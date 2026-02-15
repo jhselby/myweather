@@ -103,24 +103,16 @@ def fetch_tides():
     """Fetch tide predictions from NOAA"""
     print("📡 Fetching NOAA tides...")
     
-    from datetime import datetime, timedelta
-    
     url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
     
-    # Get today's date range
-    today = datetime.now()
-    begin_date = today.strftime("%Y%m%d")
-    end_date = (today + timedelta(days=1)).strftime("%Y%m%d")
-    
     params = {
-        "begin_date": begin_date,
-        "end_date": end_date,
         "station": TIDE_STATION,
         "product": "predictions",
         "datum": "MLLW",
         "time_zone": "lst_ldt",
         "units": "english",
-        "format": "json"
+        "format": "json",
+        "range": "24"
     }
     
     try:
