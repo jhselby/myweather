@@ -120,8 +120,7 @@ def fetch_tides():
         "datum": "MLLW",
         "time_zone": "lst_ldt",
         "units": "english",
-        "format": "json",
-        "interval": "hilo"
+        "format": "json"
     }
     
     try:
@@ -130,13 +129,37 @@ def fetch_tides():
         data = response.json()
         
         if 'predictions' in data:
+            # Get hourly predictions and find high/low points
+            predictions = data['predictions']
             tides = []
-            for pred in data['predictions'][:4]:
-                tides.append({
-                    "time": pred['t'].split()[1],
-                    "height": float(pred['v']),
-                    "type": pred['type']
-                })
+            
+            # Simple high/low detection: look for local maxima/minima
+            for i in range(1, len(predictions) - 1):
+                prev_height = float(predictions[i-1]['v'])
+                curr_height = float(predictions[i]['v'])
+                next_height = float(predictions[i+1]['v'])
+                
+                # Local maximum (high tide)
+                if curr_height > prev_height and curr_height > next_height:
+                    time_str = predictions[i]['t'].split()[1] if ' ' in predictions[i]['t'] else predictions[i]['t']
+                    tides.append({
+                        "time": time_str,
+                        "height": curr_height,
+                        "type": "H"
+                    })
+                # Local minimum (low tide)
+                elif curr_height < prev_height and curr_height < next_height:
+                    time_str = predictions[i]['t'].split()[1] if ' ' in predictions[i]['t'] else predictions[i]['t']
+                    tides.append({
+                        "time": time_str,
+                        "height": curr_height,
+                        "type": "L"
+                    })
+                
+                # Limit to 4 tides
+                if len(tides) >= 4:
+                    break
+            
             print(f"✓ Tides: {len(tides)} events")
             return tides
         return []
