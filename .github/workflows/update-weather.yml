@@ -2,9 +2,7 @@ name: Update Weather Data
 
 on:
   schedule:
-    # Run every 15 minutes
     - cron: '*/15 * * * *'
-  # Allow manual trigger
   workflow_dispatch:
 
 jobs:
@@ -28,7 +26,7 @@ jobs:
       run: |
         python3 collector.py
         
-     - name: Commit and push if changed
+    - name: Commit and push if changed
       run: |
         git config --global user.name 'Weather Bot'
         git config --global user.email 'bot@myweather.local'
