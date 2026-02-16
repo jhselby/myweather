@@ -14,7 +14,7 @@ LAT, LON = 42.5014, -70.8750
 LOCATION_NAME = "Wyman Cove, Marblehead MA"
 
 # Station IDs
-TIDE_STATION = "8442645"  # Salem, MA
+TIDE_STATION = "8442645"  # Salem Harbor, MA
 PWS_STATION = "KMAMARBL63"  # Castle Hill, Marblehead
 
 
@@ -103,16 +103,24 @@ def fetch_tides():
     """Fetch tide predictions from NOAA"""
     print("📡 Fetching NOAA tides...")
     
+    from datetime import timedelta
+    
     url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
     
+    # Get today and tomorrow in YYYYMMDD format
+    today = datetime.now()
+    begin_date = today.strftime("%Y%m%d")
+    end_date = (today + timedelta(days=1)).strftime("%Y%m%d")
+    
     params = {
+        "begin_date": begin_date,
+        "end_date": end_date,
         "station": TIDE_STATION,
         "product": "predictions",
         "datum": "MLLW",
         "time_zone": "lst_ldt",
         "units": "english",
-        "format": "json",
-        "range": "24"
+        "format": "json"
     }
     
     try:
@@ -121,27 +129,28 @@ def fetch_tides():
         data = response.json()
         
         if 'predictions' in data:
-            # Get hourly predictions and find high/low points
+            # Get predictions and find high/low points
             predictions = data['predictions']
             tides = []
             
-            # Simple high/low detection: look for local maxima/minima
-            for i in range(1, len(predictions) - 1):
-                prev_height = float(predictions[i-1]['v'])
+            # Look at hourly intervals to find peaks/troughs (every 10th prediction = ~1 hour)
+            step = 10
+            for i in range(step, len(predictions) - step, step):
+                prev_height = float(predictions[i-step]['v'])
                 curr_height = float(predictions[i]['v'])
-                next_height = float(predictions[i+1]['v'])
+                next_height = float(predictions[i+step]['v'])
                 
                 # Local maximum (high tide)
-                if curr_height > prev_height and curr_height > next_height:
-                    time_str = predictions[i]['t'].split()[1]  # Extract time (already local)
+                if curr_height > prev_height and curr_height > next_height and curr_height > 7.0:
+                    time_str = predictions[i]['t'].split()[1]
                     tides.append({
                         "time": time_str,
                         "height": curr_height,
                         "type": "H"
                     })
                 # Local minimum (low tide)
-                elif curr_height < prev_height and curr_height < next_height:
-                    time_str = predictions[i]['t'].split()[1]  # Extract time (already local)
+                elif curr_height < prev_height and curr_height < next_height and curr_height < 3.0:
+                    time_str = predictions[i]['t'].split()[1]
                     tides.append({
                         "time": time_str,
                         "height": curr_height,
