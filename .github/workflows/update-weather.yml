@@ -30,6 +30,6 @@ jobs:
       run: |
         git config --global user.name 'Weather Bot'
         git config --global user.email 'bot@myweather.local'
-        git pull --rebase
         git add weather_data.json
+        git pull --rebase --autostash
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update weather data $(date -u '+%Y-%m-%d %H:%M UTC')" && git push)
