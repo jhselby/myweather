@@ -79,7 +79,7 @@ def fetch_pws_current():
         pws_data = {
             "station": PWS_STATION,
             "name": "Castle Hill",
-            "updated": datetime.now().isoformat()
+            "updated": datetime.utcnow().isoformat() + "Z"
         }
         
         # Try to extract temperature - HTML structure may vary
@@ -245,7 +245,7 @@ def process_data(open_meteo, pws, tides, alerts):
         "location": {
             "name": LOCATION_NAME,
             "coordinates": {"lat": LAT, "lon": LON},
-            "updated": datetime.now().isoformat()
+            "updated": datetime.utcnow().isoformat() + "Z"
         },
         "alerts": alerts,
         "current": {},
