@@ -415,10 +415,20 @@
             return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
         }
 
-        function formatHour(isoString) {
+        function formatHour(isoString, index, allTimes) {
             if (!isoString) return '--';
             const date = new Date(isoString);
-            return date.toLocaleTimeString('en-US', { hour: 'numeric' });
+            const hour = date.toLocaleTimeString('en-US', { hour: 'numeric' });
+            
+            // Add date marker when day changes
+            if (index > 0 && allTimes[index - 1]) {
+                const prevDate = new Date(allTimes[index - 1]);
+                if (date.getDate() !== prevDate.getDate()) {
+                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    return `${dayName} ${hour}`;
+                }
+            }
+            return hour;
         }
 
         function formatDate(isoString) {
@@ -482,10 +492,18 @@
                     const nextTideIndex = getCurrentTideState(data.tides);
                     const tidesHTML = data.tides.map((tide, idx) => {
                         const isCurrent = idx === nextTideIndex;
+                        
+                        // Convert 24-hour to AM/PM
+                        const [hours, minutes] = tide.time.split(':');
+                        const hour = parseInt(hours);
+                        const ampm = hour >= 12 ? 'PM' : 'AM';
+                        const displayHour = hour % 12 || 12;
+                        const timeAMPM = `${displayHour}:${minutes} ${ampm}`;
+                        
                         return `
                             <div class="tide-item ${isCurrent ? 'current' : ''}">
                                 <div class="tide-type">${tide.type === 'H' ? '⬆️ High' : '⬇️ Low'}</div>
-                                <div class="tide-time">${tide.time}</div>
+                                <div class="tide-time">${timeAMPM}</div>
                                 <div class="tide-height">${tide.height.toFixed(1)} ft</div>
                             </div>
                         `;
@@ -557,7 +575,7 @@
                 }
 
                 if (data.hourly && data.hourly.times) {
-                    const labels = data.hourly.times.map(formatHour);
+                    const labels = data.hourly.times.map((time, idx) => formatHour(time, idx, data.hourly.times));
                     
                     const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
                     new Chart(hourlyCtx, {
