@@ -133,14 +133,13 @@ def fetch_tides():
             predictions = data['predictions']
             tides = []
             
-            # Look at hourly intervals to find peaks/troughs (every 10th prediction = ~1 hour)
-            step = 10
-            for i in range(step, len(predictions) - step, step):
-                prev_height = float(predictions[i-step]['v'])
+            # Check every prediction (6-minute intervals) for precise tide times
+            for i in range(1, len(predictions) - 1):
+                prev_height = float(predictions[i-1]['v'])
                 curr_height = float(predictions[i]['v'])
-                next_height = float(predictions[i+step]['v'])
+                next_height = float(predictions[i+1]['v'])
                 
-                # Local maximum (high tide)
+                # Local maximum (high tide) - must be above 7.0 ft
                 if curr_height > prev_height and curr_height > next_height and curr_height > 7.0:
                     time_str = predictions[i]['t'].split()[1]
                     tides.append({
@@ -148,7 +147,7 @@ def fetch_tides():
                         "height": curr_height,
                         "type": "H"
                     })
-                # Local minimum (low tide)
+                # Local minimum (low tide) - must be below 3.0 ft
                 elif curr_height < prev_height and curr_height < next_height and curr_height < 3.0:
                     time_str = predictions[i]['t'].split()[1]
                     tides.append({
