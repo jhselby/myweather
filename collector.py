@@ -40,8 +40,10 @@ def fetch_open_meteo():
         "daily": ",".join([
             "weather_code", "temperature_2m_max", "temperature_2m_min",
             "apparent_temperature_max", "apparent_temperature_min",
-            "sunrise", "sunset", "uv_index_max", "precipitation_sum",
-            "precipitation_probability_max", "wind_speed_10m_max", "wind_gusts_10m_max"
+            "sunrise", "sunset", "daylight_duration", "sunshine_duration",
+            "uv_index_max", "precipitation_sum",
+            "precipitation_probability_max", "wind_speed_10m_max", "wind_gusts_10m_max",
+            "moon_phase", "moonrise", "moonset"
         ]),
         "temperature_unit": "fahrenheit",
         "wind_speed_unit": "mph",
@@ -79,7 +81,7 @@ def fetch_pws_current():
         pws_data = {
             "station": PWS_STATION,
             "name": "Castle Hill",
-            "updated": datetime.utcnow().isoformat() + "Z"
+            "updated": datetime.now().isoformat()
         }
         
         # Try to extract temperature - HTML structure may vary
@@ -97,6 +99,36 @@ def fetch_pws_current():
     except Exception as e:
         print(f"✗ PWS error: {e}")
         return {"station": PWS_STATION, "name": "Castle Hill", "temperature": None}
+
+
+def fetch_water_temp():
+    """Fetch water temperature from NOAA Buoy 44013 (Boston)"""
+    print("📡 Fetching water temperature...")
+    
+    url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+    params = {
+        "station": "44013",
+        "product": "water_temperature",
+        "date": "latest",
+        "units": "english",
+        "time_zone": "lst_ldt",
+        "format": "json"
+    }
+    
+    try:
+        response = requests.get(url, params=params, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+        
+        if 'data' in data and len(data['data']) > 0:
+            water_temp = float(data['data'][0]['v'])
+            print(f"✓ Water temp: {water_temp}°F")
+            return water_temp
+        return None
+        
+    except Exception as e:
+        print(f"✗ Water temp error: {e}")
+        return None
 
 
 def fetch_tides():
@@ -237,7 +269,7 @@ def get_weather_emoji(code):
     return emojis.get(code, "🌡️")
 
 
-def process_data(open_meteo, pws, tides, alerts):
+def process_data(open_meteo, pws, tides, alerts, water_temp):
     """Process and combine all data sources"""
     print("🔄 Processing data...")
     
@@ -252,7 +284,8 @@ def process_data(open_meteo, pws, tides, alerts):
         "hourly": {},
         "daily": {},
         "tides": tides,
-        "pws": pws
+        "pws": pws,
+        "water_temp": water_temp
     }
     
     if open_meteo:
@@ -304,6 +337,9 @@ def process_data(open_meteo, pws, tides, alerts):
             "feels_like_min": daily.get('apparent_temperature_min', []),
             "sunrise": daily.get('sunrise', []),
             "sunset": daily.get('sunset', []),
+            "moonrise": daily.get('moonrise', []),
+            "moonset": daily.get('moonset', []),
+            "moon_phase": daily.get('moon_phase', []),
             "precipitation_sum": daily.get('precipitation_sum', []),
             "precipitation_probability_max": daily.get('precipitation_probability_max', []),
             "wind_speed_max": daily.get('wind_speed_10m_max', []),
@@ -326,9 +362,10 @@ def main():
     pws_data = fetch_pws_current()
     tide_data = fetch_tides()
     alert_data = fetch_nws_alerts()
+    water_temp = fetch_water_temp()
     
     # Process and combine
-    weather_data = process_data(open_meteo_data, pws_data, tide_data, alert_data)
+    weather_data = process_data(open_meteo_data, pws_data, tide_data, alert_data, water_temp)
     
     # Save to JSON
     with open('weather_data.json', 'w') as f:
