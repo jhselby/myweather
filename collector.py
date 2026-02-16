@@ -40,7 +40,7 @@ def fetch_open_meteo():
         "daily": ",".join([
             "weather_code", "temperature_2m_max", "temperature_2m_min",
             "apparent_temperature_max", "apparent_temperature_min",
-            "sunrise", "sunset", "daylight_duration", "sunshine_duration",
+            "sunrise", "sunset",
             "uv_index_max", "precipitation_sum",
             "precipitation_probability_max", "wind_speed_10m_max", "wind_gusts_10m_max",
             "moon_phase", "moonrise", "moonset"
@@ -109,9 +109,9 @@ def fetch_water_temp():
     params = {
         "station": "44013",
         "product": "water_temperature",
-        "date": "latest",
+        "date": "recent",
         "units": "english",
-        "time_zone": "lst_ldt",
+        "time_zone": "gmt",
         "format": "json"
     }
     
