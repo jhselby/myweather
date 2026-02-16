@@ -480,7 +480,7 @@
 
                 const curr = data.current;
                 if (curr.temperature !== null && curr.temperature !== undefined) {
-                    document.getElementById('currentTemp').innerHTML = 
+                   document.getElementById('currentTemp').innerHTML = 
                         Math.round(curr.temperature) + '<span class="temp-unit">°F</span>';
                     document.getElementById('feelsLike').textContent = 
                         'Feels like ' + Math.round(curr.feels_like) + '°F';
@@ -513,8 +513,8 @@
                 }
 
                 if (data.pws && data.pws.temperature !== null && data.pws.temperature !== undefined) {
-                    document.getElementById('pwsTemp').textContent = Math.round(data.pws.temperature) + '°F';
-                    document.getElementById('modelTemp').textContent = Math.round(curr.temperature) + '°F';
+                    document.getElementById('pwsTemp').textContent = data.pws.temperature.toFixed(1) + '°F';
+                    document.getElementById('modelTemp').textContent = curr.temperature.toFixed(1) + '°F';
                     const diff = Math.abs(data.pws.temperature - curr.temperature);
                     document.getElementById('tempDiff').textContent = diff.toFixed(1) + '°F';
                 } else {
