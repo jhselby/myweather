@@ -14,7 +14,7 @@ LAT, LON = 42.5014, -70.8750
 LOCATION_NAME = "Wyman Cove, Marblehead MA"
 
 # Station IDs
-TIDE_STATION = "8442668"  # Salem, MA
+TIDE_STATION = "8441241"  # Salem, MA
 PWS_STATION = "KMAMARBL63"  # Castle Hill, Marblehead
 
 
