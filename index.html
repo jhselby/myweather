@@ -293,7 +293,7 @@
 
             <!-- TIDE PANEL - PROMINENT -->
             <div class="card tide-panel">
-                <div class="card-title">🌊 Upcoming Tides - Salem</div>
+                <div class="card-title">🌊 Tides Today - Salem</div>
                 <div class="tide-grid" id="tideGrid">
                     <div class="tide-item">
                         <div class="tide-type">Loading...</div>
@@ -346,9 +346,9 @@
                 <div id="windMetrics"></div>
             </div>
 
-            <!-- Sun & Moon -->
+            <!-- Almanac -->
             <div class="card">
-                <div class="card-title">Sun & Moon</div>
+                <div class="card-title">Almanac</div>
                 <div class="sun-moon">
                     <div class="sun-moon-item">
                         <div class="sun-moon-label">🌅 Sunrise</div>
@@ -408,6 +408,35 @@
             85: "Light Snow Showers", 86: "Snow Showers",
             95: "Thunderstorm", 96: "Thunderstorm with Hail", 99: "Severe Thunderstorm"
         };
+
+        function getMoonPhase(phase) {
+            // phase is 0-1 where 0=new, 0.25=first quarter, 0.5=full, 0.75=last quarter
+            if (phase < 0.0625 || phase >= 0.9375) return { emoji: '🌑', name: 'New Moon' };
+            if (phase < 0.1875) return { emoji: '🌒', name: 'Waxing Crescent' };
+            if (phase < 0.3125) return { emoji: '🌓', name: 'First Quarter' };
+            if (phase < 0.4375) return { emoji: '🌔', name: 'Waxing Gibbous' };
+            if (phase < 0.5625) return { emoji: '🌕', name: 'Full Moon' };
+            if (phase < 0.6875) return { emoji: '🌖', name: 'Waning Gibbous' };
+            if (phase < 0.8125) return { emoji: '🌗', name: 'Last Quarter' };
+            return { emoji: '🌘', name: 'Waning Crescent' };
+        }
+
+        function getTimeDelta(futureTime) {
+            const now = new Date();
+            const target = new Date(futureTime);
+            const diffMs = target - now;
+            
+            if (diffMs < 0) return null;
+            
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (hours > 0) {
+                return `${hours}h ${minutes}m`;
+            } else {
+                return `${minutes}m`;
+            }
+        }
 
         function formatTime(isoString) {
             if (!isoString) return '--';
@@ -480,12 +509,21 @@
 
                 const curr = data.current;
                 if (curr.temperature !== null && curr.temperature !== undefined) {
-                   document.getElementById('currentTemp').innerHTML = 
-                        Math.round(curr.temperature) + '<span class="temp-unit">°F</span>';
+                    document.getElementById('currentTemp').innerHTML = 
+                        curr.temperature.toFixed(1) + '<span class="temp-unit">°F</span>';
                     document.getElementById('feelsLike').textContent = 
-                        'Feels like ' + Math.round(curr.feels_like) + '°F';
+                        'Feels like ' + curr.feels_like.toFixed(1) + '°F';
                     document.getElementById('condition').textContent = 
                         (curr.emoji || '') + ' ' + (curr.condition || '');
+                    
+                    // Add water temp if available
+                    if (data.water_temp !== null && data.water_temp !== undefined) {
+                        const conditionEl = document.getElementById('condition');
+                        const waterTempDiv = document.createElement('div');
+                        waterTempDiv.style.cssText = 'margin-top: 12px; font-size: 0.95em; opacity: 0.9;';
+                        waterTempDiv.innerHTML = `🌊 Water: ${data.water_temp.toFixed(1)}°F`;
+                        conditionEl.parentElement.appendChild(waterTempDiv);
+                    }
                 }
 
                 // TIDES - Prominent display
@@ -510,6 +548,26 @@
                         `;
                     }).join('');
                     document.getElementById('tideGrid').innerHTML = tidesHTML;
+                    
+                    // Add countdown to next tide
+                    const now = new Date();
+                    const today = now.toISOString().split('T')[0];
+                    
+                    for (let tide of data.tides) {
+                        const [hours, minutes] = tide.time.split(':');
+                        const tideDate = new Date(today + 'T' + hours.padStart(2, '0') + ':' + minutes.padStart(2, '0'));
+                        
+                        if (tideDate > now) {
+                            const countdown = getTimeDelta(tideDate);
+                            if (countdown) {
+                                const countdownDiv = document.createElement('div');
+                                countdownDiv.style.cssText = 'text-align: center; margin-top: 15px; font-size: 0.95em; opacity: 0.9;';
+                                countdownDiv.textContent = `Next ${tide.type === 'H' ? 'high' : 'low'} tide in ${countdown}`;
+                                document.querySelector('.tide-panel').appendChild(countdownDiv);
+                            }
+                            break;
+                        }
+                    }
                 }
 
                 if (data.pws && data.pws.temperature !== null && data.pws.temperature !== undefined) {
@@ -545,14 +603,44 @@
                 `;
 
                 if (data.daily && data.daily.sunrise && data.daily.sunrise[0]) {
-                    document.getElementById('sunrise').textContent = formatTime(data.daily.sunrise[0]);
-                    document.getElementById('sunset').textContent = formatTime(data.daily.sunset[0]);
+                    const sunrise = formatTime(data.daily.sunrise[0]);
+                    const sunset = formatTime(data.daily.sunset[0]);
+                    const moonrise = data.daily.moonrise && data.daily.moonrise[0] ? formatTime(data.daily.moonrise[0]) : 'N/A';
+                    const moonset = data.daily.moonset && data.daily.moonset[0] ? formatTime(data.daily.moonset[0]) : 'N/A';
+                    const moonPhase = data.daily.moon_phase && data.daily.moon_phase[0] !== undefined ? getMoonPhase(data.daily.moon_phase[0]) : { emoji: '🌙', name: 'Unknown' };
+                    
+                    document.getElementById('sunrise').textContent = sunrise;
+                    document.getElementById('sunset').textContent = sunset;
+                    
+                    // Calculate daylight
                     const rise = new Date(data.daily.sunrise[0]);
                     const set = new Date(data.daily.sunset[0]);
                     const daylight = (set - rise) / 1000 / 60 / 60;
                     const hours = Math.floor(daylight);
                     const minutes = Math.round((daylight - hours) * 60);
                     document.getElementById('daylightInfo').textContent = `Daylight: ${hours}h ${minutes}m`;
+                    
+                    // Add sailing window countdown
+                    const sailingTime = getTimeDelta(data.daily.sunset[0]);
+                    if (sailingTime) {
+                        const sailingDiv = document.createElement('div');
+                        sailingDiv.style.cssText = 'margin-top: 12px; padding: 10px; background: rgba(255,152,0,0.2); border-radius: 8px; text-align: center; font-weight: 500;';
+                        sailingDiv.innerHTML = `⛵ ${sailingTime} of sailing light`;
+                        document.getElementById('daylightInfo').parentElement.appendChild(sailingDiv);
+                    }
+                    
+                    // Add moon info
+                    const moonDiv = document.createElement('div');
+                    moonDiv.style.cssText = 'margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;';
+                    moonDiv.innerHTML = `
+                        <div style="text-align: center; font-size: 2em; margin-bottom: 5px;">${moonPhase.emoji}</div>
+                        <div style="text-align: center; font-weight: 500; margin-bottom: 8px;">${moonPhase.name}</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em;">
+                            <div>Moonrise: ${moonrise}</div>
+                            <div>Moonset: ${moonset}</div>
+                        </div>
+                    `;
+                    document.getElementById('daylightInfo').parentElement.appendChild(moonDiv);
                 }
 
                 if (data.daily && data.daily.dates) {
