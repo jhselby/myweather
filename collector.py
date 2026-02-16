@@ -6,7 +6,7 @@ Runs on GitHub Actions every 15 minutes
 
 import requests
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 
 # Your location
@@ -14,7 +14,7 @@ LAT, LON = 42.5014, -70.8750
 LOCATION_NAME = "Wyman Cove, Marblehead MA"
 
 # Station IDs
-TIDE_STATION = "8441241"  # Salem, MA
+TIDE_STATION = "8442668"  # Salem, MA
 PWS_STATION = "KMAMARBL63"  # Castle Hill, Marblehead
 
 
@@ -109,7 +109,7 @@ def fetch_tides():
         "station": TIDE_STATION,
         "product": "predictions",
         "datum": "MLLW",
-        "time_zone": "gmt",
+        "time_zone": "lst_ldt",
         "units": "english",
         "format": "json",
         "range": "24"
@@ -133,11 +133,7 @@ def fetch_tides():
                 
                 # Local maximum (high tide)
                 if curr_height > prev_height and curr_height > next_height:
-                    # Parse GMT time and convert to local
-                    from datetime import datetime, timezone, timedelta
-                    gmt_time = datetime.fromisoformat(predictions[i]['t'].replace(' ', 'T'))
-                    local_time = gmt_time.replace(tzinfo=timezone.utc).astimezone()
-                    time_str = local_time.strftime('%H:%M')
+                    time_str = predictions[i]['t'].split()[1]  # Extract time (already local)
                     tides.append({
                         "time": time_str,
                         "height": curr_height,
@@ -145,11 +141,7 @@ def fetch_tides():
                     })
                 # Local minimum (low tide)
                 elif curr_height < prev_height and curr_height < next_height:
-                    # Parse GMT time and convert to local
-                    from datetime import datetime, timezone, timedelta
-                    gmt_time = datetime.fromisoformat(predictions[i]['t'].replace(' ', 'T'))
-                    local_time = gmt_time.replace(tzinfo=timezone.utc).astimezone()
-                    time_str = local_time.strftime('%H:%M')
+                    time_str = predictions[i]['t'].split()[1]  # Extract time (already local)
                     tides.append({
                         "time": time_str,
                         "height": curr_height,
