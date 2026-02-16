@@ -28,9 +28,10 @@ jobs:
       run: |
         python3 collector.py
         
-    - name: Commit and push if changed
+     - name: Commit and push if changed
       run: |
         git config --global user.name 'Weather Bot'
         git config --global user.email 'bot@myweather.local'
+        git pull --rebase
         git add weather_data.json
         git diff --quiet && git diff --staged --quiet || (git commit -m "Update weather data $(date -u '+%Y-%m-%d %H:%M UTC')" && git push)
