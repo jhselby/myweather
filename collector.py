@@ -109,7 +109,7 @@ def fetch_tides():
         "station": TIDE_STATION,
         "product": "predictions",
         "datum": "MLLW",
-        "time_zone": "lst_ldt",
+        "time_zone": "gmt",
         "units": "english",
         "format": "json",
         "range": "24"
@@ -133,7 +133,11 @@ def fetch_tides():
                 
                 # Local maximum (high tide)
                 if curr_height > prev_height and curr_height > next_height:
-                    time_str = predictions[i]['t'].split()[1] if ' ' in predictions[i]['t'] else predictions[i]['t']
+                    # Parse GMT time and convert to local
+                    from datetime import datetime, timezone, timedelta
+                    gmt_time = datetime.fromisoformat(predictions[i]['t'].replace(' ', 'T'))
+                    local_time = gmt_time.replace(tzinfo=timezone.utc).astimezone()
+                    time_str = local_time.strftime('%H:%M')
                     tides.append({
                         "time": time_str,
                         "height": curr_height,
@@ -141,7 +145,11 @@ def fetch_tides():
                     })
                 # Local minimum (low tide)
                 elif curr_height < prev_height and curr_height < next_height:
-                    time_str = predictions[i]['t'].split()[1] if ' ' in predictions[i]['t'] else predictions[i]['t']
+                    # Parse GMT time and convert to local
+                    from datetime import datetime, timezone, timedelta
+                    gmt_time = datetime.fromisoformat(predictions[i]['t'].replace(' ', 'T'))
+                    local_time = gmt_time.replace(tzinfo=timezone.utc).astimezone()
+                    time_str = local_time.strftime('%H:%M')
                     tides.append({
                         "time": time_str,
                         "height": curr_height,
