@@ -465,6 +465,7 @@
                 
                 const updated = new Date(data.location.updated);
                 document.getElementById('lastUpdate').textContent = 'Updated: ' + 
+                    updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
                     updated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
                 if (data.alerts && data.alerts.length > 0) {
