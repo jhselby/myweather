@@ -384,12 +384,25 @@
 
   function pillClassFromSource(meta) {
     if (!meta) return "pill bad";
+
     const status = meta.status || "error";
     const age = meta.age_minutes;
+
+    // If source failed entirely
     if (status !== "ok") return "pill bad";
-    if (typeof age === "number" && age > 35) return "pill warn";
-    return "pill ok";
-  }
+
+    if (typeof age === "number") {
+      if (age >= 60) {
+      return "pill bad";      // Red after 60 minutes
+      }
+      if (age >= 30) {
+      return "pill warn";     // Yellow after 30 minutes
+      }
+    }
+
+  return "pill ok";           // Green under 30 minutes
+}
+
 
   function makePill(label, meta) {
   const cls = pillClassFromSource(meta);
