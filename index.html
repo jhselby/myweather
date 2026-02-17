@@ -68,15 +68,34 @@
       border-radius:999px;
       background:rgba(255,255,255,0.06);
       border:2px solid rgba(255,255,255,0.18);
-      font-weight:700;
+      font-weight:800;
       font-size:0.95rem;
-      min-width:108px;
+      min-width:170px;
       text-align:center;
       user-select:none;
     }
     .pill.ok{ border-color: color-mix(in srgb, var(--ok) 80%, transparent); }
     .pill.warn{ border-color: color-mix(in srgb, var(--warn) 85%, transparent); }
     .pill.bad{ border-color: color-mix(in srgb, var(--bad) 90%, transparent); }
+
+    .sources-summary{
+      margin-top:8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      justify-content:center;
+      align-items:center;
+      font-size:0.85rem;
+      color:var(--muted2);
+    }
+    .source-chip{
+      border:1px solid rgba(255,255,255,0.14);
+      background:rgba(255,255,255,0.05);
+      border-radius:999px;
+      padding:6px 10px;
+      white-space:nowrap;
+    }
+    .source-chip b{ color:#fff; }
 
     .alerts{ margin-top:14px; }
     .alert{
@@ -180,9 +199,18 @@
     <header>
       <h1>⚓ Wyman Cove Weather</h1>
       <div class="sub" id="location">Loading…</div>
+
+      <!-- main timestamp -->
       <div class="meta" id="lastUpdate">Updated: --</div>
+
+      <!-- app info -->
       <div class="meta" id="appMeta"></div>
+
+      <!-- Option A: one clear freshness pill -->
       <div class="status-strip" id="statusStrip"></div>
+
+      <!-- Option A: per-source diagnostics (small) -->
+      <div class="sources-summary" id="sourcesSummary"></div>
     </header>
 
     <div class="alerts" id="alertsContainer"></div>
@@ -267,7 +295,7 @@
   </div>
 
 <script>
-const APP_VERSION = "2.1.1";
+const APP_VERSION = "2.2.0"; // Option A
 
 function safeNum(x){ return (typeof x === "number" && !isNaN(x)) ? x : null; }
 function minutesSince(d){ return (Date.now() - d.getTime()) / 60000; }
@@ -296,6 +324,16 @@ function windDir(deg){
   if(typeof deg !== "number") return "--";
   const dirs=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
   return dirs[Math.round(deg/22.5)%16];
+}
+function statusLabel(s){
+  const st = s?.status || "unknown";
+  if(st === "ok") return "OK";
+  if(st === "error") return "ERROR";
+  return String(st).toUpperCase();
+}
+function fmtClock(d){
+  if(!d) return "--";
+  return d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
 }
 
 const weatherEmoji = { 0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"🌨️",77:"🌨️",80:"🌦️",81:"🌦️",82:"🌧️",85:"🌨️",86:"🌨️",95:"⛈️",96:"⛈️",99:"⛈️" };
@@ -336,9 +374,10 @@ function renderHeader(data){
   return updatedDate;
 }
 
-/* ✅ FIXED: per-source timestamps from data.sources.*.updated_at */
+/* Option A: one meaningful "Data freshness" + small per-source diagnostics */
 function renderStatus(data){
   const strip = document.getElementById("statusStrip");
+  const summary = document.getElementById("sourcesSummary");
 
   function parseUpdated(source){
     const ts = source?.updated_at;
@@ -350,22 +389,27 @@ function renderStatus(data){
     return d ? (Date.now() - d.getTime()) / 60000 : NaN;
   }
 
-  const dModel  = parseUpdated(data?.sources?.open_meteo);
-  const dPws    = parseUpdated(data?.sources?.pws);
-  const dTides  = parseUpdated(data?.sources?.tides);
-  const dAlerts = parseUpdated(data?.sources?.nws_alerts);
+  const sources = [
+    { key: "Model",  obj: data?.sources?.open_meteo },
+    { key: "PWS",    obj: data?.sources?.pws },
+    { key: "Tides",  obj: data?.sources?.tides },
+    { key: "Alerts", obj: data?.sources?.nws_alerts }
+  ];
 
   function draw(){
-    const aModel  = ageMin(dModel);
-    const aPws    = ageMin(dPws);
-    const aTides  = ageMin(dTides);
-    const aAlerts = ageMin(dAlerts);
+    const ages = sources.map(s => ageMin(parseUpdated(s.obj))).filter(x => !isNaN(x));
+    const worst = ages.length ? Math.max(...ages) : NaN;
 
-    strip.innerHTML =
-      `<div class="pill ${pillClass(aModel)}">Model: ${ageText(aModel)}</div>` +
-      `<div class="pill ${pillClass(aPws)}">PWS: ${ageText(aPws)}</div>` +
-      `<div class="pill ${pillClass(aTides)}">Tides: ${ageText(aTides)}</div>` +
-      `<div class="pill ${pillClass(aAlerts)}">Alerts: ${ageText(aAlerts)}</div>`;
+    strip.innerHTML = `<div class="pill ${pillClass(worst)}">Data freshness: ${ageText(worst)}</div>`;
+
+    summary.innerHTML = sources.map(s => {
+      const d = parseUpdated(s.obj);
+      const age = ageMin(d);
+      const label = statusLabel(s.obj);
+      const when = fmtClock(d);
+      const ageStr = isNaN(age) ? "--" : (age < 1 ? "now" : `${Math.round(age)}m`);
+      return `<span class="source-chip"><b>${s.key}</b> ${label} • ${when} • ${ageStr}</span>`;
+    }).join("");
   }
 
   draw();
@@ -677,6 +721,7 @@ fetch("weather_data.json?t=" + Date.now())
     document.getElementById("location").textContent = "Error loading data";
     document.getElementById("lastUpdate").textContent = "Updated: --";
     document.getElementById("statusStrip").innerHTML = `<div class="pill bad">Load failed</div>`;
+    document.getElementById("sourcesSummary").innerHTML = "";
   });
 </script>
 </body>
