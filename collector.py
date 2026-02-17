@@ -199,7 +199,8 @@ def fetch_nws_alerts():
                     "description": props.get('description', ''),
                     "severity": props.get('severity', 'Unknown'),
                     "onset": props.get('onset', ''),
-                    "expires": props.get('expires', '')
+                    "expires": props.get('expires', ''),
+                    "url": feature.get('id', '#')
                 })
         
         print(f"✓ Alerts: {len(alerts)} active")
