@@ -245,46 +245,43 @@
         document.getElementById('location').textContent = data?.location?.name || 'Wyman Cove';
 
         // ---------- Live header "Updated: ... (X ago)" ----------
-        (function () {
-          const updatedStr = data?.generated_at || data?.location?.updated;
-          const el = document.getElementById('lastUpdate');
+       // ---------- Live header "Updated: ... (X ago)" ----------
+(function () {
+  const updatedStr = data?.generated_at || data?.location?.updated;
+  const el = document.getElementById('lastUpdate');
 
-          if (!updatedStr) {
-            el.textContent = 'Updated: --';
-            return;
-          }
+  if (!updatedStr) {
+    el.textContent = 'Updated: --';
+    return;
+  }
 
-          const updatedDate = new Date(updatedStr);
-          const humanTs = updatedDate.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' ' +
-                          updatedDate.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+  const updatedDate = new Date(updatedStr);
+  const humanTs =
+    updatedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) +
+    ' ' +
+    updatedDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
 
-          // backend-provided baseline age (prefer model/source age)
-          const backendAge = (typeof data?.sources?.open_meteo?.age_minutes === 'number') ? data.sources.open_meteo.age_minutes :
-                              (typeof data?.location?.age_minutes === 'number' ? data.location.age_minutes : null);
+  function computeAgeMinutes() {
+    return (Date.now() - updatedDate.getTime()) / 60000;
+  }
 
-          const generatedAtMs = updatedDate.getTime();
-          const fetchMs = Date.now();
+  function updateHeader() {
+    const ageMin = computeAgeMinutes();
 
-          function currentAgeMinutes() {
-            const elapsedSinceFetchMin = (Date.now() - fetchMs) / 60000.0;
-            if (typeof backendAge === 'number') return backendAge + elapsedSinceFetchMin;
-            return (Date.now() - generatedAtMs) / 60000.0;
-          }
+    let ageText;
+    if (ageMin < 1) {
+      ageText = 'now';
+    } else {
+      ageText = Math.round(ageMin) + 'm ago';
+    }
 
-          function ageTextFromMinutes(ageMin) {
-            if (typeof ageMin !== 'number' || isNaN(ageMin)) return null;
-            if (ageMin < 1) return 'now';
-            return `${Math.round(ageMin)}m ago`;
-          }
+    el.textContent = `Updated: ${humanTs} (${ageText})`;
+  }
 
-          function setHeaderText(ageText) {
-            if (ageText) el.textContent = `Updated: ${humanTs} (${ageText})`;
-            else el.textContent = `Updated: ${humanTs}`;
-          }
+  updateHeader();
+  setInterval(updateHeader, 60000);
+})();
 
-          setHeaderText(ageTextFromMinutes(currentAgeMinutes()));
-          const headerTimer = setInterval(() => { setHeaderText(ageTextFromMinutes(currentAgeMinutes())); }, 60000);
-          // store in case needed: window._weather_header_timer = headerTimer;
         })();
 
         // status strip initial rendering using source metadata
