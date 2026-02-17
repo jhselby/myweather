@@ -746,6 +746,40 @@
           }
         });
       }
+          // --- LIVE AGE REFRESH (update pills every minute) ---
+    // record the time when we fetched this JSON (ms)
+    const fetchTime = Date.now();
+    const sourcesMeta = data?.sources || {};
+
+    // helper to build the status strip using a meta object copy with overridden age
+    function rebuildStatusStripWithAdjustedAges(elapsedMinutes) {
+      const s = sourcesMeta;
+      // for each source, compute adjusted age = original_age + elapsedMinutes
+      const open_meteo_meta = s.open_meteo ? { ...s.open_meteo, age_minutes: (typeof s.open_meteo.age_minutes === 'number' ? s.open_meteo.age_minutes + elapsedMinutes : undefined) } : null;
+      const pws_meta        = s.pws        ? { ...s.pws,        age_minutes: (typeof s.pws.age_minutes        === 'number' ? s.pws.age_minutes        + elapsedMinutes : undefined) } : null;
+      const tides_meta      = s.tides      ? { ...s.tides,      age_minutes: (typeof s.tides.age_minutes      === 'number' ? s.tides.age_minutes      + elapsedMinutes : undefined) } : null;
+      const alerts_meta     = s.nws_alerts ? { ...s.nws_alerts, age_minutes: (typeof s.nws_alerts.age_minutes === 'number' ? s.nws_alerts.age_minutes + elapsedMinutes : undefined) } : null;
+
+      document.getElementById('statusStrip').innerHTML =
+        makePill("Model", open_meteo_meta) +
+        makePill("PWS", pws_meta) +
+        makePill("Tides", tides_meta) +
+        makePill("Alerts", alerts_meta);
+    }
+
+    // run once immediately (elapsed = 0)
+    rebuildStatusStripWithAdjustedAges(0);
+
+    // schedule updates every minute
+    const liveAgeTimer = setInterval(() => {
+      const elapsedMs = Date.now() - fetchTime;
+      const elapsedMinutes = elapsedMs / 60000.0;
+      rebuildStatusStripWithAdjustedAges(elapsedMinutes);
+    }, 60000);
+
+    // Optional: if you ever want to stop the live updates, call:
+    // clearInterval(liveAgeTimer);
+
     })
     .catch(err => {
       console.error('Error:', err);
