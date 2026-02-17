@@ -409,18 +409,6 @@
             95: "Thunderstorm", 96: "Thunderstorm with Hail", 99: "Severe Thunderstorm"
         };
 
-        function getMoonPhase(phase) {
-            // phase is 0-1 where 0=new, 0.25=first quarter, 0.5=full, 0.75=last quarter
-            if (phase < 0.0625 || phase >= 0.9375) return { emoji: '🌑', name: 'New Moon' };
-            if (phase < 0.1875) return { emoji: '🌒', name: 'Waxing Crescent' };
-            if (phase < 0.3125) return { emoji: '🌓', name: 'First Quarter' };
-            if (phase < 0.4375) return { emoji: '🌔', name: 'Waxing Gibbous' };
-            if (phase < 0.5625) return { emoji: '🌕', name: 'Full Moon' };
-            if (phase < 0.6875) return { emoji: '🌖', name: 'Waning Gibbous' };
-            if (phase < 0.8125) return { emoji: '🌗', name: 'Last Quarter' };
-            return { emoji: '🌘', name: 'Waning Crescent' };
-        }
-
         function getTimeDelta(futureTime) {
             const now = new Date();
             const target = new Date(futureTime);
@@ -515,15 +503,6 @@
                         'Feels like ' + curr.feels_like.toFixed(1) + '°F';
                     document.getElementById('condition').textContent = 
                         (curr.emoji || '') + ' ' + (curr.condition || '');
-                    
-                    // Add water temp if available
-                    if (data.water_temp !== null && data.water_temp !== undefined) {
-                        const conditionEl = document.getElementById('condition');
-                        const waterTempDiv = document.createElement('div');
-                        waterTempDiv.style.cssText = 'margin-top: 12px; font-size: 0.95em; opacity: 0.9;';
-                        waterTempDiv.innerHTML = `🌊 Water: ${data.water_temp.toFixed(1)}°F`;
-                        conditionEl.parentElement.appendChild(waterTempDiv);
-                    }
                 }
 
                 // TIDES - Prominent display
@@ -605,9 +584,6 @@
                 if (data.daily && data.daily.sunrise && data.daily.sunrise[0]) {
                     const sunrise = formatTime(data.daily.sunrise[0]);
                     const sunset = formatTime(data.daily.sunset[0]);
-                    const moonrise = data.daily.moonrise && data.daily.moonrise[0] ? formatTime(data.daily.moonrise[0]) : 'N/A';
-                    const moonset = data.daily.moonset && data.daily.moonset[0] ? formatTime(data.daily.moonset[0]) : 'N/A';
-                    const moonPhase = data.daily.moon_phase && data.daily.moon_phase[0] !== undefined ? getMoonPhase(data.daily.moon_phase[0]) : { emoji: '🌙', name: 'Unknown' };
                     
                     document.getElementById('sunrise').textContent = sunrise;
                     document.getElementById('sunset').textContent = sunset;
@@ -628,19 +604,6 @@
                         sailingDiv.innerHTML = `⛵ ${sailingTime} of sailing light`;
                         document.getElementById('daylightInfo').parentElement.appendChild(sailingDiv);
                     }
-                    
-                    // Add moon info
-                    const moonDiv = document.createElement('div');
-                    moonDiv.style.cssText = 'margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px;';
-                    moonDiv.innerHTML = `
-                        <div style="text-align: center; font-size: 2em; margin-bottom: 5px;">${moonPhase.emoji}</div>
-                        <div style="text-align: center; font-weight: 500; margin-bottom: 8px;">${moonPhase.name}</div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.85em;">
-                            <div>Moonrise: ${moonrise}</div>
-                            <div>Moonset: ${moonset}</div>
-                        </div>
-                    `;
-                    document.getElementById('daylightInfo').parentElement.appendChild(moonDiv);
                 }
 
                 if (data.daily && data.daily.dates) {
