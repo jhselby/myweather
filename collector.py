@@ -193,16 +193,8 @@ def fetch_nws_alerts():
         if 'features' in data:
             for feature in data['features']:
                 props = feature['properties']
-                # Extract the URN and convert to web URL
-                alert_id = feature.get('id', '')
-                # Convert API URL to web URL format
-                # From: https://api.weather.gov/alerts/urn:oid:...
-                # To: Extract just the URN part after /alerts/
-                if '/alerts/' in alert_id:
-                    urn = alert_id.split('/alerts/')[-1]
-                    web_url = f"https://www.weather.gov/alerts-beta/wwalist.php?urn={urn}"
-                else:
-                    web_url = "https://www.weather.gov/alerts"
+                # Link to local NWS office for the alert (always works)
+                web_url = "https://www.weather.gov/box"  # NWS Boston office
                 
                 alerts.append({
                     "event": props.get('event', 'Unknown'),
