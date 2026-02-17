@@ -1,752 +1,730 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <!-- iOS Web App Config -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Wyman Cove">
-    
-    <title>Wyman Cove Weather</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: #fff;
-            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-            min-height: 100vh;
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
-        }
-        .container { 
-            max-width: 1400px; 
-            margin: 0 auto; 
-            padding: 15px;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 20px 15px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-        }
-        h1 { 
-            font-size: 2em; 
-            margin-bottom: 8px;
-            font-weight: 300;
-            letter-spacing: 1px;
-        }
-        .location { 
-            font-size: 0.95em; 
-            opacity: 0.9;
-            font-weight: 300;
-        }
-        .last-update {
-            margin-top: 8px;
-            font-size: 0.8em;
-            opacity: 0.7;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-        .alert-banner {
-            background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
-            padding: 12px 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            border-left: 4px solid #fff;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .alert-banner:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
-        }
-        .alert-title {
-            font-weight: bold;
-            font-size: 1em;
-            margin-bottom: 6px;
-        }
-        .alert-details { 
-            font-size: 0.9em; 
-            line-height: 1.4;
-            opacity: 0.95;
-        }
+  <!-- iOS Web App Config -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Wyman Cove">
 
-        .grid { 
-            display: grid; 
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .card {
-            background: rgba(255,255,255,0.15);
-            border-radius: 15px;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        
-        .card-title {
-            font-size: 0.85em;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            opacity: 0.8;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-        
-        .current-temp {
-            font-size: 3.5em;
-            font-weight: 200;
-            line-height: 1;
-            margin: 8px 0;
-        }
-        .temp-unit { font-size: 0.5em; opacity: 0.8; }
-        
-        .feels-like {
-            font-size: 1em;
-            opacity: 0.9;
-            margin-top: 8px;
-        }
-        
-        .condition {
-            font-size: 1.2em;
-            margin-top: 12px;
-            font-weight: 300;
-        }
-        
-        .metric {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        .metric:last-child { border-bottom: none; }
-        
-        .metric-label {
-            opacity: 0.8;
-            font-size: 0.9em;
-        }
-        .metric-value {
-            font-size: 1.1em;
-            font-weight: 500;
-        }
-        
-        /* TIDE PANEL - PROMINENT */
-        .tide-panel {
-            background: linear-gradient(135deg, #0277bd 0%, #01579b 100%);
-            border: 2px solid rgba(255,255,255,0.3);
-        }
-        .tide-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 12px;
-        }
-        .tide-item {
-            text-align: center;
-            padding: 15px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 10px;
-        }
-        .tide-item.current {
-            background: rgba(255,152,0,0.3);
-            border: 2px solid rgba(255,152,0,0.5);
-        }
-        .tide-type {
-            font-size: 0.8em;
-            opacity: 0.85;
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .tide-time {
-            font-size: 1.4em;
-            font-weight: 600;
-            margin: 5px 0;
-        }
-        .tide-height {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-        
-        .forecast-day {
-            text-align: center;
-            padding: 12px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 10px;
-            margin: 8px 0;
-        }
-        .forecast-day-name {
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 1em;
-        }
-        .forecast-icon {
-            font-size: 2.2em;
-            margin: 8px 0;
-        }
-        .forecast-temps {
-            font-size: 1em;
-            margin-top: 8px;
-        }
-        .forecast-high { color: #ff9800; margin-right: 8px; }
-        .forecast-low { opacity: 0.7; }
-        .forecast-detail {
-            font-size: 0.8em;
-            opacity: 0.8;
-            margin-top: 6px;
-        }
-        
-        .chart-container {
-            position: relative;
-            height: 250px;
-            margin-top: 15px;
-        }
-        
-        .wide-card {
-            grid-column: 1 / -1;
-        }
-        
-        .sun-moon {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 12px;
-        }
-        .sun-moon-item {
-            text-align: center;
-        }
-        .sun-moon-time {
-            font-size: 1.3em;
-            font-weight: 500;
-            margin: 8px 0;
-        }
-        .sun-moon-label {
-            font-size: 0.85em;
-            opacity: 0.8;
-        }
+  <title>Wyman Cove Weather</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-        .comparison-box {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 12px;
-        }
-        .comparison-item {
-            padding: 12px;
-            background: rgba(255,255,255,0.1);
-            border-radius: 8px;
-        }
-        .comparison-label {
-            font-size: 0.8em;
-            opacity: 0.8;
-            margin-bottom: 6px;
-        }
-        .comparison-value {
-            font-size: 1.6em;
-            font-weight: 600;
-        }
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+      color: #fff;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      min-height: 100vh;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .container { max-width: 1400px; margin: 0 auto; padding: 15px; }
 
-        @media (max-width: 768px) {
-            h1 { font-size: 1.6em; }
-            .current-temp { font-size: 3em; }
-            .tide-grid { grid-template-columns: 1fr; }
-            .chart-container { height: 220px; }
-        }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 20px 15px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+    }
+    h1 { font-size: 2em; margin-bottom: 8px; font-weight: 300; letter-spacing: 1px; }
+    .location { font-size: 0.95em; opacity: 0.9; font-weight: 300; }
+    .last-update { margin-top: 8px; font-size: 0.8em; opacity: 0.7; }
 
-        @media (min-width: 769px) {
-            .tide-grid { grid-template-columns: repeat(4, 1fr); }
-        }
+    .status-strip {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      font-size: 0.78em;
+      opacity: 0.95;
+    }
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      border: 1px solid rgba(255,255,255,0.18);
+      white-space: nowrap;
+    }
+    .pill.ok { border-color: rgba(76,175,80,0.6); }
+    .pill.warn { border-color: rgba(255,152,0,0.7); }
+    .pill.bad { border-color: rgba(244,67,54,0.7); }
 
-        /* iOS PWA specific */
-        @supports (-webkit-touch-callout: none) {
-            body {
-                padding-top: calc(env(safe-area-inset-top) + 10px);
-                padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
-            }
-        }
-    </style>
+    .alert-banner {
+      background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+      padding: 12px 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      border-left: 4px solid #fff;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .alert-banner:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.4); }
+    .alert-title { font-weight: bold; font-size: 1em; margin-bottom: 6px; }
+    .alert-details { font-size: 0.9em; line-height: 1.4; opacity: 0.95; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: rgba(255,255,255,0.15);
+      border-radius: 15px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .card-title {
+      font-size: 0.85em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.8;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+
+    .current-temp { font-size: 3.5em; font-weight: 200; line-height: 1; margin: 8px 0; }
+    .temp-unit { font-size: 0.5em; opacity: 0.8; }
+    .feels-like { font-size: 1em; opacity: 0.9; margin-top: 8px; }
+    .condition { font-size: 1.2em; margin-top: 12px; font-weight: 300; }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .metric:last-child { border-bottom: none; }
+    .metric-label { opacity: 0.8; font-size: 0.9em; }
+    .metric-value { font-size: 1.1em; font-weight: 500; }
+
+    /* Tide panel */
+    .tide-panel {
+      background: linear-gradient(135deg, #0277bd 0%, #01579b 100%);
+      border: 2px solid rgba(255,255,255,0.3);
+    }
+    .tide-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .tide-item {
+      text-align: center;
+      padding: 15px;
+      background: rgba(255,255,255,0.15);
+      border-radius: 10px;
+    }
+    .tide-item.current {
+      background: rgba(255,152,0,0.3);
+      border: 2px solid rgba(255,152,0,0.5);
+    }
+    .tide-type { font-size: 0.8em; opacity: 0.85; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tide-time { font-size: 1.4em; font-weight: 600; margin: 5px 0; }
+    .tide-height { font-size: 1.1em; opacity: 0.9; }
+
+    .forecast-day {
+      text-align: center;
+      padding: 12px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      margin: 8px 0;
+    }
+    .forecast-day-name { font-weight: 600; margin-bottom: 8px; font-size: 1em; }
+    .forecast-icon { font-size: 2.2em; margin: 8px 0; }
+    .forecast-temps { font-size: 1em; margin-top: 8px; }
+    .forecast-high { color: #ff9800; margin-right: 8px; }
+    .forecast-low { opacity: 0.7; }
+    .forecast-detail { font-size: 0.8em; opacity: 0.8; margin-top: 6px; }
+
+    .chart-container { position: relative; height: 250px; margin-top: 15px; }
+    .wide-card { grid-column: 1 / -1; }
+
+    .sun-moon { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 12px; }
+    .sun-moon-item { text-align: center; }
+    .sun-moon-time { font-size: 1.3em; font-weight: 500; margin: 8px 0; }
+    .sun-moon-label { font-size: 0.85em; opacity: 0.8; }
+
+    .comparison-box { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .comparison-item { padding: 12px; background: rgba(255,255,255,0.1); border-radius: 8px; }
+    .comparison-label { font-size: 0.8em; opacity: 0.8; margin-bottom: 6px; }
+    .comparison-value { font-size: 1.6em; font-weight: 600; }
+
+    .small-note { margin-top: 10px; font-size: 0.82em; opacity: 0.85; line-height: 1.35; }
+
+    @media (max-width: 768px) {
+      h1 { font-size: 1.6em; }
+      .current-temp { font-size: 3em; }
+      .tide-grid { grid-template-columns: 1fr; }
+      .chart-container { height: 220px; }
+    }
+    @media (min-width: 769px) {
+      .tide-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @supports (-webkit-touch-callout: none) {
+      body {
+        padding-top: calc(env(safe-area-inset-top) + 10px);
+        padding-bottom: calc(env(safe-area-inset-bottom) + 10px);
+      }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>⚓ Wyman Cove Weather</h1>
-            <div class="location" id="location">Loading...</div>
-            <div class="last-update" id="lastUpdate">Last Updated: --</div>
-        </header>
+<div class="container">
+  <header>
+    <h1>⚓ Wyman Cove Weather</h1>
+    <div class="location" id="location">Loading...</div>
+    <div class="last-update" id="lastUpdate">Last Updated: --</div>
+    <div class="status-strip" id="statusStrip"></div>
+  </header>
 
-        <div id="alertsContainer"></div>
+  <div id="alertsContainer"></div>
 
-        <div class="grid">
-            <!-- Current Conditions -->
-            <div class="card">
-                <div class="card-title">Current Conditions</div>
-                <div id="currentTemp" class="current-temp">--<span class="temp-unit">°F</span></div>
-                <div id="feelsLike" class="feels-like">Feels like --°F</div>
-                <div id="condition" class="condition">Loading...</div>
-            </div>
-
-            <!-- TIDE PANEL - PROMINENT -->
-            <div class="card tide-panel">
-                <div class="card-title">🌊 Tides Today - Salem</div>
-                <div class="tide-grid" id="tideGrid">
-                    <div class="tide-item">
-                        <div class="tide-type">Loading...</div>
-                        <div class="tide-time">--</div>
-                        <div class="tide-height">-- ft</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid">
-            <!-- PWS Comparison -->
-            <div class="card">
-                <div class="card-title">🏠 Hyperlocal Comparison</div>
-                <div class="comparison-box">
-                    <div class="comparison-item">
-                        <div class="comparison-label">Model</div>
-                        <div class="comparison-value" id="modelTemp">--°F</div>
-                    </div>
-                    <div class="comparison-item">
-                        <div class="comparison-label">Castle Hill</div>
-                        <div class="comparison-value" id="pwsTemp">--°F</div>
-                    </div>
-                </div>
-                <div style="margin-top: 12px; font-size: 0.85em; opacity: 0.8; text-align: center;">
-                    Diff: <span id="tempDiff" style="font-weight: 600;">--</span>
-                </div>
-            </div>
-
-            <!-- Today's Summary -->
-            <div class="card">
-                <div class="card-title">Today's Summary</div>
-                <div class="metric">
-                    <span class="metric-label">High</span>
-                    <span class="metric-value" style="color: #ff9800;" id="high">--°F</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Low</span>
-                    <span class="metric-value" style="color: #64b5f6;" id="low">--°F</span>
-                </div>
-                <div class="metric">
-                    <span class="metric-label">Precipitation</span>
-                    <span class="metric-value" id="precipChance">--%</span>
-                </div>
-            </div>
-
-            <!-- Wind -->
-            <div class="card">
-                <div class="card-title">Wind & Pressure</div>
-                <div id="windMetrics"></div>
-            </div>
-
-            <!-- Almanac -->
-            <div class="card">
-                <div class="card-title">Almanac</div>
-                <div class="sun-moon">
-                    <div class="sun-moon-item">
-                        <div class="sun-moon-label">🌅 Sunrise</div>
-                        <div class="sun-moon-time" id="sunrise">--</div>
-                    </div>
-                    <div class="sun-moon-item">
-                        <div class="sun-moon-label">🌇 Sunset</div>
-                        <div class="sun-moon-time" id="sunset">--</div>
-                    </div>
-                </div>
-                <div id="daylightInfo" style="margin-top: 12px; text-align: center; opacity: 0.9; font-size: 0.9em;"></div>
-            </div>
-        </div>
-
-        <!-- 10-Day Forecast -->
-        <div class="card wide-card">
-            <div class="card-title">10-Day Forecast</div>
-            <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 0;" id="forecastGrid"></div>
-        </div>
-
-        <!-- Temperature Chart -->
-        <div class="card wide-card">
-            <div class="card-title">48-Hour Temperature & Precipitation</div>
-            <div class="chart-container">
-                <canvas id="hourlyChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Wind Chart -->
-        <div class="card wide-card">
-            <div class="card-title">48-Hour Wind Forecast</div>
-            <div class="chart-container">
-                <canvas id="windChart"></canvas>
-            </div>
-        </div>
+  <div class="grid">
+    <!-- Current Conditions -->
+    <div class="card">
+      <div class="card-title">Current Conditions</div>
+      <div id="currentTemp" class="current-temp">--<span class="temp-unit">°F</span></div>
+      <div id="feelsLike" class="feels-like">Feels like --°F</div>
+      <div id="condition" class="condition">Loading...</div>
+      <div class="small-note" id="currentNote"></div>
     </div>
 
-    <script>
-        const weatherEmoji = {
-            0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
-            45: "🌫️", 48: "🌫️",
-            51: "🌦️", 53: "🌧️", 55: "🌧️",
-            61: "🌧️", 63: "🌧️", 65: "🌧️",
-            71: "🌨️", 73: "🌨️", 75: "🌨️",
-            77: "🌨️", 80: "🌦️", 81: "🌦️", 82: "🌧️",
-            85: "🌨️", 86: "🌨️",
-            95: "⛈️", 96: "⛈️", 99: "⛈️"
-        };
+    <!-- Tides -->
+    <div class="card tide-panel">
+      <div class="card-title">🌊 Tides Today - Salem</div>
+      <div class="tide-grid" id="tideGrid">
+        <div class="tide-item">
+          <div class="tide-type">Loading...</div>
+          <div class="tide-time">--</div>
+          <div class="tide-height">-- ft</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        const weatherDesc = {
-            0: "Clear", 1: "Mostly Clear", 2: "Partly Cloudy", 3: "Overcast",
-            45: "Fog", 48: "Freezing Fog",
-            51: "Light Drizzle", 53: "Drizzle", 55: "Heavy Drizzle",
-            61: "Light Rain", 63: "Rain", 65: "Heavy Rain",
-            71: "Light Snow", 73: "Snow", 75: "Heavy Snow",
-            77: "Snow Grains", 80: "Light Showers", 81: "Showers", 82: "Heavy Showers",
-            85: "Light Snow Showers", 86: "Snow Showers",
-            95: "Thunderstorm", 96: "Thunderstorm with Hail", 99: "Severe Thunderstorm"
-        };
+  <div class="grid">
+    <!-- Hyperlocal Comparison -->
+    <div class="card">
+      <div class="card-title">🏠 Hyperlocal Comparison</div>
+      <div class="comparison-box">
+        <div class="comparison-item">
+          <div class="comparison-label">Model</div>
+          <div class="comparison-value" id="modelTemp">--°F</div>
+        </div>
+        <div class="comparison-item">
+          <div class="comparison-label">Castle Hill</div>
+          <div class="comparison-value" id="pwsTemp">--°F</div>
+        </div>
+      </div>
+      <div style="margin-top: 12px; font-size: 0.85em; opacity: 0.8; text-align: center;">
+        Diff: <span id="tempDiff" style="font-weight: 600;">--</span>
+      </div>
+      <div class="small-note" id="hyperlocalNote"></div>
+    </div>
 
-        function getTimeDelta(futureTime) {
-            const now = new Date();
-            const target = new Date(futureTime);
-            const diffMs = target - now;
-            
-            if (diffMs < 0) return null;
-            
-            const hours = Math.floor(diffMs / (1000 * 60 * 60));
-            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-            
-            if (hours > 0) {
-                return `${hours}h ${minutes}m`;
-            } else {
-                return `${minutes}m`;
+    <!-- Today's Summary -->
+    <div class="card">
+      <div class="card-title">Today's Summary</div>
+      <div class="metric">
+        <span class="metric-label">High</span>
+        <span class="metric-value" style="color: #ff9800;" id="high">--°F</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Low</span>
+        <span class="metric-value" style="color: #64b5f6;" id="low">--°F</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Precipitation</span>
+        <span class="metric-value" id="precipChance">--%</span>
+      </div>
+    </div>
+
+    <!-- Wind -->
+    <div class="card">
+      <div class="card-title">Wind & Pressure</div>
+      <div id="windMetrics"></div>
+      <div class="small-note" id="pressureTrendNote"></div>
+    </div>
+
+    <!-- Almanac -->
+    <div class="card">
+      <div class="card-title">Almanac</div>
+      <div class="sun-moon">
+        <div class="sun-moon-item">
+          <div class="sun-moon-label">🌅 Sunrise</div>
+          <div class="sun-moon-time" id="sunrise">--</div>
+        </div>
+        <div class="sun-moon-item">
+          <div class="sun-moon-label">🌇 Sunset</div>
+          <div class="sun-moon-time" id="sunset">--</div>
+        </div>
+      </div>
+      <div id="daylightInfo" style="margin-top: 12px; text-align: center; opacity: 0.9; font-size: 0.9em;"></div>
+    </div>
+  </div>
+
+  <!-- 10-Day Forecast -->
+  <div class="card wide-card">
+    <div class="card-title">10-Day Forecast</div>
+    <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-top: 0;" id="forecastGrid"></div>
+  </div>
+
+  <!-- Temperature Chart -->
+  <div class="card wide-card">
+    <div class="card-title">48-Hour Temperature & Precipitation</div>
+    <div class="chart-container">
+      <canvas id="hourlyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Wind Chart -->
+  <div class="card wide-card">
+    <div class="card-title">48-Hour Wind Forecast</div>
+    <div class="chart-container">
+      <canvas id="windChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<script>
+  const weatherEmoji = {
+    0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+    45: "🌫️", 48: "🌫️",
+    51: "🌦️", 53: "🌧️", 55: "🌧️",
+    61: "🌧️", 63: "🌧️", 65: "🌧️",
+    71: "🌨️", 73: "🌨️", 75: "🌨️",
+    77: "🌨️", 80: "🌦️", 81: "🌦️", 82: "🌧️",
+    85: "🌨️", 86: "🌨️",
+    95: "⛈️", 96: "⛈️", 99: "⛈️"
+  };
+
+  const weatherDesc = {
+    0: "Clear", 1: "Mostly Clear", 2: "Partly Cloudy", 3: "Overcast",
+    45: "Fog", 48: "Freezing Fog",
+    51: "Light Drizzle", 53: "Drizzle", 55: "Heavy Drizzle",
+    61: "Light Rain", 63: "Rain", 65: "Heavy Rain",
+    71: "Light Snow", 73: "Snow", 75: "Heavy Snow",
+    77: "Snow Grains", 80: "Light Showers", 81: "Showers", 82: "Heavy Showers",
+    85: "Light Snow Showers", 86: "Snow Showers",
+    95: "Thunderstorm", 96: "Thunderstorm with Hail", 99: "Severe Thunderstorm"
+  };
+
+  function windDirection(deg) {
+    if (typeof deg !== "number") return "--";
+    const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    return dirs[Math.round(deg / 22.5) % 16];
+  }
+
+  function formatTime(isoString) {
+    if (!isoString) return '--';
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '--';
+    return d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  function formatHour(isoString, index, allTimes) {
+    if (!isoString) return '--';
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '--';
+    const hour = d.toLocaleTimeString('en-US', { hour: 'numeric' });
+
+    if (index > 0 && allTimes[index - 1]) {
+      const prev = new Date(allTimes[index - 1]);
+      if (!isNaN(prev.getTime()) && d.getDate() !== prev.getDate()) {
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+        return `${dayName} ${hour}`;
+      }
+    }
+    return hour;
+  }
+
+  function formatDate(isoString) {
+    if (!isoString) return '--';
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '--';
+    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    return days[d.getDay()];
+  }
+
+  function getTimeDelta(futureTime) {
+    const now = new Date();
+    const target = new Date(futureTime);
+    const diffMs = target - now;
+    if (diffMs < 0 || isNaN(diffMs)) return null;
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+  }
+
+  function getCurrentTideState(tides) {
+    if (!Array.isArray(tides) || tides.length === 0) return null;
+    const now = new Date();
+    const curMins = now.getHours() * 60 + now.getMinutes();
+    for (let i = 0; i < tides.length; i++) {
+      const parts = (tides[i].time || "").split(':').map(Number);
+      if (parts.length !== 2) continue;
+      const tideMins = parts[0] * 60 + parts[1];
+      if (tideMins > curMins) return i;
+    }
+    return null;
+  }
+
+  function pillClassFromSource(meta) {
+    if (!meta) return "pill bad";
+    const status = meta.status || "error";
+    const age = meta.age_minutes;
+    if (status !== "ok") return "pill bad";
+    if (typeof age === "number" && age > 35) return "pill warn";
+    return "pill ok";
+  }
+
+  function makePill(label, meta) {
+    const cls = pillClassFromSource(meta);
+    const status = meta?.status || "error";
+    const age = (typeof meta?.age_minutes === "number") ? `${meta.age_minutes}m` : "--";
+    const txt = (status === "ok") ? `${label}: ${age}` : `${label}: offline`;
+    return `<div class="${cls}">${txt}</div>`;
+  }
+
+  fetch('weather_data.json?t=' + Date.now())
+    .then(r => r.json())
+    .then(data => {
+      // Header
+      document.getElementById('location').textContent = data?.location?.name || 'Wyman Cove';
+
+      const updatedStr = data?.generated_at || data?.location?.updated;
+      if (updatedStr) {
+        const updated = new Date(updatedStr);
+        document.getElementById('lastUpdate').textContent =
+          'Updated: ' +
+          updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+          updated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      } else {
+        document.getElementById('lastUpdate').textContent = 'Updated: --';
+      }
+
+      // Status pills
+      const s = data?.sources || {};
+      document.getElementById('statusStrip').innerHTML =
+        makePill("Model", s.open_meteo) +
+        makePill("PWS", s.pws) +
+        makePill("Tides", s.tides) +
+        makePill("Alerts", s.nws_alerts);
+
+      // Alerts
+      if (Array.isArray(data?.alerts) && data.alerts.length > 0) {
+        const alertsHTML = data.alerts.map(alert => `
+          <a href="${alert.url}" target="_blank" style="text-decoration: none; color: inherit; display: block;">
+            <div class="alert-banner" style="cursor: pointer;">
+              <div class="alert-title">⚠️ ${alert.event || "Alert"}</div>
+              <div class="alert-details">${alert.headline || alert.description || ""}</div>
+            </div>
+          </a>
+        `).join('');
+        document.getElementById('alertsContainer').innerHTML = alertsHTML;
+      } else {
+        document.getElementById('alertsContainer').innerHTML = '';
+      }
+
+      // Current
+      const curr = data?.current || {};
+      const hasTemp = typeof curr.temperature === "number";
+      if (hasTemp) {
+        document.getElementById('currentTemp').innerHTML =
+          curr.temperature.toFixed(1) + '<span class="temp-unit">°F</span>';
+        if (typeof curr.feels_like === "number") {
+          document.getElementById('feelsLike').textContent = 'Feels like ' + curr.feels_like.toFixed(1) + '°F';
+        } else {
+          document.getElementById('feelsLike').textContent = 'Feels like --°F';
+        }
+        document.getElementById('condition').textContent = (curr.emoji || '') + ' ' + (curr.condition || '');
+      } else {
+        document.getElementById('currentTemp').innerHTML = '--<span class="temp-unit">°F</span>';
+        document.getElementById('feelsLike').textContent = 'Feels like --°F';
+        document.getElementById('condition').textContent = 'Model offline';
+      }
+
+      // Current note: hyperlocal corrected temp (if available)
+      const hyper = data?.hyperlocal;
+      if (hyper && typeof hyper.corrected_temp === "number" && typeof hyper.bias_temp === "number") {
+        document.getElementById('currentNote').textContent =
+          `Hyperlocal corrected temp: ${hyper.corrected_temp.toFixed(1)}°F (bias ${hyper.bias_temp >= 0 ? "+" : ""}${hyper.bias_temp.toFixed(1)}°F)`;
+      } else {
+        document.getElementById('currentNote').textContent = '';
+      }
+
+      // Tides
+      if (Array.isArray(data?.tides) && data.tides.length > 0) {
+        const nextTideIndex = getCurrentTideState(data.tides);
+        const tidesHTML = data.tides.map((tide, idx) => {
+          const isCurrent = idx === nextTideIndex;
+          const t = (tide.time || "--:--").split(':');
+          const hour = parseInt(t[0] || "0", 10);
+          const minutes = t[1] || "00";
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const displayHour = hour % 12 || 12;
+          const timeAMPM = `${displayHour}:${minutes} ${ampm}`;
+          const height = (typeof tide.height === "number") ? tide.height.toFixed(1) : "--";
+
+          return `
+            <div class="tide-item ${isCurrent ? 'current' : ''}">
+              <div class="tide-type">${tide.type === 'H' ? '⬆️ High' : '⬇️ Low'}</div>
+              <div class="tide-time">${timeAMPM}</div>
+              <div class="tide-height">${height} ft</div>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('tideGrid').innerHTML = tidesHTML;
+
+        // Countdown to next tide
+        const tidePanel = document.querySelector('.tide-panel');
+        const existing = document.getElementById("tideCountdown");
+        if (existing) existing.remove();
+
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+
+        for (let tide of data.tides) {
+          const parts = (tide.time || "").split(':');
+          if (parts.length !== 2) continue;
+          const hh = parts[0].padStart(2, '0');
+          const mm = parts[1].padStart(2, '0');
+          const tideDate = new Date(`${today}T${hh}:${mm}:00`);
+          if (tideDate > now) {
+            const countdown = getTimeDelta(tideDate);
+            if (countdown) {
+              const d = document.createElement('div');
+              d.id = "tideCountdown";
+              d.style.cssText = 'text-align: center; margin-top: 15px; font-size: 0.95em; opacity: 0.9;';
+              d.textContent = `Next ${tide.type === 'H' ? 'high' : 'low'} tide in ${countdown}`;
+              tidePanel.appendChild(d);
             }
+            break;
+          }
         }
+      }
 
-        function formatTime(isoString) {
-            if (!isoString) return '--';
-            const date = new Date(isoString);
-            return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+      // Hyperlocal comparison box
+      const pws = data?.pws || {};
+      const pwsOk = typeof pws.temperature === "number";
+      if (pwsOk) {
+        document.getElementById('pwsTemp').textContent = pws.temperature.toFixed(1) + '°F';
+      } else {
+        document.getElementById('pwsTemp').textContent = 'N/A';
+      }
+
+      if (hasTemp) document.getElementById('modelTemp').textContent = curr.temperature.toFixed(1) + '°F';
+      else document.getElementById('modelTemp').textContent = 'N/A';
+
+      if (pwsOk && hasTemp) {
+        const diff = Math.abs(pws.temperature - curr.temperature);
+        document.getElementById('tempDiff').textContent = diff.toFixed(1) + '°F';
+      } else {
+        document.getElementById('tempDiff').textContent = '--';
+      }
+
+      // Hyperlocal note (stale indicator)
+      if (pwsOk && pws.stale) {
+        document.getElementById('hyperlocalNote').textContent = 'Note: PWS value is cached (scrape failed).';
+      } else {
+        document.getElementById('hyperlocalNote').textContent = '';
+      }
+
+      // Today summary
+      const daily = data?.daily || {};
+      if (Array.isArray(daily.temperature_max) && daily.temperature_max.length > 0) {
+        document.getElementById('high').textContent = Math.round(daily.temperature_max[0]) + '°F';
+        document.getElementById('low').textContent = Math.round(daily.temperature_min[0]) + '°F';
+        document.getElementById('precipChance').textContent = Math.round(daily.precipitation_probability_max?.[0] || 0) + '%';
+      }
+
+      // Wind & pressure
+      if (hasTemp) {
+        const pressureInHg = (typeof curr.pressure === "number") ? (curr.pressure / 33.864).toFixed(2) : "--";
+        document.getElementById('windMetrics').innerHTML = `
+          <div class="metric">
+            <span class="metric-label">Wind</span>
+            <span class="metric-value">${windDirection(curr.wind_direction)} ${Math.round(curr.wind_speed || 0)} mph</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Gusts</span>
+            <span class="metric-value">${Math.round(curr.wind_gusts || 0)} mph</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Pressure</span>
+            <span class="metric-value">${pressureInHg} inHg</span>
+          </div>
+        `;
+      } else {
+        document.getElementById('windMetrics').innerHTML = `<div class="metric"><span class="metric-label">Wind</span><span class="metric-value">--</span></div>`;
+      }
+
+      // Pressure trend note
+      const derived = data?.derived || {};
+      if (derived.pressure_trend) {
+        document.getElementById('pressureTrendNote').textContent = `Pressure trend: ${derived.pressure_trend}`;
+      } else {
+        document.getElementById('pressureTrendNote').textContent = '';
+      }
+
+      // Almanac
+      if (Array.isArray(daily.sunrise) && daily.sunrise[0]) {
+        const sunrise = formatTime(daily.sunrise[0]);
+        const sunset = formatTime(daily.sunset[0]);
+        document.getElementById('sunrise').textContent = sunrise;
+        document.getElementById('sunset').textContent = sunset;
+
+        const rise = new Date(daily.sunrise[0]);
+        const set = new Date(daily.sunset[0]);
+        if (!isNaN(rise.getTime()) && !isNaN(set.getTime())) {
+          const daylight = (set - rise) / 1000 / 60 / 60;
+          const h = Math.floor(daylight);
+          const m = Math.round((daylight - h) * 60);
+          document.getElementById('daylightInfo').textContent = `Daylight: ${h}h ${m}m`;
+
+          const sailingTime = getTimeDelta(daily.sunset[0]);
+          if (sailingTime) {
+            const parent = document.getElementById('daylightInfo').parentElement;
+            const old = document.getElementById("sailingNote");
+            if (old) old.remove();
+            const div = document.createElement('div');
+            div.id = "sailingNote";
+            div.style.cssText = 'margin-top: 12px; padding: 10px; background: rgba(255,152,0,0.2); border-radius: 8px; text-align: center; font-weight: 500;';
+            div.innerHTML = `⛵ ${sailingTime} of sailing light`;
+            parent.appendChild(div);
+          }
         }
+      }
 
-        function formatHour(isoString, index, allTimes) {
-            if (!isoString) return '--';
-            const date = new Date(isoString);
-            const hour = date.toLocaleTimeString('en-US', { hour: 'numeric' });
-            
-            // Add date marker when day changes
-            if (index > 0 && allTimes[index - 1]) {
-                const prevDate = new Date(allTimes[index - 1]);
-                if (date.getDate() !== prevDate.getDate()) {
-                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
-                    return `${dayName} ${hour}`;
-                }
+      // 10-day
+      if (Array.isArray(daily.dates) && daily.dates.length > 0) {
+        const forecastHTML = daily.dates.map((date, i) => {
+          const dayName = i === 0 ? 'Today' : formatDate(date);
+          const code = daily.weather_code?.[i];
+          const emoji = weatherEmoji[code] || '🌡️';
+          return `
+            <div class="forecast-day">
+              <div class="forecast-day-name">${dayName}</div>
+              <div class="forecast-icon">${emoji}</div>
+              <div class="forecast-temps">
+                <span class="forecast-high">${Math.round(daily.temperature_max?.[i] ?? 0)}°</span>
+                <span class="forecast-low">${Math.round(daily.temperature_min?.[i] ?? 0)}°</span>
+              </div>
+              <div class="forecast-detail">${Math.round(daily.precipitation_probability_max?.[i] || 0)}%</div>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('forecastGrid').innerHTML = forecastHTML;
+      }
+
+      // Charts
+      const hourly = data?.hourly || {};
+      if (Array.isArray(hourly.times) && hourly.times.length > 0) {
+        const labels = hourly.times.map((t, idx) => formatHour(t, idx, hourly.times));
+
+        const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+        new Chart(hourlyCtx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Temp °F',
+                data: hourly.temperature || [],
+                borderColor: '#ff9800',
+                backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                yAxisID: 'y',
+                tension: 0.4,
+                pointRadius: 2,
+                borderWidth: 2
+              },
+              {
+                label: 'Precip %',
+                data: hourly.precipitation_probability || [],
+                borderColor: '#2196F3',
+                backgroundColor: 'rgba(33, 150, 243, 0.3)',
+                fill: true,
+                yAxisID: 'y1',
+                tension: 0.4,
+                pointRadius: 0,
+                borderWidth: 2
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { labels: { color: '#fff', font: { size: 11 } } }
+            },
+            scales: {
+              y: { ticks: { color: '#fff', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.1)' } },
+              y1: { position: 'right', ticks: { color: '#fff', font: { size: 10 } }, grid: { drawOnChartArea: false }, max: 100, min: 0 },
+              x: { ticks: { color: '#fff', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.1)' } }
             }
-            return hour;
-        }
+          }
+        });
 
-        function formatDate(isoString) {
-            if (!isoString) return '--';
-            const date = new Date(isoString);
-            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-            return days[date.getDay()];
-        }
-
-        function windDirection(degrees) {
-            const dirs = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-            return dirs[Math.round(degrees / 22.5) % 16];
-        }
-
-        function getCurrentTideState(tides) {
-            if (!tides || tides.length === 0) return null;
-            const now = new Date();
-            const currentTime = now.getHours() * 60 + now.getMinutes();
-            
-            for (let i = 0; i < tides.length; i++) {
-                const [hours, minutes] = tides[i].time.split(':').map(Number);
-                const tideTime = hours * 60 + minutes;
-                if (tideTime > currentTime) {
-                    return i;
-                }
+        const windCtx = document.getElementById('windChart').getContext('2d');
+        new Chart(windCtx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Wind mph',
+                data: hourly.wind_speed || [],
+                borderColor: '#4CAF50',
+                backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                tension: 0.4,
+                pointRadius: 2,
+                borderWidth: 2
+              },
+              {
+                label: 'Gusts mph',
+                data: hourly.wind_gusts || [],
+                borderColor: '#F44336',
+                backgroundColor: 'rgba(244, 67, 54, 0.1)',
+                tension: 0.4,
+                pointRadius: 2,
+                borderWidth: 2,
+                borderDash: [5, 5]
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: { legend: { labels: { color: '#fff', font: { size: 11 } } } },
+            scales: {
+              y: { ticks: { color: '#fff', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.1)' } },
+              x: { ticks: { color: '#fff', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.1)' } }
             }
-            return null;
-        }
-
-        fetch('weather_data.json?t=' + Date.now())
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById('location').textContent = data.location.name;
-                
-                const updated = new Date(data.location.updated);
-                document.getElementById('lastUpdate').textContent = 'Updated: ' + 
-                    updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
-                    updated.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-
-                if (data.alerts && data.alerts.length > 0) {
-                    const alertsHTML = data.alerts.map(alert => `
-                        <a href="${alert.url}" target="_blank" style="text-decoration: none; color: inherit; display: block;">
-                            <div class="alert-banner" style="cursor: pointer;">
-                                <div class="alert-title">⚠️ ${alert.event}</div>
-                                <div class="alert-details">${alert.headline || alert.description}</div>
-                            </div>
-                        </a>
-                    `).join('');
-                    document.getElementById('alertsContainer').innerHTML = alertsHTML;
-                }
-
-                const curr = data.current;
-                if (curr.temperature !== null && curr.temperature !== undefined) {
-                    document.getElementById('currentTemp').innerHTML = 
-                        curr.temperature.toFixed(1) + '<span class="temp-unit">°F</span>';
-                    document.getElementById('feelsLike').textContent = 
-                        'Feels like ' + curr.feels_like.toFixed(1) + '°F';
-                    document.getElementById('condition').textContent = 
-                        (curr.emoji || '') + ' ' + (curr.condition || '');
-                }
-
-                // TIDES - Prominent display
-                if (data.tides && data.tides.length > 0) {
-                    const nextTideIndex = getCurrentTideState(data.tides);
-                    const tidesHTML = data.tides.map((tide, idx) => {
-                        const isCurrent = idx === nextTideIndex;
-                        
-                        // Convert 24-hour to AM/PM
-                        const [hours, minutes] = tide.time.split(':');
-                        const hour = parseInt(hours);
-                        const ampm = hour >= 12 ? 'PM' : 'AM';
-                        const displayHour = hour % 12 || 12;
-                        const timeAMPM = `${displayHour}:${minutes} ${ampm}`;
-                        
-                        return `
-                            <div class="tide-item ${isCurrent ? 'current' : ''}">
-                                <div class="tide-type">${tide.type === 'H' ? '⬆️ High' : '⬇️ Low'}</div>
-                                <div class="tide-time">${timeAMPM}</div>
-                                <div class="tide-height">${tide.height.toFixed(1)} ft</div>
-                            </div>
-                        `;
-                    }).join('');
-                    document.getElementById('tideGrid').innerHTML = tidesHTML;
-                    
-                    // Add countdown to next tide
-                    const now = new Date();
-                    const today = now.toISOString().split('T')[0];
-                    
-                    for (let tide of data.tides) {
-                        const [hours, minutes] = tide.time.split(':');
-                        const tideDate = new Date(today + 'T' + hours.padStart(2, '0') + ':' + minutes.padStart(2, '0'));
-                        
-                        if (tideDate > now) {
-                            const countdown = getTimeDelta(tideDate);
-                            if (countdown) {
-                                const countdownDiv = document.createElement('div');
-                                countdownDiv.style.cssText = 'text-align: center; margin-top: 15px; font-size: 0.95em; opacity: 0.9;';
-                                countdownDiv.textContent = `Next ${tide.type === 'H' ? 'high' : 'low'} tide in ${countdown}`;
-                                document.querySelector('.tide-panel').appendChild(countdownDiv);
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                if (data.pws && data.pws.temperature !== null && data.pws.temperature !== undefined) {
-                    document.getElementById('pwsTemp').textContent = data.pws.temperature.toFixed(1) + '°F';
-                    document.getElementById('modelTemp').textContent = curr.temperature.toFixed(1) + '°F';
-                    const diff = Math.abs(data.pws.temperature - curr.temperature);
-                    document.getElementById('tempDiff').textContent = diff.toFixed(1) + '°F';
-                } else {
-                    document.getElementById('pwsTemp').textContent = 'N/A';
-                    document.getElementById('modelTemp').textContent = Math.round(curr.temperature) + '°F';
-                }
-
-                if (data.daily && data.daily.temperature_max && data.daily.temperature_max[0]) {
-                    document.getElementById('high').textContent = Math.round(data.daily.temperature_max[0]) + '°F';
-                    document.getElementById('low').textContent = Math.round(data.daily.temperature_min[0]) + '°F';
-                    document.getElementById('precipChance').textContent = 
-                        Math.round(data.daily.precipitation_probability_max[0] || 0) + '%';
-                }
-
-                document.getElementById('windMetrics').innerHTML = `
-                    <div class="metric">
-                        <span class="metric-label">Wind</span>
-                        <span class="metric-value">${windDirection(curr.wind_direction)} ${Math.round(curr.wind_speed)} mph</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Gusts</span>
-                        <span class="metric-value">${Math.round(curr.wind_gusts)} mph</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Pressure</span>
-                        <span class="metric-value">${(curr.pressure / 33.864).toFixed(2)} inHg</span>
-                    </div>
-                `;
-
-                if (data.daily && data.daily.sunrise && data.daily.sunrise[0]) {
-                    const sunrise = formatTime(data.daily.sunrise[0]);
-                    const sunset = formatTime(data.daily.sunset[0]);
-                    
-                    document.getElementById('sunrise').textContent = sunrise;
-                    document.getElementById('sunset').textContent = sunset;
-                    
-                    // Calculate daylight
-                    const rise = new Date(data.daily.sunrise[0]);
-                    const set = new Date(data.daily.sunset[0]);
-                    const daylight = (set - rise) / 1000 / 60 / 60;
-                    const hours = Math.floor(daylight);
-                    const minutes = Math.round((daylight - hours) * 60);
-                    document.getElementById('daylightInfo').textContent = `Daylight: ${hours}h ${minutes}m`;
-                    
-                    // Add sailing window countdown
-                    const sailingTime = getTimeDelta(data.daily.sunset[0]);
-                    if (sailingTime) {
-                        const sailingDiv = document.createElement('div');
-                        sailingDiv.style.cssText = 'margin-top: 12px; padding: 10px; background: rgba(255,152,0,0.2); border-radius: 8px; text-align: center; font-weight: 500;';
-                        sailingDiv.innerHTML = `⛵ ${sailingTime} of sailing light`;
-                        document.getElementById('daylightInfo').parentElement.appendChild(sailingDiv);
-                    }
-                }
-
-                if (data.daily && data.daily.dates) {
-                    const forecastHTML = data.daily.dates.map((date, i) => {
-                        const dayName = i === 0 ? 'Today' : formatDate(date);
-                        const emoji = weatherEmoji[data.daily.weather_code[i]] || '🌡️';
-                        const desc = weatherDesc[data.daily.weather_code[i]] || '';
-                        return `
-                            <div class="forecast-day">
-                                <div class="forecast-day-name">${dayName}</div>
-                                <div class="forecast-icon">${emoji}</div>
-                                <div class="forecast-temps">
-                                    <span class="forecast-high">${Math.round(data.daily.temperature_max[i])}°</span>
-                                    <span class="forecast-low">${Math.round(data.daily.temperature_min[i])}°</span>
-                                </div>
-                                <div class="forecast-detail">${Math.round(data.daily.precipitation_probability_max[i] || 0)}%</div>
-                            </div>
-                        `;
-                    }).join('');
-                    document.getElementById('forecastGrid').innerHTML = forecastHTML;
-                }
-
-                if (data.hourly && data.hourly.times) {
-                    const labels = data.hourly.times.map((time, idx) => formatHour(time, idx, data.hourly.times));
-                    
-                    const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
-                    new Chart(hourlyCtx, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    label: 'Temp °F',
-                                    data: data.hourly.temperature,
-                                    borderColor: '#ff9800',
-                                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                                    yAxisID: 'y',
-                                    tension: 0.4,
-                                    pointRadius: 2,
-                                    borderWidth: 2
-                                },
-                                {
-                                    label: 'Precip %',
-                                    data: data.hourly.precipitation_probability,
-                                    borderColor: '#2196F3',
-                                    backgroundColor: 'rgba(33, 150, 243, 0.3)',
-                                    fill: true,
-                                    yAxisID: 'y1',
-                                    tension: 0.4,
-                                    pointRadius: 0,
-                                    borderWidth: 2
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: { mode: 'index', intersect: false },
-                            plugins: {
-                                legend: { labels: { color: '#fff', font: { size: 11 } } }
-                            },
-                            scales: {
-                                y: {
-                                    type: 'linear', position: 'left',
-                                    title: { display: false },
-                                    ticks: { color: '#fff', font: { size: 10 } },
-                                    grid: { color: 'rgba(255,255,255,0.1)' }
-                                },
-                                y1: {
-                                    type: 'linear', position: 'right',
-                                    title: { display: false },
-                                    ticks: { color: '#fff', font: { size: 10 } },
-                                    grid: { drawOnChartArea: false },
-                                    max: 100, min: 0
-                                },
-                                x: {
-                                    ticks: { color: '#fff', font: { size: 10 } },
-                                    grid: { color: 'rgba(255,255,255,0.1)' }
-                                }
-                            }
-                        }
-                    });
-
-                    const windCtx = document.getElementById('windChart').getContext('2d');
-                    new Chart(windCtx, {
-                        type: 'line',
-                        data: {
-                            labels: labels,
-                            datasets: [
-                                {
-                                    label: 'Wind mph',
-                                    data: data.hourly.wind_speed,
-                                    borderColor: '#4CAF50',
-                                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                                    tension: 0.4,
-                                    pointRadius: 2,
-                                    borderWidth: 2
-                                },
-                                {
-                                    label: 'Gusts mph',
-                                    data: data.hourly.wind_gusts,
-                                    borderColor: '#F44336',
-                                    backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                                    tension: 0.4,
-                                    pointRadius: 2,
-                                    borderWidth: 2,
-                                    borderDash: [5, 5]
-                                }
-                            ]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            interaction: { mode: 'index', intersect: false },
-                            plugins: {
-                                legend: { labels: { color: '#fff', font: { size: 11 } } }
-                            },
-                            scales: {
-                                y: {
-                                    title: { display: false },
-                                    ticks: { color: '#fff', font: { size: 10 } },
-                                    grid: { color: 'rgba(255,255,255,0.1)' }
-                                },
-                                x: {
-                                    ticks: { color: '#fff', font: { size: 10 } },
-                                    grid: { color: 'rgba(255,255,255,0.1)' }
-                                }
-                            }
-                        }
-                    });
-                }
-            })
-            .catch(err => {
-                console.error('Error:', err);
-                document.getElementById('location').textContent = 'Error loading data';
-            });
-    </script>
+          }
+        });
+      }
+    })
+    .catch(err => {
+      console.error('Error:', err);
+      document.getElementById('location').textContent = 'Error loading data';
+      document.getElementById('lastUpdate').textContent = '';
+      document.getElementById('statusStrip').innerHTML = '<div class="pill bad">Data load failed</div>';
+    });
+</script>
 </body>
 </html>
