@@ -277,24 +277,40 @@ def process_data(open_meteo, pws, tides, alerts):
             "emoji": get_weather_emoji(current.get('weather_code', 0))
         }
         
-        # Hourly forecast (48 hours)
+        # Hourly forecast (48 hours starting from current hour)
         hourly = open_meteo.get('hourly', {})
+        
+        # Find the current hour index
+        current_hour = None
+        times = hourly.get('time', [])
+        now = datetime.now()
+        for i, time_str in enumerate(times):
+            time_obj = datetime.fromisoformat(time_str)
+            if time_obj.hour == now.hour and time_obj.date() == now.date():
+                current_hour = i
+                break
+        
+        # If we can't find current hour, default to start of today
+        if current_hour is None:
+            current_hour = 0
+        
+        # Slice from current hour for next 48 hours
         weather_data['hourly'] = {
-            "times": hourly.get('time', [])[:48],
-            "temperature": hourly.get('temperature_2m', [])[:48],
-            "feels_like": hourly.get('apparent_temperature', [])[:48],
-            "humidity": hourly.get('relative_humidity_2m', [])[:48],
-            "dew_point": hourly.get('dew_point_2m', [])[:48],
-            "precipitation_probability": hourly.get('precipitation_probability', [])[:48],
-            "precipitation": hourly.get('precipitation', [])[:48],
-            "wind_speed": hourly.get('wind_speed_10m', [])[:48],
-            "wind_gusts": hourly.get('wind_gusts_10m', [])[:48],
-            "wind_direction": hourly.get('wind_direction_10m', [])[:48],
-            "pressure": hourly.get('pressure_msl', [])[:48],
-            "cloud_cover": hourly.get('cloud_cover', [])[:48],
-            "visibility": hourly.get('visibility', [])[:48],
-            "uv_index": hourly.get('uv_index', [])[:48],
-            "weather_code": hourly.get('weather_code', [])[:48]
+            "times": hourly.get('time', [])[current_hour:current_hour+48],
+            "temperature": hourly.get('temperature_2m', [])[current_hour:current_hour+48],
+            "feels_like": hourly.get('apparent_temperature', [])[current_hour:current_hour+48],
+            "humidity": hourly.get('relative_humidity_2m', [])[current_hour:current_hour+48],
+            "dew_point": hourly.get('dew_point_2m', [])[current_hour:current_hour+48],
+            "precipitation_probability": hourly.get('precipitation_probability', [])[current_hour:current_hour+48],
+            "precipitation": hourly.get('precipitation', [])[current_hour:current_hour+48],
+            "wind_speed": hourly.get('wind_speed_10m', [])[current_hour:current_hour+48],
+            "wind_gusts": hourly.get('wind_gusts_10m', [])[current_hour:current_hour+48],
+            "wind_direction": hourly.get('wind_direction_10m', [])[current_hour:current_hour+48],
+            "pressure": hourly.get('pressure_msl', [])[current_hour:current_hour+48],
+            "cloud_cover": hourly.get('cloud_cover', [])[current_hour:current_hour+48],
+            "visibility": hourly.get('visibility', [])[current_hour:current_hour+48],
+            "uv_index": hourly.get('uv_index', [])[current_hour:current_hour+48],
+            "weather_code": hourly.get('weather_code', [])[current_hour:current_hour+48]
         }
         
         # Daily forecast (10 days)
