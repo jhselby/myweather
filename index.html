@@ -407,27 +407,41 @@ function renderHeader(data){
   return { updatedDate };
 }
 
-function renderStatus(data, updatedDate){
+function renderStatus(data){
   const strip = document.getElementById("statusStrip");
 
-  // Model/Tides/Alerts ages based on location.updated (that’s what your JSON has)
-  const modelAge = updatedDate ? minutesSince(updatedDate) : NaN;
+  function parseUpdated(source){
+    const ts = source?.updated_at;
+    if(!ts) return null;
+    const d = new Date(ts);
+    return isNaN(d.getTime()) ? null : d;
+  }
 
-  // PWS age based on pws.updated if present
-  const pwsUpdatedStr = data?.pws?.updated;
-  const pwsUpdatedDate = pwsUpdatedStr ? new Date(pwsUpdatedStr) : null;
-  const pwsAge = (pwsUpdatedDate && !isNaN(pwsUpdatedDate.getTime())) ? minutesSince(pwsUpdatedDate) : NaN;
+  const dModel  = parseUpdated(data?.sources?.open_meteo);
+  const dPws    = parseUpdated(data?.sources?.pws);
+  const dTides  = parseUpdated(data?.sources?.tides);
+  const dAlerts = parseUpdated(data?.sources?.nws_alerts);
+
+  function ageMin(d){
+    return d ? (Date.now() - d.getTime()) / 60000 : NaN;
+  }
 
   function draw(){
-    const modelAgeNow = updatedDate ? minutesSince(updatedDate) : NaN;
-    const pwsAgeNow = (pwsUpdatedDate && !isNaN(pwsUpdatedDate.getTime())) ? minutesSince(pwsUpdatedDate) : NaN;
+    const aModel  = ageMin(dModel);
+    const aPws    = ageMin(dPws);
+    const aTides  = ageMin(dTides);
+    const aAlerts = ageMin(dAlerts);
 
     strip.innerHTML =
-      `<div class="pill ${pillClass(modelAgeNow)}">Model: ${ageText(modelAgeNow)}</div>` +
-      `<div class="pill ${pillClass(pwsAgeNow)}">PWS: ${ageText(pwsAgeNow)}</div>` +
-      `<div class="pill ${pillClass(modelAgeNow)}">Tides: ${ageText(modelAgeNow)}</div>` +
-      `<div class="pill ${pillClass(modelAgeNow)}">Alerts: ${ageText(modelAgeNow)}</div>`;
+      `<div class="pill ${pillClass(aModel)}">Model: ${ageText(aModel)}</div>` +
+      `<div class="pill ${pillClass(aPws)}">PWS: ${ageText(aPws)}</div>` +
+      `<div class="pill ${pillClass(aTides)}">Tides: ${ageText(aTides)}</div>` +
+      `<div class="pill ${pillClass(aAlerts)}">Alerts: ${ageText(aAlerts)}</div>`;
   }
+
+  draw();
+  setInterval(draw, 60000);
+}
 
   draw();
   setInterval(draw, 60000);
@@ -735,7 +749,7 @@ fetch("weather_data.json?t=" + Date.now())
   .then(r => r.json())
   .then(data => {
     const { updatedDate } = renderHeader(data);
-    renderStatus(data, updatedDate);
+    renderStatus(data);
     renderAlerts(data);
     renderCurrent(data);
     renderTides(data);
