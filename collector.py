@@ -280,13 +280,20 @@ def process_data(open_meteo, pws, tides, alerts):
         # Hourly forecast (48 hours starting from current hour)
         hourly = open_meteo.get('hourly', {})
         
-        # Find the current hour index
+        # Find the current hour index (Open-Meteo returns America/New_York timezone)
+        from datetime import timezone as tz, timedelta
         current_hour = None
         times = hourly.get('time', [])
-        now = datetime.now()
+        
+        # Get current time in Eastern (UTC-5 in winter, UTC-4 in summer)
+        # Open-Meteo data is already in America/New_York, so parse it as-is
+        now_utc = datetime.now(tz.utc)
+        eastern = tz(timedelta(hours=-5))  # EST offset
+        now_eastern = now_utc.astimezone(eastern)
+        
         for i, time_str in enumerate(times):
             time_obj = datetime.fromisoformat(time_str)
-            if time_obj.hour == now.hour and time_obj.date() == now.date():
+            if time_obj.hour == now_eastern.hour and time_obj.date() == now_eastern.date():
                 current_hour = i
                 break
         
