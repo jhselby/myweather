@@ -1,153 +1,757 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Wyman Cove Weather</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#1e3c72" />
 
-<style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: linear-gradient(135deg,#1e3c72 0%,#2a5298 100%);
-  color: white;
-  margin: 0;
-  padding: 20px;
-}
-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
-h1 { font-weight: 300; }
-.status-strip {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 10px;
-}
-.pill {
-  padding: 8px 14px;
-  border-radius: 999px;
-  border: 2px solid rgba(255,255,255,0.2);
-  font-weight: 600;
-}
-.ok   { border-color: #4CAF50; }
-.warn { border-color: #ff9800; }
-.bad  { border-color: #f44336; }
+  <!-- iOS "web app" support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Wyman Cove" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-.card {
-  background: rgba(255,255,255,0.1);
-  padding: 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-</style>
+  <title>Wyman Cove Weather</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root{
+      --bg1:#1e3c72;
+      --bg2:#2a5298;
+      --card:rgba(255,255,255,0.10);
+      --card2:rgba(255,255,255,0.12);
+      --border:rgba(255,255,255,0.14);
+      --text:#ffffff;
+      --muted:rgba(255,255,255,0.82);
+      --muted2:rgba(255,255,255,0.70);
+
+      --ok:#4CAF50;
+      --warn:#ff9800;
+      --bad:#f44336;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+      color:var(--text);
+      background:linear-gradient(135deg,var(--bg1) 0%, var(--bg2) 100%);
+      -webkit-tap-highlight-color: transparent;
+      padding:
+        calc(env(safe-area-inset-top) + 14px)
+        calc(env(safe-area-inset-right) + 14px)
+        calc(env(safe-area-inset-bottom) + 14px)
+        calc(env(safe-area-inset-left) + 14px);
+    }
+
+    .container{ max-width:1400px; margin:0 auto; }
+
+    header{
+      text-align:center;
+      padding:18px 14px;
+      border-radius:16px;
+      background:rgba(255,255,255,0.10);
+      border:1px solid var(--border);
+      backdrop-filter: blur(10px);
+    }
+    h1{
+      margin:0;
+      font-weight:300;
+      letter-spacing:0.5px;
+      font-size:2.0rem;
+    }
+    .sub{
+      margin-top:6px;
+      font-size:1.0rem;
+      opacity:0.95;
+      font-weight:300;
+    }
+    .meta{
+      margin-top:8px;
+      font-size:0.85rem;
+      color:var(--muted2);
+      line-height:1.25;
+    }
+
+    .status-strip{
+      margin-top:12px;
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      flex-wrap:wrap;
+    }
+
+    .pill{
+      padding:9px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,0.06);
+      border:2px solid rgba(255,255,255,0.18);
+      font-weight:700;
+      font-size:0.95rem;
+      min-width:108px;
+      text-align:center;
+      user-select:none;
+    }
+    .pill.ok{ border-color: color-mix(in srgb, var(--ok) 80%, transparent); }
+    .pill.warn{ border-color: color-mix(in srgb, var(--warn) 85%, transparent); }
+    .pill.bad{ border-color: color-mix(in srgb, var(--bad) 90%, transparent); }
+
+    .alerts{ margin-top:14px; }
+    .alert{
+      display:block;
+      text-decoration:none;
+      color:inherit;
+      background:linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+      border:1px solid rgba(255,255,255,0.18);
+      border-radius:14px;
+      padding:14px;
+      margin-top:10px;
+    }
+    .alert .title{ font-weight:800; }
+    .alert .body{ margin-top:6px; color:rgba(255,255,255,0.92); }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap:14px;
+      margin-top:14px;
+    }
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      backdrop-filter: blur(6px);
+      min-height:110px;
+    }
+    .card-title{
+      font-size:0.85rem;
+      text-transform:uppercase;
+      letter-spacing:1px;
+      color:var(--muted2);
+      font-weight:800;
+      margin-bottom:10px;
+    }
+
+    /* layout */
+    .col-6{ grid-column: span 6; }
+    .col-4{ grid-column: span 4; }
+    .col-3{ grid-column: span 3; }
+    .col-12{ grid-column: span 12; }
+
+    @media (max-width: 980px){
+      .col-6,.col-4,.col-3{ grid-column: span 12; }
+      h1{ font-size:1.65rem; }
+    }
+
+    .big-temp{
+      font-size:3.1rem;
+      font-weight:250;
+      line-height:1;
+    }
+    .row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:8px;
+      align-items:baseline;
+    }
+    .label{ color:var(--muted2); }
+    .value{ font-weight:800; }
+
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    @media (max-width: 420px){
+      .two{ grid-template-columns:1fr; }
+    }
+
+    .tile{
+      background:rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.10);
+      border-radius:12px;
+      padding:12px;
+      text-align:center;
+    }
+
+    .tides{
+      background: linear-gradient(135deg, rgba(2,119,189,0.65) 0%, rgba(1,87,155,0.65) 100%);
+    }
+    .tide-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+      margin-top:8px;
+    }
+    .tide-item{
+      background:rgba(255,255,255,0.08);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:12px;
+      padding:12px;
+      text-align:center;
+    }
+    .tide-item.current{
+      border-color: color-mix(in srgb, var(--warn) 60%, transparent);
+      background: rgba(255,152,0,0.12);
+    }
+
+    .forecast-grid{
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap:10px;
+      margin-top:10px;
+    }
+
+    .chart-wrap{
+      height:260px;
+    }
+    @media (max-width: 980px){
+      .chart-wrap{ height:220px; }
+    }
+
+    .small-note{
+      margin-top:10px;
+      font-size:0.9rem;
+      color:var(--muted2);
+    }
+  </style>
 </head>
 
 <body>
+  <div class="container">
+    <header>
+      <h1>⚓ Wyman Cove Weather</h1>
+      <div class="sub" id="location">Loading…</div>
+      <div class="meta" id="lastUpdate">Updated: --</div>
+      <div class="meta" id="appMeta"></div>
+      <div class="status-strip" id="statusStrip"></div>
+    </header>
 
-<header>
-  <h1>⚓ Wyman Cove Weather</h1>
-  <div id="location">Loading...</div>
-  <div id="lastUpdate">Updated: --</div>
-  <div id="meta" style="font-size:0.8em; opacity:0.8;"></div>
-  <div class="status-strip" id="statusStrip"></div>
-</header>
+    <div class="alerts" id="alertsContainer"></div>
 
-<div class="card">
-  <h3>Current Conditions</h3>
-  <div id="currentTemp">--°F</div>
-  <div id="condition">Loading...</div>
-</div>
+    <div class="grid">
+      <!-- Current -->
+      <div class="card col-6">
+        <div class="card-title">Current Conditions</div>
+        <div class="big-temp" id="currentTemp">--°F</div>
+        <div style="margin-top:8px; font-size:1.05rem; font-weight:300;" id="condition">Loading…</div>
+        <div class="small-note" id="feelsLike">Feels like --°F</div>
+        <div class="small-note" id="currentExtras"></div>
+      </div>
+
+      <!-- Tides -->
+      <div class="card col-6 tides">
+        <div class="card-title">🌊 Tides Today — Salem</div>
+        <div class="tide-grid" id="tideGrid"></div>
+        <div class="small-note" id="nextTideNote"></div>
+      </div>
+
+      <!-- Hyperlocal -->
+      <div class="card col-4">
+        <div class="card-title">🏠 Hyperlocal Comparison</div>
+        <div class="two">
+          <div class="tile">
+            <div class="label">Model</div>
+            <div class="value" style="font-size:1.6rem; margin-top:4px;" id="modelTemp">--°F</div>
+          </div>
+          <div class="tile">
+            <div class="label" id="pwsName">PWS</div>
+            <div class="value" style="font-size:1.6rem; margin-top:4px;" id="pwsTemp">--°F</div>
+          </div>
+        </div>
+        <div class="small-note" style="text-align:center;">Diff: <span class="value" id="tempDiff">--</span></div>
+        <div class="small-note" id="pwsNote"></div>
+      </div>
+
+      <!-- Today summary -->
+      <div class="card col-4">
+        <div class="card-title">Today’s Summary</div>
+        <div class="row"><div class="label">High</div><div class="value" id="high">--°F</div></div>
+        <div class="row"><div class="label">Low</div><div class="value" id="low">--°F</div></div>
+        <div class="row"><div class="label">Precip chance</div><div class="value" id="precipChance">--%</div></div>
+        <div class="row"><div class="label">Precip total</div><div class="value" id="precipTotal">--</div></div>
+      </div>
+
+      <!-- Wind & pressure -->
+      <div class="card col-4">
+        <div class="card-title">Wind & Pressure</div>
+        <div class="row"><div class="label">Wind</div><div class="value" id="wind">--</div></div>
+        <div class="row"><div class="label">Gusts</div><div class="value" id="gusts">--</div></div>
+        <div class="row"><div class="label">Pressure</div><div class="value" id="pressure">--</div></div>
+        <div class="row"><div class="label">Cloud cover</div><div class="value" id="clouds">--</div></div>
+      </div>
+
+      <!-- Almanac -->
+      <div class="card col-4">
+        <div class="card-title">Almanac</div>
+        <div class="two">
+          <div class="tile">
+            <div class="label">🌅 Sunrise</div>
+            <div class="value" style="margin-top:6px;" id="sunrise">--</div>
+          </div>
+          <div class="tile">
+            <div class="label">🌇 Sunset</div>
+            <div class="value" style="margin-top:6px;" id="sunset">--</div>
+          </div>
+        </div>
+        <div class="small-note" style="text-align:center;" id="daylight">Daylight: --</div>
+      </div>
+
+      <!-- 10-day -->
+      <div class="card col-12">
+        <div class="card-title">10-Day Forecast</div>
+        <div class="forecast-grid" id="forecastGrid"></div>
+      </div>
+
+      <!-- 48h temp/precip -->
+      <div class="card col-12">
+        <div class="card-title">48-Hour Temperature & Precipitation</div>
+        <div class="chart-wrap"><canvas id="hourlyChart"></canvas></div>
+      </div>
+
+      <!-- 48h wind -->
+      <div class="card col-12">
+        <div class="card-title">48-Hour Wind Forecast</div>
+        <div class="chart-wrap"><canvas id="windChart"></canvas></div>
+      </div>
+    </div>
+  </div>
 
 <script>
+/* =========================
+   CONFIG / VERSION
+========================= */
+const APP_VERSION = "2.1.0";
 
-const APP_VERSION = "2.0.0";
-
-function pillClass(ageMinutes) {
-  if (ageMinutes >= 60) return "pill bad";
-  if (ageMinutes >= 30) return "pill warn";
+/* =========================
+   HELPERS
+========================= */
+function fmtTime(iso){
+  if(!iso) return "--";
+  const d = new Date(iso);
+  if(isNaN(d.getTime())) return "--";
+  return d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+}
+function fmtHumanTimestamp(d){
+  return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}) + " " +
+         d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+}
+function windDir(deg){
+  if(typeof deg !== "number") return "--";
+  const dirs=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  return dirs[Math.round(deg/22.5)%16];
+}
+function safeNum(x){ return (typeof x === "number" && !isNaN(x)) ? x : null; }
+function minutesSince(dateObj){ return (Date.now() - dateObj.getTime())/60000; }
+function ageText(min){
+  if(typeof min !== "number" || isNaN(min)) return "--";
+  if(min < 1) return "now";
+  return Math.round(min) + "m";
+}
+function pillClass(min){
+  if(typeof min !== "number" || isNaN(min)) return "pill bad";
+  if(min >= 60) return "pill bad";
+  if(min >= 30) return "pill warn";
   return "pill ok";
 }
 
-function ageText(ageMinutes) {
-  if (ageMinutes < 1) return "now";
-  return Math.round(ageMinutes) + "m";
+/* Emoji/desc for Open-Meteo weather codes */
+const weatherEmoji = { 0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"🌨️",77:"🌨️",80:"🌦️",81:"🌦️",82:"🌧️",85:"🌨️",86:"🌨️",95:"⛈️",96:"⛈️",99:"⛈️" };
+const weatherDesc  = { 0:"Clear",1:"Mostly Clear",2:"Partly Cloudy",3:"Overcast",45:"Fog",48:"Freezing Fog",51:"Light Drizzle",53:"Drizzle",55:"Heavy Drizzle",61:"Light Rain",63:"Rain",65:"Heavy Rain",71:"Light Snow",73:"Snow",75:"Heavy Snow",77:"Snow Grains",80:"Light Showers",81:"Showers",82:"Heavy Showers",85:"Light Snow Showers",86:"Snow Showers",95:"Thunderstorm",96:"Thunderstorm w/ Hail",99:"Severe Thunderstorm" };
+
+/* =========================
+   CHART INSTANCES (so we can re-render safely)
+========================= */
+let hourlyChart = null;
+let windChart = null;
+
+/* =========================
+   RENDERERS
+========================= */
+function renderAppMeta(){
+  const loadTime = new Date().toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit",second:"2-digit"});
+  document.getElementById("appMeta").innerHTML =
+    `Version: ${APP_VERSION}<br>Page loaded: ${loadTime}`;
 }
 
-fetch("weather_data.json?t=" + Date.now())
-.then(r => r.json())
-.then(data => {
+function renderHeader(data){
+  const loc = data?.location?.name || "Wyman Cove";
+  document.getElementById("location").textContent = loc;
 
-  // LOCATION
-  document.getElementById("location").textContent =
-    data?.location?.name || "Wyman Cove";
+  const updatedStr = data?.location?.updated;
+  const el = document.getElementById("lastUpdate");
 
-  // UPDATED HEADER
-  const updatedStr = data?.generated_at || data?.location?.updated;
-  const updatedDate = updatedStr ? new Date(updatedStr) : null;
+  if(!updatedStr){
+    el.textContent = "Updated: --";
+    return { updatedDate: null };
+  }
 
-  function updateHeader() {
-    if (!updatedDate) {
-      document.getElementById("lastUpdate").textContent = "Updated: --";
+  const updatedDate = new Date(updatedStr);
+  if(isNaN(updatedDate.getTime())){
+    el.textContent = "Updated: --";
+    return { updatedDate: null };
+  }
+
+  function updateHeaderLine(){
+    const human = fmtHumanTimestamp(updatedDate);
+    const ageMin = minutesSince(updatedDate);
+    const ageStr = (ageMin < 1) ? "now" : (Math.round(ageMin) + "m ago");
+    el.textContent = `Updated: ${human} (${ageStr})`;
+  }
+
+  updateHeaderLine();
+  setInterval(updateHeaderLine, 60000);
+
+  return { updatedDate };
+}
+
+function renderStatus(data, updatedDate){
+  const strip = document.getElementById("statusStrip");
+
+  // Model/Tides/Alerts ages based on location.updated (that’s what your JSON has)
+  const modelAge = updatedDate ? minutesSince(updatedDate) : NaN;
+
+  // PWS age based on pws.updated if present
+  const pwsUpdatedStr = data?.pws?.updated;
+  const pwsUpdatedDate = pwsUpdatedStr ? new Date(pwsUpdatedStr) : null;
+  const pwsAge = (pwsUpdatedDate && !isNaN(pwsUpdatedDate.getTime())) ? minutesSince(pwsUpdatedDate) : NaN;
+
+  function draw(){
+    const modelAgeNow = updatedDate ? minutesSince(updatedDate) : NaN;
+    const pwsAgeNow = (pwsUpdatedDate && !isNaN(pwsUpdatedDate.getTime())) ? minutesSince(pwsUpdatedDate) : NaN;
+
+    strip.innerHTML =
+      `<div class="pill ${pillClass(modelAgeNow)}">Model: ${ageText(modelAgeNow)}</div>` +
+      `<div class="pill ${pillClass(pwsAgeNow)}">PWS: ${ageText(pwsAgeNow)}</div>` +
+      `<div class="pill ${pillClass(modelAgeNow)}">Tides: ${ageText(modelAgeNow)}</div>` +
+      `<div class="pill ${pillClass(modelAgeNow)}">Alerts: ${ageText(modelAgeNow)}</div>`;
+  }
+
+  draw();
+  setInterval(draw, 60000);
+}
+
+function renderAlerts(data){
+  const container = document.getElementById("alertsContainer");
+  const alerts = Array.isArray(data?.alerts) ? data.alerts : [];
+  if(alerts.length === 0){
+    container.innerHTML = "";
+    return;
+  }
+  container.innerHTML = alerts.map(a => {
+    const url = a?.url || "#";
+    const title = a?.event || "Weather Alert";
+    const body = a?.headline || a?.description || "";
+    return `<a class="alert" href="${url}" target="_blank" rel="noopener">
+      <div class="title">⚠️ ${title}</div>
+      <div class="body">${body}</div>
+    </a>`;
+  }).join("");
+}
+
+function renderCurrent(data){
+  const c = data?.current || {};
+  const t = safeNum(c.temperature);
+  const feels = safeNum(c.feels_like);
+  const hum = safeNum(c.humidity);
+  const vis = safeNum(data?.hourly?.visibility?.[0]); // optional
+
+  document.getElementById("currentTemp").textContent = (t !== null) ? `${t.toFixed(1)}°F` : `--°F`;
+
+  const code = safeNum(c.weather_code);
+  const emoji = c.emoji || (code !== null ? (weatherEmoji[code] || "🌡️") : "🌡️");
+  const cond = c.condition || (code !== null ? (weatherDesc[code] || "—") : "—");
+  document.getElementById("condition").textContent = `${emoji} ${cond}`;
+
+  document.getElementById("feelsLike").textContent =
+    (feels !== null) ? `Feels like ${feels.toFixed(1)}°F` : `Feels like --°F`;
+
+  const extras = [];
+  if(hum !== null) extras.push(`Humidity ${Math.round(hum)}%`);
+  if(safeNum(c.precipitation) !== null) extras.push(`Precip ${safeNum(c.precipitation).toFixed(2)} in`);
+  if(vis !== null) extras.push(`Visibility ${(vis/1609.34).toFixed(1)} mi`);
+  document.getElementById("currentExtras").textContent = extras.join(" • ");
+}
+
+function renderTides(data){
+  const grid = document.getElementById("tideGrid");
+  const note = document.getElementById("nextTideNote");
+  const tides = Array.isArray(data?.tides) ? data.tides : [];
+
+  if(tides.length === 0){
+    grid.innerHTML = `<div class="tide-item">No tide data</div>`;
+    note.textContent = "";
+    return;
+  }
+
+  // find next tide by comparing HH:MM to now
+  const now = new Date();
+  const nowMins = now.getHours()*60 + now.getMinutes();
+  let nextIdx = null;
+  for(let i=0;i<tides.length;i++){
+    const parts = String(tides[i].time || "").split(":").map(Number);
+    if(parts.length === 2){
+      const m = parts[0]*60 + parts[1];
+      if(m > nowMins){ nextIdx = i; break; }
+    }
+  }
+
+  grid.innerHTML = tides.map((t, i) => {
+    const isCurrent = (i === nextIdx);
+    const type = (t.type === "H") ? "⬆️ High" : "⬇️ Low";
+    const height = (typeof t.height === "number") ? t.height.toFixed(1) : "--";
+    // display time (simple)
+    const parts = String(t.time||"--:--").split(":");
+    const hh = parseInt(parts[0]||"0",10);
+    const mm = parts[1] || "00";
+    const ampm = (hh >= 12) ? "PM" : "AM";
+    const dh = (hh % 12) || 12;
+    const disp = `${dh}:${mm} ${ampm}`;
+
+    return `<div class="tide-item ${isCurrent ? "current" : ""}">
+      <div style="font-weight:800;">${type}</div>
+      <div style="margin-top:6px;">${disp}</div>
+      <div style="margin-top:6px; opacity:0.9;">${height} ft</div>
+    </div>`;
+  }).join("");
+
+  // Next tide countdown
+  if(nextIdx !== null){
+    const parts = String(tides[nextIdx].time||"").split(":").map(Number);
+    if(parts.length === 2){
+      const today = now.toISOString().slice(0,10);
+      const dt = new Date(`${today}T${String(parts[0]).padStart(2,"0")}:${String(parts[1]).padStart(2,"0")}:00`);
+      const diffMs = dt - now;
+      if(diffMs > 0){
+        const hrs = Math.floor(diffMs/3600000);
+        const mins = Math.floor((diffMs%3600000)/60000);
+        const cd = (hrs>0) ? `${hrs}h ${mins}m` : `${mins}m`;
+        const ttype = tides[nextIdx].type === "H" ? "high" : "low";
+        note.textContent = `Next ${ttype} tide in ${cd}`;
+        return;
+      }
+    }
+  }
+  note.textContent = "";
+}
+
+function renderHyperlocal(data){
+  const modelT = safeNum(data?.current?.temperature);
+  const pwsT = safeNum(data?.pws?.temperature);
+
+  document.getElementById("modelTemp").textContent = (modelT !== null) ? `${modelT.toFixed(1)}°F` : "--°F";
+  document.getElementById("pwsTemp").textContent = (pwsT !== null) ? `${pwsT.toFixed(1)}°F` : "--°F";
+
+  const pwsName = data?.pws?.name || data?.pws?.station || "PWS";
+  document.getElementById("pwsName").textContent = pwsName;
+
+  if(modelT !== null && pwsT !== null){
+    document.getElementById("tempDiff").textContent = `${Math.abs(modelT - pwsT).toFixed(1)}°F`;
+  }else{
+    document.getElementById("tempDiff").textContent = "--";
+  }
+
+  // show PWS updated time
+  const pwsUpdated = data?.pws?.updated ? new Date(data.pws.updated) : null;
+  const note = document.getElementById("pwsNote");
+  if(pwsUpdated && !isNaN(pwsUpdated.getTime())){
+    const age = minutesSince(pwsUpdated);
+    note.textContent = `PWS updated ${age < 1 ? "now" : (Math.round(age) + "m ago")}`;
+  }else{
+    note.textContent = "";
+  }
+}
+
+function renderToday(data){
+  const d = data?.daily || {};
+  const hi = safeNum(d.temperature_max?.[0]);
+  const lo = safeNum(d.temperature_min?.[0]);
+  const pmax = safeNum(d.precipitation_probability_max?.[0]);
+  const psum = safeNum(d.precipitation_sum?.[0]);
+
+  document.getElementById("high").textContent = (hi !== null) ? `${Math.round(hi)}°F` : "--°F";
+  document.getElementById("low").textContent  = (lo !== null) ? `${Math.round(lo)}°F` : "--°F";
+  document.getElementById("precipChance").textContent = (pmax !== null) ? `${Math.round(pmax)}%` : "--%";
+  document.getElementById("precipTotal").textContent  = (psum !== null) ? `${psum.toFixed(2)} in` : "--";
+}
+
+function renderWindPressure(data){
+  const c = data?.current || {};
+  const ws = safeNum(c.wind_speed);
+  const wg = safeNum(c.wind_gusts);
+  const wd = safeNum(c.wind_direction);
+  const pr = safeNum(c.pressure);
+  const cc = safeNum(c.cloud_cover);
+
+  document.getElementById("wind").textContent =
+    (ws !== null && wd !== null) ? `${windDir(wd)} ${Math.round(ws)} mph` :
+    (ws !== null) ? `${Math.round(ws)} mph` : "--";
+
+  document.getElementById("gusts").textContent = (wg !== null) ? `${Math.round(wg)} mph` : "--";
+
+  // your pressure is likely hPa / mbar. Convert to inHg if it looks like hPa.
+  let pressureText = "--";
+  if(pr !== null){
+    // hPa to inHg: / 33.8639
+    pressureText = `${(pr/33.8639).toFixed(2)} inHg`;
+  }
+  document.getElementById("pressure").textContent = pressureText;
+  document.getElementById("clouds").textContent = (cc !== null) ? `${Math.round(cc)}%` : "--";
+}
+
+function renderAlmanac(data){
+  const d = data?.daily || {};
+  const sr = d.sunrise?.[0];
+  const ss = d.sunset?.[0];
+  document.getElementById("sunrise").textContent = fmtTime(sr);
+  document.getElementById("sunset").textContent = fmtTime(ss);
+
+  if(sr && ss){
+    const r = new Date(sr), s = new Date(ss);
+    if(!isNaN(r.getTime()) && !isNaN(s.getTime())){
+      const mins = Math.round((s - r)/60000);
+      const h = Math.floor(mins/60);
+      const m = mins%60;
+      document.getElementById("daylight").textContent = `Daylight: ${h}h ${m}m`;
       return;
     }
+  }
+  document.getElementById("daylight").textContent = "Daylight: --";
+}
 
-    const human =
-      updatedDate.toLocaleDateString("en-US", { month:"short", day:"numeric" }) +
-      " " +
-      updatedDate.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-
-    const ageMin = (Date.now() - updatedDate.getTime()) / 60000;
-    const ageStr = ageMin < 1 ? "now" : Math.round(ageMin) + "m ago";
-
-    document.getElementById("lastUpdate").textContent =
-      `Updated: ${human} (${ageStr})`;
+function renderForecast(data){
+  const d = data?.daily || {};
+  const dates = Array.isArray(d.dates) ? d.dates : [];
+  const grid = document.getElementById("forecastGrid");
+  if(dates.length === 0){
+    grid.innerHTML = `<div class="tile">No forecast</div>`;
+    return;
   }
 
-  updateHeader();
-  setInterval(updateHeader, 60000);
+  grid.innerHTML = dates.slice(0,10).map((dateStr, i) => {
+    const day = (i===0) ? "Today" : new Date(dateStr).toLocaleDateString("en-US",{weekday:"short"});
+    const hi = safeNum(d.temperature_max?.[i]);
+    const lo = safeNum(d.temperature_min?.[i]);
+    const pop = safeNum(d.precipitation_probability_max?.[i]);
+    const code = safeNum(d.weather_code?.[i]);
+    const emoji = (code !== null) ? (weatherEmoji[code] || "🌡️") : "🌡️";
 
-  // VERSION + PAGE LOAD
-  const loadTime = new Date().toLocaleTimeString("en-US", {
-    hour:"numeric",
-    minute:"2-digit",
-    second:"2-digit"
+    return `<div class="tile">
+      <div style="font-weight:900;">${day}</div>
+      <div style="font-size:1.7rem; margin-top:6px;">${emoji}</div>
+      <div style="margin-top:8px;">
+        <span style="font-weight:900;">${hi !== null ? Math.round(hi) : "--"}°</span>
+        <span style="opacity:0.75;">${lo !== null ? Math.round(lo) : "--"}°</span>
+      </div>
+      <div style="margin-top:6px; color:var(--muted2); font-weight:800;">
+        ${pop !== null ? Math.round(pop) : "--"}%
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function renderCharts(data){
+  const h = data?.hourly || {};
+  const times = Array.isArray(h.times) ? h.times : [];
+  if(times.length === 0) return;
+
+  // labels: hour, show weekday when day changes
+  const labels = times.map((t, i) => {
+    const d = new Date(t);
+    if(isNaN(d.getTime())) return "";
+    const hour = d.toLocaleTimeString("en-US",{hour:"numeric"});
+    if(i>0){
+      const p = new Date(times[i-1]);
+      if(!isNaN(p.getTime()) && d.getDate() !== p.getDate()){
+        return d.toLocaleDateString("en-US",{weekday:"short"}) + " " + hour;
+      }
+    }
+    return hour;
   });
 
-  document.getElementById("meta").innerHTML =
-    `Version: ${APP_VERSION} <br> Page loaded: ${loadTime}`;
+  const temp = Array.isArray(h.temperature) ? h.temperature : [];
+  const pop  = Array.isArray(h.precipitation_probability) ? h.precipitation_probability : [];
+  const wind = Array.isArray(h.wind_speed) ? h.wind_speed : [];
+  const gust = Array.isArray(h.wind_gusts) ? h.wind_gusts : [];
 
-  // STATUS PILLS
-  const statusStrip = document.getElementById("statusStrip");
+  // destroy old charts if re-rendered
+  if(hourlyChart) hourlyChart.destroy();
+  if(windChart) windChart.destroy();
 
-  const ageMin = updatedDate
-    ? (Date.now() - updatedDate.getTime()) / 60000
-    : 999;
+  const ctx1 = document.getElementById("hourlyChart").getContext("2d");
+  hourlyChart = new Chart(ctx1,{
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        { label:"Temp °F", data:temp, yAxisID:"y", tension:0.35, borderWidth:2, pointRadius:2 },
+        { label:"Precip %", data:pop, yAxisID:"y1", tension:0.35, borderWidth:2, pointRadius:0, fill:true }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{ mode:"index", intersect:false },
+      plugins:{ legend:{ labels:{ color:"#fff", font:{ size:11 } } } },
+      scales:{
+        x:{ ticks:{ color:"#fff", font:{ size:10 } }, grid:{ color:"rgba(255,255,255,0.06)" } },
+        y:{ ticks:{ color:"#fff", font:{ size:10 } }, grid:{ color:"rgba(255,255,255,0.08)" } },
+        y1:{ position:"right", min:0, max:100, ticks:{ color:"#fff", font:{ size:10 } }, grid:{ drawOnChartArea:false } }
+      }
+    }
+  });
 
-  statusStrip.innerHTML =
-    `<div class="${pillClass(ageMin)}">Model: ${ageText(ageMin)}</div>
-     <div class="${pillClass(ageMin)}">PWS: ${ageText(ageMin)}</div>
-     <div class="${pillClass(ageMin)}">Tides: ${ageText(ageMin)}</div>
-     <div class="${pillClass(ageMin)}">Alerts: ${ageText(ageMin)}</div>`;
+  const ctx2 = document.getElementById("windChart").getContext("2d");
+  windChart = new Chart(ctx2,{
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        { label:"Wind mph", data:wind, tension:0.35, borderWidth:2, pointRadius:2 },
+        { label:"Gusts mph", data:gust, tension:0.35, borderWidth:2, pointRadius:2, borderDash:[5,5] }
+      ]
+    },
+    options:{
+      responsive:true,
+      maintainAspectRatio:false,
+      interaction:{ mode:"index", intersect:false },
+      plugins:{ legend:{ labels:{ color:"#fff", font:{ size:11 } } } },
+      scales:{
+        x:{ ticks:{ color:"#fff", font:{ size:10 } }, grid:{ color:"rgba(255,255,255,0.06)" } },
+        y:{ ticks:{ color:"#fff", font:{ size:10 } }, grid:{ color:"rgba(255,255,255,0.08)" } }
+      }
+    }
+  });
+}
 
-  // CURRENT CONDITIONS
-  const curr = data?.current;
-  if (curr && typeof curr.temperature === "number") {
-    document.getElementById("currentTemp").textContent =
-      curr.temperature.toFixed(1) + "°F";
-    document.getElementById("condition").textContent =
-      (curr.condition || "");
-  }
+/* =========================
+   LOAD
+========================= */
+renderAppMeta();
 
-})
-.catch(err => {
-  console.error(err);
-  document.getElementById("location").textContent = "Error loading data";
-});
-
+fetch("weather_data.json?t=" + Date.now())
+  .then(r => r.json())
+  .then(data => {
+    const { updatedDate } = renderHeader(data);
+    renderStatus(data, updatedDate);
+    renderAlerts(data);
+    renderCurrent(data);
+    renderTides(data);
+    renderHyperlocal(data);
+    renderToday(data);
+    renderWindPressure(data);
+    renderAlmanac(data);
+    renderForecast(data);
+    renderCharts(data);
+  })
+  .catch(err => {
+    console.error("Failed to load weather_data.json", err);
+    document.getElementById("location").textContent = "Error loading data";
+    document.getElementById("lastUpdate").textContent = "Updated: --";
+    document.getElementById("statusStrip").innerHTML = `<div class="pill bad">Load failed</div>`;
+  });
 </script>
-
 </body>
 </html>
