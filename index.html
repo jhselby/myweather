@@ -392,12 +392,27 @@
   }
 
   function makePill(label, meta) {
-    const cls = pillClassFromSource(meta);
-    const status = meta?.status || "error";
-    const age = (typeof meta?.age_minutes === "number") ? `${meta.age_minutes}m` : "--";
-    const txt = (status === "ok") ? `${label}: ${age}` : `${label}: offline`;
-    return `<div class="${cls}">${txt}</div>`;
+  const cls = pillClassFromSource(meta);
+  const status = meta?.status || "error";
+  const ageNum = meta?.age_minutes;
+
+  let ageText = "--";
+
+  if (typeof ageNum === "number") {
+    if (ageNum < 1) {
+      ageText = "now";
+    } else {
+      ageText = Math.round(ageNum) + "m";
+    }
   }
+
+  const txt = (status === "ok")
+    ? `${label}: ${ageText}`
+    : `${label}: offline`;
+
+  return `<div class="${cls}">${txt}</div>`;
+}
+
 
   fetch('weather_data.json?t=' + Date.now())
     .then(r => r.json())
