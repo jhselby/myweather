@@ -679,49 +679,6 @@ function computePeakInWindow(hourly, windowHours){
     directionDeg: dirs[idx]
   };
 }
-function renderWindRiskTiles(hourly){
-  const host = document.getElementById("windRiskMulti");
-  if (!host) return;
-
-  const windows = [12, 24, 36, 48];
-
-  const html = windows.map(w => {
-    const peak = computePeakInWindow(hourly, w);
-    if (!peak) return "";
-
-    const when = new Date(peak.timeISO);
-    const timeStr = isNaN(when.getTime())
-      ? ""
-      : when.toLocaleString("en-US", { weekday: "short", hour: "numeric" });
-
-    const compass = degToCompass(peak.directionDeg);
-    const risk = classifyGust(peak.peakGust);
-
-    return `
-      <div class="row">
-        <div class="label">Next ${w}h</div>
-        <div class="value">${risk.label}</div>
-      </div>
-      <div class="row">
-        <div class="label">Peak Gust</div>
-        <div class="value">${peak.peakGust.toFixed(0)} mph</div>
-      </div>
-      <div class="row">
-        <div class="label">Direction</div>
-        <div class="value">${peak.directionDeg.toFixed(0)}° ${compass}</div>
-      </div>
-      <div class="row">
-        <div class="label">Peak Time</div>
-        <div class="value">${timeStr}</div>
-      </div>
-      <div style="height:10px;"></div>
-    `;
-  }).join("");
-
-  host.innerHTML = html;
-}
-
-
     function buildWindChart(times, speeds, gusts){
       const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour:"numeric" }));
       const sData = speeds.map(v => (v ?? null));
