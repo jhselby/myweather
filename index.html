@@ -850,7 +850,12 @@ if (wpNote) wpNote.textContent = `Wind Risk uses peak gust in the next ${hours} 
 
       const exposed = isExposedDir(peak.directionDeg);
       const impactGust = peak.peakGust * (exposed ? EXPOSURE_MULTIPLIER : 1.0);
-      const risk = classifyGust(impactGust);
+      const level = data.wind_risk.level;
+      const impact = data.wind_risk.impact_gust_mph;
+
+      levelEl.textContent = level;
+      peakEl.textContent = `${Math.round(impact)} mph`;
+
 
       levelEl.textContent = risk.label ?? "--";
       peakEl.textContent = `${Math.round(impactGust)} mph`;
