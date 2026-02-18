@@ -53,49 +53,50 @@
     }
     h1{ margin:0; font-weight:300; letter-spacing:0.5px; font-size:2.0rem; }
     .sub{ margin-top:6px; font-size:1.0rem; opacity:0.95; font-weight:300; }
-    .meta{ margin-top:8px; font-size:0.85rem; color:var(--muted2); line-height:1.25; }
 
-    .status-strip{
+    .meta{
+      margin-top:8px;
+      font-size:0.88rem;
+      color:var(--muted2);
+      line-height:1.25;
+    }
+
+    /* Source health row */
+    .health-row{
       margin-top:12px;
       display:flex;
-      gap:10px;
       justify-content:center;
       flex-wrap:wrap;
+      gap:10px;
+      align-items:center;
     }
-
-    .pill{
-      padding:9px 14px;
+    .health-chip{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      padding:8px 12px;
       border-radius:999px;
       background:rgba(255,255,255,0.06);
-      border:2px solid rgba(255,255,255,0.18);
-      font-weight:800;
-      font-size:0.95rem;
-      min-width:170px;
-      text-align:center;
-      user-select:none;
-    }
-    .pill.ok{ border-color: color-mix(in srgb, var(--ok) 80%, transparent); }
-    .pill.warn{ border-color: color-mix(in srgb, var(--warn) 85%, transparent); }
-    .pill.bad{ border-color: color-mix(in srgb, var(--bad) 90%, transparent); }
-
-    .sources-summary{
-      margin-top:8px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      justify-content:center;
-      align-items:center;
-      font-size:0.85rem;
-      color:var(--muted2);
-    }
-    .source-chip{
       border:1px solid rgba(255,255,255,0.14);
-      background:rgba(255,255,255,0.05);
-      border-radius:999px;
-      padding:6px 10px;
-      white-space:nowrap;
+      user-select:none;
+      font-weight:800;
+      letter-spacing:0.2px;
     }
-    .source-chip b{ color:#fff; }
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      background:rgba(255,255,255,0.35);
+      box-shadow:0 0 0 2px rgba(255,255,255,0.14) inset;
+    }
+    .ok .dot{ background:var(--ok); box-shadow:none; }
+    .warn .dot{ background:var(--warn); box-shadow:none; }
+    .bad .dot{ background:var(--bad); box-shadow:none; }
+
+    .icon{
+      font-size:1.05rem;
+      line-height:1;
+    }
 
     .alerts{ margin-top:14px; }
     .alert{
@@ -200,17 +201,14 @@
       <h1>⚓ Wyman Cove Weather</h1>
       <div class="sub" id="location">Loading…</div>
 
-      <!-- main timestamp -->
-      <div class="meta" id="lastUpdate">Updated: --</div>
+      <!-- ONE place for data freshness -->
+      <div class="meta" id="lastUpdate">Data updated: --</div>
 
-      <!-- app info -->
+      <!-- ONE place for page info -->
       <div class="meta" id="appMeta"></div>
 
-      <!-- Option A: one clear freshness pill -->
-      <div class="status-strip" id="statusStrip"></div>
-
-      <!-- Option A: per-source diagnostics (small) -->
-      <div class="sources-summary" id="sourcesSummary"></div>
+      <!-- Source health only (no repeated times/ages) -->
+      <div class="health-row" id="healthRow"></div>
     </header>
 
     <div class="alerts" id="alertsContainer"></div>
@@ -295,21 +293,10 @@
   </div>
 
 <script>
-const APP_VERSION = "2.2.0"; // Option A
+const APP_VERSION = "2.3.0";
 
 function safeNum(x){ return (typeof x === "number" && !isNaN(x)) ? x : null; }
 function minutesSince(d){ return (Date.now() - d.getTime()) / 60000; }
-function ageText(min){
-  if(typeof min !== "number" || isNaN(min)) return "--";
-  if(min < 1) return "now";
-  return Math.round(min) + "m";
-}
-function pillClass(min){
-  if(typeof min !== "number" || isNaN(min)) return "bad";
-  if(min >= 60) return "bad";
-  if(min >= 30) return "warn";
-  return "ok";
-}
 function fmtHumanTimestamp(d){
   return d.toLocaleDateString("en-US",{month:"short",day:"numeric"}) + " " +
          d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
@@ -325,15 +312,19 @@ function windDir(deg){
   const dirs=["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
   return dirs[Math.round(deg/22.5)%16];
 }
-function statusLabel(s){
-  const st = s?.status || "unknown";
-  if(st === "ok") return "OK";
-  if(st === "error") return "ERROR";
-  return String(st).toUpperCase();
+function statusToClass(status){
+  if(status === "ok") return "ok";
+  if(status === "error") return "bad";
+  if(status === "stale") return "warn";
+  if(status === "warning") return "warn";
+  return "warn";
 }
-function fmtClock(d){
-  if(!d) return "--";
-  return d.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"});
+function statusToIcon(status){
+  if(status === "ok") return "✅";
+  if(status === "error") return "❌";
+  if(status === "stale") return "⚠️";
+  if(status === "warning") return "⚠️";
+  return "⚠️";
 }
 
 const weatherEmoji = { 0:"☀️",1:"🌤️",2:"⛅",3:"☁️",45:"🌫️",48:"🌫️",51:"🌦️",53:"🌧️",55:"🌧️",61:"🌧️",63:"🌧️",65:"🌧️",71:"🌨️",73:"🌨️",75:"🌨️",77:"🌨️",80:"🌦️",81:"🌦️",82:"🌧️",85:"🌨️",86:"🌨️",95:"⛈️",96:"⛈️",99:"⛈️" };
@@ -348,72 +339,56 @@ function renderAppMeta(){
     `Version: ${APP_VERSION}<br>Page loaded: ${loadTime}`;
 }
 
-function renderHeader(data){
-  document.getElementById("location").textContent = data?.location?.name || "Wyman Cove";
+function renderDataUpdated(data){
+  // Single truth: when the DATASET was generated (or location.updated)
   const updatedStr = data?.location?.updated || data?.generated_at;
   const el = document.getElementById("lastUpdate");
 
   if(!updatedStr){
-    el.textContent = "Updated: --";
+    el.textContent = "Data updated: --";
     return null;
   }
   const updatedDate = new Date(updatedStr);
   if(isNaN(updatedDate.getTime())){
-    el.textContent = "Updated: --";
+    el.textContent = "Data updated: --";
     return null;
   }
 
-  function updateHeaderLine(){
+  function updateLine(){
     const human = fmtHumanTimestamp(updatedDate);
     const ageMin = minutesSince(updatedDate);
     const ageStr = (ageMin < 1) ? "now" : (Math.round(ageMin) + "m ago");
-    el.textContent = `Updated: ${human} (${ageStr})`;
+    el.textContent = `Data updated: ${human} (${ageStr})`;
   }
-  updateHeaderLine();
-  setInterval(updateHeaderLine, 60000);
+  updateLine();
+  setInterval(updateLine, 60000);
   return updatedDate;
 }
 
-/* Option A: one meaningful "Data freshness" + small per-source diagnostics */
-function renderStatus(data){
-  const strip = document.getElementById("statusStrip");
-  const summary = document.getElementById("sourcesSummary");
+function renderLocation(data){
+  document.getElementById("location").textContent = data?.location?.name || "Wyman Cove";
+}
 
-  function parseUpdated(source){
-    const ts = source?.updated_at;
-    if(!ts) return null;
-    const d = new Date(ts);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  function ageMin(d){
-    return d ? (Date.now() - d.getTime()) / 60000 : NaN;
-  }
+function renderHealthRow(data){
+  const row = document.getElementById("healthRow");
 
-  const sources = [
-    { key: "Model",  obj: data?.sources?.open_meteo },
-    { key: "PWS",    obj: data?.sources?.pws },
-    { key: "Tides",  obj: data?.sources?.tides },
-    { key: "Alerts", obj: data?.sources?.nws_alerts }
+  const items = [
+    { label: "Model",  src: data?.sources?.open_meteo },
+    { label: "PWS",    src: data?.sources?.pws },
+    { label: "Tides",  src: data?.sources?.tides },
+    { label: "Alerts", src: data?.sources?.nws_alerts }
   ];
 
-  function draw(){
-    const ages = sources.map(s => ageMin(parseUpdated(s.obj))).filter(x => !isNaN(x));
-    const worst = ages.length ? Math.max(...ages) : NaN;
-
-    strip.innerHTML = `<div class="pill ${pillClass(worst)}">Data freshness: ${ageText(worst)}</div>`;
-
-    summary.innerHTML = sources.map(s => {
-      const d = parseUpdated(s.obj);
-      const age = ageMin(d);
-      const label = statusLabel(s.obj);
-      const when = fmtClock(d);
-      const ageStr = isNaN(age) ? "--" : (age < 1 ? "now" : `${Math.round(age)}m`);
-      return `<span class="source-chip"><b>${s.key}</b> ${label} • ${when} • ${ageStr}</span>`;
-    }).join("");
-  }
-
-  draw();
-  setInterval(draw, 60000);
+  row.innerHTML = items.map(it => {
+    const status = it.src?.status || "warning";
+    const cls = statusToClass(status);
+    const icon = statusToIcon(status);
+    return `<div class="health-chip ${cls}">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="icon" aria-hidden="true">${icon}</span>
+      <span>${it.label}</span>
+    </div>`;
+  }).join("");
 }
 
 function renderAlerts(data){
@@ -531,14 +506,9 @@ function renderHyperlocal(data){
     document.getElementById("tempDiff").textContent = "--";
   }
 
-  const pwsUpdated = data?.sources?.pws?.updated_at ? new Date(data.sources.pws.updated_at) : null;
+  const stale = data?.pws?.stale === true;
   const note = document.getElementById("pwsNote");
-  if(pwsUpdated && !isNaN(pwsUpdated.getTime())){
-    const age = minutesSince(pwsUpdated);
-    note.textContent = `PWS updated ${age < 1 ? "now" : (Math.round(age) + "m ago")}`;
-  }else{
-    note.textContent = "";
-  }
+  note.textContent = stale ? "PWS marked stale" : "";
 }
 
 function renderToday(data){
@@ -704,8 +674,9 @@ renderAppMeta();
 fetch("weather_data.json?t=" + Date.now())
   .then(r => r.json())
   .then(data => {
-    renderHeader(data);
-    renderStatus(data);
+    renderLocation(data);
+    renderDataUpdated(data);
+    renderHealthRow(data);
     renderAlerts(data);
     renderCurrent(data);
     renderTides(data);
@@ -719,9 +690,9 @@ fetch("weather_data.json?t=" + Date.now())
   .catch(err => {
     console.error("Failed to load weather_data.json", err);
     document.getElementById("location").textContent = "Error loading data";
-    document.getElementById("lastUpdate").textContent = "Updated: --";
-    document.getElementById("statusStrip").innerHTML = `<div class="pill bad">Load failed</div>`;
-    document.getElementById("sourcesSummary").innerHTML = "";
+    document.getElementById("lastUpdate").textContent = "Data updated: --";
+    document.getElementById("healthRow").innerHTML =
+      `<div class="health-chip bad"><span class="dot"></span><span class="icon">❌</span><span>Data</span></div>`;
   });
 </script>
 </body>
