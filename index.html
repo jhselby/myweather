@@ -500,36 +500,37 @@
       <div class="grid">
         <!-- Wind Risk -->
         <div class="card col-12">
-         <div class="card-title">🌬 Wind Risk 
-    <select id="riskWindowSelect">
-      <option value="12">12h</option>
-      <option value="24">24h</option>
-      <option value="36">36h</option>
-      <option value="48">48h</option>
-    </select>
-    <div class="row">
-    <div class="label">Risk Level</div>
-    <div class="value" id="windRiskLevel">--</div>
-    </div>
+          <div class="card-title">🌬 Wind Risk
+            <select id="riskWindowSelect">
+              <option value="12">12h</option>
+              <option value="24">24h</option>
+              <option value="36">36h</option>
+              <option value="48">48h</option>
+            </select>
+          </div>
 
-    <div class="row">
-    <div class="label">Peak Gust</div>
-    <div class="value" id="windRiskPeak">-- mph</div>
-    </div>
+          <div class="row">
+            <div class="label">Risk Level</div>
+            <div class="value" id="windRiskLevel">--</div>
+          </div>
 
-    <div class="row">
-    <div class="label">Direction</div>
-    <div class="value" id="windRiskDir">--</div>
-    </div>
+          <div class="row">
+            <div class="label">Peak Gust</div>
+            <div class="value" id="windRiskPeak">-- mph</div>
+          </div>
 
-    <div class="row">
-    <div class="label">Peak Time</div>
-    <div class="value" id="windRiskTime">--</div>
-    </div>
+          <div class="row">
+            <div class="label">Direction</div>
+            <div class="value" id="windRiskDir">--</div>
+          </div>
 
-      <div class="small-note" id="windRiskNote"></div>
-      </div>
-      </div>
+          <div class="row">
+            <div class="label">Peak Time</div>
+            <div class="value" id="windRiskTime">--</div>
+          </div>
+
+          <div class="small-note" id="windRiskNote"></div>
+        </div>
 
         <!-- Wind & Pressure -->
         <div class="card col-12">
@@ -680,10 +681,12 @@ function isExposedDir(directionDeg){
   return (d >= min) || (d <= max);
 }
 
-function classifyGust(g){
-  if (g >= 55) return { label: "SEV", cls: "severe" };
+function classifyImpactGust(g){
+  if (g == null || isNaN(g)) return { label: "--", cls: "low" };
+  if (g >= 55) return { label: "SEVERE", cls: "severe" };
   if (g >= 45) return { label: "HIGH", cls: "high" };
-  if (g >= 35) return { label: "MOD", cls: "mod" };
+  if (g >= 35) return { label: "STRONG", cls: "mod" };
+  if (g >= 25) return { label: "NOTICEABLE", cls: "mod" };
   return { label: "LOW", cls: "low" };
 }
 
@@ -829,14 +832,10 @@ function computePeakInWindow(hourly, windowHours){
       const dirEl   = document.getElementById("windRiskDir");
       const timeEl  = document.getElementById("windRiskTime");
       const noteEl  = document.getElementById("windRiskNote");
-
       if (!levelEl || !peakEl || !dirEl || !timeEl || !noteEl) return;
 
       const windowSelect = document.getElementById("riskWindowSelect");
       const hours = parseInt(windowSelect?.value || "12", 10);
-      const wpNote = document.getElementById("windPressureNote");
-if (wpNote) wpNote.textContent = `Wind Risk uses peak gust in the next ${hours} hours from the model + your exposure multiplier.`;
-
 
       const peak = computePeakInWindow(data.hourly, hours);
       if (!peak) {
@@ -845,23 +844,24 @@ if (wpNote) wpNote.textContent = `Wind Risk uses peak gust in the next ${hours} 
         dirEl.textContent = "--";
         timeEl.textContent = "--";
         noteEl.textContent = "No hourly wind data yet.";
+        const wpNote = document.getElementById("windPressureNote");
+        if (wpNote) wpNote.textContent = `Wind Risk uses peak gust in the next ${hours} hours from the model + your exposure multiplier.`;
         return;
       }
 
       const exposed = isExposedDir(peak.directionDeg);
       const impactGust = peak.peakGust * (exposed ? EXPOSURE_MULTIPLIER : 1.0);
-      const level = data.wind_risk.level;
-      const impact = data.wind_risk.impact_gust_mph;
+      const risk = classifyImpactGust(impactGust);
 
-      levelEl.textContent = level;
-      peakEl.textContent = `${Math.round(impact)} mph`;
-
-
-      levelEl.textContent = risk.label ?? "--";
+      levelEl.textContent = risk.label;
       peakEl.textContent = `${Math.round(impactGust)} mph`;
       dirEl.textContent = `${Math.round(peak.directionDeg)}° ${degToCompass(peak.directionDeg)}`;
       timeEl.textContent = peak.timeISO ? fmtLocal(peak.timeISO) : "--";
+
+      // Notes
       noteEl.textContent = `Peak gust over next ${hours}h (from hourly model).`;
+      const wpNote = document.getElementById("windPressureNote");
+      if (wpNote) wpNote.textContent = `Wind Risk uses peak gust in the next ${hours} hours from the model + your exposure multiplier.`;
     }
 
     // -------- Boot: load data --------
