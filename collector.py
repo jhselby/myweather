@@ -32,8 +32,8 @@ PWS_CACHE_FILE = Path("last_pws.json")
 # -----------------------------
 # Wind Exposure Model (House-specific)
 # -----------------------------
-EXPOSED_SECTOR_MIN = 290  # degrees
-EXPOSED_SECTOR_MAX = 350  # degrees
+EXPOSED_SECTOR_MIN = 310  # degrees
+EXPOSED_SECTOR_MAX = 60  # degrees
 EXPOSURE_MULTIPLIER = 1.2
 
 # Gust thresholds (mph)
@@ -517,8 +517,12 @@ def process_data(open_meteo, pws, tides, alerts, source_meta):
             # Normalize direction to 0..359
             direction = direction % 360
 
-            # Exposed sector check (simple, non-wrapping sector)
-            exposed = (EXPOSED_SECTOR_MIN <= direction <= EXPOSED_SECTOR_MAX)
+            # Exposed sector check (supports wraparound across north)
+            if EXPOSED_SECTOR_MIN <= EXPOSED_SECTOR_MAX:
+                exposed = (EXPOSED_SECTOR_MIN <= direction <= EXPOSED_SECTOR_MAX)
+            else:
+                exposed = (direction >= EXPOSED_SECTOR_MIN) or (direction <= EXPOSED_SECTOR_MAX)
+
 
             impact_gust = gust * (EXPOSURE_MULTIPLIER if exposed else 1.0)
 
