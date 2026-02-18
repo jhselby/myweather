@@ -824,6 +824,9 @@ function computePeakInWindow(hourly, windowHours){
 
       const windowSelect = document.getElementById("riskWindowSelect");
       const hours = parseInt(windowSelect?.value || "12", 10);
+      const wpNote = document.getElementById("windPressureNote");
+if (wpNote) wpNote.textContent = `Wind Risk uses peak gust in the next ${hours} hours from the model + your exposure multiplier.`;
+
 
       const peak = computePeakInWindow(data.hourly, hours);
       if (!peak) {
@@ -982,8 +985,6 @@ if (riskSel) {
         }
 
 
-        document.getElementById("windPressureNote").textContent =
-          "Wind Risk uses peak gust in the next 12 hours from the model + your exposure multiplier.";
       })
       .catch(err => {
         console.error(err);
