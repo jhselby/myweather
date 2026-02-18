@@ -313,6 +313,7 @@
   #tempPrecipChart, #windChart {
     height: 260px !important;
   }
+}
   /* --- Wind Risk tiles --- */
 .risk-tiles{
   display: grid;
@@ -367,7 +368,6 @@
 .badge.mod    { background: rgba(255,170,0,0.22); }
 .badge.high   { background: rgba(255,80,80,0.25); }
 .badge.severe { background: rgba(200,60,255,0.25); }
-}
   </style>
 </head>
 
@@ -529,7 +529,6 @@
 
       <div class="small-note" id="windRiskNote"></div>
       </div>
-      <div class="small-note" id="windRiskNote"></div>
       </div>
 
         <!-- Wind & Pressure -->
@@ -816,45 +815,32 @@ function computePeakInWindow(hourly, windowHours){
 
     function renderWindRisk(data){
       const levelEl = document.getElementById("windRiskLevel");
-      if (!levelEl) return;
+      const peakEl  = document.getElementById("windRiskPeak");
+      const dirEl   = document.getElementById("windRiskDir");
+      const timeEl  = document.getElementById("windRiskTime");
+      const noteEl  = document.getElementById("windRiskNote");
 
-      const wr = data.wind_risk;
+      if (!levelEl || !peakEl || !dirEl || !timeEl || !noteEl) return;
+
       const windowSelect = document.getElementById("riskWindowSelect");
       const hours = parseInt(windowSelect?.value || "12", 10);
-       const peak = computePeakInWindow(data.hourly, hours);
+
+      const peak = computePeakInWindow(data.hourly, hours);
       if (!peak) {
         levelEl.textContent = "--";
         peakEl.textContent = "-- mph";
         dirEl.textContent = "--";
-        expEl.textContent = "--";
-        impEl.textContent = "-- mph";
+        timeEl.textContent = "--";
         noteEl.textContent = "No hourly wind data yet.";
-  return;
-}
-
-      const peakTime = data.derived?.wind_peak_time;
-      const peakEl = document.getElementById("windRiskPeak");
-      const dirEl = document.getElementById("windRiskDir");
-      const expEl = document.getElementById("windRiskExposed");
-      const impEl = document.getElementById("windRiskImpact");
-      const noteEl = document.getElementById("windRiskNote");
+        return;
+      }
 
       const risk = classifyGust(peak.peakGust);
-
-levelEl.textContent = risk.label ?? "--";
-peakEl.textContent = `${Math.round(peak.peakGust)} mph`;
-dirEl.textContent = `${Math.round(peak.directionDeg)}° ${degToCompass(peak.directionDeg)}`;
-
-// keep your existing exposed/impact logic for now if you want:
-expEl.textContent = "--";
-impEl.textContent = "-- mph";
-noteEl.textContent = "";
-
-      const src = wr.source ? `Source: ${wr.source}` : "";
-      const t = peakTime ? `Peak time: ${fmtLocal(peakTime)}` : "";
-      const win = wr.window_hours ? `Window: next ${wr.window_hours}h` : "";
-      const parts = [t, win, src].filter(Boolean);
-      noteEl.textContent = parts.join(" • ");
+      levelEl.textContent = risk.label ?? "--";
+      peakEl.textContent = `${Math.round(peak.peakGust)} mph`;
+      dirEl.textContent = `${Math.round(peak.directionDeg)}° ${degToCompass(peak.directionDeg)}`;
+      timeEl.textContent = peak.timeISO ? fmtLocal(peak.timeISO) : "--";
+      noteEl.textContent = `Peak gust over next ${hours}h (from hourly model).`;
     }
 
     // -------- Boot: load data --------
@@ -883,7 +869,7 @@ noteEl.textContent = "";
           alertsContainer.innerHTML = data.alerts.map(alert => `
             <a href="${alert.url}" target="_blank" style="text-decoration:none;color:inherit;display:block;">
               <div class="alert-banner">
-                <div class="alert-title">⚠️ ${alert.title}</div>
+                <div class="alert-title">⚠️ ${alert.headline || alert.event || "Weather Alert"}</div>
                 <div class="alert-desc">${alert.description || ""}</div>
               </div>
             </a>
@@ -968,22 +954,32 @@ if (riskSel) {
   };
 }
 
-        console.log("DEBUG cur =", cur);
-        console.log("DEBUG windNow el =", document.getElementById("windNow"));
+        // Wind tab: current wind + pressure cards (safe even if elements missing)
+        const windNowEl = document.getElementById("windNowWind");
+        const windGustsEl = document.getElementById("windGustsWind");
+        const pressureNowEl = document.getElementById("pressureNowWind");
+        const pressureTrendEl = document.getElementById("pressureTrendWind");
 
-        document.getElementById("windNow").textContent =
-  (cur.wind_speed != null && cur.wind_direction != null)
-    ? `${Math.round(cur.wind_speed)} mph • ${degreesToCompass(cur.wind_direction)}`
-    : "--";
+        if (windNowEl) {
+          windNowEl.textContent =
+            (cur.wind_speed != null && cur.wind_direction != null)
+              ? `${Math.round(cur.wind_speed)} mph • ${degreesToCompass(cur.wind_direction)}`
+              : "--";
+        }
 
-document.getElementById("windGusts").textContent =
-  (cur.wind_gusts != null) ? `${Math.round(cur.wind_gusts)} mph` : "--";
+        if (windGustsEl) {
+          windGustsEl.textContent =
+            (cur.wind_gusts != null) ? `${Math.round(cur.wind_gusts)} mph` : "--";
+        }
 
-document.getElementById("pressureNow").textContent =
-  (cur.pressure != null) ? `${cur.pressure.toFixed(1)} hPa` : "--";
+        if (pressureNowEl) {
+          pressureNowEl.textContent =
+            (cur.pressure != null) ? `${cur.pressure.toFixed(1)} hPa` : "--";
+        }
 
-document.getElementById("pressureTrend").textContent =
-  delta ? `${trend} (${delta})` : trend;
+        if (pressureTrendEl) {
+          pressureTrendEl.textContent = delta ? `${trend} (${delta})` : trend;
+        }
 
 
         document.getElementById("windPressureNote").textContent =
