@@ -886,6 +886,7 @@ noteEl.textContent = "";
 
         // Current card
         const cur = data.current || {};
+        const curWind = data.current_weather || data.current || {};
         document.getElementById("currentTemp").innerHTML =
           `${Math.round(cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
         document.getElementById("feelsLike").textContent =
@@ -951,7 +952,7 @@ noteEl.textContent = "";
         );
         // renderWindRiskTiles(data.hourly);
         // Wind tab cards
-        renderWindRisk(data);
+        // renderWindRisk(data);
 
         console.log("DEBUG cur =", cur);
         console.log("DEBUG windNow el =", document.getElementById("windNow"));
