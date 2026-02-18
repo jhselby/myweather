@@ -962,6 +962,9 @@ function renderWindRiskTiles(hourly){
         // Wind tab cards
         renderWindRisk(data);
 
+        console.log("DEBUG cur =", cur);
+        console.log("DEBUG windNow el =", document.getElementById("windNow"));
+
         document.getElementById("windNow").textContent =
           (cur.wind_speed != null && cur.wind_direction != null)
             ? `${Math.round(cur.wind_speed)} mph • ${degreesToCompass(cur.wind_direction)}`
