@@ -864,6 +864,11 @@ noteEl.textContent = "";
     fetch("weather_data.json?t=" + Date.now())
       .then(r => r.json())
       .then(data => {
+      window.__lastWeatherData = data;   // <-- ADD THIS LINE
+      // Header basics
+      document.getElementById("location").textContent = data.location?.name ?? "Wyman Cove";
+  ...
+
         // Header basics
         document.getElementById("location").textContent = data.location?.name ?? "Wyman Cove";
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
@@ -952,7 +957,7 @@ noteEl.textContent = "";
         );
         // renderWindRiskTiles(data.hourly);
         // Wind tab cards
-        // renderWindRisk(data);
+        renderWindRisk(data);
 
         console.log("DEBUG cur =", cur);
         console.log("DEBUG windNow el =", document.getElementById("windNow"));
