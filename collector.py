@@ -29,6 +29,19 @@ PWS_STATION = "KMAMARBL63"    # Castle Hill, Marblehead
 SCHEMA_VERSION = "1.1"
 PWS_CACHE_FILE = Path("last_pws.json")
 
+# -----------------------------
+# Wind Exposure Model (House-specific)
+# -----------------------------
+EXPOSED_SECTOR_MIN = 290  # degrees
+EXPOSED_SECTOR_MAX = 350  # degrees
+EXPOSURE_MULTIPLIER = 1.2
+
+# Gust thresholds (mph)
+GUST_NOTICEABLE = 25
+GUST_STRONG = 35
+GUST_HIGH = 45
+GUST_SEVERE = 55
+
 HEADERS_DEFAULT = {
     "User-Agent": "MyWeather/1.0 (github.com/jhselby/myweather)"
 }
@@ -444,7 +457,40 @@ def process_data(open_meteo, pws, tides, alerts, source_meta):
             elif trend < -0.6:
                 label = "Falling"
             weather_data["derived"] = {"pressure_trend": label, "pressure_trend_hpa_2h": round(trend, 1)}
+        
+        # -----------------------------
+        # Wind Risk Model (House Impact)
+        # -----------------------------
+        gust = weather_data["current"].get("wind_gusts")
+        direction = weather_data["current"].get("wind_direction")
 
+        if gust is not None and direction is not None:
+            # Check if wind direction is in exposed sector
+            exposed = False
+            if EXPOSED_SECTOR_MIN <= direction <= EXPOSED_SECTOR_MAX:
+                exposed = True
+
+            impact_gust = gust * (EXPOSURE_MULTIPLIER if exposed else 1.0)
+
+            # Classify risk level
+            level = "LOW"
+            if impact_gust >= GUST_SEVERE:
+                level = "SEVERE"
+            elif impact_gust >= GUST_HIGH:
+                level = "HIGH"
+            elif impact_gust >= GUST_STRONG:
+                level = "STRONG"
+            elif impact_gust >= GUST_NOTICEABLE:
+                level = "NOTICEABLE"
+
+            weather_data["wind_risk"] = {
+                "level": level,
+                "peak_gust_mph": round(gust, 1),
+                "direction_deg": direction,
+                "exposed": exposed,
+                "impact_gust_mph": round(impact_gust, 1)
+            }
+    
     print("✓ Processing complete")
     return weather_data
 
