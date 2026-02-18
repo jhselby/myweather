@@ -658,6 +658,82 @@
         }
       });
     }
+    function degToCompass(deg){
+  if (deg == null || isNaN(deg)) return "";
+  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+  const i = Math.round(((deg % 360) / 22.5)) % 16;
+  return dirs[i];
+}
+
+function classifyGust(g){
+  if (g >= 55) return { label: "SEV", cls: "severe" };
+  if (g >= 45) return { label: "HIGH", cls: "high" };
+  if (g >= 35) return { label: "MOD", cls: "mod" };
+  return { label: "LOW", cls: "low" };
+}
+
+function computePeakInWindow(hourly, windowHours){
+  const times = hourly?.times || [];
+  const gusts = hourly?.wind_gusts || [];
+  const dirs  = hourly?.wind_direction || [];
+
+  const n = Math.min(windowHours, gusts.length);
+  let peak = -Infinity;
+  let idx = -1;
+
+  for (let i = 0; i < n; i++){
+    const g = gusts[i];
+    if (g == null) continue;
+    if (g > peak){
+      peak = g;
+      idx = i;
+    }
+  }
+
+  if (idx < 0) return null;
+
+  return {
+    peakGust: gusts[idx],
+    timeISO: times[idx],
+    directionDeg: dirs[idx]
+  };
+}
+function renderWindRiskTiles(hourly){
+  const host = document.getElementById("windRiskTiles");
+  if (!host) return;
+
+  const windows = [12, 24, 36, 48];
+
+  const html = windows.map(w => {
+    const peak = computePeakInWindow(hourly, w);
+    if (!peak){
+      return `<div class="risk-tile">
+        <div class="kicker">Next ${w}h</div>
+        <div class="big">—</div>
+        <div class="sub">No data</div>
+      </div>`;
+    }
+
+    const when = new Date(peak.timeISO);
+    const timeStr = isNaN(when.getTime())
+      ? ""
+      : when.toLocaleString("en-US", { weekday: "short", hour: "numeric" });
+
+    const compass = degToCompass(peak.directionDeg);
+    const risk = classifyGust(peak.peakGust);
+
+    return `<div class="risk-tile">
+      <div class="kicker">
+        Next ${w}h
+        <span class="badge ${risk.cls}">${risk.label}</span>
+      </div>
+      <div class="big">${peak.peakGust.toFixed(0)} mph</div>
+      <div class="sub">${timeStr} • ${peak.directionDeg.toFixed(0)}° ${compass}</div>
+    </div>`;
+  }).join("");
+
+  host.innerHTML = html;
+}
 
     function buildWindChart(times, speeds, gusts){
       const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour:"numeric" }));
@@ -895,7 +971,7 @@
           (hourly.wind_speed || []).slice(0, 48),
           (hourly.wind_gusts || []).slice(0, 48)
         );
-
+        renderWindRiskTiles(data.hourly);
         // Wind tab cards
         renderWindRisk(data);
 
