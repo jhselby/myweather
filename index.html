@@ -802,29 +802,36 @@ function computePeakInWindow(hourly, windowHours){
       if (!levelEl) return;
 
       const wr = data.wind_risk;
+      const windowSelect = document.getElementById("riskWindowSelect");
+      const hours = parseInt(windowSelect?.value || "12", 10);
+       const peak = computePeakInWindow(data.hourly, hours);
+      if (!peak) {
+        levelEl.textContent = "--";
+        peakEl.textContent = "-- mph";
+        dirEl.textContent = "--";
+        expEl.textContent = "--";
+        impEl.textContent = "-- mph";
+        noteEl.textContent = "No hourly wind data yet.";
+  return;
+}
+
       const peakTime = data.derived?.wind_peak_time;
-      
       const peakEl = document.getElementById("windRiskPeak");
       const dirEl = document.getElementById("windRiskDir");
       const expEl = document.getElementById("windRiskExposed");
       const impEl = document.getElementById("windRiskImpact");
       const noteEl = document.getElementById("windRiskNote");
 
-      if (!wr){
-        levelEl.textContent = "--";
-        peakEl.textContent = "-- mph";
-        dirEl.textContent = "--";
-        expEl.textContent = "--";
-        impEl.textContent = "-- mph";
-        noteEl.textContent = "No wind_risk block found in JSON yet.";
-        return;
-      }
+      const risk = classifyGust(peak.peakGust);
 
-      levelEl.textContent = wr.level ?? "--";
-      peakEl.textContent = (wr.peak_gust_mph ?? "--") + " mph";
-      dirEl.textContent = degreesToCompass(wr.direction_deg);
-      expEl.textContent = wr.exposed ? "✅ Yes" : "❌ No";
-      impEl.textContent = (wr.impact_gust_mph ?? "--") + " mph";
+levelEl.textContent = risk.label ?? "--";
+peakEl.textContent = `${Math.round(peak.peakGust)} mph`;
+dirEl.textContent = `${Math.round(peak.directionDeg)}° ${degToCompass(peak.directionDeg)}`;
+
+// keep your existing exposed/impact logic for now if you want:
+expEl.textContent = "--";
+impEl.textContent = "-- mph";
+noteEl.textContent = "";
 
       const src = wr.source ? `Source: ${wr.source}` : "";
       const t = peakTime ? `Peak time: ${fmtLocal(peakTime)}` : "";
