@@ -457,22 +457,72 @@ def process_data(open_meteo, pws, tides, alerts, source_meta):
             elif trend < -0.6:
                 label = "Falling"
             weather_data["derived"] = {"pressure_trend": label, "pressure_trend_hpa_2h": round(trend, 1)}
-        
+
         # -----------------------------
         # Wind Risk Model (House Impact)
+        # Uses PEAK gust over next 12 hours (more useful than instantaneous "current")
         # -----------------------------
-        gust = weather_data["current"].get("wind_gusts")
-        direction = weather_data["current"].get("wind_direction")
+        gust = None
+        direction = None
+        source = "unknown"
+        peak_window_hours = 12
 
+        hourly = weather_data.get("hourly", {}) or {}
+        hourly_gusts = hourly.get("wind_gusts", []) or []
+        hourly_dirs = hourly.get("wind_direction", []) or []
+        hourly_times = hourly.get("times", []) or []
+
+        lookahead = min(peak_window_hours, len(hourly_gusts), len(hourly_dirs))
+
+        def _safe_num(x):
+            try:
+                return float(x)
+            except Exception:
+                return None
+
+        if lookahead > 0:
+            # Find max gust index within lookahead window
+            best_i = None
+            best_g = -1.0
+            for i in range(lookahead):
+                g = _safe_num(hourly_gusts[i])
+                d = _safe_num(hourly_dirs[i])
+                if g is None or d is None:
+                    continue
+                if g > best_g:
+                    best_g = g
+                    best_i = i
+
+            if best_i is not None:
+                gust = float(hourly_gusts[best_i])
+                direction = int(round(float(hourly_dirs[best_i])))
+                source = "hourly_peak_next_12h"
+
+                # Optional: store the time of the peak gust, if available
+                if best_i < len(hourly_times):
+                    weather_data.setdefault("derived", {})
+                    weather_data["derived"]["wind_peak_time"] = hourly_times[best_i]
+
+        # Fallback: use current gust if hourly data wasn't usable
+        if gust is None or direction is None:
+            g0 = _safe_num(weather_data.get("current", {}).get("wind_gusts"))
+            d0 = _safe_num(weather_data.get("current", {}).get("wind_direction"))
+            if g0 is not None and d0 is not None:
+                gust = float(g0)
+                direction = int(round(float(d0)))
+                source = "current"
+
+        # Only compute wind_risk if we have both
         if gust is not None and direction is not None:
-            # Check if wind direction is in exposed sector
-            exposed = False
-            if EXPOSED_SECTOR_MIN <= direction <= EXPOSED_SECTOR_MAX:
-                exposed = True
+            # Normalize direction to 0..359
+            direction = direction % 360
+
+            # Exposed sector check (simple, non-wrapping sector)
+            exposed = (EXPOSED_SECTOR_MIN <= direction <= EXPOSED_SECTOR_MAX)
 
             impact_gust = gust * (EXPOSURE_MULTIPLIER if exposed else 1.0)
 
-            # Classify risk level
+            # Classify risk level based on *impact* gust
             level = "LOW"
             if impact_gust >= GUST_SEVERE:
                 level = "SEVERE"
@@ -488,8 +538,12 @@ def process_data(open_meteo, pws, tides, alerts, source_meta):
                 "peak_gust_mph": round(gust, 1),
                 "direction_deg": direction,
                 "exposed": exposed,
-                "impact_gust_mph": round(impact_gust, 1)
+                "impact_gust_mph": round(impact_gust, 1),
+                "window_hours": peak_window_hours,
+                "source": source
             }
+
+
     
     print("✓ Processing complete")
     return weather_data
