@@ -300,6 +300,20 @@
     width: 100% !important;
     height: 220px !important;
     }
+
+    /* Make 48-hour charts less “stretched” on wide screens */
+  @media (min-width: 900px) {
+  #tempChart, #windChart {
+    height: 320px !important;
+  }
+}
+
+/* Also helps iPhone landscape / tablet landscape */
+@media (orientation: landscape) and (max-width: 900px) {
+  #tempChart, #windChart {
+    height: 260px !important;
+  }
+}
   </style>
 </head>
 
