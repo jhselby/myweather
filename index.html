@@ -669,6 +669,16 @@
   const i = Math.round(((deg % 360) / 22.5)) % 16;
   return dirs[i];
 }
+const EXPOSURE_MULTIPLIER = 1.2;
+
+// Match your Python exposed sector (330..60) including wraparound
+function isExposedDir(directionDeg){
+  const d = ((directionDeg % 360) + 360) % 360;
+  const min = 330;
+  const max = 60;
+  if (min <= max) return (min <= d && d <= max);
+  return (d >= min) || (d <= max);
+}
 
 function classifyGust(g){
   if (g >= 55) return { label: "SEV", cls: "severe" };
@@ -838,9 +848,12 @@ if (wpNote) wpNote.textContent = `Wind Risk uses peak gust in the next ${hours} 
         return;
       }
 
-      const risk = classifyGust(peak.peakGust);
+      const exposed = isExposedDir(peak.directionDeg);
+      const impactGust = peak.peakGust * (exposed ? EXPOSURE_MULTIPLIER : 1.0);
+      const risk = classifyGust(impactGust);
+
       levelEl.textContent = risk.label ?? "--";
-      peakEl.textContent = `${Math.round(peak.peakGust)} mph`;
+      peakEl.textContent = `${Math.round(impactGust)} mph`;
       dirEl.textContent = `${Math.round(peak.directionDeg)}° ${degToCompass(peak.directionDeg)}`;
       timeEl.textContent = peak.timeISO ? fmtLocal(peak.timeISO) : "--";
       noteEl.textContent = `Peak gust over next ${hours}h (from hourly model).`;
