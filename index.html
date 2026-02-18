@@ -512,19 +512,19 @@
           <div class="card-title">Wind & Pressure (now)</div>
           <div class="row">
             <div class="label">Wind</div>
-            <div class="value" id="windNow">--</div>
+            <div class="value" id="windNowWind">--</div>
           </div>
           <div class="row">
             <div class="label">Gusts</div>
-            <div class="value" id="windGusts">--</div>
+            <div class="value" id="windGustsWind">--</div>
           </div>
           <div class="row">
             <div class="label">Pressure</div>
-            <div class="value" id="pressureNow">--</div>
+            <div class="value" id="pressureNowWind">--</div>
           </div>
           <div class="row">
             <div class="label">Trend (2h)</div>
-            <div class="value" id="pressureTrend">--</div>
+            <div class="value" id="pressureTrendWind">--</div>
           </div>
           <div class="small-note" id="windPressureNote"></div>
         </div>
@@ -924,18 +924,18 @@ function computePeakInWindow(hourly, windowHours){
         console.log("DEBUG cur =", cur);
         console.log("DEBUG windNow el =", document.getElementById("windNow"));
 
-        document.getElementById("windNow").textContent =
+        document.getElementById("windNowWind").textContent =
           (cur.wind_speed != null && cur.wind_direction != null)
             ? `${Math.round(cur.wind_speed)} mph • ${degreesToCompass(cur.wind_direction)}`
             : "--";
 
-        document.getElementById("windGusts").textContent =
+        document.getElementById("windGustsWind").textContent =
           (cur.wind_gusts != null) ? `${Math.round(cur.wind_gusts)} mph` : "--";
 
-        document.getElementById("pressureNow").textContent =
+        document.getElementById("pressureNowWind").textContent =
           (cur.pressure != null) ? `${cur.pressure.toFixed(1)} hPa` : "--";
 
-        document.getElementById("pressureTrend").textContent =
+        document.getElementById("pressureTrendWind").textContent =
           delta ? `${trend} (${delta})` : trend;
 
         document.getElementById("windPressureNote").textContent =
