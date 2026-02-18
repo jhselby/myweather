@@ -833,6 +833,9 @@ function renderWindRiskTiles(hourly){
     }
 
     function renderWindRisk(data){
+      const levelEl = document.getElementById("windRiskLevel");
+      if (!levelEl) return;
+
       const wr = data.wind_risk;
       const peakTime = data.derived?.wind_peak_time;
 
