@@ -864,8 +864,9 @@ noteEl.textContent = "";
     fetch("weather_data.json?t=" + Date.now())
       .then(r => r.json())
       .then(data => {
-      window.__lastWeatherData = data;   // <-- ADD THIS LINE
-      // Header basics
+      window.__lastWeatherData = data;  
+     
+        // Header basics
       document.getElementById("location").textContent = data.location?.name ?? "Wyman Cove";
     
 
@@ -959,22 +960,31 @@ noteEl.textContent = "";
         // Wind tab cards
         renderWindRisk(data);
 
+        const riskSel = document.getElementById("riskWindowSelect");
+if (riskSel) {
+  riskSel.onchange = () => {
+    try { renderWindRisk(window.__lastWeatherData || data); }
+    catch (e) { console.error("WindRisk onchange failed:", e); }
+  };
+}
+
         console.log("DEBUG cur =", cur);
         console.log("DEBUG windNow el =", document.getElementById("windNow"));
 
-        document.getElementById("windNowWind").textContent =
-          (cur.wind_speed != null && cur.wind_direction != null)
-            ? `${Math.round(cur.wind_speed)} mph • ${degreesToCompass(cur.wind_direction)}`
-            : "--";
+        document.getElementById("windNow").textContent =
+  (cur.wind_speed != null && cur.wind_direction != null)
+    ? `${Math.round(cur.wind_speed)} mph • ${degreesToCompass(cur.wind_direction)}`
+    : "--";
 
-        document.getElementById("windGustsWind").textContent =
-          (cur.wind_gusts != null) ? `${Math.round(cur.wind_gusts)} mph` : "--";
+document.getElementById("windGusts").textContent =
+  (cur.wind_gusts != null) ? `${Math.round(cur.wind_gusts)} mph` : "--";
 
-        document.getElementById("pressureNowWind").textContent =
-          (cur.pressure != null) ? `${cur.pressure.toFixed(1)} hPa` : "--";
+document.getElementById("pressureNow").textContent =
+  (cur.pressure != null) ? `${cur.pressure.toFixed(1)} hPa` : "--";
 
-        document.getElementById("pressureTrendWind").textContent =
-          delta ? `${trend} (${delta})` : trend;
+document.getElementById("pressureTrend").textContent =
+  delta ? `${trend} (${delta})` : trend;
+
 
         document.getElementById("windPressureNote").textContent =
           "Wind Risk uses peak gust in the next 12 hours from the model + your exposure multiplier.";
