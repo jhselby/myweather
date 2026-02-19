@@ -252,7 +252,7 @@ def fetch_tides():
     url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
     today = datetime.now()
     begin_date = today.strftime("%Y%m%d")
-    end_date = (today + timedelta(days=1)).strftime("%Y%m%d")
+    end_date = (today + timedelta(days=2)).strftime("%Y%m%d")
 
     params = {
         "begin_date": begin_date,
@@ -278,6 +278,8 @@ def fetch_tides():
             meta["status"] = "ok"
             return [], meta
 
+        # Detect all local highs and lows without hardcoded height thresholds.
+        # A local extremum is any point higher (or lower) than both neighbors.
         for i in range(1, len(preds) - 1):
             prev_h = safe_float(preds[i - 1].get("v"))
             curr_h = safe_float(preds[i].get("v"))
@@ -285,17 +287,18 @@ def fetch_tides():
             if prev_h is None or curr_h is None or next_h is None:
                 continue
 
-            # local max high tide
-            if curr_h > prev_h and curr_h > next_h and curr_h > 7.0:
-                time_str = preds[i]["t"].split()[1]
-                tides.append({"time": time_str, "height": curr_h, "type": "H"})
+            t_parts = preds[i]["t"].split()
+            date_str = t_parts[0]   # YYYY-MM-DD
+            time_str = t_parts[1]   # HH:MM
 
-            # local min low tide
-            elif curr_h < prev_h and curr_h < next_h and curr_h < 3.0:
-                time_str = preds[i]["t"].split()[1]
-                tides.append({"time": time_str, "height": curr_h, "type": "L"})
+            if curr_h > prev_h and curr_h > next_h:
+                tides.append({"date": date_str, "time": time_str,
+                               "height": round(curr_h, 3), "type": "H"})
+            elif curr_h < prev_h and curr_h < next_h:
+                tides.append({"date": date_str, "time": time_str,
+                               "height": round(curr_h, 3), "type": "L"})
 
-            if len(tides) >= 4:
+            if len(tides) >= 8:
                 break
 
         meta["status"] = "ok"
