@@ -364,8 +364,8 @@
   border: 1px solid rgba(255,255,255,0.15);
 }
 
-.badge.low          { background: rgba(160,160,160,0.18); }
-.badge.noticeable   { background: rgba(100,180,255,0.22); }
+.badge.calm         { background: rgba(160,160,160,0.18); }
+.badge.breezy       { background: rgba(100,180,255,0.22); }
 .badge.notable      { background: rgba(255,170,0,0.22); }
 .badge.significant  { background: rgba(255,80,80,0.25); }
 .badge.severe       { background: rgba(200,60,255,0.30); }
@@ -480,15 +480,16 @@
     <section id="windView" style="display:none;">
       <div class="grid">
 
-        <!-- Window selector — applies to both cards -->
-        <div class="col-12" style="display:flex;align-items:center;gap:10px;padding:4px 2px 0;">
-          <span style="color:rgba(255,255,255,0.6);font-size:0.9rem;font-weight:800;">Forecast window:</span>
-          <select id="riskWindowSelect" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.9);border-radius:999px;padding:6px 12px;font-weight:800;font-size:0.85rem;">
+        <!-- Window selector — full width bar above both cards -->
+        <div class="card col-12" style="padding:10px 14px;display:flex;align-items:center;gap:12px;">
+          <span style="color:rgba(255,255,255,0.65);font-size:0.88rem;font-weight:800;letter-spacing:0.2px;">Forecast window</span>
+          <select id="riskWindowSelect" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);border-radius:999px;padding:5px 12px;font-weight:800;font-size:0.85rem;cursor:pointer;">
             <option value="12">12h</option>
             <option value="24">24h</option>
             <option value="36">36h</option>
             <option value="48">48h</option>
           </select>
+          <span style="color:rgba(255,255,255,0.38);font-size:0.82rem;margin-left:4px;">applies to both panels</span>
         </div>
 
         <!-- Gust Worry -->
@@ -721,8 +722,8 @@
       if (score >= WORRY_SEVERE)      return { label: "SEVERE",      cls: "severe"      };
       if (score >= WORRY_SIGNIFICANT) return { label: "SIGNIFICANT", cls: "significant" };
       if (score >= WORRY_NOTABLE)     return { label: "NOTABLE",     cls: "notable"     };
-      if (score >= WORRY_NOTICEABLE)  return { label: "NOTICEABLE",  cls: "noticeable"  };
-      return                                 { label: "LOW",          cls: "low"         };
+      if (score >= WORRY_NOTICEABLE)  return { label: "BREEZY",      cls: "breezy"      };
+      return                                 { label: "CALM",         cls: "calm"        };
     }
 
     function computePeakWorry(hourly, windowHours, useGusts) {
@@ -1401,8 +1402,8 @@
   border: 1px solid rgba(255,255,255,0.15);
 }
 
-.badge.low          { background: rgba(160,160,160,0.18); }
-.badge.noticeable   { background: rgba(100,180,255,0.22); }
+.badge.calm         { background: rgba(160,160,160,0.18); }
+.badge.breezy       { background: rgba(100,180,255,0.22); }
 .badge.notable      { background: rgba(255,170,0,0.22); }
 .badge.significant  { background: rgba(255,80,80,0.25); }
 .badge.severe       { background: rgba(200,60,255,0.30); }
