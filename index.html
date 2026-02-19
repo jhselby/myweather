@@ -11,6 +11,7 @@
 
   <title>Wyman Cove Weather</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
 
   <style>
     :root{
@@ -610,6 +611,54 @@
           </div>
         </div>
 
+        <!-- Moon — full width -->
+        <div class="card col-12">
+          <div class="card-title" id="moonCardTitle">&#127769; Moon</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+
+            <!-- Phase column -->
+            <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
+              <div style="font-size:3.5rem;line-height:1;margin-bottom:6px;" id="moonEmoji">&#127769;</div>
+              <div style="font-weight:900;font-size:1rem;color:rgba(255,255,255,0.9);margin-bottom:4px;" id="moonPhaseName">--</div>
+              <div style="font-size:0.88rem;color:rgba(255,255,255,0.6);font-weight:800;" id="moonIllumination">-- % illuminated</div>
+            </div>
+
+            <!-- Rise / Set column -->
+            <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
+              <div class="row">
+                <div class="label">Moonrise</div>
+                <div class="value" id="moonrise">--</div>
+              </div>
+              <div class="row">
+                <div class="label">Moonset</div>
+                <div class="value" id="moonset">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label">Next Full Moon</div>
+                <div class="value" id="nextFullMoon">--</div>
+              </div>
+            </div>
+
+            <!-- Position column -->
+            <div style="padding-left:16px;">
+              <div class="row">
+                <div class="label">Direction</div>
+                <div class="value" id="moonAzimuth">--</div>
+              </div>
+              <div class="row">
+                <div class="label">Altitude</div>
+                <div class="value" id="moonAltitude">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label">Visible</div>
+                <div class="value" id="moonVisible">--</div>
+              </div>
+            </div>
+
+          </div>
+          <div class="small-note" id="moonNote" style="margin-top:10px;"></div>
+        </div>
+
       </div>
     </section>
   </div>
@@ -917,6 +966,100 @@
     }
 
     // ======================================================
+    // Moon (SunCalc)
+    // ======================================================
+    const HOME_LAT = 42.5014;
+    const HOME_LON = -70.8750;
+
+    const MOON_PHASES = [
+      { name: "New Moon",        emoji: "\u{1F311}", min: 0,     max: 0.025 },
+      { name: "Waxing Crescent", emoji: "\u{1F312}", min: 0.025, max: 0.235 },
+      { name: "First Quarter",   emoji: "\u{1F313}", min: 0.235, max: 0.265 },
+      { name: "Waxing Gibbous",  emoji: "\u{1F314}", min: 0.265, max: 0.485 },
+      { name: "Full Moon",       emoji: "\u{1F315}", min: 0.485, max: 0.515 },
+      { name: "Waning Gibbous",  emoji: "\u{1F316}", min: 0.515, max: 0.735 },
+      { name: "Last Quarter",    emoji: "\u{1F317}", min: 0.735, max: 0.765 },
+      { name: "Waning Crescent", emoji: "\u{1F318}", min: 0.765, max: 0.975 },
+      { name: "New Moon",        emoji: "\u{1F311}", min: 0.975, max: 1.0   },
+    ];
+
+    function getMoonPhase(fraction) {
+      return MOON_PHASES.find(p => fraction >= p.min && fraction < p.max) || MOON_PHASES[0];
+    }
+
+    function fmtTime(date) {
+      if (!date || isNaN(date.getTime())) return "--";
+      return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+    }
+
+    function azimuthToSky(azRad) {
+      const d = ((azRad * 180 / Math.PI) + 360) % 360;
+      const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+      const compass = dirs[Math.round(d / 22.5) % 16];
+      return { deg: Math.round(d), compass };
+    }
+
+    function altitudeDescription(altRad) {
+      const deg = Math.round(altRad * 180 / Math.PI);
+      let text;
+      if (deg < 0)  text = "Below horizon";
+      else if (deg < 10) text = "Just above horizon";
+      else if (deg < 30) text = "Low in sky";
+      else if (deg < 60) text = "Mid sky";
+      else               text = "High overhead";
+      return { deg, text };
+    }
+
+    function daysUntilNextFullMoon() {
+      const now = new Date();
+      let prev = SunCalc.getMoonIllumination(now).phase;
+      for (let d = 1; d <= 30; d++) {
+        const candidate = new Date(now.getTime() + d * 86400000);
+        const phase = SunCalc.getMoonIllumination(candidate).phase;
+        if (prev < 0.5 && phase >= 0.5) return d;
+        prev = phase;
+      }
+      return null;
+    }
+
+    function renderMoon() {
+      if (typeof SunCalc === "undefined") {
+        document.getElementById("moonNote").textContent = "SunCalc library not loaded.";
+        return;
+      }
+      const now   = new Date();
+      const illum = SunCalc.getMoonIllumination(now);
+      const times = SunCalc.getMoonTimes(now, HOME_LAT, HOME_LON);
+      const pos   = SunCalc.getMoonPosition(now, HOME_LAT, HOME_LON);
+
+      const phase = getMoonPhase(illum.phase);
+      document.getElementById("moonEmoji").textContent        = phase.emoji;
+      document.getElementById("moonPhaseName").textContent    = phase.name;
+      document.getElementById("moonIllumination").textContent = Math.round(illum.fraction * 100) + "% illuminated";
+      document.getElementById("moonCardTitle").innerHTML      = phase.emoji + " Moon — " + phase.name;
+
+      document.getElementById("moonrise").textContent =
+        times.rise ? fmtTime(times.rise) : (times.alwaysUp ? "Up all night" : "Doesn't rise today");
+      document.getElementById("moonset").textContent =
+        times.set  ? fmtTime(times.set)  : (times.alwaysDown ? "Below horizon all day" : "--");
+
+      const daysToFull = daysUntilNextFullMoon();
+      document.getElementById("nextFullMoon").textContent =
+        daysToFull === null ? "--" :
+        daysToFull === 0    ? "Tonight" :
+        daysToFull === 1    ? "Tomorrow" :
+        "In " + daysToFull + " days";
+
+      const az  = azimuthToSky(pos.azimuth);
+      const alt = altitudeDescription(pos.altitude);
+      document.getElementById("moonAzimuth").textContent  = az.deg + "\u00b0 " + az.compass;
+      document.getElementById("moonAltitude").textContent = alt.deg + "\u00b0 \u2014 " + alt.text;
+      document.getElementById("moonVisible").textContent  = alt.deg >= 0 ? "Yes" : "No (below horizon)";
+      document.getElementById("moonNote").textContent     =
+        "Position calculated for " + now.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) + " local time.";
+    }
+
+    // ======================================================
     // Boot: load data and populate all views
     // ======================================================
     document.getElementById("pageLoaded").textContent =
@@ -1043,6 +1186,9 @@
           const h = Math.floor(mins / 60), m = mins % 60;
           document.getElementById("daylight").textContent = `${h}h ${m}m`;
         }
+
+        // Moon
+        renderMoon();
       })
       .catch(err => {
         console.error(err);
