@@ -1,36 +1,36 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-02-19T12:41:48.550788Z",
+  "generated_at": "2026-02-19T12:51:41.069013Z",
   "location": {
     "name": "Wyman Cove, Marblehead MA",
     "coordinates": {
       "lat": 42.5014,
       "lon": -70.875
     },
-    "updated": "2026-02-19T12:41:48.550788Z"
+    "updated": "2026-02-19T12:51:41.069013Z"
   },
   "sources": {
     "open_meteo": {
       "status": "ok",
-      "updated_at": "2026-02-19T12:41:44.852979Z",
+      "updated_at": "2026-02-19T12:51:37.047425Z",
       "error": null,
       "age_minutes": 0.1
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-02-19T12:41:45.502772Z",
+      "updated_at": "2026-02-19T12:51:37.632842Z",
       "error": null,
       "age_minutes": 0.1
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-02-19T12:41:47.134599Z",
+      "updated_at": "2026-02-19T12:51:39.811673Z",
       "error": null,
       "age_minutes": 0.0
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-02-19T12:41:47.558611Z",
+      "updated_at": "2026-02-19T12:51:40.082786Z",
       "error": null,
       "age_minutes": 0.0
     }
@@ -47,15 +47,15 @@
     }
   ],
   "current": {
-    "time": "2026-02-19T07:30",
-    "temperature": 27.9,
-    "feels_like": 20.4,
-    "humidity": 69,
-    "pressure": 1018.2,
-    "wind_speed": 4.9,
-    "wind_direction": 309,
-    "wind_gusts": 10.3,
-    "cloud_cover": 1,
+    "time": "2026-02-19T07:45",
+    "temperature": 28.6,
+    "feels_like": 21.0,
+    "humidity": 71,
+    "pressure": 1018.7,
+    "wind_speed": 5.5,
+    "wind_direction": 333,
+    "wind_gusts": 11.9,
+    "cloud_cover": 2,
     "precipitation": 0.0,
     "weather_code": 0,
     "condition": "Clear",
@@ -996,12 +996,12 @@
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-02-19T12:41:47.132277",
+    "updated": "2026-02-19T12:51:39.809674",
     "temperature": 30.0,
     "stale": false
   },
   "hyperlocal": {
-    "bias_temp": 2.1,
+    "bias_temp": 1.4,
     "corrected_temp": 30.0
   },
   "derived": {
@@ -1010,12 +1010,22 @@
     "wind_peak_time": "2026-02-19T09:00"
   },
   "wind_risk": {
-    "level": "LOW",
-    "peak_gust_mph": 12.8,
-    "direction_deg": 5,
-    "exposed": true,
-    "impact_gust_mph": 15.4,
     "window_hours": 12,
-    "source": "hourly_peak_next_12h"
+    "gust": {
+      "peak_mph": 12.8,
+      "direction_deg": 5,
+      "exposure_factor": 1.0,
+      "worry_score": 12.8,
+      "level": "NOTABLE",
+      "peak_time": "2026-02-19T09:00"
+    },
+    "sustained": {
+      "peak_mph": 8.3,
+      "direction_deg": 5,
+      "exposure_factor": 1.0,
+      "worry_score": 8.3,
+      "level": "NOTICEABLE",
+      "peak_time": "2026-02-19T09:00"
+    }
   }
 }
