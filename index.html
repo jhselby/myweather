@@ -587,28 +587,68 @@
     <section id="almanacView" style="display:none;">
       <div class="grid">
 
-        <!-- Tides -->
-        <div class="card col-6">
+        <!-- Tides full width -->
+        <div class="card col-12">
           <div class="card-title">&#127754; Tides &#8212; Salem Harbor</div>
-          <div class="tide-grid" id="tideGrid"></div>
+          <div id="tideGrid"></div>
           <div class="small-note" id="nextTideNote"></div>
         </div>
 
-        <!-- Sun -->
-        <div class="card col-6">
-          <div class="card-title">&#9728; Sun</div>
-          <div class="row">
-            <div class="label">Sunrise</div>
-            <div class="value" id="sunrise">--</div>
+        <!-- Sun full width, 3-column -->
+        <div class="card col-12">
+          <div class="card-title" id="sunCardTitle">&#9728;&#65039; Sun</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+
+            <!-- Summary column -->
+            <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
+              <div style="font-size:3.5rem;line-height:1;margin-bottom:6px;" id="sunEmoji">&#9728;&#65039;</div>
+              <div style="font-weight:900;font-size:1rem;color:rgba(255,255,255,0.9);margin-bottom:4px;" id="sunStatus">--</div>
+              <div style="font-size:0.88rem;color:rgba(255,255,255,0.6);font-weight:800;" id="daylight">-- daylight</div>
+              <div style="font-size:0.85rem;color:rgba(255,255,255,0.5);margin-top:6px;" id="solarNoonLabel">Solar noon: --</div>
+            </div>
+
+            <!-- Times column -->
+            <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
+              <div class="row">
+                <div class="label">Sunrise</div>
+                <div class="value" id="sunrise">--</div>
+              </div>
+              <div class="row">
+                <div class="label">Sunset</div>
+                <div class="value" id="sunset">--</div>
+              </div>
+              <div class="row">
+                <div class="label">Civil Dawn</div>
+                <div class="value" id="civilDawn">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label">Civil Dusk</div>
+                <div class="value" id="civilDusk">--</div>
+              </div>
+            </div>
+
+            <!-- Position column -->
+            <div style="padding-left:16px;">
+              <div class="row">
+                <div class="label">Direction</div>
+                <div class="value" id="sunAzimuth">--</div>
+              </div>
+              <div class="row">
+                <div class="label">Altitude</div>
+                <div class="value" id="sunAltitude">--</div>
+              </div>
+              <div class="row">
+                <div class="label">Golden Hour AM</div>
+                <div class="value" id="goldenHourAM">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label">Golden Hour PM</div>
+                <div class="value" id="goldenHourPM">--</div>
+              </div>
+            </div>
+
           </div>
-          <div class="row">
-            <div class="label">Sunset</div>
-            <div class="value" id="sunset">--</div>
-          </div>
-          <div class="row">
-            <div class="label">Daylight</div>
-            <div class="value" id="daylight">--</div>
-          </div>
+          <div class="small-note" id="sunNote" style="margin-top:10px;"></div>
         </div>
 
         <!-- Moon — full width -->
@@ -889,17 +929,77 @@
         if (note) note.textContent = "No tide data available.";
         return;
       }
-      tides.slice(0, 4).forEach(t => {
-        const div = document.createElement("div");
-        div.className = "tide-item";
-        const type = t.type === "H" ? "High" : "Low";
-        div.innerHTML = `
-          <div class="tide-type">${type}</div>
-          <div class="tide-time">${t.time}</div>
-          <div class="tide-height">${t.height ?? "--"} ft</div>`;
-        grid.appendChild(div);
+
+      // Find next tide event (first one whose time is in the future)
+      const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
+      const todayStr = new Date().toISOString().split("T")[0];
+      let nextIdx = -1;
+      for (let i = 0; i < tides.length; i++) {
+        const t = tides[i];
+        const tDate = t.date || todayStr;
+        const [th, tm] = (t.time || "00:00").split(":").map(Number);
+        const tMins = th * 60 + tm;
+        if (tDate > todayStr || (tDate === todayStr && tMins >= nowMins)) {
+          nextIdx = i;
+          break;
+        }
+      }
+
+      // Group by date
+      const byDate = {};
+      tides.forEach(t => {
+        const d = t.date || todayStr;
+        if (!byDate[d]) byDate[d] = [];
+        byDate[d].push(t);
       });
-      if (note) note.textContent = "Salem Harbor station (8442645) &#8212; harmonic predictions.";
+
+      const today  = new Date().toISOString().split("T")[0];
+      const tmrw   = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+      let tideIdx = 0;
+      Object.keys(byDate).sort().forEach(dateKey => {
+        // Day header
+        const label = dateKey === today  ? "Today" :
+                      dateKey === tmrw   ? "Tomorrow" :
+                      new Date(dateKey + "T12:00:00").toLocaleDateString("en-US",
+                        { weekday:"long", month:"short", day:"numeric" });
+        const hdr = document.createElement("div");
+        hdr.style.cssText = "font-size:0.8rem;font-weight:900;color:rgba(255,255,255,0.45);" +
+                            "letter-spacing:0.8px;text-transform:uppercase;margin:12px 0 6px;";
+        hdr.textContent = label;
+        grid.appendChild(hdr);
+
+        // Tile row for this day
+        const row = document.createElement("div");
+        row.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px;";
+
+        byDate[dateKey].forEach(t => {
+          const isNext = (tideIdx === nextIdx);
+          const type   = t.type === "H" ? "High" : "Low";
+          const tile   = document.createElement("div");
+          tile.className = "tide-item";
+          if (isNext) {
+            tile.style.cssText = "border:1px solid rgba(100,200,255,0.45);" +
+                                  "background:rgba(100,200,255,0.08);border-radius:10px;";
+          }
+          tile.innerHTML =
+            '<div class="tide-type">' + (isNext ? "&#9654; " : "") + type + '</div>' +
+            '<div class="tide-time">' + t.time + '</div>' +
+            '<div class="tide-height">' + (t.height ?? "--") + ' ft</div>';
+          row.appendChild(tile);
+          tideIdx++;
+        });
+
+        // Pad to 4 columns if fewer than 4 events on this day
+        while (byDate[dateKey].length < 4) {
+          row.appendChild(document.createElement("div"));
+          byDate[dateKey].push({});  // dummy to stop loop
+        }
+
+        grid.appendChild(row);
+      });
+
+      if (note) note.textContent = "Salem Harbor (8442645) — harmonic predictions. ▶ = next tide.";
     }
 
     function renderForecast(daily) {
@@ -963,6 +1063,61 @@
 
       const noteEl = document.getElementById("gustNote");
       if (noteEl) noteEl.textContent = `Peak gust worry over next ${hours}h. Score = gust × exposure¹·5.`;
+    }
+
+    // ======================================================
+    // Sun (SunCalc)
+    // ======================================================
+    function renderSun(daily) {
+      if (typeof SunCalc === "undefined") return;
+
+      const now  = new Date();
+      const pos  = SunCalc.getPosition(now, HOME_LAT, HOME_LON);
+      const times= SunCalc.getTimes(now, HOME_LAT, HOME_LON);
+
+      // Altitude and status
+      const altDeg = Math.round(pos.altitude * 180 / Math.PI);
+      let status, emoji;
+      if (altDeg >= 20)       { status = "Above horizon";        emoji = "\u2600\uFE0F"; }
+      else if (altDeg >= 5)   { status = "Low in sky";           emoji = "\uD83C\uDF05"; }
+      else if (altDeg >= 0)   { status = "Just above horizon";   emoji = "\uD83C\uDF05"; }
+      else if (altDeg >= -6)  { status = "Civil twilight";       emoji = "\uD83C\uDF06"; }
+      else if (altDeg >= -12) { status = "Nautical twilight";    emoji = "\uD83C\uDF06"; }
+      else if (altDeg >= -18) { status = "Astronomical twilight";emoji = "\uD83C\uDF11"; }
+      else                    { status = "Below horizon (night)"; emoji = "\uD83C\uDF11"; }
+
+      document.getElementById("sunEmoji").textContent   = emoji;
+      document.getElementById("sunStatus").textContent  = status;
+      document.getElementById("sunCardTitle").innerHTML = emoji + " Sun \u2014 " + status;
+
+      // Azimuth
+      const azDeg = Math.round(((pos.azimuth * 180 / Math.PI) + 360) % 360);
+      const dirs  = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+      const compass = dirs[Math.round(azDeg / 22.5) % 16];
+      document.getElementById("sunAzimuth").textContent  = azDeg + "\u00b0 " + compass;
+      document.getElementById("sunAltitude").textContent = altDeg + "\u00b0";
+
+      // Twilight times from SunCalc
+      document.getElementById("civilDawn").textContent =
+        fmtTime(times.dawn)    || "--";
+      document.getElementById("civilDusk").textContent =
+        fmtTime(times.dusk)    || "--";
+
+      // Golden hour
+      document.getElementById("goldenHourAM").textContent =
+        (times.goldenHourEnd ? fmtTime(times.sunrise) + "\u2013" + fmtTime(times.goldenHourEnd) : "--");
+      document.getElementById("goldenHourPM").textContent =
+        (times.goldenHour    ? fmtTime(times.goldenHour) + "\u2013" + fmtTime(times.sunset)      : "--");
+
+      // Solar noon from SunCalc (more precise than midpoint calc)
+      document.getElementById("solarNoonLabel").textContent =
+        "Solar noon: " + (fmtTime(times.solarNoon) || "--");
+
+      // Daylight from the daily JSON (already computed in boot)
+      // Note: sunNote shows calculation time
+      document.getElementById("sunNote").textContent =
+        "Position calculated for " +
+        now.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) + " local time.";
     }
 
     // ======================================================
@@ -1184,8 +1339,11 @@
           const [sh, sm] = set.split(":").map(Number);
           const mins = (sh * 60 + sm) - (rh * 60 + rm);
           const h = Math.floor(mins / 60), m = mins % 60;
-          document.getElementById("daylight").textContent = `${h}h ${m}m`;
+          document.getElementById("daylight").textContent = `${h}h ${m}m daylight`;
         }
+
+        // Sun
+        renderSun(daily);
 
         // Moon
         renderMoon();
@@ -1196,364 +1354,7 @@
       });
   </script>
 
-  <style>
-    :root{
-      --bg: #0b1220;
-      --card: rgba(255, 255, 255, 0.06);
-      --card2: rgba(255, 255, 255, 0.09);
-      --border: rgba(255, 255, 255, 0.12);
-      --text: rgba(255,255,255,0.92);
-      --muted: rgba(255,255,255,0.68);
-      --muted2: rgba(255,255,255,0.55);
-      --accent: rgba(255,255,255,0.18);
-      --shadow: 0 10px 28px rgba(0,0,0,0.35);
-    }
-
-    body {
-      margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
-      background: radial-gradient(1200px 600px at 20% -10%, rgba(84, 150, 255, 0.25), transparent 55%),
-                  radial-gradient(900px 500px at 80% 0%, rgba(90, 255, 190, 0.12), transparent 55%),
-                  var(--bg);
-      color: var(--text);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
-
-    .container {
-      max-width: 980px;
-      margin: 0 auto;
-      padding: 16px 14px 28px;
-    }
-
-    header {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 14px 14px 12px;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: rgba(255,255,255,0.05);
-      box-shadow: var(--shadow);
-      position: sticky;
-      top: 10px;
-      z-index: 50;
-      backdrop-filter: blur(10px);
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 1.25rem;
-      letter-spacing: 0.2px;
-      font-weight: 900;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .version-pill{
-      font-size: 0.78rem;
-      font-weight: 800;
-      color: rgba(255,255,255,0.78);
-      border: 1px solid rgba(255,255,255,0.18);
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.06);
-      white-space: nowrap;
-    }
-
-    .meta-row{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px 14px;
-      align-items: center;
-      color: var(--muted);
-      font-size: 0.92rem;
-    }
-
-    .meta-item{
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      white-space: nowrap;
-    }
-
-    .meta-label{
-      color: rgba(255,255,255,0.55);
-      font-weight: 800;
-      letter-spacing: 0.2px;
-    }
-
-    .meta-value{
-      color: rgba(255,255,255,0.86);
-      font-weight: 800;
-    }
-
-    .source-row{
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .source-pill{
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 10px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.05);
-      font-size: 0.82rem;
-      font-weight: 800;
-      color: rgba(255,255,255,0.86);
-    }
-    .source-pill .small{
-      font-weight: 800;
-      color: rgba(255,255,255,0.65);
-    }
-
-    .tabs{
-      margin-top: 6px;
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-
-    .tab{
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.92);
-      padding: 10px 14px;
-      border-radius: 999px;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-      transition: transform 0.06s ease, background 0.15s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .tab:active{ transform: scale(0.98); }
-    .tab.active{
-      background: rgba(255,255,255,0.18);
-      border-color: rgba(255,255,255,0.28);
-    }
-
-    .grid {
-      margin-top: 14px;
-      display: grid;
-      grid-template-columns: repeat(12, 1fr);
-      gap: 12px;
-    }
-
-    .card{
-      grid-column: span 6;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 14px 14px 12px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
-    }
-
-    .card.col-12{ grid-column: span 12; }
-    .card.col-6{ grid-column: span 6; }
-
-    .card-title{
-      font-weight: 900;
-      color: rgba(255,255,255,0.88);
-      font-size: 0.95rem;
-      letter-spacing: 0.2px;
-      margin-bottom: 10px;
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      align-items: baseline;
-    }
-
-    .small-note{
-      color: rgba(255,255,255,0.6);
-      font-size: 0.85rem;
-      line-height: 1.2rem;
-      margin-top: 8px;
-    }
-
-    .current-temp{
-      font-size: 3rem;
-      font-weight: 1000;
-      letter-spacing: -1px;
-      margin-top: 8px;
-    }
-
-    .temp-unit{
-      font-size: 1.25rem;
-      font-weight: 900;
-      color: rgba(255,255,255,0.7);
-      margin-left: 6px;
-    }
-
-    .feels-like{
-      margin-top: 2px;
-      font-size: 1rem;
-      color: rgba(255,255,255,0.76);
-      font-weight: 800;
-    }
-
-    .condition{
-      margin-top: 10px;
-      font-size: 1.05rem;
-      font-weight: 900;
-      color: rgba(255,255,255,0.86);
-    }
-
-    .row{
-      display: flex;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 7px 0;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      font-size: 0.95rem;
-    }
-    .row:last-child{ border-bottom: none; }
-
-    .label{
-      color: rgba(255,255,255,0.62);
-      font-weight: 800;
-    }
-    .value{
-      color: rgba(255,255,255,0.9);
-      font-weight: 900;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    .alert-banner{
-      background: rgba(255, 80, 80, 0.18);
-      border: 1px solid rgba(255, 80, 80, 0.30);
-      border-radius: 16px;
-      padding: 12px 14px;
-      margin-top: 12px;
-      box-shadow: 0 10px 24px rgba(0,0,0,0.25);
-    }
-    .alert-title{ font-weight: 1000; }
-    .alert-desc{ color: rgba(255,255,255,0.78); margin-top: 4px; }
-
-    .tide-grid{
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 10px;
-      margin-top: 8px;
-    }
-    .tide-item{
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      padding: 10px 10px;
-      background: rgba(255,255,255,0.05);
-    }
-    .tide-item .tide-type{
-      font-weight: 1000;
-      color: rgba(255,255,255,0.85);
-      margin-bottom: 2px;
-    }
-    .tide-item .tide-time{
-      font-weight: 900;
-      color: rgba(255,255,255,0.78);
-    }
-    .tide-item .tide-height{
-      font-weight: 900;
-      color: rgba(255,255,255,0.72);
-      font-size: 0.9rem;
-    }
-
-    canvas{
-      width: 100% !important;
-      height: 220px !important;
-    }
-
-    @media (max-width: 780px){
-      .card{ grid-column: span 12; }
-      canvas{ height: 240px !important; }
-      header{ position: relative; top: 0; }
-    }
-    /* --- iOS Chart Fix --- */
-    canvas {
-    display: block;  
-    }
-
-    #windChart {
-    width: 100% !important;
-    height: 220px !important;
-    }
-
-    /* Make 48-hour charts less “stretched” on wide screens */
-  @media (min-width: 900px) {
-  #tempPrecipChart, #windChart {
-    height: 420px !important;
-  }
-}
-
-/* Also helps iPhone landscape / tablet landscape */
-@media (orientation: landscape) and (max-width: 900px) {
-  #tempPrecipChart, #windChart {
-    height: 260px !important;
-  }
-}
-  /* --- Wind Risk tiles --- */
-.risk-tiles{
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
-  margin: 12px 0 14px 0;
-}
-
-@media (max-width: 780px){
-  .risk-tiles{
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.risk-tile{
-  border: 1px solid rgba(255,255,255,0.10);
-  background: rgba(255,255,255,0.04);
-  border-radius: 16px;
-  padding: 12px 12px 10px 12px;
-}
-
-.risk-tile .kicker{
-  font-weight: 700;
-  opacity: 0.85;
-  margin-bottom: 6px;
-}
-
-.risk-tile .big{
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.05;
-  margin-bottom: 4px;
-}
-
-.risk-tile .sub{
-  font-size: 13px;
-  opacity: 0.7;
-}
-
-/* Risk badge colors */
-.badge{
-  display: inline-block;
-  padding: 3px 9px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  margin-left: 6px;
-  border: 1px solid rgba(255,255,255,0.15);
-}
-
-.badge.calm         { background: rgba(160,160,160,0.18); }
-.badge.breezy       { background: rgba(100,180,255,0.22); }
-.badge.notable      { background: rgba(255,170,0,0.22); }
-.badge.significant  { background: rgba(255,80,80,0.25); }
-.badge.severe       { background: rgba(200,60,255,0.30); }
-  </style>
+  
 </head>
 
 </body>
