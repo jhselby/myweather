@@ -480,16 +480,20 @@
     <section id="windView" style="display:none;">
       <div class="grid">
 
+        <!-- Window selector — applies to both cards -->
+        <div class="col-12" style="display:flex;align-items:center;gap:10px;padding:4px 2px 0;">
+          <span style="color:rgba(255,255,255,0.6);font-size:0.9rem;font-weight:800;">Forecast window:</span>
+          <select id="riskWindowSelect" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:rgba(255,255,255,0.9);border-radius:999px;padding:6px 12px;font-weight:800;font-size:0.85rem;">
+            <option value="12">12h</option>
+            <option value="24">24h</option>
+            <option value="36">36h</option>
+            <option value="48">48h</option>
+          </select>
+        </div>
+
         <!-- Gust Worry -->
         <div class="card col-6">
-          <div class="card-title">&#127788; Gust Worry
-            <select id="riskWindowSelect">
-              <option value="12">12h</option>
-              <option value="24">24h</option>
-              <option value="36">36h</option>
-              <option value="48">48h</option>
-            </select>
-          </div>
+          <div class="card-title">&#127788; Gust Worry</div>
           <div class="row">
             <div class="label">Level</div>
             <div class="value" id="gustLevel">--</div>
@@ -880,7 +884,7 @@
       }
       const wl = worryLevel(peak.score);
       document.getElementById(ids.level).innerHTML =
-        `${wl.label} <span class="badge ${wl.cls}">${wl.label}</span>`;
+        `<span class="badge ${wl.cls}">${wl.label}</span>`;
       document.getElementById(ids.score).textContent   = peak.score.toFixed(1);
       document.getElementById(ids.peakSpd).textContent = `${Math.round(peak.speed)} mph`;
       document.getElementById(ids.dir).textContent     = toCompass(peak.directionDeg);
