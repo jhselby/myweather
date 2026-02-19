@@ -30,17 +30,36 @@ SCHEMA_VERSION = "1.1"
 PWS_CACHE_FILE = Path("last_pws.json")
 
 # -----------------------------
-# Wind Exposure Model (House-specific)
+# Wind Exposure Model (House-specific, 16 Indianhead Circle)
+#
+# Graduated exposure by direction. Values 0.0–1.0 reflect how exposed
+# the structure is to wind from that compass sector, accounting for:
+#   - Open water fetch to N/NW (Salem Harbor)
+#   - Low neck/cove exposure to WNW
+#   - Rising terrain (49–98 ft) providing shelter from SW/S/SE
+#
+# Each tuple: (min_bearing_inclusive, max_bearing_exclusive, exposure_factor)
 # -----------------------------
-EXPOSED_SECTOR_MIN = 310  # degrees
-EXPOSED_SECTOR_MAX = 60  # degrees
-EXPOSURE_MULTIPLIER = 1.2
+WIND_EXPOSURE_TABLE = [
+    (  0,  20, 1.00),   # N         full water fetch
+    ( 20,  60, 0.90),   # NNE–NE    open water, slight angle
+    ( 60,  90, 0.70),   # ENE       long water fetch, angled
+    ( 90, 130, 0.50),   # E–ESE     water fetch but oblique
+    (130, 165, 0.20),   # SE        land starts to shelter
+    (165, 200, 0.10),   # S–SSW     well protected, terrain rises
+    (200, 255, 0.05),   # SW        max protection: 49–98 ft terrain
+    (255, 285, 0.30),   # W–WSW     partial shelter from SW terrain
+    (285, 315, 0.70),   # WNW       low neck/cove, increasing exposure
+    (315, 360, 0.95),   # NW        open harbor + cold-air acceleration
+]
 
-# Gust thresholds (mph)
-GUST_NOTICEABLE = 25
-GUST_STRONG = 35
-GUST_HIGH = 45
-GUST_SEVERE = 55
+# Wind Worry Score = speed_mph * exposure_factor^1.5
+# Non-linear so speed matters much more on exposed sectors.
+# Worry thresholds (tuned to site observations):
+WORRY_NOTICEABLE  =  5   # may feel it
+WORRY_NOTABLE     = 12   # outdoor furniture, loose items
+WORRY_SIGNIFICANT = 20   # house shakes, structural concern
+WORRY_SEVERE      = 30   # exceptional event
 
 HEADERS_DEFAULT = {
     "User-Agent": "MyWeather/1.0 (github.com/jhselby/myweather)"
@@ -294,7 +313,7 @@ def fetch_nws_alerts():
     print("📡 Fetching NWS alerts...")
 
     url = "https://api.weather.gov/alerts/active"
-    params = {"point": f"{LAT},{LON}", "status": "actual", "message_type": "alert"}
+    params = {"point": f"{LAT},{LON}", "status": "actual"}
 
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
 
@@ -462,15 +481,42 @@ def process_data(open_meteo, pws, tides, alerts, source_meta):
         # Wind Risk Model (House Impact)
         # Uses PEAK gust over next 12 hours (more useful than instantaneous "current")
         # -----------------------------
-        gust = None
-        direction = None
-        source = "unknown"
-        peak_window_hours = 12
+        # -----------------------------
+        # Wind Risk Model (House Impact)
+        # Computes two sub-scores from hourly data over a rolling window:
+        #   gust      — peak gust in window (structural stress)
+        #   sustained — peak sustained wind in window (dock lines, outdoor use)
+        # Both use: worry_score = speed * exposure_factor^1.5
+        # -----------------------------
 
-        hourly = weather_data.get("hourly", {}) or {}
-        hourly_gusts = hourly.get("wind_gusts", []) or []
-        hourly_dirs = hourly.get("wind_direction", []) or []
-        hourly_times = hourly.get("times", []) or []
+        def get_exposure_factor(deg):
+            """Return 0.0–1.0 site exposure for wind from deg degrees."""
+            d = int(deg) % 360
+            for min_d, max_d, factor in WIND_EXPOSURE_TABLE:
+                if min_d <= max_d:
+                    if min_d <= d < max_d:
+                        return factor
+                else:
+                    if d >= min_d or d < max_d:
+                        return factor
+            return 0.5  # fallback
+
+        def worry_score(speed, exp_factor):
+            return round(speed * (exp_factor ** 1.5), 2)
+
+        def worry_level(score):
+            if score >= WORRY_SEVERE:      return "SEVERE"
+            if score >= WORRY_SIGNIFICANT: return "SIGNIFICANT"
+            if score >= WORRY_NOTABLE:     return "NOTABLE"
+            if score >= WORRY_NOTICEABLE:  return "NOTICEABLE"
+            return "LOW"
+
+        peak_window_hours = 12
+        hourly_h = weather_data.get("hourly", {}) or {}
+        hourly_gusts = hourly_h.get("wind_gusts", []) or []
+        hourly_speeds = hourly_h.get("wind_speed", []) or []
+        hourly_dirs   = hourly_h.get("wind_direction", []) or []
+        hourly_times  = hourly_h.get("times", []) or []
 
         lookahead = min(peak_window_hours, len(hourly_gusts), len(hourly_dirs))
 
@@ -480,72 +526,67 @@ def process_data(open_meteo, pws, tides, alerts, source_meta):
             except Exception:
                 return None
 
-        if lookahead > 0:
-            # Find max gust index within lookahead window
-            best_i = None
-            best_g = -1.0
-            for i in range(lookahead):
-                g = _safe_num(hourly_gusts[i])
-                d = _safe_num(hourly_dirs[i])
-                if g is None or d is None:
+        def find_peak(values, dirs, n):
+            """Return (value, direction_deg, time_iso, index) for max value in first n slots."""
+            best_val, best_dir, best_i = -1.0, None, None
+            for i in range(n):
+                v = _safe_num(values[i]) if i < len(values) else None
+                d = _safe_num(dirs[i])   if i < len(dirs)   else None
+                if v is None or d is None:
                     continue
-                if g > best_g:
-                    best_g = g
-                    best_i = i
+                if v > best_val:
+                    best_val, best_dir, best_i = v, d, i
+            if best_i is None:
+                return None, None, None
+            t = hourly_times[best_i] if best_i < len(hourly_times) else None
+            return best_val, best_dir, t
 
-            if best_i is not None:
-                gust = float(hourly_gusts[best_i])
-                direction = int(round(float(hourly_dirs[best_i])))
-                source = "hourly_peak_next_12h"
+        gust_val,  gust_dir,  gust_time  = find_peak(hourly_gusts,  hourly_dirs, lookahead)
+        sus_val,   sus_dir,   sus_time   = find_peak(hourly_speeds,  hourly_dirs, lookahead)
 
-                # Optional: store the time of the peak gust, if available
-                if best_i < len(hourly_times):
-                    weather_data.setdefault("derived", {})
-                    weather_data["derived"]["wind_peak_time"] = hourly_times[best_i]
+        # Fallback to current if hourly unavailable
+        if gust_val is None:
+            gust_val = _safe_num(weather_data.get("current", {}).get("wind_gusts"))
+            gust_dir = _safe_num(weather_data.get("current", {}).get("wind_direction"))
+            gust_time = None
+        if sus_val is None:
+            sus_val = _safe_num(weather_data.get("current", {}).get("wind_speed"))
+            sus_dir = _safe_num(weather_data.get("current", {}).get("wind_direction"))
+            sus_time = None
 
-        # Fallback: use current gust if hourly data wasn't usable
-        if gust is None or direction is None:
-            g0 = _safe_num(weather_data.get("current", {}).get("wind_gusts"))
-            d0 = _safe_num(weather_data.get("current", {}).get("wind_direction"))
-            if g0 is not None and d0 is not None:
-                gust = float(g0)
-                direction = int(round(float(d0)))
-                source = "current"
+        wind_risk = {"window_hours": peak_window_hours}
 
-        # Only compute wind_risk if we have both
-        if gust is not None and direction is not None:
-            # Normalize direction to 0..359
-            direction = direction % 360
-
-            # Exposed sector check (supports wraparound across north)
-            if EXPOSED_SECTOR_MIN <= EXPOSED_SECTOR_MAX:
-                exposed = (EXPOSED_SECTOR_MIN <= direction <= EXPOSED_SECTOR_MAX)
-            else:
-                exposed = (direction >= EXPOSED_SECTOR_MIN) or (direction <= EXPOSED_SECTOR_MAX)
-
-
-            impact_gust = gust * (EXPOSURE_MULTIPLIER if exposed else 1.0)
-
-            # Classify risk level based on *impact* gust
-            level = "LOW"
-            if impact_gust >= GUST_SEVERE:
-                level = "SEVERE"
-            elif impact_gust >= GUST_HIGH:
-                level = "HIGH"
-            elif impact_gust >= GUST_STRONG:
-                level = "STRONG"
-            elif impact_gust >= GUST_NOTICEABLE:
-                level = "NOTICEABLE"
-
-            weather_data["wind_risk"] = {
-                "level": level,
-                "peak_gust_mph": round(gust, 1),
-                "direction_deg": direction,
-                "exposed": exposed,
-                "impact_gust_mph": round(impact_gust, 1),
-                "window_hours": peak_window_hours,
-                "source": source
+        if gust_val is not None and gust_dir is not None:
+            gd = int(gust_dir) % 360
+            ef = get_exposure_factor(gd)
+            ws = worry_score(gust_val, ef)
+            wind_risk["gust"] = {
+                "peak_mph":        round(gust_val, 1),
+                "direction_deg":   gd,
+                "exposure_factor": round(ef, 2),
+                "worry_score":     ws,
+                "level":           worry_level(ws),
+                "peak_time":       gust_time,
             }
+            # Store peak gust time in derived for header display
+            if gust_time:
+                weather_data.setdefault("derived", {})["wind_peak_time"] = gust_time
+
+        if sus_val is not None and sus_dir is not None:
+            sd = int(sus_dir) % 360
+            ef = get_exposure_factor(sd)
+            ws = worry_score(sus_val, ef)
+            wind_risk["sustained"] = {
+                "peak_mph":        round(sus_val, 1),
+                "direction_deg":   sd,
+                "exposure_factor": round(ef, 2),
+                "worry_score":     ws,
+                "level":           worry_level(ws),
+                "peak_time":       sus_time,
+            }
+
+        if len(wind_risk) > 1:  # has at least one sub-object
+            weather_data["wind_risk"] = wind_risk
 
 
     

@@ -364,10 +364,11 @@
   border: 1px solid rgba(255,255,255,0.15);
 }
 
-.badge.low    { background: rgba(160,160,160,0.18); }
-.badge.mod    { background: rgba(255,170,0,0.22); }
-.badge.high   { background: rgba(255,80,80,0.25); }
-.badge.severe { background: rgba(200,60,255,0.25); }
+.badge.low          { background: rgba(160,160,160,0.18); }
+.badge.noticeable   { background: rgba(100,180,255,0.22); }
+.badge.notable      { background: rgba(255,170,0,0.22); }
+.badge.significant  { background: rgba(255,80,80,0.25); }
+.badge.severe       { background: rgba(200,60,255,0.30); }
   </style>
 </head>
 
@@ -376,7 +377,7 @@
     <header>
       <h1>
         ⚓ Wyman Cove Weather
-        <span class="version-pill" id="appVersion">v1.2</span>
+        <span class="version-pill" id="appVersion">v2.0</span>
       </h1>
 
       <div class="meta-row">
@@ -399,56 +400,50 @@
       <div class="source-row" id="sourceRow"></div>
 
       <nav class="tabs" role="tablist" aria-label="Views">
-        <button class="tab active" id="tabHome" role="tab" aria-selected="true" onclick="showTab('home')">Home</button>
+        <button class="tab active" id="tabWeather" role="tab" aria-selected="true" onclick="showTab('weather')">Weather</button>
         <button class="tab" id="tabWind" role="tab" aria-selected="false" onclick="showTab('wind')">Wind</button>
+        <button class="tab" id="tabAlmanac" role="tab" aria-selected="false" onclick="showTab('almanac')">Almanac</button>
       </nav>
     </header>
 
     <div id="alertsContainer"></div>
 
-    <!-- HOME VIEW -->
-    <section id="homeView">
+    <!-- WEATHER VIEW -->
+    <section id="weatherView">
       <div class="grid">
         <!-- Current Conditions -->
         <div class="card col-6">
           <div class="card-title">Current Conditions</div>
-          <div id="currentTemp" class="current-temp">--<span class="temp-unit">°F</span></div>
-          <div id="feelsLike" class="feels-like">Feels like --°F</div>
-          <div id="condition" class="condition">Loading…</div>
-        </div>
-
-        <!-- TIDE PANEL -->
-        <div class="card col-6">
-          <div class="card-title">🌊 Tides Today — Salem</div>
-          <div class="tide-grid" id="tideGrid"></div>
-          <div class="small-note" id="nextTideNote"></div>
+          <div id="currentTemp" class="current-temp">--<span class="temp-unit">&deg;F</span></div>
+          <div id="feelsLike" class="feels-like">Feels like --&deg;F</div>
+          <div id="condition" class="condition">Loading&hellip;</div>
         </div>
 
         <!-- Hyperlocal Comparison -->
         <div class="card col-6">
-          <div class="card-title">🏠 Hyperlocal Comparison</div>
+          <div class="card-title">&#127968; Hyperlocal Comparison</div>
           <div class="row">
             <div class="label">Model Temp</div>
-            <div class="value" id="modelTemp">--°F</div>
+            <div class="value" id="modelTemp">--&deg;F</div>
           </div>
           <div class="row">
             <div class="label">PWS Temp</div>
-            <div class="value" id="pwsTemp">--°F</div>
+            <div class="value" id="pwsTemp">--&deg;F</div>
           </div>
           <div class="row">
             <div class="label">Bias</div>
-            <div class="value" id="tempBias">--°F</div>
+            <div class="value" id="tempBias">--&deg;F</div>
           </div>
           <div class="row">
             <div class="label">Corrected</div>
-            <div class="value" id="correctedTemp">--°F</div>
+            <div class="value" id="correctedTemp">--&deg;F</div>
           </div>
           <div class="small-note" id="pwsNote"></div>
         </div>
 
         <!-- Today's Summary -->
         <div class="card col-6">
-          <div class="card-title">Today’s Summary</div>
+          <div class="card-title">Today&#39;s Summary</div>
           <div class="row">
             <div class="label">High / Low</div>
             <div class="value" id="hiLo">-- / --</div>
@@ -468,19 +463,6 @@
           <div class="small-note" id="todayNote"></div>
         </div>
 
-        <!-- Almanac -->
-        <div class="card col-6">
-          <div class="card-title">Almanac</div>
-          <div class="row">
-            <div class="label">Sunrise</div>
-            <div class="value" id="sunrise">--</div>
-          </div>
-          <div class="row">
-            <div class="label">Sunset</div>
-            <div class="value" id="sunset">--</div>
-          </div>
-        </div>
-
         <!-- 10-Day Forecast -->
         <div class="card col-6">
           <div class="card-title">10-Day Forecast</div>
@@ -489,18 +471,18 @@
 
         <!-- 48-Hour Temperature & Precipitation -->
         <div class="card col-12">
-          <div class="card-title">48-Hour Temperature & Precipitation</div>
+          <div class="card-title">48-Hour Temperature &amp; Precipitation</div>
           <canvas id="tempPrecipChart"></canvas>
         </div>
       </div>
     </section>
-
     <!-- WIND VIEW -->
     <section id="windView" style="display:none;">
       <div class="grid">
-        <!-- Wind Risk -->
-        <div class="card col-12">
-          <div class="card-title">🌬 Wind Risk
+
+        <!-- Gust Worry -->
+        <div class="card col-6">
+          <div class="card-title">&#127788; Gust Worry
             <select id="riskWindowSelect">
               <option value="12">12h</option>
               <option value="24">24h</option>
@@ -508,33 +490,66 @@
               <option value="48">48h</option>
             </select>
           </div>
-
           <div class="row">
-            <div class="label">Risk Level</div>
-            <div class="value" id="windRiskLevel">--</div>
+            <div class="label">Level</div>
+            <div class="value" id="gustLevel">--</div>
           </div>
-
+          <div class="row">
+            <div class="label">Worry Score</div>
+            <div class="value" id="gustScore">--</div>
+          </div>
           <div class="row">
             <div class="label">Peak Gust</div>
-            <div class="value" id="windRiskPeak">-- mph</div>
+            <div class="value" id="gustPeak">-- mph</div>
           </div>
-
           <div class="row">
             <div class="label">Direction</div>
-            <div class="value" id="windRiskDir">--</div>
+            <div class="value" id="gustDir">--</div>
           </div>
-
+          <div class="row">
+            <div class="label">Exposure Factor</div>
+            <div class="value" id="gustExposure">--</div>
+          </div>
           <div class="row">
             <div class="label">Peak Time</div>
-            <div class="value" id="windRiskTime">--</div>
+            <div class="value" id="gustTime">--</div>
           </div>
-
-          <div class="small-note" id="windRiskNote"></div>
+          <div class="small-note" id="gustNote"></div>
         </div>
 
-        <!-- Wind & Pressure -->
+        <!-- Sustained Worry -->
+        <div class="card col-6">
+          <div class="card-title">&#127787; Sustained Worry</div>
+          <div class="row">
+            <div class="label">Level</div>
+            <div class="value" id="susLevel">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Worry Score</div>
+            <div class="value" id="susScore">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Speed</div>
+            <div class="value" id="susPeak">-- mph</div>
+          </div>
+          <div class="row">
+            <div class="label">Direction</div>
+            <div class="value" id="susDir">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Exposure Factor</div>
+            <div class="value" id="susExposure">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Time</div>
+            <div class="value" id="susTime">--</div>
+          </div>
+          <div class="small-note" id="susNote">Sustained = dock lines, outdoor use. Gust = structural stress.</div>
+        </div>
+
+        <!-- Wind & Pressure (now) -->
         <div class="card col-12">
-          <div class="card-title">Wind & Pressure (now)</div>
+          <div class="card-title">Wind &amp; Pressure (now)</div>
           <div class="row">
             <div class="label">Wind</div>
             <div class="value" id="windNowWind">--</div>
@@ -561,46 +576,77 @@
         </div>
       </div>
     </section>
+
+    <!-- ALMANAC VIEW -->
+    <section id="almanacView" style="display:none;">
+      <div class="grid">
+
+        <!-- Tides -->
+        <div class="card col-6">
+          <div class="card-title">&#127754; Tides &#8212; Salem Harbor</div>
+          <div class="tide-grid" id="tideGrid"></div>
+          <div class="small-note" id="nextTideNote"></div>
+        </div>
+
+        <!-- Sun -->
+        <div class="card col-6">
+          <div class="card-title">&#9728; Sun</div>
+          <div class="row">
+            <div class="label">Sunrise</div>
+            <div class="value" id="sunrise">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Sunset</div>
+            <div class="value" id="sunset">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Daylight</div>
+            <div class="value" id="daylight">--</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
   </div>
 
   <script>
-    // -------- Tab behavior --------
-    function showTab(which){
-      const home = document.getElementById("homeView");
-      const wind = document.getElementById("windView");
-      const tabHome = document.getElementById("tabHome");
-      const tabWind = document.getElementById("tabWind");
-
-      const isWind = (which === "wind");
-      home.style.display = isWind ? "none" : "";
-      wind.style.display = isWind ? "" : "none";
-
-      tabHome.classList.toggle("active", !isWind);
-      tabWind.classList.toggle("active", isWind);
-
-      tabHome.setAttribute("aria-selected", String(!isWind));
-      tabWind.setAttribute("aria-selected", String(isWind));
-
+    // ======================================================
+    // Tab behavior — Weather / Wind / Almanac
+    // ======================================================
+    function showTab(which) {
+      const views = { weather: "weatherView", wind: "windView", almanac: "almanacView" };
+      const tabs  = { weather: "tabWeather",  wind: "tabWind",  almanac: "tabAlmanac"  };
+      Object.keys(views).forEach(k => {
+        const v = document.getElementById(views[k]);
+        const t = document.getElementById(tabs[k]);
+        if (v) v.style.display = (k === which) ? "" : "none";
+        if (t) {
+          t.classList.toggle("active", k === which);
+          t.setAttribute("aria-selected", String(k === which));
+        }
+      });
       try { localStorage.setItem("activeTab", which); } catch(e) {}
     }
 
-    (function restoreTab(){
+    (function restoreTab() {
       try {
         const t = localStorage.getItem("activeTab");
-        if (t === "wind") showTab("wind");
+        if (t === "wind" || t === "almanac") showTab(t);
       } catch(e) {}
     })();
 
-    // -------- Formatting helpers --------
+    // ======================================================
+    // Formatting helpers
+    // ======================================================
     const weatherEmoji = {
-      0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
-      45: "🌫️", 48: "🌫️",
-      51: "🌦️", 53: "🌧️", 55: "🌧️",
-      61: "🌧️", 63: "🌧️", 65: "🌧️",
-      71: "🌨️", 73: "🌨️", 75: "🌨️",
-      77: "🌨️", 80: "🌦️", 81: "🌦️", 82: "🌧️",
-      85: "🌨️", 86: "🌨️",
-      95: "⛈️", 96: "⛈️", 99: "⛈️"
+      0: "&#9728;&#65039;", 1: "&#127780;&#65039;", 2: "&#9925;", 3: "&#9729;&#65039;",
+      45: "&#127787;&#65039;", 48: "&#127787;&#65039;",
+      51: "&#127782;&#65039;", 53: "&#127783;&#65039;", 55: "&#127783;&#65039;",
+      61: "&#127783;&#65039;", 63: "&#127783;&#65039;", 65: "&#127783;&#65039;",
+      71: "&#127784;&#65039;", 73: "&#127784;&#65039;", 75: "&#127784;&#65039;",
+      77: "&#127784;&#65039;", 80: "&#127782;&#65039;", 81: "&#127782;&#65039;", 82: "&#127783;&#65039;",
+      85: "&#127784;&#65039;", 86: "&#127784;&#65039;",
+      95: "&#9928;&#65039;", 96: "&#9928;&#65039;", 99: "&#9928;&#65039;"
     };
 
     const weatherDesc = {
@@ -614,123 +660,137 @@
       95: "Thunderstorm", 96: "Thunderstorm + Hail", 99: "Severe Thunderstorm"
     };
 
-    function fmtLocal(dt){
+    function fmtLocal(dt) {
       if (!dt) return "--";
       const d = new Date(dt);
       if (isNaN(d.getTime())) return "--";
-      return d.toLocaleString("en-US", { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+      return d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
     }
 
-    function degreesToCompass(deg){
-      if (deg === null || deg === undefined) return "--";
+    // Single canonical compass function — replaces both old degreesToCompass and degToCompass
+    function toCompass(deg, withDeg = true) {
+      if (deg == null || isNaN(deg)) return "--";
       const d = ((deg % 360) + 360) % 360;
       const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
-      const i = Math.round(d / 22.5) % 16;
-      return `${d}° ${dirs[i]}`;
+      const label = dirs[Math.round(d / 22.5) % 16];
+      return withDeg ? `${Math.round(d)}° ${label}` : label;
     }
 
-    // -------- Charts --------
+    // ======================================================
+    // Wind Exposure Table (mirrors collector.py exactly)
+    // ======================================================
+    const WIND_EXPOSURE_TABLE = [
+      [  0,  20, 1.00],
+      [ 20,  60, 0.90],
+      [ 60,  90, 0.70],
+      [ 90, 130, 0.50],
+      [130, 165, 0.20],
+      [165, 200, 0.10],
+      [200, 255, 0.05],
+      [255, 285, 0.30],
+      [285, 315, 0.70],
+      [315, 360, 0.95],
+    ];
+
+    const WORRY_NOTICEABLE  =  5;
+    const WORRY_NOTABLE     = 12;
+    const WORRY_SIGNIFICANT = 20;
+    const WORRY_SEVERE      = 30;
+
+    function getExposureFactor(deg) {
+      const d = ((deg % 360) + 360) % 360;
+      for (const [minD, maxD, factor] of WIND_EXPOSURE_TABLE) {
+        if (minD <= maxD) {
+          if (d >= minD && d < maxD) return factor;
+        } else {
+          if (d >= minD || d < maxD) return factor;
+        }
+      }
+      return 0.5;
+    }
+
+    function worryScore(speed, expFactor) {
+      return speed * Math.pow(expFactor, 1.5);
+    }
+
+    function worryLevel(score) {
+      if (score >= WORRY_SEVERE)      return { label: "SEVERE",      cls: "severe"      };
+      if (score >= WORRY_SIGNIFICANT) return { label: "SIGNIFICANT", cls: "significant" };
+      if (score >= WORRY_NOTABLE)     return { label: "NOTABLE",     cls: "notable"     };
+      if (score >= WORRY_NOTICEABLE)  return { label: "NOTICEABLE",  cls: "noticeable"  };
+      return                                 { label: "LOW",          cls: "low"         };
+    }
+
+    function computePeakWorry(hourly, windowHours, useGusts) {
+      const values = useGusts ? (hourly?.wind_gusts || []) : (hourly?.wind_speed || []);
+      const dirs   = hourly?.wind_direction || [];
+      const times  = hourly?.times || [];
+      const n = Math.min(windowHours, values.length, dirs.length);
+
+      let bestScore = -1, bestIdx = -1;
+      for (let i = 0; i < n; i++) {
+        const v = values[i], d = dirs[i];
+        if (v == null || d == null) continue;
+        const ef = getExposureFactor(d);
+        const ws = worryScore(v, ef);
+        if (ws > bestScore) { bestScore = ws; bestIdx = i; }
+      }
+      if (bestIdx < 0) return null;
+
+      const d = dirs[bestIdx];
+      const ef = getExposureFactor(d);
+      return {
+        speed:          values[bestIdx],
+        directionDeg:   d,
+        exposureFactor: ef,
+        score:          worryScore(values[bestIdx], ef),
+        timeISO:        times[bestIdx] || null
+      };
+    }
+
+    // ======================================================
+    // Charts
+    // ======================================================
     let tempPrecipChart = null;
-    let windChart = null;
+    let windChartObj    = null;
 
-    function buildTempPrecipChart(times, temps, pop){
-      const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour:"numeric" }));
-      const tempData = temps.map(v => (v ?? null));
-      const popData = pop.map(v => (v ?? null));
-
-      const ctx = document.getElementById("tempPrecipChart").getContext("2d");
+    function buildTempPrecipChart(times, temps, pop) {
+      const labels   = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
+      const ctx      = document.getElementById("tempPrecipChart").getContext("2d");
       if (tempPrecipChart) tempPrecipChart.destroy();
-
       tempPrecipChart = new Chart(ctx, {
         type: "line",
         data: {
           labels,
           datasets: [
-            { label: "Temp (°F)", data: tempData, yAxisID: "y", tension: 0.25 },
-            { label: "Precip %", data: popData, yAxisID: "y1", tension: 0.25 }
+            { label: "Temp (°F)", data: temps.map(v => v ?? null), yAxisID: "y",  tension: 0.25 },
+            { label: "Precip %",       data: pop.map(v => v ?? null),   yAxisID: "y1", tension: 0.25 }
           ]
         },
         options: {
           responsive: true,
           plugins: { legend: { labels: { color: "rgba(255,255,255,0.8)" } } },
           scales: {
-            x: { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
-            y: { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
+            x:  { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
+            y:  { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
             y1: { position: "right", min: 0, max: 100,
-              ticks: { color: "rgba(255,255,255,0.7)" },
-              grid: { drawOnChartArea: false }
-            }
+                  ticks: { color: "rgba(255,255,255,0.7)" }, grid: { drawOnChartArea: false } }
           }
         }
       });
     }
-    function degToCompass(deg){
-  if (deg == null || isNaN(deg)) return "";
-  const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
-  const i = Math.round(((deg % 360) / 22.5)) % 16;
-  return dirs[i];
-}
-const EXPOSURE_MULTIPLIER = 1.2;
 
-// Match your Python exposed sector (330..60) including wraparound
-function isExposedDir(directionDeg){
-  const d = ((directionDeg % 360) + 360) % 360;
-  const min = 330;
-  const max = 60;
-  if (min <= max) return (min <= d && d <= max);
-  return (d >= min) || (d <= max);
-}
-
-function classifyImpactGust(g){
-  if (g == null || isNaN(g)) return { label: "--", cls: "low" };
-  if (g >= 55) return { label: "SEVERE", cls: "severe" };
-  if (g >= 45) return { label: "HIGH", cls: "high" };
-  if (g >= 35) return { label: "STRONG", cls: "mod" };
-  if (g >= 25) return { label: "NOTICEABLE", cls: "mod" };
-  return { label: "LOW", cls: "low" };
-}
-
-function computePeakInWindow(hourly, windowHours){
-  const times = hourly?.times || [];
-  const gusts = hourly?.wind_gusts || [];
-  const dirs  = hourly?.wind_direction || [];
-
-  const n = Math.min(windowHours, gusts.length);
-  let peak = -Infinity;
-  let idx = -1;
-
-  for (let i = 0; i < n; i++){
-    const g = gusts[i];
-    if (g == null) continue;
-    if (g > peak){
-      peak = g;
-      idx = i;
-    }
-  }
-
-  if (idx < 0) return null;
-
-  return {
-    peakGust: gusts[idx],
-    timeISO: times[idx],
-    directionDeg: dirs[idx]
-  };
-}
-    function buildWindChart(times, speeds, gusts){
-      const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour:"numeric" }));
-      const sData = speeds.map(v => (v ?? null));
-      const gData = gusts.map(v => (v ?? null));
-
-      const ctx = document.getElementById("windChart").getContext("2d");
-      if (windChart) windChart.destroy();
-
-      windChart = new Chart(ctx, {
+    function buildWindChart(times, speeds, gusts) {
+      const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
+      const ctx    = document.getElementById("windChart").getContext("2d");
+      if (windChartObj) windChartObj.destroy();
+      windChartObj = new Chart(ctx, {
         type: "line",
         data: {
           labels,
           datasets: [
-            { label: "Wind (mph)", data: sData, yAxisID: "y", tension: 0.25 },
-            { label: "Gust (mph)", data: gData, yAxisID: "y", tension: 0.25 }
+            { label: "Wind (mph)", data: speeds.map(v => v ?? null), yAxisID: "y", tension: 0.25 },
+            { label: "Gust (mph)", data: gusts.map(v => v ?? null),  yAxisID: "y", tension: 0.25 }
           ]
         },
         options: {
@@ -744,215 +804,192 @@ function computePeakInWindow(hourly, windowHours){
       });
     }
 
-    // -------- Rendering --------
-    function renderSources(sources){
+    // ======================================================
+    // Rendering functions
+    // ======================================================
+    function renderSources(sources) {
       const row = document.getElementById("sourceRow");
-      if (!row) return;
+      if (!row || !sources) return;
       row.innerHTML = "";
-
-      if (!sources) return;
-
       const order = ["open_meteo", "pws", "tides", "nws_alerts"];
-      const names = {
-        open_meteo: "Model",
-        pws: "PWS",
-        tides: "Tides",
-        nws_alerts: "Alerts"
-      };
-
+      const names = { open_meteo: "Model", pws: "PWS", tides: "Tides", nws_alerts: "Alerts" };
       order.forEach(key => {
         const s = sources[key];
         if (!s) return;
-
-        const ok = (s.status === "ok");
-        const icon = ok ? "✅" : "❌";
-        const age = (typeof s.age_minutes === "number") ? `${s.age_minutes.toFixed(1)}m` : "--";
-
+        const ok  = s.status === "ok";
+        const age = typeof s.age_minutes === "number" ? `${s.age_minutes.toFixed(1)}m` : "--";
         const pill = document.createElement("div");
         pill.className = "source-pill";
-        pill.innerHTML = `${icon} ${names[key]} <span class="small">(${age})</span>`;
+        pill.innerHTML = `${ok ? "&#9989;" : "&#10060;"} ${names[key]} <span class="small">(${age})</span>`;
         row.appendChild(pill);
       });
     }
 
-    function renderTides(tides){
+    function renderTides(tides) {
       const grid = document.getElementById("tideGrid");
       const note = document.getElementById("nextTideNote");
-
+      if (!grid) return;
       grid.innerHTML = "";
-      note.textContent = "";
-
+      if (note) note.textContent = "";
       if (!Array.isArray(tides) || tides.length === 0) {
-        note.textContent = "No tide data available.";
+        if (note) note.textContent = "No tide data available.";
         return;
       }
-
-      tides.slice(0,4).forEach(t => {
+      tides.slice(0, 4).forEach(t => {
         const div = document.createElement("div");
         div.className = "tide-item";
-        const type = (t.type === "H") ? "High" : "Low";
+        const type = t.type === "H" ? "High" : "Low";
         div.innerHTML = `
           <div class="tide-type">${type}</div>
           <div class="tide-time">${t.time}</div>
-          <div class="tide-height">${(t.height ?? "--")} ft</div>
-        `;
+          <div class="tide-height">${t.height ?? "--"} ft</div>`;
         grid.appendChild(div);
       });
-
-      note.textContent = "Dock offsets later — this is Salem station for now.";
+      if (note) note.textContent = "Salem Harbor station (8442645) &#8212; harmonic predictions.";
     }
 
-    function renderForecast(daily){
+    function renderForecast(daily) {
       const el = document.getElementById("forecastList");
+      if (!el || !daily || !Array.isArray(daily.dates)) return;
       el.innerHTML = "";
-
-      if (!daily || !Array.isArray(daily.dates)) return;
-
-      for (let i = 0; i < Math.min(10, daily.dates.length); i++){
-        const date = new Date(daily.dates[i] + "T00:00:00");
-        const day = date.toLocaleDateString("en-US", { weekday:"short" });
-        const hi = daily.temperature_max?.[i];
-        const lo = daily.temperature_min?.[i];
-        const code = daily.weather_code?.[i];
-        const emoji = weatherEmoji[code] || "🌡️";
-
-        const row = document.createElement("div");
+      for (let i = 0; i < Math.min(10, daily.dates.length); i++) {
+        const date  = new Date(daily.dates[i] + "T00:00:00");
+        const day   = date.toLocaleDateString("en-US", { weekday: "short" });
+        const hi    = daily.temperature_max?.[i];
+        const lo    = daily.temperature_min?.[i];
+        const code  = daily.weather_code?.[i];
+        const emoji = weatherEmoji[code] || "&#127777;&#65039;";
+        const row   = document.createElement("div");
         row.className = "row";
-        row.innerHTML = `
-          <div class="label">${day} ${emoji}</div>
-          <div class="value">${Math.round(hi)}° / ${Math.round(lo)}°</div>
-        `;
+        row.innerHTML = `<div class="label">${day} ${emoji}</div>
+                         <div class="value">${Math.round(hi)}° / ${Math.round(lo)}°</div>`;
         el.appendChild(row);
       }
     }
 
-    function renderWindRisk(data){
-      const levelEl = document.getElementById("windRiskLevel");
-      const peakEl  = document.getElementById("windRiskPeak");
-      const dirEl   = document.getElementById("windRiskDir");
-      const timeEl  = document.getElementById("windRiskTime");
-      const noteEl  = document.getElementById("windRiskNote");
-      if (!levelEl || !peakEl || !dirEl || !timeEl || !noteEl) return;
-
-      const windowSelect = document.getElementById("riskWindowSelect");
-      const hours = parseInt(windowSelect?.value || "12", 10);
-
-      const peak = computePeakInWindow(data.hourly, hours);
+    function fillWorryCard(ids, peak, windowHours) {
+      // ids: { level, score, peakSpd, dir, exposure, time, note }
       if (!peak) {
-        levelEl.textContent = "--";
-        peakEl.textContent = "-- mph";
-        dirEl.textContent = "--";
-        timeEl.textContent = "--";
-        noteEl.textContent = "No hourly wind data yet.";
-        const wpNote = document.getElementById("windPressureNote");
-        if (wpNote) wpNote.textContent = `Wind Risk uses peak gust in the next ${hours} hours from the model + your exposure multiplier.`;
+        document.getElementById(ids.level).textContent   = "--";
+        document.getElementById(ids.score).textContent   = "--";
+        document.getElementById(ids.peakSpd).textContent = "-- mph";
+        document.getElementById(ids.dir).textContent     = "--";
+        document.getElementById(ids.exposure).textContent= "--";
+        document.getElementById(ids.time).textContent    = "--";
         return;
       }
-
-      const exposed = isExposedDir(peak.directionDeg);
-      const impactGust = peak.peakGust * (exposed ? EXPOSURE_MULTIPLIER : 1.0);
-      const risk = classifyImpactGust(impactGust);
-
-      levelEl.textContent = risk.label;
-      peakEl.textContent = `${Math.round(impactGust)} mph`;
-      dirEl.textContent = `${Math.round(peak.directionDeg)}° ${degToCompass(peak.directionDeg)}`;
-      timeEl.textContent = peak.timeISO ? fmtLocal(peak.timeISO) : "--";
-
-      // Notes
-      noteEl.textContent = `Peak gust over next ${hours}h (from hourly model).`;
-      const wpNote = document.getElementById("windPressureNote");
-      if (wpNote) wpNote.textContent = `Wind Risk uses peak gust in the next ${hours} hours from the model + your exposure multiplier.`;
+      const wl = worryLevel(peak.score);
+      document.getElementById(ids.level).innerHTML =
+        `${wl.label} <span class="badge ${wl.cls}">${wl.label}</span>`;
+      document.getElementById(ids.score).textContent   = peak.score.toFixed(1);
+      document.getElementById(ids.peakSpd).textContent = `${Math.round(peak.speed)} mph`;
+      document.getElementById(ids.dir).textContent     = toCompass(peak.directionDeg);
+      document.getElementById(ids.exposure).textContent= `${(peak.exposureFactor * 100).toFixed(0)}%`;
+      document.getElementById(ids.time).textContent    = peak.timeISO ? fmtLocal(peak.timeISO) : "--";
     }
 
-    // -------- Boot: load data --------
+    function renderWindRisk(data) {
+      const windowSelect = document.getElementById("riskWindowSelect");
+      const hours = parseInt(windowSelect?.value || "12", 10);
+      const hourly = data.hourly || {};
+
+      const gustPeak = computePeakWorry(hourly, hours, true);
+      const susPeak  = computePeakWorry(hourly, hours, false);
+
+      fillWorryCard(
+        { level:"gustLevel", score:"gustScore", peakSpd:"gustPeak",
+          dir:"gustDir", exposure:"gustExposure", time:"gustTime", note:"gustNote" },
+        gustPeak, hours
+      );
+      fillWorryCard(
+        { level:"susLevel", score:"susScore", peakSpd:"susPeak",
+          dir:"susDir", exposure:"susExposure", time:"susTime", note:"susNote" },
+        susPeak, hours
+      );
+
+      const noteEl = document.getElementById("gustNote");
+      if (noteEl) noteEl.textContent = `Peak gust worry over next ${hours}h. Score = gust × exposure¹·5.`;
+    }
+
+    // ======================================================
+    // Boot: load data and populate all views
+    // ======================================================
     document.getElementById("pageLoaded").textContent =
-      new Date().toLocaleString("en-US", { month:"short", day:"numeric", hour:"numeric", minute:"2-digit" });
+      new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
     fetch("weather_data.json?t=" + Date.now())
       .then(r => r.json())
       .then(data => {
-      window.__lastWeatherData = data;  
-     
-        // Header basics
-      document.getElementById("location").textContent = data.location?.name ?? "Wyman Cove";
-    
+        window.__lastWeatherData = data;
 
-        // Header basics
-        document.getElementById("location").textContent = data.location?.name ?? "Wyman Cove";
+        // Header
+        document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
-
         renderSources(data.sources);
 
         // Alerts
         const alertsContainer = document.getElementById("alertsContainer");
         alertsContainer.innerHTML = "";
-        if (data.alerts && data.alerts.length > 0){
-          alertsContainer.innerHTML = data.alerts.map(alert => `
-            <a href="${alert.url}" target="_blank" style="text-decoration:none;color:inherit;display:block;">
+        if (data.alerts && data.alerts.length > 0) {
+          alertsContainer.innerHTML = data.alerts.map(a => `
+            <a href="${a.url}" target="_blank" style="text-decoration:none;color:inherit;display:block;">
               <div class="alert-banner">
-                <div class="alert-title">⚠️ ${alert.headline || alert.event || "Weather Alert"}</div>
-                <div class="alert-desc">${alert.description || ""}</div>
+                <div class="alert-title">&#9888;&#65039; ${a.headline || a.event || "Weather Alert"}</div>
+                <div class="alert-desc">${a.description || ""}</div>
               </div>
-            </a>
-          `).join("");
+            </a>`).join("");
         }
 
-        // Current card
-        const cur = data.current || {};
-        const curWind = data.current_weather || data.current || {};
+        // Current conditions
+        const cur   = data.current || {};
+        const code  = cur.weather_code;
+        const emoji = cur.emoji || weatherEmoji[code] || "&#127777;&#65039;";
+        const desc  = cur.condition || weatherDesc[code] || "—";
         document.getElementById("currentTemp").innerHTML =
           `${Math.round(cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
         document.getElementById("feelsLike").textContent =
           `Feels like ${Math.round(cur.feels_like ?? 0)}°F`;
-        const code = cur.weather_code;
-        const emoji = cur.emoji || weatherEmoji[code] || "🌡️";
-        const desc = cur.condition || weatherDesc[code] || "—";
-        document.getElementById("condition").textContent = `${emoji} ${desc}`;
-
-        // Tides
-        renderTides(data.tides);
+        document.getElementById("condition").innerHTML = `${emoji} ${desc}`;
 
         // Hyperlocal
-        document.getElementById("modelTemp").textContent = (cur.temperature ?? "--") + "°F";
         const pws = data.pws || {};
-        document.getElementById("pwsTemp").textContent = (pws.temperature ?? "--") + "°F";
         const hyp = data.hyperlocal || {};
-        document.getElementById("tempBias").textContent = (hyp.bias_temp ?? "--") + "°F";
-        document.getElementById("correctedTemp").textContent = (hyp.corrected_temp ?? "--") + "°F";
-        document.getElementById("pwsNote").textContent =
+        document.getElementById("modelTemp").textContent    = (cur.temperature ?? "--") + "°F";
+        document.getElementById("pwsTemp").textContent      = (pws.temperature ?? "--") + "°F";
+        document.getElementById("tempBias").textContent     = (hyp.bias_temp ?? "--") + "°F";
+        document.getElementById("correctedTemp").textContent= (hyp.corrected_temp ?? "--") + "°F";
+        document.getElementById("pwsNote").textContent      =
           pws.stale ? "PWS is stale (cached) — using last good reading." : "PWS is fresh.";
 
         // Today summary
         const daily = data.daily || {};
-        const hi = daily.temperature_max?.[0];
-        const lo = daily.temperature_min?.[0];
+        const hi    = daily.temperature_max?.[0];
+        const lo    = daily.temperature_min?.[0];
         document.getElementById("hiLo").textContent =
           (hi != null && lo != null) ? `${Math.round(hi)}° / ${Math.round(lo)}°` : "-- / --";
         const popMax = daily.precipitation_probability_max?.[0];
         document.getElementById("precipChance").textContent =
-          (popMax != null) ? `${Math.round(popMax)}%` : "--%";
+          popMax != null ? `${Math.round(popMax)}%` : "--%";
+
+        const der   = data.derived || {};
+        const trend = der.pressure_trend ?? "--";
+        const delta = typeof der.pressure_trend_hpa_2h === "number"
+          ? `${der.pressure_trend_hpa_2h.toFixed(1)} hPa/2h` : "";
+        document.getElementById("pressureTrendHome").textContent = delta ? `${trend} (${delta})` : trend;
+        document.getElementById("todayNote").textContent =
+          cur.time ? `Current time in model: ${cur.time}` : "";
 
         const windNowText = (cur.wind_speed != null && cur.wind_direction != null)
-          ? `${Math.round(cur.wind_speed)} mph ${degreesToCompass(cur.wind_direction).split(" ").slice(1).join(" ")}`
+          ? `${Math.round(cur.wind_speed)} mph ${toCompass(cur.wind_direction, false)}`
           : "--";
         document.getElementById("windNowHome").textContent = windNowText;
 
-        const der = data.derived || {};
-        const trend = der.pressure_trend ?? "--";
-        const delta = (typeof der.pressure_trend_hpa_2h === "number") ? `${der.pressure_trend_hpa_2h.toFixed(1)} hPa/2h` : "";
-        document.getElementById("pressureTrendHome").textContent = delta ? `${trend} (${delta})` : trend;
-        document.getElementById("todayNote").textContent = cur.time ? `Current time in model: ${cur.time}` : "";
-
-        // Almanac
-        document.getElementById("sunrise").textContent = daily.sunrise?.[0]?.split("T")?.[1] ?? "--";
-        document.getElementById("sunset").textContent = daily.sunset?.[0]?.split("T")?.[1] ?? "--";
-
-        // Forecast list
+        // Forecast
         renderForecast(daily);
 
-        // Charts (48h)
+        // 48h charts
         const hourly = data.hourly || {};
-        const times = (hourly.times || []).slice(0, 48);
+        const times  = (hourly.times || []).slice(0, 48);
         buildTempPrecipChart(
           times,
           (hourly.temperature || []).slice(0, 48),
@@ -963,51 +1000,647 @@ function computePeakInWindow(hourly, windowHours){
           (hourly.wind_speed || []).slice(0, 48),
           (hourly.wind_gusts || []).slice(0, 48)
         );
-        // renderWindRiskTiles(data.hourly);
-        // Wind tab cards
+
+        // Wind tab
         renderWindRisk(data);
-
         const riskSel = document.getElementById("riskWindowSelect");
-if (riskSel) {
-  riskSel.onchange = () => {
-    try { renderWindRisk(window.__lastWeatherData || data); }
-    catch (e) { console.error("WindRisk onchange failed:", e); }
-  };
-}
-
-        // Wind tab: current wind + pressure cards (safe even if elements missing)
-        const windNowEl = document.getElementById("windNowWind");
-        const windGustsEl = document.getElementById("windGustsWind");
-        const pressureNowEl = document.getElementById("pressureNowWind");
-        const pressureTrendEl = document.getElementById("pressureTrendWind");
-
-        if (windNowEl) {
-          windNowEl.textContent =
-            (cur.wind_speed != null && cur.wind_direction != null)
-              ? `${Math.round(cur.wind_speed)} mph • ${degreesToCompass(cur.wind_direction)}`
-              : "--";
+        if (riskSel) {
+          riskSel.onchange = () => {
+            try { renderWindRisk(window.__lastWeatherData || data); }
+            catch(e) { console.error("WindRisk onchange failed:", e); }
+          };
         }
 
-        if (windGustsEl) {
-          windGustsEl.textContent =
-            (cur.wind_gusts != null) ? `${Math.round(cur.wind_gusts)} mph` : "--";
+        const windNowEl      = document.getElementById("windNowWind");
+        const windGustsEl    = document.getElementById("windGustsWind");
+        const pressureNowEl  = document.getElementById("pressureNowWind");
+        const pressureTrendEl= document.getElementById("pressureTrendWind");
+        if (windNowEl) windNowEl.textContent =
+          (cur.wind_speed != null && cur.wind_direction != null)
+            ? `${Math.round(cur.wind_speed)} mph • ${toCompass(cur.wind_direction)}`
+            : "--";
+        if (windGustsEl)     windGustsEl.textContent     = cur.wind_gusts != null ? `${Math.round(cur.wind_gusts)} mph` : "--";
+        if (pressureNowEl)   pressureNowEl.textContent   = cur.pressure  != null ? `${cur.pressure.toFixed(1)} hPa` : "--";
+        if (pressureTrendEl) pressureTrendEl.textContent = delta ? `${trend} (${delta})` : trend;
+
+        // Almanac tab
+        renderTides(data.tides);
+        const rise = daily.sunrise?.[0]?.split("T")?.[1] ?? "--";
+        const set  = daily.sunset?.[0]?.split("T")?.[1] ?? "--";
+        document.getElementById("sunrise").textContent = rise;
+        document.getElementById("sunset").textContent  = set;
+
+        // Compute daylight duration
+        if (rise !== "--" && set !== "--") {
+          const [rh, rm] = rise.split(":").map(Number);
+          const [sh, sm] = set.split(":").map(Number);
+          const mins = (sh * 60 + sm) - (rh * 60 + rm);
+          const h = Math.floor(mins / 60), m = mins % 60;
+          document.getElementById("daylight").textContent = `${h}h ${m}m`;
         }
-
-        if (pressureNowEl) {
-          pressureNowEl.textContent =
-            (cur.pressure != null) ? `${cur.pressure.toFixed(1)} hPa` : "--";
-        }
-
-        if (pressureTrendEl) {
-          pressureTrendEl.textContent = delta ? `${trend} (${delta})` : trend;
-        }
-
-
       })
       .catch(err => {
         console.error(err);
         document.getElementById("location").textContent = "Error loading weather_data.json";
       });
   </script>
+
+  <style>
+    :root{
+      --bg: #0b1220;
+      --card: rgba(255, 255, 255, 0.06);
+      --card2: rgba(255, 255, 255, 0.09);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.68);
+      --muted2: rgba(255,255,255,0.55);
+      --accent: rgba(255,255,255,0.18);
+      --shadow: 0 10px 28px rgba(0,0,0,0.35);
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(84, 150, 255, 0.25), transparent 55%),
+                  radial-gradient(900px 500px at 80% 0%, rgba(90, 255, 190, 0.12), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 16px 14px 28px;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px 14px 12px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.05);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 10px;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      letter-spacing: 0.2px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .version-pill{
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: rgba(255,255,255,0.78);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      white-space: nowrap;
+    }
+
+    .meta-row{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .meta-item{
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .meta-label{
+      color: rgba(255,255,255,0.55);
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .meta-value{
+      color: rgba(255,255,255,0.86);
+      font-weight: 800;
+    }
+
+    .source-row{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .source-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: rgba(255,255,255,0.86);
+    }
+    .source-pill .small{
+      font-weight: 800;
+      color: rgba(255,255,255,0.65);
+    }
+
+    .tabs{
+      margin-top: 6px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .tab{
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.92);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      transition: transform 0.06s ease, background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tab:active{ transform: scale(0.98); }
+    .tab.active{
+      background: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.28);
+    }
+
+    .grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+    }
+
+    .card{
+      grid-column: span 6;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+    }
+
+    .card.col-12{ grid-column: span 12; }
+    .card.col-6{ grid-column: span 6; }
+
+    .card-title{
+      font-weight: 900;
+      color: rgba(255,255,255,0.88);
+      font-size: 0.95rem;
+      letter-spacing: 0.2px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .small-note{
+      color: rgba(255,255,255,0.6);
+      font-size: 0.85rem;
+      line-height: 1.2rem;
+      margin-top: 8px;
+    }
+
+    .current-temp{
+      font-size: 3rem;
+      font-weight: 1000;
+      letter-spacing: -1px;
+      margin-top: 8px;
+    }
+
+    .temp-unit{
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: rgba(255,255,255,0.7);
+      margin-left: 6px;
+    }
+
+    .feels-like{
+      margin-top: 2px;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.76);
+      font-weight: 800;
+    }
+
+    .condition{
+      margin-top: 10px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: rgba(255,255,255,0.86);
+    }
+
+    .row{
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.95rem;
+    }
+    .row:last-child{ border-bottom: none; }
+
+    .label{
+      color: rgba(255,255,255,0.62);
+      font-weight: 800;
+    }
+    .value{
+      color: rgba(255,255,255,0.9);
+      font-weight: 900;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .alert-banner{
+      background: rgba(255, 80, 80, 0.18);
+      border: 1px solid rgba(255, 80, 80, 0.30);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    }
+    .alert-title{ font-weight: 1000; }
+    .alert-desc{ color: rgba(255,255,255,0.78); margin-top: 4px; }
+
+    .tide-grid{
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .tide-item{
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 10px 10px;
+      background: rgba(255,255,255,0.05);
+    }
+    .tide-item .tide-type{
+      font-weight: 1000;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 2px;
+    }
+    .tide-item .tide-time{
+      font-weight: 900;
+      color: rgba(255,255,255,0.78);
+    }
+    .tide-item .tide-height{
+      font-weight: 900;
+      color: rgba(255,255,255,0.72);
+      font-size: 0.9rem;
+    }
+
+    canvas{
+      width: 100% !important;
+      height: 220px !important;
+    }
+
+    @media (max-width: 780px){
+      .card{ grid-column: span 12; }
+      canvas{ height: 240px !important; }
+      header{ position: relative; top: 0; }
+    }
+    /* --- iOS Chart Fix --- */
+    canvas {
+    display: block;  
+    }
+
+    #windChart {
+    width: 100% !important;
+    height: 220px !important;
+    }
+
+    /* Make 48-hour charts less “stretched” on wide screens */
+  @media (min-width: 900px) {
+  #tempPrecipChart, #windChart {
+    height: 420px !important;
+  }
+}
+
+/* Also helps iPhone landscape / tablet landscape */
+@media (orientation: landscape) and (max-width: 900px) {
+  #tempPrecipChart, #windChart {
+    height: 260px !important;
+  }
+}
+  /* --- Wind Risk tiles --- */
+.risk-tiles{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 12px 0 14px 0;
+}
+
+@media (max-width: 780px){
+  .risk-tiles{
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.risk-tile{
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  border-radius: 16px;
+  padding: 12px 12px 10px 12px;
+}
+
+.risk-tile .kicker{
+  font-weight: 700;
+  opacity: 0.85;
+  margin-bottom: 6px;
+}
+
+.risk-tile .big{
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.05;
+  margin-bottom: 4px;
+}
+
+.risk-tile .sub{
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* Risk badge colors */
+.badge{
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-left: 6px;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.badge.low          { background: rgba(160,160,160,0.18); }
+.badge.noticeable   { background: rgba(100,180,255,0.22); }
+.badge.notable      { background: rgba(255,170,0,0.22); }
+.badge.significant  { background: rgba(255,80,80,0.25); }
+.badge.severe       { background: rgba(200,60,255,0.30); }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        ⚓ Wyman Cove Weather
+        <span class="version-pill" id="appVersion">v2.0</span>
+      </h1>
+
+      <div class="meta-row">
+        <div class="meta-item">
+          <span class="meta-label">Location</span>
+          <span class="meta-value" id="location">Loading…</span>
+        </div>
+
+        <div class="meta-item">
+          <span class="meta-label">Data generated</span>
+          <span class="meta-value" id="dataUpdated">--</span>
+        </div>
+
+        <div class="meta-item">
+          <span class="meta-label">Page loaded</span>
+          <span class="meta-value" id="pageLoaded">--</span>
+        </div>
+      </div>
+
+      <div class="source-row" id="sourceRow"></div>
+
+      <nav class="tabs" role="tablist" aria-label="Views">
+        <button class="tab active" id="tabWeather" role="tab" aria-selected="true" onclick="showTab('weather')">Weather</button>
+        <button class="tab" id="tabWind" role="tab" aria-selected="false" onclick="showTab('wind')">Wind</button>
+        <button class="tab" id="tabAlmanac" role="tab" aria-selected="false" onclick="showTab('almanac')">Almanac</button>
+      </nav>
+    </header>
+
+    <div id="alertsContainer"></div>
+
+    <!-- WEATHER VIEW -->
+    <section id="weatherView">
+      <div class="grid">
+        <!-- Current Conditions -->
+        <div class="card col-6">
+          <div class="card-title">Current Conditions</div>
+          <div id="currentTemp" class="current-temp">--<span class="temp-unit">&deg;F</span></div>
+          <div id="feelsLike" class="feels-like">Feels like --&deg;F</div>
+          <div id="condition" class="condition">Loading&hellip;</div>
+        </div>
+
+        <!-- Hyperlocal Comparison -->
+        <div class="card col-6">
+          <div class="card-title">&#127968; Hyperlocal Comparison</div>
+          <div class="row">
+            <div class="label">Model Temp</div>
+            <div class="value" id="modelTemp">--&deg;F</div>
+          </div>
+          <div class="row">
+            <div class="label">PWS Temp</div>
+            <div class="value" id="pwsTemp">--&deg;F</div>
+          </div>
+          <div class="row">
+            <div class="label">Bias</div>
+            <div class="value" id="tempBias">--&deg;F</div>
+          </div>
+          <div class="row">
+            <div class="label">Corrected</div>
+            <div class="value" id="correctedTemp">--&deg;F</div>
+          </div>
+          <div class="small-note" id="pwsNote"></div>
+        </div>
+
+        <!-- Today's Summary -->
+        <div class="card col-6">
+          <div class="card-title">Today&#39;s Summary</div>
+          <div class="row">
+            <div class="label">High / Low</div>
+            <div class="value" id="hiLo">-- / --</div>
+          </div>
+          <div class="row">
+            <div class="label">Precip Chance</div>
+            <div class="value" id="precipChance">--%</div>
+          </div>
+          <div class="row">
+            <div class="label">Wind (now)</div>
+            <div class="value" id="windNowHome">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Pressure Trend (2h)</div>
+            <div class="value" id="pressureTrendHome">--</div>
+          </div>
+          <div class="small-note" id="todayNote"></div>
+        </div>
+
+        <!-- 10-Day Forecast -->
+        <div class="card col-6">
+          <div class="card-title">10-Day Forecast</div>
+          <div id="forecastList"></div>
+        </div>
+
+        <!-- 48-Hour Temperature & Precipitation -->
+        <div class="card col-12">
+          <div class="card-title">48-Hour Temperature &amp; Precipitation</div>
+          <canvas id="tempPrecipChart"></canvas>
+        </div>
+      </div>
+    </section>
+    <!-- WIND VIEW -->
+    <section id="windView" style="display:none;">
+      <div class="grid">
+
+        <!-- Gust Worry -->
+        <div class="card col-6">
+          <div class="card-title">&#127788; Gust Worry
+            <select id="riskWindowSelect">
+              <option value="12">12h</option>
+              <option value="24">24h</option>
+              <option value="36">36h</option>
+              <option value="48">48h</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="label">Level</div>
+            <div class="value" id="gustLevel">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Worry Score</div>
+            <div class="value" id="gustScore">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Gust</div>
+            <div class="value" id="gustPeak">-- mph</div>
+          </div>
+          <div class="row">
+            <div class="label">Direction</div>
+            <div class="value" id="gustDir">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Exposure Factor</div>
+            <div class="value" id="gustExposure">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Time</div>
+            <div class="value" id="gustTime">--</div>
+          </div>
+          <div class="small-note" id="gustNote"></div>
+        </div>
+
+        <!-- Sustained Worry -->
+        <div class="card col-6">
+          <div class="card-title">&#127787; Sustained Worry</div>
+          <div class="row">
+            <div class="label">Level</div>
+            <div class="value" id="susLevel">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Worry Score</div>
+            <div class="value" id="susScore">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Speed</div>
+            <div class="value" id="susPeak">-- mph</div>
+          </div>
+          <div class="row">
+            <div class="label">Direction</div>
+            <div class="value" id="susDir">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Exposure Factor</div>
+            <div class="value" id="susExposure">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Time</div>
+            <div class="value" id="susTime">--</div>
+          </div>
+          <div class="small-note" id="susNote">Sustained = dock lines, outdoor use. Gust = structural stress.</div>
+        </div>
+
+        <!-- Wind & Pressure (now) -->
+        <div class="card col-12">
+          <div class="card-title">Wind &amp; Pressure (now)</div>
+          <div class="row">
+            <div class="label">Wind</div>
+            <div class="value" id="windNowWind">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Gusts</div>
+            <div class="value" id="windGustsWind">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Pressure</div>
+            <div class="value" id="pressureNowWind">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Trend (2h)</div>
+            <div class="value" id="pressureTrendWind">--</div>
+          </div>
+          <div class="small-note" id="windPressureNote"></div>
+        </div>
+
+        <!-- 48-Hour Wind Forecast -->
+        <div class="card col-12">
+          <div class="card-title">48-Hour Wind Forecast</div>
+          <canvas id="windChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ALMANAC VIEW -->
+    <section id="almanacView" style="display:none;">
+      <div class="grid">
+
+        <!-- Tides -->
+        <div class="card col-6">
+          <div class="card-title">&#127754; Tides &#8212; Salem Harbor</div>
+          <div class="tide-grid" id="tideGrid"></div>
+          <div class="small-note" id="nextTideNote"></div>
+        </div>
+
+        <!-- Sun -->
+        <div class="card col-6">
+          <div class="card-title">&#9728; Sun</div>
+          <div class="row">
+            <div class="label">Sunrise</div>
+            <div class="value" id="sunrise">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Sunset</div>
+            <div class="value" id="sunset">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Daylight</div>
+            <div class="value" id="daylight">--</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
 </body>
 </html>
