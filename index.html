@@ -1712,7 +1712,7 @@
     let radarLayerType = "radar";   // "radar" | "satellite" | "clouds"
 
     const RADAR_CENTER = [42.5014, -70.8750];
-    const RADAR_ZOOM   = 8;
+    const RADAR_ZOOM   = 6;   // RainViewer public API max tile zoom is 7
     const FRAME_DELAY  = 400;  // ms between animation frames
 
     function initRadar() {
@@ -1723,8 +1723,8 @@
       radarMap = L.map("radarMap", {
         center:  RADAR_CENTER,
         zoom:    RADAR_ZOOM,
-        minZoom: 4,
-        maxZoom: 15,   // clamp to RainViewer tile max — above this radar tiles are empty
+        minZoom: 3,
+        maxZoom: 7,    // RainViewer public API tile max zoom is 7
         zoomControl: true,
         attributionControl: true,
       });
@@ -1734,7 +1734,7 @@
         {
           attribution: "&copy; <a href='https://carto.com/'>CARTO</a> &copy; OpenStreetMap contributors",
           subdomains: "abcd",
-          maxZoom: 15,
+          maxZoom: 19,
         }
       ).addTo(radarMap);
 
@@ -1820,8 +1820,13 @@
       radarFrameIdx = idx;
 
       const frame   = radarFrames[idx];
-      const tileUrl = "https://tilecache.rainviewer.com" + frame.path +
-                      "/256/{z}/{x}/{y}/4/1_1.png";
+      // RainViewer tile format: /512/{z}/{x}/{y}/{colorScheme}/{options}.png
+      // Color schemes: 1=BW, 2=orig, 3=univ blue, 4=TWC, 6=NEXRAD, 7=rainbow
+      // Options: {smooth}_{snow} — 1_1 = smoothed + snow coloring
+      const isSat  = radarLayerType === "satellite";
+      const tileUrl = isSat
+        ? "https://tilecache.rainviewer.com" + frame.path + "/512/{z}/{x}/{y}/0/0_0.png"
+        : "https://tilecache.rainviewer.com" + frame.path + "/512/{z}/{x}/{y}/6/1_1.png";
 
       if (radarLayer) {
         radarMap.removeLayer(radarLayer);
@@ -1829,7 +1834,7 @@
 
       radarLayer = L.tileLayer(tileUrl, {
         opacity:     0.75,
-        maxZoom:     15,
+        maxZoom:     7,
         attribution: "&copy; <a href='https://rainviewer.com'>RainViewer</a>",
       }).addTo(radarMap);
 
