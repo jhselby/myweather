@@ -1841,10 +1841,10 @@
       radarPlaying = !radarPlaying;
       const btn = document.getElementById("radarPlayBtn");
       if (radarPlaying) {
-        btn.textContent = "&#9646;&#9646; Pause";
+        btn.innerHTML = "&#9646;&#9646; Pause";
         radarAdvance();
       } else {
-        btn.textContent = "&#9654; Play";
+        btn.innerHTML = "&#9654; Play";
         clearTimeout(radarTimer);
       }
     }
