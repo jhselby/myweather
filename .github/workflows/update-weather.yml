@@ -1,49 +1,28 @@
 name: Update Weather Data
-
 concurrency:
   group: weather-data
   cancel-in-progress: false
-
 on:
   schedule:
-    - cron: '*/15 * * * *'
+    - cron: '0 * * * *'
   workflow_dispatch:
-
 jobs:
   update-weather:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-
       - name: Install dependencies
         run: |
           pip install requests beautifulsoup4
-
       - name: Run weather collector
         run: |
           python3 collector.py
-
       - name: Commit and push if changed
-        run: |
-          git config --global user.name "Weather Bot"
-          git config --global user.email "actions@users.noreply.github.com"
-
-          git add weather_data.json
-
-          # If nothing staged, exit cleanly
-          if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
-          fi
-
-         - name: Commit and push if changed
         run: |
           git config --global user.name "Weather Bot"
           git config --global user.email "actions@users.noreply.github.com"
