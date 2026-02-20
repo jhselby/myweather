@@ -947,7 +947,7 @@
               <button onclick="setRadarLayer('radar')"   id="btnLayerRadar"
                 class="radar-btn radar-btn-active">Radar</button>
               <button onclick="setRadarLayer('satellite')" id="btnLayerSat"
-                class="radar-btn">Satellite (IR)</button>
+                class="radar-btn">Satellite</button>
             </div>
 
             <!-- Spacer -->
@@ -1700,31 +1700,61 @@
     }
 
     // ======================================================
-    // Radar (Leaflet + RainViewer)
+    // Radar — IEM NEXRAD WMS (Iowa Environmental Mesonet)
+    // Free, no API key, real NEXRAD composite, any zoom level
     // ======================================================
     let radarMap       = null;
     let radarLayer     = null;
-    let radarFrames    = [];
+    let radarFrames    = [];   // [{ts: Date, isoStr: "2026-02-20T18:00:00Z"}]
     let radarFrameIdx  = 0;
     let radarPlaying   = false;
     let radarTimer     = null;
     let radarInited    = false;
-    let radarLayerType = "radar";   // "radar" | "satellite" | "clouds"
+    let radarLayerType = "radar";   // "radar" | "satellite"
 
     const RADAR_CENTER = [42.5014, -70.8750];
-    const RADAR_ZOOM   = 6;   // RainViewer public API max tile zoom is 7
-    const FRAME_DELAY  = 400;  // ms between animation frames
+    const RADAR_ZOOM   = 8;
+    const FRAME_DELAY  = 500;
+    const FRAME_COUNT  = 10;   // last 50 minutes at 5-min intervals
+
+    // IEM WMS endpoints
+    const IEM_RADAR_WMS = "https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi";
+    const IEM_SAT_WMS   = "https://mesonet.agron.iastate.edu/cgi-bin/wms/goes_east.cgi";
+
+    // Generate last N frames at 5-min IEM archive intervals
+    function buildIEMFrames() {
+      radarFrames = [];
+      const now   = new Date();
+      // Round down to nearest 5 min, subtract 1 extra interval for latency
+      const ms5   = 5 * 60 * 1000;
+      const base  = new Date(Math.floor(now.getTime() / ms5) * ms5 - ms5);
+      for (let i = FRAME_COUNT - 1; i >= 0; i--) {
+        const ts = new Date(base.getTime() - i * ms5);
+        const iso = ts.toISOString().replace(".000","");  // "2026-02-20T18:00:00Z"
+        radarFrames.push({ ts, isoStr: iso });
+      }
+
+      radarFrameIdx = radarFrames.length - 1;   // start at most recent
+      const scrubber = document.getElementById("radarScrubber");
+      scrubber.max   = radarFrames.length - 1;
+      scrubber.value = radarFrameIdx;
+
+      const fmt = d => d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+      document.getElementById("radarScrubStart").textContent = fmt(radarFrames[0].ts);
+      document.getElementById("radarScrubEnd").textContent   = fmt(radarFrames[radarFrames.length-1].ts);
+
+      showFrame(radarFrameIdx);
+    }
 
     function initRadar() {
       if (radarInited) return;
       radarInited = true;
 
-      // Base tile layer — dark CartoDB
       radarMap = L.map("radarMap", {
         center:  RADAR_CENTER,
         zoom:    RADAR_ZOOM,
-        minZoom: 3,
-        maxZoom: 7,    // RainViewer public API tile max zoom is 7
+        minZoom: 4,
+        maxZoom: 12,
         zoomControl: true,
         attributionControl: true,
       });
@@ -1740,112 +1770,48 @@
 
       // Home marker
       L.circleMarker(RADAR_CENTER, {
-        radius: 7,
-        fillColor: "rgba(100,200,255,0.9)",
-        color: "rgba(255,255,255,0.8)",
-        weight: 2,
-        fillOpacity: 1,
-      }).bindTooltip("16 Indianhead Circle", { permanent: false }).addTo(radarMap);
+        radius: 7, fillColor: "rgba(100,200,255,0.9)",
+        color: "rgba(255,255,255,0.8)", weight: 2, fillOpacity: 1,
+      }).bindTooltip("Wyman Cove", { permanent: false }).addTo(radarMap);
 
-      // Load RainViewer data
-      fetchRainViewer();
-      // Belt-and-suspenders: invalidate size again after tiles load
-      setTimeout(() => { if (radarMap) radarMap.invalidateSize(); }, 500);
-    }
-
-    let rainViewerCache = null;
-    let rainViewerCacheTs = 0;
-    const RAINVIEWER_CACHE_MS = 5 * 60 * 1000; // 5 min cache
-
-    function fetchRainViewer() {
-      const now = Date.now();
-      if (rainViewerCache && (now - rainViewerCacheTs) < RAINVIEWER_CACHE_MS) {
-        buildFrames(rainViewerCache);
-        return;
-      }
-      document.getElementById("radarTimestamp").textContent = "Loading...";
-      fetch("https://api.rainviewer.com/public/weather-maps.json")
-        .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
-        .then(data => {
-          rainViewerCache   = data;
-          rainViewerCacheTs = Date.now();
-          buildFrames(data);
-        })
-        .catch(err => {
-          document.getElementById("radarTimestamp").textContent = "Radar unavailable — " + err.message;
-          console.error("RainViewer error:", err);
-        });
-    }
-
-    function buildFrames(data) {
-      radarFrames = [];
-
-      if (radarLayerType === "radar") {
-        const past   = data.radar?.past   || [];
-        const nowcast= data.radar?.nowcast || [];
-        past.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: false }));
-        nowcast.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: true }));
-      } else if (radarLayerType === "satellite") {
-        const sat = data.satellite?.infrared || [];
-        sat.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: false }));
-      }
-
-      if (radarFrames.length === 0) {
-        document.getElementById("radarTimestamp").textContent = "No frames available";
-        return;
-      }
-
-      // Start at most recent past frame
-      radarFrameIdx = radarFrames.filter(f => !f.future).length - 1;
-      if (radarFrameIdx < 0) radarFrameIdx = 0;
-
-      // Update scrubber
-      const scrubber = document.getElementById("radarScrubber");
-      scrubber.max   = radarFrames.length - 1;
-      scrubber.value = radarFrameIdx;
-
-      // Label scrubber ends
-      const fmtTs = ts => new Date(ts * 1000).toLocaleTimeString("en-US",
-        { hour:"numeric", minute:"2-digit" });
-      document.getElementById("radarScrubStart").textContent = fmtTs(radarFrames[0].ts);
-      document.getElementById("radarScrubEnd").textContent   =
-        fmtTs(radarFrames[radarFrames.length - 1].ts);
-
-      showFrame(radarFrameIdx);
+      setTimeout(() => { if (radarMap) radarMap.invalidateSize(); }, 300);
+      buildIEMFrames();
     }
 
     function showFrame(idx) {
-      if (!radarMap || radarFrames.length === 0) return;
+      if (!radarMap) return;
       idx = Math.max(0, Math.min(idx, radarFrames.length - 1));
       radarFrameIdx = idx;
+      const frame = radarFrames[idx];
 
-      const frame   = radarFrames[idx];
-      // RainViewer tile format: /512/{z}/{x}/{y}/{colorScheme}/{options}.png
-      // Color schemes: 1=BW, 2=orig, 3=univ blue, 4=TWC, 6=NEXRAD, 7=rainbow
-      // Options: {smooth}_{snow} — 1_1 = smoothed + snow coloring
-      const isSat  = radarLayerType === "satellite";
-      const tileUrl = isSat
-        ? "https://tilecache.rainviewer.com" + frame.path + "/512/{z}/{x}/{y}/0/0_0.png"
-        : "https://tilecache.rainviewer.com" + frame.path + "/512/{z}/{x}/{y}/6/1_1.png";
+      // Remove old layer
+      if (radarLayer) { radarMap.removeLayer(radarLayer); radarLayer = null; }
 
-      if (radarLayer) {
-        radarMap.removeLayer(radarLayer);
+      if (radarLayerType === "radar") {
+        // IEM WMS-T: TIME parameter selects the archive frame
+        radarLayer = L.tileLayer.wms(IEM_RADAR_WMS, {
+          layers:      "nexrad-n0r-wmst",
+          format:      "image/png",
+          transparent: true,
+          opacity:     0.75,
+          TIME:        frame.isoStr,
+          attribution: "&copy; <a href='https://mesonet.agron.iastate.edu/'>IEM</a> / NWS NEXRAD",
+        }).addTo(radarMap);
+      } else {
+        // GOES East infrared satellite — no time param, just current
+        radarLayer = L.tileLayer.wms(IEM_SAT_WMS, {
+          layers:      "conus_ch02",
+          format:      "image/png",
+          transparent: true,
+          opacity:     0.65,
+          attribution: "&copy; <a href='https://mesonet.agron.iastate.edu/'>IEM</a> / GOES East",
+        }).addTo(radarMap);
       }
 
-      radarLayer = L.tileLayer(tileUrl, {
-        opacity:     0.75,
-        maxZoom:     7,
-        attribution: "&copy; <a href='https://rainviewer.com'>RainViewer</a>",
-      }).addTo(radarMap);
-
       // Update UI
-      const ts   = new Date(frame.ts * 1000);
-      const label= ts.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-      const tag  = frame.future ? " (forecast)" : "";
-      document.getElementById("radarTimestamp").textContent = label + tag;
-
-      const scrubber = document.getElementById("radarScrubber");
-      scrubber.value = idx;
+      document.getElementById("radarTimestamp").textContent =
+        frame.ts.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+      document.getElementById("radarScrubber").value = idx;
     }
 
     function radarTogglePlay() {
@@ -1869,25 +1835,21 @@
 
     function radarScrubTo(val) {
       radarPlaying = false;
-      document.getElementById("radarPlayBtn").textContent = "&#9654; Play";
+      document.getElementById("radarPlayBtn").innerHTML = "&#9654; Play";
       clearTimeout(radarTimer);
       showFrame(parseInt(val));
     }
 
     function setRadarLayer(type) {
       radarLayerType = type;
-      // Update button states
-      ["radar","satellite","clouds"].forEach(t => {
+      ["radar","satellite"].forEach(t => {
         const btn = document.getElementById(
           "btnLayer" + t.charAt(0).toUpperCase() + t.slice(1));
         if (btn) btn.classList.toggle("radar-btn-active", t === type);
       });
-      // Reload frames
       if (radarInited) {
         if (radarLayer) { radarMap.removeLayer(radarLayer); radarLayer = null; }
-        radarFrames = [];
-        document.getElementById("radarTimestamp").textContent = "Loading...";
-        fetchRainViewer();
+        showFrame(radarFrameIdx);
       }
     }
 
