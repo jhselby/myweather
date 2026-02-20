@@ -481,9 +481,9 @@
       margin:8px 0 4px 0;background:rgba(255,60,60,0.18);border:1px solid rgba(255,60,60,0.45);
       color:rgba(255,200,200,0.95);">
       <div style="font-weight:900;font-size:1rem;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;"
-           onclick="const d=document.getElementById('stormModeDetails');const c=document.getElementById('stormModeChev');const open=d.style.display!=='none';d.style.display=open?'none':'';c.style.transform=open?'rotate(-90deg)':'';">
+           onclick="const d=document.getElementById('stormModeDetails');const c=document.getElementById('stormModeChev');const open=d.style.display!=='none';d.style.display=open?'none':'';c.innerHTML=open?'&#9660; Show':'&#9650; Hide';">
         ⛈️ Storm conditions developing
-        <span id="stormModeChev" style="font-size:0.75rem;color:rgba(255,180,180,0.6);transition:transform 0.2s;transform:rotate(-90deg);">&#9660;</span>
+        <span id="stormModeChev" style="font-size:0.8rem;color:rgba(255,180,180,0.5);margin-left:8px;">&#9660; Show</span>
       </div>
       <div id="stormModeDetails" style="display:none;font-size:0.85rem;color:rgba(255,180,180,0.85);line-height:1.6;margin-top:6px;"></div>
     </div>
