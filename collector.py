@@ -31,6 +31,7 @@ PWS_CACHE_FILE  = Path("last_pws.json")
 KBOS_CACHE_FILE = Path("last_kbos.json")   # Rolling observed pressure history
 KBVY_CACHE_FILE  = Path("last_kbvy.json")   # Beverly Airport observations
 BUOY_CACHE_FILE  = Path("last_buoy.json")   # Boston buoy 44013
+FROST_LOG_FILE   = Path("frost_log.json")   # Persistent frost/freeze tracker
 
 # -----------------------------
 # Wind Exposure Model (House-specific, 16 Indianhead Circle)
@@ -568,6 +569,95 @@ def fetch_buoy_44013():
         return {}, meta
 
 
+def update_frost_log(daily_data):
+    """
+    Maintain a persistent log of frost/freeze events based on daily min temps.
+    Tracks: days below 32°F (freeze), days below 28°F (hard freeze), days below 20°F (severe).
+    Stores season-to-date counts and last occurrence dates.
+    Season = Oct 1 through current date.
+    """
+    try:
+        log = {}
+        if FROST_LOG_FILE.exists():
+            try:
+                log = json.loads(FROST_LOG_FILE.read_text()) or {}
+            except Exception:
+                log = {}
+
+        daily = (daily_data or {}).get("daily", {}) or {}
+        dates = daily.get("time", []) or []
+        mins  = daily.get("temperature_2m_min", []) or []
+
+        # Today's date
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        year      = datetime.now(timezone.utc).year
+        # Season start: Oct 1 of current or previous year
+        season_start = f"{year}-10-01" if today_str >= f"{year}-10-01" else f"{year-1}-10-01"
+
+        # Initialize season record if new season
+        if log.get("season_start") != season_start:
+            log = {
+                "season_start":    season_start,
+                "freeze_days":     0,   # min ≤ 32°F
+                "hard_freeze_days": 0,  # min ≤ 28°F
+                "severe_days":     0,   # min ≤ 20°F
+                "last_freeze":     None,
+                "last_hard":       None,
+                "last_severe":     None,
+                "logged_dates":    [],
+            }
+
+        logged = set(log.get("logged_dates", []))
+
+        # Process today's actual min (index 0 = today)
+        # Only log past dates to avoid logging forecast lows
+        for i, (d, t) in enumerate(zip(dates, mins)):
+            if d >= today_str:
+                continue   # skip today and future — forecast not actual
+            if d < season_start:
+                continue   # skip prior season
+            if d in logged:
+                continue   # already counted
+
+            if t is not None:
+                if t <= 20:
+                    log["severe_days"]     += 1
+                    log["hard_freeze_days"] += 1
+                    log["freeze_days"]     += 1
+                    log["last_severe"]     = d
+                    log["last_hard"]       = d
+                    log["last_freeze"]     = d
+                elif t <= 28:
+                    log["hard_freeze_days"] += 1
+                    log["freeze_days"]     += 1
+                    log["last_hard"]       = d
+                    log["last_freeze"]     = d
+                elif t <= 32:
+                    log["freeze_days"]     += 1
+                    log["last_freeze"]     = d
+                logged.add(d)
+
+        log["logged_dates"] = sorted(list(logged))[-60:]  # keep last 60 for memory
+
+        # Add forecast freeze risk (next 10 days from daily forecast)
+        upcoming_freeze = []
+        for d, t in zip(dates, mins):
+            if d < today_str: continue
+            if t is not None and t <= 32:
+                upcoming_freeze.append({"date": d, "min_f": round(t, 1)})
+        log["upcoming_freeze_days"] = upcoming_freeze
+
+        FROST_LOG_FILE.write_text(json.dumps(log, indent=2))
+        print(f"  ✓ Frost log: {log['freeze_days']} freeze days this season, "
+              f"last freeze: {log['last_freeze']}, "
+              f"upcoming: {len(upcoming_freeze)}")
+        return log
+
+    except Exception as e:
+        print(f"  ✗ Frost log error: {e}")
+        return {}
+
+
 def fetch_nws_forecast():
     """
     Fetch NWS plain-English detailed forecast for the location.
@@ -663,7 +753,7 @@ def fetch_nws_alerts():
 # -----------------------------
 # Processing
 # -----------------------------
-def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, buoy, nws_forecast, alerts, source_meta):
+def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, buoy, nws_forecast, alerts, source_meta, frost_log=None):
     """Combine and normalize data sources into a stable schema."""
     print("🔄 Processing data...")
 
@@ -692,6 +782,7 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
         "kbos":         kbos if kbos is not None else {},
         "kbvy":         kbvy if kbvy is not None else {},
         "buoy_44013":   buoy if buoy is not None else {},
+        "frost_log":    frost_log if frost_log else {},
         "nws_forecast": nws_forecast if nws_forecast is not None else [],
         "pws": pws if pws is not None else {"station": PWS_STATION, "name": "Castle Hill", "temperature": None, "stale": True}
     }
@@ -1155,9 +1246,13 @@ def main():
         "nws_alerts":   alerts_meta,
     }
 
+    print("\U0001f321 Updating frost log...")
+    frost_log = update_frost_log(daily_data)
+
     weather_data = process_data(
         current_data, hourly_data, daily_data,
-        pws_data, tide_data, kbos_data, kbvy_data, buoy_data, forecast_data, alert_data, sources
+        pws_data, tide_data, kbos_data, kbvy_data, buoy_data, forecast_data, alert_data, sources,
+        frost_log=frost_log
     )
 
     # Save to JSON
