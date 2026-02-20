@@ -947,9 +947,7 @@
               <button onclick="setRadarLayer('radar')"   id="btnLayerRadar"
                 class="radar-btn radar-btn-active">Radar</button>
               <button onclick="setRadarLayer('satellite')" id="btnLayerSat"
-                class="radar-btn">Satellite</button>
-              <button onclick="setRadarLayer('clouds')"  id="btnLayerClouds"
-                class="radar-btn">Clouds</button>
+                class="radar-btn">Satellite (IR)</button>
             </div>
 
             <!-- Spacer -->
@@ -1008,7 +1006,11 @@
         }
       });
       try { localStorage.setItem("activeTab", which); } catch(e) {}
-      if (which === "radar") initRadar();
+      if (which === "radar") {
+        initRadar();
+        // Leaflet needs a size hint after becoming visible
+        setTimeout(() => { if (radarMap) radarMap.invalidateSize(); }, 50);
+      }
       // Scroll so tab content is visible below sticky header
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -1745,15 +1747,26 @@
       fetchRainViewer();
     }
 
+    let rainViewerCache = null;
+    let rainViewerCacheTs = 0;
+    const RAINVIEWER_CACHE_MS = 5 * 60 * 1000; // 5 min cache
+
     function fetchRainViewer() {
+      const now = Date.now();
+      if (rainViewerCache && (now - rainViewerCacheTs) < RAINVIEWER_CACHE_MS) {
+        buildFrames(rainViewerCache);
+        return;
+      }
+      document.getElementById("radarTimestamp").textContent = "Loading...";
       fetch("https://api.rainviewer.com/public/weather-maps.json")
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
         .then(data => {
-          // Build frame list based on layer type
+          rainViewerCache   = data;
+          rainViewerCacheTs = Date.now();
           buildFrames(data);
         })
         .catch(err => {
-          document.getElementById("radarTimestamp").textContent = "Radar unavailable";
+          document.getElementById("radarTimestamp").textContent = "Radar unavailable — " + err.message;
           console.error("RainViewer error:", err);
         });
     }
@@ -1767,9 +1780,6 @@
         past.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: false }));
         nowcast.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: true }));
       } else if (radarLayerType === "satellite") {
-        const sat = data.satellite?.infrared || [];
-        sat.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: false }));
-      } else if (radarLayerType === "clouds") {
         const sat = data.satellite?.infrared || [];
         sat.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: false }));
       }
