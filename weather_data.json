@@ -1,51 +1,59 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-02-20T01:58:31.069242Z",
+  "generated_at": "2026-02-20T02:11:37.356344Z",
   "location": {
     "name": "Wyman Cove, Marblehead MA",
     "coordinates": {
       "lat": 42.5014,
       "lon": -70.875
     },
-    "updated": "2026-02-20T01:58:31.069242Z"
+    "updated": "2026-02-20T02:11:37.356344Z"
   },
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-02-20T01:58:24.317145Z",
+      "updated_at": "2026-02-20T02:11:29.712255Z",
       "error": null,
       "model": "GFS current",
       "age_minutes": 0.1
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-02-20T01:58:24.988498Z",
+      "updated_at": "2026-02-20T02:11:30.183605Z",
       "error": null,
       "model": "HRRR hourly",
       "age_minutes": 0.1
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-02-20T01:58:25.644150Z",
+      "updated_at": "2026-02-20T02:11:30.646542Z",
       "error": null,
       "model": "ECMWF daily",
       "age_minutes": 0.1
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-02-20T01:58:26.287731Z",
+      "updated_at": "2026-02-20T02:11:31.108840Z",
       "error": null,
       "age_minutes": 0.1
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-02-20T01:58:29.272299Z",
+      "updated_at": "2026-02-20T02:11:32.610268Z",
       "error": null,
-      "age_minutes": 0.0
+      "age_minutes": 0.1
+    },
+    "nws_forecast": {
+      "status": "ok",
+      "updated_at": "2026-02-20T02:11:32.950006Z",
+      "error": null,
+      "office": "BOX",
+      "grid": "76,97",
+      "age_minutes": 0.1
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-02-20T01:58:29.793345Z",
+      "updated_at": "2026-02-20T02:11:36.471111Z",
       "error": null,
       "age_minutes": 0.0
     }
@@ -62,15 +70,15 @@
     }
   ],
   "current": {
-    "time": "2026-02-19T20:45",
+    "time": "2026-02-19T21:00",
     "temperature": 31.5,
     "feels_like": 23.4,
     "humidity": 73,
-    "pressure": 1018.8,
-    "wind_speed": 7.6,
-    "wind_direction": 156,
-    "wind_gusts": 13.9,
-    "cloud_cover": 100,
+    "pressure": 1018.7,
+    "wind_speed": 7.3,
+    "wind_direction": 168,
+    "wind_gusts": 13.2,
+    "cloud_cover": 98,
     "precipitation": 0.0,
     "weather_code": 3,
     "condition": "Overcast",
@@ -78,7 +86,6 @@
   },
   "hourly": {
     "times": [
-      "2026-02-19T21:00",
       "2026-02-19T22:00",
       "2026-02-19T23:00",
       "2026-02-20T00:00",
@@ -107,7 +114,6 @@
       "2026-02-20T23:00"
     ],
     "temperature": [
-      31.5,
       31.4,
       31.1,
       30.7,
@@ -136,7 +142,6 @@
       32.9
     ],
     "feels_like": [
-      23.4,
       22.6,
       22.8,
       23.4,
@@ -150,22 +155,21 @@
       27.3,
       29.6,
       29.8,
-      30.6,
-      31.4,
-      31.1,
-      29.0,
-      27.0,
-      27.0,
-      24.8,
-      23.6,
-      23.8,
+      30.7,
+      31.6,
+      31.3,
+      30.3,
+      28.5,
+      26.7,
+      24.0,
+      24.1,
+      23.1,
       22.9,
-      23.9,
-      23.3,
-      22.4
+      22.3,
+      23.4,
+      22.6
     ],
     "humidity": [
-      73,
       78,
       81,
       85,
@@ -194,7 +198,6 @@
       96
     ],
     "dew_point": [
-      23.8,
       25.3,
       25.9,
       26.8,
@@ -223,7 +226,6 @@
       31.9
     ],
     "precipitation_probability": [
-      0,
       0,
       0,
       0,
@@ -270,7 +272,6 @@
       0.0,
       0.0,
       0.0,
-      0.0,
       0.016,
       0.055,
       0.043,
@@ -281,7 +282,6 @@
       0.028
     ],
     "wind_speed": [
-      7.3,
       9.6,
       8.5,
       6.7,
@@ -295,22 +295,21 @@
       7.3,
       7.6,
       8.4,
-      8.9,
-      8.3,
-      9.8,
-      13.2,
-      15.8,
-      12.6,
-      13.3,
-      16.4,
+      8.8,
+      8.0,
+      9.3,
+      10.2,
+      12.2,
+      13.4,
       15.2,
-      17.2,
-      14.5,
-      14.1,
-      15.7
+      15.2,
+      16.9,
+      17.3,
+      18.1,
+      13.9,
+      15.2
     ],
     "wind_gusts": [
-      13.2,
       19.2,
       18.3,
       11.6,
@@ -324,22 +323,21 @@
       13.9,
       15.0,
       14.3,
-      15.4,
-      14.9,
-      15.0,
-      19.2,
-      22.6,
-      20.1,
-      21.5,
-      25.5,
-      23.7,
-      25.9,
+      15.2,
+      14.8,
+      15.9,
+      16.3,
+      19.0,
+      19.7,
       22.1,
-      21.9,
-      24.6
+      23.0,
+      26.4,
+      27.7,
+      27.3,
+      23.5,
+      24.8
     ],
     "wind_direction": [
-      168,
       177,
       175,
       200,
@@ -353,22 +351,21 @@
       113,
       133,
       112,
+      109,
+      117,
       110,
-      118,
-      106,
-      95,
-      97,
-      94,
-      84,
-      80,
-      80,
+      99,
+      76,
       72,
-      58,
-      49,
-      48
+      68,
+      68,
+      68,
+      65,
+      55,
+      37,
+      43
     ],
     "pressure": [
-      1018.7,
       1019.4,
       1018.6,
       1019.1,
@@ -397,7 +394,6 @@
       1003.2
     ],
     "cloud_cover": [
-      98,
       100,
       100,
       100,
@@ -428,7 +424,6 @@
     "visibility": [],
     "uv_index": [],
     "weather_code": [
-      3,
       3,
       3,
       3,
@@ -665,10 +660,166 @@
       "type": "L"
     }
   ],
+  "nws_forecast": [
+    {
+      "name": "Tonight",
+      "is_daytime": false,
+      "temperature": 28,
+      "temp_unit": "F",
+      "wind_speed": "3 mph",
+      "wind_direction": "S",
+      "short_forecast": "Partly Cloudy",
+      "detailed": "Partly cloudy, with a low around 28. South wind around 3 mph.",
+      "icon": "https://api.weather.gov/icons/land/night/sct?size=medium"
+    },
+    {
+      "name": "Friday",
+      "is_daytime": true,
+      "temperature": 38,
+      "temp_unit": "F",
+      "wind_speed": "3 to 12 mph",
+      "wind_direction": "SE",
+      "short_forecast": "Cloudy then Slight Chance Light Snow",
+      "detailed": "A slight chance of snow between noon and 1pm, then a chance of rain between 1pm and 3pm, then rain and snow. Cloudy, with a high near 38. Southeast wind 3 to 12 mph. Chance of precipitation is 90%. New snow accumulation of less than one inch possible.",
+      "icon": "https://api.weather.gov/icons/land/day/ovc/snow,90?size=medium"
+    },
+    {
+      "name": "Friday Night",
+      "is_daytime": false,
+      "temperature": 27,
+      "temp_unit": "F",
+      "wind_speed": "9 to 13 mph",
+      "wind_direction": "NE",
+      "short_forecast": "Rain And Snow",
+      "detailed": "Rain and snow. Cloudy, with a low around 27. Northeast wind 9 to 13 mph. Chance of precipitation is 100%. New snow accumulation of 2 to 4 inches possible.",
+      "icon": "https://api.weather.gov/icons/land/night/snow,100/snow,90?size=medium"
+    },
+    {
+      "name": "Saturday",
+      "is_daytime": true,
+      "temperature": 33,
+      "temp_unit": "F",
+      "wind_speed": "6 to 12 mph",
+      "wind_direction": "NE",
+      "short_forecast": "Light Snow Likely",
+      "detailed": "Snow likely. Cloudy, with a high near 33. Northeast wind 6 to 12 mph. Chance of precipitation is 70%. New snow accumulation of 1 to 3 inches possible.",
+      "icon": "https://api.weather.gov/icons/land/day/snow,70/snow,50?size=medium"
+    },
+    {
+      "name": "Saturday Night",
+      "is_daytime": false,
+      "temperature": 25,
+      "temp_unit": "F",
+      "wind_speed": "7 mph",
+      "wind_direction": "N",
+      "short_forecast": "Chance Light Snow",
+      "detailed": "A chance of snow before 2am. Mostly cloudy, with a low around 25. North wind around 7 mph. Chance of precipitation is 30%.",
+      "icon": "https://api.weather.gov/icons/land/night/snow,30/snow,20?size=medium"
+    },
+    {
+      "name": "Sunday",
+      "is_daytime": true,
+      "temperature": 36,
+      "temp_unit": "F",
+      "wind_speed": "10 mph",
+      "wind_direction": "NE",
+      "short_forecast": "Mostly Cloudy then Slight Chance Light Snow",
+      "detailed": "A slight chance of snow after 3pm. Mostly cloudy, with a high near 36. Northeast wind around 10 mph. Chance of precipitation is 20%.",
+      "icon": "https://api.weather.gov/icons/land/day/bkn/snow,20?size=medium"
+    },
+    {
+      "name": "Sunday Night",
+      "is_daytime": false,
+      "temperature": 27,
+      "temp_unit": "F",
+      "wind_speed": "10 to 16 mph",
+      "wind_direction": "NE",
+      "short_forecast": "Chance Light Snow",
+      "detailed": "A chance of snow. Cloudy, with a low around 27. Northeast wind 10 to 16 mph, with gusts as high as 28 mph. Chance of precipitation is 40%.",
+      "icon": "https://api.weather.gov/icons/land/night/snow,30/snow,40?size=medium"
+    },
+    {
+      "name": "Monday",
+      "is_daytime": true,
+      "temperature": 34,
+      "temp_unit": "F",
+      "wind_speed": "13 to 17 mph",
+      "wind_direction": "N",
+      "short_forecast": "Chance Light Snow",
+      "detailed": "A chance of snow. Cloudy, with a high near 34. North wind 13 to 17 mph, with gusts as high as 30 mph. Chance of precipitation is 40%.",
+      "icon": "https://api.weather.gov/icons/land/day/snow,40?size=medium"
+    },
+    {
+      "name": "Monday Night",
+      "is_daytime": false,
+      "temperature": 22,
+      "temp_unit": "F",
+      "wind_speed": "9 to 13 mph",
+      "wind_direction": "NW",
+      "short_forecast": "Chance Light Snow then Mostly Cloudy",
+      "detailed": "A chance of snow before 11pm. Mostly cloudy, with a low around 22. Northwest wind 9 to 13 mph. Chance of precipitation is 30%.",
+      "icon": "https://api.weather.gov/icons/land/night/snow,30/bkn?size=medium"
+    },
+    {
+      "name": "Tuesday",
+      "is_daytime": true,
+      "temperature": 34,
+      "temp_unit": "F",
+      "wind_speed": "9 mph",
+      "wind_direction": "NW",
+      "short_forecast": "Mostly Sunny",
+      "detailed": "Mostly sunny, with a high near 34. Northwest wind around 9 mph.",
+      "icon": "https://api.weather.gov/icons/land/day/sct?size=medium"
+    },
+    {
+      "name": "Tuesday Night",
+      "is_daytime": false,
+      "temperature": 16,
+      "temp_unit": "F",
+      "wind_speed": "8 mph",
+      "wind_direction": "W",
+      "short_forecast": "Partly Cloudy",
+      "detailed": "Partly cloudy, with a low around 16. West wind around 8 mph.",
+      "icon": "https://api.weather.gov/icons/land/night/sct?size=medium"
+    },
+    {
+      "name": "Wednesday",
+      "is_daytime": true,
+      "temperature": 39,
+      "temp_unit": "F",
+      "wind_speed": "7 to 10 mph",
+      "wind_direction": "SW",
+      "short_forecast": "Slight Chance Light Snow",
+      "detailed": "A slight chance of snow between 11am and 2pm, then a chance of rain and snow. Mostly cloudy, with a high near 39. Southwest wind 7 to 10 mph. Chance of precipitation is 30%.",
+      "icon": "https://api.weather.gov/icons/land/day/snow,20/snow,30?size=medium"
+    },
+    {
+      "name": "Wednesday Night",
+      "is_daytime": false,
+      "temperature": 31,
+      "temp_unit": "F",
+      "wind_speed": "10 mph",
+      "wind_direction": "S",
+      "short_forecast": "Chance Rain And Snow",
+      "detailed": "A chance of rain and snow. Mostly cloudy, with a low around 31. South wind around 10 mph. Chance of precipitation is 50%.",
+      "icon": "https://api.weather.gov/icons/land/night/snow,50?size=medium"
+    },
+    {
+      "name": "Thursday",
+      "is_daytime": true,
+      "temperature": 43,
+      "temp_unit": "F",
+      "wind_speed": "10 mph",
+      "wind_direction": "SW",
+      "short_forecast": "Chance Light Rain",
+      "detailed": "A chance of rain. Partly sunny, with a high near 43. Southwest wind around 10 mph.",
+      "icon": "https://api.weather.gov/icons/land/day/rain,50/rain,40?size=medium"
+    }
+  ],
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-02-20T01:58:29.270321",
+    "updated": "2026-02-20T02:11:32.607894",
     "temperature": 33.0,
     "stale": false
   },
@@ -678,7 +829,7 @@
   },
   "derived": {
     "pressure_trend": "Steady",
-    "pressure_trend_hpa_2h": -0.1,
+    "pressure_trend_hpa_2h": -0.3,
     "wind_peak_time": "2026-02-19T22:00"
   },
   "wind_risk": {
