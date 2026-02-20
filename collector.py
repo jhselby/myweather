@@ -29,7 +29,8 @@ PWS_STATION = "KMAMARBL63"    # Castle Hill, Marblehead
 SCHEMA_VERSION = "1.1"
 PWS_CACHE_FILE  = Path("last_pws.json")
 KBOS_CACHE_FILE = Path("last_kbos.json")   # Rolling observed pressure history
-KBVY_CACHE_FILE = Path("last_kbvy.json")   # Beverly Airport observations
+KBVY_CACHE_FILE  = Path("last_kbvy.json")   # Beverly Airport observations
+BUOY_CACHE_FILE  = Path("last_buoy.json")   # Boston buoy 44013
 
 # -----------------------------
 # Wind Exposure Model (House-specific, 16 Indianhead Circle)
@@ -481,6 +482,92 @@ def fetch_kbvy_obs():
     return fetch_asos_obs("KBVY", KBVY_CACHE_FILE)
 
 
+def fetch_buoy_44013():
+    """
+    Fetch latest observation from NOAA buoy 44013 (Boston, 16mi ENE).
+    Fixed-width text format from NDBC realtime2 API.
+    Key fields: wind, pressure, air temp, WATER TEMP, dewpoint, pressure tendency.
+    MM = missing data (normal for calm conditions).
+    """
+    print("\U0001f4e1 Fetching buoy 44013...")
+    meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
+
+    cached = {}
+    if BUOY_CACHE_FILE.exists():
+        try:
+            cached = json.loads(BUOY_CACHE_FILE.read_text()) or {}
+        except Exception:
+            pass
+
+    try:
+        url = "https://www.ndbc.noaa.gov/data/realtime2/44013.txt"
+        r = requests.get(url, headers=HEADERS_DEFAULT, timeout=20)
+        r.raise_for_status()
+        lines = r.text.strip().split("\n")
+
+        # Parse header to get column positions
+        headers = lines[0].lstrip("#").split()
+        if len(lines) < 3:
+            raise ValueError("Insufficient buoy data lines")
+
+        vals = lines[2].split()
+        def gv(col, default=None):
+            """Get value by column name, return None if MM or missing."""
+            try:
+                idx = headers.index(col)
+                v = vals[idx]
+                return None if v == "MM" else float(v)
+            except (ValueError, IndexError):
+                return default
+
+        wdir    = gv("WDIR")        # degrees true
+        wspd_ms = gv("WSPD")        # m/s → convert
+        gst_ms  = gv("GST")         # m/s → convert
+        wvht    = gv("WVHT")        # meters significant wave height
+        dpd     = gv("DPD")         # seconds dominant period
+        pres    = gv("PRES")        # hPa
+        atmp_c  = gv("ATMP")        # °C air temp
+        wtmp_c  = gv("WTMP")        # °C WATER TEMP — key for us
+        dewp_c  = gv("DEWP")        # °C dewpoint
+        ptdy    = gv("PTDY")        # hPa pressure tendency (3h, pre-computed by NOAA)
+
+        # Unit conversions
+        wspd_mph  = round(wspd_ms * 2.237, 1) if wspd_ms is not None else None
+        gst_mph   = round(gst_ms  * 2.237, 1) if gst_ms  is not None else None
+        atmp_f    = round(atmp_c  * 9/5 + 32, 1) if atmp_c  is not None else None
+        wtmp_f    = round(wtmp_c  * 9/5 + 32, 1) if wtmp_c  is not None else None
+        dewp_f    = round(dewp_c  * 9/5 + 32, 1) if dewp_c  is not None else None
+        wvht_ft   = round(wvht * 3.281, 1) if wvht is not None else None
+
+        obs = {
+            "time":       f"{int(vals[0])}-{vals[1]}-{vals[2]}T{vals[3]}:{vals[4]}Z",
+            "wind_dir":   wdir,
+            "wind_mph":   wspd_mph,
+            "gust_mph":   gst_mph,
+            "wave_ht_ft": wvht_ft,
+            "wave_period_sec": dpd,
+            "pressure_hpa": pres,
+            "air_temp_f":   atmp_f,
+            "water_temp_f": wtmp_f,
+            "dewpoint_f":   dewp_f,
+            "pressure_tend_hpa": ptdy,   # NOAA pre-computed 3h tendency
+        }
+
+        BUOY_CACHE_FILE.write_text(json.dumps(obs))
+        meta["status"] = "ok"
+        print(f"  \u2713 Buoy 44013: WTMP={wtmp_f}\u00b0F, ATMP={atmp_f}\u00b0F, "
+              f"wind={wspd_mph}mph, PTDY={ptdy}")
+        return obs, meta
+
+    except Exception as e:
+        meta["error"] = str(e)
+        print(f"  \u2717 Buoy 44013 error: {e}")
+        if cached:
+            cached["stale"] = True
+            return cached, meta
+        return {}, meta
+
+
 def fetch_nws_forecast():
     """
     Fetch NWS plain-English detailed forecast for the location.
@@ -576,7 +663,7 @@ def fetch_nws_alerts():
 # -----------------------------
 # Processing
 # -----------------------------
-def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, nws_forecast, alerts, source_meta):
+def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, buoy, nws_forecast, alerts, source_meta):
     """Combine and normalize data sources into a stable schema."""
     print("🔄 Processing data...")
 
@@ -604,6 +691,7 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
         "tide_curve": (tides or {}).get("curve",  {"times": [], "heights": []}),
         "kbos":         kbos if kbos is not None else {},
         "kbvy":         kbvy if kbvy is not None else {},
+        "buoy_44013":   buoy if buoy is not None else {},
         "nws_forecast": nws_forecast if nws_forecast is not None else [],
         "pws": pws if pws is not None else {"station": PWS_STATION, "name": "Castle Hill", "temperature": None, "stale": True}
     }
@@ -971,6 +1059,7 @@ def main():
     tide_data,     tides_meta    = fetch_tides()
     kbos_data,     kbos_meta     = fetch_kbos_obs()
     kbvy_data,     kbvy_meta     = fetch_kbvy_obs()
+    buoy_data,     buoy_meta     = fetch_buoy_44013()
     forecast_data, forecast_meta = fetch_nws_forecast()
     alert_data,    alerts_meta   = fetch_nws_alerts()
 
@@ -982,13 +1071,14 @@ def main():
         "tides":        tides_meta,
         "kbos":         kbos_meta,
         "kbvy":         kbvy_meta,
+        "buoy_44013":   buoy_meta,
         "nws_forecast": forecast_meta,
         "nws_alerts":   alerts_meta,
     }
 
     weather_data = process_data(
         current_data, hourly_data, daily_data,
-        pws_data, tide_data, kbos_data, kbvy_data, forecast_data, alert_data, sources
+        pws_data, tide_data, kbos_data, kbvy_data, buoy_data, forecast_data, alert_data, sources
     )
 
     # Save to JSON
