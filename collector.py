@@ -320,69 +320,77 @@ def fetch_pws_current():
 
 
 def fetch_tides():
-    """Fetch tide predictions from NOAA and extract 4 nearby highs/lows."""
-    print("📡 Fetching NOAA tides...")
+    """
+    Fetch tide predictions from NOAA.
+    Makes two calls:
+      1. High/low events (hilo product) — capped at 8, used for tile display
+      2. 6-minute interval curve (predictions product) — 48h, used for chart
+    """
+    print("\U0001f4e1 Fetching NOAA tides...")
 
-    url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+    url   = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
     today = datetime.now()
-    begin_date = today.strftime("%Y%m%d")
-    end_date = (today + timedelta(days=2)).strftime("%Y%m%d")
-
-    params = {
-        "begin_date": begin_date,
-        "end_date": end_date,
-        "station": TIDE_STATION,
-        "product": "predictions",
-        "datum": "MLLW",
+    begin = today.strftime("%Y%m%d")
+    end   = (today + timedelta(days=2)).strftime("%Y%m%d")
+    base  = {
+        "station":   TIDE_STATION,
+        "datum":     "MLLW",
         "time_zone": "lst_ldt",
-        "units": "english",
-        "format": "json"
+        "units":     "english",
+        "format":    "json",
+        "begin_date": begin,
+        "end_date":   end,
     }
-
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
 
     try:
-        r = requests.get(url, params=params, headers=HEADERS_DEFAULT, timeout=30)
-        r.raise_for_status()
-        data = r.json()
+        # --- Call 1: high/low events ---
+        r1 = requests.get(url, params={**base, "product": "predictions",
+                                        "interval": "hilo"},
+                          headers=HEADERS_DEFAULT, timeout=30)
+        r1.raise_for_status()
+        hilo_preds = r1.json().get("predictions", [])
 
         tides = []
-        preds = data.get("predictions", [])
-        if not preds:
-            meta["status"] = "ok"
-            return [], meta
-
-        # Detect all local highs and lows without hardcoded height thresholds.
-        # A local extremum is any point higher (or lower) than both neighbors.
-        for i in range(1, len(preds) - 1):
-            prev_h = safe_float(preds[i - 1].get("v"))
-            curr_h = safe_float(preds[i].get("v"))
-            next_h = safe_float(preds[i + 1].get("v"))
-            if prev_h is None or curr_h is None or next_h is None:
-                continue
-
-            t_parts = preds[i]["t"].split()
-            date_str = t_parts[0]   # YYYY-MM-DD
-            time_str = t_parts[1]   # HH:MM
-
-            if curr_h > prev_h and curr_h > next_h:
-                tides.append({"date": date_str, "time": time_str,
-                               "height": round(curr_h, 3), "type": "H"})
-            elif curr_h < prev_h and curr_h < next_h:
-                tides.append({"date": date_str, "time": time_str,
-                               "height": round(curr_h, 3), "type": "L"})
-
+        for p in hilo_preds:
+            t_parts  = p["t"].split()
+            tide_type = "H" if p.get("type", "").upper() == "H" else "L"
+            tides.append({
+                "date":   t_parts[0],
+                "time":   t_parts[1],
+                "height": round(safe_float(p.get("v")) or 0, 3),
+                "type":   tide_type,
+            })
             if len(tides) >= 8:
                 break
+        print(f"  \u2713 Tide events: {len(tides)}")
+
+        # --- Call 2: 6-minute curve for chart ---
+        r2 = requests.get(url, params={**base, "product": "predictions",
+                                        "interval": "6"},
+                          headers=HEADERS_DEFAULT, timeout=30)
+        r2.raise_for_status()
+        curve_preds = r2.json().get("predictions", [])
+
+        curve_times   = []
+        curve_heights = []
+        for p in curve_preds:
+            h = safe_float(p.get("v"))
+            if h is not None:
+                curve_times.append(p["t"])     # "YYYY-MM-DD HH:MM"
+                curve_heights.append(round(h, 2))
+        print(f"  \u2713 Tide curve: {len(curve_times)} points")
 
         meta["status"] = "ok"
-        print(f"✓ Tides: {len(tides)} events")
-        return tides, meta
+        return {
+            "events": tides,
+            "curve":  {"times": curve_times, "heights": curve_heights},
+        }, meta
 
     except Exception as e:
         meta["error"] = str(e)
-        print(f"✗ Tides error: {e}")
-        return [], meta
+        print(f"  \u2717 Tides error: {e}")
+        return {"events": [], "curve": {"times": [], "heights": []}}, meta
 
 
 def fetch_nws_forecast():
@@ -504,7 +512,8 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, nws_forecast
         "current": {},
         "hourly": {},
         "daily": {},
-        "tides": tides if tides is not None else [],
+        "tides":      (tides or {}).get("events", []),
+        "tide_curve": (tides or {}).get("curve",  {"times": [], "heights": []}),
         "nws_forecast": nws_forecast if nws_forecast is not None else [],
         "pws": pws if pws is not None else {"station": PWS_STATION, "name": "Castle Hill", "temperature": None, "stale": True}
     }
