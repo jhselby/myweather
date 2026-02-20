@@ -509,12 +509,20 @@
             <div class="value" id="pressureTrendHome">--</div>
           </div>
           <div class="row">
+            <div class="label">850mb Height (6h)</div>
+            <div class="value" id="troughSignal">--</div>
+          </div>
+          <div class="row">
             <div class="label">Fog Risk (12h)</div>
             <div class="value" id="fogRisk">--</div>
           </div>
           <div class="row" id="precipTypeRow" style="display:none;">
-            <div class="label">Precip Type</div>
+            <div class="label">Precip Type (surface)</div>
             <div class="value" id="precipType">--</div>
+          </div>
+          <div class="row" id="col850Row" style="display:none;">
+            <div class="label">Column type (850mb)</div>
+            <div class="value" id="col850Type">--</div>
           </div>
           <div class="small-note" id="todayNote"></div>
         </div>
@@ -1870,26 +1878,54 @@
                             : "rgba(255,255,255,0.85)";
         }
 
-        // Wet bulb precip type — only show when precip is likely
+        // Wet bulb precip type + 850mb column type — only show when precip is likely
         const precipCode = cur.weather_code || 0;
-        const isPrecip = [51,53,55,61,63,65,71,73,75,77,80,81,82,85,86].includes(precipCode)
-                      || (data.derived?.fog_probability ?? 0) < 100;  // show when any precip possible
         const precipTypeRow = document.getElementById("precipTypeRow");
         const precipTypeEl  = document.getElementById("precipType");
         const precipType    = cur.precip_type;
-        if (precipTypeRow && precipTypeEl && precipType) {
-          // Show when precip codes present or precip probability > 20%
-          const pop = (data.daily?.precipitation_probability_max?.[0] ?? 0);
-          if (pop >= 20 || [51,53,55,61,63,65,71,73,75,77,80,81,82,85,86].includes(precipCode)) {
-            precipTypeRow.style.display = "";
-            precipTypeEl.textContent = precipType;
-            const wb = cur.wet_bulb;
-            precipTypeEl.style.color = wb != null && wb <= 32
-              ? "rgba(160,220,255,0.95)"   // snow — blue
-              : wb != null && wb <= 35
-              ? "rgba(255,220,120,0.9)"    // mixed — amber
-              : "rgba(255,255,255,0.85)";  // rain — white
-          }
+        const pop = (data.daily?.precipitation_probability_max?.[0] ?? 0);
+        const precipCodes = [51,53,55,61,63,65,71,73,75,77,80,81,82,85,86];
+        const showPrecip = pop >= 20 || precipCodes.includes(precipCode);
+
+        if (precipTypeRow && precipTypeEl && precipType && showPrecip) {
+          precipTypeRow.style.display = "";
+          precipTypeEl.textContent = precipType;
+          const wb = cur.wet_bulb;
+          precipTypeEl.style.color = wb != null && wb <= 32
+            ? "rgba(160,220,255,0.95)"
+            : wb != null && wb <= 35
+            ? "rgba(255,220,120,0.9)"
+            : "rgba(255,255,255,0.85)";
+        }
+
+        // 850mb column type
+        const col850Row  = document.getElementById("col850Row");
+        const col850El   = document.getElementById("col850Type");
+        const colType    = der.col_precip_type;
+        const colConf    = der.col_precip_conf;
+        const t850now    = der.temp_850hpa_now;
+        if (col850Row && col850El && colType && showPrecip) {
+          col850Row.style.display = "";
+          const t850str = t850now != null ? ` (${t850now}°F at 850mb)` : "";
+          col850El.textContent = `${colType}${t850str}`;
+          col850El.style.color = colType.includes("Heavy snow") ? "rgba(100,180,255,1)"
+            : colType.includes("Snow")  ? "rgba(160,220,255,0.95)"
+            : colType.includes("Mixed") ? "rgba(255,220,120,0.9)"
+            : "rgba(255,255,255,0.85)";
+        }
+
+        // Trough signal
+        const troughEl   = document.getElementById("troughSignal");
+        const troughSig  = der.trough_signal;
+        const zTend      = der.height_850hpa_tend_6h;
+        if (troughEl && troughSig) {
+          const zStr = zTend != null ? ` (${zTend > 0 ? "+" : ""}${zTend}m/6h)` : "";
+          troughEl.textContent = troughSig + zStr;
+          troughEl.style.color = troughSig === "Approaching"
+            ? "rgba(255,180,80,0.9)"
+            : troughSig === "Ridging"
+            ? "rgba(100,220,120,0.9)"
+            : "rgba(255,255,255,0.75)";
         }
 
         document.getElementById("todayNote").textContent =
