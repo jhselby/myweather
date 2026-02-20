@@ -95,7 +95,7 @@ def save_json(path: Path, obj):
     path.write_text(json.dumps(obj, indent=2))
 
 
-def compute_age_minutes(updated_at_iso: str, now_utc: datetime) -> float | None:
+def compute_age_minutes(updated_at_iso: str, now_utc: datetime):
     try:
         # Accept both "Z" and no-Z.
         s = updated_at_iso.replace("Z", "+00:00")
@@ -139,51 +139,125 @@ def get_weather_emoji(code):
 # -----------------------------
 # Fetchers
 # -----------------------------
-def fetch_open_meteo():
-    """Fetch comprehensive weather data from Open-Meteo"""
-    print("📡 Fetching Open-Meteo data...")
-    url = "https://api.open-meteo.com/v1/forecast"
-    params = {
-        "latitude": LAT,
-        "longitude": LON,
-        "current": ",".join([
-            "temperature_2m", "relative_humidity_2m", "apparent_temperature",
-            "precipitation", "weather_code", "cloud_cover", "pressure_msl",
-            "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m"
-        ]),
-        "hourly": ",".join([
-            "temperature_2m", "relative_humidity_2m", "dew_point_2m",
-            "apparent_temperature", "precipitation_probability", "precipitation",
-            "weather_code", "pressure_msl", "cloud_cover", "visibility",
-            "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m", "uv_index"
-        ]),
-        "daily": ",".join([
-            "weather_code", "temperature_2m_max", "temperature_2m_min",
-            "apparent_temperature_max", "apparent_temperature_min",
-            "sunrise", "sunset",
-            "uv_index_max", "precipitation_sum",
-            "precipitation_probability_max", "wind_speed_10m_max", "wind_gusts_10m_max"
-        ]),
-        "temperature_unit": "fahrenheit",
-        "wind_speed_unit": "mph",
-        "precipitation_unit": "inch",
-        "timezone": "America/New_York",
-        "forecast_days": 10
-    }
 
-    meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
-
+def _om_get(params, label):
+    """GET from Open-Meteo with standard error handling."""
+    url  = "https://api.open-meteo.com/v1/forecast"
+    meta = {"status": "error", "updated_at": iso_utc_now(), "error": None, "model": label}
     try:
         r = requests.get(url, params=params, headers=HEADERS_DEFAULT, timeout=30)
         r.raise_for_status()
         data = r.json()
+        if data.get("error"):
+            raise ValueError(data.get("reason", str(data["error"])))
         meta["status"] = "ok"
-        print("✓ Open-Meteo: Success")
+        print(f"  ✓ {label}")
         return data, meta
     except Exception as e:
         meta["error"] = str(e)
-        print(f"✗ Open-Meteo error: {e}")
+        print(f"  ✗ {label}: {e}")
         return None, meta
+
+
+# Shared units for all Open-Meteo calls
+_OM_UNITS = {
+    "temperature_unit":   "fahrenheit",
+    "wind_speed_unit":    "mph",
+    "precipitation_unit": "inch",
+    "timezone":           "America/New_York",
+}
+
+# HRRR supports these hourly vars (no uv_index, no visibility)
+_HRRR_HOURLY = ",".join([
+    "temperature_2m", "relative_humidity_2m", "dew_point_2m",
+    "apparent_temperature", "precipitation_probability", "precipitation",
+    "weather_code", "pressure_msl", "cloud_cover",
+    "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m",
+])
+
+# GFS/default supports these additional vars for current + fallback hourly
+_GFS_HOURLY = _HRRR_HOURLY + ",visibility,uv_index"
+
+_CURRENT_VARS = ",".join([
+    "temperature_2m", "relative_humidity_2m", "apparent_temperature",
+    "precipitation", "weather_code", "cloud_cover", "pressure_msl",
+    "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m",
+])
+
+_DAILY_VARS = ",".join([
+    "weather_code", "temperature_2m_max", "temperature_2m_min",
+    "apparent_temperature_max", "apparent_temperature_min",
+    "sunrise", "sunset", "uv_index_max", "precipitation_sum",
+    "precipitation_probability_max", "wind_speed_10m_max", "wind_gusts_10m_max",
+])
+
+
+def fetch_current_gfs():
+    """
+    Fetch current conditions from GFS (Open-Meteo default).
+    HRRR does not expose a current conditions endpoint, so GFS
+    is used for the instantaneous snapshot. GFS updates every 6h
+    which is sufficient for current conditions.
+    """
+    print("📡 Fetching current conditions (GFS)...")
+    params = {
+        "latitude":  LAT,
+        "longitude": LON,
+        "current":   _CURRENT_VARS,
+        **_OM_UNITS,
+    }
+    return _om_get(params, "GFS current")
+
+
+def fetch_hourly_hrrr():
+    """
+    Fetch 48h hourly forecast from HRRR (ncep_hrrr_conus).
+    HRRR runs at ~3km resolution, updates every hour, covers CONUS.
+    Significantly better than GFS for short-range coastal forecasts —
+    resolves land-sea boundary, local terrain, mesoscale convection.
+    Falls back to GFS seamless if HRRR unavailable.
+    """
+    print("📡 Fetching 48h hourly (HRRR)...")
+    params = {
+        "latitude":      LAT,
+        "longitude":     LON,
+        "hourly":        _HRRR_HOURLY,
+        "models":        "ncep_hrrr_conus",
+        "forecast_days": 2,
+        **_OM_UNITS,
+    }
+    data, meta = _om_get(params, "HRRR hourly")
+    if data is None:
+        print("  ⚠️  HRRR unavailable — falling back to GFS seamless")
+        fb = {k: v for k, v in params.items() if k != "models"}
+        fb["hourly"] = _GFS_HOURLY
+        data, meta = _om_get(fb, "GFS seamless (HRRR fallback)")
+    return data, meta
+
+
+def fetch_daily_ecmwf():
+    """
+    Fetch 10-day daily forecast from ECMWF IFS 0.25deg.
+    ECMWF is the world's best global NWP model for medium-range
+    (3-10 day) forecasts. Used only for the daily summary since
+    HRRR covers short-range better.
+    Falls back to GFS seamless if ECMWF unavailable.
+    """
+    print("📡 Fetching 10-day daily (ECMWF)...")
+    params = {
+        "latitude":      LAT,
+        "longitude":     LON,
+        "daily":         _DAILY_VARS,
+        "models":        "ecmwf_ifs025",
+        "forecast_days": 10,
+        **_OM_UNITS,
+    }
+    data, meta = _om_get(params, "ECMWF daily")
+    if data is None:
+        print("  ⚠️  ECMWF unavailable — falling back to GFS seamless")
+        fb = {k: v for k, v in params.items() if k != "models"}
+        data, meta = _om_get(fb, "GFS seamless (ECMWF fallback)")
+    return data, meta
 
 
 def fetch_pws_current():
@@ -352,7 +426,7 @@ def fetch_nws_alerts():
 # -----------------------------
 # Processing
 # -----------------------------
-def process_data(open_meteo, pws, tides, alerts, source_meta):
+def process_data(current_data, hourly_data, daily_data, pws, tides, alerts, source_meta):
     """Combine and normalize data sources into a stable schema."""
     print("🔄 Processing data...")
 
@@ -380,8 +454,8 @@ def process_data(open_meteo, pws, tides, alerts, source_meta):
         "pws": pws if pws is not None else {"station": PWS_STATION, "name": "Castle Hill", "temperature": None, "stale": True}
     }
 
-    if open_meteo:
-        current = open_meteo.get("current", {}) or {}
+    if current_data:
+        current = current_data.get("current", {}) or {}
         wcode = current.get("weather_code", 0)
 
         weather_data["current"] = {
@@ -401,7 +475,7 @@ def process_data(open_meteo, pws, tides, alerts, source_meta):
         }
 
         # Hourly forecast: slice next 48 hours starting from "now" in America/New_York (DST-safe)
-        hourly = open_meteo.get("hourly", {}) or {}
+        hourly = (hourly_data or {}).get("hourly", {}) or {}
         times = hourly.get("time", []) or []
         now_local = datetime.now(ZoneInfo("America/New_York"))
 
@@ -441,7 +515,7 @@ def process_data(open_meteo, pws, tides, alerts, source_meta):
             "weather_code": sl("weather_code")
         }
 
-        daily = open_meteo.get("daily", {}) or {}
+        daily = (daily_data or {}).get("daily", {}) or {}
         weather_data["daily"] = {
             "dates": daily.get("time", []) or [],
             "temperature_max": daily.get("temperature_2m_max", []) or [],
@@ -602,19 +676,26 @@ def main():
     print("Wyman Cove Weather - GitHub Actions Update")
     print("=" * 60 + "\n")
 
-    open_meteo_data, open_meteo_meta = fetch_open_meteo()
-    pws_data, pws_meta = fetch_pws_current()
-    tide_data, tides_meta = fetch_tides()
-    alert_data, alerts_meta = fetch_nws_alerts()
+    current_data,  current_meta  = fetch_current_gfs()
+    hourly_data,   hourly_meta   = fetch_hourly_hrrr()
+    daily_data,    daily_meta    = fetch_daily_ecmwf()
+    pws_data,      pws_meta      = fetch_pws_current()
+    tide_data,     tides_meta    = fetch_tides()
+    alert_data,    alerts_meta   = fetch_nws_alerts()
 
     sources = {
-        "open_meteo": open_meteo_meta,
-        "pws": pws_meta,
-        "tides": tides_meta,
-        "nws_alerts": alerts_meta
+        "gfs_current": current_meta,
+        "hrrr_hourly": hourly_meta,
+        "ecmwf_daily": daily_meta,
+        "pws":         pws_meta,
+        "tides":       tides_meta,
+        "nws_alerts":  alerts_meta,
     }
 
-    weather_data = process_data(open_meteo_data, pws_data, tide_data, alert_data, sources)
+    weather_data = process_data(
+        current_data, hourly_data, daily_data,
+        pws_data, tide_data, alert_data, sources
+    )
 
     # Save to JSON
     with open("weather_data.json", "w") as f:
