@@ -493,12 +493,28 @@
             <div class="value" id="windNowHome">--</div>
           </div>
           <div class="row">
+            <div class="label">Pressure (model)</div>
+            <div class="value" id="pressureModel">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Pressure (KBOS obs)</div>
+            <div class="value" id="pressureKBOS">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Temp: KBOS / KBVY</div>
+            <div class="value" id="tempObsStations">-- / --</div>
+          </div>
+          <div class="row">
             <div class="label">Pressure Trend (3h)</div>
             <div class="value" id="pressureTrendHome">--</div>
           </div>
           <div class="row">
             <div class="label">Fog Risk (12h)</div>
             <div class="value" id="fogRisk">--</div>
+          </div>
+          <div class="row" id="precipTypeRow" style="display:none;">
+            <div class="label">Precip Type</div>
+            <div class="value" id="precipType">--</div>
           </div>
           <div class="small-note" id="todayNote"></div>
         </div>
@@ -1027,11 +1043,11 @@
       const row = document.getElementById("sourceRow");
       if (!row || !sources) return;
       row.innerHTML = "";
-      const order = ["gfs_current", "hrrr_hourly", "ecmwf_daily", "pws", "tides", "nws_forecast", "nws_alerts"];
+      const order = ["gfs_current", "hrrr_hourly", "ecmwf_daily", "pws", "kbos", "kbvy", "tides", "nws_forecast", "nws_alerts"];
       const names = {
         gfs_current: "GFS", hrrr_hourly: "HRRR", ecmwf_daily: "ECMWF",
         pws: pwsStale ? "PWS Cached" : "PWS Live",
-        tides: "Tides", nws_forecast: "NWS", nws_alerts: "Alerts"
+        kbos: "KBOS", kbvy: "KBVY", tides: "Tides", nws_forecast: "NWS", nws_alerts: "Alerts"
       };
       order.forEach(key => {
         const s = sources[key];
@@ -1781,14 +1797,45 @@
           popMax != null ? `${Math.round(popMax)}%` : "--%";
 
         const der   = data.derived || {};
+        const kbos  = data.kbos   || {};
 
-        // Pressure trend (3h)
-        const trend = der.pressure_trend ?? "--";
-        const delta = typeof der.pressure_trend_hpa_3h === "number"
-          ? `${der.pressure_trend_hpa_3h > 0 ? "+" : ""}${der.pressure_trend_hpa_3h.toFixed(1)} hPa/3h` : "";
+        // Model pressure
+        const modelPressEl = document.getElementById("pressureModel");
+        if (modelPressEl && cur.pressure != null) {
+          modelPressEl.textContent = cur.pressure.toFixed(1) + " hPa";
+        }
+
+        // KBOS observed pressure + tendency
+        const kbosEl = document.getElementById("pressureKBOS");
+        if (kbosEl) {
+          if (kbos.pressure_hpa != null) {
+            const kbDiff = cur.pressure != null
+              ? ` (${(kbos.pressure_hpa - cur.pressure) >= 0 ? "+" : ""}${(kbos.pressure_hpa - cur.pressure).toFixed(1)})`
+              : "";
+            kbosEl.textContent = kbos.pressure_hpa.toFixed(1) + " hPa" + kbDiff;
+            kbosEl.title = "Difference from model";
+          } else {
+            kbosEl.textContent = "--";
+          }
+        }
+
+        // KBOS / KBVY observed temps
+        const kbvy  = data.kbvy || {};
+        const tempObsEl = document.getElementById("tempObsStations");
+        if (tempObsEl) {
+          const kbosT = kbos.temp_f != null ? kbos.temp_f.toFixed(1) + "°F" : "--";
+          const kbvyT = kbvy.temp_f != null ? kbvy.temp_f.toFixed(1) + "°F" : "--";
+          tempObsEl.textContent = `${kbosT} / ${kbvyT}`;
+        }
+
+        // Pressure trend (3h) — prefer KBOS observed tendency if available
+        const obsTendency = kbos.tendency_label;
+        const trend = obsTendency || der.pressure_trend || "--";
+        const tendencyHpa = kbos.tendency_hpa ?? der.pressure_trend_hpa_3h;
+        const delta = typeof tendencyHpa === "number"
+          ? ` (${tendencyHpa > 0 ? "+" : ""}${tendencyHpa.toFixed(1)} hPa)` : "";
         const trendEl = document.getElementById("pressureTrendHome");
-        trendEl.textContent = delta ? `${trend} (${delta})` : trend;
-        // Color: red=falling fast, orange=falling, green=rising, white=steady
+        trendEl.textContent = trend + delta + (obsTendency ? " [obs]" : " [model]");
         trendEl.style.color = trend.includes("fast") && trend.includes("Fall")
           ? "rgba(255,100,100,0.9)"
           : trend === "Falling" ? "rgba(255,180,80,0.9)"
@@ -1805,6 +1852,28 @@
                             : fogLabel === "Possible"   ? "rgba(255,200,100,0.85)"
                             : fogLabel === "Low chance" ? "rgba(200,200,200,0.7)"
                             : "rgba(255,255,255,0.85)";
+        }
+
+        // Wet bulb precip type — only show when precip is likely
+        const precipCode = cur.weather_code || 0;
+        const isPrecip = [51,53,55,61,63,65,71,73,75,77,80,81,82,85,86].includes(precipCode)
+                      || (data.derived?.fog_probability ?? 0) < 100;  // show when any precip possible
+        const precipTypeRow = document.getElementById("precipTypeRow");
+        const precipTypeEl  = document.getElementById("precipType");
+        const precipType    = cur.precip_type;
+        if (precipTypeRow && precipTypeEl && precipType) {
+          // Show when precip codes present or precip probability > 20%
+          const pop = (data.daily?.precipitation_probability_max?.[0] ?? 0);
+          if (pop >= 20 || [51,53,55,61,63,65,71,73,75,77,80,81,82,85,86].includes(precipCode)) {
+            precipTypeRow.style.display = "";
+            precipTypeEl.textContent = precipType;
+            const wb = cur.wet_bulb;
+            precipTypeEl.style.color = wb != null && wb <= 32
+              ? "rgba(160,220,255,0.95)"   // snow — blue
+              : wb != null && wb <= 35
+              ? "rgba(255,220,120,0.9)"    // mixed — amber
+              : "rgba(255,255,255,0.85)";  // rain — white
+          }
         }
 
         document.getElementById("todayNote").textContent =

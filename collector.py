@@ -27,7 +27,9 @@ TIDE_STATION = "8442645"      # Salem Harbor, MA
 PWS_STATION = "KMAMARBL63"    # Castle Hill, Marblehead
 
 SCHEMA_VERSION = "1.1"
-PWS_CACHE_FILE = Path("last_pws.json")
+PWS_CACHE_FILE  = Path("last_pws.json")
+KBOS_CACHE_FILE = Path("last_kbos.json")   # Rolling observed pressure history
+KBVY_CACHE_FILE = Path("last_kbvy.json")   # Beverly Airport observations
 
 # -----------------------------
 # Wind Exposure Model (House-specific, 16 Indianhead Circle)
@@ -393,6 +395,14 @@ def fetch_tides():
         return {"events": [], "curve": {"times": [], "heights": []}}, meta
 
 
+def fetch_kbos_obs():
+    return fetch_asos_obs("KBOS", KBOS_CACHE_FILE)
+
+
+def fetch_kbvy_obs():
+    return fetch_asos_obs("KBVY", KBVY_CACHE_FILE)
+
+
 def fetch_nws_forecast():
     """
     Fetch NWS plain-English detailed forecast for the location.
@@ -488,7 +498,7 @@ def fetch_nws_alerts():
 # -----------------------------
 # Processing
 # -----------------------------
-def process_data(current_data, hourly_data, daily_data, pws, tides, nws_forecast, alerts, source_meta):
+def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, nws_forecast, alerts, source_meta):
     """Combine and normalize data sources into a stable schema."""
     print("🔄 Processing data...")
 
@@ -514,6 +524,8 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, nws_forecast
         "daily": {},
         "tides":      (tides or {}).get("events", []),
         "tide_curve": (tides or {}).get("curve",  {"times": [], "heights": []}),
+        "kbos":         kbos if kbos is not None else {},
+        "kbvy":         kbvy if kbvy is not None else {},
         "nws_forecast": nws_forecast if nws_forecast is not None else [],
         "pws": pws if pws is not None else {"station": PWS_STATION, "name": "Castle Hill", "temperature": None, "stale": True}
     }
@@ -580,6 +592,54 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, nws_forecast
         }
 
         daily = (daily_data or {}).get("daily", {}) or {}
+        # --- Wet bulb temperature (Stull 2011 approximation) ---
+        # Used to classify precipitation type more accurately than weather code
+        def wet_bulb(t_f, rh_pct):
+            """Wet bulb temp in °F from dry bulb (°F) and RH (%)."""
+            if t_f is None or rh_pct is None:
+                return None
+            t = (t_f - 32) * 5/9   # to Celsius
+            rh = float(rh_pct)
+            import math
+            tw = (t * math.atan(0.151977 * (rh + 8.313659) ** 0.5)
+                  + math.atan(t + rh)
+                  - math.atan(rh - 1.676331)
+                  + 0.00391838 * rh ** 1.5 * math.atan(0.023101 * rh)
+                  - 4.686035)
+            return round(tw * 9/5 + 32, 1)   # back to °F
+
+        wb_temps = []
+        for t, rh in zip(
+            weather_data["hourly"].get("temperature", []),
+            weather_data["hourly"].get("humidity", [])
+        ):
+            wb_temps.append(wet_bulb(t, rh))
+        weather_data["hourly"]["wet_bulb"] = wb_temps
+
+        # Current wet bulb
+        cur_wb = wet_bulb(
+            weather_data["current"].get("temperature"),
+            weather_data["current"].get("humidity")
+        )
+        weather_data["current"]["wet_bulb"] = cur_wb
+
+        # Precip type label based on wet bulb
+        def precip_type_label(wb):
+            if wb is None:
+                return None
+            if wb <= 28:
+                return "Snow"
+            elif wb <= 32:
+                return "Snow likely"
+            elif wb <= 35:
+                return "Mixed/slush"
+            elif wb <= 38:
+                return "Freezing rain possible"
+            else:
+                return "Rain"
+
+        weather_data["current"]["precip_type"] = precip_type_label(cur_wb)
+
         weather_data["daily"] = {
             "dates": daily.get("time", []) or [],
             "temperature_max": daily.get("temperature_2m_max", []) or [],
@@ -787,22 +847,26 @@ def main():
     daily_data,    daily_meta    = fetch_daily_ecmwf()
     pws_data,      pws_meta      = fetch_pws_current()
     tide_data,     tides_meta    = fetch_tides()
+    kbos_data,     kbos_meta     = fetch_kbos_obs()
+    kbvy_data,     kbvy_meta     = fetch_kbvy_obs()
     forecast_data, forecast_meta = fetch_nws_forecast()
     alert_data,    alerts_meta   = fetch_nws_alerts()
 
     sources = {
-        "gfs_current": current_meta,
-        "hrrr_hourly": hourly_meta,
-        "ecmwf_daily": daily_meta,
-        "pws":         pws_meta,
-        "tides":       tides_meta,
+        "gfs_current":  current_meta,
+        "hrrr_hourly":  hourly_meta,
+        "ecmwf_daily":  daily_meta,
+        "pws":          pws_meta,
+        "tides":        tides_meta,
+        "kbos":         kbos_meta,
+        "kbvy":         kbvy_meta,
         "nws_forecast": forecast_meta,
-        "nws_alerts":  alerts_meta,
+        "nws_alerts":   alerts_meta,
     }
 
     weather_data = process_data(
         current_data, hourly_data, daily_data,
-        pws_data, tide_data, forecast_data, alert_data, sources
+        pws_data, tide_data, kbos_data, kbvy_data, forecast_data, alert_data, sources
     )
 
     # Save to JSON
