@@ -493,8 +493,12 @@
             <div class="value" id="windNowHome">--</div>
           </div>
           <div class="row">
-            <div class="label">Pressure Trend (2h)</div>
+            <div class="label">Pressure Trend (3h)</div>
             <div class="value" id="pressureTrendHome">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Fog Risk (12h)</div>
+            <div class="value" id="fogRisk">--</div>
           </div>
           <div class="small-note" id="todayNote"></div>
         </div>
@@ -1776,10 +1780,47 @@
           popMax != null ? `${Math.round(popMax)}%` : "--%";
 
         const der   = data.derived || {};
+
+        // Pressure trend (3h)
         const trend = der.pressure_trend ?? "--";
-        const delta = typeof der.pressure_trend_hpa_2h === "number"
-          ? `${der.pressure_trend_hpa_2h.toFixed(1)} hPa/2h` : "";
-        document.getElementById("pressureTrendHome").textContent = delta ? `${trend} (${delta})` : trend;
+        const delta = typeof der.pressure_trend_hpa_3h === "number"
+          ? `${der.pressure_trend_hpa_3h > 0 ? "+" : ""}${der.pressure_trend_hpa_3h.toFixed(1)} hPa/3h` : "";
+        const trendEl = document.getElementById("pressureTrendHome");
+        trendEl.textContent = delta ? `${trend} (${delta})` : trend;
+        // Color: red=falling fast, orange=falling, green=rising, white=steady
+        trendEl.style.color = trend.includes("fast") && trend.includes("Fall")
+          ? "rgba(255,100,100,0.9)"
+          : trend === "Falling" ? "rgba(255,180,80,0.9)"
+          : trend.includes("Ris") ? "rgba(100,220,120,0.9)"
+          : "rgba(255,255,255,0.85)";
+
+        // Fog risk
+        const fogEl = document.getElementById("fogRisk");
+        if (fogEl) {
+          const fogLabel = der.fog_label ?? "--";
+          const fogPct   = der.fog_probability;
+          fogEl.textContent = fogPct != null ? `${fogLabel} (${fogPct}%)` : fogLabel;
+          fogEl.style.color = fogLabel === "Likely"     ? "rgba(255,220,80,0.9)"
+                            : fogLabel === "Possible"   ? "rgba(255,200,100,0.85)"
+                            : fogLabel === "Low chance" ? "rgba(200,200,200,0.7)"
+                            : "rgba(255,255,255,0.85)";
+        }
+
+        // PWS pill: Live vs Cached
+        const pwsPill = document.querySelector("#sourcePills [data-key='pws'] span, .source-pill[data-key='pws']");
+        const pwsStale = (data.pws || {}).stale;
+        // Override PWS label in pills after render
+        setTimeout(() => {
+          const allPills = document.querySelectorAll(".source-pill");
+          allPills.forEach(pill => {
+            if (pill.textContent.startsWith("PWS")) {
+              const ageMatch = pill.textContent.match(/\(.*\)/);
+              pill.textContent = (pwsStale ? "PWS Cached" : "PWS Live") +
+                                 (ageMatch ? " " + ageMatch[0] : "");
+            }
+          });
+        }, 50);
+
         document.getElementById("todayNote").textContent =
           cur.time ? `Current time in model: ${cur.time}` : "";
 

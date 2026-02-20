@@ -606,17 +606,59 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, nws_forecast
                 "corrected_temp": round(model_t + bias, 2)
             }
 
-        # Pressure trend (next 3 hours from now)
-        p = weather_data["hourly"].get("pressure", [])
-        if isinstance(p, list) and len(p) >= 3 and all(x is not None for x in p[:3]):
-            # h0 -> h2 trend in msl hPa
-            trend = p[2] - p[0]
-            label = "Steady"
-            if trend > 0.6:
+        # Pressure trend (3h) + fog probability
+        p    = weather_data["hourly"].get("pressure", [])
+        temp = weather_data["hourly"].get("temperature", [])
+        dew  = weather_data["hourly"].get("dew_point", [])
+        rh   = weather_data["hourly"].get("humidity", [])
+        ws   = weather_data["hourly"].get("wind_speed", [])
+
+        derived = {}
+
+        # --- Pressure tendency (3h change, mariner's rule: ≥3 hPa = significant) ---
+        if isinstance(p, list) and len(p) >= 4 and all(x is not None for x in p[:4]):
+            trend_3h = p[3] - p[0]   # h0 -> h3
+            if trend_3h >= 3.0:
+                label = "Rising fast"
+            elif trend_3h >= 0.6:
                 label = "Rising"
-            elif trend < -0.6:
+            elif trend_3h <= -3.0:
+                label = "Falling fast"
+            elif trend_3h <= -0.6:
                 label = "Falling"
-            weather_data["derived"] = {"pressure_trend": label, "pressure_trend_hpa_2h": round(trend, 1)}
+            else:
+                label = "Steady"
+            derived["pressure_trend"]       = label
+            derived["pressure_trend_hpa_3h"] = round(trend_3h, 1)
+
+        # --- Fog probability (next 12h) ---
+        # Fog criteria: dewpoint depression ≤ 2°F AND RH ≥ 93% AND wind ≤ 10 mph
+        fog_hours = 0
+        fog_window = min(12, len(temp), len(dew), len(rh), len(ws))
+        for i in range(fog_window):
+            t  = temp[i] if temp[i] is not None else 999
+            d  = dew[i]  if dew[i]  is not None else -999
+            h  = rh[i]   if rh[i]   is not None else 0
+            w  = ws[i]   if ws[i]   is not None else 999
+            if (t - d) <= 2.0 and h >= 93 and w <= 10:
+                fog_hours += 1
+
+        if fog_window > 0:
+            fog_pct = round(fog_hours / fog_window * 100)
+            if fog_pct >= 75:
+                fog_label = "Likely"
+            elif fog_pct >= 40:
+                fog_label = "Possible"
+            elif fog_pct >= 15:
+                fog_label = "Low chance"
+            else:
+                fog_label = "Unlikely"
+            derived["fog_probability"]    = fog_pct
+            derived["fog_label"]          = fog_label
+            derived["fog_hours_in_12h"]   = fog_hours
+
+        if derived:
+            weather_data["derived"] = {**weather_data.get("derived", {}), **derived}
 
         # -----------------------------
         # Wind Risk Model (House Impact)
