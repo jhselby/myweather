@@ -416,17 +416,17 @@ def fetch_asos_obs(station_id, cache_file):
         r.raise_for_status()
         props = r.json().get("properties", {})
 
-        obs_time    = props.get("timestamp", "")
-        pressure_pa = (props.get("seaLevelPressure") or {}).get("value")
-        temp_c      = (props.get("temperature")      or {}).get("value")
-        dewpoint_c  = (props.get("dewpoint")         or {}).get("value")
-        wind_mps    = (props.get("windSpeed")        or {}).get("value")
-        wind_dir    = (props.get("windDirection")    or {}).get("value")
+        obs_time     = props.get("timestamp", "")
+        pressure_pa  = (props.get("seaLevelPressure") or {}).get("value")  # Pa (may be None)
+        temp_c       = (props.get("temperature")      or {}).get("value")  # degC
+        dewpoint_c   = (props.get("dewpoint")         or {}).get("value")  # degC
+        wind_kmh     = (props.get("windSpeed")        or {}).get("value")  # km/h
+        wind_dir     = (props.get("windDirection")    or {}).get("value")  # degrees
 
         pressure_hpa = round(pressure_pa / 100, 1) if pressure_pa is not None else None
         temp_f       = round(temp_c * 9/5 + 32, 1) if temp_c is not None else None
         dewpoint_f   = round(dewpoint_c * 9/5 + 32, 1) if dewpoint_c is not None else None
-        wind_mph     = round(wind_mps * 2.237, 1) if wind_mps is not None else None
+        wind_mph     = round(wind_kmh / 1.60934, 1) if wind_kmh is not None else None
 
         obs = {
             "station":      station_id,
