@@ -927,6 +927,85 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
             else:
                 derived["trough_signal"] = "Steady"
 
+        # --- Sea breeze / land breeze detector ---
+        # Inputs: PWS air temp, buoy water temp, current wind, time of day
+        import math as _math
+        pws_t    = (weather_data.get("pws") or {}).get("temperature")   # °F
+        buoy_wt  = (weather_data.get("buoy_44013") or {}).get("water_temp_f")  # °F
+        cur_ws   = weather_data["current"].get("wind_speed")   # mph
+        cur_wd   = weather_data["current"].get("wind_direction")  # degrees
+
+        if pws_t is not None and buoy_wt is not None:
+            land_sea_diff = pws_t - buoy_wt   # positive = land warmer = sea breeze potential
+
+            # Hour of day in local time
+            try:
+                from zoneinfo import ZoneInfo as _ZI
+                _now_hr = datetime.now(_ZI("America/New_York")).hour
+            except Exception:
+                _now_hr = datetime.utcnow().hour - 5
+
+            is_daytime   = 9 <= _now_hr <= 19
+            is_nighttime = _now_hr >= 21 or _now_hr <= 5
+            light_wind   = cur_ws is not None and cur_ws < 12
+            calm_wind    = cur_ws is not None and cur_ws < 6
+
+            # Sea breeze: land significantly warmer, daytime, light winds
+            # Onshore direction for your site is roughly 0-135° (N through SE)
+            onshore = cur_wd is not None and (cur_wd <= 135 or cur_wd >= 315)
+
+            if land_sea_diff >= 8 and is_daytime and calm_wind:
+                sb_label = "Sea breeze likely"
+                sb_conf  = "High"
+            elif land_sea_diff >= 5 and is_daytime and light_wind:
+                sb_label = "Sea breeze possible"
+                sb_conf  = "Moderate"
+            elif land_sea_diff >= 3 and is_daytime and light_wind and onshore:
+                sb_label = "Sea breeze developing"
+                sb_conf  = "Low"
+            elif land_sea_diff <= -5 and is_nighttime and calm_wind:
+                # Land breeze: land colder than water at night
+                sb_label = "Land breeze"
+                sb_conf  = "Moderate"
+            else:
+                sb_label = "No sea breeze"
+                sb_conf  = None
+
+            derived["sea_breeze_label"]    = sb_label
+            derived["sea_breeze_conf"]     = sb_conf
+            derived["land_sea_diff_f"]     = round(land_sea_diff, 1)
+            derived["land_temp_f"]         = pws_t
+            derived["water_temp_f"]        = buoy_wt
+
+        # --- Pressure alarm ---
+        # Use best available tendency: KBOS observed > model
+        best_tend = None
+        tend_src  = None
+        kbos_tend = (weather_data.get("kbos") or {}).get("tendency_hpa")
+        buoy_tend = (weather_data.get("buoy_44013") or {}).get("pressure_tend_hpa")
+        model_tend = derived.get("pressure_trend_hpa_3h")
+
+        # Prefer observed (KBOS or buoy) over model
+        if kbos_tend is not None:
+            best_tend = kbos_tend; tend_src = "KBOS"
+        elif buoy_tend is not None:
+            best_tend = buoy_tend; tend_src = "Buoy"
+        elif model_tend is not None:
+            best_tend = model_tend; tend_src = "model"
+
+        if best_tend is not None:
+            derived["best_pressure_tend"]     = round(best_tend, 1)
+            derived["best_pressure_tend_src"] = tend_src
+            if best_tend <= -3.0:
+                derived["pressure_alarm"] = "falling"
+                derived["pressure_alarm_label"] = f"⚠️ Pressure falling fast ({best_tend:+.1f} hPa, {tend_src})"
+            elif best_tend >= 3.0:
+                derived["pressure_alarm"] = "rising"
+                derived["pressure_alarm_label"] = f"📈 Pressure rising fast ({best_tend:+.1f} hPa, {tend_src})"
+            else:
+                derived["pressure_alarm"] = None
+                derived["pressure_alarm_label"] = None
+
         if derived:
             weather_data["derived"] = {**weather_data.get("derived", {}), **derived}
 
