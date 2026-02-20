@@ -175,6 +175,8 @@ _HRRR_HOURLY = ",".join([
     "apparent_temperature", "precipitation_probability", "precipitation",
     "weather_code", "pressure_msl", "cloud_cover",
     "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m",
+    # Upper-air variables for snow/rain discrimination and trough detection
+    "temperature_850hPa", "temperature_700hPa", "geopotential_height_850hPa",
 ])
 
 # GFS/default supports these additional vars for current + fallback hourly
@@ -664,7 +666,10 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
             "cloud_cover": sl("cloud_cover"),
             "visibility": sl("visibility"),
             "uv_index": sl("uv_index"),
-            "weather_code": sl("weather_code")
+            "weather_code": sl("weather_code"),
+            "temp_850hpa": sl("temperature_850hPa"),
+            "temp_700hpa": sl("temperature_700hPa"),
+            "height_850hpa": sl("geopotential_height_850hPa"),
         }
 
         daily = (daily_data or {}).get("daily", {}) or {}
@@ -792,6 +797,47 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
             derived["fog_probability"]    = fog_pct
             derived["fog_label"]          = fog_label
             derived["fog_hours_in_12h"]   = fog_hours
+
+        # --- 850mb upper-air analysis ---
+        t850_arr = weather_data["hourly"].get("temp_850hpa", [])
+        z850_arr = weather_data["hourly"].get("height_850hpa", [])
+        cur_t850 = t850_arr[0] if t850_arr and t850_arr[0] is not None else None
+        cur_wb   = weather_data["current"].get("wet_bulb")
+
+        if cur_t850 is not None:
+            # Snow/rain column classification
+            if cur_t850 >= 32:
+                col_label = "Rain"
+                col_conf  = "High"
+            elif cur_t850 >= 28:
+                # Marginal — defer to wet bulb
+                if cur_wb is not None and cur_wb <= 32:
+                    col_label = "Snow likely"
+                    col_conf  = "Moderate"
+                else:
+                    col_label = "Mixed"
+                    col_conf  = "Low"
+            elif cur_t850 >= 20:
+                col_label = "Snow"
+                col_conf  = "High"
+            else:
+                col_label = "Heavy snow"
+                col_conf  = "High"
+            derived["col_precip_type"]  = col_label
+            derived["col_precip_conf"]  = col_conf
+            derived["temp_850hpa_now"]  = round(cur_t850, 1)
+
+        # Geopotential height tendency (trough approach indicator)
+        # Drop of ≥30m in 6h is a fast-moving trough signal
+        if len(z850_arr) >= 7 and all(z is not None for z in z850_arr[:7]):
+            z_tend_6h = round(z850_arr[6] - z850_arr[0], 0)
+            derived["height_850hpa_tend_6h"] = z_tend_6h
+            if z_tend_6h <= -30:
+                derived["trough_signal"] = "Approaching"
+            elif z_tend_6h >= 30:
+                derived["trough_signal"] = "Ridging"
+            else:
+                derived["trough_signal"] = "Steady"
 
         if derived:
             weather_data["derived"] = {**weather_data.get("derived", {}), **derived}
