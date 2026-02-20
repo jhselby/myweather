@@ -1,77 +1,77 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-02-20T15:51:13.859930Z",
+  "generated_at": "2026-02-20T16:24:19.860007Z",
   "location": {
     "name": "Wyman Cove, Marblehead MA",
     "coordinates": {
       "lat": 42.5014,
       "lon": -70.875
     },
-    "updated": "2026-02-20T15:51:13.859930Z"
+    "updated": "2026-02-20T16:24:19.860007Z"
   },
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:06.412663Z",
+      "updated_at": "2026-02-20T16:24:13.670445Z",
       "error": null,
       "model": "GFS current",
       "age_minutes": 0.1
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:06.995526Z",
+      "updated_at": "2026-02-20T16:24:14.149673Z",
       "error": null,
       "model": "HRRR hourly",
       "age_minutes": 0.1
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:07.477969Z",
+      "updated_at": "2026-02-20T16:24:14.526070Z",
       "error": null,
       "model": "ECMWF daily",
       "age_minutes": 0.1
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:07.958961Z",
+      "updated_at": "2026-02-20T16:24:14.915247Z",
       "error": null,
       "age_minutes": 0.1
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:09.441886Z",
+      "updated_at": "2026-02-20T16:24:17.984825Z",
       "error": null,
-      "age_minutes": 0.1
+      "age_minutes": 0.0
     },
     "kbos": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:10.015607Z",
+      "updated_at": "2026-02-20T16:24:18.345309Z",
       "error": null,
-      "age_minutes": 0.1
+      "age_minutes": 0.0
     },
     "kbvy": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:10.150722Z",
+      "updated_at": "2026-02-20T16:24:18.409529Z",
       "error": null,
-      "age_minutes": 0.1
+      "age_minutes": 0.0
     },
     "buoy_44013": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:10.272979Z",
+      "updated_at": "2026-02-20T16:24:18.583001Z",
       "error": null,
-      "age_minutes": 0.1
+      "age_minutes": 0.0
     },
     "nws_forecast": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:10.683817Z",
+      "updated_at": "2026-02-20T16:24:18.803453Z",
       "error": null,
       "office": "BOX",
       "grid": "76,97",
-      "age_minutes": 0.1
+      "age_minutes": 0.0
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-02-20T15:51:12.909942Z",
+      "updated_at": "2026-02-20T16:24:18.939460Z",
       "error": null,
       "age_minutes": 0.0
     }
@@ -88,25 +88,24 @@
     }
   ],
   "current": {
-    "time": "2026-02-20T10:45",
-    "temperature": 37.1,
+    "time": "2026-02-20T11:15",
+    "temperature": 37.7,
     "feels_like": 30.7,
-    "humidity": 81,
-    "pressure": 1014.9,
-    "wind_speed": 6.1,
-    "wind_direction": 94,
-    "wind_gusts": 12.1,
+    "humidity": 80,
+    "pressure": 1014.8,
+    "wind_speed": 7.4,
+    "wind_direction": 88,
+    "wind_gusts": 13.4,
     "cloud_cover": 100,
     "precipitation": 0.0,
     "weather_code": 3,
     "condition": "Overcast",
     "emoji": "\u2601\ufe0f",
-    "wet_bulb": 34.0,
+    "wet_bulb": 34.5,
     "precip_type": "Mixed/slush"
   },
   "hourly": {
     "times": [
-      "2026-02-20T11:00",
       "2026-02-20T12:00",
       "2026-02-20T13:00",
       "2026-02-20T14:00",
@@ -145,7 +144,6 @@
       "2026-02-21T23:00"
     ],
     "temperature": [
-      37.4,
       38.3,
       38.9,
       38.5,
@@ -184,7 +182,6 @@
       25.5
     ],
     "feels_like": [
-      30.8,
       30.7,
       31.0,
       30.0,
@@ -224,7 +221,6 @@
     ],
     "humidity": [
       80,
-      80,
       78,
       78,
       85,
@@ -262,7 +258,6 @@
       92
     ],
     "dew_point": [
-      31.8,
       32.7,
       32.6,
       32.2,
@@ -301,7 +296,6 @@
       23.5
     ],
     "precipitation_probability": [
-      5,
       6,
       12,
       27,
@@ -343,7 +337,6 @@
       0.0,
       0.0,
       0.0,
-      0.0,
       0.004,
       0.075,
       0.094,
@@ -379,7 +372,6 @@
       0.0
     ],
     "wind_speed": [
-      6.4,
       9.1,
       9.8,
       11.1,
@@ -418,7 +410,6 @@
       5.2
     ],
     "wind_gusts": [
-      13.0,
       14.8,
       15.7,
       17.4,
@@ -457,7 +448,6 @@
       11.9
     ],
     "wind_direction": [
-      100,
       80,
       102,
       100,
@@ -496,7 +486,6 @@
       313
     ],
     "pressure": [
-      1015.0,
       1013.9,
       1013.0,
       1012.1,
@@ -552,7 +541,6 @@
       100,
       100,
       100,
-      100,
       88,
       100,
       100,
@@ -576,7 +564,6 @@
     "visibility": [],
     "uv_index": [],
     "weather_code": [
-      3,
       3,
       3,
       3,
@@ -615,7 +602,6 @@
       3
     ],
     "temp_850hpa": [
-      25.3,
       28.1,
       26.4,
       25.9,
@@ -654,7 +640,6 @@
       17.0
     ],
     "temp_700hpa": [
-      21.6,
       19.1,
       20.5,
       20.8,
@@ -693,7 +678,6 @@
       7.3
     ],
     "height_850hpa": [
-      4642.389,
       4619.423,
       4589.895,
       4560.368,
@@ -732,7 +716,6 @@
       4665.354
     ],
     "wet_bulb": [
-      34.2,
       35.0,
       35.3,
       34.9,
@@ -2427,35 +2410,35 @@
   },
   "kbos": {
     "station": "KBOS",
-    "time": "2026-02-20T15:35:00+00:00",
+    "time": "2026-02-20T16:05:00+00:00",
     "pressure_hpa": null,
     "temp_f": 35.6,
     "dewpoint_f": null,
-    "wind_mph": 8.1,
+    "wind_mph": 5.7,
     "wind_dir": 60,
     "tendency_hpa": null,
     "tendency_label": null
   },
   "kbvy": {
     "station": "KBVY",
-    "time": "2026-02-20T15:35:00+00:00",
+    "time": "2026-02-20T16:05:00+00:00",
     "pressure_hpa": null,
     "temp_f": 35.6,
     "dewpoint_f": null,
-    "wind_mph": 6.9,
-    "wind_dir": 110,
+    "wind_mph": 5.7,
+    "wind_dir": 120,
     "tendency_hpa": null,
     "tendency_label": null
   },
   "buoy_44013": {
-    "time": "2026-02-20T15:20Z",
-    "wind_dir": 110.0,
-    "wind_mph": 6.7,
-    "gust_mph": 8.9,
+    "time": "2026-02-20T15:50Z",
+    "wind_dir": 90.0,
+    "wind_mph": 8.9,
+    "gust_mph": 11.2,
     "wave_ht_ft": 1.6,
-    "wave_period_sec": 11.0,
-    "pressure_hpa": 1014.9,
-    "air_temp_f": 35.8,
+    "wave_period_sec": 10.0,
+    "pressure_hpa": 1013.9,
+    "air_temp_f": 36.0,
     "water_temp_f": 36.5,
     "dewpoint_f": 32.7,
     "pressure_tend_hpa": null
@@ -2619,24 +2602,24 @@
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-02-20T15:51:09.439347",
+    "updated": "2026-02-20T16:24:17.982787",
     "temperature": 37.0,
     "stale": false
   },
   "hyperlocal": {
-    "bias_temp": -0.1,
+    "bias_temp": -0.7,
     "corrected_temp": 37.0
   },
   "derived": {
-    "pressure_trend": "Falling",
-    "pressure_trend_hpa_3h": -2.9,
+    "pressure_trend": "Falling fast",
+    "pressure_trend_hpa_3h": -3.4,
     "fog_probability": 0,
     "fog_label": "Unlikely",
     "fog_hours_in_12h": 0,
-    "col_precip_type": "Snow",
-    "col_precip_conf": "High",
-    "temp_850hpa_now": 25.3,
-    "height_850hpa_tend_6h": -200.0,
+    "col_precip_type": "Mixed",
+    "col_precip_conf": "Low",
+    "temp_850hpa_now": 28.1,
+    "height_850hpa_tend_6h": -180.0,
     "trough_signal": "Approaching",
     "wind_peak_time": "2026-02-20T17:00"
   },
