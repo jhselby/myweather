@@ -477,6 +477,12 @@
     </header>
 
     <div id="pressureAlarmBanner" class="pressure-alarm"></div>
+    <div id="stormModeBanner" style="display:none;border-radius:14px;padding:12px 16px;
+      margin:8px 0 4px 0;background:rgba(255,60,60,0.18);border:1px solid rgba(255,60,60,0.45);
+      color:rgba(255,200,200,0.95);">
+      <div style="font-weight:900;font-size:1rem;margin-bottom:6px;">⛈️ Storm conditions developing</div>
+      <div id="stormModeDetails" style="font-size:0.85rem;color:rgba(255,180,180,0.85);line-height:1.6;"></div>
+    </div>
     <div id="alertsContainer"></div>
 
     <!-- WEATHER VIEW -->
@@ -827,7 +833,8 @@
 
           </div>
           <div class="small-note" id="sunNote" style="margin-top:10px;"></div>
-        </div>
+          </div><!-- /card-body sun -->
+        </div><!-- /card sun -->
 
         <!-- Moon — full width -->
         <div class="card col-12" data-collapse-key="moon" data-default-open="false">
@@ -1091,22 +1098,69 @@
     let tempPrecipChart = null;
     let windChartObj    = null;
 
-    function buildTempPrecipChart(times, temps, pop) {
-      const labels   = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
-      const ctx      = document.getElementById("tempPrecipChart").getContext("2d");
+    function buildTempPrecipChart(times, temps, pop, wetBulbs) {
+      const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
+      const ctx    = document.getElementById("tempPrecipChart").getContext("2d");
       if (tempPrecipChart) tempPrecipChart.destroy();
+
+      // Color each precip bar by wet bulb precip type
+      const precipColors = (wetBulbs || []).map((wb, i) => {
+        const p = pop[i] ?? 0;
+        if (p < 5) return "rgba(255,255,255,0.08)";   // negligible — faint
+        if (wb == null) return "rgba(100,160,255,0.55)";  // unknown — default blue
+        if (wb <= 28)   return "rgba(160,220,255,0.85)";  // snow — bright blue
+        if (wb <= 32)   return "rgba(120,200,255,0.75)";  // snow likely — blue
+        if (wb <= 35)   return "rgba(255,200,80,0.80)";   // mixed — amber
+        if (wb <= 38)   return "rgba(255,160,60,0.75)";   // freezing rain — orange
+        return          "rgba(80,140,255,0.60)";           // rain — muted blue
+      });
+
       tempPrecipChart = new Chart(ctx, {
-        type: "line",
         data: {
           labels,
           datasets: [
-            { label: "Temp (°F)", data: temps.map(v => v ?? null), yAxisID: "y",  tension: 0.25 },
-            { label: "Precip %",       data: pop.map(v => v ?? null),   yAxisID: "y1", tension: 0.25 }
+            {
+              type: "line",
+              label: "Temp (°F)",
+              data: temps.map(v => v ?? null),
+              yAxisID: "y",
+              tension: 0.25,
+              borderColor: "rgba(255,180,80,0.9)",
+              backgroundColor: "transparent",
+              pointRadius: 0,
+            },
+            {
+              type: "bar",
+              label: "Precip %",
+              data: pop.map(v => v ?? null),
+              yAxisID: "y1",
+              backgroundColor: precipColors,
+              borderColor: "transparent",
+              borderRadius: 3,
+            }
           ]
         },
         options: {
           responsive: true,
-          plugins: { legend: { labels: { color: "rgba(255,255,255,0.8)" } } },
+          plugins: {
+            legend: { labels: { color: "rgba(255,255,255,0.8)" } },
+            tooltip: {
+              callbacks: {
+                afterLabel: (ctx) => {
+                  if (ctx.datasetIndex === 1) {
+                    const wb = wetBulbs?.[ctx.dataIndex];
+                    if (wb == null) return "";
+                    if (wb <= 28)  return "❄️ Snow";
+                    if (wb <= 32)  return "🌨 Snow likely";
+                    if (wb <= 35)  return "🌧 Mixed/slush";
+                    if (wb <= 38)  return "🌧 Freezing rain possible";
+                    return "🌧 Rain";
+                  }
+                  return "";
+                }
+              }
+            }
+          },
           scales: {
             x:  { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
             y:  { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
@@ -2017,6 +2071,34 @@
           }
         }
 
+        // Storm mode — triggers when 2+ alarm conditions align
+        const stormBanner  = document.getElementById("stormModeBanner");
+        const stormDetails = document.getElementById("stormModeDetails");
+        if (stormBanner && stormDetails) {
+          const stormFlags = [];
+          // Falling pressure fast
+          if (der.pressure_alarm === "falling") stormFlags.push("⬇️ Pressure falling fast");
+          // Trough approaching
+          if (der.trough_signal === "Approaching") stormFlags.push("🌀 850mb trough approaching");
+          // High wind worry
+          const gustWorry = (data.wind_risk?.gust?.level ?? "");
+          if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`💨 Gust worry: ${gustWorry}`);
+          // Precip + snow/mixed column
+          const pop0 = (data.daily?.precipitation_probability_max?.[0] ?? 0);
+          if (pop0 >= 60 && der.col_precip_type && der.col_precip_type !== "Rain")
+            stormFlags.push(`❄️ Precip likely — column type: ${der.col_precip_type}`);
+          // NWS alert active
+          if ((data.alerts || []).length > 0)
+            stormFlags.push(`🚨 ${data.alerts.length} NWS alert${data.alerts.length > 1 ? "s" : ""} active`);
+
+          if (stormFlags.length >= 2) {
+            stormBanner.style.display  = "";
+            stormDetails.innerHTML = stormFlags.map(f => `• ${f}`).join("<br>");
+          } else {
+            stormBanner.style.display = "none";
+          }
+        }
+
         // Sea breeze indicator
         const sbRow   = document.getElementById("seaBreezeRow");
         const sbLabel = document.getElementById("seaBreezeLabel");
@@ -2102,7 +2184,8 @@
         buildTempPrecipChart(
           times,
           (hourly.temperature || []).slice(0, 48),
-          (hourly.precipitation_probability || []).slice(0, 48)
+          (hourly.precipitation_probability || []).slice(0, 48),
+          (hourly.wet_bulb || []).slice(0, 48)
         );
         buildWindChart(
           times,
