@@ -466,13 +466,12 @@
         </div>
       </div>
 
-      <div class="source-row" id="sourceRow"></div>
-
       <nav class="tabs" role="tablist" aria-label="Views">
         <button class="tab active" id="tabWeather" role="tab" aria-selected="true" onclick="showTab('weather')">Weather</button>
         <button class="tab" id="tabWind" role="tab" aria-selected="false" onclick="showTab('wind')">Wind</button>
         <button class="tab" id="tabAlmanac" role="tab" aria-selected="false" onclick="showTab('almanac')">Almanac</button>
         <button class="tab" id="tabRadar"   role="tab" aria-selected="false" onclick="showTab('radar')">Radar</button>
+        <button class="tab" id="tabSources" role="tab" aria-selected="false" onclick="showTab('sources')" style="border-color:rgba(100,220,100,0.3);">Sources</button>
       </nav>
 
       <!-- Banners — sticky with header, below tabs -->
@@ -487,11 +486,16 @@
         </div>
         <div id="stormModeDetails" style="display:none;font-size:0.85rem;color:rgba(255,180,180,0.85);line-height:1.6;margin-top:6px;"></div>
       </div>
-      <div id="alertsHeaderRow" style="display:none;align-items:center;justify-content:space-between;margin-top:4px;">
-        <span style="font-size:0.78rem;font-weight:800;color:rgba(255,180,100,0.7);" id="alertCountLabel"></span>
-        <button onclick="collapseAllAlerts()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.75rem;font-weight:800;cursor:pointer;padding:2px 6px;">Collapse all</button>
+      <!-- Consolidated alert summary bar -->
+      <div id="alertSummaryBar" style="display:none;margin-top:6px;border-radius:10px;padding:8px 14px;
+        background:rgba(255,80,80,0.18);border:1px solid rgba(255,80,80,0.35);cursor:pointer;
+        display:none;align-items:center;justify-content:space-between;"
+        onclick="toggleAlertPanel()">
+        <span id="alertSummaryText" style="font-weight:900;font-size:0.88rem;color:rgba(255,200,200,0.95);"></span>
+        <span id="alertSummaryChev" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;white-space:nowrap;">&#9660; Show</span>
       </div>
-      <div id="alertsContainer" style="max-height:160px;overflow-y:auto;"></div>
+      <!-- Expandable alert detail panel -->
+      <div id="alertsContainer" style="display:none;max-height:220px;overflow-y:auto;margin-top:4px;"></div>
 
     </header>
 
@@ -900,6 +904,16 @@
       </div>
     </section>
 
+    <!-- SOURCES VIEW -->
+    <section id="sourcesView" style="display:none;">
+      <div class="grid">
+        <div class="card col-12">
+          <div class="card-title">📡 Data Sources &amp; Status</div>
+          <div id="sourcesTable" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </section>
+
     <!-- RADAR VIEW -->
     <section id="radarView" style="display:none;">
       <div class="grid">
@@ -969,8 +983,8 @@
     // Tab behavior — Weather / Wind / Almanac
     // ======================================================
     function showTab(which) {
-      const views = { weather: "weatherView", wind: "windView", almanac: "almanacView", radar: "radarView" };
-      const tabs  = { weather: "tabWeather",  wind: "tabWind",  almanac: "tabAlmanac",  radar: "tabRadar"  };
+      const views = { weather: "weatherView", wind: "windView", almanac: "almanacView", radar: "radarView", sources: "sourcesView" };
+      const tabs  = { weather: "tabWeather",  wind: "tabWind",  almanac: "tabAlmanac",  radar: "tabRadar",  sources: "tabSources" };
       Object.keys(views).forEach(k => {
         const v = document.getElementById(views[k]);
         const t = document.getElementById(tabs[k]);
@@ -989,7 +1003,7 @@
     (function restoreTab() {
       try {
         const t = localStorage.getItem("activeTab");
-        if (["wind","almanac","radar"].includes(t)) showTab(t);
+        if (["wind","almanac","radar","sources"].includes(t)) showTab(t);
       } catch(e) {}
     })();
 
@@ -1118,15 +1132,16 @@
       if (tempPrecipChart) tempPrecipChart.destroy();
 
       // Color each precip bar by wet bulb precip type
+      // Snow = white/light grey, Mixed = purple/slate, Freezing rain = orange, Rain = blue
       const precipColors = (wetBulbs || []).map((wb, i) => {
         const p = pop[i] ?? 0;
-        if (p < 5) return "rgba(255,255,255,0.08)";   // negligible — faint
-        if (wb == null) return "rgba(100,160,255,0.55)";  // unknown — default blue
-        if (wb <= 28)   return "rgba(160,220,255,0.85)";  // snow — bright blue
-        if (wb <= 32)   return "rgba(120,200,255,0.75)";  // snow likely — blue
-        if (wb <= 35)   return "rgba(255,200,80,0.80)";   // mixed — amber
-        if (wb <= 38)   return "rgba(255,160,60,0.75)";   // freezing rain — orange
-        return          "rgba(80,140,255,0.60)";           // rain — muted blue
+        if (p < 5) return "rgba(255,255,255,0.06)";   // negligible — faint
+        if (wb == null) return "rgba(80,140,255,0.55)"; // unknown — default blue
+        if (wb <= 28)   return "rgba(230,240,255,0.90)"; // snow — near white
+        if (wb <= 32)   return "rgba(200,215,255,0.80)"; // snow likely — light grey-blue
+        if (wb <= 35)   return "rgba(160,100,220,0.80)"; // mixed/slush — purple
+        if (wb <= 38)   return "rgba(255,140,40,0.80)";  // freezing rain — orange
+        return          "rgba(60,130,255,0.70)";          // rain — blue
       });
 
       tempPrecipChart = new Chart(ctx, {
@@ -1166,9 +1181,9 @@
                     if (wb == null) return "";
                     if (wb <= 28)  return "❄️ Snow";
                     if (wb <= 32)  return "🌨 Snow likely";
-                    if (wb <= 35)  return "🌧 Mixed/slush";
-                    if (wb <= 38)  return "🌧 Freezing rain possible";
-                    return "🌧 Rain";
+                    if (wb <= 35)  return "🟣 Mixed/slush";
+                    if (wb <= 38)  return "🟠 Freezing rain possible";
+                    return "🔵 Rain";
                   }
                   return "";
                 }
@@ -1212,26 +1227,64 @@
     // ======================================================
     // Rendering functions
     // ======================================================
+    const SOURCE_META = {
+      gfs_current:  { name: "GFS",          desc: "Global Forecast System — current conditions baseline" },
+      hrrr_hourly:  { name: "HRRR",         desc: "High-Resolution Rapid Refresh — 48h hourly forecast, upper-air" },
+      ecmwf_daily:  { name: "ECMWF",        desc: "European Centre model — 10-day daily forecast" },
+      pws:          { name: "PWS",           desc: "Personal Weather Station KMAMARBL63 (Castle Hill, 0.25mi)" },
+      kbos:         { name: "KBOS",         desc: "Logan Airport ASOS — observed temp, pressure, tendency" },
+      kbvy:         { name: "KBVY",         desc: "Beverly Airport ASOS — observed temp, wind" },
+      buoy_44013:   { name: "Buoy 44013",   desc: "NOAA Boston Buoy (16mi ENE) — water temp, waves, offshore wind" },
+      tides:        { name: "Tides",        desc: "NOAA tides — Salem Harbor station 8442668" },
+      nws_forecast: { name: "NWS Forecast", desc: "NWS Boston text forecast and hourly details" },
+      nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead" },
+    };
+
     function renderSources(sources, pwsStale) {
-      const row = document.getElementById("sourceRow");
-      if (!row || !sources) return;
-      row.innerHTML = "";
-      const order = ["gfs_current", "hrrr_hourly", "ecmwf_daily", "pws", "kbos", "kbvy", "buoy_44013", "tides", "nws_forecast", "nws_alerts"];
-      const names = {
-        gfs_current: "GFS", hrrr_hourly: "HRRR", ecmwf_daily: "ECMWF",
-        pws: pwsStale ? "PWS Cached" : "PWS Live",
-        kbos: "KBOS", kbvy: "KBVY", buoy_44013: "Buoy44013", tides: "Tides", nws_forecast: "NWS", nws_alerts: "Alerts"
-      };
+      if (!sources) return;
+      const order = Object.keys(SOURCE_META);
+
+      // Count errors for tab color
+      let anyError = false;
       order.forEach(key => {
         const s = sources[key];
-        if (!s) return;
-        const ok  = s.status === "ok";
-        const age = typeof s.age_minutes === "number" ? `${s.age_minutes.toFixed(1)}m` : "--";
-        const pill = document.createElement("div");
-        pill.className = "source-pill";
-        pill.innerHTML = `${ok ? "&#9989;" : "&#10060;"} ${names[key]} <span class="small">(${age})</span>`;
-        row.appendChild(pill);
+        if (s && s.status !== "ok") anyError = true;
       });
+      const tabBtn = document.getElementById("tabSources");
+      if (tabBtn) {
+        tabBtn.style.background    = anyError ? "rgba(255,80,80,0.18)"  : "rgba(80,200,100,0.15)";
+        tabBtn.style.borderColor   = anyError ? "rgba(255,80,80,0.45)"  : "rgba(80,200,100,0.4)";
+        tabBtn.style.color         = anyError ? "rgba(255,180,180,0.95)" : "rgba(140,240,160,0.95)";
+        tabBtn.textContent         = anyError ? "⚠️ Sources" : "✓ Sources";
+      }
+
+      // Build sources table
+      const table = document.getElementById("sourcesTable");
+      if (!table) return;
+      const pwsName = pwsStale ? "PWS (cached)" : "PWS (live)";
+
+      table.innerHTML = `
+        <div style="display:grid;grid-template-columns:120px 60px 60px 1fr;gap:0;font-size:0.82rem;">
+          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 8px 6px 0;border-bottom:1px solid rgba(255,255,255,0.08);">Source</div>
+          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.08);">Status</div>
+          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.08);">Age</div>
+          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 0 6px 8px;border-bottom:1px solid rgba(255,255,255,0.08);">Description</div>
+          ${order.map(key => {
+            const s   = sources[key];
+            if (!s) return "";
+            const ok  = s.status === "ok";
+            const age = typeof s.age_minutes === "number" ? s.age_minutes.toFixed(1) + "m" : "--";
+            const meta = SOURCE_META[key];
+            const name = key === "pws" ? pwsName : meta.name;
+            return `
+              <div style="font-weight:800;color:rgba(255,255,255,0.85);padding:8px 8px 8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">${name}</div>
+              <div style="padding:8px;border-bottom:1px solid rgba(255,255,255,0.05);">${ok ? "✅" : "❌"}</div>
+              <div style="padding:8px;border-bottom:1px solid rgba(255,255,255,0.05);color:${ok ? "rgba(255,255,255,0.7)" : "rgba(255,120,120,0.9)"};">${age}</div>
+              <div style="padding:8px 0 8px 8px;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);">${meta.desc}${s.error ? `<span style="color:rgba(255,120,120,0.8);"> — ${s.error}</span>` : ""}</div>
+            `;
+          }).join("")}
+        </div>
+      `;
     }
 
     let tideChartObj = null;
@@ -1853,6 +1906,15 @@
       });
     }
 
+    function toggleAlertPanel() {
+      const panel = document.getElementById("alertsContainer");
+      const chev  = document.getElementById("alertSummaryChev");
+      if (!panel) return;
+      const isOpen = panel.style.display !== "none";
+      panel.style.display = isOpen ? "none" : "";
+      if (chev) chev.innerHTML = isOpen ? "&#9660; Show" : "&#9650; Hide";
+    }
+
     let nwsShowAll = false;
     const NWS_PREVIEW = 5;  // periods shown before "show all"
 
@@ -1971,14 +2033,17 @@
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
         renderSources(data.sources, (data.pws || {}).stale);
 
-        // Alerts — collapsible, collapsed by default
+        // Alerts — consolidated summary bar, panel collapsed by default
         const alertsContainer = document.getElementById("alertsContainer");
-        const alertsHeaderRow = document.getElementById("alertsHeaderRow");
-        const alertCountLabel = document.getElementById("alertCountLabel");
+        const alertSummaryBar = document.getElementById("alertSummaryBar");
+        const alertSummaryText = document.getElementById("alertSummaryText");
         alertsContainer.innerHTML = "";
         if (data.alerts && data.alerts.length > 0) {
-          if (alertsHeaderRow) alertsHeaderRow.style.display = "flex";
-          if (alertCountLabel) alertCountLabel.textContent = `${data.alerts.length} active alert${data.alerts.length > 1 ? "s" : ""}`;
+          if (alertSummaryBar)  { alertSummaryBar.style.display = "flex"; }
+          if (alertSummaryText) {
+            const n = data.alerts.length;
+            alertSummaryText.textContent = `⚠️ ${n} active alert${n > 1 ? "s" : ""}: ${data.alerts.map(a => a.event || "Alert").join(" · ")}`;
+          }
           alertsContainer.innerHTML = data.alerts.map((a, i) => {
             const id = `alertBody_${i}`;
             return `
@@ -2107,30 +2172,36 @@
         }
 
         // Storm mode — triggers when 2+ alarm conditions align
+        // Integrates into the consolidated alert summary bar
         const stormBanner  = document.getElementById("stormModeBanner");
         const stormDetails = document.getElementById("stormModeDetails");
-        if (stormBanner && stormDetails) {
-          const stormFlags = [];
-          // Falling pressure fast
-          if (der.pressure_alarm === "falling") stormFlags.push("⬇️ Pressure falling fast");
-          // Trough approaching
-          if (der.trough_signal === "Approaching") stormFlags.push("🌀 850mb trough approaching");
-          // High wind worry
-          const gustWorry = (data.wind_risk?.gust?.level ?? "");
-          if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`💨 Gust worry: ${gustWorry}`);
-          // Precip + snow/mixed column
-          const pop0 = (data.daily?.precipitation_probability_max?.[0] ?? 0);
-          if (pop0 >= 60 && der.col_precip_type && der.col_precip_type !== "Rain")
-            stormFlags.push(`❄️ Precip likely — column type: ${der.col_precip_type}`);
-          // NWS alert active
-          if ((data.alerts || []).length > 0)
-            stormFlags.push(`🚨 ${data.alerts.length} NWS alert${data.alerts.length > 1 ? "s" : ""} active`);
+        const stormFlags = [];
+        if (der.pressure_alarm === "falling") stormFlags.push("⬇️ Pressure falling fast");
+        if (der.trough_signal === "Approaching") stormFlags.push("🌀 850mb trough approaching");
+        const gustWorry = (data.wind_risk?.gust?.level ?? "");
+        if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`💨 Gust worry: ${gustWorry}`);
+        const pop0 = (data.daily?.precipitation_probability_max?.[0] ?? 0);
+        if (pop0 >= 60 && der.col_precip_type && der.col_precip_type !== "Rain")
+          stormFlags.push(`❄️ Precip likely — column type: ${der.col_precip_type}`);
 
+        if (stormBanner && stormDetails) {
           if (stormFlags.length >= 2) {
-            stormBanner.style.display  = "";
+            stormBanner.style.display = "";
             stormDetails.innerHTML = stormFlags.map(f => `• ${f}`).join("<br>");
           } else {
             stormBanner.style.display = "none";
+          }
+        }
+
+        // If storm flags AND alerts both exist, merge into summary bar
+        const hasAlerts = (data.alerts || []).length > 0;
+        if (stormFlags.length >= 2 && !hasAlerts) {
+          // Storm only — show in summary bar
+          const bar  = document.getElementById("alertSummaryBar");
+          const txt  = document.getElementById("alertSummaryText");
+          if (bar && txt) {
+            bar.style.display = "flex";
+            txt.textContent   = `⛈️ Storm conditions: ${stormFlags.map(f => f.replace(/^[^\s]+ /,'')).join(" · ")}`;
           }
         }
 
