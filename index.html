@@ -1634,6 +1634,16 @@
     // ======================================================
     // NWS Detailed Forecast
     // ======================================================
+    function toggleAlert(id) {
+      const body = document.getElementById(id);
+      if (!body) return;
+      const idx = id.replace("alertBody_", "");
+      const chevron = document.getElementById("alertChevron_" + idx);
+      const isOpen = body.style.display !== "none";
+      body.style.display = isOpen ? "none" : "block";
+      if (chevron) chevron.innerHTML = isOpen ? "&#9660; Show" : "&#9650; Hide";
+    }
+
     let nwsShowAll = false;
     const NWS_PREVIEW = 5;  // periods shown before "show all"
 
@@ -1752,17 +1762,23 @@
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
         renderSources(data.sources, (data.pws || {}).stale);
 
-        // Alerts
+        // Alerts — collapsible, collapsed by default
         const alertsContainer = document.getElementById("alertsContainer");
         alertsContainer.innerHTML = "";
         if (data.alerts && data.alerts.length > 0) {
-          alertsContainer.innerHTML = data.alerts.map(a => `
-            <a href="${a.url}" target="_blank" style="text-decoration:none;color:inherit;display:block;">
-              <div class="alert-banner">
-                <div class="alert-title">&#9888;&#65039; ${a.headline || a.event || "Weather Alert"}</div>
-                <div class="alert-desc">${a.description || ""}</div>
+          alertsContainer.innerHTML = data.alerts.map((a, i) => {
+            const id = `alertBody_${i}`;
+            return `
+            <div class="alert-banner">
+              <div class="alert-title" onclick="toggleAlert('${id}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+                <span>&#9888;&#65039; ${a.headline || a.event || "Weather Alert"}</span>
+                <span id="alertChevron_${i}" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;">&#9660; Show</span>
               </div>
-            </a>`).join("");
+              <div id="${id}" class="alert-desc" style="display:none;margin-top:8px;">${a.description || ""}
+                ${a.url ? `<div style="margin-top:8px;"><a href="${a.url}" target="_blank" style="color:rgba(100,200,255,0.8);font-size:0.82rem;">Full details &#8599;</a></div>` : ""}
+              </div>
+            </div>`;
+          }).join("");
         }
 
         // Current conditions
