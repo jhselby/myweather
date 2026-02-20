@@ -1,61 +1,61 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-02-20T02:28:37.640959Z",
+  "generated_at": "2026-02-20T02:30:21.111804Z",
   "location": {
     "name": "Wyman Cove, Marblehead MA",
     "coordinates": {
       "lat": 42.5014,
       "lon": -70.875
     },
-    "updated": "2026-02-20T02:28:37.640959Z"
+    "updated": "2026-02-20T02:30:21.111804Z"
   },
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-02-20T02:28:25.473564Z",
+      "updated_at": "2026-02-20T02:30:13.424192Z",
       "error": null,
       "model": "GFS current",
-      "age_minutes": 0.2
+      "age_minutes": 0.1
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-02-20T02:28:25.966359Z",
+      "updated_at": "2026-02-20T02:30:14.813858Z",
       "error": null,
       "model": "HRRR hourly",
-      "age_minutes": 0.2
+      "age_minutes": 0.1
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-02-20T02:28:26.360517Z",
+      "updated_at": "2026-02-20T02:30:16.665467Z",
       "error": null,
       "model": "ECMWF daily",
-      "age_minutes": 0.2
+      "age_minutes": 0.1
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-02-20T02:28:26.742345Z",
+      "updated_at": "2026-02-20T02:30:17.366095Z",
       "error": null,
-      "age_minutes": 0.2
+      "age_minutes": 0.1
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-02-20T02:28:28.086682Z",
+      "updated_at": "2026-02-20T02:30:19.050091Z",
       "error": null,
-      "age_minutes": 0.2
+      "age_minutes": 0.0
     },
     "nws_forecast": {
       "status": "ok",
-      "updated_at": "2026-02-20T02:28:28.418819Z",
+      "updated_at": "2026-02-20T02:30:19.787686Z",
       "error": null,
       "office": "BOX",
       "grid": "76,97",
-      "age_minutes": 0.2
+      "age_minutes": 0.0
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-02-20T02:28:31.904627Z",
+      "updated_at": "2026-02-20T02:30:19.989420Z",
       "error": null,
-      "age_minutes": 0.1
+      "age_minutes": 0.0
     }
   },
   "alerts": [
@@ -70,19 +70,19 @@
     }
   ],
   "current": {
-    "time": "2026-02-19T21:15",
-    "temperature": 30.6,
-    "feels_like": 22.9,
-    "humidity": 74,
-    "pressure": 1018.8,
-    "wind_speed": 6.5,
-    "wind_direction": 164,
-    "wind_gusts": 12.3,
-    "cloud_cover": 98,
+    "time": "2026-02-19T21:30",
+    "temperature": 30.7,
+    "feels_like": 22.8,
+    "humidity": 75,
+    "pressure": 1019.0,
+    "wind_speed": 7.2,
+    "wind_direction": 166,
+    "wind_gusts": 13.2,
+    "cloud_cover": 67,
     "precipitation": 0.0,
-    "weather_code": 3,
-    "condition": "Overcast",
-    "emoji": "\u2601\ufe0f"
+    "weather_code": 2,
+    "condition": "Partly Cloudy",
+    "emoji": "\u26c5"
   },
   "hourly": {
     "times": [
@@ -396,15 +396,15 @@
     "cloud_cover": [
       100,
       100,
-      100,
-      5,
+      87,
       1,
-      2,
-      8,
-      5,
-      84,
+      0,
+      0,
+      13,
       100,
+      18,
       100,
+      99,
       100,
       100,
       100,
@@ -431,8 +431,8 @@
       0,
       0,
       0,
-      0,
       3,
+      0,
       3,
       3,
       3,
@@ -819,12 +819,12 @@
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-02-20T02:28:28.084464",
+    "updated": "2026-02-20T02:30:19.047757",
     "temperature": 33.0,
     "stale": false
   },
   "hyperlocal": {
-    "bias_temp": 2.4,
+    "bias_temp": 2.3,
     "corrected_temp": 33.0
   },
   "derived": {
