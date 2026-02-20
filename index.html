@@ -1715,8 +1715,10 @@
 
       // Base tile layer — dark CartoDB
       radarMap = L.map("radarMap", {
-        center: RADAR_CENTER,
-        zoom:   RADAR_ZOOM,
+        center:  RADAR_CENTER,
+        zoom:    RADAR_ZOOM,
+        minZoom: 4,
+        maxZoom: 15,   // clamp to RainViewer tile max — above this radar tiles are empty
         zoomControl: true,
         attributionControl: true,
       });
@@ -1726,7 +1728,7 @@
         {
           attribution: "&copy; <a href='https://carto.com/'>CARTO</a> &copy; OpenStreetMap contributors",
           subdomains: "abcd",
-          maxZoom: 19,
+          maxZoom: 15,
         }
       ).addTo(radarMap);
 
