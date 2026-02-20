@@ -178,6 +178,21 @@
     .card.col-12{ grid-column: span 12; }
     .card.col-6{ grid-column: span 6; }
 
+    .card-title-collapsible{
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-title-collapsible:hover{ color: rgba(255,255,255,1); }
+    .collapse-chevron{
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 700;
+      margin-left: 8px;
+      transition: transform 0.2s;
+    }
     .card-title{
       font-weight: 900;
       color: rgba(255,255,255,0.88);
@@ -534,16 +549,19 @@
         </div>
 
         <!-- 48-Hour Temperature & Precipitation -->
-        <div class="card col-12">
-          <div class="card-title">48-Hour Temperature &amp; Precipitation</div>
+        <div class="card col-12" data-collapse-key="48h_temp_precip">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature &amp; Precipitation <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
           <canvas id="tempPrecipChart"></canvas>
+          </div>
         </div>
 
         <!-- NWS Detailed Forecast -->
-        <div class="card col-12">
-          <div class="card-title">&#128204; NWS Detailed Forecast
-            <span style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.45);margin-left:8px;" id="nwsOfficeLabel"></span>
+        <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
+            <span style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.45);margin-left:8px;" id="nwsOfficeLabel"></span> <span class="collapse-chevron">&#9660;</span>
           </div>
+          <div class="card-body" style="display:none;">
           <div id="nwsForecastList"></div>
           <div style="margin-top:10px;">
             <button id="nwsExpandBtn" onclick="nwsToggleExpand()"
@@ -657,9 +675,11 @@
         </div>
 
         <!-- 48-Hour Wind Forecast -->
-        <div class="card col-12">
-          <div class="card-title">48-Hour Wind Forecast</div>
+        <div class="card col-12" data-collapse-key="48h_wind">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
           <canvas id="windChart"></canvas>
+          </div>
         </div>
       </div>
     </section>
@@ -677,8 +697,9 @@
         </div>
 
         <!-- Buoy 44013 / Water Temp -->
-        <div class="card col-12">
-          <div class="card-title">&#127754; Ocean Conditions &#8212; Buoy 44013 (16mi ENE)</div>
+        <div class="card col-12" data-collapse-key="buoy_44013" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('buoy_44013', this)">&#127754; Ocean Conditions &#8212; Buoy 44013 (16mi ENE) <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
 
             <!-- Water temps -->
@@ -723,11 +744,13 @@
 
           </div>
           <div class="small-note" style="margin-top:8px;">Water temp is offshore (16mi ENE). Harbor temp typically 2–5°F warmer in summer, similar in winter.</div>
+          </div>
         </div>
 
         <!-- Sun full width, 3-column -->
-        <div class="card col-12">
-          <div class="card-title" id="sunCardTitle">&#9728;&#65039; Sun</div>
+        <div class="card col-12" data-collapse-key="sun" data-default-open="false">
+          <div class="card-title card-title-collapsible" id="sunCardTitle" onclick="toggleCard('sun', this)">&#9728;&#65039; Sun <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
 
             <!-- Summary column -->
@@ -783,8 +806,9 @@
         </div>
 
         <!-- Moon — full width -->
-        <div class="card col-12">
-          <div class="card-title" id="moonCardTitle">&#127769; Moon</div>
+        <div class="card col-12" data-collapse-key="moon" data-default-open="false">
+          <div class="card-title card-title-collapsible" id="moonCardTitle" onclick="toggleCard('moon', this)">&#127769; Moon <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
 
             <!-- Phase column -->
@@ -1691,6 +1715,34 @@
     // ======================================================
     // NWS Detailed Forecast
     // ======================================================
+    function toggleCard(key, el) {
+      const card  = el.closest(".card");
+      const body  = card.querySelector(".card-body");
+      const chev  = el.querySelector(".collapse-chevron");
+      if (!body) return;
+      const isOpen = body.style.display !== "none";
+      body.style.display = isOpen ? "none" : "";
+      if (chev) chev.style.transform = isOpen ? "rotate(-90deg)" : "";
+      try { localStorage.setItem("card_" + key, isOpen ? "0" : "1"); } catch(e) {}
+    }
+
+    function initCollapsibleCards() {
+      document.querySelectorAll("[data-collapse-key]").forEach(card => {
+        const key     = card.getAttribute("data-collapse-key");
+        const openDef = card.getAttribute("data-default-open") !== "false";
+        const body    = card.querySelector(".card-body");
+        if (!body) return;
+        let isOpen = openDef;
+        try {
+          const stored = localStorage.getItem("card_" + key);
+          if (stored !== null) isOpen = stored === "1";
+        } catch(e) {}
+        body.style.display = isOpen ? "" : "none";
+        const chev = card.querySelector(".collapse-chevron");
+        if (chev) chev.style.transform = isOpen ? "" : "rotate(-90deg)";
+      });
+    }
+
     function toggleAlert(id) {
       const body = document.getElementById(id);
       if (!body) return;
@@ -2035,6 +2087,7 @@
 
         // Almanac tab
         renderTides(data.tides);
+        initCollapsibleCards();
 
         // Buoy 44013
         const buoy = data.buoy_44013 || {};
