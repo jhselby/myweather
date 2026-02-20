@@ -676,6 +676,55 @@
           <canvas id="tideChart" style="margin-top:18px;max-height:200px;"></canvas>
         </div>
 
+        <!-- Buoy 44013 / Water Temp -->
+        <div class="card col-12">
+          <div class="card-title">&#127754; Ocean Conditions &#8212; Buoy 44013 (16mi ENE)</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+
+            <!-- Water temps -->
+            <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
+              <div class="row">
+                <div class="label">Water Temp</div>
+                <div class="value" id="buoyWaterTemp">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label">Air Temp</div>
+                <div class="value" id="buoyAirTemp">--</div>
+              </div>
+            </div>
+
+            <!-- Wind & pressure -->
+            <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
+              <div class="row">
+                <div class="label">Wind</div>
+                <div class="value" id="buoyWind">--</div>
+              </div>
+              <div class="row">
+                <div class="label">Pressure</div>
+                <div class="value" id="buoyPressure">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label">Tendency (3h)</div>
+                <div class="value" id="buoyPtdy">--</div>
+              </div>
+            </div>
+
+            <!-- Waves -->
+            <div style="padding-left:16px;">
+              <div class="row">
+                <div class="label">Wave Height</div>
+                <div class="value" id="buoyWaveHt">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label">Wave Period</div>
+                <div class="value" id="buoyWavePeriod">--</div>
+              </div>
+            </div>
+
+          </div>
+          <div class="small-note" style="margin-top:8px;">Water temp is offshore (16mi ENE). Harbor temp typically 2–5°F warmer in summer, similar in winter.</div>
+        </div>
+
         <!-- Sun full width, 3-column -->
         <div class="card col-12">
           <div class="card-title" id="sunCardTitle">&#9728;&#65039; Sun</div>
@@ -1051,11 +1100,11 @@
       const row = document.getElementById("sourceRow");
       if (!row || !sources) return;
       row.innerHTML = "";
-      const order = ["gfs_current", "hrrr_hourly", "ecmwf_daily", "pws", "kbos", "kbvy", "tides", "nws_forecast", "nws_alerts"];
+      const order = ["gfs_current", "hrrr_hourly", "ecmwf_daily", "pws", "kbos", "kbvy", "buoy_44013", "tides", "nws_forecast", "nws_alerts"];
       const names = {
         gfs_current: "GFS", hrrr_hourly: "HRRR", ecmwf_daily: "ECMWF",
         pws: pwsStale ? "PWS Cached" : "PWS Live",
-        kbos: "KBOS", kbvy: "KBVY", tides: "Tides", nws_forecast: "NWS", nws_alerts: "Alerts"
+        kbos: "KBOS", kbvy: "KBVY", buoy_44013: "Buoy44013", tides: "Tides", nws_forecast: "NWS", nws_alerts: "Alerts"
       };
       order.forEach(key => {
         const s = sources[key];
@@ -1986,6 +2035,46 @@
 
         // Almanac tab
         renderTides(data.tides);
+
+        // Buoy 44013
+        const buoy = data.buoy_44013 || {};
+        const toCompassDir = deg => deg != null ? toCompass(deg, false) : "--";
+        const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+
+        setEl("buoyWaterTemp", buoy.water_temp_f != null ? buoy.water_temp_f.toFixed(1) + "°F" : "--");
+        setEl("buoyAirTemp",   buoy.air_temp_f   != null ? buoy.air_temp_f.toFixed(1)   + "°F" : "--");
+        setEl("buoyPressure",  buoy.pressure_hpa != null ? buoy.pressure_hpa.toFixed(1) + " hPa" : "--");
+
+        const buoyWindEl = document.getElementById("buoyWind");
+        if (buoyWindEl) {
+          if (buoy.wind_mph != null) {
+            const dir = toCompassDir(buoy.wind_dir);
+            const gust = buoy.gust_mph != null ? ` (gust ${buoy.gust_mph})` : "";
+            buoyWindEl.textContent = `${buoy.wind_mph} mph ${dir}${gust}`;
+          } else {
+            buoyWindEl.textContent = "--";
+          }
+        }
+
+        const buoyPtdyEl = document.getElementById("buoyPtdy");
+        if (buoyPtdyEl && buoy.pressure_tend_hpa != null) {
+          const sign = buoy.pressure_tend_hpa > 0 ? "+" : "";
+          buoyPtdyEl.textContent = `${sign}${buoy.pressure_tend_hpa.toFixed(1)} hPa`;
+          buoyPtdyEl.style.color = buoy.pressure_tend_hpa <= -3
+            ? "rgba(255,100,100,0.9)"
+            : buoy.pressure_tend_hpa <= -0.6
+            ? "rgba(255,180,80,0.9)"
+            : buoy.pressure_tend_hpa >= 0.6
+            ? "rgba(100,220,120,0.9)"
+            : "rgba(255,255,255,0.75)";
+        } else if (buoyPtdyEl) {
+          buoyPtdyEl.textContent = "--";
+        }
+
+        const waveHtEl = document.getElementById("buoyWaveHt");
+        if (waveHtEl) waveHtEl.textContent = buoy.wave_ht_ft != null ? buoy.wave_ht_ft + " ft" : "Calm";
+        const wavePdEl = document.getElementById("buoyWavePeriod");
+        if (wavePdEl) wavePdEl.textContent = buoy.wave_period_sec != null ? buoy.wave_period_sec + " sec" : "--";
         buildTideChart(data.tide_curve, data.tides);
         const rise = daily.sunrise?.[0]?.split("T")?.[1] ?? "--";
         const set  = daily.sunset?.[0]?.split("T")?.[1] ?? "--";
