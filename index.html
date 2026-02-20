@@ -1023,14 +1023,15 @@
     // ======================================================
     // Rendering functions
     // ======================================================
-    function renderSources(sources) {
+    function renderSources(sources, pwsStale) {
       const row = document.getElementById("sourceRow");
       if (!row || !sources) return;
       row.innerHTML = "";
       const order = ["gfs_current", "hrrr_hourly", "ecmwf_daily", "pws", "tides", "nws_forecast", "nws_alerts"];
       const names = {
         gfs_current: "GFS", hrrr_hourly: "HRRR", ecmwf_daily: "ECMWF",
-        pws: "PWS", tides: "Tides", nws_forecast: "NWS", nws_alerts: "Alerts"
+        pws: pwsStale ? "PWS Cached" : "PWS Live",
+        tides: "Tides", nws_forecast: "NWS", nws_alerts: "Alerts"
       };
       order.forEach(key => {
         const s = sources[key];
@@ -1733,7 +1734,7 @@
         // Header
         document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
-        renderSources(data.sources);
+        renderSources(data.sources, (data.pws || {}).stale);
 
         // Alerts
         const alertsContainer = document.getElementById("alertsContainer");
@@ -1767,7 +1768,7 @@
         document.getElementById("tempBias").textContent     = (hyp.bias_temp ?? "--") + "°F";
         document.getElementById("correctedTemp").textContent= (hyp.corrected_temp ?? "--") + "°F";
         document.getElementById("pwsNote").textContent      =
-          pws.stale ? "PWS is stale (cached) — using last good reading." : "PWS is fresh.";
+          pws.stale ? "PWS Cached — using last good reading." : "PWS Live.";
 
         // Today summary
         const daily = data.daily || {};
@@ -1805,21 +1806,6 @@
                             : fogLabel === "Low chance" ? "rgba(200,200,200,0.7)"
                             : "rgba(255,255,255,0.85)";
         }
-
-        // PWS pill: Live vs Cached
-        const pwsPill = document.querySelector("#sourcePills [data-key='pws'] span, .source-pill[data-key='pws']");
-        const pwsStale = (data.pws || {}).stale;
-        // Override PWS label in pills after render
-        setTimeout(() => {
-          const allPills = document.querySelectorAll(".source-pill");
-          allPills.forEach(pill => {
-            if (pill.textContent.startsWith("PWS")) {
-              const ageMatch = pill.textContent.match(/\(.*\)/);
-              pill.textContent = (pwsStale ? "PWS Cached" : "PWS Live") +
-                                 (ageMatch ? " " + ageMatch[0] : "");
-            }
-          });
-        }, 50);
 
         document.getElementById("todayNote").textContent =
           cur.time ? `Current time in model: ${cur.time}` : "";
