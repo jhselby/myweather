@@ -599,6 +599,13 @@
           <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature &amp; Precipitation <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
           <canvas id="tempPrecipChart"></canvas>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:0.75rem;font-weight:800;color:rgba(255,255,255,0.6);">
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(230,240,255,0.90);margin-right:4px;vertical-align:middle;"></span>Snow</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(200,215,255,0.80);margin-right:4px;vertical-align:middle;"></span>Snow likely</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(160,100,220,0.80);margin-right:4px;vertical-align:middle;"></span>Mixed/slush</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(255,140,40,0.80);margin-right:4px;vertical-align:middle;"></span>Freezing rain</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(60,130,255,0.70);margin-right:4px;vertical-align:middle;"></span>Rain</span>
+          </div>
           </div>
         </div>
 
@@ -740,6 +747,12 @@
           <div id="tideGrid"></div>
           <div class="small-note" id="nextTideNote"></div>
           <canvas id="tideChart" style="margin-top:18px;max-height:200px;"></canvas>
+        </div>
+
+        <!-- Frost / Freeze Tracker -->
+        <div class="card col-12">
+          <div class="card-title">🌡️ Frost &amp; Freeze Tracker</div>
+          <div id="frostTracker" style="margin-top:6px;"></div>
         </div>
 
         <!-- Buoy 44013 / Water Temp -->
@@ -1200,22 +1213,67 @@
       });
     }
 
+    function windColor(mph) {
+      if (mph == null) return "rgba(255,255,255,0.08)";
+      if (mph < 10)   return "rgba(80,200,120,0.85)";
+      if (mph < 20)   return "rgba(220,200,60,0.85)";
+      if (mph < 30)   return "rgba(240,140,40,0.85)";
+      if (mph < 40)   return "rgba(220,60,60,0.85)";
+      return                 "rgba(160,60,220,0.85)";
+    }
+
     function buildWindChart(times, speeds, gusts) {
-      const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
-      const ctx    = document.getElementById("windChart").getContext("2d");
+      const labels      = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
+      const ctx         = document.getElementById("windChart").getContext("2d");
       if (windChartObj) windChartObj.destroy();
+      const speedColors = speeds.map(v => windColor(v));
       windChartObj = new Chart(ctx, {
-        type: "line",
         data: {
           labels,
           datasets: [
-            { label: "Wind (mph)", data: speeds.map(v => v ?? null), yAxisID: "y", tension: 0.25 },
-            { label: "Gust (mph)", data: gusts.map(v => v ?? null),  yAxisID: "y", tension: 0.25 }
+            {
+              type: "bar",
+              label: "Wind (mph)",
+              data: speeds.map(v => v ?? null),
+              yAxisID: "y",
+              backgroundColor: speedColors,
+              borderColor: "transparent",
+              borderRadius: 3,
+            },
+            {
+              type: "line",
+              label: "Gust (mph)",
+              data: gusts.map(v => v ?? null),
+              yAxisID: "y",
+              tension: 0.25,
+              borderColor: "rgba(255,180,100,0.8)",
+              backgroundColor: "transparent",
+              pointRadius: 0,
+              borderWidth: 2,
+            }
           ]
         },
         options: {
           responsive: true,
-          plugins: { legend: { labels: { color: "rgba(255,255,255,0.8)" } } },
+          plugins: {
+            legend: { labels: { color: "rgba(255,255,255,0.8)" } },
+            tooltip: {
+              callbacks: {
+                afterLabel: (ctx) => {
+                  if (ctx.datasetIndex === 0) {
+                    const v = ctx.raw;
+                    if (v == null) return "";
+                    if (v < 10)  return "Calm";
+                    if (v < 20)  return "Breezy";
+                    if (v < 30)  return "Windy";
+                    if (v < 40)  return "Strong";
+                    return "Dangerous";
+                  }
+                  return "";
+                }
+              }
+            }
+          },
           scales: {
             x: { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
             y: { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } }
@@ -1227,6 +1285,53 @@
     // ======================================================
     // Rendering functions
     // ======================================================
+    function renderFrostTracker(frost) {
+      const el = document.getElementById("frostTracker");
+      if (!el || !frost) return;
+      if (!frost.season_start) {
+        el.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No frost data yet — will populate after first overnight run.</div>';
+        return;
+      }
+
+      const seasonStart = new Date(frost.season_start).toLocaleDateString("en-US", { month:"short", day:"numeric", year:"numeric" });
+      const fmt = d => d ? new Date(d).toLocaleDateString("en-US", { month:"short", day:"numeric" }) : "None this season";
+
+      const upcoming = frost.upcoming_freeze_days || [];
+      const upcomingHtml = upcoming.length === 0
+        ? '<span style="color:rgba(255,255,255,0.4);">None in 10-day forecast</span>'
+        : upcoming.map(u => {
+            const label = u.min_f <= 20 ? "❄️❄️" : u.min_f <= 28 ? "❄️" : "🌡️";
+            const d = new Date(u.date).toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+            return `<span style="margin-right:12px;">${label} ${d} (${u.min_f}°F)</span>`;
+          }).join("");
+
+      el.innerHTML = `
+        <div style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-bottom:10px;">Season from ${seasonStart}</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+          <div style="background:rgba(100,180,255,0.08);border:1px solid rgba(100,180,255,0.18);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:900;color:rgba(180,220,255,0.9);">${frost.freeze_days ?? 0}</div>
+            <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:2px;">Freeze days</div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:3px;">min ≤ 32°F</div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:4px;">Last: ${fmt(frost.last_freeze)}</div>
+          </div>
+          <div style="background:rgba(60,120,255,0.08);border:1px solid rgba(60,120,255,0.18);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:900;color:rgba(140,180,255,0.9);">${frost.hard_freeze_days ?? 0}</div>
+            <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:2px;">Hard freeze days</div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:3px;">min ≤ 28°F</div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:4px;">Last: ${fmt(frost.last_hard)}</div>
+          </div>
+          <div style="background:rgba(20,60,180,0.08);border:1px solid rgba(20,60,180,0.25);border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:900;color:rgba(100,140,255,0.9);">${frost.severe_days ?? 0}</div>
+            <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:2px;">Severe freeze days</div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:3px;">min ≤ 20°F</div>
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:4px;">Last: ${fmt(frost.last_severe)}</div>
+          </div>
+        </div>
+        <div style="font-size:0.82rem;font-weight:800;color:rgba(255,255,255,0.55);margin-bottom:6px;">Upcoming freeze nights (10-day forecast):</div>
+        <div style="font-size:0.82rem;color:rgba(180,210,255,0.8);line-height:1.8;">${upcomingHtml}</div>
+      `;
+    }
+
     const SOURCE_META = {
       gfs_current:  { name: "GFS",          desc: "Global Forecast System — current conditions baseline" },
       hrrr_hourly:  { name: "HRRR",         desc: "High-Resolution Rapid Refresh — 48h hourly forecast, upper-air" },
@@ -2032,6 +2137,7 @@
         document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
         renderSources(data.sources, (data.pws || {}).stale);
+        renderFrostTracker(data.frost_log);
 
         // Alerts — consolidated summary bar, panel collapsed by default
         const alertsContainer = document.getElementById("alertsContainer");
