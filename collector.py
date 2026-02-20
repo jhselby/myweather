@@ -395,6 +395,82 @@ def fetch_tides():
         return {"events": [], "curve": {"times": [], "heights": []}}, meta
 
 
+def fetch_asos_obs(station_id, cache_file):
+    """
+    Generic ASOS observation fetcher via NWS API.
+    Returns current obs dict + rolling pressure tendency from cache.
+    """
+    print(f"\U0001f4e1 Fetching {station_id} observation...")
+    meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
+
+    history = []
+    if cache_file.exists():
+        try:
+            history = json.loads(cache_file.read_text()) or []
+        except Exception:
+            history = []
+
+    try:
+        url = f"https://api.weather.gov/stations/{station_id}/observations/latest"
+        r = requests.get(url, headers=HEADERS_DEFAULT, timeout=20)
+        r.raise_for_status()
+        props = r.json().get("properties", {})
+
+        obs_time    = props.get("timestamp", "")
+        pressure_pa = (props.get("seaLevelPressure") or {}).get("value")
+        temp_c      = (props.get("temperature")      or {}).get("value")
+        dewpoint_c  = (props.get("dewpoint")         or {}).get("value")
+        wind_mps    = (props.get("windSpeed")        or {}).get("value")
+        wind_dir    = (props.get("windDirection")    or {}).get("value")
+
+        pressure_hpa = round(pressure_pa / 100, 1) if pressure_pa is not None else None
+        temp_f       = round(temp_c * 9/5 + 32, 1) if temp_c is not None else None
+        dewpoint_f   = round(dewpoint_c * 9/5 + 32, 1) if dewpoint_c is not None else None
+        wind_mph     = round(wind_mps * 2.237, 1) if wind_mps is not None else None
+
+        obs = {
+            "station":      station_id,
+            "time":         obs_time,
+            "pressure_hpa": pressure_hpa,
+            "temp_f":       temp_f,
+            "dewpoint_f":   dewpoint_f,
+            "wind_mph":     wind_mph,
+            "wind_dir":     wind_dir,
+        }
+
+        history.append(obs)
+        history = history[-6:]
+        cache_file.write_text(json.dumps(history))
+
+        tendency_hpa = None
+        tendency_label = None
+        first_p  = next((h["pressure_hpa"] for h in history if h.get("pressure_hpa") is not None), None)
+        newest_p = obs["pressure_hpa"]
+        if first_p is not None and newest_p is not None and len(history) >= 2:
+            tendency_hpa = round(newest_p - first_p, 1)
+            if tendency_hpa >= 3.0:       tendency_label = "Rising fast"
+            elif tendency_hpa >= 0.6:     tendency_label = "Rising"
+            elif tendency_hpa <= -3.0:    tendency_label = "Falling fast"
+            elif tendency_hpa <= -0.6:    tendency_label = "Falling"
+            else:                         tendency_label = "Steady"
+
+        obs["tendency_hpa"]   = tendency_hpa
+        obs["tendency_label"] = tendency_label
+
+        meta["status"] = "ok"
+        print(f"  \u2713 {station_id}: {pressure_hpa} hPa, {temp_f}\u00b0F, tendency={tendency_label}")
+        return obs, meta
+
+    except Exception as e:
+        meta["error"] = str(e)
+        print(f"  \u2717 {station_id} error: {e}")
+        if history:
+            last = dict(history[-1])
+            last["stale"] = True
+            return last, meta
+        return {}, meta
+
+
 def fetch_kbos_obs():
     return fetch_asos_obs("KBOS", KBOS_CACHE_FILE)
 
