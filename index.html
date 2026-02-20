@@ -645,6 +645,7 @@
           <div class="card-title">&#127754; Tides &#8212; Salem Harbor</div>
           <div id="tideGrid"></div>
           <div class="small-note" id="nextTideNote"></div>
+          <canvas id="tideChart" style="margin-top:18px;max-height:200px;"></canvas>
         </div>
 
         <!-- Sun full width, 3-column -->
@@ -1039,6 +1040,8 @@
       });
     }
 
+    let tideChartObj = null;
+
     function renderTides(tides) {
       const grid = document.getElementById("tideGrid");
       const note = document.getElementById("nextTideNote");
@@ -1050,76 +1053,174 @@
         return;
       }
 
-      // Find next tide event (first one whose time is in the future)
-      const nowMins = new Date().getHours() * 60 + new Date().getMinutes();
       const todayStr = new Date().toISOString().split("T")[0];
+      const nowMins  = new Date().getHours() * 60 + new Date().getMinutes();
+
+      // Find next upcoming tide
       let nextIdx = -1;
       for (let i = 0; i < tides.length; i++) {
-        const t = tides[i];
-        const tDate = t.date || todayStr;
-        const [th, tm] = (t.time || "00:00").split(":").map(Number);
-        const tMins = th * 60 + tm;
-        if (tDate > todayStr || (tDate === todayStr && tMins >= nowMins)) {
+        const tDate = tides[i].date || todayStr;
+        const [th, tm] = (tides[i].time || "00:00").split(":").map(Number);
+        if (tDate > todayStr || (tDate === todayStr && (th * 60 + tm) >= nowMins)) {
           nextIdx = i;
           break;
         }
       }
 
-      // Group by date
+      // Group by date, cap at 4 per day, total 8 max
       const byDate = {};
+      let total = 0;
       tides.forEach(t => {
+        if (total >= 8) return;
         const d = t.date || todayStr;
         if (!byDate[d]) byDate[d] = [];
+        if (byDate[d].length >= 4) return;
         byDate[d].push(t);
+        total++;
       });
 
-      const today  = new Date().toISOString().split("T")[0];
-      const tmrw   = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+      const today = new Date().toISOString().split("T")[0];
+      const tmrw  = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
       let tideIdx = 0;
       Object.keys(byDate).sort().forEach(dateKey => {
-        // Day header
-        const label = dateKey === today  ? "Today" :
-                      dateKey === tmrw   ? "Tomorrow" :
+        const label = dateKey === today ? "Today" :
+                      dateKey === tmrw  ? "Tomorrow" :
                       new Date(dateKey + "T12:00:00").toLocaleDateString("en-US",
                         { weekday:"long", month:"short", day:"numeric" });
+
         const hdr = document.createElement("div");
         hdr.style.cssText = "font-size:0.8rem;font-weight:900;color:rgba(255,255,255,0.45);" +
                             "letter-spacing:0.8px;text-transform:uppercase;margin:12px 0 6px;";
         hdr.textContent = label;
         grid.appendChild(hdr);
 
-        // Tile row for this day
         const row = document.createElement("div");
         row.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px;";
 
-        byDate[dateKey].forEach(t => {
+        const dayTiles = byDate[dateKey];
+        dayTiles.forEach(t => {
           const isNext = (tideIdx === nextIdx);
-          const type   = t.type === "H" ? "High" : "Low";
           const tile   = document.createElement("div");
           tile.className = "tide-item";
-          if (isNext) {
-            tile.style.cssText = "border:1px solid rgba(100,200,255,0.45);" +
-                                  "background:rgba(100,200,255,0.08);border-radius:10px;";
-          }
+          if (isNext) tile.style.cssText =
+            "border:1px solid rgba(100,200,255,0.45);background:rgba(100,200,255,0.08);border-radius:10px;";
           tile.innerHTML =
-            '<div class="tide-type">' + (isNext ? "&#9654; " : "") + type + '</div>' +
+            '<div class="tide-type">' + (isNext ? "&#9654; " : "") +
+              (t.type === "H" ? "High" : "Low") + '</div>' +
             '<div class="tide-time">' + t.time + '</div>' +
             '<div class="tide-height">' + (t.height ?? "--") + ' ft</div>';
           row.appendChild(tile);
           tideIdx++;
         });
 
-        // Pad to 4 columns if fewer than 4 events on this day
-        while (byDate[dateKey].length < 4) {
+        // Pad empty cells so grid stays 4-column
+        for (let i = dayTiles.length; i < 4; i++) {
           row.appendChild(document.createElement("div"));
-          byDate[dateKey].push({});  // dummy to stop loop
         }
 
         grid.appendChild(row);
       });
 
-      if (note) note.textContent = "Salem Harbor (8442645) — harmonic predictions. ▶ = next tide.";
+      if (note) note.textContent = "Salem Harbor (8442645) \u2014 harmonic predictions. \u25b6 = next tide.";
+    }
+
+    function buildTideChart(curve, events) {
+      const ctx = document.getElementById("tideChart");
+      if (!ctx || !curve || !Array.isArray(curve.times) || curve.times.length === 0) return;
+
+      // Thin to every 3rd point (~18-min resolution) to keep chart snappy
+      const step = 3;
+      const labels  = [];
+      const heights = [];
+      for (let i = 0; i < curve.times.length; i += step) {
+        const raw = curve.times[i]; // "YYYY-MM-DD HH:MM"
+        const d   = new Date(raw.replace(" ", "T"));
+        labels.push(d.toLocaleTimeString("en-US",
+          { weekday: undefined, hour: "numeric", minute: "2-digit" }));
+        heights.push(curve.heights[i]);
+      }
+
+      // Now-line index (closest point to current time)
+      const nowMs = Date.now();
+      let nowLineIdx = 0;
+      let minDiff   = Infinity;
+      for (let i = 0; i < curve.times.length; i += step) {
+        const d    = new Date(curve.times[i].replace(" ", "T"));
+        const diff = Math.abs(d.getTime() - nowMs);
+        if (diff < minDiff) { minDiff = diff; nowLineIdx = Math.floor(i / step); }
+      }
+
+      // Annotation points for H/L events
+      const pointColors = heights.map(() => "transparent");
+      const pointRadius = heights.map(() => 0);
+
+      if (tideChartObj) tideChartObj.destroy();
+      tideChartObj = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "Tide Height (ft)",
+              data: heights,
+              borderColor:     "rgba(100,180,255,0.85)",
+              backgroundColor: "rgba(100,180,255,0.08)",
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+            },
+            // Vertical now-line via a second dataset with a single point
+            {
+              label: "Now",
+              data: labels.map((_, i) => i === nowLineIdx ? heights[i] : null),
+              borderColor:  "rgba(255,220,80,0.9)",
+              backgroundColor: "rgba(255,220,80,0.9)",
+              borderWidth: 0,
+              pointRadius: labels.map((_, i) => i === nowLineIdx ? 8 : 0),
+              pointStyle:  "triangle",
+              fill: false,
+              tension: 0,
+              showLine: false,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          interaction: { mode: "index", intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ctx.datasetIndex === 0
+                  ? " " + ctx.parsed.y.toFixed(1) + " ft"
+                  : " Now"
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                color: "rgba(255,255,255,0.45)",
+                maxTicksLimit: 12,
+                maxRotation: 0,
+                font: { size: 10, weight: "700" }
+              },
+              grid: { color: "rgba(255,255,255,0.04)" }
+            },
+            y: {
+              ticks: {
+                color: "rgba(255,255,255,0.55)",
+                callback: v => v.toFixed(1) + " ft",
+                font: { size: 10, weight: "700" }
+              },
+              grid: { color: "rgba(255,255,255,0.06)" }
+            }
+          }
+        }
+      });
     }
 
     function renderForecast(daily) {
@@ -1737,6 +1838,7 @@
 
         // Almanac tab
         renderTides(data.tides);
+        buildTideChart(data.tide_curve, data.tides);
         const rise = daily.sunrise?.[0]?.split("T")?.[1] ?? "--";
         const set  = daily.sunset?.[0]?.split("T")?.[1] ?? "--";
         document.getElementById("sunrise").textContent = rise;
