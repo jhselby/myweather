@@ -1007,9 +1007,13 @@
       });
       try { localStorage.setItem("activeTab", which); } catch(e) {}
       if (which === "radar") {
-        initRadar();
-        // Leaflet needs a size hint after becoming visible
-        setTimeout(() => { if (radarMap) radarMap.invalidateSize(); }, 50);
+        // Wait for browser to paint the div before Leaflet measures it
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            initRadar();
+            if (radarMap) radarMap.invalidateSize();
+          });
+        });
       }
       // Scroll so tab content is visible below sticky header
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1745,6 +1749,8 @@
 
       // Load RainViewer data
       fetchRainViewer();
+      // Belt-and-suspenders: invalidate size again after tiles load
+      setTimeout(() => { if (radarMap) radarMap.invalidateSize(); }, 500);
     }
 
     let rainViewerCache = null;
