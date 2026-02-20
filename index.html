@@ -905,8 +905,11 @@
       const row = document.getElementById("sourceRow");
       if (!row || !sources) return;
       row.innerHTML = "";
-      const order = ["open_meteo", "pws", "tides", "nws_alerts"];
-      const names = { open_meteo: "Model", pws: "PWS", tides: "Tides", nws_alerts: "Alerts" };
+      const order = ["gfs_current", "hrrr_hourly", "ecmwf_daily", "pws", "tides", "nws_alerts"];
+      const names = {
+        gfs_current: "GFS", hrrr_hourly: "HRRR", ecmwf_daily: "ECMWF",
+        pws: "PWS", tides: "Tides", nws_alerts: "Alerts"
+      };
       order.forEach(key => {
         const s = sources[key];
         if (!s) return;
