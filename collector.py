@@ -385,6 +385,60 @@ def fetch_tides():
         return [], meta
 
 
+def fetch_nws_forecast():
+    """
+    Fetch NWS plain-English detailed forecast for the location.
+    Two-step: first hit /points to get the forecast URL for this
+    grid point, then fetch that URL for the period-by-period text.
+    Written by NWS Boston meteorologists, not model-generated.
+    """
+    print("\U0001f4e1 Fetching NWS detailed forecast...")
+    meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
+
+    try:
+        # Step 1: resolve grid point
+        points_url = f"https://api.weather.gov/points/{LAT},{LON}"
+        r1 = requests.get(points_url, headers=HEADERS_DEFAULT, timeout=30)
+        r1.raise_for_status()
+        props = r1.json().get("properties", {})
+        forecast_url = props.get("forecast")
+        office      = props.get("cwa", "")
+        grid_x      = props.get("gridX", "")
+        grid_y      = props.get("gridY", "")
+        if not forecast_url:
+            raise ValueError("No forecast URL returned from /points")
+
+        # Step 2: fetch the forecast
+        r2 = requests.get(forecast_url, headers=HEADERS_DEFAULT, timeout=30)
+        r2.raise_for_status()
+        periods_raw = r2.json().get("properties", {}).get("periods", [])
+
+        periods = []
+        for p in periods_raw:
+            periods.append({
+                "name":           p.get("name", ""),
+                "is_daytime":     p.get("isDaytime", True),
+                "temperature":    p.get("temperature"),
+                "temp_unit":      p.get("temperatureUnit", "F"),
+                "wind_speed":     p.get("windSpeed", ""),
+                "wind_direction": p.get("windDirection", ""),
+                "short_forecast": p.get("shortForecast", ""),
+                "detailed":       p.get("detailedForecast", ""),
+                "icon":           p.get("icon", ""),
+            })
+
+        meta["status"] = "ok"
+        meta["office"] = office
+        meta["grid"]   = f"{grid_x},{grid_y}"
+        print(f"  \u2713 NWS forecast: {len(periods)} periods ({office})")
+        return periods, meta
+
+    except Exception as e:
+        meta["error"] = str(e)
+        print(f"  \u2717 NWS forecast error: {e}")
+        return [], meta
+
+
 def fetch_nws_alerts():
     """Fetch active weather alerts from NWS for the lat/lon point."""
     print("📡 Fetching NWS alerts...")
@@ -426,7 +480,7 @@ def fetch_nws_alerts():
 # -----------------------------
 # Processing
 # -----------------------------
-def process_data(current_data, hourly_data, daily_data, pws, tides, alerts, source_meta):
+def process_data(current_data, hourly_data, daily_data, pws, tides, nws_forecast, alerts, source_meta):
     """Combine and normalize data sources into a stable schema."""
     print("🔄 Processing data...")
 
@@ -451,6 +505,7 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, alerts, sour
         "hourly": {},
         "daily": {},
         "tides": tides if tides is not None else [],
+        "nws_forecast": nws_forecast if nws_forecast is not None else [],
         "pws": pws if pws is not None else {"station": PWS_STATION, "name": "Castle Hill", "temperature": None, "stale": True}
     }
 
@@ -681,6 +736,7 @@ def main():
     daily_data,    daily_meta    = fetch_daily_ecmwf()
     pws_data,      pws_meta      = fetch_pws_current()
     tide_data,     tides_meta    = fetch_tides()
+    forecast_data, forecast_meta = fetch_nws_forecast()
     alert_data,    alerts_meta   = fetch_nws_alerts()
 
     sources = {
@@ -689,12 +745,13 @@ def main():
         "ecmwf_daily": daily_meta,
         "pws":         pws_meta,
         "tides":       tides_meta,
+        "nws_forecast": forecast_meta,
         "nws_alerts":  alerts_meta,
     }
 
     weather_data = process_data(
         current_data, hourly_data, daily_data,
-        pws_data, tide_data, alert_data, sources
+        pws_data, tide_data, forecast_data, alert_data, sources
     )
 
     # Save to JSON
