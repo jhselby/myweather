@@ -483,11 +483,15 @@
         <div style="font-weight:900;font-size:0.92rem;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;"
              onclick="const d=document.getElementById('stormModeDetails');const c=document.getElementById('stormModeChev');const open=d.style.display!=='none';d.style.display=open?'none':'';c.innerHTML=open?'&#9660; Show':'&#9650; Hide';">
           ⛈️ Storm conditions developing
-          <span id="stormModeChev" style="font-size:0.8rem;color:rgba(255,180,180,0.5);margin-left:8px;">&#9660; Show</span>
+          <span id="stormModeChev" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;white-space:nowrap;">&#9660; Show</span>
         </div>
         <div id="stormModeDetails" style="display:none;font-size:0.85rem;color:rgba(255,180,180,0.85);line-height:1.6;margin-top:6px;"></div>
       </div>
-      <div id="alertsContainer"></div>
+      <div id="alertsHeaderRow" style="display:none;align-items:center;justify-content:space-between;margin-top:4px;">
+        <span style="font-size:0.78rem;font-weight:800;color:rgba(255,180,100,0.7);" id="alertCountLabel"></span>
+        <button onclick="collapseAllAlerts()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:0.75rem;font-weight:800;cursor:pointer;padding:2px 6px;">Collapse all</button>
+      </div>
+      <div id="alertsContainer" style="max-height:160px;overflow-y:auto;"></div>
 
     </header>
 
@@ -1841,6 +1845,14 @@
       if (chevron) chevron.innerHTML = isOpen ? "&#9660; Show" : "&#9650; Hide";
     }
 
+    function collapseAllAlerts() {
+      document.querySelectorAll("[id^='alertBody_']").forEach((body, i) => {
+        body.style.display = "none";
+        const chev = document.getElementById("alertChevron_" + i);
+        if (chev) chev.innerHTML = "&#9660; Show";
+      });
+    }
+
     let nwsShowAll = false;
     const NWS_PREVIEW = 5;  // periods shown before "show all"
 
@@ -1961,14 +1973,18 @@
 
         // Alerts — collapsible, collapsed by default
         const alertsContainer = document.getElementById("alertsContainer");
+        const alertsHeaderRow = document.getElementById("alertsHeaderRow");
+        const alertCountLabel = document.getElementById("alertCountLabel");
         alertsContainer.innerHTML = "";
         if (data.alerts && data.alerts.length > 0) {
+          if (alertsHeaderRow) alertsHeaderRow.style.display = "flex";
+          if (alertCountLabel) alertCountLabel.textContent = `${data.alerts.length} active alert${data.alerts.length > 1 ? "s" : ""}`;
           alertsContainer.innerHTML = data.alerts.map((a, i) => {
             const id = `alertBody_${i}`;
             return `
             <div class="alert-banner">
               <div class="alert-title" onclick="toggleAlert('${id}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
-                <span>&#9888;&#65039; ${a.headline || a.event || "Weather Alert"}</span>
+                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">&#9888;&#65039; ${a.event || a.headline?.split(" issued")[0] || "Weather Alert"}</span>
                 <span id="alertChevron_${i}" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;">&#9660; Show</span>
               </div>
               <div id="${id}" class="alert-desc" style="display:none;margin-top:8px;">${a.description || ""}
