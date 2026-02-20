@@ -10,6 +10,8 @@
   <meta name="apple-mobile-web-app-title" content="Wyman Cove" />
 
   <title>Wyman Cove Weather</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
 
@@ -370,7 +372,39 @@
 .badge.notable      { background: rgba(255,170,0,0.22); }
 .badge.significant  { background: rgba(255,80,80,0.25); }
 .badge.severe       { background: rgba(200,60,255,0.30); }
-  </style>
+  
+    /* Radar tab */
+    .radar-btn {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .radar-btn:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); }
+    .radar-btn-active {
+      background: rgba(100,180,255,0.18) !important;
+      border-color: rgba(100,180,255,0.5) !important;
+      color: rgba(140,210,255,0.95) !important;
+    }
+    /* Override Leaflet defaults for dark theme */
+    .leaflet-container { background: #0b1220 !important; }
+    .leaflet-control-attribution {
+      background: rgba(0,0,0,0.6) !important;
+      color: rgba(255,255,255,0.4) !important;
+      font-size: 10px !important;
+    }
+    .leaflet-control-attribution a { color: rgba(255,255,255,0.5) !important; }
+    .leaflet-control-zoom a {
+      background: rgba(20,30,50,0.9) !important;
+      color: rgba(255,255,255,0.8) !important;
+      border-color: rgba(255,255,255,0.15) !important;
+    }
+</style>
 </head>
 
 <body>
@@ -404,6 +438,7 @@
         <button class="tab active" id="tabWeather" role="tab" aria-selected="true" onclick="showTab('weather')">Weather</button>
         <button class="tab" id="tabWind" role="tab" aria-selected="false" onclick="showTab('wind')">Wind</button>
         <button class="tab" id="tabAlmanac" role="tab" aria-selected="false" onclick="showTab('almanac')">Almanac</button>
+        <button class="tab" id="tabRadar"   role="tab" aria-selected="false" onclick="showTab('radar')">Radar</button>
       </nav>
     </header>
 
@@ -719,6 +754,69 @@
 
       </div>
     </section>
+
+    <!-- RADAR VIEW -->
+    <section id="radarView" style="display:none;">
+      <div class="grid">
+        <div class="card col-12" style="padding:0;overflow:hidden;border-radius:18px;">
+
+          <!-- Controls bar -->
+          <div id="radarControls" style="
+            display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+            padding:12px 16px;background:rgba(255,255,255,0.05);
+            border-bottom:1px solid rgba(255,255,255,0.08);">
+
+            <span style="font-weight:900;font-size:0.9rem;color:rgba(255,255,255,0.85);">
+              &#127941; Radar
+            </span>
+
+            <!-- Layer selector -->
+            <div style="display:flex;gap:6px;margin-left:4px;">
+              <button onclick="setRadarLayer('radar')"   id="btnLayerRadar"
+                class="radar-btn radar-btn-active">Radar</button>
+              <button onclick="setRadarLayer('satellite')" id="btnLayerSat"
+                class="radar-btn">Satellite</button>
+              <button onclick="setRadarLayer('clouds')"  id="btnLayerClouds"
+                class="radar-btn">Clouds</button>
+            </div>
+
+            <!-- Spacer -->
+            <div style="flex:1;"></div>
+
+            <!-- Timestamp -->
+            <span id="radarTimestamp" style="font-size:0.8rem;color:rgba(255,255,255,0.5);font-weight:700;"></span>
+
+            <!-- Play/Pause -->
+            <button id="radarPlayBtn" onclick="radarTogglePlay()"
+              style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+                     color:rgba(255,255,255,0.85);border-radius:999px;padding:5px 14px;
+                     font-size:0.82rem;font-weight:900;cursor:pointer;">
+              &#9654; Play
+            </button>
+
+          </div>
+
+          <!-- Map -->
+          <div id="radarMap" style="height:520px;width:100%;background:#0b1220;"></div>
+
+          <!-- Frame scrubber -->
+          <div style="padding:8px 16px 10px;background:rgba(255,255,255,0.03);
+                      border-top:1px solid rgba(255,255,255,0.06);">
+            <input type="range" id="radarScrubber" min="0" max="0" value="0"
+              oninput="radarScrubTo(this.value)"
+              style="width:100%;accent-color:rgba(100,180,255,0.9);cursor:pointer;">
+            <div style="display:flex;justify-content:space-between;
+                        font-size:0.75rem;color:rgba(255,255,255,0.35);font-weight:700;margin-top:2px;">
+              <span id="radarScrubStart">--</span>
+              <span style="color:rgba(255,255,255,0.45);">&#9664; Past &nbsp;&nbsp; Future &#9654;</span>
+              <span id="radarScrubEnd">--</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
   </div>
 
   <script>
@@ -726,8 +824,8 @@
     // Tab behavior — Weather / Wind / Almanac
     // ======================================================
     function showTab(which) {
-      const views = { weather: "weatherView", wind: "windView", almanac: "almanacView" };
-      const tabs  = { weather: "tabWeather",  wind: "tabWind",  almanac: "tabAlmanac"  };
+      const views = { weather: "weatherView", wind: "windView", almanac: "almanacView", radar: "radarView" };
+      const tabs  = { weather: "tabWeather",  wind: "tabWind",  almanac: "tabAlmanac",  radar: "tabRadar"  };
       Object.keys(views).forEach(k => {
         const v = document.getElementById(views[k]);
         const t = document.getElementById(tabs[k]);
@@ -738,12 +836,13 @@
         }
       });
       try { localStorage.setItem("activeTab", which); } catch(e) {}
+      if (which === "radar") initRadar();
     }
 
     (function restoreTab() {
       try {
         const t = localStorage.getItem("activeTab");
-        if (t === "wind" || t === "almanac") showTab(t);
+        if (["wind","almanac","radar"].includes(t)) showTab(t);
       } catch(e) {}
     })();
 
@@ -1139,6 +1238,181 @@
       document.getElementById("sunNote").textContent =
         "Position calculated for " +
         now.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" }) + " local time.";
+    }
+
+    // ======================================================
+    // Radar (Leaflet + RainViewer)
+    // ======================================================
+    let radarMap       = null;
+    let radarLayer     = null;
+    let radarFrames    = [];
+    let radarFrameIdx  = 0;
+    let radarPlaying   = false;
+    let radarTimer     = null;
+    let radarInited    = false;
+    let radarLayerType = "radar";   // "radar" | "satellite" | "clouds"
+
+    const RADAR_CENTER = [42.5014, -70.8750];
+    const RADAR_ZOOM   = 8;
+    const FRAME_DELAY  = 400;  // ms between animation frames
+
+    function initRadar() {
+      if (radarInited) return;
+      radarInited = true;
+
+      // Base tile layer — dark CartoDB
+      radarMap = L.map("radarMap", {
+        center: RADAR_CENTER,
+        zoom:   RADAR_ZOOM,
+        zoomControl: true,
+        attributionControl: true,
+      });
+
+      L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        {
+          attribution: "&copy; <a href='https://carto.com/'>CARTO</a> &copy; OpenStreetMap contributors",
+          subdomains: "abcd",
+          maxZoom: 19,
+        }
+      ).addTo(radarMap);
+
+      // Home marker
+      L.circleMarker(RADAR_CENTER, {
+        radius: 7,
+        fillColor: "rgba(100,200,255,0.9)",
+        color: "rgba(255,255,255,0.8)",
+        weight: 2,
+        fillOpacity: 1,
+      }).bindTooltip("16 Indianhead Circle", { permanent: false }).addTo(radarMap);
+
+      // Load RainViewer data
+      fetchRainViewer();
+    }
+
+    function fetchRainViewer() {
+      fetch("https://api.rainviewer.com/public/weather-maps.json")
+        .then(r => r.json())
+        .then(data => {
+          // Build frame list based on layer type
+          buildFrames(data);
+        })
+        .catch(err => {
+          document.getElementById("radarTimestamp").textContent = "Radar unavailable";
+          console.error("RainViewer error:", err);
+        });
+    }
+
+    function buildFrames(data) {
+      radarFrames = [];
+
+      if (radarLayerType === "radar") {
+        const past   = data.radar?.past   || [];
+        const nowcast= data.radar?.nowcast || [];
+        past.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: false }));
+        nowcast.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: true }));
+      } else if (radarLayerType === "satellite") {
+        const sat = data.satellite?.infrared || [];
+        sat.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: false }));
+      } else if (radarLayerType === "clouds") {
+        const sat = data.satellite?.infrared || [];
+        sat.forEach(f => radarFrames.push({ ts: f.time, path: f.path, future: false }));
+      }
+
+      if (radarFrames.length === 0) {
+        document.getElementById("radarTimestamp").textContent = "No frames available";
+        return;
+      }
+
+      // Start at most recent past frame
+      radarFrameIdx = radarFrames.filter(f => !f.future).length - 1;
+      if (radarFrameIdx < 0) radarFrameIdx = 0;
+
+      // Update scrubber
+      const scrubber = document.getElementById("radarScrubber");
+      scrubber.max   = radarFrames.length - 1;
+      scrubber.value = radarFrameIdx;
+
+      // Label scrubber ends
+      const fmtTs = ts => new Date(ts * 1000).toLocaleTimeString("en-US",
+        { hour:"numeric", minute:"2-digit" });
+      document.getElementById("radarScrubStart").textContent = fmtTs(radarFrames[0].ts);
+      document.getElementById("radarScrubEnd").textContent   =
+        fmtTs(radarFrames[radarFrames.length - 1].ts);
+
+      showFrame(radarFrameIdx);
+    }
+
+    function showFrame(idx) {
+      if (!radarMap || radarFrames.length === 0) return;
+      idx = Math.max(0, Math.min(idx, radarFrames.length - 1));
+      radarFrameIdx = idx;
+
+      const frame   = radarFrames[idx];
+      const tileUrl = "https://tilecache.rainviewer.com" + frame.path +
+                      "/256/{z}/{x}/{y}/4/1_1.png";
+
+      if (radarLayer) {
+        radarMap.removeLayer(radarLayer);
+      }
+
+      radarLayer = L.tileLayer(tileUrl, {
+        opacity:     0.75,
+        maxZoom:     15,
+        attribution: "&copy; <a href='https://rainviewer.com'>RainViewer</a>",
+      }).addTo(radarMap);
+
+      // Update UI
+      const ts   = new Date(frame.ts * 1000);
+      const label= ts.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+      const tag  = frame.future ? " (forecast)" : "";
+      document.getElementById("radarTimestamp").textContent = label + tag;
+
+      const scrubber = document.getElementById("radarScrubber");
+      scrubber.value = idx;
+    }
+
+    function radarTogglePlay() {
+      radarPlaying = !radarPlaying;
+      const btn = document.getElementById("radarPlayBtn");
+      if (radarPlaying) {
+        btn.textContent = "&#9646;&#9646; Pause";
+        radarAdvance();
+      } else {
+        btn.textContent = "&#9654; Play";
+        clearTimeout(radarTimer);
+      }
+    }
+
+    function radarAdvance() {
+      if (!radarPlaying) return;
+      radarFrameIdx = (radarFrameIdx + 1) % radarFrames.length;
+      showFrame(radarFrameIdx);
+      radarTimer = setTimeout(radarAdvance, FRAME_DELAY);
+    }
+
+    function radarScrubTo(val) {
+      radarPlaying = false;
+      document.getElementById("radarPlayBtn").textContent = "&#9654; Play";
+      clearTimeout(radarTimer);
+      showFrame(parseInt(val));
+    }
+
+    function setRadarLayer(type) {
+      radarLayerType = type;
+      // Update button states
+      ["radar","satellite","clouds"].forEach(t => {
+        const btn = document.getElementById(
+          "btnLayer" + t.charAt(0).toUpperCase() + t.slice(1));
+        if (btn) btn.classList.toggle("radar-btn-active", t === type);
+      });
+      // Reload frames
+      if (radarInited) {
+        if (radarLayer) { radarMap.removeLayer(radarLayer); radarLayer = null; }
+        radarFrames = [];
+        document.getElementById("radarTimestamp").textContent = "Loading...";
+        fetchRainViewer();
+      }
     }
 
     // ======================================================
