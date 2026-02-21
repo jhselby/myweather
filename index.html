@@ -254,6 +254,37 @@
       color: rgba(255,255,255,0.62);
       font-weight: 800;
     }
+    /* Pure-CSS hover tooltips — add data-tip="..." to any element */
+    [data-tip]{
+      position: relative;
+      cursor: default;
+      text-decoration: underline dotted rgba(255,255,255,0.3);
+    }
+    [data-tip]::after{
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(20,24,36,0.97);
+      color: rgba(255,255,255,0.88);
+      font-size: 0.72rem;
+      font-weight: 600;
+      line-height: 1.4;
+      padding: 6px 10px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.12);
+      white-space: normal;
+      width: max-content;
+      max-width: 220px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+    [data-tip]:hover::after{ opacity: 1; }
+    [data-tip].tip-active::after{ opacity: 1; }
     .value{
       color: rgba(255,255,255,0.9);
       font-weight: 900;
@@ -524,11 +555,11 @@
             <div class="value" id="pwsTemp">--&deg;F</div>
           </div>
           <div class="row">
-            <div class="label">Bias</div>
+            <div class="label" data-tip="Difference between model forecast and observed PWS temp. Used to correct the model output.">Bias</div>
             <div class="value" id="tempBias">--&deg;F</div>
           </div>
           <div class="row">
-            <div class="label">Corrected</div>
+            <div class="label" data-tip="Model temp adjusted by the observed PWS bias — best estimate of actual conditions.">Corrected</div>
             <div class="value" id="correctedTemp">--&deg;F</div>
           </div>
           <div class="small-note" id="pwsNote"></div>
@@ -562,27 +593,27 @@
             <div class="value" id="tempObsStations">-- / --</div>
           </div>
           <div class="row">
-            <div class="label">Pressure Trend (3h)</div>
+            <div class="label" data-tip="Change in barometric pressure over the last 3 hours. Falling rapidly (>2 mb) suggests an approaching storm. Rising rapidly indicates clearing.">Pressure Trend (3h)</div>
             <div class="value" id="pressureTrendHome">--</div>
           </div>
           <div class="row">
-            <div class="label">850mb Height (6h)</div>
+            <div class="label" data-tip="Height of the 850mb pressure level (~5,000 ft). Rising height = warming aloft. Used to assess rain/snow/mix boundary.">850mb Height (6h)</div>
             <div class="value" id="troughSignal">--</div>
           </div>
           <div class="row">
-            <div class="label">Fog Risk (12h)</div>
+            <div class="label" data-tip="Estimated fog probability based on temperature/dewpoint spread, wind speed, and humidity. High risk when spread is <2°F and winds are calm.">Fog Risk (12h)</div>
             <div class="value" id="fogRisk">--</div>
           </div>
           <div class="row" id="seaBreezeRow">
-            <div class="label">Sea Breeze</div>
+            <div class="label" data-tip="Likelihood of a sea breeze developing today. Sea breezes form when land heats faster than the ocean, drawing cool marine air onshore from the E/SE.">Sea Breeze</div>
             <div class="value" id="seaBreezeLabel">--</div>
           </div>
           <div class="row" id="precipTypeRow" style="display:none;">
-            <div class="label">Precip Type (surface)</div>
+            <div class="label" data-tip="Predicted precipitation type at ground level based on surface temperature. May differ from what falls aloft if there are warm/cold layers above.">Precip Type (surface)</div>
             <div class="value" id="precipType">--</div>
           </div>
           <div class="row" id="col850Row" style="display:none;">
-            <div class="label">Column type (850mb)</div>
+            <div class="label" data-tip="Precipitation type suggested by the temperature at 850mb (~5,000 ft). A warm layer aloft with a cold surface can produce freezing rain or sleet.">Column type (850mb)</div>
             <div class="value" id="col850Type">--</div>
           </div>
           <div class="small-note" id="todayNote"></div>
@@ -653,7 +684,7 @@
             <div class="value" id="gustLevel">--</div>
           </div>
           <div class="row">
-            <div class="label">Worry Score</div>
+            <div class="label" data-tip="0–10 scale combining wind speed, gust factor, and your home's directional exposure. Accounts for terrain sheltering and open water fetch.">Worry Score</div>
             <div class="value" id="gustScore">--</div>
           </div>
           <div class="row">
@@ -665,7 +696,7 @@
             <div class="value" id="gustDir">--</div>
           </div>
           <div class="row">
-            <div class="label">Exposure Factor</div>
+            <div class="label" data-tip="How exposed your home is to wind from this direction (0–1). 1.0 = full open water fetch (N/NW). Lower values reflect terrain sheltering.">Exposure Factor</div>
             <div class="value" id="gustExposure">--</div>
           </div>
           <div class="row">
@@ -683,7 +714,7 @@
             <div class="value" id="susLevel">--</div>
           </div>
           <div class="row">
-            <div class="label">Worry Score</div>
+            <div class="label" data-tip="0–10 scale combining wind speed, gust factor, and your home's directional exposure. Accounts for terrain sheltering and open water fetch.">Worry Score</div>
             <div class="value" id="susScore">--</div>
           </div>
           <div class="row">
@@ -695,7 +726,7 @@
             <div class="value" id="susDir">--</div>
           </div>
           <div class="row">
-            <div class="label">Exposure Factor</div>
+            <div class="label" data-tip="How exposed your home is to wind from this direction (0–1). 1.0 = full open water fetch (N/NW). Lower values reflect terrain sheltering.">Exposure Factor</div>
             <div class="value" id="susExposure">--</div>
           </div>
           <div class="row">
@@ -780,7 +811,7 @@
                 <div class="value" id="buoyPressure">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label">Tendency (3h)</div>
+                <div class="label" data-tip="Change in barometric pressure over the last 3 hours at the buoy. Rapid falls indicate approaching low pressure systems.">Tendency (3h)</div>
                 <div class="value" id="buoyPtdy">--</div>
               </div>
             </div>
@@ -792,7 +823,7 @@
                 <div class="value" id="buoyWaveHt">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label">Wave Period</div>
+                <div class="label" data-tip="Time in seconds between successive wave crests. Longer period (>10s) = swell from distant storms, smoother ride. Shorter period = choppy local wind waves.">Wave Period</div>
                 <div class="value" id="buoyWavePeriod">--</div>
               </div>
             </div>
@@ -827,11 +858,11 @@
                 <div class="value" id="sunset">--</div>
               </div>
               <div class="row">
-                <div class="label">Civil Dawn</div>
+                <div class="label" data-tip="When the sun is 6° below the horizon. Enough light for outdoor activities without artificial light. Begins the civil twilight period.">Civil Dawn</div>
                 <div class="value" id="civilDawn">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label">Civil Dusk</div>
+                <div class="label" data-tip="When the sun reaches 6° below the horizon after sunset. End of civil twilight — artificial light needed for outdoor activities.">Civil Dusk</div>
                 <div class="value" id="civilDusk">--</div>
               </div>
             </div>
@@ -847,11 +878,11 @@
                 <div class="value" id="sunAltitude">--</div>
               </div>
               <div class="row">
-                <div class="label">Golden Hour AM</div>
+                <div class="label" data-tip="The hour after sunrise when sunlight is warm, soft, and low-angled. Ideal for photography and beautiful light conditions.">Golden Hour AM</div>
                 <div class="value" id="goldenHourAM">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label">Golden Hour PM</div>
+                <div class="label" data-tip="The hour before sunset. Same warm, diffuse light quality as the morning golden hour.">Golden Hour PM</div>
                 <div class="value" id="goldenHourPM">--</div>
               </div>
             </div>
@@ -2579,6 +2610,22 @@
         // Almanac tab
         renderTides(data.tides);
         initCollapsibleCards();
+
+        // Touch tooltip support — tap to show, tap away to dismiss
+        if ('ontouchstart' in window) {
+          document.querySelectorAll('[data-tip]').forEach(el => {
+            el.addEventListener('touchend', e => {
+              e.preventDefault();
+              const already = el.classList.contains('tip-active');
+              document.querySelectorAll('.tip-active').forEach(t => t.classList.remove('tip-active'));
+              if (!already) el.classList.add('tip-active');
+            });
+          });
+          document.addEventListener('touchend', e => {
+            if (!e.target.closest('[data-tip]'))
+              document.querySelectorAll('.tip-active').forEach(t => t.classList.remove('tip-active'));
+          });
+        }
 
         // Buoy 44013
         const buoy = data.buoy_44013 || {};
