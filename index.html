@@ -2,12 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
   <!-- iOS Web App Config -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Wyman Cove" />
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="manifest" href="manifest.json" />
 
   <title>Wyman Cove Weather</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -28,6 +30,19 @@
       --shadow: 0 10px 28px rgba(0,0,0,0.35);
     }
 
+    /* ── iOS overscroll rubber-band fix ─────────────────────────
+       Without this, bouncing past the top/bottom on iOS flashes
+       white (light) or whatever the browser default is.
+       html background anchors the overscroll color to our dark bg.
+    ──────────────────────────────────────────────────────────── */
+    html {
+      background: #0b1220;
+    }
+    body.theme-light ~ html,
+    html:has(body.theme-light) {
+      background: #f0f2f5;
+    }
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
@@ -37,6 +52,11 @@
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      /* Safe area insets for iOS notch / home indicator */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
     }
 
     .container {
@@ -1076,60 +1096,6 @@
         </div>
 
         <!-- 3. Hyperlocal Comparison — closed by default -->
-        <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">&#127968; Hyperlocal Comparison <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body" style="display:none;">
-          <div class="row">
-            <div class="label" data-tip="Raw GFS model temperature at your location before any local correction.">Model Temp</div>
-            <div class="value" id="modelTemp">--&deg;F</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Current temperature from your personal weather station — your most accurate local reading.">PWS Temp</div>
-            <div class="value" id="pwsTemp">--&deg;F</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Difference between model forecast and observed PWS temp. Used to correct the model output.">Bias</div>
-            <div class="value" id="tempBias">--&deg;F</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Model temp adjusted by the observed PWS bias — best estimate of actual conditions.">Corrected</div>
-            <div class="value" id="correctedTemp">--&deg;F</div>
-          </div>
-          <div class="small-note" id="pwsNote"></div>
-          </div>
-        </div>
-
-        <!-- 4. Conditions & Diagnostics — closed by default -->
-        <div class="card col-12" data-collapse-key="pressure_diag" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('pressure_diag', this)">Conditions &amp; Diagnostics <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body" style="display:none;">
-          <div class="row">
-            <div class="label" data-tip="Observed temperatures at Boston Logan (KBOS, 15mi SW) and Beverly Airport (KBVY, 7mi NW). Useful reference points for regional gradient.">Temp: KBOS / KBVY</div>
-            <div class="value" id="tempObsStations">-- / --</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Height of the 850mb pressure level (~5,000 ft). Rising height = warming aloft. Used to assess rain/snow/mix boundary.">850mb Height (6h)</div>
-            <div class="value" id="troughSignal">--</div>
-          </div>
-          <div class="row" id="seaBreezeRow">
-            <div class="label" data-tip="Likelihood of a sea breeze developing today. Sea breezes form when land heats faster than the ocean, drawing cool marine air onshore from the E/SE.">Sea Breeze</div>
-            <div class="value" id="seaBreezeLabel">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Estimated fog probability based on temperature/dewpoint spread, wind speed, and humidity. High risk when spread is <2°F and winds are calm.">Fog Risk (12h)</div>
-            <div class="value" id="fogRisk">--</div>
-          </div>
-          <div class="row" id="precipTypeRow" style="display:none;">
-            <div class="label" data-tip="Predicted precipitation type at ground level based on surface temperature. May differ from what falls aloft if there are warm/cold layers above.">Precip Type (surface)</div>
-            <div class="value" id="precipType">--</div>
-          </div>
-          <div class="row" id="col850Row" style="display:none;">
-            <div class="label" data-tip="Precipitation type suggested by the temperature at 850mb (~5,000 ft). A warm layer aloft with a cold surface can produce freezing rain or sleet.">Column type (850mb)</div>
-            <div class="value" id="col850Type">--</div>
-          </div>
-          </div>
-        </div>
-
         <!-- 5. 10-Day Forecast — closed by default -->
         <div class="card col-12" data-collapse-key="ten_day" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('ten_day', this)">10-Day Forecast <span class="collapse-chevron">&#9660;</span></div>
@@ -1171,6 +1137,61 @@
             <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(160,100,220,0.80);margin-right:4px;vertical-align:middle;"></span>Mixed/slush</span>
             <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(255,140,40,0.80);margin-right:4px;vertical-align:middle;"></span>Freezing rain</span>
             <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(60,130,255,0.70);margin-right:4px;vertical-align:middle;"></span>Rain</span>
+          </div>
+          </div>
+        </div>
+
+        <!-- Hyperlocal Comparison — moved to bottom -->
+        <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">&#127968; Hyperlocal Comparison <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
+          <div class="row">
+            <div class="label" data-tip="Raw GFS model temperature at your location before any local correction.">Model Temp</div>
+            <div class="value" id="modelTemp">--&deg;F</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Current temperature from your personal weather station — your most accurate local reading.">PWS Temp</div>
+            <div class="value" id="pwsTemp">--&deg;F</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Difference between model forecast and observed PWS temp. Used to correct the model output.">Bias</div>
+            <div class="value" id="tempBias">--&deg;F</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Model temp adjusted by the observed PWS bias — best estimate of actual conditions.">Corrected</div>
+            <div class="value" id="correctedTemp">--&deg;F</div>
+          </div>
+          <div class="small-note" id="pwsNote"></div>
+          </div>
+        </div>
+
+        <!-- Conditions & Diagnostics — moved to bottom -->
+        <div class="card col-12" data-collapse-key="pressure_diag" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('pressure_diag', this)">Conditions &amp; Diagnostics <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
+          <div class="row">
+            <div class="label" data-tip="Observed temperatures at Boston Logan (KBOS, 15mi SW) and Beverly Airport (KBVY, 7mi NW). Useful reference points for regional gradient.">Temp: KBOS / KBVY</div>
+            <div class="value" id="tempObsStations">-- / --</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Height of the 850mb pressure level (~5,000 ft). Rising height = warming aloft. Used to assess rain/snow/mix boundary.">850mb Height (6h)</div>
+            <div class="value" id="troughSignal">--</div>
+          </div>
+          <div class="row" id="seaBreezeRow">
+            <div class="label" data-tip="Likelihood of a sea breeze developing today. Sea breezes form when land heats faster than the ocean, drawing cool marine air onshore from the E/SE.">Sea Breeze</div>
+            <div class="value" id="seaBreezeLabel">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Estimated fog probability based on temperature/dewpoint spread, wind speed, and humidity. High risk when spread is <2°F and winds are calm.">Fog Risk (12h)</div>
+            <div class="value" id="fogRisk">--</div>
+          </div>
+          <div class="row" id="precipTypeRow" style="display:none;">
+            <div class="label" data-tip="Predicted precipitation type at ground level based on surface temperature. May differ from what falls aloft if there are warm/cold layers above.">Precip Type (surface)</div>
+            <div class="value" id="precipType">--</div>
+          </div>
+          <div class="row" id="col850Row" style="display:none;">
+            <div class="label" data-tip="Precipitation type suggested by the temperature at 850mb (~5,000 ft). A warm layer aloft with a cold surface can produce freezing rain or sleet.">Column type (850mb)</div>
+            <div class="value" id="col850Type">--</div>
           </div>
           </div>
         </div>
@@ -1620,15 +1641,14 @@
     function applyTheme(mode) {
       const body = document.body;
       body.classList.remove('theme-light', 'theme-dark');
-      if (mode === 'light') {
+      const isLight = mode === 'light' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);
+      if (isLight) {
         body.classList.add('theme-light');
-      } else if (mode === 'dark') {
-        // dark is default — no class needed, CSS vars already set
+        document.documentElement.style.background = '#f0f2f5';
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f0f2f5');
       } else {
-        // system
-        if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-          body.classList.add('theme-light');
-        }
+        document.documentElement.style.background = '#0b1220';
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0b1220');
       }
     }
 
