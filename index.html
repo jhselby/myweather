@@ -1904,7 +1904,7 @@
       });
 
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png",
+        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png",
         {
           attribution: "&copy; <a href='https://carto.com/'>CARTO</a> &copy; OpenStreetMap contributors",
           subdomains: "abcd",
@@ -1914,7 +1914,7 @@
 
       // Labels layer on top of radar
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png",
+        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_only_labels/{z}/{x}/{y}{r}.png",
         { subdomains: "abcd", maxZoom: 19, pane: "shadowPane" }
       ).addTo(radarMap);
 
@@ -1943,7 +1943,7 @@
           layers:      "nexrad-n0r-wmst",
           format:      "image/png",
           transparent: true,
-          opacity:     0.55,
+          opacity:     0.65,
           TIME:        frame.isoStr,
           attribution: "&copy; <a href='https://mesonet.agron.iastate.edu/'>IEM</a> / NWS NEXRAD",
         }).addTo(radarMap);
