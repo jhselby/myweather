@@ -1738,7 +1738,7 @@
 
     const STATIC_SOURCES = [
       { name: "RainViewer",   desc: "Radar tile source — smoothed NEXRAD composite with nowcast frames (rainviewer.com)" },
-      { name: "Stadia Maps",  desc: "Dark basemap tiles for radar view (stadiamaps.com)" },
+      { name: "CartoDB",      desc: "Dark Matter basemap tiles for radar view — no API key required (carto.com)" },
       { name: "SunCalc",      desc: "Client-side sun/moon position and phase calculations (mourner/suncalc)" },
       { name: "VSOP87",       desc: "Client-side planetary position calculations — solar system card (truncated series, ~1° accuracy)" },
       { name: "Open-Meteo",   desc: "Cloud layer data (low/mid/high) for sunset quality forecast — HRRR product" },
@@ -2640,13 +2640,20 @@
         attributionControl: true,
       });
 
-      // Dark basemap — Stadia AlidadeSmoothDark
+      // Dark basemap — CartoDB Dark Matter (free, no API key)
       L.tileLayer(
-        "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png",
+        "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
         {
-          attribution: '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+          attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          subdomains: "abcd",
           maxZoom: 20,
         }
+      ).addTo(radarMap);
+
+      // Labels on top of radar layer
+      L.tileLayer(
+        "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
+        { subdomains: "abcd", maxZoom: 20, pane: "shadowPane" }
       ).addTo(radarMap);
 
       // Home marker
