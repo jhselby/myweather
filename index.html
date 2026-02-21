@@ -744,22 +744,7 @@
           </div>
         </div>
 
-        <!-- 6. 48-Hour Temp & Precip — closed by default -->
-        <div class="card col-12" data-collapse-key="48h_temp_precip" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature &amp; Precipitation <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body" style="display:none;">
-          <canvas id="tempPrecipChart"></canvas>
-          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:0.75rem;font-weight:800;color:rgba(255,255,255,0.6);">
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(230,240,255,0.90);margin-right:4px;vertical-align:middle;"></span>Snow</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(200,215,255,0.80);margin-right:4px;vertical-align:middle;"></span>Snow likely</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(160,100,220,0.80);margin-right:4px;vertical-align:middle;"></span>Mixed/slush</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(255,140,40,0.80);margin-right:4px;vertical-align:middle;"></span>Freezing rain</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(60,130,255,0.70);margin-right:4px;vertical-align:middle;"></span>Rain</span>
-          </div>
-          </div>
-        </div>
-
-        <!-- 7. NWS Detailed Forecast — closed by default -->
+        <!-- 6. NWS Detailed Forecast — closed by default -->
         <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
             <span style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.45);margin-left:8px;" id="nwsOfficeLabel"></span>
@@ -777,6 +762,21 @@
             </button>
           </div>
           <div class="small-note" style="margin-top:8px;">Written by NWS Boston meteorologists.</div>
+        </div>
+
+        <!-- 7. 48-Hour Temp & Precip — closed by default -->
+        <div class="card col-12" data-collapse-key="48h_temp_precip" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature &amp; Precipitation <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
+          <canvas id="tempPrecipChart"></canvas>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:0.75rem;font-weight:800;color:rgba(255,255,255,0.6);">
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(230,240,255,0.90);margin-right:4px;vertical-align:middle;"></span>Snow</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(200,215,255,0.80);margin-right:4px;vertical-align:middle;"></span>Snow likely</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(160,100,220,0.80);margin-right:4px;vertical-align:middle;"></span>Mixed/slush</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(255,140,40,0.80);margin-right:4px;vertical-align:middle;"></span>Freezing rain</span>
+            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(60,130,255,0.70);margin-right:4px;vertical-align:middle;"></span>Rain</span>
+          </div>
+          </div>
         </div>
 
       </div>
