@@ -742,11 +742,13 @@
       <div class="grid">
 
         <!-- Tides full width -->
-        <div class="card col-12">
-          <div class="card-title">&#127754; Tides &#8212; Salem Harbor</div>
+        <div class="card col-12" data-collapse-key="tides">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('tides', this)">&#127754; Tides &#8212; Salem Harbor <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
           <div id="tideGrid"></div>
           <div class="small-note" id="nextTideNote"></div>
           <canvas id="tideChart" style="margin-top:18px;max-height:200px;"></canvas>
+          </div>
         </div>
 
         <!-- Buoy 44013 / Water Temp -->
@@ -919,9 +921,11 @@
         </div>
 
         <!-- Frost / Freeze Tracker -->
-        <div class="card col-12">
-          <div class="card-title">🌡️ Frost &amp; Freeze Tracker</div>
+        <div class="card col-12" data-collapse-key="frost_freeze">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('frost_freeze', this)">🌡️ Frost &amp; Freeze Tracker <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
           <div id="frostTracker" style="margin-top:6px;"></div>
+          </div>
         </div>
 
       </div>
