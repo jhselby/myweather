@@ -2495,8 +2495,7 @@
     let radarTimer     = null;
     let radarFrameIdx  = 0;
     let radarFrames    = [];   // [{ts, path, host, kind}]  kind = "past"|"nowcast"
-    let radarLayers    = {};   // path -> L.TileLayer (preloaded)
-    let radarActiveLayer = null;
+    let radarLayers    = {};   // _active -> current L.TileLayer
     let radarLayerType = "radar";   // "radar" | "satellite"
     let radarApiData   = null;
 
@@ -2572,25 +2571,12 @@
     }
 
     function preloadFrames() {
-      if (!radarMap) return;
-      // Remove stale layers
-      Object.values(radarLayers).forEach(l => {
-        if (radarMap.hasLayer(l)) radarMap.removeLayer(l);
-      });
+      // Clear any existing radar layer
+      if (radarLayers._active) {
+        radarMap.removeLayer(radarLayers._active);
+        radarLayers._active = null;
+      }
       radarLayers = {};
-
-      radarFrames.forEach(f => {
-        const url = rvTileUrl(f.host, f.path, f.kind);
-        const layer = L.tileLayer(url, {
-          opacity:     0,
-          tileSize:    TILE_SIZE,
-          zoomOffset:  0,
-          maxZoom:     10,
-          attribution: '&copy; <a href="https://rainviewer.com">RainViewer</a>',
-        });
-        layer.addTo(radarMap);
-        radarLayers[f.path] = layer;
-      });
     }
 
     function showFrame(idx) {
@@ -2599,11 +2585,23 @@
       radarFrameIdx = idx;
       const frame = radarFrames[idx];
 
-      // Hide all, show current
-      Object.entries(radarLayers).forEach(([path, layer]) => {
-        layer.setOpacity(path === frame.path ? 0.7 : 0);
+      // Remove old layer
+      if (radarLayers._active) {
+        radarMap.removeLayer(radarLayers._active);
+        radarLayers._active = null;
+      }
+
+      // Add new layer
+      const url = rvTileUrl(frame.host, frame.path, frame.kind);
+      const layer = L.tileLayer(url, {
+        opacity:    0.75,
+        tileSize:   TILE_SIZE,
+        maxZoom:    10,
+        zoomOffset: 0,
+        attribution: '&copy; <a href="https://rainviewer.com">RainViewer</a>',
       });
-      radarActiveLayer = radarLayers[frame.path];
+      layer.addTo(radarMap);
+      radarLayers._active = layer;
 
       // Timestamp with nowcast label
       const timeStr = frame.ts.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
@@ -2611,18 +2609,18 @@
       document.getElementById("radarTimestamp").textContent = timeStr + label;
       document.getElementById("radarScrubber").value = idx;
 
-      // Color the scrubber track — grey = past, blue = nowcast
-      const pct = idx / Math.max(radarFrames.length - 1, 1) * 100;
+      // Color the scrubber track — blue = past, green = nowcast
       const lastPastIdx = radarFrames.map(f => f.kind).lastIndexOf("past");
       const pastPct = lastPastIdx / Math.max(radarFrames.length - 1, 1) * 100;
+      const curPct  = idx / Math.max(radarFrames.length - 1, 1) * 100;
       const scrubber = document.getElementById("radarScrubber");
       if (scrubber) {
         scrubber.style.background = `linear-gradient(to right,
           rgba(100,180,255,0.8) 0%,
           rgba(100,180,255,0.8) ${pastPct}%,
           rgba(100,255,180,0.6) ${pastPct}%,
-          rgba(100,255,180,0.6) ${pct}%,
-          rgba(255,255,255,0.15) ${pct}%,
+          rgba(100,255,180,0.6) ${curPct}%,
+          rgba(255,255,255,0.15) ${curPct}%,
           rgba(255,255,255,0.15) 100%)`;
       }
     }
@@ -2650,10 +2648,15 @@
         }
       ).addTo(radarMap);
 
+      // Custom pane for labels — above radar (z:400) but below markers (z:600)
+      radarMap.createPane("labelsPane");
+      radarMap.getPane("labelsPane").style.zIndex = 450;
+      radarMap.getPane("labelsPane").style.pointerEvents = "none";
+
       // Labels on top of radar layer
       L.tileLayer(
         "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
-        { subdomains: "abcd", maxZoom: 20, pane: "shadowPane" }
+        { subdomains: "abcd", maxZoom: 20, pane: "labelsPane" }
       ).addTo(radarMap);
 
       // Home marker
