@@ -1383,7 +1383,7 @@
 
         <!-- Solar System -->
         <div class="card col-12" data-collapse-key="solar_system" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Tonight <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Now <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
             <div id="solarSystemGrid"></div>
             <div id="solarSystemNote" style="font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:12px;"></div>
@@ -2193,25 +2193,37 @@
       const visCount = results.filter(r => r.visible).length;
       const timeStr  = now.toLocaleTimeString("en-US", {hour:"numeric", minute:"2-digit"});
 
-      let html = `<div style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-bottom:12px;">
+      const light = isLight();
+      const subTxt   = light ? "rgba(0,0,0,0.40)" : "rgba(255,255,255,0.4)";
+      const dimTxt   = light ? "rgba(0,0,0,0.28)" : "rgba(255,255,255,0.25)";
+      const faintTxt = light ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.3)";
+      const belowCol = light ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.3)";
+      const dirTxt   = light ? "rgba(0,0,0,0.50)" : "rgba(255,255,255,0.5)";
+      const tileBg   = light ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.04)";
+      const dimBd    = light ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)";
+      const headerTxt= light ? "rgba(0,0,0,0.40)" : "rgba(255,255,255,0.4)";
+
+      let html = `<div style="font-size:0.78rem;color:${headerTxt};margin-bottom:12px;">
         ${visCount} planet${visCount!==1?"s":""} visible from Marblehead at ${timeStr}
       </div>`;
 
       html += `<div class="solar-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">`;
       for (const p of results) {
-        const dimStyle = p.visible ? "" : "opacity:0.35;";
-        const borderColor = p.visible ? p.color.replace("0.9","0.4") : "rgba(255,255,255,0.08)";
-        const altLabel = p.alt > 0
-          ? `<span style="color:rgba(100,220,100,0.9);">${p.alt}° alt</span>`
-          : `<span style="color:rgba(255,255,255,0.3);">below horizon</span>`;
+        // Instead of blanket opacity (invisible on light), use per-element muted colors
+        const nameColor    = p.visible ? p.color : (light ? "rgba(0,0,0,0.38)" : "rgba(180,180,180,0.45)");
+        const borderColor  = p.visible ? p.color.replace("0.9","0.4") : dimBd;
+        const emojiOpacity = p.visible ? "1" : (light ? "0.45" : "0.35");
+        const altLabel     = p.alt > 0
+          ? `<span style="color:rgba(100,200,100,0.9);">${p.alt}° alt</span>`
+          : `<span style="color:${belowCol};">below horizon</span>`;
         html += `
-          <div style="${dimStyle}background:rgba(255,255,255,0.04);border:1px solid ${borderColor};border-radius:10px;padding:10px 8px;text-align:center;">
-            <div style="font-size:1.5rem;margin-bottom:4px;">${p.emoji}</div>
-            <div style="font-size:0.82rem;font-weight:900;color:${p.color};margin-bottom:6px;${!p.visible ? 'opacity:1;filter:saturate(0.5);' : ''}">${p.name}</div>
+          <div style="background:${tileBg};border:1px solid ${borderColor};border-radius:10px;padding:10px 8px;text-align:center;">
+            <div style="font-size:1.5rem;margin-bottom:4px;opacity:${emojiOpacity};">${p.emoji}</div>
+            <div style="font-size:0.82rem;font-weight:900;color:${nameColor};margin-bottom:6px;">${p.name}</div>
             <div style="font-size:0.75rem;margin-bottom:3px;">${altLabel}</div>
-            ${p.alt > 0 ? `<div style="font-size:0.72rem;color:rgba(255,255,255,0.5);">${p.dir} ${p.az}°</div>` : ""}
-            <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-top:4px;">${p.elong}° from Sun</div>
-            <div style="font-size:0.7rem;color:rgba(255,255,255,0.25);">${p.dist} AU</div>
+            ${p.alt > 0 ? `<div style="font-size:0.72rem;color:${dirTxt};">${p.dir} ${p.az}°</div>` : ""}
+            <div style="font-size:0.7rem;color:${faintTxt};margin-top:4px;">${p.elong}° from Sun</div>
+            <div style="font-size:0.7rem;color:${dimTxt};">${p.dist} AU</div>
           </div>`;
       }
       html += `</div>`;
