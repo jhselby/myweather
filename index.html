@@ -1537,6 +1537,9 @@
       document.getElementById(_pressureUnit === 'inhg' ? 'pressInhg' : 'pressHpa')?.classList.add('active');
     }
 
+    function isLight() {
+      return document.body.classList.contains('theme-light');
+    }
     function chartTextColor() {
       return document.body.classList.contains('theme-light')
         ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.7)";
@@ -1894,8 +1897,24 @@
     function renderFrostTracker(frost) {
       const el = document.getElementById("frostTracker");
       if (!el || !frost) return;
+      const light = isLight();
+      const textFaint  = light ? "rgba(0,0,0,0.40)" : "rgba(255,255,255,0.4)";
+      const textMid    = light ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.5)";
+      const textSub    = light ? "rgba(0,0,0,0.38)" : "rgba(255,255,255,0.35)";
+      const textHead   = light ? "rgba(0,0,0,0.65)" : "rgba(255,255,255,0.55)";
+      const tile1bg    = light ? "rgba(30,120,255,0.06)"  : "rgba(100,180,255,0.08)";
+      const tile1bd    = light ? "rgba(30,120,255,0.20)"  : "rgba(100,180,255,0.18)";
+      const tile1num   = light ? "rgba(20,80,200,0.90)"   : "rgba(180,220,255,0.9)";
+      const tile2bg    = light ? "rgba(30,80,220,0.06)"   : "rgba(60,120,255,0.08)";
+      const tile2bd    = light ? "rgba(30,80,220,0.20)"   : "rgba(60,120,255,0.18)";
+      const tile2num   = light ? "rgba(20,60,200,0.90)"   : "rgba(140,180,255,0.9)";
+      const tile3bg    = light ? "rgba(10,30,160,0.06)"   : "rgba(20,60,180,0.08)";
+      const tile3bd    = light ? "rgba(10,30,160,0.22)"   : "rgba(20,60,180,0.25)";
+      const tile3num   = light ? "rgba(10,40,180,0.90)"   : "rgba(100,140,255,0.9)";
+      const upcomingColor = light ? "rgba(20,70,200,0.85)" : "rgba(180,210,255,0.8)";
+
       if (!frost.season_start) {
-        el.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No frost data yet — will populate after first overnight run.</div>';
+        el.innerHTML = `<div style="color:${textFaint};font-size:0.85rem;">No frost data yet — will populate after first overnight run.</div>`;
         return;
       }
 
@@ -1905,7 +1924,7 @@
 
       const upcoming = frost.upcoming_freeze_days || [];
       const upcomingHtml = upcoming.length === 0
-        ? '<span style="color:rgba(255,255,255,0.4);">None in 10-day forecast</span>'
+        ? `<span style="color:${textFaint};">None in 10-day forecast</span>`
         : upcoming.map(u => {
             const label = u.min_f <= 20 ? "❄️❄️" : u.min_f <= 28 ? "❄️" : "🌡️";
             const d = new Date(u.date).toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
@@ -1913,29 +1932,29 @@
           }).join("");
 
       el.innerHTML = `
-        <div style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-bottom:10px;">Season from ${seasonStart}</div>
+        <div style="font-size:0.78rem;color:${textFaint};margin-bottom:10px;">Season from ${seasonStart}</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;" class="mobile-3col">
-          <div style="background:rgba(100,180,255,0.08);border:1px solid rgba(100,180,255,0.18);border-radius:10px;padding:10px;text-align:center;">
-            <div style="font-size:1.8rem;font-weight:900;color:rgba(180,220,255,0.9);">${frost.freeze_days ?? 0}</div>
-            <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:2px;">Freeze days</div>
-            <div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:3px;">min ≤ 32°F</div>
-            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:4px;">Last: ${fmt(frost.last_freeze)}</div>
+          <div style="background:${tile1bg};border:1px solid ${tile1bd};border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:900;color:${tile1num};">${frost.freeze_days ?? 0}</div>
+            <div style="font-size:0.78rem;color:${textMid};margin-top:2px;">Freeze days</div>
+            <div style="font-size:0.72rem;color:${textSub};margin-top:3px;">min ≤ 32°F</div>
+            <div style="font-size:0.72rem;color:${textFaint};margin-top:4px;">Last: ${fmt(frost.last_freeze)}</div>
           </div>
-          <div style="background:rgba(60,120,255,0.08);border:1px solid rgba(60,120,255,0.18);border-radius:10px;padding:10px;text-align:center;">
-            <div style="font-size:1.8rem;font-weight:900;color:rgba(140,180,255,0.9);">${frost.hard_freeze_days ?? 0}</div>
-            <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:2px;">Hard freeze days</div>
-            <div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:3px;">min ≤ 28°F</div>
-            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:4px;">Last: ${fmt(frost.last_hard)}</div>
+          <div style="background:${tile2bg};border:1px solid ${tile2bd};border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:900;color:${tile2num};">${frost.hard_freeze_days ?? 0}</div>
+            <div style="font-size:0.78rem;color:${textMid};margin-top:2px;">Hard freeze days</div>
+            <div style="font-size:0.72rem;color:${textSub};margin-top:3px;">min ≤ 28°F</div>
+            <div style="font-size:0.72rem;color:${textFaint};margin-top:4px;">Last: ${fmt(frost.last_hard)}</div>
           </div>
-          <div style="background:rgba(20,60,180,0.08);border:1px solid rgba(20,60,180,0.25);border-radius:10px;padding:10px;text-align:center;">
-            <div style="font-size:1.8rem;font-weight:900;color:rgba(100,140,255,0.9);">${frost.severe_days ?? 0}</div>
-            <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:2px;">Severe freeze days</div>
-            <div style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin-top:3px;">min ≤ 20°F</div>
-            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:4px;">Last: ${fmt(frost.last_severe)}</div>
+          <div style="background:${tile3bg};border:1px solid ${tile3bd};border-radius:10px;padding:10px;text-align:center;">
+            <div style="font-size:1.8rem;font-weight:900;color:${tile3num};">${frost.severe_days ?? 0}</div>
+            <div style="font-size:0.78rem;color:${textMid};margin-top:2px;">Severe freeze days</div>
+            <div style="font-size:0.72rem;color:${textSub};margin-top:3px;">min ≤ 20°F</div>
+            <div style="font-size:0.72rem;color:${textFaint};margin-top:4px;">Last: ${fmt(frost.last_severe)}</div>
           </div>
         </div>
-        <div style="font-size:0.82rem;font-weight:800;color:rgba(255,255,255,0.55);margin-bottom:6px;">Upcoming freeze nights (10-day forecast):</div>
-        <div style="font-size:0.82rem;color:rgba(180,210,255,0.8);line-height:1.8;">${upcomingHtml}</div>
+        <div style="font-size:0.82rem;font-weight:800;color:${textHead};margin-bottom:6px;">Upcoming freeze nights (10-day forecast):</div>
+        <div style="font-size:0.82rem;color:${upcomingColor};line-height:1.8;">${upcomingHtml}</div>
       `;
     }
 
@@ -2033,26 +2052,33 @@
       }
 
       if (!scores.length) {
-        el.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No sunset data in forecast window</div>`;
+        el.innerHTML = `<div style="color:${isLight() ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)'};font-size:0.85rem;">No sunset data in forecast window</div>`;
         return;
       }
+
+      const light = isLight();
+      const tileBg   = light ? "rgba(0,0,0,0.03)"   : "rgba(255,255,255,0.04)";
+      const tileBd   = light ? "rgba(0,0,0,0.09)"   : "rgba(255,255,255,0.08)";
+      const dayCol   = light ? "rgba(0,0,0,0.60)"   : "rgba(255,255,255,0.6)";
+      const timeCol  = light ? "rgba(0,0,0,0.38)"   : "rgba(255,255,255,0.35)";
+      const barBg    = light ? "rgba(0,0,0,0.08)"   : "rgba(255,255,255,0.1)";
+      const detCol   = light ? "rgba(0,0,0,0.40)"   : "rgba(255,255,255,0.4)";
+      const noteCol  = light ? "rgba(0,0,0,0.35)"   : "rgba(255,255,255,0.3)";
 
       let html = `<div class="scroll-day-grid" style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:12px;">`;
       for (const s of scores) {
         const barW = Math.round(s.score * 100);
         html += `
-          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
+          <div style="background:${tileBg};border:1px solid ${tileBd};
                       border-radius:10px;padding:16px 12px;text-align:center;">
-            <div style="font-size:0.9rem;font-weight:800;color:rgba(255,255,255,0.6);margin-bottom:6px;">${s.dayLabel}</div>
+            <div style="font-size:0.9rem;font-weight:800;color:${dayCol};margin-bottom:6px;">${s.dayLabel}</div>
             <div style="font-size:2rem;margin-bottom:6px;">${s.emoji}</div>
             <div style="font-size:1.05rem;font-weight:900;color:${s.color};margin-bottom:6px;">${s.label}</div>
-            <div style="font-size:0.8rem;color:rgba(255,255,255,0.35);margin-bottom:10px;">Sunset ${s.timeLabel}</div>
-            <!-- Score bar -->
-            <div style="height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:10px;">
+            <div style="font-size:0.8rem;color:${timeCol};margin-bottom:10px;">Sunset ${s.timeLabel}</div>
+            <div style="height:5px;background:${barBg};border-radius:3px;overflow:hidden;margin-bottom:10px;">
               <div style="height:100%;width:${barW}%;background:${s.color};border-radius:3px;transition:width 0.4s;"></div>
             </div>
-            <!-- Cloud breakdown -->
-            <div style="font-size:0.78rem;color:rgba(255,255,255,0.4);line-height:2;">
+            <div style="font-size:0.78rem;color:${detCol};line-height:2;">
               <span data-tip="Low clouds (below ~6,500 ft). High values block the sun from lighting upper clouds — kills color.">Low ${s.avgLow}%</span> ·
               <span data-tip="Mid-level clouds (6,500–20,000 ft). The sweet spot for sunset color — 30–70% is ideal.">Mid ${s.avgMid}%</span> ·
               <span data-tip="High clouds (above 20,000 ft, cirrus). Add soft color and atmosphere when mid clouds are present.">High ${s.avgHigh}%</span>
@@ -2060,7 +2086,7 @@
           </div>`;
       }
       html += `</div>`;
-      html += `<div style="font-size:0.78rem;color:rgba(255,255,255,0.3);margin-top:4px;">
+      html += `<div style="font-size:0.78rem;color:${noteCol};margin-top:4px;">
         Score based on mid-level cloud fraction, low cloud obstruction, and humidity.
         Best conditions: 30–70% mid cloud, &lt;20% low cloud, dry air.
         Your western water view is a significant advantage.
@@ -2468,9 +2494,23 @@
       }
 
       if (!dayCards.length) {
-        el.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No tide data available</div>`;
+        el.innerHTML = `<div style="color:${isLight() ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)'};font-size:0.85rem;">No tide data available</div>`;
         return;
       }
+
+      const light = isLight();
+      const dTileBg    = light ? "rgba(0,0,0,0.02)"   : "rgba(255,255,255,0.03)";
+      const dTileBd    = light ? "rgba(0,0,0,0.08)"   : "rgba(255,255,255,0.08)";
+      const dDayLbl    = light ? "rgba(0,0,0,0.55)"   : "rgba(255,255,255,0.45)";
+      const dDateLbl   = light ? "rgba(0,0,0,0.38)"   : "rgba(255,255,255,0.3)";
+      const dDryTxt    = light ? "rgba(0,0,0,0.30)"   : "rgba(255,255,255,0.3)";
+      const dWinBg     = light ? "rgba(0,0,0,0.03)"   : "rgba(255,255,255,0.04)";
+      const dTimeTxt   = light ? "rgba(0,0,0,0.82)"   : "rgba(255,255,255,0.85)";
+      const dDurTxt    = light ? "rgba(0,0,0,0.38)"   : "rgba(255,255,255,0.35)";
+      const dPeakTxt   = light ? "rgba(0,0,0,0.35)"   : "rgba(255,255,255,0.3)";
+      const dBarBg     = light ? "rgba(0,0,0,0.08)"   : "rgba(255,255,255,0.1)";
+      const dDetailTxt = light ? "rgba(0,0,0,0.52)"   : "rgba(255,255,255,0.5)";
+      const dFooter    = light ? "rgba(0,0,0,0.28)"   : "rgba(255,255,255,0.22)";
 
       // Render
       function scoreLabel(s) {
@@ -2489,14 +2529,14 @@
 
       for (const day of dayCards) {
         const sl = scoreLabel(day.bestScore);
-        html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 12px;">`;
-        html += `<div style="font-size:0.78rem;font-weight:800;color:rgba(255,255,255,0.45);margin-bottom:2px;">${day.dayLabel}</div>`;
-        html += `<div style="font-size:0.72rem;color:rgba(255,255,255,0.3);margin-bottom:8px;">${day.dateLabel}</div>`;
+        html += `<div style="background:${dTileBg};border:1px solid ${dTileBd};border-radius:10px;padding:14px 12px;">`;
+        html += `<div style="font-size:0.78rem;font-weight:800;color:${dDayLbl};margin-bottom:2px;">${day.dayLabel}</div>`;
+        html += `<div style="font-size:0.72rem;color:${dDateLbl};margin-bottom:8px;">${day.dateLabel}</div>`;
 
         if (!day.usableWindows.length) {
           html += `<div style="font-size:1.4rem;margin-bottom:4px;">🔴</div>`;
           html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">Dock dry all day</div>`;
-          html += `<div style="font-size:0.72rem;color:rgba(255,255,255,0.3);margin-top:6px;">Low tides fall within usable hours</div>`;
+          html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Low tides fall within usable hours</div>`;
         } else {
           html += `<div style="font-size:1.4rem;margin-bottom:4px;">${sl.emoji}</div>`;
           html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label}</div>`;
@@ -2507,21 +2547,17 @@
             const durStr = durH > 0 ? `${durH}h ${durM}m` : `${durM}m`;
             const barW = Math.round(w.score * 100);
 
-            html += `<div style="background:rgba(255,255,255,0.04);border-radius:7px;padding:8px 10px;margin-bottom:8px;">`;
-            // Window time + duration
-            html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(255,255,255,0.85);margin-bottom:2px;">`;
+            html += `<div style="background:${dWinBg};border-radius:7px;padding:8px 10px;margin-bottom:8px;">`;
+            html += `<div style="font-size:0.82rem;font-weight:900;color:${dTimeTxt};margin-bottom:2px;">`;
             html += `${fmtTime(w.startTime)} – ${fmtTime(w.endTime)}`;
-            html += `<span style="font-size:0.7rem;font-weight:700;color:rgba(255,255,255,0.35);margin-left:6px;">${durStr}</span></div>`;
-            // Peak height
-            html += `<div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-bottom:6px;">`;
+            html += `<span style="font-size:0.7rem;font-weight:700;color:${dDurTxt};margin-left:6px;">${durStr}</span></div>`;
+            html += `<div style="font-size:0.7rem;color:${dPeakTxt};margin-bottom:6px;">`;
             html += `Peak ${w.peakH.toFixed(1)} ft`;
             if (DOCK_TIDE_OFFSET_FT !== 0) html += ` <span style="color:rgba(255,200,80,0.6);">(corrected +${DOCK_TIDE_OFFSET_FT} ft)</span>`;
             html += `</div>`;
-            // Score bar
-            html += `<div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin-bottom:8px;">`;
+            html += `<div style="height:3px;background:${dBarBg};border-radius:2px;overflow:hidden;margin-bottom:8px;">`;
             html += `<div style="height:100%;width:${barW}%;background:${scoreLabel(w.score).color};border-radius:2px;"></div></div>`;
-            // Weather details
-            html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:0.7rem;color:rgba(255,255,255,0.5);">`;
+            html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:0.7rem;color:${dDetailTxt};">`;
             html += `<div>🌡️ ${w.temp != null ? Math.round(w.temp)+"°F" : "--"}</div>`;
             html += `<div>💧 ${w.precip != null ? w.precip+"%" : "--"} precip</div>`;
             html += `<div data-tip="Wind direction relative to your 315° NW-facing dock. NW wind is directly onshore — kicks up chop against the dock. SE wind is offshore — flat calm. NE/SW is crosswind, moderate effect.">`;
@@ -2541,7 +2577,7 @@
       const offsetNote = DOCK_TIDE_OFFSET_FT !== 0
         ? `Tide heights corrected by ${DOCK_TIDE_OFFSET_FT > 0 ? "+" : ""}${DOCK_TIDE_OFFSET_FT} ft empirical offset. `
         : `No tide correction applied yet — update <code>DOCK_TIDE_OFFSET_FT</code> when empirical data available. `;
-      html += `<div style="font-size:0.71rem;color:rgba(255,255,255,0.22);margin-top:10px;">`;
+      html += `<div style="font-size:0.71rem;color:${dFooter};margin-top:10px;">`;
       html += `Float threshold ${DOCK_FLOAT_THRESHOLD_FT} ft MLLW. ${offsetNote}`;
       html += `Wind scored relative to ${DOCK_FACE_DEG}° dock face. Usable hours ${DOCK_USABLE_HOUR_START}:00–${DOCK_USABLE_HOUR_END}:00.`;
       html += `</div>`;
