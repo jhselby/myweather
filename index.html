@@ -908,8 +908,7 @@
           <div class="small-note" id="moonNote" style="margin-top:10px;"></div>
         </div>
 
-      </div>
-    </section        <!-- Solar System -->
+        <!-- Solar System -->
         <div class="card col-12" data-collapse-key="solar_system">
           <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Tonight <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
@@ -924,7 +923,8 @@
           <div id="frostTracker" style="margin-top:6px;"></div>
         </div>
 
->
+      </div>
+    </section>
 
     <!-- SOURCES VIEW -->
     <section id="sourcesView" style="display:none;">
@@ -1898,7 +1898,7 @@
       });
 
       L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
         {
           attribution: "&copy; <a href='https://carto.com/'>CARTO</a> &copy; OpenStreetMap contributors",
           subdomains: "abcd",
