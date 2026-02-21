@@ -550,17 +550,41 @@
     <!-- WEATHER VIEW -->
     <section id="weatherView">
       <div class="grid">
-        <!-- Current Conditions -->
-        <div class="card col-6">
-          <div class="card-title">Current Conditions</div>
+
+        <!-- 1. Current Conditions — open by default -->
+        <div class="card col-12" data-collapse-key="current_conditions">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('current_conditions', this)">Current Conditions <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
           <div id="currentTemp" class="current-temp">--<span class="temp-unit">&deg;F</span></div>
           <div id="feelsLike" class="feels-like">Feels like --&deg;F</div>
           <div id="condition" class="condition">Loading&hellip;</div>
+          </div>
         </div>
 
-        <!-- Hyperlocal Comparison -->
-        <div class="card col-6">
-          <div class="card-title">&#127968; Hyperlocal Comparison</div>
+        <!-- 2. Today's Summary — open by default -->
+        <div class="card col-12" data-collapse-key="todays_summary">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('todays_summary', this)">Today&#39;s Summary <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
+          <div class="row">
+            <div class="label">High / Low</div>
+            <div class="value" id="hiLo">-- / --</div>
+          </div>
+          <div class="row">
+            <div class="label">Precip Chance</div>
+            <div class="value" id="precipChance">--%</div>
+          </div>
+          <div class="row">
+            <div class="label">Wind (now)</div>
+            <div class="value" id="windNowHome">--</div>
+          </div>
+          <div class="small-note" id="todayNote"></div>
+          </div>
+        </div>
+
+        <!-- 3. Hyperlocal Comparison — closed by default -->
+        <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">&#127968; Hyperlocal Comparison <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
           <div class="row">
             <div class="label">Model Temp</div>
             <div class="value" id="modelTemp">--&deg;F</div>
@@ -577,24 +601,18 @@
             <div class="label" data-tip="Model temp adjusted by the observed PWS bias — best estimate of actual conditions.">Corrected</div>
             <div class="value" id="correctedTemp">--&deg;F</div>
           </div>
+          <div class="row">
+            <div class="label">Temp: KBOS / KBVY</div>
+            <div class="value" id="tempObsStations">-- / --</div>
+          </div>
           <div class="small-note" id="pwsNote"></div>
+          </div>
         </div>
 
-        <!-- Today's Summary -->
-        <div class="card col-6">
-          <div class="card-title">Today&#39;s Summary</div>
-          <div class="row">
-            <div class="label">High / Low</div>
-            <div class="value" id="hiLo">-- / --</div>
-          </div>
-          <div class="row">
-            <div class="label">Precip Chance</div>
-            <div class="value" id="precipChance">--%</div>
-          </div>
-          <div class="row">
-            <div class="label">Wind (now)</div>
-            <div class="value" id="windNowHome">--</div>
-          </div>
+        <!-- 4. Pressure & Diagnostics — closed by default -->
+        <div class="card col-12" data-collapse-key="pressure_diag" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('pressure_diag', this)">Pressure &amp; Diagnostics <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
           <div class="row">
             <div class="label">Pressure (model)</div>
             <div class="value" id="pressureModel">--</div>
@@ -604,10 +622,6 @@
             <div class="value" id="pressureKBOS">--</div>
           </div>
           <div class="row">
-            <div class="label">Temp: KBOS / KBVY</div>
-            <div class="value" id="tempObsStations">-- / --</div>
-          </div>
-          <div class="row">
             <div class="label" data-tip="Change in barometric pressure over the last 3 hours. Falling rapidly (>2 mb) suggests an approaching storm. Rising rapidly indicates clearing.">Pressure Trend (3h)</div>
             <div class="value" id="pressureTrendHome">--</div>
           </div>
@@ -615,13 +629,13 @@
             <div class="label" data-tip="Height of the 850mb pressure level (~5,000 ft). Rising height = warming aloft. Used to assess rain/snow/mix boundary.">850mb Height (6h)</div>
             <div class="value" id="troughSignal">--</div>
           </div>
-          <div class="row">
-            <div class="label" data-tip="Estimated fog probability based on temperature/dewpoint spread, wind speed, and humidity. High risk when spread is <2°F and winds are calm.">Fog Risk (12h)</div>
-            <div class="value" id="fogRisk">--</div>
-          </div>
           <div class="row" id="seaBreezeRow">
             <div class="label" data-tip="Likelihood of a sea breeze developing today. Sea breezes form when land heats faster than the ocean, drawing cool marine air onshore from the E/SE.">Sea Breeze</div>
             <div class="value" id="seaBreezeLabel">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Estimated fog probability based on temperature/dewpoint spread, wind speed, and humidity. High risk when spread is <2°F and winds are calm.">Fog Risk (12h)</div>
+            <div class="value" id="fogRisk">--</div>
           </div>
           <div class="row" id="precipTypeRow" style="display:none;">
             <div class="label" data-tip="Predicted precipitation type at ground level based on surface temperature. May differ from what falls aloft if there are warm/cold layers above.">Precip Type (surface)</div>
@@ -631,19 +645,21 @@
             <div class="label" data-tip="Precipitation type suggested by the temperature at 850mb (~5,000 ft). A warm layer aloft with a cold surface can produce freezing rain or sleet.">Column type (850mb)</div>
             <div class="value" id="col850Type">--</div>
           </div>
-          <div class="small-note" id="todayNote"></div>
+          </div>
         </div>
 
-        <!-- 10-Day Forecast -->
-        <div class="card col-6">
-          <div class="card-title">10-Day Forecast</div>
+        <!-- 5. 10-Day Forecast — closed by default -->
+        <div class="card col-12" data-collapse-key="ten_day" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('ten_day', this)">10-Day Forecast <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
           <div id="forecastList"></div>
+          </div>
         </div>
 
-        <!-- 48-Hour Temperature & Precipitation -->
-        <div class="card col-12" data-collapse-key="48h_temp_precip">
+        <!-- 6. 48-Hour Temp & Precip — closed by default -->
+        <div class="card col-12" data-collapse-key="48h_temp_precip" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature &amp; Precipitation <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body">
+          <div class="card-body" style="display:none;">
           <canvas id="tempPrecipChart"></canvas>
           <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:0.75rem;font-weight:800;color:rgba(255,255,255,0.6);">
             <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(230,240,255,0.90);margin-right:4px;vertical-align:middle;"></span>Snow</span>
@@ -655,7 +671,7 @@
           </div>
         </div>
 
-        <!-- NWS Detailed Forecast -->
+        <!-- 7. NWS Detailed Forecast — closed by default -->
         <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
             <span style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.45);margin-left:8px;" id="nwsOfficeLabel"></span> <span class="collapse-chevron">&#9660;</span>
