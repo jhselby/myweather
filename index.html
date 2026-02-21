@@ -762,7 +762,9 @@
         <!-- 7. NWS Detailed Forecast — closed by default -->
         <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
-            <span style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.45);margin-left:8px;" id="nwsOfficeLabel"></span> <span class="collapse-chevron">&#9660;</span>
+            <span style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.45);margin-left:8px;" id="nwsOfficeLabel"></span>
+            <span style="font-size:0.78rem;font-weight:800;color:rgba(140,200,255,0.8);margin-left:6px;" id="nwsFilterLabel"></span>
+            <span class="collapse-chevron">&#9660;</span>
           </div>
           <div class="card-body" style="display:none;">
           <div id="nwsForecastList"></div>
@@ -2335,23 +2337,153 @@
       });
     }
 
+    let _selectedForecastDate = null;  // "2026-02-21" or null = all
+
     function renderForecast(daily) {
       const el = document.getElementById("forecastList");
       if (!el || !daily || !Array.isArray(daily.dates)) return;
       el.innerHTML = "";
+
       for (let i = 0; i < Math.min(10, daily.dates.length); i++) {
-        const date  = new Date(daily.dates[i] + "T00:00:00");
-        const day   = date.toLocaleDateString("en-US", { weekday: "short" });
-        const hi    = daily.temperature_max?.[i];
-        const lo    = daily.temperature_min?.[i];
-        const code  = daily.weather_code?.[i];
-        const emoji = weatherEmoji[code] || "&#127777;&#65039;";
-        const row   = document.createElement("div");
-        row.className = "row";
-        row.innerHTML = `<div class="label">${day} ${emoji}</div>
-                         <div class="value">${Math.round(hi)}° / ${Math.round(lo)}°</div>`;
+        const dateStr = daily.dates[i];  // "2026-02-21"
+        const date    = new Date(dateStr + "T00:00:00");
+        const day     = date.toLocaleDateString("en-US", { weekday: "short" });
+        const dateNum = date.toLocaleDateString("en-US", { month:"numeric", day:"numeric" });
+        const hi      = daily.temperature_max?.[i];
+        const lo      = daily.temperature_min?.[i];
+        const code    = daily.weather_code?.[i];
+        const pop     = daily.precipitation_probability_max?.[i];
+        const emoji   = weatherEmoji[code] || "&#127777;&#65039;";
+
+        const row = document.createElement("div");
+        row.className = "row forecast-day-row";
+        row.dataset.date = dateStr;
+        row.style.cssText = "cursor:pointer;border-radius:8px;margin:0 -6px;padding:7px 6px;transition:background 0.15s;";
+        row.innerHTML = `
+          <div class="label" style="display:flex;align-items:center;gap:8px;">
+            <span style="font-weight:900;min-width:32px;">${day}</span>
+            <span style="font-size:0.85rem;color:rgba(255,255,255,0.35);">${dateNum}</span>
+            <span>${emoji}</span>
+            ${pop != null && pop > 10 ? `<span style="font-size:0.75rem;color:rgba(140,180,255,0.7);font-weight:800;">${pop}%</span>` : ""}
+          </div>
+          <div class="value">${hi != null ? Math.round(hi) : "--"}° / ${lo != null ? Math.round(lo) : "--"}°</div>`;
+
+        row.addEventListener("click", () => selectForecastDay(dateStr, day));
+        row.addEventListener("mouseenter", () => { if (row.dataset.date !== _selectedForecastDate) row.style.background = "rgba(255,255,255,0.04)"; });
+        row.addEventListener("mouseleave", () => { if (row.dataset.date !== _selectedForecastDate) row.style.background = ""; });
         el.appendChild(row);
       }
+
+      // Add "clear selection" hint if something is selected
+      updateForecastSelection();
+    }
+
+    function selectForecastDay(dateStr, dayName) {
+      if (_selectedForecastDate === dateStr) {
+        // Deselect — show all NWS periods
+        _selectedForecastDate = null;
+        filterNWSByDate(null);
+        updateForecastSelection();
+      } else {
+        _selectedForecastDate = dateStr;
+        filterNWSByDate(dateStr, dayName);
+        updateForecastSelection();
+        // Auto-expand NWS card
+        const nwsCard = document.querySelector('[data-collapse-key="nws_forecast"]');
+        if (nwsCard) {
+          const body = nwsCard.querySelector(".card-body");
+          const title = nwsCard.querySelector(".card-title-collapsible");
+          if (body && body.style.display === "none") {
+            body.style.display = "";
+            if (title) {
+              const chev = title.querySelector(".collapse-chevron");
+              if (chev) chev.style.transform = "rotate(180deg)";
+            }
+            try { localStorage.setItem("collapse_nws_forecast", "open"); } catch(e) {}
+          }
+          // Scroll NWS card into view
+          setTimeout(() => nwsCard.scrollIntoView({ behavior:"smooth", block:"nearest" }), 100);
+        }
+      }
+    }
+
+    function updateForecastSelection() {
+      document.querySelectorAll(".forecast-day-row").forEach(row => {
+        const isSelected = row.dataset.date === _selectedForecastDate;
+        row.style.background = isSelected ? "rgba(100,160,255,0.12)" : "";
+        row.style.borderRadius = "8px";
+      });
+
+      // Update hint text
+      let hint = document.getElementById("forecastSelectionHint");
+      if (!hint) {
+        hint = document.createElement("div");
+        hint.id = "forecastSelectionHint";
+        hint.style.cssText = "font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:8px;font-weight:700;";
+        document.getElementById("forecastList")?.after(hint);
+      }
+      hint.textContent = _selectedForecastDate
+        ? "Tap again to clear · NWS detail below"
+        : "Tap a day to see NWS forecast detail";
+    }
+
+    function filterNWSByDate(dateStr, dayName) {
+      const periods = window._nwsPeriods || [];
+      const list    = document.getElementById("nwsForecastList");
+      const btn     = document.getElementById("nwsExpandBtn");
+      const label   = document.getElementById("nwsFilterLabel");
+
+      if (!dateStr) {
+        // Show default (first NWS_PREVIEW periods)
+        renderNWSForecast(periods);
+        if (label) label.textContent = "";
+        return;
+      }
+
+      // Match NWS periods to the selected date
+      // NWS period names: "Monday", "Monday Night", "This Afternoon", "Tonight", etc.
+      const date     = new Date(dateStr + "T12:00:00");
+      const fullDay  = date.toLocaleDateString("en-US", { weekday:"long" });  // "Monday"
+      const shortDay = date.toLocaleDateString("en-US", { weekday:"short" }); // "Mon"
+      const isToday  = dateStr === new Date().toISOString().slice(0,10);
+
+      const matched = periods.filter(p => {
+        const n = p.name || "";
+        if (isToday && (n === "Today" || n === "Tonight" || n === "This Afternoon" || n === "This Morning")) return true;
+        return n.startsWith(fullDay) || n.startsWith(shortDay);
+      });
+
+      const toRender = matched.length > 0 ? matched : periods;
+
+      if (list) {
+        list.innerHTML = "";
+        toRender.forEach(p => {
+          const row  = document.createElement("div");
+          row.style.cssText = "display:grid;grid-template-columns:130px 1fr;gap:0;border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 0;";
+          const left = document.createElement("div");
+          left.style.cssText = "padding-right:16px;";
+          left.innerHTML =
+            `<div style="font-weight:900;font-size:0.9rem;color:rgba(255,255,255,0.9);">${p.name}</div>` +
+            `<div style="font-size:1.4rem;font-weight:900;color:rgba(255,255,255,0.85);margin:2px 0;">${p.temperature != null ? p.temperature + "°F" : "--"}</div>` +
+            `<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);font-weight:700;">${p.wind_speed || ""} ${p.wind_direction || ""}</div>`;
+          const right = document.createElement("div");
+          right.innerHTML =
+            `<div style="font-weight:900;font-size:0.88rem;color:rgba(255,255,255,0.8);margin-bottom:4px;">${p.short_forecast}</div>` +
+            `<div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">${p.detailed}</div>`;
+          row.appendChild(left);
+          row.appendChild(right);
+          list.appendChild(row);
+        });
+        // Remove last border
+        const rows = list.querySelectorAll("div[style*='border-bottom']");
+        if (rows.length) rows[rows.length-1].style.borderBottom = "none";
+      }
+
+      // Update NWS card title to show which day is filtered
+      if (label) {
+        label.textContent = matched.length > 0 ? `— ${dayName}` : "";
+      }
+      if (btn) btn.style.display = "none";  // hide expand btn when filtered
     }
 
     function fillWorryCard(ids, peak, windowHours) {
@@ -2965,6 +3097,8 @@
     const NWS_PREVIEW = 5;  // periods shown before "show all"
 
     function renderNWSForecast(periods) {
+      _selectedForecastDate = null;  // clear any day filter on fresh data load
+      updateForecastSelection();
       const list = document.getElementById("nwsForecastList");
       const btn  = document.getElementById("nwsExpandBtn");
       if (!list || !Array.isArray(periods) || periods.length === 0) {
