@@ -809,11 +809,46 @@
     body.theme-light #nwsOfficeLabel   { color: rgba(0,0,0,0.35) !important; }
     body.theme-light #nwsFilterLabel   { color: rgba(30,100,220,0.85) !important; }
 
-    /* Precip chart legend */
-    body.theme-light [style*="rgba(255,255,255,0.6)"] { color: rgba(0,0,0,0.55) !important; }
+    /* ── NUCLEAR INLINE OVERRIDE ──────────────────────────────
+       Inline style= attributes beat class selectors, so we must
+       use attribute selectors to catch every hardcoded white text.
+       Covers opacity 0.2 through 0.95 in all faint/mid/bright forms.
+    ──────────────────────────────────────────────────────────── */
+    body.theme-light [style*="color:rgba(255,255,255,0.2"]  { color: rgba(0,0,0,0.35) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.3"]  { color: rgba(0,0,0,0.42) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.4"]  { color: rgba(0,0,0,0.50) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.5"]  { color: rgba(0,0,0,0.60) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.6"]  { color: rgba(0,0,0,0.68) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.7"]  { color: rgba(0,0,0,0.75) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.8"]  { color: rgba(0,0,0,0.82) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.9"]  { color: rgba(0,0,0,0.90) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,1)"]   { color: rgba(0,0,0,0.92) !important; }
+    /* Spaced variants (color: rgba ...) */
+    body.theme-light [style*="color: rgba(255,255,255,0.2"] { color: rgba(0,0,0,0.35) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.3"] { color: rgba(0,0,0,0.42) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.4"] { color: rgba(0,0,0,0.50) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.5"] { color: rgba(0,0,0,0.60) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.6"] { color: rgba(0,0,0,0.68) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.7"] { color: rgba(0,0,0,0.75) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.8"] { color: rgba(0,0,0,0.82) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.9"] { color: rgba(0,0,0,0.90) !important; }
+    /* Exceptions — keep colored badges/status text from being forced black */
+    body.theme-light [style*="color:rgba(80,220,120"]   { color: rgba(20,140,60,0.9)   !important; } /* green wind */
+    body.theme-light [style*="color:rgba(100,220,100"]  { color: rgba(20,140,60,0.9)   !important; } /* green alt */
+    body.theme-light [style*="color:rgba(200,100,60"]   { color: rgba(180,60,20,0.9)   !important; } /* orange score */
+    body.theme-light [style*="color:rgba(220,80,80"]    { color: rgba(180,30,30,0.9)   !important; } /* red wind */
+    body.theme-light [style*="color:rgba(255,200,80"]   { color: rgba(160,110,0,0.9)   !important; } /* yellow crosswind */
+    body.theme-light [style*="color:rgba(255,190,50"]   { color: rgba(160,110,0,0.9)   !important; } /* orange marginal */
+    body.theme-light [style*="color:rgba(160,220,80"]   { color: rgba(70,140,20,0.9)   !important; } /* yellow-green */
+    body.theme-light [style*="color:rgba(180,80,80"]    { color: rgba(160,30,30,0.9)   !important; } /* red dock dry */
+    body.theme-light [style*="color:rgba(255,120,120"]  { color: rgba(200,30,30,0.9)   !important; } /* source error */
+    body.theme-light [style*="color:rgba(140,240,160"]  { color: rgba(20,140,60,0.9)   !important; } /* source ok */
 
     /* Row borders */
     body.theme-light .row { border-bottom-color: rgba(0,0,0,0.07) !important; }
+    body.theme-light [style*="border-bottom:1px solid rgba(255,255,255"] {
+      border-bottom-color: rgba(0,0,0,0.07) !important;
+    }
     .leaflet-container { background: #0b1220 !important; }
     .leaflet-control-attribution {
       background: rgba(0,0,0,0.6) !important;
