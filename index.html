@@ -650,8 +650,11 @@
     body.theme-light #sunsetQualityGrid div,
     body.theme-light #sunsetQualityGrid span { color: rgba(0,0,0,0.80) !important; }
 
-    /* 48-hour chart legend swatches — keep color, just ensure text is dark */
-    body.theme-light .card-body [style*="display:flex"] span { color: rgba(0,0,0,0.70) !important; }
+    body.theme-light #tempPrecipChart,
+    body.theme-light #windChart {
+      background: rgba(0,0,0,0.02);
+      border-radius: 8px;
+    }
 
     /* Tabs */
     body.theme-light .tab {
@@ -913,7 +916,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.1</span>
+            <span class="version-pill" id="appVersion">v2.2</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -923,6 +926,16 @@
           </div>
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.2</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 21, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Solar system: 4th visibility state — "sky too bright" (daytime)</li>
+                <li>Today card dark mode contrast fix</li>
+                <li>Tooltip hover target: consistent width across all cards</li>
+                <li>Version + changelog now auto-maintained by Claude</li>
+              </ul>
+            </div>
             <div style="margin-bottom:8px;">
               <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.1</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 21, 2026</span>
@@ -1878,7 +1891,7 @@
               yAxisID: "y",
               tension: 0.25,
               borderColor: "rgba(255,180,80,0.9)",
-              backgroundColor: "transparent",
+              backgroundColor: "rgba(255,180,80,0.15)",
               pointRadius: 0,
             },
             {
@@ -1895,7 +1908,7 @@
         options: {
           responsive: true,
           plugins: {
-            legend: { labels: { color: "rgba(255,255,255,0.8)" } },
+            legend: { labels: { color: chartTextColor(), boxWidth: 16, boxHeight: 10 } },
             tooltip: {
               callbacks: {
                 afterLabel: (ctx) => {
@@ -1956,8 +1969,8 @@
               data: gusts.map(v => v ?? null),
               yAxisID: "y",
               tension: 0.25,
-              borderColor: "rgba(255,180,100,0.8)",
-              backgroundColor: "transparent",
+              borderColor: "rgba(255,180,100,0.9)",
+              backgroundColor: "rgba(255,180,100,0.15)",
               pointRadius: 0,
               borderWidth: 2,
             }
@@ -1966,7 +1979,7 @@
         options: {
           responsive: true,
           plugins: {
-            legend: { labels: { color: "rgba(255,255,255,0.8)" } },
+            legend: { labels: { color: chartTextColor(), boxWidth: 16, boxHeight: 10 } },
             tooltip: {
               callbacks: {
                 afterLabel: (ctx) => {
