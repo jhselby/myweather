@@ -2509,8 +2509,10 @@
 
     function rvTileUrl(host, path, kind) {
       if (kind === "satellite") {
+        // Satellite: no color scheme options, just size/{z}/{x}/{y}/0/0_0
         return `${host}${path}/${TILE_SIZE}/{z}/{x}/{y}/0/0_0.webp`;
       }
+      // Radar: host + path + size/{z}/{x}/{y}/colorScheme/smooth_snow.ext
       return `${host}${path}/${TILE_SIZE}/{z}/{x}/{y}/${COLOR_SCHEME}/${SMOOTH}_${SNOW_COLORS}.webp`;
     }
 
@@ -2525,6 +2527,7 @@
 
         if (radarLayerType === "satellite") {
           const sat = radarApiData.satellite?.infrared || [];
+          console.log("RainViewer: satellite data", JSON.stringify(radarApiData.satellite || {}).slice(0, 300));
           console.log("RainViewer: satellite frames", sat.length);
           sat.forEach(f => radarFrames.push({
             ts: new Date(f.time * 1000), path: f.path,
@@ -2721,13 +2724,14 @@
         if (btn) btn.classList.toggle("radar-btn-active", t === type);
       });
       if (radarInited) {
-        // Clear preloaded layers and re-fetch for new product
-        Object.values(radarLayers).forEach(l => {
-          if (radarMap.hasLayer(l)) radarMap.removeLayer(l);
-        });
-        radarLayers = {};
+        // Clear active layer and re-fetch for new product
+        if (radarLayers._active) {
+          radarMap.removeLayer(radarLayers._active);
+          radarLayers._active = null;
+        }
         radarFrames = [];
-        radarApiData && fetchRainViewerFrames();
+        radarApiData = null;  // force fresh fetch
+        fetchRainViewerFrames();
       }
     }
 
