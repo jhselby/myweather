@@ -400,6 +400,41 @@ def fetch_tides():
         return {"events": [], "curve": {"times": [], "heights": []}}, meta
 
 
+def fetch_salem_water_temp():
+    """
+    Try to fetch water temperature from NOAA Salem Harbor tide station (8442645).
+    This sensor may or may not be active — returns None gracefully if not available.
+    """
+    print("\U0001f4e1 Fetching Salem Harbor water temp...")
+    url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+    params = {
+        "station":   TIDE_STATION,
+        "product":   "water_temperature",
+        "date":      "recent",
+        "units":     "english",
+        "time_zone": "lst_ldt",
+        "format":    "json",
+    }
+    try:
+        r = requests.get(url, params=params, headers=HEADERS_DEFAULT, timeout=20)
+        r.raise_for_status()
+        data = r.json()
+        if "error" in data:
+            print(f"  \u2717 Salem water temp: {data['error'].get('message','no sensor')}")
+            return None
+        readings = data.get("data", [])
+        if not readings:
+            print("  \u2717 Salem water temp: no data returned")
+            return None
+        latest = readings[-1]
+        val = safe_float(latest.get("v"))
+        print(f"  \u2713 Salem water temp: {val}°F at {latest.get('t','?')}")
+        return val
+    except Exception as e:
+        print(f"  \u2717 Salem water temp error: {e}")
+        return None
+
+
 def fetch_asos_obs(station_id, cache_file):
     """
     Generic ASOS observation fetcher via NWS API.
@@ -1261,6 +1296,7 @@ def main():
     daily_data,    daily_meta    = fetch_daily_ecmwf()
     pws_data,      pws_meta      = fetch_pws_current()
     tide_data,     tides_meta    = fetch_tides()
+    salem_water_temp              = fetch_salem_water_temp()
     kbos_data,     kbos_meta     = fetch_kbos_obs()
     kbvy_data,     kbvy_meta     = fetch_kbvy_obs()
     buoy_data,     buoy_meta     = fetch_buoy_44013()
@@ -1288,6 +1324,11 @@ def main():
         pws_data, tide_data, kbos_data, kbvy_data, buoy_data, forecast_data, alert_data, sources,
         frost_log=frost_log
     )
+
+    # Inject Salem Harbor water temp if available
+    if salem_water_temp is not None:
+        weather_data["salem_water_temp_f"] = salem_water_temp
+        print(f"  ✓ Salem water temp stored: {salem_water_temp}°F")
 
     # Save to JSON
     with open("weather_data.json", "w") as f:
