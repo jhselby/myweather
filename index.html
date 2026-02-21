@@ -1811,7 +1811,7 @@
 
       document.getElementById("sunEmoji").textContent   = emoji;
       document.getElementById("sunStatus").textContent  = status;
-      document.getElementById("sunCardTitle").innerHTML = emoji + " Sun \u2014 " + status;
+      document.getElementById("sunCardTitle").innerHTML = emoji + " Sun \u2014 " + status + ' <span class="collapse-chevron">&#9660;</span>';
 
       // Azimuth
       const azDeg = Math.round(((pos.azimuth * 180 / Math.PI) + 360) % 360);
@@ -2068,7 +2068,7 @@
       document.getElementById("moonEmoji").textContent        = phase.emoji;
       document.getElementById("moonPhaseName").textContent    = phase.name;
       document.getElementById("moonIllumination").textContent = Math.round(illum.fraction * 100) + "% illuminated";
-      document.getElementById("moonCardTitle").innerHTML      = phase.emoji + " Moon — " + phase.name;
+      document.getElementById("moonCardTitle").innerHTML      = phase.emoji + " Moon — " + phase.name + ' <span class="collapse-chevron">&#9660;</span>';
 
       document.getElementById("moonrise").textContent =
         times.rise ? fmtTime(times.rise) : (times.alwaysUp ? "Up all night" : "Doesn't rise today");
