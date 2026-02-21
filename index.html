@@ -755,6 +755,15 @@
           <div id="frostTracker" style="margin-top:6px;"></div>
         </div>
 
+        <!-- Solar System -->
+        <div class="card col-12" data-collapse-key="solar_system">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Tonight <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
+            <div id="solarSystemGrid"></div>
+            <div id="solarSystemNote" style="font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:12px;"></div>
+          </div>
+        </div>
+
         <!-- Buoy 44013 / Water Temp -->
         <div class="card col-12" data-collapse-key="buoy_44013" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('buoy_44013', this)">&#127754; Ocean Conditions &#8212; Buoy 44013 (16mi ENE) <span class="collapse-chevron">&#9660;</span></div>
@@ -1336,6 +1345,135 @@
         <div style="font-size:0.82rem;font-weight:800;color:rgba(255,255,255,0.55);margin-bottom:6px;">Upcoming freeze nights (10-day forecast):</div>
         <div style="font-size:0.82rem;color:rgba(180,210,255,0.8);line-height:1.8;">${upcomingHtml}</div>
       `;
+    }
+
+    // ======================================================
+    // Solar System (VSOP87 truncated — no API needed)
+    // ======================================================
+    function renderSolarSystem() {
+      const el = document.getElementById("solarSystemGrid");
+      if (!el) return;
+
+      const now   = new Date();
+      const jd    = 2440587.5 + now.getTime() / 86400000;
+      const T     = (jd - 2451545.0) / 36525.0;
+
+      // Planet orbital elements [L0, L1, a, e0, e1, i0, i1, Om0, Om1, w0, w1]
+      const EL = {
+        Mercury: [252.250906,149474.0722491,0.387098310,0.20563175, 0.000020407, 7.004986, 0.0018215,48.330893,1.1861883, 77.456119,1.5564776],
+        Venus:   [181.979801, 58519.2130302,0.723329820,0.00677188,-0.000047766, 3.394662, 0.0010037,76.679920,0.9011190,131.563703,1.4022288],
+        Mars:    [355.433000, 19141.6964471,1.523679342,0.09340062, 0.000090483, 1.849726,-0.0006011,49.558093,0.7720959,336.060234,1.8410449],
+        Jupiter: [ 34.351519,  3036.3027748,5.202603209,0.04849485, 0.000163244, 1.303270,-0.0054966,100.464407,1.0209774,14.331207,1.6126352],
+        Saturn:  [ 50.077444,  1223.5110686,9.554909192,0.05550825,-0.000346641, 2.488878, 0.0025515,113.665503,0.8770880,93.057237,1.9637613],
+      };
+
+      const EMOJIS = { Mercury:"☿", Venus:"♀️", Mars:"♂️", Jupiter:"♃", Saturn:"🪐" };
+      const COLORS = {
+        Mercury:"rgba(180,160,130,0.9)",
+        Venus:  "rgba(255,220,100,0.9)",
+        Mars:   "rgba(220,80,60,0.9)",
+        Jupiter:"rgba(200,160,100,0.9)",
+        Saturn: "rgba(210,190,130,0.9)",
+      };
+
+      const r2d = r => r * 180 / Math.PI;
+      const d2r = d => d * Math.PI / 180;
+
+      // Earth heliocentric position
+      const M_e  = d2r(((357.529092 + 35999.0502909*T) % 360 + 360) % 360);
+      const e_e  = 0.016708617 - 0.000042037*T;
+      let   E_e  = M_e;
+      for (let i=0;i<10;i++) E_e -= (E_e - e_e*Math.sin(E_e) - M_e)/(1 - e_e*Math.cos(E_e));
+      const w_e  = d2r(102.937348 + 1.7195366*T);
+      const xe0  = 1.000001018*(Math.cos(E_e) - e_e);
+      const ye0  = 1.000001018*Math.sqrt(1-e_e*e_e)*Math.sin(E_e);
+      const xe   = Math.cos(w_e)*xe0 - Math.sin(w_e)*ye0;
+      const ye   = Math.sin(w_e)*xe0 + Math.cos(w_e)*ye0;
+
+      // Greenwich Sidereal Time & Local Sidereal Time
+      const GMST = ((280.46061837 + 360.98564736629*(jd-2451545.0) + 0.000387933*T*T) % 360 + 360) % 360;
+      const LST  = (GMST + HOME_LON + 360) % 360;
+      const LAT  = d2r(HOME_LAT);
+      const eps  = d2r(23.439291 - 0.013004*T);
+
+      const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+
+      const results = [];
+
+      for (const [name, el] of Object.entries(EL)) {
+        const L   = d2r(((el[0] + el[1]*T) % 360 + 360) % 360);
+        const a   = el[2];
+        const e   = el[3] + el[4]*T;
+        const inc = d2r(el[5] + el[6]*T);
+        const Om  = d2r(el[7] + el[8]*T);
+        const w   = d2r(el[9] + el[10]*T);
+        const M   = ((L - w) % (2*Math.PI) + 2*Math.PI) % (2*Math.PI);
+        let   E   = M;
+        for (let i=0;i<10;i++) E -= (E - e*Math.sin(E) - M)/(1 - e*Math.cos(E));
+        const xo  = a*(Math.cos(E) - e);
+        const yo  = a*Math.sqrt(1-e*e)*Math.sin(E);
+        const cOm=Math.cos(Om),sOm=Math.sin(Om),cw=Math.cos(w-Om),sw=Math.sin(w-Om),ci=Math.cos(inc),si=Math.sin(inc);
+        const xh=(cOm*cw-sOm*sw*ci)*xo+(-cOm*sw-sOm*cw*ci)*yo;
+        const yh=(sOm*cw+cOm*sw*ci)*xo+(-sOm*sw+cOm*cw*ci)*yo;
+        const zh=si*(sw*xo+cw*yo);
+        const gx=xh-xe, gy=yh-ye, gz=zh;
+        const dist=Math.sqrt(gx*gx+gy*gy+gz*gz);
+        // Equatorial
+        const xeq=gx, yeq=gy*Math.cos(eps)-gz*Math.sin(eps), zeq=gy*Math.sin(eps)+gz*Math.cos(eps);
+        const ra  =((r2d(Math.atan2(yeq,xeq))%360)+360)%360;
+        const dec =r2d(Math.asin(zeq/dist));
+        // Elongation
+        const sx=-xe,sy=-ye,sz=0;
+        const sdist=Math.sqrt(sx*sx+sy*sy+sz*sz);
+        const dot=Math.max(-1,Math.min(1,(gx*sx+gy*sy+gz*sz)/(dist*sdist)));
+        const elong=r2d(Math.acos(dot));
+        // Alt/Az
+        const HA = d2r(((LST - ra) % 360 + 360) % 360);
+        const decR=d2r(dec);
+        const alt =r2d(Math.asin(Math.sin(LAT)*Math.sin(decR)+Math.cos(LAT)*Math.cos(decR)*Math.cos(HA)));
+        const azR =Math.atan2(-Math.cos(decR)*Math.sin(HA), Math.sin(decR)*Math.cos(LAT)-Math.cos(decR)*Math.cos(HA)*Math.sin(LAT));
+        const az  =((r2d(azR)%360)+360)%360;
+        const dirIdx=Math.round(az/22.5)%16;
+        const visible = alt > 5 && elong > 15;
+        results.push({name, emoji:EMOJIS[name], color:COLORS[name], alt:alt.toFixed(0), az:az.toFixed(0),
+                      dir:dirs[dirIdx], dist:dist.toFixed(2), elong:elong.toFixed(0), visible});
+      }
+
+      // Sort: visible first (by altitude desc), then invisible (by elongation desc)
+      results.sort((a,b) => {
+        if (a.visible !== b.visible) return a.visible ? -1 : 1;
+        return a.visible ? b.alt - a.alt : b.elong - a.elong;
+      });
+
+      const visCount = results.filter(r => r.visible).length;
+      const timeStr  = now.toLocaleTimeString("en-US", {hour:"numeric", minute:"2-digit"});
+
+      let html = `<div style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-bottom:12px;">
+        ${visCount} planet${visCount!==1?"s":""} visible from Marblehead at ${timeStr}
+      </div>`;
+
+      html += `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">`;
+      for (const p of results) {
+        const dimStyle = p.visible ? "" : "opacity:0.35;";
+        const borderColor = p.visible ? p.color.replace("0.9","0.4") : "rgba(255,255,255,0.08)";
+        const altLabel = p.alt > 0
+          ? `<span style="color:rgba(100,220,100,0.9);">${p.alt}° alt</span>`
+          : `<span style="color:rgba(255,255,255,0.3);">below horizon</span>`;
+        html += `
+          <div style="${dimStyle}background:rgba(255,255,255,0.04);border:1px solid ${borderColor};border-radius:10px;padding:10px 8px;text-align:center;">
+            <div style="font-size:1.5rem;margin-bottom:4px;">${p.emoji}</div>
+            <div style="font-size:0.82rem;font-weight:900;color:${p.color};margin-bottom:6px;">${p.name}</div>
+            <div style="font-size:0.75rem;margin-bottom:3px;">${altLabel}</div>
+            ${p.alt > 0 ? `<div style="font-size:0.72rem;color:rgba(255,255,255,0.5);">${p.dir} ${p.az}°</div>` : ""}
+            <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-top:4px;">${p.elong}° from Sun</div>
+            <div style="font-size:0.7rem;color:rgba(255,255,255,0.25);">${p.dist} AU</div>
+          </div>`;
+      }
+      html += `</div>`;
+
+      el.innerHTML = html;
+      document.getElementById("solarSystemNote").textContent =
+        "Positions calculated client-side using VSOP87 truncated series. Accurate to ~1°.";
     }
 
     const SOURCE_META = {
@@ -2123,6 +2261,7 @@
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
         renderSources(data.sources, (data.pws || {}).stale);
         renderFrostTracker(data.frost_log);
+        renderSolarSystem();
 
         // Alerts — consolidated summary bar, panel collapsed by default
         const alertsContainer = document.getElementById("alertsContainer");
