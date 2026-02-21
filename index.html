@@ -2603,9 +2603,9 @@
       console.log("RainViewer: showFrame", idx, "url template:", url.replace("{z}/{x}/{y}", "7/38/46"));
       const layer = L.tileLayer(url, {
         opacity:    0.75,
-        tileSize:   TILE_SIZE,
+        tileSize:   512,
+        zoomOffset: -1,
         maxZoom:    10,
-        zoomOffset: 0,
         attribution: '&copy; <a href="https://rainviewer.com">RainViewer</a>',
       });
       layer.addTo(radarMap);
