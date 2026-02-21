@@ -577,6 +577,18 @@
             <div class="label">Wind (now)</div>
             <div class="value" id="windNowHome">--</div>
           </div>
+          <div class="row">
+            <div class="label">Pressure (model)</div>
+            <div class="value" id="pressureModel">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Pressure (KBOS obs)</div>
+            <div class="value" id="pressureKBOS">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Change in barometric pressure over the last 3 hours. Falling rapidly (>2 mb) suggests an approaching storm. Rising rapidly indicates clearing.">Pressure Trend (3h)</div>
+            <div class="value" id="pressureTrendHome">--</div>
+          </div>
           <div class="small-note" id="todayNote"></div>
           </div>
         </div>
@@ -601,29 +613,17 @@
             <div class="label" data-tip="Model temp adjusted by the observed PWS bias — best estimate of actual conditions.">Corrected</div>
             <div class="value" id="correctedTemp">--&deg;F</div>
           </div>
-          <div class="row">
-            <div class="label">Temp: KBOS / KBVY</div>
-            <div class="value" id="tempObsStations">-- / --</div>
-          </div>
           <div class="small-note" id="pwsNote"></div>
           </div>
         </div>
 
-        <!-- 4. Pressure & Diagnostics — closed by default -->
+        <!-- 4. Conditions & Diagnostics — closed by default -->
         <div class="card col-12" data-collapse-key="pressure_diag" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('pressure_diag', this)">Pressure &amp; Diagnostics <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('pressure_diag', this)">Conditions &amp; Diagnostics <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <div class="row">
-            <div class="label">Pressure (model)</div>
-            <div class="value" id="pressureModel">--</div>
-          </div>
-          <div class="row">
-            <div class="label">Pressure (KBOS obs)</div>
-            <div class="value" id="pressureKBOS">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Change in barometric pressure over the last 3 hours. Falling rapidly (>2 mb) suggests an approaching storm. Rising rapidly indicates clearing.">Pressure Trend (3h)</div>
-            <div class="value" id="pressureTrendHome">--</div>
+            <div class="label">Temp: KBOS / KBVY</div>
+            <div class="value" id="tempObsStations">-- / --</div>
           </div>
           <div class="row">
             <div class="label" data-tip="Height of the 850mb pressure level (~5,000 ft). Rising height = warming aloft. Used to assess rain/snow/mix boundary.">850mb Height (6h)</div>
