@@ -569,11 +569,34 @@ def fetch_buoy_44013():
         return {}, meta
 
 
+def fetch_historical_mins(season_start, today_str):
+    """
+    Fetch daily min temps from Open-Meteo historical API for the full season.
+    Returns dict of {date_str: min_temp_F} for all past dates in season.
+    """
+    try:
+        url = (
+            f"https://archive-api.open-meteo.com/v1/archive"
+            f"?latitude={LAT}&longitude={LON}"
+            f"&start_date={season_start}&end_date={today_str}"
+            f"&daily=temperature_2m_min&temperature_unit=fahrenheit&timezone=America/New_York"
+        )
+        resp = requests.get(url, timeout=20)
+        resp.raise_for_status()
+        data = resp.json()
+        dates = data.get("daily", {}).get("time", [])
+        mins  = data.get("daily", {}).get("temperature_2m_min", [])
+        return {d: t for d, t in zip(dates, mins) if t is not None}
+    except Exception as e:
+        print(f"  ✗ Historical mins fetch error: {e}")
+        return {}
+
+
 def update_frost_log(daily_data):
     """
     Maintain a persistent log of frost/freeze events based on daily min temps.
     Tracks: days below 32°F (freeze), days below 28°F (hard freeze), days below 20°F (severe).
-    Stores season-to-date counts and last occurrence dates.
+    Backfills full season from Open-Meteo historical API on first run or season reset.
     Season = Oct 1 through current date.
     """
     try:
@@ -584,23 +607,18 @@ def update_frost_log(daily_data):
             except Exception:
                 log = {}
 
-        daily = (daily_data or {}).get("daily", {}) or {}
-        dates = daily.get("time", []) or []
-        mins  = daily.get("temperature_2m_min", []) or []
-
-        # Today's date
-        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-        year      = datetime.now(timezone.utc).year
-        # Season start: Oct 1 of current or previous year
+        today_str    = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        yesterday    = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+        year         = datetime.now(timezone.utc).year
         season_start = f"{year}-10-01" if today_str >= f"{year}-10-01" else f"{year-1}-10-01"
 
-        # Initialize season record if new season
+        # Initialize / reset on new season
         if log.get("season_start") != season_start:
             log = {
                 "season_start":    season_start,
-                "freeze_days":     0,   # min ≤ 32°F
-                "hard_freeze_days": 0,  # min ≤ 28°F
-                "severe_days":     0,   # min ≤ 20°F
+                "freeze_days":     0,
+                "hard_freeze_days": 0,
+                "severe_days":     0,
                 "last_freeze":     None,
                 "last_hard":       None,
                 "last_severe":     None,
@@ -609,37 +627,49 @@ def update_frost_log(daily_data):
 
         logged = set(log.get("logged_dates", []))
 
-        # Process today's actual min (index 0 = today)
-        # Only log past dates to avoid logging forecast lows
-        for i, (d, t) in enumerate(zip(dates, mins)):
-            if d >= today_str:
-                continue   # skip today and future — forecast not actual
-            if d < season_start:
-                continue   # skip prior season
+        # If we haven't logged most of the season yet, do a full historical backfill
+        # (catches first run, lost file, or season reset)
+        needs_backfill = len(logged) < 5  # fewer than 5 days logged = likely incomplete
+        if needs_backfill:
+            print("  ↻ Frost log: backfilling full season from Open-Meteo historical API...")
+            hist = fetch_historical_mins(season_start, yesterday)
+            date_mins = hist
+        else:
+            # Normal incremental update — only check recent ECMWF actuals
+            daily = (daily_data or {}).get("daily", {}) or {}
+            dates = daily.get("time", []) or []
+            mins  = daily.get("temperature_2m_min", []) or []
+            date_mins = {d: t for d, t in zip(dates, mins)
+                         if d < today_str and t is not None}
+
+        for d, t in sorted(date_mins.items()):
+            if d < season_start or d >= today_str:
+                continue
             if d in logged:
-                continue   # already counted
+                continue
+            if t <= 20:
+                log["severe_days"]      += 1
+                log["hard_freeze_days"] += 1
+                log["freeze_days"]      += 1
+                log["last_severe"]       = d
+                log["last_hard"]         = d
+                log["last_freeze"]       = d
+            elif t <= 28:
+                log["hard_freeze_days"] += 1
+                log["freeze_days"]      += 1
+                log["last_hard"]         = d
+                log["last_freeze"]       = d
+            elif t <= 32:
+                log["freeze_days"]      += 1
+                log["last_freeze"]       = d
+            logged.add(d)
 
-            if t is not None:
-                if t <= 20:
-                    log["severe_days"]     += 1
-                    log["hard_freeze_days"] += 1
-                    log["freeze_days"]     += 1
-                    log["last_severe"]     = d
-                    log["last_hard"]       = d
-                    log["last_freeze"]     = d
-                elif t <= 28:
-                    log["hard_freeze_days"] += 1
-                    log["freeze_days"]     += 1
-                    log["last_hard"]       = d
-                    log["last_freeze"]     = d
-                elif t <= 32:
-                    log["freeze_days"]     += 1
-                    log["last_freeze"]     = d
-                logged.add(d)
+        log["logged_dates"] = sorted(list(logged))
 
-        log["logged_dates"] = sorted(list(logged))[-60:]  # keep last 60 for memory
-
-        # Add forecast freeze risk (next 10 days from daily forecast)
+        # Upcoming freeze risk from forecast
+        daily = (daily_data or {}).get("daily", {}) or {}
+        dates = daily.get("time", []) or []
+        mins  = daily.get("temperature_2m_min", []) or []
         upcoming_freeze = []
         for d, t in zip(dates, mins):
             if d < today_str: continue
@@ -648,8 +678,8 @@ def update_frost_log(daily_data):
         log["upcoming_freeze_days"] = upcoming_freeze
 
         FROST_LOG_FILE.write_text(json.dumps(log, indent=2))
-        print(f"  ✓ Frost log: {log['freeze_days']} freeze days this season, "
-              f"last freeze: {log['last_freeze']}, "
+        print(f"  ✓ Frost log: {log['freeze_days']} freeze, {log['hard_freeze_days']} hard freeze, "
+              f"{log['severe_days']} severe | last: {log['last_freeze']} | "
               f"upcoming: {len(upcoming_freeze)}")
         return log
 
