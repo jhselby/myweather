@@ -2402,58 +2402,97 @@
         const azR =Math.atan2(-Math.cos(decR)*Math.sin(HA), Math.sin(decR)*Math.cos(LAT)-Math.cos(decR)*Math.cos(HA)*Math.sin(LAT));
         const az  =((r2d(azR)%360)+360)%360;
         const dirIdx=Math.round(az/22.5)%16;
-        const visible = alt > 5 && elong > 15;
+
+        // Four states:
+        //   'visible' — above horizon, elongation OK, dark enough (after dusk or before dawn)
+        //   'daytime' — above horizon, elongation OK, but sun is up (sky too bright)
+        //   'glare'   — above horizon, too close to sun (<15° elongation)
+        //   'below'   — below horizon
+        let state;
+        const sunTimes  = (typeof SunCalc !== "undefined") ? SunCalc.getTimes(now, HOME_LAT, HOME_LON) : null;
+        const isDark    = sunTimes
+          ? (now >= sunTimes.dusk || now <= sunTimes.dawn)
+          : false;
+        if (alt <= 5)              state = 'below';
+        else if (elong <= 15)      state = 'glare';
+        else if (!isDark)          state = 'daytime';
+        else                       state = 'visible';
+
         results.push({name, emoji:EMOJIS[name], color:COLORS[name], alt:alt.toFixed(0), az:az.toFixed(0),
-                      dir:dirs[dirIdx], dist:dist.toFixed(2), elong:elong.toFixed(0), visible});
+                      dir:dirs[dirIdx], dist:dist.toFixed(2), elong:elong.toFixed(0), visible: state === 'visible', state});
       }
 
-      // Sort: visible first (by altitude desc), then invisible (by elongation desc)
+      // Sort: visible → daytime → glare → below
       results.sort((a,b) => {
-        if (a.visible !== b.visible) return a.visible ? -1 : 1;
-        return a.visible ? b.alt - a.alt : b.elong - a.elong;
+        const rank = { visible:0, daytime:1, glare:2, below:3 };
+        if (rank[a.state] !== rank[b.state]) return rank[a.state] - rank[b.state];
+        return b.alt - a.alt;
       });
 
-      const aboveHorizon = results.filter(r => r.visible).length;
+      const trulyVisible = results.filter(r => r.state === 'visible').length;
       const timeStr  = now.toLocaleTimeString("en-US", {hour:"numeric", minute:"2-digit"});
 
       const light = isLight();
       const subTxt    = light ? "rgba(0,0,0,0.40)" : "rgba(255,255,255,0.4)";
       const dimTxt    = light ? "rgba(0,0,0,0.28)" : "rgba(255,255,255,0.25)";
       const faintTxt  = light ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.3)";
-      const belowCol  = light ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.3)";
       const dirTxt    = light ? "rgba(0,0,0,0.50)" : "rgba(255,255,255,0.5)";
-      // Visible tile: elevated background + stronger border
       const visBg     = light ? "rgba(255,255,255,1.0)" : "rgba(255,255,255,0.08)";
       const visShadow = light ? "0 1px 6px rgba(0,0,0,0.10)" : "none";
-      // Not-visible tile: clearly secondary
       const dimBg     = light ? "rgba(0,0,0,0.025)" : "rgba(255,255,255,0.02)";
       const dimBd     = light ? "rgba(0,0,0,0.07)"  : "rgba(255,255,255,0.06)";
       const headerTxt = light ? "rgba(0,0,0,0.45)"  : "rgba(255,255,255,0.4)";
+      const glareColor= light ? "rgba(180,110,0,0.85)" : "rgba(255,190,60,0.85)";
+      const dayColor  = light ? "rgba(30,90,200,0.80)" : "rgba(140,180,255,0.85)";
+
+      const headerMsg = trulyVisible > 0
+        ? `${trulyVisible} planet${trulyVisible!==1?"s":""} visible at ${timeStr}`
+        : `No planets visible at ${timeStr}`;
 
       let html = `<div style="font-size:0.78rem;color:${headerTxt};margin-bottom:12px;">
-        ${aboveHorizon} planet${aboveHorizon!==1?"s":""} above horizon at ${timeStr} — geometric position, not naked-eye visibility
+        ${headerMsg} — geometric position, not naked-eye visibility
       </div>`;
 
       html += `<div class="solar-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">`;
       for (const p of results) {
-        const nameColor   = p.visible ? p.color : (light ? "rgba(0,0,0,0.32)" : "rgba(160,160,160,0.4)");
-        const borderColor = p.visible ? p.color.replace("0.9","0.5") : dimBd;
-        const bg          = p.visible ? visBg : dimBg;
-        const shadow      = p.visible ? visShadow : "none";
-        const emojiOp     = p.visible ? "1" : (light ? "0.4" : "0.3");
-        const dataOp      = p.visible ? "1" : (light ? "0.55" : "0.5");
-        const altLabel    = p.alt > 0
-          ? `<span style="color:rgba(60,180,80,0.9);">${p.alt}° alt</span>`
-          : `<span style="color:${belowCol};">below horizon</span>`;
+        const isVis   = p.state === 'visible';
+        const isDay   = p.state === 'daytime';
+        const isGlare = p.state === 'glare';
+        const isBelow = p.state === 'below';
+
+        const nameColor   = isVis   ? p.color
+                          : isDay   ? (light ? "rgba(0,0,0,0.55)" : "rgba(180,200,255,0.7)")
+                          : isGlare ? (light ? "rgba(0,0,0,0.50)" : "rgba(200,200,200,0.6)")
+                          :           (light ? "rgba(0,0,0,0.32)" : "rgba(150,150,150,0.4)");
+        const borderColor = isVis   ? p.color.replace("0.9","0.5")
+                          : isDay   ? (light ? "rgba(30,90,200,0.20)" : "rgba(140,180,255,0.18)")
+                          : dimBd;
+        const bg          = isVis   ? visBg : dimBg;
+        const shadow      = isVis   ? visShadow : "none";
+        const emojiOp     = isVis   ? "1"
+                          : isDay   ? (light ? "0.60" : "0.50")
+                          : isGlare ? (light ? "0.50" : "0.40")
+                          :           (light ? "0.30" : "0.22");
+        const dataOp      = isVis ? "1" : isDay ? "0.80" : isGlare ? "0.70" : "0.50";
+
+        let statusLine;
+        if (isVis) {
+          statusLine = `<span style="color:rgba(60,180,80,0.9);">${p.alt}° alt · ${p.dir} ${p.az}°</span>`;
+        } else if (isDay) {
+          statusLine = `<span style="color:${dayColor};" data-tip="Planet is above the horizon with enough separation from the sun, but the sky is too bright right now. Visible after dusk.">${p.alt}° alt · sky too bright</span>`;
+        } else if (isGlare) {
+          statusLine = `<span style="color:${glareColor};" data-tip="Planet is above the horizon but only ${p.elong}° from the sun — lost in solar glare.">☀️ solar glare</span>`;
+        } else {
+          statusLine = `<span style="color:${faintTxt};">below horizon</span>`;
+        }
+
         html += `
           <div style="background:${bg};border:1px solid ${borderColor};border-radius:10px;
                       padding:10px 8px;text-align:center;box-shadow:${shadow};">
             <div style="font-size:1.5rem;margin-bottom:4px;opacity:${emojiOp};">${p.emoji}</div>
-            <div style="font-size:0.82rem;font-weight:900;color:${nameColor};margin-bottom:6px;">${p.name}</div>
-            <div style="font-size:0.75rem;margin-bottom:3px;opacity:${dataOp};">${altLabel}</div>
-            ${p.alt > 0 ? `<div style="font-size:0.72rem;color:${dirTxt};opacity:${dataOp};">${p.dir} ${p.az}°</div>` : ""}
-            <div style="font-size:0.7rem;color:${faintTxt};margin-top:4px;opacity:${dataOp};">${p.elong}° from Sun</div>
-            <div style="font-size:0.7rem;color:${dimTxt};opacity:${dataOp};">${p.dist} AU</div>
+            <div style="font-size:0.82rem;font-weight:900;color:${nameColor};margin-bottom:5px;">${p.name}</div>
+            <div style="font-size:0.72rem;margin-bottom:4px;">${statusLine}</div>
+            <div style="font-size:0.68rem;color:${faintTxt};opacity:${dataOp};">${p.elong}° from Sun · ${p.dist} AU</div>
           </div>`;
       }
       html += `</div>`;
