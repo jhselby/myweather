@@ -782,6 +782,14 @@
           </div>
         </div>
 
+        <!-- Dock Day Score -->
+        <div class="card col-12" data-collapse-key="dock_day">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('dock_day', this)">⚓ Dock Day Score <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
+            <div id="dockDayContent"></div>
+          </div>
+        </div>
+
         <!-- Buoy 44013 / Water Temp -->
         <div class="card col-12" data-collapse-key="buoy_44013" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('buoy_44013', this)">&#127754; Ocean Conditions &#8212; Buoy 44013 (16mi ENE) <span class="collapse-chevron">&#9660;</span></div>
@@ -1435,6 +1443,15 @@
             windowIndices.push(i);
           }
         }
+        // If sunset already passed and window is empty, use nearest available hour
+        if (!windowIndices.length) {
+          let best = -1, bestDiff = Infinity;
+          for (let i = 0; i < times.length; i++) {
+            const diff = Math.abs(new Date(times[i]).getTime() - sunsetMs);
+            if (diff < bestDiff) { bestDiff = diff; best = i; }
+          }
+          if (best >= 0 && bestDiff < 4*3600000) windowIndices.push(best);
+        }
         if (!windowIndices.length) continue;
 
         // Average cloud layers and humidity over window
@@ -1481,22 +1498,22 @@
         return;
       }
 
-      let html = `<div style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:10px;">`;
+      let html = `<div style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:12px;">`;
       for (const s of scores) {
         const barW = Math.round(s.score * 100);
         html += `
           <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);
-                      border-radius:10px;padding:12px 10px;text-align:center;">
-            <div style="font-size:0.78rem;font-weight:800;color:rgba(255,255,255,0.5);margin-bottom:4px;">${s.dayLabel}</div>
-            <div style="font-size:1.6rem;margin-bottom:4px;">${s.emoji}</div>
-            <div style="font-size:0.88rem;font-weight:900;color:${s.color};margin-bottom:6px;">${s.label}</div>
-            <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-bottom:8px;">Sunset ${s.timeLabel}</div>
+                      border-radius:10px;padding:16px 12px;text-align:center;">
+            <div style="font-size:0.9rem;font-weight:800;color:rgba(255,255,255,0.6);margin-bottom:6px;">${s.dayLabel}</div>
+            <div style="font-size:2rem;margin-bottom:6px;">${s.emoji}</div>
+            <div style="font-size:1.05rem;font-weight:900;color:${s.color};margin-bottom:6px;">${s.label}</div>
+            <div style="font-size:0.8rem;color:rgba(255,255,255,0.35);margin-bottom:10px;">Sunset ${s.timeLabel}</div>
             <!-- Score bar -->
-            <div style="height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin-bottom:8px;">
-              <div style="height:100%;width:${barW}%;background:${s.color};border-radius:2px;transition:width 0.4s;"></div>
+            <div style="height:5px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;margin-bottom:10px;">
+              <div style="height:100%;width:${barW}%;background:${s.color};border-radius:3px;transition:width 0.4s;"></div>
             </div>
             <!-- Cloud breakdown -->
-            <div style="font-size:0.68rem;color:rgba(255,255,255,0.3);line-height:1.7;">
+            <div style="font-size:0.78rem;color:rgba(255,255,255,0.4);line-height:2;">
               <span data-tip="Low clouds (below ~6,500 ft). High values block the sun from lighting upper clouds — kills color.">Low ${s.avgLow}%</span> ·
               <span data-tip="Mid-level clouds (6,500–20,000 ft). The sweet spot for sunset color — 30–70% is ideal.">Mid ${s.avgMid}%</span> ·
               <span data-tip="High clouds (above 20,000 ft, cirrus). Add soft color and atmosphere when mid clouds are present.">High ${s.avgHigh}%</span>
@@ -1504,7 +1521,7 @@
           </div>`;
       }
       html += `</div>`;
-      html += `<div style="font-size:0.72rem;color:rgba(255,255,255,0.25);margin-top:4px;">
+      html += `<div style="font-size:0.78rem;color:rgba(255,255,255,0.3);margin-top:4px;">
         Score based on mid-level cloud fraction, low cloud obstruction, and humidity.
         Best conditions: 30–70% mid cloud, &lt;20% low cloud, dry air.
         Your western water view is a significant advantage.
@@ -1700,6 +1717,266 @@
     }
 
     let tideChartObj = null;
+
+    // ======================================================
+    // Dock Day Score
+    // Dock floats when tide > DOCK_FLOAT_THRESHOLD_FT (above MLLW).
+    // DOCK_TIDE_OFFSET_FT: correction to apply to predicted heights once
+    //   empirical observed-vs-predicted data is collected. Default 0.0.
+    // Dock faces 315° (NW) — open water fetch in that direction.
+    //   NW winds = directly onshore at dock = choppy.
+    //   SE winds = offshore from dock = calm.
+    // ======================================================
+    const DOCK_FLOAT_THRESHOLD_FT = 1.5;   // ft above MLLW — dock just floats
+    const DOCK_TIDE_OFFSET_FT     = 0.0;   // empirical correction — update when data available
+    const DOCK_FACE_DEG           = 315;   // dock faces NW (summer solstice sunset bearing)
+    const DOCK_USABLE_HOUR_START  =  7;    // before this hour = not usable
+    const DOCK_USABLE_HOUR_END    = 20;    // after this hour = not usable
+
+    function dockWindScore(windDirDeg, windSpeedKt) {
+      // Returns 0 (bad) to 1 (good) based on wind angle relative to dock face
+      // Wind FROM dock face direction (315°) = directly onshore = worst
+      // Wind FROM opposite (135°) = offshore = best
+      if (windDirDeg == null || windSpeedKt == null) return 0.7;
+      if (windSpeedKt < 5) return 1.0;   // calm = always fine
+      // Angle between wind direction and dock face
+      let diff = Math.abs(windDirDeg - DOCK_FACE_DEG);
+      if (diff > 180) diff = 360 - diff;
+      // 0° = wind from exactly dock direction (onshore) = score 0
+      // 180° = wind from behind dock (offshore) = score 1
+      const rawScore = diff / 180;
+      // Penalty scales with speed — light winds matter less
+      const speedFactor = Math.min(windSpeedKt / 20, 1.0);
+      return rawScore * speedFactor + (1 - speedFactor);
+    }
+
+    function renderDockDay(data) {
+      const el = document.getElementById("dockDayContent");
+      if (!el) return;
+
+      const curve   = (data.tide_curve || {});
+      const ctimes  = curve.times   || [];
+      const cheights= curve.heights || [];
+      const hourly  = data.hourly   || {};
+      const htimes  = hourly.times  || [];
+      const htemps  = hourly.temperature || [];
+      const hwind   = hourly.wind_speed  || [];
+      const hwinddir= hourly.wind_direction || [];
+      const hprecip = hourly.precipitation_probability || [];
+      const buoy    = data.buoy     || {};
+      const waterTempRaw = buoy.water_temp_f;
+
+      if (!ctimes.length) {
+        el.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">Tide curve data unavailable</div>`;
+        return;
+      }
+
+      // Apply tide offset to all heights
+      const correctedHeights = cheights.map(h => h + DOCK_TIDE_OFFSET_FT);
+
+      // Helper: nearest hourly value to a given timestamp
+      function nearestHourly(arr, targetMs) {
+        let best = null, bestDiff = Infinity;
+        for (let i = 0; i < htimes.length; i++) {
+          const diff = Math.abs(new Date(htimes[i]).getTime() - targetMs);
+          if (diff < bestDiff) { bestDiff = diff; best = arr[i]; }
+        }
+        return best;
+      }
+
+      // Build accessible windows for today and tomorrow
+      const now   = new Date();
+      const days  = [0, 1].map(d => {
+        const date = new Date(now);
+        date.setDate(date.getDate() + d);
+        return date.toISOString().slice(0, 10);
+      });
+
+      const dayCards = [];
+
+      for (const dayStr of days) {
+        // Find all 6-min curve points for this day
+        const dayPoints = [];
+        for (let i = 0; i < ctimes.length; i++) {
+          if (ctimes[i].startsWith(dayStr)) {
+            dayPoints.push({ t: ctimes[i], h: correctedHeights[i] });
+          }
+        }
+        if (!dayPoints.length) continue;
+
+        // Find contiguous accessible windows where h > threshold
+        const windows = [];
+        let winStart = null;
+        for (let i = 0; i < dayPoints.length; i++) {
+          const accessible = dayPoints[i].h > DOCK_FLOAT_THRESHOLD_FT;
+          if (accessible && winStart === null) winStart = i;
+          if (!accessible && winStart !== null) {
+            windows.push({ start: winStart, end: i - 1 });
+            winStart = null;
+          }
+        }
+        if (winStart !== null) windows.push({ start: winStart, end: dayPoints.length - 1 });
+
+        // Filter to usable hours
+        const usableWindows = windows.map(w => {
+          // Trim to usable hours
+          let s = w.start, e = w.end;
+          while (s <= e) {
+            const hr = new Date(dayPoints[s].t).getHours();
+            if (hr >= DOCK_USABLE_HOUR_START) break;
+            s++;
+          }
+          while (e >= s) {
+            const hr = new Date(dayPoints[e].t).getHours();
+            if (hr < DOCK_USABLE_HOUR_END) break;
+            e--;
+          }
+          if (s > e) return null;
+          const startMs = new Date(dayPoints[s].t).getTime();
+          const endMs   = new Date(dayPoints[e].t).getTime();
+          const durMin  = Math.round((endMs - startMs) / 60000);
+          const midMs   = (startMs + endMs) / 2;
+
+          // Weather at midpoint of window
+          const temp    = nearestHourly(htemps,   midMs);
+          const wspd    = nearestHourly(hwind,    midMs);
+          const wdir    = nearestHourly(hwinddir, midMs);
+          const precip  = nearestHourly(hprecip,  midMs);
+
+          // Peak height during window
+          const peakH = Math.max(...dayPoints.slice(s, e+1).map(p => p.h));
+
+          // Wind score for dock
+          const windSc = dockWindScore(wdir, wspd);
+
+          // Temp score: 75°F=1.0, 55°F=0.3, 45°F=0
+          const tempSc = temp == null ? 0.5 :
+            Math.max(0, Math.min(1, (temp - 45) / 30));
+
+          // Precip score
+          const precipSc = precip == null ? 0.5 :
+            Math.max(0, 1 - precip / 80);
+
+          // Duration score: 3h+ = 1.0, 1h = 0.33
+          const durSc = Math.min(1, durMin / 180);
+
+          // Overall score
+          const score = windSc * 0.35 + tempSc * 0.30 + precipSc * 0.20 + durSc * 0.15;
+
+          // Wind direction label relative to dock
+          let windRelLabel = "";
+          if (wdir != null) {
+            let diff = Math.abs(wdir - DOCK_FACE_DEG);
+            if (diff > 180) diff = 360 - diff;
+            if (diff < 45)       windRelLabel = "onshore";
+            else if (diff > 135) windRelLabel = "offshore";
+            else                 windRelLabel = "crosswind";
+          }
+
+          const dirName = wdir != null ? toCompass(wdir, false) : "--";
+
+          return {
+            startTime: new Date(dayPoints[s].t),
+            endTime:   new Date(dayPoints[e].t),
+            durMin, peakH, temp, wspd, wdir, dirName, precip,
+            windRelLabel, score, windSc, tempSc, precipSc
+          };
+        }).filter(Boolean);
+
+        // Day label
+        const dateObj = new Date(dayStr + "T12:00:00");
+        const isToday = dayStr === days[0];
+        const dayLabel = isToday ? "Today" : "Tomorrow";
+        const dateLabel = dateObj.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+
+        // Best window score for the day
+        const bestScore = usableWindows.length
+          ? Math.max(...usableWindows.map(w => w.score))
+          : 0;
+
+        dayCards.push({ dayLabel, dateLabel, usableWindows, bestScore, dayStr });
+      }
+
+      if (!dayCards.length) {
+        el.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">No tide data available</div>`;
+        return;
+      }
+
+      // Render
+      function scoreLabel(s) {
+        if (s >= 0.75) return { label:"Great day",  color:"rgba(80,220,120,0.95)",  emoji:"🟢" };
+        if (s >= 0.55) return { label:"Good day",   color:"rgba(160,220,80,0.9)",   emoji:"🟡" };
+        if (s >= 0.35) return { label:"Fair",        color:"rgba(255,190,50,0.85)",  emoji:"🟠" };
+        return            { label:"Poor",        color:"rgba(180,80,80,0.8)",    emoji:"🔴" };
+      }
+
+      function fmtTime(d) {
+        return d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+      }
+
+      let html = `<div style="display:grid;grid-template-columns:repeat(${dayCards.length},1fr);gap:12px;">`;
+
+      for (const day of dayCards) {
+        const sl = scoreLabel(day.bestScore);
+        html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px 12px;">`;
+        html += `<div style="font-size:0.78rem;font-weight:800;color:rgba(255,255,255,0.45);margin-bottom:2px;">${day.dayLabel}</div>`;
+        html += `<div style="font-size:0.72rem;color:rgba(255,255,255,0.3);margin-bottom:8px;">${day.dateLabel}</div>`;
+
+        if (!day.usableWindows.length) {
+          html += `<div style="font-size:1.4rem;margin-bottom:4px;">🔴</div>`;
+          html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">Dock dry all day</div>`;
+          html += `<div style="font-size:0.72rem;color:rgba(255,255,255,0.3);margin-top:6px;">Low tides fall within usable hours</div>`;
+        } else {
+          html += `<div style="font-size:1.4rem;margin-bottom:4px;">${sl.emoji}</div>`;
+          html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label}</div>`;
+
+          for (const w of day.usableWindows) {
+            const durH = Math.floor(w.durMin / 60);
+            const durM = w.durMin % 60;
+            const durStr = durH > 0 ? `${durH}h ${durM}m` : `${durM}m`;
+            const barW = Math.round(w.score * 100);
+
+            html += `<div style="background:rgba(255,255,255,0.04);border-radius:7px;padding:8px 10px;margin-bottom:8px;">`;
+            // Window time + duration
+            html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(255,255,255,0.85);margin-bottom:2px;">`;
+            html += `${fmtTime(w.startTime)} – ${fmtTime(w.endTime)}`;
+            html += `<span style="font-size:0.7rem;font-weight:700;color:rgba(255,255,255,0.35);margin-left:6px;">${durStr}</span></div>`;
+            // Peak height
+            html += `<div style="font-size:0.7rem;color:rgba(255,255,255,0.3);margin-bottom:6px;">`;
+            html += `Peak ${w.peakH.toFixed(1)} ft`;
+            if (DOCK_TIDE_OFFSET_FT !== 0) html += ` <span style="color:rgba(255,200,80,0.6);">(corrected +${DOCK_TIDE_OFFSET_FT} ft)</span>`;
+            html += `</div>`;
+            // Score bar
+            html += `<div style="height:3px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden;margin-bottom:8px;">`;
+            html += `<div style="height:100%;width:${barW}%;background:${scoreLabel(w.score).color};border-radius:2px;"></div></div>`;
+            // Weather details
+            html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:0.7rem;color:rgba(255,255,255,0.5);">`;
+            html += `<div>🌡️ ${w.temp != null ? Math.round(w.temp)+"°F" : "--"}</div>`;
+            html += `<div>💧 ${w.precip != null ? w.precip+"%" : "--"} precip</div>`;
+            html += `<div data-tip="Wind angle relative to your NW-facing dock. Onshore (NW) = choppy. Offshore (SE) = calm flat water.">`;
+            html += `💨 ${w.wspd != null ? Math.round(w.wspd)+" kt" : "--"} ${w.dirName}`;
+            html += ` <span style="color:${w.windRelLabel==='offshore'?'rgba(80,220,120,0.8)':w.windRelLabel==='onshore'?'rgba(220,80,80,0.8)':'rgba(255,200,80,0.8)'};">(${w.windRelLabel})</span></div>`;
+            if (waterTempRaw != null) {
+              html += `<div>🌊 ${Math.round(waterTempRaw)}°F water</div>`;
+            }
+            html += `</div></div>`;
+          }
+        }
+        html += `</div>`;
+      }
+      html += `</div>`;
+
+      // Footer note
+      const offsetNote = DOCK_TIDE_OFFSET_FT !== 0
+        ? `Tide heights corrected by ${DOCK_TIDE_OFFSET_FT > 0 ? "+" : ""}${DOCK_TIDE_OFFSET_FT} ft empirical offset. `
+        : `No tide correction applied yet — update <code>DOCK_TIDE_OFFSET_FT</code> when empirical data available. `;
+      html += `<div style="font-size:0.71rem;color:rgba(255,255,255,0.22);margin-top:10px;">`;
+      html += `Float threshold ${DOCK_FLOAT_THRESHOLD_FT} ft MLLW. ${offsetNote}`;
+      html += `Wind scored relative to ${DOCK_FACE_DEG}° dock face. Usable hours ${DOCK_USABLE_HOUR_START}:00–${DOCK_USABLE_HOUR_END}:00.`;
+      html += `</div>`;
+
+      el.innerHTML = html;
+    }
 
     function renderTides(tides) {
       const grid = document.getElementById("tideGrid");
@@ -2431,6 +2708,7 @@
         renderSources(data.sources, (data.pws || {}).stale);
         renderFrostTracker(data.frost_log);
         renderSunsetQuality(data);
+        renderDockDay(data);
         renderSolarSystem();
 
         // Alerts — consolidated summary bar, panel collapsed by default
