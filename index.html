@@ -747,8 +747,9 @@
         <!-- 6. NWS Detailed Forecast — closed by default -->
         <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
-            <span style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.45);margin-left:8px;" id="nwsOfficeLabel"></span>
             <span style="font-size:0.78rem;font-weight:800;color:rgba(140,200,255,0.8);margin-left:6px;" id="nwsFilterLabel"></span>
+            <span style="flex:1;"></span>
+            <span style="font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.25);margin-right:8px;" id="nwsOfficeLabel"></span>
             <span class="collapse-chevron">&#9660;</span>
           </div>
           <div class="card-body" style="display:none;">
@@ -2345,21 +2346,41 @@
       if (!el || !daily || !Array.isArray(daily.dates)) return;
       el.innerHTML = "";
 
+      // Build set of dates covered by NWS periods
+      const nwsDates = new Set(
+        (window._nwsPeriods || [])
+          .filter(p => p.start_time)
+          .map(p => p.start_time.slice(0, 10))
+      );
+      // If no start_time data yet (old collect), assume first 7 days have NWS coverage
+      const hasStartTimes = (window._nwsPeriods || []).some(p => p.start_time);
+      const nwsDayCount = hasStartTimes ? null : 7;
+
       for (let i = 0; i < Math.min(10, daily.dates.length); i++) {
-        const dateStr = daily.dates[i];  // "2026-02-21"
-        const date    = new Date(dateStr + "T00:00:00");
-        const day     = date.toLocaleDateString("en-US", { weekday: "short" });
-        const dateNum = date.toLocaleDateString("en-US", { month:"numeric", day:"numeric" });
-        const hi      = daily.temperature_max?.[i];
-        const lo      = daily.temperature_min?.[i];
-        const code    = daily.weather_code?.[i];
-        const pop     = daily.precipitation_probability_max?.[i];
-        const emoji   = weatherEmoji[code] || "&#127777;&#65039;";
+        const dateStr   = daily.dates[i];
+        const date      = new Date(dateStr + "T00:00:00");
+        const day       = date.toLocaleDateString("en-US", { weekday: "short" });
+        const dateNum   = date.toLocaleDateString("en-US", { month:"numeric", day:"numeric" });
+        const hi        = daily.temperature_max?.[i];
+        const lo        = daily.temperature_min?.[i];
+        const code      = daily.weather_code?.[i];
+        const pop       = daily.precipitation_probability_max?.[i];
+        const emoji     = weatherEmoji[code] || "&#127777;&#65039;";
+        const hasNWS    = hasStartTimes ? nwsDates.has(dateStr) : (i < nwsDayCount);
 
         const row = document.createElement("div");
         row.className = "row forecast-day-row";
         row.dataset.date = dateStr;
-        row.style.cssText = "cursor:pointer;border-radius:8px;margin:0 -6px;padding:7px 6px;transition:background 0.15s;";
+
+        if (hasNWS) {
+          row.style.cssText = "cursor:pointer;border-radius:8px;margin:0 -6px;padding:7px 6px;transition:background 0.15s;";
+          row.addEventListener("click", () => selectForecastDay(dateStr, day));
+          row.addEventListener("mouseenter", () => { if (row.dataset.date !== _selectedForecastDate) row.style.background = "rgba(255,255,255,0.04)"; });
+          row.addEventListener("mouseleave", () => { if (row.dataset.date !== _selectedForecastDate) row.style.background = ""; });
+        } else {
+          row.style.cssText = "cursor:default;border-radius:8px;margin:0 -6px;padding:7px 6px;opacity:0.6;";
+        }
+
         row.innerHTML = `
           <div class="label" style="display:flex;align-items:center;gap:8px;">
             <span style="font-weight:900;min-width:32px;">${day}</span>
@@ -2369,13 +2390,9 @@
           </div>
           <div class="value">${hi != null ? Math.round(hi) : "--"}° / ${lo != null ? Math.round(lo) : "--"}°</div>`;
 
-        row.addEventListener("click", () => selectForecastDay(dateStr, day));
-        row.addEventListener("mouseenter", () => { if (row.dataset.date !== _selectedForecastDate) row.style.background = "rgba(255,255,255,0.04)"; });
-        row.addEventListener("mouseleave", () => { if (row.dataset.date !== _selectedForecastDate) row.style.background = ""; });
         el.appendChild(row);
       }
 
-      // Add "clear selection" hint if something is selected
       updateForecastSelection();
     }
 
@@ -2441,23 +2458,32 @@
         return;
       }
 
-      // Match NWS periods to the selected date
-      // NWS period names: "Monday", "Monday Night", "This Afternoon", "Tonight", etc.
-      const date     = new Date(dateStr + "T12:00:00");
-      const fullDay  = date.toLocaleDateString("en-US", { weekday:"long" });  // "Monday"
-      const shortDay = date.toLocaleDateString("en-US", { weekday:"short" }); // "Mon"
+      // Match NWS periods to the selected date using start_time when available,
+      // falling back to weekday name matching for today only
       const isToday  = dateStr === new Date().toISOString().slice(0,10);
+      const fullDay  = new Date(dateStr + "T12:00:00").toLocaleDateString("en-US", { weekday:"long" });
 
       const matched = periods.filter(p => {
+        // Prefer exact date match from start_time field
+        if (p.start_time) {
+          const pDate = p.start_time.slice(0, 10);  // "2026-02-25"
+          return pDate === dateStr;
+        }
+        // Fallback: name matching (only reliable for today/tonight)
         const n = p.name || "";
         if (isToday && (n === "Today" || n === "Tonight" || n === "This Afternoon" || n === "This Morning")) return true;
-        return n.startsWith(fullDay) || n.startsWith(shortDay);
+        return n.startsWith(fullDay);
       });
 
-      const toRender = matched.length > 0 ? matched : periods;
+      const toRender = matched.length > 0 ? matched : null;
 
       if (list) {
         list.innerHTML = "";
+        if (!toRender) {
+          list.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.88rem;padding:12px 0;">
+            No NWS detail available for this date — NWS forecasts cover ~7 days.
+          </div>`;
+        } else {
         toRender.forEach(p => {
           const row  = document.createElement("div");
           row.style.cssText = "display:grid;grid-template-columns:130px 1fr;gap:0;border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 0;";
@@ -2478,11 +2504,12 @@
         // Remove last border
         const rows = list.querySelectorAll("div[style*='border-bottom']");
         if (rows.length) rows[rows.length-1].style.borderBottom = "none";
+        } // end else (toRender exists)
       }
 
       // Update NWS card title to show which day is filtered
       if (label) {
-        label.textContent = matched.length > 0 ? `— ${dayName}` : "";
+        label.textContent = `— ${dayName}`;
       }
       if (btn) btn.style.display = "none";  // hide expand btn when filtered
     }
@@ -3509,7 +3536,7 @@
         const nwsOfficeEl = document.getElementById('nwsOfficeLabel');
         if (nwsOfficeEl && data.sources && data.sources.nws_forecast) {
           nwsOfficeEl.textContent = data.sources.nws_forecast.office
-            ? '\u2014 ' + data.sources.nws_forecast.office + ' office' : '';
+            ? 'NWS Boston' : '';
         }
         renderNWSForecast(window._nwsPeriods);
 

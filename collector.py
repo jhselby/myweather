@@ -757,6 +757,7 @@ def fetch_nws_forecast():
             periods.append({
                 "name":           p.get("name", ""),
                 "is_daytime":     p.get("isDaytime", True),
+                "start_time":     p.get("startTime", ""),
                 "temperature":    p.get("temperature"),
                 "temp_unit":      p.get("temperatureUnit", "F"),
                 "wind_speed":     p.get("windSpeed", ""),
