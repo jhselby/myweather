@@ -137,11 +137,13 @@
       margin-top: 6px;
       display: flex;
       gap: 8px;
-      justify-content: center;
+      justify-content: flex-start;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scrollbar-width: none;
       padding-bottom: 2px;
+      padding-left: 2px;
+      padding-right: 2px;
     }
     .tabs::-webkit-scrollbar { display: none; }
 
@@ -559,7 +561,110 @@
       border-color: rgba(100,180,255,0.5) !important;
       color: rgba(140,210,255,0.95) !important;
     }
-    /* Override Leaflet defaults for dark theme */
+    /* =============================================
+       SETTINGS BUTTON
+       ============================================= */
+    .setting-btn {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.65);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .setting-btn:hover { background: rgba(255,255,255,0.12); }
+    .setting-btn.active {
+      background: rgba(100,180,255,0.2);
+      border-color: rgba(100,180,255,0.5);
+      color: rgba(160,210,255,0.95);
+    }
+
+    /* =============================================
+       LIGHT MODE
+       ============================================= */
+    body.theme-light {
+      --bg:     #f0f2f6;
+      --card:   #ffffff;
+      --border: rgba(0,0,0,0.10);
+      --text:   #0d1117;
+      --muted:  rgba(0,0,0,0.55);
+      --shadow: 0 2px 12px rgba(0,0,0,0.10);
+    }
+    body.theme-light header {
+      background: rgba(255,255,255,0.85);
+      border-color: rgba(0,0,0,0.10);
+    }
+    body.theme-light .card {
+      background: #ffffff;
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.theme-light .card-title {
+      color: rgba(0,0,0,0.85);
+      border-bottom-color: rgba(0,0,0,0.07);
+    }
+    body.theme-light .label {
+      color: rgba(0,0,0,0.55);
+    }
+    body.theme-light .value {
+      color: rgba(0,0,0,0.88);
+    }
+    body.theme-light .row {
+      border-bottom-color: rgba(0,0,0,0.06);
+    }
+    body.theme-light .small-note {
+      color: rgba(0,0,0,0.4);
+    }
+    body.theme-light .tab {
+      background: rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.14);
+      color: rgba(0,0,0,0.75);
+    }
+    body.theme-light .tab.active {
+      background: rgba(0,0,0,0.14);
+      border-color: rgba(0,0,0,0.25);
+      color: rgba(0,0,0,0.9);
+    }
+    body.theme-light .version-pill {
+      color: rgba(0,0,0,0.6);
+      border-color: rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.05);
+    }
+    body.theme-light .meta-label { color: rgba(0,0,0,0.45); }
+    body.theme-light .meta-value { color: rgba(0,0,0,0.85); }
+    body.theme-light .source-pill {
+      background: rgba(0,0,0,0.04);
+      border-color: rgba(0,0,0,0.12);
+      color: rgba(0,0,0,0.8);
+    }
+    body.theme-light #settingsBtn {
+      background: rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.14);
+      color: rgba(0,0,0,0.6);
+    }
+    body.theme-light #settingsPanel {
+      background: rgba(0,0,0,0.04);
+      border-color: rgba(0,0,0,0.10);
+    }
+    body.theme-light .setting-btn {
+      background: rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.14);
+      color: rgba(0,0,0,0.65);
+    }
+    body.theme-light .setting-btn.active {
+      background: rgba(30,120,255,0.12);
+      border-color: rgba(30,120,255,0.4);
+      color: rgba(20,90,200,0.95);
+    }
+    body.theme-light .leaflet-container { background: #e8edf5 !important; }
+    body.theme-light .leaflet-control-zoom a {
+      background: rgba(255,255,255,0.9) !important;
+      color: rgba(0,0,0,0.7) !important;
+      border-color: rgba(0,0,0,0.2) !important;
+    }
     .leaflet-container { background: #0b1220 !important; }
     .leaflet-control-attribution {
       background: rgba(0,0,0,0.6) !important;
@@ -580,8 +685,42 @@
     <header>
       <h1>
         ⚓ Wyman Cove Weather
-        <span class="version-pill" id="appVersion">v2.0</span>
+        <span style="display:flex;align-items:center;gap:8px;">
+          <span class="version-pill" id="appVersion">v2.0</span>
+          <button id="settingsBtn" onclick="toggleSettings()" aria-label="Settings"
+            style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.16);
+                   color:rgba(255,255,255,0.7);border-radius:999px;padding:6px 10px;
+                   font-size:0.92rem;cursor:pointer;line-height:1;transition:background 0.15s;
+                   -webkit-tap-highlight-color:transparent;">⚙️</button>
+        </span>
       </h1>
+
+      <!-- Settings panel -->
+      <div id="settingsPanel" style="display:none;background:rgba(255,255,255,0.05);
+           border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px 16px;
+           margin-top:4px;">
+        <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
+                    letter-spacing:0.8px;text-transform:uppercase;margin-bottom:12px;">Settings</div>
+
+        <!-- Theme -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:0.88rem;font-weight:800;color:rgba(255,255,255,0.8);">Theme</div>
+          <div style="display:flex;gap:6px;">
+            <button class="setting-btn" id="themeLight" onclick="setTheme('light')">☀️ Light</button>
+            <button class="setting-btn" id="themeDark"  onclick="setTheme('dark')">🌙 Dark</button>
+            <button class="setting-btn" id="themeSystem" onclick="setTheme('system')">Auto</button>
+          </div>
+        </div>
+
+        <!-- Pressure units -->
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="font-size:0.88rem;font-weight:800;color:rgba(255,255,255,0.8);">Pressure</div>
+          <div style="display:flex;gap:6px;">
+            <button class="setting-btn" id="pressHpa"  onclick="setPressureUnit('hpa')">hPa</button>
+            <button class="setting-btn" id="pressInhg" onclick="setPressureUnit('inhg')">inHg</button>
+          </div>
+        </div>
+      </div>
 
       <div class="meta-row">
         <div class="meta-item">
@@ -1199,6 +1338,100 @@
   </div>
 
   <script>
+    // ======================================================
+    // Settings — theme + pressure units
+    // ======================================================
+    let _pressureUnit = localStorage.getItem('pressureUnit') || 'hpa';
+
+    function toggleSettings() {
+      const panel = document.getElementById('settingsPanel');
+      panel.style.display = panel.style.display === 'none' ? '' : 'none';
+    }
+
+    function setTheme(mode) {
+      localStorage.setItem('theme', mode);
+      applyTheme(mode);
+      updateSettingBtns();
+    }
+
+    function applyTheme(mode) {
+      const body = document.body;
+      body.classList.remove('theme-light', 'theme-dark');
+      if (mode === 'light') {
+        body.classList.add('theme-light');
+      } else if (mode === 'dark') {
+        // dark is default — no class needed, CSS vars already set
+      } else {
+        // system
+        if (window.matchMedia('(prefers-color-scheme: light)').matches) {
+          body.classList.add('theme-light');
+        }
+      }
+    }
+
+    function setPressureUnit(unit) {
+      _pressureUnit = unit;
+      localStorage.setItem('pressureUnit', unit);
+      updateSettingBtns();
+      rerenderPressure();
+    }
+
+    function updateSettingBtns() {
+      const theme = localStorage.getItem('theme') || 'system';
+      ['themeLight','themeDark','themeSystem'].forEach(id => {
+        document.getElementById(id)?.classList.remove('active');
+      });
+      const map = { light:'themeLight', dark:'themeDark', system:'themeSystem' };
+      document.getElementById(map[theme])?.classList.add('active');
+
+      ['pressHpa','pressInhg'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+      document.getElementById(_pressureUnit === 'inhg' ? 'pressInhg' : 'pressHpa')?.classList.add('active');
+    }
+
+    function hpaToInhg(hpa) {
+      return (hpa * 0.02953).toFixed(2);
+    }
+
+    function fmtPressure(hpaVal) {
+      if (hpaVal == null || hpaVal === '--') return '--';
+      const n = parseFloat(hpaVal);
+      if (isNaN(n)) return hpaVal;
+      return _pressureUnit === 'inhg'
+        ? hpaToInhg(n) + ' inHg'
+        : n.toFixed(1) + ' hPa';
+    }
+
+    // Re-render all pressure fields using last fetched data
+    function rerenderPressure() {
+      const data = window.__lastWeatherData;
+      if (!data) return;
+      const h = data.hourly || {};
+      const cur = Array.isArray(h.time) ? 0 : null;
+
+      // Today's Summary
+      const pModel = h.surface_pressure?.[0];
+      const pEl = document.getElementById('pressureNow');
+      if (pEl && pModel != null) pEl.textContent = fmtPressure(pModel);
+
+      // Wind tab pressure now
+      const wpEl = document.getElementById('windNowPressure');
+      if (wpEl && pModel != null) wpEl.textContent = fmtPressure(pModel);
+
+      // Buoy pressure
+      const buoyP = window.__lastBuoyPressure;
+      const bpEl = document.getElementById('buoyPressure');
+      if (bpEl && buoyP != null) bpEl.textContent = fmtPressure(buoyP);
+    }
+
+    // Apply theme on load
+    (function() {
+      applyTheme(localStorage.getItem('theme') || 'system');
+      // Listen for system theme changes
+      window.matchMedia('(prefers-color-scheme: light)').addEventListener('change', () => {
+        if ((localStorage.getItem('theme') || 'system') === 'system') applyTheme('system');
+      });
+    })();
+
     // ======================================================
     // Tab behavior — Weather / Wind / Almanac
     // ======================================================
@@ -3308,7 +3541,7 @@
         // Model pressure
         const modelPressEl = document.getElementById("pressureModel");
         if (modelPressEl && cur.pressure != null) {
-          modelPressEl.textContent = cur.pressure.toFixed(1) + " hPa";
+          modelPressEl.textContent = fmtPressure(cur.pressure);
         }
 
         // KBOS observed pressure + tendency
@@ -3318,7 +3551,7 @@
             const kbDiff = cur.pressure != null
               ? ` (${(kbos.pressure_hpa - cur.pressure) >= 0 ? "+" : ""}${(kbos.pressure_hpa - cur.pressure).toFixed(1)})`
               : "";
-            kbosEl.textContent = kbos.pressure_hpa.toFixed(1) + " hPa" + kbDiff;
+            kbosEl.textContent = fmtPressure(kbos.pressure_hpa) + kbDiff;
             kbosEl.title = "Difference from model";
           } else {
             kbosEl.textContent = "--";
@@ -3528,7 +3761,7 @@
             ? `${Math.round(cur.wind_speed)} mph • ${toCompass(cur.wind_direction)}`
             : "--";
         if (windGustsEl)     windGustsEl.textContent     = cur.wind_gusts != null ? `${Math.round(cur.wind_gusts)} mph` : "--";
-        if (pressureNowEl)   pressureNowEl.textContent   = cur.pressure  != null ? `${cur.pressure.toFixed(1)} hPa` : "--";
+        if (pressureNowEl)   pressureNowEl.textContent   = cur.pressure  != null ? fmtPressure(cur.pressure) : "--";
         if (pressureTrendEl) pressureTrendEl.textContent = delta ? `${trend} (${delta})` : trend;
 
         // NWS Forecast
@@ -3568,7 +3801,8 @@
 
         setEl("buoyWaterTemp", buoy.water_temp_f != null ? buoy.water_temp_f.toFixed(1) + "°F" : "--");
         setEl("buoyAirTemp",   buoy.air_temp_f   != null ? buoy.air_temp_f.toFixed(1)   + "°F" : "--");
-        setEl("buoyPressure",  buoy.pressure_hpa != null ? buoy.pressure_hpa.toFixed(1) + " hPa" : "--");
+        setEl("buoyPressure",  buoy.pressure_hpa != null ? fmtPressure(buoy.pressure_hpa) : "--");
+        window.__lastBuoyPressure = buoy.pressure_hpa ?? null;
 
         const buoyWindEl = document.getElementById("buoyWind");
         if (buoyWindEl) {
@@ -3620,6 +3854,7 @@
 
         // Moon
         renderMoon();
+        updateSettingBtns();
       })
       .catch(err => {
         console.error(err);
