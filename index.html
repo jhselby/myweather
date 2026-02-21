@@ -1230,7 +1230,15 @@
     <section id="almanacView" style="display:none;">
       <div class="grid">
 
-        <!-- Tides full width -->
+        <!-- Today card -->
+        <div class="card col-12" data-collapse-key="today_almanac" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('today_almanac', this)">📅 Today <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
+            <div id="todayAlmanacContent"></div>
+          </div>
+        </div>
+
+
         <div class="card col-12" data-collapse-key="tides" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('tides', this)">&#127754; Tides &#8212; Salem Harbor <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
@@ -1929,6 +1937,129 @@
     // ======================================================
     // Rendering functions
     // ======================================================
+    function renderTodayAlmanac(daily) {
+      const el = document.getElementById("todayAlmanacContent");
+      if (!el) return;
+
+      const now    = new Date();
+      const light  = isLight();
+
+      // ── Date basics ──────────────────────────────────────────
+      const fullDate = now.toLocaleDateString("en-US", {
+        weekday:"long", year:"numeric", month:"long", day:"numeric"
+      });
+      const startOfYear = new Date(now.getFullYear(), 0, 0);
+      const dayOfYear   = Math.floor((now - startOfYear) / 86400000);
+      const isLeap      = (now.getFullYear() % 4 === 0 && now.getFullYear() % 100 !== 0) || now.getFullYear() % 400 === 0;
+      const daysInYear  = isLeap ? 366 : 365;
+      const weekNum     = Math.ceil(dayOfYear / 7);
+
+      // ── Season ────────────────────────────────────────────────
+      // Approximate solstice/equinox dates (good to ±1 day)
+      const yr = now.getFullYear();
+      const seasons = [
+        { name:"Winter",  start: new Date(yr-1, 11, 21), next: new Date(yr, 2, 20),  nextName:"Spring equinox" },
+        { name:"Spring",  start: new Date(yr, 2, 20),    next: new Date(yr, 5, 21),  nextName:"Summer solstice" },
+        { name:"Summer",  start: new Date(yr, 5, 21),    next: new Date(yr, 8, 22),  nextName:"Fall equinox"    },
+        { name:"Fall",    start: new Date(yr, 8, 22),    next: new Date(yr, 11, 21), nextName:"Winter solstice" },
+      ];
+      let season = seasons[0];
+      for (const s of seasons) {
+        if (now >= s.start) season = s;
+      }
+      const daysToNext  = Math.ceil((season.next - now) / 86400000);
+      const seasonEmoji = { Winter:"❄️", Spring:"🌱", Summer:"☀️", Fall:"🍂" }[season.name];
+
+      // ── Daylight ──────────────────────────────────────────────
+      let daylightStr = "--";
+      let daylightMins = null;
+      if (typeof SunCalc !== "undefined") {
+        const times0    = SunCalc.getTimes(now, HOME_LAT, HOME_LON);
+        const riseMs    = times0.sunrise?.getTime();
+        const setMs     = times0.sunset?.getTime();
+        if (riseMs && setMs) {
+          daylightMins = Math.round((setMs - riseMs) / 60000);
+          const h = Math.floor(daylightMins / 60);
+          const m = daylightMins % 60;
+          daylightStr = `${h}h ${m}m`;
+        }
+      }
+
+      // Daylight change vs yesterday
+      let changeStr = "";
+      if (typeof SunCalc !== "undefined" && daylightMins !== null) {
+        const yesterday = new Date(now.getTime() - 86400000);
+        const ty = SunCalc.getTimes(yesterday, HOME_LAT, HOME_LON);
+        if (ty.sunrise && ty.sunset) {
+          const yMins = Math.round((ty.sunset - ty.sunrise) / 60000);
+          const diff  = daylightMins - yMins;
+          const sign  = diff >= 0 ? "+" : "−";
+          const absDiff = Math.abs(diff);
+          const diffM = Math.floor(absDiff / 60);
+          const diffS = absDiff % 60;  // diff is in minutes — get seconds from fractional
+          // Actually SunCalc gives millisecond precision — redo in seconds
+          const tyMs   = ty.sunset.getTime() - ty.sunrise.getTime();
+          const t0Ms   = SunCalc.getTimes(now, HOME_LAT, HOME_LON);
+          const todayMs2 = t0Ms.sunset?.getTime() - t0Ms.sunrise?.getTime();
+          if (todayMs2 && tyMs) {
+            const diffSec = Math.round((todayMs2 - tyMs) / 1000);
+            const dSign   = diffSec >= 0 ? "+" : "−";
+            const dAbs    = Math.abs(diffSec);
+            const dM      = Math.floor(dAbs / 60);
+            const dS      = dAbs % 60;
+            const dColor  = diffSec >= 0
+              ? (light ? "rgba(20,140,60,0.9)" : "rgba(100,220,120,0.9)")
+              : (light ? "rgba(180,60,20,0.9)" : "rgba(220,100,80,0.9)");
+            changeStr = `<span style="color:${dColor};font-weight:800;">${dSign}${dM > 0 ? dM+"m " : ""}${dS}s vs yesterday</span>`;
+          }
+        }
+      }
+
+      // ── Sunrise / Sunset ──────────────────────────────────────
+      let riseStr = "--", setStr = "--";
+      if (typeof SunCalc !== "undefined") {
+        const t = SunCalc.getTimes(now, HOME_LAT, HOME_LON);
+        if (t.sunrise) riseStr = fmtTime(t.sunrise);
+        if (t.sunset)  setStr  = fmtTime(t.sunset);
+      }
+
+      // ── Moon ──────────────────────────────────────────────────
+      let moonPhase = "", moonIllum = "";
+      if (typeof SunCalc !== "undefined") {
+        const mi = SunCalc.getMoonIllumination(now);
+        const phases = [
+          [0.025, "🌑 New Moon"],      [0.25,  "🌒 Waxing Crescent"],
+          [0.275, "🌓 First Quarter"], [0.5,   "🌔 Waxing Gibbous"],
+          [0.525, "🌕 Full Moon"],     [0.75,  "🌖 Waning Gibbous"],
+          [0.775, "🌗 Last Quarter"],  [1.0,   "🌘 Waning Crescent"],
+        ];
+        moonPhase = phases.find(([t]) => mi.phase < t)?.[1] ?? "🌑 New Moon";
+        moonIllum = Math.round(mi.fraction * 100) + "% illuminated";
+      }
+
+      // ── Render ────────────────────────────────────────────────
+      const labelCol = light ? "rgba(0,0,0,0.50)" : "rgba(255,255,255,0.50)";
+      const valCol   = light ? "rgba(0,0,0,0.88)" : "rgba(255,255,255,0.88)";
+      const dimCol   = light ? "rgba(0,0,0,0.38)" : "rgba(255,255,255,0.38)";
+      const divCol   = light ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)";
+
+      const row = (label, value, sub = "") => `
+        <div class="row" style="border-bottom:1px solid ${divCol};">
+          <div class="label" style="color:${labelCol};">${label}</div>
+          <div class="value" style="color:${valCol};">${value}${sub ? `<div style="font-size:0.72rem;color:${dimCol};margin-top:1px;">${sub}</div>` : ""}</div>
+        </div>`;
+
+      el.innerHTML = `
+        <div style="font-size:1.05rem;font-weight:900;color:${valCol};margin-bottom:14px;">${fullDate}</div>
+        ${row("Day of year",    `${dayOfYear} of ${daysInYear}`, `Week ${weekNum}`)}
+        ${row("Season",         `${seasonEmoji} ${season.name}`, `${daysToNext} days until ${season.nextName}`)}
+        ${row("Sunrise",        riseStr)}
+        ${row("Sunset",         setStr)}
+        ${row("Daylight",       daylightStr, changeStr)}
+        ${row("Moon",           moonPhase, moonIllum)}
+      `;
+    }
+
     function renderFrostTracker(frost) {
       const el = document.getElementById("frostTracker");
       if (!el || !frost) return;
@@ -2225,40 +2356,47 @@
         return a.visible ? b.alt - a.alt : b.elong - a.elong;
       });
 
-      const visCount = results.filter(r => r.visible).length;
+      const aboveHorizon = results.filter(r => r.visible).length;
       const timeStr  = now.toLocaleTimeString("en-US", {hour:"numeric", minute:"2-digit"});
 
       const light = isLight();
-      const subTxt   = light ? "rgba(0,0,0,0.40)" : "rgba(255,255,255,0.4)";
-      const dimTxt   = light ? "rgba(0,0,0,0.28)" : "rgba(255,255,255,0.25)";
-      const faintTxt = light ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.3)";
-      const belowCol = light ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.3)";
-      const dirTxt   = light ? "rgba(0,0,0,0.50)" : "rgba(255,255,255,0.5)";
-      const tileBg   = light ? "rgba(0,0,0,0.02)" : "rgba(255,255,255,0.04)";
-      const dimBd    = light ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.08)";
-      const headerTxt= light ? "rgba(0,0,0,0.40)" : "rgba(255,255,255,0.4)";
+      const subTxt    = light ? "rgba(0,0,0,0.40)" : "rgba(255,255,255,0.4)";
+      const dimTxt    = light ? "rgba(0,0,0,0.28)" : "rgba(255,255,255,0.25)";
+      const faintTxt  = light ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.3)";
+      const belowCol  = light ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.3)";
+      const dirTxt    = light ? "rgba(0,0,0,0.50)" : "rgba(255,255,255,0.5)";
+      // Visible tile: elevated background + stronger border
+      const visBg     = light ? "rgba(255,255,255,1.0)" : "rgba(255,255,255,0.08)";
+      const visShadow = light ? "0 1px 6px rgba(0,0,0,0.10)" : "none";
+      // Not-visible tile: clearly secondary
+      const dimBg     = light ? "rgba(0,0,0,0.025)" : "rgba(255,255,255,0.02)";
+      const dimBd     = light ? "rgba(0,0,0,0.07)"  : "rgba(255,255,255,0.06)";
+      const headerTxt = light ? "rgba(0,0,0,0.45)"  : "rgba(255,255,255,0.4)";
 
       let html = `<div style="font-size:0.78rem;color:${headerTxt};margin-bottom:12px;">
-        ${visCount} planet${visCount!==1?"s":""} visible from Marblehead at ${timeStr}
+        ${aboveHorizon} planet${aboveHorizon!==1?"s":""} above horizon at ${timeStr} — geometric position, not naked-eye visibility
       </div>`;
 
       html += `<div class="solar-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">`;
       for (const p of results) {
-        // Instead of blanket opacity (invisible on light), use per-element muted colors
-        const nameColor    = p.visible ? p.color : (light ? "rgba(0,0,0,0.38)" : "rgba(180,180,180,0.45)");
-        const borderColor  = p.visible ? p.color.replace("0.9","0.4") : dimBd;
-        const emojiOpacity = p.visible ? "1" : (light ? "0.45" : "0.35");
-        const altLabel     = p.alt > 0
-          ? `<span style="color:rgba(100,200,100,0.9);">${p.alt}° alt</span>`
+        const nameColor   = p.visible ? p.color : (light ? "rgba(0,0,0,0.32)" : "rgba(160,160,160,0.4)");
+        const borderColor = p.visible ? p.color.replace("0.9","0.5") : dimBd;
+        const bg          = p.visible ? visBg : dimBg;
+        const shadow      = p.visible ? visShadow : "none";
+        const emojiOp     = p.visible ? "1" : (light ? "0.4" : "0.3");
+        const dataOp      = p.visible ? "1" : (light ? "0.55" : "0.5");
+        const altLabel    = p.alt > 0
+          ? `<span style="color:rgba(60,180,80,0.9);">${p.alt}° alt</span>`
           : `<span style="color:${belowCol};">below horizon</span>`;
         html += `
-          <div style="background:${tileBg};border:1px solid ${borderColor};border-radius:10px;padding:10px 8px;text-align:center;">
-            <div style="font-size:1.5rem;margin-bottom:4px;opacity:${emojiOpacity};">${p.emoji}</div>
+          <div style="background:${bg};border:1px solid ${borderColor};border-radius:10px;
+                      padding:10px 8px;text-align:center;box-shadow:${shadow};">
+            <div style="font-size:1.5rem;margin-bottom:4px;opacity:${emojiOp};">${p.emoji}</div>
             <div style="font-size:0.82rem;font-weight:900;color:${nameColor};margin-bottom:6px;">${p.name}</div>
-            <div style="font-size:0.75rem;margin-bottom:3px;">${altLabel}</div>
-            ${p.alt > 0 ? `<div style="font-size:0.72rem;color:${dirTxt};">${p.dir} ${p.az}°</div>` : ""}
-            <div style="font-size:0.7rem;color:${faintTxt};margin-top:4px;">${p.elong}° from Sun</div>
-            <div style="font-size:0.7rem;color:${dimTxt};">${p.dist} AU</div>
+            <div style="font-size:0.75rem;margin-bottom:3px;opacity:${dataOp};">${altLabel}</div>
+            ${p.alt > 0 ? `<div style="font-size:0.72rem;color:${dirTxt};opacity:${dataOp};">${p.dir} ${p.az}°</div>` : ""}
+            <div style="font-size:0.7rem;color:${faintTxt};margin-top:4px;opacity:${dataOp};">${p.elong}° from Sun</div>
+            <div style="font-size:0.7rem;color:${dimTxt};opacity:${dataOp};">${p.dist} AU</div>
           </div>`;
       }
       html += `</div>`;
@@ -4095,6 +4233,9 @@
 
         // Moon
         renderMoon();
+
+        // Today almanac card
+        renderTodayAlmanac(daily);
         updateSettingBtns();
       })
       .catch(err => {
