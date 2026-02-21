@@ -2516,22 +2516,24 @@
 
     async function fetchRainViewerFrames() {
       try {
+        console.log("RainViewer: fetching API...");
         const resp = await fetch("https://api.rainviewer.com/public/weather-maps.json");
         radarApiData = await resp.json();
+        console.log("RainViewer: API response", JSON.stringify(radarApiData).slice(0, 300));
 
         radarFrames = [];
 
         if (radarLayerType === "satellite") {
-          // Infrared satellite frames
           const sat = radarApiData.satellite?.infrared || [];
+          console.log("RainViewer: satellite frames", sat.length);
           sat.forEach(f => radarFrames.push({
             ts: new Date(f.time * 1000), path: f.path,
             host: radarApiData.host, kind: "satellite"
           }));
         } else {
-          // Radar: past frames + nowcast
           const past = radarApiData.radar?.past || [];
           const now  = radarApiData.radar?.nowcast || [];
+          console.log("RainViewer: past frames", past.length, "nowcast frames", now.length);
           past.forEach(f => radarFrames.push({
             ts: new Date(f.time * 1000), path: f.path,
             host: radarApiData.host, kind: "past"
@@ -2540,6 +2542,11 @@
             ts: new Date(f.time * 1000), path: f.path,
             host: radarApiData.host, kind: "nowcast"
           }));
+        }
+
+        console.log("RainViewer: total frames", radarFrames.length);
+        if (radarFrames.length > 0) {
+          console.log("RainViewer: sample tile URL", rvTileUrl(radarFrames[0].host, radarFrames[0].path, radarFrames[0].kind).replace("{z}/{x}/{y}", "7/38/46"));
         }
 
         // Update scrubber
@@ -2593,6 +2600,7 @@
 
       // Add new layer
       const url = rvTileUrl(frame.host, frame.path, frame.kind);
+      console.log("RainViewer: showFrame", idx, "url template:", url.replace("{z}/{x}/{y}", "7/38/46"));
       const layer = L.tileLayer(url, {
         opacity:    0.75,
         tileSize:   TILE_SIZE,
