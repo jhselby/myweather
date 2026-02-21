@@ -173,6 +173,7 @@
       padding: 14px 14px 12px;
       box-shadow: var(--shadow);
       backdrop-filter: blur(8px);
+      position: relative;
     }
 
     .card.col-12{ grid-column: span 12; }
@@ -282,8 +283,8 @@
       content: attr(data-tip);
       position: absolute;
       bottom: calc(100% + 6px);
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      transform: none;
       background: rgba(20,24,36,0.97);
       color: rgba(255,255,255,0.88);
       font-size: 0.72rem;
