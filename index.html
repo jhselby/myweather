@@ -749,21 +749,6 @@
           <canvas id="tideChart" style="margin-top:18px;max-height:200px;"></canvas>
         </div>
 
-        <!-- Frost / Freeze Tracker -->
-        <div class="card col-12">
-          <div class="card-title">🌡️ Frost &amp; Freeze Tracker</div>
-          <div id="frostTracker" style="margin-top:6px;"></div>
-        </div>
-
-        <!-- Solar System -->
-        <div class="card col-12" data-collapse-key="solar_system">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Tonight <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body">
-            <div id="solarSystemGrid"></div>
-            <div id="solarSystemNote" style="font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:12px;"></div>
-          </div>
-        </div>
-
         <!-- Buoy 44013 / Water Temp -->
         <div class="card col-12" data-collapse-key="buoy_44013" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('buoy_44013', this)">&#127754; Ocean Conditions &#8212; Buoy 44013 (16mi ENE) <span class="collapse-chevron">&#9660;</span></div>
@@ -924,7 +909,22 @@
         </div>
 
       </div>
-    </section>
+    </section        <!-- Solar System -->
+        <div class="card col-12" data-collapse-key="solar_system">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Tonight <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
+            <div id="solarSystemGrid"></div>
+            <div id="solarSystemNote" style="font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:12px;"></div>
+          </div>
+        </div>
+
+        <!-- Frost / Freeze Tracker -->
+        <div class="card col-12">
+          <div class="card-title">🌡️ Frost &amp; Freeze Tracker</div>
+          <div id="frostTracker" style="margin-top:6px;"></div>
+        </div>
+
+>
 
     <!-- SOURCES VIEW -->
     <section id="sourcesView" style="display:none;">
