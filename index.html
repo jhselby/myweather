@@ -136,9 +136,14 @@
     .tabs{
       margin-top: 6px;
       display: flex;
-      gap: 10px;
+      gap: 8px;
       justify-content: center;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
     }
+    .tabs::-webkit-scrollbar { display: none; }
 
     .tab{
       border: 1px solid rgba(255,255,255,0.16);
@@ -377,6 +382,85 @@
       .card{ grid-column: span 12; }
       canvas{ height: 240px !important; }
       header{ position: relative; top: 0; }
+
+      /* 3-column grids → single column */
+      .mobile-3col {
+        grid-template-columns: 1fr !important;
+      }
+      .mobile-3col > div {
+        padding: 0 0 10px 0 !important;
+        border-right: none !important;
+        border-left: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+        margin-bottom: 4px !important;
+      }
+      .mobile-3col > div:last-child {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+      }
+
+      /* Sources table — hide description column on narrow screens */
+      .sources-col-desc { display: none !important; }
+
+      /* Radar map — don't eat the whole screen */
+      #radarMap { height: 52vh !important; min-height: 260px; }
+
+      /* Tabs — slightly smaller so all 5 fit */
+      .tab { font-size: 0.75rem !important; padding: 8px 10px !important; }
+
+      /* Wind pills — allow wrap */
+      .wind-window-pills { flex-wrap: wrap; }
+    }
+
+    /* =============================================
+       MOBILE LAYOUT FIXES (max-width: 480px)
+       ============================================= */
+    @media (max-width: 480px) {
+
+      /* Tab bar — smaller padding so all 5 fit on one row */
+      .tab { padding: 8px 10px; font-size: 0.78rem; }
+
+      /* Header meta row — smaller text */
+      .meta-row { font-size: 0.78rem; gap: 6px 10px; }
+
+      /* Radar map — responsive height */
+      #radarMap { height: min(65vw, 380px) !important; }
+
+      /* 3-column grids collapse to 1 column stacked */
+      .mobile-3col { grid-template-columns: 1fr !important; }
+      .mobile-3col > div {
+        padding: 0 0 12px 0 !important;
+        border-right: none !important;
+        border-left: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+      }
+      .mobile-3col > div:last-child {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+      }
+
+      /* Dock day + sunset quality — horizontal scroll */
+      .dock-day-grid, .scroll-day-grid {
+        display: flex !important;
+        overflow-x: auto !important;
+        gap: 10px !important;
+        padding-bottom: 8px !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .dock-day-grid::-webkit-scrollbar,
+      .scroll-day-grid::-webkit-scrollbar { display: none; }
+      .dock-day-grid > div, .scroll-day-grid > div { min-width: 140px !important; flex-shrink: 0 !important; }
+
+      /* Solar system — 3 columns on mobile instead of 5 */
+      .solar-grid { grid-template-columns: repeat(3, 1fr) !important; }
+
+      /* Wind window pills — smaller */
+      .wpill { padding: 2px 8px; font-size: 0.7rem; }
+
+      /* NWS hourly grid — 2 per row on mobile */
+      .nws-hourly-row { grid-template-columns: repeat(2, 1fr) !important; }
     }
     /* --- iOS Chart Fix --- */
     canvas {
@@ -841,7 +925,7 @@
         <div class="card col-12" data-collapse-key="buoy_44013" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('buoy_44013', this)">&#127754; Ocean Conditions <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
 
             <!-- Water temps -->
             <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
@@ -892,7 +976,7 @@
         <div class="card col-12" data-collapse-key="sun" data-default-open="false">
           <div class="card-title card-title-collapsible" id="sunCardTitle" onclick="toggleCard('sun', this)">&#9728;&#65039; Sun <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
 
             <!-- Summary column -->
             <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
@@ -959,7 +1043,7 @@
         <div class="card col-12" data-collapse-key="moon" data-default-open="false">
           <div class="card-title card-title-collapsible" id="moonCardTitle" onclick="toggleCard('moon', this)">&#127769; Moon <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
 
             <!-- Phase column -->
             <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
@@ -1088,7 +1172,7 @@
           </div>
 
           <!-- Map -->
-          <div id="radarMap" style="height:520px;width:100%;background:#0b1220;"></div>
+          <div id="radarMap" style="height:clamp(320px, 55vh, 520px);width:100%;background:#0b1220;"></div>
 
           <!-- Frame scrubber -->
           <div style="padding:8px 16px 10px;background:rgba(255,255,255,0.03);
@@ -1435,7 +1519,7 @@
 
       el.innerHTML = `
         <div style="font-size:0.78rem;color:rgba(255,255,255,0.4);margin-bottom:10px;">Season from ${seasonStart}</div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px;" class="mobile-3col">
           <div style="background:rgba(100,180,255,0.08);border:1px solid rgba(100,180,255,0.18);border-radius:10px;padding:10px;text-align:center;">
             <div style="font-size:1.8rem;font-weight:900;color:rgba(180,220,255,0.9);">${frost.freeze_days ?? 0}</div>
             <div style="font-size:0.78rem;color:rgba(255,255,255,0.5);margin-top:2px;">Freeze days</div>
@@ -1558,7 +1642,7 @@
         return;
       }
 
-      let html = `<div style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:12px;">`;
+      let html = `<div class="scroll-day-grid" style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:12px;">`;
       for (const s of scores) {
         const barW = Math.round(s.score * 100);
         html += `
@@ -1692,7 +1776,7 @@
         ${visCount} planet${visCount!==1?"s":""} visible from Marblehead at ${timeStr}
       </div>`;
 
-      html += `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">`;
+      html += `<div class="solar-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">`;
       for (const p of results) {
         const dimStyle = p.visible ? "" : "opacity:0.35;";
         const borderColor = p.visible ? p.color.replace("0.9","0.4") : "rgba(255,255,255,0.08)";
@@ -1760,38 +1844,35 @@
       if (!table) return;
       const pwsName = pwsStale ? "PWS (cached)" : "PWS (live)";
 
-      table.innerHTML = `
-        <div style="font-weight:900;font-size:0.8rem;color:rgba(255,255,255,0.4);letter-spacing:0.5px;margin-bottom:6px;">LIVE DATA SOURCES</div>
-        <div style="display:grid;grid-template-columns:120px 60px 60px 1fr;gap:0;font-size:0.82rem;">
-          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 8px 6px 0;border-bottom:1px solid rgba(255,255,255,0.08);">Source</div>
-          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.08);">Status</div>
-          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.08);">Age</div>
-          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 0 6px 8px;border-bottom:1px solid rgba(255,255,255,0.08);">Description</div>
-          ${order.map(key => {
-            const s   = sources[key];
-            if (!s) return "";
-            const ok  = s.status === "ok";
-            const age = typeof s.age_minutes === "number" ? s.age_minutes.toFixed(1) + "m" : "--";
-            const meta = SOURCE_META[key];
-            const name = key === "pws" ? pwsName : meta.name;
-            return `
-              <div style="font-weight:800;color:rgba(255,255,255,0.85);padding:8px 8px 8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">${name}</div>
-              <div style="padding:8px;border-bottom:1px solid rgba(255,255,255,0.05);">${ok ? "✅" : "❌"}</div>
-              <div style="padding:8px;border-bottom:1px solid rgba(255,255,255,0.05);color:${ok ? "rgba(255,255,255,0.7)" : "rgba(255,120,120,0.9)"};">${age}</div>
-              <div style="padding:8px 0 8px 8px;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);">${meta.desc}${s.error ? `<span style="color:rgba(255,120,120,0.8);"> — ${s.error}</span>` : ""}</div>
-            `;
-          }).join("")}
-        </div>
+      // Sources rendered as flex rows — works on any screen width
+      const rowStyle = "display:flex;gap:8px;align-items:baseline;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);flex-wrap:wrap;";
+      const nameStyle = "font-weight:800;color:rgba(255,255,255,0.9);font-size:0.85rem;min-width:90px;flex-shrink:0;";
+      const descStyle = "color:rgba(255,255,255,0.5);font-size:0.8rem;flex:1;min-width:0;";
+      const badgeStyle = ok => `font-size:0.75rem;font-weight:800;white-space:nowrap;color:${ok ? "rgba(140,240,160,0.9)" : "rgba(255,120,120,0.9)"};`;
+      const ageStyle  = ok => `font-size:0.75rem;font-weight:700;color:${ok ? "rgba(255,255,255,0.4)" : "rgba(255,120,120,0.7)"};white-space:nowrap;`;
 
-        <div style="font-weight:900;font-size:0.8rem;color:rgba(255,255,255,0.4);letter-spacing:0.5px;margin:18px 0 6px;">CLIENT-SIDE &amp; STATIC SOURCES</div>
-        <div style="display:grid;grid-template-columns:120px 1fr;gap:0;font-size:0.82rem;">
-          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 8px 6px 0;border-bottom:1px solid rgba(255,255,255,0.08);">Source</div>
-          <div style="font-weight:900;color:rgba(255,255,255,0.45);padding:6px 0 6px 8px;border-bottom:1px solid rgba(255,255,255,0.08);">Description</div>
-          ${STATIC_SOURCES.map(s => `
-            <div style="font-weight:800;color:rgba(255,255,255,0.85);padding:8px 8px 8px 0;border-bottom:1px solid rgba(255,255,255,0.05);">${s.name}</div>
-            <div style="padding:8px 0 8px 8px;border-bottom:1px solid rgba(255,255,255,0.05);color:rgba(255,255,255,0.55);">${s.desc}</div>
-          `).join("")}
-        </div>
+      table.innerHTML = `
+        <div style="font-weight:900;font-size:0.75rem;color:rgba(255,255,255,0.35);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">Live Data Sources</div>
+        ${order.map(key => {
+          const s = sources[key];
+          if (!s) return "";
+          const ok   = s.status === "ok";
+          const age  = typeof s.age_minutes === "number" ? s.age_minutes.toFixed(1) + "m ago" : "--";
+          const meta = SOURCE_META[key];
+          const name = key === "pws" ? pwsName : meta.name;
+          return `<div style="${rowStyle}">
+            <span style="${nameStyle}">${ok ? "✅" : "❌"} ${name}</span>
+            <span style="${ageStyle(ok)}">${age}</span>
+            <span style="${descStyle}">${meta.desc}${s.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${s.error}</span>` : ""}</span>
+          </div>`;
+        }).join("")}
+
+        <div style="font-weight:900;font-size:0.75rem;color:rgba(255,255,255,0.35);letter-spacing:0.8px;text-transform:uppercase;margin:18px 0 8px;">Client-Side &amp; Static</div>
+        ${STATIC_SOURCES.map(s => `
+          <div style="${rowStyle}">
+            <span style="${nameStyle}">📦 ${s.name}</span>
+            <span style="${descStyle}">${s.desc}</span>
+          </div>`).join("")}
       `;
     }
 
@@ -2009,7 +2090,7 @@
         return d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
       }
 
-      let html = `<div style="display:grid;grid-template-columns:repeat(${dayCards.length},1fr);gap:12px;">`;
+      let html = `<div class="dock-day-grid" style="display:grid;grid-template-columns:repeat(${dayCards.length},minmax(130px,1fr));gap:12px;">`;
 
       for (const day of dayCards) {
         const sl = scoreLabel(day.bestScore);
@@ -2127,7 +2208,7 @@
         grid.appendChild(hdr);
 
         const row = document.createElement("div");
-        row.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px;";
+        row.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px;"; row.className = "nws-hourly-row";
 
         const dayTiles = byDate[dateKey];
         dayTiles.forEach(t => {
