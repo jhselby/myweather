@@ -713,6 +713,9 @@
       border-color: rgba(0,0,0,0.10);
     }
     body.theme-light #settingsPanel div { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #changelogToggle   { color: rgba(0,0,0,0.55) !important; }
+    body.theme-light #changelogBody     { color: rgba(0,0,0,0.55) !important; }
+    body.theme-light #changelogBody li  { color: rgba(0,0,0,0.60) !important; }
     body.theme-light .setting-btn {
       background: rgba(0,0,0,0.06);
       border-color: rgba(0,0,0,0.14);
@@ -870,7 +873,6 @@
       <h1>
         ⚓ Wyman Cove Weather
         <span style="display:flex;align-items:center;gap:8px;">
-          <span class="version-pill" id="appVersion">v2.0</span>
           <button id="settingsBtn" onclick="toggleSettings()" aria-label="Settings"
             style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.16);
                    color:rgba(255,255,255,0.7);border-radius:999px;padding:6px 10px;
@@ -904,7 +906,62 @@
             <button class="setting-btn" id="pressInhg" onclick="setPressureUnit('inhg')">inHg</button>
           </div>
         </div>
-      </div>
+
+        <!-- Version + Changelog -->
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.09);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
+                        letter-spacing:0.8px;text-transform:uppercase;">Version</div>
+            <span class="version-pill" id="appVersion">v2.1</span>
+          </div>
+          <!-- Changelog -->
+          <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
+               style="font-size:0.78rem;font-weight:800;color:rgba(255,255,255,0.45);cursor:pointer;
+                      user-select:none;margin-bottom:6px;">
+            📋 Changelog ▾
+          </div>
+          <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
+               color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.1</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 21, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Light / dark / system theme toggle</li>
+                <li>Pressure unit switching (hPa / inHg)</li>
+                <li>Today almanac card (day of year, season countdown, daylight change)</li>
+                <li>Solar System Now — honest "above horizon" wording, clearer tile contrast</li>
+                <li>Wind impact pill wrapping fix on mobile</li>
+                <li>Light mode: comprehensive inline color overrides throughout</li>
+                <li>Version + changelog moved to settings</li>
+              </ul>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.0</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>10-day forecast with NWS integration and day selection</li>
+                <li>Mobile responsive layout (1-column stacking, horizontal scroll)</li>
+                <li>Gust &amp; sustained wind impact cards with time windows</li>
+                <li>Frost &amp; freeze tracker with season stats</li>
+                <li>Dock Day Score with tide-window scoring</li>
+                <li>Sunset Quality forecast card</li>
+                <li>RainViewer radar with nowcast frames</li>
+                <li>Settings panel (gear icon)</li>
+              </ul>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v1.0</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Late 2025</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Initial build: multi-model weather, tides, buoy, NWS alerts</li>
+                <li>Multi-tab layout (Weather / Wind / Almanac / Radar / Sources)</li>
+                <li>KBOS / KBVY / PWS observed conditions</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /settingsPanel -->
 
       <div class="meta-row">
         <div class="meta-item">
