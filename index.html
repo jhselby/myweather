@@ -676,66 +676,6 @@
           <span style="color:rgba(255,255,255,0.38);font-size:0.82rem;margin-left:4px;">applies to both panels</span>
         </div>
 
-        <!-- Gust Worry -->
-        <div class="card col-6">
-          <div class="card-title">&#127788; Gust Worry</div>
-          <div class="row">
-            <div class="label">Level</div>
-            <div class="value" id="gustLevel">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="0–10 scale combining wind speed, gust factor, and your home's directional exposure. Accounts for terrain sheltering and open water fetch.">Worry Score</div>
-            <div class="value" id="gustScore">--</div>
-          </div>
-          <div class="row">
-            <div class="label">Peak Gust</div>
-            <div class="value" id="gustPeak">-- mph</div>
-          </div>
-          <div class="row">
-            <div class="label">Direction</div>
-            <div class="value" id="gustDir">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="How exposed your home is to wind from this direction (0–1). 1.0 = full open water fetch (N/NW). Lower values reflect terrain sheltering.">Exposure Factor</div>
-            <div class="value" id="gustExposure">--</div>
-          </div>
-          <div class="row">
-            <div class="label">Peak Time</div>
-            <div class="value" id="gustTime">--</div>
-          </div>
-          <div class="small-note" id="gustNote"></div>
-        </div>
-
-        <!-- Sustained Worry -->
-        <div class="card col-6">
-          <div class="card-title">&#127787; Sustained Worry</div>
-          <div class="row">
-            <div class="label">Level</div>
-            <div class="value" id="susLevel">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="0–10 scale combining wind speed, gust factor, and your home's directional exposure. Accounts for terrain sheltering and open water fetch.">Worry Score</div>
-            <div class="value" id="susScore">--</div>
-          </div>
-          <div class="row">
-            <div class="label">Peak Speed</div>
-            <div class="value" id="susPeak">-- mph</div>
-          </div>
-          <div class="row">
-            <div class="label">Direction</div>
-            <div class="value" id="susDir">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="How exposed your home is to wind from this direction (0–1). 1.0 = full open water fetch (N/NW). Lower values reflect terrain sheltering.">Exposure Factor</div>
-            <div class="value" id="susExposure">--</div>
-          </div>
-          <div class="row">
-            <div class="label">Peak Time</div>
-            <div class="value" id="susTime">--</div>
-          </div>
-          <div class="small-note" id="susNote">Sustained = dock lines, outdoor use. Gust = structural stress.</div>
-        </div>
-
         <!-- Wind & Pressure (now) -->
         <div class="card col-12">
           <div class="card-title">Wind &amp; Pressure (now)</div>
@@ -758,6 +698,66 @@
           <div class="small-note" id="windPressureNote"></div>
         </div>
 
+        <!-- Gust Wind Impact -->
+        <div class="card col-12">
+          <div class="card-title">&#127788; Gust Wind Impact</div>
+          <div class="row">
+            <div class="label">Level</div>
+            <div class="value" id="gustLevel">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="0–10 scale combining wind speed, gust factor, and your home's directional exposure. Accounts for terrain sheltering and open water fetch.">Impact Score</div>
+            <div class="value" id="gustScore">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Gust</div>
+            <div class="value" id="gustPeak">-- mph</div>
+          </div>
+          <div class="row">
+            <div class="label">Direction</div>
+            <div class="value" id="gustDir">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="How exposed your home is to wind from this direction (0–1). 1.0 = full open water fetch (N/NW). Lower values reflect terrain sheltering.">Exposure Factor</div>
+            <div class="value" id="gustExposure">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Time</div>
+            <div class="value" id="gustTime">--</div>
+          </div>
+          <div class="small-note" id="gustNote"></div>
+        </div>
+
+        <!-- Sustained Wind Impact -->
+        <div class="card col-12">
+          <div class="card-title">&#127787; Sustained Wind Impact</div>
+          <div class="row">
+            <div class="label">Level</div>
+            <div class="value" id="susLevel">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="0–10 scale combining wind speed, gust factor, and your home's directional exposure. Accounts for terrain sheltering and open water fetch.">Impact Score</div>
+            <div class="value" id="susScore">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Speed</div>
+            <div class="value" id="susPeak">-- mph</div>
+          </div>
+          <div class="row">
+            <div class="label">Direction</div>
+            <div class="value" id="susDir">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="How exposed your home is to wind from this direction (0–1). 1.0 = full open water fetch (N/NW). Lower values reflect terrain sheltering.">Exposure Factor</div>
+            <div class="value" id="susExposure">--</div>
+          </div>
+          <div class="row">
+            <div class="label">Peak Time</div>
+            <div class="value" id="susTime">--</div>
+          </div>
+          <div class="small-note" id="susNote">Sustained = dock lines, outdoor use. Gust = structural stress.</div>
+        </div>
+
         <!-- 48-Hour Wind Forecast -->
         <div class="card col-12" data-collapse-key="48h_wind">
           <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron">&#9660;</span></div>
@@ -773,7 +773,7 @@
       <div class="grid">
 
         <!-- Tides full width -->
-        <div class="card col-12" data-collapse-key="tides">
+        <div class="card col-12" data-collapse-key="tides" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('tides', this)">&#127754; Tides &#8212; Salem Harbor <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
           <div id="tideGrid"></div>
@@ -783,7 +783,7 @@
         </div>
 
         <!-- Dock Day Score -->
-        <div class="card col-12" data-collapse-key="dock_day">
+        <div class="card col-12" data-collapse-key="dock_day" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('dock_day', this)">⚓ Dock Day Score <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
             <div id="dockDayContent"></div>
@@ -901,7 +901,7 @@
         </div><!-- /card sun -->
 
         <!-- Sunset Quality -->
-        <div class="card col-12" data-collapse-key="sunset_quality">
+        <div class="card col-12" data-collapse-key="sunset_quality" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('sunset_quality', this)">🌅 Sunset Quality Forecast <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
             <div id="sunsetQualityContent"></div>
@@ -959,7 +959,7 @@
         </div><!-- /card moon -->
 
         <!-- Solar System -->
-        <div class="card col-12" data-collapse-key="solar_system">
+        <div class="card col-12" data-collapse-key="solar_system" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Tonight <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
             <div id="solarSystemGrid"></div>
@@ -968,7 +968,7 @@
         </div>
 
         <!-- Frost / Freeze Tracker -->
-        <div class="card col-12" data-collapse-key="frost_freeze">
+        <div class="card col-12" data-collapse-key="frost_freeze" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('frost_freeze', this)">🌡️ Frost &amp; Freeze Tracker <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
           <div id="frostTracker" style="margin-top:6px;"></div>
@@ -1734,20 +1734,22 @@
     const DOCK_USABLE_HOUR_END    = 20;    // after this hour = not usable
 
     function dockWindScore(windDirDeg, windSpeedKt) {
-      // Returns 0 (bad) to 1 (good) based on wind angle relative to dock face
-      // Wind FROM dock face direction (315°) = directly onshore = worst
-      // Wind FROM opposite (135°) = offshore = best
+      // Returns 0 (bad) to 1 (good) based on wind angle AND speed
       if (windDirDeg == null || windSpeedKt == null) return 0.7;
-      if (windSpeedKt < 5) return 1.0;   // calm = always fine
+      // Hard cap — above 20 kt is unpleasant regardless of direction
+      if (windSpeedKt > 20) return 0.0;
+      if (windSpeedKt < 5)  return 1.0;   // calm = always fine
       // Angle between wind direction and dock face
       let diff = Math.abs(windDirDeg - DOCK_FACE_DEG);
       if (diff > 180) diff = 360 - diff;
       // 0° = wind from exactly dock direction (onshore) = score 0
       // 180° = wind from behind dock (offshore) = score 1
-      const rawScore = diff / 180;
-      // Penalty scales with speed — light winds matter less
-      const speedFactor = Math.min(windSpeedKt / 20, 1.0);
-      return rawScore * speedFactor + (1 - speedFactor);
+      const dirScore  = diff / 180;
+      // Speed penalty: 5kt=mild, 15kt=significant, 20kt=hard cap above
+      const speedPenalty = Math.min((windSpeedKt - 5) / 15, 1.0);
+      // Onshore winds penalized harder at speed
+      const onshoreBoost = dirScore < 0.33 ? 1.5 : 1.0;
+      return Math.max(0, dirScore - speedPenalty * 0.5 * onshoreBoost);
     }
 
     function renderDockDay(data) {
@@ -1849,19 +1851,32 @@
           // Wind score for dock
           const windSc = dockWindScore(wdir, wspd);
 
-          // Temp score: 75°F=1.0, 55°F=0.3, 45°F=0
+          // Temp score: 75°F=1.0, 60°F=0.5, 50°F=0.1, below 45°F=0
+          // Hard reality: below 50°F is not a dock day regardless of other factors
           const tempSc = temp == null ? 0.5 :
-            Math.max(0, Math.min(1, (temp - 45) / 30));
+            temp < 45 ? 0.0 :
+            temp < 55 ? Math.max(0, (temp - 45) / 20) :
+            Math.min(1, (temp - 55) / 25 + 0.5);
 
           // Precip score
           const precipSc = precip == null ? 0.5 :
-            Math.max(0, 1 - precip / 80);
+            Math.max(0, 1 - precip / 60);
 
           // Duration score: 3h+ = 1.0, 1h = 0.33
           const durSc = Math.min(1, durMin / 180);
 
-          // Overall score
-          const score = windSc * 0.35 + tempSc * 0.30 + precipSc * 0.20 + durSc * 0.15;
+          // Water temp score (from buoy) — bonus factor
+          const wtSc = waterTempRaw == null ? 0.5 :
+            waterTempRaw < 50 ? 0.2 :
+            waterTempRaw < 65 ? (waterTempRaw - 50) / 25 + 0.2 :
+            1.0;
+
+          // Overall score — temp and wind are gatekeepers
+          // If temp < 45 or wind > 20kt, score can't exceed 0.3
+          const rawScore = windSc * 0.35 + tempSc * 0.35 + precipSc * 0.15 + durSc * 0.10 + wtSc * 0.05;
+          const score = (temp != null && temp < 45) || (wspd != null && wspd > 20)
+            ? Math.min(rawScore, 0.3)
+            : rawScore;
 
           // Wind direction label relative to dock
           let windRelLabel = "";
@@ -1905,9 +1920,10 @@
       // Render
       function scoreLabel(s) {
         if (s >= 0.75) return { label:"Great day",  color:"rgba(80,220,120,0.95)",  emoji:"🟢" };
-        if (s >= 0.55) return { label:"Good day",   color:"rgba(160,220,80,0.9)",   emoji:"🟡" };
-        if (s >= 0.35) return { label:"Fair",        color:"rgba(255,190,50,0.85)",  emoji:"🟠" };
-        return            { label:"Poor",        color:"rgba(180,80,80,0.8)",    emoji:"🔴" };
+        if (s >= 0.58) return { label:"Good day",   color:"rgba(160,220,80,0.9)",   emoji:"🟡" };
+        if (s >= 0.38) return { label:"Marginal",   color:"rgba(255,190,50,0.85)",  emoji:"🟠" };
+        if (s >= 0.20) return { label:"Poor",       color:"rgba(200,100,60,0.85)",  emoji:"🔴" };
+        return            { label:"Stay inside", color:"rgba(150,50,50,0.9)",    emoji:"❌" };
       }
 
       function fmtTime(d) {
@@ -2219,7 +2235,7 @@
       );
 
       const noteEl = document.getElementById("gustNote");
-      if (noteEl) noteEl.textContent = `Peak gust worry over next ${hours}h. Score = gust × exposure¹·5.`;
+      if (noteEl) noteEl.textContent = `Peak gust wind impact over next ${hours}h. Score = gust × exposure¹·5.`;
     }
 
     // ======================================================
@@ -2857,7 +2873,7 @@
         if (der.pressure_alarm === "falling") stormFlags.push("⬇️ Pressure falling fast");
         if (der.trough_signal === "Approaching") stormFlags.push("🌀 850mb trough approaching");
         const gustWorry = (data.wind_risk?.gust?.level ?? "");
-        if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`💨 Gust worry: ${gustWorry}`);
+        if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`💨 Gust wind impact: ${gustWorry}`);
         const pop0 = (data.daily?.precipitation_probability_max?.[0] ?? 0);
         if (pop0 >= 60 && der.col_precip_type && der.col_precip_type !== "Rain")
           stormFlags.push(`❄️ Precip likely — column type: ${der.col_precip_type}`);
