@@ -2095,15 +2095,22 @@
       }
 
       // ── Render ────────────────────────────────────────────────
-      const labelCol = light ? "rgba(0,0,0,0.50)" : "rgba(255,255,255,0.50)";
-      const valCol   = light ? "rgba(0,0,0,0.88)" : "rgba(255,255,255,0.88)";
-      const dimCol   = light ? "rgba(0,0,0,0.38)" : "rgba(255,255,255,0.38)";
-      const divCol   = light ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.06)";
+      const labelCol = light ? "rgba(0,0,0,0.50)"  : "rgba(255,255,255,0.65)";
+      const valCol   = light ? "rgba(0,0,0,0.88)"  : "rgba(255,255,255,0.92)";
+      const dimCol   = light ? "rgba(0,0,0,0.38)"  : "rgba(255,255,255,0.50)";
+      const divCol   = light ? "rgba(0,0,0,0.06)"  : "rgba(255,255,255,0.08)";
+
+      // Use pure inline styles — no .label/.value classes to avoid !important conflicts
+      const rowStyle  = `display:flex;justify-content:space-between;align-items:baseline;` +
+                        `padding:9px 0;border-bottom:1px solid ${divCol};gap:12px;`;
+      const lblStyle  = `font-size:0.82rem;color:${labelCol};flex-shrink:0;`;
+      const valStyle  = `font-size:0.88rem;font-weight:700;color:${valCol};text-align:right;`;
+      const subStyle  = `font-size:0.72rem;color:${dimCol};margin-top:1px;font-weight:400;`;
 
       const row = (label, value, sub = "") => `
-        <div class="row" style="border-bottom:1px solid ${divCol};">
-          <div class="label" style="color:${labelCol};">${label}</div>
-          <div class="value" style="color:${valCol};">${value}${sub ? `<div style="font-size:0.72rem;color:${dimCol};margin-top:1px;">${sub}</div>` : ""}</div>
+        <div style="${rowStyle}">
+          <div style="${lblStyle}">${label}</div>
+          <div style="${valStyle}">${value}${sub ? `<div style="${subStyle}">${sub}</div>` : ""}</div>
         </div>`;
 
       el.innerHTML = `
