@@ -555,9 +555,9 @@
         <div class="card col-12" data-collapse-key="current_conditions">
           <div class="card-title card-title-collapsible" onclick="toggleCard('current_conditions', this)">Current Conditions <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
-          <div id="currentTemp" class="current-temp">--<span class="temp-unit">&deg;F</span></div>
-          <div id="feelsLike" class="feels-like">Feels like --&deg;F</div>
-          <div id="condition" class="condition">Loading&hellip;</div>
+          <div id="currentTemp" class="current-temp" data-tip="PWS-corrected temperature: raw model temp adjusted by your local weather station bias.">--<span class="temp-unit">&deg;F</span></div>
+          <div id="feelsLike" class="feels-like" data-tip="Apparent temperature from GFS model, accounting for wind chill or heat index.">Feels like --&deg;F</div>
+          <div id="condition" class="condition" data-tip="Sky/weather condition from GFS model weather code.">Loading&hellip;</div>
           </div>
         </div>
 
@@ -566,23 +566,23 @@
           <div class="card-title card-title-collapsible" onclick="toggleCard('todays_summary', this)">Today&#39;s Summary <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
           <div class="row">
-            <div class="label">High / Low</div>
+            <div class="label" data-tip="Forecast high and low temperatures for today from the ECMWF daily model.">High / Low</div>
             <div class="value" id="hiLo">-- / --</div>
           </div>
           <div class="row">
-            <div class="label">Precip Chance</div>
+            <div class="label" data-tip="Maximum precipitation probability for today from the ECMWF daily model.">Precip Chance</div>
             <div class="value" id="precipChance">--%</div>
           </div>
           <div class="row">
-            <div class="label">Wind (now)</div>
+            <div class="label" data-tip="Current wind speed and direction from the GFS model current conditions snapshot.">Wind (now)</div>
             <div class="value" id="windNowHome">--</div>
           </div>
           <div class="row">
-            <div class="label">Pressure (model)</div>
+            <div class="label" data-tip="Mean sea level pressure from the GFS model. Useful for trend comparison with observed.">Pressure (model)</div>
             <div class="value" id="pressureModel">--</div>
           </div>
           <div class="row">
-            <div class="label">Pressure (KBOS obs)</div>
+            <div class="label" data-tip="Observed mean sea level pressure from KBOS (Boston Logan). More accurate than model — use this for storm tracking.">Pressure (KBOS obs)</div>
             <div class="value" id="pressureKBOS">--</div>
           </div>
           <div class="row">
@@ -598,11 +598,11 @@
           <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">&#127968; Hyperlocal Comparison <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <div class="row">
-            <div class="label">Model Temp</div>
+            <div class="label" data-tip="Raw GFS model temperature at your location before any local correction.">Model Temp</div>
             <div class="value" id="modelTemp">--&deg;F</div>
           </div>
           <div class="row">
-            <div class="label">PWS Temp</div>
+            <div class="label" data-tip="Current temperature from your personal weather station — your most accurate local reading.">PWS Temp</div>
             <div class="value" id="pwsTemp">--&deg;F</div>
           </div>
           <div class="row">
@@ -622,7 +622,7 @@
           <div class="card-title card-title-collapsible" onclick="toggleCard('pressure_diag', this)">Conditions &amp; Diagnostics <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <div class="row">
-            <div class="label">Temp: KBOS / KBVY</div>
+            <div class="label" data-tip="Observed temperatures at Boston Logan (KBOS, 15mi SW) and Beverly Airport (KBVY, 7mi NW). Useful reference points for regional gradient.">Temp: KBOS / KBVY</div>
             <div class="value" id="tempObsStations">-- / --</div>
           </div>
           <div class="row">
@@ -700,19 +700,19 @@
           <div class="card-title card-title-collapsible" onclick="toggleCard('wind_now', this)">Wind &amp; Pressure (now) <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
           <div class="row">
-            <div class="label">Wind</div>
+            <div class="label" data-tip="Current wind speed and direction from the GFS model snapshot.">Wind</div>
             <div class="value" id="windNowWind">--</div>
           </div>
           <div class="row">
-            <div class="label">Gusts</div>
+            <div class="label" data-tip="Current gust speed from the GFS model snapshot.">Gusts</div>
             <div class="value" id="windGustsWind">--</div>
           </div>
           <div class="row">
-            <div class="label">Pressure</div>
+            <div class="label" data-tip="Current mean sea level pressure from the GFS model.">Pressure</div>
             <div class="value" id="pressureNowWind">--</div>
           </div>
           <div class="row">
-            <div class="label">Trend (2h)</div>
+            <div class="label" data-tip="Change in pressure over the last 2 hours. Prefers KBOS observed tendency when available (shown as [obs]), falls back to GFS model ([model]).">Trend (2h)</div>
             <div class="value" id="pressureTrendWind">--</div>
           </div>
           <div class="small-note" id="windPressureNote"></div>
@@ -733,27 +733,27 @@
           </div>
           <div class="card-body" style="display:none;">
           <div class="row">
-            <div class="label">Level</div>
+            <div class="label" data-tip="Plain-language severity: Calm / Breezy / Notable / Significant / Severe.">Level</div>
             <div class="value" id="gustLevel">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="0–10 scale combining wind speed, gust factor, and your home's directional exposure. Accounts for terrain sheltering and open water fetch.">Impact Score</div>
+            <div class="label" data-tip="Exposure-weighted wind speed: raw mph × exposure factor^1.5. A 40 mph NW gust (full exposure) scores 40. Thresholds: Breezy ≥5, Notable ≥12, Significant ≥20, Severe ≥30.">Impact Score</div>
             <div class="value" id="gustScore">--</div>
           </div>
           <div class="row">
-            <div class="label">Peak Gust</div>
+            <div class="label" data-tip="Highest forecast gust speed within the selected time window.">Peak Gust</div>
             <div class="value" id="gustPeak">-- mph</div>
           </div>
           <div class="row">
-            <div class="label">Direction</div>
+            <div class="label" data-tip="Wind direction at the time of peak gust.">Direction</div>
             <div class="value" id="gustDir">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="How exposed your home is to wind from this direction (0–1). 1.0 = full open water fetch (N/NW). Lower values reflect terrain sheltering.">Exposure Factor</div>
+            <div class="label" data-tip="0–1 multiplier for your property's directional exposure. N/NW = 1.0 (full open water fetch from ocean). S/SE ≈ 0.1 (sheltered by shoreline and property). Applied as exposure^1.5 so high-exposure directions are disproportionately penalized.">Exposure Factor</div>
             <div class="value" id="gustExposure">--</div>
           </div>
           <div class="row">
-            <div class="label">Peak Time</div>
+            <div class="label" data-tip="Forecast time when peak gust is expected.">Peak Time</div>
             <div class="value" id="gustTime">--</div>
           </div>
           <div class="small-note" id="gustNote"></div>
@@ -774,27 +774,27 @@
           </div>
           <div class="card-body" style="display:none;">
           <div class="row">
-            <div class="label">Level</div>
+            <div class="label" data-tip="Plain-language severity: Calm / Breezy / Notable / Significant / Severe.">Level</div>
             <div class="value" id="susLevel">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="0–10 scale combining wind speed, gust factor, and your home's directional exposure. Accounts for terrain sheltering and open water fetch.">Impact Score</div>
+            <div class="label" data-tip="Exposure-weighted wind speed: raw mph × exposure factor^1.5. A 40 mph NW gust (full exposure) scores 40. Thresholds: Breezy ≥5, Notable ≥12, Significant ≥20, Severe ≥30.">Impact Score</div>
             <div class="value" id="susScore">--</div>
           </div>
           <div class="row">
-            <div class="label">Peak Speed</div>
+            <div class="label" data-tip="Highest forecast sustained wind speed within the selected time window.">Peak Speed</div>
             <div class="value" id="susPeak">-- mph</div>
           </div>
           <div class="row">
-            <div class="label">Direction</div>
+            <div class="label" data-tip="Wind direction at the time of peak sustained speed.">Direction</div>
             <div class="value" id="susDir">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="How exposed your home is to wind from this direction (0–1). 1.0 = full open water fetch (N/NW). Lower values reflect terrain sheltering.">Exposure Factor</div>
+            <div class="label" data-tip="0–1 multiplier for your property's directional exposure. N/NW = 1.0 (full open water fetch from ocean). S/SE ≈ 0.1 (sheltered by shoreline and property). Applied as exposure^1.5 so high-exposure directions are disproportionately penalized.">Exposure Factor</div>
             <div class="value" id="susExposure">--</div>
           </div>
           <div class="row">
-            <div class="label">Peak Time</div>
+            <div class="label" data-tip="Forecast time when peak sustained wind is expected.">Peak Time</div>
             <div class="value" id="susTime">--</div>
           </div>
           <div class="small-note" id="susNote">Sustained = dock lines, outdoor use. Gust = structural stress.</div>
@@ -842,11 +842,11 @@
             <!-- Water temps -->
             <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div class="row">
-                <div class="label">Water Temp</div>
+                <div class="label" data-tip="Sea surface temperature from buoy 44013, 16mi ENE in open ocean. Typically 3–5°F colder than Salem Harbor in summer — buoy sits in deep open water while your harbor is shallow and enclosed, warming faster.">Water Temp</div>
                 <div class="value" id="buoyWaterTemp">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label">Air Temp</div>
+                <div class="label" data-tip="Air temperature measured at buoy 44013, 16mi ENE offshore.">Air Temp</div>
                 <div class="value" id="buoyAirTemp">--</div>
               </div>
             </div>
@@ -854,11 +854,11 @@
             <!-- Wind & pressure -->
             <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div class="row">
-                <div class="label">Wind</div>
+                <div class="label" data-tip="Wind speed and direction measured at buoy 44013. Open ocean reading — may differ from shore conditions.">Wind</div>
                 <div class="value" id="buoyWind">--</div>
               </div>
               <div class="row">
-                <div class="label">Pressure</div>
+                <div class="label" data-tip="Barometric pressure measured at buoy 44013. Useful cross-check against KBOS observed pressure.">Pressure</div>
                 <div class="value" id="buoyPressure">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
@@ -870,7 +870,7 @@
             <!-- Waves -->
             <div style="padding-left:16px;">
               <div class="row">
-                <div class="label">Wave Height</div>
+                <div class="label" data-tip="Significant wave height — the average of the highest one-third of waves. Actual max waves may be 1.5–2× this value.">Wave Height</div>
                 <div class="value" id="buoyWaveHt">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
@@ -901,11 +901,11 @@
             <!-- Times column -->
             <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div class="row">
-                <div class="label">Sunrise</div>
+                <div class="label" data-tip="Time of sunrise at your location, calculated from your coordinates.">Sunrise</div>
                 <div class="value" id="sunrise">--</div>
               </div>
               <div class="row">
-                <div class="label">Sunset</div>
+                <div class="label" data-tip="Time of sunset at your location. Your NW-facing dock gets direct sun right up to sunset.">Sunset</div>
                 <div class="value" id="sunset">--</div>
               </div>
               <div class="row">
@@ -921,11 +921,11 @@
             <!-- Position column -->
             <div style="padding-left:16px;">
               <div class="row">
-                <div class="label">Direction</div>
+                <div class="label" data-tip="Compass bearing of the sun right now. Your dock faces 315° NW — the sun illuminates the dock face directly near sunset in summer when the bearing approaches 315°.">Direction</div>
                 <div class="value" id="sunAzimuth">--</div>
               </div>
               <div class="row">
-                <div class="label">Altitude</div>
+                <div class="label" data-tip="Current angle of the sun above the horizon. Below 0° = below horizon. Above 45° = high sun, strong shadows.">Altitude</div>
                 <div class="value" id="sunAltitude">--</div>
               </div>
               <div class="row">
@@ -967,15 +967,15 @@
             <!-- Rise / Set column -->
             <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div class="row">
-                <div class="label">Moonrise</div>
+                <div class="label" data-tip="Time the moon rises above the horizon today at your location.">Moonrise</div>
                 <div class="value" id="moonrise">--</div>
               </div>
               <div class="row">
-                <div class="label">Moonset</div>
+                <div class="label" data-tip="Time the moon sets below the horizon today at your location.">Moonset</div>
                 <div class="value" id="moonset">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label">Next Full Moon</div>
+                <div class="label" data-tip="Date of the next full moon. Both full and new moons produce spring tides — larger tidal range with higher highs and lower lows. Quarter moons produce neap tides with smaller range.">Next Full Moon</div>
                 <div class="value" id="nextFullMoon">--</div>
               </div>
             </div>
@@ -983,15 +983,15 @@
             <!-- Position column -->
             <div style="padding-left:16px;">
               <div class="row">
-                <div class="label">Direction</div>
+                <div class="label" data-tip="Current compass bearing of the moon.">Direction</div>
                 <div class="value" id="moonAzimuth">--</div>
               </div>
               <div class="row">
-                <div class="label">Altitude</div>
+                <div class="label" data-tip="Current angle of the moon above the horizon. Negative = below horizon.">Altitude</div>
                 <div class="value" id="moonAltitude">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label">Visible</div>
+                <div class="label" data-tip="Percentage of the moon's face illuminated. 0% = new moon, 100% = full moon. Affects nighttime visibility and tidal range.">Visible</div>
                 <div class="value" id="moonVisible">--</div>
               </div>
             </div>
@@ -2033,7 +2033,7 @@
             html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:0.7rem;color:rgba(255,255,255,0.5);">`;
             html += `<div>🌡️ ${w.temp != null ? Math.round(w.temp)+"°F" : "--"}</div>`;
             html += `<div>💧 ${w.precip != null ? w.precip+"%" : "--"} precip</div>`;
-            html += `<div data-tip="Wind angle relative to your NW-facing dock. Onshore (NW) = choppy. Offshore (SE) = calm flat water.">`;
+            html += `<div data-tip="Wind direction relative to your 315° NW-facing dock. NW wind is directly onshore — kicks up chop against the dock. SE wind is offshore — flat calm. NE/SW is crosswind, moderate effect.">`;
             html += `💨 ${w.wspd != null ? Math.round(w.wspd)+" kt" : "--"} ${w.dirName}`;
             html += ` <span style="color:${w.windRelLabel==='offshore'?'rgba(80,220,120,0.8)':w.windRelLabel==='onshore'?'rgba(220,80,80,0.8)':'rgba(255,200,80,0.8)'};">(${w.windRelLabel})</span></div>`;
             if (waterTempRaw != null) {
