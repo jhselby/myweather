@@ -254,6 +254,21 @@
       color: rgba(255,255,255,0.62);
       font-weight: 800;
     }
+    /* Wind window pill buttons */
+    .wind-window-pills { display:flex; gap:4px; }
+    .wpill {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.5);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .wpill:hover { background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.8); }
+    .wpill.active { background: rgba(100,160,255,0.25); border-color: rgba(100,160,255,0.5); color: rgba(160,200,255,0.95); }
     /* Pure-CSS hover tooltips — add data-tip="..." to any element */
     [data-tip]{
       position: relative;
@@ -664,21 +679,10 @@
     <section id="windView" style="display:none;">
       <div class="grid">
 
-        <!-- Window selector — full width bar above both cards -->
-        <div class="card col-12" style="padding:10px 14px;display:flex;align-items:center;gap:12px;">
-          <span style="color:rgba(255,255,255,0.65);font-size:0.88rem;font-weight:800;letter-spacing:0.2px;">Forecast window</span>
-          <select id="riskWindowSelect" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);border-radius:999px;padding:5px 12px;font-weight:800;font-size:0.85rem;cursor:pointer;">
-            <option value="12">12h</option>
-            <option value="24">24h</option>
-            <option value="36">36h</option>
-            <option value="48">48h</option>
-          </select>
-          <span style="color:rgba(255,255,255,0.38);font-size:0.82rem;margin-left:4px;">applies to both panels</span>
-        </div>
-
-        <!-- Wind & Pressure (now) -->
-        <div class="card col-12">
-          <div class="card-title">Wind &amp; Pressure (now)</div>
+        <!-- Wind & Pressure (now) — open by default -->
+        <div class="card col-12" data-collapse-key="wind_now">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_now', this)">Wind &amp; Pressure (now) <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
           <div class="row">
             <div class="label">Wind</div>
             <div class="value" id="windNowWind">--</div>
@@ -696,11 +700,22 @@
             <div class="value" id="pressureTrendWind">--</div>
           </div>
           <div class="small-note" id="windPressureNote"></div>
+          </div>
         </div>
 
-        <!-- Gust Wind Impact -->
-        <div class="card col-12">
-          <div class="card-title">&#127788; Gust Wind Impact</div>
+        <!-- Gust Wind Impact — collapsed by default, own window buttons -->
+        <div class="card col-12" data-collapse-key="wind_gust_impact" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_gust_impact', this)"
+               style="display:flex;align-items:center;justify-content:space-between;">
+            <span>&#127788; Gust Wind Impact <span class="collapse-chevron">&#9660;</span></span>
+            <span class="wind-window-pills" id="gustWindowPills" onclick="event.stopPropagation()">
+              <button class="wpill active" data-target="gust" data-hours="12">12h</button>
+              <button class="wpill" data-target="gust" data-hours="24">24h</button>
+              <button class="wpill" data-target="gust" data-hours="36">36h</button>
+              <button class="wpill" data-target="gust" data-hours="48">48h</button>
+            </span>
+          </div>
+          <div class="card-body" style="display:none;">
           <div class="row">
             <div class="label">Level</div>
             <div class="value" id="gustLevel">--</div>
@@ -726,11 +741,22 @@
             <div class="value" id="gustTime">--</div>
           </div>
           <div class="small-note" id="gustNote"></div>
+          </div>
         </div>
 
-        <!-- Sustained Wind Impact -->
-        <div class="card col-12">
-          <div class="card-title">&#127787; Sustained Wind Impact</div>
+        <!-- Sustained Wind Impact — collapsed by default, own window buttons -->
+        <div class="card col-12" data-collapse-key="wind_sus_impact" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_sus_impact', this)"
+               style="display:flex;align-items:center;justify-content:space-between;">
+            <span>&#127787; Sustained Wind Impact <span class="collapse-chevron">&#9660;</span></span>
+            <span class="wind-window-pills" id="susWindowPills" onclick="event.stopPropagation()">
+              <button class="wpill active" data-target="sus" data-hours="12">12h</button>
+              <button class="wpill" data-target="sus" data-hours="24">24h</button>
+              <button class="wpill" data-target="sus" data-hours="36">36h</button>
+              <button class="wpill" data-target="sus" data-hours="48">48h</button>
+            </span>
+          </div>
+          <div class="card-body" style="display:none;">
           <div class="row">
             <div class="label">Level</div>
             <div class="value" id="susLevel">--</div>
@@ -756,12 +782,13 @@
             <div class="value" id="susTime">--</div>
           </div>
           <div class="small-note" id="susNote">Sustained = dock lines, outdoor use. Gust = structural stress.</div>
+          </div>
         </div>
 
         <!-- 48-Hour Wind Forecast -->
-        <div class="card col-12" data-collapse-key="48h_wind">
+        <div class="card col-12" data-collapse-key="48h_wind" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body">
+          <div class="card-body" style="display:none;">
           <canvas id="windChart"></canvas>
           </div>
         </div>
@@ -2215,27 +2242,46 @@
       document.getElementById(ids.time).textContent    = peak.timeISO ? fmtLocal(peak.timeISO) : "--";
     }
 
-    function renderWindRisk(data) {
-      const windowSelect = document.getElementById("riskWindowSelect");
-      const hours = parseInt(windowSelect?.value || "12", 10);
-      const hourly = data.hourly || {};
+    // Per-card window state
+    let _gustWindowHours = 12;
+    let _susWindowHours  = 12;
 
-      const gustPeak = computePeakWorry(hourly, hours, true);
-      const susPeak  = computePeakWorry(hourly, hours, false);
+    function renderWindRisk(data) {
+      const hourly = data.hourly || {};
+      const gustPeak = computePeakWorry(hourly, _gustWindowHours, true);
+      const susPeak  = computePeakWorry(hourly, _susWindowHours,  false);
 
       fillWorryCard(
         { level:"gustLevel", score:"gustScore", peakSpd:"gustPeak",
           dir:"gustDir", exposure:"gustExposure", time:"gustTime", note:"gustNote" },
-        gustPeak, hours
+        gustPeak, _gustWindowHours
       );
       fillWorryCard(
         { level:"susLevel", score:"susScore", peakSpd:"susPeak",
           dir:"susDir", exposure:"susExposure", time:"susTime", note:"susNote" },
-        susPeak, hours
+        susPeak, _susWindowHours
       );
 
       const noteEl = document.getElementById("gustNote");
-      if (noteEl) noteEl.textContent = `Peak gust wind impact over next ${hours}h. Score = gust × exposure¹·5.`;
+      if (noteEl) noteEl.textContent = `Peak gust wind impact over next ${_gustWindowHours}h. Score = gust × exposure¹·⁵.`;
+      const susNoteEl = document.getElementById("susNote");
+      if (susNoteEl) susNoteEl.textContent = `Peak sustained impact over next ${_susWindowHours}h. Sustained = dock lines, outdoor use.`;
+    }
+
+    function initWindPills(data) {
+      document.querySelectorAll(".wpill").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const target = btn.dataset.target;
+          const hours  = parseInt(btn.dataset.hours, 10);
+          // Update active state for this group
+          document.querySelectorAll(`.wpill[data-target="${target}"]`)
+            .forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          if (target === "gust") _gustWindowHours = hours;
+          else                   _susWindowHours  = hours;
+          renderWindRisk(window.__lastWeatherData || data);
+        });
+      });
     }
 
     // ======================================================
@@ -2999,13 +3045,7 @@
 
         // Wind tab
         renderWindRisk(data);
-        const riskSel = document.getElementById("riskWindowSelect");
-        if (riskSel) {
-          riskSel.onchange = () => {
-            try { renderWindRisk(window.__lastWeatherData || data); }
-            catch(e) { console.error("WindRisk onchange failed:", e); }
-          };
-        }
+        initWindPills(data);
 
         const windNowEl      = document.getElementById("windNowWind");
         const windGustsEl    = document.getElementById("windGustsWind");
