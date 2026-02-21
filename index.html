@@ -411,8 +411,8 @@
       /* Tabs — slightly smaller so all 5 fit */
       .tab { font-size: 0.75rem !important; padding: 8px 10px !important; }
 
-      /* Wind pills — allow wrap */
-      .wind-window-pills { flex-wrap: wrap; }
+      /* Wind pills — never wrap */
+      .wind-window-pills { flex-wrap: nowrap !important; }
     }
 
     /* =============================================
@@ -588,14 +588,19 @@
        ============================================= */
     body.theme-light {
       --bg:     #f0f2f6;
-      --card:   #ffffff;
+      --card:   rgba(255,255,255,0.9);
       --border: rgba(0,0,0,0.10);
       --text:   #0d1117;
       --muted:  rgba(0,0,0,0.55);
       --shadow: 0 2px 12px rgba(0,0,0,0.10);
     }
+    body.theme-light {
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(100,160,255,0.10), transparent 55%),
+                  radial-gradient(900px 500px at 80% 0%, rgba(60,200,140,0.06), transparent 55%),
+                  #f0f2f6;
+    }
     body.theme-light header {
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.88);
       border-color: rgba(0,0,0,0.10);
     }
     body.theme-light .card {
@@ -606,18 +611,48 @@
       color: rgba(0,0,0,0.85);
       border-bottom-color: rgba(0,0,0,0.07);
     }
-    body.theme-light .label {
-      color: rgba(0,0,0,0.55);
+    body.theme-light .label { color: rgba(0,0,0,0.52); }
+    body.theme-light .value { color: rgba(0,0,0,0.88); }
+    body.theme-light .row   { border-bottom-color: rgba(0,0,0,0.06); }
+    body.theme-light .small-note { color: rgba(0,0,0,0.4); }
+
+    /* Force all text inside cards to be dark in light mode */
+    body.theme-light .card-body { color: rgba(0,0,0,0.85); }
+    body.theme-light .card-body div,
+    body.theme-light .card-body span,
+    body.theme-light .card-body p  { color: inherit; }
+
+    /* NWS forecast rows — JS renders inline white colors, override them */
+    body.theme-light #nwsForecastList div,
+    body.theme-light #nwsForecastList span { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #nwsForecastList [style*="border-bottom"] {
+      border-bottom-color: rgba(0,0,0,0.07) !important;
     }
-    body.theme-light .value {
-      color: rgba(0,0,0,0.88);
-    }
-    body.theme-light .row {
-      border-bottom-color: rgba(0,0,0,0.06);
-    }
-    body.theme-light .small-note {
-      color: rgba(0,0,0,0.4);
-    }
+
+    /* 10-day forecast rows */
+    body.theme-light #forecastList .forecast-day-row { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #forecastList .forecast-day-row span { color: inherit !important; }
+    body.theme-light #forecastList .forecast-day-row .value { color: rgba(0,0,0,0.88) !important; }
+    /* Keep precip % blue-ish but dark enough */
+    body.theme-light #forecastList [style*="140,180,255"] { color: rgba(30,100,200,0.85) !important; }
+    body.theme-light #forecastSelectionHint { color: rgba(0,0,0,0.35) !important; }
+
+    /* Sources rows */
+    body.theme-light #sourcesTable div,
+    body.theme-light #sourcesTable span { color: rgba(0,0,0,0.75) !important; }
+
+    /* Solar system, dock day, sunset quality — JS-rendered */
+    body.theme-light #solarSystemGrid div,
+    body.theme-light #solarSystemGrid span { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #dockDayContainer div,
+    body.theme-light #dockDayContainer span { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #sunsetQualityGrid div,
+    body.theme-light #sunsetQualityGrid span { color: rgba(0,0,0,0.80) !important; }
+
+    /* 48-hour chart legend swatches — keep color, just ensure text is dark */
+    body.theme-light .card-body [style*="display:flex"] span { color: rgba(0,0,0,0.70) !important; }
+
+    /* Tabs */
     body.theme-light .tab {
       background: rgba(0,0,0,0.06);
       border-color: rgba(0,0,0,0.14);
@@ -628,6 +663,32 @@
       border-color: rgba(0,0,0,0.25);
       color: rgba(0,0,0,0.9);
     }
+
+    /* Wind pills */
+    body.theme-light .wpill {
+      background: rgba(0,0,0,0.07);
+      border-color: rgba(0,0,0,0.15);
+      color: rgba(0,0,0,0.65);
+    }
+    body.theme-light .wpill.active {
+      background: rgba(30,100,255,0.12);
+      border-color: rgba(30,100,255,0.4);
+      color: rgba(20,80,200,0.95);
+    }
+
+    /* Radar buttons */
+    body.theme-light .radar-btn {
+      background: rgba(0,0,0,0.07);
+      border-color: rgba(0,0,0,0.15);
+      color: rgba(0,0,0,0.65);
+    }
+    body.theme-light .radar-btn-active {
+      background: rgba(30,100,255,0.12) !important;
+      border-color: rgba(30,100,255,0.4) !important;
+      color: rgba(20,80,200,0.95) !important;
+    }
+
+    /* Misc pills + badges */
     body.theme-light .version-pill {
       color: rgba(0,0,0,0.6);
       border-color: rgba(0,0,0,0.15);
@@ -640,6 +701,8 @@
       border-color: rgba(0,0,0,0.12);
       color: rgba(0,0,0,0.8);
     }
+
+    /* Settings panel */
     body.theme-light #settingsBtn {
       background: rgba(0,0,0,0.06);
       border-color: rgba(0,0,0,0.14);
@@ -649,6 +712,7 @@
       background: rgba(0,0,0,0.04);
       border-color: rgba(0,0,0,0.10);
     }
+    body.theme-light #settingsPanel div { color: rgba(0,0,0,0.80) !important; }
     body.theme-light .setting-btn {
       background: rgba(0,0,0,0.06);
       border-color: rgba(0,0,0,0.14);
@@ -659,12 +723,97 @@
       border-color: rgba(30,120,255,0.4);
       color: rgba(20,90,200,0.95);
     }
+
+    /* Risk tiles */
+    body.theme-light .risk-tile {
+      background: rgba(0,0,0,0.03);
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.theme-light .risk-tile .big,
+    body.theme-light .risk-tile .kicker,
+    body.theme-light .risk-tile .sub { color: rgba(0,0,0,0.80) !important; }
+
+    /* Leaflet map */
     body.theme-light .leaflet-container { background: #e8edf5 !important; }
     body.theme-light .leaflet-control-zoom a {
       background: rgba(255,255,255,0.9) !important;
       color: rgba(0,0,0,0.7) !important;
       border-color: rgba(0,0,0,0.2) !important;
     }
+    body.theme-light .leaflet-control-attribution {
+      background: rgba(255,255,255,0.7) !important;
+      color: rgba(0,0,0,0.5) !important;
+    }
+
+    /* Alert banners — keep them legible in light mode */
+    body.theme-light #alertSummaryBar {
+      background: rgba(200,40,40,0.12) !important;
+      border-color: rgba(200,40,40,0.4) !important;
+    }
+    body.theme-light #alertSummaryText { color: rgba(140,20,20,0.95) !important; }
+    body.theme-light #alertSummaryChev { color: rgba(140,20,20,0.6) !important; }
+    body.theme-light #stormModeBanner {
+      background: rgba(200,40,40,0.12) !important;
+      border-color: rgba(200,40,40,0.4) !important;
+      color: rgba(140,20,20,0.95) !important;
+    }
+    body.theme-light .alert-banner {
+      background: rgba(200,40,40,0.08) !important;
+      border-color: rgba(200,40,40,0.3) !important;
+      color: rgba(120,10,10,0.9) !important;
+    }
+    body.theme-light .alert-banner * { color: rgba(120,10,10,0.85) !important; }
+    body.theme-light .alert-title    { color: rgba(120,10,10,0.9) !important; }
+
+    /* Current conditions — °F unit, feels like, condition text */
+    body.theme-light .current-temp { color: rgba(0,0,0,0.88) !important; }
+    body.theme-light .temp-unit    { color: rgba(0,0,0,0.55) !important; }
+    body.theme-light .feels-like   { color: rgba(0,0,0,0.7)  !important; }
+    body.theme-light .condition    { color: rgba(0,0,0,0.75) !important; }
+
+    /* Any element that uses white or near-white text hardcoded */
+    body.theme-light .value        { color: rgba(0,0,0,0.88) !important; }
+    body.theme-light .label        { color: rgba(0,0,0,0.55) !important; }
+    body.theme-light .small-note   { color: rgba(0,0,0,0.4)  !important; }
+
+    /* Card titles */
+    body.theme-light .card-title   { color: rgba(0,0,0,0.85) !important; }
+
+    /* Source pills */
+    body.theme-light .source-pill  { color: rgba(0,0,0,0.75) !important; }
+    body.theme-light .source-pill .small { color: rgba(0,0,0,0.5) !important; }
+
+    /* Meta row */
+    body.theme-light .meta-label   { color: rgba(0,0,0,0.5)  !important; }
+    body.theme-light .meta-value   { color: rgba(0,0,0,0.85) !important; }
+
+    /* Badges */
+    body.theme-light .badge { border-color: rgba(0,0,0,0.15) !important; }
+
+    /* Collapse chevron */
+    body.theme-light .collapse-chevron { color: rgba(0,0,0,0.4) !important; }
+
+    /* Settings panel text */
+    body.theme-light #settingsPanel { color: rgba(0,0,0,0.8) !important; }
+    body.theme-light #settingsPanel div[style*="rgba(255,255,255"] { color: rgba(0,0,0,0.8) !important; }
+
+    /* Sun/Moon/Solar system inline white text */
+    body.theme-light #sunStatus,
+    body.theme-light #daylight,
+    body.theme-light #solarNoonLabel,
+    body.theme-light #moonPhaseName,
+    body.theme-light #moonIllumination { color: rgba(0,0,0,0.75) !important; }
+
+    /* NWS forecast text */
+    body.theme-light #nwsForecastList * { color: rgba(0,0,0,0.8) !important; }
+    body.theme-light #nwsOfficeLabel   { color: rgba(0,0,0,0.35) !important; }
+    body.theme-light #nwsFilterLabel   { color: rgba(30,100,220,0.85) !important; }
+
+    /* Precip chart legend */
+    body.theme-light [style*="rgba(255,255,255,0.6)"] { color: rgba(0,0,0,0.55) !important; }
+
+    /* Row borders */
+    body.theme-light .row { border-bottom-color: rgba(0,0,0,0.07) !important; }
     .leaflet-container { background: #0b1220 !important; }
     .leaflet-control-attribution {
       background: rgba(0,0,0,0.6) !important;
@@ -953,9 +1102,9 @@
         <!-- Gust Wind Impact — collapsed by default, own window buttons -->
         <div class="card col-12" data-collapse-key="wind_gust_impact" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('wind_gust_impact', this)"
-               style="display:flex;align-items:center;justify-content:space-between;">
-            <span>&#127788; Gust Wind Impact <span class="collapse-chevron">&#9660;</span></span>
-            <span class="wind-window-pills" id="gustWindowPills" onclick="event.stopPropagation()">
+               style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span style="flex-shrink:1;min-width:0;">&#127788; Gust Wind Impact <span class="collapse-chevron">&#9660;</span></span>
+            <span class="wind-window-pills" id="gustWindowPills" onclick="event.stopPropagation()" style="flex-shrink:0;flex-wrap:nowrap;">
               <button class="wpill active" data-target="gust" data-hours="12">12h</button>
               <button class="wpill" data-target="gust" data-hours="24">24h</button>
               <button class="wpill" data-target="gust" data-hours="36">36h</button>
@@ -994,9 +1143,9 @@
         <!-- Sustained Wind Impact — collapsed by default, own window buttons -->
         <div class="card col-12" data-collapse-key="wind_sus_impact" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('wind_sus_impact', this)"
-               style="display:flex;align-items:center;justify-content:space-between;">
-            <span>&#127787; Sustained Wind Impact <span class="collapse-chevron">&#9660;</span></span>
-            <span class="wind-window-pills" id="susWindowPills" onclick="event.stopPropagation()">
+               style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <span style="flex-shrink:1;min-width:0;">&#127787; Sustained Wind Impact <span class="collapse-chevron">&#9660;</span></span>
+            <span class="wind-window-pills" id="susWindowPills" onclick="event.stopPropagation()" style="flex-shrink:0;flex-wrap:nowrap;">
               <button class="wpill active" data-target="sus" data-hours="12">12h</button>
               <button class="wpill" data-target="sus" data-hours="24">24h</button>
               <button class="wpill" data-target="sus" data-hours="36">36h</button>
@@ -1388,6 +1537,15 @@
       document.getElementById(_pressureUnit === 'inhg' ? 'pressInhg' : 'pressHpa')?.classList.add('active');
     }
 
+    function chartTextColor() {
+      return document.body.classList.contains('theme-light')
+        ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.7)";
+    }
+    function chartGridColor() {
+      return document.body.classList.contains('theme-light')
+        ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)";
+    }
+
     function hpaToInhg(hpa) {
       return (hpa * 0.02953).toFixed(2);
     }
@@ -1652,10 +1810,10 @@
             }
           },
           scales: {
-            x:  { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
-            y:  { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
+            x:  { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
+            y:  { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
             y1: { position: "right", min: 0, max: 100,
-                  ticks: { color: "rgba(255,255,255,0.7)" }, grid: { drawOnChartArea: false } }
+                  ticks: { color: chartTextColor() }, grid: { drawOnChartArea: false } }
           }
         }
       });
@@ -1723,8 +1881,8 @@
             }
           },
           scales: {
-            x: { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } },
-            y: { ticks: { color: "rgba(255,255,255,0.7)" }, grid: { color: "rgba(255,255,255,0.06)" } }
+            x: { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
+            y: { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } }
           }
         }
       });
