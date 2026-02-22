@@ -2618,10 +2618,32 @@
           const age  = typeof s.age_minutes === "number" ? s.age_minutes.toFixed(1) + "m ago" : "--";
           const meta = SOURCE_META[key];
           const name = key === "pws" ? pwsName : meta.name;
+          
+          let extraDetail = "";
+          // Add WU station breakdown if this is the wu_stations source
+          if (key === "wu_stations" && ok) {
+            const wu = window.__lastWeatherData?.wu_stations;
+            if (wu && wu.stations) {
+              const quality = wu.quality || {};
+              extraDetail = `
+                <div style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:0.75rem;">
+                  <div style="font-weight:800;margin-bottom:6px;color:rgba(255,255,255,0.7);">
+                    ${wu.stations.length} Stations • ${quality.stations_used_temp || 0} used for temp • ${quality.stations_used_wind || 0} used for wind
+                  </div>
+                  <div style="color:rgba(255,255,255,0.5);line-height:1.6;">
+                    ${wu.stations.map(st => 
+                      `${st.station_id} (${st.distance_mi}mi) - ${st.temperature_f?.toFixed(1)}°F, ${st.wind_speed_mph?.toFixed(1)}mph`
+                    ).join('<br>')}
+                  </div>
+                </div>`;
+            }
+          }
+          
           return `<div style="${rowStyle}">
             <span style="${nameStyle}">${ok ? "✅" : "❌"} ${name}</span>
             <span style="${ageStyle(ok)}">${age}</span>
             <span style="${descStyle}">${meta.desc}${s.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${s.error}</span>` : ""}</span>
+            ${extraDetail}
           </div>`;
         }).join("")}
 
