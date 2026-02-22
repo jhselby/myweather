@@ -4441,10 +4441,12 @@
       });
 
     // ── Auto-reload on foreground ─────────────────────────────
-    // When running as installed webapp (no browser chrome), reload
-    // every time the app comes to the foreground so data is fresh.
+    // Wait a few seconds after load before enabling, so the initial
+    // load isn't immediately interrupted by a visibilitychange event.
+    let reloadEnabled = false;
+    setTimeout(() => { reloadEnabled = true; }, 5000);
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState === 'visible' && reloadEnabled) {
         location.reload();
       }
     });
