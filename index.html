@@ -1164,7 +1164,7 @@
             <div class="value" id="modelTemp">--&deg;F</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Current temperature from your personal weather station — your most accurate local reading.">PWS Temp</div>
+            <div class="label" data-tip="Distance-weighted average from 10-13 nearby weather stations (filtered for quality) — your most accurate local reading.">WU Multi-Station</div>
             <div class="value" id="pwsTemp">--&deg;F</div>
           </div>
           <div class="row">
@@ -2561,7 +2561,8 @@
       gfs_current:  { name: "GFS",          desc: "Global Forecast System — current conditions baseline (NOAA)" },
       hrrr_hourly:  { name: "HRRR",         desc: "High-Resolution Rapid Refresh — 48h hourly forecast, cloud layers, upper-air (NOAA)" },
       ecmwf_daily:  { name: "ECMWF",        desc: "European Centre model — 10-day daily forecast (Open-Meteo)" },
-      pws:          { name: "PWS",           desc: "Personal Weather Station KMAMARBL63 (Castle Hill, 0.25mi) — via Weather Underground" },
+      pws:          { name: "PWS",           desc: "Single weather station KMAMARBL63 (Castle Hill, 0.27mi) — fallback only" },
+      wu_stations:  { name: "WU Multi",     desc: "15 local weather stations — distance-weighted, quality-filtered (Weather Underground API)" },
       kbos:         { name: "KBOS",         desc: "Boston Logan Airport ASOS — observed temp, pressure, tendency (NWS/aviationweather.gov)" },
       kbvy:         { name: "KBVY",         desc: "Beverly Airport ASOS — observed temp, wind (NWS/aviationweather.gov)" },
       buoy_44013:   { name: "Buoy 44013",   desc: "NOAA Boston Buoy (16mi ENE) — water temp, waves, offshore wind (NDBC)" },
@@ -4045,15 +4046,30 @@
           `Feels like ${Math.round(cur.feels_like ?? 0)}°F`;
         document.getElementById("condition").innerHTML = `${emoji} ${desc}`;
 
-        // Hyperlocal
-        const pws = data.pws || {};
+        // Hyperlocal - now using WU multi-station data
+        const wu = data.wu_stations || {};
+        const pws = data.pws || {};  // Keep for fallback
         const hyp = data.hyperlocal || {};
+        
+        // Use WU data if available, fall back to PWS
+        const localTemp = wu.temperature_f ?? pws.temperature;
+        const dataQuality = wu.quality || {};
+        const stationsUsed = dataQuality.stations_used_temp || 0;
+        
         document.getElementById("modelTemp").textContent    = (cur.temperature ?? "--") + "°F";
-        document.getElementById("pwsTemp").textContent      = (pws.temperature ?? "--") + "°F";
+        document.getElementById("pwsTemp").textContent      = (localTemp ?? "--") + "°F";
         document.getElementById("tempBias").textContent     = (hyp.bias_temp ?? "--") + "°F";
         document.getElementById("correctedTemp").textContent= (hyp.corrected_temp ?? "--") + "°F";
-        document.getElementById("pwsNote").textContent      =
-          pws.stale ? "PWS Cached — using last good reading." : "PWS Live.";
+        
+        // Show WU quality info
+        if (stationsUsed > 0) {
+          document.getElementById("pwsNote").textContent =
+            `${stationsUsed} stations • ${dataQuality.wind_sensors_failed || 0} wind sensors offline`;
+        } else if (pws.stale) {
+          document.getElementById("pwsNote").textContent = "Using cached PWS data.";
+        } else {
+          document.getElementById("pwsNote").textContent = "Live data.";
+        }
 
         // Today summary
         const daily = data.daily || {};
