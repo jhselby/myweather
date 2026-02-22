@@ -891,6 +891,7 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
     weather_data = {
         "schema_version": SCHEMA_VERSION,
         "generated_at": generated_at,
+        "debug_timestamp": datetime.now().isoformat(),  # Force change for debugging
         "location": {
             "name": LOCATION_NAME,
             "coordinates": {"lat": LAT, "lon": LON},
