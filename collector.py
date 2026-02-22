@@ -8,6 +8,7 @@ Robustness upgrades:
 - per-source status + errors + timestamps
 - DST-safe timezone handling (zoneinfo)
 - PWS last-known-good caching (last_pws.json)
+- WU multi-station scraper integration (optional, fails gracefully)
 """
 
 import json
@@ -16,6 +17,7 @@ from zoneinfo import ZoneInfo
 import requests
 from bs4 import BeautifulSoup
 from pathlib import Path
+import subprocess
 
 # -----------------------------
 # Config
@@ -26,7 +28,7 @@ LOCATION_NAME = "Wyman Cove, Marblehead MA"
 TIDE_STATION = "8442645"      # Salem Harbor, MA
 PWS_STATION = "KMAMARBL63"    # Castle Hill, Marblehead
 
-SCHEMA_VERSION = "1.1"
+SCHEMA_VERSION = "1.2"
 PWS_CACHE_FILE  = Path("last_pws.json")
 KBOS_CACHE_FILE = Path("last_kbos.json")   # Rolling observed pressure history
 KBVY_CACHE_FILE  = Path("last_kbvy.json")   # Beverly Airport observations
@@ -817,6 +819,76 @@ def fetch_nws_alerts():
         return [], meta
 
 
+def fetch_wu_stations():
+    """
+    Fetch Weather Underground multi-station data via external scraper.
+    Returns aggregated data from 15 local PWS stations.
+    Designed to fail gracefully - if scraper breaks, collector continues.
+    """
+    print("📡 Fetching WU multi-station data...")
+    meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
+    
+    try:
+        # Path to the scraper in same directory as collector
+        scraper_path = Path(__file__).parent / "wu_scraper_realtime.py"
+        
+        if not scraper_path.exists():
+            meta["error"] = "Scraper not found"
+            print(f"  ✗ WU scraper not found at {scraper_path}")
+            return None, meta
+        
+        # Run the scraper and capture output (scraper creates JSON file)
+        result = subprocess.run(
+            ["python3", str(scraper_path)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+            cwd=str(scraper_path.parent)
+        )
+        
+        if result.returncode != 0:
+            raise Exception(f"Scraper failed: {result.stderr[:200]}")
+        
+        # Load the JSON file it creates
+        json_file = Path(__file__).parent / "wu_stations_realtime.json"
+        if not json_file.exists():
+            raise Exception("Scraper did not create output file")
+        
+        data = json.loads(json_file.read_text())
+        
+        # Calculate aggregates from station data
+        if data and len(data) > 0:
+            temps = [r['temperature_f'] for r in data if r.get('temperature_f') is not None]
+            humidity = [r['humidity_pct'] for r in data if r.get('humidity_pct') is not None]
+            winds = [r['wind_speed_mph'] for r in data if r.get('wind_speed_mph') is not None]
+            gusts = [r['wind_gust_mph'] for r in data if r.get('wind_gust_mph') is not None]
+            pressures = [r['pressure_in'] for r in data if r.get('pressure_in') is not None]
+            
+            aggregated = {
+                "temperature_f": round(sum(temps)/len(temps), 1) if temps else None,
+                "temp_min_f": round(min(temps), 1) if temps else None,
+                "temp_max_f": round(max(temps), 1) if temps else None,
+                "humidity_pct": round(sum(humidity)/len(humidity), 1) if humidity else None,
+                "wind_speed_mph": round(sum(winds)/len(winds), 1) if winds else None,
+                "wind_gust_mph": round(sum(gusts)/len(gusts), 1) if gusts else None,
+                "wind_gust_max_mph": round(max(gusts), 1) if gusts else None,
+                "pressure_in": round(sum(pressures)/len(pressures), 2) if pressures else None,
+                "station_count": len(data),
+                "stations": data  # Full station detail available if needed
+            }
+            
+            meta["status"] = "ok"
+            print(f"  ✓ WU multi-station: {len(data)} stations aggregated")
+            return aggregated, meta
+        else:
+            raise Exception("No station data returned")
+            
+    except Exception as e:
+        meta["error"] = str(e)
+        print(f"  ✗ WU multi-station: {e}")
+        return None, meta
+
+
 # -----------------------------
 # Processing
 # -----------------------------
@@ -1301,6 +1373,7 @@ def main():
     kbos_data,     kbos_meta     = fetch_kbos_obs()
     kbvy_data,     kbvy_meta     = fetch_kbvy_obs()
     buoy_data,     buoy_meta     = fetch_buoy_44013()
+    wu_data,       wu_meta       = fetch_wu_stations()  # Optional WU multi-station data
     forecast_data, forecast_meta = fetch_nws_forecast()
     alert_data,    alerts_meta   = fetch_nws_alerts()
 
@@ -1313,6 +1386,7 @@ def main():
         "kbos":         kbos_meta,
         "kbvy":         kbvy_meta,
         "buoy_44013":   buoy_meta,
+        "wu_stations":  wu_meta,
         "nws_forecast": forecast_meta,
         "nws_alerts":   alerts_meta,
     }
@@ -1330,6 +1404,11 @@ def main():
     if salem_water_temp is not None:
         weather_data["salem_water_temp_f"] = salem_water_temp
         print(f"  ✓ Salem water temp stored: {salem_water_temp}°F")
+    
+    # Inject WU multi-station data if available
+    if wu_data is not None:
+        weather_data["wu_stations"] = wu_data
+        print(f"  ✓ WU stations data stored: {wu_data.get('station_count', 0)} stations")
 
     # Save to JSON
     with open("weather_data.json", "w") as f:
