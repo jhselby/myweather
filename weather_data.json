@@ -1,77 +1,77 @@
 {
   "schema_version": "1.1",
-  "generated_at": "2026-02-22T01:00:36.712277Z",
+  "generated_at": "2026-02-22T01:05:51.071562Z",
   "location": {
     "name": "Wyman Cove, Marblehead MA",
     "coordinates": {
       "lat": 42.5014,
       "lon": -70.875
     },
-    "updated": "2026-02-22T01:00:36.712277Z"
+    "updated": "2026-02-22T01:05:51.071562Z"
   },
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:26.950732Z",
+      "updated_at": "2026-02-22T01:05:43.326787Z",
       "error": null,
       "model": "GFS current",
-      "age_minutes": 0.2
+      "age_minutes": 0.1
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:27.539224Z",
+      "updated_at": "2026-02-22T01:05:43.938210Z",
       "error": null,
       "model": "HRRR hourly",
-      "age_minutes": 0.2
+      "age_minutes": 0.1
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:28.177823Z",
+      "updated_at": "2026-02-22T01:05:44.499058Z",
       "error": null,
       "model": "ECMWF daily",
       "age_minutes": 0.1
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:28.643642Z",
+      "updated_at": "2026-02-22T01:05:45.088394Z",
       "error": null,
       "age_minutes": 0.1
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:30.051725Z",
+      "updated_at": "2026-02-22T01:05:46.487485Z",
       "error": null,
       "age_minutes": 0.1
     },
     "kbos": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:30.505627Z",
+      "updated_at": "2026-02-22T01:05:47.379163Z",
       "error": null,
       "age_minutes": 0.1
     },
     "kbvy": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:30.674569Z",
+      "updated_at": "2026-02-22T01:05:48.051107Z",
       "error": null,
       "age_minutes": 0.1
     },
     "buoy_44013": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:30.777447Z",
+      "updated_at": "2026-02-22T01:05:48.342049Z",
       "error": null,
-      "age_minutes": 0.1
+      "age_minutes": 0.0
     },
     "nws_forecast": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:30.972398Z",
+      "updated_at": "2026-02-22T01:05:48.544174Z",
       "error": null,
       "office": "BOX",
       "grid": "76,97",
-      "age_minutes": 0.1
+      "age_minutes": 0.0
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-02-22T01:00:35.537862Z",
+      "updated_at": "2026-02-22T01:05:49.402437Z",
       "error": null,
       "age_minutes": 0.0
     }
@@ -2353,18 +2353,18 @@
   },
   "kbos": {
     "station": "KBOS",
-    "time": "2026-02-22T00:35:00+00:00",
+    "time": "2026-02-22T00:50:00+00:00",
     "pressure_hpa": null,
     "temp_f": 30.2,
     "dewpoint_f": null,
-    "wind_mph": 4.6,
-    "wind_dir": 40,
+    "wind_mph": 5.7,
+    "wind_dir": 30,
     "tendency_hpa": null,
     "tendency_label": null
   },
   "kbvy": {
     "station": "KBVY",
-    "time": "2026-02-22T00:35:00+00:00",
+    "time": "2026-02-22T00:50:00+00:00",
     "pressure_hpa": null,
     "temp_f": 24.8,
     "dewpoint_f": null,
@@ -2374,16 +2374,16 @@
     "tendency_label": null
   },
   "buoy_44013": {
-    "time": "2026-02-22T00:20Z",
-    "wind_dir": 340.0,
+    "time": "2026-02-22T00:30Z",
+    "wind_dir": 350.0,
     "wind_mph": 4.5,
     "gust_mph": 6.7,
-    "wave_ht_ft": 5.2,
-    "wave_period_sec": 8.0,
-    "pressure_hpa": 1019.9,
+    "wave_ht_ft": null,
+    "wave_period_sec": null,
+    "pressure_hpa": 1020.2,
     "air_temp_f": 30.6,
-    "water_temp_f": 35.8,
-    "dewpoint_f": 24.3,
+    "water_temp_f": 36.0,
+    "dewpoint_f": 24.1,
     "pressure_tend_hpa": null
   },
   "frost_log": {
@@ -2752,7 +2752,7 @@
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-02-22T01:00:30.049667",
+    "updated": "2026-02-22T01:05:46.485531",
     "temperature": 26.0,
     "stale": false
   },
@@ -2773,9 +2773,9 @@
     "trough_signal": "Steady",
     "sea_breeze_label": "No sea breeze",
     "sea_breeze_conf": null,
-    "land_sea_diff_f": -9.8,
+    "land_sea_diff_f": -10.0,
     "land_temp_f": 26.0,
-    "water_temp_f": 35.8,
+    "water_temp_f": 36.0,
     "best_pressure_tend": -0.2,
     "best_pressure_tend_src": "model",
     "pressure_alarm": null,
