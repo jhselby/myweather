@@ -4231,6 +4231,7 @@
         
         // Bottom note
         const stationsTemp = hyp.wu_stations_temp || 0;
+        const stationsWind = hyp.wu_stations_wind || 0;
         let noteText = "";
         if (stationsTemp > 0) {
           noteText = `Corrected using ${stationsTemp} local weather stations`;
@@ -4290,9 +4291,7 @@
         document.getElementById("correctedWindGust").textContent = 
           hyp.corrected_wind_gust != null ? hyp.corrected_wind_gust.toFixed(1) + " mph" : "-- mph";
         
-        // Quality note
-        const stationsTemp = hyp.wu_stations_temp || 0;
-        const stationsWind = hyp.wu_stations_wind || 0;
+        // Quality note (reuse stationsTemp/stationsWind from Current Conditions section above)
         if (stationsTemp > 0) {
           document.getElementById("hyperlocalNote").textContent =
             `Data quality: ${stationsTemp} stations for temp/humidity/pressure • ${stationsWind} for wind`;
