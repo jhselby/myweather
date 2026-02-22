@@ -34,28 +34,10 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          # Clean up any unstaged changes first
-          git reset --hard HEAD
-          git clean -fd
-          
-          # Add the new data
           git add weather_data.json
-          
-          # Only commit if there are changes
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
+          if git diff --cached --quiet; then
+            echo "No changes to weather_data.json"
           else
             git commit -m "Update weather data $(date -u +'%Y-%m-%d %H:%M') UTC"
-            
-            # Pull with rebase, handling conflicts
-            git pull --rebase origin main || {
-              echo "Rebase conflict, resetting and trying again"
-              git rebase --abort
-              git reset --hard origin/main
-              git add weather_data.json
-              git commit -m "Update weather data $(date -u +'%Y-%m-%d %H:%M') UTC"
-            }
-            
-            # Push
             git push origin main
           fi
