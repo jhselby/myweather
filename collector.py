@@ -1098,6 +1098,28 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
             hyperlocal["bias_humidity"] = round(wu_h - model_h, 1)
             hyperlocal["corrected_humidity"] = wu_h
         
+        # Wind Speed - WU observations available but no correction model yet
+        model_w = weather_data["current"].get("wind_speed")
+        wu_w = wu.get("wind_speed_mph")
+        if model_w is not None:
+            hyperlocal["model_wind_speed"] = model_w
+        if wu_w is not None:
+            hyperlocal["wu_wind_speed"] = wu_w
+        # Bias and correction placeholders for future wind model
+        hyperlocal["bias_wind_speed"] = None  # Future: wind correction model
+        hyperlocal["corrected_wind_speed"] = model_w  # Using model until we build wind correction
+        
+        # Wind Gust - WU observations available but no correction model yet
+        model_g = weather_data["current"].get("wind_gusts")
+        wu_g = wu.get("wind_gust_mph")
+        if model_g is not None:
+            hyperlocal["model_wind_gust"] = model_g
+        if wu_g is not None:
+            hyperlocal["wu_wind_gust"] = wu_g
+        # Bias and correction placeholders for future wind model
+        hyperlocal["bias_wind_gust"] = None  # Future: wind correction model
+        hyperlocal["corrected_wind_gust"] = model_g  # Using model until we build wind correction
+        
         # Store WU quality metrics for display
         if wu:
             wu_quality = wu.get("quality", {})
