@@ -1,36 +1,43 @@
 name: Update Weather Data
-concurrency:
-  group: weather-data
-  cancel-in-progress: false
+
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '6,21,36,51 * * * *'
   workflow_dispatch:
+
 jobs:
   update-weather:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
+
       - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4
-      - name: Run weather collector
-        run: |
-          python3 collector.py
-      - name: Commit and push if changed
+          python -m pip install --upgrade pip
+          pip install requests python-dateutil pytz beautifulsoup4 lxml
+
+      - name: Run collector
+        run: python collector.py
+
+      - name: Configure Git
         run: |
           git config --global user.name "Weather Bot"
-          git config --global user.email "actions@users.noreply.github.com"
-          git add weather_data.json frost_log.json
+          git config --global user.email "weather-bot@github.com"
+
+      - name: Commit and push changes
+        run: |
+          git add weather_data.json
           if git diff --cached --quiet; then
-            echo "No changes to commit."
-            exit 0
+            echo "No changes to weather_data.json"
+          else
+            git commit -m "Update weather data $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git push origin main
           fi
-          git commit -m "Update weather data $(date -u '+%Y-%m-%d %H:%M UTC')"
-          git pull --rebase origin main
-          git push
