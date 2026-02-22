@@ -1451,8 +1451,14 @@ def main():
         print(f"  ✓ WU stations data stored: {stations_used} stations")
 
     # Save to JSON
-    with open("weather_data.json", "w") as f:
+    output_file = "weather_data.json"
+    with open(output_file, "w") as f:
         json.dump(weather_data, f, indent=2)
+    
+    # Confirm write
+    import os
+    file_size = os.path.getsize(output_file)
+    print(f"  ✓ Wrote {output_file} ({file_size:,} bytes)")
 
     print("\n" + "=" * 60)
     print(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
