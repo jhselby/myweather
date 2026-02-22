@@ -736,6 +736,11 @@
       border-color: rgba(0,0,0,0.14);
       color: rgba(0,0,0,0.6);
     }
+    body.theme-light #refreshBtn {
+      background: rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.14);
+      color: rgba(0,0,0,0.6);
+    }
     body.theme-light #settingsPanel {
       background: rgba(0,0,0,0.04);
       border-color: rgba(0,0,0,0.10);
@@ -901,6 +906,11 @@
       <h1>
         ⚓ Wyman Cove Weather
         <span style="display:flex;align-items:center;gap:8px;">
+          <button id="refreshBtn" onclick="location.reload()" aria-label="Refresh"
+            style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.16);
+                   color:rgba(255,255,255,0.7);border-radius:999px;padding:6px 10px;
+                   font-size:0.92rem;cursor:pointer;line-height:1;transition:background 0.15s;
+                   -webkit-tap-highlight-color:transparent;">↻</button>
           <button id="settingsBtn" onclick="toggleSettings()" aria-label="Settings"
             style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.16);
                    color:rgba(255,255,255,0.7);border-radius:999px;padding:6px 10px;
@@ -940,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.2</span>
+            <span class="version-pill" id="appVersion">v2.3</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -951,6 +961,19 @@
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
             <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.3</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 21, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Auto-reload on foreground (webapp)</li>
+                <li>Manual refresh button (↻) in header</li>
+                <li>iOS safe areas, overscroll fix, web manifest</li>
+                <li>App icons (anchor, 192 + 512px)</li>
+                <li>Favicon</li>
+                <li>Chart legend colors theme-aware</li>
+                <li>Hyperlocal + Diagnostics moved to bottom of Weather tab</li>
+              </ul>
+            </div>
+            <div style="margin-bottom:8px;">
               <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.2</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 21, 2026</span>
               <ul style="margin:4px 0 0 16px;padding:0;">
@@ -958,6 +981,19 @@
                 <li>Today card dark mode contrast fix</li>
                 <li>Tooltip hover target: consistent width across all cards</li>
                 <li>Version + changelog now auto-maintained by Claude</li>
+              </ul>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.3</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 21, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Auto-reload on foreground (webapp)</li>
+                <li>Manual refresh button (↻) in header</li>
+                <li>iOS safe areas, overscroll fix, web manifest</li>
+                <li>App icons (anchor, 192 + 512px)</li>
+                <li>Favicon</li>
+                <li>Chart legend colors theme-aware</li>
+                <li>Hyperlocal + Diagnostics moved to bottom of Weather tab</li>
               </ul>
             </div>
             <div style="margin-bottom:8px;">
@@ -1645,8 +1681,8 @@
     function applyTheme(mode) {
       const body = document.body;
       body.classList.remove('theme-light', 'theme-dark');
-      const isLight = mode === 'light' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);
-      if (isLight) {
+      const light = mode === 'light' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: light)').matches);
+      if (light) {
         body.classList.add('theme-light');
         document.documentElement.style.background = '#f0f2f5';
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f0f2f5');
@@ -1654,6 +1690,19 @@
         document.documentElement.style.background = '#0b1220';
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#0b1220');
       }
+      updateRadarBasemap(light);
+    }
+
+    function updateRadarBasemap(light) {
+      if (!radarMap || !radarBasemap || !radarLabels) return;
+      const basemapUrl = light
+        ? "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png";
+      const labelsUrl = light
+        ? "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png";
+      radarBasemap.setUrl(basemapUrl);
+      radarLabels.setUrl(labelsUrl);
     }
 
     function setPressureUnit(unit) {
@@ -3477,6 +3526,8 @@
     // Tile URL: {host}{path}/512/{z}/{x}/{y}/{colorScheme}/{smooth}_{snow}.webp
     // ======================================================
     let radarMap       = null;
+    let radarBasemap   = null;   // CartoDB basemap tile layer (swappable)
+    let radarLabels    = null;   // CartoDB labels tile layer (swappable)
     let radarInited    = false;
     let radarPlaying   = false;
     let radarTimer     = null;
@@ -3636,10 +3687,16 @@
         attributionControl: true,
       });
 
-      // Dark basemap — CartoDB Dark Matter (free, no API key)
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
-        {
+      // Basemap — CartoDB, theme-aware
+      const light = isLight();
+      const basemapUrl = light
+        ? "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png";
+      const labelsUrl = light
+        ? "https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png";
+
+      radarBasemap = L.tileLayer(basemapUrl, {
           attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
           subdomains: "abcd",
           maxZoom: 20,
@@ -3652,8 +3709,7 @@
       radarMap.getPane("labelsPane").style.pointerEvents = "none";
 
       // Labels on top of radar layer
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
+      radarLabels = L.tileLayer(labelsUrl,
         { subdomains: "abcd", maxZoom: 20, pane: "labelsPane" }
       ).addTo(radarMap);
 
@@ -4383,6 +4439,22 @@
         console.error(err);
         document.getElementById("location").textContent = "Error loading weather_data.json";
       });
+
+    // ── Auto-reload on foreground ─────────────────────────────
+    // When running as installed webapp (no browser chrome), reload
+    // every time the app comes to the foreground so data is fresh.
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        location.reload();
+      }
+    });
+
+    // Spin the refresh button on click for tactile feedback
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+      this.style.transition = 'transform 0.4s ease';
+      this.style.transform = 'rotate(360deg)';
+      setTimeout(() => { this.style.transform = ''; this.style.transition = ''; }, 400);
+    });
   </script>
 
   
