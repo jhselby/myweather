@@ -856,30 +856,15 @@ def fetch_wu_stations():
         
         data = json.loads(json_file.read_text())
         
-        # Calculate aggregates from station data
-        if data and len(data) > 0:
-            temps = [r['temperature_f'] for r in data if r.get('temperature_f') is not None]
-            humidity = [r['humidity_pct'] for r in data if r.get('humidity_pct') is not None]
-            winds = [r['wind_speed_mph'] for r in data if r.get('wind_speed_mph') is not None]
-            gusts = [r['wind_gust_mph'] for r in data if r.get('wind_gust_mph') is not None]
-            pressures = [r['pressure_in'] for r in data if r.get('pressure_in') is not None]
-            
-            aggregated = {
-                "temperature_f": round(sum(temps)/len(temps), 1) if temps else None,
-                "temp_min_f": round(min(temps), 1) if temps else None,
-                "temp_max_f": round(max(temps), 1) if temps else None,
-                "humidity_pct": round(sum(humidity)/len(humidity), 1) if humidity else None,
-                "wind_speed_mph": round(sum(winds)/len(winds), 1) if winds else None,
-                "wind_gust_mph": round(sum(gusts)/len(gusts), 1) if gusts else None,
-                "wind_gust_max_mph": round(max(gusts), 1) if gusts else None,
-                "pressure_in": round(sum(pressures)/len(pressures), 2) if pressures else None,
-                "station_count": len(data),
-                "stations": data  # Full station detail available if needed
-            }
+        # Smart scraper returns already-aggregated data with quality metrics
+        if data and data.get('temperature_f') is not None:
+            # Data is already smartly aggregated with distance weighting and filtering
+            # Just pass it through with metadata
+            stations_used = data.get('quality', {}).get('stations_used_temp', 0)
             
             meta["status"] = "ok"
-            print(f"  ✓ WU multi-station: {len(data)} stations aggregated")
-            return aggregated, meta
+            print(f"  ✓ WU multi-station: {stations_used} stations (smart filtered & weighted)")
+            return data, meta
         else:
             raise Exception("No station data returned")
             
