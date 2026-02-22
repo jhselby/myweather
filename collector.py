@@ -877,7 +877,7 @@ def fetch_wu_stations():
 # -----------------------------
 # Processing
 # -----------------------------
-def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, buoy, nws_forecast, alerts, source_meta, frost_log=None):
+def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, buoy, nws_forecast, alerts, source_meta, wu_data=None, frost_log=None):
     """Combine and normalize data sources into a stable schema."""
     print("🔄 Processing data...")
 
@@ -908,7 +908,8 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
         "buoy_44013":   buoy if buoy is not None else {},
         "frost_log":    frost_log if frost_log else {},
         "nws_forecast": nws_forecast if nws_forecast is not None else [],
-        "pws": pws if pws is not None else {"station": PWS_STATION, "name": "Castle Hill", "temperature": None, "stale": True}
+        "pws": pws if pws is not None else {"station": PWS_STATION, "name": "Castle Hill", "temperature": None, "stale": True},
+        "wu_stations": wu_data if wu_data is not None else {}
     }
 
     if current_data:
@@ -1434,6 +1435,7 @@ def main():
     weather_data = process_data(
         current_data, hourly_data, daily_data,
         pws_data, tide_data, kbos_data, kbvy_data, buoy_data, forecast_data, alert_data, sources,
+        wu_data=wu_data,
         frost_log=frost_log
     )
 
@@ -1442,10 +1444,10 @@ def main():
         weather_data["salem_water_temp_f"] = salem_water_temp
         print(f"  ✓ Salem water temp stored: {salem_water_temp}°F")
     
-    # Inject WU multi-station data if available
+    # WU data is now injected inside process_data() for hyperlocal calculations
     if wu_data is not None:
-        weather_data["wu_stations"] = wu_data
-        print(f"  ✓ WU stations data stored: {wu_data.get('station_count', 0)} stations")
+        stations_used = wu_data.get('quality', {}).get('stations_used_temp', 0)
+        print(f"  ✓ WU stations data stored: {stations_used} stations")
 
     # Save to JSON
     with open("weather_data.json", "w") as f:
