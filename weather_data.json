@@ -1,85 +1,85 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-02-22T17:03:26.119030Z",
+  "generated_at": "2026-02-22T17:16:44.300461Z",
   "location": {
     "name": "Wyman Cove, Marblehead MA",
     "coordinates": {
       "lat": 42.5014,
       "lon": -70.875
     },
-    "updated": "2026-02-22T17:03:26.119030Z"
+    "updated": "2026-02-22T17:16:44.300461Z"
   },
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:02:40.212495Z",
+      "updated_at": "2026-02-22T17:16:15.199561Z",
       "error": null,
       "model": "GFS current",
-      "age_minutes": 0.8
+      "age_minutes": 0.5
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:02:40.846286Z",
+      "updated_at": "2026-02-22T17:16:15.611052Z",
       "error": null,
       "model": "HRRR hourly",
-      "age_minutes": 0.8
+      "age_minutes": 0.5
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:02:41.431842Z",
+      "updated_at": "2026-02-22T17:16:15.986174Z",
       "error": null,
       "model": "ECMWF daily",
-      "age_minutes": 0.7
+      "age_minutes": 0.5
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:02:42.009187Z",
+      "updated_at": "2026-02-22T17:16:16.358969Z",
       "error": null,
-      "age_minutes": 0.7
+      "age_minutes": 0.5
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:02:43.294564Z",
+      "updated_at": "2026-02-22T17:16:20.802064Z",
       "error": null,
-      "age_minutes": 0.7
+      "age_minutes": 0.4
     },
     "kbos": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:02:44.313105Z",
+      "updated_at": "2026-02-22T17:16:21.167459Z",
       "error": null,
-      "age_minutes": 0.7
+      "age_minutes": 0.4
     },
     "kbvy": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:02:45.078158Z",
+      "updated_at": "2026-02-22T17:16:21.231199Z",
       "error": null,
-      "age_minutes": 0.7
+      "age_minutes": 0.4
     },
     "buoy_44013": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:02:45.443263Z",
+      "updated_at": "2026-02-22T17:16:21.440071Z",
       "error": null,
-      "age_minutes": 0.7
+      "age_minutes": 0.4
     },
     "wu_stations": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:02:45.647534Z",
+      "updated_at": "2026-02-22T17:16:21.609953Z",
       "error": null,
-      "age_minutes": 0.7
+      "age_minutes": 0.4
     },
     "nws_forecast": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:03:09.651019Z",
+      "updated_at": "2026-02-22T17:16:42.664034Z",
       "error": null,
       "office": "BOX",
       "grid": "76,97",
-      "age_minutes": 0.3
+      "age_minutes": 0.0
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-02-22T17:03:16.038889Z",
+      "updated_at": "2026-02-22T17:16:43.368092Z",
       "error": null,
-      "age_minutes": 0.2
+      "age_minutes": 0.0
     }
   },
   "alerts": [
@@ -103,20 +103,20 @@
     }
   ],
   "current": {
-    "time": "2026-02-22T12:00",
-    "temperature": 32.2,
-    "feels_like": 22.3,
+    "time": "2026-02-22T12:15",
+    "temperature": 32.1,
+    "feels_like": 22.7,
     "humidity": 78,
     "pressure": 1021.1,
-    "wind_speed": 12.5,
-    "wind_direction": 57,
-    "wind_gusts": 16.6,
+    "wind_speed": 11.2,
+    "wind_direction": 55,
+    "wind_gusts": 15.2,
     "cloud_cover": 100,
     "precipitation": 0.0,
     "weather_code": 3,
     "condition": "Overcast",
     "emoji": "\u2601\ufe0f",
-    "wet_bulb": 28.9,
+    "wet_bulb": 28.8,
     "precip_type": "Snow likely"
   },
   "hourly": {
@@ -2519,37 +2519,37 @@
   },
   "kbos": {
     "station": "KBOS",
-    "time": "2026-02-22T16:45:00+00:00",
+    "time": "2026-02-22T17:00:00+00:00",
     "pressure_hpa": null,
     "temp_f": 33.8,
     "dewpoint_f": null,
-    "wind_mph": 10.4,
-    "wind_dir": 50,
+    "wind_mph": 11.5,
+    "wind_dir": 70,
     "tendency_hpa": null,
     "tendency_label": null
   },
   "kbvy": {
     "station": "KBVY",
-    "time": "2026-02-22T16:45:00+00:00",
+    "time": "2026-02-22T17:00:00+00:00",
     "pressure_hpa": null,
     "temp_f": 33.8,
     "dewpoint_f": null,
-    "wind_mph": 6.9,
-    "wind_dir": 40,
+    "wind_mph": 8.1,
+    "wind_dir": 60,
     "tendency_hpa": null,
     "tendency_label": null
   },
   "buoy_44013": {
-    "time": "2026-02-22T16:30Z",
-    "wind_dir": 70.0,
+    "time": "2026-02-22T16:40Z",
+    "wind_dir": 60.0,
     "wind_mph": 13.4,
-    "gust_mph": 15.7,
+    "gust_mph": 17.9,
     "wave_ht_ft": null,
     "wave_period_sec": null,
-    "pressure_hpa": 1020.6,
-    "air_temp_f": 34.3,
+    "pressure_hpa": 1020.4,
+    "air_temp_f": 34.2,
     "water_temp_f": 36.0,
-    "dewpoint_f": 26.1,
+    "dewpoint_f": 25.9,
     "pressure_tend_hpa": null
   },
   "frost_log": {
@@ -2757,9 +2757,9 @@
       "temperature": 37,
       "temp_unit": "F",
       "wind_speed": "10 mph",
-      "wind_direction": "E",
+      "wind_direction": "NE",
       "short_forecast": "Cloudy",
-      "detailed": "Cloudy, with a high near 37. East wind around 10 mph.",
+      "detailed": "Cloudy, with a high near 37. Northeast wind around 10 mph.",
       "icon": "https://api.weather.gov/icons/land/day/ovc?size=medium"
     },
     {
@@ -2768,46 +2768,46 @@
       "start_time": "2026-02-22T18:00:00-05:00",
       "temperature": 27,
       "temp_unit": "F",
-      "wind_speed": "12 to 28 mph",
+      "wind_speed": "12 to 32 mph",
       "wind_direction": "NE",
-      "short_forecast": "Heavy Snow",
-      "detailed": "Snow between 10pm and 3am, then snow and areas of blowing snow. Cloudy, with a low around 27. Northeast wind 12 to 28 mph, with gusts as high as 52 mph. Chance of precipitation is 100%. New snow accumulation of 3 to 5 inches possible.",
-      "icon": "https://api.weather.gov/icons/land/night/snow,30/blizzard,100?size=medium"
+      "short_forecast": "Snow",
+      "detailed": "Snow before 2am, then snow and areas of blowing snow. Cloudy, with a low around 27. Northeast wind 12 to 32 mph, with gusts as high as 52 mph. Chance of precipitation is 100%. New snow accumulation of 3 to 7 inches possible.",
+      "icon": "https://api.weather.gov/icons/land/night/snow,60/blizzard,100?size=medium"
     },
     {
       "name": "Monday",
       "is_daytime": true,
       "start_time": "2026-02-23T06:00:00-05:00",
-      "temperature": 33,
+      "temperature": 30,
       "temp_unit": "F",
-      "wind_speed": "24 to 31 mph",
+      "wind_speed": "21 to 36 mph",
       "wind_direction": "N",
       "short_forecast": "Heavy Snow And Areas Of Blowing Snow",
-      "detailed": "Snow and areas of blowing snow. Cloudy, with a high near 33. North wind 24 to 31 mph, with gusts as high as 58 mph. Chance of precipitation is 100%. New snow accumulation of 12 to 18 inches possible.",
+      "detailed": "Snow and areas of blowing snow. Cloudy, with a high near 30. North wind 21 to 36 mph, with gusts as high as 59 mph. Chance of precipitation is 100%. New snow accumulation of 12 to 18 inches possible.",
       "icon": "https://api.weather.gov/icons/land/day/blizzard,100?size=medium"
     },
     {
       "name": "Monday Night",
       "is_daytime": false,
       "start_time": "2026-02-23T18:00:00-05:00",
-      "temperature": 21,
+      "temperature": 22,
       "temp_unit": "F",
-      "wind_speed": "13 to 23 mph",
+      "wind_speed": "13 to 20 mph",
       "wind_direction": "NW",
-      "short_forecast": "Snow",
-      "detailed": "Snow before 2am. Mostly cloudy, with a low around 21. Northwest wind 13 to 23 mph, with gusts as high as 45 mph. Chance of precipitation is 80%. New snow accumulation of 1 to 2 inches possible.",
-      "icon": "https://api.weather.gov/icons/land/night/snow,80/snow,20?size=medium"
+      "short_forecast": "Light Snow Likely",
+      "detailed": "Snow likely before 1am. Mostly cloudy, with a low around 22. Northwest wind 13 to 20 mph, with gusts as high as 41 mph. Chance of precipitation is 60%. New snow accumulation of 3 to 5 inches possible.",
+      "icon": "https://api.weather.gov/icons/land/night/snow,60/snow,20?size=medium"
     },
     {
       "name": "Tuesday",
       "is_daytime": true,
       "start_time": "2026-02-24T06:00:00-05:00",
-      "temperature": 31,
+      "temperature": 32,
       "temp_unit": "F",
-      "wind_speed": "13 mph",
+      "wind_speed": "9 to 13 mph",
       "wind_direction": "NW",
       "short_forecast": "Mostly Sunny",
-      "detailed": "Mostly sunny, with a high near 31. Northwest wind around 13 mph, with gusts as high as 25 mph.",
+      "detailed": "Mostly sunny, with a high near 32. Northwest wind 9 to 13 mph, with gusts as high as 24 mph.",
       "icon": "https://api.weather.gov/icons/land/day/sct?size=medium"
     },
     {
@@ -2816,23 +2816,23 @@
       "start_time": "2026-02-24T18:00:00-05:00",
       "temperature": 14,
       "temp_unit": "F",
-      "wind_speed": "6 to 10 mph",
+      "wind_speed": "6 to 9 mph",
       "wind_direction": "W",
       "short_forecast": "Partly Cloudy then Slight Chance Light Snow",
-      "detailed": "A slight chance of snow after 5am. Partly cloudy, with a low around 14. West wind 6 to 10 mph. Chance of precipitation is 20%.",
+      "detailed": "A slight chance of snow after 5am. Partly cloudy, with a low around 14. West wind 6 to 9 mph. Chance of precipitation is 20%.",
       "icon": "https://api.weather.gov/icons/land/night/sct/snow,20?size=medium"
     },
     {
       "name": "Wednesday",
       "is_daytime": true,
       "start_time": "2026-02-25T06:00:00-05:00",
-      "temperature": 37,
+      "temperature": 38,
       "temp_unit": "F",
       "wind_speed": "6 to 10 mph",
       "wind_direction": "S",
-      "short_forecast": "Light Snow Likely",
-      "detailed": "Snow likely before 1pm, then rain and snow likely. Mostly cloudy, with a high near 37. South wind 6 to 10 mph. Chance of precipitation is 70%. New snow accumulation of 1 to 2 inches possible.",
-      "icon": "https://api.weather.gov/icons/land/day/snow,70/snow,60?size=medium"
+      "short_forecast": "Light Snow",
+      "detailed": "Snow before 1pm, then rain and snow likely. Mostly cloudy, with a high near 38. South wind 6 to 10 mph. Chance of precipitation is 80%. New snow accumulation of 1 to 2 inches possible.",
+      "icon": "https://api.weather.gov/icons/land/day/snow,80/snow,70?size=medium"
     },
     {
       "name": "Wednesday Night",
@@ -2842,9 +2842,9 @@
       "temp_unit": "F",
       "wind_speed": "8 mph",
       "wind_direction": "SW",
-      "short_forecast": "Chance Rain And Snow",
-      "detailed": "A chance of rain and snow before 3am. Mostly cloudy, with a low around 28. Southwest wind around 8 mph. Chance of precipitation is 40%.",
-      "icon": "https://api.weather.gov/icons/land/night/snow,40/snow,20?size=medium"
+      "short_forecast": "Chance Rain And Snow then Partly Cloudy",
+      "detailed": "A chance of rain and snow before 10pm. Partly cloudy, with a low around 28. Southwest wind around 8 mph. Chance of precipitation is 40%.",
+      "icon": "https://api.weather.gov/icons/land/night/snow,40/sct?size=medium"
     },
     {
       "name": "Thursday",
@@ -2855,80 +2855,80 @@
       "wind_speed": "8 mph",
       "wind_direction": "SW",
       "short_forecast": "Slight Chance Light Snow then Chance Light Rain",
-      "detailed": "A slight chance of snow between 8am and 9am, then a chance of rain. Mostly sunny, with a high near 39. Southwest wind around 8 mph. Chance of precipitation is 40%.",
-      "icon": "https://api.weather.gov/icons/land/day/snow,20/rain,40?size=medium"
+      "detailed": "A slight chance of snow between 11am and noon, then a chance of rain. Partly sunny, with a high near 39. Southwest wind around 8 mph. Chance of precipitation is 50%.",
+      "icon": "https://api.weather.gov/icons/land/day/snow,20/rain,50?size=medium"
     },
     {
       "name": "Thursday Night",
       "is_daytime": false,
       "start_time": "2026-02-26T18:00:00-05:00",
-      "temperature": 30,
+      "temperature": 29,
       "temp_unit": "F",
       "wind_speed": "9 mph",
-      "wind_direction": "SE",
-      "short_forecast": "Chance Rain And Snow then Rain And Snow Likely",
-      "detailed": "A chance of rain before 8pm, then a chance of rain and snow between 8pm and 10pm, then rain and snow likely. Mostly cloudy, with a low around 30. Southeast wind around 9 mph. Chance of precipitation is 60%.",
-      "icon": "https://api.weather.gov/icons/land/night/snow,60?size=medium"
+      "wind_direction": "S",
+      "short_forecast": "Rain And Snow Likely",
+      "detailed": "A chance of rain before 7pm, then rain and snow likely between 7pm and 10pm, then rain and snow likely. Mostly cloudy, with a low around 29. South wind around 9 mph. Chance of precipitation is 70%.",
+      "icon": "https://api.weather.gov/icons/land/night/snow,70?size=medium"
     },
     {
       "name": "Friday",
       "is_daytime": true,
       "start_time": "2026-02-27T06:00:00-05:00",
-      "temperature": 38,
+      "temperature": 41,
       "temp_unit": "F",
       "wind_speed": "9 mph",
-      "wind_direction": "NW",
+      "wind_direction": "W",
       "short_forecast": "Chance Rain And Snow",
-      "detailed": "A chance of rain and snow. Partly sunny, with a high near 38. Northwest wind around 9 mph. Chance of precipitation is 50%.",
-      "icon": "https://api.weather.gov/icons/land/day/snow,50/snow,30?size=medium"
+      "detailed": "A chance of rain and snow. Partly sunny, with a high near 41. West wind around 9 mph. Chance of precipitation is 50%.",
+      "icon": "https://api.weather.gov/icons/land/day/snow,50/snow,20?size=medium"
     },
     {
       "name": "Friday Night",
       "is_daytime": false,
       "start_time": "2026-02-27T18:00:00-05:00",
-      "temperature": 23,
+      "temperature": 25,
       "temp_unit": "F",
-      "wind_speed": "7 mph",
+      "wind_speed": "8 mph",
       "wind_direction": "W",
-      "short_forecast": "Slight Chance Light Snow then Mostly Clear",
-      "detailed": "A slight chance of snow before 9pm. Mostly clear, with a low around 23. West wind around 7 mph.",
-      "icon": "https://api.weather.gov/icons/land/night/snow,20/few?size=medium"
+      "short_forecast": "Mostly Clear",
+      "detailed": "Mostly clear, with a low around 25. West wind around 8 mph.",
+      "icon": "https://api.weather.gov/icons/land/night/few?size=medium"
     },
     {
       "name": "Saturday",
       "is_daytime": true,
       "start_time": "2026-02-28T06:00:00-05:00",
-      "temperature": 41,
+      "temperature": 42,
       "temp_unit": "F",
       "wind_speed": "9 mph",
       "wind_direction": "SW",
       "short_forecast": "Mostly Sunny",
-      "detailed": "Mostly sunny, with a high near 41. Southwest wind around 9 mph.",
+      "detailed": "Mostly sunny, with a high near 42. Southwest wind around 9 mph.",
       "icon": "https://api.weather.gov/icons/land/day/sct?size=medium"
     },
     {
       "name": "Saturday Night",
       "is_daytime": false,
       "start_time": "2026-02-28T18:00:00-05:00",
-      "temperature": 31,
+      "temperature": 32,
       "temp_unit": "F",
       "wind_speed": "9 mph",
       "wind_direction": "SW",
-      "short_forecast": "Mostly Cloudy then Slight Chance Light Rain",
-      "detailed": "A slight chance of rain after 2am. Mostly cloudy, with a low around 31. Southwest wind around 9 mph.",
-      "icon": "https://api.weather.gov/icons/land/night/bkn/rain,20?size=medium"
+      "short_forecast": "Partly Cloudy then Slight Chance Light Rain",
+      "detailed": "A slight chance of rain after 2am. Partly cloudy, with a low around 32. Southwest wind around 9 mph.",
+      "icon": "https://api.weather.gov/icons/land/night/sct/rain,20?size=medium"
     }
   ],
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-02-22T17:02:43.292700",
-    "temperature": 34.0,
+    "updated": "2026-02-22T17:16:20.800080",
+    "temperature": 33.0,
     "stale": false
   },
   "hyperlocal": {
-    "bias_temp": 1.8,
-    "corrected_temp": 34.0
+    "bias_temp": 0.9,
+    "corrected_temp": 33.0
   },
   "derived": {
     "pressure_trend": "Falling",
@@ -2943,8 +2943,8 @@
     "trough_signal": "Approaching",
     "sea_breeze_label": "No sea breeze",
     "sea_breeze_conf": null,
-    "land_sea_diff_f": -2.0,
-    "land_temp_f": 34.0,
+    "land_sea_diff_f": -3.0,
+    "land_temp_f": 33.0,
     "water_temp_f": 36.0,
     "best_pressure_tend": -2.0,
     "best_pressure_tend_src": "model",
@@ -2973,149 +2973,149 @@
   },
   "wu_stations": {
     "temperature_f": 33.8,
-    "temp_min_f": 30.8,
-    "temp_max_f": 36.4,
-    "humidity_pct": 82.1,
-    "wind_speed_mph": 2.7,
-    "wind_gust_mph": 5.3,
-    "wind_gust_max_mph": 12.5,
+    "temp_min_f": 30.4,
+    "temp_max_f": 36.1,
+    "humidity_pct": 80.9,
+    "wind_speed_mph": 2.8,
+    "wind_gust_mph": 6.2,
+    "wind_gust_max_mph": 15.4,
     "pressure_in": 30.0,
     "station_count": 15,
     "stations": [
       {
         "station_id": "KMAMARBL63",
-        "timestamp": "2026-02-22 11:59:55",
+        "timestamp": "2026-02-22 12:14:51",
         "temperature_f": 33.4,
-        "humidity_pct": 83.0,
-        "wind_speed_mph": 1.0,
-        "wind_gust_mph": 4.5,
-        "pressure_in": 30.44
+        "humidity_pct": 83.4,
+        "wind_speed_mph": 0.9,
+        "wind_gust_mph": 3.4,
+        "pressure_in": 30.45
       },
       {
         "station_id": "KMAMARBL69",
-        "timestamp": "2026-02-22 11:00:07",
-        "temperature_f": 34.2,
-        "humidity_pct": 84.0,
-        "wind_speed_mph": 2.7,
-        "wind_gust_mph": 4.5,
-        "pressure_in": 29.94
+        "timestamp": "2026-02-22 12:00:08",
+        "temperature_f": 34.9,
+        "humidity_pct": 82.0,
+        "wind_speed_mph": 4.3,
+        "wind_gust_mph": 7.4,
+        "pressure_in": 29.91
       },
       {
         "station_id": "KMAMARBL112",
-        "timestamp": "2026-02-22 11:59:41",
-        "temperature_f": 34.1,
-        "humidity_pct": 79.0,
-        "wind_speed_mph": 2.9,
-        "wind_gust_mph": 6.0,
+        "timestamp": "2026-02-22 12:14:41",
+        "temperature_f": 34.0,
+        "humidity_pct": 76.8,
+        "wind_speed_mph": 4.5,
+        "wind_gust_mph": 8.7,
         "pressure_in": 29.85
       },
       {
         "station_id": "KMAMARBL108",
-        "timestamp": "2026-02-22 11:59:55",
-        "temperature_f": 30.8,
-        "humidity_pct": 83.0,
+        "timestamp": "2026-02-22 12:14:51",
+        "temperature_f": 30.4,
+        "humidity_pct": 81.4,
         "wind_speed_mph": 0.0,
         "wind_gust_mph": 0.0,
-        "pressure_in": 29.87
+        "pressure_in": 29.88
       },
       {
         "station_id": "KMAMARBL39",
-        "timestamp": "2026-02-22 11:59:50",
-        "temperature_f": 34.4,
-        "humidity_pct": 78.0,
-        "wind_speed_mph": 1.2,
-        "wind_gust_mph": 2.2,
-        "pressure_in": 30.12
+        "timestamp": "2026-02-22 12:14:46",
+        "temperature_f": 33.9,
+        "humidity_pct": 77.0,
+        "wind_speed_mph": 0.9,
+        "wind_gust_mph": 3.4,
+        "pressure_in": 30.13
       },
       {
         "station_id": "KMAMARBL4",
-        "timestamp": "2026-02-22 11:59:56",
-        "temperature_f": 36.4,
-        "humidity_pct": 83.0,
-        "wind_speed_mph": 1.6,
-        "wind_gust_mph": 10.0,
+        "timestamp": "2026-02-22 12:14:55",
+        "temperature_f": 36.1,
+        "humidity_pct": 81.9,
+        "wind_speed_mph": 2.6,
+        "wind_gust_mph": 8.0,
         "pressure_in": 29.99
       },
       {
         "station_id": "KMAMARBL36",
-        "timestamp": "2026-02-22 11:45:02",
-        "temperature_f": 33.9,
+        "timestamp": "2026-02-22 12:00:04",
+        "temperature_f": 34.1,
         "humidity_pct": 84.0,
-        "wind_speed_mph": 6.0,
-        "wind_gust_mph": 9.0,
+        "wind_speed_mph": 3.0,
+        "wind_gust_mph": 8.0,
         "pressure_in": 30.12
       },
       {
         "station_id": "KMAMARBL57",
-        "timestamp": "2026-02-22 11:59:31",
-        "temperature_f": 34.1,
-        "humidity_pct": 80.4,
-        "wind_speed_mph": 0.0,
-        "wind_gust_mph": 0.0,
-        "pressure_in": 29.11
+        "timestamp": "2026-02-22 12:14:46",
+        "temperature_f": 34.2,
+        "humidity_pct": 81.0,
+        "wind_speed_mph": 0.6,
+        "wind_gust_mph": 2.2,
+        "pressure_in": 29.12
       },
       {
         "station_id": "KMAMARBL56",
-        "timestamp": "2026-02-22 11:59:47",
+        "timestamp": "2026-02-22 12:14:59",
         "temperature_f": 33.4,
         "humidity_pct": 84.2,
         "wind_speed_mph": 0.3,
-        "wind_gust_mph": 3.4,
-        "pressure_in": 29.71
+        "wind_gust_mph": 6.9,
+        "pressure_in": 29.72
       },
       {
         "station_id": "KMAMARBL89",
-        "timestamp": "2026-02-22 11:59:56",
-        "temperature_f": 34.1,
-        "humidity_pct": 83.0,
-        "wind_speed_mph": 0.4,
-        "wind_gust_mph": 2.2,
-        "pressure_in": 30.04
+        "timestamp": "2026-02-22 12:14:52",
+        "temperature_f": 34.8,
+        "humidity_pct": 83.7,
+        "wind_speed_mph": 0.3,
+        "wind_gust_mph": 3.4,
+        "pressure_in": 30.05
       },
       {
         "station_id": "KMAMARBL78",
-        "timestamp": "2026-02-22 11:59:59",
-        "temperature_f": 33.6,
-        "humidity_pct": 84.1,
-        "wind_speed_mph": 2.7,
-        "wind_gust_mph": 8.7,
-        "pressure_in": 30.2
+        "timestamp": "2026-02-22 12:14:54",
+        "temperature_f": 33.8,
+        "humidity_pct": 80.5,
+        "wind_speed_mph": 3.8,
+        "wind_gust_mph": 11.2,
+        "pressure_in": 30.21
       },
       {
         "station_id": "KMAMARBL1",
-        "timestamp": "2026-02-22 11:59:52",
-        "temperature_f": 33.1,
-        "humidity_pct": 79.8,
-        "wind_speed_mph": 10.5,
-        "wind_gust_mph": 12.5,
+        "timestamp": "2026-02-22 12:14:52",
+        "temperature_f": 33.3,
+        "humidity_pct": 74.8,
+        "wind_speed_mph": 12.0,
+        "wind_gust_mph": 15.4,
         "pressure_in": 30.1
       },
       {
         "station_id": "KMAMARBL17",
-        "timestamp": "2026-02-22 11:59:58",
-        "temperature_f": 33.4,
-        "humidity_pct": 81.0,
-        "wind_speed_mph": 8.8,
-        "wind_gust_mph": 10.0,
-        "pressure_in": 30.11
+        "timestamp": "2026-02-22 12:14:51",
+        "temperature_f": 33.6,
+        "humidity_pct": 77.0,
+        "wind_speed_mph": 7.2,
+        "wind_gust_mph": 9.0,
+        "pressure_in": 30.12
       },
       {
         "station_id": "KMASALEM91",
-        "timestamp": "2026-02-22 11:59:48",
-        "temperature_f": 33.5,
-        "humidity_pct": 82.3,
-        "wind_speed_mph": 1.8,
-        "wind_gust_mph": 3.4,
-        "pressure_in": 30.17
+        "timestamp": "2026-02-22 12:14:31",
+        "temperature_f": 33.4,
+        "humidity_pct": 83.1,
+        "wind_speed_mph": 1.1,
+        "wind_gust_mph": 4.5,
+        "pressure_in": 30.18
       },
       {
         "station_id": "KMASALEM94",
-        "timestamp": "2026-02-22 11:59:50",
-        "temperature_f": 34.1,
-        "humidity_pct": 82.1,
-        "wind_speed_mph": 1.3,
-        "wind_gust_mph": 3.0,
-        "pressure_in": 30.19
+        "timestamp": "2026-02-22 12:14:50",
+        "temperature_f": 34.4,
+        "humidity_pct": 82.8,
+        "wind_speed_mph": 0.6,
+        "wind_gust_mph": 2.0,
+        "pressure_in": 30.2
       }
     ]
   }
