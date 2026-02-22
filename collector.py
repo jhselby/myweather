@@ -1043,15 +1043,67 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
             "weather_code": daily.get("weather_code", []) or []
         }
 
-        # Hyperlocal correction (simple bias)
+        # Hyperlocal correction - expanded to include temp, pressure, humidity
+        # Uses WU multi-station data when available, falls back to single PWS
+        
         model_t = weather_data["current"].get("temperature")
-        pws_t = weather_data["pws"].get("temperature") if isinstance(weather_data["pws"], dict) else None
-        if model_t is not None and pws_t is not None:
-            bias = round(pws_t - model_t, 2)
-            weather_data["hyperlocal"] = {
-                "bias_temp": bias,
-                "corrected_temp": round(model_t + bias, 2)
-            }
+        model_p_hpa = weather_data["current"].get("pressure")
+        model_h = weather_data["current"].get("humidity")
+        
+        # Get WU multi-station data (preferred) or fall back to single PWS
+        wu = weather_data.get("wu_stations", {})
+        pws = weather_data.get("pws", {})
+        
+        wu_t = wu.get("temperature_f")
+        wu_p_in = wu.get("pressure_in")
+        wu_h = wu.get("humidity_pct")
+        
+        # Fallback to single PWS if WU not available
+        obs_t = wu_t if wu_t is not None else (pws.get("temperature") if isinstance(pws, dict) else None)
+        
+        # Convert model pressure to inches for comparison
+        model_p_in = round(model_p_hpa * 0.02953, 2) if model_p_hpa is not None else None
+        
+        # Get KBOS pressure for reference (already in hPa, convert to inches)
+        kbos = weather_data.get("kbos", {})
+        kbos_p_hpa = kbos.get("pressure_hpa")
+        kbos_p_in = round(kbos_p_hpa * 0.02953, 2) if kbos_p_hpa is not None else None
+        
+        # Build hyperlocal comparison data
+        hyperlocal = {}
+        
+        # Temperature
+        if model_t is not None and obs_t is not None:
+            hyperlocal["model_temp"] = model_t
+            hyperlocal["wu_temp"] = obs_t
+            hyperlocal["bias_temp"] = round(obs_t - model_t, 2)
+            hyperlocal["corrected_temp"] = obs_t
+        
+        # Pressure
+        if model_p_in is not None:
+            hyperlocal["model_pressure_in"] = model_p_in
+        if wu_p_in is not None:
+            hyperlocal["wu_pressure_in"] = wu_p_in
+        if kbos_p_in is not None:
+            hyperlocal["kbos_pressure_in"] = kbos_p_in
+        # Best pressure: prefer WU multi-station, then KBOS, then model
+        hyperlocal["corrected_pressure_in"] = wu_p_in or kbos_p_in or model_p_in
+        
+        # Humidity
+        if model_h is not None and wu_h is not None:
+            hyperlocal["model_humidity"] = model_h
+            hyperlocal["wu_humidity"] = wu_h
+            hyperlocal["bias_humidity"] = round(wu_h - model_h, 1)
+            hyperlocal["corrected_humidity"] = wu_h
+        
+        # Store WU quality metrics for display
+        if wu:
+            wu_quality = wu.get("quality", {})
+            hyperlocal["wu_stations_temp"] = wu_quality.get("stations_used_temp", 0)
+            hyperlocal["wu_stations_wind"] = wu_quality.get("stations_used_wind", 0)
+        
+        if hyperlocal:
+            weather_data["hyperlocal"] = hyperlocal
 
         # Pressure trend (3h) + fog probability
         p    = weather_data["hourly"].get("pressure", [])
