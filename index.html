@@ -4440,17 +4440,6 @@
         document.getElementById("location").textContent = "Error loading weather_data.json";
       });
 
-    // ── Auto-reload on foreground ─────────────────────────────
-    // Wait a few seconds after load before enabling, so the initial
-    // load isn't immediately interrupted by a visibilitychange event.
-    let reloadEnabled = false;
-    setTimeout(() => { reloadEnabled = true; }, 5000);
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible' && reloadEnabled) {
-        location.reload();
-      }
-    });
-
     // Spin the refresh button on click for tactile feedback
     document.getElementById('refreshBtn').addEventListener('click', function() {
       this.style.transition = 'transform 0.4s ease';
