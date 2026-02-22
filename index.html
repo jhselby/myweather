@@ -1159,23 +1159,65 @@
         <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">&#127968; Hyperlocal Comparison <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
+          
+          <!-- Temperature Section -->
+          <div style="font-weight:900;font-size:0.82rem;color:rgba(255,255,255,0.6);margin-bottom:8px;letter-spacing:0.5px;">TEMPERATURE</div>
           <div class="row">
-            <div class="label" data-tip="Raw GFS model temperature at your location before any local correction.">Model Temp</div>
+            <div class="label" data-tip="Raw GFS model temperature at your location before any local correction.">Model (GFS)</div>
             <div class="value" id="modelTemp">--&deg;F</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Distance-weighted average from 10-13 nearby weather stations (filtered for quality) — your most accurate local reading.">WU Multi-Station</div>
-            <div class="value" id="pwsTemp">--&deg;F</div>
+            <div class="label" data-tip="Distance-weighted average from nearby weather stations (filtered for quality).">WU Multi-Station</div>
+            <div class="value" id="wuTemp">--&deg;F</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Difference between model forecast and observed PWS temp. Used to correct the model output.">Bias</div>
+            <div class="label" data-tip="Difference between model and observations.">Bias</div>
             <div class="value" id="tempBias">--&deg;F</div>
           </div>
-          <div class="row">
-            <div class="label" data-tip="Model temp adjusted by the observed PWS bias — best estimate of actual conditions.">Corrected</div>
-            <div class="value" id="correctedTemp">--&deg;F</div>
+          <div class="row" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:4px;">
+            <div class="label" data-tip="Best estimate: observation-corrected temperature." style="font-weight:900;">Corrected</div>
+            <div class="value" id="correctedTemp" style="font-weight:900;">--&deg;F</div>
           </div>
-          <div class="small-note" id="pwsNote"></div>
+          
+          <!-- Pressure Section -->
+          <div style="font-weight:900;font-size:0.82rem;color:rgba(255,255,255,0.6);margin:16px 0 8px;letter-spacing:0.5px;">PRESSURE</div>
+          <div class="row">
+            <div class="label" data-tip="Model mean sea level pressure.">Model (GFS)</div>
+            <div class="value" id="modelPressure">-- in</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Average pressure from WU multi-station network.">WU Multi-Station</div>
+            <div class="value" id="wuPressure">-- in</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Observed pressure at Boston Logan Airport.">KBOS obs</div>
+            <div class="value" id="kbosPressure">-- in</div>
+          </div>
+          <div class="row" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:4px;">
+            <div class="label" data-tip="Best available: WU > KBOS > Model" style="font-weight:900;">Best</div>
+            <div class="value" id="correctedPressure" style="font-weight:900;">-- in</div>
+          </div>
+          
+          <!-- Humidity Section -->
+          <div style="font-weight:900;font-size:0.82rem;color:rgba(255,255,255,0.6);margin:16px 0 8px;letter-spacing:0.5px;">HUMIDITY</div>
+          <div class="row">
+            <div class="label" data-tip="Model relative humidity.">Model (GFS)</div>
+            <div class="value" id="modelHumidity">--%</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Average humidity from WU multi-station network.">WU Multi-Station</div>
+            <div class="value" id="wuHumidity">--%</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Difference between model and observations.">Bias</div>
+            <div class="value" id="humidityBias">--%</div>
+          </div>
+          <div class="row" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:4px;">
+            <div class="label" data-tip="Best estimate: observation-corrected humidity." style="font-weight:900;">Corrected</div>
+            <div class="value" id="correctedHumidity" style="font-weight:900;">--%</div>
+          </div>
+          
+          <div class="small-note" id="hyperlocalNote" style="margin-top:12px;"></div>
           </div>
         </div>
 
@@ -4068,29 +4110,48 @@
           `Feels like ${Math.round(cur.feels_like ?? 0)}°F`;
         document.getElementById("condition").innerHTML = `${emoji} ${desc}`;
 
-        // Hyperlocal - now using WU multi-station data
-        const wu = data.wu_stations || {};
-        const pws = data.pws || {};  // Keep for fallback
+        // Hyperlocal - expanded with temperature, pressure, humidity
         const hyp = data.hyperlocal || {};
+        const wu = data.wu_stations || {};
         
-        // Use WU data if available, fall back to PWS
-        const localTemp = wu.temperature_f ?? pws.temperature;
-        const dataQuality = wu.quality || {};
-        const stationsUsed = dataQuality.stations_used_temp || 0;
+        // Temperature
+        document.getElementById("modelTemp").textContent = 
+          hyp.model_temp != null ? hyp.model_temp + "°F" : "--°F";
+        document.getElementById("wuTemp").textContent = 
+          hyp.wu_temp != null ? hyp.wu_temp + "°F" : "--°F";
+        document.getElementById("tempBias").textContent = 
+          hyp.bias_temp != null ? (hyp.bias_temp >= 0 ? "+" : "") + hyp.bias_temp + "°F" : "--°F";
+        document.getElementById("correctedTemp").textContent = 
+          hyp.corrected_temp != null ? hyp.corrected_temp + "°F" : "--°F";
         
-        document.getElementById("modelTemp").textContent    = (cur.temperature ?? "--") + "°F";
-        document.getElementById("pwsTemp").textContent      = (localTemp ?? "--") + "°F";
-        document.getElementById("tempBias").textContent     = (hyp.bias_temp ?? "--") + "°F";
-        document.getElementById("correctedTemp").textContent= (hyp.corrected_temp ?? "--") + "°F";
+        // Pressure
+        document.getElementById("modelPressure").textContent = 
+          hyp.model_pressure_in != null ? hyp.model_pressure_in.toFixed(2) + " in" : "-- in";
+        document.getElementById("wuPressure").textContent = 
+          hyp.wu_pressure_in != null ? hyp.wu_pressure_in.toFixed(2) + " in" : "-- in";
+        document.getElementById("kbosPressure").textContent = 
+          hyp.kbos_pressure_in != null ? hyp.kbos_pressure_in.toFixed(2) + " in" : "-- in";
+        document.getElementById("correctedPressure").textContent = 
+          hyp.corrected_pressure_in != null ? hyp.corrected_pressure_in.toFixed(2) + " in" : "-- in";
         
-        // Show WU quality info
-        if (stationsUsed > 0) {
-          document.getElementById("pwsNote").textContent =
-            `${stationsUsed} stations • ${dataQuality.wind_sensors_failed || 0} wind sensors offline`;
-        } else if (pws.stale) {
-          document.getElementById("pwsNote").textContent = "Using cached PWS data.";
+        // Humidity
+        document.getElementById("modelHumidity").textContent = 
+          hyp.model_humidity != null ? Math.round(hyp.model_humidity) + "%" : "--%";
+        document.getElementById("wuHumidity").textContent = 
+          hyp.wu_humidity != null ? Math.round(hyp.wu_humidity) + "%" : "--%";
+        document.getElementById("humidityBias").textContent = 
+          hyp.bias_humidity != null ? (hyp.bias_humidity >= 0 ? "+" : "") + hyp.bias_humidity + "%" : "--%";
+        document.getElementById("correctedHumidity").textContent = 
+          hyp.corrected_humidity != null ? Math.round(hyp.corrected_humidity) + "%" : "--%";
+        
+        // Quality note
+        const stationsTemp = hyp.wu_stations_temp || 0;
+        const stationsWind = hyp.wu_stations_wind || 0;
+        if (stationsTemp > 0) {
+          document.getElementById("hyperlocalNote").textContent =
+            `Data quality: ${stationsTemp} stations for temp/humidity/pressure • ${stationsWind} for wind`;
         } else {
-          document.getElementById("pwsNote").textContent = "Live data.";
+          document.getElementById("hyperlocalNote").textContent = "Using model data only.";
         }
 
         // Today summary
