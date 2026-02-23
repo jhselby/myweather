@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.3</span>
+            <span class="version-pill" id="appVersion">v2.4</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -960,6 +960,16 @@
           </div>
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.4</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 23, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Smart hyperlocal correction: distance + elevation weighted bias</li>
+                <li>Quality filtering: reject stale data (&gt;30 min) and outliers (&gt;2σ)</li>
+                <li>Station diagnostics: used/total count, effective radius, confidence level</li>
+                <li>Model correction instead of replacement (respects grid precision)</li>
+              </ul>
+            </div>
             <div style="margin-bottom:8px;">
               <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.2</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 21, 2026</span>
@@ -1160,6 +1170,22 @@
           <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">&#127968; Hyperlocal Comparison <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           
+          <!-- Station Diagnostics -->
+          <div id="stationDiagnostics" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px;margin-bottom:16px;">
+            <div class="row">
+              <div class="label" data-tip="Number of stations used after quality filtering (data freshness and outlier rejection)." style="min-width:140px;">Stations Used</div>
+              <div class="value" id="stationsUsed">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Weighted average distance of stations contributing to corrections." style="min-width:140px;">Effective Radius</div>
+              <div class="value" id="effectiveRadius">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Confidence based on station agreement. High = biases within 1°F, Moderate = within 2°F." style="min-width:140px;">Confidence</div>
+              <div class="value" id="confidenceLevel">--</div>
+            </div>
+          </div>
+          
           <!-- Temperature Section -->
           <div style="font-weight:900;font-size:0.82rem;color:rgba(255,255,255,0.6);margin-bottom:8px;letter-spacing:0.5px;">TEMPERATURE</div>
           <div class="row">
@@ -1167,15 +1193,15 @@
             <div class="value" id="modelTemp">--&deg;F</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Distance-weighted average from nearby weather stations (filtered for quality).">WU Multi-Station</div>
+            <div class="label" data-tip="Distance and elevation-weighted average from nearby weather stations. Closer stations and stations at similar elevation (30ft) get higher weight.">WU Multi-Station</div>
             <div class="value" id="wuTemp">--&deg;F</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Difference between model and observations.">Bias</div>
+            <div class="label" data-tip="Distance and elevation-weighted bias calculated from station observations. Applies corrections from nearby stations to your location's model forecast.">Bias</div>
             <div class="value" id="tempBias">--&deg;F</div>
           </div>
           <div class="row" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:4px;">
-            <div class="label" data-tip="Best estimate: observation-corrected temperature." style="font-weight:900;">Corrected</div>
+            <div class="label" data-tip="Best estimate: model forecast corrected with weighted station bias. Uses model's precision for your exact location plus real observations to fix systematic errors." style="font-weight:900;">Corrected</div>
             <div class="value" id="correctedTemp" style="font-weight:900;">--&deg;F</div>
           </div>
           
@@ -4113,6 +4139,20 @@
         // Hyperlocal - expanded with temperature, pressure, humidity
         const hyp = data.hyperlocal || {};
         const wu = data.wu_stations || {};
+        
+        // Station Diagnostics (show only if smart weighting was used)
+        const diagDiv = document.getElementById("stationDiagnostics");
+        if (hyp.stations_used != null && hyp.stations_total != null) {
+          diagDiv.style.display = "block";
+          document.getElementById("stationsUsed").textContent = 
+            `${hyp.stations_used} of ${hyp.stations_total}`;
+          document.getElementById("effectiveRadius").textContent = 
+            hyp.effective_radius_mi != null ? `${hyp.effective_radius_mi} mi` : "--";
+          document.getElementById("confidenceLevel").textContent = 
+            hyp.confidence || "--";
+        } else {
+          diagDiv.style.display = "none";
+        }
         
         // Temperature
         document.getElementById("modelTemp").textContent = 
