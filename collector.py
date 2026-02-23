@@ -460,6 +460,9 @@ def fetch_asos_obs(station_id, cache_file):
 
         obs_time     = props.get("timestamp", "")
         pressure_pa  = (props.get("seaLevelPressure") or {}).get("value")  # Pa (may be None)
+        # Fallback to barometric pressure if sea level pressure unavailable
+        if pressure_pa is None:
+            pressure_pa = (props.get("barometricPressure") or {}).get("value")
         temp_c       = (props.get("temperature")      or {}).get("value")  # degC
         dewpoint_c   = (props.get("dewpoint")         or {}).get("value")  # degC
         wind_kmh     = (props.get("windSpeed")        or {}).get("value")  # km/h
