@@ -1045,10 +1045,8 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
             "weather_code": daily.get("weather_code", []) or []
         }
 
-        # Hyperlocal correction - smart distance+elevation weighted bias
-        # Uses WU multi-station data when available, falls back to simple correction
-        
-        YOUR_ELEVATION_FT = 30  # Ground level at basement walkout
+        # Hyperlocal correction - uses WU multi-station smart-aggregated data
+        # Scraper already does distance+elevation weighting and quality filtering
         
         model_t = weather_data["current"].get("temperature")
         model_p_hpa = weather_data["current"].get("pressure")
@@ -1069,112 +1067,54 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
         # Build hyperlocal comparison data
         hyperlocal = {}
         
-        # SMART CORRECTION: Use per-station data if available
-        if wu and wu.get("stations"):
-            import math
-            from statistics import median
+        # Use WU scraper's smart-aggregated data
+        wu_t = wu.get("temperature_f")
+        wu_p_in = wu.get("pressure_in")
+        wu_h = wu.get("humidity_pct")
+        
+        # Extract quality metrics from scraper
+        wu_quality = wu.get("quality", {})
+        stations_used = wu_quality.get("stations_used_temp", 0)
+        stations_total = wu_quality.get("total_stations", 0)
+        max_dist = wu_quality.get("max_distance_used_mi")
+        
+        # Temperature
+        if model_t is not None and wu_t is not None:
+            # Calculate bias (WU observation - model)
+            bias_temp = wu_t - model_t
             
-            stations = wu.get("stations", [])
-            now_utc = datetime.now(timezone.utc)
+            hyperlocal["model_temp"] = round(model_t, 1)
+            hyperlocal["wu_temp"] = round(wu_t, 1)
+            hyperlocal["bias_temp"] = round(bias_temp, 2)
+            hyperlocal["corrected_temp"] = round(model_t + bias_temp, 1)  # Apply bias to model
             
-            # Quality filtering
-            good_stations = []
-            for s in stations:
-                # Reject stale data (>30 min old)
-                updated_str = s.get("updated_at", "")
-                age_min = compute_age_minutes(updated_str, now_utc)
-                if age_min is None or age_min > 30:
-                    continue
-                    
-                # Require both temp and distance
-                if s.get("temperature_f") is None or s.get("distance_mi") is None:
-                    continue
-                    
-                good_stations.append(s)
-            
-            # Outlier rejection (temperature only for now)
-            if len(good_stations) >= 3:
-                temps = [s["temperature_f"] for s in good_stations if s.get("temperature_f") is not None]
-                if len(temps) >= 3:
-                    med = median(temps)
-                    std = (sum((t - med)**2 for t in temps) / len(temps)) ** 0.5
-                    # Reject stations >2 std from median
-                    good_stations = [s for s in good_stations 
-                                   if s.get("temperature_f") is None or 
-                                   abs(s["temperature_f"] - med) <= 2 * std]
-            
-            # Calculate weighted biases if we have good stations
-            if len(good_stations) >= 3 and model_t is not None:
-                temp_biases = []
-                weights = []
+            # Add diagnostics if we have good station data
+            if stations_used >= 3:
+                hyperlocal["stations_used"] = stations_used
+                hyperlocal["stations_total"] = stations_total
+                hyperlocal["effective_radius_mi"] = round(max_dist, 1) if max_dist else None
                 
-                for s in good_stations:
-                    st = s.get("temperature_f")
-                    dist = s.get("distance_mi", 999)
-                    elev = s.get("elevation_ft", YOUR_ELEVATION_FT)
-                    
-                    if st is None or dist == 0:
-                        continue
-                    
-                    # Calculate bias at this station (obs - model)
-                    # Model is for YOUR location, but we assume similar bias nearby
-                    bias = st - model_t
-                    
-                    # Distance weight (inverse square)
-                    dist_weight = 1.0 / (dist ** 2)
-                    
-                    # Elevation similarity weight (exponential decay, 30ft characteristic scale)
-                    elev_diff = abs(elev - YOUR_ELEVATION_FT)
-                    elev_weight = math.exp(-elev_diff / 30.0)
-                    
-                    # Combined weight
-                    weight = dist_weight * elev_weight
-                    
-                    temp_biases.append(bias)
-                    weights.append(weight)
-                
-                if weights and sum(weights) > 0:
-                    # Weighted average bias
-                    weighted_bias = sum(b * w for b, w in zip(temp_biases, weights)) / sum(weights)
-                    corrected_t = model_t + weighted_bias
-                    
-                    # Calculate effective radius (distance that gives median weight)
-                    weighted_dists = sorted([(s.get("distance_mi", 0), w) 
-                                            for s, w in zip(good_stations, weights)], 
-                                           key=lambda x: x[1], reverse=True)
-                    mid_idx = len(weighted_dists) // 2
-                    effective_radius = weighted_dists[mid_idx][0] if weighted_dists else 0
-                    
-                    # Store diagnostics
-                    hyperlocal["model_temp"] = round(model_t, 1)
-                    hyperlocal["wu_temp"] = round(sum(s.get("temperature_f", 0) * w 
-                                                     for s, w in zip(good_stations, weights)) / sum(weights), 1)
-                    hyperlocal["bias_temp"] = round(weighted_bias, 2)
-                    hyperlocal["corrected_temp"] = round(corrected_t, 1)
-                    hyperlocal["stations_used"] = len(good_stations)
-                    hyperlocal["stations_total"] = len(stations)
-                    hyperlocal["effective_radius_mi"] = round(effective_radius, 1)
-                    
-                    # Confidence based on station agreement (low std = high confidence)
-                    if len(temp_biases) >= 3:
-                        bias_std = (sum((b - weighted_bias)**2 for b in temp_biases) / len(temp_biases)) ** 0.5
-                        if bias_std < 1.0:
-                            hyperlocal["confidence"] = "High"
-                        elif bias_std < 2.0:
-                            hyperlocal["confidence"] = "Moderate"
-                        else:
-                            hyperlocal["confidence"] = "Low"
-                    
-        # Fallback to simple correction if smart method didn't work
-        if "corrected_temp" not in hyperlocal:
-            wu_t = wu.get("temperature_f")
-            obs_t = wu_t if wu_t is not None else (pws.get("temperature") if isinstance(pws, dict) else None)
-            
-            if model_t is not None and obs_t is not None:
+                # Confidence based on temperature range (from scraper's ranges)
+                wu_ranges = wu.get("ranges", {})
+                temp_min = wu_ranges.get("temp_min_f")
+                temp_max = wu_ranges.get("temp_max_f")
+                if temp_min is not None and temp_max is not None:
+                    temp_spread = temp_max - temp_min
+                    if temp_spread < 2.0:
+                        hyperlocal["confidence"] = "High"
+                    elif temp_spread < 4.0:
+                        hyperlocal["confidence"] = "Moderate"
+                    else:
+                        hyperlocal["confidence"] = "Low"
+        
+        # Fallback to simple PWS if WU not available
+        elif model_t is not None:
+            pws_t = pws.get("temperature") if isinstance(pws, dict) else None
+            if pws_t is not None:
                 hyperlocal["model_temp"] = round(model_t, 1)
-                hyperlocal["wu_temp"] = round(obs_t, 1)
-                hyperlocal["bias_temp"] = round(obs_t - model_t, 2)
-                hyperlocal["corrected_temp"] = round(obs_t, 1)
+                hyperlocal["wu_temp"] = round(pws_t, 1)
+                hyperlocal["bias_temp"] = round(pws_t - model_t, 2)
+                hyperlocal["corrected_temp"] = round(pws_t, 1)
         
         # Pressure (keep existing logic)
         if model_p_in is not None:
