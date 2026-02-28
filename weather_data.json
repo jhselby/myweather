@@ -1,76 +1,76 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-02-28T11:47:53.829543Z",
-  "debug_timestamp": "2026-02-28T11:47:53.829590",
+  "generated_at": "2026-02-28T11:59:29.958806Z",
+  "debug_timestamp": "2026-02-28T11:59:29.958857",
   "location": {
     "name": "Wyman Cove, Marblehead MA",
     "coordinates": {
       "lat": 42.5014,
       "lon": -70.875
     },
-    "updated": "2026-02-28T11:47:53.829543Z"
+    "updated": "2026-02-28T11:59:29.958806Z"
   },
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:25.536995Z",
+      "updated_at": "2026-02-28T11:59:09.196963Z",
       "error": null,
       "model": "GFS current",
-      "age_minutes": 0.5
+      "age_minutes": 0.3
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:26.112214Z",
+      "updated_at": "2026-02-28T11:59:09.661970Z",
       "error": null,
       "model": "HRRR hourly",
-      "age_minutes": 0.5
+      "age_minutes": 0.3
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:26.662047Z",
+      "updated_at": "2026-02-28T11:59:10.123484Z",
       "error": null,
       "model": "ECMWF daily",
-      "age_minutes": 0.5
+      "age_minutes": 0.3
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:27.200247Z",
+      "updated_at": "2026-02-28T11:59:10.630667Z",
       "error": null,
-      "age_minutes": 0.4
+      "age_minutes": 0.3
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:29.617636Z",
+      "updated_at": "2026-02-28T11:59:12.216535Z",
       "error": null,
-      "age_minutes": 0.4
+      "age_minutes": 0.3
     },
     "kbos": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:30.427266Z",
+      "updated_at": "2026-02-28T11:59:12.840275Z",
       "error": null,
-      "age_minutes": 0.4
+      "age_minutes": 0.3
     },
     "kbvy": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:30.753093Z",
+      "updated_at": "2026-02-28T11:59:12.939072Z",
       "error": null,
-      "age_minutes": 0.4
+      "age_minutes": 0.3
     },
     "buoy_44013": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:30.892796Z",
+      "updated_at": "2026-02-28T11:59:12.993138Z",
       "error": null,
-      "age_minutes": 0.4
+      "age_minutes": 0.3
     },
     "wu_stations": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:31.176659Z",
+      "updated_at": "2026-02-28T11:59:13.270785Z",
       "error": null,
-      "age_minutes": 0.4
+      "age_minutes": 0.3
     },
     "nws_forecast": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:53.061296Z",
+      "updated_at": "2026-02-28T11:59:29.627794Z",
       "error": null,
       "office": "BOX",
       "grid": "76,97",
@@ -78,7 +78,7 @@
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-02-28T11:47:53.518506Z",
+      "updated_at": "2026-02-28T11:59:29.728809Z",
       "error": null,
       "age_minutes": 0.0
     }
@@ -2621,37 +2621,37 @@
   },
   "kbos": {
     "station": "KBOS",
-    "time": "2026-02-28T11:20:00+00:00",
+    "time": "2026-02-28T11:35:00+00:00",
     "pressure_hpa": 1021.3,
     "temp_f": 30.2,
     "dewpoint_f": null,
-    "wind_mph": 11.5,
+    "wind_mph": 8.1,
     "wind_dir": 210,
     "tendency_hpa": null,
     "tendency_label": null
   },
   "kbvy": {
     "station": "KBVY",
-    "time": "2026-02-28T11:25:00+00:00",
+    "time": "2026-02-28T11:35:00+00:00",
     "pressure_hpa": 1020.7,
-    "temp_f": 26.6,
+    "temp_f": 24.8,
     "dewpoint_f": null,
-    "wind_mph": 4.6,
-    "wind_dir": 210,
+    "wind_mph": 6.9,
+    "wind_dir": 220,
     "tendency_hpa": null,
     "tendency_label": null
   },
   "buoy_44013": {
-    "time": "2026-02-28T11:10Z",
+    "time": "2026-02-28T11:30Z",
     "wind_dir": 200.0,
-    "wind_mph": 11.2,
-    "gust_mph": 15.7,
-    "wave_ht_ft": 2.3,
+    "wind_mph": 15.7,
+    "gust_mph": 17.9,
+    "wave_ht_ft": null,
     "wave_period_sec": null,
-    "pressure_hpa": 1021.2,
-    "air_temp_f": 33.8,
+    "pressure_hpa": 1021.1,
+    "air_temp_f": 33.6,
     "water_temp_f": 36.1,
-    "dewpoint_f": 27.7,
+    "dewpoint_f": 29.1,
     "pressure_tend_hpa": null
   },
   "frost_log": {
@@ -3004,8 +3004,8 @@
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-02-28T11:47:29.615936",
-    "temperature": 32.0,
+    "updated": "2026-02-28T11:59:12.214613",
+    "temperature": 33.0,
     "stale": false
   },
   "wu_stations": {
@@ -3230,8 +3230,8 @@
     "trough_signal": "Approaching",
     "sea_breeze_label": "No sea breeze",
     "sea_breeze_conf": null,
-    "land_sea_diff_f": -4.1,
-    "land_temp_f": 32.0,
+    "land_sea_diff_f": -3.1,
+    "land_temp_f": 33.0,
     "water_temp_f": 36.1,
     "best_pressure_tend": -1.5,
     "best_pressure_tend_src": "model",
