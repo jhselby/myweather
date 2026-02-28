@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.5</span>
+            <span class="version-pill" id="appVersion">v2.6</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1077,57 +1077,63 @@
     <section id="weatherView">
       <div class="grid">
 
-        <!-- 1. Current Conditions — open by default -->
-        <div class="card col-12" data-collapse-key="current_conditions">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('current_conditions', this)">Current Conditions <span class="collapse-chevron">&#9660;</span></div>
+        <!-- 1. RIGHT NOW — Hero Card (open by default) -->
+        <div class="card col-12" data-collapse-key="right_now">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('right_now', this)">
+            ⚡ RIGHT NOW
+            <span class="collapse-chevron">&#9660;</span>
+          </div>
           <div class="card-body">
-          <div id="currentTemp" class="current-temp" data-tip="PWS-corrected temperature: raw model temp adjusted by your local weather station bias.">--<span class="temp-unit">&deg;F</span></div>
-          <div id="feelsLike" class="feels-like" data-tip="Apparent temperature from GFS model, accounting for wind chill or heat index.">Feels like --&deg;F</div>
-          <div id="condition" class="condition" data-tip="Sky/weather condition from GFS model weather code.">Loading&hellip;</div>
+            <!-- Big Hero Temp -->
+            <div id="currentTemp" class="current-temp" data-tip="Smart-corrected temperature using distance+elevation weighted bias from 15 local weather stations.">
+              --<span class="temp-unit">&deg;F</span>
+            </div>
+            <div id="feelsLike" class="feels-like" data-tip="Apparent temperature accounting for wind chill or heat index.">
+              Feels like --&deg;F
+            </div>
+            <div id="condition" class="condition" data-tip="Current conditions from model weather code.">
+              Loading&hellip;
+            </div>
+            
+            <!-- Divider -->
+            <div style="height:1px;background:rgba(255,255,255,0.1);margin:16px 0;"></div>
+            
+            <!-- Key Metrics Grid -->
+            <div class="row">
+              <div class="label" data-tip="Today's forecast high and low (model forecast - not yet corrected).">Today's High / Low</div>
+              <div class="value" id="hiLo">-- / --</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Precipitation type and chance for today.">Precip</div>
+              <div class="value" id="precipNow">--%</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Current wind speed and direction.">Wind</div>
+              <div class="value" id="windNow">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Barometric pressure with 3-hour trend.">Pressure</div>
+              <div class="value" id="pressureNow">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Relative humidity.">Humidity</div>
+              <div class="value" id="humidityNow">--%</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="UV index (0-11+ scale).">UV Index</div>
+              <div class="value" id="uvNow">--</div>
+            </div>
           </div>
         </div>
 
-        <!-- 2. Today's Summary — open by default -->
-        <div class="card col-12" data-collapse-key="todays_summary">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('todays_summary', this)">Today&#39;s Summary <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body">
-          <div class="row">
-            <div class="label" data-tip="Forecast high and low temperatures for today from the ECMWF daily model.">High / Low</div>
-            <div class="value" id="hiLo">-- / --</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Maximum precipitation probability for today from the ECMWF daily model.">Precip Chance</div>
-            <div class="value" id="precipChance">--%</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Current wind speed and direction from the GFS model current conditions snapshot.">Wind (now)</div>
-            <div class="value" id="windNowHome">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Mean sea level pressure from the GFS model. Useful for trend comparison with observed.">Pressure (model)</div>
-            <div class="value" id="pressureModel">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Observed mean sea level pressure from KBOS (Boston Logan). More accurate than model — use this for storm tracking.">Pressure (KBOS obs)</div>
-            <div class="value" id="pressureKBOS">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Change in barometric pressure over the last 3 hours. Falling rapidly (>2 mb) suggests an approaching storm. Rising rapidly indicates clearing.">Pressure Trend (3h)</div>
-            <div class="value" id="pressureTrendHome">--</div>
-          </div>
-          <div class="small-note" id="todayNote"></div>
-          </div>
-        </div>
-
-        <!-- 3. Hyperlocal Comparison — closed by default -->
-        <!-- 5. 10-Day Forecast — closed by default -->
+       
         <div class="card col-12" data-collapse-key="ten_day" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('ten_day', this)">10-Day Forecast <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <div id="forecastList"></div>
           </div>
         </div>
-
+    
         <!-- 6. NWS Detailed Forecast — closed by default -->
         <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
@@ -1165,85 +1171,49 @@
           </div>
         </div>
 
-        <!-- Hyperlocal Comparison — moved to bottom -->
+        <!-- Hyperlocal Comparison — Enhanced (closed by default) -->
         <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">&#127968; Hyperlocal Comparison <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">
+            🧮 Smart Correction
+            <span style="font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.35);margin-left:8px;" id="hyperlocalConfidence"></span>
+            <span class="collapse-chevron">&#9660;</span>
+          </div>
           <div class="card-body" style="display:none;">
-          
-          <!-- Station Diagnostics -->
-          <div id="stationDiagnostics" style="display:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px;margin-bottom:16px;">
-            <div class="row">
-              <div class="label" data-tip="Number of stations used after quality filtering (data freshness and outlier rejection)." style="min-width:140px;">Stations Used</div>
-              <div class="value" id="stationsUsed">--</div>
+            
+            <!-- Explanation -->
+            <div style="font-size:0.82rem;color:rgba(255,255,255,0.55);margin-bottom:16px;line-height:1.5;">
+              Your corrected temperature uses <strong id="stationsUsedCount">--</strong> nearby stations, weighted by distance and elevation similarity to your 30ft location.
             </div>
-            <div class="row">
-              <div class="label" data-tip="Weighted average distance of stations contributing to corrections." style="min-width:140px;">Effective Radius</div>
-              <div class="value" id="effectiveRadius">--</div>
+            
+            <!-- The Math -->
+            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;margin-bottom:16px;">
+              <div class="row">
+                <div class="label" data-tip="Raw GFS model forecast for your exact coordinates (42.5014, -70.875).">Model Temp</div>
+                <div class="value" id="hyperlocalModelTemp">--&deg;F</div>
+              </div>
+              <div class="row">
+                <div class="label" data-tip="Weighted bias calculated from nearby stations. Accounts for how much warmer/colder stations are compared to model.">Weighted Bias</div>
+                <div class="value" id="hyperlocalBias" style="font-weight:900;">--&deg;F</div>
+              </div>
+              <div style="height:1px;background:rgba(255,255,255,0.15);margin:10px 0;"></div>
+              <div class="row">
+                <div class="label" data-tip="Model + weighted bias = your smart-corrected temperature." style="font-weight:900;">Corrected Temp</div>
+                <div class="value" id="hyperlocalCorrectedTemp" style="font-size:1.1em;font-weight:900;color:rgba(100,200,255,0.95);">--&deg;F</div>
+              </div>
             </div>
-            <div class="row">
-              <div class="label" data-tip="Confidence based on station agreement. High = biases within 1°F, Moderate = within 2°F." style="min-width:140px;">Confidence</div>
-              <div class="value" id="confidenceLevel">--</div>
+            
+            <!-- Comparison -->
+            <div style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-bottom:8px;">
+              <strong>For comparison:</strong> Simple WU average (no weighting): <span id="hyperlocalSimpleAvg">--&deg;F</span>
             </div>
-          </div>
-          
-          <!-- Temperature Section -->
-          <div style="font-weight:900;font-size:0.82rem;color:rgba(255,255,255,0.6);margin-bottom:8px;letter-spacing:0.5px;">TEMPERATURE</div>
-          <div class="row">
-            <div class="label" data-tip="Raw GFS model temperature at your location before any local correction.">Model (GFS)</div>
-            <div class="value" id="modelTemp">--&deg;F</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Distance and elevation-weighted average from nearby weather stations. Closer stations and stations at similar elevation (30ft) get higher weight.">WU Multi-Station</div>
-            <div class="value" id="wuTemp">--&deg;F</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Distance and elevation-weighted bias calculated from station observations. Applies corrections from nearby stations to your location's model forecast.">Bias</div>
-            <div class="value" id="tempBias">--&deg;F</div>
-          </div>
-          <div class="row" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:4px;">
-            <div class="label" data-tip="Best estimate: model forecast corrected with weighted station bias. Uses model's precision for your exact location plus real observations to fix systematic errors." style="font-weight:900;">Corrected</div>
-            <div class="value" id="correctedTemp" style="font-weight:900;">--&deg;F</div>
-          </div>
-          
-          <!-- Pressure Section -->
-          <div style="font-weight:900;font-size:0.82rem;color:rgba(255,255,255,0.6);margin:16px 0 8px;letter-spacing:0.5px;">PRESSURE</div>
-          <div class="row">
-            <div class="label" data-tip="Model mean sea level pressure.">Model (GFS)</div>
-            <div class="value" id="modelPressure">-- in</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Average pressure from WU multi-station network.">WU Multi-Station</div>
-            <div class="value" id="wuPressure">-- in</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Observed pressure at Boston Logan Airport.">KBOS obs</div>
-            <div class="value" id="kbosPressure">-- in</div>
-          </div>
-          <div class="row" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:4px;">
-            <div class="label" data-tip="Best available: WU > KBOS > Model" style="font-weight:900;">Best</div>
-            <div class="value" id="correctedPressure" style="font-weight:900;">-- in</div>
-          </div>
-          
-          <!-- Humidity Section -->
-          <div style="font-weight:900;font-size:0.82rem;color:rgba(255,255,255,0.6);margin:16px 0 8px;letter-spacing:0.5px;">HUMIDITY</div>
-          <div class="row">
-            <div class="label" data-tip="Model relative humidity.">Model (GFS)</div>
-            <div class="value" id="modelHumidity">--%</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Average humidity from WU multi-station network.">WU Multi-Station</div>
-            <div class="value" id="wuHumidity">--%</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Difference between model and observations.">Bias</div>
-            <div class="value" id="humidityBias">--%</div>
-          </div>
-          <div class="row" style="border-top:1px solid rgba(255,255,255,0.08);padding-top:8px;margin-top:4px;">
-            <div class="label" data-tip="Best estimate: observation-corrected humidity." style="font-weight:900;">Corrected</div>
-            <div class="value" id="correctedHumidity" style="font-weight:900;">--%</div>
-          </div>
-          
-          <div class="small-note" id="hyperlocalNote" style="margin-top:12px;"></div>
+            
+            <!-- Diagnostics -->
+            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);display:flex;gap:12px;flex-wrap:wrap;">
+              <span id="hyperlocalStationsDiag">-- stations used</span>
+              <span>•</span>
+              <span id="hyperlocalConfidenceDiag">-- confidence</span>
+            </div>
+            
           </div>
         </div>
 
@@ -1776,6 +1746,12 @@
       return _pressureUnit === 'inhg'
         ? hpaToInhg(n) + ' inHg'
         : n.toFixed(1) + ' hPa';
+    }
+    function degToCompass(deg) {
+      if (deg == null) return "";
+      const directions = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
+      const index = Math.round(((deg % 360) / 22.5));
+      return directions[index % 16];
     }
 
     // Re-render all pressure fields using last fetched data
@@ -4136,76 +4112,87 @@
           `Feels like ${Math.round(cur.feels_like ?? 0)}°F`;
         document.getElementById("condition").innerHTML = `${emoji} ${desc}`;
 
-        // Hyperlocal - expanded with temperature, pressure, humidity
+        // Hyperlocal - NEW SMART CORRECTION DISPLAY
         const hyp = data.hyperlocal || {};
         const wu = data.wu_stations || {};
         
-        // Station Diagnostics (show only if smart weighting was used)
-        const diagDiv = document.getElementById("stationDiagnostics");
-        if (hyp.stations_used != null && hyp.stations_total != null) {
-          diagDiv.style.display = "block";
-          document.getElementById("stationsUsed").textContent = 
-            `${hyp.stations_used} of ${hyp.stations_total}`;
-          document.getElementById("effectiveRadius").textContent = 
-            hyp.effective_radius_mi != null ? `${hyp.effective_radius_mi} mi` : "--";
-          document.getElementById("confidenceLevel").textContent = 
-            hyp.confidence || "--";
-        } else {
-          diagDiv.style.display = "none";
-        }
-        
-        // Temperature
-        document.getElementById("modelTemp").textContent = 
-          hyp.model_temp != null ? hyp.model_temp + "°F" : "--°F";
-        document.getElementById("wuTemp").textContent = 
-          hyp.wu_temp != null ? hyp.wu_temp + "°F" : "--°F";
-        document.getElementById("tempBias").textContent = 
-          hyp.bias_temp != null ? (hyp.bias_temp >= 0 ? "+" : "") + hyp.bias_temp + "°F" : "--°F";
-        document.getElementById("correctedTemp").textContent = 
-          hyp.corrected_temp != null ? hyp.corrected_temp + "°F" : "--°F";
-        
-        // Pressure
-        document.getElementById("modelPressure").textContent = 
-          hyp.model_pressure_in != null ? hyp.model_pressure_in.toFixed(2) + " in" : "-- in";
-        document.getElementById("wuPressure").textContent = 
-          hyp.wu_pressure_in != null ? hyp.wu_pressure_in.toFixed(2) + " in" : "-- in";
-        document.getElementById("kbosPressure").textContent = 
-          hyp.kbos_pressure_in != null ? hyp.kbos_pressure_in.toFixed(2) + " in" : "-- in";
-        document.getElementById("correctedPressure").textContent = 
-          hyp.corrected_pressure_in != null ? hyp.corrected_pressure_in.toFixed(2) + " in" : "-- in";
-        
-        // Humidity
-        document.getElementById("modelHumidity").textContent = 
-          hyp.model_humidity != null ? Math.round(hyp.model_humidity) + "%" : "--%";
-        document.getElementById("wuHumidity").textContent = 
-          hyp.wu_humidity != null ? Math.round(hyp.wu_humidity) + "%" : "--%";
-        document.getElementById("humidityBias").textContent = 
-          hyp.bias_humidity != null ? (hyp.bias_humidity >= 0 ? "+" : "") + hyp.bias_humidity + "%" : "--%";
-        document.getElementById("correctedHumidity").textContent = 
-          hyp.corrected_humidity != null ? Math.round(hyp.corrected_humidity) + "%" : "--%";
-        
-        // Quality note
-        const stationsTemp = hyp.wu_stations_temp || 0;
-        const stationsWind = hyp.wu_stations_wind || 0;
-        if (stationsTemp > 0) {
-          document.getElementById("hyperlocalNote").textContent =
-            `Data quality: ${stationsTemp} stations for temp/humidity/pressure • ${stationsWind} for wind`;
-        } else {
-          document.getElementById("hyperlocalNote").textContent = "Using model data only.";
+        // Update new hyperlocal card
+        if (hyp.corrected_temp != null) {
+          // Model temp
+          document.getElementById("hyperlocalModelTemp").textContent = 
+            hyp.model_temp != null ? hyp.model_temp + "°F" : "--°F";
+          
+          // Weighted bias
+          const bias = hyp.weighted_bias ?? hyp.bias_temp;
+          document.getElementById("hyperlocalBias").textContent = 
+            bias != null ? (bias >= 0 ? "+" : "") + bias.toFixed(2) + "°F" : "--°F";
+          
+          // Corrected temp
+          document.getElementById("hyperlocalCorrectedTemp").textContent = 
+            hyp.corrected_temp + "°F";
+          
+          // Simple average for comparison
+          const simpleAvg = hyp.wu_avg_temp ?? hyp.wu_temp;
+          document.getElementById("hyperlocalSimpleAvg").textContent = 
+            simpleAvg != null ? simpleAvg + "°F" : "--°F";
+          
+          // Station count in explanation
+          document.getElementById("stationsUsedCount").textContent = 
+            hyp.stations_used ?? "--";
+          
+          // Confidence badge in title
+          const conf = hyp.confidence || "";
+          document.getElementById("hyperlocalConfidence").textContent = conf;
+          
+          // Diagnostics at bottom
+          document.getElementById("hyperlocalStationsDiag").textContent = 
+            `${hyp.stations_used ?? "--"} of ${hyp.stations_total ?? "--"} stations used`;
+          document.getElementById("hyperlocalConfidenceDiag").textContent = 
+            `${conf || "Unknown"} confidence`;
         }
 
         // Today summary
         const daily = data.daily || {};
+        const der   = data.derived || {};
+        const kbos  = data.kbos   || {};
         const hi    = daily.temperature_max?.[0];
         const lo    = daily.temperature_min?.[0];
         document.getElementById("hiLo").textContent =
           (hi != null && lo != null) ? `${Math.round(hi)}° / ${Math.round(lo)}°` : "-- / --";
         const popMax = daily.precipitation_probability_max?.[0];
-        document.getElementById("precipChance").textContent =
-          popMax != null ? `${Math.round(popMax)}%` : "--%";
-
-        const der   = data.derived || {};
-        const kbos  = data.kbos   || {};
+        // RIGHT NOW card - new fields
+        
+        // Precip type + chance
+        const todayCode = daily.weather_code?.[0] ?? code;
+        let precipType = "None";
+        if (todayCode >= 95) precipType = "Thunderstorm";
+        else if (todayCode >= 85 || (todayCode >= 71 && todayCode <= 77)) precipType = "Snow";
+        else if (todayCode >= 66 && todayCode <= 67) precipType = "Freezing Rain";
+        else if (todayCode >= 51 && todayCode <= 65) precipType = "Rain";
+        const precipChanceVal = popMax != null ? `${Math.round(popMax)}%` : "--%";
+        document.getElementById("precipNow").textContent = 
+          precipType !== "None" ? `${precipType} ${precipChanceVal}` : precipChanceVal;
+        
+        // Wind now
+        const windSpeed = Math.round(cur.wind_speed ?? 0);
+        const windDir = cur.wind_direction != null ? degToCompass(cur.wind_direction) : "";
+        document.getElementById("windNow").textContent = 
+          windSpeed > 0 ? `${windDir} ${windSpeed} mph` : "Calm";
+        
+        // Pressure now (with trend inline)
+        const pressure = cur.pressure != null ? fmtPressure(cur.pressure) : "--";
+        const trend = der.pressure_trend || kbos.tendency_label || "";
+        const trendShort = trend.includes("Rising") ? "↑" : trend.includes("Falling") ? "↓" : "";
+        document.getElementById("pressureNow").textContent = `${pressure} ${trendShort}`.trim();
+        
+        // Humidity now
+        document.getElementById("humidityNow").textContent = 
+          cur.humidity != null ? `${Math.round(cur.humidity)}%` : "--%";
+        
+        // UV now
+        document.getElementById("uvNow").textContent = 
+          cur.uv_index != null ? cur.uv_index.toFixed(1) : "--";
+     
 
         // Model pressure
         const modelPressEl = document.getElementById("pressureModel");
@@ -4236,19 +4223,7 @@
           tempObsEl.textContent = `${kbosT} / ${kbvyT}`;
         }
 
-        // Pressure trend (3h) — prefer KBOS observed tendency if available
-        const obsTendency = kbos.tendency_label;
-        const trend = obsTendency || der.pressure_trend || "--";
-        const tendencyHpa = kbos.tendency_hpa ?? der.pressure_trend_hpa_3h;
-        const delta = typeof tendencyHpa === "number"
-          ? ` (${tendencyHpa > 0 ? "+" : ""}${tendencyHpa.toFixed(1)} hPa)` : "";
-        const trendEl = document.getElementById("pressureTrendHome");
-        trendEl.textContent = trend + delta + (obsTendency ? " [obs]" : " [model]");
-        trendEl.style.color = trend.includes("fast") && trend.includes("Fall")
-          ? "rgba(255,100,100,0.9)"
-          : trend === "Falling" ? "rgba(255,180,80,0.9)"
-          : trend.includes("Ris") ? "rgba(100,220,120,0.9)"
-          : "rgba(255,255,255,0.85)";
+        
 
         // Fog risk
         const fogEl = document.getElementById("fogRisk");
@@ -4345,14 +4320,14 @@
         const precipCode = cur.weather_code || 0;
         const precipTypeRow = document.getElementById("precipTypeRow");
         const precipTypeEl  = document.getElementById("precipType");
-        const precipType    = cur.precip_type;
+        const precipTypeOLD    = cur.precip_type;
         const pop = (data.daily?.precipitation_probability_max?.[0] ?? 0);
         const precipCodes = [51,53,55,61,63,65,71,73,75,77,80,81,82,85,86];
         const showPrecip = pop >= 20 || precipCodes.includes(precipCode);
 
-        if (precipTypeRow && precipTypeEl && precipType && showPrecip) {
+        if (precipTypeRow && precipTypeEl && precipTypeOLD && showPrecip) {
           precipTypeRow.style.display = "";
-          precipTypeEl.textContent = precipType;
+          precipTypeEl.textContent = precipTypeOLD;
           const wb = cur.wet_bulb;
           precipTypeEl.style.color = wb != null && wb <= 32
             ? "rgba(160,220,255,0.95)"
@@ -4391,13 +4366,6 @@
             : "rgba(255,255,255,0.75)";
         }
 
-        document.getElementById("todayNote").textContent =
-          cur.time ? `Current time in model: ${cur.time}` : "";
-
-        const windNowText = (cur.wind_speed != null && cur.wind_direction != null)
-          ? `${Math.round(cur.wind_speed)} mph ${toCompass(cur.wind_direction, false)}`
-          : "--";
-        document.getElementById("windNowHome").textContent = windNowText;
 
         // Forecast
         renderForecast(daily);
@@ -4431,7 +4399,7 @@
             : "--";
         if (windGustsEl)     windGustsEl.textContent     = cur.wind_gusts != null ? `${Math.round(cur.wind_gusts)} mph` : "--";
         if (pressureNowEl)   pressureNowEl.textContent   = cur.pressure  != null ? fmtPressure(cur.pressure) : "--";
-        if (pressureTrendEl) pressureTrendEl.textContent = delta ? `${trend} (${delta})` : trend;
+        if (pressureTrendEl) pressureTrendEl.textContent = trend || "--";
 
         // NWS Forecast
         window._nwsPeriods = data.nws_forecast || [];
