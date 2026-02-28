@@ -29,6 +29,27 @@ STATIONS = [
 # Wyman Cove reference point (16 Indianhead Circle)
 WYMAN_COVE_LAT = 42.5014
 WYMAN_COVE_LON = -70.8750
+WYMAN_COVE_ELEV_FT = 30.0  # Basement walkout elevation
+
+# Station elevations (from WU API, fetched 2026-02-28)
+# These don't change, so hardcoded for performance
+STATION_ELEVATIONS = {
+    "KMAMARBL63": 85.0,
+    "KMAMARBL69": 69.0,
+    "KMAMARBL112": 97.0,
+    "KMAMARBL108": 16.0,
+    "KMAMARBL39": 89.0,
+    "KMAMARBL4": 90.0,
+    "KMAMARBL36": 69.0,
+    "KMAMARBL57": 49.0,
+    "KMAMARBL56": 79.0,
+    "KMAMARBL89": 85.0,
+    "KMAMARBL78": 9.0,
+    "KMAMARBL1": 0.0,
+    "KMAMARBL17": 16.0,
+    "KMASALEM91": 36.0,
+    "KMASALEM94": 22.0,
+}
 
 # Filtering thresholds
 MAX_DISTANCE_MI = 1.5  # Ignore stations farther than this
@@ -70,10 +91,14 @@ def get_current_observation(station_id):
         if lat and lon:
             distance_mi = haversine_distance(WYMAN_COVE_LAT, WYMAN_COVE_LON, lat, lon)
         
+        # Get elevation from lookup table
+        elevation_ft = STATION_ELEVATIONS.get(station_id)
+        
         return {
             'station_id': station_id,
             'latitude': lat,
             'longitude': lon,
+            'elevation_ft': elevation_ft,
             'distance_mi': round(distance_mi, 2) if distance_mi else None,
             'timestamp': latest.get('obsTimeLocal'),
             'temperature_f': imperial.get('tempAvg'),
