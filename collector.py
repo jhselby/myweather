@@ -191,7 +191,7 @@ _GFS_HOURLY = _HRRR_HOURLY + ",visibility,uv_index"
 _CURRENT_VARS = ",".join([
     "temperature_2m", "relative_humidity_2m", "apparent_temperature",
     "precipitation", "weather_code", "cloud_cover", "pressure_msl",
-    "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m",
+    "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m", "uv_index", "dew_point_2m", "visibility",
 ])
 
 _DAILY_VARS = ",".join([
@@ -934,7 +934,10 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
             "precipitation": current.get("precipitation"),
             "weather_code": wcode,
             "condition": get_weather_description(wcode),
-            "emoji": get_weather_emoji(wcode)
+            "emoji": get_weather_emoji(wcode),
+            "uv_index": current.get("uv_index"),
+            "dew_point": current.get("dew_point_2m"),
+            "visibility": current.get("visibility"),
         }
 
         # Hourly forecast: slice next 48 hours starting from "now" in America/New_York (DST-safe)

@@ -1116,8 +1116,20 @@
               <div class="value" id="pressureNow">--</div>
             </div>
             <div class="row">
+              <div class="label" data-tip="12-hour fog probability based on temperature/dewpoint spread, wind, and humidity.">Fog Risk</div>
+              <div class="value" id="fogRiskNow">--</div>
+            </div>
+            <div class="row">
               <div class="label" data-tip="Relative humidity.">Humidity</div>
               <div class="value" id="humidityNow">--%</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Dew point temperature - when air becomes saturated. Above 65°F feels muggy.">Dew Point</div>
+              <div class="value" id="dewPointNow">--°F</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Horizontal visibility distance.">Visibility</div>
+              <div class="value" id="visibilityNow">-- mi</div>
             </div>
             <div class="row">
               <div class="label" data-tip="UV index (0-11+ scale).">UV Index</div>
@@ -1232,10 +1244,6 @@
           <div class="row" id="seaBreezeRow">
             <div class="label" data-tip="Likelihood of a sea breeze developing today. Sea breezes form when land heats faster than the ocean, drawing cool marine air onshore from the E/SE.">Sea Breeze</div>
             <div class="value" id="seaBreezeLabel">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Estimated fog probability based on temperature/dewpoint spread, wind speed, and humidity. High risk when spread is <2°F and winds are calm.">Fog Risk (12h)</div>
-            <div class="value" id="fogRisk">--</div>
           </div>
           <div class="row" id="precipTypeRow" style="display:none;">
             <div class="label" data-tip="Predicted precipitation type at ground level based on surface temperature. May differ from what falls aloft if there are warm/cold layers above.">Precip Type (surface)</div>
@@ -4192,7 +4200,13 @@
         // UV now
         document.getElementById("uvNow").textContent = 
           cur.uv_index != null ? cur.uv_index.toFixed(1) : "--";
-     
+          // Dew point now
+        document.getElementById("dewPointNow").textContent = 
+          cur.dew_point != null ? `${Math.round(cur.dew_point)}°F` : "--°F";
+        
+        // Visibility now
+        document.getElementById("visibilityNow").textContent = 
+          cur.visibility != null ? `${(cur.visibility / 1609.34).toFixed(1)} mi` : "-- mi";
 
         // Model pressure
         const modelPressEl = document.getElementById("pressureModel");
@@ -4226,7 +4240,7 @@
         
 
         // Fog risk
-        const fogEl = document.getElementById("fogRisk");
+        const fogEl = document.getElementById("fogRiskNow");
         if (fogEl) {
           const fogLabel = der.fog_label ?? "--";
           const fogPct   = der.fog_probability;
