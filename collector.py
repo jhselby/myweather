@@ -24,6 +24,7 @@ import subprocess
 # -----------------------------
 LAT, LON = 42.5014, -70.8750
 LOCATION_NAME = "Wyman Cove, Marblehead MA"
+ELEVATION_FT = 30.0  # Basement walkout elevation
 
 TIDE_STATION = "8442645"      # Salem Harbor, MA
 PWS_STATION = "KMAMARBL63"    # Castle Hill, Marblehead
@@ -1048,8 +1049,11 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
             "weather_code": daily.get("weather_code", []) or []
         }
 
-        # Hyperlocal correction - uses WU multi-station smart-aggregated data
-        # Scraper already does distance+elevation weighting and quality filtering
+        # Hyperlocal correction - SMART BIAS CORRECTION
+        # Instead of just replacing model with WU average (circular!), we:
+        # 1. Calculate bias at each station: bias = station_temp - model_temp
+        # 2. Weight by distance + elevation similarity
+        # 3. Apply weighted bias to model: corrected = model + weighted_bias
         
         model_t = weather_data["current"].get("temperature")
         model_p_hpa = weather_data["current"].get("pressure")
@@ -1070,53 +1074,87 @@ def process_data(current_data, hourly_data, daily_data, pws, tides, kbos, kbvy, 
         # Build hyperlocal comparison data
         hyperlocal = {}
         
-        # Use WU scraper's smart-aggregated data
-        wu_t = wu.get("temperature_f")
-        wu_p_in = wu.get("pressure_in")
-        wu_h = wu.get("humidity_pct")
+        # Get individual station data (not aggregated!)
+        stations = wu.get("stations", [])
         
-        # Extract quality metrics from scraper
-        wu_quality = wu.get("quality", {})
-        stations_used = wu_quality.get("stations_used_temp", 0)
-        stations_total = wu_quality.get("total_stations", 0)
-        max_dist = wu_quality.get("max_distance_used_mi")
-        
-        # Temperature
-        if model_t is not None and wu_t is not None:
-            # Calculate bias (WU observation - model)
-            bias_temp = wu_t - model_t
+        # Temperature - SMART BIAS CORRECTION
+        if model_t is not None and stations:
+            import math
             
-            hyperlocal["model_temp"] = round(model_t, 1)
-            hyperlocal["wu_temp"] = round(wu_t, 1)
-            hyperlocal["bias_temp"] = round(bias_temp, 2)
-            hyperlocal["corrected_temp"] = round(model_t + bias_temp, 1)  # Apply bias to model
+            # Calculate weighted bias from individual stations
+            weighted_bias_sum = 0.0
+            total_weight = 0.0
+            station_biases = []
+            stations_used = 0
             
-            # Add diagnostics if we have good station data
-            if stations_used >= 3:
-                hyperlocal["stations_used"] = stations_used
-                hyperlocal["stations_total"] = stations_total
-                hyperlocal["effective_radius_mi"] = round(max_dist, 1) if max_dist else None
+            for station in stations:
+                station_temp = station.get('temperature_f')
+                station_dist = station.get('distance_mi')
+                station_elev = station.get('elevation_ft')
                 
-                # Confidence based on temperature range (from scraper's ranges)
-                wu_ranges = wu.get("ranges", {})
-                temp_min = wu_ranges.get("temp_min_f")
-                temp_max = wu_ranges.get("temp_max_f")
-                if temp_min is not None and temp_max is not None:
-                    temp_spread = temp_max - temp_min
-                    if temp_spread < 2.0:
-                        hyperlocal["confidence"] = "High"
-                    elif temp_spread < 4.0:
-                        hyperlocal["confidence"] = "Moderate"
+                # Skip stations with missing data
+                if station_temp is None or station_dist is None or station_elev is None:
+                    continue
+                if station_dist == 0 or station_dist > 1.5:  # Distance filter
+                    continue
+                    
+                # Calculate bias at this station
+                bias_at_station = station_temp - model_t
+                
+                # Distance weight: 1/distance² (inverse square law)
+                dist_weight = 1.0 / (station_dist ** 2)
+                
+                # Elevation weight: exp(-|elev_diff|/30)
+                # Characteristic scale = 30ft (typical elevation variation in Marblehead)
+                elev_diff = abs(station_elev - ELEVATION_FT)
+                elev_weight = math.exp(-elev_diff / 30.0)
+                
+                # Combined weight
+                weight = dist_weight * elev_weight
+                
+                weighted_bias_sum += bias_at_station * weight
+                total_weight += weight
+                station_biases.append(bias_at_station)
+                stations_used += 1
+            
+            # Calculate weighted average bias
+            if total_weight > 0 and stations_used >= 3:
+                weighted_bias = weighted_bias_sum / total_weight
+                corrected_temp = model_t + weighted_bias
+                
+                # Calculate confidence based on bias agreement
+                if len(station_biases) > 1:
+                    import statistics
+                    bias_std = statistics.stdev(station_biases)
+                    if bias_std < 1.0:
+                        confidence = "High"
+                    elif bias_std < 2.0:
+                        confidence = "Moderate"
                     else:
-                        hyperlocal["confidence"] = "Low"
+                        confidence = "Low"
+                else:
+                    confidence = "Low"
+                
+                hyperlocal["model_temp"] = round(model_t, 1)
+                hyperlocal["weighted_bias"] = round(weighted_bias, 2)
+                hyperlocal["corrected_temp"] = round(corrected_temp, 1)
+                hyperlocal["stations_used"] = stations_used
+                hyperlocal["stations_total"] = len(stations)
+                hyperlocal["confidence"] = confidence
+                
+                # For reference, also show simple WU average (but don't use it!)
+                wu_t = wu.get("temperature_f")
+                if wu_t is not None:
+                    hyperlocal["wu_avg_temp"] = round(wu_t, 1)
+                    hyperlocal["simple_bias"] = round(wu_t - model_t, 2)
         
         # Fallback to simple PWS if WU not available
         elif model_t is not None:
             pws_t = pws.get("temperature") if isinstance(pws, dict) else None
             if pws_t is not None:
                 hyperlocal["model_temp"] = round(model_t, 1)
-                hyperlocal["wu_temp"] = round(pws_t, 1)
-                hyperlocal["bias_temp"] = round(pws_t - model_t, 2)
+                hyperlocal["pws_temp"] = round(pws_t, 1)
+                hyperlocal["simple_bias"] = round(pws_t - model_t, 2)
                 hyperlocal["corrected_temp"] = round(pws_t, 1)
         
         # Pressure (keep existing logic)
