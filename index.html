@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.61</span>
+            <span class="version-pill" id="appVersion">v2.64</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -4293,18 +4293,6 @@
             stormDetails.innerHTML = stormFlags.map(f => `• ${f}`).join("<br>");
           } else {
             stormBanner.style.display = "none";
-          }
-        }
-
-        // If storm flags AND alerts both exist, merge into summary bar
-        const hasAlerts = (data.alerts || []).length > 0;
-        if (stormFlags.length >= 2 && !hasAlerts) {
-          // Storm only — show in summary bar
-          const bar  = document.getElementById("alertSummaryBar");
-          const txt  = document.getElementById("alertSummaryText");
-          if (bar && txt) {
-            bar.style.display = "flex";
-            txt.textContent   = `⛈️ Storm conditions: ${stormFlags.map(f => f.replace(/^[^\s]+ /,'')).join(" · ")}`;
           }
         }
 
