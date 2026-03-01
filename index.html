@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.64</span>
+            <span class="version-pill" id="appVersion">v2.65</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -4188,10 +4188,14 @@
           windSpeed > 0 ? `${windDir} ${windSpeed} mph` : "Calm";
         
         // Pressure now (with trend inline)
-        const pressure = cur.pressure != null ? fmtPressure(cur.pressure) : "--";
+        const pressure = cur.pressure != null ? hpaToInhg(cur.pressure) + ' inHg' : "--";
         const trend = der.pressure_trend || kbos.tendency_label || "";
-        const trendShort = trend.includes("Rising") ? "↑" : trend.includes("Falling") ? "↓" : "";
-        document.getElementById("pressureNow").textContent = `${pressure} ${trendShort}`.trim();
+        const trendShort = der.best_pressure_tend != null 
+          ? (der.best_pressure_tend > 0.5 ? "↑" : der.best_pressure_tend < -0.5 ? "↓" : "") 
+          : (trend.includes("Rising") ? "↑" : trend.includes("Falling") ? "↓" : "");
+        const pressureChange = der.best_pressure_tend != null ? ` ${der.best_pressure_tend > 0 ? '+' : ''}${der.best_pressure_tend.toFixed(1)} hPa` : "";
+        const pressureColType = der.col_precip_type ? ` · ${der.col_precip_type}` : "";
+        document.getElementById("pressureNow").textContent = `${pressure} ${trendShort}${pressureChange}${pressureColType}`.trim();
         
         // Humidity now
         document.getElementById("humidityNow").textContent = 
