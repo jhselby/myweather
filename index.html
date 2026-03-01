@@ -1555,21 +1555,21 @@
               </div>
             </div>
 
-            <!-- Position column -->
-            <div style="padding-left:16px;">
-              <div class="row">
-                <div class="label" data-tip="Current compass bearing of the moon.">Direction</div>
-                <div class="value" id="moonAzimuth">--</div>
+              <!-- Position column -->
+              <div style="padding-left:16px;">
+                <div class="row">
+                  <div class="label" data-tip="Current azimith (compass) bearing of the moon, measured clockwise from north.">Azimuth</div>
+                  <div class="value" id="moonAzimuth">--</div>
+                </div>
+                <div class="row">
+                  <div class="label" data-tip="Current angle of the moon above the horizon. Negative = below horizon.">Altitude</div>
+                  <div class="value" id="moonAltitude">--</div>
+                </div>
+                <div class="row" style="border-bottom:none;">
+                  <div class="label" data-tip="Percentage of the moon's face illuminated. 0% = new moon, 100% = full moon. Affects nighttime visibility and tidal range.">Visible</div>
+                  <div class="value" id="moonVisible">--</div>
+                </div>
               </div>
-              <div class="row">
-                <div class="label" data-tip="Current angle of the moon above the horizon. Negative = below horizon.">Altitude</div>
-                <div class="value" id="moonAltitude">--</div>
-              </div>
-              <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="Percentage of the moon's face illuminated. 0% = new moon, 100% = full moon. Affects nighttime visibility and tidal range.">Visible</div>
-                <div class="value" id="moonVisible">--</div>
-              </div>
-            </div>
 
           </div>
           <div class="small-note" id="moonNote" style="margin-top:10px;"></div>
@@ -3835,7 +3835,7 @@
     }
 
     function azimuthToSky(azRad) {
-      const d = ((azRad * 180 / Math.PI) + 360) % 360;
+      const d = ((azRad * 180 / Math.PI) + 180 + 360) % 360;
       const dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
       const compass = dirs[Math.round(d / 22.5) % 16];
       return { deg: Math.round(d), compass };
