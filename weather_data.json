@@ -1,112 +1,111 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-03-12T20:50:44.652289Z",
-  "debug_timestamp": "2026-03-12T20:50:44.652340",
+  "generated_at": "2026-03-12T21:23:18.502725Z",
+  "debug_timestamp": "2026-03-12T21:23:18.502775",
   "location": {
     "name": "Wyman Cove, Marblehead MA",
     "coordinates": {
       "lat": 42.5014,
       "lon": -70.875
     },
-    "updated": "2026-03-12T20:50:44.652289Z"
+    "updated": "2026-03-12T21:23:18.502725Z"
   },
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:00.223177Z",
+      "updated_at": "2026-03-12T21:22:50.066275Z",
       "error": null,
       "model": "GFS current",
-      "age_minutes": 0.7
+      "age_minutes": 0.5
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:05.615966Z",
+      "updated_at": "2026-03-12T21:22:50.701874Z",
       "error": null,
       "model": "HRRR hourly",
-      "age_minutes": 0.7
+      "age_minutes": 0.5
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:09.387901Z",
+      "updated_at": "2026-03-12T21:22:51.344299Z",
       "error": null,
       "model": "ECMWF daily",
-      "age_minutes": 0.6
+      "age_minutes": 0.5
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:10.785685Z",
+      "updated_at": "2026-03-12T21:22:51.977247Z",
       "error": null,
-      "age_minutes": 0.6
+      "age_minutes": 0.4
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:13.708256Z",
+      "updated_at": "2026-03-12T21:22:52.978645Z",
       "error": null,
-      "age_minutes": 0.5
+      "age_minutes": 0.4
     },
     "kbos": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:15.204964Z",
+      "updated_at": "2026-03-12T21:22:53.900360Z",
       "error": null,
-      "age_minutes": 0.5
+      "age_minutes": 0.4
     },
     "kbvy": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:15.379499Z",
+      "updated_at": "2026-03-12T21:22:53.941200Z",
       "error": null,
-      "age_minutes": 0.5
+      "age_minutes": 0.4
     },
     "buoy_44013": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:15.652739Z",
+      "updated_at": "2026-03-12T21:22:54.077244Z",
       "error": null,
-      "age_minutes": 0.5
+      "age_minutes": 0.4
     },
     "wu_stations": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:16.273551Z",
+      "updated_at": "2026-03-12T21:22:54.162222Z",
       "error": null,
-      "age_minutes": 0.5
+      "age_minutes": 0.4
     },
     "nws_forecast": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:40.923699Z",
+      "updated_at": "2026-03-12T21:23:16.967737Z",
       "error": null,
       "office": "BOX",
       "grid": "76,97",
-      "age_minutes": 0.1
+      "age_minutes": 0.0
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-03-12T20:50:43.377727Z",
+      "updated_at": "2026-03-12T21:23:17.565430Z",
       "error": null,
       "age_minutes": 0.0
     }
   },
   "alerts": [],
   "current": {
-    "time": "2026-03-12T16:45",
-    "temperature": 39.1,
-    "feels_like": 30.8,
-    "humidity": 73,
-    "pressure": 1005.8,
-    "wind_speed": 10.2,
-    "wind_direction": 293,
-    "wind_gusts": 23.3,
+    "time": "2026-03-12T17:15",
+    "temperature": 38.7,
+    "feels_like": 31.1,
+    "humidity": 72,
+    "pressure": 1006.2,
+    "wind_speed": 8.2,
+    "wind_direction": 261,
+    "wind_gusts": 21.3,
     "cloud_cover": 100,
-    "precipitation": 0.0,
-    "weather_code": 3,
-    "condition": "Overcast",
-    "emoji": "\u2601\ufe0f",
-    "uv_index": 0.35,
-    "dew_point": 31.2,
-    "visibility": 74475.062,
-    "wet_bulb": 34.8,
+    "precipitation": 0.008,
+    "weather_code": 73,
+    "condition": "Snow",
+    "emoji": "\ud83c\udf28\ufe0f",
+    "uv_index": 0.25,
+    "dew_point": 30.4,
+    "visibility": 30183.727,
+    "wet_bulb": 34.3,
     "precip_type": "Mixed/slush"
   },
   "hourly": {
     "times": [
-      "2026-03-12T17:00",
       "2026-03-12T18:00",
       "2026-03-12T19:00",
       "2026-03-12T20:00",
@@ -139,7 +138,6 @@
       "2026-03-13T23:00"
     ],
     "temperature": [
-      38.8,
       38.9,
       37.8,
       36.8,
@@ -172,7 +170,6 @@
       33.5
     ],
     "feels_like": [
-      30.4,
       31.6,
       31.5,
       29.4,
@@ -205,7 +202,6 @@
       22.1
     ],
     "humidity": [
-      73,
       69,
       73,
       72,
@@ -238,7 +234,6 @@
       75
     ],
     "dew_point": [
-      30.9,
       29.6,
       29.9,
       28.6,
@@ -271,7 +266,6 @@
       26.4
     ],
     "precipitation_probability": [
-      53,
       55,
       51,
       45,
@@ -304,7 +298,6 @@
       13
     ],
     "precipitation": [
-      0.004,
       0.008,
       0.0,
       0.0,
@@ -337,7 +330,6 @@
       0.0
     ],
     "wind_speed": [
-      10.6,
       7.5,
       4.9,
       7.1,
@@ -370,7 +362,6 @@
       16.2
     ],
     "wind_gusts": [
-      23.5,
       19.2,
       16.3,
       19.5,
@@ -403,7 +394,6 @@
       30.0
     ],
     "wind_direction": [
-      278,
       261,
       246,
       283,
@@ -436,7 +426,6 @@
       149
     ],
     "pressure": [
-      1005.9,
       1007.0,
       1007.1,
       1008.0,
@@ -474,7 +463,6 @@
       100,
       100,
       100,
-      100,
       65,
       13,
       100,
@@ -502,7 +490,6 @@
       100
     ],
     "cloud_cover_low": [
-      100,
       100,
       100,
       64,
@@ -540,7 +527,6 @@
       100,
       100,
       100,
-      100,
       59,
       0,
       0,
@@ -568,7 +554,6 @@
       100
     ],
     "cloud_cover_high": [
-      100,
       100,
       100,
       0,
@@ -603,7 +588,6 @@
     "visibility": [],
     "uv_index": [],
     "weather_code": [
-      51,
       71,
       3,
       3,
@@ -636,7 +620,6 @@
       3
     ],
     "temp_850hpa": [
-      22.9,
       19.8,
       17.2,
       16.1,
@@ -669,7 +652,6 @@
       20.9
     ],
     "temp_700hpa": [
-      29.0,
       25.7,
       20.8,
       16.1,
@@ -702,7 +684,6 @@
       8.4
     ],
     "height_850hpa": [
-      4402.887,
       4422.572,
       4419.292,
       4435.696,
@@ -735,7 +716,6 @@
       4501.312
     ],
     "wet_bulb": [
-      34.5,
       34.1,
       33.6,
       32.5,
@@ -2424,38 +2404,38 @@
   },
   "kbos": {
     "station": "KBOS",
-    "time": "2026-03-12T20:30:00+00:00",
-    "pressure_hpa": 1004.7,
-    "temp_f": 42.8,
-    "dewpoint_f": 28.4,
-    "wind_mph": 13.8,
-    "wind_dir": 270,
-    "tendency_hpa": -12.2,
+    "time": "2026-03-12T21:00:00+00:00",
+    "pressure_hpa": 1005.4,
+    "temp_f": 41.0,
+    "dewpoint_f": null,
+    "wind_mph": null,
+    "wind_dir": null,
+    "tendency_hpa": -11.5,
     "tendency_label": "Falling fast"
   },
   "kbvy": {
     "station": "KBVY",
-    "time": "2026-03-12T20:35:00+00:00",
-    "pressure_hpa": 1004.4,
-    "temp_f": 42.8,
+    "time": "2026-03-12T21:05:00+00:00",
+    "pressure_hpa": 1004.7,
+    "temp_f": 39.2,
     "dewpoint_f": null,
-    "wind_mph": null,
-    "wind_dir": null,
-    "tendency_hpa": -12.2,
+    "wind_mph": 6.9,
+    "wind_dir": 280,
+    "tendency_hpa": -11.9,
     "tendency_label": "Falling fast"
   },
   "buoy_44013": {
-    "time": "2026-03-12T20:20Z",
+    "time": "2026-03-12T21:00Z",
     "wind_dir": 290.0,
-    "wind_mph": 13.4,
+    "wind_mph": 11.2,
     "gust_mph": 15.7,
-    "wave_ht_ft": 2.0,
-    "wave_period_sec": 3.0,
-    "pressure_hpa": 1004.5,
-    "air_temp_f": 40.5,
-    "water_temp_f": 38.3,
-    "dewpoint_f": 33.3,
-    "pressure_tend_hpa": null
+    "wave_ht_ft": null,
+    "wave_period_sec": null,
+    "pressure_hpa": 1004.8,
+    "air_temp_f": 40.3,
+    "water_temp_f": 38.5,
+    "dewpoint_f": 32.5,
+    "pressure_tend_hpa": 1.2
   },
   "frost_log": {
     "season_start": "2025-10-01",
@@ -2642,13 +2622,13 @@
     {
       "name": "This Afternoon",
       "is_daytime": true,
-      "start_time": "2026-03-12T16:00:00-04:00",
+      "start_time": "2026-03-12T17:00:00-04:00",
       "temperature": 55,
       "temp_unit": "F",
-      "wind_speed": "12 mph",
-      "wind_direction": "NW",
+      "wind_speed": "10 mph",
+      "wind_direction": "W",
       "short_forecast": "Rain And Snow",
-      "detailed": "Rain before 5pm, then rain and snow. Cloudy. High near 55, with temperatures falling to around 41 in the afternoon. Northwest wind around 12 mph. Chance of precipitation is 90%. New rainfall amounts less than a tenth of an inch possible.",
+      "detailed": "Rain and snow. Cloudy. High near 55, with temperatures falling to around 41 in the afternoon. West wind around 10 mph. Chance of precipitation is 90%. New rainfall amounts less than a tenth of an inch possible.",
       "icon": "https://api.weather.gov/icons/land/day/snow,90?size=medium"
     },
     {
@@ -2811,31 +2791,31 @@
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-03-12T20:50:13.706236",
-    "temperature": 42.0,
+    "updated": "2026-03-12T21:22:52.976763",
+    "temperature": 40.0,
     "stale": false
   },
   "wu_stations": {
-    "temperature_f": 41.9,
-    "humidity_pct": 62.6,
-    "pressure_in": 29.66,
-    "wind_speed_mph": 5.5,
-    "wind_gust_mph": 11.1,
+    "temperature_f": 39.9,
+    "humidity_pct": 70.3,
+    "pressure_in": 29.69,
+    "wind_speed_mph": 4.4,
+    "wind_gust_mph": 8.8,
     "quality": {
       "total_stations": 15,
       "stations_within_range": 12,
       "stations_used_temp": 12,
-      "stations_used_wind": 11,
+      "stations_used_wind": 10,
       "temp_outliers_removed": 1,
-      "wind_sensors_failed": 1,
+      "wind_sensors_failed": 2,
       "closest_station": "KMAMARBL63",
       "max_distance_used_mi": 1.38
     },
     "ranges": {
-      "temp_min_f": 39.2,
-      "temp_max_f": 44.7,
-      "wind_min_mph": 1.4,
-      "wind_max_mph": 11.6
+      "temp_min_f": 37.2,
+      "temp_max_f": 42.9,
+      "wind_min_mph": 0.7,
+      "wind_max_mph": 7.0
     },
     "stations": [
       {
@@ -2844,12 +2824,12 @@
         "longitude": -70.88,
         "elevation_ft": 85.0,
         "distance_mi": 0.27,
-        "timestamp": "2026-03-12 16:49:50",
-        "temperature_f": 41.9,
-        "humidity_pct": 62.5,
-        "wind_speed_mph": 5.5,
+        "timestamp": "2026-03-12 17:19:58",
+        "temperature_f": 39.8,
+        "humidity_pct": 70.0,
+        "wind_speed_mph": 5.0,
         "wind_gust_mph": 10.3,
-        "pressure_in": 29.98
+        "pressure_in": 30.0
       },
       {
         "station_id": "KMAMARBL69",
@@ -2857,12 +2837,12 @@
         "longitude": -70.858,
         "elevation_ft": 69.0,
         "distance_mi": 0.87,
-        "timestamp": "2026-03-12 16:01:01",
-        "temperature_f": 42.9,
-        "humidity_pct": 61.0,
-        "wind_speed_mph": 2.5,
-        "wind_gust_mph": 2.9,
-        "pressure_in": 29.44
+        "timestamp": "2026-03-12 17:00:59",
+        "temperature_f": 41.4,
+        "humidity_pct": 68.0,
+        "wind_speed_mph": 3.4,
+        "wind_gust_mph": 5.1,
+        "pressure_in": 29.46
       },
       {
         "station_id": "KMAMARBL112",
@@ -2870,12 +2850,12 @@
         "longitude": -70.868,
         "elevation_ft": 97.0,
         "distance_mi": 0.43,
-        "timestamp": "2026-03-12 16:49:46",
-        "temperature_f": 42.0,
-        "humidity_pct": 58.6,
-        "wind_speed_mph": 8.7,
-        "wind_gust_mph": 16.8,
-        "pressure_in": 29.38
+        "timestamp": "2026-03-12 17:19:45",
+        "temperature_f": 40.1,
+        "humidity_pct": 67.4,
+        "wind_speed_mph": 5.3,
+        "wind_gust_mph": 8.7,
+        "pressure_in": 29.42
       },
       {
         "station_id": "KMAMARBL108",
@@ -2883,12 +2863,12 @@
         "longitude": -70.869,
         "elevation_ft": 16.0,
         "distance_mi": 0.61,
-        "timestamp": "2026-03-12 16:49:50",
-        "temperature_f": 39.2,
-        "humidity_pct": 66.6,
+        "timestamp": "2026-03-12 17:19:58",
+        "temperature_f": 37.2,
+        "humidity_pct": 73.9,
         "wind_speed_mph": 0.0,
         "wind_gust_mph": 0.0,
-        "pressure_in": 29.41
+        "pressure_in": 29.44
       },
       {
         "station_id": "KMAMARBL39",
@@ -2896,12 +2876,12 @@
         "longitude": -70.866684,
         "elevation_ft": 89.0,
         "distance_mi": 0.71,
-        "timestamp": "2026-03-12 16:49:49",
-        "temperature_f": 42.0,
-        "humidity_pct": 63.4,
-        "wind_speed_mph": 2.3,
+        "timestamp": "2026-03-12 17:19:41",
+        "temperature_f": 40.3,
+        "humidity_pct": 69.4,
+        "wind_speed_mph": 2.7,
         "wind_gust_mph": 5.8,
-        "pressure_in": 29.66
+        "pressure_in": 29.69
       },
       {
         "station_id": "KMAMARBL4",
@@ -2909,12 +2889,12 @@
         "longitude": -70.86496,
         "elevation_ft": 90.0,
         "distance_mi": 1.07,
-        "timestamp": "2026-03-12 16:39:00",
-        "temperature_f": 44.7,
-        "humidity_pct": 64.2,
-        "wind_speed_mph": 11.6,
-        "wind_gust_mph": 17.0,
-        "pressure_in": 29.51
+        "timestamp": "2026-03-12 17:09:00",
+        "temperature_f": 42.9,
+        "humidity_pct": 71.3,
+        "wind_speed_mph": 7.0,
+        "wind_gust_mph": 13.0,
+        "pressure_in": 29.54
       },
       {
         "station_id": "KMAMARBL36",
@@ -2922,12 +2902,12 @@
         "longitude": -70.853333,
         "elevation_ft": 69.0,
         "distance_mi": 1.21,
-        "timestamp": "2026-03-12 16:45:08",
-        "temperature_f": 42.5,
-        "humidity_pct": 67.0,
-        "wind_speed_mph": 4.0,
-        "wind_gust_mph": 11.0,
-        "pressure_in": 29.66
+        "timestamp": "2026-03-12 17:15:14",
+        "temperature_f": 40.7,
+        "humidity_pct": 72.0,
+        "wind_speed_mph": 3.0,
+        "wind_gust_mph": 14.0,
+        "pressure_in": 29.69
       },
       {
         "station_id": "KMAMARBL57",
@@ -2935,12 +2915,12 @@
         "longitude": -70.882292,
         "elevation_ft": 49.0,
         "distance_mi": 0.92,
-        "timestamp": "2026-03-12 16:49:58",
-        "temperature_f": 42.0,
-        "humidity_pct": 61.7,
-        "wind_speed_mph": 1.4,
-        "wind_gust_mph": 5.8,
-        "pressure_in": 28.65
+        "timestamp": "2026-03-12 17:19:50",
+        "temperature_f": 40.1,
+        "humidity_pct": 70.6,
+        "wind_speed_mph": 0.7,
+        "wind_gust_mph": 2.2,
+        "pressure_in": 28.67
       },
       {
         "station_id": "KMAMARBL56",
@@ -2948,12 +2928,12 @@
         "longitude": -70.889,
         "elevation_ft": 79.0,
         "distance_mi": 1.06,
-        "timestamp": "2026-03-12 16:49:55",
-        "temperature_f": 41.7,
-        "humidity_pct": 65.7,
-        "wind_speed_mph": 2.3,
-        "wind_gust_mph": 9.2,
-        "pressure_in": 29.25
+        "timestamp": "2026-03-12 17:19:47",
+        "temperature_f": 39.7,
+        "humidity_pct": 73.7,
+        "wind_speed_mph": 0.0,
+        "wind_gust_mph": 0.0,
+        "pressure_in": 29.28
       },
       {
         "station_id": "KMAMARBL89",
@@ -2961,12 +2941,12 @@
         "longitude": -70.884631,
         "elevation_ft": 85.0,
         "distance_mi": 0.58,
-        "timestamp": "2026-03-12 16:49:53",
-        "temperature_f": 42.2,
-        "humidity_pct": 63.7,
-        "wind_speed_mph": 5.9,
-        "wind_gust_mph": 14.8,
-        "pressure_in": 29.57
+        "timestamp": "2026-03-12 17:19:45",
+        "temperature_f": 40.3,
+        "humidity_pct": 72.7,
+        "wind_speed_mph": 3.7,
+        "wind_gust_mph": 8.1,
+        "pressure_in": 29.61
       },
       {
         "station_id": "KMAMARBL78",
@@ -2974,12 +2954,12 @@
         "longitude": -70.86,
         "elevation_ft": 9.0,
         "distance_mi": 1.38,
-        "timestamp": "2026-03-12 16:49:52",
-        "temperature_f": 42.2,
-        "humidity_pct": 66.2,
-        "wind_speed_mph": 3.2,
-        "wind_gust_mph": 9.8,
-        "pressure_in": 29.73
+        "timestamp": "2026-03-12 17:19:59",
+        "temperature_f": 40.3,
+        "humidity_pct": 73.7,
+        "wind_speed_mph": 1.8,
+        "wind_gust_mph": 5.6,
+        "pressure_in": 29.76
       },
       {
         "station_id": "KMASALEM91",
@@ -2987,63 +2967,63 @@
         "longitude": -70.889328,
         "elevation_ft": 36.0,
         "distance_mi": 0.99,
-        "timestamp": "2026-03-12 16:49:55",
-        "temperature_f": 42.2,
-        "humidity_pct": 63.5,
-        "wind_speed_mph": 2.4,
-        "wind_gust_mph": 5.8,
-        "pressure_in": 29.71
+        "timestamp": "2026-03-12 17:19:47",
+        "temperature_f": 40.6,
+        "humidity_pct": 71.5,
+        "wind_speed_mph": 1.3,
+        "wind_gust_mph": 4.5,
+        "pressure_in": 29.74
       }
     ]
   },
   "hyperlocal": {
-    "model_temp": 39.1,
-    "weighted_bias": 2.39,
-    "corrected_temp": 41.5,
+    "model_temp": 38.7,
+    "weighted_bias": 0.87,
+    "corrected_temp": 39.6,
     "stations_used": 12,
     "stations_total": 12,
     "confidence": "Moderate",
-    "wu_avg_temp": 41.9,
-    "simple_bias": 2.8,
-    "model_pressure_in": 29.7,
-    "wu_pressure_in": 29.66,
-    "kbos_pressure_in": 29.67,
-    "corrected_pressure_in": 29.66,
-    "model_humidity": 73,
-    "wu_humidity": 62.6,
-    "bias_humidity": -10.4,
-    "corrected_humidity": 62.6,
-    "model_wind_speed": 10.2,
-    "wu_wind_speed": 5.5,
+    "wu_avg_temp": 39.9,
+    "simple_bias": 1.2,
+    "model_pressure_in": 29.71,
+    "wu_pressure_in": 29.69,
+    "kbos_pressure_in": 29.69,
+    "corrected_pressure_in": 29.69,
+    "model_humidity": 72,
+    "wu_humidity": 70.3,
+    "bias_humidity": -1.7,
+    "corrected_humidity": 70.3,
+    "model_wind_speed": 8.2,
+    "wu_wind_speed": 4.4,
     "bias_wind_speed": null,
-    "corrected_wind_speed": 10.2,
-    "model_wind_gust": 23.3,
-    "wu_wind_gust": 11.1,
+    "corrected_wind_speed": 8.2,
+    "model_wind_gust": 21.3,
+    "wu_wind_gust": 8.8,
     "bias_wind_gust": null,
-    "corrected_wind_gust": 23.3,
+    "corrected_wind_gust": 21.3,
     "wu_stations_temp": 12,
-    "wu_stations_wind": 11
+    "wu_stations_wind": 10
   },
   "derived": {
     "pressure_trend": "Rising",
-    "pressure_trend_hpa_3h": 2.1,
+    "pressure_trend_hpa_3h": 2.7,
     "fog_probability": 0,
     "fog_label": "Unlikely",
     "fog_hours_in_12h": 0,
-    "col_precip_type": "Snow",
+    "col_precip_type": "Heavy snow",
     "col_precip_conf": "High",
-    "temp_850hpa_now": 22.9,
-    "height_850hpa_tend_6h": 56.0,
+    "temp_850hpa_now": 19.8,
+    "height_850hpa_tend_6h": 30.0,
     "trough_signal": "Ridging",
     "sea_breeze_label": "No sea breeze",
     "sea_breeze_conf": null,
-    "land_sea_diff_f": 3.7,
-    "land_temp_f": 42.0,
-    "water_temp_f": 38.3,
-    "best_pressure_tend": -12.2,
+    "land_sea_diff_f": 1.5,
+    "land_temp_f": 40.0,
+    "water_temp_f": 38.5,
+    "best_pressure_tend": -11.5,
     "best_pressure_tend_src": "KBOS",
     "pressure_alarm": "falling",
-    "pressure_alarm_label": "\u26a0\ufe0f Pressure falling fast (-12.2 hPa, KBOS)",
+    "pressure_alarm_label": "\u26a0\ufe0f Pressure falling fast (-11.5 hPa, KBOS)",
     "wind_peak_time": "2026-03-12T23:00"
   },
   "wind_risk": {
