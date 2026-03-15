@@ -25,7 +25,7 @@ jobs:
           pip install requests python-dateutil pytz beautifulsoup4 lxml
 
       - name: Run collector
-        run: python collector.py
+        run: python -m weather_collector.collector
 
       - name: Configure Git
         run: |
