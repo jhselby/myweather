@@ -3181,7 +3181,7 @@
 
     function renderForecast(daily) {
       const el = document.getElementById("forecastList");
-      if (!el || !daily || !Array.isArray(daily.dates)) return;
+      if (!el || !daily || !Array.isArray(daily.time)) return;
       el.innerHTML = "";
 
       // Build set of dates covered by NWS periods
@@ -3194,8 +3194,8 @@
       const hasStartTimes = (window._nwsPeriods || []).some(p => p.start_time);
       const nwsDayCount = hasStartTimes ? null : 7;
 
-      for (let i = 0; i < Math.min(10, daily.dates.length); i++) {
-        const dateStr   = daily.dates[i];
+      for (let i = 0; i < Math.min(10, daily.time.length); i++) {
+        const dateStr   = daily.time[i];
         const date      = new Date(dateStr + "T00:00:00");
         const day       = date.toLocaleDateString("en-US", { weekday: "short" });
         const dateNum   = date.toLocaleDateString("en-US", { month:"numeric", day:"numeric" });
