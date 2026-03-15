@@ -17,6 +17,7 @@ from .fetchers.noaa import fetch_kbos_obs, fetch_kbvy_obs, fetch_buoy_44013
 from .fetchers.nws import fetch_nws_forecast, fetch_nws_alerts
 from .fetchers.salem_water import fetch_salem_water_temp
 from .fetchers.wu import fetch_wu_stations
+from .processors.wet_bulb import add_wet_bulb_temps
 
 # Import all processors
 from .processors.frost import update_frost_log
@@ -170,6 +171,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         if spread is not None:
             derived["dew_point_spread_f"] = spread
 
+    # Wet bulb temperatures (for precipitation type classification)
+    add_wet_bulb_temps(weather_data)
+
+    
     # Wind risk
     wind_risk = compute_wind_risk(weather_data)
     if wind_risk:
