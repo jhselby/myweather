@@ -1,64 +1,64 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-03-15T21:04:04.472857Z",
+  "generated_at": "2026-03-15T21:15:31.759029Z",
   "location": "Wyman Cove, Marblehead MA",
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-03-15T21:02:50.126897Z",
+      "updated_at": "2026-03-15T21:14:49.673129Z",
       "error": null,
       "model": "GFS current"
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-03-15T21:02:50.796136Z",
+      "updated_at": "2026-03-15T21:14:50.214254Z",
       "error": null,
       "model": "HRRR hourly"
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-03-15T21:02:51.421543Z",
+      "updated_at": "2026-03-15T21:14:50.672116Z",
       "error": null,
       "model": "ECMWF daily"
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-03-15T21:02:52.053644Z",
+      "updated_at": "2026-03-15T21:14:51.118284Z",
       "error": null
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-03-15T21:02:53.858730Z",
+      "updated_at": "2026-03-15T21:14:52.390285Z",
       "error": null
     },
     "kbos": {
       "status": "error",
-      "updated_at": "2026-03-15T21:02:55.350233Z",
+      "updated_at": "2026-03-15T21:14:53.422397Z",
       "error": "410 Client Error: Gone for url: https://aviationweather.gov/cgi-bin/data/metar.php?ids=KBOS&format=json"
     },
     "kbvy": {
       "status": "error",
-      "updated_at": "2026-03-15T21:02:55.416065Z",
+      "updated_at": "2026-03-15T21:14:53.465028Z",
       "error": "410 Client Error: Gone for url: https://aviationweather.gov/cgi-bin/data/metar.php?ids=KBVY&format=json"
     },
     "buoy_44013": {
       "status": "ok",
-      "updated_at": "2026-03-15T21:02:55.527373Z",
+      "updated_at": "2026-03-15T21:14:53.503722Z",
       "error": null
     },
     "wu_stations": {
       "status": "ok",
-      "updated_at": "2026-03-15T21:02:55.602518Z",
+      "updated_at": "2026-03-15T21:14:53.541360Z",
       "error": null
     },
     "nws_forecast": {
       "status": "ok",
-      "updated_at": "2026-03-15T21:03:18.525359Z",
+      "updated_at": "2026-03-15T21:15:16.050326Z",
       "error": null
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-03-15T21:03:39.132244Z",
+      "updated_at": "2026-03-15T21:15:28.110504Z",
       "error": null
     }
   },
@@ -1243,8 +1243,8 @@
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-03-15T21:02:53.856876",
-    "temperature": 37.0,
+    "updated": "2026-03-15T21:14:52.388337",
+    "temperature": 36.0,
     "stale": false
   },
   "tides": {
@@ -1292,14 +1292,6 @@
       }
     ],
     "curve": [
-      {
-        "t": "2026-03-15 21:00",
-        "v": "7.459"
-      },
-      {
-        "t": "2026-03-15 21:06",
-        "v": "7.53"
-      },
       {
         "t": "2026-03-15 21:12",
         "v": "7.592"
@@ -3215,14 +3207,22 @@
       {
         "t": "2026-03-17 21:00",
         "v": "6.372"
+      },
+      {
+        "t": "2026-03-17 21:06",
+        "v": "6.564"
+      },
+      {
+        "t": "2026-03-17 21:12",
+        "v": "6.752"
       }
     ]
   },
   "buoy_44013": {
     "station": "44013",
-    "pressure_hpa": 1032.2,
+    "pressure_hpa": 1032.0,
     "pressure_tend_hpa": null,
-    "water_temp_f": 38.8
+    "water_temp_f": null
   },
   "nws_forecast": [
     {
@@ -3702,13 +3702,12 @@
       }
     ]
   },
-  "salem_water_temp_f": 38.8,
   "wu_stations": {
-    "temperature_f": 36.7,
-    "humidity_pct": 67.7,
+    "temperature_f": 36.5,
+    "humidity_pct": 68.6,
     "pressure_in": 30.46,
-    "wind_speed_mph": 4.2,
-    "wind_gust_mph": 9.7,
+    "wind_speed_mph": 4.5,
+    "wind_gust_mph": 8.5,
     "quality": {
       "total_stations": 15,
       "stations_within_range": 13,
@@ -3722,8 +3721,8 @@
     "ranges": {
       "temp_min_f": 33.6,
       "temp_max_f": 39.3,
-      "wind_min_mph": 0.9,
-      "wind_max_mph": 5.8
+      "wind_min_mph": 0.5,
+      "wind_max_mph": 5.9
     },
     "stations": [
       {
@@ -3732,12 +3731,12 @@
         "longitude": -70.88,
         "elevation_ft": 85.0,
         "distance_mi": 0.27,
-        "timestamp": "2026-03-15 16:59:56",
-        "temperature_f": 36.6,
-        "humidity_pct": 68.3,
-        "wind_speed_mph": 5.0,
-        "wind_gust_mph": 12.5,
-        "pressure_in": 30.77
+        "timestamp": "2026-03-15 17:09:48",
+        "temperature_f": 36.3,
+        "humidity_pct": 69.0,
+        "wind_speed_mph": 5.9,
+        "wind_gust_mph": 10.3,
+        "pressure_in": 30.78
       },
       {
         "station_id": "KMAMARBL69",
@@ -3745,12 +3744,12 @@
         "longitude": -70.858,
         "elevation_ft": 69.0,
         "distance_mi": 0.87,
-        "timestamp": "2026-03-15 16:00:57",
-        "temperature_f": 39.0,
-        "humidity_pct": 62.0,
-        "wind_speed_mph": 3.8,
-        "wind_gust_mph": 4.5,
-        "pressure_in": 30.25
+        "timestamp": "2026-03-15 17:00:59",
+        "temperature_f": 37.6,
+        "humidity_pct": 69.0,
+        "wind_speed_mph": 5.4,
+        "wind_gust_mph": 6.7,
+        "pressure_in": 30.24
       },
       {
         "station_id": "KMAMARBL112",
@@ -3758,12 +3757,12 @@
         "longitude": -70.868,
         "elevation_ft": 97.0,
         "distance_mi": 0.43,
-        "timestamp": "2026-03-15 16:59:46",
-        "temperature_f": 36.8,
-        "humidity_pct": 66.0,
+        "timestamp": "2026-03-15 17:09:46",
+        "temperature_f": 36.6,
+        "humidity_pct": 66.4,
         "wind_speed_mph": 5.8,
-        "wind_gust_mph": 10.7,
-        "pressure_in": 30.18
+        "wind_gust_mph": 9.6,
+        "pressure_in": 30.17
       },
       {
         "station_id": "KMAMARBL108",
@@ -3771,9 +3770,9 @@
         "longitude": -70.869,
         "elevation_ft": 16.0,
         "distance_mi": 0.61,
-        "timestamp": "2026-03-15 16:59:58",
+        "timestamp": "2026-03-15 17:09:50",
         "temperature_f": 33.6,
-        "humidity_pct": 69.9,
+        "humidity_pct": 70.6,
         "wind_speed_mph": 0.0,
         "wind_gust_mph": 0.0,
         "pressure_in": 30.2
@@ -3784,11 +3783,11 @@
         "longitude": -70.866684,
         "elevation_ft": 89.0,
         "distance_mi": 0.71,
-        "timestamp": "2026-03-15 16:59:42",
+        "timestamp": "2026-03-15 17:09:50",
         "temperature_f": 37.4,
-        "humidity_pct": 64.4,
-        "wind_speed_mph": 1.9,
-        "wind_gust_mph": 4.5,
+        "humidity_pct": 65.0,
+        "wind_speed_mph": 0.9,
+        "wind_gust_mph": 2.2,
         "pressure_in": 30.46
       },
       {
@@ -3797,10 +3796,10 @@
         "longitude": -70.86496,
         "elevation_ft": 90.0,
         "distance_mi": 1.07,
-        "timestamp": "2026-03-15 16:49:00",
+        "timestamp": "2026-03-15 16:59:00",
         "temperature_f": 39.3,
         "humidity_pct": 69.0,
-        "wind_speed_mph": 5.6,
+        "wind_speed_mph": 3.4,
         "wind_gust_mph": 12.0,
         "pressure_in": 30.32
       },
@@ -3810,12 +3809,12 @@
         "longitude": -70.853333,
         "elevation_ft": 69.0,
         "distance_mi": 1.21,
-        "timestamp": "2026-03-15 16:45:20",
-        "temperature_f": 37.4,
-        "humidity_pct": 71.0,
-        "wind_speed_mph": 5.0,
-        "wind_gust_mph": 9.0,
-        "pressure_in": 30.46
+        "timestamp": "2026-03-15 17:00:21",
+        "temperature_f": 37.2,
+        "humidity_pct": 72.0,
+        "wind_speed_mph": 3.0,
+        "wind_gust_mph": 10.0,
+        "pressure_in": 30.45
       },
       {
         "station_id": "KMAMARBL57",
@@ -3823,11 +3822,11 @@
         "longitude": -70.882292,
         "elevation_ft": 49.0,
         "distance_mi": 0.92,
-        "timestamp": "2026-03-15 16:59:31",
+        "timestamp": "2026-03-15 17:09:40",
         "temperature_f": 37.0,
-        "humidity_pct": 67.5,
-        "wind_speed_mph": 3.3,
-        "wind_gust_mph": 5.8,
+        "humidity_pct": 68.2,
+        "wind_speed_mph": 3.0,
+        "wind_gust_mph": 8.1,
         "pressure_in": 29.44
       },
       {
@@ -3836,12 +3835,12 @@
         "longitude": -70.889,
         "elevation_ft": 79.0,
         "distance_mi": 1.06,
-        "timestamp": "2026-03-15 16:59:46",
+        "timestamp": "2026-03-15 17:14:58",
         "temperature_f": 36.4,
-        "humidity_pct": 71.0,
-        "wind_speed_mph": 0.9,
+        "humidity_pct": 72.0,
+        "wind_speed_mph": 0.5,
         "wind_gust_mph": 9.2,
-        "pressure_in": 30.05
+        "pressure_in": 30.04
       },
       {
         "station_id": "KMAMARBL89",
@@ -3849,10 +3848,10 @@
         "longitude": -70.884631,
         "elevation_ft": 85.0,
         "distance_mi": 0.58,
-        "timestamp": "2026-03-15 16:59:56",
-        "temperature_f": 37.3,
-        "humidity_pct": 68.0,
-        "wind_speed_mph": 1.1,
+        "timestamp": "2026-03-15 17:14:52",
+        "temperature_f": 37.0,
+        "humidity_pct": 69.0,
+        "wind_speed_mph": 1.4,
         "wind_gust_mph": 3.4,
         "pressure_in": 30.37
       },
@@ -3862,11 +3861,11 @@
         "longitude": -70.86,
         "elevation_ft": 9.0,
         "distance_mi": 1.38,
-        "timestamp": "2026-03-15 16:59:55",
-        "temperature_f": 36.6,
-        "humidity_pct": 70.3,
-        "wind_speed_mph": 5.8,
-        "wind_gust_mph": 15.9,
+        "timestamp": "2026-03-15 17:09:46",
+        "temperature_f": 36.8,
+        "humidity_pct": 71.6,
+        "wind_speed_mph": 4.1,
+        "wind_gust_mph": 8.9,
         "pressure_in": 30.53
       },
       {
@@ -3875,12 +3874,12 @@
         "longitude": -70.889328,
         "elevation_ft": 36.0,
         "distance_mi": 0.99,
-        "timestamp": "2026-03-15 16:59:45",
-        "temperature_f": 37.4,
-        "humidity_pct": 68.0,
+        "timestamp": "2026-03-15 17:14:57",
+        "temperature_f": 37.6,
+        "humidity_pct": 69.2,
         "wind_speed_mph": 0.9,
         "wind_gust_mph": 3.4,
-        "pressure_in": 30.51
+        "pressure_in": 30.5
       },
       {
         "station_id": "KMASALEM94",
@@ -3888,11 +3887,11 @@
         "longitude": -70.898,
         "elevation_ft": 22.0,
         "distance_mi": 1.25,
-        "timestamp": "2026-03-15 16:59:52",
-        "temperature_f": 37.4,
-        "humidity_pct": 66.0,
+        "timestamp": "2026-03-15 17:14:52",
+        "temperature_f": 37.3,
+        "humidity_pct": 67.0,
         "wind_speed_mph": 2.8,
-        "wind_gust_mph": 6.0,
+        "wind_gust_mph": 7.0,
         "pressure_in": 30.52
       }
     ]
