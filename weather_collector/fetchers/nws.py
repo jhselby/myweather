@@ -1,12 +1,11 @@
 """
 Fetch NWS forecast and alerts
 """
-from curses import meta
-
 import requests
-
-from ..config import LAT, LON, HEADERS_DEFAULT
+from ..config import LAT, LON
 from ..utils import iso_utc_now
+
+HEADERS_DEFAULT = {"User-Agent": "WymanCoveWeather/1.0"}
 
 
 def fetch_nws_forecast():
@@ -55,6 +54,7 @@ def fetch_nws_forecast():
         print(f"  ✗ NWS forecast: {e}")
         return None, meta
 
+
 def fetch_nws_alerts():
     """Fetch active NWS alerts for the area."""
     print("📡 Fetching NWS alerts...")
@@ -66,18 +66,14 @@ def fetch_nws_alerts():
         r.raise_for_status()
         data = r.json()
 
-        alerts = data.get("features", [])
-
-        result = {
-            "count": len(alerts),
-            "alerts": alerts,
-        }
+        features = data.get("features", [])
+        alerts = [f.get("properties", {}) for f in features]
 
         meta["status"] = "ok"
         print(f"  ✓ NWS alerts: {len(alerts)} active")
-        return result, meta
+        return alerts, meta
 
     except Exception as e:
         meta["error"] = str(e)
         print(f"  ✗ NWS alerts: {e}")
-        return None, meta
+        return [], meta

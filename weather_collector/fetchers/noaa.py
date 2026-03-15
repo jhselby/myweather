@@ -19,7 +19,7 @@ def fetch_kbos_obs():
         if not data or len(data) == 0:
             raise ValueError("No data returned")
         
-        obs = data[0]  # First result
+        obs = data[0]
         temp_c = obs.get("temp")
         
         result = {
@@ -79,7 +79,7 @@ def fetch_kbvy_obs():
 
 
 def fetch_buoy_44013():
-    """Fetch Buoy 44013 latest observation from NDBC."""
+    """Fetch Buoy 44013 latest observation from NDBC RSS feed."""
     print("📡 Fetching Buoy 44013...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
     
@@ -87,34 +87,53 @@ def fetch_buoy_44013():
         url = "https://www.ndbc.noaa.gov/data/latest_obs/44013.rss"
         r = requests.get(url, timeout=30)
         r.raise_for_status()
-        
-        # Parse RSS (simple text extraction)
         text = r.text
         
-        # Extract data between tags
-        def extract(tag):
-            start = text.find(f"<{tag}>")
-            end = text.find(f"</{tag}>")
-            if start == -1 or end == -1:
-                return None
-            return text[start + len(tag) + 2:end].strip()
+        # Find the item description (second CDATA block)
+        first = text.find("<description><![CDATA[")
+        first_end = text.find("]]></description>", first)
+        second = text.find("<description><![CDATA[", first_end)
+        second_end = text.find("]]></description>", second)
         
-        pressure_mb = extract("pressure")
-        water_temp_c = extract("water_temp")
-        wind_speed_kt = extract("wind_speed")
-        wave_height_ft = extract("wave_height")
+        if second == -1:
+            raise ValueError("Could not find item description")
+        
+        desc = text[second + 22:second_end]
+        
+        # Extract numeric values from HTML description
+        import re
+        
+        def get_num(label):
+            """Extract first number after a label."""
+            match = re.search(f"<strong>{label}:</strong>\\s*([\\d.]+)", desc)
+            return match.group(1) if match else None
+        
+        # Wind direction special case: "SE (130°)"
+        wind_dir = None
+        wind_match = re.search(r"<strong>Wind Direction:</strong>\s*\w+\s*\((\d+)", desc)
+        if wind_match:
+            wind_dir = int(wind_match.group(1))
+        
+        wind_speed = get_num("Wind Speed")
+        wind_gust = get_num("Wind Gust")
+        pressure = get_num("Atmospheric Pressure")
+        water_temp = get_num("Water Temperature")
         
         result = {
             "station": "44013",
-            "pressure_hpa": float(pressure_mb) if pressure_mb else None,
+            "pressure_hpa": round(float(pressure) * 33.8639, 1) if pressure else None,
             "pressure_tend_hpa": None,
-            "water_temp_f": round(float(water_temp_c) * 9/5 + 32, 1) if water_temp_c else None,
-            "wind_speed_kt": float(wind_speed_kt) if wind_speed_kt else None,
-            "wave_height_ft": float(wave_height_ft) if wave_height_ft else None,
+            "water_temp_f": float(water_temp) if water_temp else None,
+            "wind_speed_kt": float(wind_speed) if wind_speed else None,
+            "wind_gust_kt": float(wind_gust) if wind_gust else None,
+            "wind_dir": wind_dir,
+            "wave_height_ft": None,
+            "wave_period_sec": None,
+            "wind_mph": round(float(wind_speed) * 1.15078, 1) if wind_speed else None,
         }
         
         meta["status"] = "ok"
-        print(f"  ✓ Buoy: {result.get('pressure_hpa')} hPa, {result.get('water_temp_f')}°F")
+        print(f"  ✓ Buoy: {result.get('wind_speed_kt')} kt, {result.get('water_temp_f')}°F")
         return result, meta
         
     except Exception as e:

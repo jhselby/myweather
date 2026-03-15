@@ -18,12 +18,12 @@ from .fetchers.nws import fetch_nws_forecast, fetch_nws_alerts
 from .fetchers.salem_water import fetch_salem_water_temp
 from .fetchers.wu import fetch_wu_stations
 from .processors.wet_bulb import add_wet_bulb_temps
+from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spread
 
 # Import all processors
 from .processors.frost import update_frost_log
 from .processors.pressure import compute_pressure_trend_hpa, get_best_pressure_trend, classify_pressure_alarm
 from .processors.wind_risk import compute_wind_risk
-from .processors.hyperlocal import compute_hyperlocal_temp, compute_dew_point_spread
 
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
@@ -113,6 +113,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # Tide data
     if tide_data:
         weather_data["tides"] = tide_data
+        # Dock Day Score needs tide_curve at top level
+        weather_data["tide_curve"] = tide_data.get("curve", {"times": [], "heights": []})
 
     # NOAA observations
     if kbos_data:
@@ -157,13 +159,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         derived["pressure_alarm"] = alarm["alarm"]
         derived["pressure_alarm_label"] = alarm["alarm_label"]
 
-    # Hyperlocal temperature
-    if current_data and wu_data:
-        model_temp = current_data.get("current", {}).get("temperature_2m")
-        hyperlocal = compute_hyperlocal_temp(model_temp, wu_data)
-        if hyperlocal:
-            derived.update(hyperlocal)
-
+    # Hyperlocal corrections
+    build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data)
+    
     # Dew point spread
     if current_data:
         current = current_data.get("current", {})
