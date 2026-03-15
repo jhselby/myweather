@@ -50,9 +50,31 @@ def fetch_tides():
         r2.raise_for_status()
         curve_data = r2.json()
 
-        # Build result
-        events = hilo_data.get("predictions", [])[:8]  # Cap at 8 events
-        curve = curve_data.get("predictions", [])
+        # Build result - reformat events for UI
+        raw_events = hilo_data.get("predictions", [])[:8]
+        events = []
+        for event in raw_events:
+            # NOAA format: {t: "2026-03-15 02:54", v: "1.957", type: "L"}
+            # UI expects: {date: "2026-03-15", time: "02:54", height: "1.957", type: "L"}
+            timestamp = event.get("t", "")
+            if " " in timestamp:
+                date_part, time_part = timestamp.split(" ", 1)
+            else:
+                date_part, time_part = timestamp, "00:00"
+            
+            events.append({
+                "date": date_part,
+                "time": time_part,
+                "height": event.get("v"),
+                "type": event.get("type"),
+            })
+
+        # Curve for chart - reformat times and heights
+        raw_curve = curve_data.get("predictions", [])
+        curve = {
+            "times": [c.get("t") for c in raw_curve],
+            "heights": [float(c.get("v", 0)) for c in raw_curve],
+        }
 
         tide_result = {
             "station": TIDE_STATION,
@@ -61,7 +83,7 @@ def fetch_tides():
         }
 
         meta["status"] = "ok"
-        print(f"  ✓ Tides: {len(events)} events, {len(curve)} curve points")
+        print(f"  ✓ Tides: {len(events)} events, {len(curve['times'])} curve points")
         return tide_result, meta
 
     except Exception as e:

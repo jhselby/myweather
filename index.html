@@ -4428,7 +4428,7 @@
         renderNWSForecast(window._nwsPeriods);
 
         // Almanac tab
-        renderTides(data.tides);
+        renderTides(data.tides?.events);
         initCollapsibleCards();
         renderWaterTempLog();
 
