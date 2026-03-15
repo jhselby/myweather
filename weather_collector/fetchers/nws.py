@@ -1,6 +1,8 @@
 """
 Fetch NWS forecast and alerts
 """
+from curses import meta
+
 import requests
 
 from ..config import LAT, LON, HEADERS_DEFAULT
@@ -26,22 +28,32 @@ def fetch_nws_forecast():
         r2.raise_for_status()
         forecast_data = r2.json()
 
-        periods = forecast_data["properties"]["periods"][:6]  # Next 3 days (6 periods)
+        periods = forecast_data["properties"]["periods"][:14]
 
-        result = {
-            "office": point_data["properties"]["gridId"],
-            "periods": periods,
-        }
+        # Normalize field names (NWS uses camelCase, UI expects snake_case)
+        normalized_periods = []
+        for p in periods:
+            normalized_periods.append({
+                "name": p.get("name"),
+                "start_time": p.get("startTime"),
+                "end_time": p.get("endTime"),
+                "is_daytime": p.get("isDaytime"),
+                "temperature": p.get("temperature"),
+                "temperature_unit": p.get("temperatureUnit"),
+                "wind_speed": p.get("windSpeed"),
+                "wind_direction": p.get("windDirection"),
+                "short_forecast": p.get("shortForecast"),
+                "detailed": p.get("detailedForecast"),
+            })
 
         meta["status"] = "ok"
-        print(f"  ✓ NWS forecast: {len(periods)} periods")
-        return result, meta
+        print(f"  ✓ NWS forecast: {len(normalized_periods)} periods")
+        return normalized_periods, meta
 
     except Exception as e:
         meta["error"] = str(e)
         print(f"  ✗ NWS forecast: {e}")
         return None, meta
-
 
 def fetch_nws_alerts():
     """Fetch active NWS alerts for the area."""
