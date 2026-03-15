@@ -434,7 +434,7 @@
       #radarMap { height: 52vh !important; min-height: 260px; }
 
       /* Tabs — slightly smaller so all 5 fit */
-      .tab { font-size: 0.75rem !important; padding: 8px 10px !important; }
+      .tab { font-size: 0.70rem !important; padding: 8px 10px !important; }
 
       /* Wind pills — never wrap */
       .wind-window-pills { flex-wrap: nowrap !important; }
@@ -446,7 +446,7 @@
     @media (max-width: 480px) {
 
       /* Tab bar — smaller padding so all 5 fit on one row */
-      .tab { padding: 8px 10px; font-size: 0.78rem; }
+      .tab { padding: 8px 10px; font-size: 0.73rem; }
 
       /* Header meta row — smaller text */
       .meta-row { font-size: 0.78rem; gap: 6px 10px; }
@@ -1736,7 +1736,7 @@
     }
     function chartTextColor() {
       return document.body.classList.contains('theme-light')
-        ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.7)";
+        ? "rgba(0,0,0,0.7)" : "rgba(255,255,255,0.85)";
     }
     function chartGridColor() {
       return document.body.classList.contains('theme-light')
@@ -1956,15 +1956,15 @@
       // Color each precip bar by wet bulb precip type
       // Snow = white/light grey, Mixed = purple/slate, Freezing rain = orange, Rain = blue
       const precipColors = (wetBulbs || []).map((wb, i) => {
-        const p = pop[i] ?? 0;
-        if (p < 5) return "rgba(255,255,255,0.06)";   // negligible — faint
-        if (wb == null) return "rgba(80,140,255,0.55)"; // unknown — default blue
-        if (wb <= 28)   return "rgba(230,240,255,0.90)"; // snow — near white
-        if (wb <= 32)   return "rgba(200,215,255,0.80)"; // snow likely — light grey-blue
-        if (wb <= 35)   return "rgba(160,100,220,0.80)"; // mixed/slush — purple
-        if (wb <= 38)   return "rgba(255,140,40,0.80)";  // freezing rain — orange
-        return          "rgba(60,130,255,0.70)";          // rain — blue
-      });
+  const p = pop[i] ?? 0;
+  if (p < 5) return "rgba(200,200,200,0.15)";   // negligible — faint gray
+  if (wb == null) return "rgba(80,140,255,0.85)"; // unknown — bright blue
+  if (wb <= 28)   return "rgba(230,240,255,0.95)"; // snow — near white
+  if (wb <= 32)   return "rgba(180,200,240,0.90)"; // snow likely — light blue
+  if (wb <= 35)   return "rgba(160,100,220,0.85)"; // mixed/slush — purple
+  if (wb <= 38)   return "rgba(255,140,40,0.85)";  // freezing rain — orange
+  return          "rgba(80,150,255,0.85)";          // rain — bright blue
+});
 
       tempPrecipChart = new Chart(ctx, {
         data: {
@@ -3950,14 +3950,25 @@
       });
     }
 
-    function toggleAlertPanel() {
-      const panel = document.getElementById("alertsContainer");
-      const chev  = document.getElementById("alertSummaryChev");
-      if (!panel) return;
-      const isOpen = panel.style.display !== "none";
-      panel.style.display = isOpen ? "none" : "";
-      if (chev) chev.innerHTML = isOpen ? "&#9660; Show" : "&#9650; Hide";
+  
+
+      function toggleAlertPanel() {
+  const panel = document.getElementById("alertsContainer");
+  const chev  = document.getElementById("alertSummaryChev");
+  if (!panel) return;
+  const isOpen = panel.style.display !== "none";
+  panel.style.display = isOpen ? "none" : "";
+  if (chev) chev.innerHTML = isOpen ? "&#9660; Show" : "&#9650; Hide";
+  
+  // If opening panel and there's only 1 alert, auto-expand it
+  if (!isOpen) {
+    const alertBodies = panel.querySelectorAll('[id^="alertBody_"]');
+    if (alertBodies.length === 1) {
+      const firstAlertId = alertBodies[0].id;
+      toggleAlert(firstAlertId);
     }
+  }
+}
 
     let nwsShowAll = false;
     const NWS_PREVIEW = 5;  // periods shown before "show all"
