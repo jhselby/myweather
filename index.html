@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.68</span>
+            <span class="version-pill" id="appVersion">v2.69</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1373,12 +1373,13 @@
           <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <canvas id="windChart"></canvas>
-          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:0.75rem;font-weight:800;color:rgba(255,255,255,0.6);">
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(80,200,120,0.85);margin-right:4px;vertical-align:middle;"></span>Calm (&lt;10)</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(220,200,60,0.85);margin-right:4px;vertical-align:middle;"></span>Breezy (10-19)</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(240,140,40,0.85);margin-right:4px;vertical-align:middle;"></span>Windy (20-29)</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(220,60,60,0.85);margin-right:4px;vertical-align:middle;"></span>Strong (30-39)</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(160,60,220,0.85);margin-right:4px;vertical-align:middle;"></span>Dangerous (40+)</span>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:0.76rem;font-weight:700;color:rgba(255,255,255,0.65);padding:8px 0;border-top:1px solid rgba(255,255,255,0.1);">
+            <span style="color:rgba(150,150,150,0.7);">Forecast:</span>
+            <span><span style="display:inline-block;width:14px;height:10px;border-radius:2px;background:rgba(150,150,150,0.3);margin-right:5px;vertical-align:middle;"></span>Wind Speed</span>
+            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(150,150,150,0.6);margin-right:5px;vertical-align:middle;"></span>Gusts</span>
+            <span style="margin-left:8px;color:rgba(255,255,255,0.75);">Impact:</span>
+            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(140,100,200,0.95);margin-right:5px;vertical-align:middle;"></span>Sustained</span>
+            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(255,80,60,0.95);margin-right:5px;vertical-align:middle;"></span>Gust</span>
           </div>
         </div>
       </div>
@@ -2000,7 +2001,7 @@
         options: {
           responsive: true,
           plugins: {
-            legend: { labels: { color: chartTextColor(), boxWidth: 16, boxHeight: 10 } },
+            legend: { display: false }, 
             tooltip: {
               callbacks: {
                 afterLabel: (ctx) => {
@@ -2037,11 +2038,25 @@
       return                 "rgba(160,60,220,0.85)";
     }
 
-    function buildWindChart(times, speeds, gusts) {
+    function buildWindChart(times, speeds, gusts, directions) {
       const labels      = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
       const ctx         = document.getElementById("windChart").getContext("2d");
       if (windChartObj) windChartObj.destroy();
       const speedColors = speeds.map(v => windColor(v));
+      // Calculate impact scores
+      const sustainedImpact = speeds.map((speed, i) => {
+        const dir = directions?.[i];
+        if (speed == null || dir == null) return null;
+        const exposure = getExposureFactor(dir);
+        return worryScore(speed, exposure);
+      });
+      
+      const gustImpact = gusts.map((gust, i) => {
+        const dir = directions?.[i];
+        if (gust == null || dir == null) return null;
+        const exposure = getExposureFactor(dir);
+        return worryScore(gust, exposure);
+      });
       windChartObj = new Chart(ctx, {
         data: {
           labels,
@@ -2051,7 +2066,7 @@
               label: "Wind (mph)",
               data: speeds.map(v => v ?? null),
               yAxisID: "y",
-              backgroundColor: speedColors,
+              backgroundColor: "rgba(150,150,150,0.3)",
               borderColor: "transparent",
               borderRadius: 3,
             },
@@ -2061,17 +2076,39 @@
               data: gusts.map(v => v ?? null),
               yAxisID: "y",
               tension: 0.25,
-              borderColor: "rgba(255,180,100,0.9)",
+              borderColor: "rgba(150,150,150,0.6)",
               backgroundColor: "rgba(255,180,100,0.15)",
               pointRadius: 0,
               borderWidth: 2,
+            },
+            {
+              type: "line",
+              label: "Sustained Impact",
+              data: sustainedImpact,
+              yAxisID: "y1",
+              tension: 0.25,
+              borderColor: "rgba(140,100,200,0.95)",
+              backgroundColor: "transparent",
+              pointRadius: 0,
+              borderWidth: 2,
+            },
+            {
+              type: "line",
+              label: "Gust Impact",
+              data: gustImpact,
+              yAxisID: "y1",
+              tension: 0.25,
+              borderColor: "rgba(255,80,60,0.95)",
+              backgroundColor: "transparent",
+              pointRadius: 0,
+              borderWidth: 2, 
             }
           ]
         },
         options: {
           responsive: true,
           plugins: {
-            legend: { labels: { color: chartTextColor(), boxWidth: 16, boxHeight: 10 } },
+            legend: { display: false },
             tooltip: {
               callbacks: {
                 afterLabel: (ctx) => {
@@ -2091,7 +2128,18 @@
           },
           scales: {
             x: { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
-            y: { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } }
+            y: { 
+              position: "left",
+              title: { display: true, text: "Wind Speed (mph)", color: chartTextColor() },
+              ticks: { color: chartTextColor() }, 
+              grid: { color: chartGridColor() } 
+            },
+            y1: { 
+              position: "right",
+              title: { display: true, text: "Impact Score", color: chartTextColor() },
+              ticks: { color: chartTextColor() }, 
+              grid: { drawOnChartArea: false }
+            }
           }
         }
       });
@@ -4414,7 +4462,8 @@
         buildWindChart(
           times,
           (hourly.wind_speed || []).slice(0, 48),
-          (hourly.wind_gusts || []).slice(0, 48)
+          (hourly.wind_gusts || []).slice(0, 48),
+          (hourly.wind_direction || []).slice(0, 48)
         );
 
         // Wind tab
