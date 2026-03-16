@@ -30,6 +30,7 @@ def fetch_kbos_obs():
             "pressure_tend_hpa": obs.get("presTend"),
             "wind_speed_kt": obs.get("wspd"),
             "wind_dir": obs.get("wdir"),
+            "present_weather": obs.get("wxString")
         }
         
         meta["status"] = "ok"
@@ -66,6 +67,7 @@ def fetch_kbvy_obs():
             "pressure_hpa": obs.get("altim"),
             "wind_speed_kt": obs.get("wspd"),
             "wind_dir": obs.get("wdir"),
+            "present_weather": obs.get("wxString"),
         }
         
         meta["status"] = "ok"

@@ -24,6 +24,7 @@ from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spre
 from .processors.frost import update_frost_log
 from .processors.pressure import compute_pressure_trend_hpa, get_best_pressure_trend, classify_pressure_alarm
 from .processors.wind_risk import compute_wind_risk
+from .processors.fog import calculate_fog_risk
 
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
@@ -61,6 +62,13 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "uv_index": current.get("uv_index"),
             "visibility": current.get("visibility"),
         }
+        
+        # ASOS condition override - prefer observed conditions over model
+        if kbvy_data and kbvy_data.get("present_weather"):
+            weather_data["current"]["condition_override"] = kbvy_data["present_weather"]
+            weather_data["current"]["condition_source"] = "KBVY observed"
+        else:
+            weather_data["current"]["condition_source"] = "GFS model"
 
     # Hourly forecast
     if hourly_data:
@@ -168,6 +176,19 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         spread = compute_dew_point_spread(current.get("temperature_2m"), current.get("dew_point_2m"))
         if spread is not None:
             derived["dew_point_spread_f"] = spread
+
+    # Fog risk
+    if current_data:
+        current = current_data.get("current", {})
+        fog_risk = calculate_fog_risk(
+            current.get("temperature_2m"),
+            current.get("dew_point_2m"),
+            current.get("relative_humidity_2m"),
+            current.get("wind_speed_10m")
+        )
+        if fog_risk:
+            derived["fog_label"] = fog_risk["fog_label"]
+            derived["fog_probability"] = fog_risk["fog_probability"]
 
     # Wet bulb temperatures (for precipitation type classification)
     add_wet_bulb_temps(weather_data)
