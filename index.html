@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.65</span>
+            <span class="version-pill" id="appVersion">v2.66</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1125,7 +1125,7 @@
             </div>
             <div class="row">
               <div class="label" data-tip="Dew point temperature - when air becomes saturated. Above 65°F feels muggy.">Dew Point</div>
-              <div class="value" id="dewPointNow">--°F</div>
+              <<div class="value"><span id="dewPointNow">--°F</span><span id="dewPointDepression" style="opacity:0.6;font-size:0.85rem;"></span></div>
             </div>
             <div class="row">
               <div class="label" data-tip="Horizontal visibility distance.">Visibility</div>
@@ -2112,13 +2112,13 @@
       const weekNum     = Math.ceil(dayOfYear / 7);
 
       // ── Season ────────────────────────────────────────────────
-      // Approximate solstice/equinox dates (good to ±1 day)
+      // Meteorological seasons (Dec 1, Mar 1, Jun 1, Sep 1)
       const yr = now.getFullYear();
       const seasons = [
-        { name:"Winter",  start: new Date(yr-1, 11, 21), next: new Date(yr, 2, 20),  nextName:"Spring equinox" },
-        { name:"Spring",  start: new Date(yr, 2, 20),    next: new Date(yr, 5, 21),  nextName:"Summer solstice" },
-        { name:"Summer",  start: new Date(yr, 5, 21),    next: new Date(yr, 8, 22),  nextName:"Fall equinox"    },
-        { name:"Fall",    start: new Date(yr, 8, 22),    next: new Date(yr, 11, 21), nextName:"Winter solstice" },
+        { name:"Winter",  start: new Date(yr-1, 11, 1), next: new Date(yr, 2, 1),  nextName:"Spring" },
+        { name:"Spring",  start: new Date(yr, 2, 1),    next: new Date(yr, 5, 1),  nextName:"Summer" },
+        { name:"Summer",  start: new Date(yr, 5, 1),    next: new Date(yr, 8, 1),  nextName:"Fall"   },
+        { name:"Fall",    start: new Date(yr, 8, 1),    next: new Date(yr, 11, 1), nextName:"Winter" },
       ];
       let season = seasons[0];
       for (const s of seasons) {
@@ -2216,7 +2216,7 @@
       el.innerHTML = `
         <div style="font-size:1.05rem;font-weight:900;color:${valCol};margin-bottom:14px;">${fullDate}</div>
         ${row("Day of year",    `${dayOfYear} of ${daysInYear}`, `Week ${weekNum}`)}
-        ${row("Season",         `${seasonEmoji} ${season.name}`, `${daysToNext} days until ${season.nextName}`)}
+        ${row("Season (meteorological)",`${seasonEmoji} ${season.name}`, `${daysToNext} days until ${season.nextName}`)}
         ${row("Sunrise",        riseStr)}
         ${row("Sunset",         setStr)}
         ${row("Daylight",       daylightStr, changeStr)}
@@ -4213,16 +4213,20 @@
         document.getElementById("humidityNow").textContent = 
           cur.humidity != null ? `${Math.round(cur.humidity)}%` : "--%";
         
-        // UV now
-        document.getElementById("uvNow").textContent = 
-          cur.uv_index != null ? cur.uv_index.toFixed(1) : "--";
-          // Dew point now
-        document.getElementById("dewPointNow").textContent = 
-          cur.dew_point != null ? `${Math.round(cur.dew_point)}°F` : "--°F";
-        
         // Visibility now
         document.getElementById("visibilityNow").textContent = 
           cur.visibility != null ? `${(cur.visibility / 1609.34).toFixed(1)} mi` : "-- mi";
+
+        document.getElementById("dewPointNow").textContent = cur.dew_point != null ? `${Math.round(cur.dew_point)}°F` : "--°F";
+        
+        // Dewpoint depression
+        const dewDepEl = document.getElementById("dewPointDepression");
+        if (cur.dew_point != null && cur.temperature != null) {
+          const depression = cur.temperature - cur.dew_point;
+          dewDepEl.textContent = ` (${depression.toFixed(1)}° spread)`;
+        } else {
+          dewDepEl.textContent = "";
+        }
 
         // Model pressure
         const modelPressEl = document.getElementById("pressureModel");
@@ -4230,7 +4234,11 @@
           modelPressEl.textContent = fmtPressure(cur.pressure);
         }
 
-        // KBOS observed pressure + tendency
+        // UV now
+        document.getElementById("uvNow").textContent = 
+          cur.uv_index != null ? cur.uv_index.toFixed(1) : "N/A";
+        
+          // KBOS observed pressure + tendency
         const kbosEl = document.getElementById("pressureKBOS");
         if (kbosEl) {
           if (kbos.pressure_hpa != null) {
