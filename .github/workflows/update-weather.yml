@@ -34,7 +34,7 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git add weather_data.json
+          git add weather_data.json frost_log.json
           if git diff --cached --quiet; then
             echo "No changes to weather_data.json"
           else
