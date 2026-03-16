@@ -4182,7 +4182,7 @@
         document.getElementById("currentTemp").innerHTML =
           `${Math.round(cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
         document.getElementById("feelsLike").textContent =
-          `Feels like ${Math.round(cur.feels_like ?? 0)}°F`;
+          `Feels like ${Math.round(cur.apparent_temperature ?? 0)}°F`;
         const obsTag = cur.condition_source === "KBVY observed" ? " <span style='font-size:0.75rem;opacity:0.5;'>[obs]</span>" : "";
         document.getElementById("condition").innerHTML = `${emoji} ${desc}${obsTag}`;   
 
