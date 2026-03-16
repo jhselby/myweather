@@ -25,7 +25,7 @@ from .processors.frost import update_frost_log
 from .processors.pressure import compute_pressure_trend_hpa, get_best_pressure_trend, classify_pressure_alarm
 from .processors.wind_risk import compute_wind_risk
 from .processors.fog import calculate_fog_risk
-
+from .processors.trough import compute_trough_signal
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
                        kbos_data, kbvy_data, buoy_data, forecast_data, alert_data,
@@ -198,13 +198,16 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     wind_risk = compute_wind_risk(weather_data)
     if wind_risk:
         weather_data["wind_risk"] = wind_risk
-        # Store peak gust time for header display
         if wind_risk.get("gust", {}).get("peak_time"):
             derived["wind_peak_time"] = wind_risk["gust"]["peak_time"]
 
+    # Trough signal
+    trough_data = compute_trough_signal(hourly_data)
+    if trough_data:
+        derived.update(trough_data)
+
     if derived:
         weather_data["derived"] = derived
-
     return weather_data
 
 
