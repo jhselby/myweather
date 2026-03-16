@@ -4450,20 +4450,28 @@
         // Forecast
         renderForecast(daily);
 
-        // 48h charts
+        // 48h charts - start from current hour
         const hourly = data.hourly || {};
-        const times  = (hourly.times || []).slice(0, 48);
+        const allTimes = hourly.times || [];
+        
+        // Find current hour index
+        const now = new Date();
+        const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
+        let startIdx = allTimes.findIndex(t => new Date(t) >= currentHour);
+        if (startIdx === -1) startIdx = 0; // fallback if not found
+        
+        const times = allTimes.slice(startIdx, startIdx + 48);
         buildTempPrecipChart(
           times,
-          (hourly.temperature || []).slice(0, 48),
-          (hourly.precipitation_probability || []).slice(0, 48),
-          (hourly.wet_bulb || []).slice(0, 48)
+          (hourly.temperature || []).slice(startIdx, startIdx + 48),
+          (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48),
+          (hourly.wet_bulb || []).slice(startIdx, startIdx + 48)
         );
         buildWindChart(
           times,
-          (hourly.wind_speed || []).slice(0, 48),
-          (hourly.wind_gusts || []).slice(0, 48),
-          (hourly.wind_direction || []).slice(0, 48)
+          (hourly.wind_speed || []).slice(startIdx, startIdx + 48),
+          (hourly.wind_gusts || []).slice(startIdx, startIdx + 48),
+          (hourly.wind_direction || []).slice(startIdx, startIdx + 48)
         );
 
         // Wind tab
