@@ -136,7 +136,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if forecast_data:
         weather_data["nws_forecast"] = forecast_data
     if alert_data:
-        weather_data["nws_alerts"] = alert_data
+        weather_data["alerts"] = alert_data
 
     # Salem water temp
     if salem_water_temp is not None:
