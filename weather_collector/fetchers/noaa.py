@@ -4,6 +4,41 @@ Fetch NOAA observations (KBOS, KBVY, Buoy 44013)
 import requests
 from ..utils import iso_utc_now
 
+def decode_metar_wx(wx_string):
+    """Convert METAR weather codes to human-readable text."""
+    if not wx_string:
+        return None
+    
+    # Common METAR weather codes
+    codes = {
+        "-RA": "Light Rain",
+        "RA": "Rain",
+        "+RA": "Heavy Rain",
+        "-SN": "Light Snow",
+        "SN": "Snow",
+        "+SN": "Heavy Snow",
+        "-RASN": "Light Rain/Snow Mix",
+        "RASN": "Rain/Snow Mix",
+        "-DZ": "Light Drizzle",
+        "DZ": "Drizzle",
+        "FG": "Fog",
+        "BR": "Mist",
+        "HZ": "Haze",
+        "FU": "Smoke",
+        "FZRA": "Freezing Rain",
+        "-FZRA": "Light Freezing Rain",
+        "TSRA": "Thunderstorm",
+        "-TSRA": "Light Thunderstorm",
+        "+TSRA": "Heavy Thunderstorm",
+    }
+    
+    # Split on spaces and decode each part
+    parts = wx_string.strip().split()
+    decoded = []
+    for part in parts:
+        decoded.append(codes.get(part, part))
+    
+    return ", ".join(decoded) if decoded else wx_string
 
 def fetch_kbos_obs():
     """Fetch KBOS METAR from Aviation Weather new API."""
@@ -30,7 +65,7 @@ def fetch_kbos_obs():
             "pressure_tend_hpa": obs.get("presTend"),
             "wind_speed_kt": obs.get("wspd"),
             "wind_dir": obs.get("wdir"),
-            "present_weather": obs.get("wxString")
+            "present_weather": decode_metar_wx(obs.get("wxString"))
         }
         
         meta["status"] = "ok"
@@ -67,7 +102,7 @@ def fetch_kbvy_obs():
             "pressure_hpa": obs.get("altim"),
             "wind_speed_kt": obs.get("wspd"),
             "wind_dir": obs.get("wdir"),
-            "present_weather": obs.get("wxString"),
+            "present_weather": decode_metar_wx(obs.get("wxString")),
         }
         
         meta["status"] = "ok"
