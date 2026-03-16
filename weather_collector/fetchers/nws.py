@@ -67,7 +67,28 @@ def fetch_nws_alerts():
         data = r.json()
 
         features = data.get("features", [])
-        alerts = [f.get("properties", {}) for f in features]
+        
+        # Transform to simplified format expected by frontend
+        alerts = []
+        for f in features:
+            props = f.get("properties", {})
+            event_type = props.get('event', 'Special Weather Statement').replace(' ', '+')
+            web_url = (
+                f"https://forecast.weather.gov/showsigwx.php?"
+                f"warnzone=MAZ007&warncounty=MAC009&firewxzone=MAZ007"
+                f"&local_place1=Marblehead+MA"
+                f"&product1={event_type}"
+                f"&lat={LAT}&lon={LON}"
+            )
+            alerts.append({
+                "event": props.get('event', 'Unknown'),
+                "headline": props.get('headline', ''),
+                "description": props.get('description', ''),
+                "severity": props.get('severity', 'Unknown'),
+                "onset": props.get('onset', ''),
+                "expires": props.get('expires', ''),
+                "url": web_url
+            })
 
         meta["status"] = "ok"
         print(f"  ✓ NWS alerts: {len(alerts)} active")
