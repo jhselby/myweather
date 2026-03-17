@@ -20,19 +20,17 @@ BUOY_CACHE_FILE = Path("last_buoy.json")
 FROST_LOG_FILE = Path("frost_log.json")
 
 # Wind Exposure Model
-WIND_EXPOSURE_TABLE = [
-    [  0,  20, 0.78],  # N
-    [ 20,  60, 1.00],  # NNE-NE (MAXIMUM)
-    [ 60,  90, 0.98],  # ENE-E
-    [ 90, 130, 0.89],  # ESE-SE  
-    [130, 165, 0.71],  # SSE
-    [165, 200, 0.43],  # S-SSW (most sheltered)
-    [200, 255, 0.67],  # SW-WSW
-    [255, 285, 0.85],  # W
-    [285, 315, 0.76],  # WNW-NW
-    [315, 360, 0.77],  # NNW-N
-]
 
+WIND_EXPOSURE_TABLE = [
+    [  0,  25, 1.00],  # N-NNE - open harbor, max exposure
+    [ 25,  45, 0.70],  # NE - 39ft terrain ~200ft away, partial blocking
+    [ 45, 100, 0.25],  # E-ESE - 39-68ft Westlot/Ridge terrain close, heavy blocking
+    [100, 200, 0.08],  # SE-S - Marblehead + local terrain, maximum shelter
+    [200, 260, 0.10],  # SSW-WSW - 39-78ft Crestwood/Pinecliff close, heavy blocking
+    [260, 290, 0.40],  # W - 39ft close but harbor opens beyond, moderate
+    [290, 320, 0.75],  # WNW-NW - harbor opening, high exposure
+    [320, 360, 1.00],  # NW-N - open harbor, max exposure
+]
 WORRY_NOTICEABLE, WORRY_NOTABLE, WORRY_SIGNIFICANT, WORRY_SEVERE = 5, 12, 20, 30
 
 # HTTP
