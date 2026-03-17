@@ -21,9 +21,16 @@ FROST_LOG_FILE = Path("frost_log.json")
 
 # Wind Exposure Model
 WIND_EXPOSURE_TABLE = [
-    (  0,  20, 1.00), ( 20,  60, 0.90), ( 60,  90, 0.70), ( 90, 130, 0.50),
-    (130, 165, 0.20), (165, 200, 0.10), (200, 255, 0.05), (255, 285, 0.30),
-    (285, 315, 0.70), (315, 360, 0.95),
+    [  0,  20, 0.78],  # N
+    [ 20,  60, 1.00],  # NNE-NE (MAXIMUM)
+    [ 60,  90, 0.98],  # ENE-E
+    [ 90, 130, 0.89],  # ESE-SE  
+    [130, 165, 0.71],  # SSE
+    [165, 200, 0.43],  # S-SSW (most sheltered)
+    [200, 255, 0.67],  # SW-WSW
+    [255, 285, 0.85],  # W
+    [285, 315, 0.76],  # WNW-NW
+    [315, 360, 0.77],  # NNW-N
 ]
 
 WORRY_NOTICEABLE, WORRY_NOTABLE, WORRY_SIGNIFICANT, WORRY_SEVERE = 5, 12, 20, 30
