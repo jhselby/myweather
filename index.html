@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.70</span>
+            <span class="version-pill" id="appVersion">v2.71</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1920,16 +1920,16 @@
     // Wind Exposure Table (mirrors collector.py exactly)
     // ======================================================
     const WIND_EXPOSURE_TABLE = [
-      [  0,  20, 1.00],
-      [ 20,  60, 0.90],
-      [ 60,  90, 0.70],
-      [ 90, 130, 0.50],
-      [130, 165, 0.20],
-      [165, 200, 0.10],
-      [200, 255, 0.05],
-      [255, 285, 0.30],
-      [285, 315, 0.70],
-      [315, 360, 0.95],
+      [  0,  20, 0.78],  // N
+      [ 20,  60, 1.00],  // NNE-NE (MAXIMUM)
+      [ 60,  90, 0.98],  // ENE-E
+      [ 90, 130, 0.89],  // ESE-SE  
+      [130, 165, 0.71],  // SSE
+      [165, 200, 0.43],  // S-SSW (most sheltered)
+      [200, 255, 0.67],  // SW-WSW
+      [255, 285, 0.85],  // W
+      [285, 315, 0.76],  // WNW-NW
+      [315, 360, 0.77],  // NNW-N
     ];
 
     const WORRY_NOTICEABLE  =  5;
