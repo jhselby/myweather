@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.69</span>
+            <span class="version-pill" id="appVersion">v2.70</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -960,6 +960,19 @@
           </div>
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.70</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 16, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>48-Hour Wind Chart: swapped axes (Impact Score left 0-auto, Wind Speed right)</li>
+                <li>Added color gradient zones to Impact axis (Calm/Breezy/Notable/Significant/Severe/Extreme)</li>
+                <li>Chart now shows both Sustained (purple) and Gust (red) impact lines with raw forecast</li>
+                <li>Dynamic axis scaling: chart max adjusts to actual data range (not fixed at 5)</li>
+                <li>Fixed wind impact cards: now show forward-looking peaks (next 12/24/36/48h) instead of past data</li>
+                <li>Removed "Combined Impact" concept - sustained and gust impacts serve different purposes</li>
+                <li>Added explanation cards below chart: Sustained Impact (outdoor comfort) vs Gust Impact (structural stress)</li>
+              </ul>
+            </div>
             <div style="margin-bottom:8px;">
               <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.5</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 23, 2026</span>
@@ -1383,6 +1396,32 @@
           </div>
         </div>
       </div>
+
+        <!-- Impact Score Explanation Cards -->
+        <div class="card col-6">
+          <div class="card-title" style="font-size:0.85rem;">Sustained Impact</div>
+          <div class="card-body" style="font-size:0.82rem;line-height:1.4;">
+            <div style="color:rgba(255,255,255,0.75);margin-bottom:8px;">
+              Cumulative stress from continuous wind exposure. Affects dock lines, outdoor furniture anchoring, and prolonged exposure activities. Answers: "Can I hang out outside?"
+            </div>
+            <div style="font-family:monospace;font-size:0.78rem;color:rgba(140,100,200,0.8);background:rgba(140,100,200,0.08);padding:6px 8px;border-radius:4px;border-left:2px solid rgba(140,100,200,0.4);">
+              score = wind_speed × exposure^1.5
+            </div>
+          </div>
+        </div>
+
+        <div class="card col-6">
+          <div class="card-title" style="font-size:0.85rem;">Gust Impact</div>
+          <div class="card-body" style="font-size:0.82rem;line-height:1.4;">
+            <div style="color:rgba(255,255,255,0.75);margin-bottom:8px;">
+              Peak force from wind spikes. Threatens structural integrity, creates sudden loads on dock hardware, and can damage unsecured items. Answers: "Will the house shake?"
+            </div>
+            <div style="font-family:monospace;font-size:0.78rem;color:rgba(255,80,60,0.8);background:rgba(255,80,60,0.08);padding:6px 8px;border-radius:4px;border-left:2px solid rgba(255,80,60,0.4);">
+              score = gust_speed × exposure^1.5
+            </div>
+          </div>
+        </div>
+
     </section>
 
     <!-- ALMANAC VIEW -->
@@ -1926,10 +1965,17 @@
       const values = useGusts ? (hourly?.wind_gusts || []) : (hourly?.wind_speed || []);
       const dirs   = hourly?.wind_direction || [];
       const times  = hourly?.times || [];
-      const n = Math.min(windowHours, values.length, dirs.length);
+      
+      // Find the current hour index (start of forward-looking window)
+      const currentHour = new Date();
+      currentHour.setMinutes(0, 0, 0);
+      let startIdx = times.findIndex(t => new Date(t) >= currentHour);
+      if (startIdx === -1) startIdx = 0; // fallback
+      
+      const n = Math.min(startIdx + windowHours, values.length, dirs.length);
 
       let bestScore = -1, bestIdx = -1;
-      for (let i = 0; i < n; i++) {
+      for (let i = startIdx; i < n; i++) {
         const v = values[i], d = dirs[i];
         if (v == null || d == null) continue;
         const ef = getExposureFactor(d);
@@ -2057,6 +2103,13 @@
         const exposure = getExposureFactor(dir);
         return worryScore(gust, exposure);
       });
+      
+      // Calculate max impact score for axis scaling
+      const allImpacts = [...sustainedImpact, ...gustImpact].filter(v => v != null);
+      const maxImpact = allImpacts.length > 0 ? Math.max(...allImpacts) : 10;
+      const axisMax = Math.ceil(maxImpact * 1.1); // 10% headroom, rounded up
+      console.log('Wind chart - maxImpact:', maxImpact, 'axisMax:', axisMax, 'sample impacts:', allImpacts.slice(0, 5));
+      
       windChartObj = new Chart(ctx, {
         data: {
           labels,
@@ -2065,7 +2118,7 @@
               type: "bar",
               label: "Wind (mph)",
               data: speeds.map(v => v ?? null),
-              yAxisID: "y",
+              yAxisID: "y1",
               backgroundColor: "rgba(150,150,150,0.3)",
               borderColor: "transparent",
               borderRadius: 3,
@@ -2074,7 +2127,7 @@
               type: "line",
               label: "Gust (mph)",
               data: gusts.map(v => v ?? null),
-              yAxisID: "y",
+              yAxisID: "y1",
               tension: 0.25,
               borderColor: "rgba(150,150,150,0.6)",
               backgroundColor: "rgba(255,180,100,0.15)",
@@ -2085,7 +2138,7 @@
               type: "line",
               label: "Sustained Impact",
               data: sustainedImpact,
-              yAxisID: "y1",
+              yAxisID: "y",
               tension: 0.25,
               borderColor: "rgba(140,100,200,0.95)",
               backgroundColor: "transparent",
@@ -2096,7 +2149,7 @@
               type: "line",
               label: "Gust Impact",
               data: gustImpact,
-              yAxisID: "y1",
+              yAxisID: "y",
               tension: 0.25,
               borderColor: "rgba(255,80,60,0.95)",
               backgroundColor: "transparent",
@@ -2124,19 +2177,43 @@
                   return "";
                 }
               }
+            },
+            impactZones: {
+              beforeDatasetsDraw: (chart) => {
+                const {ctx, chartArea: {left, right, top, bottom}, scales: {y}} = chart;
+                if (!y) return;
+                
+                const zones = [
+                  {min: 0, max: 5, color: 'rgba(100, 150, 255, 0.15)', label: 'Calm'},
+                  {min: 5, max: 12, color: 'rgba(100, 200, 255, 0.15)', label: 'Breezy'},
+                  {min: 12, max: 20, color: 'rgba(255, 235, 100, 0.15)', label: 'Notable'},
+                  {min: 20, max: 30, color: 'rgba(255, 180, 100, 0.15)', label: 'Significant'},
+                  {min: 30, max: 40, color: 'rgba(255, 100, 80, 0.15)', label: 'Severe'},
+                  {min: 40, max: 100, color: 'rgba(200, 50, 50, 0.15)', label: 'Extreme'}
+                ];
+                
+                zones.forEach(zone => {
+                  const yTop = y.getPixelForValue(zone.max);
+                  const yBottom = y.getPixelForValue(zone.min);
+                  ctx.fillStyle = zone.color;
+                  ctx.fillRect(left, yTop, right - left, yBottom - yTop);
+                });
+              }
             }
           },
           scales: {
             x: { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
             y: { 
               position: "left",
-              title: { display: true, text: "Wind Speed (mph)", color: chartTextColor() },
+              title: { display: true, text: "Wind Impact Score", color: chartTextColor() },
               ticks: { color: chartTextColor() }, 
-              grid: { color: chartGridColor() } 
+              grid: { color: chartGridColor() },
+              min: 0,
+              max: axisMax
             },
             y1: { 
               position: "right",
-              title: { display: true, text: "Impact Score", color: chartTextColor() },
+              title: { display: true, text: "Wind Speed (mph)", color: chartTextColor() },
               ticks: { color: chartTextColor() }, 
               grid: { drawOnChartArea: false }
             }
