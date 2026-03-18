@@ -35,14 +35,16 @@ def classify_850mb_precip_type(t_850mb_f):
 def add_850mb_precip_type(weather_data):
     """
     Add 850mb precipitation type to hourly and current derived data.
+    Only sets col_precip_type when current PoP >= 20%.
     Modifies weather_data in place.
     
     Args:
         weather_data: Weather data dict with hourly section
     """
-    # Get current 850mb temp (first hourly value)
+    # Get current 850mb temp and PoP (first hourly value)
     hourly = weather_data.get("hourly", {})
     temps_850 = hourly.get("temperature_850hPa", [])
+    pops = hourly.get("precipitation_probability", [])
     
     # Ensure derived section exists
     if "derived" not in weather_data:
@@ -52,7 +54,11 @@ def add_850mb_precip_type(weather_data):
     if temps_850 and len(temps_850) > 0:
         t_850_now = temps_850[0]
         weather_data["derived"]["temp_850hpa_now"] = t_850_now
-        weather_data["derived"]["col_precip_type"] = classify_850mb_precip_type(t_850_now)
+        
+        # Only set col_precip_type if PoP >= 20%
+        pop_now = pops[0] if pops and len(pops) > 0 else 0
+        if pop_now >= 20:
+            weather_data["derived"]["col_precip_type"] = classify_850mb_precip_type(t_850_now)
     
     # Column precip type for each hour
     col_types = []
