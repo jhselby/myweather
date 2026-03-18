@@ -93,9 +93,9 @@ def detect_sea_breeze(weather_data):
     # Determine if active
     if likelihood >= 60:
         result["active"] = True
-        result["reason"] = f"Sea breeze active: Δ{temp_diff:+.1f}°F, {wind_speed:.0f} mph from {int(wind_dir)}°"
+        result["reason"] = f"Δ{temp_diff:+.1f}°F, {wind_speed:.0f} mph from {int(wind_dir)}°"
     elif likelihood >= 40:
-        result["reason"] = f"Possible sea breeze: Δ{temp_diff:+.1f}°F, {wind_speed:.0f} mph from {int(wind_dir)}°"
+        result["reason"] = f"Δ{temp_diff:+.1f}°F, {wind_speed:.0f} mph from {int(wind_dir)}°"
     elif scores["temp"] < 40:
         result["reason"] = f"Land/water Δ too small ({temp_diff:+.1f}°F)"
     elif scores["direction"] < 50:
