@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.71</span>
+            <span class="version-pill" id="appVersion">v2.73</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1148,6 +1148,10 @@
               <div class="label" data-tip="UV index (0-11+ scale).">UV Index</div>
               <div class="value" id="uvNow">--</div>
             </div>
+            <div class="row">
+              <div class="label" data-tip="Sea breeze likelihood based on land/water temperature differential, wind speed, direction, and time of day.">Sea Breeze</div>
+              <div class="value" id="seaBreezeNow">--</div>
+            </div>
           </div>
         </div>
 
@@ -1295,10 +1299,22 @@
             <div class="label" data-tip="Change in pressure over the last 2 hours. Prefers KBOS observed tendency when available (shown as [obs]), falls back to GFS model ([model]).">Trend (2h)</div>
             <div class="value" id="pressureTrendWind">--</div>
           </div>
+          <div class="row">
+            <div class="label" data-tip="Sea breeze likelihood based on land/water temperature differential, wind speed, direction, and time of day.">Sea Breeze</div>
+            <div class="value" id="seaBreezeWind">--</div>
+          </div>
           <div class="small-note" id="windPressureNote"></div>
           </div>
         </div>
 
+
+        <!-- Sea Breeze Detail -->
+        <div class="card col-12" data-collapse-key="sea_breeze_detail" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('sea_breeze_detail', this)">🌊 Sea Breeze Analysis <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" id="seaBreezeDetail">
+            <div style="text-align:center;color:rgba(255,255,255,0.5);padding:20px;">Loading...</div>
+          </div>
+        </div>
         <!-- Gust Wind Impact — collapsed by default, own window buttons -->
         <div class="card col-12" data-collapse-key="wind_gust_impact" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('wind_gust_impact', this)"
@@ -3581,6 +3597,74 @@
       renderWaterTempLog();
     }
 
+    function renderSeaBreezeDetail(data) {
+      const sb = data.sea_breeze || {};
+      const el = document.getElementById("seaBreezeDetail");
+      if (!el) return;
+
+      if (!sb.likelihood) {
+        el.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.5);padding:20px;">No sea breeze data available</div>`;
+        return;
+      }
+
+      const scores = sb.scores || {};
+      const buoy = data.buoy_44013 || {};
+      const cur = data.current || {};
+
+      let statusColor, statusIcon, statusText;
+      if (sb.active) {
+        statusColor = "rgba(100,200,120,0.95)";
+        statusIcon = "🌊";
+        statusText = "Active";
+      } else if (sb.likelihood >= 40) {
+        statusColor = "rgba(220,200,60,0.85)";
+        statusIcon = "⚠️";
+        statusText = "Possible";
+      } else {
+        statusColor = "rgba(150,150,150,0.6)";
+        statusIcon = "";
+        statusText = "Unlikely";
+      }
+
+      const html = `
+        <div style="text-align:center;margin-bottom:20px;">
+          <div style="font-size:2.5rem;color:${statusColor};margin-bottom:8px;">${statusIcon} ${sb.likelihood}%</div>
+          <div style="font-size:1.1rem;opacity:0.9;">${statusText}</div>
+          <div style="font-size:0.9rem;opacity:0.7;margin-top:4px;">${sb.reason}</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:20px;">
+          <div>
+            <div style="opacity:0.7;font-size:0.85rem;margin-bottom:4px;">Temp Differential</div>
+            <div style="font-size:1.3rem;">${scores.temp || 0}%</div>
+            <div style="opacity:0.6;font-size:0.8rem;margin-top:2px;">Land: ${cur.temperature?.toFixed(1) || "--"}°F | Water: ${buoy.water_temp_f?.toFixed(1) || "--"}°F</div>
+          </div>
+          <div>
+            <div style="opacity:0.7;font-size:0.85rem;margin-bottom:4px;">Wind Speed</div>
+            <div style="font-size:1.3rem;">${scores.wind_speed || 0}%</div>
+            <div style="opacity:0.6;font-size:0.8rem;margin-top:2px;">${cur.wind_speed?.toFixed(1) || "--"} mph</div>
+          </div>
+          <div>
+            <div style="opacity:0.7;font-size:0.85rem;margin-bottom:4px;">Direction</div>
+            <div style="font-size:1.3rem;">${scores.direction || 0}%</div>
+            <div style="opacity:0.6;font-size:0.8rem;margin-top:2px;">${cur.wind_direction ? Math.round(cur.wind_direction) + "° " + toCompass(cur.wind_direction) : "--"}</div>
+          </div>
+          <div>
+            <div style="opacity:0.7;font-size:0.85rem;margin-bottom:4px;">Time of Day</div>
+            <div style="font-size:1.3rem;">${scores.time || 0}%</div>
+            <div style="opacity:0.6;font-size:0.8rem;margin-top:2px;">${new Date().toLocaleTimeString("en-US", {hour: "numeric", minute: "2-digit"})}</div>
+          </div>
+        </div>
+
+        <div style="opacity:0.7;font-size:0.85rem;line-height:1.5;">
+          <strong>Calculation:</strong> Likelihood = (Temp × 40%) + (Direction × 30%) + (Wind Speed × 20%) + (Time × 10%)<br>
+          = (${scores.temp || 0} × 0.4) + (${scores.direction || 0} × 0.3) + (${scores.wind_speed || 0} × 0.2) + (${scores.time || 0} × 0.1) = ${sb.likelihood}%
+        </div>
+      `;
+
+      el.innerHTML = html;
+    }
+
     function renderWaterTempLog() {
       const el = document.getElementById("wtLogTable");
       if (!el) return;
@@ -4367,6 +4451,24 @@
         // UV now
         document.getElementById("uvNow").textContent = 
           cur.uv_index != null ? cur.uv_index.toFixed(1) : "N/A";
+
+        // Sea breeze now
+        const seaBreeze = data.sea_breeze || {};
+        const sbEl = document.getElementById("seaBreezeNow");
+        if (sbEl) {
+          if (seaBreeze.likelihood != null) {
+            const likelihood = seaBreeze.likelihood;
+            let icon = "";
+            if (seaBreeze.active) {
+              icon = "🌊 ";
+            } else if (likelihood >= 40) {
+              icon = "⚠️ ";
+            }
+            sbEl.innerHTML = `${icon}${likelihood}% <span style="opacity:0.6;font-size:0.85rem;">${seaBreeze.reason || ""}</span>`;
+          } else {
+            sbEl.textContent = "N/A";
+          }
+        }
         
           // KBOS observed pressure + tendency
         const kbosEl = document.getElementById("pressureKBOS");
@@ -4552,6 +4654,7 @@
 
         // Wind tab
         renderWindRisk(data);
+        renderSeaBreezeDetail(data);
         initWindPills(data);
 
         const windNowEl      = document.getElementById("windNowWind");
@@ -4569,6 +4672,19 @@
           ? `${der.pressure_trend_hpa_3h > 0 ? '+' : ''}${der.pressure_trend_hpa_3h.toFixed(1)} hPa/3h`
           : "--";
         pressureTrendEl.textContent = trend3h;
+        }
+
+        // Sea breeze - Wind tab
+        const sbWindEl = document.getElementById("seaBreezeWind");
+        if (sbWindEl) {
+          if (seaBreeze.likelihood != null) {
+            let icon = "";
+            if (seaBreeze.active) icon = "🌊 ";
+            else if (seaBreeze.likelihood >= 40) icon = "⚠️ ";
+            sbWindEl.innerHTML = `${icon}${seaBreeze.likelihood}% <span style="opacity:0.6;font-size:0.85rem;">${seaBreeze.reason || ""}</span>`;
+          } else {
+            sbWindEl.textContent = "N/A";
+          }
         }
 
         // NWS Forecast
