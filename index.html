@@ -4451,7 +4451,7 @@
           ? (der.best_pressure_tend > 0.5 ? "↑" : der.best_pressure_tend < -0.5 ? "↓" : "") 
           : (trend.includes("Rising") ? "↑" : trend.includes("Falling") ? "↓" : "");
         const pressureChange = der.best_pressure_tend != null ? ` ${der.best_pressure_tend > 0 ? '+' : ''}${der.best_pressure_tend.toFixed(1)} hPa` : "";
-        const pressureColType = der.col_precip_type ? ` · ${der.col_precip_type}` : "";
+        const pressureColType = "";
         document.getElementById("pressureNow").textContent = `${pressure} ${trendShort}${pressureChange}${pressureColType}`.trim();
         
         // Humidity now
