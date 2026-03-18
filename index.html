@@ -927,7 +927,7 @@
                     letter-spacing:0.8px;text-transform:uppercase;margin-bottom:12px;">Settings</div>
 
         <!-- Theme -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:12px;">
           <div style="font-size:0.88rem;font-weight:800;color:rgba(255,255,255,0.8);">Theme</div>
           <div style="display:flex;gap:6px;">
             <button class="setting-btn" id="themeLight" onclick="setTheme('light')">☀️ Light</button>
@@ -937,7 +937,7 @@
         </div>
 
         <!-- Pressure units -->
-        <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;justify-content:flex-start;">
           <div style="font-size:0.88rem;font-weight:800;color:rgba(255,255,255,0.8);">Pressure</div>
           <div style="display:flex;gap:6px;">
             <button class="setting-btn" id="pressHpa"  onclick="setPressureUnit('hpa')">hPa</button>
@@ -947,10 +947,10 @@
 
         <!-- Version + Changelog -->
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.09);">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.73</span>
+            <span class="version-pill" id="appVersion">v2.74</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1064,7 +1064,7 @@
       <div id="stormModeBanner" style="display:none;border-radius:10px;padding:10px 14px;
         margin:4px 0 0 0;background:rgba(255,60,60,0.18);border:1px solid rgba(255,60,60,0.45);
         color:rgba(255,200,200,0.95);">
-        <div style="font-weight:900;font-size:0.92rem;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;"
+        <div style="font-weight:900;font-size:0.92rem;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:flex-start;"
              onclick="const d=document.getElementById('stormModeDetails');const c=document.getElementById('stormModeChev');const open=d.style.display!=='none';d.style.display=open?'none':'';c.innerHTML=open?'&#9660; Show':'&#9650; Hide';">
           ⛈️ Storm conditions developing
           <span id="stormModeChev" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;white-space:nowrap;">&#9660; Show</span>
@@ -1074,7 +1074,7 @@
       <!-- Consolidated alert summary bar -->
       <div id="alertSummaryBar" style="display:none;margin-top:6px;border-radius:10px;padding:8px 14px;
         background:rgba(255,80,80,0.18);border:1px solid rgba(255,80,80,0.35);cursor:pointer;
-        display:none;align-items:center;justify-content:space-between;"
+        display:none;align-items:center;justify-content:flex-start;"
         onclick="toggleAlertPanel()">
         <span id="alertSummaryText" style="font-weight:900;font-size:0.88rem;color:rgba(255,200,200,0.95);"></span>
         <span id="alertSummaryChev" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;white-space:nowrap;">&#9660; Show</span>
@@ -1281,7 +1281,7 @@
 
         <!-- Wind & Pressure (now) — open by default -->
         <div class="card col-12" data-collapse-key="wind_now">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_now', this)">Wind &amp; Pressure (now) <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_now', this)">💨 Right Now <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
           <div class="row">
             <div class="label" data-tip="Current wind speed and direction from the GFS model snapshot.">Wind</div>
@@ -1298,6 +1298,14 @@
           <div class="row">
             <div class="label" data-tip="Change in pressure over the last 2 hours. Prefers KBOS observed tendency when available (shown as [obs]), falls back to GFS model ([model]).">Trend (2h)</div>
             <div class="value" id="pressureTrendWind">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Current sustained wind impact score based on wind speed and terrain exposure. Higher scores indicate stronger effective winds at your location.">Sustained Impact</div>
+            <div class="value" id="sustainedImpactWind">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Current gust impact score based on gust speed and terrain exposure. Higher scores indicate stronger effective gusts at your location.">Gust Impact</div>
+            <div class="value" id="gustImpactWind">--</div>
           </div>
           <div class="row">
             <div class="label" data-tip="Sea breeze likelihood based on land/water temperature differential, wind speed, direction, and time of day.">Sea Breeze</div>
@@ -1318,7 +1326,7 @@
         <!-- Gust Wind Impact — collapsed by default, own window buttons -->
         <div class="card col-12" data-collapse-key="wind_gust_impact" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('wind_gust_impact', this)"
-               style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+               style="display:flex;align-items:center;justify-content:flex-start;gap:8px;">
             <span style="flex-shrink:1;min-width:0;">&#127788; Gust Wind Impact <span class="collapse-chevron">&#9660;</span></span>
             <span class="wind-window-pills" id="gustWindowPills" onclick="event.stopPropagation()" style="flex-shrink:0;flex-wrap:nowrap;">
               <button class="wpill active" data-target="gust" data-hours="12">12h</button>
@@ -1328,6 +1336,10 @@
             </span>
           </div>
           <div class="card-body" style="display:none;">
+          <div class="row">
+            <div class="label" data-tip="Current gust impact score at this moment.">Current</div>
+            <div class="value" id="gustCurrentScore">--</div>
+          </div>
           <div class="row">
             <div class="label" data-tip="Plain-language severity: Calm / Breezy / Notable / Significant / Severe.">Level</div>
             <div class="value" id="gustLevel">--</div>
@@ -1359,7 +1371,7 @@
         <!-- Sustained Wind Impact — collapsed by default, own window buttons -->
         <div class="card col-12" data-collapse-key="wind_sus_impact" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('wind_sus_impact', this)"
-               style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+               style="display:flex;align-items:center;justify-content:flex-start;gap:8px;">
             <span style="flex-shrink:1;min-width:0;">&#127787; Sustained Wind Impact <span class="collapse-chevron">&#9660;</span></span>
             <span class="wind-window-pills" id="susWindowPills" onclick="event.stopPropagation()" style="flex-shrink:0;flex-wrap:nowrap;">
               <button class="wpill active" data-target="sus" data-hours="12">12h</button>
@@ -1369,6 +1381,10 @@
             </span>
           </div>
           <div class="card-body" style="display:none;">
+          <div class="row">
+            <div class="label" data-tip="Current sustained wind impact score at this moment.">Current</div>
+            <div class="value" id="susCurrentScore">--</div>
+          </div>
           <div class="row">
             <div class="label" data-tip="Plain-language severity: Calm / Breezy / Notable / Significant / Severe.">Level</div>
             <div class="value" id="susLevel">--</div>
@@ -1729,7 +1745,7 @@
             <input type="range" id="radarScrubber" min="0" max="0" value="0"
               oninput="radarScrubTo(this.value)"
               style="width:100%;accent-color:rgba(100,180,255,0.9);cursor:pointer;">
-            <div style="display:flex;justify-content:space-between;
+            <div style="display:flex;justify-content:flex-start;
                         font-size:0.75rem;color:rgba(255,255,255,0.35);font-weight:700;margin-top:2px;">
               <span id="radarScrubStart">--</span>
               <span style="color:rgba(255,255,255,0.45);">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,255,180,0.6);">Nowcast</span> &#9654;</span>
@@ -2347,7 +2363,7 @@
       const divCol   = light ? "rgba(0,0,0,0.06)"  : "rgba(255,255,255,0.08)";
 
       // Use pure inline styles — no .label/.value classes to avoid !important conflicts
-      const rowStyle  = `display:flex;justify-content:space-between;align-items:baseline;` +
+      const rowStyle  = `display:flex;justify-content:flex-start;align-items:baseline;` +
                         `padding:9px 0;border-bottom:1px solid ${divCol};gap:12px;`;
       const lblStyle  = `font-size:0.82rem;color:${labelCol};flex-shrink:0;`;
       const valStyle  = `font-size:0.88rem;font-weight:700;color:${valCol};text-align:right;`;
@@ -3543,6 +3559,23 @@
       if (noteEl) noteEl.textContent = `Peak gust wind impact over next ${_gustWindowHours}h. Score = gust × exposure¹·⁵.`;
       const susNoteEl = document.getElementById("susNote");
       if (susNoteEl) susNoteEl.textContent = `Peak sustained impact over next ${_susWindowHours}h. Sustained = dock lines, outdoor use.`;
+
+      // Add current impact scores to cards
+      const cur = data.current || {};
+      if (cur.wind_gusts != null && cur.wind_direction != null) {
+        const exposure = getExposureFactor(cur.wind_direction);
+        const gustScore = Math.round(worryScore(cur.wind_gusts, exposure));
+        const gustLevel = worryLevel(gustScore);
+        const gustCurEl = document.getElementById("gustCurrentScore");
+        if (gustCurEl) gustCurEl.innerHTML = `<span class="badge ${gustLevel.cls}">${gustScore}</span> (${gustLevel.label})`;
+      }
+      if (cur.wind_speed != null && cur.wind_direction != null) {
+        const exposure = getExposureFactor(cur.wind_direction);
+        const susScore = Math.round(worryScore(cur.wind_speed, exposure));
+        const susLevel = worryLevel(susScore);
+        const susCurEl = document.getElementById("susCurrentScore");
+        if (susCurEl) susCurEl.innerHTML = `<span class="badge ${susLevel.cls}">${susScore}</span> (${susLevel.label})`;
+      }
     }
 
     // ======================================================
@@ -4323,7 +4356,7 @@
             const id = `alertBody_${i}`;
             return `
             <div class="alert-banner">
-              <div class="alert-title" onclick="toggleAlert('${id}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
+              <div class="alert-title" onclick="toggleAlert('${id}')" style="cursor:pointer;display:flex;align-items:center;justify-content:flex-start;">
                 <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">&#9888;&#65039; ${a.event || a.headline?.split(" issued")[0] || "Weather Alert"}</span>
                 <span id="alertChevron_${i}" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;">&#9660; Show</span>
               </div>
@@ -4672,6 +4705,34 @@
           ? `${der.pressure_trend_hpa_3h > 0 ? '+' : ''}${der.pressure_trend_hpa_3h.toFixed(1)} hPa/3h`
           : "--";
         pressureTrendEl.textContent = trend3h;
+        }
+
+        // Sustained and Gust Impact Scores
+        const sustainedImpactEl = document.getElementById("sustainedImpactWind");
+        console.log("DEBUG: cur.wind_speed=", cur.wind_speed, "cur.wind_direction=", cur.wind_direction);
+        const gustImpactEl = document.getElementById("gustImpactWind");
+        
+        console.log("DEBUG: sustainedImpactEl=", sustainedImpactEl, "gustImpactEl=", gustImpactEl);
+        if (cur.wind_speed != null && cur.wind_direction != null) {
+          const exposure = getExposureFactor(cur.wind_direction);
+          const sustainedScore = Math.round(worryScore(cur.wind_speed, exposure));
+          const sustainedLevel = worryLevel(sustainedScore);
+          if (sustainedImpactEl) {
+            sustainedImpactEl.innerHTML = `${sustainedScore} <span style="opacity:0.6;font-size:0.85rem;">(${sustainedLevel.label})</span>`;
+          }
+        } else if (sustainedImpactEl) {
+          sustainedImpactEl.textContent = "N/A";
+        }
+        
+        if (cur.wind_gusts != null && cur.wind_direction != null) {
+          const exposure = getExposureFactor(cur.wind_direction);
+          const gustScore = Math.round(worryScore(cur.wind_gusts, exposure));
+          const gustLevel = worryLevel(gustScore);
+          if (gustImpactEl) {
+            gustImpactEl.innerHTML = `${gustScore} <span style="opacity:0.6;font-size:0.85rem;">(${gustLevel.label})</span>`;
+          }
+        } else if (gustImpactEl) {
+          gustImpactEl.textContent = "N/A";
         }
 
         // Sea breeze - Wind tab

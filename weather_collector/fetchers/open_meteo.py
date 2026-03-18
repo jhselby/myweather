@@ -77,5 +77,8 @@ def fetch_daily_ecmwf():
     if data is None:
         print("  ⚠️  ECMWF unavailable — falling back to GFS seamless")
         fb = {k: v for k, v in params.items() if k != "models"}
+        print("  ⏳ Attempting GFS fallback...")
         data, meta = _om_get(fb, "GFS seamless (ECMWF fallback)")
+        if data is None:
+            print("  ✗ GFS fallback also failed - no daily forecast available")
     return data, meta
