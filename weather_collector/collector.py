@@ -194,8 +194,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
     # Wet bulb temperatures (for precipitation type classification)
     add_wet_bulb_temps(weather_data)
-    add_850mb_precip_type(weather_data)
-    detect_sea_breeze(weather_data)
 
     
     # Wind risk
@@ -212,6 +210,11 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
     if derived:
         weather_data["derived"] = derived
+    
+    # Add these AFTER derived dict is set
+    add_850mb_precip_type(weather_data)
+    detect_sea_breeze(weather_data)
+
     return weather_data
 
 
