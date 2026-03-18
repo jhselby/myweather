@@ -950,7 +950,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.76</span>
+            <span class="version-pill" id="appVersion">v2.77</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1337,15 +1337,12 @@
           </div>
           <div class="card-body" style="display:none;">
           <div class="row">
-            <div class="label" data-tip="Current gust impact score at this moment.">Current</div>
+            <div class="label" data-tip="Current gust impact score and severity level right now.">Current Impact</div>
             <div class="value" id="gustCurrentScore">--</div>
           </div>
+
           <div class="row">
-            <div class="label" data-tip="Plain-language severity: Calm / Breezy / Notable / Significant / Severe.">Level</div>
-            <div class="value" id="gustLevel">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Exposure-weighted wind speed: raw mph × exposure factor^1.5. A 40 mph NW gust (full exposure) scores 40. Thresholds: Breezy ≥5, Notable ≥12, Significant ≥20, Severe ≥30.">Impact Score</div>
+            <div class="label" data-tip="Maximum impact score within the selected forecast window. Score = gust × exposure^1.5" id="gustScoreLabel">Peak Impact (next 12h)</div>
             <div class="value" id="gustScore">--</div>
           </div>
           <div class="row">
@@ -1382,15 +1379,12 @@
           </div>
           <div class="card-body" style="display:none;">
           <div class="row">
-            <div class="label" data-tip="Current sustained wind impact score at this moment.">Current</div>
+            <div class="label" data-tip="Current sustained wind impact score and severity level right now.">Current Impact</div>
             <div class="value" id="susCurrentScore">--</div>
           </div>
+
           <div class="row">
-            <div class="label" data-tip="Plain-language severity: Calm / Breezy / Notable / Significant / Severe.">Level</div>
-            <div class="value" id="susLevel">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Exposure-weighted wind speed: raw mph × exposure factor^1.5. A 40 mph NW gust (full exposure) scores 40. Thresholds: Breezy ≥5, Notable ≥12, Significant ≥20, Severe ≥30.">Impact Score</div>
+            <div class="label" data-tip="Maximum impact score within the selected forecast window. Score = sustained × exposure^1.5" id="susScoreLabel">Peak Impact (next 12h)</div>
             <div class="value" id="susScore">--</div>
           </div>
           <div class="row">
@@ -3515,9 +3509,8 @@
     }
 
     function fillWorryCard(ids, peak, windowHours) {
-      // ids: { level, score, peakSpd, dir, exposure, time, note }
+      // ids: { score, scoreLabel, peakSpd, dir, exposure, time, note }
       if (!peak) {
-        document.getElementById(ids.level).textContent   = "--";
         document.getElementById(ids.score).textContent   = "--";
         document.getElementById(ids.peakSpd).textContent = "-- mph";
         document.getElementById(ids.dir).textContent     = "--";
@@ -3526,9 +3519,9 @@
         return;
       }
       const wl = worryLevel(peak.score);
-      document.getElementById(ids.level).innerHTML =
-        `<span class="badge ${wl.cls}">${wl.label}</span>`;
-      document.getElementById(ids.score).textContent   = peak.score.toFixed(1);
+      document.getElementById(ids.score).innerHTML =
+        `<span class="badge ${wl.cls}">${peak.score.toFixed(1)}</span> (${wl.label})`;
+      document.getElementById(ids.scoreLabel).textContent = `Peak Impact (next ${windowHours}h)`;
       document.getElementById(ids.peakSpd).textContent = `${Math.round(peak.speed)} mph`;
       document.getElementById(ids.dir).textContent     = toCompass(peak.directionDeg);
       document.getElementById(ids.exposure).textContent= `${(peak.exposureFactor * 100).toFixed(0)}%`;
@@ -3545,12 +3538,12 @@
       const susPeak  = computePeakWorry(hourly, _susWindowHours,  false);
 
       fillWorryCard(
-        { level:"gustLevel", score:"gustScore", peakSpd:"gustPeak",
+        { score:"gustScore", scoreLabel:"gustScoreLabel", peakSpd:"gustPeak",
           dir:"gustDir", exposure:"gustExposure", time:"gustTime", note:"gustNote" },
         gustPeak, _gustWindowHours
       );
       fillWorryCard(
-        { level:"susLevel", score:"susScore", peakSpd:"susPeak",
+        { score:"susScore", scoreLabel:"susScoreLabel", peakSpd:"susPeak",
           dir:"susDir", exposure:"susExposure", time:"susTime", note:"susNote" },
         susPeak, _susWindowHours
       );
