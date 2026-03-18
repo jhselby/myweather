@@ -116,61 +116,62 @@ def fetch_kbvy_obs():
 
 
 def fetch_buoy_44013():
-    """Fetch Buoy 44013 latest observation from NDBC RSS feed."""
+    """Fetch Buoy 44013 latest observation from NDBC real-time text data."""
     print("📡 Fetching Buoy 44013...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
     
     try:
-        url = "https://www.ndbc.noaa.gov/data/latest_obs/44013.rss"
+        url = "https://www.ndbc.noaa.gov/data/realtime2/44013.txt"
         r = requests.get(url, timeout=30)
         r.raise_for_status()
-        text = r.text
         
-        # Find the item description (second CDATA block)
-        first = text.find("<description><![CDATA[")
-        first_end = text.find("]]></description>", first)
-        second = text.find("<description><![CDATA[", first_end)
-        second_end = text.find("]]></description>", second)
+        lines = r.text.strip().split('\n')
+        if len(lines) < 3:
+            raise ValueError("Insufficient data in response")
         
-        if second == -1:
-            raise ValueError("Could not find item description")
+        # Line 0: headers, Line 1: units, Line 2: latest data
+        headers = lines[0].split()
+        data = lines[2].split()
         
-        desc = text[second + 22:second_end]
+        # Create dict mapping header -> value
+        obs = dict(zip(headers, data))
         
-        # Extract numeric values from HTML description
-        import re
+        # Helper to convert value, return None if MM (missing)
+        def to_float(val):
+            return float(val) if val and val != 'MM' else None
         
-        def get_num(label):
-            """Extract first number after a label."""
-            match = re.search(f"<strong>{label}:</strong>\\s*([\\d.]+)", desc)
-            return match.group(1) if match else None
+        # Extract and convert values
+        wind_dir = to_float(obs.get('WDIR'))
+        wind_speed_ms = to_float(obs.get('WSPD'))  # m/s
+        gust_ms = to_float(obs.get('GST'))  # m/s
+        wave_ht_m = to_float(obs.get('WVHT'))  # meters
+        wave_period = to_float(obs.get('DPD'))  # dominant wave period, sec
+        pressure_hpa = to_float(obs.get('PRES'))
+        air_temp_c = to_float(obs.get('ATMP'))
+        water_temp_c = to_float(obs.get('WTMP'))
+        dewpoint_c = to_float(obs.get('DEWP'))
+        pressure_tend = to_float(obs.get('PTDY'))
         
-        # Wind direction special case: "SE (130°)"
-        wind_dir = None
-        wind_match = re.search(r"<strong>Wind Direction:</strong>\s*\w+\s*\((\d+)", desc)
-        if wind_match:
-            wind_dir = int(wind_match.group(1))
-        
-        wind_speed = get_num("Wind Speed")
-        wind_gust = get_num("Wind Gust")
-        pressure = get_num("Atmospheric Pressure")
-        water_temp = get_num("Water Temperature")
+        # Get timestamp from data
+        yr, mo, dy, hr, mn = obs.get('#YY'), obs.get('MM'), obs.get('DD'), obs.get('hh'), obs.get('mm')
+        time_str = f"{yr}-{mo.zfill(2)}-{dy.zfill(2)}T{hr.zfill(2)}:{mn.zfill(2)}Z"
         
         result = {
-            "station": "44013",
-            "pressure_hpa": round(float(pressure) * 33.8639, 1) if pressure else None,
-            "pressure_tend_hpa": None,
-            "water_temp_f": float(water_temp) if water_temp else None,
-            "wind_speed_kt": float(wind_speed) if wind_speed else None,
-            "wind_gust_kt": float(wind_gust) if wind_gust else None,
+            "time": time_str,
             "wind_dir": wind_dir,
-            "wave_height_ft": None,
-            "wave_period_sec": None,
-            "wind_mph": round(float(wind_speed) * 1.15078, 1) if wind_speed else None,
+            "wind_mph": round(wind_speed_ms * 2.23694, 1) if wind_speed_ms else None,
+            "gust_mph": round(gust_ms * 2.23694, 1) if gust_ms else None,
+            "wave_ht_ft": round(wave_ht_m * 3.28084, 1) if wave_ht_m else None,
+            "wave_period_sec": wave_period,
+            "pressure_hpa": pressure_hpa,
+            "air_temp_f": round(air_temp_c * 9/5 + 32, 1) if air_temp_c else None,
+            "water_temp_f": round(water_temp_c * 9/5 + 32, 1) if water_temp_c else None,
+            "dewpoint_f": round(dewpoint_c * 9/5 + 32, 1) if dewpoint_c else None,
+            "pressure_tend_hpa": pressure_tend
         }
         
         meta["status"] = "ok"
-        print(f"  ✓ Buoy: {result.get('wind_speed_kt')} kt, {result.get('water_temp_f')}°F")
+        print(f"  ✓ Buoy: {result.get('air_temp_f')}°F air, {result.get('water_temp_f')}°F water, {result.get('wave_ht_ft')} ft waves")
         return result, meta
         
     except Exception as e:
