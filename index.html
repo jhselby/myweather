@@ -340,7 +340,8 @@
       color: rgba(255,255,255,0.9);
       font-weight: 900;
       text-align: right;
-      white-space: nowrap;
+      flex: 1;
+      min-width: 0; /* Allow flex item to shrink below content size */
     }
 
     .pressure-alarm{
@@ -950,7 +951,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.77</span>
+            <span class="version-pill" id="appVersion">v2.78</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1265,6 +1266,10 @@
           <div class="row" id="precipTypeRow" style="display:none;">
             <div class="label" data-tip="Predicted precipitation type at ground level based on surface temperature. May differ from what falls aloft if there are warm/cold layers above.">Precip Type (surface)</div>
             <div class="value" id="precipType">--</div>
+          <div class="row" id="wetBulbRow" style="display:none;">
+            <div class="label" data-tip="Wet bulb temperature — the coolest temperature air can reach through evaporative cooling. Critical for precipitation type: <32°F = snow, 32-35°F = mixed, >35°F = rain. More reliable than dry bulb temp alone.">Wet Bulb Temp</div>
+            <div class="value" id="wetBulbTemp">--</div>
+          </div>
           </div>
           <div class="row" id="col850Row" style="display:none;">
             <div class="label" data-tip="Precipitation type suggested by the temperature at 850mb (~5,000 ft). A warm layer aloft with a cold surface can produce freezing rain or sleet.">Column type (850mb)</div>
@@ -4620,6 +4625,21 @@
             : "rgba(255,255,255,0.85)";
         }
 
+
+        // Wet bulb temperature display
+        const wetBulbRow = document.getElementById("wetBulbRow");
+        const wetBulbEl  = document.getElementById("wetBulbTemp");
+        const wb = cur.wet_bulb;
+        if (wetBulbRow && wetBulbEl && wb != null && showPrecip) {
+          wetBulbRow.style.display = "";
+          wetBulbEl.textContent = wb.toFixed(1) + "°F";
+          // Color based on precip type thresholds
+          wetBulbEl.style.color = wb <= 32
+            ? "rgba(160,220,255,0.95)"  // Snow
+            : wb <= 35
+            ? "rgba(255,220,120,0.9)"   // Mixed
+            : "rgba(255,255,255,0.85)"; // Rain
+        }
         // 850mb column type
         const col850Row  = document.getElementById("col850Row");
         const col850El   = document.getElementById("col850Type");
