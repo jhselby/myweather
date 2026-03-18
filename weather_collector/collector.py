@@ -20,6 +20,7 @@ from .fetchers.wu import fetch_wu_stations
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
 from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spread
+from .processors.precip_850mb import add_850mb_precip_type
 
 # Import all processors
 from .processors.frost import update_frost_log
@@ -193,6 +194,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
     # Wet bulb temperatures (for precipitation type classification)
     add_wet_bulb_temps(weather_data)
+    add_850mb_precip_type(weather_data)
     detect_sea_breeze(weather_data)
 
     
