@@ -962,16 +962,55 @@
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
             <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.70</span>
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.79</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 19, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Fix: 48-hour wind chart missing buildWindChart call (chart was not rendering)</li>
+                <li>Fix: Freezing rain detection now requires warm aloft (850mb &gt; 32&deg;F) AND cold surface, not wet bulb alone</li>
+                <li>Multi-buoy fusion: blend wave/water/air data from buoys 44013 and 44098</li>
+                <li>NDBC real-time text API upgrade for buoy fetcher</li>
+              </ul>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.78</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 18, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Add 850mb precipitation type classifier (Rain/Mixed/Snow/Heavy snow)</li>
+                <li>Wet bulb temperature display in Conditions card (shown when PoP &ge; 20%)</li>
+                <li>850mb precip type only calculated when PoP &ge; 20%</li>
+              </ul>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.72&ndash;v2.77</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 16&ndash;18, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Sea breeze detector with detailed analysis card and likelihood scoring</li>
+                <li>Terrain-based wind exposure table from contour map analysis</li>
+                <li>Wind impact cards restructured with forward-looking peak windows (12/24/36/48h)</li>
+                <li>Current impact scores added to wind cards</li>
+                <li>Trough signal processor for 850mb height tendency</li>
+                <li>ASOS condition override and fog risk calculation</li>
+                <li>Dewpoint depression display and meteorological seasons</li>
+              </ul>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.70&ndash;v2.71</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 16, 2026</span>
               <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>48-Hour Wind Chart: swapped axes (Impact Score left 0-auto, Wind Speed right)</li>
-                <li>Added color gradient zones to Impact axis (Calm/Breezy/Notable/Significant/Severe/Extreme)</li>
-                <li>Chart now shows both Sustained (purple) and Gust (red) impact lines with raw forecast</li>
-                <li>Dynamic axis scaling: chart max adjusts to actual data range (not fixed at 5)</li>
-                <li>Fixed wind impact cards: now show forward-looking peaks (next 12/24/36/48h) instead of past data</li>
-                <li>Removed "Combined Impact" concept - sustained and gust impacts serve different purposes</li>
-                <li>Added explanation cards below chart: Sustained Impact (outdoor comfort) vs Gust Impact (structural stress)</li>
+                <li>48-hour wind chart: swapped axes, color gradient zones, forward-looking impact scores</li>
+                <li>Fix wind exposure table using actual fetch measurements</li>
+              </ul>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.66&ndash;v2.69</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 15, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Major refactor: split monolithic collector.py into modular package (fetchers/, processors/)</li>
+                <li>Separate processors for fog, frost, hyperlocal, pressure, sea breeze, trough, wet bulb, wind risk</li>
+                <li>Buoy wind data added; KBOS/KBVY migrated to new Aviation Weather API</li>
+                <li>NWS alerts simplified format with proper URLs</li>
+                <li>48-hour charts now start from current hour instead of midnight</li>
+                <li>Feels-like temp fixed to use apparent_temperature</li>
               </ul>
             </div>
             <div style="margin-bottom:8px;">
