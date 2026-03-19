@@ -2031,7 +2031,7 @@
     let tempPrecipChart = null;
     let windChartObj    = null;
 
-    function buildTempPrecipChart(times, temps, pop, wetBulbs) {
+    function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb) {
       const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
       const ctx    = document.getElementById("tempPrecipChart").getContext("2d");
       if (tempPrecipChart) tempPrecipChart.destroy();
@@ -2040,13 +2040,19 @@
       // Snow = white/light grey, Mixed = purple/slate, Freezing rain = orange, Rain = blue
       const precipColors = (wetBulbs || []).map((wb, i) => {
   const p = pop[i] ?? 0;
+  const surfTemp = temps[i];
+  const temp850 = temps850mb?.[i];
   if (p < 5) return "rgba(200,200,200,0.15)";   // negligible — faint gray
   if (wb == null) return "rgba(80,140,255,0.85)"; // unknown — bright blue
   if (wb <= 28)   return "rgba(230,240,255,0.95)"; // snow — near white
+  
+  // Freezing rain: warm aloft + cold surface
+  if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
+    return "rgba(255,140,40,0.85)";  // freezing rain — orange
+  }
   if (wb <= 32)   return "rgba(180,200,240,0.90)"; // snow likely — light blue
   if (wb <= 35)   return "rgba(160,100,220,0.85)"; // mixed/slush — purple
-  if (wb <= 38)   return "rgba(255,140,40,0.85)";  // freezing rain — orange
-  return          "rgba(80,150,255,0.85)";          // rain — bright blue
+  return "rgba(80,150,255,0.85)";          // rain — bright blue
 });
 
       tempPrecipChart = new Chart(ctx, {
@@ -2083,11 +2089,12 @@
                 afterLabel: (ctx) => {
                   if (ctx.datasetIndex === 1) {
                     const wb = wetBulbs?.[ctx.dataIndex];
+                    const surfTemp = temps?.[ctx.dataIndex];
+                    const temp850 = temps850mb?.[ctx.dataIndex];
                     if (wb == null) return "";
                     if (wb <= 28)  return "❄️ Snow";
                     if (wb <= 32)  return "🌨 Snow likely";
                     if (wb <= 35)  return "🟣 Mixed/slush";
-                    if (wb <= 38)  return "🟠 Freezing rain possible";
                     return "🔵 Rain";
                   }
                   return "";
@@ -4689,13 +4696,8 @@
           times,
           (hourly.temperature || []).slice(startIdx, startIdx + 48),
           (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48),
-          (hourly.wet_bulb || []).slice(startIdx, startIdx + 48)
-        );
-        buildWindChart(
-          times,
-          (hourly.wind_speed || []).slice(startIdx, startIdx + 48),
-          (hourly.wind_gusts || []).slice(startIdx, startIdx + 48),
-          (hourly.wind_direction || []).slice(startIdx, startIdx + 48)
+          (hourly.wet_bulb || []).slice(startIdx, startIdx + 48),
+          (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48)
         );
 
         // Wind tab
