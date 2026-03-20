@@ -2508,84 +2508,108 @@
       const el = document.getElementById("sunsetQualityContent");
       if (!el) return;
 
-      const hourly  = data.hourly  || {};
-      const daily   = data.daily   || {};
-      const times   = hourly.times || [];
-      const low     = hourly.cloud_cover_low  || [];
-      const mid     = hourly.cloud_cover_mid  || [];
-      const high    = hourly.cloud_cover_high || [];
-      const total   = hourly.cloud_cover      || [];
-      const humidity= hourly.humidity         || [];
-      const sunsets = daily.sunset            || [];
-
-      if (!times.length || !sunsets.length) {
+      const sunsetDir = data.sunset_directional || [];
+      
+      if (!sunsetDir.length) {
         el.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">Sunset data unavailable</div>`;
         return;
       }
 
-      // Score each day's sunset window (sunset-30min to sunset+20min)
       const scores = [];
-      for (let di = 0; di < Math.min(sunsets.length, 5); di++) {
-        const sunsetISO = sunsets[di];
-        if (!sunsetISO) continue;
-        const sunsetMs = new Date(sunsetISO).getTime();
-
-        // Find hourly indices within the sunset window
-        const windowIndices = [];
-        for (let i = 0; i < times.length; i++) {
-          const tMs = new Date(times[i]).getTime();
-          if (tMs >= sunsetMs - 30*60000 && tMs <= sunsetMs + 20*60000) {
-            windowIndices.push(i);
-          }
+      
+      for (const day of sunsetDir) {
+        const clouds = day.clouds || {};
+        const cloud10 = clouds['10mi'];
+        const cloud25 = clouds['25mi'];
+        const cloud50 = clouds['50mi'];
+        
+        if (!cloud10 || !cloud25 || !cloud50) continue;
+        
+        const sunsetTime = new Date(day.sunset_time);
+        const sunsetIdx = cloud25.times.findIndex(t => new Date(t).getTime() >= sunsetTime.getTime());
+        
+        if (sunsetIdx < 0) continue;
+        
+        const low10 = cloud10.cloud_low[sunsetIdx] ?? 0;
+        const mid25 = cloud25.cloud_mid[sunsetIdx] ?? 0;
+        const mid50 = cloud50.cloud_mid[sunsetIdx] ?? 0;
+        const high25 = cloud25.cloud_high[sunsetIdx] ?? 0;
+        const high50 = cloud50.cloud_high[sunsetIdx] ?? 0;
+        const hum25 = cloud25.humidity[sunsetIdx] ?? 50;
+        
+        const totalCloud = (low10 + mid25 + high25) / 3;
+        
+        if (totalCloud < 15 && hum25 < 60) {
+          const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
+            : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+          const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+          
+          scores.push({
+            dayLabel, timeLabel,
+            score: 0.45,
+            label: "Good",
+            color: "rgba(255,220,100,0.9)",
+            emoji: "🌤️",
+            avgLow: low10.toFixed(0),
+            avgMid: mid25.toFixed(0),
+            avgHigh: high25.toFixed(0),
+            avgHum: hum25.toFixed(0),
+            note: "Clear sky"
+          });
+          continue;
         }
-        // If sunset already passed and window is empty, use nearest available hour
-        if (!windowIndices.length) {
-          let best = -1, bestDiff = Infinity;
-          for (let i = 0; i < times.length; i++) {
-            const diff = Math.abs(new Date(times[i]).getTime() - sunsetMs);
-            if (diff < bestDiff) { bestDiff = diff; best = i; }
-          }
-          if (best >= 0 && bestDiff < 4*3600000) windowIndices.push(best);
+        
+        if (low10 > 60) {
+          const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
+            : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+          const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+          
+          scores.push({
+            dayLabel, timeLabel,
+            score: 0.1,
+            label: "Poor",
+            color: "rgba(120,120,120,0.6)",
+            emoji: "☁️",
+            avgLow: low10.toFixed(0),
+            avgMid: mid25.toFixed(0),
+            avgHigh: high25.toFixed(0),
+            avgHum: hum25.toFixed(0),
+            note: "Overcast"
+          });
+          continue;
         }
-        if (!windowIndices.length) continue;
-
-        // Average cloud layers and humidity over window
-        const avg = arr => {
-          const vals = windowIndices.map(i => arr[i]).filter(v => v != null);
-          return vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null;
-        };
-
-        const avgLow  = avg(low)  ?? 0;
-        const avgMid  = avg(mid)  ?? 0;
-        const avgHigh = avg(high) ?? 0;
-        const avgHum  = avg(humidity) ?? 50;
-
-        // Scoring algorithm
-        // Mid clouds 30-70% are ideal; high clouds add some color; low clouds block
-        const midScore  = avgMid  <= 70 ? avgMid / 70 : (100 - avgMid) / 30;  // peaks at 70%
-        const highBonus = Math.min(avgHigh, 60) / 60 * 0.3;                    // up to 0.3 bonus
-        const lowPenalty= Math.min(avgLow / 80, 1.0);                          // kills score if overcast low
-        const humFactor = 1 - Math.max(0, (avgHum - 60)) / 80;                 // humidity penalty above 60%
-
-        let score = (midScore * 0.7 + highBonus) * (1 - lowPenalty * 0.8) * humFactor;
+        
+        const midCloudAvg = mid25 * 0.7 + mid50 * 0.3;
+        
+        const midScore = midCloudAvg <= 70 
+          ? midCloudAvg / 70 
+          : Math.max(0.3, (100 - midCloudAvg) / 40);
+        
+        const highBonus = Math.min((high25 + high50) / 2, 60) / 60 * 0.3;
+        const lowPenalty = Math.min(low10 / 80, 1.0);
+        const humFactor = 1 - Math.max(0, (hum25 - 60)) / 80;
+        
+        let score = (midScore * 0.7 + highBonus) * (1 - lowPenalty * 0.6) * humFactor;
         score = Math.max(0, Math.min(1, score));
-
-        // Label
+        
         let label, color, emoji;
         if (score >= 0.75)      { label = "Spectacular";  color = "rgba(255,160,40,0.95)";  emoji = "🔥"; }
         else if (score >= 0.55) { label = "Very Good";    color = "rgba(255,200,60,0.95)";  emoji = "🌅"; }
         else if (score >= 0.35) { label = "Good";         color = "rgba(255,220,100,0.9)";  emoji = "🌤️"; }
         else if (score >= 0.18) { label = "Fair";         color = "rgba(180,180,180,0.8)";  emoji = "🌥️"; }
         else                    { label = "Poor";         color = "rgba(120,120,120,0.6)";  emoji = "☁️"; }
-
-        const sunsetDate = new Date(sunsetISO);
-        const dayLabel   = di === 0 ? "Today" : di === 1 ? "Tomorrow"
-          : sunsetDate.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
-        const timeLabel  = sunsetDate.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-
-        scores.push({ dayLabel, timeLabel, score, label, color, emoji,
-                      avgLow: avgLow.toFixed(0), avgMid: avgMid.toFixed(0),
-                      avgHigh: avgHigh.toFixed(0), avgHum: avgHum.toFixed(0) });
+        
+        const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
+          : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+        const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+        
+        scores.push({
+          dayLabel, timeLabel, score, label, color, emoji,
+          avgLow: low10.toFixed(0),
+          avgMid: midCloudAvg.toFixed(0),
+          avgHigh: ((high25 + high50) / 2).toFixed(0),
+          avgHum: hum25.toFixed(0)
+        });
       }
 
       if (!scores.length) {
@@ -2605,6 +2629,7 @@
       let html = `<div class="scroll-day-grid" style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:12px;">`;
       for (const s of scores) {
         const barW = Math.round(s.score * 100);
+        const noteHtml = s.note ? `<div style="font-size:0.72rem;color:${noteCol};margin-top:4px;">${s.note}</div>` : '';
         html += `
           <div style="background:${tileBg};border:1px solid ${tileBd};
                       border-radius:10px;padding:16px 12px;text-align:center;">
@@ -2616,17 +2641,17 @@
               <div style="height:100%;width:${barW}%;background:${s.color};border-radius:3px;transition:width 0.4s;"></div>
             </div>
             <div style="font-size:0.78rem;color:${detCol};line-height:2;">
-              <span data-tip="Low clouds (below ~6,500 ft). High values block the sun from lighting upper clouds — kills color.">Low ${s.avgLow}%</span> ·
-              <span data-tip="Mid-level clouds (6,500–20,000 ft). The sweet spot for sunset color — 30–70% is ideal.">Mid ${s.avgMid}%</span> ·
-              <span data-tip="High clouds (above 20,000 ft, cirrus). Add soft color and atmosphere when mid clouds are present.">High ${s.avgHigh}%</span>
+              <span data-tip="Low clouds at 10mi (local horizon). High values block view.">Low ${s.avgLow}%</span> ·
+              <span data-tip="Mid-level clouds 25mi west. Sweet spot: 30–70%.">Mid ${s.avgMid}%</span> ·
+              <span data-tip="High clouds 25-50mi west. Add color and atmosphere.">High ${s.avgHigh}%</span>
             </div>
+            ${noteHtml}
           </div>`;
       }
       html += `</div>`;
       html += `<div style="font-size:0.78rem;color:${noteCol};margin-top:4px;">
-        Score based on mid-level cloud fraction, low cloud obstruction, and humidity.
-        Best conditions: 30–70% mid cloud, &lt;20% low cloud, dry air.
-        Your western water view is a significant advantage.
+        Clouds sampled 10-50 miles west along actual sunset direction (not overhead).
+        Best sunsets: 30-70% mid clouds at distance, clear horizon nearby, dry air. Clear skies with low humidity score "Good".
       </div>`;
 
       el.innerHTML = html;
