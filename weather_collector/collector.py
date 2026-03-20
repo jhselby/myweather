@@ -21,6 +21,8 @@ from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
 from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spread
 from .processors.precip_850mb import add_850mb_precip_type
+from .processors.sunset_directional import build_sunset_directional_data
+from .fetchers.open_meteo import fetch_directional_clouds
 
 # Import all processors
 from .processors.frost import update_frost_log
@@ -31,7 +33,7 @@ from .processors.trough import compute_trough_signal
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
                        kbos_data, kbvy_data, buoy_data, forecast_data, alert_data,
-                       sources, wu_data=None, frost_log=None, salem_water_temp=None):
+                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None):
     """
     Build the complete weather data structure from all sources.
     This is the main processing function that combines all fetched data.
@@ -215,6 +217,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     add_850mb_precip_type(weather_data)
     detect_sea_breeze(weather_data)
 
+    if sunset_directional:
+        weather_data["sunset_directional"] = sunset_directional
+
     return weather_data
 
 
@@ -256,6 +261,15 @@ def main():
     print("🌡️ Updating frost log...")
     frost_log = update_frost_log(daily_data)
 
+    sunset_directional = None
+    if daily_data and daily_data.get("daily") and daily_data["daily"].get("sunset"):
+        from .config import LAT, LON
+        sunset_directional = build_sunset_directional_data(
+            daily_data["daily"]["sunset"],
+            LAT, LON,
+            fetch_directional_clouds
+        )
+
     # Build complete weather data
     weather_data = build_weather_data(
         current_data, hourly_data, daily_data,
@@ -263,7 +277,8 @@ def main():
         forecast_data, alert_data, sources,
         wu_data=wu_data,
         frost_log=frost_log,
-        salem_water_temp=salem_water_temp
+        salem_water_temp=salem_water_temp,
+        sunset_directional=sunset_directional
     )
 
     # Save to JSON
