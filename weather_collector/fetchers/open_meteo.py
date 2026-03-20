@@ -82,3 +82,54 @@ def fetch_daily_ecmwf():
         if data is None:
             print("  ✗ GFS fallback also failed - no daily forecast available")
     return data, meta
+
+def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles):
+    """
+    Fetch cloud cover at multiple points along a bearing.
+    distances_miles: list of distances (e.g., [10, 25, 50])
+    Returns: dict with cloud data at each distance
+    """
+    from ..config import OM_BASE_URL, OM_UNITS, HEADERS_DEFAULT
+    from ..processors.sunset_directional import calculate_offset_lat_lon
+    from ..utils import iso_utc_now
+    import requests
+    
+    print(f"  📡 Fetching clouds at {bearing_deg}° bearing: {distances_miles} miles...")
+    
+    results = {}
+    for dist in distances_miles:
+        new_lat, new_lon = calculate_offset_lat_lon(lat, lon, bearing_deg, dist)
+        
+        params = {
+            "latitude": new_lat,
+            "longitude": new_lon,
+            "hourly": "cloud_cover_low,cloud_cover_mid,cloud_cover_high,relative_humidity_2m",
+            "forecast_days": 5,
+            **OM_UNITS,
+        }
+        
+        try:
+            r = requests.get(OM_BASE_URL, params=params, headers=HEADERS_DEFAULT, timeout=30)
+            r.raise_for_status()
+            data = r.json()
+            
+            if data.get("hourly"):
+                results[f"{dist}mi"] = {
+                    "latitude": new_lat,
+                    "longitude": new_lon,
+                    "times": data["hourly"].get("time", []),
+                    "cloud_low": data["hourly"].get("cloud_cover_low", []),
+                    "cloud_mid": data["hourly"].get("cloud_cover_mid", []),
+                    "cloud_high": data["hourly"].get("cloud_cover_high", []),
+                    "humidity": data["hourly"].get("relative_humidity_2m", []),
+                }
+                print(f"    ✓ {dist}mi ({new_lat}, {new_lon})")
+            else:
+                print(f"    ✗ {dist}mi - no data")
+                results[f"{dist}mi"] = None
+                
+        except Exception as e:
+            print(f"    ✗ {dist}mi - {e}")
+            results[f"{dist}mi"] = None
+    
+    return results
