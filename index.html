@@ -951,7 +951,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.79</span>
+            <span class="version-pill" id="appVersion">v2.80</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -962,7 +962,7 @@
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
             <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.79</span>
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.80</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 19, 2026</span>
               <ul style="margin:4px 0 0 16px;padding:0;">
                 <li>Fix: 48-hour wind chart missing buildWindChart call (chart was not rendering)</li>
@@ -4644,16 +4644,27 @@
         const pop0 = (data.daily?.precipitation_probability_max?.[0] ?? 0);
         if (pop0 >= 60 && der.col_precip_type && der.col_precip_type !== "Rain")
           stormFlags.push(`❄️ Precip likely — column type: ${der.col_precip_type}`);
+        
+        // Add rain intensity flag for moderate/heavy rain
+        const dailyPrecip = (data.daily?.precipitation_sum?.[0] ?? 0);
+        if (pop0 >= 60 && dailyPrecip >= 0.5)
+          stormFlags.push(`🌧️ Moderate/heavy rain expected (${dailyPrecip.toFixed(1)}")`);
 
         if (stormBanner && stormDetails) {
           if (stormFlags.length >= 2) {
             stormBanner.style.display = "";
             stormDetails.innerHTML = stormFlags.map(f => `• ${f}`).join("<br>");
+            
+            // Update banner title based on severity
+            const bannerTitle = stormBanner.querySelector("div:first-child");
+            if (bannerTitle && bannerTitle.firstChild && bannerTitle.firstChild.nodeType === 3) {
+              const severity = stormFlags.length >= 3 ? "⛈️ Storm conditions developing" : "🌧️ Active weather developing";
+              bannerTitle.firstChild.textContent = severity + " ";
+            }
           } else {
             stormBanner.style.display = "none";
           }
         }
-
         // Sea breeze indicator
         const sbRow   = document.getElementById("seaBreezeRow");
         const sbLabel = document.getElementById("seaBreezeLabel");
