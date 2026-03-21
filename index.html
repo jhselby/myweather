@@ -951,7 +951,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v3.1</span>
+            <span class="version-pill" id="appVersion">v3.2</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -962,7 +962,7 @@
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
             <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.1</span>
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.2</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 19, 2026</span>
               <ul style="margin:4px 0 0 16px;padding:0;">
                 <li>Fix: 48-hour wind chart missing buildWindChart call (chart was not rendering)</li>
@@ -3447,16 +3447,16 @@
         const isSimple = period.is_simple_daily;
         
         const high = isSimple ? period.temperature : (dayPeriod?.temperature || period.temperature);
-        const low = isSimple ? parseInt(period.text.match(/low (\d+)/)?.[1] || period.temperature) : (nightPeriod?.temperature || period.temperature);
+        const low = isSimple ? parseInt((period.text || "").match(/low (\d+)/)?.[1] || period.temperature) : (nightPeriod?.temperature || period.temperature);
         
         // Extract precip probability
         const combinedText = isSimple ? period.text : ((dayPeriod?.text || "") + " " + (nightPeriod?.text || ""));
-        const precipMatch = combinedText.match(/\((\d+)%\)/);
+        const precipMatch = (combinedText || "").match(/\((\d+)%\)/);
         const pop = precipMatch ? parseInt(precipMatch[1]) : 0;
         
         // Emoji
         let emoji = "☀️";
-        const text = combinedText.toLowerCase();
+        const text = (combinedText || "").toLowerCase();
         if (text.includes("thunder")) emoji = "⛈️";
         else if (text.includes("snow")) emoji = "🌨️";
         else if (text.includes("rain")) emoji = "🌧️";
@@ -4486,7 +4486,7 @@
         const emoji = cur.emoji || weatherEmoji[code] || "&#127777;&#65039;";
         const desc  = cur.condition_override || cur.weather_description || weatherDesc[code] || "—";
         document.getElementById("currentTemp").innerHTML =
-          `${Math.round(cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
+          `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
         document.getElementById("feelsLike").textContent =
           `Feels like ${Math.round(cur.apparent_temperature ?? 0)}°F`;
         const obsTag = cur.condition_source === "KBVY observed" ? " <span style='font-size:0.75rem;opacity:0.5;'>[obs]</span>" : "";
