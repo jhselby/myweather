@@ -64,6 +64,7 @@ def fetch_kbos_obs():
             "pressure_hpa": obs.get("altim"),
             "pressure_tend_hpa": obs.get("presTend"),
             "wind_speed_kt": obs.get("wspd"),
+            "wind_gust_kt": obs.get("wgst"),
             "wind_dir": obs.get("wdir"),
             "present_weather": decode_metar_wx(obs.get("wxString"))
         }
@@ -101,6 +102,7 @@ def fetch_kbvy_obs():
             "dewpoint_c": obs.get("dewp"),
             "pressure_hpa": obs.get("altim"),
             "wind_speed_kt": obs.get("wspd"),
+            "wind_gust_kt": obs.get("wgst"),
             "wind_dir": obs.get("wdir"),
             "present_weather": decode_metar_wx(obs.get("wxString")),
         }
