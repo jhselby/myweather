@@ -25,14 +25,14 @@ def worry_score(speed, exp_factor):
 def worry_level(score):
     """Classify worry score into severity level."""
     if score >= WORRY_SEVERE:
-        return "SEVERE"
+        return "Very windy"
     if score >= WORRY_SIGNIFICANT:
-        return "SIGNIFICANT"
+        return "Windy"
     if score >= WORRY_NOTABLE:
-        return "NOTABLE"
+        return "Breezy"
     if score >= WORRY_NOTICEABLE:
-        return "NOTICEABLE"
-    return "LOW"
+        return "Light winds"
+    return "Calm"
 
 
 def safe_num(x):
