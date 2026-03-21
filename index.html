@@ -951,7 +951,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v3.4</span>
+            <span class="version-pill" id="appVersion">v3.5</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -962,14 +962,26 @@
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
             <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.1</span>
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.5</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 21, 2026</span>
               <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>NWS NBM gridpoint integration (replaced GFS surface data)</li>
-                <li>Fix precipitation likelihood qualifiers (added "likely", "chance of", "slight chance of")</li>
-                <li>Fix surface temperature validation for precipitation type</li>
-                <li>NWS temperatures and weather conditions now override GFS/HRRR</li>
-                <li>Prevents physically impossible forecasts (heavy snow at 40°F)</li>
+                <li>Wind forecast improvements: max(KBVY, WU) for current conditions</li>
+                <li>Extract wind gusts from KBVY METAR (Aviation Weather API)</li>
+                <li>Blend observed wind into hourly forecast (24hr decay curve)</li>
+                <li>Lower wind impact thresholds for waterfront exposure (10/16 vs 12/20)</li>
+                <li>Fixes underreported gusts in impact cards, graphs, and forecast text</li>
+              </ul>
+            </div>
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.3</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 21, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Wind chart redesign: axis swap (time horizontal, speed vertical)</li>
+                <li>Wind chart: labeled worry zones with gradient color fills</li>
+                <li>Wind chart: legend shows current + peak worry levels with time labels</li>
+                <li>Wind chart: switched from stacked bar to grouped bar layout</li>
+                <li>Fix: duplicate "Calm" label in worryLevel function</li>
               </ul>
             </div>
             <div style="margin-bottom:8px;">
@@ -985,20 +997,16 @@
               </ul>
             </div>
             <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.4</span>
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.1</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 21, 2026</span>
               <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Wind chart redesign: axis swap (time horizontal, speed vertical)</li>
-                <li>Wind chart: labeled worry zones with gradient color fills</li>
-                <li>Wind chart: legend shows current + peak worry levels with time labels</li>
-                <li>Wind chart: switched from stacked bar to grouped bar layout</li>
-                <li>Fix: duplicate "Calm" label in worryLevel function</li>
+                <li>NWS NBM gridpoint integration (replaced GFS surface data)</li>
+                <li>Fix precipitation likelihood qualifiers (added "likely", "chance of", "slight chance of")</li>
+                <li>Fix surface temperature validation for precipitation type</li>
+                <li>NWS temperatures and weather conditions now override GFS/HRRR</li>
+                <li>Prevents physically impossible forecasts (heavy snow at 40°F)</li>
               </ul>
             </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.78</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 18, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
                 <li>Add 850mb precipitation type classifier (Rain/Mixed/Snow/Heavy snow)</li>
                 <li>Wet bulb temperature display in Conditions card (shown when PoP &ge; 20%)</li>
                 <li>850mb precip type only calculated when PoP &ge; 20%</li>
