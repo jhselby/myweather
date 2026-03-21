@@ -309,17 +309,29 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     wind_dir_short = degrees_to_compass(dominant_dir, full=False)
     wind_dir_full = degrees_to_compass(dominant_dir, full=True)
     
-    # Sky condition
-    sky_narrative = _build_sky_narrative(cloud_cover, weather_codes, period_hours)
+
+    # Check for fog first
+    has_fog = any(code in [45, 48] for code in weather_codes)
+    
+    # Sky condition (cloud-based only - fog removed from this function)
+    sky_narrative = _build_sky_narrative(cloud_cover, weather_codes, period_hours, skip_fog=True)
     
     # Precipitation
     precip_narrative = _build_precip_narrative(precip_probs, precip_types, period_hours, temps)
     
-    # Build main sentence
+    # Build main sentence: precip priority, then sky, fog as modifier
     if precip_narrative:
         main_sent = f"{precip_narrative.capitalize()}. {sky_narrative.capitalize()}"
+        if has_fog:
+            main_sent = main_sent.rstrip(".") + ", with areas of fog."
     else:
         main_sent = sky_narrative.capitalize()
+        if has_fog:
+            avg_clouds = sum(cloud_cover) / len(cloud_cover)
+            if avg_clouds > 80:
+                main_sent = "Foggy and " + main_sent.lower()
+            else:
+                main_sent = main_sent.rstrip(".") + ", with areas of fog."
     
     # Add temperature with timing
     mid_period = len(period_hours) // 2
@@ -412,48 +424,97 @@ def _generate_daily_forecast(daily_data, target_date):
     return {
         'period_name': target_date.strftime('%A'),
         'date': target_date.isoformat(),
-        'is_daytime': True,
+        'is_simple_daily': True,
         'text': ' '.join(parts),
         'temperature': int(high),
-        'is_simple_daily': True
+        'low_temp': int(low)
     }
 
 
-def _build_sky_narrative(cloud_cover, weather_codes, hours):
+
+def _build_sky_narrative(cloud_cover, weather_codes, hours, skip_fog=False):
     """Generate sky condition narrative for a period."""
     if not cloud_cover:
         return None
     
-    avg_clouds = sum(cloud_cover) / len(cloud_cover)
-    
-    # Check for significant weather
+    # Check for significant weather first
     has_fog = any(code in [45, 48] for code in weather_codes)
     has_storms = any(code >= 95 for code in weather_codes)
     
     if has_storms:
         return "thunderstorms"
     
-    if has_fog:
-        if avg_clouds > 80:
-            return "foggy and overcast"
-        else:
-            return "areas of fog"
+    # Split into morning (6am-12pm) and afternoon (12pm-6pm) for daytime periods
+    morning_indices = [i for i, h in enumerate(hours) if 6 <= h < 12]
+    afternoon_indices = [i for i, h in enumerate(hours) if 12 <= h < 18]
     
-    # Sky cover based on cloud percentage
-    if avg_clouds < 30:
-        return "sunny" if any(6 <= h <= 18 for h in hours) else "clear"
-    elif avg_clouds < 60:
-        return "partly cloudy"
-    elif avg_clouds < 85:
-        return "mostly cloudy"
+    def avg_clouds(indices):
+        if not indices:
+            return None
+        return sum(cloud_cover[i] for i in indices) / len(indices)
+    
+    def describe_sky(avg_cloud, hour):
+        if avg_cloud is None:
+            return None
+        # Daytime vs nighttime descriptions
+        is_day = 6 <= hour < 18
+        if avg_cloud < 25:
+            return "sunny" if is_day else "clear"
+        elif avg_cloud < 50:
+            return "mostly sunny" if is_day else "mostly clear"
+        elif avg_cloud < 75:
+            return "partly cloudy"
+        elif avg_cloud < 88:
+            return "mostly cloudy"
+        else:
+            return "overcast"
+    
+    morning_avg = avg_clouds(morning_indices)
+    afternoon_avg = avg_clouds(afternoon_indices)
+    
+    # Build narrative based on trend
+    if morning_avg is not None and afternoon_avg is not None:
+        # Both periods exist - check for significant change
+        if abs(afternoon_avg - morning_avg) < 20:
+            # Steady conditions - use afternoon
+            result = describe_sky(afternoon_avg, 14).capitalize()
+        elif afternoon_avg > morning_avg + 20:
+            # Increasing clouds
+            morning_desc = describe_sky(morning_avg, 9)
+            result = f"{morning_desc.capitalize()}, then becoming cloudy"
+        else:
+            # Decreasing clouds (like today!)
+            morning_desc = describe_sky(morning_avg, 9)
+            afternoon_desc = describe_sky(afternoon_avg, 14)
+            result = f"{morning_desc.capitalize()}, then {afternoon_desc}"
+    elif morning_avg is not None:
+        result = describe_sky(morning_avg, 9).capitalize()
+    elif afternoon_avg is not None:
+        result = describe_sky(afternoon_avg, 14).capitalize()
     else:
-        return "overcast"
+        # Fallback to overall average
+        avg_clouds = sum(cloud_cover) / len(cloud_cover)
+        result = describe_sky(avg_clouds, hours[0] if hours else 12).capitalize()
+    
+    # Skip fog if requested (handled by caller)
+    if not skip_fog and has_fog:
+        avg_all = sum(cloud_cover) / len(cloud_cover)
+        if avg_all > 80:
+            result = "foggy and " + result.lower()
+        else:
+            result = result + ", with areas of fog"
+    
+    print(f"DEBUG sky: morning={morning_avg if morning_avg is not None else 0:.1f}%, afternoon={afternoon_avg if afternoon_avg is not None else 0:.1f}%, result={result}")
+    return result
+    print(f"DEBUG sky: morning={morning_avg if morning_avg is not None else 0:.1f}%, afternoon={afternoon_avg if afternoon_avg is not None else 0:.1f}%, result={result}")
+    return result
 def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
     """Generate precipitation narrative for a period."""
     if not precip_probs:
         return None
     
     max_prob = max(precip_probs)
+    print(f"DEBUG precip: max_prob={max_prob}%")
     
     if max_prob < 20:
         return None
@@ -489,16 +550,14 @@ def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
         precip_desc = "mixed rain and snow" if dominant_type.lower() == "mixed" else dominant_type
     
     # Build likelihood phrase (lowercase, no period)
-    if max_prob > 70:
+    if max_prob >= 90:
         likelihood = f"{precip_desc}"
-    elif max_prob > 60:
+    elif max_prob > 70:
         likelihood = f"{precip_desc} likely"
-    elif max_prob > 30:
+    elif max_prob > 50:
         likelihood = f"chance of {precip_desc}"
-    
     else:
         likelihood = f"slight chance of {precip_desc}"
-    
     # Add timing if precipitation occurs during specific hours
     timing = None
     high_prob_indices = [i for i, p in enumerate(precip_probs) if p > 50]
