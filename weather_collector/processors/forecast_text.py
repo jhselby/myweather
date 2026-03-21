@@ -194,7 +194,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
                 # NWS returns Celsius, convert to Fahrenheit
                 nws_temps.append(nws_temp * 9/5 + 32)
             else:
-                nws_temps.append(temps[i])  # Fallback to GFS
+                nws_temps.append(temps[len(nws_temps)])  # Fallback to GFS
         if nws_temps:
             temps = nws_temps
             print(f"DEBUG: {period_name} using NWS temps (range: {min(temps):.1f}-{max(temps):.1f}°F)")
