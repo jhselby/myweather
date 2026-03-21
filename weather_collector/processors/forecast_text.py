@@ -22,7 +22,43 @@ WEATHER_CODES = {
 }
 
 
-def generate_forecast_text(hourly_data, daily_data):
+
+def _extract_nws_value(nws_property, target_time):
+    """Extract NWS value for a specific datetime from gridpoint property."""
+    # Ensure target_time is timezone-aware
+    if target_time.tzinfo is None:
+        target_time = target_time.replace(tzinfo=timezone.utc)
+    if not nws_property or "values" not in nws_property:
+    
+        return None
+    for entry in nws_property["values"]:
+        valid_time = entry.get("validTime", "")
+        if not valid_time:
+            continue
+        
+        # Parse ISO8601 duration format: "2024-03-21T12:00:00+00:00/PT1H"
+        parts = valid_time.split("/")
+        if len(parts) != 2:
+            continue
+        
+        start_str = parts[0]
+        start_dt = datetime.fromisoformat(start_str.replace("Z", "+00:00"))
+        
+        # Parse duration (PT1H = 1 hour, PT3H = 3 hours, etc.)
+        duration_str = parts[1]
+        hours = 1  # Default
+        if "PT" in duration_str and "H" in duration_str:
+            hours = int(duration_str.replace("PT", "").replace("H", ""))
+        
+        end_dt = start_dt + timedelta(hours=hours)
+        
+        # Check if target_time falls within this interval
+        if start_dt <= target_time < end_dt:
+            return entry.get("value")
+    
+    return None
+
+def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None):
     """Generate 10-day forecast: 14 periods (days 1-7) + 3 simple dailies (days 8-10)."""
     # Handle both old format (single dict) and new format (hrrr + gfs)
     if isinstance(hourly_data, dict) and "hrrr" in hourly_data:
@@ -76,7 +112,8 @@ def generate_forecast_text(hourly_data, daily_data):
             target_date,
             is_daytime,
             period_name,
-            eastern
+            eastern,
+            nws_gridpoints
         )
         
         if forecast:
@@ -92,7 +129,7 @@ def generate_forecast_text(hourly_data, daily_data):
     return forecasts
 
 
-def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, period_name, eastern):
+def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, period_name, eastern, nws_gridpoints=None):
     """Generate forecast for a single day or night period (days 1-7). Merges HRRR (48h) + GFS (7day)."""
     
     # Merge HRRR and GFS data - prefer HRRR when available
@@ -105,7 +142,9 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     # Use HRRR if it covers this period, otherwise GFS
     if hrrr_times and target_date <= datetime.fromisoformat(hrrr_times[-1].replace("Z", "+00:00")).astimezone(eastern).date():
         hourly_data = hrrr_data
+        print(f"DEBUG: {period_name} ({target_date}) using HRRR")
     else:
+        print(f"DEBUG: {period_name} ({target_date}) using GFS")
         hourly_data = gfs_data
     
     # Define time bounds for the period
@@ -143,6 +182,22 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     
     # Extract data for this period
     temps = [hourly_data['temperature'][i] for i in period_indices]
+    
+    # Override with NWS temperatures if available (NBM is more accurate than GFS)
+    if nws_gridpoints and "temperature" in nws_gridpoints:
+        nws_temps = []
+        for i in period_indices:
+            time_str = hourly_data.get("times", [])[i]
+            dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+            nws_temp = _extract_nws_value(nws_gridpoints["temperature"], dt)
+            if nws_temp is not None:
+                # NWS returns Celsius, convert to Fahrenheit
+                nws_temps.append(nws_temp * 9/5 + 32)
+            else:
+                nws_temps.append(temps[i])  # Fallback to GFS
+        if nws_temps:
+            temps = nws_temps
+            print(f"DEBUG: {period_name} using NWS temps (range: {min(temps):.1f}-{max(temps):.1f}°F)")
     apparent_temps = [hourly_data['apparent_temperature'][i] for i in period_indices]
     wind_speeds = [hourly_data['wind_speed'][i] for i in period_indices]
     wind_gusts = [hourly_data['wind_gusts'][i] for i in period_indices]
@@ -172,6 +227,39 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
                 precip_types[idx] = "freezing drizzle"
             elif code in [51, 53, 55]:  # Drizzle
                 precip_types[idx] = "drizzle"
+    print(f"DEBUG precip_types after fallback for {period_name}: {precip_types}")
+    
+    # Override with NWS weather conditions if available (NBM is more accurate)
+    if nws_gridpoints and "weather" in nws_gridpoints:
+        for idx, i in enumerate(period_indices):
+            time_str = hourly_data.get("times", [])[i]
+            dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+            nws_weather = _extract_nws_value(nws_gridpoints["weather"], dt)
+            if nws_weather and isinstance(nws_weather, list):
+                # NWS weather is array of conditions - check for rain/snow mix
+                has_rain = False
+                has_snow = False
+                for condition in nws_weather:
+                    weather_type = condition.get("weather")
+                    if weather_type is None:
+                        continue
+                    weather_lower = weather_type.lower()
+                    if "snow" in weather_lower:
+                        has_snow = True
+                    if "rain" in weather_lower:
+                        has_rain = True
+                    if "freezing" in weather_lower:
+                        precip_types[idx] = "freezing rain"
+                        break
+                else:
+                    # No freezing, check for mix or single type
+                    if has_rain and has_snow:
+                        precip_types[idx] = "mixed"
+                    elif has_snow:
+                        precip_types[idx] = "snow"
+                    elif has_rain:
+                        precip_types[idx] = "rain"
+        print(f"DEBUG: {period_name} precip_types after NWS override: {precip_types}")
     
     # Temperature (high for day, low for night)
     if is_daytime:
@@ -225,7 +313,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     sky_narrative = _build_sky_narrative(cloud_cover, weather_codes, period_hours)
     
     # Precipitation
-    precip_narrative = _build_precip_narrative(precip_probs, precip_types, period_hours)
+    precip_narrative = _build_precip_narrative(precip_probs, precip_types, period_hours, temps)
     
     # Build main sentence
     if precip_narrative:
@@ -360,7 +448,7 @@ def _build_sky_narrative(cloud_cover, weather_codes, hours):
         return "mostly cloudy"
     else:
         return "overcast"
-def _build_precip_narrative(precip_probs, precip_types, hours):
+def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
     """Generate precipitation narrative for a period."""
     if not precip_probs:
         return None
@@ -370,9 +458,27 @@ def _build_precip_narrative(precip_probs, precip_types, hours):
     if max_prob < 20:
         return None
     
+    
+    # Calculate average surface temp during precipitation
+    high_prob_indices = [i for i, p in enumerate(precip_probs) if p > 50]
+    if high_prob_indices and surface_temps:
+        avg_surface_temp = sum(surface_temps[i] for i in high_prob_indices) / len(high_prob_indices)
+    elif surface_temps:
+        avg_surface_temp = sum(surface_temps) / len(surface_temps)
+    else:
+        avg_surface_temp = None
     # Determine precipitation type
     precip_type_counts = {}
     for ptype in precip_types:
+        # Physical reality check: override 850mb classification if surface temp makes it impossible
+        if ptype and avg_surface_temp is not None:
+            ptype_lower = str(ptype).lower()
+            if avg_surface_temp > 40 and ptype_lower in ["snow", "heavy snow"]:
+                ptype = "Rain"  # Cannot be snow at 40°F+
+            elif avg_surface_temp > 35 and ptype_lower == "heavy snow":
+                ptype = "Mixed"  # Too warm for heavy snow
+            elif avg_surface_temp < 34 and ptype_lower == "rain":
+                ptype = "Mixed"  # May be mixed near freezing
         if ptype:
             precip_type_counts[ptype] = precip_type_counts.get(ptype, 0) + 1
     
@@ -386,10 +492,12 @@ def _build_precip_narrative(precip_probs, precip_types, hours):
     if max_prob > 70:
         likelihood = f"{precip_desc} likely"
     elif max_prob > 50:
-        likelihood = f"{precip_desc}"
-    else:
+        likelihood = f"{precip_desc} likely"
+    elif max_prob > 30:
         likelihood = f"chance of {precip_desc}"
     
+    else:
+        likelihood = f"slight chance of {precip_desc}"
     
     # Add timing if precipitation occurs during specific hours
     timing = None

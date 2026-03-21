@@ -16,6 +16,7 @@ from .fetchers.tides import fetch_tides
 from .fetchers.noaa import fetch_kbos_obs, fetch_kbvy_obs, fetch_buoy_44013
 from .fetchers.nws import fetch_nws_forecast, fetch_nws_alerts
 from .fetchers.salem_water import fetch_salem_water_temp
+from .fetchers.nws_gridpoints import fetch_nws_gridpoints
 from .fetchers.wu import fetch_wu_stations
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
@@ -34,7 +35,7 @@ from .processors.forecast_text import generate_forecast_text
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
                        kbos_data, kbvy_data, buoy_data, forecast_data, alert_data,
-                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, hourly_7day_data=None):
+                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None):
     """
     Build the complete weather data structure from all sources.
     This is the main processing function that combines all fetched data.
@@ -279,7 +280,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         forecast_hourly = None
     
     if forecast_hourly and "daily" in weather_data:
-        forecast_text = generate_forecast_text(forecast_hourly, weather_data["daily"])
+        forecast_text = generate_forecast_text(forecast_hourly, weather_data["daily"], nws_gridpoints)
         if forecast_text:
             weather_data["forecast_text"] = forecast_text
 
@@ -299,6 +300,7 @@ def main():
     current_data, current_meta = fetch_current_gfs()
     hourly_data, hourly_meta = fetch_hourly_hrrr()
     hourly_7day_data, hourly_7day_meta = fetch_hourly_gfs_7day()
+    nws_gridpoints_data, nws_gridpoints_meta = fetch_nws_gridpoints()
     daily_data, daily_meta = fetch_daily_ecmwf()
     pws_data, pws_meta = fetch_pws_current()
     tide_data, tides_meta = fetch_tides()
@@ -346,6 +348,7 @@ def main():
         frost_log=frost_log,
         salem_water_temp=salem_water_temp,
         sunset_directional=sunset_directional,
+        nws_gridpoints=nws_gridpoints_data,
         hourly_7day_data=hourly_7day_data
     )
 

@@ -20,6 +20,11 @@ def _om_get(params, label):
         if data.get("error"):
             raise ValueError(data.get("reason", str(data["error"])))
         meta["status"] = "ok"
+        if label == "GFS 7-day hourly":
+            if "hourly" in data and "temperature_850hPa" in data["hourly"]:
+                print(f"    DEBUG: GFS returned temperature_850hPa: {len(data.get('hourly', {}).get('temperature_850hPa', []))} values")
+            else:
+                print(f"    DEBUG: GFS did NOT return temperature_850hPa")
         print(f"  ✓ {label}")
         return data, meta
     except Exception as e:
