@@ -951,7 +951,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v2.80</span>
+            <span class="version-pill" id="appVersion">v3.0</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -962,7 +962,7 @@
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
             <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.80</span>
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.0</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 19, 2026</span>
               <ul style="margin:4px 0 0 16px;padding:0;">
                 <li>Fix: 48-hour wind chart missing buildWindChart call (chart was not rendering)</li>
@@ -1203,7 +1203,20 @@
           </div>
         </div>
     
-        <!-- 6. NWS Detailed Forecast — closed by default -->
+        <!-- 6. Hyperlocal 7-Day Forecast — open by default -->
+        <div class="card col-12" data-collapse-key="hyperlocal_forecast" data-default-open="true">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal_forecast', this)">📌 Wyman Cove Detailed Forecast
+            <span class="collapse-chevron">&#9660;</span>
+          </div>
+          <div class="card-body">
+            <div id="hyperlocalForecastList"></div>
+            <div class="small-note" style="margin-top:12px;">Generated from HRRR and ECMWF models, hyperlocal to Wyman Cove.</div>
+          </div>
+        </div>
+
+        <!-- NWS Forecast (kept as fallback, hidden by default) -->
+
+        <!-- NWS Detailed Forecast (fallback, hidden) -->
         <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
             <span style="font-size:0.78rem;font-weight:800;color:rgba(140,200,255,0.8);margin-left:6px;" id="nwsFilterLabel"></span>
@@ -3409,181 +3422,166 @@
       });
     }
 
-    let _selectedForecastDate = null;  // "2026-02-21" or null = all
+    let _selectedForecastDate = null;
 
-    function renderForecast(daily) {
+    function renderForecast(forecastText) {
       const el = document.getElementById("forecastList");
-      if (!el || !daily || !Array.isArray(daily.time)) return;
+      if (!el || !Array.isArray(forecastText)) return;
       el.innerHTML = "";
 
-      // Build set of dates covered by NWS periods
-      const nwsDates = new Set(
-        (window._nwsPeriods || [])
-          .filter(p => p.start_time)
-          .map(p => p.start_time.slice(0, 10))
-      );
-      // If no start_time data yet (old collect), assume first 7 days have NWS coverage
-      const hasStartTimes = (window._nwsPeriods || []).some(p => p.start_time);
-      const nwsDayCount = hasStartTimes ? null : 7;
+      // Group forecast_text into 10 days (combine day/night periods into single row)
+      const days = [];
+      const seenDates = new Set();
+      
+      for (const period of forecastText) {
+        const dateStr = period.date;
+        
+        if (seenDates.has(dateStr)) continue;
+        seenDates.add(dateStr);
+        
+        // Find day and night periods for this date
+        const dayPeriod = forecastText.find(p => p.date === dateStr && p.is_daytime);
+        const nightPeriod = forecastText.find(p => p.date === dateStr && !p.is_daytime);
+        
+        // For simple dailies, just use the single period
+        const isSimple = period.is_simple_daily;
+        
+        const high = isSimple ? period.temperature : (dayPeriod?.temperature || period.temperature);
+        const low = isSimple ? parseInt(period.text.match(/low (\d+)/)?.[1] || period.temperature) : (nightPeriod?.temperature || period.temperature);
+        
+        // Extract precip probability
+        const combinedText = isSimple ? period.text : ((dayPeriod?.text || "") + " " + (nightPeriod?.text || ""));
+        const precipMatch = combinedText.match(/\((\d+)%\)/);
+        const pop = precipMatch ? parseInt(precipMatch[1]) : 0;
+        
+        // Emoji
+        let emoji = "☀️";
+        const text = combinedText.toLowerCase();
+        if (text.includes("thunder")) emoji = "⛈️";
+        else if (text.includes("snow")) emoji = "🌨️";
+        else if (text.includes("rain")) emoji = "🌧️";
+        else if (text.includes("fog")) emoji = "🌫️";
+        else if (text.includes("overcast") || text.includes("mostly cloudy")) emoji = "☁️";
+        else if (text.includes("partly cloudy")) emoji = "⛅";
+        
+        const date = new Date(dateStr + "T00:00:00");
+        const day = date.toLocaleDateString("en-US", { weekday: "short" });
+        const dateNum = date.toLocaleDateString("en-US", { month:"numeric", day:"numeric" });
+        
+        days.push({ dateStr, day, dateNum, high, low, emoji, pop });
+        
+        if (days.length >= 10) break;
+      }
 
-      for (let i = 0; i < Math.min(10, daily.time.length); i++) {
-        const dateStr   = daily.time[i];
-        const date      = new Date(dateStr + "T00:00:00");
-        const day       = date.toLocaleDateString("en-US", { weekday: "short" });
-        const dateNum   = date.toLocaleDateString("en-US", { month:"numeric", day:"numeric" });
-        const hi        = daily.temperature_max?.[i];
-        const lo        = daily.temperature_min?.[i];
-        const code      = daily.weather_code?.[i];
-        const pop       = daily.precipitation_probability_max?.[i];
-        const emoji     = weatherEmoji[code] || "&#127777;&#65039;";
-        const hasNWS    = hasStartTimes ? nwsDates.has(dateStr) : (i < nwsDayCount);
-
+      // Render 10 daily rows
+      for (const d of days) {
         const row = document.createElement("div");
         row.className = "row forecast-day-row";
-        row.dataset.date = dateStr;
+        row.dataset.date = d.dateStr;
+        row.style.cssText = "cursor:pointer;border-radius:8px;margin:0 -6px;padding:7px 6px;transition:background 0.15s;";
 
-        if (hasNWS) {
-          row.style.cssText = "cursor:pointer;border-radius:8px;margin:0 -6px;padding:7px 6px;transition:background 0.15s;";
-          row.addEventListener("click", () => selectForecastDay(dateStr, day));
-          row.addEventListener("mouseenter", () => { if (row.dataset.date !== _selectedForecastDate) row.style.background = "rgba(255,255,255,0.04)"; });
-          row.addEventListener("mouseleave", () => { if (row.dataset.date !== _selectedForecastDate) row.style.background = ""; });
-        } else {
-          row.style.cssText = "cursor:default;border-radius:8px;margin:0 -6px;padding:7px 6px;opacity:0.6;";
-        }
+        row.addEventListener("click", () => selectForecastDay(d.dateStr));
+        row.addEventListener("mouseenter", () => { 
+          if (row.dataset.date !== _selectedForecastDate) 
+            row.style.background = "rgba(255,255,255,0.04)"; 
+        });
+        row.addEventListener("mouseleave", () => { 
+          if (row.dataset.date !== _selectedForecastDate) 
+            row.style.background = ""; 
+        });
 
         row.innerHTML = `
           <div class="label" style="display:flex;align-items:center;gap:8px;">
-            <span style="font-weight:900;min-width:32px;">${day}</span>
-            <span style="font-size:0.85rem;color:rgba(255,255,255,0.35);">${dateNum}</span>
-            <span>${emoji}</span>
-            ${pop != null && pop > 10 ? `<span style="font-size:0.75rem;color:rgba(140,180,255,0.7);font-weight:800;">${pop}%</span>` : ""}
+            <span style="font-weight:900;min-width:32px;">${d.day}</span>
+            <span style="font-size:0.85rem;color:rgba(255,255,255,0.35);">${d.dateNum}</span>
+            <span>${d.emoji}</span>
+            ${d.pop > 10 ? `<span style="font-size:0.75rem;color:rgba(140,180,255,0.7);font-weight:800;">${d.pop}%</span>` : ""}
           </div>
-          <div class="value">${hi != null ? Math.round(hi) : "--"}° / ${lo != null ? Math.round(lo) : "--"}°</div>`;
+          <div class="value">${d.high}° / ${d.low}°</div>`;
 
         el.appendChild(row);
       }
 
       updateForecastSelection();
+
+      // Hint
+      const hint = document.createElement("div");
+      hint.id = "forecastSelectionHint";
+      hint.style.cssText = "font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:8px;font-weight:700;";
+      el.appendChild(hint);
+      updateForecastSelection();
     }
 
-    function selectForecastDay(dateStr, dayName) {
+    function selectForecastDay(dateStr) {
       if (_selectedForecastDate === dateStr) {
-        // Deselect — show all NWS periods
+        // Deselect — show all periods
         _selectedForecastDate = null;
-        filterNWSByDate(null);
-        updateForecastSelection();
+        filterHyperlocalByDate(null);
       } else {
         _selectedForecastDate = dateStr;
-        filterNWSByDate(dateStr, dayName);
-        updateForecastSelection();
-        // Auto-expand NWS card
-        const nwsCard = document.querySelector('[data-collapse-key="nws_forecast"]');
-        if (nwsCard) {
-          const body = nwsCard.querySelector(".card-body");
-          const title = nwsCard.querySelector(".card-title-collapsible");
+        filterHyperlocalByDate(dateStr);
+        // Auto-expand Wyman Cove card
+        const card = document.querySelector('[data-collapse-key="hyperlocal_forecast"]');
+        if (card) {
+          const body = card.querySelector(".card-body");
+          const title = card.querySelector(".card-title-collapsible");
           if (body && body.style.display === "none") {
             body.style.display = "";
             if (title) {
               const chev = title.querySelector(".collapse-chevron");
               if (chev) chev.style.transform = "rotate(180deg)";
             }
-            try { localStorage.setItem("collapse_nws_forecast", "open"); } catch(e) {}
+            try { localStorage.setItem("collapse_hyperlocal_forecast", "open"); } catch(e) {}
           }
-          // Scroll NWS card into view
-          setTimeout(() => nwsCard.scrollIntoView({ behavior:"smooth", block:"nearest" }), 100);
+          // Scroll into view
+          setTimeout(() => card.scrollIntoView({ behavior:"smooth", block:"nearest" }), 100);
         }
       }
+      updateForecastSelection();
     }
 
     function updateForecastSelection() {
       document.querySelectorAll(".forecast-day-row").forEach(row => {
         const isSelected = row.dataset.date === _selectedForecastDate;
         row.style.background = isSelected ? "rgba(100,160,255,0.12)" : "";
-        row.style.borderRadius = "8px";
       });
 
-      // Update hint text
-      let hint = document.getElementById("forecastSelectionHint");
-      if (!hint) {
-        hint = document.createElement("div");
-        hint.id = "forecastSelectionHint";
-        hint.style.cssText = "font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:8px;font-weight:700;";
-        document.getElementById("forecastList")?.after(hint);
+      const hint = document.getElementById("forecastSelectionHint");
+      if (hint) {
+        hint.textContent = _selectedForecastDate
+          ? "Tap again to clear · Detail below"
+          : "Tap a day to see detailed forecast";
       }
-      hint.textContent = _selectedForecastDate
-        ? "Tap again to clear · NWS detail below"
-        : "Tap a day to see NWS forecast detail";
     }
 
-    function filterNWSByDate(dateStr, dayName) {
-      const periods = window._nwsPeriods || [];
-      const list    = document.getElementById("nwsForecastList");
-      const btn     = document.getElementById("nwsExpandBtn");
-      const label   = document.getElementById("nwsFilterLabel");
+    function filterHyperlocalByDate(dateStr) {
+      const list = document.getElementById("hyperlocalForecastList");
+      if (!list) return;
 
+      const rows = list.querySelectorAll("div[style*='grid-template-columns']");
+      
       if (!dateStr) {
-        // Show default (first NWS_PREVIEW periods)
-        renderNWSForecast(periods);
-        if (label) label.textContent = "";
+        // No filter - show all rows
+        rows.forEach(row => row.style.display = "");
         return;
       }
 
-      // Match NWS periods to the selected date using start_time when available,
-      // falling back to weekday name matching for today only
-      const isToday  = dateStr === new Date().toISOString().slice(0,10);
-      const fullDay  = new Date(dateStr + "T12:00:00").toLocaleDateString("en-US", { weekday:"long" });
+      // Filter to show only periods matching the selected date
+      if (!window._currentForecastText) {
+        rows.forEach(row => row.style.display = "");
+        return;
+      }
 
-      const matched = periods.filter(p => {
-        // Prefer exact date match from start_time field
-        if (p.start_time) {
-          const pDate = p.start_time.slice(0, 10);  // "2026-02-25"
-          return pDate === dateStr;
-        }
-        // Fallback: name matching (only reliable for today/tonight)
-        const n = p.name || "";
-        if (isToday && (n === "Today" || n === "Tonight" || n === "This Afternoon" || n === "This Morning")) return true;
-        return n.startsWith(fullDay);
+      // Get all periods for the selected date
+      const matchingPeriods = window._currentForecastText.filter(p => p.date === dateStr);
+      const matchingNames = new Set(matchingPeriods.map(p => p.period_name));
+
+      // Show/hide rows based on period name match
+      rows.forEach((row, idx) => {
+        const period = window._currentForecastText[idx];
+        row.style.display = (period && matchingNames.has(period.period_name)) ? "" : "none";
       });
-
-      const toRender = matched.length > 0 ? matched : null;
-
-      if (list) {
-        list.innerHTML = "";
-        if (!toRender) {
-          list.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.88rem;padding:12px 0;">
-            No NWS detail available for this date — NWS forecasts cover ~7 days.
-          </div>`;
-        } else {
-        toRender.forEach(p => {
-          const row  = document.createElement("div");
-          row.style.cssText = "display:grid;grid-template-columns:130px 1fr;gap:0;border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 0;";
-          const left = document.createElement("div");
-          left.style.cssText = "padding-right:16px;";
-          left.innerHTML =
-            `<div style="font-weight:900;font-size:0.9rem;color:rgba(255,255,255,0.9);">${p.name}</div>` +
-            `<div style="font-size:1.4rem;font-weight:900;color:rgba(255,255,255,0.85);margin:2px 0;">${p.temperature != null ? p.temperature + "°F" : "--"}</div>` +
-            `<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);font-weight:700;">${p.wind_speed || ""} ${p.wind_direction || ""}</div>`;
-          const right = document.createElement("div");
-          right.innerHTML =
-            `<div style="font-weight:900;font-size:0.88rem;color:rgba(255,255,255,0.8);margin-bottom:4px;">${p.short_forecast}</div>` +
-            `<div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">${p.detailed}</div>`;
-          row.appendChild(left);
-          row.appendChild(right);
-          list.appendChild(row);
-        });
-        // Remove last border
-        const rows = list.querySelectorAll("div[style*='border-bottom']");
-        if (rows.length) rows[rows.length-1].style.borderBottom = "none";
-        } // end else (toRender exists)
-      }
-
-      // Update NWS card title to show which day is filtered
-      if (label) {
-        label.textContent = `— ${dayName}`;
-      }
-      if (btn) btn.style.display = "none";  // hide expand btn when filtered
     }
-
     function fillWorryCard(ids, peak, windowHours) {
       // ids: { score, scoreLabel, peakSpd, dir, exposure, time, note }
       if (!peak) {
@@ -4289,6 +4287,52 @@
     let nwsShowAll = false;
     const NWS_PREVIEW = 14;  // periods shown before "show all"
 
+    function renderHyperlocalForecast(forecasts) {
+      const list = document.getElementById("hyperlocalForecastList");
+      if (!list || !Array.isArray(forecasts) || forecasts.length === 0) {
+        if (list) list.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.88rem;padding:8px 0;">No forecast available.</div>';
+        return;
+      }
+
+      list.innerHTML = "";
+      
+      forecasts.forEach((p, i) => {
+        const row = document.createElement("div");
+        row.style.cssText =
+          "display:grid;grid-template-columns:130px 1fr;" +
+          "gap:0;border-bottom:1px solid rgba(255,255,255,0.06);" +
+          "padding:10px 0;";
+
+        // Left: period name + temp + wind (extract wind from text if present)
+        const left = document.createElement("div");
+        left.style.cssText = "padding-right:16px;";
+        
+        // Use wind data from forecast object
+        let windText = p.wind_full || "";
+        
+        left.innerHTML =
+          '<div style="font-weight:900;font-size:0.9rem;color:rgba(255,255,255,0.9);">' +
+            p.period_name + '</div>' +
+          '<div style="font-size:1.4rem;font-weight:900;color:rgba(255,255,255,0.85);margin:2px 0;">' +
+            p.temperature + "\u00b0F</div>" +
+          '<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);font-weight:700;">' +
+            windText + '</div>';
+
+        // Right: forecast text (no need for bold short forecast since we already have full text)
+        const right = document.createElement("div");
+        right.innerHTML =
+          '<div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">' +
+            p.text + '</div>';
+
+        row.appendChild(left);
+        row.appendChild(right);
+        list.appendChild(row);
+      });
+
+      // Last row — remove bottom border
+      const rows = list.querySelectorAll("div[style*='border-bottom']");
+      if (rows.length > 0) rows[rows.length-1].style.borderBottom = "none";
+    }
     function renderNWSForecast(periods) {
       _selectedForecastDate = null;  // clear any day filter on fresh data load
       updateForecastSelection();
@@ -4754,7 +4798,7 @@
 
 
         // Forecast
-        renderForecast(daily);
+        renderForecast(data.forecast_text);
 
         // 48h charts - start from current hour
         const hourly = data.hourly || {};
@@ -4851,6 +4895,11 @@
         if (nwsOfficeEl && data.sources && data.sources.nws_forecast) {
           nwsOfficeEl.textContent = data.sources.nws_forecast.office
             ? 'NWS Boston' : '';
+        }
+
+        // Hyperlocal forecast
+        if (data.forecast_text) {
+          window._currentForecastText = data.forecast_text; renderHyperlocalForecast(data.forecast_text);
         }
         renderNWSForecast(window._nwsPeriods);
 
