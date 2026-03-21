@@ -10,7 +10,7 @@ from .config import SCHEMA_VERSION, LOCATION_NAME
 from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes
 
 # Import all fetchers
-from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf
+from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf, fetch_hourly_gfs_7day
 from .fetchers.pws import fetch_pws_current
 from .fetchers.tides import fetch_tides
 from .fetchers.noaa import fetch_kbos_obs, fetch_kbvy_obs, fetch_buoy_44013
@@ -30,10 +30,11 @@ from .processors.pressure import compute_pressure_trend_hpa, get_best_pressure_t
 from .processors.wind_risk import compute_wind_risk
 from .processors.fog import calculate_fog_risk
 from .processors.trough import compute_trough_signal
+from .processors.forecast_text import generate_forecast_text
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
                        kbos_data, kbvy_data, buoy_data, forecast_data, alert_data,
-                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None):
+                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, hourly_7day_data=None):
     """
     Build the complete weather data structure from all sources.
     This is the main processing function that combines all fetched data.
@@ -64,15 +65,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "wind_direction": current.get("wind_direction_10m"),
             "wind_gusts": current.get("wind_gusts_10m"),
             "uv_index": current.get("uv_index"),
-            "visibility": current.get("visibility"),
+            "visibility": current.get("visibility")
         }
-        
-        # ASOS condition override - prefer observed conditions over model
-        if kbvy_data and kbvy_data.get("present_weather"):
-            weather_data["current"]["condition_override"] = kbvy_data["present_weather"]
-            weather_data["current"]["condition_source"] = "KBVY observed"
-        else:
-            weather_data["current"]["condition_source"] = "GFS model"
+    
+    # ASOS condition override - prefer observed conditions over model
+    if kbvy_data and kbvy_data.get("present_weather"):
+        weather_data["current"]["condition_override"] = kbvy_data["present_weather"]
+        weather_data["current"]["condition_source"] = "KBVY observed"
+    else:
+        weather_data["current"]["condition_source"] = "GFS model"
 
     # Hourly forecast
     if hourly_data:
@@ -97,6 +98,22 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "temperature_850hPa": hourly.get("temperature_850hPa", []),
             "temperature_700hPa": hourly.get("temperature_700hPa", []),
             "geopotential_height_850hPa": hourly.get("geopotential_height_850hPa", []),
+            "col_precip_type_850mb": hourly.get("col_precip_type_850mb", []),
+        }
+
+    # 7-day hourly forecast (GFS)
+    if hourly_7day_data:
+        hourly_7day = hourly_7day_data.get("hourly", {})
+        weather_data["hourly_7day"] = {
+            "times": hourly_7day.get("time", []),
+            "temperature": hourly_7day.get("temperature_2m", []),
+            "apparent_temperature": hourly_7day.get("apparent_temperature", []),
+            "precipitation_probability": hourly_7day.get("precipitation_probability", []),
+            "weather_code": hourly_7day.get("weather_code", []),
+            "cloud_cover": hourly_7day.get("cloud_cover", []),
+            "wind_speed": hourly_7day.get("wind_speed_10m", []),
+            "wind_direction": hourly_7day.get("wind_direction_10m", []),
+            "wind_gusts": hourly_7day.get("wind_gusts_10m", []),
         }
 
     # Daily forecast
@@ -115,7 +132,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "precipitation_sum": daily.get("precipitation_sum", []),
             "precipitation_probability_max": daily.get("precipitation_probability_max", []),
             "wind_speed_max": daily.get("wind_speed_10m_max", []),
-            "wind_gusts_max": daily.get("wind_gusts_10m_max", []),
+            "wind_gusts_max": daily.get("wind_gusts_10m_max", [])
         }
 
     # PWS data
@@ -216,6 +233,55 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # Add these AFTER derived dict is set
     add_850mb_precip_type(weather_data)
     detect_sea_breeze(weather_data)
+    
+    # Process 7-day hourly data for forecast generation
+    if hourly_7day_data and "hourly" in hourly_7day_data:
+        # Normalize 7-day data to match 2-day structure
+        raw_hourly = hourly_7day_data["hourly"]
+        normalized = {
+            "times": raw_hourly.get("time", []),
+            "temperature": raw_hourly.get("temperature_2m", []),
+            "apparent_temperature": raw_hourly.get("apparent_temperature", []),
+            "humidity": raw_hourly.get("relative_humidity_2m", []),
+            "dew_point": raw_hourly.get("dew_point_2m", []),
+            "precipitation_probability": raw_hourly.get("precipitation_probability", []),
+            "precipitation": raw_hourly.get("precipitation", []),
+            "weather_code": raw_hourly.get("weather_code", []),
+            "cloud_cover": raw_hourly.get("cloud_cover", []),
+            "cloud_cover_low": raw_hourly.get("cloud_cover_low", []),
+            "cloud_cover_mid": raw_hourly.get("cloud_cover_mid", []),
+            "cloud_cover_high": raw_hourly.get("cloud_cover_high", []),
+            "wind_speed": raw_hourly.get("wind_speed_10m", []),
+            "wind_direction": raw_hourly.get("wind_direction_10m", []),
+            "wind_gusts": raw_hourly.get("wind_gusts_10m", []),
+            "pressure": raw_hourly.get("pressure_msl", []),
+            "temperature_850hPa": raw_hourly.get("temperature_850hPa", []),
+            "temperature_700hPa": raw_hourly.get("temperature_700hPa", []),
+            "geopotential_height_850hPa": raw_hourly.get("geopotential_height_850hPa", []),
+            "col_precip_type_850mb": raw_hourly.get("col_precip_type_850mb", []),
+        }
+        # Add 850mb precip types
+        temp_data = {"hourly": normalized}
+        add_850mb_precip_type(temp_data)
+        hourly_7day_data["hourly"] = temp_data["hourly"]
+
+    # Generate forecast text AFTER 850mb data is added
+    # Use 7-day hourly data for forecast if available, otherwise fall back to 2-day
+    print(f"DEBUG: hourly_7day_data type: {type(hourly_7day_data)}")
+    if hourly_7day_data:
+        print(f"DEBUG: hourly_7day_data keys: {hourly_7day_data.keys() if isinstance(hourly_7day_data, dict) else 'NOT A DICT'}")
+    if hourly_7day_data and "hourly" in hourly_7day_data:
+        print(f"DEBUG: Using 7-day data, times length: {len(hourly_7day_data['hourly'].get('times', []))}")
+        forecast_hourly = {"hrrr": weather_data.get("hourly"), "gfs": hourly_7day_data["hourly"]}
+    elif "hourly" in weather_data:
+        forecast_hourly = weather_data["hourly"]
+    else:
+        forecast_hourly = None
+    
+    if forecast_hourly and "daily" in weather_data:
+        forecast_text = generate_forecast_text(forecast_hourly, weather_data["daily"])
+        if forecast_text:
+            weather_data["forecast_text"] = forecast_text
 
     if sunset_directional:
         weather_data["sunset_directional"] = sunset_directional
@@ -232,6 +298,7 @@ def main():
     # Fetch all data sources
     current_data, current_meta = fetch_current_gfs()
     hourly_data, hourly_meta = fetch_hourly_hrrr()
+    hourly_7day_data, hourly_7day_meta = fetch_hourly_gfs_7day()
     daily_data, daily_meta = fetch_daily_ecmwf()
     pws_data, pws_meta = fetch_pws_current()
     tide_data, tides_meta = fetch_tides()
@@ -278,7 +345,8 @@ def main():
         wu_data=wu_data,
         frost_log=frost_log,
         salem_water_temp=salem_water_temp,
-        sunset_directional=sunset_directional
+        sunset_directional=sunset_directional,
+        hourly_7day_data=hourly_7day_data
     )
 
     # Save to JSON

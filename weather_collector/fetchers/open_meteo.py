@@ -133,3 +133,17 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles):
             results[f"{dist}mi"] = None
     
     return results
+
+
+def fetch_hourly_gfs_7day():
+    """Fetch 7-day hourly forecast from GFS for detailed forecast text."""
+    print("📡 Fetching 7-day hourly (GFS)...")
+    gfs_hourly = ",".join(HRRR_HOURLY_VARS + GFS_ADDITIONAL_HOURLY_VARS)
+    params = {
+        "latitude": LAT,
+        "longitude": LON,
+        "hourly": gfs_hourly,
+        "forecast_days": 7,
+        **OM_UNITS,
+    }
+    return _om_get(params, "GFS 7-day hourly")

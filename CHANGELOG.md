@@ -1,5 +1,30 @@
 # Weather App Changelog
 
+
+## v3.0 (March 21, 2026)
+
+### Major Forecast Overhaul - NWS-Quality Narratives
+
+**Replaced static 10-day forecast card with rich, hyperlocal detailed forecasts**
+- Generated from HRRR (48h) and ECMWF (7-day) models instead of generic daily summaries
+- Provides 14 day/night periods (days 1-7) plus 3 simple dailies (days 8-10)
+- Matches NWS narrative style with flowing prose instead of sentence fragments
+
+**Forecast narrative improvements:**
+- Natural sentence structure: "Mostly cloudy, with a high near 48 around 3pm. Northwest wind 3 to 11 mph, with gusts as high as 19 mph."
+- Precipitation timing: "Heavy snow before 8am", "Rain between 4am and 5am"
+- Temperature timing: Shows when highs/lows occur if notable ("around 3pm", "toward morning", "in the evening")
+- Wind ranges and gust integration: "Northwest wind 7 to 13 mph, with gusts as high as 24 mph"
+- Proper precipitation classification: Infers rain/snow/mixed from weather codes when 850mb data unavailable
+- Fixed "mixed" → "mixed rain and snow" for clarity
+- Uses "rain or snow" as default when models show precip probability but no specific type
+
+**Data infrastructure changes:**
+- Added 7-day hourly GFS data to weather_data.json (168 hours)
+- Merged HRRR (48h with precip type classification) and GFS (remaining 120h) for seamless 7-day coverage
+- Precipitation type fallback: Uses 850mb temps when available (HRRR), falls back to weather code classification (GFS)
+- Kept NWS forecast card for comparison purposes
+
 ## Recent Updates (March 10-19, 2026)
 
 ### Data Collection & Processing
