@@ -73,8 +73,36 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if kbvy_data and kbvy_data.get("present_weather"):
         weather_data["current"]["condition_override"] = kbvy_data["present_weather"]
         weather_data["current"]["condition_source"] = "KBVY observed"
-    else:
-        weather_data["current"]["condition_source"] = "GFS model"
+    
+    
+    # Wind override - use max of KBVY and WU stations for exposed coastal location
+    wind_candidates = []
+    if kbvy_data and kbvy_data.get("wind_gust_kt"):
+        wind_candidates.append({
+            "source": "KBVY",
+            "gust": kbvy_data["wind_gust_kt"] * 1.15078,
+            "speed": kbvy_data["wind_speed_kt"] * 1.15078 if kbvy_data.get("wind_speed_kt") else 0,
+            "direction": kbvy_data.get("wind_dir")
+        })
+    if wu_data and wu_data.get("stations"):
+        for station in wu_data["stations"]:
+            if station.get("wind_gust_mph"):
+                wind_candidates.append({
+                    "source": f"WU_{station.get('station_id', 'unknown')}",
+                    "gust": station["wind_gust_mph"],
+                    "speed": station.get("wind_speed_mph", 0),
+                    "direction": station.get("wind_direction")
+                })
+    
+    if wind_candidates:
+        max_wind = max(wind_candidates, key=lambda x: x['gust'])
+        print(f"DEBUG: Wind candidates: {[(c['source'], round(c['gust'], 1)) for c in wind_candidates]}")
+        print(f"DEBUG: Max wind selected: {max_wind['source']} with {max_wind['gust']:.1f} mph gusts")
+        weather_data["current"]["wind_gusts"] = max_wind['gust']
+        weather_data["current"]["wind_speed"] = max(max_wind['speed'], weather_data["current"]["wind_speed"])
+        if max_wind['direction']:
+            weather_data["current"]["wind_direction"] = max_wind['direction']
+        weather_data["current"]["condition_source"] = f"{max_wind['source']} observed"
 
     # Hourly forecast
     if hourly_data:
@@ -102,6 +130,36 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "col_precip_type_850mb": hourly.get("col_precip_type_850mb", []),
         }
 
+
+    # Blend observed wind into hourly forecast for exposed coastal location
+    if wind_candidates and "wind_gusts" in weather_data["hourly"]:
+        from datetime import datetime, timezone
+        observed_gust = weather_data["current"]["wind_gusts"]
+        observed_speed = weather_data["current"]["wind_speed"]
+        
+        # Find current hour index (times are in UTC)
+        now_utc = datetime.now(timezone.utc)
+        current_hour_iso = now_utc.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+        
+        try:
+            current_idx = weather_data["hourly"]["times"].index(current_hour_iso)
+        except ValueError:
+            current_idx = 0
+        
+        print(f"DEBUG: Blending from index {current_idx} ({current_hour_iso}), obs={observed_gust:.1f} mph")
+        
+        # Blend from current hour forward for next 24 hours
+        for i in range(current_idx, min(current_idx + 24, len(weather_data["hourly"]["wind_gusts"]))):
+            hours_ahead = i - current_idx
+            blend_weight = max(0, 1 - (hours_ahead / 24))
+            
+            model_gust = weather_data["hourly"]["wind_gusts"][i]
+            weather_data["hourly"]["wind_gusts"][i] = (observed_gust * blend_weight) + (model_gust * (1 - blend_weight))
+            
+            
+            if observed_speed and "wind_speed" in weather_data["hourly"]:
+                model_speed = weather_data["hourly"]["wind_speed"][i]
+                weather_data["hourly"]["wind_speed"][i] = (observed_speed * blend_weight) + (model_speed * (1 - blend_weight))
     # 7-day hourly forecast (GFS)
     if hourly_7day_data:
         hourly_7day = hourly_7day_data.get("hourly", {})
@@ -277,6 +335,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         print(f"DEBUG: hourly_7day_data keys: {hourly_7day_data.keys() if isinstance(hourly_7day_data, dict) else 'NOT A DICT'}")
     if hourly_7day_data and "hourly" in hourly_7day_data:
         print(f"DEBUG: Using 7-day data, times length: {len(hourly_7day_data['hourly'].get('times', []))}")
+        print(f"DEBUG: HRRR wind_gusts[0:6] before forecast gen: {weather_data.get('hourly', {}).get('wind_gusts', [])[:6]}")
         forecast_hourly = {"hrrr": weather_data.get("hourly"), "gfs": hourly_7day_data["hourly"]}
     elif "hourly" in weather_data:
         forecast_hourly = weather_data["hourly"]
