@@ -157,10 +157,14 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # NWS forecast and alerts
     if forecast_data:
         weather_data["nws_forecast"] = forecast_data
+
     if alert_data:
         weather_data["alerts"] = alert_data
 
     # Salem water temp
+
+    if nws_gridpoints:
+        weather_data["nws_gridpoints"] = nws_gridpoints
     if salem_water_temp is not None:
         weather_data["salem_water_temp_f"] = salem_water_temp
 
@@ -301,6 +305,7 @@ def main():
     hourly_data, hourly_meta = fetch_hourly_hrrr()
     hourly_7day_data, hourly_7day_meta = fetch_hourly_gfs_7day()
     nws_gridpoints_data, nws_gridpoints_meta = fetch_nws_gridpoints()
+
     daily_data, daily_meta = fetch_daily_ecmwf()
     pws_data, pws_meta = fetch_pws_current()
     tide_data, tides_meta = fetch_tides()

@@ -490,8 +490,8 @@ def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
     
     # Build likelihood phrase (lowercase, no period)
     if max_prob > 70:
-        likelihood = f"{precip_desc} likely"
-    elif max_prob > 50:
+        likelihood = f"{precip_desc}"
+    elif max_prob > 60:
         likelihood = f"{precip_desc} likely"
     elif max_prob > 30:
         likelihood = f"chance of {precip_desc}"
