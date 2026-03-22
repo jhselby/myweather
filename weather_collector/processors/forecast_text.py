@@ -129,6 +129,116 @@ def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None):
     return forecasts
 
 
+def _generate_period_title(precip_narrative, sky_narrative, has_fog, max_precip_prob):
+    """Generate a short 2-3 word forecast title like NWS shortForecast."""
+    # Priority: precip > sky > fog modifier
+    
+    if precip_narrative and max_precip_prob > 50:
+        # Extract the core precip type from narrative
+        precip_lower = precip_narrative.lower()
+        
+        if "thunderstorm" in precip_lower:
+            title = "Thunderstorms"
+        elif "snow" in precip_lower and "rain" not in precip_lower:
+            # Pure snow (any mention of snow without rain/mixed)
+            if max_precip_prob >= 70 or "snow likely" in precip_lower or "heavy snow" in precip_lower:
+                title = "Snow"
+            else:
+                title = "Chance Snow"
+        elif ("mixed" in precip_lower or "rain and snow" in precip_lower or 
+              ("snow" in precip_lower and "rain" in precip_lower)):
+            title = "Rain/Snow"
+        elif "rain" in precip_lower:
+            # Pure rain
+            if max_precip_prob >= 70 or "rain likely" in precip_lower or "heavy rain" in precip_lower:
+                title = "Rain"
+            else:
+                title = "Chance Rain"
+        elif "drizzle" in precip_lower:
+            title = "Drizzle"
+        else:
+            title = "Precipitation"
+    else:
+        # Use sky condition
+        sky_lower = sky_narrative.lower() if sky_narrative else "partly cloudy"
+        
+        if "sunny" in sky_lower and "mostly" not in sky_lower:
+            title = "Sunny"
+        elif "mostly sunny" in sky_lower:
+            title = "Mostly Sunny"
+        elif "clear" in sky_lower and "mostly" not in sky_lower:
+            title = "Clear"
+        elif "mostly clear" in sky_lower:
+            title = "Mostly Clear"
+        elif "partly cloudy" in sky_lower:
+            title = "Partly Cloudy"
+        elif "mostly cloudy" in sky_lower:
+            title = "Mostly Cloudy"
+        elif "overcast" in sky_lower:
+            title = "Overcast"
+        elif "becoming cloudy" in sky_lower:
+            title = "Increasing Clouds"
+        else:
+            title = "Partly Cloudy"  # Default
+    
+    # Add fog modifier if significant
+    if has_fog and max_precip_prob < 50:
+        title = "Fog Then " + title
+    
+    return title
+
+
+def _generate_precip_accumulation(precip_amounts, precip_types, precip_probs):
+    """Generate precipitation accumulation text like NWS."""
+    if not precip_amounts or max(precip_probs) < 30:
+        return None
+    
+    # Sum total precipitation (already in inches from API)
+    total_inches = sum(precip_amounts)
+    # Already in inches from Open-Meteo config
+    
+    if total_inches < 0.01:
+        return None
+    
+    # Determine if it's rain or snow based on dominant precip type
+    snow_hours = sum(1 for p in precip_types if p and 'snow' in str(p).lower())
+    rain_hours = sum(1 for p in precip_types if p and 'rain' in str(p).lower())
+    
+    is_snow = snow_hours > rain_hours
+    
+    # Snow accumulation (10:1 ratio)
+    if is_snow:
+        snow_inches = total_inches * 10
+        if snow_inches < 1:
+            return "New snow accumulation of less than one inch possible."
+        elif snow_inches < 2:
+            return "New snow accumulation of around one inch possible."
+        elif snow_inches < 3:
+            return "New snow accumulation of 1 to 2 inches possible."
+        elif snow_inches < 6:
+            return f"New snow accumulation of {int(snow_inches)-1} to {int(snow_inches)+1} inches possible."
+        else:
+            return f"New snow accumulation of {int(snow_inches)} inches or more possible."
+    
+    # Rain accumulation
+    else:
+        if total_inches < 0.05:
+            return None  # Too little to mention
+        elif total_inches < 0.10:
+            return "New rainfall amounts less than a tenth of an inch possible."
+        elif total_inches < 0.25:
+            return "New rainfall amounts between a tenth and quarter of an inch possible."
+        elif total_inches < 0.50:
+            return "New rainfall amounts between a quarter and half of an inch possible."
+        elif total_inches < 0.75:
+            return "New rainfall amounts between half and three quarters of an inch possible."
+        elif total_inches < 1.0:
+            return "New rainfall amounts between three quarters and one inch possible."
+        else:
+            return f"New rainfall amounts of {total_inches:.1f} inches or more possible."
+
+
+
 def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, period_name, eastern, nws_gridpoints=None):
     """Generate forecast for a single day or night period (days 1-7). Merges HRRR (48h) + GFS (7day)."""
     
@@ -210,6 +320,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         for i in period_indices
     ]
     precip_probs = [hourly_data["precipitation_probability"][i] for i in period_indices]
+    precip_amounts = [hourly_data.get("precipitation", [])[i] if i < len(hourly_data.get("precipitation", [])) else 0 for i in period_indices]
     weather_codes = [hourly_data["weather_code"][i] for i in period_indices]
     cloud_cover = [hourly_data["cloud_cover"][i] for i in period_indices]
     # Fallback: infer precip type from weather_code if col_precip_type_850mb is None
@@ -319,11 +430,15 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     # Precipitation
     precip_narrative = _build_precip_narrative(precip_probs, precip_types, period_hours, temps)
     
+    # Generate short title (like NWS shortForecast)
+    max_precip_prob = max(precip_probs) if precip_probs else 0
+    period_title = _generate_period_title(precip_narrative, sky_narrative, has_fog, max_precip_prob)
+    
     # Build main sentence: precip priority, then sky, fog as modifier
     if precip_narrative:
-        main_sent = f"{precip_narrative.capitalize()}. {sky_narrative.capitalize()}"
+        main_sent = f"{precip_narrative.capitalize()}. {sky_narrative.capitalize().rstrip('.')}"
         if has_fog:
-            main_sent = main_sent.rstrip(".") + ", with areas of fog."
+            main_sent = main_sent.rstrip(".") + ", with areas of fog"
     else:
         main_sent = sky_narrative.capitalize()
         if has_fog:
@@ -331,7 +446,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
             if avg_clouds > 80:
                 main_sent = "Foggy and " + main_sent.lower()
             else:
-                main_sent = main_sent.rstrip(".") + ", with areas of fog."
+                main_sent = main_sent.rstrip(".") + ", with areas of fog"
     
     # Add temperature with timing
     mid_period = len(period_hours) // 2
@@ -352,6 +467,10 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         main_sent += f", with a low around {int(temp)}{temp_timing}."
     
     narrative_parts.append(main_sent)
+
+    # Add precipitation probability if significant
+    if max_precip_prob >= 30:
+        narrative_parts.append(f"Chance of precipitation is {int(max_precip_prob)}%.")
     
     # Wind sentence
     if avg_wind > 3 or max_gust > 15:
@@ -375,8 +494,14 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     if feels_like_low < temp - 8:
         narrative_parts.append(f"Wind chill values as low as {int(feels_like_low)}.")
     
+    # Precipitation accumulation
+    precip_accum = _generate_precip_accumulation(precip_amounts, precip_types, precip_probs)
+    if precip_accum:
+        narrative_parts.append(precip_accum)
+    
     return {
         "period_name": period_name,
+        "title": period_title,
         "date": target_date.isoformat(),
         "is_daytime": is_daytime,
         "text": " ".join(narrative_parts),
@@ -421,8 +546,20 @@ def _generate_daily_forecast(daily_data, target_date):
     elif wind_max > 12:
         parts.append(f"Breezy, winds {int(wind_max)} mph.")
     
+    # Simple title for days 8-10
+    if precip_prob > 60:
+        simple_title = "Rain Likely"
+    elif precip_prob > 30:
+        simple_title = "Chance Rain"
+    elif wind_max > 20:
+        simple_title = "Windy"
+    else:
+        simple_title = "Partly Cloudy"
+
+    
     return {
         'period_name': target_date.strftime('%A'),
+        'title': simple_title,
         'date': target_date.isoformat(),
         'is_simple_daily': True,
         'text': ' '.join(parts),

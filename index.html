@@ -951,7 +951,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v3.5</span>
+            <span class="version-pill" id="appVersion">v3.6</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -962,6 +962,17 @@
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
             <div style="margin-bottom:8px;">
+            <div style="margin-bottom:8px;">
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.6</span>
+              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 22, 2026</span>
+              <ul style="margin:4px 0 0 16px;padding:0;">
+                <li>Added forecast period titles (e.g., "Rain", "Chance Snow", "Mostly Sunny")</li>
+                <li>Added precipitation accumulation amounts to forecast text</li>
+                <li>Added precipitation probability percentages (when ≥30%)</li>
+                <li>Fixed fog punctuation in multi-sentence forecasts</li>
+                <li>NWS detailed forecast card hidden by default (still in code)</li>
+              </ul>
+            </div>
             <div style="margin-bottom:8px;">
               <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.5</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 21, 2026</span>
@@ -1249,7 +1260,7 @@
         <!-- NWS Forecast (kept as fallback, hidden by default) -->
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-        <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false">
+        <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false" style="display:none;">
           <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
             <span style="font-size:0.78rem;font-weight:800;color:rgba(140,200,255,0.8);margin-left:6px;" id="nwsFilterLabel"></span>
             <span style="flex:1;"></span>
@@ -4350,10 +4361,12 @@
           '<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);font-weight:700;">' +
             windText + '</div>';
 
-        // Right: forecast text (no need for bold short forecast since we already have full text)
+        // Right: short title + detailed text
         const right = document.createElement("div");
         right.innerHTML =
-          '<div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">' +
+          '<div style="font-weight:900;font-size:0.88rem;color:rgba(255,255,255,0.8);margin-bottom:4px;">' +
+            p.title + '</div>' +
+            '<div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">' +
             p.text + '</div>';
 
         row.appendChild(left);
