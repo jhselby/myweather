@@ -2,7 +2,7 @@
 Calculate sunset azimuth and sample clouds directionally for accurate sunset quality prediction.
 """
 import math
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 def calculate_sunset_azimuth(lat, lon, sunset_time_iso):
     """
@@ -85,13 +85,40 @@ def build_sunset_directional_data(daily_sunsets, lat, lon, fetch_directional_clo
         
         print(f"  Day {day_idx}: sunset {sunset_iso} at {azimuth}°")
         
-        directional_clouds = fetch_directional_clouds_func(lat, lon, azimuth, [10, 25, 50])
+        directional_clouds_raw = fetch_directional_clouds_func(lat, lon, azimuth, [10, 25, 50])
+        
+        # Extract cloud values at sunset time
+        # Round sunset to nearest hour to match Open-Meteo hourly data
+        dt = datetime.fromisoformat(sunset_iso.replace('Z', '+00:00'))
+        if dt.minute >= 30:
+            dt = dt.replace(minute=0, second=0, microsecond=0) + timedelta(hours=1)
+        else:
+            dt = dt.replace(minute=0, second=0, microsecond=0)
+        sunset_hour = dt.strftime("%Y-%m-%dT%H:%M")
+        
+        clouds_at_sunset = {}
+        for dist_key, dist_data in directional_clouds_raw.items():
+            if dist_data and "times" in dist_data:
+                try:
+                    idx = dist_data["times"].index(sunset_hour)
+                    clouds_at_sunset[dist_key] = {
+                        "low": dist_data["cloud_low"][idx],
+                        "mid": dist_data["cloud_mid"][idx],
+                        "high": dist_data["cloud_high"][idx],
+                        "humidity": dist_data["humidity"][idx],
+                    }
+                    print(f"    📊 {dist_key}: low={dist_data['cloud_low'][idx]}%, mid={dist_data['cloud_mid'][idx]}%, high={dist_data['cloud_high'][idx]}%")
+                except (ValueError, IndexError) as e:
+                    print(f"    ✗ {dist_key}: sunset hour {sunset_hour} not found")
+                    clouds_at_sunset[dist_key] = None
+            else:
+                clouds_at_sunset[dist_key] = None
         
         sunset_data.append({
             "day": day_idx,
             "sunset_time": sunset_iso,
             "azimuth": azimuth,
-            "clouds": directional_clouds
+            "clouds": clouds_at_sunset
         })
     
     print(f"  ✓ Built sunset data for {len(sunset_data)} days")
