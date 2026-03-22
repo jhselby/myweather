@@ -951,7 +951,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v3.7</span>
+            <span class="version-pill" id="appVersion">v3.8</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -963,7 +963,7 @@
                color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
             <div style="margin-bottom:8px;">
             <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.7</span>
+              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.8</span>
               <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 22, 2026</span>
               <ul style="margin:4px 0 0 16px;padding:0;">
                 <li>Added forecast period titles (e.g., "Rain", "Chance Snow", "Mostly Sunny")</li>
@@ -2579,18 +2579,30 @@
         const cloud25 = clouds['25mi'];
         const cloud50 = clouds['50mi'];
         
-        if (!cloud10 || !cloud25 || !cloud50) continue;
-        
         const sunsetTime = new Date(day.sunset_time);
+        const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
+          : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+        const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+        
+        // If any distance is missing, show "No data" card
+        if (!cloud10 || !cloud25 || !cloud50) {
+          scores.push({
+            dayLabel, timeLabel,
+            score: 0,
+            label: "No data",
+            color: "rgba(120,120,120,0.5)",
+            emoji: "📡",
+            avgLow: "—",
+            avgMid: "—",
+            avgHigh: "—",
+            avgHum: "—",
+            note: "API timeout"
+          });
+          continue;
+        }
         
         // Backend now returns single values at sunset time, not arrays
         const low10 = cloud10.low ?? 0;
-        const mid25 = cloud25.mid ?? 0;
-        const mid50 = cloud50.mid ?? 0;
-        const high25 = cloud25.high ?? 0;
-        const high50 = cloud50.high ?? 0;
-        const hum25 = cloud25.humidity ?? 50;
-        
         const totalCloud = (low10 + mid25 + high25) / 3;
         
         if (totalCloud < 15 && hum25 < 60) {
