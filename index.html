@@ -2601,14 +2601,17 @@
           continue;
         }
         
+        const mid25 = cloud25.mid ?? 0;
+        const mid50 = cloud50.mid ?? 0;
+        const high25 = cloud25.high ?? 0;
+        const high50 = cloud50.high ?? 0;
+        const hum25 = cloud25.humidity ?? 50;
+
         // Backend now returns single values at sunset time, not arrays
         const low10 = cloud10.low ?? 0;
         const totalCloud = (low10 + mid25 + high25) / 3;
         
         if (totalCloud < 15 && hum25 < 60) {
-          const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
-            : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
-          const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
           
           scores.push({
             dayLabel, timeLabel,
@@ -2626,9 +2629,6 @@
         }
         
         if (low10 > 60) {
-          const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
-            : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
-          const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
           
           scores.push({
             dayLabel, timeLabel,
@@ -2665,9 +2665,6 @@
         else if (score >= 0.18) { label = "Fair";         color = "rgba(180,180,180,0.8)";  emoji = "🌥️"; }
         else                    { label = "Poor";         color = "rgba(120,120,120,0.6)";  emoji = "☁️"; }
         
-        const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
-          : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
-        const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
         
         scores.push({
           dayLabel, timeLabel, score, label, color, emoji,
