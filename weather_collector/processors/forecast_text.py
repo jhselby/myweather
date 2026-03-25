@@ -263,13 +263,13 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     
     # Temperature (high for day, low for night)
     if is_daytime:
-        temp = max(temps)
+        temp = max([t for t in temps if t is not None]) if any(t is not None for t in temps) else None
         temp_label = "High"
     else:
-        temp = min(temps)
+        temp = min([t for t in temps if t is not None]) if any(t is not None for t in temps) else None
         temp_label = "Low"
     
-    feels_like_low = min(apparent_temps)
+    feels_like_low = min([t for t in apparent_temps if t is not None]) if any(t is not None for t in apparent_temps) else None
     
     # Find timing of high/low temperature
     if is_daytime:
@@ -289,10 +289,10 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     narrative_parts = []
     
     # Get wind stats and direction
-    max_gust = max(wind_gusts)
-    avg_wind = sum(wind_speeds) / len(wind_speeds)
-    min_wind = min(wind_speeds)
-    max_wind = max(wind_speeds)
+    max_gust = max([g for g in wind_gusts if g is not None]) if any(g is not None for g in wind_gusts) else None
+    valid_winds = [w for w in wind_speeds if w is not None]; avg_wind = sum(valid_winds) / len(valid_winds) if valid_winds else None
+    min_wind = min([w for w in wind_speeds if w is not None]) if any(w is not None for w in wind_speeds) else None
+    max_wind = max([w for w in wind_speeds if w is not None]) if any(w is not None for w in wind_speeds) else None
     
     from collections import Counter
     dir_counts = Counter(wind_directions)
@@ -327,7 +327,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     else:
         main_sent = sky_narrative.capitalize()
         if has_fog:
-            avg_clouds = sum(cloud_cover) / len(cloud_cover)
+            valid_clouds = [c for c in cloud_cover if c is not None]; avg_clouds = sum(valid_clouds) / len(valid_clouds) if valid_clouds else 0
             if avg_clouds > 80:
                 main_sent = "Foggy and " + main_sent.lower()
             else:
@@ -354,25 +354,26 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     narrative_parts.append(main_sent)
     
     # Wind sentence
-    if avg_wind > 3 or max_gust > 15:
-        if min_wind < max_wind - 3:
+    if (avg_wind and avg_wind > 3) or (max_gust and max_gust > 15):
+        if min_wind is not None and max_wind is not None and min_wind < max_wind - 3:
             wind_sent = f"{wind_dir_full} wind {int(min_wind)} to {int(max_wind)} mph"
         else:
+            if avg_wind is None: avg_wind = max_gust
             wind_sent = f"{wind_dir_full} wind around {int(avg_wind)} mph"
         
-        if max_gust > avg_wind + 8:
+        if max_gust is not None and avg_wind is not None and max_gust > avg_wind + 8:
             wind_sent += f", with gusts as high as {int(max_gust)} mph"
         
         wind_sent += "."
         narrative_parts.append(wind_sent)
         wind_full_val = f"{int(avg_wind)} mph {wind_dir_short}"
-        if max_gust > avg_wind + 8:
+        if max_gust is not None and avg_wind is not None and max_gust > avg_wind + 8:
             wind_full_val += f", gusts {int(max_gust)} mph"
     else:
         wind_full_val = ""
     
     # Wind chill note
-    if feels_like_low < temp - 8:
+    if feels_like_low is not None and feels_like_low < temp - 8:
         narrative_parts.append(f"Wind chill values as low as {int(feels_like_low)}.")
     
     return {
@@ -381,8 +382,8 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         "is_daytime": is_daytime,
         "text": " ".join(narrative_parts),
         "temperature": int(temp),
-        "wind_speed": f"{int(avg_wind)} mph" if avg_wind > 3 else "",
-        "wind_direction": wind_dir_short if avg_wind > 3 else "",
+        "wind_speed": f"{int(avg_wind)} mph" if avg_wind and avg_wind > 3 else "",
+        "wind_direction": wind_dir_short if avg_wind and avg_wind > 3 else "",
         "wind_full": wind_full_val
     }
 def _generate_daily_forecast(daily_data, target_date):
@@ -439,7 +440,7 @@ def _build_sky_narrative(cloud_cover, weather_codes, hours, skip_fog=False):
     
     # Check for significant weather first
     has_fog = any(code in [45, 48] for code in weather_codes)
-    has_storms = any(code >= 95 for code in weather_codes)
+    has_storms = any(code >= 95 for code in weather_codes if code is not None)
     
     if has_storms:
         return "thunderstorms"
@@ -451,7 +452,7 @@ def _build_sky_narrative(cloud_cover, weather_codes, hours, skip_fog=False):
     def avg_clouds(indices):
         if not indices:
             return None
-        return sum(cloud_cover[i] for i in indices) / len(indices)
+        return sum(cloud_cover[i] for i in indices if cloud_cover[i] is not None) / len([i for i in indices if cloud_cover[i] is not None]) if any(cloud_cover[i] is not None for i in indices) else 0
     
     def describe_sky(avg_cloud, hour):
         if avg_cloud is None:
@@ -493,12 +494,12 @@ def _build_sky_narrative(cloud_cover, weather_codes, hours, skip_fog=False):
         result = describe_sky(afternoon_avg, 14).capitalize()
     else:
         # Fallback to overall average
-        avg_clouds = sum(cloud_cover) / len(cloud_cover)
+        valid_clouds = [c for c in cloud_cover if c is not None]; avg_clouds = sum(valid_clouds) / len(valid_clouds) if valid_clouds else 0
         result = describe_sky(avg_clouds, hours[0] if hours else 12).capitalize()
     
     # Skip fog if requested (handled by caller)
     if not skip_fog and has_fog:
-        avg_all = sum(cloud_cover) / len(cloud_cover)
+        valid_clouds = [c for c in cloud_cover if c is not None]; avg_all = sum(valid_clouds) / len(valid_clouds) if valid_clouds else 0
         if avg_all > 80:
             result = "foggy and " + result.lower()
         else:
@@ -513,7 +514,7 @@ def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
     if not precip_probs:
         return None
     
-    max_prob = max(precip_probs)
+    max_prob = max([p for p in precip_probs if p is not None]) if any(p is not None for p in precip_probs) else 0
     print(f"DEBUG precip: max_prob={max_prob}%")
     
     if max_prob < 20:
@@ -523,9 +524,9 @@ def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
     # Calculate average surface temp during precipitation
     high_prob_indices = [i for i, p in enumerate(precip_probs) if p > 50]
     if high_prob_indices and surface_temps:
-        avg_surface_temp = sum(surface_temps[i] for i in high_prob_indices) / len(high_prob_indices)
+        valid_temps = [surface_temps[i] for i in high_prob_indices if surface_temps[i] is not None]; avg_surface_temp = sum(valid_temps) / len(valid_temps) if valid_temps else None
     elif surface_temps:
-        avg_surface_temp = sum(surface_temps) / len(surface_temps)
+        valid_temps = [t for t in surface_temps if t is not None]; avg_surface_temp = sum(valid_temps) / len(valid_temps) if valid_temps else None
     else:
         avg_surface_temp = None
     # Determine precipitation type

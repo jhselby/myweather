@@ -130,6 +130,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "col_precip_type_850mb": hourly.get("col_precip_type_850mb", []),
         }
 
+    print(f"DEBUG after hourly assignment: {len(weather_data.get('hourly', {}).get('times', []))} times")
 
     # Blend observed wind into hourly forecast for exposed coastal location
     if wind_candidates and "wind_gusts" in weather_data["hourly"]:
@@ -139,7 +140,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         
         # Find current hour index (times are in UTC)
         now_utc = datetime.now(timezone.utc)
-        current_hour_iso = now_utc.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+        import pytz; eastern = pytz.timezone("America/New_York"); now_local = datetime.now(eastern); current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
         
         try:
             current_idx = weather_data["hourly"]["times"].index(current_hour_iso)
@@ -416,6 +417,18 @@ def main():
         hourly_7day_data=hourly_7day_data
     )
 
+    # Trim hourly arrays to start from current hour
+    from datetime import datetime, timezone
+    import pytz; eastern = pytz.timezone("America/New_York"); now_local = datetime.now(eastern)
+    current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+    hourly_times = weather_data.get("hourly", {}).get("times", [])
+    trim_idx = next((i for i, t in enumerate(hourly_times) if t >= current_hour_iso), 0)
+    if trim_idx > 0:
+        for key in weather_data["hourly"]:
+            weather_data["hourly"][key] = weather_data["hourly"][key][trim_idx:]
+        print(f"DEBUG: trimmed {trim_idx} past hours, now starts at {weather_data['hourly']['times'][0]}")
+
+    print(f"DEBUG before JSON dump: {len(weather_data.get('hourly', {}).get('times', []))} times")
     # Save to JSON
     output_file = "weather_data.json"
     with open(output_file, "w") as f:

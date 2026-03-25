@@ -951,7 +951,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v3.5</span>
+            <span class="version-pill" id="appVersion">v3.12</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1227,7 +1227,57 @@
           </div>
         </div>
 
-       
+        <div class="card col-12" data-collapse-key="48h_temp_precip" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature &amp; Precipitation <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
+          <!-- Hover data overlay -->
+          <div id="tempPrecipOverlay" style="
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20,20,30,0.95);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.95);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 10;
+            white-space: nowrap;
+          ">
+            <div id="overlayTime" style="font-weight: 600; margin-bottom: 4px;"></div>
+            <div id="overlayTemp"></div>
+            <div id="overlaySky"></div>
+            <div id="overlayPrecip"></div>
+            <div id="overlayType"></div>
+          </div>
+          <canvas id="tempPrecipChart"></canvas>
+          <div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;color:rgba(200,210,230,0.75);">
+            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;">
+              <div style="font-size:10px;font-weight:500;color:rgba(200,210,230,0.5);text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Sky (bottom to top per bar)</div>
+              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:linear-gradient(90deg,#1a2050,#f5d060);flex-shrink:0;"></div>Clear (night &#x2192; day)</div>
+              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(80,80,80,0.85);flex-shrink:0;"></div>Cloud cover</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;margin-top:6px;">
+              <div style="font-size:10px;font-weight:500;color:rgba(200,210,230,0.5);text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Precipitation</div>
+              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(80,150,255,0.85);flex-shrink:0;"></div>Rain</div>
+              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(255,140,40,0.85);flex-shrink:0;"></div>Freezing rain</div>
+              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(160,100,220,0.85);flex-shrink:0;"></div>Mixed/slush</div>
+              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(130,160,220,0.90);flex-shrink:0;"></div>Snow likely</div>
+              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(230,240,255,0.95);flex-shrink:0;"></div>Snow</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;margin-top:6px;">
+              <div style="font-size:10px;font-weight:500;color:rgba(200,210,230,0.5);text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Temperature</div>
+              <div style="display:flex;align-items:center;gap:5px;"><div style="width:24px;height:3px;background:rgba(255,200,80,0.95);border-radius:2px;flex-shrink:0;"></div>Temp (°F)</div>
+            </div>
+          </div>
+          </div>
+        </div>
+
         <div class="card col-12" data-collapse-key="ten_day" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('ten_day', this)">10-Day Forecast <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
@@ -1249,7 +1299,7 @@
         <!-- NWS Forecast (kept as fallback, hidden by default) -->
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-        <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false">
+        <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false" style="display:none;">
           <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
             <span style="font-size:0.78rem;font-weight:800;color:rgba(140,200,255,0.8);margin-left:6px;" id="nwsFilterLabel"></span>
             <span style="flex:1;"></span>
@@ -1267,21 +1317,6 @@
             </button>
           </div>
           <div class="small-note" style="margin-top:8px;">Written by NWS Boston meteorologists.</div>
-          </div>
-        </div>
-
-        <!-- 7. 48-Hour Temp & Precip — closed by default -->
-        <div class="card col-12" data-collapse-key="48h_temp_precip" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature &amp; Precipitation <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body" style="display:none;">
-          <canvas id="tempPrecipChart"></canvas>
-          <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;font-size:0.75rem;font-weight:800;color:rgba(255,255,255,0.6);">
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(230,240,255,0.90);margin-right:4px;vertical-align:middle;"></span>Snow</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(200,215,255,0.80);margin-right:4px;vertical-align:middle;"></span>Snow likely</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(160,100,220,0.80);margin-right:4px;vertical-align:middle;"></span>Mixed/slush</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(255,140,40,0.80);margin-right:4px;vertical-align:middle;"></span>Freezing rain</span>
-            <span><span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(60,130,255,0.70);margin-right:4px;vertical-align:middle;"></span>Rain</span>
-          </div>
           </div>
         </div>
 
@@ -2115,34 +2150,118 @@
     let tempPrecipChart = null;
     let windChartObj    = null;
 
-    function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb) {
+    function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal, sunrise, sunset) {
       const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
       const ctx    = document.getElementById("tempPrecipChart").getContext("2d");
       if (tempPrecipChart) tempPrecipChart.destroy();
 
-      // Color each precip bar by wet bulb precip type
-      // Snow = white/light grey, Mixed = purple/slate, Freezing rain = orange, Rain = blue
       const precipColors = (wetBulbs || []).map((wb, i) => {
-  const p = pop[i] ?? 0;
-  const surfTemp = temps[i];
-  const temp850 = temps850mb?.[i];
-  if (p < 5) return "rgba(200,200,200,0.15)";   // negligible — faint gray
-  if (wb == null) return "rgba(80,140,255,0.85)"; // unknown — bright blue
-  if (wb <= 28)   return "rgba(230,240,255,0.95)"; // snow — near white
-  
-  // Freezing rain: warm aloft + cold surface
-  if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
-    return "rgba(255,140,40,0.85)";  // freezing rain — orange
-  }
-  if (wb <= 32)   return "rgba(180,200,240,0.90)"; // snow likely — light blue
-  if (wb <= 35)   return "rgba(160,100,220,0.85)"; // mixed/slush — purple
-  return "rgba(80,150,255,0.85)";          // rain — bright blue
-});
+        const surfTemp = temps[i];
+        const temp850 = temps850mb?.[i];
+        if (wb == null) return "rgba(80,140,255,0.85)";
+        if (wb <= 28)   return "rgba(230,240,255,0.95)";
+        if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
+          return "rgba(255,140,40,0.85)";
+        }
+        if (wb <= 32)   return "rgba(180,200,240,0.90)";
+        if (wb <= 35)   return "rgba(160,100,220,0.85)";
+        return "rgba(80,150,255,0.85)";
+      });
+
+      function lerp(a, b, t) {
+        return a + (b - a) * Math.max(0, Math.min(1, t));
+      }
+
+      function getSkyColor(i) {
+        const time = new Date(times[i]);
+        const hour = time.getHours() + time.getMinutes() / 60;
+        const low = (cloudLow[i] ?? 0) / 100;
+        const mid = (cloudMid[i] ?? 0) / 100;
+        const high = (cloudHigh[i] ?? 0) / 100;
+        const overcast = Math.min(1, low * 1.0 + mid * 0.5 + high * 0.2);
+        const daylight = hour >= sunrise && hour <= sunset
+          ? Math.max(0, Math.sin(Math.PI * (hour - sunrise) / (sunset - sunrise)))
+          : 0;
+        const nightR = lerp(26, 45, overcast);
+        const nightG = lerp(32, 50, overcast);
+        const nightB = lerp(80, 65, overcast);
+        const dayR = lerp(245, 128, overcast);
+        const dayG = lerp(210, 144, overcast);
+        const dayB = lerp(96, 168, overcast);
+        const r = Math.round(lerp(nightR, dayR, daylight));
+        const g = Math.round(lerp(nightG, dayG, daylight));
+        const b = Math.round(lerp(nightB, dayB, daylight));
+        return "rgba(" + r + "," + g + "," + b + ",0.88)";
+      }
+
+      // Three stacked segments per hour, summing to 100
+      const precipData = pop.map(p => p ?? 0);
+      const cloudData  = times.map((_, i) => {
+        const p = pop[i] ?? 0;
+        const cc = (cloudTotal[i] ?? 0) / 100;
+        return Math.round((100 - p) * cc);
+      });
+      const clearData  = times.map((_, i) => {
+        const p = pop[i] ?? 0;
+        const cc = (cloudTotal[i] ?? 0) / 100;
+        return Math.round((100 - p) * (1 - cc));
+      });
+
+      const clearColors = times.map((_, i) => getSkyColor(i));
+
+      // Cloud segment: gray, slightly lighter at day
+      const cloudColors = times.map((_, i) => {
+        const time = new Date(times[i]);
+        const hour = time.getHours() + time.getMinutes() / 60;
+        const daylight = hour >= sunrise && hour <= sunset
+          ? Math.max(0, Math.sin(Math.PI * (hour - sunrise) / (sunset - sunrise)))
+          : 0;
+        const nr = Math.round(lerp(40, 110, daylight));
+        const ng = Math.round(lerp(45, 110, daylight));
+        const nb = Math.round(lerp(75, 110, daylight));
+        return "rgba(" + nr + "," + ng + "," + nb + ",0.85)";
+      });
 
       tempPrecipChart = new Chart(ctx, {
         data: {
           labels,
           datasets: [
+            {
+              type: "bar",
+              label: "Clear",
+              data: clearData,
+              yAxisID: "y1",
+              backgroundColor: clearColors,
+              borderColor: "transparent",
+              stack: "sky",
+              order: 3,
+              borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 3, bottomRight: 3 },
+              borderSkipped: false,
+            },
+            {
+              type: "bar",
+              label: "Cloud",
+              data: cloudData,
+              yAxisID: "y1",
+              backgroundColor: cloudColors,
+              borderColor: "transparent",
+              stack: "sky",
+              order: 2,
+              borderRadius: 0,
+              borderSkipped: false,
+            },
+            {
+              type: "bar",
+              label: "Precip %",
+              data: precipData,
+              yAxisID: "y1",
+              backgroundColor: precipColors,
+              borderColor: "transparent",
+              stack: "sky",
+              order: 1,
+              borderRadius: { topLeft: 3, topRight: 3, bottomLeft: 0, bottomRight: 0 },
+              borderSkipped: false,
+            },
             {
               type: "line",
               label: "Temp (°F)",
@@ -2152,46 +2271,70 @@
               borderColor: "rgba(255,180,80,0.9)",
               backgroundColor: "rgba(255,180,80,0.15)",
               pointRadius: 0,
-            },
-            {
-              type: "bar",
-              label: "Precip %",
-              data: pop.map(v => v ?? null),
-              yAxisID: "y1",
-              backgroundColor: precipColors,
-              borderColor: "transparent",
-              borderRadius: 3,
+              order: 0,
             }
           ]
         },
         options: {
           responsive: true,
-          plugins: {
-            legend: { display: false }, 
-            tooltip: {
-              callbacks: {
-                afterLabel: (ctx) => {
-                  if (ctx.datasetIndex === 1) {
-                    const wb = wetBulbs?.[ctx.dataIndex];
-                    const surfTemp = temps?.[ctx.dataIndex];
-                    const temp850 = temps850mb?.[ctx.dataIndex];
-                    if (wb == null) return "";
-                    if (wb <= 28)  return "❄️ Snow";
-                    if (wb <= 32)  return "🌨 Snow likely";
-                    if (wb <= 35)  return "🟣 Mixed/slush";
-                    return "🔵 Rain";
-                  }
-                  return "";
+          interaction: { mode: "index", intersect: false },
+          onHover: (event, activeElements) => {
+            const overlay = document.getElementById("tempPrecipOverlay");
+            if (activeElements.length > 0) {
+              const index = activeElements[0].index;
+              const time = times[index];
+              const temp = temps[index];
+              const precipProb = pop[index] ?? 0;
+              const wb = wetBulbs[index];
+              const surfTemp = temps[index];
+              const temp850 = temps850mb?.[index];
+              const cc = cloudTotal[index] ?? 0;
+              const dt = new Date(time);
+              const timeStr = dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+              let typeStr = "";
+              if (precipProb >= 5 && wb != null) {
+                if (wb <= 28) typeStr = "❄️ Snow";
+                else if (wb <= 32) typeStr = "🌨 Likely snow";
+                else if (wb <= 35) typeStr = "🟣 Mixed/slush";
+                else if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
+                  typeStr = "🟠 Freezing rain";
                 }
+                else typeStr = "🔵 Rain";
               }
+              const clearPct  = Math.round((100 - precipProb) * (1 - cc / 100));
+              const cloudPct  = Math.round((100 - precipProb) * (cc / 100));
+              const skyLabel  = cc >= 80 ? "Overcast" : cc >= 50 ? "Mostly Cloudy" : cc >= 20 ? "Partly Cloudy" : "Clear";
+              document.getElementById("overlayTime").textContent = timeStr;
+              document.getElementById("overlayTemp").textContent = temp != null ? `${Math.round(temp)}°F` : "";
+              const dt2 = new Date(time);
+              const hr2 = dt2.getHours() + dt2.getMinutes() / 60;
+              const isDaytime = hr2 >= sunrise && hr2 <= sunset;
+              const clearEmoji = isDaytime ? "☀️" : "🌙";
+              document.getElementById("overlaySky").textContent = `${skyLabel} — ${clearEmoji} ${clearPct}%  ☁️ ${cloudPct}%${precipProb >= 5 ? "  🌧 " + precipProb + "%" : ""}`;
+              if (precipProb >= 5) {
+                document.getElementById("overlayPrecip").textContent = typeStr;
+                document.getElementById("overlayPrecip").style.display = "block";
+              } else {
+                document.getElementById("overlayPrecip").style.display = "none";
+              }
+              document.getElementById("overlayType").style.display = "none";
+              overlay.style.opacity = "1";
+            } else {
+              overlay.style.opacity = "0";
             }
           },
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
           scales: {
-            x:  { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
+            x:  { stacked: true, ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
             y:  { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
-            y1: { position: "right", min: 0, max: 100,
+            y1: { position: "right", stacked: true, min: 0, max: 100,
                   ticks: { color: chartTextColor() }, grid: { drawOnChartArea: false } }
-          }
+          },
+          barPercentage: 1.0,
+          categoryPercentage: 0.95
         }
       });
     }
@@ -4843,12 +4986,27 @@
         if (startIdx === -1) startIdx = 0; // fallback if not found
         
         const times = allTimes.slice(startIdx, startIdx + 48);
+        const sunTimes = (typeof SunCalc !== "undefined")
+          ? SunCalc.getTimes(new Date(), HOME_LAT, HOME_LON)
+          : null;
+        const srHour = sunTimes?.sunrise
+          ? sunTimes.sunrise.getHours() + sunTimes.sunrise.getMinutes() / 60
+          : 6.0;
+        const ssHour = sunTimes?.sunset
+          ? sunTimes.sunset.getHours() + sunTimes.sunset.getMinutes() / 60
+          : 18.0;
         buildTempPrecipChart(
           times,
           (hourly.temperature || []).slice(startIdx, startIdx + 48),
           (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48),
           (hourly.wet_bulb || []).slice(startIdx, startIdx + 48),
-          (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48)
+          (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48),
+          (hourly.cloud_cover_low || []).slice(startIdx, startIdx + 48),
+          (hourly.cloud_cover_mid || []).slice(startIdx, startIdx + 48),
+          (hourly.cloud_cover_high || []).slice(startIdx, startIdx + 48),
+          (hourly.cloud_cover || []).slice(startIdx, startIdx + 48),
+          srHour,
+          ssHour
         );
 
         buildWindChart(
