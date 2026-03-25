@@ -898,7 +898,178 @@
       color: rgba(255,255,255,0.8) !important;
       border-color: rgba(255,255,255,0.15) !important;
     }
-</style>
+
+    /* ========== OVERHEAD (FLIGHT TRACKER) ========== */
+    #overheadMap {
+      width: 100%;
+      height: clamp(320px, 55vh, 520px);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1a1a2e;
+    }
+
+    .oh-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+    }
+
+    .oh-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e0e0e0;
+      letter-spacing: 0.05em;
+    }
+
+    .oh-meta {
+      font-size: 12px;
+      color: #888;
+      margin-left: 8px;
+    }
+
+    .oh-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #oh-status {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .oh-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .oh-btn:hover { background: rgba(255,255,255,0.14); }
+    .oh-btn:active { transform: scale(0.97); }
+
+    .oh-legend {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: #666;
+      padding: 0 16px;
+    }
+    .oh-legend span { margin-right: 3px; }
+
+    #oh-popup {
+      display: none;
+      margin-top: 12px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+
+    .oh-pop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    #oh-pop-flight {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.05em;
+    }
+
+    #oh-pop-route {
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 3px;
+    }
+
+    #oh-pop-airline {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .oh-close {
+      background: none;
+      border: none;
+      color: #555;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0 0 0 8px;
+      line-height: 1;
+    }
+    .oh-close:hover { color: #aaa; }
+
+    .oh-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .oh-stat {
+      text-align: center;
+    }
+
+    .oh-stat-val {
+      font-size: 16px;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    .oh-stat-lbl {
+      font-size: 10px;
+      color: #555;
+      margin-top: 2px;
+      letter-spacing: 0.08em;
+    }
+
+    .oh-plane-icon {
+      font-size: 20px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      text-shadow: 0 0 6px rgba(96,165,250,0.5);
+      display: block;
+      width: 24px;
+      height: 24px;
+      text-align: center;
+    }
+
+    .oh-home-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    /* Light theme overrides */
+    body.theme-light #overheadMap { background: #e8edf5; }
+    body.theme-light .oh-header { background: rgba(0,0,0,0.03); }
+    body.theme-light .oh-title { color: #1a1a2e; }
+    body.theme-light .oh-btn {
+      background: rgba(0,0,0,0.05);
+      border-color: rgba(0,0,0,0.1);
+      color: #555;
+    }
+    body.theme-light .oh-btn:hover { background: rgba(0,0,0,0.08); }
+    body.theme-light #oh-popup {
+      background: rgba(255,255,255,0.95);
+      border-color: rgba(0,0,0,0.1);
+    }
+    body.theme-light #oh-pop-flight { color: #1a1a2e; }
+    body.theme-light .oh-close { color: #999; }
+    body.theme-light .oh-close:hover { color: #333; }
+
+  </style>
 </head>
 
 <body>
@@ -951,7 +1122,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v3.12</span>
+            <span class="version-pill" id="appVersion">v3.13</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -1128,6 +1299,7 @@
         <button class="tab" id="tabWind" role="tab" aria-selected="false" onclick="showTab('wind')">Wind</button>
         <button class="tab" id="tabAlmanac" role="tab" aria-selected="false" onclick="showTab('almanac')">Almanac</button>
         <button class="tab" id="tabRadar"   role="tab" aria-selected="false" onclick="showTab('radar')">Radar</button>
+        <button class="tab" id="tabOverhead" role="tab" aria-selected="false" onclick="showTab('overhead')">Overhead</button>
         <button class="tab" id="tabSources" role="tab" aria-selected="false" onclick="showTab('sources')" style="border-color:rgba(100,220,100,0.3);">Sources</button>
       </nav>
 
@@ -1875,6 +2047,60 @@
       </div>
     </section>
 
+  <section id="overheadView" style="display:none;">
+    <div class="card">
+      
+      <div class="oh-header">
+        <div>
+          <span class="oh-title">✈ OVERHEAD NOW</span>
+          <span id="oh-count" class="oh-meta"></span>
+        </div>
+        <div class="oh-controls">
+          <span id="oh-status">not started</span>
+          <button class="oh-btn" onclick="ohRefresh()">↻ refresh</button>
+          <button class="oh-btn" onclick="ohToggleMapType()" id="oh-map-btn">🗺 map</button>
+          <button class="oh-btn" onclick="ohRefresh()">↻</button>
+        </div>
+      </div>
+
+      <div id="overheadMap"></div>
+
+      <div class="oh-legend">
+        <div><span style="color:#fbbf24">✈</span> &lt;5,000 ft</div>
+        <div><span style="color:#34d399">✈</span> 5–20,000 ft</div>
+        <div><span style="color:#60a5fa">✈</span> &gt;20,000 ft</div>
+        <div><span style="color:#f87171">⌂</span> home</div>
+      </div>
+
+      <div id="oh-popup">
+        <div class="oh-pop-header">
+          <div>
+            <div id="oh-pop-flight"></div>
+            <div id="oh-pop-route"></div>
+            <div id="oh-pop-airline"></div>
+          </div>
+          <button class="oh-close" onclick="document.getElementById('oh-popup').style.display='none'">×</button>
+        </div>
+        <div class="oh-stats">
+          <div class="oh-stat">
+            <div id="oh-pop-alt" class="oh-stat-val"></div>
+            <div class="oh-stat-lbl">ALTITUDE</div>
+          </div>
+          <div class="oh-stat">
+            <div id="oh-pop-spd" class="oh-stat-val"></div>
+            <div class="oh-stat-lbl">SPEED</div>
+          </div>
+          <div class="oh-stat">
+            <div id="oh-pop-hdg" class="oh-stat-val"></div>
+            <div class="oh-stat-lbl">HEADING</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+
   </div>
 
   <script>
@@ -1993,8 +2219,8 @@
     // Tab behavior — Weather / Wind / Almanac
     // ======================================================
     function showTab(which) {
-      const views = { weather: "weatherView", wind: "windView", almanac: "almanacView", radar: "radarView", sources: "sourcesView" };
-      const tabs  = { weather: "tabWeather",  wind: "tabWind",  almanac: "tabAlmanac",  radar: "tabRadar",  sources: "tabSources" };
+      const views = { weather: "weatherView", wind: "windView", almanac: "almanacView", radar: "radarView", overhead: "overheadView", sources: "sourcesView" };
+      const tabs  = { weather: "tabWeather",  wind: "tabWind",  almanac: "tabAlmanac",  radar: "tabRadar",  overhead: "tabOverhead", sources: "tabSources" };
       Object.keys(views).forEach(k => {
         const v = document.getElementById(views[k]);
         const t = document.getElementById(tabs[k]);
@@ -2014,6 +2240,15 @@
           });
         });
       }
+      if (which === "overhead") {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (window.ohInitMap) window.ohInitMap();
+            if (window.ohMap) window.ohMap.invalidateSize();
+          });
+        });
+      }
+
       // Scroll so tab content is visible below sticky header
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -2021,7 +2256,7 @@
     (function restoreTab() {
       try {
         const t = localStorage.getItem("activeTab");
-        if (["wind","almanac","radar","sources"].includes(t)) showTab(t);
+        if (["wind","almanac","radar","overhead","sources"].includes(t)) showTab(t);
       } catch(e) {}
     })();
 
@@ -4342,7 +4577,7 @@
     }
 
     function daysUntilNextFullMoon() {
-      const now = new Date();
+      let lastFetchTime = Date.now();
       let prev = SunCalc.getMoonIllumination(now).phase;
       for (let d = 1; d <= 30; d++) {
         const candidate = new Date(now.getTime() + d * 86400000);
@@ -4980,7 +5215,7 @@
         const allTimes = hourly.times || [];
         
         // Find current hour index
-        const now = new Date();
+        let lastFetchTime = Date.now();
         const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
         let startIdx = allTimes.findIndex(t => new Date(t) >= currentHour);
         if (startIdx === -1) startIdx = 0; // fallback if not found
@@ -5192,6 +5427,191 @@
 
   
 </head>
+
+
+<script>
+// ========== OVERHEAD (FLIGHT TRACKER) ==========
+(function() {
+  const HOME_LAT   = 42.4973;
+  const HOME_LNG   = -70.8661;
+  const RADIUS_NM  = 200;
+  const REFRESH_MS = 30000;
+  const API_URL    = `https://api.airplanes.live/v2/point/${HOME_LAT}/${HOME_LNG}/${RADIUS_NM}`;
+
+  let ohMap = null;
+  let ohMarkers = [];
+  let ohRefreshTimer = null;
+  let ohTileLayers = {};
+  let ohCurrentTile = 'satellite';
+  let ohIsPlaying = false;
+
+  // Initialize map (lazy, on first tab switch to overhead)
+  function ohInitMap() {
+    if (ohMap) return; // Already initialized
+
+    ohMap = L.map('overheadMap', {
+      center: [HOME_LAT, HOME_LNG],
+      zoom: 12,
+      zoomControl: true,
+      attributionControl: false
+    });
+    window.ohMap = ohMap; // Expose to global scope
+
+    ohTileLayers.street = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 });
+    ohTileLayers.satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 });
+    ohTileLayers.satellite.addTo(ohMap);
+
+    // Home marker
+    const homeIcon = L.divIcon({
+      html: '<span class="oh-home-icon" style="color:#f87171">⌂</span>',
+      className: '',
+      iconSize: [20, 20],
+      iconAnchor: [10, 10]
+    });
+    L.marker([HOME_LAT, HOME_LNG], { icon: homeIcon }).addTo(ohMap);
+
+    ohMap.on('moveend', ohUpdateCount);
+  }
+
+  function ohUpdateCount() {
+    if (!ohMap) return;
+    const bounds = ohMap.getBounds();
+    const inView = ohMarkers.filter(m => bounds.contains(m.getLatLng()));
+    const countEl = document.getElementById('oh-count');
+    countEl.textContent = `${inView.length} visible`;
+  }
+
+  async function ohFetch() {
+    const statusEl = document.getElementById('oh-status');
+    const countEl  = document.getElementById('oh-count');
+    statusEl.textContent = 'updating…';
+    statusEl.style.color = '#888';
+
+    try {
+      const res  = await fetch(API_URL);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      const aircraft = data.ac || [];
+
+      // Clear old markers
+      ohMarkers.forEach(m => ohMap.removeLayer(m));
+      ohMarkers = [];
+
+      // Filter: must have position, not on ground
+      const visible = aircraft.filter(a =>
+        a.lat && a.lon &&
+        a.alt_baro && a.alt_baro !== 'ground' &&
+        parseInt(a.alt_baro) > 500
+      );
+
+      countEl.textContent = `${visible.length} aircraft`;
+
+      visible.forEach(a => {
+        const hdg = a.track || 0;
+        const alt = parseInt(a.alt_baro) || 0;
+
+        let color;
+        if      (alt < 5000)  color = '#fbbf24';
+        else if (alt < 20000) color = '#34d399';
+        else                  color = '#60a5fa';
+
+        const planeIcon = L.divIcon({
+          html: `<span class="oh-plane-icon" style="color:${color}; transform:rotate(${hdg}deg); display:block;">✈</span>`,
+          className: '',
+          iconSize:   [24, 24],
+          iconAnchor: [12, 12]
+        });
+
+        if (!ohMap) { console.error("ohMap is null when trying to add marker"); return; }
+        const marker = L.marker([a.lat, a.lon], { icon: planeIcon }).addTo(ohMap);
+        marker.on('click', function() { ohShowPopup(a); });
+        ohMarkers.push(marker);
+      });
+
+      ohUpdateCount();
+
+      let lastFetchTime = Date.now();
+      statusEl.textContent = "just now";
+      statusEl.style.color = "#4ade80";
+      // Update relative time every 30 seconds
+      setInterval(() => {
+        const elapsed = Math.floor((Date.now() - lastFetchTime) / 1000);
+        if (elapsed < 60) statusEl.textContent = "just now";
+        else if (elapsed < 3600) statusEl.textContent = Math.floor(elapsed / 60) + "m ago";
+        else statusEl.textContent = Math.floor(elapsed / 3600) + "h ago";
+      }, 30000);
+
+    } catch(err) {
+      statusEl.textContent = 'fetch failed';
+      statusEl.style.color = '#f87171';
+      countEl.textContent  = '— see console';
+      console.error('Overhead tracker error:', err);
+    }
+  }
+
+  async function ohShowPopup(a) {
+    const flightId = a.flight ? a.flight.trim() : (a.r || 'Unknown');
+    document.getElementById('oh-pop-flight').textContent = flightId;
+    document.getElementById('oh-pop-route').textContent = 'looking up route…';
+    document.getElementById('oh-pop-airline').textContent = a.desc || a.ownOp || '';
+    document.getElementById('oh-pop-alt').textContent =
+      a.alt_baro ? `${parseInt(a.alt_baro).toLocaleString()} ft` : '—';
+    document.getElementById('oh-pop-spd').textContent =
+      a.gs ? `${Math.round(a.gs)} kts` : '—';
+    document.getElementById('oh-pop-hdg').textContent =
+      a.track ? `${Math.round(a.track)}°` : '—';
+    document.getElementById('oh-popup').style.display = 'block';
+
+    const callsign = (a.flight || '').trim();
+    if (!callsign) {
+      document.getElementById('oh-pop-route').textContent = 'No callsign';
+      return;
+    }
+    try {
+      const res  = await fetch(`https://api.adsbdb.com/v0/callsign/${callsign}`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const r = data?.response?.flightroute;
+      if (r) {
+        const orig = r.origin?.iata_code      || r.origin?.icao_code      || '?';
+        const dest = r.destination?.iata_code || r.destination?.icao_code || '?';
+        const airline = r.airline?.name || '';
+        document.getElementById('oh-pop-route').textContent = `${orig} → ${dest}`;
+        if (airline && !document.getElementById('oh-pop-airline').textContent) {
+          document.getElementById('oh-pop-airline').textContent = airline;
+        }
+      } else {
+        document.getElementById('oh-pop-route').textContent = 'Route unknown';
+      }
+    } catch(e) {
+      document.getElementById('oh-pop-route').textContent = 'Route lookup failed';
+    }
+  }
+
+
+  window.ohRefresh = function() {
+    if (!ohMap) {
+      alert('Switch to Overhead tab first');
+      return;
+    }
+    ohFetch();
+  };
+
+  window.ohToggleMapType = function() {
+    if (!ohMap) return;
+    ohMap.removeLayer(ohTileLayers[ohCurrentTile]);
+    ohCurrentTile = ohCurrentTile === 'street' ? 'satellite' : 'street';
+    ohTileLayers[ohCurrentTile].addTo(ohMap);
+    document.getElementById('oh-map-btn').textContent =
+      ohCurrentTile === 'street' ? '🛰 satellite' : '🗺 map';
+  };
+
+    // Expose to global scope for showTab to call
+  window.ohInitMap = ohInitMap;
+  window.ohMap = null; // Will be set by ohInitMap
+
+})();
+</script>
 
 </body>
 </html>
