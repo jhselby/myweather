@@ -1,85 +1,85 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-03-26T17:37:42.965183Z",
+  "generated_at": "2026-03-26T17:59:13.966508Z",
   "location": "Wyman Cove, Marblehead MA",
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:11.876560Z",
+      "updated_at": "2026-03-26T17:56:32.741155Z",
       "error": null,
       "model": "GFS current"
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:12.324090Z",
+      "updated_at": "2026-03-26T17:56:33.397687Z",
       "error": null,
       "model": "HRRR hourly"
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:13.201940Z",
+      "updated_at": "2026-03-26T17:56:35.671261Z",
       "error": null,
       "model": "ECMWF daily"
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:13.613288Z",
+      "updated_at": "2026-03-26T17:56:36.341564Z",
       "error": null
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:15.269653Z",
+      "updated_at": "2026-03-26T17:56:37.497906Z",
       "error": null
     },
     "kbos": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:16.151144Z",
+      "updated_at": "2026-03-26T17:56:38.671708Z",
       "error": null
     },
     "kbvy": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:16.191655Z",
+      "updated_at": "2026-03-26T17:56:38.756890Z",
       "error": null
     },
     "buoy_44013": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:16.545810Z",
+      "updated_at": "2026-03-26T17:56:42.052880Z",
       "error": null
     },
     "wu_stations": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:16.617164Z",
+      "updated_at": "2026-03-26T17:56:42.186009Z",
       "error": null
     },
     "nws_forecast": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:37.531472Z",
+      "updated_at": "2026-03-26T17:57:04.118601Z",
       "error": null
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-03-26T17:35:37.683894Z",
+      "updated_at": "2026-03-26T17:57:05.079624Z",
       "error": null
     }
   },
   "current": {
-    "temperature": 61.5,
-    "apparent_temperature": 57.2,
-    "humidity": 56,
-    "dew_point": 45.7,
+    "temperature": 62.1,
+    "apparent_temperature": 57.9,
+    "humidity": 55,
+    "dew_point": 45.8,
     "precipitation": 0.0,
-    "weather_code": 2,
-    "weather_description": "Partly Cloudy",
-    "weather_emoji": "\u26c5",
-    "cloud_cover": 78,
-    "pressure": 1010.5,
-    "wind_speed": 11.5078,
-    "wind_direction": 230,
-    "wind_gusts": 20.714039999999997,
-    "uv_index": 4.8,
-    "visibility": 113517.062,
+    "weather_code": 3,
+    "weather_description": "Overcast",
+    "weather_emoji": "\u2601\ufe0f",
+    "cloud_cover": 91,
+    "pressure": 1009.8,
+    "wind_speed": 18.41248,
+    "wind_direction": 220,
+    "wind_gusts": 23.0156,
+    "uv_index": 4.75,
+    "visibility": 115485.562,
     "condition_source": "KBVY observed",
-    "wet_bulb": 52.3
+    "wet_bulb": 52.7
   },
   "hourly": {
     "times": [
@@ -148,9 +148,9 @@
       50.4,
       49.6,
       49.5,
-      50.1,
-      50.7,
-      50.2,
+      49.8,
+      50.3,
+      50.9,
       45.4,
       43.6,
       41.9,
@@ -198,9 +198,9 @@
       48.9,
       48.0,
       47.2,
-      47.8,
-      48.4,
-      43.2,
+      47.4,
+      47.9,
+      45.3,
       37.7,
       35.9,
       33.4,
@@ -298,9 +298,9 @@
       50.2,
       49.6,
       49.5,
-      49.2,
-      49.3,
-      48.0,
+      49.0,
+      48.9,
+      48.7,
       39.6,
       37.8,
       35.5,
@@ -333,32 +333,30 @@
       null
     ],
     "precipitation_probability": [
-      2,
+      1,
       1,
       1,
       2,
       3,
+      5,
       4,
-      4,
-      6,
-      32,
-      59,
-      85,
-      75,
-      65,
-      44,
+      7,
+      20,
+      49,
+      74,
+      67,
+      70,
+      52,
+      45,
+      30,
+      21,
+      28,
       26,
-      12,
+      24,
       9,
-      18,
-      16,
-      15,
-      11,
       3,
       2,
       1,
-      1,
-      1,
       0,
       0,
       0,
@@ -368,7 +366,9 @@
       0,
       0,
       0,
-      4,
+      0,
+      0,
+      0,
       4,
       4,
       8,
@@ -683,30 +683,30 @@
       null
     ],
     "wind_speed": [
-      11.5078,
-      11.469975,
-      11.582149999999999,
-      11.719325,
-      11.573166666666665,
-      11.131175,
-      11.130849999999999,
-      11.622191666666666,
-      11.938533333333332,
-      11.279875,
-      8.712883333333332,
-      8.708391666666667,
-      7.7039,
-      7.278575,
-      7.65325,
-      7.315424999999999,
-      7.102600000000001,
-      14.193941666666667,
-      12.101950000000002,
-      11.580791666666666,
-      12.2513,
-      12.813475,
-      15.442316666666668,
-      15.525324999999999,
+      18.41248,
+      18.086959999999998,
+      17.91144,
+      17.76092,
+      17.327066666666667,
+      16.597379999999998,
+      16.309359999999998,
+      16.513006666666666,
+      16.541653333333333,
+      15.5953,
+      12.74061333333333,
+      12.448426666666666,
+      11.156239999999999,
+      10.44322,
+      10.530199999999999,
+      10.092179999999999,
+      9.404160000000001,
+      14.224473333333332,
+      13.828120000000002,
+      13.019266666666665,
+      13.40208,
+      13.67656,
+      16.01770666666667,
+      15.813019999999998,
       15.3,
       14.2,
       13.3,
@@ -748,9 +748,9 @@
       329,
       166,
       219,
-      224,
-      246,
-      320,
+      221,
+      231,
+      317,
       316,
       311,
       312,
@@ -783,30 +783,30 @@
       null
     ],
     "wind_gusts": [
-      20.714039999999997,
-      20.663455,
-      20.79620333333333,
-      21.037284999999997,
-      21.09503333333333,
-      21.190281666666664,
-      19.68553,
-      20.272444999999998,
-      20.676026666666665,
-      21.083774999999996,
-      16.29152333333333,
-      13.786771666666667,
-      14.057019999999998,
-      11.931434999999999,
-      12.947516666666665,
-      12.705264999999999,
-      13.238013333333333,
-      28.566595,
-      26.478509999999996,
-      25.532091666666666,
-      25.28567333333333,
-      24.114255,
-      25.10117,
-      24.438085,
+      23.0156,
+      22.869116666666667,
+      22.905966666666664,
+      23.05115,
+      23.012999999999998,
+      23.01235,
+      21.411699999999996,
+      21.902716666666667,
+      22.2104,
+      22.52225,
+      17.634099999999997,
+      15.03345,
+      15.207799999999999,
+      12.986316666666667,
+      13.906500000000001,
+      13.693349999999999,
+      13.6052,
+      27.821216666666665,
+      27.0539,
+      26.011583333333334,
+      25.669266666666665,
+      24.401950000000003,
+      25.29296666666667,
+      24.533983333333335,
       23.0,
       21.0,
       18.8,
@@ -883,24 +883,24 @@
       null
     ],
     "temperature_850hPa": [
-      45.3,
-      46.3,
-      47.6,
-      48.5,
-      49.2,
-      49.6,
-      50.7,
-      50.5,
-      50.0,
-      48.1,
-      48.3,
-      45.7,
       44.6,
-      40.9,
+      46.1,
+      47.2,
+      48.1,
+      48.9,
+      49.2,
+      50.0,
+      50.2,
+      50.5,
+      47.6,
+      46.1,
+      45.7,
+      42.2,
+      40.5,
       40.7,
-      41.3,
-      38.3,
-      36.1,
+      40.0,
+      38.1,
+      36.6,
       32.9,
       30.3,
       27.4,
@@ -933,22 +933,22 @@
       null
     ],
     "temperature_700hPa": [
-      23.0,
+      22.1,
       24.6,
       26.0,
-      26.2,
-      27.1,
-      28.4,
-      29.8,
-      29.8,
+      26.0,
+      26.8,
       27.9,
-      30.1,
-      32.0,
-      32.3,
-      33.6,
+      29.8,
+      29.5,
+      28.7,
+      29.8,
+      31.2,
+      32.5,
       34.2,
-      32.3,
-      32.3,
+      33.9,
+      33.6,
+      33.4,
       31.2,
       29.3,
       27.1,
@@ -1098,9 +1098,9 @@
       50.1,
       49.5,
       49.4,
-      49.4,
-      49.7,
-      48.6,
+      49.1,
+      49.3,
+      49.3,
       41.9,
       40.1,
       38.2,
@@ -1333,9 +1333,9 @@
       50.4,
       49.6,
       49.5,
-      50.1,
-      50.7,
-      50.2,
+      49.8,
+      50.3,
+      50.9,
       45.4,
       43.6,
       41.9,
@@ -1503,9 +1503,9 @@
       48.9,
       48.0,
       47.2,
-      47.8,
-      48.4,
-      43.2,
+      47.4,
+      47.9,
+      45.3,
       37.7,
       35.9,
       33.4,
@@ -1529,120 +1529,120 @@
       20.8,
       20.1,
       18.9,
-      17.7,
-      17.5,
-      18.6,
-      20.9,
-      23.1,
-      24.8,
-      23.6,
-      24.4,
-      25.1,
-      26.0,
-      25.4,
+      17.6,
+      17.4,
+      18.3,
+      20.6,
+      23.3,
+      25.8,
+      23.3,
       24.0,
-      23.8,
-      22.4,
-      21.1,
-      21.7,
-      21.8,
-      23.1,
-      22.0,
+      23.9,
+      24.5,
+      24.7,
+      23.5,
+      23.7,
+      23.0,
+      21.6,
+      22.3,
+      21.9,
+      22.7,
+      21.9,
       20.9,
       20.3,
-      19.6,
-      19.5,
-      19.2,
-      18.8,
+      19.8,
       19.3,
-      22.5,
-      25.2,
-      28.1,
+      19.0,
+      18.7,
+      19.5,
+      22.6,
+      24.9,
+      27.8,
       32.1,
-      36.0,
-      39.1,
-      40.6,
-      41.2,
-      39.2,
-      37.4,
-      33.0,
-      30.0,
-      29.0,
-      28.8,
-      29.2,
-      29.6,
-      29.8,
-      30.4,
-      30.5,
+      35.3,
+      38.0,
+      39.9,
+      40.0,
+      38.0,
+      36.2,
+      32.8,
       30.1,
-      29.5,
-      29.1,
-      29.0,
-      29.0,
-      32.3,
-      35.1,
-      40.3,
-      43.8,
-      47.5,
-      50.0,
+      28.8,
+      28.6,
+      29.4,
+      29.8,
+      30.1,
+      30.9,
+      31.1,
+      30.8,
+      30.6,
+      30.3,
+      30.4,
+      30.1,
+      32.8,
+      35.8,
+      40.8,
+      44.3,
+      47.6,
+      49.8,
       52.2,
-      52.4,
-      51.5,
-      49.5,
+      52.3,
+      51.3,
+      49.9,
+      50.3,
+      50.1,
+      49.2,
       48.7,
       48.0,
-      47.5,
-      46.7,
-      45.9,
-      44.5,
-      42.5,
-      40.8,
-      37.9,
-      34.7,
-      32.7,
-      31.3,
-      29.5,
-      29.3,
-      32.3,
-      34.5,
-      37.6,
-      41.5,
-      47.2,
-      49.7,
-      49.3,
-      46.4,
-      42.1,
-      38.9,
-      36.3,
-      33.8,
-      32.2,
-      31.9,
+      46.5,
+      45.1,
+      43.6,
+      39.9,
+      36.0,
+      33.7,
       32.8,
-      33.3,
-      33.3,
+      31.5,
+      30.9,
+      33.0,
+      34.8,
+      37.3,
+      40.7,
+      45.5,
+      50.1,
+      52.4,
+      49.4,
+      43.7,
+      39.6,
+      36.7,
+      34.0,
+      32.1,
+      31.5,
+      32.0,
+      32.5,
       32.9,
       33.1,
-      33.5,
+      33.7,
       34.4,
-      35.5,
-      37.4,
-      39.7,
-      42.3,
-      45.0,
-      48.0,
-      51.5,
-      56.4,
-      61.0,
-      64.9,
-      67.9,
-      68.9,
-      68.7,
-      67.7,
-      65.7,
-      63.8,
-      62.3,
-      60.9,
-      59.8
+      35.1,
+      36.1,
+      37.6,
+      39.3,
+      41.4,
+      43.2,
+      45.3,
+      48.1,
+      52.6,
+      57.8,
+      61.9,
+      64.5,
+      66.2,
+      67.2,
+      66.8,
+      65.3,
+      63.9,
+      63.1,
+      62.4,
+      61.7
     ],
     "precipitation_probability": [
       11,
@@ -1658,32 +1658,30 @@
       4,
       3,
       2,
-      2,
+      1,
       1,
       1,
       2,
       3,
+      5,
       4,
-      4,
-      6,
-      32,
-      59,
-      85,
-      75,
-      65,
-      44,
+      7,
+      20,
+      49,
+      74,
+      67,
+      70,
+      52,
+      45,
+      30,
+      21,
+      28,
       26,
-      12,
+      24,
       9,
-      18,
-      16,
-      15,
-      11,
       3,
       2,
       1,
-      1,
-      1,
       0,
       0,
       0,
@@ -1693,7 +1691,9 @@
       0,
       0,
       0,
-      4,
+      0,
+      0,
+      0,
       4,
       4,
       8,
@@ -2183,9 +2183,9 @@
       3.9,
       3.7,
       4.9,
-      4.8,
+      5.1,
       4.9,
-      15.3,
+      12.5,
       12.3,
       11.6,
       12.4,
@@ -2209,120 +2209,120 @@
       11.0,
       11.8,
       13.1,
-      11.7,
-      9.8,
-      7.4,
-      5.4,
-      5.7,
-      7.3,
-      7.6,
-      7.2,
-      6.7,
-      7.0,
-      8.6,
-      9.7,
-      9.7,
-      7.3,
-      3.8,
-      1.9,
-      1.4,
-      3.0,
-      4.5,
-      4.4,
-      5.2,
-      6.0,
-      5.2,
-      4.5,
-      4.1,
-      4.3,
-      5.9,
-      6.3,
-      7.3,
-      8.0,
-      7.8,
-      8.4,
-      9.4,
-      9.5,
-      9.8,
-      10.6,
-      13.5,
-      14.2,
-      13.0,
-      12.9,
-      12.7,
-      12.9,
-      12.0,
-      11.8,
-      10.8,
-      10.8,
-      10.5,
-      10.1,
-      9.5,
-      9.4,
-      8.9,
-      9.8,
-      9.7,
-      10.1,
-      10.4,
-      10.9,
-      12.4,
-      11.7,
-      12.0,
-      13.2,
-      14.1,
-      13.7,
-      12.5,
-      11.8,
-      10.5,
+      11.9,
       10.2,
-      9.9,
-      9.9,
-      9.6,
+      8.3,
+      6.2,
+      5.2,
+      5.0,
+      8.4,
       8.1,
-      8.0,
-      9.1,
-      9.4,
-      9.4,
-      9.3,
-      8.5,
+      9.7,
+      10.4,
+      10.3,
+      10.8,
+      10.0,
+      5.7,
+      2.6,
+      0.4,
+      1.3,
+      4.0,
+      4.8,
+      4.5,
+      5.1,
+      5.5,
+      5.7,
+      5.0,
+      4.3,
+      4.0,
+      5.6,
+      7.0,
+      7.8,
+      7.9,
+      9.2,
+      10.6,
+      10.9,
+      12.1,
+      12.7,
+      13.5,
+      14.0,
+      14.0,
+      13.6,
+      13.3,
+      12.2,
+      12.3,
+      11.3,
+      10.6,
+      9.5,
+      9.0,
+      7.9,
+      7.1,
+      6.3,
+      6.8,
+      7.7,
+      8.1,
+      8.6,
+      9.0,
+      10.1,
+      11.4,
+      12.5,
+      12.0,
+      12.3,
+      12.3,
+      10.3,
+      8.8,
+      8.6,
+      7.2,
+      5.5,
+      5.5,
+      3.8,
+      3.2,
+      4.8,
+      4.9,
+      5.5,
+      5.6,
+      4.7,
+      5.5,
+      7.6,
+      7.8,
+      7.8,
       7.0,
       5.1,
-      1.6,
-      3.5,
-      7.0,
-      8.6,
-      8.9,
-      9.1,
-      9.3,
-      9.5,
-      9.7,
-      9.7,
-      9.5,
-      9.5,
-      10.0,
-      10.7,
-      11.1,
-      11.4,
-      11.4,
-      11.2,
-      10.1,
-      8.5,
-      7.0,
-      5.6,
-      4.3,
-      3.3,
-      2.6,
-      3.9,
-      4.6,
-      3.7,
-      5.6,
-      8.1,
+      2.7,
+      0.7,
+      2.2,
+      5.2,
+      7.4,
       8.4,
-      8.1,
-      8.6,
+      9.0,
+      9.8,
+      10.7,
+      11.2,
+      11.4,
+      10.9,
+      10.2,
+      9.5,
+      9.3,
+      9.6,
+      9.9,
+      9.6,
+      9.4,
+      9.2,
+      9.8,
+      10.7,
+      11.4,
+      11.5,
+      11.4,
+      11.5,
+      11.8,
+      12.1,
+      11.7,
       10.4,
-      12.7,
-      14.4
+      9.0,
+      8.4,
+      8.5,
+      9.2,
+      10.0
     ],
     "wind_direction": [
       196,
@@ -2353,9 +2353,9 @@
       329,
       166,
       219,
-      224,
-      246,
-      320,
+      221,
+      231,
+      317,
       316,
       311,
       312,
@@ -2379,120 +2379,120 @@
       328,
       333,
       335,
-      250,
-      340,
+      249,
+      341,
       345,
-      343,
-      342,
-      337,
-      336,
-      324,
+      347,
+      350,
+      352,
+      331,
       323,
-      320,
-      327,
-      326,
       318,
-      326,
-      339,
-      21,
-      321,
-      283,
-      297,
-      300,
-      290,
+      317,
+      319,
+      318,
+      312,
+      318,
+      340,
+      360,
+      239,
+      286,
       304,
-      301,
       290,
-      276,
-      258,
-      250,
-      238,
+      285,
+      291,
+      291,
+      288,
+      279,
+      251,
+      236,
+      233,
+      231,
+      227,
+      219,
+      212,
+      217,
+      231,
+      225,
+      211,
+      207,
+      207,
+      200,
+      202,
+      208,
+      213,
+      218,
+      224,
+      225,
+      226,
+      225,
+      226,
+      225,
+      214,
+      218,
+      219,
+      221,
+      228,
+      225,
+      230,
+      243,
+      241,
+      243,
+      251,
+      252,
+      251,
+      255,
+      266,
+      284,
+      333,
+      3,
+      352,
+      349,
+      357,
+      339,
+      326,
+      325,
+      313,
+      320,
+      323,
+      327,
+      329,
+      326,
+      312,
+      252,
+      127,
+      115,
+      115,
+      124,
+      136,
+      145,
+      149,
+      151,
+      152,
+      152,
+      151,
+      153,
+      160,
+      169,
+      176,
+      179,
+      179,
+      183,
+      191,
+      200,
+      208,
+      217,
+      227,
+      234,
+      237,
       236,
       234,
-      231,
-      220,
-      213,
-      214,
       227,
-      229,
-      212,
-      211,
-      212,
-      208,
-      206,
-      208,
       215,
-      217,
-      220,
-      220,
-      222,
-      223,
-      221,
-      220,
+      205,
+      210,
       219,
-      223,
-      222,
-      223,
-      223,
-      224,
-      231,
-      230,
-      233,
-      233,
-      226,
-      232,
-      243,
-      245,
-      253,
-      255,
-      265,
-      276,
-      281,
-      302,
-      333,
-      350,
-      346,
-      332,
-      323,
-      325,
-      333,
-      345,
-      16,
-      135,
-      143,
-      139,
-      133,
-      130,
-      132,
-      137,
-      140,
-      140,
-      137,
-      133,
-      129,
-      123,
-      118,
-      110,
-      100,
-      92,
-      85,
-      78,
-      68,
-      56,
-      39,
-      16,
-      329,
-      280,
-      259,
-      218,
-      164,
-      152,
-      160,
-      178,
-      197,
-      213,
-      224,
-      229
+      226
     ],
     "wind_gusts": [
       25.3,
@@ -2523,9 +2523,9 @@
       7.4,
       4.5,
       7.4,
-      7.9,
-      9.5,
-      31.8,
+      8.1,
+      8.9,
+      29.8,
       28.4,
       26.8,
       26.2,
@@ -2826,8 +2826,8 @@
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-03-26T17:35:15.267758",
-    "temperature": 62.0,
+    "updated": "2026-03-26T17:56:37.496039",
+    "temperature": 63.0,
     "stale": false
   },
   "tides": {
@@ -2884,10 +2884,6 @@
     ],
     "curve": {
       "times": [
-        "2026-03-26 17:30",
-        "2026-03-26 17:36",
-        "2026-03-26 17:42",
-        "2026-03-26 17:48",
         "2026-03-26 17:54",
         "2026-03-26 18:00",
         "2026-03-26 18:06",
@@ -3364,13 +3360,13 @@
         "2026-03-28 17:12",
         "2026-03-28 17:18",
         "2026-03-28 17:24",
-        "2026-03-28 17:30"
+        "2026-03-28 17:30",
+        "2026-03-28 17:36",
+        "2026-03-28 17:42",
+        "2026-03-28 17:48",
+        "2026-03-28 17:54"
       ],
       "heights": [
-        7.748,
-        7.853,
-        7.948,
-        8.034,
         8.111,
         8.177,
         8.233,
@@ -3847,16 +3843,16 @@
         3.241,
         3.446,
         3.654,
-        3.864
+        3.864,
+        4.077,
+        4.29,
+        4.505,
+        4.72
       ]
     }
   },
   "tide_curve": {
     "times": [
-      "2026-03-26 17:30",
-      "2026-03-26 17:36",
-      "2026-03-26 17:42",
-      "2026-03-26 17:48",
       "2026-03-26 17:54",
       "2026-03-26 18:00",
       "2026-03-26 18:06",
@@ -4333,13 +4329,13 @@
       "2026-03-28 17:12",
       "2026-03-28 17:18",
       "2026-03-28 17:24",
-      "2026-03-28 17:30"
+      "2026-03-28 17:30",
+      "2026-03-28 17:36",
+      "2026-03-28 17:42",
+      "2026-03-28 17:48",
+      "2026-03-28 17:54"
     ],
     "heights": [
-      7.748,
-      7.853,
-      7.948,
-      8.034,
       8.111,
       8.177,
       8.233,
@@ -4816,7 +4812,11 @@
       3.241,
       3.446,
       3.654,
-      3.864
+      3.864,
+      4.077,
+      4.29,
+      4.505,
+      4.72
     ]
   },
   "kbos": {
@@ -4832,39 +4832,39 @@
   },
   "kbvy": {
     "station": "KBVY",
-    "temp_f": 61.0,
-    "dewpoint_c": 6.7,
-    "pressure_hpa": 1009.9,
-    "wind_speed_kt": 10,
-    "wind_gust_kt": 18,
-    "wind_dir": 230,
+    "temp_f": 63.0,
+    "dewpoint_c": 6.1,
+    "pressure_hpa": 1008.9,
+    "wind_speed_kt": 16,
+    "wind_gust_kt": 20,
+    "wind_dir": 220,
     "present_weather": null
   },
   "buoy_44013": {
-    "time": "2026-03-26T17:00Z",
-    "wind_dir": 240.0,
-    "wind_mph": 8.9,
+    "time": "2026-03-26T17:20Z",
+    "wind_dir": 200.0,
+    "wind_mph": 6.7,
     "gust_mph": 8.9,
-    "wave_ht_ft": 2.6,
-    "wave_period_sec": 5.0,
-    "pressure_hpa": 1010.6,
-    "air_temp_f": 45.1,
-    "water_temp_f": 39.6,
-    "dewpoint_f": 40.8,
-    "pressure_tend_hpa": -2.5
+    "wave_ht_ft": 2.3,
+    "wave_period_sec": 4.0,
+    "pressure_hpa": 1010.1,
+    "air_temp_f": 44.2,
+    "water_temp_f": 39.7,
+    "dewpoint_f": 40.3,
+    "pressure_tend_hpa": null
   },
   "nws_forecast": [
     {
-      "name": "Today",
-      "start_time": "2026-03-26T10:00:00-04:00",
+      "name": "This Afternoon",
+      "start_time": "2026-03-26T13:00:00-04:00",
       "end_time": "2026-03-26T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 62,
+      "temperature": 69,
       "temperature_unit": "F",
-      "wind_speed": "10 to 14 mph",
+      "wind_speed": "13 mph",
       "wind_direction": "SW",
-      "short_forecast": "Partly Sunny",
-      "detailed": "Partly sunny, with a high near 62. Southwest wind 10 to 14 mph, with gusts as high as 24 mph."
+      "short_forecast": "Mostly Cloudy",
+      "detailed": "Mostly cloudy, with a high near 69. Southwest wind around 13 mph."
     },
     {
       "name": "Tonight",
@@ -4873,22 +4873,22 @@
       "is_daytime": false,
       "temperature": 41,
       "temperature_unit": "F",
-      "wind_speed": "7 to 10 mph",
+      "wind_speed": "10 mph",
       "wind_direction": "W",
-      "short_forecast": "Light Rain",
-      "detailed": "Rain before midnight, then rain likely and patchy fog. Cloudy. Low around 41, with temperatures rising to around 47 overnight. West wind 7 to 10 mph. Chance of precipitation is 90%. New rainfall amounts between a quarter and half of an inch possible."
+      "short_forecast": "Rain",
+      "detailed": "Rain between 7pm and 11pm, then rain and patchy fog. Cloudy. Low around 41, with temperatures rising to around 49 overnight. West wind around 10 mph, with gusts as high as 21 mph. Chance of precipitation is 70%. New rainfall amounts between a quarter and half of an inch possible."
     },
     {
       "name": "Friday",
       "start_time": "2026-03-27T06:00:00-04:00",
       "end_time": "2026-03-27T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 47,
+      "temperature": 48,
       "temperature_unit": "F",
-      "wind_speed": "7 to 10 mph",
-      "wind_direction": "N",
-      "short_forecast": "Chance Light Rain",
-      "detailed": "A chance of rain and patchy fog before 1pm. Mostly cloudy, with a high near 47. North wind 7 to 10 mph. Chance of precipitation is 50%. New rainfall amounts less than a tenth of an inch possible."
+      "wind_speed": "8 to 12 mph",
+      "wind_direction": "NW",
+      "short_forecast": "Chance Light Rain then Partly Sunny",
+      "detailed": "A chance of rain before 9am. Partly sunny, with a high near 48. Northwest wind 8 to 12 mph. Chance of precipitation is 20%."
     },
     {
       "name": "Friday Night",
@@ -4898,69 +4898,69 @@
       "temperature": 26,
       "temperature_unit": "F",
       "wind_speed": "6 to 9 mph",
-      "wind_direction": "NE",
-      "short_forecast": "Partly Cloudy",
-      "detailed": "Partly cloudy, with a low around 26. Northeast wind 6 to 9 mph."
+      "wind_direction": "N",
+      "short_forecast": "Mostly Clear",
+      "detailed": "Mostly clear, with a low around 26. North wind 6 to 9 mph."
     },
     {
       "name": "Saturday",
       "start_time": "2026-03-28T06:00:00-04:00",
       "end_time": "2026-03-28T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 36,
+      "temperature": 37,
       "temperature_unit": "F",
-      "wind_speed": "10 mph",
+      "wind_speed": "9 mph",
       "wind_direction": "N",
       "short_forecast": "Partly Sunny",
-      "detailed": "Partly sunny, with a high near 36. North wind around 10 mph."
+      "detailed": "Partly sunny, with a high near 37. North wind around 9 mph."
     },
     {
       "name": "Saturday Night",
       "start_time": "2026-03-28T18:00:00-04:00",
       "end_time": "2026-03-29T06:00:00-04:00",
       "is_daytime": false,
-      "temperature": 27,
+      "temperature": 26,
       "temperature_unit": "F",
       "wind_speed": "7 mph",
       "wind_direction": "NW",
       "short_forecast": "Partly Cloudy",
-      "detailed": "Partly cloudy, with a low around 27. Northwest wind around 7 mph."
+      "detailed": "Partly cloudy, with a low around 26. Northwest wind around 7 mph."
     },
     {
       "name": "Sunday",
       "start_time": "2026-03-29T06:00:00-04:00",
       "end_time": "2026-03-29T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 47,
+      "temperature": 49,
       "temperature_unit": "F",
-      "wind_speed": "10 mph",
-      "wind_direction": "W",
+      "wind_speed": "7 to 12 mph",
+      "wind_direction": "SW",
       "short_forecast": "Mostly Sunny",
-      "detailed": "Mostly sunny, with a high near 47. West wind around 10 mph."
+      "detailed": "Mostly sunny, with a high near 49. Southwest wind 7 to 12 mph."
     },
     {
       "name": "Sunday Night",
       "start_time": "2026-03-29T18:00:00-04:00",
       "end_time": "2026-03-30T06:00:00-04:00",
       "is_daytime": false,
-      "temperature": 36,
+      "temperature": 38,
       "temperature_unit": "F",
-      "wind_speed": "10 mph",
+      "wind_speed": "12 mph",
       "wind_direction": "SW",
       "short_forecast": "Mostly Cloudy",
-      "detailed": "Mostly cloudy, with a low around 36. Southwest wind around 10 mph."
+      "detailed": "Mostly cloudy, with a low around 38. Southwest wind around 12 mph."
     },
     {
       "name": "Monday",
       "start_time": "2026-03-30T06:00:00-04:00",
       "end_time": "2026-03-30T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 55,
+      "temperature": 57,
       "temperature_unit": "F",
-      "wind_speed": "10 to 14 mph",
+      "wind_speed": "12 mph",
       "wind_direction": "SW",
-      "short_forecast": "Mostly Cloudy",
-      "detailed": "Mostly cloudy, with a high near 55. Southwest wind 10 to 14 mph, with gusts as high as 24 mph."
+      "short_forecast": "Partly Sunny",
+      "detailed": "Partly sunny, with a high near 57. Southwest wind around 12 mph."
     },
     {
       "name": "Monday Night",
@@ -4969,58 +4969,58 @@
       "is_daytime": false,
       "temperature": 41,
       "temperature_unit": "F",
-      "wind_speed": "9 to 14 mph",
+      "wind_speed": "10 mph",
       "wind_direction": "W",
       "short_forecast": "Mostly Cloudy",
-      "detailed": "Mostly cloudy, with a low around 41. West wind 9 to 14 mph."
+      "detailed": "Mostly cloudy, with a low around 41. West wind around 10 mph."
     },
     {
       "name": "Tuesday",
       "start_time": "2026-03-31T06:00:00-04:00",
       "end_time": "2026-03-31T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 50,
+      "temperature": 51,
       "temperature_unit": "F",
-      "wind_speed": "9 mph",
+      "wind_speed": "10 mph",
       "wind_direction": "N",
-      "short_forecast": "Chance Light Rain",
-      "detailed": "A chance of rain. Mostly cloudy, with a high near 50. North wind around 9 mph. Chance of precipitation is 30%."
+      "short_forecast": "Partly Sunny then Slight Chance Light Rain",
+      "detailed": "A slight chance of rain after 5pm. Partly sunny, with a high near 51. North wind around 10 mph."
     },
     {
       "name": "Tuesday Night",
       "start_time": "2026-03-31T18:00:00-04:00",
       "end_time": "2026-04-01T06:00:00-04:00",
       "is_daytime": false,
-      "temperature": 35,
+      "temperature": 38,
       "temperature_unit": "F",
-      "wind_speed": "9 mph",
-      "wind_direction": "E",
-      "short_forecast": "Chance Light Rain then Chance Rain And Snow",
-      "detailed": "A chance of rain before 5am, then a chance of rain and snow. Mostly cloudy, with a low around 35. East wind around 9 mph. Chance of precipitation is 30%."
+      "wind_speed": "10 mph",
+      "wind_direction": "SE",
+      "short_forecast": "Chance Light Rain",
+      "detailed": "A chance of rain. Mostly cloudy, with a low around 38. Southeast wind around 10 mph. Chance of precipitation is 50%."
     },
     {
       "name": "Wednesday",
       "start_time": "2026-04-01T06:00:00-04:00",
       "end_time": "2026-04-01T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 47,
+      "temperature": 54,
       "temperature_unit": "F",
       "wind_speed": "12 mph",
-      "wind_direction": "E",
-      "short_forecast": "Chance Rain And Snow",
-      "detailed": "A chance of rain and snow. Cloudy, with a high near 47. East wind around 12 mph. Chance of precipitation is 50%."
+      "wind_direction": "SE",
+      "short_forecast": "Chance Light Rain",
+      "detailed": "A chance of rain. Mostly cloudy, with a high near 54. Southeast wind around 12 mph. Chance of precipitation is 50%."
     },
     {
       "name": "Wednesday Night",
       "start_time": "2026-04-01T18:00:00-04:00",
       "end_time": "2026-04-02T06:00:00-04:00",
       "is_daytime": false,
-      "temperature": 40,
+      "temperature": 43,
       "temperature_unit": "F",
-      "wind_speed": "12 mph",
+      "wind_speed": "9 mph",
       "wind_direction": "S",
-      "short_forecast": "Chance Light Rain",
-      "detailed": "A chance of rain. Cloudy, with a low around 40. South wind around 12 mph."
+      "short_forecast": "Light Rain Likely",
+      "detailed": "Rain likely before 1am, then a chance of rain and isolated thunderstorms. Mostly cloudy, with a low around 43. South wind around 9 mph."
     }
   ],
   "nws_gridpoints": {
@@ -5028,108 +5028,80 @@
       "uom": "wmoUnit:degC",
       "values": [
         {
-          "validTime": "2026-03-26T01:00:00+00:00/PT2H",
-          "value": 6.111111111111111
+          "validTime": "2026-03-26T10:00:00+00:00/PT1H",
+          "value": 5
         },
         {
-          "validTime": "2026-03-26T03:00:00+00:00/PT1H",
+          "validTime": "2026-03-26T11:00:00+00:00/PT2H",
           "value": 5.555555555555555
-        },
-        {
-          "validTime": "2026-03-26T04:00:00+00:00/PT2H",
-          "value": 6.111111111111111
-        },
-        {
-          "validTime": "2026-03-26T06:00:00+00:00/PT3H",
-          "value": 5.555555555555555
-        },
-        {
-          "validTime": "2026-03-26T09:00:00+00:00/PT1H",
-          "value": 6.111111111111111
-        },
-        {
-          "validTime": "2026-03-26T10:00:00+00:00/PT2H",
-          "value": 6.666666666666667
-        },
-        {
-          "validTime": "2026-03-26T12:00:00+00:00/PT1H",
-          "value": 7.222222222222222
         },
         {
           "validTime": "2026-03-26T13:00:00+00:00/PT1H",
-          "value": 8.88888888888889
+          "value": 7.222222222222222
         },
         {
           "validTime": "2026-03-26T14:00:00+00:00/PT1H",
-          "value": 10
+          "value": 8.88888888888889
         },
         {
           "validTime": "2026-03-26T15:00:00+00:00/PT1H",
-          "value": 11.666666666666666
+          "value": 10.555555555555555
         },
         {
           "validTime": "2026-03-26T16:00:00+00:00/PT1H",
-          "value": 13.333333333333334
+          "value": 15.555555555555555
         },
         {
           "validTime": "2026-03-26T17:00:00+00:00/PT1H",
-          "value": 14.444444444444445
-        },
-        {
-          "validTime": "2026-03-26T18:00:00+00:00/PT1H",
-          "value": 15.555555555555555
-        },
-        {
-          "validTime": "2026-03-26T19:00:00+00:00/PT2H",
-          "value": 16.11111111111111
-        },
-        {
-          "validTime": "2026-03-26T21:00:00+00:00/PT1H",
           "value": 16.666666666666668
         },
         {
+          "validTime": "2026-03-26T18:00:00+00:00/PT1H",
+          "value": 18.333333333333332
+        },
+        {
+          "validTime": "2026-03-26T19:00:00+00:00/PT1H",
+          "value": 18.88888888888889
+        },
+        {
+          "validTime": "2026-03-26T20:00:00+00:00/PT1H",
+          "value": 20
+        },
+        {
+          "validTime": "2026-03-26T21:00:00+00:00/PT1H",
+          "value": 18.88888888888889
+        },
+        {
           "validTime": "2026-03-26T22:00:00+00:00/PT1H",
-          "value": 15.555555555555555
+          "value": 14.444444444444445
         },
         {
           "validTime": "2026-03-26T23:00:00+00:00/PT1H",
-          "value": 13.88888888888889
-        },
-        {
-          "validTime": "2026-03-27T00:00:00+00:00/PT1H",
           "value": 13.333333333333334
         },
         {
+          "validTime": "2026-03-27T00:00:00+00:00/PT1H",
+          "value": 12.777777777777779
+        },
+        {
           "validTime": "2026-03-27T01:00:00+00:00/PT1H",
-          "value": 11.666666666666666
-        },
-        {
-          "validTime": "2026-03-27T02:00:00+00:00/PT1H",
-          "value": 11.11111111111111
-        },
-        {
-          "validTime": "2026-03-27T03:00:00+00:00/PT1H",
           "value": 10.555555555555555
+        },
+        {
+          "validTime": "2026-03-27T02:00:00+00:00/PT2H",
+          "value": 10
         },
         {
           "validTime": "2026-03-27T04:00:00+00:00/PT1H",
-          "value": 10
-        },
-        {
-          "validTime": "2026-03-27T05:00:00+00:00/PT1H",
-          "value": 10.555555555555555
-        },
-        {
-          "validTime": "2026-03-27T06:00:00+00:00/PT1H",
-          "value": 10
-        },
-        {
-          "validTime": "2026-03-27T07:00:00+00:00/PT2H",
           "value": 9.444444444444445
         },
         {
+          "validTime": "2026-03-27T05:00:00+00:00/PT4H",
+          "value": 10
+        },
+        {
           "validTime": "2026-03-27T09:00:00+00:00/PT1H",
-          "value": 8.333333333333334
+          "value": 9.444444444444445
         },
         {
           "validTime": "2026-03-27T10:00:00+00:00/PT1H",
@@ -5144,80 +5116,88 @@
           "value": 6.111111111111111
         },
         {
-          "validTime": "2026-03-27T13:00:00+00:00/PT2H",
+          "validTime": "2026-03-27T13:00:00+00:00/PT1H",
+          "value": 5.555555555555555
+        },
+        {
+          "validTime": "2026-03-27T14:00:00+00:00/PT1H",
           "value": 6.666666666666667
         },
         {
           "validTime": "2026-03-27T15:00:00+00:00/PT1H",
-          "value": 7.222222222222222
-        },
-        {
-          "validTime": "2026-03-27T16:00:00+00:00/PT1H",
           "value": 7.777777777777778
         },
         {
-          "validTime": "2026-03-27T17:00:00+00:00/PT4H",
+          "validTime": "2026-03-27T16:00:00+00:00/PT1H",
           "value": 7.222222222222222
         },
         {
-          "validTime": "2026-03-27T21:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T17:00:00+00:00/PT2H",
+          "value": 7.777777777777778
+        },
+        {
+          "validTime": "2026-03-27T19:00:00+00:00/PT1H",
+          "value": 7.222222222222222
+        },
+        {
+          "validTime": "2026-03-27T20:00:00+00:00/PT2H",
           "value": 6.666666666666667
         },
         {
           "validTime": "2026-03-27T22:00:00+00:00/PT1H",
-          "value": 6.111111111111111
+          "value": 5.555555555555555
         },
         {
           "validTime": "2026-03-27T23:00:00+00:00/PT1H",
-          "value": 5
+          "value": 4.444444444444445
         },
         {
           "validTime": "2026-03-28T00:00:00+00:00/PT1H",
-          "value": 3.888888888888889
-        },
-        {
-          "validTime": "2026-03-28T01:00:00+00:00/PT1H",
           "value": 3.3333333333333335
         },
         {
-          "validTime": "2026-03-28T02:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T01:00:00+00:00/PT1H",
           "value": 2.7777777777777777
         },
         {
-          "validTime": "2026-03-28T03:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T02:00:00+00:00/PT1H",
           "value": 2.2222222222222223
         },
         {
-          "validTime": "2026-03-28T04:00:00+00:00/PT1H",
-          "value": 1.6666666666666667
+          "validTime": "2026-03-28T03:00:00+00:00/PT1H",
+          "value": 1.1111111111111112
         },
         {
-          "validTime": "2026-03-28T05:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T04:00:00+00:00/PT1H",
           "value": 0.5555555555555556
         },
         {
-          "validTime": "2026-03-28T06:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T05:00:00+00:00/PT1H",
           "value": 0
         },
         {
-          "validTime": "2026-03-28T07:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T06:00:00+00:00/PT1H",
           "value": -0.5555555555555556
         },
         {
-          "validTime": "2026-03-28T08:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T07:00:00+00:00/PT1H",
           "value": -1.1111111111111112
         },
         {
-          "validTime": "2026-03-28T09:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T08:00:00+00:00/PT1H",
           "value": -1.6666666666666667
         },
         {
-          "validTime": "2026-03-28T10:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T09:00:00+00:00/PT1H",
           "value": -2.2222222222222223
         },
         {
-          "validTime": "2026-03-28T11:00:00+00:00/PT2H",
+          "validTime": "2026-03-28T10:00:00+00:00/PT1H",
           "value": -2.7777777777777777
+        },
+        {
+          "validTime": "2026-03-28T11:00:00+00:00/PT2H",
+          "value": -3.3333333333333335
         },
         {
           "validTime": "2026-03-28T13:00:00+00:00/PT1H",
@@ -5236,15 +5216,19 @@
           "value": 0.5555555555555556
         },
         {
-          "validTime": "2026-03-28T17:00:00+00:00/PT1H",
-          "value": 1.1111111111111112
-        },
-        {
-          "validTime": "2026-03-28T18:00:00+00:00/PT4H",
+          "validTime": "2026-03-28T17:00:00+00:00/PT2H",
           "value": 1.6666666666666667
         },
         {
-          "validTime": "2026-03-28T22:00:00+00:00/PT2H",
+          "validTime": "2026-03-28T19:00:00+00:00/PT3H",
+          "value": 2.2222222222222223
+        },
+        {
+          "validTime": "2026-03-28T22:00:00+00:00/PT1H",
+          "value": 1.6666666666666667
+        },
+        {
+          "validTime": "2026-03-28T23:00:00+00:00/PT1H",
           "value": 1.1111111111111112
         },
         {
@@ -5252,24 +5236,36 @@
           "value": 0.5555555555555556
         },
         {
-          "validTime": "2026-03-29T01:00:00+00:00/PT2H",
+          "validTime": "2026-03-29T01:00:00+00:00/PT1H",
           "value": 0
         },
         {
-          "validTime": "2026-03-29T03:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T02:00:00+00:00/PT1H",
           "value": -0.5555555555555556
         },
         {
-          "validTime": "2026-03-29T04:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T03:00:00+00:00/PT1H",
           "value": -1.1111111111111112
         },
         {
-          "validTime": "2026-03-29T05:00:00+00:00/PT7H",
+          "validTime": "2026-03-29T04:00:00+00:00/PT1H",
           "value": -1.6666666666666667
         },
         {
+          "validTime": "2026-03-29T05:00:00+00:00/PT1H",
+          "value": -2.2222222222222223
+        },
+        {
+          "validTime": "2026-03-29T06:00:00+00:00/PT3H",
+          "value": -2.7777777777777777
+        },
+        {
+          "validTime": "2026-03-29T09:00:00+00:00/PT3H",
+          "value": -2.2222222222222223
+        },
+        {
           "validTime": "2026-03-29T12:00:00+00:00/PT1H",
-          "value": -1.1111111111111112
+          "value": -1.6666666666666667
         },
         {
           "validTime": "2026-03-29T13:00:00+00:00/PT1H",
@@ -5285,31 +5281,23 @@
         },
         {
           "validTime": "2026-03-29T16:00:00+00:00/PT1H",
-          "value": 4.444444444444445
+          "value": 5
         },
         {
           "validTime": "2026-03-29T17:00:00+00:00/PT1H",
-          "value": 5.555555555555555
+          "value": 6.111111111111111
         },
         {
           "validTime": "2026-03-29T18:00:00+00:00/PT1H",
-          "value": 6.666666666666667
-        },
-        {
-          "validTime": "2026-03-29T19:00:00+00:00/PT1H",
           "value": 7.222222222222222
         },
         {
-          "validTime": "2026-03-29T20:00:00+00:00/PT2H",
-          "value": 7.777777777777778
-        },
-        {
-          "validTime": "2026-03-29T22:00:00+00:00/PT1H",
-          "value": 7.222222222222222
+          "validTime": "2026-03-29T19:00:00+00:00/PT4H",
+          "value": 8.333333333333334
         },
         {
           "validTime": "2026-03-29T23:00:00+00:00/PT1H",
-          "value": 6.666666666666667
+          "value": 7.222222222222222
         },
         {
           "validTime": "2026-03-30T00:00:00+00:00/PT1H",
@@ -5317,27 +5305,27 @@
         },
         {
           "validTime": "2026-03-30T01:00:00+00:00/PT1H",
-          "value": 5
+          "value": 5.555555555555555
         },
         {
           "validTime": "2026-03-30T02:00:00+00:00/PT1H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-03-30T03:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T03:00:00+00:00/PT3H",
           "value": 3.888888888888889
         },
         {
-          "validTime": "2026-03-30T04:00:00+00:00/PT8H",
-          "value": 3.3333333333333335
+          "validTime": "2026-03-30T06:00:00+00:00/PT6H",
+          "value": 4.444444444444445
         },
         {
           "validTime": "2026-03-30T12:00:00+00:00/PT1H",
-          "value": 3.888888888888889
+          "value": 5
         },
         {
           "validTime": "2026-03-30T13:00:00+00:00/PT1H",
-          "value": 5.555555555555555
+          "value": 6.111111111111111
         },
         {
           "validTime": "2026-03-30T14:00:00+00:00/PT1H",
@@ -5353,19 +5341,27 @@
         },
         {
           "validTime": "2026-03-30T17:00:00+00:00/PT1H",
-          "value": 11.11111111111111
+          "value": 11.666666666666666
         },
         {
           "validTime": "2026-03-30T18:00:00+00:00/PT1H",
-          "value": 11.666666666666666
+          "value": 12.777777777777779
         },
         {
-          "validTime": "2026-03-30T19:00:00+00:00/PT4H",
-          "value": 12.222222222222221
+          "validTime": "2026-03-30T19:00:00+00:00/PT1H",
+          "value": 13.333333333333334
+        },
+        {
+          "validTime": "2026-03-30T20:00:00+00:00/PT2H",
+          "value": 13.88888888888889
+        },
+        {
+          "validTime": "2026-03-30T22:00:00+00:00/PT1H",
+          "value": 13.333333333333334
         },
         {
           "validTime": "2026-03-30T23:00:00+00:00/PT1H",
-          "value": 11.666666666666666
+          "value": 12.222222222222221
         },
         {
           "validTime": "2026-03-31T00:00:00+00:00/PT1H",
@@ -5380,140 +5376,156 @@
           "value": 10
         },
         {
-          "validTime": "2026-03-31T03:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T03:00:00+00:00/PT1H",
           "value": 9.444444444444445
         },
         {
-          "validTime": "2026-03-31T05:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T04:00:00+00:00/PT2H",
           "value": 8.88888888888889
         },
         {
-          "validTime": "2026-03-31T07:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T06:00:00+00:00/PT1H",
           "value": 8.333333333333334
         },
         {
-          "validTime": "2026-03-31T08:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T07:00:00+00:00/PT1H",
           "value": 7.777777777777778
         },
         {
-          "validTime": "2026-03-31T09:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T08:00:00+00:00/PT1H",
           "value": 7.222222222222222
         },
         {
-          "validTime": "2026-03-31T10:00:00+00:00/PT1H",
-          "value": 6.666666666666667
-        },
-        {
-          "validTime": "2026-03-31T11:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T09:00:00+00:00/PT1H",
           "value": 6.111111111111111
         },
         {
+          "validTime": "2026-03-31T10:00:00+00:00/PT1H",
+          "value": 5.555555555555555
+        },
+        {
+          "validTime": "2026-03-31T11:00:00+00:00/PT2H",
+          "value": 5
+        },
+        {
           "validTime": "2026-03-31T13:00:00+00:00/PT1H",
-          "value": 6.666666666666667
+          "value": 6.111111111111111
         },
         {
           "validTime": "2026-03-31T14:00:00+00:00/PT1H",
-          "value": 7.777777777777778
+          "value": 7.222222222222222
         },
         {
           "validTime": "2026-03-31T15:00:00+00:00/PT1H",
           "value": 8.333333333333334
         },
         {
-          "validTime": "2026-03-31T16:00:00+00:00/PT3H",
-          "value": 8.88888888888889
-        },
-        {
-          "validTime": "2026-03-31T19:00:00+00:00/PT3H",
+          "validTime": "2026-03-31T16:00:00+00:00/PT4H",
           "value": 9.444444444444445
         },
         {
-          "validTime": "2026-03-31T22:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T20:00:00+00:00/PT1H",
           "value": 8.88888888888889
+        },
+        {
+          "validTime": "2026-03-31T21:00:00+00:00/PT1H",
+          "value": 8.333333333333334
+        },
+        {
+          "validTime": "2026-03-31T22:00:00+00:00/PT1H",
+          "value": 7.777777777777778
         },
         {
           "validTime": "2026-03-31T23:00:00+00:00/PT1H",
-          "value": 7.777777777777778
+          "value": 6.666666666666667
         },
         {
           "validTime": "2026-04-01T00:00:00+00:00/PT1H",
-          "value": 6.666666666666667
+          "value": 6.111111111111111
         },
         {
-          "validTime": "2026-04-01T01:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T01:00:00+00:00/PT3H",
           "value": 5.555555555555555
         },
         {
-          "validTime": "2026-04-01T02:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T04:00:00+00:00/PT2H",
           "value": 5
         },
         {
-          "validTime": "2026-04-01T03:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T06:00:00+00:00/PT4H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-04-01T04:00:00+00:00/PT4H",
+          "validTime": "2026-04-01T10:00:00+00:00/PT2H",
           "value": 3.888888888888889
         },
         {
-          "validTime": "2026-04-01T08:00:00+00:00/PT2H",
-          "value": 3.3333333333333335
-        },
-        {
-          "validTime": "2026-04-01T10:00:00+00:00/PT3H",
-          "value": 2.7777777777777777
-        },
-        {
-          "validTime": "2026-04-01T13:00:00+00:00/PT1H",
-          "value": 3.3333333333333335
-        },
-        {
-          "validTime": "2026-04-01T14:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T12:00:00+00:00/PT1H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-04-01T15:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T13:00:00+00:00/PT1H",
+          "value": 5
+        },
+        {
+          "validTime": "2026-04-01T14:00:00+00:00/PT1H",
           "value": 5.555555555555555
         },
         {
-          "validTime": "2026-04-01T16:00:00+00:00/PT2H",
-          "value": 6.111111111111111
+          "validTime": "2026-04-01T15:00:00+00:00/PT1H",
+          "value": 6.666666666666667
+        },
+        {
+          "validTime": "2026-04-01T16:00:00+00:00/PT1H",
+          "value": 7.222222222222222
+        },
+        {
+          "validTime": "2026-04-01T17:00:00+00:00/PT1H",
+          "value": 8.333333333333334
         },
         {
           "validTime": "2026-04-01T18:00:00+00:00/PT1H",
-          "value": 6.666666666666667
+          "value": 8.88888888888889
         },
         {
-          "validTime": "2026-04-01T19:00:00+00:00/PT1H",
-          "value": 7.222222222222222
+          "validTime": "2026-04-01T19:00:00+00:00/PT5H",
+          "value": 9.444444444444445
         },
         {
-          "validTime": "2026-04-01T20:00:00+00:00/PT2H",
+          "validTime": "2026-04-02T00:00:00+00:00/PT1H",
+          "value": 8.88888888888889
+        },
+        {
+          "validTime": "2026-04-02T01:00:00+00:00/PT1H",
+          "value": 8.333333333333334
+        },
+        {
+          "validTime": "2026-04-02T02:00:00+00:00/PT2H",
           "value": 7.777777777777778
         },
         {
-          "validTime": "2026-04-01T22:00:00+00:00/PT1H",
+          "validTime": "2026-04-02T04:00:00+00:00/PT2H",
           "value": 7.222222222222222
         },
         {
-          "validTime": "2026-04-01T23:00:00+00:00/PT1H",
+          "validTime": "2026-04-02T06:00:00+00:00/PT1H",
           "value": 6.666666666666667
         },
         {
-          "validTime": "2026-04-02T00:00:00+00:00/PT8H",
-          "value": 6.111111111111111
+          "validTime": "2026-04-02T07:00:00+00:00/PT1H",
+          "value": 7.222222222222222
         },
         {
           "validTime": "2026-04-02T08:00:00+00:00/PT4H",
-          "value": 6.666666666666667
+          "value": 7.777777777777778
         },
         {
           "validTime": "2026-04-02T12:00:00+00:00/PT1H",
-          "value": 7.222222222222222
+          "value": 8.333333333333334
         },
         {
           "validTime": "2026-04-02T13:00:00+00:00/PT1H",
-          "value": 8.88888888888889
+          "value": 9.444444444444445
         },
         {
           "validTime": "2026-04-02T14:00:00+00:00/PT1H",
@@ -5521,42 +5533,42 @@
         },
         {
           "validTime": "2026-04-02T15:00:00+00:00/PT1H",
-          "value": 12.222222222222221
+          "value": 11.666666666666666
         },
         {
           "validTime": "2026-04-02T16:00:00+00:00/PT1H",
-          "value": 13.333333333333334
-        },
-        {
-          "validTime": "2026-04-02T17:00:00+00:00/PT1H",
-          "value": 14.444444444444445
-        },
-        {
-          "validTime": "2026-04-02T18:00:00+00:00/PT1H",
-          "value": 15
-        },
-        {
-          "validTime": "2026-04-02T19:00:00+00:00/PT3H",
-          "value": 15.555555555555555
-        },
-        {
-          "validTime": "2026-04-02T22:00:00+00:00/PT1H",
-          "value": 15
-        },
-        {
-          "validTime": "2026-04-02T23:00:00+00:00/PT1H",
-          "value": 13.88888888888889
-        },
-        {
-          "validTime": "2026-04-03T00:00:00+00:00/PT1H",
           "value": 12.777777777777779
         },
         {
-          "validTime": "2026-04-03T01:00:00+00:00/PT1H",
+          "validTime": "2026-04-02T17:00:00+00:00/PT1H",
+          "value": 13.333333333333334
+        },
+        {
+          "validTime": "2026-04-02T18:00:00+00:00/PT2H",
+          "value": 13.88888888888889
+        },
+        {
+          "validTime": "2026-04-02T20:00:00+00:00/PT1H",
+          "value": 13.333333333333334
+        },
+        {
+          "validTime": "2026-04-02T21:00:00+00:00/PT1H",
+          "value": 12.777777777777779
+        },
+        {
+          "validTime": "2026-04-02T22:00:00+00:00/PT1H",
+          "value": 12.222222222222221
+        },
+        {
+          "validTime": "2026-04-02T23:00:00+00:00/PT1H",
+          "value": 11.11111111111111
+        },
+        {
+          "validTime": "2026-04-03T00:00:00+00:00/PT1H",
           "value": 10.555555555555555
         },
         {
-          "validTime": "2026-04-03T02:00:00+00:00/PT1H",
+          "validTime": "2026-04-03T01:00:00+00:00/PT2H",
           "value": 10
         },
         {
@@ -5581,84 +5593,48 @@
       "uom": "wmoUnit:degC",
       "values": [
         {
-          "validTime": "2026-03-26T01:00:00+00:00/PT1H",
-          "value": -1.1111111111111112
-        },
-        {
-          "validTime": "2026-03-26T02:00:00+00:00/PT1H",
-          "value": 0.5555555555555556
-        },
-        {
-          "validTime": "2026-03-26T03:00:00+00:00/PT1H",
-          "value": 1.6666666666666667
-        },
-        {
-          "validTime": "2026-03-26T04:00:00+00:00/PT1H",
-          "value": 1.1111111111111112
-        },
-        {
-          "validTime": "2026-03-26T05:00:00+00:00/PT1H",
-          "value": 2.2222222222222223
-        },
-        {
-          "validTime": "2026-03-26T06:00:00+00:00/PT1H",
-          "value": 3.3333333333333335
-        },
-        {
-          "validTime": "2026-03-26T07:00:00+00:00/PT1H",
-          "value": 2.2222222222222223
-        },
-        {
-          "validTime": "2026-03-26T08:00:00+00:00/PT1H",
-          "value": 2.7777777777777777
-        },
-        {
-          "validTime": "2026-03-26T09:00:00+00:00/PT2H",
-          "value": 3.3333333333333335
-        },
-        {
-          "validTime": "2026-03-26T11:00:00+00:00/PT1H",
-          "value": 3.888888888888889
-        },
-        {
-          "validTime": "2026-03-26T12:00:00+00:00/PT1H",
+          "validTime": "2026-03-26T10:00:00+00:00/PT2H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-03-26T13:00:00+00:00/PT2H",
-          "value": 5.555555555555555
+          "validTime": "2026-03-26T12:00:00+00:00/PT1H",
+          "value": 5
         },
         {
-          "validTime": "2026-03-26T15:00:00+00:00/PT2H",
+          "validTime": "2026-03-26T13:00:00+00:00/PT4H",
           "value": 6.111111111111111
         },
         {
-          "validTime": "2026-03-26T17:00:00+00:00/PT3H",
+          "validTime": "2026-03-26T17:00:00+00:00/PT5H",
           "value": 6.666666666666667
         },
         {
-          "validTime": "2026-03-26T20:00:00+00:00/PT5H",
+          "validTime": "2026-03-26T22:00:00+00:00/PT2H",
           "value": 7.222222222222222
         },
         {
-          "validTime": "2026-03-27T01:00:00+00:00/PT3H",
-          "value": 7.777777777777778
-        },
-        {
-          "validTime": "2026-03-27T04:00:00+00:00/PT3H",
-          "value": 8.333333333333334
-        },
-        {
-          "validTime": "2026-03-27T07:00:00+00:00/PT2H",
-          "value": 7.777777777777778
-        },
-        {
-          "validTime": "2026-03-27T09:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T00:00:00+00:00/PT2H",
           "value": 6.666666666666667
         },
         {
+          "validTime": "2026-03-27T02:00:00+00:00/PT1H",
+          "value": 7.222222222222222
+        },
+        {
+          "validTime": "2026-03-27T03:00:00+00:00/PT3H",
+          "value": 7.777777777777778
+        },
+        {
+          "validTime": "2026-03-27T06:00:00+00:00/PT2H",
+          "value": 8.333333333333334
+        },
+        {
+          "validTime": "2026-03-27T08:00:00+00:00/PT2H",
+          "value": 7.777777777777778
+        },
+        {
           "validTime": "2026-03-27T10:00:00+00:00/PT1H",
-          "value": 5.555555555555555
+          "value": 6.111111111111111
         },
         {
           "validTime": "2026-03-27T11:00:00+00:00/PT1H",
@@ -5666,290 +5642,286 @@
         },
         {
           "validTime": "2026-03-27T12:00:00+00:00/PT1H",
-          "value": 3.3333333333333335
+          "value": 2.7777777777777777
         },
         {
           "validTime": "2026-03-27T13:00:00+00:00/PT1H",
-          "value": 2.7777777777777777
+          "value": 2.2222222222222223
         },
         {
           "validTime": "2026-03-27T14:00:00+00:00/PT1H",
-          "value": 1.6666666666666667
+          "value": 0.5555555555555556
         },
         {
           "validTime": "2026-03-27T15:00:00+00:00/PT1H",
-          "value": 0.5555555555555556
+          "value": -1.1111111111111112
         },
         {
           "validTime": "2026-03-27T16:00:00+00:00/PT1H",
-          "value": -0.5555555555555556
+          "value": -2.2222222222222223
         },
         {
           "validTime": "2026-03-27T17:00:00+00:00/PT1H",
-          "value": -1.1111111111111112
+          "value": -3.3333333333333335
         },
         {
           "validTime": "2026-03-27T18:00:00+00:00/PT1H",
-          "value": -2.2222222222222223
+          "value": -4.444444444444445
         },
         {
           "validTime": "2026-03-27T19:00:00+00:00/PT1H",
-          "value": -3.3333333333333335
+          "value": -5
         },
         {
           "validTime": "2026-03-27T20:00:00+00:00/PT1H",
-          "value": -3.888888888888889
-        },
-        {
-          "validTime": "2026-03-27T21:00:00+00:00/PT2H",
-          "value": -4.444444444444445
-        },
-        {
-          "validTime": "2026-03-27T23:00:00+00:00/PT2H",
-          "value": -5
-        },
-        {
-          "validTime": "2026-03-28T01:00:00+00:00/PT1H",
           "value": -5.555555555555555
         },
         {
-          "validTime": "2026-03-28T02:00:00+00:00/PT1H",
-          "value": -6.111111111111111
-        },
-        {
-          "validTime": "2026-03-28T03:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T21:00:00+00:00/PT1H",
           "value": -6.666666666666667
         },
         {
-          "validTime": "2026-03-28T04:00:00+00:00/PT1H",
-          "value": -7.222222222222222
-        },
-        {
-          "validTime": "2026-03-28T05:00:00+00:00/PT1H",
-          "value": -7.777777777777778
-        },
-        {
-          "validTime": "2026-03-28T06:00:00+00:00/PT1H",
-          "value": -8.333333333333334
-        },
-        {
-          "validTime": "2026-03-28T07:00:00+00:00/PT2H",
-          "value": -8.88888888888889
-        },
-        {
-          "validTime": "2026-03-28T09:00:00+00:00/PT2H",
-          "value": -9.444444444444445
-        },
-        {
-          "validTime": "2026-03-28T11:00:00+00:00/PT5H",
-          "value": -10
-        },
-        {
-          "validTime": "2026-03-28T16:00:00+00:00/PT2H",
-          "value": -10.555555555555555
-        },
-        {
-          "validTime": "2026-03-28T18:00:00+00:00/PT2H",
-          "value": -11.11111111111111
-        },
-        {
-          "validTime": "2026-03-28T20:00:00+00:00/PT3H",
-          "value": -10.555555555555555
-        },
-        {
-          "validTime": "2026-03-28T23:00:00+00:00/PT2H",
-          "value": -10
-        },
-        {
-          "validTime": "2026-03-29T01:00:00+00:00/PT2H",
-          "value": -10.555555555555555
-        },
-        {
-          "validTime": "2026-03-29T03:00:00+00:00/PT5H",
-          "value": -11.11111111111111
-        },
-        {
-          "validTime": "2026-03-29T08:00:00+00:00/PT3H",
-          "value": -10.555555555555555
-        },
-        {
-          "validTime": "2026-03-29T11:00:00+00:00/PT3H",
-          "value": -10
-        },
-        {
-          "validTime": "2026-03-29T14:00:00+00:00/PT2H",
-          "value": -9.444444444444445
-        },
-        {
-          "validTime": "2026-03-29T16:00:00+00:00/PT1H",
-          "value": -8.88888888888889
-        },
-        {
-          "validTime": "2026-03-29T17:00:00+00:00/PT1H",
-          "value": -8.333333333333334
-        },
-        {
-          "validTime": "2026-03-29T18:00:00+00:00/PT1H",
-          "value": -7.777777777777778
-        },
-        {
-          "validTime": "2026-03-29T19:00:00+00:00/PT1H",
-          "value": -7.222222222222222
-        },
-        {
-          "validTime": "2026-03-29T20:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T22:00:00+00:00/PT1H",
           "value": -6.111111111111111
         },
         {
-          "validTime": "2026-03-29T21:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T23:00:00+00:00/PT3H",
+          "value": -6.666666666666667
+        },
+        {
+          "validTime": "2026-03-28T02:00:00+00:00/PT1H",
+          "value": -7.222222222222222
+        },
+        {
+          "validTime": "2026-03-28T03:00:00+00:00/PT1H",
+          "value": -7.777777777777778
+        },
+        {
+          "validTime": "2026-03-28T04:00:00+00:00/PT4H",
+          "value": -8.333333333333334
+        },
+        {
+          "validTime": "2026-03-28T08:00:00+00:00/PT2H",
+          "value": -8.88888888888889
+        },
+        {
+          "validTime": "2026-03-28T10:00:00+00:00/PT1H",
+          "value": -9.444444444444445
+        },
+        {
+          "validTime": "2026-03-28T11:00:00+00:00/PT1H",
+          "value": -10
+        },
+        {
+          "validTime": "2026-03-28T12:00:00+00:00/PT2H",
+          "value": -10.555555555555555
+        },
+        {
+          "validTime": "2026-03-28T14:00:00+00:00/PT2H",
+          "value": -11.11111111111111
+        },
+        {
+          "validTime": "2026-03-28T16:00:00+00:00/PT2H",
+          "value": -11.666666666666666
+        },
+        {
+          "validTime": "2026-03-28T18:00:00+00:00/PT5H",
+          "value": -12.222222222222221
+        },
+        {
+          "validTime": "2026-03-28T23:00:00+00:00/PT6H",
+          "value": -11.666666666666666
+        },
+        {
+          "validTime": "2026-03-29T05:00:00+00:00/PT3H",
+          "value": -11.11111111111111
+        },
+        {
+          "validTime": "2026-03-29T08:00:00+00:00/PT5H",
+          "value": -10.555555555555555
+        },
+        {
+          "validTime": "2026-03-29T13:00:00+00:00/PT1H",
+          "value": -10
+        },
+        {
+          "validTime": "2026-03-29T14:00:00+00:00/PT1H",
+          "value": -9.444444444444445
+        },
+        {
+          "validTime": "2026-03-29T15:00:00+00:00/PT1H",
+          "value": -8.88888888888889
+        },
+        {
+          "validTime": "2026-03-29T16:00:00+00:00/PT1H",
+          "value": -7.777777777777778
+        },
+        {
+          "validTime": "2026-03-29T17:00:00+00:00/PT1H",
+          "value": -7.222222222222222
+        },
+        {
+          "validTime": "2026-03-29T18:00:00+00:00/PT1H",
+          "value": -6.111111111111111
+        },
+        {
+          "validTime": "2026-03-29T19:00:00+00:00/PT1H",
           "value": -5.555555555555555
         },
         {
-          "validTime": "2026-03-29T22:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T20:00:00+00:00/PT1H",
           "value": -5
         },
         {
-          "validTime": "2026-03-29T23:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T21:00:00+00:00/PT1H",
           "value": -4.444444444444445
         },
         {
-          "validTime": "2026-03-30T00:00:00+00:00/PT4H",
+          "validTime": "2026-03-29T22:00:00+00:00/PT2H",
           "value": -3.888888888888889
         },
         {
-          "validTime": "2026-03-30T04:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T00:00:00+00:00/PT2H",
           "value": -3.3333333333333335
         },
         {
-          "validTime": "2026-03-30T06:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T02:00:00+00:00/PT2H",
           "value": -2.7777777777777777
         },
         {
-          "validTime": "2026-03-30T07:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T04:00:00+00:00/PT1H",
           "value": -2.2222222222222223
         },
         {
-          "validTime": "2026-03-30T09:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T05:00:00+00:00/PT1H",
           "value": -1.6666666666666667
         },
         {
-          "validTime": "2026-03-30T10:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T06:00:00+00:00/PT2H",
           "value": -1.1111111111111112
         },
         {
-          "validTime": "2026-03-30T12:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T08:00:00+00:00/PT2H",
           "value": -0.5555555555555556
+        },
+        {
+          "validTime": "2026-03-30T10:00:00+00:00/PT2H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-03-30T12:00:00+00:00/PT1H",
+          "value": 0.5555555555555556
         },
         {
           "validTime": "2026-03-30T13:00:00+00:00/PT1H",
-          "value": 0
+          "value": 1.1111111111111112
         },
         {
           "validTime": "2026-03-30T14:00:00+00:00/PT1H",
-          "value": 1.1111111111111112
+          "value": 1.6666666666666667
         },
         {
           "validTime": "2026-03-30T15:00:00+00:00/PT1H",
-          "value": 1.6666666666666667
-        },
-        {
-          "validTime": "2026-03-30T16:00:00+00:00/PT3H",
           "value": 2.2222222222222223
         },
         {
-          "validTime": "2026-03-30T19:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T16:00:00+00:00/PT6H",
           "value": 2.7777777777777777
         },
         {
-          "validTime": "2026-03-30T21:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T22:00:00+00:00/PT2H",
           "value": 3.3333333333333335
         },
         {
-          "validTime": "2026-03-30T23:00:00+00:00/PT3H",
+          "validTime": "2026-03-31T00:00:00+00:00/PT1H",
           "value": 3.888888888888889
         },
         {
-          "validTime": "2026-03-31T02:00:00+00:00/PT6H",
+          "validTime": "2026-03-31T01:00:00+00:00/PT4H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-03-31T08:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T05:00:00+00:00/PT1H",
           "value": 3.888888888888889
+        },
+        {
+          "validTime": "2026-03-31T06:00:00+00:00/PT1H",
+          "value": 3.3333333333333335
+        },
+        {
+          "validTime": "2026-03-31T07:00:00+00:00/PT2H",
+          "value": 2.7777777777777777
         },
         {
           "validTime": "2026-03-31T09:00:00+00:00/PT1H",
-          "value": 3.3333333333333335
-        },
-        {
-          "validTime": "2026-03-31T10:00:00+00:00/PT1H",
-          "value": 2.7777777777777777
-        },
-        {
-          "validTime": "2026-03-31T11:00:00+00:00/PT1H",
-          "value": 1.6666666666666667
-        },
-        {
-          "validTime": "2026-03-31T12:00:00+00:00/PT1H",
-          "value": 1.1111111111111112
-        },
-        {
-          "validTime": "2026-03-31T13:00:00+00:00/PT1H",
-          "value": 0.5555555555555556
-        },
-        {
-          "validTime": "2026-03-31T14:00:00+00:00/PT18H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-04-01T08:00:00+00:00/PT5H",
-          "value": -0.5555555555555556
-        },
-        {
-          "validTime": "2026-04-01T13:00:00+00:00/PT2H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-04-01T15:00:00+00:00/PT1H",
-          "value": 0.5555555555555556
-        },
-        {
-          "validTime": "2026-04-01T16:00:00+00:00/PT2H",
-          "value": 1.1111111111111112
-        },
-        {
-          "validTime": "2026-04-01T18:00:00+00:00/PT2H",
-          "value": 1.6666666666666667
-        },
-        {
-          "validTime": "2026-04-01T20:00:00+00:00/PT3H",
           "value": 2.2222222222222223
         },
         {
-          "validTime": "2026-04-01T23:00:00+00:00/PT3H",
+          "validTime": "2026-03-31T10:00:00+00:00/PT1H",
+          "value": 1.6666666666666667
+        },
+        {
+          "validTime": "2026-03-31T11:00:00+00:00/PT1H",
+          "value": 1.1111111111111112
+        },
+        {
+          "validTime": "2026-03-31T12:00:00+00:00/PT1H",
+          "value": 0.5555555555555556
+        },
+        {
+          "validTime": "2026-03-31T13:00:00+00:00/PT4H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-03-31T17:00:00+00:00/PT9H",
+          "value": 0.5555555555555556
+        },
+        {
+          "validTime": "2026-04-01T02:00:00+00:00/PT3H",
+          "value": 1.1111111111111112
+        },
+        {
+          "validTime": "2026-04-01T05:00:00+00:00/PT3H",
+          "value": 1.6666666666666667
+        },
+        {
+          "validTime": "2026-04-01T08:00:00+00:00/PT5H",
+          "value": 2.2222222222222223
+        },
+        {
+          "validTime": "2026-04-01T13:00:00+00:00/PT2H",
           "value": 2.7777777777777777
         },
         {
-          "validTime": "2026-04-02T02:00:00+00:00/PT2H",
+          "validTime": "2026-04-01T15:00:00+00:00/PT1H",
           "value": 3.3333333333333335
         },
         {
-          "validTime": "2026-04-02T04:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T16:00:00+00:00/PT2H",
           "value": 3.888888888888889
         },
         {
-          "validTime": "2026-04-02T05:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T18:00:00+00:00/PT5H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-04-02T06:00:00+00:00/PT2H",
+          "validTime": "2026-04-01T23:00:00+00:00/PT5H",
           "value": 5
         },
         {
-          "validTime": "2026-04-02T08:00:00+00:00/PT4H",
+          "validTime": "2026-04-02T04:00:00+00:00/PT2H",
           "value": 5.555555555555555
         },
         {
-          "validTime": "2026-04-02T12:00:00+00:00/PT1H",
+          "validTime": "2026-04-02T06:00:00+00:00/PT1H",
+          "value": 6.111111111111111
+        },
+        {
+          "validTime": "2026-04-02T07:00:00+00:00/PT4H",
+          "value": 6.666666666666667
+        },
+        {
+          "validTime": "2026-04-02T11:00:00+00:00/PT2H",
           "value": 6.111111111111111
         },
         {
@@ -5958,15 +5930,23 @@
         },
         {
           "validTime": "2026-04-02T14:00:00+00:00/PT1H",
+          "value": 7.222222222222222
+        },
+        {
+          "validTime": "2026-04-02T15:00:00+00:00/PT3H",
           "value": 7.777777777777778
         },
         {
-          "validTime": "2026-04-02T15:00:00+00:00/PT8H",
-          "value": 8.333333333333334
+          "validTime": "2026-04-02T18:00:00+00:00/PT2H",
+          "value": 7.222222222222222
+        },
+        {
+          "validTime": "2026-04-02T20:00:00+00:00/PT3H",
+          "value": 6.666666666666667
         },
         {
           "validTime": "2026-04-02T23:00:00+00:00/PT2H",
-          "value": 7.777777777777778
+          "value": 6.111111111111111
         }
       ]
     },
@@ -5974,494 +5954,462 @@
       "uom": "wmoUnit:percent",
       "values": [
         {
-          "validTime": "2026-03-26T01:00:00+00:00/PT4H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-26T05:00:00+00:00/PT2H",
-          "value": 100
-        },
-        {
-          "validTime": "2026-03-26T07:00:00+00:00/PT1H",
-          "value": 26
-        },
-        {
-          "validTime": "2026-03-26T08:00:00+00:00/PT1H",
-          "value": 22
-        },
-        {
-          "validTime": "2026-03-26T09:00:00+00:00/PT1H",
+          "validTime": "2026-03-26T10:00:00+00:00/PT2H",
           "value": 20
-        },
-        {
-          "validTime": "2026-03-26T10:00:00+00:00/PT1H",
-          "value": 19
-        },
-        {
-          "validTime": "2026-03-26T11:00:00+00:00/PT1H",
-          "value": 16
         },
         {
           "validTime": "2026-03-26T12:00:00+00:00/PT1H",
-          "value": 15
-        },
-        {
-          "validTime": "2026-03-26T13:00:00+00:00/PT1H",
-          "value": 12
-        },
-        {
-          "validTime": "2026-03-26T14:00:00+00:00/PT1H",
-          "value": 10
-        },
-        {
-          "validTime": "2026-03-26T15:00:00+00:00/PT1H",
-          "value": 8
-        },
-        {
-          "validTime": "2026-03-26T16:00:00+00:00/PT2H",
-          "value": 7
-        },
-        {
-          "validTime": "2026-03-26T18:00:00+00:00/PT3H",
-          "value": 6
-        },
-        {
-          "validTime": "2026-03-26T21:00:00+00:00/PT1H",
-          "value": 12
-        },
-        {
-          "validTime": "2026-03-26T22:00:00+00:00/PT1H",
           "value": 19
         },
         {
-          "validTime": "2026-03-26T23:00:00+00:00/PT1H",
-          "value": 35
+          "validTime": "2026-03-26T13:00:00+00:00/PT1H",
+          "value": 14
         },
         {
-          "validTime": "2026-03-27T00:00:00+00:00/PT1H",
-          "value": 68
+          "validTime": "2026-03-26T14:00:00+00:00/PT1H",
+          "value": 8
         },
         {
-          "validTime": "2026-03-27T01:00:00+00:00/PT1H",
-          "value": 83
+          "validTime": "2026-03-26T15:00:00+00:00/PT2H",
+          "value": 3
         },
         {
-          "validTime": "2026-03-27T02:00:00+00:00/PT1H",
-          "value": 88
+          "validTime": "2026-03-26T17:00:00+00:00/PT2H",
+          "value": 2
         },
         {
-          "validTime": "2026-03-27T03:00:00+00:00/PT1H",
-          "value": 85
+          "validTime": "2026-03-26T19:00:00+00:00/PT1H",
+          "value": 4
         },
         {
-          "validTime": "2026-03-27T04:00:00+00:00/PT1H",
-          "value": 73
+          "validTime": "2026-03-26T20:00:00+00:00/PT1H",
+          "value": 5
         },
         {
-          "validTime": "2026-03-27T05:00:00+00:00/PT1H",
-          "value": 66
+          "validTime": "2026-03-26T21:00:00+00:00/PT1H",
+          "value": 7
         },
         {
-          "validTime": "2026-03-27T06:00:00+00:00/PT1H",
-          "value": 59
-        },
-        {
-          "validTime": "2026-03-27T07:00:00+00:00/PT1H",
-          "value": 61
-        },
-        {
-          "validTime": "2026-03-27T08:00:00+00:00/PT1H",
-          "value": 57
-        },
-        {
-          "validTime": "2026-03-27T09:00:00+00:00/PT1H",
-          "value": 52
-        },
-        {
-          "validTime": "2026-03-27T10:00:00+00:00/PT1H",
-          "value": 47
-        },
-        {
-          "validTime": "2026-03-27T11:00:00+00:00/PT1H",
-          "value": 37
-        },
-        {
-          "validTime": "2026-03-27T12:00:00+00:00/PT1H",
-          "value": 28
-        },
-        {
-          "validTime": "2026-03-27T13:00:00+00:00/PT1H",
-          "value": 25
-        },
-        {
-          "validTime": "2026-03-27T14:00:00+00:00/PT1H",
+          "validTime": "2026-03-26T22:00:00+00:00/PT1H",
           "value": 22
         },
         {
-          "validTime": "2026-03-27T15:00:00+00:00/PT1H",
+          "validTime": "2026-03-26T23:00:00+00:00/PT1H",
+          "value": 36
+        },
+        {
+          "validTime": "2026-03-27T00:00:00+00:00/PT1H",
+          "value": 51
+        },
+        {
+          "validTime": "2026-03-27T01:00:00+00:00/PT1H",
+          "value": 59
+        },
+        {
+          "validTime": "2026-03-27T02:00:00+00:00/PT1H",
+          "value": 66
+        },
+        {
+          "validTime": "2026-03-27T03:00:00+00:00/PT1H",
+          "value": 74
+        },
+        {
+          "validTime": "2026-03-27T04:00:00+00:00/PT1H",
+          "value": 65
+        },
+        {
+          "validTime": "2026-03-27T05:00:00+00:00/PT1H",
+          "value": 56
+        },
+        {
+          "validTime": "2026-03-27T06:00:00+00:00/PT1H",
+          "value": 47
+        },
+        {
+          "validTime": "2026-03-27T07:00:00+00:00/PT1H",
+          "value": 41
+        },
+        {
+          "validTime": "2026-03-27T08:00:00+00:00/PT1H",
+          "value": 35
+        },
+        {
+          "validTime": "2026-03-27T09:00:00+00:00/PT1H",
+          "value": 29
+        },
+        {
+          "validTime": "2026-03-27T10:00:00+00:00/PT1H",
+          "value": 24
+        },
+        {
+          "validTime": "2026-03-27T11:00:00+00:00/PT1H",
           "value": 20
         },
         {
-          "validTime": "2026-03-27T16:00:00+00:00/PT1H",
-          "value": 16
+          "validTime": "2026-03-27T12:00:00+00:00/PT1H",
+          "value": 15
         },
         {
-          "validTime": "2026-03-27T17:00:00+00:00/PT1H",
-          "value": 12
-        },
-        {
-          "validTime": "2026-03-27T18:00:00+00:00/PT1H",
-          "value": 8
-        },
-        {
-          "validTime": "2026-03-27T19:00:00+00:00/PT1H",
-          "value": 7
-        },
-        {
-          "validTime": "2026-03-27T20:00:00+00:00/PT1H",
-          "value": 6
-        },
-        {
-          "validTime": "2026-03-27T21:00:00+00:00/PT1H",
-          "value": 5
-        },
-        {
-          "validTime": "2026-03-27T22:00:00+00:00/PT2H",
-          "value": 4
-        },
-        {
-          "validTime": "2026-03-28T00:00:00+00:00/PT2H",
-          "value": 3
-        },
-        {
-          "validTime": "2026-03-28T02:00:00+00:00/PT4H",
-          "value": 4
-        },
-        {
-          "validTime": "2026-03-28T06:00:00+00:00/PT2H",
-          "value": 6
-        },
-        {
-          "validTime": "2026-03-28T08:00:00+00:00/PT2H",
-          "value": 7
-        },
-        {
-          "validTime": "2026-03-28T10:00:00+00:00/PT2H",
-          "value": 6
-        },
-        {
-          "validTime": "2026-03-28T12:00:00+00:00/PT6H",
-          "value": 2
-        },
-        {
-          "validTime": "2026-03-28T18:00:00+00:00/PT6H",
-          "value": 3
-        },
-        {
-          "validTime": "2026-03-29T00:00:00+00:00/PT12H",
-          "value": 1
-        },
-        {
-          "validTime": "2026-03-29T12:00:00+00:00/PT13H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-30T01:00:00+00:00/PT5H",
-          "value": 1
-        },
-        {
-          "validTime": "2026-03-30T06:00:00+00:00/PT4H",
-          "value": 2
-        },
-        {
-          "validTime": "2026-03-30T10:00:00+00:00/PT1H",
-          "value": 3
-        },
-        {
-          "validTime": "2026-03-30T11:00:00+00:00/PT1H",
-          "value": 5
-        },
-        {
-          "validTime": "2026-03-30T12:00:00+00:00/PT1H",
-          "value": 6
-        },
-        {
-          "validTime": "2026-03-30T13:00:00+00:00/PT1H",
-          "value": 7
-        },
-        {
-          "validTime": "2026-03-30T14:00:00+00:00/PT1H",
-          "value": 8
-        },
-        {
-          "validTime": "2026-03-30T15:00:00+00:00/PT1H",
-          "value": 9
-        },
-        {
-          "validTime": "2026-03-30T16:00:00+00:00/PT2H",
-          "value": 10
-        },
-        {
-          "validTime": "2026-03-30T18:00:00+00:00/PT2H",
-          "value": 11
-        },
-        {
-          "validTime": "2026-03-30T20:00:00+00:00/PT1H",
-          "value": 12
-        },
-        {
-          "validTime": "2026-03-30T21:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T13:00:00+00:00/PT1H",
           "value": 13
         },
         {
-          "validTime": "2026-03-30T22:00:00+00:00/PT2H",
-          "value": 12
+          "validTime": "2026-03-27T14:00:00+00:00/PT1H",
+          "value": 10
         },
         {
-          "validTime": "2026-03-31T00:00:00+00:00/PT2H",
-          "value": 11
+          "validTime": "2026-03-27T15:00:00+00:00/PT1H",
+          "value": 8
+        },
+        {
+          "validTime": "2026-03-27T16:00:00+00:00/PT1H",
+          "value": 6
+        },
+        {
+          "validTime": "2026-03-27T17:00:00+00:00/PT1H",
+          "value": 4
+        },
+        {
+          "validTime": "2026-03-27T18:00:00+00:00/PT5H",
+          "value": 2
+        },
+        {
+          "validTime": "2026-03-27T23:00:00+00:00/PT5H",
+          "value": 1
+        },
+        {
+          "validTime": "2026-03-28T04:00:00+00:00/PT2H",
+          "value": 2
+        },
+        {
+          "validTime": "2026-03-28T06:00:00+00:00/PT2H",
+          "value": 3
+        },
+        {
+          "validTime": "2026-03-28T08:00:00+00:00/PT2H",
+          "value": 4
+        },
+        {
+          "validTime": "2026-03-28T10:00:00+00:00/PT1H",
+          "value": 3
+        },
+        {
+          "validTime": "2026-03-28T11:00:00+00:00/PT1H",
+          "value": 2
+        },
+        {
+          "validTime": "2026-03-28T12:00:00+00:00/PT8H",
+          "value": 1
+        },
+        {
+          "validTime": "2026-03-28T20:00:00+00:00/PT3H",
+          "value": 2
+        },
+        {
+          "validTime": "2026-03-28T23:00:00+00:00/PT3H",
+          "value": 1
+        },
+        {
+          "validTime": "2026-03-29T02:00:00+00:00/P1DT1H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-03-30T03:00:00+00:00/PT6H",
+          "value": 1
+        },
+        {
+          "validTime": "2026-03-30T09:00:00+00:00/PT5H",
+          "value": 2
+        },
+        {
+          "validTime": "2026-03-30T14:00:00+00:00/PT3H",
+          "value": 3
+        },
+        {
+          "validTime": "2026-03-30T17:00:00+00:00/PT5H",
+          "value": 4
+        },
+        {
+          "validTime": "2026-03-30T22:00:00+00:00/PT3H",
+          "value": 3
+        },
+        {
+          "validTime": "2026-03-31T01:00:00+00:00/PT1H",
+          "value": 5
         },
         {
           "validTime": "2026-03-31T02:00:00+00:00/PT1H",
-          "value": 10
+          "value": 7
         },
         {
           "validTime": "2026-03-31T03:00:00+00:00/PT1H",
           "value": 9
         },
         {
-          "validTime": "2026-03-31T04:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T04:00:00+00:00/PT1H",
           "value": 10
         },
         {
-          "validTime": "2026-03-31T06:00:00+00:00/PT2H",
-          "value": 11
-        },
-        {
-          "validTime": "2026-03-31T08:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T05:00:00+00:00/PT1H",
           "value": 12
         },
         {
+          "validTime": "2026-03-31T06:00:00+00:00/PT1H",
+          "value": 14
+        },
+        {
+          "validTime": "2026-03-31T07:00:00+00:00/PT1H",
+          "value": 13
+        },
+        {
+          "validTime": "2026-03-31T08:00:00+00:00/PT1H",
+          "value": 12
+        },
+        {
+          "validTime": "2026-03-31T09:00:00+00:00/PT1H",
+          "value": 11
+        },
+        {
           "validTime": "2026-03-31T10:00:00+00:00/PT1H",
-          "value": 16
+          "value": 9
         },
         {
           "validTime": "2026-03-31T11:00:00+00:00/PT1H",
-          "value": 19
+          "value": 8
         },
         {
-          "validTime": "2026-03-31T12:00:00+00:00/PT1H",
-          "value": 22
+          "validTime": "2026-03-31T12:00:00+00:00/PT2H",
+          "value": 7
         },
         {
-          "validTime": "2026-03-31T13:00:00+00:00/PT1H",
-          "value": 25
+          "validTime": "2026-03-31T14:00:00+00:00/PT3H",
+          "value": 8
         },
         {
-          "validTime": "2026-03-31T14:00:00+00:00/PT1H",
-          "value": 28
+          "validTime": "2026-03-31T17:00:00+00:00/PT2H",
+          "value": 9
         },
         {
-          "validTime": "2026-03-31T15:00:00+00:00/PT1H",
-          "value": 32
+          "validTime": "2026-03-31T19:00:00+00:00/PT1H",
+          "value": 12
         },
         {
-          "validTime": "2026-03-31T16:00:00+00:00/PT3H",
-          "value": 31
+          "validTime": "2026-03-31T20:00:00+00:00/PT1H",
+          "value": 14
         },
         {
-          "validTime": "2026-03-31T19:00:00+00:00/PT3H",
-          "value": 30
+          "validTime": "2026-03-31T21:00:00+00:00/PT1H",
+          "value": 17
         },
         {
           "validTime": "2026-03-31T22:00:00+00:00/PT1H",
-          "value": 29
-        },
-        {
-          "validTime": "2026-03-31T23:00:00+00:00/PT1H",
-          "value": 28
-        },
-        {
-          "validTime": "2026-04-01T00:00:00+00:00/PT2H",
-          "value": 22
-        },
-        {
-          "validTime": "2026-04-01T02:00:00+00:00/PT1H",
-          "value": 21
-        },
-        {
-          "validTime": "2026-04-01T03:00:00+00:00/PT1H",
           "value": 20
         },
         {
-          "validTime": "2026-04-01T04:00:00+00:00/PT1H",
-          "value": 21
+          "validTime": "2026-03-31T23:00:00+00:00/PT1H",
+          "value": 22
         },
         {
-          "validTime": "2026-04-01T05:00:00+00:00/PT1H",
-          "value": 23
-        },
-        {
-          "validTime": "2026-04-01T06:00:00+00:00/PT1H",
-          "value": 26
-        },
-        {
-          "validTime": "2026-04-01T07:00:00+00:00/PT1H",
-          "value": 28
-        },
-        {
-          "validTime": "2026-04-01T08:00:00+00:00/PT1H",
-          "value": 30
-        },
-        {
-          "validTime": "2026-04-01T09:00:00+00:00/PT1H",
-          "value": 32
-        },
-        {
-          "validTime": "2026-04-01T10:00:00+00:00/PT1H",
-          "value": 34
-        },
-        {
-          "validTime": "2026-04-01T11:00:00+00:00/PT1H",
-          "value": 36
-        },
-        {
-          "validTime": "2026-04-01T12:00:00+00:00/PT1H",
-          "value": 42
-        },
-        {
-          "validTime": "2026-04-01T13:00:00+00:00/PT1H",
-          "value": 44
-        },
-        {
-          "validTime": "2026-04-01T14:00:00+00:00/PT1H",
-          "value": 47
-        },
-        {
-          "validTime": "2026-04-01T15:00:00+00:00/PT5H",
-          "value": 49
-        },
-        {
-          "validTime": "2026-04-01T20:00:00+00:00/PT5H",
-          "value": 48
-        },
-        {
-          "validTime": "2026-04-02T01:00:00+00:00/PT3H",
-          "value": 47
-        },
-        {
-          "validTime": "2026-04-02T04:00:00+00:00/PT1H",
-          "value": 46
-        },
-        {
-          "validTime": "2026-04-02T05:00:00+00:00/PT1H",
-          "value": 45
-        },
-        {
-          "validTime": "2026-04-02T06:00:00+00:00/PT1H",
-          "value": 43
-        },
-        {
-          "validTime": "2026-04-02T07:00:00+00:00/PT1H",
-          "value": 42
-        },
-        {
-          "validTime": "2026-04-02T08:00:00+00:00/PT1H",
-          "value": 41
-        },
-        {
-          "validTime": "2026-04-02T09:00:00+00:00/PT1H",
-          "value": 40
-        },
-        {
-          "validTime": "2026-04-02T10:00:00+00:00/PT1H",
-          "value": 39
-        },
-        {
-          "validTime": "2026-04-02T11:00:00+00:00/PT1H",
-          "value": 37
-        },
-        {
-          "validTime": "2026-04-02T12:00:00+00:00/PT1H",
-          "value": 29
-        },
-        {
-          "validTime": "2026-04-02T13:00:00+00:00/PT1H",
-          "value": 28
-        },
-        {
-          "validTime": "2026-04-02T14:00:00+00:00/PT1H",
-          "value": 26
-        },
-        {
-          "validTime": "2026-04-02T15:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T00:00:00+00:00/PT1H",
           "value": 25
         },
         {
-          "validTime": "2026-04-02T16:00:00+00:00/PT1H",
-          "value": 26
+          "validTime": "2026-04-01T01:00:00+00:00/PT1H",
+          "value": 29
         },
         {
-          "validTime": "2026-04-02T17:00:00+00:00/PT1H",
-          "value": 28
+          "validTime": "2026-04-01T02:00:00+00:00/PT1H",
+          "value": 34
         },
         {
-          "validTime": "2026-04-02T18:00:00+00:00/PT1H",
-          "value": 36
-        },
-        {
-          "validTime": "2026-04-02T19:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T03:00:00+00:00/PT1H",
           "value": 38
         },
         {
-          "validTime": "2026-04-02T20:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T04:00:00+00:00/PT1H",
+          "value": 42
+        },
+        {
+          "validTime": "2026-04-01T05:00:00+00:00/PT1H",
+          "value": 47
+        },
+        {
+          "validTime": "2026-04-01T06:00:00+00:00/PT1H",
+          "value": 51
+        },
+        {
+          "validTime": "2026-04-01T07:00:00+00:00/PT1H",
+          "value": 48
+        },
+        {
+          "validTime": "2026-04-01T08:00:00+00:00/PT1H",
+          "value": 45
+        },
+        {
+          "validTime": "2026-04-01T09:00:00+00:00/PT1H",
+          "value": 43
+        },
+        {
+          "validTime": "2026-04-01T10:00:00+00:00/PT1H",
           "value": 40
         },
         {
+          "validTime": "2026-04-01T11:00:00+00:00/PT1H",
+          "value": 37
+        },
+        {
+          "validTime": "2026-04-01T12:00:00+00:00/PT1H",
+          "value": 34
+        },
+        {
+          "validTime": "2026-04-01T13:00:00+00:00/PT1H",
+          "value": 35
+        },
+        {
+          "validTime": "2026-04-01T14:00:00+00:00/PT1H",
+          "value": 36
+        },
+        {
+          "validTime": "2026-04-01T15:00:00+00:00/PT1H",
+          "value": 38
+        },
+        {
+          "validTime": "2026-04-01T16:00:00+00:00/PT1H",
+          "value": 39
+        },
+        {
+          "validTime": "2026-04-01T17:00:00+00:00/PT1H",
+          "value": 40
+        },
+        {
+          "validTime": "2026-04-01T18:00:00+00:00/PT1H",
+          "value": 41
+        },
+        {
+          "validTime": "2026-04-01T19:00:00+00:00/PT1H",
+          "value": 44
+        },
+        {
+          "validTime": "2026-04-01T20:00:00+00:00/PT1H",
+          "value": 46
+        },
+        {
+          "validTime": "2026-04-01T21:00:00+00:00/PT1H",
+          "value": 49
+        },
+        {
+          "validTime": "2026-04-01T22:00:00+00:00/PT1H",
+          "value": 52
+        },
+        {
+          "validTime": "2026-04-01T23:00:00+00:00/PT1H",
+          "value": 54
+        },
+        {
+          "validTime": "2026-04-02T00:00:00+00:00/PT1H",
+          "value": 57
+        },
+        {
+          "validTime": "2026-04-02T01:00:00+00:00/PT1H",
+          "value": 55
+        },
+        {
+          "validTime": "2026-04-02T02:00:00+00:00/PT1H",
+          "value": 53
+        },
+        {
+          "validTime": "2026-04-02T03:00:00+00:00/PT1H",
+          "value": 51
+        },
+        {
+          "validTime": "2026-04-02T04:00:00+00:00/PT1H",
+          "value": 48
+        },
+        {
+          "validTime": "2026-04-02T05:00:00+00:00/PT1H",
+          "value": 46
+        },
+        {
+          "validTime": "2026-04-02T06:00:00+00:00/PT1H",
+          "value": 44
+        },
+        {
+          "validTime": "2026-04-02T07:00:00+00:00/PT1H",
+          "value": 39
+        },
+        {
+          "validTime": "2026-04-02T08:00:00+00:00/PT1H",
+          "value": 33
+        },
+        {
+          "validTime": "2026-04-02T09:00:00+00:00/PT1H",
+          "value": 28
+        },
+        {
+          "validTime": "2026-04-02T10:00:00+00:00/PT1H",
+          "value": 23
+        },
+        {
+          "validTime": "2026-04-02T11:00:00+00:00/PT1H",
+          "value": 17
+        },
+        {
+          "validTime": "2026-04-02T12:00:00+00:00/PT1H",
+          "value": 12
+        },
+        {
+          "validTime": "2026-04-02T13:00:00+00:00/PT1H",
+          "value": 14
+        },
+        {
+          "validTime": "2026-04-02T14:00:00+00:00/PT1H",
+          "value": 16
+        },
+        {
+          "validTime": "2026-04-02T15:00:00+00:00/PT1H",
+          "value": 19
+        },
+        {
+          "validTime": "2026-04-02T16:00:00+00:00/PT1H",
+          "value": 21
+        },
+        {
+          "validTime": "2026-04-02T17:00:00+00:00/PT1H",
+          "value": 23
+        },
+        {
+          "validTime": "2026-04-02T18:00:00+00:00/PT1H",
+          "value": 25
+        },
+        {
+          "validTime": "2026-04-02T19:00:00+00:00/PT1H",
+          "value": 22
+        },
+        {
+          "validTime": "2026-04-02T20:00:00+00:00/PT1H",
+          "value": 20
+        },
+        {
           "validTime": "2026-04-02T21:00:00+00:00/PT1H",
-          "value": 42
+          "value": 17
+        },
+        {
+          "validTime": "2026-04-02T22:00:00+00:00/PT1H",
+          "value": 14
+        },
+        {
+          "validTime": "2026-04-02T23:00:00+00:00/PT1H",
+          "value": 12
+        },
+        {
+          "validTime": "2026-04-03T00:00:00+00:00/PT1H",
+          "value": 9
         }
       ]
     },
     "quantitativePrecipitation": {
       "uom": "wmoUnit:mm",
       "values": [
-        {
-          "validTime": "2026-03-26T01:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-26T02:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-26T03:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-26T04:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-26T05:00:00+00:00/PT1H",
-          "value": 2.0319999545812695
-        },
-        {
-          "validTime": "2026-03-26T06:00:00+00:00/PT1H",
-          "value": 1.2700000189244731
-        },
-        {
-          "validTime": "2026-03-26T07:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-26T08:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-26T09:00:00+00:00/PT1H",
-          "value": 0
-        },
         {
           "validTime": "2026-03-26T10:00:00+00:00/PT1H",
           "value": 0
@@ -6516,71 +6464,71 @@
         },
         {
           "validTime": "2026-03-26T23:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-27T00:00:00+00:00/PT1H",
-          "value": 1.2700000189244731
+          "value": 0.507999988645311
         },
         {
           "validTime": "2026-03-27T01:00:00+00:00/PT1H",
-          "value": 1.523999965935933
-        },
-        {
-          "validTime": "2026-03-27T02:00:00+00:00/PT1H",
-          "value": 1.523999965935933
-        },
-        {
-          "validTime": "2026-03-27T03:00:00+00:00/PT1H",
-          "value": 1.523999965935933
-        },
-        {
-          "validTime": "2026-03-27T04:00:00+00:00/PT1H",
-          "value": 1.523999965935933
-        },
-        {
-          "validTime": "2026-03-27T05:00:00+00:00/PT1H",
           "value": 1.2700000189244731
         },
         {
+          "validTime": "2026-03-27T02:00:00+00:00/PT1H",
+          "value": 1.2700000189244731
+        },
+        {
+          "validTime": "2026-03-27T03:00:00+00:00/PT1H",
+          "value": 1.2700000189244731
+        },
+        {
+          "validTime": "2026-03-27T04:00:00+00:00/PT1H",
+          "value": 1.2700000189244731
+        },
+        {
+          "validTime": "2026-03-27T05:00:00+00:00/PT1H",
+          "value": 1.015999977290622
+        },
+        {
           "validTime": "2026-03-27T06:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         },
         {
           "validTime": "2026-03-27T07:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         },
         {
           "validTime": "2026-03-27T08:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         },
         {
           "validTime": "2026-03-27T09:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         },
         {
           "validTime": "2026-03-27T10:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-27T11:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-27T12:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         },
         {
           "validTime": "2026-03-27T13:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         },
         {
           "validTime": "2026-03-27T14:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-27T15:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-27T16:00:00+00:00/PT1H",
@@ -6952,43 +6900,43 @@
         },
         {
           "validTime": "2026-03-31T12:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-31T13:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-31T14:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-31T15:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         },
         {
           "validTime": "2026-03-31T16:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         },
         {
           "validTime": "2026-03-31T17:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         },
         {
           "validTime": "2026-03-31T18:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-31T19:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-31T20:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-31T21:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-03-31T22:00:00+00:00/PT1H",
@@ -7004,19 +6952,19 @@
         },
         {
           "validTime": "2026-04-01T01:00:00+00:00/PT1H",
-          "value": 0
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-01T02:00:00+00:00/PT1H",
-          "value": 0
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-01T03:00:00+00:00/PT1H",
-          "value": 0
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-01T04:00:00+00:00/PT1H",
-          "value": 0
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-01T05:00:00+00:00/PT1H",
@@ -7032,7 +6980,7 @@
         },
         {
           "validTime": "2026-04-01T08:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.507999988645311
         },
         {
           "validTime": "2026-04-01T09:00:00+00:00/PT1H",
@@ -7060,15 +7008,15 @@
         },
         {
           "validTime": "2026-04-01T15:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-01T16:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-01T17:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-01T18:00:00+00:00/PT1H",
@@ -7112,7 +7060,7 @@
         },
         {
           "validTime": "2026-04-02T04:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.507999988645311
         },
         {
           "validTime": "2026-04-02T05:00:00+00:00/PT1H",
@@ -7132,11 +7080,11 @@
         },
         {
           "validTime": "2026-04-02T09:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T10:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T11:00:00+00:00/PT1H",
@@ -7168,83 +7116,38 @@
         },
         {
           "validTime": "2026-04-02T18:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T19:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T20:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T21:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T22:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T23:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-03T00:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0
         }
       ]
     },
     "weather": {
       "values": [
         {
-          "validTime": "2026-03-26T01:00:00+00:00/PT4H",
-          "value": [
-            {
-              "coverage": null,
-              "weather": null,
-              "intensity": null,
-              "visibility": {
-                "unitCode": "wmoUnit:km",
-                "value": null
-              },
-              "attributes": []
-            }
-          ]
-        },
-        {
-          "validTime": "2026-03-26T05:00:00+00:00/PT2H",
-          "value": [
-            {
-              "coverage": "definite",
-              "weather": "rain_showers",
-              "intensity": "light",
-              "visibility": {
-                "unitCode": "wmoUnit:km",
-                "value": null
-              },
-              "attributes": []
-            }
-          ]
-        },
-        {
-          "validTime": "2026-03-26T07:00:00+00:00/PT1H",
-          "value": [
-            {
-              "coverage": "chance",
-              "weather": "rain_showers",
-              "intensity": "light",
-              "visibility": {
-                "unitCode": "wmoUnit:km",
-                "value": null
-              },
-              "attributes": []
-            }
-          ]
-        },
-        {
-          "validTime": "2026-03-26T08:00:00+00:00/PT5H",
+          "validTime": "2026-03-26T10:00:00+00:00/PT3H",
           "value": [
             {
               "coverage": "slight_chance",
@@ -7259,27 +7162,12 @@
           ]
         },
         {
-          "validTime": "2026-03-26T13:00:00+00:00/PT9H",
+          "validTime": "2026-03-26T13:00:00+00:00/PT10H",
           "value": [
             {
               "coverage": null,
               "weather": null,
               "intensity": null,
-              "visibility": {
-                "unitCode": "wmoUnit:km",
-                "value": null
-              },
-              "attributes": []
-            }
-          ]
-        },
-        {
-          "validTime": "2026-03-26T22:00:00+00:00/PT1H",
-          "value": [
-            {
-              "coverage": "slight_chance",
-              "weather": "rain",
-              "intensity": "light",
               "visibility": {
                 "unitCode": "wmoUnit:km",
                 "value": null
@@ -7292,7 +7180,7 @@
           "validTime": "2026-03-26T23:00:00+00:00/PT1H",
           "value": [
             {
-              "coverage": "chance",
+              "coverage": "slight_chance",
               "weather": "rain",
               "intensity": "light",
               "visibility": {
@@ -7307,7 +7195,7 @@
           "validTime": "2026-03-27T00:00:00+00:00/PT1H",
           "value": [
             {
-              "coverage": "likely",
+              "coverage": "chance",
               "weather": "rain",
               "intensity": "light",
               "visibility": {
@@ -7319,12 +7207,27 @@
           ]
         },
         {
-          "validTime": "2026-03-27T01:00:00+00:00/PT3H",
+          "validTime": "2026-03-27T01:00:00+00:00/PT1H",
+          "value": [
+            {
+              "coverage": "likely",
+              "weather": "rain",
+              "intensity": "moderate",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-03-27T02:00:00+00:00/PT1H",
           "value": [
             {
               "coverage": "definite",
               "weather": "rain",
-              "intensity": "light",
+              "intensity": "moderate",
               "visibility": {
                 "unitCode": "wmoUnit:km",
                 "value": null
@@ -7334,7 +7237,57 @@
           ]
         },
         {
-          "validTime": "2026-03-27T04:00:00+00:00/PT5H",
+          "validTime": "2026-03-27T03:00:00+00:00/PT1H",
+          "value": [
+            {
+              "coverage": "definite",
+              "weather": "rain",
+              "intensity": "moderate",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            },
+            {
+              "coverage": "patchy",
+              "weather": "fog",
+              "intensity": null,
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-03-27T04:00:00+00:00/PT2H",
+          "value": [
+            {
+              "coverage": "likely",
+              "weather": "rain",
+              "intensity": "moderate",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            },
+            {
+              "coverage": "patchy",
+              "weather": "fog",
+              "intensity": null,
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-03-27T06:00:00+00:00/PT1H",
           "value": [
             {
               "coverage": "likely",
@@ -7359,32 +7312,7 @@
           ]
         },
         {
-          "validTime": "2026-03-27T09:00:00+00:00/PT3H",
-          "value": [
-            {
-              "coverage": "chance",
-              "weather": "rain",
-              "intensity": "light",
-              "visibility": {
-                "unitCode": "wmoUnit:km",
-                "value": null
-              },
-              "attributes": []
-            },
-            {
-              "coverage": "patchy",
-              "weather": "fog",
-              "intensity": null,
-              "visibility": {
-                "unitCode": "wmoUnit:km",
-                "value": null
-              },
-              "attributes": []
-            }
-          ]
-        },
-        {
-          "validTime": "2026-03-27T12:00:00+00:00/PT2H",
+          "validTime": "2026-03-27T07:00:00+00:00/PT1H",
           "value": [
             {
               "coverage": "chance",
@@ -7399,7 +7327,7 @@
           ]
         },
         {
-          "validTime": "2026-03-27T14:00:00+00:00/PT3H",
+          "validTime": "2026-03-27T08:00:00+00:00/PT1H",
           "value": [
             {
               "coverage": "slight_chance",
@@ -7414,7 +7342,62 @@
           ]
         },
         {
-          "validTime": "2026-03-27T17:00:00+00:00/P3DT17H",
+          "validTime": "2026-03-27T09:00:00+00:00/PT1H",
+          "value": [
+            {
+              "coverage": "chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            },
+            {
+              "coverage": "patchy",
+              "weather": "fog",
+              "intensity": null,
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-03-27T10:00:00+00:00/PT2H",
+          "value": [
+            {
+              "coverage": "chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-03-27T12:00:00+00:00/PT1H",
+          "value": [
+            {
+              "coverage": "slight_chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-03-27T13:00:00+00:00/P4DT8H",
           "value": [
             {
               "coverage": null,
@@ -7429,7 +7412,7 @@
           ]
         },
         {
-          "validTime": "2026-03-31T10:00:00+00:00/PT3H",
+          "validTime": "2026-03-31T21:00:00+00:00/PT3H",
           "value": [
             {
               "coverage": "slight_chance",
@@ -7444,7 +7427,7 @@
           ]
         },
         {
-          "validTime": "2026-03-31T13:00:00+00:00/PT11H",
+          "validTime": "2026-04-01T00:00:00+00:00/P1D",
           "value": [
             {
               "coverage": "chance",
@@ -7459,10 +7442,10 @@
           ]
         },
         {
-          "validTime": "2026-04-01T00:00:00+00:00/PT6H",
+          "validTime": "2026-04-02T00:00:00+00:00/PT1H",
           "value": [
             {
-              "coverage": "slight_chance",
+              "coverage": "likely",
               "weather": "rain",
               "intensity": "light",
               "visibility": {
@@ -7474,7 +7457,7 @@
           ]
         },
         {
-          "validTime": "2026-04-01T06:00:00+00:00/PT3H",
+          "validTime": "2026-04-02T01:00:00+00:00/PT4H",
           "value": [
             {
               "coverage": "chance",
@@ -7489,7 +7472,7 @@
           ]
         },
         {
-          "validTime": "2026-04-01T09:00:00+00:00/PT12H",
+          "validTime": "2026-04-02T05:00:00+00:00/PT1H",
           "value": [
             {
               "coverage": "chance",
@@ -7502,8 +7485,23 @@
               "attributes": []
             },
             {
+              "coverage": "isolated",
+              "weather": "thunderstorms",
+              "intensity": null,
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-02T06:00:00+00:00/PT4H",
+          "value": [
+            {
               "coverage": "chance",
-              "weather": "snow",
+              "weather": "rain",
               "intensity": "light",
               "visibility": {
                 "unitCode": "wmoUnit:km",
@@ -7514,12 +7512,87 @@
           ]
         },
         {
-          "validTime": "2026-04-01T21:00:00+00:00/P1DT1H",
+          "validTime": "2026-04-02T10:00:00+00:00/PT2H",
+          "value": [
+            {
+              "coverage": "slight_chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-02T12:00:00+00:00/PT2H",
+          "value": [
+            {
+              "coverage": null,
+              "weather": null,
+              "intensity": null,
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-02T14:00:00+00:00/PT4H",
+          "value": [
+            {
+              "coverage": "slight_chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-02T18:00:00+00:00/PT1H",
           "value": [
             {
               "coverage": "chance",
               "weather": "rain",
               "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-02T19:00:00+00:00/PT3H",
+          "value": [
+            {
+              "coverage": "slight_chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-02T22:00:00+00:00/PT15H",
+          "value": [
+            {
+              "coverage": null,
+              "weather": null,
+              "intensity": null,
               "visibility": {
                 "unitCode": "wmoUnit:km",
                 "value": null
@@ -7534,27 +7607,7 @@
       "uom": "wmoUnit:km_h-1",
       "values": [
         {
-          "validTime": "2026-03-26T01:00:00+00:00/PT1H",
-          "value": 14.816
-        },
-        {
-          "validTime": "2026-03-26T02:00:00+00:00/PT1H",
-          "value": 12.964
-        },
-        {
-          "validTime": "2026-03-26T03:00:00+00:00/PT1H",
-          "value": 11.112
-        },
-        {
-          "validTime": "2026-03-26T04:00:00+00:00/PT1H",
-          "value": 9.26
-        },
-        {
-          "validTime": "2026-03-26T05:00:00+00:00/PT1H",
-          "value": 11.112
-        },
-        {
-          "validTime": "2026-03-26T06:00:00+00:00/PT5H",
+          "validTime": "2026-03-26T10:00:00+00:00/PT1H",
           "value": 16.668
         },
         {
@@ -7562,59 +7615,51 @@
           "value": 18.52
         },
         {
-          "validTime": "2026-03-26T14:00:00+00:00/PT2H",
+          "validTime": "2026-03-26T14:00:00+00:00/PT1H",
           "value": 20.372
         },
         {
-          "validTime": "2026-03-26T16:00:00+00:00/PT3H",
-          "value": 22.224
-        },
-        {
-          "validTime": "2026-03-26T19:00:00+00:00/PT1H",
-          "value": 20.372
-        },
-        {
-          "validTime": "2026-03-26T20:00:00+00:00/PT1H",
+          "validTime": "2026-03-26T15:00:00+00:00/PT2H",
           "value": 18.52
         },
         {
-          "validTime": "2026-03-26T21:00:00+00:00/PT6H",
+          "validTime": "2026-03-26T17:00:00+00:00/PT2H",
+          "value": 20.372
+        },
+        {
+          "validTime": "2026-03-26T19:00:00+00:00/PT2H",
+          "value": 18.52
+        },
+        {
+          "validTime": "2026-03-26T21:00:00+00:00/PT8H",
           "value": 16.668
         },
         {
-          "validTime": "2026-03-27T03:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T05:00:00+00:00/PT6H",
           "value": 14.816
-        },
-        {
-          "validTime": "2026-03-27T04:00:00+00:00/PT2H",
-          "value": 12.964
-        },
-        {
-          "validTime": "2026-03-27T06:00:00+00:00/PT3H",
-          "value": 11.112
-        },
-        {
-          "validTime": "2026-03-27T09:00:00+00:00/PT2H",
-          "value": 12.964
         },
         {
           "validTime": "2026-03-27T11:00:00+00:00/PT1H",
-          "value": 14.816
-        },
-        {
-          "validTime": "2026-03-27T12:00:00+00:00/PT4H",
           "value": 16.668
         },
         {
+          "validTime": "2026-03-27T12:00:00+00:00/PT4H",
+          "value": 18.52
+        },
+        {
           "validTime": "2026-03-27T16:00:00+00:00/PT3H",
-          "value": 14.816
+          "value": 16.668
         },
         {
           "validTime": "2026-03-27T19:00:00+00:00/PT2H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-03-27T21:00:00+00:00/PT1H",
           "value": 12.964
         },
         {
-          "validTime": "2026-03-27T21:00:00+00:00/PT2H",
+          "validTime": "2026-03-27T22:00:00+00:00/PT1H",
           "value": 11.112
         },
         {
@@ -7626,120 +7671,108 @@
           "value": 11.112
         },
         {
-          "validTime": "2026-03-28T04:00:00+00:00/PT2H",
+          "validTime": "2026-03-28T04:00:00+00:00/PT4H",
           "value": 12.964
         },
         {
-          "validTime": "2026-03-28T06:00:00+00:00/PT6H",
+          "validTime": "2026-03-28T08:00:00+00:00/PT6H",
           "value": 14.816
         },
         {
-          "validTime": "2026-03-28T12:00:00+00:00/PT2H",
-          "value": 16.668
-        },
-        {
-          "validTime": "2026-03-28T14:00:00+00:00/PT4H",
-          "value": 14.816
-        },
-        {
-          "validTime": "2026-03-28T18:00:00+00:00/PT4H",
+          "validTime": "2026-03-28T14:00:00+00:00/PT3H",
           "value": 12.964
         },
         {
-          "validTime": "2026-03-28T22:00:00+00:00/PT2H",
+          "validTime": "2026-03-28T17:00:00+00:00/PT5H",
           "value": 11.112
         },
         {
-          "validTime": "2026-03-29T00:00:00+00:00/PT8H",
+          "validTime": "2026-03-28T22:00:00+00:00/PT9H",
           "value": 9.26
         },
         {
-          "validTime": "2026-03-29T08:00:00+00:00/PT2H",
+          "validTime": "2026-03-29T07:00:00+00:00/PT4H",
           "value": 11.112
         },
         {
-          "validTime": "2026-03-29T10:00:00+00:00/PT5H",
+          "validTime": "2026-03-29T11:00:00+00:00/PT3H",
           "value": 12.964
+        },
+        {
+          "validTime": "2026-03-29T14:00:00+00:00/PT1H",
+          "value": 14.816
         },
         {
           "validTime": "2026-03-29T15:00:00+00:00/PT2H",
-          "value": 14.816
-        },
-        {
-          "validTime": "2026-03-29T17:00:00+00:00/PT5H",
           "value": 16.668
         },
         {
-          "validTime": "2026-03-29T22:00:00+00:00/PT7H",
-          "value": 14.816
-        },
-        {
-          "validTime": "2026-03-30T05:00:00+00:00/PT6H",
-          "value": 16.668
-        },
-        {
-          "validTime": "2026-03-30T11:00:00+00:00/PT3H",
+          "validTime": "2026-03-29T17:00:00+00:00/PT9H",
           "value": 18.52
         },
         {
-          "validTime": "2026-03-30T14:00:00+00:00/PT3H",
-          "value": 20.372
-        },
-        {
-          "validTime": "2026-03-30T17:00:00+00:00/PT6H",
-          "value": 22.224
-        },
-        {
-          "validTime": "2026-03-30T23:00:00+00:00/PT3H",
-          "value": 20.372
-        },
-        {
-          "validTime": "2026-03-31T02:00:00+00:00/PT3H",
-          "value": 18.52
-        },
-        {
-          "validTime": "2026-03-31T05:00:00+00:00/PT3H",
+          "validTime": "2026-03-30T02:00:00+00:00/PT3H",
           "value": 16.668
         },
         {
-          "validTime": "2026-03-31T08:00:00+00:00/PT15H",
+          "validTime": "2026-03-30T05:00:00+00:00/PT10H",
           "value": 14.816
         },
         {
-          "validTime": "2026-03-31T23:00:00+00:00/PT9H",
+          "validTime": "2026-03-30T15:00:00+00:00/PT4H",
+          "value": 16.668
+        },
+        {
+          "validTime": "2026-03-30T19:00:00+00:00/PT3H",
+          "value": 18.52
+        },
+        {
+          "validTime": "2026-03-30T22:00:00+00:00/PT3H",
+          "value": 16.668
+        },
+        {
+          "validTime": "2026-03-31T01:00:00+00:00/PT4H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-03-31T05:00:00+00:00/PT9H",
           "value": 12.964
         },
         {
-          "validTime": "2026-04-01T08:00:00+00:00/PT3H",
+          "validTime": "2026-03-31T14:00:00+00:00/PT7H",
           "value": 14.816
         },
         {
-          "validTime": "2026-04-01T11:00:00+00:00/PT3H",
+          "validTime": "2026-03-31T21:00:00+00:00/PT5H",
           "value": 16.668
         },
         {
-          "validTime": "2026-04-01T14:00:00+00:00/PT9H",
-          "value": 18.52
-        },
-        {
-          "validTime": "2026-04-01T23:00:00+00:00/PT6H",
-          "value": 16.668
-        },
-        {
-          "validTime": "2026-04-02T05:00:00+00:00/PT9H",
+          "validTime": "2026-04-01T02:00:00+00:00/PT7H",
           "value": 14.816
         },
         {
-          "validTime": "2026-04-02T14:00:00+00:00/PT3H",
+          "validTime": "2026-04-01T09:00:00+00:00/PT8H",
           "value": 16.668
         },
         {
-          "validTime": "2026-04-02T17:00:00+00:00/PT6H",
+          "validTime": "2026-04-01T17:00:00+00:00/PT3H",
           "value": 18.52
+        },
+        {
+          "validTime": "2026-04-01T20:00:00+00:00/PT2H",
+          "value": 16.668
+        },
+        {
+          "validTime": "2026-04-01T22:00:00+00:00/PT14H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-04-02T12:00:00+00:00/PT11H",
+          "value": 16.668
         },
         {
           "validTime": "2026-04-02T23:00:00+00:00/PT2H",
-          "value": 16.668
+          "value": 14.816
         }
       ]
     },
@@ -7747,31 +7780,7 @@
       "uom": "wmoUnit:degree_(angle)",
       "values": [
         {
-          "validTime": "2026-03-26T01:00:00+00:00/PT2H",
-          "value": 170
-        },
-        {
-          "validTime": "2026-03-26T03:00:00+00:00/PT1H",
-          "value": 180
-        },
-        {
-          "validTime": "2026-03-26T04:00:00+00:00/PT1H",
-          "value": 200
-        },
-        {
-          "validTime": "2026-03-26T05:00:00+00:00/PT1H",
-          "value": 190
-        },
-        {
-          "validTime": "2026-03-26T06:00:00+00:00/PT2H",
-          "value": 200
-        },
-        {
-          "validTime": "2026-03-26T08:00:00+00:00/PT1H",
-          "value": 190
-        },
-        {
-          "validTime": "2026-03-26T09:00:00+00:00/PT2H",
+          "validTime": "2026-03-26T10:00:00+00:00/PT1H",
           "value": 200
         },
         {
@@ -7779,111 +7788,99 @@
           "value": 210
         },
         {
-          "validTime": "2026-03-26T12:00:00+00:00/PT7H",
+          "validTime": "2026-03-26T12:00:00+00:00/PT9H",
           "value": 220
-        },
-        {
-          "validTime": "2026-03-26T19:00:00+00:00/PT2H",
-          "value": 230
         },
         {
           "validTime": "2026-03-26T21:00:00+00:00/PT2H",
-          "value": 220
+          "value": 210
         },
         {
-          "validTime": "2026-03-26T23:00:00+00:00/PT2H",
+          "validTime": "2026-03-26T23:00:00+00:00/PT3H",
           "value": 200
         },
         {
-          "validTime": "2026-03-27T01:00:00+00:00/PT2H",
-          "value": 230
-        },
-        {
-          "validTime": "2026-03-27T03:00:00+00:00/PT1H",
-          "value": 240
+          "validTime": "2026-03-27T02:00:00+00:00/PT2H",
+          "value": 210
         },
         {
           "validTime": "2026-03-27T04:00:00+00:00/PT1H",
-          "value": 260
+          "value": 220
         },
         {
           "validTime": "2026-03-27T05:00:00+00:00/PT1H",
-          "value": 270
+          "value": 240
         },
         {
           "validTime": "2026-03-27T06:00:00+00:00/PT1H",
-          "value": 300
+          "value": 260
         },
         {
           "validTime": "2026-03-27T07:00:00+00:00/PT1H",
-          "value": 320
+          "value": 290
         },
         {
           "validTime": "2026-03-27T08:00:00+00:00/PT1H",
-          "value": 330
-        },
-        {
-          "validTime": "2026-03-27T09:00:00+00:00/PT6H",
-          "value": 350
-        },
-        {
-          "validTime": "2026-03-27T15:00:00+00:00/PT2H",
-          "value": 340
-        },
-        {
-          "validTime": "2026-03-27T17:00:00+00:00/PT2H",
-          "value": 350
-        },
-        {
-          "validTime": "2026-03-27T19:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-27T20:00:00+00:00/PT1H",
-          "value": 20
-        },
-        {
-          "validTime": "2026-03-27T21:00:00+00:00/PT2H",
-          "value": 30
-        },
-        {
-          "validTime": "2026-03-27T23:00:00+00:00/PT2H",
-          "value": 40
-        },
-        {
-          "validTime": "2026-03-28T01:00:00+00:00/PT1H",
-          "value": 30
-        },
-        {
-          "validTime": "2026-03-28T02:00:00+00:00/PT1H",
-          "value": 20
-        },
-        {
-          "validTime": "2026-03-28T03:00:00+00:00/PT17H",
-          "value": 10
-        },
-        {
-          "validTime": "2026-03-28T20:00:00+00:00/PT2H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-28T22:00:00+00:00/PT1H",
-          "value": 350
-        },
-        {
-          "validTime": "2026-03-28T23:00:00+00:00/PT1H",
-          "value": 320
-        },
-        {
-          "validTime": "2026-03-29T00:00:00+00:00/PT5H",
-          "value": 310
-        },
-        {
-          "validTime": "2026-03-29T05:00:00+00:00/PT1H",
           "value": 300
         },
         {
-          "validTime": "2026-03-29T06:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T09:00:00+00:00/PT1H",
+          "value": 310
+        },
+        {
+          "validTime": "2026-03-27T10:00:00+00:00/PT1H",
+          "value": 320
+        },
+        {
+          "validTime": "2026-03-27T11:00:00+00:00/PT7H",
+          "value": 330
+        },
+        {
+          "validTime": "2026-03-27T18:00:00+00:00/PT4H",
+          "value": 340
+        },
+        {
+          "validTime": "2026-03-27T22:00:00+00:00/PT7H",
+          "value": 350
+        },
+        {
+          "validTime": "2026-03-28T05:00:00+00:00/PT1H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-03-28T06:00:00+00:00/PT5H",
+          "value": 10
+        },
+        {
+          "validTime": "2026-03-28T11:00:00+00:00/PT6H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-03-28T17:00:00+00:00/PT2H",
+          "value": 350
+        },
+        {
+          "validTime": "2026-03-28T19:00:00+00:00/PT1H",
+          "value": 340
+        },
+        {
+          "validTime": "2026-03-28T20:00:00+00:00/PT2H",
+          "value": 330
+        },
+        {
+          "validTime": "2026-03-28T22:00:00+00:00/PT1H",
+          "value": 320
+        },
+        {
+          "validTime": "2026-03-28T23:00:00+00:00/PT3H",
+          "value": 310
+        },
+        {
+          "validTime": "2026-03-29T02:00:00+00:00/PT3H",
+          "value": 300
+        },
+        {
+          "validTime": "2026-03-29T05:00:00+00:00/PT2H",
           "value": 290
         },
         {
@@ -7891,183 +7888,215 @@
           "value": 280
         },
         {
-          "validTime": "2026-03-29T08:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T08:00:00+00:00/PT2H",
           "value": 270
         },
         {
-          "validTime": "2026-03-29T09:00:00+00:00/PT2H",
+          "validTime": "2026-03-29T10:00:00+00:00/PT1H",
           "value": 260
         },
         {
-          "validTime": "2026-03-29T11:00:00+00:00/PT3H",
+          "validTime": "2026-03-29T11:00:00+00:00/PT1H",
           "value": 250
         },
         {
-          "validTime": "2026-03-29T14:00:00+00:00/PT8H",
+          "validTime": "2026-03-29T12:00:00+00:00/PT2H",
           "value": 240
         },
         {
-          "validTime": "2026-03-29T22:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T14:00:00+00:00/PT3H",
           "value": 230
         },
         {
-          "validTime": "2026-03-29T23:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T17:00:00+00:00/PT6H",
           "value": 220
         },
         {
-          "validTime": "2026-03-30T00:00:00+00:00/PT2H",
+          "validTime": "2026-03-29T23:00:00+00:00/PT6H",
           "value": 210
         },
         {
-          "validTime": "2026-03-30T02:00:00+00:00/PT6H",
+          "validTime": "2026-03-30T05:00:00+00:00/PT15H",
           "value": 220
         },
         {
-          "validTime": "2026-03-30T08:00:00+00:00/PT11H",
-          "value": 210
-        },
-        {
-          "validTime": "2026-03-30T19:00:00+00:00/PT4H",
-          "value": 220
+          "validTime": "2026-03-30T20:00:00+00:00/PT3H",
+          "value": 230
         },
         {
           "validTime": "2026-03-30T23:00:00+00:00/PT3H",
-          "value": 230
-        },
-        {
-          "validTime": "2026-03-31T02:00:00+00:00/PT2H",
           "value": 240
         },
         {
-          "validTime": "2026-03-31T04:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T02:00:00+00:00/PT2H",
           "value": 250
         },
         {
-          "validTime": "2026-03-31T05:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T04:00:00+00:00/PT1H",
           "value": 260
         },
         {
-          "validTime": "2026-03-31T07:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T05:00:00+00:00/PT1H",
           "value": 270
         },
         {
-          "validTime": "2026-03-31T08:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T06:00:00+00:00/PT1H",
+          "value": 280
+        },
+        {
+          "validTime": "2026-03-31T07:00:00+00:00/PT1H",
           "value": 290
         },
         {
-          "validTime": "2026-03-31T09:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T08:00:00+00:00/PT1H",
           "value": 300
         },
         {
-          "validTime": "2026-03-31T11:00:00+00:00/PT2H",
-          "value": 320
+          "validTime": "2026-03-31T09:00:00+00:00/PT4H",
+          "value": 310
         },
         {
           "validTime": "2026-03-31T13:00:00+00:00/PT1H",
+          "value": 320
+        },
+        {
+          "validTime": "2026-03-31T14:00:00+00:00/PT1H",
           "value": 330
         },
         {
-          "validTime": "2026-03-31T14:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T15:00:00+00:00/PT1H",
           "value": 340
         },
         {
           "validTime": "2026-03-31T16:00:00+00:00/PT1H",
-          "value": 0
+          "value": 20
         },
         {
           "validTime": "2026-03-31T17:00:00+00:00/PT1H",
-          "value": 40
-        },
-        {
-          "validTime": "2026-03-31T18:00:00+00:00/PT1H",
-          "value": 50
-        },
-        {
-          "validTime": "2026-03-31T19:00:00+00:00/PT1H",
-          "value": 60
-        },
-        {
-          "validTime": "2026-03-31T20:00:00+00:00/PT1H",
-          "value": 80
-        },
-        {
-          "validTime": "2026-03-31T21:00:00+00:00/PT6H",
           "value": 90
         },
         {
-          "validTime": "2026-04-01T03:00:00+00:00/PT2H",
-          "value": 80
+          "validTime": "2026-03-31T18:00:00+00:00/PT2H",
+          "value": 130
         },
         {
-          "validTime": "2026-04-01T05:00:00+00:00/PT7H",
-          "value": 70
-        },
-        {
-          "validTime": "2026-04-01T12:00:00+00:00/PT6H",
-          "value": 80
-        },
-        {
-          "validTime": "2026-04-01T18:00:00+00:00/PT4H",
-          "value": 90
-        },
-        {
-          "validTime": "2026-04-01T22:00:00+00:00/PT1H",
-          "value": 100
-        },
-        {
-          "validTime": "2026-04-01T23:00:00+00:00/PT2H",
-          "value": 110
-        },
-        {
-          "validTime": "2026-04-02T01:00:00+00:00/PT1H",
-          "value": 120
-        },
-        {
-          "validTime": "2026-04-02T02:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T20:00:00+00:00/PT3H",
           "value": 140
         },
         {
-          "validTime": "2026-04-02T03:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T23:00:00+00:00/PT6H",
           "value": 150
         },
         {
-          "validTime": "2026-04-02T04:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T05:00:00+00:00/PT3H",
+          "value": 140
+        },
+        {
+          "validTime": "2026-04-01T08:00:00+00:00/PT3H",
+          "value": 130
+        },
+        {
+          "validTime": "2026-04-01T11:00:00+00:00/PT3H",
+          "value": 120
+        },
+        {
+          "validTime": "2026-04-01T14:00:00+00:00/PT2H",
+          "value": 130
+        },
+        {
+          "validTime": "2026-04-01T16:00:00+00:00/PT1H",
+          "value": 140
+        },
+        {
+          "validTime": "2026-04-01T17:00:00+00:00/PT1H",
+          "value": 160
+        },
+        {
+          "validTime": "2026-04-01T18:00:00+00:00/PT1H",
           "value": 170
         },
         {
-          "validTime": "2026-04-02T05:00:00+00:00/PT1H",
-          "value": 190
+          "validTime": "2026-04-01T19:00:00+00:00/PT1H",
+          "value": 160
         },
         {
-          "validTime": "2026-04-02T06:00:00+00:00/PT1H",
-          "value": 200
+          "validTime": "2026-04-01T20:00:00+00:00/PT1H",
+          "value": 130
         },
         {
-          "validTime": "2026-04-02T07:00:00+00:00/PT1H",
-          "value": 210
+          "validTime": "2026-04-01T21:00:00+00:00/PT1H",
+          "value": 120
         },
         {
-          "validTime": "2026-04-02T08:00:00+00:00/PT3H",
+          "validTime": "2026-04-01T22:00:00+00:00/PT1H",
+          "value": 130
+        },
+        {
+          "validTime": "2026-04-01T23:00:00+00:00/PT1H",
+          "value": 140
+        },
+        {
+          "validTime": "2026-04-02T00:00:00+00:00/PT1H",
+          "value": 150
+        },
+        {
+          "validTime": "2026-04-02T01:00:00+00:00/PT1H",
+          "value": 170
+        },
+        {
+          "validTime": "2026-04-02T02:00:00+00:00/PT1H",
           "value": 220
         },
         {
-          "validTime": "2026-04-02T11:00:00+00:00/PT8H",
-          "value": 230
+          "validTime": "2026-04-02T03:00:00+00:00/PT2H",
+          "value": 240
         },
         {
-          "validTime": "2026-04-02T19:00:00+00:00/PT6H",
-          "value": 240
+          "validTime": "2026-04-02T05:00:00+00:00/PT3H",
+          "value": 250
+        },
+        {
+          "validTime": "2026-04-02T08:00:00+00:00/PT3H",
+          "value": 260
+        },
+        {
+          "validTime": "2026-04-02T11:00:00+00:00/PT5H",
+          "value": 270
+        },
+        {
+          "validTime": "2026-04-02T16:00:00+00:00/PT1H",
+          "value": 290
+        },
+        {
+          "validTime": "2026-04-02T17:00:00+00:00/PT1H",
+          "value": 340
+        },
+        {
+          "validTime": "2026-04-02T18:00:00+00:00/PT2H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-04-02T20:00:00+00:00/PT1H",
+          "value": 10
+        },
+        {
+          "validTime": "2026-04-02T21:00:00+00:00/PT2H",
+          "value": 20
+        },
+        {
+          "validTime": "2026-04-02T23:00:00+00:00/PT2H",
+          "value": 30
         }
       ]
     }
   },
   "salem_water_temp_f": 39.7,
   "wu_stations": {
-    "temperature_f": 62.1,
-    "humidity_pct": 56.5,
-    "pressure_in": 29.79,
-    "wind_speed_mph": 4.2,
-    "wind_gust_mph": 12.7,
+    "temperature_f": 62.7,
+    "humidity_pct": 55.6,
+    "pressure_in": 29.8,
+    "wind_speed_mph": 3.5,
+    "wind_gust_mph": 9.7,
     "quality": {
       "total_stations": 15,
       "stations_within_range": 13,
@@ -8079,10 +8108,10 @@
       "max_distance_used_mi": 1.38
     },
     "ranges": {
-      "temp_min_f": 60.0,
-      "temp_max_f": 63.7,
-      "wind_min_mph": 0.9,
-      "wind_max_mph": 10.0
+      "temp_min_f": 60.8,
+      "temp_max_f": 64.6,
+      "wind_min_mph": 1.0,
+      "wind_max_mph": 11.0
     },
     "stations": [
       {
@@ -8091,12 +8120,12 @@
         "longitude": -70.88,
         "elevation_ft": 85.0,
         "distance_mi": 0.27,
-        "timestamp": "2026-03-26 13:34:50",
-        "temperature_f": 62.5,
-        "humidity_pct": 55.8,
-        "wind_speed_mph": 2.9,
-        "wind_gust_mph": 14.8,
-        "pressure_in": 30.1
+        "timestamp": "2026-03-26 13:54:50",
+        "temperature_f": 62.8,
+        "humidity_pct": 55.4,
+        "wind_speed_mph": 1.6,
+        "wind_gust_mph": 9.2,
+        "pressure_in": 30.11
       },
       {
         "station_id": "KMAMARBL69",
@@ -8117,12 +8146,12 @@
         "longitude": -70.868,
         "elevation_ft": 97.0,
         "distance_mi": 0.43,
-        "timestamp": "2026-03-26 13:34:49",
-        "temperature_f": 61.1,
-        "humidity_pct": 55.6,
-        "wind_speed_mph": 7.4,
-        "wind_gust_mph": 14.1,
-        "pressure_in": 29.5
+        "timestamp": "2026-03-26 13:54:49",
+        "temperature_f": 62.4,
+        "humidity_pct": 53.0,
+        "wind_speed_mph": 7.3,
+        "wind_gust_mph": 12.3,
+        "pressure_in": 29.52
       },
       {
         "station_id": "KMAMARBL108",
@@ -8130,12 +8159,12 @@
         "longitude": -70.869,
         "elevation_ft": 16.0,
         "distance_mi": 0.61,
-        "timestamp": "2026-03-26 13:34:52",
-        "temperature_f": 60.7,
-        "humidity_pct": 58.3,
+        "timestamp": "2026-03-26 13:54:52",
+        "temperature_f": 61.1,
+        "humidity_pct": 57.8,
         "wind_speed_mph": 0.0,
         "wind_gust_mph": 0.0,
-        "pressure_in": 29.53
+        "pressure_in": 29.55
       },
       {
         "station_id": "KMAMARBL39",
@@ -8143,12 +8172,12 @@
         "longitude": -70.866684,
         "elevation_ft": 89.0,
         "distance_mi": 0.71,
-        "timestamp": "2026-03-26 13:34:39",
-        "temperature_f": 62.7,
-        "humidity_pct": 54.3,
-        "wind_speed_mph": 3.6,
-        "wind_gust_mph": 8.1,
-        "pressure_in": 29.78
+        "timestamp": "2026-03-26 13:54:39",
+        "temperature_f": 63.3,
+        "humidity_pct": 53.9,
+        "wind_speed_mph": 2.8,
+        "wind_gust_mph": 5.8,
+        "pressure_in": 29.8
       },
       {
         "station_id": "KMAMARBL4",
@@ -8156,12 +8185,12 @@
         "longitude": -70.86496,
         "elevation_ft": 90.0,
         "distance_mi": 1.07,
-        "timestamp": "2026-03-26 13:24:00",
-        "temperature_f": 63.6,
-        "humidity_pct": 58.0,
-        "wind_speed_mph": 3.9,
+        "timestamp": "2026-03-26 13:44:00",
+        "temperature_f": 64.2,
+        "humidity_pct": 57.0,
+        "wind_speed_mph": 4.0,
         "wind_gust_mph": 14.0,
-        "pressure_in": 29.65
+        "pressure_in": 29.66
       },
       {
         "station_id": "KMAMARBL36",
@@ -8169,11 +8198,11 @@
         "longitude": -70.853333,
         "elevation_ft": 69.0,
         "distance_mi": 1.21,
-        "timestamp": "2026-03-26 13:30:29",
-        "temperature_f": 60.0,
-        "humidity_pct": 66.0,
-        "wind_speed_mph": 10.0,
-        "wind_gust_mph": 17.0,
+        "timestamp": "2026-03-26 13:45:30",
+        "temperature_f": 60.8,
+        "humidity_pct": 67.0,
+        "wind_speed_mph": 11.0,
+        "wind_gust_mph": 15.0,
         "pressure_in": 29.79
       },
       {
@@ -8182,12 +8211,12 @@
         "longitude": -70.882292,
         "elevation_ft": 49.0,
         "distance_mi": 0.92,
-        "timestamp": "2026-03-26 13:34:57",
-        "temperature_f": 63.7,
-        "humidity_pct": 54.3,
-        "wind_speed_mph": 0.9,
+        "timestamp": "2026-03-26 13:54:57",
+        "temperature_f": 64.6,
+        "humidity_pct": 53.0,
+        "wind_speed_mph": 1.0,
         "wind_gust_mph": 4.5,
-        "pressure_in": 28.76
+        "pressure_in": 28.78
       },
       {
         "station_id": "KMAMARBL56",
@@ -8195,12 +8224,12 @@
         "longitude": -70.889,
         "elevation_ft": 79.0,
         "distance_mi": 1.06,
-        "timestamp": "2026-03-26 13:34:55",
-        "temperature_f": 62.4,
-        "humidity_pct": 59.3,
-        "wind_speed_mph": 0.9,
-        "wind_gust_mph": 10.3,
-        "pressure_in": 29.37
+        "timestamp": "2026-03-26 13:54:55",
+        "temperature_f": 63.2,
+        "humidity_pct": 57.7,
+        "wind_speed_mph": 1.1,
+        "wind_gust_mph": 11.4,
+        "pressure_in": 29.38
       },
       {
         "station_id": "KMAMARBL89",
@@ -8208,12 +8237,12 @@
         "longitude": -70.884631,
         "elevation_ft": 85.0,
         "distance_mi": 0.58,
-        "timestamp": "2026-03-26 13:34:49",
-        "temperature_f": 62.0,
-        "humidity_pct": 56.7,
-        "wind_speed_mph": 6.8,
+        "timestamp": "2026-03-26 13:54:49",
+        "temperature_f": 62.6,
+        "humidity_pct": 55.9,
+        "wind_speed_mph": 6.1,
         "wind_gust_mph": 12.5,
-        "pressure_in": 29.7
+        "pressure_in": 29.71
       },
       {
         "station_id": "KMAMARBL78",
@@ -8221,12 +8250,12 @@
         "longitude": -70.86,
         "elevation_ft": 9.0,
         "distance_mi": 1.38,
-        "timestamp": "2026-03-26 13:34:50",
-        "temperature_f": 61.9,
-        "humidity_pct": 59.3,
-        "wind_speed_mph": 4.7,
-        "wind_gust_mph": 12.1,
-        "pressure_in": 29.85
+        "timestamp": "2026-03-26 13:54:49",
+        "temperature_f": 62.3,
+        "humidity_pct": 58.1,
+        "wind_speed_mph": 4.4,
+        "wind_gust_mph": 12.5,
+        "pressure_in": 29.87
       },
       {
         "station_id": "KMASALEM91",
@@ -8234,12 +8263,12 @@
         "longitude": -70.889328,
         "elevation_ft": 36.0,
         "distance_mi": 0.99,
-        "timestamp": "2026-03-26 13:34:58",
-        "temperature_f": 63.1,
-        "humidity_pct": 54.8,
-        "wind_speed_mph": 2.6,
+        "timestamp": "2026-03-26 13:54:58",
+        "temperature_f": 64.2,
+        "humidity_pct": 53.6,
+        "wind_speed_mph": 2.0,
         "wind_gust_mph": 6.9,
-        "pressure_in": 29.82
+        "pressure_in": 29.84
       },
       {
         "station_id": "KMASALEM94",
@@ -8247,12 +8276,12 @@
         "longitude": -70.898,
         "elevation_ft": 22.0,
         "distance_mi": 1.25,
-        "timestamp": "2026-03-26 13:34:52",
-        "temperature_f": 63.0,
-        "humidity_pct": 54.5,
-        "wind_speed_mph": 5.1,
-        "wind_gust_mph": 10.0,
-        "pressure_in": 29.85
+        "timestamp": "2026-03-26 13:54:52",
+        "temperature_f": 63.7,
+        "humidity_pct": 53.8,
+        "wind_speed_mph": 4.2,
+        "wind_gust_mph": 8.0,
+        "pressure_in": 29.86
       }
     ]
   },
@@ -8454,24 +8483,24 @@
     ]
   },
   "hyperlocal": {
-    "model_temp": 61.5,
-    "weighted_bias": 0.57,
-    "corrected_temp": 62.1,
+    "model_temp": 62.1,
+    "weighted_bias": 0.55,
+    "corrected_temp": 62.7,
     "stations_used": 13,
     "stations_total": 13,
     "confidence": "Moderate",
-    "wu_avg_temp": 62.1,
-    "model_pressure_in": 29.84,
-    "wu_pressure_in": 29.79,
+    "wu_avg_temp": 62.7,
+    "model_pressure_in": 29.82,
+    "wu_pressure_in": 29.8,
     "kbos_pressure_in": 29.82,
-    "corrected_pressure_in": 29.79,
-    "model_humidity": 56,
-    "wu_humidity": 56.5,
-    "bias_humidity": 0.5,
-    "corrected_humidity": 56.5,
-    "model_wind_speed": 11.5078,
-    "wu_wind_speed": 4.2,
-    "corrected_wind_speed": 11.5078,
+    "corrected_pressure_in": 29.8,
+    "model_humidity": 55,
+    "wu_humidity": 55.6,
+    "bias_humidity": 0.6,
+    "corrected_humidity": 55.6,
+    "model_wind_speed": 18.41248,
+    "wu_wind_speed": 3.5,
+    "corrected_wind_speed": 18.41248,
     "wu_stations_temp": 13,
     "wu_stations_wind": 12
   },
@@ -8496,11 +8525,11 @@
   },
   "derived": {
     "pressure_trend_hpa_3h": -2.3,
-    "best_pressure_tend": -2.5,
-    "best_pressure_tend_src": "Buoy",
+    "best_pressure_tend": -2.3,
+    "best_pressure_tend_src": "model",
     "pressure_alarm": null,
     "pressure_alarm_label": null,
-    "dew_point_spread_f": 15.8,
+    "dew_point_spread_f": 16.3,
     "fog_label": "No risk",
     "fog_probability": 0,
     "wind_peak_time": "2026-03-25T20:00",
@@ -8509,12 +8538,12 @@
     "temp_850hpa_now": 27.2
   },
   "sea_breeze": {
-    "active": true,
-    "likelihood": 62,
-    "reason": "\u0394+21.9\u00b0F, 12 mph from 230\u00b0",
+    "active": false,
+    "likelihood": 50,
+    "reason": "\u0394+22.4\u00b0F, 18 mph from 220\u00b0",
     "scores": {
       "temp": 100,
-      "wind_speed": 60,
+      "wind_speed": 0,
       "direction": 0,
       "time": 100
     }
@@ -8524,27 +8553,27 @@
       "period_name": "Today",
       "date": "2026-03-26",
       "is_daytime": true,
-      "text": "Slight chance of rain. Partly cloudy, then becoming cloudy, with a high near 62 around 5pm. Southwest wind around 11 mph, with gusts as high as 22 mph. Wind chill values as low as 43.",
-      "temperature": 62,
-      "wind_speed": "11 mph",
+      "text": "Slight chance of rain. Partly cloudy, then becoming cloudy, with a high near 68 around 4pm. Southwest wind 10 to 18 mph. Wind chill values as low as 43.",
+      "temperature": 68,
+      "wind_speed": "15 mph",
       "wind_direction": "SW",
-      "wind_full": "11 mph SW, gusts 22 mph"
+      "wind_full": "15 mph SW"
     },
     {
       "period_name": "Tonight",
       "date": "2026-03-26",
       "is_daytime": false,
-      "text": "Rain likely before 9pm. Overcast, with areas of fog., with a low around 47 toward morning. South-southwest wind 7 to 14 mph, with gusts as high as 28 mph. Wind chill values as low as 33.",
-      "temperature": 47,
-      "wind_speed": "9 mph",
+      "text": "Rain likely before 10pm. Overcast, with areas of fog., with a low around 49. South-southwest wind 9 to 15 mph, with gusts as high as 27 mph. Wind chill values as low as 33.",
+      "temperature": 49,
+      "wind_speed": "12 mph",
       "wind_direction": "SSW",
-      "wind_full": "9 mph SSW, gusts 28 mph"
+      "wind_full": "12 mph SSW, gusts 27 mph"
     },
     {
       "period_name": "Friday",
       "date": "2026-03-27",
       "is_daytime": true,
-      "text": "Overcast, then sunny, with a high near 46. Northwest wind 8 to 15 mph, with gusts as high as 25 mph. Wind chill values as low as 23.",
+      "text": "Overcast, then sunny, with a high near 46. Northwest wind 8 to 16 mph, with gusts as high as 25 mph. Wind chill values as low as 23.",
       "temperature": 46,
       "wind_speed": "12 mph",
       "wind_direction": "NW",
@@ -8554,8 +8583,8 @@
       "period_name": "Friday Night",
       "date": "2026-03-27",
       "is_daytime": false,
-      "text": "Partly cloudy, with a low around 29 toward morning. North-northwest wind 8 to 13 mph, with gusts as high as 19 mph. Wind chill values as low as 15.",
-      "temperature": 29,
+      "text": "Partly cloudy, with a low around 28 toward morning. North-northwest wind 8 to 13 mph, with gusts as high as 19 mph. Wind chill values as low as 15.",
+      "temperature": 28,
       "wind_speed": "11 mph",
       "wind_direction": "NNW",
       "wind_full": "11 mph NNW, gusts 19 mph"
@@ -8564,8 +8593,8 @@
       "period_name": "Saturday",
       "date": "2026-03-28",
       "is_daytime": true,
-      "text": "Sunny, with a high near 28.",
-      "temperature": 28,
+      "text": "Sunny, with a high near 27.",
+      "temperature": 27,
       "wind_speed": "",
       "wind_direction": "",
       "wind_full": ""
@@ -8574,81 +8603,81 @@
       "period_name": "Sunday",
       "date": "2026-03-29",
       "is_daytime": true,
-      "text": "Sunny, then becoming cloudy, with a high near 46 around 4pm. South-southwest wind 7 to 14 mph, with gusts as high as 32 mph. Wind chill values as low as 28.",
-      "temperature": 46,
-      "wind_speed": "10 mph",
-      "wind_direction": "SSW",
-      "wind_full": "10 mph SSW, gusts 32 mph"
-    },
-    {
-      "period_name": "Sunday Night",
-      "date": "2026-03-29",
-      "is_daytime": false,
-      "text": "Overcast, with a low around 38. Southwest wind 8 to 12 mph, with gusts as high as 34 mph. Wind chill values as low as 29.",
-      "temperature": 38,
-      "wind_speed": "10 mph",
-      "wind_direction": "SW",
-      "wind_full": "10 mph SW, gusts 34 mph"
-    },
-    {
-      "period_name": "Monday",
-      "date": "2026-03-30",
-      "is_daytime": true,
-      "text": "Overcast, with a high near 54 around 3pm. Southwest wind 9 to 14 mph, with gusts as high as 32 mph. Wind chill values as low as 40.",
-      "temperature": 54,
+      "text": "Sunny, then becoming cloudy, with a high near 47 around 3pm. Southwest wind 7 to 14 mph, with gusts as high as 32 mph. Wind chill values as low as 27.",
+      "temperature": 47,
       "wind_speed": "11 mph",
       "wind_direction": "SW",
       "wind_full": "11 mph SW, gusts 32 mph"
     },
     {
+      "period_name": "Sunday Night",
+      "date": "2026-03-29",
+      "is_daytime": false,
+      "text": "Overcast, with a low around 39. Southwest wind 6 to 12 mph, with gusts as high as 34 mph. Wind chill values as low as 29.",
+      "temperature": 39,
+      "wind_speed": "9 mph",
+      "wind_direction": "SW",
+      "wind_full": "9 mph SW, gusts 34 mph"
+    },
+    {
+      "period_name": "Monday",
+      "date": "2026-03-30",
+      "is_daytime": true,
+      "text": "Overcast, with a high near 57 around 4pm. West-southwest wind 7 to 12 mph, with gusts as high as 32 mph. Wind chill values as low as 40.",
+      "temperature": 57,
+      "wind_speed": "10 mph",
+      "wind_direction": "WSW",
+      "wind_full": "10 mph WSW, gusts 32 mph"
+    },
+    {
       "period_name": "Monday Night",
       "date": "2026-03-30",
       "is_daytime": false,
-      "text": "Slight chance of mixed rain and snow. Mostly cloudy, with a low around 45 toward morning. West-southwest wind around 9 mph, with gusts as high as 29 mph. Wind chill values as low as 29.",
-      "temperature": 45,
-      "wind_speed": "9 mph",
-      "wind_direction": "WSW",
-      "wind_full": "9 mph WSW, gusts 29 mph"
+      "text": "Slight chance of mixed rain and snow. Mostly cloudy, with a low around 43 toward morning. West-northwest wind 3 to 7 mph, with gusts as high as 29 mph. Wind chill values as low as 30.",
+      "temperature": 43,
+      "wind_speed": "5 mph",
+      "wind_direction": "WNW",
+      "wind_full": "5 mph WNW, gusts 29 mph"
     },
     {
       "period_name": "Tuesday",
       "date": "2026-03-31",
       "is_daytime": true,
-      "text": "Slight chance of rain. Overcast, with a high near 49 around 3pm. Southeast wind 1 to 9 mph, with gusts as high as 20 mph. Wind chill values as low as 31.",
+      "text": "Slight chance of rain. Overcast, with a high near 49. East-southeast wind 0 to 10 mph, with gusts as high as 20 mph. Wind chill values as low as 31.",
       "temperature": 49,
-      "wind_speed": "7 mph",
-      "wind_direction": "SE",
-      "wind_full": "7 mph SE, gusts 20 mph"
+      "wind_speed": "6 mph",
+      "wind_direction": "ESE",
+      "wind_full": "6 mph ESE, gusts 20 mph"
     },
     {
       "period_name": "Tuesday Night",
       "date": "2026-03-31",
       "is_daytime": false,
-      "text": "Slight chance of rain. Overcast, with a low around 38 toward morning. Southeast wind 5 to 11 mph, with gusts as high as 29 mph.",
-      "temperature": 38,
-      "wind_speed": "9 mph",
-      "wind_direction": "SE",
-      "wind_full": "9 mph SE, gusts 29 mph"
+      "text": "Slight chance of mixed rain and snow. Overcast, with a low around 40. South-southeast wind around 10 mph, with gusts as high as 29 mph.",
+      "temperature": 40,
+      "wind_speed": "10 mph",
+      "wind_direction": "SSE",
+      "wind_full": "10 mph SSE, gusts 29 mph"
     },
     {
       "period_name": "Wednesday",
       "date": "2026-04-01",
       "is_daytime": true,
-      "text": "Slight chance of mixed rain and snow. Overcast, with a high near 46 around 4pm. Northeast wind 2 to 10 mph, with gusts as high as 36 mph.",
-      "temperature": 46,
-      "wind_speed": "5 mph",
-      "wind_direction": "NE",
-      "wind_full": "5 mph NE, gusts 36 mph"
+      "text": "Slight chance of rain. Overcast, with a high near 49 around 3pm. Southwest wind 8 to 12 mph, with gusts as high as 36 mph.",
+      "temperature": 49,
+      "wind_speed": "10 mph",
+      "wind_direction": "SW",
+      "wind_full": "10 mph SW, gusts 36 mph"
     },
     {
       "period_name": "Wednesday Night",
       "date": "2026-04-01",
       "is_daytime": false,
-      "text": "Slight chance of rain. Overcast, with a low around 44. Southwest wind around 13 mph, with gusts as high as 41 mph.",
-      "temperature": 44,
-      "wind_speed": "13 mph",
+      "text": "Slight chance of rain. Overcast, with a low around 49 in the evening. Southwest wind around 9 mph, with gusts as high as 41 mph.",
+      "temperature": 49,
+      "wind_speed": "9 mph",
       "wind_direction": "SW",
-      "wind_full": "13 mph SW, gusts 41 mph"
+      "wind_full": "9 mph SW, gusts 41 mph"
     },
     {
       "period_name": "Thursday",
@@ -8691,7 +8720,620 @@
       "sunset_time": "2026-03-27T19:04",
       "azimuth": 265.4,
       "clouds": {
-        "10mi": null,
+        "10mi": {
+          "latitude": 42.4896,
+          "longitude": -71.0706,
+          "times": [
+            "2026-03-26T00:00",
+            "2026-03-26T01:00",
+            "2026-03-26T02:00",
+            "2026-03-26T03:00",
+            "2026-03-26T04:00",
+            "2026-03-26T05:00",
+            "2026-03-26T06:00",
+            "2026-03-26T07:00",
+            "2026-03-26T08:00",
+            "2026-03-26T09:00",
+            "2026-03-26T10:00",
+            "2026-03-26T11:00",
+            "2026-03-26T12:00",
+            "2026-03-26T13:00",
+            "2026-03-26T14:00",
+            "2026-03-26T15:00",
+            "2026-03-26T16:00",
+            "2026-03-26T17:00",
+            "2026-03-26T18:00",
+            "2026-03-26T19:00",
+            "2026-03-26T20:00",
+            "2026-03-26T21:00",
+            "2026-03-26T22:00",
+            "2026-03-26T23:00",
+            "2026-03-27T00:00",
+            "2026-03-27T01:00",
+            "2026-03-27T02:00",
+            "2026-03-27T03:00",
+            "2026-03-27T04:00",
+            "2026-03-27T05:00",
+            "2026-03-27T06:00",
+            "2026-03-27T07:00",
+            "2026-03-27T08:00",
+            "2026-03-27T09:00",
+            "2026-03-27T10:00",
+            "2026-03-27T11:00",
+            "2026-03-27T12:00",
+            "2026-03-27T13:00",
+            "2026-03-27T14:00",
+            "2026-03-27T15:00",
+            "2026-03-27T16:00",
+            "2026-03-27T17:00",
+            "2026-03-27T18:00",
+            "2026-03-27T19:00",
+            "2026-03-27T20:00",
+            "2026-03-27T21:00",
+            "2026-03-27T22:00",
+            "2026-03-27T23:00",
+            "2026-03-28T00:00",
+            "2026-03-28T01:00",
+            "2026-03-28T02:00",
+            "2026-03-28T03:00",
+            "2026-03-28T04:00",
+            "2026-03-28T05:00",
+            "2026-03-28T06:00",
+            "2026-03-28T07:00",
+            "2026-03-28T08:00",
+            "2026-03-28T09:00",
+            "2026-03-28T10:00",
+            "2026-03-28T11:00",
+            "2026-03-28T12:00",
+            "2026-03-28T13:00",
+            "2026-03-28T14:00",
+            "2026-03-28T15:00",
+            "2026-03-28T16:00",
+            "2026-03-28T17:00",
+            "2026-03-28T18:00",
+            "2026-03-28T19:00",
+            "2026-03-28T20:00",
+            "2026-03-28T21:00",
+            "2026-03-28T22:00",
+            "2026-03-28T23:00",
+            "2026-03-29T00:00",
+            "2026-03-29T01:00",
+            "2026-03-29T02:00",
+            "2026-03-29T03:00",
+            "2026-03-29T04:00",
+            "2026-03-29T05:00",
+            "2026-03-29T06:00",
+            "2026-03-29T07:00",
+            "2026-03-29T08:00",
+            "2026-03-29T09:00",
+            "2026-03-29T10:00",
+            "2026-03-29T11:00",
+            "2026-03-29T12:00",
+            "2026-03-29T13:00",
+            "2026-03-29T14:00",
+            "2026-03-29T15:00",
+            "2026-03-29T16:00",
+            "2026-03-29T17:00",
+            "2026-03-29T18:00",
+            "2026-03-29T19:00",
+            "2026-03-29T20:00",
+            "2026-03-29T21:00",
+            "2026-03-29T22:00",
+            "2026-03-29T23:00",
+            "2026-03-30T00:00",
+            "2026-03-30T01:00",
+            "2026-03-30T02:00",
+            "2026-03-30T03:00",
+            "2026-03-30T04:00",
+            "2026-03-30T05:00",
+            "2026-03-30T06:00",
+            "2026-03-30T07:00",
+            "2026-03-30T08:00",
+            "2026-03-30T09:00",
+            "2026-03-30T10:00",
+            "2026-03-30T11:00",
+            "2026-03-30T12:00",
+            "2026-03-30T13:00",
+            "2026-03-30T14:00",
+            "2026-03-30T15:00",
+            "2026-03-30T16:00",
+            "2026-03-30T17:00",
+            "2026-03-30T18:00",
+            "2026-03-30T19:00",
+            "2026-03-30T20:00",
+            "2026-03-30T21:00",
+            "2026-03-30T22:00",
+            "2026-03-30T23:00"
+          ],
+          "cloud_low": [
+            99,
+            12,
+            100,
+            100,
+            2,
+            38,
+            99,
+            99,
+            100,
+            87,
+            8,
+            15,
+            7,
+            9,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            38,
+            36,
+            31,
+            4,
+            2,
+            1,
+            2,
+            3,
+            0,
+            0,
+            0,
+            0,
+            0,
+            6,
+            15,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            94,
+            100,
+            93,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            5,
+            90,
+            88,
+            100,
+            75,
+            100,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5,
+            5,
+            10,
+            5,
+            9,
+            56,
+            55,
+            10,
+            5,
+            5,
+            0,
+            0,
+            5,
+            0,
+            0,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            5,
+            95,
+            100,
+            95,
+            100,
+            100,
+            91,
+            59,
+            7,
+            5,
+            10,
+            5,
+            69,
+            10,
+            82,
+            100,
+            100
+          ],
+          "cloud_mid": [
+            99,
+            98,
+            98,
+            98,
+            100,
+            98,
+            98,
+            98,
+            70,
+            95,
+            3,
+            0,
+            31,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            4,
+            100,
+            100,
+            5,
+            4,
+            6,
+            92,
+            14,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            0,
+            0,
+            58,
+            57,
+            80,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5,
+            5,
+            5,
+            5,
+            0,
+            0,
+            5,
+            5,
+            5,
+            100,
+            100,
+            100,
+            83,
+            96,
+            5,
+            5,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            93,
+            96,
+            100,
+            100,
+            100,
+            100,
+            67,
+            100,
+            100,
+            100,
+            93,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            92,
+            97
+          ],
+          "cloud_high": [
+            4,
+            9,
+            98,
+            51,
+            73,
+            64,
+            98,
+            98,
+            56,
+            0,
+            0,
+            53,
+            56,
+            4,
+            100,
+            92,
+            100,
+            95,
+            100,
+            100,
+            100,
+            100,
+            85,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            2,
+            3,
+            6,
+            10,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            5,
+            83,
+            100,
+            100,
+            100,
+            100,
+            100,
+            5,
+            64,
+            5,
+            0,
+            5,
+            100,
+            100,
+            100,
+            39,
+            98,
+            75,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            46,
+            7,
+            95,
+            10
+          ],
+          "humidity": [
+            57,
+            61,
+            74,
+            84,
+            84,
+            85,
+            86,
+            85,
+            86,
+            88,
+            84,
+            72,
+            58,
+            51,
+            46,
+            46,
+            46,
+            48,
+            53,
+            57,
+            62,
+            69,
+            75,
+            94,
+            98,
+            95,
+            96,
+            96,
+            95,
+            94,
+            84,
+            79,
+            79,
+            75,
+            74,
+            72,
+            69,
+            63,
+            53,
+            47,
+            43,
+            43,
+            46,
+            53,
+            63,
+            69,
+            70,
+            71,
+            74,
+            72,
+            68,
+            63,
+            69,
+            68,
+            60,
+            56,
+            48,
+            35,
+            30,
+            26,
+            26,
+            26,
+            25,
+            25,
+            22,
+            20,
+            21,
+            23,
+            24,
+            25,
+            25,
+            33,
+            45,
+            48,
+            46,
+            39,
+            38,
+            37,
+            36,
+            35,
+            31,
+            28,
+            28,
+            26,
+            24,
+            23,
+            23,
+            24,
+            24,
+            26,
+            35,
+            42,
+            48,
+            55,
+            58,
+            58,
+            60,
+            63,
+            65,
+            67,
+            71,
+            74,
+            78,
+            81,
+            76,
+            69,
+            56,
+            48,
+            45,
+            42,
+            39,
+            42,
+            45,
+            50,
+            58,
+            62,
+            68,
+            72,
+            75,
+            78
+          ]
+        },
         "25mi": {
           "latitude": 42.4713,
           "longitude": -71.3639,
@@ -14853,620 +15495,7 @@
             86
           ]
         },
-        "50mi": {
-          "latitude": 42.4191,
-          "longitude": -71.8495,
-          "times": [
-            "2026-03-26T00:00",
-            "2026-03-26T01:00",
-            "2026-03-26T02:00",
-            "2026-03-26T03:00",
-            "2026-03-26T04:00",
-            "2026-03-26T05:00",
-            "2026-03-26T06:00",
-            "2026-03-26T07:00",
-            "2026-03-26T08:00",
-            "2026-03-26T09:00",
-            "2026-03-26T10:00",
-            "2026-03-26T11:00",
-            "2026-03-26T12:00",
-            "2026-03-26T13:00",
-            "2026-03-26T14:00",
-            "2026-03-26T15:00",
-            "2026-03-26T16:00",
-            "2026-03-26T17:00",
-            "2026-03-26T18:00",
-            "2026-03-26T19:00",
-            "2026-03-26T20:00",
-            "2026-03-26T21:00",
-            "2026-03-26T22:00",
-            "2026-03-26T23:00",
-            "2026-03-27T00:00",
-            "2026-03-27T01:00",
-            "2026-03-27T02:00",
-            "2026-03-27T03:00",
-            "2026-03-27T04:00",
-            "2026-03-27T05:00",
-            "2026-03-27T06:00",
-            "2026-03-27T07:00",
-            "2026-03-27T08:00",
-            "2026-03-27T09:00",
-            "2026-03-27T10:00",
-            "2026-03-27T11:00",
-            "2026-03-27T12:00",
-            "2026-03-27T13:00",
-            "2026-03-27T14:00",
-            "2026-03-27T15:00",
-            "2026-03-27T16:00",
-            "2026-03-27T17:00",
-            "2026-03-27T18:00",
-            "2026-03-27T19:00",
-            "2026-03-27T20:00",
-            "2026-03-27T21:00",
-            "2026-03-27T22:00",
-            "2026-03-27T23:00",
-            "2026-03-28T00:00",
-            "2026-03-28T01:00",
-            "2026-03-28T02:00",
-            "2026-03-28T03:00",
-            "2026-03-28T04:00",
-            "2026-03-28T05:00",
-            "2026-03-28T06:00",
-            "2026-03-28T07:00",
-            "2026-03-28T08:00",
-            "2026-03-28T09:00",
-            "2026-03-28T10:00",
-            "2026-03-28T11:00",
-            "2026-03-28T12:00",
-            "2026-03-28T13:00",
-            "2026-03-28T14:00",
-            "2026-03-28T15:00",
-            "2026-03-28T16:00",
-            "2026-03-28T17:00",
-            "2026-03-28T18:00",
-            "2026-03-28T19:00",
-            "2026-03-28T20:00",
-            "2026-03-28T21:00",
-            "2026-03-28T22:00",
-            "2026-03-28T23:00",
-            "2026-03-29T00:00",
-            "2026-03-29T01:00",
-            "2026-03-29T02:00",
-            "2026-03-29T03:00",
-            "2026-03-29T04:00",
-            "2026-03-29T05:00",
-            "2026-03-29T06:00",
-            "2026-03-29T07:00",
-            "2026-03-29T08:00",
-            "2026-03-29T09:00",
-            "2026-03-29T10:00",
-            "2026-03-29T11:00",
-            "2026-03-29T12:00",
-            "2026-03-29T13:00",
-            "2026-03-29T14:00",
-            "2026-03-29T15:00",
-            "2026-03-29T16:00",
-            "2026-03-29T17:00",
-            "2026-03-29T18:00",
-            "2026-03-29T19:00",
-            "2026-03-29T20:00",
-            "2026-03-29T21:00",
-            "2026-03-29T22:00",
-            "2026-03-29T23:00",
-            "2026-03-30T00:00",
-            "2026-03-30T01:00",
-            "2026-03-30T02:00",
-            "2026-03-30T03:00",
-            "2026-03-30T04:00",
-            "2026-03-30T05:00",
-            "2026-03-30T06:00",
-            "2026-03-30T07:00",
-            "2026-03-30T08:00",
-            "2026-03-30T09:00",
-            "2026-03-30T10:00",
-            "2026-03-30T11:00",
-            "2026-03-30T12:00",
-            "2026-03-30T13:00",
-            "2026-03-30T14:00",
-            "2026-03-30T15:00",
-            "2026-03-30T16:00",
-            "2026-03-30T17:00",
-            "2026-03-30T18:00",
-            "2026-03-30T19:00",
-            "2026-03-30T20:00",
-            "2026-03-30T21:00",
-            "2026-03-30T22:00",
-            "2026-03-30T23:00"
-          ],
-          "cloud_low": [
-            75,
-            98,
-            48,
-            73,
-            100,
-            37,
-            9,
-            100,
-            1,
-            10,
-            4,
-            5,
-            3,
-            1,
-            1,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            93,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            40,
-            40,
-            36,
-            32,
-            35,
-            28,
-            26,
-            17,
-            8,
-            3,
-            4,
-            6,
-            1,
-            20,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            98,
-            22,
-            24,
-            10,
-            98,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            52,
-            94,
-            45,
-            5,
-            5,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            5,
-            5,
-            5,
-            5,
-            5,
-            10,
-            5,
-            10,
-            10,
-            5,
-            10,
-            5,
-            5,
-            5,
-            5,
-            0,
-            0,
-            10,
-            5,
-            5,
-            5,
-            0,
-            0,
-            5,
-            90,
-            100,
-            65,
-            44,
-            5,
-            54,
-            37,
-            0,
-            0,
-            0,
-            0,
-            76,
-            5,
-            10,
-            100,
-            100,
-            100
-          ],
-          "cloud_mid": [
-            98,
-            98,
-            98,
-            82,
-            15,
-            24,
-            98,
-            100,
-            62,
-            7,
-            0,
-            47,
-            97,
-            100,
-            100,
-            100,
-            100,
-            100,
-            88,
-            44,
-            100,
-            100,
-            100,
-            99,
-            100,
-            100,
-            87,
-            100,
-            2,
-            100,
-            100,
-            0,
-            100,
-            0,
-            0,
-            100,
-            36,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            1,
-            1,
-            5,
-            85,
-            100,
-            100,
-            5,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            62,
-            5,
-            5,
-            5,
-            5,
-            5,
-            5,
-            91,
-            100,
-            97,
-            100,
-            100,
-            91,
-            100,
-            38,
-            5,
-            100,
-            100,
-            100,
-            100,
-            100,
-            5,
-            10,
-            10,
-            97,
-            10,
-            5,
-            100,
-            5,
-            64,
-            100,
-            71,
-            100,
-            100,
-            100,
-            100,
-            100,
-            34,
-            63,
-            60,
-            35,
-            5,
-            5
-          ],
-          "cloud_high": [
-            4,
-            64,
-            98,
-            92,
-            90,
-            0,
-            98,
-            98,
-            58,
-            2,
-            0,
-            56,
-            97,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            43,
-            100,
-            85,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            89,
-            0,
-            2,
-            5,
-            9,
-            1,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            5,
-            0,
-            5,
-            0,
-            5,
-            5,
-            35,
-            100,
-            100,
-            100,
-            100,
-            100,
-            5,
-            5,
-            0,
-            5,
-            73,
-            100,
-            100,
-            100,
-            79,
-            62,
-            62,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            100,
-            5,
-            10,
-            100
-          ],
-          "humidity": [
-            66,
-            83,
-            86,
-            83,
-            80,
-            82,
-            81,
-            85,
-            84,
-            82,
-            75,
-            69,
-            59,
-            63,
-            65,
-            62,
-            60,
-            63,
-            70,
-            75,
-            77,
-            77,
-            87,
-            96,
-            95,
-            93,
-            93,
-            92,
-            92,
-            90,
-            83,
-            81,
-            78,
-            76,
-            75,
-            72,
-            71,
-            68,
-            65,
-            62,
-            58,
-            56,
-            58,
-            64,
-            72,
-            76,
-            76,
-            71,
-            67,
-            64,
-            64,
-            68,
-            80,
-            75,
-            61,
-            55,
-            50,
-            40,
-            36,
-            36,
-            31,
-            28,
-            25,
-            25,
-            27,
-            26,
-            25,
-            28,
-            34,
-            45,
-            46,
-            44,
-            47,
-            49,
-            52,
-            53,
-            53,
-            53,
-            52,
-            50,
-            41,
-            34,
-            31,
-            30,
-            30,
-            31,
-            30,
-            28,
-            32,
-            38,
-            46,
-            55,
-            67,
-            72,
-            74,
-            75,
-            77,
-            79,
-            82,
-            82,
-            84,
-            87,
-            89,
-            88,
-            78,
-            67,
-            59,
-            56,
-            56,
-            54,
-            56,
-            58,
-            63,
-            68,
-            76,
-            83,
-            87,
-            88,
-            89,
-            91
-          ]
-        }
+        "50mi": null
       }
     }
   ]
