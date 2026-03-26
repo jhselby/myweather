@@ -1073,9 +1073,74 @@
     body.theme-light .oh-close { color: #999; }
     body.theme-light .oh-close:hover { color: #333; }
 
-  </style>
-</head>
 
+    /* Temp/Precip Chart Data Bar */
+    .chart-data-bar {
+      display: none;
+      background: rgba(30, 35, 50, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 20px 24px;
+      margin-top: 12px;
+    }
+
+    .chart-data-bar.visible {
+      display: block;
+    }
+
+    .chart-data-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 0 12px;
+    }
+
+    .chart-data-time {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .chart-data-close {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .chart-data-close:hover {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .chart-data-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .chart-data-stat {
+      text-align: center;
+    }
+
+    .chart-data-stat-val {
+      font-size: 16px;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    .chart-data-stat-lbl {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 2px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+</head>
+  </style>
 <body>
   <div class="container">
     <header>
@@ -1432,6 +1497,14 @@
             <div id="overlayType"></div>
           </div>
           <canvas id="tempPrecipChart"></canvas>
+          <div id="tempPrecipDataBar" class="chart-data-bar">
+            <div class="chart-data-header">
+              <div id="tempPrecipDataTime" class="chart-data-time"></div>
+              <button class="chart-data-close" onclick="document.getElementById('tempPrecipDataBar').classList.remove('visible')">×</button>
+            </div>
+            <div id="tempPrecipDataLine" style="font-size:clamp(14px, 2.2vw, 24px);font-weight:600;line-height:1.3;color:rgba(255,255,255,0.95);width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;white-space:nowrap;"></div>
+          </div>
+
           <div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;color:rgba(200,210,230,0.75);">
             <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;">
               <div style="font-size:10px;font-weight:500;color:rgba(200,210,230,0.5);text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Sky (bottom to top per bar)</div>
@@ -2389,6 +2462,39 @@
     let tempPrecipChart = null;
     let windChartObj    = null;
 
+    function updateTempPrecipDataBar(index, times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal) {
+      const time = times[index];
+      const temp = temps[index];
+      const precipProb = pop[index] ?? 0;
+      const wb = wetBulbs[index];
+      const surfTemp = temps[index];
+      const temp850 = temps850mb?.[index];
+      
+      const dt = new Date(time);
+      const hour = dt.getHours();
+      const nextHour = (hour + 1) % 24;
+      const weekday = dt.toLocaleDateString("en-US", { weekday: "long" });
+      const month = dt.toLocaleDateString("en-US", { month: "long" });
+      const day = dt.getDate();
+      const timeStr = `${weekday}, ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? 'am' : 'pm'}`;
+      let typeStr = "None";
+      if (precipProb >= 5 && wb != null) {
+        if (wb <= 28) typeStr = "❄️ Snow";
+        else if (wb <= 32) typeStr = "🌨 Likely snow";
+        else if (wb <= 35) typeStr = "🟣 Mixed/slush";
+        else if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
+          typeStr = "🟠 Freezing rain";
+        }
+        else typeStr = "🔵 Rain";
+      }
+      
+      const cloudPct = cloudTotal[index] != null ? Math.round(cloudTotal[index]) : 0;
+      const clearPct = 100 - cloudPct;
+      
+      document.getElementById("tempPrecipDataTime").textContent = timeStr;
+      document.getElementById("tempPrecipDataLine").textContent = `Temp: ${temp != null ? Math.round(temp) : "—"}°F | POP: ${precipProb}% | Cloud: ${cloudPct}% | Clear: ${clearPct}% | Type: ${typeStr}`;
+    }
+
     function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal, sunrise, sunset) {
       const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
       const ctx    = document.getElementById("tempPrecipChart").getContext("2d");
@@ -2517,49 +2623,17 @@
         options: {
           responsive: true,
           interaction: { mode: "index", intersect: false },
-          onHover: (event, activeElements) => {
-            const overlay = document.getElementById("tempPrecipOverlay");
+          onClick: (event, activeElements) => {
             if (activeElements.length > 0) {
               const index = activeElements[0].index;
-              const time = times[index];
-              const temp = temps[index];
-              const precipProb = pop[index] ?? 0;
-              const wb = wetBulbs[index];
-              const surfTemp = temps[index];
-              const temp850 = temps850mb?.[index];
-              const cc = cloudTotal[index] ?? 0;
-              const dt = new Date(time);
-              const timeStr = dt.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-              let typeStr = "";
-              if (precipProb >= 5 && wb != null) {
-                if (wb <= 28) typeStr = "❄️ Snow";
-                else if (wb <= 32) typeStr = "🌨 Likely snow";
-                else if (wb <= 35) typeStr = "🟣 Mixed/slush";
-                else if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
-                  typeStr = "🟠 Freezing rain";
-                }
-                else typeStr = "🔵 Rain";
-              }
-              const clearPct  = Math.round((100 - precipProb) * (1 - cc / 100));
-              const cloudPct  = Math.round((100 - precipProb) * (cc / 100));
-              const skyLabel  = cc >= 80 ? "Overcast" : cc >= 50 ? "Mostly Cloudy" : cc >= 20 ? "Partly Cloudy" : "Clear";
-              document.getElementById("overlayTime").textContent = timeStr;
-              document.getElementById("overlayTemp").textContent = temp != null ? `${Math.round(temp)}°F` : "";
-              const dt2 = new Date(time);
-              const hr2 = dt2.getHours() + dt2.getMinutes() / 60;
-              const isDaytime = hr2 >= sunrise && hr2 <= sunset;
-              const clearEmoji = isDaytime ? "☀️" : "🌙";
-              document.getElementById("overlaySky").textContent = `${skyLabel} — ${clearEmoji} ${clearPct}%  ☁️ ${cloudPct}%${precipProb >= 5 ? "  🌧 " + precipProb + "%" : ""}`;
-              if (precipProb >= 5) {
-                document.getElementById("overlayPrecip").textContent = typeStr;
-                document.getElementById("overlayPrecip").style.display = "block";
-              } else {
-                document.getElementById("overlayPrecip").style.display = "none";
-              }
-              document.getElementById("overlayType").style.display = "none";
-              overlay.style.opacity = "1";
-            } else {
-              overlay.style.opacity = "0";
+              updateTempPrecipDataBar(activeElements[0].index, times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal);
+              document.getElementById("tempPrecipDataBar").classList.add("visible");
+            }
+          },
+          onHover: (event, activeElements) => {
+            const dataBar = document.getElementById("tempPrecipDataBar");
+            if (dataBar && dataBar.classList.contains("visible") && activeElements.length > 0) {
+              updateTempPrecipDataBar(activeElements[0].index, times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal);
             }
           },
           plugins: {
