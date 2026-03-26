@@ -53,9 +53,8 @@ def fetch_hourly_hrrr():
         "latitude": LAT,
         "longitude": LON,
         "hourly": hrrr_hourly,
-        "models": "ncep_hrrr_conus",
         "forecast_hours": 48,
-        "past_hours": 24,
+        "past_hours": 0,
         **OM_UNITS,
     }
     data, meta = _om_get(params, "HRRR hourly")
