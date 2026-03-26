@@ -981,7 +981,7 @@
     }
 
     #oh-pop-flight {
-      font-size: 20px;
+      font-size: 28px;
       font-weight: 700;
       color: #fff;
       letter-spacing: 0.05em;
@@ -1003,7 +1003,7 @@
       background: none;
       border: none;
       color: #555;
-      font-size: 20px;
+      font-size: 28px;
       cursor: pointer;
       padding: 0 0 0 8px;
       line-height: 1;
@@ -1035,14 +1035,18 @@
     }
 
     .oh-plane-icon {
-      font-size: 20px;
+      font-size: 28px;
+    }
+    @media (min-width: 768px) {
+      .oh-plane-icon {
+        font-size: 40px;
       line-height: 1;
       cursor: pointer;
       user-select: none;
-      text-shadow: 0 0 6px rgba(96,165,250,0.5);
+      
       display: block;
-      width: 24px;
-      height: 24px;
+      width: 32px;
+      height: 32px;
       text-align: center;
     }
 
@@ -2052,7 +2056,7 @@
       
       <div class="oh-header">
         <div>
-          <span class="oh-title">✈ OVERHEAD NOW</span>
+          <span class="oh-title">✈︎ OVERHEAD NOW</span>
           <span id="oh-count" class="oh-meta"></span>
         </div>
         <div class="oh-controls">
@@ -2066,9 +2070,9 @@
       <div id="overheadMap"></div>
 
       <div class="oh-legend">
-        <div><span style="color:#fbbf24">✈</span> &lt;5,000 ft</div>
-        <div><span style="color:#34d399">✈</span> 5–20,000 ft</div>
-        <div><span style="color:#60a5fa">✈</span> &gt;20,000 ft</div>
+        <div><span style="color:#fbbf24">✈︎</span> &lt;5,000 ft</div>
+        <div><span style="color:#34d399">✈︎</span> 5–20,000 ft</div>
+        <div><span style="color:#60a5fa">✈︎</span> &gt;20,000 ft</div>
         <div><span style="color:#f87171">⌂</span> home</div>
       </div>
 
@@ -2834,7 +2838,7 @@
       const rowStyle  = `display:flex;justify-content:flex-start;align-items:baseline;` +
                         `padding:9px 0;border-bottom:1px solid ${divCol};gap:12px;`;
       const lblStyle  = `font-size:0.82rem;color:${labelCol};flex-shrink:0;`;
-      const valStyle  = `font-size:0.88rem;font-weight:700;color:${valCol};text-align:right;`;
+      const valStyle  = `font-size:0.88rem;font-weight:700;color:${valCol};text-align:right;margin-left:auto;`;
       const subStyle  = `font-size:0.72rem;color:${dimCol};margin-top:1px;font-weight:400;`;
 
       const row = (label, value, sub = "") => `
@@ -4577,7 +4581,7 @@
     }
 
     function daysUntilNextFullMoon() {
-      let lastFetchTime = Date.now();
+      const now = new Date();
       let prev = SunCalc.getMoonIllumination(now).phase;
       for (let d = 1; d <= 30; d++) {
         const candidate = new Date(now.getTime() + d * 86400000);
@@ -5215,7 +5219,7 @@
         const allTimes = hourly.times || [];
         
         // Find current hour index
-        let lastFetchTime = Date.now();
+        const now = new Date();
         const currentHour = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
         let startIdx = allTimes.findIndex(t => new Date(t) >= currentHour);
         if (startIdx === -1) startIdx = 0; // fallback if not found
@@ -5441,11 +5445,20 @@
   let ohMap = null;
   let ohMarkers = [];
   let ohRefreshTimer = null;
+  let lastFetchTime = null;
   let ohTileLayers = {};
   let ohCurrentTile = 'satellite';
   let ohIsPlaying = false;
 
   // Initialize map (lazy, on first tab switch to overhead)
+  function getPlaneColor(altitude) {
+    const alt = parseInt(altitude, 10);
+    if (isNaN(alt) || alt <= 0) return "#60a5fa";
+    if (alt < 5000) return "#fbbf24";
+    if (alt < 20000) return "#34d399";
+    return "#60a5fa";
+  }
+
   function ohInitMap() {
     if (ohMap) return; // Already initialized
 
@@ -5508,18 +5521,13 @@
 
       visible.forEach(a => {
         const hdg = a.track || 0;
-        const alt = parseInt(a.alt_baro) || 0;
-
-        let color;
-        if      (alt < 5000)  color = '#fbbf24';
-        else if (alt < 20000) color = '#34d399';
-        else                  color = '#60a5fa';
+        const color = getPlaneColor(a.alt_baro);
 
         const planeIcon = L.divIcon({
-          html: `<span class="oh-plane-icon" style="color:${color}; transform:rotate(${hdg}deg); display:block;">✈</span>`,
+          html: `<span class="oh-plane-icon" style="color:${color} !important; transform:rotate(${hdg}deg); display:block;">✈︎</span>`,
           className: '',
-          iconSize:   [24, 24],
-          iconAnchor: [12, 12]
+          iconSize:   [32, 32],
+          iconAnchor: [16, 16]
         });
 
         if (!ohMap) { console.error("ohMap is null when trying to add marker"); return; }
@@ -5530,7 +5538,7 @@
 
       ohUpdateCount();
 
-      let lastFetchTime = Date.now();
+      lastFetchTime = Date.now();
       statusEl.textContent = "just now";
       statusEl.style.color = "#4ade80";
       // Update relative time every 30 seconds
