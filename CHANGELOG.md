@@ -1,83 +1,123 @@
 # Weather App Changelog
 
+## v3.14 (March 26, 2026)
+* Fix missing tail hours in wind/temp charts by using Open-Meteo seamless model blending
+* Ensures full 48-hour forecast display without data dropoff at end of timeframe
 
-## v3.0 (March 21, 2026)
+## v3.13 (March 26, 2026)
+* Add Overhead tab - live aircraft tracker showing planes visible from property
+* Mapbox-based map with lazy initialization (loads only when tab opened)
+* Manual refresh button, zoom level 12 for ~15mi radius view
+* Safari-compatible plane markers (text variant ✈︎)
+* Fix Today card alignment issues
+* Scope fixes for tab initialization
 
-### Major Forecast Overhaul - NWS-Quality Narratives
+## v3.12 (March 26, 2026)
+* Add sky condition bars to 48-hour temperature/precipitation chart
+* Shows clear/partly/mostly/overcast cloud layers as stacked bars
+* Fix wind data dropoff at end of forecast window
+* Trim past hours from chart display (now shows current hour forward)
 
-**Replaced static 10-day forecast card with rich, hyperlocal detailed forecasts**
-- Generated from HRRR (48h) and ECMWF (7-day) models instead of generic daily summaries
-- Provides 14 day/night periods (days 1-7) plus 3 simple dailies (days 8-10)
-- Matches NWS narrative style with flowing prose instead of sentence fragments
+## v3.11 (March 26, 2026)
+* Fix horizontal page drift on mobile when touching/sliding across chart
+* Add touch-action CSS to prevent unwanted page scroll during chart interaction
+* Mobile UX improvement for chart data bar interaction
 
-**Forecast narrative improvements:**
-- Natural sentence structure: "Mostly cloudy, with a high near 48 around 3pm. Northwest wind 3 to 11 mph, with gusts as high as 19 mph."
-- Precipitation timing: "Heavy snow before 8am", "Rain between 4am and 5am"
-- Temperature timing: Shows when highs/lows occur if notable ("around 3pm", "toward morning", "in the evening")
-- Wind ranges and gust integration: "Northwest wind 7 to 13 mph, with gusts as high as 24 mph"
-- Proper precipitation classification: Infers rain/snow/mixed from weather codes when 850mb data unavailable
-- Fixed "mixed" → "mixed rain and snow" for clarity
-- Uses "rain or snow" as default when models show precip probability but no specific type
+## v3.10 (March 26, 2026)
+* Consolidate temp/precip chart data bar into single responsive line
+* Shows: Temp | POP | Cloud % | Clear % | Type in one formatted line
+* Data bar appears on click, updates on hover, closes with X button
+* Replaces previous 3-column grid layout
 
-**Data infrastructure changes:**
-- Added 7-day hourly GFS data to weather_data.json (168 hours)
-- Merged HRRR (48h with precip type classification) and GFS (remaining 120h) for seamless 7-day coverage
-- Precipitation type fallback: Uses 850mb temps when available (HRRR), falls back to weather code classification (GFS)
-- Kept NWS forecast card for comparison purposes
+## v3.5 (March 21, 2026)
+* Wind forecast improvements: max(KBVY, WU) for current conditions
+* Extract wind gusts from KBVY METAR (Aviation Weather API)
+* Blend observed wind into hourly forecast (24hr decay curve)
+* Lower wind impact thresholds for waterfront exposure (10/16 vs 12/20)
+* Fixes underreported gusts in impact cards, graphs, and forecast text
 
-## Recent Updates (March 10-19, 2026)
+## v3.4 (March 21, 2026)
+* Fix NWS temperature fallback IndexError in forecast generator
+* Prevents crashes when NWS data is incomplete
 
-### Data Collection & Processing
-- **Added wet bulb temperature calculation** - Calculates wet bulb temp for every hour in forecast to improve precipitation type classification (snow/mixed/rain thresholds: ≤32°F/32-35°F/>35°F)
-- **Added 850mb temperature extraction** - Classic forecaster's tool for rain/snow discrimination; surfaces when PoP ≥ 20%
-- **Added 850mb precip type classification** - Classifies precip as snow/mixed/rain based on 850mb temp thresholds (≤0°C/0-3°C/>3°C)
-- **Added sea breeze detection** - Detects sea breeze probability based on land-water temperature differential, wind conditions, and time of day; displays percentage, temp delta, wind direction/speed
-- **Added pressure tendency tracking** - 3-hour pressure change detection with fallback chain: KBOS observed → buoy 44013 → model forecast
-- **Added fog risk calculation** - Combines dewpoint depression, cloud cover, wind, and visibility data to estimate fog probability
-- **Fixed frost tracker** - Restored season-to-date freeze counters (freeze_days, hard_freeze_days, severe_days) with historical backfill from Open-Meteo; added frost_log.json to git workflow
-- **Added ASOS condition overrides** - Uses KBOS/KBVY observed conditions to override model forecast when observations show fog/mist/drizzle/freezing conditions
-- **Improved Weather Underground PWS selection** - Added realtime validation: filters out stale stations (>2h old), validates temperature sanity (≥-40°F, ≤130°F), prioritizes Marblehead stations, sorts by distance
+## v3.3 (March 21, 2026)
+* Wind chart redesign: axis swap (time horizontal, speed vertical)
+* Wind chart: labeled worry zones with gradient color fills
+* Wind chart: legend shows current + peak worry levels with time labels
+* Wind chart: switched from stacked bar to grouped bar layout
+* Fix: duplicate "Calm" label in worryLevel function
 
-### UI Improvements
-- **Redesigned wind impact display** - Removed redundant "Level" row; renamed "Current" to "Current Impact" (score + severity on one line); renamed "Impact Score" to "Peak Impact (next Xh)" with dynamic time window
-- **Added wind impact scores to 48-hour wind chart** - Dual-axis overlay showing sustained (purple) and gust (red) impact scores alongside raw wind forecast; added color-coded impact zones (Calm/Breezy/Notable/Strong/Severe/Extreme)
-- **Added wind speed color legend** - Visual guide showing color coding for different wind speeds
-- **Fixed sea breeze text wrapping** - Shortened display to icon + percentage + temp delta + compass direction + wind speed to prevent overflow on iPhone
-- **Fixed charts to start at current hour** - Both temperature/precip and wind charts now begin at the current hour rather than midnight for better relevance
-- **Added compass direction conversion** - Sea breeze module now converts degrees to 16-point compass (N, NNE, NE, etc.)
-- **Fixed dewpoint display bug** - Corrected stray `<` character from double `<<div` typo and missing space between spans
-- **Fixed feels-like temperature** - Changed from non-existent `cur.feels_like` to `cur.apparent_temperature`
-- **Added wet bulb temp display row** - Conditional display (shown when PoP ≥ 20%) with tooltip explaining significance for precip type
-- **Added 850mb precip type display row** - Conditional display showing snow/mixed/rain classification when PoP ≥ 20%
+## v3.2 (March 21, 2026)
+* Add morning/afternoon cloud split for accurate sky narratives
+* Fix fog handling: precipitation now primary, fog as modifier
+* Fix precipitation probability thresholds (90%+ drops qualifiers)
+* Fix RIGHT NOW card to show smart-corrected temperature
+* Fix 10-day forecast missing temperature data
+* Fix multiple JS errors in forecast rendering
 
-### Wind Exposure & Scoring
-- **Rebuilt wind exposure table using terrain analysis** - Maximum exposure (1.00) from 320-25° (open harbor to north); heavy blocking from 45-260° due to terrain rising 18-57 ft around property bowl; replaces initial estimated values with contour-map-derived factors
-- **Fixed wind impact card data source** - Cards now look at forward-looking windows (e.g., "next 12h") instead of incorrectly using past data
-- **Fixed wind worry score calculation** - Now starts peak calculations from current hour index rather than including historical data
+## v3.1 (March 21, 2026)
+* NWS NBM gridpoint integration (replaced GFS surface data)
+* Fix precipitation likelihood qualifiers (added "likely", "chance of", "slight chance of")
+* Fix surface temperature validation for precipitation type
+* NWS temperatures and weather conditions now override GFS/HRRR
+* Prevents physically impossible forecasts (heavy snow at 40°F)
+* Add 850mb precipitation type classifier (Rain/Mixed/Snow/Heavy snow)
+* Wet bulb temperature display in Conditions card (shown when PoP ≥ 20%)
+* 850mb precip type only calculated when PoP ≥ 20%
 
-### Data Sources & API Integration
-- **Improved NWS alerts** - Fixed key mismatch (`nws_alerts` → `alerts`); transformed raw API response to simplified structure with proper URLs (event/headline/description/severity/onset/expires/url fields)
-- **Fixed wind chart 2H pressure trend** - Corrected frontend reference from `pressure_trend_hpa_2h` to `pressure_trend_hpa_3h` to match actual data field
+## v2.72–v2.77 (March 16–18, 2026)
+* Sea breeze detector with detailed analysis card and likelihood scoring
+* Terrain-based wind exposure table from contour map analysis
+* Wind impact cards restructured with forward-looking peak windows (12/24/36/48h)
+* Current impact scores added to wind cards
+* Trough signal processor for 850mb height tendency
+* ASOS condition override and fog risk calculation
+* Dewpoint depression display and meteorological seasons
 
-### Code Structure & Workflow
-- **Refactored to modular architecture** - Migrated from single `collector.py` to organized `weather_collector/` package with separate modules for fetchers, processors, and config
-- **Added GitHub Actions concurrency guard** - Prevents simultaneous workflow runs from causing merge conflicts on `weather_data.json`
-- **Improved git workflow** - Added `frost_log.json` to automated commits; documented correct sequence for handling Actions-committed data files
+## v2.70–v2.71 (March 16, 2026)
+* 48-hour wind chart: swapped axes, color gradient zones, forward-looking impact scores
+* Fix wind exposure table using actual fetch measurements
 
-### Version History
-- v2.78 - Latest (wet bulb + 850mb precip type + sea breeze wrapping fix)
-- v2.72 - Terrain-based wind exposure table
-- v2.70 - Wind impact chart redesign with dual-axis scores
-- v2.69 - Wind impact scores, NWS alert fixes, chart timing fixes
-- v2.67-2.68 - Bug fixes and enhancements
+## v2.66–v2.69 (March 15, 2026)
+* Major refactor: split monolithic collector.py into modular package (fetchers/, processors/)
+* Separate processors for fog, frost, hyperlocal, pressure, sea breeze, trough, wet bulb, wind risk
+* Buoy wind data added; KBOS/KBVY migrated to new Aviation Weather API
+* NWS alerts simplified format with proper URLs
+* 48-hour charts now start from current hour instead of midnight
+* Feels-like temp fixed to use apparent_temperature
 
----
+## v2.5 (February 23, 2026)
+* Smart hyperlocal correction: distance + elevation weighted bias
+* Quality filtering: reject stale data (>30 min) and outliers (>2σ)
+* Station diagnostics: used/total count, effective radius, confidence level
+* Model correction instead of replacement (respects grid precision)
 
-## Pending / Next Steps
-See TODO.md for planned improvements including:
-- Additional atmospheric data (CAPE, freezing level, precipitable water, cloud base height)
-- Wave period data
-- Wind gust forecast
-- Fog dissipation timing
-- Freezing rain risk score
-- Documentation of Impact Score and Dock Days methodology
+## v2.2 (February 21, 2026)
+* Solar system: 4th visibility state — "sky too bright" (daytime)
+* Today card dark mode contrast fix
+* Tooltip hover target: consistent width across all cards
+* Version + changelog now auto-maintained by Claude
+
+## v2.2 (February 21, 2026)
+* Light / dark / system theme toggle
+* Pressure unit switching (hPa / inHg)
+* Today almanac card (day of year, season countdown, daylight change)
+* Solar System Now — honest "above horizon" wording, clearer tile contrast
+* Wind impact pill wrapping fix on mobile
+* Light mode: comprehensive inline color overrides throughout
+* Version + changelog moved to settings
+
+## v2.0 (February 2026)
+* 10-day forecast with NWS integration and day selection
+* Mobile responsive layout (1-column stacking, horizontal scroll)
+* Gust & sustained wind impact cards with time windows
+* Frost & freeze tracker with season stats
+* Dock Day Score with tide-window scoring
+* Sunset Quality forecast card
+* RainViewer radar with nowcast frames
+* Settings panel (gear icon)
+
+## v1.0 (Late 2025)
+* Initial build: multi-model weather, tides, buoy, NWS alerts
+* Multi-tab layout (Weather / Wind / Almanac / Radar / Sources)
+* KBOS / KBVY / PWS observed conditions
