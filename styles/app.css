@@ -1,0 +1,1119 @@
+:root{
+      --bg: #0b1220;
+      --card: rgba(255, 255, 255, 0.06);
+      --card2: rgba(255, 255, 255, 0.09);
+      --border: rgba(255, 255, 255, 0.12);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.68);
+      --muted2: rgba(255,255,255,0.55);
+      --accent: rgba(255,255,255,0.18);
+      --shadow: 0 10px 28px rgba(0,0,0,0.35);
+    }
+
+    /* ── iOS overscroll rubber-band fix ─────────────────────────
+       Without this, bouncing past the top/bottom on iOS flashes
+       white (light) or whatever the browser default is.
+       html background anchors the overscroll color to our dark bg.
+    ──────────────────────────────────────────────────────────── */
+    html {
+      background: #0b1220;
+    }
+    body.theme-light ~ html,
+    html:has(body.theme-light) {
+      background: #f0f2f5;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(84, 150, 255, 0.25), transparent 55%),
+                  radial-gradient(900px 500px at 80% 0%, rgba(90, 255, 190, 0.12), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      /* Safe area insets for iOS notch / home indicator */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      padding-left: env(safe-area-inset-left);
+      padding-right: env(safe-area-inset-right);
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 16px 14px 28px;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 14px 14px 12px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.05);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 10px;
+      z-index: 50;
+      backdrop-filter: blur(10px);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      letter-spacing: 0.2px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .version-pill{
+      font-size: 0.78rem;
+      font-weight: 800;
+      color: rgba(255,255,255,0.78);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.06);
+      white-space: nowrap;
+    }
+
+    .meta-row{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .meta-item{
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      white-space: nowrap;
+    }
+
+    .meta-label{
+      color: rgba(255,255,255,0.55);
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .meta-value{
+      color: rgba(255,255,255,0.86);
+      font-weight: 800;
+    }
+
+    .source-row{
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .source-pill{
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(255,255,255,0.05);
+      font-size: 0.82rem;
+      font-weight: 800;
+      color: rgba(255,255,255,0.86);
+    }
+    .source-pill .small{
+      font-weight: 800;
+      color: rgba(255,255,255,0.65);
+    }
+
+    .tabs{
+      margin-top: 6px;
+      display: flex;
+      gap: 8px;
+      justify-content: flex-start;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+      padding-left: 2px;
+      padding-right: 2px;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+
+    .tab{
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+      color: rgba(255,255,255,0.92);
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+      transition: transform 0.06s ease, background 0.15s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .tab:active{ transform: scale(0.98); }
+    .tab.active{
+      background: rgba(255,255,255,0.18);
+      border-color: rgba(255,255,255,0.28);
+    }
+
+    .grid {
+      margin-top: 14px;
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: 12px;
+    }
+
+    .card{
+      grid-column: span 6;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px 14px 12px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
+      position: relative;
+    }
+
+    .card.col-12{ grid-column: span 12; }
+    .card.col-6{ grid-column: span 6; }
+
+    .card-title-collapsible{
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .card-title-collapsible:hover{ color: rgba(255,255,255,1); }
+    .collapse-chevron{
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.4);
+      font-weight: 700;
+      margin-left: 8px;
+      transition: transform 0.2s;
+    }
+    .card-title{
+      font-weight: 900;
+      color: rgba(255,255,255,0.88);
+      font-size: 0.95rem;
+      letter-spacing: 0.2px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: baseline;
+    }
+
+    .small-note{
+      color: rgba(255,255,255,0.6);
+      font-size: 0.85rem;
+      line-height: 1.2rem;
+      margin-top: 8px;
+    }
+
+    .current-temp{
+      position: relative;
+      font-size: 3rem;
+      font-weight: 1000;
+      letter-spacing: -1px;
+      margin-top: 8px;
+    }
+
+    .temp-unit{
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: rgba(255,255,255,0.7);
+      margin-left: 6px;
+    }
+
+    .feels-like{
+      position: relative;
+      margin-top: 2px;
+      font-size: 1rem;
+      color: rgba(255,255,255,0.76);
+      font-weight: 800;
+    }
+
+    .condition{
+      position: relative;
+      margin-top: 10px;
+      font-size: 1.05rem;
+      font-weight: 900;
+      color: rgba(255,255,255,0.86);
+    }
+
+    .row{
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 7px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 0.95rem;
+    }
+    .row:last-child{ border-bottom: none; }
+
+    .label{
+      color: rgba(255,255,255,0.62);
+      font-weight: 800;
+      min-width: 45%;
+    }
+    /* Wind window pill buttons */
+    .wind-window-pills { display:flex; gap:4px; }
+    .wpill {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.5);
+      border-radius: 999px;
+      padding: 3px 10px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .wpill:hover { background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.8); }
+    .wpill.active { background: rgba(100,160,255,0.25); border-color: rgba(100,160,255,0.5); color: rgba(160,200,255,0.95); }
+    /* Pure-CSS hover tooltips — add data-tip="..." to any element */
+    [data-tip]{
+      position: relative;
+      cursor: default;
+      text-decoration: underline dotted rgba(255,255,255,0.3);
+    }
+    [data-tip]::after{
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 0;
+      transform: none;
+      background: rgba(20,24,36,0.97);
+      color: rgba(255,255,255,0.88);
+      font-size: 0.72rem;
+      font-weight: 600;
+      line-height: 1.4;
+      padding: 6px 10px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.12);
+      white-space: normal;
+      width: max-content;
+      max-width: 220px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 9999;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+    }
+    [data-tip]:hover::after{ opacity: 1; }
+    [data-tip].tip-active::after{ opacity: 1; }
+    .value{
+      color: rgba(255,255,255,0.9);
+      font-weight: 900;
+      text-align: right;
+      flex: 1;
+      min-width: 0; /* Allow flex item to shrink below content size */
+    }
+
+    .pressure-alarm{
+      border-radius: 14px;
+      padding: 10px 16px;
+      margin: 8px 0 4px 0;
+      font-weight: 800;
+      font-size: 0.92rem;
+      text-align: center;
+      display: none;
+    }
+    .pressure-alarm.falling{
+      background: rgba(255,80,80,0.18);
+      border: 1px solid rgba(255,80,80,0.4);
+      color: rgba(255,180,180,0.95);
+    }
+    .pressure-alarm.rising{
+      background: rgba(80,200,120,0.15);
+      border: 1px solid rgba(80,200,120,0.35);
+      color: rgba(150,240,180,0.95);
+    }
+    .alert-banner{
+      background: rgba(255, 80, 80, 0.18);
+      border: 1px solid rgba(255, 80, 80, 0.30);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      box-shadow: 0 10px 24px rgba(0,0,0,0.25);
+    }
+    .alert-title{ font-weight: 1000; }
+    .alert-desc{ color: rgba(255,255,255,0.78); margin-top: 4px; }
+
+    .tide-grid{
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .tide-item{
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 10px 10px;
+      background: rgba(255,255,255,0.05);
+    }
+    .tide-item .tide-type{
+      font-weight: 1000;
+      color: rgba(255,255,255,0.85);
+      margin-bottom: 2px;
+    }
+    .tide-item .tide-time{
+      font-weight: 900;
+      color: rgba(255,255,255,0.78);
+    }
+    .tide-item .tide-height{
+      font-weight: 900;
+      color: rgba(255,255,255,0.72);
+      font-size: 0.9rem;
+    }
+
+    canvas{
+      touch-action: pan-y;
+      width: 100% !important;
+      height: 220px !important;
+    }
+
+    @media (max-width: 780px){
+      .card{ grid-column: span 12; }
+      canvas{ height: 240px !important; }
+      header{ position: relative; top: 0; }
+
+      /* 3-column grids → single column */
+      .mobile-3col {
+        grid-template-columns: 1fr !important;
+      }
+      .mobile-3col > div {
+        padding: 0 0 10px 0 !important;
+        border-right: none !important;
+        border-left: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+        margin-bottom: 4px !important;
+      }
+      .mobile-3col > div:last-child {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+        margin-bottom: 0 !important;
+      }
+
+      /* Sources table — hide description column on narrow screens */
+      .sources-col-desc { display: none !important; }
+
+      /* Radar map — don't eat the whole screen */
+      #radarMap { height: 52vh !important; min-height: 260px; }
+
+      /* Tabs — slightly smaller so all 5 fit */
+      .tab { font-size: 0.70rem !important; padding: 8px 10px !important; }
+
+      /* Wind pills — never wrap */
+      .wind-window-pills { flex-wrap: nowrap !important; }
+    }
+
+    /* =============================================
+       MOBILE LAYOUT FIXES (max-width: 480px)
+       ============================================= */
+    @media (max-width: 480px) {
+
+      /* Tab bar — smaller padding so all 5 fit on one row */
+      .tab { padding: 8px 10px; font-size: 0.73rem; }
+
+      /* Header meta row — smaller text */
+      .meta-row { font-size: 0.78rem; gap: 6px 10px; }
+
+      /* Radar map — responsive height */
+      #radarMap { height: min(65vw, 380px) !important; }
+
+      /* 3-column grids collapse to 1 column stacked */
+      .mobile-3col { grid-template-columns: 1fr !important; }
+      .mobile-3col > div {
+        padding: 0 0 12px 0 !important;
+        border-right: none !important;
+        border-left: none !important;
+        border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+      }
+      .mobile-3col > div:last-child {
+        border-bottom: none !important;
+        padding-bottom: 0 !important;
+      }
+
+      /* Dock day + sunset quality — horizontal scroll */
+      .dock-day-grid, .scroll-day-grid {
+        display: flex !important;
+        overflow-x: auto !important;
+        gap: 10px !important;
+        padding-bottom: 8px !important;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .dock-day-grid::-webkit-scrollbar,
+      .scroll-day-grid::-webkit-scrollbar { display: none; }
+      .dock-day-grid > div, .scroll-day-grid > div { min-width: 140px !important; flex-shrink: 0 !important; }
+
+      /* Solar system — 3 columns on mobile instead of 5 */
+      .solar-grid { grid-template-columns: repeat(3, 1fr) !important; }
+
+      /* Wind window pills — smaller */
+      .wpill { padding: 2px 8px; font-size: 0.7rem; }
+
+      /* NWS hourly grid — 2 per row on mobile */
+      .nws-hourly-row { grid-template-columns: repeat(2, 1fr) !important; }
+    }
+    /* --- iOS Chart Fix --- */
+    canvas {
+    display: block;  
+    }
+
+    #windChart {
+    width: 100% !important;
+    height: 220px !important;
+    }
+
+    /* Make 48-hour charts less “stretched” on wide screens */
+  @media (min-width: 900px) {
+  #tempPrecipChart, #windChart {
+    height: 420px !important;
+  }
+}
+
+/* Also helps iPhone landscape / tablet landscape */
+@media (orientation: landscape) and (max-width: 900px) {
+  #tempPrecipChart, #windChart {
+    height: 260px !important;
+  }
+}
+  /* --- Wind Risk tiles --- */
+.risk-tiles{
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin: 12px 0 14px 0;
+}
+
+@media (max-width: 780px){
+  .risk-tiles{
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.risk-tile{
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  border-radius: 16px;
+  padding: 12px 12px 10px 12px;
+}
+
+.risk-tile .kicker{
+  font-weight: 700;
+  opacity: 0.85;
+  margin-bottom: 6px;
+}
+
+.risk-tile .big{
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.05;
+  margin-bottom: 4px;
+}
+
+.risk-tile .sub{
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+/* Risk badge colors */
+.badge{
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  margin-left: 6px;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+
+.badge.calm         { background: rgba(160,160,160,0.18); }
+.badge.breezy       { background: rgba(100,180,255,0.22); }
+.badge.notable      { background: rgba(255,170,0,0.22); }
+.badge.significant  { background: rgba(255,80,80,0.25); }
+.badge.severe       { background: rgba(200,60,255,0.30); }
+  
+    /* Radar tab */
+    .radar-btn {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.6);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      font-weight: 900;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .radar-btn:hover { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.9); }
+    .radar-btn-active {
+      background: rgba(100,180,255,0.18) !important;
+      border-color: rgba(100,180,255,0.5) !important;
+      color: rgba(140,210,255,0.95) !important;
+    }
+    /* =============================================
+       SETTINGS BUTTON
+       ============================================= */
+    .setting-btn {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.65);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .setting-btn:hover { background: rgba(255,255,255,0.12); }
+    .setting-btn.active {
+      background: rgba(100,180,255,0.2);
+      border-color: rgba(100,180,255,0.5);
+      color: rgba(160,210,255,0.95);
+    }
+
+    /* =============================================
+       LIGHT MODE
+       ============================================= */
+    body.theme-light {
+      --bg:     #f0f2f6;
+      --card:   rgba(255,255,255,0.9);
+      --border: rgba(0,0,0,0.10);
+      --text:   #0d1117;
+      --muted:  rgba(0,0,0,0.55);
+      --shadow: 0 2px 12px rgba(0,0,0,0.10);
+    }
+    body.theme-light {
+      background: radial-gradient(1200px 600px at 20% -10%, rgba(100,160,255,0.10), transparent 55%),
+                  radial-gradient(900px 500px at 80% 0%, rgba(60,200,140,0.06), transparent 55%),
+                  #f0f2f6;
+    }
+    body.theme-light header {
+      background: rgba(255,255,255,0.88);
+      border-color: rgba(0,0,0,0.10);
+    }
+    body.theme-light .card {
+      background: #ffffff;
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.theme-light .card-title {
+      color: rgba(0,0,0,0.85);
+      border-bottom-color: rgba(0,0,0,0.07);
+    }
+    body.theme-light .label { color: rgba(0,0,0,0.52); }
+    body.theme-light .value { color: rgba(0,0,0,0.88); }
+    body.theme-light .row   { border-bottom-color: rgba(0,0,0,0.06); }
+    body.theme-light .small-note { color: rgba(0,0,0,0.4); }
+
+    /* Force all text inside cards to be dark in light mode */
+    body.theme-light .card-body { color: rgba(0,0,0,0.85); }
+    body.theme-light .card-body div,
+    body.theme-light .card-body span,
+    body.theme-light .card-body p  { color: inherit; }
+
+    /* NWS forecast rows — JS renders inline white colors, override them */
+    body.theme-light #nwsForecastList div,
+    body.theme-light #nwsForecastList span { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #nwsForecastList [style*="border-bottom"] {
+      border-bottom-color: rgba(0,0,0,0.07) !important;
+    }
+
+    /* 10-day forecast rows */
+    body.theme-light #forecastList .forecast-day-row { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #forecastList .forecast-day-row span { color: inherit !important; }
+    body.theme-light #forecastList .forecast-day-row .value { color: rgba(0,0,0,0.88) !important; }
+    /* Keep precip % blue-ish but dark enough */
+    body.theme-light #forecastList [style*="140,180,255"] { color: rgba(30,100,200,0.85) !important; }
+    body.theme-light #forecastSelectionHint { color: rgba(0,0,0,0.35) !important; }
+
+    /* Sources rows */
+    body.theme-light #sourcesTable div,
+    body.theme-light #sourcesTable span { color: rgba(0,0,0,0.75) !important; }
+
+    /* Solar system, dock day, sunset quality — JS-rendered */
+    body.theme-light #solarSystemGrid div,
+    body.theme-light #solarSystemGrid span { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #dockDayContainer div,
+    body.theme-light #dockDayContainer span { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #sunsetQualityGrid div,
+    body.theme-light #sunsetQualityGrid span { color: rgba(0,0,0,0.80) !important; }
+
+    body.theme-light #tempPrecipChart,
+    body.theme-light #windChart {
+      background: rgba(0,0,0,0.02);
+      border-radius: 8px;
+    }
+
+    /* Tabs */
+    body.theme-light .tab {
+      background: rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.14);
+      color: rgba(0,0,0,0.75);
+    }
+    body.theme-light .tab.active {
+      background: rgba(0,0,0,0.14);
+      border-color: rgba(0,0,0,0.25);
+      color: rgba(0,0,0,0.9);
+    }
+
+    /* Wind pills */
+    body.theme-light .wpill {
+      background: rgba(0,0,0,0.07);
+      border-color: rgba(0,0,0,0.15);
+      color: rgba(0,0,0,0.65);
+    }
+    body.theme-light .wpill.active {
+      background: rgba(30,100,255,0.12);
+      border-color: rgba(30,100,255,0.4);
+      color: rgba(20,80,200,0.95);
+    }
+
+    /* Radar buttons */
+    body.theme-light .radar-btn {
+      background: rgba(0,0,0,0.07);
+      border-color: rgba(0,0,0,0.15);
+      color: rgba(0,0,0,0.65);
+    }
+    body.theme-light .radar-btn-active {
+      background: rgba(30,100,255,0.12) !important;
+      border-color: rgba(30,100,255,0.4) !important;
+      color: rgba(20,80,200,0.95) !important;
+    }
+
+    /* Misc pills + badges */
+    body.theme-light .version-pill {
+      color: rgba(0,0,0,0.6);
+      border-color: rgba(0,0,0,0.15);
+      background: rgba(0,0,0,0.05);
+    }
+    body.theme-light .meta-label { color: rgba(0,0,0,0.45); }
+    body.theme-light .meta-value { color: rgba(0,0,0,0.85); }
+    body.theme-light .source-pill {
+      background: rgba(0,0,0,0.04);
+      border-color: rgba(0,0,0,0.12);
+      color: rgba(0,0,0,0.8);
+    }
+
+    /* Settings panel */
+    body.theme-light #settingsBtn {
+      background: rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.14);
+      color: rgba(0,0,0,0.6);
+    }
+    body.theme-light #refreshBtn {
+      background: rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.14);
+      color: rgba(0,0,0,0.6);
+    }
+    body.theme-light #settingsPanel {
+      background: rgba(0,0,0,0.04);
+      border-color: rgba(0,0,0,0.10);
+    }
+    body.theme-light #settingsPanel div { color: rgba(0,0,0,0.80) !important; }
+    body.theme-light #changelogToggle   { color: rgba(0,0,0,0.55) !important; }
+    body.theme-light #changelogBody     { color: rgba(0,0,0,0.55) !important; }
+    body.theme-light #changelogBody li  { color: rgba(0,0,0,0.60) !important; }
+    body.theme-light .setting-btn {
+      background: rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.14);
+      color: rgba(0,0,0,0.65);
+    }
+    body.theme-light .setting-btn.active {
+      background: rgba(30,120,255,0.12);
+      border-color: rgba(30,120,255,0.4);
+      color: rgba(20,90,200,0.95);
+    }
+
+    /* Risk tiles */
+    body.theme-light .risk-tile {
+      background: rgba(0,0,0,0.03);
+      border-color: rgba(0,0,0,0.08);
+    }
+    body.theme-light .risk-tile .big,
+    body.theme-light .risk-tile .kicker,
+    body.theme-light .risk-tile .sub { color: rgba(0,0,0,0.80) !important; }
+
+    /* Leaflet map */
+    body.theme-light .leaflet-container { background: #e8edf5 !important; }
+    body.theme-light .leaflet-control-zoom a {
+      background: rgba(255,255,255,0.9) !important;
+      color: rgba(0,0,0,0.7) !important;
+      border-color: rgba(0,0,0,0.2) !important;
+    }
+    body.theme-light .leaflet-control-attribution {
+      background: rgba(255,255,255,0.7) !important;
+      color: rgba(0,0,0,0.5) !important;
+    }
+
+    /* Alert banners — keep them legible in light mode */
+    body.theme-light #alertSummaryBar {
+      background: rgba(200,40,40,0.12) !important;
+      border-color: rgba(200,40,40,0.4) !important;
+    }
+    body.theme-light #alertSummaryText { color: rgba(140,20,20,0.95) !important; }
+    body.theme-light #alertSummaryChev { color: rgba(140,20,20,0.6) !important; }
+    body.theme-light #stormModeBanner {
+      background: rgba(200,40,40,0.12) !important;
+      border-color: rgba(200,40,40,0.4) !important;
+      color: rgba(140,20,20,0.95) !important;
+    }
+    body.theme-light .alert-banner {
+      background: rgba(200,40,40,0.08) !important;
+      border-color: rgba(200,40,40,0.3) !important;
+      color: rgba(120,10,10,0.9) !important;
+    }
+    body.theme-light .alert-banner * { color: rgba(120,10,10,0.85) !important; }
+    body.theme-light .alert-title    { color: rgba(120,10,10,0.9) !important; }
+
+    /* Current conditions — °F unit, feels like, condition text */
+    body.theme-light .current-temp { color: rgba(0,0,0,0.88) !important; }
+    body.theme-light .temp-unit    { color: rgba(0,0,0,0.55) !important; }
+    body.theme-light .feels-like   { color: rgba(0,0,0,0.7)  !important; }
+    body.theme-light .condition    { color: rgba(0,0,0,0.75) !important; }
+
+    /* Any element that uses white or near-white text hardcoded */
+    body.theme-light .value        { color: rgba(0,0,0,0.88) !important; }
+    body.theme-light .label        { color: rgba(0,0,0,0.55) !important; }
+    body.theme-light .small-note   { color: rgba(0,0,0,0.4)  !important; }
+
+    /* Card titles */
+    body.theme-light .card-title   { color: rgba(0,0,0,0.85) !important; }
+
+    /* Source pills */
+    body.theme-light .source-pill  { color: rgba(0,0,0,0.75) !important; }
+    body.theme-light .source-pill .small { color: rgba(0,0,0,0.5) !important; }
+
+    /* Meta row */
+    body.theme-light .meta-label   { color: rgba(0,0,0,0.5)  !important; }
+    body.theme-light .meta-value   { color: rgba(0,0,0,0.85) !important; }
+
+    /* Badges */
+    body.theme-light .badge { border-color: rgba(0,0,0,0.15) !important; }
+
+    /* Collapse chevron */
+    body.theme-light .collapse-chevron { color: rgba(0,0,0,0.4) !important; }
+
+    /* Settings panel text */
+    body.theme-light #settingsPanel { color: rgba(0,0,0,0.8) !important; }
+    body.theme-light #settingsPanel div[style*="rgba(255,255,255"] { color: rgba(0,0,0,0.8) !important; }
+
+    /* Sun/Moon/Solar system inline white text */
+    body.theme-light #sunStatus,
+    body.theme-light #daylight,
+    body.theme-light #solarNoonLabel,
+    body.theme-light #moonPhaseName,
+    body.theme-light #moonIllumination { color: rgba(0,0,0,0.75) !important; }
+
+    /* NWS forecast text */
+    body.theme-light #nwsForecastList * { color: rgba(0,0,0,0.8) !important; }
+    body.theme-light #nwsOfficeLabel   { color: rgba(0,0,0,0.35) !important; }
+    body.theme-light #nwsFilterLabel   { color: rgba(30,100,220,0.85) !important; }
+
+    /* ── NUCLEAR INLINE OVERRIDE ──────────────────────────────
+       Inline style= attributes beat class selectors, so we must
+       use attribute selectors to catch every hardcoded white text.
+       Covers opacity 0.2 through 0.95 in all faint/mid/bright forms.
+    ──────────────────────────────────────────────────────────── */
+    body.theme-light [style*="color:rgba(255,255,255,0.2"]  { color: rgba(0,0,0,0.35) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.3"]  { color: rgba(0,0,0,0.42) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.4"]  { color: rgba(0,0,0,0.50) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.5"]  { color: rgba(0,0,0,0.60) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.6"]  { color: rgba(0,0,0,0.68) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.7"]  { color: rgba(0,0,0,0.75) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.8"]  { color: rgba(0,0,0,0.82) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,0.9"]  { color: rgba(0,0,0,0.90) !important; }
+    body.theme-light [style*="color:rgba(255,255,255,1)"]   { color: rgba(0,0,0,0.92) !important; }
+    /* Spaced variants (color: rgba ...) */
+    body.theme-light [style*="color: rgba(255,255,255,0.2"] { color: rgba(0,0,0,0.35) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.3"] { color: rgba(0,0,0,0.42) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.4"] { color: rgba(0,0,0,0.50) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.5"] { color: rgba(0,0,0,0.60) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.6"] { color: rgba(0,0,0,0.68) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.7"] { color: rgba(0,0,0,0.75) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.8"] { color: rgba(0,0,0,0.82) !important; }
+    body.theme-light [style*="color: rgba(255,255,255,0.9"] { color: rgba(0,0,0,0.90) !important; }
+    /* Exceptions — keep colored badges/status text from being forced black */
+    body.theme-light [style*="color:rgba(80,220,120"]   { color: rgba(20,140,60,0.9)   !important; } /* green wind */
+    body.theme-light [style*="color:rgba(100,220,100"]  { color: rgba(20,140,60,0.9)   !important; } /* green alt */
+    body.theme-light [style*="color:rgba(200,100,60"]   { color: rgba(180,60,20,0.9)   !important; } /* orange score */
+    body.theme-light [style*="color:rgba(220,80,80"]    { color: rgba(180,30,30,0.9)   !important; } /* red wind */
+    body.theme-light [style*="color:rgba(255,200,80"]   { color: rgba(160,110,0,0.9)   !important; } /* yellow crosswind */
+    body.theme-light [style*="color:rgba(255,190,50"]   { color: rgba(160,110,0,0.9)   !important; } /* orange marginal */
+    body.theme-light [style*="color:rgba(160,220,80"]   { color: rgba(70,140,20,0.9)   !important; } /* yellow-green */
+    body.theme-light [style*="color:rgba(180,80,80"]    { color: rgba(160,30,30,0.9)   !important; } /* red dock dry */
+    body.theme-light [style*="color:rgba(255,120,120"]  { color: rgba(200,30,30,0.9)   !important; } /* source error */
+    body.theme-light [style*="color:rgba(140,240,160"]  { color: rgba(20,140,60,0.9)   !important; } /* source ok */
+
+    /* Row borders */
+    body.theme-light .row { border-bottom-color: rgba(0,0,0,0.07) !important; }
+    body.theme-light [style*="border-bottom:1px solid rgba(255,255,255"] {
+      border-bottom-color: rgba(0,0,0,0.07) !important;
+    }
+    .leaflet-container { background: #0b1220 !important; }
+    .leaflet-control-attribution {
+      background: rgba(0,0,0,0.6) !important;
+      color: rgba(255,255,255,0.4) !important;
+      font-size: 10px !important;
+    }
+    .leaflet-control-attribution a { color: rgba(255,255,255,0.5) !important; }
+    .leaflet-control-zoom a {
+      background: rgba(20,30,50,0.9) !important;
+      color: rgba(255,255,255,0.8) !important;
+      border-color: rgba(255,255,255,0.15) !important;
+    }
+
+    /* ========== OVERHEAD (FLIGHT TRACKER) ========== */
+    #overheadMap {
+      width: 100%;
+      height: clamp(320px, 55vh, 520px);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1a1a2e;
+    }
+
+    .oh-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 8px;
+    }
+
+    .oh-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e0e0e0;
+      letter-spacing: 0.05em;
+    }
+
+    .oh-meta {
+      font-size: 12px;
+      color: #888;
+      margin-left: 8px;
+    }
+
+    .oh-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #oh-status {
+      font-size: 11px;
+      color: #666;
+    }
+
+    .oh-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 6px;
+      color: #aaa;
+      font-size: 11px;
+      padding: 4px 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .oh-btn:hover { background: rgba(255,255,255,0.14); }
+    .oh-btn:active { transform: scale(0.97); }
+
+    .oh-legend {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: #666;
+      padding: 0 16px;
+    }
+    .oh-legend span { margin-right: 3px; }
+
+    #oh-popup {
+      display: none;
+      margin-top: 12px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 12px 16px;
+    }
+
+    .oh-pop-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    #oh-pop-flight {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: 0.05em;
+    }
+
+    #oh-pop-route {
+      font-size: 13px;
+      color: #aaa;
+      margin-top: 3px;
+    }
+
+    #oh-pop-airline {
+      font-size: 12px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    .oh-close {
+      background: none;
+      border: none;
+      color: #555;
+      font-size: 28px;
+      cursor: pointer;
+      padding: 0 0 0 8px;
+      line-height: 1;
+    }
+    .oh-close:hover { color: #aaa; }
+
+    .oh-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .oh-stat {
+      text-align: center;
+    }
+
+    .oh-stat-val {
+      font-size: 16px;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    .oh-stat-lbl {
+      font-size: 10px;
+      color: #555;
+      margin-top: 2px;
+      letter-spacing: 0.08em;
+    }
+
+    .oh-plane-icon {
+      font-size: 28px;
+    }
+    @media (min-width: 768px) {
+      .oh-plane-icon {
+        font-size: 40px;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+      
+      display: block;
+      width: 32px;
+      height: 32px;
+      text-align: center;
+    }
+
+    .oh-home-icon {
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    /* Light theme overrides */
+    body.theme-light #overheadMap { background: #e8edf5; }
+    body.theme-light .oh-header { background: rgba(0,0,0,0.03); }
+    body.theme-light .oh-title { color: #1a1a2e; }
+    body.theme-light .oh-btn {
+      background: rgba(0,0,0,0.05);
+      border-color: rgba(0,0,0,0.1);
+      color: #555;
+    }
+    body.theme-light .oh-btn:hover { background: rgba(0,0,0,0.08); }
+    body.theme-light #oh-popup {
+      background: rgba(255,255,255,0.95);
+      border-color: rgba(0,0,0,0.1);
+    }
+    body.theme-light #oh-pop-flight { color: #1a1a2e; }
+    body.theme-light .oh-close { color: #999; }
+    body.theme-light .oh-close:hover { color: #333; }
+
+
+    /* Temp/Precip Chart Data Bar */
+    .chart-data-bar {
+      display: none;
+      background: rgba(30, 35, 50, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      padding: 20px 24px;
+      margin-top: 12px;
+    }
+
+    .chart-data-bar.visible {
+      display: block;
+    }
+
+    .chart-data-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      padding: 0 12px;
+    }
+
+    .chart-data-time {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .chart-data-close {
+      background: none;
+      border: none;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .chart-data-close:hover {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .chart-data-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+    }
+
+    .chart-data-stat {
+      text-align: center;
+    }
+
+    .chart-data-stat-val {
+      font-size: 16px;
+      font-weight: 600;
+      color: #60a5fa;
+    }
+
+    .chart-data-stat-lbl {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-top: 2px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+</head>
