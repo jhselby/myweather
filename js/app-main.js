@@ -312,6 +312,48 @@
       document.getElementById("tempPrecipDataLine").textContent = `Temp: ${temp != null ? Math.round(temp) : "—"}°F | POP: ${precipProb}% | Cloud: ${cloudPct}% | Clear: ${clearPct}% | Type: ${typeStr}`;
     }
 
+    function updateWindDataBar(index, times, speeds, gusts, directions) {
+      const time = times[index];
+      const speed = speeds[index];
+      const gust = gusts[index];
+      const dir = directions[index];
+      
+      const dt = new Date(time);
+      const hour = dt.getHours();
+      const nextHour = (hour + 1) % 24;
+      const weekday = dt.toLocaleDateString("en-US", { weekday: "long" });
+      const month = dt.toLocaleDateString("en-US", { month: "long" });
+      const day = dt.getDate();
+      const timeStr = `${weekday}, ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? 'am' : 'pm'}`;
+      
+      // Calculate impact scores
+      const exposure = dir != null ? getExposureFactor(dir) : 1.0;
+      const sustainedImpact = speed != null ? worryScore(speed, exposure) : 0;
+      const gustImpact = gust != null ? worryScore(gust, exposure) : 0;
+      
+      // Impact labels
+      const sustainedLabel = sustainedImpact <= 5 ? "Calm" :
+                            sustainedImpact <= 12 ? "Breezy" :
+                            sustainedImpact <= 20 ? "Notable" :
+                            sustainedImpact <= 30 ? "Significant" :
+                            sustainedImpact <= 40 ? "Severe" : "Extreme";
+      
+      const gustLabel = gustImpact <= 5 ? "Calm" :
+                       gustImpact <= 12 ? "Breezy" :
+                       gustImpact <= 20 ? "Notable" :
+                       gustImpact <= 30 ? "Significant" :
+                       gustImpact <= 40 ? "Severe" : "Extreme";
+      
+      // Direction conversion
+      const dirStr = dir != null ? toCompass(dir, true) : "—";
+      
+      document.getElementById("windDataTime").textContent = timeStr;
+      document.getElementById("windDataLine").textContent = 
+        `Sustained: ${speed != null ? Math.round(speed) : "—"}mph (Impact: ${Math.round(sustainedImpact)}, ${sustainedLabel}) | ` +
+        `Gust: ${gust != null ? Math.round(gust) : "—"}mph (Impact: ${Math.round(gustImpact)}, ${gustLabel}) | ` +
+        `Direction: ${dirStr}`;
+    }
+
     function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal, sunrise, sunset) {
       const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
       const ctx    = document.getElementById("tempPrecipChart").getContext("2d");
@@ -554,24 +596,23 @@
         },
         options: {
           responsive: true,
+          interaction: { mode: "index", intersect: false },
+          onClick: (event, activeElements) => {
+            if (activeElements.length > 0) {
+              const index = activeElements[0].index;
+              updateWindDataBar(activeElements[0].index, times, speeds, gusts, directions);
+              document.getElementById("windDataBar").classList.add("visible");
+            }
+          },
+          onHover: (event, activeElements) => {
+            const dataBar = document.getElementById("windDataBar");
+            if (dataBar && dataBar.classList.contains("visible") && activeElements.length > 0) {
+              updateWindDataBar(activeElements[0].index, times, speeds, gusts, directions);
+            }
+          },
           plugins: {
             legend: { display: false },
-            tooltip: {
-              callbacks: {
-                afterLabel: (ctx) => {
-                  if (ctx.datasetIndex === 0) {
-                    const v = ctx.raw;
-                    if (v == null) return "";
-                    if (v < 10)  return "Calm";
-                    if (v < 20)  return "Breezy";
-                    if (v < 30)  return "Windy";
-                    if (v < 40)  return "Strong";
-                    return "Dangerous";
-                  }
-                  return "";
-                }
-              }
-            },
+            tooltip: { enabled: false },
             impactZones: {
               beforeDatasetsDraw: (chart) => {
                 const {ctx, chartArea: {left, right, top, bottom}, scales: {y}} = chart;
