@@ -45,12 +45,12 @@
       <div id="settingsPanel" style="display:none;background:rgba(255,255,255,0.05);
            border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:14px 16px;
            margin-top:4px;">
-        <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
+        <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                     letter-spacing:0.8px;text-transform:uppercase;margin-bottom:12px;">Settings</div>
 
         <!-- Theme -->
         <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:12px;">
-          <div style="font-size:0.88rem;font-weight:800;color:rgba(255,255,255,0.8);">Theme</div>
+          <div style="font-size:0.88rem;font-weight:800;class="text-emphasis" style="">Theme</div>
           <div style="display:flex;gap:6px;">
             <button class="setting-btn" id="themeLight" onclick="setTheme('light')">☀️ Light</button>
             <button class="setting-btn" id="themeDark"  onclick="setTheme('dark')">🌙 Dark</button>
@@ -60,7 +60,7 @@
 
         <!-- Pressure units -->
         <div style="display:flex;align-items:center;justify-content:flex-start;">
-          <div style="font-size:0.88rem;font-weight:800;color:rgba(255,255,255,0.8);">Pressure</div>
+          <div style="font-size:0.88rem;font-weight:800;class="text-emphasis" style="">Pressure</div>
           <div style="display:flex;gap:6px;">
             <button class="setting-btn" id="pressHpa"  onclick="setPressureUnit('hpa')">hPa</button>
             <button class="setting-btn" id="pressInhg" onclick="setPressureUnit('inhg')">inHg</button>
@@ -70,9 +70,9 @@
         <!-- Version + Changelog -->
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.09);">
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
-            <div style="font-size:0.75rem;font-weight:900;color:rgba(255,255,255,0.35);
+            <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v3.15</span>
+            <span class="version-pill" id="appVersion">v3.16</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -81,147 +81,8 @@
             📋 Changelog ▾
           </div>
           <div id="changelogBody" style="display:none;font-size:0.75rem;line-height:1.7;
-               color:rgba(255,255,255,0.5);max-height:260px;overflow-y:auto;">
-            <div style="margin-bottom:8px;">
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.5</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 21, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Wind forecast improvements: max(KBVY, WU) for current conditions</li>
-                <li>Extract wind gusts from KBVY METAR (Aviation Weather API)</li>
-                <li>Blend observed wind into hourly forecast (24hr decay curve)</li>
-                <li>Lower wind impact thresholds for waterfront exposure (10/16 vs 12/20)</li>
-                <li>Fixes underreported gusts in impact cards, graphs, and forecast text</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.3</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 21, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Wind chart redesign: axis swap (time horizontal, speed vertical)</li>
-                <li>Wind chart: labeled worry zones with gradient color fills</li>
-                <li>Wind chart: legend shows current + peak worry levels with time labels</li>
-                <li>Wind chart: switched from stacked bar to grouped bar layout</li>
-                <li>Fix: duplicate "Calm" label in worryLevel function</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.2</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 21, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Add morning/afternoon cloud split for accurate sky narratives</li>
-                <li>Fix fog handling: precipitation now primary, fog as modifier</li>
-                <li>Fix precipitation probability thresholds (90%+ drops qualifiers)</li>
-                <li>Fix RIGHT NOW card to show smart-corrected temperature</li>
-                <li>Fix 10-day forecast missing temperature data</li>
-                <li>Fix multiple JS errors in forecast rendering</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v3.1</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 21, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>NWS NBM gridpoint integration (replaced GFS surface data)</li>
-                <li>Fix precipitation likelihood qualifiers (added "likely", "chance of", "slight chance of")</li>
-                <li>Fix surface temperature validation for precipitation type</li>
-                <li>NWS temperatures and weather conditions now override GFS/HRRR</li>
-                <li>Prevents physically impossible forecasts (heavy snow at 40°F)</li>
-              </ul>
-            </div>
-                <li>Add 850mb precipitation type classifier (Rain/Mixed/Snow/Heavy snow)</li>
-                <li>Wet bulb temperature display in Conditions card (shown when PoP &ge; 20%)</li>
-                <li>850mb precip type only calculated when PoP &ge; 20%</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.72&ndash;v2.77</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 16&ndash;18, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Sea breeze detector with detailed analysis card and likelihood scoring</li>
-                <li>Terrain-based wind exposure table from contour map analysis</li>
-                <li>Wind impact cards restructured with forward-looking peak windows (12/24/36/48h)</li>
-                <li>Current impact scores added to wind cards</li>
-                <li>Trough signal processor for 850mb height tendency</li>
-                <li>ASOS condition override and fog risk calculation</li>
-                <li>Dewpoint depression display and meteorological seasons</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.70&ndash;v2.71</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 16, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>48-hour wind chart: swapped axes, color gradient zones, forward-looking impact scores</li>
-                <li>Fix wind exposure table using actual fetch measurements</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.66&ndash;v2.69</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Mar 15, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Major refactor: split monolithic collector.py into modular package (fetchers/, processors/)</li>
-                <li>Separate processors for fog, frost, hyperlocal, pressure, sea breeze, trough, wet bulb, wind risk</li>
-                <li>Buoy wind data added; KBOS/KBVY migrated to new Aviation Weather API</li>
-                <li>NWS alerts simplified format with proper URLs</li>
-                <li>48-hour charts now start from current hour instead of midnight</li>
-                <li>Feels-like temp fixed to use apparent_temperature</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.5</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 23, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Smart hyperlocal correction: distance + elevation weighted bias</li>
-                <li>Quality filtering: reject stale data (&gt;30 min) and outliers (&gt;2σ)</li>
-                <li>Station diagnostics: used/total count, effective radius, confidence level</li>
-                <li>Model correction instead of replacement (respects grid precision)</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.2</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 21, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Solar system: 4th visibility state — "sky too bright" (daytime)</li>
-                <li>Today card dark mode contrast fix</li>
-                <li>Tooltip hover target: consistent width across all cards</li>
-                <li>Version + changelog now auto-maintained by Claude</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.2</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 21, 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Light / dark / system theme toggle</li>
-                <li>Pressure unit switching (hPa / inHg)</li>
-                <li>Today almanac card (day of year, season countdown, daylight change)</li>
-                <li>Solar System Now — honest "above horizon" wording, clearer tile contrast</li>
-                <li>Wind impact pill wrapping fix on mobile</li>
-                <li>Light mode: comprehensive inline color overrides throughout</li>
-                <li>Version + changelog moved to settings</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v2.0</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Feb 2026</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>10-day forecast with NWS integration and day selection</li>
-                <li>Mobile responsive layout (1-column stacking, horizontal scroll)</li>
-                <li>Gust &amp; sustained wind impact cards with time windows</li>
-                <li>Frost &amp; freeze tracker with season stats</li>
-                <li>Dock Day Score with tide-window scoring</li>
-                <li>Sunset Quality forecast card</li>
-                <li>RainViewer radar with nowcast frames</li>
-                <li>Settings panel (gear icon)</li>
-              </ul>
-            </div>
-            <div style="margin-bottom:8px;">
-              <span style="font-weight:900;color:rgba(255,255,255,0.7);">v1.0</span>
-              <span style="color:rgba(255,255,255,0.3);margin-left:6px;">Late 2025</span>
-              <ul style="margin:4px 0 0 16px;padding:0;">
-                <li>Initial build: multi-model weather, tides, buoy, NWS alerts</li>
-                <li>Multi-tab layout (Weather / Wind / Almanac / Radar / Sources)</li>
-                <li>KBOS / KBVY / PWS observed conditions</li>
-              </ul>
-            </div>
+               class="text-secondary" style="max-height:260px;overflow-y:auto;">
+            <!-- Loaded from CHANGELOG.md -->
           </div>
         </div>
 
@@ -261,7 +122,7 @@
         <div style="font-weight:900;font-size:0.92rem;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:flex-start;"
              onclick="const d=document.getElementById('stormModeDetails');const c=document.getElementById('stormModeChev');const open=d.style.display!=='none';d.style.display=open?'none':'';c.innerHTML=open?'&#9660; Show':'&#9650; Hide';">
           ⛈️ Storm conditions developing
-          <span id="stormModeChev" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;white-space:nowrap;">&#9660; Show</span>
+          <span id="stormModeChev" style="font-size:0.8rem;class="text-secondary" style="margin-left:8px;">&#9660; Show</span>
         </div>
         <div id="stormModeDetails" style="display:none;font-size:0.85rem;color:rgba(255,180,180,0.85);line-height:1.6;margin-top:6px;"></div>
       </div>
@@ -271,7 +132,7 @@
         display:none;align-items:center;justify-content:flex-start;"
         onclick="toggleAlertPanel()">
         <span id="alertSummaryText" style="font-weight:900;font-size:0.88rem;color:rgba(255,200,200,0.95);"></span>
-        <span id="alertSummaryChev" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;white-space:nowrap;">&#9660; Show</span>
+        <span id="alertSummaryChev" style="font-size:0.8rem;class="text-secondary" style="margin-left:8px;">&#9660; Show</span>
       </div>
       <!-- Expandable alert detail panel -->
       <div id="alertsContainer" style="display:none;max-height:220px;overflow-y:auto;margin-top:4px;"></div>
@@ -383,17 +244,17 @@
               <div id="tempPrecipDataTime" class="chart-data-time"></div>
               <button class="chart-data-close" onclick="document.getElementById('tempPrecipDataBar').classList.remove('visible')">×</button>
             </div>
-            <div id="tempPrecipDataLine" style="font-size:clamp(14px, 2.2vw, 24px);font-weight:600;line-height:1.3;color:rgba(255,255,255,0.95);width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;white-space:nowrap;"></div>
+            <div id="tempPrecipDataLine" style="font-size:clamp(14px, 2.2vw, 24px);font-weight:600;line-height:1.3;class="text-primary" style="width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;"></div>
           </div>
 
-          <div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;color:rgba(200,210,230,0.75);">
+          <div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;class="text-blue-tint" style="">
             <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;">
-              <div style="font-size:10px;font-weight:500;color:rgba(200,210,230,0.5);text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Sky (bottom to top per bar)</div>
+              <div class="chart-legend-header" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Sky (bottom to top per bar)</div>
               <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:linear-gradient(90deg,#1a2050,#f5d060);flex-shrink:0;"></div>Clear (night &#x2192; day)</div>
               <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(80,80,80,0.85);flex-shrink:0;"></div>Cloud cover</div>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;margin-top:6px;">
-              <div style="font-size:10px;font-weight:500;color:rgba(200,210,230,0.5);text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Precipitation</div>
+              <div class="chart-legend-header" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Precipitation</div>
               <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(80,150,255,0.85);flex-shrink:0;"></div>Rain</div>
               <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(255,140,40,0.85);flex-shrink:0;"></div>Freezing rain</div>
               <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(160,100,220,0.85);flex-shrink:0;"></div>Mixed/slush</div>
@@ -401,7 +262,7 @@
               <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(230,240,255,0.95);flex-shrink:0;"></div>Snow</div>
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;margin-top:6px;">
-              <div style="font-size:10px;font-weight:500;color:rgba(200,210,230,0.5);text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Temperature</div>
+              <div class="chart-legend-header" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Temperature</div>
               <div style="display:flex;align-items:center;gap:5px;"><div style="width:24px;height:3px;background:rgba(255,200,80,0.95);border-radius:2px;flex-shrink:0;"></div>Temp (°F)</div>
             </div>
           </div>
@@ -433,7 +294,7 @@
           <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
             <span style="font-size:0.78rem;font-weight:800;color:rgba(140,200,255,0.8);margin-left:6px;" id="nwsFilterLabel"></span>
             <span style="flex:1;"></span>
-            <span style="font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.25);margin-right:8px;" id="nwsOfficeLabel"></span>
+            <span style="font-size:0.72rem;font-weight:700;class="text-subtle" style="margin-right:8px;" id="nwsOfficeLabel"></span>
             <span class="collapse-chevron">&#9660;</span>
           </div>
           <div class="card-body" style="display:none;">
@@ -454,13 +315,13 @@
         <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">
             🧮 Smart Correction
-            <span style="font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.35);margin-left:8px;" id="hyperlocalConfidence"></span>
+            <span style="font-size:0.72rem;font-weight:700;class="text-subtle" style="margin-left:8px;" id="hyperlocalConfidence"></span>
             <span class="collapse-chevron">&#9660;</span>
           </div>
           <div class="card-body" style="display:none;">
             
             <!-- Explanation -->
-            <div style="font-size:0.82rem;color:rgba(255,255,255,0.55);margin-bottom:16px;line-height:1.5;">
+            <div style="font-size:0.82rem;class="text-secondary" style="margin-bottom:16px;line-height:1.5;">
               Your corrected temperature uses <strong id="stationsUsedCount">--</strong> nearby stations, weighted by distance and elevation similarity to your 30ft location.
             </div>
             
@@ -487,7 +348,7 @@
             </div>
             
             <!-- Diagnostics -->
-            <div style="font-size:0.72rem;color:rgba(255,255,255,0.4);display:flex;gap:12px;flex-wrap:wrap;">
+            <div style="font-size:0.72rem;class="text-subtle" style="display:flex;gap:12px;flex-wrap:wrap;">
               <span id="hyperlocalStationsDiag">-- stations used</span>
               <span>•</span>
               <span id="hyperlocalConfidenceDiag">-- confidence</span>
@@ -574,7 +435,7 @@
         <div class="card col-12" data-collapse-key="sea_breeze_detail" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('sea_breeze_detail', this)">🌊 Sea Breeze Analysis <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" id="seaBreezeDetail">
-            <div style="text-align:center;color:rgba(255,255,255,0.5);padding:20px;">Loading...</div>
+            <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
           </div>
         </div>
         <!-- Gust Wind Impact — collapsed by default, own window buttons -->
@@ -672,16 +533,14 @@
               <div id="windDataTime" class="chart-data-time"></div>
               <button class="chart-data-close" onclick="document.getElementById('windDataBar').classList.remove('visible')">×</button>
             </div>
-            <div id="windDataLine" style="font-size:clamp(14px, 2.2vw, 24px);font-weight:600;line-height:1.3;color:rgba(255,255,255,0.95);width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;white-space:nowrap;"></div>
+            <div id="windDataLine" style="font-size:clamp(14px, 2.2vw, 24px);font-weight:600;line-height:1.3;class="text-primary" style="width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;"></div>
           </div>
 
-          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:0.76rem;font-weight:700;color:rgba(255,255,255,0.65);padding:8px 0;border-top:1px solid rgba(255,255,255,0.1);">
-            <span style="color:rgba(150,150,150,0.7);">Forecast:</span>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:0.76rem;font-weight:700;class="text-secondary" style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.1);">
+            <span class="wind-legend-label">Forecast:</span>
             <span><span style="display:inline-block;width:14px;height:10px;border-radius:2px;background:rgba(150,150,150,0.3);margin-right:5px;vertical-align:middle;"></span>Wind Speed</span>
             <span><span style="display:inline-block;width:14px;height:2px;background:rgba(150,150,150,0.6);margin-right:5px;vertical-align:middle;"></span>Gusts</span>
-            <span style="margin-left:8px;color:rgba(255,255,255,0.75);">Impact:</span>
-            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(140,100,200,0.95);margin-right:5px;vertical-align:middle;"></span>Sustained</span>
-            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(255,80,60,0.95);margin-right:5px;vertical-align:middle;"></span>Gust</span>
+            <span style="white-space:nowrap;margin-left:8px;"><span class="wind-legend-label">Impact:</span> <span style="display:inline-block;width:14px;height:2px;background:rgba(140,100,200,0.95);margin-right:5px;vertical-align:middle;"></span>Sustained <span style="display:inline-block;width:14px;height:2px;background:rgba(255,80,60,0.95);margin-right:5px;margin-left:8px;vertical-align:middle;"></span>Gust</span>
           </div>
         </div>
       </div>
@@ -690,7 +549,7 @@
         <div class="card col-6">
           <div class="card-title" style="font-size:0.85rem;">Sustained Impact</div>
           <div class="card-body" style="font-size:0.82rem;line-height:1.4;">
-            <div style="color:rgba(255,255,255,0.75);margin-bottom:8px;">
+            <div style="margin-bottom:8px;" class="text-medium">
               Cumulative stress from continuous wind exposure. Affects dock lines, outdoor furniture anchoring, and prolonged exposure activities. Answers: "Can I hang out outside?"
             </div>
             <div style="font-family:monospace;font-size:0.78rem;color:rgba(140,100,200,0.8);background:rgba(140,100,200,0.08);padding:6px 8px;border-radius:4px;border-left:2px solid rgba(140,100,200,0.4);">
@@ -702,7 +561,7 @@
         <div class="card col-6">
           <div class="card-title" style="font-size:0.85rem;">Gust Impact</div>
           <div class="card-body" style="font-size:0.82rem;line-height:1.4;">
-            <div style="color:rgba(255,255,255,0.75);margin-bottom:8px;">
+            <div style="margin-bottom:8px;" class="text-medium">
               Peak force from wind spikes. Threatens structural integrity, creates sudden loads on dock hardware, and can damage unsecured items. Answers: "Will the house shake?"
             </div>
             <div style="font-family:monospace;font-size:0.78rem;color:rgba(255,80,60,0.8);background:rgba(255,80,60,0.08);padding:6px 8px;border-radius:4px;border-left:2px solid rgba(255,80,60,0.4);">
@@ -803,9 +662,9 @@
             <!-- Summary column -->
             <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div style="font-size:3.5rem;line-height:1;margin-bottom:6px;" id="sunEmoji">&#9728;&#65039;</div>
-              <div style="font-weight:900;font-size:1rem;color:rgba(255,255,255,0.9);margin-bottom:4px;" id="sunStatus">--</div>
-              <div style="font-size:0.88rem;color:rgba(255,255,255,0.6);font-weight:800;" id="daylight">-- daylight</div>
-              <div style="font-size:0.85rem;color:rgba(255,255,255,0.5);margin-top:6px;" id="solarNoonLabel">Solar noon: --</div>
+              <div style="font-weight:900;font-size:1rem;class="text-emphasis" style="margin-bottom:4px;" id="sunStatus">--</div>
+              <div style="font-size:0.88rem;class="text-medium" style="font-weight:800;" id="daylight">-- daylight</div>
+              <div style="font-size:0.85rem;class="text-secondary" style="margin-top:6px;" id="solarNoonLabel">Solar noon: --</div>
             </div>
 
             <!-- Times column -->
@@ -870,8 +729,8 @@
             <!-- Phase column -->
             <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div style="font-size:3.5rem;line-height:1;margin-bottom:6px;" id="moonEmoji">&#127769;</div>
-              <div style="font-weight:900;font-size:1rem;color:rgba(255,255,255,0.9);margin-bottom:4px;" id="moonPhaseName">--</div>
-              <div style="font-size:0.88rem;color:rgba(255,255,255,0.6);font-weight:800;" id="moonIllumination">-- % illuminated</div>
+              <div style="font-weight:900;font-size:1rem;class="text-emphasis" style="margin-bottom:4px;" id="moonPhaseName">--</div>
+              <div style="font-size:0.88rem;class="text-medium" style="font-weight:800;" id="moonIllumination">-- % illuminated</div>
             </div>
 
             <!-- Rise / Set column -->
@@ -916,7 +775,7 @@
           <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Now <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body">
             <div id="solarSystemGrid"></div>
-            <div id="solarSystemNote" style="font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:12px;"></div>
+            <div id="solarSystemNote" style="font-size:0.75rem;class="text-subtle" style="margin-top:12px;"></div>
           </div>
         </div>
 
@@ -935,7 +794,7 @@
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
               <input id="wtLogTemp" type="number" step="0.5" placeholder="Water temp °F"
                 style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);
-                       color:rgba(255,255,255,0.9);border-radius:8px;padding:7px 12px;
+                       class="text-emphasis" style="border-radius:8px;padding:7px 12px;
                        font-size:0.9rem;width:140px;">
               <button onclick="logWaterTemp()"
                 style="background:rgba(100,160,255,0.2);border:1px solid rgba(100,160,255,0.4);
@@ -943,9 +802,9 @@
                        font-weight:800;font-size:0.85rem;cursor:pointer;">
                 Log Reading
               </button>
-              <span id="wtLogStatus" style="font-size:0.8rem;color:rgba(255,255,255,0.4);"></span>
+              <span id="wtLogStatus" style="font-size:0.8rem;class="text-subtle" style=""></span>
             </div>
-            <div id="wtLogTable" style="font-size:0.78rem;color:rgba(255,255,255,0.6);"></div>
+            <div id="wtLogTable" style="font-size:0.78rem;class="text-medium" style=""></div>
           </div>
         </div>
 
@@ -973,7 +832,7 @@
             padding:12px 16px;background:rgba(255,255,255,0.05);
             border-bottom:1px solid rgba(255,255,255,0.08);">
 
-            <span style="font-weight:900;font-size:0.9rem;color:rgba(255,255,255,0.85);">
+            <span style="font-weight:900;font-size:0.9rem;class="text-emphasis" style="">
               &#127941; Radar
             </span>
 
@@ -981,12 +840,12 @@
             <div style="flex:1;"></div>
 
             <!-- Timestamp -->
-            <span id="radarTimestamp" style="font-size:0.8rem;color:rgba(255,255,255,0.5);font-weight:700;"></span>
+            <span id="radarTimestamp" style="font-size:0.8rem;class="text-secondary" style="font-weight:700;"></span>
 
             <!-- Play/Pause -->
             <button id="radarPlayBtn" onclick="radarTogglePlay()"
               style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
-                     color:rgba(255,255,255,0.85);border-radius:999px;padding:5px 14px;
+                     class="text-emphasis" style="border-radius:999px;padding:5px 14px;
                      font-size:0.82rem;font-weight:900;cursor:pointer;">
               &#9654; Play
             </button>
@@ -1003,9 +862,9 @@
               oninput="radarScrubTo(this.value)"
               style="width:100%;accent-color:rgba(100,180,255,0.9);cursor:pointer;">
             <div style="display:flex;justify-content:flex-start;
-                        font-size:0.75rem;color:rgba(255,255,255,0.35);font-weight:700;margin-top:2px;">
+                        font-size:0.75rem;class="text-subtle" style="font-weight:700;margin-top:2px;">
               <span id="radarScrubStart">--</span>
-              <span style="color:rgba(255,255,255,0.45);">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,255,180,0.6);">Nowcast</span> &#9654;</span>
+              <span class="text-subtle">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,255,180,0.6);">Nowcast</span> &#9654;</span>
               <span id="radarScrubEnd">--</span>
             </div>
           </div>
@@ -1061,6 +920,18 @@
             <div id="oh-pop-hdg" class="oh-stat-val"></div>
             <div class="oh-stat-lbl">HEADING</div>
           </div>
+          <div class="oh-stat">
+            <div id="oh-pop-dist" class="oh-stat-val"></div>
+            <div class="oh-stat-lbl">DISTANCE</div>
+          </div>
+          <div class="oh-stat">
+            <div id="oh-pop-vrate" class="oh-stat-val"></div>
+            <div class="oh-stat-lbl">VERTICAL RATE</div>
+          </div>
+          <div class="oh-stat">
+            <div id="oh-pop-bearing" class="oh-stat-val"></div>
+            <div class="oh-stat-lbl">BEARING</div>
+          </div>
         </div>
       </div>
 
@@ -1070,6 +941,7 @@
 
   </div>
   <script src="js/app-main.js"></script>
+  <script src="js/changelog_loader.js"></script>
   <script src="js/overhead.js"></script>
 
 </body>
