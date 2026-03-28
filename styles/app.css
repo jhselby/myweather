@@ -17,6 +17,7 @@
     ──────────────────────────────────────────────────────────── */
     html {
       background: #0b1220;
+      overflow-x: hidden;
     }
     body.theme-light ~ html,
     html:has(body.theme-light) {
@@ -32,6 +33,7 @@
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
       /* Safe area insets for iOS notch / home indicator */
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
@@ -525,7 +527,7 @@
 }
 
 .risk-tile .sub{
-  font-size: 13px;
+  font-size: 15px;
   opacity: 0.7;
 }
 
@@ -942,6 +944,10 @@
     }
     .oh-legend span { margin-right: 3px; }
 
+body.theme-light .oh-legend {
+  color: rgba(0, 0, 0, 0.6) !important;
+}
+
     #oh-popup {
       display: none;
       margin-top: 12px;
@@ -965,7 +971,7 @@
     }
 
     #oh-pop-route {
-      font-size: 13px;
+      font-size: 15px;
       color: #aaa;
       margin-top: 3px;
     }
@@ -1036,6 +1042,8 @@
     body.theme-light #overheadMap { background: #e8edf5; }
     body.theme-light .oh-header { background: rgba(0,0,0,0.03); }
     body.theme-light .oh-title { color: #1a1a2e; }
+body.theme-light .oh-meta { color: rgba(0,0,0,0.65); }
+body.theme-light #oh-status { color: rgba(0,0,0,0.65); }
     body.theme-light .oh-btn {
       background: rgba(0,0,0,0.05);
       border-color: rgba(0,0,0,0.1);
@@ -1117,3 +1125,88 @@
       text-transform: uppercase;
     }
 </head>
+/* Mobile chart data bar fixes */
+@media (max-width: 780px) {
+  .chart-data-header {
+    position: absolute;
+    right: 12px;
+    top: 12px;
+    width: auto;
+    margin-bottom: 0;
+    padding: 0;
+    z-index: 10;
+  }
+  
+  .chart-data-bar {
+    position: relative;
+    padding-top: 48px;
+  }
+  
+  .chart-data-time {
+    display: block;
+    margin-bottom: 8px;
+  }
+  
+  #tempPrecipDataLine, #windDataLine {
+    white-space: normal !important;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Light mode data bar background */
+body.theme-light .chart-data-bar {
+  background: rgba(240, 242, 245, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
+
+body.theme-light .chart-data-time {
+  color: rgba(0, 0, 0, 0.85) !important;
+}
+
+body.theme-light #tempPrecipDataLine,
+body.theme-light #windDataLine {
+  color: rgba(0, 0, 0, 0.9) !important;
+}
+
+.wind-legend-label {
+  color: rgba(150,150,150,0.7);
+}
+
+body.theme-light .wind-legend-label {
+  color: rgba(0,0,0,0.5) !important;
+}
+
+/* ========== TEXT COLOR CLASSES FOR THEME SUPPORT ========== */
+
+/* Very light text (0.25-0.45 opacity) */
+.text-subtle { color: rgba(255,255,255,0.35); }
+body.theme-light .text-subtle { color: rgba(0,0,0,0.45); }
+
+/* Light secondary text (0.45-0.6 opacity) */
+.text-secondary { color: rgba(255,255,255,0.55); }
+body.theme-light .text-secondary { color: rgba(0,0,0,0.65); }
+
+/* Medium text (0.6-0.75 opacity) */
+.text-medium { color: rgba(255,255,255,0.7); }
+body.theme-light .text-medium { color: rgba(0,0,0,0.75); }
+
+/* Emphasis text (0.8-0.9 opacity) */
+.text-emphasis { color: rgba(255,255,255,0.85); }
+body.theme-light .text-emphasis { color: rgba(0,0,0,0.9); }
+
+/* Primary text (0.95+ opacity) */
+.text-primary { color: rgba(255,255,255,0.95); }
+body.theme-light .text-primary { color: rgba(0,0,0,0.95); }
+
+/* Special: bluish-tinted text */
+.text-blue-tint { color: rgba(200,210,230,0.75); }
+body.theme-light .text-blue-tint { color: rgba(0,0,0,0.7); }
+
+.chart-legend-header {
+  color: rgba(200,210,230,0.5);
+}
+
+body.theme-light .chart-legend-header {
+  color: rgba(0,0,0,0.7) !important;
+}

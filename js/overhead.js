@@ -121,10 +121,32 @@
     }
   }
 
-  async function ohShowPopup(a) {
+function getStateName(airportName) {
+  if (!airportName) return '';
+  const stateMatch = airportName.match(/,\s*([A-Z]{2})\s*$/);
+  if (stateMatch) return stateMatch[1];
+  const states = {
+    Alabama: 'AL', Alaska: 'AK', Arizona: 'AZ', Arkansas: 'AR', California: 'CA',
+    Colorado: 'CO', Connecticut: 'CT', Delaware: 'DE', Florida: 'FL', Georgia: 'GA',
+    Hawaii: 'HI', Idaho: 'ID', Illinois: 'IL', Indiana: 'IN', Iowa: 'IA',
+    Kansas: 'KS', Kentucky: 'KY', Louisiana: 'LA', Maine: 'ME', Maryland: 'MD',
+    Massachusetts: 'MA', Michigan: 'MI', Minnesota: 'MN', Mississippi: 'MS', Missouri: 'MO',
+    Montana: 'MT', Nebraska: 'NE', Nevada: 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ',
+    'New Mexico': 'NM', 'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', Ohio: 'OH',
+    Oklahoma: 'OK', Oregon: 'OR', Pennsylvania: 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+    'South Dakota': 'SD', Tennessee: 'TN', Texas: 'TX', Utah: 'UT', Vermont: 'VT',
+    Virginia: 'VA', Washington: 'WA', 'West Virginia': 'WV', Wisconsin: 'WI', Wyoming: 'WY'
+  };
+  for (const [state, abbr] of Object.entries(states)) {
+    if (airportName.includes(state)) return abbr;
+  }
+  return '';
+}
+
+async function ohShowPopup(a) {
     const flightId = a.flight ? a.flight.trim() : (a.r || 'Unknown');
-    document.getElementById('oh-pop-flight').textContent = flightId;
     document.getElementById('oh-pop-route').textContent = 'looking up route…';
+    document.getElementById('oh-pop-flight').textContent = '';
     document.getElementById('oh-pop-airline').textContent = a.desc || a.ownOp || '';
     document.getElementById('oh-pop-alt').textContent =
       a.alt_baro ? `${parseInt(a.alt_baro).toLocaleString()} ft` : '—';
@@ -132,6 +154,12 @@
       a.gs ? `${Math.round(a.gs)} kts` : '—';
     document.getElementById('oh-pop-hdg').textContent =
       a.track ? `${Math.round(a.track)}°` : '—';
+    document.getElementById('oh-pop-dist').textContent =
+      a.dst ? `${a.dst.toFixed(1)} nm` : '—';
+    document.getElementById('oh-pop-vrate').textContent =
+      a.geom_rate ? `${a.geom_rate > 0 ? '+' : ''}${Math.abs(a.geom_rate)} fpm` : '—';
+    document.getElementById('oh-pop-bearing').textContent =
+      a.dir ? `${Math.round(a.dir)}°` : '—';
     document.getElementById('oh-popup').style.display = 'block';
 
     const callsign = (a.flight || '').trim();
@@ -145,13 +173,19 @@
       const data = await res.json();
       const r = data?.response?.flightroute;
       if (r) {
-        const orig = r.origin?.iata_code      || r.origin?.icao_code      || '?';
-        const dest = r.destination?.iata_code || r.destination?.icao_code || '?';
         const airline = r.airline?.name || '';
-        document.getElementById('oh-pop-route').textContent = `${orig} → ${dest}`;
-        if (airline && !document.getElementById('oh-pop-airline').textContent) {
-          document.getElementById('oh-pop-airline').textContent = airline;
-        }
+        const callsignDisplay = r.callsign_iata || r.callsign_icao || callsign;
+        const headerLine = airline ? `${airline} • ${callsignDisplay}` : callsignDisplay;
+        document.getElementById('oh-pop-flight').textContent = headerLine;
+        
+        const origCity = r.origin?.municipality || '?';
+        const origCode = r.origin?.iata_code || r.origin?.icao_code || '?';
+        const destCity = r.destination?.municipality || '?';
+        const destCode = r.destination?.iata_code || r.destination?.icao_code || '?';
+        
+        document.getElementById('oh-pop-route').textContent = 
+          `${origCity} (${origCode}) → ${destCity} (${destCode})`;
+
       } else {
         document.getElementById('oh-pop-route').textContent = 'Route unknown';
       }
@@ -159,8 +193,6 @@
       document.getElementById('oh-pop-route').textContent = 'Route lookup failed';
     }
   }
-
-
   window.ohRefresh = function() {
     if (!ohMap) {
       alert('Switch to Overhead tab first');
