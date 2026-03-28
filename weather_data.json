@@ -1,89 +1,88 @@
 {
   "schema_version": "1.2",
-  "generated_at": "2026-03-28T04:44:15.092738Z",
+  "generated_at": "2026-03-28T05:18:06.763534Z",
   "location": "Wyman Cove, Marblehead MA",
   "sources": {
     "gfs_current": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:41:38.745629Z",
+      "updated_at": "2026-03-28T05:15:56.397370Z",
       "error": null,
       "model": "GFS current"
     },
     "hrrr_hourly": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:41:39.388115Z",
+      "updated_at": "2026-03-28T05:15:57.004715Z",
       "error": null,
       "model": "HRRR hourly"
     },
     "ecmwf_daily": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:41:40.777919Z",
+      "updated_at": "2026-03-28T05:15:59.029371Z",
       "error": null,
       "model": "ECMWF daily"
     },
     "pws": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:41:41.409439Z",
+      "updated_at": "2026-03-28T05:15:59.590871Z",
       "error": null
     },
     "tides": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:41:42.646839Z",
+      "updated_at": "2026-03-28T05:16:00.970331Z",
       "error": null
     },
     "kbos": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:41:44.169128Z",
+      "updated_at": "2026-03-28T05:16:02.340160Z",
       "error": null
     },
     "kbvy": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:41:44.270719Z",
+      "updated_at": "2026-03-28T05:16:03.209284Z",
       "error": null
     },
     "buoy_44013": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:41:44.417306Z",
+      "updated_at": "2026-03-28T05:16:03.367839Z",
       "error": null
     },
     "wu_stations": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:41:44.622808Z",
+      "updated_at": "2026-03-28T05:16:04.280652Z",
       "error": null
     },
     "nws_forecast": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:42:06.516465Z",
+      "updated_at": "2026-03-28T05:16:28.159636Z",
       "error": null
     },
     "nws_alerts": {
       "status": "ok",
-      "updated_at": "2026-03-28T04:42:06.720268Z",
+      "updated_at": "2026-03-28T05:16:28.725688Z",
       "error": null
     }
   },
   "current": {
-    "temperature": 30.8,
-    "apparent_temperature": 20.8,
-    "humidity": 50,
-    "dew_point": 14.4,
+    "temperature": 30.6,
+    "apparent_temperature": 21.2,
+    "humidity": 52,
+    "dew_point": 15.1,
     "precipitation": 0.0,
     "weather_code": 0,
     "weather_description": "Clear",
     "weather_emoji": "\u2600\ufe0f",
     "cloud_cover": 0,
-    "pressure": 1022.6,
-    "wind_speed": 10.0,
-    "wind_direction": 333,
-    "wind_gusts": 10.3,
+    "pressure": 1023.0,
+    "wind_speed": 8.6,
+    "wind_direction": 329,
+    "wind_gusts": 12.0,
     "uv_index": 0.0,
-    "visibility": 133202.094,
-    "condition_source": "WU_KMAMARBL63 observed",
+    "visibility": 123031.5,
+    "condition_source": "WU_KMAMARBL4 observed",
     "wet_bulb": 24.7
   },
   "hourly": {
     "times": [
-      "2026-03-28T00:00",
       "2026-03-28T01:00",
       "2026-03-28T02:00",
       "2026-03-28T03:00",
@@ -130,10 +129,10 @@
       "2026-03-29T20:00",
       "2026-03-29T21:00",
       "2026-03-29T22:00",
-      "2026-03-29T23:00"
+      "2026-03-29T23:00",
+      "2026-03-30T00:00"
     ],
     "temperature": [
-      30.9,
       30.7,
       30.6,
       30.6,
@@ -180,10 +179,10 @@
       40.1,
       38.4,
       37.6,
-      37.7
+      37.7,
+      38.3
     ],
     "apparent_temperature": [
-      20.4,
       21.1,
       20.7,
       20.9,
@@ -230,10 +229,10 @@
       29.3,
       28.8,
       28.4,
-      28.9
+      28.9,
+      29.8
     ],
     "humidity": [
-      49,
       51,
       56,
       59,
@@ -280,10 +279,10 @@
       52,
       59,
       64,
-      68
+      68,
+      69
     ],
     "dew_point": [
-      14.0,
       14.7,
       16.8,
       18.0,
@@ -330,10 +329,10 @@
       23.8,
       25.3,
       26.5,
-      28.1
+      28.1,
+      29.1
     ],
     "precipitation_probability": [
-      0,
       0,
       0,
       0,
@@ -369,6 +368,7 @@
       1,
       1,
       1,
+      0,
       0,
       0,
       0,
@@ -438,7 +438,6 @@
       0,
       0,
       0,
-      0,
       3,
       3,
       3,
@@ -480,10 +479,10 @@
       0,
       2,
       1,
+      3,
       3
     ],
     "cloud_cover": [
-      0,
       0,
       0,
       2,
@@ -530,10 +529,10 @@
       73,
       54,
       21,
+      100,
       100
     ],
     "cloud_cover_low": [
-      0,
       0,
       0,
       2,
@@ -580,10 +579,10 @@
       4,
       5,
       5,
+      5,
       5
     ],
     "cloud_cover_mid": [
-      0,
       0,
       0,
       0,
@@ -630,10 +629,10 @@
       4,
       5,
       5,
-      38
+      38,
+      100
     ],
     "cloud_cover_high": [
-      0,
       0,
       0,
       0,
@@ -680,34 +679,34 @@
       73,
       46,
       5,
+      100,
       100
     ],
     "wind_speed": [
-      10.0,
-      9.958333333333334,
-      10.025,
-      9.9875,
-      10.05,
-      10.166666666666666,
-      10.2,
-      10.0875,
-      9.8,
-      9.475,
-      9.041666666666666,
-      8.120833333333334,
-      9.25,
-      10.108333333333334,
-      9.941666666666666,
-      9.5625,
-      9.600000000000001,
-      11.275,
-      11.125,
-      6.2,
-      13.166666666666668,
-      13.0625,
-      10.366666666666667,
-      10.383333333333333,
-      11.4,
+      8.6,
+      8.670833333333334,
+      8.708333333333334,
+      8.8125,
+      8.966666666666667,
+      9.058333333333334,
+      9.024999999999999,
+      8.833333333333334,
+      8.6,
+      8.2625,
+      7.475,
+      8.554166666666667,
+      9.399999999999999,
+      9.304166666666667,
+      9.008333333333333,
+      9.1,
+      10.733333333333334,
+      10.654166666666667,
+      6.050000000000001,
+      12.716666666666669,
+      12.683333333333334,
+      10.174999999999999,
+      10.25,
+      11.283333333333333,
       12.5,
       11.0,
       7.5,
@@ -730,10 +729,10 @@
       14.0,
       11.6,
       11.0,
-      10.5
+      10.5,
+      10.1
     ],
     "wind_direction": [
-      332,
       333,
       336,
       342,
@@ -780,34 +779,34 @@
       205,
       210,
       207,
-      207
+      207,
+      211
     ],
     "wind_gusts": [
-      10.3,
-      10.625,
-      10.933333333333334,
-      10.975000000000001,
-      11.116666666666667,
-      11.175,
-      11.425,
-      11.204166666666667,
-      10.9,
-      10.375,
-      10.841666666666667,
-      10.070833333333333,
-      11.55,
-      11.870833333333334,
-      12.400000000000002,
-      12.675,
-      13.3,
-      15.329166666666666,
-      15.325,
-      10.854166666666666,
-      22.966666666666665,
-      24.3875,
-      22.583333333333332,
-      25.058333333333334,
-      27.3,
+      12.0,
+      12.245833333333332,
+      12.308333333333334,
+      12.4,
+      12.416666666666666,
+      12.583333333333334,
+      12.35,
+      12.029166666666669,
+      11.5,
+      11.85,
+      11.083333333333332,
+      12.366666666666667,
+      12.6,
+      13.029166666666667,
+      13.225,
+      13.75,
+      15.599999999999998,
+      15.541666666666668,
+      11.25,
+      22.6875,
+      24.0,
+      22.2375,
+      24.55833333333333,
+      26.6625,
       25.3,
       20.4,
       15.4,
@@ -830,10 +829,10 @@
       29.8,
       30.4,
       30.6,
-      30.6
+      30.6,
+      31.1
     ],
     "pressure": [
-      1022.5,
       1022.7,
       1024.3,
       1024.8,
@@ -880,10 +879,10 @@
       1028.6,
       1029.2,
       1028.7,
-      1028.0
+      1028.0,
+      1027.5
     ],
     "temperature_850hPa": [
-      16.6,
       15.1,
       13.3,
       12.0,
@@ -930,10 +929,10 @@
       23.6,
       24.6,
       25.9,
-      27.0
+      27.0,
+      28.1
     ],
     "temperature_700hPa": [
-      9.0,
       7.9,
       6.0,
       3.5,
@@ -980,10 +979,10 @@
       8.4,
       7.9,
       8.7,
-      9.0
+      9.0,
+      9.5
     ],
     "geopotential_height_850hPa": [
-      4763.78,
       4760.499,
       4786.746,
       4790.026,
@@ -1030,7 +1029,8 @@
       5009.022,
       5032.809,
       5026.247,
-      5016.404
+      5016.404,
+      5009.843
     ],
     "col_precip_type_850mb": [
       "Heavy snow",
@@ -1078,12 +1078,11 @@
       "Heavy snow",
       "Heavy snow",
       "Heavy snow",
-      "Heavy snow",
+      "Snow",
       "Snow",
       "Snow"
     ],
     "wet_bulb": [
-      24.7,
       24.7,
       25.0,
       25.3,
@@ -1130,7 +1129,8 @@
       32.9,
       32.3,
       32.2,
-      32.8
+      32.8,
+      33.5
     ]
   },
   "hourly_7day": {
@@ -2826,8 +2826,8 @@
   "pws": {
     "station": "KMAMARBL63",
     "name": "Castle Hill",
-    "updated": "2026-03-28T04:41:42.645054",
-    "temperature": 31.0,
+    "updated": "2026-03-28T05:16:00.968487",
+    "temperature": 30.0,
     "stale": false
   },
   "tides": {
@@ -2884,12 +2884,6 @@
     ],
     "curve": {
       "times": [
-        "2026-03-28 04:36",
-        "2026-03-28 04:42",
-        "2026-03-28 04:48",
-        "2026-03-28 04:54",
-        "2026-03-28 05:00",
-        "2026-03-28 05:06",
         "2026-03-28 05:12",
         "2026-03-28 05:18",
         "2026-03-28 05:24",
@@ -3364,15 +3358,15 @@
         "2026-03-30 04:18",
         "2026-03-30 04:24",
         "2026-03-30 04:30",
-        "2026-03-30 04:36"
+        "2026-03-30 04:36",
+        "2026-03-30 04:42",
+        "2026-03-30 04:48",
+        "2026-03-30 04:54",
+        "2026-03-30 05:00",
+        "2026-03-30 05:06",
+        "2026-03-30 05:12"
       ],
       "heights": [
-        4.527,
-        4.733,
-        4.94,
-        5.149,
-        5.36,
-        5.571,
         5.783,
         5.994,
         6.204,
@@ -3847,18 +3841,18 @@
         0.61,
         0.663,
         0.726,
-        0.8
+        0.8,
+        0.882,
+        0.974,
+        1.075,
+        1.185,
+        1.304,
+        1.432
       ]
     }
   },
   "tide_curve": {
     "times": [
-      "2026-03-28 04:36",
-      "2026-03-28 04:42",
-      "2026-03-28 04:48",
-      "2026-03-28 04:54",
-      "2026-03-28 05:00",
-      "2026-03-28 05:06",
       "2026-03-28 05:12",
       "2026-03-28 05:18",
       "2026-03-28 05:24",
@@ -4333,15 +4327,15 @@
       "2026-03-30 04:18",
       "2026-03-30 04:24",
       "2026-03-30 04:30",
-      "2026-03-30 04:36"
+      "2026-03-30 04:36",
+      "2026-03-30 04:42",
+      "2026-03-30 04:48",
+      "2026-03-30 04:54",
+      "2026-03-30 05:00",
+      "2026-03-30 05:06",
+      "2026-03-30 05:12"
     ],
     "heights": [
-      4.527,
-      4.733,
-      4.94,
-      5.149,
-      5.36,
-      5.571,
       5.783,
       5.994,
       6.204,
@@ -4816,7 +4810,13 @@
       0.61,
       0.663,
       0.726,
-      0.8
+      0.8,
+      0.882,
+      0.974,
+      1.075,
+      1.185,
+      1.304,
+      1.432
     ]
   },
   "kbos": {
@@ -4832,51 +4832,51 @@
   },
   "kbvy": {
     "station": "KBVY",
-    "temp_f": 28.9,
+    "temp_f": 26.1,
     "dewpoint_c": -13.3,
-    "pressure_hpa": 1022.4,
+    "pressure_hpa": 1023.5,
     "wind_speed_kt": 6,
     "wind_gust_kt": null,
-    "wind_dir": 350,
+    "wind_dir": 330,
     "present_weather": null
   },
   "buoy_44013": {
-    "time": "2026-03-28T04:10Z",
-    "wind_dir": 350.0,
+    "time": "2026-03-28T04:50Z",
+    "wind_dir": 360.0,
     "wind_mph": 17.9,
     "gust_mph": 20.1,
     "wave_ht_ft": 3.6,
-    "wave_period_sec": 5.0,
-    "pressure_hpa": 1022.5,
-    "air_temp_f": 35.2,
-    "water_temp_f": 39.4,
-    "dewpoint_f": 18.9,
+    "wave_period_sec": 7.0,
+    "pressure_hpa": 1022.7,
+    "air_temp_f": 34.5,
+    "water_temp_f": 39.2,
+    "dewpoint_f": 19.9,
     "pressure_tend_hpa": null
   },
   "nws_forecast": [
     {
-      "name": "Tonight",
-      "start_time": "2026-03-27T19:00:00-04:00",
+      "name": "Overnight",
+      "start_time": "2026-03-28T01:00:00-04:00",
       "end_time": "2026-03-28T06:00:00-04:00",
       "is_daytime": false,
       "temperature": 25,
       "temperature_unit": "F",
-      "wind_speed": "6 to 9 mph",
+      "wind_speed": "10 mph",
       "wind_direction": "N",
-      "short_forecast": "Mostly Clear",
-      "detailed": "Mostly clear, with a low around 25. North wind 6 to 9 mph."
+      "short_forecast": "Partly Cloudy",
+      "detailed": "Partly cloudy, with a low around 25. North wind around 10 mph."
     },
     {
       "name": "Saturday",
       "start_time": "2026-03-28T06:00:00-04:00",
       "end_time": "2026-03-28T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 37,
+      "temperature": 38,
       "temperature_unit": "F",
-      "wind_speed": "6 to 9 mph",
-      "wind_direction": "N",
+      "wind_speed": "7 to 10 mph",
+      "wind_direction": "NE",
       "short_forecast": "Mostly Sunny",
-      "detailed": "Mostly sunny, with a high near 37. North wind 6 to 9 mph."
+      "detailed": "Mostly sunny, with a high near 38. Northeast wind 7 to 10 mph."
     },
     {
       "name": "Saturday Night",
@@ -4885,10 +4885,10 @@
       "is_daytime": false,
       "temperature": 27,
       "temperature_unit": "F",
-      "wind_speed": "7 mph",
+      "wind_speed": "7 to 10 mph",
       "wind_direction": "W",
       "short_forecast": "Partly Cloudy",
-      "detailed": "Partly cloudy, with a low around 27. West wind around 7 mph."
+      "detailed": "Partly cloudy, with a low around 27. West wind 7 to 10 mph."
     },
     {
       "name": "Sunday",
@@ -4897,10 +4897,10 @@
       "is_daytime": true,
       "temperature": 48,
       "temperature_unit": "F",
-      "wind_speed": "6 to 12 mph",
+      "wind_speed": "7 to 13 mph",
       "wind_direction": "SW",
-      "short_forecast": "Mostly Sunny",
-      "detailed": "Mostly sunny, with a high near 48. Southwest wind 6 to 12 mph."
+      "short_forecast": "Sunny",
+      "detailed": "Sunny, with a high near 48. Southwest wind 7 to 13 mph, with gusts as high as 23 mph."
     },
     {
       "name": "Sunday Night",
@@ -4919,12 +4919,12 @@
       "start_time": "2026-03-30T06:00:00-04:00",
       "end_time": "2026-03-30T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 57,
+      "temperature": 59,
       "temperature_unit": "F",
       "wind_speed": "12 mph",
       "wind_direction": "SW",
       "short_forecast": "Partly Sunny",
-      "detailed": "Partly sunny, with a high near 57. Southwest wind around 12 mph."
+      "detailed": "Partly sunny, with a high near 59. Southwest wind around 12 mph."
     },
     {
       "name": "Monday Night",
@@ -4933,34 +4933,34 @@
       "is_daytime": false,
       "temperature": 45,
       "temperature_unit": "F",
-      "wind_speed": "9 mph",
+      "wind_speed": "6 to 9 mph",
       "wind_direction": "SW",
       "short_forecast": "Mostly Cloudy",
-      "detailed": "Mostly cloudy, with a low around 45. Southwest wind around 9 mph."
+      "detailed": "Mostly cloudy, with a low around 45. Southwest wind 6 to 9 mph."
     },
     {
       "name": "Tuesday",
       "start_time": "2026-03-31T06:00:00-04:00",
       "end_time": "2026-03-31T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 63,
+      "temperature": 60,
       "temperature_unit": "F",
-      "wind_speed": "7 to 13 mph",
+      "wind_speed": "7 to 12 mph",
       "wind_direction": "S",
       "short_forecast": "Chance Light Rain",
-      "detailed": "A chance of rain. Mostly cloudy, with a high near 63. South wind 7 to 13 mph. Chance of precipitation is 30%."
+      "detailed": "A chance of rain. Mostly cloudy, with a high near 60. South wind 7 to 12 mph. Chance of precipitation is 40%."
     },
     {
       "name": "Tuesday Night",
       "start_time": "2026-03-31T18:00:00-04:00",
       "end_time": "2026-04-01T06:00:00-04:00",
       "is_daytime": false,
-      "temperature": 55,
+      "temperature": 51,
       "temperature_unit": "F",
-      "wind_speed": "14 mph",
+      "wind_speed": "10 to 14 mph",
       "wind_direction": "SW",
       "short_forecast": "Chance Light Rain",
-      "detailed": "A chance of rain. Mostly cloudy, with a low around 55. Southwest wind around 14 mph. Chance of precipitation is 40%."
+      "detailed": "A chance of rain. Mostly cloudy, with a low around 51. Southwest wind 10 to 14 mph, with gusts as high as 25 mph. Chance of precipitation is 30%."
     },
     {
       "name": "Wednesday",
@@ -4972,43 +4972,43 @@
       "wind_speed": "14 mph",
       "wind_direction": "SW",
       "short_forecast": "Chance Light Rain",
-      "detailed": "A chance of rain. Mostly cloudy, with a high near 69. Southwest wind around 14 mph. Chance of precipitation is 50%."
+      "detailed": "A chance of rain. Partly sunny, with a high near 69. Southwest wind around 14 mph, with gusts as high as 24 mph. Chance of precipitation is 50%."
     },
     {
       "name": "Wednesday Night",
       "start_time": "2026-04-01T18:00:00-04:00",
       "end_time": "2026-04-02T06:00:00-04:00",
       "is_daytime": false,
-      "temperature": 39,
+      "temperature": 37,
       "temperature_unit": "F",
-      "wind_speed": "13 mph",
+      "wind_speed": "12 mph",
       "wind_direction": "NW",
-      "short_forecast": "Chance Light Rain",
-      "detailed": "A chance of rain. Mostly cloudy, with a low around 39. Northwest wind around 13 mph. Chance of precipitation is 50%."
+      "short_forecast": "Light Rain Likely",
+      "detailed": "Rain likely. Mostly cloudy, with a low around 37. Northwest wind around 12 mph. Chance of precipitation is 60%."
     },
     {
       "name": "Thursday",
       "start_time": "2026-04-02T06:00:00-04:00",
       "end_time": "2026-04-02T18:00:00-04:00",
       "is_daytime": true,
-      "temperature": 44,
+      "temperature": 45,
       "temperature_unit": "F",
       "wind_speed": "12 mph",
       "wind_direction": "NE",
       "short_forecast": "Chance Light Rain",
-      "detailed": "A chance of rain. Mostly cloudy, with a high near 44. Northeast wind around 12 mph. Chance of precipitation is 40%."
+      "detailed": "A chance of rain. Mostly cloudy, with a high near 45. Northeast wind around 12 mph. Chance of precipitation is 40%."
     },
     {
       "name": "Thursday Night",
       "start_time": "2026-04-02T18:00:00-04:00",
       "end_time": "2026-04-03T06:00:00-04:00",
       "is_daytime": false,
-      "temperature": 36,
+      "temperature": 34,
       "temperature_unit": "F",
-      "wind_speed": "12 mph",
+      "wind_speed": "8 to 12 mph",
       "wind_direction": "NE",
-      "short_forecast": "Chance Rain And Snow",
-      "detailed": "A chance of rain before 8pm, then a chance of rain and snow. Mostly cloudy, with a low around 36. Northeast wind around 12 mph. Chance of precipitation is 40%."
+      "short_forecast": "Chance Light Rain then Chance Light Snow",
+      "detailed": "A chance of rain before 2am, then a chance of snow. Mostly cloudy, with a low around 34. Northeast wind 8 to 12 mph. Chance of precipitation is 30%."
     },
     {
       "name": "Friday",
@@ -5019,8 +5019,8 @@
       "temperature_unit": "F",
       "wind_speed": "13 mph",
       "wind_direction": "NE",
-      "short_forecast": "Chance Rain And Snow",
-      "detailed": "A chance of rain and snow. Mostly cloudy, with a high near 42. Northeast wind around 13 mph."
+      "short_forecast": "Chance Light Snow then Chance Light Rain",
+      "detailed": "A chance of snow before 9am, then a chance of rain. Cloudy, with a high near 42. Northeast wind around 13 mph."
     }
   ],
   "nws_gridpoints": {
@@ -5028,72 +5028,60 @@
       "uom": "wmoUnit:degC",
       "values": [
         {
-          "validTime": "2026-03-27T14:00:00+00:00/PT5H",
-          "value": 6.666666666666667
-        },
-        {
-          "validTime": "2026-03-27T19:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T21:00:00+00:00/PT2H",
           "value": 7.222222222222222
         },
         {
-          "validTime": "2026-03-27T20:00:00+00:00/PT2H",
-          "value": 6.666666666666667
-        },
-        {
-          "validTime": "2026-03-27T22:00:00+00:00/PT1H",
-          "value": 5.555555555555555
-        },
-        {
           "validTime": "2026-03-27T23:00:00+00:00/PT1H",
-          "value": 3.888888888888889
+          "value": 4.444444444444445
         },
         {
           "validTime": "2026-03-28T00:00:00+00:00/PT1H",
-          "value": 3.3333333333333335
+          "value": 2.7777777777777777
         },
         {
           "validTime": "2026-03-28T01:00:00+00:00/PT1H",
-          "value": 2.2222222222222223
+          "value": 1.6666666666666667
         },
         {
           "validTime": "2026-03-28T02:00:00+00:00/PT1H",
-          "value": 0.5555555555555556
+          "value": 1.1111111111111112
         },
         {
           "validTime": "2026-03-28T03:00:00+00:00/PT1H",
-          "value": 0
+          "value": 0.5555555555555556
         },
         {
           "validTime": "2026-03-28T04:00:00+00:00/PT1H",
-          "value": -0.5555555555555556
+          "value": 0
         },
         {
           "validTime": "2026-03-28T05:00:00+00:00/PT1H",
-          "value": -1.1111111111111112
+          "value": -0.5555555555555556
         },
         {
           "validTime": "2026-03-28T06:00:00+00:00/PT1H",
-          "value": -1.6666666666666667
+          "value": -1.1111111111111112
         },
         {
           "validTime": "2026-03-28T07:00:00+00:00/PT2H",
-          "value": -2.2222222222222223
+          "value": -1.6666666666666667
         },
         {
-          "validTime": "2026-03-28T09:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T09:00:00+00:00/PT3H",
           "value": -2.7777777777777777
         },
         {
-          "validTime": "2026-03-28T10:00:00+00:00/PT3H",
+          "validTime": "2026-03-28T12:00:00+00:00/PT1H",
           "value": -3.3333333333333335
         },
         {
           "validTime": "2026-03-28T13:00:00+00:00/PT1H",
-          "value": -2.2222222222222223
+          "value": -2.7777777777777777
         },
         {
           "validTime": "2026-03-28T14:00:00+00:00/PT1H",
-          "value": -1.6666666666666667
+          "value": -1.1111111111111112
         },
         {
           "validTime": "2026-03-28T15:00:00+00:00/PT1H",
@@ -5101,35 +5089,31 @@
         },
         {
           "validTime": "2026-03-28T16:00:00+00:00/PT1H",
-          "value": 0.5555555555555556
-        },
-        {
-          "validTime": "2026-03-28T17:00:00+00:00/PT1H",
           "value": 1.1111111111111112
         },
         {
-          "validTime": "2026-03-28T18:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T17:00:00+00:00/PT2H",
           "value": 1.6666666666666667
         },
         {
-          "validTime": "2026-03-28T19:00:00+00:00/PT3H",
+          "validTime": "2026-03-28T19:00:00+00:00/PT2H",
+          "value": 2.7777777777777777
+        },
+        {
+          "validTime": "2026-03-28T21:00:00+00:00/PT2H",
           "value": 2.2222222222222223
         },
         {
-          "validTime": "2026-03-28T22:00:00+00:00/PT2H",
+          "validTime": "2026-03-28T23:00:00+00:00/PT1H",
           "value": 1.6666666666666667
         },
         {
-          "validTime": "2026-03-29T00:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T00:00:00+00:00/PT3H",
           "value": 1.1111111111111112
         },
         {
-          "validTime": "2026-03-29T01:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T03:00:00+00:00/PT1H",
           "value": 0.5555555555555556
-        },
-        {
-          "validTime": "2026-03-29T02:00:00+00:00/PT2H",
-          "value": 0
         },
         {
           "validTime": "2026-03-29T04:00:00+00:00/PT1H",
@@ -5137,15 +5121,31 @@
         },
         {
           "validTime": "2026-03-29T05:00:00+00:00/PT1H",
+          "value": -1.1111111111111112
+        },
+        {
+          "validTime": "2026-03-29T06:00:00+00:00/PT1H",
           "value": -1.6666666666666667
         },
         {
-          "validTime": "2026-03-29T06:00:00+00:00/PT3H",
+          "validTime": "2026-03-29T07:00:00+00:00/PT1H",
           "value": -2.2222222222222223
         },
         {
-          "validTime": "2026-03-29T09:00:00+00:00/PT3H",
+          "validTime": "2026-03-29T08:00:00+00:00/PT1H",
           "value": -1.6666666666666667
+        },
+        {
+          "validTime": "2026-03-29T09:00:00+00:00/PT1H",
+          "value": -2.2222222222222223
+        },
+        {
+          "validTime": "2026-03-29T10:00:00+00:00/PT1H",
+          "value": -1.6666666666666667
+        },
+        {
+          "validTime": "2026-03-29T11:00:00+00:00/PT1H",
+          "value": -2.2222222222222223
         },
         {
           "validTime": "2026-03-29T12:00:00+00:00/PT1H",
@@ -5189,22 +5189,22 @@
         },
         {
           "validTime": "2026-03-29T23:00:00+00:00/PT1H",
-          "value": 7.222222222222222
+          "value": 6.666666666666667
         },
         {
           "validTime": "2026-03-30T00:00:00+00:00/PT1H",
-          "value": 6.111111111111111
+          "value": 5.555555555555555
         },
         {
           "validTime": "2026-03-30T01:00:00+00:00/PT1H",
           "value": 5
         },
         {
-          "validTime": "2026-03-30T02:00:00+00:00/PT5H",
+          "validTime": "2026-03-30T02:00:00+00:00/PT3H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-03-30T07:00:00+00:00/PT5H",
+          "validTime": "2026-03-30T05:00:00+00:00/PT7H",
           "value": 5
         },
         {
@@ -5217,62 +5217,66 @@
         },
         {
           "validTime": "2026-03-30T14:00:00+00:00/PT1H",
-          "value": 8.333333333333334
-        },
-        {
-          "validTime": "2026-03-30T15:00:00+00:00/PT1H",
-          "value": 10
-        },
-        {
-          "validTime": "2026-03-30T16:00:00+00:00/PT1H",
-          "value": 11.666666666666666
-        },
-        {
-          "validTime": "2026-03-30T17:00:00+00:00/PT1H",
-          "value": 12.777777777777779
-        },
-        {
-          "validTime": "2026-03-30T18:00:00+00:00/PT1H",
-          "value": 13.333333333333334
-        },
-        {
-          "validTime": "2026-03-30T19:00:00+00:00/PT1H",
-          "value": 13.88888888888889
-        },
-        {
-          "validTime": "2026-03-30T20:00:00+00:00/PT1H",
-          "value": 13.333333333333334
-        },
-        {
-          "validTime": "2026-03-30T21:00:00+00:00/PT1H",
-          "value": 12.777777777777779
-        },
-        {
-          "validTime": "2026-03-30T22:00:00+00:00/PT1H",
-          "value": 12.222222222222221
-        },
-        {
-          "validTime": "2026-03-30T23:00:00+00:00/PT2H",
-          "value": 11.11111111111111
-        },
-        {
-          "validTime": "2026-03-31T01:00:00+00:00/PT1H",
-          "value": 10
-        },
-        {
-          "validTime": "2026-03-31T02:00:00+00:00/PT1H",
-          "value": 9.444444444444445
-        },
-        {
-          "validTime": "2026-03-31T03:00:00+00:00/PT1H",
           "value": 8.88888888888889
         },
         {
-          "validTime": "2026-03-31T04:00:00+00:00/PT7H",
+          "validTime": "2026-03-30T15:00:00+00:00/PT1H",
+          "value": 10.555555555555555
+        },
+        {
+          "validTime": "2026-03-30T16:00:00+00:00/PT1H",
+          "value": 12.222222222222221
+        },
+        {
+          "validTime": "2026-03-30T17:00:00+00:00/PT1H",
+          "value": 13.333333333333334
+        },
+        {
+          "validTime": "2026-03-30T18:00:00+00:00/PT1H",
+          "value": 13.88888888888889
+        },
+        {
+          "validTime": "2026-03-30T19:00:00+00:00/PT3H",
+          "value": 14.444444444444445
+        },
+        {
+          "validTime": "2026-03-30T22:00:00+00:00/PT1H",
+          "value": 13.88888888888889
+        },
+        {
+          "validTime": "2026-03-30T23:00:00+00:00/PT1H",
+          "value": 12.777777777777779
+        },
+        {
+          "validTime": "2026-03-31T00:00:00+00:00/PT1H",
+          "value": 11.666666666666666
+        },
+        {
+          "validTime": "2026-03-31T01:00:00+00:00/PT1H",
+          "value": 11.11111111111111
+        },
+        {
+          "validTime": "2026-03-31T02:00:00+00:00/PT1H",
+          "value": 10.555555555555555
+        },
+        {
+          "validTime": "2026-03-31T03:00:00+00:00/PT1H",
+          "value": 10
+        },
+        {
+          "validTime": "2026-03-31T04:00:00+00:00/PT2H",
+          "value": 9.444444444444445
+        },
+        {
+          "validTime": "2026-03-31T06:00:00+00:00/PT1H",
+          "value": 8.88888888888889
+        },
+        {
+          "validTime": "2026-03-31T07:00:00+00:00/PT2H",
           "value": 8.333333333333334
         },
         {
-          "validTime": "2026-03-31T11:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T09:00:00+00:00/PT3H",
           "value": 7.777777777777778
         },
         {
@@ -5289,111 +5293,107 @@
         },
         {
           "validTime": "2026-03-31T15:00:00+00:00/PT1H",
-          "value": 12.222222222222221
+          "value": 11.666666666666666
         },
         {
           "validTime": "2026-03-31T16:00:00+00:00/PT1H",
-          "value": 13.88888888888889
+          "value": 12.222222222222221
         },
         {
-          "validTime": "2026-03-31T17:00:00+00:00/PT1H",
-          "value": 15
-        },
-        {
-          "validTime": "2026-03-31T18:00:00+00:00/PT1H",
-          "value": 16.11111111111111
+          "validTime": "2026-03-31T17:00:00+00:00/PT2H",
+          "value": 12.777777777777779
         },
         {
           "validTime": "2026-03-31T19:00:00+00:00/PT3H",
-          "value": 16.666666666666668
-        },
-        {
-          "validTime": "2026-03-31T22:00:00+00:00/PT1H",
-          "value": 16.11111111111111
-        },
-        {
-          "validTime": "2026-03-31T23:00:00+00:00/PT1H",
-          "value": 15
-        },
-        {
-          "validTime": "2026-04-01T00:00:00+00:00/PT1H",
-          "value": 14.444444444444445
-        },
-        {
-          "validTime": "2026-04-01T01:00:00+00:00/PT7H",
-          "value": 13.88888888888889
-        },
-        {
-          "validTime": "2026-04-01T08:00:00+00:00/PT3H",
           "value": 13.333333333333334
         },
         {
+          "validTime": "2026-03-31T22:00:00+00:00/PT1H",
+          "value": 12.777777777777779
+        },
+        {
+          "validTime": "2026-03-31T23:00:00+00:00/PT1H",
+          "value": 12.222222222222221
+        },
+        {
+          "validTime": "2026-04-01T00:00:00+00:00/PT1H",
+          "value": 11.666666666666666
+        },
+        {
+          "validTime": "2026-04-01T01:00:00+00:00/PT7H",
+          "value": 11.11111111111111
+        },
+        {
+          "validTime": "2026-04-01T08:00:00+00:00/PT3H",
+          "value": 11.666666666666666
+        },
+        {
           "validTime": "2026-04-01T11:00:00+00:00/PT1H",
-          "value": 13.88888888888889
+          "value": 12.222222222222221
         },
         {
           "validTime": "2026-04-01T12:00:00+00:00/PT1H",
-          "value": 14.444444444444445
+          "value": 12.777777777777779
         },
         {
           "validTime": "2026-04-01T13:00:00+00:00/PT1H",
-          "value": 15.555555555555555
+          "value": 13.88888888888889
         },
         {
           "validTime": "2026-04-01T14:00:00+00:00/PT1H",
-          "value": 17.22222222222222
+          "value": 15.555555555555555
         },
         {
           "validTime": "2026-04-01T15:00:00+00:00/PT1H",
-          "value": 18.333333333333332
+          "value": 17.22222222222222
         },
         {
           "validTime": "2026-04-01T16:00:00+00:00/PT1H",
-          "value": 19.444444444444443
+          "value": 18.333333333333332
         },
         {
-          "validTime": "2026-04-01T17:00:00+00:00/PT2H",
-          "value": 20
+          "validTime": "2026-04-01T17:00:00+00:00/PT1H",
+          "value": 18.88888888888889
         },
         {
-          "validTime": "2026-04-01T19:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T18:00:00+00:00/PT2H",
           "value": 19.444444444444443
         },
         {
           "validTime": "2026-04-01T20:00:00+00:00/PT1H",
-          "value": 18.333333333333332
+          "value": 18.88888888888889
         },
         {
           "validTime": "2026-04-01T21:00:00+00:00/PT1H",
-          "value": 16.666666666666668
+          "value": 17.77777777777778
         },
         {
           "validTime": "2026-04-01T22:00:00+00:00/PT1H",
-          "value": 15
+          "value": 16.666666666666668
         },
         {
           "validTime": "2026-04-01T23:00:00+00:00/PT1H",
-          "value": 13.333333333333334
+          "value": 15
         },
         {
           "validTime": "2026-04-02T00:00:00+00:00/PT1H",
-          "value": 12.222222222222221
+          "value": 13.88888888888889
         },
         {
           "validTime": "2026-04-02T01:00:00+00:00/PT1H",
-          "value": 11.11111111111111
+          "value": 12.777777777777779
         },
         {
           "validTime": "2026-04-02T02:00:00+00:00/PT1H",
-          "value": 10.555555555555555
+          "value": 11.666666666666666
         },
         {
           "validTime": "2026-04-02T03:00:00+00:00/PT1H",
-          "value": 10
+          "value": 10.555555555555555
         },
         {
           "validTime": "2026-04-02T04:00:00+00:00/PT1H",
-          "value": 9.444444444444445
+          "value": 10
         },
         {
           "validTime": "2026-04-02T05:00:00+00:00/PT1H",
@@ -5420,56 +5420,104 @@
           "value": 5.555555555555555
         },
         {
-          "validTime": "2026-04-02T11:00:00+00:00/PT3H",
+          "validTime": "2026-04-02T11:00:00+00:00/PT1H",
           "value": 5
         },
         {
-          "validTime": "2026-04-02T14:00:00+00:00/PT6H",
+          "validTime": "2026-04-02T12:00:00+00:00/PT2H",
+          "value": 4.444444444444445
+        },
+        {
+          "validTime": "2026-04-02T14:00:00+00:00/PT1H",
+          "value": 5
+        },
+        {
+          "validTime": "2026-04-02T15:00:00+00:00/PT1H",
           "value": 5.555555555555555
         },
         {
-          "validTime": "2026-04-02T20:00:00+00:00/PT2H",
+          "validTime": "2026-04-02T16:00:00+00:00/PT5H",
+          "value": 6.111111111111111
+        },
+        {
+          "validTime": "2026-04-02T21:00:00+00:00/PT1H",
+          "value": 5.555555555555555
+        },
+        {
+          "validTime": "2026-04-02T22:00:00+00:00/PT1H",
           "value": 5
         },
         {
-          "validTime": "2026-04-02T22:00:00+00:00/PT2H",
+          "validTime": "2026-04-02T23:00:00+00:00/PT1H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-04-03T00:00:00+00:00/PT2H",
+          "validTime": "2026-04-03T00:00:00+00:00/PT1H",
           "value": 3.888888888888889
         },
         {
-          "validTime": "2026-04-03T02:00:00+00:00/PT11H",
+          "validTime": "2026-04-03T01:00:00+00:00/PT4H",
           "value": 3.3333333333333335
         },
         {
-          "validTime": "2026-04-03T13:00:00+00:00/PT2H",
-          "value": 3.888888888888889
-        },
-        {
-          "validTime": "2026-04-03T15:00:00+00:00/PT10H",
-          "value": 4.444444444444445
-        },
-        {
-          "validTime": "2026-04-04T01:00:00+00:00/PT1H",
-          "value": 3.888888888888889
-        },
-        {
-          "validTime": "2026-04-04T02:00:00+00:00/PT1H",
-          "value": 3.3333333333333335
-        },
-        {
-          "validTime": "2026-04-04T03:00:00+00:00/PT1H",
+          "validTime": "2026-04-03T05:00:00+00:00/PT6H",
           "value": 2.7777777777777777
         },
         {
-          "validTime": "2026-04-04T04:00:00+00:00/PT1H",
+          "validTime": "2026-04-03T11:00:00+00:00/PT2H",
+          "value": 2.2222222222222223
+        },
+        {
+          "validTime": "2026-04-03T13:00:00+00:00/PT1H",
+          "value": 2.7777777777777777
+        },
+        {
+          "validTime": "2026-04-03T14:00:00+00:00/PT1H",
+          "value": 3.3333333333333335
+        },
+        {
+          "validTime": "2026-04-03T15:00:00+00:00/PT1H",
+          "value": 3.888888888888889
+        },
+        {
+          "validTime": "2026-04-03T16:00:00+00:00/PT6H",
+          "value": 4.444444444444445
+        },
+        {
+          "validTime": "2026-04-03T22:00:00+00:00/PT2H",
+          "value": 3.888888888888889
+        },
+        {
+          "validTime": "2026-04-04T00:00:00+00:00/PT12H",
+          "value": 3.3333333333333335
+        },
+        {
+          "validTime": "2026-04-04T12:00:00+00:00/PT1H",
+          "value": 3.888888888888889
+        },
+        {
+          "validTime": "2026-04-04T13:00:00+00:00/PT1H",
           "value": 5
         },
         {
-          "validTime": "2026-04-04T05:00:00+00:00/PT2H",
-          "value": 4.444444444444445
+          "validTime": "2026-04-04T14:00:00+00:00/PT1H",
+          "value": 5.555555555555555
+        },
+        {
+          "validTime": "2026-04-04T15:00:00+00:00/PT1H",
+          "value": 6.666666666666667
+        },
+        {
+          "validTime": "2026-04-04T16:00:00+00:00/PT4H",
+          "value": 7.222222222222222
+        },
+        {
+          "validTime": "2026-04-04T20:00:00+00:00/PT3H",
+          "value": 7.777777777777778
+        },
+        {
+          "validTime": "2026-04-04T23:00:00+00:00/PT4H",
+          "value": 7.222222222222222
         }
       ]
     },
@@ -5477,223 +5525,207 @@
       "uom": "wmoUnit:degC",
       "values": [
         {
-          "validTime": "2026-03-27T14:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-27T15:00:00+00:00/PT1H",
-          "value": -1.1111111111111112
-        },
-        {
-          "validTime": "2026-03-27T16:00:00+00:00/PT1H",
-          "value": -2.7777777777777777
-        },
-        {
-          "validTime": "2026-03-27T17:00:00+00:00/PT1H",
-          "value": -4.444444444444445
-        },
-        {
-          "validTime": "2026-03-27T18:00:00+00:00/PT1H",
-          "value": -6.111111111111111
-        },
-        {
-          "validTime": "2026-03-27T19:00:00+00:00/PT1H",
-          "value": -6.666666666666667
-        },
-        {
-          "validTime": "2026-03-27T20:00:00+00:00/PT1H",
-          "value": -7.777777777777778
-        },
-        {
-          "validTime": "2026-03-27T21:00:00+00:00/PT3H",
-          "value": -8.88888888888889
-        },
-        {
-          "validTime": "2026-03-28T00:00:00+00:00/PT1H",
-          "value": -8.333333333333334
-        },
-        {
-          "validTime": "2026-03-28T01:00:00+00:00/PT3H",
-          "value": -8.88888888888889
-        },
-        {
-          "validTime": "2026-03-28T04:00:00+00:00/PT4H",
-          "value": -9.444444444444445
-        },
-        {
-          "validTime": "2026-03-28T08:00:00+00:00/PT1H",
-          "value": -10
-        },
-        {
-          "validTime": "2026-03-28T09:00:00+00:00/PT1H",
-          "value": -9.444444444444445
-        },
-        {
-          "validTime": "2026-03-28T10:00:00+00:00/PT1H",
-          "value": -10
-        },
-        {
-          "validTime": "2026-03-28T11:00:00+00:00/PT1H",
-          "value": -10.555555555555555
-        },
-        {
-          "validTime": "2026-03-28T12:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T21:00:00+00:00/PT1H",
           "value": -11.11111111111111
         },
         {
-          "validTime": "2026-03-28T13:00:00+00:00/PT1H",
+          "validTime": "2026-03-27T22:00:00+00:00/PT1H",
+          "value": -10
+        },
+        {
+          "validTime": "2026-03-27T23:00:00+00:00/PT2H",
+          "value": -4.444444444444445
+        },
+        {
+          "validTime": "2026-03-28T01:00:00+00:00/PT1H",
+          "value": -5.555555555555555
+        },
+        {
+          "validTime": "2026-03-28T02:00:00+00:00/PT1H",
+          "value": -10.555555555555555
+        },
+        {
+          "validTime": "2026-03-28T03:00:00+00:00/PT4H",
+          "value": -8.88888888888889
+        },
+        {
+          "validTime": "2026-03-28T07:00:00+00:00/PT2H",
+          "value": -9.444444444444445
+        },
+        {
+          "validTime": "2026-03-28T09:00:00+00:00/PT1H",
+          "value": -10
+        },
+        {
+          "validTime": "2026-03-28T10:00:00+00:00/PT1H",
+          "value": -10.555555555555555
+        },
+        {
+          "validTime": "2026-03-28T11:00:00+00:00/PT1H",
+          "value": -10
+        },
+        {
+          "validTime": "2026-03-28T12:00:00+00:00/PT1H",
+          "value": -10.555555555555555
+        },
+        {
+          "validTime": "2026-03-28T13:00:00+00:00/PT2H",
+          "value": -11.11111111111111
+        },
+        {
+          "validTime": "2026-03-28T15:00:00+00:00/PT1H",
           "value": -11.666666666666666
         },
         {
-          "validTime": "2026-03-28T14:00:00+00:00/PT4H",
-          "value": -12.222222222222221
+          "validTime": "2026-03-28T16:00:00+00:00/PT1H",
+          "value": -12.777777777777779
+        },
+        {
+          "validTime": "2026-03-28T17:00:00+00:00/PT1H",
+          "value": -13.333333333333334
         },
         {
           "validTime": "2026-03-28T18:00:00+00:00/PT1H",
           "value": -12.777777777777779
         },
         {
-          "validTime": "2026-03-28T19:00:00+00:00/PT2H",
+          "validTime": "2026-03-28T19:00:00+00:00/PT3H",
           "value": -12.222222222222221
-        },
-        {
-          "validTime": "2026-03-28T21:00:00+00:00/PT1H",
-          "value": -12.777777777777779
         },
         {
           "validTime": "2026-03-28T22:00:00+00:00/PT1H",
-          "value": -12.222222222222221
+          "value": -11.666666666666666
         },
         {
           "validTime": "2026-03-28T23:00:00+00:00/PT1H",
-          "value": -11.11111111111111
+          "value": -10.555555555555555
         },
         {
           "validTime": "2026-03-29T00:00:00+00:00/PT1H",
-          "value": -10
-        },
-        {
-          "validTime": "2026-03-29T01:00:00+00:00/PT2H",
-          "value": -8.88888888888889
-        },
-        {
-          "validTime": "2026-03-29T03:00:00+00:00/PT2H",
           "value": -9.444444444444445
         },
         {
-          "validTime": "2026-03-29T05:00:00+00:00/PT8H",
-          "value": -10
-        },
-        {
-          "validTime": "2026-03-29T13:00:00+00:00/PT1H",
-          "value": -9.444444444444445
-        },
-        {
-          "validTime": "2026-03-29T14:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T01:00:00+00:00/PT1H",
           "value": -8.88888888888889
         },
         {
-          "validTime": "2026-03-29T15:00:00+00:00/PT1H",
-          "value": -8.333333333333334
-        },
-        {
-          "validTime": "2026-03-29T16:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T02:00:00+00:00/PT1H",
           "value": -7.777777777777778
         },
         {
+          "validTime": "2026-03-29T03:00:00+00:00/PT2H",
+          "value": -8.333333333333334
+        },
+        {
+          "validTime": "2026-03-29T05:00:00+00:00/PT1H",
+          "value": -9.444444444444445
+        },
+        {
+          "validTime": "2026-03-29T06:00:00+00:00/PT8H",
+          "value": -10
+        },
+        {
+          "validTime": "2026-03-29T14:00:00+00:00/PT1H",
+          "value": -9.444444444444445
+        },
+        {
+          "validTime": "2026-03-29T15:00:00+00:00/PT1H",
+          "value": -8.88888888888889
+        },
+        {
+          "validTime": "2026-03-29T16:00:00+00:00/PT1H",
+          "value": -8.333333333333334
+        },
+        {
           "validTime": "2026-03-29T17:00:00+00:00/PT1H",
+          "value": -7.777777777777778
+        },
+        {
+          "validTime": "2026-03-29T18:00:00+00:00/PT2H",
           "value": -6.666666666666667
         },
         {
-          "validTime": "2026-03-29T18:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T20:00:00+00:00/PT1H",
           "value": -6.111111111111111
         },
         {
-          "validTime": "2026-03-29T19:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T21:00:00+00:00/PT1H",
           "value": -5.555555555555555
         },
         {
-          "validTime": "2026-03-29T20:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T22:00:00+00:00/PT1H",
           "value": -5
         },
         {
-          "validTime": "2026-03-29T21:00:00+00:00/PT1H",
-          "value": -4.444444444444445
-        },
-        {
-          "validTime": "2026-03-29T22:00:00+00:00/PT2H",
+          "validTime": "2026-03-29T23:00:00+00:00/PT2H",
           "value": -3.888888888888889
         },
         {
-          "validTime": "2026-03-30T00:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T01:00:00+00:00/PT1H",
           "value": -3.3333333333333335
         },
         {
-          "validTime": "2026-03-30T01:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T02:00:00+00:00/PT1H",
           "value": -2.7777777777777777
         },
         {
-          "validTime": "2026-03-30T03:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T03:00:00+00:00/PT2H",
           "value": -2.2222222222222223
         },
         {
-          "validTime": "2026-03-30T04:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T05:00:00+00:00/PT1H",
           "value": -1.6666666666666667
         },
         {
-          "validTime": "2026-03-30T06:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T06:00:00+00:00/PT2H",
           "value": -1.1111111111111112
         },
         {
-          "validTime": "2026-03-30T07:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T08:00:00+00:00/PT2H",
           "value": -0.5555555555555556
         },
         {
-          "validTime": "2026-03-30T09:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T10:00:00+00:00/PT2H",
           "value": 0
         },
         {
-          "validTime": "2026-03-30T11:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T12:00:00+00:00/PT1H",
           "value": 0.5555555555555556
         },
         {
-          "validTime": "2026-03-30T13:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T13:00:00+00:00/PT1H",
           "value": 1.1111111111111112
         },
         {
-          "validTime": "2026-03-30T15:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T14:00:00+00:00/PT1H",
           "value": 1.6666666666666667
         },
         {
-          "validTime": "2026-03-30T16:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T15:00:00+00:00/PT2H",
           "value": 2.2222222222222223
         },
         {
-          "validTime": "2026-03-30T18:00:00+00:00/PT5H",
+          "validTime": "2026-03-30T17:00:00+00:00/PT3H",
           "value": 2.7777777777777777
         },
         {
-          "validTime": "2026-03-30T23:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T20:00:00+00:00/PT2H",
           "value": 3.3333333333333335
         },
         {
-          "validTime": "2026-03-31T00:00:00+00:00/PT2H",
-          "value": 4.444444444444445
-        },
-        {
-          "validTime": "2026-03-31T02:00:00+00:00/PT5H",
+          "validTime": "2026-03-30T22:00:00+00:00/PT1H",
           "value": 3.888888888888889
         },
         {
-          "validTime": "2026-03-31T07:00:00+00:00/PT2H",
+          "validTime": "2026-03-30T23:00:00+00:00/PT3H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-03-31T09:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T02:00:00+00:00/PT3H",
           "value": 5
         },
         {
-          "validTime": "2026-03-31T10:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T05:00:00+00:00/PT7H",
           "value": 5.555555555555555
         },
         {
@@ -5709,80 +5741,64 @@
           "value": 7.222222222222222
         },
         {
-          "validTime": "2026-03-31T15:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T15:00:00+00:00/PT14H",
           "value": 7.777777777777778
         },
         {
-          "validTime": "2026-03-31T16:00:00+00:00/PT1H",
-          "value": 8.88888888888889
-        },
-        {
-          "validTime": "2026-03-31T17:00:00+00:00/PT1H",
-          "value": 10
-        },
-        {
-          "validTime": "2026-03-31T18:00:00+00:00/PT5H",
-          "value": 10.555555555555555
-        },
-        {
-          "validTime": "2026-03-31T23:00:00+00:00/PT3H",
-          "value": 11.11111111111111
-        },
-        {
-          "validTime": "2026-04-01T02:00:00+00:00/PT6H",
-          "value": 10.555555555555555
-        },
-        {
-          "validTime": "2026-04-01T08:00:00+00:00/PT5H",
-          "value": 11.11111111111111
-        },
-        {
-          "validTime": "2026-04-01T13:00:00+00:00/PT2H",
-          "value": 11.666666666666666
-        },
-        {
-          "validTime": "2026-04-01T15:00:00+00:00/PT1H",
-          "value": 12.222222222222221
-        },
-        {
-          "validTime": "2026-04-01T16:00:00+00:00/PT3H",
-          "value": 12.777777777777779
-        },
-        {
-          "validTime": "2026-04-01T19:00:00+00:00/PT1H",
-          "value": 12.222222222222221
-        },
-        {
-          "validTime": "2026-04-01T20:00:00+00:00/PT1H",
-          "value": 11.11111111111111
-        },
-        {
-          "validTime": "2026-04-01T21:00:00+00:00/PT1H",
-          "value": 10.555555555555555
-        },
-        {
-          "validTime": "2026-04-01T22:00:00+00:00/PT2H",
-          "value": 10
-        },
-        {
-          "validTime": "2026-04-02T00:00:00+00:00/PT1H",
-          "value": 9.444444444444445
-        },
-        {
-          "validTime": "2026-04-02T01:00:00+00:00/PT1H",
-          "value": 8.88888888888889
-        },
-        {
-          "validTime": "2026-04-02T02:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T05:00:00+00:00/PT3H",
           "value": 8.333333333333334
         },
         {
-          "validTime": "2026-04-02T03:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T08:00:00+00:00/PT3H",
+          "value": 8.88888888888889
+        },
+        {
+          "validTime": "2026-04-01T11:00:00+00:00/PT2H",
+          "value": 9.444444444444445
+        },
+        {
+          "validTime": "2026-04-01T13:00:00+00:00/PT1H",
+          "value": 10
+        },
+        {
+          "validTime": "2026-04-01T14:00:00+00:00/PT1H",
+          "value": 10.555555555555555
+        },
+        {
+          "validTime": "2026-04-01T15:00:00+00:00/PT5H",
+          "value": 11.11111111111111
+        },
+        {
+          "validTime": "2026-04-01T20:00:00+00:00/PT1H",
+          "value": 10.555555555555555
+        },
+        {
+          "validTime": "2026-04-01T21:00:00+00:00/PT1H",
+          "value": 10
+        },
+        {
+          "validTime": "2026-04-01T22:00:00+00:00/PT1H",
+          "value": 9.444444444444445
+        },
+        {
+          "validTime": "2026-04-01T23:00:00+00:00/PT1H",
+          "value": 8.88888888888889
+        },
+        {
+          "validTime": "2026-04-02T00:00:00+00:00/PT1H",
+          "value": 8.333333333333334
+        },
+        {
+          "validTime": "2026-04-02T01:00:00+00:00/PT2H",
           "value": 7.777777777777778
         },
         {
-          "validTime": "2026-04-02T04:00:00+00:00/PT1H",
+          "validTime": "2026-04-02T03:00:00+00:00/PT1H",
           "value": 7.222222222222222
+        },
+        {
+          "validTime": "2026-04-02T04:00:00+00:00/PT1H",
+          "value": 6.666666666666667
         },
         {
           "validTime": "2026-04-02T05:00:00+00:00/PT1H",
@@ -5794,79 +5810,103 @@
         },
         {
           "validTime": "2026-04-02T07:00:00+00:00/PT1H",
-          "value": 5
-        },
-        {
-          "validTime": "2026-04-02T08:00:00+00:00/PT1H",
           "value": 4.444444444444445
         },
         {
-          "validTime": "2026-04-02T09:00:00+00:00/PT1H",
+          "validTime": "2026-04-02T08:00:00+00:00/PT1H",
           "value": 3.888888888888889
         },
         {
-          "validTime": "2026-04-02T10:00:00+00:00/PT1H",
-          "value": 3.3333333333333335
-        },
-        {
-          "validTime": "2026-04-02T11:00:00+00:00/PT1H",
-          "value": 2.2222222222222223
-        },
-        {
-          "validTime": "2026-04-02T12:00:00+00:00/PT1H",
-          "value": 1.6666666666666667
-        },
-        {
-          "validTime": "2026-04-02T13:00:00+00:00/PT1H",
-          "value": 1.1111111111111112
-        },
-        {
-          "validTime": "2026-04-02T14:00:00+00:00/PT1H",
-          "value": 0.5555555555555556
-        },
-        {
-          "validTime": "2026-04-02T15:00:00+00:00/PT5H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-04-02T20:00:00+00:00/PT2H",
-          "value": -0.5555555555555556
-        },
-        {
-          "validTime": "2026-04-02T22:00:00+00:00/PT2H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-04-03T00:00:00+00:00/PT5H",
-          "value": 0.5555555555555556
-        },
-        {
-          "validTime": "2026-04-03T05:00:00+00:00/PT3H",
-          "value": 1.1111111111111112
-        },
-        {
-          "validTime": "2026-04-03T08:00:00+00:00/PT3H",
-          "value": 1.6666666666666667
-        },
-        {
-          "validTime": "2026-04-03T11:00:00+00:00/PT3H",
-          "value": 1.1111111111111112
-        },
-        {
-          "validTime": "2026-04-03T14:00:00+00:00/PT3H",
-          "value": 1.6666666666666667
-        },
-        {
-          "validTime": "2026-04-03T17:00:00+00:00/PT6H",
-          "value": 2.2222222222222223
-        },
-        {
-          "validTime": "2026-04-03T23:00:00+00:00/PT1H",
+          "validTime": "2026-04-02T09:00:00+00:00/PT1H",
           "value": 2.7777777777777777
         },
         {
-          "validTime": "2026-04-04T00:00:00+00:00/PT1H",
+          "validTime": "2026-04-02T10:00:00+00:00/PT1H",
+          "value": 2.2222222222222223
+        },
+        {
+          "validTime": "2026-04-02T11:00:00+00:00/PT1H",
+          "value": 1.6666666666666667
+        },
+        {
+          "validTime": "2026-04-02T12:00:00+00:00/PT1H",
+          "value": 1.1111111111111112
+        },
+        {
+          "validTime": "2026-04-02T13:00:00+00:00/PT1H",
+          "value": 0.5555555555555556
+        },
+        {
+          "validTime": "2026-04-02T14:00:00+00:00/PT1H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-04-02T15:00:00+00:00/PT1H",
+          "value": -0.5555555555555556
+        },
+        {
+          "validTime": "2026-04-02T16:00:00+00:00/PT7H",
+          "value": -1.1111111111111112
+        },
+        {
+          "validTime": "2026-04-02T23:00:00+00:00/PT6H",
+          "value": -1.6666666666666667
+        },
+        {
+          "validTime": "2026-04-03T05:00:00+00:00/PT6H",
+          "value": -1.1111111111111112
+        },
+        {
+          "validTime": "2026-04-03T11:00:00+00:00/PT3H",
+          "value": -1.6666666666666667
+        },
+        {
+          "validTime": "2026-04-03T14:00:00+00:00/PT9H",
+          "value": -1.1111111111111112
+        },
+        {
+          "validTime": "2026-04-03T23:00:00+00:00/PT3H",
+          "value": -0.5555555555555556
+        },
+        {
+          "validTime": "2026-04-04T02:00:00+00:00/PT3H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-04-04T05:00:00+00:00/PT2H",
+          "value": 0.5555555555555556
+        },
+        {
+          "validTime": "2026-04-04T07:00:00+00:00/PT2H",
+          "value": 1.1111111111111112
+        },
+        {
+          "validTime": "2026-04-04T09:00:00+00:00/PT2H",
+          "value": 1.6666666666666667
+        },
+        {
+          "validTime": "2026-04-04T11:00:00+00:00/PT2H",
+          "value": 2.2222222222222223
+        },
+        {
+          "validTime": "2026-04-04T13:00:00+00:00/PT1H",
+          "value": 2.7777777777777777
+        },
+        {
+          "validTime": "2026-04-04T14:00:00+00:00/PT1H",
           "value": 3.3333333333333335
+        },
+        {
+          "validTime": "2026-04-04T15:00:00+00:00/PT1H",
+          "value": 3.888888888888889
+        },
+        {
+          "validTime": "2026-04-04T16:00:00+00:00/PT7H",
+          "value": 4.444444444444445
+        },
+        {
+          "validTime": "2026-04-04T23:00:00+00:00/PT2H",
+          "value": 5
         }
       ]
     },
@@ -5874,330 +5914,482 @@
       "uom": "wmoUnit:percent",
       "values": [
         {
-          "validTime": "2026-03-27T15:00:00+00:00/PT5H",
+          "validTime": "2026-03-27T21:00:00+00:00/PT14H",
           "value": 0
         },
         {
-          "validTime": "2026-03-27T20:00:00+00:00/PT3H",
+          "validTime": "2026-03-28T11:00:00+00:00/PT1H",
           "value": 1
         },
         {
-          "validTime": "2026-03-27T23:00:00+00:00/PT8H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-28T07:00:00+00:00/PT2H",
-          "value": 1
-        },
-        {
-          "validTime": "2026-03-28T09:00:00+00:00/PT8H",
+          "validTime": "2026-03-28T12:00:00+00:00/PT2H",
           "value": 2
         },
         {
-          "validTime": "2026-03-28T17:00:00+00:00/PT3H",
+          "validTime": "2026-03-28T14:00:00+00:00/PT1H",
           "value": 1
         },
         {
-          "validTime": "2026-03-28T20:00:00+00:00/PT3H",
+          "validTime": "2026-03-28T15:00:00+00:00/PT2H",
           "value": 0
         },
         {
-          "validTime": "2026-03-28T23:00:00+00:00/PT3H",
+          "validTime": "2026-03-28T17:00:00+00:00/PT1H",
           "value": 1
         },
         {
-          "validTime": "2026-03-29T02:00:00+00:00/PT15H",
+          "validTime": "2026-03-28T18:00:00+00:00/PT1H",
           "value": 0
         },
         {
-          "validTime": "2026-03-29T17:00:00+00:00/PT9H",
+          "validTime": "2026-03-28T19:00:00+00:00/PT4H",
           "value": 1
         },
         {
-          "validTime": "2026-03-30T02:00:00+00:00/PT9H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-30T11:00:00+00:00/PT3H",
-          "value": 1
-        },
-        {
-          "validTime": "2026-03-30T14:00:00+00:00/PT10H",
+          "validTime": "2026-03-28T23:00:00+00:00/PT4H",
           "value": 2
         },
         {
-          "validTime": "2026-03-31T00:00:00+00:00/PT1H",
+          "validTime": "2026-03-29T03:00:00+00:00/PT2H",
+          "value": 1
+        },
+        {
+          "validTime": "2026-03-29T05:00:00+00:00/PT4H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-03-29T09:00:00+00:00/PT3H",
+          "value": 1
+        },
+        {
+          "validTime": "2026-03-29T12:00:00+00:00/PT18H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-03-30T06:00:00+00:00/PT6H",
+          "value": 1
+        },
+        {
+          "validTime": "2026-03-30T12:00:00+00:00/PT1H",
+          "value": 2
+        },
+        {
+          "validTime": "2026-03-30T13:00:00+00:00/PT5H",
           "value": 3
         },
         {
-          "validTime": "2026-03-31T01:00:00+00:00/PT1H",
-          "value": 4
+          "validTime": "2026-03-30T18:00:00+00:00/PT4H",
+          "value": 1
         },
         {
-          "validTime": "2026-03-31T02:00:00+00:00/PT1H",
-          "value": 5
+          "validTime": "2026-03-30T22:00:00+00:00/PT3H",
+          "value": 2
         },
         {
-          "validTime": "2026-03-31T03:00:00+00:00/PT1H",
-          "value": 7
+          "validTime": "2026-03-31T01:00:00+00:00/PT3H",
+          "value": 3
         },
         {
           "validTime": "2026-03-31T04:00:00+00:00/PT1H",
-          "value": 8
+          "value": 5
         },
         {
           "validTime": "2026-03-31T05:00:00+00:00/PT1H",
-          "value": 9
+          "value": 6
         },
         {
           "validTime": "2026-03-31T06:00:00+00:00/PT1H",
-          "value": 10
+          "value": 9
         },
         {
           "validTime": "2026-03-31T07:00:00+00:00/PT1H",
-          "value": 11
+          "value": 10
         },
         {
           "validTime": "2026-03-31T08:00:00+00:00/PT1H",
-          "value": 13
+          "value": 12
         },
         {
           "validTime": "2026-03-31T09:00:00+00:00/PT1H",
-          "value": 14
+          "value": 13
         },
         {
           "validTime": "2026-03-31T10:00:00+00:00/PT1H",
-          "value": 17
+          "value": 16
         },
         {
           "validTime": "2026-03-31T11:00:00+00:00/PT1H",
-          "value": 20
+          "value": 19
         },
         {
           "validTime": "2026-03-31T12:00:00+00:00/PT1H",
-          "value": 23
+          "value": 30
         },
         {
           "validTime": "2026-03-31T13:00:00+00:00/PT1H",
-          "value": 26
+          "value": 34
         },
         {
           "validTime": "2026-03-31T14:00:00+00:00/PT1H",
-          "value": 29
-        },
-        {
-          "validTime": "2026-03-31T15:00:00+00:00/PT4H",
-          "value": 33
-        },
-        {
-          "validTime": "2026-03-31T19:00:00+00:00/PT3H",
-          "value": 34
-        },
-        {
-          "validTime": "2026-03-31T22:00:00+00:00/PT2H",
-          "value": 35
-        },
-        {
-          "validTime": "2026-04-01T00:00:00+00:00/PT1H",
-          "value": 36
-        },
-        {
-          "validTime": "2026-04-01T01:00:00+00:00/PT2H",
-          "value": 37
-        },
-        {
-          "validTime": "2026-04-01T03:00:00+00:00/PT1H",
           "value": 38
         },
         {
-          "validTime": "2026-04-01T04:00:00+00:00/PT1H",
-          "value": 37
-        },
-        {
-          "validTime": "2026-04-01T05:00:00+00:00/PT1H",
-          "value": 36
-        },
-        {
-          "validTime": "2026-04-01T06:00:00+00:00/PT1H",
-          "value": 35
-        },
-        {
-          "validTime": "2026-04-01T07:00:00+00:00/PT1H",
-          "value": 34
-        },
-        {
-          "validTime": "2026-04-01T08:00:00+00:00/PT1H",
-          "value": 33
-        },
-        {
-          "validTime": "2026-04-01T09:00:00+00:00/PT2H",
-          "value": 32
-        },
-        {
-          "validTime": "2026-04-01T11:00:00+00:00/PT3H",
-          "value": 31
-        },
-        {
-          "validTime": "2026-04-01T14:00:00+00:00/PT2H",
-          "value": 30
-        },
-        {
-          "validTime": "2026-04-01T16:00:00+00:00/PT1H",
-          "value": 33
-        },
-        {
-          "validTime": "2026-04-01T17:00:00+00:00/PT1H",
-          "value": 36
-        },
-        {
-          "validTime": "2026-04-01T18:00:00+00:00/PT1H",
-          "value": 39
-        },
-        {
-          "validTime": "2026-04-01T19:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T15:00:00+00:00/PT1H",
           "value": 42
         },
         {
-          "validTime": "2026-04-01T20:00:00+00:00/PT1H",
-          "value": 45
-        },
-        {
-          "validTime": "2026-04-01T21:00:00+00:00/PT3H",
-          "value": 48
-        },
-        {
-          "validTime": "2026-04-02T00:00:00+00:00/PT4H",
-          "value": 50
-        },
-        {
-          "validTime": "2026-04-02T04:00:00+00:00/PT1H",
-          "value": 48
-        },
-        {
-          "validTime": "2026-04-02T05:00:00+00:00/PT1H",
-          "value": 46
-        },
-        {
-          "validTime": "2026-04-02T06:00:00+00:00/PT1H",
-          "value": 36
-        },
-        {
-          "validTime": "2026-04-02T07:00:00+00:00/PT1H",
-          "value": 34
-        },
-        {
-          "validTime": "2026-04-02T08:00:00+00:00/PT1H",
-          "value": 32
-        },
-        {
-          "validTime": "2026-04-02T09:00:00+00:00/PT1H",
-          "value": 31
-        },
-        {
-          "validTime": "2026-04-02T10:00:00+00:00/PT2H",
-          "value": 30
-        },
-        {
-          "validTime": "2026-04-02T12:00:00+00:00/PT1H",
-          "value": 34
-        },
-        {
-          "validTime": "2026-04-02T13:00:00+00:00/PT5H",
-          "value": 33
-        },
-        {
-          "validTime": "2026-04-02T18:00:00+00:00/PT3H",
-          "value": 35
-        },
-        {
-          "validTime": "2026-04-02T21:00:00+00:00/PT3H",
-          "value": 36
-        },
-        {
-          "validTime": "2026-04-03T00:00:00+00:00/PT1H",
-          "value": 35
-        },
-        {
-          "validTime": "2026-04-03T01:00:00+00:00/PT3H",
-          "value": 36
-        },
-        {
-          "validTime": "2026-04-03T04:00:00+00:00/PT1H",
-          "value": 37
-        },
-        {
-          "validTime": "2026-04-03T05:00:00+00:00/PT2H",
-          "value": 38
-        },
-        {
-          "validTime": "2026-04-03T07:00:00+00:00/PT1H",
-          "value": 39
-        },
-        {
-          "validTime": "2026-04-03T08:00:00+00:00/PT1H",
-          "value": 40
-        },
-        {
-          "validTime": "2026-04-03T09:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T16:00:00+00:00/PT1H",
           "value": 41
         },
         {
-          "validTime": "2026-04-03T10:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T17:00:00+00:00/PT1H",
+          "value": 40
+        },
+        {
+          "validTime": "2026-03-31T18:00:00+00:00/PT1H",
+          "value": 36
+        },
+        {
+          "validTime": "2026-03-31T19:00:00+00:00/PT1H",
+          "value": 35
+        },
+        {
+          "validTime": "2026-03-31T20:00:00+00:00/PT1H",
+          "value": 34
+        },
+        {
+          "validTime": "2026-03-31T21:00:00+00:00/PT1H",
+          "value": 33
+        },
+        {
+          "validTime": "2026-03-31T22:00:00+00:00/PT1H",
+          "value": 31
+        },
+        {
+          "validTime": "2026-03-31T23:00:00+00:00/PT1H",
+          "value": 29
+        },
+        {
+          "validTime": "2026-04-01T00:00:00+00:00/PT1H",
+          "value": 23
+        },
+        {
+          "validTime": "2026-04-01T01:00:00+00:00/PT1H",
+          "value": 22
+        },
+        {
+          "validTime": "2026-04-01T02:00:00+00:00/PT1H",
+          "value": 20
+        },
+        {
+          "validTime": "2026-04-01T03:00:00+00:00/PT3H",
+          "value": 18
+        },
+        {
+          "validTime": "2026-04-01T06:00:00+00:00/PT1H",
+          "value": 20
+        },
+        {
+          "validTime": "2026-04-01T07:00:00+00:00/PT5H",
+          "value": 19
+        },
+        {
+          "validTime": "2026-04-01T12:00:00+00:00/PT3H",
+          "value": 13
+        },
+        {
+          "validTime": "2026-04-01T15:00:00+00:00/PT1H",
+          "value": 14
+        },
+        {
+          "validTime": "2026-04-01T16:00:00+00:00/PT1H",
+          "value": 17
+        },
+        {
+          "validTime": "2026-04-01T17:00:00+00:00/PT1H",
+          "value": 20
+        },
+        {
+          "validTime": "2026-04-01T18:00:00+00:00/PT1H",
+          "value": 38
+        },
+        {
+          "validTime": "2026-04-01T19:00:00+00:00/PT1H",
           "value": 43
         },
         {
-          "validTime": "2026-04-03T11:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T20:00:00+00:00/PT1H",
+          "value": 49
+        },
+        {
+          "validTime": "2026-04-01T21:00:00+00:00/PT1H",
+          "value": 54
+        },
+        {
+          "validTime": "2026-04-01T22:00:00+00:00/PT1H",
+          "value": 55
+        },
+        {
+          "validTime": "2026-04-01T23:00:00+00:00/PT1H",
+          "value": 56
+        },
+        {
+          "validTime": "2026-04-02T00:00:00+00:00/PT1H",
+          "value": 60
+        },
+        {
+          "validTime": "2026-04-02T01:00:00+00:00/PT1H",
+          "value": 61
+        },
+        {
+          "validTime": "2026-04-02T02:00:00+00:00/PT1H",
+          "value": 62
+        },
+        {
+          "validTime": "2026-04-02T03:00:00+00:00/PT1H",
+          "value": 63
+        },
+        {
+          "validTime": "2026-04-02T04:00:00+00:00/PT1H",
+          "value": 60
+        },
+        {
+          "validTime": "2026-04-02T05:00:00+00:00/PT1H",
+          "value": 57
+        },
+        {
+          "validTime": "2026-04-02T06:00:00+00:00/PT1H",
           "value": 44
         },
         {
-          "validTime": "2026-04-03T12:00:00+00:00/PT1H",
-          "value": 46
+          "validTime": "2026-04-02T07:00:00+00:00/PT1H",
+          "value": 42
+        },
+        {
+          "validTime": "2026-04-02T08:00:00+00:00/PT1H",
+          "value": 39
+        },
+        {
+          "validTime": "2026-04-02T09:00:00+00:00/PT1H",
+          "value": 37
+        },
+        {
+          "validTime": "2026-04-02T10:00:00+00:00/PT1H",
+          "value": 35
+        },
+        {
+          "validTime": "2026-04-02T11:00:00+00:00/PT1H",
+          "value": 33
+        },
+        {
+          "validTime": "2026-04-02T12:00:00+00:00/PT1H",
+          "value": 31
+        },
+        {
+          "validTime": "2026-04-02T13:00:00+00:00/PT1H",
+          "value": 29
+        },
+        {
+          "validTime": "2026-04-02T14:00:00+00:00/PT1H",
+          "value": 27
+        },
+        {
+          "validTime": "2026-04-02T15:00:00+00:00/PT1H",
+          "value": 26
+        },
+        {
+          "validTime": "2026-04-02T16:00:00+00:00/PT1H",
+          "value": 25
+        },
+        {
+          "validTime": "2026-04-02T17:00:00+00:00/PT2H",
+          "value": 23
+        },
+        {
+          "validTime": "2026-04-02T19:00:00+00:00/PT1H",
+          "value": 22
+        },
+        {
+          "validTime": "2026-04-02T20:00:00+00:00/PT1H",
+          "value": 21
+        },
+        {
+          "validTime": "2026-04-02T21:00:00+00:00/PT1H",
+          "value": 19
+        },
+        {
+          "validTime": "2026-04-02T22:00:00+00:00/PT2H",
+          "value": 20
+        },
+        {
+          "validTime": "2026-04-03T00:00:00+00:00/PT1H",
+          "value": 23
+        },
+        {
+          "validTime": "2026-04-03T01:00:00+00:00/PT2H",
+          "value": 24
+        },
+        {
+          "validTime": "2026-04-03T03:00:00+00:00/PT2H",
+          "value": 25
+        },
+        {
+          "validTime": "2026-04-03T05:00:00+00:00/PT2H",
+          "value": 26
+        },
+        {
+          "validTime": "2026-04-03T07:00:00+00:00/PT1H",
+          "value": 27
+        },
+        {
+          "validTime": "2026-04-03T08:00:00+00:00/PT1H",
+          "value": 28
+        },
+        {
+          "validTime": "2026-04-03T09:00:00+00:00/PT2H",
+          "value": 29
+        },
+        {
+          "validTime": "2026-04-03T11:00:00+00:00/PT2H",
+          "value": 30
         },
         {
           "validTime": "2026-04-03T13:00:00+00:00/PT1H",
-          "value": 47
+          "value": 31
         },
         {
-          "validTime": "2026-04-03T14:00:00+00:00/PT1H",
+          "validTime": "2026-04-03T14:00:00+00:00/PT2H",
+          "value": 32
+        },
+        {
+          "validTime": "2026-04-03T16:00:00+00:00/PT1H",
+          "value": 34
+        },
+        {
+          "validTime": "2026-04-03T17:00:00+00:00/PT1H",
+          "value": 35
+        },
+        {
+          "validTime": "2026-04-03T18:00:00+00:00/PT1H",
+          "value": 38
+        },
+        {
+          "validTime": "2026-04-03T19:00:00+00:00/PT1H",
+          "value": 40
+        },
+        {
+          "validTime": "2026-04-03T20:00:00+00:00/PT1H",
+          "value": 41
+        },
+        {
+          "validTime": "2026-04-03T21:00:00+00:00/PT1H",
+          "value": 42
+        },
+        {
+          "validTime": "2026-04-03T22:00:00+00:00/PT1H",
+          "value": 43
+        },
+        {
+          "validTime": "2026-04-03T23:00:00+00:00/PT1H",
+          "value": 44
+        },
+        {
+          "validTime": "2026-04-04T00:00:00+00:00/PT1H",
+          "value": 49
+        },
+        {
+          "validTime": "2026-04-04T01:00:00+00:00/PT1H",
+          "value": 50
+        },
+        {
+          "validTime": "2026-04-04T02:00:00+00:00/PT1H",
+          "value": 51
+        },
+        {
+          "validTime": "2026-04-04T03:00:00+00:00/PT1H",
+          "value": 52
+        },
+        {
+          "validTime": "2026-04-04T04:00:00+00:00/PT2H",
+          "value": 51
+        },
+        {
+          "validTime": "2026-04-04T06:00:00+00:00/PT4H",
+          "value": 50
+        },
+        {
+          "validTime": "2026-04-04T10:00:00+00:00/PT1H",
           "value": 48
         },
         {
-          "validTime": "2026-04-03T15:00:00+00:00/PT7H",
-          "value": 49
+          "validTime": "2026-04-04T11:00:00+00:00/PT1H",
+          "value": 47
+        },
+        {
+          "validTime": "2026-04-04T12:00:00+00:00/PT1H",
+          "value": 39
+        },
+        {
+          "validTime": "2026-04-04T13:00:00+00:00/PT1H",
+          "value": 38
+        },
+        {
+          "validTime": "2026-04-04T14:00:00+00:00/PT1H",
+          "value": 37
+        },
+        {
+          "validTime": "2026-04-04T15:00:00+00:00/PT1H",
+          "value": 36
+        },
+        {
+          "validTime": "2026-04-04T16:00:00+00:00/PT1H",
+          "value": 34
+        },
+        {
+          "validTime": "2026-04-04T17:00:00+00:00/PT1H",
+          "value": 33
+        },
+        {
+          "validTime": "2026-04-04T18:00:00+00:00/PT1H",
+          "value": 30
+        },
+        {
+          "validTime": "2026-04-04T19:00:00+00:00/PT1H",
+          "value": 28
+        },
+        {
+          "validTime": "2026-04-04T20:00:00+00:00/PT1H",
+          "value": 27
+        },
+        {
+          "validTime": "2026-04-04T21:00:00+00:00/PT1H",
+          "value": 26
+        },
+        {
+          "validTime": "2026-04-04T22:00:00+00:00/PT1H",
+          "value": 27
+        },
+        {
+          "validTime": "2026-04-04T23:00:00+00:00/PT1H",
+          "value": 29
+        },
+        {
+          "validTime": "2026-04-05T00:00:00+00:00/PT1H",
+          "value": 37
+        },
+        {
+          "validTime": "2026-04-05T01:00:00+00:00/PT1H",
+          "value": 39
+        },
+        {
+          "validTime": "2026-04-05T02:00:00+00:00/PT1H",
+          "value": 41
         }
       ]
     },
     "quantitativePrecipitation": {
       "uom": "wmoUnit:mm",
       "values": [
-        {
-          "validTime": "2026-03-27T14:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-27T15:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-27T16:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-27T17:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-27T18:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-27T19:00:00+00:00/PT1H",
-          "value": 0
-        },
-        {
-          "validTime": "2026-03-27T20:00:00+00:00/PT1H",
-          "value": 0
-        },
         {
           "validTime": "2026-03-27T21:00:00+00:00/PT1H",
           "value": 0
@@ -6668,67 +6860,67 @@
         },
         {
           "validTime": "2026-04-01T18:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.507999988645311
         },
         {
           "validTime": "2026-04-01T19:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.507999988645311
         },
         {
           "validTime": "2026-04-01T20:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.7619999829679792
         },
         {
           "validTime": "2026-04-01T21:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 1.015999977290622
         },
         {
           "validTime": "2026-04-01T22:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 1.015999977290622
         },
         {
           "validTime": "2026-04-01T23:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 1.015999977290622
         },
         {
           "validTime": "2026-04-02T00:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.7619999829679792
         },
         {
           "validTime": "2026-04-02T01:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.7619999829679792
         },
         {
           "validTime": "2026-04-02T02:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 1.015999977290622
         },
         {
           "validTime": "2026-04-02T03:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 1.015999977290622
         },
         {
           "validTime": "2026-04-02T04:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.7619999829679792
         },
         {
           "validTime": "2026-04-02T05:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.7619999829679792
         },
         {
           "validTime": "2026-04-02T06:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.507999988645311
         },
         {
           "validTime": "2026-04-02T07:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.507999988645311
         },
         {
           "validTime": "2026-04-02T08:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.507999988645311
         },
         {
           "validTime": "2026-04-02T09:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0.507999988645311
         },
         {
           "validTime": "2026-04-02T10:00:00+00:00/PT1H",
@@ -6748,111 +6940,111 @@
         },
         {
           "validTime": "2026-04-02T14:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T15:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T16:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T17:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T18:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T19:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T20:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T21:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T22:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-02T23:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-03T00:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-03T01:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-03T02:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-03T03:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-03T04:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-03T05:00:00+00:00/PT1H",
-          "value": 0.253999994322658
+          "value": 0
         },
         {
           "validTime": "2026-04-03T06:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T07:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T08:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T09:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T10:00:00+00:00/PT1H",
-          "value": 0.7619999829679792
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T11:00:00+00:00/PT1H",
-          "value": 0.7619999829679792
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T12:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T13:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T14:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T15:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T16:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T17:00:00+00:00/PT1H",
@@ -6860,38 +7052,134 @@
         },
         {
           "validTime": "2026-04-03T18:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T19:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T20:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T21:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T22:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-03T23:00:00+00:00/PT1H",
-          "value": 0.507999988645311
+          "value": 0.253999994322658
         },
         {
           "validTime": "2026-04-04T00:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T01:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T02:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T03:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T04:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T05:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T06:00:00+00:00/PT1H",
+          "value": 1.015999977290622
+        },
+        {
+          "validTime": "2026-04-04T07:00:00+00:00/PT1H",
+          "value": 1.015999977290622
+        },
+        {
+          "validTime": "2026-04-04T08:00:00+00:00/PT1H",
+          "value": 1.015999977290622
+        },
+        {
+          "validTime": "2026-04-04T09:00:00+00:00/PT1H",
+          "value": 1.015999977290622
+        },
+        {
+          "validTime": "2026-04-04T10:00:00+00:00/PT1H",
           "value": 0.7619999829679792
+        },
+        {
+          "validTime": "2026-04-04T11:00:00+00:00/PT1H",
+          "value": 0.7619999829679792
+        },
+        {
+          "validTime": "2026-04-04T12:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T13:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T14:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T15:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T16:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T17:00:00+00:00/PT1H",
+          "value": 0.253999994322658
+        },
+        {
+          "validTime": "2026-04-04T18:00:00+00:00/PT1H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-04-04T19:00:00+00:00/PT1H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-04-04T20:00:00+00:00/PT1H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-04-04T21:00:00+00:00/PT1H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-04-04T22:00:00+00:00/PT1H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-04-04T23:00:00+00:00/PT1H",
+          "value": 0
+        },
+        {
+          "validTime": "2026-04-05T00:00:00+00:00/PT1H",
+          "value": 0
         }
       ]
     },
     "weather": {
       "values": [
         {
-          "validTime": "2026-03-27T14:00:00+00:00/P3DT20H",
+          "validTime": "2026-03-27T21:00:00+00:00/P3DT13H",
           "value": [
             {
               "coverage": null,
@@ -6906,7 +7194,7 @@
           ]
         },
         {
-          "validTime": "2026-03-31T10:00:00+00:00/PT3H",
+          "validTime": "2026-03-31T10:00:00+00:00/PT2H",
           "value": [
             {
               "coverage": "slight_chance",
@@ -6921,7 +7209,7 @@
           ]
         },
         {
-          "validTime": "2026-03-31T13:00:00+00:00/P2DT11H",
+          "validTime": "2026-03-31T12:00:00+00:00/PT12H",
           "value": [
             {
               "coverage": "chance",
@@ -6936,7 +7224,52 @@
           ]
         },
         {
-          "validTime": "2026-04-03T00:00:00+00:00/P1D",
+          "validTime": "2026-04-01T00:00:00+00:00/PT12H",
+          "value": [
+            {
+              "coverage": "slight_chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-01T12:00:00+00:00/PT4H",
+          "value": [
+            {
+              "coverage": null,
+              "weather": null,
+              "intensity": null,
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-01T16:00:00+00:00/PT2H",
+          "value": [
+            {
+              "coverage": "slight_chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-01T18:00:00+00:00/PT4H",
           "value": [
             {
               "coverage": "chance",
@@ -6947,7 +7280,72 @@
                 "value": null
               },
               "attributes": []
-            },
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-01T22:00:00+00:00/PT8H",
+          "value": [
+            {
+              "coverage": "likely",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-02T06:00:00+00:00/PT11H",
+          "value": [
+            {
+              "coverage": "chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-02T17:00:00+00:00/PT10H",
+          "value": [
+            {
+              "coverage": "slight_chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-03T03:00:00+00:00/PT3H",
+          "value": [
+            {
+              "coverage": "chance",
+              "weather": "rain",
+              "intensity": "light",
+              "visibility": {
+                "unitCode": "wmoUnit:km",
+                "value": null
+              },
+              "attributes": []
+            }
+          ]
+        },
+        {
+          "validTime": "2026-04-03T06:00:00+00:00/PT7H",
+          "value": [
             {
               "coverage": "chance",
               "weather": "snow",
@@ -6961,12 +7359,12 @@
           ]
         },
         {
-          "validTime": "2026-04-04T00:00:00+00:00/PT13H",
+          "validTime": "2026-04-03T13:00:00+00:00/P1DT12H",
           "value": [
             {
-              "coverage": null,
-              "weather": null,
-              "intensity": null,
+              "coverage": "chance",
+              "weather": "rain",
+              "intensity": "light",
               "visibility": {
                 "unitCode": "wmoUnit:km",
                 "value": null
@@ -6981,95 +7379,119 @@
       "uom": "wmoUnit:km_h-1",
       "values": [
         {
-          "validTime": "2026-03-27T14:00:00+00:00/PT1H",
-          "value": 22.224
-        },
-        {
-          "validTime": "2026-03-27T15:00:00+00:00/PT1H",
-          "value": 20.372
-        },
-        {
-          "validTime": "2026-03-27T16:00:00+00:00/PT2H",
-          "value": 18.52
-        },
-        {
-          "validTime": "2026-03-27T18:00:00+00:00/PT2H",
-          "value": 16.668
-        },
-        {
-          "validTime": "2026-03-27T20:00:00+00:00/PT1H",
-          "value": 14.816
-        },
-        {
           "validTime": "2026-03-27T21:00:00+00:00/PT1H",
-          "value": 12.964
+          "value": 7.408
         },
         {
           "validTime": "2026-03-27T22:00:00+00:00/PT1H",
-          "value": 11.112
-        },
-        {
-          "validTime": "2026-03-27T23:00:00+00:00/PT5H",
           "value": 9.26
         },
         {
-          "validTime": "2026-03-28T04:00:00+00:00/PT2H",
+          "validTime": "2026-03-27T23:00:00+00:00/PT2H",
+          "value": 5.556
+        },
+        {
+          "validTime": "2026-03-28T01:00:00+00:00/PT2H",
+          "value": 7.408
+        },
+        {
+          "validTime": "2026-03-28T03:00:00+00:00/PT1H",
+          "value": 9.26
+        },
+        {
+          "validTime": "2026-03-28T04:00:00+00:00/PT1H",
           "value": 11.112
+        },
+        {
+          "validTime": "2026-03-28T05:00:00+00:00/PT1H",
+          "value": 12.964
         },
         {
           "validTime": "2026-03-28T06:00:00+00:00/PT3H",
-          "value": 12.964
-        },
-        {
-          "validTime": "2026-03-28T09:00:00+00:00/PT4H",
           "value": 14.816
         },
         {
-          "validTime": "2026-03-28T13:00:00+00:00/PT2H",
-          "value": 12.964
-        },
-        {
-          "validTime": "2026-03-28T15:00:00+00:00/PT3H",
-          "value": 11.112
-        },
-        {
-          "validTime": "2026-03-28T18:00:00+00:00/PT3H",
-          "value": 9.26
-        },
-        {
-          "validTime": "2026-03-28T21:00:00+00:00/PT1H",
-          "value": 11.112
-        },
-        {
-          "validTime": "2026-03-28T22:00:00+00:00/PT4H",
-          "value": 9.26
-        },
-        {
-          "validTime": "2026-03-29T02:00:00+00:00/PT7H",
-          "value": 11.112
-        },
-        {
-          "validTime": "2026-03-29T09:00:00+00:00/PT4H",
-          "value": 9.26
-        },
-        {
-          "validTime": "2026-03-29T13:00:00+00:00/PT1H",
-          "value": 11.112
-        },
-        {
-          "validTime": "2026-03-29T14:00:00+00:00/PT1H",
-          "value": 12.964
-        },
-        {
-          "validTime": "2026-03-29T15:00:00+00:00/PT1H",
-          "value": 14.816
-        },
-        {
-          "validTime": "2026-03-29T16:00:00+00:00/PT2H",
+          "validTime": "2026-03-28T09:00:00+00:00/PT1H",
           "value": 16.668
         },
         {
-          "validTime": "2026-03-29T18:00:00+00:00/PT12H",
+          "validTime": "2026-03-28T10:00:00+00:00/PT2H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-03-28T12:00:00+00:00/PT1H",
+          "value": 16.668
+        },
+        {
+          "validTime": "2026-03-28T13:00:00+00:00/PT1H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-03-28T14:00:00+00:00/PT2H",
+          "value": 12.964
+        },
+        {
+          "validTime": "2026-03-28T16:00:00+00:00/PT1H",
+          "value": 11.112
+        },
+        {
+          "validTime": "2026-03-28T17:00:00+00:00/PT1H",
+          "value": 12.964
+        },
+        {
+          "validTime": "2026-03-28T18:00:00+00:00/PT6H",
+          "value": 11.112
+        },
+        {
+          "validTime": "2026-03-29T00:00:00+00:00/PT1H",
+          "value": 12.964
+        },
+        {
+          "validTime": "2026-03-29T01:00:00+00:00/PT1H",
+          "value": 11.112
+        },
+        {
+          "validTime": "2026-03-29T02:00:00+00:00/PT1H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-03-29T03:00:00+00:00/PT1H",
+          "value": 16.668
+        },
+        {
+          "validTime": "2026-03-29T04:00:00+00:00/PT1H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-03-29T05:00:00+00:00/PT3H",
+          "value": 12.964
+        },
+        {
+          "validTime": "2026-03-29T08:00:00+00:00/PT5H",
+          "value": 11.112
+        },
+        {
+          "validTime": "2026-03-29T13:00:00+00:00/PT1H",
+          "value": 12.964
+        },
+        {
+          "validTime": "2026-03-29T14:00:00+00:00/PT2H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-03-29T16:00:00+00:00/PT1H",
+          "value": 16.668
+        },
+        {
+          "validTime": "2026-03-29T17:00:00+00:00/PT1H",
+          "value": 18.52
+        },
+        {
+          "validTime": "2026-03-29T18:00:00+00:00/PT4H",
+          "value": 20.372
+        },
+        {
+          "validTime": "2026-03-29T22:00:00+00:00/PT8H",
           "value": 18.52
         },
         {
@@ -7089,31 +7511,39 @@
           "value": 14.816
         },
         {
-          "validTime": "2026-03-30T15:00:00+00:00/PT3H",
+          "validTime": "2026-03-30T15:00:00+00:00/PT2H",
           "value": 16.668
         },
         {
-          "validTime": "2026-03-30T18:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T17:00:00+00:00/PT4H",
           "value": 18.52
         },
         {
-          "validTime": "2026-03-30T19:00:00+00:00/PT3H",
+          "validTime": "2026-03-30T21:00:00+00:00/PT1H",
           "value": 16.668
         },
         {
-          "validTime": "2026-03-30T22:00:00+00:00/PT1H",
+          "validTime": "2026-03-30T22:00:00+00:00/PT2H",
           "value": 14.816
         },
         {
-          "validTime": "2026-03-30T23:00:00+00:00/PT6H",
+          "validTime": "2026-03-31T00:00:00+00:00/PT2H",
           "value": 12.964
         },
         {
-          "validTime": "2026-03-31T05:00:00+00:00/PT6H",
+          "validTime": "2026-03-31T02:00:00+00:00/PT4H",
           "value": 11.112
         },
         {
-          "validTime": "2026-03-31T11:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T06:00:00+00:00/PT4H",
+          "value": 9.26
+        },
+        {
+          "validTime": "2026-03-31T10:00:00+00:00/PT2H",
+          "value": 11.112
+        },
+        {
+          "validTime": "2026-03-31T12:00:00+00:00/PT1H",
           "value": 12.964
         },
         {
@@ -7121,72 +7551,104 @@
           "value": 14.816
         },
         {
-          "validTime": "2026-03-31T15:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T15:00:00+00:00/PT5H",
           "value": 16.668
         },
         {
-          "validTime": "2026-03-31T16:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T20:00:00+00:00/PT2H",
           "value": 18.52
         },
         {
-          "validTime": "2026-03-31T18:00:00+00:00/PT5H",
-          "value": 20.372
-        },
-        {
-          "validTime": "2026-03-31T23:00:00+00:00/PT3H",
-          "value": 18.52
-        },
-        {
-          "validTime": "2026-04-01T02:00:00+00:00/PT6H",
-          "value": 20.372
-        },
-        {
-          "validTime": "2026-04-01T08:00:00+00:00/PT3H",
-          "value": 22.224
-        },
-        {
-          "validTime": "2026-04-01T11:00:00+00:00/PT3H",
-          "value": 20.372
-        },
-        {
-          "validTime": "2026-04-01T14:00:00+00:00/PT3H",
-          "value": 22.224
-        },
-        {
-          "validTime": "2026-04-01T17:00:00+00:00/PT6H",
-          "value": 20.372
-        },
-        {
-          "validTime": "2026-04-01T23:00:00+00:00/PT21H",
-          "value": 18.52
-        },
-        {
-          "validTime": "2026-04-02T20:00:00+00:00/PT3H",
+          "validTime": "2026-03-31T22:00:00+00:00/PT2H",
           "value": 16.668
         },
         {
-          "validTime": "2026-04-02T23:00:00+00:00/PT3H",
+          "validTime": "2026-04-01T00:00:00+00:00/PT3H",
+          "value": 18.52
+        },
+        {
+          "validTime": "2026-04-01T03:00:00+00:00/PT2H",
+          "value": 20.372
+        },
+        {
+          "validTime": "2026-04-01T05:00:00+00:00/PT2H",
+          "value": 22.224
+        },
+        {
+          "validTime": "2026-04-01T07:00:00+00:00/PT8H",
+          "value": 20.372
+        },
+        {
+          "validTime": "2026-04-01T15:00:00+00:00/PT3H",
+          "value": 22.224
+        },
+        {
+          "validTime": "2026-04-01T18:00:00+00:00/PT3H",
+          "value": 20.372
+        },
+        {
+          "validTime": "2026-04-01T21:00:00+00:00/PT2H",
+          "value": 18.52
+        },
+        {
+          "validTime": "2026-04-01T23:00:00+00:00/PT16H",
+          "value": 16.668
+        },
+        {
+          "validTime": "2026-04-02T15:00:00+00:00/PT2H",
+          "value": 18.52
+        },
+        {
+          "validTime": "2026-04-02T17:00:00+00:00/PT4H",
+          "value": 16.668
+        },
+        {
+          "validTime": "2026-04-02T21:00:00+00:00/PT2H",
           "value": 14.816
         },
         {
-          "validTime": "2026-04-03T02:00:00+00:00/PT6H",
+          "validTime": "2026-04-02T23:00:00+00:00/PT3H",
+          "value": 12.964
+        },
+        {
+          "validTime": "2026-04-03T02:00:00+00:00/PT4H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-04-03T06:00:00+00:00/PT3H",
           "value": 16.668
         },
         {
-          "validTime": "2026-04-03T08:00:00+00:00/PT3H",
+          "validTime": "2026-04-03T09:00:00+00:00/PT4H",
           "value": 18.52
         },
         {
-          "validTime": "2026-04-03T11:00:00+00:00/PT9H",
+          "validTime": "2026-04-03T13:00:00+00:00/PT7H",
           "value": 20.372
         },
         {
-          "validTime": "2026-04-03T20:00:00+00:00/PT3H",
+          "validTime": "2026-04-03T20:00:00+00:00/PT2H",
           "value": 18.52
         },
         {
-          "validTime": "2026-04-03T23:00:00+00:00/PT2H",
+          "validTime": "2026-04-03T22:00:00+00:00/PT3H",
           "value": 16.668
+        },
+        {
+          "validTime": "2026-04-04T01:00:00+00:00/PT17H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-04-04T18:00:00+00:00/PT3H",
+          "value": 16.668
+        },
+        {
+          "validTime": "2026-04-04T21:00:00+00:00/PT3H",
+          "value": 14.816
+        },
+        {
+          "validTime": "2026-04-05T00:00:00+00:00/PT1H",
+          "value": 12.964
         }
       ]
     },
@@ -7194,48 +7656,72 @@
       "uom": "wmoUnit:degree_(angle)",
       "values": [
         {
-          "validTime": "2026-03-27T14:00:00+00:00/PT4H",
-          "value": 330
+          "validTime": "2026-03-27T21:00:00+00:00/PT2H",
+          "value": 320
         },
         {
-          "validTime": "2026-03-27T18:00:00+00:00/PT3H",
+          "validTime": "2026-03-27T23:00:00+00:00/PT1H",
           "value": 340
         },
         {
-          "validTime": "2026-03-27T21:00:00+00:00/PT1H",
+          "validTime": "2026-03-28T00:00:00+00:00/PT1H",
+          "value": 10
+        },
+        {
+          "validTime": "2026-03-28T01:00:00+00:00/PT1H",
           "value": 0
         },
         {
-          "validTime": "2026-03-27T22:00:00+00:00/PT1H",
-          "value": 350
+          "validTime": "2026-03-28T02:00:00+00:00/PT1H",
+          "value": 10
         },
         {
-          "validTime": "2026-03-27T23:00:00+00:00/PT2H",
+          "validTime": "2026-03-28T03:00:00+00:00/PT4H",
           "value": 0
         },
         {
-          "validTime": "2026-03-28T01:00:00+00:00/PT5H",
-          "value": 350
+          "validTime": "2026-03-28T07:00:00+00:00/PT1H",
+          "value": 10
         },
         {
-          "validTime": "2026-03-28T06:00:00+00:00/PT5H",
+          "validTime": "2026-03-28T08:00:00+00:00/PT2H",
+          "value": 20
+        },
+        {
+          "validTime": "2026-03-28T10:00:00+00:00/PT2H",
+          "value": 10
+        },
+        {
+          "validTime": "2026-03-28T12:00:00+00:00/PT1H",
           "value": 0
         },
         {
-          "validTime": "2026-03-28T11:00:00+00:00/PT9H",
+          "validTime": "2026-03-28T13:00:00+00:00/PT1H",
           "value": 350
         },
         {
-          "validTime": "2026-03-28T20:00:00+00:00/PT2H",
-          "value": 0
+          "validTime": "2026-03-28T14:00:00+00:00/PT4H",
+          "value": 340
         },
         {
-          "validTime": "2026-03-28T22:00:00+00:00/PT1H",
-          "value": 350
+          "validTime": "2026-03-28T18:00:00+00:00/PT1H",
+          "value": 40
+        },
+        {
+          "validTime": "2026-03-28T19:00:00+00:00/PT1H",
+          "value": 70
+        },
+        {
+          "validTime": "2026-03-28T20:00:00+00:00/PT1H",
+          "value": 100
+        },
+        {
+          "validTime": "2026-03-28T21:00:00+00:00/PT2H",
+          "value": 140
         },
         {
           "validTime": "2026-03-28T23:00:00+00:00/PT1H",
-          "value": 270
+          "value": 170
         },
         {
           "validTime": "2026-03-29T00:00:00+00:00/PT1H",
@@ -7243,70 +7729,78 @@
         },
         {
           "validTime": "2026-03-29T01:00:00+00:00/PT1H",
-          "value": 270
-        },
-        {
-          "validTime": "2026-03-29T02:00:00+00:00/PT3H",
-          "value": 280
-        },
-        {
-          "validTime": "2026-03-29T05:00:00+00:00/PT1H",
-          "value": 290
-        },
-        {
-          "validTime": "2026-03-29T06:00:00+00:00/PT1H",
-          "value": 300
-        },
-        {
-          "validTime": "2026-03-29T07:00:00+00:00/PT1H",
-          "value": 290
-        },
-        {
-          "validTime": "2026-03-29T08:00:00+00:00/PT1H",
-          "value": 280
-        },
-        {
-          "validTime": "2026-03-29T09:00:00+00:00/PT1H",
-          "value": 270
-        },
-        {
-          "validTime": "2026-03-29T10:00:00+00:00/PT1H",
-          "value": 260
-        },
-        {
-          "validTime": "2026-03-29T11:00:00+00:00/PT1H",
           "value": 250
         },
         {
-          "validTime": "2026-03-29T12:00:00+00:00/PT2H",
-          "value": 240
+          "validTime": "2026-03-29T02:00:00+00:00/PT1H",
+          "value": 260
         },
         {
-          "validTime": "2026-03-29T14:00:00+00:00/PT1H",
-          "value": 230
+          "validTime": "2026-03-29T03:00:00+00:00/PT2H",
+          "value": 290
+        },
+        {
+          "validTime": "2026-03-29T05:00:00+00:00/PT2H",
+          "value": 310
+        },
+        {
+          "validTime": "2026-03-29T07:00:00+00:00/PT2H",
+          "value": 300
+        },
+        {
+          "validTime": "2026-03-29T09:00:00+00:00/PT1H",
+          "value": 290
+        },
+        {
+          "validTime": "2026-03-29T10:00:00+00:00/PT1H",
+          "value": 280
+        },
+        {
+          "validTime": "2026-03-29T11:00:00+00:00/PT1H",
+          "value": 270
+        },
+        {
+          "validTime": "2026-03-29T12:00:00+00:00/PT1H",
+          "value": 250
+        },
+        {
+          "validTime": "2026-03-29T13:00:00+00:00/PT2H",
+          "value": 240
         },
         {
           "validTime": "2026-03-29T15:00:00+00:00/PT2H",
-          "value": 220
-        },
-        {
-          "validTime": "2026-03-29T17:00:00+00:00/PT12H",
-          "value": 210
-        },
-        {
-          "validTime": "2026-03-30T05:00:00+00:00/PT6H",
-          "value": 220
-        },
-        {
-          "validTime": "2026-03-30T11:00:00+00:00/PT6H",
           "value": 230
         },
         {
-          "validTime": "2026-03-30T17:00:00+00:00/PT9H",
+          "validTime": "2026-03-29T17:00:00+00:00/PT1H",
+          "value": 220
+        },
+        {
+          "validTime": "2026-03-29T18:00:00+00:00/PT2H",
+          "value": 210
+        },
+        {
+          "validTime": "2026-03-29T20:00:00+00:00/PT3H",
+          "value": 220
+        },
+        {
+          "validTime": "2026-03-29T23:00:00+00:00/PT9H",
+          "value": 210
+        },
+        {
+          "validTime": "2026-03-30T08:00:00+00:00/PT6H",
+          "value": 220
+        },
+        {
+          "validTime": "2026-03-30T14:00:00+00:00/PT6H",
+          "value": 230
+        },
+        {
+          "validTime": "2026-03-30T20:00:00+00:00/PT9H",
           "value": 240
         },
         {
-          "validTime": "2026-03-31T02:00:00+00:00/PT5H",
+          "validTime": "2026-03-31T05:00:00+00:00/PT2H",
           "value": 230
         },
         {
@@ -7314,64 +7808,72 @@
           "value": 220
         },
         {
-          "validTime": "2026-03-31T08:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T08:00:00+00:00/PT1H",
           "value": 200
+        },
+        {
+          "validTime": "2026-03-31T09:00:00+00:00/PT1H",
+          "value": 190
         },
         {
           "validTime": "2026-03-31T10:00:00+00:00/PT1H",
-          "value": 190
-        },
-        {
-          "validTime": "2026-03-31T11:00:00+00:00/PT2H",
           "value": 180
         },
         {
-          "validTime": "2026-03-31T13:00:00+00:00/PT6H",
+          "validTime": "2026-03-31T11:00:00+00:00/PT1H",
           "value": 170
         },
         {
-          "validTime": "2026-03-31T19:00:00+00:00/PT1H",
+          "validTime": "2026-03-31T12:00:00+00:00/PT2H",
+          "value": 160
+        },
+        {
+          "validTime": "2026-03-31T14:00:00+00:00/PT3H",
+          "value": 170
+        },
+        {
+          "validTime": "2026-03-31T17:00:00+00:00/PT1H",
           "value": 180
         },
         {
-          "validTime": "2026-03-31T20:00:00+00:00/PT2H",
+          "validTime": "2026-03-31T18:00:00+00:00/PT2H",
           "value": 190
         },
         {
-          "validTime": "2026-03-31T22:00:00+00:00/PT3H",
+          "validTime": "2026-03-31T20:00:00+00:00/PT1H",
           "value": 200
         },
         {
-          "validTime": "2026-04-01T01:00:00+00:00/PT4H",
+          "validTime": "2026-03-31T21:00:00+00:00/PT11H",
           "value": 210
         },
         {
-          "validTime": "2026-04-01T05:00:00+00:00/PT6H",
+          "validTime": "2026-04-01T08:00:00+00:00/PT11H",
           "value": 220
         },
         {
-          "validTime": "2026-04-01T11:00:00+00:00/PT5H",
-          "value": 210
-        },
-        {
-          "validTime": "2026-04-01T16:00:00+00:00/PT1H",
-          "value": 220
-        },
-        {
-          "validTime": "2026-04-01T17:00:00+00:00/PT5H",
+          "validTime": "2026-04-01T19:00:00+00:00/PT1H",
           "value": 230
         },
         {
-          "validTime": "2026-04-01T22:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T20:00:00+00:00/PT1H",
           "value": 240
         },
         {
-          "validTime": "2026-04-01T23:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T21:00:00+00:00/PT1H",
+          "value": 250
+        },
+        {
+          "validTime": "2026-04-01T22:00:00+00:00/PT1H",
           "value": 260
         },
         {
-          "validTime": "2026-04-02T00:00:00+00:00/PT1H",
+          "validTime": "2026-04-01T23:00:00+00:00/PT1H",
           "value": 270
+        },
+        {
+          "validTime": "2026-04-02T00:00:00+00:00/PT1H",
+          "value": 280
         },
         {
           "validTime": "2026-04-02T01:00:00+00:00/PT1H",
@@ -7391,22 +7893,18 @@
         },
         {
           "validTime": "2026-04-02T05:00:00+00:00/PT1H",
-          "value": 340
-        },
-        {
-          "validTime": "2026-04-02T06:00:00+00:00/PT2H",
           "value": 350
         },
         {
-          "validTime": "2026-04-02T08:00:00+00:00/PT2H",
+          "validTime": "2026-04-02T06:00:00+00:00/PT2H",
           "value": 0
         },
         {
-          "validTime": "2026-04-02T10:00:00+00:00/PT3H",
+          "validTime": "2026-04-02T08:00:00+00:00/PT3H",
           "value": 10
         },
         {
-          "validTime": "2026-04-02T13:00:00+00:00/PT1H",
+          "validTime": "2026-04-02T11:00:00+00:00/PT3H",
           "value": 20
         },
         {
@@ -7418,11 +7916,11 @@
           "value": 40
         },
         {
-          "validTime": "2026-04-02T17:00:00+00:00/PT2H",
+          "validTime": "2026-04-02T17:00:00+00:00/PT3H",
           "value": 50
         },
         {
-          "validTime": "2026-04-02T19:00:00+00:00/PT4H",
+          "validTime": "2026-04-02T20:00:00+00:00/PT3H",
           "value": 60
         },
         {
@@ -7430,27 +7928,43 @@
           "value": 70
         },
         {
-          "validTime": "2026-04-03T02:00:00+00:00/PT3H",
+          "validTime": "2026-04-03T02:00:00+00:00/PT1H",
           "value": 60
         },
         {
-          "validTime": "2026-04-03T05:00:00+00:00/PT6H",
+          "validTime": "2026-04-03T03:00:00+00:00/PT8H",
           "value": 50
         },
         {
-          "validTime": "2026-04-03T11:00:00+00:00/PT3H",
+          "validTime": "2026-04-03T11:00:00+00:00/PT6H",
           "value": 60
         },
         {
-          "validTime": "2026-04-03T14:00:00+00:00/PT6H",
+          "validTime": "2026-04-03T17:00:00+00:00/PT3H",
           "value": 70
         },
         {
-          "validTime": "2026-04-03T20:00:00+00:00/PT4H",
+          "validTime": "2026-04-03T20:00:00+00:00/PT12H",
           "value": 80
         },
         {
-          "validTime": "2026-04-04T00:00:00+00:00/PT1H",
+          "validTime": "2026-04-04T08:00:00+00:00/PT6H",
+          "value": 70
+        },
+        {
+          "validTime": "2026-04-04T14:00:00+00:00/PT3H",
+          "value": 60
+        },
+        {
+          "validTime": "2026-04-04T17:00:00+00:00/PT3H",
+          "value": 50
+        },
+        {
+          "validTime": "2026-04-04T20:00:00+00:00/PT3H",
+          "value": 60
+        },
+        {
+          "validTime": "2026-04-04T23:00:00+00:00/PT2H",
           "value": 70
         }
       ]
@@ -7458,26 +7972,26 @@
   },
   "salem_water_temp_f": 39.4,
   "wu_stations": {
-    "temperature_f": 30.6,
-    "humidity_pct": 45.0,
-    "pressure_in": 30.19,
-    "wind_speed_mph": 2.2,
-    "wind_gust_mph": 8.0,
+    "temperature_f": 29.9,
+    "humidity_pct": 46.8,
+    "pressure_in": 30.2,
+    "wind_speed_mph": 3.1,
+    "wind_gust_mph": 7.7,
     "quality": {
-      "total_stations": 14,
+      "total_stations": 15,
       "stations_within_range": 13,
       "stations_used_temp": 13,
-      "stations_used_wind": 10,
+      "stations_used_wind": 9,
       "temp_outliers_removed": 0,
-      "wind_sensors_failed": 3,
+      "wind_sensors_failed": 4,
       "closest_station": "KMAMARBL63",
       "max_distance_used_mi": 1.38
     },
     "ranges": {
-      "temp_min_f": 27.5,
-      "temp_max_f": 33.8,
-      "wind_min_mph": 0.4,
-      "wind_max_mph": 4.2
+      "temp_min_f": 26.8,
+      "temp_max_f": 33.3,
+      "wind_min_mph": 1.0,
+      "wind_max_mph": 7.8
     },
     "stations": [
       {
@@ -7486,12 +8000,12 @@
         "longitude": -70.88,
         "elevation_ft": 85.0,
         "distance_mi": 0.27,
-        "timestamp": "2026-03-28 00:39:54",
-        "temperature_f": 31.1,
-        "humidity_pct": 45.1,
-        "wind_speed_mph": 2.0,
-        "wind_gust_mph": 10.3,
-        "pressure_in": 30.52
+        "timestamp": "2026-03-28 01:14:49",
+        "temperature_f": 30.3,
+        "humidity_pct": 46.5,
+        "wind_speed_mph": 2.3,
+        "wind_gust_mph": 8.1,
+        "pressure_in": 30.53
       },
       {
         "station_id": "KMAMARBL69",
@@ -7499,12 +8013,12 @@
         "longitude": -70.858,
         "elevation_ft": 69.0,
         "distance_mi": 0.87,
-        "timestamp": "2026-03-28 00:00:55",
-        "temperature_f": 31.4,
-        "humidity_pct": 43.0,
-        "wind_speed_mph": 0.9,
-        "wind_gust_mph": 1.6,
-        "pressure_in": 29.97
+        "timestamp": "2026-03-28 01:00:55",
+        "temperature_f": 30.5,
+        "humidity_pct": 44.0,
+        "wind_speed_mph": 3.1,
+        "wind_gust_mph": 3.8,
+        "pressure_in": 29.99
       },
       {
         "station_id": "KMAMARBL112",
@@ -7512,12 +8026,12 @@
         "longitude": -70.868,
         "elevation_ft": 97.0,
         "distance_mi": 0.43,
-        "timestamp": "2026-03-28 00:39:49",
-        "temperature_f": 30.5,
-        "humidity_pct": 42.4,
-        "wind_speed_mph": 4.2,
-        "wind_gust_mph": 8.1,
-        "pressure_in": 29.91
+        "timestamp": "2026-03-28 01:14:49",
+        "temperature_f": 30.0,
+        "humidity_pct": 45.0,
+        "wind_speed_mph": 6.0,
+        "wind_gust_mph": 10.7,
+        "pressure_in": 29.92
       },
       {
         "station_id": "KMAMARBL108",
@@ -7525,12 +8039,12 @@
         "longitude": -70.869,
         "elevation_ft": 16.0,
         "distance_mi": 0.61,
-        "timestamp": "2026-03-28 00:39:55",
-        "temperature_f": 27.5,
-        "humidity_pct": 46.7,
+        "timestamp": "2026-03-28 01:14:51",
+        "temperature_f": 26.8,
+        "humidity_pct": 50.1,
         "wind_speed_mph": 0.0,
         "wind_gust_mph": 0.0,
-        "pressure_in": 29.95
+        "pressure_in": 29.97
       },
       {
         "station_id": "KMAMARBL39",
@@ -7538,12 +8052,12 @@
         "longitude": -70.866684,
         "elevation_ft": 89.0,
         "distance_mi": 0.71,
-        "timestamp": "2026-03-28 00:39:41",
-        "temperature_f": 30.7,
-        "humidity_pct": 44.8,
+        "timestamp": "2026-03-28 01:14:39",
+        "temperature_f": 30.1,
+        "humidity_pct": 48.0,
         "wind_speed_mph": 1.3,
-        "wind_gust_mph": 5.8,
-        "pressure_in": 30.2
+        "wind_gust_mph": 3.4,
+        "pressure_in": 30.21
       },
       {
         "station_id": "KMAMARBL4",
@@ -7551,12 +8065,12 @@
         "longitude": -70.86496,
         "elevation_ft": 90.0,
         "distance_mi": 1.07,
-        "timestamp": "2026-03-28 00:29:00",
-        "temperature_f": 33.8,
-        "humidity_pct": 46.5,
-        "wind_speed_mph": 3.2,
-        "wind_gust_mph": 9.0,
-        "pressure_in": 30.06
+        "timestamp": "2026-03-28 01:04:00",
+        "temperature_f": 33.3,
+        "humidity_pct": 48.0,
+        "wind_speed_mph": 7.8,
+        "wind_gust_mph": 12.0,
+        "pressure_in": 30.07
       },
       {
         "station_id": "KMAMARBL36",
@@ -7564,12 +8078,12 @@
         "longitude": -70.853333,
         "elevation_ft": 69.0,
         "distance_mi": 1.21,
-        "timestamp": "2026-03-28 00:30:11",
-        "temperature_f": 31.0,
-        "humidity_pct": 48.0,
-        "wind_speed_mph": 3.0,
+        "timestamp": "2026-03-28 01:00:19",
+        "temperature_f": 30.5,
+        "humidity_pct": 51.0,
+        "wind_speed_mph": 4.0,
         "wind_gust_mph": 9.0,
-        "pressure_in": 30.19
+        "pressure_in": 30.2
       },
       {
         "station_id": "KMAMARBL57",
@@ -7577,12 +8091,12 @@
         "longitude": -70.882292,
         "elevation_ft": 49.0,
         "distance_mi": 0.92,
-        "timestamp": "2026-03-28 00:39:59",
-        "temperature_f": 30.3,
-        "humidity_pct": 46.0,
-        "wind_speed_mph": 0.4,
-        "wind_gust_mph": 2.2,
-        "pressure_in": 29.18
+        "timestamp": "2026-03-28 01:14:54",
+        "temperature_f": 29.7,
+        "humidity_pct": 47.3,
+        "wind_speed_mph": 0.2,
+        "wind_gust_mph": 1.1,
+        "pressure_in": 29.2
       },
       {
         "station_id": "KMAMARBL56",
@@ -7590,12 +8104,12 @@
         "longitude": -70.889,
         "elevation_ft": 79.0,
         "distance_mi": 1.06,
-        "timestamp": "2026-03-28 00:39:59",
-        "temperature_f": 29.9,
-        "humidity_pct": 46.7,
+        "timestamp": "2026-03-28 01:14:55",
+        "temperature_f": 29.6,
+        "humidity_pct": 47.2,
         "wind_speed_mph": 0.0,
-        "wind_gust_mph": 2.2,
-        "pressure_in": 29.79
+        "wind_gust_mph": 0.0,
+        "pressure_in": 29.8
       },
       {
         "station_id": "KMAMARBL89",
@@ -7603,12 +8117,12 @@
         "longitude": -70.884631,
         "elevation_ft": 85.0,
         "distance_mi": 0.58,
-        "timestamp": "2026-03-28 00:39:51",
-        "temperature_f": 30.4,
-        "humidity_pct": 46.0,
-        "wind_speed_mph": 0.9,
-        "wind_gust_mph": 3.4,
-        "pressure_in": 29.97
+        "timestamp": "2026-03-28 01:14:46",
+        "temperature_f": 29.7,
+        "humidity_pct": 47.4,
+        "wind_speed_mph": 1.0,
+        "wind_gust_mph": 4.5,
+        "pressure_in": 29.99
       },
       {
         "station_id": "KMAMARBL78",
@@ -7616,12 +8130,12 @@
         "longitude": -70.86,
         "elevation_ft": 9.0,
         "distance_mi": 1.38,
-        "timestamp": "2026-03-28 00:39:52",
-        "temperature_f": 31.1,
-        "humidity_pct": 47.7,
-        "wind_speed_mph": 4.0,
-        "wind_gust_mph": 9.2,
-        "pressure_in": 30.27
+        "timestamp": "2026-03-28 01:14:47",
+        "temperature_f": 30.3,
+        "humidity_pct": 48.8,
+        "wind_speed_mph": 4.1,
+        "wind_gust_mph": 6.5,
+        "pressure_in": 30.28
       },
       {
         "station_id": "KMASALEM91",
@@ -7629,12 +8143,12 @@
         "longitude": -70.889328,
         "elevation_ft": 36.0,
         "distance_mi": 0.99,
-        "timestamp": "2026-03-28 00:39:44",
-        "temperature_f": 30.9,
-        "humidity_pct": 43.6,
+        "timestamp": "2026-03-28 01:14:55",
+        "temperature_f": 30.3,
+        "humidity_pct": 45.8,
         "wind_speed_mph": 0.1,
-        "wind_gust_mph": 2.2,
-        "pressure_in": 30.24
+        "wind_gust_mph": 1.1,
+        "pressure_in": 30.26
       },
       {
         "station_id": "KMASALEM94",
@@ -7642,12 +8156,12 @@
         "longitude": -70.898,
         "elevation_ft": 22.0,
         "distance_mi": 1.25,
-        "timestamp": "2026-03-28 00:39:50",
-        "temperature_f": 29.7,
-        "humidity_pct": 47.0,
-        "wind_speed_mph": 1.7,
+        "timestamp": "2026-03-28 01:14:51",
+        "temperature_f": 29.4,
+        "humidity_pct": 46.6,
+        "wind_speed_mph": 2.3,
         "wind_gust_mph": 5.0,
-        "pressure_in": 30.26
+        "pressure_in": 30.28
       }
     ]
   },
@@ -7846,64 +8360,64 @@
     ]
   },
   "hyperlocal": {
-    "model_temp": 30.8,
-    "weighted_bias": -0.67,
-    "corrected_temp": 30.1,
+    "model_temp": 30.6,
+    "weighted_bias": -1.13,
+    "corrected_temp": 29.5,
     "stations_used": 13,
     "stations_total": 13,
     "confidence": "Moderate",
-    "wu_avg_temp": 30.6,
-    "model_pressure_in": 30.2,
-    "wu_pressure_in": 30.19,
+    "wu_avg_temp": 29.9,
+    "model_pressure_in": 30.21,
+    "wu_pressure_in": 30.2,
     "kbos_pressure_in": 30.2,
-    "corrected_pressure_in": 30.19,
-    "model_humidity": 50,
-    "wu_humidity": 45.0,
-    "bias_humidity": -5.0,
-    "corrected_humidity": 45.0,
-    "model_wind_speed": 10.0,
-    "wu_wind_speed": 2.2,
-    "corrected_wind_speed": 10.0,
+    "corrected_pressure_in": 30.2,
+    "model_humidity": 52,
+    "wu_humidity": 46.8,
+    "bias_humidity": -5.2,
+    "corrected_humidity": 46.8,
+    "model_wind_speed": 8.6,
+    "wu_wind_speed": 3.1,
+    "corrected_wind_speed": 8.6,
     "wu_stations_temp": 13,
-    "wu_stations_wind": 10
+    "wu_stations_wind": 9
   },
   "wind_risk": {
     "window_hours": 12,
     "gust": {
-      "peak_mph": 11.4,
+      "peak_mph": 12.6,
       "direction_deg": 7,
       "exposure_factor": 1.0,
-      "worry_score": 11.43,
-      "level": "Light winds",
+      "worry_score": 12.58,
+      "level": "Breezy",
       "peak_time": "2026-03-28T06:00"
     },
     "sustained": {
-      "peak_mph": 10.2,
+      "peak_mph": 9.1,
       "direction_deg": 7,
       "exposure_factor": 1.0,
-      "worry_score": 10.2,
+      "worry_score": 9.06,
       "level": "Light winds",
       "peak_time": "2026-03-28T06:00"
     }
   },
   "derived": {
-    "pressure_trend_hpa_3h": 2.3,
-    "best_pressure_tend": 2.3,
+    "pressure_trend_hpa_3h": 2.1,
+    "best_pressure_tend": 2.1,
     "best_pressure_tend_src": "model",
     "pressure_alarm": null,
     "pressure_alarm_label": null,
-    "dew_point_spread_f": 16.4,
+    "dew_point_spread_f": 15.5,
     "fog_label": "No risk",
     "fog_probability": 0,
     "wind_peak_time": "2026-03-28T06:00",
-    "height_850hpa_tend_6h": -3,
+    "height_850hpa_tend_6h": 13,
     "trough_signal": "Steady",
-    "temp_850hpa_now": 16.6
+    "temp_850hpa_now": 15.1
   },
   "sea_breeze": {
     "active": false,
     "likelihood": 48,
-    "reason": "\u0394-8.6\u00b0F, 10 mph from 333\u00b0",
+    "reason": "\u0394-8.6\u00b0F, 9 mph from 329\u00b0",
     "scores": {
       "temp": 0,
       "wind_speed": 90,
@@ -7916,21 +8430,21 @@
       "period_name": "Today",
       "date": "2026-03-28",
       "is_daytime": true,
-      "text": "Overcast, with a high near 36 around 3pm. West-northwest wind 6 to 13 mph, with gusts as high as 24 mph. Wind chill values as low as 19.",
-      "temperature": 36,
-      "wind_speed": "10 mph",
+      "text": "Overcast, with a high near 37 around 3pm. West-northwest wind 6 to 12 mph, with gusts as high as 24 mph. Wind chill values as low as 19.",
+      "temperature": 37,
+      "wind_speed": "9 mph",
       "wind_direction": "WNW",
-      "wind_full": "10 mph WNW, gusts 24 mph"
+      "wind_full": "9 mph WNW, gusts 24 mph"
     },
     {
       "period_name": "Tonight",
       "date": "2026-03-28",
       "is_daytime": false,
-      "text": "Mostly clear, with a low around 28. West-northwest wind 4 to 12 mph, with gusts as high as 27 mph. Wind chill values as low as 19.",
+      "text": "Mostly clear, with a low around 28 toward morning. West-northwest wind 4 to 12 mph, with gusts as high as 26 mph. Wind chill values as low as 19.",
       "temperature": 28,
       "wind_speed": "8 mph",
       "wind_direction": "WNW",
-      "wind_full": "8 mph WNW, gusts 27 mph"
+      "wind_full": "8 mph WNW, gusts 26 mph"
     },
     {
       "period_name": "Sunday",
@@ -7946,18 +8460,18 @@
       "period_name": "Sunday Night",
       "date": "2026-03-29",
       "is_daytime": false,
-      "text": "Partly cloudy, with a low around 45. South-southwest wind around 10 mph, with gusts as high as 30 mph. Wind chill values as low as 28.",
-      "temperature": 45,
+      "text": "Partly cloudy, with a low around 42. South-southwest wind around 10 mph, with gusts as high as 31 mph. Wind chill values as low as 28.",
+      "temperature": 42,
       "wind_speed": "10 mph",
       "wind_direction": "SSW",
-      "wind_full": "10 mph SSW, gusts 30 mph"
+      "wind_full": "10 mph SSW, gusts 31 mph"
     },
     {
       "period_name": "Monday",
       "date": "2026-03-30",
       "is_daytime": true,
-      "text": "Overcast, with a high near 57 around 3pm. West-southwest wind 9 to 13 mph, with gusts as high as 30 mph. Wind chill values as low as 41.",
-      "temperature": 57,
+      "text": "Overcast, with a high near 58 around 3pm. West-southwest wind 9 to 13 mph, with gusts as high as 30 mph. Wind chill values as low as 41.",
+      "temperature": 58,
       "wind_speed": "11 mph",
       "wind_direction": "WSW",
       "wind_full": "11 mph WSW, gusts 30 mph"
@@ -7966,8 +8480,8 @@
       "period_name": "Monday Night",
       "date": "2026-03-30",
       "is_daytime": false,
-      "text": "Slight chance of rain. Overcast, with a low around 47. Southwest wind 5 to 9 mph, with gusts as high as 26 mph.",
-      "temperature": 47,
+      "text": "Slight chance of rain. Overcast, with a low around 46 toward morning. Southwest wind 5 to 9 mph, with gusts as high as 26 mph.",
+      "temperature": 46,
       "wind_speed": "7 mph",
       "wind_direction": "SW",
       "wind_full": "7 mph SW, gusts 26 mph"
@@ -7976,8 +8490,8 @@
       "period_name": "Tuesday",
       "date": "2026-03-31",
       "is_daytime": true,
-      "text": "Slight chance of rain. Overcast, with a high near 62 around 3pm. Southwest wind 7 to 10 mph, with gusts as high as 31 mph. Wind chill values as low as 52.",
-      "temperature": 62,
+      "text": "Slight chance of rain. Overcast, with a high near 56 around 3pm. Southwest wind 7 to 10 mph, with gusts as high as 31 mph.",
+      "temperature": 56,
       "wind_speed": "8 mph",
       "wind_direction": "SW",
       "wind_full": "8 mph SW, gusts 31 mph"
@@ -7986,8 +8500,8 @@
       "period_name": "Tuesday Night",
       "date": "2026-03-31",
       "is_daytime": false,
-      "text": "Mostly cloudy, with a low around 56 toward morning. Southwest wind 11 to 14 mph, with gusts as high as 44 mph.",
-      "temperature": 56,
+      "text": "Mostly cloudy, with a low around 52 in the evening. Southwest wind 11 to 14 mph, with gusts as high as 44 mph.",
+      "temperature": 52,
       "wind_speed": "13 mph",
       "wind_direction": "SW",
       "wind_full": "13 mph SW, gusts 44 mph"
@@ -7996,8 +8510,8 @@
       "period_name": "Wednesday",
       "date": "2026-04-01",
       "is_daytime": true,
-      "text": "Chance of rain. Partly cloudy, then becoming cloudy, with a high near 68. Southwest wind 11 to 16 mph, with gusts as high as 36 mph. Wind chill values as low as 46.",
-      "temperature": 68,
+      "text": "Chance of rain. Partly cloudy, then becoming cloudy, with a high near 67 around 2pm. Southwest wind 11 to 16 mph, with gusts as high as 36 mph. Wind chill values as low as 46.",
+      "temperature": 67,
       "wind_speed": "14 mph",
       "wind_direction": "SW",
       "wind_full": "14 mph SW, gusts 36 mph"
@@ -8016,8 +8530,8 @@
       "period_name": "Thursday",
       "date": "2026-04-02",
       "is_daytime": true,
-      "text": "Slight chance of rain. Mostly cloudy, with a high near 42. North-northeast wind 3 to 9 mph. Wind chill values as low as 30.",
-      "temperature": 42,
+      "text": "Slight chance of rain. Mostly cloudy, with a high near 43. North-northeast wind 3 to 9 mph. Wind chill values as low as 30.",
+      "temperature": 43,
       "wind_speed": "6 mph",
       "wind_direction": "NNE",
       "wind_full": "6 mph NNE"
@@ -8026,8 +8540,8 @@
       "period_name": "Thursday Night",
       "date": "2026-04-02",
       "is_daytime": false,
-      "text": "Slight chance of mixed rain and snow. Overcast, with a low around 38. Northeast wind 3 to 13 mph, with gusts as high as 21 mph. Wind chill values as low as 25.",
-      "temperature": 38,
+      "text": "Slight chance of rain. Overcast, with a low around 37. Northeast wind 3 to 13 mph, with gusts as high as 21 mph. Wind chill values as low as 25.",
+      "temperature": 37,
       "wind_speed": "8 mph",
       "wind_direction": "NE",
       "wind_full": "8 mph NE, gusts 21 mph"
@@ -8046,8 +8560,8 @@
       "period_name": "Friday Night",
       "date": "2026-04-03",
       "is_daytime": false,
-      "text": "Slight chance of snow. Overcast, with a low around 40 in the evening. East-southeast wind around 11 mph, with gusts as high as 23 mph. Wind chill values as low as 26.",
-      "temperature": 40,
+      "text": "Slight chance of snow. Overcast, with a low around 39 in the evening. East-southeast wind around 11 mph, with gusts as high as 23 mph. Wind chill values as low as 26.",
+      "temperature": 39,
       "wind_speed": "11 mph",
       "wind_direction": "ESE",
       "wind_full": "11 mph ESE, gusts 23 mph"
@@ -8093,7 +8607,620 @@
       "sunset_time": "2026-03-29T19:06",
       "azimuth": 264.4,
       "clouds": {
-        "10mi": null,
+        "10mi": {
+          "latitude": 42.4871,
+          "longitude": -71.0703,
+          "times": [
+            "2026-03-28T00:00",
+            "2026-03-28T01:00",
+            "2026-03-28T02:00",
+            "2026-03-28T03:00",
+            "2026-03-28T04:00",
+            "2026-03-28T05:00",
+            "2026-03-28T06:00",
+            "2026-03-28T07:00",
+            "2026-03-28T08:00",
+            "2026-03-28T09:00",
+            "2026-03-28T10:00",
+            "2026-03-28T11:00",
+            "2026-03-28T12:00",
+            "2026-03-28T13:00",
+            "2026-03-28T14:00",
+            "2026-03-28T15:00",
+            "2026-03-28T16:00",
+            "2026-03-28T17:00",
+            "2026-03-28T18:00",
+            "2026-03-28T19:00",
+            "2026-03-28T20:00",
+            "2026-03-28T21:00",
+            "2026-03-28T22:00",
+            "2026-03-28T23:00",
+            "2026-03-29T00:00",
+            "2026-03-29T01:00",
+            "2026-03-29T02:00",
+            "2026-03-29T03:00",
+            "2026-03-29T04:00",
+            "2026-03-29T05:00",
+            "2026-03-29T06:00",
+            "2026-03-29T07:00",
+            "2026-03-29T08:00",
+            "2026-03-29T09:00",
+            "2026-03-29T10:00",
+            "2026-03-29T11:00",
+            "2026-03-29T12:00",
+            "2026-03-29T13:00",
+            "2026-03-29T14:00",
+            "2026-03-29T15:00",
+            "2026-03-29T16:00",
+            "2026-03-29T17:00",
+            "2026-03-29T18:00",
+            "2026-03-29T19:00",
+            "2026-03-29T20:00",
+            "2026-03-29T21:00",
+            "2026-03-29T22:00",
+            "2026-03-29T23:00",
+            "2026-03-30T00:00",
+            "2026-03-30T01:00",
+            "2026-03-30T02:00",
+            "2026-03-30T03:00",
+            "2026-03-30T04:00",
+            "2026-03-30T05:00",
+            "2026-03-30T06:00",
+            "2026-03-30T07:00",
+            "2026-03-30T08:00",
+            "2026-03-30T09:00",
+            "2026-03-30T10:00",
+            "2026-03-30T11:00",
+            "2026-03-30T12:00",
+            "2026-03-30T13:00",
+            "2026-03-30T14:00",
+            "2026-03-30T15:00",
+            "2026-03-30T16:00",
+            "2026-03-30T17:00",
+            "2026-03-30T18:00",
+            "2026-03-30T19:00",
+            "2026-03-30T20:00",
+            "2026-03-30T21:00",
+            "2026-03-30T22:00",
+            "2026-03-30T23:00",
+            "2026-03-31T00:00",
+            "2026-03-31T01:00",
+            "2026-03-31T02:00",
+            "2026-03-31T03:00",
+            "2026-03-31T04:00",
+            "2026-03-31T05:00",
+            "2026-03-31T06:00",
+            "2026-03-31T07:00",
+            "2026-03-31T08:00",
+            "2026-03-31T09:00",
+            "2026-03-31T10:00",
+            "2026-03-31T11:00",
+            "2026-03-31T12:00",
+            "2026-03-31T13:00",
+            "2026-03-31T14:00",
+            "2026-03-31T15:00",
+            "2026-03-31T16:00",
+            "2026-03-31T17:00",
+            "2026-03-31T18:00",
+            "2026-03-31T19:00",
+            "2026-03-31T20:00",
+            "2026-03-31T21:00",
+            "2026-03-31T22:00",
+            "2026-03-31T23:00",
+            "2026-04-01T00:00",
+            "2026-04-01T01:00",
+            "2026-04-01T02:00",
+            "2026-04-01T03:00",
+            "2026-04-01T04:00",
+            "2026-04-01T05:00",
+            "2026-04-01T06:00",
+            "2026-04-01T07:00",
+            "2026-04-01T08:00",
+            "2026-04-01T09:00",
+            "2026-04-01T10:00",
+            "2026-04-01T11:00",
+            "2026-04-01T12:00",
+            "2026-04-01T13:00",
+            "2026-04-01T14:00",
+            "2026-04-01T15:00",
+            "2026-04-01T16:00",
+            "2026-04-01T17:00",
+            "2026-04-01T18:00",
+            "2026-04-01T19:00",
+            "2026-04-01T20:00",
+            "2026-04-01T21:00",
+            "2026-04-01T22:00",
+            "2026-04-01T23:00"
+          ],
+          "cloud_low": [
+            0,
+            0,
+            0,
+            0,
+            2,
+            12,
+            100,
+            100,
+            100,
+            100,
+            84,
+            37,
+            31,
+            45,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            46,
+            0,
+            1,
+            0,
+            0,
+            0,
+            35,
+            100,
+            100,
+            100,
+            100,
+            30,
+            54,
+            34,
+            51,
+            46,
+            100,
+            100,
+            70,
+            9,
+            23,
+            2,
+            4,
+            5,
+            5,
+            5,
+            5,
+            5,
+            28,
+            100,
+            100,
+            100,
+            100,
+            100,
+            5,
+            5,
+            5,
+            5,
+            5,
+            0,
+            0,
+            5,
+            5,
+            5,
+            5,
+            100,
+            5,
+            5,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            56,
+            56,
+            100,
+            100,
+            100,
+            54,
+            47,
+            100,
+            71,
+            100,
+            100,
+            82,
+            100,
+            100,
+            100,
+            100,
+            6,
+            0,
+            100,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            6,
+            14,
+            31,
+            52,
+            70,
+            83,
+            93,
+            100
+          ],
+          "cloud_mid": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            2,
+            19,
+            3,
+            1,
+            2,
+            4,
+            6,
+            36,
+            40,
+            30,
+            0,
+            0,
+            0,
+            0,
+            0,
+            3,
+            20,
+            50,
+            8,
+            7,
+            6,
+            7,
+            0,
+            0,
+            0,
+            0,
+            85,
+            57,
+            8,
+            11,
+            10,
+            18,
+            8,
+            4,
+            5,
+            5,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            51,
+            5,
+            10,
+            80,
+            92,
+            100,
+            100,
+            100,
+            100,
+            100,
+            76,
+            31,
+            10,
+            100,
+            100,
+            100,
+            100,
+            100,
+            5,
+            100,
+            5,
+            5,
+            5,
+            62,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            5,
+            10,
+            100,
+            100,
+            100,
+            5,
+            5,
+            10,
+            0,
+            0,
+            5,
+            5,
+            5,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            7,
+            18,
+            33,
+            55,
+            81,
+            100
+          ],
+          "cloud_high": [
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            6,
+            3,
+            12,
+            10,
+            15,
+            5,
+            17,
+            50,
+            75,
+            5,
+            47,
+            100,
+            82,
+            100,
+            100,
+            100,
+            5,
+            5,
+            0,
+            34,
+            5,
+            5,
+            95,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            89,
+            35,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            74,
+            77,
+            92,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            57,
+            14,
+            100,
+            100,
+            100,
+            100,
+            15,
+            14,
+            97,
+            30,
+            9,
+            100,
+            5,
+            52,
+            100,
+            100,
+            100,
+            100,
+            100,
+            100,
+            71,
+            5,
+            37,
+            34,
+            39,
+            48,
+            64,
+            85,
+            100,
+            100,
+            100,
+            100
+          ],
+          "humidity": [
+            51,
+            54,
+            57,
+            58,
+            58,
+            59,
+            58,
+            52,
+            48,
+            49,
+            51,
+            46,
+            32,
+            27,
+            22,
+            24,
+            26,
+            27,
+            25,
+            31,
+            68,
+            83,
+            71,
+            65,
+            59,
+            62,
+            59,
+            49,
+            49,
+            50,
+            53,
+            60,
+            60,
+            61,
+            57,
+            53,
+            46,
+            42,
+            41,
+            39,
+            39,
+            36,
+            32,
+            38,
+            45,
+            52,
+            57,
+            61,
+            63,
+            65,
+            66,
+            65,
+            63,
+            64,
+            68,
+            73,
+            74,
+            67,
+            57,
+            51,
+            48,
+            43,
+            42,
+            44,
+            49,
+            56,
+            64,
+            66,
+            68,
+            69,
+            70,
+            76,
+            86,
+            89,
+            90,
+            91,
+            93,
+            96,
+            96,
+            95,
+            94,
+            91,
+            87,
+            78,
+            83,
+            75,
+            72,
+            74,
+            68,
+            76,
+            76,
+            82,
+            76,
+            77,
+            77,
+            75,
+            75,
+            77,
+            75,
+            76,
+            76,
+            75,
+            77,
+            78,
+            76,
+            70,
+            62,
+            57,
+            51,
+            46,
+            44,
+            47,
+            54,
+            60,
+            66,
+            72,
+            76,
+            78,
+            79,
+            79
+          ]
+        },
         "25mi": {
           "latitude": 42.4651,
           "longitude": -71.3631,
