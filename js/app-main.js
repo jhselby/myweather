@@ -2231,6 +2231,8 @@
     let radarLayerType = "radar";   // "radar" | "satellite"
     let radarApiData   = null;
 
+    let radarTileLayers = {};  // street and satellite base map layers
+    let radarCurrentTile = "satellite";  // default to satellite
     const RADAR_CENTER  = [42.5014, -70.8750];
     const RADAR_ZOOM    = 7;
     const FRAME_DELAY   = 400;
@@ -2380,27 +2382,11 @@
         zoomControl: true,
         attributionControl: true,
       });
+      // Create both base map layers (like overhead)
+      radarTileLayers.street = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 });
+      radarTileLayers.satellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 });
+      radarTileLayers.satellite.addTo(radarMap);  // Start with satellite
 
-      // Dark basemap — CartoDB Dark Matter (free, no API key)
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png",
-        {
-          attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-          subdomains: "abcd",
-          maxZoom: 20,
-        }
-      ).addTo(radarMap);
-
-      // Custom pane for labels — above radar (z:400) but below markers (z:600)
-      radarMap.createPane("labelsPane");
-      radarMap.getPane("labelsPane").style.zIndex = 450;
-      radarMap.getPane("labelsPane").style.pointerEvents = "none";
-
-      // Labels on top of radar layer
-      L.tileLayer(
-        "https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png",
-        { subdomains: "abcd", maxZoom: 20, pane: "labelsPane" }
-      ).addTo(radarMap);
 
       // Home marker
       L.circleMarker(RADAR_CENTER, {
@@ -2446,6 +2432,15 @@
       document.getElementById("radarPlayBtn").innerHTML = "&#9654; Play";
       clearTimeout(radarTimer);
       showFrame(parseInt(val));
+    }
+
+    function radarToggleMapType() {
+      if (!radarMap) return;
+      radarMap.removeLayer(radarTileLayers[radarCurrentTile]);
+      radarCurrentTile = radarCurrentTile === "street" ? "satellite" : "street";
+      radarTileLayers[radarCurrentTile].addTo(radarMap);
+      document.getElementById("radarMapBtn").innerHTML =
+        radarCurrentTile === "street" ? "🛰 satellite" : "🗺 map";
     }
 
     function setRadarLayer(type) {

@@ -1037,6 +1037,7 @@ body.theme-light .oh-legend {
       font-size: 16px;
       line-height: 1;
     }
+    }
 
     /* Light theme overrides */
     body.theme-light #overheadMap { background: #e8edf5; }
@@ -1173,8 +1174,17 @@ body.theme-light #windDataLine {
   color: rgba(150,150,150,0.7);
 }
 
+
 body.theme-light .wind-legend-label {
   color: rgba(0,0,0,0.5) !important;
+}
+
+body.theme-light .chart-data-close {
+  color: rgba(0, 0, 0, 0.5) !important;
+}
+
+body.theme-light .chart-data-close:hover {
+  color: rgba(0, 0, 0, 0.8) !important;
 }
 
 /* ========== TEXT COLOR CLASSES FOR THEME SUPPORT ========== */
