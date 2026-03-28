@@ -431,13 +431,32 @@
         </div>
 
 
-        <!-- Sea Breeze Detail -->
-        <div class="card col-12" data-collapse-key="sea_breeze_detail" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('sea_breeze_detail', this)">🌊 Sea Breeze Analysis <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body" id="seaBreezeDetail">
-            <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
+
+        <!-- 48-Hour Wind Forecast -->
+        <div class="card col-12" data-collapse-key="48h_wind" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
+          <canvas id="windChart"></canvas>
+
+          <div id="windDataBar" class="chart-data-bar">
+            <div class="chart-data-header">
+              <div id="windDataTime" class="chart-data-time"></div>
+              <button class="chart-data-close" onclick="document.getElementById('windDataBar').classList.remove('visible')">×</button>
+            </div>
+            <div id="windDataLine" style="font-size:clamp(14px, 2.2vw, 24px);font-weight:600;line-height:1.3;class="text-primary" style="width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;"></div>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:0.76rem;font-weight:700;class="text-secondary" style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.1);">
+            <span class="wind-legend-label">Forecast:</span>
+            <span><span style="display:inline-block;width:14px;height:10px;border-radius:2px;background:rgba(150,150,150,0.3);margin-right:5px;vertical-align:middle;"></span>Wind Speed</span>
+            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(150,150,150,0.6);margin-right:5px;vertical-align:middle;"></span>Gusts</span>
+            <span style="white-space:nowrap;margin-left:8px;"><span class="wind-legend-label">Impact:</span> <span style="display:inline-block;width:14px;height:2px;background:rgba(140,100,200,0.95);margin-right:5px;vertical-align:middle;"></span>Sustained <span style="display:inline-block;width:14px;height:2px;background:rgba(255,80,60,0.95);margin-right:5px;margin-left:8px;vertical-align:middle;"></span>Gust</span>
           </div>
         </div>
+      </div>
+
+        <!-- Impact Score Explanation Cards -->
+
         <!-- Gust Wind Impact — collapsed by default, own window buttons -->
         <div class="card col-12" data-collapse-key="wind_gust_impact" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('wind_gust_impact', this)"
@@ -522,30 +541,13 @@
           </div>
         </div>
 
-        <!-- 48-Hour Wind Forecast -->
-        <div class="card col-12" data-collapse-key="48h_wind" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body" style="display:none;">
-          <canvas id="windChart"></canvas>
-
-          <div id="windDataBar" class="chart-data-bar">
-            <div class="chart-data-header">
-              <div id="windDataTime" class="chart-data-time"></div>
-              <button class="chart-data-close" onclick="document.getElementById('windDataBar').classList.remove('visible')">×</button>
-            </div>
-            <div id="windDataLine" style="font-size:clamp(14px, 2.2vw, 24px);font-weight:600;line-height:1.3;class="text-primary" style="width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;"></div>
-          </div>
-
-          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:0.76rem;font-weight:700;class="text-secondary" style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.1);">
-            <span class="wind-legend-label">Forecast:</span>
-            <span><span style="display:inline-block;width:14px;height:10px;border-radius:2px;background:rgba(150,150,150,0.3);margin-right:5px;vertical-align:middle;"></span>Wind Speed</span>
-            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(150,150,150,0.6);margin-right:5px;vertical-align:middle;"></span>Gusts</span>
-            <span style="white-space:nowrap;margin-left:8px;"><span class="wind-legend-label">Impact:</span> <span style="display:inline-block;width:14px;height:2px;background:rgba(140,100,200,0.95);margin-right:5px;vertical-align:middle;"></span>Sustained <span style="display:inline-block;width:14px;height:2px;background:rgba(255,80,60,0.95);margin-right:5px;margin-left:8px;vertical-align:middle;"></span>Gust</span>
+        <!-- Sea Breeze Detail -->
+        <div class="card col-12" data-collapse-key="sea_breeze_detail" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('sea_breeze_detail', this)">🌊 Sea Breeze Analysis <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" id="seaBreezeDetail">
+            <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
           </div>
         </div>
-      </div>
-
-        <!-- Impact Score Explanation Cards -->
         <div class="card col-6">
           <div class="card-title" style="font-size:0.85rem;">Sustained Impact</div>
           <div class="card-body" style="font-size:0.82rem;line-height:1.4;">
