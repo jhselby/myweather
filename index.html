@@ -72,7 +72,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v3.16</span>
+            <span class="version-pill" id="appVersion">v3.17</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -896,7 +896,6 @@
           <span id="oh-status">not started</span>
           <button class="oh-btn" onclick="ohRefresh()">↻ refresh</button>
           <button class="oh-btn" onclick="ohToggleMapType()" id="oh-map-btn">🗺 map</button>
-          <button class="oh-btn" onclick="ohRefresh()">↻</button>
         </div>
       </div>
 
@@ -954,6 +953,58 @@
   <script src="js/app-main.js"></script>
   <script src="js/changelog_loader.js"></script>
   <script src="js/overhead.js"></script>
+  
+  <script>
+  // Hide alerts on non-weather tabs using CSS class
+  const originalShowTab = window.showTab;
+  
+  function updateAlertVisibility(tab) {
+    const alertBar = document.getElementById('alertSummaryBar');
+    const alertContainer = document.getElementById('alertsContainer');
+    
+    // Use CSS class to hide, never touch the display property
+    const shouldHide = (tab === 'almanac' || tab === 'overhead' || tab === 'sources');
+    
+    if (alertBar) {
+      if (shouldHide) {
+        alertBar.classList.add('tab-hidden');
+      } else {
+        alertBar.classList.remove('tab-hidden');
+      }
+    }
+    
+    if (alertContainer) {
+      if (shouldHide) {
+        alertContainer.classList.add('tab-hidden');
+      } else {
+        alertContainer.classList.remove('tab-hidden');
+      }
+    }
+  }
+  
+  window.showTab = function(tab) {
+    if (originalShowTab) originalShowTab(tab);
+    updateAlertVisibility(tab);
+  };
+  
+  // Run on page load to handle initial tab
+  document.addEventListener('DOMContentLoaded', function() {
+    // Find which tab is initially active
+    const activeTabs = document.querySelectorAll('.tab.active');
+    if (activeTabs.length > 0) {
+      const activeTab = activeTabs[0];
+      // Extract tab name from id (e.g., 'tabWeather' -> 'weather')
+      const tabName = activeTab.id.replace('tab', '').toLowerCase();
+      updateAlertVisibility(tabName);
+    }
+  });
+  </script>
+  
+  <style>
+  .tab-hidden {
+    display: none !important;
+  }
+  </style>
 
 </body>
 </html>

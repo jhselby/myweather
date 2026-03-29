@@ -17,9 +17,9 @@ function parseChangelogMarkdown(md) {
   // Remove title line
   let html = md.replace(/^# .*\n\n/, '');
   
-  // Convert ## v3.14 (date) to formatted divs
-  html = html.replace(/## (v[\d.]+(?:–v[\d.]+)?)\s*\(([^)]+)\)/g, 
-    '<div style="margin-bottom:8px;"><span style="font-weight:900;color:rgba(255,255,255,0.7);">$1</span><span style="color:rgba(255,255,255,0.3);margin-left:6px;">$2</span><ul style="margin:4px 0 0 16px;padding:0;">');
+  // Convert ## v3.14 • date to formatted divs
+  html = html.replace(/## (v[\d.]+(?:–v[\d.]+)?)\s*•\s*([^\n]+)/g, 
+    '<div style="margin-bottom:16px;"><span style="font-weight:900;font-size:1.1em;color:rgba(255,255,255,0.85);">$1</span><span style="color:rgba(255,255,255,0.4);margin-left:8px;">$2</span><ul style="margin:6px 0 0 20px;padding:0;list-style:disc;">');
   
   // Convert * list items to <li>
   html = html.replace(/^\* (.+)$/gm, '<li>$1</li>');

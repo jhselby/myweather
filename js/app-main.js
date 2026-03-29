@@ -2801,11 +2801,22 @@
         const alertSummaryText = document.getElementById("alertSummaryText");
         alertsContainer.innerHTML = "";
         if (data.alerts && data.alerts.length > 0) {
-          if (alertSummaryBar)  { alertSummaryBar.style.display = "flex"; }
+          const n = data.alerts.length;
+          
+          // Only show summary bar if there are multiple alerts
+          if (alertSummaryBar) {
+            alertSummaryBar.style.display = n > 1 ? "flex" : "none";
+          }
+          
           if (alertSummaryText) {
-            const n = data.alerts.length;
             alertSummaryText.textContent = `⚠️ ${n} active alert${n > 1 ? "s" : ""}: ${data.alerts.map(a => a.event || "Alert").join(" · ")}`;
           }
+          
+          // For single alert, show the detail panel directly
+          if (n === 1) {
+            alertsContainer.style.display = "block";
+          }
+          
           alertsContainer.innerHTML = data.alerts.map((a, i) => {
             const id = `alertBody_${i}`;
             return `
