@@ -13,6 +13,7 @@
   let ohTileLayers = {};
   let ohCurrentTile = 'satellite';
   let ohIsPlaying = false;
+  let selectedMarker = null; // Track currently selected plane
 
   // Initialize map (lazy, on first tab switch to overhead)
   function getPlaneColor(altitude) {
@@ -73,6 +74,7 @@
       // Clear old markers
       ohMarkers.forEach(m => ohMap.removeLayer(m));
       ohMarkers = [];
+      selectedMarker = null; // Reset selection on refresh
 
       // Filter: must have position, not on ground
       const visible = aircraft.filter(a =>
@@ -96,7 +98,37 @@
 
         if (!ohMap) { console.error("ohMap is null when trying to add marker"); return; }
         const marker = L.marker([a.lat, a.lon], { icon: planeIcon }).addTo(ohMap);
-        marker.on('click', function() { ohShowPopup(a); });
+        
+        // Store aircraft data with marker for later reference
+        marker.aircraftData = a;
+        
+        marker.on('click', function() { 
+          // Unhighlight previous selection
+          if (selectedMarker && selectedMarker !== marker) {
+            const prevData = selectedMarker.aircraftData;
+            const prevHdg = prevData.track || 0;
+            const prevColor = getPlaneColor(prevData.alt_baro);
+            const prevIcon = L.divIcon({
+              html: `<span class="oh-plane-icon" style="color:${prevColor} !important; transform:rotate(${prevHdg}deg); display:block;">✈︎</span>`,
+              className: '',
+              iconSize:   [32, 32],
+              iconAnchor: [16, 16]
+            });
+            selectedMarker.setIcon(prevIcon);
+          }
+          
+          // Highlight new selection with magenta color
+          const selectedIcon = L.divIcon({
+            html: `<span class="oh-plane-icon" style="color:#ec4899 !important; transform:rotate(${hdg}deg); display:block;">✈︎</span>`,
+            className: '',
+            iconSize:   [32, 32],
+            iconAnchor: [16, 16]
+          });
+          marker.setIcon(selectedIcon);
+          selectedMarker = marker;
+          
+          ohShowPopup(a); 
+        });
         ohMarkers.push(marker);
       });
 
@@ -143,6 +175,134 @@ function getStateName(airportName) {
   return '';
 }
 
+// Calculate great circle bearing from point1 to point2
+function calculateBearing(lat1, lon1, lat2, lon2) {
+  const toRad = deg => deg * Math.PI / 180;
+  const toDeg = rad => rad * 180 / Math.PI;
+  
+  const φ1 = toRad(lat1);
+  const φ2 = toRad(lat2);
+  const Δλ = toRad(lon2 - lon1);
+  
+  const y = Math.sin(Δλ) * Math.cos(φ2);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  const θ = Math.atan2(y, x);
+  
+  return (toDeg(θ) + 360) % 360; // Normalize to 0-360
+}
+
+// Calculate smallest angular difference between two headings
+function angleDiff(a, b) {
+  let diff = Math.abs(a - b) % 360;
+  return diff > 180 ? 360 - diff : diff;
+}
+
+// Calculate great circle distance between two points (in nautical miles)
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const toRad = deg => deg * Math.PI / 180;
+  const R = 3440.065; // Earth's radius in nautical miles
+  
+  const φ1 = toRad(lat1);
+  const φ2 = toRad(lat2);
+  const Δφ = toRad(lat2 - lat1);
+  const Δλ = toRad(lon2 - lon1);
+  
+  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ/2) * Math.sin(Δλ/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  
+  return R * c;
+}
+
+// Calculate perpendicular distance from point to great circle route (in nautical miles)
+function crossTrackDistance(pointLat, pointLon, routeStartLat, routeStartLon, routeEndLat, routeEndLon) {
+  const toRad = deg => deg * Math.PI / 180;
+  const toDeg = rad => rad * 180 / Math.PI;
+  const R = 3440.065; // Earth's radius in nautical miles
+  
+  const δ13 = haversineDistance(routeStartLat, routeStartLon, pointLat, pointLon) / R; // angular distance
+  const θ13 = toRad(calculateBearing(routeStartLat, routeStartLon, pointLat, pointLon));
+  const θ12 = toRad(calculateBearing(routeStartLat, routeStartLon, routeEndLat, routeEndLon));
+  
+  const δxt = Math.asin(Math.sin(δ13) * Math.sin(θ13 - θ12));
+  
+  return Math.abs(δxt * R);
+}
+
+// Validate if aircraft trajectory matches the claimed route
+function validateRoute(aircraftLat, aircraftLon, aircraftHeading, originLat, originLon, destLat, destLon) {
+  if (!aircraftHeading || !originLat || !originLon || !destLat || !destLon) {
+    return { valid: null, reason: 'insufficient data' };
+  }
+  
+  // Calculate distances to airports
+  const distToOrigin = haversineDistance(aircraftLat, aircraftLon, originLat, originLon);
+  const distToDest = haversineDistance(aircraftLat, aircraftLon, destLat, destLon);
+  const routeLength = haversineDistance(originLat, originLon, destLat, destLon);
+  
+  // If very close to origin or destination (<100nm), skip validation entirely
+  // Departure/arrival patterns make heading and position unreliable
+  const nearAirport = distToOrigin < 100 || distToDest < 100;
+  if (nearAirport) {
+    return { valid: true, reason: 'near airport' };
+  }
+  
+  // Calculate perpendicular distance from aircraft to the route line
+  const offTrackDist = crossTrackDistance(
+    aircraftLat, aircraftLon,
+    originLat, originLon,
+    destLat, destLon
+  );
+  
+  // Scale tolerance by route length
+  // Short routes (<500nm): 100nm tolerance
+  // Medium routes (500-2000nm): 200nm tolerance  
+  // Long routes (>2000nm): 300nm tolerance
+  let maxOffTrack = 100;
+  if (routeLength > 2000) maxOffTrack = 300;
+  else if (routeLength > 500) maxOffTrack = 200;
+  
+  // If aircraft is way off the route line, flag it
+  if (offTrackDist > maxOffTrack) {
+    return {
+      valid: false,
+      reason: `${Math.round(offTrackDist)}nm off route (max ${maxOffTrack}nm)`,
+      offTrackDist: Math.round(offTrackDist)
+    };
+  }
+  
+  // Calculate the expected route bearing from origin to destination
+  const routeBearing = calculateBearing(originLat, originLon, destLat, destLon);
+  
+  // Calculate bearings from aircraft to both airports
+  const bearingToOrigin = calculateBearing(aircraftLat, aircraftLon, originLat, originLon);
+  const bearingToDest = calculateBearing(aircraftLat, aircraftLon, destLat, destLon);
+  
+  const diffToOrigin = angleDiff(aircraftHeading, bearingToOrigin);
+  const diffToDest = angleDiff(aircraftHeading, bearingToDest);
+  const diffToRoute = angleDiff(aircraftHeading, routeBearing);
+  
+  // Check if aircraft heading aligns with the origin→destination route (within 60°)
+  if (diffToRoute <= 60) {
+    return { valid: true, reason: 'aligned with route' };
+  }
+  
+  // If heading away from origin AND generally toward destination = departing
+  const oppositeOrigin = (bearingToOrigin + 180) % 360;
+  const diffFromOppositeOrigin = angleDiff(aircraftHeading, oppositeOrigin);
+  if (diffFromOppositeOrigin <= 45 && diffToDest <= 90) {
+    return { valid: true, reason: 'departing origin' };
+  }
+  
+  // Heading doesn't match the claimed route
+  return { 
+    valid: false, 
+    reason: `heading ${Math.round(aircraftHeading)}° doesn't align with ${Math.round(routeBearing)}° route`,
+    diffToRoute: Math.round(diffToRoute)
+  };
+}
+
 async function ohShowPopup(a) {
     const flightId = a.flight ? a.flight.trim() : (a.r || 'Unknown');
     document.getElementById('oh-pop-route').textContent = 'looking up route…';
@@ -164,9 +324,16 @@ async function ohShowPopup(a) {
 
     const callsign = (a.flight || '').trim();
     if (!callsign) {
-      document.getElementById('oh-pop-route').textContent = 'No callsign';
+      document.getElementById('oh-pop-route').textContent = 'Private — no route data';
       return;
     }
+    
+    // Check if this looks like a commercial flight callsign
+    // Commercial: starts with 3-letter airline code (AAL, DAL, UAL) or 2-letter + digits (AA123, DL456)
+    // Private/GA: registration format (N12345) or non-standard callsign
+    const commercialPattern = /^[A-Z]{3}\d+|^[A-Z]{2}\d+/;
+    const isLikelyCommercial = commercialPattern.test(callsign);
+    
     try {
       const res  = await fetch(`https://api.adsbdb.com/v0/callsign/${callsign}`);
       if (!res.ok) throw new Error();
@@ -183,14 +350,42 @@ async function ohShowPopup(a) {
         const destCity = r.destination?.municipality || '?';
         const destCode = r.destination?.iata_code || r.destination?.icao_code || '?';
         
-        document.getElementById('oh-pop-route').textContent = 
-          `${origCity} (${origCode}) → ${destCity} (${destCode})`;
+        // Validate route using trajectory
+        const validation = validateRoute(
+          a.lat, a.lon, a.track,
+          r.origin?.latitude, r.origin?.longitude,
+          r.destination?.latitude, r.destination?.longitude
+        );
+        
+        let routeText = `${origCity} (${origCode}) → ${destCity} (${destCode})`;
+        const faLink = ` <a href="https://flightaware.com/live/flight/${callsign}" target="_blank" style="color:#60a5fa; text-decoration:underline;">verify</a>`;
+        
+        if (validation.valid === false) {
+          // Route questionable - add warning and gray it out
+          document.getElementById('oh-pop-route').innerHTML = 
+            `<span style="color:#888;">${routeText} ⚠️</span>${faLink}`;
+        } else {
+          // Route validated - show normally with verify link
+          document.getElementById('oh-pop-route').innerHTML = `${routeText}${faLink}`;
+        }
 
       } else {
-        document.getElementById('oh-pop-route').textContent = 'Route unknown';
+        // No route data returned - could be private or just not in database
+        if (isLikelyCommercial) {
+          document.getElementById('oh-pop-route').textContent = 'Route unknown';
+        } else {
+          document.getElementById('oh-pop-flight').textContent = 'Private — no route data';
+          document.getElementById('oh-pop-route').textContent = '';
+        }
       }
     } catch(e) {
-      document.getElementById('oh-pop-route').textContent = 'Route lookup failed';
+      // API call failed - distinguish between private and commercial
+      if (isLikelyCommercial) {
+        document.getElementById('oh-pop-route').textContent = 'Route lookup failed';
+      } else {
+        document.getElementById('oh-pop-flight').textContent = 'Private — no route data';
+        document.getElementById('oh-pop-route').textContent = '';
+      }
     }
   }
   window.ohRefresh = function() {
