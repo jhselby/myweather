@@ -1,4 +1,8 @@
 # Weather App Changelog
+## v3.18 • March 30, 2026
+* Fix plane icon rotation: corrected for eastward-pointing default orientation
+* Aircraft now point in correct direction based on track heading
+
 
 ## v3.17 • March 29, 2026
 * Flight tracker route validation: trajectory analyzer flags stale/incorrect routes from adsbdb cache
