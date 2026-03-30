@@ -90,7 +90,7 @@
         const color = getPlaneColor(a.alt_baro);
 
         const planeIcon = L.divIcon({
-          html: `<span class="oh-plane-icon" style="color:${color} !important; transform:rotate(${hdg}deg); display:block;">✈︎</span>`,
+          html: `<span class="oh-plane-icon" style="color:${color} !important; transform:rotate(${hdg - 90}deg); display:block;">✈︎</span>`,
           className: '',
           iconSize:   [32, 32],
           iconAnchor: [16, 16]
@@ -109,7 +109,7 @@
             const prevHdg = prevData.track || 0;
             const prevColor = getPlaneColor(prevData.alt_baro);
             const prevIcon = L.divIcon({
-              html: `<span class="oh-plane-icon" style="color:${prevColor} !important; transform:rotate(${prevHdg}deg); display:block;">✈︎</span>`,
+              html: `<span class="oh-plane-icon" style="color:${prevColor} !important; transform:rotate(${prevHdg - 90}deg); display:block;">✈︎</span>`,
               className: '',
               iconSize:   [32, 32],
               iconAnchor: [16, 16]
@@ -119,7 +119,7 @@
           
           // Highlight new selection with magenta color
           const selectedIcon = L.divIcon({
-            html: `<span class="oh-plane-icon" style="color:#ec4899 !important; transform:rotate(${hdg}deg); display:block;">✈︎</span>`,
+            html: `<span class="oh-plane-icon" style="color:#ec4899 !important; transform:rotate(${hdg - 90}deg); display:block;">✈︎</span>`,
             className: '',
             iconSize:   [32, 32],
             iconAnchor: [16, 16]
