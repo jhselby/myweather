@@ -124,6 +124,10 @@
           t.setAttribute("aria-selected", String(k === which));
         }
       });
+      // Stop overhead live refresh when leaving that tab
+      if (which !== "overhead" && window.ohStopLive) {
+        window.ohStopLive();
+      }
       try { localStorage.setItem("activeTab", which); } catch(e) {}
       if (which === "radar") {
         // Wait for browser to paint the div before Leaflet measures it
