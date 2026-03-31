@@ -113,8 +113,8 @@
     // Tab behavior — Weather / Wind / Almanac
     // ======================================================
     function showTab(which) {
-      const views = { weather: "weatherView", wind: "windView", almanac: "almanacView", radar: "radarView", overhead: "overheadView", sources: "sourcesView" };
-      const tabs  = { weather: "tabWeather",  wind: "tabWind",  almanac: "tabAlmanac",  radar: "tabRadar",  overhead: "tabOverhead", sources: "tabSources" };
+      const views = { weather: "weatherView", almanac: "almanacView", overhead: "overheadView", hyperlocal: "hyperlocalView", sources: "sourcesView" };
+      const tabs  = { weather: "tabWeather",  almanac: "tabAlmanac",  overhead: "tabOverhead", hyperlocal: "tabHyperlocal", sources: "tabSources" };
       Object.keys(views).forEach(k => {
         const v = document.getElementById(views[k]);
         const t = document.getElementById(tabs[k]);
@@ -129,15 +129,6 @@
         window.ohStopLive();
       }
       try { localStorage.setItem("activeTab", which); } catch(e) {}
-      if (which === "radar") {
-        // Wait for browser to paint the div before Leaflet measures it
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            initRadar();
-            if (radarMap) radarMap.invalidateSize();
-          });
-        });
-      }
       if (which === "overhead") {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
@@ -154,7 +145,7 @@
     (function restoreTab() {
       try {
         const t = localStorage.getItem("activeTab");
-        if (["wind","almanac","radar","overhead","sources"].includes(t)) showTab(t);
+        if (["almanac","overhead","hyperlocal","sources"].includes(t)) showTab(t);
       } catch(e) {}
     })();
 
@@ -2572,6 +2563,16 @@
       body.style.display = isOpen ? "none" : "";
       if (chev) chev.style.transform = isOpen ? "rotate(-90deg)" : "";
       try { localStorage.setItem("card_" + key, isOpen ? "0" : "1"); } catch(e) {}
+      
+      // Initialize radar when radar card is opened
+      if (key === "radar" && !isOpen) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            initRadar();
+            if (radarMap) radarMap.invalidateSize();
+          });
+        });
+      }
     }
 
     function initCollapsibleCards() {
@@ -2843,53 +2844,170 @@
         const desc  = cur.condition_override || cur.weather_description || weatherDesc[code] || "—";
         document.getElementById("currentTemp").innerHTML =
           `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
+        
+        // Hyperlocal data
+        const hyp = data.hyperlocal || {};
+        const wu = data.wu_stations || {};
+        const der = data.derived || {};
+        
+        // Calculate corrected Feels Like from corrected temp + wind
+        let correctedFeelsLike = cur.apparent_temperature ?? 0;
+        if (hyp.corrected_temp != null) {
+          const T = hyp.corrected_temp;
+          const windSpeed = cur.wind_speed || 0;
+          let feelsLike = T;
+          // Wind chill (if T <= 50°F and wind > 3 mph)
+          if (T <= 50 && windSpeed > 3) {
+            feelsLike = 35.74 + (0.6215 * T) - (35.75 * Math.pow(windSpeed, 0.16)) + (0.4275 * T * Math.pow(windSpeed, 0.16));
+          }
+          // Heat index (if T >= 80°F and humidity available)
+          else if (T >= 80 && hyp.corrected_humidity != null) {
+            const RH = hyp.corrected_humidity;
+            feelsLike = -42.379 + (2.04901523 * T) + (10.14333127 * RH) - (0.22475541 * T * RH) - 
+                        (0.00683783 * T * T) - (0.05481717 * RH * RH) + (0.00122874 * T * T * RH) +
+                        (0.00085282 * T * RH * RH) - (0.00000199 * T * T * RH * RH);
+          }
+          correctedFeelsLike = feelsLike;
+        }
+        
         document.getElementById("feelsLike").textContent =
-          `Feels like ${Math.round(cur.apparent_temperature ?? 0)}°F`;
+          `Feels like ${Math.round(correctedFeelsLike)}°F`;
         const obsTag = cur.condition_source === "KBVY observed" ? " <span style='font-size:0.75rem;opacity:0.5;'>[obs]</span>" : "";
         document.getElementById("condition").innerHTML = `${emoji} ${desc}${obsTag}`;   
 
-        // Hyperlocal - NEW SMART CORRECTION DISPLAY
-        const hyp = data.hyperlocal || {};
-        const wu = data.wu_stations || {};
-        
-        // Update new hyperlocal card
-        if (hyp.corrected_temp != null) {
-          // Model temp
-          document.getElementById("hyperlocalModelTemp").textContent = 
-            hyp.model_temp != null ? hyp.model_temp + "°F" : "--°F";
+        // Update Smart Correction table
+        if (hyp) {
+          // Primary corrections table
+          const scModelTemp = document.getElementById("scModelTemp");
+          const scBiasTemp = document.getElementById("scBiasTemp");
+          const scCorrectedTemp = document.getElementById("scCorrectedTemp");
+          if (scModelTemp) scModelTemp.textContent = hyp.model_temp != null ? hyp.model_temp.toFixed(1) + "°F" : "--";
+          if (scBiasTemp) {
+            const bias = hyp.weighted_bias ?? hyp.bias_temp;
+            scBiasTemp.textContent = bias != null ? (bias >= 0 ? "+" : "") + bias.toFixed(1) + "°F" : "--";
+          }
+          if (scCorrectedTemp) scCorrectedTemp.textContent = hyp.corrected_temp != null ? Math.round(hyp.corrected_temp) + "°F" : "--";
           
-          // Weighted bias
-          const bias = hyp.weighted_bias ?? hyp.bias_temp;
-          document.getElementById("hyperlocalBias").textContent = 
-            bias != null ? (bias >= 0 ? "+" : "") + bias.toFixed(2) + "°F" : "--°F";
+          const scModelHumidity = document.getElementById("scModelHumidity");
+          const scBiasHumidity = document.getElementById("scBiasHumidity");
+          const scCorrectedHumidity = document.getElementById("scCorrectedHumidity");
+          if (scModelHumidity) scModelHumidity.textContent = hyp.model_humidity != null ? Math.round(hyp.model_humidity) + "%" : "--";
+          if (scBiasHumidity) scBiasHumidity.textContent = hyp.bias_humidity != null ? (hyp.bias_humidity >= 0 ? "+" : "") + hyp.bias_humidity.toFixed(1) + "%" : "--";
+          if (scCorrectedHumidity) scCorrectedHumidity.textContent = hyp.corrected_humidity != null ? Math.round(hyp.corrected_humidity) + "%" : "--";
           
-          // Corrected temp
-          document.getElementById("hyperlocalCorrectedTemp").textContent = 
-            hyp.corrected_temp + "°F";
+          const scModelPressure = document.getElementById("scModelPressure");
+          const scBiasPressure = document.getElementById("scBiasPressure");
+          const scCorrectedPressure = document.getElementById("scCorrectedPressure");
+          if (scModelPressure) scModelPressure.textContent = hyp.model_pressure_in != null ? hyp.model_pressure_in.toFixed(2) : "--";
+          if (scBiasPressure && hyp.model_pressure_in != null && hyp.corrected_pressure_in != null) {
+            const pBias = hyp.corrected_pressure_in - hyp.model_pressure_in;
+            scBiasPressure.textContent = (pBias >= 0 ? "+" : "") + pBias.toFixed(2);
+          } else if (scBiasPressure) {
+            scBiasPressure.textContent = "--";
+          }
+          if (scCorrectedPressure) scCorrectedPressure.textContent = hyp.corrected_pressure_in != null ? hyp.corrected_pressure_in.toFixed(2) : "--";
           
-          // Simple average for comparison
-          const simpleAvg = hyp.wu_avg_temp ?? hyp.wu_temp;
-          document.getElementById("hyperlocalSimpleAvg").textContent = 
-            simpleAvg != null ? simpleAvg + "°F" : "--°F";
+          const scModelGusts = document.getElementById("scModelGusts");
+          const scBiasGusts = document.getElementById("scBiasGusts");
+          const scCorrectedGusts = document.getElementById("scCorrectedGusts");
+          if (scModelGusts) scModelGusts.textContent = hyp.model_wind_gusts != null ? Math.round(hyp.model_wind_gusts) + " mph" : "--";
+          if (scBiasGusts) scBiasGusts.textContent = hyp.bias_wind_gusts != null ? (hyp.bias_wind_gusts >= 0 ? "+" : "") + hyp.bias_wind_gusts.toFixed(1) + " mph" : "--";
+          if (scCorrectedGusts) scCorrectedGusts.textContent = hyp.corrected_wind_gusts != null ? Math.round(hyp.corrected_wind_gusts) + " mph" : "--";
           
-          // Station count in explanation
-          document.getElementById("stationsUsedCount").textContent = 
-            hyp.stations_used ?? "--";
+          // Derived values table
+          const scModelDewpoint = document.getElementById("scModelDewpoint");
+          const scCorrectedDewpoint = document.getElementById("scCorrectedDewpoint");
+          if (scModelDewpoint) scModelDewpoint.textContent = cur.dew_point != null ? Math.round(cur.dew_point) + "°F" : "--";
+          // Calculate corrected dew point from corrected temp + humidity
+          if (scCorrectedDewpoint && hyp.corrected_temp != null && hyp.corrected_humidity != null) {
+            const T = hyp.corrected_temp;
+            const RH = hyp.corrected_humidity;
+            const a = 17.27;
+            const b = 237.7;
+            const alpha = ((a * T) / (b + T)) + Math.log(RH / 100.0);
+            const correctedDewpoint = (b * alpha) / (a - alpha);
+            scCorrectedDewpoint.textContent = Math.round(correctedDewpoint) + "°F";
+          } else if (scCorrectedDewpoint) {
+            scCorrectedDewpoint.textContent = "--";
+          }
           
-          // Confidence badge in title
-          const conf = hyp.confidence || "";
-          document.getElementById("hyperlocalConfidence").textContent = conf;
+          const scModelFeelsLike = document.getElementById("scModelFeelsLike");
+          const scCorrectedFeelsLike = document.getElementById("scCorrectedFeelsLike");
+          // Model feels like from apparent_temperature
+          if (scModelFeelsLike) scModelFeelsLike.textContent = cur.apparent_temperature != null ? Math.round(cur.apparent_temperature) + "°F" : "--";
+          // Calculate corrected feels like from corrected temp + wind
+          if (scCorrectedFeelsLike && hyp.corrected_temp != null) {
+            const T = hyp.corrected_temp;
+            const windSpeed = cur.wind_speed || 0;
+            let feelsLike = T;
+            // Wind chill (if T <= 50°F and wind > 3 mph)
+            if (T <= 50 && windSpeed > 3) {
+              feelsLike = 35.74 + (0.6215 * T) - (35.75 * Math.pow(windSpeed, 0.16)) + (0.4275 * T * Math.pow(windSpeed, 0.16));
+            }
+            // Heat index (if T >= 80°F and humidity available)
+            else if (T >= 80 && hyp.corrected_humidity != null) {
+              const RH = hyp.corrected_humidity;
+              feelsLike = -42.379 + (2.04901523 * T) + (10.14333127 * RH) - (0.22475541 * T * RH) - 
+                          (0.00683783 * T * T) - (0.05481717 * RH * RH) + (0.00122874 * T * T * RH) +
+                          (0.00085282 * T * RH * RH) - (0.00000199 * T * T * RH * RH);
+            }
+            scCorrectedFeelsLike.textContent = Math.round(feelsLike) + "°F";
+          } else if (scCorrectedFeelsLike) {
+            scCorrectedFeelsLike.textContent = "--";
+          }
           
-          // Diagnostics at bottom
-          document.getElementById("hyperlocalStationsDiag").textContent = 
-            `${hyp.stations_used ?? "--"} of ${hyp.stations_total ?? "--"} stations used`;
-          document.getElementById("hyperlocalConfidenceDiag").textContent = 
-            `${conf || "Unknown"} confidence`;
+          // Wet Bulb Temp
+          const scModelWetBulb = document.getElementById("scModelWetBulb");
+          const scCorrectedWetBulb = document.getElementById("scCorrectedWetBulb");
+          if (scModelWetBulb) scModelWetBulb.textContent = cur.wet_bulb != null ? Math.round(cur.wet_bulb) + "°F" : "--";
+          if (scCorrectedWetBulb) scCorrectedWetBulb.textContent = der.corrected_wet_bulb != null ? Math.round(der.corrected_wet_bulb) + "°F" : "--";
+          
+          // Precip Type (only show if precipitation is likely)
+          const scModelPrecipType = document.getElementById("scModelPrecipType");
+          const scCorrectedPrecipType = document.getElementById("scCorrectedPrecipType");
+          const precipLikely = (cur.precipitation_probability ?? 0) > 20;
+          if (precipLikely) {
+            // Model precip type from weather code
+            const wc = cur.weather_code ?? 0;
+            let modelPType = "None";
+            if (wc >= 95) modelPType = "Thunderstorm";
+            else if (wc >= 85 || (wc >= 71 && wc <= 77)) modelPType = "Snow";
+            else if (wc >= 66 && wc <= 67) modelPType = "Freezing Rain";
+            else if (wc >= 51 && wc <= 65) modelPType = "Rain";
+            if (scModelPrecipType) scModelPrecipType.textContent = modelPType;
+            
+            // Corrected precip type from surface classification
+            const correctedPType = der.surface_precip_type;
+            if (scCorrectedPrecipType && correctedPType) {
+              const displayType = correctedPType === "freezing_rain" ? "Freezing Rain" :
+                                  correctedPType.charAt(0).toUpperCase() + correctedPType.slice(1);
+              scCorrectedPrecipType.textContent = displayType;
+            } else if (scCorrectedPrecipType) {
+              scCorrectedPrecipType.textContent = "--";
+            }
+          } else {
+            if (scModelPrecipType) scModelPrecipType.textContent = "None";
+            if (scCorrectedPrecipType) scCorrectedPrecipType.textContent = "None";
+          }
+          
+          // Station count and confidence
+          const stationsUsedCount = document.getElementById("stationsUsedCount");
+          if (stationsUsedCount) stationsUsedCount.textContent = hyp.stations_used ?? "--";
+          
+          const hyperlocalConfidence = document.getElementById("hyperlocalConfidence");
+          if (hyperlocalConfidence) hyperlocalConfidence.textContent = hyp.confidence || "";
+          
+          const hyperlocalStationsDiag = document.getElementById("hyperlocalStationsDiag");
+          if (hyperlocalStationsDiag) hyperlocalStationsDiag.textContent = `${hyp.stations_used ?? "--"} of ${hyp.stations_total ?? "--"} stations used`;
+          
+          const hyperlocalConfidenceDiag = document.getElementById("hyperlocalConfidenceDiag");
+          if (hyperlocalConfidenceDiag) hyperlocalConfidenceDiag.textContent = `${hyp.confidence || "Unknown"} confidence`;
         }
+
 
         // Today summary
         const daily = data.daily || {};
-        const der   = data.derived || {};
+
         const kbos  = data.kbos   || {};
         const hi    = daily.temperature_max?.[0];
         const lo    = daily.temperature_min?.[0];
@@ -2915,6 +3033,13 @@
         document.getElementById("windNow").textContent = 
           windSpeed > 0 ? `${windDir} ${windSpeed} mph` : "Calm";
         
+        // Gusts now
+        const gustsNowEl = document.getElementById("gustsNow");
+        if (gustsNowEl) {
+          const gustValue = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+          gustsNowEl.textContent = gustValue != null ? `${Math.round(gustValue)} mph` : "--";
+        }
+        
         // Pressure now (with trend inline)
         const pressure = cur.pressure != null ? hpaToInhg(cur.pressure) + ' inHg' : "--";
         const trend = der.pressure_trend || kbos.tendency_label || "";
@@ -2924,6 +3049,37 @@
         const pressureChange = der.best_pressure_tend != null ? ` ${der.best_pressure_tend > 0 ? '+' : ''}${der.best_pressure_tend.toFixed(1)} hPa` : "";
         const pressureColType = "";
         document.getElementById("pressureNow").textContent = `${pressure} ${trendShort}${pressureChange}${pressureColType}`.trim();
+        
+        // Sustained Impact and Gust Impact scores
+        const sustainedImpactNowEl = document.getElementById("sustainedImpactNow");
+        const gustImpactNowEl = document.getElementById("gustImpactNow");
+        
+        if (cur.wind_speed != null && cur.wind_direction != null) {
+          const exposure = getExposureFactor(cur.wind_direction);
+          const sustainedScore = Math.round(worryScore(cur.wind_speed, exposure));
+          const sustainedLevel = worryLevel(sustainedScore);
+          if (sustainedImpactNowEl) {
+            sustainedImpactNowEl.innerHTML = `${sustainedScore} <span style="opacity:0.6;font-size:0.85rem;">(${sustainedLevel.label})</span>`;
+          }
+        } else if (sustainedImpactNowEl) {
+          sustainedImpactNowEl.textContent = "--";
+        }
+        
+        if (cur.wind_direction != null) {
+          const gustValue = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+          if (gustValue != null) {
+            const exposure = getExposureFactor(cur.wind_direction);
+            const gustScore = Math.round(worryScore(gustValue, exposure));
+            const gustLevel = worryLevel(gustScore);
+            if (gustImpactNowEl) {
+              gustImpactNowEl.innerHTML = `${gustScore} <span style="opacity:0.6;font-size:0.85rem;">(${gustLevel.label})</span>`;
+            }
+          } else if (gustImpactNowEl) {
+            gustImpactNowEl.textContent = "--";
+          }
+        } else if (gustImpactNowEl) {
+          gustImpactNowEl.textContent = "--";
+        }
         
         // Humidity now
         document.getElementById("humidityNow").textContent = 
@@ -3180,7 +3336,7 @@
           times,
           (hourly.temperature || []).slice(startIdx, startIdx + 48),
           (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48),
-          (hourly.wet_bulb || []).slice(startIdx, startIdx + 48),
+          (hourly.corrected_wet_bulb || hourly.wet_bulb || []).slice(startIdx, startIdx + 48),
           (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48),
           (hourly.cloud_cover_low || []).slice(startIdx, startIdx + 48),
           (hourly.cloud_cover_mid || []).slice(startIdx, startIdx + 48),

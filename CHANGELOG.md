@@ -1,4 +1,20 @@
 # Weather App Changelog
+## v4.0 • March 31, 2026
+* MAJOR: Comprehensive hyperlocal correction system - all derived values now use corrected data
+* Corrected wet bulb calculation from corrected temp + humidity (current + 48h forecast)
+* Hybrid precipitation type classification using corrected wet bulb + 850mb temp (catches freezing rain)
+* Corrected feels like calculation (wind chill + heat index from corrected values)
+* Corrected dew point calculation from corrected temp + humidity
+* Today's high/low now calculated from corrected hourly temps (not model daily values)
+* Wind gust corrections blended into 48h forecast (100% at current hour, declining to 0% at hour 24)
+* Tab reorganization: removed Wind and Radar tabs, created Hyperlocal Corrections tab
+* Hyperlocal Corrections tab card order: main correction tables first, then wind impacts, sea breeze
+* Renamed "Smart Correction" card to "Hyperlocal Corrections" - removed duplicate confidence from title
+* Removed redundant Conditions & Diagnostics card
+* Updated all tooltips to reflect corrected methodology
+* Chart now uses corrected wet bulb for precipitation type coloring
+* Right Now card field reorder: wind metrics grouped together (sustained + impact, gusts + impact)
+
 ## v3.18 • March 30, 2026
 * Fix plane icon rotation: corrected for eastward-pointing default orientation
 * Aircraft now point in correct direction based on track heading

@@ -72,7 +72,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v3.18</span>
+            <span class="version-pill" id="appVersion">v4.0</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -107,10 +107,9 @@
 
       <nav class="tabs" role="tablist" aria-label="Views">
         <button class="tab active" id="tabWeather" role="tab" aria-selected="true" onclick="showTab('weather')">Weather</button>
-        <button class="tab" id="tabWind" role="tab" aria-selected="false" onclick="showTab('wind')">Wind</button>
         <button class="tab" id="tabAlmanac" role="tab" aria-selected="false" onclick="showTab('almanac')">Almanac</button>
-        <button class="tab" id="tabRadar"   role="tab" aria-selected="false" onclick="showTab('radar')">Radar</button>
         <button class="tab" id="tabOverhead" role="tab" aria-selected="false" onclick="showTab('overhead')">Overhead</button>
+        <button class="tab" id="tabHyperlocal" role="tab" aria-selected="false" onclick="showTab('hyperlocal')">Hyperlocal Corrections</button>
         <button class="tab" id="tabSources" role="tab" aria-selected="false" onclick="showTab('sources')" style="border-color:rgba(100,220,100,0.3);">Sources</button>
       </nav>
 
@@ -156,7 +155,7 @@
             <div id="currentTemp" class="current-temp" data-tip="Smart-corrected temperature using distance+elevation weighted bias from 15 local weather stations.">
               --<span class="temp-unit">&deg;F</span>
             </div>
-            <div id="feelsLike" class="feels-like" data-tip="Apparent temperature accounting for wind chill or heat index.">
+            <div id="feelsLike" class="feels-like" data-tip="Apparent temperature calculated from corrected temperature and wind (wind chill <50°F, heat index >80°F with corrected humidity).">
               Feels like --&deg;F
             </div>
             <div id="condition" class="condition" data-tip="Current conditions from model weather code.">
@@ -168,7 +167,7 @@
             
             <!-- Key Metrics Grid -->
             <div class="row">
-              <div class="label" data-tip="Today's forecast high and low (model forecast - not yet corrected).">Today's High / Low</div>
+              <div class="label" data-tip="Today's forecast high and low calculated from corrected hourly temperatures (temperature bias applied to each hour).">Today's High / Low</div>
               <div class="value" id="hiLo">-- / --</div>
             </div>
             <div class="row">
@@ -180,6 +179,26 @@
               <div class="value" id="windNow">--</div>
             </div>
             <div class="row">
+              <div class="label" data-tip="Current sustained wind impact score based on wind speed and terrain exposure.">Sustained Impact</div>
+              <div class="value" id="sustainedImpactNow">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Current gust speed corrected using weighted average from nearby WU stations. Forecast gusts blend corrected value (100% at current hour, declining to 0% at hour 24).">Gusts</div>
+              <div class="value" id="gustsNow">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Current gust impact score based on corrected gust speed and terrain exposure.">Gust Impact</div>
+              <div class="value" id="gustImpactNow">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Sea breeze likelihood based on land/water temperature differential, wind speed, direction, and time of day.">Sea Breeze</div>
+              <div class="value" id="seaBreezeNow">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Relative humidity.">Humidity</div>
+              <div class="value" id="humidityNow">--%</div>
+            </div>
+            <div class="row">
               <div class="label" data-tip="Barometric pressure with 3-hour trend.">Pressure</div>
               <div class="value" id="pressureNow">--</div>
             </div>
@@ -188,11 +207,7 @@
               <div class="value" id="fogRiskNow">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Relative humidity.">Humidity</div>
-              <div class="value" id="humidityNow">--%</div>
-            </div>
-            <div class="row">
-              <div class="label" data-tip="Dew point temperature - when air becomes saturated. Above 65°F feels muggy.">Dew Point</div>
+              <div class="label" data-tip="Dew point temperature calculated from corrected temperature and humidity. When air becomes saturated. Above 65°F feels muggy.">Dew Point</div>
               <div class="value"><span id="dewPointNow">--°F</span> <span id="dewPointDepression" style="opacity:0.6;font-size:0.85rem;"></span></div>
             </div>
             <div class="row">
@@ -203,13 +218,8 @@
               <div class="label" data-tip="UV index (0-11+ scale).">UV Index</div>
               <div class="value" id="uvNow">--</div>
             </div>
-            <div class="row">
-              <div class="label" data-tip="Sea breeze likelihood based on land/water temperature differential, wind speed, direction, and time of day.">Sea Breeze</div>
-              <div class="value" id="seaBreezeNow">--</div>
-            </div>
           </div>
         </div>
-
         <div class="card col-12" data-collapse-key="48h_temp_precip" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature &amp; Precipitation <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
@@ -269,6 +279,28 @@
           </div>
         </div>
 
+        <!-- 48-Hour Wind Forecast -->
+        <div class="card col-12" data-collapse-key="48h_wind" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" style="display:none;">
+          <canvas id="windChart"></canvas>
+
+          <div id="windDataBar" class="chart-data-bar">
+            <div class="chart-data-header">
+              <div id="windDataTime" class="chart-data-time"></div>
+              <button class="chart-data-close" onclick="document.getElementById('windDataBar').classList.remove('visible')">×</button>
+            </div>
+            <div id="windDataLine" style="font-size:clamp(14px, 2.2vw, 24px);font-weight:600;line-height:1.3;class="text-primary" style="width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;"></div>
+          </div>
+
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:0.76rem;font-weight:700;class="text-secondary" style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.1);">
+            <span class="wind-legend-label">Forecast:</span>
+            <span><span style="display:inline-block;width:14px;height:10px;border-radius:2px;background:rgba(150,150,150,0.3);margin-right:5px;vertical-align:middle;"></span>Wind Speed</span>
+            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(150,150,150,0.6);margin-right:5px;vertical-align:middle;"></span>Gusts</span>
+            <span style="white-space:nowrap;margin-left:8px;"><span class="wind-legend-label">Impact:</span> <span style="display:inline-block;width:14px;height:2px;background:rgba(140,100,200,0.95);margin-right:5px;vertical-align:middle;"></span>Sustained <span style="display:inline-block;width:14px;height:2px;background:rgba(255,80,60,0.95);margin-right:5px;margin-left:8px;vertical-align:middle;"></span>Gust</span>
+          </div>
+        </div>
+      </div>
         <div class="card col-12" data-collapse-key="ten_day" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('ten_day', this)">10-Day Forecast <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
@@ -276,7 +308,6 @@
           </div>
         </div>
     
-        <!-- 6. Hyperlocal 7-Day Forecast — open by default -->
         <div class="card col-12" data-collapse-key="hyperlocal_forecast" data-default-open="true">
           <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal_forecast', this)">📌 Wyman Cove Detailed Forecast
             <span class="collapse-chevron">&#9660;</span>
@@ -286,8 +317,6 @@
             <div class="small-note" style="margin-top:12px;">Generated from HRRR and ECMWF models, hyperlocal to Wyman Cove.</div>
           </div>
         </div>
-
-        <!-- NWS Forecast (kept as fallback, hidden by default) -->
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
         <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false" style="display:none;">
@@ -311,269 +340,69 @@
           </div>
         </div>
 
-        <!-- Hyperlocal Comparison — Enhanced (closed by default) -->
-        <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">
-            🧮 Smart Correction
-            <span style="font-size:0.72rem;font-weight:700;class="text-subtle" style="margin-left:8px;" id="hyperlocalConfidence"></span>
-            <span class="collapse-chevron">&#9660;</span>
-          </div>
-          <div class="card-body" style="display:none;">
-            
-            <!-- Explanation -->
-            <div style="font-size:0.82rem;class="text-secondary" style="margin-bottom:16px;line-height:1.5;">
-              Your corrected temperature uses <strong id="stationsUsedCount">--</strong> nearby stations, weighted by distance and elevation similarity to your 30ft location.
-            </div>
-            
-            <!-- The Math -->
-            <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;margin-bottom:16px;">
-              <div class="row">
-                <div class="label" data-tip="Raw GFS model forecast for your exact coordinates (42.5014, -70.875).">Model Temp</div>
-                <div class="value" id="hyperlocalModelTemp">--&deg;F</div>
-              </div>
-              <div class="row">
-                <div class="label" data-tip="Weighted bias calculated from nearby stations. Accounts for how much warmer/colder stations are compared to model.">Weighted Bias</div>
-                <div class="value" id="hyperlocalBias" style="font-weight:900;">--&deg;F</div>
-              </div>
-              <div style="height:1px;background:rgba(255,255,255,0.15);margin:10px 0;"></div>
-              <div class="row">
-                <div class="label" data-tip="Model + weighted bias = your smart-corrected temperature." style="font-weight:900;">Corrected Temp</div>
-                <div class="value" id="hyperlocalCorrectedTemp" style="font-size:1.1em;font-weight:900;color:rgba(100,200,255,0.95);">--&deg;F</div>
-              </div>
-            </div>
-            
-            <!-- Comparison -->
-            <div style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-bottom:8px;">
-              <strong>For comparison:</strong> Simple WU average (no weighting): <span id="hyperlocalSimpleAvg">--&deg;F</span>
-            </div>
-            
-            <!-- Diagnostics -->
-            <div style="font-size:0.72rem;class="text-subtle" style="display:flex;gap:12px;flex-wrap:wrap;">
-              <span id="hyperlocalStationsDiag">-- stations used</span>
-              <span>•</span>
-              <span id="hyperlocalConfidenceDiag">-- confidence</span>
-            </div>
-            
-          </div>
-        </div>
 
-        <!-- Conditions & Diagnostics — moved to bottom -->
-        <div class="card col-12" data-collapse-key="pressure_diag" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('pressure_diag', this)">Conditions &amp; Diagnostics <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body" style="display:none;">
-          <div class="row">
-            <div class="label" data-tip="Observed temperatures at Boston Logan (KBOS, 15mi SW) and Beverly Airport (KBVY, 7mi NW). Useful reference points for regional gradient.">Temp: KBOS / KBVY</div>
-            <div class="value" id="tempObsStations">-- / --</div>
+        <!-- Radar (collapsible) -->
+        <div class="card col-12" data-collapse-key="radar" data-default-open="false" style="padding:0;overflow:hidden;border-radius:18px;">
+
+          <!-- Controls bar (collapsible title) -->
+          <div id="radarControls" class="card-title card-title-collapsible" onclick="toggleCard('radar', this)" style="
+            display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+            padding:12px 16px;background:rgba(255,255,255,0.05);
+            border-bottom:1px solid rgba(255,255,255,0.08);">
+
+            <span style="font-weight:900;font-size:0.9rem;">
+              &#127941; Radar <span class="collapse-chevron">&#9660;</span>
+            </span>
+
+            <!-- Spacer -->
+            <div style="flex:1;"></div>
+
+            <!-- Timestamp -->
+            <span id="radarTimestamp" style="font-size:0.8rem;class="text-secondary" style="font-weight:700;"></span>
+
+            <!-- Play/Pause -->
+            <button id="radarPlayBtn" onclick="event.stopPropagation(); radarTogglePlay()"
+              style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+                     class="text-emphasis" style="border-radius:999px;padding:5px 14px;
+                     font-size:0.82rem;font-weight:900;cursor:pointer;">
+              &#9654; Play
+            </button>
+
+
+            <!-- Map toggle -->
+            <button id="radarMapBtn" onclick="event.stopPropagation(); radarToggleMapType()"
+              style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+                     border-radius:999px;padding:5px 14px;margin-left:8px;
+                     font-size:0.82rem;font-weight:900;cursor:pointer;
+                     color:rgba(255,255,255,0.75);">
+              🗺 map
+            </button>
           </div>
-          <div class="row">
-            <div class="label" data-tip="Height of the 850mb pressure level (~5,000 ft). Rising height = warming aloft. Used to assess rain/snow/mix boundary.">850mb Height (6h)</div>
-            <div class="value" id="troughSignal">--</div>
+
+          <!-- Map and scrubber (collapsible body) -->
+          <div class="card-body" style="display:none;padding:0;">
+          <!-- Map -->
+          <div id="radarMap" style="height:clamp(320px, 55vh, 520px);width:100%;background:#0b1220;"></div>
+
+          <!-- Frame scrubber -->
+          <div style="padding:8px 16px 10px;background:rgba(255,255,255,0.03);
+                      border-top:1px solid rgba(255,255,255,0.06);">
+            <input type="range" id="radarScrubber" min="0" max="0" value="0"
+              oninput="radarScrubTo(this.value)"
+              style="width:100%;accent-color:rgba(100,180,255,0.9);cursor:pointer;">
+            <div style="display:flex;justify-content:flex-start;
+                        font-size:0.75rem;class="text-subtle" style="font-weight:700;margin-top:2px;">
+              <span id="radarScrubStart">--</span>
+              <span class="text-subtle">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,255,180,0.6);">Nowcast</span> &#9654;</span>
+              <span id="radarScrubEnd">--</span>
+            </div>
           </div>
-          <div class="row" id="seaBreezeRow">
-            <div class="label" data-tip="Likelihood of a sea breeze developing today. Sea breezes form when land heats faster than the ocean, drawing cool marine air onshore from the E/SE.">Sea Breeze</div>
-            <div class="value" id="seaBreezeLabel">--</div>
           </div>
-          <div class="row" id="precipTypeRow" style="display:none;">
-            <div class="label" data-tip="Predicted precipitation type at ground level based on surface temperature. May differ from what falls aloft if there are warm/cold layers above.">Precip Type (surface)</div>
-            <div class="value" id="precipType">--</div>
-          <div class="row" id="wetBulbRow" style="display:none;">
-            <div class="label" data-tip="Wet bulb temperature — the coolest temperature air can reach through evaporative cooling. Critical for precipitation type: <32°F = snow, 32-35°F = mixed, >35°F = rain. More reliable than dry bulb temp alone.">Wet Bulb Temp</div>
-            <div class="value" id="wetBulbTemp">--</div>
-          </div>
-          </div>
-          <div class="row" id="col850Row" style="display:none;">
-            <div class="label" data-tip="Precipitation type suggested by the temperature at 850mb (~5,000 ft). A warm layer aloft with a cold surface can produce freezing rain or sleet.">Column type (850mb)</div>
-            <div class="value" id="col850Type">--</div>
-          </div>
-          </div>
+
         </div>
 
       </div>
     </section>
-    <!-- WIND VIEW -->
-    <section id="windView" style="display:none;">
-      <div class="grid">
-
-        <!-- Wind & Pressure (now) — open by default -->
-        <div class="card col-12" data-collapse-key="wind_now">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_now', this)">💨 Right Now <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body">
-          <div class="row">
-            <div class="label" data-tip="Current wind speed and direction from the GFS model snapshot.">Wind</div>
-            <div class="value" id="windNowWind">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Current gust speed from the GFS model snapshot.">Gusts</div>
-            <div class="value" id="windGustsWind">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Current mean sea level pressure from the GFS model.">Pressure</div>
-            <div class="value" id="pressureNowWind">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Change in pressure over the last 2 hours. Prefers KBOS observed tendency when available (shown as [obs]), falls back to GFS model ([model]).">Trend (2h)</div>
-            <div class="value" id="pressureTrendWind">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Current sustained wind impact score based on wind speed and terrain exposure. Higher scores indicate stronger effective winds at your location.">Sustained Impact</div>
-            <div class="value" id="sustainedImpactWind">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Current gust impact score based on gust speed and terrain exposure. Higher scores indicate stronger effective gusts at your location.">Gust Impact</div>
-            <div class="value" id="gustImpactWind">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Sea breeze likelihood based on land/water temperature differential, wind speed, direction, and time of day.">Sea Breeze</div>
-            <div class="value" id="seaBreezeWind">--</div>
-          </div>
-          <div class="small-note" id="windPressureNote"></div>
-          </div>
-        </div>
-
-
-
-        <!-- 48-Hour Wind Forecast -->
-        <div class="card col-12" data-collapse-key="48h_wind" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body" style="display:none;">
-          <canvas id="windChart"></canvas>
-
-          <div id="windDataBar" class="chart-data-bar">
-            <div class="chart-data-header">
-              <div id="windDataTime" class="chart-data-time"></div>
-              <button class="chart-data-close" onclick="document.getElementById('windDataBar').classList.remove('visible')">×</button>
-            </div>
-            <div id="windDataLine" style="font-size:clamp(14px, 2.2vw, 24px);font-weight:600;line-height:1.3;class="text-primary" style="width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;"></div>
-          </div>
-
-          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:0.76rem;font-weight:700;class="text-secondary" style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.1);">
-            <span class="wind-legend-label">Forecast:</span>
-            <span><span style="display:inline-block;width:14px;height:10px;border-radius:2px;background:rgba(150,150,150,0.3);margin-right:5px;vertical-align:middle;"></span>Wind Speed</span>
-            <span><span style="display:inline-block;width:14px;height:2px;background:rgba(150,150,150,0.6);margin-right:5px;vertical-align:middle;"></span>Gusts</span>
-            <span style="white-space:nowrap;margin-left:8px;"><span class="wind-legend-label">Impact:</span> <span style="display:inline-block;width:14px;height:2px;background:rgba(140,100,200,0.95);margin-right:5px;vertical-align:middle;"></span>Sustained <span style="display:inline-block;width:14px;height:2px;background:rgba(255,80,60,0.95);margin-right:5px;margin-left:8px;vertical-align:middle;"></span>Gust</span>
-          </div>
-        </div>
-      </div>
-
-        <!-- Impact Score Explanation Cards -->
-
-        <!-- Gust Wind Impact — collapsed by default, own window buttons -->
-        <div class="card col-12" data-collapse-key="wind_gust_impact" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_gust_impact', this)"
-               style="display:flex;align-items:center;justify-content:flex-start;gap:8px;">
-            <span style="flex-shrink:1;min-width:0;">&#127788; Gust Wind Impact <span class="collapse-chevron">&#9660;</span></span>
-            <span class="wind-window-pills" id="gustWindowPills" onclick="event.stopPropagation()" style="flex-shrink:0;flex-wrap:nowrap;">
-              <button class="wpill active" data-target="gust" data-hours="12">12h</button>
-              <button class="wpill" data-target="gust" data-hours="24">24h</button>
-              <button class="wpill" data-target="gust" data-hours="36">36h</button>
-              <button class="wpill" data-target="gust" data-hours="48">48h</button>
-            </span>
-          </div>
-          <div class="card-body" style="display:none;">
-          <div class="row">
-            <div class="label" data-tip="Current gust impact score and severity level right now.">Current Impact</div>
-            <div class="value" id="gustCurrentScore">--</div>
-          </div>
-
-          <div class="row">
-            <div class="label" data-tip="Maximum impact score within the selected forecast window. Score = gust × exposure^1.5" id="gustScoreLabel">Peak Impact (next 12h)</div>
-            <div class="value" id="gustScore">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Highest forecast gust speed within the selected time window.">Peak Gust</div>
-            <div class="value" id="gustPeak">-- mph</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Wind direction at the time of peak gust.">Direction</div>
-            <div class="value" id="gustDir">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="0–1 multiplier for your property's directional exposure. N/NW = 1.0 (full open water fetch from ocean). S/SE ≈ 0.1 (sheltered by shoreline and property). Applied as exposure^1.5 so high-exposure directions are disproportionately penalized.">Exposure Factor</div>
-            <div class="value" id="gustExposure">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Forecast time when peak gust is expected.">Peak Time</div>
-            <div class="value" id="gustTime">--</div>
-          </div>
-          <div class="small-note" id="gustNote"></div>
-          </div>
-        </div>
-
-        <!-- Sustained Wind Impact — collapsed by default, own window buttons -->
-        <div class="card col-12" data-collapse-key="wind_sus_impact" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_sus_impact', this)"
-               style="display:flex;align-items:center;justify-content:flex-start;gap:8px;">
-            <span style="flex-shrink:1;min-width:0;">&#127787; Sustained Wind Impact <span class="collapse-chevron">&#9660;</span></span>
-            <span class="wind-window-pills" id="susWindowPills" onclick="event.stopPropagation()" style="flex-shrink:0;flex-wrap:nowrap;">
-              <button class="wpill active" data-target="sus" data-hours="12">12h</button>
-              <button class="wpill" data-target="sus" data-hours="24">24h</button>
-              <button class="wpill" data-target="sus" data-hours="36">36h</button>
-              <button class="wpill" data-target="sus" data-hours="48">48h</button>
-            </span>
-          </div>
-          <div class="card-body" style="display:none;">
-          <div class="row">
-            <div class="label" data-tip="Current sustained wind impact score and severity level right now.">Current Impact</div>
-            <div class="value" id="susCurrentScore">--</div>
-          </div>
-
-          <div class="row">
-            <div class="label" data-tip="Maximum impact score within the selected forecast window. Score = sustained × exposure^1.5" id="susScoreLabel">Peak Impact (next 12h)</div>
-            <div class="value" id="susScore">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Highest forecast sustained wind speed within the selected time window.">Peak Speed</div>
-            <div class="value" id="susPeak">-- mph</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Wind direction at the time of peak sustained speed.">Direction</div>
-            <div class="value" id="susDir">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="0–1 multiplier for your property's directional exposure. N/NW = 1.0 (full open water fetch from ocean). S/SE ≈ 0.1 (sheltered by shoreline and property). Applied as exposure^1.5 so high-exposure directions are disproportionately penalized.">Exposure Factor</div>
-            <div class="value" id="susExposure">--</div>
-          </div>
-          <div class="row">
-            <div class="label" data-tip="Forecast time when peak sustained wind is expected.">Peak Time</div>
-            <div class="value" id="susTime">--</div>
-          </div>
-          <div class="small-note" id="susNote">Sustained = dock lines, outdoor use. Gust = structural stress.</div>
-          </div>
-        </div>
-
-        <!-- Sea Breeze Detail -->
-        <div class="card col-12" data-collapse-key="sea_breeze_detail" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('sea_breeze_detail', this)">🌊 Sea Breeze Analysis <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body" id="seaBreezeDetail">
-            <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
-          </div>
-        </div>
-        <div class="card col-6">
-          <div class="card-title" style="font-size:0.85rem;">Sustained Impact</div>
-          <div class="card-body" style="font-size:0.82rem;line-height:1.4;">
-            <div style="margin-bottom:8px;" class="text-medium">
-              Cumulative stress from continuous wind exposure. Affects dock lines, outdoor furniture anchoring, and prolonged exposure activities. Answers: "Can I hang out outside?"
-            </div>
-            <div style="font-family:monospace;font-size:0.78rem;color:rgba(140,100,200,0.8);background:rgba(140,100,200,0.08);padding:6px 8px;border-radius:4px;border-left:2px solid rgba(140,100,200,0.4);">
-              score = wind_speed × exposure^1.5
-            </div>
-          </div>
-        </div>
-
-        <div class="card col-6">
-          <div class="card-title" style="font-size:0.85rem;">Gust Impact</div>
-          <div class="card-body" style="font-size:0.82rem;line-height:1.4;">
-            <div style="margin-bottom:8px;" class="text-medium">
-              Peak force from wind spikes. Threatens structural integrity, creates sudden loads on dock hardware, and can damage unsecured items. Answers: "Will the house shake?"
-            </div>
-            <div style="font-family:monospace;font-size:0.78rem;color:rgba(255,80,60,0.8);background:rgba(255,80,60,0.08);padding:6px 8px;border-radius:4px;border-left:2px solid rgba(255,80,60,0.4);">
-              score = gust_speed × exposure^1.5
-            </div>
-          </div>
-        </div>
-
-    </section>
-
     <!-- ALMANAC VIEW -->
     <section id="almanacView" style="display:none;">
       <div class="grid">
@@ -813,77 +642,6 @@
       </div>
     </section>
 
-    <!-- SOURCES VIEW -->
-    <section id="sourcesView" style="display:none;">
-      <div class="grid">
-        <div class="card col-12">
-          <div class="card-title">📡 Data Sources &amp; Status</div>
-          <div id="sourcesTable" style="margin-top:8px;"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- RADAR VIEW -->
-    <section id="radarView" style="display:none;">
-      <div class="grid">
-        <div class="card col-12" style="padding:0;overflow:hidden;border-radius:18px;">
-
-          <!-- Controls bar -->
-          <div id="radarControls" style="
-            display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-            padding:12px 16px;background:rgba(255,255,255,0.05);
-            border-bottom:1px solid rgba(255,255,255,0.08);">
-
-            <span style="font-weight:900;font-size:0.9rem;class="text-emphasis" style="">
-              &#127941; Radar
-            </span>
-
-            <!-- Spacer -->
-            <div style="flex:1;"></div>
-
-            <!-- Timestamp -->
-            <span id="radarTimestamp" style="font-size:0.8rem;class="text-secondary" style="font-weight:700;"></span>
-
-            <!-- Play/Pause -->
-            <button id="radarPlayBtn" onclick="radarTogglePlay()"
-              style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
-                     class="text-emphasis" style="border-radius:999px;padding:5px 14px;
-                     font-size:0.82rem;font-weight:900;cursor:pointer;">
-              &#9654; Play
-            </button>
-
-
-            <!-- Map toggle -->
-            <button id="radarMapBtn" onclick="radarToggleMapType()"
-              style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
-                     border-radius:999px;padding:5px 14px;margin-left:8px;
-                     font-size:0.82rem;font-weight:900;cursor:pointer;
-                     color:rgba(255,255,255,0.75);">
-              🗺 map
-            </button>
-          </div>
-
-          <!-- Map -->
-          <div id="radarMap" style="height:clamp(320px, 55vh, 520px);width:100%;background:#0b1220;"></div>
-
-          <!-- Frame scrubber -->
-          <div style="padding:8px 16px 10px;background:rgba(255,255,255,0.03);
-                      border-top:1px solid rgba(255,255,255,0.06);">
-            <input type="range" id="radarScrubber" min="0" max="0" value="0"
-              oninput="radarScrubTo(this.value)"
-              style="width:100%;accent-color:rgba(100,180,255,0.9);cursor:pointer;">
-            <div style="display:flex;justify-content:flex-start;
-                        font-size:0.75rem;class="text-subtle" style="font-weight:700;margin-top:2px;">
-              <span id="radarScrubStart">--</span>
-              <span class="text-subtle">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,255,180,0.6);">Nowcast</span> &#9654;</span>
-              <span id="radarScrubEnd">--</span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
   <section id="overheadView" style="display:none;">
     <div class="card">
       
@@ -948,6 +706,198 @@
 
     </div>
   </section>
+
+    <!-- HYPERLOCAL CORRECTIONS VIEW -->
+    <section id="hyperlocalView" style="display:none;">
+      <div class="grid">
+        <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">
+            🧮 Hyperlocal Corrections
+            <span class="collapse-chevron">&#9660;</span>
+          </div>
+          <div class="card-body" style="display:none;">
+            
+            <!-- Explanation -->
+            <div style="font-size:0.82rem;class="text-secondary" style="margin-bottom:14px;line-height:1.5;">
+              Using <strong id="stationsUsedCount">--</strong> nearby stations weighted by distance and elevation.
+            </div>
+            
+            <!-- Primary Corrections Table -->
+            <div style="font-size:0.78rem;margin-bottom:14px;">
+              <div style="display:grid;grid-template-columns:100px 80px 70px 80px;gap:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Metric</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Model</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Bias</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Corrected</div>
+                
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Temp</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelTemp">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasTemp">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedTemp">--</div>
+                
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Humidity</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelHumidity">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasHumidity">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedHumidity">--</div>
+                
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Pressure</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelPressure">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasPressure">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedPressure">--</div>
+                
+                <div style="padding:6px 8px;">Wind Gusts</div>
+                <div style="padding:6px 8px;" id="scModelGusts">--</div>
+                <div style="padding:6px 8px;font-weight:700;" id="scBiasGusts">--</div>
+                <div style="padding:6px 8px;font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedGusts">--</div>
+              </div>
+              
+              <div style="display:grid;grid-template-columns:100px 80px 80px;gap:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;margin-top:14px;">
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Derived</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Model</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Corrected</div>
+                
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Dew Point</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelDewpoint">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedDewpoint">--</div>
+                
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Wet Bulb</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelWetBulb">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedWetBulb">--</div>
+                
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Precip Type</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelPrecipType">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedPrecipType">--</div>
+                
+                <div style="padding:6px 8px;">Feels Like</div>
+                <div style="padding:6px 8px;" id="scModelFeelsLike">--</div>
+                <div style="padding:6px 8px;font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedFeelsLike">--</div>
+              </div>
+            </div>
+            
+            <!-- Station Info -->
+            <div style="font-size:0.72rem;class="text-subtle" style="display:flex;gap:12px;flex-wrap:wrap;">
+              <span id="hyperlocalStationsDiag">-- stations used</span>
+              <span>•</span>
+              <span id="hyperlocalConfidenceDiag">-- confidence</span>
+            </div>
+            
+          </div>
+        </div>
+
+        <!-- Gust Wind Impact — collapsed by default, own window buttons -->
+        <div class="card col-12" data-collapse-key="wind_gust_impact" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_gust_impact', this)"
+               style="display:flex;align-items:center;justify-content:flex-start;gap:8px;">
+            <span style="flex-shrink:1;min-width:0;">&#127788; Gust Wind Impact <span class="collapse-chevron">&#9660;</span></span>
+            <span class="wind-window-pills" id="gustWindowPills" onclick="event.stopPropagation()" style="flex-shrink:0;flex-wrap:nowrap;">
+              <button class="wpill active" data-target="gust" data-hours="12">12h</button>
+              <button class="wpill" data-target="gust" data-hours="24">24h</button>
+              <button class="wpill" data-target="gust" data-hours="36">36h</button>
+              <button class="wpill" data-target="gust" data-hours="48">48h</button>
+            </span>
+          </div>
+          <div class="card-body" style="display:none;">
+          <div class="row">
+            <div class="label" data-tip="Current gust impact score and severity level right now.">Current Impact</div>
+            <div class="value" id="gustCurrentScore">--</div>
+          </div>
+
+          <div class="row">
+            <div class="label" data-tip="Maximum impact score within the selected forecast window. Score = gust × exposure^1.5. Forecast gusts use blended corrected values (100% at current, declining to 0% at hour 24)." id="gustScoreLabel">Peak Impact (next 12h)</div>
+            <div class="value" id="gustScore">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Highest forecast gust speed within the selected time window.">Peak Gust</div>
+            <div class="value" id="gustPeak">-- mph</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Wind direction at the time of peak gust.">Direction</div>
+            <div class="value" id="gustDir">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="0–1 multiplier for your property's directional exposure. N/NW = 1.0 (full open water fetch from ocean). S/SE ≈ 0.1 (sheltered by shoreline and property). Applied as exposure^1.5 so high-exposure directions are disproportionately penalized.">Exposure Factor</div>
+            <div class="value" id="gustExposure">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Forecast time when peak gust is expected.">Peak Time</div>
+            <div class="value" id="gustTime">--</div>
+          </div>
+          <div class="small-note" id="gustNote"></div>
+          </div>
+        </div>
+
+        <!-- Sustained Wind Impact — collapsed by default, own window buttons -->
+        <div class="card col-12" data-collapse-key="wind_sus_impact" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_sus_impact', this)"
+               style="display:flex;align-items:center;justify-content:flex-start;gap:8px;">
+            <span style="flex-shrink:1;min-width:0;">&#127787; Sustained Wind Impact <span class="collapse-chevron">&#9660;</span></span>
+            <span class="wind-window-pills" id="susWindowPills" onclick="event.stopPropagation()" style="flex-shrink:0;flex-wrap:nowrap;">
+              <button class="wpill active" data-target="sus" data-hours="12">12h</button>
+              <button class="wpill" data-target="sus" data-hours="24">24h</button>
+              <button class="wpill" data-target="sus" data-hours="36">36h</button>
+              <button class="wpill" data-target="sus" data-hours="48">48h</button>
+            </span>
+          </div>
+          <div class="card-body" style="display:none;">
+          <div class="row">
+            <div class="label" data-tip="Current sustained wind impact score and severity level right now.">Current Impact</div>
+            <div class="value" id="susCurrentScore">--</div>
+          </div>
+
+          <div class="row">
+            <div class="label" data-tip="Maximum impact score within the selected forecast window. Score = sustained × exposure^1.5" id="susScoreLabel">Peak Impact (next 12h)</div>
+            <div class="value" id="susScore">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Highest forecast sustained wind speed within the selected time window.">Peak Speed</div>
+            <div class="value" id="susPeak">-- mph</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Wind direction at the time of peak sustained speed.">Direction</div>
+            <div class="value" id="susDir">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="0–1 multiplier for your property's directional exposure. N/NW = 1.0 (full open water fetch from ocean). S/SE ≈ 0.1 (sheltered by shoreline and property). Applied as exposure^1.5 so high-exposure directions are disproportionately penalized.">Exposure Factor</div>
+            <div class="value" id="susExposure">--</div>
+          </div>
+          <div class="row">
+            <div class="label" data-tip="Forecast time when peak sustained wind is expected.">Peak Time</div>
+            <div class="value" id="susTime">--</div>
+          </div>
+          <div class="small-note" id="susNote">Sustained = dock lines, outdoor use. Gust = structural stress.</div>
+          </div>
+        </div>
+
+        <!-- Sea Breeze Detail -->
+        <div class="card col-12" data-collapse-key="sea_breeze_detail" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('sea_breeze_detail', this)">🌊 Sea Breeze Analysis <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body" id="seaBreezeDetail">
+            <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
+          </div>
+        </div>
+        <!-- Hyperlocal Comparison — Enhanced (closed by default) -->
+
+          </div>
+        </div>
+
+            </div>
+          </div>
+        </div>
+
+    </section>
+      </div>
+    </section>
+
+    <!-- SOURCES VIEW -->
+    <section id="sourcesView" style="display:none;">
+      <div class="grid">
+        <div class="card col-12">
+          <div class="card-title">📡 Data Sources &amp; Status</div>
+          <div id="sourcesTable" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </section>
+
 
 
   </div>

@@ -22,6 +22,7 @@ from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
 from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spread
 from .processors.precip_850mb import add_850mb_precip_type
+from .processors.precip_surface import add_corrected_precip_types
 from .processors.sunset_directional import build_sunset_directional_data
 from .fetchers.open_meteo import fetch_directional_clouds
 
@@ -297,6 +298,11 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # Add these AFTER derived dict is set
     add_850mb_precip_type(weather_data)
     detect_sea_breeze(weather_data)
+    
+    # Surface precipitation type (corrected, using corrected wet bulb)
+    # Must be called AFTER derived dict is set at line 300
+    hyperlocal_data = weather_data.get("hyperlocal", {})
+    add_corrected_precip_types(weather_data, hyperlocal_data)
     
     # Process 7-day hourly data for forecast generation
     if hourly_7day_data and "hourly" in hourly_7day_data:
