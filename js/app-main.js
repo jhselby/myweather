@@ -290,7 +290,7 @@
       const day = dt.getDate();
       const timeStr = `${weekday}, ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? 'am' : 'pm'}`;
       let typeStr = "None";
-      if (precipProb >= 5 && wb != null) {
+      if (wb != null) {
         if (wb <= 28) typeStr = "❄️ Snow";
         else if (wb <= 32) typeStr = "🌨 Likely snow";
         else if (wb <= 35) typeStr = "🟣 Mixed/slush";
@@ -304,7 +304,9 @@
       const clearPct = 100 - cloudPct;
       
       document.getElementById("tempPrecipDataTime").textContent = timeStr;
-      document.getElementById("tempPrecipDataLine").textContent = `Temp: ${temp != null ? Math.round(temp) : "—"}°F | POP: ${precipProb}% | Cloud: ${cloudPct}% | Clear: ${clearPct}% | Type: ${typeStr}`;
+      document.getElementById("tempPrecipDataLine").innerHTML = 
+        `Temp: ${temp != null ? Math.round(temp) : "—"}°F | POP: ${precipProb}% | Type: ${typeStr}<br>` +
+        `Sky: Cloud: ${cloudPct}% | Clear: ${clearPct}%`;
     }
 
     function updateWindDataBar(index, times, speeds, gusts, directions) {
@@ -343,9 +345,9 @@
       const dirStr = dir != null ? toCompass(dir, true) : "—";
       
       document.getElementById("windDataTime").textContent = timeStr;
-      document.getElementById("windDataLine").textContent = 
+      document.getElementById("windDataLine").innerHTML = 
         `Sustained: ${speed != null ? Math.round(speed) : "—"}mph (Impact: ${Math.round(sustainedImpact)}, ${sustainedLabel}) | ` +
-        `Gust: ${gust != null ? Math.round(gust) : "—"}mph (Impact: ${Math.round(gustImpact)}, ${gustLabel}) | ` +
+        `Gust: ${gust != null ? Math.round(gust) : "—"}mph (Impact: ${Math.round(gustImpact)}, ${gustLabel})<br>` +
         `Direction: ${dirStr}`;
     }
 
@@ -2106,6 +2108,70 @@
       el.innerHTML = html;
     }
 
+    function renderFogDetail(data) {
+      const der = data.derived || {};
+      const cur = data.current || {};
+      
+      // Update the main values
+      const labelEl = document.getElementById("fogCurrentLabel");
+      const probEl = document.getElementById("fogCurrentProb");
+      
+      const fogLabel = der.fog_label ?? "--";
+      const fogProb = der.fog_probability;
+      
+      if (labelEl) labelEl.textContent = fogLabel;
+      if (probEl) probEl.textContent = fogProb != null ? `${fogProb}%` : "--";
+      
+      // Calculate the inputs and effects for the breakdown table
+      const temp = cur.temperature;
+      const dewpt = cur.dew_point;
+      const humidity = cur.humidity;
+      const windSpeed = cur.wind_speed;
+      
+      const spread = (temp != null && dewpt != null) ? temp - dewpt : null;
+      
+      // Determine spread effect
+      let spreadEffect = "--";
+      if (spread != null) {
+        if (spread <= 2.0) spreadEffect = "85% base";
+        else if (spread <= 3.5) spreadEffect = "60% base";
+        else if (spread <= 5.0) spreadEffect = "30% base";
+        else spreadEffect = "0% (too dry)";
+      }
+      
+      // Determine humidity effect
+      let humidityEffect = "--";
+      if (humidity != null) {
+        if (humidity >= 95) humidityEffect = "+10%";
+        else if (humidity >= 90) humidityEffect = "+5%";
+        else if (humidity < 80) humidityEffect = "-15%";
+        else humidityEffect = "0%";
+      }
+      
+      // Determine wind effect
+      let windEffect = "--";
+      if (windSpeed != null) {
+        if (windSpeed <= 3) windEffect = "+10%";
+        else if (windSpeed >= 10) windEffect = "-20%";
+        else if (windSpeed >= 7) windEffect = "-10%";
+        else windEffect = "0%";
+      }
+      
+      const spreadEl = document.getElementById("fogSpreadValue");
+      const spreadEffEl = document.getElementById("fogSpreadEffect");
+      const humidityEl = document.getElementById("fogHumidityValue");
+      const humidityEffEl = document.getElementById("fogHumidityEffect");
+      const windEl = document.getElementById("fogWindValue");
+      const windEffEl = document.getElementById("fogWindEffect");
+      
+      if (spreadEl) spreadEl.textContent = spread != null ? `${spread.toFixed(1)}°F` : "--";
+      if (spreadEffEl) spreadEffEl.textContent = spreadEffect;
+      if (humidityEl) humidityEl.textContent = humidity != null ? `${Math.round(humidity)}%` : "--";
+      if (humidityEffEl) humidityEffEl.textContent = humidityEffect;
+      if (windEl) windEl.textContent = windSpeed != null ? `${windSpeed.toFixed(1)} mph` : "--";
+      if (windEffEl) windEffEl.textContent = windEffect;
+    }
+
     function renderWaterTempLog() {
       const el = document.getElementById("wtLogTable");
       if (!el) return;
@@ -2554,6 +2620,33 @@
     // ======================================================
     // NWS Detailed Forecast
     // ======================================================
+    
+    // Navigate to Hyperlocal tab and open a specific card
+    function navigateToHyperlocalCard(cardKey) {
+      // Switch to Hyperlocal tab
+      showTab('hyperlocal');
+      
+      // Find the card and open it if closed
+      const card = document.querySelector(`[data-collapse-key="${cardKey}"]`);
+      if (!card) return;
+      
+      const body = card.querySelector('.card-body');
+      if (!body) return;
+      
+      // Open the card if it's closed
+      if (body.style.display === 'none') {
+        const titleEl = card.querySelector('.card-title-collapsible');
+        if (titleEl) {
+          toggleCard(cardKey, titleEl);
+        }
+      }
+      
+      // Scroll the card into view with some padding
+      setTimeout(() => {
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+    
     function toggleCard(key, el) {
       const card  = el.closest(".card");
       const body  = card.querySelector(".card-body");
@@ -3004,6 +3097,8 @@
           if (hyperlocalConfidenceDiag) hyperlocalConfidenceDiag.textContent = `${hyp.confidence || "Unknown"} confidence`;
         }
 
+        // Fog risk detail (Hyperlocal tab)
+        renderFogDetail(data);
 
         // Today summary
         const daily = data.daily || {};
@@ -3027,17 +3122,39 @@
         document.getElementById("precipNow").textContent = 
           precipType !== "None" ? `${precipType} ${precipChanceVal}` : precipChanceVal;
         
-        // Wind now
-        const windSpeed = Math.round(cur.wind_speed ?? 0);
-        const windDir = cur.wind_direction != null ? degToCompass(cur.wind_direction) : "";
-        document.getElementById("windNow").textContent = 
-          windSpeed > 0 ? `${windDir} ${windSpeed} mph` : "Calm";
+        // Wind Impact now - combined score and wind data
+        const windImpactNowEl = document.getElementById("windImpactNow");
+        if (windImpactNowEl) {
+          const windSpeed = Math.round(cur.wind_speed ?? 0);
+          const windDir = cur.wind_direction != null ? degToCompass(cur.wind_direction) : "";
+          
+          if (cur.wind_speed != null && cur.wind_direction != null) {
+            const exposure = getExposureFactor(cur.wind_direction);
+            const sustainedScore = Math.round(worryScore(cur.wind_speed, exposure));
+            const sustainedLevel = worryLevel(sustainedScore);
+            const windText = windSpeed > 0 ? `${windDir} ${windSpeed} mph` : "Calm";
+            windImpactNowEl.innerHTML = `${sustainedScore} (${sustainedLevel.label}) · ${windText}`;
+          } else {
+            windImpactNowEl.textContent = windSpeed > 0 ? `-- · ${windDir} ${windSpeed} mph` : "-- · Calm";
+          }
+        }
         
-        // Gusts now
-        const gustsNowEl = document.getElementById("gustsNow");
-        if (gustsNowEl) {
+        // Gust Impact now - combined score and gust data
+        const gustImpactNowEl = document.getElementById("gustImpactNow");
+        if (gustImpactNowEl) {
           const gustValue = hyp.corrected_wind_gusts ?? cur.wind_gusts;
-          gustsNowEl.textContent = gustValue != null ? `${Math.round(gustValue)} mph` : "--";
+          const windDir = cur.wind_direction != null ? degToCompass(cur.wind_direction) : "";
+          
+          if (gustValue != null && cur.wind_direction != null) {
+            const exposure = getExposureFactor(cur.wind_direction);
+            const gustScore = Math.round(worryScore(gustValue, exposure));
+            const gustLevel = worryLevel(gustScore);
+            gustImpactNowEl.innerHTML = `${gustScore} (${gustLevel.label}) · ${windDir} ${Math.round(gustValue)} mph`;
+          } else if (gustValue != null) {
+            gustImpactNowEl.textContent = `-- · ${Math.round(gustValue)} mph`;
+          } else {
+            gustImpactNowEl.textContent = "--";
+          }
         }
         
         // Pressure now (with trend inline)
@@ -3049,37 +3166,6 @@
         const pressureChange = der.best_pressure_tend != null ? ` ${der.best_pressure_tend > 0 ? '+' : ''}${der.best_pressure_tend.toFixed(1)} hPa` : "";
         const pressureColType = "";
         document.getElementById("pressureNow").textContent = `${pressure} ${trendShort}${pressureChange}${pressureColType}`.trim();
-        
-        // Sustained Impact and Gust Impact scores
-        const sustainedImpactNowEl = document.getElementById("sustainedImpactNow");
-        const gustImpactNowEl = document.getElementById("gustImpactNow");
-        
-        if (cur.wind_speed != null && cur.wind_direction != null) {
-          const exposure = getExposureFactor(cur.wind_direction);
-          const sustainedScore = Math.round(worryScore(cur.wind_speed, exposure));
-          const sustainedLevel = worryLevel(sustainedScore);
-          if (sustainedImpactNowEl) {
-            sustainedImpactNowEl.innerHTML = `${sustainedScore} <span style="opacity:0.6;font-size:0.85rem;">(${sustainedLevel.label})</span>`;
-          }
-        } else if (sustainedImpactNowEl) {
-          sustainedImpactNowEl.textContent = "--";
-        }
-        
-        if (cur.wind_direction != null) {
-          const gustValue = hyp.corrected_wind_gusts ?? cur.wind_gusts;
-          if (gustValue != null) {
-            const exposure = getExposureFactor(cur.wind_direction);
-            const gustScore = Math.round(worryScore(gustValue, exposure));
-            const gustLevel = worryLevel(gustScore);
-            if (gustImpactNowEl) {
-              gustImpactNowEl.innerHTML = `${gustScore} <span style="opacity:0.6;font-size:0.85rem;">(${gustLevel.label})</span>`;
-            }
-          } else if (gustImpactNowEl) {
-            gustImpactNowEl.textContent = "--";
-          }
-        } else if (gustImpactNowEl) {
-          gustImpactNowEl.textContent = "--";
-        }
         
         // Humidity now
         document.getElementById("humidityNow").textContent = 
@@ -3163,6 +3249,210 @@
                             : fogLabel === "Possible"   ? "rgba(255,200,100,0.85)"
                             : fogLabel === "Low chance" ? "rgba(200,200,200,0.7)"
                             : "rgba(255,255,255,0.85)";
+        }
+
+        // Sunset Score (today only)
+        const sunsetScoreEl = document.getElementById("sunsetScoreNow");
+        if (sunsetScoreEl) {
+          const sunsetDir = data.sunset_directional || [];
+          const todaySunset = sunsetDir.find(d => d.day === 0);
+          
+          if (todaySunset) {
+            const clouds = todaySunset.clouds || {};
+            const cloud10 = clouds['10mi'];
+            const cloud25 = clouds['25mi'];
+            const cloud50 = clouds['50mi'];
+            
+            if (cloud10 && cloud25 && cloud50) {
+              const sunsetTime = new Date(todaySunset.sunset_time);
+              const sunsetIdx = cloud25.times.findIndex(t => new Date(t).getTime() >= sunsetTime.getTime());
+              
+              if (sunsetIdx >= 0) {
+                const low10 = cloud10.cloud_low[sunsetIdx] ?? 0;
+                const mid25 = cloud25.cloud_mid[sunsetIdx] ?? 0;
+                const mid50 = cloud50.cloud_mid[sunsetIdx] ?? 0;
+                const high25 = cloud25.cloud_high[sunsetIdx] ?? 0;
+                const high50 = cloud50.cloud_high[sunsetIdx] ?? 0;
+                const hum25 = cloud25.humidity[sunsetIdx] ?? 50;
+                
+                const totalCloud = (low10 + mid25 + high25) / 3;
+                let score, label, emoji, color;
+                
+                if (totalCloud < 15 && hum25 < 60) {
+                  score = 0.45; label = "Good"; emoji = "🌤️"; color = "rgba(255,220,100,0.9)";
+                } else if (low10 > 60) {
+                  score = 0.1; label = "Poor"; emoji = "☁️"; color = "rgba(120,120,120,0.6)";
+                } else {
+                  const midCloudAvg = mid25 * 0.7 + mid50 * 0.3;
+                  const midScore = midCloudAvg <= 70 ? midCloudAvg / 70 : Math.max(0.3, (100 - midCloudAvg) / 40);
+                  const highBonus = Math.min((high25 + high50) / 2, 60) / 60 * 0.3;
+                  const lowPenalty = Math.min(low10 / 80, 1.0);
+                  const humFactor = 1 - Math.max(0, (hum25 - 60)) / 80;
+                  score = (midScore * 0.7 + highBonus) * (1 - lowPenalty * 0.6) * humFactor;
+                  score = Math.max(0, Math.min(1, score));
+                  
+                  if (score >= 0.75)      { label = "Spectacular";  emoji = "🔥"; color = "rgba(255,160,40,0.95)"; }
+                  else if (score >= 0.60) { label = "Excellent";    emoji = "🌇"; color = "rgba(255,180,60,0.9)"; }
+                  else if (score >= 0.45) { label = "Very Good";    emoji = "⭐"; color = "rgba(255,200,80,0.85)"; }
+                  else if (score >= 0.30) { label = "Good";         emoji = "✨"; color = "rgba(255,220,100,0.8)"; }
+                  else if (score >= 0.20) { label = "Fair";         emoji = "🌥️"; color = "rgba(200,200,180,0.7)"; }
+                  else                    { label = "Meh";          emoji = "😐"; color = "rgba(150,150,150,0.6)"; }
+                }
+                
+                sunsetScoreEl.innerHTML = `${emoji} ${label} <span style="opacity:0.6;font-size:0.85rem;">(${score.toFixed(2)})</span>`;
+                sunsetScoreEl.style.color = color;
+              } else {
+                sunsetScoreEl.textContent = "N/A";
+              }
+            } else {
+              sunsetScoreEl.textContent = "N/A";
+            }
+          } else {
+            sunsetScoreEl.textContent = "N/A";
+          }
+        }
+
+        // Dock Day Score (today's best window)
+        const dockDayScoreEl = document.getElementById("dockDayScoreNow");
+        if (dockDayScoreEl) {
+          const curve = (data.tide_curve || {});
+          const ctimes = curve.times || [];
+          const cheights = curve.heights || [];
+          const hourly = data.hourly || {};
+          const htimes = hourly.times || [];
+          const htemps = hourly.temperature || [];
+          const hwind = hourly.wind_speed || [];
+          const hwinddir = hourly.wind_direction || [];
+          const hprecip = hourly.precipitation_probability || [];
+          const buoy = data.buoy_44013 || {};
+          const waterTempRaw = buoy.water_temp_f;
+          
+          if (ctimes.length) {
+            const correctedHeights = cheights.map(h => h + DOCK_TIDE_OFFSET_FT);
+            const now = new Date();
+            const todayStr = now.toISOString().slice(0, 10);
+            const dayPoints = [];
+            
+            for (let i = 0; i < ctimes.length; i++) {
+              if (ctimes[i].startsWith(todayStr)) {
+                dayPoints.push({ t: ctimes[i], h: correctedHeights[i] });
+              }
+            }
+            
+            if (dayPoints.length) {
+              function nearestHourly(arr, targetMs) {
+                let best = null, bestDiff = Infinity;
+                for (let i = 0; i < htimes.length; i++) {
+                  const diff = Math.abs(new Date(htimes[i]).getTime() - targetMs);
+                  if (diff < bestDiff) { bestDiff = diff; best = arr[i]; }
+                }
+                return best;
+              }
+              
+              const windows = [];
+              let winStart = null;
+              for (let i = 0; i < dayPoints.length; i++) {
+                const accessible = dayPoints[i].h > DOCK_FLOAT_THRESHOLD_FT;
+                if (accessible && winStart === null) winStart = i;
+                if (!accessible && winStart !== null) {
+                  windows.push({ start: winStart, end: i - 1 });
+                  winStart = null;
+                }
+              }
+              if (winStart !== null) windows.push({ start: winStart, end: dayPoints.length - 1 });
+              
+              const usableWindows = windows.map(w => {
+                let s = w.start, e = w.end;
+                while (s <= e) {
+                  const hr = new Date(dayPoints[s].t).getHours();
+                  if (hr >= DOCK_USABLE_HOUR_START) break;
+                  s++;
+                }
+                while (e >= s) {
+                  const hr = new Date(dayPoints[e].t).getHours();
+                  if (hr < DOCK_USABLE_HOUR_END) break;
+                  e--;
+                }
+                if (s > e) return null;
+                
+                const startMs = new Date(dayPoints[s].t).getTime();
+                const endMs = new Date(dayPoints[e].t).getTime();
+                const durMin = Math.round((endMs - startMs) / 60000);
+                const midMs = (startMs + endMs) / 2;
+                
+                const temp = nearestHourly(htemps, midMs);
+                const wspd = nearestHourly(hwind, midMs);
+                const wdir = nearestHourly(hwinddir, midMs);
+                const precip = nearestHourly(hprecip, midMs);
+                
+                const windSc = dockWindScore(wdir, wspd);
+                const tempSc = temp == null ? 0.5 :
+                  temp < 45 ? 0.0 :
+                  temp < 55 ? Math.max(0, (temp - 45) / 20) :
+                  Math.min(1, (temp - 55) / 25 + 0.5);
+                const precipSc = precip == null ? 0.5 : Math.max(0, 1 - precip / 60);
+                const durSc = Math.min(1, durMin / 180);
+                const wtSc = waterTempRaw == null ? 0.5 :
+                  waterTempRaw < 50 ? 0.2 :
+                  waterTempRaw < 65 ? (waterTempRaw - 50) / 25 + 0.2 :
+                  1.0;
+                
+                const rawScore = windSc * 0.35 + tempSc * 0.35 + precipSc * 0.15 + durSc * 0.10 + wtSc * 0.05;
+                const score = (temp != null && temp < 45) || (wspd != null && wspd > 20)
+                  ? Math.min(rawScore, 0.3)
+                  : rawScore;
+                
+                return { score };
+              }).filter(Boolean);
+              
+              const bestScore = usableWindows.length ? Math.max(...usableWindows.map(w => w.score)) : 0;
+              
+              if (bestScore > 0) {
+                let label, emoji, color;
+                if (bestScore >= 0.80)      { label = "Excellent";  emoji = "⛵"; color = "rgba(100,220,120,0.95)"; }
+                else if (bestScore >= 0.65) { label = "Very Good";  emoji = "🌊"; color = "rgba(120,200,140,0.9)"; }
+                else if (bestScore >= 0.50) { label = "Good";       emoji = "⚓"; color = "rgba(140,180,160,0.85)"; }
+                else if (bestScore >= 0.35) { label = "Fair";       emoji = "🛟"; color = "rgba(180,180,140,0.8)"; }
+                else if (bestScore >= 0.20) { label = "Marginal";   emoji = "⚠️"; color = "rgba(200,160,100,0.75)"; }
+                else                        { label = "Poor";       emoji = "🚫"; color = "rgba(150,150,150,0.6)"; }
+                
+                dockDayScoreEl.innerHTML = `${emoji} ${label} <span style="opacity:0.6;font-size:0.85rem;">(${bestScore.toFixed(2)})</span>`;
+                dockDayScoreEl.style.color = color;
+              } else {
+                dockDayScoreEl.textContent = "No accessible windows";
+              }
+            } else {
+              dockDayScoreEl.textContent = "N/A";
+            }
+          } else {
+            dockDayScoreEl.textContent = "N/A";
+          }
+        }
+
+        // Make hyperlocal fields tappable with click handlers
+        if (windImpactNowEl) {
+          windImpactNowEl.classList.add('hyperlocal-link');
+          windImpactNowEl.onclick = () => navigateToHyperlocalCard('wind_sus_impact');
+        }
+        if (gustImpactNowEl) {
+          gustImpactNowEl.classList.add('hyperlocal-link');
+          gustImpactNowEl.onclick = () => navigateToHyperlocalCard('wind_gust_impact');
+        }
+        if (sbEl) {
+          sbEl.classList.add('hyperlocal-link');
+          sbEl.onclick = () => navigateToHyperlocalCard('sea_breeze_detail');
+        }
+        if (fogEl) {
+          fogEl.classList.add('hyperlocal-link');
+          fogEl.onclick = () => navigateToHyperlocalCard('fog_risk');
+        }
+        if (sunsetScoreEl) {
+          sunsetScoreEl.classList.add('hyperlocal-link');
+          sunsetScoreEl.onclick = () => navigateToHyperlocalCard('sunset_quality');
+        }
+        if (dockDayScoreEl) {
+          dockDayScoreEl.classList.add('hyperlocal-link');
+          dockDayScoreEl.onclick = () => navigateToHyperlocalCard('dock_day');
         }
 
         // Pressure alarm banner
@@ -3433,6 +3723,22 @@
         // Almanac tab
         renderTides(data.tides?.events);
         initCollapsibleCards();
+        
+        // Check if radar card is open on page load and initialize it
+        const radarCard = document.querySelector('[data-collapse-key="radar"]');
+        if (radarCard) {
+          const radarBody = radarCard.querySelector('.card-body');
+          if (radarBody && radarBody.style.display !== 'none') {
+            // Radar is open, initialize it
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                initRadar();
+                if (radarMap) radarMap.invalidateSize();
+              });
+            });
+          }
+        }
+        
         renderWaterTempLog();
 
         // Touch tooltip support — tap to show, tap away to dismiss
