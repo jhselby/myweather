@@ -1220,3 +1220,29 @@ body.theme-light .text-blue-tint { color: rgba(0,0,0,0.7); }
 body.theme-light .chart-legend-header {
   color: rgba(0,0,0,0.7) !important;
 }
+
+/* Tappable hyperlocal links in Right Now card */
+.hyperlocal-link {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.hyperlocal-link:hover {
+  color: rgba(100,200,255,0.95) !important;
+}
+
+body.theme-light .hyperlocal-link:hover {
+  color: rgba(0,100,200,0.95) !important;
+}
+
+.hyperlocal-link:active {
+  transform: scale(0.98);
+}
+
+.hyperlocal-link::after {
+  content: ' ›';
+  opacity: 0.4;
+  font-size: 0.9em;
+  margin-left: 2px;
+}

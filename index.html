@@ -72,7 +72,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v4.0</span>
+            <span class="version-pill" id="appVersion">v4.1</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -107,9 +107,9 @@
 
       <nav class="tabs" role="tablist" aria-label="Views">
         <button class="tab active" id="tabWeather" role="tab" aria-selected="true" onclick="showTab('weather')">Weather</button>
+        <button class="tab" id="tabHyperlocal" role="tab" aria-selected="false" onclick="showTab('hyperlocal')">Hyperlocal</button>
         <button class="tab" id="tabAlmanac" role="tab" aria-selected="false" onclick="showTab('almanac')">Almanac</button>
         <button class="tab" id="tabOverhead" role="tab" aria-selected="false" onclick="showTab('overhead')">Overhead</button>
-        <button class="tab" id="tabHyperlocal" role="tab" aria-selected="false" onclick="showTab('hyperlocal')">Hyperlocal Corrections</button>
         <button class="tab" id="tabSources" role="tab" aria-selected="false" onclick="showTab('sources')" style="border-color:rgba(100,220,100,0.3);">Sources</button>
       </nav>
 
@@ -175,19 +175,11 @@
               <div class="value" id="precipNow">--%</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Current wind speed and direction.">Wind</div>
-              <div class="value" id="windNow">--</div>
+              <div class="label" data-tip="Current sustained wind impact score based on wind speed and terrain exposure, followed by current wind speed and direction.">Wind Impact</div>
+              <div class="value" id="windImpactNow">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Current sustained wind impact score based on wind speed and terrain exposure.">Sustained Impact</div>
-              <div class="value" id="sustainedImpactNow">--</div>
-            </div>
-            <div class="row">
-              <div class="label" data-tip="Current gust speed corrected using weighted average from nearby WU stations. Forecast gusts blend corrected value (100% at current hour, declining to 0% at hour 24).">Gusts</div>
-              <div class="value" id="gustsNow">--</div>
-            </div>
-            <div class="row">
-              <div class="label" data-tip="Current gust impact score based on corrected gust speed and terrain exposure.">Gust Impact</div>
+              <div class="label" data-tip="Current gust impact score based on corrected gust speed and terrain exposure, followed by gust speed and direction.">Gust Impact</div>
               <div class="value" id="gustImpactNow">--</div>
             </div>
             <div class="row">
@@ -207,6 +199,14 @@
               <div class="value" id="fogRiskNow">--</div>
             </div>
             <div class="row">
+              <div class="label" data-tip="Today's sunset quality score based on cloud cover at sunset time. Higher score = better color potential.">Sunset Score</div>
+              <div class="value" id="sunsetScoreNow">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Today's best dock day score based on tide accessibility, temperature, wind conditions, and precipitation. Higher score = better dock day.">Dock Day Score</div>
+              <div class="value" id="dockDayScoreNow">--</div>
+            </div>
+            <div class="row">
               <div class="label" data-tip="Dew point temperature calculated from corrected temperature and humidity. When air becomes saturated. Above 65°F feels muggy.">Dew Point</div>
               <div class="value"><span id="dewPointNow">--°F</span> <span id="dewPointDepression" style="opacity:0.6;font-size:0.85rem;"></span></div>
             </div>
@@ -221,7 +221,7 @@
           </div>
         </div>
         <div class="card col-12" data-collapse-key="48h_temp_precip" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature &amp; Precipitation <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature, Precipitation &amp; Sky <span class="collapse-chevron">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <!-- Hover data overlay -->
           <div id="tempPrecipOverlay" style="
@@ -309,7 +309,7 @@
         </div>
     
         <div class="card col-12" data-collapse-key="hyperlocal_forecast" data-default-open="true">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal_forecast', this)">📌 Wyman Cove Detailed Forecast
+          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal_forecast', this)">📌 Detailed Forecast
             <span class="collapse-chevron">&#9660;</span>
           </div>
           <div class="card-body">
@@ -425,14 +425,6 @@
           </div>
         </div>
 
-        <!-- Dock Day Score -->
-        <div class="card col-12" data-collapse-key="dock_day" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('dock_day', this)">⚓ Dock Day Score <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body">
-            <div id="dockDayContent"></div>
-          </div>
-        </div>
-
         <!-- Buoy 44013 / Water Temp -->
         <div class="card col-12" data-collapse-key="buoy_44013" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('buoy_44013', this)">&#127754; Ocean Conditions <span class="collapse-chevron">&#9660;</span></div>
@@ -542,14 +534,6 @@
           <div class="small-note" id="sunNote" style="margin-top:10px;"></div>
           </div><!-- /card-body sun -->
         </div><!-- /card sun -->
-
-        <!-- Sunset Quality -->
-        <div class="card col-12" data-collapse-key="sunset_quality" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('sunset_quality', this)">🌅 Sunset Quality Forecast <span class="collapse-chevron">&#9660;</span></div>
-          <div class="card-body">
-            <div id="sunsetQualityContent"></div>
-          </div>
-        </div>
 
         <!-- Moon — full width -->
         <div class="card col-12" data-collapse-key="moon" data-default-open="false">
@@ -712,7 +696,7 @@
       <div class="grid">
         <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">
-            🧮 Hyperlocal Corrections
+            🧮 Smart Corrections
             <span class="collapse-chevron">&#9660;</span>
           </div>
           <div class="card-body" style="display:none;">
@@ -875,6 +859,65 @@
             <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
           </div>
         </div>
+
+        <!-- Sunset Quality Forecast -->
+        <div class="card col-12" data-collapse-key="sunset_quality" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('sunset_quality', this)">🌅 Sunset Quality Forecast <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
+            <div id="sunsetQualityContent"></div>
+          </div>
+        </div>
+
+        <!-- Dock Day Score -->
+        <div class="card col-12" data-collapse-key="dock_day" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('dock_day', this)">⚓ Dock Day Score <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
+            <div id="dockDayContent"></div>
+          </div>
+        </div>
+
+        <!-- Fog Risk -->
+        <div class="card col-12" data-collapse-key="fog_risk" data-default-open="false">
+          <div class="card-title card-title-collapsible" onclick="toggleCard('fog_risk', this)">🌫️ Fog Risk <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-body">
+            <div class="row">
+              <div class="label" data-tip="Current fog probability based on dew point spread, humidity, and wind conditions.">Current Risk</div>
+              <div class="value" id="fogCurrentLabel">--</div>
+            </div>
+            <div class="row">
+              <div class="label" data-tip="Numerical probability from 0-100%.">Probability</div>
+              <div class="value" id="fogCurrentProb">--%</div>
+            </div>
+
+            <!-- Calculation Breakdown -->
+            <div style="font-size:0.82rem;class="text-secondary" style="margin-top:14px;margin-bottom:8px;font-weight:700;">Calculation Breakdown</div>
+            
+            <div style="font-size:0.78rem;margin-bottom:14px;">
+              <div style="display:grid;grid-template-columns:140px 80px 80px;gap:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Input</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Value</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Effect</div>
+                
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Dew Point Spread</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="fogSpreadValue">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="fogSpreadEffect">--</div>
+                
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Humidity</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="fogHumidityValue">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="fogHumidityEffect">--</div>
+                
+                <div style="padding:6px 8px;">Wind Speed</div>
+                <div style="padding:6px 8px;" id="fogWindValue">--</div>
+                <div style="padding:6px 8px;font-weight:700;" id="fogWindEffect">--</div>
+              </div>
+            </div>
+
+            <div style="font-size:0.72rem;class="text-subtle" style="line-height:1.5;">
+              Fog forms when air near saturation (small dew point spread) combines with high humidity and light winds. Base probability from spread, then adjusted for humidity and wind conditions.
+            </div>
+          </div>
+        </div>
+
         <!-- Hyperlocal Comparison — Enhanced (closed by default) -->
 
           </div>

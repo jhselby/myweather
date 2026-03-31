@@ -1,4 +1,23 @@
 # Weather App Changelog
+## v4.1 • March 31, 2026
+* Tab reorganization: Hyperlocal moved to second position (Weather → Hyperlocal → Almanac → Overhead → Sources)
+* Renamed "Hyperlocal Corrections" tab to "Hyperlocal", card to "Smart Corrections"
+* Renamed "Wyman Cove Detailed Forecast" to "Detailed Forecast"
+* Renamed "48-Hour Temperature & Precipitation" to "48-Hour Temperature, Precipitation & Sky"
+* Moved Sunset Quality Forecast and Dock Day Score cards from Almanac to Hyperlocal tab
+* Added new Fog Risk card to Hyperlocal tab with calculation breakdown (dew point spread + humidity + wind)
+* Right Now card: Added Sunset Score and Dock Day Score with today's values
+* Right Now card: Consolidated Wind/Sustained Impact and Gusts/Gust Impact into two combined rows
+* Right Now card: 6 hyperlocal fields now tappable/clickable, linking directly to detailed cards in Hyperlocal tab
+* Wind Impact/Gust Impact format: Score and severity level shown first, followed by direction and speed
+* Chart hover improvements: Wind chart direction moved to second line, Temp/Precip/Sky chart reorganized (Temp/POP/Type line 1, Sky data line 2)
+* Fix: Precipitation type now matches bar colors at all POP levels (removed 5% threshold), shows "None" only when POP = 0%
+* Fix: Radar initialization on page load when card state remembered as open
+* Fix: Fog Risk card now populates correctly (moved render call to proper section)
+* Navigation: Tappable hyperlocal links use smooth scroll and auto-open target cards
+* CSS: Added hyperlocal-link styling with hover effects and chevron indicators
+
+
 ## v4.0 • March 31, 2026
 * MAJOR: Comprehensive hyperlocal correction system - all derived values now use corrected data
 * Corrected wet bulb calculation from corrected temp + humidity (current + 48h forecast)
