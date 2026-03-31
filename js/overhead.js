@@ -13,7 +13,7 @@
   let ohTileLayers = {};
   let ohCurrentTile = 'satellite';
   let ohIsPlaying = false;
-  let selectedMarker = null; // Track currently selected plane
+  let selectedAircraftReg = null; // Track selected aircraft registration across refreshes
 
   // Initialize map (lazy, on first tab switch to overhead)
   function getPlaneColor(altitude) {
@@ -74,7 +74,7 @@
       // Clear old markers
       ohMarkers.forEach(m => ohMap.removeLayer(m));
       ohMarkers = [];
-      selectedMarker = null; // Reset selection on refresh
+      // selectedAircraftReg preserved across refresh - will re-highlight if still visible
 
       // Filter: must have position, not on ground
       const visible = aircraft.filter(a =>
@@ -87,7 +87,9 @@
 
       visible.forEach(a => {
         const hdg = a.track || 0;
-        const color = getPlaneColor(a.alt_baro);
+        const reg = a.r || a.hex || a.flight; // Unique identifier
+        const isSelected = (reg === selectedAircraftReg);
+        const color = isSelected ? '#ec4899' : getPlaneColor(a.alt_baro);
 
         const planeIcon = L.divIcon({
           html: `<span class="oh-plane-icon" style="color:${color} !important; transform:rotate(${hdg - 90}deg); display:block;">✈︎</span>`,
@@ -101,31 +103,32 @@
         
         // Store aircraft data with marker for later reference
         marker.aircraftData = a;
+        marker.aircraftReg = reg;
+        
+        // Show popup if this was the previously selected aircraft
+        if (isSelected) {
+          ohShowPopup(a);
+        }
         
         marker.on('click', function() { 
-          // Unhighlight previous selection
-          if (selectedMarker && selectedMarker !== marker) {
-            const prevData = selectedMarker.aircraftData;
-            const prevHdg = prevData.track || 0;
-            const prevColor = getPlaneColor(prevData.alt_baro);
-            const prevIcon = L.divIcon({
-              html: `<span class="oh-plane-icon" style="color:${prevColor} !important; transform:rotate(${prevHdg - 90}deg); display:block;">✈︎</span>`,
+          // Update selection
+          const oldReg = selectedAircraftReg;
+          selectedAircraftReg = reg;
+          
+          // Refresh all markers to update colors
+          ohMarkers.forEach(m => {
+            const mData = m.aircraftData;
+            const mReg = m.aircraftReg;
+            const mHdg = mData.track || 0;
+            const mColor = (mReg === reg) ? '#ec4899' : getPlaneColor(mData.alt_baro);
+            const mIcon = L.divIcon({
+              html: `<span class="oh-plane-icon" style="color:${mColor} !important; transform:rotate(${mHdg - 90}deg); display:block;">✈︎</span>`,
               className: '',
               iconSize:   [32, 32],
               iconAnchor: [16, 16]
             });
-            selectedMarker.setIcon(prevIcon);
-          }
-          
-          // Highlight new selection with magenta color
-          const selectedIcon = L.divIcon({
-            html: `<span class="oh-plane-icon" style="color:#ec4899 !important; transform:rotate(${hdg - 90}deg); display:block;">✈︎</span>`,
-            className: '',
-            iconSize:   [32, 32],
-            iconAnchor: [16, 16]
+            m.setIcon(mIcon);
           });
-          marker.setIcon(selectedIcon);
-          selectedMarker = marker;
           
           ohShowPopup(a); 
         });
@@ -408,5 +411,45 @@ async function ohShowPopup(a) {
     // Expose to global scope for showTab to call
   window.ohInitMap = ohInitMap;
   window.ohMap = null; // Will be set by ohInitMap
+
+
+  // Toggle live auto-refresh
+  window.ohToggleLive = function() {
+    if (ohIsPlaying) {
+      // Stop auto-refresh
+      clearInterval(ohRefreshTimer);
+      ohRefreshTimer = null;
+      ohIsPlaying = false;
+      document.getElementById('oh-live-btn').textContent = 'Live';
+    } else {
+      // Start auto-refresh
+      ohIsPlaying = true;
+      document.getElementById('oh-live-btn').textContent = 'Stop';
+      ohFetch(); // Fetch immediately
+      ohRefreshTimer = setInterval(ohFetch, REFRESH_MS);
+    }
+  };
+
+  // Stop auto-refresh (called when leaving Overhead tab)
+  window.ohStopLive = function() {
+    if (ohIsPlaying) {
+      clearInterval(ohRefreshTimer);
+      ohRefreshTimer = null;
+      ohIsPlaying = false;
+      document.getElementById('oh-live-btn').textContent = 'Live';
+    }
+  };
+
+  // Stop auto-refresh when page becomes hidden (lock, minimize, tab switch)
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden && ohIsPlaying) {
+      clearInterval(ohRefreshTimer);
+      ohRefreshTimer = null;
+      // Keep ohIsPlaying true so it resumes when visible again
+    } else if (!document.hidden && ohIsPlaying && !ohRefreshTimer) {
+      ohFetch();
+      ohRefreshTimer = setInterval(ohFetch, REFRESH_MS);
+    }
+  });
 
 })();
