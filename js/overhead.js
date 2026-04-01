@@ -306,6 +306,32 @@ function validateRoute(aircraftLat, aircraftLon, aircraftHeading, originLat, ori
   };
 }
 
+
+function ohClosePopup() {
+  // Hide the popup
+  console.log("ohClosePopup called");
+  document.getElementById('oh-popup').style.display = 'none';
+  
+  // Reset selected aircraft
+  const oldReg = selectedAircraftReg;
+  selectedAircraftReg = null;
+  
+  // Refresh all markers to restore altitude-based colors
+  ohMarkers.forEach(m => {
+    const mData = m.aircraftData;
+    const mHdg = mData.track || 0;
+    const mColor = getPlaneColor(mData.alt_baro);
+    const mIcon = L.divIcon({
+      html: `<span class="oh-plane-icon" style="color:${mColor} !important; transform:rotate(${mHdg - 90}deg); display:block;">✈︎</span>`,
+      className: '',
+      iconAnchor: [16, 16]
+    });
+    m.setIcon(mIcon);
+  });
+}
+window.ohClosePopup = ohClosePopup;
+
+
 async function ohShowPopup(a) {
     const flightId = a.flight ? a.flight.trim() : (a.r || 'Unknown');
     document.getElementById('oh-pop-route').textContent = 'looking up route…';

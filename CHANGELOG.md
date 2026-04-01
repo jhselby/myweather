@@ -1,4 +1,13 @@
 # Weather App Changelog
+## v4.3 • April 1, 2026
+* UI consistency improvements: standardized card collapse patterns
+* Radar card: moved controls (timestamp, play/pause, map toggle) inside card body
+* Wind Impact cards: moved time window pills (12h/24h/36h/48h) inside card body
+* All collapsible cards now have clean titles when collapsed, controls visible only when expanded
+* Flight tracker: selected aircraft now reverts to altitude-based color when detail panel closes
+* Fixed bug where clicked planes stayed highlighted (red) after closing details
+
+
 ## v4.2 • March 31, 2026
 * Chart sky colors redesigned for visual accuracy
 * Clear sky: yellow (sun) during day, dark blue/black at night, subtle orange at dawn/dusk
