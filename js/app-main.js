@@ -1247,7 +1247,7 @@
     };
 
     const STATIC_SOURCES = [
-      { name: "RainViewer",   desc: "Radar tile source — smoothed NEXRAD composite with nowcast frames (rainviewer.com)" },
+      { name: "IEM NEXRAD",   desc: "Radar tile source — NOAA NEXRAD base reflectivity composite via Iowa Environmental Mesonet, 5-minute archives (mesonet.agron.iastate.edu)" },
       { name: "CartoDB",      desc: "Dark Matter basemap tiles for radar view — no API key required (carto.com)" },
       { name: "SunCalc",      desc: "Client-side sun/moon position and phase calculations (mourner/suncalc)" },
       { name: "VSOP87",       desc: "Client-side planetary position calculations — solar system card (truncated series, ~1° accuracy)" },
@@ -2312,102 +2312,74 @@
     }
 
     // ======================================================
-    // Radar — RainViewer public API
-    // No key required. Smooth interpolated tiles, animated past frames + nowcast.
-    // API JSON: https://api.rainviewer.com/public/weather-maps.json
-    // Tile URL: {host}{path}/512/{z}/{x}/{y}/{colorScheme}/{smooth}_{snow}.webp
+    // Radar — NOAA NEXRAD via IEM WMS
+    // 5-minute archive interval (vs RainViewer's 10-minute)
+    // WMS endpoint: https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi
+    // Layer: nexrad-n0r-wmst (time-enabled NEXRAD base reflectivity composite)
+    // Time format: YYYY-MM-DDTHH:MM:00Z
     // ======================================================
     let radarMap       = null;
     let radarInited    = false;
     let radarPlaying   = false;
     let radarTimer     = null;
     let radarFrameIdx  = 0;
-    let radarFrames    = [];   // [{ts, path, host, kind}]  kind = "past"|"nowcast"
+    let radarFrames    = [];   // [{ts, kind}]  kind = "past" (no nowcast with NEXRAD)
     let radarLayers    = {};   // _active -> current L.TileLayer
-    let radarLayerType = "radar";   // "radar" | "satellite"
-    let radarApiData   = null;
+    let radarLayerType = "radar";   // only radar for now (satellite can be added later)
 
     let radarTileLayers = {};  // street and satellite base map layers
     let radarCurrentTile = "satellite";  // default to satellite
     const RADAR_CENTER  = [42.5014, -70.8750];
     const RADAR_ZOOM    = 7;
     const FRAME_DELAY   = 400;
-    const COLOR_SCHEME  = 2;   // 0-8; 2 = classic blue→green→yellow→red
-    const SMOOTH        = 1;   // 1 = smoothed/interpolated
-    const SNOW_COLORS   = 1;   // 1 = show snow as distinct color
-    const TILE_SIZE     = 512;
+    const NEXRAD_FRAMES = 24;   // 24 frames * 5min = 2 hours of history
 
-    function rvTileUrl(host, path, kind) {
-      if (kind === "satellite") {
-        // Satellite: no color scheme options, just size/{z}/{x}/{y}/0/0_0
-        return `${host}${path}/${TILE_SIZE}/{z}/{x}/{y}/0/0_0.webp`;
-      }
-      // Radar: host + path + size/{z}/{x}/{y}/colorScheme/smooth_snow.ext
-      return `${host}${path}/${TILE_SIZE}/{z}/{x}/{y}/${COLOR_SCHEME}/${SMOOTH}_${SNOW_COLORS}.webp`;
+    function mrmsTimeString(date) {
+      // Format: YYYY-MM-DDTHH:MM:00Z (rounded to nearest 5-min boundary)
+      const d = new Date(date);
+      const minutes = Math.floor(d.getUTCMinutes() / 5) * 5;  // round down to 5-min boundary
+      d.setUTCMinutes(minutes, 0, 0);
+      return d.toISOString().replace(/\.\d{3}Z$/, 'Z').replace(/:\d{2}Z$/, ':00Z');
     }
 
-    async function fetchRainViewerFrames() {
-      try {
-        console.log("RainViewer: fetching API...");
-        const resp = await fetch("https://api.rainviewer.com/public/weather-maps.json");
-        radarApiData = await resp.json();
-        console.log("RainViewer: API response", JSON.stringify(radarApiData).slice(0, 300));
-
-        radarFrames = [];
-
-        if (radarLayerType === "satellite") {
-          const sat = radarApiData.satellite?.infrared || [];
-          console.log("RainViewer: satellite data", JSON.stringify(radarApiData.satellite || {}).slice(0, 300));
-          console.log("RainViewer: satellite frames", sat.length);
-          sat.forEach(f => radarFrames.push({
-            ts: new Date(f.time * 1000), path: f.path,
-            host: radarApiData.host, kind: "satellite"
-          }));
-        } else {
-          const past = radarApiData.radar?.past || [];
-          const now  = radarApiData.radar?.nowcast || [];
-          console.log("RainViewer: past frames", past.length, "nowcast frames", now.length);
-          past.forEach(f => radarFrames.push({
-            ts: new Date(f.time * 1000), path: f.path,
-            host: radarApiData.host, kind: "past"
-          }));
-          now.forEach(f => radarFrames.push({
-            ts: new Date(f.time * 1000), path: f.path,
-            host: radarApiData.host, kind: "nowcast"
-          }));
-        }
-
-        console.log("RainViewer: total frames", radarFrames.length);
-        if (radarFrames.length > 0) {
-          console.log("RainViewer: sample tile URL", rvTileUrl(radarFrames[0].host, radarFrames[0].path, radarFrames[0].kind).replace("{z}/{x}/{y}", "7/38/46"));
-        }
-
-        // Update scrubber
-        const scrubber = document.getElementById("radarScrubber");
-        if (scrubber) {
-          scrubber.max   = radarFrames.length - 1;
-          scrubber.value = radarFrames.length - 1;
-        }
-        const fmt = d => d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-        if (radarFrames.length) {
-          const startEl = document.getElementById("radarScrubStart");
-          const endEl   = document.getElementById("radarScrubEnd");
-          if (startEl) startEl.textContent = fmt(radarFrames[0].ts);
-          if (endEl)   endEl.textContent   = fmt(radarFrames[radarFrames.length - 1].ts)
-            + (radarLayerType === "radar" ? " (nowcast)" : "");
-        }
-
-        // Preload all frame layers (hidden)
-        preloadFrames();
-
-        // Show most recent past frame (not nowcast) as default
-        const lastPastIdx = radarFrames.map(f => f.kind).lastIndexOf("past");
-        showFrame(lastPastIdx >= 0 ? lastPastIdx : radarFrames.length - 1);
-
-      } catch(e) {
-        console.error("RainViewer fetch failed:", e);
-        document.getElementById("radarTimestamp").textContent = "Error loading radar";
+    function generateMRMSFrames() {
+      radarFrames = [];
+      const now = new Date();
+      
+      // NEXRAD archives update every 5 minutes, generate last N frames
+      for (let i = 0; i < NEXRAD_FRAMES; i++) {
+        const frameTime = new Date(now - (NEXRAD_FRAMES - 1 - i) * 5 * 60 * 1000);
+        radarFrames.push({
+          ts: frameTime,
+          kind: "past"
+        });
       }
+
+      console.log("NEXRAD: generated", radarFrames.length, "frames");
+      console.log("NEXRAD: time range", 
+                  mrmsTimeString(radarFrames[0].ts), 
+                  "to", 
+                  mrmsTimeString(radarFrames[radarFrames.length - 1].ts));
+
+      // Update scrubber
+      const scrubber = document.getElementById("radarScrubber");
+      if (scrubber) {
+        scrubber.max   = radarFrames.length - 1;
+        scrubber.value = radarFrames.length - 1;
+      }
+      const fmt = d => d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+      if (radarFrames.length) {
+        const startEl = document.getElementById("radarScrubStart");
+        const endEl   = document.getElementById("radarScrubEnd");
+        if (startEl) startEl.textContent = fmt(radarFrames[0].ts);
+        if (endEl)   endEl.textContent   = fmt(radarFrames[radarFrames.length - 1].ts);
+      }
+
+      // Preload all frame layers (hidden)
+      preloadFrames();
+
+      // Show most recent frame
+      showFrame(radarFrames.length - 1);
     }
 
     function preloadFrames() {
@@ -2425,42 +2397,65 @@
       radarFrameIdx = idx;
       const frame = radarFrames[idx];
 
-      // Remove old layer
-      if (radarLayers._active) {
-        radarMap.removeLayer(radarLayers._active);
-        radarLayers._active = null;
-      }
-
-      // Add new layer
-      const url = rvTileUrl(frame.host, frame.path, frame.kind);
-      console.log("RainViewer: showFrame", idx, "url template:", url.replace("{z}/{x}/{y}", "7/38/46"));
-      const layer = L.tileLayer(url, {
-        opacity:    0.75,
-        tileSize:   512,
-        zoomOffset: -1,
-        maxZoom:    10,
-        attribution: '&copy; <a href="https://rainviewer.com">RainViewer</a>',
+      // Add new layer with NEXRAD WMS
+      const timeStr = mrmsTimeString(frame.ts);
+      console.log("NEXRAD: showFrame", idx, "time:", timeStr);
+      
+      const layer = L.tileLayer.wms("https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi", {
+        layers: 'nexrad-n0r-wmst',  // Note: -wmst suffix for time-enabled layer
+        format: 'image/png',
+        transparent: true,
+        opacity: 0.75,
+        attribution: '&copy; <a href="https://mesonet.agron.iastate.edu/">IEM NEXRAD</a>',
+        time: timeStr
       });
+      
+      // Track loading state - need to wait for ALL tiles, not just first one
+      layer._loaded = false;
+      layer._tilesLoading = 0;
+      const oldLayer = radarLayers._active;
+      
+      layer.on('tileloadstart', () => { 
+        layer._tilesLoading++; 
+      });
+      
+      layer.on('tileload', () => { 
+        layer._tilesLoading--;
+        if (layer._tilesLoading === 0) {
+          layer._loaded = true;
+          // Remove old layer once ALL new tiles are loaded
+          if (oldLayer && radarMap.hasLayer(oldLayer)) {
+            radarMap.removeLayer(oldLayer);
+          }
+        }
+      });
+      
+      layer.on('tileerror', () => { 
+        layer._tilesLoading--;
+        if (layer._tilesLoading === 0) {
+          layer._loaded = true;
+          // Remove old layer even with errors
+          if (oldLayer && radarMap.hasLayer(oldLayer)) {
+            radarMap.removeLayer(oldLayer);
+          }
+        }
+      });
+      
       layer.addTo(radarMap);
       radarLayers._active = layer;
 
-      // Timestamp with nowcast label
-      const timeStr = frame.ts.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
-      const label   = frame.kind === "nowcast" ? ` (nowcast)` : "";
-      document.getElementById("radarTimestamp").textContent = timeStr + label;
+      // Timestamp display
+      const displayTime = frame.ts.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
+      document.getElementById("radarTimestamp").textContent = displayTime;
       document.getElementById("radarScrubber").value = idx;
 
-      // Color the scrubber track — blue = past, green = nowcast
-      const lastPastIdx = radarFrames.map(f => f.kind).lastIndexOf("past");
-      const pastPct = lastPastIdx / Math.max(radarFrames.length - 1, 1) * 100;
-      const curPct  = idx / Math.max(radarFrames.length - 1, 1) * 100;
+      // Simple scrubber track color (all past frames, no nowcast)
+      const curPct = idx / Math.max(radarFrames.length - 1, 1) * 100;
       const scrubber = document.getElementById("radarScrubber");
       if (scrubber) {
         scrubber.style.background = `linear-gradient(to right,
           rgba(100,180,255,0.8) 0%,
-          rgba(100,180,255,0.8) ${pastPct}%,
-          rgba(100,255,180,0.6) ${pastPct}%,
-          rgba(100,255,180,0.6) ${curPct}%,
+          rgba(100,180,255,0.8) ${curPct}%,
           rgba(255,255,255,0.15) ${curPct}%,
           rgba(255,255,255,0.15) 100%)`;
       }
@@ -2474,7 +2469,7 @@
         center:  RADAR_CENTER,
         zoom:    RADAR_ZOOM,
         minZoom: 4,
-        maxZoom: 10,
+        maxZoom: 12,
         zoomControl: true,
         attributionControl: true,
       });
@@ -2492,10 +2487,10 @@
       }).bindTooltip("Wyman Cove", { permanent: false }).addTo(radarMap);
 
       setTimeout(() => { if (radarMap) radarMap.invalidateSize(); }, 300);
-      fetchRainViewerFrames();
+      generateMRMSFrames();
 
-      // Refresh frames every 5 minutes
-      setInterval(fetchRainViewerFrames, 5 * 60 * 1000);
+      // Refresh frames every 5 minutes (matches NEXRAD archive frequency)
+      setInterval(generateMRMSFrames, 5 * 60 * 1000);
     }
 
     function radarTogglePlay() {
@@ -2512,6 +2507,13 @@
 
     function radarAdvance() {
       if (!radarPlaying) return;
+      
+      // Wait for current frame to finish loading before advancing
+      if (radarLayers._active && !radarLayers._active._loaded) {
+        radarTimer = setTimeout(radarAdvance, 100);  // check again in 100ms
+        return;
+      }
+      
       let next = radarFrameIdx + 1;
       if (next >= radarFrames.length) {
         next = 0;
@@ -2539,24 +2541,6 @@
         radarCurrentTile === "street" ? "🛰 satellite" : "🗺 map";
     }
 
-    function setRadarLayer(type) {
-      radarLayerType = type;
-      ["radar","satellite"].forEach(t => {
-        const btn = document.getElementById(
-          "btnLayer" + t.charAt(0).toUpperCase() + t.slice(1));
-        if (btn) btn.classList.toggle("radar-btn-active", t === type);
-      });
-      if (radarInited) {
-        // Clear active layer and re-fetch for new product
-        if (radarLayers._active) {
-          radarMap.removeLayer(radarLayers._active);
-          radarLayers._active = null;
-        }
-        radarFrames = [];
-        radarApiData = null;  // force fresh fetch
-        fetchRainViewerFrames();
-      }
-    }
 
     // ======================================================
     // Moon (SunCalc)

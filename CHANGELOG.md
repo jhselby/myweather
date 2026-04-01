@@ -1,4 +1,19 @@
 # Weather App Changelog
+## 4.4 (April 1, 2026) - NEXRAD Radar Upgrade**
+*  Switched radar source from RainViewer to IEM NEXRAD WMS
+  * 5-minute update intervals (vs RainViewer's 10-minute)
+  * 24 frames = 2 hours of radar history
+  * Higher quality NOAA NEXRAD base reflectivity composite
+* Fixed animation smoothness: crossfade between frames
+  * Old radar layer stays visible until new frame fully loads
+  * Tracks tile loading state to prevent blank gaps during playback
+  * No more choppy transitions or disappearing radar data
+* Updated Sources page: "IEM NEXRAD" attribution
+* Code locations:
+  * Radar implementation: `js/app-main.js` lines ~2315-2520
+  * WMS endpoint: `https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi`
+  * Layer: `nexrad-n0r-wmst` (time-enabled)
+
 ## v4.3 • April 1, 2026
 * UI consistency improvements: standardized card collapse patterns
 * Radar card: moved controls (timestamp, play/pause, map toggle) inside card body
@@ -6,7 +21,6 @@
 * All collapsible cards now have clean titles when collapsed, controls visible only when expanded
 * Flight tracker: selected aircraft now reverts to altitude-based color when detail panel closes
 * Fixed bug where clicked planes stayed highlighted (red) after closing details
-
 
 ## v4.2 • March 31, 2026
 * Chart sky colors redesigned for visual accuracy
