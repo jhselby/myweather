@@ -290,7 +290,7 @@
       const day = dt.getDate();
       const timeStr = `${weekday}, ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? 'am' : 'pm'}`;
       let typeStr = "None";
-      if (wb != null) {
+      if (precipProb > 0 && wb != null) {
         if (wb <= 28) typeStr = "❄️ Snow";
         else if (wb <= 32) typeStr = "🌨 Likely snow";
         else if (wb <= 35) typeStr = "🟣 Mixed/slush";
@@ -376,23 +376,20 @@
       function getSkyColor(i) {
         const time = new Date(times[i]);
         const hour = time.getHours() + time.getMinutes() / 60;
-        const low = (cloudLow[i] ?? 0) / 100;
-        const mid = (cloudMid[i] ?? 0) / 100;
-        const high = (cloudHigh[i] ?? 0) / 100;
-        const overcast = Math.min(1, low * 1.0 + mid * 0.5 + high * 0.2);
         const daylight = hour >= sunrise && hour <= sunset
           ? Math.max(0, Math.sin(Math.PI * (hour - sunrise) / (sunset - sunrise)))
           : 0;
-        const nightR = lerp(26, 45, overcast);
-        const nightG = lerp(32, 50, overcast);
-        const nightB = lerp(80, 65, overcast);
-        const dayR = lerp(245, 128, overcast);
-        const dayG = lerp(210, 144, overcast);
-        const dayB = lerp(96, 168, overcast);
-        const r = Math.round(lerp(nightR, dayR, daylight));
-        const g = Math.round(lerp(nightG, dayG, daylight));
-        const b = Math.round(lerp(nightB, dayB, daylight));
-        return "rgba(" + r + "," + g + "," + b + ",0.88)";
+        
+        if (daylight > 0.5) {
+          // Full daytime: yellow/golden sun
+          return "rgba(255, 220, 100, 0.88)";
+        } else if (daylight > 0) {
+          // Sunrise/sunset: subtle orange (close to yellow)
+          return "rgba(255, 200, 80, 0.88)";
+        } else {
+          // Nighttime: dark blue/black
+          return "rgba(10, 15, 35, 0.88)";
+        }
       }
 
       // Three stacked segments per hour, summing to 100
@@ -414,13 +411,51 @@
       const cloudColors = times.map((_, i) => {
         const time = new Date(times[i]);
         const hour = time.getHours() + time.getMinutes() / 60;
+        const low = (cloudLow[i] ?? 0) / 100;
+        const mid = (cloudMid[i] ?? 0) / 100;
+        const high = (cloudHigh[i] ?? 0) / 100;
+        const totalCloud = low + mid + high;
+        
         const daylight = hour >= sunrise && hour <= sunset
           ? Math.max(0, Math.sin(Math.PI * (hour - sunrise) / (sunset - sunrise)))
           : 0;
-        const nr = Math.round(lerp(40, 110, daylight));
-        const ng = Math.round(lerp(45, 110, daylight));
-        const nb = Math.round(lerp(75, 110, daylight));
-        return "rgba(" + nr + "," + ng + "," + nb + ",0.85)";
+        
+        // Daytime cloud colors (pure gray - R=G=B)
+        const dayLowR = 80, dayLowG = 80, dayLowB = 80;       // dark gray
+        const dayMidR = 120, dayMidG = 120, dayMidB = 120;    // medium gray
+        const dayHighR = 160, dayHighG = 160, dayHighB = 160; // light gray
+        
+        // Nighttime cloud colors (blue-tinted gray)
+        const nightLowR = 40, nightLowG = 45, nightLowB = 60;    // dark blue-gray
+        const nightMidR = 60, nightMidG = 65, nightMidB = 85;    // medium blue-gray
+        const nightHighR = 90, nightHighG = 95, nightHighB = 110; // light blue-gray
+        
+        // Weighted blend of cloud layers
+        let r, g, b;
+        if (totalCloud > 0) {
+          const lowWeight = low / totalCloud;
+          const midWeight = mid / totalCloud;
+          const highWeight = high / totalCloud;
+          
+          const dayR = dayLowR * lowWeight + dayMidR * midWeight + dayHighR * highWeight;
+          const dayG = dayLowG * lowWeight + dayMidG * midWeight + dayHighG * highWeight;
+          const dayB = dayLowB * lowWeight + dayMidB * midWeight + dayHighB * highWeight;
+          
+          const nightR = nightLowR * lowWeight + nightMidR * midWeight + nightHighR * highWeight;
+          const nightG = nightLowG * lowWeight + nightMidG * midWeight + nightHighG * highWeight;
+          const nightB = nightLowB * lowWeight + nightMidB * midWeight + nightHighB * highWeight;
+          
+          r = Math.round(lerp(nightR, dayR, daylight));
+          g = Math.round(lerp(nightG, dayG, daylight));
+          b = Math.round(lerp(nightB, dayB, daylight));
+        } else {
+          // No clouds - shouldn't happen but fallback to medium gray
+          r = Math.round(lerp(60, 120, daylight));
+          g = Math.round(lerp(65, 120, daylight));
+          b = Math.round(lerp(85, 120, daylight));
+        }
+        
+        return "rgba(" + r + "," + g + "," + b + ",0.85)";
       });
 
       tempPrecipChart = new Chart(ctx, {
