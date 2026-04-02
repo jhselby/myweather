@@ -2669,11 +2669,12 @@
     function toggleCard(key, el) {
       const card  = el.closest(".card");
       const body  = card.querySelector(".card-body");
+      const preview = card.querySelector(".card-collapsed-preview");
       const chev  = el.querySelector(".collapse-chevron");
       if (!body) return;
       const isOpen = body.style.display !== "none";
-      body.style.display = isOpen ? "none" : "";
-      if (chev) chev.style.transform = isOpen ? "rotate(-90deg)" : "";
+      body.style.display = isOpen ? "none" : ""; if (preview) preview.style.display = isOpen ? "" : "none"; if (!isOpen) { const bd = document.createElement("div"); bd.className = "modal-backdrop"; bd.id = "modalBackdrop"; document.body.appendChild(bd); card.classList.add("card-expanded"); } else { const bd = document.getElementById("modalBackdrop"); if (bd) bd.remove(); card.classList.remove("card-expanded"); }
+      const closeBtn = card.querySelector(".card-close-btn"); if (closeBtn) closeBtn.style.display = isOpen ? "none" : "flex"; if (chev) { if (card.querySelector(".card-close-btn")) { chev.style.display = "none"; } else { chev.style.display = isOpen ? "" : "none"; chev.style.transform = isOpen ? "rotate(-90deg)" : ""; } }
       try { localStorage.setItem("card_" + key, isOpen ? "0" : "1"); } catch(e) {}
       
       // Initialize radar when radar card is opened
@@ -2698,9 +2699,9 @@
           const stored = localStorage.getItem("card_" + key);
           if (stored !== null) isOpen = stored === "1";
         } catch(e) {}
-        body.style.display = isOpen ? "" : "none";
+        body.style.display = isOpen ? "" : "none"; const preview = card.querySelector(".card-collapsed-preview"); if (preview) preview.style.display = isOpen ? "none" : ""; if (card.querySelector(".card-collapsed-preview")) { card.classList.toggle("col-12", isOpen); card.classList.toggle("col-6", !isOpen); }
         const chev = card.querySelector(".collapse-chevron");
-        if (chev) chev.style.transform = isOpen ? "" : "rotate(-90deg)";
+        if (chev) { chev.style.transform = isOpen ? "" : "rotate(-90deg)"; if (card.querySelector(".card-close-btn")) chev.style.display = "none"; }
       });
     }
 
@@ -2956,6 +2957,7 @@
         const desc  = cur.condition_override || cur.weather_description || weatherDesc[code] || "—";
         document.getElementById("currentTemp").innerHTML =
           `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
+        const ctc = document.getElementById("currentTempCollapsed"); if (ctc) ctc.innerHTML = `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
         
         // Hyperlocal data
         const hyp = data.hyperlocal || {};
@@ -2984,8 +2986,10 @@
         
         document.getElementById("feelsLike").textContent =
           `Feels like ${Math.round(correctedFeelsLike)}°F`;
+        const flc = document.getElementById("feelsLikeCollapsed"); if (flc) flc.textContent = `Feels like ${Math.round(correctedFeelsLike)}°F`;
         const obsTag = cur.condition_source === "KBVY observed" ? " <span style='font-size:0.75rem;opacity:0.5;'>[obs]</span>" : "";
-        document.getElementById("condition").innerHTML = `${emoji} ${desc}${obsTag}`;   
+        document.getElementById("condition").innerHTML = `${emoji} ${desc}${obsTag}`;
+        const cc = document.getElementById("conditionCollapsed"); if (cc) cc.innerHTML = `${emoji} ${desc}`;   
 
         // Update Smart Correction table
         if (hyp) {
