@@ -72,7 +72,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v4.4</span>
+            <span class="version-pill" id="appVersion">v4.5</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -145,12 +145,18 @@
       <div class="grid">
 
         <!-- 1. RIGHT NOW — Hero Card (open by default) -->
-        <div class="card col-12" data-collapse-key="right_now">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('right_now', this)">
+        <div class="card col-6" data-collapse-key="right_now" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('right_now', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
             ⚡ RIGHT NOW
-            <span class="collapse-chevron">&#9660;</span>
+            <span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <div class="card-body">
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('right_now', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div id="currentTempCollapsed" class="current-temp" style="font-size:2rem;margin-top:8px;">--<span class="temp-unit">&deg;F</span></div>
+            <div id="feelsLikeCollapsed" class="feels-like">Feels like --&deg;F</div>
+            <div id="conditionCollapsed" class="condition" style="font-size:0.95rem;margin-top:6px;">Loading&hellip;</div>
+          </div>
+          <div class="card-body" style="display:none;">
             <!-- Big Hero Temp -->
             <div id="currentTemp" class="current-temp" data-tip="Smart-corrected temperature using distance+elevation weighted bias from 15 local weather stations.">
               --<span class="temp-unit">&deg;F</span>
@@ -221,7 +227,7 @@
           </div>
         </div>
         <div class="card col-12" data-collapse-key="48h_temp_precip" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature, Precipitation &amp; Sky <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature, Precipitation &amp; Sky <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <!-- Hover data overlay -->
           <div id="tempPrecipOverlay" style="
@@ -281,7 +287,7 @@
 
         <!-- 48-Hour Wind Forecast -->
         <div class="card col-12" data-collapse-key="48h_wind" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <canvas id="windChart"></canvas>
 
@@ -302,7 +308,7 @@
         </div>
       </div>
         <div class="card col-12" data-collapse-key="ten_day" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('ten_day', this)">10-Day Forecast <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('ten_day', this)">10-Day Forecast <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <div id="forecastList"></div>
           </div>
@@ -310,7 +316,7 @@
     
         <div class="card col-12" data-collapse-key="hyperlocal_forecast" data-default-open="true">
           <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal_forecast', this)">📌 Detailed Forecast
-            <span class="collapse-chevron">&#9660;</span>
+            <span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <div class="card-body">
             <div id="hyperlocalForecastList"></div>
@@ -324,7 +330,7 @@
             <span style="font-size:0.78rem;font-weight:800;color:rgba(140,200,255,0.8);margin-left:6px;" id="nwsFilterLabel"></span>
             <span style="flex:1;"></span>
             <span style="font-size:0.72rem;font-weight:700;class="text-subtle" style="margin-right:8px;" id="nwsOfficeLabel"></span>
-            <span class="collapse-chevron">&#9660;</span>
+            <span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <div class="card-body" style="display:none;">
           <div id="nwsForecastList"></div>
@@ -347,7 +353,7 @@
           <!-- Controls bar (collapsible title) -->
           <div class="card-title card-title-collapsible" onclick="toggleCard('radar', this)">
             &#127941; Radar
-            <span class="collapse-chevron">&#9660;</span>
+            <span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
 
           <!-- Map and scrubber (collapsible body) -->
@@ -386,7 +392,7 @@
 
         <!-- Today card -->
         <div class="card col-12" data-collapse-key="today_almanac" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('today_almanac', this)">📅 Today <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('today_almanac', this)">📅 Today <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body">
             <div id="todayAlmanacContent"></div>
           </div>
@@ -394,7 +400,7 @@
 
 
         <div class="card col-12" data-collapse-key="tides" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('tides', this)">&#127754; Tides &#8212; Salem Harbor <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('tides', this)">&#127754; Tides &#8212; Salem Harbor <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body">
           <div id="tideGrid"></div>
           <div class="small-note" id="nextTideNote"></div>
@@ -404,7 +410,7 @@
 
         <!-- Buoy 44013 / Water Temp -->
         <div class="card col-12" data-collapse-key="buoy_44013" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('buoy_44013', this)">&#127754; Ocean Conditions <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('buoy_44013', this)">&#127754; Ocean Conditions <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
 
@@ -455,7 +461,7 @@
 
         <!-- Sun full width, 3-column -->
         <div class="card col-12" data-collapse-key="sun" data-default-open="false">
-          <div class="card-title card-title-collapsible" id="sunCardTitle" onclick="toggleCard('sun', this)">&#9728;&#65039; Sun <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" id="sunCardTitle" onclick="toggleCard('sun', this)">&#9728;&#65039; Sun <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
 
@@ -514,7 +520,7 @@
 
         <!-- Moon — full width -->
         <div class="card col-12" data-collapse-key="moon" data-default-open="false">
-          <div class="card-title card-title-collapsible" id="moonCardTitle" onclick="toggleCard('moon', this)">&#127769; Moon <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" id="moonCardTitle" onclick="toggleCard('moon', this)">&#127769; Moon <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body" style="display:none;">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
 
@@ -564,7 +570,7 @@
 
         <!-- Solar System -->
         <div class="card col-12" data-collapse-key="solar_system" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Now <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Now <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body">
             <div id="solarSystemGrid"></div>
             <div id="solarSystemNote" style="font-size:0.75rem;class="text-subtle" style="margin-top:12px;"></div>
@@ -573,7 +579,7 @@
 
         <!-- Frost / Freeze Tracker -->
         <div class="card col-12" data-collapse-key="frost_freeze" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('frost_freeze', this)">🌡️ Frost &amp; Freeze Tracker <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('frost_freeze', this)">🌡️ Frost &amp; Freeze Tracker <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body">
           <div id="frostTracker" style="margin-top:6px;"></div>
           </div>
@@ -674,7 +680,7 @@
         <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">
             🧮 Smart Corrections
-            <span class="collapse-chevron">&#9660;</span>
+            <span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <div class="card-body" style="display:none;">
             
@@ -749,7 +755,7 @@
         <div class="card col-12" data-collapse-key="wind_gust_impact" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('wind_gust_impact', this)"
                >
-            &#127788; Gust Wind Impact <span class="collapse-chevron">&#9660;</span>
+            &#127788; Gust Wind Impact <span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <div class="card-body" style="display:none;">
           <div class="wind-window-pills" id="gustWindowPills" style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">
@@ -791,7 +797,7 @@
         <div class="card col-12" data-collapse-key="wind_sus_impact" data-default-open="false">
           <div class="card-title card-title-collapsible" onclick="toggleCard('wind_sus_impact', this)"
                >
-            &#127787; Sustained Wind Impact <span class="collapse-chevron">&#9660;</span>
+            &#127787; Sustained Wind Impact <span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <div class="card-body" style="display:none;">
           <div class="wind-window-pills" id="susWindowPills" style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">
@@ -831,7 +837,7 @@
 
         <!-- Sea Breeze Detail -->
         <div class="card col-12" data-collapse-key="sea_breeze_detail" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('sea_breeze_detail', this)">🌊 Sea Breeze Analysis <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('sea_breeze_detail', this)">🌊 Sea Breeze Analysis <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body" id="seaBreezeDetail">
             <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
           </div>
@@ -839,7 +845,7 @@
 
         <!-- Sunset Quality Forecast -->
         <div class="card col-12" data-collapse-key="sunset_quality" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('sunset_quality', this)">🌅 Sunset Quality Forecast <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('sunset_quality', this)">🌅 Sunset Quality Forecast <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body">
             <div id="sunsetQualityContent"></div>
           </div>
@@ -847,7 +853,7 @@
 
         <!-- Dock Day Score -->
         <div class="card col-12" data-collapse-key="dock_day" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('dock_day', this)">⚓ Dock Day Score <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('dock_day', this)">⚓ Dock Day Score <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body">
             <div id="dockDayContent"></div>
           </div>
@@ -855,7 +861,7 @@
 
         <!-- Fog Risk -->
         <div class="card col-12" data-collapse-key="fog_risk" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('fog_risk', this)">🌫️ Fog Risk <span class="collapse-chevron">&#9660;</span></div>
+          <div class="card-title card-title-collapsible" onclick="toggleCard('fog_risk', this)">🌫️ Fog Risk <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
           <div class="card-body">
             <div class="row">
               <div class="label" data-tip="Current fog probability based on dew point spread, humidity, and wind conditions.">Current Risk</div>

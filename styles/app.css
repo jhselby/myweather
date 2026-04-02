@@ -1246,3 +1246,43 @@ body.theme-light .hyperlocal-link:hover {
   font-size: 0.9em;
   margin-left: 2px;
 }
+
+/* Card expanded modal state */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+}
+
+.card.card-expanded {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100% - 32px);
+  max-width: 780px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  border-radius: 18px;
+  z-index: 1000;
+  grid-column: unset;
+  width: calc(100vw - 32px) !important;
+}
+
+.card-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.15);
+  border: none;
+  cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
