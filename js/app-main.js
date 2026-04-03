@@ -2773,6 +2773,38 @@
     }
     
     function toggleCard(key, el) {
+      // Close all other cards first
+      // Remove any existing backdrop first
+      const existingBackdrop = document.getElementById("modalBackdrop");
+      if (existingBackdrop) existingBackdrop.remove();
+      
+      document.querySelectorAll("[data-collapse-key]").forEach(otherCard => {
+      const allCards = document.querySelectorAll("[data-collapse-key]");
+      console.log("Total cards found:", allCards.length);
+      allCards.forEach(c => {
+        const k = c.getAttribute("data-collapse-key");
+        const b = c.querySelector(".card-body");
+        console.log("Card:", k, "body display:", b ? b.style.display : "NO BODY");
+      });
+        const otherKey = otherCard.getAttribute("data-collapse-key");
+        if (otherKey !== key) {
+          const otherBody = otherCard.querySelector(".card-body");
+          const otherPreview = otherCard.querySelector(".card-collapsed-preview");
+          const otherChev = otherCard.querySelector(".collapse-chevron");
+          if (otherBody && otherBody.style.display !== "none") {
+            otherBody.style.display = "none";
+            if (otherPreview) otherPreview.style.display = "";
+            otherCard.classList.remove("card-expanded");
+            const otherClose = otherCard.querySelector(".card-close-btn");
+            if (otherClose) otherClose.style.display = "none";
+            if (otherChev) {
+              otherChev.style.display = "";
+              otherChev.style.transform = "rotate(-90deg)";
+            }
+          }
+        }
+      });
+      
       const card  = el.closest(".card");
       const body  = card.querySelector(".card-body");
       const preview = card.querySelector(".card-collapsed-preview");
@@ -2800,11 +2832,8 @@
         const openDef = card.getAttribute("data-default-open") !== "false";
         const body    = card.querySelector(".card-body");
         if (!body) return;
-        let isOpen = openDef;
-        try {
-          const stored = localStorage.getItem("card_" + key);
-          if (stored !== null) isOpen = stored === "1";
-        } catch(e) {}
+        let isOpen = false;  // Always start closed on page load
+        console.log("initCollapsibleCards setting", key, "to closed, body.display =", body.style.display);
         body.style.display = isOpen ? "" : "none"; const preview = card.querySelector(".card-collapsed-preview"); if (preview) preview.style.display = isOpen ? "none" : ""; if (card.querySelector(".card-collapsed-preview")) { card.classList.toggle("col-12", isOpen); card.classList.toggle("col-6", !isOpen); }
         const chev = card.querySelector(".collapse-chevron");
         if (chev) { chev.style.transform = isOpen ? "" : "rotate(-90deg)"; if (card.querySelector(".card-close-btn")) chev.style.display = "none"; }
@@ -3343,10 +3372,27 @@
         const daily = data.daily || {};
 
         const kbos  = data.kbos   || {};
-        const hi    = daily.temperature_max?.[0];
-        const lo    = daily.temperature_min?.[0];
+        
+        // Calculate today's high/low from corrected HRRR hourly data
+        const hourlyData = data.hourly || {};
+        const hourlyTimes = hourlyData.times || [];
+        const hourlyTemps = hourlyData.temperature || [];
+        const bias = hyp.weighted_bias ?? 0;
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        let todayHigh = null, todayLow = null;
+        hourlyTimes.forEach((timeStr, i) => {
+          if (timeStr.startsWith(todayStr)) {
+            const temp = hourlyTemps[i];
+            if (temp != null) {
+              const correctedTemp = temp + bias;
+              todayHigh = todayHigh === null ? correctedTemp : Math.max(todayHigh, correctedTemp);
+              todayLow = todayLow === null ? correctedTemp : Math.min(todayLow, correctedTemp);
+            }
+          }
+        });
         document.getElementById("hiLo").textContent =
-          (hi != null && lo != null) ? `${Math.round(hi)}° / ${Math.round(lo)}°` : "-- / --";
+          (todayHigh != null && todayLow != null) ? `${Math.round(todayHigh)}° / ${Math.round(todayLow)}°` : "-- / --";
         const popMax = daily.precipitation_probability_max?.[0];
         // RIGHT NOW card - new fields
         
@@ -3893,7 +3939,7 @@
           : 18.0;
         buildTempPrecipChart(
           times,
-          (hourly.temperature || []).slice(startIdx, startIdx + 48),
+          (hourly.temperature || []).map((t, i) => { const bias = hyp.weighted_bias ?? 0; return t != null ? t + bias : null; }).slice(startIdx, startIdx + 48),
           (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48),
           (hourly.corrected_wet_bulb || hourly.wet_bulb || []).slice(startIdx, startIdx + 48),
           (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48),

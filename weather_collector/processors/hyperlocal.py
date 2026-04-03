@@ -187,6 +187,12 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data):
             hyperlocal["wu_wind_gusts"] = round(wu_avg_gust, 1)
             hyperlocal["bias_wind_gusts"] = round(bias_gust, 1)
             hyperlocal["corrected_wind_gusts"] = round(corrected_gust, 1)
+            
+            # CRITICAL FIX: Gusts must always be >= sustained wind
+            corrected_speed = hyperlocal.get("corrected_wind_speed")
+            if corrected_speed is not None and corrected_gust < corrected_speed:
+                corrected_gust = corrected_speed
+                hyperlocal["corrected_wind_gusts"] = round(corrected_gust, 1)
     
     # WU quality metrics
     if wu_data:
