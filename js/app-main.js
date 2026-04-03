@@ -576,7 +576,6 @@
       const allImpacts = [...sustainedImpact, ...gustImpact].filter(v => v != null);
       const maxImpact = allImpacts.length > 0 ? Math.max(...allImpacts) : 10;
       const axisMax = Math.ceil(maxImpact * 1.1); // 10% headroom, rounded up
-      console.log('Wind chart - maxImpact:', maxImpact, 'axisMax:', axisMax, 'sample impacts:', allImpacts.slice(0, 5));
       
       windChartObj = new Chart(ctx, {
         data: {
@@ -1650,14 +1649,12 @@
     }
 
     function renderTides(tides) {
-      console.log("renderTides called with:", tides ? tides.length + " tides" : "null/undefined");
       
       const grid = document.getElementById("tideGrid");
       const note = document.getElementById("nextTideNote");
       const nextTideEl = document.getElementById("nextTideCollapsed");
       const nextTideTimeEl = document.getElementById("nextTideTimeCollapsed");
       
-      console.log("Elements found - grid:", !!grid, "nextTideEl:", !!nextTideEl, "nextTideTimeEl:", !!nextTideTimeEl);
       
       if (!grid) return;
       grid.innerHTML = "";
@@ -1675,8 +1672,6 @@
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
       const nowMins  = today.getHours() * 60 + today.getMinutes();
 
-      console.log("Tide debug - todayStr:", todayStr, "nowMins:", nowMins);
-      console.log("Tide debug - first 3 tides:", tides.slice(0, 3));
 
       // Find next upcoming tide
       let nextIdx = -1;
@@ -1684,15 +1679,12 @@
         const tDate = tides[i].date || todayStr;
         const [th, tm] = (tides[i].time || "00:00").split(":").map(Number);
         const tideMins = th * 60 + tm;
-        console.log(`Tide ${i}: date=${tDate}, time=${tides[i].time}, tideMins=${tideMins}, check: ${tDate > todayStr} || (${tDate === todayStr} && ${tideMins >= nowMins})`);
         if (tDate > todayStr || (tDate === todayStr && tideMins >= nowMins)) {
           nextIdx = i;
-          console.log("Found next tide at index:", nextIdx);
           break;
         }
       }
       
-      console.log("Final nextIdx:", nextIdx);
 
       // Group by date, cap at 4 per day, total 8 max
       const byDate = {};
@@ -2465,11 +2457,6 @@
         });
       }
 
-      console.log("NEXRAD: generated", radarFrames.length, "frames");
-      console.log("NEXRAD: time range", 
-                  mrmsTimeString(radarFrames[0].ts), 
-                  "to", 
-                  mrmsTimeString(radarFrames[radarFrames.length - 1].ts));
 
       // Update scrubber
       const scrubber = document.getElementById("radarScrubber");
@@ -2509,7 +2496,6 @@
 
       // Add new layer with NEXRAD WMS
       const timeStr = mrmsTimeString(frame.ts);
-      console.log("NEXRAD: showFrame", idx, "time:", timeStr);
       
       const layer = L.tileLayer.wms("https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi", {
         layers: 'nexrad-n0r-wmst',  // Note: -wmst suffix for time-enabled layer
@@ -2759,9 +2745,17 @@
     
     // Navigate to Hyperlocal tab and open a specific card
     function navigateToHyperlocalCard(cardKey) {
+      // Close any open modal cards and remove backdrop
+      const openCards = document.querySelectorAll(".card-expanded");
+      openCards.forEach(c => c.classList.remove("card-expanded"));
+      const backdrop = document.getElementById("modalBackdrop");
+      if (backdrop) backdrop.remove();
+      
       // Switch to Hyperlocal tab
+      
       showTab('hyperlocal');
       
+      const rnCard = document.querySelector("[data-collapse-key=\"right_now\"]");
       // Find the card and open it if closed
       const card = document.querySelector(`[data-collapse-key="${cardKey}"]`);
       if (!card) return;
@@ -3597,27 +3591,27 @@
         // Make hyperlocal fields tappable with click handlers
         if (windImpactNowEl) {
           windImpactNowEl.classList.add('hyperlocal-link');
-          windImpactNowEl.onclick = () => navigateToHyperlocalCard('wind_sus_impact');
+          windImpactNowEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('wind_sus_impact'); };
         }
         if (gustImpactNowEl) {
           gustImpactNowEl.classList.add('hyperlocal-link');
-          gustImpactNowEl.onclick = () => navigateToHyperlocalCard('wind_gust_impact');
+          gustImpactNowEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('wind_gust_impact'); };
         }
         if (sbEl) {
           sbEl.classList.add('hyperlocal-link');
-          sbEl.onclick = () => navigateToHyperlocalCard('sea_breeze_detail');
+          sbEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('sea_breeze_detail'); };
         }
         if (fogEl) {
           fogEl.classList.add('hyperlocal-link');
-          fogEl.onclick = () => navigateToHyperlocalCard('fog_risk');
+          fogEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('fog_risk'); };
         }
         if (sunsetScoreEl) {
           sunsetScoreEl.classList.add('hyperlocal-link');
-          sunsetScoreEl.onclick = () => navigateToHyperlocalCard('sunset_quality');
+          sunsetScoreEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('sunset_quality'); };
         }
         if (dockDayScoreEl) {
           dockDayScoreEl.classList.add('hyperlocal-link');
-          dockDayScoreEl.onclick = () => navigateToHyperlocalCard('dock_day');
+          dockDayScoreEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('dock_day'); };
         }
 
         // Pressure alarm banner
@@ -3832,10 +3826,8 @@
 
         // Sustained and Gust Impact Scores
         const sustainedImpactEl = document.getElementById("sustainedImpactWind");
-        console.log("DEBUG: cur.wind_speed=", cur.wind_speed, "cur.wind_direction=", cur.wind_direction);
         const gustImpactEl = document.getElementById("gustImpactWind");
         
-        console.log("DEBUG: sustainedImpactEl=", sustainedImpactEl, "gustImpactEl=", gustImpactEl);
         if (cur.wind_speed != null && cur.wind_direction != null) {
           const exposure = getExposureFactor(cur.wind_direction);
           const sustainedScore = Math.round(worryScore(cur.wind_speed, exposure));
