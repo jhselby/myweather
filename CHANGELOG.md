@@ -1,3 +1,9 @@
+## v4.9 - 2026-04-03
+
+### Fixed
+- **Fixed hyperlocal navigation from Right Now card** - Clicking hyperlocal links (Sunset, Dock, Wind Impact, etc.) now properly navigates without leaving page unresponsive
+- **Fixed card interaction** - Restored guard preventing cards from closing when clicking content inside expanded cards (only X button closes)
+
 ## v4.8 - 2026-04-03
 
 ### Changed
