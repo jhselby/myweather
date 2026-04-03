@@ -1,3 +1,14 @@
+## v4.8 - 2026-04-03
+
+### Changed
+- **Eliminated duplicate calculations in Right Now card** - Sunset and Dock scores now read from their respective cards instead of recalculating
+- **All impact scores now use unified 1-100 scale** for consistency
+  - Wind Impact: 1-100 (previously unbounded)
+  - Gust Impact: 1-100 (previously unbounded)
+  - Sunset Quality: 1-100 (previously 0.00-1.00 decimal)
+  - Dock Day Score: 1-100 (previously 0.00-1.00 decimal)
+- All scores display as whole numbers without decimals
+
 ## v4.7 - 2026-04-03
 
 ### Fixed
