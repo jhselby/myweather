@@ -937,7 +937,7 @@
           
           scores.push({
             dayLabel, timeLabel,
-            score: 0.45,
+            score: 45,
             label: "Good",
             color: "rgba(255,220,100,0.9)",
             emoji: "🌤️",
@@ -957,7 +957,7 @@
           
           scores.push({
             dayLabel, timeLabel,
-            score: 0.1,
+            score: 10,
             label: "Poor",
             color: "rgba(120,120,120,0.6)",
             emoji: "☁️",
@@ -981,13 +981,13 @@
         const humFactor = 1 - Math.max(0, (hum25 - 60)) / 80;
         
         let score = (midScore * 0.7 + highBonus) * (1 - lowPenalty * 0.6) * humFactor;
-        score = Math.max(0, Math.min(1, score));
+        score = Math.max(1, Math.min(100, Math.round(score * 100)));
         
         let label, color, emoji;
-        if (score >= 0.75)      { label = "Spectacular";  color = "rgba(255,160,40,0.95)";  emoji = "🔥"; }
-        else if (score >= 0.55) { label = "Very Good";    color = "rgba(255,200,60,0.95)";  emoji = "🌅"; }
-        else if (score >= 0.35) { label = "Good";         color = "rgba(255,220,100,0.9)";  emoji = "🌤️"; }
-        else if (score >= 0.18) { label = "Fair";         color = "rgba(180,180,180,0.8)";  emoji = "🌥️"; }
+        if (score >= 75)      { label = "Spectacular";  color = "rgba(255,160,40,0.95)";  emoji = "🔥"; }
+        else if (score >= 55) { label = "Very Good";    color = "rgba(255,200,60,0.95)";  emoji = "🌅"; }
+        else if (score >= 35) { label = "Good";         color = "rgba(255,220,100,0.9)";  emoji = "🌤️"; }
+        else if (score >= 18) { label = "Fair";         color = "rgba(180,180,180,0.8)";  emoji = "🌥️"; }
         else                    { label = "Poor";         color = "rgba(120,120,120,0.6)";  emoji = "☁️"; }
         
         const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
@@ -1001,6 +1001,11 @@
           avgHigh: ((high25 + high50) / 2).toFixed(0),
           avgHum: hum25.toFixed(0)
         });
+        
+        // Store today's score for Right Now card
+        if (day.day === 0) {
+          window.__todaySunsetScore = {score, label, emoji, color};
+        }
       }
 
       if (!scores.length) {
@@ -1026,7 +1031,7 @@
                       border-radius:10px;padding:16px 12px;text-align:center;">
             <div style="font-size:0.9rem;font-weight:800;color:${dayCol};margin-bottom:6px;">${s.dayLabel}</div>
             <div style="font-size:2rem;margin-bottom:6px;">${s.emoji}</div>
-            <div style="font-size:1.05rem;font-weight:900;color:${s.color};margin-bottom:6px;">${s.label}</div>
+            <div style="font-size:1.05rem;font-weight:900;color:${s.color};margin-bottom:6px;">${s.label} <span style="font-size:0.8rem;opacity:0.7;">(${Math.round(s.score)})</span></div>
             <div style="font-size:0.8rem;color:${timeCol};margin-bottom:10px;">Sunset ${s.timeLabel}</div>
             <div style="height:5px;background:${barBg};border-radius:3px;overflow:hidden;margin-bottom:10px;">
               <div style="height:100%;width:${barW}%;background:${s.color};border-radius:3px;transition:width 0.4s;"></div>
@@ -1572,6 +1577,12 @@
 
       for (const day of dayCards) {
         const sl = scoreLabel(day.bestScore);
+        
+        // Store today's score for Right Now card
+        if (day.dayLabel === "Today") {
+          window.__todayDockScore = {score: day.bestScore, label: sl.label, emoji: sl.emoji, color: sl.color};
+        }
+        
         html += `<div style="background:${dTileBg};border:1px solid ${dTileBd};border-radius:10px;padding:14px 12px;">`;
         html += `<div style="font-size:0.78rem;font-weight:800;color:${dDayLbl};margin-bottom:2px;">${day.dayLabel}</div>`;
         html += `<div style="font-size:0.72rem;color:${dDateLbl};margin-bottom:8px;">${day.dateLabel}</div>`;
@@ -1582,7 +1593,7 @@
           html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Low tides fall within usable hours</div>`;
         } else {
           html += `<div style="font-size:1.4rem;margin-bottom:4px;">${sl.emoji}</div>`;
-          html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label}</div>`;
+          html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label} <span style="font-size:0.75rem;opacity:0.7;">(${Math.round(day.bestScore)})</span></div>`;
 
           for (const w of day.usableWindows) {
             const durH = Math.floor(w.durMin / 60);
@@ -2780,11 +2791,9 @@
       
       document.querySelectorAll("[data-collapse-key]").forEach(otherCard => {
       const allCards = document.querySelectorAll("[data-collapse-key]");
-      console.log("Total cards found:", allCards.length);
       allCards.forEach(c => {
         const k = c.getAttribute("data-collapse-key");
         const b = c.querySelector(".card-body");
-        console.log("Card:", k, "body display:", b ? b.style.display : "NO BODY");
       });
         const otherKey = otherCard.getAttribute("data-collapse-key");
         if (otherKey !== key) {
@@ -2833,7 +2842,6 @@
         const body    = card.querySelector(".card-body");
         if (!body) return;
         let isOpen = false;  // Always start closed on page load
-        console.log("initCollapsibleCards setting", key, "to closed, body.display =", body.style.display);
         body.style.display = isOpen ? "" : "none"; const preview = card.querySelector(".card-collapsed-preview"); if (preview) preview.style.display = isOpen ? "none" : ""; if (card.querySelector(".card-collapsed-preview")) { card.classList.toggle("col-12", isOpen); card.classList.toggle("col-6", !isOpen); }
         const chev = card.querySelector(".collapse-chevron");
         if (chev) { chev.style.transform = isOpen ? "" : "rotate(-90deg)"; if (card.querySelector(".card-close-btn")) chev.style.display = "none"; }
@@ -3566,182 +3574,24 @@
                             : "rgba(255,255,255,0.85)";
         }
 
-        // Sunset Score (today only)
+        // Sunset Score - read from renderSunsetQuality()
         const sunsetScoreEl = document.getElementById("sunsetScoreNow");
-        if (sunsetScoreEl) {
-          const sunsetDir = data.sunset_directional || [];
-          const todaySunset = sunsetDir.find(d => d.day === 0);
-          
-          if (todaySunset) {
-            const clouds = todaySunset.clouds || {};
-            const cloud10 = clouds['10mi'];
-            const cloud25 = clouds['25mi'];
-            const cloud50 = clouds['50mi'];
-            
-            if (cloud10 && cloud25 && cloud50) {
-              const sunsetTime = new Date(todaySunset.sunset_time);
-              const sunsetIdx = cloud25.times.findIndex(t => new Date(t).getTime() >= sunsetTime.getTime());
-              
-              if (sunsetIdx >= 0) {
-                const low10 = cloud10.cloud_low[sunsetIdx] ?? 0;
-                const mid25 = cloud25.cloud_mid[sunsetIdx] ?? 0;
-                const mid50 = cloud50.cloud_mid[sunsetIdx] ?? 0;
-                const high25 = cloud25.cloud_high[sunsetIdx] ?? 0;
-                const high50 = cloud50.cloud_high[sunsetIdx] ?? 0;
-                const hum25 = cloud25.humidity[sunsetIdx] ?? 50;
-                
-                const totalCloud = (low10 + mid25 + high25) / 3;
-                let score, label, emoji, color;
-                
-                if (totalCloud < 15 && hum25 < 60) {
-                  score = 0.45; label = "Good"; emoji = "🌤️"; color = "rgba(255,220,100,0.9)";
-                } else if (low10 > 60) {
-                  score = 0.1; label = "Poor"; emoji = "☁️"; color = "rgba(120,120,120,0.6)";
-                } else {
-                  const midCloudAvg = mid25 * 0.7 + mid50 * 0.3;
-                  const midScore = midCloudAvg <= 70 ? midCloudAvg / 70 : Math.max(0.3, (100 - midCloudAvg) / 40);
-                  const highBonus = Math.min((high25 + high50) / 2, 60) / 60 * 0.3;
-                  const lowPenalty = Math.min(low10 / 80, 1.0);
-                  const humFactor = 1 - Math.max(0, (hum25 - 60)) / 80;
-                  score = (midScore * 0.7 + highBonus) * (1 - lowPenalty * 0.6) * humFactor;
-                  score = Math.max(0, Math.min(1, score));
-                  
-                  if (score >= 0.75)      { label = "Spectacular";  emoji = "🔥"; color = "rgba(255,160,40,0.95)"; }
-                  else if (score >= 0.60) { label = "Excellent";    emoji = "🌇"; color = "rgba(255,180,60,0.9)"; }
-                  else if (score >= 0.45) { label = "Very Good";    emoji = "⭐"; color = "rgba(255,200,80,0.85)"; }
-                  else if (score >= 0.30) { label = "Good";         emoji = "✨"; color = "rgba(255,220,100,0.8)"; }
-                  else if (score >= 0.20) { label = "Fair";         emoji = "🌥️"; color = "rgba(200,200,180,0.7)"; }
-                  else                    { label = "Meh";          emoji = "😐"; color = "rgba(150,150,150,0.6)"; }
-                }
-                
-                sunsetScoreEl.innerHTML = `${emoji} ${label} <span style="opacity:0.6;font-size:0.85rem;">(${score.toFixed(2)})</span>`;
-                sunsetScoreEl.style.color = color;
-              } else {
-                sunsetScoreEl.textContent = "N/A";
-              }
-            } else {
-              sunsetScoreEl.textContent = "N/A";
-            }
-          } else {
-            sunsetScoreEl.textContent = "N/A";
-          }
+        if (sunsetScoreEl && window.__todaySunsetScore) {
+          const s = window.__todaySunsetScore;
+          sunsetScoreEl.innerHTML = `${s.emoji} ${s.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(s.score)})</span>`;
+          sunsetScoreEl.style.color = s.color;
+        } else if (sunsetScoreEl) {
+          sunsetScoreEl.textContent = "No data";
         }
 
-        // Dock Day Score (today's best window)
+        // Dock Day Score - read from renderDockDay()
         const dockDayScoreEl = document.getElementById("dockDayScoreNow");
-        if (dockDayScoreEl) {
-          const curve = (data.tide_curve || {});
-          const ctimes = curve.times || [];
-          const cheights = curve.heights || [];
-          const hourly = data.hourly || {};
-          const htimes = hourly.times || [];
-          const htemps = hourly.temperature || [];
-          const hwind = hourly.wind_speed || [];
-          const hwinddir = hourly.wind_direction || [];
-          const hprecip = hourly.precipitation_probability || [];
-          const buoy = data.buoy_44013 || {};
-          const waterTempRaw = buoy.water_temp_f;
-          
-          if (ctimes.length) {
-            const correctedHeights = cheights.map(h => h + DOCK_TIDE_OFFSET_FT);
-            const now = new Date();
-            const todayStr = now.toISOString().slice(0, 10);
-            const dayPoints = [];
-            
-            for (let i = 0; i < ctimes.length; i++) {
-              if (ctimes[i].startsWith(todayStr)) {
-                dayPoints.push({ t: ctimes[i], h: correctedHeights[i] });
-              }
-            }
-            
-            if (dayPoints.length) {
-              function nearestHourly(arr, targetMs) {
-                let best = null, bestDiff = Infinity;
-                for (let i = 0; i < htimes.length; i++) {
-                  const diff = Math.abs(new Date(htimes[i]).getTime() - targetMs);
-                  if (diff < bestDiff) { bestDiff = diff; best = arr[i]; }
-                }
-                return best;
-              }
-              
-              const windows = [];
-              let winStart = null;
-              for (let i = 0; i < dayPoints.length; i++) {
-                const accessible = dayPoints[i].h > DOCK_FLOAT_THRESHOLD_FT;
-                if (accessible && winStart === null) winStart = i;
-                if (!accessible && winStart !== null) {
-                  windows.push({ start: winStart, end: i - 1 });
-                  winStart = null;
-                }
-              }
-              if (winStart !== null) windows.push({ start: winStart, end: dayPoints.length - 1 });
-              
-              const usableWindows = windows.map(w => {
-                let s = w.start, e = w.end;
-                while (s <= e) {
-                  const hr = new Date(dayPoints[s].t).getHours();
-                  if (hr >= DOCK_USABLE_HOUR_START) break;
-                  s++;
-                }
-                while (e >= s) {
-                  const hr = new Date(dayPoints[e].t).getHours();
-                  if (hr < DOCK_USABLE_HOUR_END) break;
-                  e--;
-                }
-                if (s > e) return null;
-                
-                const startMs = new Date(dayPoints[s].t).getTime();
-                const endMs = new Date(dayPoints[e].t).getTime();
-                const durMin = Math.round((endMs - startMs) / 60000);
-                const midMs = (startMs + endMs) / 2;
-                
-                const temp = nearestHourly(htemps, midMs);
-                const wspd = nearestHourly(hwind, midMs);
-                const wdir = nearestHourly(hwinddir, midMs);
-                const precip = nearestHourly(hprecip, midMs);
-                
-                const windSc = dockWindScore(wdir, wspd);
-                const tempSc = temp == null ? 0.5 :
-                  temp < 45 ? 0.0 :
-                  temp < 55 ? Math.max(0, (temp - 45) / 20) :
-                  Math.min(1, (temp - 55) / 25 + 0.5);
-                const precipSc = precip == null ? 0.5 : Math.max(0, 1 - precip / 60);
-                const durSc = Math.min(1, durMin / 180);
-                const wtSc = waterTempRaw == null ? 0.5 :
-                  waterTempRaw < 50 ? 0.2 :
-                  waterTempRaw < 65 ? (waterTempRaw - 50) / 25 + 0.2 :
-                  1.0;
-                
-                const rawScore = windSc * 0.35 + tempSc * 0.35 + precipSc * 0.15 + durSc * 0.10 + wtSc * 0.05;
-                const score = (temp != null && temp < 45) || (wspd != null && wspd > 20)
-                  ? Math.min(rawScore, 0.3)
-                  : rawScore;
-                
-                return { score };
-              }).filter(Boolean);
-              
-              const bestScore = usableWindows.length ? Math.max(...usableWindows.map(w => w.score)) : 0;
-              
-              if (bestScore > 0) {
-                let label, emoji, color;
-                if (bestScore >= 0.80)      { label = "Excellent";  emoji = "⛵"; color = "rgba(100,220,120,0.95)"; }
-                else if (bestScore >= 0.65) { label = "Very Good";  emoji = "🌊"; color = "rgba(120,200,140,0.9)"; }
-                else if (bestScore >= 0.50) { label = "Good";       emoji = "⚓"; color = "rgba(140,180,160,0.85)"; }
-                else if (bestScore >= 0.35) { label = "Fair";       emoji = "🛟"; color = "rgba(180,180,140,0.8)"; }
-                else if (bestScore >= 0.20) { label = "Marginal";   emoji = "⚠️"; color = "rgba(200,160,100,0.75)"; }
-                else                        { label = "Poor";       emoji = "🚫"; color = "rgba(150,150,150,0.6)"; }
-                
-                dockDayScoreEl.innerHTML = `${emoji} ${label} <span style="opacity:0.6;font-size:0.85rem;">(${bestScore.toFixed(2)})</span>`;
-                dockDayScoreEl.style.color = color;
-              } else {
-                dockDayScoreEl.textContent = "No accessible windows";
-              }
-            } else {
-              dockDayScoreEl.textContent = "N/A";
-            }
-          } else {
-            dockDayScoreEl.textContent = "N/A";
-          }
+        if (dockDayScoreEl && window.__todayDockScore) {
+          const d = window.__todayDockScore;
+          dockDayScoreEl.innerHTML = `${d.emoji} ${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score)})</span>`;
+          dockDayScoreEl.style.color = d.color;
+        } else if (dockDayScoreEl) {
+          dockDayScoreEl.textContent = "No data";
         }
 
         // Make hyperlocal fields tappable with click handlers
