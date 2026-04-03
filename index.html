@@ -72,7 +72,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v4.5</span>
+            <span class="version-pill" id="appVersion">v4.6</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -147,14 +147,13 @@
         <!-- 1. RIGHT NOW — Hero Card (open by default) -->
         <div class="card col-6" data-collapse-key="right_now" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('right_now', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            ⚡ RIGHT NOW
-            <span class="collapse-chevron" style="display:none;">&#9660;</span>
+            ⚡ RIGHT NOW<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('right_now', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;">
-            <div id="currentTempCollapsed" class="current-temp" style="font-size:2rem;margin-top:8px;">--<span class="temp-unit">&deg;F</span></div>
-            <div id="feelsLikeCollapsed" class="feels-like">Feels like --&deg;F</div>
-            <div id="conditionCollapsed" class="condition" style="font-size:0.95rem;margin-top:6px;">Loading&hellip;</div>
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">⚡ RIGHT NOW</div>
+            <div id="currentTempCollapsed" class="current-temp" style="font-size:1.5rem;margin-top:4px;">--<span class="temp-unit">&deg;F</span></div>
+            <div id="feelsLikeCollapsed" class="feels-like" style="font-size:0.85rem;">Feels like --&deg;F</div>
           </div>
           <div class="card-body" style="display:none;">
             <!-- Big Hero Temp -->
@@ -226,8 +225,16 @@
             </div>
           </div>
         </div>
-        <div class="card col-12" data-collapse-key="48h_temp_precip" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_temp_precip', this)">48-Hour Temperature, Precipitation &amp; Sky <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="48h_temp_precip" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('48h_temp_precip', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🌡️ SKY & PRECIP<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('48h_temp_precip', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌡️ SKY & PRECIP</div>
+            <div id="skyCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
+            <div id="precipCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          </div>
           <div class="card-body" style="display:none;">
           <!-- Hover data overlay -->
           <div id="tempPrecipOverlay" style="
@@ -286,8 +293,16 @@
         </div>
 
         <!-- 48-Hour Wind Forecast -->
-        <div class="card col-12" data-collapse-key="48h_wind" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('48h_wind', this)">48-Hour Wind Forecast <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="48h_wind" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('48h_wind', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            💨 WIND<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('48h_wind', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">💨 WIND</div>
+            <div id="windNowCollapsed" style="font-size:0.88rem;margin-top:8px;line-height:1.4;"><strong>Wind Impact</strong><br>Loading...</div>
+            <div id="windPeakCollapsed" style="font-size:0.88rem;margin-top:8px;line-height:1.4;"><strong>Gust Impact</strong><br>--</div>
+          </div>
           <div class="card-body" style="display:none;">
           <canvas id="windChart"></canvas>
 
@@ -307,16 +322,29 @@
           </div>
         </div>
       </div>
-        <div class="card col-12" data-collapse-key="ten_day" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('ten_day', this)">10-Day Forecast <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="ten_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('ten_day', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            📆 10-DAY FORECAST<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('ten_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:1.1rem;letter-spacing:0.2px;margin-bottom:0;opacity:0.88;">📆 10-DAY FORECAST</div>
+            <div id="tenDayRangeCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
+            <div id="tenDayTrendCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          </div>
           <div class="card-body" style="display:none;">
           <div id="forecastList"></div>
           </div>
         </div>
     
-        <div class="card col-12" data-collapse-key="hyperlocal_forecast" data-default-open="true">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal_forecast', this)">📌 Detailed Forecast
-            <span class="collapse-chevron" style="display:none;">&#9660;</span>
+        <div class="card col-6" data-collapse-key="hyperlocal_forecast" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hyperlocal_forecast', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            📌 DETAILED FORECAST<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hyperlocal_forecast', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:1.1rem;letter-spacing:0.2px;margin-bottom:0;opacity:0.88;">📌 DETAILED FORECAST</div>
+            <div id="hyperlocalSummaryCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
           </div>
           <div class="card-body">
             <div id="hyperlocalForecastList"></div>
@@ -325,12 +353,14 @@
         </div>
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-        <div class="card col-12" data-collapse-key="nws_forecast" data-default-open="false" style="display:none;">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('nws_forecast', this)">&#128204; NWS Detailed Forecast
-            <span style="font-size:0.78rem;font-weight:800;color:rgba(140,200,255,0.8);margin-left:6px;" id="nwsFilterLabel"></span>
-            <span style="flex:1;"></span>
-            <span style="font-size:0.72rem;font-weight:700;class="text-subtle" style="margin-right:8px;" id="nwsOfficeLabel"></span>
-            <span class="collapse-chevron" style="display:none;">&#9660;</span>
+        <div class="card col-6" data-collapse-key="nws_forecast" data-default-open="false" style="display:none;" onclick="if(!this.classList.contains('card-expanded')) toggleCard('nws_forecast', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            📄 NWS<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('nws_forecast', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">📄 NWS</div>
+            <div id="nwsSummaryCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
           </div>
           <div class="card-body" style="display:none;">
           <div id="nwsForecastList"></div>
@@ -348,12 +378,16 @@
 
 
         <!-- Radar (collapsible) -->
-        <div class="card col-12" data-collapse-key="radar" data-default-open="false">
+        <div class="card col-6" data-collapse-key="radar" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('radar', this.querySelector('.card-title-collapsible'))">
 
           <!-- Controls bar (collapsible title) -->
-          <div class="card-title card-title-collapsible" onclick="toggleCard('radar', this)">
-            &#127941; Radar
-            <span class="collapse-chevron" style="display:none;">&#9660;</span>
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            📡 RADAR<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('radar', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">📡 RADAR</div>
+            <div id="radarStatusCollapsed" style="font-size:0.88rem;margin-top:8px;">Live radar</div>
           </div>
 
           <!-- Map and scrubber (collapsible body) -->
@@ -391,16 +425,37 @@
       <div class="grid">
 
         <!-- Today card -->
-        <div class="card col-12" data-collapse-key="today_almanac" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('today_almanac', this)">📅 Today <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="today_almanac" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('today_almanac', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            📅 TODAY<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('today_almanac', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">📅 TODAY</div>
+            <div id="todayDateCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
+            <div id="todayDayCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('today_almanac', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div id="todayDateCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
+            <div id="todayDayCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          </div>
           <div class="card-body">
             <div id="todayAlmanacContent"></div>
           </div>
         </div>
 
 
-        <div class="card col-12" data-collapse-key="tides" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('tides', this)">&#127754; Tides &#8212; Salem Harbor <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="tides" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('tides', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🌊 TIDES<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('tides', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌊 TIDES</div>
+            <div id="nextTideCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
+            <div id="nextTideTimeCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          </div>
           <div class="card-body">
           <div id="tideGrid"></div>
           <div class="small-note" id="nextTideNote"></div>
@@ -409,8 +464,16 @@
         </div>
 
         <!-- Buoy 44013 / Water Temp -->
-        <div class="card col-12" data-collapse-key="buoy_44013" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('buoy_44013', this)">&#127754; Ocean Conditions <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="buoy_44013" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('buoy_44013', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🌊 OCEAN<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('buoy_44013', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌊 OCEAN</div>
+            <div id="waterTempCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
+            <div id="wavesCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          </div>
           <div class="card-body">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
 
@@ -460,8 +523,16 @@
         </div>
 
         <!-- Sun full width, 3-column -->
-        <div class="card col-12" data-collapse-key="sun" data-default-open="false">
-          <div class="card-title card-title-collapsible" id="sunCardTitle" onclick="toggleCard('sun', this)">&#9728;&#65039; Sun <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="sun" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sun', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            ☀️ SUN<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sun', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">☀️ SUN</div>
+            <div id="sunStatusCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
+            <div id="sunTimesCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          </div>
           <div class="card-body" style="display:none;">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
 
@@ -519,8 +590,16 @@
         </div><!-- /card sun -->
 
         <!-- Moon — full width -->
-        <div class="card col-12" data-collapse-key="moon" data-default-open="false">
-          <div class="card-title card-title-collapsible" id="moonCardTitle" onclick="toggleCard('moon', this)">&#127769; Moon <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="moon" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('moon', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🌙 MOON<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('moon', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌙 MOON</div>
+            <div id="moonPhaseCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
+            <div id="moonIllumCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          </div>
           <div class="card-body" style="display:none;">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
 
@@ -569,8 +648,15 @@
         </div><!-- /card moon -->
 
         <!-- Solar System -->
-        <div class="card col-12" data-collapse-key="solar_system" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('solar_system', this)">🪐 Solar System Now <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="solar_system" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('solar_system', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🪐 PLANETS<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('solar_system', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🪐 PLANETS</div>
+            <div id="solarStatusCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Visible tonight</div>
+          </div>
           <div class="card-body">
             <div id="solarSystemGrid"></div>
             <div id="solarSystemNote" style="font-size:0.75rem;class="text-subtle" style="margin-top:12px;"></div>
@@ -578,8 +664,16 @@
         </div>
 
         <!-- Frost / Freeze Tracker -->
-        <div class="card col-12" data-collapse-key="frost_freeze" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('frost_freeze', this)">🌡️ Frost &amp; Freeze Tracker <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="frost_freeze" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('frost_freeze', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            ❄️ FROST LOG<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('frost_freeze', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">❄️ FROST LOG</div>
+            <div id="frostStatusCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
+            <div id="frostDaysCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          </div>
           <div class="card-body">
           <div id="frostTracker" style="margin-top:6px;"></div>
           </div>
@@ -677,10 +771,14 @@
     <!-- HYPERLOCAL CORRECTIONS VIEW -->
     <section id="hyperlocalView" style="display:none;">
       <div class="grid">
-        <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('hyperlocal', this)">
-            🧮 Smart Corrections
-            <span class="collapse-chevron" style="display:none;">&#9660;</span>
+        <div class="card col-6" data-collapse-key="hyperlocal" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hyperlocal', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🧮 OBSERVATION-BASED CORRECTIONS<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hyperlocal', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.85rem;letter-spacing:0.2px;margin-bottom:0;opacity:0.88;line-height:1.3;">🧮 OBSERVATION-BASED CORRECTIONS</div>
+            <div id="correctionsStatusCollapsed" style="font-size:0.88rem;margin-top:8px;"></div>
           </div>
           <div class="card-body" style="display:none;">
             
@@ -752,10 +850,15 @@
         </div>
 
         <!-- Gust Wind Impact — collapsed by default, own window buttons -->
-        <div class="card col-12" data-collapse-key="wind_gust_impact" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_gust_impact', this)"
-               >
-            &#127788; Gust Wind Impact <span class="collapse-chevron" style="display:none;">&#9660;</span>
+        <div class="card col-6" data-collapse-key="wind_gust_impact" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('wind_gust_impact', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            💨 GUST IMPACT<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_gust_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">💨 GUST IMPACT</div>
+            <div id="gustImpactCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
+            <div id="gustPeakCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
           </div>
           <div class="card-body" style="display:none;">
           <div class="wind-window-pills" id="gustWindowPills" style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">
@@ -794,10 +897,15 @@
         </div>
 
         <!-- Sustained Wind Impact — collapsed by default, own window buttons -->
-        <div class="card col-12" data-collapse-key="wind_sus_impact" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('wind_sus_impact', this)"
-               >
-            &#127787; Sustained Wind Impact <span class="collapse-chevron" style="display:none;">&#9660;</span>
+        <div class="card col-6" data-collapse-key="wind_sus_impact" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('wind_sus_impact', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            💨 WIND IMPACT<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_sus_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">💨 WIND IMPACT</div>
+            <div id="susImpactCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
+            <div id="susPeakCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
           </div>
           <div class="card-body" style="display:none;">
           <div class="wind-window-pills" id="susWindowPills" style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">
@@ -836,32 +944,64 @@
         </div>
 
         <!-- Sea Breeze Detail -->
-        <div class="card col-12" data-collapse-key="sea_breeze_detail" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('sea_breeze_detail', this)">🌊 Sea Breeze Analysis <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="sea_breeze_detail" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sea_breeze_detail', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🌊 SEA BREEZE<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sea_breeze_detail', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌊 SEA BREEZE</div>
+            <div id="seaBreezeCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
+            <div id="seaBreezeProbCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          </div>
           <div class="card-body" id="seaBreezeDetail">
             <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
           </div>
         </div>
 
         <!-- Sunset Quality Forecast -->
-        <div class="card col-12" data-collapse-key="sunset_quality" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('sunset_quality', this)">🌅 Sunset Quality Forecast <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="sunset_quality" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sunset_quality', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🌅 SUNSET<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sunset_quality', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌅 SUNSET</div>
+            <div id="sunsetScoreCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
+            <div id="sunsetTimeCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          </div>
           <div class="card-body">
             <div id="sunsetQualityContent"></div>
           </div>
         </div>
 
         <!-- Dock Day Score -->
-        <div class="card col-12" data-collapse-key="dock_day" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('dock_day', this)">⚓ Dock Day Score <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="dock_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('dock_day', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            ⚓ DOCK DAY<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('dock_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">⚓ DOCK DAY</div>
+            <div id="dockScoreCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
+            <div id="dockConditionsCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          </div>
           <div class="card-body">
             <div id="dockDayContent"></div>
           </div>
         </div>
 
         <!-- Fog Risk -->
-        <div class="card col-12" data-collapse-key="fog_risk" data-default-open="false">
-          <div class="card-title card-title-collapsible" onclick="toggleCard('fog_risk', this)">🌫️ Fog Risk <span class="collapse-chevron" style="display:none;">&#9660;</span></div>
+        <div class="card col-6" data-collapse-key="fog_risk" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('fog_risk', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🌫️ FOG<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('fog_risk', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;">
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌫️ FOG</div>
+            <div id="fogRiskCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
+            <div id="fogProbCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          </div>
           <div class="card-body">
             <div class="row">
               <div class="label" data-tip="Current fog probability based on dew point spread, humidity, and wind conditions.">Current Risk</div>

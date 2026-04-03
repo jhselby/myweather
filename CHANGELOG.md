@@ -1,5 +1,34 @@
 # Weather App Changelog
-## 4.4 (April 1, 2026) - NEXRAD Radar Upgrade**
+## v4.6 • April 2, 2026
+* Collapsible tile system - all cards now col-6 tiles that expand to modal overlays
+  * 20+ cards converted: Weather (7), Hyperlocal (7), Almanac (7)
+  * Tiles show preview data when collapsed (current conditions, scores, next events)
+  * Click tile to expand to full-screen modal with close button (X)
+  * State persists in localStorage across sessions
+* Preview data improvements:
+  * Right Now: Temperature + Feels Like
+  * Sky & Precip: Condition emoji + POP/clouds/clear breakdown
+  * Wind: Current sustained + gust impact scores with speed/direction
+  * Tides: Next tide (High/Low) with 12-hour time + height
+  * Sun: Next event (Sunrise/Sunset) with 12-hour time
+  * Sea Breeze, Sunset Quality, Dock Day: Current scores + status
+  * Ocean, Fog, Frost, Moon, Planets: Current data
+* 10-Day Forecast: Days no longer clickable (removed detail view expansion)
+* Time format: All tide and sun times now display in 12-hour format with AM/PM
+* Tile design: Uniform 140px height, centered titles + data, compact spacing
+* Fixed: Duplicate `const today` declaration in renderTides
+* Fixed: UTC vs local date bug for tide "next event" calculation
+* Renamed: "CORRECTIONS" → "OBSERVATION-BASED CORRECTIONS"
+* Code: toggleCard(), initCollapsibleCards(), modal-backdrop CSS
+
+## v4.5 • April 2, 2026
+* Prototype: Collapsible tile system (single card proof-of-concept)
+  * Converted one card to col-6 tile that expands to modal overlay
+  * Implemented toggleCard() function and modal backdrop
+  * localStorage persistence for open/closed state
+  * Foundation for v4.6 full rollout
+
+## v4.4 • April 1, 2026 - NEXRAD Radar Upgrade**
 *  Switched radar source from RainViewer to IEM NEXRAD WMS
   * 5-minute update intervals (vs RainViewer's 10-minute)
   * 24 frames = 2 hours of radar history

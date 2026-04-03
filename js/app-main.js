@@ -1046,6 +1046,15 @@
       </div>`;
 
       el.innerHTML = html;
+      
+      // Update collapsed preview with today's data
+      if (scores.length > 0 && scores[0].dayLabel === "Today") {
+        const today = scores[0];
+        const sunsetScoreEl = document.getElementById("sunsetScoreCollapsed");
+        const sunsetTimeEl = document.getElementById("sunsetTimeCollapsed");
+        if (sunsetScoreEl) sunsetScoreEl.innerHTML = `${today.dayLabel}<br>${today.emoji}`;
+        if (sunsetTimeEl) sunsetTimeEl.textContent = today.label;
+      }
     }
 
     function renderSolarSystem() {
@@ -1617,32 +1626,62 @@
       html += `</div>`;
 
       el.innerHTML = html;
+      
+      // Update collapsed preview with today's data
+      if (dayCards.length > 0 && dayCards[0].dayLabel === "Today") {
+        const today = dayCards[0];
+        const sl = scoreLabel(today.bestScore);
+        const dockScoreEl = document.getElementById("dockScoreCollapsed");
+        const dockConditionsEl = document.getElementById("dockConditionsCollapsed");
+        if (dockScoreEl) dockScoreEl.innerHTML = `${today.dayLabel}<br>${sl.emoji}`;
+        if (dockConditionsEl) dockConditionsEl.textContent = sl.label;
+      }
     }
 
     function renderTides(tides) {
+      console.log("renderTides called with:", tides ? tides.length + " tides" : "null/undefined");
+      
       const grid = document.getElementById("tideGrid");
       const note = document.getElementById("nextTideNote");
+      const nextTideEl = document.getElementById("nextTideCollapsed");
+      const nextTideTimeEl = document.getElementById("nextTideTimeCollapsed");
+      
+      console.log("Elements found - grid:", !!grid, "nextTideEl:", !!nextTideEl, "nextTideTimeEl:", !!nextTideTimeEl);
+      
       if (!grid) return;
       grid.innerHTML = "";
       if (note) note.textContent = "";
+      
       if (!Array.isArray(tides) || tides.length === 0) {
         if (note) note.textContent = "No tide data available.";
+        // Update preview to show no data
+        if (nextTideEl) nextTideEl.textContent = "No tide data";
+        if (nextTideTimeEl) nextTideTimeEl.textContent = "";
         return;
       }
 
-      const todayStr = new Date().toISOString().split("T")[0];
-      const nowMins  = new Date().getHours() * 60 + new Date().getMinutes();
+      const today = new Date();
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const nowMins  = today.getHours() * 60 + today.getMinutes();
+
+      console.log("Tide debug - todayStr:", todayStr, "nowMins:", nowMins);
+      console.log("Tide debug - first 3 tides:", tides.slice(0, 3));
 
       // Find next upcoming tide
       let nextIdx = -1;
       for (let i = 0; i < tides.length; i++) {
         const tDate = tides[i].date || todayStr;
         const [th, tm] = (tides[i].time || "00:00").split(":").map(Number);
-        if (tDate > todayStr || (tDate === todayStr && (th * 60 + tm) >= nowMins)) {
+        const tideMins = th * 60 + tm;
+        console.log(`Tide ${i}: date=${tDate}, time=${tides[i].time}, tideMins=${tideMins}, check: ${tDate > todayStr} || (${tDate === todayStr} && ${tideMins >= nowMins})`);
+        if (tDate > todayStr || (tDate === todayStr && tideMins >= nowMins)) {
           nextIdx = i;
+          console.log("Found next tide at index:", nextIdx);
           break;
         }
       }
+      
+      console.log("Final nextIdx:", nextIdx);
 
       // Group by date, cap at 4 per day, total 8 max
       const byDate = {};
@@ -1656,12 +1695,12 @@
         total++;
       });
 
-      const today = new Date().toISOString().split("T")[0];
+      const todayISO = new Date().toISOString().split("T")[0];
       const tmrw  = new Date(Date.now() + 86400000).toISOString().split("T")[0];
 
       let tideIdx = 0;
       Object.keys(byDate).sort().forEach(dateKey => {
-        const label = dateKey === today ? "Today" :
+        const label = dateKey === todayISO ? "Today" :
                       dateKey === tmrw  ? "Tomorrow" :
                       new Date(dateKey + "T12:00:00").toLocaleDateString("en-US",
                         { weekday:"long", month:"short", day:"numeric" });
@@ -1682,10 +1721,20 @@
           tile.className = "tide-item";
           if (isNext) tile.style.cssText =
             "border:1px solid rgba(100,200,255,0.45);background:rgba(100,200,255,0.08);border-radius:10px;";
+          
+          // Convert 24-hour time to 12-hour with AM/PM
+          let time12hr = t.time;
+          if (t.time && t.time.includes(":")) {
+            const [hours, mins] = t.time.split(":").map(Number);
+            const period = hours >= 12 ? "PM" : "AM";
+            const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+            time12hr = `${hours12}:${mins.toString().padStart(2, '0')} ${period}`;
+          }
+          
           tile.innerHTML =
             '<div class="tide-type">' + (isNext ? "&#9654; " : "") +
               (t.type === "H" ? "High" : "Low") + '</div>' +
-            '<div class="tide-time">' + t.time + '</div>' +
+            '<div class="tide-time">' + time12hr + '</div>' +
             '<div class="tide-height">' + (t.height ?? "--") + ' ft</div>';
           row.appendChild(tile);
           tideIdx++;
@@ -1700,6 +1749,29 @@
       });
 
       if (note) note.textContent = "Salem Harbor (8442645) \u2014 harmonic predictions. \u25b6 = next tide.";
+      
+      // Update collapsed preview with next tide (elements already retrieved at top of function)
+      if (nextIdx >= 0 && tides[nextIdx]) {
+        const nextTide = tides[nextIdx];
+        const type = nextTide.type === "H" ? "High" : "Low";
+        const height = nextTide.height ? `${nextTide.height} ft` : "--";
+        
+        // Convert 24-hour time to 12-hour with AM/PM
+        let time12hr = nextTide.time || "--";
+        if (nextTide.time && nextTide.time.includes(":")) {
+          const [hours, mins] = nextTide.time.split(":").map(Number);
+          const period = hours >= 12 ? "PM" : "AM";
+          const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+          time12hr = `${hours12}:${mins.toString().padStart(2, '0')} ${period}`;
+        }
+        
+        if (nextTideEl) nextTideEl.textContent = `${type} tide`;
+        if (nextTideTimeEl) nextTideTimeEl.textContent = `${time12hr} · ${height}`;
+      } else {
+        // No upcoming tide found
+        if (nextTideEl) nextTideEl.textContent = "No upcoming tide";
+        if (nextTideTimeEl) nextTideTimeEl.textContent = "";
+      }
     }
 
     function buildTideChart(curve, events) {
@@ -1856,17 +1928,9 @@
         const row = document.createElement("div");
         row.className = "row forecast-day-row";
         row.dataset.date = d.dateStr;
-        row.style.cssText = "cursor:pointer;border-radius:8px;margin:0 -6px;padding:7px 6px;transition:background 0.15s;";
+        row.style.cssText = "border-radius:8px;margin:0 -6px;padding:7px 6px;";
 
-        row.addEventListener("click", () => selectForecastDay(d.dateStr));
-        row.addEventListener("mouseenter", () => { 
-          if (row.dataset.date !== _selectedForecastDate) 
-            row.style.background = "rgba(255,255,255,0.04)"; 
-        });
-        row.addEventListener("mouseleave", () => { 
-          if (row.dataset.date !== _selectedForecastDate) 
-            row.style.background = ""; 
-        });
+        // Click handler removed - days are no longer clickable
 
         row.innerHTML = `
           <div class="label" style="display:flex;align-items:center;gap:8px;">
@@ -2141,6 +2205,12 @@
       `;
 
       el.innerHTML = html;
+      
+      // Update collapsed preview
+      const seaBreezeCollapsedEl = document.getElementById("seaBreezeCollapsed");
+      const seaBreezeProbCollapsedEl = document.getElementById("seaBreezeProbCollapsed");
+      if (seaBreezeCollapsedEl) seaBreezeCollapsedEl.textContent = `${sb.likelihood}% likelihood`;
+      if (seaBreezeProbCollapsedEl) seaBreezeProbCollapsedEl.textContent = statusText;
     }
 
     function renderFogDetail(data) {
@@ -2279,7 +2349,36 @@
 
       document.getElementById("sunEmoji").textContent   = emoji;
       document.getElementById("sunStatus").textContent  = status;
-      document.getElementById("sunCardTitle").innerHTML = emoji + " Sun \u2014 " + status + ' <span class="collapse-chevron">&#9660;</span>';
+      
+      // Update collapsed preview - show next event only (sunrise or sunset)
+      const sunStatusCollapsedEl = document.getElementById("sunStatusCollapsed");
+      const sunTimesCollapsedEl = document.getElementById("sunTimesCollapsed");
+      
+      if (sunStatusCollapsedEl && sunTimesCollapsedEl) {
+        // Determine next event
+        const now = new Date();
+        const sunrise = times.sunrise;
+        const sunset = times.sunset;
+        
+        let nextEvent, nextTime;
+        if (now < sunrise) {
+          nextEvent = "Sunrise";
+          nextTime = fmtTime(sunrise);
+        } else if (now < sunset) {
+          nextEvent = "Sunset";
+          nextTime = fmtTime(sunset);
+        } else {
+          // After sunset - show tomorrow's sunrise
+          const tomorrow = new Date(now);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          const tomorrowTimes = SunCalc.getTimes(tomorrow, HOME_LAT, HOME_LON);
+          nextEvent = "Sunrise";
+          nextTime = fmtTime(tomorrowTimes.sunrise);
+        }
+        
+        sunStatusCollapsedEl.textContent = nextEvent;
+        sunTimesCollapsedEl.textContent = nextTime;
+      }
 
       // Azimuth
       const azDeg = Math.round(((pos.azimuth * 180 / Math.PI) + 180 + 360) % 360);
@@ -2613,7 +2712,14 @@
       document.getElementById("moonEmoji").textContent        = phase.emoji;
       document.getElementById("moonPhaseName").textContent    = phase.name;
       document.getElementById("moonIllumination").textContent = Math.round(illum.fraction * 100) + "% illuminated";
-      document.getElementById("moonCardTitle").innerHTML      = phase.emoji + " Moon — " + phase.name + ' <span class="collapse-chevron">&#9660;</span>';
+      
+      // Update collapsed preview
+      if (document.getElementById("moonPhaseCollapsed")) {
+        document.getElementById("moonPhaseCollapsed").textContent = phase.name;
+      }
+      if (document.getElementById("moonIllumCollapsed")) {
+        document.getElementById("moonIllumCollapsed").textContent = Math.round(illum.fraction * 100) + "% illuminated";
+      }
 
       document.getElementById("moonrise").textContent =
         times.rise ? fmtTime(times.rise) : (times.alwaysUp ? "Up all night" : "Doesn't rise today");
@@ -2899,6 +3005,95 @@
     document.getElementById("pageLoaded").textContent =
       new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
+    // ═══════════════════════════════════════════════════════════════
+    // Populate Collapsed Tile Previews
+    // ═══════════════════════════════════════════════════════════════
+    function populateCollapsedPreviews(data) {
+      // Helper to safely set text
+      const setText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+      };
+      
+      // Extract daily and hourly from data
+      const daily = data.daily || {};
+      const hourly = data.hourly || {};
+      
+      // Sky & Precip (48h) - needs to be populated AFTER main data processing
+      // This will be called separately after cur/emoji/desc are available
+      
+      // Wind - shows Wind Impact (sustained) and Gust Impact
+      // This will be populated AFTER main data processing where wind impact is calculated
+      
+      // 10-Day
+      const hiToday = daily?.temperature_2m_max?.[0];
+      const loToday = daily?.temperature_2m_min?.[0];
+      const hi10 = daily?.temperature_2m_max?.[9];
+      const lo10 = daily?.temperature_2m_min?.[9];
+      if (hiToday && loToday) {
+        setText("tenDayRangeCollapsed", `Today ${Math.round(hiToday)}°/${Math.round(loToday)}°`);
+        if (hi10 && lo10) {
+          setText("tenDayTrendCollapsed", `Day 10: ${Math.round(hi10)}°/${Math.round(lo10)}°`);
+        }
+      }
+      
+      // Detailed Forecast
+      const periods = data.hyperlocal_forecast?.periods || [];
+      if (periods.length > 0) {
+        setText("hyperlocalSummaryCollapsed", periods[0].short_summary || "Loading...");
+      }
+      
+      // NWS Forecast
+      const nwsPeriods = data.nws_forecast?.periods || [];
+      if (nwsPeriods.length > 0) {
+        setText("nwsSummaryCollapsed", nwsPeriods[0].name + ": " + (nwsPeriods[0].shortForecast || ""));
+      }
+      
+      // Today Almanac
+      const today = new Date();
+      const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][today.getDay()];
+      const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][today.getMonth()];
+      setText("todayDateCollapsed", `${monthName} ${today.getDate()}`);
+      setText("todayDayCollapsed", dayName);
+      
+      // Tides - populated by renderTides()
+      
+      // Ocean/Buoy
+      const waterTemp = data.buoy_44013?.water_temp_f;
+      const waveHt = data.buoy_44013?.wave_ht_ft;
+      if (waterTemp) setText("waterTempCollapsed", `${waterTemp}°F water`);
+      if (waveHt !== undefined) setText("wavesCollapsed", waveHt > 0 ? `${waveHt} ft waves` : "Calm");
+      
+      // Solar System
+      setText("solarStatusCollapsed", "Planets visible tonight");
+      
+      // Frost/Freeze
+      const frostDays = data.frost_stats?.days_since_last_frost;
+      if (frostDays !== undefined) {
+        setText("frostStatusCollapsed", frostDays === 0 ? "Frost today" : `${frostDays} days since frost`);
+        setText("frostDaysCollapsed", `Last year: ${data.frost_stats?.days_since_last_frost_last_year || "—"}`);
+      }
+      
+      // Wind Gust Impact - populated by Right Now card data
+      // Wind Sustained Impact - populated by Right Now card data
+      
+      // Sea Breeze - populated by renderSeaBreezeDetail()
+      
+      // Sunset Quality - populated by renderSunsetQuality()
+      // Dock Day - populated by renderDockDay()
+      
+      // Fog Risk - use data.derived
+      const fogProb = data.derived?.fog_probability;
+      const fogLabel = data.derived?.fog_label;
+      if (fogProb !== undefined && fogLabel) {
+        setText("fogRiskCollapsed", fogLabel);
+        setText("fogProbCollapsed", `${fogProb}%`);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Main Data Load
+    // ═══════════════════════════════════════════════════════════════
     fetch("weather_data.json?t=" + Date.now())
       .then(r => r.json())
       .then(data => {
@@ -2989,7 +3184,28 @@
         const flc = document.getElementById("feelsLikeCollapsed"); if (flc) flc.textContent = `Feels like ${Math.round(correctedFeelsLike)}°F`;
         const obsTag = cur.condition_source === "KBVY observed" ? " <span style='font-size:0.75rem;opacity:0.5;'>[obs]</span>" : "";
         document.getElementById("condition").innerHTML = `${emoji} ${desc}${obsTag}`;
-        const cc = document.getElementById("conditionCollapsed"); if (cc) cc.innerHTML = `${emoji} ${desc}`;   
+        // Removed conditionCollapsed - sky condition now goes in Sky & Precip tile
+        
+        // Populate Sky & Precip tile preview
+        const skyEl = document.getElementById("skyCollapsed");
+        const precipEl = document.getElementById("precipCollapsed");
+        if (skyEl) skyEl.innerHTML = `${emoji} ${desc}`;
+        if (precipEl) {
+          const precipProb = data.hourly?.precipitation_probability?.[0] || 0;
+          const cloudCover = data.hourly?.cloud_cover?.[0] || 0;
+          const clearSky = 100 - cloudCover;
+          
+          let skyText = `${precipProb}% precip`;
+          if (cloudCover > 0 && clearSky > 0) {
+            skyText += ` | ${Math.round(cloudCover)}% clouds | ${Math.round(clearSky)}% clear`;
+          } else if (cloudCover === 100) {
+            skyText += ` | 100% clouds`;
+          } else if (cloudCover === 0) {
+            skyText += ` | Clear`;
+          }
+          
+          precipEl.textContent = skyText;
+        }   
 
         // Update Smart Correction table
         if (hyp) {
@@ -3178,6 +3394,36 @@
           } else {
             gustImpactNowEl.textContent = "--";
           }
+        }
+        
+        // Populate Wind tile preview with same Wind Impact + Gust Impact data (Weather page)
+        const windNowCollapsedEl = document.getElementById("windNowCollapsed");
+        const windPeakCollapsedEl = document.getElementById("windPeakCollapsed");
+        if (windNowCollapsedEl && windImpactNowEl) {
+          windNowCollapsedEl.innerHTML = `<strong>Wind Impact</strong><br>${windImpactNowEl.innerHTML}`;
+        }
+        if (windPeakCollapsedEl && gustImpactNowEl) {
+          windPeakCollapsedEl.innerHTML = `<strong>Gust Impact</strong><br>${gustImpactNowEl.innerHTML}`;
+        }
+        
+        // Populate Hyperlocal page Gust Impact and Sustained Wind Impact tiles
+        const gustImpactCollapsedEl = document.getElementById("gustImpactCollapsed");
+        const gustPeakCollapsedEl = document.getElementById("gustPeakCollapsed");
+        const susImpactCollapsedEl = document.getElementById("susImpactCollapsed");
+        const susPeakCollapsedEl = document.getElementById("susPeakCollapsed");
+        
+        if (gustImpactCollapsedEl && gustImpactNowEl) {
+          gustImpactCollapsedEl.innerHTML = gustImpactNowEl.innerHTML;
+        }
+        if (gustPeakCollapsedEl) {
+          gustPeakCollapsedEl.textContent = ""; // Clear second line for gust tile
+        }
+        
+        if (susImpactCollapsedEl && windImpactNowEl) {
+          susImpactCollapsedEl.innerHTML = windImpactNowEl.innerHTML;
+        }
+        if (susPeakCollapsedEl) {
+          susPeakCollapsedEl.textContent = ""; // Clear second line for sustained tile
         }
         
         // Pressure now (with trend inline)
@@ -3843,6 +4089,10 @@
 
         // Today almanac card
         renderTodayAlmanac(daily);
+        
+        // Populate all collapsed tile previews
+        populateCollapsedPreviews(data);
+        
         updateSettingBtns();
       })
       .catch(err => {
