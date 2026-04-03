@@ -1,3 +1,14 @@
+## v4.7 - 2026-04-03
+
+### Fixed
+- **CRITICAL**: Chart temperature line now uses corrected HRRR data (model + hyperlocal bias) instead of raw model temperatures
+- **CRITICAL**: Precip type coloring on chart now uses corrected temperatures for freezing rain detection
+- **CRITICAL**: Today's high/low calculated from corrected hourly temps instead of timing-out ECMWF daily endpoint
+- **CRITICAL**: Gust floor bug - corrected gusts can no longer be less than corrected sustained wind speed
+- Sunrise/sunset times now display in 12-hour format (e.g., "6:22 AM" instead of "06:22")
+- All tiles now start closed on page load (localStorage no longer restores previous state)
+- Only one tile can be open at a time (opening a tile closes all others)
+
 # Weather App Changelog
 ## v4.6 • April 2, 2026
 * Collapsible tile system - all cards now col-6 tiles that expand to modal overlays
