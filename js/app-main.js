@@ -1,4 +1,32 @@
 // ======================================================
+    // Utility Functions
+    // ======================================================
+    
+    /**
+     * Calculate wet bulb temperature using Stull's formula
+     * @param {number} t_f - Temperature in °F
+     * @param {number} rh_pct - Relative humidity in %
+     * @returns {number|null} - Wet bulb temperature in °F, or null if invalid
+     */
+    function calculateWetBulb(t_f, rh_pct) {
+      if (t_f == null || rh_pct == null) return null;
+      
+      // Convert to Celsius
+      const t = (t_f - 32) * 5/9;
+      const rh = parseFloat(rh_pct);
+      
+      // Stull's formula
+      const tw = (t * Math.atan(0.151977 * Math.pow(rh + 8.313659, 0.5))
+                + Math.atan(t + rh)
+                - Math.atan(rh - 1.676331)
+                + 0.00391838 * Math.pow(rh, 1.5) * Math.atan(0.023101 * rh)
+                - 4.686035);
+      
+      // Convert back to °F and round
+      return Math.round((tw * 9/5 + 32) * 10) / 10;
+    }
+
+    // ======================================================
     // Settings — theme + pressure units
     // ======================================================
     let _pressureUnit = localStorage.getItem('pressureUnit') || 'hpa';
@@ -3278,10 +3306,12 @@
           if (scBiasGusts) scBiasGusts.textContent = hyp.bias_wind_gusts != null ? (hyp.bias_wind_gusts >= 0 ? "+" : "") + hyp.bias_wind_gusts.toFixed(1) + " mph" : "--";
           if (scCorrectedGusts) scCorrectedGusts.textContent = hyp.corrected_wind_gusts != null ? Math.round(hyp.corrected_wind_gusts) + " mph" : "--";
           
-          // Derived values table
+          // Dew Point
           const scModelDewpoint = document.getElementById("scModelDewpoint");
+          const scBiasDewpoint = document.getElementById("scBiasDewpoint");
           const scCorrectedDewpoint = document.getElementById("scCorrectedDewpoint");
-          if (scModelDewpoint) scModelDewpoint.textContent = cur.dew_point != null ? Math.round(cur.dew_point) + "°F" : "--";
+          const modelDewpoint = cur.dew_point;
+          if (scModelDewpoint) scModelDewpoint.textContent = modelDewpoint != null ? Math.round(modelDewpoint) + "°F" : "--";
           // Calculate corrected dew point from corrected temp + humidity
           if (scCorrectedDewpoint && hyp.corrected_temp != null && hyp.corrected_humidity != null) {
             const T = hyp.corrected_temp;
@@ -3291,14 +3321,39 @@
             const alpha = ((a * T) / (b + T)) + Math.log(RH / 100.0);
             const correctedDewpoint = (b * alpha) / (a - alpha);
             scCorrectedDewpoint.textContent = Math.round(correctedDewpoint) + "°F";
-          } else if (scCorrectedDewpoint) {
-            scCorrectedDewpoint.textContent = "--";
+            // Calculate and display bias
+            if (scBiasDewpoint && modelDewpoint != null) {
+              const dewBias = correctedDewpoint - modelDewpoint;
+              scBiasDewpoint.textContent = (dewBias >= 0 ? "+" : "") + dewBias.toFixed(1) + "°F";
+            }
+          } else {
+            if (scCorrectedDewpoint) scCorrectedDewpoint.textContent = "--";
+            if (scBiasDewpoint) scBiasDewpoint.textContent = "--";
           }
           
+          // Wet Bulb Temp
+          const scModelWetBulb = document.getElementById("scModelWetBulb");
+          const scBiasWetBulb = document.getElementById("scBiasWetBulb");
+          const scCorrectedWetBulb = document.getElementById("scCorrectedWetBulb");
+          const modelWetBulb = cur.wet_bulb;
+          if (scModelWetBulb) scModelWetBulb.textContent = modelWetBulb != null ? Math.round(modelWetBulb) + "°F" : "--";
+          const correctedWetBulb = der.corrected_wet_bulb;
+          if (scCorrectedWetBulb) scCorrectedWetBulb.textContent = correctedWetBulb != null ? Math.round(correctedWetBulb) + "°F" : "--";
+          // Calculate and display bias
+          if (scBiasWetBulb && modelWetBulb != null && correctedWetBulb != null) {
+            const wbBias = correctedWetBulb - modelWetBulb;
+            scBiasWetBulb.textContent = (wbBias >= 0 ? "+" : "") + wbBias.toFixed(1) + "°F";
+          } else if (scBiasWetBulb) {
+            scBiasWetBulb.textContent = "--";
+          }
+          
+          // Feels Like
           const scModelFeelsLike = document.getElementById("scModelFeelsLike");
+          const scBiasFeelsLike = document.getElementById("scBiasFeelsLike");
           const scCorrectedFeelsLike = document.getElementById("scCorrectedFeelsLike");
           // Model feels like from apparent_temperature
-          if (scModelFeelsLike) scModelFeelsLike.textContent = cur.apparent_temperature != null ? Math.round(cur.apparent_temperature) + "°F" : "--";
+          const modelFeelsLike = cur.apparent_temperature;
+          if (scModelFeelsLike) scModelFeelsLike.textContent = modelFeelsLike != null ? Math.round(modelFeelsLike) + "°F" : "--";
           // Calculate corrected feels like from corrected temp + wind
           if (scCorrectedFeelsLike && hyp.corrected_temp != null) {
             const T = hyp.corrected_temp;
@@ -3316,18 +3371,19 @@
                           (0.00085282 * T * RH * RH) - (0.00000199 * T * T * RH * RH);
             }
             scCorrectedFeelsLike.textContent = Math.round(feelsLike) + "°F";
-          } else if (scCorrectedFeelsLike) {
-            scCorrectedFeelsLike.textContent = "--";
+            // Calculate and display bias
+            if (scBiasFeelsLike && modelFeelsLike != null) {
+              const flBias = feelsLike - modelFeelsLike;
+              scBiasFeelsLike.textContent = (flBias >= 0 ? "+" : "") + flBias.toFixed(1) + "°F";
+            }
+          } else {
+            if (scCorrectedFeelsLike) scCorrectedFeelsLike.textContent = "--";
+            if (scBiasFeelsLike) scBiasFeelsLike.textContent = "--";
           }
-          
-          // Wet Bulb Temp
-          const scModelWetBulb = document.getElementById("scModelWetBulb");
-          const scCorrectedWetBulb = document.getElementById("scCorrectedWetBulb");
-          if (scModelWetBulb) scModelWetBulb.textContent = cur.wet_bulb != null ? Math.round(cur.wet_bulb) + "°F" : "--";
-          if (scCorrectedWetBulb) scCorrectedWetBulb.textContent = der.corrected_wet_bulb != null ? Math.round(der.corrected_wet_bulb) + "°F" : "--";
           
           // Precip Type (only show if precipitation is likely)
           const scModelPrecipType = document.getElementById("scModelPrecipType");
+          const scBiasPrecipType = document.getElementById("scBiasPrecipType");
           const scCorrectedPrecipType = document.getElementById("scCorrectedPrecipType");
           const precipLikely = (cur.precipitation_probability ?? 0) > 20;
           if (precipLikely) {
@@ -3346,12 +3402,18 @@
               const displayType = correctedPType === "freezing_rain" ? "Freezing Rain" :
                                   correctedPType.charAt(0).toUpperCase() + correctedPType.slice(1);
               scCorrectedPrecipType.textContent = displayType;
+              // Bias: show if different from model, otherwise --
+              if (scBiasPrecipType) {
+                scBiasPrecipType.textContent = (displayType !== modelPType) ? "Changed" : "--";
+              }
             } else if (scCorrectedPrecipType) {
               scCorrectedPrecipType.textContent = "--";
+              if (scBiasPrecipType) scBiasPrecipType.textContent = "--";
             }
           } else {
             if (scModelPrecipType) scModelPrecipType.textContent = "None";
             if (scCorrectedPrecipType) scCorrectedPrecipType.textContent = "None";
+            if (scBiasPrecipType) scBiasPrecipType.textContent = "--";
           }
           
           // Station count and confidence
@@ -3786,7 +3848,13 @@
           times,
           (hourly.temperature || []).map((t, i) => { const bias = hyp.weighted_bias ?? 0; return t != null ? t + bias : null; }).slice(startIdx, startIdx + 48),
           (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48),
-          (hourly.corrected_wet_bulb || hourly.wet_bulb || []).slice(startIdx, startIdx + 48),
+          (hourly.temperature || []).map((t, i) => {
+            const tempBias = hyp.weighted_bias ?? 0;
+            const humidityBias = hyp.bias_humidity ?? 0;
+            const correctedTemp = t != null ? t + tempBias : null;
+            const correctedHumidity = (hourly.humidity || [])[i] != null ? (hourly.humidity[i] + humidityBias) : null;
+            return calculateWetBulb(correctedTemp, correctedHumidity);
+          }).slice(startIdx, startIdx + 48),
           (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48),
           (hourly.cloud_cover_low || []).slice(startIdx, startIdx + 48),
           (hourly.cloud_cover_mid || []).slice(startIdx, startIdx + 48),
@@ -4010,4 +4078,4 @@
     document.getElementById('refreshBtn').addEventListener('click', function() {
       this.style.transform = 'rotate(360deg)';
       setTimeout(() => { this.style.transform = ''; location.reload(); }, 400);
-    });
+    });// test comment

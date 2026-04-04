@@ -1,3 +1,19 @@
+## v4.14 - 2026-04-04
+
+### Changed
+- **Smart Corrections table unified** - Removed distinction between "Metric" and "Derived" sections
+- **Added Bias column for derived values** - Dew point, wet bulb, feels like, and precip type now show calculated bias
+- Precip type bias shows "Changed" when correction differs from model, "--" when same
+
+## v4.13 - 2026-04-04
+
+### Fixed
+- **Wet bulb forecast accuracy** - 48-hour wet bulb now calculated with BOTH corrected temperature and corrected humidity (previously only humidity was corrected)
+- Added calculateWetBulb() function to frontend for accurate psychrometric calculations
+
+### Changed
+- Tested and validated build.py cache-busting system
+
 ## v4.9 - 2026-04-03
 
 ### Fixed
