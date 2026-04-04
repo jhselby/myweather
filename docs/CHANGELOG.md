@@ -242,3 +242,12 @@
 * Initial build: multi-model weather, tides, buoy, NWS alerts
 * Multi-tab layout (Weather / Wind / Almanac / Radar / Sources)
 * KBOS / KBVY / PWS observed conditions
+
+## v4.12 • April 4, 2026
+* Added DATA_PIPELINE.md technical reference documentation
+* Moved CHANGELOG.md to docs/ folder
+* Added Data Pipeline Reference section to header
+* Created build.py automated cache-busting system
+* Moved wu_scraper_realtime.py to weather_collector/fetchers/
+* Updated .gitignore with cache file exclusions
+* Fixed wu.py to import scraper as module instead of subprocess
