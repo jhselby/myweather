@@ -1,3 +1,8 @@
+## v4.15 - 2026-04-04
+
+### Fixed
+- **Sunset data collection reliability** - Added warmup API call to establish connection before fetching directional cloud data, eliminating Day 0 timeout failures on GitHub Actions
+
 ## v4.14 - 2026-04-04
 
 ### Changed
