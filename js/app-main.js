@@ -518,12 +518,11 @@
             if (activeElements.length > 0) {
               const index = activeElements[0].index;
               updateTempPrecipDataBar(activeElements[0].index, times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal);
-              document.getElementById("tempPrecipDataBar").classList.add("visible");
             }
           },
           onHover: (event, activeElements) => {
             const dataBar = document.getElementById("tempPrecipDataBar");
-            if (dataBar && dataBar.classList.contains("visible") && activeElements.length > 0) {
+            if (dataBar && activeElements.length > 0) {
               updateTempPrecipDataBar(activeElements[0].index, times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal);
             }
           },
@@ -632,12 +631,11 @@
             if (activeElements.length > 0) {
               const index = activeElements[0].index;
               updateWindDataBar(activeElements[0].index, times, speeds, gusts, directions);
-              document.getElementById("windDataBar").classList.add("visible");
             }
           },
           onHover: (event, activeElements) => {
             const dataBar = document.getElementById("windDataBar");
-            if (dataBar && dataBar.classList.contains("visible") && activeElements.length > 0) {
+            if (dataBar && activeElements.length > 0) {
               updateWindDataBar(activeElements[0].index, times, speeds, gusts, directions);
             }
           },
@@ -2052,6 +2050,7 @@
     let _susWindowHours  = 12;
 
     function renderWindRisk(data) {
+      const hyp   = data.hyperlocal || {};
       const hourly = data.hourly || {};
       const gustPeak = computePeakWorry(hourly, _gustWindowHours, true);
       const susPeak  = computePeakWorry(hourly, _susWindowHours,  false);
@@ -2083,7 +2082,7 @@
       }
       if (cur.wind_speed != null && cur.wind_direction != null) {
         const exposure = getExposureFactor(cur.wind_direction);
-        const susScore = Math.round(worryScore(cur.wind_speed, exposure));
+        const susScore = Math.round(worryScore(hyp.corrected_wind_speed ?? cur.wind_speed, exposure));
         const susLevel = worryLevel(susScore);
         const susCurEl = document.getElementById("susCurrentScore");
         if (susCurEl) susCurEl.innerHTML = `<span class="badge ${susLevel.cls}">${susScore}</span> (${susLevel.label})`;
@@ -2153,6 +2152,7 @@
       }
 
       const scores = sb.scores || {};
+      const hyp = data.hyperlocal || {};
       const buoy = data.buoy_44013 || {};
       const cur = data.current || {};
 
@@ -2187,7 +2187,7 @@
           <div>
             <div style="opacity:0.7;font-size:0.85rem;margin-bottom:4px;">Wind Speed</div>
             <div style="font-size:1.3rem;">${scores.wind_speed || 0}%</div>
-            <div style="opacity:0.6;font-size:0.8rem;margin-top:2px;">${cur.wind_speed?.toFixed(1) || "--"} mph</div>
+            <div style="opacity:0.6;font-size:0.8rem;margin-top:2px;">${(hyp.corrected_wind_speed ?? cur.wind_speed)?.toFixed(1) || "--"} mph</div>
           </div>
           <div>
             <div style="opacity:0.7;font-size:0.85rem;margin-bottom:4px;">Direction</div>
@@ -2234,7 +2234,8 @@
       const temp = cur.temperature;
       const dewpt = cur.dew_point;
       const humidity = cur.humidity;
-      const windSpeed = cur.wind_speed;
+      const hyp = data.hyperlocal || {};
+      const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
       
       const spread = (temp != null && dewpt != null) ? temp - dewpt : null;
       
@@ -3131,7 +3132,7 @@
         window.__lastWeatherData = data;
 
         // Header
-        document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
+        // // document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
         renderSources(data.sources, (data.pws || {}).stale);
         renderFrostTracker(data.frost_log);
@@ -3194,7 +3195,7 @@
         let correctedFeelsLike = cur.apparent_temperature ?? 0;
         if (hyp.corrected_temp != null) {
           const T = hyp.corrected_temp;
-          const windSpeed = cur.wind_speed || 0;
+          const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
           let feelsLike = T;
           // Wind chill (if T <= 50°F and wind > 3 mph)
           if (T <= 50 && windSpeed > 3) {
@@ -3301,7 +3302,7 @@
           // Calculate corrected feels like from corrected temp + wind
           if (scCorrectedFeelsLike && hyp.corrected_temp != null) {
             const T = hyp.corrected_temp;
-            const windSpeed = cur.wind_speed || 0;
+            const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
             let feelsLike = T;
             // Wind chill (if T <= 50°F and wind > 3 mph)
             if (T <= 50 && windSpeed > 3) {
@@ -3412,12 +3413,12 @@
         // Wind Impact now - combined score and wind data
         const windImpactNowEl = document.getElementById("windImpactNow");
         if (windImpactNowEl) {
-          const windSpeed = Math.round(cur.wind_speed ?? 0);
+          const windSpeed = Math.round(hyp.corrected_wind_speed ?? cur.wind_speed ?? 0);
           const windDir = cur.wind_direction != null ? degToCompass(cur.wind_direction) : "";
           
           if (cur.wind_speed != null && cur.wind_direction != null) {
             const exposure = getExposureFactor(cur.wind_direction);
-            const sustainedScore = Math.round(worryScore(cur.wind_speed, exposure));
+            const sustainedScore = Math.round(worryScore(hyp.corrected_wind_speed ?? cur.wind_speed, exposure));
             const sustainedLevel = worryLevel(sustainedScore);
             const windText = windSpeed > 0 ? `${windDir} ${windSpeed} mph` : "Calm";
             windImpactNowEl.innerHTML = `${sustainedScore} (${sustainedLevel.label}) · ${windText}`;
@@ -3802,6 +3803,24 @@
           (hourly.wind_direction || []).slice(startIdx, startIdx + 48)
         );
 
+        // Initialize data bars with hour 0 data
+        const tempData = (hourly.temperature || []).map((t, i) => { const bias = hyp.weighted_bias ?? 0; return t != null ? t + bias : null; }).slice(startIdx, startIdx + 48);
+        const popData = (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48);
+        const wbData = (hourly.corrected_wet_bulb || hourly.wet_bulb || []).slice(startIdx, startIdx + 48);
+        const t850Data = (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48);
+        const cloudLowData = (hourly.cloud_cover_low || []).slice(startIdx, startIdx + 48);
+        const cloudMidData = (hourly.cloud_cover_mid || []).slice(startIdx, startIdx + 48);
+        const cloudHighData = (hourly.cloud_cover_high || []).slice(startIdx, startIdx + 48);
+        const cloudTotalData = (hourly.cloud_cover || []).slice(startIdx, startIdx + 48);
+        
+        updateTempPrecipDataBar(0, times, tempData, popData, wbData, t850Data, cloudLowData, cloudMidData, cloudHighData, cloudTotalData);
+        
+        const windSpeedData = (hourly.wind_speed || []).slice(startIdx, startIdx + 48);
+        const windGustData = (hourly.wind_gusts || []).slice(startIdx, startIdx + 48);
+        const windDirData = (hourly.wind_direction || []).slice(startIdx, startIdx + 48);
+        
+        updateWindDataBar(0, times, windSpeedData, windGustData, windDirData);
+
         // Wind tab
         renderWindRisk(data);
         renderSeaBreezeDetail(data);
@@ -3985,7 +4004,7 @@
       })
       .catch(err => {
         console.error(err);
-        document.getElementById("location").textContent = "Error loading weather_data.json";
+        // // document.getElementById("location").textContent = "Error loading weather_data.json";
       });
 
     document.getElementById('refreshBtn').addEventListener('click', function() {
