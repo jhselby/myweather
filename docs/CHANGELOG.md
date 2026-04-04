@@ -1,3 +1,9 @@
+## v4.16 - 2026-04-04
+
+### Fixed
+- **Sunset data collection reliability improved** - Added retry logic with 10-second backoff for timeout failures, replacing warmup approach
+- API requests that timeout are automatically retried once after 10 seconds before failing
+
 ## v4.15 - 2026-04-04
 
 ### Fixed
