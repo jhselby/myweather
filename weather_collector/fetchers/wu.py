@@ -1,30 +1,22 @@
 """
 Fetch Weather Underground multi-station data
 """
-import subprocess
 import json
-
+from . import wu_scraper_realtime
 from ..utils import iso_utc_now
 
 
 def fetch_wu_stations():
     """
-    Run wu_scraper_realtime.py to fetch multi-station WU data.
+    Fetch multi-station WU data using the scraper module.
     This is optional and fails gracefully if the scraper is unavailable.
     """
     print("📡 Fetching WU stations (optional)...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
 
     try:
-        result = subprocess.run(
-            ["python3", "wu_scraper_realtime.py"],
-            capture_output=True,
-            text=True,
-            timeout=60
-        )
-
-        if result.returncode != 0:
-            raise RuntimeError(f"Scraper failed: {result.stderr}")
+        # Run the scraper (it writes to wu_stations_realtime.json)
+        wu_scraper_realtime.main()
 
         # Load the output file
         with open("wu_stations_realtime.json", "r") as f:

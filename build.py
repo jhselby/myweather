@@ -77,21 +77,27 @@ def add_cache_busting(html_content, assets, base_dir):
         if file_hash is None:
             continue
         
-        # Create new tag with cache-busting hash
-        # Remove any existing ?v= parameter first
-        clean_tag = re.sub(r'\?v=[a-f0-9]+', '', original_tag)
-        
-        # Add new hash
-        if '<script' in clean_tag:
-            new_tag = clean_tag.replace(f'src="{filepath}"', f'src="{filepath}?v={file_hash}"')
-            new_tag = new_tag.replace(f"src='{filepath}'", f"src='{filepath}?v={file_hash}'")
-        else:  # CSS
-            new_tag = clean_tag.replace(f'href="{filepath}"', f'href="{filepath}?v={file_hash}"')
-            new_tag = new_tag.replace(f"href='{filepath}'", f"href='{filepath}?v={file_hash}'")
+        # Build new tag by modifying the original
+        # Pattern: Replace src="path" or src="path?v=old" with src="path?v=new"
+        if '<script' in original_tag:
+            # Match src="filepath" or src="filepath?anything"
+            new_tag = re.sub(
+                rf'src=["\']({re.escape(filepath)})(?:\?[^"\']*)?["\']',
+                rf'src="\1?v={file_hash}"',
+                original_tag
+            )
+        else:  # CSS link tag
+            # Match href="filepath" or href="filepath?anything"
+            new_tag = re.sub(
+                rf'href=["\']({re.escape(filepath)})(?:\?[^"\']*)?["\']',
+                rf'href="\1?v={file_hash}"',
+                original_tag
+            )
         
         # Replace in HTML
-        modified_html = modified_html.replace(original_tag, new_tag)
-        changes_made.append(f"  ✓ {filepath} → ?v={file_hash}")
+        if new_tag != original_tag:
+            modified_html = modified_html.replace(original_tag, new_tag)
+            changes_made.append(f"  ✓ {filepath} → ?v={file_hash}")
     
     return modified_html, changes_made
 
