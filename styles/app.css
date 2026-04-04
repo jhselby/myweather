@@ -138,7 +138,7 @@
     .tabs{
       margin-top: 6px;
       display: flex;
-      gap: 8px;
+      gap: 6px;
       justify-content: flex-start;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -153,9 +153,10 @@
       border: 1px solid rgba(255,255,255,0.16);
       background: rgba(255,255,255,0.06);
       color: rgba(255,255,255,0.92);
-      padding: 10px 14px;
+      padding: 7px 11px;
       border-radius: 999px;
-      font-weight: 900;
+      font-size: 0.85rem;
+  font-weight: 800;
       cursor: pointer;
       box-shadow: 0 6px 16px rgba(0,0,0,0.25);
       transition: transform 0.06s ease, background 0.15s ease;
@@ -183,6 +184,7 @@
       box-shadow: var(--shadow);
       backdrop-filter: blur(8px);
       position: relative;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .card.col-12{ grid-column: span 12; }
@@ -898,7 +900,7 @@
     }
 
     .oh-title {
-      font-size: 14px;
+      font-size: 0.78rem;
       font-weight: 600;
       color: #e0e0e0;
       letter-spacing: 0.05em;
@@ -1062,17 +1064,14 @@ body.theme-light #oh-status { color: rgba(0,0,0,0.65); }
 
     /* Temp/Precip Chart Data Bar */
     .chart-data-bar {
-      display: none;
-      background: rgba(30, 35, 50, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: block;
+      background: rgba(30, 35, 50, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.08);
       border-radius: 6px;
-      padding: 20px 24px;
+      padding: 12px 16px;
       margin-top: 12px;
     }
 
-    .chart-data-bar.visible {
-      display: block;
-    }
 
     .chart-data-header {
       display: flex;
@@ -1083,7 +1082,7 @@ body.theme-light #oh-status { color: rgba(0,0,0,0.65); }
     }
 
     .chart-data-time {
-      font-size: 14px;
+      font-size: 0.78rem;
       font-weight: 600;
       color: rgba(255, 255, 255, 0.9);
     }
@@ -1265,6 +1264,8 @@ body.theme-light .hyperlocal-link:hover {
   min-height: 140px;
   max-height: 140px;
   padding: 12px 12px;
+  transition: opacity 0.25s ease;
+  backface-visibility: hidden;
 }
 
 /* Smaller title when collapsed */
@@ -1281,11 +1282,29 @@ body.theme-light .hyperlocal-link:hover {
   display: none;
 }
 
+/* Hide collapsed preview when card is expanded */
+.card.card-expanded .card-collapsed-preview {
+  opacity: 0;
+}
+
+/* Smooth fade-in for expanded card title and content */
+.card-title-collapsible {
+  transition: opacity 0.3s ease 0.2s;
+}
+
+.card:not(.card-expanded) .card-title-collapsible {
+  opacity: 0;
+}
+
+.card-body {
+  transition: opacity 0.3s ease 0.2s;
+}
+
 .card.card-expanded {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%) scale(1.02);
   width: calc(100% - 32px);
   max-width: 780px;
   max-height: calc(100vh - 32px);
@@ -1303,7 +1322,7 @@ body.theme-light .hyperlocal-link:hover {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(0,0,0,0.15);
+  background: rgba(255,255,255,0.15);
   border: none;
   cursor: pointer;
   font-size: 20px;
