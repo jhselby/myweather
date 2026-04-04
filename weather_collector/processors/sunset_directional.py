@@ -75,6 +75,14 @@ def build_sunset_directional_data(daily_sunsets, lat, lon, fetch_directional_clo
     """
     print("🌅 Building directional sunset data...")
     
+    # Warmup call to establish connection and avoid cold-start timeout on Day 0
+    print("  📡 Warmup: establishing connection to Open-Meteo API...")
+    try:
+        _ = fetch_directional_clouds_func(lat, lon, 0, [10])  # Single dummy call
+        print("  ✓ Connection established")
+    except Exception as e:
+        print(f"  ⚠️ Warmup failed (not critical): {e}")
+    
     sunset_data = []
     
     for day_idx, sunset_iso in enumerate(daily_sunsets[:5]):
