@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=4.12" />
+  <link rel="stylesheet" href="styles/app.css?v=e57b5bae" />
 </head>
 <body>
   <div class="container">
@@ -72,7 +72,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v4.12</span>
+            <span class="version-pill" id="appVersion">v4.14</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -816,31 +816,29 @@
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasPressure">--</div>
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedPressure">--</div>
                 
-                <div style="padding:6px 8px;">Wind Gusts</div>
-                <div style="padding:6px 8px;" id="scModelGusts">--</div>
-                <div style="padding:6px 8px;font-weight:700;" id="scBiasGusts">--</div>
-                <div style="padding:6px 8px;font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedGusts">--</div>
-              </div>
-              
-              <div style="display:grid;grid-template-columns:100px 80px 80px;gap:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;margin-top:14px;">
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Derived</div>
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Model</div>
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Corrected</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Wind Gusts</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelGusts">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasGusts">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedGusts">--</div>
                 
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Dew Point</div>
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelDewpoint">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasDewpoint">--</div>
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedDewpoint">--</div>
                 
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Wet Bulb</div>
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelWetBulb">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasWetBulb">--</div>
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedWetBulb">--</div>
                 
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Precip Type</div>
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelPrecipType">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasPrecipType">--</div>
                 <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedPrecipType">--</div>
                 
                 <div style="padding:6px 8px;">Feels Like</div>
                 <div style="padding:6px 8px;" id="scModelFeelsLike">--</div>
+                <div style="padding:6px 8px;font-weight:700;" id="scBiasFeelsLike">--</div>
                 <div style="padding:6px 8px;font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedFeelsLike">--</div>
               </div>
             </div>
@@ -1062,9 +1060,9 @@
 
 
   </div>
-  <script src="js/app-main.js?v=4.12"></script>
-  <script src="js/changelog_loader.js"></script>
-  <script src="js/overhead.js"></script>
+  <script src="js/app-main.js?v=d53c2afe"></script>
+  <script src="js/changelog_loader.js?v=e42dea8a"></script>
+  <script src="js/overhead.js?v=7c773419"></script>
   
   <script>
   // Hide alerts on non-weather tabs using CSS class
