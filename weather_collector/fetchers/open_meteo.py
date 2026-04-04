@@ -98,6 +98,7 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles):
     from ..processors.sunset_directional import calculate_offset_lat_lon
     from ..utils import iso_utc_now
     import requests
+    import time
     
     print(f"  📡 Fetching clouds at {bearing_deg}° bearing: {distances_miles} miles...")
     
@@ -113,29 +114,45 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles):
             **OM_UNITS,
         }
         
-        try:
-            r = requests.get(OM_BASE_URL, params=params, headers=HEADERS_DEFAULT, timeout=30)
-            r.raise_for_status()
-            data = r.json()
-            
-            if data.get("hourly"):
-                results[f"{dist}mi"] = {
-                    "latitude": new_lat,
-                    "longitude": new_lon,
-                    "times": data["hourly"].get("time", []),
-                    "cloud_low": data["hourly"].get("cloud_cover_low", []),
-                    "cloud_mid": data["hourly"].get("cloud_cover_mid", []),
-                    "cloud_high": data["hourly"].get("cloud_cover_high", []),
-                    "humidity": data["hourly"].get("relative_humidity_2m", []),
-                }
-                print(f"    ✓ {dist}mi ({new_lat}, {new_lon})")
-            else:
-                print(f"    ✗ {dist}mi - no data")
-                results[f"{dist}mi"] = None
+        # Try request with one retry on timeout
+        for attempt in range(2):
+            try:
+                r = requests.get(OM_BASE_URL, params=params, headers=HEADERS_DEFAULT, timeout=30)
+                r.raise_for_status()
+                data = r.json()
                 
-        except Exception as e:
-            print(f"    ✗ {dist}mi - {e}")
-            results[f"{dist}mi"] = None
+                if data.get("hourly"):
+                    results[f"{dist}mi"] = {
+                        "latitude": new_lat,
+                        "longitude": new_lon,
+                        "times": data["hourly"].get("time", []),
+                        "cloud_low": data["hourly"].get("cloud_cover_low", []),
+                        "cloud_mid": data["hourly"].get("cloud_cover_mid", []),
+                        "cloud_high": data["hourly"].get("cloud_cover_high", []),
+                        "humidity": data["hourly"].get("relative_humidity_2m", []),
+                    }
+                    print(f"    ✓ {dist}mi ({new_lat}, {new_lon})")
+                    break  # Success - exit retry loop
+                else:
+                    print(f"    ✗ {dist}mi - no data")
+                    results[f"{dist}mi"] = None
+                    break  # No retry for "no data" response
+                    
+            except requests.exceptions.Timeout as e:
+                if attempt == 0:
+                    # First attempt timed out - wait and retry
+                    print(f"    ⚠️ {dist}mi - timeout, retrying in 10s...")
+                    time.sleep(10)
+                else:
+                    # Second attempt also timed out - give up
+                    print(f"    ✗ {dist}mi - timeout after retry")
+                    results[f"{dist}mi"] = None
+                    
+            except Exception as e:
+                # Other errors - don't retry
+                print(f"    ✗ {dist}mi - {e}")
+                results[f"{dist}mi"] = None
+                break
     
     return results
 
