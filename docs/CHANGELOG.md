@@ -288,3 +288,7 @@
 * Moved wu_scraper_realtime.py to weather_collector/fetchers/
 * Updated .gitignore with cache file exclusions
 * Fixed wu.py to import scraper as module instead of subprocess
+
+## v4.21 - UI fixes
+- Fixed chart data bar text alignment (date and data now properly aligned)
+- Fixed alert Show/Hide toggle positioning (now consistently on far right)

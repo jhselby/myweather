@@ -126,17 +126,17 @@
       <div id="stormModeBanner" style="display:none;border-radius:10px;padding:10px 14px;
         margin:4px 0 0 0;background:rgba(255,60,60,0.18);border:1px solid rgba(255,60,60,0.45);
         color:rgba(255,200,200,0.95);">
-        <div style="font-weight:900;font-size:0.92rem;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:flex-start;"
+        <div style="font-weight:900;font-size:0.92rem;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;"
              onclick="const d=document.getElementById('stormModeDetails');const c=document.getElementById('stormModeChev');const open=d.style.display!=='none';d.style.display=open?'none':'';c.innerHTML=open?'&#9660; Show':'&#9650; Hide';">
           ⛈️ Storm conditions developing
-          <span id="stormModeChev" style="font-size:0.8rem;class="text-secondary" style="margin-left:8px;">&#9660; Show</span>
+           <span id="stormModeChev" style="font-size:0.8rem;color:rgba(255,255,255,0.5);flex-shrink:0;">&#9660; Show</span>
         </div>
         <div id="stormModeDetails" style="display:none;font-size:0.85rem;color:rgba(255,180,180,0.85);line-height:1.6;margin-top:6px;"></div>
       </div>
       <!-- Consolidated alert summary bar -->
       <div id="alertSummaryBar" style="display:none;margin-top:6px;border-radius:10px;padding:8px 14px;
         background:rgba(255,80,80,0.18);border:1px solid rgba(255,80,80,0.35);cursor:pointer;
-        display:none;align-items:center;justify-content:flex-start;"
+        display:none;align-items:center;justify-content:space-between;"
         onclick="toggleAlertPanel()">
         <span id="alertSummaryText" style="font-weight:900;font-size:0.88rem;color:rgba(255,200,200,0.95);"></span>
         <span id="alertSummaryChev" style="font-size:0.8rem;class="text-secondary" style="margin-left:8px;">&#9660; Show</span>
@@ -274,7 +274,7 @@
             <div class="chart-data-header">
               <div id="tempPrecipDataTime" class="chart-data-time"></div>
             </div>
-            <div id="tempPrecipDataLine" style="font-size:0.78rem;font-weight:600;line-height:1.4;class="text-primary" style="width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;"></div>
+            <div id="tempPrecipDataLine" class="text-primary" style="font-size:0.78rem;font-weight:600;line-height:1.4;padding:6px 12px;letter-spacing:0.01em;"></div>
           </div>
 
           <div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;class="text-blue-tint" style="">
@@ -317,7 +317,7 @@
             <div class="chart-data-header">
               <div id="windDataTime" class="chart-data-time"></div>
             </div>
-            <div id="windDataLine" style="font-size:0.78rem;font-weight:600;line-height:1.4;class="text-primary" style="width:100%;padding:6px 0;text-align:center;letter-spacing:0.01em;"></div>
+            <div id="windDataLine" class="text-primary" style="font-size:0.78rem;font-weight:600;line-height:1.4;padding:6px 12px;letter-spacing:0.01em;"></div>
           </div>
 
           <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:0.76rem;font-weight:700;class="text-secondary" style="padding:8px 0;border-top:1px solid rgba(255,255,255,0.1);">
@@ -1062,9 +1062,9 @@
 
 
   </div>
-  <script src="js/app-main.js?v=b317c91b"></script>
+  <script src="js/app-main.js?v=22e7dcce"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
-  <script src="js/overhead.js?v=7c773419"></script>
+  <script src="js/overhead.js?v=33c4e62b"></script>
   
   <script>
   // Hide alerts on non-weather tabs using CSS class
