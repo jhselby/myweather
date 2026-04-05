@@ -142,9 +142,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     # Use HRRR if it covers this period, otherwise GFS
     if hrrr_times and target_date <= datetime.fromisoformat(hrrr_times[-1].replace("Z", "+00:00")).astimezone(eastern).date():
         hourly_data = hrrr_data
-        print(f"DEBUG: {period_name} ({target_date}) using HRRR")
     else:
-        print(f"DEBUG: {period_name} ({target_date}) using GFS")
         hourly_data = gfs_data
     
     # Define time bounds for the period
@@ -197,7 +195,6 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
                 nws_temps.append(temps[len(nws_temps)])  # Fallback to GFS
         if nws_temps:
             temps = nws_temps
-            print(f"DEBUG: {period_name} using NWS temps (range: {min(temps):.1f}-{max(temps):.1f}°F)")
     apparent_temps = [hourly_data['apparent_temperature'][i] for i in period_indices]
     wind_speeds = [hourly_data['wind_speed'][i] for i in period_indices]
     wind_gusts = [hourly_data['wind_gusts'][i] for i in period_indices]
@@ -227,7 +224,6 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
                 precip_types[idx] = "freezing drizzle"
             elif code in [51, 53, 55]:  # Drizzle
                 precip_types[idx] = "drizzle"
-    print(f"DEBUG precip_types after fallback for {period_name}: {precip_types}")
     
     # Override with NWS weather conditions if available (NBM is more accurate)
     if nws_gridpoints and "weather" in nws_gridpoints:
@@ -259,7 +255,6 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
                         precip_types[idx] = "snow"
                     elif has_rain:
                         precip_types[idx] = "rain"
-        print(f"DEBUG: {period_name} precip_types after NWS override: {precip_types}")
     
     # Temperature (high for day, low for night)
     if is_daytime:
@@ -505,9 +500,7 @@ def _build_sky_narrative(cloud_cover, weather_codes, hours, skip_fog=False):
         else:
             result = result + ", with areas of fog"
     
-    print(f"DEBUG sky: morning={morning_avg if morning_avg is not None else 0:.1f}%, afternoon={afternoon_avg if afternoon_avg is not None else 0:.1f}%, result={result}")
     return result
-    print(f"DEBUG sky: morning={morning_avg if morning_avg is not None else 0:.1f}%, afternoon={afternoon_avg if afternoon_avg is not None else 0:.1f}%, result={result}")
     return result
 def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
     """Generate precipitation narrative for a period."""
@@ -515,7 +508,6 @@ def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
         return None
     
     max_prob = max([p for p in precip_probs if p is not None]) if any(p is not None for p in precip_probs) else 0
-    print(f"DEBUG precip: max_prob={max_prob}%")
     
     if max_prob < 20:
         return None

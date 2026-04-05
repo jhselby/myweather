@@ -309,7 +309,6 @@ function validateRoute(aircraftLat, aircraftLon, aircraftHeading, originLat, ori
 
 function ohClosePopup() {
   // Hide the popup
-  console.log("ohClosePopup called");
   document.getElementById('oh-popup').style.display = 'none';
   
   // Reset selected aircraft
