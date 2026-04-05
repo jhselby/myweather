@@ -28,7 +28,6 @@ def classify_surface_precip_type(wet_bulb_f):
         return "snow"
     elif wet_bulb_f < 35.0:
         return "mixed"
-    else:
         return "rain"
 
 
@@ -98,8 +97,6 @@ def add_corrected_precip_types(weather_data, hyperlocal_data):
     """
     from .wet_bulb import calculate_wet_bulb
     
-    print("DEBUG precip_surface: Starting add_corrected_precip_types")
-    print(f"DEBUG precip_surface: hyperlocal_data keys: {list(hyperlocal_data.keys())}")
     
     if "derived" not in weather_data:
         weather_data["derived"] = {}
@@ -108,20 +105,14 @@ def add_corrected_precip_types(weather_data, hyperlocal_data):
     corrected_temp = hyperlocal_data.get("corrected_temp")
     corrected_humidity = hyperlocal_data.get("corrected_humidity")
     
-    print(f"DEBUG precip_surface: corrected_temp={corrected_temp}, corrected_humidity={corrected_humidity}")
     
     if corrected_temp is not None and corrected_humidity is not None:
         corrected_wet_bulb = calculate_wet_bulb(corrected_temp, corrected_humidity)
-        print(f"DEBUG precip_surface: Calculated corrected_wet_bulb={corrected_wet_bulb}")
         weather_data["derived"]["corrected_wet_bulb"] = corrected_wet_bulb
         
         # Current precip type from corrected wet bulb only (no 850mb needed for current)
         current_precip_type = classify_surface_precip_type(corrected_wet_bulb)
-        print(f"DEBUG precip_surface: surface_precip_type={current_precip_type}")
         weather_data["derived"]["surface_precip_type"] = current_precip_type
-    else:
-        print("DEBUG precip_surface: Skipping current - missing corrected temp or humidity")
-    
     # FORECAST: Apply humidity bias correction to hourly forecast, then calculate corrected wet bulb
     hourly = weather_data.get("hourly", {})
     hourly_temps = hourly.get("temperature", [])
@@ -131,7 +122,6 @@ def add_corrected_precip_types(weather_data, hyperlocal_data):
     # Get humidity bias from hyperlocal
     humidity_bias = hyperlocal_data.get("bias_humidity", 0)
     
-    print(f"DEBUG precip_surface: humidity_bias={humidity_bias}, processing {len(hourly_temps)} hourly forecasts")
     
     corrected_wet_bulbs = []
     surface_precip_types = []
@@ -155,4 +145,3 @@ def add_corrected_precip_types(weather_data, hyperlocal_data):
     
     weather_data["hourly"]["corrected_wet_bulb"] = corrected_wet_bulbs
     weather_data["hourly"]["surface_precip_type"] = surface_precip_types
-    print(f"DEBUG precip_surface: Added {len(corrected_wet_bulbs)} hourly corrected wet bulbs")

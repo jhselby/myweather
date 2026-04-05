@@ -97,8 +97,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     
     if wind_candidates:
         max_wind = max(wind_candidates, key=lambda x: x['gust'])
-        print(f"DEBUG: Wind candidates: {[(c['source'], round(c['gust'], 1)) for c in wind_candidates]}")
-        print(f"DEBUG: Max wind selected: {max_wind['source']} with {max_wind['gust']:.1f} mph gusts")
         weather_data["current"]["wind_gusts"] = max_wind['gust']
         weather_data["current"]["wind_speed"] = max(max_wind['speed'], weather_data["current"]["wind_speed"])
         if max_wind['direction']:
@@ -131,7 +129,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "col_precip_type_850mb": hourly.get("col_precip_type_850mb", []),
         }
 
-    print(f"DEBUG after hourly assignment: {len(weather_data.get('hourly', {}).get('times', []))} times")
 
     # Blend observed wind into hourly forecast for exposed coastal location
     if wind_candidates and "wind_gusts" in weather_data["hourly"]:
@@ -148,7 +145,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         except ValueError:
             current_idx = 0
         
-        print(f"DEBUG: Blending from index {current_idx} ({current_hour_iso}), obs={observed_gust:.1f} mph")
         
         # Blend from current hour forward for next 24 hours
         for i in range(current_idx, min(current_idx + 24, len(weather_data["hourly"]["wind_gusts"]))):
@@ -337,12 +333,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
     # Generate forecast text AFTER 850mb data is added
     # Use 7-day hourly data for forecast if available, otherwise fall back to 2-day
-    print(f"DEBUG: hourly_7day_data type: {type(hourly_7day_data)}")
-    if hourly_7day_data:
-        print(f"DEBUG: hourly_7day_data keys: {hourly_7day_data.keys() if isinstance(hourly_7day_data, dict) else 'NOT A DICT'}")
     if hourly_7day_data and "hourly" in hourly_7day_data:
-        print(f"DEBUG: Using 7-day data, times length: {len(hourly_7day_data['hourly'].get('times', []))}")
-        print(f"DEBUG: HRRR wind_gusts[0:6] before forecast gen: {weather_data.get('hourly', {}).get('wind_gusts', [])[:6]}")
         forecast_hourly = {"hrrr": weather_data.get("hourly"), "gfs": hourly_7day_data["hourly"]}
     elif "hourly" in weather_data:
         forecast_hourly = weather_data["hourly"]
@@ -432,9 +423,7 @@ def main():
     if trim_idx > 0:
         for key in weather_data["hourly"]:
             weather_data["hourly"][key] = weather_data["hourly"][key][trim_idx:]
-        print(f"DEBUG: trimmed {trim_idx} past hours, now starts at {weather_data['hourly']['times'][0]}")
 
-    print(f"DEBUG before JSON dump: {len(weather_data.get('hourly', {}).get('times', []))} times")
     # Save to JSON
     output_file = "weather_data.json"
     with open(output_file, "w") as f:
