@@ -1,3 +1,7 @@
+## v4.17 • 2026-04-04
+* **Sunset Day 0 warmup improved** - Added dummy Day 6 fetch to establish API connection before Day 0 data collection
+* This warms the connection without risking Day 0 data if warmup times out
+
 ## v4.16 • 2026-04-04
 * **Sunset data collection reliability improved** - Added retry logic with 10-second backoff for timeout failures, plus increased API timeout from 30s to 60s
 * **Sunset score now works with partial data** - If some distance measurements fail, estimates missing values from available data instead of showing "No data"
