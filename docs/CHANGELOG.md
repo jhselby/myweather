@@ -1,3 +1,7 @@
+## v4.18 • 2026-04-04
+* **Warmup optimization** - Warmup call now uses single attempt (no retry) to reduce total collection time by ~60 seconds
+* Warmup still establishes connection for Day 0 even if it times out
+
 ## v4.17 • 2026-04-04
 * **Sunset Day 0 warmup improved** - Added dummy Day 6 fetch to establish API connection before Day 0 data collection
 * This warms the connection without risking Day 0 data if warmup times out

@@ -88,10 +88,11 @@ def fetch_daily_ecmwf():
             print("  ✗ GFS fallback also failed - no daily forecast available")
     return data, meta
 
-def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles):
+def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=False):
     """
     Fetch cloud cover at multiple points along a bearing.
     distances_miles: list of distances (e.g., [10, 25, 50])
+    skip_retry: if True, don't retry on timeout (used for warmup calls)
     Returns: dict with cloud data at each distance
     """
     from ..config import OM_BASE_URL, OM_UNITS, HEADERS_DEFAULT
@@ -114,8 +115,9 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles):
             **OM_UNITS,
         }
         
-        # Try request with one retry on timeout
-        for attempt in range(2):
+        # Try request with one retry on timeout (unless skip_retry=True)
+        max_attempts = 1 if skip_retry else 2
+        for attempt in range(max_attempts):
             try:
                 r = requests.get(OM_BASE_URL, params=params, headers=HEADERS_DEFAULT, timeout=60)
                 r.raise_for_status()
@@ -139,13 +141,16 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles):
                     break  # No retry for "no data" response
                     
             except requests.exceptions.Timeout as e:
-                if attempt == 0:
+                if attempt == 0 and not skip_retry:
                     # First attempt timed out - wait and retry
                     print(f"    ⚠️ {dist}mi - timeout, retrying in 10s...")
                     time.sleep(10)
                 else:
-                    # Second attempt also timed out - give up
-                    print(f"    ✗ {dist}mi - timeout after retry")
+                    # Either: (1) skip_retry=True, or (2) second attempt also timed out
+                    if skip_retry:
+                        print(f"    ✗ {dist}mi - timeout (warmup)")
+                    else:
+                        print(f"    ✗ {dist}mi - timeout after retry")
                     results[f"{dist}mi"] = None
                     
             except Exception as e:
