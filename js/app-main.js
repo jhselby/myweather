@@ -3672,14 +3672,29 @@
                             : "rgba(255,255,255,0.85)";
         }
 
-        // Sunset Score - read from renderSunsetQuality()
+       // Sunset Score - read from rendered sunset card
         const sunsetScoreEl = document.getElementById("sunsetScoreNow");
-        if (sunsetScoreEl && window.__todaySunsetScore) {
-          const s = window.__todaySunsetScore;
-          sunsetScoreEl.innerHTML = `${s.emoji} ${s.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(s.score)})</span>`;
-          sunsetScoreEl.style.color = s.color;
-        } else if (sunsetScoreEl) {
-          sunsetScoreEl.textContent = "No data";
+        if (sunsetScoreEl) {
+          const sunsetContent = document.getElementById("sunsetQualityContent");
+          const firstTile = sunsetContent?.querySelector('.scroll-day-grid > div');
+          if (firstTile) {
+            const dayLabel = firstTile.querySelector('div:first-child')?.textContent.trim();
+            if (dayLabel === "Today") {
+              const emoji = firstTile.querySelector('div:nth-child(2)')?.textContent.trim();
+              const labelDiv = firstTile.querySelector('div:nth-child(3)')?.innerHTML;
+              const color = firstTile.querySelector('div:nth-child(3)')?.style.color || "rgba(180,180,180,0.8)";
+              if (labelDiv) {
+                sunsetScoreEl.innerHTML = `${emoji} ${labelDiv}`;
+                sunsetScoreEl.style.color = color;
+              } else {
+                sunsetScoreEl.textContent = "No data";
+              }
+            } else {
+              sunsetScoreEl.textContent = "No data";
+            }
+          } else {
+            sunsetScoreEl.textContent = "No data";
+          }
         }
 
         // Dock Day Score - read from renderDockDay()

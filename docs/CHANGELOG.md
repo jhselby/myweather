@@ -1,3 +1,6 @@
+## v4.19 • 2026-04-05
+* **Right Now card sunset score fixed** - Now reads from rendered sunset card instead of global variable that wasn't being set for overcast/clear-sky conditions
+
 ## v4.18 • 2026-04-04
 * **Warmup optimization** - Warmup call now uses single attempt (no retry) to reduce total collection time by ~60 seconds
 * Warmup still establishes connection for Day 0 even if it times out
