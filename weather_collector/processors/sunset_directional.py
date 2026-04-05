@@ -79,7 +79,7 @@ def build_sunset_directional_data(daily_sunsets, lat, lon, fetch_directional_clo
     # If this times out, we don't care - but it should warm the connection for Day 0
     print("  📡 Warmup: fetching Day 6 to establish connection...")
     try:
-        _ = fetch_directional_clouds_func(lat, lon, 0, [10])  # Dummy call, ignore result
+        _ = fetch_directional_clouds_func(lat, lon, 0, [10], skip_retry=True)  # No retry on warmup
         print("  ✓ Warmup complete")
     except Exception as e:
         print(f"  ⚠️ Warmup timeout (not critical): {e}")
