@@ -117,7 +117,7 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles):
         # Try request with one retry on timeout
         for attempt in range(2):
             try:
-                r = requests.get(OM_BASE_URL, params=params, headers=HEADERS_DEFAULT, timeout=30)
+                r = requests.get(OM_BASE_URL, params=params, headers=HEADERS_DEFAULT, timeout=60)
                 r.raise_for_status()
                 data = r.json()
                 
