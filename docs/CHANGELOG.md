@@ -1,3 +1,6 @@
+## v4.21 • 2026-04-05
+* Alert toggle positioning fixed - Changed justify-content from flex-start to space-between for better chevron alignment
+
 ## v4.20 • 2026-04-05
 * **Right Now card navigation improved** - Clicking links from Right Now card (Wind Impact, Sea Breeze, Fog Risk, etc.) now switches to Hyperlocal tab to open the target card, then returns to Weather tab with Right Now card still open when closed
 * Right Now card sunset score now reads directly from rendered sunset card instead of relying on global variable
