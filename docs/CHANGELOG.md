@@ -292,3 +292,7 @@
 ## v4.21 - UI fixes
 - Fixed chart data bar text alignment (date and data now properly aligned)
 - Fixed alert Show/Hide toggle positioning (now consistently on far right)
+
+## v4.21 - UI fixes
+- Fixed chart data bar text alignment (date and data now properly aligned)
+- Fixed alert Show/Hide toggle positioning (now consistently on far right)
