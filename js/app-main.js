@@ -2884,7 +2884,7 @@
       const chev  = el.querySelector(".collapse-chevron");
       if (!body) return;
       const isOpen = body.style.display !== "none";
-      body.style.display = isOpen ? "none" : ""; if (preview) preview.style.display = isOpen ? "" : "none"; if (!isOpen) { const bd = document.createElement("div"); bd.className = "modal-backdrop"; bd.id = "modalBackdrop"; document.body.appendChild(bd); card.classList.add("card-expanded"); } else { const bd = document.getElementById("modalBackdrop"); if (bd) bd.remove(); card.classList.remove("card-expanded"); }
+      body.style.display = isOpen ? "none" : ""; if (preview) preview.style.display = isOpen ? "" : "none"; if (!isOpen) { const bd = document.createElement("div"); bd.className = "modal-backdrop"; bd.id = "modalBackdrop"; document.body.appendChild(bd); card.classList.add("card-expanded"); } else { const shouldReturn = window.__navSource; const bd = document.getElementById("modalBackdrop"); if (bd && !shouldReturn) bd.remove(); if (!shouldReturn) card.classList.remove("card-expanded"); else setTimeout(() => card.classList.remove("card-expanded"), 200); if (window.__navSource) { const src = window.__navSource; window.__navSource = null; requestAnimationFrame(() => { showTab(src.tab); requestAnimationFrame(() => { const rc = document.querySelector(`[data-collapse-key="${src.card}"]`); if (rc && !rc.classList.contains("card-expanded")) rc.click(); }); }); } }
       const closeBtn = card.querySelector(".card-close-btn"); if (closeBtn) closeBtn.style.display = isOpen ? "none" : "flex"; if (chev) { if (card.querySelector(".card-close-btn")) { chev.style.display = "none"; } else { chev.style.display = isOpen ? "" : "none"; chev.style.transform = isOpen ? "rotate(-90deg)" : ""; } }
       try { localStorage.setItem("card_" + key, isOpen ? "0" : "1"); } catch(e) {}
       
@@ -3710,27 +3710,27 @@
         // Make hyperlocal fields tappable with click handlers
         if (windImpactNowEl) {
           windImpactNowEl.classList.add('hyperlocal-link');
-          windImpactNowEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('wind_sus_impact'); };
+          windImpactNowEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="wind_sus_impact"]'); if (card) card.click(); }, 100); };
         }
         if (gustImpactNowEl) {
           gustImpactNowEl.classList.add('hyperlocal-link');
-          gustImpactNowEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('wind_gust_impact'); };
+          gustImpactNowEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="wind_gust_impact"]'); if (card) card.click(); }, 100); };
         }
         if (sbEl) {
           sbEl.classList.add('hyperlocal-link');
-          sbEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('sea_breeze_detail'); };
+          sbEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="sea_breeze_detail"]'); if (card) card.click(); }, 100); };
         }
         if (fogEl) {
           fogEl.classList.add('hyperlocal-link');
-          fogEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('fog_risk'); };
+          fogEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="fog_risk"]'); if (card) card.click(); }, 100); };
         }
         if (sunsetScoreEl) {
           sunsetScoreEl.classList.add('hyperlocal-link');
-          sunsetScoreEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('sunset_quality'); };
+          sunsetScoreEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="sunset_quality"]'); if (card) card.click(); }, 100); };
         }
         if (dockDayScoreEl) {
           dockDayScoreEl.classList.add('hyperlocal-link');
-          dockDayScoreEl.onclick = (e) => { e.stopPropagation(); navigateToHyperlocalCard('dock_day'); };
+          dockDayScoreEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="dock_day"]'); if (card) card.click(); }, 100); };
         }
 
         // Pressure alarm banner
