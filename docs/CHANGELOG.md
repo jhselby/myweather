@@ -1,57 +1,52 @@
-## v4.16 - 2026-04-04
+## v4.16 • 2026-04-04
+* **Sunset data collection reliability improved** - Added retry logic with 10-second backoff for timeout failures, plus increased API timeout from 30s to 60s
+* **Sunset score now works with partial data** - If some distance measurements fail, estimates missing values from available data instead of showing "No data"
+* API requests that timeout are automatically retried once after 10 seconds before failing
 
-### Fixed
-- **Sunset data collection reliability improved** - Added retry logic with 10-second backoff for timeout failures, replacing warmup approach
-- API requests that timeout are automatically retried once after 10 seconds before failing
+## v4.15 • 2026-04-04
+* **Sunset data collection reliability** - Added warmup API call to establish connection before fetching directional cloud data (later replaced by retry logic in v4.16)
 
-## v4.15 - 2026-04-04
+## v4.14 • 2026-04-04
+* **Smart Corrections table unified** - Removed distinction between "Metric" and "Derived" sections
+* **Added Bias column for derived values** - Dew point, wet bulb, feels like, and precip type now show calculated bias
+* Precip type bias shows "Changed" when correction differs from model, "--" when same
 
-### Fixed
-- **Sunset data collection reliability** - Added warmup API call to establish connection before fetching directional cloud data, eliminating Day 0 timeout failures on GitHub Actions
+## v4.13 • 2026-04-04
+* **Wet bulb forecast accuracy** - 48-hour wet bulb now calculated with BOTH corrected temperature and corrected humidity (previously only humidity was corrected)
+* Added calculateWetBulb() function to frontend for accurate psychrometric calculations using Stull's formula
+* Tested and validated build.py cache-busting system
 
-## v4.14 - 2026-04-04
+## v4.12 • 2026-04-04
+* **Automated cache-busting build system** - Added build.py script to generate content hashes for JS/CSS files
+* **DATA_PIPELINE.md reference document** - Comprehensive documentation of all data sources, processors, and correction algorithms
+* Added Data Pipeline Reference section to settings panel for easy access to technical documentation
 
-### Changed
-- **Smart Corrections table unified** - Removed distinction between "Metric" and "Derived" sections
-- **Added Bias column for derived values** - Dew point, wet bulb, feels like, and precip type now show calculated bias
-- Precip type bias shows "Changed" when correction differs from model, "--" when same
+## v4.11 • 2026-04-03
+* **Wind corrections** - Improved sustained wind and gust correction algorithms
+* **48-hour chart data bars improved** - Better visualization of precipitation and cloud data
+* **Header cleanup** - Streamlined header layout and styling
 
-## v4.13 - 2026-04-04
+## v4.9 • 2026-04-03
+* **Fixed hyperlocal navigation from Right Now card** - Clicking hyperlocal links (Sunset, Dock, Wind Impact, etc.) now properly navigates without leaving page unresponsive
+* **Fixed card interaction** - Restored guard preventing cards from closing when clicking content inside expanded cards (only X button closes)
 
-### Fixed
-- **Wet bulb forecast accuracy** - 48-hour wet bulb now calculated with BOTH corrected temperature and corrected humidity (previously only humidity was corrected)
-- Added calculateWetBulb() function to frontend for accurate psychrometric calculations
+## v4.8 • 2026-04-03
+* **Eliminated duplicate calculations in Right Now card** - Sunset and Dock scores now read from their respective cards instead of recalculating
+* **All impact scores now use unified 1-100 scale** for consistency
+  * Wind Impact: 1-100 (previously unbounded)
+  * Gust Impact: 1-100 (previously unbounded)
+  * Sunset Quality: 1-100 (previously 0.00-1.00 decimal)
+  * Dock Day Score: 1-100 (previously 0.00-1.00 decimal)
+* All scores display as whole numbers without decimals
 
-### Changed
-- Tested and validated build.py cache-busting system
-
-## v4.9 - 2026-04-03
-
-### Fixed
-- **Fixed hyperlocal navigation from Right Now card** - Clicking hyperlocal links (Sunset, Dock, Wind Impact, etc.) now properly navigates without leaving page unresponsive
-- **Fixed card interaction** - Restored guard preventing cards from closing when clicking content inside expanded cards (only X button closes)
-
-## v4.8 - 2026-04-03
-
-### Changed
-- **Eliminated duplicate calculations in Right Now card** - Sunset and Dock scores now read from their respective cards instead of recalculating
-- **All impact scores now use unified 1-100 scale** for consistency
-  - Wind Impact: 1-100 (previously unbounded)
-  - Gust Impact: 1-100 (previously unbounded)
-  - Sunset Quality: 1-100 (previously 0.00-1.00 decimal)
-  - Dock Day Score: 1-100 (previously 0.00-1.00 decimal)
-- All scores display as whole numbers without decimals
-
-## v4.7 - 2026-04-03
-
-### Fixed
-- **CRITICAL**: Chart temperature line now uses corrected HRRR data (model + hyperlocal bias) instead of raw model temperatures
-- **CRITICAL**: Precip type coloring on chart now uses corrected temperatures for freezing rain detection
-- **CRITICAL**: Today's high/low calculated from corrected hourly temps instead of timing-out ECMWF daily endpoint
-- **CRITICAL**: Gust floor bug - corrected gusts can no longer be less than corrected sustained wind speed
-- Sunrise/sunset times now display in 12-hour format (e.g., "6:22 AM" instead of "06:22")
-- All tiles now start closed on page load (localStorage no longer restores previous state)
-- Only one tile can be open at a time (opening a tile closes all others)
+## v4.7 • 2026-04-03
+* **CRITICAL**: Chart temperature line now uses corrected HRRR data (model + hyperlocal bias) instead of raw model temperatures
+* **CRITICAL**: Precip type coloring on chart now uses corrected temperatures for freezing rain detection
+* **CRITICAL**: Today's high/low calculated from corrected hourly temps instead of timing-out ECMWF daily endpoint
+* **CRITICAL**: Gust floor bug - corrected gusts can no longer be less than corrected sustained wind speed
+* Sunrise/sunset times now display in 12-hour format (e.g., "6:22 AM" instead of "06:22")
+* All tiles now start closed on page load (localStorage no longer restores previous state)
+* Only one tile can be open at a time (opening a tile closes all others)
 
 # Weather App Changelog
 ## v4.6 • April 2, 2026

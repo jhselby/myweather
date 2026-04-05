@@ -27,14 +27,43 @@
     }
 
     // ======================================================
-    // Settings — theme + pressure units
+    // Menu drawer functions
     // ======================================================
-    let _pressureUnit = localStorage.getItem('pressureUnit') || 'hpa';
-
+    
     function toggleSettings() {
       const panel = document.getElementById('settingsPanel');
       panel.style.display = panel.style.display === 'none' ? '' : 'none';
     }
+
+    function toggleMenu() {
+      const drawer = document.getElementById('menuDrawer');
+      const backdrop = document.getElementById('menuBackdrop');
+      const isOpen = drawer.classList.contains('open');
+      
+      if (isOpen) {
+        drawer.classList.remove('open');
+        backdrop.classList.remove('open');
+      } else {
+        drawer.classList.add('open');
+        backdrop.classList.add('open');
+      }
+    }
+
+    function toggleMenuSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      const isOpen = section.classList.contains('open');
+      
+      if (isOpen) {
+        section.classList.remove('open');
+      } else {
+        section.classList.add('open');
+      }
+    }
+
+    // ======================================================
+    // Settings — theme + pressure units
+    // ======================================================
+    let _pressureUnit = localStorage.getItem('pressureUnit') || 'hpa';
 
     function setTheme(mode) {
       localStorage.setItem('theme', mode);
@@ -65,14 +94,15 @@
 
     function updateSettingBtns() {
       const theme = localStorage.getItem('theme') || 'system';
-      ['themeLight','themeDark','themeSystem'].forEach(id => {
+      // Update menu drawer buttons
+      ['themeLightMenu','themeDarkMenu','themeSystemMenu'].forEach(id => {
         document.getElementById(id)?.classList.remove('active');
       });
-      const map = { light:'themeLight', dark:'themeDark', system:'themeSystem' };
-      document.getElementById(map[theme])?.classList.add('active');
+      const themeMap = { light:'themeLightMenu', dark:'themeDarkMenu', system:'themeSystemMenu' };
+      document.getElementById(themeMap[theme])?.classList.add('active');
 
-      ['pressHpa','pressInhg'].forEach(id => document.getElementById(id)?.classList.remove('active'));
-      document.getElementById(_pressureUnit === 'inhg' ? 'pressInhg' : 'pressHpa')?.classList.add('active');
+      ['pressHpaMenu','pressInhgMenu'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+      document.getElementById(_pressureUnit === 'inhg' ? 'pressInhgMenu' : 'pressHpaMenu')?.classList.add('active');
     }
 
     function isLight() {
@@ -939,19 +969,30 @@
         const cloud25 = clouds['25mi'];
         const cloud50 = clouds['50mi'];
         
-        if (!cloud10 || !cloud25 || !cloud50) continue;
+        // Need at least one distance to calculate score
+        if (!cloud10 && !cloud25 && !cloud50) continue;
         
+        // Use the first available cloud data for timing
+        const timeSource = cloud25 || cloud50 || cloud10;
         const sunsetTime = new Date(day.sunset_time);
-        const sunsetIdx = cloud25.times.findIndex(t => new Date(t).getTime() >= sunsetTime.getTime());
+        const sunsetIdx = timeSource.times.findIndex(t => new Date(t).getTime() >= sunsetTime.getTime());
         
         if (sunsetIdx < 0) continue;
         
-        const low10 = cloud10.cloud_low[sunsetIdx] ?? 0;
-        const mid25 = cloud25.cloud_mid[sunsetIdx] ?? 0;
-        const mid50 = cloud50.cloud_mid[sunsetIdx] ?? 0;
-        const high25 = cloud25.cloud_high[sunsetIdx] ?? 0;
-        const high50 = cloud50.cloud_high[sunsetIdx] ?? 0;
-        const hum25 = cloud25.humidity[sunsetIdx] ?? 50;
+        // Use available data, estimate missing with nearby values
+        const low10 = cloud10 ? (cloud10.cloud_low[sunsetIdx] ?? 0) 
+                              : cloud25 ? (cloud25.cloud_low[sunsetIdx] ?? 0) : 0;
+        const mid25 = cloud25 ? (cloud25.cloud_mid[sunsetIdx] ?? 0)
+                              : cloud50 ? (cloud50.cloud_mid[sunsetIdx] ?? 0)
+                              : cloud10 ? (cloud10.cloud_mid[sunsetIdx] ?? 0) : 0;
+        const mid50 = cloud50 ? (cloud50.cloud_mid[sunsetIdx] ?? 0)
+                              : cloud25 ? (cloud25.cloud_mid[sunsetIdx] ?? 0) : mid25;
+        const high25 = cloud25 ? (cloud25.cloud_high[sunsetIdx] ?? 0)
+                               : cloud50 ? (cloud50.cloud_high[sunsetIdx] ?? 0)
+                               : cloud10 ? (cloud10.cloud_high[sunsetIdx] ?? 0) : 0;
+        const high50 = cloud50 ? (cloud50.cloud_high[sunsetIdx] ?? 0)
+                               : cloud25 ? (cloud25.cloud_high[sunsetIdx] ?? 0) : high25;
+        const hum25 = (cloud25 || cloud50 || cloud10)?.humidity[sunsetIdx] ?? 50;
         
         const totalCloud = (low10 + mid25 + high25) / 3;
         
