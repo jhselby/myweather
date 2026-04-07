@@ -2923,8 +2923,12 @@
         touchZoom: false
       }).setView([42.5001, -70.8578], 10);
       
-      // Use CartoDB Positron - light map designed for data viz overlays
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+      // Use light or dark tiles based on theme
+      const isDarkMode = !document.body.classList.contains("theme-light");
+      const tileUrl = isDarkMode 
+        ? "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
+        : "https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png";
+      L.tileLayer(tileUrl, {
         maxZoom: 19
       }).addTo(miniMap);
       

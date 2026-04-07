@@ -1,3 +1,9 @@
+## v4.23 • 2026-04-07
+* **Radar tile dark mode optimization** - Replaced dynamic Leaflet map with static Mapbox background image for better performance and consistent rendering
+* Fixed radar tile dark mode appearance - now properly darkened to match theme while maintaining land/sea contrast
+* Fixed radar tile title positioning and border visibility in dark mode
+* Eliminated Leaflet tile loading race conditions and theme detection issues
+
 ## v4.22 • 2026-04-07
 * **Weather page tile redesign - all 6 collapsed previews redesigned** - New collapsible tile/modal architecture with distinctive card-collapsed-preview designs
 * **Right Now tile** - Centered layout with large temperature (68px), thermometer graphic with animated mercury level, "Feels like" below
@@ -8,6 +14,14 @@
 * **Radar tile** - Animated Leaflet map showing MA coastline with CartoDB Positron light base map, subtle green radar aesthetics (range rings at 15/30/60/90 miles, rotating sweep line, pulsing center dot at Marblehead), zoom level 10, fills entire tile edge-to-edge
 * All collapsed previews now have consistent "TITLE" labels in upper-left, positioned absolutely at top:0/left:0
 * Tiles fill entire card area with no white background showing (matching Right Now and Sky & Precip colored backgrounds)
+
+
+## v4.23 • 2026-04-07
+* **Radar tile dark mode optimization** - Replaced dynamic Leaflet map with static Mapbox background image for better performance and consistent rendering
+* Fixed radar tile dark mode appearance - now properly darkened to match theme while maintaining land/sea contrast  
+* Fixed radar tile title positioning and border visibility in dark mode
+* Eliminated Leaflet tile loading race conditions and theme detection issues
+
 
 ## v4.21 • 2026-04-05
 * Alert toggle positioning fixed - Changed justify-content from flex-start to space-between for better chevron alignment
