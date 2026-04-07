@@ -69,6 +69,7 @@
       localStorage.setItem('theme', mode);
       applyTheme(mode);
       updateSettingBtns();
+      location.reload();
     }
 
     function applyTheme(mode) {
