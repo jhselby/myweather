@@ -72,7 +72,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v4.21</span>
+            <span class="version-pill" id="appVersion">v4.22</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -158,10 +158,36 @@
             ⚡ RIGHT NOW<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('right_now', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">⚡ RIGHT NOW</div>
-            <div id="currentTempCollapsed" class="current-temp" style="font-size:1.5rem;margin-top:4px;">--<span class="temp-unit">&deg;F</span></div>
-            <div id="feelsLikeCollapsed" class="feels-like" style="font-size:0.85rem;">Feels like --&deg;F</div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;">
+            <!-- Title in upper left corner -->
+            <div style="position:absolute;top:0;left:0;font-size:11px;font-weight:600;color:rgba(0,0,0,0.4);text-transform:uppercase;letter-spacing:0.5px;">Right Now</div>
+            
+            <!-- Main content: temp and thermometer centered -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:24px;">
+              <!-- Left side: temp -->
+              <div style="flex:1;">
+                <div id="currentTempCollapsed" style="font-size:68px;font-weight:300;line-height:0.9;color:rgba(0,0,0,0.95);">--<span style="font-size:34px;font-weight:400;color:rgba(0,0,0,0.4);">°</span></div>
+                <div id="feelsLikeCollapsed" style="font-size:15px;color:rgba(0,0,0,0.5);font-weight:400;margin-top:8px;">Feels like --°</div>
+              </div>
+              
+              <!-- Right side: thermometer -->
+              <div style="flex-shrink:0;margin-left:8px;">
+                <svg width="40" height="140" viewBox="0 0 32 100">
+                  <!-- Thermometer tube -->
+                  <rect x="12" y="4" width="8" height="74" rx="4" fill="rgba(255,255,255,0.95)" stroke="rgba(0,0,0,0.25)" stroke-width="1.5"/>
+                  <!-- Bulb -->
+                  <circle cx="16" cy="86" r="10" fill="rgba(220,38,38,1)" stroke="rgba(0,0,0,0.25)" stroke-width="1.5"/>
+                  <!-- Mercury level (animated based on temp: 0°F at y=76, 100°F at y=8) -->
+                  <rect id="thermometerMercury" x="13.5" y="40" width="5" height="38" rx="2.5" fill="rgba(220,38,38,0.9)"/>
+                  <!-- Temperature marks (0, 25, 50, 75, 100) -->
+                  <line x1="20" y1="76" x2="24" y2="76" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+                  <line x1="20" y1="59" x2="24" y2="59" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+                  <line x1="20" y1="42" x2="24" y2="42" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+                  <line x1="20" y1="25" x2="24" y2="25" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+                  <line x1="20" y1="8" x2="24" y2="8" stroke="rgba(0,0,0,0.3)" stroke-width="1.5"/>
+                </svg>
+              </div>
+            </div>
           </div>
           <div class="card-body" style="display:none;">
             <!-- Big Hero Temp -->
@@ -238,10 +264,23 @@
             🌡️ SKY & PRECIP<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('48h_temp_precip', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌡️ SKY & PRECIP</div>
-            <div id="skyCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
-            <div id="precipCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;overflow:hidden;" id="skyPrecipPreview">
+            <!-- Title in upper left corner - absolute positioned -->
+            <div style="position:absolute;top:0;left:0;font-size:11px;font-weight:600;color:rgba(0,0,0,0.4);text-transform:uppercase;letter-spacing:0.5px;z-index:10;">Sky & Precip</div>
+            
+            <!-- Weather graphic SVG - upper right area -->
+            <svg id="weatherGraphic" width="100" height="80" viewBox="0 0 100 80" style="position:absolute;top:0;right:8px;opacity:0.4;z-index:5;">
+              <!-- Graphics will be drawn here by JS -->
+            </svg>
+            
+            <!-- Main content with top margin for title -->
+            <div style="text-align:center;padding-top:24px;position:relative;z-index:5;">
+              <!-- Condition name -->
+              <div id="skyConditionCollapsed" style="font-size:28px;font-weight:500;color:rgba(0,0,0,0.95);margin-bottom:8px;">Mist</div>
+              
+              <!-- Precip and clouds -->
+              <div id="skyStatsCollapsed" style="font-size:15px;color:rgba(0,0,0,0.5);">11% precip | 100% clouds</div>
+            </div>
           </div>
           <div class="card-body" style="display:none;">
           <!-- Hover data overlay -->
@@ -302,13 +341,47 @@
         <!-- 48-Hour Wind Forecast -->
         <div class="card col-6" data-collapse-key="48h_wind" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('48h_wind', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            💨 WIND<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            💨 WIND IMPACT<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('48h_wind', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">💨 WIND</div>
-            <div id="windNowCollapsed" style="font-size:0.88rem;margin-top:8px;line-height:1.4;"><strong>Wind Impact</strong><br>Loading...</div>
-            <div id="windPeakCollapsed" style="font-size:0.88rem;margin-top:8px;line-height:1.4;"><strong>Gust Impact</strong><br>--</div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;padding-bottom:40px;">
+            <!-- Title in upper left corner - matching Right Now exactly -->
+            <div style="position:absolute;top:0;left:0;font-size:11px;font-weight:600;color:rgba(0,0,0,0.4);text-transform:uppercase;letter-spacing:0.5px;">Wind</div>
+            
+            <!-- Main content: wind speeds centered between title (top) and impact bar (bottom) -->
+            <div style="position:absolute;top:calc(50% - 10px);left:50%;transform:translate(-50%, -50%);text-align:center;width:100%;">
+              <!-- Background: Compass rose - centered around content -->
+              <svg width="160" height="160" viewBox="0 0 160 160" style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:0;opacity:0.3;">
+                <circle cx="80" cy="80" r="70" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>
+                <text x="80" y="18" text-anchor="middle" font-size="12" font-weight="500" fill="rgba(0,0,0,0.5)">N</text>
+                <text x="142" y="84" text-anchor="middle" font-size="12" font-weight="500" fill="rgba(0,0,0,0.5)">E</text>
+                <text x="80" y="148" text-anchor="middle" font-size="12" font-weight="500" fill="rgba(0,0,0,0.5)">S</text>
+                <text x="18" y="84" text-anchor="middle" font-size="12" font-weight="500" fill="rgba(0,0,0,0.5)">W</text>
+                <g id="weatherWindDirectionIndicator">
+                  <!-- Small arrow near circle edge only -->
+                  <path d="M 135 80 L 150 80" stroke="rgba(59,130,246,0.9)" stroke-width="3" stroke-linecap="round"/>
+                  <polygon points="150,80 143,76 143,84" fill="rgba(59,130,246,0.9)"/>
+                </g>
+              </svg>
+              
+              <!-- Foreground: Wind speeds -->
+              <div style="position:relative;z-index:1;">
+                <!-- Main wind speed - "18" centered, "mph" smaller to right -->
+                <div style="line-height:0.9;margin-bottom:6px;">
+                  <span id="weatherWindSustainedSpeed" style="font-size:48px;font-weight:300;color:rgba(0,0,0,0.95);">--</span>
+                  <span style="font-size:16px;font-weight:400;margin-left:3px;color:rgba(0,0,0,0.4);">mph</span>
+                </div>
+                <!-- Gusts line -->
+                <div id="weatherWindGustsLine" style="font-size:14px;font-weight:400;color:rgba(0,0,0,0.5);white-space:nowrap;">
+                  Gusts -- mph
+                </div>
+              </div>
+            </div>
+            
+            <!-- Bottom bar: Impact score - 0px from bottom edge -->
+            <div id="weatherWindImpactBar" style="position:absolute;bottom:0;left:0;right:0;background:rgba(59,130,246,0.15);border-radius:6px;padding:7px 10px;font-size:0.8rem;font-weight:500;text-align:center;color:rgba(0,0,0,0.8);white-space:nowrap;">
+              Impact: --
+            </div>
           </div>
           <div class="card-body" style="display:none;">
           <canvas id="windChart"></canvas>
@@ -333,10 +406,21 @@
             📆 10-DAY FORECAST<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('ten_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:1.1rem;letter-spacing:0.2px;margin-bottom:0;opacity:0.88;">📆 10-DAY FORECAST</div>
-            <div id="tenDayRangeCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
-            <div id="tenDayTrendCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;">
+            <!-- Title in upper left corner -->
+            <div style="position:absolute;top:0;left:0;font-size:11px;font-weight:600;color:rgba(0,0,0,0.4);text-transform:uppercase;letter-spacing:0.5px;">10-Day</div>
+            
+            <!-- Temps on same line with dot separator -->
+            <div style="margin-top:24px;">
+              <div style="display:flex;align-items:baseline;gap:6px;justify-content:flex-start;">
+                <span id="tenDayHigh" style="font-size:44px;font-weight:300;color:rgba(0,0,0,0.95);line-height:1;">46°</span>
+                <span style="font-size:24px;font-weight:300;color:rgba(0,0,0,0.4);line-height:1;">·</span>
+                <span id="tenDayLow" style="font-size:44px;font-weight:300;color:rgba(0,0,0,0.5);line-height:1;">35°</span>
+              </div>
+              
+              <!-- Label -->
+              <div style="font-size:15px;color:rgba(0,0,0,0.5);font-weight:400;margin-top:6px;">High / Low today</div>
+            </div>
           </div>
           <div class="card-body" style="display:none;">
           <div id="forecastList"></div>
@@ -348,9 +432,16 @@
             📌 DETAILED FORECAST<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hyperlocal_forecast', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:1.1rem;letter-spacing:0.2px;margin-bottom:0;opacity:0.88;">📌 DETAILED FORECAST</div>
-            <div id="hyperlocalSummaryCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;">
+            <!-- Title upper left -->
+            <div style="position:absolute;top:0;left:0;font-size:11px;font-weight:600;color:rgba(0,0,0,0.4);text-transform:uppercase;letter-spacing:0.5px;">Detailed Forecast</div>
+            
+            <!-- Today's main transition/change centered -->
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);text-align:center;width:90%;">
+              <div id="detailedForecastSummary" style="font-size:20px;font-weight:400;color:rgba(0,0,0,0.75);line-height:1.3;">
+                Becoming cloudy
+              </div>
+            </div>
           </div>
           <div class="card-body">
             <div id="hyperlocalForecastList"></div>
@@ -387,13 +478,16 @@
         <div class="card col-6" data-collapse-key="radar" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('radar', this.querySelector('.card-title-collapsible'))">
 
           <!-- Controls bar (collapsible title) -->
-          <div class="card-title card-title-collapsible" style="cursor:default;">
+          <div class="card-title card-title-collapsible" style="cursor:default;display:none;">
             📡 RADAR<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('radar', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">📡 RADAR</div>
-            <div id="radarStatusCollapsed" style="font-size:0.88rem;margin-top:8px;">Live radar</div>
+          <div class="card-collapsed-preview" style="position:relative;min-height:216px;padding:0;margin:-16px;overflow:hidden;border-radius:inherit;">
+            <!-- Title upper left -->
+            <div style="position:absolute;top:28px;left:32px;font-size:11px;font-weight:600;color:rgba(0,0,0,0.4);text-transform:uppercase;letter-spacing:0.5px;z-index:1000;">Radar</div>
+            
+            <!-- Mini radar map -->
+            <div id="radarMapCollapsed" style="position:absolute;top:0;left:0;width:100%;height:100%;border-radius:inherit;"></div>
           </div>
 
           <!-- Map and scrubber (collapsible body) -->
