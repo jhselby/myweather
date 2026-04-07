@@ -2899,6 +2899,167 @@
       }
     }
 
+    function initCollapsedRadarMap() {
+      console.log('initCollapsedRadarMap called');
+      const mapEl = document.getElementById('radarMapCollapsed');
+      console.log('mapEl:', mapEl);
+      if (!mapEl || window._collapsedRadarInitialized) {
+        console.log('Exiting - no element or already initialized');
+        return;
+      }
+      
+      console.log('Initializing collapsed radar map...');
+      console.log('Element dimensions:', mapEl.offsetWidth, 'x', mapEl.offsetHeight);
+      console.log('Element display:', getComputedStyle(mapEl).display);
+      console.log('Parent display:', getComputedStyle(mapEl.parentElement).display);
+      
+      // Initialize mini Leaflet map - zoomed in closer to Marblehead
+      const miniMap = L.map('radarMapCollapsed', {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        touchZoom: false
+      }).setView([42.5001, -70.8578], 10);
+      
+      // Use CartoDB Positron - light map designed for data viz overlays
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+        maxZoom: 19
+      }).addTo(miniMap);
+      
+      // No filter - just use natural light map colors
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes radarSweep {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        @keyframes centerPulse {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 0.3; }
+        }
+      `;
+      document.head.appendChild(style);
+      
+      // SVG overlay
+      const svg = L.svg();
+      svg.addTo(miniMap);
+      
+      console.log('Added SVG overlay to map');
+      
+      setTimeout(() => {
+        console.log('Timeout callback fired');
+        const svgEl = document.querySelector('#radarMapCollapsed svg');
+        console.log('svgEl:', svgEl);
+        if (!svgEl) {
+          console.log('No SVG element found!');
+          return;
+        }
+        
+        // Force map to recalculate size since it was hidden during init
+        miniMap.invalidateSize();
+        console.log('Map size invalidated');
+        
+        const center = miniMap.latLngToLayerPoint([42.5001, -70.8578]);
+        console.log('Center point:', center);
+        
+        // Range rings: 15, 30, 60, 90 miles - much lighter
+        const ranges = [
+          { deg: 0.22, opacity: 0.25, width: '1.5' },
+          { deg: 0.43, opacity: 0.2, width: '1.5' },
+          { deg: 0.87, opacity: 0.15, width: '1' },
+          { deg: 1.3, opacity: 0.1, width: '1' }
+        ];
+        
+        ranges.forEach(range => {
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', center.x);
+          circle.setAttribute('cy', center.y);
+          circle.setAttribute('r', range.deg * 111 * 3);
+          circle.setAttribute('fill', 'none');
+          circle.setAttribute('stroke', `rgba(100, 180, 120, ${range.opacity})`);
+          circle.setAttribute('stroke-width', range.width);
+          circle.setAttribute('stroke-dasharray', '5,4');
+          svgEl.appendChild(circle);
+        });
+        
+        // Pulsing glow - very subtle
+        const glow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        glow.setAttribute('cx', center.x);
+        glow.setAttribute('cy', center.y);
+        glow.setAttribute('r', '10');
+        glow.setAttribute('fill', 'rgba(80, 160, 100, 0.15)');
+        glow.style.animation = 'centerPulse 2s ease-in-out infinite';
+        svgEl.appendChild(glow);
+        
+        // Center dot - lighter
+        const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        dot.setAttribute('cx', center.x);
+        dot.setAttribute('cy', center.y);
+        dot.setAttribute('r', '5');
+        dot.setAttribute('fill', 'rgba(80, 160, 100, 0.7)');
+        dot.setAttribute('stroke', 'white');
+        dot.setAttribute('stroke-width', '2');
+        svgEl.appendChild(dot);
+        
+        // Sweep group (animated)
+        const sweepGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        sweepGroup.style.transformOrigin = `${center.x}px ${center.y}px`;
+        sweepGroup.style.animation = 'radarSweep 4s linear infinite';
+        
+        // Sweep line - lighter
+        const sweep = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        sweep.setAttribute('x1', center.x);
+        sweep.setAttribute('y1', center.y);
+        sweep.setAttribute('x2', center.x + 150);
+        sweep.setAttribute('y2', center.y);
+        sweep.setAttribute('stroke', 'rgba(100, 180, 120, 0.3)');
+        sweep.setAttribute('stroke-width', '2');
+        sweep.setAttribute('stroke-linecap', 'round');
+        sweepGroup.appendChild(sweep);
+        
+        // Trailing wedge glow - very subtle
+        const sweepFade = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        const sweepPath = `M ${center.x},${center.y} L ${center.x + 150},${center.y} A 150,150 0 0,1 ${center.x + 106},${center.y + 106} Z`;
+        sweepFade.setAttribute('d', sweepPath);
+        sweepFade.setAttribute('fill', 'rgba(80, 160, 100, 0.05)');
+        sweepGroup.appendChild(sweepFade);
+        
+        svgEl.appendChild(sweepGroup);
+        
+        // Grid lines - very subtle
+        const gridGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        gridGroup.setAttribute('opacity', '0.08');
+        
+        for (let i = 0; i < 5; i++) {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', '0');
+          line.setAttribute('y1', i * 50);
+          line.setAttribute('x2', '400');
+          line.setAttribute('y2', i * 50);
+          line.setAttribute('stroke', 'rgba(100, 255, 150, 0.5)');
+          line.setAttribute('stroke-width', '0.5');
+          gridGroup.appendChild(line);
+        }
+        
+        for (let i = 0; i < 8; i++) {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', i * 50);
+          line.setAttribute('y1', '0');
+          line.setAttribute('x2', i * 50);
+          line.setAttribute('y2', '250');
+          line.setAttribute('stroke', 'rgba(100, 255, 150, 0.5)');
+          line.setAttribute('stroke-width', '0.5');
+          gridGroup.appendChild(line);
+        }
+        
+        svgEl.appendChild(gridGroup);
+      }, 800);
+      
+      window._collapsedRadarInitialized = true;
+    }
+
     function initCollapsibleCards() {
       document.querySelectorAll("[data-collapse-key]").forEach(card => {
         const key     = card.getAttribute("data-collapse-key");
@@ -2953,12 +3114,33 @@
     let nwsShowAll = false;
     const NWS_PREVIEW = 14;  // periods shown before "show all"
 
+    function generateForecastSummary(forecasts) {
+      const summaryEl = document.getElementById("detailedForecastSummary");
+      if (!summaryEl || !forecasts || forecasts.length === 0) return;
+      
+      // Get first period (should be "Today" or current period)
+      const today = forecasts[0];
+      if (!today || !today.text) {
+        summaryEl.textContent = "Check forecast...";
+        return;
+      }
+      
+      // Extract first sentence (up to first period)
+      const firstSentence = today.text.split('.')[0].trim();
+      
+      // Add ellipsis
+      summaryEl.textContent = firstSentence + "...";
+    }
+
     function renderHyperlocalForecast(forecasts) {
       const list = document.getElementById("hyperlocalForecastList");
       if (!list || !Array.isArray(forecasts) || forecasts.length === 0) {
         if (list) list.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.88rem;padding:8px 0;">No forecast available.</div>';
         return;
       }
+
+      // Generate short summary for collapsed preview
+      generateForecastSummary(forecasts);
 
       list.innerHTML = "";
       
@@ -3126,17 +3308,7 @@
       // Wind - shows Wind Impact (sustained) and Gust Impact
       // This will be populated AFTER main data processing where wind impact is calculated
       
-      // 10-Day
-      const hiToday = daily?.temperature_2m_max?.[0];
-      const loToday = daily?.temperature_2m_min?.[0];
-      const hi10 = daily?.temperature_2m_max?.[9];
-      const lo10 = daily?.temperature_2m_min?.[9];
-      if (hiToday && loToday) {
-        setText("tenDayRangeCollapsed", `Today ${Math.round(hiToday)}°/${Math.round(loToday)}°`);
-        if (hi10 && lo10) {
-          setText("tenDayTrendCollapsed", `Day 10: ${Math.round(hi10)}°/${Math.round(lo10)}°`);
-        }
-      }
+      // 10-Day - will be populated later after hyp is defined
       
       // Detailed Forecast
       const periods = data.hyperlocal_forecast?.periods || [];
@@ -3200,6 +3372,18 @@
       .then(data => {
         window.__lastWeatherData = data;
 
+        // Apply temperature-based gradient to Right Now card
+        const temp = data.hyperlocal?.corrected_temp ?? data.current?.temperature ?? 50;
+        const rightNowCard = document.querySelector('[data-collapse-key="right_now"]');
+        if (rightNowCard) {
+          rightNowCard.classList.remove('tile-temp-cold', 'tile-temp-cool', 'tile-temp-mild', 'tile-temp-warm', 'tile-temp-hot');
+          if (temp < 40) rightNowCard.classList.add('tile-temp-cold');
+          else if (temp < 55) rightNowCard.classList.add('tile-temp-cool');
+          else if (temp < 70) rightNowCard.classList.add('tile-temp-mild');
+          else if (temp < 85) rightNowCard.classList.add('tile-temp-warm');
+          else rightNowCard.classList.add('tile-temp-hot');
+        }
+
         // Header
         // // document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
@@ -3253,7 +3437,24 @@
         const desc  = cur.condition_override || cur.weather_description || weatherDesc[code] || "—";
         document.getElementById("currentTemp").innerHTML =
           `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
-        const ctc = document.getElementById("currentTempCollapsed"); if (ctc) ctc.innerHTML = `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
+        const ctc = document.getElementById("currentTempCollapsed"); 
+        if (ctc) {
+          const temp = Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0);
+          ctc.innerHTML = `${temp}<span style="font-size:34px;font-weight:300;color:rgba(0,0,0,0.4);">°</span>`;
+          
+          // Update thermometer mercury level
+          // Tube goes from y=4 (top, 100°F) to y=78 (bottom of tube, 0°F)
+          // Bulb top is at y=76
+          const mercury = document.getElementById("thermometerMercury");
+          if (mercury) {
+            const clampedTemp = Math.max(0, Math.min(100, temp));
+            // Calculate mercury top position: 100°F = y=4, 0°F = y=76
+            const mercuryTop = 76 - (clampedTemp / 100) * 72; // 72px is tube height
+            const mercuryHeight = 78 - mercuryTop; // Always extends to bulb connection at y=78
+            mercury.setAttribute("y", mercuryTop);
+            mercury.setAttribute("height", mercuryHeight);
+          }
+        }
         
         // Hyperlocal data
         const hyp = data.hyperlocal || {};
@@ -3282,31 +3483,222 @@
         
         document.getElementById("feelsLike").textContent =
           `Feels like ${Math.round(correctedFeelsLike)}°F`;
-        const flc = document.getElementById("feelsLikeCollapsed"); if (flc) flc.textContent = `Feels like ${Math.round(correctedFeelsLike)}°F`;
+        const flc = document.getElementById("feelsLikeCollapsed"); if (flc) flc.textContent = `Feels like ${Math.round(correctedFeelsLike)}°`;
+        
+        // 10-Day collapsed preview - use same calculation as hiLo
+        const tenDayHighEl = document.getElementById("tenDayHigh");
+        const tenDayLowEl = document.getElementById("tenDayLow");
+        if (tenDayHighEl && tenDayLowEl) {
+          const hourlyData = data.hourly || {};
+          const hourlyTimes = hourlyData.times || [];
+          const hourlyTemps = hourlyData.temperature || [];
+          const bias = hyp.weighted_bias ?? 0;
+          const today = new Date();
+          const todayStr = today.toISOString().split('T')[0];
+          let todayHigh = null, todayLow = null;
+          hourlyTimes.forEach((timeStr, i) => {
+            if (timeStr.startsWith(todayStr)) {
+              const temp = hourlyTemps[i];
+              if (temp != null) {
+                const correctedTemp = temp + bias;
+                todayHigh = todayHigh === null ? correctedTemp : Math.max(todayHigh, correctedTemp);
+                todayLow = todayLow === null ? correctedTemp : Math.min(todayLow, correctedTemp);
+              }
+            }
+          });
+          
+          if (todayHigh != null && todayLow != null) {
+            tenDayHighEl.textContent = `${Math.round(todayHigh)}°`;
+            tenDayLowEl.textContent = `${Math.round(todayLow)}°`;
+          } else {
+            tenDayHighEl.textContent = `--°`;
+            tenDayLowEl.textContent = `--°`;
+          }
+        }
         const obsTag = cur.condition_source === "KBVY observed" ? " <span style='font-size:0.75rem;opacity:0.5;'>[obs]</span>" : "";
         document.getElementById("condition").innerHTML = `${emoji} ${desc}${obsTag}`;
         // Removed conditionCollapsed - sky condition now goes in Sky & Precip tile
         
-        // Populate Sky & Precip tile preview
-        const skyEl = document.getElementById("skyCollapsed");
-        const precipEl = document.getElementById("precipCollapsed");
-        if (skyEl) skyEl.innerHTML = `${emoji} ${desc}`;
-        if (precipEl) {
+        // Populate Sky & Precip tile preview - with day/night graphics and backgrounds
+        const skyConditionEl = document.getElementById("skyConditionCollapsed");
+        const skyStatsEl = document.getElementById("skyStatsCollapsed");
+        const weatherGraphic = document.getElementById("weatherGraphic");
+        const skyPrecipBg = document.getElementById("skyPrecipBg");
+        
+        if (skyConditionEl) skyConditionEl.textContent = desc;
+        if (skyStatsEl) {
           const precipProb = data.hourly?.precipitation_probability?.[0] || 0;
           const cloudCover = data.hourly?.cloud_cover?.[0] || 0;
-          const clearSky = 100 - cloudCover;
           
           let skyText = `${precipProb}% precip`;
-          if (cloudCover > 0 && clearSky > 0) {
-            skyText += ` | ${Math.round(cloudCover)}% clouds | ${Math.round(clearSky)}% clear`;
-          } else if (cloudCover === 100) {
+          if (cloudCover === 100) {
             skyText += ` | 100% clouds`;
           } else if (cloudCover === 0) {
             skyText += ` | Clear`;
+          } else {
+            skyText += ` | ${Math.round(cloudCover)}% clouds`;
           }
           
-          precipEl.textContent = skyText;
-        }   
+          skyStatsEl.textContent = skyText;
+        }
+        
+        // Draw weather graphics and set background based on condition and time of day
+        if (weatherGraphic) {
+          const skyPrecipCard = document.querySelector('[data-collapse-key="48h_temp_precip"]');
+          const condition = desc.toLowerCase();
+          
+          // Determine if it's day or night
+          const now = new Date();
+          const sunrise = data.daily?.sunrise?.[0] ? new Date(data.daily.sunrise[0]) : null;
+          const sunset = data.daily?.sunset?.[0] ? new Date(data.daily.sunset[0]) : null;
+          const isDay = sunrise && sunset ? (now >= sunrise && now < sunset) : true;
+          
+          let graphicSVG = '';
+          let weatherClass = '';
+          
+          // Clear/Sunny
+          if (condition.includes('clear') || condition.includes('sunny')) {
+            weatherClass = isDay ? 'weather-clear-day' : 'weather-clear-night';
+            if (isDay) {
+              // Day: Bright sun
+              graphicSVG = `
+                <circle cx="75" cy="25" r="18" fill="rgba(255,200,80,0.8)"/>
+                <line x1="75" y1="3" x2="75" y2="10" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="93" y1="25" x2="100" y2="25" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="86" y1="36" x2="91" y2="41" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="86" y1="14" x2="91" y2="9" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="64" y1="36" x2="59" y2="41" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="64" y1="14" x2="59" y2="9" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+              `;
+            } else {
+              // Night: Moon and stars
+              graphicSVG = `
+                <circle cx="75" cy="25" r="16" fill="rgba(245,245,220,0.8)"/>
+                <circle cx="80" cy="20" r="16" fill="rgba(25,25,112,0.6)"/>
+                <circle cx="20" cy="15" r="2" fill="rgba(255,255,255,0.8)"/>
+                <circle cx="30" cy="25" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                <circle cx="45" cy="12" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                <circle cx="25" cy="35" r="2" fill="rgba(255,255,255,0.8)"/>
+              `;
+            }
+          }
+          // Partly Cloudy
+          else if (condition.includes('partly')) {
+            weatherClass = isDay ? 'weather-partly-day' : 'weather-partly-night';
+            if (isDay) {
+              // Day: Sun peeking through clouds
+              graphicSVG = `
+                <circle cx="60" cy="20" r="12" fill="rgba(255,200,80,0.6)"/>
+                <ellipse cx="75" cy="35" rx="20" ry="14" fill="rgba(220,220,220,0.85)"/>
+                <ellipse cx="58" cy="40" rx="16" ry="12" fill="rgba(200,200,200,0.85)"/>
+              `;
+            } else {
+              // Night: Moon and clouds
+              graphicSVG = `
+                <circle cx="60" cy="20" r="11" fill="rgba(245,245,220,0.7)"/>
+                <circle cx="64" cy="17" r="11" fill="rgba(47,79,79,0.5)"/>
+                <ellipse cx="75" cy="35" rx="20" ry="14" fill="rgba(169,169,169,0.8)"/>
+                <ellipse cx="58" cy="40" rx="16" ry="12" fill="rgba(128,128,128,0.8)"/>
+              `;
+            }
+          }
+          // Overcast/Cloudy
+          else if (condition.includes('overcast') || condition.includes('cloudy')) {
+            weatherClass = isDay ? 'weather-cloudy-day' : 'weather-cloudy-night';
+            if (isDay) {
+              // Day: Gray clouds
+              graphicSVG = `
+                <ellipse cx="50" cy="28" rx="24" ry="16" fill="rgba(160,160,160,0.8)"/>
+                <ellipse cx="75" cy="35" rx="22" ry="15" fill="rgba(150,150,150,0.8)"/>
+                <ellipse cx="30" cy="38" rx="20" ry="14" fill="rgba(170,170,170,0.8)"/>
+              `;
+            } else {
+              // Night: Darker clouds
+              graphicSVG = `
+                <ellipse cx="50" cy="28" rx="24" ry="16" fill="rgba(105,105,105,0.85)"/>
+                <ellipse cx="75" cy="35" rx="22" ry="15" fill="rgba(90,90,90,0.85)"/>
+                <ellipse cx="30" cy="38" rx="20" ry="14" fill="rgba(115,115,115,0.85)"/>
+              `;
+            }
+          }
+          // Rain
+          else if (condition.includes('rain') || condition.includes('drizzle') || condition.includes('shower')) {
+            weatherClass = isDay ? 'weather-rain-day' : 'weather-rain-night';
+            if (isDay) {
+              // Day: Rain clouds and raindrops
+              graphicSVG = `
+                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(100,100,100,0.8)"/>
+                <line x1="40" y1="45" x2="36" y2="60" stroke="rgba(100,150,200,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="52" y1="45" x2="48" y2="60" stroke="rgba(100,150,200,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="64" y1="45" x2="60" y2="60" stroke="rgba(100,150,200,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="46" y1="50" x2="42" y2="65" stroke="rgba(100,150,200,0.6)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="58" y1="50" x2="54" y2="65" stroke="rgba(100,150,200,0.6)" stroke-width="2" stroke-linecap="round"/>
+              `;
+            } else {
+              // Night: Dark rain
+              graphicSVG = `
+                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(70,70,70,0.85)"/>
+                <line x1="40" y1="45" x2="36" y2="60" stroke="rgba(80,120,160,0.75)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="52" y1="45" x2="48" y2="60" stroke="rgba(80,120,160,0.75)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="64" y1="45" x2="60" y2="60" stroke="rgba(80,120,160,0.75)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="46" y1="50" x2="42" y2="65" stroke="rgba(80,120,160,0.65)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="58" y1="50" x2="54" y2="65" stroke="rgba(80,120,160,0.65)" stroke-width="2" stroke-linecap="round"/>
+              `;
+            }
+          }
+          // Snow
+          else if (condition.includes('snow') || condition.includes('flurr')) {
+            weatherClass = isDay ? 'weather-snow-day' : 'weather-snow-night';
+            if (isDay) {
+              // Day: Snow clouds and snowflakes
+              graphicSVG = `
+                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(180,180,200,0.8)"/>
+                <text x="35" y="55" font-size="18" fill="rgba(150,180,220,0.8)">❄</text>
+                <text x="55" y="62" font-size="14" fill="rgba(150,180,220,0.75)">❄</text>
+                <text x="48" y="48" font-size="12" fill="rgba(150,180,220,0.7)">❄</text>
+              `;
+            } else {
+              // Night: Dark snow
+              graphicSVG = `
+                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(90,90,110,0.85)"/>
+                <text x="35" y="55" font-size="18" fill="rgba(180,200,230,0.8)">❄</text>
+                <text x="55" y="62" font-size="14" fill="rgba(180,200,230,0.75)">❄</text>
+                <text x="48" y="48" font-size="12" fill="rgba(180,200,230,0.7)">❄</text>
+              `;
+            }
+          }
+          // Mist/Fog
+          else if (condition.includes('mist') || condition.includes('fog')) {
+            weatherClass = isDay ? 'weather-mist-day' : 'weather-mist-night';
+            if (isDay) {
+              // Day: Light fog waves
+              graphicSVG = `
+                <path d="M 20,25 Q 40,20 60,25 T 100,25" stroke="rgba(200,200,200,0.7)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 15,40 Q 40,35 65,40 T 105,40" stroke="rgba(210,210,210,0.7)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 18,55 Q 40,50 62,55 T 102,55" stroke="rgba(200,200,200,0.65)" stroke-width="5" fill="none" stroke-linecap="round"/>
+              `;
+            } else {
+              // Night: Darker fog
+              graphicSVG = `
+                <path d="M 20,25 Q 40,20 60,25 T 100,25" stroke="rgba(130,130,130,0.75)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 15,40 Q 40,35 65,40 T 105,40" stroke="rgba(140,140,140,0.75)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 18,55 Q 40,50 62,55 T 102,55" stroke="rgba(130,130,130,0.7)" stroke-width="5" fill="none" stroke-linecap="round"/>
+              `;
+            }
+          }
+          
+          weatherGraphic.innerHTML = graphicSVG;
+          
+          // Apply weather class to card
+          if (skyPrecipCard) {
+            skyPrecipCard.classList.remove('weather-clear-day', 'weather-clear-night', 'weather-partly-day', 'weather-partly-night', 
+              'weather-cloudy-day', 'weather-cloudy-night', 'weather-rain-day', 'weather-rain-night', 
+              'weather-snow-day', 'weather-snow-night', 'weather-mist-day', 'weather-mist-night');
+            if (weatherClass) {
+              skyPrecipCard.classList.add(weatherClass);
+            }
+          }
+        }
 
         // Update Smart Correction table
         if (hyp) {
@@ -3548,14 +3940,40 @@
           }
         }
         
-        // Populate Wind tile preview with same Wind Impact + Gust Impact data (Weather page)
-        const windNowCollapsedEl = document.getElementById("windNowCollapsed");
-        const windPeakCollapsedEl = document.getElementById("windPeakCollapsed");
-        if (windNowCollapsedEl && windImpactNowEl) {
-          windNowCollapsedEl.innerHTML = `<strong>Wind Impact</strong><br>${windImpactNowEl.innerHTML}`;
-        }
-        if (windPeakCollapsedEl && gustImpactNowEl) {
-          windPeakCollapsedEl.innerHTML = `<strong>Gust Impact</strong><br>${gustImpactNowEl.innerHTML}`;
+        // Populate Weather page Wind Impact tile (redesigned)
+        const weatherWindSustainedSpeedEl = document.getElementById("weatherWindSustainedSpeed");
+        const weatherWindGustsLineEl = document.getElementById("weatherWindGustsLine");
+        const weatherWindDirectionIndicatorEl = document.getElementById("weatherWindDirectionIndicator");
+        const weatherWindImpactBarEl = document.getElementById("weatherWindImpactBar");
+        
+        if (weatherWindSustainedSpeedEl && weatherWindGustsLineEl && weatherWindImpactBarEl) {
+          const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
+          const gustSpeed = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+          const windDir = cur.wind_direction;
+          
+          // Set sustained speed (just number)
+          weatherWindSustainedSpeedEl.textContent = windSpeed != null ? Math.round(windSpeed) : '--';
+          
+          // Set gusts line (one line: "Gusts 21 mph")
+          weatherWindGustsLineEl.textContent = gustSpeed != null 
+            ? `Gusts ${Math.round(gustSpeed)} mph` 
+            : 'Gusts -- mph';
+          
+          // Rotate direction indicator arrow (add 90° because arrow defaults to north, wind is FROM so show TO)
+          if (weatherWindDirectionIndicatorEl && windDir != null) {
+            const arrowRotation = (windDir + 90) % 360;
+            weatherWindDirectionIndicatorEl.setAttribute('transform', `rotate(${arrowRotation}, 60, 60)`);
+          }
+          
+          // Set impact score (using gust impact)
+          if (gustSpeed != null && windDir != null) {
+            const exposure = getExposureFactor(windDir);
+            const gustScore = Math.round(worryScore(gustSpeed, exposure));
+            const gustLevel = worryLevel(gustScore);
+            weatherWindImpactBarEl.textContent = `Impact: ${gustScore} ${gustLevel.label}`;
+          } else {
+            weatherWindImpactBarEl.textContent = 'Impact: --';
+          }
         }
         
         // Populate Hyperlocal page Gust Impact and Sustained Wind Impact tiles
@@ -4023,6 +4441,25 @@
         // Almanac tab
         renderTides(data.tides?.events);
         initCollapsibleCards();
+        
+        // Initialize collapsed radar map when visible
+        const radarPreview = document.querySelector('[data-collapse-key="radar"] .card-collapsed-preview');
+        if (radarPreview) {
+          // Use MutationObserver to detect when preview becomes visible
+          const observer = new MutationObserver(() => {
+            if (radarPreview.style.display !== 'none' && !window._collapsedRadarInitialized) {
+              console.log('Radar preview is now visible, initializing...');
+              setTimeout(initCollapsedRadarMap, 100);
+              observer.disconnect();
+            }
+          });
+          observer.observe(radarPreview, { attributes: true, attributeFilter: ['style'] });
+          
+          // Also try immediately if already visible
+          if (radarPreview.style.display !== 'none') {
+            setTimeout(initCollapsedRadarMap, 100);
+          }
+        }
         
         // Check if radar card is open on page load and initialize it
         const radarCard = document.querySelector('[data-collapse-key="radar"]');
