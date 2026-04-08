@@ -245,6 +245,95 @@
       background: linear-gradient(135deg, rgba(105,105,105,0.4) 0%, rgba(128,128,128,0.35) 100%) !important;
     }
 
+    /* ========== HYPERLOCAL & ALMANAC TILE BACKGROUNDS ========== */
+    
+    /* Fog Risk - white fog overlay that increases with risk level */
+    .tile-fog-low:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(240,240,245,0.15) 0%, rgba(220,220,230,0.12) 100%) !important;
+    }
+    .tile-fog-moderate:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(240,240,245,0.35) 0%, rgba(220,220,230,0.28) 100%) !important;
+    }
+    .tile-fog-high:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(240,240,245,0.55) 0%, rgba(220,220,230,0.48) 100%) !important;
+    }
+    body.theme-light .tile-fog-low:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(200,200,210,0.25) 0%, rgba(180,180,190,0.20) 100%) !important;
+    }
+    body.theme-light .tile-fog-moderate:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(200,200,210,0.45) 0%, rgba(180,180,190,0.38) 100%) !important;
+    }
+    body.theme-light .tile-fog-high:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(200,200,210,0.65) 0%, rgba(180,180,190,0.55) 100%) !important;
+    }
+
+    /* Wind Impact - green (calm) to red (severe) */
+    .tile-wind-calm:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(134,239,172,0.12) 0%, rgba(34,197,94,0.06) 100%) !important;
+    }
+    .tile-wind-light:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(200,220,140,0.15) 0%, rgba(150,200,100,0.08) 100%) !important;
+    }
+    .tile-wind-moderate:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(253,224,71,0.12) 0%, rgba(234,179,8,0.06) 100%) !important;
+    }
+    .tile-wind-strong:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(251,191,36,0.15) 0%, rgba(245,158,11,0.08) 100%) !important;
+    }
+    .tile-wind-severe:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.08) 100%) !important;
+    }
+
+    /* Sea Breeze - ocean teal/blue */
+    .tile-seabreeze-unlikely:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(140,160,180,0.12) 0%, rgba(120,140,160,0.08) 100%) !important;
+    }
+    .tile-seabreeze-possible:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(100,200,200,0.15) 0%, rgba(80,170,180,0.1) 100%) !important;
+    }
+    .tile-seabreeze-likely:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(80,200,210,0.18) 0%, rgba(60,180,190,0.12) 100%) !important;
+    }
+
+    /* Sunset Score - subtle warm gradient based on quality */
+    .tile-sunset-poor:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(128,128,128,0.12) 0%, rgba(140,140,150,0.08) 100%) !important;
+    }
+    .tile-sunset-fair:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(200,180,140,0.15) 0%, rgba(180,160,120,0.10) 100%) !important;
+    }
+    .tile-sunset-good:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(251,191,36,0.15) 0%, rgba(245,158,11,0.08) 100%) !important;
+    }
+    .tile-sunset-verygood:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(251,146,60,0.18) 0%, rgba(249,115,22,0.10) 100%) !important;
+    }
+    .tile-sunset-spectacular:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(251,146,60,0.22) 0%, rgba(249,115,22,0.12) 100%) !important;
+    }
+
+    /* Dock Day - score-based like Wind Impact */
+    .tile-dock-great:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(134,239,172,0.12) 0%, rgba(34,197,94,0.06) 100%) !important;
+    }
+    .tile-dock-good:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(200,220,140,0.15) 0%, rgba(150,200,100,0.08) 100%) !important;
+    }
+    .tile-dock-marginal:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(253,224,71,0.12) 0%, rgba(234,179,8,0.06) 100%) !important;
+    }
+    .tile-dock-poor:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(251,191,36,0.15) 0%, rgba(245,158,11,0.08) 100%) !important;
+    }
+    .tile-dock-stayinside:not(.card-expanded) {
+      background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.08) 100%) !important;
+    }
+
+    /* Astronomical tiles - subtle dark space gradient */
+    .tile-astro:not(.card-expanded) {
+      background: linear-gradient(180deg, rgba(30,41,59,0.15) 0%, rgba(15,23,42,0.08) 100%) !important;
+    }
+
 
     /* ========== TILE PREVIEW STYLING ========== */
     

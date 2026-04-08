@@ -1,3 +1,22 @@
+## v4.24 • 2026-04-07
+* **Hyperlocal & Almanac tile redesign - 14 collapsed previews redesigned** - New centered layouts with clean 20px regular-weight text matching Detailed Forecast aesthetic
+* **Corrections tile** - Shows station count and confidence level as simple teaser ("13 stations • Moderate")
+* **Wind Impact tiles (Gust & Sustained)** - Large centered score number, label, and wind data with color-coded gradients (green calm → red severe)
+* **Sea Breeze tile** - Large percentage with label and time, teal gradient based on likelihood
+* **Sunset Score tile** - Shows next sunset (today or tomorrow after civil dusk) with day label, weather icon, and score with gradient
+* **Dock Day tile** - Day label, emoji, and condition label with score-based gradient
+* **Fog Risk tile** - Large percentage and risk label with fog overlay gradient (increases with risk level)
+* **Today Almanac tile** - Date, day, and sunrise/sunset times with daylight duration
+* **Tides tile** - Animated water fill showing current tide height, fills/drains from last tide event on page load, gentle wave slosh animation, overlaid next tide info
+* **Ocean/Buoy tile** - 3-row mini table (Water temp, Waves, Wind) in 20px text
+* **Sun tile** - Arc with moving dot showing sun position based on altitude, altitude display, next event (sunrise/sunset)
+* **Moon tile** - Dynamic phase emoji, phase name, illumination percentage
+* **Planets tile** - Realistic SVG planets (simple spheres with radial gradients, Saturn with rings) replacing Unicode symbols, shows visible planet icons/names or "None visible tonight"
+* **Frost tile** - Snowflake emoji, days since frost, last year comparison
+* Fixed collapsed radar map rendering bug - Map now properly resizes when switching to Weather tab (no longer requires manual refresh)
+* All Hyperlocal/Almanac tiles use consistent 20px font-weight 400 style
+* All tiles have subtle background gradients matching their data state (fog levels, wind impact, sea breeze likelihood, sunset quality, dock conditions)
+
 ## v4.23 • 2026-04-07
 * **Radar tile dark mode optimization** - Replaced dynamic Leaflet map with static Mapbox background image for better performance and consistent rendering
 * Fixed radar tile dark mode appearance - now properly darkened to match theme while maintaining land/sea contrast

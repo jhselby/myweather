@@ -188,11 +188,21 @@
         window.ohStopLive();
       }
       try { localStorage.setItem("activeTab", which); } catch(e) {}
+      
+      // Fix map sizing when switching to tabs with Leaflet maps
       if (which === "overhead") {
         requestAnimationFrame(() => {
           requestAnimationFrame(() => {
             if (window.ohInitMap) window.ohInitMap();
             if (window.ohMap) window.ohMap.invalidateSize();
+          });
+        });
+      }
+      
+      if (which === "weather") {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            if (window.collapsedRadarMap) window.collapsedRadarMap.invalidateSize();
           });
         });
       }
@@ -1119,14 +1129,79 @@
 
       el.innerHTML = html;
       
-      // Update collapsed preview with today's data
-      if (scores.length > 0 && scores[0].dayLabel === "Today") {
-        const today = scores[0];
-        const sunsetScoreEl = document.getElementById("sunsetScoreCollapsed");
-        const sunsetTimeEl = document.getElementById("sunsetTimeCollapsed");
-        if (sunsetScoreEl) sunsetScoreEl.innerHTML = `${today.dayLabel}<br>${today.emoji}`;
-        if (sunsetTimeEl) sunsetTimeEl.textContent = today.label;
+      // Update collapsed preview with next sunset's data
+      // Determine if we should show today or tomorrow based on current time vs civil dusk
+      const now = new Date();
+      let nextSunset = scores.length > 0 ? scores[0] : null;
+      
+      // Check if we're past civil dusk - if so, show tomorrow
+      const civilDuskStr = data.sun?.civil_dusk;
+      if (civilDuskStr && nextSunset) {
+        const civilDusk = new Date(civilDuskStr);
+        if (now > civilDusk && scores.length > 1) {
+          nextSunset = scores[1]; // Show tomorrow
+        }
       }
+      
+      if (nextSunset) {
+        const sunsetDayEl = document.getElementById("sunsetDayCollapsed");
+        const sunsetIconEl = document.getElementById("sunsetIconCollapsed");
+        const sunsetScoreEl = document.getElementById("sunsetScoreCollapsed");
+        
+        if (sunsetDayEl) sunsetDayEl.textContent = nextSunset.dayLabel;
+        if (sunsetIconEl) sunsetIconEl.textContent = nextSunset.emoji;
+        if (sunsetScoreEl) sunsetScoreEl.innerHTML = `${nextSunset.label} <span style="font-size:0.85rem;opacity:0.7;">(${nextSunset.score})</span>`;
+        
+        // Apply gradient class based on score
+        const sunsetCard = document.querySelector('[data-collapse-key="sunset_quality"]');
+        if (sunsetCard) {
+          sunsetCard.classList.remove('tile-sunset-poor', 'tile-sunset-fair', 'tile-sunset-good', 'tile-sunset-verygood', 'tile-sunset-spectacular');
+          if (nextSunset.score < 20) sunsetCard.classList.add('tile-sunset-poor');
+          else if (nextSunset.score < 35) sunsetCard.classList.add('tile-sunset-fair');
+          else if (nextSunset.score < 55) sunsetCard.classList.add('tile-sunset-good');
+          else if (nextSunset.score < 75) sunsetCard.classList.add('tile-sunset-verygood');
+          else sunsetCard.classList.add('tile-sunset-spectacular');
+        }
+      }
+    }
+
+    function getPlanetSVG(planetName, size) {
+      const s = size || 40;
+      const c = s / 2; // center
+      const r = (s / 2) * 0.8; // radius
+      
+      const gradients = {
+        Mercury: `<radialGradient id="mercury-grad-${s}"><stop offset="30%" stop-color="#9D9993"/><stop offset="100%" stop-color="#5C5A57"/></radialGradient>`,
+        Venus: `<radialGradient id="venus-grad-${s}"><stop offset="30%" stop-color="#F5E6C8"/><stop offset="100%" stop-color="#D4BE8F"/></radialGradient>`,
+        Mars: `<radialGradient id="mars-grad-${s}"><stop offset="30%" stop-color="#E27B58"/><stop offset="100%" stop-color="#AD3E1A"/></radialGradient>`,
+        Jupiter: `<radialGradient id="jupiter-grad-${s}"><stop offset="30%" stop-color="#D4A574"/><stop offset="100%" stop-color="#9E7550"/></radialGradient>`,
+        Saturn: `<radialGradient id="saturn-grad-${s}"><stop offset="30%" stop-color="#EAE0C8"/><stop offset="100%" stop-color="#BAA888"/></radialGradient>`
+      };
+      
+      const fills = {
+        Mercury: `url(#mercury-grad-${s})`,
+        Venus: `url(#venus-grad-${s})`,
+        Mars: `url(#mars-grad-${s})`,
+        Jupiter: `url(#jupiter-grad-${s})`,
+        Saturn: `url(#saturn-grad-${s})`
+      };
+      
+      if (planetName === 'Saturn') {
+        const ringRx = r * 1.8;
+        const ringRy = r * 0.4;
+        const saturnR = r * 0.65;
+        return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="display:inline-block;vertical-align:middle;">
+          <defs>${gradients.Saturn}</defs>
+          <ellipse cx="${c}" cy="${c}" rx="${ringRx}" ry="${ringRy}" fill="none" stroke="#C4B69A" stroke-width="${s/20}" opacity="0.5"/>
+          <circle cx="${c}" cy="${c}" r="${saturnR}" fill="${fills.Saturn}"/>
+          <ellipse cx="${c}" cy="${c}" rx="${ringRx}" ry="${ringRy}" fill="none" stroke="#C4B69A" stroke-width="${s/20}" opacity="0.3" clip-path="inset(50% 0 0 0)"/>
+        </svg>`;
+      }
+      
+      return `<svg width="${s}" height="${s}" viewBox="0 0 ${s} ${s}" style="display:inline-block;vertical-align:middle;">
+        <defs>${gradients[planetName] || gradients.Mercury}</defs>
+        <circle cx="${c}" cy="${c}" r="${r}" fill="${fills[planetName] || fills.Mercury}"/>
+      </svg>`;
     }
 
     function renderSolarSystem() {
@@ -1147,6 +1222,47 @@
       };
 
       const EMOJIS = { Mercury:"☿", Venus:"♀️", Mars:"♂️", Jupiter:"♃", Saturn:"🪐" };
+      
+      // SVG planet functions (40px for collapsed, 60px for expanded)
+      const getPlanetSVG = (name, size = 40) => {
+        const r = size === 40 ? 16 : 24;
+        const cx = size / 2;
+        const cy = size / 2;
+        
+        if (name === "Mercury") {
+          return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <defs><radialGradient id="mercury-g-${size}"><stop offset="30%" stop-color="#9D9993"/><stop offset="100%" stop-color="#5C5A57"/></radialGradient></defs>
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#mercury-g-${size})"/>
+          </svg>`;
+        } else if (name === "Venus") {
+          return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <defs><radialGradient id="venus-g-${size}"><stop offset="30%" stop-color="#F5E6C8"/><stop offset="100%" stop-color="#D4BE8F"/></radialGradient></defs>
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#venus-g-${size})"/>
+          </svg>`;
+        } else if (name === "Mars") {
+          return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <defs><radialGradient id="mars-g-${size}"><stop offset="30%" stop-color="#E27B58"/><stop offset="100%" stop-color="#AD3E1A"/></radialGradient></defs>
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#mars-g-${size})"/>
+          </svg>`;
+        } else if (name === "Jupiter") {
+          return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <defs><radialGradient id="jupiter-g-${size}"><stop offset="30%" stop-color="#D4A574"/><stop offset="100%" stop-color="#9E7550"/></radialGradient></defs>
+            <circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#jupiter-g-${size})"/>
+          </svg>`;
+        } else if (name === "Saturn") {
+          const ringRx = size === 40 ? 22 : 33;
+          const ringRy = size === 40 ? 5 : 7.5;
+          const planetR = size === 40 ? 12 : 18;
+          return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+            <defs><radialGradient id="saturn-g-${size}"><stop offset="30%" stop-color="#EAE0C8"/><stop offset="100%" stop-color="#BAA888"/></radialGradient></defs>
+            <ellipse cx="${cx}" cy="${cy}" rx="${ringRx}" ry="${ringRy}" fill="none" stroke="#C4B69A" stroke-width="${size === 40 ? 1.5 : 2}" opacity="0.5"/>
+            <circle cx="${cx}" cy="${cy}" r="${planetR}" fill="url(#saturn-g-${size})"/>
+            <ellipse cx="${cx}" cy="${cy}" rx="${ringRx}" ry="${ringRy}" fill="none" stroke="#C4B69A" stroke-width="${size === 40 ? 1.5 : 2}" opacity="0.3" clip-path="inset(50% 0 0 0)"/>
+          </svg>`;
+        }
+        return EMOJIS[name] || "•";
+      };
+      
       const COLORS = {
         Mercury:"rgba(180,160,130,0.9)",
         Venus:  "rgba(255,220,100,0.9)",
@@ -1300,7 +1416,7 @@
         html += `
           <div style="background:${bg};border:1px solid ${borderColor};border-radius:10px;
                       padding:10px 8px;text-align:center;box-shadow:${shadow};">
-            <div style="font-size:1.5rem;margin-bottom:4px;opacity:${emojiOp};">${p.emoji}</div>
+            <div style="margin-bottom:4px;opacity:${emojiOp};display:flex;justify-content:center;">${getPlanetSVG(p.name, 60)}</div>
             <div style="font-size:0.82rem;font-weight:900;color:${nameColor};margin-bottom:5px;">${p.name}</div>
             <div style="font-size:0.72rem;margin-bottom:4px;">${statusLine}</div>
             <div style="font-size:0.68rem;color:${faintTxt};opacity:${dataOp};">${p.elong}° from Sun · ${p.dist} AU</div>
@@ -1311,6 +1427,23 @@
       el.innerHTML = html;
       document.getElementById("solarSystemNote").textContent =
         "Positions calculated client-side using VSOP87 truncated series. Accurate to ~1°.";
+      
+      // Update collapsed preview with visible planets
+      const visiblePlanets = results.filter(r => r.state === 'visible');
+      const planetsIconsEl = document.getElementById("planetsIconsCollapsed");
+      const planetsNamesEl = document.getElementById("planetsNamesCollapsed");
+      
+      if (planetsIconsEl && planetsNamesEl) {
+        if (visiblePlanets.length > 0) {
+          const icons = visiblePlanets.map(p => getPlanetSVG(p.name, 40)).join('');
+          const names = visiblePlanets.map(p => p.name).join(', ');
+          planetsIconsEl.innerHTML = icons;
+          planetsNamesEl.textContent = names;
+        } else {
+          planetsIconsEl.innerHTML = '';
+          planetsNamesEl.textContent = 'None visible tonight';
+        }
+      }
     }
 
     const SOURCE_META = {
@@ -1709,10 +1842,24 @@
       if (dayCards.length > 0 && dayCards[0].dayLabel === "Today") {
         const today = dayCards[0];
         const sl = scoreLabel(today.bestScore);
+        const dockDayLabelEl = document.getElementById("dockDayLabelCollapsed");
+        const dockEmojiEl = document.getElementById("dockEmojiCollapsed");
         const dockScoreEl = document.getElementById("dockScoreCollapsed");
-        const dockConditionsEl = document.getElementById("dockConditionsCollapsed");
-        if (dockScoreEl) dockScoreEl.innerHTML = `${today.dayLabel}<br>${sl.emoji}`;
-        if (dockConditionsEl) dockConditionsEl.textContent = sl.label;
+        
+        if (dockDayLabelEl) dockDayLabelEl.textContent = today.dayLabel;
+        if (dockEmojiEl) dockEmojiEl.textContent = sl.emoji;
+        if (dockScoreEl) dockScoreEl.textContent = sl.label;
+        
+        // Apply gradient class based on score
+        const dockCard = document.querySelector('[data-collapse-key="dock_day"]');
+        if (dockCard) {
+          dockCard.classList.remove('tile-dock-great', 'tile-dock-good', 'tile-dock-marginal', 'tile-dock-poor', 'tile-dock-stayinside');
+          if (today.bestScore >= 0.75) dockCard.classList.add('tile-dock-great');
+          else if (today.bestScore >= 0.58) dockCard.classList.add('tile-dock-good');
+          else if (today.bestScore >= 0.38) dockCard.classList.add('tile-dock-marginal');
+          else if (today.bestScore >= 0.20) dockCard.classList.add('tile-dock-poor');
+          else dockCard.classList.add('tile-dock-stayinside');
+        }
       }
     }
 
@@ -1836,8 +1983,48 @@
           time12hr = `${hours12}:${mins.toString().padStart(2, '0')} ${period}`;
         }
         
-        if (nextTideEl) nextTideEl.textContent = `${type} tide`;
-        if (nextTideTimeEl) nextTideTimeEl.textContent = `${time12hr} · ${height}`;
+        if (nextTideEl) nextTideEl.textContent = `${type} Tide`;
+        if (nextTideTimeEl) nextTideTimeEl.textContent = time12hr;
+        const nextTideHeightEl = document.getElementById("nextTideHeightCollapsed");
+        if (nextTideHeightEl) nextTideHeightEl.textContent = height;
+        
+        // Animate tide water level
+        const tideWaterEl = document.getElementById("tideWater");
+        if (tideWaterEl && nextIdx >= 0) {
+          // Find previous tide to determine direction
+          const prevIdx = nextIdx - 1;
+          if (prevIdx >= 0 && tides[prevIdx]) {
+            const prevTide = tides[prevIdx];
+            const prevHeight = parseFloat(prevTide.height) || 0;
+            const nextHeight = parseFloat(nextTide.height) || 0;
+            
+            // Calculate current time as percentage between prev and next tide
+            const now = new Date();
+            const prevTime = new Date(`${prevTide.date || todayStr}T${prevTide.time || "00:00"}:00`);
+            const nextTime = new Date(`${nextTide.date || todayStr}T${nextTide.time || "00:00"}:00`);
+            const totalDuration = nextTime - prevTime;
+            const elapsed = now - prevTime;
+            const progress = Math.max(0, Math.min(1, elapsed / totalDuration));
+            
+            // Interpolate current height
+            const currentHeight = prevHeight + (nextHeight - prevHeight) * progress;
+            
+            // Convert height to percentage (assume 0-12 ft range for Salem Harbor)
+            const minHeight = 0;
+            const maxHeight = 12;
+            const currentPercent = ((currentHeight - minHeight) / (maxHeight - minHeight)) * 100;
+            const prevPercent = ((prevHeight - minHeight) / (maxHeight - minHeight)) * 100;
+            
+            // Set initial height based on direction
+            const isRising = nextHeight > prevHeight;
+            tideWaterEl.style.height = `${prevPercent}%`;
+            
+            // Animate to current height after a brief delay
+            setTimeout(() => {
+              tideWaterEl.style.height = `${Math.max(5, Math.min(95, currentPercent))}%`;
+            }, 100);
+          }
+        }
       } else {
         // No upcoming tide found
         if (nextTideEl) nextTideEl.textContent = "No upcoming tide";
@@ -2279,11 +2466,27 @@
 
       el.innerHTML = html;
       
-      // Update collapsed preview
+      // Update collapsed preview with new structure
       const seaBreezeCollapsedEl = document.getElementById("seaBreezeCollapsed");
+      const seaBreezeLabelEl = document.getElementById("seaBreezeLabel");
       const seaBreezeProbCollapsedEl = document.getElementById("seaBreezeProbCollapsed");
-      if (seaBreezeCollapsedEl) seaBreezeCollapsedEl.textContent = `${sb.likelihood}% likelihood`;
-      if (seaBreezeProbCollapsedEl) seaBreezeProbCollapsedEl.textContent = statusText;
+      if (seaBreezeCollapsedEl) {
+        seaBreezeCollapsedEl.innerHTML = `${sb.likelihood}<span style="font-size:1.8rem;opacity:0.6;">%</span>`;
+      }
+      if (seaBreezeLabelEl) seaBreezeLabelEl.textContent = statusText;
+      if (seaBreezeProbCollapsedEl) {
+        const timeText = sb.active ? "Active now" : sb.likelihood >= 40 ? "This afternoon" : "Wind from west";
+        seaBreezeProbCollapsedEl.textContent = timeText;
+      }
+      
+      // Apply gradient class based on likelihood
+      const seaBreezeCard = document.querySelector('[data-collapse-key="sea_breeze_detail"]');
+      if (seaBreezeCard) {
+        seaBreezeCard.classList.remove('tile-seabreeze-unlikely', 'tile-seabreeze-possible', 'tile-seabreeze-likely');
+        if (sb.likelihood < 30) seaBreezeCard.classList.add('tile-seabreeze-unlikely');
+        else if (sb.likelihood < 60) seaBreezeCard.classList.add('tile-seabreeze-possible');
+        else seaBreezeCard.classList.add('tile-seabreeze-likely');
+      }
     }
 
     function renderFogDetail(data) {
@@ -2424,11 +2627,11 @@
       document.getElementById("sunEmoji").textContent   = emoji;
       document.getElementById("sunStatus").textContent  = status;
       
-      // Update collapsed preview - show next event only (sunrise or sunset)
+      // Update collapsed preview - show altitude, arc position, and next event
       const sunStatusCollapsedEl = document.getElementById("sunStatusCollapsed");
-      const sunTimesCollapsedEl = document.getElementById("sunTimesCollapsed");
+      const sunAltitudeCollapsedEl = document.getElementById("sunAltitudeCollapsed");
       
-      if (sunStatusCollapsedEl && sunTimesCollapsedEl) {
+      if (sunStatusCollapsedEl) {
         // Determine next event
         const now = new Date();
         const sunrise = times.sunrise;
@@ -2450,8 +2653,32 @@
           nextTime = fmtTime(tomorrowTimes.sunrise);
         }
         
-        sunStatusCollapsedEl.textContent = nextEvent;
-        sunTimesCollapsedEl.textContent = nextTime;
+        sunStatusCollapsedEl.textContent = `${nextEvent} ${nextTime}`;
+      }
+      
+      if (sunAltitudeCollapsedEl) {
+        sunAltitudeCollapsedEl.textContent = `${altDeg}° altitude`;
+      }
+      
+      // Position sun dot on arc based on altitude
+      const sunPositionDot = document.getElementById("sunPositionDot");
+      if (sunPositionDot) {
+        // Arc goes from x=10 (horizon left) to x=110 (horizon right)
+        // Altitude: 0° = horizon (y=55), 90° = zenith (y=5)
+        // Use simple quadratic curve approximation
+        const normalizedAlt = Math.max(0, Math.min(90, altDeg)) / 90; // Clamp 0-90, normalize 0-1
+        const x = 10 + (100 * normalizedAlt);
+        const y = 55 - (50 * Math.sin(normalizedAlt * Math.PI));
+        
+        sunPositionDot.setAttribute('cx', x);
+        sunPositionDot.setAttribute('cy', y);
+        
+        // Update glow circle too
+        const glowCircle = sunPositionDot.nextElementSibling;
+        if (glowCircle && glowCircle.tagName === 'circle') {
+          glowCircle.setAttribute('cx', x);
+          glowCircle.setAttribute('cy', y);
+        }
       }
 
       // Azimuth
@@ -2782,11 +3009,18 @@
       document.getElementById("moonIllumination").textContent = Math.round(illum.fraction * 100) + "% illuminated";
       
       // Update collapsed preview
-      if (document.getElementById("moonPhaseCollapsed")) {
-        document.getElementById("moonPhaseCollapsed").textContent = phase.name;
+      const moonEmojiCollapsedEl = document.getElementById("moonEmojiCollapsed");
+      const moonPhaseCollapsedEl = document.getElementById("moonPhaseCollapsed");
+      const moonIllumCollapsedEl = document.getElementById("moonIllumCollapsed");
+      
+      if (moonEmojiCollapsedEl) {
+        moonEmojiCollapsedEl.textContent = phase.emoji;
       }
-      if (document.getElementById("moonIllumCollapsed")) {
-        document.getElementById("moonIllumCollapsed").textContent = Math.round(illum.fraction * 100) + "% illuminated";
+      if (moonPhaseCollapsedEl) {
+        moonPhaseCollapsedEl.textContent = phase.name;
+      }
+      if (moonIllumCollapsedEl) {
+        moonIllumCollapsedEl.textContent = Math.round(illum.fraction * 100) + "% illuminated";
       }
 
       document.getElementById("moonrise").textContent =
@@ -2923,6 +3157,9 @@
         doubleClickZoom: false,
         touchZoom: false
       }).setView([42.5001, -70.8578], 10);
+      
+      // Store globally so we can invalidate size on tab switch
+      window.collapsedRadarMap = miniMap;
       
       // Use light or dark tiles based on theme
       const isDarkMode = !document.body.classList.contains("theme-light");
@@ -3303,70 +3540,114 @@
         if (el) el.textContent = text;
       };
       
+      // Helper to safely set HTML
+      const setHTML = (id, html) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+      };
+      
       // Extract daily and hourly from data
       const daily = data.daily || {};
       const hourly = data.hourly || {};
       
-      // Sky & Precip (48h) - needs to be populated AFTER main data processing
-      // This will be called separately after cur/emoji/desc are available
+      // ═══════════════════════════════════════════════════════════════
+      // ALMANAC TILES
+      // ═══════════════════════════════════════════════════════════════
       
-      // Wind - shows Wind Impact (sustained) and Gust Impact
-      // This will be populated AFTER main data processing where wind impact is calculated
-      
-      // 10-Day - will be populated later after hyp is defined
-      
-      // Detailed Forecast
-      const periods = data.hyperlocal_forecast?.periods || [];
-      if (periods.length > 0) {
-        setText("hyperlocalSummaryCollapsed", periods[0].short_summary || "Loading...");
-      }
-      
-      // NWS Forecast
-      const nwsPeriods = data.nws_forecast?.periods || [];
-      if (nwsPeriods.length > 0) {
-        setText("nwsSummaryCollapsed", nwsPeriods[0].name + ": " + (nwsPeriods[0].shortForecast || ""));
-      }
-      
-      // Today Almanac
+      // Today Almanac - show sunrise/sunset times
       const today = new Date();
       const dayName = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][today.getDay()];
       const monthName = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][today.getMonth()];
       setText("todayDateCollapsed", `${monthName} ${today.getDate()}`);
       setText("todayDayCollapsed", dayName);
       
+      // Add sunrise/sunset times
+      const sunrise = data.sun?.sunrise;
+      const sunset = data.sun?.sunset;
+      if (sunrise && sunset) {
+        const sunriseTime = new Date(sunrise).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+        const sunsetTime = new Date(sunset).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+        const daylight = data.sun?.daylight_duration || "";
+        setHTML("todayTimesCollapsed", `
+          <div>Rise ${sunriseTime}</div>
+          <div>Set ${sunsetTime}</div>
+          ${daylight ? `<div style="opacity:0.65;font-size:0.72rem;margin-top:4px;">${daylight}</div>` : ''}
+        `);
+      }
+      
       // Tides - populated by renderTides()
       
-      // Ocean/Buoy
+      // Ocean/Buoy - update to new 3-row structure
       const waterTemp = data.buoy_44013?.water_temp_f;
       const waveHt = data.buoy_44013?.wave_ht_ft;
-      if (waterTemp) setText("waterTempCollapsed", `${waterTemp}°F water`);
-      if (waveHt !== undefined) setText("wavesCollapsed", waveHt > 0 ? `${waveHt} ft waves` : "Calm");
+      const buoyWind = data.buoy_44013?.wind_speed_kt;
+      const buoyDir = data.buoy_44013?.wind_dir;
+      if (waterTemp) setText("waterTempCollapsed", `${waterTemp}°F`);
+      if (waveHt !== undefined) setText("wavesCollapsed", waveHt > 0 ? `${waveHt} ft` : "Calm");
+      if (buoyWind && buoyDir) {
+        setText("buoyWindCollapsed", `${buoyWind} kt ${toCompass(buoyDir, false)}`);
+      }
       
-      // Solar System
-      setText("solarStatusCollapsed", "Planets visible tonight");
+      // Sun - apply astronomical gradient and populate arc
+      const sunCard = document.querySelector('[data-collapse-key="sun"]');
+      if (sunCard) {
+        sunCard.classList.add('tile-astro');
+      }
       
-      // Frost/Freeze
+      // Moon - apply astronomical gradient
+      const moonCard = document.querySelector('[data-collapse-key="moon"]');
+      if (moonCard) {
+        moonCard.classList.add('tile-astro');
+      }
+      
+      // Planets - apply astronomical gradient
+      const planetsCard = document.querySelector('[data-collapse-key="solar_system"]');
+      if (planetsCard) {
+        planetsCard.classList.add('tile-astro');
+      }
+      
+      // Frost/Freeze - already populated correctly
       const frostDays = data.frost_stats?.days_since_last_frost;
       if (frostDays !== undefined) {
-        setText("frostStatusCollapsed", frostDays === 0 ? "Frost today" : `${frostDays} days since frost`);
+        setText("frostStatusCollapsed", frostDays === 0 ? "Frost today" : `${frostDays} days since`);
         setText("frostDaysCollapsed", `Last year: ${data.frost_stats?.days_since_last_frost_last_year || "—"}`);
+      }
+      
+      // ═══════════════════════════════════════════════════════════════
+      // HYPERLOCAL TILES
+      // ═══════════════════════════════════════════════════════════════
+      
+      // Observation-Based Corrections
+      // Observation-Based Corrections - simple teaser
+      const hyp = data.hyperlocal || {};
+      const stationsCount = hyp.stations_used || 0;
+      const confidence = hyp.confidence || "Unknown";
+      
+      setText("correctionsStationsCollapsed", `${stationsCount} stations`);
+      setText("correctionsTempCollapsed", confidence);
+      
+      // Fog Risk - populate and apply gradient
+      const fogProb = data.derived?.fog_probability;
+      const fogLabel = data.derived?.fog_label;
+      if (fogProb !== undefined && fogLabel) {
+        setHTML("fogPctCollapsed", `${fogProb}<span style="font-size:1.8rem;opacity:0.6;">%</span>`);
+        setText("fogRiskCollapsed", fogLabel);
+        
+        // Apply fog gradient class
+        const fogCard = document.querySelector('[data-collapse-key="fog_risk"]');
+        if (fogCard) {
+          fogCard.classList.remove('tile-fog-low', 'tile-fog-moderate', 'tile-fog-high');
+          if (fogProb < 30) fogCard.classList.add('tile-fog-low');
+          else if (fogProb < 60) fogCard.classList.add('tile-fog-moderate');
+          else fogCard.classList.add('tile-fog-high');
+        }
       }
       
       // Wind Gust Impact - populated by Right Now card data
       // Wind Sustained Impact - populated by Right Now card data
-      
       // Sea Breeze - populated by renderSeaBreezeDetail()
-      
       // Sunset Quality - populated by renderSunsetQuality()
       // Dock Day - populated by renderDockDay()
-      
-      // Fog Risk - use data.derived
-      const fogProb = data.derived?.fog_probability;
-      const fogLabel = data.derived?.fog_label;
-      if (fogProb !== undefined && fogLabel) {
-        setText("fogRiskCollapsed", fogLabel);
-        setText("fogProbCollapsed", `${fogProb}%`);
-      }
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -3983,22 +4264,62 @@
         
         // Populate Hyperlocal page Gust Impact and Sustained Wind Impact tiles
         const gustImpactCollapsedEl = document.getElementById("gustImpactCollapsed");
+        const gustImpactLabelEl = document.getElementById("gustImpactLabel");
         const gustPeakCollapsedEl = document.getElementById("gustPeakCollapsed");
         const susImpactCollapsedEl = document.getElementById("susImpactCollapsed");
+        const susImpactLabelEl = document.getElementById("susImpactLabel");
         const susPeakCollapsedEl = document.getElementById("susPeakCollapsed");
         
+        // Gust Impact - extract score, label, and wind data
         if (gustImpactCollapsedEl && gustImpactNowEl) {
-          gustImpactCollapsedEl.innerHTML = gustImpactNowEl.innerHTML;
-        }
-        if (gustPeakCollapsedEl) {
-          gustPeakCollapsedEl.textContent = ""; // Clear second line for gust tile
+          const gustText = gustImpactNowEl.textContent || "";
+          const gustMatch = gustText.match(/(\d+)\s*\(([^)]+)\)\s*·\s*(.+)/);
+          if (gustMatch) {
+            const gustScore = parseInt(gustMatch[1]);
+            const gustLabel = gustMatch[2];
+            const gustWind = gustMatch[3];
+            
+            gustImpactCollapsedEl.textContent = gustScore.toString();
+            if (gustImpactLabelEl) gustImpactLabelEl.textContent = gustLabel;
+            if (gustPeakCollapsedEl) gustPeakCollapsedEl.textContent = gustWind;
+            
+            // Apply gradient class based on score
+            const gustCard = document.querySelector('[data-collapse-key="wind_gust_impact"]');
+            if (gustCard) {
+              gustCard.classList.remove('tile-wind-calm', 'tile-wind-light', 'tile-wind-moderate', 'tile-wind-strong', 'tile-wind-severe');
+              if (gustScore <= 2) gustCard.classList.add('tile-wind-calm');
+              else if (gustScore <= 4) gustCard.classList.add('tile-wind-light');
+              else if (gustScore <= 7) gustCard.classList.add('tile-wind-moderate');
+              else if (gustScore <= 10) gustCard.classList.add('tile-wind-strong');
+              else gustCard.classList.add('tile-wind-severe');
+            }
+          }
         }
         
+        // Sustained Wind Impact - extract score, label, and wind data
         if (susImpactCollapsedEl && windImpactNowEl) {
-          susImpactCollapsedEl.innerHTML = windImpactNowEl.innerHTML;
-        }
-        if (susPeakCollapsedEl) {
-          susPeakCollapsedEl.textContent = ""; // Clear second line for sustained tile
+          const susText = windImpactNowEl.textContent || "";
+          const susMatch = susText.match(/(\d+)\s*\(([^)]+)\)\s*·\s*(.+)/);
+          if (susMatch) {
+            const susScore = parseInt(susMatch[1]);
+            const susLabel = susMatch[2];
+            const susWind = susMatch[3];
+            
+            susImpactCollapsedEl.textContent = susScore.toString();
+            if (susImpactLabelEl) susImpactLabelEl.textContent = susLabel;
+            if (susPeakCollapsedEl) susPeakCollapsedEl.textContent = susWind;
+            
+            // Apply gradient class based on score
+            const susCard = document.querySelector('[data-collapse-key="wind_sus_impact"]');
+            if (susCard) {
+              susCard.classList.remove('tile-wind-calm', 'tile-wind-light', 'tile-wind-moderate', 'tile-wind-strong', 'tile-wind-severe');
+              if (susScore <= 2) susCard.classList.add('tile-wind-calm');
+              else if (susScore <= 4) susCard.classList.add('tile-wind-light');
+              else if (susScore <= 7) susCard.classList.add('tile-wind-moderate');
+              else if (susScore <= 10) susCard.classList.add('tile-wind-strong');
+              else susCard.classList.add('tile-wind-severe');
+            }
+          }
         }
         
         // Pressure now (with trend inline)
