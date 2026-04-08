@@ -72,7 +72,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v4.23</span>
+            <span class="version-pill" id="appVersion">v4.24</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -544,15 +544,13 @@
             📅 TODAY<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('today_almanac', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">📅 TODAY</div>
-            <div id="todayDateCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
-            <div id="todayDayCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
-          </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('today_almanac', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div id="todayDateCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
-            <div id="todayDayCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Today</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div id="todayDateCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;margin-bottom:6px;"></div>
+              <div id="todayDayCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;opacity:0.7;margin-bottom:16px;"></div>
+              <div id="todayTimesCollapsed" style="font-size:20px;font-weight:400;line-height:1.6;opacity:0.85;text-align:center;"></div>
+            </div>
           </div>
           <div class="card-body">
             <div id="todayAlmanacContent"></div>
@@ -565,10 +563,47 @@
             🌊 TIDES<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('tides', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌊 TIDES</div>
-            <div id="nextTideCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
-            <div id="nextTideTimeCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;overflow:hidden;">
+            <div class="tile-label" style="top:12px;left:16px;">Tides</div>
+            <!-- Animated water fill -->
+            <div id="tideWater" style="
+              position:absolute;
+              bottom:0;
+              left:0;
+              right:0;
+              height:50%;
+              background:linear-gradient(180deg, rgba(100,200,210,0.35) 0%, rgba(80,180,190,0.45) 100%);
+              transition:height 2.5s ease-in-out;
+            ">
+              <!-- Wave animation layer 1 -->
+              <div style="
+                position:absolute;
+                top:-10px;
+                left:-100%;
+                width:300%;
+                height:20px;
+                background:radial-gradient(ellipse at center, rgba(100,200,210,0.5) 0%, rgba(100,200,210,0.3) 50%, transparent 50%);
+                background-size:50% 100%;
+                animation:wave 3s linear infinite;
+              "></div>
+              <!-- Wave animation layer 2 -->
+              <div style="
+                position:absolute;
+                top:-15px;
+                left:-100%;
+                width:300%;
+                height:20px;
+                background:radial-gradient(ellipse at center, rgba(80,180,190,0.4) 0%, rgba(80,180,190,0.2) 50%, transparent 50%);
+                background-size:60% 100%;
+                animation:wave 4s linear infinite reverse;
+              "></div>
+            </div>
+            <!-- Tide info overlay -->
+            <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;z-index:5;width:90%;">
+              <div id="nextTideCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;margin-bottom:4px;"></div>
+              <div id="nextTideTimeCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;opacity:0.75;margin-bottom:8px;"></div>
+              <div id="nextTideHeightCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;opacity:0.6;"></div>
+            </div>
           </div>
           <div class="card-body">
           <div id="tideGrid"></div>
@@ -583,10 +618,24 @@
             🌊 OCEAN<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('buoy_44013', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌊 OCEAN</div>
-            <div id="waterTempCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
-            <div id="wavesCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Ocean</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding:16px;padding-top:28px;">
+              <div style="font-size:20px;font-weight:400;line-height:1.6;width:100%;max-width:200px;">
+                <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;margin-bottom:8px;">
+                  <div style="opacity:0.6;">Water</div>
+                  <div id="waterTempCollapsed" style="text-align:right;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;margin-bottom:8px;">
+                  <div style="opacity:0.6;">Waves</div>
+                  <div id="wavesCollapsed" style="text-align:right;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;">
+                  <div style="opacity:0.6;">Wind</div>
+                  <div id="buoyWindCollapsed" style="text-align:right;"></div>
+                </div>
+              </div>
+            </div>
           </div>
           <div class="card-body">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
@@ -642,10 +691,19 @@
             ☀️ SUN<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sun', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">☀️ SUN</div>
-            <div id="sunStatusCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
-            <div id="sunTimesCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Sun</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:8px;">
+              <div style="font-size:2.2rem;margin-bottom:4px;line-height:1;">☀️</div>
+              <svg id="sunArcCollapsed" width="120" height="60" viewBox="0 0 120 60" style="margin-bottom:4px;">
+                <path d="M 10 55 Q 60 5, 110 55" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+                <line x1="10" y1="55" x2="110" y2="55" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+                <circle id="sunPositionDot" cx="45" cy="35" r="4" fill="rgba(251,191,36,0.9)"/>
+                <circle cx="45" cy="35" r="6" fill="rgba(251,191,36,0.3)"/>
+              </svg>
+              <div id="sunAltitudeCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;margin-bottom:10px;opacity:0.7;"></div>
+              <div id="sunStatusCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;opacity:0.9;"></div>
+            </div>
           </div>
           <div class="card-body" style="display:none;">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
@@ -709,10 +767,13 @@
             🌙 MOON<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('moon', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌙 MOON</div>
-            <div id="moonPhaseCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
-            <div id="moonIllumCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Moon</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div id="moonEmojiCollapsed" style="font-size:2.8rem;margin-bottom:8px;line-height:1;">🌓</div>
+              <div id="moonPhaseCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;margin-bottom:4px;"></div>
+              <div id="moonIllumCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;opacity:0.75;"></div>
+            </div>
           </div>
           <div class="card-body" style="display:none;">
           <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
@@ -767,9 +828,13 @@
             🪐 PLANETS<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('solar_system', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🪐 PLANETS</div>
-            <div id="solarStatusCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Visible tonight</div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Planets</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div style="font-size:20px;font-weight:400;line-height:1.3;margin-bottom:10px;opacity:0.75;">Visible tonight</div>
+              <div id="planetsIconsCollapsed" style="font-size:1.6rem;margin-bottom:8px;letter-spacing:6px;line-height:1;"></div>
+              <div id="planetsNamesCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;opacity:0.65;text-align:center;"></div>
+            </div>
           </div>
           <div class="card-body">
             <div id="solarSystemGrid"></div>
@@ -783,10 +848,13 @@
             ❄️ FROST LOG<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('frost_freeze', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">❄️ FROST LOG</div>
-            <div id="frostStatusCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
-            <div id="frostDaysCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Frost Log</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div style="font-size:2.2rem;margin-bottom:8px;line-height:1;">❄️</div>
+              <div id="frostStatusCollapsed" style="font-size:0.95rem;font-weight:500;margin-bottom:4px;"></div>
+              <div id="frostDaysCollapsed" style="font-size:0.8rem;opacity:0.65;"></div>
+            </div>
           </div>
           <div class="card-body">
           <div id="frostTracker" style="margin-top:6px;"></div>
@@ -890,9 +958,12 @@
             🧮 OBSERVATION-BASED CORRECTIONS<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hyperlocal', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.85rem;letter-spacing:0.2px;margin-bottom:0;opacity:0.88;line-height:1.3;">🧮 OBSERVATION-BASED CORRECTIONS</div>
-            <div id="correctionsStatusCollapsed" style="font-size:0.88rem;margin-top:8px;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Corrections</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div id="correctionsStationsCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;margin-bottom:6px;"></div>
+              <div id="correctionsTempCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;opacity:0.75;"></div>
+            </div>
           </div>
           <div class="card-body" style="display:none;">
             
@@ -969,10 +1040,13 @@
             💨 GUST IMPACT<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_gust_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">💨 GUST IMPACT</div>
-            <div id="gustImpactCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
-            <div id="gustPeakCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Gust Impact</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div id="gustImpactCollapsed" style="font-size:4rem;font-weight:300;line-height:1;margin-bottom:4px;"></div>
+              <div id="gustImpactLabel" style="font-size:0.95rem;font-weight:500;margin-bottom:12px;opacity:0.9;"></div>
+              <div id="gustPeakCollapsed" style="font-size:0.85rem;opacity:0.65;"></div>
+            </div>
           </div>
           <div class="card-body" style="display:none;">
           <div class="wind-window-pills" id="gustWindowPills" style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">
@@ -1016,10 +1090,13 @@
             💨 WIND IMPACT<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_sus_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">💨 WIND IMPACT</div>
-            <div id="susImpactCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
-            <div id="susPeakCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Wind Impact</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div id="susImpactCollapsed" style="font-size:4rem;font-weight:300;line-height:1;margin-bottom:4px;"></div>
+              <div id="susImpactLabel" style="font-size:0.95rem;font-weight:500;margin-bottom:12px;opacity:0.9;"></div>
+              <div id="susPeakCollapsed" style="font-size:0.85rem;opacity:0.65;"></div>
+            </div>
           </div>
           <div class="card-body" style="display:none;">
           <div class="wind-window-pills" id="susWindowPills" style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">
@@ -1063,10 +1140,13 @@
             🌊 SEA BREEZE<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sea_breeze_detail', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌊 SEA BREEZE</div>
-            <div id="seaBreezeCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
-            <div id="seaBreezeProbCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;">--</div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Sea Breeze</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div id="seaBreezeCollapsed" style="font-size:3.5rem;font-weight:300;line-height:1;margin-bottom:4px;"></div>
+              <div id="seaBreezeLabel" style="font-size:0.95rem;font-weight:500;margin-bottom:4px;opacity:0.9;"></div>
+              <div id="seaBreezeProbCollapsed" style="font-size:0.82rem;opacity:0.65;"></div>
+            </div>
           </div>
           <div class="card-body" id="seaBreezeDetail">
             <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
@@ -1079,10 +1159,13 @@
             🌅 SUNSET<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sunset_quality', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌅 SUNSET</div>
-            <div id="sunsetScoreCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
-            <div id="sunsetTimeCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Sunset Score</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div id="sunsetDayCollapsed" style="font-size:0.9rem;font-weight:500;margin-bottom:8px;opacity:0.85;"></div>
+              <div id="sunsetIconCollapsed" style="font-size:2.5rem;margin-bottom:8px;line-height:1;"></div>
+              <div id="sunsetScoreCollapsed" style="font-size:1.05rem;font-weight:500;opacity:0.95;"></div>
+            </div>
           </div>
           <div class="card-body">
             <div id="sunsetQualityContent"></div>
@@ -1095,10 +1178,13 @@
             ⚓ DOCK DAY<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('dock_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">⚓ DOCK DAY</div>
-            <div id="dockScoreCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
-            <div id="dockConditionsCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Dock Day</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div id="dockDayLabelCollapsed" style="font-size:0.9rem;font-weight:500;margin-bottom:8px;opacity:0.85;"></div>
+              <div id="dockEmojiCollapsed" style="font-size:3rem;margin-bottom:8px;line-height:1;"></div>
+              <div id="dockScoreCollapsed" style="font-size:1rem;font-weight:500;opacity:0.95;"></div>
+            </div>
           </div>
           <div class="card-body">
             <div id="dockDayContent"></div>
@@ -1111,10 +1197,12 @@
             🌫️ FOG<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('fog_risk', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">🌫️ FOG</div>
-            <div id="fogRiskCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;"></div>
-            <div id="fogProbCollapsed" style="font-size:0.88rem;margin-top:4px;opacity:0.8;"></div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Fog</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding-top:12px;">
+              <div id="fogPctCollapsed" style="font-size:3.5rem;font-weight:300;line-height:1;margin-bottom:8px;"></div>
+              <div id="fogRiskCollapsed" style="font-size:1rem;font-weight:500;opacity:0.9;"></div>
+            </div>
           </div>
           <div class="card-body">
             <div class="row">
