@@ -1,3 +1,25 @@
+## v4.25 • 2026-04-10
+* **UI/UX Improvements
+  * **Tide tile**: Added "NOW: Coming in/Going out, X.X ft" indicator in water showing current tide height and direction
+  * **Tide tile**: Added 0 ft reference line at 14.3% for visual orientation
+  * **Tide tile**: Increased minimum water height from 5% to 12% ensuring text always visible
+  * **Tide tile**: Changed "High/Low Tide" label to "Next: High/Low Tide" for clarity
+
+* Visual Polish
+  * **Fog Risk backgrounds**: Replaced linear gradients with layered radial fog clouds (2-4 layers based on risk)
+  * **Wind Impact backgrounds**: Updated calm/light colors from green to blue (matches temp-cool)
+  * **Wind Impact backgrounds**: Enhanced strong wind color to orange-red (255,140,60)
+  * **Sea Breeze backgrounds**: Smoother color progression, brighter teal for likely (80,220,230)
+  * **Sunset Quality backgrounds**: Increased contrast - spectacular now 255,100,50 at 30%/20%
+  * **Dock Day backgrounds**: Changed scale from green→red to blue→red (great = 96,165,250)
+
+* Performance
+  * **NWS Forecast fetcher**: Disabled (was unused - card hidden in UI, using custom forecasts instead)
+  * Saves ~1-2 seconds on every 15-minute collector run
+
+* Data Sources
+  * Removed NWS Forecast from sources list (fetcher disabled)
+
 ## v4.24 • 2026-04-07
 * **Hyperlocal & Almanac tile redesign - 14 collapsed previews redesigned** - New centered layouts with clean 20px regular-weight text matching Detailed Forecast aesthetic
 * **Corrections tile** - Shows station count and confidence level as simple teaser ("13 stations • Moderate")

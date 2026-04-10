@@ -371,7 +371,7 @@ def main():
     kbvy_data, kbvy_meta = fetch_kbvy_obs()
     buoy_data, buoy_meta = fetch_buoy_44013()
     wu_data, wu_meta = fetch_wu_stations()
-    forecast_data, forecast_meta = fetch_nws_forecast()
+    forecast_data, forecast_meta = {}, {"status": "disabled"}  # fetch_nws_forecast() DISABLED - using custom forecasts
     alert_data, alerts_meta = fetch_nws_alerts()
 
     sources = {

@@ -1456,7 +1456,6 @@
       kbvy:         { name: "KBVY",         desc: "Beverly Airport ASOS — observed temp, wind (NWS/aviationweather.gov)" },
       buoy_44013:   { name: "Buoy 44013",   desc: "NOAA Boston Buoy (16mi ENE) — water temp, waves, offshore wind (NDBC)" },
       tides:        { name: "Tides",        desc: "NOAA CO-OPS tide predictions — Salem Harbor station 8442645" },
-      nws_forecast: { name: "NWS Forecast", desc: "NWS Boston text forecast and hourly details (api.weather.gov)" },
       nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead (api.weather.gov)" },
     };
 
@@ -1983,7 +1982,7 @@
           time12hr = `${hours12}:${mins.toString().padStart(2, '0')} ${period}`;
         }
         
-        if (nextTideEl) nextTideEl.textContent = `${type} Tide`;
+        if (nextTideEl) nextTideEl.textContent = `Next: ${type} Tide`;
         if (nextTideTimeEl) nextTideTimeEl.textContent = time12hr;
         const nextTideHeightEl = document.getElementById("nextTideHeightCollapsed");
         if (nextTideHeightEl) nextTideHeightEl.textContent = height;
@@ -2010,7 +2009,7 @@
             const currentHeight = prevHeight + (nextHeight - prevHeight) * progress;
             
             // Convert height to percentage (assume 0-12 ft range for Salem Harbor)
-            const minHeight = 0;
+            const minHeight = -2;
             const maxHeight = 12;
             const currentPercent = ((currentHeight - minHeight) / (maxHeight - minHeight)) * 100;
             const prevPercent = ((prevHeight - minHeight) / (maxHeight - minHeight)) * 100;
@@ -2021,7 +2020,19 @@
             
             // Animate to current height after a brief delay
             setTimeout(() => {
-              tideWaterEl.style.height = `${Math.max(5, Math.min(95, currentPercent))}%`;
+              tideWaterEl.style.height = `${Math.max(12, Math.min(95, currentPercent))}%`;
+
+              // Add current tide indicator text inside water
+              const direction = isRising ? "Coming in" : "Going out";
+              const currentHeightFt = currentHeight.toFixed(1);
+              let currentTideText = tideWaterEl.querySelector(".current-tide-text");
+              if (!currentTideText) {
+                currentTideText = document.createElement("div");
+                currentTideText.className = "current-tide-text";
+                currentTideText.style.cssText = "position:absolute;bottom:8px;left:50%;transform:translateX(-50%);font-size:13px;font-weight:600;color:rgba(255,255,255,0.5);text-align:center;z-index:3;white-space:nowrap;";
+                tideWaterEl.appendChild(currentTideText);
+              }
+              currentTideText.textContent = `NOW: ${direction}, ${currentHeightFt} ft`;
             }, 100);
           }
         }
@@ -3309,7 +3320,7 @@
         const body    = card.querySelector(".card-body");
         if (!body) return;
         let isOpen = false;  // Always start closed on page load
-        body.style.display = isOpen ? "" : "none"; const preview = card.querySelector(".card-collapsed-preview"); if (preview) preview.style.display = isOpen ? "none" : ""; if (card.querySelector(".card-collapsed-preview")) { card.classList.toggle("col-12", isOpen); card.classList.toggle("col-6", !isOpen); }
+        body.style.display = isOpen ? "" : "none"; const preview = card.querySelector(".card-collapsed-preview"); if (preview) preview.style.display = isOpen ? "none" : ""; if (card.querySelector(".card-collapsed-preview")) { if (card.dataset.collapseKey !== "hyperlocal") { card.classList.toggle("col-12", isOpen); card.classList.toggle("col-6", !isOpen); } }
         const chev = card.querySelector(".collapse-chevron");
         if (chev) { chev.style.transform = isOpen ? "" : "rotate(-90deg)"; if (card.querySelector(".card-close-btn")) chev.style.display = "none"; }
       });
@@ -3625,6 +3636,15 @@
       
       setText("correctionsStationsCollapsed", `${stationsCount} stations`);
       setText("correctionsTempCollapsed", confidence);
+
+      // Apply corrections confidence gradient class
+      const correctionsCard = document.querySelector('[data-collapse-key="hyperlocal"]');
+      if (correctionsCard) {
+        correctionsCard.classList.remove('tile-corrections-high', 'tile-corrections-moderate', 'tile-corrections-low');
+        if (confidence === 'High') correctionsCard.classList.add('tile-corrections-high');
+        else if (confidence === 'Moderate') correctionsCard.classList.add('tile-corrections-moderate');
+        else if (confidence === 'Low') correctionsCard.classList.add('tile-corrections-low');
+      }
       
       // Fog Risk - populate and apply gradient
       const fogProb = data.derived?.fog_probability;
@@ -4211,7 +4231,7 @@
         // Gust Impact now - combined score and gust data
         const gustImpactNowEl = document.getElementById("gustImpactNow");
         if (gustImpactNowEl) {
-          const gustValue = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+          const gustValue = cur.wind_gusts;  // Use model gusts, not WU-corrected (WU stations are sheltered)
           const windDir = cur.wind_direction != null ? degToCompass(cur.wind_direction) : "";
           
           if (gustValue != null && cur.wind_direction != null) {
@@ -4263,6 +4283,7 @@
         }
         
         // Populate Hyperlocal page Gust Impact and Sustained Wind Impact tiles
+        // Read directly from wind_risk data (no dependency on Right Now card)
         const gustImpactCollapsedEl = document.getElementById("gustImpactCollapsed");
         const gustImpactLabelEl = document.getElementById("gustImpactLabel");
         const gustPeakCollapsedEl = document.getElementById("gustPeakCollapsed");
@@ -4270,40 +4291,47 @@
         const susImpactLabelEl = document.getElementById("susImpactLabel");
         const susPeakCollapsedEl = document.getElementById("susPeakCollapsed");
         
-        // Gust Impact - extract score, label, and wind data
-        if (gustImpactCollapsedEl && gustImpactNowEl) {
-          const gustText = gustImpactNowEl.textContent || "";
-          const gustMatch = gustText.match(/(\d+)\s*\(([^)]+)\)\s*·\s*(.+)/);
-          if (gustMatch) {
-            const gustScore = parseInt(gustMatch[1]);
-            const gustLabel = gustMatch[2];
-            const gustWind = gustMatch[3];
-            
-            gustImpactCollapsedEl.textContent = gustScore.toString();
-            if (gustImpactLabelEl) gustImpactLabelEl.textContent = gustLabel;
-            if (gustPeakCollapsedEl) gustPeakCollapsedEl.textContent = gustWind;
-            
-            // Apply gradient class based on score
-            const gustCard = document.querySelector('[data-collapse-key="wind_gust_impact"]');
-            if (gustCard) {
-              gustCard.classList.remove('tile-wind-calm', 'tile-wind-light', 'tile-wind-moderate', 'tile-wind-strong', 'tile-wind-severe');
-              if (gustScore <= 2) gustCard.classList.add('tile-wind-calm');
-              else if (gustScore <= 4) gustCard.classList.add('tile-wind-light');
-              else if (gustScore <= 7) gustCard.classList.add('tile-wind-moderate');
-              else if (gustScore <= 10) gustCard.classList.add('tile-wind-strong');
-              else gustCard.classList.add('tile-wind-severe');
-            }
+        const windRisk = data.wind_risk || {};
+        
+        // Gust Impact - read directly from wind_risk.gust
+        const gustData = windRisk.gust || {};
+        if (gustImpactCollapsedEl && gustData.worry_score !== undefined) {
+          const gustScore = Math.round(gustData.worry_score);
+          const gustLabel = gustData.level || "";
+          const gustDir = gustData.direction_deg || 0;
+          const gustSpeed = gustData.peak_mph || 0;
+          const gustWind = `${gustDir}° ${gustSpeed} mph`;
+          
+          gustImpactCollapsedEl.textContent = gustScore.toString();
+          if (gustImpactLabelEl) gustImpactLabelEl.textContent = gustLabel;
+          if (gustPeakCollapsedEl) gustPeakCollapsedEl.textContent = gustWind;
+          
+          // Apply gradient class based on score
+          const gustCard = document.querySelector('[data-collapse-key="wind_gust_impact"]');
+          if (gustCard) {
+            gustCard.classList.remove('tile-wind-calm', 'tile-wind-light', 'tile-wind-moderate', 'tile-wind-strong', 'tile-wind-severe');
+            if (gustScore <= 2) gustCard.classList.add('tile-wind-calm');
+            else if (gustScore <= 4) gustCard.classList.add('tile-wind-light');
+            else if (gustScore <= 7) gustCard.classList.add('tile-wind-moderate');
+            else if (gustScore <= 10) gustCard.classList.add('tile-wind-strong');
+            else gustCard.classList.add('tile-wind-severe');
           }
         }
         
-        // Sustained Wind Impact - extract score, label, and wind data
-        if (susImpactCollapsedEl && windImpactNowEl) {
-          const susText = windImpactNowEl.textContent || "";
-          const susMatch = susText.match(/(\d+)\s*\(([^)]+)\)\s*·\s*(.+)/);
-          if (susMatch) {
-            const susScore = parseInt(susMatch[1]);
-            const susLabel = susMatch[2];
-            const susWind = susMatch[3];
+        // Sustained Wind Impact - read current score from modal (same calculation as Right Now card)
+        const susData = windRisk.sustained || {};
+        if (susImpactCollapsedEl) {
+          const currentWindSpeed = data.hyperlocal?.corrected_wind_speed ?? data.current?.wind_speed ?? 0;
+          const currentWindDir = data.current?.wind_direction;
+          
+          if (currentWindSpeed > 0 && currentWindDir != null) {
+            const exposure = getExposureFactor(currentWindDir);
+            const susScore = Math.round(worryScore(currentWindSpeed, exposure));
+            const susLevelData = worryLevel(susScore);
+            const susLabel = susLevelData.label || "";
+            const susDir = degToCompass(currentWindDir);
+            const susSpeed = Math.round(currentWindSpeed);
+            const susWind = `${susDir} ${susSpeed} mph`;
             
             susImpactCollapsedEl.textContent = susScore.toString();
             if (susImpactLabelEl) susImpactLabelEl.textContent = susLabel;

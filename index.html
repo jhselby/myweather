@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=48f04a0c" />
+  <link rel="stylesheet" href="styles/app.css?v=45422c17" />
 </head>
 <body>
   <div class="container">
@@ -72,7 +72,7 @@
           <div style="display:flex;align-items:center;justify-content:flex-start;margin-bottom:10px;">
             <div style="font-size:0.75rem;font-weight:900;class="text-subtle" style="
                         letter-spacing:0.8px;text-transform:uppercase;">Version</div>
-            <span class="version-pill" id="appVersion">v4.24</span>
+            <span class="version-pill" id="appVersion">v4.25</span>
           </div>
           <!-- Changelog -->
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
@@ -566,6 +566,8 @@
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;overflow:hidden;">
             <div class="tile-label" style="top:12px;left:16px;">Tides</div>
             <!-- Animated water fill -->
+            <!-- 0 ft reference line -->
+            <div style="position:absolute;bottom:14.3%;left:0;right:0;height:1px;background:rgba(210,180,140,0.5);z-index:4;"></div>
             <div id="tideWater" style="
               position:absolute;
               bottom:0;
@@ -613,78 +615,6 @@
         </div>
 
         <!-- Buoy 44013 / Water Temp -->
-        <div class="card col-6" data-collapse-key="buoy_44013" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('buoy_44013', this.querySelector('.card-title-collapsible'))">
-          <div class="card-title card-title-collapsible" style="cursor:default;">
-            🌊 OCEAN<span class="collapse-chevron" style="display:none;">&#9660;</span>
-          </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('buoy_44013', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
-            <div class="tile-label" style="top:12px;left:16px;">Ocean</div>
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding:16px;padding-top:28px;">
-              <div style="font-size:20px;font-weight:400;line-height:1.6;width:100%;max-width:200px;">
-                <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;margin-bottom:8px;">
-                  <div style="opacity:0.6;">Water</div>
-                  <div id="waterTempCollapsed" style="text-align:right;"></div>
-                </div>
-                <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;margin-bottom:8px;">
-                  <div style="opacity:0.6;">Waves</div>
-                  <div id="wavesCollapsed" style="text-align:right;"></div>
-                </div>
-                <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;">
-                  <div style="opacity:0.6;">Wind</div>
-                  <div id="buoyWindCollapsed" style="text-align:right;"></div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="card-body">
-          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
-
-            <!-- Water temps -->
-            <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
-              <div class="row">
-                <div class="label" data-tip="Sea surface temperature from buoy 44013, 16mi ENE in open ocean. Typically 3–5°F colder than Salem Harbor in summer — buoy sits in deep open water while your harbor is shallow and enclosed, warming faster.">Water Temp</div>
-                <div class="value" id="buoyWaterTemp">--</div>
-              </div>
-              <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="Air temperature measured at buoy 44013, 16mi ENE offshore.">Air Temp</div>
-                <div class="value" id="buoyAirTemp">--</div>
-              </div>
-            </div>
-
-            <!-- Wind & pressure -->
-            <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
-              <div class="row">
-                <div class="label" data-tip="Wind speed and direction measured at buoy 44013. Open ocean reading — may differ from shore conditions.">Wind</div>
-                <div class="value" id="buoyWind">--</div>
-              </div>
-              <div class="row">
-                <div class="label" data-tip="Barometric pressure measured at buoy 44013. Useful cross-check against KBOS observed pressure.">Pressure</div>
-                <div class="value" id="buoyPressure">--</div>
-              </div>
-              <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="Change in barometric pressure over the last 3 hours at the buoy. Rapid falls indicate approaching low pressure systems.">Tendency (3h)</div>
-                <div class="value" id="buoyPtdy">--</div>
-              </div>
-            </div>
-
-            <!-- Waves -->
-            <div style="padding-left:16px;">
-              <div class="row">
-                <div class="label" data-tip="Significant wave height — the average of the highest one-third of waves. Actual max waves may be 1.5–2× this value.">Wave Height</div>
-                <div class="value" id="buoyWaveHt">--</div>
-              </div>
-              <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="Time in seconds between successive wave crests. Longer period (>10s) = swell from distant storms, smoother ride. Shorter period = choppy local wind waves.">Wave Period</div>
-                <div class="value" id="buoyWavePeriod">--</div>
-              </div>
-            </div>
-
-          </div>
-          <div class="small-note" style="margin-top:8px;">Water temp is offshore (16mi ENE). Harbor temp typically 2–5°F warmer in summer, similar in winter.</div>
-          </div>
-        </div>
-
         <!-- Sun full width, 3-column -->
         <div class="card col-6" data-collapse-key="sun" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sun', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
@@ -843,6 +773,78 @@
         </div>
 
         <!-- Frost / Freeze Tracker -->
+        <div class="card col-6" data-collapse-key="buoy_44013" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('buoy_44013', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            🌊 OCEAN<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('buoy_44013', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:216px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Ocean</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:216px;padding:16px;padding-top:28px;">
+              <div style="font-size:20px;font-weight:400;line-height:1.6;width:100%;max-width:200px;">
+                <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;margin-bottom:8px;">
+                  <div style="opacity:0.6;">Water</div>
+                  <div id="waterTempCollapsed" style="text-align:right;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;margin-bottom:8px;">
+                  <div style="opacity:0.6;">Waves</div>
+                  <div id="wavesCollapsed" style="text-align:right;"></div>
+                </div>
+                <div style="display:grid;grid-template-columns:70px 1fr;gap:8px;">
+                  <div style="opacity:0.6;">Wind</div>
+                  <div id="buoyWindCollapsed" style="text-align:right;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;" class="mobile-3col">
+
+            <!-- Water temps -->
+            <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
+              <div class="row">
+                <div class="label" data-tip="Sea surface temperature from buoy 44013, 16mi ENE in open ocean. Typically 3–5°F colder than Salem Harbor in summer — buoy sits in deep open water while your harbor is shallow and enclosed, warming faster.">Water Temp</div>
+                <div class="value" id="buoyWaterTemp">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label" data-tip="Air temperature measured at buoy 44013, 16mi ENE offshore.">Air Temp</div>
+                <div class="value" id="buoyAirTemp">--</div>
+              </div>
+            </div>
+
+            <!-- Wind & pressure -->
+            <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
+              <div class="row">
+                <div class="label" data-tip="Wind speed and direction measured at buoy 44013. Open ocean reading — may differ from shore conditions.">Wind</div>
+                <div class="value" id="buoyWind">--</div>
+              </div>
+              <div class="row">
+                <div class="label" data-tip="Barometric pressure measured at buoy 44013. Useful cross-check against KBOS observed pressure.">Pressure</div>
+                <div class="value" id="buoyPressure">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label" data-tip="Change in barometric pressure over the last 3 hours at the buoy. Rapid falls indicate approaching low pressure systems.">Tendency (3h)</div>
+                <div class="value" id="buoyPtdy">--</div>
+              </div>
+            </div>
+
+            <!-- Waves -->
+            <div style="padding-left:16px;">
+              <div class="row">
+                <div class="label" data-tip="Significant wave height — the average of the highest one-third of waves. Actual max waves may be 1.5–2× this value.">Wave Height</div>
+                <div class="value" id="buoyWaveHt">--</div>
+              </div>
+              <div class="row" style="border-bottom:none;">
+                <div class="label" data-tip="Time in seconds between successive wave crests. Longer period (>10s) = swell from distant storms, smoother ride. Shorter period = choppy local wind waves.">Wave Period</div>
+                <div class="value" id="buoyWavePeriod">--</div>
+              </div>
+            </div>
+
+          </div>
+          <div class="small-note" style="margin-top:8px;">Water temp is offshore (16mi ENE). Harbor temp typically 2–5°F warmer in summer, similar in winter.</div>
+          </div>
+        </div>
+
         <div class="card col-6" data-collapse-key="frost_freeze" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('frost_freeze', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             ❄️ FROST LOG<span class="collapse-chevron" style="display:none;">&#9660;</span>
@@ -953,7 +955,7 @@
     <!-- HYPERLOCAL CORRECTIONS VIEW -->
     <section id="hyperlocalView" style="display:none;">
       <div class="grid">
-        <div class="card col-6" data-collapse-key="hyperlocal" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hyperlocal', this.querySelector('.card-title-collapsible'))">
+        <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hyperlocal', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             🧮 OBSERVATION-BASED CORRECTIONS<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
@@ -1258,7 +1260,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=1d21e8ac"></script>
+  <script src="js/app-main.js?v=0c8b8244"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
