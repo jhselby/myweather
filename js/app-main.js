@@ -849,12 +849,12 @@
       if (typeof SunCalc !== "undefined") {
         const mi = SunCalc.getMoonIllumination(now);
         const phases = [
-          [0.025, "🌑 New Moon"],      [0.25,  "🌒 Waxing Crescent"],
-          [0.275, "🌓 First Quarter"], [0.5,   "🌔 Waxing Gibbous"],
-          [0.525, "🌕 Full Moon"],     [0.75,  "🌖 Waning Gibbous"],
-          [0.775, "🌗 Last Quarter"],  [1.0,   "🌘 Waning Crescent"],
+          [0.025, "New Moon"],      [0.25,  "Waxing Crescent"],
+          [0.275, "First Quarter"], [0.5,   "Waxing Gibbous"],
+          [0.525, "Full Moon"],     [0.75,  "Waning Gibbous"],
+          [0.775, "Last Quarter"],  [1.0,   "Waning Crescent"],
         ];
-        moonPhase = phases.find(([t]) => mi.phase < t)?.[1] ?? "🌑 New Moon";
+        moonPhase = phases.find(([t]) => mi.phase < t)?.[1] ?? "New Moon";
         moonIllum = Math.round(mi.fraction * 100) + "% illuminated";
       }
 
@@ -2965,6 +2965,79 @@
       { name: "New Moon",        emoji: "\u{1F311}", min: 0.975, max: 1.0   },
     ];
 
+    /**
+     * Draw a canvas-rendered moon phase.
+     * @param {string} canvasId - DOM id of the <canvas> element
+     * @param {number} phase    - SunCalc illum.phase (0–1, 0=new, 0.5=full)
+     * @param {boolean} darkBg  - true = dark background (expanded card), false = transparent (tile)
+     */
+    function drawMoonCanvas(canvasId, phase, darkBg) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      const ctx = canvas.getContext("2d");
+      const W = canvas.width, H = canvas.height;
+      const cx = W / 2, cy = H / 2;
+      const R = Math.floor(Math.min(W, H) * 0.31);
+      const alpha = phase * 2 * Math.PI; // 0=new, pi=full
+      const waxing = alpha < Math.PI;
+      const k = Math.cos(alpha); // terminator ellipse param (northern hemisphere)
+
+      ctx.clearRect(0, 0, W, H);
+
+      // Subtle glow
+      const glow = ctx.createRadialGradient(cx, cy, R * 0.95, cx, cy, R * 1.6);
+      glow.addColorStop(0, "rgba(255,190,110,0.12)");
+      glow.addColorStop(1, "rgba(255,190,110,0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, R * 1.6, 0, 2 * Math.PI);
+      ctx.fill();
+
+      // Dark disk (unlit side)
+      const darkShade = ctx.createRadialGradient(
+        cx - R * 0.25, cy - R * 0.25, R * 0.05, cx, cy, R
+      );
+      darkShade.addColorStop(0, darkBg ? "#17181c" : "rgba(23,24,28,0.85)");
+      darkShade.addColorStop(0.6, darkBg ? "#0b0c10" : "rgba(11,12,16,0.85)");
+      darkShade.addColorStop(1, darkBg ? "#05060a" : "rgba(5,6,10,0.85)");
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+      ctx.fillStyle = darkShade;
+      ctx.fill();
+
+      // Clip to moon disk and draw lit side with scanline
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+      ctx.clip();
+
+      const lit = ctx.createRadialGradient(
+        cx - R * 0.35, cy - R * 0.35, R * 0.06, cx, cy, R
+      );
+      lit.addColorStop(0, "#fff2c7");
+      lit.addColorStop(0.45, "#ffd27a");
+      lit.addColorStop(0.78, "#ffb347");
+      lit.addColorStop(1, "#c97e25");
+      ctx.fillStyle = lit;
+
+      for (let y = -R; y <= R; y++) {
+        const xr = Math.sqrt(R * R - y * y);
+        const xt = k * xr;
+        let xLeft, xRight;
+        if (waxing) { xLeft = xt; xRight = xr; }
+        else        { xLeft = -xr; xRight = -xt; }
+        ctx.fillRect(cx + xLeft, cy + y, xRight - xLeft, 1);
+      }
+      ctx.restore();
+
+      // Rim
+      ctx.beginPath();
+      ctx.arc(cx, cy, R, 0, 2 * Math.PI);
+      ctx.strokeStyle = "rgba(255,255,255,0.09)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+
     function getMoonPhase(fraction) {
       return MOON_PHASES.find(p => fraction >= p.min && fraction < p.max) || MOON_PHASES[0];
     }
@@ -3015,18 +3088,16 @@
       const pos   = SunCalc.getMoonPosition(now, HOME_LAT, HOME_LON);
 
       const phase = getMoonPhase(illum.phase);
-      document.getElementById("moonEmoji").textContent        = phase.emoji;
+      // Draw canvas moon renderings
+      drawMoonCanvas("moonCanvasExpanded", illum.phase, false);
       document.getElementById("moonPhaseName").textContent    = phase.name;
       document.getElementById("moonIllumination").textContent = Math.round(illum.fraction * 100) + "% illuminated";
       
       // Update collapsed preview
-      const moonEmojiCollapsedEl = document.getElementById("moonEmojiCollapsed");
+      drawMoonCanvas("moonCanvasCollapsed", illum.phase, false);
       const moonPhaseCollapsedEl = document.getElementById("moonPhaseCollapsed");
       const moonIllumCollapsedEl = document.getElementById("moonIllumCollapsed");
       
-      if (moonEmojiCollapsedEl) {
-        moonEmojiCollapsedEl.textContent = phase.emoji;
-      }
       if (moonPhaseCollapsedEl) {
         moonPhaseCollapsedEl.textContent = phase.name;
       }
@@ -3591,12 +3662,12 @@
       // Ocean/Buoy - update to new 3-row structure
       const waterTemp = data.buoy_44013?.water_temp_f;
       const waveHt = data.buoy_44013?.wave_ht_ft;
-      const buoyWind = data.buoy_44013?.wind_speed_kt;
+      const buoyWind = data.buoy_44013?.wind_mph;
       const buoyDir = data.buoy_44013?.wind_dir;
       if (waterTemp) setText("waterTempCollapsed", `${waterTemp}°F`);
       if (waveHt !== undefined) setText("wavesCollapsed", waveHt > 0 ? `${waveHt} ft` : "Calm");
       if (buoyWind && buoyDir) {
-        setText("buoyWindCollapsed", `${buoyWind} kt ${toCompass(buoyDir, false)}`);
+        setText("buoyWindCollapsed", `${buoyWind} mph ${toCompass(buoyDir, false)}`);
       }
       
       // Sun - apply astronomical gradient and populate arc
