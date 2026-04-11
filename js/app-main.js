@@ -3780,17 +3780,14 @@
           
           // Only show summary bar if there are multiple alerts
           if (alertSummaryBar) {
-            alertSummaryBar.style.display = n > 1 ? "flex" : "none";
+            alertSummaryBar.style.display = "none"; // alerts shown via badge/modal
           }
           
           if (alertSummaryText) {
             alertSummaryText.textContent = `⚠️ ${n} active alert${n > 1 ? "s" : ""}: ${data.alerts.map(a => a.event || "Alert").join(" · ")}`;
           }
           
-          // For single alert, show the detail panel directly
-          if (n === 1) {
-            alertsContainer.style.display = "block";
-          }
+          // Single alert — badge handles it, no inline display
           
           alertsContainer.innerHTML = data.alerts.map((a, i) => {
             const id = `alertBody_${i}`;
@@ -4997,3 +4994,99 @@
       this.style.transform = 'rotate(360deg)';
       setTimeout(() => { this.style.transform = ''; location.reload(); }, 400);
     });// test comment
+
+
+// === Bottom tab bar sync ===
+(function() {
+  const origShowTab = window.showTab;
+  window.showTab = function(tab) {
+    // Call original
+    if (origShowTab) origShowTab(tab);
+    // Sync bottom tab bar
+    document.querySelectorAll('.bottom-tab').forEach(btn => {
+      const label = btn.querySelector('.tab-label').textContent.toLowerCase();
+      const isActive = label === tab;
+      btn.classList.toggle('active', isActive);
+      btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+    });
+    // Also sync old top tabs (in case anything references them)
+    document.querySelectorAll('.tab').forEach(btn => {
+      const id = btn.id.replace('tab', '').toLowerCase();
+      btn.classList.toggle('active', id === tab);
+      btn.setAttribute('aria-selected', id === tab ? 'true' : 'false');
+    });
+  };
+})();
+
+
+// === Settings Modal ===
+function openSettingsModal() {
+  document.getElementById('settingsModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  // Sync data timestamps
+  const du = document.getElementById('dataUpdated');
+  const pl = document.getElementById('pageLoaded');
+  const du2 = document.getElementById('dataUpdated2');
+  const pl2 = document.getElementById('pageLoaded2');
+  if (du && du2) du2.textContent = du.textContent;
+  if (pl && pl2) pl2.textContent = pl.textContent;
+}
+function closeSettingsModal() {
+  document.getElementById('settingsModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// === Alert Modal ===
+function openAlertModal() {
+  const container = document.getElementById('alertsContainer');
+  const modalBody = document.getElementById('alertModalBody');
+  if (!container || !modalBody) return;
+  
+  // Copy alert content into modal with better styling
+  const alerts = container.querySelectorAll('.alert-banner');
+  if (alerts.length === 0) return;
+  
+  modalBody.innerHTML = '';
+  alerts.forEach(alert => {
+    const titleEl = alert.querySelector('.alert-title span');
+    const descEl = alert.querySelector('.alert-desc');
+    const title = titleEl ? titleEl.textContent : 'Weather Alert';
+    const desc = descEl ? descEl.innerHTML : '';
+    
+    modalBody.innerHTML += `
+      <div class="alert-modal-item">
+        <div class="alert-modal-title">${title}</div>
+        <div class="alert-modal-desc">${desc}</div>
+      </div>`;
+  });
+  
+  document.getElementById('alertModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeAlertModal() {
+  document.getElementById('alertModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+// === Alert Badge ===
+// Patch the alert rendering to show/hide the header badge
+(function() {
+  const origRender = null; // We'll observe alertSummaryBar changes
+  const observer = new MutationObserver(function() {
+    const bar = document.getElementById('alertSummaryBar');
+    const badge = document.getElementById('alertBadge');
+    if (!badge) return;
+    // Show badge if alertSummaryBar has been made visible OR alertsContainer has content
+    const container = document.getElementById('alertsContainer');
+    const hasAlerts = container && container.innerHTML.trim().length > 0;
+    badge.style.display = hasAlerts ? 'inline-flex' : 'none';
+  });
+  
+  // Start observing once DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('alertsContainer');
+    if (container) {
+      observer.observe(container, { childList: true, subtree: true, characterData: true });
+    }
+  });
+})();
