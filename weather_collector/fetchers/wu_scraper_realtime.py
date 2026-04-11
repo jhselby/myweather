@@ -234,26 +234,32 @@ def main():
     
     results = []
     
-    for station_id in STATIONS:
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    
+    def fetch_station(station_id):
         data = get_current_observation(station_id)
-        if data:
-            results.append(data)
-            dist = data['distance_mi'] if data['distance_mi'] else 999
-            temp = data['temperature_f'] if data['temperature_f'] else 0
-            wind = data['wind_speed_mph'] if data['wind_speed_mph'] else 0
-            
-            # Flag suspicious data
-            flags = []
-            if wind < MIN_WIND_THRESHOLD:
-                flags.append("⚠️ WIND")
-            if dist > MAX_DISTANCE_MI:
-                flags.append("⚠️ FAR")
-            
-            flag_str = " ".join(flags) if flags else "✓"
-            
-            print(f"{station_id:15} {dist:5.2f}mi | {temp:5.1f}°F | {wind:4.1f}mph | {flag_str}")
-        
-        time.sleep(1)
+        return station_id, data
+    
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(fetch_station, sid): sid for sid in STATIONS}
+        for future in as_completed(futures):
+            station_id, data = future.result()
+            if data:
+                results.append(data)
+                dist = data['distance_mi'] if data['distance_mi'] else 999
+                temp = data['temperature_f'] if data['temperature_f'] else 0
+                wind = data['wind_speed_mph'] if data['wind_speed_mph'] else 0
+                
+                # Flag suspicious data
+                flags = []
+                if wind < MIN_WIND_THRESHOLD:
+                    flags.append("⚠️ WIND")
+                if dist > MAX_DISTANCE_MI:
+                    flags.append("⚠️ FAR")
+                
+                flag_str = " ".join(flags) if flags else "✓"
+                
+                print(f"{station_id:15} {dist:5.2f}mi | {temp:5.1f}°F | {wind:4.1f}mph | {flag_str}")
     
     print()
     print("=" * 80)
