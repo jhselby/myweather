@@ -801,7 +801,7 @@
       font-size: 0.9rem;
     }
 
-    canvas{
+    canvas:not(.moon-canvas){
       touch-action: pan-y;
       width: 100% !important;
       height: 220px !important;
@@ -809,7 +809,7 @@
 
     @media (max-width: 780px){
       .card{ grid-column: span 12; }
-      canvas{ height: 240px !important; }
+      canvas:not(.moon-canvas){ height: 240px !important; }
       header{ position: relative; top: 0; }
 
       /* 3-column grids → single column */

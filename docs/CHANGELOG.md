@@ -1,3 +1,21 @@
+## v4.26 • 2026-04-11
+* **Moon Phase Rendering**
+  * Replaced emoji moon with canvas-rendered moon phase (scanline algorithm)
+  * Canvas moon in collapsed tile (60px) and expanded card (80px)
+  * Northern hemisphere view: waxing lit on right, waning lit on left
+  * Removed emoji from Right Now card moon phase labels
+
+* **Tile Visual Consistency**
+  * **Moon tile**: Canvas moon graphic offset to upper right (matching Sky & Precip pattern)
+  * **Sun tile**: Replaced flat SVG with radial gradient sun graphic in upper right
+  * **Sun tile**: Separated sun arc/position dot from sun graphic, kept arc centered
+  * **Sun tile**: Arc stroke color updated for dark mode visibility
+  * **Sun/Moon tiles**: Text sizing matched to Sky & Precip (28px primary, 15px secondary)
+
+* **Bug Fixes**
+  * **Ocean tile**: Fixed collapsed wind display (was reading nonexistent wind_speed_kt, now uses wind_mph)
+  * **CSS**: Scoped global canvas sizing rule to exclude moon canvases (canvas:not(.moon-canvas))
+
 ## v4.25 • 2026-04-10
 * **UI/UX Improvements
   * **Tide tile**: Added "NOW: Coming in/Going out, X.X ft" indicator in water showing current tide height and direction
