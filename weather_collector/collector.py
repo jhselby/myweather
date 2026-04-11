@@ -353,26 +353,37 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
 def main():
     """Main execution function."""
+    import time as _time
+
     print("\n" + "=" * 60)
     print("Wyman Cove Weather - Modular Collector v2.0")
     print("=" * 60 + "\n")
 
-    # Fetch all data sources
-    current_data, current_meta = fetch_current_gfs()
-    hourly_data, hourly_meta = fetch_hourly_hrrr()
-    hourly_7day_data, hourly_7day_meta = fetch_hourly_gfs_7day()
-    nws_gridpoints_data, nws_gridpoints_meta = fetch_nws_gridpoints()
+    total_t0 = _time.time()
 
-    daily_data, daily_meta = fetch_daily_ecmwf()
-    pws_data, pws_meta = fetch_pws_current()
-    tide_data, tides_meta = fetch_tides()
-    salem_water_temp = fetch_salem_water_temp()
-    kbos_data, kbos_meta = fetch_kbos_obs()
-    kbvy_data, kbvy_meta = fetch_kbvy_obs()
-    buoy_data, buoy_meta = fetch_buoy_44013()
-    wu_data, wu_meta = fetch_wu_stations()
+    def timed_fetch(name, fn, *args, **kwargs):
+        t0 = _time.time()
+        result = fn(*args, **kwargs)
+        elapsed = _time.time() - t0
+        print(f"  ⏱  {name}: {elapsed:.1f}s")
+        return result
+
+    # Fetch all data sources
+    current_data, current_meta = timed_fetch("GFS current", fetch_current_gfs)
+    hourly_data, hourly_meta = timed_fetch("HRRR hourly", fetch_hourly_hrrr)
+    hourly_7day_data, hourly_7day_meta = timed_fetch("GFS 7-day hourly", fetch_hourly_gfs_7day)
+    nws_gridpoints_data, nws_gridpoints_meta = timed_fetch("NWS gridpoints", fetch_nws_gridpoints)
+
+    daily_data, daily_meta = timed_fetch("ECMWF daily", fetch_daily_ecmwf)
+    pws_data, pws_meta = timed_fetch("PWS current", fetch_pws_current)
+    tide_data, tides_meta = timed_fetch("Tides", fetch_tides)
+    salem_water_temp = timed_fetch("Salem water temp", fetch_salem_water_temp)
+    kbos_data, kbos_meta = timed_fetch("KBOS obs", fetch_kbos_obs)
+    kbvy_data, kbvy_meta = timed_fetch("KBVY obs", fetch_kbvy_obs)
+    buoy_data, buoy_meta = timed_fetch("Buoy 44013", fetch_buoy_44013)
+    wu_data, wu_meta = timed_fetch("WU stations", fetch_wu_stations)
     forecast_data, forecast_meta = {}, {"status": "disabled"}  # fetch_nws_forecast() DISABLED - using custom forecasts
-    alert_data, alerts_meta = fetch_nws_alerts()
+    alert_data, alerts_meta = timed_fetch("NWS alerts", fetch_nws_alerts)
 
     sources = {
         "gfs_current": current_meta,
@@ -389,19 +400,24 @@ def main():
     }
 
     # Update frost log
+    t0 = _time.time()
     print("🌡️ Updating frost log...")
     frost_log = update_frost_log(daily_data)
+    print(f"  ⏱  Frost log: {_time.time() - t0:.1f}s")
 
     sunset_directional = None
     if daily_data and daily_data.get("daily") and daily_data["daily"].get("sunset"):
+        t0 = _time.time()
         from .config import LAT, LON
         sunset_directional = build_sunset_directional_data(
             daily_data["daily"]["sunset"],
             LAT, LON,
             fetch_directional_clouds
         )
+        print(f"  ⏱  Sunset directional: {_time.time() - t0:.1f}s")
 
     # Build complete weather data
+    t0 = _time.time()
     weather_data = build_weather_data(
         current_data, hourly_data, daily_data,
         pws_data, tide_data, kbos_data, kbvy_data, buoy_data,
@@ -413,6 +429,7 @@ def main():
         nws_gridpoints=nws_gridpoints_data,
         hourly_7day_data=hourly_7day_data
     )
+    print(f"  ⏱  Build weather data: {_time.time() - t0:.1f}s")
 
     # Trim hourly arrays to start from current hour
     from datetime import datetime, timezone
@@ -434,7 +451,7 @@ def main():
     print(f"  ✓ Wrote {output_file} ({file_size:,} bytes)")
 
     print("\n" + "=" * 60)
-    print(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({_time.time() - total_t0:.1f}s total)")
     print("=" * 60 + "\n")
 
 
