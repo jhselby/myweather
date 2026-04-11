@@ -73,35 +73,50 @@ def build_sunset_directional_data(daily_sunsets, lat, lon, fetch_directional_clo
     """
     Build sunset directional cloud sampling data for next 5 days.
     """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    
     print("🌅 Building directional sunset data...")
     
-    # Warmup: fetch Day 6 (which we don't use) to establish connection
-    # If this times out, we don't care - but it should warm the connection for Day 0
+    # Warmup: establish connection to Open-Meteo (absorbs cold-start timeout on GitHub Actions)
     print("  📡 Warmup: fetching Day 6 to establish connection...")
     try:
-        _ = fetch_directional_clouds_func(lat, lon, 0, [10], skip_retry=True)  # No retry on warmup
+        _ = fetch_directional_clouds_func(lat, lon, 0, [10], skip_retry=True)
         print("  ✓ Warmup complete")
     except Exception as e:
         print(f"  ⚠️ Warmup timeout (not critical): {e}")
     
-    sunset_data = []
-    
+    # Pre-calculate azimuths for all days
+    day_tasks = []
     for day_idx, sunset_iso in enumerate(daily_sunsets[:5]):
         if not sunset_iso:
             continue
-            
         azimuth = calculate_sunset_azimuth(lat, lon, sunset_iso)
-        
         print(f"  Day {day_idx}: sunset {sunset_iso} at {azimuth}°")
-        
-        directional_clouds = fetch_directional_clouds_func(lat, lon, azimuth, [10, 25, 50])
-        
-        sunset_data.append({
+        day_tasks.append((day_idx, sunset_iso, azimuth))
+    
+    # Fetch all 5 days in parallel
+    sunset_data = [None] * len(day_tasks)
+    
+    def fetch_day(task):
+        day_idx, sunset_iso, azimuth = task
+        clouds = fetch_directional_clouds_func(lat, lon, azimuth, [10, 25, 50])
+        return day_idx, {
             "day": day_idx,
             "sunset_time": sunset_iso,
             "azimuth": azimuth,
-            "clouds": directional_clouds
-        })
+            "clouds": clouds
+        }
     
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = {executor.submit(fetch_day, t): t for t in day_tasks}
+        for future in as_completed(futures):
+            idx, result = future.result()
+            # Find position in day_tasks
+            for i, (di, _, _) in enumerate(day_tasks):
+                if di == idx:
+                    sunset_data[i] = result
+                    break
+    
+    sunset_data = [d for d in sunset_data if d is not None]
     print(f"  ✓ Built sunset data for {len(sunset_data)} days")
     return sunset_data
