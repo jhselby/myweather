@@ -78,6 +78,17 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     
     # Wind override - use max of KBVY and WU stations for exposed coastal location
     wind_candidates = []
+    # Save original model values for corrections display
+    weather_data["current"]["model_wind_speed"] = weather_data["current"].get("wind_speed", 0)
+    weather_data["current"]["model_wind_gusts"] = weather_data["current"].get("wind_gusts", 0)
+    
+    # Include model as a candidate so we never undercount
+    wind_candidates.append({
+        "source": "model",
+        "gust": weather_data["current"].get("wind_gusts", 0),
+        "speed": weather_data["current"].get("wind_speed", 0),
+        "direction": weather_data["current"].get("wind_direction")
+    })
     if kbvy_data and kbvy_data.get("wind_gust_kt"):
         wind_candidates.append({
             "source": "KBVY",
@@ -96,12 +107,18 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
                 })
     
     if wind_candidates:
-        max_wind = max(wind_candidates, key=lambda x: x['gust'])
-        weather_data["current"]["wind_gusts"] = max_wind['gust']
-        weather_data["current"]["wind_speed"] = max(max_wind['speed'], weather_data["current"]["wind_speed"])
-        if max_wind['direction']:
-            weather_data["current"]["wind_direction"] = max_wind['direction']
-        weather_data["current"]["condition_source"] = f"{max_wind['source']} observed"
+        # Max gust independently
+        max_gust_entry = max(wind_candidates, key=lambda x: x['gust'])
+        weather_data["current"]["wind_gusts"] = max_gust_entry['gust']
+        
+        # Max sustained independently
+        max_speed_entry = max(wind_candidates, key=lambda x: x['speed'])
+        weather_data["current"]["wind_speed"] = max_speed_entry['speed']
+        
+        # Direction from highest gust source
+        if max_gust_entry['direction']:
+            weather_data["current"]["wind_direction"] = max_gust_entry['direction']
+        weather_data["current"]["condition_source"] = f"{max_gust_entry['source']} observed"
 
     # Hourly forecast
     if hourly_data:
