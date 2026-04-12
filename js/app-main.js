@@ -218,6 +218,52 @@
       } catch(e) {}
     })();
 
+
+    // ======================================================
+    // Swipe navigation between tabs
+    // ======================================================
+    (function initSwipeNav() {
+      const tabOrder = ['weather', 'hyperlocal', 'almanac', 'overhead'];
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+
+      document.addEventListener('touchstart', function(e) {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY;
+        touchStartTime = Date.now();
+      }, { passive: true });
+
+      document.addEventListener('touchend', function(e) {
+        const dx = e.changedTouches[0].screenX - touchStartX;
+        const dy = e.changedTouches[0].screenY - touchStartY;
+        const dt = Date.now() - touchStartTime;
+
+        // Must be horizontal, fast enough, and long enough
+        if (Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) || dt > 400) return;
+
+        // Don't swipe when a card is expanded
+        if (document.querySelector('.card-expanded')) return;
+
+        // Don't swipe on maps or scrubbers
+        if (e.target.closest('#radarMap, #overheadMap, input[type=range]')) return;
+
+        const current = localStorage.getItem('activeTab') || 'weather';
+        const idx = tabOrder.indexOf(current);
+        if (idx === -1) return;
+
+        if (dx < 0 && idx < tabOrder.length - 1) {
+          showTab(tabOrder[idx + 1]);
+          const v = document.getElementById({weather:'weatherView',hyperlocal:'hyperlocalView',almanac:'almanacView',overhead:'overheadView'}[tabOrder[idx + 1]]);
+          if (v) { v.classList.remove('slide-in-left','slide-in-right'); void v.offsetWidth; v.classList.add('slide-in-right'); }
+        } else if (dx > 0 && idx > 0) {
+          showTab(tabOrder[idx - 1]);
+          const v = document.getElementById({weather:'weatherView',hyperlocal:'hyperlocalView',almanac:'almanacView',overhead:'overheadView'}[tabOrder[idx - 1]]);
+          if (v) { v.classList.remove('slide-in-left','slide-in-right'); void v.offsetWidth; v.classList.add('slide-in-left'); }
+        }
+      }, { passive: true });
+    })();
+
     // ======================================================
     // Formatting helpers
     // ======================================================
@@ -2671,15 +2717,28 @@
         sunAltitudeCollapsedEl.textContent = `${altDeg}° altitude`;
       }
       
-      // Position sun dot on arc based on altitude
+      // Position sun dot on arc: x = time progress (sunrise-left to sunset-right), y = altitude
       const sunPositionDot = document.getElementById("sunPositionDot");
       if (sunPositionDot) {
-        // Arc goes from x=10 (horizon left) to x=110 (horizon right)
-        // Altitude: 0° = horizon (y=55), 90° = zenith (y=5)
-        // Use simple quadratic curve approximation
-        const normalizedAlt = Math.max(0, Math.min(90, altDeg)) / 90; // Clamp 0-90, normalize 0-1
-        const x = 10 + (100 * normalizedAlt);
-        const y = 55 - (50 * Math.sin(normalizedAlt * Math.PI));
+        // Get today's sunrise and sunset times
+        const times = SunCalc.getTimes(new Date(), 42.5014, -70.8750);
+        const now = Date.now();
+        const riseMs = times.sunrise.getTime();
+        const setMs = times.sunset.getTime();
+        
+        // Progress through the day: 0 = sunrise, 1 = sunset
+        let progress = (now - riseMs) / (setMs - riseMs);
+        progress = Math.max(0, Math.min(1, progress));
+        
+        // x: left (10) = sunrise, right (110) = sunset
+        const x = 10 + (100 * progress);
+        // y: use actual altitude for the vertical position
+        const normalizedAlt = Math.max(0, altDeg) / 90;
+        const y = 55 - (50 * Math.sin(normalizedAlt * Math.PI / 2));
+        
+        // Hide dot if before sunrise or after sunset
+        const visible = now >= riseMs && now <= setMs;
+        sunPositionDot.style.display = visible ? '' : 'none';
         
         sunPositionDot.setAttribute('cx', x);
         sunPositionDot.setAttribute('cy', y);
@@ -2689,6 +2748,7 @@
         if (glowCircle && glowCircle.tagName === 'circle') {
           glowCircle.setAttribute('cx', x);
           glowCircle.setAttribute('cy', y);
+          if (glowCircle.style) glowCircle.style.display = visible ? '' : 'none';
         }
       }
 
@@ -4336,7 +4396,11 @@
           // Rotate direction indicator arrow (add 90° because arrow defaults to north, wind is FROM so show TO)
           if (weatherWindDirectionIndicatorEl && windDir != null) {
             const arrowRotation = (windDir + 90) % 360;
-            weatherWindDirectionIndicatorEl.setAttribute('transform', `rotate(${arrowRotation}, 60, 60)`);
+            // Set base rotation, CSS animation adds wobble
+            weatherWindDirectionIndicatorEl.style.transformOrigin = '60px 60px';
+            weatherWindDirectionIndicatorEl.style.transform = `rotate(${arrowRotation}deg)`;
+            weatherWindDirectionIndicatorEl.removeAttribute('transform');
+            weatherWindDirectionIndicatorEl.classList.add('wind-wobble');
           }
           
           // Set impact score (using gust impact)

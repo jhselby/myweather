@@ -168,6 +168,19 @@
       border-color: rgba(255,255,255,0.28);
     }
 
+
+    /* Tab swipe slide animations */
+    @keyframes slideInFromRight {
+      from { transform: translateX(60px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideInFromLeft {
+      from { transform: translateX(-60px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    .slide-in-right { animation: slideInFromRight 0.35s ease-out; }
+    .slide-in-left { animation: slideInFromLeft 0.35s ease-out; }
+
     .grid {
       margin-top: 14px;
       display: grid;

@@ -1,3 +1,9 @@
+## v4.29 • 2026-04-11
+* **Swipe Navigation**
+  * Swipe left/right to page through tabs (Weather, Hyperlocal, Almanac, Overhead)
+  * Slide animation on swipe (60px travel, 0.35s ease-out)
+  * Ignores vertical scrolls, expanded cards, and map/scrubber interactions
+
  • 2026-04-11
 * **Uniform Tile Heights**
   * Added grid-auto-rows: 192px for consistent tile sizing across all tabs
