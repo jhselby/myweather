@@ -1,3 +1,32 @@
+## v4.34 • 2026-04-12
+* **Card Beautification Pass**
+  * Gradient backgrounds now persist into expanded card state (all tabs)
+  * Expanded cards show clean title row matching tile label style (no emoji, uppercase)
+  * Close button and title share header row — content starts immediately below
+  * Removed tooltip dotted underline from hero temperature display
+
+* **Right Now Card**
+  * Centered hero area (temp, feels like, condition)
+  * Lighter font weights (300 temp, 400 feels-like)
+  * Refined row dividers (0.5px) and muted labels
+
+* **10-Day Forecast**
+  * Low temperature muted (40% opacity) for visual hierarchy
+
+* **Detailed Forecast**
+  * Converted from 2-column grid to inline layout (period + temp, wind, narrative)
+
+* **Dock Day & Sunset Cards**
+  * Light mode score colors darkened for readability against gradient backgrounds
+  * Dock Day: dark green/gold/red score labels in light mode
+  * Sunset: Poor/Fair/Good labels now readable on light backgrounds
+
+* **Corrections Card**
+  * Corrected values changed from cyan to dark blue, black override in light mode
+
+* **Sun Card**
+  * Hidden large emoji in expanded state
+
 ## v4.33 • 2026-04-12
 * **Sources moved to Settings Modal**
   * Data Sources and Status now accessible from settings gear icon

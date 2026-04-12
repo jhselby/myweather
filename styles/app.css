@@ -205,77 +205,77 @@
     .card.col-6{ grid-column: span 6; overflow: hidden; }
 
     /* Temperature-based tile backgrounds - only when collapsed */
-    .tile-temp-cold:not(.card-expanded) {
+    .tile-temp-cold {
       background: linear-gradient(135deg, rgba(147,197,253,0.12) 0%, rgba(59,130,246,0.06) 100%) !important;
     }
-    .tile-temp-cool:not(.card-expanded) {
+    .tile-temp-cool {
       background: linear-gradient(135deg, rgba(96,165,250,0.15) 0%, rgba(59,130,246,0.08) 100%) !important;
     }
-    .tile-temp-mild:not(.card-expanded) {
+    .tile-temp-mild {
       background: linear-gradient(135deg, rgba(253,224,71,0.12) 0%, rgba(234,179,8,0.06) 100%) !important;
     }
-    .tile-temp-warm:not(.card-expanded) {
+    .tile-temp-warm {
       background: linear-gradient(135deg, rgba(255,140,60,0.18) 0%, rgba(255,100,30,0.10) 100%) !important;
     }
-    .tile-temp-hot:not(.card-expanded) {
+    .tile-temp-hot {
       background: linear-gradient(135deg, rgba(251,146,60,0.15) 0%, rgba(249,115,22,0.08) 100%) !important;
     }
 
     /* Weather condition backgrounds for Sky & Precip - only when collapsed */
-    .weather-clear-day:not(.card-expanded) {
+    .weather-clear-day {
       background: linear-gradient(135deg, rgba(135,206,250,0.5) 0%, rgba(255,223,186,0.4) 100%) !important;
     }
-    .weather-clear-night:not(.card-expanded) {
+    .weather-clear-night {
       background: linear-gradient(135deg, rgba(25,25,112,0.5) 0%, rgba(72,61,139,0.4) 100%) !important;
     }
-    .weather-partly-day:not(.card-expanded) {
+    .weather-partly-day {
       background: linear-gradient(135deg, rgba(176,196,222,0.4) 0%, rgba(230,230,250,0.4) 100%) !important;
     }
-    .weather-partly-night:not(.card-expanded) {
+    .weather-partly-night {
       background: linear-gradient(135deg, rgba(47,79,79,0.4) 0%, rgba(105,105,105,0.4) 100%) !important;
     }
-    .weather-cloudy-day:not(.card-expanded) {
+    .weather-cloudy-day {
       background: linear-gradient(135deg, rgba(169,169,169,0.35) 0%, rgba(192,192,192,0.35) 100%) !important;
     }
-    .weather-cloudy-night:not(.card-expanded) {
+    .weather-cloudy-night {
       background: linear-gradient(135deg, rgba(105,105,105,0.4) 0%, rgba(119,136,153,0.4) 100%) !important;
     }
-    .weather-rain-day:not(.card-expanded) {
+    .weather-rain-day {
       background: linear-gradient(135deg, rgba(119,136,153,0.4) 0%, rgba(176,196,222,0.35) 100%) !important;
     }
-    .weather-rain-night:not(.card-expanded) {
+    .weather-rain-night {
       background: linear-gradient(135deg, rgba(47,79,79,0.5) 0%, rgba(70,130,180,0.4) 100%) !important;
     }
-    .weather-snow-day:not(.card-expanded) {
+    .weather-snow-day {
       background: linear-gradient(135deg, rgba(230,240,255,0.5) 0%, rgba(200,220,240,0.45) 100%) !important;
     }
-    .weather-snow-night:not(.card-expanded) {
+    .weather-snow-night {
       background: linear-gradient(135deg, rgba(70,90,120,0.5) 0%, rgba(100,120,150,0.45) 100%) !important;
     }
-    .weather-mist-day:not(.card-expanded) {
+    .weather-mist-day {
       background: linear-gradient(135deg, rgba(220,220,220,0.4) 0%, rgba(240,240,240,0.35) 100%) !important;
     }
-    .weather-mist-night:not(.card-expanded) {
+    .weather-mist-night {
       background: linear-gradient(135deg, rgba(105,105,105,0.4) 0%, rgba(128,128,128,0.35) 100%) !important;
     }
 
     /* ========== HYPERLOCAL & ALMANAC TILE BACKGROUNDS ========== */
     
     /* Fog Risk - white fog overlay that increases with risk level */
-    .tile-fog-low:not(.card-expanded) {
+    .tile-fog-low {
       background: 
         radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.08) 0%, transparent 60%),
         radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.06) 0%, transparent 50%),
         rgba(240,240,245,0.05) !important;
     }
-    .tile-fog-moderate:not(.card-expanded) {
+    .tile-fog-moderate {
       background: 
         radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.25) 0%, transparent 65%),
         radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.20) 0%, transparent 60%),
         radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.15) 0%, transparent 55%),
         rgba(240,240,245,0.12) !important;
     }
-    .tile-fog-high:not(.card-expanded) {
+    .tile-fog-high {
       background: 
         radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.45) 0%, transparent 70%),
         radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.40) 0%, transparent 65%),
@@ -283,20 +283,20 @@
         radial-gradient(ellipse at 20% 80%, rgba(255,255,255,0.30) 0%, transparent 55%),
         rgba(240,240,245,0.25) !important;
     }
-    .tile-fog-low:not(.card-expanded) {
+    .tile-fog-low {
       background: 
         radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.08) 0%, transparent 60%),
         radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.06) 0%, transparent 50%),
         rgba(240,240,245,0.05) !important;
     }
-    .tile-fog-moderate:not(.card-expanded) {
+    .tile-fog-moderate {
       background: 
         radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.25) 0%, transparent 65%),
         radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.20) 0%, transparent 60%),
         radial-gradient(ellipse at 50% 20%, rgba(255,255,255,0.15) 0%, transparent 55%),
         rgba(240,240,245,0.12) !important;
     }
-    .tile-fog-high:not(.card-expanded) {
+    .tile-fog-high {
       background: 
         radial-gradient(ellipse at 30% 40%, rgba(255,255,255,0.45) 0%, transparent 70%),
         radial-gradient(ellipse at 70% 60%, rgba(255,255,255,0.40) 0%, transparent 65%),
@@ -306,76 +306,76 @@
     }
 
     /* Wind Impact - green (calm) to red (severe) */
-    .tile-wind-calm:not(.card-expanded) {
+    .tile-wind-calm {
       background: linear-gradient(135deg, rgba(96,165,250,0.15) 0%, rgba(59,130,246,0.08) 100%) !important;
     }
-    .tile-wind-light:not(.card-expanded) {
+    .tile-wind-light {
       background: linear-gradient(135deg, rgba(100,200,200,0.15) 0%, rgba(80,180,180,0.08) 100%) !important;
     }
-    .tile-wind-moderate:not(.card-expanded) {
+    .tile-wind-moderate {
       background: linear-gradient(135deg, rgba(253,224,71,0.12) 0%, rgba(234,179,8,0.06) 100%) !important;
     }
-    .tile-wind-strong:not(.card-expanded) {
+    .tile-wind-strong {
       background: linear-gradient(135deg, rgba(255,140,60,0.18) 0%, rgba(255,100,30,0.10) 100%) !important;
     }
-    .tile-wind-severe:not(.card-expanded) {
+    .tile-wind-severe {
       background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.08) 100%) !important;
     }
 
     /* Corrections - confidence-based */
-    .tile-corrections-high:not(.card-expanded) {
+    .tile-corrections-high {
       background: linear-gradient(135deg, rgba(134,239,172,0.08) 0%, rgba(34,197,94,0.04) 100%) !important;
     }
-    .tile-corrections-moderate:not(.card-expanded) {
+    .tile-corrections-moderate {
       background: linear-gradient(135deg, rgba(253,224,71,0.08) 0%, rgba(234,179,8,0.04) 100%) !important;
     }
-    .tile-corrections-low:not(.card-expanded) {
+    .tile-corrections-low {
       background: linear-gradient(135deg, rgba(248,113,113,0.08) 0%, rgba(239,68,68,0.04) 100%) !important;
     }
 
     /* Sea Breeze - ocean teal/blue */
-    .tile-seabreeze-unlikely:not(.card-expanded) {
+    .tile-seabreeze-unlikely {
       background: linear-gradient(135deg, rgba(140,160,180,0.12) 0%, rgba(120,140,160,0.08) 100%) !important;
     }
-    .tile-seabreeze-possible:not(.card-expanded) {
+    .tile-seabreeze-possible {
       background: linear-gradient(135deg, rgba(120,190,200,0.15) 0%, rgba(100,170,180,0.10) 100%) !important;
     }
-    .tile-seabreeze-likely:not(.card-expanded) {
+    .tile-seabreeze-likely {
       background: linear-gradient(135deg, rgba(80,220,230,0.22) 0%, rgba(60,200,210,0.15) 100%) !important;
     }
 
     /* Sunset Score - subtle warm gradient based on quality */
-    .tile-sunset-poor:not(.card-expanded) {
+    .tile-sunset-poor {
       background: linear-gradient(135deg, rgba(128,128,128,0.12) 0%, rgba(140,140,150,0.08) 100%) !important;
     }
-    .tile-sunset-fair:not(.card-expanded) {
+    .tile-sunset-fair {
       background: linear-gradient(135deg, rgba(200,180,140,0.15) 0%, rgba(180,160,120,0.10) 100%) !important;
     }
-    .tile-sunset-good:not(.card-expanded) {
+    .tile-sunset-good {
       background: linear-gradient(135deg, rgba(255,140,60,0.18) 0%, rgba(255,100,30,0.10) 100%) !important;
     }
-    .tile-sunset-verygood:not(.card-expanded) {
+    .tile-sunset-verygood {
       background: linear-gradient(135deg, rgba(255,140,60,0.22) 0%, rgba(249,115,22,0.14) 100%) !important;
     }
-    .tile-sunset-spectacular:not(.card-expanded) {
+    .tile-sunset-spectacular {
       background: linear-gradient(135deg, rgba(255,100,50,0.30) 0%, rgba(255,70,30,0.20) 100%) !important;
     }
 
     /* Dock Day - score-based like Wind Impact */
-    .tile-dock-great:not(.card-expanded) {
+    .tile-dock-great {
       background: linear-gradient(135deg, rgba(96,165,250,0.15) 0%, rgba(59,130,246,0.08) 100%) !important;
     }
-    .tile-dock-good:not(.card-expanded) {
+    .tile-dock-good {
       background: linear-gradient(135deg, rgba(100,200,200,0.15) 0%, rgba(80,180,180,0.08) 100%) !important;
     }
-    .tile-dock-marginal:not(.card-expanded) {
+    .tile-dock-marginal {
       background: linear-gradient(135deg, rgba(253,224,71,0.12) 0%, rgba(234,179,8,0.06) 100%) !important;
     }
-    .tile-dock-poor:not(.card-expanded) {
+    .tile-dock-poor {
       background: linear-gradient(135deg, rgba(251,146,60,0.18) 0%, rgba(249,115,22,0.10) 100%) !important;
       background: linear-gradient(135deg, rgba(255,140,60,0.18) 0%, rgba(255,100,30,0.10) 100%) !important;
     }
-    .tile-dock-stayinside:not(.card-expanded) {
+    .tile-dock-stayinside {
       background: linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.08) 100%) !important;
     }
 
@@ -390,7 +390,7 @@
       color: rgba(0,0,0,0.6) !important;
     }
 
-    .tile-astro:not(.card-expanded) {
+    .tile-astro {
       background: linear-gradient(180deg, rgba(30,41,59,0.15) 0%, rgba(15,23,42,0.08) 100%) !important;
     }
 
@@ -1980,8 +1980,14 @@ body.theme-light .hyperlocal-link:hover {
 }
 
 /* Hide title when collapsed - content goes in preview instead */
-.card:not(.card-expanded) .card-title-collapsible {
+.card .card-title-collapsible {
   display: none;
+}
+
+/* Show title when expanded */
+.card.card-expanded .card-title-collapsible {
+  display: flex !important;
+  opacity: 1 !important;
 }
 
 /* Hide collapsed preview when card is expanded */
@@ -1994,7 +2000,7 @@ body.theme-light .hyperlocal-link:hover {
   transition: opacity 0.3s ease 0.2s;
 }
 
-.card:not(.card-expanded) .card-title-collapsible {
+.card .card-title-collapsible {
   opacity: 0;
 }
 
@@ -2025,12 +2031,206 @@ body.theme-light .hyperlocal-link:hover {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.12);
   border: none;
   cursor: pointer;
-  font-size: 20px;
+  font-size: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10;
+  color: rgba(255,255,255,0.7);
 }
+body.theme-light .card-close-btn {
+  background: rgba(0,0,0,0.06);
+  color: rgba(0,0,0,0.45);
+}
+
+/* ========== EXPANDED CARD BEAUTIFICATION ========== */
+
+/* Refined row styling in expanded cards */
+.card-expanded .row {
+  padding: 8px 0;
+  border-bottom: 0.5px solid rgba(255,255,255,0.06);
+}
+.card-expanded .row:last-child { border-bottom: none; }
+body.theme-light .card-expanded .row {
+  border-bottom-color: rgba(0,0,0,0.06);
+}
+
+/* Muted labels, clean values in expanded state */
+.card-expanded .label {
+  color: rgba(255,255,255,0.45);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.card-expanded .value {
+  color: rgba(255,255,255,0.92);
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+body.theme-light .card-expanded .label {
+  color: rgba(0,0,0,0.55) !important;
+}
+body.theme-light .card-expanded .value {
+  color: rgba(0,0,0,0.9) !important;
+}
+
+/* Expanded card title — header row with close button */
+.card-expanded .card-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  min-height: 32px;
+  padding-right: 40px; /* space for close button */
+}
+body.theme-light .card-expanded .card-title {
+  color: rgba(0,0,0,0.5) !important;
+}
+
+/* Close button sits in the title row area */
+.card-expanded .card-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+/* Hero area divider for Right Now expanded */
+.card-expanded .hero-divider {
+  height: 0.5px;
+  background: rgba(255,255,255,0.08);
+  margin: 16px 0;
+}
+body.theme-light .card-expanded .hero-divider {
+  background: rgba(0,0,0,0.06);
+}
+
+/* Hero area — centered temp block */
+.card-expanded .hero-area {
+  text-align: center;
+  padding: 8px 0 0;
+}
+
+/* Remove tooltip underline from hero elements */
+.card-expanded .hero-area [data-tip] {
+  text-decoration: none;
+}
+
+/* Expanded card body — content starts right after title row */
+.card-expanded .card-body {
+  padding-top: 0;
+}
+
+/* Chart cards need top padding since their canvas sits at top of card-body */
+.card-expanded[data-collapse-key="48h_temp_precip"] .card-body,
+.card-expanded[data-collapse-key="48h_wind"] .card-body {
+  padding-top: 8px;
+}
+
+/* Expanded current temp — refined */
+.card-expanded .current-temp {
+  font-size: 3.5rem;
+  font-weight: 300;
+  letter-spacing: -2px;
+}
+.card-expanded .temp-unit {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.4);
+}
+body.theme-light .card-expanded .temp-unit {
+  color: rgba(0,0,0,0.5) !important;
+}
+.card-expanded .feels-like {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.45);
+}
+body.theme-light .card-expanded .feels-like {
+  color: rgba(0,0,0,0.55) !important;
+}
+.card-expanded .condition {
+  font-size: 1rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
+}
+
+/* 10-Day forecast expanded styling */
+.card-expanded .forecast-day-row {
+  padding: 8px 6px !important;
+}
+.card-expanded .forecast-day-row .value {
+  font-weight: 500;
+}
+.card-expanded .forecast-day-row .temp-lo {
+  opacity: 0.4;
+  font-weight: 400;
+}
+
+/* Detailed Forecast expanded — inline layout */
+.card-expanded .detailed-period {
+  padding: 12px 0;
+  border-bottom: 0.5px solid rgba(255,255,255,0.06);
+}
+.card-expanded .detailed-period:last-child { border-bottom: none; }
+body.theme-light .card-expanded .detailed-period {
+  border-bottom-color: rgba(0,0,0,0.06);
+}
+.card-expanded .detailed-period-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.card-expanded .detailed-period-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+}
+body.theme-light .card-expanded .detailed-period-name {
+  color: rgba(0,0,0,0.85) !important;
+}
+.card-expanded .detailed-period-temp {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(255,255,255,0.9);
+}
+body.theme-light .card-expanded .detailed-period-temp {
+  color: rgba(0,0,0,0.85) !important;
+}
+.card-expanded .detailed-period-wind {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.35);
+}
+body.theme-light .card-expanded .detailed-period-wind {
+  color: rgba(0,0,0,0.4) !important;
+}
+.card-expanded .detailed-period-narrative {
+  font-size: 0.88rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+body.theme-light .card-expanded .detailed-period-narrative {
+  color: rgba(0,0,0,0.55) !important;
+}
+
+/* ========== ALMANAC CARD REFINEMENTS ========== */
+
+/* Hide the large sun emoji in expanded state */
+.card-expanded #sunEmoji {
+  display: none;
+}
+
+/* Tighten sun card summary column in expanded state */
+.card-expanded .mobile-3col {
+  margin-top: 0;
+}
+body.theme-light [style*="color:rgba(100,200,255"] { color: rgba(0,0,0,0.85) !important; }

@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=86ac25d7" />
+  <link rel="stylesheet" href="styles/app.css?v=2bae788b" />
 </head>
 <body>
   <div class="container">
@@ -94,7 +94,7 @@
         <!-- 1. RIGHT NOW — Hero Card (open by default) -->
         <div class="card col-6" data-collapse-key="right_now" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('right_now', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            ⚡ RIGHT NOW<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Right Now<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('right_now', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;">
@@ -129,19 +129,21 @@
             </div>
           </div>
           <div class="card-body" style="display:none;">
-            <!-- Big Hero Temp -->
-            <div id="currentTemp" class="current-temp" data-tip="Smart-corrected temperature using distance+elevation weighted bias from 15 local weather stations.">
-              --<span class="temp-unit">&deg;F</span>
-            </div>
-            <div id="feelsLike" class="feels-like" data-tip="Apparent temperature calculated from corrected temperature and wind (wind chill <50°F, heat index >80°F with corrected humidity).">
-              Feels like --&deg;F
-            </div>
-            <div id="condition" class="condition" data-tip="Current conditions from model weather code.">
-              Loading&hellip;
+            <!-- Hero area — centered temp, feels-like, condition -->
+            <div class="hero-area">
+              <div id="currentTemp" class="current-temp" data-tip="Smart-corrected temperature using distance+elevation weighted bias from 15 local weather stations.">
+                --<span class="temp-unit">&deg;F</span>
+              </div>
+              <div id="feelsLike" class="feels-like" data-tip="Apparent temperature calculated from corrected temperature and wind (wind chill <50°F, heat index >80°F with corrected humidity).">
+                Feels like --&deg;F
+              </div>
+              <div id="condition" class="condition" data-tip="Current conditions from model weather code.">
+                Loading&hellip;
+              </div>
             </div>
             
             <!-- Divider -->
-            <div style="height:1px;background:rgba(255,255,255,0.1);margin:16px 0;"></div>
+            <div class="hero-divider"></div>
             
             <!-- Key Metrics Grid -->
             <div class="row">
@@ -200,7 +202,7 @@
         </div>
         <div class="card col-6" data-collapse-key="48h_temp_precip" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('48h_temp_precip', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            🌡️ SKY & PRECIP<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Sky & Precip<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('48h_temp_precip', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;overflow:hidden;" id="skyPrecipPreview">
@@ -280,7 +282,7 @@
         <!-- 48-Hour Wind Forecast -->
         <div class="card col-6" data-collapse-key="48h_wind" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('48h_wind', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            💨 WIND IMPACT<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Wind Impact<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('48h_wind', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;padding-bottom:8px;">
@@ -356,7 +358,7 @@
       </div>
         <div class="card col-6" data-collapse-key="ten_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('ten_day', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            📆 10-DAY FORECAST<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            10-Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('ten_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;">
@@ -382,7 +384,7 @@
     
         <div class="card col-6" data-collapse-key="hyperlocal_forecast" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hyperlocal_forecast', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            📌 DETAILED FORECAST<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Detailed Forecast<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hyperlocal_forecast', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;">
@@ -405,7 +407,7 @@
         <!-- NWS Detailed Forecast (fallback, hidden) -->
         <div class="card col-6" data-collapse-key="nws_forecast" data-default-open="false" style="display:none;" onclick="if(!this.classList.contains('card-expanded')) toggleCard('nws_forecast', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            📄 NWS<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            NWS<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('nws_forecast', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;">
@@ -432,7 +434,7 @@
 
           <!-- Controls bar (collapsible title) -->
           <div class="card-title card-title-collapsible" style="cursor:default;display:none;">
-            📡 RADAR<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Radar<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('radar', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="position:relative;min-height:192px;padding:0;margin:-16px;overflow:hidden;border-radius:inherit;">
@@ -480,7 +482,7 @@
         <!-- Today card -->
         <div class="card col-6" data-collapse-key="today_almanac" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('today_almanac', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            📅 TODAY<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Today<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('today_almanac', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -499,7 +501,7 @@
 
         <div class="card col-6" data-collapse-key="tides" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('tides', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            🌊 TIDES<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Tides<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('tides', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;overflow:hidden;">
@@ -557,7 +559,7 @@
         <!-- Sun full width, 3-column -->
         <div class="card col-6" data-collapse-key="sun" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sun', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            ☀️ SUN<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Sun<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sun', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;overflow:hidden;">
@@ -638,7 +640,7 @@
         <!-- Moon — full width -->
         <div class="card col-6" data-collapse-key="moon" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('moon', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            🌙 MOON<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Moon<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('moon', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -699,7 +701,7 @@
         <!-- Solar System -->
         <div class="card col-6" data-collapse-key="solar_system" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('solar_system', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            🪐 PLANETS<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Planets<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('solar_system', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -719,7 +721,7 @@
         <!-- Frost / Freeze Tracker -->
         <div class="card col-6" data-collapse-key="buoy_44013" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('buoy_44013', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            🌊 OCEAN<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Ocean<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('buoy_44013', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -791,7 +793,7 @@
 
         <div class="card col-6" data-collapse-key="frost_freeze" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('frost_freeze', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            ❄️ FROST LOG<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Frost Log<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('frost_freeze', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -901,7 +903,7 @@
       <div class="grid">
         <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hyperlocal', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            🧮 OBSERVATION-BASED CORRECTIONS<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Corrections<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hyperlocal', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -988,7 +990,7 @@
         <!-- Gust Wind Impact — collapsed by default, own window buttons -->
         <div class="card col-6" data-collapse-key="wind_gust_impact" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('wind_gust_impact', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            💨 GUST IMPACT<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Gust Impact<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_gust_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -1038,7 +1040,7 @@
         <!-- Sustained Wind Impact — collapsed by default, own window buttons -->
         <div class="card col-6" data-collapse-key="wind_sus_impact" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('wind_sus_impact', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            💨 WIND IMPACT<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Wind Impact<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_sus_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -1088,7 +1090,7 @@
         <!-- Sea Breeze Detail -->
         <div class="card col-6" data-collapse-key="sea_breeze_detail" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sea_breeze_detail', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            🌊 SEA BREEZE<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Sea Breeze<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sea_breeze_detail', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -1107,7 +1109,7 @@
         <!-- Sunset Quality Forecast -->
         <div class="card col-6" data-collapse-key="sunset_quality" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sunset_quality', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            🌅 SUNSET<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Sunset<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sunset_quality', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -1126,7 +1128,7 @@
         <!-- Dock Day Score -->
         <div class="card col-6" data-collapse-key="dock_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('dock_day', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            ⚓ DOCK DAY<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Dock Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('dock_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -1145,7 +1147,7 @@
         <!-- Fog Risk -->
         <div class="card col-6" data-collapse-key="fog_risk" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('fog_risk', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            🌫️ FOG<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Fog<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('fog_risk', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -1209,7 +1211,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=7967d685"></script>
+  <script src="js/app-main.js?v=e1191c21"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1297,7 +1299,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.33</span>
+            <span class="version-pill" id="appVersion">v4.34</span>
           </div>
         </div>
         <!-- Changelog -->
