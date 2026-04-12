@@ -1,4 +1,4 @@
-## v4.28 • 2026-04-11
+ • 2026-04-11
 * **Uniform Tile Heights**
   * Added grid-auto-rows: 192px for consistent tile sizing across all tabs
   * All col-6 tiles now identical height regardless of content
@@ -12,6 +12,41 @@
 
 * **Wind Tile Fix**
   * Compass SVG shrunk 160px to 120px, padding-bottom 40px to 8px
+
+## v4.27 • 2026-04-11
+* **iOS-Style Bottom Tab Bar**
+  * Fixed-position bottom nav with 4 tabs: Weather, Hyperlocal, Almanac, Overhead
+  * Frosted glass background, active tab label turns blue
+  * Constrained to max-width 980px on desktop
+
+* **Header Redesign**
+  * Simplified to Wyman Cove title with Marblehead map icon
+  * Three SVG icon buttons: alert badge, refresh, settings
+  * Transparent/borderless header
+
+* **Settings Modal Sheet**
+  * iOS-style slide-up modal replaces inline settings
+  * Contains theme toggle, pressure units, version, changelog, data pipeline
+
+* **Alert System Overhaul**
+  * Alert badge with pulsing red dot replaces inline alert bar
+  * Tapping badge opens alert modal sheet
+
+* **Marblehead Map Icon**
+  * CartoDB map tile of Marblehead peninsula as app icon
+  * Water tinted blue, red dot marks Wyman Cove
+
+* **Sun Arc Fix**
+  * Sun position dot tracks time progress through day
+  * Uses actual altitude for y-axis
+
+* **Wind Arrow Improvements**
+  * Longer arrow, brighter blue with glow effect
+  * Organic wobble animation with prime-number durations
+
+* **Spacing and Animation**
+  * Tightened container/header padding and grid gap
+  * Animation restart on tab switch
 
 ## v4.26 • 2026-04-11
 * **Moon Phase Rendering**
