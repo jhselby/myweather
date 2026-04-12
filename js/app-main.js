@@ -4166,6 +4166,13 @@
           }
           if (scCorrectedPressure) scCorrectedPressure.textContent = hyp.corrected_pressure_in != null ? hyp.corrected_pressure_in.toFixed(2) : "--";
           
+          const scModelWindSpeed = document.getElementById("scModelWindSpeed");
+          const scBiasWindSpeed = document.getElementById("scBiasWindSpeed");
+          const scCorrectedWindSpeed = document.getElementById("scCorrectedWindSpeed");
+          if (scModelWindSpeed) scModelWindSpeed.textContent = hyp.model_wind_speed != null ? Math.round(hyp.model_wind_speed) + " mph" : "--";
+          if (scBiasWindSpeed) scBiasWindSpeed.textContent = hyp.bias_wind_speed != null ? (hyp.bias_wind_speed >= 0 ? "+" : "") + hyp.bias_wind_speed.toFixed(1) + " mph" : "--";
+          if (scCorrectedWindSpeed) scCorrectedWindSpeed.textContent = hyp.corrected_wind_speed != null ? Math.round(hyp.corrected_wind_speed) + " mph" : "--";
+          
           const scModelGusts = document.getElementById("scModelGusts");
           const scBiasGusts = document.getElementById("scBiasGusts");
           const scCorrectedGusts = document.getElementById("scCorrectedGusts");

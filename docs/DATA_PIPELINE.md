@@ -743,15 +743,18 @@ else if (T >= 80 && RH != null) {
 - **Reason:** Allows flexibility - can change decay strategy without re-running collector
 
 ### Wind Correction Architecture
-- **Backend:** Calculates observed value, MODIFIES hourly arrays with 24h decay blend
-- **Frontend:** Displays pre-blended values directly
-- **Reason:** Wind blend is stable, no need for frontend flexibility
+- **Backend (current hour):** Max-selects from model + KBVY + WU stations (independently for gusts and sustained)
+- **Backend (forecast):** Blends max-selected observed into hourly arrays with 24h linear decay
+- **Hyperlocal:** Stores model vs corrected for Smart Corrections display
+- **Frontend:** Displays pre-blended forecast values directly
+- **Rationale:** User lives in most exposed/windiest location, so max across all sources is a floor, not a ceiling
 
-### Inconsistency: Wind Speed
-- **Collector:** Max-selects observed wind, stores in current, blends into hourly
-- **Hyperlocal:** Calculates weighted average (not used), stores placeholder
-- **Frontend:** Uses hyperlocal placeholder (which is just model copy)
-- **Result:** Frontend gets WRONG wind speed for current hour displays
+### Wind Speed and Gust Architecture (v4.30)
+- **Collector:** Max-selects from model + KBVY + WU stations independently for both sustained and gusts
+- **Collector:** Saves original model values as model_wind_speed and model_wind_gusts before override
+- **Hyperlocal:** Passes through collector max-selected values, calculates bias (corrected - model)
+- **Frontend:** Displays max-selected values with model comparison in Smart Corrections table
+- **Result:** Both sustained and gusts always use highest available reading across all sources
 
 ### Partial Correction: Wet Bulb Forecast
 - **Uses:** Corrected humidity (bias applied in backend)
@@ -772,8 +775,8 @@ else if (T >= 80 && RH != null) {
 | **Temperature** | ✅ Corrected | ✅ Bias applied (frontend) | Weighted bias | None (flat) |
 | **Humidity** | ✅ Corrected | ❌ Raw model | Replacement | N/A |
 | **Pressure** | ✅ Best source | ❌ Raw model | Selection | N/A |
-| **Wind Speed** | ⚠️ Placeholder | ✅ Blended (backend) | Max-select + blend | 24h linear |
-| **Wind Gusts** | ✅ Corrected | ✅ Blended (backend) | Max-select + blend | 24h linear |
+| **Wind Speed** | ✅ Max-selected (model+KBVY+WU) | ✅ Blended (backend) | Independent max-select | 24h linear |
+| **Wind Gusts** | ✅ Max-selected (model+KBVY+WU) | ✅ Blended (backend) | Independent max-select | 24h linear |
 | **Wet Bulb** | ✅ Fully corrected | ⚠️ Partial (humidity only) | Calculated | N/A |
 | **Feels Like** | ✅ Fully corrected | ❌ Raw model | Calculated | N/A |
 
@@ -786,17 +789,16 @@ else if (T >= 80 && RH != null) {
 
 ## BUGS AND IMPROVEMENTS NEEDED
 
-### Bug #1: Wind Speed Current Hour (HIGH PRIORITY)
-**Problem:** `hyp.corrected_wind_speed` is just model copy, not max-selected observed
-**Location:** `weather_collector/processors/hyperlocal.py` line 150
-**Fix:** Should copy from `weather_data["current"]["wind_speed"]` (after max-selection)
-**Impact:** Right Now card shows wrong wind speed, affects feels-like calculation
+### Bug #1: Wind Speed Current Hour — RESOLVED (v4.29)
+**Original concern:** `hyp.corrected_wind_speed` appeared to be a model copy
+**Actual behavior:** Collector max-selects wind (KBVY, WU, model) and writes to `weather_data["current"]["wind_speed"]` BEFORE `build_hyperlocal_data` runs. So `current.get("wind_speed")` already returns the corrected value.
+**Fix:** Variable renamed from `model_w` to `observed_w`, comment updated to clarify.
+**Status:** Not a bug — execution order was correct all along.
 
-### Bug #2: Wind Gust Constraint Uses Wrong Value
-**Problem:** Lines 192-195 check `corrected_gust >= corrected_wind_speed`
-**Issue:** `corrected_wind_speed` is model copy, not actual corrected value
-**Fix:** Should compare against max-selected wind from current
-**Impact:** Constraint may not work as intended
+### Bug #2: Wind Gust Constraint — RESOLVED (v4.29)
+**Original concern:** Constraint compared against model copy
+**Actual behavior:** Same as Bug #1 — `corrected_wind_speed` was already max-selected.
+**Status:** Constraint works as intended.
 
 ### Improvement #1: Temperature Forecast Decay
 **Current:** Flat bias for all 48 hours
