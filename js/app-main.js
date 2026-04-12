@@ -1151,25 +1151,37 @@
       const light = isLight();
       const tileBg   = light ? "rgba(0,0,0,0.03)"   : "rgba(255,255,255,0.04)";
       const tileBd   = light ? "rgba(0,0,0,0.09)"   : "rgba(255,255,255,0.08)";
-      const dayCol   = light ? "rgba(0,0,0,0.60)"   : "rgba(255,255,255,0.6)";
-      const timeCol  = light ? "rgba(0,0,0,0.38)"   : "rgba(255,255,255,0.35)";
-      const barBg    = light ? "rgba(0,0,0,0.08)"   : "rgba(255,255,255,0.1)";
-      const detCol   = light ? "rgba(0,0,0,0.40)"   : "rgba(255,255,255,0.4)";
-      const noteCol  = light ? "rgba(0,0,0,0.35)"   : "rgba(255,255,255,0.3)";
+      const dayCol   = light ? "rgba(0,0,0,0.75)"   : "rgba(255,255,255,0.6)";
+      const timeCol  = light ? "rgba(0,0,0,0.50)"   : "rgba(255,255,255,0.35)";
+      const barBg    = light ? "rgba(0,0,0,0.10)"   : "rgba(255,255,255,0.1)";
+      const detCol   = light ? "rgba(0,0,0,0.55)"   : "rgba(255,255,255,0.4)";
+      const noteCol  = light ? "rgba(0,0,0,0.50)"   : "rgba(255,255,255,0.3)";
+
+      // Adjust score colors for light mode readability
+      function adjustScoreColor(color) {
+        if (!light) return color;
+        if (color.includes("120,120,120")) return "rgba(0,0,0,0.7)";     // Poor: darker gray
+        if (color.includes("180,180,180")) return "rgba(60,60,60,0.9)";     // Fair: darker gray
+        if (color.includes("255,220,100")) return "rgba(180,140,0,0.95)";      // Good: dark gold
+        if (color.includes("255,200,60"))  return "rgba(180,130,0,0.95)";      // Very Good: dark gold
+        if (color.includes("255,160,40"))  return "rgba(200,100,0,0.95)";      // Spectacular: dark orange
+        return color;
+      }
 
       let html = `<div class="scroll-day-grid" style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:12px;">`;
       for (const s of scores) {
         const barW = Math.round(s.score * 100);
+        const scoreCol = adjustScoreColor(s.color);
         const noteHtml = s.note ? `<div style="font-size:0.72rem;color:${noteCol};margin-top:4px;">${s.note}</div>` : '';
         html += `
           <div style="background:${tileBg};border:1px solid ${tileBd};
                       border-radius:10px;padding:16px 12px;text-align:center;">
             <div style="font-size:0.9rem;font-weight:800;color:${dayCol};margin-bottom:6px;">${s.dayLabel}</div>
             <div style="font-size:2rem;margin-bottom:6px;">${s.emoji}</div>
-            <div style="font-size:1.05rem;font-weight:900;color:${s.color};margin-bottom:6px;">${s.label} <span style="font-size:0.8rem;opacity:0.7;">(${Math.round(s.score)})</span></div>
+            <div style="font-size:1.05rem;font-weight:900;color:${scoreCol};margin-bottom:6px;">${s.label} <span style="font-size:0.8rem;opacity:0.7;">(${Math.round(s.score)})</span></div>
             <div style="font-size:0.8rem;color:${timeCol};margin-bottom:10px;">Sunset ${s.timeLabel}</div>
             <div style="height:5px;background:${barBg};border-radius:3px;overflow:hidden;margin-bottom:10px;">
-              <div style="height:100%;width:${barW}%;background:${s.color};border-radius:3px;transition:width 0.4s;"></div>
+              <div style="height:100%;width:${barW}%;background:${scoreCol};border-radius:3px;transition:width 0.4s;"></div>
             </div>
             <div style="font-size:0.78rem;color:${detCol};line-height:2;">
               <span data-tip="Low clouds at 10mi (local horizon). High values block view.">Low ${s.avgLow}%</span> ·
@@ -1809,19 +1821,26 @@
       const light = isLight();
       const dTileBg    = light ? "rgba(0,0,0,0.02)"   : "rgba(255,255,255,0.03)";
       const dTileBd    = light ? "rgba(0,0,0,0.08)"   : "rgba(255,255,255,0.08)";
-      const dDayLbl    = light ? "rgba(0,0,0,0.55)"   : "rgba(255,255,255,0.45)";
-      const dDateLbl   = light ? "rgba(0,0,0,0.38)"   : "rgba(255,255,255,0.3)";
-      const dDryTxt    = light ? "rgba(0,0,0,0.30)"   : "rgba(255,255,255,0.3)";
+      const dDayLbl    = light ? "rgba(0,0,0,0.75)"   : "rgba(255,255,255,0.45)";
+      const dDateLbl   = light ? "rgba(0,0,0,0.50)"   : "rgba(255,255,255,0.3)";
+      const dDryTxt    = light ? "rgba(0,0,0,0.45)"   : "rgba(255,255,255,0.3)";
       const dWinBg     = light ? "rgba(0,0,0,0.03)"   : "rgba(255,255,255,0.04)";
-      const dTimeTxt   = light ? "rgba(0,0,0,0.82)"   : "rgba(255,255,255,0.85)";
-      const dDurTxt    = light ? "rgba(0,0,0,0.38)"   : "rgba(255,255,255,0.35)";
-      const dPeakTxt   = light ? "rgba(0,0,0,0.35)"   : "rgba(255,255,255,0.3)";
-      const dBarBg     = light ? "rgba(0,0,0,0.08)"   : "rgba(255,255,255,0.1)";
-      const dDetailTxt = light ? "rgba(0,0,0,0.52)"   : "rgba(255,255,255,0.5)";
-      const dFooter    = light ? "rgba(0,0,0,0.28)"   : "rgba(255,255,255,0.22)";
+      const dTimeTxt   = light ? "rgba(0,0,0,0.85)"   : "rgba(255,255,255,0.85)";
+      const dDurTxt    = light ? "rgba(0,0,0,0.50)"   : "rgba(255,255,255,0.35)";
+      const dPeakTxt   = light ? "rgba(0,0,0,0.45)"   : "rgba(255,255,255,0.3)";
+      const dBarBg     = light ? "rgba(0,0,0,0.10)"   : "rgba(255,255,255,0.1)";
+      const dDetailTxt = light ? "rgba(0,0,0,0.60)"   : "rgba(255,255,255,0.5)";
+      const dFooter    = light ? "rgba(0,0,0,0.45)"   : "rgba(255,255,255,0.22)";
 
       // Render
       function scoreLabel(s) {
+        if (light) {
+          if (s >= 0.75) return { label:"Great day",  color:"rgba(20,140,50,0.95)",   emoji:"🟢" };
+          if (s >= 0.58) return { label:"Good day",   color:"rgba(70,140,20,0.95)",   emoji:"🟡" };
+          if (s >= 0.38) return { label:"Marginal",   color:"rgba(180,120,0,0.95)",   emoji:"🟠" };
+          if (s >= 0.20) return { label:"Poor",       color:"rgba(180,60,30,0.9)",    emoji:"🔴" };
+          return            { label:"Stay inside", color:"rgba(150,40,40,0.9)",    emoji:"❌" };
+        }
         if (s >= 0.75) return { label:"Great day",  color:"rgba(80,220,120,0.95)",  emoji:"🟢" };
         if (s >= 0.58) return { label:"Good day",   color:"rgba(160,220,80,0.9)",   emoji:"🟡" };
         if (s >= 0.38) return { label:"Marginal",   color:"rgba(255,190,50,0.85)",  emoji:"🟠" };
@@ -2266,12 +2285,12 @@
 
         row.innerHTML = `
           <div class="label" style="display:flex;align-items:center;gap:8px;">
-            <span style="font-weight:900;min-width:32px;">${d.day}</span>
-            <span style="font-size:0.85rem;color:rgba(255,255,255,0.35);">${d.dateNum}</span>
-            <span>${d.emoji}</span>
-            ${d.pop > 10 ? `<span style="font-size:0.75rem;color:rgba(140,180,255,0.7);font-weight:800;">${d.pop}%</span>` : ""}
+            <span style="font-weight:600;min-width:32px;">${d.day}</span>
+            <span style="font-size:0.82rem;color:rgba(255,255,255,0.35);">${d.dateNum}</span>
+            <span style="font-size:16px;">${d.emoji}</span>
+            ${d.pop > 10 ? `<span style="font-size:0.75rem;color:rgba(140,180,255,0.7);font-weight:600;">${d.pop}%</span>` : ""}
           </div>
-          <div class="value">${d.high}° / ${d.low}°</div>`;
+          <div class="value">${d.high}° <span class="temp-lo" style="opacity:0.4;font-weight:400;">/ ${d.low}°</span></div>`;
 
         el.appendChild(row);
       }
@@ -3547,40 +3566,21 @@
       
       forecasts.forEach((p, i) => {
         const row = document.createElement("div");
-        row.style.cssText =
-          "display:grid;grid-template-columns:130px 1fr;" +
-          "gap:0;border-bottom:1px solid rgba(255,255,255,0.06);" +
-          "padding:10px 0;";
+        row.className = "detailed-period";
 
-        // Left: period name + temp + wind (extract wind from text if present)
-        const left = document.createElement("div");
-        left.style.cssText = "padding-right:16px;";
-        
         // Use wind data from forecast object
         let windText = p.wind_full || "";
-        
-        left.innerHTML =
-          '<div style="font-weight:900;font-size:0.9rem;color:rgba(255,255,255,0.9);">' +
-            p.period_name + '</div>' +
-          '<div style="font-size:1.4rem;font-weight:900;color:rgba(255,255,255,0.85);margin:2px 0;">' +
-            p.temperature + "\u00b0F</div>" +
-          '<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);font-weight:700;">' +
-            windText + '</div>';
 
-        // Right: forecast text (no need for bold short forecast since we already have full text)
-        const right = document.createElement("div");
-        right.innerHTML =
-          '<div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">' +
-            p.text + '</div>';
+        row.innerHTML =
+          '<div class="detailed-period-header">' +
+            '<span class="detailed-period-name">' + p.period_name + '</span>' +
+            '<span class="detailed-period-temp">' + p.temperature + '\u00b0F</span>' +
+          '</div>' +
+          (windText ? '<div class="detailed-period-wind">' + windText + '</div>' : '') +
+          '<div class="detailed-period-narrative">' + p.text + '</div>';
 
-        row.appendChild(left);
-        row.appendChild(right);
         list.appendChild(row);
       });
-
-      // Last row — remove bottom border
-      const rows = list.querySelectorAll("div[style*='border-bottom']");
-      if (rows.length > 0) rows[rows.length-1].style.borderBottom = "none";
     }
     function renderNWSForecast(periods) {
       _selectedForecastDate = null;  // clear any day filter on fresh data load
