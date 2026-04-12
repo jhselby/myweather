@@ -173,6 +173,7 @@
       display: grid;
       grid-template-columns: repeat(12, 1fr);
       gap: 12px;
+      grid-auto-rows: 192px;
     }
 
     .card{
@@ -188,7 +189,7 @@
     }
 
     .card.col-12{ grid-column: span 12; }
-    .card.col-6{ grid-column: span 6; }
+    .card.col-6{ grid-column: span 6; overflow: hidden; }
 
     /* Temperature-based tile backgrounds - only when collapsed */
     .tile-temp-cold:not(.card-expanded) {
