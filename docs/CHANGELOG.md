@@ -1,3 +1,9 @@
+## v4.31 • 2026-04-11
+* **Tide Animation Fix**
+  * Tide water level now replays correctly when switching to Almanac tab
+  * Animation starts from previous tide height (high or low) and animates to current level
+  * Fixed stale animation when tab was hidden during initial data load
+
 ## v4.29 • 2026-04-11
 * **Swipe Navigation**
   * Swipe left/right to page through tabs (Weather, Hyperlocal, Almanac, Overhead)
