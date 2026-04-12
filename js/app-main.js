@@ -207,6 +207,18 @@
         });
       }
 
+      // Re-trigger tide animation when switching to Almanac
+      if (which === "almanac") {
+        const tw = document.getElementById("tideWater");
+        if (tw && tw._prevPercent != null && tw._targetPercent != null) {
+          tw.style.transition = "none";
+          tw.style.height = Math.max(12, Math.min(95, tw._prevPercent)) + "%";
+          void tw.offsetHeight;
+          tw.style.transition = "height 2.5s ease-in-out";
+          tw.style.height = Math.max(12, Math.min(95, tw._targetPercent)) + "%";
+        }
+      }
+
       // Scroll so tab content is visible below sticky header
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -2062,6 +2074,8 @@
             
             // Set initial height based on direction
             const isRising = nextHeight > prevHeight;
+            tideWaterEl._prevPercent = prevPercent;
+            tideWaterEl._targetPercent = currentPercent;
             tideWaterEl.style.height = `${prevPercent}%`;
             
             // Animate to current height after a brief delay
