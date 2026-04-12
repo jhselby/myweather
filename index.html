@@ -1209,7 +1209,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=252eb6bf"></script>
+  <script src="js/app-main.js?v=7967d685"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1297,7 +1297,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.32</span>
+            <span class="version-pill" id="appVersion">v4.33</span>
           </div>
         </div>
         <!-- Changelog -->
@@ -1315,6 +1315,16 @@
             📊 Data Pipeline Reference ▾
           </div>
           <div id="dataPipelineBody" style="display:none;font-size:0.8rem;line-height:1.7;color:var(--muted);max-height:400px;overflow-y:auto;margin-top:8px;"></div>
+        </div>
+        <!-- Data Sources -->
+        <div class="modal-setting-group">
+          <div id="sourcesToggle" onclick="document.getElementById('sourcesBody').style.display=document.getElementById('sourcesBody').style.display==='none'?'block':'none'"
+               style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
+            Data Sources ▾
+          </div>
+          <div id="sourcesBody" style="display:none;margin-top:8px;">
+            <div id="sourcesTableModal"></div>
+          </div>
         </div>
         <!-- Data timestamps -->
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">

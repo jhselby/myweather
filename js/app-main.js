@@ -1545,7 +1545,9 @@
 
       // Build sources table
       const table = document.getElementById("sourcesTable");
-      if (!table) return;
+      const tableModal = document.getElementById("sourcesTableModal");
+      if (!table && !tableModal) return;
+      const renderTarget = table || tableModal;
       const pwsName = pwsStale ? "PWS (cached)" : "PWS (live)";
 
       // Sources rendered as flex rows — works on any screen width
@@ -1600,6 +1602,7 @@
             <span style="${descStyle}">${s.desc}</span>
           </div>`).join("")}
       `;
+      if (tableModal) tableModal.innerHTML = renderTarget.innerHTML;
     }
 
     let tideChartObj = null;
