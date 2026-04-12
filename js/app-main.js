@@ -4513,9 +4513,10 @@
         const pressureColType = "";
         document.getElementById("pressureNow").textContent = `${pressure} ${trendShort}${pressureChange}${pressureColType}`.trim();
         
-        // Humidity now
+        // Humidity now (use corrected if available)
+        const displayHumidity = hyp.corrected_humidity ?? cur.humidity;
         document.getElementById("humidityNow").textContent = 
-          cur.humidity != null ? `${Math.round(cur.humidity)}%` : "--%";
+          displayHumidity != null ? `${Math.round(displayHumidity)}%` : "--%";
         
         // Visibility now
         document.getElementById("visibilityNow").textContent = 
