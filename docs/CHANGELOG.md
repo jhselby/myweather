@@ -1,3 +1,8 @@
+## v4.33 • 2026-04-12
+* **Sources moved to Settings Modal**
+  * Data Sources and Status now accessible from settings gear icon
+  * Collapsible section showing all live data sources and station details
+
 ## v4.32 • 2026-04-12
 * **Station Network Expansion**
   * Expanded from 15 to 36 WU stations (30 responding, 13 within 1 mile)
