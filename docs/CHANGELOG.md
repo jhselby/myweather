@@ -1,3 +1,18 @@
+## v4.28 • 2026-04-11
+* **Uniform Tile Heights**
+  * Added grid-auto-rows: 192px for consistent tile sizing across all tabs
+  * All col-6 tiles now identical height regardless of content
+  * Added overflow: hidden on col-6 cards to clip overflowing content
+
+* **Content Scaling for Smaller Tiles**
+  * Hyperlocal: Gust/Wind impact numbers 4rem to 3rem, Sea Breeze/Fog 3.5rem to 2.8rem
+  * Almanac: Sun status 28px to 18px, Moon 28px to 22px, date/tide/planet text 20px to 16px
+  * Ocean card font 20px to 15px with tighter padding
+  * Sun/Frost/Dock/Sunset emoji sizes reduced proportionally
+
+* **Wind Tile Fix**
+  * Compass SVG shrunk 160px to 120px, padding-bottom 40px to 8px
+
 ## v4.26 • 2026-04-11
 * **Moon Phase Rendering**
   * Replaced emoji moon with canvas-rendered moon phase (scanline algorithm)
