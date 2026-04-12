@@ -1,3 +1,13 @@
+## v4.32 • 2026-04-12
+* **Station Network Expansion**
+  * Expanded from 15 to 36 WU stations (30 responding, 13 within 1 mile)
+  * Removed KMAMARBL17 (consistently failing)
+  * Added 22 new stations discovered via API scan
+  * Collector run time: 9.1s (only 1s slower than 15 stations)
+
+* **Humidity Display Fix**
+  * Current humidity now uses corrected value from hyperlocal
+
 ## v4.31 • 2026-04-11
 * **Tide Animation Fix**
   * Tide water level now replays correctly when switching to Almanac tab
