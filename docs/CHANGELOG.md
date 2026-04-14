@@ -1,3 +1,31 @@
+## v4.36 • 2026-04-14
+* **10-Day Forecast**
+  * Today and tomorrow high/low now use corrected hourly temperatures (bias-adjusted) instead of raw NWS model values
+
+## v4.35 • 2026-04-14
+* **UI / Native App Polish**
+  * Header now fixed with frosted glass effect matching footer (backdrop blur, same opacity)
+  * Storm mode banner removed from header — storm alerts consolidated into alert badge modal
+  * Alert modal renamed "Active Alerts" — shows storm flags + NWS alerts in one place
+  * Alert badge now activates for storm conditions (2+ flags) as well as NWS alerts
+  * Settings icon replaced with standard gear (was brightness/sun icon)
+  * Swipe-down to dismiss settings drawer (desktop mouse drag also supported)
+  * Settings close (✕) button removed — use swipe or tap scrim to dismiss
+
+* **Settings Cleanup**
+  * Pressure unit toggle removed — hardcoded to inHg (standard US consumer default)
+
+* **Tooltips Removed**
+  * All data-tip tooltips removed from Weather, Almanac, Hyperlocal, and Overhead tabs
+
+* **Sources / Data Display**
+  * 📡 emoji added to Data Sources section in settings
+  * Offline stations now display "---" instead of "undefined°F, undefinedmph"
+
+* **Corrections Card**
+  * Confidence level removed — station spread displayed instead
+  * Bullet separator removed from station count line
+
 ## v4.34 • 2026-04-12
 * **Card Beautification Pass**
   * Gradient backgrounds now persist into expanded card state (all tabs)

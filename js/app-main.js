@@ -2213,7 +2213,7 @@
 
     let _selectedForecastDate = null;
 
-    function renderForecast(forecastText) {
+    function renderForecast(forecastText, hourlyTimes, hourlyTemps, tempBias) {
       const el = document.getElementById("forecastList");
       if (!el || !Array.isArray(forecastText)) return;
       el.innerHTML = "";
@@ -2221,6 +2221,28 @@
       // Group forecast_text into 10 days (combine day/night periods into single row)
       const days = [];
       const seenDates = new Set();
+
+      // Precompute corrected high/low for today and tomorrow from hourly data
+      const _correctedDays = {};
+      if (hourlyTimes && hourlyTemps && tempBias != null) {
+        const _now = new Date();
+        const _pad = n => String(n).padStart(2, '0');
+        const _dateStr = d => `${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`;
+        const _tomorrow = new Date(_now); _tomorrow.setDate(_tomorrow.getDate() + 1);
+        const _targets = new Set([_dateStr(_now), _dateStr(_tomorrow)]);
+        hourlyTimes.forEach((t, i) => {
+          const dStr = t.slice(0, 10);
+          if (!_targets.has(dStr)) return;
+          const temp = hourlyTemps[i];
+          if (temp == null) return;
+          const corrected = temp + tempBias;
+          if (!_correctedDays[dStr]) _correctedDays[dStr] = { high: corrected, low: corrected };
+          else {
+            _correctedDays[dStr].high = Math.max(_correctedDays[dStr].high, corrected);
+            _correctedDays[dStr].low  = Math.min(_correctedDays[dStr].low,  corrected);
+          }
+        });
+      }
       
       for (const period of forecastText) {
         const dateStr = period.date;
@@ -2235,8 +2257,13 @@
         // For simple dailies, just use the single period
         const isSimple = period.is_simple_daily;
         
-        const high = isSimple ? period.temperature : (dayPeriod?.temperature || period.temperature);
-        const low = isSimple ? parseInt((period.text || "").match(/low (\d+)/)?.[1] || period.temperature) : (nightPeriod?.temperature || period.temperature);
+        let high = isSimple ? period.temperature : (dayPeriod?.temperature || period.temperature);
+        let low = isSimple ? parseInt((period.text || "").match(/low (\d+)/)?.[1] || period.temperature) : (nightPeriod?.temperature || period.temperature);
+        // Use corrected hourly high/low for today and tomorrow
+        if (_correctedDays[dateStr]) {
+          high = Math.round(_correctedDays[dateStr].high);
+          low  = Math.round(_correctedDays[dateStr].low);
+        }
         
         // Extract precip probability
         const combinedText = isSimple ? period.text : ((dayPeriod?.text || "") + " " + (nightPeriod?.text || ""));
@@ -4778,7 +4805,9 @@
 
 
         // Forecast
-        renderForecast(data.forecast_text);
+        const _fcHourly = data.hourly || {};
+        const _fcBias = (data.hyperlocal || {}).weighted_bias ?? 0;
+        renderForecast(data.forecast_text, _fcHourly.times || [], _fcHourly.temperature || [], _fcBias);
 
         // 48h charts - start from current hour
         const hourly = data.hourly || {};
