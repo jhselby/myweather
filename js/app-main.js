@@ -1650,7 +1650,9 @@
       const cheights= curve.heights || [];
       const hourly  = data.hourly   || {};
       const htimes  = hourly.times  || [];
-      const htemps  = hourly.temperature || [];
+      const _rawHtemps = hourly.temperature || [];
+      const _dockBias = (data.hyperlocal || {}).weighted_bias ?? 0;
+      const htemps  = _rawHtemps.map(t => t != null ? t + _dockBias : null);
       const hwind   = hourly.wind_speed  || [];
       const hwinddir= hourly.wind_direction || [];
       const hprecip = hourly.precipitation_probability || [];
@@ -2440,7 +2442,7 @@
       const cur = data.current || {};
       if (cur.wind_gusts != null && cur.wind_direction != null) {
         const exposure = getExposureFactor(cur.wind_direction);
-        const gustScore = Math.round(worryScore(cur.wind_gusts, exposure));
+        const gustScore = Math.round(worryScore(hyp.corrected_wind_gusts ?? cur.wind_gusts, exposure));
         const gustLevel = worryLevel(gustScore);
         const gustCurEl = document.getElementById("gustCurrentScore");
         if (gustCurEl) gustCurEl.innerHTML = `<span class="badge ${gustLevel.cls}">${gustScore}</span> (${gustLevel.label})`;
@@ -2547,7 +2549,7 @@
           <div>
             <div style="opacity:0.7;font-size:0.85rem;margin-bottom:4px;">Temp Differential</div>
             <div style="font-size:1.3rem;">${scores.temp || 0}%</div>
-            <div style="opacity:0.6;font-size:0.8rem;margin-top:2px;">Land: ${cur.temperature?.toFixed(1) || "--"}°F | Water: ${buoy.water_temp_f?.toFixed(1) || "--"}°F</div>
+            <div style="opacity:0.6;font-size:0.8rem;margin-top:2px;">Land: ${(hyp.corrected_temp ?? cur.temperature)?.toFixed(1) || "--"}°F | Water: ${buoy.water_temp_f?.toFixed(1) || "--"}°F</div>
           </div>
           <div>
             <div style="opacity:0.7;font-size:0.85rem;margin-bottom:4px;">Wind Speed</div>
@@ -2612,9 +2614,17 @@
       if (probEl) probEl.textContent = fogProb != null ? `${fogProb}%` : "--";
       
       // Calculate the inputs and effects for the breakdown table
-      const temp = cur.temperature;
-      const dewpt = cur.dew_point;
-      const humidity = cur.humidity;
+      const temp = hyp.corrected_temp ?? cur.temperature;
+      const humidity = hyp.corrected_humidity ?? cur.humidity;
+      const _corrDewPt = (hyp.corrected_temp != null && hyp.corrected_humidity != null)
+        ? (function() {
+            const Tc = (hyp.corrected_temp - 32) * 5/9;
+            const RH = hyp.corrected_humidity;
+            const gamma = Math.log(RH/100) + (17.625*Tc)/(243.04+Tc);
+            return gamma * 243.04 / (17.625 - gamma) * 9/5 + 32;
+          })()
+        : cur.dew_point;
+      const dewpt = _corrDewPt;
       const hyp = data.hyperlocal || {};
       const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
       
@@ -4534,7 +4544,7 @@
         }
         
         // Pressure now (with trend inline)
-        const pressure = cur.pressure != null ? hpaToInhg(cur.pressure) + ' inHg' : "--";
+        const pressure = hyp.corrected_pressure_in != null ? hyp.corrected_pressure_in + ' inHg' : (cur.pressure != null ? hpaToInhg(cur.pressure) + ' inHg' : "--");
         const trend = der.pressure_trend || kbos.tendency_label || "";
         const trendShort = der.best_pressure_tend != null 
           ? (der.best_pressure_tend > 0.5 ? "↑" : der.best_pressure_tend < -0.5 ? "↓" : "") 
@@ -4552,12 +4562,20 @@
         document.getElementById("visibilityNow").textContent = 
           cur.visibility != null ? `${(cur.visibility / 1609.34).toFixed(1)} mi` : "-- mi";
 
-        document.getElementById("dewPointNow").textContent = cur.dew_point != null ? `${Math.round(cur.dew_point)}°F` : "--°F";
+        const _cdp = (hyp.corrected_temp != null && hyp.corrected_humidity != null)
+          ? (function() {
+              const Tc = (hyp.corrected_temp - 32) * 5/9;
+              const RH = hyp.corrected_humidity;
+              const gamma = Math.log(RH/100) + (17.625*Tc)/(243.04+Tc);
+              return gamma * 243.04 / (17.625 - gamma) * 9/5 + 32;
+            })()
+          : cur.dew_point;
+        document.getElementById("dewPointNow").textContent = _cdp != null ? `${Math.round(_cdp)}°F` : "--°F";
         
         // Dewpoint depression
         const dewDepEl = document.getElementById("dewPointDepression");
-        if (cur.dew_point != null && cur.temperature != null) {
-          const depression = cur.temperature - cur.dew_point;
+        if (_cdp != null) {
+          const depression = (hyp.corrected_temp ?? cur.temperature) - _cdp;
           dewDepEl.textContent = ` (${depression.toFixed(1)}° spread)`;
         } else {
           dewDepEl.textContent = "";
@@ -4906,10 +4924,10 @@
         const pressureTrendEl= document.getElementById("pressureTrendWind");
         if (windNowEl) windNowEl.textContent =
           (cur.wind_speed != null && cur.wind_direction != null)
-            ? `${Math.round(cur.wind_speed)} mph • ${toCompass(cur.wind_direction)}`
+            ? `${Math.round(hyp.corrected_wind_speed ?? cur.wind_speed)} mph • ${toCompass(cur.wind_direction)}`
             : "--";
-        if (windGustsEl)     windGustsEl.textContent     = cur.wind_gusts != null ? `${Math.round(cur.wind_gusts)} mph` : "--";
-        if (pressureNowEl)   pressureNowEl.textContent   = cur.pressure  != null ? fmtPressure(cur.pressure) : "--";
+        if (windGustsEl)     windGustsEl.textContent     = cur.wind_gusts != null ? `${Math.round(hyp.corrected_wind_gusts ?? cur.wind_gusts)} mph` : "--";
+        if (pressureNowEl)   pressureNowEl.textContent   = hyp.corrected_pressure_in != null ? hyp.corrected_pressure_in + ' inHg' : (cur.pressure != null ? fmtPressure(cur.pressure) : "--");
         if (pressureTrendEl) {
           const trend3h = der.pressure_trend_hpa_3h != null 
           ? `${der.pressure_trend_hpa_3h > 0 ? '+' : ''}${der.pressure_trend_hpa_3h.toFixed(1)} hPa/3h`
@@ -4923,7 +4941,7 @@
         
         if (cur.wind_speed != null && cur.wind_direction != null) {
           const exposure = getExposureFactor(cur.wind_direction);
-          const sustainedScore = Math.round(worryScore(cur.wind_speed, exposure));
+          const sustainedScore = Math.round(worryScore(hyp.corrected_wind_speed ?? cur.wind_speed, exposure));
           const sustainedLevel = worryLevel(sustainedScore);
           if (sustainedImpactEl) {
             sustainedImpactEl.innerHTML = `${sustainedScore} <span style="opacity:0.6;font-size:0.85rem;">(${sustainedLevel.label})</span>`;
@@ -4934,7 +4952,7 @@
         
         if (cur.wind_gusts != null && cur.wind_direction != null) {
           const exposure = getExposureFactor(cur.wind_direction);
-          const gustScore = Math.round(worryScore(cur.wind_gusts, exposure));
+          const gustScore = Math.round(worryScore(hyp.corrected_wind_gusts ?? cur.wind_gusts, exposure));
           const gustLevel = worryLevel(gustScore);
           if (gustImpactEl) {
             gustImpactEl.innerHTML = `${gustScore} <span style="opacity:0.6;font-size:0.85rem;">(${gustLevel.label})</span>`;
@@ -5188,6 +5206,23 @@ function closeSettingsModal() {
 
 // === Alert Modal ===
 function openAlertModal() {
+  const sheet = document.querySelector('#alertModal .modal-sheet');
+  if (sheet && !sheet._swipeInit) {
+    sheet._swipeInit = true;
+    let startY = 0, isDragging = false;
+    const onTouchStart = e => { startY = e.touches[0].clientY; isDragging = true; sheet.style.transition = 'none'; };
+    const onTouchMove = e => { if (!isDragging) return; const dy = e.touches[0].clientY - startY; if (dy > 0) sheet.style.transform = `translateY(${dy}px)`; };
+    const onTouchEnd = e => { isDragging = false; const dy = e.changedTouches[0].clientY - startY; sheet.style.transition = ''; if (dy > 80) closeAlertModal(); else sheet.style.transform = ''; };
+    const onMouseDown = e => { startY = e.clientY; isDragging = true; sheet.style.transition = 'none'; sheet.style.userSelect = 'none'; };
+    const onMouseMove = e => { if (!isDragging) return; const dy = e.clientY - startY; if (dy > 0) sheet.style.transform = `translateY(${dy}px)`; };
+    const onMouseUp = e => { if (!isDragging) return; isDragging = false; sheet.style.transition = ''; sheet.style.userSelect = ''; const dy = e.clientY - startY; if (dy > 80) closeAlertModal(); else sheet.style.transform = ''; };
+    sheet.addEventListener('touchstart', onTouchStart, { passive: true });
+    sheet.addEventListener('touchmove', onTouchMove, { passive: true });
+    sheet.addEventListener('touchend', onTouchEnd, { passive: true });
+    sheet.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
   const container = document.getElementById('alertsContainer');
   const modalBody = document.getElementById('alertModalBody');
   if (!modalBody) return;
@@ -5225,6 +5260,8 @@ function openAlertModal() {
   document.body.style.overflow = 'hidden';
 }
 function closeAlertModal() {
+  const sheet = document.querySelector('#alertModal .modal-sheet');
+  if (sheet) sheet.style.transform = '';
   document.getElementById('alertModal').style.display = 'none';
   document.body.style.overflow = '';
 }

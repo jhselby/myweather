@@ -1,3 +1,18 @@
+## v4.38 • 2026-04-14
+* **Corrected Values Audit — Use Corrections Everywhere**
+  * Fog detail breakdown now uses corrected temp, humidity, and calculated dew point (Magnus formula)
+  * Dew point display and depression spread calculated from corrected temp + humidity
+  * Gust impact scores use corrected wind gusts everywhere (was using raw model)
+  * Sustained wind scores use corrected wind speed in collapsed wind tile
+  * Wind tile collapsed preview shows corrected wind speed and gusts
+  * Pressure display uses corrected pressure (hyp.corrected_pressure_in) in Right Now and Wind tile
+  * Sea breeze detail land temp shows corrected temperature
+  * Dock day hourly temp scoring applies weighted bias to raw hourly temps
+
+* **Alert Modal**
+  * Swipe-down to dismiss (touch and mouse drag)
+  * Close (✕) button removed — use swipe or tap scrim to dismiss
+
 ## v4.37 • 2026-04-14
 * **Forecast Temperature Corrections**
   * Today and tomorrow high/low in expanded 10-day card now use corrected hourly temperatures
