@@ -1,3 +1,11 @@
+## v4.39 • 2026-04-14
+* **Tides Card Redesign**
+  * Expanded view replaced with 3-column calendar layout (Today / Tomorrow / next day)
+  * High tides highlighted in blue, low tides muted — clear visual hierarchy
+  * Next tide marked with ▶ and blue highlight border
+  * Tide chart axis labels and grid now theme-aware (dark and light mode)
+  * Collector now fetches 3 days / 12 events (was 2 days / 8 events)
+
 ## v4.38 • 2026-04-14
 * **Corrected Values Audit — Use Corrections Everywhere**
   * Fog detail breakdown now uses corrected temp, humidity, and calculated dew point (Magnus formula)

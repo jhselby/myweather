@@ -1970,72 +1970,93 @@
       }
       
 
-      // Group by date, cap at 4 per day, total 8 max
+      // Build calendar-style 3-column layout (one column per day)
+      const todayISO = new Date().toISOString().split("T")[0];
+      const tmrw = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+      // Group tides by date, up to 3 days, 4 tides per day
       const byDate = {};
-      let total = 0;
+      let tideIdx = 0;
       tides.forEach(t => {
-        if (total >= 8) return;
         const d = t.date || todayStr;
         if (!byDate[d]) byDate[d] = [];
-        if (byDate[d].length >= 4) return;
-        byDate[d].push(t);
-        total++;
+        if (byDate[d].length < 4) { byDate[d].push({ ...t, globalIdx: tideIdx }); }
+        tideIdx++;
       });
+      const dateKeys = Object.keys(byDate).sort().slice(0, 3);
 
-      const todayISO = new Date().toISOString().split("T")[0];
-      const tmrw  = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+      // Helper: format time 24h -> 12h
+      const fmt12 = time => {
+        if (!time || !time.includes(":")) return time || "--";
+        const [h, m] = time.split(":").map(Number);
+        const period = h >= 12 ? "PM" : "AM";
+        const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+        return `${h12}:${m.toString().padStart(2,"0")} ${period}`;
+      };
 
-      let tideIdx = 0;
-      Object.keys(byDate).sort().forEach(dateKey => {
-        const label = dateKey === todayISO ? "Today" :
-                      dateKey === tmrw  ? "Tomorrow" :
-                      new Date(dateKey + "T12:00:00").toLocaleDateString("en-US",
-                        { weekday:"long", month:"short", day:"numeric" });
+      // Day label
+      const dayLabel = dk =>
+        dk === todayISO ? "Today" :
+        dk === tmrw ? "Tomorrow" :
+        new Date(dk + "T12:00:00").toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
 
+      // Calendar container
+      const cal = document.createElement("div");
+      cal.style.cssText = "display:grid;grid-template-columns:repeat(" + dateKeys.length + ",1fr);gap:10px;margin-bottom:12px;";
+
+      dateKeys.forEach(dk => {
+        const col = document.createElement("div");
+        col.style.cssText = "display:flex;flex-direction:column;gap:0;";
+
+        // Day header
         const hdr = document.createElement("div");
-        hdr.style.cssText = "font-size:0.8rem;font-weight:900;color:rgba(255,255,255,0.45);" +
-                            "letter-spacing:0.8px;text-transform:uppercase;margin:12px 0 6px;";
-        hdr.textContent = label;
-        grid.appendChild(hdr);
+        hdr.style.cssText = "font-size:0.72rem;font-weight:900;letter-spacing:0.8px;text-transform:uppercase;" +
+          "color:var(--muted);padding:0 2px 8px;border-bottom:1px solid var(--border);margin-bottom:8px;";
+        hdr.textContent = dayLabel(dk);
+        col.appendChild(hdr);
 
-        const row = document.createElement("div");
-        row.style.cssText = "display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px;"; row.className = "nws-hourly-row";
+        // Tide entries
+        byDate[dk].forEach(t => {
+          const isNext = (t.globalIdx === nextIdx);
+          const isHigh = t.type === "H";
 
-        const dayTiles = byDate[dateKey];
-        dayTiles.forEach(t => {
-          const isNext = (tideIdx === nextIdx);
-          const tile   = document.createElement("div");
-          tile.className = "tide-item";
-          if (isNext) tile.style.cssText =
-            "border:1px solid rgba(100,200,255,0.45);background:rgba(100,200,255,0.08);border-radius:10px;";
-          
-          // Convert 24-hour time to 12-hour with AM/PM
-          let time12hr = t.time;
-          if (t.time && t.time.includes(":")) {
-            const [hours, mins] = t.time.split(":").map(Number);
-            const period = hours >= 12 ? "PM" : "AM";
-            const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
-            time12hr = `${hours12}:${mins.toString().padStart(2, '0')} ${period}`;
-          }
-          
-          tile.innerHTML =
-            '<div class="tide-type">' + (isNext ? "&#9654; " : "") +
-              (t.type === "H" ? "High" : "Low") + '</div>' +
-            '<div class="tide-time">' + time12hr + '</div>' +
-            '<div class="tide-height">' + (t.height ?? "--") + ' ft</div>';
-          row.appendChild(tile);
-          tideIdx++;
+          const entry = document.createElement("div");
+          entry.style.cssText =
+            "display:flex;flex-direction:column;gap:1px;padding:9px 10px;border-radius:12px;margin-bottom:7px;" +
+            (isNext
+              ? "background:rgba(100,200,255,0.12);border:1px solid rgba(100,200,255,0.4);"
+              : "background:var(--card-bg,rgba(255,255,255,0.04));border:1px solid var(--border);");
+
+          // Type row
+          const typeEl = document.createElement("div");
+          typeEl.style.cssText = "display:flex;align-items:center;gap:5px;font-size:0.72rem;font-weight:900;" +
+            "letter-spacing:0.5px;text-transform:uppercase;margin-bottom:3px;" +
+            (isHigh ? (document.body.classList.contains("theme-light") ? "color:#0055aa;" : "color:rgba(100,200,255,0.9);") : "color:var(--muted);");
+          typeEl.innerHTML = (isNext ? "&#9654; " : "") + (isHigh ? "High" : "Low");
+          entry.appendChild(typeEl);
+
+          // Time
+          const timeEl = document.createElement("div");
+          timeEl.style.cssText = "font-size:0.95rem;font-weight:800;color:var(--text);line-height:1.1;";
+          timeEl.textContent = fmt12(t.time);
+          entry.appendChild(timeEl);
+
+          // Height
+          const htEl = document.createElement("div");
+          htEl.style.cssText = "font-size:0.82rem;font-weight:700;" +
+            (isHigh ? (document.body.classList.contains("theme-light") ? "color:#0055aa;" : "color:rgba(100,200,255,0.9);") : "color:var(--muted);");
+          htEl.textContent = (t.height ?? "--") + " ft";
+          entry.appendChild(htEl);
+
+          col.appendChild(entry);
         });
 
-        // Pad empty cells so grid stays 4-column
-        for (let i = dayTiles.length; i < 4; i++) {
-          row.appendChild(document.createElement("div"));
-        }
-
-        grid.appendChild(row);
+        cal.appendChild(col);
       });
 
-      if (note) note.textContent = "Salem Harbor (8442645) \u2014 harmonic predictions. \u25b6 = next tide.";
+      grid.appendChild(cal);
+
+      if (note) note.textContent = "Salem Harbor (8442645) — harmonic predictions. ▶ = next tide.";
       
       // Update collapsed preview with next tide (elements already retrieved at top of function)
       if (nextIdx >= 0 && tides[nextIdx]) {
@@ -2193,20 +2214,20 @@
           scales: {
             x: {
               ticks: {
-                color: "rgba(255,255,255,0.45)",
+                color: document.body.classList.contains("theme-light") ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.45)",
                 maxTicksLimit: 12,
                 maxRotation: 0,
                 font: { size: 10, weight: "700" }
               },
-              grid: { color: "rgba(255,255,255,0.04)" }
+              grid: { color: document.body.classList.contains("theme-light") ? "rgba(0,0,0,0.06)" : "rgba(255,255,255,0.04)" }
             },
             y: {
               ticks: {
-                color: "rgba(255,255,255,0.55)",
+                color: document.body.classList.contains("theme-light") ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.55)",
                 callback: v => v.toFixed(1) + " ft",
                 font: { size: 10, weight: "700" }
               },
-              grid: { color: "rgba(255,255,255,0.06)" }
+              grid: { color: document.body.classList.contains("theme-light") ? "rgba(0,0,0,0.08)" : "rgba(255,255,255,0.06)" }
             }
           }
         }

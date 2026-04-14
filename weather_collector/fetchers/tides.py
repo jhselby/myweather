@@ -20,7 +20,7 @@ def fetch_tides():
     url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
     today = datetime.now()
     begin = today.strftime("%Y%m%d")
-    end = (today + timedelta(days=2)).strftime("%Y%m%d")
+    end = (today + timedelta(days=3)).strftime("%Y%m%d")
     base = {
         "station": TIDE_STATION,
         "datum": "MLLW",
@@ -42,7 +42,7 @@ def fetch_tides():
 
         # Call 2: 6-minute curve (48h)
         begin_curve = today.strftime("%Y%m%d %H:%M")
-        end_curve = (today + timedelta(hours=48)).strftime("%Y%m%d %H:%M")
+        end_curve = (today + timedelta(hours=72)).strftime("%Y%m%d %H:%M")
         r2 = requests.get(url, params={**base, "product": "predictions",
                                         "interval": "6",
                                         "begin_date": begin_curve,
@@ -51,7 +51,7 @@ def fetch_tides():
         curve_data = r2.json()
 
         # Build result - reformat events for UI
-        raw_events = hilo_data.get("predictions", [])[:8]
+        raw_events = hilo_data.get("predictions", [])[:12]
         events = []
         for event in raw_events:
             # NOAA format: {t: "2026-03-15 02:54", v: "1.957", type: "L"}
