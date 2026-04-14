@@ -58,7 +58,7 @@ def _extract_nws_value(nws_property, target_time):
     
     return None
 
-def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None):
+def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None, temp_bias=0):
     """Generate 10-day forecast: 14 periods (days 1-7) + 3 simple dailies (days 8-10)."""
     # Handle both old format (single dict) and new format (hrrr + gfs)
     if isinstance(hourly_data, dict) and "hrrr" in hourly_data:
@@ -113,7 +113,8 @@ def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None):
             is_daytime,
             period_name,
             eastern,
-            nws_gridpoints
+            nws_gridpoints,
+            temp_bias=temp_bias if current_day_offset <= 1 else 0
         )
         
         if forecast:
@@ -129,7 +130,7 @@ def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None):
     return forecasts
 
 
-def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, period_name, eastern, nws_gridpoints=None):
+def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, period_name, eastern, nws_gridpoints=None, temp_bias=0):
     """Generate forecast for a single day or night period (days 1-7). Merges HRRR (48h) + GFS (7day)."""
     
     # Merge HRRR and GFS data - prefer HRRR when available
@@ -272,6 +273,9 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     else:
         temp_hour_idx = temps.index(min(temps))
     temp_hour = period_hours[temp_hour_idx]
+    # Apply hyperlocal bias correction to temp for today/tomorrow
+    if temp_bias:
+        temp = temp + temp_bias
     
     def format_temp_time(h):
         if h == 0: return "midnight"

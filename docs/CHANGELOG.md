@@ -1,3 +1,9 @@
+## v4.37 • 2026-04-14
+* **Forecast Temperature Corrections**
+  * Today and tomorrow high/low in expanded 10-day card now use corrected hourly temperatures
+  * Detailed forecast period header temperature corrected for today and tomorrow
+  * Forecast narrative text ("high near X") uses hyperlocal bias-corrected temperature for today and tomorrow
+
 ## v4.36 • 2026-04-14
 * **10-Day Forecast**
   * Today and tomorrow high/low now use corrected hourly temperatures (bias-adjusted) instead of raw NWS model values

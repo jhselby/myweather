@@ -3567,7 +3567,7 @@
       summaryEl.textContent = firstSentence + "...";
     }
 
-    function renderHyperlocalForecast(forecasts) {
+    function renderHyperlocalForecast(forecasts, hourlyTimes, hourlyTemps, tempBias) {
       const list = document.getElementById("hyperlocalForecastList");
       if (!list || !Array.isArray(forecasts) || forecasts.length === 0) {
         if (list) list.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.88rem;padding:8px 0;">No forecast available.</div>';
@@ -3579,6 +3579,25 @@
 
       list.innerHTML = "";
       
+      // Precompute corrected high for today and tomorrow
+      const _fcCorrected = {};
+      if (hourlyTimes && hourlyTemps && tempBias != null) {
+        const _now = new Date();
+        const _pad = n => String(n).padStart(2, "0");
+        const _ds = d => `${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`;
+        const _tom = new Date(_now); _tom.setDate(_tom.getDate() + 1);
+        const _targets = new Set([_ds(_now), _ds(_tom)]);
+        hourlyTimes.forEach((t, i) => {
+          const d = t.slice(0, 10);
+          if (!_targets.has(d)) return;
+          const temp = hourlyTemps[i];
+          if (temp == null) return;
+          const c = temp + tempBias;
+          if (!_fcCorrected[d]) _fcCorrected[d] = { high: c, low: c };
+          else { _fcCorrected[d].high = Math.max(_fcCorrected[d].high, c); _fcCorrected[d].low = Math.min(_fcCorrected[d].low, c); }
+        });
+      }
+
       forecasts.forEach((p, i) => {
         const row = document.createElement("div");
         row.className = "detailed-period";
@@ -3589,7 +3608,9 @@
         row.innerHTML =
           '<div class="detailed-period-header">' +
             '<span class="detailed-period-name">' + p.period_name + '</span>' +
-            '<span class="detailed-period-temp">' + p.temperature + '\u00b0F</span>' +
+            '<span class="detailed-period-temp">' + 
+              (p.date && _fcCorrected[p.date] ? Math.round(p.is_daytime ? _fcCorrected[p.date].high : _fcCorrected[p.date].low) : p.temperature) +
+            '\u00b0F</span>' +
           '</div>' +
           (windText ? '<div class="detailed-period-wind">' + windText + '</div>' : '') +
           '<div class="detailed-period-narrative">' + p.text + '</div>';
@@ -4945,7 +4966,10 @@
 
         // Hyperlocal forecast
         if (data.forecast_text) {
-          window._currentForecastText = data.forecast_text; renderHyperlocalForecast(data.forecast_text);
+          window._currentForecastText = data.forecast_text;
+          const _hfHourly = data.hourly || {};
+          const _hfBias = (data.hyperlocal || {}).weighted_bias ?? 0;
+          renderHyperlocalForecast(data.forecast_text, _hfHourly.times || [], _hfHourly.temperature || [], _hfBias);
         }
         renderNWSForecast(window._nwsPeriods);
 

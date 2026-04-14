@@ -358,7 +358,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         forecast_hourly = None
     
     if forecast_hourly and "daily" in weather_data:
-        forecast_text = generate_forecast_text(forecast_hourly, weather_data["daily"], nws_gridpoints)
+        _hyp_bias = weather_data.get("hyperlocal", {}).get("weighted_bias", 0) or 0
+        forecast_text = generate_forecast_text(forecast_hourly, weather_data["daily"], nws_gridpoints, temp_bias=_hyp_bias)
         if forecast_text:
             weather_data["forecast_text"] = forecast_text
 
