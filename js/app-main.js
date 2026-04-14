@@ -63,7 +63,6 @@
     // ======================================================
     // Settings — theme + pressure units
     // ======================================================
-    let _pressureUnit = localStorage.getItem('pressureUnit') || 'hpa';
 
     function setTheme(mode) {
       localStorage.setItem('theme', mode);
@@ -86,12 +85,6 @@
       }
     }
 
-    function setPressureUnit(unit) {
-      _pressureUnit = unit;
-      localStorage.setItem('pressureUnit', unit);
-      updateSettingBtns();
-      rerenderPressure();
-    }
 
     function updateSettingBtns() {
       const theme = localStorage.getItem('theme') || 'system';
@@ -101,9 +94,6 @@
       });
       const themeMap = { light:'themeLightMenu', dark:'themeDarkMenu', system:'themeSystemMenu' };
       document.getElementById(themeMap[theme])?.classList.add('active');
-
-      ['pressHpaMenu','pressInhgMenu'].forEach(id => document.getElementById(id)?.classList.remove('active'));
-      document.getElementById(_pressureUnit === 'inhg' ? 'pressInhgMenu' : 'pressHpaMenu')?.classList.add('active');
     }
 
     function isLight() {
@@ -126,9 +116,7 @@
       if (hpaVal == null || hpaVal === '--') return '--';
       const n = parseFloat(hpaVal);
       if (isNaN(n)) return hpaVal;
-      return _pressureUnit === 'inhg'
-        ? hpaToInhg(n) + ' inHg'
-        : n.toFixed(1) + ' hPa';
+      return hpaToInhg(n) + ' inHg';
     }
     function degToCompass(deg) {
       if (deg == null) return "";
@@ -1184,9 +1172,9 @@
               <div style="height:100%;width:${barW}%;background:${scoreCol};border-radius:3px;transition:width 0.4s;"></div>
             </div>
             <div style="font-size:0.78rem;color:${detCol};line-height:2;">
-              <span data-tip="Low clouds at 10mi (local horizon). High values block view.">Low ${s.avgLow}%</span> ·
-              <span data-tip="Mid-level clouds 25mi west. Sweet spot: 30–70%.">Mid ${s.avgMid}%</span> ·
-              <span data-tip="High clouds 25-50mi west. Add color and atmosphere.">High ${s.avgHigh}%</span>
+              <span>Low ${s.avgLow}%</span> ·
+              <span>Mid ${s.avgMid}%</span> ·
+              <span>High ${s.avgHigh}%</span>
             </div>
             ${noteHtml}
           </div>`;
@@ -1476,9 +1464,9 @@
         if (isVis) {
           statusLine = `<span style="color:rgba(60,180,80,0.9);">${p.alt}° alt · ${p.dir} ${p.az}°</span>`;
         } else if (isDay) {
-          statusLine = `<span style="color:${dayColor};" data-tip="Planet is above the horizon with enough separation from the sun, but the sky is too bright right now. Visible after dusk.">${p.alt}° alt · sky too bright</span>`;
+          statusLine = `<span style="color:${dayColor};">${p.alt}° alt · sky too bright</span>`;
         } else if (isGlare) {
-          statusLine = `<span style="color:${glareColor};" data-tip="Planet is above the horizon but only ${p.elong}° from the sun — lost in solar glare.">☀️ solar glare</span>`;
+          statusLine = `<span style="color:${glareColor};">☀️ solar glare</span>`;
         } else {
           statusLine = `<span style="color:${faintTxt};">below horizon</span>`;
         }
@@ -1521,7 +1509,7 @@
       hrrr_hourly:  { name: "HRRR",         desc: "High-Resolution Rapid Refresh — 48h hourly forecast, cloud layers, upper-air (NOAA)" },
       ecmwf_daily:  { name: "ECMWF",        desc: "European Centre model — 10-day daily forecast (Open-Meteo)" },
       pws:          { name: "PWS",           desc: "Single weather station KMAMARBL63 (Castle Hill, 0.27mi) — fallback only" },
-      wu_stations:  { name: "WU Multi",     desc: "15 local weather stations — distance- and elevation-weighted, quality-filtered (Weather Underground API)" },
+      wu_stations:  { name: "WU Multi",     desc: "Distance- and elevation-weighted, quality-filtered local weather stations (Weather Underground API)" },
       kbos:         { name: "KBOS",         desc: "Boston Logan Airport ASOS — observed temp, pressure, tendency (NWS/aviationweather.gov)" },
       kbvy:         { name: "KBVY",         desc: "Beverly Airport ASOS — observed temp, wind (NWS/aviationweather.gov)" },
       buoy_44013:   { name: "Buoy 44013",   desc: "NOAA Boston Buoy (16mi ENE) — water temp, waves, offshore wind (NDBC)" },
@@ -1592,7 +1580,7 @@
                   </div>
                   <div style="color:rgba(255,255,255,0.5);line-height:1.6;">
                     ${wu.stations.map(st => 
-                      `${st.station_id} (${st.distance_mi}mi) - ${st.temperature_f?.toFixed(1)}°F, ${st.wind_speed_mph?.toFixed(1)}mph`
+                      `${st.station_id} (${st.distance_mi}mi) - ${st.temperature_f != null ? st.temperature_f.toFixed(1) + "°F" : "---"}, ${st.wind_speed_mph != null ? st.wind_speed_mph.toFixed(1) + "mph" : "---"}`
                     ).join('<br>')}
                   </div>
                 </div>`;
@@ -1893,7 +1881,7 @@
             html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:0.7rem;color:${dDetailTxt};">`;
             html += `<div>🌡️ ${w.temp != null ? Math.round(w.temp)+"°F" : "--"}</div>`;
             html += `<div>💧 ${w.precip != null ? w.precip+"%" : "--"} precip</div>`;
-            html += `<div data-tip="Wind direction relative to your 315° NW-facing dock. NW wind is directly onshore — kicks up chop against the dock. SE wind is offshore — flat calm. NE/SW is crosswind, moderate effect.">`;
+            html += `<div>`;
             html += `💨 ${w.wspd != null ? Math.round(w.wspd)+" kt" : "--"} ${w.dirName}`;
             html += ` <span style="color:${w.windRelLabel==='offshore'?'rgba(80,220,120,0.8)':w.windRelLabel==='onshore'?'rgba(220,80,80,0.8)':'rgba(255,200,80,0.8)'};">(${w.windRelLabel})</span></div>`;
             if (waterTempRaw != null) {
@@ -3783,7 +3771,6 @@
       const confidence = hyp.confidence || "Unknown";
       
       setText("correctionsStationsCollapsed", `${stationsCount} stations`);
-      setText("correctionsTempCollapsed", confidence);
 
       // Apply corrections confidence gradient class
       const correctionsCard = document.querySelector('[data-collapse-key="hyperlocal"]');
@@ -4311,19 +4298,11 @@
           const stationsUsedCount = document.getElementById("stationsUsedCount");
           if (stationsUsedCount) stationsUsedCount.textContent = hyp.stations_used ?? "--";
           
-          const hyperlocalConfidence = document.getElementById("hyperlocalConfidence");
-          if (hyperlocalConfidence) hyperlocalConfidence.textContent = hyp.confidence || "";
           
           const hyperlocalStationsDiag = document.getElementById("hyperlocalStationsDiag");
           if (hyperlocalStationsDiag) hyperlocalStationsDiag.textContent = `${hyp.stations_used ?? "--"} of ${hyp.stations_total ?? "--"} stations used`;
           
-          const hyperlocalConfidenceDiag = document.getElementById("hyperlocalConfidenceDiag");
-          if (hyperlocalConfidenceDiag) hyperlocalConfidenceDiag.textContent = `${hyp.confidence || "Unknown"} confidence`;
-        }
-
-        // Fog risk detail (Hyperlocal tab)
-        renderFogDetail(data);
-
+          }
         // Today summary
         const daily = data.daily || {};
 
@@ -4687,8 +4666,6 @@
 
         // Storm mode — triggers when 2+ alarm conditions align
         // Integrates into the consolidated alert summary bar
-        const stormBanner  = document.getElementById("stormModeBanner");
-        const stormDetails = document.getElementById("stormModeDetails");
         const stormFlags = [];
         if (der.pressure_alarm === "falling") stormFlags.push("⬇️ Pressure falling fast");
         if (der.trough_signal === "Approaching") stormFlags.push("🌀 850mb trough approaching");
@@ -4703,20 +4680,14 @@
         if (pop0 >= 60 && dailyPrecip >= 0.5)
           stormFlags.push(`🌧️ Moderate/heavy rain expected (${dailyPrecip.toFixed(1)}")`);
 
-        if (stormBanner && stormDetails) {
-          if (stormFlags.length >= 2) {
-            stormBanner.style.display = "";
-            stormDetails.innerHTML = stormFlags.map(f => `• ${f}`).join("<br>");
-            
-            // Update banner title based on severity
-            const bannerTitle = stormBanner.querySelector("div:first-child");
-            if (bannerTitle && bannerTitle.firstChild && bannerTitle.firstChild.nodeType === 3) {
-              const severity = stormFlags.length >= 3 ? "⛈️ Storm conditions developing" : "🌧️ Active weather developing";
-              bannerTitle.firstChild.textContent = severity + " ";
-            }
-          } else {
-            stormBanner.style.display = "none";
-          }
+        // Store storm flags globally and refresh alert badge
+        window.__stormFlags = stormFlags;
+        const badge = document.getElementById("alertBadge");
+        if (badge) {
+          const container = document.getElementById("alertsContainer");
+          const hasAlerts = container && container.innerHTML.trim().length > 0;
+          const hasStorm = stormFlags.length >= 2;
+          badge.style.display = (hasAlerts || hasStorm) ? "inline-flex" : "none";
         }
         // Sea breeze indicator
         const sbRow   = document.getElementById("seaBreezeRow");
@@ -4988,23 +4959,6 @@
         }
         
         renderWaterTempLog();
-
-        // Touch tooltip support — tap to show, tap away to dismiss
-        if ('ontouchstart' in window) {
-          document.querySelectorAll('[data-tip]').forEach(el => {
-            el.addEventListener('touchend', e => {
-              e.preventDefault();
-              const already = el.classList.contains('tip-active');
-              document.querySelectorAll('.tip-active').forEach(t => t.classList.remove('tip-active'));
-              if (!already) el.classList.add('tip-active');
-            });
-          });
-          document.addEventListener('touchend', e => {
-            if (!e.target.closest('[data-tip]'))
-              document.querySelectorAll('.tip-active').forEach(t => t.classList.remove('tip-active'));
-          });
-        }
-
         // Buoy 44013
         const buoy = data.buoy_44013 || {};
         const toCompassDir = deg => deg != null ? toCompass(deg, false) : "--";
@@ -5111,6 +5065,58 @@
 // === Settings Modal ===
 function openSettingsModal() {
   document.getElementById('settingsModal').style.display = 'flex';
+
+  // Swipe-down to dismiss
+  const sheet = document.querySelector('#settingsModal .modal-sheet');
+  if (sheet && !sheet._swipeInit) {
+    sheet._swipeInit = true;
+    let startY = 0, isDragging = false;
+    sheet.addEventListener('touchstart', e => {
+      startY = e.touches[0].clientY;
+      isDragging = true;
+      sheet.style.transition = 'none';
+    }, { passive: true });
+    sheet.addEventListener('touchmove', e => {
+      if (!isDragging) return;
+      const dy = e.touches[0].clientY - startY;
+      if (dy > 0) sheet.style.transform = `translateY(${dy}px)`;
+    }, { passive: true });
+    sheet.addEventListener('touchend', e => {
+      isDragging = false;
+      const dy = e.changedTouches[0].clientY - startY;
+      sheet.style.transition = '';
+      if (dy > 80) {
+        closeSettingsModal();
+      } else {
+        sheet.style.transform = '';
+      }
+    }, { passive: true });
+
+    // Mouse drag-to-dismiss for desktop
+    sheet.addEventListener('mousedown', e => {
+      startY = e.clientY;
+      isDragging = true;
+      sheet.style.transition = 'none';
+      sheet.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      const dy = e.clientY - startY;
+      if (dy > 0) sheet.style.transform = `translateY(${dy}px)`;
+    });
+    document.addEventListener('mouseup', e => {
+      if (!isDragging) return;
+      isDragging = false;
+      sheet.style.transition = '';
+      sheet.style.userSelect = '';
+      const dy = e.clientY - startY;
+      if (dy > 80) {
+        closeSettingsModal();
+      } else {
+        sheet.style.transform = '';
+      }
+    });
+  }
   document.body.style.overflow = 'hidden';
   // Sync data timestamps
   const du = document.getElementById('dataUpdated');
@@ -5121,6 +5127,8 @@ function openSettingsModal() {
   if (pl && pl2) pl2.textContent = pl.textContent;
 }
 function closeSettingsModal() {
+  const sheet = document.querySelector('#settingsModal .modal-sheet');
+  if (sheet) sheet.style.transform = '';
   document.getElementById('settingsModal').style.display = 'none';
   document.body.style.overflow = '';
 }
@@ -5129,26 +5137,37 @@ function closeSettingsModal() {
 function openAlertModal() {
   const container = document.getElementById('alertsContainer');
   const modalBody = document.getElementById('alertModalBody');
-  if (!container || !modalBody) return;
-  
-  // Copy alert content into modal with better styling
-  const alerts = container.querySelectorAll('.alert-banner');
-  if (alerts.length === 0) return;
-  
+  if (!modalBody) return;
+
+  const stormFlags = window.__stormFlags || [];
+  const alerts = container ? container.querySelectorAll('.alert-banner') : [];
+  if (alerts.length === 0 && stormFlags.length < 2) return;
+
   modalBody.innerHTML = '';
+
+  // Storm flags section
+  if (stormFlags.length >= 2) {
+    const severity = stormFlags.length >= 3 ? '⛈️ Storm conditions developing' : '🌧️ Active weather developing';
+    modalBody.innerHTML += `
+      <div class="alert-modal-item" style="border-left:3px solid rgba(255,100,100,0.6);padding-left:12px;">
+        <div class="alert-modal-title">${severity}</div>
+        <div class="alert-modal-desc">${stormFlags.map(f => '• ' + f).join('<br>')}</div>
+      </div>`;
+  }
+
+  // NWS alerts section
   alerts.forEach(alert => {
     const titleEl = alert.querySelector('.alert-title span');
     const descEl = alert.querySelector('.alert-desc');
     const title = titleEl ? titleEl.textContent : 'Weather Alert';
     const desc = descEl ? descEl.innerHTML : '';
-    
     modalBody.innerHTML += `
       <div class="alert-modal-item">
         <div class="alert-modal-title">${title}</div>
         <div class="alert-modal-desc">${desc}</div>
       </div>`;
   });
-  
+
   document.getElementById('alertModal').style.display = 'flex';
   document.body.style.overflow = 'hidden';
 }
@@ -5168,7 +5187,8 @@ function closeAlertModal() {
     // Show badge if alertSummaryBar has been made visible OR alertsContainer has content
     const container = document.getElementById('alertsContainer');
     const hasAlerts = container && container.innerHTML.trim().length > 0;
-    badge.style.display = hasAlerts ? 'inline-flex' : 'none';
+    const hasStorm = (window.__stormFlags || []).length >= 2;
+    badge.style.display = (hasAlerts || hasStorm) ? 'inline-flex' : 'none';
   });
   
   // Start observing once DOM is ready

@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=2bae788b" />
+  <link rel="stylesheet" href="styles/app.css?v=87ca3d70" />
 </head>
 <body>
   <div class="container">
@@ -35,9 +35,7 @@
           <button id="refreshBtn" class="header-icon-btn" aria-label="Refresh">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="display:block;"><path d="M3.5 10a6.5 6.5 0 0 1 11.3-4.4M16.5 10a6.5 6.5 0 0 1-11.3 4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><polyline points="14,2.5 15,5.5 12,6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="6,14 5,14.5 8,14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <button id="settingsBtn" class="header-icon-btn" aria-label="Settings" onclick="openSettingsModal()">
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="display:block;"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.6"/><path d="M10 1.5v2M10 16.5v2M1.5 10h2M16.5 10h2M3.9 3.9l1.4 1.4M14.7 14.7l1.4 1.4M3.9 16.1l1.4-1.4M14.7 5.3l1.4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          </button>
+          <button id="settingsBtn" class="header-icon-btn" aria-label="Settings" onclick="openSettingsModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="display:block;" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
         </span>
       </h1>
 
@@ -67,16 +65,6 @@
 
       <!-- Banners — sticky with header, below tabs -->
       <div id="pressureAlarmBanner" class="pressure-alarm" style="margin:0;border-radius:10px;"></div>
-      <div id="stormModeBanner" style="display:none;border-radius:10px;padding:10px 14px;
-        margin:4px 0 0 0;background:rgba(255,60,60,0.18);border:1px solid rgba(255,60,60,0.45);
-        color:rgba(255,200,200,0.95);">
-        <div style="font-weight:900;font-size:0.92rem;cursor:pointer;user-select:none;display:flex;align-items:center;justify-content:space-between;"
-             onclick="const d=document.getElementById('stormModeDetails');const c=document.getElementById('stormModeChev');const open=d.style.display!=='none';d.style.display=open?'none':'';c.innerHTML=open?'&#9660; Show':'&#9650; Hide';">
-          ⛈️ Storm conditions developing
-           <span id="stormModeChev" style="font-size:0.8rem;color:rgba(255,255,255,0.5);flex-shrink:0;">&#9660; Show</span>
-        </div>
-        <div id="stormModeDetails" style="display:none;font-size:0.85rem;color:rgba(255,180,180,0.85);line-height:1.6;margin-top:6px;"></div>
-      </div>
 
           <!-- Hidden alert data containers (used by JS, displayed in modal) -->
       <div id="alertSummaryBar" style="display:none;"></div>
@@ -131,13 +119,13 @@
           <div class="card-body" style="display:none;">
             <!-- Hero area — centered temp, feels-like, condition -->
             <div class="hero-area">
-              <div id="currentTemp" class="current-temp" data-tip="Smart-corrected temperature using distance+elevation weighted bias from 15 local weather stations.">
+              <div id="currentTemp" class="current-temp">
                 --<span class="temp-unit">&deg;F</span>
               </div>
-              <div id="feelsLike" class="feels-like" data-tip="Apparent temperature calculated from corrected temperature and wind (wind chill <50°F, heat index >80°F with corrected humidity).">
+              <div id="feelsLike" class="feels-like">
                 Feels like --&deg;F
               </div>
-              <div id="condition" class="condition" data-tip="Current conditions from model weather code.">
+              <div id="condition" class="condition">
                 Loading&hellip;
               </div>
             </div>
@@ -147,55 +135,55 @@
             
             <!-- Key Metrics Grid -->
             <div class="row">
-              <div class="label" data-tip="Today's forecast high and low calculated from corrected hourly temperatures (temperature bias applied to each hour).">Today's High / Low</div>
+              <div class="label">Today's High / Low</div>
               <div class="value" id="hiLo">-- / --</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Precipitation type and chance for today.">Precip</div>
+              <div class="label">Precip</div>
               <div class="value" id="precipNow">--%</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Current sustained wind impact score based on wind speed and terrain exposure, followed by current wind speed and direction.">Wind Impact</div>
+              <div class="label">Wind Impact</div>
               <div class="value" id="windImpactNow">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Current gust impact score based on corrected gust speed and terrain exposure, followed by gust speed and direction.">Gust Impact</div>
+              <div class="label">Gust Impact</div>
               <div class="value" id="gustImpactNow">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Sea breeze likelihood based on land/water temperature differential, wind speed, direction, and time of day.">Sea Breeze</div>
+              <div class="label">Sea Breeze</div>
               <div class="value" id="seaBreezeNow">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Relative humidity.">Humidity</div>
+              <div class="label">Humidity</div>
               <div class="value" id="humidityNow">--%</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Barometric pressure with 3-hour trend.">Pressure</div>
+              <div class="label">Pressure</div>
               <div class="value" id="pressureNow">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="12-hour fog probability based on temperature/dewpoint spread, wind, and humidity.">Fog Risk</div>
+              <div class="label">Fog Risk</div>
               <div class="value" id="fogRiskNow">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Today's sunset quality score based on cloud cover at sunset time. Higher score = better color potential.">Sunset Score</div>
+              <div class="label">Sunset Score</div>
               <div class="value" id="sunsetScoreNow">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Today's best dock day score based on tide accessibility, temperature, wind conditions, and precipitation. Higher score = better dock day.">Dock Day Score</div>
+              <div class="label">Dock Day Score</div>
               <div class="value" id="dockDayScoreNow">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Dew point temperature calculated from corrected temperature and humidity. When air becomes saturated. Above 65°F feels muggy.">Dew Point</div>
+              <div class="label">Dew Point</div>
               <div class="value"><span id="dewPointNow">--°F</span> <span id="dewPointDepression" style="opacity:0.6;font-size:0.85rem;"></span></div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Horizontal visibility distance.">Visibility</div>
+              <div class="label">Visibility</div>
               <div class="value" id="visibilityNow">-- mi</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="UV index (0-11+ scale).">UV Index</div>
+              <div class="label">UV Index</div>
               <div class="value" id="uvNow">--</div>
             </div>
           </div>
@@ -595,19 +583,19 @@
             <!-- Times column -->
             <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div class="row">
-                <div class="label" data-tip="Time of sunrise at your location, calculated from your coordinates.">Sunrise</div>
+                <div class="label">Sunrise</div>
                 <div class="value" id="sunrise">--</div>
               </div>
               <div class="row">
-                <div class="label" data-tip="Time of sunset at your location. Your NW-facing dock gets direct sun right up to sunset.">Sunset</div>
+                <div class="label">Sunset</div>
                 <div class="value" id="sunset">--</div>
               </div>
               <div class="row">
-                <div class="label" data-tip="When the sun is 6° below the horizon. Enough light for outdoor activities without artificial light. Begins the civil twilight period.">Civil Dawn</div>
+                <div class="label">Civil Dawn</div>
                 <div class="value" id="civilDawn">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="When the sun reaches 6° below the horizon after sunset. End of civil twilight — artificial light needed for outdoor activities.">Civil Dusk</div>
+                <div class="label">Civil Dusk</div>
                 <div class="value" id="civilDusk">--</div>
               </div>
             </div>
@@ -615,19 +603,19 @@
             <!-- Position column -->
             <div style="padding-left:16px;">
               <div class="row">
-                <div class="label" data-tip="Compass bearing of the sun right now. Your dock faces 315° NW — the sun illuminates the dock face directly near sunset in summer when the bearing approaches 315°.">Direction</div>
+                <div class="label">Direction</div>
                 <div class="value" id="sunAzimuth">--</div>
               </div>
               <div class="row">
-                <div class="label" data-tip="Current angle of the sun above the horizon. Below 0° = below horizon. Above 45° = high sun, strong shadows.">Altitude</div>
+                <div class="label">Altitude</div>
                 <div class="value" id="sunAltitude">--</div>
               </div>
               <div class="row">
-                <div class="label" data-tip="The hour after sunrise when sunlight is warm, soft, and low-angled. Ideal for photography and beautiful light conditions.">Golden Hour AM</div>
+                <div class="label">Golden Hour AM</div>
                 <div class="value" id="goldenHourAM">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="The hour before sunset. Same warm, diffuse light quality as the morning golden hour.">Golden Hour PM</div>
+                <div class="label">Golden Hour PM</div>
                 <div class="value" id="goldenHourPM">--</div>
               </div>
             </div>
@@ -664,15 +652,15 @@
             <!-- Rise / Set column -->
             <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div class="row">
-                <div class="label" data-tip="Time the moon rises above the horizon today at your location.">Moonrise</div>
+                <div class="label">Moonrise</div>
                 <div class="value" id="moonrise">--</div>
               </div>
               <div class="row">
-                <div class="label" data-tip="Time the moon sets below the horizon today at your location.">Moonset</div>
+                <div class="label">Moonset</div>
                 <div class="value" id="moonset">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="Date of the next full moon. Both full and new moons produce spring tides — larger tidal range with higher highs and lower lows. Quarter moons produce neap tides with smaller range.">Next Full Moon</div>
+                <div class="label">Next Full Moon</div>
                 <div class="value" id="nextFullMoon">--</div>
               </div>
             </div>
@@ -680,15 +668,15 @@
               <!-- Position column -->
               <div style="padding-left:16px;">
                 <div class="row">
-                  <div class="label" data-tip="Current azimith (compass) bearing of the moon, measured clockwise from north.">Azimuth</div>
+                  <div class="label">Azimuth</div>
                   <div class="value" id="moonAzimuth">--</div>
                 </div>
                 <div class="row">
-                  <div class="label" data-tip="Current angle of the moon above the horizon. Negative = below horizon.">Altitude</div>
+                  <div class="label">Altitude</div>
                   <div class="value" id="moonAltitude">--</div>
                 </div>
                 <div class="row" style="border-bottom:none;">
-                  <div class="label" data-tip="Percentage of the moon's face illuminated. 0% = new moon, 100% = full moon. Affects nighttime visibility and tidal range.">Visible</div>
+                  <div class="label">Visible</div>
                   <div class="value" id="moonVisible">--</div>
                 </div>
               </div>
@@ -749,11 +737,11 @@
             <!-- Water temps -->
             <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div class="row">
-                <div class="label" data-tip="Sea surface temperature from buoy 44013, 16mi ENE in open ocean. Typically 3–5°F colder than Salem Harbor in summer — buoy sits in deep open water while your harbor is shallow and enclosed, warming faster.">Water Temp</div>
+                <div class="label">Water Temp</div>
                 <div class="value" id="buoyWaterTemp">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="Air temperature measured at buoy 44013, 16mi ENE offshore.">Air Temp</div>
+                <div class="label">Air Temp</div>
                 <div class="value" id="buoyAirTemp">--</div>
               </div>
             </div>
@@ -761,15 +749,15 @@
             <!-- Wind & pressure -->
             <div style="padding:0 16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div class="row">
-                <div class="label" data-tip="Wind speed and direction measured at buoy 44013. Open ocean reading — may differ from shore conditions.">Wind</div>
+                <div class="label">Wind</div>
                 <div class="value" id="buoyWind">--</div>
               </div>
               <div class="row">
-                <div class="label" data-tip="Barometric pressure measured at buoy 44013. Useful cross-check against KBOS observed pressure.">Pressure</div>
+                <div class="label">Pressure</div>
                 <div class="value" id="buoyPressure">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="Change in barometric pressure over the last 3 hours at the buoy. Rapid falls indicate approaching low pressure systems.">Tendency (3h)</div>
+                <div class="label">Tendency (3h)</div>
                 <div class="value" id="buoyPtdy">--</div>
               </div>
             </div>
@@ -777,11 +765,11 @@
             <!-- Waves -->
             <div style="padding-left:16px;">
               <div class="row">
-                <div class="label" data-tip="Significant wave height — the average of the highest one-third of waves. Actual max waves may be 1.5–2× this value.">Wave Height</div>
+                <div class="label">Wave Height</div>
                 <div class="value" id="buoyWaveHt">--</div>
               </div>
               <div class="row" style="border-bottom:none;">
-                <div class="label" data-tip="Time in seconds between successive wave crests. Longer period (>10s) = swell from distant storms, smoother ride. Shorter period = choppy local wind waves.">Wave Period</div>
+                <div class="label">Wave Period</div>
                 <div class="value" id="buoyWavePeriod">--</div>
               </div>
             </div>
@@ -910,7 +898,6 @@
             <div class="tile-label" style="top:12px;left:16px;">Corrections</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
               <div id="correctionsStationsCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;margin-bottom:6px;"></div>
-              <div id="correctionsTempCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;opacity:0.75;"></div>
             </div>
           </div>
           <div class="card-body" style="display:none;">
@@ -980,8 +967,6 @@
             <!-- Station Info -->
             <div style="font-size:0.72rem;class="text-subtle" style="display:flex;gap:12px;flex-wrap:wrap;">
               <span id="hyperlocalStationsDiag">-- stations used</span>
-              <span>•</span>
-              <span id="hyperlocalConfidenceDiag">-- confidence</span>
             </div>
             
           </div>
@@ -1009,28 +994,28 @@
             <button class="wpill" data-target="gust" data-hours="48">48h</button>
           </div>
           <div class="row">
-            <div class="label" data-tip="Current gust impact score and severity level right now.">Current Impact</div>
+            <div class="label">Current Impact</div>
             <div class="value" id="gustCurrentScore">--</div>
           </div>
 
           <div class="row">
-            <div class="label" data-tip="Maximum impact score within the selected forecast window. Score = gust × exposure^1.5. Forecast gusts use blended corrected values (100% at current, declining to 0% at hour 24)." id="gustScoreLabel">Peak Impact (next 12h)</div>
+            <div class="label" id="gustScoreLabel">Peak Impact (next 12h)</div>
             <div class="value" id="gustScore">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Highest forecast gust speed within the selected time window.">Peak Gust</div>
+            <div class="label">Peak Gust</div>
             <div class="value" id="gustPeak">-- mph</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Wind direction at the time of peak gust.">Direction</div>
+            <div class="label">Direction</div>
             <div class="value" id="gustDir">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="0–1 multiplier for your property's directional exposure. N/NW = 1.0 (full open water fetch from ocean). S/SE ≈ 0.1 (sheltered by shoreline and property). Applied as exposure^1.5 so high-exposure directions are disproportionately penalized.">Exposure Factor</div>
+            <div class="label">Exposure Factor</div>
             <div class="value" id="gustExposure">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Forecast time when peak gust is expected.">Peak Time</div>
+            <div class="label">Peak Time</div>
             <div class="value" id="gustTime">--</div>
           </div>
           <div class="small-note" id="gustNote"></div>
@@ -1059,28 +1044,28 @@
             <button class="wpill" data-target="sus" data-hours="48">48h</button>
           </div>
           <div class="row">
-            <div class="label" data-tip="Current sustained wind impact score and severity level right now.">Current Impact</div>
+            <div class="label">Current Impact</div>
             <div class="value" id="susCurrentScore">--</div>
           </div>
 
           <div class="row">
-            <div class="label" data-tip="Maximum impact score within the selected forecast window. Score = sustained × exposure^1.5" id="susScoreLabel">Peak Impact (next 12h)</div>
+            <div class="label" id="susScoreLabel">Peak Impact (next 12h)</div>
             <div class="value" id="susScore">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Highest forecast sustained wind speed within the selected time window.">Peak Speed</div>
+            <div class="label">Peak Speed</div>
             <div class="value" id="susPeak">-- mph</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Wind direction at the time of peak sustained speed.">Direction</div>
+            <div class="label">Direction</div>
             <div class="value" id="susDir">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="0–1 multiplier for your property's directional exposure. N/NW = 1.0 (full open water fetch from ocean). S/SE ≈ 0.1 (sheltered by shoreline and property). Applied as exposure^1.5 so high-exposure directions are disproportionately penalized.">Exposure Factor</div>
+            <div class="label">Exposure Factor</div>
             <div class="value" id="susExposure">--</div>
           </div>
           <div class="row">
-            <div class="label" data-tip="Forecast time when peak sustained wind is expected.">Peak Time</div>
+            <div class="label">Peak Time</div>
             <div class="value" id="susTime">--</div>
           </div>
           <div class="small-note" id="susNote">Sustained = dock lines, outdoor use. Gust = structural stress.</div>
@@ -1159,11 +1144,11 @@
           </div>
           <div class="card-body">
             <div class="row">
-              <div class="label" data-tip="Current fog probability based on dew point spread, humidity, and wind conditions.">Current Risk</div>
+              <div class="label">Current Risk</div>
               <div class="value" id="fogCurrentLabel">--</div>
             </div>
             <div class="row">
-              <div class="label" data-tip="Numerical probability from 0-100%.">Probability</div>
+              <div class="label">Probability</div>
               <div class="value" id="fogCurrentProb">--%</div>
             </div>
 
@@ -1211,7 +1196,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=e1191c21"></script>
+  <script src="js/app-main.js?v=d6e7a349"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1275,7 +1260,6 @@
       <div class="modal-handle"></div>
       <div class="modal-header">
         <h2>Settings</h2>
-        <button class="modal-close" onclick="closeSettingsModal()">✕</button>
       </div>
       <div class="modal-body">
         <!-- Theme -->
@@ -1287,19 +1271,11 @@
             <button class="setting-btn" id="themeSystem" onclick="setTheme('system')">Auto</button>
           </div>
         </div>
-        <!-- Pressure units -->
-        <div class="modal-setting-group">
-          <div class="modal-setting-label">Pressure</div>
-          <div class="modal-setting-options">
-            <button class="setting-btn" id="pressHpa"  onclick="setPressureUnit('hpa')">hPa</button>
-            <button class="setting-btn" id="pressInhg" onclick="setPressureUnit('inhg')">inHg</button>
-          </div>
-        </div>
         <!-- Version -->
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.34</span>
+            <span class="version-pill" id="appVersion">v4.35</span>
           </div>
         </div>
         <!-- Changelog -->
@@ -1322,7 +1298,7 @@
         <div class="modal-setting-group">
           <div id="sourcesToggle" onclick="document.getElementById('sourcesBody').style.display=document.getElementById('sourcesBody').style.display==='none'?'block':'none'"
                style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
-            Data Sources ▾
+            📡 Data Sources ▾
           </div>
           <div id="sourcesBody" style="display:none;margin-top:8px;">
             <div id="sourcesTableModal"></div>
@@ -1345,7 +1321,7 @@
     <div class="modal-sheet">
       <div class="modal-handle"></div>
       <div class="modal-header">
-        <h2>⚠️ Weather Alerts</h2>
+        <h2>⚠️ Active Alerts</h2>
         <button class="modal-close" onclick="closeAlertModal()">✕</button>
       </div>
       <div class="modal-body" id="alertModalBody">

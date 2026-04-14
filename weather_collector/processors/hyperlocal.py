@@ -107,6 +107,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data):
             hyperlocal["stations_used"] = stations_used
             hyperlocal["stations_total"] = len(stations)
             hyperlocal["confidence"] = confidence
+            hyperlocal["bias_std"] = round(bias_std, 2)
             
             # For reference, also show simple WU average
             wu_t = wu_data.get("temperature_f") if wu_data else None

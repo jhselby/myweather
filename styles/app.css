@@ -17,7 +17,7 @@
     ──────────────────────────────────────────────────────────── */
     html {
       background: #0b1220;
-      overflow-x: hidden;
+      overflow-x: clip;
     }
     body.theme-light ~ html,
     html:has(body.theme-light) {
@@ -33,7 +33,7 @@
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
+      overflow-x: clip;
       /* Safe area insets for iOS notch / home indicator */
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
@@ -56,9 +56,17 @@
       border-radius: 0;
       background: transparent;
       box-shadow: none;
-      position: relative;
+      position: fixed;
       top: 0;
-      z-index: 50;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 980px;
+      z-index: 100;
+      background: rgba(30,30,30,0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 0.5px solid rgba(255,255,255,0.16);
     }
 
     header h1 {
@@ -720,36 +728,6 @@
     .wpill:hover { background: rgba(255,255,255,0.14); color: rgba(255,255,255,0.8); }
     .wpill.active { background: rgba(100,160,255,0.25); border-color: rgba(100,160,255,0.5); color: rgba(160,200,255,0.95); }
     /* Pure-CSS hover tooltips — add data-tip="..." to any element */
-    [data-tip]{
-      position: relative;
-      cursor: default;
-      text-decoration: underline dotted rgba(255,255,255,0.3);
-    }
-    [data-tip]::after{
-      content: attr(data-tip);
-      position: absolute;
-      bottom: calc(100% + 6px);
-      left: 0;
-      transform: none;
-      background: rgba(20,24,36,0.97);
-      color: rgba(255,255,255,0.88);
-      font-size: 0.72rem;
-      font-weight: 600;
-      line-height: 1.4;
-      padding: 6px 10px;
-      border-radius: 7px;
-      border: 1px solid rgba(255,255,255,0.12);
-      white-space: normal;
-      width: max-content;
-      max-width: 220px;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.15s;
-      z-index: 9999;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
-    }
-    [data-tip]:hover::after{ opacity: 1; }
-    [data-tip].tip-active::after{ opacity: 1; }
     .value{
       color: rgba(255,255,255,0.9);
       font-weight: 900;
@@ -1082,7 +1060,7 @@
     @media (max-width: 780px){
       .card{ grid-column: span 12; }
       canvas:not(.moon-canvas){ height: 240px !important; }
-      header{ position: relative; top: 0; }
+      header{ position: fixed; top: 0; left: 50%; transform: translateX(-50%); width: 100%; }
 
       /* 3-column grids → single column */
       .mobile-3col {
@@ -1299,8 +1277,8 @@
                   #f0f2f6;
     }
     body.theme-light header {
-      background: transparent;
-      border-color: transparent;
+      background: rgba(249,249,249,0.72);
+      border-bottom-color: rgba(0,0,0,0.12);
     }
     body.theme-light .card {
       background: #ffffff;
@@ -2117,9 +2095,6 @@ body.theme-light .card-expanded .hero-divider {
 }
 
 /* Remove tooltip underline from hero elements */
-.card-expanded .hero-area [data-tip] {
-  text-decoration: none;
-}
 
 /* Expanded card body — content starts right after title row */
 .card-expanded .card-body {
@@ -2234,3 +2209,9 @@ body.theme-light .card-expanded .detailed-period-narrative {
   margin-top: 0;
 }
 body.theme-light [style*="color:rgba(100,200,255"] { color: rgba(0,0,0,0.85) !important; }
+
+
+/* Fixed header offset */
+#weatherView, #hyperlocalView, #almanacView, #overheadView, #sourcesView {
+  padding-top: 64px;
+}
