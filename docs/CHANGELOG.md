@@ -1,3 +1,9 @@
+## v4.40 • 2026-04-14
+* **Planets Tile**
+  * "None visible tonight" → "None visible now" (reflects current time, not night forecast)
+  * "Visible tonight" label hidden when no planets are currently visible
+  * "None visible now" sized to match "Visible now" label for visual consistency
+
 ## v4.39 • 2026-04-14
 * **Tides Card Redesign**
   * Expanded view replaced with 3-column calendar layout (Today / Tomorrow / next day)

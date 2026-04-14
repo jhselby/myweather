@@ -1496,10 +1496,17 @@
           const icons = visiblePlanets.map(p => getPlanetSVG(p.name, 40)).join('');
           const names = visiblePlanets.map(p => p.name).join(', ');
           planetsIconsEl.innerHTML = icons;
-          planetsNamesEl.textContent = names;
+          planetsNamesEl.textContent = names; planetsNamesEl.style.fontSize = ''; planetsNamesEl.style.opacity = ''; planetsNamesEl.style.fontWeight = '';
+          const labelEl = document.getElementById('planetsVisibleLabel');
+          if (labelEl) labelEl.style.display = '';
         } else {
           planetsIconsEl.innerHTML = '';
-          planetsNamesEl.textContent = 'None visible tonight';
+          planetsNamesEl.textContent = 'None visible now';
+          planetsNamesEl.style.fontSize = '20px';
+          planetsNamesEl.style.opacity = '0.75';
+          planetsNamesEl.style.fontWeight = '400';
+          const labelEl2 = document.getElementById('planetsVisibleLabel');
+          if (labelEl2) labelEl2.style.display = 'none';
         }
       }
     }
