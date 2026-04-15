@@ -418,10 +418,9 @@
       const cloudPct = cloudTotal[index] != null ? Math.round(cloudTotal[index]) : 0;
       const clearPct = 100 - cloudPct;
       
-      document.getElementById("tempPrecipDataTime").textContent = timeStr;
-      document.getElementById("tempPrecipDataLine").innerHTML = 
-        `Temp: ${temp != null ? Math.round(temp) : "—"}°F | POP: ${precipProb}% | Type: ${typeStr}<br>` +
-        `Sky: Cloud: ${cloudPct}% | Clear: ${clearPct}%`;
+      document.getElementById("tempPrecipDataTime").textContent = timeStr + " ·";
+      document.getElementById("tempPrecipDataLine").textContent =
+        `${temp != null ? Math.round(temp) : "—"}°F · ${precipProb}% ${typeStr} · ☁ ${cloudPct}%`;
     }
 
     function updateWindDataBar(index, times, speeds, gusts, directions) {
@@ -651,8 +650,8 @@
             y1: { position: "right", stacked: true, min: 0, max: 100,
                   ticks: { color: chartTextColor() }, grid: { drawOnChartArea: false } }
           },
-          barPercentage: 1.0,
-          categoryPercentage: 0.95
+          barPercentage: 0.55,
+          categoryPercentage: 0.70
         }
       });
     }

@@ -238,31 +238,18 @@
             <div id="overlayType"></div>
           </div>
           <canvas id="tempPrecipChart"></canvas>
-          <div id="tempPrecipDataBar" class="chart-data-bar">
-            <div class="chart-data-header">
-              <div id="tempPrecipDataTime" class="chart-data-time"></div>
-            </div>
-            <div id="tempPrecipDataLine" class="text-primary" style="font-size:0.78rem;font-weight:600;line-height:1.4;padding:6px 12px;letter-spacing:0.01em;"></div>
+          <div id="tempPrecipDataBar" style="padding:4px 12px;font-size:0.74rem;color:var(--text-secondary);border-top:1px solid rgba(255,255,255,0.07);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <span id="tempPrecipDataTime" style="font-weight:600;color:var(--text-primary);margin-right:6px;"></span><span id="tempPrecipDataLine"></span>
           </div>
 
-          <div style="display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07);font-size:11px;class="text-blue-tint" style="">
-            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;">
-              <div class="chart-legend-header" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Sky (bottom to top per bar)</div>
-              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:linear-gradient(90deg,#0a0f23,#ffdc64);flex-shrink:0;"></div>Clear sky (night &#x2192; day)</div>
-              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:linear-gradient(90deg,rgba(160,160,160,0.85),rgba(80,80,80,0.85));flex-shrink:0;"></div>Clouds (high &#x2192; low)</div>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;margin-top:6px;">
-              <div class="chart-legend-header" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Precipitation</div>
-              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(80,150,255,0.85);flex-shrink:0;"></div>Rain</div>
-              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(255,140,40,0.85);flex-shrink:0;"></div>Freezing rain</div>
-              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(160,100,220,0.85);flex-shrink:0;"></div>Mixed/slush</div>
-              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(130,160,220,0.90);flex-shrink:0;"></div>Snow likely</div>
-              <div style="display:flex;align-items:center;gap:5px;"><div style="width:48px;height:12px;border-radius:2px;background:rgba(230,240,255,0.95);flex-shrink:0;"></div>Snow</div>
-            </div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px 14px;width:100%;margin-top:6px;">
-              <div class="chart-legend-header" style="font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:0.08em;width:100%;margin-bottom:2px;">Temperature</div>
-              <div style="display:flex;align-items:center;gap:5px;"><div style="width:24px;height:3px;background:rgba(255,200,80,0.95);border-radius:2px;flex-shrink:0;"></div>Temp (°F)</div>
-            </div>
+          <div style="display:flex;flex-wrap:wrap;gap:4px 12px;padding:6px 12px 8px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:var(--text-secondary);">
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:linear-gradient(90deg,#0a0f23,#ffdc64);flex-shrink:0;"></div>Clear</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:linear-gradient(90deg,rgba(90,95,110,0.85),rgba(150,150,150,0.85));flex-shrink:0;"></div>Cloud</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:rgba(80,150,255,0.85);flex-shrink:0;"></div>Rain</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:rgba(255,140,40,0.85);flex-shrink:0;"></div>Frz rain</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:rgba(160,100,220,0.85);flex-shrink:0;"></div>Mix</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:rgba(230,240,255,0.95);flex-shrink:0;"></div>Snow</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:20px;height:2px;background:rgba(255,200,80,0.95);border-radius:2px;flex-shrink:0;"></div>Temp</div>
           </div>
           </div>
         </div>
@@ -435,9 +422,11 @@
 
           <!-- Map and scrubber (collapsible body) -->
           <div class="card-body" style="display:none;padding:0;">
-          <div id="radarControls" style="display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--border-color);">
-            <span id="radarTimestamp" style="font-size:0.78rem;color:var(--text-secondary);flex:1;"></span>
-            <button id="radarPlayBtn" onclick="radarTogglePlay()" style="background:transparent;border:0.5px solid var(--border-color);border-radius:999px;padding:3px 12px;font-size:0.78rem;font-weight:600;cursor:pointer;color:var(--text-primary);">&#9654; Play</button>
+          <div id="radarControls" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);">
+            <div style="flex:1;"></div>
+            <span id="radarTimestamp" style="font-size:0.8rem;" class="text-secondary"></span>
+            <button id="radarPlayBtn" onclick="radarTogglePlay()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:5px 14px;font-size:0.82rem;font-weight:900;cursor:pointer;">&#9654; Play</button>
+            <button id="radarMapBtn" onclick="radarToggleMapType()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:5px 14px;margin-left:8px;font-size:0.82rem;font-weight:900;cursor:pointer;color:rgba(255,255,255,0.75);">🗺 map</button>
           </div>
           <!-- Map -->
           <div id="radarMap" style="height:clamp(320px, 55vh, 520px);width:100%;background:#0b1220;"></div>
@@ -448,9 +437,10 @@
             <input type="range" id="radarScrubber" min="0" max="0" value="0"
               oninput="radarScrubTo(this.value)"
               style="width:100%;accent-color:rgba(100,180,255,0.9);cursor:pointer;">
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:var(--text-secondary);margin-top:3px;">
+            <div style="display:flex;justify-content:flex-start;
+                        font-size:0.75rem;class="text-subtle" style="font-weight:700;margin-top:2px;">
               <span id="radarScrubStart">--</span>
-              <span style="color:var(--text-subtle);">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,220,160,0.85);">Nowcast</span> &#9654;</span>
+              <span class="text-subtle">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,255,180,0.6);">Nowcast</span> &#9654;</span>
               <span id="radarScrubEnd">--</span>
             </div>
           </div>
@@ -1193,7 +1183,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=d8fd31bf"></script>
+  <script src="js/app-main.js?v=815d4438"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
