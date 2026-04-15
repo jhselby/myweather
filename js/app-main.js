@@ -2641,6 +2641,7 @@
       if (probEl) probEl.textContent = fogProb != null ? `${fogProb}%` : "--";
       
       // Calculate the inputs and effects for the breakdown table
+      const hyp = data.hyperlocal || {};
       const temp = hyp.corrected_temp ?? cur.temperature;
       const humidity = hyp.corrected_humidity ?? cur.humidity;
       const _corrDewPt = (hyp.corrected_temp != null && hyp.corrected_humidity != null)
@@ -2652,7 +2653,6 @@
           })()
         : cur.dew_point;
       const dewpt = _corrDewPt;
-      const hyp = data.hyperlocal || {};
       const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
       
       const spread = (temp != null && dewpt != null) ? temp - dewpt : null;
@@ -4959,6 +4959,7 @@
         // Wind tab
         renderWindRisk(data);
         renderSeaBreezeDetail(data);
+        renderFogDetail(data);
         initWindPills(data);
 
         const windNowEl      = document.getElementById("windNowWind");
