@@ -56,7 +56,8 @@
       border-radius: 0;
       box-shadow: none;
       position: fixed;
-      top: env(safe-area-inset-top, 0px);
+      top: 0;
+      padding-top: env(safe-area-inset-top, 0px);
       left: 50%;
       transform: translateX(-50%);
       width: 100%;
