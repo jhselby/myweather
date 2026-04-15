@@ -242,14 +242,21 @@
             <span id="tempPrecipDataTime" style="font-weight:600;color:var(--text-primary);margin-right:6px;"></span><span id="tempPrecipDataLine"></span>
           </div>
 
-          <div style="display:flex;flex-wrap:wrap;gap:4px 12px;padding:6px 12px 8px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:var(--text-secondary);">
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:linear-gradient(90deg,#0a0f23,#ffdc64);flex-shrink:0;"></div>Clear</div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:linear-gradient(90deg,rgba(90,95,110,0.85),rgba(150,150,150,0.85));flex-shrink:0;"></div>Cloud</div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:rgba(80,150,255,0.85);flex-shrink:0;"></div>Rain</div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:rgba(255,140,40,0.85);flex-shrink:0;"></div>Frz rain</div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:rgba(160,100,220,0.85);flex-shrink:0;"></div>Mix</div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:24px;height:8px;border-radius:1px;background:rgba(230,240,255,0.95);flex-shrink:0;"></div>Snow</div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:20px;height:2px;background:rgba(255,200,80,0.95);border-radius:2px;flex-shrink:0;"></div>Temp</div>
+          <div style="padding:6px 12px 8px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:var(--text-secondary);">
+            <div style="font-weight:500;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Sky (column background)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:3px 12px;margin-bottom:5px;">
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:48px;height:8px;border-radius:1px;background:linear-gradient(90deg,#0a0f28,#ffd237);flex-shrink:0;"></div>Night &#x2192; clear day</div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:48px;height:8px;border-radius:1px;background:linear-gradient(90deg,#0f1530,#5f6373);flex-shrink:0;"></div>Night &#x2192; overcast day</div>
+            </div>
+            <div style="font-weight:500;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:3px;">Precipitation (bars)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:3px 12px;margin-bottom:5px;">
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:8px;border-radius:1px;background:rgba(80,150,255,0.85);flex-shrink:0;"></div>Rain</div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:8px;border-radius:1px;background:rgba(255,140,40,0.85);flex-shrink:0;"></div>Freezing rain</div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:8px;border-radius:1px;background:rgba(160,100,220,0.85);flex-shrink:0;"></div>Mixed/slush</div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:8px;border-radius:1px;background:rgba(180,200,240,0.90);flex-shrink:0;"></div>Snow likely</div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:8px;border-radius:1px;background:rgba(230,240,255,0.95);flex-shrink:0;"></div>Snow</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:20px;height:2px;background:rgba(255,200,80,0.95);border-radius:2px;flex-shrink:0;"></div>Temp (°F)</div>
           </div>
           </div>
         </div>
@@ -407,11 +414,8 @@
         <!-- Radar (collapsible) -->
         <div class="card col-6" data-collapse-key="radar" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('radar', this.querySelector('.card-title-collapsible'))">
 
-          <!-- Controls bar (collapsible title) -->
-          <div class="card-title card-title-collapsible" style="cursor:default;display:none;">
-            Radar<span class="collapse-chevron" style="display:none;">&#9660;</span>
-          </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('radar', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-title card-title-collapsible" style="display:none !important;">Radar</div>
+
           <div class="card-collapsed-preview" style="position:relative;min-height:192px;padding:0;margin:-16px;overflow:hidden;border-radius:inherit;">
             <!-- Title upper left -->
             <div style="position:absolute;top:12px;left:16px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;z-index:1000;color:rgba(0,0,0,0.4);">Radar</div>
@@ -422,11 +426,11 @@
 
           <!-- Map and scrubber (collapsible body) -->
           <div class="card-body" style="display:none;padding:0;">
-          <div id="radarControls" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);">
-            <div style="flex:1;"></div>
-            <span id="radarTimestamp" style="font-size:0.8rem;" class="text-secondary"></span>
-            <button id="radarPlayBtn" onclick="radarTogglePlay()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:5px 14px;font-size:0.82rem;font-weight:900;cursor:pointer;">&#9654; Play</button>
-            <button id="radarMapBtn" onclick="radarToggleMapType()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:5px 14px;margin-left:8px;font-size:0.82rem;font-weight:900;cursor:pointer;color:rgba(255,255,255,0.75);">🗺 map</button>
+          <div id="radarControls" style="display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--border-color);">
+            <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-secondary);">Radar</span>
+            <span id="radarTimestamp" style="font-size:0.78rem;color:var(--text-secondary);flex:1;"></span>
+            <button id="radarPlayBtn" onclick="radarTogglePlay()" style="background:transparent;border:0.5px solid var(--border-color);border-radius:999px;padding:3px 12px;font-size:0.78rem;font-weight:600;cursor:pointer;color:var(--text-primary);">&#9654; Play</button>
+            <button onclick="event.stopPropagation(); toggleCard('radar', document.querySelector('[data-collapse-key=radar] .card-title-collapsible'))" style="background:transparent;border:none;font-size:16px;line-height:1;cursor:pointer;color:var(--text-secondary);padding:0 2px;">&#215;</button>
           </div>
           <!-- Map -->
           <div id="radarMap" style="height:clamp(320px, 55vh, 520px);width:100%;background:#0b1220;"></div>
@@ -437,10 +441,9 @@
             <input type="range" id="radarScrubber" min="0" max="0" value="0"
               oninput="radarScrubTo(this.value)"
               style="width:100%;accent-color:rgba(100,180,255,0.9);cursor:pointer;">
-            <div style="display:flex;justify-content:flex-start;
-                        font-size:0.75rem;class="text-subtle" style="font-weight:700;margin-top:2px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:var(--text-secondary);margin-top:3px;">
               <span id="radarScrubStart">--</span>
-              <span class="text-subtle">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,255,180,0.6);">Nowcast</span> &#9654;</span>
+              <span style="color:var(--text-subtle);">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,220,160,0.85);">Nowcast</span> &#9654;</span>
               <span id="radarScrubEnd">--</span>
             </div>
           </div>
@@ -1183,7 +1186,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=43602b19"></script>
+  <script src="js/app-main.js?v=d819226c"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1262,7 +1265,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.40</span>
+            <span class="version-pill" id="appVersion">v4.41</span>
           </div>
         </div>
         <!-- Changelog -->

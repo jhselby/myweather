@@ -400,27 +400,28 @@
       const dt = new Date(time);
       const hour = dt.getHours();
       const nextHour = (hour + 1) % 24;
-      const weekday = dt.toLocaleDateString("en-US", { weekday: "long" });
-      const month = dt.toLocaleDateString("en-US", { month: "long" });
+      const weekday = dt.toLocaleDateString("en-US", { weekday: "short" });
+      const month = dt.toLocaleDateString("en-US", { month: "short" });
       const day = dt.getDate();
-      const timeStr = `${weekday}, ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? 'am' : 'pm'}`;
-      let typeStr = "None";
+      const timeStr = `${weekday} ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? 'am' : 'pm'}`;
+      let typeStr = "none";
       if (precipProb > 0 && wb != null) {
-        if (wb <= 28) typeStr = "❄️ Snow";
-        else if (wb <= 32) typeStr = "🌨 Likely snow";
-        else if (wb <= 35) typeStr = "🟣 Mixed/slush";
+        if (wb <= 28) typeStr = "snow";
+        else if (wb <= 32) typeStr = "snow likely";
+        else if (wb <= 35) typeStr = "mixed/slush";
         else if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
-          typeStr = "🟠 Freezing rain";
+          typeStr = "freezing rain";
         }
-        else typeStr = "🔵 Rain";
+        else typeStr = "rain";
       }
-      
+
       const cloudPct = cloudTotal[index] != null ? Math.round(cloudTotal[index]) : 0;
-      const clearPct = 100 - cloudPct;
-      
+      const sunPct = 100 - cloudPct;
+      const skyStr = cloudPct >= sunPct ? `${cloudPct}% clouds` : `${sunPct}% sun`;
+
       document.getElementById("tempPrecipDataTime").textContent = timeStr + " ·";
       document.getElementById("tempPrecipDataLine").textContent =
-        `${temp != null ? Math.round(temp) : "—"}°F · ${precipProb}% ${typeStr} · ☁ ${cloudPct}%`;
+        `${temp != null ? Math.round(temp) : "—"}° · ${precipProb}% ${typeStr} · ${skyStr}`;
     }
 
     function updateWindDataBar(index, times, speeds, gusts, directions) {
@@ -470,9 +471,12 @@
       const ctx    = document.getElementById("tempPrecipChart").getContext("2d");
       if (tempPrecipChart) tempPrecipChart.destroy();
 
+      // Precip bar colors by precipitation type
+      const precipData   = pop.map(p => p ?? 0);
       const precipColors = (wetBulbs || []).map((wb, i) => {
         const surfTemp = temps[i];
-        const temp850 = temps850mb?.[i];
+        const temp850  = temps850mb?.[i];
+        if (pop[i] === 0) return "rgba(0,0,0,0)";
         if (wb == null) return "rgba(80,140,255,0.85)";
         if (wb <= 28)   return "rgba(230,240,255,0.95)";
         if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
@@ -483,123 +487,76 @@
         return "rgba(80,150,255,0.85)";
       });
 
-      function lerp(a, b, t) {
-        return a + (b - a) * Math.max(0, Math.min(1, t));
-      }
+      // Sky background plugin — paints per-column gradient behind bars on every render
+      const skyBgPlugin = {
+        id: "skyBackground",
+        beforeDatasetsDraw(chart) {
+          const { ctx, chartArea: { left, top, right, bottom }, scales } = chart;
+          const n = times.length;
+          const colW = (right - left) / n;
+          ctx.save();
+          for (let i = 0; i < n; i++) {
+            const time     = new Date(times[i]);
+            const hour     = time.getHours() + time.getMinutes() / 60;
+            const daylight = (hour >= sunrise && hour <= sunset)
+              ? Math.max(0, Math.sin(Math.PI * (hour - sunrise) / (sunset - sunrise)))
+              : 0;
+            const cc = Math.min(1, (cloudTotal[i] ?? 0) / 100);
+            const x0 = left + i * colW;
 
-      function getSkyColor(i) {
-        const time = new Date(times[i]);
-        const hour = time.getHours() + time.getMinutes() / 60;
-        const daylight = hour >= sunrise && hour <= sunset
-          ? Math.max(0, Math.sin(Math.PI * (hour - sunrise) / (sunset - sunrise)))
-          : 0;
-        
-        if (daylight > 0.5) {
-          // Full daytime: yellow/golden sun
-          return "rgba(255, 220, 100, 0.88)";
-        } else if (daylight > 0) {
-          // Sunrise/sunset: subtle orange (close to yellow)
-          return "rgba(255, 200, 80, 0.88)";
-        } else {
-          // Nighttime: dark blue/black
-          return "rgba(10, 15, 35, 0.88)";
+            // Sky color: blend sunny yellow → cloudy gray, modulated by daylight
+            // Heavy clouds (cc > 0.7) pull hard to cool gray regardless of sun
+            const cloudWeight = Math.pow(cc, 0.6); // non-linear: clouds dominate quickly
+            const sunWeight   = (1 - cloudWeight) * daylight;
+            const twlWeight   = (1 - cloudWeight) * Math.max(0, daylight > 0 ? 0 : 0) ;
+
+            // Base colors
+            const sunR = 255, sunG = 210, sunB = 55;          // warm yellow
+            const twlR = 220, twlG = 130, twlB = 40;          // twilight orange
+            const cldDayR = 95,  cldDayG = 100, cldDayB = 115; // cool overcast day
+            const cldNgtR = 15,  cldNgtG = 20,  cldNgtB = 45;  // dark overcast night
+            const clrNgtR = 10,  clrNgtG = 15,  clrNgtB = 40;  // clear night
+
+            let r, g, b, a;
+            if (daylight > 0) {
+              // Daytime or twilight: blend sun vs overcast
+              const daylitCloudR = cldDayR + (cldNgtR - cldDayR) * (1 - daylight);
+              const daylitCloudG = cldDayG + (cldNgtG - cldDayG) * (1 - daylight);
+              const daylitCloudB = cldDayB + (cldNgtB - cldDayB) * (1 - daylight);
+              r = Math.round(sunR * sunWeight + daylitCloudR * cloudWeight + sunR * (1 - cloudWeight - sunWeight));
+              g = Math.round(sunG * sunWeight + daylitCloudG * cloudWeight + sunG * (1 - cloudWeight - sunWeight));
+              b = Math.round(sunB * sunWeight + daylitCloudB * cloudWeight + sunB * (1 - cloudWeight - sunWeight));
+              // Twilight tint when daylight is low
+              if (daylight < 0.3) {
+                const tw = (0.3 - daylight) / 0.3;
+                r = Math.round(r * (1 - tw * 0.4) + twlR * tw * 0.4);
+                g = Math.round(g * (1 - tw * 0.4) + twlG * tw * 0.4);
+                b = Math.round(b * (1 - tw * 0.4) + twlB * tw * 0.4);
+              }
+              a = 0.32 + sunWeight * 0.18;
+            } else {
+              // Nighttime
+              r = Math.round(clrNgtR + (cldNgtR - clrNgtR) * cc);
+              g = Math.round(clrNgtG + (cldNgtG - clrNgtG) * cc);
+              b = Math.round(clrNgtB + (cldNgtB - clrNgtB) * cc);
+              a = 0.55 + cc * 0.1;
+            }
+
+            const grad = ctx.createLinearGradient(0, top, 0, bottom);
+            grad.addColorStop(0, `rgba(${r},${g},${b},${a.toFixed(2)})`);
+            grad.addColorStop(1, `rgba(${r},${g},${b},${(a * 0.35).toFixed(2)})`);
+            ctx.fillStyle = grad;
+            ctx.fillRect(x0, top, colW, bottom - top);
+          }
+          ctx.restore();
         }
-      }
-
-      // Three stacked segments per hour, summing to 100
-      const precipData = pop.map(p => p ?? 0);
-      const cloudData  = times.map((_, i) => {
-        const p = pop[i] ?? 0;
-        const cc = (cloudTotal[i] ?? 0) / 100;
-        return Math.round((100 - p) * cc);
-      });
-      const clearData  = times.map((_, i) => {
-        const p = pop[i] ?? 0;
-        const cc = (cloudTotal[i] ?? 0) / 100;
-        return Math.round((100 - p) * (1 - cc));
-      });
-
-      const clearColors = times.map((_, i) => getSkyColor(i));
-
-      // Cloud segment: gray, slightly lighter at day
-      const cloudColors = times.map((_, i) => {
-        const time = new Date(times[i]);
-        const hour = time.getHours() + time.getMinutes() / 60;
-        const low = (cloudLow[i] ?? 0) / 100;
-        const mid = (cloudMid[i] ?? 0) / 100;
-        const high = (cloudHigh[i] ?? 0) / 100;
-        const totalCloud = low + mid + high;
-        
-        const daylight = hour >= sunrise && hour <= sunset
-          ? Math.max(0, Math.sin(Math.PI * (hour - sunrise) / (sunset - sunrise)))
-          : 0;
-        
-        // Daytime cloud colors (pure gray - R=G=B)
-        const dayLowR = 80, dayLowG = 80, dayLowB = 80;       // dark gray
-        const dayMidR = 120, dayMidG = 120, dayMidB = 120;    // medium gray
-        const dayHighR = 160, dayHighG = 160, dayHighB = 160; // light gray
-        
-        // Nighttime cloud colors (blue-tinted gray)
-        const nightLowR = 40, nightLowG = 45, nightLowB = 60;    // dark blue-gray
-        const nightMidR = 60, nightMidG = 65, nightMidB = 85;    // medium blue-gray
-        const nightHighR = 90, nightHighG = 95, nightHighB = 110; // light blue-gray
-        
-        // Weighted blend of cloud layers
-        let r, g, b;
-        if (totalCloud > 0) {
-          const lowWeight = low / totalCloud;
-          const midWeight = mid / totalCloud;
-          const highWeight = high / totalCloud;
-          
-          const dayR = dayLowR * lowWeight + dayMidR * midWeight + dayHighR * highWeight;
-          const dayG = dayLowG * lowWeight + dayMidG * midWeight + dayHighG * highWeight;
-          const dayB = dayLowB * lowWeight + dayMidB * midWeight + dayHighB * highWeight;
-          
-          const nightR = nightLowR * lowWeight + nightMidR * midWeight + nightHighR * highWeight;
-          const nightG = nightLowG * lowWeight + nightMidG * midWeight + nightHighG * highWeight;
-          const nightB = nightLowB * lowWeight + nightMidB * midWeight + nightHighB * highWeight;
-          
-          r = Math.round(lerp(nightR, dayR, daylight));
-          g = Math.round(lerp(nightG, dayG, daylight));
-          b = Math.round(lerp(nightB, dayB, daylight));
-        } else {
-          // No clouds - shouldn't happen but fallback to medium gray
-          r = Math.round(lerp(60, 120, daylight));
-          g = Math.round(lerp(65, 120, daylight));
-          b = Math.round(lerp(85, 120, daylight));
-        }
-        
-        return "rgba(" + r + "," + g + "," + b + ",0.85)";
-      });
+      };
 
       tempPrecipChart = new Chart(ctx, {
+        plugins: [skyBgPlugin],
         data: {
           labels,
           datasets: [
-            {
-              type: "bar",
-              label: "Clear",
-              data: clearData,
-              yAxisID: "y1",
-              backgroundColor: clearColors,
-              borderColor: "transparent",
-              stack: "sky",
-              order: 3,
-              borderRadius: { topLeft: 0, topRight: 0, bottomLeft: 3, bottomRight: 3 },
-              borderSkipped: false,
-            },
-            {
-              type: "bar",
-              label: "Cloud",
-              data: cloudData,
-              yAxisID: "y1",
-              backgroundColor: cloudColors,
-              borderColor: "transparent",
-              stack: "sky",
-              order: 2,
-              borderRadius: 0,
-              borderSkipped: false,
-            },
             {
               type: "bar",
               label: "Precip %",
@@ -607,7 +564,6 @@
               yAxisID: "y1",
               backgroundColor: precipColors,
               borderColor: "transparent",
-              stack: "sky",
               order: 1,
               borderRadius: { topLeft: 3, topRight: 3, bottomLeft: 0, bottomRight: 0 },
               borderSkipped: false,
@@ -619,7 +575,7 @@
               yAxisID: "y",
               tension: 0.25,
               borderColor: "rgba(255,180,80,0.9)",
-              backgroundColor: "rgba(255,180,80,0.15)",
+              backgroundColor: "transparent",
               pointRadius: 0,
               order: 0,
             }
@@ -630,7 +586,6 @@
           interaction: { mode: "index", intersect: false },
           onClick: (event, activeElements) => {
             if (activeElements.length > 0) {
-              const index = activeElements[0].index;
               updateTempPrecipDataBar(activeElements[0].index, times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal);
             }
           },
@@ -645,10 +600,38 @@
             tooltip: { enabled: false }
           },
           scales: {
-            x:  { stacked: true, ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
-            y:  { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
-            y1: { position: "right", stacked: true, min: 0, max: 100,
-                  ticks: { color: chartTextColor() }, grid: { drawOnChartArea: false } }
+            x: {
+              ticks: {
+                color: chartTextColor(),
+                maxRotation: 0,
+                autoSkip: false,
+                callback: function(value, index) {
+                  const dt = new Date(times[index]);
+                  const h = dt.getHours();
+                  const m = dt.getMinutes();
+                  if (m !== 0) return null;
+                  if (h === 0) {
+                    const day = dt.toLocaleDateString("en-US", { weekday: "short" });
+                    return day;
+                  }
+                  if (h % 6 === 0) {
+                    return h === 12 ? "12pm" : h < 12 ? h + "am" : (h - 12) + "pm";
+                  }
+                  return null;
+                },
+                font: { size: 10 }
+              },
+              grid: { color: chartGridColor() }
+            },
+            y: {
+              ticks: { color: chartTextColor(), font: { size: 10 }, callback: v => v + "°" },
+              grid: { color: chartGridColor() }
+            },
+            y1: {
+              position: "right", min: 0, max: 100,
+              ticks: { color: chartTextColor(), font: { size: 10 }, callback: v => v === 0 || v === 50 || v === 100 ? v + "%" : null },
+              grid: { drawOnChartArea: false }
+            }
           },
           barPercentage: 0.55,
           categoryPercentage: 0.70
