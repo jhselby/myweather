@@ -3028,9 +3028,25 @@
         attributionControl: true,
       });
       // Create both base map layers (like overhead)
-      radarTileLayers.street = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18 });
-      radarTileLayers.satellite = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19 });
-      radarTileLayers.satellite.addTo(radarMap);  // Start with satellite
+      function radarBaseTileUrl() {
+        const isLight = document.body.classList.contains('theme-light');
+        return isLight
+          ? "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+          : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+      }
+      function radarApplyBaseTile() {
+        if (!radarMap) return;
+        if (radarTileLayers._base) radarMap.removeLayer(radarTileLayers._base);
+        radarTileLayers._base = L.tileLayer(radarBaseTileUrl(), { maxZoom: 19, attribution: '&copy; <a href="https://carto.com/">CartoDB</a>' });
+        radarTileLayers._base.addTo(radarMap);
+        radarTileLayers._base.bringToBack();
+      }
+      radarTileLayers.street = { addTo: () => {} };   // compat stub
+      radarTileLayers.satellite = radarTileLayers.street;
+      radarApplyBaseTile();
+      // Re-apply base tile when theme changes
+      const _radarThemeObs = new MutationObserver(() => radarApplyBaseTile());
+      _radarThemeObs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
 
       // Home marker

@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=87ca3d70" />
+  <link rel="stylesheet" href="styles/app.css?v=2421cdb6" />
 </head>
 <body>
   <div class="container">
@@ -435,11 +435,9 @@
 
           <!-- Map and scrubber (collapsible body) -->
           <div class="card-body" style="display:none;padding:0;">
-          <div id="radarControls" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);">
-            <div style="flex:1;"></div>
-            <span id="radarTimestamp" style="font-size:0.8rem;" class="text-secondary"></span>
-            <button id="radarPlayBtn" onclick="radarTogglePlay()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:5px 14px;font-size:0.82rem;font-weight:900;cursor:pointer;">&#9654; Play</button>
-            <button id="radarMapBtn" onclick="radarToggleMapType()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:999px;padding:5px 14px;margin-left:8px;font-size:0.82rem;font-weight:900;cursor:pointer;color:rgba(255,255,255,0.75);">🗺 map</button>
+          <div id="radarControls" style="display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--border-color);">
+            <span id="radarTimestamp" style="font-size:0.78rem;color:var(--text-secondary);flex:1;"></span>
+            <button id="radarPlayBtn" onclick="radarTogglePlay()" style="background:transparent;border:0.5px solid var(--border-color);border-radius:999px;padding:3px 12px;font-size:0.78rem;font-weight:600;cursor:pointer;color:var(--text-primary);">&#9654; Play</button>
           </div>
           <!-- Map -->
           <div id="radarMap" style="height:clamp(320px, 55vh, 520px);width:100%;background:#0b1220;"></div>
@@ -450,10 +448,9 @@
             <input type="range" id="radarScrubber" min="0" max="0" value="0"
               oninput="radarScrubTo(this.value)"
               style="width:100%;accent-color:rgba(100,180,255,0.9);cursor:pointer;">
-            <div style="display:flex;justify-content:flex-start;
-                        font-size:0.75rem;class="text-subtle" style="font-weight:700;margin-top:2px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:0.72rem;color:var(--text-secondary);margin-top:3px;">
               <span id="radarScrubStart">--</span>
-              <span class="text-subtle">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,255,180,0.6);">Nowcast</span> &#9654;</span>
+              <span style="color:var(--text-subtle);">&#9664; Past &nbsp;|&nbsp; <span style="color:rgba(100,220,160,0.85);">Nowcast</span> &#9654;</span>
               <span id="radarScrubEnd">--</span>
             </div>
           </div>
@@ -1196,7 +1193,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=3d88bdf3"></script>
+  <script src="js/app-main.js?v=d8fd31bf"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
