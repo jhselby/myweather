@@ -349,6 +349,13 @@
       return                                 { label: "Calm",         cls: "calm"        };
     }
 
+    function combinedWindImpact(sustainedSpeed, gustSpeed, direction) {
+      const exposure = getExposureFactor(direction);
+      const sustainedScore = sustainedSpeed != null ? worryScore(sustainedSpeed, exposure) : 0;
+      const gustScore      = gustSpeed      != null ? worryScore(gustSpeed,      exposure) : 0;
+      return sustainedSpeed != null && sustainedSpeed < 15 ? sustainedScore : gustScore;
+    }
+
     function computePeakWorry(hourly, windowHours, useGusts) {
       const values = useGusts ? (hourly?.wind_gusts || []) : (hourly?.wind_speed || []);
       const dirs   = hourly?.wind_direction || [];
@@ -433,37 +440,21 @@
       const dt = new Date(time);
       const hour = dt.getHours();
       const nextHour = (hour + 1) % 24;
-      const weekday = dt.toLocaleDateString("en-US", { weekday: "long" });
-      const month = dt.toLocaleDateString("en-US", { month: "long" });
-      const day = dt.getDate();
-      const timeStr = `${weekday}, ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? 'am' : 'pm'}`;
+      const weekday = dt.toLocaleDateString("en-US", { weekday: "short" });
+      const month   = dt.toLocaleDateString("en-US", { month: "short" });
+      const day     = dt.getDate();
+      const timeStr = `${weekday} ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? 'am' : 'pm'}`;
       
-      // Calculate impact scores
-      const exposure = dir != null ? getExposureFactor(dir) : 1.0;
-      const sustainedImpact = speed != null ? worryScore(speed, exposure) : 0;
-      const gustImpact = gust != null ? worryScore(gust, exposure) : 0;
-      
-      // Impact labels
-      const sustainedLabel = sustainedImpact <= 5 ? "Calm" :
-                            sustainedImpact <= 12 ? "Breezy" :
-                            sustainedImpact <= 20 ? "Notable" :
-                            sustainedImpact <= 30 ? "Significant" :
-                            sustainedImpact <= 40 ? "Severe" : "Extreme";
-      
-      const gustLabel = gustImpact <= 5 ? "Calm" :
-                       gustImpact <= 12 ? "Breezy" :
-                       gustImpact <= 20 ? "Notable" :
-                       gustImpact <= 30 ? "Significant" :
-                       gustImpact <= 40 ? "Severe" : "Extreme";
-      
-      // Direction conversion
-      const dirStr = dir != null ? toCompass(dir, true) : "—";
-      
-      document.getElementById("windDataTime").textContent = timeStr;
-      document.getElementById("windDataLine").innerHTML = 
-        `Sustained: ${speed != null ? Math.round(speed) : "—"}mph (Impact: ${Math.round(sustainedImpact)}, ${sustainedLabel}) | ` +
-        `Gust: ${gust != null ? Math.round(gust) : "—"}mph (Impact: ${Math.round(gustImpact)}, ${gustLabel})<br>` +
-        `Direction: ${dirStr}`;
+      const dirStr  = dir != null ? toCompass(dir, true) : "—";
+      const combined      = dir != null ? Math.round(combinedWindImpact(speed, gust, dir)) : null;
+      const combinedLevel = combined != null ? worryLevel(combined) : null;
+      const impactStr     = combined != null ? `Impact: ${combined} ${combinedLevel.label}` : "Impact: --";
+      const spdStr  = speed != null ? `${Math.round(speed)} mph` : "--";
+      const gustStr = gust  != null ? `Gusts ${Math.round(gust)} mph` : "";
+
+      document.getElementById("windDataTime").textContent = timeStr + " ·";
+      document.getElementById("windDataLine").textContent =
+        `${spdStr}${gustStr ? " · " + gustStr : ""} · ${dirStr} · ${impactStr}`;
     }
 
     function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal, sunrise, sunset) {
@@ -763,19 +754,34 @@
             }
           },
           scales: {
-            x: { ticks: { color: chartTextColor() }, grid: { color: chartGridColor() } },
-            y: { 
+            x: {
+              ticks: {
+                color: chartTextColor(),
+                maxRotation: 0,
+                autoSkip: false,
+                font: { size: 10 },
+                callback: function(value, index) {
+                  const dt = new Date(times[index]);
+                  const h = dt.getHours();
+                  const m = dt.getMinutes();
+                  if (m !== 0) return null;
+                  if (h === 0) return dt.toLocaleDateString("en-US", { weekday: "short" });
+                  if (h % 6 === 0) return h === 12 ? "12pm" : h < 12 ? h + "am" : (h-12) + "pm";
+                  return null;
+                }
+              },
+              grid: { color: chartGridColor() }
+            },
+            y: {
               position: "left",
-              title: { display: true, text: "Wind Impact Score", color: chartTextColor() },
-              ticks: { color: chartTextColor() }, 
+              ticks: { color: chartTextColor(), font: { size: 10 } },
               grid: { color: chartGridColor() },
               min: 0,
               max: axisMax
             },
-            y1: { 
+            y1: {
               position: "right",
-              title: { display: true, text: "Wind Speed (mph)", color: chartTextColor() },
-              ticks: { color: chartTextColor() }, 
+              ticks: { color: chartTextColor(), font: { size: 10 }, callback: v => v + " mph" },
               grid: { drawOnChartArea: false }
             }
           }
@@ -2403,23 +2409,26 @@
       });
     }
     function fillWorryCard(ids, peak, windowHours) {
-      // ids: { score, scoreLabel, peakSpd, dir, exposure, time, note }
+      function setEl(id, val, isHTML) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (isHTML) el.innerHTML = val; else el.textContent = val;
+      }
       if (!peak) {
-        document.getElementById(ids.score).textContent   = "--";
-        document.getElementById(ids.peakSpd).textContent = "-- mph";
-        document.getElementById(ids.dir).textContent     = "--";
-        document.getElementById(ids.exposure).textContent= "--";
-        document.getElementById(ids.time).textContent    = "--";
+        setEl(ids.score,    "--");
+        setEl(ids.peakSpd,  "-- mph");
+        setEl(ids.dir,      "--");
+        setEl(ids.exposure, "--");
+        setEl(ids.time,     "--");
         return;
       }
       const wl = worryLevel(peak.score);
-      document.getElementById(ids.score).innerHTML =
-        `<span class="badge ${wl.cls}">${peak.score.toFixed(1)}</span> (${wl.label})`;
-      document.getElementById(ids.scoreLabel).textContent = `Peak Impact (next ${windowHours}h)`;
-      document.getElementById(ids.peakSpd).textContent = `${Math.round(peak.speed)} mph`;
-      document.getElementById(ids.dir).textContent     = toCompass(peak.directionDeg);
-      document.getElementById(ids.exposure).textContent= `${(peak.exposureFactor * 100).toFixed(0)}%`;
-      document.getElementById(ids.time).textContent    = peak.timeISO ? fmtLocal(peak.timeISO) : "--";
+      setEl(ids.score,      `<span class="badge ${wl.cls}">${peak.score.toFixed(1)}</span> (${wl.label})`, true);
+      setEl(ids.scoreLabel, `Peak Impact (next ${windowHours}h)`);
+      setEl(ids.peakSpd,   `${Math.round(peak.speed)} mph`);
+      setEl(ids.dir,        toCompass(peak.directionDeg));
+      setEl(ids.exposure,  `${(peak.exposureFactor * 100).toFixed(0)}%`);
+      setEl(ids.time,       peak.timeISO ? fmtLocal(peak.timeISO) : "--");
     }
 
     // Per-card window state
@@ -2433,36 +2442,35 @@
       const susPeak  = computePeakWorry(hourly, _susWindowHours,  false);
 
       fillWorryCard(
-        { score:"gustScore", scoreLabel:"gustScoreLabel", peakSpd:"gustPeak",
+        { score:"gustCurrentScore", scoreLabel:"windImpactScoreLabel", peakSpd:"gustPeak",
           dir:"gustDir", exposure:"gustExposure", time:"gustTime", note:"gustNote" },
         gustPeak, _gustWindowHours
       );
       fillWorryCard(
-        { score:"susScore", scoreLabel:"susScoreLabel", peakSpd:"susPeak",
+        { score:"susCurrentScore", scoreLabel:"windImpactScoreLabel", peakSpd:"susPeak",
           dir:"susDir", exposure:"susExposure", time:"susTime", note:"susNote" },
         susPeak, _susWindowHours
       );
 
       const noteEl = document.getElementById("gustNote");
-      if (noteEl) noteEl.textContent = `Peak gust wind impact over next ${_gustWindowHours}h. Score = gust × exposure¹·⁵.`;
-      const susNoteEl = document.getElementById("susNote");
-      if (susNoteEl) susNoteEl.textContent = `Peak sustained impact over next ${_susWindowHours}h. Sustained = dock lines, outdoor use.`;
+      if (noteEl) noteEl.textContent = `Wind impact over next ${_gustWindowHours}h. Score reflects sustained wind when calm, gusts when conditions are notable.`;
 
-      // Add current impact scores to cards
+      // Combined Wind Impact current score
       const cur = data.current || {};
-      if (cur.wind_gusts != null && cur.wind_direction != null) {
-        const exposure = getExposureFactor(cur.wind_direction);
-        const gustScore = Math.round(worryScore(hyp.corrected_wind_gusts ?? cur.wind_gusts, exposure));
-        const gustLevel = worryLevel(gustScore);
-        const gustCurEl = document.getElementById("gustCurrentScore");
-        if (gustCurEl) gustCurEl.innerHTML = `<span class="badge ${gustLevel.cls}">${gustScore}</span> (${gustLevel.label})`;
-      }
-      if (cur.wind_speed != null && cur.wind_direction != null) {
-        const exposure = getExposureFactor(cur.wind_direction);
-        const susScore = Math.round(worryScore(hyp.corrected_wind_speed ?? cur.wind_speed, exposure));
-        const susLevel = worryLevel(susScore);
-        const susCurEl = document.getElementById("susCurrentScore");
-        if (susCurEl) susCurEl.innerHTML = `<span class="badge ${susLevel.cls}">${susScore}</span> (${susLevel.label})`;
+      const curWindSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
+      const curGustSpeed = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+      if (cur.wind_direction != null && (curWindSpeed != null || curGustSpeed != null)) {
+        const combined = Math.round(combinedWindImpact(curWindSpeed, curGustSpeed, cur.wind_direction));
+        const combinedLevel = worryLevel(combined);
+        const combinedEl = document.getElementById("windImpactCombinedScore");
+        if (combinedEl) combinedEl.innerHTML = `<span class="badge ${combinedLevel.cls}">${combined}</span> (${combinedLevel.label})`;
+
+        const peakCombined = Math.round(gustPeak.score ?? 0);
+        const peakLevel = worryLevel(peakCombined);
+        const peakEl = document.getElementById("windImpactPeakScore");
+        const labelEl = document.getElementById("windImpactScoreLabel");
+        if (peakEl) peakEl.innerHTML = `<span class="badge ${peakLevel.cls}">${peakCombined}</span> (${peakLevel.label})`;
+        if (labelEl) labelEl.textContent = `Peak impact (next ${_gustWindowHours}h)`;
       }
     }
 
@@ -2724,8 +2732,9 @@
           document.querySelectorAll(`.wpill[data-target="${target}"]`)
             .forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
-          if (target === "gust") _gustWindowHours = hours;
-          else                   _susWindowHours  = hours;
+          if (target === "wind_impact") { _gustWindowHours = hours; _susWindowHours = hours; }
+          else if (target === "gust") _gustWindowHours = hours;
+          else                        _susWindowHours  = hours;
           renderWindRisk(window.__lastWeatherData || data);
         });
       });
@@ -4426,38 +4435,22 @@
         document.getElementById("precipNow").textContent = 
           precipType !== "None" ? `${precipType} ${precipChanceVal}` : precipChanceVal;
         
-        // Wind Impact now - combined score and wind data
+        // Wind Impact now - combined score (sustained if <15mph, gust otherwise)
         const windImpactNowEl = document.getElementById("windImpactNow");
         if (windImpactNowEl) {
-          const windSpeed = Math.round(hyp.corrected_wind_speed ?? cur.wind_speed ?? 0);
-          const windDir = cur.wind_direction != null ? degToCompass(cur.wind_direction) : "";
+          const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
+          const gustValue = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+          const windDir   = cur.wind_direction;
+          const windDirStr = windDir != null ? degToCompass(windDir) : "";
           
-          if (cur.wind_speed != null && cur.wind_direction != null) {
-            const exposure = getExposureFactor(cur.wind_direction);
-            const sustainedScore = Math.round(worryScore(hyp.corrected_wind_speed ?? cur.wind_speed, exposure));
-            const sustainedLevel = worryLevel(sustainedScore);
-            const windText = windSpeed > 0 ? `${windDir} ${windSpeed} mph` : "Calm";
-            windImpactNowEl.innerHTML = `${sustainedScore} (${sustainedLevel.label}) · ${windText}`;
+          if (windDir != null && (windSpeed != null || gustValue != null)) {
+            const combined = Math.round(combinedWindImpact(windSpeed, gustValue, windDir));
+            const level    = worryLevel(combined);
+            const spdStr   = windSpeed != null ? `${Math.round(windSpeed)} mph` : "--";
+            const gustStr  = gustValue != null ? ` · Gusts ${Math.round(gustValue)} mph` : "";
+            windImpactNowEl.innerHTML = `${combined} (${level.label}) · ${windDirStr} ${spdStr}${gustStr}`;
           } else {
-            windImpactNowEl.textContent = windSpeed > 0 ? `-- · ${windDir} ${windSpeed} mph` : "-- · Calm";
-          }
-        }
-        
-        // Gust Impact now - combined score and gust data
-        const gustImpactNowEl = document.getElementById("gustImpactNow");
-        if (gustImpactNowEl) {
-          const gustValue = cur.wind_gusts;  // Use model gusts, not WU-corrected (WU stations are sheltered)
-          const windDir = cur.wind_direction != null ? degToCompass(cur.wind_direction) : "";
-          
-          if (gustValue != null && cur.wind_direction != null) {
-            const exposure = getExposureFactor(cur.wind_direction);
-            const gustScore = Math.round(worryScore(gustValue, exposure));
-            const gustLevel = worryLevel(gustScore);
-            gustImpactNowEl.innerHTML = `${gustScore} (${gustLevel.label}) · ${windDir} ${Math.round(gustValue)} mph`;
-          } else if (gustValue != null) {
-            gustImpactNowEl.textContent = `-- · ${Math.round(gustValue)} mph`;
-          } else {
-            gustImpactNowEl.textContent = "--";
+            windImpactNowEl.textContent = "--";
           }
         }
         
@@ -4490,83 +4483,67 @@
             weatherWindDirectionIndicatorEl.classList.add('wind-wobble');
           }
           
-          // Set impact score (using gust impact)
-          if (gustSpeed != null && windDir != null) {
-            const exposure = getExposureFactor(windDir);
-            const gustScore = Math.round(worryScore(gustSpeed, exposure));
-            const gustLevel = worryLevel(gustScore);
-            weatherWindImpactBarEl.textContent = `Impact: ${gustScore} ${gustLevel.label}`;
+          // Set impact score (combined: sustained if <15mph, gust otherwise)
+          const windBarClasses = ['wind-bar-calm','wind-bar-light','wind-bar-moderate','wind-bar-strong','wind-bar-severe'];
+          const windTintClasses = ['wind-tint-calm','wind-tint-light','wind-tint-moderate','wind-tint-strong','wind-tint-severe'];
+          const windCard = document.querySelector('[data-collapse-key="48h_wind"]');
+          weatherWindImpactBarEl.classList.remove(...windBarClasses);
+          if (windCard) windCard.classList.remove(...windTintClasses);
+          if (windDir != null && (windSpeed != null || gustSpeed != null)) {
+            const combined = Math.round(combinedWindImpact(windSpeed, gustSpeed, windDir));
+            const combinedLevel = worryLevel(combined);
+            weatherWindImpactBarEl.textContent = `Impact: ${combined} ${combinedLevel.label}`;
+            const colorCls = combined <= 2 ? 'calm' : combined <= 4 ? 'light' : combined <= 7 ? 'moderate' : combined <= 10 ? 'strong' : 'severe';
+            weatherWindImpactBarEl.classList.add(`wind-bar-${colorCls}`);
+            if (windCard) windCard.classList.add(`wind-tint-${colorCls}`);
           } else {
             weatherWindImpactBarEl.textContent = 'Impact: --';
           }
         }
         
-        // Populate Hyperlocal page Gust Impact and Sustained Wind Impact tiles
-        // Read directly from wind_risk data (no dependency on Right Now card)
-        const gustImpactCollapsedEl = document.getElementById("gustImpactCollapsed");
-        const gustImpactLabelEl = document.getElementById("gustImpactLabel");
-        const gustPeakCollapsedEl = document.getElementById("gustPeakCollapsed");
-        const susImpactCollapsedEl = document.getElementById("susImpactCollapsed");
-        const susImpactLabelEl = document.getElementById("susImpactLabel");
-        const susPeakCollapsedEl = document.getElementById("susPeakCollapsed");
-        
+        // Populate Hyperlocal merged Wind Impact card collapsed tile
+        const windImpactCollapsedEl     = document.getElementById("windImpactCollapsed");
+        const windImpactLabelEl         = document.getElementById("windImpactLabel");
+        const windImpactPeakCollapsedEl = document.getElementById("windImpactPeakCollapsed");
+
         const windRisk = data.wind_risk || {};
-        
-        // Gust Impact - read directly from wind_risk.gust
-        const gustData = windRisk.gust || {};
-        if (gustImpactCollapsedEl && gustData.worry_score !== undefined) {
-          const gustScore = Math.round(gustData.worry_score);
-          const gustLabel = gustData.level || "";
-          const gustDir = gustData.direction_deg || 0;
-          const gustSpeed = gustData.peak_mph || 0;
-          const gustWind = `${gustDir}° ${gustSpeed} mph`;
-          
-          gustImpactCollapsedEl.textContent = gustScore.toString();
-          if (gustImpactLabelEl) gustImpactLabelEl.textContent = gustLabel;
-          if (gustPeakCollapsedEl) gustPeakCollapsedEl.textContent = gustWind;
-          
-          // Apply gradient class based on score
-          const gustCard = document.querySelector('[data-collapse-key="wind_gust_impact"]');
-          if (gustCard) {
-            gustCard.classList.remove('tile-wind-calm', 'tile-wind-light', 'tile-wind-moderate', 'tile-wind-strong', 'tile-wind-severe');
-            if (gustScore <= 2) gustCard.classList.add('tile-wind-calm');
-            else if (gustScore <= 4) gustCard.classList.add('tile-wind-light');
-            else if (gustScore <= 7) gustCard.classList.add('tile-wind-moderate');
-            else if (gustScore <= 10) gustCard.classList.add('tile-wind-strong');
-            else gustCard.classList.add('tile-wind-severe');
+
+        {
+          const cwSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
+          const cwGust  = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+          const cwDir   = cur.wind_direction;
+          if (windImpactCollapsedEl && cwDir != null) {
+            const combined      = Math.round(combinedWindImpact(cwSpeed, cwGust, cwDir));
+            const combinedLevel = worryLevel(combined);
+            const dirStr        = degToCompass(cwDir);
+            windImpactCollapsedEl.textContent = combined.toString();
+            if (windImpactLabelEl) windImpactLabelEl.textContent = combinedLevel.label;
+            if (windImpactPeakCollapsedEl) windImpactPeakCollapsedEl.textContent =
+              `${dirStr} · ${cwSpeed != null ? Math.round(cwSpeed) : '--'} mph · Gusts ${cwGust != null ? Math.round(cwGust) : '--'} mph`;
+            const windCard = document.querySelector('[data-collapse-key="wind_impact"]');
+            if (windCard) {
+              windCard.classList.remove('tile-wind-calm','tile-wind-light','tile-wind-moderate','tile-wind-strong','tile-wind-severe');
+              const cls = combined <= 2 ? 'calm' : combined <= 4 ? 'light' : combined <= 7 ? 'moderate' : combined <= 10 ? 'strong' : 'severe';
+              windCard.classList.add(`tile-wind-${cls}`);
+            }
           }
         }
         
-        // Sustained Wind Impact - read current score from modal (same calculation as Right Now card)
-        const susData = windRisk.sustained || {};
-        if (susImpactCollapsedEl) {
-          const currentWindSpeed = data.hyperlocal?.corrected_wind_speed ?? data.current?.wind_speed ?? 0;
-          const currentWindDir = data.current?.wind_direction;
-          
-          if (currentWindSpeed > 0 && currentWindDir != null) {
-            const exposure = getExposureFactor(currentWindDir);
-            const susScore = Math.round(worryScore(currentWindSpeed, exposure));
-            const susLevelData = worryLevel(susScore);
-            const susLabel = susLevelData.label || "";
-            const susDir = degToCompass(currentWindDir);
-            const susSpeed = Math.round(currentWindSpeed);
-            const susWind = `${susDir} ${susSpeed} mph`;
-            
-            susImpactCollapsedEl.textContent = susScore.toString();
-            if (susImpactLabelEl) susImpactLabelEl.textContent = susLabel;
-            if (susPeakCollapsedEl) susPeakCollapsedEl.textContent = susWind;
-            
-            // Apply gradient class based on score
-            const susCard = document.querySelector('[data-collapse-key="wind_sus_impact"]');
-            if (susCard) {
-              susCard.classList.remove('tile-wind-calm', 'tile-wind-light', 'tile-wind-moderate', 'tile-wind-strong', 'tile-wind-severe');
-              if (susScore <= 2) susCard.classList.add('tile-wind-calm');
-              else if (susScore <= 4) susCard.classList.add('tile-wind-light');
-              else if (susScore <= 7) susCard.classList.add('tile-wind-moderate');
-              else if (susScore <= 10) susCard.classList.add('tile-wind-strong');
-              else susCard.classList.add('tile-wind-severe');
-            }
-          }
+        // Gust Impact expanded detail rows (still populate for expanded body)
+        const gustData = windRisk.gust || {};
+        if (gustData.worry_score !== undefined) {
+          const gustScore = Math.round(gustData.worry_score);
+          const gustLevel = worryLevel(gustScore);
+          const gustEl = document.getElementById("gustCurrentScore");
+          if (gustEl) gustEl.innerHTML = `<span class="badge ${gustLevel.cls}">${gustScore}</span> (${gustLevel.label})`;
+          const gustPeakEl = document.getElementById("gustPeak");
+          if (gustPeakEl) gustPeakEl.textContent = `${gustData.peak_mph || "--"} mph`;
+          const gustDirEl = document.getElementById("gustDir");
+          if (gustDirEl) gustDirEl.textContent = gustData.direction_deg != null ? `${gustData.direction_deg}° ${degToCompass(gustData.direction_deg)}` : "--";
+          const gustExpEl = document.getElementById("gustExposure");
+          if (gustExpEl) gustExpEl.textContent = gustData.exposure_factor != null ? `${(gustData.exposure_factor * 100).toFixed(0)}%` : "--";
+          const gustTimeEl = document.getElementById("gustTime");
+          if (gustTimeEl) gustTimeEl.textContent = gustData.peak_time ? fmtLocal(gustData.peak_time) : "--";
         }
         
         // Pressure now (with trend inline)
@@ -4710,11 +4687,7 @@
         // Make hyperlocal fields tappable with click handlers
         if (windImpactNowEl) {
           windImpactNowEl.classList.add('hyperlocal-link');
-          windImpactNowEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="wind_sus_impact"]'); if (card) card.click(); }, 100); };
-        }
-        if (gustImpactNowEl) {
-          gustImpactNowEl.classList.add('hyperlocal-link');
-          gustImpactNowEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="wind_gust_impact"]'); if (card) card.click(); }, 100); };
+          windImpactNowEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="wind_impact"]'); if (card) card.click(); }, 100); };
         }
         if (sbEl) {
           sbEl.classList.add('hyperlocal-link');
