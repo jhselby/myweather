@@ -823,7 +823,6 @@
         if (now >= s.start) season = s;
       }
       const daysToNext  = Math.ceil((season.next - now) / 86400000);
-      const seasonEmoji = { Winter:"❄️", Spring:"🌱", Summer:"☀️", Fall:"🍂" }[season.name];
 
       // ── Daylight ──────────────────────────────────────────────
       let daylightStr = "--";
@@ -914,7 +913,7 @@
       el.innerHTML = `
         <div style="font-size:1.05rem;font-weight:900;color:${valCol};margin-bottom:14px;">${fullDate}</div>
         ${row("Day of year",    `${dayOfYear} of ${daysInYear}`, `Week ${weekNum}`)}
-        ${row("Season (meteorological)",`${seasonEmoji} ${season.name}`, `${daysToNext} days until ${season.nextName}`)}
+        ${row("Season (meteorological)",`${season.name}`, `${daysToNext} days until ${season.nextName}`)}
         ${row("Sunrise",        riseStr)}
         ${row("Sunset",         setStr)}
         ${row("Daylight",       daylightStr, changeStr)}
@@ -954,7 +953,7 @@
       const upcomingHtml = upcoming.length === 0
         ? `<span style="color:${textFaint};">None in 10-day forecast</span>`
         : upcoming.map(u => {
-            const label = u.min_f <= 20 ? "❄️❄️" : u.min_f <= 28 ? "❄️" : "🌡️";
+            const label = u.min_f <= 20 ? "Hard freeze" : u.min_f <= 28 ? "Frost" : "Cool";
             const d = new Date(u.date).toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
             return `<span style="margin-right:12px;">${label} ${d} (${u.min_f}°F)</span>`;
           }).join("");
@@ -1051,7 +1050,6 @@
             score: 45,
             label: "Good",
             color: "rgba(255,220,100,0.9)",
-            emoji: "🌤️",
             avgLow: low10.toFixed(0),
             avgMid: mid25.toFixed(0),
             avgHigh: high25.toFixed(0),
@@ -1071,7 +1069,6 @@
             score: 10,
             label: "Poor",
             color: "rgba(120,120,120,0.6)",
-            emoji: "☁️",
             avgLow: low10.toFixed(0),
             avgMid: mid25.toFixed(0),
             avgHigh: high25.toFixed(0),
@@ -1094,19 +1091,19 @@
         let score = (midScore * 0.7 + highBonus) * (1 - lowPenalty * 0.6) * humFactor;
         score = Math.max(1, Math.min(100, Math.round(score * 100)));
         
-        let label, color, emoji;
-        if (score >= 75)      { label = "Spectacular";  color = "rgba(255,160,40,0.95)";  emoji = "🔥"; }
-        else if (score >= 55) { label = "Very Good";    color = "rgba(255,200,60,0.95)";  emoji = "🌅"; }
-        else if (score >= 35) { label = "Good";         color = "rgba(255,220,100,0.9)";  emoji = "🌤️"; }
-        else if (score >= 18) { label = "Fair";         color = "rgba(180,180,180,0.8)";  emoji = "🌥️"; }
-        else                    { label = "Poor";         color = "rgba(120,120,120,0.6)";  emoji = "☁️"; }
+        let label, color;
+        if (score >= 75)      { label = "Spectacular";  color = "rgba(255,160,40,0.95)";  ; }
+        else if (score >= 55) { label = "Very Good";    color = "rgba(255,200,60,0.95)";  ; }
+        else if (score >= 35) { label = "Good";         color = "rgba(255,220,100,0.9)"; }
+        else if (score >= 18) { label = "Fair";         color = "rgba(180,180,180,0.8)"; }
+        else                    { label = "Poor";         color = "rgba(120,120,120,0.6)"; }
         
         const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
           : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
         const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
         
         scores.push({
-          dayLabel, timeLabel, score, label, color, emoji,
+          dayLabel, timeLabel, score, label, color,
           avgLow: low10.toFixed(0),
           avgMid: midCloudAvg.toFixed(0),
           avgHigh: ((high25 + high50) / 2).toFixed(0),
@@ -1115,7 +1112,7 @@
         
         // Store today's score for Right Now card
         if (day.day === 0) {
-          window.__todaySunsetScore = {score, label, emoji, color};
+          window.__todaySunsetScore = {score, label, color};
         }
       }
 
@@ -1153,7 +1150,7 @@
           <div style="background:${tileBg};border:1px solid ${tileBd};
                       border-radius:10px;padding:16px 12px;text-align:center;">
             <div style="font-size:0.9rem;font-weight:800;color:${dayCol};margin-bottom:6px;">${s.dayLabel}</div>
-            <div style="font-size:2rem;margin-bottom:6px;">${s.emoji}</div>
+            
             <div style="font-size:1.05rem;font-weight:900;color:${scoreCol};margin-bottom:6px;">${s.label} <span style="font-size:0.8rem;opacity:0.7;">(${Math.round(s.score)})</span></div>
             <div style="font-size:0.8rem;color:${timeCol};margin-bottom:10px;">Sunset ${s.timeLabel}</div>
             <div style="height:5px;background:${barBg};border-radius:3px;overflow:hidden;margin-bottom:10px;">
@@ -1195,7 +1192,7 @@
         const sunsetScoreEl = document.getElementById("sunsetScoreCollapsed");
         
         if (sunsetDayEl) sunsetDayEl.textContent = nextSunset.dayLabel;
-        if (sunsetIconEl) sunsetIconEl.textContent = nextSunset.emoji;
+        
         if (sunsetScoreEl) sunsetScoreEl.innerHTML = `${nextSunset.label} <span style="font-size:0.85rem;opacity:0.7;">(${nextSunset.score})</span>`;
         
         // Apply gradient class based on score
@@ -1454,7 +1451,7 @@
         } else if (isDay) {
           statusLine = `<span style="color:${dayColor};">${p.alt}° alt · sky too bright</span>`;
         } else if (isGlare) {
-          statusLine = `<span style="color:${glareColor};">☀️ solar glare</span>`;
+          statusLine = `<span style="color:${glareColor};">solar glare</span>`;
         } else {
           statusLine = `<span style="color:${faintTxt};">below horizon</span>`;
         }
@@ -1535,7 +1532,7 @@
         tabBtn.style.background    = anyError ? "rgba(255,80,80,0.18)"  : "rgba(80,200,100,0.15)";
         tabBtn.style.borderColor   = anyError ? "rgba(255,80,80,0.45)"  : "rgba(80,200,100,0.4)";
         tabBtn.style.color         = anyError ? "rgba(255,180,180,0.95)" : "rgba(140,240,160,0.95)";
-        tabBtn.textContent         = anyError ? "⚠️ Sources" : "✓ Sources";
+        tabBtn.textContent         = anyError ? "Sources" : "✓ Sources";
       }
 
       // Build sources table
@@ -1583,7 +1580,7 @@
           }
           
           return `<div style="${rowStyle}">
-            <span style="${nameStyle}">${ok ? "✅" : "❌"} ${name}</span>
+            <span style="${nameStyle}">${ok ? "●" : "○"} ${name}</span>
             <span style="${ageStyle(ok)}">${age}</span>
             <span style="${descStyle}">${meta.desc}${s.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${s.error}</span>` : ""}</span>
             ${extraDetail}
@@ -1820,17 +1817,17 @@
       // Render
       function scoreLabel(s) {
         if (light) {
-          if (s >= 0.75) return { label:"Great day",  color:"rgba(20,140,50,0.95)",   emoji:"🟢" };
-          if (s >= 0.58) return { label:"Good day",   color:"rgba(70,140,20,0.95)",   emoji:"🟡" };
-          if (s >= 0.38) return { label:"Marginal",   color:"rgba(180,120,0,0.95)",   emoji:"🟠" };
-          if (s >= 0.20) return { label:"Poor",       color:"rgba(180,60,30,0.9)",    emoji:"🔴" };
-          return            { label:"Stay inside", color:"rgba(150,40,40,0.9)",    emoji:"❌" };
+          if (s >= 0.75) return { label:"Great day",  color:"rgba(20,140,50,0.95)" };
+          if (s >= 0.58) return { label:"Good day",   color:"rgba(70,140,20,0.95)" };
+          if (s >= 0.38) return { label:"Marginal",   color:"rgba(180,120,0,0.95)" };
+          if (s >= 0.20) return { label:"Poor",       color:"rgba(180,60,30,0.9)" };
+          return            { label:"Stay inside", color:"rgba(150,40,40,0.9)" };
         }
-        if (s >= 0.75) return { label:"Great day",  color:"rgba(80,220,120,0.95)",  emoji:"🟢" };
-        if (s >= 0.58) return { label:"Good day",   color:"rgba(160,220,80,0.9)",   emoji:"🟡" };
-        if (s >= 0.38) return { label:"Marginal",   color:"rgba(255,190,50,0.85)",  emoji:"🟠" };
-        if (s >= 0.20) return { label:"Poor",       color:"rgba(200,100,60,0.85)",  emoji:"🔴" };
-        return            { label:"Stay inside", color:"rgba(150,50,50,0.9)",    emoji:"❌" };
+        if (s >= 0.75) return { label:"Great day",  color:"rgba(80,220,120,0.95)" };
+        if (s >= 0.58) return { label:"Good day",   color:"rgba(160,220,80,0.9)" };
+        if (s >= 0.38) return { label:"Marginal",   color:"rgba(255,190,50,0.85)" };
+        if (s >= 0.20) return { label:"Poor",       color:"rgba(200,100,60,0.85)" };
+        return            { label:"Stay inside", color:"rgba(150,50,50,0.9)" };
       }
 
       function fmtTime(d) {
@@ -1844,7 +1841,7 @@
         
         // Store today's score for Right Now card
         if (day.dayLabel === "Today") {
-          window.__todayDockScore = {score: day.bestScore, label: sl.label, emoji: sl.emoji, color: sl.color};
+          window.__todayDockScore = {score: day.bestScore, label: sl.label, color: sl.color};
         }
         
         html += `<div style="background:${dTileBg};border:1px solid ${dTileBd};border-radius:10px;padding:14px 12px;">`;
@@ -1852,11 +1849,11 @@
         html += `<div style="font-size:0.72rem;color:${dDateLbl};margin-bottom:8px;">${day.dateLabel}</div>`;
 
         if (!day.usableWindows.length) {
-          html += `<div style="font-size:1.4rem;margin-bottom:4px;">🔴</div>`;
+          html += ``;
           html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">Dock dry all day</div>`;
           html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Low tides fall within usable hours</div>`;
         } else {
-          html += `<div style="font-size:1.4rem;margin-bottom:4px;">${sl.emoji}</div>`;
+          html += ``;
           html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label} <span style="font-size:0.75rem;opacity:0.7;">(${Math.round(day.bestScore)})</span></div>`;
 
           for (const w of day.usableWindows) {
@@ -1876,13 +1873,13 @@
             html += `<div style="height:3px;background:${dBarBg};border-radius:2px;overflow:hidden;margin-bottom:8px;">`;
             html += `<div style="height:100%;width:${barW}%;background:${scoreLabel(w.score).color};border-radius:2px;"></div></div>`;
             html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:0.7rem;color:${dDetailTxt};">`;
-            html += `<div>🌡️ ${w.temp != null ? Math.round(w.temp)+"°F" : "--"}</div>`;
+            html += `<div>${w.temp != null ? Math.round(w.temp)+"°F" : "--"}</div>`;
             html += `<div>💧 ${w.precip != null ? w.precip+"%" : "--"} precip</div>`;
             html += `<div>`;
-            html += `💨 ${w.wspd != null ? Math.round(w.wspd)+" kt" : "--"} ${w.dirName}`;
+            html += `${w.wspd != null ? Math.round(w.wspd)+" kt" : "--"} ${w.dirName}`;
             html += ` <span style="color:${w.windRelLabel==='offshore'?'rgba(80,220,120,0.8)':w.windRelLabel==='onshore'?'rgba(220,80,80,0.8)':'rgba(255,200,80,0.8)'};">(${w.windRelLabel})</span></div>`;
             if (waterTempRaw != null) {
-              html += `<div>🌊 ${Math.round(waterTempRaw)}°F water</div>`;
+              html += `<div>${Math.round(waterTempRaw)}°F water</div>`;
             }
             html += `</div></div>`;
           }
@@ -1907,11 +1904,10 @@
         const today = dayCards[0];
         const sl = scoreLabel(today.bestScore);
         const dockDayLabelEl = document.getElementById("dockDayLabelCollapsed");
-        const dockEmojiEl = document.getElementById("dockEmojiCollapsed");
         const dockScoreEl = document.getElementById("dockScoreCollapsed");
         
         if (dockDayLabelEl) dockDayLabelEl.textContent = today.dayLabel;
-        if (dockEmojiEl) dockEmojiEl.textContent = sl.emoji;
+        
         if (dockScoreEl) dockScoreEl.textContent = sl.label;
         
         // Apply gradient class based on score
@@ -2288,9 +2284,8 @@
         const precipMatch = (combinedText || "").match(/\((\d+)%\)/);
         const pop = precipMatch ? parseInt(precipMatch[1]) : 0;
         
-        // Emoji
-        let emoji = "☀️";
         const text = (combinedText || "").toLowerCase();
+        let emoji = "☀️";
         if (text.includes("thunder")) emoji = "⛈️";
         else if (text.includes("snow")) emoji = "🌨️";
         else if (text.includes("rain")) emoji = "🌧️";
@@ -2331,10 +2326,7 @@
       updateForecastSelection();
 
       // Hint
-      const hint = document.createElement("div");
-      hint.id = "forecastSelectionHint";
-      hint.style.cssText = "font-size:0.75rem;color:rgba(255,255,255,0.35);margin-top:8px;font-weight:700;";
-      el.appendChild(hint);
+      
       updateForecastSelection();
     }
 
@@ -2372,12 +2364,8 @@
         row.style.background = isSelected ? "rgba(100,160,255,0.12)" : "";
       });
 
-      const hint = document.getElementById("forecastSelectionHint");
-      if (hint) {
-        hint.textContent = _selectedForecastDate
-          ? "Tap again to clear · Detail below"
-          : "Tap a day to see detailed forecast";
-      }
+      
+
     }
 
     function filterHyperlocalByDate(dateStr) {
@@ -2541,24 +2529,21 @@
       const buoy = data.buoy_44013 || {};
       const cur = data.current || {};
 
-      let statusColor, statusIcon, statusText;
+      let statusColor, statusText;
       if (sb.active) {
         statusColor = "rgba(100,200,120,0.95)";
-        statusIcon = "🌊";
         statusText = "Active";
       } else if (sb.likelihood >= 40) {
         statusColor = "rgba(220,200,60,0.85)";
-        statusIcon = "⚠️";
         statusText = "Possible";
       } else {
         statusColor = "rgba(150,150,150,0.6)";
-        statusIcon = "";
         statusText = "Unlikely";
       }
 
       const html = `
         <div style="text-align:center;margin-bottom:20px;">
-          <div style="font-size:2.5rem;color:${statusColor};margin-bottom:8px;">${statusIcon} ${sb.likelihood}%</div>
+          <div style="font-size:2.5rem;color:${statusColor};margin-bottom:8px;">${sb.likelihood}%</div>
           <div style="font-size:1.1rem;opacity:0.9;">${statusText}</div>
           <div style="font-size:0.9rem;opacity:0.7;margin-top:4px;">${sb.reason}</div>
         </div>
@@ -2753,13 +2738,13 @@
       // Altitude and status
       const altDeg = Math.round(pos.altitude * 180 / Math.PI);
       let status, emoji;
-      if (altDeg >= 20)       { status = "Above horizon";        emoji = "\u2600\uFE0F"; }
-      else if (altDeg >= 5)   { status = "Low in sky";           emoji = "\uD83C\uDF05"; }
-      else if (altDeg >= 0)   { status = "Just above horizon";   emoji = "\uD83C\uDF05"; }
-      else if (altDeg >= -6)  { status = "Civil twilight";       emoji = "\uD83C\uDF06"; }
-      else if (altDeg >= -12) { status = "Nautical twilight";    emoji = "\uD83C\uDF06"; }
-      else if (altDeg >= -18) { status = "Astronomical twilight";emoji = "\uD83C\uDF11"; }
-      else                    { status = "Below horizon (night)"; emoji = "\uD83C\uDF11"; }
+      if (altDeg >= 20)       { status = "Above horizon"; }
+      else if (altDeg >= 5)   { status = "Low in sky"; }
+      else if (altDeg >= 0)   { status = "Just above horizon"; }
+      else if (altDeg >= -6)  { status = "Civil twilight"; }
+      else if (altDeg >= -12) { status = "Nautical twilight"; }
+      else if (altDeg >= -18) { status = "Astronomical twilight"; }
+      else                    { status = "Below horizon (night)"; }
 
       document.getElementById("sunEmoji").textContent   = emoji;
       document.getElementById("sunStatus").textContent  = status;
@@ -3110,15 +3095,15 @@
     const HOME_LON = -70.8750;
 
     const MOON_PHASES = [
-      { name: "New Moon",        emoji: "\u{1F311}", min: 0,     max: 0.025 },
-      { name: "Waxing Crescent", emoji: "\u{1F312}", min: 0.025, max: 0.235 },
-      { name: "First Quarter",   emoji: "\u{1F313}", min: 0.235, max: 0.265 },
-      { name: "Waxing Gibbous",  emoji: "\u{1F314}", min: 0.265, max: 0.485 },
-      { name: "Full Moon",       emoji: "\u{1F315}", min: 0.485, max: 0.515 },
-      { name: "Waning Gibbous",  emoji: "\u{1F316}", min: 0.515, max: 0.735 },
-      { name: "Last Quarter",    emoji: "\u{1F317}", min: 0.735, max: 0.765 },
-      { name: "Waning Crescent", emoji: "\u{1F318}", min: 0.765, max: 0.975 },
-      { name: "New Moon",        emoji: "\u{1F311}", min: 0.975, max: 1.0   },
+      { name: "New Moon", min: 0,     max: 0.025 },
+      { name: "Waxing Crescent", min: 0.025, max: 0.235 },
+      { name: "First Quarter", min: 0.235, max: 0.265 },
+      { name: "Waxing Gibbous", min: 0.265, max: 0.485 },
+      { name: "Full Moon", min: 0.485, max: 0.515 },
+      { name: "Waning Gibbous", min: 0.515, max: 0.735 },
+      { name: "Last Quarter", min: 0.735, max: 0.765 },
+      { name: "Waning Crescent", min: 0.765, max: 0.975 },
+      { name: "New Moon", min: 0.975, max: 1.0   },
     ];
 
     /**
@@ -3941,7 +3926,7 @@
           }
           
           if (alertSummaryText) {
-            alertSummaryText.textContent = `⚠️ ${n} active alert${n > 1 ? "s" : ""}: ${data.alerts.map(a => a.event || "Alert").join(" · ")}`;
+            alertSummaryText.textContent = `${n} active alert${n > 1 ? "s" : ""}: ${data.alerts.map(a => a.event || "Alert").join(" · ")}`;
           }
           
           // Single alert — badge handles it, no inline display
@@ -4602,9 +4587,9 @@
             const likelihood = seaBreeze.likelihood;
             let icon = "";
             if (seaBreeze.active) {
-              icon = "🌊 ";
+              icon = "";
             } else if (likelihood >= 40) {
-              icon = "⚠️ ";
+              icon = "";
             }
             sbEl.innerHTML = `${icon}${likelihood}% <span style="opacity:0.6;font-size:0.85rem;">${seaBreeze.reason || ""}</span>`;
           } else {
@@ -4657,11 +4642,10 @@
           if (firstTile) {
             const dayLabel = firstTile.querySelector('div:first-child')?.textContent.trim();
             if (dayLabel === "Today") {
-              const emoji = firstTile.querySelector('div:nth-child(2)')?.textContent.trim();
               const labelDiv = firstTile.querySelector('div:nth-child(3)')?.innerHTML;
               const color = firstTile.querySelector('div:nth-child(3)')?.style.color || "rgba(180,180,180,0.8)";
               if (labelDiv) {
-                sunsetScoreEl.innerHTML = `${emoji} ${labelDiv}`;
+                sunsetScoreEl.innerHTML = labelDiv;
                 sunsetScoreEl.style.color = color;
               } else {
                 sunsetScoreEl.textContent = "No data";
@@ -4678,7 +4662,7 @@
         const dockDayScoreEl = document.getElementById("dockDayScoreNow");
         if (dockDayScoreEl && window.__todayDockScore) {
           const d = window.__todayDockScore;
-          dockDayScoreEl.innerHTML = `${d.emoji} ${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score)})</span>`;
+          dockDayScoreEl.innerHTML = `${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score)})</span>`;
           dockDayScoreEl.style.color = d.color;
         } else if (dockDayScoreEl) {
           dockDayScoreEl.textContent = "No data";
@@ -4732,18 +4716,18 @@
         // Storm mode — triggers when 2+ alarm conditions align
         // Integrates into the consolidated alert summary bar
         const stormFlags = [];
-        if (der.pressure_alarm === "falling") stormFlags.push("⬇️ Pressure falling fast");
-        if (der.trough_signal === "Approaching") stormFlags.push("🌀 850mb trough approaching");
+        if (der.pressure_alarm === "falling") stormFlags.push("Pressure falling fast");
+        if (der.trough_signal === "Approaching") stormFlags.push("850mb trough approaching");
         const gustWorry = (data.wind_risk?.gust?.level ?? "");
-        if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`💨 Gust wind impact: ${gustWorry}`);
+        if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`Gust wind impact: ${gustWorry}`);
         const pop0 = (data.daily?.precipitation_probability_max?.[0] ?? 0);
         if (pop0 >= 60 && der.col_precip_type && der.col_precip_type !== "Rain")
-          stormFlags.push(`❄️ Precip likely — column type: ${der.col_precip_type}`);
+          stormFlags.push(`Precip likely — column type: ${der.col_precip_type}`);
         
         // Add rain intensity flag for moderate/heavy rain
         const dailyPrecip = (data.daily?.precipitation_sum?.[0] ?? 0);
         if (pop0 >= 60 && dailyPrecip >= 0.5)
-          stormFlags.push(`🌧️ Moderate/heavy rain expected (${dailyPrecip.toFixed(1)}")`);
+          stormFlags.push(`Moderate/heavy rain expected (${dailyPrecip.toFixed(1)}")`);
 
         // Store storm flags globally and refresh alert badge
         window.__stormFlags = stormFlags;
@@ -4966,8 +4950,8 @@
         if (sbWindEl) {
           if (seaBreeze.likelihood != null) {
             let icon = "";
-            if (seaBreeze.active) icon = "🌊 ";
-            else if (seaBreeze.likelihood >= 40) icon = "⚠️ ";
+            if (seaBreeze.active) icon = "";
+            else if (seaBreeze.likelihood >= 40) icon = "";
             sbWindEl.innerHTML = `${icon}${seaBreeze.likelihood}% <span style="opacity:0.6;font-size:0.85rem;">${seaBreeze.reason || ""}</span>`;
           } else {
             sbWindEl.textContent = "N/A";
@@ -5235,7 +5219,7 @@ function openAlertModal() {
 
   // Storm flags section
   if (stormFlags.length >= 2) {
-    const severity = stormFlags.length >= 3 ? '⛈️ Storm conditions developing' : '🌧️ Active weather developing';
+    const severity = stormFlags.length >= 3 ? 'Storm conditions developing' : 'Active weather developing';
     modalBody.innerHTML += `
       <div class="alert-modal-item" style="border-left:3px solid rgba(255,100,100,0.6);padding-left:12px;">
         <div class="alert-modal-title">${severity}</div>

@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=dec18024" />
+  <link rel="stylesheet" href="styles/app.css?v=2ad9f467" />
 </head>
 <body>
   <div class="container">
@@ -385,7 +385,7 @@
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('nws_forecast', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">📄 NWS</div>
+            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">NWS</div>
             <div id="nwsSummaryCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
           </div>
           <div class="card-body" style="display:none;">
@@ -781,7 +781,7 @@
 
         <!-- Water Temp Logger — hidden until calibration data is sufficient -->
         <div id="waterTempLoggerCard" style="display:none;" class="card col-12">
-          <div class="card-title">🌡️ Water Temp Calibration Logger</div>
+          <div class="card-title">Water Temp Calibration Logger</div>
           <div class="card-body">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
               <input id="wtLogTemp" type="number" step="0.5" placeholder="Water temp °F"
@@ -1066,7 +1066,7 @@
             <div class="tile-label" style="top:12px;left:16px;">Dock Day</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
               <div id="dockDayLabelCollapsed" style="font-size:0.9rem;font-weight:500;margin-bottom:8px;opacity:0.85;"></div>
-              <div id="dockEmojiCollapsed" style="font-size:2.5rem;margin-bottom:8px;line-height:1;"></div>
+              
               <div id="dockScoreCollapsed" style="font-size:1rem;font-weight:500;opacity:0.95;"></div>
             </div>
           </div>
@@ -1133,7 +1133,7 @@
     <section id="sourcesView" style="display:none;">
       <div class="grid">
         <div class="card col-12">
-          <div class="card-title">📡 Data Sources &amp; Status</div>
+          <div class="card-title">Data Sources &amp; Status</div>
           <div id="sourcesTable" style="margin-top:8px;"></div>
         </div>
       </div>
@@ -1142,7 +1142,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=2c351d00"></script>
+  <script src="js/app-main.js?v=87289e94"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1212,8 +1212,8 @@
         <div class="modal-setting-group">
           <div class="modal-setting-label">Theme</div>
           <div class="modal-setting-options">
-            <button class="setting-btn" id="themeLight" onclick="setTheme('light')">☀️ Light</button>
-            <button class="setting-btn" id="themeDark"  onclick="setTheme('dark')">🌙 Dark</button>
+            <button class="setting-btn" id="themeLight" onclick="setTheme('light')">Light</button>
+            <button class="setting-btn" id="themeDark"  onclick="setTheme('dark')">Dark</button>
             <button class="setting-btn" id="themeSystem" onclick="setTheme('system')">Auto</button>
           </div>
         </div>
@@ -1221,14 +1221,14 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.42</span>
+            <span class="version-pill" id="appVersion">v4.43</span>
           </div>
         </div>
         <!-- Changelog -->
         <div class="modal-setting-group">
           <div id="changelogToggle" onclick="document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
                style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
-            📋 Changelog ▾
+            Changelog ▾
           </div>
           <div id="changelogBody" style="display:none;font-size:0.8rem;line-height:1.7;color:var(--muted);max-height:260px;overflow-y:auto;margin-top:8px;"></div>
         </div>
@@ -1236,7 +1236,7 @@
         <div class="modal-setting-group">
           <div id="dataPipelineToggle" onclick="document.getElementById('dataPipelineBody').style.display=document.getElementById('dataPipelineBody').style.display==='none'?'block':'none'"
                style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
-            📊 Data Pipeline Reference ▾
+            Data Pipeline Reference ▾
           </div>
           <div id="dataPipelineBody" style="display:none;font-size:0.8rem;line-height:1.7;color:var(--muted);max-height:400px;overflow-y:auto;margin-top:8px;"></div>
         </div>
@@ -1244,7 +1244,7 @@
         <div class="modal-setting-group">
           <div id="sourcesToggle" onclick="document.getElementById('sourcesBody').style.display=document.getElementById('sourcesBody').style.display==='none'?'block':'none'"
                style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
-            📡 Data Sources ▾
+            Data Sources ▾
           </div>
           <div id="sourcesBody" style="display:none;margin-top:8px;">
             <div id="sourcesTableModal"></div>

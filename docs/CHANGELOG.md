@@ -1,3 +1,48 @@
+## v4.43 • 2026-04-17
+* **Emoji Removal**
+  * Removed all decorative and status emojis throughout the app
+  * Dock Day Score, Sunset Quality, Sea Breeze, storm flags, and sources status now use color-coded text labels only
+  * Frost log severity labels replaced with text (Hard freeze / Frost / Cool)
+  * Season, NWS, and settings panel emojis removed
+  * 10-day weather condition icons retained (functional)
+  * Sun card and overhead tab symbols retained
+* **Detail Forecast Tile**
+  * Collapsed preview now clamps to 4 lines with ellipsis
+
+## v4.42 • 2026-04-16
+* **Wind Impact Unification**
+  * Added combined Wind Impact score using threshold logic: sustained wind when below 15 mph, gust impact when sustained wind is 15 mph or higher
+  * Weather page now uses a single Wind Impact score across the tile, chart, and Right Now card
+  * Hyperlocal sustained and gust impact cards merged into one Wind Impact card with combined headline and separate sustained/gust breakdown
+* **Wind Chart Cleanup**
+  * Wind data bar condensed to a single-line format
+  * X-axis simplified to 6-hour ticks with day labels at midnight
+* **Wind Severity Styling**
+  * Weather wind tile impact bar now reflects severity color
+  * Expanded wind card tint now matches the combined wind impact severity scale
+* **Bug Fixes**
+  * Fixed combined peak wind impact logic using incorrect units
+  * Fixed missing combinedWindImpact function reference
+  * Fixed null element errors in fillWorryCard
+  * Fixed breakdown rows so sustained and gust scores reflect peak impact over the selected 12/24/36/48h window
+## v4.41 • 2026-04-15
+* **Sky & Precip Chart Redesign**
+  * Sky conditions now painted as per-column background gradients instead of stacked bars
+  * Clear days show warm yellow columns, overcast days cool gray, nights deep blue-black
+  * Cloud darkening weighted by layer height — low clouds darken most, high cirrus barely affects brightness
+  * Precip bars now show only precipitation probability, colored by type (rain/snow/freezing rain/mixed)
+  * X-axis simplified to 6-hour ticks; midnight shows day name (Thu, Fri) instead of 12am
+  * Y-axis labels embedded in tick suffixes (54°, 50%) instead of rotated axis titles
+  * Data bar condensed: short date format, no emojis, shows dominant sky condition (64% sun vs 80% clouds)
+* **Radar Modal Polish**
+  * Tight single-row header: title + timestamp + play + close in one bar
+  * Map toggle button removed
+  * CartoDB light/dark vector tiles replace satellite imagery
+  * Dark mode automatically switches tile style via MutationObserver
+* **Bug Fixes**
+  * Fixed fog detail card never called on data load
+  * Fixed fog detail ReferenceError (hyp declared after use)
+  
 ## v4.40 • 2026-04-14
 * **Planets Tile**
   * "None visible tonight" → "None visible now" (reflects current time, not night forecast)
@@ -552,3 +597,4 @@
 ## v4.21 - UI fixes
 - Fixed chart data bar text alignment (date and data now properly aligned)
 - Fixed alert Show/Hide toggle positioning (now consistently on far right)
+
