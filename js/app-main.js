@@ -1737,9 +1737,9 @@
           // Temp score: 75°F=1.0, 60°F=0.5, 50°F=0.1, below 45°F=0
           // Hard reality: below 50°F is not a dock day regardless of other factors
           const tempSc = temp == null ? 0.5 :
-            temp < 45 ? 0.0 :
-            temp < 55 ? Math.max(0, (temp - 45) / 20) :
-            Math.min(1, (temp - 55) / 25 + 0.5);
+            temp < 50 ? 0.0 :
+            temp < 65 ? (temp - 50) / 30 :
+            Math.min(1, (temp - 65) / 30 + 0.5);
 
           // Precip score
           const precipSc = precip == null ? 0.5 :
@@ -1854,7 +1854,7 @@
           html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Low tides fall within usable hours</div>`;
         } else {
           html += ``;
-          html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label} <span style="font-size:0.75rem;opacity:0.7;">(${Math.round(day.bestScore)})</span></div>`;
+          html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label} <span style="font-size:0.75rem;opacity:0.7;">(${Math.round(day.bestScore * 100)})</span></div>`;
 
           for (const w of day.usableWindows) {
             const durH = Math.floor(w.durMin / 60);
@@ -1914,10 +1914,10 @@
         const dockCard = document.querySelector('[data-collapse-key="dock_day"]');
         if (dockCard) {
           dockCard.classList.remove('tile-dock-great', 'tile-dock-good', 'tile-dock-marginal', 'tile-dock-poor', 'tile-dock-stayinside');
-          if (today.bestScore >= 0.75) dockCard.classList.add('tile-dock-great');
-          else if (today.bestScore >= 0.58) dockCard.classList.add('tile-dock-good');
-          else if (today.bestScore >= 0.38) dockCard.classList.add('tile-dock-marginal');
-          else if (today.bestScore >= 0.20) dockCard.classList.add('tile-dock-poor');
+          if (today.bestScore >= 0.80) dockCard.classList.add('tile-dock-great');
+          else if (today.bestScore >= 0.65) dockCard.classList.add('tile-dock-good');
+          else if (today.bestScore >= 0.45) dockCard.classList.add('tile-dock-marginal');
+          else if (today.bestScore >= 0.25) dockCard.classList.add('tile-dock-poor');
           else dockCard.classList.add('tile-dock-stayinside');
         }
       }
@@ -4662,7 +4662,7 @@
         const dockDayScoreEl = document.getElementById("dockDayScoreNow");
         if (dockDayScoreEl && window.__todayDockScore) {
           const d = window.__todayDockScore;
-          dockDayScoreEl.innerHTML = `${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score)})</span>`;
+          dockDayScoreEl.innerHTML = `${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score * 100)})</span>`;
           dockDayScoreEl.style.color = d.color;
         } else if (dockDayScoreEl) {
           dockDayScoreEl.textContent = "No data";
