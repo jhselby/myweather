@@ -1,3 +1,9 @@
+## v4.44 • 2026-04-17
+* **Dock Day Score Refinements**
+  * Score now displayed as 1-100 (was 0-1 fraction)
+  * Tightened temp curve: below 50°F scores 0 (was 45°F), comfortable range shifted to 65-80°F
+  * Raised label thresholds: Great day 80+, Good day 65+, Marginal 45+, Poor 25+
+
 ## v4.43 • 2026-04-17
 * **Emoji Removal**
   * Removed all decorative and status emojis throughout the app
