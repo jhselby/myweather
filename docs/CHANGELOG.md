@@ -1,3 +1,11 @@
+## v4.45 • 2026-04-17
+* **Auto-Refresh on Resume**
+  * Page now reloads weather data automatically when reopened from background or home screen
+* **Expanded Card Backgrounds**
+  * Dynamic tile colors (temp, wind, dock day, sunset, sea breeze) now render at full intensity when card is expanded (were washed out at low opacity)
+* **Emoji Removal** (continued)
+  * Removed remaining emoji from dock day collapsed tile
+
 ## v4.44 • 2026-04-17
 * **Dock Day Score Refinements**
   * Score now displayed as 1-100 (was 0-1 fraction)

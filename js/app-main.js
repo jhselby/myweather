@@ -3886,6 +3886,7 @@
     // ═══════════════════════════════════════════════════════════════
     // Main Data Load
     // ═══════════════════════════════════════════════════════════════
+    function loadWeatherData() {
     fetch("weather_data.json?t=" + Date.now())
       .then(r => r.json())
       .then(data => {
@@ -5087,6 +5088,13 @@
         console.error(err);
         // // document.getElementById("location").textContent = "Error loading weather_data.json";
       });
+    } // end loadWeatherData
+
+    loadWeatherData();
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') loadWeatherData();
+    });
 
     document.getElementById('refreshBtn').addEventListener('click', function() {
       this.style.transform = 'rotate(360deg)';

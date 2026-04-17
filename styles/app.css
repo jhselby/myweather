@@ -2009,6 +2009,32 @@ body.theme-light .hyperlocal-link:hover {
   transition: opacity 0.3s ease 0.2s;
 }
 
+
+    /* ========== EXPANDED CARD - BOOSTED TILE BACKGROUNDS ========== */
+    .card.card-expanded.tile-temp-cold    { background: linear-gradient(135deg, rgba(147,197,253,0.35) 0%, rgba(59,130,246,0.20) 100%) !important; }
+    .card.card-expanded.tile-temp-cool    { background: linear-gradient(135deg, rgba(96,165,250,0.40) 0%, rgba(59,130,246,0.25) 100%) !important; }
+    .card.card-expanded.tile-temp-mild    { background: linear-gradient(135deg, rgba(253,224,71,0.35) 0%, rgba(234,179,8,0.20) 100%) !important; }
+    .card.card-expanded.tile-temp-warm    { background: linear-gradient(135deg, rgba(255,140,60,0.45) 0%, rgba(255,100,30,0.30) 100%) !important; }
+    .card.card-expanded.tile-temp-hot     { background: linear-gradient(135deg, rgba(251,146,60,0.45) 0%, rgba(249,115,22,0.30) 100%) !important; }
+    .card.card-expanded.tile-wind-calm    { background: linear-gradient(135deg, rgba(96,165,250,0.40) 0%, rgba(59,130,246,0.25) 100%) !important; }
+    .card.card-expanded.tile-wind-light   { background: linear-gradient(135deg, rgba(100,200,200,0.40) 0%, rgba(80,180,180,0.25) 100%) !important; }
+    .card.card-expanded.tile-wind-moderate{ background: linear-gradient(135deg, rgba(253,224,71,0.35) 0%, rgba(234,179,8,0.20) 100%) !important; }
+    .card.card-expanded.tile-wind-strong  { background: linear-gradient(135deg, rgba(255,140,60,0.45) 0%, rgba(255,100,30,0.30) 100%) !important; }
+    .card.card-expanded.tile-wind-severe  { background: linear-gradient(135deg, rgba(239,68,68,0.45) 0%, rgba(220,38,38,0.30) 100%) !important; }
+    .card.card-expanded.tile-dock-great   { background: linear-gradient(135deg, rgba(96,165,250,0.40) 0%, rgba(59,130,246,0.25) 100%) !important; }
+    .card.card-expanded.tile-dock-good    { background: linear-gradient(135deg, rgba(100,200,200,0.40) 0%, rgba(80,180,180,0.25) 100%) !important; }
+    .card.card-expanded.tile-dock-marginal{ background: linear-gradient(135deg, rgba(253,224,71,0.35) 0%, rgba(234,179,8,0.20) 100%) !important; }
+    .card.card-expanded.tile-dock-poor    { background: linear-gradient(135deg, rgba(255,140,60,0.45) 0%, rgba(255,100,30,0.30) 100%) !important; }
+    .card.card-expanded.tile-dock-stayinside { background: linear-gradient(135deg, rgba(239,68,68,0.45) 0%, rgba(220,38,38,0.30) 100%) !important; }
+    .card.card-expanded.tile-sunset-poor  { background: linear-gradient(135deg, rgba(128,128,128,0.35) 0%, rgba(140,140,150,0.25) 100%) !important; }
+    .card.card-expanded.tile-sunset-fair  { background: linear-gradient(135deg, rgba(200,180,140,0.40) 0%, rgba(180,160,120,0.28) 100%) !important; }
+    .card.card-expanded.tile-sunset-good  { background: linear-gradient(135deg, rgba(255,140,60,0.45) 0%, rgba(255,100,30,0.30) 100%) !important; }
+    .card.card-expanded.tile-sunset-verygood { background: linear-gradient(135deg, rgba(255,140,60,0.55) 0%, rgba(249,115,22,0.38) 100%) !important; }
+    .card.card-expanded.tile-sunset-spectacular { background: linear-gradient(135deg, rgba(255,100,50,0.65) 0%, rgba(255,70,30,0.50) 100%) !important; }
+    .card.card-expanded.tile-seabreeze-unlikely { background: linear-gradient(135deg, rgba(140,160,180,0.35) 0%, rgba(120,140,160,0.25) 100%) !important; }
+    .card.card-expanded.tile-seabreeze-possible { background: linear-gradient(135deg, rgba(120,190,200,0.40) 0%, rgba(100,170,180,0.28) 100%) !important; }
+    .card.card-expanded.tile-seabreeze-likely   { background: linear-gradient(135deg, rgba(80,220,230,0.55) 0%, rgba(60,200,210,0.40) 100%) !important; }
+
 .card.card-expanded {
   position: fixed;
   top: 50%;
