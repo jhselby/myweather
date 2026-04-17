@@ -1,3 +1,11 @@
+## v4.46 • 2026-04-17
+* **Feels Like Card**
+  * New Hyperlocal card showing current apparent temperature with context-aware label (Wind Chill / Heat Index / Feels Like)
+  * Blue tint for wind chill, orange for heat index, neutral otherwise
+  * Hourly chart for today showing feels-like vs air temp (dashed)
+  * Shows coldest/peak value for today, plus air temp, humidity, and wind inputs
+  * "Feels like" on Right Now card is now tappable — navigates directly to Feels Like card
+
 ## v4.45 • 2026-04-17
 * **Auto-Refresh on Resume**
   * Page now reloads weather data automatically when reopened from background or home screen

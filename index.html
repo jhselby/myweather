@@ -122,8 +122,8 @@
               <div id="currentTemp" class="current-temp">
                 --<span class="temp-unit">&deg;F</span>
               </div>
-              <div id="feelsLike" class="feels-like">
-                Feels like --&deg;F
+              <div id="feelsLike" class="feels-like">{const c=document.querySelector('[data-collapse-key="feels_like"]'); if(c) c.click();},100);">
+                Feels like --&deg;F <span style="font-size:0.7em;opacity:0.5;">&#8250;</span>
               </div>
               <div id="condition" class="condition">
                 Loading&hellip;
@@ -1127,6 +1127,49 @@
           </div>
         </div>
 
+
+
+        <div class="card col-6" data-collapse-key="feels_like" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('feels_like', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            Feels Like<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('feels_like', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Feels Like</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div id="feelsLikeCardValue" style="font-size:2.8rem;font-weight:300;line-height:1;margin-bottom:8px;">--°</div>
+              <div id="feelsLikeCardLabel" style="font-size:1rem;font-weight:500;opacity:0.9;">--</div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="label">Current</div>
+              <div class="value" id="feelsLikeCardCurrent">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Type</div>
+              <div class="value" id="feelsLikeCardType">--</div>
+            </div>
+            <div class="row">
+              <div class="label" id="feelsLikeCardPeakLabel">Peak Today</div>
+              <div class="value" id="feelsLikeCardPeak">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Air Temp</div>
+              <div class="value" id="feelsLikeCardAirTemp">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Humidity</div>
+              <div class="value" id="feelsLikeCardHumidity">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Wind</div>
+              <div class="value" id="feelsLikeCardWind">--</div>
+            </div>
+            <canvas id="feelsLikeChart" height="80" style="margin-top:12px;width:100%;"></canvas>
+          </div>
+        </div>
+
     </section>
 
     <!-- SOURCES VIEW -->
@@ -1142,7 +1185,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=7f168e70"></script>
+  <script src="js/app-main.js?v=280012df"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1221,7 +1264,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.45</span>
+            <span class="version-pill" id="appVersion">v4.46</span>
           </div>
         </div>
         <!-- Changelog -->

@@ -2602,7 +2602,139 @@
       }
     }
 
-    function renderFogDetail(data) {
+    function renderFeelsLikeCard(data) {
+      const hyp = data.hyperlocal || {};
+      const cur = data.current || {};
+      const hourly = data.hourly || {};
+      const light = isLight();
+
+      // Current corrected values
+      const T = hyp.corrected_temp ?? cur.temperature;
+      const wind = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
+      const RH = hyp.corrected_humidity ?? cur.relative_humidity ?? 50;
+
+      // Calculate current feels like
+      let feelsLike = T;
+      let flType = "Feels Like";
+      if (T != null) {
+        if (T <= 50 && wind > 3) {
+          feelsLike = 35.74 + (0.6215*T) - (35.75*Math.pow(wind,0.16)) + (0.4275*T*Math.pow(wind,0.16));
+          flType = "Wind Chill";
+        } else if (T >= 80 && RH != null) {
+          feelsLike = -42.379 + (2.04901523*T) + (10.14333127*RH) - (0.22475541*T*RH) -
+                      (0.00683783*T*T) - (0.05481717*RH*RH) + (0.00122874*T*T*RH) +
+                      (0.00085282*T*RH*RH) - (0.00000199*T*T*RH*RH);
+          flType = "Heat Index";
+        }
+      }
+
+      // Update tile front
+      const valEl = document.getElementById("feelsLikeCardValue");
+      const lblEl = document.getElementById("feelsLikeCardLabel");
+      if (valEl) valEl.textContent = T != null ? Math.round(feelsLike) + "\u00b0" : "--\u00b0";
+      if (lblEl) {
+        lblEl.textContent = flType;
+        lblEl.style.color = flType === "Wind Chill" ? "rgba(100,180,255,0.9)" :
+                            flType === "Heat Index"  ? "rgba(255,140,60,0.9)" :
+                            light ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
+      }
+
+      // Update card body rows
+      const setEl = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+      setEl("feelsLikeCardCurrent", T != null ? Math.round(feelsLike) + "\u00b0F" : "--");
+      setEl("feelsLikeCardType", flType);
+      setEl("feelsLikeCardAirTemp", T != null ? Math.round(T) + "\u00b0F" : "--");
+      setEl("feelsLikeCardHumidity", RH != null ? Math.round(RH) + "%" : "--");
+      setEl("feelsLikeCardWind", wind != null ? Math.round(wind) + " mph" : "--");
+
+      // Hourly feels-like for today
+      const times = hourly.times || [];
+      const htemps = hourly.temperature || [];
+      const hwind = hourly.wind_speed || [];
+      const hhumid = hourly.humidity || [];
+      const tempBias = hyp.weighted_bias ?? 0;
+
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0,10);
+      const chartLabels = [], chartValues = [], chartTemps = [];
+
+      for (let i = 0; i < times.length; i++) {
+        const dt = new Date(times[i]);
+        if (dt.toISOString().slice(0,10) !== todayStr) continue;
+        const ht = htemps[i] != null ? htemps[i] + tempBias : null;
+        const hw = hwind[i] ?? 0;
+        const hrh = hhumid[i] ?? 50;
+        let hfl = ht;
+        if (ht != null) {
+          if (ht <= 50 && hw > 3) {
+            hfl = 35.74 + (0.6215*ht) - (35.75*Math.pow(hw,0.16)) + (0.4275*ht*Math.pow(hw,0.16));
+          } else if (ht >= 80) {
+            hfl = -42.379 + (2.04901523*ht) + (10.14333127*hrh) - (0.22475541*ht*hrh) -
+                  (0.00683783*ht*ht) - (0.05481717*hrh*hrh) + (0.00122874*ht*ht*hrh) +
+                  (0.00085282*ht*hrh*hrh) - (0.00000199*ht*ht*hrh*hrh);
+          }
+        }
+        chartLabels.push(dt.toLocaleTimeString("en-US",{hour:"numeric",hour12:true}));
+        chartValues.push(hfl != null ? Math.round(hfl) : null);
+        chartTemps.push(ht != null ? Math.round(ht) : null);
+      }
+
+      // Peak today
+      const validVals = chartValues.filter(v => v != null);
+      if (validVals.length) {
+        const peak = flType === "Wind Chill" ? Math.min(...validVals) : Math.max(...validVals);
+        const peakLabelEl = document.getElementById("feelsLikeCardPeakLabel");
+        if (peakLabelEl) peakLabelEl.textContent = flType === "Wind Chill" ? "Coldest Today" : flType === "Heat Index" ? "Peak Today" : "Range Today";
+        setEl("feelsLikeCardPeak", peak + "\u00b0F");
+      }
+
+      // Chart
+      const canvas = document.getElementById("feelsLikeChart");
+      if (!canvas || !chartValues.length) return;
+      if (canvas._flChart) { canvas._flChart.destroy(); canvas._flChart = null; }
+
+      const textColor = chartTextColor();
+      const gridColor = chartGridColor();
+
+      canvas._flChart = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: chartLabels,
+          datasets: [
+            {
+              label: flType,
+              data: chartValues,
+              borderColor: flType === "Wind Chill" ? "rgba(100,180,255,0.9)" : flType === "Heat Index" ? "rgba(255,140,60,0.9)" : "rgba(180,180,255,0.8)",
+              backgroundColor: flType === "Wind Chill" ? "rgba(100,180,255,0.1)" : flType === "Heat Index" ? "rgba(255,140,60,0.1)" : "rgba(180,180,255,0.05)",
+              borderWidth: 2,
+              fill: true,
+              tension: 0.4,
+              pointRadius: 0,
+            },
+            {
+              label: "Air Temp",
+              data: chartTemps,
+              borderColor: "rgba(255,255,255,0.25)",
+              borderWidth: 1,
+              borderDash: [4,4],
+              fill: false,
+              tension: 0.4,
+              pointRadius: 0,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false }, tooltip: { mode: "index", intersect: false } },
+          scales: {
+            x: { ticks: { color: textColor, font: { size: 9 }, maxTicksLimit: 6 }, grid: { color: gridColor } },
+            y: { ticks: { color: textColor, font: { size: 9 }, callback: v => v + "\u00b0" }, grid: { color: gridColor } }
+          }
+        }
+      });
+    }
+
+        function renderFogDetail(data) {
       const der = data.derived || {};
       const cur = data.current || {};
       
@@ -4691,6 +4823,12 @@
           dockDayScoreEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="dock_day"]'); if (card) card.click(); }, 100); };
         }
 
+        const feelsLikeEl = document.getElementById("feelsLike");
+        if (feelsLikeEl) {
+          feelsLikeEl.classList.add("hyperlocal-link");
+          feelsLikeEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: "weather", card: "right_now"}; showTab("hyperlocal"); setTimeout(() => { const card = document.querySelector("[data-collapse-key=\"feels_like\"]"); if (card) card.click(); }, 100); };
+        }
+
         // Pressure alarm banner
         const alarmBanner = document.getElementById("pressureAlarmBanner");
         if (alarmBanner) {
@@ -4901,6 +5039,7 @@
         renderWindRisk(data);
         renderSeaBreezeDetail(data);
         renderFogDetail(data);
+        renderFeelsLikeCard(data);
         initWindPills(data);
 
         const windNowEl      = document.getElementById("windNowWind");
