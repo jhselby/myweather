@@ -1193,7 +1193,7 @@
         
         if (sunsetDayEl) sunsetDayEl.textContent = nextSunset.dayLabel;
         
-        if (sunsetScoreEl) sunsetScoreEl.innerHTML = `${nextSunset.label} <span style="font-size:0.85rem;opacity:0.7;">(${nextSunset.score})</span>`;
+        if (sunsetScoreEl) sunsetScoreEl.innerHTML = `${nextSunset.label} <span style="font-size:0.85rem;opacity:0.7;">(${nextSunset.score}/100)</span>`;
         
         // Apply gradient class based on score
         const sunsetCard = document.querySelector('[data-collapse-key="sunset_quality"]');
@@ -1801,7 +1801,7 @@
       }
 
       const light = isLight();
-      const dTileBg    = light ? "rgba(0,0,0,0.02)"   : "rgba(255,255,255,0.03)";
+      const dTileBg    = light ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.03)";
       const dTileBd    = light ? "rgba(0,0,0,0.08)"   : "rgba(255,255,255,0.08)";
       const dDayLbl    = light ? "rgba(0,0,0,0.75)"   : "rgba(255,255,255,0.45)";
       const dDateLbl   = light ? "rgba(0,0,0,0.50)"   : "rgba(255,255,255,0.3)";
@@ -1908,7 +1908,7 @@
         
         if (dockDayLabelEl) dockDayLabelEl.textContent = today.dayLabel;
         
-        if (dockScoreEl) dockScoreEl.textContent = sl.label;
+        if (dockScoreEl) dockScoreEl.textContent = sl.label + " (" + Math.round(today.bestScore * 100) + "/100)";
         
         // Apply gradient class based on score
         const dockCard = document.querySelector('[data-collapse-key="dock_day"]');

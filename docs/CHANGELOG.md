@@ -1,3 +1,10 @@
+## v4.47 • 2026-04-17
+* **Scoring Display**
+  * Dock Day and Sunset Score tile fronts now show score as xx/100
+  * Dock Day expanded card inner tiles use opaque white background in light mode for readability
+* **Dock Day Scoring**
+  * Raised label thresholds to better reflect actual conditions (Great 80+, Good 65+, Marginal 45+, Poor 25+)
+
 ## v4.46 • 2026-04-17
 * **Feels Like Card**
   * New Hyperlocal card showing current apparent temperature with context-aware label (Wind Chill / Heat Index / Feels Like)
