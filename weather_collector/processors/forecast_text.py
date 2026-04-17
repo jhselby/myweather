@@ -372,7 +372,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         wind_full_val = ""
     
     # Wind chill note
-    if feels_like_low is not None and feels_like_low < temp - 8:
+    if feels_like_low is not None and feels_like_low < 25 and feels_like_low < temp - 8:
         narrative_parts.append(f"Wind chill values as low as {int(feels_like_low)}.")
     
     return {
