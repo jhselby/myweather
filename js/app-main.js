@@ -5232,7 +5232,19 @@
     loadWeatherData();
 
     document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible') loadWeatherData();
+      if (document.visibilityState === 'visible') {
+        // Close any open card before refreshing to avoid blank card paint bug
+        document.querySelectorAll('.card-expanded').forEach(card => {
+          card.classList.remove('card-expanded');
+          const body = card.querySelector('.card-body');
+          const preview = card.querySelector('.card-collapsed-preview');
+          if (body) body.style.display = 'none';
+          if (preview) preview.style.display = '';
+          const bd = document.getElementById('modalBackdrop');
+          if (bd) bd.remove();
+        });
+        loadWeatherData();
+      }
     });
 
     document.getElementById('refreshBtn').addEventListener('click', function() {

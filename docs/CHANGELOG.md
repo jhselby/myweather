@@ -1,3 +1,6 @@
+## v4.48 • 2026-04-18
+- Fix blank card bug on resume: close any open expanded card before refreshing data on visibility change
+
 ## v4.47 • 2026-04-17
 * **Scoring Display**
   * Dock Day and Sunset Score tile fronts now show score as xx/100
