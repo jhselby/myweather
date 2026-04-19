@@ -1,3 +1,10 @@
+## v4.52 • 2026-04-19
+* **Infrastructure: GCS migration**
+  * Collector moved from GitHub Actions to Google Cloud Functions + Cloud Scheduler
+  * weather_data.json and frost_log.json now served from GCS bucket (myweather-data)
+  * Eliminates force-push conflicts caused by GitHub Actions writing data to repo
+  * PWA fetch URL updated to GCS public URL
+
 ## v4.51 • 2026-04-18
 * **Feels Like card redesign**
   * 48-hour Chart.js line chart with day-labeled x-axis (matches wind/sky pattern)

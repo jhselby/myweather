@@ -4059,7 +4059,7 @@
     // Main Data Load
     // ═══════════════════════════════════════════════════════════════
     function loadWeatherData() {
-    fetch("weather_data.json?t=" + Date.now())
+    fetch("https://storage.googleapis.com/myweather-data/weather_data.json?t=" + Date.now())
       .then(r => r.json())
       .then(data => {
         window.__lastWeatherData = data;
