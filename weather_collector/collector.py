@@ -18,6 +18,7 @@ from .fetchers.nws import fetch_nws_forecast, fetch_nws_alerts
 from .fetchers.salem_water import fetch_salem_water_temp
 from .fetchers.nws_gridpoints import fetch_nws_gridpoints
 from .fetchers.wu import fetch_wu_stations
+from .fetchers.pirate_weather import fetch_pirate_weather
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
 from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spread
@@ -36,7 +37,7 @@ from .processors.forecast_text import generate_forecast_text
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
                        kbos_data, kbvy_data, buoy_data, forecast_data, alert_data,
-                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None):
+                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None, pirate_data=None):
     """
     Build the complete weather data structure from all sources.
     This is the main processing function that combines all fetched data.
@@ -249,6 +250,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if frost_log:
         weather_data["frost_log"] = frost_log
 
+    # Pirate Weather (minutely precip, solar, CAPE)
+    if pirate_data:
+        weather_data["pirate_weather"] = pirate_data
+
     # --- Derived calculations ---
     derived = {}
 
@@ -402,6 +407,7 @@ def main():
     wu_data, wu_meta = timed_fetch("WU stations", fetch_wu_stations)
     forecast_data, forecast_meta = {}, {"status": "disabled"}  # fetch_nws_forecast() DISABLED - using custom forecasts
     alert_data, alerts_meta = timed_fetch("NWS alerts", fetch_nws_alerts)
+    pirate_data, pirate_meta = timed_fetch("Pirate Weather", fetch_pirate_weather)
 
     sources = {
         "gfs_current": current_meta,
@@ -415,6 +421,7 @@ def main():
         "wu_stations": wu_meta,
         "nws_forecast": forecast_meta,
         "nws_alerts": alerts_meta,
+        "pirate_weather": pirate_meta,
     }
 
     # Update frost log
@@ -445,7 +452,8 @@ def main():
         salem_water_temp=salem_water_temp,
         sunset_directional=sunset_directional,
         nws_gridpoints=nws_gridpoints_data,
-        hourly_7day_data=hourly_7day_data
+        hourly_7day_data=hourly_7day_data,
+        pirate_data=pirate_data
     )
     print(f"  ⏱  Build weather data: {_time.time() - t0:.1f}s")
 
