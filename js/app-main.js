@@ -213,8 +213,7 @@
 
     (function restoreTab() {
       try {
-        const t = localStorage.getItem("activeTab");
-        if (["almanac","overhead","hyperlocal","sources"].includes(t)) showTab(t);
+        // Tab restore handled after bottom tab bar sync wrapper is initialized below
       } catch(e) {}
     })();
 
@@ -5316,6 +5315,18 @@
   };
 })();
 
+// Restore active tab after bottom tab bar sync is ready
+(function() {
+  try {
+    const t = localStorage.getItem('activeTab') || 'weather';
+    showTab(t);
+  } catch(e) { showTab('weather'); }
+})();
+
+// Restore active tab after DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  try { showTab(localStorage.getItem('activeTab') || 'weather'); } catch(e) { showTab('weather'); }
+});
 
 // === Settings Modal ===
 function openSettingsModal() {

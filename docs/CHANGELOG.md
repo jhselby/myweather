@@ -1,3 +1,9 @@
+## v4.56 • 2026-04-19
+* **Tab active state fix**
+  * Weather tab no longer incorrectly highlighted when on another tab after refresh
+  * Active tab correctly restored from localStorage on page load
+  * Removed hardcoded active class from weather tab HTML
+
 ## v4.55 • 2026-04-19
 * **Ocean tile layout fix**
   * Labels left-aligned, values right-aligned using table layout
