@@ -676,3 +676,11 @@
 - Fixed chart data bar text alignment (date and data now properly aligned)
 - Fixed alert Show/Hide toggle positioning (now consistently on far right)
 
+
+## v4.57 • 2026-04-19
+* **Hair Day Card (Hyperlocal tab)**
+  * New col-6 card scoring current hair conditions 0–100
+  * Five weighted factors: humidity (40%), dew point spread (25%), wind (15%), rain chance (10%), UV index (10%)
+  * Uses hyperlocal-corrected temp/humidity where available
+  * Collapsed preview shows emoji, label, and score
+  * Labels: Great hair day / Good hair day / Manageable / Frizz risk / Bad hair day / Stay inside

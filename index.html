@@ -1147,6 +1147,25 @@
           </div>
         </div>
 
+        <!-- Hair Day Score -->
+        <div class="card col-6" data-collapse-key="hair_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hair_day', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            Hair Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hair_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Hair Day</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div id="hairDayEmojiCollapsed" style="font-size:2.4rem;line-height:1;margin-bottom:6px;"></div>
+              <div id="hairDayLabelCollapsed" style="font-size:1rem;font-weight:500;margin-bottom:4px;opacity:0.9;"></div>
+              <div id="hairDayScoreCollapsed" style="font-size:0.82rem;opacity:0.65;"></div>
+            </div>
+          </div>
+          <div class="card-body" style="display:none;">
+            <div id="hairDayContent"></div>
+          </div>
+        </div>
+
     </section>
 
     <!-- SOURCES VIEW -->
@@ -1162,7 +1181,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=7ab16421"></script>
+  <script src="js/app-main.js?v=7c3aefa8"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1241,7 +1260,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.56</span>
+            <span class="version-pill" id="appVersion">v4.57</span>
           </div>
         </div>
         <!-- Changelog -->

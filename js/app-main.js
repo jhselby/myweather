@@ -1632,6 +1632,155 @@
       return Math.max(0, dirScore - speedPenalty * 0.5 * onshoreBoost);
     }
 
+    function renderHairDay(data) {
+      const el = document.getElementById("hairDayContent");
+      if (!el) return;
+
+      const hyp    = data.hyperlocal || {};
+      const cur    = data.current    || {};
+      const daily  = data.daily      || {};
+      const hourly = data.hourly     || {};
+
+      // --- Inputs (prefer corrected hyperlocal values) ---
+      const humidity   = hyp.corrected_humidity ?? cur.humidity ?? 50;
+      const temp       = hyp.corrected_temp     ?? cur.temperature ?? 60;
+
+      // Corrected dew point from corrected temp+humidity, fallback to raw
+      let dewPoint = cur.dew_point;
+      if (hyp.corrected_temp != null && hyp.corrected_humidity != null) {
+        const Tc = (hyp.corrected_temp - 32) * 5 / 9;
+        const RH = hyp.corrected_humidity;
+        const dp = Tc - ((100 - RH) / 5);
+        dewPoint = dp * 9 / 5 + 32;
+      }
+      const spread     = dewPoint != null ? temp - dewPoint : null;
+
+      const uvIndex    = cur.uv_index ?? 0;
+      const windSpeed  = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
+      const precipChance = daily.precipitation_probability_max?.[0] ?? cur.precipitation_probability ?? 0;
+
+      // --- Scoring (0–100, lower = worse hair day) ---
+      // Humidity component (40 pts): primary frizz driver
+      // Sweet spot: 40–55% RH. Below 30% = static/dry. Above 70% = frizz.
+      let humidScore;
+      if (humidity < 25)       humidScore = 30;  // very dry → static
+      else if (humidity < 40)  humidScore = 55;  // dry-ish
+      else if (humidity <= 55) humidScore = 100; // ideal
+      else if (humidity <= 65) humidScore = 75;
+      else if (humidity <= 75) humidScore = 45;
+      else if (humidity <= 85) humidScore = 20;
+      else                     humidScore = 5;   // tropical soup
+
+      // Dew point spread component (25 pts): near-saturation = frizz regardless of %RH
+      let spreadScore = 100;
+      if (spread != null) {
+        if (spread < 3)       spreadScore = 10;  // nearly saturated
+        else if (spread < 6)  spreadScore = 35;
+        else if (spread < 10) spreadScore = 65;
+        else if (spread < 15) spreadScore = 85;
+        else                  spreadScore = 100;
+      }
+
+      // Wind component (15 pts): flyaways
+      let windScore;
+      if (windSpeed < 5)       windScore = 100;
+      else if (windSpeed < 12) windScore = 80;
+      else if (windSpeed < 20) windScore = 55;
+      else if (windSpeed < 28) windScore = 30;
+      else                     windScore = 10;
+
+      // Rain component (10 pts)
+      let rainScore;
+      if (precipChance < 10)      rainScore = 100;
+      else if (precipChance < 25) rainScore = 75;
+      else if (precipChance < 50) rainScore = 45;
+      else if (precipChance < 75) rainScore = 20;
+      else                        rainScore = 5;
+
+      // UV component (10 pts): high UV → drying/damage
+      let uvScore;
+      if (uvIndex <= 2)       uvScore = 100;
+      else if (uvIndex <= 4)  uvScore = 85;
+      else if (uvIndex <= 6)  uvScore = 65;
+      else if (uvIndex <= 8)  uvScore = 45;
+      else                    uvScore = 25;
+
+      const totalScore = Math.round(
+        humidScore  * 0.40 +
+        spreadScore * 0.25 +
+        windScore   * 0.15 +
+        rainScore   * 0.10 +
+        uvScore     * 0.10
+      );
+
+      // --- Label + Emoji ---
+      let label, emoji, color;
+      if (totalScore >= 85)      { label = "Great hair day";    emoji = "💁";  color = "rgba(100,220,130,0.95)"; }
+      else if (totalScore >= 70) { label = "Good hair day";     emoji = "😊";  color = "rgba(130,210,100,0.95)"; }
+      else if (totalScore >= 55) { label = "Manageable";        emoji = "🤷";  color = "rgba(200,190,80,0.95)";  }
+      else if (totalScore >= 40) { label = "Frizz risk";        emoji = "😬";  color = "rgba(220,150,60,0.95)";  }
+      else if (totalScore >= 25) { label = "Bad hair day";      emoji = "😤";  color = "rgba(220,100,60,0.95)";  }
+      else                       { label = "Stay inside";       emoji = "🙈";  color = "rgba(200,60,60,0.95)";   }
+
+      // Update collapsed preview
+      const emojiEl = document.getElementById("hairDayEmojiCollapsed");
+      const labelEl = document.getElementById("hairDayLabelCollapsed");
+      const scoreEl = document.getElementById("hairDayScoreCollapsed");
+      if (emojiEl) emojiEl.textContent = emoji;
+      if (labelEl) { labelEl.textContent = label; labelEl.style.color = color; }
+      if (scoreEl) scoreEl.textContent = `Score: ${totalScore}/100`;
+
+      // Factor bar helper
+      function factorBar(score, weight) {
+        const pct = Math.round(score);
+        const barColor = pct >= 70 ? "rgba(100,210,120,0.7)" : pct >= 45 ? "rgba(200,180,60,0.7)" : "rgba(210,80,60,0.7)";
+        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div style="flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.4s;"></div>
+          </div>
+          <div style="font-size:0.72rem;width:28px;text-align:right;opacity:0.6;">${pct}</div>
+          <div style="font-size:0.65rem;width:32px;text-align:right;opacity:0.4;">${weight}%</div>
+        </div>`;
+      }
+
+      el.innerHTML = `
+        <div style="text-align:center;padding:8px 0 16px;">
+          <div style="font-size:2.8rem;line-height:1;margin-bottom:6px;">${emoji}</div>
+          <div style="font-size:1.3rem;font-weight:600;color:${color};margin-bottom:2px;">${label}</div>
+          <div style="font-size:0.82rem;opacity:0.5;">Score: ${totalScore}/100</div>
+        </div>
+
+        <div style="font-size:0.78rem;margin-bottom:14px;">
+          <div style="display:grid;grid-template-columns:1fr auto;gap:4px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 12px;">
+
+            <div style="opacity:0.6;margin-bottom:2px;">Humidity</div>
+            <div style="text-align:right;font-weight:600;">${Math.round(humidity)}%</div>
+            <div style="grid-column:1/-1;margin-bottom:6px;">${factorBar(humidScore, 40)}</div>
+
+            <div style="opacity:0.6;margin-bottom:2px;">Dew Point Spread</div>
+            <div style="text-align:right;font-weight:600;">${spread != null ? spread.toFixed(1) + "°" : "--"}</div>
+            <div style="grid-column:1/-1;margin-bottom:6px;">${factorBar(spreadScore, 25)}</div>
+
+            <div style="opacity:0.6;margin-bottom:2px;">Wind Speed</div>
+            <div style="text-align:right;font-weight:600;">${Math.round(windSpeed)} mph</div>
+            <div style="grid-column:1/-1;margin-bottom:6px;">${factorBar(windScore, 15)}</div>
+
+            <div style="opacity:0.6;margin-bottom:2px;">Rain Chance</div>
+            <div style="text-align:right;font-weight:600;">${Math.round(precipChance)}%</div>
+            <div style="grid-column:1/-1;margin-bottom:6px;">${factorBar(rainScore, 10)}</div>
+
+            <div style="opacity:0.6;margin-bottom:2px;">UV Index</div>
+            <div style="text-align:right;font-weight:600;">${uvIndex.toFixed(1)}</div>
+            <div style="grid-column:1/-1;">${factorBar(uvScore, 10)}</div>
+          </div>
+        </div>
+
+        <div style="font-size:0.68rem;line-height:1.5;opacity:0.4;padding:0 2px;">
+          Humidity and dew point spread are primary frizz drivers (65% of score). Wind adds flyaways; rain and UV round out the picture. Uses hyperlocal-corrected values where available.
+        </div>
+      `;
+    }
+
     function renderDockDay(data) {
       const el = document.getElementById("dockDayContent");
       if (!el) return;
@@ -4082,6 +4231,7 @@
         renderFrostTracker(data.frost_log);
         renderSunsetQuality(data);
         renderDockDay(data);
+        renderHairDay(data);
         renderSolarSystem();
 
         // Alerts — consolidated summary bar, panel collapsed by default
