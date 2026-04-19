@@ -1,3 +1,11 @@
+## v4.51 • 2026-04-18
+* **Feels Like card redesign**
+  * 48-hour Chart.js line chart with day-labeled x-axis (matches wind/sky pattern)
+  * Hover/swipe data bar showing time, feels-like type, and air temp
+  * Removed static rows — chart is the UI
+* **Bug fixes**
+  * Fog emoji (🌫️) replaced with 🌥️ — was rendering as square on all platforms
+
 ## v4.50 • 2026-04-18
 * **Pirate Weather Integration**
   * Added minutely precip fetcher (61-point, 1-min resolution)

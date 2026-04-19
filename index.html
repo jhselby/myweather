@@ -1142,32 +1142,17 @@
               <div id="feelsLikeCardLabel" style="font-size:1rem;font-weight:500;opacity:0.9;">--</div>
             </div>
           </div>
-          <div class="card-body">
-            <div class="row">
-              <div class="label">Current</div>
-              <div class="value" id="feelsLikeCardCurrent">--</div>
-            </div>
-            <div class="row">
-              <div class="label">Type</div>
-              <div class="value" id="feelsLikeCardType">--</div>
-            </div>
-            <div class="row">
-              <div class="label" id="feelsLikeCardPeakLabel">Peak Today</div>
-              <div class="value" id="feelsLikeCardPeak">--</div>
-            </div>
-            <div class="row">
-              <div class="label">Air Temp</div>
-              <div class="value" id="feelsLikeCardAirTemp">--</div>
-            </div>
-            <div class="row">
-              <div class="label">Humidity</div>
-              <div class="value" id="feelsLikeCardHumidity">--</div>
-            </div>
-            <div class="row">
-              <div class="label">Wind</div>
-              <div class="value" id="feelsLikeCardWind">--</div>
-            </div>
-            <canvas id="feelsLikeChart" height="80" style="margin-top:12px;width:100%;"></canvas>
+          <div class="card-body" style="display:none;">
+          <canvas id="feelsLikeChart"></canvas>
+          <div id="feelsLikeDataBar" style="padding:4px 12px;font-size:0.74rem;color:var(--text-secondary);border-top:1px solid rgba(255,255,255,0.07);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <span id="feelsLikeDataTime" style="font-weight:600;color:var(--text-primary);margin-right:6px;"></span><span id="feelsLikeDataLine"></span>
+          </div>
+          <div style="padding:6px 12px 8px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:3px 12px;">
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(100,180,255,0.9);border-radius:2px;flex-shrink:0;"></div>Wind Chill</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(255,140,60,0.9);border-radius:2px;flex-shrink:0;"></div>Heat Index</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(180,180,255,0.8);border-radius:2px;flex-shrink:0;"></div>Feels Like</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(255,255,255,0.25);border-radius:2px;flex-shrink:0;border-top:1px dashed rgba(255,255,255,0.25);"></div>Air Temp</div>
+          </div>
           </div>
         </div>
 
@@ -1186,7 +1171,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=d137958f"></script>
+  <script src="js/app-main.js?v=36f66143"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1265,7 +1250,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.50</span>
+            <span class="version-pill" id="appVersion">v4.51</span>
           </div>
         </div>
         <!-- Changelog -->

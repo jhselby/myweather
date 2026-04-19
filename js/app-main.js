@@ -2289,7 +2289,7 @@
         if (text.includes("thunder")) emoji = "⛈️";
         else if (text.includes("snow")) emoji = "🌨️";
         else if (text.includes("rain")) emoji = "🌧️";
-        else if (text.includes("fog")) emoji = "🌫️";
+        else if (text.includes("fog")) emoji = "🌥️";
         else if (text.includes("overcast") || text.includes("mostly cloudy")) emoji = "☁️";
         else if (text.includes("partly cloudy")) emoji = "⛅";
         
@@ -2606,12 +2606,11 @@
       const hyp = data.hyperlocal || {};
       const cur = data.current || {};
       const hourly = data.hourly || {};
-      const light = isLight();
 
-      // Current corrected values
+      // Current corrected values for tile front
       const T = hyp.corrected_temp ?? cur.temperature;
       const wind = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
-      const RH = hyp.corrected_humidity ?? cur.relative_humidity ?? 50;
+      const RH = hyp.corrected_humidity ?? cur.humidity ?? 50;
 
       // Calculate current feels like
       let feelsLike = T;
@@ -2631,6 +2630,7 @@
       // Update tile front
       const valEl = document.getElementById("feelsLikeCardValue");
       const lblEl = document.getElementById("feelsLikeCardLabel");
+      const light = isLight();
       if (valEl) valEl.textContent = T != null ? Math.round(feelsLike) + "\u00b0" : "--\u00b0";
       if (lblEl) {
         lblEl.textContent = flType;
@@ -2639,73 +2639,88 @@
                             light ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
       }
 
-      // Update card body rows
-      const setEl = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
-      setEl("feelsLikeCardCurrent", T != null ? Math.round(feelsLike) + "\u00b0F" : "--");
-      setEl("feelsLikeCardType", flType);
-      setEl("feelsLikeCardAirTemp", T != null ? Math.round(T) + "\u00b0F" : "--");
-      setEl("feelsLikeCardHumidity", RH != null ? Math.round(RH) + "%" : "--");
-      setEl("feelsLikeCardWind", wind != null ? Math.round(wind) + " mph" : "--");
-
-      // Hourly feels-like for today
-      const times = hourly.times || [];
-      const htemps = hourly.temperature || [];
-      const hwind = hourly.wind_speed || [];
-      const hhumid = hourly.humidity || [];
+      // Build 48-hour dataset from HRRR hourly
       const tempBias = hyp.weighted_bias ?? 0;
+      const times  = hourly.times       || [];
+      const htemps = hourly.temperature || [];
+      const hwind  = hourly.wind_speed  || [];
+      const hhumid = hourly.humidity    || [];
 
-      const now = new Date();
-      const todayStr = now.toISOString().slice(0,10);
-      const chartLabels = [], chartValues = [], chartTemps = [];
+      function calcFL(ht, hw, hrh) {
+        if (ht == null) return null;
+        if (ht <= 50 && hw > 3)
+          return 35.74 + (0.6215*ht) - (35.75*Math.pow(hw,0.16)) + (0.4275*ht*Math.pow(hw,0.16));
+        if (ht >= 80)
+          return -42.379 + (2.04901523*ht) + (10.14333127*hrh) - (0.22475541*ht*hrh) -
+                 (0.00683783*ht*ht) - (0.05481717*hrh*hrh) + (0.00122874*ht*ht*hrh) +
+                 (0.00085282*ht*hrh*hrh) - (0.00000199*ht*ht*hrh*hrh);
+        return ht;
+      }
 
+      function flTypeFor(ht, hw) {
+        if (ht == null) return "Feels Like";
+        if (ht <= 50 && hw > 3) return "Wind Chill";
+        if (ht >= 80) return "Heat Index";
+        return "Feels Like";
+      }
+
+      const chartTimes = [], chartFL = [], chartAir = [], chartTypes = [];
       for (let i = 0; i < times.length; i++) {
-        const dt = new Date(times[i]);
-        if (dt.toISOString().slice(0,10) !== todayStr) continue;
-        const ht = htemps[i] != null ? htemps[i] + tempBias : null;
-        const hw = hwind[i] ?? 0;
+        const ht  = htemps[i] != null ? htemps[i] + tempBias : null;
+        const hw  = hwind[i]  ?? 0;
         const hrh = hhumid[i] ?? 50;
-        let hfl = ht;
-        if (ht != null) {
-          if (ht <= 50 && hw > 3) {
-            hfl = 35.74 + (0.6215*ht) - (35.75*Math.pow(hw,0.16)) + (0.4275*ht*Math.pow(hw,0.16));
-          } else if (ht >= 80) {
-            hfl = -42.379 + (2.04901523*ht) + (10.14333127*hrh) - (0.22475541*ht*hrh) -
-                  (0.00683783*ht*ht) - (0.05481717*hrh*hrh) + (0.00122874*ht*ht*hrh) +
-                  (0.00085282*ht*hrh*hrh) - (0.00000199*ht*ht*hrh*hrh);
-          }
-        }
-        chartLabels.push(dt.toLocaleTimeString("en-US",{hour:"numeric",hour12:true}));
-        chartValues.push(hfl != null ? Math.round(hfl) : null);
-        chartTemps.push(ht != null ? Math.round(ht) : null);
+        const fl  = calcFL(ht, hw, hrh);
+        chartTimes.push(times[i]);
+        chartFL.push(fl != null ? Math.round(fl) : null);
+        chartAir.push(ht != null ? Math.round(ht) : null);
+        chartTypes.push(flTypeFor(ht, hw));
       }
 
-      // Peak today
-      const validVals = chartValues.filter(v => v != null);
-      if (validVals.length) {
-        const peak = flType === "Wind Chill" ? Math.min(...validVals) : Math.max(...validVals);
-        const peakLabelEl = document.getElementById("feelsLikeCardPeakLabel");
-        if (peakLabelEl) peakLabelEl.textContent = flType === "Wind Chill" ? "Coldest Today" : flType === "Heat Index" ? "Peak Today" : "Range Today";
-        setEl("feelsLikeCardPeak", peak + "\u00b0F");
+      // Data bar update
+      function updateFLDataBar(idx) {
+        const timeEl = document.getElementById("feelsLikeDataTime");
+        const lineEl = document.getElementById("feelsLikeDataLine");
+        if (!timeEl || !lineEl || idx == null || idx < 0) return;
+        const dt = new Date(chartTimes[idx]);
+        const hour = dt.getHours();
+        const nextHour = (hour + 1) % 24;
+        const weekday = dt.toLocaleDateString("en-US", { weekday: "short" });
+        const month   = dt.toLocaleDateString("en-US", { month: "short" });
+        const day     = dt.getDate();
+        const timeStr = `${weekday} ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? "am" : "pm"}`;
+        const fl  = chartFL[idx]  != null ? chartFL[idx]  + "\u00b0F" : "--";
+        const air = chartAir[idx] != null ? chartAir[idx] + "\u00b0F" : "--";
+        const typ = chartTypes[idx] || "Feels Like";
+        timeEl.textContent = timeStr + " \u00b7";
+        lineEl.textContent = `${typ}: ${fl} \u00b7 Air: ${air}`;
       }
 
-      // Chart
+      const dominantType = chartTypes.find(t => t !== "Feels Like") || "Feels Like";
+      const lineColor = dominantType === "Wind Chill" ? "rgba(100,180,255,0.9)"
+                      : dominantType === "Heat Index"  ? "rgba(255,140,60,0.9)"
+                      : "rgba(180,180,255,0.8)";
+      const fillColor = dominantType === "Wind Chill" ? "rgba(100,180,255,0.1)"
+                      : dominantType === "Heat Index"  ? "rgba(255,140,60,0.1)"
+                      : "rgba(180,180,255,0.05)";
+
       const canvas = document.getElementById("feelsLikeChart");
-      if (!canvas || !chartValues.length) return;
+      if (!canvas || !chartFL.length) return;
       if (canvas._flChart) { canvas._flChart.destroy(); canvas._flChart = null; }
 
       const textColor = chartTextColor();
       const gridColor = chartGridColor();
+      const labels = chartTimes.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
 
       canvas._flChart = new Chart(canvas, {
         type: "line",
         data: {
-          labels: chartLabels,
+          labels,
           datasets: [
             {
-              label: flType,
-              data: chartValues,
-              borderColor: flType === "Wind Chill" ? "rgba(100,180,255,0.9)" : flType === "Heat Index" ? "rgba(255,140,60,0.9)" : "rgba(180,180,255,0.8)",
-              backgroundColor: flType === "Wind Chill" ? "rgba(100,180,255,0.1)" : flType === "Heat Index" ? "rgba(255,140,60,0.1)" : "rgba(180,180,255,0.05)",
+              label: "Feels Like",
+              data: chartFL,
+              borderColor: lineColor,
+              backgroundColor: fillColor,
               borderWidth: 2,
               fill: true,
               tension: 0.4,
@@ -2713,10 +2728,10 @@
             },
             {
               label: "Air Temp",
-              data: chartTemps,
+              data: chartAir,
               borderColor: "rgba(255,255,255,0.25)",
+              borderDash: [4, 4],
               borderWidth: 1,
-              borderDash: [4,4],
               fill: false,
               tension: 0.4,
               pointRadius: 0,
@@ -2725,14 +2740,50 @@
         },
         options: {
           responsive: true,
-          plugins: { legend: { display: false }, tooltip: { mode: "index", intersect: false } },
+          interaction: { mode: "index", intersect: false },
+          onClick: (event, activeElements) => {
+            if (activeElements.length > 0) updateFLDataBar(activeElements[0].index);
+          },
+          onHover: (event, activeElements) => {
+            if (activeElements.length > 0) updateFLDataBar(activeElements[0].index);
+          },
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false }
+          },
           scales: {
-            x: { ticks: { color: textColor, font: { size: 9 }, maxTicksLimit: 6 }, grid: { color: gridColor } },
-            y: { ticks: { color: textColor, font: { size: 9 }, callback: v => v + "\u00b0" }, grid: { color: gridColor } }
+            x: {
+              ticks: {
+                color: textColor,
+                font: { size: 10 },
+                maxRotation: 0,
+                autoSkip: false,
+                callback: function(value, index) {
+                  const dt = new Date(chartTimes[index]);
+                  const h = dt.getHours();
+                  const m = dt.getMinutes();
+                  if (m !== 0) return null;
+                  if (h === 0) return dt.toLocaleDateString("en-US", { weekday: "short" });
+                  if (h % 6 === 0) return h === 12 ? "12pm" : h < 12 ? h + "am" : (h-12) + "pm";
+                  return null;
+                }
+              },
+              grid: { color: gridColor }
+            },
+            y: {
+              ticks: { color: textColor, font: { size: 9 }, callback: v => v + "\u00b0" },
+              grid: { color: gridColor }
+            }
           }
         }
       });
+
+      // Init data bar to current hour
+      const nowIso = new Date().toISOString().slice(0, 13);
+      const initIdx = chartTimes.findIndex(t => t.slice(0, 13) >= nowIso);
+      updateFLDataBar(initIdx >= 0 ? initIdx : 0);
     }
+
 
         function renderFogDetail(data) {
       const der = data.derived || {};
