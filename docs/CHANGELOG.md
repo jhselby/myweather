@@ -1,3 +1,8 @@
+## v4.54 • 2026-04-19
+* **Tap outside to close card**
+  * Transparent full-screen backdrop captures taps outside expanded cards
+  * Consistent with X button behavior, no visual dimming
+
 ## v4.53 • 2026-04-19
 * **Next Hour precip drawer — honest timing**
   * First tick now shows actual data fetch time (e.g. "10:23am") instead of "now"
