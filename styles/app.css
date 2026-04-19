@@ -874,6 +874,20 @@
       50% { opacity: 0.4; }
     }
 
+    .precip-badge {
+      position: relative;
+    }
+    .precip-badge-dot {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 8px;
+      height: 8px;
+      background: #3b9eff;
+      border-radius: 50%;
+      animation: alert-pulse 2s ease-in-out infinite;
+    }
+
     /* ===== Modal Sheet ===== */
     .modal-overlay {
       position: fixed;

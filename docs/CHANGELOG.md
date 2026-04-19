@@ -1,3 +1,12 @@
+## v4.50 • 2026-04-18
+* **Pirate Weather Integration**
+  * Added minutely precip fetcher (61-point, 1-min resolution)
+  * Solar irradiance and CAPE stored in weather_data.json
+  * Conditional 🌧️ badge in header — appears only when precip expected in next hour
+  * Tap badge to open Next Hour drawer with 60-bar minutely chart and plain-language summary
+  * Swipe-down or ✕ to dismiss; pulsing blue dot matches alert badge pattern
+  * Removed debug console.log noise from collapsed radar map init
+
 ## v4.48 • 2026-04-18
 - Fix blank card bug on resume: close any open expanded card before refreshing data on visibility change
 

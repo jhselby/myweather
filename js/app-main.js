@@ -3490,18 +3490,12 @@
     }
 
     function initCollapsedRadarMap() {
-      console.log('initCollapsedRadarMap called');
       const mapEl = document.getElementById('radarMapCollapsed');
-      console.log('mapEl:', mapEl);
       if (!mapEl || window._collapsedRadarInitialized) {
         console.log('Exiting - no element or already initialized');
         return;
       }
       
-      console.log('Initializing collapsed radar map...');
-      console.log('Element dimensions:', mapEl.offsetWidth, 'x', mapEl.offsetHeight);
-      console.log('Element display:', getComputedStyle(mapEl).display);
-      console.log('Parent display:', getComputedStyle(mapEl.parentElement).display);
       
       // Initialize mini Leaflet map - zoomed in closer to Marblehead
       const miniMap = L.map('radarMapCollapsed', {
@@ -3543,23 +3537,18 @@
       const svg = L.svg();
       svg.addTo(miniMap);
       
-      console.log('Added SVG overlay to map');
       
       setTimeout(() => {
-        console.log('Timeout callback fired');
         const svgEl = document.querySelector('#radarMapCollapsed svg');
-        console.log('svgEl:', svgEl);
-        if (!svgEl) {
+          if (!svgEl) {
           console.log('No SVG element found!');
           return;
         }
         
         // Force map to recalculate size since it was hidden during init
         miniMap.invalidateSize();
-        console.log('Map size invalidated');
         
         const center = miniMap.latLngToLayerPoint([42.5001, -70.8578]);
-        console.log('Center point:', center);
         
         // Range rings: 15, 30, 60, 90 miles - much lighter
         const ranges = [
@@ -4877,6 +4866,7 @@
           const hasStorm = stormFlags.length >= 2;
           badge.style.display = (hasAlerts || hasStorm) ? "inline-flex" : "none";
         }
+        updatePrecipBadge(data);
         // Sea breeze indicator
         const sbRow   = document.getElementById("seaBreezeRow");
         const sbLabel = document.getElementById("seaBreezeLabel");
@@ -5408,6 +5398,110 @@ function closeAlertModal() {
   document.getElementById('alertModal').style.display = 'none';
   document.body.style.overflow = '';
 }
+
+// === Precip Modal ===
+function openPrecipModal() {
+  const sheet = document.querySelector('#precipModal .modal-sheet');
+  if (sheet && !sheet._swipeInit) {
+    sheet._swipeInit = true;
+    let startY = 0, isDragging = false;
+    const onTouchStart = e => { startY = e.touches[0].clientY; isDragging = true; sheet.style.transition = 'none'; };
+    const onTouchMove = e => { if (!isDragging) return; const dy = e.touches[0].clientY - startY; if (dy > 0) sheet.style.transform = `translateY(${dy}px)`; };
+    const onTouchEnd = e => { isDragging = false; const dy = e.changedTouches[0].clientY - startY; sheet.style.transition = ''; if (dy > 80) closePrecipModal(); else sheet.style.transform = ''; };
+    const onMouseDown = e => { startY = e.clientY; isDragging = true; sheet.style.transition = 'none'; sheet.style.userSelect = 'none'; };
+    const onMouseMove = e => { if (!isDragging) return; const dy = e.clientY - startY; if (dy > 0) sheet.style.transform = `translateY(${dy}px)`; };
+    const onMouseUp = e => { if (!isDragging) return; isDragging = false; sheet.style.transition = ''; sheet.style.userSelect = ''; const dy = e.clientY - startY; if (dy > 80) closePrecipModal(); else sheet.style.transform = ''; };
+    sheet.addEventListener('touchstart', onTouchStart, { passive: true });
+    sheet.addEventListener('touchmove', onTouchMove, { passive: true });
+    sheet.addEventListener('touchend', onTouchEnd, { passive: true });
+    sheet.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }
+
+  const data = window.__lastWeatherData;
+  const minutely = data?.pirate_weather?.minutely || [];
+  const body = document.getElementById('precipModalBody');
+  if (!body) return;
+
+  if (minutely.length === 0) {
+    body.innerHTML = '<p style="padding:16px;opacity:0.7;">No minutely data available.</p>';
+    document.getElementById('precipModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    return;
+  }
+
+  // Build summary text
+  const now = Math.floor(Date.now() / 1000);
+  let firstRainIdx = -1, lastRainIdx = -1;
+  let maxIntensity = 0;
+  minutely.forEach((pt, i) => {
+    if (pt.precip_intensity > 0.001) {
+      if (firstRainIdx === -1) firstRainIdx = i;
+      lastRainIdx = i;
+      if (pt.precip_intensity > maxIntensity) maxIntensity = pt.precip_intensity;
+    }
+  });
+
+  let summaryText = '';
+  if (firstRainIdx === -1) {
+    summaryText = 'No precipitation in the next hour.';
+  } else if (firstRainIdx === 0) {
+    const endsIn = lastRainIdx + 1;
+    const intensity = maxIntensity < 0.01 ? 'Light' : maxIntensity < 0.1 ? 'Moderate' : 'Heavy';
+    summaryText = `${intensity} rain now — ending in ~${endsIn} min`;
+  } else {
+    const intensity = maxIntensity < 0.01 ? 'Light' : maxIntensity < 0.1 ? 'Moderate' : 'Heavy';
+    const duration = lastRainIdx - firstRainIdx + 1;
+    summaryText = `${intensity} rain starting in ~${firstRainIdx} min, lasting ~${duration} min`;
+  }
+
+  // Build 60-bar chart
+  const maxI = Math.max(...minutely.map(p => p.precip_intensity), 0.01);
+  const bars = minutely.map((pt, i) => {
+    const h = Math.max(2, Math.round((pt.precip_intensity / maxI) * 60));
+    const color = pt.precip_type === 'snow' ? '#a0c8ff'
+                : pt.precip_type === 'sleet' ? '#c8a0ff'
+                : 'rgba(100,160,255,0.85)';
+    const isNow = i === 0 ? 'border-top:2px solid rgba(255,255,255,0.6);' : '';
+    return `<div style="flex:1;display:flex;align-items:flex-end;height:64px;">
+      <div style="width:100%;height:${h}px;background:${color};border-radius:2px 2px 0 0;${isNow}"></div>
+    </div>`;
+  }).join('');
+
+  // Tick marks at 0, 15, 30, 45, 60 min
+  const ticks = '<div style="display:flex;justify-content:space-between;margin-top:4px;opacity:0.5;font-size:10px;">' +
+    ['now','15m','30m','45m','60m'].map(t => `<span>${t}</span>`).join('') + '</div>';
+
+  body.innerHTML = `
+    <div style="padding:16px 16px 8px;">
+      <div style="font-size:15px;font-weight:500;margin-bottom:14px;">${summaryText}</div>
+      <div style="display:flex;align-items:flex-end;gap:1px;height:64px;border-bottom:1px solid rgba(255,255,255,0.15);">
+        ${bars}
+      </div>
+      ${ticks}
+    </div>`;
+
+  document.getElementById('precipModal').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+
+function closePrecipModal() {
+  const sheet = document.querySelector('#precipModal .modal-sheet');
+  if (sheet) sheet.style.transform = '';
+  document.getElementById('precipModal').style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function updatePrecipBadge(data) {
+  const badge = document.getElementById('precipBadge');
+  if (!badge) return;
+  const minutely = data?.pirate_weather?.minutely || [];
+  const hasRain = minutely.some(pt => pt.precip_intensity > 0.001);
+  badge.style.display = hasRain ? 'inline-flex' : 'none';
+}
+
+// === Precip Modal ===
 
 // === Alert Badge ===
 // Patch the alert rendering to show/hide the header badge
