@@ -1,3 +1,8 @@
+## v4.55 • 2026-04-19
+* **Ocean tile layout fix**
+  * Labels left-aligned, values right-aligned using table layout
+  * Wind value no longer wraps to multiple lines
+
 ## v4.54 • 2026-04-19
 * **Tap outside to close card**
   * Transparent full-screen backdrop captures taps outside expanded cards
