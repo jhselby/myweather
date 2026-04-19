@@ -5484,6 +5484,17 @@ function openPrecipModal() {
 
   // Build summary text
   const now = Math.floor(Date.now() / 1000);
+
+  // Staleness: how many minutes ago was this data fetched
+  const dataTime = minutely[0]?.time ?? now;
+  const stalenessMin = Math.round((now - dataTime) / 60);
+
+  // First bar clock time label
+  const dataDate = new Date(dataTime * 1000);
+  const dataHour = dataDate.getHours();
+  const dataMin = dataDate.getMinutes();
+  const startLabel = `${dataHour % 12 || 12}:${String(dataMin).padStart(2,'0')}${dataHour < 12 ? 'am' : 'pm'}`;
+
   let firstRainIdx = -1, lastRainIdx = -1;
   let maxIntensity = 0;
   minutely.forEach((pt, i) => {
@@ -5494,17 +5505,22 @@ function openPrecipModal() {
     }
   });
 
+  // Adjust indices for staleness to get minutes-from-now
+  const firstRainFromNow = firstRainIdx === -1 ? -1 : firstRainIdx - stalenessMin;
+  const lastRainFromNow  = lastRainIdx  === -1 ? -1 : lastRainIdx  - stalenessMin;
+
   let summaryText = '';
   if (firstRainIdx === -1) {
     summaryText = 'No precipitation in the next hour.';
-  } else if (firstRainIdx === 0) {
-    const endsIn = lastRainIdx + 1;
+  } else if (firstRainFromNow <= 0) {
+    // Rain already started
+    const endsIn = Math.max(1, lastRainFromNow + 1);
     const intensity = maxIntensity < 0.01 ? 'Light' : maxIntensity < 0.1 ? 'Moderate' : 'Heavy';
     summaryText = `${intensity} rain now — ending in ~${endsIn} min`;
   } else {
     const intensity = maxIntensity < 0.01 ? 'Light' : maxIntensity < 0.1 ? 'Moderate' : 'Heavy';
     const duration = lastRainIdx - firstRainIdx + 1;
-    summaryText = `${intensity} rain starting in ~${firstRainIdx} min, lasting ~${duration} min`;
+    summaryText = `${intensity} rain starting in ~${firstRainFromNow} min, lasting ~${duration} min`;
   }
 
   // Build 60-bar chart
@@ -5520,9 +5536,9 @@ function openPrecipModal() {
     </div>`;
   }).join('');
 
-  // Tick marks at 0, 15, 30, 45, 60 min
+  // Tick marks — first tick is actual clock time, rest are relative
   const ticks = '<div style="display:flex;justify-content:space-between;margin-top:4px;opacity:0.5;font-size:10px;">' +
-    ['now','15m','30m','45m','60m'].map(t => `<span>${t}</span>`).join('') + '</div>';
+    [startLabel,'15m','30m','45m','60m'].map(t => `<span>${t}</span>`).join('') + '</div>';
 
   body.innerHTML = `
     <div style="padding:16px 16px 8px;">

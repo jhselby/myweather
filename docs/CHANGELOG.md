@@ -1,3 +1,9 @@
+## v4.53 • 2026-04-19
+* **Next Hour precip drawer — honest timing**
+  * First tick now shows actual data fetch time (e.g. "10:23am") instead of "now"
+  * Summary text adjusted for data staleness — "starting in ~26 min" reflects minutes from now, not from fetch time
+  * Rain already-started edge case handled correctly
+
 ## v4.52 • 2026-04-19
 * **Infrastructure: GCS migration**
   * Collector moved from GitHub Actions to Google Cloud Functions + Cloud Scheduler
