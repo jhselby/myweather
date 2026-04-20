@@ -1640,145 +1640,178 @@
       const cur    = data.current    || {};
       const daily  = data.daily      || {};
       const hourly = data.hourly     || {};
+      const htimes = hourly.times    || [];
+      const hhumid = hourly.humidity || [];
+      const htemp  = hourly.temperature || [];
+      const hwind  = hourly.wind_speed  || [];
+      const hprecip = hourly.precipitation_probability || [];
 
-      // --- Inputs (prefer corrected hyperlocal values) ---
-      const humidity   = hyp.corrected_humidity ?? cur.humidity ?? 50;
-      const temp       = hyp.corrected_temp     ?? cur.temperature ?? 60;
-
-      // Corrected dew point from corrected temp+humidity, fallback to raw
-      let dewPoint = cur.dew_point;
-      if (hyp.corrected_temp != null && hyp.corrected_humidity != null) {
-        const Tc = (hyp.corrected_temp - 32) * 5 / 9;
-        const RH = hyp.corrected_humidity;
-        const dp = Tc - ((100 - RH) / 5);
-        dewPoint = dp * 9 / 5 + 32;
+      // --- Scoring helpers ---
+      function scoreHumidity(rh) {
+        if (rh < 25)       return 30;
+        if (rh < 40)       return 55;
+        if (rh <= 55)      return 100;
+        if (rh <= 65)      return 75;
+        if (rh <= 75)      return 45;
+        if (rh <= 85)      return 20;
+        return 5;
       }
-      const spread     = dewPoint != null ? temp - dewPoint : null;
-
-      const uvIndex    = cur.uv_index ?? 0;
-      const windSpeed  = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
-      const precipChance = daily.precipitation_probability_max?.[0] ?? cur.precipitation_probability ?? 0;
-
-      // --- Scoring (0–100, lower = worse hair day) ---
-      // Humidity component (40 pts): primary frizz driver
-      // Sweet spot: 40–55% RH. Below 30% = static/dry. Above 70% = frizz.
-      let humidScore;
-      if (humidity < 25)       humidScore = 30;  // very dry → static
-      else if (humidity < 40)  humidScore = 55;  // dry-ish
-      else if (humidity <= 55) humidScore = 100; // ideal
-      else if (humidity <= 65) humidScore = 75;
-      else if (humidity <= 75) humidScore = 45;
-      else if (humidity <= 85) humidScore = 20;
-      else                     humidScore = 5;   // tropical soup
-
-      // Dew point spread component (25 pts): near-saturation = frizz regardless of %RH
-      let spreadScore = 100;
-      if (spread != null) {
-        if (spread < 3)       spreadScore = 10;  // nearly saturated
-        else if (spread < 6)  spreadScore = 35;
-        else if (spread < 10) spreadScore = 65;
-        else if (spread < 15) spreadScore = 85;
-        else                  spreadScore = 100;
+      function scoreSpread(sp) {
+        if (sp == null)    return 80;
+        if (sp < 3)        return 10;
+        if (sp < 6)        return 35;
+        if (sp < 10)       return 65;
+        if (sp < 15)       return 85;
+        return 100;
+      }
+      function scoreWind(ws) {
+        if (ws < 5)        return 100;
+        if (ws < 12)       return 80;
+        if (ws < 20)       return 55;
+        if (ws < 28)       return 30;
+        return 10;
+      }
+      function scoreRain(pct) {
+        if (pct < 10)      return 100;
+        if (pct < 25)      return 75;
+        if (pct < 50)      return 45;
+        if (pct < 75)      return 20;
+        return 5;
+      }
+      function totalScore(humid, spread, wind, rain) {
+        return Math.round(
+          scoreHumidity(humid) * 0.40 +
+          scoreSpread(spread)  * 0.25 +
+          scoreWind(wind)      * 0.20 +  // bumped wind, dropped UV (null data)
+          scoreRain(rain)      * 0.15
+        );
+      }
+      function labelFor(score) {
+        if (score >= 85) return { label: "Great hair day", emoji: "💁", color: "rgba(100,220,130,0.95)" };
+        if (score >= 70) return { label: "Good hair day",  emoji: "😊", color: "rgba(130,210,100,0.95)" };
+        if (score >= 55) return { label: "Manageable",     emoji: "🤷", color: "rgba(200,190,80,0.95)"  };
+        if (score >= 40) return { label: "Frizz risk",     emoji: "😬", color: "rgba(220,150,60,0.95)"  };
+        if (score >= 25) return { label: "Bad hair day",   emoji: "😤", color: "rgba(220,100,60,0.95)"  };
+        return             { label: "Stay inside",         emoji: "🙈", color: "rgba(200,60,60,0.95)"   };
+      }
+      function deriveDewSpread(tempF, rh) {
+        if (tempF == null || rh == null) return null;
+        const Tc = (tempF - 32) * 5 / 9;
+        const dp = Tc - ((100 - rh) / 5);
+        const dpF = dp * 9 / 5 + 32;
+        return tempF - dpF;
       }
 
-      // Wind component (15 pts): flyaways
-      let windScore;
-      if (windSpeed < 5)       windScore = 100;
-      else if (windSpeed < 12) windScore = 80;
-      else if (windSpeed < 20) windScore = 55;
-      else if (windSpeed < 28) windScore = 30;
-      else                     windScore = 10;
+      // --- Helper: aggregate daytime hourly values for a given date string ---
+      // Daytime = 7am–8pm inclusive
+      function aggregateDay(dateStr) {
+        const idxs = [];
+        for (let i = 0; i < htimes.length; i++) {
+          if (!htimes[i].startsWith(dateStr)) continue;
+          const hr = new Date(htimes[i]).getHours();
+          if (hr >= 7 && hr <= 20) idxs.push(i);
+        }
+        if (!idxs.length) return null;
 
-      // Rain component (10 pts)
-      let rainScore;
-      if (precipChance < 10)      rainScore = 100;
-      else if (precipChance < 25) rainScore = 75;
-      else if (precipChance < 50) rainScore = 45;
-      else if (precipChance < 75) rainScore = 20;
-      else                        rainScore = 5;
+        const avg = arr => {
+          const vals = idxs.map(i => arr[i]).filter(v => v != null);
+          return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
+        };
+        const max = arr => {
+          const vals = idxs.map(i => arr[i]).filter(v => v != null);
+          return vals.length ? Math.max(...vals) : null;
+        };
 
-      // UV component (10 pts): high UV → drying/damage
-      let uvScore;
-      if (uvIndex <= 2)       uvScore = 100;
-      else if (uvIndex <= 4)  uvScore = 85;
-      else if (uvIndex <= 6)  uvScore = 65;
-      else if (uvIndex <= 8)  uvScore = 45;
-      else                    uvScore = 25;
+        const humidity = avg(hhumid);
+        const temp     = avg(htemp);
+        const wind     = max(hwind);
+        const precip   = max(hprecip);
+        const spread   = deriveDewSpread(temp, humidity);
+        return { humidity, temp, wind, precip, spread };
+      }
 
-      const totalScore = Math.round(
-        humidScore  * 0.40 +
-        spreadScore * 0.25 +
-        windScore   * 0.15 +
-        rainScore   * 0.10 +
-        uvScore     * 0.10
-      );
+      // --- Build day objects ---
+      const now = new Date();
+      const days = [];
 
-      // --- Label + Emoji ---
-      let label, emoji, color;
-      if (totalScore >= 85)      { label = "Great hair day";    emoji = "💁";  color = "rgba(100,220,130,0.95)"; }
-      else if (totalScore >= 70) { label = "Good hair day";     emoji = "😊";  color = "rgba(130,210,100,0.95)"; }
-      else if (totalScore >= 55) { label = "Manageable";        emoji = "🤷";  color = "rgba(200,190,80,0.95)";  }
-      else if (totalScore >= 40) { label = "Frizz risk";        emoji = "😬";  color = "rgba(220,150,60,0.95)";  }
-      else if (totalScore >= 25) { label = "Bad hair day";      emoji = "😤";  color = "rgba(220,100,60,0.95)";  }
-      else                       { label = "Stay inside";       emoji = "🙈";  color = "rgba(200,60,60,0.95)";   }
+      // Day 0: Today — use hyperlocal-corrected current values
+      {
+        const humidity = hyp.corrected_humidity ?? cur.humidity ?? 50;
+        const temp     = hyp.corrected_temp ?? cur.temperature ?? 60;
+        let spread = deriveDewSpread(temp, humidity);
+        if (spread == null) spread = cur.dew_point != null ? temp - cur.dew_point : null;
+        const wind   = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
+        const precip = daily.precipitation_probability_max?.[0] ?? cur.precipitation_probability ?? 0;
+        const score  = totalScore(humidity, spread, wind, precip);
+        const lf = labelFor(score);
+        const todayDate = new Date();
+        const todayLabel = todayDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+        days.push({ label: "Today", dateLabel: todayLabel, humidity, spread, wind, precip, score, scoreLabel: lf.label, emoji: lf.emoji, color: lf.color });
+      }
 
-      // Update collapsed preview
+      // Days 1 & 2: Tomorrow, Day After — from hourly aggregation
+      for (let d = 1; d <= 2; d++) {
+        const date = new Date(now);
+        date.setDate(date.getDate() + d);
+        const dateStr = date.toISOString().slice(0, 10);
+        const dayName = d === 1 ? "Tomorrow" : date.toLocaleDateString("en-US", { weekday: "long" });
+        const agg = aggregateDay(dateStr);
+        if (!agg) continue;
+        const dateLabel = date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+        const score = totalScore(agg.humidity, agg.spread, agg.wind, agg.precip);
+        const lf = labelFor(score);
+        days.push({ label: dayName, dateLabel, ...agg, score, scoreLabel: lf.label, emoji: lf.emoji, color: lf.color });
+      }
+
+      // Update collapsed preview from Today
+      const today = days[0];
       const emojiEl = document.getElementById("hairDayEmojiCollapsed");
       const labelEl = document.getElementById("hairDayLabelCollapsed");
       const scoreEl = document.getElementById("hairDayScoreCollapsed");
-      if (emojiEl) emojiEl.textContent = emoji;
-      if (labelEl) { labelEl.textContent = label; labelEl.style.color = color; }
-      if (scoreEl) scoreEl.textContent = `Score: ${totalScore}/100`;
+      if (emojiEl) emojiEl.textContent = today.emoji;
+      if (labelEl) { labelEl.textContent = today.scoreLabel; labelEl.style.color = today.color; }
+      if (scoreEl) scoreEl.textContent = `Today: ${today.score}/100`;
 
-      // Factor bar helper
-      function factorBar(score, weight) {
+      // --- Render helpers ---
+      function factorBar(score) {
         const pct = Math.round(score);
         const barColor = pct >= 70 ? "rgba(100,210,120,0.7)" : pct >= 45 ? "rgba(200,180,60,0.7)" : "rgba(210,80,60,0.7)";
-        return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <div style="flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
-            <div style="width:${pct}%;height:100%;background:${barColor};border-radius:3px;transition:width 0.4s;"></div>
-          </div>
-          <div style="font-size:0.72rem;width:28px;text-align:right;opacity:0.6;">${pct}</div>
-          <div style="font-size:0.65rem;width:32px;text-align:right;opacity:0.4;">${weight}%</div>
+        return `<div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-top:3px;">
+          <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;"></div>
         </div>`;
       }
 
-      el.innerHTML = `
-        <div style="text-align:center;padding:8px 0 16px;">
-          <div style="font-size:2.8rem;line-height:1;margin-bottom:6px;">${emoji}</div>
-          <div style="font-size:1.3rem;font-weight:600;color:${color};margin-bottom:2px;">${label}</div>
-          <div style="font-size:0.82rem;opacity:0.5;">Score: ${totalScore}/100</div>
-        </div>
+      function dayCard(day, isToday) {
+        const hVal = day.humidity != null ? Math.round(day.humidity) + "%" : "--";
+        const sVal = day.spread   != null ? day.spread.toFixed(1) + "°"   : "--";
+        const wVal = day.wind     != null ? Math.round(day.wind) + " mph"  : "--";
+        const pVal = day.precip   != null ? Math.round(day.precip) + "%"   : "--";
+        return `
+          <div style="background:rgba(255,255,255,${isToday ? "0.06" : "0.03"});border:1px solid rgba(255,255,255,${isToday ? "0.14" : "0.07"});border-radius:10px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;min-width:0;">
+            <div style="font-size:0.78rem;font-weight:700;margin-bottom:2px;opacity:${isToday ? "1" : "0.7"};">${day.label}</div>
+            <div style="font-size:0.68rem;opacity:0.45;margin-bottom:6px;">${day.dateLabel}</div>
+            <div style="font-size:2rem;line-height:1;margin-bottom:4px;">${day.emoji}</div>
+            <div style="font-size:0.8rem;font-weight:600;color:${day.color};text-align:center;margin-bottom:8px;">${day.scoreLabel}</div>
+            <div style="font-size:1.4rem;font-weight:300;margin-bottom:10px;">${day.score}<span style="font-size:0.65rem;opacity:0.5;">/100</span></div>
+            <div style="width:100%;background:rgba(255,255,255,0.08);border-radius:3px;height:4px;overflow:hidden;margin-bottom:12px;">
+              <div style="width:${day.score}%;height:100%;background:${day.color};border-radius:3px;"></div>
+            </div>
+            <div style="width:100%;font-size:0.7rem;display:flex;flex-direction:column;gap:5px;">
+              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Humidity</span><span style="font-weight:600;">${hVal}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">DP Spread</span><span style="font-weight:600;">${sVal}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Wind</span><span style="font-weight:600;">${wVal}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Rain</span><span style="font-weight:600;">${pVal}</span></div>
+            </div>
+          </div>`;
+      }
 
-        <div style="font-size:0.78rem;margin-bottom:14px;">
-          <div style="display:grid;grid-template-columns:1fr auto;gap:4px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;padding:10px 12px;">
-
-            <div style="opacity:0.6;margin-bottom:2px;">Humidity</div>
-            <div style="text-align:right;font-weight:600;">${Math.round(humidity)}%</div>
-            <div style="grid-column:1/-1;margin-bottom:6px;">${factorBar(humidScore, 40)}</div>
-
-            <div style="opacity:0.6;margin-bottom:2px;">Dew Point Spread</div>
-            <div style="text-align:right;font-weight:600;">${spread != null ? spread.toFixed(1) + "°" : "--"}</div>
-            <div style="grid-column:1/-1;margin-bottom:6px;">${factorBar(spreadScore, 25)}</div>
-
-            <div style="opacity:0.6;margin-bottom:2px;">Wind Speed</div>
-            <div style="text-align:right;font-weight:600;">${Math.round(windSpeed)} mph</div>
-            <div style="grid-column:1/-1;margin-bottom:6px;">${factorBar(windScore, 15)}</div>
-
-            <div style="opacity:0.6;margin-bottom:2px;">Rain Chance</div>
-            <div style="text-align:right;font-weight:600;">${Math.round(precipChance)}%</div>
-            <div style="grid-column:1/-1;margin-bottom:6px;">${factorBar(rainScore, 10)}</div>
-
-            <div style="opacity:0.6;margin-bottom:2px;">UV Index</div>
-            <div style="text-align:right;font-weight:600;">${uvIndex.toFixed(1)}</div>
-            <div style="grid-column:1/-1;">${factorBar(uvScore, 10)}</div>
-          </div>
-        </div>
-
-        <div style="font-size:0.68rem;line-height:1.5;opacity:0.4;padding:0 2px;">
-          Humidity and dew point spread are primary frizz drivers (65% of score). Wind adds flyaways; rain and UV round out the picture. Uses hyperlocal-corrected values where available.
-        </div>
-      `;
+      el.innerHTML =
+        `<div style="display:grid;grid-template-columns:repeat(${days.length},1fr);gap:8px;margin-bottom:12px;">` +
+        days.map((d, i) => dayCard(d, i === 0)).join("") +
+        `</div>` +
+        `<div style="font-size:0.68rem;line-height:1.5;opacity:0.35;padding:2px;">
+          Today uses hyperlocal-corrected values. Tomorrow and beyond use daytime hourly averages (7am–8pm). Humidity and dew point spread drive 65% of the score.
+        </div>`;
     }
 
     function renderDockDay(data) {

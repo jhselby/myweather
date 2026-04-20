@@ -684,3 +684,11 @@
   * Uses hyperlocal-corrected temp/humidity where available
   * Collapsed preview shows emoji, label, and score
   * Labels: Great hair day / Good hair day / Manageable / Frizz risk / Bad hair day / Stay inside
+
+## v4.57 • 2026-04-19
+* **Hair Day Card (Hyperlocal tab)**
+  * 3-day horizontal layout matching Sunset/Dock Day style
+  * Today uses hyperlocal-corrected values; Tomorrow and Day After use daytime hourly averages (7am–8pm)
+  * Scored 0–100: humidity (40%), dew point spread (25%), wind (20%), rain chance (15%)
+  * Each column shows date, emoji, score label, score/100, progress bar, and 4 data rows
+  * Collapsed preview shows today's emoji, score label, and score
