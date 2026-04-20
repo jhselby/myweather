@@ -752,3 +752,10 @@
 * **Expanded card scroll gap**
   * When a card near the top of the page expands, page scrolls to ensure ~80px tappable backdrop above
   * Combined with 82vh max-height, guarantees tappable strips both above and below on mobile
+
+## v4.71 • 2026-04-20
+* **Expanded cards now use fixed-position modal**
+  * Cards open centered on screen with guaranteed backdrop on all sides
+  * Tappable backdrop above, below, and beside — no X button needed
+  * Max height calc(100vh - 160px) with internal scrolling
+  * Subtle scale animation on open

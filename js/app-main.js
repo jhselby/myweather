@@ -3920,14 +3920,7 @@
       if (!body) return;
       const isOpen = body.style.display !== "none";
       body.style.display = isOpen ? "none" : ""; if (preview) preview.style.display = isOpen ? "" : "none"; if (!isOpen) { const bd = document.createElement("div"); bd.className = "modal-backdrop"; bd.id = "modalBackdrop"; bd.style.cssText = "position:fixed;inset:0;z-index:199;background:transparent;"; bd.addEventListener("click", () => toggleCard(key, el)); document.body.appendChild(bd); card.classList.add("card-expanded");
-          // Ensure tappable strip above and below the expanded card
-          requestAnimationFrame(() => {
-            const rect = card.getBoundingClientRect();
-            const minTop = 80; // px of backdrop needed above card
-            if (rect.top < minTop) {
-              window.scrollBy({ top: rect.top - minTop, behavior: 'smooth' });
-            }
-          });
+
         } else { const shouldReturn = window.__navSource; const bd = document.getElementById("modalBackdrop"); if (bd && !shouldReturn) bd.remove(); if (!shouldReturn) card.classList.remove("card-expanded"); else setTimeout(() => card.classList.remove("card-expanded"), 200); if (window.__navSource) { const src = window.__navSource; window.__navSource = null; requestAnimationFrame(() => { showTab(src.tab); requestAnimationFrame(() => { const rc = document.querySelector(`[data-collapse-key="${src.card}"]`); if (rc && !rc.classList.contains("card-expanded")) rc.click(); }); }); } }
       const closeBtn = card.querySelector(".card-close-btn"); if (closeBtn) closeBtn.style.display = isOpen ? "none" : "flex"; if (chev) { if (card.querySelector(".card-close-btn")) { chev.style.display = "none"; } else { chev.style.display = isOpen ? "" : "none"; chev.style.transform = isOpen ? "rotate(-90deg)" : ""; } }
       try { localStorage.setItem("card_" + key, isOpen ? "0" : "1"); } catch(e) {}
