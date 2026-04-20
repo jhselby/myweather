@@ -713,3 +713,14 @@
   * Shows "Access window passed (ended X:XXpm)" when today's windows are behind us
   * Shows "High tides outside usable hours" when tide timing is the constraint
   * Headline shows "dock accessible now until X" when currently in a window
+
+## v4.65 • 2026-04-20
+* **Hair Day card overhaul**
+  * Scoring now based on Absolute Humidity (AH) with inverted-U curve — sweet spot 4-5 g/m³
+  * Too dry (<2 g/m³) penalized for flyaways/static, too humid (>14 g/m³) penalized for frizz
+  * RH penalty multiplier applied at >70%, >80%, >90% thresholds
+  * Precip scoring uses weather_code for type — snow/freezing rain penalized more than rain
+  * Morning-weighted aggregation (6-10am = 3x, 10am-2pm = 1x, 2-8pm = 0.5x)
+  * Display rows: Humidity (RH%), Abs. Humidity (g/m³), Rain+type, Morning Wind
+  * Wind remains a flag only — "Windy morning — expect flyaways" when >12mph
+  * Corrected Magnus formula bug (216.7 not 2165)

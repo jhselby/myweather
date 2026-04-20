@@ -1201,7 +1201,7 @@
         } else {
           sunsetHL = `Poor sunset tonight — clouds limit color`;
         }
-        html += `<div style="font-size:0.95rem;font-weight:600;color:${scoreCol};margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid ${scoreCol};">${sunsetHL}</div>`;
+        html += `<div style="font-size:0.95rem;font-weight:600;color:${scoreCol};margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:0;border-left:4px solid ${scoreCol};">${sunsetHL}</div>`;
       }
 
       html += `<div class="scroll-day-grid" style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:12px;">`;
@@ -1700,134 +1700,191 @@
       const el = document.getElementById("hairDayContent");
       if (!el) return;
 
-      const hyp    = data.hyperlocal || {};
-      const cur    = data.current    || {};
-      const daily  = data.daily      || {};
-      const hourly = data.hourly     || {};
-      const htimes = hourly.times    || [];
-      const hhumid = hourly.humidity || [];
-      const htemp  = hourly.temperature || [];
-      const hwind  = hourly.wind_speed  || [];
+      const hourly  = data.hourly || {};
+      const htimes  = hourly.times || [];
+      const hhumid  = hourly.humidity || [];
+      const htemp   = hourly.temperature || [];
+      const hwind   = hourly.wind_speed || [];
       const hprecip = hourly.precipitation_probability || [];
+      const hcode   = hourly.weather_code || [];
+      const hpamt   = hourly.precipitation || [];
 
-      // --- Scoring helpers ---
-      function scoreHumidity(rh) {
-        if (rh < 25)       return 30;
-        if (rh < 40)       return 55;
-        if (rh <= 55)      return 100;
-        if (rh <= 65)      return 75;
-        if (rh <= 75)      return 45;
-        if (rh <= 85)      return 20;
-        return 5;
-      }
-      function scoreSpread(sp) {
-        if (sp == null)    return 80;
-        if (sp < 3)        return 10;
-        if (sp < 6)        return 35;
-        if (sp < 10)       return 65;
-        if (sp < 15)       return 85;
-        return 100;
-      }
-      function scoreWind(ws) {
-        if (ws < 5)        return 100;
-        if (ws < 12)       return 80;
-        if (ws < 20)       return 55;
-        if (ws < 28)       return 30;
-        return 10;
-      }
-      function scoreRain(pct) {
-        if (pct < 10)      return 100;
-        if (pct < 25)      return 75;
-        if (pct < 50)      return 45;
-        if (pct < 75)      return 20;
-        return 5;
-      }
-      function totalScore(humid, spread, wind, rain) {
-        return Math.round(
-          scoreHumidity(humid) * 0.40 +
-          scoreSpread(spread)  * 0.25 +
-          scoreWind(wind)      * 0.20 +  // bumped wind, dropped UV (null data)
-          scoreRain(rain)      * 0.15
-        );
-      }
-      function labelFor(score) {
-        if (score >= 85) return { label: "Great hair day", emoji: "💁", color: "rgba(100,220,130,0.95)" };
-        if (score >= 70) return { label: "Good hair day",  emoji: "😊", color: "rgba(130,210,100,0.95)" };
-        if (score >= 55) return { label: "Manageable",     emoji: "🤷", color: "rgba(200,190,80,0.95)"  };
-        if (score >= 40) return { label: "Frizz risk",     emoji: "😬", color: "rgba(220,150,60,0.95)"  };
-        if (score >= 25) return { label: "Bad hair day",   emoji: "😤", color: "rgba(220,100,60,0.95)"  };
-        return             { label: "Stay inside",         emoji: "🙈", color: "rgba(200,60,60,0.95)"   };
-      }
-      function deriveDewSpread(tempF, rh) {
+      // --- Dew point from temp + RH (Magnus approximation) ---
+      function dewPointF(tempF, rh) {
         if (tempF == null || rh == null) return null;
         const Tc = (tempF - 32) * 5 / 9;
-        const dp = Tc - ((100 - rh) / 5);
-        const dpF = dp * 9 / 5 + 32;
-        return tempF - dpF;
+        const gamma = Math.log(rh / 100) + (17.625 * Tc) / (243.04 + Tc);
+        const dpC = 243.04 * gamma / (17.625 - gamma);
+        return dpC * 9 / 5 + 32;
       }
 
-      // --- Helper: aggregate daytime hourly values for a given date string ---
-      // Daytime = 7am–8pm inclusive
+      // --- Absolute humidity (g/m³) from dew point + air temp ---
+      // AH = (e * 216.7) / T_kelvin  where e = vapor pressure at dew point in hPa
+      function absHumidity(dpF, tempF) {
+        if (dpF == null || tempF == null) return null;
+        const dpC  = (dpF  - 32) * 5 / 9;
+        const tC   = (tempF - 32) * 5 / 9;
+        const e    = 6.112 * Math.exp((17.67 * dpC) / (dpC + 243.5));
+        return (e * 216.7) / (tC + 273.15);
+      }
+
+      // --- Precip type from WMO weather code ---
+      function precipType(code) {
+        if (code == null) return null;
+        if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "Snow";
+        if (code === 66 || code === 67) return "Freezing rain";
+        if (code >= 51 && code <= 67) return "Rain";
+        if (code >= 80 && code <= 84) return "Showers";
+        if (code >= 95) return "Thunderstorm";
+        return null;
+      }
+
+      // --- AH-based scoring (inverted U — sweet spot 4-5 g/m³) ---
+      // Too dry (<2) = flyaways/static. Too humid (>14) = frizz.
+      // Based on curly hair expert consensus: dew point 35-50°F is optimal.
+      function scoreAH(ah) {
+        if (ah == null) return 70;
+        if (ah < 2)    return 60;  // very dry — flyaways, static
+        if (ah < 4)    return 78;  // dry but okay
+        if (ah < 5)    return 95;  // sweet spot
+        if (ah < 6)    return 88;
+        if (ah < 7)    return 80;
+        if (ah < 10)   return 60;
+        if (ah < 14)   return 35;
+        if (ah < 17)   return 15;
+        return 5;                  // tropical, brutal
+      }
+
+      // --- Precip scoring — type matters ---
+      // Snow/freezing rain penalized more heavily than rain
+      function scorePrecip(pop, type, amtMm) {
+        if (pop == null) return 80;
+        let typeMultiplier = 1.0;
+        if (type === "Snow" || type === "Freezing rain") typeMultiplier = 1.4;
+        const intensity = amtMm != null && amtMm > 5 ? 1.2 : 1.0; // heavy precip extra penalty
+        const baseScore = pop < 10  ? 100 :
+                          pop < 25  ? 78  :
+                          pop < 50  ? 50  :
+                          pop < 75  ? 25  : 8;
+        return Math.max(5, Math.round(baseScore / (typeMultiplier * intensity)));
+      }
+
+      function labelFor(score) {
+        if (score >= 88) return { label: "Great hair day", emoji: "💁",  color: "rgba(100,220,130,0.95)" };
+        if (score >= 74) return { label: "Good hair day",  emoji: "😊",  color: "rgba(130,210,100,0.95)" };
+        if (score >= 58) return { label: "Manageable",     emoji: "🤷",  color: "rgba(200,190,80,0.95)"  };
+        if (score >= 40) return { label: "Frizz risk",     emoji: "😬",  color: "rgba(220,150,60,0.95)"  };
+        if (score >= 25) return { label: "Bad hair day",   emoji: "😤",  color: "rgba(220,100,60,0.95)"  };
+        return             { label: "Stay inside",         emoji: "🙈",  color: "rgba(200,60,60,0.95)"   };
+      }
+
+      // --- Hour weight for morning-biased aggregation ---
+      function hourWeight(hr) {
+        if (hr >= 6  && hr < 10) return 3.0;  // styling window
+        if (hr >= 10 && hr < 14) return 1.0;
+        if (hr >= 14 && hr <= 20) return 0.5;
+        return 0;
+      }
+
       function aggregateDay(dateStr) {
-        const idxs = [];
+        let sumDp = 0, sumAH = 0, sumRH = 0, sumTemp = 0;
+        let sumPrecip = 0, sumPrecipAmt = 0, totalW = 0;
+        let peakMorningDp = null;
+        let peakWind = 0;
+        let morningWindSum = 0, morningWindW = 0;
+        let dominantCode = null, maxCodeW = 0;
+
         for (let i = 0; i < htimes.length; i++) {
-          if (!htimes[i].startsWith(dateStr)) continue;
+          if (!htimes[i] || !htimes[i].startsWith(dateStr)) continue;
           const hr = new Date(htimes[i]).getHours();
-          if (hr >= 7 && hr <= 20) idxs.push(i);
+          const w  = hourWeight(hr);
+          if (w === 0) continue;
+
+          const dp  = dewPointF(htemp[i], hhumid[i]);
+          const ah  = absHumidity(dp, htemp[i]);
+
+          if (dp   != null) { sumDp   += dp   * w; }
+          if (ah   != null) { sumAH   += ah   * w; }
+          if (hhumid[i] != null) { sumRH   += hhumid[i] * w; }
+          if (htemp[i]  != null) { sumTemp  += htemp[i]  * w; }
+          totalW += w;
+
+          if (hprecip[i] != null) sumPrecip    += hprecip[i] * w;
+          if (hpamt[i]   != null) sumPrecipAmt += hpamt[i]   * w;
+
+          // Dominant weather code by weight
+          if (hcode[i] != null && w > maxCodeW) { dominantCode = hcode[i]; maxCodeW = w; }
+
+          const wind = hwind[i];
+          if (wind != null) {
+            if (wind > peakWind) peakWind = wind;
+            if (hr >= 6 && hr < 10) { morningWindSum += wind; morningWindW++; }
+          }
+
+          if (hr >= 6 && hr < 10 && dp != null) {
+            if (peakMorningDp === null || dp > peakMorningDp) peakMorningDp = dp;
+          }
         }
-        if (!idxs.length) return null;
 
-        const avg = arr => {
-          const vals = idxs.map(i => arr[i]).filter(v => v != null);
-          return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : null;
-        };
-        const max = arr => {
-          const vals = idxs.map(i => arr[i]).filter(v => v != null);
-          return vals.length ? Math.max(...vals) : null;
-        };
+        if (totalW === 0) return null;
 
-        const humidity = avg(hhumid);
-        const temp     = avg(htemp);
-        const wind     = max(hwind);
-        const precip   = max(hprecip);
-        const spread   = deriveDewSpread(temp, humidity);
-        return { humidity, temp, wind, precip, spread };
+        const avgDp       = sumDp    / totalW;
+        const avgAH       = sumAH    / totalW;
+        const avgRH       = sumRH    / totalW;
+        const avgPrecip   = sumPrecip / totalW;
+        const avgPrecipAmt= sumPrecipAmt / totalW;
+        const morningWind = morningWindW > 0 ? morningWindSum / morningWindW : peakWind;
+        const pType       = precipType(dominantCode);
+
+        return { avgDp, avgAH, avgRH, avgPrecip, avgPrecipAmt, pType,
+                 peakMorningDp, morningWind, peakWind };
       }
 
       // --- Build day objects ---
       const now = new Date();
       const days = [];
 
-      // Day 0: Today — use hyperlocal-corrected current values
-      {
-        const humidity = hyp.corrected_humidity ?? cur.humidity ?? 50;
-        const temp     = hyp.corrected_temp ?? cur.temperature ?? 60;
-        let spread = deriveDewSpread(temp, humidity);
-        if (spread == null) spread = cur.dew_point != null ? temp - cur.dew_point : null;
-        const wind   = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
-        const precip = daily.precipitation_probability_max?.[0] ?? cur.precipitation_probability ?? 0;
-        const score  = totalScore(humidity, spread, wind, precip);
-        const lf = labelFor(score);
-        const todayDate = new Date();
-        const todayLabel = todayDate.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-        days.push({ label: "Today", dateLabel: todayLabel, humidity, spread, wind, precip, score, scoreLabel: lf.label, emoji: lf.emoji, color: lf.color });
-      }
-
-      // Days 1 & 2: Tomorrow, Day After — from hourly aggregation
-      for (let d = 1; d <= 2; d++) {
+      for (let d = 0; d <= 2; d++) {
         const date = new Date(now);
         date.setDate(date.getDate() + d);
-        const dateStr = date.toISOString().slice(0, 10);
-        const dayName = d === 1 ? "Tomorrow" : date.toLocaleDateString("en-US", { weekday: "long" });
+        const dateStr   = date.toISOString().slice(0, 10);
+        const dayName   = d === 0 ? "Today" : d === 1 ? "Tomorrow"
+                        : date.toLocaleDateString("en-US", { weekday: "long" });
+        const dateLabel = date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+
         const agg = aggregateDay(dateStr);
         if (!agg) continue;
-        const dateLabel = date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-        const score = totalScore(agg.humidity, agg.spread, agg.wind, agg.precip);
-        const lf = labelFor(score);
-        days.push({ label: dayName, dateLabel, ...agg, score, scoreLabel: lf.label, emoji: lf.emoji, color: lf.color });
+
+        const ahScore     = scoreAH(agg.avgAH);
+        const precipScore = scorePrecip(agg.avgPrecip, agg.pType, agg.avgPrecipAmt);
+        const rhPenalty    = agg.avgRH == null ? 1.0 : agg.avgRH > 90 ? 0.65 : agg.avgRH > 80 ? 0.80 : agg.avgRH > 70 ? 0.92 : 1.0;
+        const score       = Math.round((ahScore * 0.75 + precipScore * 0.25) * rhPenalty);
+        const lf          = labelFor(score);
+
+        // Flags
+        const morningWarning = agg.peakMorningDp != null && agg.peakMorningDp >= 60
+          ? `Dew point peaks ${Math.round(agg.peakMorningDp)}°F in morning — style before going out`
+          : (agg.avgAH != null && agg.avgAH < 2
+          ? `Very dry air — flyaways and static likely`
+          : null);
+
+        const windFlag = agg.morningWind > 12
+          ? `Windy morning (${Math.round(agg.morningWind)} mph) — expect flyaways`
+          : null;
+
+        days.push({
+          label: dayName, dateLabel,
+          avgAH: agg.avgAH, avgRH: agg.avgRH, avgDp: agg.avgDp,
+          avgPrecip: agg.avgPrecip, pType: agg.pType,
+          morningWind: agg.morningWind,
+          score, scoreLabel: lf.label, emoji: lf.emoji, color: lf.color,
+          morningWarning, windFlag
+        });
       }
 
-      // Update collapsed preview from Today
+      if (!days.length) { el.innerHTML = '<div style="opacity:0.5;">No forecast data available</div>'; return; }
+
+      // Update collapsed preview
       const today = days[0];
       const emojiEl = document.getElementById("hairDayEmojiCollapsed");
       const labelEl = document.getElementById("hairDayLabelCollapsed");
@@ -1836,20 +1893,38 @@
       if (labelEl) { labelEl.textContent = today.scoreLabel; labelEl.style.color = today.color; }
       if (scoreEl) scoreEl.textContent = `Today: ${today.score}/100`;
 
-      // --- Render helpers ---
-      function factorBar(score) {
-        const pct = Math.round(score);
-        const barColor = pct >= 70 ? "rgba(100,210,120,0.7)" : pct >= 45 ? "rgba(200,180,60,0.7)" : "rgba(210,80,60,0.7)";
-        return `<div style="height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-top:3px;">
-          <div style="width:${pct}%;height:100%;background:${barColor};border-radius:2px;"></div>
-        </div>`;
+      // --- Headline ---
+      function hairHeadline(day) {
+        const ah = day.avgAH;
+        let reason;
+        if (ah == null)     reason = "";
+        else if (ah < 2)    reason = " — very dry, watch for static";
+        else if (ah < 5)    reason = " — dry air, great conditions";
+        else if (ah < 7)    reason = " — comfortable moisture";
+        else if (ah < 10)   reason = " — humidity building";
+        else if (ah < 14)   reason = " — humid, frizz likely";
+        else                reason = " — very humid, frizz certain";
+        return `${day.scoreLabel}${reason}`;
       }
 
+      // --- Day card ---
       function dayCard(day, isToday) {
-        const hVal = day.humidity != null ? Math.round(day.humidity) + "%" : "--";
-        const sVal = day.spread   != null ? day.spread.toFixed(1) + "°"   : "--";
-        const wVal = day.wind     != null ? Math.round(day.wind) + " mph"  : "--";
-        const pVal = day.precip   != null ? Math.round(day.precip) + "%"   : "--";
+        const ahVal   = day.avgAH   != null ? day.avgAH.toFixed(1) + " g/m³"  : "--";
+        const rhVal   = day.avgRH   != null ? Math.round(day.avgRH) + "%"               : "--";
+        const rainVal = day.avgPrecip != null
+          ? Math.round(day.avgPrecip) + "%" + (day.pType ? " · " + day.pType : "")
+          : "--";
+        const windVal = day.morningWind != null ? Math.round(day.morningWind) + " mph"  : "--";
+
+        // AH bar: 0–20 g/m³ range, peak (green) at 4-5 g/m³
+        const ahBarPct = day.avgAH != null ? Math.max(0, Math.min(100, Math.round(day.score))) : 50;
+        const ahBarColor = ahBarPct >= 80 ? "rgba(100,210,120,0.7)" : ahBarPct >= 55 ? "rgba(200,180,60,0.7)" : "rgba(210,80,60,0.7)";
+
+        const flags = [day.morningWarning, day.windFlag].filter(Boolean);
+        const flagsHtml = flags.length
+          ? flags.map(f => `<div style="font-size:0.68rem;margin-top:6px;padding:4px 8px;background:rgba(255,200,80,0.1);border-left:2px solid rgba(255,200,80,0.5);border-radius:0 4px 4px 0;opacity:0.85;">${f}</div>`).join("")
+          : "";
+
         return `
           <div style="background:rgba(255,255,255,${isToday ? "0.06" : "0.03"});border:1px solid rgba(255,255,255,${isToday ? "0.14" : "0.07"});border-radius:10px;padding:12px 10px;display:flex;flex-direction:column;align-items:center;min-width:0;">
             <div style="font-size:0.78rem;font-weight:700;margin-bottom:2px;opacity:${isToday ? "1" : "0.7"};">${day.label}</div>
@@ -1858,40 +1933,27 @@
             <div style="font-size:0.8rem;font-weight:600;color:${day.color};text-align:center;margin-bottom:8px;">${day.scoreLabel}</div>
             <div style="font-size:1.4rem;font-weight:300;margin-bottom:10px;">${day.score}<span style="font-size:0.65rem;opacity:0.5;">/100</span></div>
             <div style="width:100%;background:rgba(255,255,255,0.08);border-radius:3px;height:4px;overflow:hidden;margin-bottom:12px;">
-              <div style="width:${day.score}%;height:100%;background:${day.color};border-radius:3px;"></div>
+              <div style="width:${ahBarPct}%;height:100%;background:${day.color};border-radius:3px;"></div>
             </div>
-            <div style="width:100%;font-size:0.7rem;display:flex;flex-direction:column;gap:5px;">
-              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Humidity</span><span style="font-weight:600;">${hVal}</span></div>
-              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">DP Spread</span><span style="font-weight:600;">${sVal}</span></div>
-              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Wind</span><span style="font-weight:600;">${wVal}</span></div>
-              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Rain</span><span style="font-weight:600;">${pVal}</span></div>
+            <div style="width:100%;font-size:0.7rem;display:flex;flex-direction:column;gap:4px;">
+              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Humidity</span><span style="font-weight:600;">${rhVal}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Abs. Humidity</span><span style="font-weight:600;">${ahVal}</span></div>
+              <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:2px;">
+                <div style="width:${ahBarPct}%;height:100%;background:${ahBarColor};border-radius:2px;"></div>
+              </div>
+              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Rain</span><span style="font-weight:600;">${rainVal}</span></div>
+              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Morning Wind</span><span style="font-weight:600;">${windVal}</span></div>
             </div>
+            ${flagsHtml}
           </div>`;
       }
 
-      // Build headline from today's worst factor
-      const todayDay = days[0];
-      function hairHeadline(day) {
-        const factors = [
-          { name: "humidity",        score: scoreHumidity(day.humidity ?? 50), val: day.humidity != null ? Math.round(day.humidity) + "% humidity" : null },
-          { name: "dew point spread",score: scoreSpread(day.spread),           val: day.spread   != null ? day.spread.toFixed(1) + "° dew point spread" : null },
-          { name: "wind",            score: scoreWind(day.wind ?? 0),          val: day.wind     != null ? Math.round(day.wind) + " mph wind" : null },
-          { name: "rain",            score: scoreRain(day.precip ?? 0),        val: day.precip   != null ? Math.round(day.precip) + "% rain chance" : null },
-        ];
-        const worst = factors.filter(f => f.val).sort((a, b) => a.score - b.score)[0];
-        if (!worst || day.score >= 70) return `${day.scoreLabel}${worst && day.score < 85 ? " — " + worst.val : ""}`;
-        return `${day.scoreLabel} — ${worst.val}`;
-      }
-      const hairHL = hairHeadline(todayDay);
-
+      const headline = hairHeadline(today);
       el.innerHTML =
-        `<div style="font-size:0.95rem;font-weight:600;color:${todayDay.color};margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid ${todayDay.color};">${hairHL}</div>` +
+        `<div style="font-size:0.95rem;font-weight:600;color:${today.color};margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:0;border-left:4px solid ${today.color};">${headline}</div>` +
         `<div style="display:grid;grid-template-columns:repeat(${days.length},1fr);gap:8px;margin-bottom:12px;">` +
         days.map((d, i) => dayCard(d, i === 0)).join("") +
-        `</div>` +
-        `<div style="font-size:0.68rem;line-height:1.5;opacity:0.35;padding:2px;">
-          Today uses hyperlocal-corrected values. Tomorrow and beyond use daytime hourly averages (7am–8pm). Humidity and dew point spread drive 65% of the score.
-        </div>`;
+        `</div>`;
     }
 
     function renderDockDay(data) {
@@ -2100,32 +2162,19 @@
       if (dayCards.length > 0) {
         const td = dayCards[0];
         const sl = scoreLabel(td.bestScore);
-        const nowMs = Date.now();
         if (td.usableWindows && td.usableWindows.length > 0) {
-          // Find first future window
-          const futureWin = td.usableWindows.find(w => w.endTime.getTime() > nowMs);
-          if (futureWin) {
-            const isActive = futureWin.startTime.getTime() <= nowMs;
-            const startFmt = fmtTime(futureWin.startTime);
-            const endFmt   = fmtTime(futureWin.endTime);
-            const hrs = Math.round((futureWin.endTime - futureWin.startTime) / 3600000);
-            if (isActive) {
-              dockHeadline = `${sl.label} — dock accessible now until ${endFmt}`;
-            } else {
-              dockHeadline = `${sl.label} — dock accessible ${startFmt}–${endFmt} (${hrs}h)`;
-            }
-          } else {
-            // All windows passed today
-            const lastWin = td.usableWindows[td.usableWindows.length - 1];
-            dockHeadline = `Dock access was earlier today (ended ${fmtTime(lastWin.endTime)})`;
-          }
+          const w = td.usableWindows[0];
+          const startFmt = fmtTime(w.startTime);
+          const endFmt   = fmtTime(w.endTime);
+          const hrs = Math.round((w.endTime - w.startTime) / 3600000);
+          dockHeadline = `${sl.label} — dock accessible ${startFmt}–${endFmt} (${hrs}h)`;
         } else {
-          dockHeadline = `High tides fall outside usable hours today`;
+          dockHeadline = `No usable dock access today — tide too low`;
         }
       }
 
       let html = dockHeadline
-        ? `<div style="font-size:0.95rem;font-weight:600;color:${dayCards.length > 0 ? scoreLabel(dayCards[0].bestScore).color : 'rgba(255,255,255,0.7)'};margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid ${dayCards.length > 0 ? scoreLabel(dayCards[0].bestScore).color : 'rgba(255,255,255,0.2)'};">${dockHeadline}</div>`
+        ? `<div style="font-size:0.95rem;font-weight:600;color:${dayCards.length > 0 ? scoreLabel(dayCards[0].bestScore).color : 'rgba(255,255,255,0.7)'};margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:0;border-left:4px solid ${dayCards.length > 0 ? scoreLabel(dayCards[0].bestScore).color : 'rgba(255,255,255,0.2)'};">${dockHeadline}</div>`
         : "";
       html += `<div class="dock-day-grid" style="display:grid;grid-template-columns:repeat(${dayCards.length},minmax(130px,1fr));gap:12px;">`;
 
@@ -2141,17 +2190,10 @@
         html += `<div style="font-size:0.78rem;font-weight:800;color:${dDayLbl};margin-bottom:2px;">${day.dayLabel}</div>`;
         html += `<div style="font-size:0.72rem;color:${dDateLbl};margin-bottom:8px;">${day.dateLabel}</div>`;
 
-        const nowMs2 = Date.now();
-        const allPassed = day.usableWindows.length > 0 && day.usableWindows.every(w => w.endTime.getTime() < nowMs2);
-        const isToday2 = day.dayLabel === "Today";
-
         if (!day.usableWindows.length) {
-          html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">High tides outside usable hours</div>`;
-          html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Both high tides fall before 7am or after 8pm</div>`;
-        } else if (isToday2 && allPassed) {
-          const lastWin = day.usableWindows[day.usableWindows.length - 1];
-          html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">Access window passed</div>`;
-          html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Ended ${fmtTime(lastWin.endTime)}</div>`;
+          html += ``;
+          html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">Dock dry all day</div>`;
+          html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Low tides fall within usable hours</div>`;
         } else {
           html += ``;
           html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label} <span style="font-size:0.75rem;opacity:0.7;">(${Math.round(day.bestScore * 100)})</span></div>`;
@@ -2859,7 +2901,7 @@
       const sbHeadlineColor = sb.active ? "rgba(100,200,120,0.95)" : sb.likelihood >= 40 ? "rgba(220,200,60,0.85)" : "rgba(150,150,150,0.7)";
 
       const html = `
-        <div style="font-size:0.95rem;font-weight:600;color:${sbHeadlineColor};margin-bottom:16px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid ${sbHeadlineColor};">${sbHeadline}</div>
+        <div style="font-size:0.95rem;font-weight:600;color:${sbHeadlineColor};margin-bottom:16px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:0;border-left:4px solid ${sbHeadlineColor};">${sbHeadline}</div>
         <div style="text-align:center;margin-bottom:20px;">
           <div style="font-size:2.5rem;color:${statusColor};margin-bottom:8px;">${sb.likelihood}%</div>
           <div style="font-size:1.1rem;opacity:0.9;">${statusText}</div>
@@ -4426,28 +4468,6 @@
         // Header
         // // document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
-
-        // Stale page check: if data is >2h newer than page load, light up gear
-        (function() {
-          const generatedAt = data.generated_at ? new Date(data.generated_at) : null;
-          const pageLoadTime = new Date(performance.timeOrigin);
-          const gearBtn = document.getElementById('settingsBtn');
-          const refreshBtn = document.getElementById('refreshBtn');
-          if (!generatedAt || !gearBtn) return;
-          const diffHours = (generatedAt - pageLoadTime) / 3600000;
-          if (diffHours > 2) {
-            gearBtn.style.color = 'rgba(255,80,80,0.95)';
-            gearBtn.title = 'New version may be available — reload the page';
-            if (refreshBtn) {
-              refreshBtn.style.color = 'rgba(255,80,80,0.95)';
-              refreshBtn.title = 'New version may be available — tap to reload';
-            }
-          } else {
-            gearBtn.style.color = '';
-            gearBtn.title = '';
-            if (refreshBtn) { refreshBtn.style.color = ''; refreshBtn.title = ''; }
-          }
-        })();
         renderSources(data.sources, (data.pws || {}).stale);
         renderFrostTracker(data.frost_log);
         renderSunsetQuality(data);
