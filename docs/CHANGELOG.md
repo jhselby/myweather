@@ -1,3 +1,92 @@
+## v4.71 • 2026-04-20
+* **Expanded cards now use fixed-position modal**
+  * Cards open centered on screen with guaranteed backdrop on all sides
+  * Tappable backdrop above, below, and beside — no X button needed
+  * Max height calc(100vh - 160px) with internal scrolling
+  * Subtle scale animation on open
+## v4.71 • 2026-04-20
+* **Expanded cards now use fixed-position modal**
+  * Cards open centered on screen with guaranteed backdrop on all sides
+  * Tappable backdrop above, below, and beside — no X button needed
+  * Max height calc(100vh - 160px) with internal scrolling
+  * Subtle scale animation on open
+
+## v4.70 • 2026-04-20
+* **Expanded card scroll gap**
+  * When a card near the top of the page expands, page scrolls to ensure ~80px tappable backdrop above
+  * Combined with 82vh max-height, guarantees tappable strips both above and below on mobile
+
+## v4.69 • 2026-04-20
+* **Expanded card max-height**
+  * Cards cap at 82vh with internal scrolling — always leaves visible backdrop to tap to dismiss
+  * X button removed (backdrop tap + Escape key are sufficient)
+* **Hyperlocal tab reordered**
+  * New order: Corrections, Wind Impact, Sea Breeze, Feels Like, Fog, Hair Day, Sunset, Dock Day
+  * Comfort/impact grouped together, lifestyle scores grouped together
+
+## v4.68 • 2026-04-20
+* **Right Now card lifestyle section polish**
+  * Sunset Score, Dock Day, Hair Day now show score/100 format
+  * Fog Risk now shows "X% chance" instead of bare percentage
+  * Sunset Score fixed — now reads correctly from stored score instead of DOM scraping
+
+## v4.66 • 2026-04-20
+* **Hair Day card polish**
+  * Score bar shows 0/100 endpoints for clarity
+  * Removed redundant AH bar from data rows
+  * Row labels shortened to RH/AH for cleaner layout
+  * Values align in right column via CSS grid
+* **Fog card headline fix**
+  * Removed border-radius on headline bar (was rendering as parenthesis in light mode)
+
+## v4.65 • 2026-04-20
+* **Hair Day card overhaul**
+  * Scoring now based on Absolute Humidity (AH) with inverted-U curve — sweet spot 4-5 g/m³
+  * Too dry (<2 g/m³) penalized for flyaways/static, too humid (>14 g/m³) penalized for frizz
+  * RH penalty multiplier applied at >70%, >80%, >90% thresholds
+  * Precip scoring uses weather_code for type — snow/freezing rain penalized more than rain
+  * Morning-weighted aggregation (6-10am = 3x, 10am-2pm = 1x, 2-8pm = 0.5x)
+  * Display rows: Humidity (RH%), Abs. Humidity (g/m³), Rain+type, Morning Wind
+  * Wind remains a flag only — "Windy morning — expect flyaways" when >12mph
+  * Corrected Magnus formula bug (216.7 not 2165)
+
+## v4.61 • 2026-04-20
+* **Stale page indicator**
+  * Gear and refresh icons turn red when data is >2h newer than page load
+  * "Page loaded" relabeled "Code loaded" in Settings and header for clarity
+* **Dock Day messaging fix**
+  * "Dock dry all day" replaced with accurate time-aware states
+  * Shows "Access window passed (ended X:XXpm)" when today's windows are behind us
+  * Shows "High tides outside usable hours" when tide timing is the constraint
+  * Headline shows "dock accessible now until X" when currently in a window
+
+## v4.60 • 2026-04-19
+* **Sunset headline sentence**
+  * Plain-English summary above day grid ("Good sunset tonight — clear horizon, low humidity")
+  * Matches headline pattern from Hair Day, Dock Day, Sea Breeze, Fog cards
+
+## v4.58 • 2026-04-19
+* **UX polish (roadmap easy wins)**
+  * Frost Log: explicit empty state when no frost events recorded this season
+  * Collapsed tiles: hover lift + cursor affordance to signal interactivity
+  * Escape key closes any expanded card modal
+
+## v4.57 • 2026-04-19
+* **Hair Day Card (Hyperlocal tab)**
+  * New col-6 card scoring current hair conditions 0–100
+  * Five weighted factors: humidity (40%), dew point spread (25%), wind (15%), rain chance (10%), UV index (10%)
+  * Uses hyperlocal-corrected temp/humidity where available
+  * Collapsed preview shows emoji, label, and score
+  * Labels: Great hair day / Good hair day / Manageable / Frizz risk / Bad hair day / Stay inside
+
+## v4.57 • 2026-04-19
+* **Hair Day Card (Hyperlocal tab)**
+  * 3-day horizontal layout matching Sunset/Dock Day style
+  * Today uses hyperlocal-corrected values; Tomorrow and Day After use daytime hourly averages (7am–8pm)
+  * Scored 0–100: humidity (40%), dew point spread (25%), wind (20%), rain chance (15%)
+  * Each column shows date, emoji, score label, score/100, progress bar, and 4 data rows
+  * Collapsed preview shows today's emoji, score label, and score
+
 ## v4.56 • 2026-04-19
 * **Tab active state fix**
   * Weather tab no longer incorrectly highlighted when on another tab after refresh
@@ -355,6 +444,13 @@
 * Fixed radar tile title positioning and border visibility in dark mode
 * Eliminated Leaflet tile loading race conditions and theme detection issues
 
+## v4.23 • 2026-04-07
+* **Radar tile dark mode optimization** - Replaced dynamic Leaflet map with static Mapbox background image for better performance and consistent rendering
+* Fixed radar tile dark mode appearance - now properly darkened to match theme while maintaining land/sea contrast  
+* Fixed radar tile title positioning and border visibility in dark mode
+* Eliminated Leaflet tile loading race conditions and theme detection issues
+
+
 ## v4.22 • 2026-04-07
 * **Weather page tile redesign - all 6 collapsed previews redesigned** - New collapsible tile/modal architecture with distinctive card-collapsed-preview designs
 * **Right Now tile** - Centered layout with large temperature (68px), thermometer graphic with animated mercury level, "Feels like" below
@@ -367,15 +463,17 @@
 * Tiles fill entire card area with no white background showing (matching Right Now and Sky & Precip colored backgrounds)
 
 
-## v4.23 • 2026-04-07
-* **Radar tile dark mode optimization** - Replaced dynamic Leaflet map with static Mapbox background image for better performance and consistent rendering
-* Fixed radar tile dark mode appearance - now properly darkened to match theme while maintaining land/sea contrast  
-* Fixed radar tile title positioning and border visibility in dark mode
-* Eliminated Leaflet tile loading race conditions and theme detection issues
-
-
 ## v4.21 • 2026-04-05
 * Alert toggle positioning fixed - Changed justify-content from flex-start to space-between for better chevron alignment
+
+## v4.21 - UI fixes
+- Fixed chart data bar text alignment (date and data now properly aligned)
+- Fixed alert Show/Hide toggle positioning (now consistently on far right)
+
+## v4.21 - UI fixes
+- Fixed chart data bar text alignment (date and data now properly aligned)
+- Fixed alert Show/Hide toggle positioning (now consistently on far right)
+
 
 ## v4.20 • 2026-04-05
 * **Right Now card navigation improved** - Clicking links from Right Now card (Wind Impact, Sea Breeze, Fog Risk, etc.) now switches to Hyperlocal tab to open the target card, then returns to Weather tab with Right Now card still open when closed
@@ -414,6 +512,15 @@
 * **Automated cache-busting build system** - Added build.py script to generate content hashes for JS/CSS files
 * **DATA_PIPELINE.md reference document** - Comprehensive documentation of all data sources, processors, and correction algorithms
 * Added Data Pipeline Reference section to settings panel for easy access to technical documentation
+
+## v4.12 • April 4, 2026
+* Added DATA_PIPELINE.md technical reference documentation
+* Moved CHANGELOG.md to docs/ folder
+* Added Data Pipeline Reference section to header
+* Created build.py automated cache-busting system
+* Moved wu_scraper_realtime.py to weather_collector/fetchers/
+* Updated .gitignore with cache file exclusions
+* Fixed wu.py to import scraper as module instead of subprocess
 
 ## v4.11 • 2026-04-03
 * **Wind corrections** - Improved sustained wind and gust correction algorithms
@@ -659,103 +766,3 @@
 * Multi-tab layout (Weather / Wind / Almanac / Radar / Sources)
 * KBOS / KBVY / PWS observed conditions
 
-## v4.12 • April 4, 2026
-* Added DATA_PIPELINE.md technical reference documentation
-* Moved CHANGELOG.md to docs/ folder
-* Added Data Pipeline Reference section to header
-* Created build.py automated cache-busting system
-* Moved wu_scraper_realtime.py to weather_collector/fetchers/
-* Updated .gitignore with cache file exclusions
-* Fixed wu.py to import scraper as module instead of subprocess
-
-## v4.21 - UI fixes
-- Fixed chart data bar text alignment (date and data now properly aligned)
-- Fixed alert Show/Hide toggle positioning (now consistently on far right)
-
-## v4.21 - UI fixes
-- Fixed chart data bar text alignment (date and data now properly aligned)
-- Fixed alert Show/Hide toggle positioning (now consistently on far right)
-
-
-## v4.57 • 2026-04-19
-* **Hair Day Card (Hyperlocal tab)**
-  * New col-6 card scoring current hair conditions 0–100
-  * Five weighted factors: humidity (40%), dew point spread (25%), wind (15%), rain chance (10%), UV index (10%)
-  * Uses hyperlocal-corrected temp/humidity where available
-  * Collapsed preview shows emoji, label, and score
-  * Labels: Great hair day / Good hair day / Manageable / Frizz risk / Bad hair day / Stay inside
-
-## v4.57 • 2026-04-19
-* **Hair Day Card (Hyperlocal tab)**
-  * 3-day horizontal layout matching Sunset/Dock Day style
-  * Today uses hyperlocal-corrected values; Tomorrow and Day After use daytime hourly averages (7am–8pm)
-  * Scored 0–100: humidity (40%), dew point spread (25%), wind (20%), rain chance (15%)
-  * Each column shows date, emoji, score label, score/100, progress bar, and 4 data rows
-  * Collapsed preview shows today's emoji, score label, and score
-
-## v4.58 • 2026-04-19
-* **UX polish (roadmap easy wins)**
-  * Frost Log: explicit empty state when no frost events recorded this season
-  * Collapsed tiles: hover lift + cursor affordance to signal interactivity
-  * Escape key closes any expanded card modal
-
-## v4.60 • 2026-04-19
-* **Sunset headline sentence**
-  * Plain-English summary above day grid ("Good sunset tonight — clear horizon, low humidity")
-  * Matches headline pattern from Hair Day, Dock Day, Sea Breeze, Fog cards
-
-## v4.61 • 2026-04-20
-* **Stale page indicator**
-  * Gear and refresh icons turn red when data is >2h newer than page load
-  * "Page loaded" relabeled "Code loaded" in Settings and header for clarity
-* **Dock Day messaging fix**
-  * "Dock dry all day" replaced with accurate time-aware states
-  * Shows "Access window passed (ended X:XXpm)" when today's windows are behind us
-  * Shows "High tides outside usable hours" when tide timing is the constraint
-  * Headline shows "dock accessible now until X" when currently in a window
-
-## v4.65 • 2026-04-20
-* **Hair Day card overhaul**
-  * Scoring now based on Absolute Humidity (AH) with inverted-U curve — sweet spot 4-5 g/m³
-  * Too dry (<2 g/m³) penalized for flyaways/static, too humid (>14 g/m³) penalized for frizz
-  * RH penalty multiplier applied at >70%, >80%, >90% thresholds
-  * Precip scoring uses weather_code for type — snow/freezing rain penalized more than rain
-  * Morning-weighted aggregation (6-10am = 3x, 10am-2pm = 1x, 2-8pm = 0.5x)
-  * Display rows: Humidity (RH%), Abs. Humidity (g/m³), Rain+type, Morning Wind
-  * Wind remains a flag only — "Windy morning — expect flyaways" when >12mph
-  * Corrected Magnus formula bug (216.7 not 2165)
-
-## v4.66 • 2026-04-20
-* **Hair Day card polish**
-  * Score bar shows 0/100 endpoints for clarity
-  * Removed redundant AH bar from data rows
-  * Row labels shortened to RH/AH for cleaner layout
-  * Values align in right column via CSS grid
-* **Fog card headline fix**
-  * Removed border-radius on headline bar (was rendering as parenthesis in light mode)
-
-## v4.68 • 2026-04-20
-* **Right Now card lifestyle section polish**
-  * Sunset Score, Dock Day, Hair Day now show score/100 format
-  * Fog Risk now shows "X% chance" instead of bare percentage
-  * Sunset Score fixed — now reads correctly from stored score instead of DOM scraping
-
-## v4.69 • 2026-04-20
-* **Expanded card max-height**
-  * Cards cap at 82vh with internal scrolling — always leaves visible backdrop to tap to dismiss
-  * X button removed (backdrop tap + Escape key are sufficient)
-* **Hyperlocal tab reordered**
-  * New order: Corrections, Wind Impact, Sea Breeze, Feels Like, Fog, Hair Day, Sunset, Dock Day
-  * Comfort/impact grouped together, lifestyle scores grouped together
-
-## v4.70 • 2026-04-20
-* **Expanded card scroll gap**
-  * When a card near the top of the page expands, page scrolls to ensure ~80px tappable backdrop above
-  * Combined with 82vh max-height, guarantees tappable strips both above and below on mobile
-
-## v4.71 • 2026-04-20
-* **Expanded cards now use fixed-position modal**
-  * Cards open centered on screen with guaranteed backdrop on all sides
-  * Tappable backdrop above, below, and beside — no X button needed
-  * Max height calc(100vh - 160px) with internal scrolling
-  * Subtle scale animation on open
