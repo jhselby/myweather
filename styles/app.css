@@ -742,6 +742,23 @@
       border-bottom: 1px solid rgba(255,255,255,0.08);
       font-size: 0.95rem;
     }
+
+    .row-category-header {
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.4;
+      padding: 10px 0 4px;
+      margin-top: 4px;
+    }
+    .row-category-header:first-child {
+      padding-top: 0;
+      margin-top: 0;
+    }
+    body.theme-light .row-category-header {
+      opacity: 0.35;
+    }
     .row:last-child{ border-bottom: none; }
 
     .label{

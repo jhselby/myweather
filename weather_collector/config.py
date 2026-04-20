@@ -2,6 +2,7 @@
 Configuration constants for Wyman Cove Weather Station  
 """
 from pathlib import Path
+import os
 
 # Location & Station IDs
 LAT, LON = 42.5014, -70.8750
@@ -13,11 +14,11 @@ PWS_STATION = "KMAMARBL63"
 
 # Schema & Cache
 SCHEMA_VERSION = "1.2"
-PWS_CACHE_FILE = Path("last_pws.json")
-KBOS_CACHE_FILE = Path("last_kbos.json")
-KBVY_CACHE_FILE = Path("last_kbvy.json")
-BUOY_CACHE_FILE = Path("last_buoy.json")
-FROST_LOG_FILE = Path("frost_log.json")
+PWS_CACHE_FILE = Path("/tmp/last_pws.json")
+KBOS_CACHE_FILE = Path("/tmp/last_kbos.json")
+KBVY_CACHE_FILE = Path("/tmp/last_kbvy.json")
+BUOY_CACHE_FILE = Path("/tmp/last_buoy.json")
+FROST_LOG_FILE = Path("/tmp/frost_log.json")
 
 # Wind Exposure Model
 

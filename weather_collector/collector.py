@@ -4,7 +4,9 @@ Wyman Cove Weather Station - Main Collector
 Orchestrates all data fetching and processing
 """
 import json
+import os
 from datetime import datetime
+from pathlib import Path
 
 from .config import SCHEMA_VERSION, LOCATION_NAME
 from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes
@@ -34,6 +36,46 @@ from .processors.wind_risk import compute_wind_risk
 from .processors.fog import calculate_fog_risk
 from .processors.trough import compute_trough_signal
 from .processors.forecast_text import generate_forecast_text
+
+GCS_BUCKET = "myweather-data"
+FROST_LOG_GCS_PATH = "frost_log.json"
+WEATHER_DATA_GCS_PATH = "weather_data.json"
+FROST_LOG_TMP = Path("/tmp/frost_log.json")
+
+
+def _gcs_client():
+    from google.cloud import storage
+    return storage.Client()
+
+
+def _download_frost_log_from_gcs():
+    """Download frost_log.json from GCS to /tmp. Silently skips if not found."""
+    try:
+        client = _gcs_client()
+        blob = client.bucket(GCS_BUCKET).blob(FROST_LOG_GCS_PATH)
+        if blob.exists():
+            blob.download_to_filename(str(FROST_LOG_TMP))
+            print(f"  ✓ Downloaded frost_log.json from GCS")
+        else:
+            print(f"  ℹ  No frost_log.json in GCS yet (first run)")
+    except Exception as e:
+        print(f"  ⚠  Could not download frost_log.json from GCS: {e}")
+
+
+def _upload_to_gcs(data, gcs_path, label):
+    """Upload a dict as JSON to GCS."""
+    try:
+        client = _gcs_client()
+        blob = client.bucket(GCS_BUCKET).blob(gcs_path)
+        payload = json.dumps(data, indent=2)
+        blob.upload_from_string(payload, content_type="application/json")
+        blob.cache_control = "no-cache, max-age=0"
+        blob.patch()
+        print(f"  ✓ Uploaded {label} to GCS ({len(payload):,} bytes)")
+    except Exception as e:
+        print(f"  ✗ Failed to upload {label} to GCS: {e}")
+        raise
+
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
                        kbos_data, kbvy_data, buoy_data, forecast_data, alert_data,
@@ -391,6 +433,9 @@ def main():
         print(f"  ⏱  {name}: {elapsed:.1f}s")
         return result
 
+    # Download frost log from GCS before fetching (needed for update_frost_log)
+    _download_frost_log_from_gcs()
+
     # Fetch all data sources
     current_data, current_meta = timed_fetch("GFS current", fetch_current_gfs)
     hourly_data, hourly_meta = timed_fetch("HRRR hourly", fetch_hourly_hrrr)
@@ -424,11 +469,19 @@ def main():
         "pirate_weather": pirate_meta,
     }
 
-    # Update frost log
+    # Update frost log (reads/writes /tmp/frost_log.json)
     t0 = _time.time()
     print("🌡️ Updating frost log...")
     frost_log = update_frost_log(daily_data)
     print(f"  ⏱  Frost log: {_time.time() - t0:.1f}s")
+
+    # Upload updated frost log back to GCS
+    if FROST_LOG_TMP.exists():
+        try:
+            frost_log_data = json.loads(FROST_LOG_TMP.read_text())
+            _upload_to_gcs(frost_log_data, FROST_LOG_GCS_PATH, "frost_log.json")
+        except Exception as e:
+            print(f"  ⚠  Could not upload frost_log.json: {e}")
 
     sunset_directional = None
     if daily_data and daily_data.get("daily") and daily_data["daily"].get("sunset"):
@@ -467,18 +520,25 @@ def main():
         for key in weather_data["hourly"]:
             weather_data["hourly"][key] = weather_data["hourly"][key][trim_idx:]
 
-    # Save to JSON
-    output_file = "weather_data.json"
-    with open(output_file, "w") as f:
-        json.dump(weather_data, f, indent=2)
-    
-    import os
-    file_size = os.path.getsize(output_file)
-    print(f"  ✓ Wrote {output_file} ({file_size:,} bytes)")
+    # Upload weather data to GCS
+    _upload_to_gcs(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
 
     print("\n" + "=" * 60)
     print(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({_time.time() - total_t0:.1f}s total)")
     print("=" * 60 + "\n")
+
+
+# Cloud Function entry point
+def run(request):
+    """HTTP entry point for Cloud Functions."""
+    try:
+        main()
+        return ("OK", 200)
+    except Exception as e:
+        print(f"ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        return (f"ERROR: {e}", 500)
 
 
 if __name__ == "__main__":
