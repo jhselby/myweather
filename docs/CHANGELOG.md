@@ -1,3 +1,11 @@
+## v4.73 • 2026-04-20
+* **Card modal positioning — measured from actual layout**
+  * JS measures header and tab bar heights on load, sets CSS variables
+  * Cards position relative to actual rendered elements, not hardcoded pixels
+  * Works correctly on every device and screen size
+  * Short cards vertically centered in available space
+  * Tall cards top-align and scroll internally
+
 ## v4.71 • 2026-04-20
 * **Expanded cards now use fixed-position modal**
   * Cards open centered on screen with guaranteed backdrop on all sides

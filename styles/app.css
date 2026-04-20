@@ -2031,15 +2031,19 @@ body.theme-light .hyperlocal-link:hover {
 }
 
 /* Show title when expanded */
+:root {
+  --header-bottom: 55px;
+  --tabbar-height: 70px;
+}
 .card.card-expanded {
   position: fixed !important;
-  top: 80px !important;
+  top: calc(var(--header-bottom) + 12px + (100vh - var(--header-bottom) - var(--tabbar-height) - 44px) / 2) !important;
   left: 50% !important;
   right: auto !important;
   bottom: auto !important;
-  transform: translateX(-50%) !important;
+  transform: translate(-50%, -50%) !important;
   width: min(680px, calc(100vw - 32px)) !important;
-  max-height: calc(100vh - 160px) !important;
+  max-height: calc(100vh - var(--header-bottom) - var(--tabbar-height) - 44px) !important;
   z-index: 200 !important;
   display: flex !important;
   flex-direction: column !important;
