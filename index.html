@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=551ae743" />
+  <link rel="stylesheet" href="styles/app.css?v=c11cbfab" />
 </head>
 <body>
   <div class="container">
@@ -957,8 +957,7 @@
           </div>
         </div>
 
-        <!-- Gust Wind Impact — collapsed by default, own window buttons -->
-        <!-- Wind Impact — merged sustained + gust card -->
+        
         <div class="card col-6" data-collapse-key="wind_impact" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('wind_impact', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Wind Impact<span class="collapse-chevron" style="display:none;">&#9660;</span>
@@ -1021,7 +1020,7 @@
           </div>
         </div>
 
-        <!-- Sea Breeze Detail -->
+        
         <div class="card col-6" data-collapse-key="sea_breeze_detail" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sea_breeze_detail', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Sea Breeze<span class="collapse-chevron" style="display:none;">&#9660;</span>
@@ -1040,45 +1039,34 @@
           </div>
         </div>
 
-        <!-- Sunset Quality Forecast -->
-        <div class="card col-6" data-collapse-key="sunset_quality" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sunset_quality', this.querySelector('.card-title-collapsible'))">
+        
+        <div class="card col-6" data-collapse-key="feels_like" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('feels_like', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            Sunset<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Feels Like<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sunset_quality', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('feels_like', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
-            <div class="tile-label" style="top:12px;left:16px;">Sunset Score</div>
+            <div class="tile-label" style="top:12px;left:16px;">Feels Like</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
-              <div id="sunsetDayCollapsed" style="font-size:0.9rem;font-weight:500;margin-bottom:8px;opacity:0.85;"></div>
-              <div id="sunsetIconCollapsed" style="font-size:2rem;margin-bottom:8px;line-height:1;"></div>
-              <div id="sunsetScoreCollapsed" style="font-size:1.05rem;font-weight:500;opacity:0.95;"></div>
+              <div id="feelsLikeCardValue" style="font-size:2.8rem;font-weight:300;line-height:1;margin-bottom:8px;">--°</div>
+              <div id="feelsLikeCardLabel" style="font-size:1rem;font-weight:500;opacity:0.9;">--</div>
             </div>
           </div>
-          <div class="card-body">
-            <div id="sunsetQualityContent"></div>
+          <div class="card-body" style="display:none;">
+          <canvas id="feelsLikeChart"></canvas>
+          <div id="feelsLikeDataBar" style="padding:4px 12px;font-size:0.74rem;color:var(--text-secondary);border-top:1px solid rgba(255,255,255,0.07);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            <span id="feelsLikeDataTime" style="font-weight:600;color:var(--text-primary);margin-right:6px;"></span><span id="feelsLikeDataLine"></span>
+          </div>
+          <div style="padding:6px 12px 8px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:3px 12px;">
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(100,180,255,0.9);border-radius:2px;flex-shrink:0;"></div>Wind Chill</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(255,140,60,0.9);border-radius:2px;flex-shrink:0;"></div>Heat Index</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(180,180,255,0.8);border-radius:2px;flex-shrink:0;"></div>Feels Like</div>
+            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(255,255,255,0.25);border-radius:2px;flex-shrink:0;border-top:1px dashed rgba(255,255,255,0.25);"></div>Air Temp</div>
+          </div>
           </div>
         </div>
 
-        <!-- Dock Day Score -->
-        <div class="card col-6" data-collapse-key="dock_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('dock_day', this.querySelector('.card-title-collapsible'))">
-          <div class="card-title card-title-collapsible" style="cursor:default;">
-            Dock Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
-          </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('dock_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
-            <div class="tile-label" style="top:12px;left:16px;">Dock Day</div>
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
-              <div id="dockDayLabelCollapsed" style="font-size:0.9rem;font-weight:500;margin-bottom:8px;opacity:0.85;"></div>
-              
-              <div id="dockScoreCollapsed" style="font-size:1rem;font-weight:500;opacity:0.95;"></div>
-            </div>
-          </div>
-          <div class="card-body">
-            <div id="dockDayContent"></div>
-          </div>
-        </div>
-
-        <!-- Fog Risk -->
+        
         <div class="card col-6" data-collapse-key="fog_risk" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('fog_risk', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Fog<span class="collapse-chevron" style="display:none;">&#9660;</span>
@@ -1132,33 +1120,7 @@
 
 
 
-        <div class="card col-6" data-collapse-key="feels_like" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('feels_like', this.querySelector('.card-title-collapsible'))">
-          <div class="card-title card-title-collapsible" style="cursor:default;">
-            Feels Like<span class="collapse-chevron" style="display:none;">&#9660;</span>
-          </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('feels_like', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
-            <div class="tile-label" style="top:12px;left:16px;">Feels Like</div>
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
-              <div id="feelsLikeCardValue" style="font-size:2.8rem;font-weight:300;line-height:1;margin-bottom:8px;">--°</div>
-              <div id="feelsLikeCardLabel" style="font-size:1rem;font-weight:500;opacity:0.9;">--</div>
-            </div>
-          </div>
-          <div class="card-body" style="display:none;">
-          <canvas id="feelsLikeChart"></canvas>
-          <div id="feelsLikeDataBar" style="padding:4px 12px;font-size:0.74rem;color:var(--text-secondary);border-top:1px solid rgba(255,255,255,0.07);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            <span id="feelsLikeDataTime" style="font-weight:600;color:var(--text-primary);margin-right:6px;"></span><span id="feelsLikeDataLine"></span>
-          </div>
-          <div style="padding:6px 12px 8px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:var(--text-secondary);display:flex;flex-wrap:wrap;gap:3px 12px;">
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(100,180,255,0.9);border-radius:2px;flex-shrink:0;"></div>Wind Chill</div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(255,140,60,0.9);border-radius:2px;flex-shrink:0;"></div>Heat Index</div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(180,180,255,0.8);border-radius:2px;flex-shrink:0;"></div>Feels Like</div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:32px;height:2px;background:rgba(255,255,255,0.25);border-radius:2px;flex-shrink:0;border-top:1px dashed rgba(255,255,255,0.25);"></div>Air Temp</div>
-          </div>
-          </div>
-        </div>
-
-        <!-- Hair Day Score -->
+        
         <div class="card col-6" data-collapse-key="hair_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hair_day', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Hair Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
@@ -1176,6 +1138,49 @@
             <div id="hairDayContent"></div>
           </div>
         </div>
+
+    
+        <div class="card col-6" data-collapse-key="sunset_quality" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sunset_quality', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            Sunset<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sunset_quality', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Sunset Score</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div id="sunsetDayCollapsed" style="font-size:0.9rem;font-weight:500;margin-bottom:8px;opacity:0.85;"></div>
+              <div id="sunsetIconCollapsed" style="font-size:2rem;margin-bottom:8px;line-height:1;"></div>
+              <div id="sunsetScoreCollapsed" style="font-size:1.05rem;font-weight:500;opacity:0.95;"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="sunsetQualityContent"></div>
+          </div>
+        </div>
+
+        
+        <div class="card col-6" data-collapse-key="dock_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('dock_day', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            Dock Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('dock_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Dock Day</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div id="dockDayLabelCollapsed" style="font-size:0.9rem;font-weight:500;margin-bottom:8px;opacity:0.85;"></div>
+              
+              <div id="dockScoreCollapsed" style="font-size:1rem;font-weight:500;opacity:0.95;"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="dockDayContent"></div>
+          </div>
+        </div>
+
+        
+
+      </div>
+    
 
     </section>
 
@@ -1271,7 +1276,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.68</span>
+            <span class="version-pill" id="appVersion">v4.69</span>
           </div>
         </div>
         <!-- Changelog -->

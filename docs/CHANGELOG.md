@@ -739,3 +739,11 @@
   * Sunset Score, Dock Day, Hair Day now show score/100 format
   * Fog Risk now shows "X% chance" instead of bare percentage
   * Sunset Score fixed — now reads correctly from stored score instead of DOM scraping
+
+## v4.69 • 2026-04-20
+* **Expanded card max-height**
+  * Cards cap at 82vh with internal scrolling — always leaves visible backdrop to tap to dismiss
+  * X button removed (backdrop tap + Escape key are sufficient)
+* **Hyperlocal tab reordered**
+  * New order: Corrections, Wind Impact, Sea Breeze, Feels Like, Fog, Hair Day, Sunset, Dock Day
+  * Comfort/impact grouped together, lifestyle scores grouped together

@@ -2031,6 +2031,16 @@ body.theme-light .hyperlocal-link:hover {
 }
 
 /* Show title when expanded */
+.card.card-expanded {
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+}
+.card.card-expanded .card-body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
 .card.card-expanded .card-title-collapsible {
   display: flex !important;
   opacity: 1 !important;
@@ -2167,9 +2177,7 @@ body.theme-light .card-expanded .card-title {
 
 /* Close button sits in the title row area */
 .card-expanded .card-close-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
+  display: none !important;
 }
 
 /* Hero area divider for Right Now expanded */
