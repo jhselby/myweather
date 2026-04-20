@@ -2100,14 +2100,27 @@
       if (dayCards.length > 0) {
         const td = dayCards[0];
         const sl = scoreLabel(td.bestScore);
+        const nowMs = Date.now();
         if (td.usableWindows && td.usableWindows.length > 0) {
-          const w = td.usableWindows[0];
-          const startFmt = fmtTime(w.startTime);
-          const endFmt   = fmtTime(w.endTime);
-          const hrs = Math.round((w.endTime - w.startTime) / 3600000);
-          dockHeadline = `${sl.label} — dock accessible ${startFmt}–${endFmt} (${hrs}h)`;
+          // Find first future window
+          const futureWin = td.usableWindows.find(w => w.endTime.getTime() > nowMs);
+          if (futureWin) {
+            const isActive = futureWin.startTime.getTime() <= nowMs;
+            const startFmt = fmtTime(futureWin.startTime);
+            const endFmt   = fmtTime(futureWin.endTime);
+            const hrs = Math.round((futureWin.endTime - futureWin.startTime) / 3600000);
+            if (isActive) {
+              dockHeadline = `${sl.label} — dock accessible now until ${endFmt}`;
+            } else {
+              dockHeadline = `${sl.label} — dock accessible ${startFmt}–${endFmt} (${hrs}h)`;
+            }
+          } else {
+            // All windows passed today
+            const lastWin = td.usableWindows[td.usableWindows.length - 1];
+            dockHeadline = `Dock access was earlier today (ended ${fmtTime(lastWin.endTime)})`;
+          }
         } else {
-          dockHeadline = `No usable dock access today — tide too low`;
+          dockHeadline = `High tides fall outside usable hours today`;
         }
       }
 
@@ -2128,10 +2141,17 @@
         html += `<div style="font-size:0.78rem;font-weight:800;color:${dDayLbl};margin-bottom:2px;">${day.dayLabel}</div>`;
         html += `<div style="font-size:0.72rem;color:${dDateLbl};margin-bottom:8px;">${day.dateLabel}</div>`;
 
+        const nowMs2 = Date.now();
+        const allPassed = day.usableWindows.length > 0 && day.usableWindows.every(w => w.endTime.getTime() < nowMs2);
+        const isToday2 = day.dayLabel === "Today";
+
         if (!day.usableWindows.length) {
-          html += ``;
-          html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">Dock dry all day</div>`;
-          html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Low tides fall within usable hours</div>`;
+          html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">High tides outside usable hours</div>`;
+          html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Both high tides fall before 7am or after 8pm</div>`;
+        } else if (isToday2 && allPassed) {
+          const lastWin = day.usableWindows[day.usableWindows.length - 1];
+          html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">Access window passed</div>`;
+          html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Ended ${fmtTime(lastWin.endTime)}</div>`;
         } else {
           html += ``;
           html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label} <span style="font-size:0.75rem;opacity:0.7;">(${Math.round(day.bestScore * 100)})</span></div>`;
@@ -4406,6 +4426,28 @@
         // Header
         // // document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
         document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
+
+        // Stale page check: if data is >2h newer than page load, light up gear
+        (function() {
+          const generatedAt = data.generated_at ? new Date(data.generated_at) : null;
+          const pageLoadTime = new Date(performance.timeOrigin);
+          const gearBtn = document.getElementById('settingsBtn');
+          const refreshBtn = document.getElementById('refreshBtn');
+          if (!generatedAt || !gearBtn) return;
+          const diffHours = (generatedAt - pageLoadTime) / 3600000;
+          if (diffHours > 2) {
+            gearBtn.style.color = 'rgba(255,80,80,0.95)';
+            gearBtn.title = 'New version may be available — reload the page';
+            if (refreshBtn) {
+              refreshBtn.style.color = 'rgba(255,80,80,0.95)';
+              refreshBtn.title = 'New version may be available — tap to reload';
+            }
+          } else {
+            gearBtn.style.color = '';
+            gearBtn.title = '';
+            if (refreshBtn) { refreshBtn.style.color = ''; refreshBtn.title = ''; }
+          }
+        })();
         renderSources(data.sources, (data.pws || {}).stale);
         renderFrostTracker(data.frost_log);
         renderSunsetQuality(data);

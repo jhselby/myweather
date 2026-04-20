@@ -703,3 +703,13 @@
 * **Sunset headline sentence**
   * Plain-English summary above day grid ("Good sunset tonight — clear horizon, low humidity")
   * Matches headline pattern from Hair Day, Dock Day, Sea Breeze, Fog cards
+
+## v4.61 • 2026-04-20
+* **Stale page indicator**
+  * Gear and refresh icons turn red when data is >2h newer than page load
+  * "Page loaded" relabeled "Code loaded" in Settings and header for clarity
+* **Dock Day messaging fix**
+  * "Dock dry all day" replaced with accurate time-aware states
+  * Shows "Access window passed (ended X:XXpm)" when today's windows are behind us
+  * Shows "High tides outside usable hours" when tide timing is the constraint
+  * Headline shows "dock accessible now until X" when currently in a window
