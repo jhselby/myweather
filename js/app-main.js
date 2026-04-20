@@ -4320,6 +4320,32 @@
     // ======================================================
     // Boot: load data and populate all views
     // ======================================================
+
+    // Measure header and tab bar heights, set CSS variables for card modal positioning
+    (function measureLayout() {
+      function measure() {
+        const header = document.querySelector('.app-header') || document.querySelector('header');
+        const tabBar = document.querySelector('.bottom-tab-bar');
+        if (header) {
+          const headerBottom = header.getBoundingClientRect().bottom;
+          if (headerBottom > 0) {
+            document.documentElement.style.setProperty('--header-bottom', headerBottom + 'px');
+          }
+        }
+        if (tabBar) {
+          const tabBarTop = tabBar.getBoundingClientRect().top;
+          if (tabBarTop > 0) {
+            const tabBarHeight = window.innerHeight - tabBarTop;
+            document.documentElement.style.setProperty('--tabbar-height', tabBarHeight + 'px');
+          }
+        }
+      }
+      // Measure immediately and again after fonts/layout settle
+      measure();
+      requestAnimationFrame(() => { measure(); });
+      window.addEventListener('resize', measure);
+    })();
+
     document.getElementById("pageLoaded").textContent =
       new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
