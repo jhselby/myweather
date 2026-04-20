@@ -1148,11 +1148,12 @@
           avgHum: hum25.toFixed(0)
         });
         
-        // Store today's score for Right Now card
-        if (day.day === 0) {
-          window.__todaySunsetScore = {score, label, color};
-        }
+
       }
+
+      // Store today sunset score for Right Now card
+      const todayScore = scores.find(s => s.dayLabel === "Today");
+      if (todayScore) window.__todaySunsetScore = {score: todayScore.score, label: todayScore.label, color: todayScore.color};
 
       if (!scores.length) {
         el.innerHTML = `<div style="color:${isLight() ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)'};font-size:0.85rem;">No sunset data in forecast window</div>`;
@@ -1883,6 +1884,9 @@
       }
 
       if (!days.length) { el.innerHTML = '<div style="opacity:0.5;">No forecast data available</div>'; return; }
+
+      // Store today for Right Now card
+      window.__todayHairScore = days[0];
 
       // Update collapsed preview
       const today = days[0];
@@ -5191,7 +5195,7 @@
         if (fogEl) {
           const fogLabel = der.fog_label ?? "--";
           const fogPct   = der.fog_probability;
-          fogEl.textContent = fogPct != null ? `${fogLabel} (${fogPct}%)` : fogLabel;
+          fogEl.textContent = fogPct != null ? `${fogLabel} (${fogPct}% chance)` : fogLabel;
           fogEl.style.color = fogLabel === "Likely"     ? "rgba(255,220,80,0.9)"
                             : fogLabel === "Possible"   ? "rgba(255,200,100,0.85)"
                             : fogLabel === "Low chance" ? "rgba(200,200,200,0.7)"
@@ -5201,22 +5205,10 @@
        // Sunset Score - read from rendered sunset card
         const sunsetScoreEl = document.getElementById("sunsetScoreNow");
         if (sunsetScoreEl) {
-          const sunsetContent = document.getElementById("sunsetQualityContent");
-          const firstTile = sunsetContent?.querySelector('.scroll-day-grid > div');
-          if (firstTile) {
-            const dayLabel = firstTile.querySelector('div:first-child')?.textContent.trim();
-            if (dayLabel === "Today") {
-              const labelDiv = firstTile.querySelector('div:nth-child(3)')?.innerHTML;
-              const color = firstTile.querySelector('div:nth-child(3)')?.style.color || "rgba(180,180,180,0.8)";
-              if (labelDiv) {
-                sunsetScoreEl.innerHTML = labelDiv;
-                sunsetScoreEl.style.color = color;
-              } else {
-                sunsetScoreEl.textContent = "No data";
-              }
-            } else {
-              sunsetScoreEl.textContent = "No data";
-            }
+          if (window.__todaySunsetScore) {
+            const s = window.__todaySunsetScore;
+            sunsetScoreEl.innerHTML = `${s.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(s.score)}/100)</span>`;
+            sunsetScoreEl.style.color = s.color;
           } else {
             sunsetScoreEl.textContent = "No data";
           }
@@ -5226,7 +5218,7 @@
         const dockDayScoreEl = document.getElementById("dockDayScoreNow");
         if (dockDayScoreEl && window.__todayDockScore) {
           const d = window.__todayDockScore;
-          dockDayScoreEl.innerHTML = `${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score * 100)})</span>`;
+          dockDayScoreEl.innerHTML = `${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score * 100)}/100)</span>`;
           dockDayScoreEl.style.color = d.color;
         } else if (dockDayScoreEl) {
           dockDayScoreEl.textContent = "No data";
@@ -5252,6 +5244,18 @@
         if (dockDayScoreEl) {
           dockDayScoreEl.classList.add('hyperlocal-link');
           dockDayScoreEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="dock_day"]'); if (card) card.click(); }, 100); };
+        }
+
+        // Hair Day Score
+        const hairDayNowEl = document.getElementById("hairDayNow");
+        if (hairDayNowEl && window.__todayHairScore) {
+          const h = window.__todayHairScore;
+          hairDayNowEl.innerHTML = `${h.scoreLabel} <span style="opacity:0.6;font-size:0.85rem;">(${h.score}/100)</span>`;
+          hairDayNowEl.style.color = h.color;
+          hairDayNowEl.classList.add('hyperlocal-link');
+          hairDayNowEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="hair_day"]'); if (card) card.click(); }, 100); };
+        } else if (hairDayNowEl) {
+          hairDayNowEl.textContent = "No data";
         }
 
         const feelsLikeEl = document.getElementById("feelsLike");

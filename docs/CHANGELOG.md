@@ -733,3 +733,9 @@
   * Values align in right column via CSS grid
 * **Fog card headline fix**
   * Removed border-radius on headline bar (was rendering as parenthesis in light mode)
+
+## v4.68 • 2026-04-20
+* **Right Now card lifestyle section polish**
+  * Sunset Score, Dock Day, Hair Day now show score/100 format
+  * Fog Risk now shows "X% chance" instead of bare percentage
+  * Sunset Score fixed — now reads correctly from stored score instead of DOM scraping

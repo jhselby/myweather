@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=d5984634" />
+  <link rel="stylesheet" href="styles/app.css?v=551ae743" />
 </head>
 <body>
   <div class="container">
@@ -135,6 +135,7 @@
             <div class="hero-divider"></div>
             
             <!-- Key Metrics Grid -->
+            <div class="row-category-header">Forecast</div>
             <div class="row">
               <div class="label">Today's High / Low</div>
               <div class="value" id="hiLo">-- / --</div>
@@ -143,6 +144,30 @@
               <div class="label">Precip</div>
               <div class="value" id="precipNow">--%</div>
             </div>
+
+            <div class="row-category-header">Conditions</div>
+            <div class="row">
+              <div class="label">Humidity</div>
+              <div class="value" id="humidityNow">--%</div>
+            </div>
+            <div class="row">
+              <div class="label">Dew Point</div>
+              <div class="value"><span id="dewPointNow">--°F</span> <span id="dewPointDepression" style="opacity:0.6;font-size:0.85rem;"></span></div>
+            </div>
+            <div class="row">
+              <div class="label">Pressure</div>
+              <div class="value" id="pressureNow">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Visibility</div>
+              <div class="value" id="visibilityNow">-- mi</div>
+            </div>
+            <div class="row">
+              <div class="label">UV Index</div>
+              <div class="value" id="uvNow">--</div>
+            </div>
+
+            <div class="row-category-header">Comfort &amp; Impact</div>
             <div class="row">
               <div class="label">Wind Impact</div>
               <div class="value" id="windImpactNow">--</div>
@@ -151,14 +176,8 @@
               <div class="label">Sea Breeze</div>
               <div class="value" id="seaBreezeNow">--</div>
             </div>
-            <div class="row">
-              <div class="label">Humidity</div>
-              <div class="value" id="humidityNow">--%</div>
-            </div>
-            <div class="row">
-              <div class="label">Pressure</div>
-              <div class="value" id="pressureNow">--</div>
-            </div>
+
+            <div class="row-category-header">Lifestyle</div>
             <div class="row">
               <div class="label">Fog Risk</div>
               <div class="value" id="fogRiskNow">--</div>
@@ -172,16 +191,8 @@
               <div class="value" id="dockDayScoreNow">--</div>
             </div>
             <div class="row">
-              <div class="label">Dew Point</div>
-              <div class="value"><span id="dewPointNow">--°F</span> <span id="dewPointDepression" style="opacity:0.6;font-size:0.85rem;"></span></div>
-            </div>
-            <div class="row">
-              <div class="label">Visibility</div>
-              <div class="value" id="visibilityNow">-- mi</div>
-            </div>
-            <div class="row">
-              <div class="label">UV Index</div>
-              <div class="value" id="uvNow">--</div>
+              <div class="label">Hair Day</div>
+              <div class="value" id="hairDayNow">--</div>
             </div>
           </div>
         </div>
@@ -1181,7 +1192,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=697db84a"></script>
+  <script src="js/app-main.js?v=609b8a7d"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1260,7 +1271,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.66</span>
+            <span class="version-pill" id="appVersion">v4.68</span>
           </div>
         </div>
         <!-- Changelog -->
