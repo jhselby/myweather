@@ -724,3 +724,12 @@
   * Display rows: Humidity (RH%), Abs. Humidity (g/m³), Rain+type, Morning Wind
   * Wind remains a flag only — "Windy morning — expect flyaways" when >12mph
   * Corrected Magnus formula bug (216.7 not 2165)
+
+## v4.66 • 2026-04-20
+* **Hair Day card polish**
+  * Score bar shows 0/100 endpoints for clarity
+  * Removed redundant AH bar from data rows
+  * Row labels shortened to RH/AH for cleaner layout
+  * Values align in right column via CSS grid
+* **Fog card headline fix**
+  * Removed border-radius on headline bar (was rendering as parenthesis in light mode)

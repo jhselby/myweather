@@ -1931,18 +1931,19 @@
             <div style="font-size:0.68rem;opacity:0.45;margin-bottom:6px;">${day.dateLabel}</div>
             <div style="font-size:2rem;line-height:1;margin-bottom:4px;">${day.emoji}</div>
             <div style="font-size:0.8rem;font-weight:600;color:${day.color};text-align:center;margin-bottom:8px;">${day.scoreLabel}</div>
-            <div style="font-size:1.4rem;font-weight:300;margin-bottom:10px;">${day.score}<span style="font-size:0.65rem;opacity:0.5;">/100</span></div>
-            <div style="width:100%;background:rgba(255,255,255,0.08);border-radius:3px;height:4px;overflow:hidden;margin-bottom:12px;">
-              <div style="width:${ahBarPct}%;height:100%;background:${day.color};border-radius:3px;"></div>
-            </div>
-            <div style="width:100%;font-size:0.7rem;display:flex;flex-direction:column;gap:4px;">
-              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Humidity</span><span style="font-weight:600;">${rhVal}</span></div>
-              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Abs. Humidity</span><span style="font-weight:600;">${ahVal}</span></div>
-              <div style="height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:2px;">
-                <div style="width:${ahBarPct}%;height:100%;background:${ahBarColor};border-radius:2px;"></div>
+            <div style="font-size:1.4rem;font-weight:300;margin-bottom:6px;">${day.score}<span style="font-size:0.65rem;opacity:0.5;">/100</span></div>
+            <div style="width:100%;display:flex;align-items:center;gap:4px;margin-bottom:12px;">
+              <span style="font-size:0.6rem;opacity:0.3;flex-shrink:0;">0</span>
+              <div style="flex:1;background:rgba(255,255,255,0.08);border-radius:3px;height:4px;overflow:hidden;">
+                <div style="width:${day.score}%;height:100%;background:${day.color};border-radius:3px;"></div>
               </div>
-              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Rain</span><span style="font-weight:600;">${rainVal}</span></div>
-              <div style="display:flex;justify-content:space-between;"><span style="opacity:0.5;">Morning Wind</span><span style="font-weight:600;">${windVal}</span></div>
+              <span style="font-size:0.6rem;opacity:0.3;flex-shrink:0;">100</span>
+            </div>
+            <div style="width:100%;font-size:0.7rem;display:grid;grid-template-columns:auto 1fr;gap:3px 0;">
+              <span style="opacity:0.5;">RH</span><span style="font-weight:600;text-align:right;">${rhVal}</span>
+              <span style="opacity:0.5;">AH</span><span style="font-weight:600;text-align:right;">${ahVal}</span>
+              <span style="opacity:0.5;">Rain</span><span style="font-weight:600;text-align:right;">${rainVal}</span>
+              <span style="opacity:0.5;line-height:1.3;">Morning<br>Wind</span><span style="font-weight:600;text-align:right;">${windVal}</span>
             </div>
             ${flagsHtml}
           </div>`;
@@ -3175,7 +3176,7 @@
       if (!fogHLEl) {
         fogHLEl = document.createElement("div");
         fogHLEl.id = "fogHeadline";
-        fogHLEl.style.cssText = "font-size:0.95rem;font-weight:600;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;";
+        fogHLEl.style.cssText = "font-size:0.95rem;font-weight:600;margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:0;";
         const fogBody = document.querySelector('[data-collapse-key="fog_risk"] .card-body');
         if (fogBody) fogBody.insertBefore(fogHLEl, fogBody.firstChild);
       }
