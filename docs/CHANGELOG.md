@@ -698,3 +698,8 @@
   * Frost Log: explicit empty state when no frost events recorded this season
   * Collapsed tiles: hover lift + cursor affordance to signal interactivity
   * Escape key closes any expanded card modal
+
+## v4.60 • 2026-04-19
+* **Sunset headline sentence**
+  * Plain-English summary above day grid ("Good sunset tonight — clear horizon, low humidity")
+  * Matches headline pattern from Hair Day, Dock Day, Sea Breeze, Fog cards

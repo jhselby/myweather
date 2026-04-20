@@ -1179,7 +1179,32 @@
         return color;
       }
 
-      let html = `<div class="scroll-day-grid" style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:12px;">`;
+      let html = ``;
+
+      // Headline from today's (or next available) sunset score
+      if (scores.length > 0) {
+        const ts = scores[0];
+        const scoreCol = adjustScoreColor(ts.color);
+        let sunsetHL;
+        const mid = parseInt(ts.avgMid);
+        const low = parseInt(ts.avgLow);
+        if (ts.note === "Clear sky") {
+          sunsetHL = `Good sunset tonight — clear horizon, low humidity`;
+        } else if (ts.label === "Spectacular" || ts.label === "Very Good") {
+          sunsetHL = `${ts.label} sunset tonight — mid-level clouds at distance (${mid}%)`;
+        } else if (ts.label === "Good") {
+          sunsetHL = `Decent sunset tonight — some color likely`;
+        } else if (ts.label === "Fair") {
+          sunsetHL = `Fair sunset tonight — limited color expected`;
+        } else if (low > 60) {
+          sunsetHL = `Poor sunset tonight — overcast blocks the horizon`;
+        } else {
+          sunsetHL = `Poor sunset tonight — clouds limit color`;
+        }
+        html += `<div style="font-size:0.95rem;font-weight:600;color:${scoreCol};margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid ${scoreCol};">${sunsetHL}</div>`;
+      }
+
+      html += `<div class="scroll-day-grid" style="display:grid;grid-template-columns:repeat(${scores.length},1fr);gap:10px;margin-bottom:12px;">`;
       for (const s of scores) {
         const barW = Math.round(s.score * 100);
         const scoreCol = adjustScoreColor(s.color);
@@ -1844,7 +1869,23 @@
           </div>`;
       }
 
+      // Build headline from today's worst factor
+      const todayDay = days[0];
+      function hairHeadline(day) {
+        const factors = [
+          { name: "humidity",        score: scoreHumidity(day.humidity ?? 50), val: day.humidity != null ? Math.round(day.humidity) + "% humidity" : null },
+          { name: "dew point spread",score: scoreSpread(day.spread),           val: day.spread   != null ? day.spread.toFixed(1) + "° dew point spread" : null },
+          { name: "wind",            score: scoreWind(day.wind ?? 0),          val: day.wind     != null ? Math.round(day.wind) + " mph wind" : null },
+          { name: "rain",            score: scoreRain(day.precip ?? 0),        val: day.precip   != null ? Math.round(day.precip) + "% rain chance" : null },
+        ];
+        const worst = factors.filter(f => f.val).sort((a, b) => a.score - b.score)[0];
+        if (!worst || day.score >= 70) return `${day.scoreLabel}${worst && day.score < 85 ? " — " + worst.val : ""}`;
+        return `${day.scoreLabel} — ${worst.val}`;
+      }
+      const hairHL = hairHeadline(todayDay);
+
       el.innerHTML =
+        `<div style="font-size:0.95rem;font-weight:600;color:${todayDay.color};margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid ${todayDay.color};">${hairHL}</div>` +
         `<div style="display:grid;grid-template-columns:repeat(${days.length},1fr);gap:8px;margin-bottom:12px;">` +
         days.map((d, i) => dayCard(d, i === 0)).join("") +
         `</div>` +
@@ -2054,7 +2095,26 @@
         return d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
       }
 
-      let html = `<div class="dock-day-grid" style="display:grid;grid-template-columns:repeat(${dayCards.length},minmax(130px,1fr));gap:12px;">`;
+      // Build headline from today's dock data
+      let dockHeadline = "";
+      if (dayCards.length > 0) {
+        const td = dayCards[0];
+        const sl = scoreLabel(td.bestScore);
+        if (td.usableWindows && td.usableWindows.length > 0) {
+          const w = td.usableWindows[0];
+          const startFmt = fmtTime(w.startTime);
+          const endFmt   = fmtTime(w.endTime);
+          const hrs = Math.round((w.endTime - w.startTime) / 3600000);
+          dockHeadline = `${sl.label} — dock accessible ${startFmt}–${endFmt} (${hrs}h)`;
+        } else {
+          dockHeadline = `No usable dock access today — tide too low`;
+        }
+      }
+
+      let html = dockHeadline
+        ? `<div style="font-size:0.95rem;font-weight:600;color:${dayCards.length > 0 ? scoreLabel(dayCards[0].bestScore).color : 'rgba(255,255,255,0.7)'};margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid ${dayCards.length > 0 ? scoreLabel(dayCards[0].bestScore).color : 'rgba(255,255,255,0.2)'};">${dockHeadline}</div>`
+        : "";
+      html += `<div class="dock-day-grid" style="display:grid;grid-template-columns:repeat(${dayCards.length},minmax(130px,1fr));gap:12px;">`;
 
       for (const day of dayCards) {
         const sl = scoreLabel(day.bestScore);
@@ -2761,7 +2821,25 @@
         statusText = "Unlikely";
       }
 
+      // Build sea breeze headline
+      let sbHeadline;
+      if (sb.active) {
+        sbHeadline = `Sea breeze active — offshore flow replaced by onshore`;
+      } else if (sb.likelihood >= 60) {
+        sbHeadline = `Sea breeze likely this afternoon (${sb.likelihood}%)`;
+      } else if (sb.likelihood >= 35) {
+        sbHeadline = `Sea breeze possible (${sb.likelihood}%) — conditions marginal`;
+      } else {
+        const windDir = data.current?.wind_direction;
+        const compass = windDir != null ? toCompass(windDir) : null;
+        sbHeadline = compass
+          ? `No sea breeze — ${compass} wind dominates (${sb.likelihood}%)`
+          : `No sea breeze — conditions unfavorable (${sb.likelihood}%)`;
+      }
+      const sbHeadlineColor = sb.active ? "rgba(100,200,120,0.95)" : sb.likelihood >= 40 ? "rgba(220,200,60,0.85)" : "rgba(150,150,150,0.7)";
+
       const html = `
+        <div style="font-size:0.95rem;font-weight:600;color:${sbHeadlineColor};margin-bottom:16px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:3px solid ${sbHeadlineColor};">${sbHeadline}</div>
         <div style="text-align:center;margin-bottom:20px;">
           <div style="font-size:2.5rem;color:${statusColor};margin-bottom:8px;">${sb.likelihood}%</div>
           <div style="font-size:1.1rem;opacity:0.9;">${statusText}</div>
@@ -3016,6 +3094,35 @@
       const fogLabel = der.fog_label ?? "--";
       const fogProb = der.fog_probability;
       
+      // Build fog headline
+      let fogHeadline;
+      const fogLikelihood = fogProb ?? 0;
+      if (fogLikelihood >= 60) {
+        fogHeadline = `Fog likely — air near saturation`;
+      } else if (fogLikelihood >= 30) {
+        fogHeadline = `Fog possible — humidity borderline`;
+      } else if (fogLikelihood > 0) {
+        fogHeadline = `Low fog risk — air is too dry`;
+      } else {
+        fogHeadline = `No fog risk`;
+      }
+      const fogHeadlineColor = fogLikelihood >= 60 ? "rgba(220,200,60,0.9)" : fogLikelihood >= 30 ? "rgba(200,160,60,0.85)" : "rgba(100,200,120,0.9)";
+
+      // Inject or update headline element above the card rows
+      let fogHLEl = document.getElementById("fogHeadline");
+      if (!fogHLEl) {
+        fogHLEl = document.createElement("div");
+        fogHLEl.id = "fogHeadline";
+        fogHLEl.style.cssText = "font-size:0.95rem;font-weight:600;margin-bottom:14px;padding:10px 12px;background:rgba(255,255,255,0.04);border-radius:8px;";
+        const fogBody = document.querySelector('[data-collapse-key="fog_risk"] .card-body');
+        if (fogBody) fogBody.insertBefore(fogHLEl, fogBody.firstChild);
+      }
+      if (fogHLEl) {
+        fogHLEl.textContent = fogHeadline;
+        fogHLEl.style.color = fogHeadlineColor;
+        fogHLEl.style.borderLeft = `3px solid ${fogHeadlineColor}`;
+      }
+
       if (labelEl) labelEl.textContent = fogLabel;
       if (probEl) probEl.textContent = fogProb != null ? `${fogProb}%` : "--";
       
