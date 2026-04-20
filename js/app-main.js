@@ -86,6 +86,17 @@
     }
 
 
+
+    // Escape key closes any expanded card modal
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      const expanded = document.querySelector('.card.card-expanded');
+      if (expanded) {
+        const titleEl = expanded.querySelector('.card-title-collapsible');
+        if (titleEl) toggleCard(expanded.dataset.collapseKey, titleEl);
+      }
+    });
+
     function updateSettingBtns() {
       const theme = localStorage.getItem('theme') || 'system';
       // Update menu drawer buttons
@@ -939,8 +950,36 @@
       const tile3num   = light ? "rgba(10,40,180,0.90)"   : "rgba(100,140,255,0.9)";
       const upcomingColor = light ? "rgba(20,70,200,0.85)" : "rgba(180,210,255,0.8)";
 
+      // Check if we have any meaningful frost data this season
+      const hasFrostData = frost.season_start && (
+        (frost.freeze_days ?? 0) > 0 ||
+        (frost.hard_freeze_days ?? 0) > 0 ||
+        (frost.severe_days ?? 0) > 0
+      );
+
       if (!frost.season_start) {
         el.innerHTML = `<div style="color:${textFaint};font-size:0.85rem;">No frost data yet — will populate after first overnight run.</div>`;
+        return;
+      }
+
+      if (!hasFrostData) {
+        const upcoming = frost.upcoming_freeze_days || [];
+        const upcomingHtml = upcoming.length === 0
+          ? `<span style="color:${textFaint};">None in 10-day forecast</span>`
+          : upcoming.map(u => {
+              const label = u.min_f <= 20 ? "Hard freeze" : u.min_f <= 28 ? "Frost" : "Cool night";
+              const d = new Date(u.date).toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+              return `<span style="margin-right:12px;">${label} ${d} (${u.min_f}°F)</span>`;
+            }).join("");
+        el.innerHTML = `
+          <div style="text-align:center;padding:12px 0 8px;">
+            <div style="font-size:1.8rem;margin-bottom:6px;">❄️</div>
+            <div style="font-size:0.92rem;font-weight:600;color:${textFaint};margin-bottom:4px;">No frost events this season</div>
+            <div style="font-size:0.78rem;color:${textFaint};margin-bottom:14px;">Season started ${new Date(frost.season_start).toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</div>
+          </div>
+          <div style="font-size:0.82rem;font-weight:800;color:${textHead};margin-bottom:6px;">Upcoming freeze nights (10-day):</div>
+          <div style="font-size:0.82rem;color:${upcomingColor};line-height:1.8;">${upcomingHtml}</div>
+        `;
         return;
       }
 

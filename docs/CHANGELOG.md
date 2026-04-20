@@ -692,3 +692,9 @@
   * Scored 0–100: humidity (40%), dew point spread (25%), wind (20%), rain chance (15%)
   * Each column shows date, emoji, score label, score/100, progress bar, and 4 data rows
   * Collapsed preview shows today's emoji, score label, and score
+
+## v4.58 • 2026-04-19
+* **UX polish (roadmap easy wins)**
+  * Frost Log: explicit empty state when no frost events recorded this season
+  * Collapsed tiles: hover lift + cursor affordance to signal interactivity
+  * Escape key closes any expanded card modal
