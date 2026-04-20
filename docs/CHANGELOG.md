@@ -747,3 +747,8 @@
 * **Hyperlocal tab reordered**
   * New order: Corrections, Wind Impact, Sea Breeze, Feels Like, Fog, Hair Day, Sunset, Dock Day
   * Comfort/impact grouped together, lifestyle scores grouped together
+
+## v4.70 • 2026-04-20
+* **Expanded card scroll gap**
+  * When a card near the top of the page expands, page scrolls to ensure ~80px tappable backdrop above
+  * Combined with 82vh max-height, guarantees tappable strips both above and below on mobile
