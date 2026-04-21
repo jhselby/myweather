@@ -171,7 +171,7 @@
     // Tab behavior — Weather / Wind / Almanac
     // ======================================================
     function showTab(which) {
-      const views = { weather: "weatherView", almanac: "almanacView", overhead: "overheadView", hyperlocal: "hyperlocalView", sources: "sourcesView" };
+      const views = { weather: "weatherView", almanac: "almanacView", overhead: "overheadView", hyperlocal: "hyperlocalView" };
       Object.keys(views).forEach(k => {
         const v = document.getElementById(views[k]);
         if (v) v.style.display = (k === which) ? "" : "none";
@@ -1585,14 +1585,6 @@
         const s = sources[key];
         if (s && s.status !== "ok") anyError = true;
       });
-      const tabBtn = document.getElementById("tabSources");
-      if (tabBtn) {
-        tabBtn.style.background    = anyError ? "rgba(255,80,80,0.18)"  : "rgba(80,200,100,0.15)";
-        tabBtn.style.borderColor   = anyError ? "rgba(255,80,80,0.45)"  : "rgba(80,200,100,0.4)";
-        tabBtn.style.color         = anyError ? "rgba(255,180,180,0.95)" : "rgba(140,240,160,0.95)";
-        tabBtn.textContent         = anyError ? "Sources" : "✓ Sources";
-      }
-
       // Build sources table
       const table = document.getElementById("sourcesTable");
       const tableModal = document.getElementById("sourcesTableModal");
