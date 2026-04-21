@@ -149,39 +149,6 @@
       color: rgba(255,255,255,0.65);
     }
 
-    .tabs{
-      display: none !important; /* moved to bottom tab bar */
-      margin-top: 6px;
-      display: flex;
-      gap: 6px;
-      justify-content: flex-start;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      scrollbar-width: none;
-      padding-bottom: 2px;
-      padding-left: 2px;
-      padding-right: 2px;
-    }
-    .tabs::-webkit-scrollbar { display: none; }
-
-    .tab{
-      border: 1px solid rgba(255,255,255,0.16);
-      background: rgba(255,255,255,0.06);
-      color: rgba(255,255,255,0.92);
-      padding: 7px 11px;
-      border-radius: 999px;
-      font-size: 0.85rem;
-  font-weight: 800;
-      cursor: pointer;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.25);
-      transition: transform 0.06s ease, background 0.15s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .tab:active{ transform: scale(0.98); }
-    .tab.active{
-      background: rgba(255,255,255,0.18);
-      border-color: rgba(255,255,255,0.28);
-    }
 
 
     /* Tab swipe slide animations */
@@ -1153,9 +1120,6 @@
       /* Radar map — don't eat the whole screen */
       #radarMap { height: 52vh !important; min-height: 260px; }
 
-      /* Tabs — slightly smaller so all 5 fit */
-      .tab { font-size: 0.70rem !important; padding: 8px 10px !important; }
-
       /* Wind pills — never wrap */
       .wind-window-pills { flex-wrap: nowrap !important; }
     }
@@ -1164,9 +1128,6 @@
        MOBILE LAYOUT FIXES (max-width: 480px)
        ============================================= */
     @media (max-width: 480px) {
-
-      /* Tab bar — smaller padding so all 5 fit on one row */
-      .tab { padding: 8px 10px; font-size: 0.73rem; }
 
       /* Header meta row — smaller text */
       .meta-row { font-size: 0.78rem; gap: 6px 10px; }
@@ -1398,18 +1359,6 @@
     body.theme-light #windChart {
       background: rgba(0,0,0,0.02);
       border-radius: 8px;
-    }
-
-    /* Tabs */
-    body.theme-light .tab {
-      background: rgba(0,0,0,0.06);
-      border-color: rgba(0,0,0,0.14);
-      color: rgba(0,0,0,0.75);
-    }
-    body.theme-light .tab.active {
-      background: rgba(0,0,0,0.14);
-      border-color: rgba(0,0,0,0.25);
-      color: rgba(0,0,0,0.9);
     }
 
     /* Wind pills */
