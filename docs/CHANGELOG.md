@@ -9,6 +9,23 @@
   * Now reads `data.current.wind_direction` and renders the actual compass heading ("Wind from S", "Wind from NE", etc.)
   * Falls back to "Unfavorable" if wind direction is missing
 
+* **Header Precip Badge — Consistent Styling**
+  * Replaced 🌧️ emoji with outlined SVG cloud+rain that uses `currentColor`
+  * Badge now matches the visual language of alerts/refresh/settings (plain outlined icon at rest)
+  * Active state still driven solely by the blue dot, same pattern as the alerts badge
+  * Emoji always rendered as multicolor regardless of state, making the badge look perpetually "active"
+
+## v4.78 • 2026-04-21
+* **Sea Breeze Card — Fixed False "No Data" Error**
+  * Root cause: renderer guard was `if (!sb.likelihood)`, which treats `likelihood === 0` as falsy and short-circuits to "No sea breeze data available"
+  * Result: every time the detector correctly computed 0% likelihood (common in spring/fall when water is warmer than land), the card lied and claimed the fetcher was broken
+  * Guard now checks `undefined || null` explicitly, so the 0% state renders its real reasoning (e.g., "Land/water Δ too small (-4.2°F)")
+
+* **Sea Breeze Collapsed Tile — Dynamic Wind Compass**
+  * Collapsed preview hardcoded "Wind from west" for every low-likelihood case — wrong on any day the wind wasn't from the west
+  * Now reads `data.current.wind_direction` and renders the actual compass heading ("Wind from S", "Wind from NE", etc.)
+  * Falls back to "Unfavorable" if wind direction is missing
+
 ## v4.77 • 2026-04-21
 * **Hair Day — Wind Scoring with Corrected Gusts**
   * Added wind as a real scoring component (10% weight); AH dropped 75→70%, precip 25→20%
