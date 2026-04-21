@@ -1,3 +1,10 @@
+## v4.76 • 2026-04-20
+* **Card Open Animation — Smoother**
+  * Replaced bouncy cubic-bezier overshoot with standard iOS ease-out
+  * Removed competing animations: `.card` had `transition: all` while `.card-expanded` had a keyframe animation, so they fought each other during expansion
+  * Fixed keyframe to preserve `translate(-50%, -50%)` centering — previously the scale transform was overriding the centering translate, causing the jerky feel
+  * Removed delayed opacity transitions on `.card-body` and `.card-title-collapsible` — the keyframe now drives opacity cleanly at the card level so children don't need their own fades
+
 ## v4.75 • 2026-04-20
 * **Pirate Weather Next Hour — Probability Gate**
   * Fixed bug where precip badge triggered on raw intensity even when probability was 0% (Pirate reports theoretical intensity regardless of probability)

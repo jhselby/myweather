@@ -180,7 +180,7 @@
       box-shadow: var(--shadow);
       backdrop-filter: blur(8px);
       position: relative;
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
     }
 
     /* Collapsed tile: show pointer + subtle lift to indicate interactivity */
@@ -2000,11 +2000,11 @@ body.theme-light .hyperlocal-link:hover {
   margin: 0 !important;
   border-radius: 18px !important;
   box-shadow: 0 8px 40px rgba(0,0,0,0.4) !important;
-  animation: card-expand 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: card-expand 0.28s ease-out;
 }
 @keyframes card-expand {
-  from { opacity: 0.7; transform: scale(0.97); }
-  to   { opacity: 1;   transform: scale(1); }
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 }
 .card.card-expanded .card-body {
   overflow-y: auto;
@@ -2022,17 +2022,18 @@ body.theme-light .hyperlocal-link:hover {
   opacity: 0;
 }
 
-/* Smooth fade-in for expanded card title and content */
+/* Expanded card children inherit the opacity animation from the .card-expand keyframe —
+   no separate delayed transitions needed (they used to fight the keyframe, causing jank). */
 .card-title-collapsible {
-  transition: opacity 0.3s ease 0.2s;
+  opacity: 1;
 }
 
 .card .card-title-collapsible {
   opacity: 0;
 }
 
-.card-body {
-  transition: opacity 0.3s ease 0.2s;
+.card.card-expanded .card-title-collapsible {
+  opacity: 1;
 }
 
 
