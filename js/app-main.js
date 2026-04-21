@@ -5724,12 +5724,6 @@
       btn.classList.toggle('active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
-    // Also sync old top tabs (in case anything references them)
-    document.querySelectorAll('.tab').forEach(btn => {
-      const id = btn.id.replace('tab', '').toLowerCase();
-      btn.classList.toggle('active', id === tab);
-      btn.setAttribute('aria-selected', id === tab ? 'true' : 'false');
-    });
   };
 })();
 
