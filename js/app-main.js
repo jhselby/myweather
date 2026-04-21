@@ -172,15 +172,9 @@
     // ======================================================
     function showTab(which) {
       const views = { weather: "weatherView", almanac: "almanacView", overhead: "overheadView", hyperlocal: "hyperlocalView", sources: "sourcesView" };
-      const tabs  = { weather: "tabWeather",  almanac: "tabAlmanac",  overhead: "tabOverhead", hyperlocal: "tabHyperlocal", sources: "tabSources" };
       Object.keys(views).forEach(k => {
         const v = document.getElementById(views[k]);
-        const t = document.getElementById(tabs[k]);
         if (v) v.style.display = (k === which) ? "" : "none";
-        if (t) {
-          t.classList.toggle("active", k === which);
-          t.setAttribute("aria-selected", String(k === which));
-        }
       });
       // Stop overhead live refresh when leaving that tab
       if (which !== "overhead" && window.ohStopLive) {
