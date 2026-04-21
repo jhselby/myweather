@@ -5321,10 +5321,12 @@
         window.__stormFlags = stormFlags;
         const badge = document.getElementById("alertBadge");
         if (badge) {
+          const dot = badge.querySelector(".alert-badge-dot");
           const container = document.getElementById("alertsContainer");
           const hasAlerts = container && container.innerHTML.trim().length > 0;
           const hasStorm = stormFlags.length >= 2;
-          badge.style.display = (hasAlerts || hasStorm) ? "inline-flex" : "none";
+          // Badge is always visible — toggle the colored dot for active state
+          if (dot) dot.style.display = (hasAlerts || hasStorm) ? "" : "none";
         }
         updatePrecipBadge(data);
         // Sea breeze indicator
@@ -5828,9 +5830,21 @@ function openAlertModal() {
 
   const stormFlags = window.__stormFlags || [];
   const alerts = container ? container.querySelectorAll('.alert-banner') : [];
-  if (alerts.length === 0 && stormFlags.length < 2) return;
 
   modalBody.innerHTML = '';
+
+  // If no alerts, show reassurance instead of refusing to open
+  if (alerts.length === 0 && stormFlags.length < 2) {
+    modalBody.innerHTML = `
+      <div style="padding:32px 16px;text-align:center;color:var(--muted);">
+        <div style="font-size:2.5rem;margin-bottom:12px;">✓</div>
+        <div style="font-size:1rem;font-weight:500;margin-bottom:4px;color:var(--text-primary);">No active alerts</div>
+        <div style="font-size:0.85rem;">No NWS watches, warnings, or advisories for Marblehead.</div>
+      </div>`;
+    document.getElementById('alertModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    return;
+  }
 
   // Storm flags section
   if (stormFlags.length >= 2) {
@@ -5912,12 +5926,16 @@ function openPrecipModal() {
 
   let firstRainIdx = -1, lastRainIdx = -1;
   let maxIntensity = 0;
+  let maxProbability = 0;
   minutely.forEach((pt, i) => {
-    if (pt.precip_intensity > 0.001) {
+    const prob = pt.precip_probability ?? 0;
+    // Require probability >= 30% — Pirate reports intensity even when probability is 0
+    if (pt.precip_intensity > 0.001 && prob >= 0.3) {
       if (firstRainIdx === -1) firstRainIdx = i;
       lastRainIdx = i;
       if (pt.precip_intensity > maxIntensity) maxIntensity = pt.precip_intensity;
     }
+    if (prob > maxProbability) maxProbability = prob;
   });
 
   // Adjust indices for staleness to get minutes-from-now
@@ -5925,26 +5943,37 @@ function openPrecipModal() {
   const lastRainFromNow  = lastRainIdx  === -1 ? -1 : lastRainIdx  - stalenessMin;
 
   let summaryText = '';
+  const maxProbPct = Math.round(maxProbability * 100);
   if (firstRainIdx === -1) {
-    summaryText = 'No precipitation in the next hour.';
+    // Still show max probability even when no rain gate passes, so user sees what Pirate thinks
+    summaryText = maxProbPct > 0
+      ? `No precipitation forecast in the next hour. (Peak probability: ${maxProbPct}%)`
+      : 'No precipitation in the next hour.';
   } else if (firstRainFromNow <= 0) {
-    // Rain already started
+    // Rain already started — NWS intensity: light <0.10, moderate 0.10-0.30, heavy >0.30 in/hr
     const endsIn = Math.max(1, lastRainFromNow + 1);
-    const intensity = maxIntensity < 0.01 ? 'Light' : maxIntensity < 0.1 ? 'Moderate' : 'Heavy';
-    summaryText = `${intensity} rain now — ending in ~${endsIn} min`;
+    const intensity = maxIntensity < 0.10 ? 'Light' : maxIntensity < 0.30 ? 'Moderate' : 'Heavy';
+    summaryText = `${intensity} rain now — ending in ~${endsIn} min (${maxProbPct}% probability, ${maxIntensity.toFixed(2)} in/hr)`;
   } else {
-    const intensity = maxIntensity < 0.01 ? 'Light' : maxIntensity < 0.1 ? 'Moderate' : 'Heavy';
+    const intensity = maxIntensity < 0.10 ? 'Light' : maxIntensity < 0.30 ? 'Moderate' : 'Heavy';
     const duration = lastRainIdx - firstRainIdx + 1;
-    summaryText = `${intensity} rain starting in ~${firstRainFromNow} min, lasting ~${duration} min`;
+    summaryText = `${intensity} rain starting in ~${firstRainFromNow} min, lasting ~${duration} min (${maxProbPct}% probability, ${maxIntensity.toFixed(2)} in/hr)`;
   }
 
   // Build 60-bar chart
+  // Bars with probability < 30% are shown ghosted — Pirate reports intensity
+  // even when probability is 0, so without this the chart contradicts the summary.
   const maxI = Math.max(...minutely.map(p => p.precip_intensity), 0.01);
   const bars = minutely.map((pt, i) => {
     const h = Math.max(2, Math.round((pt.precip_intensity / maxI) * 60));
-    const color = pt.precip_type === 'snow' ? '#a0c8ff'
-                : pt.precip_type === 'sleet' ? '#c8a0ff'
-                : 'rgba(100,160,255,0.85)';
+    const prob = pt.precip_probability ?? 0;
+    const likely = prob >= 0.3;
+    const baseColor = pt.precip_type === 'snow' ? '160,200,255'
+                    : pt.precip_type === 'sleet' ? '200,160,255'
+                    : '100,160,255';
+    // Full opacity if probability gate passes; heavily muted otherwise
+    const opacity = likely ? 0.85 : 0.15;
+    const color = `rgba(${baseColor},${opacity})`;
     const isNow = i === 0 ? 'border-top:2px solid rgba(255,255,255,0.6);' : '';
     return `<div style="flex:1;display:flex;align-items:flex-end;height:64px;">
       <div style="width:100%;height:${h}px;background:${color};border-radius:2px 2px 0 0;${isNow}"></div>
@@ -5978,9 +6007,14 @@ function closePrecipModal() {
 function updatePrecipBadge(data) {
   const badge = document.getElementById('precipBadge');
   if (!badge) return;
+  const dot = badge.querySelector('.precip-badge-dot');
   const minutely = data?.pirate_weather?.minutely || [];
-  const hasRain = minutely.some(pt => pt.precip_intensity > 0.001);
-  badge.style.display = hasRain ? 'inline-flex' : 'none';
+  // Require BOTH nonzero intensity AND probability >= 30%.
+  // Pirate often reports intensity with probability=0, which means
+  // "this is what it would be IF it rained" — not an actual forecast.
+  const hasRain = minutely.some(pt => pt.precip_intensity > 0.001 && (pt.precip_probability ?? 0) >= 0.3);
+  // Badge is always visible — toggle the colored dot to indicate active state
+  if (dot) dot.style.display = hasRain ? '' : 'none';
 }
 
 // === Precip Modal ===
@@ -5993,11 +6027,13 @@ function updatePrecipBadge(data) {
     const bar = document.getElementById('alertSummaryBar');
     const badge = document.getElementById('alertBadge');
     if (!badge) return;
+    const dot = badge.querySelector('.alert-badge-dot');
     // Show badge if alertSummaryBar has been made visible OR alertsContainer has content
     const container = document.getElementById('alertsContainer');
     const hasAlerts = container && container.innerHTML.trim().length > 0;
     const hasStorm = (window.__stormFlags || []).length >= 2;
-    badge.style.display = (hasAlerts || hasStorm) ? 'inline-flex' : 'none';
+    // Badge is always visible — toggle the colored dot to indicate active state
+    if (dot) dot.style.display = (hasAlerts || hasStorm) ? '' : 'none';
   });
   
   // Start observing once DOM is ready

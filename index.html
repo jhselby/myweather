@@ -28,11 +28,11 @@
       <h1>
         <span class="header-title"><img src="icon-192.png" alt="" style="width:38px;height:38px;border-radius:8px;vertical-align:middle;margin-right:8px;">Wyman Cove</span>
         <span class="header-actions">
-          <button id="precipBadge" class="header-icon-btn precip-badge" aria-label="Next Hour Precip" onclick="openPrecipModal()" style="display:none;"><span class="precip-badge-dot"></span><span class="alert-badge-icon">🌧️</span></button>
-          <button id="alertBadge" class="header-icon-btn alert-badge" aria-label="Alerts" onclick="openAlertModal()" style="display:none;">
-            <span class="alert-badge-dot"></span>
+          <button id="alertBadge" class="header-icon-btn alert-badge" aria-label="Alerts" onclick="openAlertModal()">
+            <span class="alert-badge-dot" style="display:none;"></span>
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="display:block;"><path d="M10 1.5L1.5 17h17L10 1.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><line x1="10" y1="8" x2="10" y2="12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="14.5" r="0.9" fill="currentColor"/></svg>
           </button>
+          <button id="precipBadge" class="header-icon-btn precip-badge" aria-label="Next Hour Precip" onclick="openPrecipModal()"><span class="precip-badge-dot" style="display:none;"></span><span class="alert-badge-icon">🌧️</span></button>
           <button id="refreshBtn" class="header-icon-btn" aria-label="Refresh">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="display:block;"><path d="M3.5 10a6.5 6.5 0 0 1 11.3-4.4M16.5 10a6.5 6.5 0 0 1-11.3 4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><polyline points="14,2.5 15,5.5 12,6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="6,14 5,14.5 8,14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
@@ -1182,7 +1182,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=c168c76e"></script>
+  <script src="js/app-main.js?v=e44af5bc"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1261,7 +1261,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.74</span>
+            <span class="version-pill" id="appVersion">v4.75</span>
           </div>
         </div>
         <!-- Changelog -->

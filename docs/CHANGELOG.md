@@ -1,3 +1,19 @@
+## v4.75 • 2026-04-20
+* **Pirate Weather Next Hour — Probability Gate**
+  * Fixed bug where precip badge triggered on raw intensity even when probability was 0% (Pirate reports theoretical intensity regardless of probability)
+  * Badge now requires intensity > 0 AND probability ≥ 30%
+  * Intensity thresholds corrected to NWS standards (Light <0.10, Moderate 0.10-0.30, Heavy >0.30 in/hr)
+
+* **Always-Visible Header Badges**
+  * Alert and precip badges now always visible in header, with colored dot indicating active state
+  * Order: Alerts · Precip · Refresh · Settings
+  * Tapping either badge opens its modal regardless of state
+  * Alert modal shows "No active alerts" when nothing active (previously refused to open)
+  * Precip modal shows ghosted bars for low-probability Pirate data so chart doesn't contradict summary
+
+* **Bug Fix — Duplicate Hide Logic**
+  * Fixed alert badge being hidden by loadWeatherData after mutation observer made it visible. Both paths now toggle the dot instead of the button itself.
+
 ## v4.74 • 2026-04-20
 * **Dead Code Cleanup — Top Tab Nav Removal**
   * Removed unused top tab nav HTML (was hidden by CSS since bottom tab bar launched)
