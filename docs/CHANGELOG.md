@@ -1,3 +1,15 @@
+## v4.74 • 2026-04-20
+* **Dead Code Cleanup — Top Tab Nav Removal**
+  * Removed unused top tab nav HTML (was hidden by CSS since bottom tab bar launched)
+  * Removed 51 lines of dead `.tabs`/`.tab` CSS (including responsive and light-mode variants)
+  * Cleaned `showTab()` — removed top-tab sync code and orphaned `sources` view mapping
+  * Removed dead `.tab` sync loop from bottom tab bar wrapper
+  * Removed dead `sourcesView` section from HTML (Data Sources now lives in settings drawer only)
+  * Removed `tabSources` health indicator block (styled an element that no longer exists)
+
+* **Bug Fix — renderSources**
+  * Fixed pre-existing bug: function was writing to `table.innerHTML` instead of `renderTarget.innerHTML`, which would have crashed if `#sourcesTable` was missing and `#sourcesTableModal` was present (the exact state after this cleanup)
+
 ## v4.73 • 2026-04-20
 * **Card modal positioning — measured from actual layout**
   * JS measures header and tab bar heights on load, sets CSS variables
