@@ -1691,7 +1691,7 @@
       const htimes  = hourly.times || [];
       const hhumid  = hourly.humidity || [];
       const htemp   = hourly.temperature || [];
-      const hwind   = hourly.wind_speed || [];
+      const hwind   = hourly.wind_gusts || [];  // gusts rip styled hair; sustained just moves it
       const hprecip = hourly.precipitation_probability || [];
       const hcode   = hourly.weather_code || [];
       const hpamt   = hourly.precipitation || [];
@@ -1754,6 +1754,21 @@
                           pop < 50  ? 50  :
                           pop < 75  ? 25  : 8;
         return Math.max(5, Math.round(baseScore / (typeMultiplier * intensity)));
+      }
+
+      // --- Wind scoring — tuned for curly hair ---
+      // Score based on how late in the day wind first crosses threshold.
+      // Later bad wind = better score (more of the day happens before ruin).
+      // badStartHour is the first hour (6-20) where sustained wind >= 15 mph.
+      // Returns null-equivalent 100 if wind stays calm all day.
+      const WIND_THRESHOLD_MPH = 22;  // gust threshold (sustained-equivalent ~14-15 mph)
+      function scoreWind(badStartHour) {
+        if (badStartHour == null) return 100;   // calm all day
+        if (badStartHour >= 18)    return 95;   // late evening — day was fine
+        if (badStartHour >= 13)    return 80;   // afternoon — morning was good
+        if (badStartHour >= 10)    return 60;   // mid-morning — styling window was clean
+        if (badStartHour >= 7)     return 35;   // early morning — day ruined from start
+        return 20;                              // windy from wake-up
       }
 
       function labelFor(score) {
@@ -1820,11 +1835,46 @@
         const avgRH       = sumRH    / totalW;
         const avgPrecip   = sumPrecip / totalW;
         const avgPrecipAmt= sumPrecipAmt / totalW;
-        const morningWind = morningWindW > 0 ? morningWindSum / morningWindW : peakWind;
+        const morningGust = morningWindW > 0 ? morningWindSum / morningWindW : peakWind;
         const pType       = precipType(dominantCode);
 
+        // --- Walk hours 6-20 to find wind crossover and restyle window ---
+        let badStartHour = null;
+        const hoursOfDay = [];  // [{hr, wind}] for 6-20 on this date
+        for (let i = 0; i < htimes.length; i++) {
+          if (!htimes[i] || !htimes[i].startsWith(dateStr)) continue;
+          const hr = new Date(htimes[i]).getHours();
+          if (hr < 6 || hr > 20) continue;
+          hoursOfDay.push({ hr, wind: hwind[i] });
+        }
+        hoursOfDay.sort((a, b) => a.hr - b.hr);
+
+        for (const h of hoursOfDay) {
+          if (h.wind != null && h.wind >= WIND_THRESHOLD_MPH) { badStartHour = h.hr; break; }
+        }
+
+        // Restyle window: 2+ consecutive calm hours after badStart, before 7pm
+        let restyleWindow = null;
+        if (badStartHour != null) {
+          let winStart = null, winEnd = null;
+          for (const h of hoursOfDay) {
+            if (h.hr <= badStartHour || h.hr >= 19) continue;
+            if (h.wind != null && h.wind < WIND_THRESHOLD_MPH) {
+              if (winStart == null) winStart = h.hr;
+              winEnd = h.hr;
+            } else {
+              if (winStart != null && (winEnd - winStart) >= 1) break;  // had a window, it ended
+              winStart = null; winEnd = null;
+            }
+          }
+          if (winStart != null && winEnd != null && (winEnd - winStart) >= 1) {
+            restyleWindow = { start: winStart, end: winEnd };
+          }
+        }
+
         return { avgDp, avgAH, avgRH, avgPrecip, avgPrecipAmt, pType,
-                 peakMorningDp, morningWind, peakWind };
+                 peakMorningDp, morningGust, peakGust: peakWind,
+                 badStartHour, restyleWindow };
       }
 
       // --- Build day objects ---
@@ -1844,8 +1894,9 @@
 
         const ahScore     = scoreAH(agg.avgAH);
         const precipScore = scorePrecip(agg.avgPrecip, agg.pType, agg.avgPrecipAmt);
+        const windScore   = scoreWind(agg.badStartHour);
         const rhPenalty    = agg.avgRH == null ? 1.0 : agg.avgRH > 90 ? 0.65 : agg.avgRH > 80 ? 0.80 : agg.avgRH > 70 ? 0.92 : 1.0;
-        const score       = Math.round((ahScore * 0.75 + precipScore * 0.25) * rhPenalty);
+        const score       = Math.round((ahScore * 0.70 + precipScore * 0.20 + windScore * 0.10) * rhPenalty);
         const lf          = labelFor(score);
 
         // Flags
@@ -1855,15 +1906,28 @@
           ? `Very dry air — flyaways and static likely`
           : null);
 
-        const windFlag = agg.morningWind > 12
-          ? `Windy morning (${Math.round(agg.morningWind)} mph) — expect flyaways`
-          : null;
+        // --- Composed wind flag ---
+        function fmtHr(h) {
+          const ampm = h >= 12 ? "pm" : "am";
+          const h12  = h === 0 ? 12 : h > 12 ? h - 12 : h;
+          return `${h12}${ampm}`;
+        }
+        let windFlag = null;
+        if (agg.badStartHour != null) {
+          if (agg.restyleWindow) {
+            windFlag = `Windy from ${fmtHr(agg.badStartHour)}, calms ${fmtHr(agg.restyleWindow.start)}–${fmtHr(agg.restyleWindow.end)} — restyle opportunity`;
+          } else if (agg.badStartHour >= 13) {
+            windFlag = `Wind picks up after ${fmtHr(agg.badStartHour)}`;
+          } else {
+            windFlag = `Windy from ${fmtHr(agg.badStartHour)} — tough day for hair`;
+          }
+        }
 
         days.push({
           label: dayName, dateLabel,
           avgAH: agg.avgAH, avgRH: agg.avgRH, avgDp: agg.avgDp,
           avgPrecip: agg.avgPrecip, pType: agg.pType,
-          morningWind: agg.morningWind,
+          morningGust: agg.morningGust,
           score, scoreLabel: lf.label, emoji: lf.emoji, color: lf.color,
           morningWarning, windFlag
         });
@@ -1904,7 +1968,7 @@
         const rainVal = day.avgPrecip != null
           ? Math.round(day.avgPrecip) + "%" + (day.pType ? " · " + day.pType : "")
           : "--";
-        const windVal = day.morningWind != null ? Math.round(day.morningWind) + " mph"  : "--";
+        const gustVal = day.morningGust != null ? Math.round(day.morningGust) + " mph"  : "--";
 
         // AH bar: 0–20 g/m³ range, peak (green) at 4-5 g/m³
         const ahBarPct = day.avgAH != null ? Math.max(0, Math.min(100, Math.round(day.score))) : 50;
@@ -1933,7 +1997,7 @@
               <span style="opacity:0.5;">RH</span><span style="font-weight:600;text-align:right;">${rhVal}</span>
               <span style="opacity:0.5;">AH</span><span style="font-weight:600;text-align:right;">${ahVal}</span>
               <span style="opacity:0.5;">Rain</span><span style="font-weight:600;text-align:right;">${rainVal}</span>
-              <span style="opacity:0.5;line-height:1.3;">Morning<br>Wind</span><span style="font-weight:600;text-align:right;">${windVal}</span>
+              <span style="opacity:0.5;line-height:1.3;">Morning<br>Gust</span><span style="font-weight:600;text-align:right;">${gustVal}</span>
             </div>
             ${flagsHtml}
           </div>`;

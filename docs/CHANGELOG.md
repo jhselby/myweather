@@ -1,3 +1,13 @@
+## v4.77 • 2026-04-21
+* **Hair Day — Wind Scoring with Corrected Gusts**
+  * Added wind as a real scoring component (10% weight); AH dropped 75→70%, precip 25→20%
+  * Wind score uses first-bad-hour logic: walks hours 6am–8pm looking for first gust ≥22 mph. Later bad wind = higher score (more of the day happens before ruin)
+  * Threshold uses `hourly.wind_gusts` (corrected series with station-weighted adjustments, not raw model data) because gusts rip styled hair while sustained wind just moves it
+  * Detects restyle opportunity: if bad wind is followed by 2+ consecutive calm hours before 7pm, flag tells you when
+  * Composed wind flag replaces old "windy morning" message — one of four shapes: no flag, "picks up after X" (late), "tough day from X" (early, no recovery), or "windy from X, calms Y–Z — restyle opportunity"
+  * Display label changed from "Morning Wind" to "Morning Gust" to match what's being scored
+  * Tuned for Ari's curly+colored hair: AH still dominates, wind secondary. Future v4.78 will add hair-type selector and per-hour styling-window scoring.
+
 ## v4.76 • 2026-04-20
 * **Card Open Animation — Smoother**
   * Replaced bouncy cubic-bezier overshoot with standard iOS ease-out
