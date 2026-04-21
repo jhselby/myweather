@@ -1607,7 +1607,7 @@
       const badgeStyle = ok => `font-size:0.75rem;font-weight:800;white-space:nowrap;color:${ok ? "rgba(140,240,160,0.9)" : "rgba(255,120,120,0.9)"};`;
       const ageStyle  = ok => `font-size:0.75rem;font-weight:700;color:${ok ? "rgba(255,255,255,0.4)" : "rgba(255,120,120,0.7)"};white-space:nowrap;`;
 
-      table.innerHTML = `
+      renderTarget.innerHTML = `
         <div style="font-weight:900;font-size:0.75rem;color:rgba(255,255,255,0.35);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">Live Data Sources</div>
         ${order.map(key => {
           const s = sources[key];
