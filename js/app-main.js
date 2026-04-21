@@ -2916,7 +2916,7 @@
       const el = document.getElementById("seaBreezeDetail");
       if (!el) return;
 
-      if (!sb.likelihood) {
+      if (sb.likelihood === undefined || sb.likelihood === null) {
         el.innerHTML = `<div style="text-align:center;color:rgba(255,255,255,0.5);padding:20px;">No sea breeze data available</div>`;
         return;
       }
@@ -3003,7 +3003,15 @@
       }
       if (seaBreezeLabelEl) seaBreezeLabelEl.textContent = statusText;
       if (seaBreezeProbCollapsedEl) {
-        const timeText = sb.active ? "Active now" : sb.likelihood >= 40 ? "This afternoon" : "Wind from west";
+        let timeText;
+        if (sb.active) {
+          timeText = "Active now";
+        } else if (sb.likelihood >= 40) {
+          timeText = "This afternoon";
+        } else {
+          const wd = data.current?.wind_direction;
+          timeText = wd != null ? `Wind from ${toCompass(wd)}` : "Unfavorable";
+        }
         seaBreezeProbCollapsedEl.textContent = timeText;
       }
       
