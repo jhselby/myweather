@@ -1,3 +1,15 @@
+## v4.80 • 2026-04-23
+* **Tab Reorganization — Weather vs Hyperlocal by Content Type**
+  * Moved Feels Like, Fog, and Sea Breeze from Hyperlocal to the bottom of the Weather tab. Organizing principle: objective weather data and forecasts belong on Weather; derived scores, curated metrics, and Marblehead-specific curiosities belong on Hyperlocal.
+  * Weather tab now: Right Now → 48h Temp/Precip → 48h Wind → 10-Day → Hyperlocal Forecast → Radar → Feels Like → Fog → Sea Breeze
+  * Hyperlocal tab now: Corrections, Wind Impact, Hair Day, Sunset Quality, Dock Day, Birds
+  * Hyperlocal tab name preserved intentionally — the corrections engine and hyperlocal forecasts still anchor the tab's identity even as its contents skew toward curated/derived metrics.
+
+* **Bug Fix — Broken #feelsLike Markup on Right Now Card**
+  * The `#feelsLike` div had a mangled `onclick` handler: the attribute's opening `onclick="setTimeout(()=>` was missing, leaving `{const c=document.querySelector(...); if(c) c.click();},100);">` as stray text in the opening tag.
+  * Browsers silently parsed this as unknown attributes and ignored it — the tap-to-open-Feels-Like shortcut hadn't worked for some time, but nothing visibly failed.
+  * Removed the broken handler entirely rather than reconstructing it. With the Feels Like card now on the same tab as Right Now, a click-forwarder between them is redundant. Also stripped the `›` chevron next to "Feels like --°F" since there's no longer anything to tap.
+
 ## v4.79 • 2026-04-23
 * **Birds Card — Hyperlocal Tab**
   * New card on the Hyperlocal tab using eBird recent sightings (5 km radius, 2 days back). Data was already flowing via the fetcher shipped v4.78-era; this ships the UI.
