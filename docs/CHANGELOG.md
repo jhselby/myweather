@@ -1,3 +1,13 @@
+## v4.82 • 2026-04-24
+* **Hair Day — Hair Type Selector**
+  * Four-profile system: Straight, Wavy, Curly, Coily. Pill selector at top of expanded card, persisted to localStorage.
+  * Each profile has tuned AH scoring curves, wind thresholds, composite weights, and warning messages reflecting how that hair type actually responds to humidity, wind, and dryness.
+  * Straight: tolerates wind better, humidity makes it limp rather than frizzy, static is the dry-air risk.
+  * Wavy: moderate sensitivity both directions, balanced weights.
+  * Curly: AH-dominant scoring (70%), frizz-focused. Tightened from v4.77 values to address score inflation feedback.
+  * Coily: needs moisture — dry air is the primary threat, high humidity is more tolerable. Fragile to wind.
+  * Default remains Curly (Ari's type). Switching type re-renders the card immediately.
+
 ## v4.81 • 2026-04-24
 * **Wind Impact Card Moved to Weather Tab**
   * Moved from Hyperlocal to Weather tab, after Sea Breeze. Consistent with v4.80 principle: weather-derived data belongs on Weather regardless of whether it uses hyperlocal corrections.

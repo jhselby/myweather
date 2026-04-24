@@ -1684,6 +1684,7 @@
     }
 
     function renderHairDay(data) {
+      window.__lastWeatherData = data;
       const el = document.getElementById("hairDayContent");
       if (!el) return;
 
@@ -1726,6 +1727,97 @@
         return null;
       }
 
+
+      // --- Hair type profiles ---
+      const HAIR_PROFILES = {
+        straight: {
+          label: "Straight",
+          // Straight hair goes limp in humidity, static in dry air
+          scoreAH(ah) {
+            if (ah == null) return 70;
+            if (ah < 2)    return 45;  // static, flyaways
+            if (ah < 4)    return 85;
+            if (ah < 5)    return 95;  // sweet spot
+            if (ah < 6)    return 90;
+            if (ah < 7)    return 80;
+            if (ah < 10)   return 65;  // getting limp
+            if (ah < 14)   return 45;
+            if (ah < 17)   return 30;
+            return 15;
+          },
+          windThreshold: 28,  // straight hair handles wind better
+          weights: { ah: 0.55, precip: 0.30, wind: 0.15 },
+          dryWarning: "Very dry — static and flyaways likely",
+          humidWarning: "High humidity — hair may fall flat"
+        },
+        wavy: {
+          label: "Wavy",
+          scoreAH(ah) {
+            if (ah == null) return 70;
+            if (ah < 2)    return 55;
+            if (ah < 4)    return 82;
+            if (ah < 5)    return 92;
+            if (ah < 6)    return 85;
+            if (ah < 7)    return 75;
+            if (ah < 10)   return 55;
+            if (ah < 14)   return 30;
+            if (ah < 17)   return 15;
+            return 5;
+          },
+          windThreshold: 22,
+          weights: { ah: 0.60, precip: 0.25, wind: 0.15 },
+          dryWarning: "Very dry — waves may lose definition",
+          humidWarning: "Humid — frizz and puffiness likely"
+        },
+        curly: {
+          label: "Curly",
+          scoreAH(ah) {
+            if (ah == null) return 70;
+            if (ah < 2)    return 50;
+            if (ah < 4)    return 72;
+            if (ah < 5)    return 88;
+            if (ah < 6)    return 80;
+            if (ah < 7)    return 68;
+            if (ah < 10)   return 45;
+            if (ah < 14)   return 22;
+            if (ah < 17)   return 10;
+            return 5;
+          },
+          windThreshold: 20,
+          weights: { ah: 0.70, precip: 0.20, wind: 0.10 },
+          dryWarning: "Very dry — curls may lose definition and frizz",
+          humidWarning: "Humid — frizz and volume expansion likely"
+        },
+        coily: {
+          label: "Coily",
+          // Coily hair needs moisture — dry air is the enemy
+          scoreAH(ah) {
+            if (ah == null) return 70;
+            if (ah < 2)    return 25;  // very bad — shrinkage, breakage
+            if (ah < 4)    return 55;
+            if (ah < 5)    return 75;
+            if (ah < 6)    return 88;
+            if (ah < 7)    return 92;  // sweet spot is higher
+            if (ah < 10)   return 85;
+            if (ah < 14)   return 70;
+            if (ah < 17)   return 55;
+            return 40;
+          },
+          windThreshold: 18,  // more fragile
+          weights: { ah: 0.75, precip: 0.15, wind: 0.10 },
+          dryWarning: "Very dry — risk of breakage and excess shrinkage",
+          humidWarning: "Humid but manageable — seal ends well"
+        }
+      };
+
+      function getHairType() {
+        try { return localStorage.getItem("hairType") || "curly"; } catch(e) { return "curly"; }
+      }
+      function setHairType(t) {
+        try { localStorage.setItem("hairType", t); } catch(e) {}
+      }
+      const hairProfile = HAIR_PROFILES[getHairType()];
+
       // --- AH-based scoring (inverted U — sweet spot 4-5 g/m³) ---
       // Too dry (<2) = flyaways/static. Too humid (>14) = frizz.
       // Based on curly hair expert consensus: dew point 35-50°F is optimal.
@@ -1761,7 +1853,7 @@
       // Later bad wind = better score (more of the day happens before ruin).
       // badStartHour is the first hour (6-20) where sustained wind >= 15 mph.
       // Returns null-equivalent 100 if wind stays calm all day.
-      const WIND_THRESHOLD_MPH = 22;  // gust threshold (sustained-equivalent ~14-15 mph)
+      const WIND_THRESHOLD_MPH = hairProfile.windThreshold;  // gust threshold (sustained-equivalent ~14-15 mph)
       function scoreWind(badStartHour) {
         if (badStartHour == null) return 100;   // calm all day
         if (badStartHour >= 18)    return 95;   // late evening — day was fine
@@ -1892,18 +1984,18 @@
         const agg = aggregateDay(dateStr);
         if (!agg) continue;
 
-        const ahScore     = scoreAH(agg.avgAH);
+        const ahScore     = hairProfile.scoreAH(agg.avgAH);
         const precipScore = scorePrecip(agg.avgPrecip, agg.pType, agg.avgPrecipAmt);
         const windScore   = scoreWind(agg.badStartHour);
         const rhPenalty    = agg.avgRH == null ? 1.0 : agg.avgRH > 90 ? 0.65 : agg.avgRH > 80 ? 0.80 : agg.avgRH > 70 ? 0.92 : 1.0;
-        const score       = Math.round((ahScore * 0.70 + precipScore * 0.20 + windScore * 0.10) * rhPenalty);
+        const score       = Math.round((ahScore * hairProfile.weights.ah + precipScore * hairProfile.weights.precip + windScore * hairProfile.weights.wind) * rhPenalty);
         const lf          = labelFor(score);
 
         // Flags
         const morningWarning = agg.peakMorningDp != null && agg.peakMorningDp >= 60
           ? `Dew point peaks ${Math.round(agg.peakMorningDp)}°F in morning — style before going out`
           : (agg.avgAH != null && agg.avgAH < 2
-          ? `Very dry air — flyaways and static likely`
+          ? hairProfile.dryWarning
           : null);
 
         // --- Composed wind flag ---
@@ -2004,7 +2096,20 @@
       }
 
       const headline = hairHeadline(today);
+      const currentType = getHairType();
+      const selectorHtml = `<div style="display:flex;gap:6px;margin-bottom:14px;justify-content:center;">` +
+        Object.keys(HAIR_PROFILES).map(k => {
+          const p = HAIR_PROFILES[k];
+          const active = k === currentType;
+          return `<button onclick="event.stopPropagation(); localStorage.setItem('hairType','${k}'); renderHairDay(window.__lastWeatherData);"
+            style="padding:5px 12px;border-radius:999px;border:1px solid ${active ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.12)'};
+            background:${active ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.04)'};
+            color:${active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.5)'};
+            font-size:0.72rem;font-weight:${active ? '700' : '500'};cursor:pointer;
+            transition:all 0.2s;">${p.label}</button>`;
+        }).join("") + `</div>`;
       el.innerHTML =
+        selectorHtml +
         `<div style="font-size:0.95rem;font-weight:600;color:${today.color};margin-bottom:14px;padding:10px 14px;background:rgba(255,255,255,0.04);border-radius:0;border-left:4px solid ${today.color};">${headline}</div>` +
         `<div style="display:grid;grid-template-columns:repeat(${days.length},1fr);gap:8px;margin-bottom:12px;">` +
         days.map((d, i) => dayCard(d, i === 0)).join("") +
