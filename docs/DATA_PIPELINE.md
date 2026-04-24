@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 4.32  
-**Last Updated:** April 12, 2026  
+**Version:** 4.82  
+**Last Updated:** April 24, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
@@ -13,7 +13,9 @@
 5. [Wind Gusts](#wind-gusts)
 6. [Wet Bulb Temperature](#wet-bulb-temperature)
 7. [Feels Like / Apparent Temperature](#feels-like--apparent-temperature)
-8. [Data Flow Summary](#data-flow-summary)
+8. [Birds (eBird)](#birds-ebird)
+9. [Hair Day Scoring](#hair-day-scoring)
+10. [Data Flow Summary](#data-flow-summary)
 
 ---
 
@@ -737,6 +739,13 @@ else if (T >= 80 && RH != null) {
 
 ## KEY ARCHITECTURAL NOTES
 
+
+### API Key Management (v4.81)
+- All API keys (WU, Pirate Weather, eBird) read from Cloud Function environment variables
+- Hardcoded fallback values remain in source for local development
+- Keys set via `--set-env-vars` in `make deploy-collector`
+- Repo is public (`jhselby/myweather`) — env vars prevent key exposure in production
+
 ### Temperature Correction Architecture
 - **Backend:** Calculates bias, stores in hyperlocal, does NOT modify hourly arrays
 - **Frontend:** Applies bias to 48-hour forecast when displaying
@@ -830,6 +839,16 @@ else if (T >= 80 && RH != null) {
 ---
 
 ## VERSION HISTORY
+
+**v4.82 (April 24, 2026):**
+- Hair Day hair-type selector: 4 profiles (Straight, Wavy, Curly, Coily) with tuned scoring curves
+- Birds card: clickable location links (eBird hotspot map for public, Apple Maps for private)
+- Birds card: sort by distance, added loc_id/loc_private/lat/lng to collector schema
+- External link fix: visibilitychange handler skips card collapse on return from external links
+- API keys migrated to Cloud Function env vars
+- HTML validator added to build.py
+- Wind Impact card moved to Weather tab
+- Hyperlocal tab reordered, Sunset Score renamed to Sunset
 
 **v4.11 (April 4, 2026):**
 - Wind corrections applied throughout frontend
