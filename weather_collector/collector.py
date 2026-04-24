@@ -21,6 +21,7 @@ from .fetchers.salem_water import fetch_salem_water_temp
 from .fetchers.nws_gridpoints import fetch_nws_gridpoints
 from .fetchers.wu import fetch_wu_stations
 from .fetchers.pirate_weather import fetch_pirate_weather
+from .fetchers.ebird import fetch_ebird
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
 from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spread
@@ -79,7 +80,7 @@ def _upload_to_gcs(data, gcs_path, label):
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
                        kbos_data, kbvy_data, buoy_data, forecast_data, alert_data,
-                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None, pirate_data=None):
+                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None, pirate_data=None, birds_data=None):
     """
     Build the complete weather data structure from all sources.
     This is the main processing function that combines all fetched data.
@@ -413,6 +414,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if sunset_directional:
         weather_data["sunset_directional"] = sunset_directional
 
+    if birds_data:
+        weather_data["birds"] = birds_data
+
     return weather_data
 
 
@@ -453,6 +457,7 @@ def main():
     forecast_data, forecast_meta = {}, {"status": "disabled"}  # fetch_nws_forecast() DISABLED - using custom forecasts
     alert_data, alerts_meta = timed_fetch("NWS alerts", fetch_nws_alerts)
     pirate_data, pirate_meta = timed_fetch("Pirate Weather", fetch_pirate_weather)
+    birds_data, birds_meta = timed_fetch("eBird", fetch_ebird)
 
     sources = {
         "gfs_current": current_meta,
@@ -467,6 +472,7 @@ def main():
         "nws_forecast": forecast_meta,
         "nws_alerts": alerts_meta,
         "pirate_weather": pirate_meta,
+        "ebird": birds_meta,
     }
 
     # Update frost log (reads/writes /tmp/frost_log.json)
@@ -506,7 +512,8 @@ def main():
         sunset_directional=sunset_directional,
         nws_gridpoints=nws_gridpoints_data,
         hourly_7day_data=hourly_7day_data,
-        pirate_data=pirate_data
+        pirate_data=pirate_data,
+        birds_data=birds_data
     )
     print(f"  ⏱  Build weather data: {_time.time() - t0:.1f}s")
 

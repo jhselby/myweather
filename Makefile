@@ -12,7 +12,7 @@ deploy-collector:
 	  --set-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811
 
 run-collector:
-	curl -X POST https://us-east1-weather-data-493811.cloudfunctions.net/myweather-collector
+	curl -X POST https://myweather-collector-25c6bclx5q-ue.a.run.app
 
 logs:
 	gcloud functions logs read myweather-collector --region=us-east1 --limit=50
