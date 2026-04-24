@@ -1,3 +1,15 @@
+## v4.79 • 2026-04-23
+* **Birds Card — Hyperlocal Tab**
+  * New card on the Hyperlocal tab using eBird recent sightings (5 km radius, 2 days back). Data was already flowing via the fetcher shipped v4.78-era; this ships the UI.
+  * Collapsed tile: shows top notable species name if any exist, otherwise species count + total bird count. 🐦 icon, centered layout matching other 192px tiles.
+  * Expanded view: grouped by location (hotspot), sorted by most recent sighting. All groups collapsed by default — tap to reveal the species list for that hotspot. Header shows `{species} species · {total} birds` plus notable-count badge when applicable.
+  * Each group header shows distance, species count, bird count, and last-seen timestamp. Species rows show count (×N when >1) and link out to eBird species pages in a new tab. Notable species rendered with an orange pill highlight.
+  * Theme-aware colors (light/dark); HTML-escaped species names for defense in depth.
+
+* **Placement Fix — Card Landed Outside Grid**
+  * Initial automated insertion put the Birds card after the `.grid` container's closing `</div>`, not inside it. Effect: `col-6` had no grid parent to halve against, so the card rendered full-width; grid gap spacing also disappeared.
+  * Fix script walked the Dock Day card's DOM depth to find its actual matching `</div>`, then re-inserted Birds at the correct sibling position. Script now uses bracket-matching rather than a naive "last `</div>` before `</section>`" heuristic that matched the wrong div.
+
 ## v4.78 • 2026-04-21
 * **Sea Breeze Card — Fixed False "No Data" Error**
   * Root cause: renderer guard was `if (!sb.likelihood)`, which treats `likelihood === 0` as falsy and short-circuits to "No sea breeze data available"
