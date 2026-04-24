@@ -102,6 +102,57 @@ def add_cache_busting(html_content, assets, base_dir):
     return modified_html, changes_made
 
 
+
+def validate_html(html_content):
+    """
+    Check for mismatched/unclosed tags in HTML.
+    Returns list of error strings (empty = clean).
+    """
+    from html.parser import HTMLParser
+
+    VOID_ELEMENTS = {
+        'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+        'link', 'meta', 'param', 'source', 'track', 'wbr'
+    }
+
+    errors = []
+    stack = []
+
+    class Checker(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            if tag.lower() not in VOID_ELEMENTS:
+                stack.append((tag.lower(), self.getpos()))
+
+        def handle_endtag(self, tag):
+            tag = tag.lower()
+            if tag in VOID_ELEMENTS:
+                return
+            if not stack:
+                errors.append(f"Line {self.getpos()[0]}: closing </{tag}> with no matching open tag")
+                return
+            # Walk back to find matching open tag (allows for browser-style recovery)
+            for i in range(len(stack) - 1, -1, -1):
+                if stack[i][0] == tag:
+                    # Any tags between here and top of stack are unclosed
+                    for j in range(len(stack) - 1, i, -1):
+                        unclosed = stack[j]
+                        errors.append(f"Line {unclosed[1][0]}: <{unclosed[0]}> never closed (closed by </{tag}> at line {self.getpos()[0]})")
+                    del stack[i:]
+                    return
+            errors.append(f"Line {self.getpos()[0]}: closing </{tag}> with no matching open tag")
+
+    try:
+        Checker().feed(html_content)
+    except Exception as e:
+        errors.append(f"Parser error: {e}")
+        return errors
+
+    # Anything left on stack is unclosed
+    for tag, pos in stack:
+        errors.append(f"Line {pos[0]}: <{tag}> never closed")
+
+    return errors
+
 def main():
     """Main build process."""
     print("=" * 60)
@@ -123,6 +174,17 @@ def main():
     with open(index_path, 'r', encoding='utf-8') as f:
         html_content = f.read()
     
+    # Validate HTML
+    print("\n🔎 Validating HTML...")
+    html_errors = validate_html(html_content)
+    if html_errors:
+        print(f"\n❌ Found {len(html_errors)} HTML issue(s):")
+        for err in html_errors:
+            print(f"  ⚠️  {err}")
+        print("\n⚠️  Proceeding with build, but fix these issues.")
+    else:
+        print("  ✓ No markup issues found")
+
     # Extract assets
     assets = extract_assets(html_content)
     print(f"\n🔍 Found {len(assets)} asset(s) to process:")
