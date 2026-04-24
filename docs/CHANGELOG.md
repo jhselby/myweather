@@ -1,3 +1,12 @@
+## v4.81 • 2026-04-24
+* **Wind Impact Card Moved to Weather Tab**
+  * Wind Impact now lives on the Weather tab after Sea Breeze, consistent with the v4.80 principle that weather-derived data belongs on Weather regardless of whether it uses hyperlocal corrections.
+  * Removed from Hyperlocal tab.
+
+* **Hyperlocal Tab Reordered**
+  * New order: Corrections, Hair Day, Birds, Sunset, Dock Day.
+  * Renamed "Sunset Score" to "Sunset" across all card titles and tile labels for consistency with Hair Day and Dock Day (none use "Score" in the title; the score value is visible on the card face).
+
 ## v4.80 • 2026-04-23
 * **Tab Reorganization — Weather vs Hyperlocal by Content Type**
   * Moved Feels Like, Fog, and Sea Breeze from Hyperlocal to the bottom of the Weather tab. Organizing principle: objective weather data and forecasts belong on Weather; derived scores, curated metrics, and Marblehead-specific curiosities belong on Hyperlocal.

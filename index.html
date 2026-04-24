@@ -176,7 +176,7 @@
               <div class="value" id="fogRiskNow">--</div>
             </div>
             <div class="row">
-              <div class="label">Sunset Score</div>
+              <div class="label">Sunset</div>
               <div class="value" id="sunsetScoreNow">--</div>
             </div>
             <div class="row">
@@ -548,6 +548,67 @@
           </div>
           <div class="card-body" id="seaBreezeDetail">
             <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
+          </div>
+        </div>
+        <div class="card col-6" data-collapse-key="wind_impact" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('wind_impact', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            Wind Impact<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Wind Impact</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div id="windImpactCollapsed" style="font-size:3rem;font-weight:300;line-height:1;margin-bottom:4px;"></div>
+              <div id="windImpactLabel" style="font-size:0.95rem;font-weight:500;margin-bottom:12px;opacity:0.9;"></div>
+              <div id="windImpactPeakCollapsed" style="font-size:0.85rem;opacity:0.65;"></div>
+            </div>
+          </div>
+          <div class="card-body" style="display:none;">
+          <div class="wind-window-pills" id="windImpactWindowPills" style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">
+            <button class="wpill active" data-target="wind_impact" data-hours="12">12h</button>
+            <button class="wpill" data-target="wind_impact" data-hours="24">24h</button>
+            <button class="wpill" data-target="wind_impact" data-hours="36">36h</button>
+            <button class="wpill" data-target="wind_impact" data-hours="48">48h</button>
+          </div>
+          <div class="row">
+            <div class="label">Wind Impact</div>
+            <div class="value" id="windImpactCombinedScore">--</div>
+          </div>
+          <div class="row">
+            <div class="label" id="windImpactScoreLabel">Peak Impact (next 12h)</div>
+            <div class="value" id="windImpactPeakScore">--</div>
+          </div>
+          <div style="border-top:1px solid rgba(255,255,255,0.07);margin:8px 0;padding:8px 16px 0;font-size:0.75rem;color:var(--text-secondary);">
+            <div class="row">
+              <div class="label">Sustained</div>
+              <div class="value" id="susCurrentScore">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Peak Sustained</div>
+              <div class="value" id="susPeak">-- mph</div>
+            </div>
+            <div class="row">
+              <div class="label">Gust Impact</div>
+              <div class="value" id="gustCurrentScore">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Peak Gust</div>
+              <div class="value" id="gustPeak">-- mph</div>
+            </div>
+            <div class="row">
+              <div class="label">Direction</div>
+              <div class="value" id="gustDir">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Exposure Factor</div>
+              <div class="value" id="gustExposure">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Peak Time</div>
+              <div class="value" id="gustTime">--</div>
+            </div>
+          </div>
+          <div class="small-note" id="gustNote"></div>
           </div>
         </div>
       </div>
@@ -1053,67 +1114,6 @@
         </div>
 
         
-        <div class="card col-6" data-collapse-key="wind_impact" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('wind_impact', this.querySelector('.card-title-collapsible'))">
-          <div class="card-title card-title-collapsible" style="cursor:default;">
-            Wind Impact<span class="collapse-chevron" style="display:none;">&#9660;</span>
-          </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
-            <div class="tile-label" style="top:12px;left:16px;">Wind Impact</div>
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
-              <div id="windImpactCollapsed" style="font-size:3rem;font-weight:300;line-height:1;margin-bottom:4px;"></div>
-              <div id="windImpactLabel" style="font-size:0.95rem;font-weight:500;margin-bottom:12px;opacity:0.9;"></div>
-              <div id="windImpactPeakCollapsed" style="font-size:0.85rem;opacity:0.65;"></div>
-            </div>
-          </div>
-          <div class="card-body" style="display:none;">
-          <div class="wind-window-pills" id="windImpactWindowPills" style="display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08);">
-            <button class="wpill active" data-target="wind_impact" data-hours="12">12h</button>
-            <button class="wpill" data-target="wind_impact" data-hours="24">24h</button>
-            <button class="wpill" data-target="wind_impact" data-hours="36">36h</button>
-            <button class="wpill" data-target="wind_impact" data-hours="48">48h</button>
-          </div>
-          <div class="row">
-            <div class="label">Wind Impact</div>
-            <div class="value" id="windImpactCombinedScore">--</div>
-          </div>
-          <div class="row">
-            <div class="label" id="windImpactScoreLabel">Peak Impact (next 12h)</div>
-            <div class="value" id="windImpactPeakScore">--</div>
-          </div>
-          <div style="border-top:1px solid rgba(255,255,255,0.07);margin:8px 0;padding:8px 16px 0;font-size:0.75rem;color:var(--text-secondary);">
-            <div class="row">
-              <div class="label">Sustained</div>
-              <div class="value" id="susCurrentScore">--</div>
-            </div>
-            <div class="row">
-              <div class="label">Peak Sustained</div>
-              <div class="value" id="susPeak">-- mph</div>
-            </div>
-            <div class="row">
-              <div class="label">Gust Impact</div>
-              <div class="value" id="gustCurrentScore">--</div>
-            </div>
-            <div class="row">
-              <div class="label">Peak Gust</div>
-              <div class="value" id="gustPeak">-- mph</div>
-            </div>
-            <div class="row">
-              <div class="label">Direction</div>
-              <div class="value" id="gustDir">--</div>
-            </div>
-            <div class="row">
-              <div class="label">Exposure Factor</div>
-              <div class="value" id="gustExposure">--</div>
-            </div>
-            <div class="row">
-              <div class="label">Peak Time</div>
-              <div class="value" id="gustTime">--</div>
-            </div>
-          </div>
-          <div class="small-note" id="gustNote"></div>
-          </div>
-        </div>
         <div class="card col-6" data-collapse-key="hair_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hair_day', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Hair Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
@@ -1133,13 +1133,31 @@
         </div>
 
     
+        <div class="card col-6" data-collapse-key="birds" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('birds', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            Birds<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('birds', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Birds</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div style="font-size:2.4rem;line-height:1;margin-bottom:6px;">🐦</div>
+              <div id="birdsPrimaryCollapsed" style="font-size:1.05rem;font-weight:500;line-height:1.2;margin-bottom:4px;text-align:center;padding:0 12px;"></div>
+              <div id="birdsSecondaryCollapsed" style="font-size:0.82rem;opacity:0.65;"></div>
+            </div>
+          </div>
+          <div class="card-body" style="display:none;">
+            <div id="birdsContent"></div>
+          </div>
+        </div>
+
         <div class="card col-6" data-collapse-key="sunset_quality" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sunset_quality', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Sunset<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sunset_quality', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
-            <div class="tile-label" style="top:12px;left:16px;">Sunset Score</div>
+            <div class="tile-label" style="top:12px;left:16px;">Sunset</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
               <div id="sunsetDayCollapsed" style="font-size:0.9rem;font-weight:500;margin-bottom:8px;opacity:0.85;"></div>
               <div id="sunsetIconCollapsed" style="font-size:2rem;margin-bottom:8px;line-height:1;"></div>
@@ -1170,27 +1188,6 @@
           </div>
         </div>
         
-        <div class="card col-6" data-collapse-key="birds" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('birds', this.querySelector('.card-title-collapsible'))">
-          <div class="card-title card-title-collapsible" style="cursor:default;">
-            Birds<span class="collapse-chevron" style="display:none;">&#9660;</span>
-          </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('birds', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
-            <div class="tile-label" style="top:12px;left:16px;">Birds</div>
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
-              <div style="font-size:2.4rem;line-height:1;margin-bottom:6px;">🐦</div>
-              <div id="birdsPrimaryCollapsed" style="font-size:1.05rem;font-weight:500;line-height:1.2;margin-bottom:4px;text-align:center;padding:0 12px;"></div>
-              <div id="birdsSecondaryCollapsed" style="font-size:0.82rem;opacity:0.65;"></div>
-            </div>
-          </div>
-          <div class="card-body" style="display:none;">
-            <div id="birdsContent"></div>
-          </div>
-        </div>
-
-
-        
-
       </div>
     
 
@@ -1280,7 +1277,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v4.80</span>
+            <span class="version-pill" id="appVersion">v4.81</span>
           </div>
         </div>
         <!-- Changelog -->
