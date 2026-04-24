@@ -15,7 +15,8 @@ from datetime import datetime
 from math import radians, sin, cos, sqrt, atan2
 
 # API Configuration
-API_KEY = "e1f10a1e78da46f5b10a1e78da96f525"
+import os
+API_KEY = os.environ.get("WU_API_KEY", "e1f10a1e78da46f5b10a1e78da96f525")
 BASE_URL = "https://api.weather.com/v2/pws/observations/all/1day"
 
 # Station IDs
