@@ -631,6 +631,80 @@ else if (T >= 80 && RH != null) {
 
 ---
 
+
+## BIRDS (eBIRD)
+
+### Data Source
+
+**Fetcher:** `weather_collector/fetchers/ebird.py`
+
+**API Endpoints:**
+- `/v2/data/obs/geo/recent` — all recent species (one obs per species)
+- `/v2/data/obs/geo/recent/notable` — rarities per eBird regional filters
+
+**Parameters:**
+- Radius: 5 km from home (LAT/LON in config.py)
+- Lookback: 2 days (~48 hours)
+- API key: `EBIRD_API_KEY` env var (Cloud Function), hardcoded fallback for local dev
+
+### Per-Observation Schema
+
+| Field | Type | Description |
+|-------|------|-------------|
+| code | string | eBird species code (e.g., "coohaw") |
+| name | string | Common name |
+| sci_name | string | Scientific name |
+| count | int/null | Number observed (null = "X" in eBird) |
+| last_seen | string | "YYYY-MM-DD HH:MM" |
+| location | string | Location name (hotspot or personal) |
+| loc_id | string | eBird location ID (e.g., "L5289631") |
+| loc_private | bool | True = personal location, False = public hotspot |
+| lat | float | Observation latitude |
+| lng | float | Observation longitude |
+| distance_km | float | Haversine distance from home |
+| notable | bool | True if in notable/rarity list |
+
+### Frontend Rendering
+
+**Location:** `js/app-main.js` function `renderBirds()`
+
+Collapsed tile: top notable species or species count. Expanded: grouped by location, sorted nearest first. Species links go to eBird. Public hotspot names link to eBird map view. Private location names link to Apple Maps via maps: URI. External links set `window.__externalLinkOpen` to prevent visibilitychange card collapse on return.
+
+---
+
+## HAIR DAY SCORING
+
+### Overview
+
+Predicts hair manageability for 3 days. Four hair type profiles with different scoring curves. Selection persisted to localStorage key `hairType`, default `curly`.
+
+**Location:** `js/app-main.js` function `renderHairDay()`
+
+### Hair Type Profiles
+
+| Profile | AH Sweet Spot | Wind Threshold | Weights (AH/Precip/Wind) | Primary Risk |
+|---------|--------------|----------------|--------------------------|-------------|
+| Straight | 4-5 g/m3 | 28 mph gust | 55/30/15 | Limpness in humidity, static in dry |
+| Wavy | 4-5 g/m3 | 22 mph gust | 60/25/15 | Frizz and puffiness |
+| Curly | 4-5 g/m3 | 20 mph gust | 70/20/10 | Frizz and volume expansion |
+| Coily | 6-7 g/m3 | 18 mph gust | 75/15/10 | Dryness, shrinkage, breakage |
+
+### Scoring Components
+
+**AH (primary):** From dew point via Magnus approximation. Each type has different curve. **Precip (secondary):** Based on probability, type, intensity. **Wind (tertiary):** Based on when wind crosses threshold during 6am-8pm. **RH penalty:** Multiplicative: >90%=0.65x, >80%=0.80x, >70%=0.92x.
+
+**Composite:** `round((ahScore * w_ah + precipScore * w_precip + windScore * w_wind) * rhPenalty)`
+
+### Hour Weighting
+
+Morning-biased: 6-10am weight 3.0, 10am-2pm weight 1.0, 2-8pm weight 0.5, outside 0.
+
+### Score Labels
+
+88-100: Great hair day. 74-87: Good hair day. 58-73: Manageable. 40-57: Frizz risk. 25-39: Bad hair day. 0-24: Stay inside.
+
+---
+
 ## DATA FLOW SUMMARY
 
 ### Current Hour Data Flow
