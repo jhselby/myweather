@@ -13,6 +13,19 @@
 
 ## v4.81 • 2026-04-24
 * **Wind Impact Card Moved to Weather Tab**
+  * Moved from Hyperlocal to Weather tab, after Sea Breeze. Consistent with v4.80 principle: weather-derived data belongs on Weather regardless of whether it uses hyperlocal corrections.
+
+* **Hyperlocal Tab Reordered**
+  * New order: Corrections, Hair Day, Birds, Sunset, Dock Day.
+  * Renamed "Sunset Score" to "Sunset" for consistency with Hair Day and Dock Day (score value visible on card face, no need to repeat in title).
+
+* **Birds Card — Clickable Location Links**
+  * Location names in the expanded birds card now link to their eBird hotspot/location page.
+  * Added `loc_id` to the collector's eBird schema; deployed to Cloud Functions.
+  * Renderer gracefully falls back to plain text if `loc_id` is missing.
+
+## v4.81 • 2026-04-24
+* **Wind Impact Card Moved to Weather Tab**
   * Wind Impact now lives on the Weather tab after Sea Breeze, consistent with the v4.80 principle that weather-derived data belongs on Weather regardless of whether it uses hyperlocal corrections.
   * Removed from Hyperlocal tab.
 
