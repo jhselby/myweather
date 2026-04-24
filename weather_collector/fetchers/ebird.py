@@ -68,6 +68,7 @@ def _normalize(obs, notable):
         "count": obs.get("howMany"),  # may be None (reported as "X" in eBird)
         "last_seen": obs.get("obsDt"),
         "location": obs.get("locName"),
+        "loc_id": obs.get("locId"),
         "distance_km": dist_km,
         "notable": notable,
     }

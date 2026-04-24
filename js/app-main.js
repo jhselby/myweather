@@ -3369,6 +3369,7 @@
         if (!byLocation.has(key)) {
           byLocation.set(key, {
             name: key,
+            loc_id: s.loc_id,
             distance_km: s.distance_km,
             last_seen: s.last_seen,
             species: []
@@ -3439,7 +3440,7 @@
                  style="padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;">
               <div style="min-width:0;flex:1;">
                 <div style="font-weight:700;font-size:0.9rem;color:${textHead};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                  ${escapeHtml(loc.name)}${locNotables > 0 ? ` <span style="background:${notableBg};color:${notableFg};padding:1px 6px;border-radius:999px;font-size:0.7rem;font-weight:700;margin-left:4px;">${locNotables}★</span>` : ""}
+                  ${loc.loc_id ? `<a href="https://ebird.org/hotspot/${loc.loc_id}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="color:${textHead};text-decoration:none;border-bottom:1px dotted ${textFaint};">${escapeHtml(loc.name)}</a>` : escapeHtml(loc.name)}${locNotables > 0 ? ` <span style="background:${notableBg};color:${notableFg};padding:1px 6px;border-radius:999px;font-size:0.7rem;font-weight:700;margin-left:4px;">${locNotables}★</span>` : ""}
                 </div>
                 <div style="font-size:0.75rem;color:${textFaint};margin-top:2px;">
                   ${distStr} · ${locSpeciesCount} species · ${locBirdCount} bird${locBirdCount === 1 ? "" : "s"} · ${fmtTime(loc.last_seen)}
