@@ -1133,7 +1133,7 @@
         </div>
 
     
-        <div class="card col-6" data-collapse-key="birds" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('birds', this.querySelector('.card-title-collapsible'))">
+        <div class="card col-6" data-collapse-key="birds" data-default-open="false" onclick="if(!this.classList.contains('card-expanded') && !event.target.closest('a')) toggleCard('birds', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Birds<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
@@ -1198,7 +1198,7 @@
 
 
   </div>
-  <script src="js/app-main.js?v=dfe429d0"></script>
+  <script src="js/app-main.js?v=5f6101f4"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   

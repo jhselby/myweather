@@ -69,6 +69,7 @@ def _normalize(obs, notable):
         "last_seen": obs.get("obsDt"),
         "location": obs.get("locName"),
         "loc_id": obs.get("locId"),
+        "loc_private": obs.get("locationPrivate", False),
         "distance_km": dist_km,
         "notable": notable,
     }
