@@ -3371,6 +3371,8 @@
             name: key,
             loc_id: s.loc_id,
             loc_private: s.loc_private,
+            lat: s.lat,
+            lng: s.lng,
             distance_km: s.distance_km,
             last_seen: s.last_seen,
             species: []
@@ -3381,9 +3383,9 @@
         if ((s.last_seen || "") > (loc.last_seen || "")) loc.last_seen = s.last_seen;
       });
 
-      // Sort locations by most recent sighting (desc)
+      // Sort locations by distance from home (nearest first)
       const locations = [...byLocation.values()].sort((a, b) =>
-        (b.last_seen || "").localeCompare(a.last_seen || "")
+        (a.distance_km ?? 99) - (b.distance_km ?? 99)
       );
 
       // Sort species within each location: notable first, then count desc
@@ -3441,7 +3443,7 @@
                  style="padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;">
               <div style="min-width:0;flex:1;">
                 <div style="font-weight:700;font-size:0.9rem;color:${textHead};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                  ${loc.loc_id && !loc.loc_private ? `<a href="https://ebird.org/hotspots?hs=${loc.loc_id}" target="_blank" rel="noopener" onclick="event.stopPropagation(); event.preventDefault(); window.__externalLinkOpen = true; window.open('https://ebird.org/hotspots?hs=${loc.loc_id}', '_blank');" style="color:${textHead};text-decoration:none;border-bottom:1px dotted ${textFaint};">${escapeHtml(loc.name)}</a>` : escapeHtml(loc.name)}${locNotables > 0 ? ` <span style="background:${notableBg};color:${notableFg};padding:1px 6px;border-radius:999px;font-size:0.7rem;font-weight:700;margin-left:4px;">${locNotables}★</span>` : ""}
+                  ${loc.loc_id && !loc.loc_private ? `<a href="https://ebird.org/hotspots?hs=${loc.loc_id}" target="_blank" rel="noopener" onclick="event.stopPropagation(); event.preventDefault(); window.__externalLinkOpen = true; window.open('https://ebird.org/hotspots?hs=${loc.loc_id}', '_blank');" style="color:${textHead};text-decoration:none;border-bottom:1px dotted ${textFaint};">${escapeHtml(loc.name)}</a>` : loc.loc_private && loc.lat && loc.lng ? `<a href="https://maps.apple.com/?ll=${loc.lat},${loc.lng}&q=${encodeURIComponent(loc.name)}&z=15" target="_blank" rel="noopener" onclick="event.stopPropagation(); event.preventDefault(); window.__externalLinkOpen = true; window.open('https://maps.apple.com/?ll=${loc.lat},${loc.lng}&q=${encodeURIComponent(loc.name)}&z=15', '_blank');" style="color:${textHead};text-decoration:none;border-bottom:1px dotted ${textFaint};">${escapeHtml(loc.name)}</a>` : escapeHtml(loc.name)}${locNotables > 0 ? ` <span style="background:${notableBg};color:${notableFg};padding:1px 6px;border-radius:999px;font-size:0.7rem;font-weight:700;margin-left:4px;">${locNotables}★</span>` : ""}
                 </div>
                 <div style="font-size:0.75rem;color:${textFaint};margin-top:2px;">
                   ${distStr} · ${locSpeciesCount} species · ${locBirdCount} bird${locBirdCount === 1 ? "" : "s"} · ${fmtTime(loc.last_seen)}
