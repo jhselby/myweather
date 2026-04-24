@@ -3441,7 +3441,7 @@
                  style="padding:10px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px;">
               <div style="min-width:0;flex:1;">
                 <div style="font-weight:700;font-size:0.9rem;color:${textHead};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                  ${loc.loc_id && !loc.loc_private ? `<a href="https://ebird.org/hotspots?hs=${loc.loc_id}" target="_blank" rel="noopener" onclick="event.stopPropagation(); event.preventDefault(); window.open('https://ebird.org/hotspots?hs=${loc.loc_id}', '_blank');" style="color:${textHead};text-decoration:none;border-bottom:1px dotted ${textFaint};">${escapeHtml(loc.name)}</a>` : escapeHtml(loc.name)}${locNotables > 0 ? ` <span style="background:${notableBg};color:${notableFg};padding:1px 6px;border-radius:999px;font-size:0.7rem;font-weight:700;margin-left:4px;">${locNotables}★</span>` : ""}
+                  ${loc.loc_id && !loc.loc_private ? `<a href="https://ebird.org/hotspots?hs=${loc.loc_id}" target="_blank" rel="noopener" onclick="event.stopPropagation(); event.preventDefault(); window.__externalLinkOpen = true; window.open('https://ebird.org/hotspots?hs=${loc.loc_id}', '_blank');" style="color:${textHead};text-decoration:none;border-bottom:1px dotted ${textFaint};">${escapeHtml(loc.name)}</a>` : escapeHtml(loc.name)}${locNotables > 0 ? ` <span style="background:${notableBg};color:${notableFg};padding:1px 6px;border-radius:999px;font-size:0.7rem;font-weight:700;margin-left:4px;">${locNotables}★</span>` : ""}
                 </div>
                 <div style="font-size:0.75rem;color:${textFaint};margin-top:2px;">
                   ${distStr} · ${locSpeciesCount} species · ${locBirdCount} bird${locBirdCount === 1 ? "" : "s"} · ${fmtTime(loc.last_seen)}
@@ -3458,7 +3458,7 @@
                   : "";
                 return `
                   <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid ${border};font-size:0.85rem;">
-                    <a href="${ebirdUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation(); event.preventDefault(); window.open('${ebirdUrl}', '_blank');" style="color:${linkCol};text-decoration:none;flex:1;min-width:0;">
+                    <a href="${ebirdUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation(); event.preventDefault(); window.__externalLinkOpen = true; window.open('${ebirdUrl}', '_blank');" style="color:${linkCol};text-decoration:none;flex:1;min-width:0;">
                       <span style="${nameStyle}">${escapeHtml(s.name)}</span>
                     </a>
                     <span style="color:${textSub};margin-left:10px;font-variant-numeric:tabular-nums;flex-shrink:0;">
@@ -5935,6 +5935,10 @@
 
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
+        if (window.__externalLinkOpen) {
+          window.__externalLinkOpen = false;
+          return;
+        }
         // Close any open card before refreshing to avoid blank card paint bug
         document.querySelectorAll('.card-expanded').forEach(card => {
           card.classList.remove('card-expanded');

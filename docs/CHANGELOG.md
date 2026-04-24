@@ -2,14 +2,21 @@
 * **Wind Impact Card Moved to Weather Tab**
   * Moved from Hyperlocal to Weather tab, after Sea Breeze. Consistent with v4.80 principle: weather-derived data belongs on Weather regardless of whether it uses hyperlocal corrections.
 
+* **Cross-Card Navigation Fixes**
+  * Fixed Right Now card links to Feels Like, Fog, Sea Breeze, and Wind Impact. These were still calling `showTab('hyperlocal')` after those cards moved to Weather in v4.80. Now navigate directly on the same tab.
+
 * **Hyperlocal Tab Reordered**
   * New order: Corrections, Hair Day, Birds, Sunset, Dock Day.
-  * Renamed "Sunset Score" to "Sunset" for consistency with Hair Day and Dock Day (score value visible on card face, no need to repeat in title).
+  * Renamed "Sunset Score" to "Sunset" for consistency (score value visible on card face).
 
 * **Birds Card — Clickable Location Links**
-  * Location names in the expanded birds card now link to their eBird hotspot/location page.
-  * Added `loc_id` to the collector's eBird schema; deployed to Cloud Functions.
-  * Renderer gracefully falls back to plain text if `loc_id` is missing.
+  * Location names in expanded birds card now link to eBird hotspot map view.
+  * Only public hotspots are linked; private locations show plain text.
+  * Added `loc_id` and `loc_private` to collector's eBird schema; deployed to Cloud Functions.
+
+* **Birds Card — External Link Fix**
+  * Clicking species or hotspot links no longer collapses the card on return. Root cause: `visibilitychange` handler was closing all expanded cards when page regained focus. Now skips card collapse and data reload when returning from an external link opened from within a card.
+
 
 ## v4.81 • 2026-04-24
 * **Wind Impact Card Moved to Weather Tab**
