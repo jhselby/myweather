@@ -171,7 +171,7 @@
     // Tab behavior — Weather / Wind / Almanac
     // ======================================================
     function showTab(which) {
-      const views = { weather: "weatherView", almanac: "almanacView", overhead: "overheadView", hyperlocal: "hyperlocalView" };
+      const views = { briefing: "briefingView", weather: "weatherView", almanac: "almanacView", overhead: "overheadView", hyperlocal: "hyperlocalView" };
       Object.keys(views).forEach(k => {
         const v = document.getElementById(views[k]);
         if (v) v.style.display = (k === which) ? "" : "none";
@@ -227,7 +227,7 @@
     // Swipe navigation between tabs
     // ======================================================
     (function initSwipeNav() {
-      const tabOrder = ['weather', 'hyperlocal', 'almanac', 'overhead'];
+      const tabOrder = ['briefing', 'weather', 'hyperlocal', 'almanac', 'overhead'];
       let touchStartX = 0;
       let touchStartY = 0;
       let touchStartTime = 0;
@@ -258,11 +258,11 @@
 
         if (dx < 0 && idx < tabOrder.length - 1) {
           showTab(tabOrder[idx + 1]);
-          const v = document.getElementById({weather:'weatherView',hyperlocal:'hyperlocalView',almanac:'almanacView',overhead:'overheadView'}[tabOrder[idx + 1]]);
+          const v = document.getElementById({briefing:'briefingView',weather:'weatherView',hyperlocal:'hyperlocalView',almanac:'almanacView',overhead:'overheadView'}[tabOrder[idx + 1]]);
           if (v) { v.classList.remove('slide-in-left','slide-in-right'); void v.offsetWidth; v.classList.add('slide-in-right'); }
         } else if (dx > 0 && idx > 0) {
           showTab(tabOrder[idx - 1]);
-          const v = document.getElementById({weather:'weatherView',hyperlocal:'hyperlocalView',almanac:'almanacView',overhead:'overheadView'}[tabOrder[idx - 1]]);
+          const v = document.getElementById({briefing:'briefingView',weather:'weatherView',hyperlocal:'hyperlocalView',almanac:'almanacView',overhead:'overheadView'}[tabOrder[idx - 1]]);
           if (v) { v.classList.remove('slide-in-left','slide-in-right'); void v.offsetWidth; v.classList.add('slide-in-left'); }
         }
       }, { passive: true });
@@ -4822,6 +4822,39 @@
     // ═══════════════════════════════════════════════════════════════
     // Main Data Load
     // ═══════════════════════════════════════════════════════════════
+
+    // Briefing Tab Renderer
+    function renderBriefing(data) {
+      if (typeof generateBriefing !== 'function') return;
+      const b = generateBriefing(data);
+      const now = new Date();
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      const dl = document.getElementById('briefDateline');
+      if (dl) dl.textContent = days[now.getDay()] + ' · ' + now.getDate() + ' ' + months[now.getMonth()];
+      const tl = document.getElementById('briefTimeLabel');
+      if (tl) tl.textContent = b.timeLabel;
+      const hl = document.getElementById('briefHeadline');
+      if (hl) hl.textContent = b.headline;
+      const sm = document.getElementById('briefSummary');
+      if (sm) sm.textContent = b.summary;
+      const sn = document.getElementById('briefTempNow');
+      if (sn) sn.innerHTML = (b.stats.now ?? '--') + '<span class="unit">°</span>';
+      const sh = document.getElementById('briefTempHigh');
+      if (sh) sh.innerHTML = (b.stats.high ?? '--') + '<span class="unit">°</span>';
+      const sr = document.getElementById('briefRain');
+      if (sr) sr.innerHTML = (b.stats.rainInches || '0') + '<span class="unit">"</span>';
+      const cm = { green: 'brief-val-green', orange: 'brief-val-orange', red: 'brief-val-red', blue: 'brief-val-blue' };
+      const todayEl = document.getElementById('briefTodayRows');
+      if (todayEl) { let html = ''; b.todayRows.forEach(r => { const cls = r.color ? cm[r.color] || '' : ''; html += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; }); todayEl.innerHTML = html; }
+      const lifeEl = document.getElementById('briefLifestyleSection');
+      if (lifeEl) { if (b.lifestyleRows && b.lifestyleRows.length) { let lh = '<hr class="brief-rule"><div class="brief-section-label">Lifestyle</div><div class="brief-rows">'; b.lifestyleRows.forEach(r => { const cls = r.color ? cm[r.color] || '' : ''; lh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; }); lh += '</div>'; lifeEl.innerHTML = lh; } else { lifeEl.innerHTML = ''; } }
+      const watchEl = document.getElementById('briefWatchSection');
+      if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isAlert) { wh += '<div class="brief-alert-row">⚠ <strong>' + r.value + '</strong>' + (r.detail ? ' — ' + r.detail : '') + '</div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; wh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); watchEl.innerHTML = wh; } else if (b.priority === 'quiet') { watchEl.innerHTML = '<div class="brief-quiet-note">Nothing to watch for today.</div>'; } else { watchEl.innerHTML = ''; } }
+      const tonightEl = document.getElementById('briefTonightSection');
+      if (tonightEl) { if (b.tonight) { tonightEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Tonight</div><div class="brief-row"><span class="brief-row-label">Overnight</span><span class="brief-row-value">' + b.tonight + '</span></div>'; } else { tonightEl.innerHTML = ''; } }
+    }
+
     function loadWeatherData() {
     fetch("https://storage.googleapis.com/myweather-data/weather_data.json?t=" + Date.now())
       .then(r => r.json())
@@ -4849,6 +4882,7 @@
         renderSunsetQuality(data);
         renderDockDay(data);
         renderHairDay(data);
+        renderBriefing(data);
         renderSolarSystem();
 
         // Alerts — consolidated summary bar, panel collapsed by default

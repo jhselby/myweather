@@ -1,0 +1,220 @@
+/* ═══════════════════════════════════════════════════════════
+   Briefing Tab — Editorial weather briefing styles
+   ═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;1,400&display=swap');
+
+.briefing-container {
+  padding: 20px 20px 0;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.brief-dateline {
+  font-family: 'Source Sans 3', -apple-system, sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-secondary, rgba(255,255,255,0.5));
+  margin: 0 0 2px;
+}
+
+.brief-masthead {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+  font-style: italic;
+  color: var(--text-primary, #fff);
+  margin: 0 0 16px;
+}
+
+.brief-rule {
+  border: none;
+  border-top: 1px solid var(--card-border, rgba(255,255,255,0.08));
+  margin: 0 0 14px;
+}
+
+.brief-section-label {
+  font-family: 'Source Sans 3', -apple-system, sans-serif;
+  font-size: 10px;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary, rgba(255,255,255,0.5));
+  margin: 0 0 10px;
+  font-weight: 400;
+}
+
+.brief-headline {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 400;
+  color: var(--text-primary, #fff);
+  margin: 0 0 10px;
+}
+
+.brief-summary {
+  font-family: 'Source Sans 3', -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary, rgba(255,255,255,0.7));
+  margin: 0 0 18px;
+}
+
+.brief-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin: 0 0 20px;
+  border-top: 1px solid var(--card-border, rgba(255,255,255,0.08));
+  border-bottom: 1px solid var(--card-border, rgba(255,255,255,0.08));
+}
+
+.brief-stat {
+  text-align: center;
+  padding: 14px 0;
+}
+
+.brief-stat:not(:last-child) {
+  border-right: 1px solid var(--card-border, rgba(255,255,255,0.08));
+}
+
+.brief-stat-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 32px;
+  font-weight: 400;
+  color: var(--text-primary, #fff);
+  line-height: 1;
+}
+
+.brief-stat-value .unit {
+  font-size: 18px;
+}
+
+.brief-stat-high {
+  color: rgba(220,160,50,0.95);
+}
+
+.brief-stat-label {
+  font-family: 'Source Sans 3', -apple-system, sans-serif;
+  font-size: 11px;
+  color: var(--text-secondary, rgba(255,255,255,0.5));
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.brief-rows {
+  margin: 0 0 6px;
+}
+
+.brief-row {
+  display: flex;
+  align-items: baseline;
+  padding: 9px 0;
+  border-bottom: 0.5px solid var(--card-border, rgba(255,255,255,0.08));
+  gap: 12px;
+}
+
+.brief-row:last-child {
+  border-bottom: none;
+}
+
+.brief-row-label {
+  font-family: 'Source Sans 3', -apple-system, sans-serif;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-secondary, rgba(255,255,255,0.5));
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.brief-row-value {
+  font-family: 'Source Sans 3', -apple-system, sans-serif;
+  font-size: 14px;
+  color: var(--text-primary, #fff);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.brief-val-green { color: rgba(80,220,120,0.95) !important; }
+.brief-val-orange { color: rgba(220,160,50,0.95) !important; }
+.brief-val-red { color: rgba(200,80,60,0.95) !important; }
+.brief-val-blue { color: rgba(100,180,255,0.95) !important; }
+
+.brief-alert-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: 6px 0;
+  border-radius: 8px;
+  font-family: 'Source Sans 3', -apple-system, sans-serif;
+  font-size: 13px;
+  line-height: 1.4;
+  background: rgba(220,160,50,0.1);
+  border-left: 3px solid rgba(220,160,50,0.8);
+  color: var(--text-primary, #fff);
+}
+
+.brief-alert-row strong {
+  font-weight: 600;
+}
+
+.brief-quiet-note {
+  font-family: 'Source Sans 3', -apple-system, sans-serif;
+  font-size: 13px;
+  font-style: italic;
+  color: var(--text-secondary, rgba(255,255,255,0.5));
+  text-align: center;
+  padding: 14px 0;
+}
+
+.brief-priority-tag {
+  font-size: 10px;
+  font-family: monospace;
+  color: var(--text-secondary, rgba(255,255,255,0.3));
+  text-align: center;
+  margin-top: 12px;
+  padding-bottom: 20px;
+}
+
+/* Light mode overrides */
+body.light-mode .brief-dateline,
+body.light-mode .brief-section-label,
+body.light-mode .brief-stat-label,
+body.light-mode .brief-row-label,
+body.light-mode .brief-quiet-note {
+  color: rgba(0,0,0,0.45);
+}
+
+body.light-mode .brief-masthead,
+body.light-mode .brief-headline,
+body.light-mode .brief-stat-value,
+body.light-mode .brief-row-value {
+  color: rgba(0,0,0,0.85);
+}
+
+body.light-mode .brief-summary {
+  color: rgba(0,0,0,0.6);
+}
+
+body.light-mode .brief-rule,
+body.light-mode .brief-stat:not(:last-child),
+body.light-mode .brief-stats,
+body.light-mode .brief-row {
+  border-color: rgba(0,0,0,0.1);
+}
+
+body.light-mode .brief-stat-high {
+  color: rgba(180,120,0,0.95);
+}
+
+body.light-mode .brief-val-green { color: rgba(20,140,50,0.95) !important; }
+body.light-mode .brief-val-orange { color: rgba(180,120,0,0.95) !important; }
+body.light-mode .brief-val-red { color: rgba(170,50,40,0.95) !important; }
+body.light-mode .brief-val-blue { color: rgba(20,100,170,0.95) !important; }
+
+body.light-mode .brief-alert-row {
+  background: rgba(220,160,50,0.08);
+  color: rgba(0,0,0,0.85);
+}

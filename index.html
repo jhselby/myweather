@@ -21,6 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
   <link rel="stylesheet" href="styles/app.css?v=8f48073c" />
+  <link rel="stylesheet" href="styles/briefing.css" />
 </head>
 <body>
   <div class="container">
@@ -68,6 +69,38 @@
     </header>
 
 
+
+
+    <!-- BRIEFING VIEW -->
+    <section id="briefingView" style="display:none;">
+      <div class="briefing-container">
+        <div class="brief-dateline" id="briefDateline"></div>
+        <div class="brief-masthead">Wyman Cove</div>
+        <hr class="brief-rule">
+        <div class="brief-section-label" id="briefTimeLabel"></div>
+        <div class="brief-headline" id="briefHeadline"></div>
+        <div class="brief-summary" id="briefSummary"></div>
+        <div class="brief-stats">
+          <div class="brief-stat">
+            <div class="brief-stat-value" id="briefTempNow">--<span class="unit">°</span></div>
+            <div class="brief-stat-label">now</div>
+          </div>
+          <div class="brief-stat">
+            <div class="brief-stat-value brief-stat-high" id="briefTempHigh">--<span class="unit">°</span></div>
+            <div class="brief-stat-label">high</div>
+          </div>
+          <div class="brief-stat">
+            <div class="brief-stat-value" id="briefRain">0<span class="unit">"</span></div>
+            <div class="brief-stat-label">rain · 48h</div>
+          </div>
+        </div>
+        <div class="brief-section-label">Today</div>
+        <div class="brief-rows" id="briefTodayRows"></div>
+        <div id="briefLifestyleSection"></div>
+        <div id="briefWatchSection"></div>
+        <div id="briefTonightSection"></div>
+      </div>
+    </section>
 
     <!-- WEATHER VIEW -->
     <section id="weatherView">
@@ -1198,6 +1231,7 @@
 
 
   </div>
+  <script src="js/briefing.js"></script>
   <script src="js/app-main.js?v=dcb178e6"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
@@ -1346,6 +1380,10 @@
 
   <!-- iOS-style bottom tab bar -->
   <nav class="bottom-tab-bar" role="tablist" aria-label="Views">
+    <button class="bottom-tab" role="tab" aria-selected="false" onclick="showTab('briefing')">
+      <span class="tab-icon">📋</span>
+      <span class="tab-label">Briefing</span>
+    </button>
     <button class="bottom-tab" role="tab" aria-selected="false" onclick="showTab('weather')">
       <span class="tab-icon">🌤️</span>
       <span class="tab-label">Weather</span>
