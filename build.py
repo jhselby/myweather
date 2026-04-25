@@ -49,6 +49,8 @@ def extract_assets(html_content):
     for match in re.finditer(script_pattern, html_content):
         full_tag = match.group(0)
         filepath = match.group(1)
+        if filepath.startswith(('http://', 'https://')):
+            continue
         assets[full_tag] = filepath
     
     # Match <link rel="stylesheet" href="path/to/file.css">
@@ -56,6 +58,8 @@ def extract_assets(html_content):
     for match in re.finditer(css_pattern, html_content):
         full_tag = match.group(0)
         filepath = match.group(1)
+        if filepath.startswith(('http://', 'https://')):
+            continue
         assets[full_tag] = filepath
     
     return assets
