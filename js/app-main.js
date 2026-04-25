@@ -252,7 +252,7 @@
         // Don't swipe on maps or scrubbers
         if (e.target.closest('#radarMap, #overheadMap, input[type=range]')) return;
 
-        const current = localStorage.getItem('activeTab') || 'weather';
+        const current = localStorage.getItem('activeTab') || 'briefing';
         const idx = tabOrder.indexOf(current);
         if (idx === -1) return;
 
@@ -4871,7 +4871,7 @@
       // Cross-card navigation from briefing rows
       var navMap = {
         'Sky': { tab: 'weather', card: '48h_temp_precip' },
-        'Wind': { tab: 'weather', card: 'wind_impact' },
+        'Wind': { tab: 'weather', card: '48h_wind' },
         'Sea breeze': { tab: 'weather', card: 'sea_breeze_detail' },
         'Fog': { tab: 'weather', card: 'fog_risk' },
         'Rain': { tab: 'weather', card: 'right_now' },
@@ -6182,14 +6182,14 @@ function loadWeatherData() {
 // Restore active tab after bottom tab bar sync is ready
 (function() {
   try {
-    const t = localStorage.getItem('activeTab') || 'weather';
+    const t = localStorage.getItem('activeTab') || 'briefing';
     showTab(t);
   } catch(e) { showTab('weather'); }
 })();
 
 // Restore active tab after DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  try { showTab(localStorage.getItem('activeTab') || 'weather'); } catch(e) { showTab('weather'); }
+  try { showTab(localStorage.getItem('activeTab') || 'briefing'); } catch(e) { showTab('briefing'); }
 });
 
 // === Settings Modal ===

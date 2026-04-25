@@ -1,3 +1,12 @@
+## v0.5.5 • 2026-04-25
+* **Briefing Cross-Nav Fixes**
+  * Wind row now links to 48h Wind chart (was Wind Impact)
+  * Sky row links to Sky & Precip card
+* **Default Tab**
+  * App now opens to Briefing tab by default
+* **Removed NWS Forecast Card**
+  * Hidden NWS forecast card removed from Weather tab
+
 ## v0.5.4 • 2026-04-25
 * **Briefing Tab — Cross-Card Navigation**
   * Tapping any data row navigates to that card's expanded view

@@ -417,28 +417,7 @@
         </div>
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-        <div class="card col-6" data-collapse-key="nws_forecast" data-default-open="false" style="display:none;" onclick="if(!this.classList.contains('card-expanded')) toggleCard('nws_forecast', this.querySelector('.card-title-collapsible'))">
-          <div class="card-title card-title-collapsible" style="cursor:default;">
-            NWS<span class="collapse-chevron" style="display:none;">&#9660;</span>
-          </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('nws_forecast', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;">
-            <div style="font-weight:900;font-size:0.95rem;letter-spacing:0.2px;margin-bottom:12px;opacity:0.88;">NWS</div>
-            <div id="nwsSummaryCollapsed" style="font-size:0.95rem;margin-top:8px;font-weight:600;">Loading...</div>
-          </div>
-          <div class="card-body" style="display:none;">
-          <div id="nwsForecastList"></div>
-          <div style="margin-top:10px;">
-            <button id="nwsExpandBtn" onclick="nwsToggleExpand()"
-              style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);
-                     color:rgba(255,255,255,0.7);border-radius:999px;padding:6px 16px;
-                     font-size:0.82rem;font-weight:800;cursor:pointer;display:none;">
-              Show all periods
-            </button>
-          </div>
-          <div class="small-note" style="margin-top:8px;">Written by NWS Boston meteorologists.</div>
-          </div>
-        </div>
+<!-- NWS forecast card removed v0.5.5 -->
 
 
         <!-- Radar (collapsible) -->
@@ -1247,7 +1226,7 @@
 
   </div>
   <script src="js/briefing.js?v=1ba67223"></script>
-  <script src="js/app-main.js?v=5d1b9e7a"></script>
+  <script src="js/app-main.js?v=837953ae"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1326,7 +1305,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.4</span>
+            <span class="version-pill" id="appVersion">v0.5.5</span>
           </div>
         </div>
         <!-- Changelog -->
