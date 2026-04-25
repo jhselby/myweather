@@ -22,6 +22,7 @@ from .fetchers.nws_gridpoints import fetch_nws_gridpoints
 from .fetchers.wu import fetch_wu_stations
 from .fetchers.pirate_weather import fetch_pirate_weather
 from .fetchers.ebird import fetch_ebird
+from .fetchers.briefing_ai import generate_briefing
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
 from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spread
@@ -516,6 +517,15 @@ def main():
         birds_data=birds_data
     )
     print(f"  ⏱  Build weather data: {_time.time() - t0:.1f}s")
+
+    # Generate AI briefing headline
+    t0 = _time.time()
+    briefing = generate_briefing(weather_data)
+    if briefing:
+        weather_data["briefing"] = briefing
+    else:
+        weather_data.setdefault("briefing", {"headline": "", "subheadline": ""})
+    print(f"  ⏱  Briefing AI: {_time.time() - t0:.1f}s")
 
     # Trim hourly arrays to start from current hour
     from datetime import datetime, timezone
