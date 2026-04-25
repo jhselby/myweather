@@ -4875,6 +4875,8 @@
         'Sea breeze': { tab: 'weather', card: 'sea_breeze_detail' },
         'Fog': { tab: 'weather', card: 'fog_risk' },
         'Rain': { tab: 'weather', card: 'right_now' },
+        'Wind chill': { tab: 'weather', card: 'feels_like' },
+        'Heat index': { tab: 'weather', card: 'feels_like' },
         'Sun': { tab: 'almanac', card: 'sun' },
         'Tide': { tab: 'almanac', card: 'tides' },
         'Moon': { tab: 'almanac', card: 'moon' },

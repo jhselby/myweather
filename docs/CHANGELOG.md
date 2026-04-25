@@ -1,3 +1,11 @@
+## v0.5.6 • 2026-04-25
+* **Briefing — Feels Like Row**
+  * Wind chill shown when temp ≤40°F and feels 5°+ colder
+  * Heat index shown when temp ≥80°F and feels 5°+ hotter
+  * Color-coded by severity (orange/red)
+* **Briefing Cross-Nav**
+  * Feels like / Wind chill / Heat index links to feels_like card
+
 ## v0.5.5 • 2026-04-25
 * **Briefing Cross-Nav Fixes**
   * Wind row now links to 48h Wind chart (was Wind Impact)

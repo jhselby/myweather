@@ -599,6 +599,17 @@
       rows.push({ label: "Rain", value: `${s.rainStartStr}–${s.rainEndStr} — ${s.rainInches}"`, color: "blue" });
     }
 
+    // Feels like — only when cold enough for wind chill or hot enough for heat index
+    const feelsLike = Math.round(s._data.current?.apparent_temperature ?? s.temp);
+    const feelsDiff = Math.abs(feelsLike - s.temp);
+    const showWindChill = feelsLike < s.temp && s.temp <= 40 && feelsDiff >= 5;
+    const showHeatIndex = feelsLike > s.temp && s.temp >= 80 && feelsDiff >= 5;
+    if (showWindChill) {
+      rows.push({ label: "Wind chill", value: feelsLike + "°", color: feelsLike <= 20 ? "red" : feelsLike <= 32 ? "orange" : null });
+    } else if (showHeatIndex) {
+      rows.push({ label: "Heat index", value: feelsLike + "°", color: feelsLike >= 100 ? "red" : feelsLike >= 90 ? "orange" : null });
+    }
+
     // Sunrise / Sunset
     const daily = s._data.daily || {};
     const todaySunrise = daily.sunrise?.[0];
