@@ -227,7 +227,7 @@
     // Swipe navigation between tabs
     // ======================================================
     (function initSwipeNav() {
-      const tabOrder = ['briefing', 'weather', 'hyperlocal', 'almanac', 'overhead'];
+      const tabOrder = ['briefing', 'weather', 'hyperlocal', 'almanac'];
       let touchStartX = 0;
       let touchStartY = 0;
       let touchStartTime = 0;
