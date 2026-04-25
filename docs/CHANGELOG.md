@@ -1,3 +1,11 @@
+## v0.5.4 • 2026-04-25
+* **Briefing Tab — Cross-Card Navigation**
+  * Tapping any data row navigates to that card's expanded view
+  * Sky → Sky & Precip; Wind → Wind Impact; Sun/Tide/Moon → Almanac cards; Sunset/Beach/Hair/Birds → Hyperlocal cards
+  * Closing a linked card returns to Briefing tab (same pattern as Right Now card)
+* **Bugfix**
+  * Sky row now links to Sky & Precip card (was incorrectly linking to Right Now)
+
 ## v0.5.3 • 2026-04-25
 * **Briefing Tab — New Data Rows**
   * Sun row: sunrise/sunset times in Today section

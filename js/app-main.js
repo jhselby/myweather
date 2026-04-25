@@ -4867,6 +4867,40 @@
       if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isAlert) { wh += '<div class="brief-alert-row">⚠ <strong>' + r.value + '</strong>' + (r.detail ? ' — ' + r.detail : '') + '</div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; wh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); watchEl.innerHTML = wh; } else if (b.priority === 'quiet') { watchEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div><div class="brief-quiet-note">No alerts, incoming rain, or frost risk today.</div>'; } else { watchEl.innerHTML = ''; } }
       const tonightEl = document.getElementById('briefTonightSection');
       if (tonightEl) { if (b.tonight) { tonightEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Tonight</div><div class="brief-row"><span class="brief-row-label">Overnight</span><span class="brief-row-value">' + b.tonight + '</span></div>'; } else { tonightEl.innerHTML = ''; } }
+
+      // Cross-card navigation from briefing rows
+      var navMap = {
+        'Sky': { tab: 'weather', card: '48h_temp_precip' },
+        'Wind': { tab: 'weather', card: 'wind_impact' },
+        'Sea breeze': { tab: 'weather', card: 'sea_breeze_detail' },
+        'Fog': { tab: 'weather', card: 'fog_risk' },
+        'Rain': { tab: 'weather', card: 'right_now' },
+        'Sun': { tab: 'almanac', card: 'sun' },
+        'Tide': { tab: 'almanac', card: 'tides' },
+        'Moon': { tab: 'almanac', card: 'moon' },
+        'Sunset': { tab: 'hyperlocal', card: 'sunset_quality' },
+        'Beach day': { tab: 'hyperlocal', card: 'dock_day' },
+        'Hair day': { tab: 'hyperlocal', card: 'hair_day' },
+        'Birds': { tab: 'hyperlocal', card: 'birds' },
+      };
+      var allBriefRows = document.querySelectorAll('#briefTodayRows .brief-row, #briefLifestyleSection .brief-row');
+      allBriefRows.forEach(function(row) {
+        var labelEl = row.querySelector('.brief-row-label');
+        if (!labelEl) return;
+        var label = labelEl.textContent.trim();
+        var nav = navMap[label];
+        if (!nav) return;
+        row.style.cursor = 'pointer';
+        row.onclick = function(e) {
+          e.stopPropagation();
+          window.__navSource = { tab: 'briefing', card: null };
+          showTab(nav.tab);
+          setTimeout(function() {
+            var card = document.querySelector('[data-collapse-key="' + nav.card + '"]');
+            if (card) card.click();
+          }, 100);
+        };
+      });
     }
 
     
