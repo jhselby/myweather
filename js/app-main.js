@@ -4844,13 +4844,27 @@
       if (sh) sh.innerHTML = (b.stats.high ?? '--') + '<span class="unit">°</span>';
       const sr = document.getElementById('briefRain');
       if (sr) sr.innerHTML = (b.stats.rainInches || '0') + '<span class="unit">"</span>';
+      // Inject wind impact score into briefing Wind row
+      const hyp = data.hyperlocal || {};
+      const cur = data.current || {};
+      const bWindSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
+      const bGustSpeed = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+      const bWindDir = cur.wind_direction;
+      if (bWindDir != null && (bWindSpeed != null || bGustSpeed != null)) {
+        const bImpact = Math.round(combinedWindImpact(bWindSpeed, bGustSpeed, bWindDir));
+        const bLevel = worryLevel(bImpact);
+        const windRow = b.todayRows.find(r => r.label === 'Wind');
+        if (windRow) {
+          windRow.value += ' · Impact: ' + bImpact + ' ' + bLevel.label;
+        }
+      }
       const cm = { green: 'brief-val-green', orange: 'brief-val-orange', red: 'brief-val-red', blue: 'brief-val-blue' };
       const todayEl = document.getElementById('briefTodayRows');
       if (todayEl) { let html = ''; b.todayRows.forEach(r => { const cls = r.color ? cm[r.color] || '' : ''; html += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; }); todayEl.innerHTML = html; }
       const lifeEl = document.getElementById('briefLifestyleSection');
       if (lifeEl) { if (b.lifestyleRows && b.lifestyleRows.length) { let lh = '<hr class="brief-rule"><div class="brief-section-label">Lifestyle</div><div class="brief-rows">'; b.lifestyleRows.forEach(r => { const cls = r.color ? cm[r.color] || '' : ''; lh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; }); lh += '</div>'; lifeEl.innerHTML = lh; } else { lifeEl.innerHTML = ''; } }
       const watchEl = document.getElementById('briefWatchSection');
-      if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isAlert) { wh += '<div class="brief-alert-row">⚠ <strong>' + r.value + '</strong>' + (r.detail ? ' — ' + r.detail : '') + '</div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; wh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); watchEl.innerHTML = wh; } else if (b.priority === 'quiet') { watchEl.innerHTML = '<div class="brief-quiet-note">Nothing to watch for today.</div>'; } else { watchEl.innerHTML = ''; } }
+      if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isAlert) { wh += '<div class="brief-alert-row">⚠ <strong>' + r.value + '</strong>' + (r.detail ? ' — ' + r.detail : '') + '</div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; wh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); watchEl.innerHTML = wh; } else if (b.priority === 'quiet') { watchEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div><div class="brief-quiet-note">No alerts, incoming rain, or frost risk today.</div>'; } else { watchEl.innerHTML = ''; } }
       const tonightEl = document.getElementById('briefTonightSection');
       if (tonightEl) { if (b.tonight) { tonightEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Tonight</div><div class="brief-row"><span class="brief-row-label">Overnight</span><span class="brief-row-value">' + b.tonight + '</span></div>'; } else { tonightEl.innerHTML = ''; } }
     }

@@ -120,9 +120,24 @@ def generate_briefing(weather_data):
     """
     summary = _build_weather_summary(weather_data)
 
+    # Inject current time so Gemini writes forward-looking content
+    from datetime import datetime
+    import pytz
+    eastern = pytz.timezone("America/New_York")
+    now = datetime.now(eastern)
+    time_str = now.strftime("%I:%M %p").lstrip("0")
+    day_str = now.strftime("%A, %B %d")
+
+    time_context = (
+        f"\nCurrent time: {time_str} on {day_str}.\n"
+        f"CRITICAL: Only write about what's AHEAD — not what already happened. "
+        f"If it's afternoon, don't mention morning. If it's evening, focus on tonight and tomorrow. "
+        f"Never reference times that have already passed today."
+    )
+
     payload = {
         "contents": [{
-            "parts": [{"text": f"{SYSTEM_PROMPT}\n\nWeather data for right now:\n{summary}"}]
+            "parts": [{"text": f"{SYSTEM_PROMPT}\n\nWeather data for right now:\n{summary}{time_context}"}]
         }],
         "generationConfig": {
             "temperature": 0.9,
