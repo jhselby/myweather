@@ -17,7 +17,7 @@ from ..utils import iso_utc_now
 
 EBIRD_BASE = "https://api.ebird.org/v2/data/obs/geo"
 import os
-EBIRD_API_KEY = os.environ.get("EBIRD_API_KEY", "sjjc0p5rqpqg")
+EBIRD_API_KEY = os.environ["EBIRD_API_KEY"]
 RADIUS_KM = 5
 BACK_DAYS = 2  # ~48 hours
 

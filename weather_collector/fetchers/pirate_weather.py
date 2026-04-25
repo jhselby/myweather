@@ -6,7 +6,7 @@ https://pirateweather.net
 import os
 import requests
 
-API_KEY = os.environ.get("PIRATE_WEATHER_API_KEY", "0mvXH6VSOmo8f5r1G3882vSQ5OVXB13i")
+API_KEY = os.environ["PIRATE_WEATHER_API_KEY"]
 LAT = 42.5014
 LON = -70.8750
 BASE_URL = "https://api.pirateweather.net/forecast"
