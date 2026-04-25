@@ -5,21 +5,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;1,400&display=swap');
 
 .briefing-container {
-  padding: 20px 16px 80px;
+  padding: 80px 16px 80px;
 }
 
 .brief-dateline {
   font-family: 'Source Sans 3', -apple-system, sans-serif;
-  font-size: 11px;
+  font-size: 0.85rem;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--text-secondary, rgba(255,255,255,0.5));
   margin: 0 0 2px;
 }
 
-.brief-masthead {
+.brief-masthead { display: none;
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 22px;
+  font-size: 1.4rem;
   font-weight: 400;
   font-style: italic;
   color: var(--text-primary, #fff);
@@ -34,7 +34,7 @@
 
 .brief-section-label {
   font-family: 'Source Sans 3', -apple-system, sans-serif;
-  font-size: 10px;
+  font-size: 0.75rem;
   letter-spacing: 2.5px;
   text-transform: uppercase;
   color: var(--text-secondary, rgba(255,255,255,0.5));
@@ -44,7 +44,7 @@
 
 .brief-headline {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 26px;
+  font-size: 1.8rem;
   line-height: 1.25;
   font-weight: 400;
   color: var(--text-primary, #fff);
@@ -53,7 +53,7 @@
 
 .brief-summary {
   font-family: 'Source Sans 3', -apple-system, sans-serif;
-  font-size: 14px;
+  font-size: 1rem;
   line-height: 1.55;
   color: var(--text-secondary, rgba(255,255,255,0.7));
   margin: 0 0 18px;
@@ -79,14 +79,14 @@
 
 .brief-stat-value {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 32px;
+  font-size: 2.5rem;
   font-weight: 400;
   color: var(--text-primary, #fff);
   line-height: 1;
 }
 
 .brief-stat-value .unit {
-  font-size: 18px;
+  font-size: 1.2rem;
 }
 
 .brief-stat-high {
@@ -95,7 +95,7 @@
 
 .brief-stat-label {
   font-family: 'Source Sans 3', -apple-system, sans-serif;
-  font-size: 11px;
+  font-size: 0.85rem;
   color: var(--text-secondary, rgba(255,255,255,0.5));
   margin-top: 4px;
   letter-spacing: 0.5px;
@@ -119,7 +119,7 @@
 
 .brief-row-label {
   font-family: 'Source Sans 3', -apple-system, sans-serif;
-  font-size: 13px;
+  font-size: 0.95rem;
   font-style: italic;
   color: var(--text-secondary, rgba(255,255,255,0.5));
   min-width: 80px;
@@ -128,7 +128,7 @@
 
 .brief-row-value {
   font-family: 'Source Sans 3', -apple-system, sans-serif;
-  font-size: 14px;
+  font-size: 1rem;
   color: var(--text-primary, #fff);
   font-weight: 600;
   line-height: 1.4;
@@ -147,7 +147,7 @@
   margin: 6px 0;
   border-radius: 8px;
   font-family: 'Source Sans 3', -apple-system, sans-serif;
-  font-size: 13px;
+  font-size: 0.95rem;
   line-height: 1.4;
   background: rgba(220,160,50,0.1);
   border-left: 3px solid rgba(220,160,50,0.8);
@@ -160,7 +160,7 @@
 
 .brief-quiet-note {
   font-family: 'Source Sans 3', -apple-system, sans-serif;
-  font-size: 13px;
+  font-size: 0.95rem;
   font-style: italic;
   color: var(--text-secondary, rgba(255,255,255,0.5));
   text-align: center;
@@ -168,7 +168,7 @@
 }
 
 .brief-priority-tag {
-  font-size: 10px;
+  font-size: 0.75rem;
   font-family: monospace;
   color: var(--text-secondary, rgba(255,255,255,0.3));
   text-align: center;

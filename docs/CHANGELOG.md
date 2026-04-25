@@ -1,3 +1,9 @@
+## v0.5.1 • 2026-04-25
+* Removed redundant Wyman Cove masthead from Briefing tab
+* Bumped all Briefing tab font sizes to match app card sizing (rem units)
+* Fixed Briefing tab top padding and light mode text readability
+* Fixed light mode CSS selectors (theme-light, not light-mode)
+
 ## v0.5.0 • 2026-04-25
 * **Briefing Tab — AI-Powered Weather Briefing**
   * New first tab with editorial-style layout: AI headline, subheadline, stat boxes, conditional data rows.
