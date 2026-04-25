@@ -4855,7 +4855,22 @@
       if (tonightEl) { if (b.tonight) { tonightEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Tonight</div><div class="brief-row"><span class="brief-row-label">Overnight</span><span class="brief-row-value">' + b.tonight + '</span></div>'; } else { tonightEl.innerHTML = ''; } }
     }
 
-    function loadWeatherData() {
+    
+    // Overhead card: reparent overheadView content into card on first expand
+    document.addEventListener('click', function(e) {
+      var card = e.target.closest('[data-collapse-key="overhead_card"]');
+      if (card && window.__overheadMoved !== true) {
+        var src = document.querySelector('#overheadView > .card');
+        var dest = document.getElementById('overheadCardBody');
+        if (src && dest) {
+          dest.appendChild(src);
+          window.__overheadMoved = true;
+          if (typeof ohInitMap === 'function') setTimeout(function() { ohInitMap(); if (typeof ohRefresh === 'function') ohRefresh(); }, 300);
+        }
+      }
+    });
+
+function loadWeatherData() {
     fetch("https://storage.googleapis.com/myweather-data/weather_data.json?t=" + Date.now())
       .then(r => r.json())
       .then(data => {
