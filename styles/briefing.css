@@ -5,9 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;1,400&display=swap');
 
 .briefing-container {
-  padding: 20px 20px 0;
-  max-width: 500px;
-  margin: 0 auto;
+  padding: 20px 16px 80px;
 }
 
 .brief-dateline {
@@ -179,42 +177,42 @@
 }
 
 /* Light mode overrides */
-body.light-mode .brief-dateline,
-body.light-mode .brief-section-label,
-body.light-mode .brief-stat-label,
-body.light-mode .brief-row-label,
-body.light-mode .brief-quiet-note {
+body.theme-light .brief-dateline,
+body.theme-light .brief-section-label,
+body.theme-light .brief-stat-label,
+body.theme-light .brief-row-label,
+body.theme-light .brief-quiet-note {
   color: rgba(0,0,0,0.45);
 }
 
-body.light-mode .brief-masthead,
-body.light-mode .brief-headline,
-body.light-mode .brief-stat-value,
-body.light-mode .brief-row-value {
+body.theme-light .brief-masthead,
+body.theme-light .brief-headline,
+body.theme-light .brief-stat-value,
+body.theme-light .brief-row-value {
   color: rgba(0,0,0,0.85);
 }
 
-body.light-mode .brief-summary {
+body.theme-light .brief-summary {
   color: rgba(0,0,0,0.6);
 }
 
-body.light-mode .brief-rule,
-body.light-mode .brief-stat:not(:last-child),
-body.light-mode .brief-stats,
-body.light-mode .brief-row {
+body.theme-light .brief-rule,
+body.theme-light .brief-stat:not(:last-child),
+body.theme-light .brief-stats,
+body.theme-light .brief-row {
   border-color: rgba(0,0,0,0.1);
 }
 
-body.light-mode .brief-stat-high {
+body.theme-light .brief-stat-high {
   color: rgba(180,120,0,0.95);
 }
 
-body.light-mode .brief-val-green { color: rgba(20,140,50,0.95) !important; }
-body.light-mode .brief-val-orange { color: rgba(180,120,0,0.95) !important; }
-body.light-mode .brief-val-red { color: rgba(170,50,40,0.95) !important; }
-body.light-mode .brief-val-blue { color: rgba(20,100,170,0.95) !important; }
+body.theme-light .brief-val-green { color: rgba(20,140,50,0.95) !important; }
+body.theme-light .brief-val-orange { color: rgba(180,120,0,0.95) !important; }
+body.theme-light .brief-val-red { color: rgba(170,50,40,0.95) !important; }
+body.theme-light .brief-val-blue { color: rgba(20,100,170,0.95) !important; }
 
-body.light-mode .brief-alert-row {
+body.theme-light .brief-alert-row {
   background: rgba(220,160,50,0.08);
   color: rgba(0,0,0,0.85);
 }
