@@ -9,7 +9,7 @@ deploy-collector:
 	  --allow-unauthenticated \
 	  --timeout=300s \
 	  --memory=512MB \
-	  --set-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811
+	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811
 
 run-collector:
 	curl -X POST https://myweather-collector-25c6bclx5q-ue.a.run.app
