@@ -375,6 +375,13 @@
       });
     }
 
+    // Birds — species count from eBird
+    const birds = s._data.birds || {};
+    const speciesCount = birds.total_species;
+    if (speciesCount) {
+      rows.push({ label: "Birds", value: speciesCount + " species nearby", color: null });
+    }
+
     return rows;
   }
 
@@ -590,6 +597,40 @@
       rows.push({ label: "Rain", value: `By ${s.rainStartStr} — ${s.rainInches}"`, color: "blue" });
     } else if (s.rainContext === "later") {
       rows.push({ label: "Rain", value: `${s.rainStartStr}–${s.rainEndStr} — ${s.rainInches}"`, color: "blue" });
+    }
+
+    // Sunrise / Sunset
+    const daily = s._data.daily || {};
+    const todaySunrise = daily.sunrise?.[0];
+    const todaySunset = daily.sunset?.[0];
+    function fmtTimeShort(iso) {
+      if (!iso) return "";
+      const d = new Date(iso);
+      return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase();
+    }
+    if (todaySunrise || todaySunset) {
+      rows.push({ label: "Sun", value: "\u2191 " + fmtTimeShort(todaySunrise) + "  \u2193 " + fmtTimeShort(todaySunset), color: null });
+    }
+
+    // Next tide
+    const tideEvents = (s._data.tides || {}).events || [];
+    const nowMs = Date.now();
+    const nextTide = tideEvents.find(function(e) {
+      return new Date(e.date + "T" + e.time).getTime() >= nowMs;
+    });
+    if (nextTide) {
+      const typeStr = nextTide.type === "H" ? "High" : "Low";
+      const ht = parseFloat(nextTide.height).toFixed(1);
+      rows.push({ label: "Tide", value: typeStr + " " + fmtTimeShort(nextTide.date + "T" + nextTide.time) + " (" + ht + " ft)", color: null });
+    }
+
+    // Moon phase (SunCalc is loaded client-side)
+    if (typeof SunCalc !== "undefined") {
+      const mi = SunCalc.getMoonIllumination(new Date());
+      const phases = [[0.025,"New Moon"],[0.25,"Waxing Crescent"],[0.275,"First Quarter"],[0.5,"Waxing Gibbous"],[0.525,"Full Moon"],[0.75,"Waning Gibbous"],[0.775,"Last Quarter"],[1.0,"Waning Crescent"]];
+      const moonName = phases.find(function(p) { return mi.phase < p[0]; })?.[1] ?? "New Moon";
+      const illum = Math.round(mi.fraction * 100);
+      rows.push({ label: "Moon", value: moonName + " (" + illum + "%)", color: null });
     }
 
     return rows;

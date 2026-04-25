@@ -1,3 +1,20 @@
+## v0.5.3 • 2026-04-25
+* **Briefing Tab — New Data Rows**
+  * Sun row: sunrise/sunset times in Today section
+  * Tide row: next tide event with type, time, height
+  * Moon row: phase name and illumination % (via SunCalc)
+  * Birds row added to Lifestyle section (species count from eBird)
+* **Watch For Section**
+  * Added WATCH FOR header to empty state
+  * Descriptive empty message: "No alerts, incoming rain, or frost risk today"
+* **Wind Row**
+  * Now shows Impact score and label (e.g., "Impact: 3 Calm")
+* **Gemini Headline**
+  * Collector now passes current time — headlines are forward-looking only
+* **Infrastructure**
+  * Added DEPLOY_WORKFLOW.md reference doc
+  * Makefile uses --update-env-vars to stop wiping API keys on deploy
+
 ## v0.5.1 • 2026-04-25
 * Removed redundant Wyman Cove masthead from Briefing tab
 * Bumped all Briefing tab font sizes to match app card sizing (rem units)
