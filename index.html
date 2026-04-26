@@ -417,7 +417,7 @@
         </div>
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-<!-- NWS forecast card removed v0.5.11a -->
+<!-- NWS forecast card removed v0.5.11b -->
 
 
         <!-- Radar (collapsible) -->
@@ -1305,7 +1305,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.11a</span>
+            <span class="version-pill" id="appVersion">v0.5.11b</span>
           </div>
         </div>
         <!-- Changelog -->
@@ -1428,7 +1428,7 @@
     if (isIOS) {
       setTimeout(function() {
         if (banner.style.display === 'block') return;
-        msg.innerHTML = 'Tap <strong style="color:rgba(100,180,255,0.9);">Share \u2b06</strong> then <strong style="color:rgba(100,180,255,0.9);">Add to Home Screen</strong>';
+        msg.innerHTML = 'To install, tap <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(100,180,255,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> below, then <strong>Add to Home Screen</strong>.';
         banner.style.display = 'block';
       }, 3000);
     }
