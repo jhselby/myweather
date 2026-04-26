@@ -9,7 +9,7 @@ import os
 import requests
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_MODEL = "gemini-2.5-flash-lite"
+GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove, Marblehead MA — a coastal New England harbor.
@@ -113,11 +113,83 @@ def _build_weather_summary(weather_data):
     return "\n".join(lines)
 
 
+# Cache: last successful headline stored in GCS
+_BRIEFING_CACHE_PATH = "briefing_cache.json"
+_BRIEFING_INTERVAL_MINUTES = 30
+
+
+def _load_cached_briefing():
+    """Load last successful briefing from GCS."""
+    try:
+        from google.cloud import storage as gcs
+        client = gcs.Client()
+        bucket = client.bucket("myweather-data")
+        blob = bucket.blob(_BRIEFING_CACHE_PATH)
+        if blob.exists():
+            data = json.loads(blob.download_as_text())
+            print(f"  ✓ Briefing cache loaded: {data.get('headline', '?')[:50]}")
+            return data
+    except Exception as e:
+        print(f"  ⚠ Briefing cache load failed: {e}")
+    return None
+
+
+def _save_cached_briefing(briefing):
+    """Save successful briefing to GCS."""
+    try:
+        from google.cloud import storage as gcs
+        from datetime import datetime
+        import pytz
+        client = gcs.Client()
+        bucket = client.bucket("myweather-data")
+        blob = bucket.blob(_BRIEFING_CACHE_PATH)
+        briefing["cached_at"] = datetime.now(pytz.timezone("America/New_York")).isoformat()
+        blob.upload_from_string(json.dumps(briefing), content_type="application/json")
+        print(f"  ✓ Briefing cache saved")
+    except Exception as e:
+        print(f"  ⚠ Briefing cache save failed: {e}")
+
+
+def _should_call_gemini():
+    """Only call Gemini every 30 minutes to stay under free tier quota."""
+    try:
+        from google.cloud import storage as gcs
+        from datetime import datetime
+        import pytz
+        client = gcs.Client()
+        bucket = client.bucket("myweather-data")
+        blob = bucket.blob(_BRIEFING_CACHE_PATH)
+        if blob.exists():
+            data = json.loads(blob.download_as_text())
+            cached_at = data.get("cached_at")
+            if cached_at:
+                eastern = pytz.timezone("America/New_York")
+                cached_time = datetime.fromisoformat(cached_at)
+                now = datetime.now(eastern)
+                age_min = (now - cached_time).total_seconds() / 60
+                if age_min < _BRIEFING_INTERVAL_MINUTES:
+                    print(f"  ⏭ Briefing: cached {age_min:.0f}m ago, skipping Gemini (interval: {_BRIEFING_INTERVAL_MINUTES}m)")
+                    return False, data
+    except Exception as e:
+        print(f"  ⚠ Briefing interval check failed: {e}")
+    return True, None
+
+
 def generate_briefing(weather_data):
     """
     Call Gemini to generate a briefing headline and subheadline.
+    - Only calls Gemini every 30 minutes (free tier quota management)
+    - Retries once on 429
+    - Falls back to cached headline on failure
     Returns dict with 'headline' and 'subheadline' keys, or None on failure.
     """
+    import time
+
+    # Check if we should call Gemini or use cache
+    should_call, cached = _should_call_gemini()
+    if not should_call and cached:
+        return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", "")}
+
     summary = _build_weather_summary(weather_data)
 
     # Inject current time so Gemini writes forward-looking content
@@ -145,42 +217,58 @@ def generate_briefing(weather_data):
         }
     }
 
-    try:
-        resp = requests.post(
-            GEMINI_URL,
-            params={"key": GEMINI_API_KEY},
-            json=payload,
-            timeout=10
-        )
-        resp.raise_for_status()
+    # Try up to 2 times (initial + 1 retry on 429)
+    for attempt in range(2):
+        try:
+            resp = requests.post(
+                GEMINI_URL,
+                params={"key": GEMINI_API_KEY},
+                json=payload,
+                timeout=10
+            )
+            if resp.status_code == 429 and attempt == 0:
+                print("  ⚠ Briefing: 429 rate limited, retrying in 3s...")
+                time.sleep(3)
+                continue
+            resp.raise_for_status()
 
-        data = resp.json()
-        text = data["candidates"][0]["content"]["parts"][0]["text"]
-        # Strip markdown fences if present
-        text = text.strip()
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        text = text.strip()
-        result = json.loads(text)
+            data = resp.json()
+            text = data["candidates"][0]["content"]["parts"][0]["text"]
+            # Strip markdown fences if present
+            text = text.strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            text = text.strip()
+            result = json.loads(text)
 
-        headline = result.get("headline", "").strip()
-        subheadline = result.get("subheadline", "").strip()
+            headline = result.get("headline", "").strip()
+            subheadline = result.get("subheadline", "").strip()
 
-        if headline:
-            print(f"  ✓ Briefing: {headline}")
-            return {"headline": headline, "subheadline": subheadline}
-        else:
-            print("  ⚠ Briefing: empty headline from Gemini")
-            return None
+            if headline:
+                print(f"  ✓ Briefing: {headline}")
+                briefing = {"headline": headline, "subheadline": subheadline}
+                _save_cached_briefing(briefing)
+                return briefing
+            else:
+                print("  ⚠ Briefing: empty headline from Gemini")
+                break
 
-    except requests.exceptions.Timeout:
-        print("  ⚠ Briefing: Gemini timeout (10s)")
-        return None
-    except requests.exceptions.RequestException as e:
-        print(f"  ⚠ Briefing: Gemini API error: {e}")
-        return None
-    except (json.JSONDecodeError, KeyError, IndexError) as e:
-        print(f"  ⚠ Briefing: Failed to parse Gemini response: {e}")
-        return None
+        except requests.exceptions.Timeout:
+            print("  ⚠ Briefing: Gemini timeout (10s)")
+            break
+        except requests.exceptions.RequestException as e:
+            print(f"  ⚠ Briefing: Gemini API error: {e}")
+            break
+        except (json.JSONDecodeError, KeyError, IndexError) as e:
+            print(f"  ⚠ Briefing: Failed to parse Gemini response: {e}")
+            break
+
+    # All attempts failed — fall back to cached headline
+    cached = _load_cached_briefing()
+    if cached and cached.get("headline"):
+        print(f"  ↩ Briefing: using cached headline")
+        return {"headline": cached["headline"], "subheadline": cached.get("subheadline", "")}
+
+    return None
