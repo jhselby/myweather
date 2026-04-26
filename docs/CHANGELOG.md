@@ -1,3 +1,11 @@
+## v0.5.12 • 2026-04-26
+* **PWA Install Prompt (iOS)**
+  * iOS action sheet style modeled on react-ios-pwa-prompt
+  * Shows after 3rd visit, dismisses for 30 days
+  * Share icon + Add to Home Screen steps with SVG icons
+  * Light/dark mode support, slide-up animation
+  * Android: triggers native beforeinstallprompt directly
+
 ## v0.5.11 • 2026-04-26
 * **Almanac Tab Icon**
   * Swapped 📅 for 🗓️ (no hardcoded date number)

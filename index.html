@@ -417,7 +417,7 @@
         </div>
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-<!-- NWS forecast card removed v0.5.11f -->
+<!-- NWS forecast card removed v0.5.12 -->
 
 
         <!-- Radar (collapsible) -->
@@ -1305,7 +1305,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.11f</span>
+            <span class="version-pill" id="appVersion">v0.5.12</span>
           </div>
         </div>
         <!-- Changelog -->
@@ -1620,7 +1620,7 @@
         deferredPrompt = e;
         var visits = parseInt(localStorage.getItem('pwa-visit-count') || '0') + 1;
         localStorage.setItem('pwa-visit-count', visits.toString());
-        if (visits < 0) return;
+        if (visits < 3) return;
         var dismissed = localStorage.getItem('pwa-prompt-dismissed');
         if (dismissed && (Date.now() - parseInt(dismissed)) < 30 * 24 * 60 * 60 * 1000) return;
         deferredPrompt.prompt();
@@ -1634,7 +1634,7 @@
 
     var visits = parseInt(localStorage.getItem('pwa-visit-count') || '0') + 1;
     localStorage.setItem('pwa-visit-count', visits.toString());
-    if (visits < 0) return;
+    if (visits < 3) return;
 
     var overlay = document.getElementById('pwaOverlay');
     var sheet = document.getElementById('pwaSheet');
