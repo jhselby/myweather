@@ -1402,7 +1402,7 @@
         <div id="pwaInstallMsg" style="font-size:0.82rem; color:rgba(255,255,255,0.55); line-height:1.35;"></div>
       </div>
       <button id="pwaInstallAction" style="flex-shrink:0; background:rgba(100,180,255,0.9); color:#000; border:none; border-radius:8px; padding:8px 14px; font-size:0.85rem; font-weight:600; cursor:pointer;">Install</button>
-      <button id="pwaInstallDismiss" style="flex-shrink:0; background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.2rem; cursor:pointer; padding:4px 2px; line-height:1;" aria-label="Dismiss">&times;</button>
+      <button id="pwaInstallDismiss" onclick="document.getElementById('pwaInstallBanner').style.display='none';localStorage.setItem('pwa-install-dismissed','true')" style="flex-shrink:0; background:none; border:none; color:rgba(255,255,255,0.4); font-size:1.4rem; cursor:pointer; padding:8px 6px; line-height:1; -webkit-tap-highlight-color:transparent;" aria-label="Dismiss">&times;</button>
     </div>
   </div>
 
