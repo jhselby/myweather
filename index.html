@@ -417,7 +417,7 @@
         </div>
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-<!-- NWS forecast card removed v0.5.11b -->
+<!-- NWS forecast card removed v0.5.11c -->
 
 
         <!-- Radar (collapsible) -->
@@ -1305,7 +1305,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.11b</span>
+            <span class="version-pill" id="appVersion">v0.5.11c</span>
           </div>
         </div>
         <!-- Changelog -->
@@ -1395,42 +1395,77 @@
 
 
   <!-- PWA Install Prompt -->
-  <div id="pwaInstallBanner" onclick="this.style.display='none';localStorage.setItem('pwa-install-dismissed','true')" style="display:none; position:fixed; bottom:76px; left:12px; right:12px; z-index:10000; background:rgba(20,30,50,0.97); border:1px solid rgba(255,255,255,0.15); border-radius:12px; padding:16px; font-family:'Source Sans 3',-apple-system,sans-serif; box-shadow:0 4px 20px rgba(0,0,0,0.5); -webkit-tap-highlight-color:transparent; cursor:pointer;">
+  <div id="pwaPrompt" style="display:none; position:fixed; bottom:76px; left:12px; right:12px; z-index:10000; border-radius:14px; padding:14px 16px; font-family:'Source Sans 3',-apple-system,sans-serif; -webkit-tap-highlight-color:transparent; box-shadow:0 4px 24px rgba(0,0,0,0.4);">
     <div style="display:flex; align-items:center; gap:12px;">
       <div style="flex:1; min-width:0;">
-        <div style="font-size:0.95rem; font-weight:600; color:#fff; margin-bottom:2px;">Install Wyman Cove Weather</div>
-        <div id="pwaInstallMsg" style="font-size:0.82rem; color:rgba(255,255,255,0.55); line-height:1.35;"></div>
+        <div id="pwaPromptMsg" style="font-size:0.88rem; color:rgba(255,255,255,0.85); line-height:1.4;"></div>
       </div>
-      <div style="flex-shrink:0; color:rgba(255,255,255,0.4); font-size:1.6rem; padding:4px 8px; line-height:1;">&times;</div>
-      
+      <button id="pwaPromptAction" style="display:none; flex-shrink:0; background:rgba(100,180,255,0.9); color:#000; border:none; border-radius:8px; padding:8px 14px; font-size:0.85rem; font-weight:600; cursor:pointer;">Add</button>
+      <div onclick="dismissPwaPrompt()" style="flex-shrink:0; color:rgba(255,255,255,0.35); font-size:1.5rem; padding:4px 8px; line-height:1; cursor:pointer;">&times;</div>
     </div>
   </div>
 
   <script>
-  (function() {
-    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
-    if (localStorage.getItem('pwa-install-dismissed')) return;
+  function dismissPwaPrompt() {
+    var p = document.getElementById('pwaPrompt');
+    if (p) p.style.display = 'none';
+    localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
+  }
 
-    var banner = document.getElementById('pwaInstallBanner');
-    var msg = document.getElementById('pwaInstallMsg');
-    if (!banner || !msg) return;
+  (function() {
+    // Already installed?
+    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
+
+    // Dismissed in last 30 days?
+    var dismissed = localStorage.getItem('pwa-prompt-dismissed');
+    if (dismissed && (Date.now() - parseInt(dismissed)) < 30 * 24 * 60 * 60 * 1000) return;
+
+    // Visit counter — only show after 3rd visit
+    var visits = parseInt(localStorage.getItem('pwa-visit-count') || '0') + 1;
+    localStorage.setItem('pwa-visit-count', visits.toString());
+    if (visits < 3) return;
+
+    var prompt = document.getElementById('pwaPrompt');
+    var msg = document.getElementById('pwaPromptMsg');
+    var actionBtn = document.getElementById('pwaPromptAction');
+    if (!prompt || !msg) return;
 
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    var deferredPrompt = null;
 
-    // Android: intercept beforeinstallprompt
+    // Style: dark on light theme, light on dark theme
+    var isLight = document.body.classList.contains('theme-light');
+    if (isLight) {
+      prompt.style.background = 'rgba(30,35,50,0.95)';
+    } else {
+      prompt.style.background = 'rgba(25,35,55,0.97)';
+      prompt.style.border = '1px solid rgba(255,255,255,0.1)';
+    }
+
+    // Android: real install prompt
     window.addEventListener('beforeinstallprompt', function(e) {
       e.preventDefault();
-      msg.textContent = 'Tap to add to your home screen.';
-      banner.style.display = 'block';
+      deferredPrompt = e;
+      msg.textContent = 'Add Wyman Cove to your home screen for quick access.';
+      actionBtn.style.display = 'block';
+      actionBtn.onclick = function() {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then(function() {
+          deferredPrompt = null;
+          dismissPwaPrompt();
+        });
+      };
+      prompt.style.display = 'block';
     });
 
-    // iOS: show after short delay
+    // iOS: instructional with share icon
     if (isIOS) {
       setTimeout(function() {
-        if (banner.style.display === 'block') return;
-        msg.innerHTML = 'To install, tap <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(100,180,255,0.9)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> below, then <strong>Add to Home Screen</strong>.';
-        banner.style.display = 'block';
-      }, 3000);
+        if (prompt.style.display === 'block') return;
+        var shareIcon = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(100,180,255,0.95)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>';
+        msg.innerHTML = 'For quick access, tap ' + shareIcon + ' below then <strong style="color:rgba(255,255,255,0.95);">Add to Home Screen</strong>';
+        prompt.style.display = 'block';
+      }, 2000);
     }
   })();
   </script>
