@@ -610,6 +610,13 @@
       rows.push({ label: "Heat index", value: feelsLike + "°", color: feelsLike >= 100 ? "red" : feelsLike >= 90 ? "orange" : null });
     }
 
+    // Humidity — show when notably high or low
+    if (s.humidity >= 80) {
+      rows.push({ label: "Humidity", value: s.humidity + "%", color: s.humidity >= 90 ? "red" : "orange" });
+    } else if (s.humidity <= 25) {
+      rows.push({ label: "Humidity", value: s.humidity + "% — very dry", color: "blue" });
+    }
+
     // Sunrise / Sunset
     const daily = s._data.daily || {};
     const todaySunrise = daily.sunrise?.[0];
@@ -651,6 +658,34 @@
 
   function buildWatchRows(s) {
     const rows = [];
+    const der = s._data.derived || {};
+    const sb = s._data.sea_breeze || {};
+
+    // Wind gusts >= 25 mph or impact score >= 7
+    const windImpact = der.wind_impact_score ?? 0;
+    const gustMph = Math.round(s._data.current?.wind_gusts ?? (s.gustKt ? s.gustKt / 0.868976 : 0));
+    if (gustMph >= 25 || windImpact >= 7) {
+      const gustNote = gustMph >= 25 ? "Gusts " + gustMph + " mph" : "Impact " + windImpact + "/10";
+      rows.push({ label: "Wind", value: gustNote, color: gustMph >= 35 ? "red" : "orange" });
+    }
+
+    // Frost risk: overnight low <= 36
+    if (s.low != null && s.low <= 36) {
+      rows.push({ label: "Frost risk", value: "Low tonight " + s.low + "°", color: s.low <= 32 ? "red" : "orange" });
+    }
+
+    // Sea breeze likelihood >= 60%
+    const sbLikelihood = sb.likelihood ?? 0;
+    const sbDelta = parseFloat((sb.reason || "").match(/Δ([-\d.]+)/)?.[1] || "0");
+    if (sbLikelihood >= 60 && sbDelta > 0) {
+      rows.push({ label: "Sea breeze", value: sbLikelihood + "% likely", color: "blue" });
+    }
+
+    // Fog probability >= 50%
+    const fogProb = der.fog_probability ?? 0;
+    if (fogProb >= 50) {
+      rows.push({ label: "Fog", value: fogProb + "% probability", color: "orange" });
+    }
 
     // Next rain — only if not today and not none
     if (s.rainContext === "tomorrow") {
@@ -661,7 +696,7 @@
     for (const a of s.alerts) {
       rows.push({
         label: "Alert",
-        value: `${a.event}`,
+        value: a.event,
         detail: a.description ? a.description.slice(0, 80) : "",
         color: "orange",
         isAlert: true,
