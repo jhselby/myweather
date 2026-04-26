@@ -1,3 +1,8 @@
+## v0.5.13 • 2026-04-26
+* **Bird Hotspot Links**
+  * Private hotspot links now open in OpenStreetMap instead of Apple Maps
+  * Works on all platforms (iOS, Android, desktop) without leaving the PWA
+
 ## v0.5.12 • 2026-04-26
 * **PWA Install Prompt (iOS)**
   * iOS action sheet style modeled on react-ios-pwa-prompt
