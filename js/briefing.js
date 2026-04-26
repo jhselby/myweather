@@ -347,7 +347,7 @@
 
     // Sunset — only show if Good or better
     const sunset = getSunsetScore() || estimateSunsetScore(s._data);
-    if (sunset && sunset.score >= 50) {
+    if (sunset) {
       rows.push({
         label: "Sunset",
         value: `${sunset.label} (${sunset.score}/100)`,
@@ -367,7 +367,7 @@
 
     // Hair Day — only show if notable (bad or great, not middling)
     const hair = getHairDayScore() || estimateHairDayScore(s);
-    if (hair && (hair.score >= 80 || hair.score <= 45)) {
+    if (hair) {
       rows.push({
         label: "Hair day",
         value: `${hair.label} (${hair.score}/100)`,
@@ -377,7 +377,7 @@
 
     // Birds — species count from eBird
     const birds = s._data.birds || {};
-    const speciesCount = birds.total_species;
+    const speciesCount = birds.species_count;
     if (speciesCount) {
       rows.push({ label: "Birds", value: speciesCount + " species nearby", color: null });
     }

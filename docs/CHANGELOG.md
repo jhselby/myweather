@@ -1,3 +1,8 @@
+## v0.5.7 • 2026-04-25
+* **Briefing Lifestyle Section**
+  * Sunset and Hair Day scores now always visible (removed threshold filters)
+  * Birds species count fixed (was reading wrong field name)
+
 ## v0.5.6 • 2026-04-25
 * **Briefing — Feels Like Row**
   * Wind chill shown when temp ≤40°F and feels 5°+ colder
