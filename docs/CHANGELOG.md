@@ -1,3 +1,8 @@
+## v0.5.15 • 2026-04-26
+* **Settings Cleanup**
+  * Changelog, Data Pipeline, Data Sources, Data Info moved behind "Nerd Stuff" toggle
+  * Added Licenses section (SunCalc, Leaflet, Chart.js)
+
 ## v0.5.14 • 2026-04-26
 * **Licenses**
   * Added LICENSES.md listing SunCalc, Leaflet, Chart.js
