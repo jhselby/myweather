@@ -1,3 +1,7 @@
+## v0.5.11 • 2026-04-26
+* **Almanac Tab Icon**
+  * Swapped 📅 for 🗓️ (no hardcoded date number)
+
 ## v0.5.10 • 2026-04-26
 * **PWA Install Prompt**
   * Detects non-installed PWA, shows one-time dismissible banner
