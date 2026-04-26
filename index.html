@@ -417,7 +417,7 @@
         </div>
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-<!-- NWS forecast card removed v0.5.11 -->
+<!-- NWS forecast card removed v0.5.11a -->
 
 
         <!-- Radar (collapsible) -->
@@ -1305,7 +1305,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.11</span>
+            <span class="version-pill" id="appVersion">v0.5.11a</span>
           </div>
         </div>
         <!-- Changelog -->
@@ -1408,56 +1408,30 @@
 
   <script>
   (function() {
-    // Already installed?
     if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
-    // Already dismissed?
     if (localStorage.getItem('pwa-install-dismissed')) return;
 
     var banner = document.getElementById('pwaInstallBanner');
     var msg = document.getElementById('pwaInstallMsg');
-    var actionBtn = document.getElementById('pwaInstallAction');
-    var dismissBtn = document.getElementById('pwaInstallDismiss');
-    var deferredPrompt = null;
+    if (!banner || !msg) return;
 
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    var isAndroid = /Android/.test(navigator.userAgent);
 
     // Android: intercept beforeinstallprompt
     window.addEventListener('beforeinstallprompt', function(e) {
       e.preventDefault();
-      deferredPrompt = e;
-      msg.textContent = 'Add to your home screen for the best experience.';
-      actionBtn.textContent = 'Install';
+      msg.textContent = 'Tap to add to your home screen.';
       banner.style.display = 'block';
     });
 
-    // iOS: show manual instructions after short delay
+    // iOS: show after short delay
     if (isIOS) {
       setTimeout(function() {
-        if (banner.style.display === 'block') return; // Android prompt already showing
+        if (banner.style.display === 'block') return;
         msg.innerHTML = 'Tap <strong style="color:rgba(100,180,255,0.9);">Share \u2b06</strong> then <strong style="color:rgba(100,180,255,0.9);">Add to Home Screen</strong>';
-        actionBtn.style.display = 'none';
         banner.style.display = 'block';
       }, 3000);
     }
-
-    // Install button (Android)
-    actionBtn.addEventListener('click', function() {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function() {
-          deferredPrompt = null;
-          banner.style.display = 'none';
-          localStorage.setItem('pwa-install-dismissed', 'true');
-        });
-      }
-    });
-
-    // Dismiss
-    dismissBtn.addEventListener('click', function() {
-      banner.style.display = 'none';
-      localStorage.setItem('pwa-install-dismissed', 'true');
-    });
   })();
   </script>
 
