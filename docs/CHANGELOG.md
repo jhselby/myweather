@@ -1,3 +1,7 @@
+## v0.5.14 • 2026-04-26
+* **Licenses**
+  * Added LICENSES.md listing SunCalc, Leaflet, Chart.js
+
 ## v0.5.13 • 2026-04-26
 * **Bird Hotspot Links**
   * Private hotspot links now open in OpenStreetMap instead of Apple Maps
