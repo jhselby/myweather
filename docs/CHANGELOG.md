@@ -1,3 +1,7 @@
+## v0.5.8 • 2026-04-25
+* **Reduced Dead Space**
+  * Tightened top padding on all tabs (64px → 44px, briefing 80px → 44px)
+
 ## v0.5.7 • 2026-04-25
 * **Briefing Lifestyle Section**
   * Sunset and Hair Day scores now always visible (removed threshold filters)
