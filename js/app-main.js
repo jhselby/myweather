@@ -1630,7 +1630,7 @@
           }
           
           return `<div style="${rowStyle}">
-            <span style="${nameStyle}">${ok ? "●" : "○"} ${name}</span>
+            <span style="${badgeStyle(ok)}">${ok ? "●" : "○"}</span> <span style="${nameStyle}">${name}</span>
             <span style="${ageStyle(ok)}">${age}</span>
             <span style="${descStyle}">${meta.desc}${s.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${s.error}</span>` : ""}</span>
             ${extraDetail}

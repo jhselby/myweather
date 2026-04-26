@@ -417,7 +417,7 @@
         </div>
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-<!-- NWS forecast card removed v0.5.15 -->
+<!-- NWS forecast card removed v0.5.15a -->
 
 
         <!-- Radar (collapsible) -->
@@ -1226,7 +1226,7 @@
 
   </div>
   <script src="js/briefing.js?v=bf2d7a15"></script>
-  <script src="js/app-main.js?v=66e5bf42"></script>
+  <script src="js/app-main.js?v=02dcb7c7"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=33c4e62b"></script>
   
@@ -1305,14 +1305,22 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.15</span>
+            <span class="version-pill" id="appVersion">v0.5.15a</span>
           </div>
         </div>
-        <!-- Nerd Stuff gate -->
+        <!-- Data timestamps (always visible) -->
+        <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+          <div class="modal-setting-label" style="margin-bottom:8px;">Data Info</div>
+          <div style="font-size:0.82rem;color:var(--muted);display:flex;flex-direction:column;gap:4px;">
+            <div>Data generated: <span id="dataUpdated2">--</span></div>
+            <div>Code loaded: <span id="pageLoaded2">--</span></div>
+          </div>
+        </div>
+        <!-- Under the Hood gate -->
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div onclick="var b=document.getElementById('nerdStuffBody');b.style.display=b.style.display==='none'?'block':'none'"
                style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
-            Nerd Stuff ▾
+            Under the Hood ▾
           </div>
           <div id="nerdStuffBody" style="display:none;margin-top:12px;">
             <!-- Changelog -->
@@ -1353,16 +1361,9 @@
                 <strong>Chart.js 4.4.4</strong> — MIT
               </div>
             </div>
-            <!-- Data timestamps -->
-            <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:12px;margin-top:8px;">
-              <div class="modal-setting-label" style="margin-bottom:8px;">Data Info</div>
-              <div style="font-size:0.82rem;color:var(--muted);display:flex;flex-direction:column;gap:4px;">
-                <div>Data generated: <span id="dataUpdated2">--</span></div>
-                <div>Code loaded: <span id="pageLoaded2">--</span></div>
-              </div>
-            </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
