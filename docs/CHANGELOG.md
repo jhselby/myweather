@@ -1,3 +1,12 @@
+## v0.5.9 • 2026-04-26
+* **Briefing — Humidity Row**
+  * Shows in Today section when humidity >=80% (orange/red) or <=25% (blue)
+* **Briefing — Watch For Thresholds**
+  * Wind gusts >=25 mph or impact score >=7
+  * Frost risk: overnight low <=36°F
+  * Sea breeze likelihood >=60%
+  * Fog probability >=50%
+
 ## v0.5.8 • 2026-04-25
 * **Reduced Dead Space**
   * Tightened top padding on all tabs (64px → 44px, briefing 80px → 44px)
