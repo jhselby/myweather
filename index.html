@@ -298,7 +298,7 @@
         <!-- 48-Hour Wind Forecast -->
         <div class="card col-6" data-collapse-key="48h_wind" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('48h_wind', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            Wind Impact<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Wind<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('48h_wind', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;padding-bottom:8px;">
@@ -417,7 +417,7 @@
         </div>
 
         <!-- NWS Detailed Forecast (fallback, hidden) -->
-<!-- NWS forecast card removed v0.5.15a -->
+<!-- NWS forecast card removed v0.5.15b -->
 
 
         <!-- Radar (collapsible) -->
@@ -564,7 +564,7 @@
         </div>
         <div class="card col-6" data-collapse-key="wind_impact" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('wind_impact', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            Wind Impact<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Wind<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -1305,7 +1305,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.15a</span>
+            <span class="version-pill" id="appVersion">v0.5.15b</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
