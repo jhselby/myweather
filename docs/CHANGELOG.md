@@ -121,26 +121,25 @@
   * Fixed build.py to skip CDN URLs when hashing for cache busting.
   * Added README.md documenting architecture, collector, and deployment.
 
-* **Version Reset**
-  * Renumbered from v4.x to v0.x to reflect pre-1.0 status. This release is v0.5.0.
 
 
-## v4.82 • 2026-04-24
+
+## v0.4.82 • 2026-04-24
 * **Hair Day — Hair Type Selector**
   * Four-profile system: Straight, Wavy, Curly, Coily. Pill selector at top of expanded card, persisted to localStorage.
   * Each profile has tuned AH scoring curves, wind thresholds, composite weights, and warning messages reflecting how that hair type actually responds to humidity, wind, and dryness.
   * Straight: tolerates wind better, humidity makes it limp rather than frizzy, static is the dry-air risk.
   * Wavy: moderate sensitivity both directions, balanced weights.
-  * Curly: AH-dominant scoring (70%), frizz-focused. Tightened from v4.77 values to address score inflation feedback.
+  * Curly: AH-dominant scoring (70%), frizz-focused. Tightened from v0.4.77 values to address score inflation feedback.
   * Coily: needs moisture — dry air is the primary threat, high humidity is more tolerable. Fragile to wind.
   * Default remains Curly (Ari's type). Switching type re-renders the card immediately.
 
-## v4.81 • 2026-04-24
+## v0.4.81 • 2026-04-24
 * **Wind Impact Card Moved to Weather Tab**
-  * Moved from Hyperlocal to Weather tab, after Sea Breeze. Consistent with v4.80 principle: weather-derived data belongs on Weather regardless of whether it uses hyperlocal corrections.
+  * Moved from Hyperlocal to Weather tab, after Sea Breeze. Consistent with v0.4.80 principle: weather-derived data belongs on Weather regardless of whether it uses hyperlocal corrections.
 
 * **Cross-Card Navigation Fixes**
-  * Fixed Right Now card links to Feels Like, Fog, Sea Breeze, and Wind Impact. These were still calling `showTab('hyperlocal')` after those cards moved to Weather in v4.80. Now navigate directly on the same tab.
+  * Fixed Right Now card links to Feels Like, Fog, Sea Breeze, and Wind Impact. These were still calling `showTab('hyperlocal')` after those cards moved to Weather in v0.4.80. Now navigate directly on the same tab.
 
 * **Hyperlocal Tab Reordered**
   * New order: Corrections, Hair Day, Birds, Sunset, Dock Day.
@@ -162,7 +161,7 @@
   * WU, Pirate Weather, and eBird API keys now read from Cloud Function env vars with local fallbacks for dev.
 
 
-## v4.80 • 2026-04-23
+## v0.4.80 • 2026-04-23
 * **Tab Reorganization — Weather vs Hyperlocal by Content Type**
   * Moved Feels Like, Fog, and Sea Breeze from Hyperlocal to the bottom of the Weather tab. Organizing principle: objective weather data and forecasts belong on Weather; derived scores, curated metrics, and Marblehead-specific curiosities belong on Hyperlocal.
   * Weather tab now: Right Now → 48h Temp/Precip → 48h Wind → 10-Day → Hyperlocal Forecast → Radar → Feels Like → Fog → Sea Breeze
@@ -174,9 +173,9 @@
   * Browsers silently parsed this as unknown attributes and ignored it — the tap-to-open-Feels-Like shortcut hadn't worked for some time, but nothing visibly failed.
   * Removed the broken handler entirely rather than reconstructing it. With the Feels Like card now on the same tab as Right Now, a click-forwarder between them is redundant. Also stripped the `›` chevron next to "Feels like --°F" since there's no longer anything to tap.
 
-## v4.79 • 2026-04-23
+## v0.4.79 • 2026-04-23
 * **Birds Card — Hyperlocal Tab**
-  * New card on the Hyperlocal tab using eBird recent sightings (5 km radius, 2 days back). Data was already flowing via the fetcher shipped v4.78-era; this ships the UI.
+  * New card on the Hyperlocal tab using eBird recent sightings (5 km radius, 2 days back). Data was already flowing via the fetcher shipped v0.4.78-era; this ships the UI.
   * Collapsed tile: shows top notable species name if any exist, otherwise species count + total bird count. 🐦 icon, centered layout matching other 192px tiles.
   * Expanded view: grouped by location (hotspot), sorted by most recent sighting. All groups collapsed by default — tap to reveal the species list for that hotspot. Header shows `{species} species · {total} birds` plus notable-count badge when applicable.
   * Each group header shows distance, species count, bird count, and last-seen timestamp. Species rows show count (×N when >1) and link out to eBird species pages in a new tab. Notable species rendered with an orange pill highlight.
@@ -186,7 +185,7 @@
   * Initial automated insertion put the Birds card after the `.grid` container's closing `</div>`, not inside it. Effect: `col-6` had no grid parent to halve against, so the card rendered full-width; grid gap spacing also disappeared.
   * Fix script walked the Dock Day card's DOM depth to find its actual matching `</div>`, then re-inserted Birds at the correct sibling position. Script now uses bracket-matching rather than a naive "last `</div>` before `</section>`" heuristic that matched the wrong div.
 
-## v4.78 • 2026-04-21
+## v0.4.78 • 2026-04-21
 * **Sea Breeze Card — Fixed False "No Data" Error**
   * Root cause: renderer guard was `if (!sb.likelihood)`, which treats `likelihood === 0` as falsy and short-circuits to "No sea breeze data available"
   * Result: every time the detector correctly computed 0% likelihood (common in spring/fall when water is warmer than land), the card lied and claimed the fetcher was broken
@@ -203,7 +202,7 @@
   * Active state still driven solely by the blue dot, same pattern as the alerts badge
   * Emoji always rendered as multicolor regardless of state, making the badge look perpetually "active"
 
-## v4.77 • 2026-04-21
+## v0.4.77 • 2026-04-21
 * **Hair Day — Wind Scoring with Corrected Gusts**
   * Added wind as a real scoring component (10% weight); AH dropped 75→70%, precip 25→20%
   * Wind score uses first-bad-hour logic: walks hours 6am–8pm looking for first gust ≥22 mph. Later bad wind = higher score (more of the day happens before ruin)
@@ -211,16 +210,16 @@
   * Detects restyle opportunity: if bad wind is followed by 2+ consecutive calm hours before 7pm, flag tells you when
   * Composed wind flag replaces old "windy morning" message — one of four shapes: no flag, "picks up after X" (late), "tough day from X" (early, no recovery), or "windy from X, calms Y–Z — restyle opportunity"
   * Display label changed from "Morning Wind" to "Morning Gust" to match what's being scored
-  * Tuned for Ari's curly+colored hair: AH still dominates, wind secondary. Future v4.78 will add hair-type selector and per-hour styling-window scoring.
+  * Tuned for Ari's curly+colored hair: AH still dominates, wind secondary. Future v0.4.78 will add hair-type selector and per-hour styling-window scoring.
 
-## v4.76 • 2026-04-20
+## v0.4.76 • 2026-04-20
 * **Card Open Animation — Smoother**
   * Replaced bouncy cubic-bezier overshoot with standard iOS ease-out
   * Removed competing animations: `.card` had `transition: all` while `.card-expanded` had a keyframe animation, so they fought each other during expansion
   * Fixed keyframe to preserve `translate(-50%, -50%)` centering — previously the scale transform was overriding the centering translate, causing the jerky feel
   * Removed delayed opacity transitions on `.card-body` and `.card-title-collapsible` — the keyframe now drives opacity cleanly at the card level so children don't need their own fades
 
-## v4.75 • 2026-04-20
+## v0.4.75 • 2026-04-20
 * **Pirate Weather Next Hour — Probability Gate**
   * Fixed bug where precip badge triggered on raw intensity even when probability was 0% (Pirate reports theoretical intensity regardless of probability)
   * Badge now requires intensity > 0 AND probability ≥ 30%
@@ -236,7 +235,7 @@
 * **Bug Fix — Duplicate Hide Logic**
   * Fixed alert badge being hidden by loadWeatherData after mutation observer made it visible. Both paths now toggle the dot instead of the button itself.
 
-## v4.74 • 2026-04-20
+## v0..74 • 2026-04-20
 * **Dead Code Cleanup — Top Tab Nav Removal**
   * Removed unused top tab nav HTML (was hidden by CSS since bottom tab bar launched)
   * Removed 51 lines of dead `.tabs`/`.tab` CSS (including responsive and light-mode variants)
@@ -248,7 +247,7 @@
 * **Bug Fix — renderSources**
   * Fixed pre-existing bug: function was writing to `table.innerHTML` instead of `renderTarget.innerHTML`, which would have crashed if `#sourcesTable` was missing and `#sourcesTableModal` was present (the exact state after this cleanup)
 
-## v4.73 • 2026-04-20
+## v0.4.73 • 2026-04-20
 * **Card modal positioning — measured from actual layout**
   * JS measures header and tab bar heights on load, sets CSS variables
   * Cards position relative to actual rendered elements, not hardcoded pixels
@@ -256,25 +255,25 @@
   * Short cards vertically centered in available space
   * Tall cards top-align and scroll internally
 
-## v4.71 • 2026-04-20
+## v0.4.71 • 2026-04-20
 * **Expanded cards now use fixed-position modal**
   * Cards open centered on screen with guaranteed backdrop on all sides
   * Tappable backdrop above, below, and beside — no X button needed
   * Max height calc(100vh - 160px) with internal scrolling
   * Subtle scale animation on open
-## v4.71 • 2026-04-20
+## v0.4.71 • 2026-04-20
 * **Expanded cards now use fixed-position modal**
   * Cards open centered on screen with guaranteed backdrop on all sides
   * Tappable backdrop above, below, and beside — no X button needed
   * Max height calc(100vh - 160px) with internal scrolling
   * Subtle scale animation on open
 
-## v4.70 • 2026-04-20
+## v0.4.70 • 2026-04-20
 * **Expanded card scroll gap**
   * When a card near the top of the page expands, page scrolls to ensure ~80px tappable backdrop above
   * Combined with 82vh max-height, guarantees tappable strips both above and below on mobile
 
-## v4.69 • 2026-04-20
+## v0.4.69 • 2026-04-20
 * **Expanded card max-height**
   * Cards cap at 82vh with internal scrolling — always leaves visible backdrop to tap to dismiss
   * X button removed (backdrop tap + Escape key are sufficient)
@@ -282,13 +281,13 @@
   * New order: Corrections, Wind Impact, Sea Breeze, Feels Like, Fog, Hair Day, Sunset, Dock Day
   * Comfort/impact grouped together, lifestyle scores grouped together
 
-## v4.68 • 2026-04-20
+## v0.4.68 • 2026-04-20
 * **Right Now card lifestyle section polish**
   * Sunset Score, Dock Day, Hair Day now show score/100 format
   * Fog Risk now shows "X% chance" instead of bare percentage
   * Sunset Score fixed — now reads correctly from stored score instead of DOM scraping
 
-## v4.66 • 2026-04-20
+## v0.4.66 • 2026-04-20
 * **Hair Day card polish**
   * Score bar shows 0/100 endpoints for clarity
   * Removed redundant AH bar from data rows
@@ -297,7 +296,7 @@
 * **Fog card headline fix**
   * Removed border-radius on headline bar (was rendering as parenthesis in light mode)
 
-## v4.65 • 2026-04-20
+## v0.4.65 • 2026-04-20
 * **Hair Day card overhaul**
   * Scoring now based on Absolute Humidity (AH) with inverted-U curve — sweet spot 4-5 g/m³
   * Too dry (<2 g/m³) penalized for flyaways/static, too humid (>14 g/m³) penalized for frizz
@@ -308,7 +307,7 @@
   * Wind remains a flag only — "Windy morning — expect flyaways" when >12mph
   * Corrected Magnus formula bug (216.7 not 2165)
 
-## v4.61 • 2026-04-20
+## v0.4.61 • 2026-04-20
 * **Stale page indicator**
   * Gear and refresh icons turn red when data is >2h newer than page load
   * "Page loaded" relabeled "Code loaded" in Settings and header for clarity
@@ -318,18 +317,18 @@
   * Shows "High tides outside usable hours" when tide timing is the constraint
   * Headline shows "dock accessible now until X" when currently in a window
 
-## v4.60 • 2026-04-19
+## v0.4.60 • 2026-04-19
 * **Sunset headline sentence**
   * Plain-English summary above day grid ("Good sunset tonight — clear horizon, low humidity")
   * Matches headline pattern from Hair Day, Dock Day, Sea Breeze, Fog cards
 
-## v4.58 • 2026-04-19
+## v0.4.58 • 2026-04-19
 * **UX polish (roadmap easy wins)**
   * Frost Log: explicit empty state when no frost events recorded this season
   * Collapsed tiles: hover lift + cursor affordance to signal interactivity
   * Escape key closes any expanded card modal
 
-## v4.57 • 2026-04-19
+## v0.4.57 • 2026-04-19
 * **Hair Day Card (Hyperlocal tab)**
   * New col-6 card scoring current hair conditions 0–100
   * Five weighted factors: humidity (40%), dew point spread (25%), wind (15%), rain chance (10%), UV index (10%)
@@ -337,7 +336,7 @@
   * Collapsed preview shows emoji, label, and score
   * Labels: Great hair day / Good hair day / Manageable / Frizz risk / Bad hair day / Stay inside
 
-## v4.57 • 2026-04-19
+## v0.4.57 • 2026-04-19
 * **Hair Day Card (Hyperlocal tab)**
   * 3-day horizontal layout matching Sunset/Dock Day style
   * Today uses hyperlocal-corrected values; Tomorrow and Day After use daytime hourly averages (7am–8pm)
@@ -345,36 +344,36 @@
   * Each column shows date, emoji, score label, score/100, progress bar, and 4 data rows
   * Collapsed preview shows today's emoji, score label, and score
 
-## v4.56 • 2026-04-19
+## v0.4.56 • 2026-04-19
 * **Tab active state fix**
   * Weather tab no longer incorrectly highlighted when on another tab after refresh
   * Active tab correctly restored from localStorage on page load
   * Removed hardcoded active class from weather tab HTML
 
-## v4.55 • 2026-04-19
+## v0.4.55 • 2026-04-19
 * **Ocean tile layout fix**
   * Labels left-aligned, values right-aligned using table layout
   * Wind value no longer wraps to multiple lines
 
-## v4.54 • 2026-04-19
+## v0.4.54 • 2026-04-19
 * **Tap outside to close card**
   * Transparent full-screen backdrop captures taps outside expanded cards
   * Consistent with X button behavior, no visual dimming
 
-## v4.53 • 2026-04-19
+## v0.4.53 • 2026-04-19
 * **Next Hour precip drawer — honest timing**
   * First tick now shows actual data fetch time (e.g. "10:23am") instead of "now"
   * Summary text adjusted for data staleness — "starting in ~26 min" reflects minutes from now, not from fetch time
   * Rain already-started edge case handled correctly
 
-## v4.52 • 2026-04-19
+## v0.4.52 • 2026-04-19
 * **Infrastructure: GCS migration**
   * Collector moved from GitHub Actions to Google Cloud Functions + Cloud Scheduler
   * weather_data.json and frost_log.json now served from GCS bucket (myweather-data)
   * Eliminates force-push conflicts caused by GitHub Actions writing data to repo
   * PWA fetch URL updated to GCS public URL
 
-## v4.51 • 2026-04-18
+## v0.4.51 • 2026-04-18
 * **Feels Like card redesign**
   * 48-hour Chart.js line chart with day-labeled x-axis (matches wind/sky pattern)
   * Hover/swipe data bar showing time, feels-like type, and air temp
@@ -382,7 +381,7 @@
 * **Bug fixes**
   * Fog emoji (🌫️) replaced with 🌥️ — was rendering as square on all platforms
 
-## v4.50 • 2026-04-18
+## v0.4.50 • 2026-04-18
 * **Pirate Weather Integration**
   * Added minutely precip fetcher (61-point, 1-min resolution)
   * Solar irradiance and CAPE stored in weather_data.json
@@ -391,17 +390,17 @@
   * Swipe-down or ✕ to dismiss; pulsing blue dot matches alert badge pattern
   * Removed debug console.log noise from collapsed radar map init
 
-## v4.48 • 2026-04-18
+## v0.4.48 • 2026-04-18
 - Fix blank card bug on resume: close any open expanded card before refreshing data on visibility change
 
-## v4.47 • 2026-04-17
+## v0.4.47 • 2026-04-17
 * **Scoring Display**
   * Dock Day and Sunset Score tile fronts now show score as xx/100
   * Dock Day expanded card inner tiles use opaque white background in light mode for readability
 * **Dock Day Scoring**
   * Raised label thresholds to better reflect actual conditions (Great 80+, Good 65+, Marginal 45+, Poor 25+)
 
-## v4.46 • 2026-04-17
+## v0.4.46 • 2026-04-17
 * **Feels Like Card**
   * New Hyperlocal card showing current apparent temperature with context-aware label (Wind Chill / Heat Index / Feels Like)
   * Blue tint for wind chill, orange for heat index, neutral otherwise
@@ -409,7 +408,7 @@
   * Shows coldest/peak value for today, plus air temp, humidity, and wind inputs
   * "Feels like" on Right Now card is now tappable — navigates directly to Feels Like card
 
-## v4.45 • 2026-04-17
+## v0.4.45 • 2026-04-17
 * **Auto-Refresh on Resume**
   * Page now reloads weather data automatically when reopened from background or home screen
 * **Expanded Card Backgrounds**
@@ -417,13 +416,13 @@
 * **Emoji Removal** (continued)
   * Removed remaining emoji from dock day collapsed tile
 
-## v4.44 • 2026-04-17
+## v0.4.44 • 2026-04-17
 * **Dock Day Score Refinements**
   * Score now displayed as 1-100 (was 0-1 fraction)
   * Tightened temp curve: below 50°F scores 0 (was 45°F), comfortable range shifted to 65-80°F
   * Raised label thresholds: Great day 80+, Good day 65+, Marginal 45+, Poor 25+
 
-## v4.43 • 2026-04-17
+## v0.4.43 • 2026-04-17
 * **Emoji Removal**
   * Removed all decorative and status emojis throughout the app
   * Dock Day Score, Sunset Quality, Sea Breeze, storm flags, and sources status now use color-coded text labels only
@@ -434,7 +433,7 @@
 * **Detail Forecast Tile**
   * Collapsed preview now clamps to 4 lines with ellipsis
 
-## v4.42 • 2026-04-16
+## v0.4.42 • 2026-04-16
 * **Wind Impact Unification**
   * Added combined Wind Impact score using threshold logic: sustained wind when below 15 mph, gust impact when sustained wind is 15 mph or higher
   * Weather page now uses a single Wind Impact score across the tile, chart, and Right Now card
@@ -450,7 +449,7 @@
   * Fixed missing combinedWindImpact function reference
   * Fixed null element errors in fillWorryCard
   * Fixed breakdown rows so sustained and gust scores reflect peak impact over the selected 12/24/36/48h window
-## v4.41 • 2026-04-15
+## v0.4.41 • 2026-04-15
 * **Sky & Precip Chart Redesign**
   * Sky conditions now painted as per-column background gradients instead of stacked bars
   * Clear days show warm yellow columns, overcast days cool gray, nights deep blue-black
@@ -468,13 +467,13 @@
   * Fixed fog detail card never called on data load
   * Fixed fog detail ReferenceError (hyp declared after use)
   
-## v4.40 • 2026-04-14
+## v0.4.40 • 2026-04-14
 * **Planets Tile**
   * "None visible tonight" → "None visible now" (reflects current time, not night forecast)
   * "Visible tonight" label hidden when no planets are currently visible
   * "None visible now" sized to match "Visible now" label for visual consistency
 
-## v4.39 • 2026-04-14
+## v0.4.39 • 2026-04-14
 * **Tides Card Redesign**
   * Expanded view replaced with 3-column calendar layout (Today / Tomorrow / next day)
   * High tides highlighted in blue, low tides muted — clear visual hierarchy
@@ -482,7 +481,7 @@
   * Tide chart axis labels and grid now theme-aware (dark and light mode)
   * Collector now fetches 3 days / 12 events (was 2 days / 8 events)
 
-## v4.38 • 2026-04-14
+## v0.4.38 • 2026-04-14
 * **Corrected Values Audit — Use Corrections Everywhere**
   * Fog detail breakdown now uses corrected temp, humidity, and calculated dew point (Magnus formula)
   * Dew point display and depression spread calculated from corrected temp + humidity
@@ -497,17 +496,17 @@
   * Swipe-down to dismiss (touch and mouse drag)
   * Close (✕) button removed — use swipe or tap scrim to dismiss
 
-## v4.37 • 2026-04-14
+## v0.4.37 • 2026-04-14
 * **Forecast Temperature Corrections**
   * Today and tomorrow high/low in expanded 10-day card now use corrected hourly temperatures
   * Detailed forecast period header temperature corrected for today and tomorrow
   * Forecast narrative text ("high near X") uses hyperlocal bias-corrected temperature for today and tomorrow
 
-## v4.36 • 2026-04-14
+## v0.4.36 • 2026-04-14
 * **10-Day Forecast**
   * Today and tomorrow high/low now use corrected hourly temperatures (bias-adjusted) instead of raw NWS model values
 
-## v4.35 • 2026-04-14
+## v0.4.35 • 2026-04-14
 * **UI / Native App Polish**
   * Header now fixed with frosted glass effect matching footer (backdrop blur, same opacity)
   * Storm mode banner removed from header — storm alerts consolidated into alert badge modal
@@ -531,7 +530,7 @@
   * Confidence level removed — station spread displayed instead
   * Bullet separator removed from station count line
 
-## v4.34 • 2026-04-12
+## v0.4.34 • 2026-04-12
 * **Card Beautification Pass**
   * Gradient backgrounds now persist into expanded card state (all tabs)
   * Expanded cards show clean title row matching tile label style (no emoji, uppercase)
@@ -560,12 +559,12 @@
 * **Sun Card**
   * Hidden large emoji in expanded state
 
-## v4.33 • 2026-04-12
+## v0.4.33 • 2026-04-12
 * **Sources moved to Settings Modal**
   * Data Sources and Status now accessible from settings gear icon
   * Collapsible section showing all live data sources and station details
 
-## v4.32 • 2026-04-12
+## v0.4.32 • 2026-04-12
 * **Station Network Expansion**
   * Expanded from 15 to 36 WU stations (30 responding, 13 within 1 mile)
   * Removed KMAMARBL17 (consistently failing)
@@ -575,13 +574,13 @@
 * **Humidity Display Fix**
   * Current humidity now uses corrected value from hyperlocal
 
-## v4.31 • 2026-04-11
+## v0.4.31 • 2026-04-11
 * **Tide Animation Fix**
   * Tide water level now replays correctly when switching to Almanac tab
   * Animation starts from previous tide height (high or low) and animates to current level
   * Fixed stale animation when tab was hidden during initial data load
 
-## v4.29 • 2026-04-11
+## v0.4.29 • 2026-04-11
 * **Swipe Navigation**
   * Swipe left/right to page through tabs (Weather, Hyperlocal, Almanac, Overhead)
   * Slide animation on swipe (60px travel, 0.35s ease-out)
@@ -602,7 +601,7 @@
 * **Wind Tile Fix**
   * Compass SVG shrunk 160px to 120px, padding-bottom 40px to 8px
 
-## v4.27 • 2026-04-11
+## v0.4.27 • 2026-04-11
 * **iOS-Style Bottom Tab Bar**
   * Fixed-position bottom nav with 4 tabs: Weather, Hyperlocal, Almanac, Overhead
   * Frosted glass background, active tab label turns blue
@@ -637,7 +636,7 @@
   * Tightened container/header padding and grid gap
   * Animation restart on tab switch
 
-## v4.26 • 2026-04-11
+## v0.4.26 • 2026-04-11
 * **Moon Phase Rendering**
   * Replaced emoji moon with canvas-rendered moon phase (scanline algorithm)
   * Canvas moon in collapsed tile (60px) and expanded card (80px)
@@ -655,7 +654,7 @@
   * **Ocean tile**: Fixed collapsed wind display (was reading nonexistent wind_speed_kt, now uses wind_mph)
   * **CSS**: Scoped global canvas sizing rule to exclude moon canvases (canvas:not(.moon-canvas))
 
-## v4.25 • 2026-04-10
+## v0.4.25 • 2026-04-10
 * **UI/UX Improvements
   * **Tide tile**: Added "NOW: Coming in/Going out, X.X ft" indicator in water showing current tide height and direction
   * **Tide tile**: Added 0 ft reference line at 14.3% for visual orientation
@@ -677,7 +676,7 @@
 * Data Sources
   * Removed NWS Forecast from sources list (fetcher disabled)
 
-## v4.24 • 2026-04-07
+## v0.4.24 • 2026-04-07
 * **Hyperlocal & Almanac tile redesign - 14 collapsed previews redesigned** - New centered layouts with clean 20px regular-weight text matching Detailed Forecast aesthetic
 * **Corrections tile** - Shows station count and confidence level as simple teaser ("13 stations • Moderate")
 * **Wind Impact tiles (Gust & Sustained)** - Large centered score number, label, and wind data with color-coded gradients (green calm → red severe)
@@ -696,20 +695,20 @@
 * All Hyperlocal/Almanac tiles use consistent 20px font-weight 400 style
 * All tiles have subtle background gradients matching their data state (fog levels, wind impact, sea breeze likelihood, sunset quality, dock conditions)
 
-## v4.23 • 2026-04-07
+## v0.4.23 • 2026-04-07
 * **Radar tile dark mode optimization** - Replaced dynamic Leaflet map with static Mapbox background image for better performance and consistent rendering
 * Fixed radar tile dark mode appearance - now properly darkened to match theme while maintaining land/sea contrast
 * Fixed radar tile title positioning and border visibility in dark mode
 * Eliminated Leaflet tile loading race conditions and theme detection issues
 
-## v4.23 • 2026-04-07
+## v0.4.23 • 2026-04-07
 * **Radar tile dark mode optimization** - Replaced dynamic Leaflet map with static Mapbox background image for better performance and consistent rendering
 * Fixed radar tile dark mode appearance - now properly darkened to match theme while maintaining land/sea contrast  
 * Fixed radar tile title positioning and border visibility in dark mode
 * Eliminated Leaflet tile loading race conditions and theme detection issues
 
 
-## v4.22 • 2026-04-07
+## v0.4.22 • 2026-04-07
 * **Weather page tile redesign - all 6 collapsed previews redesigned** - New collapsible tile/modal architecture with distinctive card-collapsed-preview designs
 * **Right Now tile** - Centered layout with large temperature (68px), thermometer graphic with animated mercury level, "Feels like" below
 * **Sky & Precip tile** - Sky visualization, sky condition text, precipitation and cloud percentage
@@ -721,57 +720,57 @@
 * Tiles fill entire card area with no white background showing (matching Right Now and Sky & Precip colored backgrounds)
 
 
-## v4.21 • 2026-04-05
+## v0.4.21 • 2026-04-05
 * Alert toggle positioning fixed - Changed justify-content from flex-start to space-between for better chevron alignment
 
-## v4.21 - UI fixes
+## v0.4.21 - UI fixes
 - Fixed chart data bar text alignment (date and data now properly aligned)
 - Fixed alert Show/Hide toggle positioning (now consistently on far right)
 
-## v4.21 - UI fixes
+## v0.4.21 - UI fixes
 - Fixed chart data bar text alignment (date and data now properly aligned)
 - Fixed alert Show/Hide toggle positioning (now consistently on far right)
 
 
-## v4.20 • 2026-04-05
+## v0.4.20 • 2026-04-05
 * **Right Now card navigation improved** - Clicking links from Right Now card (Wind Impact, Sea Breeze, Fog Risk, etc.) now switches to Hyperlocal tab to open the target card, then returns to Weather tab with Right Now card still open when closed
 * Right Now card sunset score now reads directly from rendered sunset card instead of relying on global variable
 
-## v4.19 • 2026-04-05
+## v0.4.19 • 2026-04-05
 * **Right Now card sunset score fixed** - Now reads from rendered sunset card instead of global variable that wasn't being set for overcast/clear-sky conditions
 
-## v4.18 • 2026-04-04
+## v0.4.18 • 2026-04-04
 * **Warmup optimization** - Warmup call now uses single attempt (no retry) to reduce total collection time by ~60 seconds
 * Warmup still establishes connection for Day 0 even if it times out
 
-## v4.17 • 2026-04-04
+## v0.4.17 • 2026-04-04
 * **Sunset Day 0 warmup improved** - Added dummy Day 6 fetch to establish API connection before Day 0 data collection
 * This warms the connection without risking Day 0 data if warmup times out
 
-## v4.16 • 2026-04-04
+## v0.4.16 • 2026-04-04
 * **Sunset data collection reliability improved** - Added retry logic with 10-second backoff for timeout failures, plus increased API timeout from 30s to 60s
 * **Sunset score now works with partial data** - If some distance measurements fail, estimates missing values from available data instead of showing "No data"
 * API requests that timeout are automatically retried once after 10 seconds before failing
 
-## v4.15 • 2026-04-04
-* **Sunset data collection reliability** - Added warmup API call to establish connection before fetching directional cloud data (later replaced by retry logic in v4.16)
+## v0.4.15 • 2026-04-04
+* **Sunset data collection reliability** - Added warmup API call to establish connection before fetching directional cloud data (later replaced by retry logic in v0.4.16)
 
-## v4.14 • 2026-04-04
+## v0.4.14 • 2026-04-04
 * **Smart Corrections table unified** - Removed distinction between "Metric" and "Derived" sections
 * **Added Bias column for derived values** - Dew point, wet bulb, feels like, and precip type now show calculated bias
 * Precip type bias shows "Changed" when correction differs from model, "--" when same
 
-## v4.13 • 2026-04-04
+## v0.4.13 • 2026-04-04
 * **Wet bulb forecast accuracy** - 48-hour wet bulb now calculated with BOTH corrected temperature and corrected humidity (previously only humidity was corrected)
 * Added calculateWetBulb() function to frontend for accurate psychrometric calculations using Stull's formula
 * Tested and validated build.py cache-busting system
 
-## v4.12 • 2026-04-04
+## v0.4.12 • 2026-04-04
 * **Automated cache-busting build system** - Added build.py script to generate content hashes for JS/CSS files
 * **DATA_PIPELINE.md reference document** - Comprehensive documentation of all data sources, processors, and correction algorithms
 * Added Data Pipeline Reference section to settings panel for easy access to technical documentation
 
-## v4.12 • April 4, 2026
+## v0.4.12 • April 4, 2026
 * Added DATA_PIPELINE.md technical reference documentation
 * Moved CHANGELOG.md to docs/ folder
 * Added Data Pipeline Reference section to header
@@ -780,16 +779,16 @@
 * Updated .gitignore with cache file exclusions
 * Fixed wu.py to import scraper as module instead of subprocess
 
-## v4.11 • 2026-04-03
+## v0.4.11 • 2026-04-03
 * **Wind corrections** - Improved sustained wind and gust correction algorithms
 * **48-hour chart data bars improved** - Better visualization of precipitation and cloud data
 * **Header cleanup** - Streamlined header layout and styling
 
-## v4.9 • 2026-04-03
+## v0.4.9 • 2026-04-03
 * **Fixed hyperlocal navigation from Right Now card** - Clicking hyperlocal links (Sunset, Dock, Wind Impact, etc.) now properly navigates without leaving page unresponsive
 * **Fixed card interaction** - Restored guard preventing cards from closing when clicking content inside expanded cards (only X button closes)
 
-## v4.8 • 2026-04-03
+## v0.4.8 • 2026-04-03
 * **Eliminated duplicate calculations in Right Now card** - Sunset and Dock scores now read from their respective cards instead of recalculating
 * **All impact scores now use unified 1-100 scale** for consistency
   * Wind Impact: 1-100 (previously unbounded)
@@ -798,7 +797,7 @@
   * Dock Day Score: 1-100 (previously 0.00-1.00 decimal)
 * All scores display as whole numbers without decimals
 
-## v4.7 • 2026-04-03
+## v0.4.7 • 2026-04-03
 * **CRITICAL**: Chart temperature line now uses corrected HRRR data (model + hyperlocal bias) instead of raw model temperatures
 * **CRITICAL**: Precip type coloring on chart now uses corrected temperatures for freezing rain detection
 * **CRITICAL**: Today's high/low calculated from corrected hourly temps instead of timing-out ECMWF daily endpoint
@@ -808,7 +807,7 @@
 * Only one tile can be open at a time (opening a tile closes all others)
 
 # Weather App Changelog
-## v4.6 • April 2, 2026
+## v0.4.6 • April 2, 2026
 * Collapsible tile system - all cards now col-6 tiles that expand to modal overlays
   * 20+ cards converted: Weather (7), Hyperlocal (7), Almanac (7)
   * Tiles show preview data when collapsed (current conditions, scores, next events)
@@ -830,14 +829,14 @@
 * Renamed: "CORRECTIONS" → "OBSERVATION-BASED CORRECTIONS"
 * Code: toggleCard(), initCollapsibleCards(), modal-backdrop CSS
 
-## v4.5 • April 2, 2026
+## v0.4.5 • April 2, 2026
 * Prototype: Collapsible tile system (single card proof-of-concept)
   * Converted one card to col-6 tile that expands to modal overlay
   * Implemented toggleCard() function and modal backdrop
   * localStorage persistence for open/closed state
-  * Foundation for v4.6 full rollout
+  * Foundation for v0.4.6 full rollout
 
-## v4.4 • April 1, 2026 - NEXRAD Radar Upgrade**
+## v0.4.4 • April 1, 2026 - NEXRAD Radar Upgrade**
 *  Switched radar source from RainViewer to IEM NEXRAD WMS
   * 5-minute update intervals (vs RainViewer's 10-minute)
   * 24 frames = 2 hours of radar history
@@ -852,7 +851,7 @@
   * WMS endpoint: `https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi`
   * Layer: `nexrad-n0r-wmst` (time-enabled)
 
-## v4.3 • April 1, 2026
+## v0.4.3 • April 1, 2026
 * UI consistency improvements: standardized card collapse patterns
 * Radar card: moved controls (timestamp, play/pause, map toggle) inside card body
 * Wind Impact cards: moved time window pills (12h/24h/36h/48h) inside card body
@@ -860,7 +859,7 @@
 * Flight tracker: selected aircraft now reverts to altitude-based color when detail panel closes
 * Fixed bug where clicked planes stayed highlighted (red) after closing details
 
-## v4.2 • March 31, 2026
+## v0.4.2 • March 31, 2026
 * Chart sky colors redesigned for visual accuracy
 * Clear sky: yellow (sun) during day, dark blue/black at night, subtle orange at dawn/dusk
 * Cloud bars: weighted blend of low/mid/high cloud layers
@@ -870,7 +869,7 @@
   * Night clouds: blue-tinted gray
 * Legend updated to reflect new color scheme
 
-## v4.0 • March 31, 2026
+## v0.4.0 • March 31, 2026
 * MAJOR: Comprehensive hyperlocal correction system - all derived values now use corrected data
 * Corrected wet bulb calculation from corrected temp + humidity (current + 48h forecast)
 * Hybrid precipitation type classification using corrected wet bulb + 850mb temp (catches freezing rain)
@@ -886,12 +885,12 @@
 * Chart now uses corrected wet bulb for precipitation type coloring
 * Right Now card field reorder: wind metrics grouped together (sustained + impact, gusts + impact)
 
-## v3.18 • March 30, 2026
+## v0.3.18 • March 30, 2026
 * Fix plane icon rotation: corrected for eastward-pointing default orientation
 * Aircraft now point in correct direction based on track heading
 
 
-## v3.17 • March 29, 2026
+## v0.3.17 • March 29, 2026
 * Flight tracker route validation: trajectory analyzer flags stale/incorrect routes from adsbdb cache
 * Route validation uses position (cross-track distance) and heading alignment checks
 * Near-airport exemption (<100nm) prevents false positives during departure/arrival
@@ -902,17 +901,17 @@
 * Single alert display: removed redundant summary bar when only one alert active
 * UI cleanup: removed duplicate refresh button from overhead controls
 
-## v3.16 • March 28, 2026
+## v0.3.16 • March 28, 2026
 * Beefed up airplane data popup with distance, vertical rate, and bearing
 * Reformatted airplane info: "Airline • Flight#" format, added full city names to routes
 * Fixed light mode contrast issues across multiple sections
 * Fixed wind chart legend wrapping and increased route text size
 
-## v3.14 • March 26, 2026
+## v0.3.14 • March 26, 2026
 * Fix missing tail hours in wind/temp charts by using Open-Meteo seamless model blending
 * Ensures full 48-hour forecast display without data dropoff at end of timeframe
 
-## v3.13 • March 26, 2026
+## v0.3.13 • March 26, 2026
 * Add Overhead tab - live aircraft tracker showing planes visible from property
 * Mapbox-based map with lazy initialization (loads only when tab opened)
 * Manual refresh button, zoom level 12 for ~15mi radius view
@@ -920,42 +919,42 @@
 * Fix Today card alignment issues
 * Scope fixes for tab initialization
 
-## v3.12 • March 26, 2026
+## v0.3.12 • March 26, 2026
 * Add sky condition bars to 48-hour temperature/precipitation chart
 * Shows clear/partly/mostly/overcast cloud layers as stacked bars
 * Fix wind data dropoff at end of forecast window
 * Trim past hours from chart display (now shows current hour forward)
 
-## v3.11 • March 26, 2026
+## v0.3.11 • March 26, 2026
 * Fix horizontal page drift on mobile when touching/sliding across chart
 * Add touch-action CSS to prevent unwanted page scroll during chart interaction
 * Mobile UX improvement for chart data bar interaction
 
-## v3.10 • March 26, 2026
+## 0.3.10 • March 26, 2026
 * Consolidate temp/precip chart data bar into single responsive line
 * Shows: Temp | POP | Cloud % | Clear % | Type in one formatted line
 * Data bar appears on click, updates on hover, closes with X button
 * Replaces previous 3-column grid layout
 
-## v3.5 • March 21, 2026
+## v0.3.5 • March 21, 2026
 * Wind forecast improvements: max(KBVY, WU) for current conditions
 * Extract wind gusts from KBVY METAR (Aviation Weather API)
 * Blend observed wind into hourly forecast (24hr decay curve)
 * Lower wind impact thresholds for waterfront exposure (10/16 vs 12/20)
 * Fixes underreported gusts in impact cards, graphs, and forecast text
 
-## v3.4 • March 21, 2026
+## v0.3.4 • March 21, 2026
 * Fix NWS temperature fallback IndexError in forecast generator
 * Prevents crashes when NWS data is incomplete
 
-## v3.3 • March 21, 2026
+## v0.3.3 • March 21, 2026
 * Wind chart redesign: axis swap (time horizontal, speed vertical)
 * Wind chart: labeled worry zones with gradient color fills
 * Wind chart: legend shows current + peak worry levels with time labels
 * Wind chart: switched from stacked bar to grouped bar layout
 * Fix: duplicate "Calm" label in worryLevel function
 
-## v3.2 • March 21, 2026
+## v0.3.2 • March 21, 2026
 * Add morning/afternoon cloud split for accurate sky narratives
 * Fix fog handling: precipitation now primary, fog as modifier
 * Fix precipitation probability thresholds (90%+ drops qualifiers)
@@ -963,7 +962,7 @@
 * Fix 10-day forecast missing temperature data
 * Fix multiple JS errors in forecast rendering
 
-## v3.1 • March 21, 2026
+## v0.3.1 • March 21, 2026
 * NWS NBM gridpoint integration (replaced GFS surface data)
 * Fix precipitation likelihood qualifiers (added "likely", "chance of", "slight chance of")
 * Fix surface temperature validation for precipitation type
@@ -973,7 +972,7 @@
 * Wet bulb temperature display in Conditions card (shown when PoP ≥ 20%)
 * 850mb precip type only calculated when PoP ≥ 20%
 
-## v2.72–v2.77 • March 16–18, 2026
+## v0.2.72–v0.2.77 • March 16–18, 2026
 * Sea breeze detector with detailed analysis card and likelihood scoring
 * Terrain-based wind exposure table from contour map analysis
 * Wind impact cards restructured with forward-looking peak windows (12/24/36/48h)
@@ -982,11 +981,11 @@
 * ASOS condition override and fog risk calculation
 * Dewpoint depression display and meteorological seasons
 
-## v2.70–v2.71 • March 16, 2026
+## v0.2.70–v0.2.71 • March 16, 2026
 * 48-hour wind chart: swapped axes, color gradient zones, forward-looking impact scores
 * Fix wind exposure table using actual fetch measurements
 
-## v2.66–v2.69 • March 15, 2026
+## v0.2.66–v0.2.69 • March 15, 2026
 * Major refactor: split monolithic collector.py into modular package (fetchers/, processors/)
 * Separate processors for fog, frost, hyperlocal, pressure, sea breeze, trough, wet bulb, wind risk
 * Buoy wind data added; KBOS/KBVY migrated to new Aviation Weather API
@@ -994,13 +993,13 @@
 * 48-hour charts now start from current hour instead of midnight
 * Feels-like temp fixed to use apparent_temperature
 
-## v2.5 • February 23, 2026
+## v0.2.5 • February 23, 2026
 * Smart hyperlocal correction: distance + elevation weighted bias
 * Quality filtering: reject stale data (>30 min) and outliers (>2σ)
 * Station diagnostics: used/total count, effective radius, confidence level
 * Model correction instead of replacement (respects grid precision)
 
-## v2.2 • February 21, 2026
+## v0.2.2 • February 21, 2026
 * Light / dark / system theme toggle
 * Pressure unit switching (hPa / inHg)
 * Today almanac card (day of year, season countdown, daylight change)
@@ -1009,7 +1008,7 @@
 * Light mode: comprehensive inline color overrides throughout
 * Version + changelog moved to settings
 
-## v2.0 • February 2026
+## v0.2.0 • February 2026
 * 10-day forecast with NWS integration and day selection
 * Mobile responsive layout (1-column stacking, horizontal scroll)
 * Gust & sustained wind impact cards with time windows
@@ -1019,7 +1018,7 @@
 * RainViewer radar with nowcast frames
 * Settings panel (gear icon)
 
-## v1.0 • Late 2025
+## v0.1.0 • Late 2025
 * Initial build: multi-model weather, tides, buoy, NWS alerts
 * Multi-tab layout (Weather / Wind / Almanac / Radar / Sources)
 * KBOS / KBVY / PWS observed conditions

@@ -1565,6 +1565,7 @@
       buoy_44013:   { name: "Buoy 44013",   desc: "NOAA Boston Buoy (16mi ENE) — water temp, waves, offshore wind (NDBC)" },
       tides:        { name: "Tides",        desc: "NOAA CO-OPS tide predictions — Salem Harbor station 8442645" },
       nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead (api.weather.gov)" },
+      gemini:        { name: "Gemini",       desc: "Google Gemini AI — briefing headline and subheadline generator (free tier)" },
     };
 
     const STATIC_SOURCES = [
@@ -2027,17 +2028,20 @@
 
       if (!days.length) { el.innerHTML = '<div style="opacity:0.5;">No forecast data available</div>'; return; }
 
-      // Store today for Right Now card
+      // Store today and tomorrow for Right Now / Briefing cards
       window.__todayHairScore = days[0];
+      if (days.length > 1) window.__tomorrowHairScore = days[1];
 
-      // Update collapsed preview
-      const today = days[0];
+      // Update collapsed preview — after 6 PM show tomorrow
+      const afterCutoff = new Date().getHours() >= 18;
+      const showDay = (afterCutoff && days.length > 1) ? days[1] : days[0];
+      const showDayLabel = (afterCutoff && days.length > 1) ? "Tomorrow" : "Today";
       const emojiEl = document.getElementById("hairDayEmojiCollapsed");
       const labelEl = document.getElementById("hairDayLabelCollapsed");
       const scoreEl = document.getElementById("hairDayScoreCollapsed");
-      if (emojiEl) emojiEl.textContent = today.emoji;
-      if (labelEl) { labelEl.textContent = today.scoreLabel; labelEl.style.color = today.color; }
-      if (scoreEl) scoreEl.textContent = `Today: ${today.score}/100`;
+      if (emojiEl) emojiEl.textContent = showDay.emoji;
+      if (labelEl) { labelEl.textContent = showDay.scoreLabel; labelEl.style.color = showDay.color; }
+      if (scoreEl) scoreEl.textContent = `${showDayLabel}: ${showDay.score}/100`;
 
       // --- Headline ---
       function hairHeadline(day) {
@@ -2095,6 +2099,7 @@
           </div>`;
       }
 
+      const today = days[0];
       const headline = hairHeadline(today);
       const currentType = getHairType();
       const selectorHtml = `<div style="display:flex;gap:6px;margin-bottom:14px;justify-content:center;">` +
@@ -2341,9 +2346,12 @@
       for (const day of dayCards) {
         const sl = scoreLabel(day.bestScore);
         
-        // Store today's score for Right Now card
+        // Store today's and tomorrow's score for Right Now card
         if (day.dayLabel === "Today") {
           window.__todayDockScore = {score: day.bestScore, label: sl.label, color: sl.color};
+        }
+        if (day.dayLabel === "Tomorrow") {
+          window.__tomorrowDockScore = {score: day.bestScore, label: sl.label, color: sl.color};
         }
         
         html += `<div style="background:${dTileBg};border:1px solid ${dTileBd};border-radius:10px;padding:14px 12px;">`;
@@ -2401,25 +2409,26 @@
 
       el.innerHTML = html;
       
-      // Update collapsed preview with today's data
+      // Update collapsed preview — after 6 PM, show tomorrow's score if available
       if (dayCards.length > 0 && dayCards[0].dayLabel === "Today") {
-        const today = dayCards[0];
-        const sl = scoreLabel(today.bestScore);
+        const afterCutoff = new Date().getHours() >= 18;
+        const showDay = (afterCutoff && dayCards.length > 1) ? dayCards[1] : dayCards[0];
+        const sl = scoreLabel(showDay.bestScore);
         const dockDayLabelEl = document.getElementById("dockDayLabelCollapsed");
         const dockScoreEl = document.getElementById("dockScoreCollapsed");
         
-        if (dockDayLabelEl) dockDayLabelEl.textContent = today.dayLabel;
+        if (dockDayLabelEl) dockDayLabelEl.textContent = showDay.dayLabel;
         
-        if (dockScoreEl) dockScoreEl.textContent = sl.label + " (" + Math.round(today.bestScore * 100) + "/100)";
+        if (dockScoreEl) dockScoreEl.textContent = sl.label + " (" + Math.round(showDay.bestScore * 100) + "/100)";
         
         // Apply gradient class based on score
         const dockCard = document.querySelector('[data-collapse-key="dock_day"]');
         if (dockCard) {
           dockCard.classList.remove('tile-dock-great', 'tile-dock-good', 'tile-dock-marginal', 'tile-dock-poor', 'tile-dock-stayinside');
-          if (today.bestScore >= 0.80) dockCard.classList.add('tile-dock-great');
-          else if (today.bestScore >= 0.65) dockCard.classList.add('tile-dock-good');
-          else if (today.bestScore >= 0.45) dockCard.classList.add('tile-dock-marginal');
-          else if (today.bestScore >= 0.25) dockCard.classList.add('tile-dock-poor');
+          if (showDay.bestScore >= 0.80) dockCard.classList.add('tile-dock-great');
+          else if (showDay.bestScore >= 0.65) dockCard.classList.add('tile-dock-good');
+          else if (showDay.bestScore >= 0.45) dockCard.classList.add('tile-dock-marginal');
+          else if (showDay.bestScore >= 0.25) dockCard.classList.add('tile-dock-poor');
           else dockCard.classList.add('tile-dock-stayinside');
         }
       }
@@ -2567,7 +2576,8 @@
         }
         
         if (nextTideEl) nextTideEl.textContent = `Next: ${type} Tide`;
-        if (nextTideTimeEl) nextTideTimeEl.textContent = time12hr;
+        const isTomorrow = (nextTide.date || todayStr) !== todayStr;
+        if (nextTideTimeEl) nextTideTimeEl.textContent = time12hr + (isTomorrow ? " (tomorrow)" : "");
         const nextTideHeightEl = document.getElementById("nextTideHeightCollapsed");
         if (nextTideHeightEl) nextTideHeightEl.textContent = height;
         
@@ -4835,7 +4845,10 @@
       const tl = document.getElementById('briefTimeLabel');
       if (tl) tl.textContent = b.timeLabel;
       const hl = document.getElementById('briefHeadline');
-      if (hl) hl.textContent = b.headline;
+      if (hl) {
+        hl.textContent = b.headline;
+        hl.style.fontStyle = b.isAI ? 'normal' : 'italic';
+      }
       const sm = document.getElementById('briefSummary');
       if (sm) sm.textContent = b.summary;
       const sn = document.getElementById('briefTempNow');

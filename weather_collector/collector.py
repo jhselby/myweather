@@ -521,11 +521,14 @@ def main():
     # Generate AI briefing headline
     t0 = _time.time()
     briefing = generate_briefing(weather_data)
+    elapsed = _time.time() - t0
     if briefing:
         weather_data["briefing"] = briefing
+        weather_data["sources"]["gemini"] = {"status": "ok", "age_minutes": 0}
     else:
         weather_data.setdefault("briefing", {"headline": "", "subheadline": ""})
-    print(f"  ⏱  Briefing AI: {_time.time() - t0:.1f}s")
+        weather_data["sources"]["gemini"] = {"status": "error", "age_minutes": 0}
+    print(f"  ⏱  Briefing AI: {elapsed:.1f}s")
 
     # Trim hourly arrays to start from current hour
     from datetime import datetime, timezone

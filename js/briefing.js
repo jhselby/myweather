@@ -261,17 +261,19 @@
   }
 
   function getBeachDayScore() {
-    if (window.__todayDockScore) {
-      const d = window.__todayDockScore;
-      return { score: Math.round(d.score * 100), label: d.label };
+    const afterCutoff = new Date().getHours() >= 18;
+    const src = (afterCutoff && window.__tomorrowDockScore) ? window.__tomorrowDockScore : window.__todayDockScore;
+    if (src) {
+      return { score: Math.round(src.score * 100), label: src.label, tomorrow: afterCutoff && !!window.__tomorrowDockScore };
     }
     return null;
   }
 
   function getHairDayScore() {
-    if (window.__todayHairScore) {
-      const h = window.__todayHairScore;
-      return { score: h.score, label: h.scoreLabel };
+    const afterCutoff = new Date().getHours() >= 18;
+    const src = (afterCutoff && window.__tomorrowHairScore) ? window.__tomorrowHairScore : window.__todayHairScore;
+    if (src) {
+      return { score: src.score, label: src.scoreLabel, tomorrow: afterCutoff && !!window.__tomorrowHairScore };
     }
     return null;
   }
