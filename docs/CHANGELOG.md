@@ -1,3 +1,10 @@
+## v0.5.10 • 2026-04-26
+* **PWA Install Prompt**
+  * Detects non-installed PWA, shows one-time dismissible banner
+  * Android: intercepts beforeinstallprompt, triggers native install dialog
+  * iOS: shows manual Share → Add to Home Screen instructions
+  * Dismissed via localStorage, never shows again
+
 ## v0.5.9 • 2026-04-26
 * **Briefing — Humidity Row**
   * Shows in Today section when humidity >=80% (orange/red) or <=25% (blue)
