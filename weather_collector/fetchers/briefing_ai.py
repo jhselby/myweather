@@ -24,6 +24,10 @@ Rules:
 - Don't mention everything. Skip calm wind, normal humidity, boring sunsets.
 - Never start with greetings or "Today will be."
 - Be specific when it matters (times, speeds, amounts) but impressionistic when that's more useful.
+- Use corrected values and derived values as the source of truth when they are provided. Do not recompute your own temperatures or reinterpret the numbers.
+- Wind tone must follow the provided wind impact score first, with gusts only as supporting detail.
+- If wind impact is calm or light, describe wind as light, gentle, or a breeze. Do not describe it as sharp, strong, choppy, restless, or disruptive unless the impact data supports that.
+- Local flavor is welcome, but only when physically correct. Do not invent causal claims about local geography or landmarks unless they are explicitly supported by the input data.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
 
@@ -44,13 +48,15 @@ def _build_weather_summary(weather_data):
     wind_gusts = round(hyp.get("corrected_wind_gusts") or cur.get("wind_gusts") or 0)
     sky = cur.get("condition_override") or cur.get("weather_description") or "Unknown"
 
-    # Daily
-    high = daily.get("temperature_max", [None])[0]
+    # Daily / derived source-of-truth values
+    high = der.get("today_high")
+    if high is None:
+        high = daily.get("temperature_max", [None])[0]
+    high = round(high) if high is not None else None
+
+    # No corrected overnight-low source exists yet, so use daily fallback for now
     low = daily.get("temperature_min", [None])[0]
-    if high is not None:
-        bias = hyp.get("weighted_bias", 0)
-        high = round(high + bias)
-        low = round(low + bias) if low is not None else None
+    low = round(low) if low is not None else None
 
     # Wind direction
     wind_dir_deg = cur.get("wind_direction")
@@ -60,6 +66,10 @@ def _build_weather_summary(weather_data):
     # Fog
     fog_prob = der.get("fog_probability", 0)
     fog_label = der.get("fog_label", "No risk")
+
+    # Wind impact
+    wind_impact = der.get("wind_impact_score")
+    wind_impact_label = der.get("wind_impact_label")
 
     # Sea breeze
     sb_active = sb.get("active", False)
@@ -101,6 +111,7 @@ def _build_weather_summary(weather_data):
         f"Current: {temp}°F, {sky}",
         f"High: {high}°F, Low: {low}°F",
         f"Wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else ""),
+        f"Wind impact: {wind_impact if wind_impact is not None else 'Unknown'}" + (f" ({wind_impact_label})" if wind_impact_label else ""),
         f"Humidity: {humidity}%",
         f"Fog: {fog_label} ({fog_prob}%)",
         f"Sea breeze: {'Active — ' + sb_reason if sb_active else 'Inactive'}",
