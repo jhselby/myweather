@@ -251,29 +251,77 @@
 
   // ── Lifestyle score helpers ──
 
-  function getSunsetScore() {
-    // In-app: read from global set by app-main.js
-    if (window.__todaySunsetScore) {
-      const s = window.__todaySunsetScore;
-      return { score: s.score, label: s.label };
+  function getLifestyleCutoffs(data) {
+    const now = new Date();
+    const daily = data?.daily || {};
+    const todaySunsetIso = daily.sunset?.[0] || null;
+    const todaySunset = todaySunsetIso ? new Date(todaySunsetIso) : null;
+
+    let civilDusk = null;
+    if (typeof SunCalc !== "undefined") {
+      try {
+        const scTimes = SunCalc.getTimes(now, 42.5014, -70.8750);
+        civilDusk = scTimes?.dusk || null;
+      } catch (e) {}
+    }
+
+    // Fallback: civil dusk is roughly 30 minutes after sunset if SunCalc is unavailable
+    if (!civilDusk && todaySunset) {
+      civilDusk = new Date(todaySunset.getTime() + 30 * 60 * 1000);
+    }
+
+    const beachCutoff = todaySunset;
+    const hairCutoff = todaySunset ? new Date(todaySunset.getTime() + 2 * 60 * 60 * 1000) : null;
+
+    return {
+      now,
+      civilDusk,
+      beachCutoff,
+      hairCutoff,
+    };
+  }
+
+  function getSunsetScore(data) {
+    const cutoffs = getLifestyleCutoffs(data);
+    const useTomorrow = !!(cutoffs.civilDusk && cutoffs.now >= cutoffs.civilDusk);
+
+    const directional = data?.sunset_directional || [];
+    const todayDirectional = directional[0] || null;
+    const tomorrowDirectional = directional[1] || null;
+
+    const todaySrc = window.__todaySunsetScore
+      ? { score: window.__todaySunsetScore.score, label: window.__todaySunsetScore.label }
+      : (todayDirectional ? { score: todayDirectional.score, label: todayDirectional.label } : null);
+
+    const tomorrowSrc = window.__tomorrowSunsetScore
+      ? { score: window.__tomorrowSunsetScore.score, label: window.__tomorrowSunsetScore.label }
+      : (tomorrowDirectional ? { score: tomorrowDirectional.score, label: tomorrowDirectional.label } : null);
+
+    const src = (useTomorrow && tomorrowSrc) ? tomorrowSrc : todaySrc;
+    if (src) {
+      return { score: src.score, label: src.label, tomorrow: !!(useTomorrow && tomorrowSrc) };
     }
     return null;
   }
 
-  function getBeachDayScore() {
-    const afterCutoff = new Date().getHours() >= 18;
-    const src = (afterCutoff && window.__tomorrowDockScore) ? window.__tomorrowDockScore : window.__todayDockScore;
+  function getBeachDayScore(data) {
+    const cutoffs = getLifestyleCutoffs(data);
+    const useTomorrow = !!(cutoffs.beachCutoff && cutoffs.now >= cutoffs.beachCutoff);
+
+    const src = (useTomorrow && window.__tomorrowDockScore) ? window.__tomorrowDockScore : window.__todayDockScore;
     if (src) {
-      return { score: Math.round(src.score * 100), label: src.label, tomorrow: afterCutoff && !!window.__tomorrowDockScore };
+      return { score: Math.round(src.score * 100), label: src.label, tomorrow: useTomorrow && !!window.__tomorrowDockScore };
     }
     return null;
   }
 
-  function getHairDayScore() {
-    const afterCutoff = new Date().getHours() >= 18;
-    const src = (afterCutoff && window.__tomorrowHairScore) ? window.__tomorrowHairScore : window.__todayHairScore;
+  function getHairDayScore(data) {
+    const cutoffs = getLifestyleCutoffs(data);
+    const useTomorrow = !!(cutoffs.hairCutoff && cutoffs.now >= cutoffs.hairCutoff);
+
+    const src = (useTomorrow && window.__tomorrowHairScore) ? window.__tomorrowHairScore : window.__todayHairScore;
     if (src) {
-      return { score: src.score, label: src.scoreLabel, tomorrow: afterCutoff && !!window.__tomorrowHairScore };
+      return { score: src.score, label: src.scoreLabel, tomorrow: useTomorrow && !!window.__tomorrowHairScore };
     }
     return null;
   }
@@ -348,30 +396,30 @@
     const rows = [];
 
     // Sunset — only show if Good or better
-    const sunset = getSunsetScore() || estimateSunsetScore(s._data);
+    const sunset = getSunsetScore(s._data) || estimateSunsetScore(s._data);
     if (sunset) {
       rows.push({
-        label: "Sunset",
+        label: sunset.tomorrow ? "Sunset (tomorrow)" : "Sunset",
         value: `${sunset.label} (${sunset.score}/100)`,
         color: sunset.score >= 70 ? "green" : null,
       });
     }
 
     // Beach Day — always show (it's why you check the weather)
-    const beach = getBeachDayScore() || estimateBeachDayScore(s);
+    const beach = getBeachDayScore(s._data) || estimateBeachDayScore(s);
     if (beach) {
       rows.push({
-        label: "Beach day",
+        label: beach.tomorrow ? "Beach day (tomorrow)" : "Beach day",
         value: `${beach.label} (${beach.score}/100)`,
         color: beach.score >= 75 ? "green" : beach.score >= 58 ? null : beach.score >= 38 ? "orange" : "red",
       });
     }
 
     // Hair Day — only show if notable (bad or great, not middling)
-    const hair = getHairDayScore() || estimateHairDayScore(s);
+    const hair = getHairDayScore(s._data) || estimateHairDayScore(s);
     if (hair) {
       rows.push({
-        label: "Hair day",
+        label: hair.tomorrow ? "Hair day (tomorrow)" : "Hair day",
         value: `${hair.label} (${hair.score}/100)`,
         color: hair.score >= 80 ? "green" : "orange",
       });
