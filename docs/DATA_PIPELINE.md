@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 4.82  
-**Last Updated:** April 24, 2026  
+**Version:** 5.17  
+**Last Updated:** April 27, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
