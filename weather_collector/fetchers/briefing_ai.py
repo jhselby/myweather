@@ -28,6 +28,7 @@ Rules:
 - Wind tone must follow the provided wind impact score first, with gusts only as supporting detail.
 - If wind impact is calm or light, describe wind as light, gentle, or a breeze. Do not describe it as sharp, strong, choppy, restless, or disruptive unless the impact data supports that.
 - Local flavor is welcome, but only when physically correct. Do not invent causal claims about local geography or landmarks unless they are explicitly supported by the input data.
+- Avoid vague coastal phrasing like "off the water" or "onshore." Prefer explicit wind direction (e.g., northeast breeze) unless a directional relationship is clearly defined.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
 
