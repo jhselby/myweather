@@ -3479,7 +3479,7 @@
       const notableFg = light ? "rgba(200,90,10,0.95)"  : "rgba(255,200,120,0.95)";
       const linkCol   = light ? "rgba(20,80,200,0.9)"   : "rgba(120,190,255,0.9)";
 
-      // Group species by location
+      // Group species by location, then aggregate duplicate species within each location
       const byLocation = new Map();
       species.forEach(s => {
         const key = s.location || "Unknown location";
@@ -3500,17 +3500,52 @@
         if ((s.last_seen || "") > (loc.last_seen || "")) loc.last_seen = s.last_seen;
       });
 
-      // Sort locations by distance from home (nearest first)
-      const locations = [...byLocation.values()].sort((a, b) =>
-        (a.distance_km ?? 99) - (b.distance_km ?? 99)
-      );
+      const locations = [...byLocation.values()].map(loc => {
+        const speciesMap = new Map();
 
-      // Sort species within each location: notable first, then count desc
-      locations.forEach(loc => {
+        loc.species.forEach(s => {
+          const speciesKey = s.code || s.name || "unknown-species";
+          if (!speciesMap.has(speciesKey)) {
+            speciesMap.set(speciesKey, { ...s });
+            return;
+          }
+
+          const existing = speciesMap.get(speciesKey);
+
+          // Sum counts when available
+          if (existing.count != null || s.count != null) {
+            existing.count = (existing.count || 0) + (s.count || 0);
+          }
+
+          // Preserve notable if any sighting is notable
+          existing.notable = !!(existing.notable || s.notable);
+
+          // Keep most recent sighting time
+          if ((s.last_seen || "") > (existing.last_seen || "")) {
+            existing.last_seen = s.last_seen;
+          }
+
+          speciesMap.set(speciesKey, existing);
+        });
+
+        loc.species = [...speciesMap.values()];
+
+        // Sort species within each location: notable first, then count desc, then name
         loc.species.sort((a, b) => {
           if (a.notable !== b.notable) return a.notable ? -1 : 1;
-          return (b.count || 0) - (a.count || 0);
+          const countDiff = (b.count || 0) - (a.count || 0);
+          if (countDiff !== 0) return countDiff;
+          return (a.name || "").localeCompare(b.name || "");
         });
+
+        loc.hasNotable = loc.species.some(s => s.notable);
+        return loc;
+      });
+
+      // Sort locations: any hotspot with notable birds first, otherwise by distance from home
+      locations.sort((a, b) => {
+        if (a.hasNotable !== b.hasNotable) return a.hasNotable ? -1 : 1;
+        return (a.distance_km ?? 99) - (b.distance_km ?? 99);
       });
 
       // Format "2026-04-23 18:49" -> "Apr 23, 6:49 PM"
