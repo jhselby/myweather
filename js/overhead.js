@@ -46,7 +46,6 @@
       iconSize: [20, 20],
       iconAnchor: [10, 10]
     });
-    L.marker([HOME_LAT, HOME_LNG], { icon: homeIcon }).addTo(ohMap);
 
     ohMap.on('moveend', ohUpdateCount);
   }
