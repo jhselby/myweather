@@ -71,11 +71,11 @@
     // High temp today
     const highRaw = daily.temperature_max?.[0];
     const bias = hyp.weighted_bias ?? 0;
-    const high = Math.round(der.today_high ?? der.high ?? daily.temperature_max?.[0] ?? 0);
+    const high = highRaw != null ? Math.round(highRaw + bias) : null;
 
     // Low tonight
     const lowRaw = daily.temperature_min?.[0];
-    const low = Math.floor(daily.temperature_min?.[0] ?? 0);
+    const low = lowRaw != null ? Math.round(lowRaw + bias) : null;
 
     // Sky condition
     const skyCode = cur.weather_code ?? 0;
@@ -109,7 +109,7 @@
     else if (windSpeed >= 5) windBand = "light";
 
     // Convert wind to knots for display
-    const windKt = windSpeed;
+    const windKt = Math.round(windSpeed * 0.868976);
     const gustKt = windGust ? Math.round(windGust * 0.868976) : null;
 
     // Rain in next 48h — scan hourly precip probability
@@ -507,47 +507,47 @@
     let c2 = "";
     switch (s.priority) {
       case "rain_now":
-        c2 = `Rain ongoing${s.rainInches > 0 ? `, ${s.rainInches}" so far` : ""}. Wind ${s.windKt} MPH ${s.windDir}${gustStr}.`;
+        c2 = `Rain ongoing${s.rainInches > 0 ? `, ${s.rainInches}" so far` : ""}. Wind ${s.windKt} kt ${s.windDir}${gustStr}.`;
         break;
       case "rain_soon":
-        c2 = `Rain by ${s.rainStartStr}${s.rainInches > 0 ? `, ${s.rainInches}" expected` : ""}. Wind ${s.windKt} MPH ${s.windDir}.`;
+        c2 = `Rain by ${s.rainStartStr}${s.rainInches > 0 ? `, ${s.rainInches}" expected` : ""}. Wind ${s.windKt} kt ${s.windDir}.`;
         break;
       case "rain_later":
-        c2 = `Rain ${s.rainStartStr}–${s.rainEndStr}, ${s.rainInches}". Wind ${s.windKt} MPH ${s.windDir}.`;
+        c2 = `Rain ${s.rainStartStr}–${s.rainEndStr}, ${s.rainInches}". Wind ${s.windKt} kt ${s.windDir}.`;
         break;
       case "alert":
-        c2 = `${s.alerts[0].event}${s.alerts[0].description ? "" : ""}. ${s.windKt} MPH ${s.windDir}${gustStr}.`;
+        c2 = `${s.alerts[0].event}${s.alerts[0].description ? "" : ""}. ${s.windKt} kt ${s.windDir}${gustStr}.`;
         break;
       case "fog":
-        c2 = `Fog probability ${s.fogProb}%. Wind ${s.windKt} MPH ${s.windDir}.`;
+        c2 = `Fog probability ${s.fogProb}%. Wind ${s.windKt} kt ${s.windDir}.`;
         break;
       case "clear_changing":
-        c2 = `Cloud cover builds later. Wind ${s.windKt} MPH ${s.windDir}.`;
+        c2 = `Cloud cover builds later. Wind ${s.windKt} kt ${s.windDir}.`;
         break;
       case "sea_breeze":
-        c2 = `Sea breeze active (${s.seaBreeze.likelihood}% likelihood). ${s.windKt} MPH ${s.windDir}${gustStr}.`;
+        c2 = `Sea breeze active (${s.seaBreeze.likelihood}% likelihood). ${s.windKt} kt ${s.windDir}${gustStr}.`;
         break;
       case "trend":
         c2 = s.skyTrend === "clearing"
-          ? `Clearing later. Wind ${s.windKt} MPH ${s.windDir}.`
-          : `Clouds building. Wind ${s.windKt} MPH ${s.windDir}.`;
+          ? `Clearing later. Wind ${s.windKt} kt ${s.windDir}.`
+          : `Clouds building. Wind ${s.windKt} kt ${s.windDir}.`;
         break;
       case "wind":
-        c2 = `Wind ${s.windKt} MPH ${s.windDir}${gustStr}.`;
+        c2 = `Wind ${s.windKt} kt ${s.windDir}${gustStr}.`;
         break;
       case "temp_extreme":
         c2 = s.tempBand === "hot"
-          ? `${s.windKt > 5 ? `Wind ${s.windKt} MPH ${s.windDir}.` : "Barely a breeze."}`
-          : `Wind ${s.windKt} MPH ${s.windDir}${gustStr} — feels worse.`;
+          ? `${s.windKt > 5 ? `Wind ${s.windKt} kt ${s.windDir}.` : "Barely a breeze."}`
+          : `Wind ${s.windKt} kt ${s.windDir}${gustStr} — feels worse.`;
         break;
       case "frost":
         c2 = `Tonight drops to ${s.low}°. Frost likely by dawn.`;
         break;
       default:
         if (s.rainContext === "tomorrow") {
-          c2 = `Next rain: tomorrow. Wind ${s.windKt} MPH ${s.windDir}.`;
+          c2 = `Next rain: tomorrow. Wind ${s.windKt} kt ${s.windDir}.`;
         } else {
-          c2 = `No rain in sight. Wind ${s.windKt} MPH ${s.windDir}.`;
+          c2 = `No rain in sight. Wind ${s.windKt} kt ${s.windDir}.`;
         }
     }
 
@@ -571,7 +571,7 @@
     const gustNote = s.gustKt ? `, gusts ${s.gustKt}` : "";
     rows.push({
       label: "Wind",
-      value: `${s.windKt} MPH ${s.windDir}${gustNote}`,
+      value: `${s.windKt} kt ${s.windDir}${gustNote}`,
       color: s.windBand === "dangerous" ? "red" : s.windBand === "windy" ? "orange" : null,
     });
 
