@@ -3576,7 +3576,7 @@
             ${speciesCount} species · ${totalBirds} bird${totalBirds === 1 ? "" : "s"}${notableBadge}
           </div>
           <div style="font-size:0.78rem;color:${textFaint};margin-top:4px;">
-            eBird · ${birds.radius_km ?? 5} km radius · last ${birds.back_days ?? 2} day${(birds.back_days ?? 2) === 1 ? "" : "s"}${fetchedAt ? ` · updated ${fetchedAt}` : ""}
+            eBird · ${Math.round((birds.radius_km ?? 5) * 0.621371)} miles radius · last ${birds.back_days ?? 2} day${(birds.back_days ?? 2) === 1 ? "" : "s"}${fetchedAt ? ` · updated ${fetchedAt}` : ""}
           </div>
         </div>
       `;
@@ -3587,7 +3587,9 @@
         const locNotables = loc.species.filter(s => s.notable).length;
         const locSpeciesCount = loc.species.length;
         const locBirdCount = loc.species.reduce((sum, s) => sum + (s.count || 0), 0);
-        const distStr = loc.distance_km != null ? `${loc.distance_km.toFixed(1)} km` : "";
+        const distStr = loc.distance_km != null
+  ? `${(loc.distance_km * 0.621371).toFixed(1)} mi`
+  : "";
 
         html += `
           <div style="border:1px solid ${border};border-radius:10px;margin-bottom:8px;overflow:hidden;background:${rowBg};">
