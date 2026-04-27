@@ -1565,7 +1565,9 @@
       buoy_44013:   { name: "Buoy 44013",   desc: "NOAA Boston Buoy (16mi ENE) — water temp, waves, offshore wind (NDBC)" },
       tides:        { name: "Tides",        desc: "NOAA CO-OPS tide predictions — Salem Harbor station 8442645" },
       nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead (api.weather.gov)" },
-      gemini:        { name: "Gemini",       desc: "Google Gemini AI — briefing headline and subheadline generator (free tier)" },
+      pirate_weather: { name: "Pirate Weather", desc: "Pirate Weather API — next 60 minutes precipitation, plus solar and CAPE" },
+      ebird:        { name: "eBird",        desc: "Cornell eBird recent and notable bird observations near Marblehead" },
+      gemini:       { name: "Gemini",       desc: "Google Gemini AI — briefing headline and subheadline generator (free tier)" },
     };
 
     const STATIC_SOURCES = [
