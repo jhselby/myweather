@@ -13,6 +13,12 @@ import math
 import requests
 
 from ..config import LAT, LON, HEADERS_DEFAULT
+
+# Birding query center is intentionally shifted slightly N/NE of home
+# to better capture Salem Sound, while displayed distances still use home LAT/LON.
+EBIRD_QUERY_LAT = 42.515
+EBIRD_QUERY_LON = -70.845
+
 from ..utils import iso_utc_now
 
 EBIRD_BASE = "https://api.ebird.org/v2/data/obs/geo"
@@ -38,7 +44,7 @@ def _ebird_get(path, api_key, label):
     url = f"{EBIRD_BASE}/{path}"
     headers = dict(HEADERS_DEFAULT)
     headers["X-eBirdApiToken"] = api_key
-    params = {"lat": LAT, "lng": LON, "dist": RADIUS_KM, "back": BACK_DAYS}
+    params = {"lat": EBIRD_QUERY_LAT, "lng": EBIRD_QUERY_LON, "dist": RADIUS_KM, "back": BACK_DAYS}
     try:
         r = requests.get(url, headers=headers, params=params, timeout=20)
         r.raise_for_status()
