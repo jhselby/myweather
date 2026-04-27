@@ -642,8 +642,32 @@
       rows.push({ label: "Rain", value: `${s.rainStartStr}–${s.rainEndStr} — ${s.rainInches}"`, color: "blue" });
     }
 
-    // Feels like — only when cold enough for wind chill or hot enough for heat index
-    const feelsLike = Math.round(s._data.current?.apparent_temperature ?? s.temp);
+    // Feels like — use corrected inputs to match the weather card
+    let feelsLike = s.temp;
+    if (s.temp != null) {
+      const T = s.temp;
+      const wind = s.windMph ?? 0;
+      const RH = s.humidity;
+
+      if (T <= 50 && wind > 3) {
+        feelsLike = 35.74 + (0.6215 * T) - (35.75 * Math.pow(wind, 0.16)) + (0.4275 * T * Math.pow(wind, 0.16));
+      } else if (T >= 80 && RH != null) {
+        feelsLike =
+          -42.379 +
+          2.04901523 * T +
+          10.14333127 * RH -
+          0.22475541 * T * RH -
+          0.00683783 * T * T -
+          0.05481717 * RH * RH +
+          0.00122874 * T * T * RH +
+          0.00085282 * T * RH * RH -
+          0.00000199 * T * T * RH * RH;
+      } else {
+        feelsLike = s._data.current?.apparent_temperature ?? T;
+      }
+    }
+
+    feelsLike = Math.round(feelsLike);
     const feelsDiff = Math.abs(feelsLike - s.temp);
     const showWindChill = feelsLike < s.temp && s.temp <= 40 && feelsDiff >= 5;
     const showHeatIndex = feelsLike > s.temp && s.temp >= 80 && feelsDiff >= 5;
@@ -704,12 +728,13 @@
     const der = s._data.derived || {};
     const sb = s._data.sea_breeze || {};
 
-    // Wind gusts >= 25 mph or impact score >= 7
+    // Wind — impact-first, with gusts as supporting detail
     const windImpact = der.wind_impact_score ?? 0;
     const gustMph = Math.round(s._data.hyperlocal?.corrected_wind_gusts ?? s._data.current?.wind_gusts ?? s.gustMph ?? 0);
-    if (gustMph >= 25 || windImpact >= 7) {
-      const gustNote = gustMph >= 25 ? "Gusts " + gustMph + " mph" : "Impact " + windImpact + "/10";
-      rows.push({ label: "Wind", value: gustNote, color: gustMph >= 35 ? "red" : "orange" });
+    if (windImpact >= 7) {
+      let windValue = "Impact " + windImpact + "/10";
+      if (gustMph >= 25) windValue += " · Gusts " + gustMph + " mph";
+      rows.push({ label: "Wind", value: windValue, color: windImpact >= 9 ? "red" : "orange" });
     }
 
     // Frost risk: overnight low <= 36
