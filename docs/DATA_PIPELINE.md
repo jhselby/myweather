@@ -958,3 +958,75 @@ Check this document first to understand where data comes from and what correctio
 ---
 
 **END OF DOCUMENT**
+
+
+---
+
+## AI Briefing (Gemini)
+
+**Purpose:** Generate a concise, human-readable daily briefing (headline + subheadline) using corrected and derived weather data.
+
+### Inputs (Collector → Gemini)
+
+- Current (corrected where available):
+  - Temperature (corrected_temp)
+  - Humidity (corrected_humidity)
+  - Wind speed (corrected_wind_speed)
+  - Wind gusts (corrected_wind_gusts)
+  - Wind direction
+- Daily:
+  - High temperature (derived.today_high preferred, fallback to model daily)
+  - Low temperature (model fallback)
+- Derived:
+  - Wind impact score + label
+  - Fog probability + label
+  - Sea breeze state + reasoning
+- Forecast:
+  - Rain timing (next 48h, probability ≥40
+---
+
+## AI Briefing (Gemini)
+
+**Purpose:** Generate a concise, human-readable daily briefing (headline + subheadline) using corrected and derived weather data.
+
+### Inputs (Collector → Gemini)
+
+- Current (corrected where available):
+  - Temperature (corrected_temp)
+  - Humidity (corrected_humidity)
+  - Wind speed (corrected_wind_speed)
+  - Wind gusts (corrected_wind_gusts)
+  - Wind direction
+- Daily:
+  - High temperature (derived.today_high preferred, fallback to model daily)
+  - Low temperature (model fallback)
+- Derived:
+  - Wind impact score + label
+  - Fog probability + label
+  - Sea breeze state + reasoning
+- Forecast:
+  - Rain timing (next 48h, probability ≥40 percent)
+  - Total precipitation (mm → inches)
+- Alerts (NWS)
+- Sunset score (if available)
+
+### Key Rules
+
+- Corrected data is source of truth
+- Wind interpretation is impact-driven (impact > gusts)
+- No invented geography or causal landmark claims
+- Avoid vague coastal phrasing ("off the water", "onshore")
+
+### Output
+
+{ "headline": "...", "subheadline": "..." }
+
+- Headline: ≤12 words
+- Subheadline: 1–2 sentences
+
+### Caching
+
+- Cached in GCS (briefing_cache.json)
+- Refresh interval: 30 minutes
+- Fallback: cached → template
+
