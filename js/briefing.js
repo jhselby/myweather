@@ -69,12 +69,9 @@
     const humidity = Math.round(hyp.corrected_humidity ?? cur.humidity ?? 0);
 
     // High temp today
-    const highRaw = daily.temperature_max?.[0];
-    const bias = hyp.weighted_bias ?? 0;
     const high = Math.round(der.today_high ?? der.high ?? daily.temperature_max?.[0] ?? 0);
 
     // Low tonight
-    const lowRaw = daily.temperature_min?.[0];
     const low = Math.floor(daily.temperature_min?.[0] ?? 0);
 
     // Sky condition
@@ -108,9 +105,9 @@
     else if (windSpeed >= 10) windBand = "breezy";
     else if (windSpeed >= 5) windBand = "light";
 
-    // Convert wind to knots for display
-    const windKt = windSpeed;
-    const gustKt = windGust ? Math.round(windGust * 0.868976) : null;
+    // Wind for display — use the same corrected mph values as the wind card
+    const windMph = windSpeed;
+    const gustMph = windGust || null;
 
     // Rain in next 48h — scan hourly precip probability
     const popArr = hourly.precipitation_probability || [];
@@ -172,11 +169,7 @@
 
     // Sunset quality — find today's score
     const sunsetArr = data.sunset_directional || [];
-    let sunsetScore = null;
-    let sunsetLabel = null;
-    // sunset scoring is done in app-main.js; we'll compute a simple version
-    // For now just check if data exists
-    const hasSunsetData = sunsetArr.length > 0;
+    // sunset scoring is done in app-main.js; briefing uses that when available
 
     // Alerts
     const alerts = data.alerts || [];
@@ -237,7 +230,7 @@
     else if (frostRisk) priority = "frost";
 
     return {
-      temp, high, low, windSpeed, windKt, gustKt, windDir, windDeg, humidity,
+      temp, high, low, windSpeed, windMph, gustMph, windDir, windDeg, humidity,
       skyState, skyDesc, tempBand, windBand, skyTrend,
       rainContext, rainInches, rainStartStr, rainEndStr,
       fogProb, fogLabel, hasFog,
@@ -541,7 +534,7 @@
   // ── Step 4: Generate specific summary ──
 
   function specificSummary(s) {
-    const gustStr = s.gustKt ? `, gusts ${s.gustKt}` : "";
+    const gustStr = s.gustMph ? `, gusts ${s.gustMph}` : "";
 
     // Clause 1: current conditions
     const c1Pool = [
@@ -555,47 +548,47 @@
     let c2 = "";
     switch (s.priority) {
       case "rain_now":
-        c2 = `Rain ongoing${s.rainInches > 0 ? `, ${s.rainInches}" so far` : ""}. Wind ${s.windKt} MPH ${s.windDir}${gustStr}.`;
+        c2 = `Rain ongoing${s.rainInches > 0 ? `, ${s.rainInches}" so far` : ""}. Wind ${s.windMph} MPH ${s.windDir}${gustStr}.`;
         break;
       case "rain_soon":
-        c2 = `Rain by ${s.rainStartStr}${s.rainInches > 0 ? `, ${s.rainInches}" expected` : ""}. Wind ${s.windKt} MPH ${s.windDir}.`;
+        c2 = `Rain by ${s.rainStartStr}${s.rainInches > 0 ? `, ${s.rainInches}" expected` : ""}. Wind ${s.windMph} MPH ${s.windDir}.`;
         break;
       case "rain_later":
-        c2 = `Rain ${s.rainStartStr}–${s.rainEndStr}, ${s.rainInches}". Wind ${s.windKt} MPH ${s.windDir}.`;
+        c2 = `Rain ${s.rainStartStr}–${s.rainEndStr}, ${s.rainInches}". Wind ${s.windMph} MPH ${s.windDir}.`;
         break;
       case "alert":
-        c2 = `${s.alerts[0].event}${s.alerts[0].description ? "" : ""}. ${s.windKt} MPH ${s.windDir}${gustStr}.`;
+        c2 = `${s.alerts[0].event}${s.alerts[0].description ? "" : ""}. ${s.windMph} MPH ${s.windDir}${gustStr}.`;
         break;
       case "fog":
-        c2 = `Fog probability ${s.fogProb}%. Wind ${s.windKt} MPH ${s.windDir}.`;
+        c2 = `Fog probability ${s.fogProb}%. Wind ${s.windMph} MPH ${s.windDir}.`;
         break;
       case "clear_changing":
-        c2 = `Cloud cover builds later. Wind ${s.windKt} MPH ${s.windDir}.`;
+        c2 = `Cloud cover builds later. Wind ${s.windMph} MPH ${s.windDir}.`;
         break;
       case "sea_breeze":
-        c2 = `Sea breeze active (${s.seaBreeze.likelihood}% likelihood). ${s.windKt} MPH ${s.windDir}${gustStr}.`;
+        c2 = `Sea breeze active (${s.seaBreeze.likelihood}% likelihood). ${s.windMph} MPH ${s.windDir}${gustStr}.`;
         break;
       case "trend":
         c2 = s.skyTrend === "clearing"
-          ? `Clearing later. Wind ${s.windKt} MPH ${s.windDir}.`
-          : `Clouds building. Wind ${s.windKt} MPH ${s.windDir}.`;
+          ? `Clearing later. Wind ${s.windMph} MPH ${s.windDir}.`
+          : `Clouds building. Wind ${s.windMph} MPH ${s.windDir}.`;
         break;
       case "wind":
-        c2 = `Wind ${s.windKt} MPH ${s.windDir}${gustStr}.`;
+        c2 = `Wind ${s.windMph} MPH ${s.windDir}${gustStr}.`;
         break;
       case "temp_extreme":
         c2 = s.tempBand === "hot"
-          ? `${s.windKt > 5 ? `Wind ${s.windKt} MPH ${s.windDir}.` : "Barely a breeze."}`
-          : `Wind ${s.windKt} MPH ${s.windDir}${gustStr} — feels worse.`;
+          ? `${s.windMph > 5 ? `Wind ${s.windMph} MPH ${s.windDir}.` : "Barely a breeze."}`
+          : `Wind ${s.windMph} MPH ${s.windDir}${gustStr} — feels worse.`;
         break;
       case "frost":
         c2 = `Tonight drops to ${s.low}°. Frost likely by dawn.`;
         break;
       default:
         if (s.rainContext === "tomorrow") {
-          c2 = `Next rain: tomorrow. Wind ${s.windKt} MPH ${s.windDir}.`;
+          c2 = `Next rain: tomorrow. Wind ${s.windMph} MPH ${s.windDir}.`;
         } else {
-          c2 = `No rain in sight. Wind ${s.windKt} MPH ${s.windDir}.`;
+          c2 = `No rain in sight. Wind ${s.windMph} MPH ${s.windDir}.`;
         }
     }
 
@@ -616,10 +609,10 @@
     rows.push({ label: "Sky", value: skyValue, color: null });
 
     // Wind — always show
-    const gustNote = s.gustKt ? `, gusts ${s.gustKt}` : "";
+    const gustNote = s.gustMph ? `, gusts ${s.gustMph}` : "";
     rows.push({
       label: "Wind",
-      value: `${s.windKt} MPH ${s.windDir}${gustNote}`,
+      value: `${s.windMph} MPH ${s.windDir}${gustNote}`,
       color: s.windBand === "dangerous" ? "red" : s.windBand === "windy" ? "orange" : null,
     });
 
@@ -713,7 +706,7 @@
 
     // Wind gusts >= 25 mph or impact score >= 7
     const windImpact = der.wind_impact_score ?? 0;
-    const gustMph = Math.round(s._data.current?.wind_gusts ?? (s.gustKt ? s.gustKt / 0.868976 : 0));
+    const gustMph = Math.round(s._data.hyperlocal?.corrected_wind_gusts ?? s._data.current?.wind_gusts ?? s.gustMph ?? 0);
     if (gustMph >= 25 || windImpact >= 7) {
       const gustNote = gustMph >= 25 ? "Gusts " + gustMph + " mph" : "Impact " + windImpact + "/10";
       rows.push({ label: "Wind", value: gustNote, color: gustMph >= 35 ? "red" : "orange" });
