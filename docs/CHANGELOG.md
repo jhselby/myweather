@@ -1,3 +1,24 @@
+## v0.5.17 • 2026-04-27
+* **Briefing — Data Integrity Alignment**
+  * Briefing now uses hyperlocal-corrected values consistently (temp, wind, gusts, humidity)
+  * Removed duplicate bias application in briefing layer — prevents double-counted corrections
+  * Wind units standardized to mph (removed legacy kt conversion artifacts)
+  * High temperature now sourced from derived corrected values (`today_high`) instead of recomputing
+* **Briefing — Behavioral Logic Fixes**
+  * Wind messaging now driven by impact score, not raw gust thresholds
+  * Gusts displayed as supporting detail only — no longer trigger “windy” conditions on calm-impact days
+  * Feels-like calculation aligned with weather card logic (corrected temp + wind + humidity)
+* **AI Briefing — Prompt & Input Discipline**
+  * Gemini input now includes wind impact score and label
+  * Corrected values prioritized as source-of-truth (no recomputation in AI layer)
+  * Removed bias adjustment from AI input pipeline
+* **AI Briefing — Tone & Realism Improvements**
+  * Wind language constrained to match impact score (no “sharp gusts” on calm days)
+  * Local references allowed only when physically accurate
+  * Eliminated vague coastal phrasing (“off the water”, “onshore”) in favor of explicit direction
+* **Bug Fix — Misleading Local Geography**
+  * Prevented AI from generating incorrect causal statements (e.g., “sun behind the Neck”)
+
 ## v0.5.15 • 2026-04-26
 * **Settings Cleanup**
   * Changelog, Data Pipeline, Data Sources, Data Info moved behind "Nerd Stuff" toggle
