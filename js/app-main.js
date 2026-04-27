@@ -6116,16 +6116,23 @@ function loadWeatherData() {
         const wavePdEl = document.getElementById("buoyWavePeriod");
         if (wavePdEl) wavePdEl.textContent = buoy.wave_period_sec != null ? buoy.wave_period_sec + " sec" : "--";
         buildTideChart(data.tide_curve, data.tides);
-        const rise = daily.sunrise?.[0]?.split("T")?.[1] ?? "--";
-        const set  = daily.sunset?.[0]?.split("T")?.[1] ?? "--";
+
+        const riseDate = daily.sunrise?.[0] ? new Date(daily.sunrise[0]) : null;
+        const setDate  = daily.sunset?.[0] ? new Date(daily.sunset[0]) : null;
+
+        const rise = riseDate
+          ? riseDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+          : "--";
+        const set = setDate
+          ? setDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
+          : "--";
+
         document.getElementById("sunrise").textContent = rise;
         document.getElementById("sunset").textContent  = set;
 
         // Compute daylight duration
-        if (rise !== "--" && set !== "--") {
-          const [rh, rm] = rise.split(":").map(Number);
-          const [sh, sm] = set.split(":").map(Number);
-          const mins = (sh * 60 + sm) - (rh * 60 + rm);
+        if (riseDate && setDate) {
+          const mins = Math.round((setDate - riseDate) / 60000);
           const h = Math.floor(mins / 60), m = mins % 60;
           document.getElementById("daylight").textContent = `${h}h ${m}m daylight`;
         }
