@@ -55,8 +55,8 @@ def _build_weather_summary(weather_data):
         high = daily.get("temperature_max", [None])[0]
     high = round(high) if high is not None else None
 
-    # No corrected overnight-low source exists yet, so use daily fallback for now
-    low = daily.get("temperature_min", [None])[0]
+    # Use corrected low from derived, fallback to daily
+    low = der.get("today_low") or daily.get("temperature_min", [None])[0]
     low = round(low) if low is not None else None
 
     # Wind direction
