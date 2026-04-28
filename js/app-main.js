@@ -3141,19 +3141,13 @@
       const wind = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
       const RH = hyp.corrected_humidity ?? cur.humidity ?? 50;
 
-      // Calculate current feels like
-      let feelsLike = T;
+      // Use corrected feels-like from collector (single source of truth)
+      const der = data.derived || {};
+      const feelsLike = der.corrected_feels_like ?? T;
       let flType = "Feels Like";
       if (T != null) {
-        if (T <= 50 && wind > 3) {
-          feelsLike = 35.74 + (0.6215*T) - (35.75*Math.pow(wind,0.16)) + (0.4275*T*Math.pow(wind,0.16));
-          flType = "Wind Chill";
-        } else if (T >= 80 && RH != null) {
-          feelsLike = -42.379 + (2.04901523*T) + (10.14333127*RH) - (0.22475541*T*RH) -
-                      (0.00683783*T*T) - (0.05481717*RH*RH) + (0.00122874*T*T*RH) +
-                      (0.00085282*T*RH*RH) - (0.00000199*T*T*RH*RH);
-          flType = "Heat Index";
-        }
+        if (T <= 50 && wind > 3) flType = "Wind Chill";
+        else if (T >= 80) flType = "Heat Index";
       }
 
       // Update tile front
@@ -3361,15 +3355,7 @@
       const hyp = data.hyperlocal || {};
       const temp = hyp.corrected_temp ?? cur.temperature;
       const humidity = hyp.corrected_humidity ?? cur.humidity;
-      const _corrDewPt = (hyp.corrected_temp != null && hyp.corrected_humidity != null)
-        ? (function() {
-            const Tc = (hyp.corrected_temp - 32) * 5/9;
-            const RH = hyp.corrected_humidity;
-            const gamma = Math.log(RH/100) + (17.625*Tc)/(243.04+Tc);
-            return gamma * 243.04 / (17.625 - gamma) * 9/5 + 32;
-          })()
-        : cur.dew_point;
-      const dewpt = _corrDewPt;
+      const dewpt = der.corrected_dew_point ?? cur.dew_point;
       const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
       
       const spread = (temp != null && dewpt != null) ? temp - dewpt : null;
@@ -5301,16 +5287,10 @@ function loadWeatherData() {
           const modelDewpoint = cur.dew_point;
           if (scModelDewpoint) scModelDewpoint.textContent = modelDewpoint != null ? Math.round(modelDewpoint) + "°F" : "--";
           // Calculate corrected dew point from corrected temp + humidity
-          if (scCorrectedDewpoint && hyp.corrected_temp != null && hyp.corrected_humidity != null) {
-            const T = hyp.corrected_temp;
-            const RH = hyp.corrected_humidity;
-            const a = 17.27;
-            const b = 237.7;
-            const alpha = ((a * T) / (b + T)) + Math.log(RH / 100.0);
-            const correctedDewpoint = (b * alpha) / (a - alpha);
-            scCorrectedDewpoint.textContent = Math.round(correctedDewpoint) + "°F";
-            // Calculate and display bias
-            if (scBiasDewpoint && modelDewpoint != null) {
+          if (scCorrectedDewpoint) {
+            const correctedDewpoint = der.corrected_dew_point;
+            scCorrectedDewpoint.textContent = correctedDewpoint != null ? Math.round(correctedDewpoint) + "°F" : "--";
+            if (scBiasDewpoint && modelDewpoint != null && correctedDewpoint != null) {
               const dewBias = correctedDewpoint - modelDewpoint;
               scBiasDewpoint.textContent = (dewBias >= 0 ? "+" : "") + dewBias.toFixed(1) + "°F";
             }
@@ -5342,25 +5322,11 @@ function loadWeatherData() {
           // Model feels like from apparent_temperature
           const modelFeelsLike = cur.apparent_temperature;
           if (scModelFeelsLike) scModelFeelsLike.textContent = modelFeelsLike != null ? Math.round(modelFeelsLike) + "°F" : "--";
-          // Calculate corrected feels like from corrected temp + wind
-          if (scCorrectedFeelsLike && hyp.corrected_temp != null) {
-            const T = hyp.corrected_temp;
-            const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
-            let feelsLike = T;
-            // Wind chill (if T <= 50°F and wind > 3 mph)
-            if (T <= 50 && windSpeed > 3) {
-              feelsLike = 35.74 + (0.6215 * T) - (35.75 * Math.pow(windSpeed, 0.16)) + (0.4275 * T * Math.pow(windSpeed, 0.16));
-            }
-            // Heat index (if T >= 80°F and humidity available)
-            else if (T >= 80 && hyp.corrected_humidity != null) {
-              const RH = hyp.corrected_humidity;
-              feelsLike = -42.379 + (2.04901523 * T) + (10.14333127 * RH) - (0.22475541 * T * RH) - 
-                          (0.00683783 * T * T) - (0.05481717 * RH * RH) + (0.00122874 * T * T * RH) +
-                          (0.00085282 * T * RH * RH) - (0.00000199 * T * T * RH * RH);
-            }
-            scCorrectedFeelsLike.textContent = Math.round(feelsLike) + "°F";
-            // Calculate and display bias
-            if (scBiasFeelsLike && modelFeelsLike != null) {
+          // Use corrected feels-like from collector (single source of truth)
+          if (scCorrectedFeelsLike) {
+            const feelsLike = der.corrected_feels_like;
+            scCorrectedFeelsLike.textContent = feelsLike != null ? Math.round(feelsLike) + "°F" : "--";
+            if (scBiasFeelsLike && modelFeelsLike != null && feelsLike != null) {
               const flBias = feelsLike - modelFeelsLike;
               scBiasFeelsLike.textContent = (flBias >= 0 ? "+" : "") + flBias.toFixed(1) + "°F";
             }
@@ -5582,14 +5548,7 @@ function loadWeatherData() {
         document.getElementById("visibilityNow").textContent = 
           cur.visibility != null ? `${(cur.visibility / 1609.34).toFixed(1)} mi` : "-- mi";
 
-        const _cdp = (hyp.corrected_temp != null && hyp.corrected_humidity != null)
-          ? (function() {
-              const Tc = (hyp.corrected_temp - 32) * 5/9;
-              const RH = hyp.corrected_humidity;
-              const gamma = Math.log(RH/100) + (17.625*Tc)/(243.04+Tc);
-              return gamma * 243.04 / (17.625 - gamma) * 9/5 + 32;
-            })()
-          : cur.dew_point;
+        const _cdp = der.corrected_dew_point ?? cur.dew_point;
         document.getElementById("dewPointNow").textContent = _cdp != null ? `${Math.round(_cdp)}°F` : "--°F";
         
         // Dewpoint depression
