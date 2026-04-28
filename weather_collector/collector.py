@@ -341,8 +341,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if daily_temps_data and daily_temps_data.get("hourly"):
         _dt_times = daily_temps_data["hourly"].get("time", [])
         _dt_temps = daily_temps_data["hourly"].get("temperature_2m", [])
-        from datetime import timedelta
-        _now = datetime.utcnow()
+        from datetime import datetime, timedelta
+        import pytz
+        eastern = pytz.timezone("America/New_York")
+        _now = datetime.now(eastern)
         _today_str = _now.strftime("%Y-%m-%d")
         _tomorrow_str = (_now + timedelta(days=1)).strftime("%Y-%m-%d")
         for _label, _date_str in [("today", _today_str), ("tomorrow", _tomorrow_str)]:
