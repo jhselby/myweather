@@ -1,3 +1,20 @@
+## v0.5.17c • 2026-04-28
+* **Observed Temperature Logging & Hybrid Daily High/Low**
+  * Collector now logs corrected temp observations hourly to `obs_temp_log.json` (keeps today + yesterday)
+  * `derived.today_high/low` computed from observed past temps + corrected forecast future temps
+  * Replaces pure HRRR hindcast approach — actual observations are the truth for hours that already happened
+* **Timezone Fix for Daily High/Low**
+  * Day boundaries now use Eastern time instead of UTC
+  * Fixes bug where tomorrow’s high was shown as today’s near midnight
+* **Forecast Text Uses Derived High/Low**
+  * `forecast_text` processor reads `derived.today_high/low` and `derived.tomorrow_high/low`
+  * Narrative text matches all other display paths
+* **Revert Parallel Fetches**
+  * Open-Meteo rate-limits concurrent requests — reverted to sequential for OM calls
+  * Non-OM fetches (NWS, WU, buoy, tides, etc.) remain parallelized
+* **Test Alert Filtering**
+  * Frontend and Gemini briefing filter out NWS TEST alerts
+
 ## v0.5.17b • 2026-04-28
 * **Phase 2: Corrected Hourly Arrays**
   * Collector now writes `hourly.corrected_temperature` and `hourly.corrected_humidity` arrays (bias pre-applied)

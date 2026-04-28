@@ -1,5 +1,5 @@
 # MyWeather Data Pipeline Reference
-**Version:** 5.17a  
+**Version:** 5.17c  
 **Last Updated:** April 28, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
@@ -546,6 +546,16 @@ today_low  = min(corrected temps for today date)
 **Output:** `derived.today_high`, `derived.today_low`, `derived.tomorrow_high`, `derived.tomorrow_low`
 
 **Frontend:** All display paths (briefing card, 10-day collapsed preview, detailed forecast) read directly from `derived`. No bias recomputation in JS.
+
+**Observed Temperature Log:**
+
+**Location:** `weather_collector/collector.py` → `_update_obs_temp_log()`
+
+**Method:** Each collector run (every 10 min) logs `hyperlocal.corrected_temp` with an Eastern-time hour stamp to `obs_temp_log.json`. One entry per hour, deduped. Keeps today + yesterday only.
+
+**Hybrid daily high/low:** `derived.today_high/low` = max/min of (observed corrected temps for past hours) + (corrected forecast temps for remaining hours). As the day progresses, observations replace forecast data, converging on the true observed high/low by end of day.
+
+**Fetch parallelization:** Open-Meteo calls run sequentially (rate-limit sensitive). All other fetchers (NWS, WU, buoy, tides, KBOS, KBVY, eBird, Pirate Weather) run in parallel via `concurrent.futures.ThreadPoolExecutor`.
 
 **Why temperature not corrected in forecast:**
 - Temperature bias is applied in FRONTEND (js/app-main.js), not backend
