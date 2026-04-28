@@ -501,56 +501,24 @@ def main():
     _download_frost_log_from_gcs()
 
     # Fetch all data sources
-    # Parallel fetch all data sources
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    _fetch_jobs = {
-        "GFS current": fetch_current_gfs,
-        "HRRR hourly": fetch_hourly_hrrr,
-        "HRRR daily temps": fetch_hrrr_daily_temps,
-        "GFS 7-day hourly": fetch_hourly_gfs_7day,
-        "NWS gridpoints": fetch_nws_gridpoints,
-        "ECMWF daily": fetch_daily_ecmwf,
-        "PWS current": fetch_pws_current,
-        "Tides": fetch_tides,
-        "Salem water temp": fetch_salem_water_temp,
-        "KBOS obs": fetch_kbos_obs,
-        "KBVY obs": fetch_kbvy_obs,
-        "Buoy 44013": fetch_buoy_44013,
-        "WU stations": fetch_wu_stations,
-        "NWS alerts": fetch_nws_alerts,
-        "Pirate Weather": fetch_pirate_weather,
-        "eBird": fetch_ebird,
-    }
-    _fetch_results = {}
-    _t_fetch_start = _time.time()
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        _futures = {executor.submit(timed_fetch, name, fn): name for name, fn in _fetch_jobs.items()}
-        for future in as_completed(_futures):
-            name = _futures[future]
-            try:
-                _fetch_results[name] = future.result()
-            except Exception as e:
-                print(f"  ✗ {name} failed: {e}")
-                _fetch_results[name] = (None, {"status": "error", "error": str(e)})
-    print(f"  ⏱  All fetches complete: {_time.time() - _t_fetch_start:.1f}s")
+    current_data, current_meta = timed_fetch("GFS current", fetch_current_gfs)
+    hourly_data, hourly_meta = timed_fetch("HRRR hourly", fetch_hourly_hrrr)
+    daily_temps_data, daily_temps_meta = timed_fetch("HRRR daily temps", fetch_hrrr_daily_temps)
+    hourly_7day_data, hourly_7day_meta = timed_fetch("GFS 7-day hourly", fetch_hourly_gfs_7day)
+    nws_gridpoints_data, nws_gridpoints_meta = timed_fetch("NWS gridpoints", fetch_nws_gridpoints)
 
-    current_data, current_meta = _fetch_results["GFS current"]
-    hourly_data, hourly_meta = _fetch_results["HRRR hourly"]
-    daily_temps_data, daily_temps_meta = _fetch_results["HRRR daily temps"]
-    hourly_7day_data, hourly_7day_meta = _fetch_results["GFS 7-day hourly"]
-    nws_gridpoints_data, nws_gridpoints_meta = _fetch_results["NWS gridpoints"]
-    daily_data, daily_meta = _fetch_results["ECMWF daily"]
-    pws_data, pws_meta = _fetch_results["PWS current"]
-    tide_data, tides_meta = _fetch_results["Tides"]
-    salem_water_temp = _fetch_results["Salem water temp"]
-    kbos_data, kbos_meta = _fetch_results["KBOS obs"]
-    kbvy_data, kbvy_meta = _fetch_results["KBVY obs"]
-    buoy_data, buoy_meta = _fetch_results["Buoy 44013"]
-    wu_data, wu_meta = _fetch_results["WU stations"]
+    daily_data, daily_meta = timed_fetch("ECMWF daily", fetch_daily_ecmwf)
+    pws_data, pws_meta = timed_fetch("PWS current", fetch_pws_current)
+    tide_data, tides_meta = timed_fetch("Tides", fetch_tides)
+    salem_water_temp = timed_fetch("Salem water temp", fetch_salem_water_temp)
+    kbos_data, kbos_meta = timed_fetch("KBOS obs", fetch_kbos_obs)
+    kbvy_data, kbvy_meta = timed_fetch("KBVY obs", fetch_kbvy_obs)
+    buoy_data, buoy_meta = timed_fetch("Buoy 44013", fetch_buoy_44013)
+    wu_data, wu_meta = timed_fetch("WU stations", fetch_wu_stations)
     forecast_data, forecast_meta = {}, {"status": "disabled"}  # fetch_nws_forecast() DISABLED - using custom forecasts
-    alert_data, alerts_meta = _fetch_results["NWS alerts"]
-    pirate_data, pirate_meta = _fetch_results["Pirate Weather"]
-    birds_data, birds_meta = _fetch_results["eBird"]
+    alert_data, alerts_meta = timed_fetch("NWS alerts", fetch_nws_alerts)
+    pirate_data, pirate_meta = timed_fetch("Pirate Weather", fetch_pirate_weather)
+    birds_data, birds_meta = timed_fetch("eBird", fetch_ebird)
 
     sources = {
         "gfs_current": current_meta,
