@@ -197,7 +197,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
 
     # Blend observed wind into hourly forecast for exposed coastal location
-    if wind_candidates and "wind_gusts" in weather_data["hourly"]:
+    if wind_candidates and "hourly" in weather_data and "wind_gusts" in weather_data["hourly"]:
         from datetime import datetime, timezone
         observed_gust = weather_data["current"]["wind_gusts"]
         observed_speed = weather_data["current"]["wind_speed"]
@@ -336,11 +336,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             round(h + _hbias, 1) if h is not None else None for h in _raw_humid
         ]
 
-    # Compute corrected daily high/low from full-day HRRR temps + hyperlocal bias
-    _bias = _hyp.get("weighted_bias", 0)
-    if daily_temps_data and daily_temps_data.get("hourly"):
-        _dt_times = daily_temps_data["hourly"].get("time", [])
-        _dt_temps = daily_temps_data["hourly"].get("temperature_2m", [])
+    # Compute corrected daily high/low from the 48h corrected hourly temperature array
+    if "hourly" in weather_data:
+        _ct_times = weather_data["hourly"].get("times", [])
+        _ct_temps = weather_data["hourly"].get("corrected_temperature", [])
         from datetime import datetime, timedelta
         import pytz
         eastern = pytz.timezone("America/New_York")
@@ -348,8 +347,11 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _today_str = _now.strftime("%Y-%m-%d")
         _tomorrow_str = (_now + timedelta(days=1)).strftime("%Y-%m-%d")
         for _label, _date_str in [("today", _today_str), ("tomorrow", _tomorrow_str)]:
-            _day_temps = [_dt_temps[i] + _bias for i, t in enumerate(_dt_times)
-                          if t.startswith(_date_str) and _dt_temps[i] is not None]
+            _day_temps = [
+                _ct_temps[i]
+                for i, t in enumerate(_ct_times)
+                if i < len(_ct_temps) and _ct_temps[i] is not None and t.startswith(_date_str)
+            ]
             if _day_temps:
                 derived[f"{_label}_high"] = round(max(_day_temps), 1)
                 derived[f"{_label}_low"] = round(min(_day_temps), 1)
