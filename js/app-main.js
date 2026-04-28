@@ -3163,11 +3163,10 @@
       }
 
       // Build 48-hour dataset from HRRR hourly
-      const tempBias = hyp.weighted_bias ?? 0;
       const times  = hourly.times       || [];
-      const htemps = hourly.temperature || [];
+      const htemps = hourly.corrected_temperature || hourly.temperature || [];
       const hwind  = hourly.wind_speed  || [];
-      const hhumid = hourly.humidity    || [];
+      const hhumid = hourly.corrected_humidity || hourly.humidity    || [];
 
       function calcFL(ht, hw, hrh) {
         if (ht == null) return null;
@@ -3189,7 +3188,7 @@
 
       const chartTimes = [], chartFL = [], chartAir = [], chartTypes = [];
       for (let i = 0; i < times.length; i++) {
-        const ht  = htemps[i] != null ? htemps[i] + tempBias : null;
+        const ht  = htemps[i] ?? null;
         const hw  = hwind[i]  ?? 0;
         const hrh = hhumid[i] ?? 50;
         const fl  = calcFL(ht, hw, hrh);
@@ -5384,26 +5383,10 @@ function loadWeatherData() {
 
         const kbos  = data.kbos   || {};
         
-        // Calculate today's high/low from corrected HRRR hourly data
-        const hourlyData = data.hourly || {};
-        const hourlyTimes = hourlyData.times || [];
-        const hourlyTemps = hourlyData.temperature || [];
-        const bias = hyp.weighted_bias ?? 0;
-        const today = new Date();
-        const todayStr = today.toISOString().split('T')[0];
-        let todayHigh = null, todayLow = null;
-        hourlyTimes.forEach((timeStr, i) => {
-          if (timeStr.startsWith(todayStr)) {
-            const temp = hourlyTemps[i];
-            if (temp != null) {
-              const correctedTemp = temp + bias;
-              todayHigh = todayHigh === null ? correctedTemp : Math.max(todayHigh, correctedTemp);
-              todayLow = todayLow === null ? correctedTemp : Math.min(todayLow, correctedTemp);
-            }
-          }
-        });
+        // Use corrected daily high/low from collector (single source of truth)
+        const _der = data.derived || {};
         document.getElementById("hiLo").textContent =
-          (todayHigh != null && todayLow != null) ? `${Math.round(todayHigh)}° / ${Math.round(todayLow)}°` : "-- / --";
+          (_der.today_high != null && _der.today_low != null) ? `${Math.round(_der.today_high)}° / ${Math.round(_der.today_low)}°` : "-- / --";
         const popMax = daily.precipitation_probability_max?.[0];
         // RIGHT NOW card - new fields
         
@@ -5853,14 +5836,11 @@ function loadWeatherData() {
           : 18.0;
         buildTempPrecipChart(
           times,
-          (hourly.temperature || []).map((t, i) => { const bias = hyp.weighted_bias ?? 0; return t != null ? t + bias : null; }).slice(startIdx, startIdx + 48),
+          (hourly.corrected_temperature || hourly.temperature || []).slice(startIdx, startIdx + 48),
           (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48),
-          (hourly.temperature || []).map((t, i) => {
-            const tempBias = hyp.weighted_bias ?? 0;
-            const humidityBias = hyp.bias_humidity ?? 0;
-            const correctedTemp = t != null ? t + tempBias : null;
-            const correctedHumidity = (hourly.humidity || [])[i] != null ? (hourly.humidity[i] + humidityBias) : null;
-            return calculateWetBulb(correctedTemp, correctedHumidity);
+          (hourly.corrected_temperature || hourly.temperature || []).map((t, i) => {
+            const correctedHumidity = (hourly.corrected_humidity || hourly.humidity || [])[i];
+            return calculateWetBulb(t, correctedHumidity);
           }).slice(startIdx, startIdx + 48),
           (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48),
           (hourly.cloud_cover_low || []).slice(startIdx, startIdx + 48),
@@ -5879,7 +5859,7 @@ function loadWeatherData() {
         );
 
         // Initialize data bars with hour 0 data
-        const tempData = (hourly.temperature || []).map((t, i) => { const bias = hyp.weighted_bias ?? 0; return t != null ? t + bias : null; }).slice(startIdx, startIdx + 48);
+        const tempData = (hourly.corrected_temperature || hourly.temperature || []).slice(startIdx, startIdx + 48);
         const popData = (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48);
         const wbData = (hourly.corrected_wet_bulb || hourly.wet_bulb || []).slice(startIdx, startIdx + 48);
         const t850Data = (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48);

@@ -318,8 +318,21 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # Hyperlocal corrections
     build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data)
 
-    # Compute corrected daily high/low from full-day HRRR temps + hyperlocal bias
+    # Add corrected hourly arrays (bias pre-applied)
     _hyp = weather_data.get("hyperlocal", {})
+    _bias = _hyp.get("weighted_bias", 0)
+    _hbias = _hyp.get("bias_humidity", 0)
+    if "hourly" in weather_data:
+        _raw_temps = weather_data["hourly"].get("temperature", [])
+        weather_data["hourly"]["corrected_temperature"] = [
+            round(t + _bias, 1) if t is not None else None for t in _raw_temps
+        ]
+        _raw_humid = weather_data["hourly"].get("humidity", [])
+        weather_data["hourly"]["corrected_humidity"] = [
+            round(h + _hbias, 1) if h is not None else None for h in _raw_humid
+        ]
+
+    # Compute corrected daily high/low from full-day HRRR temps + hyperlocal bias
     _bias = _hyp.get("weighted_bias", 0)
     if daily_temps_data and daily_temps_data.get("hourly"):
         _dt_times = daily_temps_data["hourly"].get("time", [])
