@@ -4973,6 +4973,12 @@ function loadWeatherData() {
         const alertSummaryBar = document.getElementById("alertSummaryBar");
         const alertSummaryText = document.getElementById("alertSummaryText");
         alertsContainer.innerHTML = "";
+        // Filter out TEST alerts (NWS transmission tests)
+        const _realAlerts = (data.alerts || []).filter(a => {
+          const txt = ((a.description || '') + ' ' + (a.headline || '')).toUpperCase();
+          return !txt.includes('THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY') && !txt.includes('THIS IS A TEST');
+        });
+        data.alerts = _realAlerts;
         if (data.alerts && data.alerts.length > 0) {
           const n = data.alerts.length;
           

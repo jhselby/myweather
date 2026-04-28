@@ -25,6 +25,7 @@ Rules:
 - Never start with greetings or "Today will be."
 - Be specific when it matters (times, speeds, amounts) but impressionistic when that's more useful.
 - Use corrected values and derived values as the source of truth when they are provided. Do not recompute your own temperatures or reinterpret the numbers.
+- Ignore any alerts that contain "TEST" in the headline or description. These are NWS transmission tests, not real alerts. Never mention test alerts in the headline or subheadline.
 - Wind tone must follow the provided wind impact score first, with gusts only as supporting detail.
 - If wind impact is calm or light, describe wind as light, gentle, or a breeze. Do not describe it as sharp, strong, choppy, restless, or disruptive unless the impact data supports that.
 - Local flavor is welcome, but only when physically correct. Do not invent causal claims about local geography or landmarks unless they are explicitly supported by the input data.
@@ -91,6 +92,9 @@ def _build_weather_summary(weather_data):
             break
 
     # Alerts
+    # Filter out TEST alerts before sending to Gemini
+    alerts = [a for a in alerts if 'TEST' not in (a.get('headline', '') + ' ' + a.get('description', '')).upper() 
+              and 'THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY' not in a.get('description', '')]
     alert_strs = []
     for a in alerts[:3]:  # max 3
         event = a.get("event", "")
