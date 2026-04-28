@@ -1,3 +1,15 @@
+## v0.5.17b • 2026-04-28
+* **Phase 2: Corrected Hourly Arrays**
+  * Collector now writes `hourly.corrected_temperature` and `hourly.corrected_humidity` arrays (bias pre-applied)
+  * All frontend charts read corrected arrays directly — no more JS bias math
+  * Eliminated ~6 separate `htemps[i] + tempBias` computations across app-main.js
+  * Fifth today high/low recomputation replaced with `derived.today_high/low`
+* **Phase 1: Corrected Dew Point & Feels-Like**
+  * Collector computes `derived.corrected_dew_point` and `derived.corrected_feels_like`
+  * Three dew point IIFEs replaced with single `derived` read (fixed inconsistent Magnus constants bug)
+  * Three feels-like computations replaced with single `derived` read
+  * Briefing AI low temp now uses `derived.today_low` instead of raw ECMWF
+
 ## v0.5.17a • 2026-04-28
 * **Daily High/Low — Single Source of Truth**
   * Collector now computes `derived.today_high`, `derived.today_low`, `derived.tomorrow_high`, `derived.tomorrow_low`
