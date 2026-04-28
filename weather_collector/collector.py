@@ -42,6 +42,7 @@ from .processors.forecast_text import generate_forecast_text
 GCS_BUCKET = "myweather-data"
 FROST_LOG_GCS_PATH = "frost_log.json"
 WEATHER_DATA_GCS_PATH = "weather_data.json"
+OBS_TEMP_LOG_GCS_PATH = "obs_temp_log.json"
 FROST_LOG_TMP = Path("/tmp/frost_log.json")
 
 
@@ -77,6 +78,50 @@ def _upload_to_gcs(data, gcs_path, label):
     except Exception as e:
         print(f"  ✗ Failed to upload {label} to GCS: {e}")
         raise
+
+
+def _load_obs_temp_log():
+    """Load observed corrected temperature log from GCS."""
+    try:
+        client = _gcs_client()
+        blob = client.bucket(GCS_BUCKET).blob(OBS_TEMP_LOG_GCS_PATH)
+        if blob.exists():
+            return json.loads(blob.download_as_text())
+    except Exception as e:
+        print(f"  ⚠  Could not load obs_temp_log.json from GCS: {e}")
+    return {"entries": []}
+
+
+def _save_obs_temp_log(data):
+    """Save observed corrected temperature log to GCS."""
+    _upload_to_gcs(data, OBS_TEMP_LOG_GCS_PATH, "obs_temp_log.json")
+
+
+def _update_obs_temp_log(corrected_temp):
+    """Append current corrected temp with local timestamp; keep only today and yesterday."""
+    if corrected_temp is None:
+        return _load_obs_temp_log()
+
+    import pytz
+    from datetime import datetime, timedelta
+    eastern = pytz.timezone("America/New_York")
+    now_local = datetime.now(eastern)
+    today_str = now_local.strftime("%Y-%m-%d")
+    yesterday_str = (now_local - timedelta(days=1)).strftime("%Y-%m-%d")
+
+    log = _load_obs_temp_log()
+    entries = log.get("entries", [])
+
+    entries = [e for e in entries if e.get("time", "").startswith(today_str) or e.get("time", "").startswith(yesterday_str)]
+
+    hour_stamp = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+    if not any(e.get("time") == hour_stamp for e in entries):
+        entries.append({"time": hour_stamp, "temp": round(corrected_temp, 1)})
+
+    entries.sort(key=lambda e: e.get("time", ""))
+    log = {"entries": entries}
+    _save_obs_temp_log(log)
+    return log
 
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
@@ -336,7 +381,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             round(h + _hbias, 1) if h is not None else None for h in _raw_humid
         ]
 
-    # Compute corrected daily high/low from the 48h corrected hourly temperature array
+    # Compute daily high/low using Joe's observed corrected temp so far today
+    # plus Joe's remaining corrected forecast for today; tomorrow stays forecast-only.
     if "hourly" in weather_data:
         _ct_times = weather_data["hourly"].get("times", [])
         _ct_temps = weather_data["hourly"].get("corrected_temperature", [])
@@ -346,15 +392,35 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _now = datetime.now(eastern)
         _today_str = _now.strftime("%Y-%m-%d")
         _tomorrow_str = (_now + timedelta(days=1)).strftime("%Y-%m-%d")
-        for _label, _date_str in [("today", _today_str), ("tomorrow", _tomorrow_str)]:
-            _day_temps = [
-                _ct_temps[i]
-                for i, t in enumerate(_ct_times)
-                if i < len(_ct_temps) and _ct_temps[i] is not None and t.startswith(_date_str)
-            ]
-            if _day_temps:
-                derived[f"{_label}_high"] = round(max(_day_temps), 1)
-                derived[f"{_label}_low"] = round(min(_day_temps), 1)
+        _current_hour_iso = _now.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+
+        _obs_log = _update_obs_temp_log(_hyp.get("corrected_temp"))
+        _obs_entries = _obs_log.get("entries", [])
+
+        _obs_today = [
+            e.get("temp") for e in _obs_entries
+            if e.get("time", "").startswith(_today_str) and e.get("temp") is not None
+        ]
+
+        _fc_today = [
+            _ct_temps[i]
+            for i, t in enumerate(_ct_times)
+            if i < len(_ct_temps) and _ct_temps[i] is not None and t.startswith(_today_str) and t >= _current_hour_iso
+        ]
+
+        _today_series = _obs_today + _fc_today
+        if _today_series:
+            derived["today_high"] = round(max(_today_series), 1)
+            derived["today_low"] = round(min(_today_series), 1)
+
+        _fc_tomorrow = [
+            _ct_temps[i]
+            for i, t in enumerate(_ct_times)
+            if i < len(_ct_temps) and _ct_temps[i] is not None and t.startswith(_tomorrow_str)
+        ]
+        if _fc_tomorrow:
+            derived["tomorrow_high"] = round(max(_fc_tomorrow), 1)
+            derived["tomorrow_low"] = round(min(_fc_tomorrow), 1)
 
     
     # Corrected dew point (from corrected temp + humidity)

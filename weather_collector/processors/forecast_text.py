@@ -125,7 +125,7 @@ def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None, temp_bi
     # Generate days 8-10 from daily data (simple summaries)
     for day_offset in range(7, 10):
         target_date = (now_local + timedelta(days=day_offset)).date()
-        forecast = _generate_daily_forecast(daily_data, target_date)
+        forecast = _generate_daily_forecast(daily_data, target_date, derived=derived)
         if forecast:
             forecasts.append(forecast)
     
@@ -396,7 +396,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         "wind_direction": wind_dir_short if avg_wind and avg_wind > 3 else "",
         "wind_full": wind_full_val
     }
-def _generate_daily_forecast(daily_data, target_date):
+def _generate_daily_forecast(daily_data, target_date, derived=None):
     """Generate simple daily summary from ECMWF data (days 8-10)."""
     
     # Find matching day in daily data
@@ -412,6 +412,23 @@ def _generate_daily_forecast(daily_data, target_date):
     
     high = daily_data['temperature_max'][day_index]
     low = daily_data['temperature_min'][day_index]
+
+    # Override with corrected derived values (single source of truth)
+    if derived:
+        from datetime import datetime, timedelta
+        import pytz
+        eastern = pytz.timezone("America/New_York")
+        now = datetime.now(eastern)
+        today_str = now.strftime("%Y-%m-%d")
+        tomorrow_str = (now + timedelta(days=1)).strftime("%Y-%m-%d")
+        target_str = target_date.isoformat()
+
+        if target_str == today_str:
+            high = derived.get("today_high", high)
+            low  = derived.get("today_low", low)
+        elif target_str == tomorrow_str:
+            high = derived.get("tomorrow_high", high)
+            low  = derived.get("tomorrow_low", low)
     precip_prob = daily_data.get('precipitation_probability_max', [0] * len(daily_times))[day_index]
     wind_max = daily_data.get('wind_speed_max', [0] * len(daily_times))[day_index]
     
