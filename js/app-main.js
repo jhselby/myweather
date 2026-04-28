@@ -5049,24 +5049,7 @@ function loadWeatherData() {
         const der = data.derived || {};
         
         // Calculate corrected Feels Like from corrected temp + wind
-        let correctedFeelsLike = cur.apparent_temperature ?? 0;
-        if (hyp.corrected_temp != null) {
-          const T = hyp.corrected_temp;
-          const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
-          let feelsLike = T;
-          // Wind chill (if T <= 50°F and wind > 3 mph)
-          if (T <= 50 && windSpeed > 3) {
-            feelsLike = 35.74 + (0.6215 * T) - (35.75 * Math.pow(windSpeed, 0.16)) + (0.4275 * T * Math.pow(windSpeed, 0.16));
-          }
-          // Heat index (if T >= 80°F and humidity available)
-          else if (T >= 80 && hyp.corrected_humidity != null) {
-            const RH = hyp.corrected_humidity;
-            feelsLike = -42.379 + (2.04901523 * T) + (10.14333127 * RH) - (0.22475541 * T * RH) - 
-                        (0.00683783 * T * T) - (0.05481717 * RH * RH) + (0.00122874 * T * T * RH) +
-                        (0.00085282 * T * RH * RH) - (0.00000199 * T * T * RH * RH);
-          }
-          correctedFeelsLike = feelsLike;
-        }
+        const correctedFeelsLike = der.corrected_feels_like ?? cur.apparent_temperature ?? 0;
         
         document.getElementById("feelsLike").textContent =
           `Feels like ${Math.round(correctedFeelsLike)}°F`;

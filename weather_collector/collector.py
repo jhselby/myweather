@@ -336,12 +336,36 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
                 derived[f"{_label}_low"] = round(min(_day_temps), 1)
 
     
-    # Dew point spread
-    if current_data:
+    # Corrected dew point (from corrected temp + humidity)
+    _hyp = weather_data.get("hyperlocal", {})
+    _ct = _hyp.get("corrected_temp")
+    _ch = _hyp.get("corrected_humidity")
+    if _ct is not None and _ch is not None and _ch > 0:
+        import math
+        _tc = (_ct - 32) * 5 / 9
+        _gamma = math.log(_ch / 100) + (17.625 * _tc) / (243.04 + _tc)
+        _corrected_dewpt = _gamma * 243.04 / (17.625 - _gamma) * 9 / 5 + 32
+        derived["corrected_dew_point"] = round(_corrected_dewpt, 1)
+        derived["dew_point_spread_f"] = round(_ct - _corrected_dewpt, 1)
+    elif current_data:
         current = current_data.get("current", {})
         spread = compute_dew_point_spread(current.get("temperature_2m"), current.get("dew_point_2m"))
         if spread is not None:
             derived["dew_point_spread_f"] = spread
+
+    # Corrected feels-like (from corrected temp + wind + humidity)
+    _cw = _hyp.get("corrected_wind_speed")
+    if _ct is not None:
+        _fl = _ct
+        _ws = _cw if _cw is not None else (weather_data.get("current", {}).get("wind_speed") or 0)
+        if _ct <= 50 and _ws > 3:
+            _fl = 35.74 + (0.6215 * _ct) - (35.75 * (_ws ** 0.16)) + (0.4275 * _ct * (_ws ** 0.16))
+        elif _ct >= 80 and _ch is not None:
+            _fl = (-42.379 + (2.04901523 * _ct) + (10.14333127 * _ch)
+                   - (0.22475541 * _ct * _ch) - (0.00683783 * _ct * _ct)
+                   - (0.05481717 * _ch * _ch) + (0.00122874 * _ct * _ct * _ch)
+                   + (0.00085282 * _ct * _ch * _ch) - (0.00000199 * _ct * _ct * _ch * _ch))
+        derived["corrected_feels_like"] = round(_fl, 1)
 
     # Fog risk
     if current_data:
