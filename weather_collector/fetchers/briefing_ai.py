@@ -236,9 +236,9 @@ def generate_briefing(weather_data):
                 GEMINI_URL,
                 params={"key": GEMINI_API_KEY},
                 json=payload,
-                timeout=10
+                timeout=20
             )
-            if resp.status_code == 429 and attempt == 0:
+            if resp.status_code in (429, 500, 502, 503, 504) and attempt == 0:
                 print("  ⚠ Briefing: 429 rate limited, retrying in 3s...")
                 time.sleep(3)
                 continue
@@ -268,7 +268,11 @@ def generate_briefing(weather_data):
                 break
 
         except requests.exceptions.Timeout:
-            print("  ⚠ Briefing: Gemini timeout (10s)")
+            if attempt == 0:
+                print("  ⚠ Briefing: timeout, retrying in 2s...")
+                time.sleep(2)
+                continue
+            print("  ⚠ Briefing: Gemini timeout after retry")
             break
         except requests.exceptions.RequestException as e:
             print(f"  ⚠ Briefing: Gemini API error: {e}")

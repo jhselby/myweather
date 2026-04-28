@@ -72,6 +72,11 @@ def fetch_nws_alerts():
         alerts = []
         for f in features:
             props = f.get("properties", {})
+            # Skip TEST alerts (NWS transmission tests)
+            desc = (props.get('description', '') + ' ' + props.get('headline', '')).upper()
+            if 'THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY' in desc or 'THIS IS A TEST' in desc:
+                print(f"  ⏭ Skipping TEST alert: {props.get('event', 'Unknown')}")
+                continue
             event_type = props.get('event', 'Special Weather Statement').replace(' ', '+')
             web_url = (
                 f"https://forecast.weather.gov/showsigwx.php?"

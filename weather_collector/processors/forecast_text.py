@@ -342,13 +342,13 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         # Only show timing for afternoon/late highs
         if temp_position > len(period_hours) * 0.6 and temp_hour >= 14:
             temp_timing = f" around {format_temp_time(temp_hour)}"
-        main_sent += f", with a high near {int(temp)}{temp_timing}."
+        main_sent += f", with a high near {round(temp)}{temp_timing}."
     else:
         if temp_position < len(period_hours) * 0.3:
             temp_timing = f" in the evening"
         elif temp_position > len(period_hours) * 0.7:
             temp_timing = f" toward morning"
-        main_sent += f", with a low around {int(temp)}{temp_timing}."
+        main_sent += f", with a low around {round(temp)}{temp_timing}."
     
     narrative_parts.append(main_sent)
     
@@ -380,7 +380,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         "date": target_date.isoformat(),
         "is_daytime": is_daytime,
         "text": " ".join(narrative_parts),
-        "temperature": int(temp),
+        "temperature": round(temp),
         "wind_speed": f"{int(avg_wind)} mph" if avg_wind and avg_wind > 3 else "",
         "wind_direction": wind_dir_short if avg_wind and avg_wind > 3 else "",
         "wind_full": wind_full_val
@@ -407,7 +407,7 @@ def _generate_daily_forecast(daily_data, target_date):
     parts = []
     
     # Temperature
-    parts.append(f"High {int(high)}°F, low {int(low)}°F.")
+    parts.append(f"High {round(high)}°F, low {round(low)}°F.")
     
     # Precipitation
     if precip_prob > 60:
@@ -426,8 +426,8 @@ def _generate_daily_forecast(daily_data, target_date):
         'date': target_date.isoformat(),
         'is_simple_daily': True,
         'text': ' '.join(parts),
-        'temperature': int(high),
-        'low_temp': int(low)
+        'temperature': round(high),
+        'low_temp': round(low)
     }
 
 
