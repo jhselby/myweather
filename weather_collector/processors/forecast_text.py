@@ -58,7 +58,7 @@ def _extract_nws_value(nws_property, target_time):
     
     return None
 
-def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None, temp_bias=0):
+def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None, temp_bias=0, derived=None):
     """Generate 10-day forecast: 14 periods (days 1-7) + 3 simple dailies (days 8-10)."""
     # Handle both old format (single dict) and new format (hrrr + gfs)
     if isinstance(hourly_data, dict) and "hrrr" in hourly_data:
@@ -114,7 +114,9 @@ def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None, temp_bi
             period_name,
             eastern,
             nws_gridpoints,
-            temp_bias=temp_bias if current_day_offset <= 1 else 0
+            temp_bias=temp_bias if current_day_offset <= 1 else 0,
+            derived=derived,
+            current_day_offset=current_day_offset
         )
         
         if forecast:
@@ -130,7 +132,7 @@ def generate_forecast_text(hourly_data, daily_data, nws_gridpoints=None, temp_bi
     return forecasts
 
 
-def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, period_name, eastern, nws_gridpoints=None, temp_bias=0):
+def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, period_name, eastern, nws_gridpoints=None, temp_bias=0, derived=None, current_day_offset=0):
     """Generate forecast for a single day or night period (days 1-7). Merges HRRR (48h) + GFS (7day)."""
     
     # Merge HRRR and GFS data - prefer HRRR when available
@@ -273,8 +275,17 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     else:
         temp_hour_idx = temps.index(min(temps))
     temp_hour = period_hours[temp_hour_idx]
-    # Apply hyperlocal bias correction to temp for today/tomorrow
-    if temp_bias:
+    # Use derived corrected high/low for today/tomorrow (single source of truth)
+    if derived and current_day_offset <= 1:
+        if is_daytime:
+            _key = "today_high" if current_day_offset == 0 else "tomorrow_high"
+            if derived.get(_key) is not None:
+                temp = derived[_key]
+        else:
+            _key = "today_low" if current_day_offset == 0 else "tomorrow_low"
+            if derived.get(_key) is not None:
+                temp = derived[_key]
+    elif temp_bias:
         temp = temp + temp_bias
     
     def format_temp_time(h):
