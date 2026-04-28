@@ -1,3 +1,12 @@
+## v0.5.17a • 2026-04-28
+* **Daily High/Low — Single Source of Truth**
+  * Collector now computes `derived.today_high`, `derived.today_low`, `derived.tomorrow_high`, `derived.tomorrow_low`
+  * Uses dedicated HRRR fetch (past_hours=24 + forecast_hours=48) to cover full calendar day
+  * Applies hyperlocal bias to full-day hourly temps — corrected data is the truth
+  * All three frontend display paths (briefing card, 10-day collapsed, detailed forecast) now read from `derived` instead of recomputing
+  * Eliminated three redundant bias-application blocks in frontend JS
+  * Briefing low now uses `derived.today_low` instead of raw ECMWF `daily.temperature_min`
+
 ## v0.5.17 • 2026-04-27
 * **Briefing — Data Integrity Alignment**
   * Briefing now uses hyperlocal-corrected values consistently (temp, wind, gusts, humidity)

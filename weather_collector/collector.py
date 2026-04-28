@@ -12,7 +12,7 @@ from .config import SCHEMA_VERSION, LOCATION_NAME
 from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes
 
 # Import all fetchers
-from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf, fetch_hourly_gfs_7day
+from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf, fetch_hourly_gfs_7day, fetch_hrrr_daily_temps
 from .fetchers.pws import fetch_pws_current
 from .fetchers.tides import fetch_tides
 from .fetchers.noaa import fetch_kbos_obs, fetch_kbvy_obs, fetch_buoy_44013
@@ -81,7 +81,7 @@ def _upload_to_gcs(data, gcs_path, label):
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
                        kbos_data, kbvy_data, buoy_data, forecast_data, alert_data,
-                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None, pirate_data=None, birds_data=None):
+                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None, pirate_data=None, birds_data=None, daily_temps_data=None):
     """
     Build the complete weather data structure from all sources.
     This is the main processing function that combines all fetched data.
@@ -317,6 +317,24 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
     # Hyperlocal corrections
     build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data)
+
+    # Compute corrected daily high/low from full-day HRRR temps + hyperlocal bias
+    _hyp = weather_data.get("hyperlocal", {})
+    _bias = _hyp.get("weighted_bias", 0)
+    if daily_temps_data and daily_temps_data.get("hourly"):
+        _dt_times = daily_temps_data["hourly"].get("time", [])
+        _dt_temps = daily_temps_data["hourly"].get("temperature_2m", [])
+        from datetime import timedelta
+        _now = datetime.utcnow()
+        _today_str = _now.strftime("%Y-%m-%d")
+        _tomorrow_str = (_now + timedelta(days=1)).strftime("%Y-%m-%d")
+        for _label, _date_str in [("today", _today_str), ("tomorrow", _tomorrow_str)]:
+            _day_temps = [_dt_temps[i] + _bias for i, t in enumerate(_dt_times)
+                          if t.startswith(_date_str) and _dt_temps[i] is not None]
+            if _day_temps:
+                derived[f"{_label}_high"] = round(max(_day_temps), 1)
+                derived[f"{_label}_low"] = round(min(_day_temps), 1)
+
     
     # Dew point spread
     if current_data:
@@ -444,6 +462,7 @@ def main():
     # Fetch all data sources
     current_data, current_meta = timed_fetch("GFS current", fetch_current_gfs)
     hourly_data, hourly_meta = timed_fetch("HRRR hourly", fetch_hourly_hrrr)
+    daily_temps_data, daily_temps_meta = timed_fetch("HRRR daily temps", fetch_hrrr_daily_temps)
     hourly_7day_data, hourly_7day_meta = timed_fetch("GFS 7-day hourly", fetch_hourly_gfs_7day)
     nws_gridpoints_data, nws_gridpoints_meta = timed_fetch("NWS gridpoints", fetch_nws_gridpoints)
 
@@ -514,7 +533,8 @@ def main():
         nws_gridpoints=nws_gridpoints_data,
         hourly_7day_data=hourly_7day_data,
         pirate_data=pirate_data,
-        birds_data=birds_data
+        birds_data=birds_data,
+        daily_temps_data=daily_temps_data
     )
     print(f"  ⏱  Build weather data: {_time.time() - t0:.1f}s")
 

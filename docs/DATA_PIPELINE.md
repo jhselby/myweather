@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 5.17  
-**Last Updated:** April 27, 2026  
+**Version:** 5.17a  
+**Last Updated:** April 28, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
@@ -530,6 +530,22 @@ corrected_wet_bulb = calculate_wet_bulb(hourly_temp, corrected_humidity)
 - ✅ Uses corrected humidity (bias applied)
 - ❌ Uses raw model temperature (no bias applied)
 - This differs from current hour which uses BOTH corrected temp and humidity
+
+**Daily High/Low (Corrected):**
+
+**Location:** `weather_collector/collector.py` (after `build_hyperlocal_data`)
+
+**Method:** Separate HRRR fetch with `past_hours=24` + `forecast_hours=48` provides full calendar day coverage. Hyperlocal bias applied to all hourly temps, then max/min computed per day.
+
+```
+corrected_hourly_temp = hrrr_hourly_temp + weighted_bias
+today_high = max(corrected temps for today date)
+today_low  = min(corrected temps for today date)
+```
+
+**Output:** `derived.today_high`, `derived.today_low`, `derived.tomorrow_high`, `derived.tomorrow_low`
+
+**Frontend:** All display paths (briefing card, 10-day collapsed preview, detailed forecast) read directly from `derived`. No bias recomputation in JS.
 
 **Why temperature not corrected in forecast:**
 - Temperature bias is applied in FRONTEND (js/app-main.js), not backend

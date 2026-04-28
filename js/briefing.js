@@ -72,7 +72,7 @@
     const high = Math.round(der.today_high ?? der.high ?? daily.temperature_max?.[0] ?? 0);
 
     // Low tonight
-    const low = Math.floor(daily.temperature_min?.[0] ?? 0);
+    const low = Math.round(der.today_low ?? daily.temperature_min?.[0] ?? 0);
 
     // Sky condition
     const skyCode = cur.weather_code ?? 0;

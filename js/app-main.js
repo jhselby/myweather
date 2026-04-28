@@ -2741,7 +2741,7 @@
 
     let _selectedForecastDate = null;
 
-    function renderForecast(forecastText, hourlyTimes, hourlyTemps, tempBias) {
+    function renderForecast(forecastText, hourlyTimes, hourlyTemps, tempBias, derived) {
       const el = document.getElementById("forecastList");
       if (!el || !Array.isArray(forecastText)) return;
       el.innerHTML = "";
@@ -2750,27 +2750,16 @@
       const days = [];
       const seenDates = new Set();
 
-      // Precompute corrected high/low for today and tomorrow from hourly data
+      // Use corrected daily high/low from collector (single source of truth)
+      const _now = new Date();
+      const _pad = n => String(n).padStart(2, '0');
+      const _dateStr = d => `${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`;
+      const _todayStr = _dateStr(_now);
+      const _tom = new Date(_now); _tom.setDate(_tom.getDate() + 1);
+      const _tomorrowStr = _dateStr(_tom);
       const _correctedDays = {};
-      if (hourlyTimes && hourlyTemps && tempBias != null) {
-        const _now = new Date();
-        const _pad = n => String(n).padStart(2, '0');
-        const _dateStr = d => `${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`;
-        const _tomorrow = new Date(_now); _tomorrow.setDate(_tomorrow.getDate() + 1);
-        const _targets = new Set([_dateStr(_now), _dateStr(_tomorrow)]);
-        hourlyTimes.forEach((t, i) => {
-          const dStr = t.slice(0, 10);
-          if (!_targets.has(dStr)) return;
-          const temp = hourlyTemps[i];
-          if (temp == null) return;
-          const corrected = temp + tempBias;
-          if (!_correctedDays[dStr]) _correctedDays[dStr] = { high: corrected, low: corrected };
-          else {
-            _correctedDays[dStr].high = Math.max(_correctedDays[dStr].high, corrected);
-            _correctedDays[dStr].low  = Math.min(_correctedDays[dStr].low,  corrected);
-          }
-        });
-      }
+      if (derived.today_high != null) _correctedDays[_todayStr] = { high: derived.today_high, low: derived.today_low };
+      if (derived.tomorrow_high != null) _correctedDays[_tomorrowStr] = { high: derived.tomorrow_high, low: derived.tomorrow_low };
       
       for (const period of forecastText) {
         const dateStr = period.date;
@@ -4556,7 +4545,7 @@
       summaryEl.textContent = firstSentence + "...";
     }
 
-    function renderHyperlocalForecast(forecasts, hourlyTimes, hourlyTemps, tempBias) {
+    function renderHyperlocalForecast(forecasts, hourlyTimes, hourlyTemps, tempBias, derived) {
       const list = document.getElementById("hyperlocalForecastList");
       if (!list || !Array.isArray(forecasts) || forecasts.length === 0) {
         if (list) list.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.88rem;padding:8px 0;">No forecast available.</div>';
@@ -4568,24 +4557,16 @@
 
       list.innerHTML = "";
       
-      // Precompute corrected high for today and tomorrow
+      // Use corrected daily high/low from collector (single source of truth)
+      const _now = new Date();
+      const _pad = n => String(n).padStart(2, "0");
+      const _ds = d => `${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`;
+      const _todayStr = _ds(_now);
+      const _tom = new Date(_now); _tom.setDate(_tom.getDate() + 1);
+      const _tomorrowStr = _ds(_tom);
       const _fcCorrected = {};
-      if (hourlyTimes && hourlyTemps && tempBias != null) {
-        const _now = new Date();
-        const _pad = n => String(n).padStart(2, "0");
-        const _ds = d => `${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`;
-        const _tom = new Date(_now); _tom.setDate(_tom.getDate() + 1);
-        const _targets = new Set([_ds(_now), _ds(_tom)]);
-        hourlyTimes.forEach((t, i) => {
-          const d = t.slice(0, 10);
-          if (!_targets.has(d)) return;
-          const temp = hourlyTemps[i];
-          if (temp == null) return;
-          const c = temp + tempBias;
-          if (!_fcCorrected[d]) _fcCorrected[d] = { high: c, low: c };
-          else { _fcCorrected[d].high = Math.max(_fcCorrected[d].high, c); _fcCorrected[d].low = Math.min(_fcCorrected[d].low, c); }
-        });
-      }
+      if (derived.today_high != null) _fcCorrected[_todayStr] = { high: derived.today_high, low: derived.today_low };
+      if (derived.tomorrow_high != null) _fcCorrected[_tomorrowStr] = { high: derived.tomorrow_high, low: derived.tomorrow_low };
 
       forecasts.forEach((p, i) => {
         const row = document.createElement("div");
@@ -5095,31 +5076,9 @@ function loadWeatherData() {
         const tenDayHighEl = document.getElementById("tenDayHigh");
         const tenDayLowEl = document.getElementById("tenDayLow");
         if (tenDayHighEl && tenDayLowEl) {
-          const hourlyData = data.hourly || {};
-          const hourlyTimes = hourlyData.times || [];
-          const hourlyTemps = hourlyData.temperature || [];
-          const bias = hyp.weighted_bias ?? 0;
-          const today = new Date();
-          const todayStr = today.toISOString().split('T')[0];
-          let todayHigh = null, todayLow = null;
-          hourlyTimes.forEach((timeStr, i) => {
-            if (timeStr.startsWith(todayStr)) {
-              const temp = hourlyTemps[i];
-              if (temp != null) {
-                const correctedTemp = temp + bias;
-                todayHigh = todayHigh === null ? correctedTemp : Math.max(todayHigh, correctedTemp);
-                todayLow = todayLow === null ? correctedTemp : Math.min(todayLow, correctedTemp);
-              }
-            }
-          });
-          
-          if (todayHigh != null && todayLow != null) {
-            tenDayHighEl.textContent = `${Math.round(todayHigh)}°`;
-            tenDayLowEl.textContent = `${Math.round(todayLow)}°`;
-          } else {
-            tenDayHighEl.textContent = `--°`;
-            tenDayLowEl.textContent = `--°`;
-          }
+          const der = data.derived || {};
+          tenDayHighEl.textContent = der.today_high != null ? `${Math.round(der.today_high)}°` : `--°`;
+          tenDayLowEl.textContent = der.today_low != null ? `${Math.round(der.today_low)}°` : `--°`;
         }
         const obsTag = cur.condition_source === "KBVY observed" ? " <span style='font-size:0.75rem;opacity:0.5;'>[obs]</span>" : "";
         document.getElementById("condition").innerHTML = `${emoji} ${desc}${obsTag}`;
@@ -5928,7 +5887,7 @@ function loadWeatherData() {
         // Forecast
         const _fcHourly = data.hourly || {};
         const _fcBias = (data.hyperlocal || {}).weighted_bias ?? 0;
-        renderForecast(data.forecast_text, _fcHourly.times || [], _fcHourly.temperature || [], _fcBias);
+        renderForecast(data.forecast_text, _fcHourly.times || [], _fcHourly.temperature || [], _fcBias, data.derived || {});
 
         // 48h charts - start from current hour
         const hourly = data.hourly || {};
@@ -6071,7 +6030,7 @@ function loadWeatherData() {
           window._currentForecastText = data.forecast_text;
           const _hfHourly = data.hourly || {};
           const _hfBias = (data.hyperlocal || {}).weighted_bias ?? 0;
-          renderHyperlocalForecast(data.forecast_text, _hfHourly.times || [], _hfHourly.temperature || [], _hfBias);
+          renderHyperlocalForecast(data.forecast_text, _hfHourly.times || [], _hfHourly.temperature || [], _hfBias, data.derived || {});
         }
         renderNWSForecast(window._nwsPeriods);
 

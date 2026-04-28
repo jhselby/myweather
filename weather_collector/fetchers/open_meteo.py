@@ -163,3 +163,18 @@ def fetch_hourly_gfs_7day():
         **OM_UNITS,
     }
     return _om_get(params, "GFS 7-day hourly")
+
+
+def fetch_hrrr_daily_temps():
+    """Fetch today's full hourly temps (past+forward) for daily high/low computation."""
+    print("📡 Fetching HRRR daily temps (past+forward)...")
+    params = {
+        "latitude": LAT,
+        "longitude": LON,
+        "hourly": "temperature_2m",
+        "forecast_hours": 48,
+        "past_hours": 24,
+        **OM_UNITS,
+    }
+    data, meta = _om_get(params, "HRRR daily temps")
+    return data, meta
