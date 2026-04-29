@@ -468,7 +468,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             derived["fog_probability"] = fog_risk["fog_probability"]
 
     # Wet bulb temperatures (for precipitation type classification)
-    add_wet_bulb_temps(weather_data)
+    if "hourly" in weather_data:
+        add_wet_bulb_temps(weather_data)
 
     
     # Wind risk
@@ -667,7 +668,7 @@ def main():
     current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
     hourly_times = weather_data.get("hourly", {}).get("times", [])
     trim_idx = next((i for i, t in enumerate(hourly_times) if t >= current_hour_iso), 0)
-    if trim_idx > 0:
+    if trim_idx > 0 and "hourly" in weather_data:
         for key in weather_data["hourly"]:
             weather_data["hourly"][key] = weather_data["hourly"][key][trim_idx:]
 

@@ -28,6 +28,7 @@ Rules:
 - Ignore any alerts that contain "TEST" in the headline or description. These are NWS transmission tests, not real alerts. Never mention test alerts in the headline or subheadline.
 - Wind tone must follow the provided wind impact score first, with gusts only as supporting detail.
 - If wind impact is calm or light, describe wind as light, gentle, or a breeze. Do not describe it as sharp, strong, choppy, restless, or disruptive unless the impact data supports that.
+- Example: if wind impact is 2 (Calm) but raw wind is 15 mph with 21 mph gusts, the headline should treat it as calm or light air — the impact score accounts for local exposure and is more accurate than raw speed for this location. Raw speed and gusts may be mentioned as context but must not set the tone.
 - Local flavor is welcome, but only when physically correct. Do not invent causal claims about local geography or landmarks unless they are explicitly supported by the input data.
 - Avoid vague coastal phrasing like "off the water" or "onshore." Prefer explicit wind direction (e.g., northeast breeze) unless a directional relationship is clearly defined.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
@@ -115,8 +116,8 @@ def _build_weather_summary(weather_data):
     lines = [
         f"Current: {temp}°F, {sky}",
         f"High: {high}°F, Low: {low}°F",
-        f"Wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else ""),
-        f"Wind impact: {wind_impact if wind_impact is not None else 'Unknown'}" + (f" ({wind_impact_label})" if wind_impact_label else ""),
+        f"Wind impact: {wind_impact if wind_impact is not None else 'Unknown'}" + (f" ({wind_impact_label})" if wind_impact_label else "") + " — THIS IS THE AUTHORITATIVE WIND MEASURE",
+        f"Raw model wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + " (use for context only, not tone)",
         f"Humidity: {humidity}%",
         f"Fog: {fog_label} ({fog_prob}%)",
         f"Sea breeze: {'Active — ' + sb_reason if sb_active else 'Inactive'}",
