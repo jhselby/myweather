@@ -571,25 +571,56 @@ def main():
     # Download frost log from GCS before fetching (needed for update_frost_log)
     _download_frost_log_from_gcs()
 
-    # Fetch all data sources
+    # ── Open-Meteo calls: SEQUENTIAL (rate-limit sensitive) ──
     current_data, current_meta = timed_fetch("GFS current", fetch_current_gfs)
     hourly_data, hourly_meta = timed_fetch("HRRR hourly", fetch_hourly_hrrr)
     daily_temps_data, daily_temps_meta = timed_fetch("HRRR daily temps", fetch_hrrr_daily_temps)
     hourly_7day_data, hourly_7day_meta = timed_fetch("GFS 7-day hourly", fetch_hourly_gfs_7day)
-    nws_gridpoints_data, nws_gridpoints_meta = timed_fetch("NWS gridpoints", fetch_nws_gridpoints)
-
     daily_data, daily_meta = timed_fetch("ECMWF daily", fetch_daily_ecmwf)
-    pws_data, pws_meta = timed_fetch("PWS current", fetch_pws_current)
-    tide_data, tides_meta = timed_fetch("Tides", fetch_tides)
-    salem_water_temp = timed_fetch("Salem water temp", fetch_salem_water_temp)
-    kbos_data, kbos_meta = timed_fetch("KBOS obs", fetch_kbos_obs)
-    kbvy_data, kbvy_meta = timed_fetch("KBVY obs", fetch_kbvy_obs)
-    buoy_data, buoy_meta = timed_fetch("Buoy 44013", fetch_buoy_44013)
-    wu_data, wu_meta = timed_fetch("WU stations", fetch_wu_stations)
-    forecast_data, forecast_meta = {}, {"status": "disabled"}  # fetch_nws_forecast() DISABLED - using custom forecasts
-    alert_data, alerts_meta = timed_fetch("NWS alerts", fetch_nws_alerts)
-    pirate_data, pirate_meta = timed_fetch("Pirate Weather", fetch_pirate_weather)
-    birds_data, birds_meta = timed_fetch("eBird", fetch_ebird)
+
+    # ── Everything else: PARALLEL ──
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    parallel_t0 = _time.time()
+    parallel_tasks = {
+        "NWS gridpoints": (fetch_nws_gridpoints, [], {}),
+        "PWS current": (fetch_pws_current, [], {}),
+        "Tides": (fetch_tides, [], {}),
+        "Salem water temp": (fetch_salem_water_temp, [], {}),
+        "KBOS obs": (fetch_kbos_obs, [], {}),
+        "KBVY obs": (fetch_kbvy_obs, [], {}),
+        "Buoy 44013": (fetch_buoy_44013, [], {}),
+        "WU stations": (fetch_wu_stations, [], {}),
+        "NWS alerts": (fetch_nws_alerts, [], {}),
+        "Pirate Weather": (fetch_pirate_weather, [], {}),
+        "eBird": (fetch_ebird, [], {}),
+    }
+    parallel_results = {}
+    with ThreadPoolExecutor(max_workers=6) as executor:
+        future_to_name = {
+            executor.submit(fn, *args, **kwargs): name
+            for name, (fn, args, kwargs) in parallel_tasks.items()
+        }
+        for future in as_completed(future_to_name):
+            name = future_to_name[future]
+            try:
+                parallel_results[name] = future.result()
+            except Exception as e:
+                print(f"  ⚠️  {name} failed: {e}")
+                parallel_results[name] = (None, {"status": "error", "error": str(e)}) if name != "Salem water temp" else None
+    print(f"  ✓ Parallel fetches complete: {_time.time() - parallel_t0:.1f}s")
+
+    nws_gridpoints_data, nws_gridpoints_meta = parallel_results.get("NWS gridpoints", (None, {"status": "error"}))
+    pws_data, pws_meta = parallel_results.get("PWS current", (None, {"status": "error"}))
+    tide_data, tides_meta = parallel_results.get("Tides", (None, {"status": "error"}))
+    salem_water_temp = parallel_results.get("Salem water temp")
+    kbos_data, kbos_meta = parallel_results.get("KBOS obs", (None, {"status": "error"}))
+    kbvy_data, kbvy_meta = parallel_results.get("KBVY obs", (None, {"status": "error"}))
+    buoy_data, buoy_meta = parallel_results.get("Buoy 44013", (None, {"status": "error"}))
+    wu_data, wu_meta = parallel_results.get("WU stations", (None, {"status": "error"}))
+    alert_data, alerts_meta = parallel_results.get("NWS alerts", (None, {"status": "error"}))
+    pirate_data, pirate_meta = parallel_results.get("Pirate Weather", (None, {"status": "error"}))
+    birds_data, birds_meta = parallel_results.get("eBird", (None, {"status": "error"}))
+    forecast_data, forecast_meta = {}, {"status": "disabled"}  # fetch_nws_forecast() DISABLED
 
     sources = {
         "gfs_current": current_meta,
