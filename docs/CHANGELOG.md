@@ -1,3 +1,14 @@
+## v0.5.17c (cont.) • 2026-04-28
+* **Gemini Briefing Fixes**
+  * Wind impact score now sent first in data block with authoritative label; raw speed demoted to context
+  * Added concrete example to system prompt: high raw speed + calm impact = calm tone
+  * Added tomorrow high/low to Gemini data block — prevents invented temperatures
+  * Added prompt rule: use provided temperatures exactly, never estimate
+* **Stability**
+  * Guarded `add_wet_bulb_temps` and hourly trim against missing `hourly` key (HRRR fetch failures)
+* **Local Development**
+  * `make run-local` runs collector locally with `.env` secrets (GCS auth via ADC)
+
 ## v0.5.17c • 2026-04-28
 * **Observed Temperature Logging & Hybrid Daily High/Low**
   * Collector now logs corrected temp observations hourly to `obs_temp_log.json` (keeps today + yesterday)
