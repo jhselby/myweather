@@ -225,7 +225,7 @@ def generate_briefing(weather_data):
     # Check if we should call Gemini or use cache
     should_call, cached = _should_call_gemini()
     if not should_call and cached:
-        return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", "")}
+        return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
 
     summary = _build_weather_summary(weather_data)
 
@@ -285,7 +285,8 @@ def generate_briefing(weather_data):
 
             if headline:
                 print(f"  ✓ Briefing: {headline}")
-                briefing = {"headline": headline, "subheadline": subheadline}
+                cached_at = datetime.now(eastern).isoformat()
+                briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at}
                 _save_cached_briefing(briefing)
                 return briefing
             else:

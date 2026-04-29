@@ -656,7 +656,17 @@ def main():
     elapsed = _time.time() - t0
     if briefing:
         weather_data["briefing"] = briefing
-        weather_data["sources"]["gemini"] = {"status": "ok", "age_minutes": 0}
+        # Calculate actual age from cached_at timestamp
+        _gemini_age = 0
+        if briefing.get("cached_at"):
+            try:
+                from datetime import datetime
+                import pytz
+                _cached = datetime.fromisoformat(briefing["cached_at"])
+                _gemini_age = round((datetime.now(pytz.timezone("America/New_York")) - _cached).total_seconds() / 60, 1)
+            except Exception:
+                pass
+        weather_data["sources"]["gemini"] = {"status": "ok", "age_minutes": _gemini_age}
     else:
         weather_data.setdefault("briefing", {"headline": "", "subheadline": ""})
         weather_data["sources"]["gemini"] = {"status": "error", "age_minutes": 0}

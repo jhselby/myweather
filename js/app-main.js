@@ -1608,7 +1608,13 @@
           const s = sources[key];
           if (!s) return "";
           const ok   = s.status === "ok";
-          const age  = typeof s.age_minutes === "number" ? s.age_minutes.toFixed(1) + "m ago" : "--";
+          let age = "--";
+          if (key === "gemini" && window.__lastWeatherData?.briefing?.cached_at) {
+            const cachedAt = new Date(window.__lastWeatherData.briefing.cached_at);
+            age = Math.round((Date.now() - cachedAt.getTime()) / 60000) + "m ago";
+          } else if (typeof s.age_minutes === "number") {
+            age = Math.round(s.age_minutes) + "m ago";
+          }
           const meta = SOURCE_META[key];
           const name = key === "pws" ? pwsName : meta.name;
           
