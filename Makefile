@@ -19,4 +19,4 @@ logs:
 	gcloud functions logs read myweather-collector --region=us-east1 --limit=50
 
 run-local:
-	set -a && source .env && set +a && python3 -c "from weather_collector.collector import run; run(None)"
+	@bash -lc 'set +x; set -a; source .env; set +a; python3 -c "from weather_collector.collector import run; run(None)"'
