@@ -32,6 +32,9 @@ Rules:
 - Local flavor is welcome, but only when physically correct. Do not invent causal claims about local geography or landmarks unless they are explicitly supported by the input data.
 - Avoid vague coastal phrasing like "off the water" or "onshore." Prefer explicit wind direction (e.g., northeast breeze) unless a directional relationship is clearly defined.
 - If next rain is known within the next few days, do not say "no rain in sight"; instead say when rain returns.
+- Do not use absolute phrasing like "rain stays away until" or "no rain until" if there is any earlier non-zero rain chance.
+- If early rain chances are minor, describe conditions as mostly dry or as a slight chance before steadier rain arrives.
+- If near-term precipitation chance is non-zero, avoid describing conditions as completely dry.
 - Use the provided temperature values exactly as given. Never estimate, round differently, or invent temperatures not in the data.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
@@ -45,6 +48,7 @@ def _build_weather_summary(weather_data):
     sb = weather_data.get("sea_breeze", {})
     alerts = weather_data.get("alerts", [])
     hourly = weather_data.get("hourly", {})
+    pirate = weather_data.get("pirate_weather", {})
 
     # Current conditions
     temp = round(hyp.get("corrected_temp") or cur.get("temperature") or 0)
@@ -107,10 +111,27 @@ def _build_weather_summary(weather_data):
     pop_arr = hourly.get("precipitation_probability", [])
     time_arr = hourly.get("times", [])
     rain_start = None
+    rain_start_idx = None
     for i, p in enumerate(pop_arr[:48]):
         if p and p >= 40 and time_arr and i < len(time_arr):
             rain_start = time_arr[i]
+            rain_start_idx = i
             break
+
+    # Minor rain chances before the main rain event
+    minor_rain_before_main = False
+    minor_rain_max_pop_before_main = 0
+    scan_end = rain_start_idx if rain_start_idx is not None else min(len(pop_arr), 24)
+    for p in pop_arr[:scan_end]:
+        if p is None:
+            continue
+        if p > 0:
+            minor_rain_before_main = True
+        if p > minor_rain_max_pop_before_main:
+            minor_rain_max_pop_before_main = p
+
+    # Pirate Weather near-term precip signal
+    pirate_next_hour_pop = pirate.get("precip_probability")
 
     # Alerts
     # Filter out TEST alerts before sending to Gemini
@@ -143,6 +164,8 @@ def _build_weather_summary(weather_data):
         f"Fog: {fog_label} ({fog_prob}%)",
         f"Sea breeze: {'Active — ' + sb_reason if sb_active else 'Inactive'}",
         f"Rain next 48h: {rain_inches}\"" + (f", starts around {rain_start}" if rain_start else ""),
+        f"Minor rain chance before main rain: {'yes' if minor_rain_before_main else 'no'}" + (f", max {minor_rain_max_pop_before_main}%" if minor_rain_before_main else ""),
+        f"Next-hour precip chance (Pirate): {pirate_next_hour_pop}%" if pirate_next_hour_pop is not None else "",
         f"Alerts: {', '.join(alert_strs) if alert_strs else 'None'}",
     ]
     if sunset_note:
