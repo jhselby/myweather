@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=f554c0b2" />
+  <link rel="stylesheet" href="styles/app.css?v=d992eee8" />
   <link rel="stylesheet" href="styles/briefing.css?v=795205b2" />
 </head>
 <body>
@@ -37,7 +37,7 @@
           <button id="refreshBtn" class="header-icon-btn" aria-label="Refresh">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style="display:block;"><path d="M3.5 10a6.5 6.5 0 0 1 11.3-4.4M16.5 10a6.5 6.5 0 0 1-11.3 4.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><polyline points="14,2.5 15,5.5 12,6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><polyline points="6,14 5,14.5 8,14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
-          <button id="settingsBtn" class="header-icon-btn" aria-label="Settings" onclick="openSettingsModal()"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="display:block;" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+          <button id="settingsBtn" class="header-icon-btn" aria-label="Settings" onclick="openSettingsModal()"><span id="settingsAlertDot" class="settings-alert-dot" style="display:none;"></span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" style="display:block;" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
         </span>
       </h1>
 
@@ -1225,7 +1225,7 @@
 
   </div>
   <script src="js/briefing.js?v=657d6dc2"></script>
-  <script src="js/app-main.js?v=c6e68f93"></script>
+  <script src="js/app-main.js?v=18aaa18b"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   <script src="js/overhead.js?v=b7ed964d"></script>
   
@@ -1314,6 +1314,15 @@
             <div>Data generated: <span id="dataUpdated2">--</span></div>
             <div>Code loaded: <span id="pageLoaded2">--</span></div>
           </div>
+          <div style="margin-top:10px;">
+            <div id="sourcesToggle" onclick="event.stopPropagation();document.getElementById('sourcesBody').style.display=document.getElementById('sourcesBody').style.display==='none'?'block':'none'"
+                 style="font-size:0.82rem;font-weight:600;color:var(--muted);cursor:pointer;user-select:none;">
+              Data Sources <span id="sourcesStatusDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;margin-left:4px;vertical-align:middle;"></span> ▾
+            </div>
+            <div id="sourcesBody" style="display:none;margin-top:8px;">
+              <div id="sourcesTableModal"></div>
+            </div>
+          </div>
         </div>
         <!-- Under the Hood gate -->
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
@@ -1338,16 +1347,7 @@
               </div>
               <div id="dataPipelineBody" style="display:none;font-size:0.8rem;line-height:1.7;color:var(--muted);max-height:400px;overflow-y:auto;margin-top:8px;"></div>
             </div>
-            <!-- Data Sources -->
-            <div class="modal-setting-group">
-              <div id="sourcesToggle" onclick="event.stopPropagation();document.getElementById('sourcesBody').style.display=document.getElementById('sourcesBody').style.display==='none'?'block':'none'"
-                   style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
-                Data Sources ▾
-              </div>
-              <div id="sourcesBody" style="display:none;margin-top:8px;">
-                <div id="sourcesTableModal"></div>
-              </div>
-            </div>
+
             <!-- Licenses -->
             <div class="modal-setting-group">
               <div onclick="event.stopPropagation();document.getElementById('licensesBody').style.display=document.getElementById('licensesBody').style.display==='none'?'block':'none'"

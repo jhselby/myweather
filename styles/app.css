@@ -835,6 +835,7 @@
     }
 
     .header-icon-btn {
+      position: relative;
       background: none;
       border: none;
       color: var(--muted);
@@ -2288,4 +2289,16 @@ body.theme-light [style*="color:rgba(100,200,255"] { color: rgba(0,0,0,0.85) !im
 /* Fixed header offset */
 #weatherView, #hyperlocalView, #almanacView, #overheadView, #sourcesView {
   padding-top: 44px;
+}
+
+/* Settings gear stale-data indicator dot */
+.settings-alert-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 8px;
+  height: 8px;
+  background: #ef4444;
+  border-radius: 50%;
+  pointer-events: none;
 }

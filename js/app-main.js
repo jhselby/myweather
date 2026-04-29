@@ -1647,6 +1647,22 @@
           </div>`).join("")}
       `;
       if (tableModal) tableModal.innerHTML = renderTarget.innerHTML;
+
+      // Update sources status dot (green=all ok, red=something down)
+      const srcDot = document.getElementById("sourcesStatusDot");
+      if (srcDot) {
+        srcDot.style.display = "inline-block";
+        srcDot.style.background = anyError ? "#ef4444" : "#4ade80";
+      }
+
+      // Update settings gear dot (red if data stale OR any source errored)
+      const settingsDot = document.getElementById("settingsAlertDot");
+      if (settingsDot) {
+        const genAt = window.__lastWeatherData?.generated_at;
+        const staleMinutes = genAt ? (Date.now() - new Date(genAt).getTime()) / 60000 : 999;
+        const isStale = staleMinutes > 20;
+        settingsDot.style.display = (isStale || anyError) ? "block" : "none";
+      }
     }
 
     let tideChartObj = null;
