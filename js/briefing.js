@@ -98,12 +98,21 @@
       else tempBand = "hot";
     }
 
-    // Wind band
+    // Wind band — from impact score (accounts for local exposure), not raw speed
+    const _expTable = [[0,25,1],[25,45,.7],[45,100,.25],[100,200,.08],[200,260,.1],[260,290,.4],[290,320,.75],[320,360,1]];
+    const _dir = cur.wind_direction;
+    let _ef = 0.5;
+    if (_dir != null) {
+      const _d = ((_dir % 360) + 360) % 360;
+      for (const [a, b, f] of _expTable) { if (a <= b ? (_d >= a && _d < b) : (_d >= a || _d < b)) { _ef = f; break; } }
+    }
+    const _ws = (s) => s * Math.pow(_ef, 1.5);
+    const _impact = windSpeed < 15 ? _ws(windSpeed) : _ws(windGust);
     let windBand = "calm";
-    if (windGust >= 35 || windSpeed >= 25) windBand = "dangerous";
-    else if (windGust >= 20 || windSpeed >= 15) windBand = "windy";
-    else if (windSpeed >= 10) windBand = "breezy";
-    else if (windSpeed >= 5) windBand = "light";
+    if (_impact >= 30) windBand = "dangerous";
+    else if (_impact >= 16) windBand = "windy";
+    else if (_impact >= 10) windBand = "breezy";
+    else if (_impact >= 5) windBand = "light";
 
     // Wind for display — use the same corrected mph values as the wind card
     const windMph = windSpeed;
