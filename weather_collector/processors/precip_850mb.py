@@ -65,4 +65,5 @@ def add_850mb_precip_type(weather_data):
     for t in temps_850:
         col_types.append(classify_850mb_precip_type(t))
     
-    weather_data["hourly"]["col_precip_type_850mb"] = col_types
+    if "hourly" in weather_data:
+        weather_data["hourly"]["col_precip_type_850mb"] = col_types
