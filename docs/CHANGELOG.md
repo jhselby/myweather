@@ -1,3 +1,28 @@
+## v0.5.19 • 2026-04-29
+* **Bug Fixes**
+  * Fixed wind impact constant mismatch between frontend (10/16) and backend (12/20) — frontend now matches config.py
+  * Guarded `precip_850mb` processor against missing `hourly` key (crash on HRRR fetch failure)
+  * Removed duplicate `degToCompass` function — all callers now use `toCompass(deg, false)`
+  * Added `.catch()` to weather data fetch — shows "Data unavailable" instead of silent Loading...
+* **AI Briefing**
+  * Prevent AI from saying "no rain in sight" when rain is imminent
+  * Added Pirate Weather minutely precip signal to briefing data
+  * Fixed missing `pirate_weather` variable in briefing summary
+  * Redacted API keys from collector and briefing error logs
+  * Gemini model string now reads from env var (falls back to gemini-3.1-flash-lite-preview)
+* **UI**
+  * Data Sources moved from Under the Hood to Data Info section in settings
+  * Green/red status dot on Data Sources indicates source health at a glance
+  * Red dot on settings gear icon when data is stale (>20 min)
+  * Notable bird badge moved below hotspot name to prevent off-screen clipping on mobile
+* **Infrastructure**
+  * Cloud Function secured with OIDC auth via Cloud Scheduler (removed --allow-unauthenticated)
+  * `make run-collector` now triggers Cloud Scheduler instead of direct curl
+  * Lazy-load overhead.js on card tap instead of every page load
+* **Cleanup**
+  * Removed one-off migration scripts (fix_birds_card_placement.py, move_cards_to_weather.py, nerd_gate.py, replace_pwa.py)
+  * Silenced local collector run command output
+
 ## v0.5.17c (cont.) • 2026-04-28
 * **Gemini Briefing Fixes**
   * Wind impact score now sent first in data block with authoritative label; raw speed demoted to context
