@@ -4943,12 +4943,22 @@
     document.addEventListener('click', function(e) {
       var card = e.target.closest('[data-collapse-key="overhead_card"]');
       if (card && window.__overheadMoved !== true) {
-        var src = document.querySelector('#overheadView > .card');
-        var dest = document.getElementById('overheadCardBody');
-        if (src && dest) {
-          dest.appendChild(src);
-          window.__overheadMoved = true;
-          if (typeof ohInitMap === 'function') setTimeout(function() { ohInitMap(); if (typeof ohRefresh === 'function') ohRefresh(); }, 300);
+        window.__overheadMoved = true;
+        function reparentAndInit() {
+          var src = document.querySelector('#overheadView > .card');
+          var dest = document.getElementById('overheadCardBody');
+          if (src && dest) {
+            dest.appendChild(src);
+            setTimeout(function() { if (typeof ohInitMap === 'function') ohInitMap(); if (typeof ohRefresh === 'function') ohRefresh(); }, 300);
+          }
+        }
+        if (typeof ohInitMap === 'function') {
+          reparentAndInit();
+        } else {
+          var s = document.createElement('script');
+          s.src = 'js/overhead.js?v=b7ed964d';
+          s.onload = reparentAndInit;
+          document.body.appendChild(s);
         }
       }
     });
