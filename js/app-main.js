@@ -325,8 +325,8 @@
     [320, 360, 1.00],  // NW-N - open harbor, max exposure
 ];
     const WORRY_NOTICEABLE  =  5;
-    const WORRY_NOTABLE     = 10;
-    const WORRY_SIGNIFICANT = 16;
+    const WORRY_NOTABLE     = 12;
+    const WORRY_SIGNIFICANT = 20;
     const WORRY_SEVERE      = 30;
 
     function getExposureFactor(deg) {
@@ -4946,7 +4946,7 @@
 
 function loadWeatherData() {
     fetch("https://storage.googleapis.com/myweather-data/weather_data.json?t=" + Date.now())
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(data => {
         window.__lastWeatherData = data;
 
@@ -6084,7 +6084,7 @@ function loadWeatherData() {
         updateSettingBtns();
       })
       .catch(err => {
-        console.error(err);
+        console.error("Weather fetch failed:", err); document.getElementById("condition").textContent = "Data unavailable";
         // // document.getElementById("location").textContent = "Error loading weather_data.json";
       });
     } // end loadWeatherData
