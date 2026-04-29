@@ -129,13 +129,6 @@
       if (isNaN(n)) return hpaVal;
       return hpaToInhg(n) + ' inHg';
     }
-    function degToCompass(deg) {
-      if (deg == null) return "";
-      const directions = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"];
-      const index = Math.round(((deg % 360) / 22.5));
-      return directions[index % 16];
-    }
-
     // Re-render all pressure fields using last fetched data
     function rerenderPressure() {
       const data = window.__lastWeatherData;
@@ -5419,7 +5412,7 @@ function loadWeatherData() {
           const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
           const gustValue = hyp.corrected_wind_gusts ?? cur.wind_gusts;
           const windDir   = cur.wind_direction;
-          const windDirStr = windDir != null ? degToCompass(windDir) : "";
+          const windDirStr = windDir != null ? toCompass(windDir, false) : "";
           
           if (windDir != null && (windSpeed != null || gustValue != null)) {
             const combined = Math.round(combinedWindImpact(windSpeed, gustValue, windDir));
@@ -5493,7 +5486,7 @@ function loadWeatherData() {
           if (windImpactCollapsedEl && cwDir != null) {
             const combined      = Math.round(combinedWindImpact(cwSpeed, cwGust, cwDir));
             const combinedLevel = worryLevel(combined);
-            const dirStr        = degToCompass(cwDir);
+            const dirStr        = toCompass(cwDir, false);
             windImpactCollapsedEl.textContent = combined.toString();
             if (windImpactLabelEl) windImpactLabelEl.textContent = combinedLevel.label;
             if (windImpactPeakCollapsedEl) windImpactPeakCollapsedEl.textContent =
@@ -5517,7 +5510,7 @@ function loadWeatherData() {
           const gustPeakEl = document.getElementById("gustPeak");
           if (gustPeakEl) gustPeakEl.textContent = `${gustData.peak_mph || "--"} mph`;
           const gustDirEl = document.getElementById("gustDir");
-          if (gustDirEl) gustDirEl.textContent = gustData.direction_deg != null ? `${gustData.direction_deg}° ${degToCompass(gustData.direction_deg)}` : "--";
+          if (gustDirEl) gustDirEl.textContent = gustData.direction_deg != null ? `${gustData.direction_deg}° ${toCompass(gustData.direction_deg, false)}` : "--";
           const gustExpEl = document.getElementById("gustExposure");
           if (gustExpEl) gustExpEl.textContent = gustData.exposure_factor != null ? `${(gustData.exposure_factor * 100).toFixed(0)}%` : "--";
           const gustTimeEl = document.getElementById("gustTime");
