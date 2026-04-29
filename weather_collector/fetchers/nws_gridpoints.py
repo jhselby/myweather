@@ -9,6 +9,14 @@ HEADERS = {"User-Agent": "MyWeatherApp/1.0"}
 GRIDPOINT_URL = "https://api.weather.gov/gridpoints/BOX/76,97"
 
 
+
+def _redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)['"]?\s*[:=]\s*['"]?)[^'"\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    return s
+
 def fetch_nws_gridpoints():
     """Fetch NWS gridpoint hourly data (temperature, precip, wind)."""
     print("📡 Fetching NWS gridpoint data...")
@@ -37,6 +45,6 @@ def fetch_nws_gridpoints():
         return result, meta
         
     except Exception as e:
-        meta["error"] = str(e)
-        print(f"  ✗ NWS gridpoints failed: {e}")
+        meta["error"] = _redact_secrets(e)
+        print(f"  ✗ NWS gridpoints failed: {_redact_secrets(e)}")
         return {}, meta

@@ -10,6 +10,14 @@ from ..config import (
 from ..utils import iso_utc_now
 
 
+
+def _redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)['"]?\s*[:=]\s*['"]?)[^'"\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    return s
+
 def _om_get(params, label):
     """GET from Open-Meteo with standard error handling."""
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None, "model": label}
@@ -23,8 +31,8 @@ def _om_get(params, label):
         print(f"  ✓ {label}")
         return data, meta
     except Exception as e:
-        meta["error"] = str(e)
-        print(f"  ✗ {label}: {e}")
+        meta["error"] = _redact_secrets(e)
+        print(f"  ✗ {label}: {_redact_secrets(e)}")
         return None, meta
 
 
@@ -137,7 +145,7 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
                     print(f"    ✗ {dist}mi - timeout {label}")
                     return f"{dist}mi", None
             except Exception as e:
-                print(f"    ✗ {dist}mi - {e}")
+                print(f"    ✗ {dist}mi - {_redact_secrets(e)}")
                 return f"{dist}mi", None
         return f"{dist}mi", None
     

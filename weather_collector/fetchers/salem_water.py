@@ -8,6 +8,14 @@ from ..config import HEADERS_DEFAULT
 from ..utils import safe_float
 
 
+
+def _redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)['"]?\s*[:=]\s*['"]?)[^'"\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    return s
+
 def fetch_salem_water_temp():
     """
     Scrape Salem water temperature from NOAA buoy 44013.
@@ -34,5 +42,5 @@ def fetch_salem_water_temp():
         return None
         
     except Exception as e:
-        print(f"  ✗ Salem water temp: {e}")
+        print(f"  ✗ Salem water temp: {_redact_secrets(e)}")
         return None

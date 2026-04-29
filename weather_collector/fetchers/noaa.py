@@ -4,6 +4,14 @@ Fetch NOAA observations (KBOS, KBVY, Buoy 44013+44098)
 import requests
 from ..utils import iso_utc_now
 
+
+def _redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)['"]?\s*[:=]\s*['"]?)[^'"\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    return s
+
 def decode_metar_wx(wx_string):
     """Convert METAR weather codes to human-readable text."""
     if not wx_string:
@@ -74,8 +82,8 @@ def fetch_kbos_obs():
         return result, meta
         
     except Exception as e:
-        meta["error"] = str(e)
-        print(f"  ✗ KBOS: {e}")
+        meta["error"] = _redact_secrets(e)
+        print(f"  ✗ KBOS: {_redact_secrets(e)}")
         return None, meta
 
 
@@ -112,8 +120,8 @@ def fetch_kbvy_obs():
         return result, meta
         
     except Exception as e:
-        meta["error"] = str(e)
-        print(f"  ✗ KBVY: {e}")
+        meta["error"] = _redact_secrets(e)
+        print(f"  ✗ KBVY: {_redact_secrets(e)}")
         return None, meta
 
 
@@ -169,7 +177,7 @@ def _fetch_single_buoy(buoy_id):
             "pressure_tend_hpa": pressure_tend
         }
     except Exception as e:
-        print(f"  ✗ {buoy_id}: {e}")
+        print(f"  ✗ {buoy_id}: {_redact_secrets(e)}")
         return None
 
 
@@ -280,6 +288,6 @@ def fetch_buoy_44013():
         return final_result, meta
         
     except Exception as e:
-        meta["error"] = str(e)
-        print(f"  ✗ Buoy fusion failed: {e}")
+        meta["error"] = _redact_secrets(e)
+        print(f"  ✗ Buoy fusion failed: {_redact_secrets(e)}")
         return None, meta

@@ -28,6 +28,14 @@ RADIUS_KM = 5
 BACK_DAYS = 2  # ~48 hours
 
 
+
+def _redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)['"]?\s*[:=]\s*['"]?)[^'"\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    return s
+
 def _haversine_km(lat1, lon1, lat2, lon2):
     """Great-circle distance in km."""
     R = 6371.0
@@ -56,8 +64,8 @@ def _ebird_get(path, api_key, label):
         print(f"  ✓ eBird {label}: {len(data)} obs")
         return data, meta
     except Exception as e:
-        meta["error"] = str(e)
-        print(f"  ✗ eBird {label}: {e}")
+        meta["error"] = _redact_secrets(e)
+        print(f"  ✗ eBird {label}: {_redact_secrets(e)}")
         return None, meta
 
 

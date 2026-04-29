@@ -84,6 +84,14 @@ MIN_WIND_THRESHOLD = 0.3  # Wind below this = sensor failure
 MAX_TEMP_DEVIATION = 4.0  # Exclude temps >4°F from median
 
 
+
+def _redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)['"]?\s*[:=]\s*['"]?)[^'"\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    return s
+
 def haversine_distance(lat1, lon1, lat2, lon2):
     """Calculate distance in miles between two lat/lon points"""
     R = 3959  # Earth radius in miles
@@ -136,7 +144,7 @@ def get_current_observation(station_id):
         }
         
     except Exception as e:
-        print(f"❌ {station_id}: {e}")
+        print(f"❌ {station_id}: {_redact_secrets(e)}")
         return None
 
 

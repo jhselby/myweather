@@ -39,6 +39,14 @@ Rules:
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
 
+
+def _redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
+    return s
+
 def _build_weather_summary(weather_data):
     """Extract the key fields Gemini needs to write the briefing."""
     cur = weather_data.get("current", {})
@@ -191,7 +199,7 @@ def _load_cached_briefing():
             print(f"  ✓ Briefing cache loaded: {data.get('headline', '?')[:50]}")
             return data
     except Exception as e:
-        print(f"  ⚠ Briefing cache load failed: {e}")
+        print(f"  ⚠ Briefing cache load failed: {_redact_secrets(e)}")
     return None
 
 
@@ -208,7 +216,7 @@ def _save_cached_briefing(briefing):
         blob.upload_from_string(json.dumps(briefing), content_type="application/json")
         print(f"  ✓ Briefing cache saved")
     except Exception as e:
-        print(f"  ⚠ Briefing cache save failed: {e}")
+        print(f"  ⚠ Briefing cache save failed: {_redact_secrets(e)}")
 
 
 def _should_call_gemini():
@@ -232,7 +240,7 @@ def _should_call_gemini():
                     print(f"  ⏭ Briefing: cached {age_min:.0f}m ago, skipping Gemini (interval: {_BRIEFING_INTERVAL_MINUTES}m)")
                     return False, data
     except Exception as e:
-        print(f"  ⚠ Briefing interval check failed: {e}")
+        print(f"  ⚠ Briefing interval check failed: {_redact_secrets(e)}")
     return True, None
 
 
@@ -325,10 +333,10 @@ def generate_briefing(weather_data):
             print("  ⚠ Briefing: Gemini timeout after retry")
             break
         except requests.exceptions.RequestException as e:
-            print(f"  ⚠ Briefing: Gemini API error: {e}")
+            print(f"  ⚠ Briefing: Gemini API error: {_redact_secrets(e)}")
             break
         except (json.JSONDecodeError, KeyError, IndexError) as e:
-            print(f"  ⚠ Briefing: Failed to parse Gemini response: {e}")
+            print(f"  ⚠ Briefing: Failed to parse Gemini response: {_redact_secrets(e)}")
             break
 
     # All attempts failed — fall back to cached headline

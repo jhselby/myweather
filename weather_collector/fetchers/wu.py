@@ -4,7 +4,16 @@ Fetch Weather Underground multi-station data
 import json
 from . import wu_scraper_realtime
 from ..utils import iso_utc_now
+import re
 
+
+
+def _redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)['"]?\s*[:=]\s*['"]?)[^'"\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    return s
 
 def fetch_wu_stations():
     """
@@ -28,6 +37,6 @@ def fetch_wu_stations():
         return wu_data, meta
 
     except Exception as e:
-        meta["error"] = str(e)
-        print(f"  ✗ WU stations (optional): {e}")
+        meta["error"] = _redact_secrets(e)
+        print(f"  ✗ WU stations (optional): {_redact_secrets(e)}")
         return None, meta

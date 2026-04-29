@@ -12,6 +12,14 @@ LON = -70.8750
 BASE_URL = "https://api.pirateweather.net/forecast"
 
 
+
+def _redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)['"]?\s*[:=]\s*['"]?)[^'"\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    return s
+
 def fetch_pirate_weather():
     """
     Fetch minutely precip, hourly solar/CAPE from Pirate Weather.
@@ -73,6 +81,6 @@ def fetch_pirate_weather():
     except requests.exceptions.Timeout:
         return None, {"status": "error", "error": "timeout"}
     except requests.exceptions.RequestException as e:
-        return None, {"status": "error", "error": str(e)}
+        return None, {"status": "error", "error": _redact_secrets(e)}
     except Exception as e:
-        return None, {"status": "error", "error": f"unexpected: {e}"}
+        return None, {"status": "error", "error": f"unexpected: {_redact_secrets(e)}"}
