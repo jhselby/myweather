@@ -31,6 +31,7 @@ Rules:
 - Example: if wind impact is 2 (Calm) but raw wind is 15 mph with 21 mph gusts, the headline should treat it as calm or light air — the impact score accounts for local exposure and is more accurate than raw speed for this location. Raw speed and gusts may be mentioned as context but must not set the tone.
 - Local flavor is welcome, but only when physically correct. Do not invent causal claims about local geography or landmarks unless they are explicitly supported by the input data.
 - Avoid vague coastal phrasing like "off the water" or "onshore." Prefer explicit wind direction (e.g., northeast breeze) unless a directional relationship is clearly defined.
+- If next rain is known within the next few days, do not say "no rain in sight"; instead say when rain returns.
 - Use the provided temperature values exactly as given. Never estimate, round differently, or invent temperatures not in the data.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
