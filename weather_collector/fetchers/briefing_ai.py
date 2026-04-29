@@ -77,9 +77,21 @@ def _build_weather_summary(weather_data):
     fog_prob = der.get("fog_probability", 0)
     fog_label = der.get("fog_label", "No risk")
 
-    # Wind impact
-    wind_impact = der.get("wind_impact_score")
-    wind_impact_label = der.get("wind_impact_label")
+    # Wind impact — replicate frontend combinedWindImpact logic
+    # sustained < 15mph → use sustained worry; otherwise use gust worry
+    # worry_score = speed * exposure_factor^1.5
+    _wind_dir = cur.get("wind_direction")
+    _hyp = weather_data.get("hyperlocal", {})
+    _sus = _hyp.get("corrected_wind_speed") or cur.get("wind_speed") or 0
+    _gst = _hyp.get("corrected_wind_gusts") or cur.get("wind_gusts") or 0
+    # Exposure factor from wind_risk processor
+    from weather_collector.processors.wind_risk import get_exposure_factor, worry_score, worry_level
+    _ef = get_exposure_factor(int(_wind_dir) % 360) if _wind_dir is not None else 1.0
+    _sus_score = worry_score(_sus, _ef)
+    _gst_score = worry_score(_gst, _ef)
+    _combined = _sus_score if _sus < 15 else _gst_score
+    wind_impact = round(_combined, 1)
+    wind_impact_label = worry_level(round(_combined))
 
     # Sea breeze
     sb_active = sb.get("active", False)

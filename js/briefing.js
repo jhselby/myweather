@@ -140,7 +140,9 @@
       if (hoursAway <= 0) rainContext = "now";
       else if (hoursAway <= 3) rainContext = "soon";
       else if (hoursAway <= 12) rainContext = "later";
-      else if (hoursAway <= 48) rainContext = "tomorrow";
+      else if (hoursAway <= 48) {
+        rainContext = rainStart.toLocaleDateString("en-US", { weekday: "long" });
+      }
     }
 
     function fmtHour(d) {
@@ -585,8 +587,8 @@
         c2 = `Tonight drops to ${s.low}°. Frost likely by dawn.`;
         break;
       default:
-        if (s.rainContext === "tomorrow") {
-          c2 = `Next rain: tomorrow. Wind ${s.windMph} MPH ${s.windDir}.`;
+        if (s.rainContext && s.rainContext !== "none") {
+          c2 = `Next rain: ${s.rainContext}. Wind ${s.windMph} MPH ${s.windDir}.`;
         } else {
           c2 = `No rain in sight. Wind ${s.windMph} MPH ${s.windDir}.`;
         }
@@ -756,8 +758,8 @@
     }
 
     // Next rain — only if not today and not none
-    if (s.rainContext === "tomorrow") {
-      rows.push({ label: "Next rain", value: "Tomorrow", color: "blue" });
+    if (s.rainContext && !["none","now","soon","later"].includes(s.rainContext)) {
+      rows.push({ label: "Next rain", value: s.rainContext, color: "blue" });
     }
 
     // Alerts
