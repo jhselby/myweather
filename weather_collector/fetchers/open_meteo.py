@@ -2,6 +2,7 @@
 Fetch weather data from Open-Meteo API (GFS, HRRR, ECMWF models)
 """
 import requests
+import re
 
 from ..config import (
     LAT, LON, OM_BASE_URL, OM_UNITS, HEADERS_DEFAULT,
@@ -15,7 +16,7 @@ def _redact_secrets(value):
     s = str(value)
     s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
     s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
-    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)['"]?\s*[:=]\s*['"]?)[^'"\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
     return s
 
 def _om_get(params, label):
