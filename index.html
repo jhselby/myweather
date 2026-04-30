@@ -1323,7 +1323,7 @@
           </div>
         </div>
         <!-- Install App (shown only when browser supports install) -->
-        <div class="modal-setting-group" id="installAppGroup" style="display:none;border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+        <div class="modal-setting-group" id="installAppGroup" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <div class="modal-setting-label">Install App</div>
             <button id="installAppBtn" onclick="triggerInstall()" style="
@@ -1350,7 +1350,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.21</span>
+            <span class="version-pill" id="appVersion">v0.5.22</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
@@ -1694,44 +1694,40 @@
       return;
     }
 
-    // iOS: show the manual "Add to Home Screen" sheet after 3 visits
-    var visits = parseInt(localStorage.getItem('pwa-visit-count') || '0') + 1;
-    localStorage.setItem('pwa-visit-count', visits.toString());
-    if (visits < 3) return;
+    // iOS: expose showIOSInstallPrompt globally so it can be called after beta accept or from Settings
+    window.__isIOSMobile = true;
+    window.showIOSInstallPrompt = function() {
+      var dismissed = localStorage.getItem('pwa-prompt-dismissed');
+      if (dismissed && (Date.now() - parseInt(dismissed)) < 7 * 24 * 60 * 60 * 1000) return;
 
-    var dismissed = localStorage.getItem('pwa-prompt-dismissed');
-    if (dismissed && (Date.now() - parseInt(dismissed)) < 30 * 24 * 60 * 60 * 1000) return;
+      var overlay = document.getElementById('pwaOverlay');
+      var sheet = document.getElementById('pwaSheet');
+      var arrow = document.getElementById('pwaArrow');
+      var cancelBtn = document.getElementById('pwaCancelBtn');
+      if (!overlay || !sheet || !cancelBtn) return;
 
-    var overlay = document.getElementById('pwaOverlay');
-    var sheet = document.getElementById('pwaSheet');
-    var arrow = document.getElementById('pwaArrow');
-    var cancelBtn = document.getElementById('pwaCancelBtn');
-    if (!overlay || !sheet || !cancelBtn) return;
-
-    function showPrompt() {
       overlay.style.display = 'block';
       sheet.style.display = 'block';
       void sheet.offsetHeight;
       overlay.classList.add('visible');
       sheet.classList.add('visible');
       if (arrow) arrow.classList.add('visible');
-    }
 
-    function hidePrompt() {
-      overlay.classList.remove('visible');
-      sheet.classList.remove('visible');
-      if (arrow) arrow.classList.remove('visible');
-      localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
-      setTimeout(function() {
-        overlay.style.display = 'none';
-        sheet.style.display = 'none';
-      }, 350);
-    }
+      function hidePrompt() {
+        overlay.classList.remove('visible');
+        sheet.classList.remove('visible');
+        if (arrow) arrow.classList.remove('visible');
+        localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
+        setTimeout(function() {
+          overlay.style.display = 'none';
+          sheet.style.display = 'none';
+        }, 350);
+      }
+      overlay.onclick = hidePrompt;
+      cancelBtn.onclick = hidePrompt;
+    };
 
-    overlay.addEventListener('click', hidePrompt);
-    cancelBtn.addEventListener('click', hidePrompt);
 
-    setTimeout(showPrompt, 2000);
   })();
   </script>
 
@@ -1767,6 +1763,15 @@
     if (window.goatcounter && window.goatcounter.count) {
       window.goatcounter.count({ path: '/event/beta-accepted', title: 'Beta Accepted', event: true });
     }
+    // Prompt install right after beta acceptance
+    setTimeout(function() {
+      if (window.__deferredInstallPrompt) {
+        window.__deferredInstallPrompt.prompt();
+        window.__deferredInstallPrompt.userChoice.then(function(r) { window.__deferredInstallPrompt = null; });
+      } else if (window.__isIOSMobile) {
+        window.showIOSInstallPrompt();
+      }
+    }, 500);
   }
 
   function triggerInstall() {
@@ -1780,8 +1785,23 @@
           window.goatcounter.count({ path: '/event/pwa-installed', title: 'PWA Installed', event: true });
         }
       });
+    } else if (window.__isIOSMobile && window.showIOSInstallPrompt) {
+      closeSettingsModal();
+      setTimeout(function() { window.showIOSInstallPrompt(); }, 300);
     } else {
-      alert('To install: use your browser\'s "Add to Home Screen" option from the share menu.');
+      // Desktop Safari or other browser without install support
+      var msg = document.createElement('div');
+      msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card-bg,#1a1a2e);color:var(--text,#fff);padding:24px 28px;border-radius:14px;z-index:100000;max-width:320px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);';
+      msg.innerHTML = '<div style="font-size:1.1rem;font-weight:700;margin-bottom:12px;">Install on Mobile</div>' +
+        '<div style="font-size:0.88rem;line-height:1.5;opacity:0.8;margin-bottom:16px;">Wyman Cove Weather is designed for your phone. Visit this URL on your iPhone and tap Share → Add to Home Screen.</div>' +
+        '<div style="font-size:0.82rem;font-weight:600;background:rgba(255,255,255,0.1);padding:10px;border-radius:8px;margin-bottom:16px;user-select:all;word-break:break-all;">jhselby.github.io/myweather</div>' +
+        '<button onclick="this.parentElement.remove();document.getElementById(\'installBackdrop\').remove();" style="padding:10px 24px;border:none;border-radius:8px;background:#1d4ed8;color:#fff;font-size:0.9rem;font-weight:600;cursor:pointer;">Got It</button>';
+      var bd = document.createElement('div');
+      bd.id = 'installBackdrop';
+      bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99999;';
+      bd.onclick = function() { msg.remove(); bd.remove(); };
+      document.body.appendChild(bd);
+      document.body.appendChild(msg);
     }
   }
 
