@@ -1,3 +1,12 @@
+## v0.5.28 • 2026-04-30
+* **Briefing rain row fix**
+  * Suppressed all rain rows (now/soon/later) when forecast accumulation is 0"
+* **Collector fixes**
+  * Switched Gemini model from deprecated 2.0-flash-lite to 2.5-flash-lite
+  * Added missing `import re` to four fetcher files (nws, pirate, wu_scraper, salem_water)
+  * Briefing fallback now preserves `cached_at` for Gemini age display
+  * Temperature ranges sent to Gemini to prevent hallucinated exact temps
+
 ## v0.5.27 • 2026-04-30
 * **Sources label update**
   * Removed Weather Underground API reference from station data source description

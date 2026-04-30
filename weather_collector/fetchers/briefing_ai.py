@@ -10,7 +10,7 @@ import os
 import requests
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash-lite")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove, Marblehead MA — a coastal New England harbor.
@@ -36,9 +36,30 @@ Rules:
 - Do not use absolute phrasing like "rain stays away until" or "no rain until" if there is any earlier non-zero rain chance.
 - If early rain chances are minor, describe conditions as mostly dry or as a slight chance before steadier rain arrives.
 - If near-term precipitation chance is non-zero, avoid describing conditions as completely dry.
-- Use the provided temperature values exactly as given. Never estimate, round differently, or invent temperatures not in the data.
+- Temperatures are provided as ranges (e.g. 'low 60s', 'mid 40s'). Use these ranges naturally — never invent specific degree numbers. Say 'low 60s' not '62'. The only exact temperature is the current reading.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
+
+
+def _temp_range(t):
+    """Convert exact temp to a natural range so Gemini can't hallucinate specifics."""
+    if t is None:
+        return "unknown"
+    t = round(t)
+    decade = (t // 10) * 10
+    pos = t % 10
+    labels = {20: "20s", 30: "30s", 40: "40s", 50: "50s", 60: "60s", 70: "70s", 80: "80s", 90: "90s"}
+    decade_str = labels.get(decade, f"{decade}s")
+    if pos <= 1:
+        return f"around {decade}"
+    elif pos <= 3:
+        return f"low {decade_str}"
+    elif pos <= 6:
+        return f"mid {decade_str}"
+    elif pos <= 8:
+        return f"upper {decade_str}"
+    else:
+        return f"near {decade + 10}"
 
 
 def _redact_secrets(value):
@@ -165,8 +186,8 @@ def _build_weather_summary(weather_data):
 
     lines = [
         f"Current: {temp}°F, {sky}",
-        f"Today high: {high}°F, Low: {low}°F",
-        f"Tomorrow high: {tomorrow_high}°F, Low: {tomorrow_low}°F",
+        f"Today high: {_temp_range(high)}, Low: {_temp_range(low)}",
+        f"Tomorrow high: {_temp_range(tomorrow_high)}, Low: {_temp_range(tomorrow_low)}",
         f"Wind impact: {wind_impact if wind_impact is not None else 'Unknown'}" + (f" ({wind_impact_label})" if wind_impact_label else "") + " — THIS IS THE AUTHORITATIVE WIND MEASURE",
         f"Raw model wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + " (use for context only, not tone)",
         f"Humidity: {humidity}%",
@@ -344,6 +365,6 @@ def generate_briefing(weather_data):
     cached = _load_cached_briefing()
     if cached and cached.get("headline"):
         print(f"  ↩ Briefing: using cached headline")
-        return {"headline": cached["headline"], "subheadline": cached.get("subheadline", "")}
+        return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
 
     return None

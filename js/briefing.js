@@ -646,9 +646,9 @@
 
     // Rain — only if coming
     if (s.rainContext === "now") {
-      rows.push({ label: "Rain", value: `Now${s.rainInches > 0 ? ` — ${s.rainInches}"` : ""}`, color: "blue" });
+      if (s.rainInches > 0) rows.push({ label: "Rain", value: `Now — ${s.rainInches}"`, color: "blue" });
     } else if (s.rainContext === "soon") {
-      rows.push({ label: "Rain", value: `By ${s.rainStartStr} — ${s.rainInches}"`, color: "blue" });
+      if (s.rainInches > 0) rows.push({ label: "Rain", value: `By ${s.rainStartStr} — ${s.rainInches}"`, color: "blue" });
     } else if (s.rainContext === "later") {
       if (s.rainInches > 0) rows.push({ label: "Rain", value: `${s.rainStartStr}–${s.rainEndStr} — ${s.rainInches}"`, color: "blue" });
     }
