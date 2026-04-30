@@ -4956,7 +4956,7 @@
           var dest = document.getElementById('overheadCardBody');
           if (src && dest) {
             dest.appendChild(src);
-            setTimeout(function() { if (typeof ohInitMap === 'function') ohInitMap(); if (typeof ohRefresh === 'function') ohRefresh(); }, 300);
+            setTimeout(function() { if (typeof ohInitMap === 'function') ohInitMap(); setTimeout(function() { if (typeof ohFetch === 'function') ohFetch(); else if (typeof ohRefresh === 'function') ohRefresh(); }, 500); }, 300);
           }
         }
         if (typeof ohInitMap === 'function') {

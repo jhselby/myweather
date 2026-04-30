@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=d992eee8" />
+  <link rel="stylesheet" href="styles/app.css?v=d4ad2f35" />
   <link rel="stylesheet" href="styles/briefing.css?v=795205b2" />
 </head>
 <body>
@@ -990,7 +990,45 @@
         </div>
       </div>
 
-      <div id="overheadMap"></div>
+      <div id="overheadMapWrap" style="position:relative;">
+        <div id="overheadMap"></div>
+        <div id="oh-popup">
+          <div class="oh-pop-header">
+            <div style="min-width:0;">
+              <div id="oh-pop-flight"></div>
+              <div id="oh-pop-route"></div>
+              <div id="oh-pop-airline"></div>
+            </div>
+            <button class="oh-close" onclick="ohClosePopup()">×</button>
+          </div>
+          <div class="oh-stats">
+            <div class="oh-stat">
+              <div id="oh-pop-alt" class="oh-stat-val"></div>
+              <div class="oh-stat-lbl">ALT</div>
+            </div>
+            <div class="oh-stat">
+              <div id="oh-pop-spd" class="oh-stat-val"></div>
+              <div class="oh-stat-lbl">SPD</div>
+            </div>
+            <div class="oh-stat">
+              <div id="oh-pop-hdg" class="oh-stat-val"></div>
+              <div class="oh-stat-lbl">HDG</div>
+            </div>
+            <div class="oh-stat">
+              <div id="oh-pop-dist" class="oh-stat-val"></div>
+              <div class="oh-stat-lbl">DIST</div>
+            </div>
+            <div class="oh-stat">
+              <div id="oh-pop-vrate" class="oh-stat-val"></div>
+              <div class="oh-stat-lbl">V/S</div>
+            </div>
+            <div class="oh-stat">
+              <div id="oh-pop-bearing" class="oh-stat-val"></div>
+              <div class="oh-stat-lbl">BRG</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div class="oh-legend">
         <div><span style="color:#fbbf24">✈︎</span> &lt;5,000 ft</div>
@@ -998,42 +1036,7 @@
         <div><span style="color:#60a5fa">✈︎</span> &gt;20,000 ft</div>
       </div>
 
-      <div id="oh-popup">
-        <div class="oh-pop-header">
-          <div>
-            <div id="oh-pop-flight"></div>
-            <div id="oh-pop-route"></div>
-            <div id="oh-pop-airline"></div>
-          </div>
-          <button class="oh-close" onclick="ohClosePopup()">×</button>
-        </div>
-        <div class="oh-stats">
-          <div class="oh-stat">
-            <div id="oh-pop-alt" class="oh-stat-val"></div>
-            <div class="oh-stat-lbl">ALTITUDE</div>
-          </div>
-          <div class="oh-stat">
-            <div id="oh-pop-spd" class="oh-stat-val"></div>
-            <div class="oh-stat-lbl">SPEED</div>
-          </div>
-          <div class="oh-stat">
-            <div id="oh-pop-hdg" class="oh-stat-val"></div>
-            <div class="oh-stat-lbl">HEADING</div>
-          </div>
-          <div class="oh-stat">
-            <div id="oh-pop-dist" class="oh-stat-val"></div>
-            <div class="oh-stat-lbl">DISTANCE</div>
-          </div>
-          <div class="oh-stat">
-            <div id="oh-pop-vrate" class="oh-stat-val"></div>
-            <div class="oh-stat-lbl">VERTICAL RATE</div>
-          </div>
-          <div class="oh-stat">
-            <div id="oh-pop-bearing" class="oh-stat-val"></div>
-            <div class="oh-stat-lbl">BEARING</div>
-          </div>
-        </div>
-      </div>
+
 
     </div>
   </section>
@@ -1225,7 +1228,7 @@
 
   </div>
   <script src="js/briefing.js?v=c074885c"></script>
-  <script src="js/app-main.js?v=17fe90fd"></script>
+  <script src="js/app-main.js?v=1ffa76c4"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   
   <script>

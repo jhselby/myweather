@@ -29,7 +29,7 @@
 
     ohMap = L.map('overheadMap', {
       center: [HOME_LAT, HOME_LNG],
-      zoom: 12,
+      zoom: 10,
       zoomControl: true,
       attributionControl: false
     });
@@ -418,6 +418,14 @@ async function ohShowPopup(a) {
   window.ohRefresh = function() {
     if (!ohMap) {
       alert('Switch to Overhead tab first');
+      return;
+    }
+    // 30-second cooldown to prevent API abuse
+    if (lastFetchTime && (Date.now() - lastFetchTime) < 30000) {
+      const wait = Math.ceil((30000 - (Date.now() - lastFetchTime)) / 1000);
+      const btn = document.getElementById('oh-refresh-btn');
+      if (btn) btn.textContent = wait + 's';
+      setTimeout(() => { if (btn) btn.textContent = '↻ refresh'; }, 1000);
       return;
     }
     ohFetch();
