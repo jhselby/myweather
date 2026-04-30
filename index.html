@@ -1696,9 +1696,11 @@
 
     // iOS: expose showIOSInstallPrompt globally so it can be called after beta accept or from Settings
     window.__isIOSMobile = true;
-    window.showIOSInstallPrompt = function() {
-      var dismissed = localStorage.getItem('pwa-prompt-dismissed');
-      if (dismissed && (Date.now() - parseInt(dismissed)) < 7 * 24 * 60 * 60 * 1000) return;
+    window.showIOSInstallPrompt = function(force) {
+      if (!force) {
+        var dismissed = localStorage.getItem('pwa-prompt-dismissed');
+        if (dismissed && (Date.now() - parseInt(dismissed)) < 24 * 60 * 60 * 1000) return;
+      }
 
       var overlay = document.getElementById('pwaOverlay');
       var sheet = document.getElementById('pwaSheet');
@@ -1723,7 +1725,6 @@
           sheet.style.display = 'none';
         }, 350);
       }
-      overlay.onclick = hidePrompt;
       cancelBtn.onclick = hidePrompt;
     };
 
@@ -1787,7 +1788,7 @@
       });
     } else if (window.__isIOSMobile && window.showIOSInstallPrompt) {
       closeSettingsModal();
-      setTimeout(function() { window.showIOSInstallPrompt(); }, 300);
+      setTimeout(function() { window.showIOSInstallPrompt(true); }, 300);
     } else {
       // Desktop Safari or other browser without install support
       var msg = document.createElement('div');
