@@ -1,3 +1,7 @@
+## v0.5.27 • 2026-04-30
+* **Sources label update**
+  * Removed Weather Underground API reference from station data source description
+
 ## v0.5.26 • 2026-04-30
 * **Rain icon threshold**
   * Next-hour rain indicator now triggers on any precip intensity instead of requiring 30% probability
