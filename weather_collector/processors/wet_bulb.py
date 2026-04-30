@@ -1,3 +1,4 @@
+import re
 """
 Wet bulb temperature calculation for precipitation type classification
 """

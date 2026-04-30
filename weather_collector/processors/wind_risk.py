@@ -1,3 +1,4 @@
+import re
 """
 Wind risk assessment using house-specific exposure model
 """

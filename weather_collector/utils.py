@@ -1,3 +1,4 @@
+import re
 """
 Utility functions for weather data collection and processing
 """

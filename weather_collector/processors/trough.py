@@ -1,3 +1,4 @@
+import re
 """
 Calculate 850mb geopotential height tendency (trough signal)
 """

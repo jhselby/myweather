@@ -1,3 +1,4 @@
+import re
 """
 Precipitation type classification based on 850mb temperature
 """

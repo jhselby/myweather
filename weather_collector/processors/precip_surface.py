@@ -1,3 +1,4 @@
+import re
 """
 Surface precipitation type classification using wet bulb temperature
 """
