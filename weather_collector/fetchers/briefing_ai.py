@@ -3,13 +3,14 @@ Briefing headline generator using Google Gemini API (free tier).
 Generates an editorial headline and subheadline from weather data.
 Falls back gracefully if the API is unavailable.
 """
+import re
 
 import json
 import os
 import requests
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite-preview")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash-lite")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove, Marblehead MA — a coastal New England harbor.

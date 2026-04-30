@@ -1668,7 +1668,7 @@
     let tideChartObj = null;
 
     // ======================================================
-    // Dock Day Score
+    // Swim Float Score
     // Dock floats when tide > DOCK_FLOAT_THRESHOLD_FT (above MLLW).
     // DOCK_TIDE_OFFSET_FT: correction to apply to predicted heights once
     //   empirical observed-vs-predicted data is collected. Default 0.0.
@@ -2139,7 +2139,7 @@
     }
 
     function renderDockDay(data) {
-      const el = document.getElementById("dockDayContent");
+      const el = document.getElementById("swimFloatContent");
       if (!el) return;
 
       const curve   = (data.tide_curve || {});
@@ -2240,7 +2240,7 @@
           const windSc = dockWindScore(wdir, wspd);
 
           // Temp score: 75°F=1.0, 60°F=0.5, 50°F=0.1, below 45°F=0
-          // Hard reality: below 50°F is not a dock day regardless of other factors
+          // Hard reality: below 50°F is not a swim float day regardless of other factors
           const tempSc = temp == null ? 0.5 :
             temp < 50 ? 0.0 :
             temp < 65 ? (temp - 50) / 30 :
@@ -2339,19 +2339,22 @@
         return d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
       }
 
-      // Build headline from today's dock data
+      // Build headline from today's swim float data
       let dockHeadline = "";
       if (dayCards.length > 0) {
         const td = dayCards[0];
         const sl = scoreLabel(td.bestScore);
         if (td.usableWindows && td.usableWindows.length > 0) {
-          const w = td.usableWindows[0];
-          const startFmt = fmtTime(w.startTime);
-          const endFmt   = fmtTime(w.endTime);
-          const hrs = Math.round((w.endTime - w.startTime) / 3600000);
-          dockHeadline = `${sl.label} — dock accessible ${startFmt}–${endFmt} (${hrs}h)`;
+          // Find best window (longest duration)
+          const bestW = td.usableWindows.reduce((a, b) => (b.endTime - b.startTime) > (a.endTime - a.startTime) ? b : a);
+          const startFmt = fmtTime(bestW.startTime);
+          const endFmt   = fmtTime(bestW.endTime);
+          const hrs = Math.round((bestW.endTime - bestW.startTime) / 3600000);
+          const isPast = bestW.endTime < now;
+          const verb = isPast ? "was wet" : "wet";
+          dockHeadline = `${sl.label} — swim float ${verb} ${startFmt}–${endFmt} (${hrs}h)`;
         } else {
-          dockHeadline = `No usable dock access today — tide too low`;
+          dockHeadline = `Swim float dry all day — tide too low`;
         }
       }
 
@@ -2421,7 +2424,7 @@
         : `No tide correction applied yet — update <code>DOCK_TIDE_OFFSET_FT</code> when empirical data available. `;
       html += `<div style="font-size:0.71rem;color:${dFooter};margin-top:10px;">`;
       html += `Float threshold ${DOCK_FLOAT_THRESHOLD_FT} ft MLLW. ${offsetNote}`;
-      html += `Wind scored relative to ${DOCK_FACE_DEG}° dock face. Usable hours ${DOCK_USABLE_HOUR_START}:00–${DOCK_USABLE_HOUR_END}:00.`;
+      html += `Wind scored relative to onshore direction. Usable hours ${DOCK_USABLE_HOUR_START}:00–${DOCK_USABLE_HOUR_END}:00.`;
       html += `</div>`;
 
       el.innerHTML = html;
@@ -2431,15 +2434,15 @@
         const afterCutoff = new Date().getHours() >= 18;
         const showDay = (afterCutoff && dayCards.length > 1) ? dayCards[1] : dayCards[0];
         const sl = scoreLabel(showDay.bestScore);
-        const dockDayLabelEl = document.getElementById("dockDayLabelCollapsed");
-        const dockScoreEl = document.getElementById("dockScoreCollapsed");
+        const dockDayLabelEl = document.getElementById("swimFloatLabelCollapsed");
+        const dockScoreEl = document.getElementById("swimFloatScoreCollapsed");
         
         if (dockDayLabelEl) dockDayLabelEl.textContent = showDay.dayLabel;
         
         if (dockScoreEl) dockScoreEl.textContent = sl.label + " (" + Math.round(showDay.bestScore * 100) + "/100)";
         
         // Apply gradient class based on score
-        const dockCard = document.querySelector('[data-collapse-key="dock_day"]');
+        const dockCard = document.querySelector('[data-collapse-key="swim_float"]');
         if (dockCard) {
           dockCard.classList.remove('tile-dock-great', 'tile-dock-good', 'tile-dock-marginal', 'tile-dock-poor', 'tile-dock-stayinside');
           if (showDay.bestScore >= 0.80) dockCard.classList.add('tile-dock-great');
@@ -4847,7 +4850,7 @@
       // Wind Sustained Impact - populated by Right Now card data
       // Sea Breeze - populated by renderSeaBreezeDetail()
       // Sunset Quality - populated by renderSunsetQuality()
-      // Dock Day - populated by renderDockDay()
+      // Swim Float - populated by renderDockDay()
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -4915,7 +4918,7 @@
         'Tide': { tab: 'almanac', card: 'tides' },
         'Moon': { tab: 'almanac', card: 'moon' },
         'Sunset': { tab: 'hyperlocal', card: 'sunset_quality' },
-        'Beach day': { tab: 'hyperlocal', card: 'dock_day' },
+        'Beach day': { tab: 'hyperlocal', card: 'swim_float' },
         'Hair day': { tab: 'hyperlocal', card: 'hair_day' },
         'Birds': { tab: 'hyperlocal', card: 'birds' },
       };
@@ -5652,8 +5655,8 @@ function loadWeatherData() {
           }
         }
 
-        // Dock Day Score - read from renderDockDay()
-        const dockDayScoreEl = document.getElementById("dockDayScoreNow");
+        // Swim Float Score - read from renderDockDay()
+        const dockDayScoreEl = document.getElementById("swimFloatScoreNow");
         if (dockDayScoreEl && window.__todayDockScore) {
           const d = window.__todayDockScore;
           dockDayScoreEl.innerHTML = `${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score * 100)}/100)</span>`;
@@ -5681,7 +5684,7 @@ function loadWeatherData() {
         }
         if (dockDayScoreEl) {
           dockDayScoreEl.classList.add('hyperlocal-link');
-          dockDayScoreEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="dock_day"]'); if (card) card.click(); }, 100); };
+          dockDayScoreEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="swim_float"]'); if (card) card.click(); }, 100); };
         }
 
         // Hair Day Score

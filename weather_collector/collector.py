@@ -692,7 +692,11 @@ def main():
 
     # Generate AI briefing headline
     t0 = _time.time()
-    briefing = generate_briefing(weather_data)
+    try:
+        briefing = generate_briefing(weather_data)
+    except Exception as e:
+        print(f"  ⚠ Briefing generation failed: {e}")
+        briefing = None
     elapsed = _time.time() - t0
     if briefing:
         weather_data["briefing"] = briefing
