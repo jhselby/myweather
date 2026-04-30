@@ -2,6 +2,7 @@
 Fetch NWS gridpoint data (NBM hourly forecasts)
 Provides high-quality surface forecasts from National Blend of Models
 """
+import re
 import requests
 from ..utils import iso_utc_now
 

@@ -1,6 +1,7 @@
 """
 Fetch Salem Harbor water temperature from NOAA buoy data
 """
+import re
 import requests
 from bs4 import BeautifulSoup
 

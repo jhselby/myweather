@@ -10,6 +10,7 @@ recent one), so no dedupe-by-species is needed within a single call. We merge
 the two lists into a unified species[] array with a `notable` flag.
 """
 import math
+import re
 import requests
 
 from ..config import LAT, LON, HEADERS_DEFAULT

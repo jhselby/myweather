@@ -4,6 +4,7 @@ Provides minutely precip, solar irradiance, and CAPE
 https://pirateweather.net
 """
 import os
+import re
 import requests
 
 API_KEY = os.environ["PIRATE_WEATHER_API_KEY"]

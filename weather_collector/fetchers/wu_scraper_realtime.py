@@ -8,6 +8,7 @@ Intelligently aggregates data from 15 local stations with:
 - Quality scoring for each aggregate
 """
 
+import re
 import requests
 import json
 import time

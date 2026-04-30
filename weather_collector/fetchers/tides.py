@@ -1,6 +1,7 @@
 """
 Fetch tide predictions from NOAA
 """
+import re
 import requests
 from datetime import datetime, timedelta
 
@@ -49,7 +50,7 @@ def fetch_tides():
         hilo_data = r1.json()
 
         # Call 2: 6-minute curve (48h)
-        begin_curve = today.strftime("%Y%m%d %H:%M")
+        begin_curve = today.replace(hour=0, minute=0, second=0, microsecond=0).strftime("%Y%m%d %H:%M")
         end_curve = (today + timedelta(hours=72)).strftime("%Y%m%d %H:%M")
         r2 = requests.get(url, params={**base, "product": "predictions",
                                         "interval": "6",

@@ -1,6 +1,7 @@
 """
 Fetch current conditions from Weather Underground Personal Weather Station
 """
+import re
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime

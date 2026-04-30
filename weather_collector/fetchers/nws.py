@@ -1,6 +1,7 @@
 """
 Fetch NWS forecast and alerts
 """
+import re
 import requests
 from ..config import LAT, LON
 from ..utils import iso_utc_now
