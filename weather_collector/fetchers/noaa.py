@@ -1,6 +1,7 @@
 """
 Fetch NOAA observations (KBOS, KBVY, Buoy 44013+44098)
 """
+import re
 import requests
 from ..utils import iso_utc_now
 
