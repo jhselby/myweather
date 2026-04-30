@@ -2382,8 +2382,8 @@
 
         if (!day.usableWindows.length) {
           html += ``;
-          html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">Dock dry all day</div>`;
-          html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Low tides fall within usable hours</div>`;
+          html += `<div style="font-size:0.82rem;font-weight:900;color:rgba(180,80,80,0.8);">Float dry all day</div>`;
+          html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Low tide falls within usable hours</div>`;
         } else {
           html += ``;
           html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label} <span style="font-size:0.75rem;opacity:0.7;">(${Math.round(day.bestScore * 100)})</span></div>`;
