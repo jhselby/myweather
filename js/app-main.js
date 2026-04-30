@@ -1141,6 +1141,8 @@
       // Store today sunset score for Right Now card
       const todayScore = scores.find(s => s.dayLabel === "Today");
       if (todayScore) window.__todaySunsetScore = {score: todayScore.score, label: todayScore.label, color: todayScore.color};
+      const tomorrowScore = scores.find(s => s.dayLabel === "Tomorrow");
+      if (tomorrowScore) window.__tomorrowSunsetScore = {score: tomorrowScore.score, label: tomorrowScore.label, color: tomorrowScore.color};
 
       if (!scores.length) {
         el.innerHTML = `<div style="color:${isLight() ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.4)'};font-size:0.85rem;">No sunset data in forecast window</div>`;
@@ -4911,7 +4913,8 @@
         'Wind': { tab: 'weather', card: '48h_wind' },
         'Sea breeze': { tab: 'weather', card: 'sea_breeze_detail' },
         'Fog': { tab: 'weather', card: 'fog_risk' },
-        'Rain': { tab: 'weather', card: 'right_now' },
+        'Rain': { tab: 'weather', card: '48h_temp_precip' },
+        'Next rain': { tab: 'weather', card: '48h_temp_precip' },
         'Wind chill': { tab: 'weather', card: 'feels_like' },
         'Heat index': { tab: 'weather', card: 'feels_like' },
         'Sun': { tab: 'almanac', card: 'sun' },
@@ -4926,7 +4929,7 @@
       allBriefRows.forEach(function(row) {
         var labelEl = row.querySelector('.brief-row-label');
         if (!labelEl) return;
-        var label = labelEl.textContent.trim();
+        var label = labelEl.textContent.trim().replace(/ \(tomorrow\)/, '');
         var nav = navMap[label];
         if (!nav) return;
         row.style.cursor = 'pointer';

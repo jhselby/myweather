@@ -1,3 +1,10 @@
+## v0.5.23 • 2026-04-30
+* **Briefing — Tomorrow score fixes**
+  * Added `__tomorrowSunsetScore` global so sunset score shows correctly after civil dusk
+  * Fixed clickthrough navigation for all "(tomorrow)" labeled rows (sunset, beach day, hair day)
+  * Rain and Next rain rows now navigate to Sky & Precip card instead of Right Now
+  * Suppressed rain row when expected accumulation is 0"
+
 ## v0.5.19 • 2026-04-29
 * **Bug Fixes**
   * Fixed wind impact constant mismatch between frontend (10/16) and backend (12/20) — frontend now matches config.py
