@@ -4946,6 +4946,15 @@
     }
 
     
+    // Return to source tab on PWA resume after any cross-tab clickthrough
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden && window.__navSource) {
+        var src = window.__navSource;
+        window.__navSource = null;
+        showTab(src.tab);
+      }
+    });
+
     // Overhead card: reparent overheadView content into card on first expand
     document.addEventListener('click', function(e) {
       var card = e.target.closest('[data-collapse-key="overhead_card"]');

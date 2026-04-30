@@ -1,3 +1,17 @@
+## v0.5.25 • 2026-04-30
+* **Briefing — Tomorrow score fixes**
+  * Added `__tomorrowSunsetScore` so sunset score displays correctly after civil dusk
+  * Fixed clickthrough navigation for all "(tomorrow)" labeled rows
+  * Rain and Next rain rows now navigate to Sky & Precip card
+  * Suppressed rain row when expected accumulation is 0"
+* **Overhead card improvements**
+  * Zoomed out default view (12 → 10) to capture BOS approach traffic
+  * Plane info panel now overlays bottom of map instead of rendering below it
+  * Map pans to keep selected plane visible above overlay
+  * Added 30-second refresh cooldown to prevent API abuse
+* **PWA resume behavior**
+  * Returning to app after sleep/background now restores source tab after cross-tab clickthroughs
+
 ## v0.5.23 • 2026-04-30
 * **Briefing — Tomorrow score fixes**
   * Added `__tomorrowSunsetScore` global so sunset score shows correctly after civil dusk
