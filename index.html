@@ -1283,6 +1283,29 @@
 
 
   <!-- Settings Modal Sheet -->
+  <!-- Beta Disclaimer Modal -->
+  <div id="betaModal" class="modal-overlay" style="display:none;">
+    <div class="modal-sheet" style="max-width:400px;margin:auto;pointer-events:auto;">
+      <div style="padding:28px 24px 24px;text-align:center;">
+        <img src="icon-192.png" alt="" style="width:64px;height:64px;border-radius:14px;margin-bottom:16px;">
+        <h2 style="margin:0 0 6px;font-size:1.2rem;font-weight:700;color:var(--text);">Wyman Cove Weather</h2>
+        <span style="display:inline-block;background:#f59e0b;color:#000;font-size:0.7rem;font-weight:700;letter-spacing:0.05em;padding:2px 8px;border-radius:4px;text-transform:uppercase;margin-bottom:16px;">Beta</span>
+        <p style="font-size:0.88rem;line-height:1.55;color:var(--muted);margin:0 0 20px;">
+          This is a work in progress. Things will break, change, and occasionally look weird.
+        </p>
+        <p style="font-size:0.75rem;line-height:1.5;color:var(--muted);opacity:0.7;margin:0 0 24px;">
+          Free to use. Might not always be, no promises to maintain it. Don't make safety decisions based on this app. It's a hobby project, not a forecast service.
+        </p>
+        <button id="betaAcceptBtn" onclick="acceptBeta()" style="
+          width:100%;padding:14px;border:none;border-radius:10px;
+          background:#1d4ed8;color:#fff;
+          font-size:0.95rem;font-weight:600;cursor:pointer;
+          -webkit-tap-highlight-color:transparent;
+        ">Got It</button>
+      </div>
+    </div>
+  </div>
+
   <div id="settingsModal" class="modal-overlay" style="display:none;" onclick="if(event.target===this)closeSettingsModal()">
     <div class="modal-sheet">
       <div class="modal-handle"></div>
@@ -1299,11 +1322,35 @@
             <button class="setting-btn" id="themeSystem" onclick="setTheme('system')">Auto</button>
           </div>
         </div>
+        <!-- Install App (shown only when browser supports install) -->
+        <div class="modal-setting-group" id="installAppGroup" style="display:none;border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div class="modal-setting-label">Install App</div>
+            <button id="installAppBtn" onclick="triggerInstall()" style="
+              padding:6px 16px;border:none;border-radius:8px;
+              background:#1d4ed8;color:#fff;
+              font-size:0.82rem;font-weight:600;cursor:pointer;
+            ">Add to Home Screen</button>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;">
+            Install for full-screen access without the browser toolbar.
+          </div>
+        </div>
+        <!-- Beta Info -->
+        <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div class="modal-setting-label" style="margin:0;line-height:1;">Status</div>
+            <span style="display:inline-block;background:#f59e0b;color:#000;font-size:0.68rem;font-weight:700;letter-spacing:0.05em;padding:2px 8px;border-radius:4px;text-transform:uppercase;">Beta</span>
+          </div>
+          <div style="font-size:0.75rem;color:var(--muted);margin-top:6px;line-height:1.5;">
+            Free to use. Might not always be, no promises to maintain it. Don't make safety decisions based on this app. It's a hobby project, not a forecast service.
+          </div>
+        </div>
         <!-- Version -->
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.19</span>
+            <span class="version-pill" id="appVersion">v0.5.20</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
@@ -1629,32 +1676,31 @@
 
   <script>
   (function() {
+    // Already installed as PWA — hide install UI
     if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) return;
 
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     if (!isIOS) {
-      var deferredPrompt = null;
+      // Android/Chrome: capture the install prompt for manual trigger from Settings
+      window.__deferredInstallPrompt = null;
       window.addEventListener('beforeinstallprompt', function(e) {
         e.preventDefault();
-        deferredPrompt = e;
-        var visits = parseInt(localStorage.getItem('pwa-visit-count') || '0') + 1;
-        localStorage.setItem('pwa-visit-count', visits.toString());
-        if (visits < 3) return;
-        var dismissed = localStorage.getItem('pwa-prompt-dismissed');
-        if (dismissed && (Date.now() - parseInt(dismissed)) < 30 * 24 * 60 * 60 * 1000) return;
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then(function() { deferredPrompt = null; });
+        window.__deferredInstallPrompt = e;
+        // Show the install button in settings
+        var btn = document.getElementById('installAppGroup');
+        if (btn) btn.style.display = '';
       });
       return;
     }
 
-    var dismissed = localStorage.getItem('pwa-prompt-dismissed');
-    if (dismissed && (Date.now() - parseInt(dismissed)) < 30 * 24 * 60 * 60 * 1000) return;
-
+    // iOS: show the manual "Add to Home Screen" sheet after 3 visits
     var visits = parseInt(localStorage.getItem('pwa-visit-count') || '0') + 1;
     localStorage.setItem('pwa-visit-count', visits.toString());
     if (visits < 3) return;
+
+    var dismissed = localStorage.getItem('pwa-prompt-dismissed');
+    if (dismissed && (Date.now() - parseInt(dismissed)) < 30 * 24 * 60 * 60 * 1000) return;
 
     var overlay = document.getElementById('pwaOverlay');
     var sheet = document.getElementById('pwaSheet');
@@ -1668,13 +1714,13 @@
       void sheet.offsetHeight;
       overlay.classList.add('visible');
       sheet.classList.add('visible');
-      arrow.classList.add('visible');
+      if (arrow) arrow.classList.add('visible');
     }
 
     function hidePrompt() {
       overlay.classList.remove('visible');
       sheet.classList.remove('visible');
-      arrow.classList.remove('visible');
+      if (arrow) arrow.classList.remove('visible');
       localStorage.setItem('pwa-prompt-dismissed', Date.now().toString());
       setTimeout(function() {
         overlay.style.display = 'none';
@@ -1687,6 +1733,65 @@
 
     setTimeout(showPrompt, 2000);
   })();
+  </script>
+
+  <!-- GoatCounter Analytics -->
+  <script data-goatcounter="https://wymancoveweather.goatcounter.com/count"
+          async src="//gc.zgo.at/count.js"></script>
+
+  <!-- Service Worker Registration -->
+  <script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/myweather/sw.js')
+      .then(function(reg) {
+        setInterval(function() { reg.update(); }, 30 * 60 * 1000);
+        reg.addEventListener('updatefound', function() {
+          var newWorker = reg.installing;
+          newWorker.addEventListener('statechange', function() {
+            if (newWorker.state === 'activated') {
+              console.log('[SW] New version activated');
+            }
+          });
+        });
+      })
+      .catch(function(err) { console.warn('[SW] Registration failed:', err); });
+  }
+  </script>
+
+  <!-- Beta disclaimer + Install trigger -->
+  <script>
+  function acceptBeta() {
+    localStorage.setItem('wc-beta-accepted', '1');
+    document.getElementById('betaModal').style.display = 'none';
+    document.body.style.overflow = '';
+    if (window.goatcounter && window.goatcounter.count) {
+      window.goatcounter.count({ path: '/event/beta-accepted', title: 'Beta Accepted', event: true });
+    }
+  }
+
+  function triggerInstall() {
+    var prompt = window.__deferredInstallPrompt;
+    if (prompt) {
+      prompt.prompt();
+      prompt.userChoice.then(function(result) {
+        window.__deferredInstallPrompt = null;
+        document.getElementById('installAppGroup').style.display = 'none';
+        if (result.outcome === 'accepted' && window.goatcounter && window.goatcounter.count) {
+          window.goatcounter.count({ path: '/event/pwa-installed', title: 'PWA Installed', event: true });
+        }
+      });
+    } else {
+      alert('To install: use your browser\'s "Add to Home Screen" option from the share menu.');
+    }
+  }
+
+  // Show beta modal on first visit
+  document.addEventListener('DOMContentLoaded', function() {
+    if (!localStorage.getItem('wc-beta-accepted')) {
+      document.getElementById('betaModal').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  });
   </script>
 
 </body>
