@@ -1641,7 +1641,7 @@
         </div>
       </div>
       <div class="pwa-body">
-        Get quick access to Wyman Cove conditions in full screen, without the browser toolbar.
+        Wyman Cove Weather is designed to run from your Home Screen. For the best experience, add it now — it only takes a moment.
       </div>
       <ol class="pwa-steps">
         <li class="pwa-step">
@@ -1662,7 +1662,7 @@
               <line x1="8" y1="12" x2="16" y2="12"/>
             </svg>
           </span>
-          <span>Tap <strong>Add to Home Screen</strong></span>
+          <span>Scroll down and tap <strong>Add to Home Screen</strong></span>
         </li>
       </ol>
     </div>
@@ -1792,7 +1792,7 @@
     } else {
       // Desktop Safari or other browser without install support
       var msg = document.createElement('div');
-      msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card-bg,#1a1a2e);color:var(--text,#fff);padding:24px 28px;border-radius:14px;z-index:100000;max-width:320px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);';
+      msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card-bg,#fff);color:var(--text,#000);border:1px solid rgba(0,0,0,0.1);padding:24px 28px;border-radius:14px;z-index:100000;max-width:320px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);';
       msg.innerHTML = '<div style="font-size:1.1rem;font-weight:700;margin-bottom:12px;">Install on Mobile</div>' +
         '<div style="font-size:0.88rem;line-height:1.5;opacity:0.8;margin-bottom:16px;">Wyman Cove Weather is designed for your phone. Visit this URL on your iPhone and tap Share → Add to Home Screen.</div>' +
         '<div style="font-size:0.82rem;font-weight:600;background:rgba(255,255,255,0.1);padding:10px;border-radius:8px;margin-bottom:16px;user-select:all;word-break:break-all;">jhselby.github.io/myweather</div>' +
@@ -1804,6 +1804,12 @@
       document.body.appendChild(bd);
       document.body.appendChild(msg);
     }
+  }
+
+  // Hide install button if already running as PWA
+  if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) {
+    var ig = document.getElementById('installAppGroup');
+    if (ig) ig.style.display = 'none';
   }
 
   // Show beta modal on first visit
