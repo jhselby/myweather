@@ -129,7 +129,13 @@
             m.setIcon(mIcon);
           });
           
-          ohShowPopup(a); 
+          ohShowPopup(a);
+          // Pan map so selected plane is above the overlay
+          var pt = ohMap.latLngToContainerPoint([a.lat, a.lon]);
+          var mapH = ohMap.getContainer().clientHeight;
+          var targetY = mapH * 0.35; // put plane at ~35% from top
+          var offsetY = pt.y - targetY;
+          if (offsetY > 20) ohMap.panBy([0, offsetY], {animate: true, duration: 0.3});
         });
         ohMarkers.push(marker);
       });
