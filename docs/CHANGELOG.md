@@ -1,3 +1,7 @@
+## v0.5.26 • 2026-04-30
+* **Rain icon threshold**
+  * Next-hour rain indicator now triggers on any precip intensity instead of requiring 30% probability
+
 ## v0.5.25 • 2026-04-30
 * **Briefing — Tomorrow score fixes**
   * Added `__tomorrowSunsetScore` so sunset score displays correctly after civil dusk

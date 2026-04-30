@@ -6459,7 +6459,7 @@ function updatePrecipBadge(data) {
   // Require BOTH nonzero intensity AND probability >= 30%.
   // Pirate often reports intensity with probability=0, which means
   // "this is what it would be IF it rained" — not an actual forecast.
-  const hasRain = minutely.some(pt => pt.precip_intensity > 0.001 && (pt.precip_probability ?? 0) >= 0.3);
+  const hasRain = minutely.some(pt => pt.precip_intensity > 0);
   // Badge is always visible — toggle the colored dot to indicate active state
   if (dot) dot.style.display = hasRain ? '' : 'none';
 }
