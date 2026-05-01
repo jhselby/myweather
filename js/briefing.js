@@ -295,11 +295,11 @@
 
     const todaySrc = window.__todaySunsetScore
       ? { score: window.__todaySunsetScore.score, label: window.__todaySunsetScore.label }
-      : (todayDirectional ? { score: todayDirectional.score, label: todayDirectional.label } : null);
+      : (todayDirectional && todayDirectional.score != null ? { score: todayDirectional.score, label: todayDirectional.label } : null);
 
     const tomorrowSrc = window.__tomorrowSunsetScore
       ? { score: window.__tomorrowSunsetScore.score, label: window.__tomorrowSunsetScore.label }
-      : (tomorrowDirectional ? { score: tomorrowDirectional.score, label: tomorrowDirectional.label } : null);
+      : (tomorrowDirectional && tomorrowDirectional.score != null ? { score: tomorrowDirectional.score, label: tomorrowDirectional.label } : null);
 
     const src = (useTomorrow && tomorrowSrc) ? tomorrowSrc : todaySrc;
     if (src) {
