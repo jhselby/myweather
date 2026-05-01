@@ -1996,7 +1996,7 @@
       for (let d = 0; d <= 2; d++) {
         const date = new Date(now);
         date.setDate(date.getDate() + d);
-        const dateStr   = date.toISOString().slice(0, 10);
+        const dateStr   = `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
         const dayName   = d === 0 ? "Today" : d === 1 ? "Tomorrow"
                         : date.toLocaleDateString("en-US", { weekday: "long" });
         const dateLabel = date.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
@@ -2181,7 +2181,7 @@
       const days  = [0, 1].map(d => {
         const date = new Date(now);
         date.setDate(date.getDate() + d);
-        return date.toISOString().slice(0, 10);
+        return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
       });
 
       const dayCards = [];
@@ -2190,7 +2190,7 @@
         // Find all 6-min curve points for this day
         const dayPoints = [];
         for (let i = 0; i < ctimes.length; i++) {
-          if (ctimes[i].startsWith(dayStr)) {
+          const cd = new Date(ctimes[i]); const cds = `${cd.getFullYear()}-${String(cd.getMonth()+1).padStart(2,"0")}-${String(cd.getDate()).padStart(2,"0")}`; if (cds === dayStr) {
             dayPoints.push({ t: ctimes[i], h: correctedHeights[i] });
           }
         }
@@ -2495,8 +2495,8 @@
       
 
       // Build calendar-style 3-column layout (one column per day)
-      const todayISO = new Date().toISOString().split("T")[0];
-      const tmrw = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+      const todayISO = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
+      const tmrw = (() => { const d = new Date(); d.setDate(d.getDate()+1); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; })();
 
       // Group tides by date, up to 3 days, 4 tides per day
       const byDate = {};
