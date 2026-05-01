@@ -288,21 +288,10 @@
   function getSunsetScore(data) {
     const cutoffs = getLifestyleCutoffs(data);
     const useTomorrow = !!(cutoffs.civilDusk && cutoffs.now >= cutoffs.civilDusk);
-
-    const directional = data?.sunset_directional || [];
-    const todayDirectional = directional[0] || null;
-    const tomorrowDirectional = directional[1] || null;
-
-    const todaySrc = window.__todaySunsetScore
-      ? { score: window.__todaySunsetScore.score, label: window.__todaySunsetScore.label }
-      : (todayDirectional && todayDirectional.score != null ? { score: todayDirectional.score, label: todayDirectional.label } : null);
-
-    const tomorrowSrc = window.__tomorrowSunsetScore
-      ? { score: window.__tomorrowSunsetScore.score, label: window.__tomorrowSunsetScore.label }
-      : (tomorrowDirectional && tomorrowDirectional.score != null ? { score: tomorrowDirectional.score, label: tomorrowDirectional.label } : null);
-
+    const todaySrc = window.__todaySunsetScore || null;
+    const tomorrowSrc = window.__tomorrowSunsetScore || null;
     const src = (useTomorrow && tomorrowSrc) ? tomorrowSrc : todaySrc;
-    if (src) {
+    if (src && src.score != null) {
       return { score: src.score, label: src.label, tomorrow: !!(useTomorrow && tomorrowSrc) };
     }
     return null;
