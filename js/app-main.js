@@ -2052,7 +2052,7 @@
       if (days.length > 1) window.__tomorrowHairScore = days[1];
 
       // Update collapsed preview — after 6 PM show tomorrow
-      const afterCutoff = new Date().getHours() >= 18;
+      const hairNow = new Date(); const hairSunsetStr = data.daily?.sunset?.[0]; const afterCutoff = hairSunsetStr ? hairNow > new Date(new Date(hairSunsetStr).getTime() + 2 * 3600000) : hairNow.getHours() >= 18;
       const showDay = (afterCutoff && days.length > 1) ? days[1] : days[0];
       const showDayLabel = (afterCutoff && days.length > 1) ? "Tomorrow" : "Today";
       const emojiEl = document.getElementById("hairDayEmojiCollapsed");
@@ -2433,7 +2433,7 @@
       
       // Update collapsed preview — after 6 PM, show tomorrow's score if available
       if (dayCards.length > 0 && dayCards[0].dayLabel === "Today") {
-        const afterCutoff = new Date().getHours() >= 18;
+        const beachNow = new Date(); const beachSunsetStr = data.daily?.sunset?.[0]; const afterCutoff = beachSunsetStr ? beachNow > new Date(beachSunsetStr) : beachNow.getHours() >= 18;
         const showDay = (afterCutoff && dayCards.length > 1) ? dayCards[1] : dayCards[0];
         const sl = scoreLabel(showDay.bestScore);
         const dockDayLabelEl = document.getElementById("swimFloatLabelCollapsed");
