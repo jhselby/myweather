@@ -4,6 +4,7 @@ Fetch tide predictions from NOAA
 import re
 import requests
 from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from ..config import TIDE_STATION
 from ..utils import iso_utc_now
@@ -27,7 +28,7 @@ def fetch_tides():
     print("📡 Fetching NOAA tides...")
 
     url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
-    today = datetime.now()
+    today = datetime.now(ZoneInfo("America/New_York"))
     begin = today.strftime("%Y%m%d")
     end = (today + timedelta(days=3)).strftime("%Y%m%d")
     base = {

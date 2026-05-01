@@ -1,3 +1,29 @@
+## v0.5.33 • 2026-05-01
+* **Tile Front Cutoffs**
+  * Beach day tile switches to tomorrow at sunset (was hardcoded 6 PM)
+  * Hair day tile switches to tomorrow at sunset + 2h (was hardcoded 6 PM)
+  * Sunset tile already used civil dusk — no change
+
+## v0.5.32 • 2026-05-01
+* **Briefing Sunset Fix**
+  * Removed broken fallback that read score/label from raw sunset_directional data
+  * Briefing now only uses computed sunset scores from renderSunsetQuality
+
+## v0.5.31 • 2026-05-01
+* **Briefing Sunset Null Check**
+  * Prevented "undefined (undefined/100)" when today sunset score unavailable
+
+## v0.5.30 • 2026-05-01
+* **UTC Timezone Fixes**
+  * Fixed swim float card showing wrong day after 8 PM EDT
+  * Fixed tide calendar grouping using UTC dates
+  * Added after-sunset tomorrow switching for hyperlocal tab scores
+
+## v0.5.29 • 2026-04-30
+* **Swim Float Labels**
+  * Fixed "Dock dry all day" label to "Float dry all day"
+  * Fixed import re in collector
+
 ## v0.5.28 • 2026-04-30
 * **Briefing rain row fix**
   * Suppressed all rain rows (now/soon/later) when forecast accumulation is 0"
