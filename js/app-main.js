@@ -5670,7 +5670,7 @@ function loadWeatherData() {
         // Swim Float Score - read from renderDockDay()
         const dockDayScoreEl = document.getElementById("swimFloatScoreNow");
         if (dockDayScoreEl && window.__todayDockScore) {
-          const d = window.__todayDockScore;
+          const dockAfter6 = new Date().getHours() >= 18; const d = (dockAfter6 && window.__tomorrowDockScore) ? window.__tomorrowDockScore : window.__todayDockScore;
           dockDayScoreEl.innerHTML = `${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score * 100)}/100)</span>`;
           dockDayScoreEl.style.color = d.color;
         } else if (dockDayScoreEl) {
@@ -5702,7 +5702,7 @@ function loadWeatherData() {
         // Hair Day Score
         const hairDayNowEl = document.getElementById("hairDayNow");
         if (hairDayNowEl && window.__todayHairScore) {
-          const h = window.__todayHairScore;
+          const hairAfter6 = new Date().getHours() >= 18; const h = (hairAfter6 && window.__tomorrowHairScore) ? window.__tomorrowHairScore : window.__todayHairScore;
           hairDayNowEl.innerHTML = `${h.scoreLabel} <span style="opacity:0.6;font-size:0.85rem;">(${h.score}/100)</span>`;
           hairDayNowEl.style.color = h.color;
           hairDayNowEl.classList.add('hyperlocal-link');
