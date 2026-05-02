@@ -5748,8 +5748,11 @@ function loadWeatherData() {
         const gustWorry = (data.wind_risk?.gust?.level ?? "");
         if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`Gust wind impact: ${gustWorry}`);
         const pop0 = (data.daily?.precipitation_probability_max?.[0] ?? 0);
-        if (pop0 >= 60 && der.col_precip_type && der.col_precip_type !== "Rain")
-          stormFlags.push(`Precip likely — column type: ${der.col_precip_type}`);
+        if (pop0 >= 60 && der.col_precip_type) {
+          const surfType = der.surface_precip_type || "unknown";
+          if (der.col_precip_type !== "Rain" || surfType !== "rain")
+            stormFlags.push(`Precip likely — surface: ${surfType}, column: ${der.col_precip_type}`);
+        }
         
         // Add rain intensity flag for moderate/heavy rain
         const dailyPrecip = (data.daily?.precipitation_sum?.[0] ?? 0);
