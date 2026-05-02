@@ -6129,11 +6129,22 @@ function loadWeatherData() {
 
     loadWeatherData();
 
+    // Track when user leaves the app for briefing-on-return logic
+    document.addEventListener('visibilitychange', function() {
+      if (document.hidden) {
+        window.__lastHiddenAt = Date.now();
+      }
+    });
+
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
         if (window.__externalLinkOpen) {
           window.__externalLinkOpen = false;
           return;
+        }
+        // Return to briefing tab if away for 5+ minutes
+        if (window.__lastHiddenAt && (Date.now() - window.__lastHiddenAt) > 5 * 60 * 1000) {
+          showTab('briefing');
         }
         // Close any open card before refreshing to avoid blank card paint bug
         document.querySelectorAll('.card-expanded').forEach(card => {
@@ -6181,7 +6192,8 @@ function loadWeatherData() {
 
 // Restore active tab after DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
-  try { showTab(localStorage.getItem('activeTab') || 'briefing'); } catch(e) { showTab('briefing'); }
+  // Always start on briefing — it's the landing page for fresh opens
+  try { showTab('briefing'); } catch(e) { showTab('briefing'); }
 });
 
 // === Settings Modal ===

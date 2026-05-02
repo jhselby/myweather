@@ -1,3 +1,7 @@
+## v0.5.40 - 2026-05-02
+- Added: app returns to briefing tab after 5+ minutes away
+- Changed: app always opens on briefing tab on fresh load
+
 ## v0.5.39 - 2026-05-02
 - Changed: active weather alert now shows both surface and column precip types (e.g. "surface: rain, column: Mixed")
 
