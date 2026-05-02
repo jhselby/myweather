@@ -1048,20 +1048,30 @@
         
         if (sunsetIdx < 0) continue;
         
+        // Average across 3-hour window (sunset-1h through sunset+1h) to smooth model wobble
+        const windowIndices = [sunsetIdx - 1, sunsetIdx, sunsetIdx + 1].filter(
+          i => i >= 0 && i < timeSource.times.length
+        );
+        function avgWindow(source, field) {
+          if (!source) return null;
+          const vals = windowIndices.map(i => source[field][i]).filter(v => v != null);
+          return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+        }
+        
         // Use available data, estimate missing with nearby values
-        const low10 = cloud10 ? (cloud10.cloud_low[sunsetIdx] ?? 0) 
-                              : cloud25 ? (cloud25.cloud_low[sunsetIdx] ?? 0) : 0;
-        const mid25 = cloud25 ? (cloud25.cloud_mid[sunsetIdx] ?? 0)
-                              : cloud50 ? (cloud50.cloud_mid[sunsetIdx] ?? 0)
-                              : cloud10 ? (cloud10.cloud_mid[sunsetIdx] ?? 0) : 0;
-        const mid50 = cloud50 ? (cloud50.cloud_mid[sunsetIdx] ?? 0)
-                              : cloud25 ? (cloud25.cloud_mid[sunsetIdx] ?? 0) : mid25;
-        const high25 = cloud25 ? (cloud25.cloud_high[sunsetIdx] ?? 0)
-                               : cloud50 ? (cloud50.cloud_high[sunsetIdx] ?? 0)
-                               : cloud10 ? (cloud10.cloud_high[sunsetIdx] ?? 0) : 0;
-        const high50 = cloud50 ? (cloud50.cloud_high[sunsetIdx] ?? 0)
-                               : cloud25 ? (cloud25.cloud_high[sunsetIdx] ?? 0) : high25;
-        const hum25 = (cloud25 || cloud50 || cloud10)?.humidity[sunsetIdx] ?? 50;
+        const low10 = avgWindow(cloud10, 'cloud_low') 
+                      ?? avgWindow(cloud25, 'cloud_low') ?? 0;
+        const mid25 = avgWindow(cloud25, 'cloud_mid')
+                      ?? avgWindow(cloud50, 'cloud_mid')
+                      ?? avgWindow(cloud10, 'cloud_mid') ?? 0;
+        const mid50 = avgWindow(cloud50, 'cloud_mid')
+                      ?? avgWindow(cloud25, 'cloud_mid') ?? mid25;
+        const high25 = avgWindow(cloud25, 'cloud_high')
+                       ?? avgWindow(cloud50, 'cloud_high')
+                       ?? avgWindow(cloud10, 'cloud_high') ?? 0;
+        const high50 = avgWindow(cloud50, 'cloud_high')
+                       ?? avgWindow(cloud25, 'cloud_high') ?? high25;
+        const hum25 = avgWindow(cloud25 || cloud50 || cloud10, 'humidity') ?? 50;
         
         const totalCloud = (low10 + mid25 + high25) / 3;
         

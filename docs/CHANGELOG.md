@@ -1,3 +1,8 @@
+## v0.5.41 • 2026-05-02
+* **Sunset Score Smoothing**
+  * Sunset quality now averages cloud cover across 3-hour window (sunset ±1h) instead of single hourly snapshot
+  * Reduces score volatility from model wobble between collector runs
+
 ## v0.5.40 • 2026-05-02
 * **Briefing Landing Page**
   * App returns to briefing tab after 5+ minutes away
