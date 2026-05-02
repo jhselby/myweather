@@ -555,14 +555,15 @@ def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
         avg_surface_temp = None
     # Determine precipitation type
     precip_type_counts = {}
+    frozen_keywords = ["snow", "mixed", "ice", "freezing", "sleet"]
     for ptype in precip_types:
         # Physical reality check: override 850mb classification if surface temp makes it impossible
         if ptype and avg_surface_temp is not None:
             ptype_lower = str(ptype).lower()
-            if avg_surface_temp > 40 and ptype_lower in ["snow", "heavy snow"]:
-                ptype = "Rain"  # Cannot be snow at 40°F+
-            elif avg_surface_temp > 35 and ptype_lower == "heavy snow":
-                ptype = "Mixed"  # Too warm for heavy snow
+            if avg_surface_temp > 40 and any(k in ptype_lower for k in frozen_keywords):
+                ptype = "Rain"  # No frozen precip reaching surface above 40°F
+            elif avg_surface_temp > 35 and any(k in ptype_lower for k in ["snow", "ice", "sleet"]):
+                ptype = "Mixed"  # Marginal zone: snow melts, freezing rain possible
             elif avg_surface_temp < 34 and ptype_lower == "rain":
                 ptype = "Mixed"  # May be mixed near freezing
         if ptype:
