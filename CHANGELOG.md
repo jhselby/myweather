@@ -12,3 +12,7 @@
 - Fixed: sea_breeze.py now uses corrected hyperlocal temp for land/water differential
 - Added: advection fog detection (warm air over cold water with onshore wind) - primary coastal fog type
 - fog.py now returns fog_type (radiation vs advection)
+
+## v0.5.38 - 2026-05-02
+- Fixed: hyperlocal temp correction now works when GFS model temp is unavailable (uses WU station weighted average directly)
+- Fixed: briefing AI falls back to cache when current temp is missing/zero (prevents 0°F briefings during GFS outages)

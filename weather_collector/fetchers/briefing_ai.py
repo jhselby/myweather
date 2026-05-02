@@ -283,6 +283,17 @@ def generate_briefing(weather_data):
 
     summary = _build_weather_summary(weather_data)
 
+    # Guard: if current temp fell through to 0 (GFS failure + no hyperlocal), skip
+    cur_temp = weather_data.get("hyperlocal", {}).get("corrected_temp") or weather_data.get("current", {}).get("temperature")
+    if cur_temp is None or cur_temp == 0:
+        daily_high = weather_data.get("derived", {}).get("today_high") or (weather_data.get("daily", {}).get("temperature_max", [None]) or [None])[0]
+        if daily_high is not None and daily_high > 20:
+            print("  ⚠ Briefing: current temp is missing/zero (likely GFS failure), using cache")
+            cached = _load_cached_briefing()
+            if cached and cached.get("headline"):
+                return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
+            return None
+
     # Inject current time so Gemini writes forward-looking content
     from datetime import datetime
     import pytz

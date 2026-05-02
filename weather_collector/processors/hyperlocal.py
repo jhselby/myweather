@@ -114,6 +114,28 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data):
             if wu_t is not None:
                 hyperlocal["wu_avg_temp"] = round(wu_t, 1)
     
+    # Fallback: WU stations available but model temp missing — use WU average directly
+    elif model_t is None and stations:
+        weighted_sum = 0.0
+        total_weight = 0.0
+        for station in stations:
+            st = station.get('temperature_f')
+            sd = station.get('distance_mi')
+            se = station.get('elevation_ft')
+            if st is None or sd is None or se is None or sd == 0 or sd > 1.5:
+                continue
+            dist_w = 1.0 / (sd ** 2)
+            elev_w = math.exp(-abs(se - ELEVATION_FT) / 30.0)
+            w = dist_w * elev_w
+            weighted_sum += st * w
+            total_weight += w
+        if total_weight > 0:
+            corrected = weighted_sum / total_weight
+            hyperlocal["corrected_temp"] = round(corrected, 1)
+            hyperlocal["stations_used"] = len([s for s in stations if s.get('temperature_f') and s.get('distance_mi') and s['distance_mi'] <= 1.5])
+            hyperlocal["confidence"] = "Moderate"
+            hyperlocal["note"] = "GFS model unavailable, using WU stations directly"
+
     # Fallback to PWS if WU not available
     elif model_t is not None and pws_data:
         pws_t = pws_data.get("temperature")
