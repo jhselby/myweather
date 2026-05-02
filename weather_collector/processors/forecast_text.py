@@ -204,8 +204,8 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     wind_directions = [hourly_data["wind_direction"][i] for i in period_indices]
     
     precip_types = [
-        hourly_data.get("col_precip_type_850mb", [])[i] 
-        if i < len(hourly_data.get("col_precip_type_850mb", [])) 
+        hourly_data.get("surface_precip_type", hourly_data.get("col_precip_type_850mb", []))[i] 
+        if i < len(hourly_data.get("surface_precip_type", hourly_data.get("col_precip_type_850mb", []))) 
         else None 
         for i in period_indices
     ]
@@ -438,10 +438,16 @@ def _generate_daily_forecast(daily_data, target_date, derived=None):
     parts.append(f"High {round(high)}°F, low {round(low)}°F.")
     
     # Precipitation
+    if precip_prob > 0:
+        precip_word = "rain"
+        if low is not None and low < 32:
+            precip_word = "snow"
+        elif low is not None and low < 36:
+            precip_word = "rain and snow"
     if precip_prob > 60:
-        parts.append(f"Rain likely ({int(precip_prob)}%).")
+        parts.append(f"{precip_word.capitalize()} likely ({int(precip_prob)}%).")
     elif precip_prob > 30:
-        parts.append(f"Chance of rain ({int(precip_prob)}%).")
+        parts.append(f"Chance of {precip_word} ({int(precip_prob)}%).")
     
     # Wind
     if wind_max > 20:

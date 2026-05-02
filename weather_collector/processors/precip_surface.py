@@ -29,6 +29,7 @@ def classify_surface_precip_type(wet_bulb_f):
         return "snow"
     elif wet_bulb_f < 35.0:
         return "mixed"
+    else:
         return "rain"
 
 

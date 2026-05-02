@@ -531,9 +531,11 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "geopotential_height_850hPa": raw_hourly.get("geopotential_height_850hPa", []),
             "col_precip_type_850mb": raw_hourly.get("col_precip_type_850mb", []),
         }
-        # Add 850mb precip types
-        temp_data = {"hourly": normalized}
+        # Add 850mb precip types, wet bulb, and surface precip types
+        temp_data = {"hourly": normalized, "current": weather_data.get("current", {})}
         add_850mb_precip_type(temp_data)
+        add_wet_bulb_temps(temp_data)
+        add_corrected_precip_types(temp_data, weather_data.get("hyperlocal", {}))
         hourly_7day_data["hourly"] = temp_data["hourly"]
 
     # Generate forecast text AFTER 850mb data is added
