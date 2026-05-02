@@ -142,8 +142,17 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     hrrr_times = hrrr_data.get("times", []) if hrrr_data else []
     gfs_times = gfs_data.get("times", []) if gfs_data else []
     
-    # Use HRRR if it covers this period, otherwise GFS
-    if hrrr_times and target_date <= datetime.fromisoformat(hrrr_times[-1].replace("Z", "+00:00")).astimezone(eastern).date():
+    # Determine time bounds for coverage check
+    if is_daytime:
+        need_start = datetime.combine(target_date, datetime.min.time()).replace(hour=6, tzinfo=eastern)
+        need_end = datetime.combine(target_date, datetime.min.time()).replace(hour=18, tzinfo=eastern)
+    else:
+        need_start = datetime.combine(target_date, datetime.min.time()).replace(hour=18, tzinfo=eastern)
+        need_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time()).replace(hour=6, tzinfo=eastern)
+    
+    # Use HRRR only if it covers most of this period, otherwise GFS
+    hrrr_end = datetime.fromisoformat(hrrr_times[-1].replace("Z", "+00:00")).astimezone(eastern) if hrrr_times else None
+    if hrrr_end and hrrr_end >= need_end:
         hourly_data = hrrr_data
     else:
         hourly_data = gfs_data
