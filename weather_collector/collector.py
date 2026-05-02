@@ -466,11 +466,14 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # Fog risk
     if current_data:
         current = current_data.get("current", {})
+        _buoy = weather_data.get("buoy_44013", {})
         fog_risk = calculate_fog_risk(
             current.get("temperature_2m"),
             current.get("dew_point_2m"),
             current.get("relative_humidity_2m"),
-            current.get("wind_speed_10m")
+            current.get("wind_speed_10m"),
+            wind_direction=current.get("wind_direction_10m"),
+            water_temp_f=_buoy.get("water_temp_f")
         )
         if fog_risk:
             derived["fog_label"] = fog_risk["fog_label"]

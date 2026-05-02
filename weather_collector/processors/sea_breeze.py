@@ -12,7 +12,8 @@ def detect_sea_breeze(weather_data):
     current = weather_data.get("current", {})
     buoy = weather_data.get("buoy_44013", {})
     
-    pws_temp = current.get("temperature")
+    hyperlocal = weather_data.get("hyperlocal", {})
+    pws_temp = hyperlocal.get("corrected_temp") or current.get("temperature")
     water_temp = buoy.get("water_temp_f")
     wind_speed = current.get("wind_speed")
     wind_dir = current.get("wind_direction")
