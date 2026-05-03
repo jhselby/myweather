@@ -1,3 +1,12 @@
+## v0.5.42 • May 3, 2026
+* Fixed 13 broken HTML attributes where `class` was inside `style` — elements now get proper theme-aware colors in light mode
+* Fixed settings theme buttons not syncing active state (wrong IDs)
+* Fixed precip badge lighting up without probability check — now matches modal's ≥30% threshold
+* Renamed "Swim Float" card to "Beach Day"
+* Redesigned wind compass arrow — full-length through center with gap for speed number, extends past circle, bolder styling
+* Removed dead code: `toggleSettings()`, `toggleMenu()`, `toggleMenuSection()`, duplicate `updateForecastSelection()` call, test comment
+* Removed hidden meta-row, rewired timestamps to settings modal directly
+
 ## v0.5.41 • 2026-05-02
 * **Meteorological Audit — 7 fixes across precipitation, forecast, and resilience**
   * Surface precip type (wet bulb) now used everywhere instead of 850mb column type

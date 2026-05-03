@@ -30,36 +30,6 @@
     // Menu drawer functions
     // ======================================================
     
-    function toggleSettings() {
-      const panel = document.getElementById('settingsPanel');
-      panel.style.display = panel.style.display === 'none' ? '' : 'none';
-    }
-
-    function toggleMenu() {
-      const drawer = document.getElementById('menuDrawer');
-      const backdrop = document.getElementById('menuBackdrop');
-      const isOpen = drawer.classList.contains('open');
-      
-      if (isOpen) {
-        drawer.classList.remove('open');
-        backdrop.classList.remove('open');
-      } else {
-        drawer.classList.add('open');
-        backdrop.classList.add('open');
-      }
-    }
-
-    function toggleMenuSection(sectionId) {
-      const section = document.getElementById(sectionId);
-      const isOpen = section.classList.contains('open');
-      
-      if (isOpen) {
-        section.classList.remove('open');
-      } else {
-        section.classList.add('open');
-      }
-    }
-
     // ======================================================
     // Settings — theme + pressure units
     // ======================================================
@@ -100,10 +70,10 @@
     function updateSettingBtns() {
       const theme = localStorage.getItem('theme') || 'system';
       // Update menu drawer buttons
-      ['themeLightMenu','themeDarkMenu','themeSystemMenu'].forEach(id => {
+      ['themeLight','themeDark','themeSystem'].forEach(id => {
         document.getElementById(id)?.classList.remove('active');
       });
-      const themeMap = { light:'themeLightMenu', dark:'themeDarkMenu', system:'themeSystemMenu' };
+      const themeMap = { light:'themeLight', dark:'themeDark', system:'themeSystem' };
       document.getElementById(themeMap[theme])?.classList.add('active');
     }
 
@@ -1680,7 +1650,7 @@
     let tideChartObj = null;
 
     // ======================================================
-    // Swim Float Score
+    // Beach Day Score
     // Dock floats when tide > DOCK_FLOAT_THRESHOLD_FT (above MLLW).
     // DOCK_TIDE_OFFSET_FT: correction to apply to predicted heights once
     //   empirical observed-vs-predicted data is collected. Default 0.0.
@@ -2252,7 +2222,7 @@
           const windSc = dockWindScore(wdir, wspd);
 
           // Temp score: 75°F=1.0, 60°F=0.5, 50°F=0.1, below 45°F=0
-          // Hard reality: below 50°F is not a swim float day regardless of other factors
+          // Hard reality: below 50°F is not a beach day regardless of other factors
           const tempSc = temp == null ? 0.5 :
             temp < 50 ? 0.0 :
             temp < 65 ? (temp - 50) / 30 :
@@ -2351,7 +2321,7 @@
         return d.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
       }
 
-      // Build headline from today's swim float data
+      // Build headline from today's beach day data
       let dockHeadline = "";
       if (dayCards.length > 0) {
         const td = dayCards[0];
@@ -2859,8 +2829,6 @@
       updateForecastSelection();
 
       // Hint
-      
-      updateForecastSelection();
     }
 
     function selectForecastDay(dateStr) {
@@ -4734,8 +4702,6 @@
       window.addEventListener('resize', measure);
     })();
 
-    document.getElementById("pageLoaded").textContent =
-      new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 
     // ═══════════════════════════════════════════════════════════════
     // Populate Collapsed Tile Previews
@@ -4862,7 +4828,7 @@
       // Wind Sustained Impact - populated by Right Now card data
       // Sea Breeze - populated by renderSeaBreezeDetail()
       // Sunset Quality - populated by renderSunsetQuality()
-      // Swim Float - populated by renderDockDay()
+      // Beach Day - populated by renderDockDay()
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -5009,7 +4975,7 @@ function loadWeatherData() {
 
         // Header
         // // document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
-        document.getElementById("dataUpdated").textContent = fmtLocal(data.generated_at || data.location?.updated);
+        var _duEl = document.getElementById("dataUpdated2"); if (_duEl) _duEl.textContent = fmtLocal(data.generated_at || data.location?.updated);
         renderSources(data.sources, (data.pws || {}).stale);
         renderFrostTracker(data.frost_log);
         renderBirds(data.birds);
@@ -5500,7 +5466,7 @@ function loadWeatherData() {
           if (weatherWindDirectionIndicatorEl && windDir != null) {
             const arrowRotation = (windDir + 90) % 360;
             // Set base rotation, CSS animation adds wobble
-            weatherWindDirectionIndicatorEl.style.transformOrigin = '60px 60px';
+            weatherWindDirectionIndicatorEl.style.transformOrigin = '80px 80px';
             weatherWindDirectionIndicatorEl.style.transform = `rotate(${arrowRotation}deg)`;
             weatherWindDirectionIndicatorEl.removeAttribute('transform');
             weatherWindDirectionIndicatorEl.classList.add('wind-wobble');
@@ -5677,7 +5643,7 @@ function loadWeatherData() {
           }
         }
 
-        // Swim Float Score - read from renderDockDay()
+        // Beach Day Score - read from renderDockDay()
         const dockDayScoreEl = document.getElementById("swimFloatScoreNow");
         if (dockDayScoreEl && window.__todayDockScore) {
           const dockAfter6 = new Date().getHours() >= 18; const d = (dockAfter6 && window.__tomorrowDockScore) ? window.__tomorrowDockScore : window.__todayDockScore;
@@ -6173,7 +6139,7 @@ function loadWeatherData() {
     document.getElementById('refreshBtn').addEventListener('click', function() {
       this.style.transform = 'rotate(360deg)';
       setTimeout(() => { this.style.transform = ''; location.reload(); }, 400);
-    });// test comment
+    });
 
 
 // === Bottom tab bar sync ===
@@ -6203,6 +6169,7 @@ function loadWeatherData() {
 // Restore active tab after DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
   // Always start on briefing — it's the landing page for fresh opens
+  var _plEl = document.getElementById("pageLoaded2"); if (_plEl) _plEl.textContent = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   try { showTab('briefing'); } catch(e) { showTab('briefing'); }
 });
 
@@ -6263,12 +6230,6 @@ function openSettingsModal() {
   }
   document.body.style.overflow = 'hidden';
   // Sync data timestamps
-  const du = document.getElementById('dataUpdated');
-  const pl = document.getElementById('pageLoaded');
-  const du2 = document.getElementById('dataUpdated2');
-  const pl2 = document.getElementById('pageLoaded2');
-  if (du && du2) du2.textContent = du.textContent;
-  if (pl && pl2) pl2.textContent = pl.textContent;
 }
 function closeSettingsModal() {
   const sheet = document.querySelector('#settingsModal .modal-sheet');
@@ -6484,7 +6445,7 @@ function updatePrecipBadge(data) {
   // Require BOTH nonzero intensity AND probability >= 30%.
   // Pirate often reports intensity with probability=0, which means
   // "this is what it would be IF it rained" — not an actual forecast.
-  const hasRain = minutely.some(pt => pt.precip_intensity > 0);
+  const hasRain = minutely.some(pt => pt.precip_intensity > 0 && (pt.precip_probability ?? 0) >= 0.3);
   // Badge is always visible — toggle the colored dot to indicate active state
   if (dot) dot.style.display = hasRain ? '' : 'none';
 }

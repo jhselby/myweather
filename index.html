@@ -43,19 +43,6 @@
 
       <!-- Settings moved to modal -->
 
-      <div class="meta-row" style="display:none;">
-        
-
-        <div class="meta-item">
-          <span class="meta-label">Data generated</span>
-          <span class="meta-value" id="dataUpdated">--</span>
-        </div>
-
-        <div class="meta-item">
-          <span class="meta-label">Code loaded</span>
-          <span class="meta-value" id="pageLoaded">--</span>
-        </div>
-      </div>
 
 
       <!-- Banners — sticky with header, below tabs -->
@@ -308,28 +295,21 @@
             <!-- Main content: wind speeds centered between title (top) and impact bar (bottom) -->
             <div style="position:absolute;top:calc(50% - 10px);left:50%;transform:translate(-50%, -50%);text-align:center;width:100%;">
               <!-- Background: Ornate compass rose - centered -->
-              <svg width="120" height="120" viewBox="0 0 160 160" style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:0;opacity:0.3;">
-                <!-- Outer circle -->
-                <circle class="compass-circle" cx="80" cy="80" r="70"/>
-                <!-- Cardinal direction lines -->
-                <line class="compass-circle" x1="80" y1="10" x2="80" y2="20"/>
-                <line class="compass-circle" x1="150" y1="80" x2="140" y2="80"/>
-                <line class="compass-circle" x1="80" y1="150" x2="80" y2="140"/>
-                <line class="compass-circle" x1="10" y1="80" x2="20" y2="80"/>
-                <!-- Intercardinal markers -->
-                <line class="compass-circle" x1="130" y1="30" x2="125" y2="35"/>
-                <line class="compass-circle" x1="130" y1="130" x2="125" y2="125"/>
-                <line class="compass-circle" x1="30" y1="130" x2="35" y2="125"/>
-                <line class="compass-circle" x1="30" y1="30" x2="35" y2="35"/>
-                <!-- Cardinal labels with proper spacing -->
-                <text class="compass-label" x="80" y="23" text-anchor="middle">N</text>
-                <text class="compass-label" x="137" y="84" text-anchor="middle">E</text>
-                <text class="compass-label" x="80" y="143" text-anchor="middle">S</text>
-                <text class="compass-label" x="23" y="84" text-anchor="middle">W</text>
+              <svg width="120" height="120" viewBox="0 0 160 160" style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:0;">
+                <circle cx="80" cy="80" r="70" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2"/>
+                <line x1="80" y1="10" x2="80" y2="20" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+                <line x1="150" y1="80" x2="140" y2="80" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+                <line x1="80" y1="150" x2="80" y2="140" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+                <line x1="10" y1="80" x2="20" y2="80" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+                <text x="80" y="18" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" opacity="0.35">N</text>
+                <text x="142" y="84" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" opacity="0.35">E</text>
+                <text x="80" y="152" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" opacity="0.35">S</text>
+                <text x="18" y="84" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" opacity="0.35">W</text>
                 <g id="weatherWindDirectionIndicator">
-                  <!-- Small arrow near circle edge only -->
-                  <path class="compass-arrow" d="M 135 80 L 150 80"/>
-                  <polygon class="compass-arrow-head" points="150,80 143,76 143,84"/>
+                  <line x1="6" y1="80" x2="58" y2="80" stroke="rgba(59,130,246,0.7)" stroke-width="3" stroke-linecap="round"/>
+                  <line x1="102" y1="80" x2="152" y2="80" stroke="rgba(59,130,246,1)" stroke-width="3" stroke-linecap="round"/>
+                  <polygon points="156,80 144,73 144,87" fill="rgba(59,130,246,1)"/>
+                  <circle cx="6" cy="80" r="4" fill="rgba(59,130,246,0.7)"/>
                 </g>
               </svg>
               
@@ -512,7 +492,7 @@
             </div>
 
             <!-- Calculation Breakdown -->
-            <div style="font-size:0.82rem;class="text-secondary" style="margin-top:14px;margin-bottom:8px;font-weight:700;">Calculation Breakdown</div>
+            <div class="text-secondary" style="font-size:0.82rem;margin-top:14px;margin-bottom:8px;font-weight:700;">Calculation Breakdown</div>
             
             <div style="font-size:0.78rem;margin-bottom:14px;">
               <div style="display:grid;grid-template-columns:140px 80px 80px;gap:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
@@ -534,7 +514,7 @@
               </div>
             </div>
 
-            <div style="font-size:0.72rem;class="text-subtle" style="line-height:1.5;">
+            <div class="text-subtle" style="font-size:0.72rem;line-height:1.5;">
               Fog forms when air near saturation (small dew point spread) combines with high humidity and light winds. Base probability from spread, then adjusted for humidity and wind conditions.
             </div>
           </div>
@@ -559,7 +539,7 @@
             </div>
           </div>
           <div class="card-body" id="seaBreezeDetail">
-            <div style="text-align:center;class="text-secondary" style="padding:20px;">Loading...</div>
+            <div class="text-secondary" style="text-align:center;padding:20px;">Loading...</div>
           </div>
         </div>
         <div class="card col-6" data-collapse-key="wind_impact" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('wind_impact', this.querySelector('.card-title-collapsible'))">
@@ -737,9 +717,9 @@
             <!-- Summary column -->
             <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
               <div style="font-size:2.8rem;line-height:1;margin-bottom:6px;" id="sunEmoji">&#9728;&#65039;</div>
-              <div style="font-weight:900;font-size:1rem;class="text-emphasis" style="margin-bottom:4px;" id="sunStatus">--</div>
-              <div style="font-size:0.88rem;class="text-medium" style="font-weight:800;" id="daylight">-- daylight</div>
-              <div style="font-size:0.85rem;class="text-secondary" style="margin-top:6px;" id="solarNoonLabel">Solar noon: --</div>
+              <div class="text-emphasis" style="font-weight:900;font-size:1rem;margin-bottom:4px;" id="sunStatus">--</div>
+              <div class="text-medium" style="font-size:0.88rem;font-weight:800;" id="daylight">-- daylight</div>
+              <div class="text-secondary" style="font-size:0.85rem;margin-top:6px;" id="solarNoonLabel">Solar noon: --</div>
             </div>
 
             <!-- Times column -->
@@ -807,8 +787,8 @@
             <!-- Phase column -->
             <div style="padding-right:16px;border-right:1px solid rgba(255,255,255,0.08);">
               <canvas id="moonCanvasExpanded" class="moon-canvas" width="160" height="160" style="width:80px;height:80px;border-radius:50%;margin-bottom:6px;"></canvas>
-              <div style="font-weight:900;font-size:1rem;class="text-emphasis" style="margin-bottom:4px;" id="moonPhaseName">--</div>
-              <div style="font-size:0.88rem;class="text-medium" style="font-weight:800;" id="moonIllumination">-- % illuminated</div>
+              <div class="text-emphasis" style="font-weight:900;font-size:1rem;margin-bottom:4px;" id="moonPhaseName">--</div>
+              <div class="text-medium" style="font-size:0.88rem;font-weight:800;" id="moonIllumination">-- % illuminated</div>
             </div>
 
             <!-- Rise / Set column -->
@@ -864,7 +844,7 @@
           </div>
           <div class="card-body">
             <div id="solarSystemGrid"></div>
-            <div id="solarSystemNote" style="font-size:0.75rem;class="text-subtle" style="margin-top:12px;"></div>
+            <div id="solarSystemNote" class="text-subtle" style="font-size:0.75rem;margin-top:12px;"></div>
           </div>
         </div>
 
@@ -965,9 +945,9 @@
                        font-weight:800;font-size:0.85rem;cursor:pointer;">
                 Log Reading
               </button>
-              <span id="wtLogStatus" style="font-size:0.8rem;class="text-subtle" style=""></span>
+              <span id="wtLogStatus" class="text-subtle" style="font-size:0.8rem;"></span>
             </div>
-            <div id="wtLogTable" style="font-size:0.78rem;class="text-medium" style=""></div>
+            <div id="wtLogTable" class="text-medium" style="font-size:0.78rem;"></div>
           </div>
         </div>
 
@@ -1058,7 +1038,7 @@
           <div class="card-body" style="display:none;">
             
             <!-- Explanation -->
-            <div style="font-size:0.82rem;class="text-secondary" style="margin-bottom:14px;line-height:1.5;">
+            <div class="text-secondary" style="font-size:0.82rem;margin-bottom:14px;line-height:1.5;">
               Using <strong id="stationsUsedCount">--</strong> nearby stations weighted by distance and elevation.
             </div>
             
@@ -1120,7 +1100,7 @@
             </div>
             
             <!-- Station Info -->
-            <div style="font-size:0.72rem;class="text-subtle" style="display:flex;gap:12px;flex-wrap:wrap;">
+            <div class="text-subtle" style="font-size:0.72rem;display:flex;gap:12px;flex-wrap:wrap;">
               <span id="hyperlocalStationsDiag">-- stations used</span>
             </div>
             
@@ -1186,7 +1166,7 @@
         
         <div class="card col-6" data-collapse-key="swim_float" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('swim_float', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
-            Swim Float<span class="collapse-chevron" style="display:none;">&#9660;</span>
+            Beach Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
           <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('swim_float', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
@@ -1228,7 +1208,7 @@
 
   </div>
   <script src="js/briefing.js?v=afb5255d"></script>
-  <script src="js/app-main.js?v=f8eef34e"></script>
+  <script src="js/app-main.js?v=f01920d9"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   
   <script>
@@ -1353,7 +1333,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.41</span>
+            <span class="version-pill" id="appVersion">v0.5.42</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
