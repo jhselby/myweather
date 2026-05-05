@@ -117,7 +117,7 @@ def _build_weather_summary(weather_data):
             if p and p >= 30 and i < len(time_arr):
                 rain_start = time_arr[i]
                 break
-        precip_line = f"Precip: max {max_pop}% POP, {rain_inches}" total"
+        precip_line = f"Precip: max {max_pop}% POP, {rain_inches}\" total"
         if rain_start:
             precip_line += f", starts around {rain_start}"
 
