@@ -5941,7 +5941,8 @@ function loadWeatherData() {
         const toCompassDir = deg => deg != null ? toCompass(deg, false) : "--";
         const setEl = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
 
-        setEl("buoyWaterTemp", buoy.water_temp_f != null ? buoy.water_temp_f.toFixed(1) + "°F" : "--");
+        const waterTempF = data.salem_water_temp_f ?? buoy.water_temp_f;
+        setEl("buoyWaterTemp", waterTempF != null ? waterTempF.toFixed(1) + "°F" : "--");
         setEl("buoyAirTemp",   buoy.air_temp_f   != null ? buoy.air_temp_f.toFixed(1)   + "°F" : "--");
         setEl("buoyPressure",  buoy.pressure_hpa != null ? fmtPressure(buoy.pressure_hpa) : "--");
         window.__lastBuoyPressure = buoy.pressure_hpa ?? null;
