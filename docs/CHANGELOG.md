@@ -1,3 +1,6 @@
+## v0.5.50 • May 5, 2026
+* Settings modal now collapses all subsections and scrolls to top on close
+
 ## v0.5.49 • May 5, 2026
 * Rewrote Gemini briefing prompt — cut token usage roughly in half
 * Added Wyman Cove geographic context (Salem Harbor side, open water N/NW) with full exposure table
