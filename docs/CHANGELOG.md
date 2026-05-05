@@ -1,3 +1,7 @@
+## v0.5.51 • May 5, 2026
+* Beach Day now uses combinedWindImpact (same exposure model as wind card) instead of custom dockWindScore
+* Removed dead dockWindScore function
+
 ## v0.5.50 • May 5, 2026
 * Settings modal now collapses all subsections and scrolls to top on close
 

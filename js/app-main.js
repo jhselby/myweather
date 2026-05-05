@@ -1648,25 +1648,6 @@
     const DOCK_USABLE_HOUR_START  =  7;    // before this hour = not usable
     const DOCK_USABLE_HOUR_END    = 20;    // after this hour = not usable
 
-    function dockWindScore(windDirDeg, windSpeedKt) {
-      // Returns 0 (bad) to 1 (good) based on wind angle AND speed
-      if (windDirDeg == null || windSpeedKt == null) return 0.7;
-      // Hard cap — above 20 kt is unpleasant regardless of direction
-      if (windSpeedKt > 20) return 0.0;
-      if (windSpeedKt < 5)  return 1.0;   // calm = always fine
-      // Angle between wind direction and dock face
-      let diff = Math.abs(windDirDeg - DOCK_FACE_DEG);
-      if (diff > 180) diff = 360 - diff;
-      // 0° = wind from exactly dock direction (onshore) = score 0
-      // 180° = wind from behind dock (offshore) = score 1
-      const dirScore  = diff / 180;
-      // Speed penalty: 5kt=mild, 15kt=significant, 20kt=hard cap above
-      const speedPenalty = Math.min((windSpeedKt - 5) / 15, 1.0);
-      // Onshore winds penalized harder at speed
-      const onshoreBoost = dirScore < 0.33 ? 1.5 : 1.0;
-      return Math.max(0, dirScore - speedPenalty * 0.5 * onshoreBoost);
-    }
-
     function renderHairDay(data) {
       window.__lastWeatherData = data;
       const el = document.getElementById("hairDayContent");
@@ -2185,8 +2166,11 @@
           // Peak height during window
           const peakH = Math.max(...dayPoints.slice(s, e+1).map(p => p.h));
 
-          // Wind score for dock
-          const windSc = dockWindScore(wdir, wspd);
+          // Wind impact score (same exposure model as wind card)
+          const wgust   = nearestHourly(hourly.wind_gusts || [], midMs);
+          const impactRaw = combinedWindImpact(wspd, wgust, wdir);
+          // Normalize to 0-1 scale: 0 impact = 1.0 score (perfect), WORRY_SEVERE+ = 0.0
+          const windSc = Math.max(0, 1 - impactRaw / WORRY_SEVERE);
 
           // Temp score: 75°F=1.0, 60°F=0.5, 50°F=0.1, below 45°F=0
           // Hard reality: below 50°F is not a beach day regardless of other factors
