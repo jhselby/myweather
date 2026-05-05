@@ -411,6 +411,28 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
                 _corrected_at.append(None)
         weather_data["hourly"]["corrected_apparent_temperature"] = _corrected_at
 
+        # Corrected dew point and absolute humidity for all hourly periods
+        _corrected_dp = []
+        _corrected_ah = []
+        for i in range(len(_ct_arr)):
+            _t = _ct_arr[i] if i < len(_ct_arr) else None
+            _h = _ch_arr[i] if i < len(_ch_arr) else None
+            if _t is not None and _h is not None:
+                _tc = (_t - 32) * 5 / 9
+                _gamma = math.log(_h / 100) + (17.625 * _tc) / (243.04 + _tc)
+                _dp_c = 243.04 * _gamma / (17.625 - _gamma)
+                _dp_f = _dp_c * 9 / 5 + 32
+                _corrected_dp.append(round(_dp_f, 1))
+                # Absolute humidity (g/m³)
+                _e = 6.112 * math.exp((17.67 * _dp_c) / (_dp_c + 243.5))
+                _ah = (_e * 216.7) / (_tc + 273.15)
+                _corrected_ah.append(round(_ah, 1))
+            else:
+                _corrected_dp.append(None)
+                _corrected_ah.append(None)
+        weather_data["hourly"]["corrected_dew_point"] = _corrected_dp
+        weather_data["hourly"]["corrected_absolute_humidity"] = _corrected_ah
+
     # Compute daily high/low using Joe's observed corrected temp so far today
     # plus Joe's remaining corrected forecast for today; tomorrow stays forecast-only.
     if "hourly" in weather_data:

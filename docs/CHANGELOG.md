@@ -1,3 +1,9 @@
+## v0.5.48 • May 5, 2026
+* Collector computes corrected hourly dew point and absolute humidity from corrected inputs
+* Hair Day card reads corrected_dew_point and corrected_absolute_humidity from collector
+* Hair Day now uses corrected temp/humidity inputs instead of raw model data
+* Removed dead dewPointF and absHumidity JS functions
+
 ## v0.5.47 • May 5, 2026
 * Sky chart reads corrected_wet_bulb from collector instead of recalculating in frontend
 * Removed dead calculateWetBulb function

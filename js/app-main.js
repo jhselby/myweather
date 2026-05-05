@@ -1674,31 +1674,16 @@
 
       const hourly  = data.hourly || {};
       const htimes  = hourly.times || [];
-      const hhumid  = hourly.humidity || [];
-      const htemp   = hourly.temperature || [];
+      const hhumid  = hourly.corrected_humidity || hourly.humidity || [];
+      const htemp   = hourly.corrected_temperature || hourly.temperature || [];
+      const hdp     = hourly.corrected_dew_point || hourly.dew_point || [];
+      const hah     = hourly.corrected_absolute_humidity || [];
       const hwind   = hourly.wind_gusts || [];  // gusts rip styled hair; sustained just moves it
       const hprecip = hourly.precipitation_probability || [];
       const hcode   = hourly.weather_code || [];
       const hpamt   = hourly.precipitation || [];
 
-      // --- Dew point from temp + RH (Magnus approximation) ---
-      function dewPointF(tempF, rh) {
-        if (tempF == null || rh == null) return null;
-        const Tc = (tempF - 32) * 5 / 9;
-        const gamma = Math.log(rh / 100) + (17.625 * Tc) / (243.04 + Tc);
-        const dpC = 243.04 * gamma / (17.625 - gamma);
-        return dpC * 9 / 5 + 32;
-      }
 
-      // --- Absolute humidity (g/m³) from dew point + air temp ---
-      // AH = (e * 216.7) / T_kelvin  where e = vapor pressure at dew point in hPa
-      function absHumidity(dpF, tempF) {
-        if (dpF == null || tempF == null) return null;
-        const dpC  = (dpF  - 32) * 5 / 9;
-        const tC   = (tempF - 32) * 5 / 9;
-        const e    = 6.112 * Math.exp((17.67 * dpC) / (dpC + 243.5));
-        return (e * 216.7) / (tC + 273.15);
-      }
 
       // --- Precip type from WMO weather code ---
       function precipType(code) {
@@ -1878,8 +1863,8 @@
           const w  = hourWeight(hr);
           if (w === 0) continue;
 
-          const dp  = dewPointF(htemp[i], hhumid[i]);
-          const ah  = absHumidity(dp, htemp[i]);
+          const dp  = hdp[i] ?? null;
+          const ah  = hah[i] ?? null;
 
           if (dp   != null) { sumDp   += dp   * w; }
           if (ah   != null) { sumAH   += ah   * w; }
