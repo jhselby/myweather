@@ -1,3 +1,10 @@
+## v0.5.49 • May 5, 2026
+* Rewrote Gemini briefing prompt — cut token usage roughly in half
+* Added Wyman Cove geographic context (Salem Harbor side, open water N/NW) with full exposure table
+* Data summary now conditional: precip only sent if POP ≥ 20%, fog only if risk > 0, sea breeze only if active
+* Removed sunset quality, humidity, raw model wind, and pirate next-hour precip from Gemini payload
+* Precip threshold: below 20% POP = don't mention rain, 20-30% = minor mention, 40%+ = feature it
+
 ## v0.5.48 • May 5, 2026
 * Collector computes corrected hourly dew point and absolute humidity from corrected inputs
 * Hair Day card reads corrected_dew_point and corrected_absolute_humidity from collector

@@ -13,30 +13,30 @@ GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
-SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove, Marblehead MA — a coastal New England harbor.
+SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove — on the Salem Harbor side of Marblehead's peninsula, with open water to the north and northwest.
 
-Your tone is like a seasoned local neighbor: observant, direct, helpful. Not a weather channel, not a lifestyle blog. You notice things — when the fog is about to burn off, when the wind will make the dock unpleasant, when it's one of those rare perfect days.
+Site exposure by wind direction (0=no shelter, 1=fully exposed):
+N to NNE (0°–25°): 1.0 — open harbor, max exposure
+NE (25°–45°): 0.7 — partial terrain blocking
+E to ESE (45°–100°): 0.25 — heavy terrain blocking
+SE to S (100°–200°): 0.08 — maximum shelter (Marblehead peninsula)
+SSW to WSW (200°–260°): 0.10 — heavy terrain blocking
+W (260°–290°): 0.40 — moderate, harbor opens beyond
+WNW to NW (290°–320°): 0.75 — harbor opening, high exposure
+NW to N (320°–360°): 1.0 — open harbor, max exposure
 
-You receive all of today's weather data. Your job is to pick what actually matters and ignore the rest. On a quiet day, say very little. On a busy day, name the one or two things worth knowing.
+Tone: seasoned local neighbor — observant, direct, helpful. Not a weather channel. Pick what matters, ignore the rest. On a quiet day, say little.
 
 Rules:
-- HEADLINE: Under 12 words. One breath. Lead with the weather story, not activities.
-- SUBHEADLINE: 1-2 sentences. What rounds out the picture. Specific times, temps, wind if relevant. Skip anything unremarkable.
-- Don't mention everything. Skip calm wind, normal humidity, boring sunsets.
+- HEADLINE: Under 12 words. One breath. Lead with the weather story.
+- SUBHEADLINE: 1-2 sentences. Specific times, temps, wind if relevant. Skip anything unremarkable.
+- Don't mention everything. Only what's worth knowing right now.
 - Never start with greetings or "Today will be."
-- Be specific when it matters (times, speeds, amounts) but impressionistic when that's more useful.
-- Use corrected values and derived values as the source of truth when they are provided. Do not recompute your own temperatures or reinterpret the numbers.
-- Ignore any alerts that contain "TEST" in the headline or description. These are NWS transmission tests, not real alerts. Never mention test alerts in the headline or subheadline.
-- Wind tone must follow the provided wind impact score first, with gusts only as supporting detail.
-- If wind impact is calm or light, describe wind as light, gentle, or a breeze. Do not describe it as sharp, strong, choppy, restless, or disruptive unless the impact data supports that.
-- Example: if wind impact is 2 (Calm) but raw wind is 15 mph with 21 mph gusts, the headline should treat it as calm or light air — the impact score accounts for local exposure and is more accurate than raw speed for this location. Raw speed and gusts may be mentioned as context but must not set the tone.
-- Local flavor is welcome, but only when physically correct. Do not invent causal claims about local geography or landmarks unless they are explicitly supported by the input data.
-- Avoid vague coastal phrasing like "off the water" or "onshore." Prefer explicit wind direction (e.g., northeast breeze) unless a directional relationship is clearly defined.
-- If next rain is known within the next few days, do not say "no rain in sight"; instead say when rain returns.
-- Do not use absolute phrasing like "rain stays away until" or "no rain until" if there is any earlier non-zero rain chance.
-- If early rain chances are minor, describe conditions as mostly dry or as a slight chance before steadier rain arrives.
-- If near-term precipitation chance is non-zero, avoid describing conditions as completely dry.
-- Temperatures are provided as ranges (e.g. 'low 60s', 'mid 40s'). Use these ranges naturally — never invent specific degree numbers. Say 'low 60s' not '62'. The only exact temperature is the current reading.
+- Use the temperature ranges provided — never invent specific degree numbers. The only exact temperature is the current reading.
+- Wind impact score is the authoritative measure for how wind affects this location. Raw wind speed is context for boaters and general conditions, but impact score sets the tone for the briefing.
+- Only mention precipitation if POP data is included. If no precip data is included, conditions are dry — do not mention rain.
+- Only mention fog or sea breeze if included in the data.
+- Ignore any alerts containing "TEST" — those are NWS transmission tests.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
 
@@ -70,7 +70,7 @@ def _redact_secrets(value):
     return s
 
 def _build_weather_summary(weather_data):
-    """Extract the key fields Gemini needs to write the briefing."""
+    """Extract only what Gemini needs — minimal tokens, no conflicting data."""
     cur = weather_data.get("current", {})
     hyp = weather_data.get("hyperlocal", {})
     daily = weather_data.get("daily", {})
@@ -78,128 +78,80 @@ def _build_weather_summary(weather_data):
     sb = weather_data.get("sea_breeze", {})
     alerts = weather_data.get("alerts", [])
     hourly = weather_data.get("hourly", {})
-    pirate = weather_data.get("pirate_weather", {})
 
     # Current conditions
     temp = round(hyp.get("corrected_temp") or cur.get("temperature") or 0)
-    humidity = round(hyp.get("corrected_humidity") or cur.get("humidity") or 0)
-    wind_speed = round(hyp.get("corrected_wind_speed") or cur.get("wind_speed") or 0)
-    wind_gusts = round(hyp.get("corrected_wind_gusts") or cur.get("wind_gusts") or 0)
     sky = cur.get("condition_override") or cur.get("weather_description") or "Unknown"
 
-    # Daily / derived source-of-truth values
-    high = der.get("today_high")
-    if high is None:
-        high = daily.get("temperature_max", [None])[0]
-    high = round(high) if high is not None else None
-
-    # Use corrected low from derived, fallback to daily
-    low = der.get("today_low") or daily.get("temperature_min", [None])[0]
-    low = round(low) if low is not None else None
-
-    # Tomorrow high/low
+    # Highs/lows as ranges
+    high = der.get("today_high") or (daily.get("temperature_max", [None]) or [None])[0]
+    low = der.get("today_low") or (daily.get("temperature_min", [None]) or [None])[0]
     tomorrow_high = der.get("tomorrow_high")
-    tomorrow_high = round(tomorrow_high) if tomorrow_high is not None else None
     tomorrow_low = der.get("tomorrow_low")
-    tomorrow_low = round(tomorrow_low) if tomorrow_low is not None else None
 
-    # Wind direction
+    # Wind — corrected values + impact
+    wind_speed = round(hyp.get("corrected_wind_speed") or cur.get("wind_speed") or 0)
+    wind_gusts = round(hyp.get("corrected_wind_gusts") or cur.get("wind_gusts") or 0)
     wind_dir_deg = cur.get("wind_direction")
     dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
     wind_dir = dirs[round((wind_dir_deg or 0) / 22.5) % 16] if wind_dir_deg is not None else ""
 
-    # Fog
-    fog_prob = der.get("fog_probability", 0)
-    fog_label = der.get("fog_label", "No risk")
-
-    # Wind impact — replicate frontend combinedWindImpact logic
-    # sustained < 15mph → use sustained worry; otherwise use gust worry
-    # worry_score = speed * exposure_factor^1.5
-    _wind_dir = cur.get("wind_direction")
-    _hyp = weather_data.get("hyperlocal", {})
-    _sus = _hyp.get("corrected_wind_speed") or cur.get("wind_speed") or 0
-    _gst = _hyp.get("corrected_wind_gusts") or cur.get("wind_gusts") or 0
-    # Exposure factor from wind_risk processor
     from weather_collector.processors.wind_risk import get_exposure_factor, worry_score, worry_level
-    _ef = get_exposure_factor(int(_wind_dir) % 360) if _wind_dir is not None else 1.0
-    _sus_score = worry_score(_sus, _ef)
-    _gst_score = worry_score(_gst, _ef)
-    _combined = _sus_score if _sus < 15 else _gst_score
+    _ef = get_exposure_factor(int(wind_dir_deg) % 360) if wind_dir_deg is not None else 1.0
+    _sus_score = worry_score(wind_speed, _ef)
+    _gst_score = worry_score(wind_gusts, _ef)
+    _combined = _sus_score if wind_speed < 15 else _gst_score
     wind_impact = round(_combined, 1)
     wind_impact_label = worry_level(round(_combined))
 
-    # Sea breeze
-    sb_active = sb.get("active", False)
-    sb_reason = sb.get("reason", "")
-
-    # Rain next 48h
-    precip_arr = hourly.get("precipitation", [])
-    rain_total_mm = sum(precip_arr[:48]) if precip_arr else 0
-    rain_inches = round(rain_total_mm / 25.4, 1)
-
-    # Precipitation probability scan
+    # Precip — only include if POP >= 20% somewhere in next 48h
     pop_arr = hourly.get("precipitation_probability", [])
     time_arr = hourly.get("times", [])
-    rain_start = None
-    rain_start_idx = None
-    for i, p in enumerate(pop_arr[:48]):
-        if p and p >= 40 and time_arr and i < len(time_arr):
-            rain_start = time_arr[i]
-            rain_start_idx = i
-            break
+    max_pop = max((p or 0) for p in pop_arr[:48]) if pop_arr else 0
+    precip_line = ""
+    if max_pop >= 20:
+        precip_arr = hourly.get("precipitation", [])
+        rain_inches = round(sum(precip_arr[:48]) / 25.4, 1) if precip_arr else 0
+        rain_start = None
+        for i, p in enumerate(pop_arr[:48]):
+            if p and p >= 30 and i < len(time_arr):
+                rain_start = time_arr[i]
+                break
+        precip_line = f"Precip: max {max_pop}% POP, {rain_inches}" total"
+        if rain_start:
+            precip_line += f", starts around {rain_start}"
 
-    # Minor rain chances before the main rain event
-    minor_rain_before_main = False
-    minor_rain_max_pop_before_main = 0
-    scan_end = rain_start_idx if rain_start_idx is not None else min(len(pop_arr), 24)
-    for p in pop_arr[:scan_end]:
-        if p is None:
-            continue
-        if p > 0:
-            minor_rain_before_main = True
-        if p > minor_rain_max_pop_before_main:
-            minor_rain_max_pop_before_main = p
+    # Fog — only include if risk > 0
+    fog_prob = der.get("fog_probability", 0)
+    fog_line = ""
+    if fog_prob > 0:
+        fog_line = f"Fog: {der.get('fog_label', 'Possible')} ({fog_prob}%)"
 
-    # Pirate Weather near-term precip signal
-    pirate_next_hour_pop = pirate.get("precip_probability")
+    # Sea breeze — only include if active
+    sb_line = ""
+    if sb.get("active"):
+        sb_line = f"Sea breeze: Active — {sb.get('reason', '')}"
 
-    # Alerts
-    # Filter out TEST alerts before sending to Gemini
-    alerts = [a for a in alerts if 'TEST' not in (a.get('headline', '') + ' ' + a.get('description', '')).upper() 
-              and 'THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY' not in a.get('description', '')]
-    alert_strs = []
-    for a in alerts[:3]:  # max 3
-        event = a.get("event", "")
-        if event:
-            alert_strs.append(event)
-
-    # Sunset quality (if available)
-    sunset_data = weather_data.get("sunset_directional", [])
-    sunset_note = ""
-    if sunset_data and len(sunset_data) > 0:
-        today_sunset = sunset_data[0]
-        if isinstance(today_sunset, dict):
-            score = today_sunset.get("score")
-            label = today_sunset.get("label")
-            if score and label:
-                sunset_note = f"{label} ({score}/100)"
+    # Alerts — filter TEST
+    alerts = [a for a in alerts if 'TEST' not in (a.get('headline', '') + ' ' + a.get('description', '')).upper()]
+    alert_line = ""
+    if alerts:
+        alert_line = f"Alerts: {', '.join(a.get('event', '') for a in alerts[:3])}"
 
     lines = [
         f"Current: {temp}°F, {sky}",
-        f"Today high: {_temp_range(high)}, Low: {_temp_range(low)}",
-        f"Tomorrow high: {_temp_range(tomorrow_high)}, Low: {_temp_range(tomorrow_low)}",
-        f"Wind impact: {wind_impact if wind_impact is not None else 'Unknown'}" + (f" ({wind_impact_label})" if wind_impact_label else "") + " — THIS IS THE AUTHORITATIVE WIND MEASURE",
-        f"Raw model wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + " (use for context only, not tone)",
-        f"Humidity: {humidity}%",
-        f"Fog: {fog_label} ({fog_prob}%)",
-        f"Sea breeze: {'Active — ' + sb_reason if sb_active else 'Inactive'}",
-        f"Rain next 48h: {rain_inches}\"" + (f", starts around {rain_start}" if rain_start else ""),
-        f"Minor rain chance before main rain: {'yes' if minor_rain_before_main else 'no'}" + (f", max {minor_rain_max_pop_before_main}%" if minor_rain_before_main else ""),
-        f"Next-hour precip chance (Pirate): {pirate_next_hour_pop}%" if pirate_next_hour_pop is not None else "",
-        f"Alerts: {', '.join(alert_strs) if alert_strs else 'None'}",
+        f"Today high: {_temp_range(high)}, low: {_temp_range(low)}",
+        f"Tomorrow high: {_temp_range(tomorrow_high)}, low: {_temp_range(tomorrow_low)}",
+        f"Wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + f" | Impact: {wind_impact} ({wind_impact_label})",
     ]
-    if sunset_note:
-        lines.append(f"Sunset quality: {sunset_note}")
+    if precip_line:
+        lines.append(precip_line)
+    if fog_line:
+        lines.append(fog_line)
+    if sb_line:
+        lines.append(sb_line)
+    if alert_line:
+        lines.append(alert_line)
 
     return "\n".join(lines)
 
