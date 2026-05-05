@@ -1,3 +1,19 @@
+## v0.5.45 • May 5, 2026
+* Collector computes corrected_apparent_temperature for all 48 hourly periods using Steadman shade formula
+* Feels-like chart reads corrected_apparent_temperature from collector (single source of truth)
+* Sky chart uses corrected_temperature directly instead of raw temp + bias
+* Eliminated all duplicate feels-like calculations from frontend
+
+## v0.5.44 • May 5, 2026
+* Feels-like chart reads apparent_temperature directly instead of recalculating in frontend
+* Removed Wind Chill / Heat Index labels and legend entries (Steadman is continuous)
+* Fixed Air Temp line and legend visibility in both light and dark modes
+
+## v0.5.43 • May 5, 2026
+* Replaced piecewise NWS wind chill / heat index with continuous Steadman apparent temperature formula
+* Eliminates 50-80°F dead zone where no feels-like adjustment was applied
+* Uses shade version: AT = Ta + 0.33×e − 0.70×ws − 4.00
+
 ## v0.5.42 • May 3, 2026
 * Fixed 13 broken HTML attributes where `class` was inside `style` — elements now get proper theme-aware colors in light mode
 * Fixed settings theme buttons not syncing active state (wrong IDs)
@@ -211,21 +227,3 @@
   * Multi-model weather (GFS, HRRR, ECMWF via Open-Meteo), tides, buoy, NWS alerts
   * Multi-tab layout (Weather / Wind / Almanac / Radar / Sources)
   * KBOS / KBVY / PWS observed conditions
-
-## v0.5.43
-- Replaced piecewise NWS wind chill / heat index with continuous Steadman apparent temperature formula
-- Eliminates 50-80°F "dead zone" where no feels-like adjustment was applied
-- Uses shade version: AT = Ta + 0.33×e − 0.70×ws − 4.00 (metric inputs)
-- Solar radiation version stubbed out pending unit conversion validation
-
-## v0.5.44
-- Feels-like chart now reads apparent_temperature directly instead of recalculating in frontend
-- Sky chart now uses corrected_temperature instead of raw temp + bias
-- Removed Wind Chill / Heat Index labels and legend entries (Steadman is continuous)
-- Fixed Air Temp line and legend visibility in both light and dark modes
-
-## v0.5.45
-- Collector now computes corrected_apparent_temperature for all 48 hourly periods using Steadman shade formula with corrected temp, humidity, and wind
-- Feels-like chart reads corrected_apparent_temperature from collector (single source of truth, no frontend recalculation)
-- Sky chart uses corrected_temperature directly instead of raw temp + bias
-- Eliminated all duplicate feels-like calculations from frontend
