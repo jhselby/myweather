@@ -217,3 +217,9 @@
 - Eliminates 50-80°F "dead zone" where no feels-like adjustment was applied
 - Uses shade version: AT = Ta + 0.33×e − 0.70×ws − 4.00 (metric inputs)
 - Solar radiation version stubbed out pending unit conversion validation
+
+## v0.5.44
+- Feels-like chart now reads apparent_temperature directly instead of recalculating in frontend
+- Sky chart now uses corrected_temperature instead of raw temp + bias
+- Removed Wind Chill / Heat Index labels and legend entries (Steadman is continuous)
+- Fixed Air Temp line and legend visibility in both light and dark modes

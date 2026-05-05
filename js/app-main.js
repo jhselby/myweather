@@ -2129,9 +2129,7 @@
       const cheights= curve.heights || [];
       const hourly  = data.hourly   || {};
       const htimes  = hourly.times  || [];
-      const _rawHtemps = hourly.temperature || [];
-      const _dockBias = (data.hyperlocal || {}).weighted_bias ?? 0;
-      const htemps  = _rawHtemps.map(t => t != null ? t + _dockBias : null);
+      const htemps  = hourly.corrected_temperature || hourly.temperature || [];
       const hwind   = hourly.wind_speed  || [];
       const hwinddir= hourly.wind_direction || [];
       const hprecip = hourly.precipitation_probability || [];
@@ -3142,58 +3140,26 @@
       // Use corrected feels-like from collector (single source of truth)
       const der = data.derived || {};
       const feelsLike = der.corrected_feels_like ?? T;
-      let flType = "Feels Like";
-      if (T != null) {
-        if (T <= 50 && wind > 3) flType = "Wind Chill";
-        else if (T >= 80) flType = "Heat Index";
-      }
-
       // Update tile front
       const valEl = document.getElementById("feelsLikeCardValue");
       const lblEl = document.getElementById("feelsLikeCardLabel");
       const light = isLight();
       if (valEl) valEl.textContent = T != null ? Math.round(feelsLike) + "\u00b0" : "--\u00b0";
       if (lblEl) {
-        lblEl.textContent = flType;
-        lblEl.style.color = flType === "Wind Chill" ? "rgba(100,180,255,0.9)" :
-                            flType === "Heat Index"  ? "rgba(255,140,60,0.9)" :
-                            light ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
+        lblEl.textContent = "Feels Like";
+        lblEl.style.color = light ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
       }
 
       // Build 48-hour dataset from HRRR hourly
       const times  = hourly.times       || [];
       const htemps = hourly.corrected_temperature || hourly.temperature || [];
-      const hwind  = hourly.wind_speed  || [];
-      const hhumid = hourly.corrected_humidity || hourly.humidity    || [];
+      const hApparent = hourly.apparent_temperature || [];
 
-      function calcFL(ht, hw, hrh) {
-        if (ht == null) return null;
-        if (ht <= 50 && hw > 3)
-          return 35.74 + (0.6215*ht) - (35.75*Math.pow(hw,0.16)) + (0.4275*ht*Math.pow(hw,0.16));
-        if (ht >= 80)
-          return -42.379 + (2.04901523*ht) + (10.14333127*hrh) - (0.22475541*ht*hrh) -
-                 (0.00683783*ht*ht) - (0.05481717*hrh*hrh) + (0.00122874*ht*ht*hrh) +
-                 (0.00085282*ht*hrh*hrh) - (0.00000199*ht*ht*hrh*hrh);
-        return ht;
-      }
-
-      function flTypeFor(ht, hw) {
-        if (ht == null) return "Feels Like";
-        if (ht <= 50 && hw > 3) return "Wind Chill";
-        if (ht >= 80) return "Heat Index";
-        return "Feels Like";
-      }
-
-      const chartTimes = [], chartFL = [], chartAir = [], chartTypes = [];
+      const chartTimes = [], chartFL = [], chartAir = [];
       for (let i = 0; i < times.length; i++) {
-        const ht  = htemps[i] ?? null;
-        const hw  = hwind[i]  ?? 0;
-        const hrh = hhumid[i] ?? 50;
-        const fl  = calcFL(ht, hw, hrh);
         chartTimes.push(times[i]);
-        chartFL.push(fl != null ? Math.round(fl) : null);
-        chartAir.push(ht != null ? Math.round(ht) : null);
-        chartTypes.push(flTypeFor(ht, hw));
+        chartAir.push(htemps[i] != null ? Math.round(htemps[i]) : null);
+        chartFL.push(hApparent[i] != null ? Math.round(hApparent[i]) : null);
       }
 
       // Data bar update
@@ -3210,18 +3176,12 @@
         const timeStr = `${weekday} ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? "am" : "pm"}`;
         const fl  = chartFL[idx]  != null ? chartFL[idx]  + "\u00b0F" : "--";
         const air = chartAir[idx] != null ? chartAir[idx] + "\u00b0F" : "--";
-        const typ = chartTypes[idx] || "Feels Like";
         timeEl.textContent = timeStr + " \u00b7";
-        lineEl.textContent = `${typ}: ${fl} \u00b7 Air: ${air}`;
+        lineEl.textContent = `Feels Like: ${fl} \u00b7 Air: ${air}`;
       }
 
-      const dominantType = chartTypes.find(t => t !== "Feels Like") || "Feels Like";
-      const lineColor = dominantType === "Wind Chill" ? "rgba(100,180,255,0.9)"
-                      : dominantType === "Heat Index"  ? "rgba(255,140,60,0.9)"
-                      : "rgba(180,180,255,0.8)";
-      const fillColor = dominantType === "Wind Chill" ? "rgba(100,180,255,0.1)"
-                      : dominantType === "Heat Index"  ? "rgba(255,140,60,0.1)"
-                      : "rgba(180,180,255,0.05)";
+      const lineColor = "rgba(180,180,255,0.8)";
+      const fillColor = "rgba(180,180,255,0.05)";
 
       const canvas = document.getElementById("feelsLikeChart");
       if (!canvas || !chartFL.length) return;
@@ -3249,7 +3209,8 @@
             {
               label: "Air Temp",
               data: chartAir,
-              borderColor: "rgba(255,255,255,0.25)",
+              borderColor: isLight() ? "rgba(100,100,100,0.4)" : "rgba(200,200,200,0.4)",
+              backgroundColor: isLight() ? "rgba(100,100,100,0.4)" : "rgba(200,200,200,0.4)",
               borderDash: [4, 4],
               borderWidth: 1,
               fill: false,
