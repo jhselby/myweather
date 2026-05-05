@@ -1,3 +1,7 @@
+## v0.5.47 • May 5, 2026
+* Sky chart reads corrected_wet_bulb from collector instead of recalculating in frontend
+* Removed dead calculateWetBulb function
+
 ## v0.5.46 • May 5, 2026
 * Removed dead tempBias parameter from renderForecast and renderHyperlocalForecast
 * Both functions now receive corrected_temperature directly instead of raw temp + bias

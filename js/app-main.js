@@ -8,23 +8,7 @@
      * @param {number} rh_pct - Relative humidity in %
      * @returns {number|null} - Wet bulb temperature in °F, or null if invalid
      */
-    function calculateWetBulb(t_f, rh_pct) {
-      if (t_f == null || rh_pct == null) return null;
-      
-      // Convert to Celsius
-      const t = (t_f - 32) * 5/9;
-      const rh = parseFloat(rh_pct);
-      
-      // Stull's formula
-      const tw = (t * Math.atan(0.151977 * Math.pow(rh + 8.313659, 0.5))
-                + Math.atan(t + rh)
-                - Math.atan(rh - 1.676331)
-                + 0.00391838 * Math.pow(rh, 1.5) * Math.atan(0.023101 * rh)
-                - 4.686035);
-      
-      // Convert back to °F and round
-      return Math.round((tw * 9/5 + 32) * 10) / 10;
-    }
+
 
     // ======================================================
     // Menu drawer functions
@@ -5824,10 +5808,7 @@ function loadWeatherData() {
           times,
           (hourly.corrected_temperature || hourly.temperature || []).slice(startIdx, startIdx + 48),
           (hourly.precipitation_probability || []).slice(startIdx, startIdx + 48),
-          (hourly.corrected_temperature || hourly.temperature || []).map((t, i) => {
-            const correctedHumidity = (hourly.corrected_humidity || hourly.humidity || [])[i];
-            return calculateWetBulb(t, correctedHumidity);
-          }).slice(startIdx, startIdx + 48),
+          (hourly.corrected_wet_bulb || hourly.wet_bulb || []).slice(startIdx, startIdx + 48),
           (hourly.temperature_850hPa || []).slice(startIdx, startIdx + 48),
           (hourly.cloud_cover_low || []).slice(startIdx, startIdx + 48),
           (hourly.cloud_cover_mid || []).slice(startIdx, startIdx + 48),
