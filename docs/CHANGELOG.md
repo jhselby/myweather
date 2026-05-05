@@ -1,3 +1,8 @@
+## v0.5.52 • May 5, 2026
+* WATCH FOR section moves above LIFESTYLE when NWS alerts are active
+* Alert rows now show title only (no raw NWS text) and tap to open alert modal
+* Fixed alert row border-radius causing parenthesis-shaped left border
+
 ## v0.5.51 • May 5, 2026
 * Beach Day now uses combinedWindImpact (same exposure model as wind card) instead of custom dockWindScore
 * Removed dead dockWindScore function
