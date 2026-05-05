@@ -223,3 +223,9 @@
 - Sky chart now uses corrected_temperature instead of raw temp + bias
 - Removed Wind Chill / Heat Index labels and legend entries (Steadman is continuous)
 - Fixed Air Temp line and legend visibility in both light and dark modes
+
+## v0.5.45
+- Collector now computes corrected_apparent_temperature for all 48 hourly periods using Steadman shade formula with corrected temp, humidity, and wind
+- Feels-like chart reads corrected_apparent_temperature from collector (single source of truth, no frontend recalculation)
+- Sky chart uses corrected_temperature directly instead of raw temp + bias
+- Eliminated all duplicate feels-like calculations from frontend

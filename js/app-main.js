@@ -3153,7 +3153,7 @@
       // Build 48-hour dataset from HRRR hourly
       const times  = hourly.times       || [];
       const htemps = hourly.corrected_temperature || hourly.temperature || [];
-      const hApparent = hourly.apparent_temperature || [];
+      const hApparent = hourly.corrected_apparent_temperature || hourly.apparent_temperature || [];
 
       const chartTimes = [], chartFL = [], chartAir = [];
       for (let i = 0; i < times.length; i++) {

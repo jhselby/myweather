@@ -390,6 +390,27 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             round(h + _hbias, 1) if h is not None else None for h in _raw_humid
         ]
 
+        # Corrected apparent temperature (Steadman shade formula) for all hourly periods
+        import math
+        _ct_arr = weather_data["hourly"]["corrected_temperature"]
+        _ch_arr = weather_data["hourly"]["corrected_humidity"]
+        _ws_arr = weather_data["hourly"].get("wind_speed", [])
+        _corrected_at = []
+        for i in range(len(_ct_arr)):
+            _t = _ct_arr[i] if i < len(_ct_arr) else None
+            _h = _ch_arr[i] if i < len(_ch_arr) else None
+            _w = _ws_arr[i] if i < len(_ws_arr) else None
+            if _t is not None:
+                _tc = (_t - 32) * 5 / 9
+                _ws_ms = (_w or 0) * 0.44704
+                _rh = _h if _h is not None else 50
+                _e = (_rh / 100) * 6.105 * math.exp((17.27 * _tc) / (237.7 + _tc))
+                _at_c = _tc + 0.33 * _e - 0.70 * _ws_ms - 4.00
+                _corrected_at.append(round(_at_c * 9 / 5 + 32, 1))
+            else:
+                _corrected_at.append(None)
+        weather_data["hourly"]["corrected_apparent_temperature"] = _corrected_at
+
     # Compute daily high/low using Joe's observed corrected temp so far today
     # plus Joe's remaining corrected forecast for today; tomorrow stays forecast-only.
     if "hourly" in weather_data:
