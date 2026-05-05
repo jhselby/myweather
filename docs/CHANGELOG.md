@@ -1,3 +1,8 @@
+## v0.5.46 • May 5, 2026
+* Removed dead tempBias parameter from renderForecast and renderHyperlocalForecast
+* Both functions now receive corrected_temperature directly instead of raw temp + bias
+* Removed unused weighted_bias variables from forecast render calls
+
 ## v0.5.45 • May 5, 2026
 * Collector computes corrected_apparent_temperature for all 48 hourly periods using Steadman shade formula
 * Feels-like chart reads corrected_apparent_temperature from collector (single source of truth)

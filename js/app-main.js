@@ -2739,7 +2739,7 @@
 
     let _selectedForecastDate = null;
 
-    function renderForecast(forecastText, hourlyTimes, hourlyTemps, tempBias, derived) {
+    function renderForecast(forecastText, hourlyTimes, hourlyTemps, derived) {
       const el = document.getElementById("forecastList");
       if (!el || !Array.isArray(forecastText)) return;
       el.innerHTML = "";
@@ -4490,7 +4490,7 @@
       summaryEl.textContent = firstSentence + "...";
     }
 
-    function renderHyperlocalForecast(forecasts, hourlyTimes, hourlyTemps, tempBias, derived) {
+    function renderHyperlocalForecast(forecasts, hourlyTimes, hourlyTemps, derived) {
       const list = document.getElementById("hyperlocalForecastList");
       if (!list || !Array.isArray(forecasts) || forecasts.length === 0) {
         if (list) list.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.88rem;padding:8px 0;">No forecast available.</div>';
@@ -5798,8 +5798,7 @@ function loadWeatherData() {
 
         // Forecast
         const _fcHourly = data.hourly || {};
-        const _fcBias = (data.hyperlocal || {}).weighted_bias ?? 0;
-        renderForecast(data.forecast_text, _fcHourly.times || [], _fcHourly.temperature || [], _fcBias, data.derived || {});
+        renderForecast(data.forecast_text, _fcHourly.times || [], _fcHourly.corrected_temperature || _fcHourly.temperature || [], data.derived || {});
 
         // 48h charts - start from current hour
         const hourly = data.hourly || {};
@@ -5938,8 +5937,7 @@ function loadWeatherData() {
         if (data.forecast_text) {
           window._currentForecastText = data.forecast_text;
           const _hfHourly = data.hourly || {};
-          const _hfBias = (data.hyperlocal || {}).weighted_bias ?? 0;
-          renderHyperlocalForecast(data.forecast_text, _hfHourly.times || [], _hfHourly.temperature || [], _hfBias, data.derived || {});
+          renderHyperlocalForecast(data.forecast_text, _hfHourly.times || [], _hfHourly.corrected_temperature || _hfHourly.temperature || [], data.derived || {});
         }
         renderNWSForecast(window._nwsPeriods);
 
