@@ -211,3 +211,9 @@
   * Multi-model weather (GFS, HRRR, ECMWF via Open-Meteo), tides, buoy, NWS alerts
   * Multi-tab layout (Weather / Wind / Almanac / Radar / Sources)
   * KBOS / KBVY / PWS observed conditions
+
+## v0.5.43
+- Replaced piecewise NWS wind chill / heat index with continuous Steadman apparent temperature formula
+- Eliminates 50-80°F "dead zone" where no feels-like adjustment was applied
+- Uses shade version: AT = Ta + 0.33×e − 0.70×ws − 4.00 (metric inputs)
+- Solar radiation version stubbed out pending unit conversion validation

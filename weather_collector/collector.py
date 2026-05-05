@@ -449,18 +449,20 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         if spread is not None:
             derived["dew_point_spread_f"] = spread
 
-    # Corrected feels-like (from corrected temp + wind + humidity)
+    # Corrected feels-like (Steadman apparent temperature)
+    # Shade: AT = Ta + 0.33*e - 0.70*ws - 4.00
+    # Radiation: AT = Ta + 0.348*e - 0.70*ws + 0.70*Q/(ws+10) - 4.25
     _cw = _hyp.get("corrected_wind_speed")
     if _ct is not None:
-        _fl = _ct
-        _ws = _cw if _cw is not None else (weather_data.get("current", {}).get("wind_speed") or 0)
-        if _ct <= 50 and _ws > 3:
-            _fl = 35.74 + (0.6215 * _ct) - (35.75 * (_ws ** 0.16)) + (0.4275 * _ct * (_ws ** 0.16))
-        elif _ct >= 80 and _ch is not None:
-            _fl = (-42.379 + (2.04901523 * _ct) + (10.14333127 * _ch)
-                   - (0.22475541 * _ct * _ch) - (0.00683783 * _ct * _ct)
-                   - (0.05481717 * _ch * _ch) + (0.00122874 * _ct * _ct * _ch)
-                   + (0.00085282 * _ct * _ch * _ch) - (0.00000199 * _ct * _ct * _ch * _ch))
+        _tc_fl = (_ct - 32) * 5 / 9
+        _ws_mph = _cw if _cw is not None else (weather_data.get("current", {}).get("wind_speed") or 0)
+        _ws_ms = _ws_mph * 0.44704
+        _rh = _ch if _ch is not None else 50
+        _e = (_rh / 100) * 6.105 * math.exp((17.27 * _tc_fl) / (237.7 + _tc_fl))
+        # TODO: Add radiation version once we confirm Pirate Weather solar
+        # units match Steadman's Q (net radiation W/m², not gross shortwave)
+        _at_c = _tc_fl + 0.33 * _e - 0.70 * _ws_ms - 4.00
+        _fl = _at_c * 9 / 5 + 32
         derived["corrected_feels_like"] = round(_fl, 1)
 
     # Fog risk
