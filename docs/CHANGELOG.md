@@ -1,3 +1,11 @@
+## v0.5.60 • May 6, 2026
+* Implemented Steadman radiation apparent temperature using Open-Meteo direct_radiation
+* Radiation formula (AT = Ta + 0.348e - 0.70ws + 0.70Q/(ws+10) - 4.25) used when direct_radiation > 0
+* Falls back to shade formula when overcast or nighttime (direct_radiation = 0)
+* Q = direct_radiation × 0.17 (body absorptivity × effective cross-section)
+* Applied to both current feels-like and 48h hourly apparent temperature array
+* Replaced shortwave_radiation with direct_radiation in HRRR pipeline
+
 ## v0.5.58 • May 6, 2026
 * Reduced sunset directional cloud fetches from 5 days to 3 — cuts Open-Meteo parallel calls from 15 to 9, eliminating intermittent 429 rate limit errors that blanked Sky/Precip and Fog tile fronts
 

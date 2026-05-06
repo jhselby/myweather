@@ -240,7 +240,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "cloud_cover_low": hourly.get("cloud_cover_low", []),
             "cloud_cover_mid": hourly.get("cloud_cover_mid", []),
             "cloud_cover_high": hourly.get("cloud_cover_high", []),
-            "shortwave_radiation": hourly.get("shortwave_radiation", []),
+            "direct_radiation": hourly.get("direct_radiation", []),
             "wind_speed": hourly.get("wind_speed_10m", []),
             "wind_direction": hourly.get("wind_direction_10m", []),
             "wind_gusts": hourly.get("wind_gusts_10m", []),
@@ -396,17 +396,23 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _ct_arr = weather_data["hourly"]["corrected_temperature"]
         _ch_arr = weather_data["hourly"]["corrected_humidity"]
         _ws_arr = weather_data["hourly"].get("wind_speed", [])
+        _dr_arr = weather_data["hourly"].get("direct_radiation", [])
         _corrected_at = []
         for i in range(len(_ct_arr)):
             _t = _ct_arr[i] if i < len(_ct_arr) else None
             _h = _ch_arr[i] if i < len(_ch_arr) else None
             _w = _ws_arr[i] if i < len(_ws_arr) else None
+            _dr = _dr_arr[i] if i < len(_dr_arr) else None
             if _t is not None:
                 _tc = (_t - 32) * 5 / 9
                 _ws_ms = (_w or 0) * 0.44704
                 _rh = _h if _h is not None else 50
                 _e = (_rh / 100) * 6.105 * math.exp((17.27 * _tc) / (237.7 + _tc))
-                _at_c = _tc + 0.33 * _e - 0.70 * _ws_ms - 4.00
+                if _dr is not None and _dr > 0:
+                    _Q = _dr * 0.17
+                    _at_c = _tc + 0.348 * _e - 0.70 * _ws_ms + 0.70 * _Q / (_ws_ms + 10) - 4.25
+                else:
+                    _at_c = _tc + 0.33 * _e - 0.70 * _ws_ms - 4.00
                 _corrected_at.append(round(_at_c * 9 / 5 + 32, 1))
             else:
                 _corrected_at.append(None)
@@ -502,10 +508,23 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _ws_ms = _ws_mph * 0.44704
         _rh = _ch if _ch is not None else 50
         _e = (_rh / 100) * 6.105 * math.exp((17.27 * _tc_fl) / (237.7 + _tc_fl))
-        # TODO: Add radiation version using hourly["shortwave_radiation"] from Open-Meteo
-        # Use current hour value; Open-Meteo shortwave_radiation is cloud-attenuated unlike Pirate Weather
-        # Q = shortwave_radiation[current_idx] * 0.17
-        _at_c = _tc_fl + 0.33 * _e - 0.70 * _ws_ms - 4.00
+        # Radiation version using direct_radiation from Open-Meteo (cloud-attenuated direct sunlight)
+        # Q = direct_radiation[current_hour] * 0.17
+        _hourly_direct = weather_data.get("hourly", {}).get("direct_radiation", [])
+        _hourly_times = weather_data.get("hourly", {}).get("times", [])
+        import pytz
+        _eastern = pytz.timezone("America/New_York")
+        _now_hr = datetime.now(_eastern).strftime("%Y-%m-%dT%H:00")
+        _direct_now = None
+        for _i, _t in enumerate(_hourly_times):
+            if _t == _now_hr and _i < len(_hourly_direct):
+                _direct_now = _hourly_direct[_i]
+                break
+        if _direct_now is not None and _direct_now > 0:
+            _Q = _direct_now * 0.17
+            _at_c = _tc_fl + 0.348 * _e - 0.70 * _ws_ms + 0.70 * _Q / (_ws_ms + 10) - 4.25
+        else:
+            _at_c = _tc_fl + 0.33 * _e - 0.70 * _ws_ms - 4.00
         _fl = _at_c * 9 / 5 + 32
         derived["corrected_feels_like"] = round(_fl, 1)
 
