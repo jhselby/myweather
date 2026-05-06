@@ -88,7 +88,7 @@ def build_sunset_directional_data(daily_sunsets, lat, lon, fetch_directional_clo
     
     # Pre-calculate azimuths for all days
     day_tasks = []
-    for day_idx, sunset_iso in enumerate(daily_sunsets[:5]):
+    for day_idx, sunset_iso in enumerate(daily_sunsets[:3]):
         if not sunset_iso:
             continue
         azimuth = calculate_sunset_azimuth(lat, lon, sunset_iso)
@@ -108,7 +108,7 @@ def build_sunset_directional_data(daily_sunsets, lat, lon, fetch_directional_clo
             "clouds": clouds
         }
     
-    with ThreadPoolExecutor(max_workers=5) as executor:
+    with ThreadPoolExecutor(max_workers=3) as executor:
         futures = {executor.submit(fetch_day, t): t for t in day_tasks}
         for future in as_completed(futures):
             idx, result = future.result()

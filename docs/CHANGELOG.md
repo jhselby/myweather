@@ -1,3 +1,6 @@
+## v0.5.58 • May 6, 2026
+* Reduced sunset directional cloud fetches from 5 days to 3 — cuts Open-Meteo parallel calls from 15 to 9, eliminating intermittent 429 rate limit errors that blanked Sky/Precip and Fog tile fronts
+
 ## v0.5.57 • May 6, 2026
 * Tonight section on Briefing tab now shows detailed forecast text from forecast_text.py
 * Automatically reflects any future improvements to the forecast narrative generator
