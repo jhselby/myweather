@@ -5657,6 +5657,7 @@ function loadWeatherData() {
 
         // Store storm flags globally and refresh alert badge
         window.__stormFlags = stormFlags;
+        renderBriefing(data); // Re-render now that storm flags are available
         const badge = document.getElementById("alertBadge");
         if (badge) {
           const dot = badge.querySelector(".alert-badge-dot");

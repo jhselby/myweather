@@ -760,6 +760,19 @@
       rows.push({ label: "Next rain", value: s.rainContext, color: "blue" });
     }
 
+    // Storm flags (computed by app-main.js from pressure/trough/wind/precip signals)
+    const stormFlags = window.__stormFlags || [];
+    if (stormFlags.length >= 2) {
+      const severity = stormFlags.length >= 3 ? 'Storm conditions developing' : 'Active weather developing';
+      rows.push({
+        label: "Storm",
+        value: severity,
+        detail: stormFlags.join(" · "),
+        color: "orange",
+        isAlert: true,
+      });
+    }
+
     // Alerts
     for (const a of s.alerts) {
       rows.push({

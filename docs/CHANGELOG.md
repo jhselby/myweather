@@ -1,3 +1,8 @@
+## v0.5.55 • May 6, 2026
+* Storm alerts now appear in Watch For section on Briefing tab
+* briefing.js reads window.__stormFlags set by app-main.js
+* renderBriefing() called again after storm flags computed to ensure they appear on load
+
 ## v0.5.54 • May 6, 2026
 * Briefing prompt: Wind Impact score reframed as authoritative hyperlocal measure; Gemini decides when contrast with regional forecast is worth mentioning
 * Briefing prompt: Numeric impact score stripped from data summary — Gemini now receives label only (Calm, Breezy, etc.)
