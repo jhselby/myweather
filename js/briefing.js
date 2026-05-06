@@ -723,6 +723,46 @@
 
   // ── Step 6: Build WATCH FOR rows ──
 
+  function buildPrecipMiniBar() {
+    const minutely = window.__precipMinutely || [];
+    if (!minutely.length) return null;
+    const now = Math.floor(Date.now() / 1000);
+    const dataTime = minutely[0]?.time ?? now;
+    const stalenessMin = Math.round((now - dataTime) / 60);
+    let firstRainIdx = -1, lastRainIdx = -1, maxIntensity = 0;
+    minutely.forEach((pt, i) => {
+      const prob = pt.precip_probability ?? 0;
+      if (pt.precip_intensity > 0.001 && prob >= 0.3) {
+        if (firstRainIdx === -1) firstRainIdx = i;
+        lastRainIdx = i;
+        if (pt.precip_intensity > maxIntensity) maxIntensity = pt.precip_intensity;
+      }
+    });
+    const firstRainFromNow = firstRainIdx === -1 ? -1 : firstRainIdx - stalenessMin;
+    const lastRainFromNow  = lastRainIdx  === -1 ? -1 : lastRainIdx  - stalenessMin;
+    const intensity = maxIntensity < 0.10 ? 'Light' : maxIntensity < 0.30 ? 'Moderate' : 'Heavy';
+    let summaryText = '';
+    if (firstRainFromNow <= 0) {
+      summaryText = `${intensity} rain now — ending in ~${Math.max(1, lastRainFromNow + 1)} min`;
+    } else {
+      const duration = lastRainIdx - firstRainIdx + 1;
+      summaryText = `${intensity} rain in ~${firstRainFromNow} min, lasting ~${duration} min`;
+    }
+    const maxI = Math.max(...minutely.map(p => p.precip_intensity), 0.01);
+    const bars = minutely.map((pt, i) => {
+      const h = Math.max(1, Math.round((pt.precip_intensity / maxI) * 28));
+      const prob = pt.precip_probability ?? 0;
+      const likely = prob >= 0.3;
+      const baseColor = pt.precip_type === 'snow' ? '160,200,255' : pt.precip_type === 'sleet' ? '200,160,255' : '100,160,255';
+      const opacity = likely ? 0.85 : 0.15;
+      return `<div style="flex:1;display:flex;align-items:flex-end;height:28px;"><div style="width:100%;height:${h}px;background:rgba(${baseColor},${opacity});border-radius:1px 1px 0 0;"></div></div>`;
+    }).join('');
+    return `<div onclick="openPrecipModal()" style="cursor:pointer;padding:8px 0 4px;">
+      <div style="font-size:0.88rem;margin-bottom:6px;opacity:0.85;">🌧 ${summaryText}</div>
+      <div style="display:flex;align-items:flex-end;gap:1px;height:28px;border-bottom:1px solid rgba(128,128,128,0.2);">${bars}</div>
+    </div>`;
+  }
+
   function buildWatchRows(s) {
     const rows = [];
     const der = s._data.derived || {};
@@ -758,6 +798,12 @@
     // Next rain — only if not today and not none
     if (s.rainContext && !["none","now","soon","later"].includes(s.rainContext)) {
       rows.push({ label: "Next rain", value: s.rainContext, color: "blue" });
+    }
+
+    // Precip mini bar — only when header precip dot is active
+    if (window.__precipHasRain) {
+      const miniBar = buildPrecipMiniBar();
+      if (miniBar) rows.push({ isHtml: true, html: miniBar });
     }
 
     // Storm flags (computed by app-main.js from pressure/trough/wind/precip signals)

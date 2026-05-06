@@ -1,3 +1,8 @@
+## v0.5.56 • May 6, 2026
+* Precip mini bar now appears in Watch For section when rain is imminent (header dot active)
+* Mini bar shows intensity, timing, and 60-minute chart — taps to open full precip modal
+* Watch For section now moves above Lifestyle whenever it has any content (not just alerts)
+
 ## v0.5.55 • May 6, 2026
 * Storm alerts now appear in Watch For section on Briefing tab
 * briefing.js reads window.__stormFlags set by app-main.js

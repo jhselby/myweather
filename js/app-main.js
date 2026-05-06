@@ -4793,13 +4793,13 @@
       const lifeEl = document.getElementById('briefLifestyleSection');
       if (lifeEl) { if (b.lifestyleRows && b.lifestyleRows.length) { let lh = '<hr class="brief-rule"><div class="brief-section-label">Lifestyle</div><div class="brief-rows">'; b.lifestyleRows.forEach(r => { const cls = r.color ? cm[r.color] || '' : ''; lh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; }); lh += '</div>'; lifeEl.innerHTML = lh; } else { lifeEl.innerHTML = ''; } }
       const watchEl = document.getElementById('briefWatchSection');
-      const hasAlerts = b.watchRows && b.watchRows.some(r => r.isAlert);
-      if (hasAlerts && watchEl && lifeEl && watchEl.parentNode) {
+      const hasWatchContent = b.watchRows && b.watchRows.length > 0;
+      if (hasWatchContent && watchEl && lifeEl && watchEl.parentNode) {
         watchEl.parentNode.insertBefore(watchEl, lifeEl);
-      } else if (!hasAlerts && watchEl && lifeEl && watchEl.parentNode) {
+      } else if (!hasWatchContent && watchEl && lifeEl && watchEl.parentNode) {
         lifeEl.parentNode.insertBefore(lifeEl, watchEl);
       }
-      if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isAlert) { wh += '<div class="brief-alert-row" onclick="openAlertModal()" style="cursor:pointer;">⚠ <strong>' + r.value + '</strong></div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; wh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); watchEl.innerHTML = wh; } else if (b.priority === 'quiet') { watchEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div><div class="brief-quiet-note">No alerts, incoming rain, or frost risk today.</div>'; } else { watchEl.innerHTML = ''; } }
+      if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isHtml) { wh += r.html; } else if (r.isAlert) { wh += '<div class="brief-alert-row" onclick="openAlertModal()" style="cursor:pointer;">⚠ <strong>' + r.value + '</strong></div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; wh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); watchEl.innerHTML = wh; } else if (b.priority === 'quiet') { watchEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div><div class="brief-quiet-note">No alerts, incoming rain, or frost risk today.</div>'; } else { watchEl.innerHTML = ''; } }
       const tonightEl = document.getElementById('briefTonightSection');
       if (tonightEl) { if (b.tonight) { tonightEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Tonight</div><div class="brief-row"><span class="brief-row-label">Overnight</span><span class="brief-row-value">' + b.tonight + '</span></div>'; } else { tonightEl.innerHTML = ''; } }
 
@@ -6371,6 +6371,9 @@ function updatePrecipBadge(data) {
   const hasRain = minutely.some(pt => pt.precip_intensity > 0 && (pt.precip_probability ?? 0) >= 0.3);
   // Badge is always visible — toggle the colored dot to indicate active state
   if (dot) dot.style.display = hasRain ? '' : 'none';
+  window.__precipHasRain = hasRain;
+  window.__precipMinutely = minutely;
+  if (hasRain && window.__lastWeatherData) renderBriefing(window.__lastWeatherData);
 }
 
 // === Precip Modal ===
