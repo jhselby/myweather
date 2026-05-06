@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 5.19  
-**Last Updated:** May 5, 2026  
+**Version:** 0.5.54
+**Last Updated:** May 6, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
@@ -1035,7 +1035,7 @@ Check this document first to understand where data comes from and what correctio
   - High temperature (derived.today_high preferred, fallback to model daily)
   - Low temperature (model fallback)
 - Derived:
-  - Wind impact score + label
+  - Wind impact label only (Calm, Breezy, etc.) — numeric score intentionally excluded to prevent Gemini from echoing raw numbers
   - Fog probability + label
   - Sea breeze state + reasoning
 - Forecast:
@@ -1058,7 +1058,7 @@ Check this document first to understand where data comes from and what correctio
   - High temperature (derived.today_high preferred, fallback to model daily)
   - Low temperature (model fallback)
 - Derived:
-  - Wind impact score + label
+  - Wind impact label only (Calm, Breezy, etc.) — numeric score intentionally excluded to prevent Gemini from echoing raw numbers
   - Fog probability + label
   - Sea breeze state + reasoning
 - Forecast:
@@ -1070,7 +1070,8 @@ Check this document first to understand where data comes from and what correctio
 ### Key Rules
 
 - Corrected data is source of truth
-- Wind interpretation is impact-driven (impact > gusts)
+- Wind Impact score is the authoritative hyperlocal measure — accounts for terrain exposure; Gemini uses the label to set tone, not raw speed
+- Gemini decides when contrast between local impact and regional forecast is worth mentioning (not forced)
 - No invented geography or causal landmark claims
 - Avoid vague coastal phrasing ("off the water", "onshore")
 

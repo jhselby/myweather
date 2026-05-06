@@ -9,6 +9,7 @@ deploy-collector:
 	  --no-allow-unauthenticated \
 	  --timeout=300s \
 	  --memory=512MB \
+	  --max-instances=1 \
 	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811 \
 	  --set-secrets=WU_API_KEY=wu-api-key:latest,PIRATE_WEATHER_API_KEY=PIRATE_WEATHER_API_KEY:latest,GEMINI_API_KEY=gemini-api-key:latest,EBIRD_API_KEY=ebird-api-key:latest
 

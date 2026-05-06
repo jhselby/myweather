@@ -1,3 +1,8 @@
+## v0.5.54 • May 6, 2026
+* Briefing prompt: Wind Impact score reframed as authoritative hyperlocal measure; Gemini decides when contrast with regional forecast is worth mentioning
+* Briefing prompt: Numeric impact score stripped from data summary — Gemini now receives label only (Calm, Breezy, etc.)
+* Cloud Function: max-instances=1 to prevent concurrent execution and Gemini 429 rate limit collisions
+
 ## v0.5.53 • May 5, 2026
 * Water temperature now sourced from GoMOFS (Gulf of Maine Operational Forecast System) instead of buoy 44013
 * GoMOFS grid point ny=392, nx=101 (42.50N, -70.88W) — Salem Sound, ~2mi from dock

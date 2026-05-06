@@ -33,8 +33,7 @@ Rules:
 - Don't mention everything. Only what's worth knowing right now.
 - Never start with greetings or "Today will be."
 - Use the temperature ranges provided — never invent specific degree numbers. The only exact temperature is the current reading.
-- Wind impact score is the authoritative measure for how wind affects this location. Raw wind speed is context for boaters and general conditions, but impact score sets the tone for the briefing.
-- When Wind Impact is 0–1 but raw forecast wind is 15+ mph, the cove is sheltered from that wind direction. Say so explicitly — e.g., "Winds from the south will feel calmer at the cove despite a breezy regional forecast." Never describe conditions as breezy or windy when Impact is 0–1.
+- Wind Impact score already accounts for the cove's terrain exposure — it is the authoritative, hyperlocal wind measure, more accurate than raw forecast speed. Use it to set the tone. Mention the contrast with regional forecast only when it adds useful context. Never mention numerical impact scores — only use the impact label (Calm, Moderate, etc.).
 - Only mention precipitation if POP data is included. If no precip data is included, conditions are dry — do not mention rain.
 - Only mention fog or sea breeze if included in the data.
 - Ignore any alerts containing "TEST" — those are NWS transmission tests.
@@ -143,7 +142,7 @@ def _build_weather_summary(weather_data):
         f"Current: {temp}°F, {sky}",
         f"Today high: {_temp_range(high)}, low: {_temp_range(low)}",
         f"Tomorrow high: {_temp_range(tomorrow_high)}, low: {_temp_range(tomorrow_low)}",
-        f"Wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + f" | Impact: {wind_impact} ({wind_impact_label})",
+        f"Wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + f" | Local impact: {wind_impact_label}",
     ]
     if precip_line:
         lines.append(precip_line)
