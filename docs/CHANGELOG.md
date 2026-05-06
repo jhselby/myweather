@@ -1,3 +1,11 @@
+## v0.5.53 • May 5, 2026
+* Water temperature now sourced from GoMOFS (Gulf of Maine Operational Forecast System) instead of buoy 44013
+* GoMOFS grid point ny=392, nx=101 (42.50N, -70.88W) — Salem Sound, ~2mi from dock
+* GoMOFS provides blended water column temp at exact coordinates vs. buoy 16mi offshore
+* Buoy 44013 retained as fallback if GoMOFS unavailable
+* Ocean card front and expanded views both updated to display GoMOFS temp
+* Fixed briefing_ai.py f-string syntax error (unterminated string literal line 120)
+
 ## v0.5.52 • May 5, 2026
 * WATCH FOR section moves above LIFESTYLE when NWS alerts are active
 * Alert rows now show title only (no raw NWS text) and tap to open alert modal
