@@ -4801,7 +4801,18 @@
       }
       if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isHtml) { wh += r.html; } else if (r.isAlert) { wh += '<div class="brief-alert-row" onclick="openAlertModal()" style="cursor:pointer;">⚠ <strong>' + r.value + '</strong></div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; wh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); watchEl.innerHTML = wh; } else if (b.priority === 'quiet') { watchEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Watch for</div><div class="brief-quiet-note">No alerts, incoming rain, or frost risk today.</div>'; } else { watchEl.innerHTML = ''; } }
       const tonightEl = document.getElementById('briefTonightSection');
-      if (tonightEl) { if (b.tonight) { tonightEl.innerHTML = '<hr class="brief-rule"><div class="brief-section-label">Tonight</div><div class="brief-row"><span class="brief-row-label">Overnight</span><span class="brief-row-value">' + b.tonight + '</span></div>'; } else { tonightEl.innerHTML = ''; } }
+      if (tonightEl) {
+        if (b.tonight) {
+          const ft = data.forecast_text || [];
+          const tonightFc = ft.find(p => p.period_name === 'Tonight');
+          let th = '<hr class="brief-rule"><div class="brief-section-label">Tonight</div>';
+          th += '<div class="brief-row"><span class="brief-row-label">Overnight</span><span class="brief-row-value">' + b.tonight + '</span></div>';
+          if (tonightFc && tonightFc.text) {
+            th += '<div style="font-size:0.88rem;opacity:0.7;padding:6px 0 2px;line-height:1.5;">' + tonightFc.text + '</div>';
+          }
+          tonightEl.innerHTML = th;
+        } else { tonightEl.innerHTML = ''; }
+      }
 
       // Cross-card navigation from briefing rows
       var navMap = {

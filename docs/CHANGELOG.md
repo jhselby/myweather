@@ -1,3 +1,7 @@
+## v0.5.57 • May 6, 2026
+* Tonight section on Briefing tab now shows detailed forecast text from forecast_text.py
+* Automatically reflects any future improvements to the forecast narrative generator
+
 ## v0.5.56 • May 6, 2026
 * Precip mini bar now appears in Watch For section when rain is imminent (header dot active)
 * Mini bar shows intensity, timing, and 60-minute chart — taps to open full precip modal
