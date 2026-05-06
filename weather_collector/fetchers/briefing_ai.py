@@ -34,6 +34,7 @@ Rules:
 - Never start with greetings or "Today will be."
 - Use the temperature ranges provided — never invent specific degree numbers. The only exact temperature is the current reading.
 - Wind impact score is the authoritative measure for how wind affects this location. Raw wind speed is context for boaters and general conditions, but impact score sets the tone for the briefing.
+- When Wind Impact is 0–1 but raw forecast wind is 15+ mph, the cove is sheltered from that wind direction. Say so explicitly — e.g., "Winds from the south will feel calmer at the cove despite a breezy regional forecast." Never describe conditions as breezy or windy when Impact is 0–1.
 - Only mention precipitation if POP data is included. If no precip data is included, conditions are dry — do not mention rain.
 - Only mention fog or sea breeze if included in the data.
 - Ignore any alerts containing "TEST" — those are NWS transmission tests.
