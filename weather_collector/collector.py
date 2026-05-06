@@ -4,6 +4,7 @@ Wyman Cove Weather Station - Main Collector
 Orchestrates all data fetching and processing
 """
 import json
+import math
 import os
 from datetime import datetime
 from pathlib import Path
@@ -392,7 +393,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         ]
 
         # Corrected apparent temperature (Steadman shade formula) for all hourly periods
-        import math
         _ct_arr = weather_data["hourly"]["corrected_temperature"]
         _ch_arr = weather_data["hourly"]["corrected_humidity"]
         _ws_arr = weather_data["hourly"].get("wind_speed", [])
@@ -481,7 +481,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     _ct = _hyp.get("corrected_temp")
     _ch = _hyp.get("corrected_humidity")
     if _ct is not None and _ch is not None and _ch > 0:
-        import math
         _tc = (_ct - 32) * 5 / 9
         _gamma = math.log(_ch / 100) + (17.625 * _tc) / (243.04 + _tc)
         _corrected_dewpt = _gamma * 243.04 / (17.625 - _gamma) * 9 / 5 + 32
