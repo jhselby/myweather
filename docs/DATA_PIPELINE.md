@@ -1,5 +1,5 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.54
+**Version:** 0.5.60
 **Last Updated:** May 6, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
@@ -583,78 +583,32 @@ today_low  = min(corrected temps for today date)
 
 ## FEELS LIKE / APPARENT TEMPERATURE
 
-### Current Hour Calculation
+### Method: Steadman Australian Apparent Temperature (AT)
 
-**Location:** `js/app-main.js` lines 3194-3212, 3302-3318
+**Location:** weather_collector/collector.py lines ~495-520 (current), ~393-415 (hourly)
 
-**Method:** Calculate in frontend from corrected inputs
+**Shade formula (no direct sun):**
+AT = Ta + 0.33*e - 0.70*ws - 4.00
 
-**Formula:**
-```javascript
-const T = hyp.corrected_temp
-const windSpeed = hyp.corrected_wind_speed ?? cur.wind_speed
-const RH = hyp.corrected_humidity
+**Radiation formula (direct sun present):**
+AT = Ta + 0.348*e - 0.70*ws + 0.70*Q/(ws+10) - 4.25
+Q = direct_radiation * 0.17
 
-// Default: no adjustment
-let feelsLike = T
+Where: Ta = corrected temp (C), e = vapour pressure (hPa), ws = corrected wind (m/s), Q = net absorbed radiation (W/m2), direct_radiation = Open-Meteo HRRR cloud-attenuated solar (W/m2), 0.17 = body absorptivity * effective cross-section
 
-// Wind chill (if T ≤ 50°F and wind > 3 mph)
-if (T <= 50 && windSpeed > 3) {
-    feelsLike = 35.74 + (0.6215 × T) 
-              - (35.75 × windSpeed^0.16) 
-              + (0.4275 × T × windSpeed^0.16)
-}
-
-// Heat index (if T ≥ 80°F and humidity available)
-else if (T >= 80 && RH != null) {
-    feelsLike = -42.379 
-              + (2.04901523 × T) 
-              + (10.14333127 × RH) 
-              - (0.22475541 × T × RH)
-              - (0.00683783 × T²) 
-              - (0.05481717 × RH²) 
-              + (0.00122874 × T² × RH)
-              + (0.00085282 × T × RH²) 
-              - (0.00000199 × T² × RH²)
-}
-```
+**Logic:** direct_radiation > 0 uses radiation formula (+2-5F on sunny days); zero uses shade formula (overcast/night)
 
 **Inputs:**
-- ✅ Temperature: `hyp.corrected_temp` (corrected)
-- ⚠️ Wind speed: `hyp.corrected_wind_speed` (currently just model copy, not max-selected)
-- ✅ Humidity: `hyp.corrected_humidity` (corrected)
+- Temperature: hyp.corrected_temp
+- Wind: hyp.corrected_wind_speed
+- Humidity: hyp.corrected_humidity
+- Solar: hourly.direct_radiation (Open-Meteo HRRR)
 
-**Storage:** NOT stored in data - calculated on-demand in frontend
+**Storage:**
+- Current: derived.corrected_feels_like (F)
+- Hourly 48h: hourly.corrected_apparent_temperature (F array)
 
-**For comparison:**
-- Model feels like: `cur.apparent_temperature` (from GFS/HRRR, uses raw model inputs)
-
----
-
-### Forecast Hours (1-48) Handling
-
-**Backend:** Model provides apparent_temperature in hourly data  
-**Frontend:** NO correction applied to forecast feels-like
-
-**Storage:** `weather_data["hourly"]["apparent_temperature"]` - raw model values only
-
-**Note:** Unlike temperature which gets bias applied in frontend, feels-like forecast is NOT corrected
-
----
-
-### Frontend Display Usage
-
-**Right Now Card:**
-- **Element:** `#feelsLike`, `#feelsLikeCollapsed`
-- **Code:** `js/app-main.js` lines 3214-3216
-- **Value:** Calculated from corrected temp + corrected wind + corrected humidity
-
-**Smart Corrections Table:**
-- **Elements:** `#scModelFeelsLike`, `#scCorrectedFeelsLike`
-- **Code:** `js/app-main.js` lines 3298-3321
-- **Values:**
-  - Model: `cur.apparent_temperature` (raw model)
-  - Corrected: Calculated from corrected inputs (same formula as Right Now)
+**Frontend:** No calculations — collector is single source of truth
 
 ---
 

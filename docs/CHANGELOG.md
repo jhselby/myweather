@@ -1,90 +1,43 @@
-## v0.5.60 • May 6, 2026
-* Implemented Steadman radiation apparent temperature using Open-Meteo direct_radiation
-* Radiation formula (AT = Ta + 0.348e - 0.70ws + 0.70Q/(ws+10) - 4.25) used when direct_radiation > 0
-* Falls back to shade formula when overcast or nighttime (direct_radiation = 0)
-* Q = direct_radiation × 0.17 (body absorptivity × effective cross-section)
-* Applied to both current feels-like and 48h hourly apparent temperature array
-* Replaced shortwave_radiation with direct_radiation in HRRR pipeline
+## v0.5.54–v0.5.60 • May 6, 2026
+* **Briefing Tab Improvements**
+  * Storm alerts (pressure/trough/wind/precip signals) now appear in Watch For section
+  * Precip mini bar in Watch For when rain is imminent — taps to open full precip modal
+  * Watch For moves above Lifestyle whenever it has any content
+  * Tonight section now shows detailed forecast text from forecast_text.py
+  * Rain stat label clarified to "rain · next 48h"
+* **Gemini Briefing Prompt**
+  * Wind Impact score reframed as authoritative hyperlocal measure; numeric score stripped from payload
+  * Gemini decides when to mention contrast with regional forecast
+  * Cloud Function max-instances=1 — prevents concurrent execution and 429 rate limit collisions
+* **Feels Like / Apparent Temperature**
+  * Implemented Steadman radiation formula using Open-Meteo direct_radiation (cloud-attenuated)
+  * Radiation formula used when direct_radiation > 0; falls back to shade formula when overcast/night
+  * Q = direct_radiation × 0.17; applied to both current feels-like and 48h hourly array
+* **Wind Compass**
+  * Arrow tail made full opacity and extended; tail dot removed for cleaner direction reading
+* **Collector / Data Pipeline**
+  * Sunset directional cloud fetches reduced from 5 days to 3 — eliminates Open-Meteo 429 errors
+  * direct_radiation added to HRRR hourly pipeline (replaced shortwave_radiation)
 
-## v0.5.58 • May 6, 2026
-* Reduced sunset directional cloud fetches from 5 days to 3 — cuts Open-Meteo parallel calls from 15 to 9, eliminating intermittent 429 rate limit errors that blanked Sky/Precip and Fog tile fronts
-
-## v0.5.57 • May 6, 2026
-* Tonight section on Briefing tab now shows detailed forecast text from forecast_text.py
-* Automatically reflects any future improvements to the forecast narrative generator
-
-## v0.5.56 • May 6, 2026
-* Precip mini bar now appears in Watch For section when rain is imminent (header dot active)
-* Mini bar shows intensity, timing, and 60-minute chart — taps to open full precip modal
-* Watch For section now moves above Lifestyle whenever it has any content (not just alerts)
-
-## v0.5.55 • May 6, 2026
-* Storm alerts now appear in Watch For section on Briefing tab
-* briefing.js reads window.__stormFlags set by app-main.js
-* renderBriefing() called again after storm flags computed to ensure they appear on load
-
-## v0.5.54 • May 6, 2026
-* Briefing prompt: Wind Impact score reframed as authoritative hyperlocal measure; Gemini decides when contrast with regional forecast is worth mentioning
-* Briefing prompt: Numeric impact score stripped from data summary — Gemini now receives label only (Calm, Breezy, etc.)
-* Cloud Function: max-instances=1 to prevent concurrent execution and Gemini 429 rate limit collisions
-
-## v0.5.53 • May 5, 2026
-* Water temperature now sourced from GoMOFS (Gulf of Maine Operational Forecast System) instead of buoy 44013
-* GoMOFS grid point ny=392, nx=101 (42.50N, -70.88W) — Salem Sound, ~2mi from dock
-* GoMOFS provides blended water column temp at exact coordinates vs. buoy 16mi offshore
-* Buoy 44013 retained as fallback if GoMOFS unavailable
-* Ocean card front and expanded views both updated to display GoMOFS temp
-* Fixed briefing_ai.py f-string syntax error (unterminated string literal line 120)
-
-## v0.5.52 • May 5, 2026
-* WATCH FOR section moves above LIFESTYLE when NWS alerts are active
-* Alert rows now show title only (no raw NWS text) and tap to open alert modal
-* Fixed alert row border-radius causing parenthesis-shaped left border
-
-## v0.5.51 • May 5, 2026
-* Beach Day now uses combinedWindImpact (same exposure model as wind card) instead of custom dockWindScore
-* Removed dead dockWindScore function
-
-## v0.5.50 • May 5, 2026
-* Settings modal now collapses all subsections and scrolls to top on close
-
-## v0.5.49 • May 5, 2026
-* Rewrote Gemini briefing prompt — cut token usage roughly in half
-* Added Wyman Cove geographic context (Salem Harbor side, open water N/NW) with full exposure table
-* Data summary now conditional: precip only sent if POP ≥ 20%, fog only if risk > 0, sea breeze only if active
-* Removed sunset quality, humidity, raw model wind, and pirate next-hour precip from Gemini payload
-* Precip threshold: below 20% POP = don't mention rain, 20-30% = minor mention, 40%+ = feature it
-
-## v0.5.48 • May 5, 2026
-* Collector computes corrected hourly dew point and absolute humidity from corrected inputs
-* Hair Day card reads corrected_dew_point and corrected_absolute_humidity from collector
-* Hair Day now uses corrected temp/humidity inputs instead of raw model data
-* Removed dead dewPointF and absHumidity JS functions
-
-## v0.5.47 • May 5, 2026
-* Sky chart reads corrected_wet_bulb from collector instead of recalculating in frontend
-* Removed dead calculateWetBulb function
-
-## v0.5.46 • May 5, 2026
-* Removed dead tempBias parameter from renderForecast and renderHyperlocalForecast
-* Both functions now receive corrected_temperature directly instead of raw temp + bias
-* Removed unused weighted_bias variables from forecast render calls
-
-## v0.5.45 • May 5, 2026
-* Collector computes corrected_apparent_temperature for all 48 hourly periods using Steadman shade formula
-* Feels-like chart reads corrected_apparent_temperature from collector (single source of truth)
-* Sky chart uses corrected_temperature directly instead of raw temp + bias
-* Eliminated all duplicate feels-like calculations from frontend
-
-## v0.5.44 • May 5, 2026
-* Feels-like chart reads apparent_temperature directly instead of recalculating in frontend
-* Removed Wind Chill / Heat Index labels and legend entries (Steadman is continuous)
-* Fixed Air Temp line and legend visibility in both light and dark modes
-
-## v0.5.43 • May 5, 2026
-* Replaced piecewise NWS wind chill / heat index with continuous Steadman apparent temperature formula
-* Eliminates 50-80°F dead zone where no feels-like adjustment was applied
-* Uses shade version: AT = Ta + 0.33×e − 0.70×ws − 4.00
+## v0.5.43–v0.5.53 • May 5, 2026
+* **Feels Like Overhaul**
+  * Replaced piecewise NWS wind chill / heat index with continuous Steadman shade formula
+  * Eliminates 50–80°F dead zone; collector computes corrected_apparent_temperature for all 48h
+  * Feels-like chart reads from collector (single source of truth); Wind Chill / Heat Index labels removed
+* **Water Temperature**
+  * Now sourced from GoMOFS (Gulf of Maine Operational Forecast System), grid point Salem Channel (~1.5mi)
+  * Buoy 44013 retained as fallback; ocean card and Beach Day scoring both updated
+* **Briefing Tab**
+  * Watch For: alerts move above Lifestyle; alert rows simplified, tap to open modal
+  * Gemini prompt rewritten — geographic context, exposure table, conditional data, token reduction
+  * Precip threshold: <20% POP = no mention; 20–30% minor; 40%+ featured
+* **Collector Cleanup**
+  * Corrected hourly dew point, absolute humidity, wet bulb all computed in collector
+  * Dead JS functions removed: calculateWetBulb, dewPointF, absHumidity, dockWindScore
+  * Dead tempBias parameter removed from forecast renderers
+  * Settings modal resets subsections on close
+* **Beach Day**
+  * Now uses combinedWindImpact (exposure model) instead of custom dockWindScore
 
 ## v0.5.42 • May 3, 2026
 * Fixed 13 broken HTML attributes where `class` was inside `style` — elements now get proper theme-aware colors in light mode
@@ -299,11 +252,3 @@
   * Multi-model weather (GFS, HRRR, ECMWF via Open-Meteo), tides, buoy, NWS alerts
   * Multi-tab layout (Weather / Wind / Almanac / Radar / Sources)
   * KBOS / KBVY / PWS observed conditions
-
-## v0.5.53 • May 5, 2026
-* Water temperature now sourced from GoMOFS (Gulf of Maine Operational Forecast System) instead of buoy 44013
-* GoMOFS grid point ny=392, nx=101 (42.50N, -70.88W) — Salem Sound, ~2mi from dock
-* GoMOFS provides blended water column temp at exact coordinates vs. buoy 16mi offshore
-* Buoy 44013 retained as fallback if GoMOFS unavailable
-* Ocean card front and expanded views both updated to display GoMOFS temp
-* Fixed briefing_ai.py f-string syntax error (unterminated string literal line 120)
