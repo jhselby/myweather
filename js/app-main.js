@@ -2084,7 +2084,7 @@
       const hwinddir= hourly.wind_direction || [];
       const hprecip = hourly.precipitation_probability || [];
       const buoy    = data.buoy     || {};
-      const waterTempRaw = buoy.water_temp_f;
+      const waterTempRaw = data.salem_water_temp_f ?? buoy.water_temp_f;
 
       if (!ctimes.length) {
         el.innerHTML = `<div style="color:rgba(255,255,255,0.4);font-size:0.85rem;">Tide curve data unavailable</div>`;
@@ -4665,7 +4665,7 @@
       // Tides - populated by renderTides()
       
       // Ocean/Buoy - update to new 3-row structure
-      const waterTemp = data.buoy_44013?.water_temp_f;
+      const waterTemp = data.salem_water_temp_f ?? data.buoy_44013?.water_temp_f;
       const waveHt = data.buoy_44013?.wave_ht_ft;
       const buoyWind = data.buoy_44013?.wind_mph;
       const buoyDir = data.buoy_44013?.wind_dir;

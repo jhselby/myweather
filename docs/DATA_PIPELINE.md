@@ -13,7 +13,8 @@
 5. [Wind Gusts](#wind-gusts)
 6. [Wet Bulb Temperature](#wet-bulb-temperature)
 7. [Feels Like / Apparent Temperature](#feels-like--apparent-temperature)
-8. [Birds (eBird)](#birds-ebird)
+8. [Water Temperature](#water-temperature)
+9. [Birds (eBird)](#birds-ebird)
 9. [Hair Day Scoring](#hair-day-scoring)
 10. [Data Flow Summary](#data-flow-summary)
 
@@ -555,7 +556,7 @@ today_low  = min(corrected temps for today date)
 
 **Hybrid daily high/low:** `derived.today_high/low` = max/min of (observed corrected temps for past hours) + (corrected forecast temps for remaining hours). As the day progresses, observations replace forecast data, converging on the true observed high/low by end of day.
 
-**Fetch parallelization:** Open-Meteo calls run sequentially (rate-limit sensitive). All other fetchers (NWS, WU, buoy, tides, KBOS, KBVY, eBird, Pirate Weather) run in parallel via `concurrent.futures.ThreadPoolExecutor`.
+**Fetch parallelization:** Open-Meteo calls run sequentially (rate-limit sensitive). All other fetchers (NWS, WU, buoy, tides, KBOS, KBVY, eBird, Pirate Weather, GoMOFS water temp) run in parallel via `concurrent.futures.ThreadPoolExecutor`.
 
 **Why temperature not corrected in forecast:**
 - Temperature bias is applied in FRONTEND (js/app-main.js), not backend
@@ -728,6 +729,36 @@ Morning-biased: 6-10am weight 3.0, 10am-2pm weight 1.0, 2-8pm weight 0.5, outsid
 ### Score Labels
 
 88-100: Great hair day. 74-87: Good hair day. 58-73: Manageable. 40-57: Frizz risk. 25-39: Bad hair day. 0-24: Stay inside.
+
+---
+
+## WATER TEMPERATURE
+
+### Source Priority
+1. **GoMOFS** (primary) — NOAA Gulf of Maine Operational Forecast System
+2. **Buoy 44013** (fallback) — NDBC offshore buoy, 16mi ENE
+
+### GoMOFS Details
+- **Endpoint:** `https://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/GOMOFS/MODELS/YYYY/MM/DD/`
+- **File pattern:** `gomofs.tHHz.YYYYMMDD.regulargrid.nNNN.nc`
+- **Grid point:** ny=392, nx=101 (42.50N, -70.88W) — Salem Sound, ~2mi from dock
+- **Variable:** `temp[time][Depth][ny][nx]`, Depth index 0 = surface
+- **Resolution:** ~700m horizontal grid
+- **Cycles:** 4/day (00z, 06z, 12z, 18z), 72h forecast each
+- **Fill value:** -99999.0 = land mask (point confirmed as water)
+- **Output key:** `weather_data["salem_water_temp_f"]` (°F)
+
+### URL Construction
+Fetcher tries most recent cycle first, walks back through n000→n003→n006→n009→n012 forecast offsets until a non-404 file is found. Falls back to previous day 18z if needed.
+
+### Buoy 44013 Fallback
+- Scraped from `https://www.ndbc.noaa.gov/station_page.php?station=44013`
+- Returns surface water temp in °F
+- Systematically 2-5°F colder than Salem Sound in summer
+
+### Frontend
+- `data.salem_water_temp_f` used in ocean card front (waterTempCollapsed), expanded view (buoyWaterTemp), and beach day scoring (waterTempRaw)
+- Falls back to `data.buoy_44013.water_temp_f` if GoMOFS key absent
 
 ---
 
