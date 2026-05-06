@@ -239,6 +239,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "cloud_cover_low": hourly.get("cloud_cover_low", []),
             "cloud_cover_mid": hourly.get("cloud_cover_mid", []),
             "cloud_cover_high": hourly.get("cloud_cover_high", []),
+            "shortwave_radiation": hourly.get("shortwave_radiation", []),
             "wind_speed": hourly.get("wind_speed_10m", []),
             "wind_direction": hourly.get("wind_direction_10m", []),
             "wind_gusts": hourly.get("wind_gusts_10m", []),
@@ -502,8 +503,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _ws_ms = _ws_mph * 0.44704
         _rh = _ch if _ch is not None else 50
         _e = (_rh / 100) * 6.105 * math.exp((17.27 * _tc_fl) / (237.7 + _tc_fl))
-        # TODO: Add radiation version once we confirm Pirate Weather solar
-        # units match Steadman's Q (net radiation W/m², not gross shortwave)
+        # TODO: Add radiation version using hourly["shortwave_radiation"] from Open-Meteo
+        # Use current hour value; Open-Meteo shortwave_radiation is cloud-attenuated unlike Pirate Weather
+        # Q = shortwave_radiation[current_idx] * 0.17
         _at_c = _tc_fl + 0.33 * _e - 0.70 * _ws_ms - 4.00
         _fl = _at_c * 9 / 5 + 32
         derived["corrected_feels_like"] = round(_fl, 1)
