@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
 **Version:** 5.19  
-**Last Updated:** April 29, 2026  
+**Last Updated:** May 5, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
@@ -741,7 +741,7 @@ Morning-biased: 6-10am weight 3.0, 10am-2pm weight 1.0, 2-8pm weight 0.5, outsid
 ### GoMOFS Details
 - **Endpoint:** `https://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/GOMOFS/MODELS/YYYY/MM/DD/`
 - **File pattern:** `gomofs.tHHz.YYYYMMDD.regulargrid.nNNN.nc`
-- **Grid point:** ny=392, nx=101 (42.50N, -70.88W) — Salem Sound, ~2mi from dock
+- **Grid point:** ny=401, nx=103 (42.53N, -70.86W) — Salem Channel, ~1.5mi from dock
 - **Variable:** `temp[time][Depth][ny][nx]`, Depth index 0 = surface
 - **Resolution:** ~700m horizontal grid
 - **Cycles:** 4/day (00z, 06z, 12z, 18z), 72h forecast each
