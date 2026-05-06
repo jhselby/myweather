@@ -12,8 +12,8 @@ from ..config import HEADERS_DEFAULT
 from ..utils import safe_float
 
 
-GOMOFS_NY = 392
-GOMOFS_NX = 101
+GOMOFS_NY = 401
+GOMOFS_NX = 103
 GOMOFS_BASE = "https://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/GOMOFS/MODELS"
 
 
