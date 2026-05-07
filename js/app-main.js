@@ -4772,7 +4772,7 @@
       const sh = document.getElementById('briefTempHigh');
       if (sh) sh.innerHTML = (b.stats.high ?? '--') + '<span class="unit">°</span>';
       const sr = document.getElementById('briefRain');
-      if (sr) sr.innerHTML = (b.stats.rainInches || '0') + '<span class="unit">"</span>';
+      if (sr) { const ri = b.stats.rainInches; if (b.stats.rainAmount > 0 && ri === 0) { sr.classList.add('brief-stat-text'); sr.innerHTML = 'Trace'; } else { sr.classList.remove('brief-stat-text'); sr.innerHTML = (ri || '0') + '<span class="unit">"</span>'; } }
       // Inject wind impact score into briefing Wind row
       const hyp = data.hyperlocal || {};
       const cur = data.current || {};
@@ -6412,3 +6412,4 @@ function updatePrecipBadge(data) {
     }
   });
 })();
+// cache bust
