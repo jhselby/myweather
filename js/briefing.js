@@ -243,7 +243,7 @@
     return {
       temp, high, low, windSpeed, windMph, gustMph, windDir, windDeg, humidity,
       skyState, skyDesc, tempBand, windBand, skyTrend,
-      rainContext, rainInches, rainStartStr, rainEndStr,
+      rainContext, rainInches, rainAmount, rainStartStr, rainEndStr,
       fogProb, fogLabel, hasFog,
       seaBreeze, alerts, frostRisk,
       timeOfDay, timeLabel: timeLabels[timeOfDay] || "today",
@@ -849,6 +849,7 @@
         now: s.temp,
         high: s.high,
         rainInches: s.rainInches,
+        rainAmount: s.rainAmount,
       },
       todayRows: buildRows(s),
       almanacRows: buildAlmanacRows(s),
