@@ -1,4 +1,8 @@
-## v0.5.54–v0.5.61 • May 6, 2026
+## v0.5.54–v0.5.62c • May 6, 2026
+* **Rain Stat (v0.5.62)**
+  * Shows "Trace" instead of 0" when precip is measurable but rounds to zero
+  * Trace stat correctly sized (1.8rem) and vertically centered
+  * brief-stat cells flex-centered for consistent alignment
 * **Briefing Tab Restructure (v0.5.61)**
   * WATCH FOR floats to top (below stats) when active; static HTML order replaces runtime DOM reordering
   * New ALMANAC section (sun rise/set, next tide, moon phase) split out from TODAY
