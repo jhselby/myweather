@@ -1,4 +1,10 @@
-## v0.5.54–v0.5.60 • May 6, 2026
+## v0.5.54–v0.5.61 • May 6, 2026
+* **Briefing Tab Restructure (v0.5.61)**
+  * WATCH FOR floats to top (below stats) when active; static HTML order replaces runtime DOM reordering
+  * New ALMANAC section (sun rise/set, next tide, moon phase) split out from TODAY
+  * Fog and rain rows removed from TODAY — covered exclusively by WATCH FOR
+  * "No alerts" quiet note suppressed — WATCH FOR div simply empty when inactive
+  * Separator line spacing normalized between WATCH FOR and TODAY
 * **Briefing Tab Improvements**
   * Storm alerts (pressure/trough/wind/precip signals) now appear in Watch For section
   * Precip mini bar in Watch For when rain is imminent — taps to open full precip modal
