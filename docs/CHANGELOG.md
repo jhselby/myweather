@@ -1,3 +1,12 @@
+## v0.5.64 • May 7, 2026
+* **Briefing Top Row: Rain stat shows three states**
+  * "No rain" with "next 48h" sublabel when forecast is truly zero
+  * "Trace" with "rain · next 48h" sublabel when precip rounds to zero
+  * Inches with "rain · next 48h" sublabel when measurable
+* **TODAY section: High / Low row**
+  * Shows today's high and overnight low (e.g. 66° / 48°) after Wind row
+  * Ensures full temp range visible without scrolling past TODAY
+
 ## v0.5.54–v0.5.62c • May 6, 2026
 * **Rain Stat (v0.5.62)**
   * Shows "Trace" instead of 0" when precip is measurable but rounds to zero

@@ -616,6 +616,11 @@
       color: s.windBand === "dangerous" ? "red" : s.windBand === "windy" ? "orange" : null,
     });
 
+    // High / Low
+    if (s.high != null && s.low != null) {
+      rows.push({ label: "High / Low", value: s.high + "° / " + s.low + "°", color: null });
+    }
+
     // Sea breeze — only if active with positive delta, or likely
     const sbDeltaRow = parseFloat((sb.reason || "").match(/Δ([-\d.]+)/)?.[1] || "0");
     if (sb.active && sbDeltaRow > 0) {

@@ -4772,7 +4772,21 @@
       const sh = document.getElementById('briefTempHigh');
       if (sh) sh.innerHTML = (b.stats.high ?? '--') + '<span class="unit">°</span>';
       const sr = document.getElementById('briefRain');
-      if (sr) { const ri = b.stats.rainInches; if (b.stats.rainAmount > 0 && ri === 0) { sr.classList.add('brief-stat-text'); sr.innerHTML = 'Trace'; } else { sr.classList.remove('brief-stat-text'); sr.innerHTML = (ri || '0') + '<span class="unit">"</span>'; } }
+      if (sr) {
+        const ri = b.stats.rainInches;
+        const ra = b.stats.rainAmount;
+        const rl = document.querySelector('#briefRain + .brief-stat-label');
+        if (ra === 0) {
+          sr.classList.add('brief-stat-text'); sr.innerHTML = 'No rain';
+          if (rl) rl.textContent = 'next 48h';
+        } else if (ri === 0) {
+          sr.classList.add('brief-stat-text'); sr.innerHTML = 'Trace';
+          if (rl) rl.textContent = 'rain \u00b7 next 48h';
+        } else {
+          sr.classList.remove('brief-stat-text'); sr.innerHTML = ri + '<span class="unit">"</span>';
+          if (rl) rl.textContent = 'rain \u00b7 next 48h';
+        }
+      }
       // Inject wind impact score into briefing Wind row
       const hyp = data.hyperlocal || {};
       const cur = data.current || {};
