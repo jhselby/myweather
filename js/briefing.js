@@ -855,6 +855,7 @@
         high: s.high,
         rainInches: s.rainInches,
         rainAmount: s.rainAmount,
+        rainContext: s.rainContext,
       },
       todayRows: buildRows(s),
       almanacRows: buildAlmanacRows(s),

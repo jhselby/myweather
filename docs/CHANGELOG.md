@@ -1,3 +1,15 @@
+## v0.5.65 • May 7, 2026
+* **Briefing Rain Stat: POP-aware Trace**
+  * Top stat shows "Trace" when POP ≥ 40% exists in 48h window, even if accumulation is zero
+  * Prevents contradiction between "No rain" stat and "Next rain" in Watch For
+* **Forecast Text: Corrected data always preferred**
+  * 2-hour tolerance on coverage check ensures corrected 48h data is used over GFS
+  * Fixes false "Chance of rain" in Friday Night text when corrected POP was only 5%
+  * Previously fell through to GFS because corrected data ended 1 hour short of period boundary
+* **10-day Rain Icon consistency**
+  * Identified: rain emoji driven by forecast_text word matching, not POP threshold
+  * Root cause fixed upstream — corrected data now used for forecast text generation
+
 ## v0.5.64 • May 7, 2026
 * **Briefing Top Row: Rain stat shows three states**
   * "No rain" with "next 48h" sublabel when forecast is truly zero

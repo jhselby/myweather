@@ -4776,7 +4776,8 @@
         const ri = b.stats.rainInches;
         const ra = b.stats.rainAmount;
         const rl = document.querySelector('#briefRain + .brief-stat-label');
-        if (ra === 0) {
+        const rc = b.stats.rainContext;
+        if (ra === 0 && (!rc || rc === 'none')) {
           sr.classList.add('brief-stat-text'); sr.innerHTML = 'No rain';
           if (rl) rl.textContent = 'next 48h';
         } else if (ri === 0) {

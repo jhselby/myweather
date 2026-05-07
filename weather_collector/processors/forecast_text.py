@@ -150,13 +150,16 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         need_start = datetime.combine(target_date, datetime.min.time()).replace(hour=18, tzinfo=eastern)
         need_end = datetime.combine(target_date + timedelta(days=1), datetime.min.time()).replace(hour=6, tzinfo=eastern)
     
-    # Use HRRR only if it covers most of this period, otherwise GFS
+    # Always prefer corrected 48h data; only fall back to GFS for periods fully beyond coverage
+    # Use 2-hour tolerance so corrected data is preferred when it covers most of the period
     hrrr_end = datetime.fromisoformat(hrrr_times[-1].replace("Z", "+00:00")).astimezone(eastern) if hrrr_times else None
-    if hrrr_end and hrrr_end >= need_end:
+    if hrrr_end and hrrr_end >= need_end - timedelta(hours=2):
         hourly_data = hrrr_data
-    else:
+    elif gfs_data:
         hourly_data = gfs_data
-    
+    else:
+        hourly_data = {}
+
     # Define time bounds for the period
     if is_daytime:
         start_hour = 6
