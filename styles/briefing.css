@@ -71,6 +71,10 @@
 .brief-stat {
   text-align: center;
   padding: 14px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .brief-stat:not(:last-child) {
@@ -87,6 +91,11 @@
 
 .brief-stat-value .unit {
   font-size: 1.2rem;
+}
+
+.brief-stat-value.brief-stat-text {
+  font-size: 1.8rem;
+  font-weight: 400;
 }
 
 .brief-stat-high {
@@ -203,7 +212,12 @@ body.theme-light .brief-row {
   border-color: rgba(0,0,0,0.1);
 }
 
-body.theme-light .brief-stat-high {
+body.theme-light .brief-stat-value.brief-stat-text {
+  font-size: 1.8rem;
+  font-weight: 400;
+}
+
+.brief-stat-high {
   color: rgba(180,120,0,0.95);
 }
 
