@@ -624,24 +624,6 @@
       rows.push({ label: "Sea breeze", value: `${sb.likelihood}% likely`, color: "orange" });
     }
 
-    // Fog — only if risk
-    if (s.hasFog) {
-      rows.push({
-        label: "Fog",
-        value: `${s.fogLabel} — ${s.fogProb}%`,
-        color: s.fogProb >= 60 ? "orange" : "blue",
-      });
-    }
-
-    // Rain — only if coming
-    if (s.rainContext === "now") {
-      if (s.rainInches > 0) rows.push({ label: "Rain", value: `Now — ${s.rainInches}"`, color: "blue" });
-    } else if (s.rainContext === "soon") {
-      if (s.rainInches > 0) rows.push({ label: "Rain", value: `By ${s.rainStartStr} — ${s.rainInches}"`, color: "blue" });
-    } else if (s.rainContext === "later") {
-      if (s.rainInches > 0) rows.push({ label: "Rain", value: `${s.rainStartStr}–${s.rainEndStr} — ${s.rainInches}"`, color: "blue" });
-    }
-
     // Feels like — use corrected inputs to match the weather card
     let feelsLike = s.temp;
     if (s.temp != null) {
@@ -684,17 +666,24 @@
       rows.push({ label: "Humidity", value: s.humidity + "% — very dry", color: "blue" });
     }
 
-    // Sunrise / Sunset
-    const daily = s._data.daily || {};
-    const todaySunrise = daily.sunrise?.[0];
-    const todaySunset = daily.sunset?.[0];
+    return rows;
+  }
+
+  function buildAlmanacRows(s) {
+    const rows = [];
+
     function fmtTimeShort(iso) {
       if (!iso) return "";
       const d = new Date(iso);
       return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase();
     }
+
+    // Sun
+    const daily = s._data.daily || {};
+    const todaySunrise = daily.sunrise?.[0];
+    const todaySunset = daily.sunset?.[0];
     if (todaySunrise || todaySunset) {
-      rows.push({ label: "Sun", value: "\u2191 " + fmtTimeShort(todaySunrise) + "  \u2193 " + fmtTimeShort(todaySunset), color: null });
+      rows.push({ label: "Sun", value: "↑ " + fmtTimeShort(todaySunrise) + "  ↓ " + fmtTimeShort(todaySunset), color: null });
     }
 
     // Next tide
@@ -709,7 +698,7 @@
       rows.push({ label: "Tide", value: typeStr + " " + fmtTimeShort(nextTide.date + "T" + nextTide.time) + " (" + ht + " ft)", color: null });
     }
 
-    // Moon phase (SunCalc is loaded client-side)
+    // Moon
     if (typeof SunCalc !== "undefined") {
       const mi = SunCalc.getMoonIllumination(new Date());
       const phases = [[0.025,"New Moon"],[0.25,"Waxing Crescent"],[0.275,"First Quarter"],[0.5,"Waxing Gibbous"],[0.525,"Full Moon"],[0.75,"Waning Gibbous"],[0.775,"Last Quarter"],[1.0,"Waning Crescent"]];
@@ -759,7 +748,7 @@
     }).join('');
     return `<div onclick="openPrecipModal()" style="cursor:pointer;padding:8px 0 4px;">
       <div style="font-size:0.88rem;margin-bottom:6px;opacity:0.85;">🌧 ${summaryText}</div>
-      <div style="display:flex;align-items:flex-end;gap:1px;height:28px;border-bottom:1px solid rgba(128,128,128,0.2);">${bars}</div>
+      <div style="display:flex;align-items:flex-end;gap:1px;height:28px;">${bars}</div>
     </div>`;
   }
 
@@ -862,6 +851,7 @@
         rainInches: s.rainInches,
       },
       todayRows: buildRows(s),
+      almanacRows: buildAlmanacRows(s),
       lifestyleRows: buildLifestyleRows(s),
       watchRows: buildWatchRows(s),
       tonight: buildTonightRow(s),
