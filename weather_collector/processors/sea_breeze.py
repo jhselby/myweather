@@ -63,13 +63,11 @@ def detect_sea_breeze(weather_data):
     else:
         scores["wind_speed"] = 100
     
-    # Wind direction (270-330° from Salem Harbor)
-    onshore_min, onshore_max = 260, 340
+    # Wind direction (135-200° onshore from Massachusetts Bay to S/SE)
+    onshore_min, onshore_max = 135, 200
     if onshore_min <= wind_dir <= onshore_max:
         scores["direction"] = 100
-    elif 240 <= wind_dir < onshore_min or onshore_max < wind_dir <= 360:
-        scores["direction"] = 50
-    elif 0 <= wind_dir <= 20:
+    elif 110 <= wind_dir < onshore_min or onshore_max < wind_dir <= 225:
         scores["direction"] = 50
     else:
         scores["direction"] = 0
@@ -101,7 +99,7 @@ def detect_sea_breeze(weather_data):
     elif scores["temp"] < 40:
         result["reason"] = f"Land/water Δ too small ({temp_diff:+.1f}°F)"
     elif scores["direction"] < 50:
-        result["reason"] = f"Wind not onshore ({int(wind_dir)}°, need 270-330°)"
+        result["reason"] = f"Wind not onshore ({int(wind_dir)}°, need 135-200°)"
     elif scores["wind_speed"] < 50:
         result["reason"] = f"Winds too strong ({wind_speed:.0f} mph)"
     elif scores["time"] == 0:
