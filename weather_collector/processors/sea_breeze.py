@@ -2,6 +2,7 @@
 Sea breeze detection for coastal locations
 """
 from datetime import datetime
+import pytz
 
 
 def detect_sea_breeze(weather_data):
@@ -18,7 +19,7 @@ def detect_sea_breeze(weather_data):
     wind_speed = current.get("wind_speed")
     wind_dir = current.get("wind_direction")
     
-    now = datetime.now()
+    now = datetime.now(pytz.timezone("America/New_York"))
     hour = now.hour
     
     result = {

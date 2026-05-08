@@ -152,7 +152,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     
     # Always prefer corrected 48h data; only fall back to GFS for periods fully beyond coverage
     # Use 2-hour tolerance so corrected data is preferred when it covers most of the period
-    hrrr_end = datetime.fromisoformat(hrrr_times[-1].replace("Z", "+00:00")).astimezone(eastern) if hrrr_times else None
+    hrrr_end = eastern.localize(datetime.fromisoformat(hrrr_times[-1])) if hrrr_times else None
     if hrrr_end and hrrr_end >= need_end - timedelta(hours=2):
         hourly_data = hrrr_data
     elif gfs_data:
@@ -173,7 +173,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     period_hours = []
     
     for i, time_str in enumerate(hourly_data.get('times', [])):
-        dt = datetime.fromisoformat(time_str.replace('Z', '+00:00')).astimezone(eastern)
+        dt = eastern.localize(datetime.fromisoformat(time_str))
         
         # Check if this hour belongs to our period
         if is_daytime:
@@ -201,7 +201,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         nws_temps = []
         for i in period_indices:
             time_str = hourly_data.get("times", [])[i]
-            dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+            dt = eastern.localize(datetime.fromisoformat(time_str)).astimezone(pytz.utc)
             nws_temp = _extract_nws_value(nws_gridpoints["temperature"], dt)
             if nws_temp is not None:
                 # NWS returns Celsius, convert to Fahrenheit
@@ -244,7 +244,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     if nws_gridpoints and "weather" in nws_gridpoints:
         for idx, i in enumerate(period_indices):
             time_str = hourly_data.get("times", [])[i]
-            dt = datetime.fromisoformat(time_str.replace("Z", "+00:00"))
+            dt = eastern.localize(datetime.fromisoformat(time_str)).astimezone(pytz.utc)
             nws_weather = _extract_nws_value(nws_gridpoints["weather"], dt)
             if nws_weather and isinstance(nws_weather, list):
                 # NWS weather is array of conditions - check for rain/snow mix
