@@ -17,7 +17,11 @@ def detect_sea_breeze(weather_data):
     pws_temp = hyperlocal.get("corrected_temp") or current.get("temperature")
     water_temp = buoy.get("water_temp_f")
     wind_speed = current.get("wind_speed")
-    wind_dir = float(current.get("wind_direction")) if current.get("wind_direction") is not None else None
+    _wd = current.get("wind_direction")
+    try:
+        wind_dir = float(_wd) if _wd is not None else None
+    except (ValueError, TypeError):
+        wind_dir = None
     
     now = datetime.now(pytz.timezone("America/New_York"))
     hour = now.hour
