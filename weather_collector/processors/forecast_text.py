@@ -6,6 +6,7 @@ Uses local time (America/New_York) to determine period boundaries.
 """
 from datetime import datetime, timezone, timedelta
 import pytz
+from .wind_risk import get_exposure_factor, worry_score, worry_level
 
 
 WEATHER_CODES = {
@@ -342,8 +343,14 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     precip_narrative = _build_precip_narrative(precip_probs, precip_types, period_hours, temps)
     
     # Build main sentence: precip priority, then sky, fog as modifier
+    # Suppress contradictory sky descriptions during heavy precip
+    max_precip_prob = max([p for p in precip_probs if p is not None]) if any(p is not None for p in precip_probs) else 0
     if precip_narrative:
-        main_sent = f"{precip_narrative.capitalize()}. {sky_narrative.capitalize()}"
+        if max_precip_prob >= 70:
+            # Heavy precip — sky is implied, don't say "partly cloudy" during rain
+            main_sent = f"{precip_narrative.capitalize()}"
+        else:
+            main_sent = f"{precip_narrative.capitalize()}. {sky_narrative.capitalize()}"
         if has_fog:
             main_sent = main_sent.rstrip(".") + ", with areas of fog."
     else:
@@ -360,34 +367,71 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     temp_position = period_hours.index(temp_hour) if temp_hour in period_hours else mid_period
     
     # Only add timing if temp occurs notably early or late in period
+    # Skip timing for GFS days (3h resolution = false precision)
     temp_timing = ""
     if is_daytime:
-        # Only show timing for afternoon/late highs
-        if temp_position > len(period_hours) * 0.6 and temp_hour >= 14:
+        if current_day_offset <= 2 and temp_position > len(period_hours) * 0.6 and temp_hour >= 14:
             temp_timing = f" around {format_temp_time(temp_hour)}"
         main_sent += f", with a high near {round(temp)}{temp_timing}."
     else:
         if temp_position < len(period_hours) * 0.3:
             temp_timing = f" in the evening"
-        elif temp_position > len(period_hours) * 0.7:
-            temp_timing = f" toward morning"
+        # "toward morning" is almost always true for lows — only mention evening
         main_sent += f", with a low around {round(temp)}{temp_timing}."
     
     narrative_parts.append(main_sent)
     
-    # Wind sentence
+    # Wind impact at the cove (exposure-adjusted) — compute before narrative
+    _peak_wind = max_gust if max_gust and max_gust > (avg_wind or 0) else (avg_wind or 0)
+    _exp = get_exposure_factor(dominant_dir) if dominant_dir is not None else 0.5
+    _wscore = worry_score(_peak_wind, _exp)
+    _wlabel = worry_level(round(_wscore))
+
+    # Build raw wind detail string (used in both narrative and wind_full)
+    _raw_detail = ""
     if (avg_wind and avg_wind > 3) or (max_gust and max_gust > 15):
         if min_wind is not None and max_wind is not None and min_wind < max_wind - 3:
-            wind_sent = f"{wind_dir_full} wind {int(min_wind)} to {int(max_wind)} mph"
+            _raw_detail = f"{wind_dir_full.lower()} wind {int(min_wind)} to {int(max_wind)} mph"
         else:
-            if avg_wind is None: avg_wind = max_gust
-            wind_sent = f"{wind_dir_full} wind around {int(avg_wind)} mph"
-        
+            _aw = avg_wind if avg_wind else max_gust
+            _raw_detail = f"{wind_dir_full.lower()} wind around {int(_aw)} mph"
         if max_gust is not None and avg_wind is not None and max_gust > avg_wind + 8:
-            wind_sent += f", with gusts as high as {int(max_gust)} mph"
-        
-        wind_sent += "."
+            _raw_detail += f", with gusts as high as {int(max_gust)} mph"
+
+    # Wind sentence — exposure-aware narrative
+    _notable_raw = (max_gust and max_gust >= 25) or (avg_wind and avg_wind > 12)
+    if _wlabel in ("Windy", "Very windy"):
+        # High impact — lead with impact, emphasize gusts over sustained
+        if max_gust and max_gust > (avg_wind or 0) + 5:
+            wind_sent = f"{_wlabel} at the cove, {wind_dir_full.lower()} gusts to {int(max_gust)} mph."
+        elif _raw_detail:
+            wind_sent = f"{_wlabel} at the cove, {_raw_detail}."
+        else:
+            wind_sent = f"{_wlabel} at the cove."
         narrative_parts.append(wind_sent)
+    elif _wlabel == "Breezy":
+        # Breezy — lead with gusts to avoid "breezy + 3 mph" contradiction
+        if max_gust and max_gust > (avg_wind or 0) + 5:
+            wind_sent = f"Breezy at the cove, {wind_dir_full.lower()} gusts to {int(max_gust)} mph."
+        elif _raw_detail:
+            wind_sent = f"Breezy at the cove, {_raw_detail}."
+        else:
+            wind_sent = "Breezy at the cove."
+        narrative_parts.append(wind_sent)
+    elif _notable_raw and _wlabel in ("Calm", "Light winds") and _exp < 0.5:
+        # High raw wind but sheltered — explain the contrast
+        _gust_part = f"gusts to {int(max_gust)} mph" if max_gust and max_gust >= 25 else _raw_detail
+        wind_sent = f"Calm at the cove despite {wind_dir_full.lower()} {_gust_part}."
+        narrative_parts.append(wind_sent)
+    elif _raw_detail:
+        # Normal wind — just report the raw detail, no label prefix
+        wind_sent = f"{_raw_detail.capitalize()}."
+        narrative_parts.append(wind_sent)
+    else:
+        wind_sent = ""
+
+    # Build wind_full for structured data
+    if (avg_wind and avg_wind > 3) or (max_gust and max_gust > 15):
         wind_full_val = f"{int(avg_wind)} mph {wind_dir_short}"
         if max_gust is not None and avg_wind is not None and max_gust > avg_wind + 8:
             wind_full_val += f", gusts {int(max_gust)} mph"
@@ -397,7 +441,7 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     # Wind chill note
     if feels_like_low is not None and feels_like_low < 25 and feels_like_low < temp - 8:
         narrative_parts.append(f"Wind chill values as low as {int(feels_like_low)}.")
-    
+
     return {
         "period_name": period_name,
         "date": target_date.isoformat(),
@@ -406,7 +450,10 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         "temperature": round(temp),
         "wind_speed": f"{int(avg_wind)} mph" if avg_wind and avg_wind > 3 else "",
         "wind_direction": wind_dir_short if avg_wind and avg_wind > 3 else "",
-        "wind_full": wind_full_val
+        "wind_full": wind_full_val,
+        "wind_worry_score": round(_wscore, 1),
+        "wind_worry_label": _wlabel,
+        "wind_exposure_factor": round(_exp, 2)
     }
 def _generate_daily_forecast(daily_data, target_date, derived=None):
     """Generate simple daily summary from ECMWF data (days 8-10)."""
@@ -446,6 +493,24 @@ def _generate_daily_forecast(daily_data, target_date, derived=None):
     
     parts = []
     
+    # Sky condition from weather code
+    _wcode = daily_data.get('weather_code', [])
+    _sky = None
+    if day_index < len(_wcode) and _wcode[day_index] is not None:
+        code = _wcode[day_index]
+        if code <= 1:
+            _sky = "Sunny"
+        elif code == 2:
+            _sky = "Partly cloudy"
+        elif code == 3:
+            _sky = "Cloudy"
+        elif code in [45, 48]:
+            _sky = "Foggy"
+        # Skip sky for precip codes — precip sentence covers it
+    
+    if _sky and (precip_prob <= 30):
+        parts.append(f"{_sky}.")
+    
     # Temperature
     parts.append(f"High {round(high)}°F, low {round(low)}°F.")
     
@@ -456,16 +521,20 @@ def _generate_daily_forecast(daily_data, target_date, derived=None):
             precip_word = "snow"
         elif low is not None and low < 36:
             precip_word = "rain and snow"
-    if precip_prob > 60:
-        parts.append(f"{precip_word.capitalize()} likely ({int(precip_prob)}%).")
-    elif precip_prob > 30:
-        parts.append(f"Chance of {precip_word} ({int(precip_prob)}%).")
+        if precip_prob > 60:
+            parts.append(f"{precip_word.capitalize()} likely ({int(precip_prob)}%).")
+        elif precip_prob > 30:
+            parts.append(f"Chance of {precip_word} ({int(precip_prob)}%).")
     
-    # Wind
-    if wind_max > 20:
+    # Wind — use gusts if available
+    _gusts_max = daily_data.get('wind_gusts_max', [])
+    _gust = _gusts_max[day_index] if day_index < len(_gusts_max) else None
+    if _gust and _gust > 25:
+        parts.append(f"Windy, gusts to {int(_gust)} mph.")
+    elif wind_max > 20:
         parts.append(f"Windy, gusts to {int(wind_max)} mph.")
     elif wind_max > 12:
-        parts.append(f"Breezy, winds {int(wind_max)} mph.")
+        parts.append(f"Breezy, winds to {int(wind_max)} mph.")
     
     return {
         'period_name': target_date.strftime('%A'),
@@ -551,7 +620,7 @@ def _build_sky_narrative(cloud_cover, weather_codes, hours, skip_fog=False):
             result = result + ", with areas of fog"
     
     return result
-    return result
+
 def _build_precip_narrative(precip_probs, precip_types, hours, surface_temps):
     """Generate precipitation narrative for a period."""
     if not precip_probs:

@@ -93,6 +93,10 @@ def _build_weather_summary(weather_data):
     wind_speed = round(hyp.get("corrected_wind_speed") or cur.get("wind_speed") or 0)
     wind_gusts = round(hyp.get("corrected_wind_gusts") or cur.get("wind_gusts") or 0)
     wind_dir_deg = cur.get("wind_direction")
+    try:
+        wind_dir_deg = float(wind_dir_deg) if wind_dir_deg is not None else None
+    except (ValueError, TypeError):
+        wind_dir_deg = None
     dirs = ["N","NNE","NE","ENE","E","ESE","SE","SSE","S","SSW","SW","WSW","W","WNW","NW","NNW"]
     wind_dir = dirs[round((wind_dir_deg or 0) / 22.5) % 16] if wind_dir_deg is not None else ""
 

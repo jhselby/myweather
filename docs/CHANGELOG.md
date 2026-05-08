@@ -1,3 +1,16 @@
+## v0.5.67 • May 8, 2026
+- Exposure-aware wind narratives in forecast text
+  - "Calm at the cove despite [dir] gusts to X mph" when site is sheltered
+  - "Windy/Breezy at the cove, [dir] gusts to X mph" when harbor-exposed
+  - Added wind_worry_score, wind_worry_label, wind_exposure_factor to each forecast period
+- Removed "toward morning" from every night low (was meaningless noise)
+- Removed false-precision temp timing ("around 4pm") on GFS-sourced days
+- Suppressed contradictory sky descriptions during heavy precip (no more "Rain likely. Partly cloudy")
+- Days 8-10 now include sky condition from ECMWF weather_code and gust data
+- Fixed UnboundLocalError: removed late local `from datetime import` that shadowed earlier imports
+- Fixed wind_direction type casting: PWS "VRB" directions no longer crash sea_breeze or briefing_ai
+- Added pytz to module-level imports in collector.py
+
 ## v0.5.66
 - Added frontend fallbacks for Fog and Wind Impact tile fronts when GFS current data is unavailable (tiles now show "No data" instead of blank)
 - Added collector fallback: uses HRRR hourly[0] for fog calculation when GFS current fetch fails

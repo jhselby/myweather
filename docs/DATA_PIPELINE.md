@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.60
-**Last Updated:** May 6, 2026  
+**Version:** 0.5.67
+**Last Updated:** May 8, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
@@ -15,8 +15,9 @@
 7. [Feels Like / Apparent Temperature](#feels-like--apparent-temperature)
 8. [Water Temperature](#water-temperature)
 9. [Birds (eBird)](#birds-ebird)
-9. [Hair Day Scoring](#hair-day-scoring)
-10. [Data Flow Summary](#data-flow-summary)
+10. [Hair Day Scoring](#hair-day-scoring)
+11. [Forecast Text Generation](#forecast-text-generation)
+12. [Data Flow Summary](#data-flow-summary)
 
 ---
 
@@ -1042,3 +1043,43 @@ Check this document first to understand where data comes from and what correctio
 - Refresh interval: 30 minutes
 - Fallback: cached → template
 
+
+---
+
+## Forecast Text Generation
+
+**Source:** `weather_collector/processors/forecast_text.py`
+**Output:** `weather_data["forecast_text"]` — array of period objects
+
+### Structure
+- **Days 1-7:** 14 day/night periods from merged HRRR (48h) + GFS (168h) hourly data
+- **Days 8-10:** Simple daily summaries from ECMWF daily data
+
+### Period Fields (Days 1-7)
+- `period_name` — "Today", "Tonight", "Saturday", "Saturday Night", etc.
+- `date` — ISO date string
+- `is_daytime` — boolean
+- `text` — NWS-style narrative with exposure-aware wind sentences
+- `temperature` — high (day) or low (night), rounded
+- `wind_speed`, `wind_direction`, `wind_full` — raw wind data
+- `wind_worry_score` — site-adjusted wind impact (speed × exposure^1.5)
+- `wind_worry_label` — Calm / Light winds / Breezy / Windy / Very windy
+- `wind_exposure_factor` — 0.0–1.0 directional terrain exposure from WIND_EXPOSURE_TABLE
+
+### Wind Narrative Logic
+Uses worry_score + exposure_factor to generate contextual wind sentences:
+- **Windy/Breezy label:** "Windy at the cove, [dir] gusts to X mph."
+- **High raw wind + low exposure (< 0.5):** "Calm at the cove despite [dir] gusts to X mph."
+- **Normal conditions:** Standard NWS-style wind sentence
+- Gust threshold for "despite" narrative: ≥ 25 mph or sustained > 12 mph
+
+### Period Fields (Days 8-10)
+- `period_name`, `date`, `temperature`, `low_temp`
+- `is_simple_daily` — true
+- `text` — includes sky condition (from ECMWF weather_code), temp, precip, gusts
+
+### Data Source Priority
+- HRRR preferred for periods within 48h coverage (2h tolerance)
+- GFS used for periods beyond HRRR range
+- NWS gridpoint temps override model temps when available
+- `derived.today_high/low` and `derived.tomorrow_high/low` override computed temps for days 0-1

@@ -8,6 +8,7 @@ import math
 import os
 from datetime import datetime
 from pathlib import Path
+import pytz
 
 from .config import SCHEMA_VERSION, LOCATION_NAME
 from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes
@@ -219,9 +220,12 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         max_speed_entry = max(wind_candidates, key=lambda x: x['speed'])
         weather_data["current"]["wind_speed"] = max_speed_entry['speed']
         
-        # Direction from highest gust source
-        if max_gust_entry['direction']:
-            weather_data["current"]["wind_direction"] = max_gust_entry['direction']
+        # Direction from highest gust source (cast to float — PWS may return strings like "VRB")
+        if max_gust_entry['direction'] is not None:
+            try:
+                weather_data["current"]["wind_direction"] = float(max_gust_entry['direction'])
+            except (ValueError, TypeError):
+                pass  # Keep existing numeric value from Open-Meteo
         weather_data["current"]["condition_source"] = f"{max_gust_entry['source']} observed"
 
     # Hourly forecast
@@ -787,8 +791,6 @@ def main():
         _gemini_age = 0
         if briefing.get("cached_at"):
             try:
-                from datetime import datetime
-                import pytz
                 _cached = datetime.fromisoformat(briefing["cached_at"])
                 _gemini_age = round((datetime.now(pytz.timezone("America/New_York")) - _cached).total_seconds() / 60, 1)
             except Exception:
@@ -800,8 +802,7 @@ def main():
     print(f"  ⏱  Briefing AI: {elapsed:.1f}s")
 
     # Trim hourly arrays to start from current hour
-    from datetime import datetime, timezone
-    import pytz; eastern = pytz.timezone("America/New_York"); now_local = datetime.now(eastern)
+    now_local = datetime.now(pytz.timezone("America/New_York"))
     current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
     hourly_times = weather_data.get("hourly", {}).get("times", [])
     trim_idx = next((i for i, t in enumerate(hourly_times) if t >= current_hour_iso), 0)
