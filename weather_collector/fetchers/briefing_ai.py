@@ -119,7 +119,37 @@ def _build_weather_summary(weather_data):
                 break
         precip_line = f"Precip: max {max_pop}% POP, {rain_inches}\" total"
         if rain_start:
-            precip_line += f", starts around {rain_start}"
+            from datetime import datetime
+            import pytz
+            try:
+                eastern = pytz.timezone("America/New_York")
+                now_et = datetime.now(eastern)
+                rain_dt = datetime.fromisoformat(rain_start).replace(tzinfo=eastern) if rain_start[-1] != "Z" else datetime.fromisoformat(rain_start.replace("Z", "+00:00")).astimezone(eastern)
+                delta_hours = (rain_dt - now_et).total_seconds() / 3600
+                hour = rain_dt.hour
+                if hour < 6:
+                    time_of_day = "early morning"
+                elif hour < 12:
+                    time_of_day = "morning"
+                elif hour < 17:
+                    time_of_day = "afternoon"
+                elif hour < 21:
+                    time_of_day = "evening"
+                else:
+                    time_of_day = "tonight"
+                day_name = rain_dt.strftime("%A")
+                hours_away = round(delta_hours)
+                if delta_hours < 6:
+                    rain_label = f"within the next few hours (~{hours_away}h from now)"
+                elif rain_dt.date() == now_et.date():
+                    rain_label = f"this {time_of_day} (~{hours_away}h from now)"
+                elif (rain_dt.date() - now_et.date()).days == 1:
+                    rain_label = f"tomorrow {time_of_day} (~{hours_away}h from now)"
+                else:
+                    rain_label = f"{day_name} {time_of_day} (~{hours_away}h from now)"
+                precip_line += f", starts around {rain_label} — NOT sooner"
+            except Exception:
+                precip_line += f", starts around {rain_start}"
 
     # Fog — only include if risk > 0
     fog_prob = der.get("fog_probability", 0)
