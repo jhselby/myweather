@@ -528,9 +528,22 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _fl = _at_c * 9 / 5 + 32
         derived["corrected_feels_like"] = round(_fl, 1)
 
-    # Fog risk
+    # Fog risk — fall back to HRRR hourly[0] if GFS current is missing
+    _fog_current = None
     if current_data:
-        current = current_data.get("current", {})
+        _fog_current = current_data.get("current", {})
+    elif hourly_data and "hourly" in hourly_data:
+        _h = hourly_data["hourly"]
+        _fog_current = {
+            "temperature_2m": (_h.get("temperature_2m") or [None])[0],
+            "dew_point_2m": (_h.get("dew_point_2m") or [None])[0],
+            "relative_humidity_2m": (_h.get("relative_humidity_2m") or [None])[0],
+            "wind_speed_10m": (_h.get("wind_speed_10m") or [None])[0],
+            "wind_direction_10m": (_h.get("wind_direction_10m") or [None])[0],
+        }
+        print("  ⚠️ GFS current unavailable, using HRRR hourly[0] for fog calc")
+    if _fog_current:
+        current = _fog_current
         _buoy = weather_data.get("buoy_44013", {})
         fog_risk = calculate_fog_risk(
             current.get("temperature_2m"),

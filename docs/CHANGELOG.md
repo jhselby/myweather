@@ -1,3 +1,7 @@
+## v0.5.66
+- Added frontend fallbacks for Fog and Wind Impact tile fronts when GFS current data is unavailable (tiles now show "No data" instead of blank)
+- Added collector fallback: uses HRRR hourly[0] for fog calculation when GFS current fetch fails
+
 ## v0.5.65 • May 7, 2026
 * **Briefing Rain Stat: POP-aware Trace**
   * Top stat shows "Trace" when POP ≥ 40% exists in 48h window, even if accumulation is zero

@@ -4736,6 +4736,9 @@
           else if (fogProb < 60) fogCard.classList.add('tile-fog-moderate');
           else fogCard.classList.add('tile-fog-high');
         }
+      } else {
+        setHTML("fogPctCollapsed", `--<span style="font-size:1.8rem;opacity:0.6;">%</span>`);
+        setText("fogRiskCollapsed", "No data");
       }
       
       // Wind Gust Impact - populated by Right Now card data
@@ -5459,6 +5462,10 @@ function loadWeatherData() {
               const cls = combined <= 2 ? 'calm' : combined <= 4 ? 'light' : combined <= 7 ? 'moderate' : combined <= 10 ? 'strong' : 'severe';
               windCard.classList.add(`tile-wind-${cls}`);
             }
+          } else if (windImpactCollapsedEl) {
+            windImpactCollapsedEl.textContent = '--';
+            if (windImpactLabelEl) windImpactLabelEl.textContent = 'No data';
+            if (windImpactPeakCollapsedEl) windImpactPeakCollapsedEl.textContent = '';
           }
         }
         
