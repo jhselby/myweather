@@ -10,7 +10,7 @@ from datetime import datetime
 from pathlib import Path
 import pytz
 
-from .config import SCHEMA_VERSION, LOCATION_NAME
+from .config import SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
 from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes
 
 # Import all fetchers
