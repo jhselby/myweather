@@ -5324,14 +5324,13 @@ function loadWeatherData() {
             ? `Gusts ${Math.round(gustSpeed)} mph` 
             : 'Gusts -- mph';
           
-          // Rotate direction indicator arrow (add 90° because arrow defaults to north, wind is FROM so show TO)
+          // Rotate direction indicator arrow (add 90° because arrow defaults to east, wind is FROM so show TO)
           if (weatherWindDirectionIndicatorEl && windDir != null) {
             const arrowRotation = (windDir + 90) % 360;
-            // Set base rotation, CSS animation adds wobble
-            weatherWindDirectionIndicatorEl.style.transformOrigin = '80px 80px';
-            weatherWindDirectionIndicatorEl.style.transform = `rotate(${arrowRotation}deg)`;
-            weatherWindDirectionIndicatorEl.removeAttribute('transform');
-            weatherWindDirectionIndicatorEl.classList.add('wind-wobble');
+            // SVG rotate(angle, cx, cy) — explicit center in viewBox coords, works in all renderers incl. PWA WKWebView
+            weatherWindDirectionIndicatorEl.setAttribute('transform', `rotate(${arrowRotation}, 80, 80)`);
+            weatherWindDirectionIndicatorEl.style.transform = '';
+            weatherWindDirectionIndicatorEl.style.transformOrigin = '';
           }
           
           // Set impact score (combined: sustained if <15mph, gust otherwise)
