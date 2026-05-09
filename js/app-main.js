@@ -4669,17 +4669,17 @@
       if (sn) sn.innerHTML = (b.stats.now ?? '--') + '<span class="unit">°</span>';
       const sh = document.getElementById('briefTempHigh');
       if (sh) sh.innerHTML = (b.stats.high ?? '--') + '<span class="unit">°</span>';
+      // Inject wind impact score into briefing Wind row
+      const hyp = data.hyperlocal || {};
+      const cur = data.current || {};
       const sc = document.getElementById('briefConditions');
       const scl = document.getElementById('briefConditionsLabel');
       if (sc) {
-        const raw = cur.condition_override || cur.weather_description || '--';
+        const raw = cur.weather_description || cur.condition_override || '--';
         const parts = raw.split(/,\s*|(?<=\S)\s+and\s+/i);
         sc.textContent = parts[0];
         if (scl) scl.textContent = parts[1] ? parts[1].toLowerCase() : 'sky';
       }
-      // Inject wind impact score into briefing Wind row
-      const hyp = data.hyperlocal || {};
-      const cur = data.current || {};
       const bWindSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
       const bGustSpeed = hyp.corrected_wind_gusts ?? cur.wind_gusts;
       const bWindDir = cur.wind_direction;
