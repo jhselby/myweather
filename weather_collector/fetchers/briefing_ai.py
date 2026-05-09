@@ -11,7 +11,9 @@ import requests
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
+GEMINI_FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-1.5-flash-8b")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+GEMINI_FALLBACK_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_FALLBACK_MODEL}:generateContent"
 
 SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove — on the Salem Harbor side of Marblehead's peninsula, with open water to the north and northwest.
 
@@ -305,17 +307,22 @@ def generate_briefing(weather_data):
         }
     }
 
-    # Try up to 2 times (initial + 1 retry on 429)
+    # Try up to 2 times: primary model, then fallback on 429
     for attempt in range(2):
+        url = GEMINI_URL if attempt == 0 else GEMINI_FALLBACK_URL
+        model_label = GEMINI_MODEL if attempt == 0 else GEMINI_FALLBACK_MODEL
         try:
             resp = requests.post(
-                GEMINI_URL,
+                url,
                 params={"key": GEMINI_API_KEY},
                 json=payload,
                 timeout=20
             )
-            if resp.status_code in (429, 500, 502, 503, 504) and attempt == 0:
-                print("  ⚠ Briefing: 429 rate limited, retrying in 3s...")
+            if resp.status_code == 429 and attempt == 0:
+                print(f"  ⚠ Briefing: {GEMINI_MODEL} rate limited, falling back to {GEMINI_FALLBACK_MODEL}...")
+                continue
+            if resp.status_code in (500, 502, 503, 504) and attempt == 0:
+                print(f"  ⚠ Briefing: {model_label} server error, retrying in 3s...")
                 time.sleep(3)
                 continue
             resp.raise_for_status()
