@@ -18,7 +18,7 @@ from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_dai
 from .fetchers.pws import fetch_pws_current
 from .fetchers.tides import fetch_tides
 from .fetchers.noaa import fetch_kbos_obs, fetch_kbvy_obs, fetch_buoy_44013
-from .fetchers.nws import fetch_nws_forecast, fetch_nws_alerts
+from .fetchers.nws import fetch_nws_alerts
 from .fetchers.salem_water import fetch_salem_water_temp
 from .fetchers.nws_gridpoints import fetch_nws_gridpoints
 from .fetchers.wu import fetch_wu_stations
@@ -335,10 +335,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         weather_data["kbvy"] = kbvy_data
     if buoy_data:
         weather_data["buoy_44013"] = buoy_data
-
-    # NWS forecast and alerts
-    if forecast_data:
-        weather_data["nws_forecast"] = forecast_data
 
     if alert_data:
         weather_data["alerts"] = alert_data
@@ -716,7 +712,6 @@ def main():
     alert_data, alerts_meta = parallel_results.get("NWS alerts", (None, {"status": "error"}))
     pirate_data, pirate_meta = parallel_results.get("Pirate Weather", (None, {"status": "error"}))
     birds_data, birds_meta = parallel_results.get("eBird", (None, {"status": "error"}))
-    forecast_data, forecast_meta = {}, {"status": "disabled"}  # fetch_nws_forecast() DISABLED
 
     sources = {
         "gfs_current": current_meta,
@@ -728,7 +723,6 @@ def main():
         "kbvy": kbvy_meta,
         "buoy_44013": buoy_meta,
         "wu_stations": wu_meta,
-        "nws_forecast": forecast_meta,
         "nws_alerts": alerts_meta,
         "pirate_weather": pirate_meta,
         "ebird": birds_meta,

@@ -4422,9 +4422,6 @@
   }
 }
 
-    let nwsShowAll = false;
-    const NWS_PREVIEW = 14;  // periods shown before "show all"
-
     function generateForecastSummary(forecasts) {
       const summaryEl = document.getElementById("detailedForecastSummary");
       if (!summaryEl || !forecasts || forecasts.length === 0) return;
@@ -4486,108 +4483,6 @@
         list.appendChild(row);
       });
     }
-    function renderNWSForecast(periods) {
-      _selectedForecastDate = null;  // clear any day filter on fresh data load
-      updateForecastSelection();
-      const list = document.getElementById("nwsForecastList");
-      const btn  = document.getElementById("nwsExpandBtn");
-      if (!list || !Array.isArray(periods) || periods.length === 0) {
-        if (list) list.innerHTML =
-          '<div style="color:rgba(255,255,255,0.4);font-size:0.88rem;padding:8px 0;">No forecast available.</div>';
-        return;
-      }
-
-      function renderPeriods(all) {
-        const toShow = all ? periods : periods.slice(0, NWS_PREVIEW);
-        list.innerHTML = "";
-        toShow.forEach((p, i) => {
-          const isDay   = p.is_daytime !== false;
-          const bgAlpha = isDay ? "0.05" : "0.03";
-          const row     = document.createElement("div");
-          row.style.cssText =
-            "display:grid;grid-template-columns:130px 1fr;" +
-            "gap:0;border-bottom:1px solid rgba(255,255,255,0.06);" +
-            "padding:10px 0;";
-
-          // Left: name + temp + wind
-          const left = document.createElement("div");
-          left.style.cssText = "padding-right:16px;";
-          left.innerHTML =
-            '<div style="font-weight:900;font-size:0.9rem;color:rgba(255,255,255,0.9);">' +
-              p.name + '</div>' +
-            '<div style="font-size:1.4rem;font-weight:900;color:rgba(255,255,255,0.85);margin:2px 0;">' +
-              (p.temperature != null ? p.temperature + "\u00b0F" : "--") + '</div>' +
-            '<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);font-weight:700;">' +
-              (p.wind_speed || "") + " " + (p.wind_direction || "") + '</div>';
-
-          // Right: short forecast bold + detailed text
-          const right = document.createElement("div");
-          right.innerHTML =
-            '<div style="font-weight:900;font-size:0.88rem;color:rgba(255,255,255,0.8);margin-bottom:4px;">' +
-              p.short_forecast + '</div>' +
-            '<div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">' +
-              p.detailed + '</div>';
-
-          row.appendChild(left);
-          row.appendChild(right);
-          list.appendChild(row);
-        });
-
-        // Last row — remove bottom border
-        const rows = list.querySelectorAll("div[style*='border-bottom']");
-        if (rows.length > 0) rows[rows.length-1].style.borderBottom = "none";
-      }
-
-      renderPeriods(false);
-
-      if (periods.length > NWS_PREVIEW) {
-        btn.style.display = "inline-block";
-        btn.textContent   = "Show all " + periods.length + " periods \u25be";
-      } else {
-        btn.style.display = "none";
-      }
-    }
-
-    function nwsToggleExpand() {
-      const btn     = document.getElementById("nwsExpandBtn");
-      const periods = window._nwsPeriods || [];
-      nwsShowAll    = !nwsShowAll;
-
-      const list = document.getElementById("nwsForecastList");
-      const toShow = nwsShowAll ? periods : periods.slice(0, NWS_PREVIEW);
-      list.innerHTML = "";
-      toShow.forEach(p => {
-        const row = document.createElement("div");
-        row.style.cssText =
-          "display:grid;grid-template-columns:130px 1fr;" +
-          "gap:0;border-bottom:1px solid rgba(255,255,255,0.06);padding:10px 0;";
-        const left = document.createElement("div");
-        left.style.cssText = "padding-right:16px;";
-        left.innerHTML =
-          '<div style="font-weight:900;font-size:0.9rem;color:rgba(255,255,255,0.9);">' + p.name + '</div>' +
-          '<div style="font-size:1.4rem;font-weight:900;color:rgba(255,255,255,0.85);margin:2px 0;">' +
-            (p.temperature != null ? p.temperature + "\u00b0F" : "--") + '</div>' +
-          '<div style="font-size:0.78rem;color:rgba(255,255,255,0.5);font-weight:700;">' +
-            (p.wind_speed || "") + " " + (p.wind_direction || "") + '</div>';
-        const right = document.createElement("div");
-        right.innerHTML =
-          '<div style="font-weight:900;font-size:0.88rem;color:rgba(255,255,255,0.8);margin-bottom:4px;">' +
-            p.short_forecast + '</div>' +
-          '<div style="font-size:0.85rem;color:rgba(255,255,255,0.6);line-height:1.5;">' +
-            p.detailed + '</div>';
-        row.appendChild(left);
-        row.appendChild(right);
-        list.appendChild(row);
-      });
-      const rows = list.querySelectorAll("div[style*='border-bottom']");
-      if (rows.length > 0) rows[rows.length-1].style.borderBottom = "none";
-
-      btn.textContent = nwsShowAll
-        ? "Show fewer \u25b4"
-        : "Show all " + periods.length + " periods \u25be";
-    }
-
-    // ======================================================
     // Boot: load data and populate all views
     // ======================================================
 
@@ -5928,13 +5823,6 @@ function loadWeatherData() {
           }
         }
 
-        // NWS Forecast
-        window._nwsPeriods = data.nws_forecast || [];
-        const nwsOfficeEl = document.getElementById('nwsOfficeLabel');
-        if (nwsOfficeEl && data.sources && data.sources.nws_forecast) {
-          nwsOfficeEl.textContent = data.sources.nws_forecast.office
-            ? 'NWS Boston' : '';
-        }
 
         // Hyperlocal forecast
         if (data.forecast_text) {
@@ -5942,7 +5830,6 @@ function loadWeatherData() {
           const _hfHourly = data.hourly || {};
           renderHyperlocalForecast(data.forecast_text, _hfHourly.times || [], _hfHourly.corrected_temperature || _hfHourly.temperature || [], data.derived || {});
         }
-        renderNWSForecast(window._nwsPeriods);
 
         // Almanac tab
         renderTides(data.tides?.events);
