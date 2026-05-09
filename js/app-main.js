@@ -5589,13 +5589,10 @@ function loadWeatherData() {
         const gustWorry = (data.wind_risk?.gust?.level ?? "");
         if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`${gustWorry} wind gusts expected`);
         const pop0 = (data.daily?.precipitation_probability_max?.[0] ?? 0);
-        if (pop0 >= 60 && der.col_precip_type) {
-          const surfType = der.surface_precip_type || "rain";
-          const typeMap = { rain: "Rain", snow: "Snow", "freezing rain": "Freezing rain", sleet: "Sleet", mixed: "Mixed precip" };
-          const surfLabel = typeMap[surfType] || surfType;
-          const colLabel = typeMap[(der.col_precip_type || "").toLowerCase()] || der.col_precip_type;
-          if (surfType !== "rain" || (der.col_precip_type || "").toLowerCase() !== "rain")
-            stormFlags.push(`${surfLabel} likely${colLabel && colLabel !== surfLabel ? " (mixed aloft)" : ""}`);
+        if (pop0 >= 60 && der.surface_precip_type && der.surface_precip_type !== "rain") {
+          const typeMap = { snow: "Snow", "freezing rain": "Freezing rain", sleet: "Sleet", mixed: "Mixed precip" };
+          const surfLabel = typeMap[der.surface_precip_type] || der.surface_precip_type;
+          stormFlags.push(`${surfLabel} likely`);
         }
 
         const dailyPrecip = (data.daily?.precipitation_sum?.[0] ?? 0);
