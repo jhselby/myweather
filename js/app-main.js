@@ -4679,6 +4679,13 @@
         const parts = raw.split(/,\s*|(?<=\S)\s+and\s+/i);
         sc.textContent = parts[0];
         if (scl) scl.textContent = parts[1] ? parts[1].toLowerCase() : 'sky';
+        const fitSizes = ['2.4rem','2.0rem','1.7rem','1.4rem','1.15rem','0.95rem','0.82rem'];
+        const maxW = sc.parentElement ? sc.parentElement.offsetWidth - 8 : 999;
+        sc.style.fontSize = fitSizes[0];
+        for (const s of fitSizes) {
+          sc.style.fontSize = s;
+          if (sc.scrollWidth <= maxW) break;
+        }
       }
       const bWindSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
       const bGustSpeed = hyp.corrected_wind_gusts ?? cur.wind_gusts;

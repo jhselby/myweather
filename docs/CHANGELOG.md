@@ -1,9 +1,17 @@
-## v0.5.76 • May 9, 2026
+## v0.5.76–v0.5.85 • May 9, 2026
 - Gemini briefing falls back to gemini-1.5-flash-8b on 429; both models configurable via env vars
 - Briefing interval check now has in-memory guard (survives GCS failures; max-instances=1)
+- Gemini briefing now receives previous headline as context; can note forecast shifts (rain timing, snow line movement) in subheadline
 - Stale data indicator threshold raised from 20 to 25 minutes (fires only after 2+ missed collector runs)
-- Fixed collector crash: removed leftover `forecast_data` parameter from build_weather_data (dead code from NWS removal)
-- Fixed collector crash: missing WIND_EXPOSURE_TABLE import (introduced in v0.5.75)
+- Briefing third stat changed from 48h rain to current conditions (sky text)
+- All conditions displays now use weather_description (HRRR model) with condition_override (KBVY) as fallback — consistent across briefing stat, Watch For sky row, and Sky & Precip card
+- Wind arrow redesigned: single line + arrowhead SVG; switched to SVG rotate() attribute to fix broken rotation in macOS PWA (WKWebView CSS transform-origin bug)
+- Watch For storm flags: title now derives from most specific flag (freezing rain > snow > heavy rain > mixed > gusts > system > pressure) instead of generic "Active weather developing"
+- Watch For detail line now visible inline below alert/flag title without requiring a tap
+- Precip flag no longer fires for rain on the surface — only for snow, sleet, freezing rain, and mixed
+- Fixed collector crash: removed leftover `forecast_data` parameter (dead code from NWS removal)
+- Fixed collector crash: missing WIND_EXPOSURE_TABLE import
+- Fixed ReferenceError: conditions stat rendering placed before `const cur` declaration
 
 ## v0.5.68–v0.5.75 • May 9, 2026
 - Wet bulb and precip type classification (rain/snow/sleet/freezing rain) now fully corrected: both wet_bulb.py and precip_surface.py use corrected_temperature and corrected_humidity arrays throughout

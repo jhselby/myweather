@@ -1,5 +1,5 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.71
+**Version:** 0.5.85
 **Last Updated:** May 9, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
@@ -902,6 +902,13 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 
 ## VERSION HISTORY
 
+**v0.5.76–v0.5.85 (May 9, 2026):**
+- Gemini briefing: fallback to gemini-1.5-flash-8b on 429; both models configurable via env vars
+- Gemini briefing: in-memory guard prevents burst calls on GCS failure (safe due to max-instances=1)
+- Gemini briefing: previous headline fed as context; prompt instructs model to note forecast shifts
+- Wet bulb, precip_surface.py: both now use corrected_temperature and corrected_humidity arrays throughout (v0.5.71 fix; documented here retroactively)
+- Wind direction fallback: if GFS fails and no candidate station has direction, falls back to KBVY wind_dir
+
 **v4.82 (April 24, 2026):**
 - Hair Day hair-type selector: 4 profiles (Straight, Wavy, Curly, Coily) with tuned scoring curves
 - Birds card: clickable location links (eBird hotspot map for public, Apple Maps for private)
@@ -990,10 +997,23 @@ Check this document first to understand where data comes from and what correctio
 - Headline: ≤12 words
 - Subheadline: 1–2 sentences
 
+### Model Configuration
+
+- **Primary:** `gemini-2.5-flash-lite-preview-06-17` (default, configurable via `GEMINI_MODEL` env var)
+- **Fallback:** `gemini-1.5-flash-8b` on HTTP 429 (configurable via `GEMINI_FALLBACK_MODEL` env var)
+- Fallback uses a separate endpoint URL; retries 3x with increasing delay
+
+### Previous Briefing Context
+
+- Before calling Gemini, `_load_cached_briefing()` reads the current `briefing_cache.json` from GCS
+- Previous headline is injected into the prompt as `prev_context`
+- System prompt rule: if forecast has shifted meaningfully (timing, rain/snow line, temperature trend), note the change briefly in the subheadline
+
 ### Caching
 
-- Cached in GCS (briefing_cache.json)
+- Cached in GCS (`briefing_cache.json`)
 - Refresh interval: 30 minutes
+- In-memory guard (`_last_gemini_call_time`): checked before GCS read, prevents burst calls when GCS fails; safe because Cloud Function runs max-instances=1
 - Fallback: cached → template
 
 
