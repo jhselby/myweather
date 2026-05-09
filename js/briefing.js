@@ -762,45 +762,18 @@
     const der = s._data.derived || {};
     const sb = s._data.sea_breeze || {};
 
-    // Wind — impact-first, with gusts as supporting detail
-    const windImpact = der.wind_impact_score ?? 0;
-    const gustMph = Math.round(s._data.hyperlocal?.corrected_wind_gusts ?? s._data.current?.wind_gusts ?? s.gustMph ?? 0);
-    if (windImpact >= 7) {
-      let windValue = "Impact " + windImpact + "/10";
-      if (gustMph >= 25) windValue += " · Gusts " + gustMph + " mph";
-      rows.push({ label: "Wind", value: windValue, color: windImpact >= 9 ? "red" : "orange" });
+    // 1. NWS alerts (highest urgency)
+    for (const a of s.alerts) {
+      rows.push({
+        label: "Alert",
+        value: a.event,
+        detail: a.description ? a.description.slice(0, 120) : "",
+        color: "red",
+        isAlert: true,
+      });
     }
 
-    // Frost risk: overnight low <= 36
-    if (s.low != null && s.low <= 36) {
-      rows.push({ label: "Frost risk", value: "Low tonight " + s.low + "°", color: s.low <= 32 ? "red" : "orange" });
-    }
-
-    // Sea breeze likelihood >= 60%
-    const sbLikelihood = sb.likelihood ?? 0;
-    const sbDelta = parseFloat((sb.reason || "").match(/Δ([-\d.]+)/)?.[1] || "0");
-    if (sbLikelihood >= 60 && sbDelta > 0) {
-      rows.push({ label: "Sea breeze", value: sbLikelihood + "% likely", color: "blue" });
-    }
-
-    // Fog probability >= 50%
-    const fogProb = der.fog_probability ?? 0;
-    if (fogProb >= 50) {
-      rows.push({ label: "Fog", value: fogProb + "% probability", color: "orange" });
-    }
-
-    // Next rain — only if not today and not none
-    if (s.rainContext && !["none","now","soon","later"].includes(s.rainContext)) {
-      rows.push({ label: "Next rain", value: s.rainContext, color: "blue" });
-    }
-
-    // Precip mini bar — only when header precip dot is active
-    if (window.__precipHasRain) {
-      const miniBar = buildPrecipMiniBar();
-      if (miniBar) rows.push({ isHtml: true, html: miniBar });
-    }
-
-    // Storm flags (computed by app-main.js from pressure/trough/wind/precip signals)
+    // 2. Storm flags
     const stormFlags = window.__stormFlags || [];
     if (stormFlags.length >= 2) {
       const severity = stormFlags.length >= 3 ? 'Storm conditions developing' : 'Active weather developing';
@@ -813,15 +786,42 @@
       });
     }
 
-    // Alerts
-    for (const a of s.alerts) {
-      rows.push({
-        label: "Alert",
-        value: a.event,
-        detail: a.description ? a.description.slice(0, 80) : "",
-        color: "orange",
-        isAlert: true,
-      });
+    // 3. Precip mini bar (current/imminent rain)
+    if (window.__precipHasRain) {
+      const miniBar = buildPrecipMiniBar();
+      if (miniBar) rows.push({ isHtml: true, html: miniBar });
+    }
+
+    // 4. Next rain
+    if (s.rainContext && !["none","now","soon","later"].includes(s.rainContext)) {
+      rows.push({ label: "Next rain", value: s.rainContext, color: "blue" });
+    }
+
+    // 5. Wind
+    const windImpact = der.wind_impact_score ?? 0;
+    const gustMph = Math.round(s._data.hyperlocal?.corrected_wind_gusts ?? s._data.current?.wind_gusts ?? s.gustMph ?? 0);
+    if (windImpact >= 7) {
+      let windValue = "Impact " + windImpact + "/10";
+      if (gustMph >= 25) windValue += " · Gusts " + gustMph + " mph";
+      rows.push({ label: "Wind", value: windValue, color: windImpact >= 9 ? "red" : "orange" });
+    }
+
+    // 6. Fog
+    const fogProb = der.fog_probability ?? 0;
+    if (fogProb >= 50) {
+      rows.push({ label: "Fog", value: fogProb + "% probability", color: "orange" });
+    }
+
+    // 7. Frost risk
+    if (s.low != null && s.low <= 36) {
+      rows.push({ label: "Frost risk", value: "Low tonight " + s.low + "°", color: s.low <= 32 ? "red" : "orange" });
+    }
+
+    // 8. Sea breeze
+    const sbLikelihood = sb.likelihood ?? 0;
+    const sbDelta = parseFloat((sb.reason || "").match(/Δ([-\d.]+)/)?.[1] || "0");
+    if (sbLikelihood >= 60 && sbDelta > 0) {
+      rows.push({ label: "Sea breeze", value: sbLikelihood + "% likely", color: "blue" });
     }
 
     return rows;
