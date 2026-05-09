@@ -261,16 +261,16 @@
     // ======================================================
    
 
-    const WIND_EXPOSURE_TABLE = [
-      [  0,  25, 1.00],  // N-NNE - open harbor, max exposure
-      [ 25,  45, 0.70],  // NE - 39ft terrain ~200ft away, partial blocking
-      [ 45, 100, 0.25],  // E-ESE - 39-68ft Westlot/Ridge terrain close, heavy blocking
-      [100, 200, 0.08],  // SE-S - Marblehead + local terrain, maximum shelter
-      [200, 260, 0.10],  // SSW-WSW - 39-78ft Crestwood/Pinecliff close, heavy blocking
-      [260, 290, 0.40],  // W - 39ft close but harbor opens beyond, moderate
-      [290, 320, 0.75],  // WNW-NW - harbor opening, high exposure
-    [320, 360, 1.00],  // NW-N - open harbor, max exposure
-];
+    let WIND_EXPOSURE_TABLE = [
+      [  0,  25, 1.00],
+      [ 25,  45, 0.70],
+      [ 45, 100, 0.25],
+      [100, 200, 0.08],
+      [200, 260, 0.10],
+      [260, 290, 0.40],
+      [290, 320, 0.75],
+      [320, 360, 1.00],
+    ];
     const WORRY_NOTICEABLE  =  5;
     const WORRY_NOTABLE     = 12;
     const WORRY_SIGNIFICANT = 20;
@@ -4802,6 +4802,11 @@ function loadWeatherData() {
       .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(data => {
         window.__lastWeatherData = data;
+
+        // Use exposure table from data if available (single source of truth with collector)
+        if (Array.isArray(data.wind_exposure_table) && data.wind_exposure_table.length > 0) {
+          WIND_EXPOSURE_TABLE = data.wind_exposure_table;
+        }
 
         // Apply temperature-based gradient to Right Now card
         const temp = data.hyperlocal?.corrected_temp ?? data.current?.temperature ?? 50;

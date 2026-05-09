@@ -147,6 +147,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         "generated_at": iso_utc_now(),
         "location": LOCATION_NAME,
         "sources": sources,
+        "wind_exposure_table": [list(row) for row in WIND_EXPOSURE_TABLE],
     }
 
     # Current conditions
