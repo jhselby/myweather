@@ -39,6 +39,7 @@ Rules:
 - Only mention precipitation if POP data is included. If no precip data is included, conditions are dry — do not mention rain.
 - Only mention fog or sea breeze if included in the data.
 - Ignore any alerts containing "TEST" — those are NWS transmission tests.
+- If a previous briefing is provided and the forecast has shifted meaningfully (timing, rain/snow line, temperature trend), note the change briefly in the subheadline (e.g., "rain timing pushed back two hours" or "snow line crept east since this morning"). Skip it if nothing significant changed.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
 
@@ -285,6 +286,8 @@ def generate_briefing(weather_data):
             return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
 
     summary = _build_weather_summary(weather_data)
+    prev_briefing = _load_cached_briefing()
+    prev_headline = prev_briefing.get("headline", "").strip() if prev_briefing else ""
 
     # Guard: if current temp fell through to 0 (GFS failure + no hyperlocal), skip
     cur_temp = weather_data.get("hyperlocal", {}).get("corrected_temp") or weather_data.get("current", {}).get("temperature")
@@ -312,9 +315,11 @@ def generate_briefing(weather_data):
         f"Never reference times that have already passed today."
     )
 
+    prev_context = f'\nPrevious briefing (30 min ago): "{prev_headline}"' if prev_headline else ""
+
     payload = {
         "contents": [{
-            "parts": [{"text": f"{SYSTEM_PROMPT}\n\nWeather data for right now:\n{summary}{time_context}"}]
+            "parts": [{"text": f"{SYSTEM_PROMPT}\n\nWeather data for right now:\n{summary}{time_context}{prev_context}"}]
         }],
         "generationConfig": {
             "temperature": 0.9,
