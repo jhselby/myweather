@@ -44,21 +44,19 @@ def add_wet_bulb_temps(weather_data):
     Args:
         weather_data: Weather data dict with current and hourly sections
     """
-    # Hourly wet bulb temps
+    # Hourly wet bulb temps — use bias-corrected arrays if available
     hourly = weather_data.get("hourly", {})
-    temps = hourly.get("temperature", [])
-    humidity = hourly.get("humidity", [])
-    
+    temps = hourly.get("corrected_temperature") or hourly.get("temperature", [])
+    humidity = hourly.get("corrected_humidity") or hourly.get("humidity", [])
+
     wb_temps = []
     for t, rh in zip(temps, humidity):
         wb_temps.append(calculate_wet_bulb(t, rh))
-    
+
     weather_data["hourly"]["wet_bulb"] = wb_temps
-    
-    # Current wet bulb
-    current = weather_data.get("current", {})
-    cur_wb = calculate_wet_bulb(
-        current.get("temperature"),
-        current.get("humidity")
-    )
-    weather_data["current"]["wet_bulb"] = cur_wb
+
+    # Current wet bulb — use hyperlocal corrected values if available
+    hyp = weather_data.get("hyperlocal", {})
+    cur_t = hyp.get("corrected_temp") or weather_data.get("current", {}).get("temperature")
+    cur_h = hyp.get("corrected_humidity") or weather_data.get("current", {}).get("humidity")
+    weather_data["current"]["wet_bulb"] = calculate_wet_bulb(cur_t, cur_h)

@@ -1,12 +1,17 @@
-## v0.5.64–v0.5.69 • May 7–9, 2026
+## v0.5.68–v0.5.70 • May 9, 2026
+- Wet bulb temperatures now use bias-corrected hourly temperature and humidity arrays; current wet bulb uses hyperlocal corrected values — precip type classification (rain/snow/sleet/freezing rain) is now consistent with displayed temperatures
 - Briefing click-throughs: Almanac rows (Sun, Tide, Moon) and Watch For rows now tap through to their detail cards
+- Fixed fog+temperature double-period punctuation in forecast text
+
+## v0.5.66–v0.5.67 • May 8, 2026
 - Exposure-aware wind narratives in forecast text ("Calm at the cove despite..." / "Windy at the cove...")
 - Added wind_worry_score, wind_worry_label, wind_exposure_factor to forecast periods
 - Removed "toward morning" noise from night lows; removed false-precision temp timing on GFS days
 - Suppressed contradictory sky descriptions during heavy precip
 - Days 8–10 now include ECMWF sky condition and gust data
-- Fixed fog+temperature double-period punctuation in forecast text
 - Fixed UnboundLocalError from shadowed datetime import; fixed "VRB" wind direction crashes
+
+## v0.5.64–v0.5.65 • May 7, 2026
 - Frontend fallbacks for Fog and Wind Impact tiles when GFS current data unavailable
 - Collector fallback: HRRR hourly[0] for fog when GFS fails
 - Briefing rain stat shows three states: "No rain", "Trace" (POP ≥ 40% but zero accumulation), or inches
