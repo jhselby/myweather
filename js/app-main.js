@@ -4867,7 +4867,7 @@ function loadWeatherData() {
         const cur   = data.current || {};
         const code  = cur.weather_code;
         const emoji = cur.emoji || weatherEmoji[code] || "&#127777;&#65039;";
-        const desc  = cur.condition_override || cur.weather_description || weatherDesc[code] || "—";
+        const desc  = cur.weather_description || cur.condition_override || weatherDesc[code] || "—";
         document.getElementById("currentTemp").innerHTML =
           `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
         const ctc = document.getElementById("currentTempCollapsed"); 
