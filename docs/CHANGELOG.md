@@ -1,40 +1,18 @@
-## v0.5.67 • May 8, 2026
-- Exposure-aware wind narratives in forecast text
-  - "Calm at the cove despite [dir] gusts to X mph" when site is sheltered
-  - "Windy/Breezy at the cove, [dir] gusts to X mph" when harbor-exposed
-  - Added wind_worry_score, wind_worry_label, wind_exposure_factor to each forecast period
-- Removed "toward morning" from every night low (was meaningless noise)
-- Removed false-precision temp timing ("around 4pm") on GFS-sourced days
-- Suppressed contradictory sky descriptions during heavy precip (no more "Rain likely. Partly cloudy")
-- Days 8-10 now include sky condition from ECMWF weather_code and gust data
-- Fixed UnboundLocalError: removed late local `from datetime import` that shadowed earlier imports
-- Fixed wind_direction type casting: PWS "VRB" directions no longer crash sea_breeze or briefing_ai
-- Added pytz to module-level imports in collector.py
-
-## v0.5.66
-- Added frontend fallbacks for Fog and Wind Impact tile fronts when GFS current data is unavailable (tiles now show "No data" instead of blank)
-- Added collector fallback: uses HRRR hourly[0] for fog calculation when GFS current fetch fails
-
-## v0.5.65 • May 7, 2026
-* **Briefing Rain Stat: POP-aware Trace**
-  * Top stat shows "Trace" when POP ≥ 40% exists in 48h window, even if accumulation is zero
-  * Prevents contradiction between "No rain" stat and "Next rain" in Watch For
-* **Forecast Text: Corrected data always preferred**
-  * 2-hour tolerance on coverage check ensures corrected 48h data is used over GFS
-  * Fixes false "Chance of rain" in Friday Night text when corrected POP was only 5%
-  * Previously fell through to GFS because corrected data ended 1 hour short of period boundary
-* **10-day Rain Icon consistency**
-  * Identified: rain emoji driven by forecast_text word matching, not POP threshold
-  * Root cause fixed upstream — corrected data now used for forecast text generation
-
-## v0.5.64 • May 7, 2026
-* **Briefing Top Row: Rain stat shows three states**
-  * "No rain" with "next 48h" sublabel when forecast is truly zero
-  * "Trace" with "rain · next 48h" sublabel when precip rounds to zero
-  * Inches with "rain · next 48h" sublabel when measurable
-* **TODAY section: High / Low row**
-  * Shows today's high and overnight low (e.g. 66° / 48°) after Wind row
-  * Ensures full temp range visible without scrolling past TODAY
+## v0.5.64–v0.5.69 • May 7–9, 2026
+- Briefing click-throughs: Almanac rows (Sun, Tide, Moon) and Watch For rows now tap through to their detail cards
+- Exposure-aware wind narratives in forecast text ("Calm at the cove despite..." / "Windy at the cove...")
+- Added wind_worry_score, wind_worry_label, wind_exposure_factor to forecast periods
+- Removed "toward morning" noise from night lows; removed false-precision temp timing on GFS days
+- Suppressed contradictory sky descriptions during heavy precip
+- Days 8–10 now include ECMWF sky condition and gust data
+- Fixed fog+temperature double-period punctuation in forecast text
+- Fixed UnboundLocalError from shadowed datetime import; fixed "VRB" wind direction crashes
+- Frontend fallbacks for Fog and Wind Impact tiles when GFS current data unavailable
+- Collector fallback: HRRR hourly[0] for fog when GFS fails
+- Briefing rain stat shows three states: "No rain", "Trace" (POP ≥ 40% but zero accumulation), or inches
+- TODAY section: High / Low row shows full temp range without scrolling
+- Forecast text now always prefers corrected data; fixed false "Chance of rain" from GFS fallthrough
+- 10-day rain icons now driven by corrected data upstream
 
 ## v0.5.54–v0.5.62c • May 6, 2026
 * **Rain Stat (v0.5.62)**
@@ -96,7 +74,7 @@
 * Removed dead code: `toggleSettings()`, `toggleMenu()`, `toggleMenuSection()`, duplicate `updateForecastSelection()` call, test comment
 * Removed hidden meta-row, rewired timestamps to settings modal directly
 
-## v0.5.41 • 2026-05-02
+## v0.5.41 • May 2, 2026
 * **Meteorological Audit — 7 fixes across precipitation, forecast, and resilience**
   * Surface precip type (wet bulb) now used everywhere instead of 850mb column type
   * 850mb override catches all frozen/mixed types when surface temp > 40°F
@@ -116,7 +94,7 @@
   * App returns to briefing tab after 5+ minutes away; always opens on briefing
   * Sunset quality score smoothed with 3-hour averaging window (reduces model wobble)
 
-## v0.5.33 • 2026-05-01
+## v0.5.33 • May 1, 2026
 * **Tile & Briefing Fixes**
   * Beach/hair day tiles switch to tomorrow at sunset (was hardcoded 6 PM)
   * Fixed briefing sunset score reading from wrong data source
@@ -124,7 +102,7 @@
   * Fixed swim float card showing wrong day after 8 PM EDT
   * Fixed tide calendar grouping using UTC dates
 
-## v0.5.25–v0.5.28 • 2026-04-30
+## v0.5.25–v0.5.28 • April 30, 2026
 * **Briefing Polish**
   * Tomorrow scores (sunset, beach, hair) display correctly after civil dusk
   * Clickthrough navigation for all "(tomorrow)" rows
@@ -138,7 +116,7 @@
   * Zoomed out to capture BOS approach traffic
   * Plane info overlays map instead of pushing content down
 
-## v0.5.19 • 2026-04-29
+## v0.5.19 • April 29, 2026
 * **Bug Fixes & AI Briefing**
   * Fixed wind impact constant mismatch between frontend and backend
   * Guarded precip_850mb against missing hourly key
@@ -148,7 +126,7 @@
   * Data Sources moved to settings with health status dots
   * Lazy-load overhead.js on card tap
 
-## v0.5.17–v0.5.17c • 2026-04-27–28
+## v0.5.17–v0.5.17c • April 27–28, 2026
 * **Single Source of Truth for Temperatures**
   * Collector computes `derived.today_high/low` from observed past + corrected forecast
   * Observed temp log (`obs_temp_log.json`) tracks hourly corrected readings
@@ -162,7 +140,7 @@
 * **Infrastructure**
   * Open-Meteo calls sequential (rate-limit sensitive); non-OM calls parallelized
 
-## v0.5.0–v0.5.15 • 2026-04-25–26
+## v0.5.0–v0.5.15 • April 25–26, 2026
 * **Briefing Tab — AI-Powered Weather Briefing**
   * New first tab: Gemini headline + subheadline, stat boxes, conditional data rows
   * Template fallback when AI unavailable
@@ -177,7 +155,7 @@
   * Changelog, data pipeline, licenses behind "Nerd Stuff" toggle
   * Bird hotspot links open in OpenStreetMap
 
-## v0.4.78–v0.4.82 • 2026-04-21–24
+## v0.4.78–v0.4.82 • April 21–24, 2026
 * **Hair Day — Hair Type Selector**
   * Four profiles: Straight, Wavy, Curly, Coily with tuned AH curves and wind thresholds
   * Wind scoring added (10% weight) using first-bad-hour logic
@@ -193,7 +171,7 @@
   * 0% likelihood no longer shows as "No data"
   * Collapsed tile shows actual wind direction
 
-## v0.4.65–v0.4.77 • 2026-04-20–21
+## v0.4.65–v0.4.77 • April 20–21, 2026
 * **Hair Day Card**
   * Scoring based on Absolute Humidity with inverted-U curve (sweet spot 4-5 g/m³)
   * Morning-weighted aggregation; precip type matters (snow/freezing rain penalized more)
@@ -209,7 +187,7 @@
   * Dead top tab nav HTML removed
   * Right Now card lifestyle scores show /100 format
 
-## v0.4.50–v0.4.61 • 2026-04-18–20
+## v0.4.50–v0.4.61 • April 18–20, 2026
 * **Pirate Weather Integration**
   * Minutely precip, solar irradiance, CAPE
   * Next-hour rain badge with 60-bar chart and plain-language summary
@@ -222,7 +200,7 @@
   * weather_data.json served from GCS bucket
   * Stale page indicator (gear/refresh turn red when data >2h old)
 
-## v0.4.34–v0.4.48 • 2026-04-12–18
+## v0.4.34–v0.4.48 • April 12–18, 2026
 * **Corrected Values Audit**
   * All display paths use corrected temp, humidity, wind, pressure, dew point
   * Forecast temperatures corrected for today and tomorrow

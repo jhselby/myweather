@@ -4848,7 +4848,7 @@
         'Hair day': { tab: 'hyperlocal', card: 'hair_day' },
         'Birds': { tab: 'hyperlocal', card: 'birds' },
       };
-      var allBriefRows = document.querySelectorAll('#briefTodayRows .brief-row, #briefLifestyleSection .brief-row');
+      var allBriefRows = document.querySelectorAll('#briefTodayRows .brief-row, #briefAlmanacSection .brief-row, #briefLifestyleSection .brief-row, #briefWatchSection .brief-row');
       allBriefRows.forEach(function(row) {
         var labelEl = row.querySelector('.brief-row-label');
         if (!labelEl) return;
