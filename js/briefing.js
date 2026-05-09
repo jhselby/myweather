@@ -76,7 +76,7 @@
 
     // Sky condition
     const skyCode = cur.weather_code ?? 0;
-    const skyDesc = cur.condition_override || cur.weather_description || "";
+    const skyDesc = cur.weather_description || cur.condition_override || "";
 
     let skyState = "clear";
     if (skyCode >= 95) skyState = "rain"; // thunderstorm
