@@ -77,8 +77,8 @@
             <div class="brief-stat-label">high</div>
           </div>
           <div class="brief-stat">
-            <div class="brief-stat-value" id="briefRain">0<span class="unit">"</span></div>
-            <div class="brief-stat-label">rain · next 48h</div>
+            <div class="brief-stat-value brief-stat-text" id="briefConditions" style="font-size:clamp(0.85rem,3.5vw,1.3rem);line-height:1.2;">--</div>
+            <div class="brief-stat-label" id="briefConditionsLabel">sky</div>
           </div>
         </div>
         <div id="briefWatchSection"></div>
@@ -1207,7 +1207,7 @@
 
   </div>
   <script src="js/briefing.js?v=60fb7a35"></script>
-  <script src="js/app-main.js?v=adf7773c"></script>
+  <script src="js/app-main.js?v=e0303c3d"></script>
   <script src="js/changelog_loader.js?v=e42dea8a"></script>
   
   <script>
@@ -1332,7 +1332,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.84</span>
+            <span class="version-pill" id="appVersion">v0.5.85</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->

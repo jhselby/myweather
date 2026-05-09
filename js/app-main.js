@@ -4669,22 +4669,13 @@
       if (sn) sn.innerHTML = (b.stats.now ?? '--') + '<span class="unit">°</span>';
       const sh = document.getElementById('briefTempHigh');
       if (sh) sh.innerHTML = (b.stats.high ?? '--') + '<span class="unit">°</span>';
-      const sr = document.getElementById('briefRain');
-      if (sr) {
-        const ri = b.stats.rainInches;
-        const ra = b.stats.rainAmount;
-        const rl = document.querySelector('#briefRain + .brief-stat-label');
-        const rc = b.stats.rainContext;
-        if (ra === 0 && (!rc || rc === 'none')) {
-          sr.classList.add('brief-stat-text'); sr.innerHTML = 'No rain';
-          if (rl) rl.textContent = 'next 48h';
-        } else if (ri === 0) {
-          sr.classList.add('brief-stat-text'); sr.innerHTML = 'Trace';
-          if (rl) rl.textContent = 'rain \u00b7 next 48h';
-        } else {
-          sr.classList.remove('brief-stat-text'); sr.innerHTML = ri + '<span class="unit">"</span>';
-          if (rl) rl.textContent = 'rain \u00b7 next 48h';
-        }
+      const sc = document.getElementById('briefConditions');
+      const scl = document.getElementById('briefConditionsLabel');
+      if (sc) {
+        const raw = cur.condition_override || cur.weather_description || '--';
+        const parts = raw.split(/,\s*|(?<=\S)\s+and\s+/i);
+        sc.textContent = parts[0];
+        if (scl) scl.textContent = parts[1] ? parts[1].toLowerCase() : 'sky';
       }
       // Inject wind impact score into briefing Wind row
       const hyp = data.hyperlocal || {};
