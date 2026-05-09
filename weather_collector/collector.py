@@ -136,7 +136,7 @@ def _update_obs_temp_log(corrected_temp):
 
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
-                       kbos_data, kbvy_data, buoy_data, forecast_data, alert_data,
+                       kbos_data, kbvy_data, buoy_data, alert_data,
                        sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None, pirate_data=None, birds_data=None, daily_temps_data=None):
     """
     Build the complete weather data structure from all sources.
@@ -759,7 +759,7 @@ def main():
     weather_data = build_weather_data(
         current_data, hourly_data, daily_data,
         pws_data, tide_data, kbos_data, kbvy_data, buoy_data,
-        forecast_data, alert_data, sources,
+        alert_data, sources,
         wu_data=wu_data,
         frost_log=frost_log,
         salem_water_temp=salem_water_temp,
