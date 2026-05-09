@@ -229,6 +229,14 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
                 pass  # Keep existing numeric value from Open-Meteo
         weather_data["current"]["condition_source"] = f"{max_gust_entry['source']} observed"
 
+    # Direction fallback: if GFS failed and no candidate had direction, pull from KBVY directly
+    if weather_data["current"].get("wind_direction") is None:
+        if kbvy_data and kbvy_data.get("wind_dir") is not None:
+            try:
+                weather_data["current"]["wind_direction"] = float(kbvy_data["wind_dir"])
+            except (ValueError, TypeError):
+                pass
+
     # Hourly forecast
     if hourly_data:
         hourly = hourly_data.get("hourly", {})
