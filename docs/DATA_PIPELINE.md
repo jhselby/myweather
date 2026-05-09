@@ -162,18 +162,11 @@ bias_humidity = wu_avg_humidity - model_humidity
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** NO correction to main hourly arrays  
-**Storage:** `weather_data["hourly"]["humidity"]` contains raw HRRR model data
+**Backend:** `corrected_humidity` array built in `collector.py` immediately after `build_hyperlocal_data`  
+**Storage:** `weather_data["hourly"]["corrected_humidity"]` contains bias-corrected values; raw `weather_data["hourly"]["humidity"]` preserved as fallback
 
-**Frontend Application:** NO direct correction  
-**Exception:** Humidity bias IS used for corrected wet bulb calculation (see Wet Bulb section)
-
-**Location of bias application:** `weather_collector/processors/precip_surface.py` lines 139-147
-```python
-# Applied only for wet bulb calculation, not stored in main humidity array
-corrected_hourly_humidity = hourly_humidity[i] + humidity_bias
-corrected_wet_bulb = calculate_wet_bulb(hourly_temp[i], corrected_hourly_humidity)
-```
+**Frontend Application:** YES — all display paths prefer corrected array  
+**Pattern:** `hourly.corrected_humidity || hourly.humidity` used in app-main.js (line 1658) and `hyp.corrected_humidity ?? cur.humidity` for current hour
 
 ---
 
@@ -860,7 +853,7 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 | Variable | Current Hour | Forecast (1-48h) | Method | Decay |
 |----------|-------------|------------------|--------|-------|
 | **Temperature** | ✅ Corrected | ✅ Bias applied (frontend) | Weighted bias | None (flat) |
-| **Humidity** | ✅ Corrected | ❌ Raw model | Replacement | N/A |
+| **Humidity** | ✅ Corrected | ✅ corrected_humidity array used by frontend | Replacement | N/A |
 | **Pressure** | ✅ Best source | ❌ Raw model | Selection | N/A |
 | **Wind Speed** | ✅ Max-selected (model+KBVY+WU) | ✅ Blended (backend) | Independent max-select | 24h linear |
 | **Wind Gusts** | ✅ Max-selected (model+KBVY+WU) | ✅ Blended (backend) | Independent max-select | 24h linear |

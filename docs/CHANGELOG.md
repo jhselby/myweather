@@ -1,6 +1,7 @@
-## v0.5.68–v0.5.71 • May 9, 2026
+## v0.5.68–v0.5.72 • May 9, 2026
 - Wet bulb and precip type classification (rain/snow/sleet/freezing rain) now fully corrected: both wet_bulb.py and precip_surface.py use corrected_temperature and corrected_humidity arrays throughout
 - Updated DATA_PIPELINE.md: corrected stale placeholder/bug notes for wind speed, wet bulb, and feels-like; removed duplicate AI Briefing section
+- build.py no longer creates index.html.backup on each run; deleted stale backup file
 - Briefing click-throughs: Almanac rows (Sun, Tide, Moon) and Watch For rows now tap through to their detail cards
 - Fixed fog+temperature double-period punctuation in forecast text
 

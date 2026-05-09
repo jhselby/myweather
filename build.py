@@ -12,7 +12,6 @@ What it does:
     1. Reads all JS/CSS files referenced in index.html
     2. Calculates SHA-256 hash of each file's contents
     3. Rewrites index.html with ?v=HASH appended to each asset
-    4. Creates index.html.backup before modifying (just in case)
     
 Example:
     <script src="js/app-main.js"></script>
@@ -201,12 +200,6 @@ def main():
     if not changes:
         print("\n⚠️  No changes made - all assets already up to date or missing")
         return 0
-    
-    # Backup original
-    backup_path = index_path.with_suffix('.html.backup')
-    with open(backup_path, 'w', encoding='utf-8') as f:
-        f.write(html_content)
-    print(f"\n💾 Backup created: {backup_path}")
     
     # Write modified HTML
     with open(index_path, 'w', encoding='utf-8') as f:
