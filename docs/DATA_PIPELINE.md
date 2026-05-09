@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.67
-**Last Updated:** May 8, 2026  
+**Version:** 0.5.71
+**Last Updated:** May 9, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
@@ -289,11 +289,11 @@ weather_data["current"]["wind_direction"] = max_wind['direction']
 - `current["condition_source"]` - e.g., "KBVY observed" or "WU_STATION123 observed"
 
 **Hyperlocal Data (for reference only):**
-- **Location:** `weather_collector/processors/hyperlocal.py` line 150
-- `model_wind_speed` - Raw model value
+- **Location:** `weather_collector/processors/hyperlocal.py` lines 166-178
+- `model_wind_speed` - Raw model value (saved before max-selection)
 - `wu_wind_speed` - WU average (if available)
-- `corrected_wind_speed` - Currently just copies model_wind_speed (placeholder)
-- **NOTE:** This is a BUG - hyperlocal doesn't use the max-selected wind from collector
+- `corrected_wind_speed` - Max-selected value from collector (reads `current["wind_speed"]` which has already been overwritten by max-selection)
+- `bias_wind_speed` - corrected - model (for Smart Corrections display)
 
 ---
 
@@ -399,13 +399,12 @@ corrected_gust = model_gust + bias_gust  # Same as wu_avg_gust
 - Minimum 3 stations with gust data
 - Stations within 1.5 miles
 
-**Bug/Constraint:** Lines 192-195
+**Constraint:** Gusts enforced >= sustained wind
 ```python
-# Gusts must be >= sustained wind
 if corrected_gust < corrected_wind_speed:
     corrected_gust = corrected_wind_speed
 ```
-**Problem:** `corrected_wind_speed` is just model copy (not the max-selected observed), so this constraint may use wrong value
+`corrected_wind_speed` is the max-selected observed value (not a model copy), so this constraint is valid.
 
 **Data Stored (in `weather_data["hyperlocal"]`):**
 - `model_wind_gusts` - Raw model value
@@ -499,39 +498,34 @@ corrected_wet_bulb_f = tw × 9/5 + 32
 - `weather_data["derived"]["corrected_wet_bulb"]` - Current hour only (°F)
 - Uses corrected temp + corrected humidity inputs
 
-**Also calculated (for reference):**
-- **Location:** `weather_collector/processors/wet_bulb.py` lines 39-69
-- `weather_data["current"]["wet_bulb"]` - From raw model temp + humidity
-- `weather_data["hourly"]["wet_bulb"]` - From raw model temps + humidity (all hours)
+**Also calculated:**
+- **Location:** `weather_collector/processors/wet_bulb.py`
+- `weather_data["current"]["wet_bulb"]` - From hyperlocal corrected temp + corrected humidity
+- `weather_data["hourly"]["wet_bulb"]` - From corrected_temperature + corrected_humidity arrays (all hours)
 
 ---
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** YES - humidity bias applied, temp NOT corrected  
-**Location:** `weather_collector/processors/precip_surface.py` lines 139-147
+**Backend:** YES - fully corrected (both temp and humidity)  
+**Location:** `weather_collector/processors/precip_surface.py`
 
 **Formula:**
 ```python
-# For each forecast hour:
-hourly_temp = hourly["temperature"][i]  # RAW MODEL (no temp correction)
-hourly_humidity = hourly["humidity"][i] # RAW MODEL
-humidity_bias = hyp.bias_humidity       # From current hour
+# Use bias-corrected arrays (built earlier in collector.py):
+hourly_temps = hourly["corrected_temperature"]   # Bias-corrected temp array
+hourly_humidity = hourly["corrected_humidity"]   # Bias-corrected humidity array
 
-# Apply humidity correction only:
-corrected_humidity = hourly_humidity + humidity_bias
-corrected_humidity = clamp(0, 100, corrected_humidity)
-
-# Calculate wet bulb from raw temp + corrected humidity:
-corrected_wet_bulb = calculate_wet_bulb(hourly_temp, corrected_humidity)
+# Calculate corrected wet bulb directly:
+corrected_wet_bulb = calculate_wet_bulb(temp, humidity)
 ```
 
 **Storage:** `weather_data["hourly"]["corrected_wet_bulb"]`
 
-**Note:** This is a PARTIAL correction:
-- ✅ Uses corrected humidity (bias applied)
-- ❌ Uses raw model temperature (no bias applied)
-- This differs from current hour which uses BOTH corrected temp and humidity
+**Correction status:**
+- ✅ Uses corrected temperature (corrected_temperature array, v0.5.71)
+- ✅ Uses corrected humidity (corrected_humidity array, v0.5.71)
+- Consistent with current hour correction
 
 **Daily High/Low (Corrected):**
 
@@ -559,10 +553,10 @@ today_low  = min(corrected temps for today date)
 
 **Fetch parallelization:** Open-Meteo calls run sequentially (rate-limit sensitive). All other fetchers (NWS, WU, buoy, tides, KBOS, KBVY, eBird, Pirate Weather, GoMOFS water temp) run in parallel via `concurrent.futures.ThreadPoolExecutor`.
 
-**Why temperature not corrected in forecast:**
-- Temperature bias is applied in FRONTEND (js/app-main.js), not backend
-- Wet bulb is calculated in BACKEND, so it can't access frontend temp corrections
-- Only humidity bias is available in backend for correction
+**Why corrected arrays are used for wet bulb:**
+- `corrected_temperature` and `corrected_humidity` are built in `collector.py` immediately after `build_hyperlocal_data` runs
+- Both wet_bulb.py and precip_surface.py run after those arrays exist, so they can use them directly
+- The frontend still applies bias to the raw `temperature` array for chart display, but the backend now has fully corrected values for derived calculations
 
 ---
 
@@ -767,18 +761,18 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 │  • corrected_wind_gusts = model + weighted_bias             │
 │                                                              │
 │ WIND SPEED:                                                  │
-│  • corrected_wind_speed = model (PLACEHOLDER - no actual    │
-│    correction, should use max-selected from collector)      │
+│  • corrected_wind_speed = max-selected (reads current[      │
+│    "wind_speed"] which collector already overwrote)         │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
 │       WET BULB PROCESSOR (wet_bulb.py)                       │
 ├─────────────────────────────────────────────────────────────┤
 │ Creates weather_data["current"]["wet_bulb"]:                 │
-│  • From RAW model temp + humidity                           │
+│  • From hyperlocal corrected_temp + corrected_humidity      │
 │                                                              │
 │ Creates weather_data["hourly"]["wet_bulb"]:                  │
-│  • From RAW model temps + humidity (all hours)              │
+│  • From corrected_temperature + corrected_humidity arrays   │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -788,9 +782,8 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 │  • From CORRECTED temp + CORRECTED humidity                 │
 │                                                              │
 │ Creates weather_data["hourly"]["corrected_wet_bulb"]:        │
-│  • From RAW temp + CORRECTED humidity (humidity bias only)  │
-│  • NOTE: Temp not corrected in forecast (bias applied in    │
-│    frontend, not available here)                            │
+│  • From corrected_temperature + corrected_humidity arrays   │
+│  • Fully corrected (both temp and humidity, v0.5.71)        │
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
@@ -806,7 +799,7 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 │  • Temperature: hyp.corrected_temp                          │
 │  • Humidity: hyp.corrected_humidity                         │
 │  • Pressure: hyp.corrected_pressure_in                      │
-│  • Wind speed: hyp.corrected_wind_speed (placeholder)       │
+│  • Wind speed: hyp.corrected_wind_speed (max-selected)      │
 │  • Wind gusts: hyp.corrected_wind_gusts (weighted avg)      │
 │  • Feels like: CALCULATE from corrected inputs              │
 │  • Wet bulb: der.corrected_wet_bulb                         │
@@ -816,8 +809,8 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 │    (bias applied here in frontend)                          │
 │  • Wind speed: hourly.wind_speed (already blended)          │
 │  • Wind gusts: hourly.wind_gusts (already blended)          │
-│  • Wet bulb: hourly.corrected_wet_bulb (partial correction) │
-│  • Feels like: hourly.apparent_temperature (NO correction)  │
+│  • Wet bulb: hourly.corrected_wet_bulb (fully corrected)    │
+│  • Feels like: hourly.corrected_apparent_temperature        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -851,15 +844,14 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 - **Frontend:** Displays max-selected values with model comparison in Smart Corrections table
 - **Result:** Both sustained and gusts always use highest available reading across all sources
 
-### Partial Correction: Wet Bulb Forecast
-- **Uses:** Corrected humidity (bias applied in backend)
-- **Doesn't use:** Corrected temperature (bias applied in frontend, not available)
-- **Result:** Forecast wet bulb is only partially corrected
+### Full Correction: Wet Bulb Forecast (v0.5.71)
+- **Uses:** corrected_temperature array (temp bias pre-applied in backend)
+- **Uses:** corrected_humidity array (humidity bias pre-applied in backend)
+- **Result:** Forecast wet bulb fully corrected, consistent with current hour
 
-### No Correction: Feels-Like Forecast
-- **Current hour:** Fully corrected (temp, wind, humidity)
-- **Forecast hours:** No correction (uses raw model apparent_temperature)
-- **Could improve:** Apply temp bias + humidity bias to calculate corrected forecast feels-like
+### Full Correction: Feels-Like Forecast
+- **Current hour:** Fully corrected (temp, wind, humidity via Steadman radiation formula)
+- **Forecast hours:** Fully corrected via hourly.corrected_apparent_temperature (computed in collector since v0.5.43)
 
 ---
 
@@ -872,8 +864,8 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 | **Pressure** | ✅ Best source | ❌ Raw model | Selection | N/A |
 | **Wind Speed** | ✅ Max-selected (model+KBVY+WU) | ✅ Blended (backend) | Independent max-select | 24h linear |
 | **Wind Gusts** | ✅ Max-selected (model+KBVY+WU) | ✅ Blended (backend) | Independent max-select | 24h linear |
-| **Wet Bulb** | ✅ Fully corrected | ⚠️ Partial (humidity only) | Calculated | N/A |
-| **Feels Like** | ✅ Fully corrected | ❌ Raw model | Calculated | N/A |
+| **Wet Bulb** | ✅ Fully corrected | ✅ Fully corrected (v0.5.71) | Calculated | N/A |
+| **Feels Like** | ✅ Fully corrected | ✅ Fully corrected (v0.5.43) | Calculated | N/A |
 
 **Legend:**
 - ✅ Fully corrected
@@ -907,20 +899,11 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 **Impact:** Would improve dewpoint, wet bulb, feels-like forecasts
 **Complexity:** Low - just apply bias in frontend like temperature
 
-### Improvement #3: Wet Bulb Forecast Full Correction
-**Current:** Uses raw temp + corrected humidity
-**Potential:** Apply temp bias in wet bulb calculation
-**Challenge:** Temp bias currently applied in frontend, wet bulb calculated in backend
-**Solutions:**
-  - Option A: Move temp bias application to backend
-  - Option B: Recalculate wet bulb in frontend with both biases
-**Complexity:** Medium-High
+### Improvement #3: Wet Bulb Forecast Full Correction — RESOLVED (v0.5.71)
+**Fix:** Both wet_bulb.py and precip_surface.py now read corrected_temperature and corrected_humidity arrays instead of raw model arrays. corrected_temperature is built in collector.py immediately after build_hyperlocal_data, so it's available to all downstream processors.
 
-### Improvement #4: Feels-Like Forecast Correction
-**Current:** Uses raw model apparent_temperature
-**Potential:** Calculate corrected feels-like for forecast hours
-**Method:** Apply temp + humidity biases, use blended wind
-**Complexity:** Low - just extend current calculation to forecast hours
+### Improvement #4: Feels-Like Forecast Correction — RESOLVED (v0.5.43)
+**Fix:** collector.py computes corrected_apparent_temperature for all 48h using corrected_temperature, corrected_humidity, and blended wind. Frontend reads hourly.corrected_apparent_temperature directly.
 
 ---
 
@@ -972,29 +955,6 @@ Check this document first to understand where data comes from and what correctio
 **END OF DOCUMENT**
 
 
----
-
-## AI Briefing (Gemini)
-
-**Purpose:** Generate a concise, human-readable daily briefing (headline + subheadline) using corrected and derived weather data.
-
-### Inputs (Collector → Gemini)
-
-- Current (corrected where available):
-  - Temperature (corrected_temp)
-  - Humidity (corrected_humidity)
-  - Wind speed (corrected_wind_speed)
-  - Wind gusts (corrected_wind_gusts)
-  - Wind direction
-- Daily:
-  - High temperature (derived.today_high preferred, fallback to model daily)
-  - Low temperature (model fallback)
-- Derived:
-  - Wind impact label only (Calm, Breezy, etc.) — numeric score intentionally excluded to prevent Gemini from echoing raw numbers
-  - Fog probability + label
-  - Sea breeze state + reasoning
-- Forecast:
-  - Rain timing (next 48h, probability ≥40
 ---
 
 ## AI Briefing (Gemini)

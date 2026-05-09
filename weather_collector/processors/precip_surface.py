@@ -115,27 +115,18 @@ def add_corrected_precip_types(weather_data, hyperlocal_data):
         # Current precip type from corrected wet bulb only (no 850mb needed for current)
         current_precip_type = classify_surface_precip_type(corrected_wet_bulb)
         weather_data["derived"]["surface_precip_type"] = current_precip_type
-    # FORECAST: Apply humidity bias correction to hourly forecast, then calculate corrected wet bulb
+    # FORECAST: Use bias-corrected hourly arrays if available
     hourly = weather_data.get("hourly", {})
-    hourly_temps = hourly.get("temperature", [])
-    hourly_humidity = hourly.get("humidity", [])
+    hourly_temps = hourly.get("corrected_temperature") or hourly.get("temperature", [])
+    hourly_humidity = hourly.get("corrected_humidity") or hourly.get("humidity", [])
     hourly_850mb = hourly.get("temperature_850hPa", [])
-    
-    # Get humidity bias from hyperlocal
-    humidity_bias = hyperlocal_data.get("bias_humidity", 0)
-    
-    
+
     corrected_wet_bulbs = []
     surface_precip_types = []
-    
+
     for i, (temp, humidity, temp_850) in enumerate(zip(hourly_temps, hourly_humidity, hourly_850mb)):
         if temp is not None and humidity is not None:
-            # Apply humidity correction to forecast
-            corrected_hourly_humidity = humidity + humidity_bias
-            corrected_hourly_humidity = max(0, min(100, corrected_hourly_humidity))  # Clamp 0-100%
-            
-            # Calculate corrected wet bulb
-            corrected_wb = calculate_wet_bulb(temp, corrected_hourly_humidity)
+            corrected_wb = calculate_wet_bulb(temp, humidity)
             corrected_wet_bulbs.append(corrected_wb)
             
             # Classify using hybrid method (surface wet bulb + 850mb)
