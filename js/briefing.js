@@ -773,14 +773,30 @@
       });
     }
 
-    // 2. Storm flags
+    // 2. Storm flags — derive title from the most specific flag, show rest as detail
     const stormFlags = window.__stormFlags || [];
     if (stormFlags.length >= 2) {
-      const severity = stormFlags.length >= 3 ? 'Storm conditions developing' : 'Active weather developing';
+      const titlePriority = [
+        f => f.includes("Freezing rain") && f,
+        f => f.includes("Snow") && f,
+        f => f.includes("Heavy rain") && f,
+        f => f.includes("Mixed precip") && f,
+        f => f.includes("Rain likely") && f,
+        f => f.includes("gusts") && f,
+        f => f.includes("system approaching") && f,
+        f => f.includes("Pressure") && f,
+      ];
+      let title = null;
+      for (const test of titlePriority) {
+        title = stormFlags.map(test).find(Boolean) || null;
+        if (title) break;
+      }
+      if (!title) title = stormFlags[0];
+      const detail = stormFlags.filter(f => f !== title).join(" · ");
       rows.push({
         label: "Storm",
-        value: severity,
-        detail: stormFlags.join(" · "),
+        value: title,
+        detail,
         color: "orange",
         isAlert: true,
       });

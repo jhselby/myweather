@@ -5585,21 +5585,23 @@ function loadWeatherData() {
         // Storm mode — triggers when 2+ alarm conditions align
         // Integrates into the consolidated alert summary bar
         const stormFlags = [];
-        if (der.pressure_alarm === "falling") stormFlags.push("Pressure falling fast");
-        if (der.trough_signal === "Approaching") stormFlags.push("850mb trough approaching");
+        if (der.pressure_alarm === "falling") stormFlags.push("Pressure dropping");
+        if (der.trough_signal === "Approaching") stormFlags.push("Weather system approaching");
         const gustWorry = (data.wind_risk?.gust?.level ?? "");
-        if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`Gust wind impact: ${gustWorry}`);
+        if (["High","Extreme"].includes(gustWorry)) stormFlags.push(`${gustWorry} wind gusts expected`);
         const pop0 = (data.daily?.precipitation_probability_max?.[0] ?? 0);
         if (pop0 >= 60 && der.col_precip_type) {
-          const surfType = der.surface_precip_type || "unknown";
-          if (der.col_precip_type !== "Rain" || surfType !== "rain")
-            stormFlags.push(`Precip likely — surface: ${surfType}, column: ${der.col_precip_type}`);
+          const surfType = der.surface_precip_type || "rain";
+          const typeMap = { rain: "Rain", snow: "Snow", "freezing rain": "Freezing rain", sleet: "Sleet", mixed: "Mixed precip" };
+          const surfLabel = typeMap[surfType] || surfType;
+          const colLabel = typeMap[(der.col_precip_type || "").toLowerCase()] || der.col_precip_type;
+          if (surfType !== "rain" || (der.col_precip_type || "").toLowerCase() !== "rain")
+            stormFlags.push(`${surfLabel} likely${colLabel && colLabel !== surfLabel ? " (mixed aloft)" : ""}`);
         }
-        
-        // Add rain intensity flag for moderate/heavy rain
+
         const dailyPrecip = (data.daily?.precipitation_sum?.[0] ?? 0);
         if (pop0 >= 60 && dailyPrecip >= 0.5)
-          stormFlags.push(`Moderate/heavy rain expected (${dailyPrecip.toFixed(1)}")`);
+          stormFlags.push(`Heavy rain expected — ${dailyPrecip.toFixed(1)}"`);
 
         // Store storm flags globally and refresh alert badge
         window.__stormFlags = stormFlags;
