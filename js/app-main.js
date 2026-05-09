@@ -5003,6 +5003,21 @@ function loadWeatherData() {
         const wu = data.wu_stations || {};
         const der = data.derived || {};
         
+        // Bias confidence indicator
+        const confEl = document.getElementById("tempConfidence");
+        if (confEl) {
+          const conf = hyp.confidence;
+          const bias = hyp.weighted_bias;
+          if ((conf === "Low" || conf === "Moderate") && bias != null) {
+            const sign = bias >= 0 ? "+" : "";
+            confEl.textContent = `· ${sign}${bias.toFixed(1)}° correction${conf === "Low" ? " — stations disagree" : ""}`;
+            confEl.style.color = conf === "Low" ? "rgba(239,68,68,0.85)" : "rgba(234,179,8,0.85)";
+            confEl.style.display = "";
+          } else {
+            confEl.style.display = "none";
+          }
+        }
+
         // Calculate corrected Feels Like from corrected temp + wind
         const correctedFeelsLike = der.corrected_feels_like ?? cur.apparent_temperature ?? 0;
         
