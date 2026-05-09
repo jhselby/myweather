@@ -1626,7 +1626,7 @@
       if (settingsDot) {
         const genAt = window.__lastWeatherData?.generated_at;
         const staleMinutes = genAt ? (Date.now() - new Date(genAt).getTime()) / 60000 : 999;
-        const isStale = staleMinutes > 20;
+        const isStale = staleMinutes > 25;
         settingsDot.style.display = (isStale || anyError) ? "block" : "none";
       }
     }

@@ -195,6 +195,8 @@ def _build_weather_summary(weather_data):
 # Cache: last successful headline stored in GCS
 _BRIEFING_CACHE_PATH = "briefing_cache.json"
 _BRIEFING_INTERVAL_MINUTES = 30
+# In-memory guard: persists across invocations on the same instance (max-instances=1)
+_last_gemini_call_time = None
 
 
 def _load_cached_briefing():
@@ -231,10 +233,20 @@ def _save_cached_briefing(briefing):
 
 def _should_call_gemini():
     """Only call Gemini every 30 minutes to stay under free tier quota."""
+    from datetime import datetime
+    import pytz
+    eastern = pytz.timezone("America/New_York")
+    now = datetime.now(eastern)
+
+    # In-memory fast path — survives GCS failures; reliable with max-instances=1
+    if _last_gemini_call_time is not None:
+        age_min = (now - _last_gemini_call_time).total_seconds() / 60
+        if age_min < _BRIEFING_INTERVAL_MINUTES:
+            print(f"  ⏭ Briefing: in-memory guard {age_min:.0f}m, skipping Gemini")
+            return False, None
+
     try:
         from google.cloud import storage as gcs
-        from datetime import datetime
-        import pytz
         client = gcs.Client()
         bucket = client.bucket("myweather-data")
         blob = bucket.blob(_BRIEFING_CACHE_PATH)
@@ -242,9 +254,7 @@ def _should_call_gemini():
             data = json.loads(blob.download_as_text())
             cached_at = data.get("cached_at")
             if cached_at:
-                eastern = pytz.timezone("America/New_York")
                 cached_time = datetime.fromisoformat(cached_at)
-                now = datetime.now(eastern)
                 age_min = (now - cached_time).total_seconds() / 60
                 if age_min < _BRIEFING_INTERVAL_MINUTES:
                     print(f"  ⏭ Briefing: cached {age_min:.0f}m ago, skipping Gemini (interval: {_BRIEFING_INTERVAL_MINUTES}m)")
@@ -264,10 +274,15 @@ def generate_briefing(weather_data):
     """
     import time
 
+    global _last_gemini_call_time
+
     # Check if we should call Gemini or use cache
     should_call, cached = _should_call_gemini()
-    if not should_call and cached:
-        return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
+    if not should_call:
+        if cached is None:
+            cached = _load_cached_briefing()
+        if cached and cached.get("headline"):
+            return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
 
     summary = _build_weather_summary(weather_data)
 
@@ -346,6 +361,7 @@ def generate_briefing(weather_data):
                 cached_at = datetime.now(eastern).isoformat()
                 briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at}
                 _save_cached_briefing(briefing)
+                _last_gemini_call_time = datetime.now(eastern)
                 return briefing
             else:
                 print("  ⚠ Briefing: empty headline from Gemini")

@@ -1,3 +1,10 @@
+## v0.5.76 • May 9, 2026
+- Gemini briefing falls back to gemini-1.5-flash-8b on 429; both models configurable via env vars
+- Briefing interval check now has in-memory guard (survives GCS failures; max-instances=1)
+- Stale data indicator threshold raised from 20 to 25 minutes (fires only after 2+ missed collector runs)
+- Fixed collector crash: removed leftover `forecast_data` parameter from build_weather_data (dead code from NWS removal)
+- Fixed collector crash: missing WIND_EXPOSURE_TABLE import (introduced in v0.5.75)
+
 ## v0.5.68–v0.5.75 • May 9, 2026
 - Wet bulb and precip type classification (rain/snow/sleet/freezing rain) now fully corrected: both wet_bulb.py and precip_surface.py use corrected_temperature and corrected_humidity arrays throughout
 - Updated DATA_PIPELINE.md: corrected stale placeholder/bug notes for wind speed, wet bulb, and feels-like; removed duplicate AI Briefing section
