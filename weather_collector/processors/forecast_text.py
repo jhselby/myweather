@@ -372,12 +372,12 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     if is_daytime:
         if current_day_offset <= 2 and temp_position > len(period_hours) * 0.6 and temp_hour >= 14:
             temp_timing = f" around {format_temp_time(temp_hour)}"
-        main_sent += f", with a high near {round(temp)}{temp_timing}."
+        main_sent = main_sent.rstrip(".") + f", with a high near {round(temp)}{temp_timing}."
     else:
         if temp_position < len(period_hours) * 0.3:
             temp_timing = f" in the evening"
         # "toward morning" is almost always true for lows — only mention evening
-        main_sent += f", with a low around {round(temp)}{temp_timing}."
+        main_sent = main_sent.rstrip(".") + f", with a low around {round(temp)}{temp_timing}."
     
     narrative_parts.append(main_sent)
     
