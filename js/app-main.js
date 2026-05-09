@@ -4675,7 +4675,7 @@
       const sc = document.getElementById('briefConditions');
       const scl = document.getElementById('briefConditionsLabel');
       if (sc) {
-        const raw = cur.weather_description || cur.condition_override || '--';
+        const raw = cur.condition_override || cur.weather_description || '--';
         const parts = raw.split(/,\s*|(?<=\S)\s+and\s+/i);
         sc.textContent = parts[0];
         if (scl) scl.textContent = parts[1] ? parts[1].toLowerCase() : 'sky';
