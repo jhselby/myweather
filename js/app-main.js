@@ -6354,6 +6354,8 @@ function updatePrecipBadge(data) {
         else if (ct === 'sleet') pwDesc = 'Sleet';
         else pwDesc = ci < 0.01 ? 'Drizzle' : ci < 0.10 ? 'Light Rain' : ci < 0.30 ? 'Moderate Rain' : 'Heavy Rain';
         condEl.innerHTML = `${condEl.dataset.emoji || ''} ${pwDesc}`;
+        const skyColEl = document.getElementById('skyConditionCollapsed');
+        if (skyColEl) skyColEl.textContent = pwDesc;
       }
     }
   }
