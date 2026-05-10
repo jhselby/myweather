@@ -29,7 +29,7 @@
 .brief-rule {
   border: none;
   border-top: 1px solid var(--card-border, rgba(255,255,255,0.08));
-  margin: 0 0 14px;
+  margin: 0 0 8px;
 }
 
 .brief-section-label {
@@ -56,21 +56,21 @@
   font-size: 1rem;
   line-height: 1.55;
   color: var(--text-secondary, rgba(255,255,255,0.7));
-  margin: 0 0 12px;
+  margin: 0 0 6px;
 }
 
 .brief-stats {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 0;
-  margin: 0 0 14px;
+  margin: 0 0 8px;
   border-top: 1px solid var(--card-border, rgba(255,255,255,0.08));
   border-bottom: 1px solid var(--card-border, rgba(255,255,255,0.08));
 }
 
 .brief-stat {
   text-align: center;
-  padding: 14px 0;
+  padding: 10px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
