@@ -76,7 +76,20 @@
 
     // Sky condition
     const skyCode = cur.weather_code ?? 0;
-    const skyDesc = cur.weather_description || cur.condition_override || "";
+    let skyDesc = cur.weather_description || cur.condition_override || "";
+    if (!/rain|snow|drizzle|sleet|shower/i.test(skyDesc)) {
+      const mn = window.__precipMinutely || [];
+      if (mn.length) {
+        const mnStale = Math.round((Date.now()/1000 - (mn[0]?.time ?? Date.now()/1000)) / 60);
+        const mnPt = mn[Math.min(mnStale, mn.length - 1)];
+        if (mnPt && mnPt.precip_intensity > 0.001 && (mnPt.precip_probability ?? 0) >= 0.3) {
+          const ci = mnPt.precip_intensity, ct = mnPt.precip_type || 'rain';
+          if (ct === 'snow') skyDesc = ci < 0.10 ? 'Light Snow' : ci < 0.30 ? 'Snow' : 'Heavy Snow';
+          else if (ct === 'sleet') skyDesc = 'Sleet';
+          else skyDesc = ci < 0.01 ? 'Drizzle' : ci < 0.10 ? 'Light Rain' : ci < 0.30 ? 'Moderate Rain' : 'Heavy Rain';
+        }
+      }
+    }
 
     let skyState = "clear";
     if (skyCode >= 95) skyState = "rain"; // thunderstorm
