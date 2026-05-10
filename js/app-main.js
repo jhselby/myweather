@@ -4676,7 +4676,24 @@
       const scl = document.getElementById('briefConditionsLabel');
       if (sc) {
         const raw = cur.weather_description || cur.condition_override || '--';
-        const parts = raw.split(/,\s*|(?<=\S)\s+and\s+/i);
+        // Override with Pirate Weather radar if it shows current precip and HRRR doesn't
+        let displayCondition = raw;
+        if (!/rain|snow|drizzle|sleet|shower/i.test(raw)) {
+          const mn = window.__precipMinutely || [];
+          if (mn.length) {
+            const mnNow = Math.floor(Date.now() / 1000);
+            const mnStale = Math.round((mnNow - (mn[0]?.time ?? mnNow)) / 60);
+            const mnCur = mn[Math.min(mnStale, mn.length - 1)];
+            if (mnCur && mnCur.precip_intensity > 0.001 && (mnCur.precip_probability ?? 0) >= 0.3) {
+              const ci = mnCur.precip_intensity;
+              const ct = mnCur.precip_type || 'rain';
+              if (ct === 'snow') displayCondition = ci < 0.10 ? 'Light Snow' : ci < 0.30 ? 'Snow' : 'Heavy Snow';
+              else if (ct === 'sleet') displayCondition = 'Sleet';
+              else displayCondition = ci < 0.01 ? 'Drizzle' : ci < 0.10 ? 'Light Rain' : ci < 0.30 ? 'Moderate Rain' : 'Heavy Rain';
+            }
+          }
+        }
+        const parts = displayCondition.split(/,\s*|(?<=\S)\s+and\s+/i);
         sc.textContent = parts[0];
         if (scl) scl.textContent = parts[1] ? parts[1].toLowerCase() : 'sky';
         const fitSizes = ['2.4rem','2.0rem','1.7rem','1.4rem','1.15rem','0.95rem','0.82rem'];
@@ -4874,7 +4891,21 @@ function loadWeatherData() {
         const cur   = data.current || {};
         const code  = cur.weather_code;
         const emoji = cur.emoji || weatherEmoji[code] || "&#127777;&#65039;";
-        const desc  = cur.weather_description || cur.condition_override || weatherDesc[code] || "—";
+        let desc  = cur.weather_description || cur.condition_override || weatherDesc[code] || "—";
+        if (!/rain|snow|drizzle|sleet|shower/i.test(desc)) {
+          const mn2 = window.__precipMinutely || [];
+          if (mn2.length) {
+            const mn2Now = Math.floor(Date.now() / 1000);
+            const mn2Stale = Math.round((mn2Now - (mn2[0]?.time ?? mn2Now)) / 60);
+            const mn2Cur = mn2[Math.min(mn2Stale, mn2.length - 1)];
+            if (mn2Cur && mn2Cur.precip_intensity > 0.001 && (mn2Cur.precip_probability ?? 0) >= 0.3) {
+              const ci2 = mn2Cur.precip_intensity, ct2 = mn2Cur.precip_type || 'rain';
+              if (ct2 === 'snow') desc = ci2 < 0.10 ? 'Light Snow' : ci2 < 0.30 ? 'Snow' : 'Heavy Snow';
+              else if (ct2 === 'sleet') desc = 'Sleet';
+              else desc = ci2 < 0.01 ? 'Drizzle' : ci2 < 0.10 ? 'Light Rain' : ci2 < 0.30 ? 'Moderate Rain' : 'Heavy Rain';
+            }
+          }
+        }
         document.getElementById("currentTemp").innerHTML =
           `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
         const ctc = document.getElementById("currentTempCollapsed"); 
@@ -4932,7 +4963,9 @@ function loadWeatherData() {
           tenDayLowEl.textContent = der.today_low != null ? `${Math.round(der.today_low)}°` : `--°`;
         }
         const obsTag = cur.condition_source === "KBVY observed" ? " <span style='font-size:0.75rem;opacity:0.5;'>[obs]</span>" : "";
-        document.getElementById("condition").innerHTML = `${emoji} ${desc}${obsTag}`;
+        const condEl2 = document.getElementById("condition");
+        condEl2.innerHTML = `${emoji} ${desc}${obsTag}`;
+        condEl2.dataset.emoji = emoji;
         // Removed conditionCollapsed - sky condition now goes in Sky & Precip tile
         
         // Populate Sky & Precip tile preview - with day/night graphics and backgrounds
@@ -6307,7 +6340,23 @@ function updatePrecipBadge(data) {
   if (dot) dot.style.display = hasRain ? '' : 'none';
   window.__precipHasRain = hasRain;
   window.__precipMinutely = minutely;
-  if (hasRain && window.__lastWeatherData) renderBriefing(window.__lastWeatherData);
+  if (hasRain && window.__lastWeatherData) {
+    renderBriefing(window.__lastWeatherData);
+    // Also patch Sky & Precip card — it rendered before minutely arrived
+    const condEl = document.getElementById('condition');
+    if (condEl && !/rain|snow|drizzle|sleet|shower/i.test(condEl.textContent)) {
+      const stale = Math.round((Date.now()/1000 - (minutely[0]?.time ?? Date.now()/1000)) / 60);
+      const pt = minutely[Math.min(stale, minutely.length - 1)];
+      if (pt && pt.precip_intensity > 0.001 && (pt.precip_probability ?? 0) >= 0.3) {
+        const ci = pt.precip_intensity, ct = pt.precip_type || 'rain';
+        let pwDesc;
+        if (ct === 'snow') pwDesc = ci < 0.10 ? 'Light Snow' : ci < 0.30 ? 'Snow' : 'Heavy Snow';
+        else if (ct === 'sleet') pwDesc = 'Sleet';
+        else pwDesc = ci < 0.01 ? 'Drizzle' : ci < 0.10 ? 'Light Rain' : ci < 0.30 ? 'Moderate Rain' : 'Heavy Rain';
+        condEl.innerHTML = `${condEl.dataset.emoji || ''} ${pwDesc}`;
+      }
+    }
+  }
 }
 
 // === Precip Modal ===
