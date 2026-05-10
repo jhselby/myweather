@@ -1,3 +1,11 @@
+## v0.5.86–v0.5.99 • May 9–10, 2026
+- WeatherFlow Tempest integration: fetches 3 public stations within 0.4mi of Wyman Cove (Willow Rd, Driftwood Rd, Neptune Rd) via tempestwx.com web API
+- Tempest stations wired into hyperlocal temperature bias calculation and wind max-selection alongside WU stations
+- Tempest humidity preferred over WU aggregate for corrected_humidity (closer, fresher)
+- Corrections card now shows 27/32 stations (30 WU + 2 valid Tempest)
+- Fixed UnboundLocalError in build_weather_data: datetime local variable shadowed by conditional imports
+- Gemini fallback model updated from deprecated gemini-1.5-flash-8b to gemini-2.0-flash-lite
+
 ## v0.5.76–v0.5.85 • May 9, 2026
 - Gemini briefing falls back to gemini-1.5-flash-8b on 429; both models configurable via env vars
 - Briefing interval check now has in-memory guard (survives GCS failures; max-instances=1)

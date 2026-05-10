@@ -24,6 +24,7 @@ from .fetchers.nws_gridpoints import fetch_nws_gridpoints
 from .fetchers.wu import fetch_wu_stations
 from .fetchers.pirate_weather import fetch_pirate_weather
 from .fetchers.ebird import fetch_ebird
+from .fetchers.tempest import fetch_tempest
 from .fetchers.briefing_ai import generate_briefing
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
@@ -137,7 +138,7 @@ def _update_obs_temp_log(corrected_temp):
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
                        kbos_data, kbvy_data, buoy_data, alert_data,
-                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None, pirate_data=None, birds_data=None, daily_temps_data=None):
+                       sources, wu_data=None, frost_log=None, salem_water_temp=None, sunset_directional=None, nws_gridpoints=None, hourly_7day_data=None, pirate_data=None, birds_data=None, daily_temps_data=None, tempest_data=None):
     """
     Build the complete weather data structure from all sources.
     This is the main processing function that combines all fetched data.
@@ -210,6 +211,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
                     "gust": station["wind_gust_mph"],
                     "speed": station.get("wind_speed_mph", 0),
                     "direction": station.get("wind_direction")
+                })
+    if tempest_data:
+        for tb in tempest_data.get("stations", []):
+            if tb.get("valid") and tb.get("wind_gust_mph"):
+                wind_candidates.append({
+                    "source": f"Tempest_{tb['station_name']}",
+                    "gust": tb["wind_gust_mph"],
+                    "speed": tb.get("wind_avg_mph", 0),
+                    "direction": tb.get("wind_direction")
                 })
     
     if wind_candidates:
@@ -367,6 +377,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if pirate_data:
         weather_data["pirate_weather"] = pirate_data
 
+    if tempest_data:
+        weather_data["tempest"] = tempest_data
+
     # --- Derived calculations ---
     derived = {}
 
@@ -385,7 +398,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         derived["pressure_alarm_label"] = alarm["alarm_label"]
 
     # Hyperlocal corrections
-    build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data)
+    build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=tempest_data)
 
     # Add corrected hourly arrays (bias pre-applied)
     _hyp = weather_data.get("hyperlocal", {})
@@ -521,9 +534,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         # Q = direct_radiation[current_hour] * 0.17
         _hourly_direct = weather_data.get("hourly", {}).get("direct_radiation", [])
         _hourly_times = weather_data.get("hourly", {}).get("times", [])
+        from datetime import datetime as _dt
         import pytz
         _eastern = pytz.timezone("America/New_York")
-        _now_hr = datetime.now(_eastern).strftime("%Y-%m-%dT%H:00")
+        _now_hr = _dt.now(_eastern).strftime("%Y-%m-%dT%H:00")
         _direct_now = None
         for _i, _t in enumerate(_hourly_times):
             if _t == _now_hr and _i < len(_hourly_direct):
@@ -694,6 +708,7 @@ def main():
         "NWS alerts": (fetch_nws_alerts, [], {}),
         "Pirate Weather": (fetch_pirate_weather, [], {}),
         "eBird": (fetch_ebird, [], {}),
+        "Tempest": (fetch_tempest, [], {}),
     }
     parallel_results = {}
     with ThreadPoolExecutor(max_workers=6) as executor:
@@ -721,6 +736,7 @@ def main():
     alert_data, alerts_meta = parallel_results.get("NWS alerts", (None, {"status": "error"}))
     pirate_data, pirate_meta = parallel_results.get("Pirate Weather", (None, {"status": "error"}))
     birds_data, birds_meta = parallel_results.get("eBird", (None, {"status": "error"}))
+    tempest_data, tempest_meta = parallel_results.get("Tempest", (None, {"status": "error"}))
 
     sources = {
         "gfs_current": current_meta,
@@ -735,6 +751,7 @@ def main():
         "nws_alerts": alerts_meta,
         "pirate_weather": pirate_meta,
         "ebird": birds_meta,
+        "tempest": tempest_meta,
     }
 
     # Update frost log (reads/writes /tmp/frost_log.json)
@@ -776,7 +793,8 @@ def main():
         hourly_7day_data=hourly_7day_data,
         pirate_data=pirate_data,
         birds_data=birds_data,
-        daily_temps_data=daily_temps_data
+        daily_temps_data=daily_temps_data,
+        tempest_data=tempest_data
     )
     print(f"  ⏱  Build weather data: {_time.time() - t0:.1f}s")
 

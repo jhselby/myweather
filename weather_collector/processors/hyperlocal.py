@@ -22,7 +22,7 @@ def compute_dew_point_spread(temp_f, dew_point_f):
     return round(temp_f - dew_point_f, 1)
 
 
-def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data):
+def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=None):
     """
     Build complete hyperlocal correction data.
     This modifies weather_data in place by adding a 'hyperlocal' key.
@@ -47,6 +47,11 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data):
     
     # Temperature - SMART BIAS CORRECTION using individual stations
     stations = wu_data.get("stations", []) if wu_data else []
+    # Inject all valid Tempest stations as additional high-quality inputs
+    if tempest_data:
+        for tb in tempest_data.get("stations", []):
+            if tb.get("valid") and tb.get("temperature_f") and tb.get("distance_mi") and tb.get("elevation_ft") is not None:
+                stations = list(stations) + [tb]
     
     if model_t is not None and stations:
         weighted_bias_sum = 0.0
@@ -157,11 +162,20 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data):
     
     # Humidity
     wu_h = wu_data.get("humidity_pct") if wu_data else None
-    if model_h is not None and wu_h is not None:
+    tempest_h = next(
+        (tb["relative_humidity"] for tb in (tempest_data or {}).get("stations", [])
+         if tb.get("valid") and tb.get("relative_humidity") is not None),
+        None
+    )
+    # Prefer closest valid source: Tempest (0.21mi) > WU aggregate
+    best_h = tempest_h if tempest_h is not None else wu_h
+    if model_h is not None and best_h is not None:
         hyperlocal["model_humidity"] = model_h
         hyperlocal["wu_humidity"] = wu_h
-        hyperlocal["bias_humidity"] = round(wu_h - model_h, 1)
-        hyperlocal["corrected_humidity"] = wu_h
+        if tempest_h is not None:
+            hyperlocal["tempest_humidity"] = tempest_h
+        hyperlocal["bias_humidity"] = round(best_h - model_h, 1)
+        hyperlocal["corrected_humidity"] = best_h
     
     # Wind Speed — current.wind_speed is already max-selected by collector
     # current.model_wind_speed has the original model value (saved before override)

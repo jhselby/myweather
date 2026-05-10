@@ -1527,6 +1527,7 @@
       pirate_weather: { name: "Pirate Weather", desc: "Pirate Weather API — next 60 minutes precipitation, plus solar and CAPE" },
       ebird:        { name: "eBird",        desc: "Cornell eBird recent and notable bird observations near Marblehead" },
       gemini:       { name: "Gemini",       desc: "Google Gemini AI — briefing headline and subheadline generator (free tier)" },
+      tempest:      { name: "Tempest",      desc: "WeatherFlow Tempest — 3 public stations within 0.4mi (Willow Rd, Driftwood Rd, Neptune Rd); lightning, solar radiation, wind lull, wet bulb" },
     };
 
     const STATIC_SOURCES = [
