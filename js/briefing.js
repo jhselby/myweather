@@ -734,13 +734,16 @@
     });
     const firstRainFromNow = firstRainIdx === -1 ? -1 : firstRainIdx - stalenessMin;
     const lastRainFromNow  = lastRainIdx  === -1 ? -1 : lastRainIdx  - stalenessMin;
-    const intensity = maxIntensity < 0.10 ? 'Light' : maxIntensity < 0.30 ? 'Moderate' : 'Heavy';
+    const peakIntensity = maxIntensity < 0.10 ? 'Light' : maxIntensity < 0.30 ? 'Moderate' : 'Heavy';
+    const curIdx = Math.min(stalenessMin, minutely.length - 1);
+    const curI = minutely[curIdx]?.precip_intensity || 0;
+    const nowIntensity = curI < 0.10 ? 'Light' : curI < 0.30 ? 'Moderate' : 'Heavy';
     let summaryText = '';
     if (firstRainFromNow <= 0) {
-      summaryText = `${intensity} rain now — ending in ~${Math.max(1, lastRainFromNow + 1)} min`;
+      summaryText = `${nowIntensity} rain now — ending in ~${Math.max(1, lastRainFromNow + 1)} min`;
     } else {
       const duration = lastRainIdx - firstRainIdx + 1;
-      summaryText = `${intensity} rain in ~${firstRainFromNow} min, lasting ~${duration} min`;
+      summaryText = `${peakIntensity} rain in ~${firstRainFromNow} min, lasting ~${duration} min`;
     }
     const maxI = Math.max(...minutely.map(p => p.precip_intensity), 0.01);
     const bars = minutely.map((pt, i) => {
