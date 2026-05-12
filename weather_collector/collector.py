@@ -92,6 +92,55 @@ def _upload_to_gcs(data, gcs_path, label):
         raise
 
 
+def _load_prev_weather_data():
+    """Read the current weather_data.json from GCS as a fallback cache. Returns {} on any failure."""
+    try:
+        client = _gcs_client()
+        blob = client.bucket(GCS_BUCKET).blob(WEATHER_DATA_GCS_PATH)
+        if blob.exists():
+            prev = json.loads(blob.download_as_text())
+            print(f"  ✓ Loaded previous weather_data.json from GCS for fallback cache")
+            return prev
+        else:
+            print(f"  ℹ  No previous weather_data.json in GCS (first run)")
+    except Exception as e:
+        print(f"  ⚠  Could not load previous weather_data.json: {_redact_secrets(e)}")
+    return {}
+
+
+def _apply_stale_fallbacks(weather_data, prev, failed_fetches):
+    """
+    For any source that failed this run, copy the previous run's data.
+    failed_fetches: set of source names that returned None this run.
+    Mutates weather_data in place. Returns list of stale source names.
+    """
+    if not prev:
+        return []
+
+    stale = []
+
+    # Top-level keys: present in weather_data only when fetch succeeded
+    top_level_keys = [
+        "pirate_weather", "kbos", "kbvy", "wu_stations",
+        "nws_gridpoints", "tides", "buoy", "sunset_directional",
+    ]
+    for key in top_level_keys:
+        if key not in weather_data and key in prev:
+            weather_data[key] = prev[key]
+            stale.append(key)
+            print(f"  ⚠  {key}: using previous run's data (source failed)")
+
+    # current/hourly/daily: built even when GFS fails (silently wrong).
+    # Use explicit None-tracking instead of inspecting the built dict.
+    for fetch_name, data_key in [("current", "current"), ("hourly", "hourly"), ("daily", "daily")]:
+        if fetch_name in failed_fetches and data_key in prev:
+            weather_data[data_key] = prev[data_key]
+            stale.append(data_key)
+            print(f"  ⚠  {data_key}: using previous run's data (fetch failed)")
+
+    return stale
+
+
 def _load_obs_temp_log():
     """Load observed corrected temperature log from GCS."""
     try:
@@ -683,6 +732,9 @@ def main():
         print(f"  ⏱  {name}: {elapsed:.1f}s")
         return result
 
+    # Load previous weather data for stale fallback cache
+    prev_weather_data = _load_prev_weather_data()
+
     # Download frost log from GCS before fetching (needed for update_frost_log)
     _download_frost_log_from_gcs()
 
@@ -692,6 +744,12 @@ def main():
     daily_temps_data, daily_temps_meta = timed_fetch("HRRR daily temps", fetch_hrrr_daily_temps)
     hourly_7day_data, hourly_7day_meta = timed_fetch("GFS 7-day hourly", fetch_hourly_gfs_7day)
     daily_data, daily_meta = timed_fetch("ECMWF daily", fetch_daily_ecmwf)
+
+    # Track which sequential fetches returned None (used by stale fallback)
+    failed_fetches = set()
+    if current_data is None:   failed_fetches.add("current")
+    if hourly_data is None:    failed_fetches.add("hourly")
+    if daily_data is None:     failed_fetches.add("daily")
 
     # ── Everything else: PARALLEL ──
     from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -830,6 +888,14 @@ def main():
     if trim_idx > 0 and "hourly" in weather_data:
         for key in weather_data["hourly"]:
             weather_data["hourly"][key] = weather_data["hourly"][key][trim_idx:]
+
+    # Apply stale fallbacks for any source that failed this run
+    stale_sources = _apply_stale_fallbacks(weather_data, prev_weather_data, failed_fetches)
+    if stale_sources:
+        weather_data["stale_sources"] = stale_sources
+        print(f"  ⚠  Stale sources in this payload: {stale_sources}")
+    else:
+        weather_data.pop("stale_sources", None)
 
     # Upload weather data to GCS
     _upload_to_gcs(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
