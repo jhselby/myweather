@@ -46,6 +46,8 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
     kbos_p_in = round(kbos_p / 33.8639, 2) if kbos_p else None
     
     # Temperature - SMART BIAS CORRECTION using individual stations
+    wu_stations_attempted = wu_data.get("quality", {}).get("total_stations", 0) if wu_data else 0
+    tempest_stations_attempted = len(tempest_data.get("stations", [])) if tempest_data else 0
     stations = wu_data.get("stations", []) if wu_data else []
     # Inject all valid Tempest stations as additional high-quality inputs
     if tempest_data:
@@ -58,12 +60,12 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
         total_weight = 0.0
         station_biases = []
         stations_used = 0
-        
+
         for station in stations:
             station_temp = station.get('temperature_f')
             station_dist = station.get('distance_mi')
             station_elev = station.get('elevation_ft')
-            
+
             # Skip stations with missing data
             if station_temp is None or station_dist is None or station_elev is None:
                 continue
@@ -110,7 +112,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             hyperlocal["weighted_bias"] = round(weighted_bias, 2)
             hyperlocal["corrected_temp"] = round(corrected_temp, 1)
             hyperlocal["stations_used"] = stations_used
-            hyperlocal["stations_total"] = len(stations)
+            hyperlocal["stations_total"] = wu_stations_attempted + tempest_stations_attempted
             hyperlocal["confidence"] = confidence
             hyperlocal["bias_std"] = round(bias_std, 2)
             

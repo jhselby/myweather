@@ -24,13 +24,12 @@ BASE_URL = "https://api.weather.com/v2/pws/observations/all/1day"
 STATIONS = [
     "KMAMARBL63", "KMAMARBL69", "KMAMARBL112", "KMAMARBL108",
     "KMAMARBL39", "KMAMARBL4", "KMAMARBL36", "KMAMARBL57",
-    "KMAMARBL56", "KMAMARBL89", "KMAMARBL78", "KMAMARBL1",
-    "KMASALEM91", "KMASALEM94", "KMAMARBL8", "KMAMARBL22",
-    "KMAMARBL40", "KMAMARBL42", "KMAMARBL43", "KMAMARBL61",
-    "KMAMARBL64", "KMAMARBL68", "KMAMARBL75", "KMAMARBL76",
-    "KMAMARBL82", "KMAMARBL85", "KMAMARBL90", "KMAMARBL92",
-    "KMAMARBL95", "KMAMARBL96", "KMAMARBL100", "KMAMARBL113",
-    "KMAMARBL114", "KMAMARBL116", "KMAMARBL117", "KMAMARBL118"
+    "KMAMARBL56", "KMAMARBL89", "KMAMARBL78", "KMASALEM94",
+    "KMAMARBL22", "KMAMARBL40", "KMAMARBL42", "KMAMARBL43",
+    "KMAMARBL61", "KMAMARBL68", "KMAMARBL75", "KMAMARBL76",
+    "KMAMARBL82", "KMAMARBL90", "KMAMARBL92", "KMAMARBL95",
+    "KMAMARBL96", "KMAMARBL100", "KMAMARBL114", "KMAMARBL116",
+    "KMAMARBL117",
 ]
 
 # Wyman Cove reference point (16 Indianhead Circle)
@@ -234,7 +233,7 @@ def filter_and_aggregate(stations):
         
         # Quality metadata
         'quality': {
-            'total_stations': len(stations),
+            'total_stations': len(STATIONS),
             'stations_within_range': len(close_stations),
             'stations_used_temp': len(temp_data),
             'stations_used_wind': len(wind_speed_data),
