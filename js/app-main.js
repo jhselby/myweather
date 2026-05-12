@@ -1029,7 +1029,7 @@
         
         const totalCloud = (low10 + mid25 + high25) / 3;
         
-        if (totalCloud < 15 && hum25 < 60) {
+        if (totalCloud < 15) {
           const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
             : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
           const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
@@ -1048,7 +1048,7 @@
           continue;
         }
         
-        if (low10 > 60) {
+        if (low10 > 75) {
           const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
             : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
           const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });

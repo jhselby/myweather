@@ -1,3 +1,7 @@
+## v0.5.100 • May 12, 2026
+- Fix sunset score too low: clear-sky branch no longer requires low humidity (humid clear nights were scoring 1)
+- Raise low-cloud overcast cutoff from 60% to 75% (patchy boundary-layer clouds were hardcoding "Poor"/10)
+
 ## v0.5.86–v0.5.99 • May 9–10, 2026
 - WeatherFlow Tempest integration: fetches 3 public stations within 0.4mi of Wyman Cove (Willow Rd, Driftwood Rd, Neptune Rd) via tempestwx.com web API
 - Tempest stations wired into hyperlocal temperature bias calculation and wind max-selection alongside WU stations
