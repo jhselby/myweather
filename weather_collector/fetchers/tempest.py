@@ -13,11 +13,17 @@ import requests
 from ..config import LAT, LON
 from ..utils import iso_utc_now
 
-# Three public Tempest stations within 0.4 mi of Wyman Cove
+# Public Tempest stations within ~1.5mi of Wyman Cove
 TEMPEST_STATIONS = [
     {"id": 204883, "name": "Willow Rd"},
     {"id": 85260,  "name": "Driftwood Rd"},
     {"id": 192019, "name": "Neptune Rd"},
+    {"id": 193183, "name": "Baldwin Rd"},
+    {"id": 193746, "name": "Maple St"},
+    {"id": 168702, "name": "Forest Ave"},
+    {"id": 135494, "name": "Lincoln Ave"},
+    {"id": 192607, "name": "Willard Ln"},
+    {"id": 86357,  "name": "ColleeninMHD"},
 ]
 
 _API_KEY  = "6bff2f89-84ab-463c-886e-fc0f443da4cf"
