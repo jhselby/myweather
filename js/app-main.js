@@ -5997,29 +5997,39 @@ function loadWeatherData() {
       }
     });
 
-    document.addEventListener('visibilitychange', function() {
-      if (document.visibilityState === 'visible') {
-        if (window.__externalLinkOpen) {
-          window.__externalLinkOpen = false;
-          return;
-        }
-        // Return to briefing tab if away for 5+ minutes
-        if (window.__lastHiddenAt && (Date.now() - window.__lastHiddenAt) > 5 * 60 * 1000) {
-          showTab('briefing');
-        }
-        // Close any open card before refreshing to avoid blank card paint bug
-        document.querySelectorAll('.card-expanded').forEach(card => {
-          card.classList.remove('card-expanded');
-          const body = card.querySelector('.card-body');
-          const preview = card.querySelector('.card-collapsed-preview');
-          if (body) body.style.display = 'none';
-          if (preview) preview.style.display = '';
-          const bd = document.getElementById('modalBackdrop');
-          if (bd) bd.remove();
-        });
-        loadWeatherData();
+    // refreshOnReturn: fires on tab-switch (visibilitychange) AND app-switch (window focus).
+    // Debounced so both events triggering together only cause one reload.
+    let __lastRefresh = 0;
+    function refreshOnReturn() {
+      const now = Date.now();
+      if (now - __lastRefresh < 2000) return;
+      __lastRefresh = now;
+
+      if (window.__externalLinkOpen) {
+        window.__externalLinkOpen = false;
+        return;
       }
+      // Return to briefing tab if away for 5+ minutes
+      if (window.__lastHiddenAt && (now - window.__lastHiddenAt) > 5 * 60 * 1000) {
+        showTab('briefing');
+      }
+      // Close any open card before refreshing to avoid blank card paint bug
+      document.querySelectorAll('.card-expanded').forEach(card => {
+        card.classList.remove('card-expanded');
+        const body = card.querySelector('.card-body');
+        const preview = card.querySelector('.card-collapsed-preview');
+        if (body) body.style.display = 'none';
+        if (preview) preview.style.display = '';
+        const bd = document.getElementById('modalBackdrop');
+        if (bd) bd.remove();
+      });
+      loadWeatherData();
+    }
+
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') refreshOnReturn();
     });
+    window.addEventListener('focus', refreshOnReturn);
 
     document.getElementById('refreshBtn').addEventListener('click', function() {
       this.style.transform = 'rotate(360deg)';

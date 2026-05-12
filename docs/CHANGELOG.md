@@ -1,3 +1,6 @@
+## v0.5.101 • May 12, 2026
+- Fix data refresh on Mac: add window focus listener alongside visibilitychange so Cmd+Tab back to browser triggers a reload (visibilitychange alone only fires on tab switches)
+
 ## v0.5.100 • May 12, 2026
 - Fix sunset score too low: clear-sky branch no longer requires low humidity (humid clear nights were scoring 1)
 - Raise low-cloud overcast cutoff from 60% to 75% (patchy boundary-layer clouds were hardcoding "Poor"/10)
