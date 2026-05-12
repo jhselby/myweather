@@ -774,10 +774,13 @@ def main():
             executor.submit(fn, *args, **kwargs): name
             for name, (fn, args, kwargs) in parallel_tasks.items()
         }
-        for future in as_completed(future_to_name):
+        for future in as_completed(future_to_name, timeout=60):
             name = future_to_name[future]
             try:
-                parallel_results[name] = future.result()
+                parallel_results[name] = future.result(timeout=45)
+            except TimeoutError:
+                print(f"  ⚠️  {name} timed out (45s)")
+                parallel_results[name] = (None, {"status": "error", "error": "timeout"}) if name != "Salem water temp" else None
             except Exception as e:
                 print(f"  ⚠️  {name} failed: {_redact_secrets(e)}")
                 parallel_results[name] = (None, {"status": "error", "error": _redact_secrets(e)}) if name != "Salem water temp" else None
