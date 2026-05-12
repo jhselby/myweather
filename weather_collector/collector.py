@@ -29,6 +29,7 @@ from .fetchers.briefing_ai import generate_briefing
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
 from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spread
+from .processors.station_bias import load_history, save_history, update_history, compute_offsets
 from .processors.precip_850mb import add_850mb_precip_type
 from .processors.precip_surface import add_corrected_precip_types
 from .processors.sunset_directional import build_sunset_directional_data
@@ -446,8 +447,13 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         derived["pressure_alarm"] = alarm["alarm"]
         derived["pressure_alarm_label"] = alarm["alarm_label"]
 
-    # Hyperlocal corrections
-    build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=tempest_data)
+    # Hyperlocal corrections with per-station bias tracking
+    _gcs = _gcs_client()
+    _station_history = load_history(_gcs, GCS_BUCKET)
+    _station_offsets = compute_offsets(_station_history)
+    build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=tempest_data, station_offsets=_station_offsets)
+    update_history(_station_history, wu_data, tempest_data)
+    save_history(_station_history, _gcs, GCS_BUCKET)
 
     # Add corrected hourly arrays (bias pre-applied)
     _hyp = weather_data.get("hyperlocal", {})

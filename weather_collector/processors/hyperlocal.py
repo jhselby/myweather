@@ -22,7 +22,7 @@ def compute_dew_point_spread(temp_f, dew_point_f):
     return round(temp_f - dew_point_f, 1)
 
 
-def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=None):
+def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=None, station_offsets=None):
     """
     Build complete hyperlocal correction data.
     This modifies weather_data in place by adding a 'hyperlocal' key.
@@ -61,6 +61,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
         station_biases = []
         stations_used = 0
 
+        offsets = station_offsets or {}
         for station in stations:
             station_temp = station.get('temperature_f')
             station_dist = station.get('distance_mi')
@@ -71,7 +72,12 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
                 continue
             if station_dist == 0 or station_dist > 1.5:  # Distance filter
                 continue
-                
+
+            # Apply chronic calibration offset if we have enough history
+            sid = station.get('station_id') or station.get('station_name')
+            chronic = offsets.get(sid, 0.0)
+            station_temp = station_temp - chronic
+
             # Calculate bias at this station
             bias_at_station = station_temp - model_t
             
@@ -115,6 +121,8 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             hyperlocal["stations_total"] = wu_stations_attempted + tempest_stations_attempted
             hyperlocal["confidence"] = confidence
             hyperlocal["bias_std"] = round(bias_std, 2)
+            if offsets:
+                hyperlocal["station_offsets"] = offsets
             
             # For reference, also show simple WU average
             wu_t = wu_data.get("temperature_f") if wu_data else None
