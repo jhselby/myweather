@@ -6166,7 +6166,7 @@ function closeSettingsModal() {
   const sheet = document.querySelector('#settingsModal .modal-sheet');
   if (sheet) sheet.style.transform = '';
   // Collapse all subsections and scroll to top
-  ['sourcesBody','nerdStuffBody','changelogBody','dataPipelineBody','licensesBody'].forEach(id => {
+  ['sourcesBody','nerdStuffBody','changelogBody','howItWorksBody','dataPipelineBody','licensesBody'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });

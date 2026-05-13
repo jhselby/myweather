@@ -101,8 +101,22 @@ function parseDataPipelineMarkdown(md) {
   return html;
 }
 
+// Load "How It Works" prose from docs/HOW_IT_WORKS.md
+async function loadHowItWorks() {
+  try {
+    const response = await fetch('docs/HOW_IT_WORKS.md');
+    const text = await response.text();
+    const html = parseDataPipelineMarkdown(text);
+    document.getElementById('howItWorksBody').innerHTML = html;
+  } catch (err) {
+    console.error('Failed to load how it works:', err);
+    document.getElementById('howItWorksBody').innerHTML = '<p style="color:rgba(255,255,255,0.4);">Unavailable</p>';
+  }
+}
+
 // Call on page load
 document.addEventListener('DOMContentLoaded', () => {
   loadChangelog();
   loadDataPipeline();
+  loadHowItWorks();
 });
