@@ -66,7 +66,7 @@ For the 48-hour forecast, the current observed wind is blended into the model fo
 
 ## Wind Impact Score
 
-Raw wind speed doesn't tell the whole story at Wyman Cove. A 20 mph northwest wind is barely felt at the dock — the land blocks it. The same speed from the southeast, with a full ocean fetch, is a different experience entirely.
+Raw wind speed doesn't tell the whole story at Wyman Cove. A 20 mph south wind is barely felt at the dock — Marblehead and local terrain block it almost completely. The same speed from the north or northwest, with open harbor exposure, is a completely different experience.
 
 The wind impact score adjusts for directional exposure using a lookup table that maps wind direction to a terrain exposure factor between 0 and 1. The impact score is the product of wind speed and a power of the exposure factor. A strong wind from a sheltered direction scores low. A moderate wind from the exposed southeast scores high. The 10-day forecast text uses this score to decide whether to say "windy at the cove" or "calm at the cove despite regional gusts."
 
