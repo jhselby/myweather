@@ -266,3 +266,85 @@ function buildTideChart(curve, events) {
     }
   });
 }
+
+// Water temp calibration logger
+
+function logWaterTemp() {
+  const input  = document.getElementById("wtLogTemp");
+  const status = document.getElementById("wtLogStatus");
+  const temp   = parseFloat(input.value);
+  if (isNaN(temp) || temp < 30 || temp > 95) {
+    status.textContent = "Enter a valid temp (30–95°F)";
+    status.style.color = "rgba(255,120,80,0.9)";
+    return;
+  }
+
+  // Get current tide height from curve
+  const data    = window.__lastWeatherData || {};
+  const curve   = data.tide_curve || {};
+  const ctimes  = curve.times   || [];
+  const cheights= curve.heights || [];
+  const nowMs   = Date.now();
+  let tideH = null;
+  let bestDiff = Infinity;
+  for (let i = 0; i < ctimes.length; i++) {
+    const diff = Math.abs(new Date(ctimes[i]).getTime() - nowMs);
+    if (diff < bestDiff) { bestDiff = diff; tideH = cheights[i]; }
+  }
+
+  const buoyTemp = (data.buoy_44013 || {}).water_temp_f ?? null;
+  const now      = new Date();
+  const entry    = {
+    ts:         now.toISOString(),
+    local_time: now.toLocaleString("en-US"),
+    water_temp_f: temp,
+    tide_height_ft: tideH !== null ? Math.round(tideH * 100) / 100 : null,
+    buoy_temp_f:  buoyTemp,
+    offset_f:     buoyTemp !== null ? Math.round((temp - buoyTemp) * 10) / 10 : null,
+    month:        now.getMonth() + 1,
+  };
+
+  // Save to localStorage
+  let log = [];
+  try { log = JSON.parse(localStorage.getItem("wt_cal_log") || "[]"); } catch(e) {}
+  log.push(entry);
+  try { localStorage.setItem("wt_cal_log", JSON.stringify(log)); } catch(e) {}
+
+  input.value = "";
+  status.textContent = `✓ Logged ${temp}°F at tide ${tideH !== null ? tideH.toFixed(1)+"ft" : "unknown"}`;
+  status.style.color = "rgba(100,220,120,0.9)";
+  renderWaterTempLog();
+}
+
+function renderWaterTempLog() {
+  const el = document.getElementById("wtLogTable");
+  if (!el) return;
+  let log = [];
+  try { log = JSON.parse(localStorage.getItem("wt_cal_log") || "[]"); } catch(e) {}
+  if (!log.length) { el.innerHTML = "<em>No readings logged yet.</em>"; return; }
+
+  // Show most recent 20, newest first
+  const rows = [...log].reverse().slice(0, 20);
+  let html = `<table style="width:100%;border-collapse:collapse;">
+    <tr style="color:rgba(255,255,255,0.4);font-size:0.72rem;border-bottom:1px solid rgba(255,255,255,0.1);">
+      <th style="text-align:left;padding:4px 8px;">Time</th>
+      <th style="text-align:right;padding:4px 8px;">Harbor °F</th>
+      <th style="text-align:right;padding:4px 8px;">Tide ft</th>
+      <th style="text-align:right;padding:4px 8px;">Buoy °F</th>
+      <th style="text-align:right;padding:4px 8px;">Offset</th>
+    </tr>`;
+  for (const e of rows) {
+    html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+      <td style="padding:4px 8px;color:rgba(255,255,255,0.45);">${e.local_time}</td>
+      <td style="padding:4px 8px;text-align:right;font-weight:800;">${e.water_temp_f}°</td>
+      <td style="padding:4px 8px;text-align:right;">${e.tide_height_ft !== null ? e.tide_height_ft+"ft" : "--"}</td>
+      <td style="padding:4px 8px;text-align:right;">${e.buoy_temp_f !== null ? e.buoy_temp_f+"°" : "--"}</td>
+      <td style="padding:4px 8px;text-align:right;color:${e.offset_f > 0 ? "rgba(100,220,120,0.8)" : "rgba(255,120,80,0.8)"};">
+        ${e.offset_f !== null ? (e.offset_f > 0 ? "+" : "") + e.offset_f+"°" : "--"}
+      </td>
+    </tr>`;
+  }
+  html += `</table>`;
+  if (log.length > 20) html += `<div style="margin-top:6px;color:rgba(255,255,255,0.3);font-size:0.72rem;">${log.length} total readings stored.</div>`;
+  el.innerHTML = html;
+}

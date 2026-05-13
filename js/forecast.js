@@ -159,3 +159,65 @@ function filterHyperlocalByDate(dateStr) {
     row.style.display = (period && matchingNames.has(period.period_name)) ? "" : "none";
   });
 }
+
+function generateForecastSummary(forecasts) {
+  const summaryEl = document.getElementById("detailedForecastSummary");
+  if (!summaryEl || !forecasts || forecasts.length === 0) return;
+  
+  // Get first period (should be "Today" or current period)
+  const today = forecasts[0];
+  if (!today || !today.text) {
+    summaryEl.textContent = "Check forecast...";
+    return;
+  }
+  
+  // Extract first sentence (up to first period)
+  const firstSentence = today.text.split('.')[0].trim();
+  
+  // Add ellipsis
+  summaryEl.textContent = firstSentence + "...";
+}
+
+function renderHyperlocalForecast(forecasts, hourlyTimes, hourlyTemps, derived) {
+  const list = document.getElementById("hyperlocalForecastList");
+  if (!list || !Array.isArray(forecasts) || forecasts.length === 0) {
+    if (list) list.innerHTML = '<div style="color:rgba(255,255,255,0.4);font-size:0.88rem;padding:8px 0;">No forecast available.</div>';
+    return;
+  }
+
+  // Generate short summary for collapsed preview
+  generateForecastSummary(forecasts);
+
+  list.innerHTML = "";
+  
+  // Use corrected daily high/low from collector (single source of truth)
+  const _now = new Date();
+  const _pad = n => String(n).padStart(2, "0");
+  const _ds = d => `${d.getFullYear()}-${_pad(d.getMonth()+1)}-${_pad(d.getDate())}`;
+  const _todayStr = _ds(_now);
+  const _tom = new Date(_now); _tom.setDate(_tom.getDate() + 1);
+  const _tomorrowStr = _ds(_tom);
+  const _fcCorrected = {};
+  if (derived.today_high != null) _fcCorrected[_todayStr] = { high: derived.today_high, low: derived.today_low };
+  if (derived.tomorrow_high != null) _fcCorrected[_tomorrowStr] = { high: derived.tomorrow_high, low: derived.tomorrow_low };
+
+  forecasts.forEach((p, i) => {
+    const row = document.createElement("div");
+    row.className = "detailed-period";
+
+    // Use wind data from forecast object
+    let windText = p.wind_full || "";
+
+    row.innerHTML =
+      '<div class="detailed-period-header">' +
+        '<span class="detailed-period-name">' + p.period_name + '</span>' +
+        '<span class="detailed-period-temp">' + 
+          (p.date && _fcCorrected[p.date] ? Math.round(p.is_daytime ? _fcCorrected[p.date].high : _fcCorrected[p.date].low) : p.temperature) +
+        '\u00b0F</span>' +
+      '</div>' +
+      (windText ? '<div class="detailed-period-wind">' + windText + '</div>' : '') +
+      '<div class="detailed-period-narrative">' + p.text + '</div>';
+
+    list.appendChild(row);
+  });
+}
