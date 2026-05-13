@@ -15,6 +15,15 @@
   text-transform: uppercase;
   color: var(--text-secondary, rgba(255,255,255,0.5));
   margin: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.brief-dateline-age {
+  letter-spacing: 0;
+  font-size: 0.78rem;
+  opacity: 0.7;
 }
 
 .brief-masthead { display: none;
@@ -163,8 +172,19 @@
   color: var(--text-primary, #fff);
 }
 
+.brief-alert-row--red {
+  background: rgba(200,80,60,0.12);
+  border-left-color: rgba(200,80,60,0.9);
+}
+
 .brief-alert-row strong {
   font-weight: 600;
+}
+
+.brief-row--dim .brief-row-label,
+.brief-row--dim .brief-row-value {
+  opacity: 0.55;
+  font-weight: 400;
 }
 
 .brief-quiet-note {

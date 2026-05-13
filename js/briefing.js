@@ -867,7 +867,7 @@
     // 6. Fog
     const fogProb = der.fog_probability ?? 0;
     if (fogProb >= 50) {
-      rows.push({ label: "Fog", value: fogProb + "% probability", color: "orange" });
+      rows.push({ label: "Fog", value: fogProb + "% probability", color: "orange", dim: fogProb < 70 });
     }
 
     // 7. Frost risk
@@ -897,7 +897,7 @@
     const sbLikelihood = sb.likelihood ?? 0;
     const sbDelta = parseFloat((sb.reason || "").match(/Δ([-\d.]+)/)?.[1] || "0");
     if (sbLikelihood >= 60 && sbDelta > 0) {
-      rows.push({ label: "Sea breeze", value: sbLikelihood + "% likely", color: "blue" });
+      rows.push({ label: "Sea breeze", value: sbLikelihood + "% likely", color: "blue", dim: true });
     }
 
     return rows;
@@ -956,7 +956,13 @@ function renderBriefing(data) {
   const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const dl = document.getElementById('briefDateline');
-  if (dl) dl.textContent = days[now.getDay()] + ' · ' + now.getDate() + ' ' + months[now.getMonth()];
+  if (dl) {
+    const dateStr = days[now.getDay()] + ' · ' + now.getDate() + ' ' + months[now.getMonth()];
+    const genAt = data.generated_at ? new Date(data.generated_at) : null;
+    const ageMin = genAt ? Math.round((now - genAt) / 60000) : null;
+    const ageStr = ageMin != null ? (ageMin < 1 ? 'just now' : ageMin + 'm ago') : '';
+    dl.innerHTML = '<span>' + dateStr + '</span>' + (ageStr ? '<span class="brief-dateline-age">' + ageStr + '</span>' : '');
+  }
   const tl = document.getElementById('briefTimeLabel');
   if (tl) tl.textContent = b.timeLabel;
   const hl = document.getElementById('briefHeadline');
@@ -1026,7 +1032,7 @@ function renderBriefing(data) {
   const watchEl = document.getElementById('briefWatchSection');
   const hasWatchContent = b.watchRows && b.watchRows.length > 0;
 
-  if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isHtml) { wh += r.html; } else if (r.isAlert) { wh += '<div class="brief-alert-row" onclick="openAlertModal()" style="cursor:pointer;">⚠ <strong>' + r.value + '</strong>' + (r.detail ? '<div style="font-size:0.78rem;margin-top:3px;opacity:0.72;">' + r.detail + '</div>' : '') + '</div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; wh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); wh += '<hr class="brief-rule" style="margin-top:14px;">'; watchEl.innerHTML = wh; } else { watchEl.innerHTML = ''; } }
+  if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isHtml) { wh += r.html; } else if (r.isAlert) { const redCls = r.color === 'red' ? ' brief-alert-row--red' : ''; wh += '<div class="brief-alert-row' + redCls + '" onclick="openAlertModal()" style="cursor:pointer;">⚠ <strong>' + r.value + '</strong>' + (r.detail ? '<div style="font-size:0.78rem;margin-top:3px;opacity:0.72;">' + r.detail + '</div>' : '') + '</div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; const dimCls = r.dim ? ' brief-row--dim' : ''; wh += '<div class="brief-row' + dimCls + '"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); wh += '<hr class="brief-rule" style="margin-top:14px;">'; watchEl.innerHTML = wh; } else { watchEl.innerHTML = ''; } }
   const tonightEl = document.getElementById('briefTonightSection');
   if (tonightEl) {
     if (b.tonight) {

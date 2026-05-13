@@ -17,6 +17,7 @@ from ..utils import redact_secrets
 
 # API Configuration
 import os
+import logging
 API_KEY = os.environ["WU_API_KEY"]
 BASE_URL = "https://api.weather.com/v2/pws/observations/all/1day"
 
@@ -138,7 +139,7 @@ def get_current_observation(station_id):
         }
         
     except Exception as e:
-        print(f"❌ {station_id}: {redact_secrets(e)}")
+        logging.info(f"❌ {station_id}: {redact_secrets(e)}")
         return None
 
 
@@ -253,13 +254,13 @@ def filter_and_aggregate(stations):
 
 
 def main():
-    print("=" * 80)
-    print("WU Multi-Station Smart Scraper")
-    print("=" * 80)
-    print(f"Reference: Wyman Cove ({WYMAN_COVE_LAT}, {WYMAN_COVE_LON})")
-    print(f"Filters: Distance ≤{MAX_DISTANCE_MI}mi | Wind ≥{MIN_WIND_THRESHOLD}mph | Temp ±{MAX_TEMP_DEVIATION}°F")
-    print("=" * 80)
-    print()
+    logging.info("=" * 80)
+    logging.info("WU Multi-Station Smart Scraper")
+    logging.info("=" * 80)
+    logging.info(f"Reference: Wyman Cove ({WYMAN_COVE_LAT}, {WYMAN_COVE_LON})")
+    logging.info(f"Filters: Distance ≤{MAX_DISTANCE_MI}mi | Wind ≥{MIN_WIND_THRESHOLD}mph | Temp ±{MAX_TEMP_DEVIATION}°F")
+    logging.info("=" * 80)
+    logging.info("")
     
     results = []
     
@@ -288,44 +289,44 @@ def main():
                 
                 flag_str = " ".join(flags) if flags else "✓"
                 
-                print(f"{station_id:15} {dist:5.2f}mi | {temp:5.1f}°F | {wind:4.1f}mph | {flag_str}")
+                logging.info(f"{station_id:15} {dist:5.2f}mi | {temp:5.1f}°F | {wind:4.1f}mph | {flag_str}")
     
-    print()
-    print("=" * 80)
-    print("SMART AGGREGATION")
-    print("=" * 80)
+    logging.info("")
+    logging.info("=" * 80)
+    logging.info("SMART AGGREGATION")
+    logging.info("=" * 80)
     
     aggregated = filter_and_aggregate(results)
     
     q = aggregated['quality']
     r = aggregated['ranges']
     
-    print(f"Temperature:  {aggregated['temperature_f']}°F")
-    print(f"  Range: {r['temp_min_f']}°F - {r['temp_max_f']}°F")
-    print(f"  Stations used: {q['stations_used_temp']}/{q['total_stations']}")
-    print(f"  Outliers removed: {q['temp_outliers_removed']}")
+    logging.info(f"Temperature:  {aggregated['temperature_f']}°F")
+    logging.info(f"  Range: {r['temp_min_f']}°F - {r['temp_max_f']}°F")
+    logging.info(f"  Stations used: {q['stations_used_temp']}/{q['total_stations']}")
+    logging.info(f"  Outliers removed: {q['temp_outliers_removed']}")
     
-    print(f"\nHumidity:     {aggregated['humidity_pct']}%")
+    logging.info(f"\nHumidity:     {aggregated['humidity_pct']}%")
     
-    print(f"\nWind Speed:   {aggregated['wind_speed_mph']} mph")
-    print(f"  Range: {r['wind_min_mph']} - {r['wind_max_mph']} mph")
-    print(f"  Stations used: {q['stations_used_wind']}/{q['stations_within_range']}")
-    print(f"  Failed sensors: {q['wind_sensors_failed']}")
+    logging.info(f"\nWind Speed:   {aggregated['wind_speed_mph']} mph")
+    logging.info(f"  Range: {r['wind_min_mph']} - {r['wind_max_mph']} mph")
+    logging.info(f"  Stations used: {q['stations_used_wind']}/{q['stations_within_range']}")
+    logging.error(f"  Failed sensors: {q['wind_sensors_failed']}")
     
-    print(f"\nWind Gust:    {aggregated['wind_gust_mph']} mph")
+    logging.info(f"\nWind Gust:    {aggregated['wind_gust_mph']} mph")
     
-    print(f"\nPressure:     {aggregated['pressure_in']} in")
+    logging.info(f"\nPressure:     {aggregated['pressure_in']} in")
     
-    print(f"\nClosest station: {q['closest_station']}")
-    print(f"Max distance used: {q['max_distance_used_mi']}mi")
+    logging.info(f"\nClosest station: {q['closest_station']}")
+    logging.info(f"Max distance used: {q['max_distance_used_mi']}mi")
     
-    print("=" * 80)
+    logging.info("=" * 80)
     
     # Save to file
     output_file = 'wu_stations_realtime.json'
     with open(output_file, 'w') as f:
         json.dump(aggregated, f, indent=2)
-    print(f"\n✅ Saved to: {output_file}")
+    logging.info(f"\n✅ Saved to: {output_file}")
 
 if __name__ == "__main__":
     main()

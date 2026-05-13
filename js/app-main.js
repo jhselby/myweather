@@ -382,6 +382,16 @@ function loadWeatherData() {
       .then(data => {
         window.__lastWeatherData = data;
 
+        // If the data schema is newer than this JS knows about, stop rendering and ask for a refresh
+        const EXPECTED_SCHEMA = "1.2";
+        if (data.schema_version && data.schema_version !== EXPECTED_SCHEMA) {
+          const el = document.getElementById("dataUpdated2");
+          if (el) el.textContent = "App update required — tap refresh";
+          const btn = document.getElementById("refreshBtn");
+          if (btn) btn.classList.add("has-update");
+          return;
+        }
+
         // Use exposure table from data if available (single source of truth with collector)
         if (Array.isArray(data.wind_exposure_table) && data.wind_exposure_table.length > 0) {
           WIND_EXPOSURE_TABLE = data.wind_exposure_table;
