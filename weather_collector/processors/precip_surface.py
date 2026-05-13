@@ -109,9 +109,23 @@ def add_corrected_precip_types(weather_data, hyperlocal_data):
     
     
     if corrected_temp is not None and corrected_humidity is not None:
-        corrected_wet_bulb = calculate_wet_bulb(corrected_temp, corrected_humidity)
+        synthetic_wet_bulb = calculate_wet_bulb(corrected_temp, corrected_humidity)
+
+        # Prefer Tempest hardware wet bulb (direct measurement) over Stull formula
+        tempest_stations = weather_data.get("tempest", {}).get("stations", [])
+        tempest_wb_vals = [s["wet_bulb_temperature_f"] for s in tempest_stations
+                           if s.get("wet_bulb_temperature_f") is not None]
+
+        if tempest_wb_vals:
+            corrected_wet_bulb = sum(tempest_wb_vals) / len(tempest_wb_vals)
+            weather_data["derived"]["wet_bulb_source"] = "tempest"
+            weather_data["derived"]["wet_bulb_synthetic"] = round(synthetic_wet_bulb, 1)
+        else:
+            corrected_wet_bulb = synthetic_wet_bulb
+            weather_data["derived"]["wet_bulb_source"] = "synthetic"
+
         weather_data["derived"]["corrected_wet_bulb"] = corrected_wet_bulb
-        
+
         # Current precip type from corrected wet bulb only (no 850mb needed for current)
         current_precip_type = classify_surface_precip_type(corrected_wet_bulb)
         weather_data["derived"]["surface_precip_type"] = current_precip_type
