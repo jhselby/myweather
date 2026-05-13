@@ -1,3 +1,17 @@
+## v0.5.102–v0.5.106 • May 13, 2026
+- Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
+- WU station list trimmed from 36 to 29 (removed 7 confirmed out-of-range stations)
+- Station denominator now counts all attempted stations (29 WU + 9 Tempest = 38), not just responders
+- Adaptive bias correction: new station_bias.py tracks per-station chronic offsets for temp, humidity, and pressure using leave-one-out consensus over a 48h rolling window; MIN_READINGS=6 before offset applied
+- Temperature diurnal split: separate day/night bias offsets (7am–7pm ET boundary); captures sensors whose drift varies across the day
+- Kalman gain blend: corrected_temp = model + K × weighted_bias; K = 0.90/0.65/0.40 based on station count and agreement; model contributes when stations disagree
+- KBVY temp logged as external calibration anchor: kbvy_temp_f and kbvy_local_delta in hyperlocal output every run
+- Tempest stations shown in Settings → Sources card
+- Version update detection: refresh button dot lights up when a new deploy is available; polls version.json every 5 min
+- Fixed version dot always showing (DOM timing bug — appVersion not yet in DOM at script execution time)
+- Added How It Works prose doc to Settings → Under the Hood
+- DATA_PIPELINE.md updated to v0.5.105
+
 ## v0.5.101 • May 12, 2026
 - Fix data refresh on Mac: add window focus listener alongside visibilitychange so Cmd+Tab back to browser triggers a reload (visibilitychange alone only fires on tab switches)
 
