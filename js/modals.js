@@ -1,5 +1,13 @@
 // modals.js — Settings, alert, and precip modal open/close
 
+// === Settings accordions (exclusive open within a group) ===
+function toggleSettingsPanel(id, siblings) {
+  const target = document.getElementById(id);
+  const isOpen = target.style.display !== 'none';
+  siblings.forEach(sid => { document.getElementById(sid).style.display = 'none'; });
+  target.style.display = isOpen ? 'none' : 'block';
+}
+
 // === Settings Modal ===
 function openSettingsModal() {
   document.getElementById('settingsModal').style.display = 'flex';

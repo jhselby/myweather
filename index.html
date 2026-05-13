@@ -21,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
   <link rel="stylesheet" href="styles/app.css?v=d4ad2f35" />
-  <link rel="stylesheet" href="styles/briefing.css?v=847238d6" />
+  <link rel="stylesheet" href="styles/briefing.css?v=d6517ae0" />
 </head>
 <body>
   <div class="container">
@@ -1205,7 +1205,7 @@
 
 
   </div>
-  <script src="js/briefing.js?v=8cb4a32e"></script>
+  <script src="js/briefing.js?v=172ab1e0"></script>
   <script src="js/wind.js?v=22edbb47"></script>
   <script src="js/corrections.js?v=e79852f5"></script>
   <script src="js/sky.js?v=e79e6941"></script>
@@ -1224,8 +1224,8 @@
   <script src="js/hair.js?v=c3130163"></script>
   <script src="js/dock.js?v=d91978f5"></script>
   <script src="js/ui.js?v=f62def1a"></script>
-  <script src="js/modals.js?v=4e28c7b1"></script>
-  <script src="js/app-main.js?v=0f97944d"></script>
+  <script src="js/modals.js?v=14fd5a23"></script>
+  <script src="js/app-main.js?v=835b4ed6"></script>
   <script src="js/changelog_loader.js?v=eb2d0222"></script>
   
   <script>
@@ -1350,7 +1350,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.120</span>
+            <span class="version-pill" id="appVersion">v0.5.121</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
@@ -1361,7 +1361,7 @@
             <div>Code loaded: <span id="pageLoaded2">--</span></div>
           </div>
           <div style="margin-top:10px;">
-            <div id="sourcesToggle" onclick="event.stopPropagation();document.getElementById('sourcesBody').style.display=document.getElementById('sourcesBody').style.display==='none'?'block':'none'"
+            <div id="sourcesToggle" onclick="event.stopPropagation();toggleSettingsPanel('sourcesBody',['sourcesBody','nerdStuffBody'])"
                  style="font-size:0.82rem;font-weight:600;color:var(--muted);cursor:pointer;user-select:none;">
               Data Sources <span id="sourcesStatusDot" style="display:none;width:8px;height:8px;background:#ef4444;border-radius:50%;margin-left:4px;vertical-align:middle;"></span> ▾
             </div>
@@ -1372,14 +1372,14 @@
         </div>
         <!-- Under the Hood gate -->
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
-          <div onclick="var b=document.getElementById('nerdStuffBody');b.style.display=b.style.display==='none'?'block':'none'"
+          <div onclick="event.stopPropagation();toggleSettingsPanel('nerdStuffBody',['sourcesBody','nerdStuffBody'])"
                style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
             Under the Hood ▾
           </div>
           <div id="nerdStuffBody" style="display:none;margin-top:12px;">
             <!-- Changelog -->
             <div class="modal-setting-group">
-              <div id="changelogToggle" onclick="event.stopPropagation();document.getElementById('changelogBody').style.display=document.getElementById('changelogBody').style.display==='none'?'block':'none'"
+              <div id="changelogToggle" onclick="event.stopPropagation();toggleSettingsPanel('changelogBody',['changelogBody','howItWorksBody','dataPipelineBody','licensesBody'])"
                    style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
                 Changelog ▾
               </div>
@@ -1387,7 +1387,7 @@
             </div>
             <!-- How It Works -->
             <div class="modal-setting-group">
-              <div onclick="event.stopPropagation();document.getElementById('howItWorksBody').style.display=document.getElementById('howItWorksBody').style.display==='none'?'block':'none'"
+              <div onclick="event.stopPropagation();toggleSettingsPanel('howItWorksBody',['changelogBody','howItWorksBody','dataPipelineBody','licensesBody'])"
                    style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
                 How It Works ▾
               </div>
@@ -1395,7 +1395,7 @@
             </div>
             <!-- Data Pipeline -->
             <div class="modal-setting-group">
-              <div id="dataPipelineToggle" onclick="event.stopPropagation();document.getElementById('dataPipelineBody').style.display=document.getElementById('dataPipelineBody').style.display==='none'?'block':'none'"
+              <div id="dataPipelineToggle" onclick="event.stopPropagation();toggleSettingsPanel('dataPipelineBody',['changelogBody','howItWorksBody','dataPipelineBody','licensesBody'])"
                    style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
                 Data Pipeline Reference ▾
               </div>
@@ -1404,7 +1404,7 @@
 
             <!-- Licenses -->
             <div class="modal-setting-group">
-              <div onclick="event.stopPropagation();document.getElementById('licensesBody').style.display=document.getElementById('licensesBody').style.display==='none'?'block':'none'"
+              <div onclick="event.stopPropagation();toggleSettingsPanel('licensesBody',['changelogBody','howItWorksBody','dataPipelineBody','licensesBody'])"
                    style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
                 Licenses ▾
               </div>

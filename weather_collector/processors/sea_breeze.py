@@ -89,19 +89,19 @@ def detect_sea_breeze(weather_data):
     )
     
     result["likelihood"] = likelihood
-    
-    # Determine if active
-    if likelihood >= 60:
+
+    # Hard vetoes — these conditions rule out a sea breeze regardless of score
+    if scores["direction"] == 0:
+        result["reason"] = f"Wind not onshore ({int(wind_dir)}°, need 135-200°)"
+    elif scores["wind_speed"] == 0:
+        result["reason"] = f"Winds too strong ({wind_speed:.0f} mph)"
+    elif likelihood >= 60:
         result["active"] = True
         result["reason"] = f"Δ{temp_diff:+.1f}°F, {wind_speed:.0f} mph from {int(wind_dir)}°"
     elif likelihood >= 40:
         result["reason"] = f"Δ{temp_diff:+.1f}°F, {wind_speed:.0f} mph from {int(wind_dir)}°"
     elif scores["temp"] < 40:
         result["reason"] = f"Land/water Δ too small ({temp_diff:+.1f}°F)"
-    elif scores["direction"] < 50:
-        result["reason"] = f"Wind not onshore ({int(wind_dir)}°, need 135-200°)"
-    elif scores["wind_speed"] < 50:
-        result["reason"] = f"Winds too strong ({wind_speed:.0f} mph)"
     elif scores["time"] == 0:
         result["reason"] = f"Wrong time of day ({hour:02d}:00, need 10am-6pm)"
     else:
