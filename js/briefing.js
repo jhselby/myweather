@@ -167,6 +167,29 @@
       }
     }
 
+    // Minutely overrides hourly: if Pirate Weather minutely shows rain within 60 min,
+    // upgrade rainContext so a stale far-off day label doesn't contradict imminent rain.
+    {
+      const minutely = window.__precipMinutely || [];
+      if (minutely.length) {
+        const nowSec = Math.floor(Date.now() / 1000);
+        const dataTime = minutely[0]?.time ?? nowSec;
+        const stalenessMin = Math.round((nowSec - dataTime) / 60);
+        let firstRainIdx = -1;
+        for (let i = 0; i < minutely.length; i++) {
+          const pt = minutely[i];
+          if (pt.precip_intensity > 0.001 && (pt.precip_probability ?? 0) >= 0.3) {
+            firstRainIdx = i; break;
+          }
+        }
+        if (firstRainIdx !== -1) {
+          const minAway = firstRainIdx - stalenessMin;
+          if (minAway <= 0 && rainContext !== "now") rainContext = "now";
+          else if (minAway <= 60 && !["now", "soon"].includes(rainContext)) rainContext = "soon";
+        }
+      }
+    }
+
     function fmtHour(d) {
       if (!d) return "";
       return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" }).toLowerCase();
