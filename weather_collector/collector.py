@@ -451,7 +451,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     _gcs = _gcs_client()
     _station_history = load_history(_gcs, GCS_BUCKET)
     _station_offsets = compute_offsets(_station_history)
-    build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=tempest_data, station_offsets=_station_offsets)
+    build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=tempest_data, station_offsets=_station_offsets, kbvy_data=kbvy_data)
     update_history(_station_history, wu_data, tempest_data)
     save_history(_station_history, _gcs, GCS_BUCKET)
 

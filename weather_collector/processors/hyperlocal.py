@@ -31,7 +31,7 @@ def compute_dew_point_spread(temp_f, dew_point_f):
     return round(temp_f - dew_point_f, 1)
 
 
-def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=None, station_offsets=None):
+def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=None, station_offsets=None, kbvy_data=None):
     """
     Build complete hyperlocal correction data.
     This modifies weather_data in place by adding a 'hyperlocal' key.
@@ -242,5 +242,14 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
         hyperlocal["wu_stations_temp"] = wu_quality.get("stations_used_temp", 0)
         hyperlocal["wu_stations_wind"] = wu_quality.get("stations_used_wind", 0)
     
+    # KBVY reference temperature — external calibrated anchor (ASOS, 6.3mi NW)
+    if kbvy_data:
+        kbvy_t = kbvy_data.get("temp_f")
+        if kbvy_t is not None:
+            hyperlocal["kbvy_temp_f"] = kbvy_t
+            corrected = hyperlocal.get("corrected_temp")
+            if corrected is not None:
+                hyperlocal["kbvy_local_delta"] = round(corrected - kbvy_t, 2)
+
     if hyperlocal:
         weather_data["hyperlocal"] = hyperlocal
