@@ -3,7 +3,11 @@ Hyperlocal corrections using Weather Underground station data
 """
 import math
 import statistics
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from ..config import ELEVATION_FT
+
+_EASTERN = ZoneInfo("America/New_York")
 
 
 def _kalman_gain(n_stations, bias_std):
@@ -65,7 +69,9 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
                 stations = list(stations) + [tb]
     
     _offsets = station_offsets or {}
-    temp_offsets = _offsets.get("temp", {})
+    _is_day = 7 <= datetime.now(timezone.utc).astimezone(_EASTERN).hour < 19
+    _temp_split = _offsets.get("temp_day" if _is_day else "temp_night", {})
+    temp_offsets = {**_offsets.get("temp", {}), **_temp_split}  # split overrides combined
     humidity_offsets = _offsets.get("humidity", {})
     pressure_offsets = _offsets.get("pressure", {})
 

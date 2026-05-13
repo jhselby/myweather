@@ -7,7 +7,15 @@ Covers temperature, humidity, and pressure.
 import json
 import math
 from datetime import datetime, timezone, timedelta
+from zoneinfo import ZoneInfo
 from ..config import ELEVATION_FT
+
+_EASTERN = ZoneInfo("America/New_York")
+
+
+def _is_daytime(ts_utc_iso):
+    dt = datetime.fromisoformat(ts_utc_iso).replace(tzinfo=timezone.utc)
+    return 7 <= dt.astimezone(_EASTERN).hour < 19
 
 GCS_PATH = "station_history.json"
 WINDOW_HOURS = 48
@@ -121,11 +129,16 @@ def update_history(history, wu_data, tempest_data):
     humidity_deltas = _leave_one_out(eligible, _humidity)
     pressure_deltas = _leave_one_out(eligible, _pressure_in)
 
+    is_day = _is_daytime(ts)
     all_sids = set(temp_deltas) | set(humidity_deltas) | set(pressure_deltas)
     for sid in all_sids:
         entry = {"ts": ts}
         if sid in temp_deltas:
             entry["delta"] = temp_deltas[sid]
+            if is_day:
+                entry["delta_d"] = temp_deltas[sid]
+            else:
+                entry["delta_n"] = temp_deltas[sid]
         if sid in humidity_deltas:
             entry["h_delta"] = humidity_deltas[sid]
         if sid in pressure_deltas:
@@ -149,12 +162,21 @@ def compute_offsets(history):
     }
     Only includes stations with >= MIN_READINGS for each metric.
     """
-    temp_off, humidity_off, pressure_off = {}, {}, {}
+    temp_off, temp_day_off, temp_night_off = {}, {}, {}
+    humidity_off, pressure_off = {}, {}
 
     for sid, readings in history.items():
         t_vals = [r["delta"] for r in readings if "delta" in r]
         if len(t_vals) >= MIN_READINGS:
             temp_off[sid] = round(sum(t_vals) / len(t_vals), 3)
+
+        d_vals = [r["delta_d"] for r in readings if "delta_d" in r]
+        if len(d_vals) >= MIN_READINGS:
+            temp_day_off[sid] = round(sum(d_vals) / len(d_vals), 3)
+
+        n_vals = [r["delta_n"] for r in readings if "delta_n" in r]
+        if len(n_vals) >= MIN_READINGS:
+            temp_night_off[sid] = round(sum(n_vals) / len(n_vals), 3)
 
         h_vals = [r["h_delta"] for r in readings if "h_delta" in r]
         if len(h_vals) >= MIN_READINGS:
@@ -164,4 +186,5 @@ def compute_offsets(history):
         if len(p_vals) >= MIN_READINGS:
             pressure_off[sid] = round(sum(p_vals) / len(p_vals), 4)
 
-    return {"temp": temp_off, "humidity": humidity_off, "pressure": pressure_off}
+    return {"temp": temp_off, "temp_day": temp_day_off, "temp_night": temp_night_off,
+            "humidity": humidity_off, "pressure": pressure_off}

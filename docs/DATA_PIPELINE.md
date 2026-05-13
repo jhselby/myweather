@@ -1,5 +1,5 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.104
+**Version:** 0.5.105
 **Last Updated:** May 13, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
@@ -29,11 +29,13 @@
 
 **Station sources:** 29 WU stations + up to 9 Tempest stations, all within 1.5 miles
 
-**Method:** Distance/elevation weighted bias correction with adaptive per-station offsets and Kalman gain blend
+**Method:** Distance/elevation weighted bias correction with adaptive per-station offsets (diurnal split), Kalman gain blend
 
 **Formula:**
 ```python
-# Per-station adaptive offset (from station_bias.py, 48h rolling history):
+# Per-station adaptive offset — diurnal split (from station_bias.py, 48h rolling history):
+# Uses temp_day offset during 7am-7pm ET, temp_night offset otherwise.
+# Falls back to combined offset if split doesn't yet have >= MIN_READINGS.
 corrected_station_temp = station_temp - chronic_offset[station_id]
 
 # Bias against model:
@@ -942,6 +944,10 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 ---
 
 ## VERSION HISTORY
+
+**v0.5.105 (May 13, 2026):**
+- Diurnal split on temperature bias correction: station_bias.py now tags each temp delta as `delta_d` (7am–7pm ET) or `delta_n` (7pm–7am ET) alongside the combined `delta`. compute_offsets() returns `temp_day` and `temp_night` in addition to `temp`. hyperlocal.py applies the split offset when ≥ MIN_READINGS available for the current period, falls back to combined. Captures sensors whose warm/cold bias varies across the day (e.g. shading, thermal mass).
+- KBVY temp logged as external calibration anchor: `kbvy_temp_f` and `kbvy_local_delta` (corrected_temp − KBVY) added to hyperlocal output every run. Builds empirical distribution of the local marine/elevation offset for future network-level drift detection.
 
 **v0.5.86–v0.5.104 (May 13, 2026):**
 - Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove (Willow Rd, Driftwood Rd, Neptune Rd, Baldwin Rd, Maple St, Forest Ave, Lincoln Ave, Willard Ln, ColleeninMHD)
