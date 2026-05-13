@@ -70,26 +70,34 @@ function renderSources(sources, pwsStale) {
         if (wu && wu.stations) {
           const quality = wu.quality || {};
           const tempestStations = tempest?.stations || [];
-          const tempestRows = tempestStations.map(st =>
-            `${st.station_name} (${st.distance_mi}mi) - ${st.temperature_f != null ? st.temperature_f.toFixed(1) + "°F" : "---"}, ${st.wind_avg_mph != null ? st.wind_avg_mph.toFixed(1) + "mph" : "---"}${st.valid ? "" : " ⚠︎"}`
-          ).join('<br>');
+          const allStations = [
+            ...wu.stations.map(st => ({
+              label: st.station_id,
+              dist: st.distance_mi,
+              temp: st.temperature_f != null ? st.temperature_f.toFixed(1) + "°F" : "---",
+              wind: st.wind_speed_mph != null ? st.wind_speed_mph.toFixed(1) + "mph" : "---",
+              tag: "WU",
+              valid: true,
+            })),
+            ...tempestStations.map(st => ({
+              label: st.station_name,
+              dist: st.distance_mi,
+              temp: st.temperature_f != null ? st.temperature_f.toFixed(1) + "°F" : "---",
+              wind: st.wind_avg_mph != null ? st.wind_avg_mph.toFixed(1) + "mph" : "---",
+              tag: "T",
+              valid: st.valid !== false,
+            })),
+          ].sort((a, b) => a.dist - b.dist);
           extraDetail = `
             <div style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:0.75rem;">
               <div style="font-weight:800;margin-bottom:6px;color:rgba(255,255,255,0.7);">
-                WU: ${wu.stations.length} Stations • ${quality.stations_used_temp || 0} used for temp • ${quality.stations_used_wind || 0} used for wind
+                ${allStations.length} Stations • ${quality.stations_used_temp || 0} used for temp • ${quality.stations_used_wind || 0} used for wind
               </div>
               <div style="color:rgba(255,255,255,0.5);line-height:1.6;">
-                ${wu.stations.map(st =>
-                  `${st.station_id} (${st.distance_mi}mi) - ${st.temperature_f != null ? st.temperature_f.toFixed(1) + "°F" : "---"}, ${st.wind_speed_mph != null ? st.wind_speed_mph.toFixed(1) + "mph" : "---"}`
+                ${allStations.map(st =>
+                  `<span style="color:rgba(255,255,255,0.3);font-size:0.7rem;">[${st.tag}]</span> ${st.label} (${st.dist}mi) - ${st.temp}, ${st.wind}${st.valid ? "" : " ⚠︎"}`
                 ).join('<br>')}
               </div>
-              ${tempestStations.length > 0 ? `
-              <div style="font-weight:800;margin:8px 0 6px;color:rgba(255,255,255,0.7);">
-                Tempest: ${tempestStations.length} Stations
-              </div>
-              <div style="color:rgba(255,255,255,0.5);line-height:1.6;">
-                ${tempestRows}
-              </div>` : ""}
             </div>`;
         }
       }

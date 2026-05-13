@@ -577,21 +577,34 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _ws_ms = _ws_mph * 0.44704
         _rh = _ch if _ch is not None else 50
         _e = (_rh / 100) * 6.105 * math.exp((17.27 * _tc_fl) / (237.7 + _tc_fl))
-        # Radiation version using direct_radiation from Open-Meteo (cloud-attenuated direct sunlight)
-        # Q = direct_radiation[current_hour] * 0.17
-        _hourly_direct = weather_data.get("hourly", {}).get("direct_radiation", [])
-        _hourly_times = weather_data.get("hourly", {}).get("times", [])
-        from datetime import datetime as _dt
-        import pytz
-        _eastern = pytz.timezone("America/New_York")
-        _now_hr = _dt.now(_eastern).strftime("%Y-%m-%dT%H:00")
-        _direct_now = None
-        for _i, _t in enumerate(_hourly_times):
-            if _t == _now_hr and _i < len(_hourly_direct):
-                _direct_now = _hourly_direct[_i]
-                break
-        if _direct_now is not None and _direct_now > 0:
-            _Q = _direct_now * 0.17
+        # Solar source priority: Pirate Weather current → Tempest station avg → Open-Meteo direct_radiation
+        _solar_wm2 = None
+        # 1. Pirate Weather (point forecast for our exact location)
+        _pw_solar = weather_data.get("pirate_weather", {}).get("current_solar")
+        if isinstance(_pw_solar, (int, float)) and _pw_solar >= 0:
+            _solar_wm2 = _pw_solar
+        # 2. Average of valid Tempest stations
+        if _solar_wm2 is None:
+            _t_solar_vals = [
+                s["solar_radiation_wm2"] for s in weather_data.get("tempest", {}).get("stations", [])
+                if s.get("valid") and isinstance(s.get("solar_radiation_wm2"), (int, float))
+            ]
+            if _t_solar_vals:
+                _solar_wm2 = sum(_t_solar_vals) / len(_t_solar_vals)
+        # 3. Open-Meteo direct_radiation (hourly, modeled)
+        if _solar_wm2 is None:
+            _hourly_direct = weather_data.get("hourly", {}).get("direct_radiation", [])
+            _hourly_times = weather_data.get("hourly", {}).get("times", [])
+            from datetime import datetime as _dt
+            import pytz
+            _eastern = pytz.timezone("America/New_York")
+            _now_hr = _dt.now(_eastern).strftime("%Y-%m-%dT%H:00")
+            for _i, _t in enumerate(_hourly_times):
+                if _t == _now_hr and _i < len(_hourly_direct):
+                    _solar_wm2 = _hourly_direct[_i]
+                    break
+        if _solar_wm2 is not None and _solar_wm2 > 0:
+            _Q = _solar_wm2 * 0.17
             _at_c = _tc_fl + 0.348 * _e - 0.70 * _ws_ms + 0.70 * _Q / (_ws_ms + 10) - 4.25
         else:
             _at_c = _tc_fl + 0.33 * _e - 0.70 * _ws_ms - 4.00

@@ -1,4 +1,4 @@
-## v0.5.110–v0.5.117 • May 13, 2026
+## v0.5.110–v0.5.118 • May 13, 2026
 - Tempest hardware wet bulb replaces Stull formula for corrected_wet_bulb (fallback retained)
 - Fix: Next rain day label suppressed when minutely shows rain within 60 min
 - Extract renderSun/renderMoon/renderSolarSystem to js/sky.js
