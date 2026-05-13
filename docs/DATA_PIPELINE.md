@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.85
-**Last Updated:** May 9, 2026  
+**Version:** 0.5.104
+**Last Updated:** May 13, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
@@ -25,14 +25,19 @@
 
 ### Current Hour Calculation
 
-**Location:** `weather_collector/processors/hyperlocal.py` lines 48-123
+**Location:** `weather_collector/processors/hyperlocal.py`
 
-**Method:** Distance and elevation weighted bias correction
+**Station sources:** 29 WU stations + up to 9 Tempest stations, all within 1.5 miles
+
+**Method:** Distance/elevation weighted bias correction with adaptive per-station offsets and Kalman gain blend
 
 **Formula:**
 ```python
-# For each WU station within 1.5 miles:
-bias_at_station = station_temp - model_temp
+# Per-station adaptive offset (from station_bias.py, 48h rolling history):
+corrected_station_temp = station_temp - chronic_offset[station_id]
+
+# Bias against model:
+bias_at_station = corrected_station_temp - model_temp
 dist_weight = 1.0 / (station_dist ** 2)                    # Inverse square law
 elev_weight = exp(-|station_elev - 30ft| / 30)            # Exponential decay
 combined_weight = dist_weight × elev_weight
@@ -40,8 +45,13 @@ combined_weight = dist_weight × elev_weight
 # Weighted average of all biases:
 weighted_bias = Σ(bias_at_station × combined_weight) / Σ(combined_weight)
 
-# Apply to model:
-corrected_temp = model_temp + weighted_bias
+# Kalman gain — how much to trust stations vs. model:
+K = 0.90  if stations_used >= 5 and bias_std < 1.0°F   # High confidence
+K = 0.65  if stations_used >= 3 and bias_std < 2.0°F   # Moderate confidence
+K = 0.40  otherwise                                      # Low confidence / few stations
+
+# Apply to model (model contributes when K < 1):
+corrected_temp = model_temp + K × weighted_bias
 ```
 
 **Requirements:**
@@ -59,11 +69,14 @@ else:                   confidence = "Low"
 
 **Data Stored (in `weather_data["hyperlocal"]`):**
 - `model_temp` - Raw GFS/HRRR model temperature (°F)
-- `weighted_bias` - Calculated bias correction (°F)
-- `corrected_temp` - Model + weighted bias (°F)
-- `stations_used` - Number of stations contributing to calculation
-- `stations_total` - Total WU stations available
+- `weighted_bias` - Calculated bias correction (°F, before K scaling)
+- `kalman_gain` - K value applied (0.40 / 0.65 / 0.90)
+- `corrected_temp` - model_temp + K × weighted_bias (°F)
+- `stations_used` - Number of stations with valid data in this run
+- `stations_total` - All attempted stations (29 WU + 9 Tempest = 38)
 - `confidence` - "High", "Moderate", or "Low"
+- `bias_std` - Standard deviation of per-station biases (°F)
+- `station_offsets` - Chronic offsets applied this run (from station_bias.py), if any
 - `wu_avg_temp` - Simple WU multi-station average (for reference only)
 
 **Fallback (if WU unavailable):**
@@ -140,23 +153,26 @@ Hour 48: Model 38°F → Display 38.27°F
 
 ### Current Hour Calculation
 
-**Location:** `weather_collector/processors/hyperlocal.py` lines 135-141
+**Location:** `weather_collector/processors/hyperlocal.py`
 
-**Method:** Direct replacement with WU multi-station average
+**Method:** Distance/elevation weighted average across all stations with adaptive per-station bias correction (same weights as temperature)
 
 **Formula:**
 ```python
-corrected_humidity = wu_avg_humidity  # Simple replacement
-bias_humidity = wu_avg_humidity - model_humidity
+# Per-station adaptive offset (from station_bias.py, once >= 6 readings):
+corrected_station_humidity = station_humidity - chronic_h_offset[station_id]
+
+# Distance/elevation weighted average:
+corrected_humidity = Σ(corrected_station_humidity × weight) / Σ(weight)
+bias_humidity = corrected_humidity - model_humidity
 ```
 
 **Data Stored (in `weather_data["hyperlocal"]`):**
 - `model_humidity` - Raw GFS/HRRR model humidity (%)
-- `wu_humidity` - WU multi-station average (%)
-- `bias_humidity` - Difference (%)
-- `corrected_humidity` - Same as wu_humidity (%)
+- `corrected_humidity` - Weighted station average with bias correction (%)
+- `bias_humidity` - corrected - model (%)
 
-**Note:** Unlike temperature, humidity uses simple replacement, not weighted bias correction
+**Note:** Per-station chronic offsets kick in after ≥ 6 readings (~1 hour). Before that, raw station values are used.
 
 ---
 
@@ -188,22 +204,28 @@ bias_humidity = wu_avg_humidity - model_humidity
 
 ### Current Hour Calculation
 
-**Location:** `weather_collector/processors/hyperlocal.py` lines 125-133
+**Location:** `weather_collector/processors/hyperlocal.py`
 
-**Method:** Preference hierarchy (WU → KBOS → Model)
+**Method:** Distance/elevation weighted average across all stations with adaptive per-station bias correction. Falls back to KBOS or model if no station pressure data available.
 
 **Formula:**
 ```python
-corrected_pressure_in = wu_pressure_in OR kbos_pressure_in OR model_pressure_in
+# Per-station adaptive offset (from station_bias.py, once >= 6 readings):
+corrected_station_pressure = station_pressure_in - chronic_p_offset[station_id]
+
+# Distance/elevation weighted average:
+corrected_pressure_in = Σ(corrected_station_pressure × weight) / Σ(weight)
+
+# Fallback hierarchy if no station pressure data:
+corrected_pressure_in = kbos_pressure_in OR model_pressure_in
 ```
 
 **Data Stored (in `weather_data["hyperlocal"]`):**
 - `model_pressure_in` - GFS/HRRR model pressure (inHg)
-- `wu_pressure_in` - WU multi-station average (inHg) [if available]
 - `kbos_pressure_in` - KBOS observation (inHg) [if available]
-- `corrected_pressure_in` - Best available value (inHg)
+- `corrected_pressure_in` - Weighted station average, or fallback (inHg)
 
-**Note:** This is selection, not bias correction - picks best source
+**Note:** Per-station chronic offsets kick in after ≥ 6 readings (~1 hour).
 
 ---
 
@@ -734,20 +756,39 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 └─────────────────────────────────────────────────────────────┘
                             ↓
 ┌─────────────────────────────────────────────────────────────┐
+│       STATION BIAS PROCESSOR (station_bias.py)               │
+├─────────────────────────────────────────────────────────────┤
+│ Loads station_history.json from GCS (48h rolling window)     │
+│ compute_offsets() → chronic offset per station per metric    │
+│                                                              │
+│  • ≥ 6 readings required before offset applied              │
+│  • Leave-one-out: each station vs. consensus of all others  │
+│  • Covers temp, humidity, pressure independently            │
+│  • Offsets passed to hyperlocal.py as station_offsets dict  │
+│  • After hyperlocal runs, update_history() appends new      │
+│    leave-one-out deltas and saves to GCS                    │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────┐
 │          HYPERLOCAL PROCESSOR (hyperlocal.py)                │
 ├─────────────────────────────────────────────────────────────┤
 │ Creates weather_data["hyperlocal"] with:                     │
 │                                                              │
 │ TEMPERATURE:                                                 │
-│  • Weighted bias from WU stations                           │
-│  • corrected_temp = model + weighted_bias                   │
+│  • Per-station offsets applied before bias calculation      │
+│  • weighted_bias = distance/elevation weighted avg of biases │
+│  • K (Kalman gain) = 0.90/0.65/0.40 based on confidence    │
+│  • corrected_temp = model + K × weighted_bias               │
 │                                                              │
 │ HUMIDITY:                                                    │
-│  • corrected_humidity = WU average (replacement)            │
-│  • bias_humidity = WU - model                               │
+│  • Per-station offsets applied                              │
+│  • corrected_humidity = weighted station average            │
+│  • bias_humidity = corrected - model                        │
 │                                                              │
 │ PRESSURE:                                                    │
-│  • corrected_pressure = WU OR KBOS OR model (priority)      │
+│  • Per-station offsets applied                              │
+│  • corrected_pressure = weighted station average            │
+│  • Fallback: KBOS OR model                                  │
 │                                                              │
 │ WIND GUSTS (parallel to collector's max-select):            │
 │  • Weighted average from WU stations                        │
@@ -901,6 +942,17 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 ---
 
 ## VERSION HISTORY
+
+**v0.5.86–v0.5.104 (May 13, 2026):**
+- Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove (Willow Rd, Driftwood Rd, Neptune Rd, Baldwin Rd, Maple St, Forest Ave, Lincoln Ave, Willard Ln, ColleeninMHD)
+- WU station list trimmed from 36 to 29: removed 7 confirmed out-of-range stations (KMAMARBL1, KMASALEM91, KMAMARBL8, KMAMARBL64, KMAMARBL85, KMAMARBL113, KMAMARBL118)
+- Station denominator: `stations_total` now counts all attempted stations (29 WU + 9 Tempest = 38), not just responders
+- Adaptive bias correction (station_bias.py): new module tracking per-station chronic offsets for temp, humidity, and pressure using leave-one-out consensus over a 48h rolling window in GCS (station_history.json). MIN_READINGS=6 before offset applied.
+- hyperlocal.py: single-pass per-station loop applies temp, humidity, and pressure offsets simultaneously; old standalone humidity/pressure blocks removed
+- Kalman gain blend: corrected_temp = model + K × weighted_bias where K = 0.90/0.65/0.40 based on stations_used and bias_std. Model contributes meaningfully when stations disagree. `kalman_gain` field added to hyperlocal output.
+- Tempest stations shown in Settings → Sources card
+- Version update detection: build.py writes version.json; frontend polls every 5 min and lights up refresh button dot if new version available
+- v0.5.104: fixed version dot always showing (DOM timing — appVersion element not yet parsed when script executed; fixed with setTimeout(0) and lazy read)
 
 **v0.5.76–v0.5.85 (May 9, 2026):**
 - Gemini briefing: fallback to gemini-1.5-flash-8b on 429; both models configurable via env vars
