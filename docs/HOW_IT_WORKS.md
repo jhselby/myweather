@@ -1,45 +1,125 @@
 # How It Works
 
-MyWeather doesn't just display model forecasts. Every temperature reading you see has been corrected using a network of 38 local weather stations — 29 personal stations from Weather Underground and 9 Tempest stations — all within 1.5 miles of Wyman Cove.
+MyWeather is a hyperlocal weather app built for a specific location: Wyman Cove in Marblehead, Massachusetts. Every number you see has been processed through a pipeline designed to answer one question: what is the weather actually doing here, right now?
 
-## The problem with weather models
+---
 
-Numerical weather models like HRRR and GFS are remarkably good at predicting large-scale atmospheric patterns: storm tracks, pressure systems, frontal passages. But they run on grids with cells several kilometers wide. A single grid cell covers the entire Marblehead Neck peninsula and the open water beyond it. The model has no idea that Wyman Cove sits at the end of a narrow spit of land surrounded by Salem Sound, or that an afternoon sea breeze from the southeast arrives here an hour before it reaches the airport.
+## Data Sources
 
-The result: on a clear summer afternoon, the model might say 78°F while every thermometer within a mile reads 74°F. That four-degree gap is real, systematic, and predictable.
+The app draws from eight external sources simultaneously, every ten minutes:
 
-## Local stations as correction
+**Open-Meteo** provides the model backbone — HRRR for the next 48 hours and GFS for days 3 through 10. These are the same numerical weather prediction models used by professional forecasters. They're good at large-scale patterns but run on grids too coarse to resolve local coastal microclimate effects.
 
-The most direct fix is to look outside. With 38 stations within 1.5 miles, we have a dense network of actual measurements. Each station's reading is weighted by two factors: how close it is (nearer stations matter more, following an inverse-square relationship) and how similar its elevation is to Wyman Cove (stations at a similar height are more representative).
+**Weather Underground** provides observations from 29 personal weather stations within 1.5 miles of Wyman Cove, plus wind data from stations slightly farther out. These are hobbyist sensors — quality varies.
 
-The weighted average of what those stations are reading gives us a correction to apply to the model. If the model says 78°F and the stations collectively say 74°F, we correct down.
+**Nine Tempest stations** also within 1.5 miles contribute higher-quality observations. Tempest uses a different sensor architecture than typical WU stations and generally has lower drift.
 
-## The self-calibration problem
+**KBVY (Beverly Municipal Airport)**, 6.3 miles northwest, provides certified ASOS observations — the same instrument-grade sensors used by the FAA and National Weather Service. Used primarily for wind and as a calibration reference.
 
-Personal weather stations aren't government-grade sensors. They sit on rooftops, in gardens, next to brick walls. Some run consistently warm. Some run cold. If you average them naively, the bad actors drag the answer in the wrong direction.
+**KBOS (Logan Airport)** contributes pressure observations. Logan's barometers are among the most reliable in the region.
 
-The solution is a technique called leave-one-out calibration. Every 10 minutes, each station is compared not to an external reference, but to the consensus of all its neighbors. If one station consistently reads 2.7°F warmer than every other station around it, that's not weather — that's a miscalibrated sensor. We track that chronic offset over a 48-hour rolling window and subtract it before the station contributes to the correction.
+**Pirate Weather** provides the only reliable minutely precipitation forecast (next hour, by the minute), plus solar radiation, lightning probability, and atmospheric instability data that Open-Meteo doesn't expose.
 
-This runs separately for temperature, humidity, and pressure. Temperature also splits by time of day: a station shaded by a tree in the afternoon might read accurately at midnight but run cool during the day. The system learns both patterns independently.
+**NOAA's Gulf of Maine Operational Forecast System (GoMOFS)** provides water temperature from a grid point in Salem Channel, approximately 1.5 miles from the dock — far more accurate than a buoy 16 miles offshore.
 
-## Knowing when not to trust the stations
+**eBird** provides bird observation data from a 5km radius, updated every 10 minutes.
 
-On most days, the 30+ active stations agree within about 1°F of each other. When they agree, we trust them almost completely.
+---
 
-But sometimes they don't — during a fast-moving front, when sensors are icing up, or when half the network goes offline overnight. Blindly averaging disagreeing stations would produce a worse answer than just using the model.
+## Temperature
 
-We handle this with a blend factor that determines how much of the station-based correction to apply. When stations strongly agree, stations get 90% of the say. When they moderately agree, 65%. When they're noisy or sparse, 40% — and the model gets meaningful weight back. This is the same principle used by the National Weather Service in its Real-Time Mesoscale Analysis, which blends model output with surface observations the same way.
+The model's temperature for this grid cell is a starting point, not an answer. The HRRR grid cell that covers Wyman Cove spans several kilometers — the model has no knowledge of the specific microclimate at the water's edge.
 
-## KBVY as an outside check
+The correction works in three layers.
 
-The leave-one-out approach is a closed loop: stations calibrate against each other. If the entire network drifts warm together — say, a hot summer with every station absorbing more radiant heat — the system won't catch it, because every station looks fine relative to its neighbors.
+**Station weighting.** Each of the 38 local stations contributes to a weighted average based on two factors: distance (closer stations matter more, following an inverse-square relationship) and elevation (stations at similar height to Wyman Cove's 30 feet are more representative than rooftop sensors). The weighted average of what all stations are reading gives a "bias" — the difference between what the model predicts and what the local area is actually experiencing.
 
-Beverly Municipal Airport (KBVY), 6.3 miles northwest, is the outside check. It's an FAA-certified ASOS station, maintained by the National Weather Service to instrument-grade standards. We log the difference between our local corrected temperature and KBVY's reading every 10 minutes. Over time, that gap reveals the normal marine and elevation offset between the airport and Wyman Cove. If it suddenly widens or narrows, it signals that the local network has shifted as a whole.
+**Self-calibration.** Personal weather stations drift. A sensor on a south-facing rooftop will read warm in summer. One in a shaded garden runs cold. The app tracks each station's chronic offset over a 48-hour rolling window using a leave-one-out technique: every run, each station's reading is compared against the weighted consensus of all its neighbors. A station that consistently reads 2.7°F warmer than everyone else gets that offset subtracted before it contributes to the correction. This runs separately for day and night, since a sensor shaded in the afternoon may be accurate at midnight.
+
+**Confidence blending.** When 33 stations all agree within 1°F of each other, the station-based correction is applied at 90% weight — the model contributes only 10%. When stations are noisier or fewer are reporting, the model gets more weight back (up to 60%). This is the same principle used in the NWS Real-Time Mesoscale Analysis: blend observations with the model in proportion to how much you trust each.
+
+For the 48-hour forecast, the current bias is applied flat across all hours.
+
+---
+
+## Humidity
+
+Handled the same way as temperature: a distance/elevation weighted average across all stations, with per-station chronic offsets applied first. The model's humidity is frequently wrong for coastal locations — marine air is consistently more humid than model grids suggest, and the correction regularly adds 4–6% relative humidity to the model value.
+
+---
+
+## Pressure
+
+Weighted station average with per-station bias correction, falling back to Logan Airport (KBOS) if station data isn't available, and to the model as a last resort. Pressure doesn't vary much over 1.5 miles, so the correction here is mostly about sensor calibration rather than spatial interpolation.
+
+---
 
 ## Wind
 
-Wind is handled differently. A weighted average of wind speeds across 38 stations would be meaningless — wind varies too much over short distances depending on terrain, buildings, and fetch. Instead, we take the highest observed gust from any station or the airport, on the principle that at an exposed coastal site, the highest reading is the most relevant one. That observed value is then blended into the 24-hour forecast with a linear decay, so the forecast transitions smoothly from what's actually happening now to what the model expects later.
+Wind is handled differently from temperature and humidity. A weighted average of wind speeds across 38 stations is meaningless — wind varies too much over short distances depending on terrain, buildings, and fetch. A sensor behind a house reads differently from one on a roof, which reads differently from one at the water's edge.
 
-## What you see
+The approach for current conditions is maximum selection: take the highest gust observed by any station (including KBVY), and use that as the floor. At an exposed coastal site, the highest reading is the most representative one for what you'd experience outside. The model value is never allowed to be higher than the observed maximum.
 
-The temperature on the main screen is the output of all of the above: model baseline, corrected by a self-calibrating network of local stations, blended with a confidence-weighted gain, validated against a certified reference station 6 miles away. It updates every 10 minutes.
+For the 48-hour forecast, the current observed wind is blended into the model forecast with a linear decay over 24 hours. At the current hour, the display shows 100% observed. Six hours from now, 75% observed. Twelve hours, 50/50. By hour 24, the model takes over completely. This ensures the near-term forecast is grounded in what's actually happening rather than what the model expected hours ago.
+
+---
+
+## Wind Impact Score
+
+Raw wind speed doesn't tell the whole story at Wyman Cove. A 20 mph northwest wind is barely felt at the dock — the land blocks it. The same speed from the southeast, with a full ocean fetch, is a different experience entirely.
+
+The wind impact score adjusts for directional exposure using a lookup table that maps wind direction to a terrain exposure factor between 0 and 1. The impact score is the product of wind speed and a power of the exposure factor. A strong wind from a sheltered direction scores low. A moderate wind from the exposed southeast scores high. The 10-day forecast text uses this score to decide whether to say "windy at the cove" or "calm at the cove despite regional gusts."
+
+---
+
+## Feels Like
+
+Uses the Steadman Australian Apparent Temperature formula, which combines temperature, humidity, and wind speed. On days with direct sunlight, a solar radiation term is added — this accounts for the fact that full sun in calm conditions feels warmer than the thermometer suggests. The formula uses corrected values for all inputs, and is fully recalculated for every hour of the 48-hour forecast.
+
+---
+
+## Wet Bulb Temperature
+
+The wet bulb temperature — the lowest temperature achievable by evaporative cooling — is calculated from corrected temperature and corrected humidity using Stull's psychrometric equation. It's more relevant than heat index for assessing heat stress in humid conditions, and more honest than "feels like" for understanding outdoor athletic limits. Calculated for the current hour and all 48 forecast hours.
+
+---
+
+## Daily High and Low
+
+The daily high and low are not taken directly from the model's forecast. Instead, they're computed from a hybrid of observed and forecast temperatures. Each time the collector runs, it logs the corrected local temperature with an hourly timestamp. The daily high is the maximum of all observed corrected temperatures so far today, plus the corrected forecast temperatures for the remaining hours. As the day progresses, observations replace forecast values, so by evening the high and low reflect what actually happened rather than what was predicted.
+
+---
+
+## Water Temperature
+
+Comes from NOAA's Gulf of Maine Operational Forecast System — a dedicated ocean circulation model with a grid point in Salem Channel, 1.5 miles from the dock. This is significantly more accurate than the NDBC buoy 16 miles offshore, which runs 2–5°F colder than local inshore water in summer due to upwelling and distance. The GoMOFS model runs four times a day and produces 72-hour forecasts.
+
+---
+
+## Hair Day Score
+
+Predicts hair manageability for three days. The primary driver is absolute humidity — the actual water vapor content of the air, calculated from dew point. Unlike relative humidity, absolute humidity doesn't change when temperature changes, making it a more stable predictor of frizz risk. Four hair type profiles (Straight, Wavy, Curly, Coily) have different scoring curves, different wind thresholds, and different weightings between humidity, precipitation, and wind. Morning hours are weighted three times more heavily than afternoon, on the logic that how your hair looks at 8am is what matters. A high relative humidity penalty multiplies the score down when air is already near saturation regardless of absolute moisture content.
+
+---
+
+## Birds
+
+Bird observations from eBird within 5km of the cove, updated every 10 minutes, looking back 48 hours. Notable/rare species flagged by eBird's regional filters are highlighted. Observations are grouped by location, sorted nearest first. Counts come directly from eBird observer reports and may be exact numbers or an "X" where the observer didn't count.
+
+---
+
+## 10-Day Forecast Text
+
+The narrative forecast is generated entirely in the collector — no AI involved for the text itself. It merges HRRR data (days 1–2) with GFS data (days 3–7) and ECMWF daily summaries (days 8–10), generating NWS-style period descriptions with exposure-aware wind sentences. When wind is coming from a sheltered direction, the text says so explicitly rather than just reporting the speed.
+
+---
+
+## AI Briefing (Gemini)
+
+Once every 30 minutes, the collector sends a structured summary of current and forecast conditions to Google's Gemini model and asks for a headline and one-sentence subheadline. Gemini receives corrected values — not raw model output — and the wind impact label rather than raw speed, so its tone reflects what the weather feels like at the specific location rather than what the regional forecast says. The previous headline is fed as context so Gemini can note when the forecast has shifted since the last briefing.
+
+---
+
+## KBVY as a Calibration Anchor
+
+The leave-one-out self-calibration is a closed loop — stations learn from each other. If the entire local network drifts warm together over a summer, the system won't detect it because every station looks correct relative to its neighbors. Beverly Airport, 6.3 miles away, provides an outside reference. The difference between the local corrected temperature and KBVY is logged every 10 minutes. Over time, this builds a picture of the normal marine and elevation offset between the airport and the cove. A sudden change in that gap is an early warning that something in the local network has shifted.
