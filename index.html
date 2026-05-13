@@ -313,19 +313,14 @@
                 </g>
               </svg>
               
-              <!-- Foreground: Wind speed centered in compass with mph positioned relative -->
-              <div style="position:relative;z-index:1;margin-top:12px;margin-top:12px;">
-                <!-- Container for centering just the number -->
+              <!-- Foreground: gusts top / speed center / lull bottom over compass -->
+              <div style="position:relative;z-index:1;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px 0;">
+                <div id="weatherWindGustsLine" class="tile-wind-gusts">Gusts -- mph</div>
                 <div style="position:relative;display:inline-block;">
-                  <!-- Main wind speed - centered in compass -->
                   <span id="weatherWindSustainedSpeed" class="tile-wind-speed">--</span>
-                  <!-- mph positioned relative to the number -->
                   <span class="tile-wind-unit" style="font-size:14px;position:absolute;bottom:0;margin-left:2px;">mph</span>
                 </div>
-                <!-- Gusts line below -->
-                <div id="weatherWindGustsLine" class="tile-wind-gusts" style="margin-top:8px;">
-                  Gusts -- mph
-                </div>
+                <div id="weatherWindLullLine" class="tile-wind-gusts" style="display:none;">Lull -- mph</div>
               </div>
             </div>
             
@@ -1211,8 +1206,9 @@
 
   </div>
   <script src="js/briefing.js?v=b58ea00c"></script>
+  <script src="js/wind.js?v=22edbb47"></script>
   <script src="js/corrections.js?v=e79852f5"></script>
-  <script src="js/app-main.js?v=93f96981"></script>
+  <script src="js/app-main.js?v=d2ddda63"></script>
   <script src="js/changelog_loader.js?v=eb2d0222"></script>
   
   <script>
@@ -1337,7 +1333,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.108</span>
+            <span class="version-pill" id="appVersion">v0.5.109</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->

@@ -1,4 +1,4 @@
-## v0.5.102–v0.5.108 • May 13, 2026
+## v0.5.102–v0.5.109 • May 13, 2026
 - Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
 - WU station list trimmed from 36 to 29 (removed 7 confirmed out-of-range stations)
 - Station denominator now counts all attempted stations (29 WU + 9 Tempest = 38), not just responders
@@ -13,6 +13,8 @@
 - DATA_PIPELINE.md updated to v0.5.105
 - Corrections card extracted to js/corrections.js; per-station adaptive bias offsets table (tap to expand, top 8 by magnitude, warm=red/cold=blue); KBVY anchor line in expanded card
 - Lightning alerts from Tempest network: Watch For row + Active Alerts modal when ≥3 strikes/hr or ≥1 strike within 20 km; badge lights standalone; red if close, orange if distant
+- Wind compass tile: wind lull (min across Tempest stations) added below sustained speed; gusts top / sustained center / lull bottom layout
+- Wind rendering extracted to js/wind.js (renderWindTile, renderWindImpactCollapsed, renderWindChart, renderWindRisk, initWindPills, buildWindChart)
 
 ## v0.5.100–v0.5.101 • May 12, 2026
 - Fix data refresh on Mac: add window focus listener alongside visibilitychange so Cmd+Tab back to browser triggers a reload (visibilitychange alone only fires on tab switches)
