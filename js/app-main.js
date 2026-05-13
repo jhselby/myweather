@@ -5484,6 +5484,16 @@ function loadWeatherData() {
         if (pop0 >= 60 && dailyPrecip >= 0.5)
           stormFlags.push(`Heavy rain expected — ${dailyPrecip.toFixed(1)}"`);
 
+        const tempestStations = data.tempest?.stations || [];
+        const lightningCount1hr = tempestStations.reduce((sum, st) => sum + (st.lightning_count_1hr || 0), 0);
+        const lightningDists = tempestStations.map(st => st.lightning_last_distance_km).filter(d => d != null && d > 0);
+        const lightningMinDist = lightningDists.length > 0 ? Math.min(...lightningDists) : null;
+        const lightningActive = lightningCount1hr >= 3 || (lightningCount1hr >= 1 && lightningMinDist != null && lightningMinDist <= 20);
+        if (lightningActive) {
+          stormFlags.push(`Lightning detected — ${lightningCount1hr} strike${lightningCount1hr !== 1 ? "s" : ""} in past hour`);
+        }
+        window.__lightningStrike = lightningActive ? { count: lightningCount1hr, distKm: lightningMinDist } : null;
+
         // Store storm flags globally and refresh alert badge
         window.__stormFlags = stormFlags;
         renderBriefing(data); // Re-render now that storm flags are available
@@ -5494,7 +5504,7 @@ function loadWeatherData() {
           const hasAlerts = container && container.innerHTML.trim().length > 0;
           const hasStorm = stormFlags.length >= 2;
           // Badge is always visible — toggle the colored dot for active state
-          if (dot) dot.style.display = (hasAlerts || hasStorm) ? "" : "none";
+          if (dot) dot.style.display = (hasAlerts || hasStorm || !!window.__lightningStrike) ? "" : "none";
         }
         updatePrecipBadge(data);
         // Sea breeze indicator
@@ -6044,8 +6054,10 @@ function openAlertModal() {
 
   modalBody.innerHTML = '';
 
+  const lightningStrike = window.__lightningStrike;
+
   // If no alerts, show reassurance instead of refusing to open
-  if (alerts.length === 0 && stormFlags.length < 2) {
+  if (alerts.length === 0 && stormFlags.length < 2 && !lightningStrike) {
     modalBody.innerHTML = `
       <div style="padding:32px 16px;text-align:center;color:var(--muted);">
         <div style="font-size:2.5rem;margin-bottom:12px;">✓</div>
@@ -6055,6 +6067,17 @@ function openAlertModal() {
     document.getElementById('alertModal').style.display = 'flex';
     document.body.style.overflow = 'hidden';
     return;
+  }
+
+  // Standalone lightning section (when not already folded into storm flags block)
+  if (lightningStrike && stormFlags.length < 2) {
+    const distStr = lightningStrike.distKm != null ? ` · closest ${Math.round(lightningStrike.distKm)} km` : "";
+    const isClose = lightningStrike.distKm != null && lightningStrike.distKm <= 20;
+    modalBody.innerHTML += `
+      <div class="alert-modal-item" style="border-left:3px solid ${isClose ? 'rgba(255,80,80,0.7)' : 'rgba(255,160,50,0.7)'};padding-left:12px;">
+        <div class="alert-modal-title">⚡ Lightning detected</div>
+        <div class="alert-modal-desc">${lightningStrike.count} strike${lightningStrike.count !== 1 ? "s" : ""} in the past hour${distStr}</div>
+      </div>`;
   }
 
   // Storm flags section

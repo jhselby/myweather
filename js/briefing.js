@@ -849,7 +849,25 @@
       rows.push({ label: "Frost risk", value: "Low tonight " + s.low + "°", color: s.low <= 32 ? "red" : "orange" });
     }
 
-    // 8. Sea breeze
+    // 8. Lightning
+    const tempestStations = (s._data.tempest?.stations || []);
+    if (tempestStations.length > 0) {
+      const totalCount1hr = tempestStations.reduce((sum, st) => sum + (st.lightning_count_1hr || 0), 0);
+      const distances = tempestStations.map(st => st.lightning_last_distance_km).filter(d => d != null && d > 0);
+      const minDist = distances.length > 0 ? Math.min(...distances) : null;
+      const isClose = minDist != null && minDist <= 20;
+      if (totalCount1hr >= 3 || (totalCount1hr >= 1 && isClose)) {
+        const distStr = minDist != null ? ` · closest ${Math.round(minDist)} km` : "";
+        rows.push({
+          label: "Lightning",
+          value: `Lightning · ${totalCount1hr} strike${totalCount1hr !== 1 ? "s" : ""} in past hour${distStr}`,
+          color: isClose ? "red" : "orange",
+          isAlert: true,
+        });
+      }
+    }
+
+    // 9. Sea breeze
     const sbLikelihood = sb.likelihood ?? 0;
     const sbDelta = parseFloat((sb.reason || "").match(/Δ([-\d.]+)/)?.[1] || "0");
     if (sbLikelihood >= 60 && sbDelta > 0) {
