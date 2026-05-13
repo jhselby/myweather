@@ -1,3 +1,9 @@
+## v0.5.115 • May 13, 2026
+- Extract renderBriefing to js/briefing.js (now the complete briefing module alongside generateBriefing)
+- Extract buildTempPrecipChart/updateTempPrecipDataBar to js/tempchart.js
+- Extract renderForecast/selectForecastDay/updateForecastSelection/filterHyperlocalByDate to js/forecast.js
+- app-main.js: 4426 → 2817 lines
+
 ## v0.5.110–v0.5.114 • May 13, 2026
 - Tempest hardware wet bulb replaces Stull formula for corrected_wet_bulb (fallback retained)
 - Fix: Next rain day label suppressed when minutely shows rain within 60 min
