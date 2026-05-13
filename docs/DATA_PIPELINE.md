@@ -604,17 +604,22 @@ AT = Ta + 0.33*e - 0.70*ws - 4.00
 
 **Radiation formula (direct sun present):**
 AT = Ta + 0.348*e - 0.70*ws + 0.70*Q/(ws+10) - 4.25
-Q = direct_radiation * 0.17
+Q = solar_wm2 * 0.17
 
-Where: Ta = corrected temp (C), e = vapour pressure (hPa), ws = corrected wind (m/s), Q = net absorbed radiation (W/m2), direct_radiation = Open-Meteo HRRR cloud-attenuated solar (W/m2), 0.17 = body absorptivity * effective cross-section
+Where: Ta = corrected temp (C), e = vapour pressure (hPa), ws = corrected wind (m/s), Q = net absorbed radiation (W/m2), solar_wm2 = measured GHI (W/m2), 0.17 = body absorptivity * effective cross-section
 
-**Logic:** direct_radiation > 0 uses radiation formula (+2-5F on sunny days); zero uses shade formula (overcast/night)
+**Solar source priority:**
+1. Pirate Weather `current_solar` — point forecast for exact location, updated each run
+2. Average of valid Tempest station readings (`solar_radiation_wm2`)
+3. Open-Meteo `hourly.direct_radiation` — modeled, hourly resolution
+
+**Logic:** solar_wm2 > 0 uses radiation formula (~8-10F sun/shade delta on clear days); zero uses shade formula (overcast/night)
 
 **Inputs:**
 - Temperature: hyp.corrected_temp
 - Wind: hyp.corrected_wind_speed
 - Humidity: hyp.corrected_humidity
-- Solar: hourly.direct_radiation (Open-Meteo HRRR)
+- Solar: pirate_weather.current_solar (primary)
 
 **Storage:**
 - Current: derived.corrected_feels_like (F)

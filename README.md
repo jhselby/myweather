@@ -47,22 +47,23 @@ Fetchers live in `weather_collector/fetchers/`:
 
 | Fetcher | Source | What it provides |
 |---|---|---|
-| `pirate_weather.py` | Pirate Weather API | GFS current conditions, hourly/daily forecasts |
-| `open_meteo.py` | Open-Meteo API | HRRR/ECMWF model data, directional cloud sampling |
-| `wu_scraper_realtime.py` | Weather Underground API | ~36 personal weather station readings for hyperlocal corrections |
+| `pirate_weather.py` | Pirate Weather API | Minutely precip, current solar irradiance, CAPE |
+| `open_meteo.py` | Open-Meteo API | HRRR 48h + ECMWF 10-day forecasts, directional cloud sampling |
+| `wu_scraper_realtime.py` | Weather Underground API | 29 personal weather station readings for hyperlocal corrections |
+| `tempest.py` | WeatherFlow Tempest API | Up to 9 Tempest stations within 1.5mi; lightning, solar, wind lull, wet bulb |
 | `pws.py` | NWS/KBOS/KBVY/buoy | Nearby official station observations |
-| `nws.py` | NWS API | Alerts, forecast discussions |
-| `nws_gridpoints.py` | NWS Gridpoints API | Grid-level forecast data |
+| `nws.py` | NWS API | Alerts + gridpoint forecast data (BOX/76,97) |
 | `noaa.py` | NOAA CO-OPS | Tide predictions and water temperature |
 | `tides.py` | NOAA tides | Detailed tide data for station 8442645 |
 | `salem_water.py` | Salem Water dept | Salem Sound water temperature |
 | `ebird.py` | eBird API | Recent/notable bird sightings within 5 km |
+| `briefing_ai.py` | Google Gemini API | AI-generated briefing headline and subheadline |
 
 ### Processors
 
 Processors live in `weather_collector/processors/` and compute derived scores from raw fetcher data:
 
-`hyperlocal.py` (temperature/humidity corrections from WU station network), `wind_risk.py`, `fog.py`, `frost.py`, `sunset_directional.py`, `sea_breeze.py`, `pressure.py`, `wet_bulb.py`, `precip_surface.py`, `precip_850mb.py`, `trough.py`, `forecast_text.py`
+`hyperlocal.py` (temperature/humidity corrections from WU + Tempest station network), `station_bias.py` (per-station Kalman bias tracking), `wind_risk.py`, `fog.py`, `frost.py`, `sunset_directional.py`, `sea_breeze.py`, `pressure.py`, `wet_bulb.py`, `precip_surface.py`, `precip_850mb.py`, `trough.py`, `forecast_text.py`
 
 ### Output
 
@@ -75,13 +76,14 @@ The collector reads API keys from environment variables (set in the Cloud Run se
 - `PIRATE_WEATHER_API_KEY`
 - `WU_API_KEY`
 - `EBIRD_API_KEY`
+- `GEMINI_API_KEY`
 - `GOOGLE_CLOUD_PROJECT`
 
 These are **not** in the source code. They are set at deploy time.
 
 ## PWA
 
-The frontend is a single-page app served by GitHub Pages. All rendering logic is in `index.html` and `js/app-main.js`. Styles are in `styles/`.
+The frontend is a single-page app served by GitHub Pages. Rendering logic is split across `index.html` and ~20 JS modules in `js/` (app-main.js, briefing.js, wind.js, forecast.js, etc.). Styles are in `styles/`.
 
 On load and every 10 minutes, the PWA fetches `weather_data.json` from:
 
@@ -127,13 +129,10 @@ make logs
 python3 build.py
 git add -A
 git commit -m "description of change"
-git fetch origin
-git push --force-with-lease
+git push
 ```
 
 **Never stage `weather_data.json` or `frost_log.json`** — these are collector outputs, not source files. They should not be in git.
-
-**Never use `git pull --rebase`** — always `git fetch` then `git push --force-with-lease`.
 
 ## Local development
 
