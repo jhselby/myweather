@@ -263,8 +263,11 @@
 
     const isClearNow = skyCode <= 2; // clear, mostly clear, partly cloudy
 
+    const criticalAlert = alerts.find(a => a.severity === "Extreme" || a.severity === "Severe");
+
     let priority = "quiet";
-    if (rainContext === "now") priority = "rain_now";
+    if (criticalAlert) priority = "alert";
+    else if (rainContext === "now") priority = "rain_now";
     else if (rainContext === "soon") priority = "rain_soon";
     else if (alerts.length > 0) priority = "alert";
     else if (fogIsHeadline) priority = "fog";

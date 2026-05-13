@@ -14,16 +14,17 @@ from ..config import LAT, LON
 from ..utils import iso_utc_now
 
 # Public Tempest stations within ~1.5mi of Wyman Cove
+# waterfront=True: on the harbor shoreline, most representative for wind
 TEMPEST_STATIONS = [
-    {"id": 204883, "name": "Willow Rd"},
-    {"id": 85260,  "name": "Driftwood Rd"},
-    {"id": 192019, "name": "Neptune Rd"},
-    {"id": 193183, "name": "Baldwin Rd"},
-    {"id": 193746, "name": "Maple St"},
-    {"id": 168702, "name": "Forest Ave"},
-    {"id": 135494, "name": "Lincoln Ave"},
-    {"id": 192607, "name": "Willard Ln"},
-    {"id": 86357,  "name": "ColleeninMHD"},
+    {"id": 204883, "name": "Willow Rd",    "waterfront": True},
+    {"id": 85260,  "name": "Driftwood Rd", "waterfront": True},
+    {"id": 192019, "name": "Neptune Rd",   "waterfront": True},
+    {"id": 193183, "name": "Baldwin Rd",   "waterfront": False},
+    {"id": 193746, "name": "Maple St",     "waterfront": False},
+    {"id": 168702, "name": "Forest Ave",   "waterfront": False},
+    {"id": 135494, "name": "Lincoln Ave",  "waterfront": False},
+    {"id": 192607, "name": "Willard Ln",   "waterfront": False},
+    {"id": 86357,  "name": "ColleeninMHD", "waterfront": False},
 ]
 
 _API_KEY  = "6bff2f89-84ab-463c-886e-fc0f443da4cf"
@@ -100,6 +101,7 @@ def fetch_tempest():
             entry = {
                 "station_id":   sid,
                 "station_name": raw.get("station_name", station["name"]),
+                "waterfront":   station.get("waterfront", False),
                 "latitude":     slat,
                 "longitude":    slon,
                 "elevation_ft": raw.get("elevation"),

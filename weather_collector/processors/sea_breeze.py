@@ -41,17 +41,13 @@ def detect_sea_breeze(weather_data):
     temp_diff = pws_temp - water_temp
     scores = {}
     
-    # Temperature differential
-    if temp_diff < 0:
+    # Temperature differential — need at least 5°F for meaningful sea breeze
+    if temp_diff < 5:
         scores["temp"] = 0
-    elif temp_diff < 3:
-        scores["temp"] = 20
-    elif temp_diff < 5:
-        scores["temp"] = 40
     elif temp_diff < 8:
-        scores["temp"] = 70
+        scores["temp"] = 40
     elif temp_diff < 12:
-        scores["temp"] = 90
+        scores["temp"] = 70
     else:
         scores["temp"] = 100
     
