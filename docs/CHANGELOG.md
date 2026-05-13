@@ -1,3 +1,6 @@
+## v0.5.107 • May 13, 2026
+- Extract corrections card to js/corrections.js; add per-station adaptive bias offsets table (tap to expand, top 8 by magnitude, warm=red/cold=blue); add KBVY anchor line display
+
 ## v0.5.102–v0.5.106 • May 13, 2026
 - Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
 - WU station list trimmed from 36 to 29 (removed 7 confirmed out-of-range stations)
