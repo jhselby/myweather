@@ -6,6 +6,15 @@ import statistics
 from ..config import ELEVATION_FT
 
 
+def _kalman_gain(n_stations, bias_std):
+    if n_stations >= 5 and bias_std < 1.0:
+        return 0.90
+    elif n_stations >= 3 and bias_std < 2.0:
+        return 0.65
+    else:
+        return 0.40
+
+
 def compute_dew_point_spread(temp_f, dew_point_f):
     """
     Compute dew point spread in Fahrenheit.
@@ -118,7 +127,6 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
         # Calculate weighted average bias
         if total_weight > 0 and stations_used >= 3:
             weighted_bias = weighted_bias_sum / total_weight
-            corrected_temp = model_t + weighted_bias
 
             # Calculate confidence based on bias agreement
             if len(station_biases) > 1:
@@ -130,10 +138,15 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
                 else:
                     confidence = "Low"
             else:
+                bias_std = None
                 confidence = "Low"
+
+            K = _kalman_gain(stations_used, bias_std if bias_std is not None else 99)
+            corrected_temp = model_t + K * weighted_bias
 
             hyperlocal["model_temp"] = round(model_t, 1)
             hyperlocal["weighted_bias"] = round(weighted_bias, 2)
+            hyperlocal["kalman_gain"] = round(K, 2)
             hyperlocal["corrected_temp"] = round(corrected_temp, 1)
             hyperlocal["stations_used"] = stations_used
             hyperlocal["stations_total"] = wu_stations_attempted + tempest_stations_attempted
