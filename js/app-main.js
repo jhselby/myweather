@@ -6002,6 +6002,20 @@ function loadWeatherData() {
 
     loadWeatherData();
 
+    // Version update detection — light up refresh button if a new deploy is available
+    const LOADED_VERSION = document.getElementById('appVersion')?.textContent?.trim();
+    function checkForUpdate() {
+      fetch('version.json?_=' + Date.now())
+        .then(r => r.json())
+        .then(d => {
+          const dot = document.getElementById('refreshAlertDot');
+          if (dot) dot.style.display = (d.version && d.version !== LOADED_VERSION) ? 'block' : 'none';
+        })
+        .catch(() => {});
+    }
+    checkForUpdate();
+    setInterval(checkForUpdate, 5 * 60 * 1000);
+
     // Track when user leaves the app for briefing-on-return logic
     document.addEventListener('visibilitychange', function() {
       if (document.hidden) {

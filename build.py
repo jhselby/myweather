@@ -197,10 +197,19 @@ def main():
     # Add cache-busting hashes
     modified_html, changes = add_cache_busting(html_content, assets, base_dir)
     
+    # Write version.json for update detection (always, regardless of asset changes)
+    import json, re as _re
+    v_match = _re.search(r'id="appVersion"[^>]*>(v[\d.]+)<', modified_html)
+    if v_match:
+        version_path = base_dir / 'version.json'
+        with open(version_path, 'w') as vf:
+            json.dump({"version": v_match.group(1)}, vf)
+        print(f"  ✓ version.json → {v_match.group(1)}")
+
     if not changes:
         print("\n⚠️  No changes made - all assets already up to date or missing")
         return 0
-    
+
     # Write modified HTML
     with open(index_path, 'w', encoding='utf-8') as f:
         f.write(modified_html)
