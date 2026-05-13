@@ -1,10 +1,4 @@
-## v0.5.115 • May 13, 2026
-- Extract renderBriefing to js/briefing.js (now the complete briefing module alongside generateBriefing)
-- Extract buildTempPrecipChart/updateTempPrecipDataBar to js/tempchart.js
-- Extract renderForecast/selectForecastDay/updateForecastSelection/filterHyperlocalByDate to js/forecast.js
-- app-main.js: 4426 → 2817 lines
-
-## v0.5.110–v0.5.114 • May 13, 2026
+## v0.5.110–v0.5.116 • May 13, 2026
 - Tempest hardware wet bulb replaces Stull formula for corrected_wet_bulb (fallback retained)
 - Fix: Next rain day label suppressed when minutely shows rain within 60 min
 - Extract renderSun/renderMoon/renderSolarSystem to js/sky.js
@@ -16,6 +10,17 @@
 - Extract renderSunsetQuality to js/sunset.js
 - Extract renderHairDay to js/hair.js
 - Extract renderDockDay + dock constants to js/dock.js
+- Extract renderBriefing to js/briefing.js (complete briefing module)
+- Extract buildTempPrecipChart/updateTempPrecipDataBar to js/tempchart.js
+- Extract renderForecast group to js/forecast.js
+- Extract renderTodayAlmanac to js/almanac.js
+- Extract renderSeaBreezeDetail to js/seabreeze.js
+- Extract renderFeelsLikeCard/renderFogDetail to js/feelslike.js
+- Extract populateCollapsedPreviews to js/previews.js
+- Move logWaterTemp/renderWaterTempLog to js/tides.js
+- Move initCollapsedRadarMap to js/radar.js
+- Move generateForecastSummary/renderHyperlocalForecast to js/forecast.js
+- app-main.js: 5,900 → 1,903 lines
 
 ## v0.5.102–v0.5.109 • May 13, 2026
 - Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
