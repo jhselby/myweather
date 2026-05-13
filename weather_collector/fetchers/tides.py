@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 
 from ..config import TIDE_STATION
 from ..utils import iso_utc_now, redact_secrets
+import logging
 
 
 
@@ -18,7 +19,7 @@ def fetch_tides():
       1. High/low events (hilo product) — capped at 8, used for tile display
       2. 6-minute interval curve (predictions product) — 48h, used for chart
     """
-    print("📡 Fetching NOAA tides...")
+    logging.info("📡 Fetching NOAA tides...")
 
     url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
     today = datetime.now(ZoneInfo("America/New_York"))
@@ -86,10 +87,10 @@ def fetch_tides():
         }
 
         meta["status"] = "ok"
-        print(f"  ✓ Tides: {len(events)} events, {len(curve['times'])} curve points")
+        logging.info(f"  ✓ Tides: {len(events)} events, {len(curve['times'])} curve points")
         return tide_result, meta
 
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"  ✗ Tides: {redact_secrets(e)}")
+        logging.error(f"  ✗ Tides: {redact_secrets(e)}")
         return None, meta

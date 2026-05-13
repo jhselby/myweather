@@ -1,4 +1,5 @@
 import re
+import logging
 """
 Surface precipitation type classification using wet bulb temperature
 """
@@ -151,7 +152,7 @@ def add_corrected_precip_types(weather_data, hyperlocal_data):
             surface_precip_types.append(None)
     
     if "hourly" not in weather_data:
-        print("  ⚠️ No hourly forecast data; skipping corrected wet-bulb layer")
+        logging.warning("  ⚠️ No hourly forecast data; skipping corrected wet-bulb layer")
         return weather_data
 
     weather_data["hourly"]["corrected_wet_bulb"] = corrected_wet_bulbs

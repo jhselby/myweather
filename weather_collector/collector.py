@@ -41,6 +41,7 @@ from .processors.wind_risk import compute_wind_risk
 from .processors.fog import calculate_fog_risk
 from .processors.trough import compute_trough_signal
 from .processors.forecast_text import generate_forecast_text
+import logging
 
 GCS_BUCKET = "myweather-data"
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -63,11 +64,11 @@ def _download_frost_log_from_gcs():
         blob = client.bucket(GCS_BUCKET).blob(FROST_LOG_GCS_PATH)
         if blob.exists():
             blob.download_to_filename(str(FROST_LOG_TMP))
-            print(f"  ✓ Downloaded frost_log.json from GCS")
+            logging.info(f"  ✓ Downloaded frost_log.json from GCS")
         else:
-            print(f"  ℹ  No frost_log.json in GCS yet (first run)")
+            logging.info(f"  ℹ  No frost_log.json in GCS yet (first run)")
     except Exception as e:
-        print(f"  ⚠  Could not download frost_log.json from GCS: {redact_secrets(e)}")
+        logging.warning(f"  ⚠  Could not download frost_log.json from GCS: {redact_secrets(e)}")
 
 
 def _upload_to_gcs(data, gcs_path, label):
@@ -79,9 +80,9 @@ def _upload_to_gcs(data, gcs_path, label):
         blob.upload_from_string(payload, content_type="application/json")
         blob.cache_control = "no-cache, max-age=0"
         blob.patch()
-        print(f"  ✓ Uploaded {label} to GCS ({len(payload):,} bytes)")
+        logging.info(f"  ✓ Uploaded {label} to GCS ({len(payload):,} bytes)")
     except Exception as e:
-        print(f"  ✗ Failed to upload {label} to GCS: {redact_secrets(e)}")
+        logging.error(f"  ✗ Failed to upload {label} to GCS: {redact_secrets(e)}")
         raise
 
 
@@ -92,12 +93,12 @@ def _load_prev_weather_data():
         blob = client.bucket(GCS_BUCKET).blob(WEATHER_DATA_GCS_PATH)
         if blob.exists():
             prev = json.loads(blob.download_as_text())
-            print(f"  ✓ Loaded previous weather_data.json from GCS for fallback cache")
+            logging.warning(f"  ✓ Loaded previous weather_data.json from GCS for fallback cache")
             return prev
         else:
-            print(f"  ℹ  No previous weather_data.json in GCS (first run)")
+            logging.info(f"  ℹ  No previous weather_data.json in GCS (first run)")
     except Exception as e:
-        print(f"  ⚠  Could not load previous weather_data.json: {redact_secrets(e)}")
+        logging.warning(f"  ⚠  Could not load previous weather_data.json: {redact_secrets(e)}")
     return {}
 
 
@@ -121,7 +122,7 @@ def _apply_stale_fallbacks(weather_data, prev, failed_fetches):
         if key not in weather_data and key in prev:
             weather_data[key] = prev[key]
             stale.append(key)
-            print(f"  ⚠  {key}: using previous run's data (source failed)")
+            logging.error(f"  ⚠  {key}: using previous run's data (source failed)")
 
     # current/hourly/daily: built even when GFS fails (silently wrong).
     # Use explicit None-tracking instead of inspecting the built dict.
@@ -129,7 +130,7 @@ def _apply_stale_fallbacks(weather_data, prev, failed_fetches):
         if fetch_name in failed_fetches and data_key in prev:
             weather_data[data_key] = prev[data_key]
             stale.append(data_key)
-            print(f"  ⚠  {data_key}: using previous run's data (fetch failed)")
+            logging.error(f"  ⚠  {data_key}: using previous run's data (fetch failed)")
 
     return stale
 
@@ -142,7 +143,7 @@ def _load_obs_temp_log():
         if blob.exists():
             return json.loads(blob.download_as_text())
     except Exception as e:
-        print(f"  ⚠  Could not load obs_temp_log.json from GCS: {redact_secrets(e)}")
+        logging.warning(f"  ⚠  Could not load obs_temp_log.json from GCS: {redact_secrets(e)}")
     return {"entries": []}
 
 
@@ -658,7 +659,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "wind_speed_10m": (_h.get("wind_speed_10m") or [None])[0],
             "wind_direction_10m": (_h.get("wind_direction_10m") or [None])[0],
         }
-        print("  ⚠️ GFS current unavailable, using HRRR hourly[0] for fog calc")
+        logging.warning("  ⚠️ GFS current unavailable, using HRRR hourly[0] for fog calc")
     if _fog_current:
         current = _fog_current
         _buoy = weather_data.get("buoy_44013", {})
@@ -764,9 +765,9 @@ def main():
     """Main execution function."""
     import time as _time
 
-    print("\n" + "=" * 60)
-    print("Wyman Cove Weather - Modular Collector v2.0")
-    print("=" * 60 + "\n")
+    logging.info("\n" + "=" * 60)
+    logging.info("Wyman Cove Weather - Modular Collector v2.0")
+    logging.info("=" * 60 + "\n")
 
     total_t0 = _time.time()
 
@@ -774,7 +775,7 @@ def main():
         t0 = _time.time()
         result = fn(*args, **kwargs)
         elapsed = _time.time() - t0
-        print(f"  ⏱  {name}: {elapsed:.1f}s")
+        logging.info(f"  ⏱  {name}: {elapsed:.1f}s")
         return result
 
     # Load previous weather data for stale fallback cache
@@ -824,12 +825,12 @@ def main():
             try:
                 parallel_results[name] = future.result(timeout=45)
             except TimeoutError:
-                print(f"  ⚠️  {name} timed out (45s)")
+                logging.warning(f"  ⚠️  {name} timed out (45s)")
                 parallel_results[name] = (None, {"status": "error", "error": "timeout"}) if name != "Salem water temp" else None
             except Exception as e:
-                print(f"  ⚠️  {name} failed: {redact_secrets(e)}")
+                logging.error(f"  ⚠️  {name} failed: {redact_secrets(e)}")
                 parallel_results[name] = (None, {"status": "error", "error": redact_secrets(e)}) if name != "Salem water temp" else None
-    print(f"  ✓ Parallel fetches complete: {_time.time() - parallel_t0:.1f}s")
+    logging.info(f"  ✓ Parallel fetches complete: {_time.time() - parallel_t0:.1f}s")
 
     nws_gridpoints_data, nws_gridpoints_meta = parallel_results.get("NWS gridpoints", (None, {"status": "error"}))
     pws_data, pws_meta = parallel_results.get("PWS current", (None, {"status": "error"}))
@@ -862,9 +863,9 @@ def main():
 
     # Update frost log (reads/writes /tmp/frost_log.json)
     t0 = _time.time()
-    print("🌡️ Updating frost log...")
+    logging.info("🌡️ Updating frost log...")
     frost_log = update_frost_log(daily_data)
-    print(f"  ⏱  Frost log: {_time.time() - t0:.1f}s")
+    logging.info(f"  ⏱  Frost log: {_time.time() - t0:.1f}s")
 
     # Upload updated frost log back to GCS
     if FROST_LOG_TMP.exists():
@@ -872,7 +873,7 @@ def main():
             frost_log_data = json.loads(FROST_LOG_TMP.read_text())
             _upload_to_gcs(frost_log_data, FROST_LOG_GCS_PATH, "frost_log.json")
         except Exception as e:
-            print(f"  ⚠  Could not upload frost_log.json: {redact_secrets(e)}")
+            logging.warning(f"  ⚠  Could not upload frost_log.json: {redact_secrets(e)}")
 
     sunset_directional = None
     if daily_data and daily_data.get("daily") and daily_data["daily"].get("sunset"):
@@ -883,7 +884,7 @@ def main():
             LAT, LON,
             fetch_directional_clouds
         )
-        print(f"  ⏱  Sunset directional: {_time.time() - t0:.1f}s")
+        logging.info(f"  ⏱  Sunset directional: {_time.time() - t0:.1f}s")
 
     # Build complete weather data
     t0 = _time.time()
@@ -902,14 +903,14 @@ def main():
         daily_temps_data=daily_temps_data,
         tempest_data=tempest_data
     )
-    print(f"  ⏱  Build weather data: {_time.time() - t0:.1f}s")
+    logging.info(f"  ⏱  Build weather data: {_time.time() - t0:.1f}s")
 
     # Generate AI briefing headline
     t0 = _time.time()
     try:
         briefing = generate_briefing(weather_data)
     except Exception as e:
-        print(f"  ⚠ Briefing generation failed: {e}")
+        logging.error(f"  ⚠ Briefing generation failed: {e}")
         briefing = None
     elapsed = _time.time() - t0
     if briefing:
@@ -926,7 +927,7 @@ def main():
     else:
         weather_data.setdefault("briefing", {"headline": "", "subheadline": ""})
         weather_data["sources"]["gemini"] = {"status": "error", "age_minutes": 0}
-    print(f"  ⏱  Briefing AI: {elapsed:.1f}s")
+    logging.info(f"  ⏱  Briefing AI: {elapsed:.1f}s")
 
     # Trim hourly arrays to start from current hour
     now_local = datetime.now(pytz.timezone("America/New_York"))
@@ -941,16 +942,16 @@ def main():
     stale_sources = _apply_stale_fallbacks(weather_data, prev_weather_data, failed_fetches)
     if stale_sources:
         weather_data["stale_sources"] = stale_sources
-        print(f"  ⚠  Stale sources in this payload: {stale_sources}")
+        logging.warning(f"  ⚠  Stale sources in this payload: {stale_sources}")
     else:
         weather_data.pop("stale_sources", None)
 
     # Upload weather data to GCS
     _upload_to_gcs(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
 
-    print("\n" + "=" * 60)
-    print(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({_time.time() - total_t0:.1f}s total)")
-    print("=" * 60 + "\n")
+    logging.info("\n" + "=" * 60)
+    logging.info(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({_time.time() - total_t0:.1f}s total)")
+    logging.info("=" * 60 + "\n")
 
 
 # Cloud Function entry point
@@ -960,7 +961,7 @@ def run(request):
         main()
         return ("OK", 200)
     except Exception as e:
-        print(f"ERROR: {redact_secrets(e)}")
+        logging.info(f"ERROR: {redact_secrets(e)}")
         import traceback
         traceback.print_exc()
         return (f"ERROR: {redact_secrets(e)}", 500)

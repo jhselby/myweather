@@ -23,6 +23,7 @@ from ..utils import iso_utc_now, redact_secrets
 
 EBIRD_BASE = "https://api.ebird.org/v2/data/obs/geo"
 import os
+import logging
 EBIRD_API_KEY = os.environ["EBIRD_API_KEY"]
 RADIUS_KM = 5
 BACK_DAYS = 2  # ~48 hours
@@ -55,11 +56,11 @@ def _ebird_get(path, api_key, label):
             raise ValueError(f"unexpected response shape: {type(data).__name__}")
         meta["status"] = "ok"
         meta["count"] = len(data)
-        print(f"  ✓ eBird {label}: {len(data)} obs")
+        logging.info(f"  ✓ eBird {label}: {len(data)} obs")
         return data, meta
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"  ✗ eBird {label}: {redact_secrets(e)}")
+        logging.error(f"  ✗ eBird {label}: {redact_secrets(e)}")
         return None, meta
 
 
@@ -106,7 +107,7 @@ def fetch_ebird():
           ]
         }
     """
-    print("🐦 Fetching eBird observations...")
+    logging.info("🐦 Fetching eBird observations...")
     recent, recent_meta = _ebird_get("recent", EBIRD_API_KEY, "recent")
     notable, notable_meta = _ebird_get("recent/notable", EBIRD_API_KEY, "notable")
 
@@ -148,7 +149,7 @@ def fetch_ebird():
         "notable_count": sum(1 for s in species if s["notable"]),
         "species": species,
     }
-    print(f"  ✓ eBird combined: {data['species_count']} species, {data['notable_count']} notable")
+    logging.info(f"  ✓ eBird combined: {data['species_count']} species, {data['notable_count']} notable")
     return data, meta
 
 

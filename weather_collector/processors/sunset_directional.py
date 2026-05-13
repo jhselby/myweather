@@ -4,6 +4,7 @@ Calculate sunset azimuth and sample clouds directionally for accurate sunset qua
 """
 import math
 from datetime import datetime, timezone
+import logging
 
 def calculate_sunset_azimuth(lat, lon, sunset_time_iso):
     """
@@ -76,15 +77,15 @@ def build_sunset_directional_data(daily_sunsets, lat, lon, fetch_directional_clo
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
     
-    print("🌅 Building directional sunset data...")
+    logging.info("🌅 Building directional sunset data...")
     
     # Warmup: establish connection to Open-Meteo (absorbs cold-start timeout on GitHub Actions)
-    print("  📡 Warmup: fetching Day 6 to establish connection...")
+    logging.info("  📡 Warmup: fetching Day 6 to establish connection...")
     try:
         _ = fetch_directional_clouds_func(lat, lon, 0, [10], skip_retry=True)
-        print("  ✓ Warmup complete")
+        logging.info("  ✓ Warmup complete")
     except Exception as e:
-        print(f"  ⚠️ Warmup timeout (not critical): {e}")
+        logging.warning(f"  ⚠️ Warmup timeout (not critical): {e}")
     
     # Pre-calculate azimuths for all days
     day_tasks = []
@@ -92,7 +93,7 @@ def build_sunset_directional_data(daily_sunsets, lat, lon, fetch_directional_clo
         if not sunset_iso:
             continue
         azimuth = calculate_sunset_azimuth(lat, lon, sunset_iso)
-        print(f"  Day {day_idx}: sunset {sunset_iso} at {azimuth}°")
+        logging.info(f"  Day {day_idx}: sunset {sunset_iso} at {azimuth}°")
         day_tasks.append((day_idx, sunset_iso, azimuth))
     
     # Fetch all 5 days in parallel
@@ -119,5 +120,5 @@ def build_sunset_directional_data(daily_sunsets, lat, lon, fetch_directional_clo
                     break
     
     sunset_data = [d for d in sunset_data if d is not None]
-    print(f"  ✓ Built sunset data for {len(sunset_data)} days")
+    logging.info(f"  ✓ Built sunset data for {len(sunset_data)} days")
     return sunset_data

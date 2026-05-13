@@ -8,6 +8,7 @@ from ..utils import redact_secrets
 import json
 import os
 import requests
+import logging
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
@@ -203,10 +204,10 @@ def _load_cached_briefing():
         blob = bucket.blob(_BRIEFING_CACHE_PATH)
         if blob.exists():
             data = json.loads(blob.download_as_text())
-            print(f"  ✓ Briefing cache loaded: {data.get('headline', '?')[:50]}")
+            logging.info(f"  ✓ Briefing cache loaded: {data.get('headline', '?')[:50]}")
             return data
     except Exception as e:
-        print(f"  ⚠ Briefing cache load failed: {redact_secrets(e)}")
+        logging.error(f"  ⚠ Briefing cache load failed: {redact_secrets(e)}")
     return None
 
 
@@ -221,9 +222,9 @@ def _save_cached_briefing(briefing):
         blob = bucket.blob(_BRIEFING_CACHE_PATH)
         briefing["cached_at"] = datetime.now(pytz.timezone("America/New_York")).isoformat()
         blob.upload_from_string(json.dumps(briefing), content_type="application/json")
-        print(f"  ✓ Briefing cache saved")
+        logging.info(f"  ✓ Briefing cache saved")
     except Exception as e:
-        print(f"  ⚠ Briefing cache save failed: {redact_secrets(e)}")
+        logging.error(f"  ⚠ Briefing cache save failed: {redact_secrets(e)}")
 
 
 def _should_call_gemini():
@@ -237,7 +238,7 @@ def _should_call_gemini():
     if _last_gemini_call_time is not None:
         age_min = (now - _last_gemini_call_time).total_seconds() / 60
         if age_min < _BRIEFING_INTERVAL_MINUTES:
-            print(f"  ⏭ Briefing: in-memory guard {age_min:.0f}m, skipping Gemini")
+            logging.info(f"  ⏭ Briefing: in-memory guard {age_min:.0f}m, skipping Gemini")
             return False, None
 
     try:
@@ -252,10 +253,10 @@ def _should_call_gemini():
                 cached_time = datetime.fromisoformat(cached_at)
                 age_min = (now - cached_time).total_seconds() / 60
                 if age_min < _BRIEFING_INTERVAL_MINUTES:
-                    print(f"  ⏭ Briefing: cached {age_min:.0f}m ago, skipping Gemini (interval: {_BRIEFING_INTERVAL_MINUTES}m)")
+                    logging.info(f"  ⏭ Briefing: cached {age_min:.0f}m ago, skipping Gemini (interval: {_BRIEFING_INTERVAL_MINUTES}m)")
                     return False, data
     except Exception as e:
-        print(f"  ⚠ Briefing interval check failed: {redact_secrets(e)}")
+        logging.error(f"  ⚠ Briefing interval check failed: {redact_secrets(e)}")
     return True, None
 
 
@@ -288,7 +289,7 @@ def generate_briefing(weather_data):
     if cur_temp is None or cur_temp == 0:
         daily_high = weather_data.get("derived", {}).get("today_high") or (weather_data.get("daily", {}).get("temperature_max", [None]) or [None])[0]
         if daily_high is not None and daily_high > 20:
-            print("  ⚠ Briefing: current temp is missing/zero (likely GFS failure), using cache")
+            logging.error("  ⚠ Briefing: current temp is missing/zero (likely GFS failure), using cache")
             cached = _load_cached_briefing()
             if cached and cached.get("headline"):
                 return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
@@ -333,10 +334,10 @@ def generate_briefing(weather_data):
                 timeout=20
             )
             if resp.status_code == 429 and attempt == 0:
-                print(f"  ⚠ Briefing: {GEMINI_MODEL} rate limited, falling back to {GEMINI_FALLBACK_MODEL}...")
+                logging.warning(f"  ⚠ Briefing: {GEMINI_MODEL} rate limited, falling back to {GEMINI_FALLBACK_MODEL}...")
                 continue
             if resp.status_code in (500, 502, 503, 504) and attempt == 0:
-                print(f"  ⚠ Briefing: {model_label} server error, retrying in 3s...")
+                logging.error(f"  ⚠ Briefing: {model_label} server error, retrying in 3s...")
                 time.sleep(3)
                 continue
             resp.raise_for_status()
@@ -356,34 +357,34 @@ def generate_briefing(weather_data):
             subheadline = result.get("subheadline", "").strip()
 
             if headline:
-                print(f"  ✓ Briefing: {headline}")
+                logging.info(f"  ✓ Briefing: {headline}")
                 cached_at = datetime.now(eastern).isoformat()
                 briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at}
                 _save_cached_briefing(briefing)
                 _last_gemini_call_time = datetime.now(eastern)
                 return briefing
             else:
-                print("  ⚠ Briefing: empty headline from Gemini")
+                logging.warning("  ⚠ Briefing: empty headline from Gemini")
                 break
 
         except requests.exceptions.Timeout:
             if attempt == 0:
-                print("  ⚠ Briefing: timeout, retrying in 2s...")
+                logging.warning("  ⚠ Briefing: timeout, retrying in 2s...")
                 time.sleep(2)
                 continue
-            print("  ⚠ Briefing: Gemini timeout after retry")
+            logging.warning("  ⚠ Briefing: Gemini timeout after retry")
             break
         except requests.exceptions.RequestException as e:
-            print(f"  ⚠ Briefing: Gemini API error: {redact_secrets(e)}")
+            logging.error(f"  ⚠ Briefing: Gemini API error: {redact_secrets(e)}")
             break
         except (json.JSONDecodeError, KeyError, IndexError) as e:
-            print(f"  ⚠ Briefing: Failed to parse Gemini response: {redact_secrets(e)}")
+            logging.error(f"  ⚠ Briefing: Failed to parse Gemini response: {redact_secrets(e)}")
             break
 
     # All attempts failed — fall back to cached headline
     cached = _load_cached_briefing()
     if cached and cached.get("headline"):
-        print(f"  ↩ Briefing: using cached headline")
+        logging.info(f"  ↩ Briefing: using cached headline")
         return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
 
     return None

@@ -9,6 +9,7 @@ from datetime import datetime, timedelta, timezone
 
 from ..config import HEADERS_DEFAULT
 from ..utils import safe_float, redact_secrets
+import logging
 
 
 GOMOFS_NY = 401
@@ -63,18 +64,18 @@ def _fetch_gomofs_temp():
         try:
             r = requests.get(full_url, headers=HEADERS_DEFAULT, timeout=30)
             if r.status_code == 404:
-                print(f"  - GoMOFS {fname}: 404, skipping")
+                logging.info(f"  - GoMOFS {fname}: 404, skipping")
                 continue
             r.raise_for_status()
             temp_c = _parse_gomofs_temp(r.text)
             if temp_c is not None:
                 temp_f = round(temp_c * 9 / 5 + 32, 1)
-                print(f"  ✓ GoMOFS water temp: {temp_f}°F ({temp_c:.2f}°C) [{fname}]")
+                logging.info(f"  ✓ GoMOFS water temp: {temp_f}°F ({temp_c:.2f}°C) [{fname}]")
                 return temp_f
         except Exception as e:
-            print(f"  ✗ GoMOFS {fname}: {redact_secrets(e)}")
+            logging.error(f"  ✗ GoMOFS {fname}: {redact_secrets(e)}")
             continue
-    print("  ✗ GoMOFS: all candidates failed")
+    logging.error("  ✗ GoMOFS: all candidates failed")
     return None
 
 
@@ -92,19 +93,19 @@ def _fetch_buoy_temp():
                     val_str = raw.split("°F")[0].strip()
                     temp_f = safe_float(val_str)
                     if temp_f is not None:
-                        print(f"  ✓ Buoy 44013 water temp (fallback): {temp_f}°F")
+                        logging.warning(f"  ✓ Buoy 44013 water temp (fallback): {temp_f}°F")
                         return temp_f
-        print("  ✗ Buoy 44013: water temp not found in page")
+        logging.error("  ✗ Buoy 44013: water temp not found in page")
         return None
     except Exception as e:
-        print(f"  ✗ Buoy 44013: {redact_secrets(e)}")
+        logging.error(f"  ✗ Buoy 44013: {redact_secrets(e)}")
         return None
 
 
 def fetch_salem_water_temp():
-    print("📡 Fetching Salem water temperature...")
+    logging.info("📡 Fetching Salem water temperature...")
     temp = _fetch_gomofs_temp()
     if temp is not None:
         return temp
-    print("  ↩ Falling back to buoy 44013...")
+    logging.info("  ↩ Falling back to buoy 44013...")
     return _fetch_buoy_temp()

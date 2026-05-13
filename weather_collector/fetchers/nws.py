@@ -4,6 +4,7 @@ Fetch NWS data: alerts and gridpoint forecasts (BOX/76,97)
 import requests
 from ..config import LAT, LON
 from ..utils import iso_utc_now, redact_secrets
+import logging
 
 HEADERS = {"User-Agent": "WymanCoveWeather/1.0"}
 GRIDPOINT_URL = "https://api.weather.gov/gridpoints/BOX/76,97"
@@ -11,7 +12,7 @@ GRIDPOINT_URL = "https://api.weather.gov/gridpoints/BOX/76,97"
 
 def fetch_nws_alerts():
     """Fetch active NWS alerts for the area."""
-    print("📡 Fetching NWS alerts...")
+    logging.info("📡 Fetching NWS alerts...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
 
     try:
@@ -27,7 +28,7 @@ def fetch_nws_alerts():
             props = f.get("properties", {})
             desc = (props.get('description', '') + ' ' + props.get('headline', '')).upper()
             if 'THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY' in desc or 'THIS IS A TEST' in desc:
-                print(f"  ⏭ Skipping TEST alert: {props.get('event', 'Unknown')}")
+                logging.info(f"  ⏭ Skipping TEST alert: {props.get('event', 'Unknown')}")
                 continue
             event_type = props.get('event', 'Special Weather Statement').replace(' ', '+')
             web_url = (
@@ -48,18 +49,18 @@ def fetch_nws_alerts():
             })
 
         meta["status"] = "ok"
-        print(f"  ✓ NWS alerts: {len(alerts)} active")
+        logging.info(f"  ✓ NWS alerts: {len(alerts)} active")
         return alerts, meta
 
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"  ✗ NWS alerts: {redact_secrets(e)}")
+        logging.error(f"  ✗ NWS alerts: {redact_secrets(e)}")
         return [], meta
 
 
 def fetch_nws_gridpoints():
     """Fetch NWS gridpoint hourly data (temperature, precip, wind)."""
-    print("📡 Fetching NWS gridpoint data...")
+    logging.info("📡 Fetching NWS gridpoint data...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
 
     try:
@@ -79,10 +80,10 @@ def fetch_nws_gridpoints():
         }
 
         meta["status"] = "ok"
-        print(f"  ✓ NWS gridpoints fetched")
+        logging.info(f"  ✓ NWS gridpoints fetched")
         return result, meta
 
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"  ✗ NWS gridpoints failed: {redact_secrets(e)}")
+        logging.error(f"  ✗ NWS gridpoints failed: {redact_secrets(e)}")
         return {}, meta

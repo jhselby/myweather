@@ -9,6 +9,7 @@ import math
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 from ..config import ELEVATION_FT
+import logging
 
 _EASTERN = ZoneInfo("America/New_York")
 
@@ -89,9 +90,9 @@ def load_history(gcs_client, bucket_name):
         blob = gcs_client.bucket(bucket_name).blob(GCS_PATH)
         if blob.exists():
             return json.loads(blob.download_as_text())
-        print("  ℹ  No station_history.json yet (first run)")
+        logging.info("  ℹ  No station_history.json yet (first run)")
     except Exception as e:
-        print(f"  ⚠  Could not load station history: {e}")
+        logging.warning(f"  ⚠  Could not load station history: {e}")
     return {}
 
 
@@ -99,9 +100,9 @@ def save_history(history, gcs_client, bucket_name):
     try:
         blob = gcs_client.bucket(bucket_name).blob(GCS_PATH)
         blob.upload_from_string(json.dumps(history), content_type="application/json")
-        print(f"  ✓ Saved station history ({len(history)} stations)")
+        logging.info(f"  ✓ Saved station history ({len(history)} stations)")
     except Exception as e:
-        print(f"  ⚠  Could not save station history: {e}")
+        logging.warning(f"  ⚠  Could not save station history: {e}")
 
 
 def update_history(history, wu_data, tempest_data):

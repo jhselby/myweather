@@ -8,6 +8,7 @@ from pathlib import Path
 
 from ..config import PWS_STATION, PWS_CACHE_FILE
 from ..utils import iso_utc_now, safe_float, load_json, save_json, redact_secrets
+import logging
 
 
 
@@ -17,7 +18,7 @@ def fetch_pws_current():
     Scrape current conditions from Weather Underground PWS.
     Falls back to cached value if scrape fails.
     """
-    print("📡 Fetching Castle Hill PWS...")
+    logging.info("📡 Fetching Castle Hill PWS...")
 
     url = f"https://www.wunderground.com/weather/us/ma/marblehead/{PWS_STATION}"
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
@@ -51,12 +52,12 @@ def fetch_pws_current():
         save_json(cache_path, pws_data)
 
         meta["status"] = "ok"
-        print(f"✓ PWS: {pws_data['temperature']}°F")
+        logging.info(f"✓ PWS: {pws_data['temperature']}°F")
         return pws_data, meta
 
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"✗ PWS error: {redact_secrets(e)}")
+        logging.error(f"✗ PWS error: {redact_secrets(e)}")
 
         if last and isinstance(last, dict) and last.get("temperature") is not None:
             last_copy = dict(last)

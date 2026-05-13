@@ -1,5 +1,5 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.105
+**Version:** 0.5.121
 **Last Updated:** May 13, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
@@ -257,46 +257,78 @@ corrected_pressure_in = kbos_pressure_in OR model_pressure_in
 
 ### Current Hour Calculation
 
-**Location:** `weather_collector/collector.py` lines 79-106
+**Location:** `weather_collector/collector.py` lines ~230-317
 
-**Method:** MAX selection across all stations
+**Method:** MAX selection across all stations; direction sourced from waterfront Tempest
 
 **Process:**
-1. Collect wind candidates from KBVY and all WU stations
-2. Select station with HIGHEST gust reading
-3. Use that station's sustained wind speed
+1. Collect wind candidates from model, KBVY, WU stations (age-filtered), and Tempest stations (age-filtered)
+2. Select station with HIGHEST gust for `wind_gusts`
+3. Select station with HIGHEST sustained for `wind_speed` (independent from gust)
+4. Direction: prefer highest-gust fresh waterfront Tempest station; fall back to max-gust source
 
 **Code:**
 ```python
-# Build candidates list
+# Save model values before override
+weather_data["current"]["model_wind_speed"] = weather_data["current"].get("wind_speed", 0)
+weather_data["current"]["model_wind_gusts"] = weather_data["current"].get("wind_gusts", 0)
+
 wind_candidates = []
+
+# Model always included as a floor
+wind_candidates.append({"source": "model", "gust": ..., "speed": ..., "waterfront": False})
+
+# KBVY — METARs always fresh, no age filter needed
 if kbvy_data and kbvy_data.get("wind_gust_kt"):
     wind_candidates.append({
         "source": "KBVY",
-        "gust": kbvy_data["wind_gust_kt"] * 1.15078,  # kt to mph
+        "gust": kbvy_data["wind_gust_kt"] * 1.15078,
         "speed": kbvy_data["wind_speed_kt"] * 1.15078,
-        "direction": kbvy_data.get("wind_dir")
+        "waterfront": False,
     })
 
-for wu_station in wu_stations:
-    if wu_station.get("wind_gust_mph"):
-        wind_candidates.append({
-            "source": f"WU_{station_id}",
-            "gust": wu_station["wind_gust_mph"],
-            "speed": wu_station.get("wind_speed_mph", 0),
-            "direction": wu_station.get("wind_direction")
-        })
+# WU stations — skip if observation > 20 min old
+for station in wu_data["stations"]:
+    if not station.get("wind_gust_mph"):
+        continue
+    if timestamp_age_minutes(station["timestamp"]) > 20:
+        continue
+    wind_candidates.append({
+        "source": f"WU_{station_id}",
+        "gust": station["wind_gust_mph"],
+        "speed": station.get("wind_speed_mph", 0),
+        "waterfront": station.get("waterfront", False),  # no WU stations are waterfront
+    })
 
-# Select station with max gust
-max_wind = max(wind_candidates, key=lambda x: x['gust'])
+# Tempest stations — skip if observation > 20 min old
+for tb in tempest_data["stations"]:
+    if not tb.get("valid") or not tb.get("wind_gust_mph"):
+        continue
+    if tb.get("age_minutes", 0) > 20:
+        continue
+    wind_candidates.append({
+        "source": f"Tempest_{tb['station_name']}",
+        "gust": tb["wind_gust_mph"],
+        "speed": tb.get("wind_avg_mph", 0),
+        "waterfront": tb.get("waterfront", False),  # True for Willow Rd, Driftwood Rd, Neptune Rd
+    })
 
-# Store in current (overwrites model values)
-weather_data["current"]["wind_speed"] = max(max_wind['speed'], model_wind_speed)
-weather_data["current"]["wind_gusts"] = max_wind['gust']
-weather_data["current"]["wind_direction"] = max_wind['direction']
+# Select independently
+max_gust_entry = max(wind_candidates, key=lambda x: x['gust'])
+max_speed_entry = max(wind_candidates, key=lambda x: x['speed'])
+weather_data["current"]["wind_gusts"] = max_gust_entry['gust']
+weather_data["current"]["wind_speed"] = max_speed_entry['speed']
+
+# Direction from best fresh waterfront Tempest; fall back to max-gust source
+waterfront_tempest = [c for c in wind_candidates if c["waterfront"] and c["source"].startswith("Tempest_") and c["direction"] is not None]
+dir_source = max(waterfront_tempest, key=lambda x: x['gust']) if waterfront_tempest else max_gust_entry
+weather_data["current"]["wind_direction"] = float(dir_source['direction'])
+weather_data["current"]["condition_source"] = f"{max_gust_entry['source']} observed"
 ```
 
-**Rationale:** Exposed coastal location - trust highest observed wind
+**Waterfront Tempest stations:** Willow Rd (204883), Driftwood Rd (85260), Neptune Rd (192019) — flagged in `TEMPEST_STATIONS` in `tempest.py`. These sit on the harbor and provide the most accurate wind direction for Wyman Cove.
+
+**Rationale:** Exposed coastal location — trust highest observed wind. Direction from waterfront station because inland stations underreport due to terrain shielding.
 
 **Data Stored:**
 - Values stored directly in `weather_data["current"]` (NOT in hyperlocal)
@@ -872,18 +904,21 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 - **Reason:** Allows flexibility - can change decay strategy without re-running collector
 
 ### Wind Correction Architecture
-- **Backend (current hour):** Max-selects from model + KBVY + WU stations (independently for gusts and sustained)
+- **Backend (current hour):** Max-selects from model + KBVY + WU (age-filtered) + Tempest (age-filtered, waterfront-flagged)
 - **Backend (forecast):** Blends max-selected observed into hourly arrays with 24h linear decay
 - **Hyperlocal:** Stores model vs corrected for Smart Corrections display
 - **Frontend:** Displays pre-blended forecast values directly
+- **Direction:** Waterfront Tempest stations (Willow Rd, Driftwood Rd, Neptune Rd) preferred for direction; these sit on harbor and are most accurate for Wyman Cove
 - **Rationale:** User lives in most exposed/windiest location, so max across all sources is a floor, not a ceiling
 
-### Wind Speed and Gust Architecture (v4.30)
-- **Collector:** Max-selects from model + KBVY + WU stations independently for both sustained and gusts
-- **Collector:** Saves original model values as model_wind_speed and model_wind_gusts before override
+### Wind Speed and Gust Architecture (v0.5.119)
+- **Collector:** Max-selects from model + KBVY + WU + Tempest independently for both sustained and gusts
+- **Collector:** WU candidates excluded if observation > 20 min old; Tempest candidates excluded if `age_minutes > 20`
+- **Collector:** Saves original model values as `model_wind_speed` and `model_wind_gusts` before override
+- **Collector:** `waterfront` flag on each candidate — currently True only for three Tempest stations on Wyman Cove harbor
 - **Hyperlocal:** Passes through collector max-selected values, calculates bias (corrected - model)
 - **Frontend:** Displays max-selected values with model comparison in Smart Corrections table
-- **Result:** Both sustained and gusts always use highest available reading across all sources
+- **Result:** Both sustained and gusts always use highest available reading across all fresh sources
 
 ### Full Correction: Wet Bulb Forecast (v0.5.71)
 - **Uses:** corrected_temperature array (temp bias pre-applied in backend)
@@ -903,8 +938,8 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 | **Temperature** | ✅ Corrected | ✅ Bias applied (frontend) | Weighted bias | None (flat) |
 | **Humidity** | ✅ Corrected | ✅ corrected_humidity array used by frontend | Replacement | N/A |
 | **Pressure** | ✅ Best source | ❌ Raw model | Selection | N/A |
-| **Wind Speed** | ✅ Max-selected (model+KBVY+WU) | ✅ Blended (backend) | Independent max-select | 24h linear |
-| **Wind Gusts** | ✅ Max-selected (model+KBVY+WU) | ✅ Blended (backend) | Independent max-select | 24h linear |
+| **Wind Speed** | ✅ Max-selected (model+KBVY+WU+Tempest, age-filtered) | ✅ Blended (backend) | Independent max-select | 24h linear |
+| **Wind Gusts** | ✅ Max-selected (model+KBVY+WU+Tempest, age-filtered) | ✅ Blended (backend) | Independent max-select | 24h linear |
 | **Wet Bulb** | ✅ Fully corrected | ✅ Fully corrected (v0.5.71) | Calculated | N/A |
 | **Feels Like** | ✅ Fully corrected | ✅ Fully corrected (v0.5.43) | Calculated | N/A |
 
@@ -949,6 +984,24 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 ---
 
 ## VERSION HISTORY
+
+**v0.5.119–v0.5.121 (May 13, 2026):**
+- Wind blend expanded to include Tempest stations alongside model, KBVY, and WU
+- Age filtering added: WU candidates excluded if observation > 20 min old; Tempest excluded if `age_minutes > 20`
+- `waterfront` flag added to all wind candidates; Willow Rd (204883), Driftwood Rd (85260), Neptune Rd (192019) marked True
+- Wind direction now sourced from the highest-gust fresh waterfront Tempest station when available; falls back to max-gust source
+- Gust and sustained speed max-selected independently (gust source and speed source may differ)
+- WU `print()` calls converted to `logging` for structured Cloud Function log output
+- Schema version check added to frontend: shows "App update required" if `schema_version` in data doesn't match expected
+- Hard vetoes added to sea breeze detector: wrong direction or excessive wind speed vetoes `active=True` regardless of overall score
+- Advection fog bug fixed: early return on spread > 5°F was preventing advection fog from ever firing; restructured to always compute both fog types and take the max
+- Sea breeze threshold tightened: `temp_diff < 5°F → score 0` (was: `< 3°F → 20, < 5°F → 40`)
+- Alert priority fixed in briefing: Extreme/Severe NWS alerts now surface above `rain_now`
+- "Watch For" hierarchy: fog rows at 50–69% and sea breeze rows dim at 55% opacity
+- Briefing dateline: data age shown right-aligned ("3m ago")
+- Settings accordions: opening one panel now collapses its siblings
+- `Hyperlocal` tab renamed to `Lifestyle`
+- Test suite added: `tests/test_processors.py` with 17 tests for fog, wet bulb, and sea breeze processors
 
 **v0.5.105 (May 13, 2026):**
 - Diurnal split on temperature bias correction: station_bias.py now tags each temp delta as `delta_d` (7am–7pm ET) or `delta_n` (7pm–7am ET) alongside the combined `delta`. compute_offsets() returns `temp_day` and `temp_night` in addition to `temp`. hyperlocal.py applies the split offset when ≥ MIN_READINGS available for the current period, falls back to combined. Captures sensors whose warm/cold bias varies across the day (e.g. shading, thermal mass).

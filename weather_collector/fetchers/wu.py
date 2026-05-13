@@ -4,6 +4,7 @@ Fetch Weather Underground multi-station data
 import json
 from . import wu_scraper_realtime
 from ..utils import iso_utc_now, redact_secrets
+import logging
 
 
 
@@ -13,7 +14,7 @@ def fetch_wu_stations():
     Fetch multi-station WU data using the scraper module.
     This is optional and fails gracefully if the scraper is unavailable.
     """
-    print("📡 Fetching WU stations (optional)...")
+    logging.info("📡 Fetching WU stations (optional)...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
 
     try:
@@ -26,10 +27,10 @@ def fetch_wu_stations():
 
         meta["status"] = "ok"
         stations_count = wu_data.get("quality", {}).get("stations_used_temp", 0)
-        print(f"  ✓ WU stations: {stations_count} stations")
+        logging.info(f"  ✓ WU stations: {stations_count} stations")
         return wu_data, meta
 
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"  ✗ WU stations (optional): {redact_secrets(e)}")
+        logging.error(f"  ✗ WU stations (optional): {redact_secrets(e)}")
         return None, meta

@@ -8,6 +8,7 @@ from ..config import (
     HRRR_HOURLY_VARS, GFS_ADDITIONAL_HOURLY_VARS, CURRENT_VARS, DAILY_VARS
 )
 from ..utils import iso_utc_now, redact_secrets
+import logging
 
 
 
@@ -22,17 +23,17 @@ def _om_get(params, label):
         if data.get("error"):
             raise ValueError(data.get("reason", str(data["error"])))
         meta["status"] = "ok"
-        print(f"  ✓ {label}")
+        logging.info(f"  ✓ {label}")
         return data, meta
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"  ✗ {label}: {redact_secrets(e)}")
+        logging.error(f"  ✗ {label}: {redact_secrets(e)}")
         return None, meta
 
 
 def fetch_current_gfs():
     """Fetch current conditions from GFS."""
-    print("📡 Fetching current conditions (GFS)...")
+    logging.info("📡 Fetching current conditions (GFS)...")
     params = {
         "latitude": LAT,
         "longitude": LON,
@@ -44,7 +45,7 @@ def fetch_current_gfs():
 
 def fetch_hourly_hrrr():
     """Fetch 48h hourly forecast from HRRR, fallback to GFS."""
-    print("📡 Fetching 48h hourly (HRRR)...")
+    logging.info("📡 Fetching 48h hourly (HRRR)...")
     hrrr_hourly = ",".join(HRRR_HOURLY_VARS)
     params = {
         "latitude": LAT,
@@ -56,7 +57,7 @@ def fetch_hourly_hrrr():
     }
     data, meta = _om_get(params, "HRRR hourly")
     if data is None:
-        print("  ⚠️  HRRR unavailable — falling back to GFS seamless")
+        logging.warning("  ⚠️  HRRR unavailable — falling back to GFS seamless")
         gfs_hourly = ",".join(HRRR_HOURLY_VARS + GFS_ADDITIONAL_HOURLY_VARS)
         fb = {k: v for k, v in params.items() if k != "models"}
         fb["hourly"] = gfs_hourly
@@ -66,7 +67,7 @@ def fetch_hourly_hrrr():
 
 def fetch_daily_ecmwf():
     """Fetch 10-day daily forecast from ECMWF, fallback to GFS."""
-    print("📡 Fetching 10-day daily (ECMWF)...")
+    logging.info("📡 Fetching 10-day daily (ECMWF)...")
     params = {
         "latitude": LAT,
         "longitude": LON,
@@ -77,12 +78,12 @@ def fetch_daily_ecmwf():
     }
     data, meta = _om_get(params, "ECMWF daily")
     if data is None:
-        print("  ⚠️  ECMWF unavailable — falling back to GFS seamless")
+        logging.warning("  ⚠️  ECMWF unavailable — falling back to GFS seamless")
         fb = {k: v for k, v in params.items() if k != "models"}
-        print("  ⏳ Attempting GFS fallback...")
+        logging.warning("  ⏳ Attempting GFS fallback...")
         data, meta = _om_get(fb, "GFS seamless (ECMWF fallback)")
         if data is None:
-            print("  ✗ GFS fallback also failed - no daily forecast available")
+            logging.error("  ✗ GFS fallback also failed - no daily forecast available")
     return data, meta
 
 def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=False):
@@ -99,7 +100,7 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
     import time
     from concurrent.futures import ThreadPoolExecutor, as_completed
     
-    print(f"  📡 Fetching clouds at {bearing_deg}° bearing: {distances_miles} miles...")
+    logging.info(f"  📡 Fetching clouds at {bearing_deg}° bearing: {distances_miles} miles...")
     
     def fetch_one(dist):
         new_lat, new_lon = calculate_offset_lat_lon(lat, lon, bearing_deg, dist)
@@ -117,7 +118,7 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
                 r.raise_for_status()
                 data = r.json()
                 if data.get("hourly"):
-                    print(f"    ✓ {dist}mi ({new_lat}, {new_lon})")
+                    logging.info(f"    ✓ {dist}mi ({new_lat}, {new_lon})")
                     return f"{dist}mi", {
                         "latitude": new_lat,
                         "longitude": new_lon,
@@ -128,18 +129,18 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
                         "humidity": data["hourly"].get("relative_humidity_2m", []),
                     }
                 else:
-                    print(f"    ✗ {dist}mi - no data")
+                    logging.error(f"    ✗ {dist}mi - no data")
                     return f"{dist}mi", None
             except requests.exceptions.Timeout:
                 if attempt == 0 and not skip_retry:
-                    print(f"    ⚠️ {dist}mi - timeout, retrying in 1s...")
+                    logging.warning(f"    ⚠️ {dist}mi - timeout, retrying in 1s...")
                     time.sleep(1)
                 else:
                     label = "(warmup)" if skip_retry else "after retry"
-                    print(f"    ✗ {dist}mi - timeout {label}")
+                    logging.error(f"    ✗ {dist}mi - timeout {label}")
                     return f"{dist}mi", None
             except Exception as e:
-                print(f"    ✗ {dist}mi - {redact_secrets(e)}")
+                logging.error(f"    ✗ {dist}mi - {redact_secrets(e)}")
                 return f"{dist}mi", None
         return f"{dist}mi", None
     
@@ -155,7 +156,7 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
 
 def fetch_hourly_gfs_7day():
     """Fetch 7-day hourly forecast from GFS for detailed forecast text."""
-    print("📡 Fetching 7-day hourly (GFS)...")
+    logging.info("📡 Fetching 7-day hourly (GFS)...")
     gfs_hourly = ",".join(HRRR_HOURLY_VARS + GFS_ADDITIONAL_HOURLY_VARS)
     params = {
         "latitude": LAT,
@@ -169,7 +170,7 @@ def fetch_hourly_gfs_7day():
 
 def fetch_hrrr_daily_temps():
     """Fetch today's full hourly temps (past+forward) for daily high/low computation."""
-    print("📡 Fetching HRRR daily temps (past+forward)...")
+    logging.info("📡 Fetching HRRR daily temps (past+forward)...")
     params = {
         "latitude": LAT,
         "longitude": LON,

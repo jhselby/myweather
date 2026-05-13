@@ -3,6 +3,7 @@ Fetch NOAA observations (KBOS, KBVY, Buoy 44013+44098)
 """
 import requests
 from ..utils import iso_utc_now, redact_secrets
+import logging
 
 
 
@@ -44,7 +45,7 @@ def decode_metar_wx(wx_string):
 
 def fetch_kbos_obs():
     """Fetch KBOS METAR from Aviation Weather new API."""
-    print("📡 Fetching KBOS obs...")
+    logging.info("📡 Fetching KBOS obs...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
     
     try:
@@ -72,18 +73,18 @@ def fetch_kbos_obs():
         }
         
         meta["status"] = "ok"
-        print(f"  ✓ KBOS: {result.get('temp_f')}°F, {result.get('pressure_hpa')} hPa")
+        logging.info(f"  ✓ KBOS: {result.get('temp_f')}°F, {result.get('pressure_hpa')} hPa")
         return result, meta
         
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"  ✗ KBOS: {redact_secrets(e)}")
+        logging.error(f"  ✗ KBOS: {redact_secrets(e)}")
         return None, meta
 
 
 def fetch_kbvy_obs():
     """Fetch KBVY METAR from Aviation Weather new API."""
-    print("📡 Fetching KBVY obs...")
+    logging.info("📡 Fetching KBVY obs...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
     
     try:
@@ -110,12 +111,12 @@ def fetch_kbvy_obs():
         }
         
         meta["status"] = "ok"
-        print(f"  ✓ KBVY: {result.get('temp_f')}°F")
+        logging.info(f"  ✓ KBVY: {result.get('temp_f')}°F")
         return result, meta
         
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"  ✗ KBVY: {redact_secrets(e)}")
+        logging.error(f"  ✗ KBVY: {redact_secrets(e)}")
         return None, meta
 
 
@@ -171,13 +172,13 @@ def _fetch_single_buoy(buoy_id):
             "pressure_tend_hpa": pressure_tend
         }
     except Exception as e:
-        print(f"  ✗ {buoy_id}: {redact_secrets(e)}")
+        logging.error(f"  ✗ {buoy_id}: {redact_secrets(e)}")
         return None
 
 
 def fetch_buoy_44013():
     """Fetch and blend buoy data from 44013 (primary) and 44098 (DPD backup)."""
-    print("📡 Fetching buoy data (44013 + 44098)...")
+    logging.info("📡 Fetching buoy data (44013 + 44098)...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
     
     try:
@@ -246,14 +247,14 @@ def fetch_buoy_44013():
             )
             
             if blended:
-                print(f"  ℹ Blended: {', '.join(blended)}")
+                logging.info(f"  ℹ Blended: {', '.join(blended)}")
             else:
-                print(f"  ℹ Using 44013 only (44098 has no overlapping data)")
+                logging.info(f"  ℹ Using 44013 only (44098 has no overlapping data)")
         
         else:
             # 44013 failed, use 44098 as fallback
             result = buoy_98.copy()
-            print("  ⚠ Using 44098 only (44013 failed)")
+            logging.error("  ⚠ Using 44098 only (44013 failed)")
         
         # Convert to final units
         wind_speed_ms = result.get('wind_speed_ms')
@@ -278,10 +279,10 @@ def fetch_buoy_44013():
         }
         
         meta["status"] = "ok"
-        print(f"  ✓ Buoy: {final_result.get('air_temp_f')}°F air, {final_result.get('water_temp_f')}°F water, {final_result.get('wave_ht_ft')} ft waves, {final_result.get('wave_period_sec')}s period")
+        logging.info(f"  ✓ Buoy: {final_result.get('air_temp_f')}°F air, {final_result.get('water_temp_f')}°F water, {final_result.get('wave_ht_ft')} ft waves, {final_result.get('wave_period_sec')}s period")
         return final_result, meta
         
     except Exception as e:
         meta["error"] = redact_secrets(e)
-        print(f"  ✗ Buoy fusion failed: {redact_secrets(e)}")
+        logging.error(f"  ✗ Buoy fusion failed: {redact_secrets(e)}")
         return None, meta

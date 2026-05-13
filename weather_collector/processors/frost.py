@@ -8,6 +8,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from ..config import LAT, LON, FROST_LOG_FILE
+import logging
 
 
 def fetch_historical_mins(season_start, today_str):
@@ -25,7 +26,7 @@ def fetch_historical_mins(season_start, today_str):
         mins  = data.get("daily", {}).get("temperature_2m_min", [])
         return {d: t for d, t in zip(dates, mins) if t is not None}
     except Exception as e:
-        print(f"  ✗ Historical mins fetch error: {e}")
+        logging.error(f"  ✗ Historical mins fetch error: {e}")
         return {}
 
 
@@ -60,7 +61,7 @@ def update_frost_log(daily_data):
 
         needs_backfill = len(logged) < 5
         if needs_backfill:
-            print("  ↻ Frost log: backfilling full season from Open-Meteo historical API...")
+            logging.info("  ↻ Frost log: backfilling full season from Open-Meteo historical API...")
             date_mins = fetch_historical_mins(season_start, yesterday)
         else:
             daily     = (daily_data or {}).get("daily", {}) or {}
@@ -101,11 +102,11 @@ def update_frost_log(daily_data):
         log["upcoming_freeze_days"] = upcoming_freeze
 
         frost_log_file.write_text(json.dumps(log, indent=2))
-        print(f"  ✓ Frost log: {log['freeze_days']} freeze, {log['hard_freeze_days']} hard, "
+        logging.info(f"  ✓ Frost log: {log['freeze_days']} freeze, {log['hard_freeze_days']} hard, "
               f"{log['severe_days']} severe | last: {log['last_freeze']} | "
               f"upcoming: {len(upcoming_freeze)}")
         return log
 
     except Exception as e:
-        print(f"  ✗ Frost log error: {e}")
+        logging.error(f"  ✗ Frost log error: {e}")
         return {}

@@ -12,6 +12,7 @@ import requests
 
 from ..config import LAT, LON
 from ..utils import iso_utc_now
+import logging
 
 # Public Tempest stations within ~1.5mi of Wyman Cove
 # waterfront=True: on the harbor shoreline, most representative for wind
@@ -73,7 +74,7 @@ def fetch_tempest():
     Fetch observations from up to 3 public Tempest stations near Wyman Cove.
     Returns (data, meta). data has 'best' (closest valid station) and 'stations' (all).
     """
-    print("📡 Fetching Tempest stations...")
+    logging.info("📡 Fetching Tempest stations...")
     meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
     now_epoch = time.time()
     results = []
@@ -134,11 +135,11 @@ def fetch_tempest():
             }
             results.append(entry)
             status = f"{entry['temperature_f']}°F wind {entry['wind_avg_mph']}mph" if valid else "no temp/wind"
-            print(f"  ✓ Tempest {sid} ({station['name']}): {status}")
+            logging.info(f"  ✓ Tempest {sid} ({station['name']}): {status}")
 
         except Exception as e:
             errors.append(f"{sid}: {e}")
-            print(f"  ✗ Tempest {sid}: {e}")
+            logging.error(f"  ✗ Tempest {sid}: {e}")
 
     if not results:
         meta["error"] = "; ".join(errors) if errors else "no data"

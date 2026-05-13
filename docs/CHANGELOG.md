@@ -1,4 +1,4 @@
-## v0.5.110–v0.5.118 • May 13, 2026
+## v0.5.110–v0.5.121 • May 13, 2026
 - Tempest hardware wet bulb replaces Stull formula for corrected_wet_bulb (fallback retained)
 - Fix: Next rain day label suppressed when minutely shows rain within 60 min
 - Extract renderSun/renderMoon/renderSolarSystem to js/sky.js
@@ -23,6 +23,17 @@
 - Extract card toggle/nav helpers to js/ui.js
 - Extract settings/alert/precip modals to js/modals.js
 - app-main.js: 5,900 → 1,449 lines
+- NWS Extreme/Severe alerts now headline over active rain in briefing priority
+- Fog: advection fog now fires correctly when dew point spread is large (was dead code path)
+- Sea breeze: minimum land/sea differential raised 3°F → 5°F; hard vetoes for offshore wind and winds >15 mph
+- Wind blend: stale observations (>20 min) excluded from Tempest and WU candidates; direction sourced from best fresh waterfront Tempest station
+- Watch For: red border/background for Extreme/Severe alerts; fog and sea breeze rows dimmed as informational
+- Briefing dateline: data age ("3m ago") shown right-aligned
+- Schema version check: app stops rendering and prompts refresh on mismatch
+- Tab: Hyperlocal renamed to Lifestyle
+- Settings: opening one accordion closes the others
+- Collector: all print() replaced with logging.info/warning/error across 16 files
+- Tests: 17 passing tests added for fog, wet bulb, and sea breeze processors
 
 ## v0.5.102–v0.5.109 • May 13, 2026
 - Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
