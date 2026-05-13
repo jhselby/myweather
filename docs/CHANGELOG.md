@@ -1,27 +1,22 @@
-## v0.5.110–v0.5.121 • May 13, 2026
+## v0.5.102–v0.5.121 • May 13, 2026
+- Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
+- WU station list trimmed from 36 to 29 (removed 7 confirmed out-of-range stations)
+- Station denominator now counts all attempted stations (29 WU + 9 Tempest = 38), not just responders
+- Adaptive bias correction: new station_bias.py tracks per-station chronic offsets for temp, humidity, and pressure using leave-one-out consensus over a 48h rolling window; MIN_READINGS=6 before offset applied
+- Temperature diurnal split: separate day/night bias offsets (7am–7pm ET boundary); captures sensors whose drift varies across the day
+- Kalman gain blend: corrected_temp = model + K × weighted_bias; K = 0.90/0.65/0.40 based on station count and agreement; model contributes when stations disagree
+- KBVY temp logged as external calibration anchor: kbvy_temp_f and kbvy_local_delta in hyperlocal output every run
+- Tempest stations shown in Settings → Sources card
+- Version update detection: refresh button dot lights up when a new deploy is available; polls version.json every 5 min
+- Fixed version dot always showing (DOM timing bug — appVersion not yet in DOM at script execution time)
+- Added How It Works prose doc to Settings → Under the Hood
+- Corrections card extracted to js/corrections.js; per-station adaptive bias offsets table (tap to expand, top 8 by magnitude, warm=red/cold=blue); KBVY anchor line in expanded card
+- Lightning alerts from Tempest network: Watch For row + Active Alerts modal when ≥3 strikes/hr or ≥1 strike within 20 km; badge lights standalone; red if close, orange if distant
+- Wind compass tile: wind lull (min across Tempest stations) added below sustained speed; gusts top / sustained center / lull bottom layout
+- Wind rendering extracted to js/wind.js (renderWindTile, renderWindImpactCollapsed, renderWindChart, renderWindRisk, initWindPills, buildWindChart)
 - Tempest hardware wet bulb replaces Stull formula for corrected_wet_bulb (fallback retained)
 - Fix: Next rain day label suppressed when minutely shows rain within 60 min
-- Extract renderSun/renderMoon/renderSolarSystem to js/sky.js
-- Extract renderSources to js/sources.js
-- Extract renderBirds to js/birds.js
-- Extract radar functions to js/radar.js
-- Extract renderTides/buildTideChart to js/tides.js
-- Extract renderFrostTracker to js/frost.js
-- Extract renderSunsetQuality to js/sunset.js
-- Extract renderHairDay to js/hair.js
-- Extract renderDockDay + dock constants to js/dock.js
-- Extract renderBriefing to js/briefing.js (complete briefing module)
-- Extract buildTempPrecipChart/updateTempPrecipDataBar to js/tempchart.js
-- Extract renderForecast group to js/forecast.js
-- Extract renderTodayAlmanac to js/almanac.js
-- Extract renderSeaBreezeDetail to js/seabreeze.js
-- Extract renderFeelsLikeCard/renderFogDetail to js/feelslike.js
-- Extract populateCollapsedPreviews to js/previews.js
-- Move logWaterTemp/renderWaterTempLog to js/tides.js
-- Move initCollapsedRadarMap to js/radar.js
-- Move generateForecastSummary/renderHyperlocalForecast to js/forecast.js
-- Extract card toggle/nav helpers to js/ui.js
-- Extract settings/alert/precip modals to js/modals.js
+- Extract renderSun/renderMoon/renderSolarSystem to js/sky.js; renderSources to js/sources.js; renderBirds to js/birds.js; radar functions to js/radar.js; renderTides/buildTideChart to js/tides.js; renderFrostTracker to js/frost.js; renderSunsetQuality to js/sunset.js; renderHairDay to js/hair.js; renderDockDay to js/dock.js; renderBriefing to js/briefing.js; buildTempPrecipChart to js/tempchart.js; renderForecast to js/forecast.js; renderTodayAlmanac to js/almanac.js; renderSeaBreezeDetail to js/seabreeze.js; renderFeelsLikeCard/renderFogDetail to js/feelslike.js; populateCollapsedPreviews to js/previews.js; card toggle/nav helpers to js/ui.js; settings/alert/precip modals to js/modals.js
 - app-main.js: 5,900 → 1,449 lines
 - NWS Extreme/Severe alerts now headline over active rain in briefing priority
 - Fog: advection fog now fires correctly when dew point spread is large (was dead code path)
@@ -34,24 +29,6 @@
 - Settings: opening one accordion closes the others
 - Collector: all print() replaced with logging.info/warning/error across 16 files
 - Tests: 17 passing tests added for fog, wet bulb, and sea breeze processors
-
-## v0.5.102–v0.5.109 • May 13, 2026
-- Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
-- WU station list trimmed from 36 to 29 (removed 7 confirmed out-of-range stations)
-- Station denominator now counts all attempted stations (29 WU + 9 Tempest = 38), not just responders
-- Adaptive bias correction: new station_bias.py tracks per-station chronic offsets for temp, humidity, and pressure using leave-one-out consensus over a 48h rolling window; MIN_READINGS=6 before offset applied
-- Temperature diurnal split: separate day/night bias offsets (7am–7pm ET boundary); captures sensors whose drift varies across the day
-- Kalman gain blend: corrected_temp = model + K × weighted_bias; K = 0.90/0.65/0.40 based on station count and agreement; model contributes when stations disagree
-- KBVY temp logged as external calibration anchor: kbvy_temp_f and kbvy_local_delta in hyperlocal output every run
-- Tempest stations shown in Settings → Sources card
-- Version update detection: refresh button dot lights up when a new deploy is available; polls version.json every 5 min
-- Fixed version dot always showing (DOM timing bug — appVersion not yet in DOM at script execution time)
-- Added How It Works prose doc to Settings → Under the Hood
-- DATA_PIPELINE.md updated to v0.5.105
-- Corrections card extracted to js/corrections.js; per-station adaptive bias offsets table (tap to expand, top 8 by magnitude, warm=red/cold=blue); KBVY anchor line in expanded card
-- Lightning alerts from Tempest network: Watch For row + Active Alerts modal when ≥3 strikes/hr or ≥1 strike within 20 km; badge lights standalone; red if close, orange if distant
-- Wind compass tile: wind lull (min across Tempest stations) added below sustained speed; gusts top / sustained center / lull bottom layout
-- Wind rendering extracted to js/wind.js (renderWindTile, renderWindImpactCollapsed, renderWindChart, renderWindRisk, initWindPills, buildWindChart)
 
 ## v0.5.100–v0.5.101 • May 12, 2026
 - Fix data refresh on Mac: add window focus listener alongside visibilitychange so Cmd+Tab back to browser triggers a reload (visibilitychange alone only fires on tab switches)
