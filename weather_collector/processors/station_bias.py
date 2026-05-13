@@ -14,7 +14,8 @@ MIN_READINGS = 6  # require 1 hour of data before applying corrections
 
 
 def _sid(station):
-    return station.get('station_id') or station.get('station_name')
+    sid = station.get('station_id') or station.get('station_name')
+    return str(sid) if sid is not None else None
 
 
 def _weight(station):

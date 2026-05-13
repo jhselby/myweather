@@ -74,7 +74,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
                 continue
 
             # Apply chronic calibration offset if we have enough history
-            sid = station.get('station_id') or station.get('station_name')
+            sid = str(station.get('station_id') or station.get('station_name') or '')
             chronic = offsets.get(sid, 0.0)
             station_temp = station_temp - chronic
 
