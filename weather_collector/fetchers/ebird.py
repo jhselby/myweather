@@ -10,7 +10,6 @@ recent one), so no dedupe-by-species is needed within a single call. We merge
 the two lists into a unified species[] array with a `notable` flag.
 """
 import math
-import re
 import requests
 
 from ..config import LAT, LON, HEADERS_DEFAULT
@@ -20,7 +19,7 @@ from ..config import LAT, LON, HEADERS_DEFAULT
 EBIRD_QUERY_LAT = 42.515
 EBIRD_QUERY_LON = -70.845
 
-from ..utils import iso_utc_now
+from ..utils import iso_utc_now, redact_secrets
 
 EBIRD_BASE = "https://api.ebird.org/v2/data/obs/geo"
 import os
@@ -30,12 +29,6 @@ BACK_DAYS = 2  # ~48 hours
 
 
 
-def _redact_secrets(value):
-    s = str(value)
-    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
-    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
-    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
-    return s
 
 def _haversine_km(lat1, lon1, lat2, lon2):
     """Great-circle distance in km."""
@@ -65,8 +58,8 @@ def _ebird_get(path, api_key, label):
         print(f"  ✓ eBird {label}: {len(data)} obs")
         return data, meta
     except Exception as e:
-        meta["error"] = _redact_secrets(e)
-        print(f"  ✗ eBird {label}: {_redact_secrets(e)}")
+        meta["error"] = redact_secrets(e)
+        print(f"  ✗ eBird {label}: {redact_secrets(e)}")
         return None, meta
 
 

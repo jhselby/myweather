@@ -8,12 +8,12 @@ Intelligently aggregates data from 15 local stations with:
 - Quality scoring for each aggregate
 """
 
-import re
 import requests
 import json
 import time
 from datetime import datetime
 from math import radians, sin, cos, sqrt, atan2
+from ..utils import redact_secrets
 
 # API Configuration
 import os
@@ -85,12 +85,6 @@ MAX_TEMP_DEVIATION = 4.0  # Exclude temps >4°F from median
 
 
 
-def _redact_secrets(value):
-    s = str(value)
-    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
-    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
-    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
-    return s
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     """Calculate distance in miles between two lat/lon points"""
@@ -144,7 +138,7 @@ def get_current_observation(station_id):
         }
         
     except Exception as e:
-        print(f"❌ {station_id}: {_redact_secrets(e)}")
+        print(f"❌ {station_id}: {redact_secrets(e)}")
         return None
 
 

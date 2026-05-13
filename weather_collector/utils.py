@@ -1,10 +1,19 @@
-import re
 """
 Utility functions for weather data collection and processing
 """
+import re
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+
+
+def redact_secrets(value):
+    s = str(value)
+    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
+    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
+    s = re.sub(r'((?:x-goog-api-key|api[_-]?key)["\']?\s*[:=]\s*["\']?)[^"\'\\s,}]+', r'\1REDACTED', s, flags=re.IGNORECASE)
+    return s
+
 
 
 def iso_utc_now() -> str:

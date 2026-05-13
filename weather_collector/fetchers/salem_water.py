@@ -3,13 +3,12 @@ Fetch Salem Harbor water temperature.
 Primary: GoMOFS model (NOAA Gulf of Maine OFS) at ny=392, nx=101 (42.50N, -70.88W)
 Fallback: NOAA buoy 44013 scraped from NDBC
 """
-import re
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, timezone
 
 from ..config import HEADERS_DEFAULT
-from ..utils import safe_float
+from ..utils import safe_float, redact_secrets
 
 
 GOMOFS_NY = 401
@@ -17,12 +16,6 @@ GOMOFS_NX = 103
 GOMOFS_BASE = "https://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/GOMOFS/MODELS"
 
 
-def _redact_secrets(value):
-    s = str(value)
-    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
-    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
-    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
-    return s
 
 
 def _candidate_urls(dt=None):
@@ -79,7 +72,7 @@ def _fetch_gomofs_temp():
                 print(f"  ✓ GoMOFS water temp: {temp_f}°F ({temp_c:.2f}°C) [{fname}]")
                 return temp_f
         except Exception as e:
-            print(f"  ✗ GoMOFS {fname}: {_redact_secrets(e)}")
+            print(f"  ✗ GoMOFS {fname}: {redact_secrets(e)}")
             continue
     print("  ✗ GoMOFS: all candidates failed")
     return None
@@ -104,7 +97,7 @@ def _fetch_buoy_temp():
         print("  ✗ Buoy 44013: water temp not found in page")
         return None
     except Exception as e:
-        print(f"  ✗ Buoy 44013: {_redact_secrets(e)}")
+        print(f"  ✗ Buoy 44013: {redact_secrets(e)}")
         return None
 
 

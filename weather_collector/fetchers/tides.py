@@ -1,22 +1,15 @@
 """
 Fetch tide predictions from NOAA
 """
-import re
 import requests
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from ..config import TIDE_STATION
-from ..utils import iso_utc_now
+from ..utils import iso_utc_now, redact_secrets
 
 
 
-def _redact_secrets(value):
-    s = str(value)
-    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
-    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
-    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
-    return s
 
 def fetch_tides():
     """
@@ -97,6 +90,6 @@ def fetch_tides():
         return tide_result, meta
 
     except Exception as e:
-        meta["error"] = _redact_secrets(e)
-        print(f"  ✗ Tides: {_redact_secrets(e)}")
+        meta["error"] = redact_secrets(e)
+        print(f"  ✗ Tides: {redact_secrets(e)}")
         return None, meta

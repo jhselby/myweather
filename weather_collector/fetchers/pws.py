@@ -1,23 +1,16 @@
 """
 Fetch current conditions from Weather Underground Personal Weather Station
 """
-import re
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 from pathlib import Path
 
 from ..config import PWS_STATION, PWS_CACHE_FILE
-from ..utils import iso_utc_now, safe_float, load_json, save_json
+from ..utils import iso_utc_now, safe_float, load_json, save_json, redact_secrets
 
 
 
-def _redact_secrets(value):
-    s = str(value)
-    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
-    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
-    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
-    return s
 
 def fetch_pws_current():
     """
@@ -62,8 +55,8 @@ def fetch_pws_current():
         return pws_data, meta
 
     except Exception as e:
-        meta["error"] = _redact_secrets(e)
-        print(f"✗ PWS error: {_redact_secrets(e)}")
+        meta["error"] = redact_secrets(e)
+        print(f"✗ PWS error: {redact_secrets(e)}")
 
         if last and isinstance(last, dict) and last.get("temperature") is not None:
             last_copy = dict(last)

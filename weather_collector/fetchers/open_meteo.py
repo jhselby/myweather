@@ -2,22 +2,15 @@
 Fetch weather data from Open-Meteo API (GFS, HRRR, ECMWF models)
 """
 import requests
-import re
 
 from ..config import (
     LAT, LON, OM_BASE_URL, OM_UNITS, HEADERS_DEFAULT,
     HRRR_HOURLY_VARS, GFS_ADDITIONAL_HOURLY_VARS, CURRENT_VARS, DAILY_VARS
 )
-from ..utils import iso_utc_now
+from ..utils import iso_utc_now, redact_secrets
 
 
 
-def _redact_secrets(value):
-    s = str(value)
-    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
-    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
-    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
-    return s
 
 def _om_get(params, label):
     """GET from Open-Meteo with standard error handling."""
@@ -32,8 +25,8 @@ def _om_get(params, label):
         print(f"  ✓ {label}")
         return data, meta
     except Exception as e:
-        meta["error"] = _redact_secrets(e)
-        print(f"  ✗ {label}: {_redact_secrets(e)}")
+        meta["error"] = redact_secrets(e)
+        print(f"  ✗ {label}: {redact_secrets(e)}")
         return None, meta
 
 
@@ -146,7 +139,7 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
                     print(f"    ✗ {dist}mi - timeout {label}")
                     return f"{dist}mi", None
             except Exception as e:
-                print(f"    ✗ {dist}mi - {_redact_secrets(e)}")
+                print(f"    ✗ {dist}mi - {redact_secrets(e)}")
                 return f"{dist}mi", None
         return f"{dist}mi", None
     

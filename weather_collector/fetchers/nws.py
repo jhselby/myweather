@@ -1,21 +1,12 @@
 """
-Fetch NWS forecast and alerts
+Fetch NWS data: alerts and gridpoint forecasts (BOX/76,97)
 """
-import re
 import requests
 from ..config import LAT, LON
-from ..utils import iso_utc_now
+from ..utils import iso_utc_now, redact_secrets
 
-HEADERS_DEFAULT = {"User-Agent": "WymanCoveWeather/1.0"}
-
-
-
-def _redact_secrets(value):
-    s = str(value)
-    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
-    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
-    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
-    return s
+HEADERS = {"User-Agent": "WymanCoveWeather/1.0"}
+GRIDPOINT_URL = "https://api.weather.gov/gridpoints/BOX/76,97"
 
 
 def fetch_nws_alerts():
@@ -25,17 +16,15 @@ def fetch_nws_alerts():
 
     try:
         url = f"https://api.weather.gov/alerts/active?point={LAT},{LON}"
-        r = requests.get(url, headers=HEADERS_DEFAULT, timeout=30)
+        r = requests.get(url, headers=HEADERS, timeout=30)
         r.raise_for_status()
         data = r.json()
 
         features = data.get("features", [])
-        
-        # Transform to simplified format expected by frontend
+
         alerts = []
         for f in features:
             props = f.get("properties", {})
-            # Skip TEST alerts (NWS transmission tests)
             desc = (props.get('description', '') + ' ' + props.get('headline', '')).upper()
             if 'THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY' in desc or 'THIS IS A TEST' in desc:
                 print(f"  ⏭ Skipping TEST alert: {props.get('event', 'Unknown')}")
@@ -63,6 +52,37 @@ def fetch_nws_alerts():
         return alerts, meta
 
     except Exception as e:
-        meta["error"] = _redact_secrets(e)
-        print(f"  ✗ NWS alerts: {_redact_secrets(e)}")
+        meta["error"] = redact_secrets(e)
+        print(f"  ✗ NWS alerts: {redact_secrets(e)}")
         return [], meta
+
+
+def fetch_nws_gridpoints():
+    """Fetch NWS gridpoint hourly data (temperature, precip, wind)."""
+    print("📡 Fetching NWS gridpoint data...")
+    meta = {"status": "error", "updated_at": iso_utc_now(), "error": None}
+
+    try:
+        r = requests.get(GRIDPOINT_URL, headers=HEADERS, timeout=30)
+        r.raise_for_status()
+        data = r.json()
+
+        properties = data.get("properties", {})
+        result = {
+            "temperature": properties.get("temperature", {}),
+            "dewpoint": properties.get("dewpoint", {}),
+            "probabilityOfPrecipitation": properties.get("probabilityOfPrecipitation", {}),
+            "quantitativePrecipitation": properties.get("quantitativePrecipitation", {}),
+            "weather": properties.get("weather", {}),
+            "windSpeed": properties.get("windSpeed", {}),
+            "windDirection": properties.get("windDirection", {}),
+        }
+
+        meta["status"] = "ok"
+        print(f"  ✓ NWS gridpoints fetched")
+        return result, meta
+
+    except Exception as e:
+        meta["error"] = redact_secrets(e)
+        print(f"  ✗ NWS gridpoints failed: {redact_secrets(e)}")
+        return {}, meta

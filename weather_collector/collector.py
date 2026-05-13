@@ -11,16 +11,15 @@ from pathlib import Path
 import pytz
 
 from .config import SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
-from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes
+from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes, redact_secrets
 
 # Import all fetchers
 from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf, fetch_hourly_gfs_7day, fetch_hrrr_daily_temps
 from .fetchers.pws import fetch_pws_current
 from .fetchers.tides import fetch_tides
 from .fetchers.noaa import fetch_kbos_obs, fetch_kbvy_obs, fetch_buoy_44013
-from .fetchers.nws import fetch_nws_alerts
 from .fetchers.salem_water import fetch_salem_water_temp
-from .fetchers.nws_gridpoints import fetch_nws_gridpoints
+from .fetchers.nws import fetch_nws_alerts, fetch_nws_gridpoints
 from .fetchers.wu import fetch_wu_stations
 from .fetchers.pirate_weather import fetch_pirate_weather
 from .fetchers.ebird import fetch_ebird
@@ -42,7 +41,6 @@ from .processors.wind_risk import compute_wind_risk
 from .processors.fog import calculate_fog_risk
 from .processors.trough import compute_trough_signal
 from .processors.forecast_text import generate_forecast_text
-import re
 
 GCS_BUCKET = "myweather-data"
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -52,12 +50,6 @@ FROST_LOG_TMP = Path("/tmp/frost_log.json")
 
 
 
-def _redact_secrets(value):
-    s = str(value)
-    s = re.sub(r'([?&]key=)[^&\s]+', r'\1REDACTED', s)
-    s = re.sub(r'(AIza[0-9A-Za-z\-_]{20,})', 'REDACTED', s)
-    s = re.sub(r"((?:x-goog-api-key|api[_-]?key)[\"']?\s*[:=]\s*[\"']?)[^\"'\s,}]+", r"\1REDACTED", s, flags=re.IGNORECASE)
-    return s
 
 def _gcs_client():
     from google.cloud import storage
@@ -75,7 +67,7 @@ def _download_frost_log_from_gcs():
         else:
             print(f"  ℹ  No frost_log.json in GCS yet (first run)")
     except Exception as e:
-        print(f"  ⚠  Could not download frost_log.json from GCS: {_redact_secrets(e)}")
+        print(f"  ⚠  Could not download frost_log.json from GCS: {redact_secrets(e)}")
 
 
 def _upload_to_gcs(data, gcs_path, label):
@@ -89,7 +81,7 @@ def _upload_to_gcs(data, gcs_path, label):
         blob.patch()
         print(f"  ✓ Uploaded {label} to GCS ({len(payload):,} bytes)")
     except Exception as e:
-        print(f"  ✗ Failed to upload {label} to GCS: {_redact_secrets(e)}")
+        print(f"  ✗ Failed to upload {label} to GCS: {redact_secrets(e)}")
         raise
 
 
@@ -105,7 +97,7 @@ def _load_prev_weather_data():
         else:
             print(f"  ℹ  No previous weather_data.json in GCS (first run)")
     except Exception as e:
-        print(f"  ⚠  Could not load previous weather_data.json: {_redact_secrets(e)}")
+        print(f"  ⚠  Could not load previous weather_data.json: {redact_secrets(e)}")
     return {}
 
 
@@ -150,7 +142,7 @@ def _load_obs_temp_log():
         if blob.exists():
             return json.loads(blob.download_as_text())
     except Exception as e:
-        print(f"  ⚠  Could not load obs_temp_log.json from GCS: {_redact_secrets(e)}")
+        print(f"  ⚠  Could not load obs_temp_log.json from GCS: {redact_secrets(e)}")
     return {"entries": []}
 
 
@@ -788,8 +780,8 @@ def main():
                 print(f"  ⚠️  {name} timed out (45s)")
                 parallel_results[name] = (None, {"status": "error", "error": "timeout"}) if name != "Salem water temp" else None
             except Exception as e:
-                print(f"  ⚠️  {name} failed: {_redact_secrets(e)}")
-                parallel_results[name] = (None, {"status": "error", "error": _redact_secrets(e)}) if name != "Salem water temp" else None
+                print(f"  ⚠️  {name} failed: {redact_secrets(e)}")
+                parallel_results[name] = (None, {"status": "error", "error": redact_secrets(e)}) if name != "Salem water temp" else None
     print(f"  ✓ Parallel fetches complete: {_time.time() - parallel_t0:.1f}s")
 
     nws_gridpoints_data, nws_gridpoints_meta = parallel_results.get("NWS gridpoints", (None, {"status": "error"}))
@@ -833,7 +825,7 @@ def main():
             frost_log_data = json.loads(FROST_LOG_TMP.read_text())
             _upload_to_gcs(frost_log_data, FROST_LOG_GCS_PATH, "frost_log.json")
         except Exception as e:
-            print(f"  ⚠  Could not upload frost_log.json: {_redact_secrets(e)}")
+            print(f"  ⚠  Could not upload frost_log.json: {redact_secrets(e)}")
 
     sunset_directional = None
     if daily_data and daily_data.get("daily") and daily_data["daily"].get("sunset"):
@@ -921,10 +913,10 @@ def run(request):
         main()
         return ("OK", 200)
     except Exception as e:
-        print(f"ERROR: {_redact_secrets(e)}")
+        print(f"ERROR: {redact_secrets(e)}")
         import traceback
         traceback.print_exc()
-        return (f"ERROR: {_redact_secrets(e)}", 500)
+        return (f"ERROR: {redact_secrets(e)}", 500)
 
 
 if __name__ == "__main__":
