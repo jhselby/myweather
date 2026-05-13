@@ -944,4 +944,134 @@
   window.generateBriefing = generateBriefing;
 
 })();
- 
+
+// Briefing Tab Renderer
+function renderBriefing(data) {
+  if (typeof generateBriefing !== 'function') return;
+  const b = generateBriefing(data);
+  const now = new Date();
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dl = document.getElementById('briefDateline');
+  if (dl) dl.textContent = days[now.getDay()] + ' · ' + now.getDate() + ' ' + months[now.getMonth()];
+  const tl = document.getElementById('briefTimeLabel');
+  if (tl) tl.textContent = b.timeLabel;
+  const hl = document.getElementById('briefHeadline');
+  if (hl) {
+    hl.textContent = b.headline;
+    hl.style.fontStyle = b.isAI ? 'normal' : 'italic';
+  }
+  const sm = document.getElementById('briefSummary');
+  if (sm) sm.textContent = b.summary;
+  const sn = document.getElementById('briefTempNow');
+  if (sn) sn.innerHTML = (b.stats.now ?? '--') + '<span class="unit">°</span>';
+  const sh = document.getElementById('briefTempHigh');
+  if (sh) sh.innerHTML = (b.stats.high ?? '--') + '<span class="unit">°</span>';
+  // Inject wind impact score into briefing Wind row
+  const hyp = data.hyperlocal || {};
+  const cur = data.current || {};
+  const sc = document.getElementById('briefConditions');
+  const scl = document.getElementById('briefConditionsLabel');
+  if (sc) {
+    const raw = cur.weather_description || cur.condition_override || '--';
+    // Override with Pirate Weather radar if it shows current precip and HRRR doesn't
+    let displayCondition = raw;
+    if (!/rain|snow|drizzle|sleet|shower/i.test(raw)) {
+      const mn = window.__precipMinutely || [];
+      if (mn.length) {
+        const mnNow = Math.floor(Date.now() / 1000);
+        const mnStale = Math.round((mnNow - (mn[0]?.time ?? mnNow)) / 60);
+        const mnCur = mn[Math.min(mnStale, mn.length - 1)];
+        if (mnCur && mnCur.precip_intensity > 0.001 && (mnCur.precip_probability ?? 0) >= 0.3) {
+          const ci = mnCur.precip_intensity;
+          const ct = mnCur.precip_type || 'rain';
+          if (ct === 'snow') displayCondition = ci < 0.10 ? 'Light Snow' : ci < 0.30 ? 'Snow' : 'Heavy Snow';
+          else if (ct === 'sleet') displayCondition = 'Sleet';
+          else displayCondition = ci < 0.01 ? 'Drizzle' : ci < 0.10 ? 'Light Rain' : ci < 0.30 ? 'Moderate Rain' : 'Heavy Rain';
+        }
+      }
+    }
+    const parts = displayCondition.split(/,\s*|(?<=\S)\s+and\s+/i);
+    sc.textContent = parts[0];
+    if (scl) scl.textContent = parts[1] ? parts[1].toLowerCase() : 'sky';
+    const fitSizes = ['2.4rem','2.0rem','1.7rem','1.4rem','1.15rem','0.95rem','0.82rem'];
+    const maxW = sc.parentElement ? sc.parentElement.offsetWidth - 8 : 999;
+    sc.style.fontSize = fitSizes[0];
+    for (const s of fitSizes) {
+      sc.style.fontSize = s;
+      if (sc.scrollWidth <= maxW) break;
+    }
+  }
+  const bWindSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
+  const bGustSpeed = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+  const bWindDir = cur.wind_direction;
+  if (bWindDir != null && (bWindSpeed != null || bGustSpeed != null)) {
+    const bImpact = Math.round(combinedWindImpact(bWindSpeed, bGustSpeed, bWindDir));
+    const bLevel = worryLevel(bImpact);
+    const windRow = b.todayRows.find(r => r.label === 'Wind');
+    if (windRow) {
+      windRow.value += ' · Impact: ' + bImpact + ' ' + bLevel.label;
+    }
+  }
+  const cm = { green: 'brief-val-green', orange: 'brief-val-orange', red: 'brief-val-red', blue: 'brief-val-blue' };
+  const todayEl = document.getElementById('briefTodayRows');
+  if (todayEl) { let html = ''; b.todayRows.forEach(r => { const cls = r.color ? cm[r.color] || '' : ''; html += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; }); todayEl.innerHTML = html; }
+  const almanacEl = document.getElementById('briefAlmanacSection');
+  if (almanacEl) { if (b.almanacRows && b.almanacRows.length) { let ah = '<hr class="brief-rule"><div class="brief-section-label">Almanac</div><div class="brief-rows">'; b.almanacRows.forEach(r => { const cls = r.color ? cm[r.color] || '' : ''; ah += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; }); ah += '</div>'; almanacEl.innerHTML = ah; } else { almanacEl.innerHTML = ''; } }
+  const lifeEl = document.getElementById('briefLifestyleSection');
+  if (lifeEl) { if (b.lifestyleRows && b.lifestyleRows.length) { let lh = '<hr class="brief-rule"><div class="brief-section-label">Lifestyle</div><div class="brief-rows">'; b.lifestyleRows.forEach(r => { const cls = r.color ? cm[r.color] || '' : ''; lh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; }); lh += '</div>'; lifeEl.innerHTML = lh; } else { lifeEl.innerHTML = ''; } }
+  const watchEl = document.getElementById('briefWatchSection');
+  const hasWatchContent = b.watchRows && b.watchRows.length > 0;
+
+  if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isHtml) { wh += r.html; } else if (r.isAlert) { wh += '<div class="brief-alert-row" onclick="openAlertModal()" style="cursor:pointer;">⚠ <strong>' + r.value + '</strong>' + (r.detail ? '<div style="font-size:0.78rem;margin-top:3px;opacity:0.72;">' + r.detail + '</div>' : '') + '</div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; wh += '<div class="brief-row"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); wh += '<hr class="brief-rule" style="margin-top:14px;">'; watchEl.innerHTML = wh; } else { watchEl.innerHTML = ''; } }
+  const tonightEl = document.getElementById('briefTonightSection');
+  if (tonightEl) {
+    if (b.tonight) {
+      const ft = data.forecast_text || [];
+      const tonightFc = ft.find(p => p.period_name === 'Tonight');
+      let th = '<hr class="brief-rule"><div class="brief-section-label">Tonight</div>';
+      th += '<div class="brief-row"><span class="brief-row-label">Overnight</span><span class="brief-row-value">' + b.tonight + '</span></div>';
+      if (tonightFc && tonightFc.text) {
+        th += '<div style="font-size:0.88rem;opacity:0.7;padding:6px 0 2px;line-height:1.5;">' + tonightFc.text + '</div>';
+      }
+      tonightEl.innerHTML = th;
+    } else { tonightEl.innerHTML = ''; }
+  }
+
+  // Cross-card navigation from briefing rows
+  var navMap = {
+    'Sky': { tab: 'weather', card: '48h_temp_precip' },
+    'Wind': { tab: 'weather', card: '48h_wind' },
+    'Sea breeze': { tab: 'weather', card: 'sea_breeze_detail' },
+    'Fog': { tab: 'weather', card: 'fog_risk' },
+    'Rain': { tab: 'weather', card: '48h_temp_precip' },
+    'Next rain': { tab: 'weather', card: '48h_temp_precip' },
+    'Wind chill': { tab: 'weather', card: 'feels_like' },
+    'Heat index': { tab: 'weather', card: 'feels_like' },
+    'Sun': { tab: 'almanac', card: 'sun' },
+    'Tide': { tab: 'almanac', card: 'tides' },
+    'Moon': { tab: 'almanac', card: 'moon' },
+    'Sunset': { tab: 'hyperlocal', card: 'sunset_quality' },
+    'Beach day': { tab: 'hyperlocal', card: 'swim_float' },
+    'Hair day': { tab: 'hyperlocal', card: 'hair_day' },
+    'Birds': { tab: 'hyperlocal', card: 'birds' },
+  };
+  var allBriefRows = document.querySelectorAll('#briefTodayRows .brief-row, #briefAlmanacSection .brief-row, #briefLifestyleSection .brief-row, #briefWatchSection .brief-row');
+  allBriefRows.forEach(function(row) {
+    var labelEl = row.querySelector('.brief-row-label');
+    if (!labelEl) return;
+    var label = labelEl.textContent.trim().replace(/ \(tomorrow\)/, '');
+    var nav = navMap[label];
+    if (!nav) return;
+    row.style.cursor = 'pointer';
+    row.onclick = function(e) {
+      e.stopPropagation();
+      window.__navSource = { tab: 'briefing', card: null };
+      showTab(nav.tab);
+      setTimeout(function() {
+        var card = document.querySelector('[data-collapse-key="' + nav.card + '"]');
+        if (card) card.click();
+      }, 100);
+    };
+  });
+}
