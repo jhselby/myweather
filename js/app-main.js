@@ -6059,7 +6059,15 @@ function loadWeatherData() {
 
     document.getElementById('refreshBtn').addEventListener('click', function() {
       this.style.transform = 'rotate(360deg)';
-      setTimeout(() => { this.style.transform = ''; location.reload(); }, 400);
+      const updatePending = document.getElementById('refreshAlertDot')?.style.display !== 'none';
+      setTimeout(() => {
+        this.style.transform = '';
+        if (updatePending) {
+          window.location.href = window.location.pathname + '?_=' + Date.now();
+        } else {
+          location.reload();
+        }
+      }, 400);
     });
 
 
