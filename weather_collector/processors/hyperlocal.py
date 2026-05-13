@@ -55,13 +55,21 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             if tb.get("valid") and tb.get("temperature_f") and tb.get("distance_mi") and tb.get("elevation_ft") is not None:
                 stations = list(stations) + [tb]
     
+    _offsets = station_offsets or {}
+    temp_offsets = _offsets.get("temp", {})
+    humidity_offsets = _offsets.get("humidity", {})
+    pressure_offsets = _offsets.get("pressure", {})
+
     if model_t is not None and stations:
         weighted_bias_sum = 0.0
         total_weight = 0.0
         station_biases = []
         stations_used = 0
+        h_wsum = 0.0
+        h_wt = 0.0
+        p_wsum = 0.0
+        p_wt = 0.0
 
-        offsets = station_offsets or {}
         for station in stations:
             station_temp = station.get('temperature_f')
             station_dist = station.get('distance_mi')
@@ -73,35 +81,45 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             if station_dist == 0 or station_dist > 1.5:  # Distance filter
                 continue
 
-            # Apply chronic calibration offset if we have enough history
             sid = str(station.get('station_id') or station.get('station_name') or '')
-            chronic = offsets.get(sid, 0.0)
-            station_temp = station_temp - chronic
 
-            # Calculate bias at this station
-            bias_at_station = station_temp - model_t
-            
             # Distance weight: 1/distance² (inverse square law)
             dist_weight = 1.0 / (station_dist ** 2)
-            
             # Elevation weight: exp(-|elev_diff|/30)
-            # Characteristic scale = 30ft (typical elevation variation in Marblehead)
             elev_diff = abs(station_elev - ELEVATION_FT)
             elev_weight = math.exp(-elev_diff / 30.0)
-            
-            # Combined weight
             weight = dist_weight * elev_weight
-            
+
+            # Temperature with bias correction
+            corrected_temp_s = station_temp - temp_offsets.get(sid, 0.0)
+            bias_at_station = corrected_temp_s - model_t
             weighted_bias_sum += bias_at_station * weight
             total_weight += weight
             station_biases.append(bias_at_station)
             stations_used += 1
-        
+
+            # Humidity with bias correction (single pass)
+            raw_h = station.get('humidity_pct') or station.get('relative_humidity')
+            if raw_h is not None:
+                corrected_h = raw_h - humidity_offsets.get(sid, 0.0)
+                h_wsum += corrected_h * weight
+                h_wt += weight
+
+            # Pressure with bias correction (single pass)
+            raw_p = station.get('pressure_in')
+            if raw_p is None:
+                p_mb = station.get('sea_level_pressure_mb')
+                raw_p = round(p_mb / 33.8639, 3) if p_mb is not None else None
+            if raw_p is not None:
+                corrected_p = raw_p - pressure_offsets.get(sid, 0.0)
+                p_wsum += corrected_p * weight
+                p_wt += weight
+
         # Calculate weighted average bias
         if total_weight > 0 and stations_used >= 3:
             weighted_bias = weighted_bias_sum / total_weight
             corrected_temp = model_t + weighted_bias
-            
+
             # Calculate confidence based on bias agreement
             if len(station_biases) > 1:
                 bias_std = statistics.stdev(station_biases)
@@ -113,7 +131,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
                     confidence = "Low"
             else:
                 confidence = "Low"
-            
+
             hyperlocal["model_temp"] = round(model_t, 1)
             hyperlocal["weighted_bias"] = round(weighted_bias, 2)
             hyperlocal["corrected_temp"] = round(corrected_temp, 1)
@@ -121,13 +139,24 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             hyperlocal["stations_total"] = wu_stations_attempted + tempest_stations_attempted
             hyperlocal["confidence"] = confidence
             hyperlocal["bias_std"] = round(bias_std, 2)
-            if offsets:
-                hyperlocal["station_offsets"] = offsets
-            
+            if _offsets:
+                hyperlocal["station_offsets"] = _offsets
+
             # For reference, also show simple WU average
             wu_t = wu_data.get("temperature_f") if wu_data else None
             if wu_t is not None:
                 hyperlocal["wu_avg_temp"] = round(wu_t, 1)
+
+            # Humidity from per-station weighted average
+            if h_wt > 0:
+                hyperlocal["corrected_humidity"] = round(h_wsum / h_wt, 1)
+                if model_h is not None:
+                    hyperlocal["model_humidity"] = model_h
+                    hyperlocal["bias_humidity"] = round((h_wsum / h_wt) - model_h, 1)
+
+            # Pressure from per-station weighted average
+            if p_wt > 0:
+                hyperlocal["corrected_pressure_in"] = round(p_wsum / p_wt, 2)
     
     # Fallback: WU stations available but model temp missing — use WU average directly
     elif model_t is None and stations:
@@ -160,32 +189,14 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             hyperlocal["simple_bias"] = round(pws_t - model_t, 2)
             hyperlocal["corrected_temp"] = round(pws_t, 1)
     
-    # Pressure
+    # Pressure fallback if per-station average not available
+    if "corrected_pressure_in" not in hyperlocal:
+        wu_p_in = wu_data.get("pressure_in") if wu_data else None
+        hyperlocal["corrected_pressure_in"] = wu_p_in or kbos_p_in or model_p_in
     if model_p_in is not None:
         hyperlocal["model_pressure_in"] = model_p_in
-    wu_p_in = wu_data.get("pressure_in") if wu_data else None
-    if wu_p_in is not None:
-        hyperlocal["wu_pressure_in"] = wu_p_in
     if kbos_p_in is not None:
         hyperlocal["kbos_pressure_in"] = kbos_p_in
-    hyperlocal["corrected_pressure_in"] = wu_p_in or kbos_p_in or model_p_in
-    
-    # Humidity
-    wu_h = wu_data.get("humidity_pct") if wu_data else None
-    tempest_h = next(
-        (tb["relative_humidity"] for tb in (tempest_data or {}).get("stations", [])
-         if tb.get("valid") and tb.get("relative_humidity") is not None),
-        None
-    )
-    # Prefer closest valid source: Tempest (0.21mi) > WU aggregate
-    best_h = tempest_h if tempest_h is not None else wu_h
-    if model_h is not None and best_h is not None:
-        hyperlocal["model_humidity"] = model_h
-        hyperlocal["wu_humidity"] = wu_h
-        if tempest_h is not None:
-            hyperlocal["tempest_humidity"] = tempest_h
-        hyperlocal["bias_humidity"] = round(best_h - model_h, 1)
-        hyperlocal["corrected_humidity"] = best_h
     
     # Wind Speed — current.wind_speed is already max-selected by collector
     # current.model_wind_speed has the original model value (saved before override)

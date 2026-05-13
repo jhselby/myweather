@@ -1,7 +1,8 @@
 """
-Per-station bias tracking for hyperlocal temperature correction.
+Per-station bias tracking for hyperlocal corrections.
 Tracks each station's chronic offset from the local consensus using
 a leave-one-out approach over a 48-hour rolling window.
+Covers temperature, humidity, and pressure.
 """
 import json
 import math
@@ -11,6 +12,8 @@ from ..config import ELEVATION_FT
 GCS_PATH = "station_history.json"
 WINDOW_HOURS = 48
 MIN_READINGS = 6  # require 1 hour of data before applying corrections
+
+MB_TO_INHG = 1.0 / 33.8639
 
 
 def _sid(station):
@@ -26,6 +29,18 @@ def _weight(station):
     return (1.0 / dist ** 2) * math.exp(-abs(elev - ELEVATION_FT) / 30.0)
 
 
+def _humidity(station):
+    return station.get('humidity_pct') or station.get('relative_humidity')
+
+
+def _pressure_in(station):
+    p = station.get('pressure_in')
+    if p is not None:
+        return p
+    p_mb = station.get('sea_level_pressure_mb')
+    return round(p_mb * MB_TO_INHG, 3) if p_mb is not None else None
+
+
 def _build_station_list(wu_data, tempest_data):
     stations = list(wu_data.get("stations", [])) if wu_data else []
     if tempest_data:
@@ -33,6 +48,32 @@ def _build_station_list(wu_data, tempest_data):
             if tb.get("valid") and tb.get("temperature_f") and tb.get("distance_mi") and tb.get("elevation_ft") is not None:
                 stations.append(tb)
     return stations
+
+
+def _leave_one_out(eligible, value_fn):
+    """
+    Given eligible = [(station, weight, value), ...],
+    return {sid: leave_one_out_delta} for each station.
+    value_fn extracts the metric value from a station dict.
+    """
+    vals = [(s, w, value_fn(s)) for s, w, _ in eligible]
+    vals = [(s, w, v) for s, w, v in vals if v is not None]
+    if len(vals) < 2:
+        return {}
+
+    total_w = sum(w for _, w, _ in vals)
+    total_wv = sum(w * v for _, w, v in vals)
+    result = {}
+    for station, w, val in vals:
+        sid = _sid(station)
+        if not sid:
+            continue
+        denom = total_w - w
+        if denom <= 0:
+            continue
+        consensus = (total_wv - w * val) / denom
+        result[sid] = round(val - consensus, 3)
+    return result
 
 
 def load_history(gcs_client, bucket_name):
@@ -57,9 +98,9 @@ def save_history(history, gcs_client, bucket_name):
 
 def update_history(history, wu_data, tempest_data):
     """
-    Compute each station's leave-one-out delta from the local consensus
-    and append to history. Trims entries older than WINDOW_HOURS.
-    Uses raw (uncorrected) temps so history reflects true sensor behavior.
+    Compute each station's leave-one-out delta for temp, humidity, and pressure,
+    then append to history. Trims entries older than WINDOW_HOURS.
+    Uses raw (uncorrected) values so history reflects true sensor behavior.
     """
     ts = datetime.now(timezone.utc).isoformat()
     cutoff = (datetime.now(timezone.utc) - timedelta(hours=WINDOW_HOURS)).isoformat()
@@ -76,22 +117,23 @@ def update_history(history, wu_data, tempest_data):
     if len(eligible) < 2:
         return history
 
-    total_w = sum(w for _, w, _ in eligible)
-    total_wt = sum(w * t for _, w, t in eligible)
+    temp_deltas = _leave_one_out(eligible, lambda s: s.get('temperature_f'))
+    humidity_deltas = _leave_one_out(eligible, _humidity)
+    pressure_deltas = _leave_one_out(eligible, _pressure_in)
 
-    for station, w, temp in eligible:
-        sid = _sid(station)
-        if not sid:
-            continue
-        denom = total_w - w
-        if denom <= 0:
-            continue
-        consensus = (total_wt - w * temp) / denom
-        delta = round(temp - consensus, 3)
+    all_sids = set(temp_deltas) | set(humidity_deltas) | set(pressure_deltas)
+    for sid in all_sids:
+        entry = {"ts": ts}
+        if sid in temp_deltas:
+            entry["delta"] = temp_deltas[sid]
+        if sid in humidity_deltas:
+            entry["h_delta"] = humidity_deltas[sid]
+        if sid in pressure_deltas:
+            entry["p_delta"] = pressure_deltas[sid]
 
         if sid not in history:
             history[sid] = []
-        history[sid].append({"ts": ts, "delta": delta})
+        history[sid].append(entry)
         history[sid] = [r for r in history[sid] if r["ts"] >= cutoff]
 
     return history
@@ -99,11 +141,27 @@ def update_history(history, wu_data, tempest_data):
 
 def compute_offsets(history):
     """
-    Return {station_id: chronic_offset} for stations with >= MIN_READINGS.
-    Positive offset means station reads warm; negative means reads cold.
+    Return structured offsets dict:
+    {
+        "temp":     {station_id: chronic_offset, ...},
+        "humidity": {station_id: chronic_offset, ...},
+        "pressure": {station_id: chronic_offset, ...},
+    }
+    Only includes stations with >= MIN_READINGS for each metric.
     """
-    offsets = {}
+    temp_off, humidity_off, pressure_off = {}, {}, {}
+
     for sid, readings in history.items():
-        if len(readings) >= MIN_READINGS:
-            offsets[sid] = round(sum(r["delta"] for r in readings) / len(readings), 3)
-    return offsets
+        t_vals = [r["delta"] for r in readings if "delta" in r]
+        if len(t_vals) >= MIN_READINGS:
+            temp_off[sid] = round(sum(t_vals) / len(t_vals), 3)
+
+        h_vals = [r["h_delta"] for r in readings if "h_delta" in r]
+        if len(h_vals) >= MIN_READINGS:
+            humidity_off[sid] = round(sum(h_vals) / len(h_vals), 3)
+
+        p_vals = [r["p_delta"] for r in readings if "p_delta" in r]
+        if len(p_vals) >= MIN_READINGS:
+            pressure_off[sid] = round(sum(p_vals) / len(p_vals), 4)
+
+    return {"temp": temp_off, "humidity": humidity_off, "pressure": pressure_off}
