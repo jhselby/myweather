@@ -1,3 +1,16 @@
+## v0.5.110–v0.5.114 • May 13, 2026
+- Tempest hardware wet bulb replaces Stull formula for corrected_wet_bulb (fallback retained)
+- Fix: Next rain day label suppressed when minutely shows rain within 60 min
+- Extract renderSun/renderMoon/renderSolarSystem to js/sky.js
+- Extract renderSources to js/sources.js
+- Extract renderBirds to js/birds.js
+- Extract radar functions to js/radar.js
+- Extract renderTides/buildTideChart to js/tides.js
+- Extract renderFrostTracker to js/frost.js
+- Extract renderSunsetQuality to js/sunset.js
+- Extract renderHairDay to js/hair.js
+- Extract renderDockDay + dock constants to js/dock.js
+
 ## v0.5.102–v0.5.109 • May 13, 2026
 - Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
 - WU station list trimmed from 36 to 29 (removed 7 confirmed out-of-range stations)
