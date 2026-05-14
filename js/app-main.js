@@ -118,11 +118,30 @@
     // Tab behavior — Weather / Wind / Almanac
     // ======================================================
     function showTab(which) {
+      const tabOrder = ['briefing', 'weather', 'hyperlocal', 'almanac'];
       const views = { briefing: "briefingView", weather: "weatherView", almanac: "almanacView", overhead: "overheadView", hyperlocal: "hyperlocalView" };
+
+      // Determine slide direction before updating localStorage
+      const current = localStorage.getItem('activeTab') || 'briefing';
+      const fromIdx = tabOrder.indexOf(current);
+      const toIdx = tabOrder.indexOf(which);
+
       Object.keys(views).forEach(k => {
         const v = document.getElementById(views[k]);
         if (v) v.style.display = (k === which) ? "" : "none";
       });
+
+      // Apply directional slide to incoming view
+      if (fromIdx !== -1 && toIdx !== -1 && fromIdx !== toIdx) {
+        const v = document.getElementById(views[which]);
+        if (v) {
+          const cls = toIdx > fromIdx ? 'slide-in-right' : 'slide-in-left';
+          v.classList.remove('slide-in-left', 'slide-in-right');
+          void v.offsetWidth;
+          v.classList.add(cls);
+        }
+      }
+
       // Stop overhead live refresh when leaving that tab
       if (which !== "overhead" && window.ohStopLive) {
         window.ohStopLive();
@@ -205,12 +224,8 @@
 
         if (dx < 0 && idx < tabOrder.length - 1) {
           showTab(tabOrder[idx + 1]);
-          const v = document.getElementById({briefing:'briefingView',weather:'weatherView',hyperlocal:'hyperlocalView',almanac:'almanacView',overhead:'overheadView'}[tabOrder[idx + 1]]);
-          if (v) { v.classList.remove('slide-in-left','slide-in-right'); void v.offsetWidth; v.classList.add('slide-in-right'); }
         } else if (dx > 0 && idx > 0) {
           showTab(tabOrder[idx - 1]);
-          const v = document.getElementById({briefing:'briefingView',weather:'weatherView',hyperlocal:'hyperlocalView',almanac:'almanacView',overhead:'overheadView'}[tabOrder[idx - 1]]);
-          if (v) { v.classList.remove('slide-in-left','slide-in-right'); void v.offsetWidth; v.classList.add('slide-in-left'); }
         }
       }, { passive: true });
     })();
