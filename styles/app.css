@@ -1110,22 +1110,32 @@
     }
 
     .bottom-tab .tab-icon {
-      font-size: 1.45rem;
+      display: block;
       line-height: 1;
-      opacity: 0.55;
-      transition: opacity 0.15s;
+      color: rgba(255,255,255,0.45);
+      transition: color 0.15s;
     }
+
+    .bottom-tab .tab-icon svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+    }
+
+    .bottom-tab .tab-icon .icon-filled { display: none; }
+    .bottom-tab.active .tab-icon .icon-outline { display: none; }
+    .bottom-tab.active .tab-icon .icon-filled { display: block; }
 
     .bottom-tab .tab-label {
       font-size: 0.62rem;
       font-weight: 600;
       letter-spacing: 0.2px;
-      color: rgba(255,255,255,0.55);
+      color: rgba(255,255,255,0.45);
       transition: color 0.15s;
     }
 
     .bottom-tab.active .tab-icon {
-      opacity: 1;
+      color: #0a84ff;
     }
 
     .bottom-tab.active .tab-label {
@@ -1138,14 +1148,17 @@
       background: rgba(249,249,249,0.72);
       border-top-color: rgba(0,0,0,0.12);
     }
+    body.theme-light .bottom-tab .tab-icon {
+      color: rgba(0,0,0,0.40);
+    }
     body.theme-light .bottom-tab .tab-label {
       color: rgba(0,0,0,0.45);
     }
-    body.theme-light .bottom-tab.active .tab-label {
+    body.theme-light .bottom-tab.active .tab-icon {
       color: #007aff;
     }
-    body.theme-light .bottom-tab .tab-icon {
-      filter: none;
+    body.theme-light .bottom-tab.active .tab-label {
+      color: #007aff;
     }
 
     /* Add bottom padding to container so content isn't hidden behind tab bar */

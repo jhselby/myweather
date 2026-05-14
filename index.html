@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=3da5cdb3" />
+  <link rel="stylesheet" href="styles/app.css?v=0863a739" />
   <link rel="stylesheet" href="styles/briefing.css?v=d6517ae0" />
 </head>
 <body>
@@ -1237,7 +1237,7 @@
   <script src="js/dock.js?v=d91978f5"></script>
   <script src="js/ui.js?v=f62def1a"></script>
   <script src="js/modals.js?v=14fd5a23"></script>
-  <script src="js/app-main.js?v=835b4ed6"></script>
+  <script src="js/app-main.js?v=cc83dacb"></script>
   <script src="js/changelog_loader.js?v=eb2d0222"></script>
   
   <script>
@@ -1461,20 +1461,32 @@
 
   <!-- iOS-style bottom tab bar -->
   <nav class="bottom-tab-bar" role="tablist" aria-label="Views">
-    <button class="bottom-tab" role="tab" aria-selected="false" onclick="showTab('briefing')">
-      <span class="tab-icon">📋</span>
+    <button class="bottom-tab" role="tab" aria-selected="false" data-tab="briefing" onclick="showTab('briefing')">
+      <span class="tab-icon">
+        <svg class="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+        <svg class="icon-filled" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm0 1.5L18.5 8H14V3.5zM8 13h8a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 8 13zm0 4h5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 8 17z"/></svg>
+      </span>
       <span class="tab-label">Briefing</span>
     </button>
-    <button class="bottom-tab" role="tab" aria-selected="false" onclick="showTab('weather')">
-      <span class="tab-icon">🌤️</span>
+    <button class="bottom-tab" role="tab" aria-selected="false" data-tab="weather" onclick="showTab('weather')">
+      <span class="tab-icon">
+        <svg class="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg class="icon-filled" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 1a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0V2a1 1 0 0 1 1-1zm0 18a1 1 0 0 1 1 1v1a1 1 0 1 1-2 0v-1a1 1 0 0 1 1-1zM3.515 4.929l.707-.707a1 1 0 1 1 1.414 1.414l-.707.707a1 1 0 0 1-1.414-1.414zm13.44 13.44l.707-.707a1 1 0 0 1 1.414 1.414l-.707.707a1 1 0 0 1-1.414-1.414zM1 12a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2H2a1 1 0 0 1-1-1zm18 0a1 1 0 0 1 1-1h1a1 1 0 1 1 0 2h-1a1 1 0 0 1-1-1zM4.929 19.071l-.707-.707a1 1 0 0 1 1.414-1.414l.707.707a1 1 0 0 1-1.414 1.414zm13.44-13.44l-.707-.707a1 1 0 0 1 1.414-1.414l.707.707a1 1 0 0 1-1.414 1.414z"/></svg>
+      </span>
       <span class="tab-label">Weather</span>
     </button>
-    <button class="bottom-tab" role="tab" aria-selected="false" onclick="showTab('hyperlocal')">
-      <span class="tab-icon">📍</span>
+    <button class="bottom-tab" role="tab" aria-selected="false" data-tab="hyperlocal" onclick="showTab('hyperlocal')">
+      <span class="tab-icon">
+        <svg class="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <svg class="icon-filled" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm-7 9a7 7 0 0 1 14 0H5z"/></svg>
+      </span>
       <span class="tab-label">Lifestyle</span>
     </button>
-    <button class="bottom-tab" role="tab" aria-selected="false" onclick="showTab('almanac')">
-      <span class="tab-icon">🗓️</span>
+    <button class="bottom-tab" role="tab" aria-selected="false" data-tab="almanac" onclick="showTab('almanac')">
+      <span class="tab-icon">
+        <svg class="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="icon-filled" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75 9.75 9.75 0 0 1 8.25 6a9.718 9.718 0 0 1 .248-2.252A9.003 9.003 0 0 0 3 12a9 9 0 0 0 18 0 9.003 9.003 0 0 0-.248-2.998z"/></svg>
+      </span>
       <span class="tab-label">Almanac</span>
     </button>
 

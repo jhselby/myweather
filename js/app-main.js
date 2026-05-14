@@ -1405,8 +1405,7 @@ function loadWeatherData() {
     if (origShowTab) origShowTab(tab);
     // Sync bottom tab bar
     document.querySelectorAll('.bottom-tab').forEach(btn => {
-      const label = btn.querySelector('.tab-label').textContent.toLowerCase();
-      const isActive = label === tab;
+      const isActive = (btn.dataset.tab || btn.querySelector('.tab-label').textContent.toLowerCase()) === tab;
       btn.classList.toggle('active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
     });
