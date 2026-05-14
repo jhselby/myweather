@@ -1,3 +1,12 @@
+## v0.5.122–v0.5.124 • May 14, 2026
+- SVG tab icons replace emoji tabs across all four tabs
+- Wind card tile redesigned: split compass/speed layout
+- PWA manifest updated for wymancove.com custom domain
+- Move notice banner added for users still on old GitHub Pages URL (only shown from jhselby.github.io)
+- iOS card close bug fixed: tapping outside an expanded card now closes it without opening the card behind it; switched from backdrop click listener to document-level capture-phase touchstart/click handlers
+- Corrections card moved from Lifestyle tab to bottom of Weather tab (col-6); collapsed tile shows station count and confidence level
+- Birds card collapsed tile now shows "last 48 hrs" label
+
 ## v0.5.102–v0.5.121 • May 13, 2026
 - Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
 - WU station list trimmed from 36 to 29 (removed 7 confirmed out-of-range stations)
