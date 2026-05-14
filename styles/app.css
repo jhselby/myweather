@@ -2038,6 +2038,11 @@ body.theme-light .hyperlocal-link:hover {
   z-index: 999;
 }
 
+/* Prevent background cards from receiving any pointer events while a card is expanded */
+body.card-modal-open .card:not(.card-expanded) {
+  pointer-events: none;
+}
+
 .card-collapsed-preview {
   pointer-events: none;
   display: flex;
@@ -2148,22 +2153,6 @@ body.theme-light .hyperlocal-link:hover {
     .card.card-expanded.tile-seabreeze-unlikely { background: linear-gradient(135deg, rgba(140,160,180,0.35) 0%, rgba(120,140,160,0.25) 100%) !important; }
     .card.card-expanded.tile-seabreeze-possible { background: linear-gradient(135deg, rgba(120,190,200,0.40) 0%, rgba(100,170,180,0.28) 100%) !important; }
     .card.card-expanded.tile-seabreeze-likely   { background: linear-gradient(135deg, rgba(80,220,230,0.55) 0%, rgba(60,200,210,0.40) 100%) !important; }
-
-.card.card-expanded {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(1.02);
-  width: calc(100% - 32px);
-  max-width: 780px;
-  max-height: calc(80vh);
-  overflow-y: auto;
-  
-  border-radius: 18px;
-  z-index: 1000;
-  grid-column: unset;
-  width: calc(100vw - 32px) !important;
-}
 
 .card-close-btn {
   position: absolute;
