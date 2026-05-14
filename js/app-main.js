@@ -1420,10 +1420,10 @@ function loadWeatherData() {
   } catch(e) { showTab('weather'); }
 })();
 
-// Move notice — show once to prompt PWA reinstall
+// Move notice — show once only to users referred from old GitHub Pages URL
 (function() {
   try {
-    if (!localStorage.getItem('moveNotice2025')) {
+    if (!localStorage.getItem('moveNotice2025') && document.referrer.includes('jhselby.github.io')) {
       const el = document.getElementById('moveNoticeBanner');
       if (el) el.style.display = '';
       if (window.goatcounter) goatcounter.count({ path: '/event/move-notice-shown', title: 'Move Notice Shown', event: true });
