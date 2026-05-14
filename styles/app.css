@@ -40,6 +40,8 @@
       color: var(--text);
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-touch-callout: none;
       overflow-x: clip;
       /* Safe area insets for iOS notch / home indicator */
       padding-top: env(safe-area-inset-top);
