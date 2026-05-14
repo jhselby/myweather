@@ -318,31 +318,37 @@ function renderWindTile(data) {
   const speedEl    = document.getElementById("weatherWindSustainedSpeed");
   const gustsEl    = document.getElementById("weatherWindGustsLine");
   const lullEl     = document.getElementById("weatherWindLullLine");
+  const lullRowEl  = document.getElementById("weatherWindLullRow");
   const dirEl      = document.getElementById("weatherWindDirectionIndicator");
+  const dirLabelEl = document.getElementById("weatherWindDirLabel");
   const impactEl   = document.getElementById("weatherWindImpactBar");
 
   if (!speedEl || !gustsEl || !impactEl) return;
 
   speedEl.textContent = windSpeed != null ? Math.round(windSpeed) : '--';
-  gustsEl.textContent = gustSpeed != null ? `Gusts ${Math.round(gustSpeed)} mph` : 'Gusts -- mph';
+  gustsEl.textContent = gustSpeed != null ? Math.round(gustSpeed) : '--';
+
+  if (dirLabelEl) {
+    dirLabelEl.textContent = windDir != null ? toCompass(windDir, false) : '--';
+  }
 
   // Lull from Tempest stations (minimum lull across reporters)
-  if (lullEl) {
+  if (lullEl && lullRowEl) {
     const stations  = data.tempest?.stations || [];
     const lullVals  = stations.map(s => s.wind_lull_mph).filter(v => v != null && v >= 0);
     const lullMph   = lullVals.length > 0 ? Math.min(...lullVals) : null;
     if (lullMph != null) {
-      lullEl.textContent    = `Lull ${Math.round(lullMph)} mph`;
-      lullEl.style.display  = '';
+      lullEl.textContent       = Math.round(lullMph);
+      lullRowEl.style.display  = '';
     } else {
-      lullEl.style.display  = 'none';
+      lullRowEl.style.display  = 'none';
     }
   }
 
-  // Direction arrow
+  // Direction arrow — needle points north by default, center at (42,42)
   if (dirEl && windDir != null) {
-    const arrowRotation = (windDir + 90) % 360;
-    dirEl.setAttribute('transform', `rotate(${arrowRotation}, 80, 80)`);
+    const arrowRotation = (windDir + 180) % 360;
+    dirEl.setAttribute('transform', `rotate(${arrowRotation}, 42, 42)`);
     dirEl.style.transform      = '';
     dirEl.style.transformOrigin = '';
   }

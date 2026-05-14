@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=d4ad2f35" />
+  <link rel="stylesheet" href="styles/app.css?v=3da5cdb3" />
   <link rel="stylesheet" href="styles/briefing.css?v=d6517ae0" />
 </head>
 <body>
@@ -293,41 +293,53 @@
           <div class="card-collapsed-preview" style="display:none;position:relative;padding-bottom:8px;">
             <!-- Title in upper left corner - matching Right Now exactly -->
             <div class="tile-label">Wind</div>
-            
-            <!-- Main content: wind speeds centered between title (top) and impact bar (bottom) -->
-            <div style="position:absolute;top:calc(50% - 10px);left:50%;transform:translate(-50%, -50%);text-align:center;width:100%;">
-              <!-- Background: Ornate compass rose - centered -->
-              <svg width="120" height="120" viewBox="0 0 160 160" style="position:absolute;top:50%;left:50%;transform:translate(-50%, -50%);z-index:0;">
-                <circle cx="80" cy="80" r="70" fill="none" stroke="currentColor" stroke-width="1" opacity="0.2"/>
-                <line x1="80" y1="10" x2="80" y2="20" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
-                <line x1="150" y1="80" x2="140" y2="80" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
-                <line x1="80" y1="150" x2="80" y2="140" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
-                <line x1="10" y1="80" x2="20" y2="80" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
-                <text x="80" y="18" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" opacity="0.35">N</text>
-                <text x="142" y="84" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" opacity="0.35">E</text>
-                <text x="80" y="152" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" opacity="0.35">S</text>
-                <text x="18" y="84" text-anchor="middle" font-size="10" font-weight="500" fill="currentColor" opacity="0.35">W</text>
-                <g id="weatherWindDirectionIndicator">
-                  <line x1="8" y1="80" x2="148" y2="80" stroke="rgba(59,130,246,1)" stroke-width="3.5" stroke-linecap="round"/>
-                  <polygon points="158,80 144,72 144,88" fill="rgba(59,130,246,1)"/>
-                </g>
-              </svg>
-              
-              <!-- Foreground: gusts top / speed center / lull bottom over compass -->
-              <div style="position:relative;z-index:1;height:120px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:6px 0;">
-                <div id="weatherWindGustsLine" class="tile-wind-gusts">Gusts -- mph</div>
-                <div style="position:relative;display:inline-block;">
-                  <span id="weatherWindSustainedSpeed" class="tile-wind-speed">--</span>
-                  <span class="tile-wind-unit" style="font-size:14px;position:absolute;bottom:0;margin-left:2px;">mph</span>
+
+            <div class="wind-tile-body">
+              <div class="wind-compass-col">
+                <svg class="wind-compass-svg" viewBox="0 0 84 84">
+                  <circle cx="42" cy="42" r="38" fill="none" stroke="currentColor" stroke-width="1" opacity="0.15"/>
+                  <line x1="42" y1="4"  x2="42" y2="11" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+                  <line x1="80" y1="42" x2="73" y2="42" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+                  <line x1="42" y1="80" x2="42" y2="73" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+                  <line x1="4"  y1="42" x2="11" y2="42" stroke="currentColor" stroke-width="0.8" opacity="0.2"/>
+                  <line x1="68.9" y1="15.1" x2="64.5" y2="19.5" stroke="currentColor" stroke-width="0.5" opacity="0.12"/>
+                  <line x1="68.9" y1="68.9" x2="64.5" y2="64.5" stroke="currentColor" stroke-width="0.5" opacity="0.12"/>
+                  <line x1="15.1" y1="68.9" x2="19.5" y2="64.5" stroke="currentColor" stroke-width="0.5" opacity="0.12"/>
+                  <line x1="15.1" y1="15.1" x2="19.5" y2="19.5" stroke="currentColor" stroke-width="0.5" opacity="0.12"/>
+                  <text x="42" y="9"  text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="600" fill="currentColor" opacity="0.35">N</text>
+                  <text x="77" y="42" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="600" fill="currentColor" opacity="0.35">E</text>
+                  <text x="42" y="78" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="600" fill="currentColor" opacity="0.35">S</text>
+                  <text x="7"  y="42" text-anchor="middle" dominant-baseline="middle" font-size="8" font-weight="600" fill="currentColor" opacity="0.35">W</text>
+                  <g id="weatherWindDirectionIndicator">
+                    <line x1="42" y1="54" x2="42" y2="62" stroke="rgba(59,130,246,0.35)" stroke-width="1.5" stroke-linecap="round"/>
+                    <line x1="42" y1="20" x2="42" y2="56" stroke="rgba(59,130,246,0.90)" stroke-width="2.5" stroke-linecap="round"/>
+                    <polygon points="42,14 37.5,22 46.5,22" fill="rgba(59,130,246,0.90)"/>
+                  </g>
+                </svg>
+                <div id="weatherWindDirLabel" class="wind-dir-label">--</div>
+              </div>
+
+              <div class="wind-speed-col">
+                <div class="wind-speed-row">
+                  <span id="weatherWindSustainedSpeed" class="wind-speed-num">--</span>
+                  <span class="wind-speed-unit">mph</span>
                 </div>
-                <div id="weatherWindLullLine" class="tile-wind-gusts" style="display:none;">Lull -- mph</div>
+                <div class="wind-stat-grid">
+                  <div class="wind-stat-row">
+                    <span class="wind-stat-key">Gust</span>
+                    <span id="weatherWindGustsLine" class="wind-stat-val">--</span>
+                    <span class="wind-stat-unit">mph</span>
+                  </div>
+                  <div id="weatherWindLullRow" class="wind-stat-row" style="display:none;">
+                    <span class="wind-stat-key">Lull</span>
+                    <span id="weatherWindLullLine" class="wind-stat-val">--</span>
+                    <span class="wind-stat-unit">mph</span>
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <!-- Bottom bar: Impact score - 0px from bottom edge -->
-            <div id="weatherWindImpactBar" class="tile-wind-impact">
-              Impact: --
-            </div>
+
+            <div id="weatherWindImpactBar" class="tile-wind-impact">Impact: --</div>
           </div>
           <div class="card-body" style="display:none;">
           <canvas id="windChart"></canvas>
@@ -1206,7 +1218,7 @@
 
   </div>
   <script src="js/briefing.js?v=172ab1e0"></script>
-  <script src="js/wind.js?v=22edbb47"></script>
+  <script src="js/wind.js?v=f9653ac7"></script>
   <script src="js/corrections.js?v=e79852f5"></script>
   <script src="js/sky.js?v=e79e6941"></script>
   <script src="js/sources.js?v=0c7b4771"></script>
@@ -1350,7 +1362,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.121</span>
+            <span class="version-pill" id="appVersion">v0.5.122</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->

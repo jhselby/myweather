@@ -491,62 +491,124 @@
     }
     
     /* Wind tile */
-    .tile-wind-speed {
-      font-size: 48px;
+    /* Wind tile — split layout */
+    [data-collapse-key="48h_wind"] .card-collapsed-preview {
+      height: 100%;
+    }
+
+    .wind-tile-body {
+      position: absolute;
+      top: 26px;
+      left: 0;
+      right: 0;
+      bottom: 32px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+    }
+
+    .wind-compass-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+
+    .wind-compass-svg {
+      width: 84px;
+      height: 84px;
+    }
+
+    .wind-dir-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: rgba(255,255,255,0.50);
+    }
+    body.theme-light .wind-dir-label {
+      color: rgba(0,0,0,0.50);
+    }
+
+    .wind-speed-col {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 5px;
+    }
+
+    .wind-speed-row {
+      display: flex;
+      align-items: baseline;
+      gap: 3px;
+      line-height: 1;
+    }
+
+    .wind-speed-num {
+      font-size: 46px;
       font-weight: 300;
       color: rgba(255,255,255,0.95);
+      line-height: 1;
     }
-    body.theme-light .tile-wind-speed {
-      color: rgba(0,0,0,0.95);
+    body.theme-light .wind-speed-num {
+      color: rgba(0,0,0,0.90);
     }
-    
-    .tile-wind-unit {
-      font-size: 16px;
+
+    .wind-speed-unit {
+      font-size: 13px;
       font-weight: 400;
-      margin-left: 3px;
-      color: rgba(255,255,255,0.4);
+      color: rgba(255,255,255,0.38);
+      margin-bottom: 3px;
     }
-    body.theme-light .tile-wind-unit {
-      color: rgba(0,0,0,0.4);
+    body.theme-light .wind-speed-unit {
+      color: rgba(0,0,0,0.38);
     }
-    
-    .tile-wind-gusts {
-      font-size: 14px;
-      font-weight: 400;
-      color: rgba(255,255,255,0.5);
+
+    .wind-stat-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .wind-stat-row {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+    }
+
+    .wind-stat-key {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+      width: 34px;
+      flex-shrink: 0;
       white-space: nowrap;
     }
-    body.theme-light .tile-wind-gusts {
-      color: rgba(0,0,0,0.5);
+    body.theme-light .wind-stat-key {
+      color: rgba(0,0,0,0.30);
     }
-    
-    /* Compass rose */
-    .compass-circle {
-      fill: none;
-      stroke: rgba(255,255,255,0.2);
-      stroke-width: 1;
+
+    .wind-stat-val {
+      font-size: 13px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.62);
     }
-    body.theme-light .compass-circle {
-      stroke: rgba(0,0,0,0.2);
+    body.theme-light .wind-stat-val {
+      color: rgba(0,0,0,0.62);
     }
-    
-    .compass-label {
-      font-size: 12px;
-      font-weight: 500;
-      fill: rgba(255,255,255,0.5);
+
+    .wind-stat-unit {
+      font-size: 10px;
+      color: rgba(255,255,255,0.28);
     }
-    body.theme-light .compass-label {
-      fill: rgba(0,0,0,0.5);
-    }
-    
-    .compass-arrow {
-      stroke: rgba(59,130,246,0.9);
-      stroke-width: 3;
-      stroke-linecap: round;
-    }
-    
-    .compass-arrow-head {
-      fill: rgba(59,130,246,0.9);
+    body.theme-light .wind-stat-unit {
+      color: rgba(0,0,0,0.28);
     }
     
     /* Wind impact bar */
