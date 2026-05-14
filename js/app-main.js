@@ -1420,6 +1420,17 @@ function loadWeatherData() {
   } catch(e) { showTab('weather'); }
 })();
 
+// Move notice — show once to prompt PWA reinstall
+(function() {
+  try {
+    if (!localStorage.getItem('moveNotice2025')) {
+      const el = document.getElementById('moveNoticeBanner');
+      if (el) el.style.display = '';
+      if (window.goatcounter) goatcounter.count({ path: '/event/move-notice-shown', title: 'Move Notice Shown', event: true });
+    }
+  } catch(e) {}
+})();
+
 // Restore active tab after DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
   // Always start on briefing — it's the landing page for fresh opens

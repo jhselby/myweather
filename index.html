@@ -46,6 +46,10 @@
 
 
       <!-- Banners — sticky with header, below tabs -->
+      <div id="moveNoticeBanner" style="display:none;background:rgba(10,132,255,0.15);border:1px solid rgba(10,132,255,0.3);border-radius:10px;padding:10px 14px;margin:0 0 6px;font-size:0.82rem;line-height:1.4;color:var(--text);">
+        <strong>Wyman Cove Weather has a new home</strong> at <a href="https://wymancove.com" style="color:#0a84ff;">wymancove.com</a>. If you have this app installed on your home screen, please reinstall it from the new address.
+        <button onclick="document.getElementById('moveNoticeBanner').style.display='none';localStorage.setItem('moveNotice2025','done');if(window.goatcounter)goatcounter.count({path:'/event/move-notice-dismissed',title:'Move Notice Dismissed',event:true});" style="display:block;margin-top:8px;background:rgba(10,132,255,0.2);border:1px solid rgba(10,132,255,0.4);border-radius:6px;padding:5px 12px;font-size:0.78rem;font-weight:600;color:#0a84ff;cursor:pointer;width:100%;">Got it</button>
+      </div>
       <div id="pressureAlarmBanner" class="pressure-alarm" style="margin:0;border-radius:10px;"></div>
 
           <!-- Hidden alert data containers (used by JS, displayed in modal) -->
@@ -1237,7 +1241,7 @@
   <script src="js/dock.js?v=d91978f5"></script>
   <script src="js/ui.js?v=f62def1a"></script>
   <script src="js/modals.js?v=14fd5a23"></script>
-  <script src="js/app-main.js?v=cc83dacb"></script>
+  <script src="js/app-main.js?v=6023a24c"></script>
   <script src="js/changelog_loader.js?v=eb2d0222"></script>
   
   <script>
