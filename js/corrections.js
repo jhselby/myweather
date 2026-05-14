@@ -11,14 +11,13 @@ function renderCorrectionsCard(data) {
   const stationsCount = hyp.stations_used || 0;
   const confidence = hyp.confidence || 'Unknown';
 
-  if (typeof setText === 'function') {
-    setText('correctionsStationsCollapsed', `${stationsCount} stations`);
-  } else {
-    const el = document.getElementById('correctionsStationsCollapsed');
-    if (el) el.textContent = `${stationsCount} stations`;
-  }
+  const stationsEl = document.getElementById('correctionsStationsCollapsed');
+  if (stationsEl) stationsEl.textContent = stationsCount;
 
-  const correctionsCard = document.querySelector('[data-collapse-key="hyperlocal"]');
+  const confidenceEl = document.getElementById('correctionsConfidenceCollapsed');
+  if (confidenceEl) confidenceEl.textContent = confidence !== 'Unknown' ? `${confidence} confidence` : '';
+
+  const correctionsCard = document.querySelector('[data-collapse-key="corrections"]');
   if (correctionsCard) {
     correctionsCard.classList.remove('tile-corrections-high', 'tile-corrections-moderate', 'tile-corrections-low');
     if (confidence === 'High') correctionsCard.classList.add('tile-corrections-high');

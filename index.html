@@ -613,6 +613,78 @@
           <div class="small-note" id="gustNote"></div>
           </div>
         </div>
+
+        <!-- CORRECTIONS -->
+        <div class="card col-6" data-collapse-key="corrections" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('corrections', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            Corrections<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('corrections', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Corrections</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div id="correctionsStationsCollapsed" style="font-size:2.4rem;font-weight:300;line-height:1;margin-bottom:6px;"></div>
+              <div style="font-size:0.78rem;opacity:0.55;margin-bottom:8px;">stations</div>
+              <div id="correctionsConfidenceCollapsed" style="font-size:0.9rem;font-weight:500;opacity:0.85;"></div>
+            </div>
+          </div>
+          <div class="card-body" style="display:none;">
+            <div class="text-secondary" style="font-size:0.82rem;margin-bottom:14px;line-height:1.5;">
+              Using <strong id="stationsUsedCount">--</strong> nearby stations weighted by distance and elevation.
+            </div>
+            <div style="font-size:0.78rem;margin-bottom:14px;">
+              <div style="display:grid;grid-template-columns:100px 80px 70px 80px;gap:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Metric</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Model</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Bias</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Corrected</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Temp</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelTemp">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasTemp">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedTemp">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Humidity</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelHumidity">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasHumidity">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedHumidity">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Pressure</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelPressure">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasPressure">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedPressure">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Wind Speed</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelWindSpeed">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasWindSpeed">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedWindSpeed">--</div>
+                <div style="padding:6px 8px;">Wind Gusts</div>
+                <div style="padding:6px 8px;" id="scModelGusts">--</div>
+                <div style="padding:6px 8px;font-weight:700;" id="scBiasGusts">--</div>
+                <div style="padding:6px 8px;font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedGusts">--</div>
+              </div>
+              <div style="display:grid;grid-template-columns:100px 80px 80px;gap:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;margin-top:14px;">
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Derived</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Model</div>
+                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Corrected</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Dew Point</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelDewpoint">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedDewpoint">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Wet Bulb</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelWetBulb">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedWetBulb">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Precip Type</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelPrecipType">--</div>
+                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedPrecipType">--</div>
+                <div style="padding:6px 8px;">Feels Like</div>
+                <div style="padding:6px 8px;" id="scModelFeelsLike">--</div>
+                <div style="padding:6px 8px;font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedFeelsLike">--</div>
+              </div>
+            </div>
+            <div class="text-subtle" style="font-size:0.72rem;display:flex;gap:12px;flex-wrap:wrap;">
+              <span id="hyperlocalStationsDiag">-- stations used</span>
+              <span id="kbvyAnchorLine" style="opacity:0.5;"></span>
+            </div>
+            <div id="stationOffsetsSection" style="display:none;"></div>
+          </div>
+        </div>
+
       </div>
     </section>
     <!-- ALMANAC VIEW -->
@@ -1034,92 +1106,6 @@
     <!-- HYPERLOCAL CORRECTIONS VIEW -->
     <section id="hyperlocalView" style="display:none;">
       <div class="grid">
-        <div class="card col-12" data-collapse-key="hyperlocal" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hyperlocal', this.querySelector('.card-title-collapsible'))">
-          <div class="card-title card-title-collapsible" style="cursor:default;">
-            Corrections<span class="collapse-chevron" style="display:none;">&#9660;</span>
-          </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hyperlocal', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
-          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
-            <div class="tile-label" style="top:12px;left:16px;">Corrections</div>
-            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
-              <div id="correctionsStationsCollapsed" style="font-size:20px;font-weight:400;line-height:1.3;margin-bottom:6px;"></div>
-            </div>
-          </div>
-          <div class="card-body" style="display:none;">
-            
-            <!-- Explanation -->
-            <div class="text-secondary" style="font-size:0.82rem;margin-bottom:14px;line-height:1.5;">
-              Using <strong id="stationsUsedCount">--</strong> nearby stations weighted by distance and elevation.
-            </div>
-            
-            <!-- Primary Corrections Table -->
-            <div style="font-size:0.78rem;margin-bottom:14px;">
-              <div style="display:grid;grid-template-columns:100px 80px 70px 80px;gap:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;">
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Metric</div>
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Model</div>
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Bias</div>
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Corrected</div>
-                
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Temp</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelTemp">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasTemp">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedTemp">--</div>
-                
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Humidity</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelHumidity">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasHumidity">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedHumidity">--</div>
-                
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Pressure</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelPressure">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasPressure">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedPressure">--</div>
-                
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Wind Speed</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelWindSpeed">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:700;" id="scBiasWindSpeed">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedWindSpeed">--</div>
-                
-                <div style="padding:6px 8px;">Wind Gusts</div>
-                <div style="padding:6px 8px;" id="scModelGusts">--</div>
-                <div style="padding:6px 8px;font-weight:700;" id="scBiasGusts">--</div>
-                <div style="padding:6px 8px;font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedGusts">--</div>
-              </div>
-              
-              <div style="display:grid;grid-template-columns:100px 80px 80px;gap:0;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;margin-top:14px;">
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Derived</div>
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Model</div>
-                <div style="font-weight:800;padding:6px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);">Corrected</div>
-                
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Dew Point</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelDewpoint">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedDewpoint">--</div>
-                
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Wet Bulb</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelWetBulb">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedWetBulb">--</div>
-                
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">Precip Type</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);" id="scModelPrecipType">--</div>
-                <div style="padding:6px 8px;border-bottom:1px solid rgba(255,255,255,0.05);font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedPrecipType">--</div>
-                
-                <div style="padding:6px 8px;">Feels Like</div>
-                <div style="padding:6px 8px;" id="scModelFeelsLike">--</div>
-                <div style="padding:6px 8px;font-weight:800;color:rgba(100,200,255,0.95);" id="scCorrectedFeelsLike">--</div>
-              </div>
-            </div>
-            
-            <!-- Station Info -->
-            <div class="text-subtle" style="font-size:0.72rem;display:flex;gap:12px;flex-wrap:wrap;">
-              <span id="hyperlocalStationsDiag">-- stations used</span>
-              <span id="kbvyAnchorLine" style="opacity:0.5;"></span>
-            </div>
-
-            <!-- Station calibration offsets (rendered by corrections.js) -->
-            <div id="stationOffsetsSection" style="display:none;"></div>
-
-          </div>
-        </div>
 
         
         <div class="card col-6" data-collapse-key="hair_day" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('hair_day', this.querySelector('.card-title-collapsible'))">
@@ -1152,6 +1138,7 @@
               <div style="font-size:2.4rem;line-height:1;margin-bottom:6px;">🐦</div>
               <div id="birdsPrimaryCollapsed" style="font-size:1.05rem;font-weight:500;line-height:1.2;margin-bottom:4px;text-align:center;padding:0 12px;"></div>
               <div id="birdsSecondaryCollapsed" style="font-size:0.82rem;opacity:0.65;"></div>
+              <div style="font-size:0.72rem;opacity:0.4;margin-top:4px;">last 48 hrs</div>
             </div>
           </div>
           <div class="card-body" style="display:none;">
@@ -1223,7 +1210,7 @@
   </div>
   <script src="js/briefing.js?v=172ab1e0"></script>
   <script src="js/wind.js?v=f9653ac7"></script>
-  <script src="js/corrections.js?v=e79852f5"></script>
+  <script src="js/corrections.js?v=3054d09e"></script>
   <script src="js/sky.js?v=e79e6941"></script>
   <script src="js/sources.js?v=0c7b4771"></script>
   <script src="js/birds.js?v=d46d0312"></script>
@@ -1366,7 +1353,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.123</span>
+            <span class="version-pill" id="appVersion">v0.5.124</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
