@@ -1508,7 +1508,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!indicator) {
       indicator = document.createElement('div');
       indicator.id = 'ptrIndicator';
-      indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
+      indicator.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>';
       document.body.appendChild(indicator);
     }
     return indicator;
@@ -1538,7 +1538,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const progress = Math.min(dy / THRESHOLD, 1);
     ind.style.transition = 'none';
     ind.style.opacity = String(progress);
-    ind.style.transform = `translateX(-50%) translateY(${-60 + progress * 60}px)`;
+    ind.style.transform = `translateX(-50%) translateY(${-56 + progress * 56}px)`;
+    const arc = ind.querySelector('circle');
+    if (arc) arc.style.strokeDashoffset = String(75.4 * (1 - progress));
     ind.classList.toggle('ptr-ready', dy >= THRESHOLD);
   }, { passive: true });
 
@@ -1549,7 +1551,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dy >= THRESHOLD && indicator) {
       indicator.classList.remove('ptr-ready');
       indicator.classList.add('ptr-loading');
-      indicator.style.transition = 'transform 0.2s ease';
+      indicator.style.transition = 'none';
       indicator.style.transform = 'translateX(-50%) translateY(0px)';
       setTimeout(() => { removeIndicator(); location.reload(); }, 400);
     } else {
