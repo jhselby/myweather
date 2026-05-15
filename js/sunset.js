@@ -36,18 +36,26 @@ function renderSunsetQuality(data) {
     
     if (sunsetIdx < 0) continue;
     
-    // Average across 3-hour window (sunset-1h through sunset+1h) to smooth model wobble
-    const windowIndices = [sunsetIdx - 1, sunsetIdx, sunsetIdx + 1].filter(
+    // Window: sunset-1h, sunset, sunset+1h
+    // Forward-weighted [0.15, 0.50, 0.35] — what matters is conditions AT and just AFTER sunset,
+    // not an hour before. Equal weighting buries clearing trends.
+    const wi = [sunsetIdx - 1, sunsetIdx, sunsetIdx + 1].filter(
       i => i >= 0 && i < timeSource.times.length
     );
-    function avgWindow(source, field) {
+    const FW = [0.15, 0.50, 0.35].slice(3 - wi.length); // drop early weights if window is short
+    function avgWindow(source, field, weights) {
       if (!source) return null;
-      const vals = windowIndices.map(i => source[field][i]).filter(v => v != null);
-      return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 0;
+      const w = weights || FW;
+      let sum = 0, wsum = 0;
+      wi.forEach((i, j) => {
+        const v = source[field][i];
+        if (v != null) { sum += v * w[j]; wsum += w[j]; }
+      });
+      return wsum ? sum / wsum : 0;
     }
-    
+
     // Use available data, estimate missing with nearby values
-    const low10 = avgWindow(cloud10, 'cloud_low') 
+    const low10 = avgWindow(cloud10, 'cloud_low')
                   ?? avgWindow(cloud25, 'cloud_low') ?? 0;
     const mid25 = avgWindow(cloud25, 'cloud_mid')
                   ?? avgWindow(cloud50, 'cloud_mid')
@@ -102,16 +110,22 @@ function renderSunsetQuality(data) {
     }
     
     const midCloudAvg = mid25 * 0.7 + mid50 * 0.3;
-    
-    const midScore = midCloudAvg <= 70 
-      ? midCloudAvg / 70 
+
+    const midScore = midCloudAvg <= 70
+      ? midCloudAvg / 70
       : Math.max(0.3, (100 - midCloudAvg) / 40);
-    
+
     const highBonus = Math.min((high25 + high50) / 2, 60) / 60 * 0.3;
     const lowPenalty = Math.min(low10 / 80, 1.0);
-    const humFactor = 1 - Math.max(0, (hum25 - 60)) / 80;
-    
-    let score = (midScore * 0.7 + highBonus) * (1 - lowPenalty * 0.6) * humFactor;
+    // Humidity penalty: meaningful above 70% (not 60%) — coastal air is naturally humid
+    const humFactor = 1 - Math.max(0, (hum25 - 70)) / 90;
+    // Partial low clouds at the horizon catch color from below — treat as a contribution,
+    // not just a blocker. Peak opportunity around 20-50% low cloud coverage.
+    const lowCloudColor = (low10 > 8 && low10 < 72)
+      ? Math.sin((low10 - 8) / 64 * Math.PI) * 0.35
+      : 0;
+
+    let score = (midScore * 0.7 + highBonus + lowCloudColor) * (1 - lowPenalty * 0.55) * humFactor;
     score = Math.max(1, Math.min(100, Math.round(score * 100)));
     
     let label, color;
