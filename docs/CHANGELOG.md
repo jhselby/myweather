@@ -1,3 +1,15 @@
+## v0.5.125–v0.5.131 • May 15, 2026
+- Tab bar icons repositioned to sit flush above the home indicator on iOS (align-items: flex-start, safe-area bottom padding corrected)
+- Lifestyle tab tab bar height normalized: min-height 100svh on all tab views prevents short-content tabs from rendering the fixed bar differently
+- iOS tap highlight flash and long-press callout suppressed globally
+- Tab button taps now animate with the same directional slide as swipe navigation
+- Tab icon spring-bounce animation on tap
+- Red alert dot appears on Briefing tab icon when active weather alerts are present
+- Scroll position remembered per tab — returning to a tab restores where you left off
+- Card body fades in on open (short slide + opacity animation)
+- Pull-to-refresh: drag down from top of any tab to reload weather data; arrow indicator fades in and flips when past threshold
+- Fixed tab bar jumping on page load: removed redundant showTab call that triggered iOS URL bar flash on every refresh
+
 ## v0.5.122–v0.5.124 • May 14, 2026
 - SVG tab icons replace emoji tabs across all four tabs
 - Wind card tile redesigned: split compass/speed layout
