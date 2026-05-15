@@ -1339,12 +1339,41 @@ function loadWeatherData() {
         populateCollapsedPreviews(data);
         
         updateSettingBtns();
+        try { localStorage.setItem('lastWeatherData', JSON.stringify(data)); } catch(e) {}
       })
       .catch(err => {
         console.error("Weather fetch failed:", err); document.getElementById("condition").textContent = "Data unavailable";
         // // document.getElementById("location").textContent = "Error loading weather_data.json";
       });
     } // end loadWeatherData
+
+    // Stale-while-revalidate: render last cached data immediately so the page
+    // isn't blank while the network fetch is in flight.
+    (function() {
+      try {
+        const _raw = localStorage.getItem('lastWeatherData');
+        if (!_raw) return;
+        const _d = JSON.parse(_raw);
+        if (!_d || _d.schema_version !== '1.2') return;
+        window.__lastWeatherData = _d;
+        renderFrostTracker(_d.frost_log);
+        renderBirds(_d.birds);
+        renderSunsetQuality(_d);
+        renderDockDay(_d);
+        renderHairDay(_d);
+        renderBriefing(_d);
+        renderCorrectionsCard(_d);
+        populateCollapsedPreviews(_d);
+        const _duEl = document.getElementById('dataUpdated2');
+        if (_duEl) {
+          const _dt = _d.generated_at || _d.location?.updated;
+          if (_dt) {
+            const _d2 = new Date(_dt);
+            if (!isNaN(_d2.getTime())) _duEl.textContent = _d2.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+          }
+        }
+      } catch(e) {}
+    })();
 
     loadWeatherData();
 
