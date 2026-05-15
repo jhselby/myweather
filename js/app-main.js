@@ -1506,8 +1506,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function getIndicator() {
     if (!indicator) {
+      const headerBottom = (document.querySelector('header') || {getBoundingClientRect: () => ({bottom: 110})}).getBoundingClientRect().bottom;
       indicator = document.createElement('div');
       indicator.id = 'ptrIndicator';
+      indicator.style.top = (headerBottom + 12) + 'px';
       indicator.innerHTML = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/></svg>';
       document.body.appendChild(indicator);
     }
