@@ -182,9 +182,11 @@
         }
       }
 
-      // Restore scroll position for this tab (or jump to top for fresh tabs)
-      const savedScroll = _tabScrollPos[which] ?? 0;
-      window.scrollTo({ top: savedScroll, behavior: "instant" });
+      // Restore scroll position when switching tabs (not on initial same-tab load)
+      if (fromIdx !== toIdx) {
+        const savedScroll = _tabScrollPos[which] ?? 0;
+        window.scrollTo({ top: savedScroll, behavior: "instant" });
+      }
     }
 
     (function restoreTab() {
@@ -1458,11 +1460,9 @@ function loadWeatherData() {
   } catch(e) {}
 })();
 
-// Restore active tab after DOM is ready
+// Set page-loaded timestamp
 document.addEventListener('DOMContentLoaded', function() {
-  // Always start on briefing — it's the landing page for fresh opens
   var _plEl = document.getElementById("pageLoaded2"); if (_plEl) _plEl.textContent = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
-  try { showTab('briefing'); } catch(e) { showTab('briefing'); }
 });
 
 
@@ -1535,10 +1535,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const dy = e.touches[0].clientY - startY;
     if (dy <= 0) { pulling = false; removeIndicator(); return; }
     const ind = getIndicator();
-    const travel = Math.min(dy * 0.45, THRESHOLD * 0.65);
+    const progress = Math.min(dy / THRESHOLD, 1);
     ind.style.transition = 'none';
-    ind.style.opacity = String(Math.min(dy / THRESHOLD, 1));
-    ind.style.transform = `translateX(-50%) translateY(${travel - 56}px)`;
+    ind.style.opacity = String(progress);
+    ind.style.transform = `translateX(-50%) translateY(${-60 + progress * 60}px)`;
     ind.classList.toggle('ptr-ready', dy >= THRESHOLD);
   }, { passive: true });
 
@@ -1550,7 +1550,7 @@ document.addEventListener('DOMContentLoaded', function() {
       indicator.classList.remove('ptr-ready');
       indicator.classList.add('ptr-loading');
       indicator.style.transition = 'transform 0.2s ease';
-      indicator.style.transform = 'translateX(-50%) translateY(16px)';
+      indicator.style.transform = 'translateX(-50%) translateY(0px)';
       setTimeout(() => { removeIndicator(); location.reload(); }, 400);
     } else {
       removeIndicator();

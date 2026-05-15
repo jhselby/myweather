@@ -2409,9 +2409,10 @@ body.theme-light [style*="color:rgba(100,200,255"] { color: rgba(0,0,0,0.85) !im
 /* Pull-to-refresh indicator */
 #ptrIndicator {
   position: fixed;
-  top: 0;
+  top: calc(env(safe-area-inset-top, 44px) + 8px);
   left: 50%;
-  transform: translateX(-50%) translateY(-56px);
+  transform: translateX(-50%) translateY(-60px);
+  opacity: 0;
   z-index: 999;
   width: 38px;
   height: 38px;
