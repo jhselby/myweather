@@ -2411,27 +2411,24 @@ body.theme-light [style*="color:rgba(100,200,255"] { color: rgba(0,0,0,0.85) !im
   position: fixed;
   top: 0;
   left: 50%;
-  transform: translateX(-50%) translateY(-56px);
+  transform: translateX(-50%) translateY(-48px);
   opacity: 0;
   z-index: 999;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   pointer-events: none;
 }
-#ptrIndicator svg {
-  width: 32px;
-  height: 32px;
-  transform: rotate(-90deg);
+.ptr-arc {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2.5px solid rgba(255,255,255,0.25);
+  border-top-color: rgba(255,255,255,0.9);
+  box-sizing: border-box;
 }
-#ptrIndicator circle {
-  fill: none;
-  stroke: rgba(255,255,255,0.85);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-dasharray: 75.4;
-  stroke-dashoffset: 75.4;
+body.theme-light .ptr-arc {
+  border-color: rgba(0,0,0,0.12);
+  border-top-color: rgba(0,0,0,0.6);
 }
-body.theme-light #ptrIndicator circle { stroke: rgba(0,0,0,0.55); }
-#ptrIndicator.ptr-loading svg { animation: ptrSpin 0.75s linear infinite; }
-#ptrIndicator.ptr-loading circle { stroke-dashoffset: 20; transition: none; }
-@keyframes ptrSpin { to { transform: rotate(270deg); } }
+#ptrIndicator.ptr-loading .ptr-arc { animation: ptrSpin 0.65s linear infinite; }
+@keyframes ptrSpin { to { transform: rotate(360deg); } }
