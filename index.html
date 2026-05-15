@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=9e1d156b" />
+  <link rel="stylesheet" href="styles/app.css?v=4476e1cb" />
   <link rel="stylesheet" href="styles/briefing.css?v=d6517ae0" />
 </head>
 <body>
@@ -1226,9 +1226,9 @@
   <script src="js/sunset.js?v=cd321f99"></script>
   <script src="js/hair.js?v=c3130163"></script>
   <script src="js/dock.js?v=d91978f5"></script>
-  <script src="js/ui.js?v=899204fa"></script>
+  <script src="js/ui.js?v=95607d53"></script>
   <script src="js/modals.js?v=14fd5a23"></script>
-  <script src="js/app-main.js?v=949f8211"></script>
+  <script src="js/app-main.js?v=673b5ea7"></script>
   <script src="js/changelog_loader.js?v=eb2d0222"></script>
   
   <script>
@@ -1353,7 +1353,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.128</span>
+            <span class="version-pill" id="appVersion">v0.5.129</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
@@ -1453,9 +1453,10 @@
   <!-- iOS-style bottom tab bar -->
   <nav class="bottom-tab-bar" role="tablist" aria-label="Views">
     <button class="bottom-tab" role="tab" aria-selected="false" data-tab="briefing" onclick="showTab('briefing')">
-      <span class="tab-icon">
+      <span class="tab-icon" style="position:relative;">
         <svg class="icon-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
         <svg class="icon-filled" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm0 1.5L18.5 8H14V3.5zM8 13h8a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 8 13zm0 4h5a.75.75 0 0 1 0 1.5H8A.75.75 0 0 1 8 17z"/></svg>
+        <span id="briefingTabAlertDot" style="display:none;position:absolute;top:-2px;right:-4px;width:8px;height:8px;border-radius:50%;background:#ef4444;border:1.5px solid rgba(30,30,30,0.9);"></span>
       </span>
       <span class="tab-label">Briefing</span>
     </button>

@@ -117,6 +117,7 @@
     // ======================================================
     // Tab behavior — Weather / Wind / Almanac
     // ======================================================
+    const _tabScrollPos = {};
     function showTab(which) {
       const tabOrder = ['briefing', 'weather', 'hyperlocal', 'almanac'];
       const views = { briefing: "briefingView", weather: "weatherView", almanac: "almanacView", overhead: "overheadView", hyperlocal: "hyperlocalView" };
@@ -125,6 +126,9 @@
       const current = localStorage.getItem('activeTab') || 'briefing';
       const fromIdx = tabOrder.indexOf(current);
       const toIdx = tabOrder.indexOf(which);
+
+      // Save scroll position of the tab being left
+      if (current !== which) _tabScrollPos[current] = window.scrollY;
 
       Object.keys(views).forEach(k => {
         const v = document.getElementById(views[k]);
@@ -178,8 +182,9 @@
         }
       }
 
-      // Scroll so tab content is visible below sticky header
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Restore scroll position for this tab (or jump to top for fresh tabs)
+      const savedScroll = _tabScrollPos[which] ?? 0;
+      window.scrollTo({ top: savedScroll, behavior: "instant" });
     }
 
     (function restoreTab() {
@@ -1421,8 +1426,15 @@ function loadWeatherData() {
     // Sync bottom tab bar
     document.querySelectorAll('.bottom-tab').forEach(btn => {
       const isActive = (btn.dataset.tab || btn.querySelector('.tab-label').textContent.toLowerCase()) === tab;
+      const wasActive = btn.classList.contains('active');
       btn.classList.toggle('active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      if (isActive && !wasActive) {
+        btn.classList.remove('tab-pop');
+        void btn.offsetWidth;
+        btn.classList.add('tab-pop');
+        btn.addEventListener('animationend', () => btn.classList.remove('tab-pop'), { once: true });
+      }
     });
   };
 })();
@@ -1471,6 +1483,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const hasStorm = (window.__stormFlags || []).length >= 2;
     // Badge is always visible — toggle the colored dot to indicate active state
     if (dot) dot.style.display = (hasAlerts || hasStorm) ? '' : 'none';
+    // Briefing tab alert dot
+    const tabDot = document.getElementById('briefingTabAlertDot');
+    if (tabDot) tabDot.style.display = (hasAlerts || hasStorm) ? '' : 'none';
   });
   
   // Start observing once DOM is ready
@@ -1481,4 +1496,66 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 })();
+
+// Pull-to-refresh
+(function initPullToRefresh() {
+  const THRESHOLD = 72;
+  let startY = 0;
+  let pulling = false;
+  let indicator = null;
+
+  function getIndicator() {
+    if (!indicator) {
+      indicator = document.createElement('div');
+      indicator.id = 'ptrIndicator';
+      indicator.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>';
+      document.body.appendChild(indicator);
+    }
+    return indicator;
+  }
+
+  function removeIndicator() {
+    if (indicator) {
+      indicator.style.transition = 'transform 0.25s ease, opacity 0.25s ease';
+      indicator.style.opacity = '0';
+      indicator.style.transform = 'translateX(-50%) translateY(-56px)';
+      setTimeout(() => { indicator && indicator.remove(); indicator = null; }, 260);
+    }
+  }
+
+  document.addEventListener('touchstart', function(e) {
+    if (window.scrollY === 0 && !document.querySelector('.card-expanded')) {
+      startY = e.touches[0].clientY;
+      pulling = true;
+    }
+  }, { passive: true });
+
+  document.addEventListener('touchmove', function(e) {
+    if (!pulling) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0) { pulling = false; removeIndicator(); return; }
+    const ind = getIndicator();
+    const travel = Math.min(dy * 0.45, THRESHOLD * 0.65);
+    ind.style.transition = 'none';
+    ind.style.opacity = String(Math.min(dy / THRESHOLD, 1));
+    ind.style.transform = `translateX(-50%) translateY(${travel - 56}px)`;
+    ind.classList.toggle('ptr-ready', dy >= THRESHOLD);
+  }, { passive: true });
+
+  document.addEventListener('touchend', function(e) {
+    if (!pulling) return;
+    pulling = false;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (dy >= THRESHOLD && indicator) {
+      indicator.classList.remove('ptr-ready');
+      indicator.classList.add('ptr-loading');
+      indicator.style.transition = 'transform 0.2s ease';
+      indicator.style.transform = 'translateX(-50%) translateY(16px)';
+      setTimeout(() => { removeIndicator(); location.reload(); }, 400);
+    } else {
+      removeIndicator();
+    }
+  }, { passive: true });
+})();
+
 // cache bust
