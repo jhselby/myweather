@@ -93,24 +93,24 @@ function renderForecast(forecastText, hourlyTimes, hourlyTemps, derived) {
     const row = document.createElement("div");
     row.className = "forecast-day-row";
     row.dataset.date = d.dateStr;
-    row.style.cssText = "display:flex;align-items:center;gap:10px;border-radius:8px;margin:0 -6px;padding:8px 6px;";
+    row.style.cssText = "display:flex;align-items:flex-start;gap:10px;border-radius:8px;margin:0 -6px;padding:8px 6px;";
 
     row.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;min-width:108px;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:108px;padding-top:2px;">
         <span style="font-weight:600;min-width:32px;">${d.day}</span>
         <span style="font-size:0.82rem;opacity:0.35;">${d.dateNum}</span>
         <span style="font-size:16px;">${d.emoji}</span>
       </div>
-      <div style="flex:1;min-width:0;">
+      <div style="flex:1;min-width:0;padding-top:5px;">
         <div style="display:flex;align-items:center;gap:6px;">
           <div style="flex:1;height:3px;border-radius:2px;background:var(--fc-bar-track);overflow:hidden;">
             <div class="fc-precip-fill" style="height:100%;width:${d.pop}%;border-radius:2px;"></div>
           </div>
-          <span class="fc-pop-pct" style="font-size:0.72rem;font-weight:600;min-width:30px;text-align:right;">${d.pop > 10 ? d.pop + "%" : ""}</span>
+          <span class="fc-pop-pct" style="font-size:0.72rem;font-weight:600;width:34px;text-align:right;">${d.pop > 10 ? d.pop + "%" : ""}</span>
         </div>
-        ${d.windLabel ? `<div class="fc-wind-label" style="font-size:0.7rem;opacity:0.45;margin-top:3px;">${d.windLabel}</div>` : ""}
+        ${d.windLabel ? `<div class="fc-wind-label" style="font-size:0.7rem;opacity:0.45;margin-top:4px;">${d.windLabel}</div>` : ""}
       </div>
-      <div style="white-space:nowrap;font-weight:600;">${d.high}°<span class="temp-lo" style="opacity:0.4;font-weight:400;"> / ${d.low}°</span></div>`;
+      <div style="white-space:nowrap;font-weight:600;padding-top:1px;">${d.high}°<span class="temp-lo" style="opacity:0.4;font-weight:400;"> / ${d.low}°</span></div>`;
 
     el.appendChild(row);
   }
