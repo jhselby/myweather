@@ -1428,11 +1428,12 @@
     }
 
     /* 10-day forecast rows */
+    :root { --fc-bar-track: rgba(255,255,255,0.10); --fc-bar-fill: rgba(100,160,255,0.75); --fc-pop-color: rgba(140,180,255,0.9); }
+    body.theme-light { --fc-bar-track: rgba(0,0,0,0.08); --fc-bar-fill: rgba(30,100,210,0.55); --fc-pop-color: rgba(20,80,180,0.85); }
+    .fc-precip-fill { background: var(--fc-bar-fill); }
+    .fc-pop-pct { color: var(--fc-pop-color); }
     body.theme-light #forecastList .forecast-day-row { color: rgba(0,0,0,0.80) !important; }
     body.theme-light #forecastList .forecast-day-row span { color: inherit !important; }
-    body.theme-light #forecastList .forecast-day-row .value { color: rgba(0,0,0,0.88) !important; }
-    /* Keep precip % blue-ish but dark enough */
-    body.theme-light #forecastList [style*="140,180,255"] { color: rgba(30,100,200,0.85) !important; }
     body.theme-light #forecastSelectionHint { color: rgba(0,0,0,0.35) !important; }
 
     /* Sources rows */

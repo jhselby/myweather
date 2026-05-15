@@ -44,11 +44,19 @@ function renderForecast(forecastText, hourlyTimes, hourlyTemps, derived) {
       low  = Math.round(_correctedDays[dateStr].low);
     }
     
-    // Extract precip probability
+    // Extract precip probability — use structured field, fall back to regex on text
     const combinedText = isSimple ? period.text : ((dayPeriod?.text || "") + " " + (nightPeriod?.text || ""));
-    const precipMatch = (combinedText || "").match(/\((\d+)%\)/);
-    const pop = precipMatch ? parseInt(precipMatch[1]) : 0;
-    
+    const _dayPop = dayPeriod?.precip_probability ?? null;
+    const _nightPop = nightPeriod?.precip_probability ?? null;
+    const _simplePop = period.precip_probability ?? null;
+    let pop = 0;
+    if (isSimple) {
+      pop = _simplePop ?? parseInt((combinedText || "").match(/\((\d+)%\)/)?.[1] || "0");
+    } else {
+      pop = Math.max(_dayPop ?? 0, _nightPop ?? 0);
+      if (pop === 0) pop = parseInt((combinedText || "").match(/\((\d+)%\)/)?.[1] || "0");
+    }
+
     const text = (combinedText || "").toLowerCase();
     let emoji = "☀️";
     if (text.includes("thunder")) emoji = "⛈️";
@@ -57,33 +65,52 @@ function renderForecast(forecastText, hourlyTimes, hourlyTemps, derived) {
     else if (text.includes("fog")) emoji = "🌥️";
     else if (text.includes("overcast") || text.includes("mostly cloudy")) emoji = "☁️";
     else if (text.includes("partly cloudy")) emoji = "⛅";
-    
+
+    // Wind label — show only when Breezy or worse
+    const _windRank = { "Calm": 0, "Light winds": 1, "Breezy": 2, "Windy": 3, "Very windy": 4 };
+    let windLabel = "";
+    if (!isSimple) {
+      const labels = [dayPeriod?.wind_worry_label, nightPeriod?.wind_worry_label].filter(Boolean);
+      const worst = labels.reduce((a, b) => (_windRank[b] ?? 0) > (_windRank[a] ?? 0) ? b : a, "Calm");
+      if ((_windRank[worst] ?? 0) >= 2) windLabel = worst;
+    } else {
+      if (text.includes("very windy")) windLabel = "Very windy";
+      else if (text.includes("windy")) windLabel = "Windy";
+      else if (text.includes("breezy")) windLabel = "Breezy";
+    }
+
     const date = new Date(dateStr + "T00:00:00");
     const day = date.toLocaleDateString("en-US", { weekday: "short" });
     const dateNum = date.toLocaleDateString("en-US", { month:"numeric", day:"numeric" });
-    
-    days.push({ dateStr, day, dateNum, high, low, emoji, pop });
-    
+
+    days.push({ dateStr, day, dateNum, high, low, emoji, pop, windLabel });
+
     if (days.length >= 10) break;
   }
 
   // Render 10 daily rows
   for (const d of days) {
     const row = document.createElement("div");
-    row.className = "row forecast-day-row";
+    row.className = "forecast-day-row";
     row.dataset.date = d.dateStr;
-    row.style.cssText = "border-radius:8px;margin:0 -6px;padding:7px 6px;";
-
-    // Click handler removed - days are no longer clickable
+    row.style.cssText = "display:flex;align-items:center;gap:10px;border-radius:8px;margin:0 -6px;padding:8px 6px;";
 
     row.innerHTML = `
-      <div class="label" style="display:flex;align-items:center;gap:8px;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:108px;">
         <span style="font-weight:600;min-width:32px;">${d.day}</span>
-        <span style="font-size:0.82rem;color:rgba(255,255,255,0.35);">${d.dateNum}</span>
+        <span style="font-size:0.82rem;opacity:0.35;">${d.dateNum}</span>
         <span style="font-size:16px;">${d.emoji}</span>
-        ${d.pop > 10 ? `<span style="font-size:0.75rem;color:rgba(140,180,255,0.7);font-weight:600;">${d.pop}%</span>` : ""}
       </div>
-      <div class="value">${d.high}° <span class="temp-lo" style="opacity:0.4;font-weight:400;">/ ${d.low}°</span></div>`;
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div style="flex:1;height:3px;border-radius:2px;background:var(--fc-bar-track);overflow:hidden;">
+            <div class="fc-precip-fill" style="height:100%;width:${d.pop}%;border-radius:2px;"></div>
+          </div>
+          <span class="fc-pop-pct" style="font-size:0.72rem;font-weight:600;min-width:30px;text-align:right;">${d.pop > 10 ? d.pop + "%" : ""}</span>
+        </div>
+        ${d.windLabel ? `<div class="fc-wind-label" style="font-size:0.7rem;opacity:0.45;margin-top:3px;">${d.windLabel}</div>` : ""}
+      </div>
+      <div style="white-space:nowrap;font-weight:600;">${d.high}°<span class="temp-lo" style="opacity:0.4;font-weight:400;"> / ${d.low}°</span></div>`;
 
     el.appendChild(row);
   }

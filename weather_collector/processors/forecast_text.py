@@ -453,7 +453,8 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
         "wind_full": wind_full_val,
         "wind_worry_score": round(_wscore, 1),
         "wind_worry_label": _wlabel,
-        "wind_exposure_factor": round(_exp, 2)
+        "wind_exposure_factor": round(_exp, 2),
+        "precip_probability": round(max_precip_prob)
     }
 def _generate_daily_forecast(daily_data, target_date, derived=None):
     """Generate simple daily summary from ECMWF data (days 8-10)."""
@@ -542,7 +543,8 @@ def _generate_daily_forecast(daily_data, target_date, derived=None):
         'is_simple_daily': True,
         'text': ' '.join(parts),
         'temperature': round(high),
-        'low_temp': round(low)
+        'low_temp': round(low),
+        'precip_probability': round(precip_prob)
     }
 
 
