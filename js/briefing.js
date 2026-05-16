@@ -331,7 +331,7 @@
     const tomorrowSrc = window.__tomorrowSunsetScore || null;
     const src = (useTomorrow && tomorrowSrc) ? tomorrowSrc : todaySrc;
     if (src && src.score != null) {
-      return { score: src.score, label: src.label, tomorrow: !!(useTomorrow && tomorrowSrc) };
+      return { score: src.score, label: src.label, color: src.color, tomorrow: !!(useTomorrow && tomorrowSrc) };
     }
     return null;
   }
@@ -342,7 +342,8 @@
 
     const src = (useTomorrow && window.__tomorrowDockScore) ? window.__tomorrowDockScore : window.__todayDockScore;
     if (src) {
-      return { score: Math.round(src.score * 100), label: src.label, tomorrow: useTomorrow && !!window.__tomorrowDockScore };
+      const displayScore = typeof wineScaleDock === 'function' ? wineScaleDock(src.score) : Math.round(src.score * 100);
+      return { score: displayScore, label: src.label, color: src.color, tomorrow: useTomorrow && !!window.__tomorrowDockScore };
     }
     return null;
   }
@@ -353,9 +354,8 @@
 
     const src = (useTomorrow && window.__tomorrowHairScore) ? window.__tomorrowHairScore : window.__todayHairScore;
     if (src) {
-      const rawScore = src.score;
-      const displayScore = typeof wineScaleHair === 'function' ? wineScaleHair(rawScore) : rawScore;
-      return { score: displayScore, label: src.scoreLabel, tomorrow: useTomorrow && !!window.__tomorrowHairScore };
+      const displayScore = typeof wineScaleHair === 'function' ? wineScaleHair(src.score) : src.score;
+      return { score: displayScore, label: src.scoreLabel, color: src.color, tomorrow: useTomorrow && !!window.__tomorrowHairScore };
     }
     return null;
   }
@@ -435,7 +435,7 @@
       rows.push({
         label: sunset.tomorrow ? "Sunset (tomorrow)" : "Sunset",
         value: `${sunset.label} (${sunset.score}/100)`,
-        color: sunset.score >= 70 ? "green" : null,
+        color: ["Spectacular","Very Good"].includes(sunset.label) ? "orange" : sunset.label === "Good" ? "green" : null,
       });
     }
 
@@ -445,7 +445,7 @@
       rows.push({
         label: beach.tomorrow ? "Beach day (tomorrow)" : "Beach day",
         value: `${beach.label} (${beach.score}/100)`,
-        color: beach.score >= 75 ? "green" : beach.score >= 58 ? null : beach.score >= 38 ? "orange" : "red",
+        color: beach.label === "Great day" ? "green" : beach.label === "Good day" ? null : beach.label === "Stay inside" ? "red" : "orange",
       });
     }
 
@@ -455,7 +455,7 @@
       rows.push({
         label: hair.tomorrow ? "Hair day (tomorrow)" : "Hair day",
         value: `${hair.label} (${hair.score}/100)`,
-        color: hair.score >= 80 ? "green" : "orange",
+        color: ["Great hair day","Good hair day"].includes(hair.label) ? "green" : ["Bad hair day","Stay inside"].includes(hair.label) ? "red" : ["Frizz risk"].includes(hair.label) ? "orange" : null,
       });
     }
 
