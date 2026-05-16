@@ -1,4 +1,5 @@
 // sunset.js — Sunset quality forecast card
+function wineScale(raw) { return Math.max(50, Math.min(100, Math.round(50 + 50 * Math.pow(Math.max(0, raw) / 100, 0.6)))); }
 // Uses SunCalc sunset times + cloud data fetched by collector
 
 // ======================================================
@@ -78,7 +79,7 @@ function renderSunsetQuality(data) {
       
       scores.push({
         dayLabel, timeLabel,
-        score: 45,
+        score: wineScale(45),
         label: "Good",
         color: "rgba(255,220,100,0.9)",
         avgLow: low10.toFixed(0),
@@ -97,7 +98,7 @@ function renderSunsetQuality(data) {
       
       scores.push({
         dayLabel, timeLabel,
-        score: 10,
+        score: wineScale(10),
         label: "Poor",
         color: "rgba(120,120,120,0.6)",
         avgLow: low10.toFixed(0),
@@ -125,15 +126,16 @@ function renderSunsetQuality(data) {
       ? Math.sin((low10 - 8) / 64 * Math.PI) * 0.35
       : 0;
 
-    let score = (midScore * 0.7 + highBonus + lowCloudColor) * (1 - lowPenalty * 0.55) * humFactor;
-    score = Math.max(1, Math.min(100, Math.round(score * 100)));
-    
+    let rawScore = (midScore * 0.7 + highBonus + lowCloudColor) * (1 - lowPenalty * 0.55) * humFactor;
+    rawScore = Math.max(1, Math.min(100, Math.round(rawScore * 100)));
+
     let label, color;
-    if (score >= 75)      { label = "Spectacular";  color = "rgba(255,160,40,0.95)";  ; }
-    else if (score >= 55) { label = "Very Good";    color = "rgba(255,200,60,0.95)";  ; }
-    else if (score >= 35) { label = "Good";         color = "rgba(255,220,100,0.9)"; }
-    else if (score >= 18) { label = "Fair";         color = "rgba(180,180,180,0.8)"; }
-    else                    { label = "Poor";         color = "rgba(120,120,120,0.6)"; }
+    if (rawScore >= 75)      { label = "Spectacular";  color = "rgba(255,160,40,0.95)"; }
+    else if (rawScore >= 55) { label = "Very Good";    color = "rgba(255,200,60,0.95)"; }
+    else if (rawScore >= 35) { label = "Good";         color = "rgba(255,220,100,0.9)"; }
+    else if (rawScore >= 18) { label = "Fair";         color = "rgba(180,180,180,0.8)"; }
+    else                     { label = "Poor";         color = "rgba(120,120,120,0.6)"; }
+    const score = wineScale(rawScore);
     
     const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
       : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });

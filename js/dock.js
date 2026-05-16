@@ -1,4 +1,5 @@
 // dock.js — Swim float / dock day forecast card
+function wineScaleDock(raw01) { return Math.max(50, Math.min(100, Math.round(50 + 50 * Math.pow(Math.max(0, raw01), 0.6)))); }
 
 // ======================================================
 // Beach Day Score
@@ -262,7 +263,7 @@ function renderDockDay(data) {
       html += `<div style="font-size:0.72rem;color:${dDryTxt};margin-top:6px;">Low tide falls within usable hours</div>`;
     } else {
       html += ``;
-      html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label} <span style="font-size:0.75rem;opacity:0.7;">(${Math.round(day.bestScore * 100)})</span></div>`;
+      html += `<div style="font-size:0.88rem;font-weight:900;color:${sl.color};margin-bottom:10px;">${sl.label} <span style="font-size:0.75rem;opacity:0.7;">(${wineScaleDock(day.bestScore)})</span></div>`;
 
       for (const w of day.usableWindows) {
         const durH = Math.floor(w.durMin / 60);
@@ -317,7 +318,7 @@ function renderDockDay(data) {
     
     if (dockDayLabelEl) dockDayLabelEl.textContent = showDay.dayLabel;
     
-    if (dockScoreEl) dockScoreEl.textContent = sl.label + " (" + Math.round(showDay.bestScore * 100) + "/100)";
+    if (dockScoreEl) dockScoreEl.textContent = sl.label + " (" + wineScaleDock(showDay.bestScore) + "/100)";
     
     // Apply gradient class based on score
     const dockCard = document.querySelector('[data-collapse-key="swim_float"]');

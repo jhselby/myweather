@@ -1,4 +1,5 @@
 // hair.js — Hair day forecast card
+function wineScaleHair(raw) { return Math.max(50, Math.min(100, Math.round(50 + 50 * Math.pow(Math.max(0, raw) / 100, 0.6)))); }
 
 function renderHairDay(data) {
   window.__lastWeatherData = data;
@@ -342,7 +343,7 @@ function renderHairDay(data) {
   const scoreEl = document.getElementById("hairDayScoreCollapsed");
   if (emojiEl) emojiEl.textContent = showDay.emoji;
   if (labelEl) { labelEl.textContent = showDay.scoreLabel; labelEl.style.color = showDay.color; }
-  if (scoreEl) scoreEl.textContent = `${showDayLabel}: ${showDay.score}/100`;
+  if (scoreEl) scoreEl.textContent = `${showDayLabel}: ${wineScaleHair(showDay.score)}/100`;
 
   // --- Headline ---
   function hairHeadline(day) {
@@ -382,7 +383,7 @@ function renderHairDay(data) {
         <div style="font-size:0.68rem;opacity:0.45;margin-bottom:6px;">${day.dateLabel}</div>
         <div style="font-size:2rem;line-height:1;margin-bottom:4px;">${day.emoji}</div>
         <div style="font-size:0.8rem;font-weight:600;color:${day.color};text-align:center;margin-bottom:8px;">${day.scoreLabel}</div>
-        <div style="font-size:1.4rem;font-weight:300;margin-bottom:6px;">${day.score}<span style="font-size:0.65rem;opacity:0.5;">/100</span></div>
+        <div style="font-size:1.4rem;font-weight:300;margin-bottom:6px;">${wineScaleHair(day.score)}<span style="font-size:0.65rem;opacity:0.5;">/100</span></div>
         <div style="width:100%;display:flex;align-items:center;gap:4px;margin-bottom:12px;">
           <span style="font-size:0.6rem;opacity:0.3;flex-shrink:0;">0</span>
           <div style="flex:1;background:rgba(255,255,255,0.08);border-radius:3px;height:4px;overflow:hidden;">
