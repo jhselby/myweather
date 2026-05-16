@@ -353,7 +353,9 @@
 
     const src = (useTomorrow && window.__tomorrowHairScore) ? window.__tomorrowHairScore : window.__todayHairScore;
     if (src) {
-      return { score: src.score, label: src.scoreLabel, tomorrow: useTomorrow && !!window.__tomorrowHairScore };
+      const rawScore = src.score;
+      const displayScore = typeof wineScaleHair === 'function' ? wineScaleHair(rawScore) : rawScore;
+      return { score: displayScore, label: src.scoreLabel, tomorrow: useTomorrow && !!window.__tomorrowHairScore };
     }
     return null;
   }
