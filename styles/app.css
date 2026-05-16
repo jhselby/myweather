@@ -1,8 +1,8 @@
 :root{
-      --bg: #2a2d35;
-      --card: rgba(255, 255, 255, 0.06);
-      --card2: rgba(255, 255, 255, 0.09);
-      --border: rgba(255, 255, 255, 0.12);
+      --bg: #0d1525;
+      --card: rgba(255, 255, 255, 0.10);
+      --card2: rgba(255, 255, 255, 0.14);
+      --border: rgba(255, 255, 255, 0.22);
       --text: rgba(255,255,255,0.92);
       --muted: rgba(255,255,255,0.68);
       --muted2: rgba(255,255,255,0.55);
@@ -23,7 +23,7 @@
        html background anchors the overscroll color to our dark bg.
     ──────────────────────────────────────────────────────────── */
     html {
-      background: #0b1220;
+      background: #0d1525;
       overflow-x: clip;
     }
     body.theme-light ~ html,
@@ -90,6 +90,8 @@
       justify-content: space-between;
       gap: 10px;
     }
+
+
 
     .version-pill{
       font-size: 0.78rem;
@@ -193,10 +195,10 @@
       grid-column: span 6;
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 18px;
+      border-radius: 22px;
       padding: 14px 14px 12px;
-      box-shadow: var(--shadow);
-      backdrop-filter: blur(8px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 12px 32px rgba(0,0,0,0.50);
+      backdrop-filter: blur(16px);
       position: relative;
       transition: transform 0.2s ease-out, box-shadow 0.2s ease-out, border-color 0.2s ease-out;
     }
@@ -416,15 +418,15 @@
       position: absolute;
       top: 0;
       left: 0;
-      font-size: 11px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.4);
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.55);
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
       z-index: 10;
     }
     body.theme-light .tile-label {
-      color: rgba(0,0,0,0.4);
+      color: rgba(0,0,0,0.45);
     }
     
     /* Right Now tile specific */
@@ -1153,11 +1155,11 @@
     }
 
     .bottom-tab.active .tab-icon {
-      color: #0a84ff;
+      color: #3BAABD;
     }
 
     .bottom-tab.active .tab-label {
-      color: #0a84ff;
+      color: #3BAABD;
       font-weight: 700;
     }
 
@@ -1173,10 +1175,10 @@
       color: rgba(0,0,0,0.45);
     }
     body.theme-light .bottom-tab.active .tab-icon {
-      color: #007aff;
+      color: #2A8FA0;
     }
     body.theme-light .bottom-tab.active .tab-label {
-      color: #007aff;
+      color: #2A8FA0;
     }
 
     /* Add bottom padding to container so content isn't hidden behind tab bar */
