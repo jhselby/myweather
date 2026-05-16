@@ -139,7 +139,7 @@ function renderDockDay(data) {
         1.0;
 
       // Overall score — temp and wind are gatekeepers
-      // If temp < 45 or wind > 20kt, score can't exceed 0.3
+      // If temp < 45 or wind > 20 mph, score can't exceed 0.3
       const rawScore = windSc * 0.35 + tempSc * 0.35 + precipSc * 0.15 + durSc * 0.10 + wtSc * 0.05;
       const score = (temp != null && temp < 45) || (wspd != null && wspd > 20)
         ? Math.min(rawScore, 0.3)
@@ -285,7 +285,7 @@ function renderDockDay(data) {
         html += `<div>${w.temp != null ? Math.round(w.temp)+"°F" : "--"}</div>`;
         html += `<div>💧 ${w.precip != null ? w.precip+"%" : "--"} precip</div>`;
         html += `<div>`;
-        html += `${w.wspd != null ? Math.round(w.wspd)+" kt" : "--"} ${w.dirName}`;
+        html += `${w.wspd != null ? Math.round(w.wspd)+" mph" : "--"} ${w.dirName}`;
         html += ` <span style="color:${w.windRelLabel==='offshore'?'rgba(80,220,120,0.8)':w.windRelLabel==='onshore'?'rgba(220,80,80,0.8)':'rgba(255,200,80,0.8)'};">(${w.windRelLabel})</span></div>`;
         if (waterTempRaw != null) {
           html += `<div>${Math.round(waterTempRaw)}°F water</div>`;
