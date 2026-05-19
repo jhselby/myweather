@@ -1518,7 +1518,7 @@ function loadWeatherData() {
 
 // Set page-loaded timestamp
 document.addEventListener('DOMContentLoaded', function() {
-  var _plEl = document.getElementById("pageLoaded2"); if (_plEl) _plEl.textContent = new Date().toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  window._pageLoadTime = new Date();
 });
 
 

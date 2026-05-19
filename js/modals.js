@@ -65,6 +65,19 @@ function openSettingsModal() {
   }
   document.body.style.overflow = 'hidden';
   // Sync data timestamps
+  function _relTime(dt) {
+    if (!dt) return "--";
+    const d = new Date(dt);
+    if (isNaN(d.getTime())) return "--";
+    const mins = Math.round((Date.now() - d.getTime()) / 60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return mins + "m ago";
+    return Math.round(mins / 60) + "h ago";
+  }
+  const _du = document.getElementById("dataUpdated2");
+  if (_du) _du.textContent = _relTime(window.__lastWeatherData?.generated_at);
+  const _pl = document.getElementById("pageLoaded2");
+  if (_pl) _pl.textContent = _relTime(window._pageLoadTime);
 }
 function closeSettingsModal() {
   const sheet = document.querySelector('#settingsModal .modal-sheet');
