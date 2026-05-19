@@ -11,7 +11,7 @@ import requests
 import logging
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-2.0-flash-lite")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 GEMINI_FALLBACK_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_FALLBACK_MODEL}:generateContent"
@@ -318,7 +318,7 @@ def generate_briefing(weather_data):
         }],
         "generationConfig": {
             "temperature": 0.9,
-            "maxOutputTokens": 200,
+            "maxOutputTokens": 400,
         }
     }
 
@@ -381,7 +381,11 @@ def generate_briefing(weather_data):
             logging.error(f"  ⚠ Briefing: Failed to parse Gemini response: {redact_secrets(e)}")
             break
 
-    # All attempts failed — fall back to cached headline
+    # All attempts failed — set in-memory guard so we don't retry for 30 minutes
+    from datetime import datetime
+    import pytz
+    _last_gemini_call_time = datetime.now(pytz.timezone("America/New_York"))
+
     cached = _load_cached_briefing()
     if cached and cached.get("headline"):
         logging.info(f"  ↩ Briefing: using cached headline")

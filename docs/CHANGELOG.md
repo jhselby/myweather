@@ -1,3 +1,6 @@
+## v0.5.146 • May 19, 2026
+- Gemini briefing: switch primary model from gemini-2.5-flash-lite (invalid, returns 503) to gemini-2.5-flash; set in-memory backoff on failure to prevent retry storm every 10 minutes
+
 ## v0.5.145 • May 19, 2026
 - Pirate Weather cloud cover fallback: Sky/Precip card no longer goes blank when Open-Meteo HRRR is down; collector now extracts 48h cloud cover from Pirate Weather and injects it into the hourly block as fallback
 
