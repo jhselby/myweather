@@ -853,41 +853,10 @@
       });
     }
 
-    // 3. Precip mini bar (current/imminent rain)
-    if (window.__precipHasRain) {
-      const miniBar = buildPrecipMiniBar();
-      if (miniBar) rows.push({ isHtml: true, html: miniBar });
-    }
-
-    // 4. Next rain
-    if (s.rainContext && !["none","now","soon","later"].includes(s.rainContext)) {
-      rows.push({ label: "Next rain", value: s.rainContext, color: "blue" });
-    }
-
-    // 5. Wind
-    const windImpact = der.wind_impact_score ?? 0;
-    const gustMph = Math.round(s._data.hyperlocal?.corrected_wind_gusts ?? s._data.current?.wind_gusts ?? s.gustMph ?? 0);
-    if (windImpact >= 7) {
-      let windValue = "Impact " + windImpact + "/10";
-      if (gustMph >= 25) windValue += " · Gusts " + gustMph + " mph";
-      rows.push({ label: "Wind", value: windValue, color: windImpact >= 9 ? "red" : "orange" });
-    }
-
-    // 6. Fog
-    const fogProb = der.fog_probability ?? 0;
-    if (fogProb >= 50) {
-      rows.push({ label: "Fog", value: fogProb + "% probability", color: "orange", dim: fogProb < 70 });
-    }
-
-    // 7. Frost risk
-    if (s.low != null && s.low <= 36) {
-      rows.push({ label: "Frost risk", value: "Low tonight " + s.low + "°", color: s.low <= 32 ? "red" : "orange" });
-    }
-
-    // 8. Lightning
+    // 3. Lightning (alert-level — keep with NWS alerts at top)
     const tempestStations = (s._data.tempest?.stations || []);
     if (tempestStations.length > 0) {
-      const totalCount1hr = tempestStations.reduce((sum, st) => sum + (st.lightning_count_1hr || 0), 0);
+      const totalCount1hr = Math.max(...tempestStations.map(st => st.lightning_count_1hr || 0));
       const distances = tempestStations.map(st => st.lightning_last_distance_km).filter(d => d != null && d > 0);
       const minDist = distances.length > 0 ? Math.min(...distances) : null;
       const isClose = minDist != null && minDist <= 20;
@@ -900,6 +869,37 @@
           isAlert: true,
         });
       }
+    }
+
+    // 4. Precip mini bar (current/imminent rain)
+    if (window.__precipHasRain) {
+      const miniBar = buildPrecipMiniBar();
+      if (miniBar) rows.push({ isHtml: true, html: miniBar });
+    }
+
+    // 5. Next rain
+    if (s.rainContext && !["none","now","soon","later"].includes(s.rainContext)) {
+      rows.push({ label: "Next rain", value: s.rainContext, color: "blue" });
+    }
+
+    // 6. Wind
+    const windImpact = der.wind_impact_score ?? 0;
+    const gustMph = Math.round(s._data.hyperlocal?.corrected_wind_gusts ?? s._data.current?.wind_gusts ?? s.gustMph ?? 0);
+    if (windImpact >= 7) {
+      let windValue = "Impact " + windImpact + "/10";
+      if (gustMph >= 25) windValue += " · Gusts " + gustMph + " mph";
+      rows.push({ label: "Wind", value: windValue, color: windImpact >= 9 ? "red" : "orange" });
+    }
+
+    // 7. Fog
+    const fogProb = der.fog_probability ?? 0;
+    if (fogProb >= 50) {
+      rows.push({ label: "Fog", value: fogProb + "% probability", color: "orange", dim: fogProb < 70 });
+    }
+
+    // 8. Frost risk
+    if (s.low != null && s.low <= 36) {
+      rows.push({ label: "Frost risk", value: "Low tonight " + s.low + "°", color: s.low <= 32 ? "red" : "orange" });
     }
 
     // 9. Sea breeze

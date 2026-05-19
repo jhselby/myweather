@@ -1012,7 +1012,7 @@ function loadWeatherData() {
           stormFlags.push(`Heavy rain expected — ${dailyPrecip.toFixed(1)}"`);
 
         const tempestStations = data.tempest?.stations || [];
-        const lightningCount1hr = tempestStations.reduce((sum, st) => sum + (st.lightning_count_1hr || 0), 0);
+        const lightningCount1hr = Math.max(0, ...tempestStations.map(st => st.lightning_count_1hr || 0));
         const lightningDists = tempestStations.map(st => st.lightning_last_distance_km).filter(d => d != null && d > 0);
         const lightningMinDist = lightningDists.length > 0 ? Math.min(...lightningDists) : null;
         const lightningActive = lightningCount1hr >= 3 || (lightningCount1hr >= 1 && lightningMinDist != null && lightningMinDist <= 20);

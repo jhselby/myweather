@@ -273,6 +273,23 @@ function renderWindRisk(data) {
   const cur = data.current || {};
   const curWindSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
   const curGustSpeed = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+
+  // If observed current gust/sustained exceeds forecast peak, use observed as peak
+  if (cur.wind_direction != null) {
+    const obsDir = cur.wind_direction;
+    const obsEf  = getExposureFactor(obsDir);
+    const obsGustScore = curGustSpeed != null ? worryScore(curGustSpeed, obsEf) : 0;
+    const obsSusScore  = curWindSpeed != null ? worryScore(curWindSpeed, obsEf) : 0;
+    if (obsGustScore > (gustPeak?.score ?? 0)) {
+      gustPeak = { speed: curGustSpeed, directionDeg: obsDir, exposureFactor: obsEf,
+                   score: obsGustScore, timeISO: new Date().toISOString() };
+    }
+    if (obsSusScore > (susPeak?.score ?? 0)) {
+      susPeak = { speed: curWindSpeed, directionDeg: obsDir, exposureFactor: obsEf,
+                  score: obsSusScore, timeISO: new Date().toISOString() };
+    }
+  }
+
   if (cur.wind_direction != null && (curWindSpeed != null || curGustSpeed != null)) {
     const combined      = Math.round(combinedWindImpact(curWindSpeed, curGustSpeed, cur.wind_direction));
     const combinedLevel = worryLevel(combined);
@@ -439,6 +456,17 @@ function renderWindChart(data) {
   const speeds = (hourly.wind_speed     || []).slice(startIdx, startIdx + 48);
   const gusts  = (hourly.wind_gusts     || []).slice(startIdx, startIdx + 48);
   const dirs   = (hourly.wind_direction || []).slice(startIdx, startIdx + 48);
+
+  // Substitute current hour with hyperlocal observed values so impact lines
+  // reflect actual conditions rather than (often wrong) model forecast direction
+  const hyp = data.hyperlocal || {};
+  const cur = data.current    || {};
+  const obsSpeed = hyp.corrected_wind_speed ?? cur.wind_speed;
+  const obsGust  = hyp.corrected_wind_gusts ?? cur.wind_gusts;
+  const obsDir   = cur.wind_direction;
+  if (obsSpeed != null) speeds[0] = obsSpeed;
+  if (obsGust  != null) gusts[0]  = obsGust;
+  if (obsDir   != null) dirs[0]   = obsDir;
 
   buildWindChart(times, speeds, gusts, dirs);
   updateWindDataBar(0, times, speeds, gusts, dirs);
