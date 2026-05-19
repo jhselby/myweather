@@ -23,7 +23,8 @@ function renderFeelsLikeCard(data) {
     lblEl.style.color = light ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
   }
   if (fsCardEl) {
-    if (fullSunFL != null && fullSunFL > heatIndex + 5) {
+    const shadeRef = der.heat_index != null ? heatIndex : T;
+    if (fullSunFL != null && fullSunFL > shadeRef + 5) {
       fsCardEl.textContent = `\u2600 Full sun: ${Math.round(fullSunFL)}\u00b0F`;
       fsCardEl.style.display = "";
     } else {

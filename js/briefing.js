@@ -1064,6 +1064,8 @@ function renderBriefing(data) {
     'Next rain': { tab: 'weather', card: '48h_temp_precip' },
     'Wind chill': { tab: 'weather', card: 'feels_like' },
     'Heat index': { tab: 'weather', card: 'feels_like' },
+    'High / Low': { tab: 'weather', card: 'hyperlocal_forecast' },
+    'Overnight': { tab: 'weather', card: 'hyperlocal_forecast' },
     'Sun': { tab: 'almanac', card: 'sun' },
     'Tide': { tab: 'almanac', card: 'tides' },
     'Moon': { tab: 'almanac', card: 'moon' },
@@ -1072,7 +1074,7 @@ function renderBriefing(data) {
     'Hair day': { tab: 'hyperlocal', card: 'hair_day' },
     'Birds': { tab: 'hyperlocal', card: 'birds' },
   };
-  var allBriefRows = document.querySelectorAll('#briefTodayRows .brief-row, #briefAlmanacSection .brief-row, #briefLifestyleSection .brief-row, #briefWatchSection .brief-row');
+  var allBriefRows = document.querySelectorAll('#briefTodayRows .brief-row, #briefAlmanacSection .brief-row, #briefLifestyleSection .brief-row, #briefWatchSection .brief-row, #briefTonightSection .brief-row');
   allBriefRows.forEach(function(row) {
     var labelEl = row.querySelector('.brief-row-label');
     if (!labelEl) return;

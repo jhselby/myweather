@@ -676,7 +676,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         derived["corrected_feels_like"] = round(_fl, 1)
 
         # NWS heat index (shade, no solar term) — valid above 80°F
-        if _ct >= 80 and _rh >= 40:
+        if _ct >= 80 and _rh >= 35:
             T, RH = _ct, _rh
             _hi = (-42.379 + 2.04901523*T + 10.14333127*RH - 0.22475541*T*RH
                    - 6.83783e-3*T**2 - 5.481717e-2*RH**2 + 1.22874e-3*T**2*RH
