@@ -1390,6 +1390,11 @@ function loadWeatherData() {
     // Version update detection — light up refresh button if a new deploy is available
     // setTimeout(0) defers until after the full DOM is parsed (appVersion element exists)
     function checkForUpdate() {
+      // If we just reloaded due to an update, suppress the check for 30s — GitHub Pages CDN
+      // ignores query params for HTML, so the old index.html may still be served for a bit.
+      const justUpdated = sessionStorage.getItem('_updateReload');
+      if (justUpdated && Date.now() - parseInt(justUpdated) < 30000) return;
+      sessionStorage.removeItem('_updateReload');
       const loadedVersion = document.getElementById('appVersion')?.textContent?.trim();
       if (!loadedVersion) return;
       fetch('version.json?_=' + Date.now())
@@ -1450,6 +1455,7 @@ function loadWeatherData() {
       setTimeout(() => {
         this.style.transform = '';
         if (updatePending) {
+          sessionStorage.setItem('_updateReload', Date.now());
           window.location.href = window.location.pathname + '?_=' + Date.now();
         } else {
           location.reload();
