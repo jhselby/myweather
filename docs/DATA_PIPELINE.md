@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.121
-**Last Updated:** May 13, 2026  
+**Version:** 0.5.149
+**Last Updated:** May 19, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
@@ -627,37 +627,45 @@ today_low  = min(corrected temps for today date)
 
 ## FEELS LIKE / APPARENT TEMPERATURE
 
-### Method: Steadman Australian Apparent Temperature (AT)
+### Two parallel systems (v0.5.147+)
 
-**Location:** weather_collector/collector.py lines ~495-520 (current), ~393-415 (hourly)
+**System 1: NWS Heat Index (shade)**
+- **Condition:** T ≥ 80°F AND RH ≥ 40%
+- **Formula:** Rothfusz polynomial (NOAA standard)
+- **Inputs:** hyp.corrected_temp, hyp.corrected_humidity
+- **Storage:** `derived.heat_index` (°F)
+- **Display:** Primary value on card front ("In shade") and briefing tab Heat Index row
 
-**Shade formula (no direct sun):**
-AT = Ta + 0.33*e - 0.70*ws - 4.00
+**System 2: Steadman Australian Apparent Temperature (full sun)**
+- **Location:** weather_collector/collector.py lines ~495-520 (current), ~393-415 (hourly)
+- **Shade formula (no direct sun):** AT = Ta + 0.33×e − 0.70×ws − 4.00
+- **Radiation formula (direct sun):** AT = Ta + 0.348×e − 0.70×ws + 0.70×Q/(ws+10) − 4.25; Q = solar_wm2 × 0.17
+- Where: Ta = corrected temp (°C), e = vapour pressure (hPa), ws = corrected wind (m/s)
+- **Solar source priority:**
+  1. Pirate Weather `current_solar` — point forecast, updated each run
+  2. Average of valid Tempest station readings (`solar_radiation_wm2`)
+  3. Open-Meteo `hourly.direct_radiation` — modeled, hourly resolution
+- **Storage:** `derived.corrected_feels_like` (°F, current); `hourly.corrected_apparent_temperature` (48h array)
+- **Display:** Secondary value ("☀ Full sun: X°F") when full sun exceeds heat index by >5°F
 
-**Radiation formula (direct sun present):**
-AT = Ta + 0.348*e - 0.70*ws + 0.70*Q/(ws+10) - 4.25
-Q = solar_wm2 * 0.17
+### Card Front Display Logic
+```
+heatIndex = der.heat_index ?? der.corrected_feels_like ?? apparent_temperature
+fullSunFL = der.corrected_feels_like
+if fullSunFL > heatIndex + 5: show "☀ Full sun: X°F" below primary value
+```
 
-Where: Ta = corrected temp (C), e = vapour pressure (hPa), ws = corrected wind (m/s), Q = net absorbed radiation (W/m2), solar_wm2 = measured GHI (W/m2), 0.17 = body absorptivity * effective cross-section
+### Briefing Tab Heat Index Row
+- Shown when feelsLike > temp, temp ≥ 80°F, diff ≥ 5°F
+- Uses `der.heat_index` directly (Kalman-corrected inputs; avoids 1°F discrepancy from re-computing with uncorrected `s.temp`)
+- Value string: "98° in shade · 109° in full sun" when full sun exceeds shade by >3°F
 
-**Solar source priority:**
-1. Pirate Weather `current_solar` — point forecast for exact location, updated each run
-2. Average of valid Tempest station readings (`solar_radiation_wm2`)
-3. Open-Meteo `hourly.direct_radiation` — modeled, hourly resolution
-
-**Logic:** solar_wm2 > 0 uses radiation formula (~8-10F sun/shade delta on clear days); zero uses shade formula (overcast/night)
-
-**Inputs:**
-- Temperature: hyp.corrected_temp
-- Wind: hyp.corrected_wind_speed
-- Humidity: hyp.corrected_humidity
-- Solar: pirate_weather.current_solar (primary)
-
-**Storage:**
-- Current: derived.corrected_feels_like (F)
-- Hourly 48h: hourly.corrected_apparent_temperature (F array)
-
-**Frontend:** No calculations — collector is single source of truth
+### Feels Like Chart (feelslike.js)
+Three lines computed from hourly arrays:
+- **In shade:** `calcFullSunAT(temp, humidity, wind, 0)` — AT formula, solar=0
+- **☀ Full sun:** `calcFullSunAT(temp, humidity, wind, direct_radiation)` — AT formula with solar
+- **Air Temp:** raw `corrected_temperature`
+- Note: `hourly.corrected_apparent_temperature` (Open-Meteo apparent temp) is NOT used for the chart because it already bakes in radiation effects, causing the two feels-like lines to overlap.
 
 ---
 
@@ -883,7 +891,8 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 │  • Wind speed: hourly.wind_speed (already blended)          │
 │  • Wind gusts: hourly.wind_gusts (already blended)          │
 │  • Wet bulb: hourly.corrected_wet_bulb (fully corrected)    │
-│  • Feels like: hourly.corrected_apparent_temperature        │
+│  • Feels like chart: calcFullSunAT(hourly, solar=0/actual)  │
+│    (corrected_apparent_temperature not used — bakes in solar)│
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -941,7 +950,8 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 | **Wind Speed** | ✅ Max-selected (model+KBVY+WU+Tempest, age-filtered) | ✅ Blended (backend) | Independent max-select | 24h linear |
 | **Wind Gusts** | ✅ Max-selected (model+KBVY+WU+Tempest, age-filtered) | ✅ Blended (backend) | Independent max-select | 24h linear |
 | **Wet Bulb** | ✅ Fully corrected | ✅ Fully corrected (v0.5.71) | Calculated | N/A |
-| **Feels Like** | ✅ Fully corrected | ✅ Fully corrected (v0.5.43) | Calculated | N/A |
+| **Feels Like (shade)** | ✅ NWS heat index from corrected inputs | ✅ AT formula solar=0 from corrected hourly | Calculated | N/A |
+| **Feels Like (full sun)** | ✅ AT formula with corrected inputs + solar | ✅ AT formula with hourly direct_radiation | Calculated | N/A |
 
 **Legend:**
 - ✅ Fully corrected
@@ -984,6 +994,13 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 ---
 
 ## VERSION HISTORY
+
+**v0.5.145–v0.5.149 (May 19, 2026):**
+- Pirate Weather cloud cover fallback: collector extracts 48h cloud cover from PW; injected into hourly block when Open-Meteo HRRR is down or cloud_cover array is empty
+- Gemini briefing: switched to `gemini-2.5-flash` (gemini-2.5-flash-lite invalid); maxOutputTokens 200→2048 (thinking model); in-memory backoff on failure prevents retry storm
+- Dual feels-like display: NWS heat index (shade, Rothfusz) added to `derived.heat_index`; card front shows heat index as primary + "☀ Full sun" secondary when gap >5°F; briefing tab uses `der.heat_index` directly for consistency
+- Feels Like chart: 3 lines (In shade = AT formula solar=0, Full sun = AT formula with direct_radiation, Air Temp); `hourly.corrected_apparent_temperature` not used (it bakes in radiation, causing lines to overlap); legend updated to match
+- Briefing Heat Index row: "98° in shade · 109° in full sun" format when full sun exceeds shade by >3°F
 
 **v0.5.119–v0.5.121 (May 13, 2026):**
 - Wind blend expanded to include Tempest stations alongside model, KBVY, and WU
@@ -1115,8 +1132,10 @@ Check this document first to understand where data comes from and what correctio
 
 ### Model Configuration
 
-- **Primary:** `gemini-2.5-flash-lite-preview-06-17` (default, configurable via `GEMINI_MODEL` env var)
+- **Primary:** `gemini-2.5-flash` (default, configurable via `GEMINI_MODEL` env var; `gemini-2.5-flash-lite` was invalid/503)
 - **Fallback:** `gemini-1.5-flash-8b` on HTTP 429 (configurable via `GEMINI_FALLBACK_MODEL` env var)
+- **maxOutputTokens:** 2048 (thinking model — thinking tokens count against output budget; 200/400 too low)
+- **Retry storm guard:** `_last_gemini_call_time` set on failure; prevents every 10-min run from retrying Gemini after an error
 - Fallback uses a separate endpoint URL; retries 3x with increasing delay
 
 ### Previous Briefing Context

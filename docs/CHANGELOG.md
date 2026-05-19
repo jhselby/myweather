@@ -1,3 +1,7 @@
+## v0.5.149 • May 19, 2026
+- Feels Like chart: fixed 3-line rendering — "In shade" line now uses AT formula with solar=0 (was using Open-Meteo apparent_temperature which bakes in radiation, causing shade and full sun lines to overlap); legend updated with correct 3 entries
+- Briefing tab Heat Index row: use collector-derived heat_index (Kalman-corrected) instead of re-computing from uncorrected temp; row now reads "98° in shade · 109° in full sun" when full sun exceeds shade by >3°F
+
 ## v0.5.148 • May 20, 2026
 - Feels Like chart: add "Full sun" line (orange dashed, AT formula with direct_radiation); rename "Feels Like" → "In shade" to match card tile; data bar shows In shade · ☀ Full sun · Air
 
