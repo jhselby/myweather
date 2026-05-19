@@ -86,7 +86,7 @@ function renderFeelsLikeCard(data) {
   const fillColor   = shadeFill;
 
   const canvas = document.getElementById("feelsLikeChart");
-  if (!canvas || !chartFL.length) return;
+  if (!canvas || !chartShade.length) return;
   if (canvas._flChart) { canvas._flChart.destroy(); canvas._flChart = null; }
 
   const textColor = chartTextColor();
