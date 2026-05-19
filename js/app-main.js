@@ -543,9 +543,20 @@ function loadWeatherData() {
           }
         }
 
-        // Feels like: heat index (shade) as primary, AT full-sun as secondary
-        const heatIndex = der.heat_index ?? der.corrected_feels_like ?? cur.apparent_temperature ?? 0;
+        // Feels like: shade AT as primary, full-sun AT as secondary badge
         const fullSunFL = der.corrected_feels_like ?? null;
+        let _shadeAT = der.heat_index ?? null;
+        if (_shadeAT == null) {
+          const _T = data.hyperlocal?.corrected_temp ?? cur.temperature;
+          const _w = (data.hyperlocal?.corrected_wind_speed ?? cur.wind_speed ?? 0) * 0.44704;
+          const _rh = data.hyperlocal?.corrected_humidity ?? cur.humidity ?? 50;
+          if (_T != null) {
+            const _Tc = (_T - 32) * 5 / 9;
+            const _e = (_rh / 100) * 6.105 * Math.exp(17.27 * _Tc / (237.7 + _Tc));
+            _shadeAT = Math.round((_Tc + 0.33 * _e - 0.70 * _w - 4.00) * 9 / 5 + 32);
+          }
+        }
+        const heatIndex = _shadeAT ?? cur.apparent_temperature ?? 0;
 
         document.getElementById("feelsLike").textContent =
           `Feels like ${Math.round(heatIndex)}°F`;

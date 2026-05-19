@@ -702,12 +702,14 @@
     if (showWindChill) {
       rows.push({ label: "Wind chill", value: feelsLike + "°", color: feelsLike <= 20 ? "red" : feelsLike <= 32 ? "orange" : null });
     } else if (showHeatIndex) {
+      const derivedHI = s._data?.derived?.heat_index;
+      const displayHI = derivedHI != null ? Math.round(derivedHI) : feelsLike;
       const fullSun = s._data?.derived?.corrected_feels_like;
       const fullSunRounded = fullSun != null ? Math.round(fullSun) : null;
-      const hiValue = fullSunRounded != null && fullSunRounded > feelsLike + 3
-        ? `${feelsLike}° in shade · ${fullSunRounded}° in full sun`
-        : feelsLike + "°";
-      rows.push({ label: "Heat index", value: hiValue, color: feelsLike >= 100 ? "red" : feelsLike >= 90 ? "orange" : null });
+      const hiValue = fullSunRounded != null && fullSunRounded > displayHI + 3
+        ? `${displayHI}° in shade · ${fullSunRounded}° in full sun`
+        : displayHI + "°";
+      rows.push({ label: "Heat index", value: hiValue, color: displayHI >= 100 ? "red" : displayHI >= 90 ? "orange" : null });
     }
 
     // Humidity — show when notably high or low

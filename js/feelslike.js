@@ -11,20 +11,29 @@ function renderFeelsLikeCard(data) {
   const RH = hyp.corrected_humidity ?? cur.humidity ?? 50;
 
   const der = data.derived || {};
-  const heatIndex = der.heat_index ?? der.corrected_feels_like ?? T;
   const fullSunFL = der.corrected_feels_like ?? null;
+
+  // Shade AT: use NWS heat index if available, else compute AT formula with solar=0
+  let shadeAT = der.heat_index ?? null;
+  if (shadeAT == null && T != null) {
+    const Tc = (T - 32) * 5 / 9;
+    const ws = wind * 0.44704;
+    const e = (RH / 100) * 6.105 * Math.exp(17.27 * Tc / (237.7 + Tc));
+    shadeAT = Math.round((Tc + 0.33 * e - 0.70 * ws - 4.00) * 9 / 5 + 32);
+  }
+  const heatIndex = shadeAT ?? T;
+
   const valEl = document.getElementById("feelsLikeCardValue");
   const lblEl = document.getElementById("feelsLikeCardLabel");
   const fsCardEl = document.getElementById("feelsLikeCardFullSun");
   const light = isLight();
   if (valEl) valEl.textContent = T != null ? Math.round(heatIndex) + "\u00b0" : "--\u00b0";
   if (lblEl) {
-    lblEl.textContent = der.heat_index != null ? "In shade" : "Feels Like";
+    lblEl.textContent = "In shade";
     lblEl.style.color = light ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
   }
   if (fsCardEl) {
-    const shadeRef = der.heat_index != null ? heatIndex : T;
-    if (fullSunFL != null && fullSunFL > shadeRef + 5) {
+    if (fullSunFL != null && fullSunFL > heatIndex + 5) {
       fsCardEl.textContent = `\u2600 Full sun: ${Math.round(fullSunFL)}\u00b0F`;
       fsCardEl.style.display = "";
     } else {
