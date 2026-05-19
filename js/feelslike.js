@@ -56,7 +56,7 @@ function renderFeelsLikeCard(data) {
   for (let i = 0; i < times.length; i++) {
     chartTimes.push(times[i]);
     chartAir.push(htemps[i] != null ? Math.round(htemps[i]) : null);
-    chartShade.push(hApparent[i] != null ? Math.round(hApparent[i]) : null);
+    chartShade.push(calcFullSunAT(htemps[i], hHumidity[i], hWind[i], 0));
     chartFullSun.push(calcFullSunAT(htemps[i], hHumidity[i], hWind[i], hRadiation[i]));
   }
 
