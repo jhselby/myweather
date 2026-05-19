@@ -1,18 +1,14 @@
-## v0.5.149 • May 19, 2026
-- Feels Like chart: fixed 3-line rendering — "In shade" line now uses AT formula with solar=0 (was using Open-Meteo apparent_temperature which bakes in radiation, causing shade and full sun lines to overlap); legend updated with correct 3 entries
-- Briefing tab Heat Index row: use collector-derived heat_index (Kalman-corrected) instead of re-computing from uncorrected temp; row now reads "98° in shade · 109° in full sun" when full sun exceeds shade by >3°F
-
-## v0.5.148 • May 20, 2026
-- Feels Like chart: add "Full sun" line (orange dashed, AT formula with direct_radiation); rename "Feels Like" → "In shade" to match card tile; data bar shows In shade · ☀ Full sun · Air
-
-## v0.5.147 • May 19, 2026
-- Feels like: NWS heat index (shade) is now the primary value; Australian AT full-sun appears as "☀ Full sun: X°F" in hero and card tile when it exceeds shade by more than 5°F
-
-## v0.5.146 • May 19, 2026
-- Gemini briefing: switch primary model from gemini-2.5-flash-lite (invalid, returns 503) to gemini-2.5-flash; maxOutputTokens 200→2048 (2.5-flash uses thinking tokens that count against the limit, leaving too few for output); set in-memory backoff on failure to prevent retry storm every 10 minutes
-
-## v0.5.145 • May 19, 2026
-- Pirate Weather cloud cover fallback: Sky/Precip card no longer goes blank when Open-Meteo HRRR is down; collector now extracts 48h cloud cover from Pirate Weather and injects it into the hourly block as fallback
+## v0.5.145–v0.5.152 • May 19, 2026
+* **Fog dissipation timing:** Collector computes `fog_dissipation_hour` from 18h hourly fog probability; expanded fog card shows "Expected to clear by Xpm"; collapsed tile front shows "Clears by Xpm" when risk ≥20%
+* **Fog card text color:** Dissipation line inherits card text color instead of hardcoded rgba(255,255,255,0.7) — readable in both light and dark mode
+* **Briefing stat boxes:** Now/High/Sky boxes in briefing header click through to their respective cards
+* **Settings relative times:** Data generated and code loaded times shown as relative ("3 min ago") instead of absolute timestamps
+* **Feels Like consistency:** Briefing heat index row uses `der.heat_index` (Kalman-corrected) for display; shade AT falls back to JS computation if collector value missing
+* **Heat index threshold:** Lowered RH threshold 40→35% so heat index activates in more conditions; Tonight briefing row click-through added; feelslike badge fallback improved
+* **Update-reload loop fix:** Version check suppressed for 30s after an update-triggered reload to prevent infinite reload loop
+* **Feels Like chart:** Three distinct lines — In shade (AT formula, solar=0), Full sun (AT + direct_radiation), Air temp; legend updated; "In shade" replaces "Feels Like" label for clarity
+* **Gemini briefing:** Switched to gemini-2.5-flash (flash-lite returned 503); maxOutputTokens 200→2048 to accommodate thinking token overhead; in-memory backoff prevents retry storm on failure
+* **Pirate Weather cloud cover fallback:** Sky/Precip card no longer goes blank when Open-Meteo HRRR is down; collector injects Pirate Weather 48h cloud cover as fallback
 
 ## v0.5.132–v0.5.144 • May 15, 2026
 * Pull-to-refresh indicator refined: CSS border spinner replaces arc indicator; fixed position, light mode color, and tab bar jump on load
