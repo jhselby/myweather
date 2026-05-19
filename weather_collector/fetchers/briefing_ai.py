@@ -318,7 +318,7 @@ def generate_briefing(weather_data):
         }],
         "generationConfig": {
             "temperature": 0.9,
-            "maxOutputTokens": 400,
+            "maxOutputTokens": 2048,
         }
     }
 
