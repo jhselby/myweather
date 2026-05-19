@@ -32,15 +32,32 @@ function renderFeelsLikeCard(data) {
   }
 
   // Build 48-hour dataset from HRRR hourly
-  const times  = hourly.times       || [];
-  const htemps = hourly.corrected_temperature || hourly.temperature || [];
-  const hApparent = hourly.corrected_apparent_temperature || hourly.apparent_temperature || [];
+  const times      = hourly.times || [];
+  const htemps     = hourly.corrected_temperature || hourly.temperature || [];
+  const hApparent  = hourly.corrected_apparent_temperature || hourly.apparent_temperature || [];
+  const hHumidity  = hourly.corrected_humidity || hourly.humidity || [];
+  const hWind      = hourly.wind_speed || [];
+  const hRadiation = hourly.direct_radiation || [];
 
-  const chartTimes = [], chartFL = [], chartAir = [];
+  // Compute full-sun AT for each hour using Steadman formula with solar radiation
+  function calcFullSunAT(T_f, rh, wind_mph, solar_wm2) {
+    if (T_f == null || rh == null) return null;
+    const Tc = (T_f - 32) * 5 / 9;
+    const ws = (wind_mph ?? 0) * 0.44704;
+    const e = (rh / 100) * 6.105 * Math.exp(17.27 * Tc / (237.7 + Tc));
+    const Q = (solar_wm2 ?? 0) * 0.17;
+    const at_c = solar_wm2 > 0
+      ? Tc + 0.348 * e - 0.70 * ws + 0.70 * Q / (ws + 10) - 4.25
+      : Tc + 0.33 * e - 0.70 * ws - 4.00;
+    return Math.round(at_c * 9 / 5 + 32);
+  }
+
+  const chartTimes = [], chartShade = [], chartFullSun = [], chartAir = [];
   for (let i = 0; i < times.length; i++) {
     chartTimes.push(times[i]);
     chartAir.push(htemps[i] != null ? Math.round(htemps[i]) : null);
-    chartFL.push(hApparent[i] != null ? Math.round(hApparent[i]) : null);
+    chartShade.push(hApparent[i] != null ? Math.round(hApparent[i]) : null);
+    chartFullSun.push(calcFullSunAT(htemps[i], hHumidity[i], hWind[i], hRadiation[i]));
   }
 
   // Data bar update
@@ -55,14 +72,18 @@ function renderFeelsLikeCard(data) {
     const month   = dt.toLocaleDateString("en-US", { month: "short" });
     const day     = dt.getDate();
     const timeStr = `${weekday} ${month} ${day}, ${hour % 12 || 12}-${nextHour % 12 || 12}${nextHour < 12 ? "am" : "pm"}`;
-    const fl  = chartFL[idx]  != null ? chartFL[idx]  + "\u00b0F" : "--";
-    const air = chartAir[idx] != null ? chartAir[idx] + "\u00b0F" : "--";
+    const shade = chartShade[idx]   != null ? chartShade[idx]   + "\u00b0F" : "--";
+    const sun   = chartFullSun[idx] != null ? chartFullSun[idx] + "\u00b0F" : "--";
+    const air   = chartAir[idx]     != null ? chartAir[idx]     + "\u00b0F" : "--";
     timeEl.textContent = timeStr + " \u00b7";
-    lineEl.textContent = `Feels Like: ${fl} \u00b7 Air: ${air}`;
+    lineEl.textContent = `In shade: ${shade} \u00b7 \u2600 Full sun: ${sun} \u00b7 Air: ${air}`;
   }
 
-  const lineColor = "rgba(180,180,255,0.8)";
-  const fillColor = "rgba(180,180,255,0.05)";
+  const shadeColor  = "rgba(180,180,255,0.8)";
+  const shadeFill   = "rgba(180,180,255,0.05)";
+  const sunColor    = "rgba(255,190,80,0.75)";
+  const lineColor   = shadeColor;
+  const fillColor   = shadeFill;
 
   const canvas = document.getElementById("feelsLikeChart");
   if (!canvas || !chartFL.length) return;
@@ -78,10 +99,21 @@ function renderFeelsLikeCard(data) {
       labels,
       datasets: [
         {
-          label: "Feels Like",
-          data: chartFL,
-          borderColor: lineColor,
-          backgroundColor: fillColor,
+          label: "☀ Full sun",
+          data: chartFullSun,
+          borderColor: sunColor,
+          backgroundColor: "rgba(255,190,80,0.04)",
+          borderWidth: 1.5,
+          borderDash: [3, 3],
+          fill: false,
+          tension: 0.4,
+          pointRadius: 0,
+        },
+        {
+          label: "In shade",
+          data: chartShade,
+          borderColor: shadeColor,
+          backgroundColor: shadeFill,
           borderWidth: 2,
           fill: true,
           tension: 0.4,
@@ -91,7 +123,7 @@ function renderFeelsLikeCard(data) {
           label: "Air Temp",
           data: chartAir,
           borderColor: isLight() ? "rgba(100,100,100,0.4)" : "rgba(200,200,200,0.4)",
-          backgroundColor: isLight() ? "rgba(100,100,100,0.4)" : "rgba(200,200,200,0.4)",
+          backgroundColor: "transparent",
           borderDash: [4, 4],
           borderWidth: 1,
           fill: false,

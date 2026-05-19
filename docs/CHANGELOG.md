@@ -1,3 +1,6 @@
+## v0.5.148 • May 20, 2026
+- Feels Like chart: add "Full sun" line (orange dashed, AT formula with direct_radiation); rename "Feels Like" → "In shade" to match card tile; data bar shows In shade · ☀ Full sun · Air
+
 ## v0.5.147 • May 19, 2026
 - Feels like: NWS heat index (shade) is now the primary value; Australian AT full-sun appears as "☀ Full sun: X°F" in hero and card tile when it exceeds shade by more than 5°F
 
