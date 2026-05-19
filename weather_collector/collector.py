@@ -352,6 +352,35 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         }
 
 
+    # Pirate Weather cloud cover fallback when HRRR is down
+    if pirate_data and pirate_data.get("hourly_cloud_cover"):
+        if "hourly" not in weather_data:
+            # HRRR completely unavailable — build a minimal hourly block from PW data
+            import pytz
+            _eastern = pytz.timezone("America/New_York")
+            _pw_times = [
+                _eastern.localize(__import__("datetime").datetime.fromtimestamp(ts)).strftime("%Y-%m-%dT%H:%M")
+                for ts in pirate_data.get("hourly_times", [])
+                if ts is not None
+            ]
+            _pw_cc = pirate_data["hourly_cloud_cover"][:len(_pw_times)]
+            weather_data["hourly"] = {
+                "times": _pw_times,
+                "cloud_cover": _pw_cc,
+                "cloud_cover_low": [], "cloud_cover_mid": [], "cloud_cover_high": [],
+                "temperature": [], "apparent_temperature": [], "humidity": [],
+                "dew_point": [], "precipitation_probability": [], "precipitation": [],
+                "weather_code": [], "direct_radiation": [], "wind_speed": [],
+                "wind_direction": [], "wind_gusts": [], "pressure": [],
+                "temperature_850hPa": [], "temperature_700hPa": [],
+                "geopotential_height_850hPa": [], "col_precip_type_850mb": [],
+            }
+            logging.warning("  ⚠️ HRRR unavailable — using Pirate Weather cloud cover for hourly block")
+        elif not weather_data["hourly"].get("cloud_cover"):
+            # HRRR returned data but cloud cover is empty — patch from PW
+            weather_data["hourly"]["cloud_cover"] = pirate_data["hourly_cloud_cover"][:len(weather_data["hourly"]["times"])]
+            logging.warning("  ⚠️ HRRR cloud cover empty — patched from Pirate Weather")
+
     # Blend observed wind into hourly forecast for exposed coastal location
     if wind_candidates and "hourly" in weather_data and "wind_gusts" in weather_data["hourly"]:
         from datetime import datetime, timezone

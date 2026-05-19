@@ -1,6 +1,6 @@
 """
 Pirate Weather API fetcher
-Provides minutely precip, solar irradiance, and CAPE
+Provides minutely precip, solar irradiance, CAPE, and cloud cover
 https://pirateweather.net
 """
 import os
@@ -44,24 +44,33 @@ def fetch_pirate_weather():
             for pt in minutely_raw
         ]
 
-        # --- Currently block (solar, CAPE) ---
+        # --- Currently block (solar, CAPE, cloud cover) ---
         currently = raw.get("currently", {})
         solar = currently.get("solar")        # W/m²
         cape = currently.get("cape")          # J/kg
+        current_cloud_cover_raw = currently.get("cloudCover")  # 0-1 fraction
+        current_cloud_cover = round(current_cloud_cover_raw * 100) if current_cloud_cover_raw is not None else None
 
-        # --- Hourly solar/CAPE (first 24h) ---
-        hourly_raw = raw.get("hourly", {}).get("data", [])[:24]
+        # --- Hourly solar/CAPE/cloud cover (48h) ---
+        hourly_raw = raw.get("hourly", {}).get("data", [])[:48]
         hourly_solar = [pt.get("solar") for pt in hourly_raw]
         hourly_cape = [pt.get("cape") for pt in hourly_raw]
         hourly_times = [pt.get("time") for pt in hourly_raw]
+        # cloudCover is 0-1; convert to 0-100 to match Open-Meteo format
+        hourly_cloud_cover = [
+            round(pt["cloudCover"] * 100) if pt.get("cloudCover") is not None else None
+            for pt in hourly_raw
+        ]
 
         data = {
             "minutely": minutely,
             "current_solar": solar,
             "current_cape": cape,
+            "current_cloud_cover": current_cloud_cover,
             "hourly_times": hourly_times,
             "hourly_solar": hourly_solar,
             "hourly_cape": hourly_cape,
+            "hourly_cloud_cover": hourly_cloud_cover,
         }
 
         meta = {

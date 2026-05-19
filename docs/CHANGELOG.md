@@ -1,117 +1,120 @@
+## v0.5.145 • May 19, 2026
+- Pirate Weather cloud cover fallback: Sky/Precip card no longer goes blank when Open-Meteo HRRR is down; collector now extracts 48h cloud cover from Pirate Weather and injects it into the hourly block as fallback
+
 ## v0.5.132–v0.5.144 • May 15, 2026
-- Pull-to-refresh indicator refined: CSS border spinner replaces arc indicator; fixed position, light mode color, and tab bar jump on load
-- Stale-while-revalidate: cached weather data rendered immediately on load from localStorage before network fetch completes; schema version guard prevents restoring incompatible data
-- 10-day forecast: precip probability bar per row (filled by PoP%); wind label shown when Breezy or worse; fixed POP extraction to read field directly from collector output; fixed row alignment (fixed-width % column, flex-start to prevent tall rows shifting temps)
-- Text selection (long-press menu) disabled globally for native app feel
-- Sunset scoring algorithm improved: forward-weighted time window [0.15, 0.50, 0.35] so clearing trends aren't buried; low cloud color contribution term (partial low clouds catch horizon light from below); humidity penalty eased above 70% for coastal air
-- Wine-scale scoring applied to sunset, hair day, and beach day: display = 50 + 50×(raw/100)^0.6 — compresses the floor, spreads meaningful variance into 75–100 range, matching user expectations from wine/school-grade scoring
-- Beach day wind display: was showing "kt", corrected to mph
-- Briefing tab lifestyle rows: switched to label-based color mapping for sunset, hair, and beach day (rgba passthrough was incompatible with the cm color-class map)
-- Design pass: background deepened to navy (#0d1525); card opacity, blur, and border increased for better panel definition; tab bar active color changed from iOS blue (#0a84ff) to ocean teal (#3BAABD); briefing headline bumped 1.8→2rem; card border radius 18→22px; tile labels slightly more readable
+* Pull-to-refresh indicator refined: CSS border spinner replaces arc indicator; fixed position, light mode color, and tab bar jump on load
+* Stale-while-revalidate: cached weather data rendered immediately on load from localStorage before network fetch completes; schema version guard prevents restoring incompatible data
+* 10-day forecast: precip probability bar per row (filled by PoP%); wind label shown when Breezy or worse; fixed POP extraction to read field directly from collector output; fixed row alignment (fixed-width % column, flex-start to prevent tall rows shifting temps)
+* Text selection (long-press menu) disabled globally for native app feel
+* Sunset scoring algorithm improved: forward-weighted time window [0.15, 0.50, 0.35] so clearing trends aren't buried; low cloud color contribution term (partial low clouds catch horizon light from below); humidity penalty eased above 70% for coastal air
+* Wine-scale scoring applied to sunset, hair day, and beach day: display = 50 + 50×(raw/100)^0.6 — compresses the floor, spreads meaningful variance into 75–100 range, matching user expectations from wine/school-grade scoring
+* Beach day wind display: was showing "kt", corrected to mph
+* Briefing tab lifestyle rows: switched to label-based color mapping for sunset, hair, and beach day (rgba passthrough was incompatible with the cm color-class map)
+* Design pass: background deepened to navy (#0d1525); card opacity, blur, and border increased for better panel definition; tab bar active color changed from iOS blue (#0a84ff) to ocean teal (#3BAABD); briefing headline bumped 1.8→2rem; card border radius 18→22px; tile labels slightly more readable
 
 ## v0.5.125–v0.5.131 • May 15, 2026
-- Tab bar icons repositioned to sit flush above the home indicator on iOS (align-items: flex-start, safe-area bottom padding corrected)
-- Lifestyle tab tab bar height normalized: min-height 100svh on all tab views prevents short-content tabs from rendering the fixed bar differently
-- iOS tap highlight flash and long-press callout suppressed globally
-- Tab button taps now animate with the same directional slide as swipe navigation
-- Tab icon spring-bounce animation on tap
-- Red alert dot appears on Briefing tab icon when active weather alerts are present
-- Scroll position remembered per tab — returning to a tab restores where you left off
-- Card body fades in on open (short slide + opacity animation)
-- Pull-to-refresh: drag down from top of any tab to reload weather data; arrow indicator fades in and flips when past threshold
-- Fixed tab bar jumping on page load: removed redundant showTab call that triggered iOS URL bar flash on every refresh
+* Tab bar icons repositioned to sit flush above the home indicator on iOS (align-items: flex-start, safe-area bottom padding corrected)
+* Lifestyle tab tab bar height normalized: min-height 100svh on all tab views prevents short-content tabs from rendering the fixed bar differently
+* iOS tap highlight flash and long-press callout suppressed globally
+* Tab button taps now animate with the same directional slide as swipe navigation
+* Tab icon spring-bounce animation on tap
+* Red alert dot appears on Briefing tab icon when active weather alerts are present
+* Scroll position remembered per tab — returning to a tab restores where you left off
+* Card body fades in on open (short slide + opacity animation)
+* Pull-to-refresh: drag down from top of any tab to reload weather data; arrow indicator fades in and flips when past threshold
+* Fixed tab bar jumping on page load: removed redundant showTab call that triggered iOS URL bar flash on every refresh
 
 ## v0.5.122–v0.5.124 • May 14, 2026
-- SVG tab icons replace emoji tabs across all four tabs
-- Wind card tile redesigned: split compass/speed layout
-- PWA manifest updated for wymancove.com custom domain
-- Move notice banner added for users still on old GitHub Pages URL (only shown from jhselby.github.io)
-- iOS card close bug fixed: tapping outside an expanded card now closes it without opening the card behind it; switched from backdrop click listener to document-level capture-phase touchstart/click handlers
-- Corrections card moved from Lifestyle tab to bottom of Weather tab (col-6); collapsed tile shows station count and confidence level
-- Birds card collapsed tile now shows "last 48 hrs" label
+* SVG tab icons replace emoji tabs across all four tabs
+* Wind card tile redesigned: split compass/speed layout
+* PWA manifest updated for wymancove.com custom domain
+* Move notice banner added for users still on old GitHub Pages URL (only shown from jhselby.github.io)
+* iOS card close bug fixed: tapping outside an expanded card now closes it without opening the card behind it; switched from backdrop click listener to document-level capture-phase touchstart/click handlers
+* Corrections card moved from Lifestyle tab to bottom of Weather tab (col-6); collapsed tile shows station count and confidence level
+* Birds card collapsed tile now shows "last 48 hrs" label
 
 ## v0.5.102–v0.5.121 • May 13, 2026
-- Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
-- WU station list trimmed from 36 to 29 (removed 7 confirmed out-of-range stations)
-- Station denominator now counts all attempted stations (29 WU + 9 Tempest = 38), not just responders
-- Adaptive bias correction: new station_bias.py tracks per-station chronic offsets for temp, humidity, and pressure using leave-one-out consensus over a 48h rolling window; MIN_READINGS=6 before offset applied
-- Temperature diurnal split: separate day/night bias offsets (7am–7pm ET boundary); captures sensors whose drift varies across the day
-- Kalman gain blend: corrected_temp = model + K × weighted_bias; K = 0.90/0.65/0.40 based on station count and agreement; model contributes when stations disagree
-- KBVY temp logged as external calibration anchor: kbvy_temp_f and kbvy_local_delta in hyperlocal output every run
-- Tempest stations shown in Settings → Sources card
-- Version update detection: refresh button dot lights up when a new deploy is available; polls version.json every 5 min
-- Fixed version dot always showing (DOM timing bug — appVersion not yet in DOM at script execution time)
-- Added How It Works prose doc to Settings → Under the Hood
-- Corrections card extracted to js/corrections.js; per-station adaptive bias offsets table (tap to expand, top 8 by magnitude, warm=red/cold=blue); KBVY anchor line in expanded card
-- Lightning alerts from Tempest network: Watch For row + Active Alerts modal when ≥3 strikes/hr or ≥1 strike within 20 km; badge lights standalone; red if close, orange if distant
-- Wind compass tile: wind lull (min across Tempest stations) added below sustained speed; gusts top / sustained center / lull bottom layout
-- Wind rendering extracted to js/wind.js (renderWindTile, renderWindImpactCollapsed, renderWindChart, renderWindRisk, initWindPills, buildWindChart)
-- Tempest hardware wet bulb replaces Stull formula for corrected_wet_bulb (fallback retained)
-- Fix: Next rain day label suppressed when minutely shows rain within 60 min
-- Extract renderSun/renderMoon/renderSolarSystem to js/sky.js; renderSources to js/sources.js; renderBirds to js/birds.js; radar functions to js/radar.js; renderTides/buildTideChart to js/tides.js; renderFrostTracker to js/frost.js; renderSunsetQuality to js/sunset.js; renderHairDay to js/hair.js; renderDockDay to js/dock.js; renderBriefing to js/briefing.js; buildTempPrecipChart to js/tempchart.js; renderForecast to js/forecast.js; renderTodayAlmanac to js/almanac.js; renderSeaBreezeDetail to js/seabreeze.js; renderFeelsLikeCard/renderFogDetail to js/feelslike.js; populateCollapsedPreviews to js/previews.js; card toggle/nav helpers to js/ui.js; settings/alert/precip modals to js/modals.js
-- app-main.js: 5,900 → 1,449 lines
-- NWS Extreme/Severe alerts now headline over active rain in briefing priority
-- Fog: advection fog now fires correctly when dew point spread is large (was dead code path)
-- Sea breeze: minimum land/sea differential raised 3°F → 5°F; hard vetoes for offshore wind and winds >15 mph
-- Wind blend: stale observations (>20 min) excluded from Tempest and WU candidates; direction sourced from best fresh waterfront Tempest station
-- Watch For: red border/background for Extreme/Severe alerts; fog and sea breeze rows dimmed as informational
-- Briefing dateline: data age ("3m ago") shown right-aligned
-- Schema version check: app stops rendering and prompts refresh on mismatch
-- Tab: Hyperlocal renamed to Lifestyle
-- Settings: opening one accordion closes the others
-- Collector: all print() replaced with logging.info/warning/error across 16 files
-- Tests: 17 passing tests added for fog, wet bulb, and sea breeze processors
+* Tempest stations expanded from 3 to 9 within ~1.5mi of Wyman Cove
+* WU station list trimmed from 36 to 29 (removed 7 confirmed out-of-range stations)
+* Station denominator now counts all attempted stations (29 WU + 9 Tempest = 38), not just responders
+* Adaptive bias correction: new station_bias.py tracks per-station chronic offsets for temp, humidity, and pressure using leave-one-out consensus over a 48h rolling window; MIN_READINGS=6 before offset applied
+* Temperature diurnal split: separate day/night bias offsets (7am–7pm ET boundary); captures sensors whose drift varies across the day
+* Kalman gain blend: corrected_temp = model + K × weighted_bias; K = 0.90/0.65/0.40 based on station count and agreement; model contributes when stations disagree
+* KBVY temp logged as external calibration anchor: kbvy_temp_f and kbvy_local_delta in hyperlocal output every run
+* Tempest stations shown in Settings → Sources card
+* Version update detection: refresh button dot lights up when a new deploy is available; polls version.json every 5 min
+* Fixed version dot always showing (DOM timing bug — appVersion not yet in DOM at script execution time)
+* Added How It Works prose doc to Settings → Under the Hood
+* Corrections card extracted to js/corrections.js; per-station adaptive bias offsets table (tap to expand, top 8 by magnitude, warm=red/cold=blue); KBVY anchor line in expanded card
+* Lightning alerts from Tempest network: Watch For row + Active Alerts modal when ≥3 strikes/hr or ≥1 strike within 20 km; badge lights standalone; red if close, orange if distant
+* Wind compass tile: wind lull (min across Tempest stations) added below sustained speed; gusts top / sustained center / lull bottom layout
+* Wind rendering extracted to js/wind.js (renderWindTile, renderWindImpactCollapsed, renderWindChart, renderWindRisk, initWindPills, buildWindChart)
+* Tempest hardware wet bulb replaces Stull formula for corrected_wet_bulb (fallback retained)
+* Fix: Next rain day label suppressed when minutely shows rain within 60 min
+* Extract renderSun/renderMoon/renderSolarSystem to js/sky.js; renderSources to js/sources.js; renderBirds to js/birds.js; radar functions to js/radar.js; renderTides/buildTideChart to js/tides.js; renderFrostTracker to js/frost.js; renderSunsetQuality to js/sunset.js; renderHairDay to js/hair.js; renderDockDay to js/dock.js; renderBriefing to js/briefing.js; buildTempPrecipChart to js/tempchart.js; renderForecast to js/forecast.js; renderTodayAlmanac to js/almanac.js; renderSeaBreezeDetail to js/seabreeze.js; renderFeelsLikeCard/renderFogDetail to js/feelslike.js; populateCollapsedPreviews to js/previews.js; card toggle/nav helpers to js/ui.js; settings/alert/precip modals to js/modals.js
+* app-main.js: 5,900 → 1,449 lines
+* NWS Extreme/Severe alerts now headline over active rain in briefing priority
+* Fog: advection fog now fires correctly when dew point spread is large (was dead code path)
+* Sea breeze: minimum land/sea differential raised 3°F → 5°F; hard vetoes for offshore wind and winds >15 mph
+* Wind blend: stale observations (>20 min) excluded from Tempest and WU candidates; direction sourced from best fresh waterfront Tempest station
+* Watch For: red border/background for Extreme/Severe alerts; fog and sea breeze rows dimmed as informational
+* Briefing dateline: data age ("3m ago") shown right-aligned
+* Schema version check: app stops rendering and prompts refresh on mismatch
+* Tab: Hyperlocal renamed to Lifestyle
+* Settings: opening one accordion closes the others
+* Collector: all print() replaced with logging.info/warning/error across 16 files
+* Tests: 17 passing tests added for fog, wet bulb, and sea breeze processors
 
 ## v0.5.100–v0.5.101 • May 12, 2026
-- Fix data refresh on Mac: add window focus listener alongside visibilitychange so Cmd+Tab back to browser triggers a reload (visibilitychange alone only fires on tab switches)
-- Fix sunset score too low: clear-sky branch no longer requires low humidity (humid clear nights were scoring 1)
-- Raise low-cloud overcast cutoff from 60% to 75% (patchy boundary-layer clouds were hardcoding "Poor"/10)
+* Fix data refresh on Mac: add window focus listener alongside visibilitychange so Cmd+Tab back to browser triggers a reload (visibilitychange alone only fires on tab switches)
+* Fix sunset score too low: clear-sky branch no longer requires low humidity (humid clear nights were scoring 1)
+* Raise low-cloud overcast cutoff from 60% to 75% (patchy boundary-layer clouds were hardcoding "Poor"/10)
 
 ## v0.5.86–v0.5.99 • May 10, 2026
-- WeatherFlow Tempest integration: fetches 3 public stations within 0.4mi of Wyman Cove (Willow Rd, Driftwood Rd, Neptune Rd) via tempestwx.com web API
-- Tempest stations wired into hyperlocal temperature bias calculation and wind max-selection alongside WU stations
-- Tempest humidity preferred over WU aggregate for corrected_humidity (closer, fresher)
-- Corrections card now shows 27/32 stations (30 WU + 2 valid Tempest)
-- Fixed UnboundLocalError in build_weather_data: datetime local variable shadowed by conditional imports
-- Gemini fallback model updated from deprecated gemini-1.5-flash-8b to gemini-2.0-flash-lite
+* WeatherFlow Tempest integration: fetches 3 public stations within 0.4mi of Wyman Cove (Willow Rd, Driftwood Rd, Neptune Rd) via tempestwx.com web API
+* Tempest stations wired into hyperlocal temperature bias calculation and wind max-selection alongside WU stations
+* Tempest humidity preferred over WU aggregate for corrected_humidity (closer, fresher)
+* Corrections card now shows 27/32 stations (30 WU + 2 valid Tempest)
+* Fixed UnboundLocalError in build_weather_data: datetime local variable shadowed by conditional imports
+* Gemini fallback model updated from deprecated gemini-1.5-flash-8b to gemini-2.0-flash-lite
 
 ## v0.5.68–v0.5.85 • May 9, 2026
-- Wet bulb and precip type classification (rain/snow/sleet/freezing rain) now fully corrected: both wet_bulb.py and precip_surface.py use corrected_temperature and corrected_humidity arrays throughout
-- Updated DATA_PIPELINE.md: corrected stale placeholder/bug notes for wind speed, wet bulb, and feels-like; removed duplicate AI Briefing section
-- build.py no longer creates index.html.backup on each run; deleted stale backup file
-- Bias confidence indicator: shows correction amount and confidence level (Moderate=yellow, Low=red) below Feels Like when stations disagree; hidden when High confidence
-- Removed dead NWS text forecast code: fetch_nws_forecast() from nws.py, renderNWSForecast() and nwsToggleExpand() from app-main.js, disabled collector references — replaced by forecast_text.py since v0.5.41
-- Wind exposure table now single source of truth: collector embeds it in weather_data.json, frontend reads and updates from data on each load; JS fallback retained for offline/stale data
-- Briefing click-throughs: Almanac rows (Sun, Tide, Moon) and Watch For rows now tap through to their detail cards
-- Fixed fog+temperature double-period punctuation in forecast text
-- Gemini briefing falls back to gemini-1.5-flash-8b on 429; both models configurable via env vars
-- Briefing interval check now has in-memory guard (survives GCS failures; max-instances=1)
-- Gemini briefing now receives previous headline as context; can note forecast shifts in subheadline
-- Stale data indicator threshold raised from 20 to 25 minutes (fires only after 2+ missed collector runs)
-- Briefing third stat changed from 48h rain to current conditions (sky text)
-- All conditions displays now use weather_description (HRRR model) with condition_override (KBVY) as fallback
-- Wind arrow redesigned: single line + arrowhead SVG; switched to SVG rotate() attribute to fix broken rotation in macOS PWA (WKWebView CSS transform-origin bug)
-- Watch For storm flags: title now derives from most specific flag (freezing rain > snow > heavy rain > mixed > gusts > system > pressure)
-- Watch For detail line now visible inline below alert/flag title without requiring a tap
-- Precip flag no longer fires for rain on the surface — only for snow, sleet, freezing rain, and mixed
-- Fixed collector crash: removed leftover forecast_data parameter; fixed missing WIND_EXPOSURE_TABLE import
-- Fixed ReferenceError: conditions stat rendering placed before const cur declaration
+* Wet bulb and precip type classification (rain/snow/sleet/freezing rain) now fully corrected: both wet_bulb.py and precip_surface.py use corrected_temperature and corrected_humidity arrays throughout
+* Updated DATA_PIPELINE.md: corrected stale placeholder/bug notes for wind speed, wet bulb, and feels-like; removed duplicate AI Briefing section
+* build.py no longer creates index.html.backup on each run; deleted stale backup file
+* Bias confidence indicator: shows correction amount and confidence level (Moderate=yellow, Low=red) below Feels Like when stations disagree; hidden when High confidence
+* Removed dead NWS text forecast code: fetch_nws_forecast() from nws.py, renderNWSForecast() and nwsToggleExpand() from app-main.js, disabled collector references — replaced by forecast_text.py since v0.5.41
+* Wind exposure table now single source of truth: collector embeds it in weather_data.json, frontend reads and updates from data on each load; JS fallback retained for offline/stale data
+* Briefing click-throughs: Almanac rows (Sun, Tide, Moon) and Watch For rows now tap through to their detail cards
+* Fixed fog+temperature double-period punctuation in forecast text
+* Gemini briefing falls back to gemini-1.5-flash-8b on 429; both models configurable via env vars
+* Briefing interval check now has in-memory guard (survives GCS failures; max-instances=1)
+* Gemini briefing now receives previous headline as context; can note forecast shifts in subheadline
+* Stale data indicator threshold raised from 20 to 25 minutes (fires only after 2+ missed collector runs)
+* Briefing third stat changed from 48h rain to current conditions (sky text)
+* All conditions displays now use weather_description (HRRR model) with condition_override (KBVY) as fallback
+* Wind arrow redesigned: single line + arrowhead SVG; switched to SVG rotate() attribute to fix broken rotation in macOS PWA (WKWebView CSS transform-origin bug)
+* Watch For storm flags: title now derives from most specific flag (freezing rain > snow > heavy rain > mixed > gusts > system > pressure)
+* Watch For detail line now visible inline below alert/flag title without requiring a tap
+* Precip flag no longer fires for rain on the surface — only for snow, sleet, freezing rain, and mixed
+* Fixed collector crash: removed leftover forecast_data parameter; fixed missing WIND_EXPOSURE_TABLE import
+* Fixed ReferenceError: conditions stat rendering placed before const cur declaration
 
 ## v0.5.66–v0.5.67 • May 8, 2026
-- Exposure-aware wind narratives in forecast text ("Calm at the cove despite..." / "Windy at the cove...")
-- Added wind_worry_score, wind_worry_label, wind_exposure_factor to forecast periods
-- Removed "toward morning" noise from night lows; removed false-precision temp timing on GFS days
-- Suppressed contradictory sky descriptions during heavy precip
-- Days 8–10 now include ECMWF sky condition and gust data
-- Fixed UnboundLocalError from shadowed datetime import; fixed "VRB" wind direction crashes
+* Exposure-aware wind narratives in forecast text ("Calm at the cove despite..." / "Windy at the cove...")
+* Added wind_worry_score, wind_worry_label, wind_exposure_factor to forecast periods
+* Removed "toward morning" noise from night lows; removed false-precision temp timing on GFS days
+* Suppressed contradictory sky descriptions during heavy precip
+* Days 8–10 now include ECMWF sky condition and gust data
+* Fixed UnboundLocalError from shadowed datetime import; fixed "VRB" wind direction crashes
 
 ## v0.5.64–v0.5.65 • May 7, 2026
-- Frontend fallbacks for Fog and Wind Impact tiles when GFS current data unavailable
-- Collector fallback: HRRR hourly[0] for fog when GFS fails
-- Briefing rain stat shows three states: "No rain", "Trace" (POP ≥ 40% but zero accumulation), or inches
-- TODAY section: High / Low row shows full temp range without scrolling
-- Forecast text now always prefers corrected data; fixed false "Chance of rain" from GFS fallthrough
-- 10-day rain icons now driven by corrected data upstream
+* Frontend fallbacks for Fog and Wind Impact tiles when GFS current data unavailable
+* Collector fallback: HRRR hourly[0] for fog when GFS fails
+* Briefing rain stat shows three states: "No rain", "Trace" (POP ≥ 40% but zero accumulation), or inches
+* TODAY section: High / Low row shows full temp range without scrolling
+* Forecast text now always prefers corrected data; fixed false "Chance of rain" from GFS fallthrough
+* 10-day rain icons now driven by corrected data upstream
 
 ## v0.5.54–v0.5.62c • May 6, 2026
 * **Rain Stat (v0.5.62)**
