@@ -712,6 +712,37 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             derived["fog_label"] = fog_risk["fog_label"]
             derived["fog_probability"] = fog_risk["fog_probability"]
 
+        # Hourly fog probability for next 12h — used for dissipation timing
+        _h = weather_data.get("hourly", {})
+        _htimes   = _h.get("times", [])
+        _htemps   = _h.get("corrected_temperature", _h.get("temperature", []))
+        _hdewpts  = _h.get("corrected_dew_point",   _h.get("dew_point", []))
+        _hhumids  = _h.get("corrected_humidity",    _h.get("humidity", []))
+        _hwinds   = _h.get("wind_speed", [])
+        _hwdirs   = _h.get("wind_direction", [])
+        _water_f  = weather_data.get("buoy_44013", {}).get("water_temp_f")
+        _hourly_fog_probs = []
+        for _i in range(min(18, len(_htimes))):
+            _fr = calculate_fog_risk(
+                _htemps[_i]  if _i < len(_htemps)  else None,
+                _hdewpts[_i] if _i < len(_hdewpts)  else None,
+                _hhumids[_i] if _i < len(_hhumids)  else None,
+                _hwinds[_i]  if _i < len(_hwinds)   else None,
+                wind_direction=_hwdirs[_i] if _i < len(_hwdirs) else None,
+                water_temp_f=_water_f,
+            )
+            _hourly_fog_probs.append(_fr["fog_probability"] if _fr else 0)
+        derived["fog_hourly_prob"] = _hourly_fog_probs
+        derived["fog_hourly_times"] = _htimes[:18]
+        # Find dissipation: first run of 2+ consecutive hours below 20%
+        _diss_hour = None
+        for _i in range(len(_hourly_fog_probs) - 1):
+            if _hourly_fog_probs[_i] < 20 and _hourly_fog_probs[_i + 1] < 20:
+                _diss_hour = _htimes[_i] if _i < len(_htimes) else None
+                break
+        if _diss_hour:
+            derived["fog_dissipation_hour"] = _diss_hour
+
     # Wet bulb temperatures (for precipitation type classification)
     if "hourly" in weather_data:
         add_wet_bulb_temps(weather_data)
