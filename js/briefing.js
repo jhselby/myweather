@@ -670,8 +670,7 @@
       rows.push({ label: "Sea breeze", value: `${sb.likelihood}% likely`, color: "orange" });
     }
 
-    // Feels like — use collector-derived values to match the weather card exactly
-    const derivedHI = s._data?.derived?.heat_index;
+    // Feels like — compute from s.temp (today's high) so feelsDiff comparison is meaningful
     let feelsLike = s.temp;
     if (s.temp != null) {
       const T = s.temp;
@@ -680,8 +679,6 @@
 
       if (T <= 50 && wind > 3) {
         feelsLike = 35.74 + (0.6215 * T) - (35.75 * Math.pow(wind, 0.16)) + (0.4275 * T * Math.pow(wind, 0.16));
-      } else if (derivedHI != null) {
-        feelsLike = derivedHI;
       } else if (T >= 80 && RH != null) {
         feelsLike =
           -42.379 +
@@ -701,7 +698,7 @@
     feelsLike = Math.round(feelsLike);
     const feelsDiff = Math.abs(feelsLike - s.temp);
     const showWindChill = feelsLike < s.temp && s.temp <= 40 && feelsDiff >= 5;
-    const showHeatIndex = feelsLike > s.temp && s.temp >= 80 && feelsDiff >= 5;
+    const showHeatIndex = feelsLike > s.temp && s.temp >= 80 && feelsDiff >= 3;
     if (showWindChill) {
       rows.push({ label: "Wind chill", value: feelsLike + "°", color: feelsLike <= 20 ? "red" : feelsLike <= 32 ? "orange" : null });
     } else if (showHeatIndex) {
