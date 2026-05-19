@@ -10,17 +10,25 @@ function renderFeelsLikeCard(data) {
   const wind = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
   const RH = hyp.corrected_humidity ?? cur.humidity ?? 50;
 
-  // Use corrected feels-like from collector (single source of truth)
   const der = data.derived || {};
-  const feelsLike = der.corrected_feels_like ?? T;
-  // Update tile front
+  const heatIndex = der.heat_index ?? der.corrected_feels_like ?? T;
+  const fullSunFL = der.corrected_feels_like ?? null;
   const valEl = document.getElementById("feelsLikeCardValue");
   const lblEl = document.getElementById("feelsLikeCardLabel");
+  const fsCardEl = document.getElementById("feelsLikeCardFullSun");
   const light = isLight();
-  if (valEl) valEl.textContent = T != null ? Math.round(feelsLike) + "\u00b0" : "--\u00b0";
+  if (valEl) valEl.textContent = T != null ? Math.round(heatIndex) + "\u00b0" : "--\u00b0";
   if (lblEl) {
-    lblEl.textContent = "Feels Like";
+    lblEl.textContent = der.heat_index != null ? "In shade" : "Feels Like";
     lblEl.style.color = light ? "rgba(0,0,0,0.6)" : "rgba(255,255,255,0.6)";
+  }
+  if (fsCardEl) {
+    if (fullSunFL != null && fullSunFL > heatIndex + 5) {
+      fsCardEl.textContent = `\u2600 Full sun: ${Math.round(fullSunFL)}\u00b0F`;
+      fsCardEl.style.display = "";
+    } else {
+      fsCardEl.style.display = "none";
+    }
   }
 
   // Build 48-hour dataset from HRRR hourly

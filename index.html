@@ -144,6 +144,7 @@
               <div id="feelsLike" class="feels-like">
                 Feels like --&deg;F
               </div>
+              <div id="feelsLikeFullSun" style="font-size:0.78rem;margin-top:1px;opacity:0.6;display:none;">&#9728; Full sun: --&deg;F</div>
               <div id="tempConfidence" style="font-size:0.78rem;margin-top:2px;display:none;"></div>
               <div id="condition" class="condition">
                 Loading&hellip;
@@ -463,6 +464,7 @@
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
               <div id="feelsLikeCardValue" style="font-size:2.8rem;font-weight:300;line-height:1;margin-bottom:8px;">--°</div>
               <div id="feelsLikeCardLabel" style="font-size:1rem;font-weight:500;opacity:0.9;">--</div>
+              <div id="feelsLikeCardFullSun" style="font-size:0.78rem;margin-top:6px;opacity:0.55;display:none;">&#9728; Full sun: --°F</div>
             </div>
           </div>
           <div class="card-body" style="display:none;">
@@ -1218,7 +1220,7 @@
   <script src="js/tides.js?v=7516452c"></script>
   <script src="js/almanac.js?v=6bb44d8a"></script>
   <script src="js/seabreeze.js?v=14e6104c"></script>
-  <script src="js/feelslike.js?v=827122b6"></script>
+  <script src="js/feelslike.js?v=404ad821"></script>
   <script src="js/previews.js?v=fabd7061"></script>
   <script src="js/tempchart.js?v=ddb37223"></script>
   <script src="js/forecast.js?v=5b44ecee"></script>
@@ -1228,7 +1230,7 @@
   <script src="js/dock.js?v=300bea08"></script>
   <script src="js/ui.js?v=95607d53"></script>
   <script src="js/modals.js?v=14fd5a23"></script>
-  <script src="js/app-main.js?v=a2e1ac26"></script>
+  <script src="js/app-main.js?v=499c7262"></script>
   <script src="js/changelog_loader.js?v=eb2d0222"></script>
   
   <script>
@@ -1353,7 +1355,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.146</span>
+            <span class="version-pill" id="appVersion">v0.5.147</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->

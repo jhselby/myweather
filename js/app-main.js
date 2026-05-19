@@ -543,12 +543,22 @@ function loadWeatherData() {
           }
         }
 
-        // Calculate corrected Feels Like from corrected temp + wind
-        const correctedFeelsLike = der.corrected_feels_like ?? cur.apparent_temperature ?? 0;
-        
+        // Feels like: heat index (shade) as primary, AT full-sun as secondary
+        const heatIndex = der.heat_index ?? der.corrected_feels_like ?? cur.apparent_temperature ?? 0;
+        const fullSunFL = der.corrected_feels_like ?? null;
+
         document.getElementById("feelsLike").textContent =
-          `Feels like ${Math.round(correctedFeelsLike)}°F`;
-        const flc = document.getElementById("feelsLikeCollapsed"); if (flc) flc.textContent = `Feels like ${Math.round(correctedFeelsLike)}°`;
+          `Feels like ${Math.round(heatIndex)}°F`;
+        const flc = document.getElementById("feelsLikeCollapsed"); if (flc) flc.textContent = `Feels like ${Math.round(heatIndex)}°`;
+        const fsEl = document.getElementById("feelsLikeFullSun");
+        if (fsEl) {
+          if (fullSunFL != null && fullSunFL > heatIndex + 5) {
+            fsEl.textContent = `☀ Full sun: ${Math.round(fullSunFL)}°F`;
+            fsEl.style.display = "";
+          } else {
+            fsEl.style.display = "none";
+          }
+        }
         
         // 10-Day collapsed preview - use same calculation as hiLo
         const tenDayHighEl = document.getElementById("tenDayHigh");

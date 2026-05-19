@@ -1,3 +1,6 @@
+## v0.5.147 • May 19, 2026
+- Feels like: NWS heat index (shade) is now the primary value; Australian AT full-sun appears as "☀ Full sun: X°F" in hero and card tile when it exceeds shade by more than 5°F
+
 ## v0.5.146 • May 19, 2026
 - Gemini briefing: switch primary model from gemini-2.5-flash-lite (invalid, returns 503) to gemini-2.5-flash; maxOutputTokens 200→2048 (2.5-flash uses thinking tokens that count against the limit, leaving too few for output); set in-memory backoff on failure to prevent retry storm every 10 minutes
 

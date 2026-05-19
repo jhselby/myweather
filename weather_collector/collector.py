@@ -675,6 +675,14 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _fl = _at_c * 9 / 5 + 32
         derived["corrected_feels_like"] = round(_fl, 1)
 
+        # NWS heat index (shade, no solar term) — valid above 80°F
+        if _ct >= 80 and _rh >= 40:
+            T, RH = _ct, _rh
+            _hi = (-42.379 + 2.04901523*T + 10.14333127*RH - 0.22475541*T*RH
+                   - 6.83783e-3*T**2 - 5.481717e-2*RH**2 + 1.22874e-3*T**2*RH
+                   + 8.5282e-4*T*RH**2 - 1.99e-6*T**2*RH**2)
+            derived["heat_index"] = round(_hi, 1)
+
     # Fog risk — fall back to HRRR hourly[0] if GFS current is missing
     _fog_current = None
     if current_data:
