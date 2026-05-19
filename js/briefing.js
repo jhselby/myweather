@@ -1094,4 +1094,26 @@ function renderBriefing(data) {
       }, 100);
     };
   });
+
+  // Stat box click-throughs
+  var statLinks = [
+    { id: 'briefTempNow',    tab: 'weather', card: 'right_now' },
+    { id: 'briefTempHigh',   tab: 'weather', card: 'ten_day' },
+    { id: 'briefConditions', tab: 'weather', card: '48h_temp_precip' },
+  ];
+  statLinks.forEach(function(sl) {
+    var el = document.getElementById(sl.id);
+    var box = el && el.closest('.brief-stat');
+    if (!box) return;
+    box.style.cursor = 'pointer';
+    box.onclick = function(e) {
+      e.stopPropagation();
+      window.__navSource = { tab: 'briefing', card: null };
+      showTab(sl.tab);
+      setTimeout(function() {
+        var card = document.querySelector('[data-collapse-key="' + sl.card + '"]');
+        if (card) card.click();
+      }, 100);
+    };
+  });
 }
