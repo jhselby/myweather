@@ -281,4 +281,31 @@ function renderFeelsLikeCard(data) {
   if (humidityEffEl) humidityEffEl.textContent = humidityEffect;
   if (windEl) windEl.textContent = windSpeed != null ? `${windSpeed.toFixed(1)} mph` : "--";
   if (windEffEl) windEffEl.textContent = windEffect;
+
+  // Fog dissipation timing
+  let fogDissEl = document.getElementById("fogDissipation");
+  if (!fogDissEl) {
+    fogDissEl = document.createElement("div");
+    fogDissEl.id = "fogDissipation";
+    fogDissEl.style.cssText = "font-size:0.88rem;margin-top:12px;padding:8px 14px;border-top:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);";
+    const fogBody = document.querySelector('[data-collapse-key="fog_risk"] .card-body');
+    if (fogBody) fogBody.appendChild(fogDissEl);
+  }
+  if (fogDissEl) {
+    const dissHour = der.fog_dissipation_hour;
+    if (fogLikelihood >= 20 && dissHour) {
+      const dt = new Date(dissHour);
+      const h = dt.getHours();
+      const timeStr = h === 0 ? "midnight" : h < 12 ? `${h}am` : h === 12 ? "noon" : `${h - 12}pm`;
+      const dayStr = dt.toLocaleDateString("en-US", { weekday: "short" });
+      const isToday = dt.toDateString() === new Date().toDateString();
+      fogDissEl.textContent = `Expected to clear by ${isToday ? "" : dayStr + " "}${timeStr}`;
+      fogDissEl.style.display = "";
+    } else if (fogLikelihood >= 20) {
+      fogDissEl.textContent = "May persist — conditions stay favorable beyond 18h forecast";
+      fogDissEl.style.display = "";
+    } else {
+      fogDissEl.style.display = "none";
+    }
+  }
 }
