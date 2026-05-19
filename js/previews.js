@@ -92,7 +92,24 @@ function populateCollapsedPreviews(data) {
   if (fogProb !== undefined && fogLabel) {
     setHTML("fogPctCollapsed", `${fogProb}<span style="font-size:1.8rem;opacity:0.6;">%</span>`);
     setText("fogRiskCollapsed", fogLabel);
-    
+
+    // Dissipation timing on collapsed front
+    const dissEl = document.getElementById("fogDissCollapsed");
+    if (dissEl) {
+      const dissHour = data.derived?.fog_dissipation_hour;
+      if (fogProb >= 20 && dissHour) {
+        const dt = new Date(dissHour);
+        const h = dt.getHours();
+        const timeStr = h === 0 ? "midnight" : h < 12 ? `${h}am` : h === 12 ? "noon" : `${h - 12}pm`;
+        const isToday = dt.toDateString() === new Date().toDateString();
+        const dayStr = dt.toLocaleDateString("en-US", { weekday: "short" });
+        dissEl.textContent = `Clears by ${isToday ? "" : dayStr + " "}${timeStr}`;
+        dissEl.style.display = "";
+      } else {
+        dissEl.style.display = "none";
+      }
+    }
+
     // Apply fog gradient class
     const fogCard = document.querySelector('[data-collapse-key="fog_risk"]');
     if (fogCard) {

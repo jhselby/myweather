@@ -287,7 +287,7 @@ function renderFeelsLikeCard(data) {
   if (!fogDissEl) {
     fogDissEl = document.createElement("div");
     fogDissEl.id = "fogDissipation";
-    fogDissEl.style.cssText = "font-size:0.88rem;margin-top:12px;padding:8px 14px;border-top:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.7);";
+    fogDissEl.style.cssText = "font-size:0.88rem;margin-top:12px;padding:8px 14px;border-top:1px solid rgba(255,255,255,0.08);";
     const fogBody = document.querySelector('[data-collapse-key="fog_risk"] .card-body');
     if (fogBody) fogBody.appendChild(fogDissEl);
   }
