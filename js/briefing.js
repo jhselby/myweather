@@ -870,7 +870,6 @@
           label: "Storm risk",
           value: `CAPE ${ts.cape_current} J/kg · ${ts.cape_label} instability`,
           color: "orange",
-          dim: true,
           isAlert: false,
         });
       }
