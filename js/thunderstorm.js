@@ -3,10 +3,10 @@
 let _tsChartObj = null;
 
 const TS_SEVERITY_CONFIG = {
-  clear:  { label: "No Risk",    cls: "calm",        tileClass: "" },
-  watch:  { label: "Watch",      cls: "notable",     tileClass: "tile-ts-watch" },
-  active: { label: "Active",     cls: "significant", tileClass: "tile-ts-active" },
-  severe: { label: "Severe",     cls: "severe",      tileClass: "tile-ts-severe" },
+  clear:  { label: "No Risk",             cls: "calm",        tileClass: "" },
+  watch:  { label: null,                  cls: "notable",     tileClass: "tile-ts-watch" },  // label set dynamically from CAPE
+  active: { label: "Thunderstorm",        cls: "significant", tileClass: "tile-ts-active" },
+  severe: { label: "Severe Thunderstorm", cls: "severe",      tileClass: "tile-ts-severe" },
 };
 
 function _riskLabel(capeLabel) {
@@ -49,14 +49,12 @@ function renderThunderstormCard(data) {
   const tileDetail = document.getElementById("tsDetailCollapsed");
   const tileCape   = document.getElementById("tsCapeCollapsed");
 
-  if (tileStatus) tileStatus.textContent = cfg.label;
+  const displayLabel = ts?.severity === "watch" ? _riskLabel(ts.cape_label) : (cfg.label || "No Risk");
+  if (tileStatus) tileStatus.textContent = displayLabel;
   if (tileDetail && ts) {
     if (ts.active && ts.lightning_count > 0) {
       const dist = ts.min_distance_km != null ? ` · ${ts.min_distance_km} km away` : "";
       tileDetail.textContent = `${ts.lightning_count} strikes/hr${dist}`;
-      tileDetail.style.display = "";
-    } else if (ts.severity === "watch") {
-      tileDetail.textContent = _riskLabel(ts.cape_label);
       tileDetail.style.display = "";
     } else {
       tileDetail.style.display = "none";
@@ -73,7 +71,7 @@ function renderThunderstormCard(data) {
   const setH = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML  = val; };
 
   // Status badge
-  setH("tsStatusBadge", `<span class="badge ${cfg.cls}">${cfg.label}</span>`);
+  setH("tsStatusBadge", `<span class="badge ${cfg.cls}">${displayLabel}</span>`);
 
   // Live lightning rows
   const lightningSection = document.getElementById("tsLightningSection");

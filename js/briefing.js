@@ -853,30 +853,27 @@
       });
     }
 
-    // 3. Thunderstorm / lightning (alert-level — keep with NWS alerts at top)
+    // 3. Thunderstorm / lightning — active always shows; watch only shows at Moderate risk or higher
     const ts = der.thunderstorm;
-    if (ts && (ts.active || ts.severity === "watch")) {
-      if (ts.active) {
-        const distStr = ts.min_distance_km != null ? ` · closest ${ts.min_distance_km} km` : "";
-        const label = ts.severity === "severe" ? "Severe Thunderstorm" : "Thunderstorm";
-        rows.push({
-          label,
-          value: `${ts.lightning_count} strike${ts.lightning_count !== 1 ? "s" : ""}/hr${distStr}`,
-          color: ts.severity === "severe" ? "red" : "orange",
-          isAlert: true,
-        });
-      } else {
-        const riskDesc = ts.cape_label === "Moderate" ? "Moderate risk" :
-                         ts.cape_label === "High"     ? "High risk" :
-                         ts.cape_label === "Extreme"  ? "Extreme risk" :
-                                                        "Low risk";
-        rows.push({
-          label: "Thunderstorm risk",
-          value: riskDesc,
-          color: "orange",
-          isAlert: false,
-        });
-      }
+    if (ts && ts.active) {
+      const distStr = ts.min_distance_km != null ? ` · closest ${ts.min_distance_km} km` : "";
+      const label = ts.severity === "severe" ? "Severe Thunderstorm" : "Thunderstorm";
+      rows.push({
+        label,
+        value: `${ts.lightning_count} strike${ts.lightning_count !== 1 ? "s" : ""}/hr${distStr}`,
+        color: ts.severity === "severe" ? "red" : "orange",
+        isAlert: true,
+      });
+    } else if (ts && ts.severity === "watch" && ts.cape_label !== "Weak") {
+      const riskDesc = ts.cape_label === "Extreme" ? "Extreme risk" :
+                       ts.cape_label === "High"    ? "High risk" :
+                                                     "Moderate risk";
+      rows.push({
+        label: "Thunderstorm risk",
+        value: riskDesc,
+        color: "orange",
+        isAlert: false,
+      });
     }
 
     // 4. Precip mini bar (current/imminent rain)
