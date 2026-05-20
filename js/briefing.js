@@ -463,7 +463,7 @@
     const birds = s._data.birds || {};
     const speciesCount = birds.species_count;
     if (speciesCount) {
-      rows.push({ label: "Birds", value: speciesCount + " species nearby", color: null });
+      rows.push({ label: "Birds", value: speciesCount + " species nearby · 48h", color: null });
     }
 
     return rows;
