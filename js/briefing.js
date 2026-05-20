@@ -866,9 +866,13 @@
           isAlert: true,
         });
       } else {
+        const capeDesc = ts.cape_label === "Moderate" ? "atmosphere moderately unstable" :
+                         ts.cape_label === "High"     ? "atmosphere very unstable" :
+                         ts.cape_label === "Extreme"  ? "atmosphere extremely unstable" :
+                                                        "atmosphere slightly unstable";
         rows.push({
-          label: "Storm risk",
-          value: `CAPE ${ts.cape_current} J/kg · ${ts.cape_label} instability`,
+          label: "Thunderstorm risk",
+          value: `Storms possible — ${capeDesc}`,
           color: "orange",
           isAlert: false,
         });
@@ -1066,6 +1070,9 @@ function renderBriefing(data) {
     'Wind': { tab: 'weather', card: '48h_wind' },
     'Sea breeze': { tab: 'weather', card: 'sea_breeze_detail' },
     'Fog': { tab: 'weather', card: 'fog_risk' },
+    'Thunderstorm': { tab: 'weather', card: 'thunderstorm' },
+    'Severe Thunderstorm': { tab: 'weather', card: 'thunderstorm' },
+    'Thunderstorm risk': { tab: 'weather', card: 'thunderstorm' },
     'Rain': { tab: 'weather', card: '48h_temp_precip' },
     'Next rain': { tab: 'weather', card: '48h_temp_precip' },
     'Wind chill': { tab: 'weather', card: 'feels_like' },
