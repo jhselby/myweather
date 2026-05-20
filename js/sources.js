@@ -13,7 +13,8 @@ const SOURCE_META = {
   nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead (api.weather.gov)" },
   pirate_weather: { name: "Pirate Weather", desc: "Pirate Weather API — next 60 minutes precipitation, plus solar and CAPE" },
   ebird:        { name: "eBird",        desc: "Cornell eBird recent and notable bird observations near Marblehead" },
-  gemini:       { name: "Gemini",       desc: "Google Gemini AI — briefing headline and subheadline generator (free tier)" },
+  gemini:       { name: "Gemini 2.5 Flash", desc: "Google Gemini AI — primary briefing headline generator (free tier)" },
+  groq:         { name: "Groq / Llama 3",  desc: "Groq API running Llama 3 8B — fallback briefing generator when Gemini is unavailable (free tier)" },
   tempest:      { name: "Tempest",      desc: "WeatherFlow Tempest — 3 public stations within 0.4mi (Willow Rd, Driftwood Rd, Neptune Rd); lightning, solar radiation, wind lull, wet bulb" },
 };
 
@@ -51,13 +52,19 @@ function renderSources(sources, pwsStale) {
     <div style="font-weight:900;font-size:0.75rem;color:rgba(255,255,255,0.35);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">Live Data Sources</div>
     ${order.map(key => {
       const s = sources[key];
-      if (!s) return "";
-      const ok   = s.status === "ok";
+      const briefingModel = window.__lastWeatherData?.briefing?.model || "gemini";
+      const isBriefingSource = key === "gemini" || key === "groq";
+      const isActiveBriefingSource = isBriefingSource && key === briefingModel;
+      const isStandbyBriefingSource = isBriefingSource && key !== briefingModel;
+      if (!s && !isBriefingSource) return "";
+      const ok = isBriefingSource ? isActiveBriefingSource : s.status === "ok";
       let age = "--";
-      if (key === "gemini" && window.__lastWeatherData?.briefing?.cached_at) {
+      if (isActiveBriefingSource && window.__lastWeatherData?.briefing?.cached_at) {
         const cachedAt = new Date(window.__lastWeatherData.briefing.cached_at);
         age = Math.round((Date.now() - cachedAt.getTime()) / 60000) + "m ago";
-      } else if (typeof s.age_minutes === "number") {
+      } else if (isStandbyBriefingSource) {
+        age = "standby";
+      } else if (s && typeof s.age_minutes === "number") {
         age = Math.round(s.age_minutes) + "m ago";
       }
       const meta = SOURCE_META[key];
@@ -102,10 +109,13 @@ function renderSources(sources, pwsStale) {
         }
       }
 
-      return `<div style="${rowStyle}">
-        <span style="${badgeStyle(ok)}">${ok ? "●" : "○"}</span> <span style="${nameStyle}">${name}</span>
+      const rowOpacity = isStandbyBriefingSource ? "opacity:0.4;" : "";
+      const standbyTag = isStandbyBriefingSource ? ` <span style="font-size:0.7rem;opacity:0.6;">(standby)</span>` : "";
+      const activeTag  = isActiveBriefingSource  ? ` <span style="font-size:0.7rem;color:rgba(100,220,100,0.8);">(active)</span>` : "";
+      return `<div style="${rowStyle}${rowOpacity}">
+        <span style="${badgeStyle(ok)}">${ok ? "●" : "○"}</span> <span style="${nameStyle}">${name}${activeTag}${standbyTag}</span>
         <span style="${ageStyle(ok)}">${age}</span>
-        <span style="${descStyle}">${meta.desc}${s.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${s.error}</span>` : ""}</span>
+        <span style="${descStyle}">${meta.desc}${s?.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${s.error}</span>` : ""}</span>
         ${extraDetail}
       </div>`;
     }).join("")}

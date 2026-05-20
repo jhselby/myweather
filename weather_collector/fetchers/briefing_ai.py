@@ -12,9 +12,11 @@ import logging
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-GEMINI_FALLBACK_MODEL = os.environ.get("GEMINI_FALLBACK_MODEL", "gemini-2.0-flash-lite")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
-GEMINI_FALLBACK_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_FALLBACK_MODEL}:generateContent"
+
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+GROQ_MODEL = "llama3-8b-8192"
+GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove — on the Salem Harbor side of Marblehead's peninsula, with open water to the north and northwest.
 
@@ -41,6 +43,7 @@ Rules:
 - Only mention fog or sea breeze if included in the data.
 - Ignore any alerts containing "TEST" — those are NWS transmission tests.
 - If a previous briefing is provided and the forecast has shifted meaningfully (timing, rain/snow line, temperature trend), note the change briefly in the subheadline (e.g., "rain timing pushed back two hours" or "snow line crept east since this morning"). Skip it if nothing significant changed.
+- The headline and subheadline must not repeat the same information. If the headline says "cooler Thursday," the subheadline must add something new — don't restate it.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
 
@@ -188,11 +191,13 @@ def _build_weather_summary(weather_data):
     # Thunderstorm
     ts = der.get("thunderstorm", {})
     ts_severity = ts.get("severity", "clear")
+    cape_label = ts.get("cape_label", "")
+    risk_word = {"Extreme": "extreme", "High": "high", "Moderate": "moderate"}.get(cape_label, "low")
     if ts_severity in ("active", "severe"):
         dist_str = f", closest {ts['min_distance_km']} km" if ts.get("min_distance_km") else ""
-        lines.append(f"Thunderstorm: {ts_severity.upper()} — {ts.get('lightning_count', 0)} strikes/hr{dist_str}, CAPE {ts.get('cape_current', '?')} J/kg")
-    elif ts_severity == "watch":
-        lines.append(f"Storm risk: CAPE {ts.get('cape_current', '?')} J/kg ({ts.get('cape_label', '')} instability) — conditions favorable for storms")
+        lines.append(f"{'Severe thunderstorm' if ts_severity == 'severe' else 'Thunderstorm'} in progress — {ts.get('lightning_count', 0)} strikes in past hour{dist_str}")
+    elif ts_severity == "watch" and cape_label not in ("", "Weak"):
+        lines.append(f"Thunderstorm risk: {risk_word} — do NOT overstate this, mention only briefly if relevant")
 
     if alert_line:
         lines.append(alert_line)
@@ -290,7 +295,7 @@ def generate_briefing(weather_data):
         if cached is None:
             cached = _load_cached_briefing()
         if cached and cached.get("headline"):
-            return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
+            return {"headline": cached.get("headline", ""), "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", ""), "model": cached.get("model", "gemini")}
 
     summary = _build_weather_summary(weather_data)
     prev_briefing = _load_cached_briefing()
@@ -304,7 +309,7 @@ def generate_briefing(weather_data):
             logging.error("  ⚠ Briefing: current temp is missing/zero (likely GFS failure), using cache")
             cached = _load_cached_briefing()
             if cached and cached.get("headline"):
-                return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
+                return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", ""), "model": cached.get("model", "gemini")}
             return None
 
     # Inject current time so Gemini writes forward-looking content
@@ -334,64 +339,71 @@ def generate_briefing(weather_data):
         }
     }
 
-    # Try up to 2 times: primary model, then fallback on 429
-    for attempt in range(2):
-        url = GEMINI_URL if attempt == 0 else GEMINI_FALLBACK_URL
-        model_label = GEMINI_MODEL if attempt == 0 else GEMINI_FALLBACK_MODEL
-        try:
-            resp = requests.post(
-                url,
-                params={"key": GEMINI_API_KEY},
-                json=payload,
-                timeout=20
-            )
-            if resp.status_code == 429 and attempt == 0:
-                logging.warning(f"  ⚠ Briefing: {GEMINI_MODEL} rate limited, falling back to {GEMINI_FALLBACK_MODEL}...")
-                continue
-            if resp.status_code in (500, 502, 503, 504) and attempt == 0:
-                logging.error(f"  ⚠ Briefing: {model_label} server error, retrying in 3s...")
-                time.sleep(3)
-                continue
-            resp.raise_for_status()
+    # Try Gemini first
+    gemini_ok = False
+    try:
+        resp = requests.post(
+            GEMINI_URL,
+            params={"key": GEMINI_API_KEY},
+            json=payload,
+            timeout=20
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+        if text.startswith("```"):
+            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        result = json.loads(text.strip())
+        headline = result.get("headline", "").strip()
+        subheadline = result.get("subheadline", "").strip()
+        if headline:
+            logging.info(f"  ✓ Briefing (Gemini): {headline}")
+            cached_at = datetime.now(eastern).isoformat()
+            briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at, "model": "gemini"}
+            _save_cached_briefing(briefing)
+            _last_gemini_call_time = datetime.now(eastern)
+            return briefing
+    except Exception as e:
+        logging.warning(f"  ⚠ Briefing: Gemini failed ({type(e).__name__}), trying Groq...")
 
-            data = resp.json()
-            text = data["candidates"][0]["content"]["parts"][0]["text"]
-            # Strip markdown fences if present
-            text = text.strip()
+    # Groq fallback (OpenAI-compatible)
+    if GROQ_API_KEY:
+        try:
+            groq_payload = {
+                "model": GROQ_MODEL,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": f"Weather data for right now:\n{summary}{time_context}{prev_context}"},
+                ],
+                "temperature": 0.9,
+                "max_tokens": 256,
+            }
+            resp = requests.post(
+                GROQ_URL,
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+                json=groq_payload,
+                timeout=15
+            )
+            resp.raise_for_status()
+            text = resp.json()["choices"][0]["message"]["content"].strip()
             if text.startswith("```"):
                 text = text.split("\n", 1)[1] if "\n" in text else text[3:]
             if text.endswith("```"):
                 text = text[:-3]
-            text = text.strip()
-            result = json.loads(text)
-
+            result = json.loads(text.strip())
             headline = result.get("headline", "").strip()
             subheadline = result.get("subheadline", "").strip()
-
             if headline:
-                logging.info(f"  ✓ Briefing: {headline}")
+                logging.info(f"  ✓ Briefing (Groq): {headline}")
                 cached_at = datetime.now(eastern).isoformat()
-                briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at}
+                briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at, "model": "groq"}
                 _save_cached_briefing(briefing)
                 _last_gemini_call_time = datetime.now(eastern)
                 return briefing
-            else:
-                logging.warning("  ⚠ Briefing: empty headline from Gemini")
-                break
-
-        except requests.exceptions.Timeout:
-            if attempt == 0:
-                logging.warning("  ⚠ Briefing: timeout, retrying in 2s...")
-                time.sleep(2)
-                continue
-            logging.warning("  ⚠ Briefing: Gemini timeout after retry")
-            break
-        except requests.exceptions.RequestException as e:
-            logging.error(f"  ⚠ Briefing: Gemini API error: {redact_secrets(e)}")
-            break
-        except (json.JSONDecodeError, KeyError, IndexError) as e:
-            logging.error(f"  ⚠ Briefing: Failed to parse Gemini response: {redact_secrets(e)}")
-            break
+        except Exception as e:
+            logging.error(f"  ⚠ Briefing: Groq failed ({type(e).__name__}: {redact_secrets(e)})")
 
     # All attempts failed — set in-memory guard so we don't retry for 30 minutes
     from datetime import datetime
@@ -401,6 +413,6 @@ def generate_briefing(weather_data):
     cached = _load_cached_briefing()
     if cached and cached.get("headline"):
         logging.info(f"  ↩ Briefing: using cached headline")
-        return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", "")}
+        return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", ""), "model": cached.get("model", "gemini")}
 
     return None
