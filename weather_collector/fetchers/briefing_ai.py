@@ -111,7 +111,9 @@ def _build_weather_summary(weather_data):
     time_arr = hourly.get("times", [])
     max_pop = max((p or 0) for p in pop_arr[:48]) if pop_arr else 0
     precip_line = ""
-    if max_pop >= 20:
+    if max_pop < 20:
+        precip_line = "No significant rain expected next 48h — do NOT mention rain"
+    elif max_pop >= 20:
         precip_arr = hourly.get("precipitation", [])
         rain_inches = round(sum(precip_arr[:48]) / 25.4, 1) if precip_arr else 0
         rain_start = None
