@@ -115,6 +115,7 @@ function _buildCapeChart(hourly) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      layout: { padding: { bottom: 4 } },
       plugins: {
         legend: { display: false },
         tooltip: {

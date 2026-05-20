@@ -121,9 +121,10 @@ function openAlertModal() {
   modalBody.innerHTML = '';
 
   const lightningStrike = window.__lightningStrike;
+  const tsData = window.__thunderstorm;
 
   // If no alerts, show reassurance instead of refusing to open
-  if (alerts.length === 0 && stormFlags.length < 2 && !lightningStrike) {
+  if (alerts.length === 0 && stormFlags.length < 2 && !lightningStrike && !tsData) {
     modalBody.innerHTML = `
       <div style="padding:32px 16px;text-align:center;color:var(--muted);">
         <div style="font-size:2.5rem;margin-bottom:12px;">✓</div>
@@ -143,6 +144,26 @@ function openAlertModal() {
       <div class="alert-modal-item" style="border-left:3px solid ${isClose ? 'rgba(255,80,80,0.7)' : 'rgba(255,160,50,0.7)'};padding-left:12px;">
         <div class="alert-modal-title">⚡ Lightning detected</div>
         <div class="alert-modal-desc">${lightningStrike.count} strike${lightningStrike.count !== 1 ? "s" : ""} in the past hour${distStr}</div>
+      </div>`;
+  }
+
+  // Thunderstorm detection section
+  if (tsData) {
+    const sev = tsData.severity;
+    const isActive = sev === 'active' || sev === 'severe';
+    const color = sev === 'severe' ? 'rgba(255,60,60,0.8)' : sev === 'active' ? 'rgba(255,120,30,0.75)' : 'rgba(180,140,0,0.7)';
+    const icon = isActive ? '⛈' : '🌩';
+    const titleStr = sev === 'severe' ? 'Severe Thunderstorm' : sev === 'active' ? 'Thunderstorm Active' : 'Thunderstorm Watch';
+    const capeStr = tsData.cape_current != null ? ` · CAPE ${tsData.cape_current} J/kg` : '';
+    const strikeStr = isActive && tsData.lightning_count != null
+      ? `${tsData.lightning_count} strike${tsData.lightning_count !== 1 ? 's' : ''} in the past hour` : '';
+    const distStr = isActive && tsData.min_distance_km != null
+      ? ` · closest ${Math.round(tsData.min_distance_km)} km` : '';
+    const desc = strikeStr ? `${strikeStr}${distStr}${capeStr}` : `Atmosphere unstable${capeStr}`;
+    modalBody.innerHTML += `
+      <div class="alert-modal-item" onclick="closeAlertModal();switchTab('weather');setTimeout(()=>{ const c=document.querySelector('[data-collapse-key=thunderstorm]'); if(c&&!c.classList.contains('card-expanded')) c.click(); },200);" style="cursor:pointer;border-left:3px solid ${color};padding-left:12px;">
+        <div class="alert-modal-title">${icon} ${titleStr}</div>
+        <div class="alert-modal-desc">${desc}</div>
       </div>`;
   }
 

@@ -1031,7 +1031,7 @@ function loadWeatherData() {
           const hasAlerts = container && container.innerHTML.trim().length > 0;
           const hasStorm = stormFlags.length >= 2;
           // Badge is always visible — toggle the colored dot for active state
-          if (dot) dot.style.display = (hasAlerts || hasStorm || !!window.__lightningStrike) ? "" : "none";
+          if (dot) dot.style.display = (hasAlerts || hasStorm || !!window.__lightningStrike || !!window.__thunderstorm) ? "" : "none";
         }
         updatePrecipBadge(data);
         // Sea breeze indicator
@@ -1180,6 +1180,8 @@ function loadWeatherData() {
         renderFogDetail(data);
         renderFeelsLikeCard(data);
         renderThunderstormCard(data);
+        window.__thunderstorm = (data.derived?.thunderstorm?.severity && data.derived.thunderstorm.severity !== 'clear')
+          ? data.derived.thunderstorm : null;
         initWindPills(data);
 
         const windNowEl      = document.getElementById("windNowWind");
@@ -1538,11 +1540,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('alertsContainer');
     const hasAlerts = container && container.innerHTML.trim().length > 0;
     const hasStorm = (window.__stormFlags || []).length >= 2;
+    const hasTs = !!window.__thunderstorm;
     // Badge is always visible — toggle the colored dot to indicate active state
-    if (dot) dot.style.display = (hasAlerts || hasStorm) ? '' : 'none';
+    if (dot) dot.style.display = (hasAlerts || hasStorm || hasTs) ? '' : 'none';
     // Briefing tab alert dot
     const tabDot = document.getElementById('briefingTabAlertDot');
-    if (tabDot) tabDot.style.display = (hasAlerts || hasStorm) ? '' : 'none';
+    if (tabDot) tabDot.style.display = (hasAlerts || hasStorm || hasTs) ? '' : 'none';
   });
   
   // Start observing once DOM is ready
