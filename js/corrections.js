@@ -31,7 +31,9 @@ function renderCorrectionsCard(data) {
   // Temperature
   set('scModelTemp',     hyp.model_temp != null ? hyp.model_temp.toFixed(1) + '°F' : '--');
   set('scCorrectedTemp', hyp.corrected_temp != null ? Math.round(hyp.corrected_temp) + '°F' : '--');
-  const tempBias = hyp.weighted_bias ?? hyp.bias_temp;
+  const tempBias = (hyp.corrected_temp != null && hyp.model_temp != null)
+    ? hyp.corrected_temp - hyp.model_temp
+    : (hyp.weighted_bias ?? hyp.bias_temp);
   set('scBiasTemp', tempBias != null ? (tempBias >= 0 ? '+' : '') + tempBias.toFixed(1) + '°F' : '--');
 
   // Humidity
