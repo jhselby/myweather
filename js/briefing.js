@@ -866,13 +866,13 @@
           isAlert: true,
         });
       } else {
-        const capeDesc = ts.cape_label === "Moderate" ? "atmosphere moderately unstable" :
-                         ts.cape_label === "High"     ? "atmosphere very unstable" :
-                         ts.cape_label === "Extreme"  ? "atmosphere extremely unstable" :
-                                                        "atmosphere slightly unstable";
+        const riskDesc = ts.cape_label === "Moderate" ? "Moderate risk" :
+                         ts.cape_label === "High"     ? "High risk" :
+                         ts.cape_label === "Extreme"  ? "Extreme risk" :
+                                                        "Low risk";
         rows.push({
           label: "Thunderstorm risk",
-          value: `Storms possible — ${capeDesc}`,
+          value: riskDesc,
           color: "orange",
           isAlert: false,
         });

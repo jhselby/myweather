@@ -9,6 +9,13 @@ const TS_SEVERITY_CONFIG = {
   severe: { label: "Severe",     cls: "severe",      tileClass: "tile-ts-severe" },
 };
 
+function _riskLabel(capeLabel) {
+  if (capeLabel === "Moderate") return "Moderate risk";
+  if (capeLabel === "High")     return "High risk";
+  if (capeLabel === "Extreme")  return "Extreme risk";
+  return "Low risk";
+}
+
 function _capeColor(cape) {
   if (cape == null)    return "rgba(120,120,120,0.5)";
   if (cape >= 4000)    return "rgba(180,60,220,0.85)";
@@ -49,14 +56,14 @@ function renderThunderstormCard(data) {
       tileDetail.textContent = `${ts.lightning_count} strikes/hr${dist}`;
       tileDetail.style.display = "";
     } else if (ts.severity === "watch") {
-      tileDetail.textContent = "Conditions favorable";
+      tileDetail.textContent = _riskLabel(ts.cape_label);
       tileDetail.style.display = "";
     } else {
       tileDetail.style.display = "none";
     }
   }
   if (tileCape && ts?.cape_current != null) {
-    tileCape.textContent = `CAPE ${ts.cape_current} J/kg · ${ts.cape_label}`;
+    tileCape.textContent = `CAPE ${ts.cape_current} J/kg`;
   }
 
   // ── Expanded card ─────────────────────────────────────────────────────────
@@ -79,7 +86,7 @@ function renderThunderstormCard(data) {
 
   // CAPE rows
   setT("tsCapeValue",     ts.cape_current != null ? `${ts.cape_current} J/kg` : "--");
-  setT("tsCapeLabelValue", ts.cape_label || "--");
+  setT("tsCapeLabelValue", ts.cape_label ? _riskLabel(ts.cape_label) : "--");
   if (ts.cape_peak_value != null && ts.cape_peak_hour != null) {
     setT("tsCapePeakValue", `${ts.cape_peak_value} J/kg at ${_fmtTime(ts.cape_peak_hour)}`);
   } else {

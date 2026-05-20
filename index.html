@@ -573,14 +573,14 @@
               </div>
             </div>
 
-            <div class="text-secondary" style="font-size:0.82rem;margin-bottom:8px;font-weight:700;">Atmospheric Instability (CAPE)</div>
+            <div class="text-secondary" style="font-size:0.82rem;margin-bottom:8px;font-weight:700;">Storm Risk Forecast</div>
             <div class="row">
-              <div class="label">Current</div>
-              <div class="value" id="tsCapeValue">--</div>
+              <div class="label">Risk level</div>
+              <div class="value" id="tsCapeLabelValue">--</div>
             </div>
             <div class="row">
-              <div class="label">Level</div>
-              <div class="value" id="tsCapeLabelValue">--</div>
+              <div class="label">CAPE</div>
+              <div class="value" id="tsCapeValue">--</div>
             </div>
             <div class="row" style="margin-bottom:14px;">
               <div class="label">12h peak</div>
@@ -592,7 +592,7 @@
             </div>
 
             <div class="text-subtle" style="font-size:0.72rem;line-height:1.5;margin-top:20px;">
-              CAPE (Convective Available Potential Energy) measures atmospheric instability. Values above 500 J/kg indicate storm potential; above 2500 J/kg conditions can support severe storms. Lightning data from Tempest stations within 0.5 mi.
+              Risk based on CAPE (atmospheric energy available for storm development) and lightning from Tempest stations within 0.5 mi. Low risk = CAPE 500–999 J/kg; Moderate = 1000–2499; High = 2500–3999; Extreme = 4000+.
             </div>
           </div>
         </div>
@@ -1270,7 +1270,7 @@
 
 
   </div>
-  <script src="js/briefing.js?v=1634fa88"></script>
+  <script src="js/briefing.js?v=7967ea92"></script>
   <script src="js/wind.js?v=435540aa"></script>
   <script src="js/corrections.js?v=3054d09e"></script>
   <script src="js/sky.js?v=e79e6941"></script>
@@ -1281,7 +1281,7 @@
   <script src="js/almanac.js?v=6bb44d8a"></script>
   <script src="js/seabreeze.js?v=14e6104c"></script>
   <script src="js/feelslike.js?v=8f917725"></script>
-  <script src="js/thunderstorm.js?v=e70295e8"></script>
+  <script src="js/thunderstorm.js?v=21b57575"></script>
   <script src="js/previews.js?v=4f6a8df5"></script>
   <script src="js/tempchart.js?v=ddb37223"></script>
   <script src="js/forecast.js?v=5b44ecee"></script>
@@ -1416,7 +1416,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.162</span>
+            <span class="version-pill" id="appVersion">v0.5.163</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
