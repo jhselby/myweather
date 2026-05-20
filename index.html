@@ -20,7 +20,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
-  <link rel="stylesheet" href="styles/app.css?v=c58ba9cf" />
+  <link rel="stylesheet" href="styles/app.css?v=220172a4" />
   <link rel="stylesheet" href="styles/briefing.css?v=f3156b36" />
 </head>
 <body>
@@ -538,7 +538,65 @@
 
         
 
-        
+        <div class="card col-6" data-collapse-key="thunderstorm" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('thunderstorm', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            Storm<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('thunderstorm', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Storm</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div id="tsStatusCollapsed" style="font-size:1.6rem;font-weight:600;margin-bottom:6px;">--</div>
+              <div id="tsDetailCollapsed" style="font-size:0.85rem;opacity:0.85;margin-bottom:4px;text-align:center;padding:0 12px;"></div>
+              <div id="tsCapeCollapsed" style="font-size:0.72rem;opacity:0.6;margin-top:4px;"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row" style="margin-bottom:14px;">
+              <div class="label">Status</div>
+              <div class="value" id="tsStatusBadge">--</div>
+            </div>
+
+            <div id="tsLightningSection">
+              <div class="text-secondary" style="font-size:0.82rem;margin-bottom:8px;font-weight:700;">Lightning</div>
+              <div class="row">
+                <div class="label">Strikes / hr</div>
+                <div class="value" id="tsStrikesValue">--</div>
+              </div>
+              <div class="row">
+                <div class="label">Strikes / 3hr</div>
+                <div class="value" id="tsStrikes3hrValue">--</div>
+              </div>
+              <div class="row" style="margin-bottom:14px;">
+                <div class="label">Closest strike</div>
+                <div class="value" id="tsDistanceValue">--</div>
+              </div>
+            </div>
+
+            <div class="text-secondary" style="font-size:0.82rem;margin-bottom:8px;font-weight:700;">Atmospheric Instability (CAPE)</div>
+            <div class="row">
+              <div class="label">Current</div>
+              <div class="value" id="tsCapeValue">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Level</div>
+              <div class="value" id="tsCapeLabelValue">--</div>
+            </div>
+            <div class="row" style="margin-bottom:14px;">
+              <div class="label">12h peak</div>
+              <div class="value" id="tsCapePeakValue">--</div>
+            </div>
+
+            <div style="position:relative;height:120px;margin-bottom:12px;">
+              <canvas id="tsCapeChart"></canvas>
+            </div>
+
+            <div class="text-subtle" style="font-size:0.72rem;line-height:1.5;">
+              CAPE (Convective Available Potential Energy) measures atmospheric instability. Values above 500 J/kg indicate storm potential; above 2500 J/kg conditions can support severe storms. Lightning data from Tempest stations within 0.5 mi.
+            </div>
+          </div>
+        </div>
+
         <div class="card col-6" data-collapse-key="sea_breeze_detail" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sea_breeze_detail', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Sea Breeze<span class="collapse-chevron" style="display:none;">&#9660;</span>
@@ -1212,8 +1270,8 @@
 
 
   </div>
-  <script src="js/briefing.js?v=67ea8c86"></script>
-  <script src="js/wind.js?v=cbf5f795"></script>
+  <script src="js/briefing.js?v=5d134f99"></script>
+  <script src="js/wind.js?v=435540aa"></script>
   <script src="js/corrections.js?v=3054d09e"></script>
   <script src="js/sky.js?v=e79e6941"></script>
   <script src="js/sources.js?v=0c7b4771"></script>
@@ -1223,6 +1281,7 @@
   <script src="js/almanac.js?v=6bb44d8a"></script>
   <script src="js/seabreeze.js?v=14e6104c"></script>
   <script src="js/feelslike.js?v=8f917725"></script>
+  <script src="js/thunderstorm.js?v=a053542c"></script>
   <script src="js/previews.js?v=4f6a8df5"></script>
   <script src="js/tempchart.js?v=ddb37223"></script>
   <script src="js/forecast.js?v=5b44ecee"></script>
@@ -1232,7 +1291,7 @@
   <script src="js/dock.js?v=300bea08"></script>
   <script src="js/ui.js?v=95607d53"></script>
   <script src="js/modals.js?v=c40f836e"></script>
-  <script src="js/app-main.js?v=e71947d3"></script>
+  <script src="js/app-main.js?v=f465a78e"></script>
   <script src="js/changelog_loader.js?v=eb2d0222"></script>
   
   <script>
@@ -1357,7 +1416,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.153</span>
+            <span class="version-pill" id="appVersion">v0.5.154</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->

@@ -1179,6 +1179,7 @@ function loadWeatherData() {
         renderSeaBreezeDetail(data);
         renderFogDetail(data);
         renderFeelsLikeCard(data);
+        renderThunderstormCard(data);
         initWindPills(data);
 
         const windNowEl      = document.getElementById("windNowWind");

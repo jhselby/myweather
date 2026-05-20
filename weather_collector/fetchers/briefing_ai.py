@@ -182,6 +182,16 @@ def _build_weather_summary(weather_data):
         lines.append(fog_line)
     if sb_line:
         lines.append(sb_line)
+
+    # Thunderstorm
+    ts = der.get("thunderstorm", {})
+    ts_severity = ts.get("severity", "clear")
+    if ts_severity in ("active", "severe"):
+        dist_str = f", closest {ts['min_distance_km']} km" if ts.get("min_distance_km") else ""
+        lines.append(f"Thunderstorm: {ts_severity.upper()} — {ts.get('lightning_count', 0)} strikes/hr{dist_str}, CAPE {ts.get('cape_current', '?')} J/kg")
+    elif ts_severity == "watch":
+        lines.append(f"Storm risk: CAPE {ts.get('cape_current', '?')} J/kg ({ts.get('cape_label', '')} instability) — conditions favorable for storms")
+
     if alert_line:
         lines.append(alert_line)
 

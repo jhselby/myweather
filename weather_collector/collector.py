@@ -40,6 +40,7 @@ from .processors.pressure import compute_pressure_trend_hpa, get_best_pressure_t
 from .processors.wind_risk import compute_wind_risk
 from .processors.fog import calculate_fog_risk
 from .processors.trough import compute_trough_signal
+from .processors.thunderstorm import detect_thunderstorm
 from .processors.forecast_text import generate_forecast_text
 import logging
 
@@ -771,6 +772,12 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # Must be called AFTER derived dict is set at line 300
     hyperlocal_data = weather_data.get("hyperlocal", {})
     add_corrected_precip_types(weather_data, hyperlocal_data)
+
+    # Thunderstorm detection
+    ts = detect_thunderstorm(weather_data)
+    weather_data["derived"]["thunderstorm"] = ts
+    if ts.get("sky_override"):
+        weather_data.setdefault("current", {})["condition_override"] = ts["sky_override"]
     
     # Process 7-day hourly data for forecast generation
     if hourly_7day_data and "hourly" in hourly_7day_data:

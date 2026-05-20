@@ -253,8 +253,8 @@ function fillWorryCard(ids, peak, windowHours) {
 function renderWindRisk(data) {
   const hyp    = data.hyperlocal || {};
   const hourly = data.hourly || {};
-  const gustPeak = computePeakWorry(hourly, _gustWindowHours, true);
-  const susPeak  = computePeakWorry(hourly, _susWindowHours,  false);
+  let gustPeak = computePeakWorry(hourly, _gustWindowHours, true);
+  let susPeak  = computePeakWorry(hourly, _susWindowHours,  false);
 
   fillWorryCard(
     { score:"gustCurrentScore", scoreLabel:"windImpactScoreLabel", peakSpd:"gustPeak",

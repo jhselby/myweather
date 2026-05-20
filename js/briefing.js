@@ -853,20 +853,25 @@
       });
     }
 
-    // 3. Lightning (alert-level — keep with NWS alerts at top)
-    const tempestStations = (s._data.tempest?.stations || []);
-    if (tempestStations.length > 0) {
-      const totalCount1hr = Math.max(...tempestStations.map(st => st.lightning_count_1hr || 0));
-      const distances = tempestStations.map(st => st.lightning_last_distance_km).filter(d => d != null && d > 0);
-      const minDist = distances.length > 0 ? Math.min(...distances) : null;
-      const isClose = minDist != null && minDist <= 20;
-      if (totalCount1hr >= 3 || (totalCount1hr >= 1 && isClose)) {
-        const distStr = minDist != null ? ` · closest ${Math.round(minDist)} km` : "";
+    // 3. Thunderstorm / lightning (alert-level — keep with NWS alerts at top)
+    const ts = der.thunderstorm;
+    if (ts && (ts.active || ts.severity === "watch")) {
+      if (ts.active) {
+        const distStr = ts.min_distance_km != null ? ` · closest ${ts.min_distance_km} km` : "";
+        const label = ts.severity === "severe" ? "Severe Thunderstorm" : "Thunderstorm";
         rows.push({
-          label: "Lightning",
-          value: `Lightning · ${totalCount1hr} strike${totalCount1hr !== 1 ? "s" : ""} in past hour${distStr}`,
-          color: isClose ? "red" : "orange",
+          label,
+          value: `${ts.lightning_count} strike${ts.lightning_count !== 1 ? "s" : ""}/hr${distStr}`,
+          color: ts.severity === "severe" ? "red" : "orange",
           isAlert: true,
+        });
+      } else {
+        rows.push({
+          label: "Storm risk",
+          value: `CAPE ${ts.cape_current} J/kg · ${ts.cape_label} instability`,
+          color: "orange",
+          dim: true,
+          isAlert: false,
         });
       }
     }
