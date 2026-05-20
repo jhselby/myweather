@@ -126,7 +126,7 @@ function _buildCapeChart(hourly) {
       },
       scales: {
         x: {
-          ticks: { color: chartTextColor(), font: { size: 10 }, maxRotation: 0 },
+          ticks: { color: chartTextColor(), font: { size: 10 }, maxRotation: 0, maxTicksLimit: 7 },
           grid:  { color: chartGridColor() },
         },
         y: {
