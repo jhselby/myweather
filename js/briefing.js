@@ -984,6 +984,18 @@ function renderBriefing(data) {
     hl.textContent = b.headline;
     hl.style.fontStyle = b.isAI ? 'normal' : 'italic';
   }
+  const staleEl = document.getElementById('briefHeadlineStale');
+  if (staleEl) {
+    const cachedAt = data.briefing?.cached_at ? new Date(data.briefing.cached_at) : null;
+    const headlineAge = cachedAt ? Math.round((now - cachedAt) / 60000) : null;
+    if (b.isAI && headlineAge != null && headlineAge >= 90) {
+      const hStr = headlineAge >= 120 ? Math.round(headlineAge / 60) + 'h' : headlineAge + 'm';
+      staleEl.textContent = 'headline from ' + hStr + ' ago';
+      staleEl.style.display = '';
+    } else {
+      staleEl.style.display = 'none';
+    }
+  }
   const sm = document.getElementById('briefSummary');
   if (sm) sm.textContent = b.summary;
   const sn = document.getElementById('briefTempNow');

@@ -21,7 +21,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.js"></script>
   <link rel="stylesheet" href="styles/app.css?v=92288fe4" />
-  <link rel="stylesheet" href="styles/briefing.css?v=f3156b36" />
+  <link rel="stylesheet" href="styles/briefing.css?v=211cd27b" />
 </head>
 <body>
   <div class="container">
@@ -70,6 +70,7 @@
         <hr class="brief-rule">
         <div class="brief-section-label" id="briefTimeLabel"></div>
         <div class="brief-headline" id="briefHeadline"></div>
+        <div class="brief-headline-stale" id="briefHeadlineStale" style="display:none;"></div>
         <div class="brief-summary" id="briefSummary"></div>
         <div class="brief-stats">
           <div class="brief-stat">
@@ -1270,7 +1271,7 @@
 
 
   </div>
-  <script src="js/briefing.js?v=41346d34"></script>
+  <script src="js/briefing.js?v=fc384eb9"></script>
   <script src="js/wind.js?v=2d8ef9d7"></script>
   <script src="js/corrections.js?v=1189b06b"></script>
   <script src="js/sky.js?v=e79e6941"></script>
@@ -1416,7 +1417,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.166</span>
+            <span class="version-pill" id="appVersion">v0.5.167</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
