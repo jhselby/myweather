@@ -1407,7 +1407,11 @@ function loadWeatherData() {
       // If we just reloaded due to an update, suppress the check for 30s — GitHub Pages CDN
       // ignores query params for HTML, so the old index.html may still be served for a bit.
       const justUpdated = sessionStorage.getItem('_updateReload');
-      if (justUpdated && Date.now() - parseInt(justUpdated) < 30000) return;
+      if (justUpdated && Date.now() - parseInt(justUpdated) < 30000) {
+        const dot = document.getElementById('refreshAlertDot');
+        if (dot) dot.style.display = 'none';
+        return;
+      }
       sessionStorage.removeItem('_updateReload');
       const loadedVersion = document.getElementById('appVersion')?.textContent?.trim();
       if (!loadedVersion) return;
