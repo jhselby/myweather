@@ -560,7 +560,7 @@ function loadWeatherData() {
 
         document.getElementById("feelsLike").textContent =
           `Feels like ${Math.round(heatIndex)}°F`;
-        const flc = document.getElementById("feelsLikeCollapsed"); if (flc) flc.textContent = `Feels like ${Math.round(heatIndex)}°`;
+        const flc = document.getElementById("feelsLikeCollapsed"); if (flc) flc.textContent = `Feels like ${Math.round(heatIndex)}°F`;
         const fsEl = document.getElementById("feelsLikeFullSun");
         if (fsEl) {
           if (fullSunFL != null && fullSunFL > heatIndex + 5) {

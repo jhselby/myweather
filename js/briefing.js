@@ -434,7 +434,7 @@
     if (sunset) {
       rows.push({
         label: sunset.tomorrow ? "Sunset (tomorrow)" : "Sunset",
-        value: `${sunset.label} (${sunset.score}/100)`,
+        value: sunset.label,
         color: ["Spectacular","Very Good"].includes(sunset.label) ? "orange" : sunset.label === "Good" ? "green" : null,
       });
     }
@@ -444,7 +444,7 @@
     if (beach) {
       rows.push({
         label: beach.tomorrow ? "Beach day (tomorrow)" : "Beach day",
-        value: `${beach.label} (${beach.score}/100)`,
+        value: beach.label,
         color: beach.label === "Great day" ? "green" : beach.label === "Good day" ? null : beach.label === "Stay inside" ? "red" : "orange",
       });
     }
@@ -454,7 +454,7 @@
     if (hair) {
       rows.push({
         label: hair.tomorrow ? "Hair day (tomorrow)" : "Hair day",
-        value: `${hair.label} (${hair.score}/100)`,
+        value: hair.label,
         color: ["Great hair day","Good hair day"].includes(hair.label) ? "green" : ["Bad hair day","Stay inside"].includes(hair.label) ? "red" : ["Frizz risk"].includes(hair.label) ? "orange" : null,
       });
     }
@@ -463,7 +463,7 @@
     const birds = s._data.birds || {};
     const speciesCount = birds.species_count;
     if (speciesCount) {
-      rows.push({ label: "Birds", value: speciesCount + " species nearby · 48h", color: null });
+      rows.push({ label: "Birds", value: speciesCount + " species spotted nearby · Last 48h", color: null });
     }
 
     return rows;
@@ -589,47 +589,47 @@
     let c2 = "";
     switch (s.priority) {
       case "rain_now":
-        c2 = `Rain ongoing${s.rainInches > 0 ? `, ${s.rainInches}" so far` : ""}. Wind ${s.windMph} MPH ${s.windDir}${gustStr}.`;
+        c2 = `Rain ongoing${s.rainInches > 0 ? `, ${s.rainInches}" so far` : ""}. Wind ${s.windMph} mph ${s.windDir}${gustStr}.`;
         break;
       case "rain_soon":
-        c2 = `Rain by ${s.rainStartStr}${s.rainInches > 0 ? `, ${s.rainInches}" expected` : ""}. Wind ${s.windMph} MPH ${s.windDir}.`;
+        c2 = `Rain by ${s.rainStartStr}${s.rainInches > 0 ? `, ${s.rainInches}" expected` : ""}. Wind ${s.windMph} mph ${s.windDir}.`;
         break;
       case "rain_later":
-        c2 = `Rain ${s.rainStartStr}–${s.rainEndStr}, ${s.rainInches}". Wind ${s.windMph} MPH ${s.windDir}.`;
+        c2 = `Rain ${s.rainStartStr}–${s.rainEndStr}, ${s.rainInches}". Wind ${s.windMph} mph ${s.windDir}.`;
         break;
       case "alert":
-        c2 = `${s.alerts[0].event}${s.alerts[0].description ? "" : ""}. ${s.windMph} MPH ${s.windDir}${gustStr}.`;
+        c2 = `${s.alerts[0].event}${s.alerts[0].description ? "" : ""}. ${s.windMph} mph ${s.windDir}${gustStr}.`;
         break;
       case "fog":
-        c2 = `Fog probability ${s.fogProb}%. Wind ${s.windMph} MPH ${s.windDir}.`;
+        c2 = `Fog probability ${s.fogProb}%. Wind ${s.windMph} mph ${s.windDir}.`;
         break;
       case "clear_changing":
-        c2 = `Cloud cover builds later. Wind ${s.windMph} MPH ${s.windDir}.`;
+        c2 = `Cloud cover builds later. Wind ${s.windMph} mph ${s.windDir}.`;
         break;
       case "sea_breeze":
-        c2 = `Sea breeze active (${s.seaBreeze.likelihood}% likelihood). ${s.windMph} MPH ${s.windDir}${gustStr}.`;
+        c2 = `Sea breeze active (${s.seaBreeze.likelihood}% likelihood). ${s.windMph} mph ${s.windDir}${gustStr}.`;
         break;
       case "trend":
         c2 = s.skyTrend === "clearing"
-          ? `Clearing later. Wind ${s.windMph} MPH ${s.windDir}.`
-          : `Clouds building. Wind ${s.windMph} MPH ${s.windDir}.`;
+          ? `Clearing later. Wind ${s.windMph} mph ${s.windDir}.`
+          : `Clouds building. Wind ${s.windMph} mph ${s.windDir}.`;
         break;
       case "wind":
-        c2 = `Wind ${s.windMph} MPH ${s.windDir}${gustStr}.`;
+        c2 = `Wind ${s.windMph} mph ${s.windDir}${gustStr}.`;
         break;
       case "temp_extreme":
         c2 = s.tempBand === "hot"
-          ? `${s.windMph > 5 ? `Wind ${s.windMph} MPH ${s.windDir}.` : "Barely a breeze."}`
-          : `Wind ${s.windMph} MPH ${s.windDir}${gustStr} — feels worse.`;
+          ? `${s.windMph > 5 ? `Wind ${s.windMph} mph ${s.windDir}.` : "Barely a breeze."}`
+          : `Wind ${s.windMph} mph ${s.windDir}${gustStr} — feels worse.`;
         break;
       case "frost":
         c2 = `Tonight drops to ${s.low}°. Frost likely by dawn.`;
         break;
       default:
         if (s.rainContext && s.rainContext !== "none") {
-          c2 = `Next rain: ${s.rainContext}. Wind ${s.windMph} MPH ${s.windDir}.`;
+          c2 = `Next rain: ${s.rainContext}. Wind ${s.windMph} mph ${s.windDir}.`;
         } else {
-          c2 = `No rain in sight. Wind ${s.windMph} MPH ${s.windDir}.`;
+          c2 = `No rain in sight. Wind ${s.windMph} mph ${s.windDir}.`;
         }
     }
 
@@ -653,7 +653,7 @@
     const gustNote = s.gustMph ? `, gusts ${s.gustMph}` : "";
     rows.push({
       label: "Wind",
-      value: `${s.windMph} MPH ${s.windDir}${gustNote}`,
+      value: `${s.windMph} mph ${s.windDir}${gustNote}`,
       color: s.windBand === "dangerous" ? "red" : s.windBand === "windy" ? "orange" : null,
     });
 
@@ -1033,7 +1033,9 @@ function renderBriefing(data) {
     const bLevel = worryLevel(bImpact);
     const windRow = b.todayRows.find(r => r.label === 'Wind');
     if (windRow) {
-      windRow.value += ' · Impact: ' + bImpact + ' ' + bLevel.label;
+      const gustPart = bGustSpeed != null ? `, gusts ${Math.round(bGustSpeed)}` : '';
+      windRow.value = `${bLevel.label} at the cove (${Math.round(bWindSpeed)} mph ${toCompass(bWindDir)}${gustPart})`;
+      windRow.color = bLevel.cls === 'severe' ? 'red' : bLevel.cls === 'significant' ? 'orange' : null;
     }
   }
   const cm = { green: 'brief-val-green', orange: 'brief-val-orange', red: 'brief-val-red', blue: 'brief-val-blue' };

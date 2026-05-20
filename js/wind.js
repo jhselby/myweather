@@ -301,7 +301,7 @@ function renderWindRisk(data) {
     const peakEl       = document.getElementById("windImpactPeakScore");
     const labelEl      = document.getElementById("windImpactScoreLabel");
     if (peakEl)  peakEl.innerHTML  = `<span class="badge ${peakLevel.cls}">${peakCombined}</span> (${peakLevel.label})`;
-    if (labelEl) labelEl.textContent = `Peak impact (next ${_gustWindowHours}h)`;
+    if (labelEl) labelEl.textContent = `Peak Impact (next ${_gustWindowHours}h)`;
   }
 }
 
