@@ -897,6 +897,11 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if birds_data:
         weather_data["birds"] = birds_data
 
+    try:
+        weather_data["obs_temp_log"] = _obs_log
+    except NameError:
+        weather_data["obs_temp_log"] = {"entries": []}
+
     return weather_data
 
 
