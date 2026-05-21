@@ -54,6 +54,7 @@ HRRR_HOURLY_VARS = [
     "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m",
     "temperature_850hPa", "temperature_700hPa", "geopotential_height_850hPa",
     "direct_radiation",
+    "freezinglevel_height", "total_column_integrated_water_vapour",
 ]
 
 GFS_ADDITIONAL_HOURLY_VARS = ["visibility", "uv_index"]

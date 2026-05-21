@@ -373,6 +373,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "temperature_700hPa": hourly.get("temperature_700hPa", []),
             "geopotential_height_850hPa": hourly.get("geopotential_height_850hPa", []),
             "col_precip_type_850mb": hourly.get("col_precip_type_850mb", []),
+            "freezing_level_ft": hourly.get("freezinglevel_height", []),
+            "precip_water_mm": hourly.get("total_column_integrated_water_vapour", []),
         }
 
 
@@ -398,6 +400,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
                 "wind_direction": [], "wind_gusts": [], "pressure": [],
                 "temperature_850hPa": [], "temperature_700hPa": [],
                 "geopotential_height_850hPa": [], "col_precip_type_850mb": [],
+                "freezing_level_ft": [], "precip_water_mm": [],
             }
             logging.warning("  ⚠️ HRRR unavailable — using Pirate Weather cloud cover for hourly block")
         elif not weather_data["hourly"].get("cloud_cover"):
@@ -650,6 +653,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         if _obs_yesterday_gusts:
             derived["yesterday_peak_gust"] = round(max(_obs_yesterday_gusts), 1)
 
+        _hourly_fl = weather_data["hourly"].get("freezing_level_ft", [])
+        _hourly_pw = weather_data["hourly"].get("precip_water_mm", [])
+        if _current_hour_iso in _hourly_times:
+            _ci_atm = _hourly_times.index(_current_hour_iso)
+            if _ci_atm < len(_hourly_fl) and _hourly_fl[_ci_atm] is not None:
+                derived["freezing_level_ft"] = round(_hourly_fl[_ci_atm])
+            if _ci_atm < len(_hourly_pw) and _hourly_pw[_ci_atm] is not None:
+                derived["precip_water_mm"] = round(_hourly_pw[_ci_atm], 1)
+
         _fc_tomorrow = [
             _ct_temps[i]
             for i, t in enumerate(_ct_times)
@@ -670,6 +682,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _corrected_dewpt = _gamma * 243.04 / (17.625 - _gamma) * 9 / 5 + 32
         derived["corrected_dew_point"] = round(_corrected_dewpt, 1)
         derived["dew_point_spread_f"] = round(_ct - _corrected_dewpt, 1)
+        derived["cloud_base_ft"] = max(0, round((_ct - _corrected_dewpt) * 225))
     elif current_data:
         current = current_data.get("current", {})
         spread = compute_dew_point_spread(current.get("temperature_2m"), current.get("dew_point_2m"))
