@@ -1,6 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.149
-**Last Updated:** May 19, 2026  
+**Version:** 0.5.170
+**Last Updated:** May 21, 2026  
 **Purpose:** Complete technical specification of all data corrections and transformations
 
 ---
@@ -995,6 +995,20 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 
 ## VERSION HISTORY
 
+**v0.5.169–v0.5.170 (May 21, 2026):**
+- Yesterday context in briefing prompt: `obs_temp_log.json` now records hourly `precip_in` and `gust_mph` alongside temp; collector derives `derived.yesterday_high`, `derived.yesterday_precip_in`, `derived.yesterday_peak_gust`; all three passed to Gemini/Groq as a single "Yesterday:" line with no rules attached
+- Groq model upgraded from `llama-3.1-8b-instant` to `llama-3.3-70b-versatile` for better prompt rule compliance
+- Settings alert dot: critical-only trigger (GFS, HRRR, WU, Pirate Weather, NWS Alerts); supplementary sources (KBVY, KBOS, eBird, buoy, tides) fail silently
+- Source error display: raw exception strings parsed to short readable labels in sources.js
+
+**v0.5.159–v0.5.168 (May 20, 2026):**
+- Groq fallback: `llama-3.1-8b-instant` via Groq API (OpenAI-compatible); fires when Gemini raises any exception; `"model": "gemini"/"groq"` tagged on every briefing save and cached return; Sources card shows active/standby with age for the active model
+- No-redundancy prompt rule: headline and subheadline must carry different information
+- Briefing stale indicator: "headline from Xh ago" shown below headline when briefing >90 min old
+- Corrections card: bias display fixed — shows actual applied delta (`corrected_temp − model_temp`) not raw `weighted_bias` (which is pre-Kalman and overstates the correction)
+- Wind briefing row: "Light winds at the cove (9 mph NW, gusts 23)" format
+- Terminology: mph spacing, capitalization normalized across js/briefing.js, js/wind.js, js/sources.js, index.html
+
 **v0.5.145–v0.5.149 (May 19, 2026):**
 - Pirate Weather cloud cover fallback: collector extracts 48h cloud cover from PW; injected into hourly block when Open-Meteo HRRR is down or cloud_cover array is empty
 - Gemini briefing: switched to `gemini-2.5-flash` (gemini-2.5-flash-lite invalid); maxOutputTokens 200→2048 (thinking model); in-memory backoff on failure prevents retry storm
@@ -1114,6 +1128,9 @@ Check this document first to understand where data comes from and what correctio
   - Total precipitation (mm → inches)
 - Alerts (NWS)
 - Sunset score (if available)
+- Yesterday's observed high (from `obs_temp_log.json`; always present after first full day)
+- Yesterday's precip total in inches (from `obs_temp_log.json`; present once log has been running ≥1 day; omitted if trace/zero)
+- Yesterday's peak gust in mph (from `obs_temp_log.json`; omitted if < 20 mph)
 
 ### Key Rules
 
@@ -1122,6 +1139,7 @@ Check this document first to understand where data comes from and what correctio
 - Gemini decides when contrast between local impact and regional forecast is worth mentioning (not forced)
 - No invented geography or causal landmark claims
 - Avoid vague coastal phrasing ("off the water", "onshore")
+- Headline and subheadline must not repeat the same information — if the headline names a trend, the subheadline must add something new
 
 ### Output
 
@@ -1133,10 +1151,10 @@ Check this document first to understand where data comes from and what correctio
 ### Model Configuration
 
 - **Primary:** `gemini-2.5-flash` (default, configurable via `GEMINI_MODEL` env var; `gemini-2.5-flash-lite` was invalid/503)
-- **Fallback:** `gemini-1.5-flash-8b` on HTTP 429 (configurable via `GEMINI_FALLBACK_MODEL` env var)
-- **maxOutputTokens:** 2048 (thinking model — thinking tokens count against output budget; 200/400 too low)
-- **Retry storm guard:** `_last_gemini_call_time` set on failure; prevents every 10-min run from retrying Gemini after an error
-- Fallback uses a separate endpoint URL; retries 3x with increasing delay
+- **Fallback:** Groq API (`llama-3.3-70b-versatile`) when Gemini raises any exception; OpenAI-compatible endpoint (`https://api.groq.com/openai/v1/chat/completions`); key via `GROQ_API_KEY` Secret Manager; same system prompt as Gemini
+- **maxOutputTokens:** 2048 for Gemini (thinking model); 256 for Groq
+- **Retry storm guard:** `_last_gemini_call_time` set on failure; prevents every 10-min run from retrying Gemini after an error; same guard covers Groq path
+- **Model tagging:** every briefing save includes `"model": "gemini"` or `"model": "groq"`; cached returns preserve the tag; Sources card reads `data.briefing.model` to show active/standby state
 
 ### Previous Briefing Context
 
