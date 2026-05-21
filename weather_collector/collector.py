@@ -153,8 +153,8 @@ def _save_obs_temp_log(data):
     _upload_to_gcs(data, OBS_TEMP_LOG_GCS_PATH, "obs_temp_log.json")
 
 
-def _update_obs_temp_log(corrected_temp):
-    """Append current corrected temp with local timestamp; keep only today and yesterday."""
+def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None):
+    """Append current corrected temp/precip/gust with local timestamp; keep only today and yesterday."""
     if corrected_temp is None:
         return _load_obs_temp_log()
 
@@ -171,8 +171,18 @@ def _update_obs_temp_log(corrected_temp):
     entries = [e for e in entries if e.get("time", "").startswith(today_str) or e.get("time", "").startswith(yesterday_str)]
 
     hour_stamp = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
-    if not any(e.get("time") == hour_stamp for e in entries):
-        entries.append({"time": hour_stamp, "temp": round(corrected_temp, 1)})
+    existing = next((e for e in entries if e.get("time") == hour_stamp), None)
+    if existing is None:
+        entry = {"time": hour_stamp, "temp": round(corrected_temp, 1)}
+        if precip_in is not None:
+            entry["precip_in"] = round(precip_in, 3)
+        if peak_gust_mph is not None:
+            entry["gust_mph"] = round(peak_gust_mph, 1)
+        entries.append(entry)
+    else:
+        # Update gust if this run observed a higher value
+        if peak_gust_mph is not None:
+            existing["gust_mph"] = round(max(existing.get("gust_mph", 0), peak_gust_mph), 1)
 
     entries.sort(key=lambda e: e.get("time", ""))
     log = {"entries": entries}
@@ -293,11 +303,24 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if wind_candidates:
         # Max gust independently
         max_gust_entry = max(wind_candidates, key=lambda x: x['gust'])
-        weather_data["current"]["wind_gusts"] = max_gust_entry['gust']
+        selected_gust = max_gust_entry['gust']
 
         # Max sustained independently
         max_speed_entry = max(wind_candidates, key=lambda x: x['speed'])
-        weather_data["current"]["wind_speed"] = max_speed_entry['speed']
+        selected_speed = max_speed_entry['speed']
+
+        # Sanity check: if WU has ≥10 stations and the selected speed is >2x the WU aggregate,
+        # the model is likely wrong high — cap at 2x WU aggregate to trust the sensor network
+        wu_speed = wu_data.get("wind_speed_mph") if wu_data else None
+        wu_stations_wind = wu_data.get("quality", {}).get("stations_used_wind", 0) if wu_data else 0
+        if wu_speed is not None and wu_stations_wind >= 10 and selected_speed > wu_speed * 2.5:
+            logging.warning(f"  ⚠️ Wind sanity cap: selected {selected_speed:.1f} mph > 2.5× WU aggregate {wu_speed:.1f} mph ({wu_stations_wind} stations) — capping")
+            cap = wu_speed * 2.5
+            selected_speed = min(selected_speed, cap)
+            selected_gust  = min(selected_gust,  cap * 1.3)
+
+        weather_data["current"]["wind_gusts"] = selected_gust
+        weather_data["current"]["wind_speed"] = selected_speed
 
         # Direction: prefer the best fresh waterfront Tempest station; fall back to max-gust source
         waterfront_tempest = [
@@ -584,10 +607,20 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         eastern = pytz.timezone("America/New_York")
         _now = datetime.now(eastern)
         _today_str = _now.strftime("%Y-%m-%d")
+        _yesterday_str = (_now - timedelta(days=1)).strftime("%Y-%m-%d")
         _tomorrow_str = (_now + timedelta(days=1)).strftime("%Y-%m-%d")
         _current_hour_iso = _now.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
 
-        _obs_log = _update_obs_temp_log(_hyp.get("corrected_temp"))
+        _hourly_times = weather_data["hourly"].get("times", [])
+        _hourly_precip_mm = weather_data["hourly"].get("precipitation", [])
+        _cur_hour_precip_in = None
+        if _current_hour_iso in _hourly_times:
+            _ci = _hourly_times.index(_current_hour_iso)
+            if _ci < len(_hourly_precip_mm) and _hourly_precip_mm[_ci] is not None:
+                _cur_hour_precip_in = _hourly_precip_mm[_ci] / 25.4
+        _cur_gust = _hyp.get("corrected_wind_gusts") or weather_data.get("current", {}).get("wind_gusts")
+
+        _obs_log = _update_obs_temp_log(_hyp.get("corrected_temp"), precip_in=_cur_hour_precip_in, peak_gust_mph=_cur_gust)
         _obs_entries = _obs_log.get("entries", [])
 
         _obs_today = [
@@ -605,6 +638,17 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         if _today_series:
             derived["today_high"] = round(max(_today_series), 1)
             derived["today_low"] = round(min(_today_series), 1)
+
+        _entries_yesterday = [e for e in _obs_entries if e.get("time", "").startswith(_yesterday_str)]
+        _obs_yesterday_temps = [e["temp"] for e in _entries_yesterday if e.get("temp") is not None]
+        if _obs_yesterday_temps:
+            derived["yesterday_high"] = round(max(_obs_yesterday_temps), 1)
+        _obs_yesterday_precip = [e["precip_in"] for e in _entries_yesterday if e.get("precip_in") is not None]
+        if _obs_yesterday_precip:
+            derived["yesterday_precip_in"] = round(sum(_obs_yesterday_precip), 2)
+        _obs_yesterday_gusts = [e["gust_mph"] for e in _entries_yesterday if e.get("gust_mph") is not None]
+        if _obs_yesterday_gusts:
+            derived["yesterday_peak_gust"] = round(max(_obs_yesterday_gusts), 1)
 
         _fc_tomorrow = [
             _ct_temps[i]
