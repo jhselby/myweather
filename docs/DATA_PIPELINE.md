@@ -1209,3 +1209,98 @@ Uses worry_score + exposure_factor to generate contextual wind sentences:
 - GFS used for periods beyond HRRR range
 - NWS gridpoint temps override model temps when available
 - `derived.today_high/low` and `derived.tomorrow_high/low` override computed temps for days 0-1
+
+---
+
+## WIND IMPACT SCORE
+
+**Location:** `js/app-main.js` (shared globals, used by wind.js, briefing.js, dock.js, forecast_text.py)
+
+### Exposure Factor
+Directional terrain table — how exposed Wyman Cove is to each wind direction (0 = fully sheltered, 1 = fully exposed):
+
+| Direction | Degrees | Factor |
+|-----------|---------|--------|
+| N–NNE | 0°–25° | 1.00 |
+| NE | 25°–45° | 0.70 |
+| E–ESE | 45°–100° | 0.25 |
+| SE–S | 100°–200° | 0.08 |
+| SSW–WSW | 200°–260° | 0.10 |
+| W | 260°–290° | 0.40 |
+| WNW–NW | 290°–320° | 0.75 |
+| NW–N | 320°–360° | 1.00 |
+
+Table loaded from `weather_data.wind_exposure_table` at runtime; fallback hardcoded in `app-main.js`.
+
+### Formula
+```javascript
+worryScore(speed, exposure) = speed × exposure^1.5
+
+combinedWindImpact(sustained, gust, direction):
+  exposure = getExposureFactor(direction)
+  if sustained < 15 mph: return worryScore(sustained, exposure)
+  else:                  return worryScore(gust, exposure)
+```
+
+The `^1.5` exponent amplifies exposure non-linearly — a fully exposed direction (1.0) is ~3× more impactful than a half-exposed direction (0.5) for the same wind speed.
+
+### Thresholds → Labels
+| Score | Label |
+|-------|-------|
+| ≥ 30 | Very windy |
+| ≥ 20 | Windy |
+| ≥ 12 | Breezy |
+| ≥ 5 | Light winds |
+| < 5 | Calm |
+
+### Usage
+- Wind card: current + peak impact scores
+- Briefing tab: wind row label ("Calm at the cove", "Windy at the cove", etc.)
+- Dock Day: wind component of beach score (normalized 0–1: `1 - score/WORRY_SEVERE`)
+- Forecast text: wind narrative ("Windy at the cove despite calm regional forecast")
+
+---
+
+## DOCK DAY (SWIM FLOAT) SCORE
+
+**Location:** `js/dock.js`
+
+### Overview
+Scores today and tomorrow's swim float usability based on tide height, air temp, wind, precip, and water temp. Shows accessible windows (hours when tide is high enough for the float), scored independently.
+
+### Tide Threshold
+- **Float threshold:** 1.5 ft MLLW — dock is just floating
+- **Usable hours:** 7:00 AM – 8:00 PM only
+- **Dock face:** 315° NW — open water fetch; NW winds = onshore/choppy, SE winds = offshore/calm
+- **Tide offset:** `DOCK_TIDE_OFFSET_FT = 0.0` — empirical correction to be updated once observed vs. predicted data is collected
+
+### Score Components (per accessible window)
+
+| Component | Weight | Formula |
+|-----------|--------|---------|
+| Wind | 35% | `1 - combinedWindImpact / WORRY_SEVERE` (capped 0–1) |
+| Air temp | 35% | 0.0 below 50°F; linear 50→65°F; 1.0 at 80°F+ |
+| Precip | 15% | `1 - POP% / 60` (0 at 60%+ POP) |
+| Duration | 10% | `min(1, window_minutes / 180)` — 3h+ = full credit |
+| Water temp | 5% | 0.2 below 50°F; linear 50→65°F; 1.0 at 65°F+ |
+
+Weather values sampled at midpoint of each accessible window.
+
+**Hard caps:**
+- Air temp < 45°F OR sustained wind > 20 mph → score capped at 0.3 regardless of other factors
+
+### Score Labels
+| Raw score | Label |
+|-----------|-------|
+| ≥ 0.75 | Great day |
+| ≥ 0.58 | Good day |
+| ≥ 0.38 | Marginal |
+| ≥ 0.20 | Poor |
+| < 0.20 | Stay inside |
+
+Display score uses wine scale: `max(50, round(50 + 50 × score^0.6))` — compresses the floor, spreads meaningful variance into 75–100 range.
+
+### Wind Direction Labels (relative to dock face 315°)
+- Within ±45°: **onshore** (choppy)
+- Within ±45° of opposite: **offshore** (calm)
+- Otherwise: **crosswind**
