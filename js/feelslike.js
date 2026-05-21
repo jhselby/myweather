@@ -282,6 +282,23 @@ function renderFeelsLikeCard(data) {
   if (windEl) windEl.textContent = windSpeed != null ? `${windSpeed.toFixed(1)} mph` : "--";
   if (windEffEl) windEffEl.textContent = windEffect;
 
+  // Atmospheric context: cloud base, freezing level, precip water
+  const cloudBaseEl   = document.getElementById("fogCloudBase");
+  const freezeLevelEl = document.getElementById("fogFreezeLevel");
+  const precipWaterEl = document.getElementById("fogPrecipWater");
+  if (cloudBaseEl) {
+    const cb = der.cloud_base_ft;
+    cloudBaseEl.textContent = cb != null ? `~${Math.round(cb / 100) * 100} ft` : "--";
+  }
+  if (freezeLevelEl) {
+    const fl = der.freezing_level_ft;
+    freezeLevelEl.textContent = fl != null ? `${Math.round(fl / 100) * 100} ft` : "--";
+  }
+  if (precipWaterEl) {
+    const pw = der.precip_water_mm;
+    precipWaterEl.textContent = pw != null ? `${pw} mm` : "--";
+  }
+
   // Fog dissipation timing
   let fogDissEl = document.getElementById("fogDissipation");
   if (!fogDissEl) {

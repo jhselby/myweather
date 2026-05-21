@@ -532,6 +532,21 @@
             <div class="text-subtle" style="font-size:0.72rem;line-height:1.5;">
               Fog forms when air near saturation (small dew point spread) combines with high humidity and light winds. Base probability from spread, then adjusted for humidity and wind conditions.
             </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:14px;">
+              <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:8px;text-align:center;">
+                <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Cloud Base</div>
+                <div id="fogCloudBase" style="font-size:0.9rem;font-weight:700;">--</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:8px;text-align:center;">
+                <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Freeze Level</div>
+                <div id="fogFreezeLevel" style="font-size:0.9rem;font-weight:700;">--</div>
+              </div>
+              <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:8px;text-align:center;">
+                <div style="font-size:0.65rem;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Atm. Moisture</div>
+                <div id="fogPrecipWater" style="font-size:0.9rem;font-weight:700;">--</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1281,7 +1296,7 @@
   <script src="js/tides.js?v=7516452c"></script>
   <script src="js/almanac.js?v=6bb44d8a"></script>
   <script src="js/seabreeze.js?v=14e6104c"></script>
-  <script src="js/feelslike.js?v=8f917725"></script>
+  <script src="js/feelslike.js?v=029322dd"></script>
   <script src="js/thunderstorm.js?v=47e14fef"></script>
   <script src="js/previews.js?v=4f6a8df5"></script>
   <script src="js/tempchart.js?v=ddb37223"></script>
@@ -1417,7 +1432,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.170</span>
+            <span class="version-pill" id="appVersion">v0.5.171</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
