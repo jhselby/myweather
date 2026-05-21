@@ -399,7 +399,7 @@
     });
 
 function loadWeatherData() {
-    fetch("https://storage.googleapis.com/myweather-data/weather_data.json?t=" + Date.now())
+    fetch("https://data.wymancove.com/weather_data.json?t=" + Date.now())
       .then(r => { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
       .then(data => {
         window.__lastWeatherData = data;
