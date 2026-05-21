@@ -26,15 +26,44 @@ const STATIC_SOURCES = [
   { name: "Open-Meteo",   desc: "Cloud layer data (low/mid/high) for sunset quality forecast — HRRR product" },
 ];
 
+function _fmtError(err) {
+  if (!err) return '';
+  const s = String(err);
+  const httpMatch = s.match(/\b([45]\d{2})\b/);
+  if (httpMatch) {
+    const code = httpMatch[1];
+    const labels = { '429': 'Rate limited', '404': 'Not found', '500': 'Server error',
+                     '502': 'Bad gateway', '503': 'Unavailable', '504': 'Gateway timeout' };
+    return labels[code] ? `${code} ${labels[code]}` : `HTTP ${code}`;
+  }
+  if (/connection reset/i.test(s))   return 'Connection reset';
+  if (/connection aborted/i.test(s)) return 'Connection aborted';
+  if (/timed?\s*out/i.test(s))       return 'Timeout';
+  if (/ssl/i.test(s))                return 'SSL error';
+  if (/connection/i.test(s))         return 'Connection error';
+  return s.replace(/\s+/g, ' ').slice(0, 50);
+}
+
 function renderSources(sources, pwsStale) {
   if (!sources) return;
   const order = Object.keys(SOURCE_META);
 
+  // Only critical sources trigger the alert dot — supplementary failures are silent
+  const CRITICAL_SOURCES = new Set(['gfs_current', 'hrrr_hourly', 'wu_stations', 'pirate_weather', 'nws_alerts']);
   let anyError = false;
+  let anyCriticalError = false;
   order.forEach(key => {
     const s = sources[key];
-    if (s && s.status !== "ok") anyError = true;
+    if (s && s.status !== "ok") {
+      anyError = true;
+      if (CRITICAL_SOURCES.has(key)) anyCriticalError = true;
+    }
   });
+  // Briefing counts as critical only if both Gemini and Groq are unavailable
+  const briefingModel = window.__lastWeatherData?.briefing?.model;
+  const geminiOk = sources['gemini']?.status === 'ok' || briefingModel === 'gemini';
+  const groqOk   = sources['groq']?.status === 'ok'   || briefingModel === 'groq';
+  if (!geminiOk && !groqOk) anyCriticalError = true;
 
   const table = document.getElementById("sourcesTable");
   const tableModal = document.getElementById("sourcesTableModal");
@@ -115,7 +144,7 @@ function renderSources(sources, pwsStale) {
       return `<div style="${rowStyle}${rowOpacity}">
         <span style="${badgeStyle(ok)}">${ok ? "●" : "○"}</span> <span style="${nameStyle}">${name}${activeTag}${standbyTag}</span>
         <span style="${ageStyle(ok)}">${age}</span>
-        <span style="${descStyle}">${meta.desc}${s?.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${s.error}</span>` : ""}</span>
+        <span style="${descStyle}">${meta.desc}${s?.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${_fmtError(s.error)}</span>` : ""}</span>
         ${extraDetail}
       </div>`;
     }).join("")}
@@ -140,6 +169,6 @@ function renderSources(sources, pwsStale) {
     const genAt = window.__lastWeatherData?.generated_at;
     const staleMinutes = genAt ? (Date.now() - new Date(genAt).getTime()) / 60000 : 999;
     const isStale = staleMinutes > 25;
-    settingsDot.style.display = (isStale || anyError) ? "block" : "none";
+    settingsDot.style.display = (isStale || anyCriticalError) ? "block" : "none";
   }
 }
