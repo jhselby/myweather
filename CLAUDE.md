@@ -121,11 +121,15 @@ This document exists because Claude has repeatedly failed in predictable, preven
 ## 8. Deploy Workflow
 
 **The rules:**
+- **ALWAYS test on localhost before pushing frontend changes.** No exceptions. Load the page, open the affected card/feature, verify it works visually. If it can't be tested (collector-only change), say so explicitly.
 - PWA (frontend): `git add`, `git commit`, `git push`. That's it.
 - Collector (backend): `make deploy-collector`.
 - Always deploy collector first if both changed, then verify GCS data, then commit frontend.
 - Don't suggest `make run-collector` when the next scheduled run is within 10 minutes.
 - After deploy, verify with logs: `gcloud functions logs read myweather-collector --region=us-east1 --limit=10 --gen2`
+
+**History of failures:**
+- May 21: Pushed observation history chart changes to the forecast chart without localhost testing. Chart broke the 48h forecast by turning it into a 72h chart that was unreadable on mobile. Had to revert.
 
 ---
 

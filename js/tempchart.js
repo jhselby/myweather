@@ -40,42 +40,17 @@ function updateTempPrecipDataBar(index, times, temps, pop, wetBulbs, temps850mb,
     `${temp != null ? Math.round(temp) : "—"}° · ${precipProb}% ${typeStr} · ${skyStr}`;
 }
 
-function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal, sunrise, sunset, obsEntries) {
-  // Prepend observed past hours before the forecast window
-  const obsPast = (obsEntries || []).filter(e => e.time < times[0]);
-  const allTimes = [...obsPast.map(e => e.time), ...times];
-  const obsCount = obsPast.length;
-
-  // Observed temp array: real values for past, null for forecast
-  const obsTemps = [
-    ...obsPast.map(e => e.temp ?? null),
-    ...new Array(times.length).fill(null)
-  ];
-  // Forecast temp array: null for past, real values for forecast
-  const fcTemps = [
-    ...new Array(obsCount).fill(null),
-    ...temps
-  ];
-  // Precip / cloud arrays padded with nulls for past
-  const allPop       = [...new Array(obsCount).fill(0),   ...pop];
-  const allWetBulbs  = [...new Array(obsCount).fill(null), ...wetBulbs];
-  const allT850      = [...new Array(obsCount).fill(null), ...temps850mb];
-  const allCloudLow  = [...new Array(obsCount).fill(null), ...cloudLow];
-  const allCloudMid  = [...new Array(obsCount).fill(null), ...cloudMid];
-  const allCloudHigh = [...new Array(obsCount).fill(null), ...cloudHigh];
-  const allCloudTotal= [...new Array(obsCount).fill(null), ...cloudTotal];
-
-  const labels = allTimes.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
+function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal, sunrise, sunset) {
+  const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
   const ctx    = document.getElementById("tempPrecipChart").getContext("2d");
   if (tempPrecipChart) tempPrecipChart.destroy();
 
-  // Precip bar colors by precipitation type (forecast portion only)
-  const precipData   = allPop.map(p => p ?? 0);
-  const precipColors = allWetBulbs.map((wb, i) => {
-    if (i < obsCount) return "rgba(0,0,0,0)"; // no precip bars for observed past
-    const surfTemp = fcTemps[i];
-    const temp850  = allT850?.[i];
-    if (allPop[i] === 0) return "rgba(0,0,0,0)";
+  // Precip bar colors by precipitation type
+  const precipData   = pop.map(p => p ?? 0);
+  const precipColors = (wetBulbs || []).map((wb, i) => {
+    const surfTemp = temps[i];
+    const temp850  = temps850mb?.[i];
+    if (pop[i] === 0) return "rgba(0,0,0,0)";
     if (wb == null) return "rgba(80,140,255,0.85)";
     if (wb <= 28)   return "rgba(230,240,255,0.95)";
     if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
@@ -86,45 +61,21 @@ function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow,
     return "rgba(80,150,255,0.85)";
   });
 
-  // "NOW" vertical line plugin
-  const nowLinePlugin = {
-    id: "nowLine",
-    afterDatasetsDraw(chart) {
-      if (obsCount === 0) return;
-      const { ctx, chartArea: { top, bottom }, scales: { x } } = chart;
-      const xPos = x.getPixelForValue(obsCount - 0.5);
-      ctx.save();
-      ctx.beginPath();
-      ctx.moveTo(xPos, top);
-      ctx.lineTo(xPos, bottom);
-      ctx.strokeStyle = "rgba(255,255,255,0.35)";
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 4]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.font = "9px sans-serif";
-      ctx.fillStyle = "rgba(255,255,255,0.4)";
-      ctx.textAlign = "center";
-      ctx.fillText("NOW", xPos, top + 10);
-      ctx.restore();
-    }
-  };
-
   // Sky background plugin — paints per-column gradient behind bars on every render
   const skyBgPlugin = {
     id: "skyBackground",
     beforeDatasetsDraw(chart) {
       const { ctx, chartArea: { left, top, right, bottom }, scales } = chart;
-      const n = allTimes.length;
+      const n = times.length;
       const colW = (right - left) / n;
       ctx.save();
       for (let i = 0; i < n; i++) {
-        const time     = new Date(allTimes[i]);
+        const time     = new Date(times[i]);
         const hour     = time.getHours() + time.getMinutes() / 60;
         const daylight = (hour >= sunrise && hour <= sunset)
           ? Math.max(0, Math.sin(Math.PI * (hour - sunrise) / (sunset - sunrise)))
           : 0;
-        const cc = Math.min(1, (allCloudTotal[i] ?? 0) / 100);
+        const cc = Math.min(1, (cloudTotal[i] ?? 0) / 100);
         const x0 = left + i * colW;
 
         // Sky color: blend sunny yellow → cloudy gray, modulated by daylight
@@ -176,7 +127,7 @@ function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow,
   };
 
   tempPrecipChart = new Chart(ctx, {
-    plugins: [skyBgPlugin, nowLinePlugin],
+    plugins: [skyBgPlugin],
     data: {
       labels,
       datasets: [
@@ -193,28 +144,14 @@ function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow,
         },
         {
           type: "line",
-          label: "Observed Temp",
-          data: obsTemps,
-          yAxisID: "y",
-          tension: 0.25,
-          borderColor: "rgba(120,200,255,0.85)",
-          backgroundColor: "transparent",
-          pointRadius: 0,
-          borderDash: [],
-          order: 0,
-          spanGaps: false,
-        },
-        {
-          type: "line",
-          label: "Forecast Temp",
-          data: fcTemps,
+          label: "Temp (°F)",
+          data: temps.map(v => v ?? null),
           yAxisID: "y",
           tension: 0.25,
           borderColor: "rgba(255,180,80,0.9)",
           backgroundColor: "transparent",
           pointRadius: 0,
           order: 0,
-          spanGaps: false,
         }
       ]
     },
@@ -223,13 +160,13 @@ function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow,
       interaction: { mode: "index", intersect: false },
       onClick: (event, activeElements) => {
         if (activeElements.length > 0) {
-          updateTempPrecipDataBar(activeElements[0].index, allTimes, [...obsTemps.map((v,i) => v ?? fcTemps[i])], allPop, allWetBulbs, allT850, allCloudLow, allCloudMid, allCloudHigh, allCloudTotal);
+          updateTempPrecipDataBar(activeElements[0].index, times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal);
         }
       },
       onHover: (event, activeElements) => {
         const dataBar = document.getElementById("tempPrecipDataBar");
         if (dataBar && activeElements.length > 0) {
-          updateTempPrecipDataBar(activeElements[0].index, allTimes, [...obsTemps.map((v,i) => v ?? fcTemps[i])], allPop, allWetBulbs, allT850, allCloudLow, allCloudMid, allCloudHigh, allCloudTotal);
+          updateTempPrecipDataBar(activeElements[0].index, times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal);
         }
       },
       plugins: {
@@ -243,7 +180,7 @@ function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow,
             maxRotation: 0,
             autoSkip: false,
             callback: function(value, index) {
-              const dt = new Date(allTimes[index]);
+              const dt = new Date(times[index]);
               const h = dt.getHours();
               const m = dt.getMinutes();
               if (m !== 0) return null;
