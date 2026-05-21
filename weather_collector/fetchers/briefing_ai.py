@@ -15,7 +15,7 @@ GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-GROQ_MODEL = "llama3-8b-8192"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove — on the Salem Harbor side of Marblehead's peninsula, with open water to the north and northwest.
@@ -175,8 +175,21 @@ def _build_weather_summary(weather_data):
     if alerts:
         alert_line = f"Alerts: {', '.join(a.get('event', '') for a in alerts[:3])}"
 
+    yesterday_high = der.get("yesterday_high")
+    yesterday_precip = der.get("yesterday_precip_in")
+    yesterday_gust = der.get("yesterday_peak_gust")
+
+    yesterday_parts = []
+    if yesterday_high is not None:
+        yesterday_parts.append(f"high {_temp_range(yesterday_high)}")
+    if yesterday_precip is not None and yesterday_precip >= 0.01:
+        yesterday_parts.append(f"{yesterday_precip}\" rain")
+    if yesterday_gust is not None and yesterday_gust >= 20:
+        yesterday_parts.append(f"gusts to {round(yesterday_gust)} mph")
+
     lines = [
         f"Current: {temp}°F, {sky}",
+        f"Yesterday: {', '.join(yesterday_parts)}" if yesterday_parts else None,
         f"Today high: {_temp_range(high)}, low: {_temp_range(low)}",
         f"Tomorrow high: {_temp_range(tomorrow_high)}, low: {_temp_range(tomorrow_low)}",
         f"Wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + f" | Local impact: {wind_impact_label}",
@@ -199,10 +212,15 @@ def _build_weather_summary(weather_data):
     elif ts_severity == "watch" and cape_label not in ("", "Weak"):
         lines.append(f"Thunderstorm risk: {risk_word} — do NOT overstate this, mention only briefly if relevant")
 
+    pwat = der.get("precip_water_mm")
+    if pwat is not None and ts_severity in ("active", "watch") and pwat >= 25:
+        pwat_label = "very high" if pwat >= 35 else "high"
+        lines.append(f"Precipitable water: {pwat}mm ({pwat_label}) — heavy rainfall rates likely with any storm")
+
     if alert_line:
         lines.append(alert_line)
 
-    return "\n".join(lines)
+    return "\n".join(l for l in lines if l is not None)
 
 
 # Cache: last successful headline stored in GCS

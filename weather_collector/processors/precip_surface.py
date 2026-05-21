@@ -34,50 +34,43 @@ def classify_surface_precip_type(wet_bulb_f):
         return "rain"
 
 
-def classify_hybrid_precip_type(wet_bulb_f, temp_850mb_f):
+def classify_hybrid_precip_type(wet_bulb_f, temp_850mb_f, freezing_level_ft=None):
     """
-    Classify precipitation type using both surface wet bulb and 850mb temperature.
-    
-    This hybrid approach catches complex scenarios like freezing rain
-    (warm air aloft, cold at surface).
-    
+    Classify precipitation type using surface wet bulb, 850mb temperature, and
+    optionally the actual freezing level altitude.
+
     Logic:
     - Both cold (850mb < 32°F, wet bulb < 32°F) → Snow
     - Both warm (850mb > 32°F, wet bulb > 35°F) → Rain
     - Warm aloft, cold surface (850mb > 32°F, wet bulb < 35°F) → Freezing Rain
-    - Cold aloft, warm surface (850mb < 32°F, wet bulb > 35°F) → Rain (unlikely but possible)
+    - Cold aloft, warm surface (850mb < 32°F, wet bulb > 35°F) → Rain
     - Transition zones → Mixed
-    
-    Args:
-        wet_bulb_f: Surface wet bulb temperature in °F
-        temp_850mb_f: Temperature at 850mb (~5000 ft) in °F
-        
-    Returns:
-        str: "snow", "mixed", "freezing_rain", "rain", or None if either input is None
+    - Freezing level overrides: >5000 ft → rain; <1500 ft + cold surface → snow
     """
     if wet_bulb_f is None or temp_850mb_f is None:
-        return classify_surface_precip_type(wet_bulb_f)  # Fallback to surface only
-    
-    # Convert 850mb to Celsius for standard meteorological threshold
-    temp_850mb_c = (temp_850mb_f - 32) * 5/9
-    
-    # Classic freezing rain scenario: warm aloft, cold at surface
+        return classify_surface_precip_type(wet_bulb_f)
+
+    # Freezing level overrides: clear-cut cases where altitude settles the question
+    if freezing_level_ft is not None:
+        if freezing_level_ft > 5000 and wet_bulb_f > 30.0:
+            return "rain"  # Warm layer too deep for snow to survive descent
+        if freezing_level_ft < 1500 and wet_bulb_f < 33.0:
+            return "snow"  # Freezing level near surface, cold throughout
+
+    temp_850mb_c = (temp_850mb_f - 32) * 5 / 9
+
     if temp_850mb_c > 0 and wet_bulb_f < 35.0:
         return "freezing_rain"
-    
-    # Both cold → Snow
+
     if temp_850mb_f < 32.0 and wet_bulb_f < 32.0:
         return "snow"
-    
-    # Both warm → Rain
+
     if temp_850mb_f > 32.0 and wet_bulb_f > 35.0:
         return "rain"
-    
-    # Transition zone → Mixed
+
     if wet_bulb_f >= 32.0 and wet_bulb_f < 35.0:
         return "mixed"
-    
-    # Cold surface, warm aloft (rare) → use surface
+
     return classify_surface_precip_type(wet_bulb_f)
 
 
@@ -127,14 +120,20 @@ def add_corrected_precip_types(weather_data, hyperlocal_data):
 
         weather_data["derived"]["corrected_wet_bulb"] = corrected_wet_bulb
 
-        # Current precip type from corrected wet bulb only (no 850mb needed for current)
-        current_precip_type = classify_surface_precip_type(corrected_wet_bulb)
+        # Current precip type — use freezing level if available for more accurate classification
+        cur_fl_ft = weather_data.get("derived", {}).get("freezing_level_ft")
+        if cur_fl_ft is not None:
+            cur_850 = (weather_data.get("hourly", {}).get("temperature_850hPa") or [None])[0]
+            current_precip_type = classify_hybrid_precip_type(corrected_wet_bulb, cur_850, freezing_level_ft=cur_fl_ft)
+        else:
+            current_precip_type = classify_surface_precip_type(corrected_wet_bulb)
         weather_data["derived"]["surface_precip_type"] = current_precip_type
     # FORECAST: Use bias-corrected hourly arrays if available
     hourly = weather_data.get("hourly", {})
     hourly_temps = hourly.get("corrected_temperature") or hourly.get("temperature", [])
     hourly_humidity = hourly.get("corrected_humidity") or hourly.get("humidity", [])
     hourly_850mb = hourly.get("temperature_850hPa", [])
+    hourly_freeze_ft = hourly.get("freezing_level_ft", [])
 
     corrected_wet_bulbs = []
     surface_precip_types = []
@@ -143,9 +142,8 @@ def add_corrected_precip_types(weather_data, hyperlocal_data):
         if temp is not None and humidity is not None:
             corrected_wb = calculate_wet_bulb(temp, humidity)
             corrected_wet_bulbs.append(corrected_wb)
-            
-            # Classify using hybrid method (surface wet bulb + 850mb)
-            precip_type = classify_hybrid_precip_type(corrected_wb, temp_850)
+            fl_ft = hourly_freeze_ft[i] if i < len(hourly_freeze_ft) else None
+            precip_type = classify_hybrid_precip_type(corrected_wb, temp_850, freezing_level_ft=fl_ft)
             surface_precip_types.append(precip_type)
         else:
             corrected_wet_bulbs.append(None)
