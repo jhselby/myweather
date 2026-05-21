@@ -4,7 +4,7 @@ Fog risk calculation based on dew point spread, humidity, and wind
 
 
 def calculate_fog_risk(temperature_f, dew_point_f, humidity_pct, wind_speed_mph,
-                      wind_direction=None, water_temp_f=None):
+                      wind_direction=None, water_temp_f=None, cloud_cover_low_pct=None):
     """
     Calculate fog probability and risk label.
 
@@ -75,6 +75,13 @@ def calculate_fog_risk(temperature_f, dew_point_f, humidity_pct, wind_speed_mph,
                 rad_prob -= 20  # Strong winds disperse fog
             elif wind_speed_mph >= 7:
                 rad_prob -= 10
+        if cloud_cover_low_pct is not None:
+            if cloud_cover_low_pct >= 90:
+                rad_prob += 10
+            elif cloud_cover_low_pct >= 70:
+                rad_prob += 5
+            elif cloud_cover_low_pct < 20:
+                rad_prob -= 8
         rad_prob = max(0, min(100, rad_prob))
 
     # Take the higher of radiation or advection

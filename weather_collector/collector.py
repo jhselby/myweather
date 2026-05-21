@@ -653,14 +653,17 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         if _obs_yesterday_gusts:
             derived["yesterday_peak_gust"] = round(max(_obs_yesterday_gusts), 1)
 
-        _hourly_fl = weather_data["hourly"].get("freezing_level_ft", [])
-        _hourly_pw = weather_data["hourly"].get("precip_water_mm", [])
+        _hourly_fl  = weather_data["hourly"].get("freezing_level_ft", [])
+        _hourly_pw  = weather_data["hourly"].get("precip_water_mm", [])
+        _hourly_ccl = weather_data["hourly"].get("cloud_cover_low", [])
         if _current_hour_iso in _hourly_times:
             _ci_atm = _hourly_times.index(_current_hour_iso)
             if _ci_atm < len(_hourly_fl) and _hourly_fl[_ci_atm] is not None:
                 derived["freezing_level_ft"] = round(_hourly_fl[_ci_atm])
             if _ci_atm < len(_hourly_pw) and _hourly_pw[_ci_atm] is not None:
                 derived["precip_water_mm"] = round(_hourly_pw[_ci_atm], 1)
+            if _ci_atm < len(_hourly_ccl) and _hourly_ccl[_ci_atm] is not None:
+                derived["cloud_cover_low_pct"] = round(_hourly_ccl[_ci_atm])
 
         _fc_tomorrow = [
             _ct_temps[i]
@@ -758,13 +761,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if _fog_current:
         current = _fog_current
         _buoy = weather_data.get("buoy_44013", {})
+        _cur_ccl = derived.get("cloud_cover_low_pct")
         fog_risk = calculate_fog_risk(
             current.get("temperature_2m"),
             current.get("dew_point_2m"),
             current.get("relative_humidity_2m"),
             current.get("wind_speed_10m"),
             wind_direction=current.get("wind_direction_10m"),
-            water_temp_f=_buoy.get("water_temp_f")
+            water_temp_f=_buoy.get("water_temp_f"),
+            cloud_cover_low_pct=_cur_ccl,
         )
         if fog_risk:
             derived["fog_label"] = fog_risk["fog_label"]
@@ -778,6 +783,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _hhumids  = _h.get("corrected_humidity",    _h.get("humidity", []))
         _hwinds   = _h.get("wind_speed", [])
         _hwdirs   = _h.get("wind_direction", [])
+        _hccl     = _h.get("cloud_cover_low", [])
         _water_f  = weather_data.get("buoy_44013", {}).get("water_temp_f")
         _hourly_fog_probs = []
         for _i in range(min(18, len(_htimes))):
@@ -788,6 +794,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
                 _hwinds[_i]  if _i < len(_hwinds)   else None,
                 wind_direction=_hwdirs[_i] if _i < len(_hwdirs) else None,
                 water_temp_f=_water_f,
+                cloud_cover_low_pct=_hccl[_i] if _i < len(_hccl) else None,
             )
             _hourly_fog_probs.append(_fr["fog_probability"] if _fr else 0)
         derived["fog_hourly_prob"] = _hourly_fog_probs
