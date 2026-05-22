@@ -63,6 +63,17 @@ function buildObsChart(entries) {
   const dewpts  = entries.map(e => e.dew_point_f ?? null);
   const pressures = entries.map(e => e.pressure_in ?? null);
 
+  const sustainedImpact = entries.map(e =>
+    (e.wind_mph != null && e.wind_dir != null && window._combinedWindImpact)
+      ? +(window._combinedWindImpact(e.wind_mph, null, e.wind_dir).toFixed(1))
+      : null
+  );
+  const gustImpact = entries.map(e =>
+    (e.gust_mph != null && e.wind_dir != null && window._combinedWindImpact)
+      ? +(window._combinedWindImpact(null, e.gust_mph, e.wind_dir).toFixed(1))
+      : null
+  );
+
   // Scale pressure to temp axis range for visual trend
   const validTemps = temps.filter(v => v != null);
   const validPress = pressures.filter(v => v != null);
@@ -144,7 +155,7 @@ function buildObsChart(entries) {
       data: dewpts,
       yAxisID: "y",
       tension: 0.3,
-      borderColor: "rgba(100,180,255,0.75)",
+      borderColor: "rgba(60,130,255,0.9)",
       backgroundColor: "transparent",
       pointRadius: 0,
       borderDash: [3, 3],
@@ -170,7 +181,7 @@ function buildObsChart(entries) {
       data: winds,
       yAxisID: "y1",
       tension: 0.3,
-      borderColor: "rgba(60,200,160,0.85)",
+      borderColor: "rgba(160,90,230,0.85)",
       backgroundColor: "transparent",
       pointRadius: 0,
       borderDash: [4, 3],
@@ -204,13 +215,10 @@ function buildObsChart(entries) {
               const dt = new Date(entries[index].time);
               const h = dt.getHours();
               const m = dt.getMinutes();
-              if (index > 0) {
-                const prev = new Date(entries[index - 1].time);
-                if (prev.getDate() !== dt.getDate()) return dt.toLocaleDateString("en-US", { weekday: "short" });
-              } else if (h === 0 && m < 10) {
-                return dt.toLocaleDateString("en-US", { weekday: "short" });
-              }
-              if (m === 0 && h % 6 === 0) return h === 12 ? "12pm" : h < 12 ? h + "am" : (h - 12) + "pm";
+              if (index === 0) return dt.toLocaleDateString("en-US", { weekday: "short" });
+              const prev = new Date(entries[index - 1].time);
+              if (prev.getDate() !== dt.getDate()) return dt.toLocaleDateString("en-US", { weekday: "short" });
+              if (m < 10 && h % 6 === 0 && h !== 0) return h === 12 ? "12pm" : h < 12 ? h + "am" : (h - 12) + "pm";
               return null;
             },
             font: { size: 10 }
