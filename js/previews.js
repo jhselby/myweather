@@ -29,16 +29,19 @@ function populateCollapsedPreviews(data) {
   setText("todayDayCollapsed", dayName);
   
   // Add sunrise/sunset times
-  const sunrise = data.sun?.sunrise;
-  const sunset = data.sun?.sunset;
+  const sunrise = data.daily?.sunrise?.[0];
+  const sunset = data.daily?.sunset?.[0];
   if (sunrise && sunset) {
     const sunriseTime = new Date(sunrise).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
     const sunsetTime = new Date(sunset).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-    const daylight = data.sun?.daylight_duration || "";
+    const daylightMs = new Date(sunset) - new Date(sunrise);
+    const daylightHrs = Math.floor(daylightMs / 3600000);
+    const daylightMins = Math.floor((daylightMs % 3600000) / 60000);
+    const daylight = `${daylightHrs}h ${daylightMins}m daylight`;
     setHTML("todayTimesCollapsed", `
-      <div>Rise ${sunriseTime}</div>
-      <div>Set ${sunsetTime}</div>
-      ${daylight ? `<div style="opacity:0.65;font-size:0.72rem;margin-top:4px;">${daylight}</div>` : ''}
+      <div>Sunrise ${sunriseTime}</div>
+      <div>Sunset ${sunsetTime}</div>
+      <div style="opacity:0.65;font-size:0.72rem;margin-top:4px;">${daylight}</div>
     `);
   }
   
@@ -73,11 +76,14 @@ function populateCollapsedPreviews(data) {
     planetsCard.classList.add('tile-astro');
   }
   
-  // Frost/Freeze - already populated correctly
-  const frostDays = data.frost_stats?.days_since_last_frost;
-  if (frostDays !== undefined) {
-    setText("frostStatusCollapsed", frostDays === 0 ? "Frost today" : `${frostDays} days since`);
-    setText("frostDaysCollapsed", `Last year: ${data.frost_stats?.days_since_last_frost_last_year || "—"}`);
+  // Frost/Freeze
+  const frostLog = data.frost_log;
+  if (frostLog?.last_freeze) {
+    const lastFreeze = new Date(frostLog.last_freeze);
+    const daysSince = Math.floor((new Date() - lastFreeze) / 86400000);
+    const lastFreezeStr = lastFreeze.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    setText("frostStatusCollapsed", `Last freeze ${lastFreezeStr}`);
+    setText("frostDaysCollapsed", `${daysSince} days ago · ${frostLog.freeze_days} freeze days`);
   }
   
   // ═══════════════════════════════════════════════════════════════
