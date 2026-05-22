@@ -32,13 +32,15 @@ function updateObsDataBar(index, entries) {
     if (level && level.label !== "Calm") impactStr = ` (${level.label.toLowerCase()})`;
   }
 
+  const dewpt = e.dew_point_f != null ? ` · Dew ${Math.round(e.dew_point_f)}°` : "";
+  const press = e.pressure_in != null ? ` · ${e.pressure_in.toFixed(2)} inHg` : "";
   const precip = (e.precip_in != null && e.precip_in > 0.005)
     ? ` · ${e.precip_in.toFixed(2)}" rain` : "";
 
   const timeEl = document.getElementById("obsDataTime");
   const lineEl = document.getElementById("obsDataLine");
   if (timeEl) timeEl.textContent = timeStr + " ·";
-  if (lineEl) lineEl.textContent = temp + windStr + impactStr + precip;
+  if (lineEl) lineEl.textContent = temp + dewpt + press + windStr + impactStr + precip;
 }
 
 function buildObsChart(entries) {
@@ -55,9 +57,24 @@ function buildObsChart(entries) {
     const dt = new Date(e.time);
     return dt.toLocaleTimeString("en-US", { hour: "numeric" });
   });
-  const temps = entries.map(e => e.temp ?? null);
-  const gusts = entries.map(e => e.gust_mph ?? null);
-  const winds = entries.map(e => e.wind_mph ?? null);
+  const temps   = entries.map(e => e.temp ?? null);
+  const gusts   = entries.map(e => e.gust_mph ?? null);
+  const winds   = entries.map(e => e.wind_mph ?? null);
+  const dewpts  = entries.map(e => e.dew_point_f ?? null);
+  const pressures = entries.map(e => e.pressure_in ?? null);
+
+  // Scale pressure to temp axis range for visual trend
+  const validTemps = temps.filter(v => v != null);
+  const validPress = pressures.filter(v => v != null);
+  const tMin = validTemps.length ? Math.min(...validTemps) : 40;
+  const tMax = validTemps.length ? Math.max(...validTemps) : 80;
+  const pMin = validPress.length ? Math.min(...validPress) : 29.5;
+  const pMax = validPress.length ? Math.max(...validPress) : 30.5;
+  const pRange = pMax - pMin || 0.01;
+  const tRange = tMax - tMin || 10;
+  const scaledPressure = pressures.map(p =>
+    p != null ? tMin + ((p - pMin) / pRange) * tRange : null
+  );
 
   const dayBgPlugin = {
     id: "obsDayBackground",
@@ -106,7 +123,7 @@ function buildObsChart(entries) {
       yAxisID: "y1",
       backgroundColor: gustColors,
       borderColor: "transparent",
-      order: 2,
+      order: 3,
       borderRadius: { topLeft: 2, topRight: 2, bottomLeft: 0, bottomRight: 0 },
       borderSkipped: false,
     },
@@ -120,6 +137,29 @@ function buildObsChart(entries) {
       backgroundColor: "transparent",
       pointRadius: 0,
       order: 0,
+    },
+    {
+      type: "line",
+      label: "Dew Point (°F)",
+      data: dewpts,
+      yAxisID: "y",
+      tension: 0.3,
+      borderColor: "rgba(100,180,255,0.75)",
+      backgroundColor: "transparent",
+      pointRadius: 0,
+      borderDash: [3, 3],
+      order: 1,
+    },
+    {
+      type: "line",
+      label: "Pressure (scaled)",
+      data: scaledPressure,
+      yAxisID: "y",
+      tension: 0.4,
+      borderColor: "rgba(180,180,180,0.45)",
+      backgroundColor: "transparent",
+      pointRadius: 0,
+      order: 2,
     }
   ];
 
@@ -134,7 +174,7 @@ function buildObsChart(entries) {
       backgroundColor: "transparent",
       pointRadius: 0,
       borderDash: [4, 3],
-      order: 1,
+      order: 2,
     });
   }
 
