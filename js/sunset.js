@@ -5,8 +5,10 @@ function wineScale(raw) { return Math.max(50, Math.min(100, Math.round(50 + 50 *
 // ======================================================
 // Sunset Quality Forecast
 // Algorithm based on SunsetWx methodology:
-//   Score = mid_cloud × (1 - low_cloud_penalty) × humidity_factor
-// Best sunsets: 30-70% mid/high cloud, <20% low cloud, dry air
+//   Score = mid_cloud_canvas × (1 - low_cloud_penalty) × humidity_factor
+// Best sunsets: mid/high cloud (any %) with <20% low cloud, dry air.
+// Low cloud blocks the horizon → kills color. Mid/high cloud catches it → enhances color.
+// 100% mid + 0% low = spectacular (large lit canvas, clear horizon).
 // ======================================================
 function renderSunsetQuality(data) {
   const el = document.getElementById("sunsetQualityContent");
@@ -112,9 +114,14 @@ function renderSunsetQuality(data) {
     
     const midCloudAvg = mid25 * 0.7 + mid50 * 0.3;
 
-    const midScore = midCloudAvg <= 70
+    // When the horizon is clear (low cloud = 0), dense mid/high cloud is the color canvas.
+    // Only penalize heavy mid cloud when low cloud is also present (true overcast).
+    const lowClearFactor = Math.max(0, 1 - low10 / 50); // 1.0 at low=0, 0 at low≥50
+    const midScoreBase = midCloudAvg <= 70
       ? midCloudAvg / 70
       : Math.max(0.3, (100 - midCloudAvg) / 40);
+    const midScoreClear = Math.min(1.0, midCloudAvg / 50); // ramps to max at 50%+, no falloff
+    const midScore = midScoreBase * (1 - lowClearFactor) + midScoreClear * lowClearFactor;
 
     const highBonus = Math.min((high25 + high50) / 2, 60) / 60 * 0.3;
     const lowPenalty = Math.min(low10 / 80, 1.0);
@@ -195,7 +202,11 @@ function renderSunsetQuality(data) {
     if (ts.note === "Clear sky") {
       sunsetHL = `Good sunset tonight — clear horizon, low humidity`;
     } else if (ts.label === "Spectacular" || ts.label === "Very Good") {
-      sunsetHL = `${ts.label} sunset tonight — mid-level clouds at distance (${mid}%)`;
+      if (mid >= 80 && low <= 15) {
+        sunsetHL = `${ts.label} sunset tonight — thick cloud canvas, clear horizon`;
+      } else {
+        sunsetHL = `${ts.label} sunset tonight — mid-level clouds at distance (${mid}%)`;
+      }
     } else if (ts.label === "Good") {
       sunsetHL = `Decent sunset tonight — some color likely`;
     } else if (ts.label === "Fair") {
