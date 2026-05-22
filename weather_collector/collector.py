@@ -154,7 +154,7 @@ def _save_obs_temp_log(data):
 
 
 def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, wind_mph=None, wind_dir=None):
-    """Append current corrected temp/precip/gust with local timestamp; keep only today and yesterday."""
+    """Append 10-min observed snapshot; keep last 24 hours of entries."""
     if corrected_temp is None:
         return _load_obs_temp_log()
 
@@ -162,31 +162,24 @@ def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, win
     from datetime import datetime, timedelta
     eastern = pytz.timezone("America/New_York")
     now_local = datetime.now(eastern)
-    today_str = now_local.strftime("%Y-%m-%d")
-    yesterday_str = (now_local - timedelta(days=1)).strftime("%Y-%m-%d")
+    cutoff = now_local - timedelta(hours=24)
 
     log = _load_obs_temp_log()
     entries = log.get("entries", [])
 
-    entries = [e for e in entries if e.get("time", "").startswith(today_str) or e.get("time", "").startswith(yesterday_str)]
+    entries = [e for e in entries if e.get("time", "") >= cutoff.strftime("%Y-%m-%dT%H:%M")]
 
-    hour_stamp = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
-    existing = next((e for e in entries if e.get("time") == hour_stamp), None)
-    if existing is None:
-        entry = {"time": hour_stamp, "temp": round(corrected_temp, 1)}
-        if precip_in is not None:
-            entry["precip_in"] = round(precip_in, 3)
-        if peak_gust_mph is not None:
-            entry["gust_mph"] = round(peak_gust_mph, 1)
-        if wind_mph is not None:
-            entry["wind_mph"] = round(wind_mph, 1)
-        if wind_dir is not None:
-            entry["wind_dir"] = round(wind_dir)
-        entries.append(entry)
-    else:
-        # Update gust if this run observed a higher value
-        if peak_gust_mph is not None:
-            existing["gust_mph"] = round(max(existing.get("gust_mph", 0), peak_gust_mph), 1)
+    stamp = now_local.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+    entry = {"time": stamp, "temp": round(corrected_temp, 1)}
+    if precip_in is not None:
+        entry["precip_in"] = round(precip_in, 3)
+    if peak_gust_mph is not None:
+        entry["gust_mph"] = round(peak_gust_mph, 1)
+    if wind_mph is not None:
+        entry["wind_mph"] = round(wind_mph, 1)
+    if wind_dir is not None:
+        entry["wind_dir"] = round(wind_dir)
+    entries.append(entry)
 
     entries.sort(key=lambda e: e.get("time", ""))
     log = {"entries": entries}

@@ -163,8 +163,14 @@ function buildObsChart(entries) {
             callback: function(value, index) {
               const dt = new Date(entries[index].time);
               const h = dt.getHours();
-              if (h === 0) return dt.toLocaleDateString("en-US", { weekday: "short" });
-              if (h % 6 === 0) return h === 12 ? "12pm" : h < 12 ? h + "am" : (h - 12) + "pm";
+              const m = dt.getMinutes();
+              if (index > 0) {
+                const prev = new Date(entries[index - 1].time);
+                if (prev.getDate() !== dt.getDate()) return dt.toLocaleDateString("en-US", { weekday: "short" });
+              } else if (h === 0 && m < 10) {
+                return dt.toLocaleDateString("en-US", { weekday: "short" });
+              }
+              if (m === 0 && h % 6 === 0) return h === 12 ? "12pm" : h < 12 ? h + "am" : (h - 12) + "pm";
               return null;
             },
             font: { size: 10 }
