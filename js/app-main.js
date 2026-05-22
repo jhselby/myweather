@@ -418,6 +418,8 @@ function loadWeatherData() {
         if (Array.isArray(data.wind_exposure_table) && data.wind_exposure_table.length > 0) {
           WIND_EXPOSURE_TABLE = data.wind_exposure_table;
         }
+        window._combinedWindImpact = combinedWindImpact;
+        window._worryLevel = worryLevel;
 
         // Apply temperature-based gradient to Right Now card
         const temp = data.hyperlocal?.corrected_temp ?? data.current?.temperature ?? 50;
@@ -1287,6 +1289,14 @@ function loadWeatherData() {
         }
         
         renderWaterTempLog();
+
+        // Observed history chart
+        const obsEntries = (data.obs_temp_log?.entries) || [];
+        if (obsEntries.length > 0) {
+          buildObsChart(obsEntries);
+          renderObsChartCollapsedPreview(obsEntries);
+        }
+
         // Buoy 44013
         const buoy = data.buoy_44013 || {};
         const toCompassDir = deg => deg != null ? toCompass(deg, false) : "--";

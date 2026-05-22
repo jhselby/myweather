@@ -153,7 +153,7 @@ def _save_obs_temp_log(data):
     _upload_to_gcs(data, OBS_TEMP_LOG_GCS_PATH, "obs_temp_log.json")
 
 
-def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None):
+def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, wind_mph=None, wind_dir=None):
     """Append current corrected temp/precip/gust with local timestamp; keep only today and yesterday."""
     if corrected_temp is None:
         return _load_obs_temp_log()
@@ -178,6 +178,10 @@ def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None):
             entry["precip_in"] = round(precip_in, 3)
         if peak_gust_mph is not None:
             entry["gust_mph"] = round(peak_gust_mph, 1)
+        if wind_mph is not None:
+            entry["wind_mph"] = round(wind_mph, 1)
+        if wind_dir is not None:
+            entry["wind_dir"] = round(wind_dir)
         entries.append(entry)
     else:
         # Update gust if this run observed a higher value
@@ -622,8 +626,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             if _ci < len(_hourly_precip_mm) and _hourly_precip_mm[_ci] is not None:
                 _cur_hour_precip_in = _hourly_precip_mm[_ci] / 25.4
         _cur_gust = _hyp.get("corrected_wind_gusts") or weather_data.get("current", {}).get("wind_gusts")
+        _cur_wind = _hyp.get("corrected_wind_speed") or weather_data.get("current", {}).get("wind_speed")
+        _cur_wind_dir = weather_data.get("current", {}).get("wind_direction")
 
-        _obs_log = _update_obs_temp_log(_hyp.get("corrected_temp"), precip_in=_cur_hour_precip_in, peak_gust_mph=_cur_gust)
+        _obs_log = _update_obs_temp_log(_hyp.get("corrected_temp"), precip_in=_cur_hour_precip_in, peak_gust_mph=_cur_gust, wind_mph=_cur_wind, wind_dir=_cur_wind_dir)
         _obs_entries = _obs_log.get("entries", [])
 
         _obs_today = [

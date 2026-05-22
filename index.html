@@ -1116,6 +1116,33 @@
           </div>
         </div>
 
+        <!-- Observed history chart -->
+        <div class="card col-12" data-collapse-key="obs_history" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('obs_history', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            Observed<span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('obs_history', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;">Observed</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div id="obsChartPrimaryCollapsed" style="font-size:1.05rem;font-weight:500;margin-bottom:6px;opacity:0.95;"></div>
+              <div id="obsChartSecondaryCollapsed" style="font-size:0.85rem;opacity:0.65;"></div>
+              <div style="font-size:0.72rem;opacity:0.4;margin-top:6px;">Temp range · station corrected</div>
+            </div>
+          </div>
+          <div class="card-body" style="display:none;">
+            <canvas id="obsChart"></canvas>
+            <div id="obsDataBar" style="padding:4px 12px;font-size:0.74rem;color:var(--text-secondary);border-top:1px solid rgba(255,255,255,0.07);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              <span id="obsDataTime" style="font-weight:600;color:var(--text-primary);margin-right:6px;"></span><span id="obsDataLine"></span>
+            </div>
+            <div style="padding:5px 12px 7px;border-top:1px solid rgba(255,255,255,0.07);font-size:10px;color:var(--text-secondary);display:flex;gap:14px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:20px;height:2px;background:rgba(255,180,80,0.9);border-radius:2px;flex-shrink:0;"></div>Temp (°F)</div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:20px;height:2px;border-top:2px dashed rgba(60,200,160,0.85);flex-shrink:0;"></div>Wind (mph)</div>
+              <div style="display:flex;align-items:center;gap:4px;"><div style="width:14px;height:10px;border-radius:1px;background:rgba(60,200,160,0.6);flex-shrink:0;"></div>Gust (mph)</div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -1304,7 +1331,8 @@
   <script src="js/feelslike.js?v=d8f5440f"></script>
   <script src="js/thunderstorm.js?v=47e14fef"></script>
   <script src="js/previews.js?v=4f6a8df5"></script>
-  <script src="js/tempchart.js?v=ee9e746a"></script>
+  <script src="js/tempchart.js?v=ddb37223"></script>
+  <script src="js/obschart.js?v=028ad39b"></script>
   <script src="js/forecast.js?v=5b44ecee"></script>
   <script src="js/frost.js?v=45b487d0"></script>
   <script src="js/sunset.js?v=a72adc55"></script>
@@ -1312,7 +1340,7 @@
   <script src="js/dock.js?v=300bea08"></script>
   <script src="js/ui.js?v=95607d53"></script>
   <script src="js/modals.js?v=7931c931"></script>
-  <script src="js/app-main.js?v=57c01959"></script>
+  <script src="js/app-main.js?v=88b5431b"></script>
   <script src="js/changelog_loader.js?v=eb2d0222"></script>
   
   <script>
@@ -1437,7 +1465,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.175</span>
+            <span class="version-pill" id="appVersion">v0.5.176</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
