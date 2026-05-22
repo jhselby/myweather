@@ -29,7 +29,7 @@ function updateObsDataBar(index, entries) {
   if (e.wind_dir != null && (e.wind_mph != null || e.gust_mph != null) && window._combinedWindImpact && window._worryLevel) {
     const score = window._combinedWindImpact(e.wind_mph ?? null, e.gust_mph ?? null, e.wind_dir);
     const level = window._worryLevel(score);
-    if (level && level.label !== "Calm") impactStr = ` (${level.label.toLowerCase()})`;
+    if (level) impactStr = ` (${level.label.toLowerCase()})`;
   }
 
   const dewpt = e.dew_point_f != null ? ` · Dew ${Math.round(e.dew_point_f)}°` : "";
