@@ -105,7 +105,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Right Now<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('right_now', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;">
             <!-- Title in upper left corner -->
             <div class="tile-label">Right Now</div>
@@ -222,7 +221,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Sky & Precip<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('48h_temp_precip', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;overflow:hidden;" id="skyPrecipPreview">
             <!-- Title in upper left corner - absolute positioned -->
             <div class="tile-label" style="z-index:10;">Sky & Precip</div>
@@ -296,7 +294,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Wind<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('48h_wind', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;padding-bottom:8px;">
             <!-- Title in upper left corner - matching Right Now exactly -->
             <div class="tile-label">Wind</div>
@@ -366,7 +363,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             10-Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('ten_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;">
             <!-- Title in upper left corner -->
             <div class="tile-label">10-Day</div>
@@ -392,7 +388,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Detailed Forecast<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hyperlocal_forecast', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;">
             <!-- Title upper left -->
             <div class="tile-label">Detailed Forecast</div>
@@ -460,7 +455,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Feels Like<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('feels_like', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Feels Like</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -488,7 +482,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Fog<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('fog_risk', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Fog</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -563,7 +556,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Thunderstorm<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('thunderstorm', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Thunderstorm</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -622,7 +614,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Sea Breeze<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sea_breeze_detail', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Sea Breeze</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -639,7 +630,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Wind<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('wind_impact', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Wind Impact</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -702,7 +692,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Corrections<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('corrections', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Corrections</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -779,7 +768,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Today<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('today_almanac', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Today</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -798,7 +786,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Tides<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('tides', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;overflow:hidden;">
             <div class="tile-label" style="top:12px;left:16px;">Tides</div>
             <!-- Animated water fill -->
@@ -856,7 +843,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Sun<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sun', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;overflow:hidden;">
             <div class="tile-label" style="top:12px;left:16px;">Sun</div>
             <svg width="90" height="90" viewBox="0 0 90 90" style="position:absolute;top:0;right:8px;opacity:0.4;z-index:5;">
@@ -937,7 +923,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Moon<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('moon', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Moon</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:40px;">
@@ -998,7 +983,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Planets<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('solar_system', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Planets</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -1018,7 +1002,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Ocean<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('buoy_44013', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Ocean</div>
             <div style="position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;justify-content:center;padding:32px 16px 12px;">
@@ -1081,7 +1064,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Frost Log<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('frost_freeze', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Frost Log</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -1221,7 +1203,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Hair Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('hair_day', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Hair Day</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -1240,7 +1221,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Birds<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('birds', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Birds</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -1259,7 +1239,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Sunset<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('sunset_quality', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Sunset</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -1278,7 +1257,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Beach Day<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('swim_float', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Beach Day</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -1296,7 +1274,6 @@
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Overhead<span class="collapse-chevron" style="display:none;">&#9660;</span>
           </div>
-          <button class="card-close-btn" style="display:none;" onclick="event.stopPropagation(); toggleCard('overhead_card', this.closest('.card').querySelector('.card-title-collapsible'))">✕</button>
           <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
             <div class="tile-label" style="top:12px;left:16px;">Overhead</div>
             <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
@@ -1337,7 +1314,7 @@
   <script src="js/sunset.js?v=a72adc55"></script>
   <script src="js/hair.js?v=415b8909"></script>
   <script src="js/dock.js?v=300bea08"></script>
-  <script src="js/ui.js?v=95607d53"></script>
+  <script src="js/ui.js?v=a1e2a120"></script>
   <script src="js/modals.js?v=7931c931"></script>
   <script src="js/app-main.js?v=88b5431b"></script>
   <script src="js/changelog_loader.js?v=eb2d0222"></script>
@@ -1464,7 +1441,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.5.177</span>
+            <span class="version-pill" id="appVersion">v0.5.178</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
