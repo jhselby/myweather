@@ -1159,7 +1159,8 @@ function loadWeatherData() {
           (hourly.cloud_cover_high || []).slice(startIdx, startIdx + 48),
           (hourly.cloud_cover || []).slice(startIdx, startIdx + 48),
           srHour,
-          ssHour
+          ssHour,
+          (hourly.precipitation || []).slice(startIdx, startIdx + 48)
         );
 
         renderWindChart(data);

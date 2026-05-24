@@ -40,25 +40,33 @@ function updateTempPrecipDataBar(index, times, temps, pop, wetBulbs, temps850mb,
     `${temp != null ? Math.round(temp) : "—"}° · ${precipProb}% ${typeStr} · ${skyStr}`;
 }
 
-function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal, sunrise, sunset) {
+function buildTempPrecipChart(times, temps, pop, wetBulbs, temps850mb, cloudLow, cloudMid, cloudHigh, cloudTotal, sunrise, sunset, precipIntensity) {
   const labels = times.map(t => new Date(t).toLocaleTimeString("en-US", { hour: "numeric" }));
   const ctx    = document.getElementById("tempPrecipChart").getContext("2d");
   if (tempPrecipChart) tempPrecipChart.destroy();
 
-  // Precip bar colors by precipitation type
+  // Precip bar colors by type, shaded light→dark blue by rain intensity
   const precipData   = pop.map(p => p ?? 0);
+  const maxIntensity = precipIntensity ? Math.max(...precipIntensity.map(v => v ?? 0), 0.01) : 1;
   const precipColors = (wetBulbs || []).map((wb, i) => {
     const surfTemp = temps[i];
     const temp850  = temps850mb?.[i];
     if (pop[i] === 0) return "rgba(0,0,0,0)";
-    if (wb == null) return "rgba(80,140,255,0.85)";
-    if (wb <= 28)   return "rgba(230,240,255,0.95)";
+    // Snow, ice, sleet — keep fixed type colors
+    if (wb != null && wb <= 28)   return "rgba(230,240,255,0.95)";
     if (temp850 != null && temp850 > 32 && surfTemp != null && surfTemp < 32) {
       return "rgba(255,140,40,0.85)";
     }
-    if (wb <= 32)   return "rgba(180,200,240,0.90)";
-    if (wb <= 35)   return "rgba(160,100,220,0.85)";
-    return "rgba(80,150,255,0.85)";
+    if (wb != null && wb <= 32)   return "rgba(180,200,240,0.90)";
+    if (wb != null && wb <= 35)   return "rgba(160,100,220,0.85)";
+    // Rain: shade light→dark blue by intensity
+    const intensity = precipIntensity?.[i] ?? 0;
+    const t = Math.min(intensity / 0.40, 1.0); // 0.40 in/hr = full dark
+    const r = Math.round(140 - 100 * t);  // 140 → 40
+    const g = Math.round(190 - 140 * t);  // 190 → 50
+    const b = Math.round(255 - 55  * t);  // 255 → 200
+    const a = (0.45 + 0.50 * t).toFixed(2);
+    return `rgba(${r},${g},${b},${a})`;
   });
 
   // Sky background plugin — paints per-column gradient behind bars on every render
