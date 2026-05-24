@@ -74,16 +74,24 @@ function buildObsChart(entries) {
       : null
   );
 
+  // Smooth pressure with a moving average to eliminate staircase from 0.01 inHg quantization
+  const smoothPressure = pressures.map((_, i) => {
+    const half = 4; // 9-point window ≈ 90 min
+    const slice = pressures.slice(Math.max(0, i - half), Math.min(pressures.length, i + half + 1))
+      .filter(v => v != null);
+    return slice.length ? slice.reduce((a, b) => a + b, 0) / slice.length : null;
+  });
+
   // Scale pressure to temp axis range for visual trend
   const validTemps = temps.filter(v => v != null);
-  const validPress = pressures.filter(v => v != null);
+  const validSmooth = smoothPressure.filter(v => v != null);
   const tMin = validTemps.length ? Math.min(...validTemps) : 40;
   const tMax = validTemps.length ? Math.max(...validTemps) : 80;
-  const pMin = validPress.length ? Math.min(...validPress) : 29.5;
-  const pMax = validPress.length ? Math.max(...validPress) : 30.5;
+  const pMin = validSmooth.length ? Math.min(...validSmooth) : 29.5;
+  const pMax = validSmooth.length ? Math.max(...validSmooth) : 30.5;
   const pRange = pMax - pMin || 0.01;
   const tRange = tMax - tMin || 10;
-  const scaledPressure = pressures.map(p =>
+  const scaledPressure = smoothPressure.map(p =>
     p != null ? tMin + ((p - pMin) / pRange) * tRange : null
   );
 
