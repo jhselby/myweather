@@ -914,6 +914,34 @@
       rows.push({ label: "Sea breeze", value: sbLikelihood + "% likely", color: "blue", dim: true });
     }
 
+    // 10. Heat stress (WBGT)
+    {
+      const hTemps  = s._data.hourly?.corrected_temperature || s._data.hourly?.temperature || [];
+      const hWb     = s._data.hourly?.corrected_wet_bulb    || s._data.hourly?.wet_bulb    || [];
+      const hRad    = s._data.hourly?.direct_radiation || [];
+      const hTimes  = s._data.hourly?.times || [];
+      const todayStr = new Date().toLocaleDateString("en-US");
+      let peakWBGT = 0, peakHour = null;
+      hTimes.forEach((t, i) => {
+        const dt = new Date(t);
+        if (dt.toLocaleDateString("en-US") !== todayStr) return;
+        const h = dt.getHours();
+        if (h < 9 || h > 18) return;
+        const T  = hTemps[i] ?? null;
+        const Tw = hWb[i]    ?? null;
+        if (T == null || Tw == null) return;
+        const wbgt = 0.7 * Tw + 0.3 * T + 0.002 * (hRad[i] ?? 0);
+        if (wbgt > peakWBGT) { peakWBGT = wbgt; peakHour = dt; }
+      });
+      if (peakWBGT >= 80) {
+        const risk  = peakWBGT >= 88 ? "High risk" : peakWBGT >= 83 ? "Moderate" : "Caution";
+        const color = peakWBGT >= 88 ? "red" : "orange";
+        const dim   = peakWBGT < 83;
+        const timeStr = peakHour ? " · peaks " + peakHour.toLocaleTimeString("en-US", { hour: "numeric" }) : "";
+        rows.push({ label: "Heat stress", value: `WBGT ${Math.round(peakWBGT)}°F · ${risk}${timeStr}`, color, dim });
+      }
+    }
+
     return rows;
   }
 
