@@ -58,8 +58,12 @@ function renderSunsetQuality(data) {
     }
 
     // Use available data, estimate missing with nearby values
-    const low10 = avgWindow(cloud10, 'cloud_low')
-                  ?? avgWindow(cloud25, 'cloud_low') ?? 0;
+    const low10   = avgWindow(cloud10, 'cloud_low') ?? avgWindow(cloud25, 'cloud_low') ?? 0;
+    const low25val = avgWindow(cloud25, 'cloud_low') ?? avgWindow(cloud50, 'cloud_low') ?? low10;
+    const low50val = avgWindow(cloud50, 'cloud_low') ?? low25val;
+    // Horizon low cloud: 50mi weighted most — that's the wall between the sun and you
+    const horizonLow = low10 * 0.15 + low25val * 0.25 + low50val * 0.60;
+
     const mid25 = avgWindow(cloud25, 'cloud_mid')
                   ?? avgWindow(cloud50, 'cloud_mid')
                   ?? avgWindow(cloud10, 'cloud_mid') ?? 0;
@@ -93,7 +97,7 @@ function renderSunsetQuality(data) {
       continue;
     }
     
-    if (low10 > 75) {
+    if (horizonLow > 75) {
       const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
         : sunsetTime.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
       const timeLabel = sunsetTime.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
@@ -114,26 +118,29 @@ function renderSunsetQuality(data) {
     
     const midCloudAvg = mid25 * 0.7 + mid50 * 0.3;
 
-    // When the horizon is clear (low cloud = 0), dense mid/high cloud is the color canvas.
-    // Only penalize heavy mid cloud when low cloud is also present (true overcast).
-    const lowClearFactor = Math.max(0, 1 - low10 / 50); // 1.0 at low=0, 0 at low≥50
+    // horizonLow drives all penalty/clearFactor — 50mi is what's between the sun and you.
+    // When horizonLow is near 0, dense mid/high cloud is the color canvas (no falloff).
+    // When horizonLow is high, the horizon is blocked regardless of local conditions.
+    const lowClearFactor = Math.max(0, 1 - horizonLow / 50);
     const midScoreBase = midCloudAvg <= 70
       ? midCloudAvg / 70
       : Math.max(0.3, (100 - midCloudAvg) / 40);
-    const midScoreClear = Math.min(1.0, midCloudAvg / 50); // ramps to max at 50%+, no falloff
+    // Canvas bonus only applies when the distant horizon is clear enough to back-light the clouds
+    const horizonClearness = Math.max(0, 1 - horizonLow / 40);
+    const midScoreClear = Math.min(1.0, midCloudAvg / 50) * horizonClearness;
     const midScore = midScoreBase * (1 - lowClearFactor) + midScoreClear * lowClearFactor;
 
     const highBonus = Math.min((high25 + high50) / 2, 60) / 60 * 0.3;
-    const lowPenalty = Math.min(low10 / 80, 1.0);
+    const lowPenalty = Math.min(horizonLow / 70, 1.0);
     // Humidity penalty: meaningful above 70% (not 60%) — coastal air is naturally humid
     const humFactor = 1 - Math.max(0, (hum25 - 70)) / 90;
-    // Partial low clouds at the horizon catch color from below — treat as a contribution,
-    // not just a blocker. Peak opportunity around 20-50% low cloud coverage.
-    const lowCloudColor = (low10 > 8 && low10 < 72)
+    // Local partial low clouds can catch color — but only if the distant horizon is clear enough
+    // to send colored light through in the first place.
+    const lowCloudColor = (low10 > 8 && low10 < 72 && horizonLow < 40)
       ? Math.sin((low10 - 8) / 64 * Math.PI) * 0.35
       : 0;
 
-    let rawScore = (midScore * 0.7 + highBonus + lowCloudColor) * (1 - lowPenalty * 0.55) * humFactor;
+    let rawScore = (midScore * 0.7 + highBonus + lowCloudColor) * (1 - lowPenalty * 0.65) * humFactor;
     rawScore = Math.max(1, Math.min(100, Math.round(rawScore * 100)));
 
     let label, color;
