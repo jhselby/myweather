@@ -153,7 +153,7 @@ def _save_obs_temp_log(data):
     _upload_to_gcs(data, OBS_TEMP_LOG_GCS_PATH, "obs_temp_log.json")
 
 
-def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, wind_mph=None, wind_dir=None, dew_point_f=None, pressure_in=None):
+def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, wind_mph=None, wind_dir=None, dew_point_f=None, pressure_in=None, cloud_cover=None):
     """Append 10-min observed snapshot; keep last 24 hours of entries."""
     if corrected_temp is None:
         return _load_obs_temp_log()
@@ -183,6 +183,8 @@ def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, win
         entry["dew_point_f"] = round(dew_point_f, 1)
     if pressure_in is not None:
         entry["pressure_in"] = round(pressure_in, 2)
+    if cloud_cover is not None:
+        entry["cloud_cover"] = round(cloud_cover)
     entries.append(entry)
 
     entries.sort(key=lambda e: e.get("time", ""))
@@ -627,8 +629,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _cur_wind_dir = weather_data.get("current", {}).get("wind_direction")
         _cur_dewpt = _hyp.get("corrected_dew_point") or weather_data.get("derived", {}).get("corrected_dew_point")
         _cur_pressure = _hyp.get("corrected_pressure_in")
+        _cur_cloud = weather_data.get("current", {}).get("cloud_cover")
 
-        _obs_log = _update_obs_temp_log(_hyp.get("corrected_temp"), precip_in=_cur_hour_precip_in, peak_gust_mph=_cur_gust, wind_mph=_cur_wind, wind_dir=_cur_wind_dir, dew_point_f=_cur_dewpt, pressure_in=_cur_pressure)
+        _obs_log = _update_obs_temp_log(_hyp.get("corrected_temp"), precip_in=_cur_hour_precip_in, peak_gust_mph=_cur_gust, wind_mph=_cur_wind, wind_dir=_cur_wind_dir, dew_point_f=_cur_dewpt, pressure_in=_cur_pressure, cloud_cover=_cur_cloud)
         _obs_entries = _obs_log.get("entries", [])
 
         _obs_today = [

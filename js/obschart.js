@@ -95,20 +95,61 @@ function buildObsChart(entries) {
     p != null ? tMin + ((p - pMin) / pRange) * tRange : null
   );
 
-  const dayBgPlugin = {
-    id: "obsDayBackground",
+  const skyBgPlugin = {
+    id: "obsSkyBackground",
     beforeDatasetsDraw(chart) {
-      const { ctx, chartArea: { left, top, right, bottom } } = chart;
+      const { ctx, chartArea: { left, top, right, bottom }, scales } = chart;
       const n = entries.length;
       const colW = (right - left) / n;
       ctx.save();
       for (let i = 0; i < n; i++) {
-        const isToday = new Date(entries[i].time).toLocaleDateString("en-US") === todayStr;
-        ctx.fillStyle = isToday
-          ? "rgba(255,200,100,0.04)"
-          : "rgba(120,140,200,0.07)";
+        const dt   = new Date(entries[i].time);
+        const hour = dt.getHours() + dt.getMinutes() / 60;
+        const cc   = Math.min(1, (entries[i].cloud_cover ?? 50) / 100);
+
+        // Approximate daylight: civil twilight 5–8pm range; use simple sine over 5–20h
+        const sunriseH = 5.2, sunsetH = 20.1;
+        const daylight = (hour >= sunriseH && hour <= sunsetH)
+          ? Math.max(0, Math.sin(Math.PI * (hour - sunriseH) / (sunsetH - sunriseH)))
+          : 0;
+
+        const cloudWeight = Math.pow(cc, 0.6);
+        const sunWeight   = (1 - cloudWeight) * daylight;
+
+        const sunR = 255, sunG = 210, sunB = 55;
+        const cldDayR = 95,  cldDayG = 100, cldDayB = 115;
+        const cldNgtR = 15,  cldNgtG = 20,  cldNgtB = 45;
+        const clrNgtR = 10,  clrNgtG = 15,  clrNgtB = 40;
+
+        let r, g, b, a;
+        if (daylight > 0) {
+          const daylitCloudR = cldDayR + (cldNgtR - cldDayR) * (1 - daylight);
+          const daylitCloudG = cldDayG + (cldNgtG - cldDayG) * (1 - daylight);
+          const daylitCloudB = cldDayB + (cldNgtB - cldDayB) * (1 - daylight);
+          r = Math.round(sunR * sunWeight + daylitCloudR * cloudWeight + sunR * (1 - cloudWeight - sunWeight));
+          g = Math.round(sunG * sunWeight + daylitCloudG * cloudWeight + sunG * (1 - cloudWeight - sunWeight));
+          b = Math.round(sunB * sunWeight + daylitCloudB * cloudWeight + sunB * (1 - cloudWeight - sunWeight));
+          if (daylight < 0.3) {
+            const tw = (0.3 - daylight) / 0.3;
+            r = Math.round(r * (1 - tw * 0.4) + 220 * tw * 0.4);
+            g = Math.round(g * (1 - tw * 0.4) + 130 * tw * 0.4);
+            b = Math.round(b * (1 - tw * 0.4) +  40 * tw * 0.4);
+          }
+          a = 0.32 + sunWeight * 0.18;
+        } else {
+          r = Math.round(clrNgtR + (cldNgtR - clrNgtR) * cc);
+          g = Math.round(clrNgtG + (cldNgtG - clrNgtG) * cc);
+          b = Math.round(clrNgtB + (cldNgtB - clrNgtB) * cc);
+          a = 0.55 + cc * 0.1;
+        }
+
+        const grad = ctx.createLinearGradient(0, top, 0, bottom);
+        grad.addColorStop(0, `rgba(${r},${g},${b},${a.toFixed(2)})`);
+        grad.addColorStop(1, `rgba(${r},${g},${b},${(a * 0.35).toFixed(2)})`);
+        ctx.fillStyle = grad;
         ctx.fillRect(left + i * colW, top, colW, bottom - top);
       }
+      // Day-boundary dividers
       for (let i = 1; i < n; i++) {
         const prevDay = new Date(entries[i - 1].time).toLocaleDateString("en-US");
         const curDay  = new Date(entries[i].time).toLocaleDateString("en-US");
@@ -197,8 +238,9 @@ function buildObsChart(entries) {
     });
   }
 
+  let lastLabelIdx = -99;
   obsChart = new Chart(ctx, {
-    plugins: [dayBgPlugin],
+    plugins: [skyBgPlugin],
     data: { labels, datasets },
     options: {
       responsive: true,
@@ -223,10 +265,13 @@ function buildObsChart(entries) {
               const dt = new Date(entries[index].time);
               const h = dt.getHours();
               const m = dt.getMinutes();
-              if (index === 0) return dt.toLocaleDateString("en-US", { weekday: "short" });
+              if (index === 0) { lastLabelIdx = index; return dt.toLocaleDateString("en-US", { weekday: "short" }); }
               const prev = new Date(entries[index - 1].time);
-              if (prev.getDate() !== dt.getDate()) return dt.toLocaleDateString("en-US", { weekday: "short" });
-              if (m < 10 && h % 6 === 0 && h !== 0) return h === 12 ? "12pm" : h < 12 ? h + "am" : (h - 12) + "pm";
+              if (prev.getDate() !== dt.getDate()) { lastLabelIdx = index; return dt.toLocaleDateString("en-US", { weekday: "short" }); }
+              if (m < 10 && h % 6 === 0 && h !== 0 && (index - lastLabelIdx) > 8) {
+                lastLabelIdx = index;
+                return h === 12 ? "12pm" : h < 12 ? h + "am" : (h - 12) + "pm";
+              }
               return null;
             },
             font: { size: 10 }
