@@ -442,6 +442,7 @@ function loadWeatherData() {
         renderSunsetQuality(data);
         renderDockDay(data);
         renderHairDay(data);
+        renderOutdoorConditions(data);
         renderBriefing(data);
         renderSolarSystem();
 
@@ -1396,6 +1397,7 @@ function loadWeatherData() {
         renderSunsetQuality(_d);
         renderDockDay(_d);
         renderHairDay(_d);
+        renderOutdoorConditions(_d);
         renderBriefing(_d);
         renderCorrectionsCard(_d);
         populateCollapsedPreviews(_d);

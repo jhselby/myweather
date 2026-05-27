@@ -1,3 +1,6 @@
+## v0.5.190 • May 27, 2026
+- **Outside card (Lifestyle tab):** New card scoring current outdoor conditions — rain, wind, comfort (dew point), and UV — with overall label (Great/Good/Fair/Poor/Stay inside), per-factor bars, and best-window hint when current conditions are poor. Pollen and AQI placeholders for future additions.
+
 ## v0.5.184–v0.5.189 • May 23–26, 2026
 * **Sunset scorer: horizon low cloud fix:** 50mi low cloud now weighted 60% in penalty calculation — a blocked distant horizon correctly scores Fair/Poor even when local sky is clear. Canvas bonus (mid/high cloud) only activates when the distant horizon is actually clear enough to back-light it.
 * **Heat stress in Watch For:** WBGT computed from corrected wet bulb, temperature, and solar radiation — appears in briefing Watch For section when peak daytime WBGT ≥ 80°F, with Caution/Moderate/High risk labels
