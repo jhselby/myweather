@@ -183,7 +183,7 @@ function renderOutdoorConditions(data) {
     { label: "Rain",    value: raining ? "Raining now" : `${rainPOP}% next 3h`,  score: scoreRain(nowIdx) },
     { label: "Wind",    value: windStr,                                            score: scoreWind(nowIdx) },
     { label: "Comfort", value: dpStr,                                              score: scoreDewPoint(nowIdx) },
-    { label: "UV",      value: uvMax != null ? `${uvMax} today (peak)` : "—",     score: scoreUV(uvMax) },
+    ...(uvMax != null ? [{ label: "UV", value: `${uvMax} today (peak)`, score: scoreUV(uvMax) }] : []),
   ];
 
   function barColor(s) {

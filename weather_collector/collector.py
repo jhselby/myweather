@@ -47,7 +47,8 @@ import logging
 GCS_BUCKET = "myweather-data"
 FROST_LOG_GCS_PATH = "frost_log.json"
 WEATHER_DATA_GCS_PATH = "weather_data.json"
-OBS_TEMP_LOG_GCS_PATH = "obs_temp_log.json"
+OBS_TEMP_LOG_GCS_PATH  = "obs_temp_log.json"
+FORECAST_LOG_GCS_PATH  = "forecast_log.json"
 FROST_LOG_TMP = Path("/tmp/frost_log.json")
 
 
@@ -191,6 +192,48 @@ def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, win
     log = {"entries": entries}
     _save_obs_temp_log(log)
     return log
+
+
+def _append_forecast_snapshot(hourly):
+    """Log a snapshot of the corrected 48h forecast for later validation. Keeps 14 days."""
+    import pytz
+    from datetime import datetime, timedelta
+    eastern = pytz.timezone("America/New_York")
+    now_local = datetime.now(eastern)
+    run_stamp = now_local.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+    cutoff = (now_local - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M")
+
+    times  = hourly.get("times", [])
+    temps  = hourly.get("corrected_temperature", hourly.get("temperature", []))
+    winds  = hourly.get("wind_speed", [])
+    gusts  = hourly.get("wind_gusts", [])
+    humid  = hourly.get("corrected_humidity", hourly.get("humidity", []))
+
+    hours = []
+    for i, t in enumerate(times[:48]):
+        if not t:
+            continue
+        entry = {"v": t}
+        if i < len(temps)  and temps[i]  is not None: entry["t"]  = round(temps[i], 1)
+        if i < len(winds)  and winds[i]  is not None: entry["ws"] = round(winds[i], 1)
+        if i < len(gusts)  and gusts[i]  is not None: entry["wg"] = round(gusts[i], 1)
+        if i < len(humid)  and humid[i]  is not None: entry["h"]  = round(humid[i], 1)
+        hours.append(entry)
+
+    if not hours:
+        return
+
+    try:
+        client = _gcs_client()
+        blob = client.bucket(GCS_BUCKET).blob(FORECAST_LOG_GCS_PATH)
+        log = json.loads(blob.download_as_text()) if blob.exists() else {"snapshots": []}
+    except Exception as e:
+        logging.warning(f"  ⚠  Could not load forecast_log.json: {redact_secrets(e)}")
+        log = {"snapshots": []}
+
+    snapshots = [s for s in log.get("snapshots", []) if s.get("run", "") >= cutoff]
+    snapshots.append({"run": run_stamp, "hours": hours})
+    _upload_to_gcs({"snapshots": snapshots}, FORECAST_LOG_GCS_PATH, "forecast_log.json")
 
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
@@ -632,6 +675,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _cur_cloud = weather_data.get("current", {}).get("cloud_cover")
 
         _obs_log = _update_obs_temp_log(_hyp.get("corrected_temp"), precip_in=_cur_hour_precip_in, peak_gust_mph=_cur_gust, wind_mph=_cur_wind, wind_dir=_cur_wind_dir, dew_point_f=_cur_dewpt, pressure_in=_cur_pressure, cloud_cover=_cur_cloud)
+        _append_forecast_snapshot(weather_data["hourly"])
         _obs_entries = _obs_log.get("entries", [])
 
         _obs_today = [
