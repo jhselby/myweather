@@ -130,7 +130,9 @@ function renderSunsetQuality(data) {
     const midScoreClear = Math.min(1.0, midCloudAvg / 50) * horizonClearness;
     const midScore = midScoreBase * (1 - lowClearFactor) + midScoreClear * lowClearFactor;
 
-    const highBonus = Math.min((high25 + high50) / 2, 60) / 60 * 0.3;
+    // High cloud cap scales up when horizon is clear — cirrus IS a color canvas with no low obstruction
+    const highBonusCap = 0.30 + 0.25 * Math.max(0, 1 - horizonLow / 25);
+    const highBonus = Math.min((high25 + high50) / 2, 80) / 80 * highBonusCap;
     const lowPenalty = Math.min(horizonLow / 70, 1.0);
     // Humidity penalty: meaningful above 70% (not 60%) — coastal air is naturally humid
     const humFactor = 1 - Math.max(0, (hum25 - 70)) / 90;

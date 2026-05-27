@@ -473,6 +473,9 @@ def _generate_daily_forecast(daily_data, target_date, derived=None):
     high = daily_data['temperature_max'][day_index]
     low = daily_data['temperature_min'][day_index]
 
+    if high is None or low is None:
+        return None
+
     # Override with corrected derived values (single source of truth)
     if derived:
         from datetime import datetime, timedelta
