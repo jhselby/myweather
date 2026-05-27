@@ -411,6 +411,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "cloud_cover_mid": hourly.get("cloud_cover_mid", []),
             "cloud_cover_high": hourly.get("cloud_cover_high", []),
             "direct_radiation": hourly.get("direct_radiation", []),
+            "uv_index": hourly.get("uv_index", []),
             "wind_speed": hourly.get("wind_speed_10m", []),
             "wind_direction": hourly.get("wind_direction_10m", []),
             "wind_gusts": hourly.get("wind_gusts_10m", []),

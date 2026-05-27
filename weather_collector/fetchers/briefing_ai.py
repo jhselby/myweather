@@ -124,7 +124,16 @@ def _build_weather_summary(weather_data):
             if p and p >= 30 and i < len(time_arr):
                 rain_start = time_arr[i]
                 break
-        precip_line = f"Precip: max {max_pop}% POP, {rain_inches}\" total"
+        peak_intensity = max((p or 0) for p in precip_arr[:48]) if precip_arr else 0
+        intensity_label = (
+            "torrential" if peak_intensity >= 1.0 else
+            "heavy"      if peak_intensity >= 0.30 else
+            "moderate"   if peak_intensity >= 0.10 else
+            "light"      if peak_intensity >= 0.01 else
+            "drizzle"
+        )
+        intensity_str = f" · peak {intensity_label} ({peak_intensity:.2f}\"/hr)" if peak_intensity >= 0.01 else ""
+        precip_line = f"Precip: max {max_pop}% POP, {rain_inches}\" total{intensity_str}"
         if rain_start:
             from datetime import datetime
             import pytz

@@ -942,6 +942,31 @@
       }
     }
 
+    // 11. UV index — only when high or above
+    {
+      const hUV    = s._data.hourly?.uv_index || [];
+      const hTimes = s._data.hourly?.times || [];
+      const todayISO = new Date().toISOString().slice(0, 10);
+      let uvPeak = null;
+      hTimes.forEach((t, i) => {
+        if (!t || !t.startsWith(todayISO)) return;
+        const h = new Date(t).getHours();
+        if (h < 9 || h > 17) return;
+        const v = hUV[i];
+        if (v != null && (uvPeak === null || v > uvPeak)) uvPeak = v;
+      });
+      if (uvPeak === null) uvPeak = s._data.daily?.uv_index_max?.[0] ?? null;
+      if (uvPeak != null && uvPeak >= 6) {
+        const uv = Math.round(uvPeak);
+        const value = uv >= 11 ? `UV ${uv} — extreme` :
+                      uv >= 8  ? `UV ${uv} — very high, limit midday exposure` :
+                                 `UV ${uv} — high, wear sunscreen`;
+        const color = uv >= 8 ? "orange" : "orange";
+        const dim   = uv < 8;
+        rows.push({ label: "UV", value, color, dim });
+      }
+    }
+
     return rows;
   }
 

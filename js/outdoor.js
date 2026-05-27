@@ -11,7 +11,7 @@ function renderOutdoorConditions(data) {
   const hwind   = hourly.wind_speed || [];
   const hgusts  = hourly.wind_gusts || [];
   const hdp     = hourly.corrected_dew_point || hourly.dew_point || [];
-  const uvMax   = data.daily?.uv_index_max?.[0] ?? null;
+  const huv     = hourly.uv_index || [];
 
   const now = new Date();
   const nowStr = now.toISOString().slice(0, 13); // "2026-05-27T14"
@@ -110,8 +110,19 @@ function renderOutdoorConditions(data) {
     return h === 0 ? "12am" : h < 12 ? h + "am" : h === 12 ? "12pm" : (h - 12) + "pm";
   }
 
-  // Find best 2h+ window today from now through 8pm
+  // Today's peak UV from hourly data (9am–5pm window), fallback to daily
   const todayStr = now.toISOString().slice(0, 10);
+  let uvMax = null;
+  for (let i = 0; i < htimes.length; i++) {
+    if (!htimes[i] || !htimes[i].startsWith(todayStr)) continue;
+    const h = new Date(htimes[i]).getHours();
+    if (h < 9 || h > 17) continue;
+    const v = huv[i];
+    if (v != null && (uvMax === null || v > uvMax)) uvMax = v;
+  }
+  if (uvMax === null) uvMax = data.daily?.uv_index_max?.[0] ?? null;
+
+  // Find best 2h+ window today from now through 8pm
   let bestWindowScore = 0, bestWindowStart = null, bestWindowEnd = null;
   let runStart = null, runScore = 0, runLen = 0;
 
