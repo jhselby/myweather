@@ -1156,6 +1156,8 @@ function renderBriefing(data) {
     'Beach day': { tab: 'hyperlocal', card: 'swim_float' },
     'Hair day': { tab: 'hyperlocal', card: 'hair_day' },
     'Birds': { tab: 'hyperlocal', card: 'birds' },
+    'UV': { tab: 'hyperlocal', card: 'outdoor_conditions' },
+    'Heat stress': { tab: 'hyperlocal', card: 'outdoor_conditions' },
   };
   var allBriefRows = document.querySelectorAll('#briefTodayRows .brief-row, #briefAlmanacSection .brief-row, #briefLifestyleSection .brief-row, #briefWatchSection .brief-row, #briefTonightSection .brief-row');
   allBriefRows.forEach(function(row) {
