@@ -961,9 +961,7 @@
         const value = uv >= 11 ? `UV ${uv} — extreme` :
                       uv >= 8  ? `UV ${uv} — very high, limit midday exposure` :
                                  `UV ${uv} — high, wear sunscreen`;
-        const color = uv >= 8 ? "orange" : "orange";
-        const dim   = uv < 8;
-        rows.push({ label: "UV", value, color, dim });
+        rows.push({ label: "UV", value, color: "orange" });
       }
     }
 
@@ -1119,7 +1117,7 @@ function renderBriefing(data) {
   const watchEl = document.getElementById('briefWatchSection');
   const hasWatchContent = b.watchRows && b.watchRows.length > 0;
 
-  if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<div class="brief-section-label">Watch for</div>'; b.watchRows.forEach(r => { if (r.isHtml) { wh += r.html; } else if (r.isAlert) { const redCls = r.color === 'red' ? ' brief-alert-row--red' : ''; wh += '<div class="brief-alert-row' + redCls + '" onclick="openAlertModal()" style="cursor:pointer;">⚠ <strong>' + r.value + '</strong>' + (r.detail ? '<div style="font-size:0.78rem;margin-top:3px;opacity:0.72;">' + r.detail + '</div>' : '') + '</div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; const dimCls = r.dim ? ' brief-row--dim' : ''; wh += '<div class="brief-row' + dimCls + '"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); wh += '<hr class="brief-rule" style="margin-top:14px;">'; watchEl.innerHTML = wh; } else { watchEl.innerHTML = ''; } }
+  if (watchEl) { if (b.watchRows && b.watchRows.length) { let wh = '<div class="brief-section-label">Watch for</div><div class="brief-rows">'; b.watchRows.forEach(r => { if (r.isHtml) { wh += r.html; } else if (r.isAlert) { const redCls = r.color === 'red' ? ' brief-alert-row--red' : ''; wh += '<div class="brief-alert-row' + redCls + '" onclick="openAlertModal()" style="cursor:pointer;">⚠ <strong>' + r.value + '</strong>' + (r.detail ? '<div style="font-size:0.78rem;margin-top:3px;opacity:0.72;">' + r.detail + '</div>' : '') + '</div>'; } else { const cls = r.color ? cm[r.color] || '' : ''; const dimCls = r.dim ? ' brief-row--dim' : ''; wh += '<div class="brief-row' + dimCls + '"><span class="brief-row-label">' + r.label + '</span><span class="brief-row-value ' + cls + '">' + r.value + '</span></div>'; } }); wh += '</div><hr class="brief-rule" style="margin-top:14px;">'; watchEl.innerHTML = wh; } else { watchEl.innerHTML = ''; } }
   const tonightEl = document.getElementById('briefTonightSection');
   if (tonightEl) {
     if (b.tonight) {
