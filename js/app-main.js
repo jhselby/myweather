@@ -268,6 +268,16 @@
       if (isNaN(d.getTime())) return "--";
       return d.toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
     }
+    function fmtRelAge(dt) {
+      if (!dt) return "--";
+      const d = new Date(dt);
+      if (isNaN(d.getTime())) return "--";
+      const mins = Math.round((Date.now() - d.getTime()) / 60000);
+      if (mins < 1)  return "just now";
+      if (mins < 60) return mins + "m ago";
+      return Math.round(mins / 60) + "h ago";
+    }
+    window.fmtRelAge = fmtRelAge;
 
     // Single canonical compass function — replaces both old degreesToCompass and degToCompass
     function toCompass(deg, withDeg = true) {
@@ -435,7 +445,7 @@ function loadWeatherData() {
 
         // Header
         // // document.getElementById("location").textContent    = data.location?.name ?? "Wyman Cove";
-        var _duEl = document.getElementById("dataUpdated2"); if (_duEl) _duEl.textContent = fmtLocal(data.generated_at || data.location?.updated);
+        var _duEl = document.getElementById("dataUpdated2"); if (_duEl) _duEl.textContent = fmtRelAge(data.generated_at || data.location?.updated);
         renderSources(data.sources, (data.pws || {}).stale);
         renderFrostTracker(data.frost_log);
         renderBirds(data.birds);
@@ -1406,7 +1416,7 @@ function loadWeatherData() {
           const _dt = _d.generated_at || _d.location?.updated;
           if (_dt) {
             const _d2 = new Date(_dt);
-            if (!isNaN(_d2.getTime())) _duEl.textContent = _d2.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+            if (!isNaN(_d2.getTime())) _duEl.textContent = fmtRelAge(_dt);
           }
         }
       } catch(e) {}
