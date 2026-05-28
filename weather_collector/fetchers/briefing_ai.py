@@ -42,7 +42,7 @@ Rules:
 - Only mention precipitation if POP data is included. If no precip data is included, conditions are dry — do not mention rain.
 - Only mention fog or sea breeze if included in the data.
 - Ignore any alerts containing "TEST" — those are NWS transmission tests.
-- If a previous briefing is provided and the forecast has shifted meaningfully (timing, rain/snow line, temperature trend), note the change briefly in the subheadline (e.g., "rain timing pushed back two hours" or "snow line crept east since this morning"). Skip it if nothing significant changed.
+- If a previous briefing is provided and the forecast has shifted meaningfully (timing, rain/snow line, temperature trend), note the change briefly in the subheadline (e.g., "rain timing pushed back two hours" or "snow line crept east since this morning"). If nothing significant changed, say nothing about the prior forecast — do not write phrases like "no change since last update" or "consistent with the prior forecast."
 - The headline and subheadline must not repeat the same information. If the headline says "cooler Thursday," the subheadline must add something new — don't restate it.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
 
