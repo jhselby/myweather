@@ -942,20 +942,20 @@
       }
     }
 
-    // 11. UV index — only when high or above
+    // 11. UV index — only when high or above, and only during the UV window
     {
       const hUV    = s._data.hourly?.uv_index || [];
       const hTimes = s._data.hourly?.times || [];
       const todayISO = new Date().toISOString().slice(0, 10);
+      const nowHour = new Date().getHours();
       let uvPeak = null;
       hTimes.forEach((t, i) => {
         if (!t || !t.startsWith(todayISO)) return;
         const h = new Date(t).getHours();
-        if (h < 9 || h > 17) return;
+        if (h < nowHour || h > 17) return;   // only current hour onward, within UV window
         const v = hUV[i];
         if (v != null && (uvPeak === null || v > uvPeak)) uvPeak = v;
       });
-      if (uvPeak === null) uvPeak = s._data.daily?.uv_index_max?.[0] ?? null;
       if (uvPeak != null && uvPeak >= 6) {
         const uv = Math.round(uvPeak);
         const value = uv >= 11 ? `UV ${uv} — extreme` :
