@@ -1,3 +1,6 @@
+## v0.5.197 • May 28, 2026
+- **Collector:** obs_temp_log now records observed humidity each run — enables future validation of humidity, dew point, apparent temperature, and heat index forecast accuracy.
+
 ## v0.5.192–v0.5.196 • May 27, 2026
 - **UV in Watch For:** Briefing Watch For section now shows UV index when today's peak is ≥ 6 (high or above) — dimmed at 6–7, orange at 8–10, red at 11+. Hidden on low-UV days.
 - **Watch For links:** UV and Heat stress rows now navigate to the Outside card on the Lifestyle tab when tapped.
