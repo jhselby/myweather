@@ -681,11 +681,16 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
         _hourly_times = weather_data["hourly"].get("times", [])
         _hourly_precip_mm = weather_data["hourly"].get("precipitation", [])
-        _cur_hour_precip_in = None
-        if _current_hour_iso in _hourly_times:
-            _ci = _hourly_times.index(_current_hour_iso)
-            if _ci < len(_hourly_precip_mm) and _hourly_precip_mm[_ci] is not None:
-                _cur_hour_precip_in = _hourly_precip_mm[_ci] / 25.4
+        # Observed precip rate from WU stations (real gauges); fall back to forecast hourly
+        _wu_precip_rate = weather_data.get("wu_stations", {}).get("precip_rate_in")
+        if _wu_precip_rate is not None:
+            _cur_hour_precip_in = _wu_precip_rate
+        else:
+            _cur_hour_precip_in = None
+            if _current_hour_iso in _hourly_times:
+                _ci = _hourly_times.index(_current_hour_iso)
+                if _ci < len(_hourly_precip_mm) and _hourly_precip_mm[_ci] is not None:
+                    _cur_hour_precip_in = _hourly_precip_mm[_ci] / 25.4
         _cur_gust = _hyp.get("corrected_wind_gusts") or weather_data.get("current", {}).get("wind_gusts")
         _cur_wind = _hyp.get("corrected_wind_speed") or weather_data.get("current", {}).get("wind_speed")
         _cur_wind_dir = weather_data.get("current", {}).get("wind_direction")

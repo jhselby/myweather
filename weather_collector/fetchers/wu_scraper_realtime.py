@@ -135,7 +135,9 @@ def get_current_observation(station_id):
             'humidity_pct': latest.get('humidityAvg'),
             'wind_speed_mph': imperial.get('windspeedAvg'),
             'wind_gust_mph': imperial.get('windgustHigh'),
-            'pressure_in': imperial.get('pressureMax')
+            'pressure_in': imperial.get('pressureMax'),
+            'precip_rate_in': imperial.get('precipRate'),
+            'precip_today_in': imperial.get('precipTotal')
         }
         
     except Exception as e:
@@ -218,6 +220,10 @@ def filter_and_aggregate(stations):
     wind_gust_data = [(s['wind_gust_mph'], get_weight(s['distance_mi'])) 
                       for s in valid_wind_stations if s['wind_gust_mph'] is not None]
     
+    # Precip: use max across stations (rain gauges don't need distance weighting)
+    precip_totals = [s['precip_today_in'] for s in valid_all if s.get('precip_today_in') is not None]
+    precip_rates  = [s['precip_rate_in']  for s in valid_all if s.get('precip_rate_in')  is not None]
+
     # Calculate aggregates
     result = {
         'temperature_f': round(weighted_average(temp_data), 1) if temp_data else None,
@@ -225,6 +231,8 @@ def filter_and_aggregate(stations):
         'pressure_in': round(weighted_average(pressure_data), 2) if pressure_data else None,
         'wind_speed_mph': round(weighted_average(wind_speed_data), 1) if wind_speed_data else None,
         'wind_gust_mph': round(weighted_average(wind_gust_data), 1) if wind_gust_data else None,
+        'precip_today_in': round(max(precip_totals), 2) if precip_totals else None,
+        'precip_rate_in': round(max(precip_rates), 2) if precip_rates else None,
         
         # Quality metadata
         'quality': {

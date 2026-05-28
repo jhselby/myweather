@@ -1,3 +1,6 @@
+## v0.5.200 • May 28, 2026
+- **Collector:** obs_temp_log now records observed precip rate from WU rain gauges (replaces forecast model precip). WU aggregate now includes `precip_rate_in` and `precip_today_in` from station network.
+
 ## v0.5.199 • May 28, 2026
 - **Settings drawer:** "Data generated" always shows relative time ("just now", "5m ago") — previously switched to absolute time when a background refresh fired while the drawer was open.
 
