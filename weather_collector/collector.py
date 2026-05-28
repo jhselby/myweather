@@ -188,6 +188,13 @@ def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, win
         entry["cloud_cover"] = round(cloud_cover)
     if humidity is not None:
         entry["humidity"] = round(humidity, 1)
+        # Compute dew point from temp + RH (Magnus formula)
+        import math
+        T_c = (corrected_temp - 32) * 5 / 9
+        rh = humidity
+        gamma = (17.625 * T_c / (243.04 + T_c)) + math.log(rh / 100.0)
+        dp_c = 243.04 * gamma / (17.625 - gamma)
+        entry["dew_point_f"] = round(dp_c * 9 / 5 + 32, 1)
     entries.append(entry)
 
     entries.sort(key=lambda e: e.get("time", ""))
@@ -205,11 +212,13 @@ def _append_forecast_snapshot(hourly):
     run_stamp = now_local.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
     cutoff = (now_local - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M")
 
+    import math
     times  = hourly.get("times", [])
     temps  = hourly.get("corrected_temperature", hourly.get("temperature", []))
     winds  = hourly.get("wind_speed", [])
     gusts  = hourly.get("wind_gusts", [])
     humid  = hourly.get("corrected_humidity", hourly.get("humidity", []))
+    pop    = hourly.get("precipitation_probability", [])
 
     hours = []
     for i, t in enumerate(times[:48]):
@@ -219,7 +228,14 @@ def _append_forecast_snapshot(hourly):
         if i < len(temps)  and temps[i]  is not None: entry["t"]  = round(temps[i], 1)
         if i < len(winds)  and winds[i]  is not None: entry["ws"] = round(winds[i], 1)
         if i < len(gusts)  and gusts[i]  is not None: entry["wg"] = round(gusts[i], 1)
-        if i < len(humid)  and humid[i]  is not None: entry["h"]  = round(humid[i], 1)
+        if i < len(humid)  and humid[i]  is not None:
+            entry["h"] = round(humid[i], 1)
+            # Dew point from Magnus formula
+            T_c = (temps[i] - 32) * 5 / 9 if i < len(temps) and temps[i] is not None else None
+            if T_c is not None:
+                gamma = (17.625 * T_c / (243.04 + T_c)) + math.log(humid[i] / 100.0)
+                entry["dp"] = round(243.04 * gamma / (17.625 - gamma) * 9 / 5 + 32, 1)
+        if i < len(pop)    and pop[i]    is not None: entry["pp"] = round(pop[i])
         hours.append(entry)
 
     if not hours:
