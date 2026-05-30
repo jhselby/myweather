@@ -17,6 +17,7 @@ import pytz
 
 from .config import LAT, LON, SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
 from .gcs_io import BUCKET, get_client, upload_json
+from .stale_cache import apply_stale_fallbacks, load_prev_weather_data
 from .utils import iso_utc_now, compute_age_minutes, redact_secrets
 
 # Import all fetchers
@@ -72,55 +73,6 @@ def _download_frost_log_from_gcs():
             logging.info(f"  ℹ  No frost_log.json in GCS yet (first run)")
     except Exception as e:
         logging.warning(f"  ⚠  Could not download frost_log.json from GCS: {redact_secrets(e)}")
-
-
-def _load_prev_weather_data():
-    """Read the current weather_data.json from GCS as a fallback cache. Returns {} on any failure."""
-    try:
-        client = get_client()
-        blob = client.bucket(BUCKET).blob(WEATHER_DATA_GCS_PATH)
-        if blob.exists():
-            prev = json.loads(blob.download_as_text())
-            logging.warning(f"  ✓ Loaded previous weather_data.json from GCS for fallback cache")
-            return prev
-        else:
-            logging.info(f"  ℹ  No previous weather_data.json in GCS (first run)")
-    except Exception as e:
-        logging.warning(f"  ⚠  Could not load previous weather_data.json: {redact_secrets(e)}")
-    return {}
-
-
-def _apply_stale_fallbacks(weather_data, prev, failed_fetches):
-    """
-    For any source that failed this run, copy the previous run's data.
-    failed_fetches: set of source names that returned None this run.
-    Mutates weather_data in place. Returns list of stale source names.
-    """
-    if not prev:
-        return []
-
-    stale = []
-
-    # Top-level keys: present in weather_data only when fetch succeeded
-    top_level_keys = [
-        "pirate_weather", "kbos", "kbvy", "wu_stations",
-        "nws_gridpoints", "tides", "buoy", "sunset_directional",
-    ]
-    for key in top_level_keys:
-        if key not in weather_data and key in prev:
-            weather_data[key] = prev[key]
-            stale.append(key)
-            logging.error(f"  ⚠  {key}: using previous run's data (source failed)")
-
-    # current/hourly/daily: built even when GFS fails (silently wrong).
-    # Use explicit None-tracking instead of inspecting the built dict.
-    for fetch_name, data_key in [("current", "current"), ("hourly", "hourly"), ("daily", "daily")]:
-        if fetch_name in failed_fetches and data_key in prev:
-            weather_data[data_key] = prev[data_key]
-            stale.append(data_key)
-            logging.error(f"  ⚠  {data_key}: using previous run's data (fetch failed)")
-
-    return stale
 
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
@@ -353,7 +305,7 @@ def main():
         return result
 
     # Load previous weather data for stale fallback cache
-    prev_weather_data = _load_prev_weather_data()
+    prev_weather_data = load_prev_weather_data()
 
     # Download frost log from GCS before fetching (needed for update_frost_log)
     _download_frost_log_from_gcs()
@@ -511,7 +463,7 @@ def main():
             weather_data["hourly"][key] = weather_data["hourly"][key][trim_idx:]
 
     # Apply stale fallbacks for any source that failed this run
-    stale_sources = _apply_stale_fallbacks(weather_data, prev_weather_data, failed_fetches)
+    stale_sources = apply_stale_fallbacks(weather_data, prev_weather_data, failed_fetches)
     if stale_sources:
         weather_data["stale_sources"] = stale_sources
         logging.warning(f"  ⚠  Stale sources in this payload: {stale_sources}")

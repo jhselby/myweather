@@ -1,3 +1,6 @@
+## v0.5.214 • May 30, 2026
+- **Collector refactor:** previous-run cache + stale fallback extracted from `collector.py` into `weather_collector/stale_cache.py`. The hardcoded list of top-level keys that fall back to the previous run is now a named `STALE_FALLBACK_KEYS` constant. collector.py now 494 lines — under 500 for the first time.
+
 ## v0.5.213 • May 30, 2026
 - **Collector refactor:** hourly observed-wind blend extracted from `collector.py` into `processors/wind_blend.py` as `blend_observed_into_hourly()`. Both halves of the wind story now live together — `select_observed_wind` chooses the live value, `blend_observed_into_hourly` mixes it into the next 24h of forecast with linear decay. Dropped the now-unused `wind_candidates` return value. collector.py now 542 lines.
 
