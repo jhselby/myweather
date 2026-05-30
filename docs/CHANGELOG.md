@@ -1,3 +1,6 @@
+## v0.5.205 • May 30, 2026
+- **Collector plumbing:** GCS bucket constant + client + upload helper extracted from `collector.py` into a new `weather_collector/gcs_io.py` module (also adds a graceful `load_json` helper). All 6 upload callsites and the 4 load callsites now route through it. No behavior change.
+
 ## v0.5.204 • May 30, 2026
 - **Collector refactor:** bias-corrected hourly arrays (corrected_temperature, corrected_humidity, corrected_apparent_temperature, corrected_dew_point, corrected_absolute_humidity) extracted from `collector.py` into a new `processors/corrected_hourly.py` module. collector.py is now under 1000 lines for the first time. No behavior change — all 5 arrays still 48 entries with identical values.
 

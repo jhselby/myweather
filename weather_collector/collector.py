@@ -16,6 +16,7 @@ from pathlib import Path
 import pytz
 
 from .config import LAT, LON, SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
+from .gcs_io import BUCKET, get_client, upload_json
 from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes, redact_secrets, magnus_dew_point_f, steadman_feels_like_f
 
 # Import all fetchers
@@ -50,7 +51,6 @@ from .processors.forecast_text import generate_forecast_text
 from .processors.wind_blend import select_observed_wind
 from .processors.corrected_hourly import add_corrected_hourly_arrays
 
-GCS_BUCKET = "myweather-data"
 FROST_LOG_GCS_PATH = "frost_log.json"
 WEATHER_DATA_GCS_PATH = "weather_data.json"
 OBS_TEMP_LOG_GCS_PATH  = "obs_temp_log.json"
@@ -58,18 +58,11 @@ FORECAST_LOG_GCS_PATH  = "forecast_log.json"
 FROST_LOG_TMP = Path("/tmp/frost_log.json")
 
 
-
-
-def _gcs_client():
-    from google.cloud import storage
-    return storage.Client()
-
-
 def _download_frost_log_from_gcs():
     """Download frost_log.json from GCS to /tmp. Silently skips if not found."""
     try:
-        client = _gcs_client()
-        blob = client.bucket(GCS_BUCKET).blob(FROST_LOG_GCS_PATH)
+        client = get_client()
+        blob = client.bucket(BUCKET).blob(FROST_LOG_GCS_PATH)
         if blob.exists():
             blob.download_to_filename(str(FROST_LOG_TMP))
             logging.info(f"  ✓ Downloaded frost_log.json from GCS")
@@ -79,26 +72,11 @@ def _download_frost_log_from_gcs():
         logging.warning(f"  ⚠  Could not download frost_log.json from GCS: {redact_secrets(e)}")
 
 
-def _upload_to_gcs(data, gcs_path, label):
-    """Upload a dict as JSON to GCS."""
-    try:
-        client = _gcs_client()
-        blob = client.bucket(GCS_BUCKET).blob(gcs_path)
-        payload = json.dumps(data, indent=2)
-        blob.upload_from_string(payload, content_type="application/json")
-        blob.cache_control = "no-cache, max-age=0"
-        blob.patch()
-        logging.info(f"  ✓ Uploaded {label} to GCS ({len(payload):,} bytes)")
-    except Exception as e:
-        logging.error(f"  ✗ Failed to upload {label} to GCS: {redact_secrets(e)}")
-        raise
-
-
 def _load_prev_weather_data():
     """Read the current weather_data.json from GCS as a fallback cache. Returns {} on any failure."""
     try:
-        client = _gcs_client()
-        blob = client.bucket(GCS_BUCKET).blob(WEATHER_DATA_GCS_PATH)
+        client = get_client()
+        blob = client.bucket(BUCKET).blob(WEATHER_DATA_GCS_PATH)
         if blob.exists():
             prev = json.loads(blob.download_as_text())
             logging.warning(f"  ✓ Loaded previous weather_data.json from GCS for fallback cache")
@@ -146,8 +124,8 @@ def _apply_stale_fallbacks(weather_data, prev, failed_fetches):
 def _load_obs_temp_log():
     """Load observed corrected temperature log from GCS."""
     try:
-        client = _gcs_client()
-        blob = client.bucket(GCS_BUCKET).blob(OBS_TEMP_LOG_GCS_PATH)
+        client = get_client()
+        blob = client.bucket(BUCKET).blob(OBS_TEMP_LOG_GCS_PATH)
         if blob.exists():
             return json.loads(blob.download_as_text())
     except Exception as e:
@@ -157,7 +135,7 @@ def _load_obs_temp_log():
 
 def _save_obs_temp_log(data):
     """Save observed corrected temperature log to GCS."""
-    _upload_to_gcs(data, OBS_TEMP_LOG_GCS_PATH, "obs_temp_log.json")
+    upload_json(data, OBS_TEMP_LOG_GCS_PATH, "obs_temp_log.json")
 
 
 def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, wind_mph=None, wind_dir=None, dew_point_f=None, pressure_in=None, cloud_cover=None, humidity=None):
@@ -238,8 +216,8 @@ def _append_forecast_snapshot(hourly):
         return
 
     try:
-        client = _gcs_client()
-        blob = client.bucket(GCS_BUCKET).blob(FORECAST_LOG_GCS_PATH)
+        client = get_client()
+        blob = client.bucket(BUCKET).blob(FORECAST_LOG_GCS_PATH)
         log = json.loads(blob.download_as_text()) if blob.exists() else {"snapshots": []}
     except Exception as e:
         logging.warning(f"  ⚠  Could not load forecast_log.json: {redact_secrets(e)}")
@@ -247,7 +225,7 @@ def _append_forecast_snapshot(hourly):
 
     snapshots = [s for s in log.get("snapshots", []) if s.get("run", "") >= cutoff]
     snapshots.append({"run": run_stamp, "hours": hours})
-    _upload_to_gcs({"snapshots": snapshots}, FORECAST_LOG_GCS_PATH, "forecast_log.json")
+    upload_json({"snapshots": snapshots}, FORECAST_LOG_GCS_PATH, "forecast_log.json")
 
 
 def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_data,
@@ -484,12 +462,12 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         derived["pressure_alarm_label"] = alarm["alarm_label"]
 
     # Hyperlocal corrections with per-station bias tracking
-    _gcs = _gcs_client()
-    _station_history = load_history(_gcs, GCS_BUCKET)
+    _gcs = get_client()
+    _station_history = load_history(_gcs, BUCKET)
     _station_offsets = compute_offsets(_station_history)
     build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_data=tempest_data, station_offsets=_station_offsets, kbvy_data=kbvy_data)
     update_history(_station_history, wu_data, tempest_data)
-    save_history(_station_history, _gcs, GCS_BUCKET)
+    save_history(_station_history, _gcs, BUCKET)
 
     # Bias-corrected hourly arrays (must run after build_hyperlocal_data)
     add_corrected_hourly_arrays(weather_data)
@@ -901,7 +879,7 @@ def main():
     if FROST_LOG_TMP.exists():
         try:
             frost_log_data = json.loads(FROST_LOG_TMP.read_text())
-            _upload_to_gcs(frost_log_data, FROST_LOG_GCS_PATH, "frost_log.json")
+            upload_json(frost_log_data, FROST_LOG_GCS_PATH, "frost_log.json")
         except Exception as e:
             logging.warning(f"  ⚠  Could not upload frost_log.json: {redact_secrets(e)}")
 
@@ -976,7 +954,7 @@ def main():
         weather_data.pop("stale_sources", None)
 
     # Upload weather data to GCS
-    _upload_to_gcs(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
+    upload_json(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
 
     logging.info("\n" + "=" * 60)
     logging.info(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({time.time() - total_t0:.1f}s total)")
