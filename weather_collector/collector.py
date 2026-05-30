@@ -47,6 +47,7 @@ from .processors.fog import calculate_fog_risk
 from .processors.trough import compute_trough_signal
 from .processors.thunderstorm import detect_thunderstorm
 from .processors.forecast_text import generate_forecast_text
+from .processors.wind_blend import select_observed_wind
 
 GCS_BUCKET = "myweather-data"
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -295,115 +296,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         weather_data["current"]["condition_source"] = "KBVY observed"
     
     
-    # Wind override - use max of KBVY and WU stations for exposed coastal location
-    wind_candidates = []
-    # Save original model values for corrections display
-    weather_data["current"]["model_wind_speed"] = weather_data["current"].get("wind_speed", 0)
-    weather_data["current"]["model_wind_gusts"] = weather_data["current"].get("wind_gusts", 0)
-
-    # Include model as a candidate so we never undercount
-    wind_candidates.append({
-        "source": "model",
-        "gust": weather_data["current"].get("wind_gusts", 0),
-        "speed": weather_data["current"].get("wind_speed", 0),
-        "direction": weather_data["current"].get("wind_direction"),
-        "waterfront": False,
-    })
-    if kbvy_data and kbvy_data.get("wind_gust_kt"):
-        # METARs are issued at :54 past each hour — always < 60 min old, no age filter needed
-        wind_candidates.append({
-            "source": "KBVY",
-            "gust": kbvy_data["wind_gust_kt"] * 1.15078,
-            "speed": kbvy_data["wind_speed_kt"] * 1.15078 if kbvy_data.get("wind_speed_kt") else 0,
-            "direction": kbvy_data.get("wind_dir"),
-            "waterfront": False,
-        })
-    if wu_data and wu_data.get("stations"):
-        now_utc = datetime.now(timezone.utc)
-        for station in wu_data["stations"]:
-            if not station.get("wind_gust_mph"):
-                continue
-            # Filter stale WU observations (> 20 min old)
-            ts_str = station.get("timestamp")
-            if ts_str:
-                try:
-                    obs_dt = datetime.fromisoformat(ts_str).replace(tzinfo=timezone.utc) if ts_str.endswith("Z") else datetime.fromisoformat(ts_str)
-                    if obs_dt.tzinfo is None:
-                        obs_dt = obs_dt.replace(tzinfo=timezone.utc)
-                    age_min = (now_utc - obs_dt).total_seconds() / 60
-                    if age_min > 20:
-                        continue
-                except (ValueError, TypeError):
-                    pass  # Unparseable timestamp — include anyway
-            wind_candidates.append({
-                "source": f"WU_{station.get('station_id', 'unknown')}",
-                "gust": station["wind_gust_mph"],
-                "speed": station.get("wind_speed_mph", 0),
-                "direction": station.get("wind_direction"),
-                "waterfront": station.get("waterfront", False),
-            })
-    if tempest_data:
-        for tb in tempest_data.get("stations", []):
-            if not tb.get("valid") or not tb.get("wind_gust_mph"):
-                continue
-            # Filter stale Tempest observations (> 20 min old)
-            if tb.get("age_minutes") is not None and tb["age_minutes"] > 20:
-                continue
-            wind_candidates.append({
-                "source": f"Tempest_{tb['station_name']}",
-                "gust": tb["wind_gust_mph"],
-                "speed": tb.get("wind_avg_mph", 0),
-                "direction": tb.get("wind_direction"),
-                "waterfront": tb.get("waterfront", False),
-            })
-
-    if wind_candidates:
-        # Max gust independently
-        max_gust_entry = max(wind_candidates, key=lambda x: x['gust'])
-        selected_gust = max_gust_entry['gust']
-
-        # Max sustained independently
-        max_speed_entry = max(wind_candidates, key=lambda x: x['speed'])
-        selected_speed = max_speed_entry['speed']
-
-        # Sanity check: if WU has ≥10 stations and the selected speed is >2x the WU aggregate,
-        # the model is likely wrong high — cap at 2x WU aggregate to trust the sensor network
-        wu_speed = wu_data.get("wind_speed_mph") if wu_data else None
-        wu_stations_wind = wu_data.get("quality", {}).get("stations_used_wind", 0) if wu_data else 0
-        if wu_speed is not None and wu_stations_wind >= 10 and selected_speed > wu_speed * 2.5:
-            logging.warning(f"  ⚠️ Wind sanity cap: selected {selected_speed:.1f} mph > 2.5× WU aggregate {wu_speed:.1f} mph ({wu_stations_wind} stations) — capping")
-            cap = wu_speed * 2.5
-            selected_speed = min(selected_speed, cap)
-            selected_gust  = min(selected_gust,  cap * 1.3)
-
-        weather_data["current"]["wind_gusts"] = selected_gust
-        weather_data["current"]["wind_speed"] = selected_speed
-
-        # Direction: prefer the best fresh waterfront Tempest station; fall back to max-gust source
-        waterfront_tempest = [
-            c for c in wind_candidates
-            if c["waterfront"] and c["source"].startswith("Tempest_") and c["direction"] is not None
-        ]
-        if waterfront_tempest:
-            # Use the waterfront station with the highest gust (most exposed reading)
-            dir_source = max(waterfront_tempest, key=lambda x: x['gust'])
-        else:
-            dir_source = max_gust_entry
-
-        if dir_source['direction'] is not None:
-            try:
-                weather_data["current"]["wind_direction"] = float(dir_source['direction'])
-            except (ValueError, TypeError):
-                pass  # Keep existing numeric value from Open-Meteo
-        weather_data["current"]["condition_source"] = f"{max_gust_entry['source']} observed"
-
-    # Direction fallback: if GFS failed and no candidate had direction, pull from KBVY directly
-    if weather_data["current"].get("wind_direction") is None:
-        if kbvy_data and kbvy_data.get("wind_dir") is not None:
-            try:
-                weather_data["current"]["wind_direction"] = float(kbvy_data["wind_dir"])
-            except (ValueError, TypeError):
-                pass
+    # Wind: override model with best available observation; keep candidate list
+    # for downstream blending into the hourly forecast.
+    wind_candidates = select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data)
 
     # Hourly forecast
     if hourly_data:

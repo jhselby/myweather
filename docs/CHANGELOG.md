@@ -1,3 +1,6 @@
+## v0.5.203 • May 30, 2026
+- **Collector refactor:** 109-line wind override block extracted from `collector.py` into a new `processors/wind_blend.py` module. Constants (20-min staleness, 2.5× WU sanity cap, 10-station minimum) now named. No behavior change — verified live against KBVY/Tempest/WU/model candidate selection and the sanity cap math.
+
 ## v0.5.202 • May 30, 2026
 - **Collector cleanup:** 8 mid-function imports of `pytz`/`datetime` hoisted to the top of the file; `_obs_log` initialized up front so the `NameError` catch can go away; unused `now_utc` in wind blend removed. No behavior change.
 
