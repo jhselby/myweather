@@ -1,3 +1,6 @@
+## v0.5.210 • May 30, 2026
+- **Collector refactor:** fog metrics (current risk + 18-hour probability array + dissipation hour) extracted from `collector.py` into `processors/fog_metrics.py` with named constants (HOURLY_HORIZON=18, DISSIPATION_THRESHOLD=20). Current-fog inputs now read from the cleaned `weather_data["current"]` / `weather_data["hourly"][0]` instead of threading the raw API responses through. collector.py now 679 lines.
+
 ## v0.5.209 • May 30, 2026
 - **Collector refactor:** current-conditions derived metrics (corrected dew point + spread + cloud base, corrected feels-like, NWS heat index) extracted from `collector.py` into `processors/current_derived.py`. Solar source priority chain (Pirate Weather → Tempest avg → Open-Meteo direct_radiation) factored out into a named helper. collector.py now 740 lines.
 

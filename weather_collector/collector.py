@@ -44,7 +44,6 @@ from .fetchers.open_meteo import fetch_directional_clouds
 from .processors.frost import update_frost_log
 from .processors.pressure import compute_pressure_trend_hpa, get_best_pressure_trend, classify_pressure_alarm
 from .processors.wind_risk import compute_wind_risk
-from .processors.fog import calculate_fog_risk
 from .processors.trough import compute_trough_signal
 from .processors.thunderstorm import detect_thunderstorm
 from .processors.forecast_text import generate_forecast_text
@@ -52,6 +51,7 @@ from .processors.wind_blend import select_observed_wind
 from .processors.corrected_hourly import add_corrected_hourly_arrays
 from .processors.daily_extremes import compute_daily_extremes
 from .processors.current_derived import compute_current_derived
+from .processors.fog_metrics import compute_fog_metrics
 
 FROST_LOG_GCS_PATH = "frost_log.json"
 WEATHER_DATA_GCS_PATH = "weather_data.json"
@@ -377,69 +377,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # base, corrected feels-like (with solar if available), and NWS heat index.
     compute_current_derived(weather_data)
 
-    # Fog risk — fall back to HRRR hourly[0] if GFS current is missing
-    _fog_current = None
-    if current_data:
-        _fog_current = current_data.get("current", {})
-    elif hourly_data and "hourly" in hourly_data:
-        _h = hourly_data["hourly"]
-        _fog_current = {
-            "temperature_2m": (_h.get("temperature_2m") or [None])[0],
-            "dew_point_2m": (_h.get("dew_point_2m") or [None])[0],
-            "relative_humidity_2m": (_h.get("relative_humidity_2m") or [None])[0],
-            "wind_speed_10m": (_h.get("wind_speed_10m") or [None])[0],
-            "wind_direction_10m": (_h.get("wind_direction_10m") or [None])[0],
-        }
-        logging.warning("  ⚠️ GFS current unavailable, using HRRR hourly[0] for fog calc")
-    if _fog_current:
-        current = _fog_current
-        _buoy = weather_data.get("buoy_44013", {})
-        _cur_ccl = derived.get("cloud_cover_low_pct")
-        fog_risk = calculate_fog_risk(
-            current.get("temperature_2m"),
-            current.get("dew_point_2m"),
-            current.get("relative_humidity_2m"),
-            current.get("wind_speed_10m"),
-            wind_direction=current.get("wind_direction_10m"),
-            water_temp_f=_buoy.get("water_temp_f"),
-            cloud_cover_low_pct=_cur_ccl,
-        )
-        if fog_risk:
-            derived["fog_label"] = fog_risk["fog_label"]
-            derived["fog_probability"] = fog_risk["fog_probability"]
-
-        # Hourly fog probability for next 12h — used for dissipation timing
-        _h = weather_data.get("hourly", {})
-        _htimes   = _h.get("times", [])
-        _htemps   = _h.get("corrected_temperature", _h.get("temperature", []))
-        _hdewpts  = _h.get("corrected_dew_point",   _h.get("dew_point", []))
-        _hhumids  = _h.get("corrected_humidity",    _h.get("humidity", []))
-        _hwinds   = _h.get("wind_speed", [])
-        _hwdirs   = _h.get("wind_direction", [])
-        _hccl     = _h.get("cloud_cover_low", [])
-        _water_f  = weather_data.get("buoy_44013", {}).get("water_temp_f")
-        _hourly_fog_probs = []
-        for _i in range(min(18, len(_htimes))):
-            _fr = calculate_fog_risk(
-                _htemps[_i]  if _i < len(_htemps)  else None,
-                _hdewpts[_i] if _i < len(_hdewpts)  else None,
-                _hhumids[_i] if _i < len(_hhumids)  else None,
-                _hwinds[_i]  if _i < len(_hwinds)   else None,
-                wind_direction=_hwdirs[_i] if _i < len(_hwdirs) else None,
-                water_temp_f=_water_f,
-                cloud_cover_low_pct=_hccl[_i] if _i < len(_hccl) else None,
-            )
-            _hourly_fog_probs.append(_fr["fog_probability"] if _fr else 0)
-        derived["fog_hourly_prob"] = _hourly_fog_probs
-        derived["fog_hourly_times"] = _htimes[:18]
-        # Find dissipation: first run of 2+ consecutive hours below 20%
-        _diss_hour = None
-        for _i in range(len(_hourly_fog_probs) - 1):
-            if _hourly_fog_probs[_i] < 20 and _hourly_fog_probs[_i + 1] < 20:
-                _diss_hour = _htimes[_i] if _i < len(_htimes) else None
-                break
-        if _diss_hour:
-            derived["fog_dissipation_hour"] = _diss_hour
+    # Fog metrics: current risk + 18-hour probability array + dissipation hour
+    compute_fog_metrics(weather_data)
 
     # Wet bulb temperatures (for precipitation type classification)
     if "hourly" in weather_data:
