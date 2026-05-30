@@ -17,7 +17,7 @@ import pytz
 
 from .config import LAT, LON, SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
 from .gcs_io import BUCKET, get_client, upload_json
-from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes, redact_secrets
+from .utils import iso_utc_now, compute_age_minutes, redact_secrets
 
 # Import all fetchers
 from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf, fetch_hourly_gfs_7day, fetch_hrrr_daily_temps
@@ -53,6 +53,7 @@ from .processors.daily_extremes import compute_daily_extremes
 from .processors.current_derived import compute_current_derived
 from .processors.fog_metrics import compute_fog_metrics
 from .processors.hourly_7day import normalize_for_payload, normalize_for_forecast_generation
+from .processors.normalize import normalize_current, normalize_hourly, normalize_daily, empty_hourly
 
 FROST_LOG_GCS_PATH = "frost_log.json"
 WEATHER_DATA_GCS_PATH = "weather_data.json"
@@ -138,30 +139,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     }
 
     # Current conditions
-    if current_data:
-        current = current_data.get("current", {})
-        current_units = current_data.get("current_units", {})
-        weather_data["current"] = {
-            "temperature": current.get("temperature_2m"),
-            "apparent_temperature": current.get("apparent_temperature"),
-            "humidity": current.get("relative_humidity_2m"),
-            "dew_point": current.get("dew_point_2m"),
-            "precipitation": current.get("precipitation"),
-            "weather_code": current.get("weather_code"),
-            "weather_description": get_weather_description(current.get("weather_code", 0)),
-            "weather_emoji": get_weather_emoji(current.get("weather_code", 0)),
-            "cloud_cover": current.get("cloud_cover"),
-            "pressure": current.get("pressure_msl"),
-            "wind_speed": current.get("wind_speed_10m"),
-            "wind_direction": current.get("wind_direction_10m"),
-            "wind_gusts": current.get("wind_gusts_10m"),
-            "uv_index": current.get("uv_index"),
-            "visibility": current.get("visibility")
-        }
-    
-    # Ensure current dict exists even if GFS failed
-    if "current" not in weather_data:
-        weather_data["current"] = {}
+    weather_data["current"] = normalize_current(current_data) or {}
 
     # ASOS condition override - prefer observed conditions over model
     if kbvy_data and kbvy_data.get("present_weather"):
@@ -174,59 +152,24 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     wind_candidates = select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data)
 
     # Hourly forecast
-    if hourly_data:
-        hourly = hourly_data.get("hourly", {})
-        weather_data["hourly"] = {
-            "times": hourly.get("time", []),
-            "temperature": hourly.get("temperature_2m", []),
-            "apparent_temperature": hourly.get("apparent_temperature", []),
-            "humidity": hourly.get("relative_humidity_2m", []),
-            "dew_point": hourly.get("dew_point_2m", []),
-            "precipitation_probability": hourly.get("precipitation_probability", []),
-            "precipitation": hourly.get("precipitation", []),
-            "weather_code": hourly.get("weather_code", []),
-            "cloud_cover": hourly.get("cloud_cover", []),
-            "cloud_cover_low": hourly.get("cloud_cover_low", []),
-            "cloud_cover_mid": hourly.get("cloud_cover_mid", []),
-            "cloud_cover_high": hourly.get("cloud_cover_high", []),
-            "direct_radiation": hourly.get("direct_radiation", []),
-            "uv_index": hourly.get("uv_index", []),
-            "wind_speed": hourly.get("wind_speed_10m", []),
-            "wind_direction": hourly.get("wind_direction_10m", []),
-            "wind_gusts": hourly.get("wind_gusts_10m", []),
-            "pressure": hourly.get("pressure_msl", []),
-            "temperature_850hPa": hourly.get("temperature_850hPa", []),
-            "temperature_700hPa": hourly.get("temperature_700hPa", []),
-            "geopotential_height_850hPa": hourly.get("geopotential_height_850hPa", []),
-            "col_precip_type_850mb": hourly.get("col_precip_type_850mb", []),
-            "freezing_level_ft": hourly.get("freezinglevel_height", []),
-            "precip_water_mm": hourly.get("total_column_integrated_water_vapour", []),
-        }
+    normalized_hourly = normalize_hourly(hourly_data)
+    if normalized_hourly is not None:
+        weather_data["hourly"] = normalized_hourly
 
 
     # Pirate Weather cloud cover fallback when HRRR is down
     if pirate_data and pirate_data.get("hourly_cloud_cover"):
         if "hourly" not in weather_data:
-            # HRRR completely unavailable — build a minimal hourly block from PW data
+            # HRRR completely unavailable — seed a minimal hourly block from PW
             _eastern = pytz.timezone("America/New_York")
             _pw_times = [
                 _eastern.localize(datetime.fromtimestamp(ts)).strftime("%Y-%m-%dT%H:%M")
                 for ts in pirate_data.get("hourly_times", [])
                 if ts is not None
             ]
-            _pw_cc = pirate_data["hourly_cloud_cover"][:len(_pw_times)]
-            weather_data["hourly"] = {
-                "times": _pw_times,
-                "cloud_cover": _pw_cc,
-                "cloud_cover_low": [], "cloud_cover_mid": [], "cloud_cover_high": [],
-                "temperature": [], "apparent_temperature": [], "humidity": [],
-                "dew_point": [], "precipitation_probability": [], "precipitation": [],
-                "weather_code": [], "direct_radiation": [], "wind_speed": [],
-                "wind_direction": [], "wind_gusts": [], "pressure": [],
-                "temperature_850hPa": [], "temperature_700hPa": [],
-                "geopotential_height_850hPa": [], "col_precip_type_850mb": [],
-                "freezing_level_ft": [], "precip_water_mm": [],
-            }
+            weather_data["hourly"] = empty_hourly()
+            weather_data["hourly"]["times"] = _pw_times
+            weather_data["hourly"]["cloud_cover"] = pirate_data["hourly_cloud_cover"][:len(_pw_times)]
             logging.warning("  ⚠️ HRRR unavailable — using Pirate Weather cloud cover for hourly block")
         elif not weather_data["hourly"].get("cloud_cover"):
             # HRRR returned data but cloud cover is empty — patch from PW
@@ -266,23 +209,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         weather_data["hourly_7day"] = normalize_for_payload(hourly_7day_data.get("hourly", {}))
 
     # Daily forecast
-    if daily_data:
-        daily = daily_data.get("daily", {})
-        weather_data["daily"] = {
-            "time": daily.get("time", []),
-            "weather_code": daily.get("weather_code", []),
-            "temperature_max": daily.get("temperature_2m_max", []),
-            "temperature_min": daily.get("temperature_2m_min", []),
-            "apparent_temperature_max": daily.get("apparent_temperature_max", []),
-            "apparent_temperature_min": daily.get("apparent_temperature_min", []),
-            "sunrise": daily.get("sunrise", []),
-            "sunset": daily.get("sunset", []),
-            "uv_index_max": daily.get("uv_index_max", []),
-            "precipitation_sum": daily.get("precipitation_sum", []),
-            "precipitation_probability_max": daily.get("precipitation_probability_max", []),
-            "wind_speed_max": daily.get("wind_speed_10m_max", []),
-            "wind_gusts_max": daily.get("wind_gusts_10m_max", [])
-        }
+    normalized_daily = normalize_daily(daily_data)
+    if normalized_daily is not None:
+        weather_data["daily"] = normalized_daily
 
     # PWS data
     if pws_data:

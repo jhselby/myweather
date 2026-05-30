@@ -1,3 +1,6 @@
+## v0.5.212 • May 30, 2026
+- **Collector refactor:** raw GFS/HRRR/ECMWF normalization extracted from `collector.py` into `processors/normalize.py` — `normalize_current` (15 fields), `normalize_hourly` (24 fields), `normalize_daily` (13 fields), plus `empty_hourly()` used by the Pirate Weather cloud-cover fallback. Each replacement is a one-liner at the call site. collector.py now 569 lines.
+
 ## v0.5.211 • May 30, 2026
 - **Collector refactor:** 7-day GFS hourly normalization extracted from `collector.py` into `processors/hourly_7day.py`. Two functions share a key-map helper: `normalize_for_payload` (9 fields for `weather_data["hourly_7day"]`) and `normalize_for_forecast_generation` (full pipeline that mutates the raw data with 850mb precip types, wet bulb temps, and surface precip types for forecast text). collector.py now 640 lines.
 
