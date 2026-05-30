@@ -1,3 +1,6 @@
+## v0.5.211 • May 30, 2026
+- **Collector refactor:** 7-day GFS hourly normalization extracted from `collector.py` into `processors/hourly_7day.py`. Two functions share a key-map helper: `normalize_for_payload` (9 fields for `weather_data["hourly_7day"]`) and `normalize_for_forecast_generation` (full pipeline that mutates the raw data with 850mb precip types, wet bulb temps, and surface precip types for forecast text). collector.py now 640 lines.
+
 ## v0.5.210 • May 30, 2026
 - **Collector refactor:** fog metrics (current risk + 18-hour probability array + dissipation hour) extracted from `collector.py` into `processors/fog_metrics.py` with named constants (HOURLY_HORIZON=18, DISSIPATION_THRESHOLD=20). Current-fog inputs now read from the cleaned `weather_data["current"]` / `weather_data["hourly"][0]` instead of threading the raw API responses through. collector.py now 679 lines.
 

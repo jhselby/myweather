@@ -52,6 +52,7 @@ from .processors.corrected_hourly import add_corrected_hourly_arrays
 from .processors.daily_extremes import compute_daily_extremes
 from .processors.current_derived import compute_current_derived
 from .processors.fog_metrics import compute_fog_metrics
+from .processors.hourly_7day import normalize_for_payload, normalize_for_forecast_generation
 
 FROST_LOG_GCS_PATH = "frost_log.json"
 WEATHER_DATA_GCS_PATH = "weather_data.json"
@@ -260,20 +261,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             if observed_speed and "wind_speed" in weather_data["hourly"]:
                 model_speed = weather_data["hourly"]["wind_speed"][i]
                 weather_data["hourly"]["wind_speed"][i] = (observed_speed * blend_weight) + (model_speed * (1 - blend_weight))
-    # 7-day hourly forecast (GFS)
+    # 7-day hourly forecast (GFS) — shipped projection
     if hourly_7day_data:
-        hourly_7day = hourly_7day_data.get("hourly", {})
-        weather_data["hourly_7day"] = {
-            "times": hourly_7day.get("time", []),
-            "temperature": hourly_7day.get("temperature_2m", []),
-            "apparent_temperature": hourly_7day.get("apparent_temperature", []),
-            "precipitation_probability": hourly_7day.get("precipitation_probability", []),
-            "weather_code": hourly_7day.get("weather_code", []),
-            "cloud_cover": hourly_7day.get("cloud_cover", []),
-            "wind_speed": hourly_7day.get("wind_speed_10m", []),
-            "wind_direction": hourly_7day.get("wind_direction_10m", []),
-            "wind_gusts": hourly_7day.get("wind_gusts_10m", []),
-        }
+        weather_data["hourly_7day"] = normalize_for_payload(hourly_7day_data.get("hourly", {}))
 
     # Daily forecast
     if daily_data:
@@ -417,38 +407,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if ts.get("sky_override"):
         weather_data.setdefault("current", {})["condition_override"] = ts["sky_override"]
     
-    # Process 7-day hourly data for forecast generation
+    # Process 7-day hourly data for forecast text generation
     if hourly_7day_data and "hourly" in hourly_7day_data:
-        # Normalize 7-day data to match 2-day structure
-        raw_hourly = hourly_7day_data["hourly"]
-        normalized = {
-            "times": raw_hourly.get("time", []),
-            "temperature": raw_hourly.get("temperature_2m", []),
-            "apparent_temperature": raw_hourly.get("apparent_temperature", []),
-            "humidity": raw_hourly.get("relative_humidity_2m", []),
-            "dew_point": raw_hourly.get("dew_point_2m", []),
-            "precipitation_probability": raw_hourly.get("precipitation_probability", []),
-            "precipitation": raw_hourly.get("precipitation", []),
-            "weather_code": raw_hourly.get("weather_code", []),
-            "cloud_cover": raw_hourly.get("cloud_cover", []),
-            "cloud_cover_low": raw_hourly.get("cloud_cover_low", []),
-            "cloud_cover_mid": raw_hourly.get("cloud_cover_mid", []),
-            "cloud_cover_high": raw_hourly.get("cloud_cover_high", []),
-            "wind_speed": raw_hourly.get("wind_speed_10m", []),
-            "wind_direction": raw_hourly.get("wind_direction_10m", []),
-            "wind_gusts": raw_hourly.get("wind_gusts_10m", []),
-            "pressure": raw_hourly.get("pressure_msl", []),
-            "temperature_850hPa": raw_hourly.get("temperature_850hPa", []),
-            "temperature_700hPa": raw_hourly.get("temperature_700hPa", []),
-            "geopotential_height_850hPa": raw_hourly.get("geopotential_height_850hPa", []),
-            "col_precip_type_850mb": raw_hourly.get("col_precip_type_850mb", []),
-        }
-        # Add 850mb precip types, wet bulb, and surface precip types
-        temp_data = {"hourly": normalized, "current": weather_data.get("current", {})}
-        add_850mb_precip_type(temp_data)
-        add_wet_bulb_temps(temp_data)
-        add_corrected_precip_types(temp_data, weather_data.get("hyperlocal", {}))
-        hourly_7day_data["hourly"] = temp_data["hourly"]
+        normalize_for_forecast_generation(hourly_7day_data, weather_data)
 
     # Generate forecast text AFTER 850mb data is added
     # Use 7-day hourly data for forecast if available, otherwise fall back to 2-day
