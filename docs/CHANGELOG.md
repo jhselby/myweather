@@ -1,3 +1,6 @@
+## v0.5.217 • May 30, 2026
+- **Frontend refactor:** Right Now weather-art SVG dispatch (12 inline if/else branches building inline SVG by condition × day/night) collapsed into a top-of-file `WEATHER_GRAPHICS` lookup table + a `matchWeatherType()` helper that maps condition substrings → type in precedence order. Class-list cleanup uses the same single list. Zero behavior change.
+
 ## v0.5.216 • May 30, 2026
 - **Frontend refactor:** the dimmed-suffix span (`<span style="opacity:0.6;font-size:0.85rem;">…</span>`) repeated at 7 callsites in `app-main.js` collapsed into a single `dim(text)` helper. Zero behavior change.
 

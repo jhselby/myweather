@@ -342,6 +342,110 @@
     }
 
     // ======================================================
+    // Right Now weather-art SVG dispatch
+    // ======================================================
+    // Inline SVG inner-markup for the Right Now art, keyed by `${type}_${day|night}`.
+    const WEATHER_GRAPHICS = {
+      clear_day: `
+                <circle cx="75" cy="25" r="18" fill="rgba(255,200,80,0.8)"/>
+                <line x1="75" y1="3" x2="75" y2="10" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="93" y1="25" x2="100" y2="25" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="86" y1="36" x2="91" y2="41" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="86" y1="14" x2="91" y2="9" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="64" y1="36" x2="59" y2="41" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="64" y1="14" x2="59" y2="9" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
+              `,
+      clear_night: `
+                <circle cx="75" cy="25" r="16" fill="rgba(245,245,220,0.8)"/>
+                <circle cx="80" cy="20" r="16" fill="rgba(25,25,112,0.6)"/>
+                <circle cx="20" cy="15" r="2" fill="rgba(255,255,255,0.8)"/>
+                <circle cx="30" cy="25" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                <circle cx="45" cy="12" r="1.5" fill="rgba(255,255,255,0.7)"/>
+                <circle cx="25" cy="35" r="2" fill="rgba(255,255,255,0.8)"/>
+              `,
+      partly_day: `
+                <circle cx="60" cy="20" r="12" fill="rgba(255,200,80,0.6)"/>
+                <ellipse cx="75" cy="35" rx="20" ry="14" fill="rgba(220,220,220,0.85)"/>
+                <ellipse cx="58" cy="40" rx="16" ry="12" fill="rgba(200,200,200,0.85)"/>
+              `,
+      partly_night: `
+                <circle cx="60" cy="20" r="11" fill="rgba(245,245,220,0.7)"/>
+                <circle cx="64" cy="17" r="11" fill="rgba(47,79,79,0.5)"/>
+                <ellipse cx="75" cy="35" rx="20" ry="14" fill="rgba(169,169,169,0.8)"/>
+                <ellipse cx="58" cy="40" rx="16" ry="12" fill="rgba(128,128,128,0.8)"/>
+              `,
+      cloudy_day: `
+                <ellipse cx="50" cy="28" rx="24" ry="16" fill="rgba(160,160,160,0.8)"/>
+                <ellipse cx="75" cy="35" rx="22" ry="15" fill="rgba(150,150,150,0.8)"/>
+                <ellipse cx="30" cy="38" rx="20" ry="14" fill="rgba(170,170,170,0.8)"/>
+              `,
+      cloudy_night: `
+                <ellipse cx="50" cy="28" rx="24" ry="16" fill="rgba(105,105,105,0.85)"/>
+                <ellipse cx="75" cy="35" rx="22" ry="15" fill="rgba(90,90,90,0.85)"/>
+                <ellipse cx="30" cy="38" rx="20" ry="14" fill="rgba(115,115,115,0.85)"/>
+              `,
+      rain_day: `
+                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(100,100,100,0.8)"/>
+                <line x1="40" y1="45" x2="36" y2="60" stroke="rgba(100,150,200,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="52" y1="45" x2="48" y2="60" stroke="rgba(100,150,200,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="64" y1="45" x2="60" y2="60" stroke="rgba(100,150,200,0.7)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="46" y1="50" x2="42" y2="65" stroke="rgba(100,150,200,0.6)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="58" y1="50" x2="54" y2="65" stroke="rgba(100,150,200,0.6)" stroke-width="2" stroke-linecap="round"/>
+              `,
+      rain_night: `
+                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(70,70,70,0.85)"/>
+                <line x1="40" y1="45" x2="36" y2="60" stroke="rgba(80,120,160,0.75)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="52" y1="45" x2="48" y2="60" stroke="rgba(80,120,160,0.75)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="64" y1="45" x2="60" y2="60" stroke="rgba(80,120,160,0.75)" stroke-width="2.5" stroke-linecap="round"/>
+                <line x1="46" y1="50" x2="42" y2="65" stroke="rgba(80,120,160,0.65)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="58" y1="50" x2="54" y2="65" stroke="rgba(80,120,160,0.65)" stroke-width="2" stroke-linecap="round"/>
+              `,
+      snow_day: `
+                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(180,180,200,0.8)"/>
+                <text x="35" y="55" font-size="18" fill="rgba(150,180,220,0.8)">❄</text>
+                <text x="55" y="62" font-size="14" fill="rgba(150,180,220,0.75)">❄</text>
+                <text x="48" y="48" font-size="12" fill="rgba(150,180,220,0.7)">❄</text>
+              `,
+      snow_night: `
+                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(90,90,110,0.85)"/>
+                <text x="35" y="55" font-size="18" fill="rgba(180,200,230,0.8)">❄</text>
+                <text x="55" y="62" font-size="14" fill="rgba(180,200,230,0.75)">❄</text>
+                <text x="48" y="48" font-size="12" fill="rgba(180,200,230,0.7)">❄</text>
+              `,
+      mist_day: `
+                <path d="M 20,25 Q 40,20 60,25 T 100,25" stroke="rgba(200,200,200,0.7)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 15,40 Q 40,35 65,40 T 105,40" stroke="rgba(210,210,210,0.7)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 18,55 Q 40,50 62,55 T 102,55" stroke="rgba(200,200,200,0.65)" stroke-width="5" fill="none" stroke-linecap="round"/>
+              `,
+      mist_night: `
+                <path d="M 20,25 Q 40,20 60,25 T 100,25" stroke="rgba(130,130,130,0.75)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 15,40 Q 40,35 65,40 T 105,40" stroke="rgba(140,140,140,0.75)" stroke-width="5" fill="none" stroke-linecap="round"/>
+                <path d="M 18,55 Q 40,50 62,55 T 102,55" stroke="rgba(130,130,130,0.7)" stroke-width="5" fill="none" stroke-linecap="round"/>
+              `,
+    };
+
+    // Condition substrings → weather type, checked in this order (first match wins).
+    const WEATHER_TYPE_MATCHERS = [
+      { type: 'clear',  patterns: ['clear', 'sunny'] },
+      { type: 'partly', patterns: ['partly'] },
+      { type: 'cloudy', patterns: ['overcast', 'cloudy'] },
+      { type: 'rain',   patterns: ['rain', 'drizzle', 'shower'] },
+      { type: 'snow',   patterns: ['snow', 'flurr'] },
+      { type: 'mist',   patterns: ['mist', 'fog'] },
+    ];
+
+    const WEATHER_CLASS_LIST = WEATHER_TYPE_MATCHERS.flatMap(
+      ({ type }) => [`weather-${type}-day`, `weather-${type}-night`]
+    );
+
+    function matchWeatherType(condition) {
+      for (const { type, patterns } of WEATHER_TYPE_MATCHERS) {
+        if (patterns.some(p => condition.includes(p))) return type;
+      }
+      return null;
+    }
+
+    // ======================================================
     // Wind Exposure Table (mirrors collector.py exactly)
     // ======================================================
    
@@ -678,157 +782,21 @@ function loadWeatherData() {
         if (weatherGraphic) {
           const skyPrecipCard = document.querySelector('[data-collapse-key="48h_temp_precip"]');
           const condition = desc.toLowerCase();
-          
-          // Determine if it's day or night
+
           const now = new Date();
           const sunrise = data.daily?.sunrise?.[0] ? new Date(data.daily.sunrise[0]) : null;
           const sunset = data.daily?.sunset?.[0] ? new Date(data.daily.sunset[0]) : null;
           const isDay = sunrise && sunset ? (now >= sunrise && now < sunset) : true;
-          
-          let graphicSVG = '';
-          let weatherClass = '';
-          
-          // Clear/Sunny
-          if (condition.includes('clear') || condition.includes('sunny')) {
-            weatherClass = isDay ? 'weather-clear-day' : 'weather-clear-night';
-            if (isDay) {
-              // Day: Bright sun
-              graphicSVG = `
-                <circle cx="75" cy="25" r="18" fill="rgba(255,200,80,0.8)"/>
-                <line x1="75" y1="3" x2="75" y2="10" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
-                <line x1="93" y1="25" x2="100" y2="25" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
-                <line x1="86" y1="36" x2="91" y2="41" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
-                <line x1="86" y1="14" x2="91" y2="9" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
-                <line x1="64" y1="36" x2="59" y2="41" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
-                <line x1="64" y1="14" x2="59" y2="9" stroke="rgba(255,200,80,0.7)" stroke-width="2" stroke-linecap="round"/>
-              `;
-            } else {
-              // Night: Moon and stars
-              graphicSVG = `
-                <circle cx="75" cy="25" r="16" fill="rgba(245,245,220,0.8)"/>
-                <circle cx="80" cy="20" r="16" fill="rgba(25,25,112,0.6)"/>
-                <circle cx="20" cy="15" r="2" fill="rgba(255,255,255,0.8)"/>
-                <circle cx="30" cy="25" r="1.5" fill="rgba(255,255,255,0.7)"/>
-                <circle cx="45" cy="12" r="1.5" fill="rgba(255,255,255,0.7)"/>
-                <circle cx="25" cy="35" r="2" fill="rgba(255,255,255,0.8)"/>
-              `;
-            }
-          }
-          // Partly Cloudy
-          else if (condition.includes('partly')) {
-            weatherClass = isDay ? 'weather-partly-day' : 'weather-partly-night';
-            if (isDay) {
-              // Day: Sun peeking through clouds
-              graphicSVG = `
-                <circle cx="60" cy="20" r="12" fill="rgba(255,200,80,0.6)"/>
-                <ellipse cx="75" cy="35" rx="20" ry="14" fill="rgba(220,220,220,0.85)"/>
-                <ellipse cx="58" cy="40" rx="16" ry="12" fill="rgba(200,200,200,0.85)"/>
-              `;
-            } else {
-              // Night: Moon and clouds
-              graphicSVG = `
-                <circle cx="60" cy="20" r="11" fill="rgba(245,245,220,0.7)"/>
-                <circle cx="64" cy="17" r="11" fill="rgba(47,79,79,0.5)"/>
-                <ellipse cx="75" cy="35" rx="20" ry="14" fill="rgba(169,169,169,0.8)"/>
-                <ellipse cx="58" cy="40" rx="16" ry="12" fill="rgba(128,128,128,0.8)"/>
-              `;
-            }
-          }
-          // Overcast/Cloudy
-          else if (condition.includes('overcast') || condition.includes('cloudy')) {
-            weatherClass = isDay ? 'weather-cloudy-day' : 'weather-cloudy-night';
-            if (isDay) {
-              // Day: Gray clouds
-              graphicSVG = `
-                <ellipse cx="50" cy="28" rx="24" ry="16" fill="rgba(160,160,160,0.8)"/>
-                <ellipse cx="75" cy="35" rx="22" ry="15" fill="rgba(150,150,150,0.8)"/>
-                <ellipse cx="30" cy="38" rx="20" ry="14" fill="rgba(170,170,170,0.8)"/>
-              `;
-            } else {
-              // Night: Darker clouds
-              graphicSVG = `
-                <ellipse cx="50" cy="28" rx="24" ry="16" fill="rgba(105,105,105,0.85)"/>
-                <ellipse cx="75" cy="35" rx="22" ry="15" fill="rgba(90,90,90,0.85)"/>
-                <ellipse cx="30" cy="38" rx="20" ry="14" fill="rgba(115,115,115,0.85)"/>
-              `;
-            }
-          }
-          // Rain
-          else if (condition.includes('rain') || condition.includes('drizzle') || condition.includes('shower')) {
-            weatherClass = isDay ? 'weather-rain-day' : 'weather-rain-night';
-            if (isDay) {
-              // Day: Rain clouds and raindrops
-              graphicSVG = `
-                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(100,100,100,0.8)"/>
-                <line x1="40" y1="45" x2="36" y2="60" stroke="rgba(100,150,200,0.7)" stroke-width="2.5" stroke-linecap="round"/>
-                <line x1="52" y1="45" x2="48" y2="60" stroke="rgba(100,150,200,0.7)" stroke-width="2.5" stroke-linecap="round"/>
-                <line x1="64" y1="45" x2="60" y2="60" stroke="rgba(100,150,200,0.7)" stroke-width="2.5" stroke-linecap="round"/>
-                <line x1="46" y1="50" x2="42" y2="65" stroke="rgba(100,150,200,0.6)" stroke-width="2" stroke-linecap="round"/>
-                <line x1="58" y1="50" x2="54" y2="65" stroke="rgba(100,150,200,0.6)" stroke-width="2" stroke-linecap="round"/>
-              `;
-            } else {
-              // Night: Dark rain
-              graphicSVG = `
-                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(70,70,70,0.85)"/>
-                <line x1="40" y1="45" x2="36" y2="60" stroke="rgba(80,120,160,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-                <line x1="52" y1="45" x2="48" y2="60" stroke="rgba(80,120,160,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-                <line x1="64" y1="45" x2="60" y2="60" stroke="rgba(80,120,160,0.75)" stroke-width="2.5" stroke-linecap="round"/>
-                <line x1="46" y1="50" x2="42" y2="65" stroke="rgba(80,120,160,0.65)" stroke-width="2" stroke-linecap="round"/>
-                <line x1="58" y1="50" x2="54" y2="65" stroke="rgba(80,120,160,0.65)" stroke-width="2" stroke-linecap="round"/>
-              `;
-            }
-          }
-          // Snow
-          else if (condition.includes('snow') || condition.includes('flurr')) {
-            weatherClass = isDay ? 'weather-snow-day' : 'weather-snow-night';
-            if (isDay) {
-              // Day: Snow clouds and snowflakes
-              graphicSVG = `
-                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(180,180,200,0.8)"/>
-                <text x="35" y="55" font-size="18" fill="rgba(150,180,220,0.8)">❄</text>
-                <text x="55" y="62" font-size="14" fill="rgba(150,180,220,0.75)">❄</text>
-                <text x="48" y="48" font-size="12" fill="rgba(150,180,220,0.7)">❄</text>
-              `;
-            } else {
-              // Night: Dark snow
-              graphicSVG = `
-                <ellipse cx="50" cy="25" rx="22" ry="14" fill="rgba(90,90,110,0.85)"/>
-                <text x="35" y="55" font-size="18" fill="rgba(180,200,230,0.8)">❄</text>
-                <text x="55" y="62" font-size="14" fill="rgba(180,200,230,0.75)">❄</text>
-                <text x="48" y="48" font-size="12" fill="rgba(180,200,230,0.7)">❄</text>
-              `;
-            }
-          }
-          // Mist/Fog
-          else if (condition.includes('mist') || condition.includes('fog')) {
-            weatherClass = isDay ? 'weather-mist-day' : 'weather-mist-night';
-            if (isDay) {
-              // Day: Light fog waves
-              graphicSVG = `
-                <path d="M 20,25 Q 40,20 60,25 T 100,25" stroke="rgba(200,200,200,0.7)" stroke-width="5" fill="none" stroke-linecap="round"/>
-                <path d="M 15,40 Q 40,35 65,40 T 105,40" stroke="rgba(210,210,210,0.7)" stroke-width="5" fill="none" stroke-linecap="round"/>
-                <path d="M 18,55 Q 40,50 62,55 T 102,55" stroke="rgba(200,200,200,0.65)" stroke-width="5" fill="none" stroke-linecap="round"/>
-              `;
-            } else {
-              // Night: Darker fog
-              graphicSVG = `
-                <path d="M 20,25 Q 40,20 60,25 T 100,25" stroke="rgba(130,130,130,0.75)" stroke-width="5" fill="none" stroke-linecap="round"/>
-                <path d="M 15,40 Q 40,35 65,40 T 105,40" stroke="rgba(140,140,140,0.75)" stroke-width="5" fill="none" stroke-linecap="round"/>
-                <path d="M 18,55 Q 40,50 62,55 T 102,55" stroke="rgba(130,130,130,0.7)" stroke-width="5" fill="none" stroke-linecap="round"/>
-              `;
-            }
-          }
-          
-          weatherGraphic.innerHTML = graphicSVG;
-          
-          // Apply weather class to card
+
+          const type = matchWeatherType(condition);
+          const dayKey = isDay ? 'day' : 'night';
+          const weatherClass = type ? `weather-${type}-${dayKey}` : '';
+
+          weatherGraphic.innerHTML = type ? (WEATHER_GRAPHICS[`${type}_${dayKey}`] || '') : '';
+
           if (skyPrecipCard) {
-            skyPrecipCard.classList.remove('weather-clear-day', 'weather-clear-night', 'weather-partly-day', 'weather-partly-night', 
-              'weather-cloudy-day', 'weather-cloudy-night', 'weather-rain-day', 'weather-rain-night', 
-              'weather-snow-day', 'weather-snow-night', 'weather-mist-day', 'weather-mist-night');
-            if (weatherClass) {
-              skyPrecipCard.classList.add(weatherClass);
-            }
+            skyPrecipCard.classList.remove(...WEATHER_CLASS_LIST);
+            if (weatherClass) skyPrecipCard.classList.add(weatherClass);
           }
         }
 
