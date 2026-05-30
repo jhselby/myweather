@@ -336,6 +336,11 @@
       };
     }
 
+    // Dim suffix span used after the primary value in many card displays.
+    function dim(text) {
+      return `<span style="opacity:0.6;font-size:0.85rem;">${text}</span>`;
+    }
+
     // ======================================================
     // Wind Exposure Table (mirrors collector.py exactly)
     // ======================================================
@@ -926,7 +931,7 @@ function loadWeatherData() {
             } else if (likelihood >= 40) {
               icon = "";
             }
-            sbEl.innerHTML = `${icon}${likelihood}% <span style="opacity:0.6;font-size:0.85rem;">${seaBreeze.reason || ""}</span>`;
+            sbEl.innerHTML = `${icon}${likelihood}% ${dim(seaBreeze.reason || "")}`;
           } else {
             sbEl.textContent = "N/A";
           }
@@ -974,7 +979,7 @@ function loadWeatherData() {
         if (sunsetScoreEl) {
           if (window.__todaySunsetScore) {
             const s = window.__todaySunsetScore;
-            sunsetScoreEl.innerHTML = `${s.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(s.score)}/100)</span>`;
+            sunsetScoreEl.innerHTML = `${s.label} ${dim(`(${Math.round(s.score)}/100)`)}`;
             sunsetScoreEl.style.color = s.color;
           } else {
             sunsetScoreEl.textContent = "No data";
@@ -985,7 +990,7 @@ function loadWeatherData() {
         const dockDayScoreEl = document.getElementById("swimFloatScoreNow");
         if (dockDayScoreEl && window.__todayDockScore) {
           const dockAfter6 = new Date().getHours() >= 18; const d = (dockAfter6 && window.__tomorrowDockScore) ? window.__tomorrowDockScore : window.__todayDockScore;
-          dockDayScoreEl.innerHTML = `${d.label} <span style="opacity:0.6;font-size:0.85rem;">(${Math.round(d.score * 100)}/100)</span>`;
+          dockDayScoreEl.innerHTML = `${d.label} ${dim(`(${Math.round(d.score * 100)}/100)`)}`;
           dockDayScoreEl.style.color = d.color;
         } else if (dockDayScoreEl) {
           dockDayScoreEl.textContent = "No data";
@@ -1002,7 +1007,7 @@ function loadWeatherData() {
         const hairDayNowEl = document.getElementById("hairDayNow");
         if (hairDayNowEl && window.__todayHairScore) {
           const hairAfter6 = new Date().getHours() >= 18; const h = (hairAfter6 && window.__tomorrowHairScore) ? window.__tomorrowHairScore : window.__todayHairScore;
-          hairDayNowEl.innerHTML = `${h.scoreLabel} <span style="opacity:0.6;font-size:0.85rem;">(${h.score}/100)</span>`;
+          hairDayNowEl.innerHTML = `${h.scoreLabel} ${dim(`(${h.score}/100)`)}`;
           hairDayNowEl.style.color = h.color;
           wireHyperlocalLink(hairDayNowEl, 'hair_day', 'hyperlocal');
         } else if (hairDayNowEl) {
@@ -1253,7 +1258,7 @@ function loadWeatherData() {
           const sustainedScore = Math.round(worryScore(hyp.corrected_wind_speed ?? cur.wind_speed, exposure));
           const sustainedLevel = worryLevel(sustainedScore);
           if (sustainedImpactEl) {
-            sustainedImpactEl.innerHTML = `${sustainedScore} <span style="opacity:0.6;font-size:0.85rem;">(${sustainedLevel.label})</span>`;
+            sustainedImpactEl.innerHTML = `${sustainedScore} ${dim(`(${sustainedLevel.label})`)}`;
           }
         } else if (sustainedImpactEl) {
           sustainedImpactEl.textContent = "N/A";
@@ -1264,7 +1269,7 @@ function loadWeatherData() {
           const gustScore = Math.round(worryScore(hyp.corrected_wind_gusts ?? cur.wind_gusts, exposure));
           const gustLevel = worryLevel(gustScore);
           if (gustImpactEl) {
-            gustImpactEl.innerHTML = `${gustScore} <span style="opacity:0.6;font-size:0.85rem;">(${gustLevel.label})</span>`;
+            gustImpactEl.innerHTML = `${gustScore} ${dim(`(${gustLevel.label})`)}`;
           }
         } else if (gustImpactEl) {
           gustImpactEl.textContent = "N/A";
@@ -1277,7 +1282,7 @@ function loadWeatherData() {
             let icon = "";
             if (seaBreeze.active) icon = "";
             else if (seaBreeze.likelihood >= 40) icon = "";
-            sbWindEl.innerHTML = `${icon}${seaBreeze.likelihood}% <span style="opacity:0.6;font-size:0.85rem;">${seaBreeze.reason || ""}</span>`;
+            sbWindEl.innerHTML = `${icon}${seaBreeze.likelihood}% ${dim(seaBreeze.reason || "")}`;
           } else {
             sbWindEl.textContent = "N/A";
           }

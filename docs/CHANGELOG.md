@@ -1,3 +1,6 @@
+## v0.5.216 • May 30, 2026
+- **Frontend refactor:** the dimmed-suffix span (`<span style="opacity:0.6;font-size:0.85rem;">…</span>`) repeated at 7 callsites in `app-main.js` collapsed into a single `dim(text)` helper. Zero behavior change.
+
 ## v0.5.215 • May 30, 2026
 - **Right Now click-throughs:** tapping a value field in the expanded Right Now card now actually navigates to the matching detail card (and tapping outside the detail returns you to Right Now). Previously the modal's `outsideHandler` was eating the synthetic click on the sibling target. Fix: the click handler dismisses the source card's modal state up front so the target click reaches its inline `onclick` cleanly.
 - **Frontend refactor:** seven near-identical hyperlocal-link click handlers in `app-main.js` collapsed into one `wireHyperlocalLink(el, cardKey, targetTab)` helper.
