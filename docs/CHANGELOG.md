@@ -1,81 +1,24 @@
-## v0.5.219 • May 30, 2026
-- **Collector refactor:** all data-fetching orchestration extracted from `collector.py` into `fetchers/fetch_all.py`. New `FetchResults` dataclass bundles 17 data fields + `sources` dict + `failed_fetches` set; `fetch_all_sources()` runs sequential Open-Meteo + parallel sources + result unpacking + sources-dict construction in one call. `collector.main()` shrunk to a clean linear flow: load prev cache → download frost log → fetched = fetch_all_sources() → update frost log → sunset directional → build_weather_data → briefing → upload. Removed 5 unused open_meteo imports + a duplicate `fetch_directional_clouds` import. collector.py now 406 lines (was 455 → cumulative 494 → 406 today, -88 lines / -18%). Zero behavior change — verified by 16:27 GCS payload (all 31 top-level keys present, all 14 sources status=ok).
+## v0.5.201–v0.5.220 • May 30, 2026
+* **Docs (v0.5.220):** consolidated same-day entries in `CHANGELOG.md` — May 27, May 28, and today's entries each collapsed into a single range header with concise themed bullets, matching the established format for earlier dates.
+* **Right Now click-throughs (v0.5.215):** tapping a value field in the expanded Right Now card now navigates to the matching detail card; tapping outside the detail returns you to Right Now. Modal's `outsideHandler` was eating the synthetic click on the sibling target — fix dismisses the source's modal state before navigating.
+* **Frontend dedup (v0.5.215–v0.5.217):** seven hyperlocal-link click handlers → one `wireHyperlocalLink()` helper; seven dimmed-suffix span literals → one `dim()` helper; twelve weather-art SVG conditionals → `WEATHER_GRAPHICS` lookup table with a `matchWeatherType()` precedence helper.
+* **Collector formula consolidation (v0.5.201):** Magnus dew-point (4 copies) and Steadman feels-like (2 copies) collapsed into `utils.py` helpers.
+* **Collector cleanup (v0.5.202):** 8 mid-function `pytz`/`datetime` imports hoisted; `_obs_log` initialized up front so the `NameError` catch goes away; unused `now_utc` removed.
+* **Collector module extractions (v0.5.203–v0.5.214, v0.5.218–v0.5.219):** carved out of `collector.py` into focused modules — `wind_blend`, `corrected_hourly`, `gcs_io`, `obs_log`, `forecast_snapshot`, `daily_extremes`, `current_derived`, `fog_metrics`, `hourly_7day`, `normalize`, `stale_cache`, `fetch_parallel`, `fetch_all`. `concurrent.futures` and 16 now-unused fetcher imports removed. collector.py 1,653 → 406 lines (−76%). Zero behavior change throughout.
 
-## v0.5.218 • May 30, 2026
-- **Collector refactor:** parallel-fetch block (ThreadPoolExecutor + 12-task dict + timeout/error handling) extracted from `collector.py` into `fetchers/fetch_parallel.py` as `fetch_parallel_sources()`. Named constants: MAX_WORKERS=6, AS_COMPLETED_TIMEOUT=60, TASK_TIMEOUT=45. Single-value Salem water temp branch lifted into a `_SINGLE_VALUE_TASKS` set + `_error_placeholder()` helper. 11 now-unused parallel-fetcher imports + `concurrent.futures` import removed from `collector.py`. collector.py now 455 lines (was 494). Zero behavior change — verified by checking the 15:47 GCS payload has all parallel-source fields populated.
+## v0.5.197–v0.5.200 • May 28, 2026
+* **Collector:** obs_temp_log now records observed precip rate from WU rain gauges (replaces forecast model precip); WU aggregate also includes `precip_rate_in` and `precip_today_in` from station network. Earlier in the day: obs_temp_log added observed humidity and dew point (Magnus formula from temp + RH).
+* **Forecast snapshots:** Each hourly entry now includes dew point (`dp`) and precipitation probability (`pp`) — enables POP calibration and dew point decay analysis alongside temp/wind.
+* **Settings drawer:** "Data generated" always shows relative time ("just now", "5m ago") — previously switched to absolute time when a background refresh fired while the drawer was open.
 
-## v0.5.217 • May 30, 2026
-- **Frontend refactor:** Right Now weather-art SVG dispatch (12 inline if/else branches building inline SVG by condition × day/night) collapsed into a top-of-file `WEATHER_GRAPHICS` lookup table + a `matchWeatherType()` helper that maps condition substrings → type in precedence order. Class-list cleanup uses the same single list. Zero behavior change.
-
-## v0.5.216 • May 30, 2026
-- **Frontend refactor:** the dimmed-suffix span (`<span style="opacity:0.6;font-size:0.85rem;">…</span>`) repeated at 7 callsites in `app-main.js` collapsed into a single `dim(text)` helper. Zero behavior change.
-
-## v0.5.215 • May 30, 2026
-- **Right Now click-throughs:** tapping a value field in the expanded Right Now card now actually navigates to the matching detail card (and tapping outside the detail returns you to Right Now). Previously the modal's `outsideHandler` was eating the synthetic click on the sibling target. Fix: the click handler dismisses the source card's modal state up front so the target click reaches its inline `onclick` cleanly.
-- **Frontend refactor:** seven near-identical hyperlocal-link click handlers in `app-main.js` collapsed into one `wireHyperlocalLink(el, cardKey, targetTab)` helper.
-
-## v0.5.214 • May 30, 2026
-- **Collector refactor:** previous-run cache + stale fallback extracted from `collector.py` into `weather_collector/stale_cache.py`. The hardcoded list of top-level keys that fall back to the previous run is now a named `STALE_FALLBACK_KEYS` constant. collector.py now 494 lines — under 500 for the first time.
-
-## v0.5.213 • May 30, 2026
-- **Collector refactor:** hourly observed-wind blend extracted from `collector.py` into `processors/wind_blend.py` as `blend_observed_into_hourly()`. Both halves of the wind story now live together — `select_observed_wind` chooses the live value, `blend_observed_into_hourly` mixes it into the next 24h of forecast with linear decay. Dropped the now-unused `wind_candidates` return value. collector.py now 542 lines.
-
-## v0.5.212 • May 30, 2026
-- **Collector refactor:** raw GFS/HRRR/ECMWF normalization extracted from `collector.py` into `processors/normalize.py` — `normalize_current` (15 fields), `normalize_hourly` (24 fields), `normalize_daily` (13 fields), plus `empty_hourly()` used by the Pirate Weather cloud-cover fallback. Each replacement is a one-liner at the call site. collector.py now 569 lines.
-
-## v0.5.211 • May 30, 2026
-- **Collector refactor:** 7-day GFS hourly normalization extracted from `collector.py` into `processors/hourly_7day.py`. Two functions share a key-map helper: `normalize_for_payload` (9 fields for `weather_data["hourly_7day"]`) and `normalize_for_forecast_generation` (full pipeline that mutates the raw data with 850mb precip types, wet bulb temps, and surface precip types for forecast text). collector.py now 640 lines.
-
-## v0.5.210 • May 30, 2026
-- **Collector refactor:** fog metrics (current risk + 18-hour probability array + dissipation hour) extracted from `collector.py` into `processors/fog_metrics.py` with named constants (HOURLY_HORIZON=18, DISSIPATION_THRESHOLD=20). Current-fog inputs now read from the cleaned `weather_data["current"]` / `weather_data["hourly"][0]` instead of threading the raw API responses through. collector.py now 679 lines.
-
-## v0.5.209 • May 30, 2026
-- **Collector refactor:** current-conditions derived metrics (corrected dew point + spread + cloud base, corrected feels-like, NWS heat index) extracted from `collector.py` into `processors/current_derived.py`. Solar source priority chain (Pirate Weather → Tempest avg → Open-Meteo direct_radiation) factored out into a named helper. collector.py now 740 lines.
-
-## v0.5.208 • May 30, 2026
-- **Collector refactor:** 80-line daily-extremes block extracted from `collector.py` into a new `processors/daily_extremes.py` module. One public function `compute_daily_extremes(weather_data)` that logs the current 10-min obs snapshot, writes the 48h forecast snapshot, and derives today (obs + remaining forecast), yesterday (obs-only), tomorrow (forecast-only), and current-hour atmospheric fields. Also binds `derived` to `weather_data["derived"]` from the start so extracted modules can `setdefault` without divergence. collector.py now at 790 lines, down from 1,653 this morning.
-
-## v0.5.207 • May 30, 2026
-- **Collector refactor:** `_append_forecast_snapshot` extracted from `collector.py` into a new `processors/forecast_snapshot.py` with named constants (14-day retention, 48-hour snapshot window, GCS path). Also drops 7 lines of manual try/except GCS-load boilerplate by routing through `gcs_io.load_json`. Verified live: 16:27 snapshot has 48 hours, all short-key fields present.
-
-## v0.5.206 • May 30, 2026
-- **Collector refactor:** the rolling 10-min obs_temp_log helpers (`_load_obs_temp_log`, `_save_obs_temp_log`, `_update_obs_temp_log`) moved from `collector.py` into a new `processors/obs_log.py` with named constants (24-hour retention, GCS path). Same shape, same fields. Verified against live obs_temp_log entries.
-
-## v0.5.205 • May 30, 2026
-- **Collector plumbing:** GCS bucket constant + client + upload helper extracted from `collector.py` into a new `weather_collector/gcs_io.py` module (also adds a graceful `load_json` helper). All 6 upload callsites and the 4 load callsites now route through it. No behavior change.
-
-## v0.5.204 • May 30, 2026
-- **Collector refactor:** bias-corrected hourly arrays (corrected_temperature, corrected_humidity, corrected_apparent_temperature, corrected_dew_point, corrected_absolute_humidity) extracted from `collector.py` into a new `processors/corrected_hourly.py` module. collector.py is now under 1000 lines for the first time. No behavior change — all 5 arrays still 48 entries with identical values.
-
-## v0.5.203 • May 30, 2026
-- **Collector refactor:** 109-line wind override block extracted from `collector.py` into a new `processors/wind_blend.py` module. Constants (20-min staleness, 2.5× WU sanity cap, 10-station minimum) now named. No behavior change — verified live against KBVY/Tempest/WU/model candidate selection and the sanity cap math.
-
-## v0.5.202 • May 30, 2026
-- **Collector cleanup:** 8 mid-function imports of `pytz`/`datetime` hoisted to the top of the file; `_obs_log` initialized up front so the `NameError` catch can go away; unused `now_utc` in wind blend removed. No behavior change.
-
-## v0.5.201 • May 30, 2026
-- **Collector refactor:** Magnus dew-point formula (4 copies) and Steadman feels-like formula (2 copies) consolidated into `utils.py` helpers. No behavior change — same numbers, single source of truth.
-
-## v0.5.200 • May 28, 2026
-- **Collector:** obs_temp_log now records observed precip rate from WU rain gauges (replaces forecast model precip). WU aggregate now includes `precip_rate_in` and `precip_today_in` from station network.
-
-## v0.5.199 • May 28, 2026
-- **Settings drawer:** "Data generated" always shows relative time ("just now", "5m ago") — previously switched to absolute time when a background refresh fired while the drawer was open.
-
-## v0.5.197–v0.5.198 • May 28, 2026
-- **Collector:** obs_temp_log now records observed humidity and dew point (computed via Magnus formula from temp + RH) each run.
-- **Forecast snapshots:** Each hourly entry now includes dew point (`dp`) and precipitation probability (`pp`) — enables POP calibration and dew point decay analysis alongside temp/wind.
-
-## v0.5.192–v0.5.196 • May 27, 2026
-- **UV in Watch For:** Briefing Watch For section now shows UV index when today's peak is ≥ 6 (high or above) — dimmed at 6–7, orange at 8–10, red at 11+. Hidden on low-UV days.
-- **Watch For links:** UV and Heat stress rows now navigate to the Outside card on the Lifestyle tab when tapped.
-- **Watch For layout fix:** Wrapped rows in brief-rows container so thin item dividers and thick section separator render correctly; UV label no longer dimmed.
-- **Briefing prompt fix:** Groq/Gemini no longer append "no change since last update" when forecast is stable — prior forecast is only mentioned when something shifted meaningfully.
-- **UV Watch For time gate:** UV warning now only appears when UV ≥ 6 hours remain today — hides after the UV window has passed (e.g. evenings).
-
-## v0.5.190–v0.5.191 • May 27, 2026
-- **Outside card (Lifestyle tab):** New card scoring current outdoor conditions — rain, wind, comfort (dew point), UV (hidden when unavailable) — with overall label (Great/Good/Fair/Poor/Stay inside), per-factor bars, and best-window hint when current conditions are poor. Pollen and AQI placeholders for future additions.
-- **Forecast snapshot logger:** Collector now writes `forecast_log.json` to GCS each run — 48h corrected temp, humidity, wind speed, gusts — rolling 14-day window. Foundation for decay curve calibration.
+## v0.5.190–v0.5.196 • May 27, 2026
+* **Outside card (Lifestyle tab):** New card scoring current outdoor conditions — rain, wind, comfort (dew point), UV (hidden when unavailable) — with overall label (Great/Good/Fair/Poor/Stay inside), per-factor bars, and best-window hint when current conditions are poor. Pollen and AQI placeholders for future additions.
+* **Forecast snapshot logger:** Collector now writes `forecast_log.json` to GCS each run — 48h corrected temp, humidity, wind speed, gusts — rolling 14-day window. Foundation for decay curve calibration.
+* **UV in Watch For:** Briefing Watch For section now shows UV index when today's peak is ≥ 6 (high or above) — dimmed at 6–7, orange at 8–10, red at 11+. Hidden on low-UV days.
+* **Watch For links:** UV and Heat stress rows now navigate to the Outside card on the Lifestyle tab when tapped.
+* **Watch For layout fix:** Wrapped rows in brief-rows container so thin item dividers and thick section separator render correctly; UV label no longer dimmed.
+* **UV Watch For time gate:** UV warning now only appears when UV ≥ 6 hours remain today — hides after the UV window has passed (e.g. evenings).
+* **Briefing prompt fix:** Groq/Gemini no longer append "no change since last update" when forecast is stable — prior forecast is only mentioned when something shifted meaningfully.
 
 ## v0.5.184–v0.5.189 • May 23–26, 2026
 * **Sunset scorer: horizon low cloud fix:** 50mi low cloud now weighted 60% in penalty calculation — a blocked distant horizon correctly scores Fair/Poor even when local sky is clear. Canvas bonus (mid/high cloud) only activates when the distant horizon is actually clear enough to back-light it.
