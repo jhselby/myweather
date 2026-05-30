@@ -50,10 +50,10 @@ from .processors.thunderstorm import detect_thunderstorm
 from .processors.forecast_text import generate_forecast_text
 from .processors.wind_blend import select_observed_wind
 from .processors.corrected_hourly import add_corrected_hourly_arrays
+from .processors.obs_log import update_obs_temp_log
 
 FROST_LOG_GCS_PATH = "frost_log.json"
 WEATHER_DATA_GCS_PATH = "weather_data.json"
-OBS_TEMP_LOG_GCS_PATH  = "obs_temp_log.json"
 FORECAST_LOG_GCS_PATH  = "forecast_log.json"
 FROST_LOG_TMP = Path("/tmp/frost_log.json")
 
@@ -119,66 +119,6 @@ def _apply_stale_fallbacks(weather_data, prev, failed_fetches):
             logging.error(f"  ⚠  {data_key}: using previous run's data (fetch failed)")
 
     return stale
-
-
-def _load_obs_temp_log():
-    """Load observed corrected temperature log from GCS."""
-    try:
-        client = get_client()
-        blob = client.bucket(BUCKET).blob(OBS_TEMP_LOG_GCS_PATH)
-        if blob.exists():
-            return json.loads(blob.download_as_text())
-    except Exception as e:
-        logging.warning(f"  ⚠  Could not load obs_temp_log.json from GCS: {redact_secrets(e)}")
-    return {"entries": []}
-
-
-def _save_obs_temp_log(data):
-    """Save observed corrected temperature log to GCS."""
-    upload_json(data, OBS_TEMP_LOG_GCS_PATH, "obs_temp_log.json")
-
-
-def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, wind_mph=None, wind_dir=None, dew_point_f=None, pressure_in=None, cloud_cover=None, humidity=None):
-    """Append 10-min observed snapshot; keep last 24 hours of entries."""
-    if corrected_temp is None:
-        return _load_obs_temp_log()
-
-    eastern = pytz.timezone("America/New_York")
-    now_local = datetime.now(eastern)
-    cutoff = now_local - timedelta(hours=24)
-
-    log = _load_obs_temp_log()
-    entries = log.get("entries", [])
-
-    entries = [e for e in entries if e.get("time", "") >= cutoff.strftime("%Y-%m-%dT%H:%M")]
-
-    stamp = now_local.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
-    entry = {"time": stamp, "temp": round(corrected_temp, 1)}
-    if precip_in is not None:
-        entry["precip_in"] = round(precip_in, 3)
-    if peak_gust_mph is not None:
-        entry["gust_mph"] = round(peak_gust_mph, 1)
-    if wind_mph is not None:
-        entry["wind_mph"] = round(wind_mph, 1)
-    if wind_dir is not None:
-        entry["wind_dir"] = round(wind_dir)
-    if dew_point_f is not None:
-        entry["dew_point_f"] = round(dew_point_f, 1)
-    if pressure_in is not None:
-        entry["pressure_in"] = round(pressure_in, 2)
-    if cloud_cover is not None:
-        entry["cloud_cover"] = round(cloud_cover)
-    if humidity is not None:
-        entry["humidity"] = round(humidity, 1)
-        dp = magnus_dew_point_f(corrected_temp, humidity)
-        if dp is not None:
-            entry["dew_point_f"] = dp
-    entries.append(entry)
-
-    entries.sort(key=lambda e: e.get("time", ""))
-    log = {"entries": entries}
-    _save_obs_temp_log(log)
-    return log
 
 
 def _append_forecast_snapshot(hourly):
@@ -506,7 +446,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         _cur_cloud    = weather_data.get("current", {}).get("cloud_cover")
         _cur_humidity = weather_data.get("current", {}).get("humidity")
 
-        _obs_log = _update_obs_temp_log(_hyp.get("corrected_temp"), precip_in=_cur_hour_precip_in, peak_gust_mph=_cur_gust, wind_mph=_cur_wind, wind_dir=_cur_wind_dir, dew_point_f=_cur_dewpt, pressure_in=_cur_pressure, cloud_cover=_cur_cloud, humidity=_cur_humidity)
+        _obs_log = update_obs_temp_log(_hyp.get("corrected_temp"), precip_in=_cur_hour_precip_in, peak_gust_mph=_cur_gust, wind_mph=_cur_wind, wind_dir=_cur_wind_dir, dew_point_f=_cur_dewpt, pressure_in=_cur_pressure, cloud_cover=_cur_cloud, humidity=_cur_humidity)
         _append_forecast_snapshot(weather_data["hourly"])
         _obs_entries = _obs_log.get("entries", [])
 

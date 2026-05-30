@@ -1,3 +1,6 @@
+## v0.5.206 • May 30, 2026
+- **Collector refactor:** the rolling 10-min obs_temp_log helpers (`_load_obs_temp_log`, `_save_obs_temp_log`, `_update_obs_temp_log`) moved from `collector.py` into a new `processors/obs_log.py` with named constants (24-hour retention, GCS path). Same shape, same fields. Verified against live obs_temp_log entries.
+
 ## v0.5.205 • May 30, 2026
 - **Collector plumbing:** GCS bucket constant + client + upload helper extracted from `collector.py` into a new `weather_collector/gcs_io.py` module (also adds a graceful `load_json` helper). All 6 upload callsites and the 4 load callsites now route through it. No behavior change.
 
