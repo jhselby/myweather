@@ -1,3 +1,6 @@
+## v0.5.213 • May 30, 2026
+- **Collector refactor:** hourly observed-wind blend extracted from `collector.py` into `processors/wind_blend.py` as `blend_observed_into_hourly()`. Both halves of the wind story now live together — `select_observed_wind` chooses the live value, `blend_observed_into_hourly` mixes it into the next 24h of forecast with linear decay. Dropped the now-unused `wind_candidates` return value. collector.py now 542 lines.
+
 ## v0.5.212 • May 30, 2026
 - **Collector refactor:** raw GFS/HRRR/ECMWF normalization extracted from `collector.py` into `processors/normalize.py` — `normalize_current` (15 fields), `normalize_hourly` (24 fields), `normalize_daily` (13 fields), plus `empty_hourly()` used by the Pirate Weather cloud-cover fallback. Each replacement is a one-liner at the call site. collector.py now 569 lines.
 

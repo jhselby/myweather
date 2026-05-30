@@ -1,10 +1,15 @@
 """
-Wind blend: choose the best current wind speed/gust/direction from model
-and observation sources, with staleness filtering and a sanity cap against
-the WU sensor network aggregate. Mutates weather_data["current"] in place.
+Wind blending:
+  - select_observed_wind: pick the best current wind from model + obs sources
+  - blend_observed_into_hourly: bleed that observation into the next N hours
+    of the hourly forecast, decaying linearly
+
+Both mutate weather_data in place.
 """
 import logging
 from datetime import datetime, timezone
+
+import pytz
 
 
 # Observation freshness limits. Readings older than this are dropped.
@@ -21,6 +26,12 @@ GUST_CAP_FACTOR = 1.3
 
 # Knots to mph (METAR wind units → display units).
 KT_TO_MPH = 1.15078
+
+# Hourly blend horizon: weight decays linearly from 100% observed at hour 0
+# to 0% observed at hour BLEND_HOURS, replacing the model's wind in between.
+BLEND_HOURS = 24
+
+_TZ_EASTERN = pytz.timezone("America/New_York")
 
 
 def _wu_candidates(wu_data, now_utc):
@@ -83,10 +94,6 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data):
       - wind_speed, wind_gusts, wind_direction (chosen values)
       - model_wind_speed, model_wind_gusts (preserved original model values)
       - condition_source (e.g., "Tempest_PoolHouse observed")
-
-    Returns the wind_candidates list (model + all observation sources that
-    passed staleness filtering) so callers can reuse it downstream — e.g.,
-    blending observed wind into the hourly forecast.
     """
     current = weather_data["current"]
 
@@ -167,4 +174,42 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data):
         except (ValueError, TypeError):
             pass
 
-    return candidates
+
+def blend_observed_into_hourly(weather_data):
+    """Blend the current observed wind into the next BLEND_HOURS of the
+    hourly forecast. Weight decays linearly: 100% observed at the current
+    hour → 0% observed BLEND_HOURS out. Compensates for the model
+    under-reading wind at exposed coastal locations.
+
+    No-op when there's no hourly data, no current wind to blend in, or
+    the hourly arrays don't include wind_gusts.
+    """
+    hourly = weather_data.get("hourly")
+    if not hourly or "wind_gusts" not in hourly:
+        return
+
+    cur = weather_data.get("current", {})
+    observed_gust = cur.get("wind_gusts")
+    observed_speed = cur.get("wind_speed")
+    if not observed_gust and not observed_speed:
+        return
+
+    times = hourly.get("times", [])
+    gusts = hourly.get("wind_gusts", [])
+    speeds = hourly.get("wind_speed", [])
+    blend_speed = bool(observed_speed) and bool(speeds)
+
+    now_local = datetime.now(_TZ_EASTERN)
+    current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+    try:
+        current_idx = times.index(current_hour_iso)
+    except ValueError:
+        current_idx = 0
+
+    end_idx = min(current_idx + BLEND_HOURS, len(gusts))
+    for i in range(current_idx, end_idx):
+        weight = max(0, 1 - (i - current_idx) / BLEND_HOURS)
+        if observed_gust is not None:
+            gusts[i] = (observed_gust * weight) + (gusts[i] * (1 - weight))
+        if blend_speed and i < len(speeds):
+            speeds[i] = (observed_speed * weight) + (speeds[i] * (1 - weight))

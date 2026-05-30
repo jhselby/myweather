@@ -47,7 +47,7 @@ from .processors.wind_risk import compute_wind_risk
 from .processors.trough import compute_trough_signal
 from .processors.thunderstorm import detect_thunderstorm
 from .processors.forecast_text import generate_forecast_text
-from .processors.wind_blend import select_observed_wind
+from .processors.wind_blend import select_observed_wind, blend_observed_into_hourly
 from .processors.corrected_hourly import add_corrected_hourly_arrays
 from .processors.daily_extremes import compute_daily_extremes
 from .processors.current_derived import compute_current_derived
@@ -147,9 +147,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         weather_data["current"]["condition_source"] = "KBVY observed"
     
     
-    # Wind: override model with best available observation; keep candidate list
-    # for downstream blending into the hourly forecast.
-    wind_candidates = select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data)
+    # Wind: override model with best available observation
+    select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data)
 
     # Hourly forecast
     normalized_hourly = normalize_hourly(hourly_data)
@@ -176,34 +175,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             weather_data["hourly"]["cloud_cover"] = pirate_data["hourly_cloud_cover"][:len(weather_data["hourly"]["times"])]
             logging.warning("  ⚠️ HRRR cloud cover empty — patched from Pirate Weather")
 
-    # Blend observed wind into hourly forecast for exposed coastal location
-    if wind_candidates and "hourly" in weather_data and "wind_gusts" in weather_data["hourly"]:
-        observed_gust = weather_data["current"]["wind_gusts"]
-        observed_speed = weather_data["current"]["wind_speed"]
-
-        # Find current hour index (times are in local Eastern)
-        eastern = pytz.timezone("America/New_York")
-        now_local = datetime.now(eastern)
-        current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
-        
-        try:
-            current_idx = weather_data["hourly"]["times"].index(current_hour_iso)
-        except ValueError:
-            current_idx = 0
-        
-        
-        # Blend from current hour forward for next 24 hours
-        for i in range(current_idx, min(current_idx + 24, len(weather_data["hourly"]["wind_gusts"]))):
-            hours_ahead = i - current_idx
-            blend_weight = max(0, 1 - (hours_ahead / 24))
-            
-            model_gust = weather_data["hourly"]["wind_gusts"][i]
-            weather_data["hourly"]["wind_gusts"][i] = (observed_gust * blend_weight) + (model_gust * (1 - blend_weight))
-            
-            
-            if observed_speed and "wind_speed" in weather_data["hourly"]:
-                model_speed = weather_data["hourly"]["wind_speed"][i]
-                weather_data["hourly"]["wind_speed"][i] = (observed_speed * blend_weight) + (model_speed * (1 - blend_weight))
+    # Blend observed wind into the next 24h of forecast (exposed coastal location)
+    blend_observed_into_hourly(weather_data)
     # 7-day hourly forecast (GFS) — shipped projection
     if hourly_7day_data:
         weather_data["hourly_7day"] = normalize_for_payload(hourly_7day_data.get("hourly", {}))
