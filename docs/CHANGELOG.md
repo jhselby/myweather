@@ -1,3 +1,6 @@
+## v0.5.209 • May 30, 2026
+- **Collector refactor:** current-conditions derived metrics (corrected dew point + spread + cloud base, corrected feels-like, NWS heat index) extracted from `collector.py` into `processors/current_derived.py`. Solar source priority chain (Pirate Weather → Tempest avg → Open-Meteo direct_radiation) factored out into a named helper. collector.py now 740 lines.
+
 ## v0.5.208 • May 30, 2026
 - **Collector refactor:** 80-line daily-extremes block extracted from `collector.py` into a new `processors/daily_extremes.py` module. One public function `compute_daily_extremes(weather_data)` that logs the current 10-min obs snapshot, writes the 48h forecast snapshot, and derives today (obs + remaining forecast), yesterday (obs-only), tomorrow (forecast-only), and current-hour atmospheric fields. Also binds `derived` to `weather_data["derived"]` from the start so extracted modules can `setdefault` without divergence. collector.py now at 790 lines, down from 1,653 this morning.
 

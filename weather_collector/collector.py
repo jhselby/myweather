@@ -17,7 +17,7 @@ import pytz
 
 from .config import LAT, LON, SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
 from .gcs_io import BUCKET, get_client, upload_json
-from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes, redact_secrets, magnus_dew_point_f, steadman_feels_like_f
+from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes, redact_secrets
 
 # Import all fetchers
 from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf, fetch_hourly_gfs_7day, fetch_hrrr_daily_temps
@@ -33,7 +33,7 @@ from .fetchers.tempest import fetch_tempest
 from .fetchers.briefing_ai import generate_briefing
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
-from .processors.hyperlocal import build_hyperlocal_data, compute_dew_point_spread
+from .processors.hyperlocal import build_hyperlocal_data
 from .processors.station_bias import load_history, save_history, update_history, compute_offsets
 from .processors.precip_850mb import add_850mb_precip_type
 from .processors.precip_surface import add_corrected_precip_types
@@ -51,6 +51,7 @@ from .processors.forecast_text import generate_forecast_text
 from .processors.wind_blend import select_observed_wind
 from .processors.corrected_hourly import add_corrected_hourly_arrays
 from .processors.daily_extremes import compute_daily_extremes
+from .processors.current_derived import compute_current_derived
 
 FROST_LOG_GCS_PATH = "frost_log.json"
 WEATHER_DATA_GCS_PATH = "weather_data.json"
@@ -372,60 +373,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # tomorrow (forecast only), and current-hour atmospheric fields.
     compute_daily_extremes(weather_data)
 
-    # Corrected dew point (from corrected temp + humidity)
-    _ct = _hyp.get("corrected_temp")
-    _ch = _hyp.get("corrected_humidity")
-    _corrected_dewpt = magnus_dew_point_f(_ct, _ch)
-    if _corrected_dewpt is not None:
-        derived["corrected_dew_point"] = _corrected_dewpt
-        derived["dew_point_spread_f"] = round(_ct - _corrected_dewpt, 1)
-        derived["cloud_base_ft"] = max(0, round((_ct - _corrected_dewpt) * 225))
-    elif current_data:
-        current = current_data.get("current", {})
-        spread = compute_dew_point_spread(current.get("temperature_2m"), current.get("dew_point_2m"))
-        if spread is not None:
-            derived["dew_point_spread_f"] = spread
-
-    # Corrected feels-like (Steadman apparent temperature, with solar if available)
-    _cw = _hyp.get("corrected_wind_speed")
-    if _ct is not None:
-        _ws_mph = _cw if _cw is not None else (weather_data.get("current", {}).get("wind_speed") or 0)
-        _rh = _ch if _ch is not None else 50
-        # Solar source priority: Pirate Weather current → Tempest station avg → Open-Meteo direct_radiation
-        _solar_wm2 = None
-        # 1. Pirate Weather (point forecast for our exact location)
-        _pw_solar = weather_data.get("pirate_weather", {}).get("current_solar")
-        if isinstance(_pw_solar, (int, float)) and _pw_solar >= 0:
-            _solar_wm2 = _pw_solar
-        # 2. Average of valid Tempest stations
-        if _solar_wm2 is None:
-            _t_solar_vals = [
-                s["solar_radiation_wm2"] for s in weather_data.get("tempest", {}).get("stations", [])
-                if s.get("valid") and isinstance(s.get("solar_radiation_wm2"), (int, float))
-            ]
-            if _t_solar_vals:
-                _solar_wm2 = sum(_t_solar_vals) / len(_t_solar_vals)
-        # 3. Open-Meteo direct_radiation (hourly, modeled)
-        if _solar_wm2 is None:
-            _hourly_direct = weather_data.get("hourly", {}).get("direct_radiation", [])
-            _hourly_times = weather_data.get("hourly", {}).get("times", [])
-            _eastern = pytz.timezone("America/New_York")
-            _now_hr = datetime.now(_eastern).strftime("%Y-%m-%dT%H:00")
-            for _i, _t in enumerate(_hourly_times):
-                if _t == _now_hr and _i < len(_hourly_direct):
-                    _solar_wm2 = _hourly_direct[_i]
-                    break
-        _fl = steadman_feels_like_f(_ct, _ch, _ws_mph, _solar_wm2)
-        if _fl is not None:
-            derived["corrected_feels_like"] = _fl
-
-        # NWS heat index (shade, no solar term) — valid above 80°F
-        if _ct >= 80 and _rh >= 35:
-            T, RH = _ct, _rh
-            _hi = (-42.379 + 2.04901523*T + 10.14333127*RH - 0.22475541*T*RH
-                   - 6.83783e-3*T**2 - 5.481717e-2*RH**2 + 1.22874e-3*T**2*RH
-                   + 8.5282e-4*T*RH**2 - 1.99e-6*T**2*RH**2)
-            derived["heat_index"] = round(_hi, 1)
+    # Current-conditions derived metrics: corrected dew point + spread + cloud
+    # base, corrected feels-like (with solar if available), and NWS heat index.
+    compute_current_derived(weather_data)
 
     # Fog risk — fall back to HRRR hourly[0] if GFS current is missing
     _fog_current = None
