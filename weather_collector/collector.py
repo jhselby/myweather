@@ -11,7 +11,7 @@ from pathlib import Path
 import pytz
 
 from .config import SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
-from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes, redact_secrets
+from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes, redact_secrets, magnus_dew_point_f, steadman_feels_like_f
 
 # Import all fetchers
 from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf, fetch_hourly_gfs_7day, fetch_hrrr_daily_temps
@@ -188,13 +188,9 @@ def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, win
         entry["cloud_cover"] = round(cloud_cover)
     if humidity is not None:
         entry["humidity"] = round(humidity, 1)
-        # Compute dew point from temp + RH (Magnus formula)
-        import math
-        T_c = (corrected_temp - 32) * 5 / 9
-        rh = humidity
-        gamma = (17.625 * T_c / (243.04 + T_c)) + math.log(rh / 100.0)
-        dp_c = 243.04 * gamma / (17.625 - gamma)
-        entry["dew_point_f"] = round(dp_c * 9 / 5 + 32, 1)
+        dp = magnus_dew_point_f(corrected_temp, humidity)
+        if dp is not None:
+            entry["dew_point_f"] = dp
     entries.append(entry)
 
     entries.sort(key=lambda e: e.get("time", ""))
@@ -212,7 +208,6 @@ def _append_forecast_snapshot(hourly):
     run_stamp = now_local.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
     cutoff = (now_local - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M")
 
-    import math
     times  = hourly.get("times", [])
     temps  = hourly.get("corrected_temperature", hourly.get("temperature", []))
     winds  = hourly.get("wind_speed", [])
@@ -230,11 +225,10 @@ def _append_forecast_snapshot(hourly):
         if i < len(gusts)  and gusts[i]  is not None: entry["wg"] = round(gusts[i], 1)
         if i < len(humid)  and humid[i]  is not None:
             entry["h"] = round(humid[i], 1)
-            # Dew point from Magnus formula
-            T_c = (temps[i] - 32) * 5 / 9 if i < len(temps) and temps[i] is not None else None
-            if T_c is not None:
-                gamma = (17.625 * T_c / (243.04 + T_c)) + math.log(humid[i] / 100.0)
-                entry["dp"] = round(243.04 * gamma / (17.625 - gamma) * 9 / 5 + 32, 1)
+            if i < len(temps) and temps[i] is not None:
+                dp = magnus_dew_point_f(temps[i], humid[i])
+                if dp is not None:
+                    entry["dp"] = dp
         if i < len(pop)    and pop[i]    is not None: entry["pp"] = round(pop[i])
         hours.append(entry)
 
@@ -617,7 +611,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             round(h + _hbias, 1) if h is not None else None for h in _raw_humid
         ]
 
-        # Corrected apparent temperature (Steadman shade formula) for all hourly periods
+        # Corrected apparent temperature (Steadman) for all hourly periods
         _ct_arr = weather_data["hourly"]["corrected_temperature"]
         _ch_arr = weather_data["hourly"]["corrected_humidity"]
         _ws_arr = weather_data["hourly"].get("wind_speed", [])
@@ -628,19 +622,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             _h = _ch_arr[i] if i < len(_ch_arr) else None
             _w = _ws_arr[i] if i < len(_ws_arr) else None
             _dr = _dr_arr[i] if i < len(_dr_arr) else None
-            if _t is not None:
-                _tc = (_t - 32) * 5 / 9
-                _ws_ms = (_w or 0) * 0.44704
-                _rh = _h if _h is not None else 50
-                _e = (_rh / 100) * 6.105 * math.exp((17.27 * _tc) / (237.7 + _tc))
-                if _dr is not None and _dr > 0:
-                    _Q = _dr * 0.17
-                    _at_c = _tc + 0.348 * _e - 0.70 * _ws_ms + 0.70 * _Q / (_ws_ms + 10) - 4.25
-                else:
-                    _at_c = _tc + 0.33 * _e - 0.70 * _ws_ms - 4.00
-                _corrected_at.append(round(_at_c * 9 / 5 + 32, 1))
-            else:
-                _corrected_at.append(None)
+            _corrected_at.append(steadman_feels_like_f(_t, _h, _w, _dr))
         weather_data["hourly"]["corrected_apparent_temperature"] = _corrected_at
 
         # Corrected dew point and absolute humidity for all hourly periods
@@ -649,13 +631,12 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         for i in range(len(_ct_arr)):
             _t = _ct_arr[i] if i < len(_ct_arr) else None
             _h = _ch_arr[i] if i < len(_ch_arr) else None
-            if _t is not None and _h is not None:
+            _dp_f = magnus_dew_point_f(_t, _h)
+            if _dp_f is not None:
+                _corrected_dp.append(_dp_f)
+                # Absolute humidity (g/m³) — derived from dew point
                 _tc = (_t - 32) * 5 / 9
-                _gamma = math.log(_h / 100) + (17.625 * _tc) / (243.04 + _tc)
-                _dp_c = 243.04 * _gamma / (17.625 - _gamma)
-                _dp_f = _dp_c * 9 / 5 + 32
-                _corrected_dp.append(round(_dp_f, 1))
-                # Absolute humidity (g/m³)
+                _dp_c = (_dp_f - 32) * 5 / 9
                 _e = 6.112 * math.exp((17.67 * _dp_c) / (_dp_c + 243.5))
                 _ah = (_e * 216.7) / (_tc + 273.15)
                 _corrected_ah.append(round(_ah, 1))
@@ -756,11 +737,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     _hyp = weather_data.get("hyperlocal", {})
     _ct = _hyp.get("corrected_temp")
     _ch = _hyp.get("corrected_humidity")
-    if _ct is not None and _ch is not None and _ch > 0:
-        _tc = (_ct - 32) * 5 / 9
-        _gamma = math.log(_ch / 100) + (17.625 * _tc) / (243.04 + _tc)
-        _corrected_dewpt = _gamma * 243.04 / (17.625 - _gamma) * 9 / 5 + 32
-        derived["corrected_dew_point"] = round(_corrected_dewpt, 1)
+    _corrected_dewpt = magnus_dew_point_f(_ct, _ch)
+    if _corrected_dewpt is not None:
+        derived["corrected_dew_point"] = _corrected_dewpt
         derived["dew_point_spread_f"] = round(_ct - _corrected_dewpt, 1)
         derived["cloud_base_ft"] = max(0, round((_ct - _corrected_dewpt) * 225))
     elif current_data:
@@ -769,16 +748,11 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         if spread is not None:
             derived["dew_point_spread_f"] = spread
 
-    # Corrected feels-like (Steadman apparent temperature)
-    # Shade: AT = Ta + 0.33*e - 0.70*ws - 4.00
-    # Radiation: AT = Ta + 0.348*e - 0.70*ws + 0.70*Q/(ws+10) - 4.25
+    # Corrected feels-like (Steadman apparent temperature, with solar if available)
     _cw = _hyp.get("corrected_wind_speed")
     if _ct is not None:
-        _tc_fl = (_ct - 32) * 5 / 9
         _ws_mph = _cw if _cw is not None else (weather_data.get("current", {}).get("wind_speed") or 0)
-        _ws_ms = _ws_mph * 0.44704
         _rh = _ch if _ch is not None else 50
-        _e = (_rh / 100) * 6.105 * math.exp((17.27 * _tc_fl) / (237.7 + _tc_fl))
         # Solar source priority: Pirate Weather current → Tempest station avg → Open-Meteo direct_radiation
         _solar_wm2 = None
         # 1. Pirate Weather (point forecast for our exact location)
@@ -805,13 +779,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
                 if _t == _now_hr and _i < len(_hourly_direct):
                     _solar_wm2 = _hourly_direct[_i]
                     break
-        if _solar_wm2 is not None and _solar_wm2 > 0:
-            _Q = _solar_wm2 * 0.17
-            _at_c = _tc_fl + 0.348 * _e - 0.70 * _ws_ms + 0.70 * _Q / (_ws_ms + 10) - 4.25
-        else:
-            _at_c = _tc_fl + 0.33 * _e - 0.70 * _ws_ms - 4.00
-        _fl = _at_c * 9 / 5 + 32
-        derived["corrected_feels_like"] = round(_fl, 1)
+        _fl = steadman_feels_like_f(_ct, _ch, _ws_mph, _solar_wm2)
+        if _fl is not None:
+            derived["corrected_feels_like"] = _fl
 
         # NWS heat index (shade, no solar term) — valid above 80°F
         if _ct >= 80 and _rh >= 35:

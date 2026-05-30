@@ -1,3 +1,6 @@
+## v0.5.201 • May 30, 2026
+- **Collector refactor:** Magnus dew-point formula (4 copies) and Steadman feels-like formula (2 copies) consolidated into `utils.py` helpers. No behavior change — same numbers, single source of truth.
+
 ## v0.5.200 • May 28, 2026
 - **Collector:** obs_temp_log now records observed precip rate from WU rain gauges (replaces forecast model precip). WU aggregate now includes `precip_rate_in` and `precip_today_in` from station network.
 

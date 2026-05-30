@@ -1,6 +1,7 @@
 """
 Utility functions for weather data collection and processing
 """
+import math
 import re
 import json
 from datetime import datetime, timezone
@@ -60,6 +61,38 @@ def compute_age_minutes(updated_at_iso: str, now_utc: datetime):
         return round(delta.total_seconds() / 60.0, 1)
     except Exception:
         return None
+
+
+def magnus_dew_point_f(temp_f, rh_pct):
+    """Magnus formula: dew point in °F from temperature °F and relative humidity %.
+    Returns None if either input is missing or humidity is non-positive."""
+    if temp_f is None or rh_pct is None or rh_pct <= 0:
+        return None
+    t_c = (temp_f - 32) * 5 / 9
+    gamma = math.log(rh_pct / 100.0) + (17.625 * t_c) / (243.04 + t_c)
+    dp_c = 243.04 * gamma / (17.625 - gamma)
+    return round(dp_c * 9 / 5 + 32, 1)
+
+
+def steadman_feels_like_f(temp_f, rh_pct=None, wind_mph=None, solar_wm2=None):
+    """Steadman apparent temperature in °F.
+
+    Uses the solar variant when solar_wm2 is a positive number, otherwise the
+    shade variant. Missing humidity defaults to 50%; missing wind defaults to 0.
+    Returns None if temp_f is None.
+    """
+    if temp_f is None:
+        return None
+    rh = rh_pct if rh_pct is not None else 50
+    ws_ms = (wind_mph if wind_mph is not None else 0) * 0.44704
+    t_c = (temp_f - 32) * 5 / 9
+    e = (rh / 100) * 6.105 * math.exp((17.27 * t_c) / (237.7 + t_c))
+    if solar_wm2 is not None and solar_wm2 > 0:
+        q = solar_wm2 * 0.17
+        at_c = t_c + 0.348 * e - 0.70 * ws_ms + 0.70 * q / (ws_ms + 10) - 4.25
+    else:
+        at_c = t_c + 0.33 * e - 0.70 * ws_ms - 4.00
+    return round(at_c * 9 / 5 + 32, 1)
 
 
 def get_weather_description(code: int) -> str:
