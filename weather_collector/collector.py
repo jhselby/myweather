@@ -50,8 +50,7 @@ from .processors.thunderstorm import detect_thunderstorm
 from .processors.forecast_text import generate_forecast_text
 from .processors.wind_blend import select_observed_wind
 from .processors.corrected_hourly import add_corrected_hourly_arrays
-from .processors.obs_log import update_obs_temp_log
-from .processors.forecast_snapshot import append_forecast_snapshot
+from .processors.daily_extremes import compute_daily_extremes
 
 FROST_LOG_GCS_PATH = "frost_log.json"
 WEATHER_DATA_GCS_PATH = "weather_data.json"
@@ -338,7 +337,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         weather_data["tempest"] = tempest_data
 
     # --- Derived calculations ---
-    derived = {}
+    # Bind derived to weather_data["derived"] so subsequent extracted modules
+    # that use setdefault("derived", {}) pick up the same dict object.
+    derived = weather_data.setdefault("derived", {})
 
     # Pressure trend
     model_trend = compute_pressure_trend_hpa(hourly_data)
@@ -366,91 +367,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     add_corrected_hourly_arrays(weather_data)
     _hyp = weather_data.get("hyperlocal", {})
 
-    # Compute daily high/low using Joe's observed corrected temp so far today
-    # plus Joe's remaining corrected forecast for today; tomorrow stays forecast-only.
-    _obs_log = {"entries": []}
-    if "hourly" in weather_data:
-        _ct_times = weather_data["hourly"].get("times", [])
-        _ct_temps = weather_data["hourly"].get("corrected_temperature", [])
-        eastern = pytz.timezone("America/New_York")
-        _now = datetime.now(eastern)
-        _today_str = _now.strftime("%Y-%m-%d")
-        _yesterday_str = (_now - timedelta(days=1)).strftime("%Y-%m-%d")
-        _tomorrow_str = (_now + timedelta(days=1)).strftime("%Y-%m-%d")
-        _current_hour_iso = _now.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
-
-        _hourly_times = weather_data["hourly"].get("times", [])
-        _hourly_precip_mm = weather_data["hourly"].get("precipitation", [])
-        # Observed precip rate from WU stations (real gauges); fall back to forecast hourly
-        _wu_precip_rate = weather_data.get("wu_stations", {}).get("precip_rate_in")
-        if _wu_precip_rate is not None:
-            _cur_hour_precip_in = _wu_precip_rate
-        else:
-            _cur_hour_precip_in = None
-            if _current_hour_iso in _hourly_times:
-                _ci = _hourly_times.index(_current_hour_iso)
-                if _ci < len(_hourly_precip_mm) and _hourly_precip_mm[_ci] is not None:
-                    _cur_hour_precip_in = _hourly_precip_mm[_ci] / 25.4
-        _cur_gust = _hyp.get("corrected_wind_gusts") or weather_data.get("current", {}).get("wind_gusts")
-        _cur_wind = _hyp.get("corrected_wind_speed") or weather_data.get("current", {}).get("wind_speed")
-        _cur_wind_dir = weather_data.get("current", {}).get("wind_direction")
-        _cur_dewpt = _hyp.get("corrected_dew_point") or weather_data.get("derived", {}).get("corrected_dew_point")
-        _cur_pressure = _hyp.get("corrected_pressure_in")
-        _cur_cloud    = weather_data.get("current", {}).get("cloud_cover")
-        _cur_humidity = weather_data.get("current", {}).get("humidity")
-
-        _obs_log = update_obs_temp_log(_hyp.get("corrected_temp"), precip_in=_cur_hour_precip_in, peak_gust_mph=_cur_gust, wind_mph=_cur_wind, wind_dir=_cur_wind_dir, dew_point_f=_cur_dewpt, pressure_in=_cur_pressure, cloud_cover=_cur_cloud, humidity=_cur_humidity)
-        append_forecast_snapshot(weather_data["hourly"])
-        _obs_entries = _obs_log.get("entries", [])
-
-        _obs_today = [
-            e.get("temp") for e in _obs_entries
-            if e.get("time", "").startswith(_today_str) and e.get("temp") is not None
-        ]
-
-        _fc_today = [
-            _ct_temps[i]
-            for i, t in enumerate(_ct_times)
-            if i < len(_ct_temps) and _ct_temps[i] is not None and t.startswith(_today_str) and t >= _current_hour_iso
-        ]
-
-        _today_series = _obs_today + _fc_today
-        if _today_series:
-            derived["today_high"] = round(max(_today_series), 1)
-            derived["today_low"] = round(min(_today_series), 1)
-
-        _entries_yesterday = [e for e in _obs_entries if e.get("time", "").startswith(_yesterday_str)]
-        _obs_yesterday_temps = [e["temp"] for e in _entries_yesterday if e.get("temp") is not None]
-        if _obs_yesterday_temps:
-            derived["yesterday_high"] = round(max(_obs_yesterday_temps), 1)
-        _obs_yesterday_precip = [e["precip_in"] for e in _entries_yesterday if e.get("precip_in") is not None]
-        if _obs_yesterday_precip:
-            derived["yesterday_precip_in"] = round(sum(_obs_yesterday_precip), 2)
-        _obs_yesterday_gusts = [e["gust_mph"] for e in _entries_yesterday if e.get("gust_mph") is not None]
-        if _obs_yesterday_gusts:
-            derived["yesterday_peak_gust"] = round(max(_obs_yesterday_gusts), 1)
-
-        _hourly_fl  = weather_data["hourly"].get("freezing_level_ft", [])
-        _hourly_pw  = weather_data["hourly"].get("precip_water_mm", [])
-        _hourly_ccl = weather_data["hourly"].get("cloud_cover_low", [])
-        if _current_hour_iso in _hourly_times:
-            _ci_atm = _hourly_times.index(_current_hour_iso)
-            if _ci_atm < len(_hourly_fl) and _hourly_fl[_ci_atm] is not None:
-                derived["freezing_level_ft"] = round(_hourly_fl[_ci_atm])
-            if _ci_atm < len(_hourly_pw) and _hourly_pw[_ci_atm] is not None:
-                derived["precip_water_mm"] = round(_hourly_pw[_ci_atm], 1)
-            if _ci_atm < len(_hourly_ccl) and _hourly_ccl[_ci_atm] is not None:
-                derived["cloud_cover_low_pct"] = round(_hourly_ccl[_ci_atm])
-
-        _fc_tomorrow = [
-            _ct_temps[i]
-            for i, t in enumerate(_ct_times)
-            if i < len(_ct_temps) and _ct_temps[i] is not None and t.startswith(_tomorrow_str)
-        ]
-        if _fc_tomorrow:
-            derived["tomorrow_high"] = round(max(_fc_tomorrow), 1)
-            derived["tomorrow_low"] = round(min(_fc_tomorrow), 1)
-
+    # Daily extremes: log current obs to rolling 24h log + 48h forecast snapshot,
+    # then derive today (obs + remaining forecast), yesterday (obs only),
+    # tomorrow (forecast only), and current-hour atmospheric fields.
+    compute_daily_extremes(weather_data)
 
     # Corrected dew point (from corrected temp + humidity)
     _ct = _hyp.get("corrected_temp")
@@ -588,8 +508,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if trough_data:
         derived.update(trough_data)
 
-    if derived:
-        weather_data["derived"] = derived
+    # `derived` is already weather_data["derived"] (bound via setdefault above).
+    # Prune the key if nothing was added so the payload stays the same as before.
+    if not weather_data["derived"]:
+        weather_data.pop("derived", None)
     
     # Add these AFTER derived dict is set
     add_850mb_precip_type(weather_data)
@@ -659,8 +581,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
     if birds_data:
         weather_data["birds"] = birds_data
-
-    weather_data["obs_temp_log"] = _obs_log
 
     return weather_data
 

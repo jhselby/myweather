@@ -1,3 +1,6 @@
+## v0.5.208 • May 30, 2026
+- **Collector refactor:** 80-line daily-extremes block extracted from `collector.py` into a new `processors/daily_extremes.py` module. One public function `compute_daily_extremes(weather_data)` that logs the current 10-min obs snapshot, writes the 48h forecast snapshot, and derives today (obs + remaining forecast), yesterday (obs-only), tomorrow (forecast-only), and current-hour atmospheric fields. Also binds `derived` to `weather_data["derived"]` from the start so extracted modules can `setdefault` without divergence. collector.py now at 790 lines, down from 1,653 this morning.
+
 ## v0.5.207 • May 30, 2026
 - **Collector refactor:** `_append_forecast_snapshot` extracted from `collector.py` into a new `processors/forecast_snapshot.py` with named constants (14-day retention, 48-hour snapshot window, GCS path). Also drops 7 lines of manual try/except GCS-load boilerplate by routing through `gcs_io.load_json`. Verified live: 16:27 snapshot has 48 hours, all short-key fields present.
 
