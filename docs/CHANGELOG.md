@@ -1,3 +1,6 @@
+## v0.5.202 • May 30, 2026
+- **Collector cleanup:** 8 mid-function imports of `pytz`/`datetime` hoisted to the top of the file; `_obs_log` initialized up front so the `NameError` catch can go away; unused `now_utc` in wind blend removed. No behavior change.
+
 ## v0.5.201 • May 30, 2026
 - **Collector refactor:** Magnus dew-point formula (4 copies) and Steadman feels-like formula (2 copies) consolidated into `utils.py` helpers. No behavior change — same numbers, single source of truth.
 

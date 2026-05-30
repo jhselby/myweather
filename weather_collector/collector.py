@@ -4,13 +4,18 @@ Wyman Cove Weather Station - Main Collector
 Orchestrates all data fetching and processing
 """
 import json
+import logging
 import math
 import os
-from datetime import datetime
+import time
+import traceback
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
 import pytz
 
-from .config import SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
+from .config import LAT, LON, SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
 from .utils import iso_utc_now, get_weather_description, get_weather_emoji, compute_age_minutes, redact_secrets, magnus_dew_point_f, steadman_feels_like_f
 
 # Import all fetchers
@@ -42,7 +47,6 @@ from .processors.fog import calculate_fog_risk
 from .processors.trough import compute_trough_signal
 from .processors.thunderstorm import detect_thunderstorm
 from .processors.forecast_text import generate_forecast_text
-import logging
 
 GCS_BUCKET = "myweather-data"
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -159,8 +163,6 @@ def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, win
     if corrected_temp is None:
         return _load_obs_temp_log()
 
-    import pytz
-    from datetime import datetime, timedelta
     eastern = pytz.timezone("America/New_York")
     now_local = datetime.now(eastern)
     cutoff = now_local - timedelta(hours=24)
@@ -201,8 +203,6 @@ def _update_obs_temp_log(corrected_temp, precip_in=None, peak_gust_mph=None, win
 
 def _append_forecast_snapshot(hourly):
     """Log a snapshot of the corrected 48h forecast for later validation. Keeps 14 days."""
-    import pytz
-    from datetime import datetime, timedelta
     eastern = pytz.timezone("America/New_York")
     now_local = datetime.now(eastern)
     run_stamp = now_local.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
@@ -319,7 +319,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             "waterfront": False,
         })
     if wu_data and wu_data.get("stations"):
-        from datetime import datetime, timezone
         now_utc = datetime.now(timezone.utc)
         for station in wu_data["stations"]:
             if not station.get("wind_gust_mph"):
@@ -441,10 +440,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if pirate_data and pirate_data.get("hourly_cloud_cover"):
         if "hourly" not in weather_data:
             # HRRR completely unavailable — build a minimal hourly block from PW data
-            import pytz
             _eastern = pytz.timezone("America/New_York")
             _pw_times = [
-                _eastern.localize(__import__("datetime").datetime.fromtimestamp(ts)).strftime("%Y-%m-%dT%H:%M")
+                _eastern.localize(datetime.fromtimestamp(ts)).strftime("%Y-%m-%dT%H:%M")
                 for ts in pirate_data.get("hourly_times", [])
                 if ts is not None
             ]
@@ -469,13 +467,13 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
     # Blend observed wind into hourly forecast for exposed coastal location
     if wind_candidates and "hourly" in weather_data and "wind_gusts" in weather_data["hourly"]:
-        from datetime import datetime, timezone
         observed_gust = weather_data["current"]["wind_gusts"]
         observed_speed = weather_data["current"]["wind_speed"]
-        
-        # Find current hour index (times are in UTC)
-        now_utc = datetime.now(timezone.utc)
-        import pytz; eastern = pytz.timezone("America/New_York"); now_local = datetime.now(eastern); current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
+
+        # Find current hour index (times are in local Eastern)
+        eastern = pytz.timezone("America/New_York")
+        now_local = datetime.now(eastern)
+        current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
         
         try:
             current_idx = weather_data["hourly"]["times"].index(current_hour_iso)
@@ -648,11 +646,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
     # Compute daily high/low using Joe's observed corrected temp so far today
     # plus Joe's remaining corrected forecast for today; tomorrow stays forecast-only.
+    _obs_log = {"entries": []}
     if "hourly" in weather_data:
         _ct_times = weather_data["hourly"].get("times", [])
         _ct_temps = weather_data["hourly"].get("corrected_temperature", [])
-        from datetime import datetime, timedelta
-        import pytz
         eastern = pytz.timezone("America/New_York")
         _now = datetime.now(eastern)
         _today_str = _now.strftime("%Y-%m-%d")
@@ -771,10 +768,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         if _solar_wm2 is None:
             _hourly_direct = weather_data.get("hourly", {}).get("direct_radiation", [])
             _hourly_times = weather_data.get("hourly", {}).get("times", [])
-            from datetime import datetime as _dt
-            import pytz
             _eastern = pytz.timezone("America/New_York")
-            _now_hr = _dt.now(_eastern).strftime("%Y-%m-%dT%H:00")
+            _now_hr = datetime.now(_eastern).strftime("%Y-%m-%dT%H:00")
             for _i, _t in enumerate(_hourly_times):
                 if _t == _now_hr and _i < len(_hourly_direct):
                     _solar_wm2 = _hourly_direct[_i]
@@ -944,28 +939,23 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if birds_data:
         weather_data["birds"] = birds_data
 
-    try:
-        weather_data["obs_temp_log"] = _obs_log
-    except NameError:
-        weather_data["obs_temp_log"] = {"entries": []}
+    weather_data["obs_temp_log"] = _obs_log
 
     return weather_data
 
 
 def main():
     """Main execution function."""
-    import time as _time
-
     logging.info("\n" + "=" * 60)
     logging.info("Wyman Cove Weather - Modular Collector v2.0")
     logging.info("=" * 60 + "\n")
 
-    total_t0 = _time.time()
+    total_t0 = time.time()
 
     def timed_fetch(name, fn, *args, **kwargs):
-        t0 = _time.time()
+        t0 = time.time()
         result = fn(*args, **kwargs)
-        elapsed = _time.time() - t0
+        elapsed = time.time() - t0
         logging.info(f"  ⏱  {name}: {elapsed:.1f}s")
         return result
 
@@ -989,8 +979,7 @@ def main():
     if daily_data is None:     failed_fetches.add("daily")
 
     # ── Everything else: PARALLEL ──
-    from concurrent.futures import ThreadPoolExecutor, as_completed
-    parallel_t0 = _time.time()
+    parallel_t0 = time.time()
     parallel_tasks = {
         "NWS gridpoints": (fetch_nws_gridpoints, [], {}),
         "PWS current": (fetch_pws_current, [], {}),
@@ -1021,7 +1010,7 @@ def main():
             except Exception as e:
                 logging.error(f"  ⚠️  {name} failed: {redact_secrets(e)}")
                 parallel_results[name] = (None, {"status": "error", "error": redact_secrets(e)}) if name != "Salem water temp" else None
-    logging.info(f"  ✓ Parallel fetches complete: {_time.time() - parallel_t0:.1f}s")
+    logging.info(f"  ✓ Parallel fetches complete: {time.time() - parallel_t0:.1f}s")
 
     nws_gridpoints_data, nws_gridpoints_meta = parallel_results.get("NWS gridpoints", (None, {"status": "error"}))
     pws_data, pws_meta = parallel_results.get("PWS current", (None, {"status": "error"}))
@@ -1053,10 +1042,10 @@ def main():
     }
 
     # Update frost log (reads/writes /tmp/frost_log.json)
-    t0 = _time.time()
+    t0 = time.time()
     logging.info("🌡️ Updating frost log...")
     frost_log = update_frost_log(daily_data)
-    logging.info(f"  ⏱  Frost log: {_time.time() - t0:.1f}s")
+    logging.info(f"  ⏱  Frost log: {time.time() - t0:.1f}s")
 
     # Upload updated frost log back to GCS
     if FROST_LOG_TMP.exists():
@@ -1068,17 +1057,16 @@ def main():
 
     sunset_directional = None
     if daily_data and daily_data.get("daily") and daily_data["daily"].get("sunset"):
-        t0 = _time.time()
-        from .config import LAT, LON
+        t0 = time.time()
         sunset_directional = build_sunset_directional_data(
             daily_data["daily"]["sunset"],
             LAT, LON,
             fetch_directional_clouds
         )
-        logging.info(f"  ⏱  Sunset directional: {_time.time() - t0:.1f}s")
+        logging.info(f"  ⏱  Sunset directional: {time.time() - t0:.1f}s")
 
     # Build complete weather data
-    t0 = _time.time()
+    t0 = time.time()
     weather_data = build_weather_data(
         current_data, hourly_data, daily_data,
         pws_data, tide_data, kbos_data, kbvy_data, buoy_data,
@@ -1094,16 +1082,16 @@ def main():
         daily_temps_data=daily_temps_data,
         tempest_data=tempest_data
     )
-    logging.info(f"  ⏱  Build weather data: {_time.time() - t0:.1f}s")
+    logging.info(f"  ⏱  Build weather data: {time.time() - t0:.1f}s")
 
     # Generate AI briefing headline
-    t0 = _time.time()
+    t0 = time.time()
     try:
         briefing = generate_briefing(weather_data)
     except Exception as e:
         logging.error(f"  ⚠ Briefing generation failed: {e}")
         briefing = None
-    elapsed = _time.time() - t0
+    elapsed = time.time() - t0
     if briefing:
         weather_data["briefing"] = briefing
         # Calculate actual age from cached_at timestamp
@@ -1141,7 +1129,7 @@ def main():
     _upload_to_gcs(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
 
     logging.info("\n" + "=" * 60)
-    logging.info(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({_time.time() - total_t0:.1f}s total)")
+    logging.info(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({time.time() - total_t0:.1f}s total)")
     logging.info("=" * 60 + "\n")
 
 
@@ -1153,7 +1141,6 @@ def run(request):
         return ("OK", 200)
     except Exception as e:
         logging.info(f"ERROR: {redact_secrets(e)}")
-        import traceback
         traceback.print_exc()
         return (f"ERROR: {redact_secrets(e)}", 500)
 
