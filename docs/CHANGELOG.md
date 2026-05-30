@@ -1,3 +1,6 @@
+## v0.5.207 • May 30, 2026
+- **Collector refactor:** `_append_forecast_snapshot` extracted from `collector.py` into a new `processors/forecast_snapshot.py` with named constants (14-day retention, 48-hour snapshot window, GCS path). Also drops 7 lines of manual try/except GCS-load boilerplate by routing through `gcs_io.load_json`. Verified live: 16:27 snapshot has 48 hours, all short-key fields present.
+
 ## v0.5.206 • May 30, 2026
 - **Collector refactor:** the rolling 10-min obs_temp_log helpers (`_load_obs_temp_log`, `_save_obs_temp_log`, `_update_obs_temp_log`) moved from `collector.py` into a new `processors/obs_log.py` with named constants (24-hour retention, GCS path). Same shape, same fields. Verified against live obs_temp_log entries.
 
