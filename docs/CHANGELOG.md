@@ -1,4 +1,5 @@
-## v0.5.201–v0.5.223 • May 30, 2026
+## v0.5.201–v0.5.224 • May 30, 2026
+* **Frontend split (v0.5.224):** pressure-alarm banner + storm-mode composite badge logic (~60 lines) extracted from `app-main.js` into `js/alarms.js` as `renderPressureAlarm(data)` + `renderStormMode(data)`. app-main.js 1,513 → 1,453 lines.
 * **Tooling fix (v0.5.223):** version pill was missed in the v0.5.222 commit due to an Edit ordering error; this commit catches it up.
 * **Frontend split (v0.5.221–v0.5.222):** version-update detection + refresh-on-return (~78 lines) extracted into `js/version_check.js`; pull-to-refresh gesture (~64 lines) extracted into `js/pull_refresh.js`. app-main.js 1,654 → 1,513 lines.
 * **Docs (v0.5.220):** consolidated same-day entries in `CHANGELOG.md` — May 27, May 28, and today's entries each collapsed into a single range header with concise themed bullets, matching the established format for earlier dates.
