@@ -613,45 +613,8 @@ function loadWeatherData() {
         renderBriefing(data);
         renderSolarSystem();
 
-        // Alerts — consolidated summary bar, panel collapsed by default
-        const alertsContainer = document.getElementById("alertsContainer");
-        const alertSummaryBar = document.getElementById("alertSummaryBar");
-        const alertSummaryText = document.getElementById("alertSummaryText");
-        alertsContainer.innerHTML = "";
-        // Filter out TEST alerts (NWS transmission tests)
-        const _realAlerts = (data.alerts || []).filter(a => {
-          const txt = ((a.description || '') + ' ' + (a.headline || '')).toUpperCase();
-          return !txt.includes('THIS_MESSAGE_IS_FOR_TEST_PURPOSES_ONLY') && !txt.includes('THIS IS A TEST');
-        });
-        data.alerts = _realAlerts;
-        if (data.alerts && data.alerts.length > 0) {
-          const n = data.alerts.length;
-          
-          // Only show summary bar if there are multiple alerts
-          if (alertSummaryBar) {
-            alertSummaryBar.style.display = "none"; // alerts shown via badge/modal
-          }
-          
-          if (alertSummaryText) {
-            alertSummaryText.textContent = `${n} active alert${n > 1 ? "s" : ""}: ${data.alerts.map(a => a.event || "Alert").join(" · ")}`;
-          }
-          
-          // Single alert — badge handles it, no inline display
-          
-          alertsContainer.innerHTML = data.alerts.map((a, i) => {
-            const id = `alertBody_${i}`;
-            return `
-            <div class="alert-banner">
-              <div class="alert-title" onclick="toggleAlert('${id}')" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;">
-                <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">&#9888;&#65039; ${a.event || a.headline?.split(" issued")[0] || "Weather Alert"}</span>
-                <span id="alertChevron_${i}" style="font-size:0.8rem;color:rgba(255,255,255,0.5);margin-left:8px;">&#9660; Show</span>
-              </div>
-              <div id="${id}" class="alert-desc" style="display:none;margin-top:8px;">${a.description || ""}
-                ${a.url ? `<div style="margin-top:8px;"><a href="${a.url}" target="_blank" style="color:rgba(100,200,255,0.8);font-size:0.82rem;">Full details &#8599;</a></div>` : ""}
-              </div>
-            </div>`;
-          }).join("");
-        }
+        // NWS alerts panel — see js/alerts.js
+        renderAlerts(data);
 
         // Current conditions
         const cur   = data.current || {};
