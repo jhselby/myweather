@@ -19,11 +19,12 @@ from .gcs_io import BUCKET, get_client, upload_json
 from .stale_cache import apply_stale_fallbacks, load_prev_weather_data
 from .utils import iso_utc_now, compute_age_minutes, redact_secrets
 
-# Import fetchers (only the sequential Open-Meteo calls + the parallel-fetch
-# orchestrator stay here — the 12 parallel fetchers are imported by fetch_parallel).
-from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf, fetch_hourly_gfs_7day, fetch_hrrr_daily_temps
+# Import fetchers (data fetching orchestration is fully in fetchers/fetch_all.py;
+# briefing AI is called directly from main() since it needs the assembled
+# weather_data as input).
 from .fetchers.briefing_ai import generate_briefing
-from .fetchers.fetch_parallel import fetch_parallel_sources
+from .fetchers.fetch_all import fetch_all_sources
+from .fetchers.open_meteo import fetch_directional_clouds
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
 from .processors.hyperlocal import build_hyperlocal_data
@@ -31,7 +32,6 @@ from .processors.station_bias import load_history, save_history, update_history,
 from .processors.precip_850mb import add_850mb_precip_type
 from .processors.precip_surface import add_corrected_precip_types
 from .processors.sunset_directional import build_sunset_directional_data
-from .fetchers.open_meteo import fetch_directional_clouds
 
 # Import all processors
 from .processors.frost import update_frost_log
@@ -289,68 +289,19 @@ def main():
 
     total_t0 = time.time()
 
-    def timed_fetch(name, fn, *args, **kwargs):
-        t0 = time.time()
-        result = fn(*args, **kwargs)
-        elapsed = time.time() - t0
-        logging.info(f"  ⏱  {name}: {elapsed:.1f}s")
-        return result
-
     # Load previous weather data for stale fallback cache
     prev_weather_data = load_prev_weather_data()
 
     # Download frost log from GCS before fetching (needed for update_frost_log)
     _download_frost_log_from_gcs()
 
-    # ── Open-Meteo calls: SEQUENTIAL (rate-limit sensitive) ──
-    current_data, current_meta = timed_fetch("GFS current", fetch_current_gfs)
-    hourly_data, hourly_meta = timed_fetch("HRRR hourly", fetch_hourly_hrrr)
-    daily_temps_data, daily_temps_meta = timed_fetch("HRRR daily temps", fetch_hrrr_daily_temps)
-    hourly_7day_data, hourly_7day_meta = timed_fetch("GFS 7-day hourly", fetch_hourly_gfs_7day)
-    daily_data, daily_meta = timed_fetch("ECMWF daily", fetch_daily_ecmwf)
-
-    # Track which sequential fetches returned None (used by stale fallback)
-    failed_fetches = set()
-    if current_data is None:   failed_fetches.add("current")
-    if hourly_data is None:    failed_fetches.add("hourly")
-    if daily_data is None:     failed_fetches.add("daily")
-
-    # ── Everything else: PARALLEL ──
-    parallel_results = fetch_parallel_sources()
-
-    nws_gridpoints_data, nws_gridpoints_meta = parallel_results.get("NWS gridpoints", (None, {"status": "error"}))
-    pws_data, pws_meta = parallel_results.get("PWS current", (None, {"status": "error"}))
-    tide_data, tides_meta = parallel_results.get("Tides", (None, {"status": "error"}))
-    salem_water_temp = parallel_results.get("Salem water temp")
-    kbos_data, kbos_meta = parallel_results.get("KBOS obs", (None, {"status": "error"}))
-    kbvy_data, kbvy_meta = parallel_results.get("KBVY obs", (None, {"status": "error"}))
-    buoy_data, buoy_meta = parallel_results.get("Buoy 44013", (None, {"status": "error"}))
-    wu_data, wu_meta = parallel_results.get("WU stations", (None, {"status": "error"}))
-    alert_data, alerts_meta = parallel_results.get("NWS alerts", (None, {"status": "error"}))
-    pirate_data, pirate_meta = parallel_results.get("Pirate Weather", (None, {"status": "error"}))
-    birds_data, birds_meta = parallel_results.get("eBird", (None, {"status": "error"}))
-    tempest_data, tempest_meta = parallel_results.get("Tempest", (None, {"status": "error"}))
-
-    sources = {
-        "gfs_current": current_meta,
-        "hrrr_hourly": hourly_meta,
-        "ecmwf_daily": daily_meta,
-        "pws": pws_meta,
-        "tides": tides_meta,
-        "kbos": kbos_meta,
-        "kbvy": kbvy_meta,
-        "buoy_44013": buoy_meta,
-        "wu_stations": wu_meta,
-        "nws_alerts": alerts_meta,
-        "pirate_weather": pirate_meta,
-        "ebird": birds_meta,
-        "tempest": tempest_meta,
-    }
+    # Fetch all data — Open-Meteo sequential, everything else parallel.
+    fetched = fetch_all_sources()
 
     # Update frost log (reads/writes /tmp/frost_log.json)
     t0 = time.time()
     logging.info("🌡️ Updating frost log...")
-    frost_log = update_frost_log(daily_data)
+    frost_log = update_frost_log(fetched.daily_data)
     logging.info(f"  ⏱  Frost log: {time.time() - t0:.1f}s")
 
     # Upload updated frost log back to GCS
@@ -362,10 +313,10 @@ def main():
             logging.warning(f"  ⚠  Could not upload frost_log.json: {redact_secrets(e)}")
 
     sunset_directional = None
-    if daily_data and daily_data.get("daily") and daily_data["daily"].get("sunset"):
+    if fetched.daily_data and fetched.daily_data.get("daily") and fetched.daily_data["daily"].get("sunset"):
         t0 = time.time()
         sunset_directional = build_sunset_directional_data(
-            daily_data["daily"]["sunset"],
+            fetched.daily_data["daily"]["sunset"],
             LAT, LON,
             fetch_directional_clouds
         )
@@ -374,19 +325,19 @@ def main():
     # Build complete weather data
     t0 = time.time()
     weather_data = build_weather_data(
-        current_data, hourly_data, daily_data,
-        pws_data, tide_data, kbos_data, kbvy_data, buoy_data,
-        alert_data, sources,
-        wu_data=wu_data,
+        fetched.current_data, fetched.hourly_data, fetched.daily_data,
+        fetched.pws_data, fetched.tide_data, fetched.kbos_data, fetched.kbvy_data, fetched.buoy_data,
+        fetched.alert_data, fetched.sources,
+        wu_data=fetched.wu_data,
         frost_log=frost_log,
-        salem_water_temp=salem_water_temp,
+        salem_water_temp=fetched.salem_water_temp,
         sunset_directional=sunset_directional,
-        nws_gridpoints=nws_gridpoints_data,
-        hourly_7day_data=hourly_7day_data,
-        pirate_data=pirate_data,
-        birds_data=birds_data,
-        daily_temps_data=daily_temps_data,
-        tempest_data=tempest_data
+        nws_gridpoints=fetched.nws_gridpoints_data,
+        hourly_7day_data=fetched.hourly_7day_data,
+        pirate_data=fetched.pirate_data,
+        birds_data=fetched.birds_data,
+        daily_temps_data=fetched.daily_temps_data,
+        tempest_data=fetched.tempest_data
     )
     logging.info(f"  ⏱  Build weather data: {time.time() - t0:.1f}s")
 
@@ -424,7 +375,7 @@ def main():
             weather_data["hourly"][key] = weather_data["hourly"][key][trim_idx:]
 
     # Apply stale fallbacks for any source that failed this run
-    stale_sources = apply_stale_fallbacks(weather_data, prev_weather_data, failed_fetches)
+    stale_sources = apply_stale_fallbacks(weather_data, prev_weather_data, fetched.failed_fetches)
     if stale_sources:
         weather_data["stale_sources"] = stale_sources
         logging.warning(f"  ⚠  Stale sources in this payload: {stale_sources}")
