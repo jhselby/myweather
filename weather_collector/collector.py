@@ -48,6 +48,7 @@ from .processors.trough import compute_trough_signal
 from .processors.thunderstorm import detect_thunderstorm
 from .processors.forecast_text import generate_forecast_text
 from .processors.wind_blend import select_observed_wind
+from .processors.corrected_hourly import add_corrected_hourly_arrays
 
 GCS_BUCKET = "myweather-data"
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -490,54 +491,9 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     update_history(_station_history, wu_data, tempest_data)
     save_history(_station_history, _gcs, GCS_BUCKET)
 
-    # Add corrected hourly arrays (bias pre-applied)
+    # Bias-corrected hourly arrays (must run after build_hyperlocal_data)
+    add_corrected_hourly_arrays(weather_data)
     _hyp = weather_data.get("hyperlocal", {})
-    _bias = _hyp.get("weighted_bias", 0)
-    _hbias = _hyp.get("bias_humidity", 0)
-    if "hourly" in weather_data:
-        _raw_temps = weather_data["hourly"].get("temperature", [])
-        weather_data["hourly"]["corrected_temperature"] = [
-            round(t + _bias, 1) if t is not None else None for t in _raw_temps
-        ]
-        _raw_humid = weather_data["hourly"].get("humidity", [])
-        weather_data["hourly"]["corrected_humidity"] = [
-            round(h + _hbias, 1) if h is not None else None for h in _raw_humid
-        ]
-
-        # Corrected apparent temperature (Steadman) for all hourly periods
-        _ct_arr = weather_data["hourly"]["corrected_temperature"]
-        _ch_arr = weather_data["hourly"]["corrected_humidity"]
-        _ws_arr = weather_data["hourly"].get("wind_speed", [])
-        _dr_arr = weather_data["hourly"].get("direct_radiation", [])
-        _corrected_at = []
-        for i in range(len(_ct_arr)):
-            _t = _ct_arr[i] if i < len(_ct_arr) else None
-            _h = _ch_arr[i] if i < len(_ch_arr) else None
-            _w = _ws_arr[i] if i < len(_ws_arr) else None
-            _dr = _dr_arr[i] if i < len(_dr_arr) else None
-            _corrected_at.append(steadman_feels_like_f(_t, _h, _w, _dr))
-        weather_data["hourly"]["corrected_apparent_temperature"] = _corrected_at
-
-        # Corrected dew point and absolute humidity for all hourly periods
-        _corrected_dp = []
-        _corrected_ah = []
-        for i in range(len(_ct_arr)):
-            _t = _ct_arr[i] if i < len(_ct_arr) else None
-            _h = _ch_arr[i] if i < len(_ch_arr) else None
-            _dp_f = magnus_dew_point_f(_t, _h)
-            if _dp_f is not None:
-                _corrected_dp.append(_dp_f)
-                # Absolute humidity (g/m³) — derived from dew point
-                _tc = (_t - 32) * 5 / 9
-                _dp_c = (_dp_f - 32) * 5 / 9
-                _e = 6.112 * math.exp((17.67 * _dp_c) / (_dp_c + 243.5))
-                _ah = (_e * 216.7) / (_tc + 273.15)
-                _corrected_ah.append(round(_ah, 1))
-            else:
-                _corrected_dp.append(None)
-                _corrected_ah.append(None)
-        weather_data["hourly"]["corrected_dew_point"] = _corrected_dp
-        weather_data["hourly"]["corrected_absolute_humidity"] = _corrected_ah
 
     # Compute daily high/low using Joe's observed corrected temp so far today
     # plus Joe's remaining corrected forecast for today; tomorrow stays forecast-only.
@@ -624,9 +580,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             derived["tomorrow_high"] = round(max(_fc_tomorrow), 1)
             derived["tomorrow_low"] = round(min(_fc_tomorrow), 1)
 
-    
+
     # Corrected dew point (from corrected temp + humidity)
-    _hyp = weather_data.get("hyperlocal", {})
     _ct = _hyp.get("corrected_temp")
     _ch = _hyp.get("corrected_humidity")
     _corrected_dewpt = magnus_dew_point_f(_ct, _ch)

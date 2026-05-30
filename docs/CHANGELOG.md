@@ -1,3 +1,6 @@
+## v0.5.204 • May 30, 2026
+- **Collector refactor:** bias-corrected hourly arrays (corrected_temperature, corrected_humidity, corrected_apparent_temperature, corrected_dew_point, corrected_absolute_humidity) extracted from `collector.py` into a new `processors/corrected_hourly.py` module. collector.py is now under 1000 lines for the first time. No behavior change — all 5 arrays still 48 entries with identical values.
+
 ## v0.5.203 • May 30, 2026
 - **Collector refactor:** 109-line wind override block extracted from `collector.py` into a new `processors/wind_blend.py` module. Constants (20-min staleness, 2.5× WU sanity cap, 10-station minimum) now named. No behavior change — verified live against KBVY/Tempest/WU/model candidate selection and the sanity cap math.
 
