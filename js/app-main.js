@@ -288,6 +288,54 @@
       return withDeg ? `${Math.round(d)}° ${label}` : label;
     }
 
+    // Tear down the modal state of the currently-expanded card without firing
+    // toggleCard's "return to source" logic. Used when one expanded card
+    // navigates to another — we want to dismiss the source cleanly so the
+    // outsideHandler doesn't eat the synthetic click on the target.
+    function _dismissExpandedCard(card) {
+      if (!card || !card.classList.contains('card-expanded')) return;
+      const body = card.querySelector('.card-body');
+      const preview = card.querySelector('.card-collapsed-preview');
+      const chev = card.querySelector('.collapse-chevron');
+      if (body) body.style.display = 'none';
+      if (preview) preview.style.display = '';
+      if (chev) { chev.style.display = ''; chev.style.transform = 'rotate(-90deg)'; }
+      card.classList.remove('card-expanded');
+      const bd = document.getElementById('modalBackdrop');
+      if (bd) bd.remove();
+      document.body.classList.remove('card-modal-open');
+      if (window.__cardOutsideHandler) {
+        document.removeEventListener('touchstart', window.__cardOutsideHandler, true);
+        document.removeEventListener('click', window.__cardOutsideHandler, true);
+        window.__cardOutsideHandler = null;
+      }
+    }
+
+    // Wire a "Right Now" tile field to expand its detail card on tap.
+    // If the source card is currently expanded, dismisses it first so the
+    // outsideHandler doesn't eat the synthetic click on the target.
+    // __navSource is set AFTER the dismiss so it only fires when the user
+    // closes the target (returning them to the source).
+    function wireHyperlocalLink(el, cardKey, targetTab) {
+      if (!el) return;
+      el.classList.add('hyperlocal-link');
+      el.onclick = (e) => {
+        e.stopPropagation();
+        _dismissExpandedCard(el.closest('.card-expanded'));
+        window.__navSource = { tab: 'weather', card: 'right_now' };
+        const openCard = () => {
+          const card = document.querySelector(`[data-collapse-key="${cardKey}"]`);
+          if (card) card.click();
+        };
+        if (targetTab) {
+          showTab(targetTab);
+          setTimeout(openCard, 100);
+        } else {
+          openCard();
+        }
+      };
+    }
+
     // ======================================================
     // Wind Exposure Table (mirrors collector.py exactly)
     // ======================================================
@@ -943,27 +991,12 @@ function loadWeatherData() {
           dockDayScoreEl.textContent = "No data";
         }
 
-        // Make hyperlocal fields tappable with click handlers
-        if (windImpactNowEl) {
-          windImpactNowEl.classList.add('hyperlocal-link');
-          windImpactNowEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; const card = document.querySelector('[data-collapse-key="wind_impact"]'); if (card) card.click(); };
-        }
-        if (sbEl) {
-          sbEl.classList.add('hyperlocal-link');
-          sbEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; const card = document.querySelector('[data-collapse-key="sea_breeze_detail"]'); if (card) card.click(); };
-        }
-        if (fogEl) {
-          fogEl.classList.add('hyperlocal-link');
-          fogEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; const card = document.querySelector('[data-collapse-key="fog_risk"]'); if (card) card.click(); };
-        }
-        if (sunsetScoreEl) {
-          sunsetScoreEl.classList.add('hyperlocal-link');
-          sunsetScoreEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="sunset_quality"]'); if (card) card.click(); }, 100); };
-        }
-        if (dockDayScoreEl) {
-          dockDayScoreEl.classList.add('hyperlocal-link');
-          dockDayScoreEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="swim_float"]'); if (card) card.click(); }, 100); };
-        }
+        // Make hyperlocal fields tappable — opens the matching detail card.
+        wireHyperlocalLink(windImpactNowEl, 'wind_impact');
+        wireHyperlocalLink(sbEl,            'sea_breeze_detail');
+        wireHyperlocalLink(fogEl,           'fog_risk');
+        wireHyperlocalLink(sunsetScoreEl,   'sunset_quality', 'hyperlocal');
+        wireHyperlocalLink(dockDayScoreEl,  'swim_float',     'hyperlocal');
 
         // Hair Day Score
         const hairDayNowEl = document.getElementById("hairDayNow");
@@ -971,17 +1004,13 @@ function loadWeatherData() {
           const hairAfter6 = new Date().getHours() >= 18; const h = (hairAfter6 && window.__tomorrowHairScore) ? window.__tomorrowHairScore : window.__todayHairScore;
           hairDayNowEl.innerHTML = `${h.scoreLabel} <span style="opacity:0.6;font-size:0.85rem;">(${h.score}/100)</span>`;
           hairDayNowEl.style.color = h.color;
-          hairDayNowEl.classList.add('hyperlocal-link');
-          hairDayNowEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: 'weather', card: 'right_now'}; showTab('hyperlocal'); setTimeout(() => { const card = document.querySelector('[data-collapse-key="hair_day"]'); if (card) card.click(); }, 100); };
+          wireHyperlocalLink(hairDayNowEl, 'hair_day', 'hyperlocal');
         } else if (hairDayNowEl) {
           hairDayNowEl.textContent = "No data";
         }
 
         const feelsLikeEl = document.getElementById("feelsLike");
-        if (feelsLikeEl) {
-          feelsLikeEl.classList.add("hyperlocal-link");
-          feelsLikeEl.onclick = (e) => { e.stopPropagation(); window.__navSource = {tab: "weather", card: "right_now"}; const card = document.querySelector("[data-collapse-key=\"feels_like\"]"); if (card) card.click(); };
-        }
+        wireHyperlocalLink(feelsLikeEl, 'feels_like');
 
         // Pressure alarm banner
         const alarmBanner = document.getElementById("pressureAlarmBanner");

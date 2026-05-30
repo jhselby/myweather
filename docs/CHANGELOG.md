@@ -1,3 +1,7 @@
+## v0.5.215 • May 30, 2026
+- **Right Now click-throughs:** tapping a value field in the expanded Right Now card now actually navigates to the matching detail card (and tapping outside the detail returns you to Right Now). Previously the modal's `outsideHandler` was eating the synthetic click on the sibling target. Fix: the click handler dismisses the source card's modal state up front so the target click reaches its inline `onclick` cleanly.
+- **Frontend refactor:** seven near-identical hyperlocal-link click handlers in `app-main.js` collapsed into one `wireHyperlocalLink(el, cardKey, targetTab)` helper.
+
 ## v0.5.214 • May 30, 2026
 - **Collector refactor:** previous-run cache + stale fallback extracted from `collector.py` into `weather_collector/stale_cache.py`. The hardcoded list of top-level keys that fall back to the previous run is now a named `STALE_FALLBACK_KEYS` constant. collector.py now 494 lines — under 500 for the first time.
 
