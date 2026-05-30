@@ -1,3 +1,6 @@
+## v0.5.218 • May 30, 2026
+- **Collector refactor:** parallel-fetch block (ThreadPoolExecutor + 12-task dict + timeout/error handling) extracted from `collector.py` into `fetchers/fetch_parallel.py` as `fetch_parallel_sources()`. Named constants: MAX_WORKERS=6, AS_COMPLETED_TIMEOUT=60, TASK_TIMEOUT=45. Single-value Salem water temp branch lifted into a `_SINGLE_VALUE_TASKS` set + `_error_placeholder()` helper. 11 now-unused parallel-fetcher imports + `concurrent.futures` import removed from `collector.py`. collector.py now 455 lines (was 494). Zero behavior change — verified by checking the 15:47 GCS payload has all parallel-source fields populated.
+
 ## v0.5.217 • May 30, 2026
 - **Frontend refactor:** Right Now weather-art SVG dispatch (12 inline if/else branches building inline SVG by condition × day/night) collapsed into a top-of-file `WEATHER_GRAPHICS` lookup table + a `matchWeatherType()` helper that maps condition substrings → type in precedence order. Class-list cleanup uses the same single list. Zero behavior change.
 

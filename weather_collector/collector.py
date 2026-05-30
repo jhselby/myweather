@@ -9,7 +9,6 @@ import math
 import os
 import time
 import traceback
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -20,18 +19,11 @@ from .gcs_io import BUCKET, get_client, upload_json
 from .stale_cache import apply_stale_fallbacks, load_prev_weather_data
 from .utils import iso_utc_now, compute_age_minutes, redact_secrets
 
-# Import all fetchers
+# Import fetchers (only the sequential Open-Meteo calls + the parallel-fetch
+# orchestrator stay here — the 12 parallel fetchers are imported by fetch_parallel).
 from .fetchers.open_meteo import fetch_current_gfs, fetch_hourly_hrrr, fetch_daily_ecmwf, fetch_hourly_gfs_7day, fetch_hrrr_daily_temps
-from .fetchers.pws import fetch_pws_current
-from .fetchers.tides import fetch_tides
-from .fetchers.noaa import fetch_kbos_obs, fetch_kbvy_obs, fetch_buoy_44013
-from .fetchers.salem_water import fetch_salem_water_temp
-from .fetchers.nws import fetch_nws_alerts, fetch_nws_gridpoints
-from .fetchers.wu import fetch_wu_stations
-from .fetchers.pirate_weather import fetch_pirate_weather
-from .fetchers.ebird import fetch_ebird
-from .fetchers.tempest import fetch_tempest
 from .fetchers.briefing_ai import generate_briefing
+from .fetchers.fetch_parallel import fetch_parallel_sources
 from .processors.wet_bulb import add_wet_bulb_temps
 from .processors.sea_breeze import detect_sea_breeze
 from .processors.hyperlocal import build_hyperlocal_data
@@ -324,38 +316,7 @@ def main():
     if daily_data is None:     failed_fetches.add("daily")
 
     # ── Everything else: PARALLEL ──
-    parallel_t0 = time.time()
-    parallel_tasks = {
-        "NWS gridpoints": (fetch_nws_gridpoints, [], {}),
-        "PWS current": (fetch_pws_current, [], {}),
-        "Tides": (fetch_tides, [], {}),
-        "Salem water temp": (fetch_salem_water_temp, [], {}),
-        "KBOS obs": (fetch_kbos_obs, [], {}),
-        "KBVY obs": (fetch_kbvy_obs, [], {}),
-        "Buoy 44013": (fetch_buoy_44013, [], {}),
-        "WU stations": (fetch_wu_stations, [], {}),
-        "NWS alerts": (fetch_nws_alerts, [], {}),
-        "Pirate Weather": (fetch_pirate_weather, [], {}),
-        "eBird": (fetch_ebird, [], {}),
-        "Tempest": (fetch_tempest, [], {}),
-    }
-    parallel_results = {}
-    with ThreadPoolExecutor(max_workers=6) as executor:
-        future_to_name = {
-            executor.submit(fn, *args, **kwargs): name
-            for name, (fn, args, kwargs) in parallel_tasks.items()
-        }
-        for future in as_completed(future_to_name, timeout=60):
-            name = future_to_name[future]
-            try:
-                parallel_results[name] = future.result(timeout=45)
-            except TimeoutError:
-                logging.warning(f"  ⚠️  {name} timed out (45s)")
-                parallel_results[name] = (None, {"status": "error", "error": "timeout"}) if name != "Salem water temp" else None
-            except Exception as e:
-                logging.error(f"  ⚠️  {name} failed: {redact_secrets(e)}")
-                parallel_results[name] = (None, {"status": "error", "error": redact_secrets(e)}) if name != "Salem water temp" else None
-    logging.info(f"  ✓ Parallel fetches complete: {time.time() - parallel_t0:.1f}s")
+    parallel_results = fetch_parallel_sources()
 
     nws_gridpoints_data, nws_gridpoints_meta = parallel_results.get("NWS gridpoints", (None, {"status": "error"}))
     pws_data, pws_meta = parallel_results.get("PWS current", (None, {"status": "error"}))
