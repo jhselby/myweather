@@ -47,6 +47,7 @@ from .processors.current_derived import compute_current_derived
 from .processors.fog_metrics import compute_fog_metrics
 from .processors.hourly_7day import normalize_for_payload, normalize_for_forecast_generation
 from .processors.hourly_trim import trim_hourly_to_current_hour
+from .processors.forecast_error_log import update_forecast_error_log
 from .processors.normalize import normalize_current, normalize_hourly, normalize_daily, empty_hourly
 
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -347,6 +348,16 @@ def main():
 
     # Trim hourly arrays so they start at the current local hour
     trim_hourly_to_current_hour(weather_data)
+
+    # Match past forecast snapshots against observed hours and log the errors
+    # (feeds the per-field decay-curve fitter). Non-essential to the main
+    # payload — log and continue on failure.
+    t0 = time.time()
+    try:
+        update_forecast_error_log()
+        logging.info(f"  ⏱  Forecast error log: {time.time() - t0:.1f}s")
+    except Exception as e:
+        logging.warning(f"  ⚠  Forecast error log update failed: {redact_secrets(e)}")
 
     # Apply stale fallbacks for any source that failed this run
     stale_sources = apply_stale_fallbacks(weather_data, prev_weather_data, fetched.failed_fetches)
