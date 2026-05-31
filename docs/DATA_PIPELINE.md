@@ -1,7 +1,6 @@
 # MyWeather Data Pipeline Reference
-**Version:** 0.5.170
-**Last Updated:** May 21, 2026  
-**Purpose:** Complete technical specification of all data corrections and transformations
+**Last Updated:** May 31, 2026
+**Purpose:** Complete technical specification of all data corrections and transformations. Line numbers intentionally omitted — file paths are the navigation aid; specific code locations move too often to keep accurate.
 
 ---
 
@@ -102,12 +101,12 @@ corrected_temp = 32.9 + 0.27 = 33.2°F
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** NO correction applied to hourly arrays  
-**Location:** `weather_collector/collector.py` line 113  
+**Backend:** NO correction applied to hourly arrays
+**Location:** `weather_collector/collector.py`
 **Storage:** `weather_data["hourly"]["temperature"]` contains raw HRRR model data
 
-**Frontend Application:** YES - flat bias applied  
-**Location:** `js/app-main.js` lines 3787, 3807  
+**Frontend Application:** YES - flat bias applied
+**Location:** `js/app-main.js`
 **Formula:**
 ```javascript
 const bias = hyp.weighted_bias ?? 0;
@@ -131,19 +130,19 @@ Hour 48: Model 38°F → Display 38.27°F
 
 **Right Now Card:**
 - **Element:** `#currentTemp`, `#currentTempCollapsed`
-- **Code:** `js/app-main.js` lines 3185-3187
+- **Code:** `js/app-main.js`
 - **Value:** `hyp.corrected_temp ?? cur.temperature`
 - **Fallback chain:** Corrected → Model
 
 **48-Hour Temperature Chart:**
 - **Element:** Temperature line in combined chart
-- **Code:** `js/app-main.js` line 3787
+- **Code:** `js/app-main.js`
 - **Value:** `hourly.temperature.map(t => t + bias)` for 48 hours
 - **Note:** Bias applied in frontend, not in data
 
 **Smart Corrections Table:**
 - **Elements:** `#scModelTemp`, `#scBiasTemp`, `#scCorrectedTemp`
-- **Code:** `js/app-main.js` lines 3248-3253
+- **Code:** `js/app-main.js`
 - **Values:**
   - Model: `hyp.model_temp`
   - Bias: `hyp.weighted_bias ?? hyp.bias_temp`
@@ -180,11 +179,11 @@ bias_humidity = corrected_humidity - model_humidity
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** `corrected_humidity` array built in `collector.py` immediately after `build_hyperlocal_data`  
+**Backend:** `corrected_humidity` array built in `collector.py` immediately after `build_hyperlocal_data`
 **Storage:** `weather_data["hourly"]["corrected_humidity"]` contains bias-corrected values; raw `weather_data["hourly"]["humidity"]` preserved as fallback
 
-**Frontend Application:** YES — all display paths prefer corrected array  
-**Pattern:** `hourly.corrected_humidity || hourly.humidity` used in app-main.js (line 1658) and `hyp.corrected_humidity ?? cur.humidity` for current hour
+**Frontend Application:** YES — all display paths prefer corrected array
+**Pattern:** `hourly.corrected_humidity || hourly.humidity` used in app-main.js and `hyp.corrected_humidity ?? cur.humidity` for current hour
 
 ---
 
@@ -194,7 +193,7 @@ bias_humidity = corrected_humidity - model_humidity
 
 **Smart Corrections Table:**
 - **Elements:** `#scModelHumidity`, `#scBiasHumidity`, `#scCorrectedHumidity`
-- **Code:** `js/app-main.js` lines 3255-3260
+- **Code:** `js/app-main.js`
 - **Values:**
   - Model: `hyp.model_humidity`
   - Bias: `hyp.bias_humidity`
@@ -233,8 +232,8 @@ corrected_pressure_in = kbos_pressure_in OR model_pressure_in
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** NO correction applied  
-**Frontend:** NO correction applied  
+**Backend:** NO correction applied
+**Frontend:** NO correction applied
 **Storage:** `weather_data["hourly"]["pressure"]` contains raw HRRR model data
 
 **Rationale:** Pressure varies spatially; KBOS/WU observations may not apply to forecast locations
@@ -245,7 +244,7 @@ corrected_pressure_in = kbos_pressure_in OR model_pressure_in
 
 **Smart Corrections Table:**
 - **Elements:** `#scModelPressure`, `#scBiasPressure`, `#scCorrectedPressure`
-- **Code:** `js/app-main.js` lines 3262-3272
+- **Code:** `js/app-main.js`
 - **Values:**
   - Model: `hyp.model_pressure_in`
   - Bias: `corrected_pressure_in - model_pressure_in` (calculated, not stored)
@@ -257,7 +256,7 @@ corrected_pressure_in = kbos_pressure_in OR model_pressure_in
 
 ### Current Hour Calculation
 
-**Location:** `weather_collector/collector.py` lines ~230-317
+**Location:** `weather_collector/collector.py`
 
 **Method:** MAX selection across all stations; direction sourced from waterfront Tempest
 
@@ -338,7 +337,7 @@ weather_data["current"]["condition_source"] = f"{max_gust_entry['source']} obser
 - `current["condition_source"]` - e.g., "KBVY observed" or "WU_STATION123 observed"
 
 **Hyperlocal Data (for reference only):**
-- **Location:** `weather_collector/processors/hyperlocal.py` lines 166-178
+- **Location:** `weather_collector/processors/hyperlocal.py`
 - `model_wind_speed` - Raw model value (saved before max-selection)
 - `wu_wind_speed` - WU average (if available)
 - `corrected_wind_speed` - Max-selected value from collector (reads `current["wind_speed"]` which has already been overwritten by max-selection)
@@ -348,8 +347,8 @@ weather_data["current"]["condition_source"] = f"{max_gust_entry['source']} obser
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** YES - 24-hour linear decay blend applied  
-**Location:** `weather_collector/collector.py` lines 136-164
+**Backend:** YES - 24-hour linear decay blend applied
+**Location:** `weather_collector/collector.py`
 
 **Formula:**
 ```python
@@ -363,7 +362,7 @@ current_idx = hourly["times"].index(current_hour_iso)
 for i in range(current_idx, current_idx + 24):
     hours_ahead = i - current_idx
     blend_weight = max(0, 1 - (hours_ahead / 24))
-    
+
     model_speed = hourly["wind_speed"][i]
     hourly["wind_speed"][i] = (observed_speed × blend_weight) + (model_speed × (1 - blend_weight))
 ```
@@ -397,19 +396,19 @@ Hour 25+: Raw model (no observed influence)
 
 **Right Now Card - Wind Impact:**
 - **Element:** `#windImpactNow`
-- **Code:** `js/app-main.js` lines 3416-3427
+- **Code:** `js/app-main.js`
 - **Value:** `hyp.corrected_wind_speed ?? cur.wind_speed`
 - **Used for:** Display AND impact score calculation
 - **Note:** Falls back to hyperlocal corrected (which is just model copy) or current
 
 **48-Hour Wind Chart:**
 - **Element:** Sustained wind bars
-- **Code:** `js/app-main.js` line 3801
+- **Code:** `js/app-main.js`
 - **Value:** `hourly.wind_speed` (already blended in backend)
 - **Note:** Chart displays backend-blended values directly
 
 **Impact Score Calculation:**
-- **Code:** `js/app-main.js` line 3421
+- **Code:** `js/app-main.js`
 - **Formula:** `worryScore(hyp.corrected_wind_speed ?? cur.wind_speed, exposure)`
 - **Exposure:** Directional exposure factor from lookup table
 
@@ -422,13 +421,13 @@ Hour 25+: Raw model (no observed influence)
 **Two parallel systems exist - this is confusing:**
 
 #### System 1: Collector Max Selection (Used by Frontend)
-**Location:** `weather_collector/collector.py` lines 98-102  
-**Method:** MAX gust across all stations (same as sustained wind)  
-**Storage:** `weather_data["current"]["wind_gusts"]`  
+**Location:** `weather_collector/collector.py`
+**Method:** MAX gust across all stations (same as sustained wind)
+**Storage:** `weather_data["current"]["wind_gusts"]`
 **This is what actually gets used**
 
 #### System 2: Hyperlocal Weighted Average (Calculated but Less Used)
-**Location:** `weather_collector/processors/hyperlocal.py` lines 152-195  
+**Location:** `weather_collector/processors/hyperlocal.py`
 **Method:** Distance and elevation weighted average (same weights as temperature)
 
 **Formula:**
@@ -465,8 +464,8 @@ if corrected_gust < corrected_wind_speed:
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** YES - 24-hour linear decay blend applied  
-**Location:** `weather_collector/collector.py` lines 153-159  
+**Backend:** YES - 24-hour linear decay blend applied
+**Location:** `weather_collector/collector.py`
 **Uses:** Max-selected observed gust from System 1 (NOT hyperlocal weighted average)
 
 **Formula:**
@@ -478,7 +477,7 @@ observed_gust = weather_data["current"]["wind_gusts"]
 for i in range(current_idx, current_idx + 24):
     hours_ahead = i - current_idx
     blend_weight = max(0, 1 - (hours_ahead / 24))
-    
+
     model_gust = hourly["wind_gusts"][i]
     hourly["wind_gusts"][i] = (observed_gust × blend_weight) + (model_gust × (1 - blend_weight))
 ```
@@ -493,20 +492,20 @@ for i in range(current_idx, current_idx + 24):
 
 **Right Now Card - Gust Impact:**
 - **Element:** `#gustImpactNow`
-- **Code:** `js/app-main.js` lines 3433-3445
+- **Code:** `js/app-main.js`
 - **Value:** `hyp.corrected_wind_gusts ?? cur.wind_gusts`
 - **Used for:** Display AND impact score calculation
 - **Note:** Uses hyperlocal weighted average if available, falls back to max-selected
 
 **48-Hour Wind Chart:**
 - **Element:** Gust line
-- **Code:** `js/app-main.js` line 3802
+- **Code:** `js/app-main.js`
 - **Value:** `hourly.wind_gusts` (already blended in backend)
 - **Note:** Chart displays backend-blended values (which used max-selected, not hyperlocal)
 
 **Smart Corrections Table:**
 - **Elements:** `#scModelGusts`, `#scBiasGusts`, `#scCorrectedGusts`
-- **Code:** `js/app-main.js` lines 3274-3279
+- **Code:** `js/app-main.js`
 - **Values:**
   - Model: `hyp.model_wind_gusts`
   - Bias: `hyp.bias_wind_gusts`
@@ -518,7 +517,7 @@ for i in range(current_idx, current_idx + 24):
 
 ### Current Hour Calculation
 
-**Location:** `weather_collector/processors/precip_surface.py` lines 107-116
+**Location:** `weather_collector/processors/precip_surface.py`
 
 **Method:** Calculate from corrected temperature and corrected humidity
 
@@ -556,7 +555,7 @@ corrected_wet_bulb_f = tw × 9/5 + 32
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** YES - fully corrected (both temp and humidity)  
+**Backend:** YES - fully corrected (both temp and humidity)
 **Location:** `weather_collector/processors/precip_surface.py`
 
 **Formula:**
@@ -594,7 +593,7 @@ today_low  = min(corrected temps for today date)
 
 **Observed Temperature Log:**
 
-**Location:** `weather_collector/collector.py` → `_update_obs_temp_log()`
+**Location:** `weather_collector/collector.py` → `_update_obs_temp_log`
 
 **Method:** Each collector run (every 10 min) logs `hyperlocal.corrected_temp` with an Eastern-time hour stamp to `obs_temp_log.json`. One entry per hour, deduped. Keeps today + yesterday only.
 
@@ -613,7 +612,7 @@ today_low  = min(corrected temps for today date)
 
 **48-Hour Temperature Chart:**
 - **Element:** Wet bulb line
-- **Code:** `js/app-main.js` line 3789
+- **Code:** `js/app-main.js`
 - **Value:** `hourly.corrected_wet_bulb ?? hourly.wet_bulb`
 - **Fallback:** Corrected (partial) → Raw model
 
@@ -637,7 +636,7 @@ today_low  = min(corrected temps for today date)
 - **Display:** Primary value on card front ("In shade") and briefing tab Heat Index row
 
 **System 2: Steadman Australian Apparent Temperature (full sun)**
-- **Location:** weather_collector/collector.py lines ~495-520 (current), ~393-415 (hourly)
+- **Location:** weather_collector/collector.py
 - **Shade formula (no direct sun):** AT = Ta + 0.33×e − 0.70×ws − 4.00
 - **Radiation formula (direct sun):** AT = Ta + 0.348×e − 0.70×ws + 0.70×Q/(ws+10) − 4.25; Q = solar_wm2 × 0.17
 - Where: Ta = corrected temp (°C), e = vapour pressure (hPa), ws = corrected wind (m/s)
@@ -704,7 +703,7 @@ Three lines computed from hourly arrays:
 
 ### Frontend Rendering
 
-**Location:** `js/app-main.js` function `renderBirds()`
+**Location:** `js/app-main.js` function `renderBirds`
 
 Collapsed tile: top notable species or species count. Expanded: grouped by location, sorted nearest first. Species links go to eBird. Public hotspot names link to eBird map view. Private location names link to Apple Maps via maps: URI. External links set `window.__externalLinkOpen` to prevent visibilitychange card collapse on return.
 
@@ -716,7 +715,7 @@ Collapsed tile: top notable species or species count. Expanded: grouped by locat
 
 Predicts hair manageability for 3 days. Four hair type profiles with different scoring curves. Selection persisted to localStorage key `hairType`, default `curly`.
 
-**Location:** `js/app-main.js` function `renderHairDay()`
+**Location:** `js/app-main.js` function `renderHairDay`
 
 ### Hair Type Profiles
 
@@ -806,13 +805,13 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 │       STATION BIAS PROCESSOR (station_bias.py)               │
 ├─────────────────────────────────────────────────────────────┤
 │ Loads station_history.json from GCS (48h rolling window)     │
-│ compute_offsets() → chronic offset per station per metric    │
+│ compute_offsets → chronic offset per station per metric    │
 │                                                              │
 │  • ≥ 6 readings required before offset applied              │
 │  • Leave-one-out: each station vs. consensus of all others  │
 │  • Covers temp, humidity, pressure independently            │
 │  • Offsets passed to hyperlocal.py as station_offsets dict  │
-│  • After hyperlocal runs, update_history() appends new      │
+│  • After hyperlocal runs, update_history appends new      │
 │    leave-one-out deltas and saves to GCS                    │
 └─────────────────────────────────────────────────────────────┘
                             ↓
@@ -1022,7 +1021,7 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 - `waterfront` flag added to all wind candidates; Willow Rd (204883), Driftwood Rd (85260), Neptune Rd (192019) marked True
 - Wind direction now sourced from the highest-gust fresh waterfront Tempest station when available; falls back to max-gust source
 - Gust and sustained speed max-selected independently (gust source and speed source may differ)
-- WU `print()` calls converted to `logging` for structured Cloud Function log output
+- WU `print` calls converted to `logging` for structured Cloud Function log output
 - Schema version check added to frontend: shows "App update required" if `schema_version` in data doesn't match expected
 - Hard vetoes added to sea breeze detector: wrong direction or excessive wind speed vetoes `active=True` regardless of overall score
 - Advection fog bug fixed: early return on spread > 5°F was preventing advection fog from ever firing; restructured to always compute both fog types and take the max
@@ -1035,7 +1034,7 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 - Test suite added: `tests/test_processors.py` with 17 tests for fog, wet bulb, and sea breeze processors
 
 **v0.5.105 (May 13, 2026):**
-- Diurnal split on temperature bias correction: station_bias.py now tags each temp delta as `delta_d` (7am–7pm ET) or `delta_n` (7pm–7am ET) alongside the combined `delta`. compute_offsets() returns `temp_day` and `temp_night` in addition to `temp`. hyperlocal.py applies the split offset when ≥ MIN_READINGS available for the current period, falls back to combined. Captures sensors whose warm/cold bias varies across the day (e.g. shading, thermal mass).
+- Diurnal split on temperature bias correction: station_bias.py now tags each temp delta as `delta_d` (7am–7pm ET) or `delta_n` (7pm–7am ET) alongside the combined `delta`. compute_offsets returns `temp_day` and `temp_night` in addition to `temp`. hyperlocal.py applies the split offset when ≥ MIN_READINGS available for the current period, falls back to combined. Captures sensors whose warm/cold bias varies across the day (e.g. shading, thermal mass).
 - KBVY temp logged as external calibration anchor: `kbvy_temp_f` and `kbvy_local_delta` (corrected_temp − KBVY) added to hyperlocal output every run. Builds empirical distribution of the local marine/elevation offset for future network-level drift detection.
 
 **v0.5.86–v0.5.104 (May 13, 2026):**
@@ -1158,7 +1157,7 @@ Check this document first to understand where data comes from and what correctio
 
 ### Previous Briefing Context
 
-- Before calling Gemini, `_load_cached_briefing()` reads the current `briefing_cache.json` from GCS
+- Before calling Gemini, `_load_cached_briefing` reads the current `briefing_cache.json` from GCS
 - Previous headline is injected into the prompt as `prev_context`
 - System prompt rule: if forecast has shifted meaningfully (timing, rain/snow line, temperature trend), note the change briefly in the subheadline
 

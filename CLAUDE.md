@@ -139,7 +139,7 @@ These are current as of May 2026. If any seem wrong, ASK before assuming:
 
 - **Collector:** Python on Google Cloud Functions (us-east1), runs every 10 min via Cloud Scheduler.
 - **Data:** Writes `weather_data.json` to GCS bucket `myweather-data`. PWA fetches from GCS.
-- **Frontend:** `index.html`, `js/app-main.js`, `js/briefing.js`. Vanilla JS, no framework.
+- **Frontend:** `index.html` + a modular set of `js/*.js` files (`app-main.js` is the entry point + data loader; each card/concern lives in its own file — `right_now.js`, `briefing.js`, `wind.js`, `alarms.js`, `alerts.js`, `theme.js`, `format.js`, `version_check.js`, `pull_refresh.js`, etc.). Vanilla JS, no framework, no build step beyond `build.py` for cache-busting.
 - **API keys:** In Cloud Function env vars only. Never in committed files.
 - **Build:** `python3 build.py` for cache-busting before commit.
 - **GitHub Actions:** NOT INVOLVED. Does nothing. The old workflow is dead.
