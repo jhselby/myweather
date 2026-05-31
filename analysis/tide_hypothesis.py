@@ -174,63 +174,174 @@ def tide_phase(obs_dt, hilo):
     return (hours_since % M2_PERIOD_H) / M2_PERIOD_H
 
 
-def plot_field(pairs, field_short, field_label, field_unit, hilo, out_path):
-    """One PNG per field. Each PNG has len(LEADS_TO_PLOT) subplots
-    (one per lead), each showing mean error per tide-phase bin."""
-    fig, axes = plt.subplots(1, len(LEADS_TO_PLOT),
-                             figsize=(3.5 * len(LEADS_TO_PLOT), 3.6),
-                             sharey=True)
-    if len(LEADS_TO_PLOT) == 1:
-        axes = [axes]
+N_HOD_BINS = 24            # one bin per hour-of-day
+N_HOD_STRATA = 4           # 0-5, 6-11, 12-17, 18-23 — used in the stratified diagnostic
+STRATUM_LABELS = ["night (0-5)", "morning (6-11)", "afternoon (12-17)", "evening (18-23)"]
+STRATUM_COLORS = ["#4aa3ff", "#7ad97a", "#ff9f4a", "#c084fc"]
 
-    field_pairs = [p for p in pairs if p["field"] == field_short]
-    fig.suptitle(f"{field_label} ({field_unit}) — mean forecast error vs tide phase"
-                 f"   ·   total pairs: {len(field_pairs):,}", fontsize=11)
 
-    summary_lines = [f"\n=== {field_label} ({field_short}) ==="]
+def _bin_by_tide(pairs, hilo):
+    """Bin (mean error, count) by tide phase. Returns lists of length N_PHASE_BINS."""
+    buckets = defaultdict(list)
+    for p in pairs:
+        try:
+            obs_dt = parse_local(p["obs_time"])
+        except ValueError:
+            continue
+        ph = tide_phase(obs_dt, hilo)
+        if ph is None:
+            continue
+        buckets[min(int(ph * N_PHASE_BINS), N_PHASE_BINS - 1)].append(p["error"])
+    means = [np.mean(buckets[i]) if buckets[i] else np.nan for i in range(N_PHASE_BINS)]
+    counts = [len(buckets[i]) for i in range(N_PHASE_BINS)]
+    return means, counts
 
-    for ax, lead in zip(axes, LEADS_TO_PLOT):
-        bins = defaultdict(list)
-        for p in field_pairs:
-            if p["lead_h"] != lead:
-                continue
+
+def _bin_by_hod(pairs):
+    """Bin (mean error, count) by hour-of-day. Returns lists of length 24."""
+    buckets = defaultdict(list)
+    for p in pairs:
+        try:
+            obs_dt = parse_local(p["obs_time"])
+        except ValueError:
+            continue
+        buckets[obs_dt.hour].append(p["error"])
+    means = [np.mean(buckets[i]) if buckets[i] else np.nan for i in range(N_HOD_BINS)]
+    counts = [len(buckets[i]) for i in range(N_HOD_BINS)]
+    return means, counts
+
+
+def _bin_by_tide_and_hod_stratum(pairs, hilo):
+    """For the diagnostic: bin by tide phase, separately within each
+    hour-of-day stratum. Returns dict {stratum_idx: (means, counts)} where
+    means/counts are length N_PHASE_BINS."""
+    out = {}
+    for stratum in range(N_HOD_STRATA):
+        lo = stratum * (24 // N_HOD_STRATA)
+        hi = lo + (24 // N_HOD_STRATA)
+        subset = []
+        for p in pairs:
             try:
                 obs_dt = parse_local(p["obs_time"])
             except ValueError:
                 continue
-            ph = tide_phase(obs_dt, hilo)
-            if ph is None:
-                continue
-            bin_idx = min(int(ph * N_PHASE_BINS), N_PHASE_BINS - 1)
-            bins[bin_idx].append(p["error"])
+            if lo <= obs_dt.hour < hi:
+                subset.append(p)
+        out[stratum] = _bin_by_tide(subset, hilo)
+    return out
 
-        xs = (np.arange(N_PHASE_BINS) + 0.5) * (M2_PERIOD_H / N_PHASE_BINS)
-        means = [np.mean(bins[i]) if bins[i] else np.nan for i in range(N_PHASE_BINS)]
-        counts = [len(bins[i]) for i in range(N_PHASE_BINS)]
-        total = sum(counts)
 
-        colors = ["#4aa3ff" if not np.isnan(m) and m >= 0 else "#ef6450"
-                  if not np.isnan(m) else "#3a3f4a" for m in means]
-        ax.bar(xs, [0 if np.isnan(m) else m for m in means],
-               width=(M2_PERIOD_H / N_PHASE_BINS) * 0.9,
-               color=colors, alpha=0.75, edgecolor="none")
-        ax.axhline(0, color="black", linewidth=0.6)
-        ax.set_title(f"lead {lead}h (n={total:,})", fontsize=10)
-        ax.set_xlabel("hours since prev high tide")
-        ax.set_xlim(0, M2_PERIOD_H)
-        ax.grid(True, alpha=0.2)
-        if ax is axes[0]:
-            ax.set_ylabel(f"mean error ({field_unit})")
+def _bar_panel(ax, xs, means, width, label_unit, title):
+    colors = ["#4aa3ff" if not np.isnan(m) and m >= 0
+              else "#ef6450" if not np.isnan(m) else "#3a3f4a" for m in means]
+    ax.bar(xs, [0 if np.isnan(m) else m for m in means],
+           width=width, color=colors, alpha=0.75, edgecolor="none")
+    ax.axhline(0, color="black", linewidth=0.6)
+    ax.set_title(title, fontsize=9)
+    ax.grid(True, alpha=0.2)
 
-        summary_lines.append(f"  lead {lead}h: n={total:,}, "
-                             f"bin means = "
-                             + ", ".join(f"{m:+.2f}" if not np.isnan(m) else "—"
-                                         for m in means))
+
+def plot_field(pairs, field_short, field_label, field_unit, hilo, out_path):
+    """One PNG per field. Two rows × len(LEADS_TO_PLOT) cols:
+      row 1: mean error vs tide phase
+      row 2: mean error vs hour-of-day
+    Same shape + period in both rows → likely confounded with diurnal.
+    Pattern in one but not the other → that's the real driver."""
+    n_cols = len(LEADS_TO_PLOT)
+    fig, axes = plt.subplots(2, n_cols, figsize=(3.5 * n_cols, 6.4), sharey="row")
+    if n_cols == 1:
+        axes = axes.reshape(2, 1)
+
+    field_pairs = [p for p in pairs if p["field"] == field_short]
+    fig.suptitle(
+        f"{field_label} ({field_unit}) — top: error vs tide phase  ·  "
+        f"bottom: error vs hour-of-day  ·  total pairs: {len(field_pairs):,}",
+        fontsize=11,
+    )
+
+    summary_lines = [f"\n=== {field_label} ({field_short}) ==="]
+
+    for col, lead in enumerate(LEADS_TO_PLOT):
+        lead_pairs = [p for p in field_pairs if p["lead_h"] == lead]
+        # Tide phase row
+        t_means, t_counts = _bin_by_tide(lead_pairs, hilo)
+        xs_t = (np.arange(N_PHASE_BINS) + 0.5) * (M2_PERIOD_H / N_PHASE_BINS)
+        _bar_panel(axes[0, col], xs_t, t_means, (M2_PERIOD_H / N_PHASE_BINS) * 0.9,
+                   field_unit, f"lead {lead}h tide  (n={sum(t_counts):,})")
+        axes[0, col].set_xlim(0, M2_PERIOD_H)
+        if col == 0:
+            axes[0, col].set_ylabel(f"mean error ({field_unit})")
+        axes[0, col].set_xlabel("hours since prev high tide")
+        # Hour-of-day row
+        h_means, h_counts = _bin_by_hod(lead_pairs)
+        xs_h = np.arange(N_HOD_BINS) + 0.5
+        _bar_panel(axes[1, col], xs_h, h_means, 0.9, field_unit,
+                   f"lead {lead}h hour-of-day  (n={sum(h_counts):,})")
+        axes[1, col].set_xlim(0, 24)
+        axes[1, col].set_xticks([0, 6, 12, 18, 24])
+        if col == 0:
+            axes[1, col].set_ylabel(f"mean error ({field_unit})")
+        axes[1, col].set_xlabel("local hour")
+
+        summary_lines.append(
+            f"  lead {lead}h tide bins: "
+            + ", ".join(f"{m:+.2f}" if not np.isnan(m) else "—" for m in t_means)
+        )
+        summary_lines.append(
+            f"  lead {lead}h HOD bins:  "
+            + ", ".join(f"{m:+.1f}" if not np.isnan(m) else "—" for m in h_means)
+        )
 
     fig.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(out_path, dpi=120)
     plt.close(fig)
     return summary_lines
+
+
+def plot_stratified(pairs, field_short, field_label, field_unit, hilo, out_path):
+    """Definitive confounding test: for one figure per field, plot tide-phase
+    error binned separately within each hour-of-day stratum. One line per
+    stratum, on the same axes per lead.
+
+    If the lines have the same shape across all strata → tide is the real
+    driver (pattern survives hour-of-day partitioning).
+    If lines have very different shapes per stratum → hour-of-day is the
+    driver and what looked like a tide pattern is just diurnal aliasing."""
+    n_cols = len(LEADS_TO_PLOT)
+    fig, axes = plt.subplots(1, n_cols, figsize=(3.5 * n_cols, 3.8), sharey=True)
+    if n_cols == 1:
+        axes = [axes]
+
+    field_pairs = [p for p in pairs if p["field"] == field_short]
+    fig.suptitle(
+        f"{field_label} ({field_unit}) — tide-phase error stratified by hour-of-day  ·  "
+        f"if all lines have the same shape → tide is real",
+        fontsize=11,
+    )
+
+    xs = (np.arange(N_PHASE_BINS) + 0.5) * (M2_PERIOD_H / N_PHASE_BINS)
+
+    for col, lead in enumerate(LEADS_TO_PLOT):
+        lead_pairs = [p for p in field_pairs if p["lead_h"] == lead]
+        strata = _bin_by_tide_and_hod_stratum(lead_pairs, hilo)
+        ax = axes[col]
+        for stratum, (means, counts) in strata.items():
+            ax.plot(xs, [m if not np.isnan(m) else None for m in means],
+                    marker="o", linewidth=1.5, markersize=3,
+                    color=STRATUM_COLORS[stratum],
+                    label=f"{STRATUM_LABELS[stratum]}  (n={sum(counts):,})")
+        ax.axhline(0, color="black", linewidth=0.6)
+        ax.set_title(f"lead {lead}h", fontsize=9)
+        ax.set_xlabel("hours since prev high tide")
+        ax.set_xlim(0, M2_PERIOD_H)
+        ax.grid(True, alpha=0.2)
+        if col == 0:
+            ax.set_ylabel(f"mean error ({field_unit})")
+            ax.legend(fontsize=7, loc="best")
+
+    fig.tight_layout(rect=[0, 0, 1, 0.93])
+    fig.savefig(out_path, dpi=120)
+    plt.close(fig)
 
 
 def main():
@@ -269,6 +380,9 @@ def main():
         out_path = os.path.join(OUT_DIR, f"tide_hypothesis_{short}.png")
         summary.extend(plot_field(pairs, short, label, unit, hilo, out_path))
         print(f"  ✓ {out_path}")
+        strat_path = os.path.join(OUT_DIR, f"stratified_{short}.png")
+        plot_stratified(pairs, short, label, unit, hilo, strat_path)
+        print(f"  ✓ {strat_path}")
 
     summary_path = os.path.join(OUT_DIR, "tide_hypothesis_summary.txt")
     with open(summary_path, "w") as f:
