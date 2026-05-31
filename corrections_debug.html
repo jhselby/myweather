@@ -374,13 +374,24 @@ function renderBiasSection(wxDoc) {
     return;
   }
 
-  // Build a station_id → distance_mi lookup from wu_stations (only WU stations
-  // ship distance today; Tempest / others will fall back to null and sort last).
+  // Build a station_id → distance_mi lookup. WU stations live in
+  // wxDoc.wu_stations.stations (string IDs like "KMAMARBL4"); Tempest
+  // stations live in wxDoc.tempest.stations (numeric station_id). The
+  // station_offsets dict mixes both.
   const distByStation = {};
   const wuStations = (wxDoc.wu_stations && wxDoc.wu_stations.stations) || [];
   for (const s of wuStations) {
     if (s && s.station_id != null && typeof s.distance_mi === "number") {
       distByStation[s.station_id] = s.distance_mi;
+    }
+  }
+  const tempestStations = (wxDoc.tempest && wxDoc.tempest.stations) || [];
+  for (const s of tempestStations) {
+    if (s && s.station_id != null && typeof s.distance_mi === "number") {
+      distByStation[s.station_id] = s.distance_mi;
+      // Some bias-tracker entries key Tempest stations by the numeric id as
+      // a string; cover that case too.
+      distByStation[String(s.station_id)] = s.distance_mi;
     }
   }
 
