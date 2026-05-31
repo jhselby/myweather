@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyWeather — Decay Corrections</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171b22;
+    --ink: #e7ecf3;
+    --muted: #8a93a3;
+    --accent: #4aa3ff;
+    --warn: #ff9f4a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 18px;
+    font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #242833;
+  }
+  h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  .meta { color: var(--muted); font-size: 12px; }
+  .meta strong { color: var(--ink); font-weight: 500; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    padding: 12px 12px 6px;
+  }
+  .card h2 {
+    font-size: 13px;
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+  }
+  .card h2 span { color: var(--ink); font-weight: 600; }
+  .chart-wrap { position: relative; height: 220px; }
+  .status {
+    padding: 16px;
+    color: var(--warn);
+    font-size: 13px;
+  }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Decay corrections</h1>
+  <span class="meta" id="meta">loading…</span>
+</header>
+
+<div id="status" class="status" hidden></div>
+<div id="grid" class="grid"></div>
+
+<script>
+const DATA_URL = "https://data.wymancove.com/decay_corrections.json";
+
+const FIELDS = [
+  { key: "t",  label: "Temperature",   unit: "°F" },
+  { key: "dp", label: "Dew point",     unit: "°F" },
+  { key: "h",  label: "Humidity",      unit: "%"  },
+  { key: "ws", label: "Wind speed",    unit: "mph" },
+  { key: "wg", label: "Wind gust",     unit: "mph" },
+  { key: "pp", label: "Precip prob",   unit: "%"  },
+];
+
+function fmt(v, digits = 2) {
+  return v === null || v === undefined ? "—" : Number(v).toFixed(digits);
+}
+
+function showStatus(msg) {
+  const s = document.getElementById("status");
+  s.textContent = msg;
+  s.hidden = false;
+}
+
+function renderMeta(data) {
+  const el = document.getElementById("meta");
+  el.innerHTML =
+    `fitted <strong>${data.fitted_at || "?"}</strong> · ` +
+    `<strong>${(data.n_pairs || 0).toLocaleString()}</strong> pairs · ` +
+    `retention <strong>${data.retention_days || "?"}</strong>d · ` +
+    `<a href="${DATA_URL}" target="_blank">raw</a>`;
+}
+
+function buildChart(canvas, field, corrections, counts) {
+  const labels = Array.from({ length: corrections.length }, (_, i) => i);
+  // Replace nulls with NaN so Chart.js leaves a gap rather than drawing to 0.
+  const series = corrections.map(v => (v === null || v === undefined ? NaN : v));
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: `mean error (${field.unit})`,
+          data: series,
+          borderColor: "#4aa3ff",
+          backgroundColor: "rgba(74,163,255,0.15)",
+          borderWidth: 1.5,
+          pointRadius: 2,
+          tension: 0.25,
+          spanGaps: false,
+          yAxisID: "y",
+        },
+        {
+          label: "n samples",
+          data: counts,
+          type: "bar",
+          backgroundColor: "rgba(138,147,163,0.25)",
+          borderWidth: 0,
+          yAxisID: "y2",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: {
+          labels: { color: "#8a93a3", boxWidth: 10, font: { size: 11 } },
+          position: "bottom",
+        },
+        tooltip: {
+          callbacks: {
+            title: (items) => `lead ${items[0].label}h`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "lead time (hours)", color: "#8a93a3" },
+          ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
+          grid: { color: "#242833" },
+        },
+        y: {
+          title: { display: true, text: `mean error (${field.unit})`, color: "#8a93a3" },
+          ticks: { color: "#8a93a3" },
+          grid: { color: "#242833" },
+          beginAtZero: false,
+        },
+        y2: {
+          position: "right",
+          title: { display: true, text: "n", color: "#8a93a3" },
+          ticks: { color: "#8a93a3" },
+          grid: { display: false },
+          beginAtZero: true,
+        },
+      },
+    },
+  });
+}
+
+async function load() {
+  try {
+    const res = await fetch(DATA_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) {
+      showStatus(`No decay_corrections.json yet (HTTP ${res.status}). ` +
+        `Trigger a Fitter run, then refresh.`);
+      document.getElementById("meta").textContent = "no data";
+      return;
+    }
+    const data = await res.json();
+    renderMeta(data);
+
+    const grid = document.getElementById("grid");
+    for (const f of FIELDS) {
+      const corrections = (data.corrections || {})[f.key] || [];
+      const counts = (data.n_samples || {})[f.key] || [];
+      const validVals = corrections.filter(v => v !== null && v !== undefined);
+      const meanAbs = validVals.length
+        ? (validVals.reduce((s, v) => s + Math.abs(v), 0) / validVals.length).toFixed(2)
+        : "—";
+      const totalN = counts.reduce((s, v) => s + v, 0);
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        `<h2><span>${f.label} (${f.key})</span>` +
+        `<span style="color:var(--muted);font-weight:400;">|mean| ${meanAbs} ${f.unit} · ${totalN.toLocaleString()} pairs</span></h2>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid.appendChild(card);
+      buildChart(card.querySelector("canvas"), f, corrections, counts);
+    }
+  } catch (err) {
+    showStatus(`Load failed: ${err.message}`);
+  }
+}
+
+load();
+</script>
+</body>
+</html>
