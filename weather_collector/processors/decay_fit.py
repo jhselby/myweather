@@ -1,0 +1,123 @@
+"""
+Fitter (Piece 3 of the decay model): once-a-day pass over
+forecast_error_log.jsonl that does two things:
+
+1. For each (field, lead_h) bin, compute the mean signed error and the
+   number of pairs that fed it. Write the result to decay_corrections.json.
+   Piece 4 (Apply) will subtract these from the forecast at each lead.
+2. Rewrite forecast_error_log.jsonl pruned to RETENTION_DAYS. The Joiner
+   appends via GCS compose; this rewrite resets the component count back
+   to 1 (the compose ceiling is 5,300 components, hit around day 36 at
+   144 ticks/day).
+
+Streaming I/O via blob.open — memory is bounded by the bin accumulators
+(6 fields × 48 leads), independent of file size. At steady state the
+input is ~1.3 GB.
+
+Wired to run once per day from collector.main() gated on the 03:X7 tick.
+Error sign convention (from the Joiner): error = forecast - observed, so
+the correction is mean(error) and corrected_forecast = forecast - correction.
+"""
+import json
+import logging
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+import pytz
+
+from ..gcs_io import BUCKET, get_client, upload_json
+from ..utils import redact_secrets
+
+
+ERROR_LOG_PATH = "forecast_error_log.jsonl"
+CORRECTIONS_PATH = "decay_corrections.json"
+TEMP_PATH = "forecast_error_log_flatten.tmp.jsonl"
+TZ = pytz.timezone("America/New_York")
+RETENTION_DAYS = 30
+LEAD_BINS = 48  # lead_h 0..47
+
+FIELDS = ("t", "ws", "wg", "h", "dp", "pp")
+
+
+def fit_decay_corrections():
+    """Daily Fitter entry point."""
+    client = get_client()
+    bucket = client.bucket(BUCKET)
+    main_blob = bucket.blob(ERROR_LOG_PATH)
+
+    if not main_blob.exists():
+        logging.info("  ℹ  Fitter: no forecast_error_log.jsonl yet, skipping")
+        return
+
+    # obs_time in rows is local-naive ISO minute ("%Y-%m-%dT%H:%M"), so a
+    # lexicographic compare against a same-format cutoff is exact.
+    cutoff = (datetime.now(TZ).replace(tzinfo=None) - timedelta(days=RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+
+    sums = defaultdict(float)
+    counts = defaultdict(int)
+    n_in = 0
+    n_kept = 0
+
+    temp_blob = bucket.blob(TEMP_PATH)
+    with main_blob.open("r") as fin, temp_blob.open("w") as fout:
+        for raw in fin:
+            line = raw.strip()
+            if not line:
+                continue
+            n_in += 1
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            obs_time = row.get("obs_time", "")
+            if obs_time < cutoff:
+                continue
+            n_kept += 1
+            fout.write(line + "\n")
+            field = row.get("field")
+            lead_h = row.get("lead_h")
+            error = row.get("error")
+            if field is None or lead_h is None or error is None:
+                continue
+            if not (0 <= lead_h < LEAD_BINS):
+                continue
+            sums[(field, lead_h)] += float(error)
+            counts[(field, lead_h)] += 1
+
+    corrections = {}
+    n_samples = {}
+    for f in FIELDS:
+        c_arr = [None] * LEAD_BINS
+        n_arr = [0] * LEAD_BINS
+        for h in range(LEAD_BINS):
+            n = counts.get((f, h), 0)
+            n_arr[h] = n
+            if n > 0:
+                c_arr[h] = round(sums[(f, h)] / n, 3)
+        corrections[f] = c_arr
+        n_samples[f] = n_arr
+
+    output = {
+        "fitted_at": datetime.now(TZ).replace(tzinfo=None).strftime("%Y-%m-%dT%H:%M"),
+        "n_pairs": n_kept,
+        "retention_days": RETENTION_DAYS,
+        "corrections": corrections,
+        "n_samples": n_samples,
+    }
+    upload_json(output, CORRECTIONS_PATH, "decay_corrections.json")
+
+    # Overwrite main with the pruned temp (resets compose component count to 1).
+    try:
+        bucket.copy_blob(temp_blob, bucket, ERROR_LOG_PATH)
+        temp_blob.delete()
+    except Exception as e:
+        logging.error(f"  ✗ Fitter: rewrite of {ERROR_LOG_PATH} failed: {redact_secrets(e)}")
+        try:
+            if temp_blob.exists():
+                temp_blob.delete()
+        except Exception:
+            pass
+        raise
+
+    pruned = n_in - n_kept
+    logging.info(f"  ✓ Fitter: {n_in:,} pairs in, {n_kept:,} kept ({pruned:,} pruned >{RETENTION_DAYS}d)")

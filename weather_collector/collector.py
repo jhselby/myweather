@@ -48,6 +48,7 @@ from .processors.fog_metrics import compute_fog_metrics
 from .processors.hourly_7day import normalize_for_payload, normalize_for_forecast_generation
 from .processors.hourly_trim import trim_hourly_to_current_hour
 from .processors.forecast_error_log import update_forecast_error_log
+from .processors.decay_fit import fit_decay_corrections
 from .processors.normalize import normalize_current, normalize_hourly, normalize_daily, empty_hourly
 
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -369,6 +370,19 @@ def main():
 
     # Upload weather data to GCS
     upload_json(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
+
+    # Fit per-field per-lead_h decay corrections once per day at the 03:X7
+    # tick. Also prunes forecast_error_log.jsonl to RETENTION_DAYS, which
+    # resets the GCS compose component count back to 1. Runs after the main
+    # payload upload so a slow or hung Fitter cannot delay weather_data.json.
+    now_local = datetime.now(pytz.timezone("America/New_York"))
+    if now_local.hour == 3 and now_local.minute < 10:
+        t0 = time.time()
+        try:
+            fit_decay_corrections()
+            logging.info(f"  ⏱  Decay fit: {time.time() - t0:.1f}s")
+        except Exception as e:
+            logging.warning(f"  ⚠  Decay fit failed: {redact_secrets(e)}")
 
     logging.info("\n" + "=" * 60)
     logging.info(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({time.time() - total_t0:.1f}s total)")
