@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MyWeather — Corrections Debug</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <style>
   :root {
     --bg: #0f1115;
@@ -122,6 +124,44 @@
   .offset-cell.warm { color: var(--warm); font-weight: 600; }
   .offset-cell.cool { color: var(--cool); font-weight: 600; }
   .offset-cell.zero { color: var(--muted); }
+  /* Bias map */
+  .bias-map-wrap {
+    height: 460px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #242833;
+    margin-bottom: 12px;
+    background: var(--panel);
+  }
+  .bias-map-wrap .leaflet-tile-pane { filter: brightness(0.65) contrast(1.05); }
+  .bias-map-wrap .leaflet-container { background: #1a1f2a; font: inherit; }
+  .bias-map-wrap .leaflet-popup-content-wrapper {
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid #242833;
+    border-radius: 6px;
+    font-size: 12px;
+  }
+  .bias-map-wrap .leaflet-popup-tip { background: var(--panel); }
+  .bias-legend {
+    background: rgba(23,27,34,0.92);
+    border: 1px solid #242833;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: var(--ink);
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .bias-legend .scale {
+    display: inline-block;
+    width: 140px;
+    height: 8px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin: 0 6px;
+    background: linear-gradient(to right,
+      hsl(220,80%,55%), hsl(220,40%,55%), hsl(0,0%,60%), hsl(20,40%,55%), hsl(0,80%,55%));
+  }
 </style>
 </head>
 <body>
@@ -141,6 +181,7 @@
 <div id="status-bias" class="status" hidden></div>
 <h2 class="section">3. Station calibration offsets — per-station bias</h2>
 <div id="stats-bias" class="stats-panel" hidden></div>
+<div id="bias-map" class="bias-map-wrap"></div>
 <div id="bias-table-wrap"></div>
 
 <script>
@@ -286,7 +327,104 @@ function fmtFixed(v, digits) {
   return (v === null || v === undefined || Number.isNaN(v)) ? "—" : Number(v).toFixed(digits);
 }
 
-// ── Section 3: station bias offsets table ────────────────────────────────────
+// ── Section 3: station bias offsets — map + table ────────────────────────────
+
+// Wyman Cove (matches LAT, LON in weather_collector/config.py)
+const WYMAN_COVE = [42.5014, -70.8750];
+
+let _biasMap = null;
+let _biasMapLayer = null;
+
+function _offsetColor(v) {
+  // Proper diverging scale: blue if negative, red if positive — NEVER through
+  // green (which is what a linear hue 220→0 does). Hue is locked to 220 or 0
+  // depending on sign; saturation + darkness scale with magnitude. Near-zero
+  // values collapse to neutral gray.
+  if (v == null || Number.isNaN(v)) return "#666";
+  const clamped = Math.max(-3, Math.min(3, v));
+  const mag = Math.abs(clamped) / 3;  // 0..1
+  if (mag < 0.05) return "hsl(0, 0%, 62%)";
+  const hue = clamped < 0 ? 220 : 0;
+  const sat = Math.round(30 + 55 * mag);
+  const light = Math.round(70 - 20 * mag);
+  return `hsl(${hue}, ${sat}%, ${light}%)`;
+}
+
+function renderBiasMap(stationRows) {
+  const container = document.getElementById("bias-map");
+  if (!container || typeof L === "undefined") return;
+
+  // First call: build the map + legend + Wyman Cove marker. Fully locked
+  // (no pan, no zoom, no scroll) — markers + popups still work.
+  if (!_biasMap) {
+    _biasMap = L.map(container, {
+      zoomControl: false,
+      attributionControl: true,
+      dragging: false,
+      scrollWheelZoom: false,
+      doubleClickZoom: false,
+      touchZoom: false,
+      boxZoom: false,
+      keyboard: false,
+    }).setView(WYMAN_COVE, 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      attribution: "© OpenStreetMap",
+    }).addTo(_biasMap);
+    L.marker(WYMAN_COVE, {
+      icon: L.divIcon({
+        className: "wyman-cove-icon",
+        html: '<div style="background:#fff;border:2px solid #111;width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 2px rgba(255,255,255,0.5);"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7],
+      }),
+    }).addTo(_biasMap).bindPopup("<strong>Wyman Cove</strong>");
+    const legend = L.control({ position: "bottomright" });
+    legend.onAdd = () => {
+      const div = L.DomUtil.create("div", "bias-legend");
+      div.innerHTML =
+        '<strong>Temp bias</strong><br>' +
+        '−3°F<span class="scale"></span>+3°F<br>' +
+        '<span style="color:#8a93a3;">cool (under-reads) → warm (over-reads)</span>';
+      return div;
+    };
+    legend.addTo(_biasMap);
+  }
+
+  // Clear any previous station layer and rebuild.
+  if (_biasMapLayer) _biasMapLayer.remove();
+  _biasMapLayer = L.layerGroup().addTo(_biasMap);
+
+  const plotted = [];
+  for (const r of stationRows) {
+    if (typeof r.lat !== "number" || typeof r.lng !== "number") continue;
+    if (r.temp == null) continue;
+    const color = _offsetColor(r.temp);
+    const sign = r.temp >= 0 ? "+" : "";
+    const popup =
+      `<strong>${r.station}</strong><br>` +
+      (r.distance_mi != null ? `${r.distance_mi.toFixed(2)} mi from Wyman Cove<br>` : "") +
+      `Temp bias: <strong style="color:${color};">${sign}${r.temp.toFixed(2)}°F</strong>` +
+      (r.temp_day != null ? `<br>Day: ${r.temp_day >= 0 ? "+" : ""}${r.temp_day.toFixed(2)}°F` : "") +
+      (r.temp_night != null ? `<br>Night: ${r.temp_night >= 0 ? "+" : ""}${r.temp_night.toFixed(2)}°F` : "");
+    L.circleMarker([r.lat, r.lng], {
+      radius: 7,
+      fillColor: color,
+      color: "#0f1115",
+      weight: 1.5,
+      fillOpacity: 0.9,
+    }).bindPopup(popup).addTo(_biasMapLayer);
+    plotted.push([r.lat, r.lng]);
+  }
+
+  // Fit to include all plotted stations + Wyman Cove.
+  if (plotted.length) {
+    plotted.push(WYMAN_COVE);
+    _biasMap.fitBounds(plotted, { padding: [30, 30], maxZoom: 14 });
+  }
+}
+
+// ── Section 3 (cont.): station bias offsets table ────────────────────────────
 
 const BIAS_COLS = [
   { key: "temp",       label: "Temp",       unit: "°F", digits: 2 },
@@ -374,29 +512,36 @@ function renderBiasSection(wxDoc) {
     return;
   }
 
-  // Build a station_id → distance_mi lookup. WU stations live in
-  // wxDoc.wu_stations.stations (string IDs like "KMAMARBL4"); Tempest
-  // stations live in wxDoc.tempest.stations (numeric station_id). The
-  // station_offsets dict mixes both.
-  const distByStation = {};
-  const wuStations = (wxDoc.wu_stations && wxDoc.wu_stations.stations) || [];
-  for (const s of wuStations) {
-    if (s && s.station_id != null && typeof s.distance_mi === "number") {
-      distByStation[s.station_id] = s.distance_mi;
-    }
+  // Build station_id → {distance_mi, lat, lng} lookups. WU stations are in
+  // wxDoc.wu_stations.stations (string IDs like "KMAMARBL4"); Tempest stations
+  // are in wxDoc.tempest.stations (numeric station_id). station_offsets mixes
+  // both, so we have to consult both sources.
+  const metaByStation = {};
+  const addMeta = (id, s) => {
+    metaByStation[id] = {
+      distance_mi: typeof s.distance_mi === "number" ? s.distance_mi : null,
+      lat: typeof s.latitude === "number" ? s.latitude : null,
+      lng: typeof s.longitude === "number" ? s.longitude : null,
+    };
+  };
+  for (const s of (wxDoc.wu_stations && wxDoc.wu_stations.stations) || []) {
+    if (s && s.station_id != null) addMeta(s.station_id, s);
   }
-  const tempestStations = (wxDoc.tempest && wxDoc.tempest.stations) || [];
-  for (const s of tempestStations) {
-    if (s && s.station_id != null && typeof s.distance_mi === "number") {
-      distByStation[s.station_id] = s.distance_mi;
-      // Some bias-tracker entries key Tempest stations by the numeric id as
-      // a string; cover that case too.
-      distByStation[String(s.station_id)] = s.distance_mi;
+  for (const s of (wxDoc.tempest && wxDoc.tempest.stations) || []) {
+    if (s && s.station_id != null) {
+      addMeta(s.station_id, s);
+      addMeta(String(s.station_id), s);  // some keys come through as strings
     }
   }
 
   const rows = [...stationIds].map(s => {
-    const r = { station: s, distance_mi: distByStation[s] ?? null };
+    const meta = metaByStation[s] || {};
+    const r = {
+      station: s,
+      distance_mi: meta.distance_mi ?? null,
+      lat: meta.lat ?? null,
+      lng: meta.lng ?? null,
+    };
     for (const c of BIAS_COLS) {
       const v = offsets[c.key] && offsets[c.key][s];
       r[c.key] = (typeof v === "number") ? v : null;
@@ -404,6 +549,7 @@ function renderBiasSection(wxDoc) {
     return r;
   });
   _biasState.rows = rows;
+  renderBiasMap(rows);
   _renderBiasTable();
 
   // Header stats panel
