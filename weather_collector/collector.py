@@ -49,6 +49,7 @@ from .processors.hourly_7day import normalize_for_payload, normalize_for_forecas
 from .processors.hourly_trim import trim_hourly_to_current_hour
 from .processors.forecast_error_log import update_forecast_error_log
 from .processors.decay_fit import fit_decay_corrections
+from .processors.decay_apply import apply_decay_corrections
 from .processors.normalize import normalize_current, normalize_hourly, normalize_daily, empty_hourly
 
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -349,6 +350,15 @@ def main():
 
     # Trim hourly arrays so they start at the current local hour
     trim_hourly_to_current_hour(weather_data)
+
+    # Apply per-lead decay corrections (Piece 4) on top of the existing bias
+    # correction and wind blend. Runs after trim so array index == lead_h.
+    # Snapshot was already logged inside build_weather_data, so this does not
+    # affect what the Fitter measures next round (keeps corrections stable).
+    try:
+        apply_decay_corrections(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Decay apply failed: {redact_secrets(e)}")
 
     # Match past forecast snapshots against observed hours and log the errors
     # (feeds the per-field decay-curve fitter). Non-essential to the main
