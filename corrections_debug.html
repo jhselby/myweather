@@ -295,7 +295,10 @@ const BIAS_COLS = [
   { key: "humidity",   label: "Humidity",   unit: "%",  digits: 1 },
   { key: "pressure",   label: "Pressure",   unit: "",   digits: 3 },
 ];
-let _biasState = { rows: [], sortKey: "temp", sortDir: -1 };  // -1 = desc by |val|
+// Default sort: by distance ascending (nearest first).
+// sortDir: +1 = ascending, -1 = descending. For bias columns we sort by |value|;
+// for distance we sort by raw value. _biasSortMode tells which mode applies.
+let _biasState = { rows: [], sortKey: "distance_mi", sortDir: +1 };
 
 function _offsetCellClass(v) {
   if (v == null || Number.isNaN(v)) return "";
@@ -310,20 +313,27 @@ function _renderBiasTable() {
     wrap.innerHTML = "";
     return;
   }
+  // distance and station sort by raw value; bias columns sort by |value|.
+  const isRawSort = (sortKey === "distance_mi" || sortKey === "station");
   const sorted = [...rows].sort((a, b) => {
     const av = a[sortKey], bv = b[sortKey];
-    // Treat null as smaller than any number for desc-by-magnitude sorts.
     if (av == null && bv == null) return 0;
-    if (av == null) return 1;
+    if (av == null) return 1;   // nulls sink
     if (bv == null) return -1;
+    if (isRawSort) {
+      if (typeof av === "string") return sortDir * av.localeCompare(bv);
+      return sortDir * (av - bv);
+    }
     return sortDir * (Math.abs(bv) - Math.abs(av));
   });
   const head = `<tr>
-    <th data-col="station" class="${sortKey === 'station' ? 'sorted' : ''}">Station</th>
+    <th data-col="station"     class="${sortKey === 'station' ? 'sorted' : ''}">Station</th>
+    <th data-col="distance_mi" class="${sortKey === 'distance_mi' ? 'sorted' : ''}">Dist (mi)</th>
     ${BIAS_COLS.map(c => `<th data-col="${c.key}" class="${sortKey === c.key ? 'sorted' : ''}">${c.label}${c.unit ? ' (' + c.unit + ')' : ''}</th>`).join('')}
   </tr>`;
   const body = sorted.map(r => `<tr>
     <td class="station">${r.station}</td>
+    <td>${r.distance_mi == null ? "—" : r.distance_mi.toFixed(2)}</td>
     ${BIAS_COLS.map(c => {
       const v = r[c.key];
       const cls = _offsetCellClass(v);
@@ -335,8 +345,13 @@ function _renderBiasTable() {
   wrap.querySelectorAll("th[data-col]").forEach(th => {
     th.addEventListener("click", () => {
       const col = th.dataset.col;
-      if (_biasState.sortKey === col) _biasState.sortDir *= -1;
-      else { _biasState.sortKey = col; _biasState.sortDir = -1; }
+      if (_biasState.sortKey === col) {
+        _biasState.sortDir *= -1;
+      } else {
+        _biasState.sortKey = col;
+        // Default direction: ascending for distance/station, desc-by-magnitude for bias.
+        _biasState.sortDir = (col === "distance_mi" || col === "station") ? +1 : -1;
+      }
       _renderBiasTable();
     });
   });
@@ -359,8 +374,18 @@ function renderBiasSection(wxDoc) {
     return;
   }
 
+  // Build a station_id → distance_mi lookup from wu_stations (only WU stations
+  // ship distance today; Tempest / others will fall back to null and sort last).
+  const distByStation = {};
+  const wuStations = (wxDoc.wu_stations && wxDoc.wu_stations.stations) || [];
+  for (const s of wuStations) {
+    if (s && s.station_id != null && typeof s.distance_mi === "number") {
+      distByStation[s.station_id] = s.distance_mi;
+    }
+  }
+
   const rows = [...stationIds].map(s => {
-    const r = { station: s };
+    const r = { station: s, distance_mi: distByStation[s] ?? null };
     for (const c of BIAS_COLS) {
       const v = offsets[c.key] && offsets[c.key][s];
       r[c.key] = (typeof v === "number") ? v : null;
