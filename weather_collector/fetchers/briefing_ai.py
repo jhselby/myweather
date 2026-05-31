@@ -6,9 +6,13 @@ Falls back gracefully if the API is unavailable.
 from ..utils import redact_secrets
 
 import json
-import os
-import requests
 import logging
+import os
+import time
+from datetime import datetime
+
+import pytz
+import requests
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
@@ -443,3 +447,35 @@ def generate_briefing(weather_data):
         return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", ""), "model": cached.get("model", "gemini")}
 
     return None
+
+
+def apply_briefing_to_weather_data(weather_data):
+    """Run generate_briefing(), store the result on weather_data['briefing'],
+    record the source status (with cached_at age in minutes) on
+    weather_data['sources']['gemini'], and log the elapsed time. Handles the
+    failure path by setting an empty briefing placeholder + error status.
+    Mutates weather_data in place; returns nothing."""
+    t0 = time.time()
+    try:
+        briefing = generate_briefing(weather_data)
+    except Exception as e:
+        logging.error(f"  ⚠ Briefing generation failed: {e}")
+        briefing = None
+    elapsed = time.time() - t0
+
+    if briefing:
+        weather_data["briefing"] = briefing
+        # Age of the cached_at timestamp (minutes from now in Eastern time)
+        gemini_age = 0
+        if briefing.get("cached_at"):
+            try:
+                cached = datetime.fromisoformat(briefing["cached_at"])
+                gemini_age = round((datetime.now(pytz.timezone("America/New_York")) - cached).total_seconds() / 60, 1)
+            except Exception:
+                pass
+        weather_data["sources"]["gemini"] = {"status": "ok", "age_minutes": gemini_age}
+    else:
+        weather_data.setdefault("briefing", {"headline": "", "subheadline": ""})
+        weather_data["sources"]["gemini"] = {"status": "error", "age_minutes": 0}
+
+    logging.info(f"  ⏱  Briefing AI: {elapsed:.1f}s")

@@ -22,7 +22,7 @@ from .utils import iso_utc_now, compute_age_minutes, redact_secrets
 # Import fetchers (data fetching orchestration is fully in fetchers/fetch_all.py;
 # briefing AI is called directly from main() since it needs the assembled
 # weather_data as input).
-from .fetchers.briefing_ai import generate_briefing
+from .fetchers.briefing_ai import apply_briefing_to_weather_data
 from .fetchers.fetch_all import fetch_all_sources
 from .fetchers.open_meteo import fetch_directional_clouds
 from .processors.wet_bulb import add_wet_bulb_temps
@@ -46,6 +46,7 @@ from .processors.daily_extremes import compute_daily_extremes
 from .processors.current_derived import compute_current_derived
 from .processors.fog_metrics import compute_fog_metrics
 from .processors.hourly_7day import normalize_for_payload, normalize_for_forecast_generation
+from .processors.hourly_trim import trim_hourly_to_current_hour
 from .processors.normalize import normalize_current, normalize_hourly, normalize_daily, empty_hourly
 
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -341,38 +342,11 @@ def main():
     )
     logging.info(f"  ⏱  Build weather data: {time.time() - t0:.1f}s")
 
-    # Generate AI briefing headline
-    t0 = time.time()
-    try:
-        briefing = generate_briefing(weather_data)
-    except Exception as e:
-        logging.error(f"  ⚠ Briefing generation failed: {e}")
-        briefing = None
-    elapsed = time.time() - t0
-    if briefing:
-        weather_data["briefing"] = briefing
-        # Calculate actual age from cached_at timestamp
-        _gemini_age = 0
-        if briefing.get("cached_at"):
-            try:
-                _cached = datetime.fromisoformat(briefing["cached_at"])
-                _gemini_age = round((datetime.now(pytz.timezone("America/New_York")) - _cached).total_seconds() / 60, 1)
-            except Exception:
-                pass
-        weather_data["sources"]["gemini"] = {"status": "ok", "age_minutes": _gemini_age}
-    else:
-        weather_data.setdefault("briefing", {"headline": "", "subheadline": ""})
-        weather_data["sources"]["gemini"] = {"status": "error", "age_minutes": 0}
-    logging.info(f"  ⏱  Briefing AI: {elapsed:.1f}s")
+    # AI briefing — generates headline, wires to payload, records source status
+    apply_briefing_to_weather_data(weather_data)
 
-    # Trim hourly arrays to start from current hour
-    now_local = datetime.now(pytz.timezone("America/New_York"))
-    current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
-    hourly_times = weather_data.get("hourly", {}).get("times", [])
-    trim_idx = next((i for i, t in enumerate(hourly_times) if t >= current_hour_iso), 0)
-    if trim_idx > 0 and "hourly" in weather_data:
-        for key in weather_data["hourly"]:
-            weather_data["hourly"][key] = weather_data["hourly"][key][trim_idx:]
+    # Trim hourly arrays so they start at the current local hour
+    trim_hourly_to_current_hour(weather_data)
 
     # Apply stale fallbacks for any source that failed this run
     stale_sources = apply_stale_fallbacks(weather_data, prev_weather_data, fetched.failed_fetches)
