@@ -188,6 +188,15 @@ def blend_observed_into_hourly(weather_data):
     if not hourly or "wind_gusts" not in hourly:
         return
 
+    # Preserve raw (pre-blend) wind values so downstream (decay debug page,
+    # anything else) can show what the forecast would be with NO local
+    # corrections applied at all. temp/humidity/POP retain their raw arrays
+    # naturally — only wind/gust get mutated in place here.
+    if "wind_speed" in hourly and "raw_wind_speed" not in hourly:
+        hourly["raw_wind_speed"] = list(hourly["wind_speed"])
+    if "raw_wind_gusts" not in hourly:
+        hourly["raw_wind_gusts"] = list(hourly["wind_gusts"])
+
     cur = weather_data.get("current", {})
     observed_gust = cur.get("wind_gusts")
     observed_speed = cur.get("wind_speed")

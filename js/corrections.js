@@ -133,6 +133,72 @@ function renderCorrectionsCard(data) {
 
   // ── Station bias offsets (adaptive bias correction) ───────────────────────
   _renderStationOffsets(hyp);
+
+  // ── Forecast decay corrections (lead-time-dependent error correction) ────
+  _renderDecayCorrections(data);
+}
+
+
+function _renderDecayCorrections(data) {
+  const container = document.getElementById('decayCorrectionsSection');
+  if (!container) return;
+
+  const dm = data && data.decay_meta;
+  if (!dm || typeof dm !== 'object') {
+    container.style.display = 'none';
+    return;
+  }
+
+  // Field key → [display label, unit, decimal places]
+  const fieldSpec = {
+    t:  ['Temperature', '°F',  1],
+    dp: ['Dew Point',   '°F',  1],
+    h:  ['Humidity',    '%',   0],
+    ws: ['Wind Speed',  'mph', 1],
+    wg: ['Wind Gust',   'mph', 1],
+    pp: ['Precip Prob', '%',   0],
+  };
+
+  const per24 = dm.per_field_24h || {};
+  // Display in a stable order (matches the debug page) so the user gets a
+  // consistent layout regardless of dict insertion order.
+  const order = ['t', 'dp', 'h', 'ws', 'wg', 'pp'];
+  const rows = order
+    .filter(k => k in per24)
+    .map(k => {
+      const v = Number(per24[k]);
+      const [label, unit, digits] = fieldSpec[k] || [k, '', 1];
+      const sign = v >= 0 ? '+' : '';
+      const color = v > 0 ? 'rgba(239,100,80,0.9)'
+                  : v < 0 ? 'rgba(80,160,239,0.9)'
+                  :         'rgba(180,180,180,0.7)';
+      const display = `${sign}${v.toFixed(digits)}${unit === '°F' || unit === 'mph' ? ' ' + unit : unit}`;
+      return `<div style="display:flex;justify-content:space-between;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <span style="opacity:0.7;font-size:0.78rem;">${label}</span>
+        <span style="font-weight:700;color:${color};font-size:0.78rem;">${display}</span>
+      </div>`;
+    }).join('');
+
+  const cappedText = dm.cells_capped ? ` · ${dm.cells_capped} capped` : '';
+  const cells = dm.cells_corrected || 0;
+  container.innerHTML = `
+    <div style="margin-top:14px;">
+      <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'"
+           style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.5);cursor:pointer;user-select:none;padding:4px 0;">
+        Forecast Decay Corrections ▾
+      </div>
+      <div style="display:none;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;margin-top:6px;">
+        <div style="display:flex;justify-content:space-between;padding:5px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.1);">
+          <span style="font-weight:800;font-size:0.78rem;color:rgba(255,255,255,0.6);">+24h forecast adjustment</span>
+          <span style="font-weight:800;font-size:0.78rem;color:rgba(255,255,255,0.6);">${cells} cells${cappedText}</span>
+        </div>
+        ${rows || `<div style="padding:8px;font-size:0.78rem;opacity:0.5;">No +24h correction data available yet.</div>`}
+        <div style="padding:5px 8px;font-size:0.72rem;opacity:0.4;">
+          Applied ${dm.applied_at || '?'} · fitted ${dm.fitted_at || '?'} · <a href="/corrections_debug.html" target="_blank" style="color:rgba(120,180,239,0.9);">full curves →</a>
+        </div>
+      </div>
+    </div>`;
+  container.style.display = '';
 }
 
 

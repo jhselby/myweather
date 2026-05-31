@@ -102,6 +102,12 @@ def apply_decay_corrections(weather_data):
         logging.warning("  ⚠  Decay apply: corrections malformed — skipping")
         return
 
+    # Preserve raw POP before the per-field loop mutates it. (temp/humidity
+    # have separate corrected_* arrays so their raw arrays already survive;
+    # wind/gust raw is captured upstream in blend_observed_into_hourly.)
+    if "precipitation_probability" in hourly and "raw_precipitation_probability" not in hourly:
+        hourly["raw_precipitation_probability"] = list(hourly["precipitation_probability"])
+
     applied = 0
     capped = 0
     for short, array_name in TARGET_ARRAY.items():
@@ -161,6 +167,27 @@ def apply_decay_corrections(weather_data):
             msg += f" ({capped} capped at sanity bound)"
         logging.info(msg)
 
+    # Per-field correction value at lead +24h — the most actionable
+    # "tomorrow's forecast got adjusted by" number for the Corrections card.
+    # Already capped to match what Apply actually did.
+    per_field_24h = {}
+    LEAD_24H = 24
+    for short in TARGET_ARRAY:
+        per_lead = corrections.get(short, [])
+        if not isinstance(per_lead, list) or len(per_lead) <= LEAD_24H:
+            continue
+        c = per_lead[LEAD_24H]
+        if c is None:
+            continue
+        try:
+            c = float(c)
+        except (TypeError, ValueError):
+            continue
+        cap = CAPS.get(short, float("inf"))
+        if abs(c) > cap:
+            c = cap if c > 0 else -cap
+        per_field_24h[short] = round(c, 2)
+
     # Stamp the payload so the debug page (and anything else) can tell
     # which weather_data ticks actually had decay corrections applied.
     weather_data["decay_meta"] = {
@@ -168,4 +195,5 @@ def apply_decay_corrections(weather_data):
         "applied_at": datetime.now(TZ).replace(tzinfo=None).strftime("%Y-%m-%dT%H:%M"),
         "cells_corrected": applied,
         "cells_capped": capped,
+        "per_field_24h": per_field_24h,
     }

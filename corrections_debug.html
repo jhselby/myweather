@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MyWeather — Corrections Debug</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171b22;
+    --ink: #e7ecf3;
+    --muted: #8a93a3;
+    --accent: #4aa3ff;
+    --warn: #ff9f4a;
+    --warm: rgba(239,100,80,0.9);
+    --cool: rgba(80,160,239,0.9);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 18px;
+    font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #242833;
+  }
+  h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  h2.section {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin: 22px 2px 10px;
+    font-weight: 600;
+  }
+  .meta { color: var(--muted); font-size: 12px; }
+  .meta strong { color: var(--ink); font-weight: 500; }
+  .meta a { color: var(--accent); }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    padding: 12px 12px 6px;
+  }
+  .card h3 {
+    font-size: 13px;
+    margin: 0 0 8px;
+    color: var(--muted);
+    font-weight: 500;
+    display: flex;
+    justify-content: space-between;
+  }
+  .card h3 .name { color: var(--ink); font-weight: 600; }
+  .card h3 .summary { color: var(--muted); font-weight: 400; }
+  .chart-wrap { position: relative; height: 220px; }
+  .status {
+    padding: 10px 12px;
+    color: var(--warn);
+    font-size: 13px;
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+  /* Section 3 table */
+  .stats-panel {
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+  }
+  .stats-panel strong { color: var(--ink); font-weight: 500; }
+  .offset-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 12px;
+  }
+  .offset-table th, .offset-table td {
+    padding: 6px 10px;
+    text-align: right;
+    border-bottom: 1px solid #1f242d;
+  }
+  .offset-table th {
+    background: #1c2029;
+    color: var(--muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 11px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .offset-table th.sorted { color: var(--ink); }
+  .offset-table th:first-child, .offset-table td:first-child { text-align: left; }
+  .offset-table td.station { color: var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .offset-table tr:last-child td { border-bottom: none; }
+  .offset-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .offset-cell.warm { color: var(--warm); font-weight: 600; }
+  .offset-cell.cool { color: var(--cool); font-weight: 600; }
+  .offset-cell.zero { color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Corrections debug</h1>
+  <span class="meta" id="meta">loading…</span>
+</header>
+
+<div id="status-corrections" class="status" hidden></div>
+<h2 class="section">1. Fitted decay-correction curves — what is being applied</h2>
+<div id="grid-corrections" class="grid"></div>
+
+<div id="status-live" class="status" hidden></div>
+<h2 class="section">2. Live forecast — with vs without corrections</h2>
+<div id="grid-live" class="grid"></div>
+
+<div id="status-bias" class="status" hidden></div>
+<h2 class="section">3. Station calibration offsets — per-station bias</h2>
+<div id="stats-bias" class="stats-panel" hidden></div>
+<div id="bias-table-wrap"></div>
+
+<script>
+const CORRECTIONS_URL = "https://data.wymancove.com/decay_corrections.json";
+const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
+
+const FIELDS = [
+  { key: "t",  label: "Temperature", unit: "°F",  array: "corrected_temperature",     raw: "temperature" },
+  { key: "dp", label: "Dew point",   unit: "°F",  array: "corrected_dew_point",       raw: "__dp_magnus__" },
+  { key: "h",  label: "Humidity",    unit: "%",   array: "corrected_humidity",        raw: "humidity" },
+  { key: "ws", label: "Wind speed",  unit: "mph", array: "wind_speed",                raw: "raw_wind_speed" },
+  { key: "wg", label: "Wind gust",   unit: "mph", array: "wind_gusts",                raw: "raw_wind_gusts" },
+  { key: "pp", label: "Precip prob", unit: "%",   array: "precipitation_probability", raw: "raw_precipitation_probability" },
+];
+
+// Port of magnus_dew_point_f() in weather_collector/utils.py (constants 17.625, 243.04).
+function magnusDpF(tF, h) {
+  if (tF == null || h == null || h <= 0) return null;
+  const tC = (tF - 32) * 5 / 9;
+  const gamma = Math.log(h / 100) + (17.625 * tC) / (243.04 + tC);
+  const dpC = 243.04 * gamma / (17.625 - gamma);
+  return dpC * 9 / 5 + 32;
+}
+
+function rawValuesFor(f, hourly, len) {
+  if (f.raw === "__dp_magnus__") {
+    const t = hourly.temperature || [];
+    const h = hourly.humidity || [];
+    return Array.from({ length: len }, (_, i) => magnusDpF(t[i], h[i]));
+  }
+  // Fallback: if the raw_* array isn't shipped yet (e.g., pre-redeploy tick),
+  // fall back to the base array name — meaning the raw line will visually
+  // overlap the live line in that field, which is a clear signal that the
+  // payload is from before the raw snapshot was wired up.
+  const fallback = (f.raw === "raw_precipitation_probability") ? "precipitation_probability"
+                 : (f.raw === "raw_wind_speed")               ? "wind_speed"
+                 : (f.raw === "raw_wind_gusts")               ? "wind_gusts"
+                 : null;
+  const arr = hourly[f.raw] || (fallback ? hourly[fallback] : null) || [];
+  return arr.slice(0, len);
+}
+
+function showStatus(id, msg) {
+  const s = document.getElementById(id);
+  s.textContent = msg;
+  s.hidden = false;
+}
+
+function renderMeta(corrDoc, wxDoc) {
+  const el = document.getElementById("meta");
+  const dm = (wxDoc && wxDoc.decay_meta) || null;
+  const applied = dm
+    ? `<strong style="color:#4aa3ff;">decay applied ${dm.applied_at}</strong> (${dm.cells_corrected.toLocaleString()} cells${dm.cells_capped ? `, ${dm.cells_capped} capped` : ""})`
+    : `<strong style="color:#ff9f4a;">decay NOT yet applied to this payload</strong>`;
+  const fitted = corrDoc ? `fitted <strong>${corrDoc.fitted_at || "?"}</strong> · <strong>${(corrDoc.n_pairs || 0).toLocaleString()}</strong> pairs · ` : "";
+  el.innerHTML =
+    `${fitted}${applied} · ` +
+    `<a href="${CORRECTIONS_URL}" target="_blank">corrections</a> · ` +
+    `<a href="${WEATHER_URL}" target="_blank">weather</a>`;
+}
+
+function buildCorrectionChart(canvas, field, corrections, counts) {
+  const labels = Array.from({ length: corrections.length }, (_, i) => i);
+  const series = corrections.map(v => (v === null || v === undefined ? NaN : v));
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: `mean error (${field.unit})`, data: series,
+          borderColor: "#4aa3ff", backgroundColor: "rgba(74,163,255,0.15)",
+          borderWidth: 1.5, pointRadius: 2, tension: 0.25, spanGaps: false, yAxisID: "y" },
+        { label: "n samples", data: counts, type: "bar",
+          backgroundColor: "rgba(138,147,163,0.25)", borderWidth: 0, yAxisID: "y2" },
+      ],
+    },
+    options: chartOpts(field, { secondaryY: true, yTitle: `mean error (${field.unit})` }),
+  });
+}
+
+function buildLiveChart(canvas, field, applied, liveVals, otherVals, rawVals) {
+  // Solid blue   = Forecast (live = full corrections: bias + blend + decay).
+  // Dashed gray  = same forecast with the decay layer removed (or added if not applied yet).
+  // Dotted gray  = raw model — no local corrections at all.
+  const otherLabel = applied ? "without decay correction" : "with decay correction";
+  const labels = Array.from({ length: liveVals.length }, (_, i) => i);
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels,
+      datasets: [
+        { label: "Forecast", data: liveVals,
+          borderColor: "#4aa3ff", backgroundColor: "rgba(74,163,255,0.15)",
+          borderWidth: 1.8, pointRadius: 0, tension: 0.25, spanGaps: true },
+        { label: otherLabel, data: otherVals,
+          borderColor: "#8a93a3", backgroundColor: "rgba(0,0,0,0)",
+          borderWidth: 1.2, borderDash: [4, 4], pointRadius: 0, tension: 0.25, spanGaps: true },
+        { label: "raw model", data: rawVals,
+          borderColor: "rgba(138,147,163,0.55)", backgroundColor: "rgba(0,0,0,0)",
+          borderWidth: 1, borderDash: [2, 3], pointRadius: 0, tension: 0.25, spanGaps: true },
+      ],
+    },
+    options: chartOpts(field, { secondaryY: false, yTitle: `value (${field.unit})` }),
+  });
+}
+
+function chartOpts(field, { secondaryY, yTitle }) {
+  const scales = {
+    x: {
+      title: { display: true, text: "lead time (hours)", color: "#8a93a3" },
+      ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
+      grid: { color: "#242833" },
+    },
+    y: {
+      title: { display: true, text: yTitle, color: "#8a93a3" },
+      ticks: { color: "#8a93a3" },
+      grid: { color: "#242833" },
+      beginAtZero: false,
+    },
+  };
+  if (secondaryY) {
+    scales.y2 = {
+      position: "right",
+      title: { display: true, text: "n", color: "#8a93a3" },
+      ticks: { color: "#8a93a3" },
+      grid: { display: false },
+      beginAtZero: true,
+    };
+  }
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: {
+      legend: { labels: { color: "#8a93a3", boxWidth: 10, font: { size: 11 } }, position: "bottom" },
+      tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
+    },
+    scales,
+  };
+}
+
+function fmtFixed(v, digits) {
+  return (v === null || v === undefined || Number.isNaN(v)) ? "—" : Number(v).toFixed(digits);
+}
+
+// ── Section 3: station bias offsets table ────────────────────────────────────
+
+const BIAS_COLS = [
+  { key: "temp",       label: "Temp",       unit: "°F", digits: 2 },
+  { key: "temp_day",   label: "Day",        unit: "°F", digits: 2 },
+  { key: "temp_night", label: "Night",      unit: "°F", digits: 2 },
+  { key: "humidity",   label: "Humidity",   unit: "%",  digits: 1 },
+  { key: "pressure",   label: "Pressure",   unit: "",   digits: 3 },
+];
+let _biasState = { rows: [], sortKey: "temp", sortDir: -1 };  // -1 = desc by |val|
+
+function _offsetCellClass(v) {
+  if (v == null || Number.isNaN(v)) return "";
+  if (Math.abs(v) < 0.05) return "zero";
+  return v > 0 ? "warm" : "cool";
+}
+
+function _renderBiasTable() {
+  const wrap = document.getElementById("bias-table-wrap");
+  const { rows, sortKey, sortDir } = _biasState;
+  if (!rows.length) {
+    wrap.innerHTML = "";
+    return;
+  }
+  const sorted = [...rows].sort((a, b) => {
+    const av = a[sortKey], bv = b[sortKey];
+    // Treat null as smaller than any number for desc-by-magnitude sorts.
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return sortDir * (Math.abs(bv) - Math.abs(av));
+  });
+  const head = `<tr>
+    <th data-col="station" class="${sortKey === 'station' ? 'sorted' : ''}">Station</th>
+    ${BIAS_COLS.map(c => `<th data-col="${c.key}" class="${sortKey === c.key ? 'sorted' : ''}">${c.label}${c.unit ? ' (' + c.unit + ')' : ''}</th>`).join('')}
+  </tr>`;
+  const body = sorted.map(r => `<tr>
+    <td class="station">${r.station}</td>
+    ${BIAS_COLS.map(c => {
+      const v = r[c.key];
+      const cls = _offsetCellClass(v);
+      const txt = v == null ? "—" : `${v >= 0 ? '+' : ''}${v.toFixed(c.digits)}`;
+      return `<td class="offset-cell ${cls}">${txt}</td>`;
+    }).join('')}
+  </tr>`).join('');
+  wrap.innerHTML = `<table class="offset-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll("th[data-col]").forEach(th => {
+    th.addEventListener("click", () => {
+      const col = th.dataset.col;
+      if (_biasState.sortKey === col) _biasState.sortDir *= -1;
+      else { _biasState.sortKey = col; _biasState.sortDir = -1; }
+      _renderBiasTable();
+    });
+  });
+}
+
+function renderBiasSection(wxDoc) {
+  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+  const offsets = hyp.station_offsets || {};
+  const stats = document.getElementById("stats-bias");
+
+  // Compose per-station rows by unioning every station mentioned across any offset type.
+  const stationIds = new Set();
+  for (const k of Object.keys(offsets)) {
+    const o = offsets[k];
+    if (o && typeof o === "object") Object.keys(o).forEach(s => stationIds.add(s));
+  }
+  if (!stationIds.size) {
+    showStatus("status-bias", "No station_offsets in weather_data.json yet.");
+    stats.hidden = true;
+    return;
+  }
+
+  const rows = [...stationIds].map(s => {
+    const r = { station: s };
+    for (const c of BIAS_COLS) {
+      const v = offsets[c.key] && offsets[c.key][s];
+      r[c.key] = (typeof v === "number") ? v : null;
+    }
+    return r;
+  });
+  _biasState.rows = rows;
+  _renderBiasTable();
+
+  // Header stats panel
+  const fmt = (v, d=2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
+  const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
+  const parts = [
+    `<span><strong>${hyp.stations_used ?? "?"}</strong> / ${hyp.stations_total ?? "?"} stations used · ${hyp.confidence ?? "—"} confidence</span>`,
+    `<span>weighted temp bias <strong>${sgn(hyp.weighted_bias)}${fmt(hyp.weighted_bias)}°F</strong></span>`,
+    hyp.bias_humidity != null ? `<span>humidity bias <strong>${sgn(hyp.bias_humidity)}${fmt(hyp.bias_humidity, 1)}%</strong></span>` : "",
+    hyp.bias_wind_speed != null ? `<span>wind bias <strong>${sgn(hyp.bias_wind_speed)}${fmt(hyp.bias_wind_speed, 1)} mph</strong></span>` : "",
+    hyp.bias_wind_gusts != null ? `<span>gust bias <strong>${sgn(hyp.bias_wind_gusts)}${fmt(hyp.bias_wind_gusts, 1)} mph</strong></span>` : "",
+    hyp.kalman_gain != null ? `<span>Kalman gain <strong>${fmt(hyp.kalman_gain, 3)}</strong></span>` : "",
+    hyp.bias_std != null ? `<span>bias σ <strong>${fmt(hyp.bias_std, 2)}°F</strong></span>` : "",
+    hyp.kbvy_temp_f != null ? `<span>KBVY <strong>${fmt(hyp.kbvy_temp_f, 1)}°F</strong> · local ${sgn(hyp.kbvy_local_delta)}${fmt(hyp.kbvy_local_delta, 1)}°F</span>` : "",
+  ];
+  stats.innerHTML = parts.filter(Boolean).join("");
+  stats.hidden = false;
+}
+
+async function load() {
+  let corrDoc, wxDoc;
+  try {
+    const res = await fetch(CORRECTIONS_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) {
+      showStatus("status-corrections", `No decay_corrections.json yet (HTTP ${res.status}). Trigger a Fitter run, then refresh.`);
+    } else {
+      corrDoc = await res.json();
+    }
+  } catch (err) {
+    showStatus("status-corrections", `Corrections load failed: ${err.message}`);
+  }
+
+  try {
+    const res = await fetch(WEATHER_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) {
+      showStatus("status-live", `weather_data.json load failed (HTTP ${res.status}).`);
+    } else {
+      wxDoc = await res.json();
+    }
+  } catch (err) {
+    showStatus("status-live", `weather_data.json load failed: ${err.message}`);
+  }
+
+  renderMeta(corrDoc, wxDoc);
+
+  const decayApplied = !!(wxDoc && wxDoc.decay_meta);
+
+  // ── Section 1: fitted correction curves ──
+  if (corrDoc) {
+    const grid = document.getElementById("grid-corrections");
+    for (const f of FIELDS) {
+      const corrections = (corrDoc.corrections || {})[f.key] || [];
+      const counts = (corrDoc.n_samples || {})[f.key] || [];
+      const validVals = corrections.filter(v => v !== null && v !== undefined);
+      const meanAbs = validVals.length
+        ? (validVals.reduce((s, v) => s + Math.abs(v), 0) / validVals.length).toFixed(2)
+        : "—";
+      const totalN = counts.reduce((s, v) => s + v, 0);
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<span class="summary">|mean| ${meanAbs} ${f.unit} · ${totalN.toLocaleString()} pairs</span></h3>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid.appendChild(card);
+      buildCorrectionChart(card.querySelector("canvas"), f, corrections, counts);
+    }
+  }
+
+  // ── Section 2: live forecast with vs without (+ raw) ──
+  if (corrDoc && wxDoc && wxDoc.hourly) {
+    if (!decayApplied) {
+      showStatus("status-live", "Decay not yet applied to this payload (the tick that produced it ran on older code). Solid line = current live forecast; dashed line = what decay correction WILL produce on the next tick.");
+    }
+    const grid = document.getElementById("grid-live");
+    for (const f of FIELDS) {
+      const corrections = (corrDoc.corrections || {})[f.key] || [];
+      const liveArr = wxDoc.hourly[f.array] || [];
+      const n = Math.min(corrections.length, liveArr.length);
+      const live = [];
+      const other = [];
+      for (let i = 0; i < n; i++) {
+        const v = liveArr[i];
+        const c = corrections[i];
+        if (v === null || v === undefined) {
+          live.push(NaN);
+          other.push(NaN);
+          continue;
+        }
+        live.push(Number(v));
+        if (c === null || c === undefined) {
+          other.push(Number(v));
+        } else if (decayApplied) {
+          other.push(Number(v) + Number(c));
+        } else {
+          other.push(Number(v) - Number(c));
+        }
+      }
+      const raw = rawValuesFor(f, wxDoc.hourly, n).map(v => (v == null ? NaN : Number(v)));
+
+      const digits = f.key === "pp" ? 0 : 1;
+      const nowVal = live.length ? fmtFixed(live[0], digits) : "—";
+      const v24    = live.length > 24 ? fmtFixed(live[24], digits) : "—";
+
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<span class="summary">now ${nowVal}${f.unit} · +24h ${v24}${f.unit}</span></h3>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid.appendChild(card);
+      buildLiveChart(card.querySelector("canvas"), f, decayApplied, live, other, raw);
+    }
+  } else if (corrDoc && wxDoc) {
+    showStatus("status-live", "weather_data.json loaded but has no hourly block.");
+  }
+
+  // ── Section 3: station calibration offsets ──
+  if (wxDoc) renderBiasSection(wxDoc);
+}
+
+load();
+</script>
+</body>
+</html>
