@@ -2,6 +2,8 @@
 
 This document exists because Claude has repeatedly failed in predictable, preventable ways across dozens of sessions. Every rule here was written in response to a real incident. Read this before every session. Follow it without exception.
 
+This file is a copy of the root `CLAUDE.md` (which Claude auto-loads). Keep the two in sync when rules change.
+
 ---
 
 ## 1. Git Workflow
@@ -121,11 +123,15 @@ This document exists because Claude has repeatedly failed in predictable, preven
 ## 8. Deploy Workflow
 
 **The rules:**
+- **ALWAYS test on localhost before pushing frontend changes.** No exceptions. Load the page, open the affected card/feature, verify it works visually. If it can't be tested (collector-only change), say so explicitly.
 - PWA (frontend): `git add`, `git commit`, `git push`. That's it.
 - Collector (backend): `make deploy-collector`.
 - Always deploy collector first if both changed, then verify GCS data, then commit frontend.
 - Don't suggest `make run-collector` when the next scheduled run is within 10 minutes.
 - After deploy, verify with logs: `gcloud functions logs read myweather-collector --region=us-east1 --limit=10 --gen2`
+
+**History of failures:**
+- May 21: Pushed observation history chart changes to the forecast chart without localhost testing. Chart broke the 48h forecast by turning it into a 72h chart that was unreadable on mobile. Had to revert.
 
 ---
 
@@ -153,8 +159,10 @@ These are current as of May 2026. If any seem wrong, ASK before assuming:
 - Challenge Joe when he's wrong — he prefers learning to being coddled.
 - Search past chats before asking Joe to re-explain context.
 - Don't say "I think" or "possibly" or "you might consider."
-- One question at a time, max. Usually zero.
 - Active voice with agency: "I broke it" or "you overwrote it" — never "it got broken."
+- **When intent is ambiguous, ask one targeted question instead of assuming.** Don't pick the "obvious" choice on Joe's behalf — if the assumption could be wrong, ask. The cost of a single question is tiny; the cost of executing on a wrong assumption is whole sessions. Counsel mode means asking before proposing, not silently picking.
+- **Ask one specific question, not a menu.** Not "here are three options, which do you want?" — that's still you deciding the option space. Ask the actual decision: "should the observed value be one per hour or one per 10-min obs?" Direct answers are faster than menu navigation.
+- **Joe's questions are usually probing, not disagreement.** Default assumption: he's testing his own understanding, testing your reasoning, or making sure your position holds up under scrutiny — NOT signaling that you're wrong. The correct response is to hold position and explain reasoning more clearly, not to change positions. Change only when he provides new information or identifies a specific error in your reasoning. If genuinely unsure whether he's challenging the conclusion or testing the path to it, ask: "are you pushing back on the answer, or checking the reasoning?" Defending a sound position under questioning is correct — capitulating to probing is the failure mode.
 
 ---
 
@@ -181,3 +189,5 @@ These are current as of May 2026. If any seem wrong, ASK before assuming:
 8. **Claiming to update memory/skills but not actually doing it** — breaks trust, causes repeated failures
 9. **Forgetting macOS sed syntax** — `sed -i ''` not `sed -i`
 10. **Giving multiple commands when output is needed** — Joe runs one, can't get back to the others
+11. **Assuming user intent when it could be asked** — picking the "obvious" interpretation of an ambiguous request instead of asking one targeted question. Documented in the May 31 decay-Joiner session: assumed hour-bucketed obs, assumed storage strategy, assumed "simple first," assumed regional bucket location — all wrong, all askable in one sentence.
+12. **Capitulating to pushback / flip-flopping under pressure** — switching positions because Joe questioned the prior one, not because new information arrived. Documented in the May 31 session: bucketed → per-obs → bucketed → per-obs → per-snapshot → full cross-product, with no new data driving any flip. Each reversal cost real time and made Joe lose track of which version we were building.

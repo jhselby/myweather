@@ -1,6 +1,13 @@
 # MyWeather Data Pipeline Reference
-**Last Updated:** May 31, 2026
+**Last Updated:** May 31, 2026 (decay-correction layer)
 **Purpose:** Complete technical specification of all data corrections and transformations. Line numbers intentionally omitted — file paths are the navigation aid; specific code locations move too often to keep accurate.
+
+> **Three correction layers, applied in order.** Every numeric forecast (temp, humidity, dew point, wind, gust, POP) goes through up to three layers before reaching the user:
+> 1. **Station-network bias correction** (`processors/hyperlocal.py` + `processors/station_bias.py` + `processors/corrected_hourly.py`) — flat per-tick offset from the WU/Tempest network, applied to all 48 hourly forecast hours.
+> 2. **Wind blend** (`processors/wind_blend.py`) — 24h linear blend from observed wind into model wind. Wind/gust only.
+> 3. **Lead-time decay correction** (`processors/decay_fit.py` + `processors/decay_apply.py`) — per-(field, lead_h) mean residual error, fitted daily from 30 days of `(snapshot × observation)` pairs, subtracted from the corrected forecast each tick. See [§DECAY PIPELINE](#decay-pipeline-layer-3) below.
+>
+> The frontend reads `hourly.corrected_temperature`, `hourly.corrected_humidity`, etc. directly — no further math.
 
 ---
 
@@ -101,27 +108,34 @@ corrected_temp = 32.9 + 0.27 = 33.2°F
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** NO correction applied to hourly arrays
-**Location:** `weather_collector/collector.py`
-**Storage:** `weather_data["hourly"]["temperature"]` contains raw HRRR model data
+**Backend:** YES — full correction stack in the collector. Frontend reads the result; no frontend math.
+**Pipeline order in `weather_collector/collector.py`:**
+1. `add_corrected_hourly_arrays(weather_data)` (Layer 1) builds `hourly.corrected_temperature[i] = hourly.temperature[i] + temp_bias`. Flat offset across all 48 hours.
+2. `apply_decay_corrections(weather_data)` (Layer 3) subtracts the per-lead mean residual: `hourly.corrected_temperature[i] -= decay_corrections["t"][i]`. Sanity-capped at ±5°F.
 
-**Frontend Application:** YES - flat bias applied
-**Location:** `js/app-main.js`
-**Formula:**
-```javascript
-const bias = hyp.weighted_bias ?? 0;
-corrected_forecast_temp = hourly.temperature[i] + bias
+**Storage:**
+- `weather_data["hourly"]["temperature"]` — raw HRRR model (preserved for debugging / for the "raw model" line on the debug page)
+- `weather_data["hourly"]["corrected_temperature"]` — fully-corrected (bias + decay), the value users see
+- `weather_data["decay_meta"]["per_field_24h"]["t"]` — the decay correction value at lead +24h, shipped for the Corrections card
+
+**Frontend read pattern:** `hourly.corrected_temperature || hourly.temperature` (always prefers corrected, falls back if missing)
+
+**Decay:** YES, since v0.5.235 (Piece 4). Per-lead correction varies by field. Typical magnitudes today:
+
+```
+                lead 0   lead 12   lead 24   lead 36   lead 47
+Temp (°F):       ~0        ~-1       ~-1.5     ~-3       ~-3
+Wind speed:      ~0        ~+1.5     ~+3.5     ~+5       ~+1
+Wind gust:       ~0        ~+4       ~+8.5     ~+12      ~+6
+Humidity (%):    ~+9       ~+10      ~+13      ~+10      ~+9
 ```
 
-**Decay:** NONE - Same bias applied to all 48 hours
-
-**Example:**
+**Example with decay applied:**
 ```
-Current hour: bias = +0.27°F
-Hour 1:  Model 31°F → Display 31.27°F
-Hour 6:  Model 29°F → Display 29.27°F
-Hour 24: Model 35°F → Display 35.27°F
-Hour 48: Model 38°F → Display 38.27°F
+Current hour: temp_bias = -4.6°F, decay[0]['t'] = -0.1°F
+Hour 0:   Model 60.0°F + bias(-4.6) - decay(-0.1) = 55.5°F
+Hour 24:  Model 67.0°F + bias(-4.6) - decay(-1.5) = 63.9°F
+Hour 36:  Model 70.0°F + bias(-4.6) - decay(-3.0) = 68.4°F
 ```
 
 ---
@@ -179,8 +193,14 @@ bias_humidity = corrected_humidity - model_humidity
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** `corrected_humidity` array built in `collector.py` immediately after `build_hyperlocal_data`
-**Storage:** `weather_data["hourly"]["corrected_humidity"]` contains bias-corrected values; raw `weather_data["hourly"]["humidity"]` preserved as fallback
+**Backend:** Full Layer-1 + Layer-3 stack:
+1. `add_corrected_hourly_arrays` builds `hourly.corrected_humidity[i] = hourly.humidity[i] + humid_bias` (Layer 1, flat offset).
+2. `apply_decay_corrections` subtracts `decay_corrections["h"][i]` from each lead hour (Layer 3, sanity-capped at ±20%).
+
+**Storage:**
+- `weather_data["hourly"]["humidity"]` — raw model (preserved)
+- `weather_data["hourly"]["corrected_humidity"]` — fully-corrected (bias + decay)
+- `weather_data["decay_meta"]["per_field_24h"]["h"]` — decay correction at +24h
 
 **Frontend Application:** YES — all display paths prefer corrected array
 **Pattern:** `hourly.corrected_humidity || hourly.humidity` used in app-main.js and `hyp.corrected_humidity ?? cur.humidity` for current hour
@@ -941,21 +961,74 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 
 ## CORRECTION STATUS MATRIX
 
-| Variable | Current Hour | Forecast (1-48h) | Method | Decay |
+| Variable | Current Hour | Forecast (1-48h) | Method | Layer 3 (decay) |
 |----------|-------------|------------------|--------|-------|
-| **Temperature** | ✅ Corrected | ✅ Bias applied (frontend) | Weighted bias | None (flat) |
-| **Humidity** | ✅ Corrected | ✅ corrected_humidity array used by frontend | Replacement | N/A |
-| **Pressure** | ✅ Best source | ❌ Raw model | Selection | N/A |
-| **Wind Speed** | ✅ Max-selected (model+KBVY+WU+Tempest, age-filtered) | ✅ Blended (backend) | Independent max-select | 24h linear |
-| **Wind Gusts** | ✅ Max-selected (model+KBVY+WU+Tempest, age-filtered) | ✅ Blended (backend) | Independent max-select | 24h linear |
-| **Wet Bulb** | ✅ Fully corrected | ✅ Fully corrected (v0.5.71) | Calculated | N/A |
-| **Feels Like (shade)** | ✅ NWS heat index from corrected inputs | ✅ AT formula solar=0 from corrected hourly | Calculated | N/A |
-| **Feels Like (full sun)** | ✅ AT formula with corrected inputs + solar | ✅ AT formula with hourly direct_radiation | Calculated | N/A |
+| **Temperature** | ✅ Corrected | ✅ Bias + decay (backend) | Weighted bias + per-lead residual | ✅ since v0.5.235, ±5°F cap |
+| **Humidity** | ✅ Corrected | ✅ Bias + decay (backend) | Replacement + per-lead residual | ✅ since v0.5.235, ±20% cap |
+| **Dew point** | ✅ Computed from corrected inputs | ✅ Computed + decay (backend) | Magnus from corrected t/h | ✅ since v0.5.235, ±5°F cap |
+| **Pressure** | ✅ Best source | ❌ Raw model | Selection | ❌ |
+| **Wind Speed** | ✅ Max-selected (model+KBVY+WU+Tempest, age-filtered) | ✅ Blended + decay (backend) | Independent max-select | ✅ since v0.5.235, ±10 mph cap; 24h linear blend underneath |
+| **Wind Gusts** | ✅ Max-selected (model+KBVY+WU+Tempest, age-filtered) | ✅ Blended + decay (backend) | Independent max-select | ✅ since v0.5.235, ±15 mph cap; 24h linear blend underneath |
+| **Precip prob** | — | ✅ Decay (backend) | Raw model | ✅ since v0.5.235, ±25% cap |
+| **Wet Bulb** | ✅ Fully corrected | ✅ Recomputed from corrected t/h after decay applies | Calculated | inherited |
+| **Feels Like (shade)** | ✅ NWS heat index from corrected inputs | ✅ Recomputed from corrected hourly after decay | Calculated | inherited |
+| **Feels Like (full sun)** | ✅ AT formula with corrected inputs + solar | ✅ Recomputed from corrected hourly + direct_radiation after decay | Calculated | inherited |
 
 **Legend:**
 - ✅ Fully corrected
 - ⚠️ Partially corrected or has issues
 - ❌ No correction applied
+
+---
+
+## DECAY PIPELINE (LAYER 3)
+
+The decay-correction layer is built from four pieces that all live in the collector. None are visible to users directly, but they're the part of the system that gets *better over time* by measuring its own past forecast errors and subtracting them.
+
+### Piece 1 — Logger (`processors/forecast_snapshot.py`)
+Every 10-min tick, writes the current corrected 48-hour forecast to `forecast_log.json` in GCS. Each snapshot is `{"run": "YYYY-MM-DDTHH:MM", "hours": [{v, t, ws, wg, h, dp, pp}, ...]}` with short field keys for compactness. The snapshot reads the post-Layer-1 (`corrected_temperature`/`corrected_humidity`) and post-Layer-2 (blended `wind_speed`/`wind_gusts`) arrays — so the recorded forecast is what the user would have seen at that moment if Apply hadn't run yet. 14-day rolling retention (~600 snapshots at steady state).
+
+### Piece 2 — Joiner (`processors/forecast_error_log.py`)
+Every tick. Reads new entries from `obs_temp_log.json` and pairs each one against every snapshot in `forecast_log.json` whose hours array covers that observation's hour. Emits one row per `(obs × snapshot × field)` triple — `{obs_time, run_time, valid_time, lead_h, field, forecast, observed, error}` where `error = forecast − observed`. New pairs are uploaded as a small temp JSONL blob and then **server-side composed** onto `forecast_error_log.jsonl` (GCS `compose` operation, O(1) regardless of file size). Watermark in `forecast_error_state.json` tracks the latest obs_time processed. POP uses `obs_entry.precip_in > 0` as the binary observed signal. At steady state: ~250k pairs/day, ~7.5M pairs / ~1.3 GB after 30 days.
+
+### Piece 3 — Fitter (`processors/decay_fit.py`)
+Once a day, gated on the `03:07 EDT` tick in `collector.main()`. Streams the full `forecast_error_log.jsonl` via `blob.open("r")` (bounded memory regardless of file size). For each `(field, lead_h)` bin where `0 ≤ lead_h < 48`, accumulates `Σerror` and `n`. Writes `decay_corrections.json` to GCS with shape:
+```json
+{
+  "fitted_at": "...",
+  "n_pairs": 1234567,
+  "retention_days": 30,
+  "corrections": {"t": [48 floats], "dp": [...], "h": [...], "ws": [...], "wg": [...], "pp": [...]},
+  "n_samples":   {"t": [48 ints],   ...}
+}
+```
+Same pass also prunes the input to a 30-day window and rewrites it as a single non-composed blob — this resets the GCS compose component count (otherwise hits the 5,300 ceiling around day 36). Empty bins write `null` in `corrections[field]`.
+
+### Piece 4 — Apply (`processors/decay_apply.py`)
+Every tick, after `trim_hourly_to_current_hour` (so array index == `lead_h`) and after `weather_data.json` has been uploaded (so a slow Fitter can't delay the user payload — wait, no — actually Apply runs *before* the upload as of v0.5.235; see code). Loads `decay_corrections.json`, validates `fitted_at` is within `STALE_DAYS` (7), and for each `(field → array)` in `TARGET_ARRAY` subtracts `corrections[field][i]` from `hourly[array_name][i]`. Per-field sanity caps prevent any single correction from moving the forecast more than its CAP. After mutating temp/humidity/dp/ws/wg/pp arrays, **recomputes** `corrected_apparent_temperature` (Steadman) and `corrected_absolute_humidity` (Bolton) so derived arrays stay self-consistent with their now-corrected base inputs. Also stamps:
+```json
+weather_data["decay_meta"] = {
+  "fitted_at": "...",
+  "applied_at": "...",
+  "cells_corrected": 288,        // 6 fields × 48 leads if all present
+  "cells_capped": 0,
+  "per_field_24h": {"t": ..., "dp": ..., "h": ..., "ws": ..., "wg": ..., "pp": ...}
+}
+```
+The `per_field_24h` summary is what the PWA Corrections card reads to render the "+24h forecast adjustment" mini-table — no separate `decay_corrections.json` fetch needed from the frontend.
+
+### Failure modes
+- **`decay_corrections.json` missing** (first deploy, before first Fitter run): Apply logs "no decay_corrections.json — skipping", returns without setting `decay_meta`. Payload ships with Layer 1 + Layer 2 only.
+- **`fitted_at` > 7 days old:** Apply logs "corrections stale — skipping", same fallback.
+- **Malformed `corrections` dict:** Apply logs warning, skips.
+- **Apply itself raises:** `collector.main()` wraps the call in try/except, logs the exception, payload continues without Layer 3.
+
+### Where the user can see this
+- **Live correction values:** `weather_data.decay_meta` (every tick)
+- **Per-(field, lead) correction curves:** `decay_corrections.json` directly, or the debug page at `corrections_debug.html` Section 1
+- **Live forecast with vs without decay:** debug page Section 2
+- **Per-station bias offsets (Layer 1 inputs) on a map:** debug page Section 3
+- **PWA inline summary:** Corrections card on Weather tab → "Forecast Decay Corrections ▾"
 
 ---
 
@@ -972,17 +1045,11 @@ Fetcher tries most recent cycle first, walks back through n000→n003→n006→n
 **Actual behavior:** Same as Bug #1 — `corrected_wind_speed` was already max-selected.
 **Status:** Constraint works as intended.
 
-### Improvement #1: Temperature Forecast Decay
-**Current:** Flat bias for all 48 hours
-**Potential:** Time-decaying bias (similar to wind's 24h decay)
-**Rationale:** Bias relevance decreases over time, especially across diurnal cycles
-**Complexity:** Medium - requires choosing decay window (6h? 12h? 24h?)
+### Improvement #1: Temperature Forecast Decay — RESOLVED (v0.5.235, May 31 2026)
+**Fix:** Built the four-piece decay pipeline (Logger / Joiner / Fitter / Apply) — see [§DECAY PIPELINE](#decay-pipeline-layer-3). `decay_apply.py` subtracts a per-lead mean residual from `corrected_temperature[i]` every tick. Sanity-capped at ±5°F. Fitted daily at 03:07 EDT over the prior 30 days of `(snapshot × observation)` pairs.
 
-### Improvement #2: Humidity Forecast Correction
-**Current:** Only used for wet bulb calculation, not applied to main humidity arrays
-**Potential:** Apply humidity bias to forecast (like temperature)
-**Impact:** Would improve dewpoint, wet bulb, feels-like forecasts
-**Complexity:** Low - just apply bias in frontend like temperature
+### Improvement #2: Humidity Forecast Correction — RESOLVED (v0.5.235, May 31 2026)
+**Fix:** Layer 1 already added `corrected_humidity[i] = humidity[i] + humid_bias` to the hourly arrays. Layer 3 (Piece 4) now also subtracts the per-lead humidity decay residual. Frontend reads `hourly.corrected_humidity` directly. Improves dewpoint, wet bulb, and feels-like forecasts as a side effect (those are derived in `corrected_hourly.py` and recomputed in `decay_apply.py` after corrections land, so they stay self-consistent).
 
 ### Improvement #3: Wet Bulb Forecast Full Correction — RESOLVED (v0.5.71)
 **Fix:** Both wet_bulb.py and precip_surface.py now read corrected_temperature and corrected_humidity arrays instead of raw model arrays. corrected_temperature is built in collector.py immediately after build_hyperlocal_data, so it's available to all downstream processors.
