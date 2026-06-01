@@ -3,7 +3,9 @@ Joiner: appends matched-pair rows to forecast_error_log.jsonl via GCS compose.
 
 Each tick:
 - Reads state file to find the last obs_time already processed
-- Walks new obs entries (those past last_processed and in completed hours)
+- Walks every new obs entry past last_processed (since v0.6.4 — was previously
+  gated on "completed hour bucket" which held back current-hour obs for up to
+  60 min; pairs are per-obs and don't need the hour to be fully sampled)
 - For each new obs, generates pairs against every snapshot that predicted its hour
 - Uploads the new pairs as a tiny temp .jsonl object
 - Composes main + temp → main (server-side, constant cost regardless of main size)
@@ -115,12 +117,14 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
     return pairs
 
 
-def _generate_new_pairs(forecast_log, obs_log, last_processed, current_hour_iso):
+def _generate_new_pairs(forecast_log, obs_log, last_processed):
     """Pure function — given inputs, return (new_pairs, latest_obs_time_processed).
 
-    Only emits pairs for obs entries strictly past last_processed AND in
-    hour buckets strictly before current_hour_iso (so each hour is fully
-    sampled before its pairs are written).
+    Emits pairs for every obs entry strictly past last_processed, regardless
+    of which hour bucket they fall in. Pairs are per-obs, not per-hour-bucket,
+    so emitting immediately at the next tick produces identical pair content
+    to waiting for the obs's hour to complete. Pre-v0.6.4 held back obs from
+    the current in-progress hour as a state-machine simplification.
     """
     snapshots = forecast_log.get("snapshots", [])
     obs_entries = obs_log.get("entries", [])
@@ -136,8 +140,6 @@ def _generate_new_pairs(forecast_log, obs_log, last_processed, current_hour_iso)
         if t <= last_processed:
             continue
         hour_key = t[:13] + ":00"
-        if hour_key >= current_hour_iso:
-            continue
         new_pairs.extend(_pairs_for_obs(e, hour_key, snapshots))
         if t > latest:
             latest = t
@@ -154,13 +156,8 @@ def update_forecast_error_log():
     forecast_log = load_json(FORECAST_LOG_PATH, default={"snapshots": []})
     obs_log = load_json(OBS_LOG_PATH, default={"entries": []})
 
-    now_local = datetime.now(TZ).replace(tzinfo=None)
-    current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
-
     last_processed = state.get("last_processed", "")
-    new_pairs, latest = _generate_new_pairs(
-        forecast_log, obs_log, last_processed, current_hour_iso
-    )
+    new_pairs, latest = _generate_new_pairs(forecast_log, obs_log, last_processed)
 
     if not new_pairs:
         # If we advanced the watermark with no eligible obs (rare), persist it
