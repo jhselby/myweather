@@ -248,7 +248,11 @@ const TIDE_HISTORY_URL = "https://data.wymancove.com/tide_phase_corrections_hist
 const TIMESERIES_URL  = "https://data.wymancove.com/time_series_diagnostic.json";
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
 const M2_PERIOD_HOURS = 12.4206;
-const SALEM_M2_AMPLITUDE_FT = 4.0;
+// Reference cosine amplitude for Section 5's phase-binned charts. Bumped from
+// 4.0 to 5.0 in v0.6.12 — closer to Salem's typical M2 amplitude. The
+// reference is for visual phase anchoring only; Section 6 uses real NOAA
+// harmonic heights from the collector.
+const SALEM_M2_AMPLITUDE_FT = 5.0;
 
 const FIELDS = [
   { key: "t",  label: "Temperature", unit: "°F",  array: "corrected_temperature",     raw: "temperature" },

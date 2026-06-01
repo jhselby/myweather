@@ -27,6 +27,7 @@ the correction is weighted_mean(error) and corrected_forecast = forecast - corre
 import json
 import logging
 import math
+import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -67,10 +68,18 @@ TIMESERIES_LEADS = [0, 6, 12, 18, 24, 30, 36, 42]
 TIMESERIES_LEADS_SET = set(TIMESERIES_LEADS)  # for O(1) membership in the tight pair-log loop
 TIMESERIES_DAYS = 7
 TIMESERIES_PATH = "time_series_diagnostic.json"
-# Approximate M2 tidal amplitude at Salem (peak-to-mean) in feet. Real tide
-# heights are a sum of many harmonics; this is a single-component
-# approximation good enough for the visual oscillation check.
-SALEM_M2_AMPLITUDE_FT = 4.0
+# Approximate M2 tidal amplitude at Salem (peak-to-mean) in feet. Used only as
+# a FALLBACK when the NOAA tide-prediction fetch fails — real heights from
+# NOAA come from station 8442645 via _fetch_noaa_tide_hourly() below.
+SALEM_M2_AMPLITUDE_FT = 5.0
+NOAA_TIDE_STATION = "8442645"
+NOAA_TIDE_URL_TPL = (
+    "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter"
+    "?product=predictions&application=myweather_fitter"
+    "&begin_date={start}&end_date={end}"
+    "&datum=MLLW&station={station}&time_zone=lst_ldt"
+    "&units=english&interval=h&format=json"
+)
 
 # Recency weighting: each pair contributes exp(-age_days / TAU_DAYS) to its bin.
 # τ=14 days → half-weight at ~10 days, ~12% weight at 30 days. Lets the fit
@@ -99,11 +108,10 @@ def _tide_phase_bin(obs_time_str):
     return min(int(phase_frac * TIDE_PHASE_BINS), TIDE_PHASE_BINS - 1)
 
 
-def _tide_elevation_ft(obs_hour_str):
-    """Approximate M2 tide elevation at obs_hour, in feet. M2 cosine model
-    anchored to the reference high tide. Real tide is the sum of many
-    harmonics; this is single-component, good enough for the oscillation
-    visualization on the debug page."""
+def _tide_elevation_ft_m2(obs_hour_str):
+    """M2 cosine approximation of tide elevation, in feet. Used as a fallback
+    when the NOAA fetch fails. Single-harmonic, so underestimates the spring
+    tide range and ignores fortnightly variation — but the phase is right."""
     try:
         local_naive = datetime.strptime(obs_hour_str, "%Y-%m-%dT%H:%M")
     except (ValueError, TypeError):
@@ -113,6 +121,34 @@ def _tide_elevation_ft(obs_hour_str):
     hours_since_ref = (utc_naive - M2_REFERENCE_UTC).total_seconds() / 3600.0
     phase_frac = (hours_since_ref % M2_PERIOD_HOURS) / M2_PERIOD_HOURS
     return round(SALEM_M2_AMPLITUDE_FT * math.cos(2 * math.pi * phase_frac), 2)
+
+
+def _fetch_noaa_tide_hourly(start_date_yyyymmdd, end_date_yyyymmdd):
+    """Fetch real hourly tide-elevation harmonic predictions from NOAA Tides
+    & Currents for Salem station 8442645. Returns a dict mapping local-naive
+    ISO hour strings ("YYYY-MM-DDTHH:00") to elevation in feet. Empty dict
+    on failure — callers fall back to the M2 cosine approximation."""
+    url = NOAA_TIDE_URL_TPL.format(
+        start=start_date_yyyymmdd,
+        end=end_date_yyyymmdd,
+        station=NOAA_TIDE_STATION,
+    )
+    out = {}
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "myweather-fitter/1.0"})
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            data = json.load(resp)
+        for p in data.get("predictions", []):
+            t = p.get("t", "")  # "YYYY-MM-DD HH:MM" in local time (lst_ldt)
+            v = p.get("v", "")
+            try:
+                iso = t.replace(" ", "T")
+                out[iso] = float(v)
+            except (ValueError, TypeError):
+                continue
+    except Exception as e:
+        logging.warning(f"  ⚠  NOAA tide fetch failed: {redact_secrets(e)}")
+    return out
 
 
 def fit_decay_corrections():
@@ -291,14 +327,36 @@ def fit_decay_corrections():
                     errors_by_lead[lead_str][f].append(round(ts_sums[(f, lead, h)] / c, 3))
                 else:
                     errors_by_lead[lead_str][f].append(None)
+    # Fetch real NOAA tide harmonic predictions covering the time-series window
+    # so the elevation overlay shows actual heights instead of an M2 cosine
+    # approximation. Pad by ±1 day to cover any edge-of-window hours.
+    if ts_hours:
+        try:
+            ts_start = datetime.strptime(ts_hours[0], "%Y-%m-%dT%H:%M") - timedelta(days=1)
+            ts_end = datetime.strptime(ts_hours[-1], "%Y-%m-%dT%H:%M") + timedelta(days=1)
+        except ValueError:
+            ts_start, ts_end = now_naive - timedelta(days=TIMESERIES_DAYS + 1), now_naive + timedelta(days=1)
+    else:
+        ts_start, ts_end = now_naive - timedelta(days=TIMESERIES_DAYS + 1), now_naive + timedelta(days=1)
+    noaa_tides = _fetch_noaa_tide_hourly(
+        ts_start.strftime("%Y%m%d"), ts_end.strftime("%Y%m%d"),
+    )
+    tide_source = "noaa_harmonic" if noaa_tides else "m2_cosine_fallback"
+    tide_elevation_ft = []
+    for h in ts_hours:
+        if h in noaa_tides:
+            tide_elevation_ft.append(round(noaa_tides[h], 2))
+        else:
+            tide_elevation_ft.append(_tide_elevation_ft_m2(h))
+
     ts_output = {
         "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
         "leads_h": TIMESERIES_LEADS,
         "window_days": TIMESERIES_DAYS,
-        "m2_period_hours": M2_PERIOD_HOURS,
-        "salem_m2_amplitude_ft": SALEM_M2_AMPLITUDE_FT,
+        "tide_source": tide_source,
+        "tide_station": NOAA_TIDE_STATION,
         "hours": ts_hours,
-        "tide_elevation_ft": [_tide_elevation_ft(h) for h in ts_hours],
+        "tide_elevation_ft": tide_elevation_ft,
         "errors_by_lead": errors_by_lead,
         "n_samples_by_lead": samples_by_lead,
     }
