@@ -992,17 +992,20 @@ Every 10-min tick, writes the current corrected 48-hour forecast to `forecast_lo
 Every tick. Reads new entries from `obs_temp_log.json` and pairs each one against every snapshot in `forecast_log.json` whose hours array covers that observation's hour. Emits one row per `(obs × snapshot × field)` triple — `{obs_time, run_time, valid_time, lead_h, field, forecast, observed, error}` where `error = forecast − observed`. New pairs are uploaded as a small temp JSONL blob and then **server-side composed** onto `forecast_error_log.jsonl` (GCS `compose` operation, O(1) regardless of file size). Watermark in `forecast_error_state.json` tracks the latest obs_time processed. POP uses `obs_entry.precip_in > 0` as the binary observed signal. At steady state: ~250k pairs/day, ~7.5M pairs / ~1.3 GB after 30 days.
 
 ### Piece 3 — Fitter (`processors/decay_fit.py`)
-Once a day, gated on the `03:07 EDT` tick in `collector.main()`. Streams the full `forecast_error_log.jsonl` via `blob.open("r")` (bounded memory regardless of file size). For each `(field, lead_h)` bin where `0 ≤ lead_h < 48`, accumulates `Σerror` and `n`. Writes `decay_corrections.json` to GCS with shape:
+Once a day, gated on the `03:07 EDT` tick in `collector.main()`. Streams the full `forecast_error_log.jsonl` via `blob.open("r")` (bounded memory regardless of file size). For each `(field, lead_h)` bin where `0 ≤ lead_h < 48`, accumulates **recency-weighted** sums: each pair contributes `w = exp(-age_days / TAU_DAYS)` (TAU_DAYS=14, since v0.6.1). Bin mean = `Σ(error × w) / Σw`. Recent pairs dominate, old pairs fade smoothly. Half-weight at ~10 days; ~12% weight at 30 days. Lets the fit track seasonal transitions (spring→summer, fall onset) and recover faster from upstream data-quality changes. To revert to uniform weighting, set `TAU_DAYS` to something much larger than `RETENTION_DAYS`.
+
+Writes `decay_corrections.json` to GCS with shape:
 ```json
 {
   "fitted_at": "...",
   "n_pairs": 1234567,
   "retention_days": 30,
+  "weighting": {"method": "exponential_decay", "tau_days": 14},
   "corrections": {"t": [48 floats], "dp": [...], "h": [...], "ws": [...], "wg": [...], "pp": [...]},
   "n_samples":   {"t": [48 ints],   ...}
 }
 ```
-Same pass also prunes the input to a 30-day window and rewrites it as a single non-composed blob — this resets the GCS compose component count (otherwise hits the 5,300 ceiling around day 36). Empty bins write `null` in `corrections[field]`.
+`n_samples` are unweighted raw pair counts (for display / sample-size sanity); the weighted sums drive the actual corrections. Same pass also prunes the input to a 30-day window and rewrites it as a single non-composed blob — this resets the GCS compose component count (otherwise hits the 5,300 ceiling around day 36). Empty bins write `null` in `corrections[field]`.
 
 ### Piece 4 — Apply (`processors/decay_apply.py`)
 Every tick, after `trim_hourly_to_current_hour` (so array index == `lead_h`) and after `weather_data.json` has been uploaded (so a slow Fitter can't delay the user payload — wait, no — actually Apply runs *before* the upload as of v0.5.235; see code). Loads `decay_corrections.json`, validates `fitted_at` is within `STALE_DAYS` (7), and for each `(field → array)` in `TARGET_ARRAY` subtracts `corrections[field][i]` from `hourly[array_name][i]`. Per-field sanity caps prevent any single correction from moving the forecast more than its CAP. After mutating temp/humidity/dp/ws/wg/pp arrays, **recomputes** `corrected_apparent_temperature` (Steadman) and `corrected_absolute_humidity` (Bolton) so derived arrays stay self-consistent with their now-corrected base inputs. Also stamps:
