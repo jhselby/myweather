@@ -57,6 +57,19 @@ TIDE_PHASE_BINS = 12
 M2_PERIOD_HOURS = 12.4206
 M2_REFERENCE_UTC = datetime(2026, 6, 1, 16, 23, 0)
 
+# Time-series diagnostic (Section 6 — research). For each hour in the last
+# TIMESERIES_DAYS, compute mean error per field at TIMESERIES_LEAD lead, and
+# the approximate tide elevation at that hour. Lets the debug page render
+# "error vs time + tide overlay" so the eye can check if they oscillate
+# together. Lead 18h is where the tide signal is strongest in our data.
+TIMESERIES_LEAD = 18
+TIMESERIES_DAYS = 7
+TIMESERIES_PATH = "time_series_diagnostic.json"
+# Approximate M2 tidal amplitude at Salem (peak-to-mean) in feet. Real tide
+# heights are a sum of many harmonics; this is a single-component
+# approximation good enough for the visual oscillation check.
+SALEM_M2_AMPLITUDE_FT = 4.0
+
 # Recency weighting: each pair contributes exp(-age_days / TAU_DAYS) to its bin.
 # τ=14 days → half-weight at ~10 days, ~12% weight at 30 days. Lets the fit
 # track seasonal transitions (spring→summer, fall onset, etc.) and recover
@@ -84,6 +97,22 @@ def _tide_phase_bin(obs_time_str):
     return min(int(phase_frac * TIDE_PHASE_BINS), TIDE_PHASE_BINS - 1)
 
 
+def _tide_elevation_ft(obs_hour_str):
+    """Approximate M2 tide elevation at obs_hour, in feet. M2 cosine model
+    anchored to the reference high tide. Real tide is the sum of many
+    harmonics; this is single-component, good enough for the oscillation
+    visualization on the debug page."""
+    try:
+        local_naive = datetime.strptime(obs_hour_str, "%Y-%m-%dT%H:%M")
+    except (ValueError, TypeError):
+        return None
+    local_aware = TZ.localize(local_naive)
+    utc_naive = local_aware.astimezone(pytz.UTC).replace(tzinfo=None)
+    hours_since_ref = (utc_naive - M2_REFERENCE_UTC).total_seconds() / 3600.0
+    phase_frac = (hours_since_ref % M2_PERIOD_HOURS) / M2_PERIOD_HOURS
+    return round(SALEM_M2_AMPLITUDE_FT * math.cos(2 * math.pi * phase_frac), 2)
+
+
 def fit_decay_corrections():
     """Daily Fitter entry point."""
     client = get_client()
@@ -109,6 +138,13 @@ def fit_decay_corrections():
     tide_sums = defaultdict(float)
     tide_weights = defaultdict(float)
     tide_raw_counts = defaultdict(int)
+    # Time-series accumulators for Section 6 — only pairs at TIMESERIES_LEAD
+    # within the last TIMESERIES_DAYS, grouped per obs hour. Unweighted (raw
+    # mean per hour) because we want to see the actual hour-by-hour signal,
+    # not a smoothed weighted version.
+    ts_cutoff = (now_naive - timedelta(days=TIMESERIES_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    ts_sums = defaultdict(float)   # key: (field, obs_hour_iso)
+    ts_counts = defaultdict(int)
     n_in = 0
     n_kept = 0
 
@@ -149,6 +185,12 @@ def fit_decay_corrections():
                 tide_sums[(field, tide_bin)] += float(error) * w
                 tide_weights[(field, tide_bin)] += w
                 tide_raw_counts[(field, tide_bin)] += 1
+            # Time-series accumulation — only pairs at the chosen lead, recent
+            # enough to be in the time-series window, grouped per obs hour.
+            if lead_h == TIMESERIES_LEAD and obs_time >= ts_cutoff:
+                obs_hour = obs_time[:13] + ":00"
+                ts_sums[(field, obs_hour)] += float(error)
+                ts_counts[(field, obs_hour)] += 1
 
     corrections = {}
     n_samples = {}
@@ -226,6 +268,38 @@ def fit_decay_corrections():
         logging.info(f"  ✓ Tide-phase history: {len(kept_tp)} fits in {HISTORY_RETENTION_DAYS}-day window")
     except Exception as e:
         logging.warning(f"  ⚠  Tide-phase history append failed: {redact_secrets(e)}")
+
+    # Time-series diagnostic (Section 6) — last TIMESERIES_DAYS of hour-by-hour
+    # mean error per field at TIMESERIES_LEAD, plus an M2 tide-elevation curve
+    # at each hour. Lets the debug page render error and tide elevation on a
+    # shared time axis so the eye can check "do they oscillate together?"
+    ts_hours = sorted({h for (_, h) in ts_sums.keys()})
+    ts_errors = {f: [] for f in FIELDS}
+    ts_counts_per_hour = {f: [] for f in FIELDS}
+    for h in ts_hours:
+        for f in FIELDS:
+            c = ts_counts.get((f, h), 0)
+            ts_counts_per_hour[f].append(c)
+            if c > 0:
+                ts_errors[f].append(round(ts_sums[(f, h)] / c, 3))
+            else:
+                ts_errors[f].append(None)
+    ts_output = {
+        "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
+        "lead_h": TIMESERIES_LEAD,
+        "window_days": TIMESERIES_DAYS,
+        "m2_period_hours": M2_PERIOD_HOURS,
+        "salem_m2_amplitude_ft": SALEM_M2_AMPLITUDE_FT,
+        "hours": ts_hours,
+        "tide_elevation_ft": [_tide_elevation_ft(h) for h in ts_hours],
+        "errors": ts_errors,
+        "n_samples": ts_counts_per_hour,
+    }
+    try:
+        upload_json(ts_output, TIMESERIES_PATH, "time_series_diagnostic.json")
+        logging.info(f"  ✓ Time-series: {len(ts_hours)} hours at lead {TIMESERIES_LEAD}h over last {TIMESERIES_DAYS}d")
+    except Exception as e:
+        logging.warning(f"  ⚠  Time-series write failed: {redact_secrets(e)}")
 
     # Overwrite main with the pruned temp (resets compose component count to 1).
     try:

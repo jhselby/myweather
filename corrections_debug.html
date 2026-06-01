@@ -213,10 +213,15 @@
 <h2 class="section">5. Tide-phase curves over time — does the error track the tide cycle?</h2>
 <div id="grid-tide" class="grid"></div>
 
+<div id="status-timeseries" class="status" hidden></div>
+<h2 class="section">6. Error vs tide elevation over time — do they oscillate together?</h2>
+<div id="grid-timeseries" class="grid"></div>
+
 <script>
 const CORRECTIONS_URL = "https://data.wymancove.com/decay_corrections.json";
 const HISTORY_URL     = "https://data.wymancove.com/decay_corrections_history.json";
 const TIDE_HISTORY_URL = "https://data.wymancove.com/tide_phase_corrections_history.json";
+const TIMESERIES_URL   = "https://data.wymancove.com/time_series_diagnostic.json";
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
 const M2_PERIOD_HOURS = 12.4206;
 
@@ -291,6 +296,83 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
       ],
     },
     options: chartOpts(field, { secondaryY: true, yTitle: `mean error (${field.unit})` }),
+  });
+}
+
+function buildTimeSeriesChart(canvas, field, hours, errorSeries, tideSeries, leadH) {
+  // Two-axis chart: forecast error (left) + tide elevation (right) over time.
+  // Visual check for "do they oscillate together?" If yes, tide modulates
+  // the model's bias. If no, no tide signal at this lead for this field.
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: hours,
+      datasets: [
+        {
+          label: `error at lead ${leadH}h (${field.unit})`,
+          data: errorSeries,
+          borderColor: "#4aa3ff",
+          backgroundColor: "rgba(0,0,0,0)",
+          borderWidth: 1.8,
+          pointRadius: 0,
+          tension: 0.25,
+          spanGaps: true,
+          yAxisID: "y",
+        },
+        {
+          label: "tide elevation (ft)",
+          data: tideSeries,
+          borderColor: "rgba(138,147,163,0.7)",
+          backgroundColor: "rgba(138,147,163,0.10)",
+          borderWidth: 1,
+          pointRadius: 0,
+          tension: 0.3,
+          spanGaps: true,
+          yAxisID: "y2",
+          fill: true,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { labels: { color: "#8a93a3", boxWidth: 10, font: { size: 11 } }, position: "bottom" },
+        tooltip: {
+          callbacks: {
+            title: (items) => items[0].label,
+          },
+        },
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: "#8a93a3",
+            autoSkip: true,
+            maxTicksLimit: 8,
+            callback: function(value, index, ticks) {
+              // Show only date+hour, drop the ":00"
+              const label = this.getLabelForValue(value);
+              return label ? label.replace("T", " ").slice(5, 13) : "";
+            },
+          },
+          grid: { color: "#242833" },
+        },
+        y: {
+          position: "left",
+          title: { display: true, text: `error (${field.unit})`, color: "#4aa3ff" },
+          ticks: { color: "#4aa3ff" },
+          grid: { color: "#242833" },
+        },
+        y2: {
+          position: "right",
+          title: { display: true, text: "tide (ft)", color: "#8a93a3" },
+          ticks: { color: "#8a93a3" },
+          grid: { display: false },
+        },
+      },
+    },
   });
 }
 
@@ -759,6 +841,16 @@ async function load() {
     // Silent; tide-phase history is optional.
   }
 
+  let tsDoc;
+  try {
+    const res = await fetch(TIMESERIES_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) {
+      tsDoc = await res.json();
+    }
+  } catch (err) {
+    // Silent; time-series file is optional.
+  }
+
   renderMeta(corrDoc, wxDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
@@ -896,6 +988,30 @@ async function load() {
     }
   } else {
     showStatus("status-tide", "No tide_phase_corrections_history.json yet — appears after the next Fitter run (the v0.6.7+ Fitter writes this alongside the lead-h history). Stable curves across days → tide-driven; drifting curves → diurnal masquerade.");
+  }
+
+  // ── Section 6: error vs tide elevation over time ──
+  if (tsDoc && Array.isArray(tsDoc.hours) && tsDoc.hours.length) {
+    const hours = tsDoc.hours;
+    const tide = tsDoc.tide_elevation_ft || [];
+    const leadH = tsDoc.lead_h;
+    const grid = document.getElementById("grid-timeseries");
+    grid.innerHTML = "";
+    for (const f of FIELDS) {
+      const errors = (tsDoc.errors || {})[f.key] || [];
+      const errSeries = errors.map(v => (v === null || v === undefined ? NaN : v));
+      const tideSeries = tide.map(v => (v === null || v === undefined ? NaN : v));
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<span class="summary">lead ${leadH}h · last ${tsDoc.window_days}d · ${hours.length} hours</span></h3>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid.appendChild(card);
+      buildTimeSeriesChart(card.querySelector("canvas"), f, hours, errSeries, tideSeries, leadH);
+    }
+  } else {
+    showStatus("status-timeseries", "No time_series_diagnostic.json yet — appears after the next Fitter run (the v0.6.8+ Fitter writes this). Blue line = forecast error per hour; gray sinusoid = tide elevation. If they oscillate in sync, the tide drives the bias.");
   }
 }
 
