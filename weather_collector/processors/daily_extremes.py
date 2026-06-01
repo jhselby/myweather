@@ -47,7 +47,12 @@ def _gather_current_observation(weather_data, current_hour_iso):
         "dew_point_f": hyp.get("corrected_dew_point") or der.get("corrected_dew_point"),
         "pressure_in": hyp.get("corrected_pressure_in"),
         "cloud_cover": cur.get("cloud_cover"),
-        "humidity": cur.get("humidity"),
+        # Use the station-network–corrected humidity (matches how `corrected_temp`
+        # is sourced two lines above). Storing raw model humidity here causes the
+        # Joiner / Fitter to see the Kalman bias itself as "error," which makes
+        # the Layer-3 decay correction effectively undo Layer 1 — see comment in
+        # decay_apply.py and the May 31 evening session notes.
+        "humidity": hyp.get("corrected_humidity") if hyp.get("corrected_humidity") is not None else cur.get("humidity"),
     }
 
 
