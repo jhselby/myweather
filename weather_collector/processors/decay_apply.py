@@ -59,6 +59,20 @@ TARGET_ARRAY = {
 # Per-field display rounding to match what the rest of the pipeline writes.
 ROUND_DIGITS = {"t": 1, "dp": 1, "h": 1, "ws": 1, "wg": 1, "pp": 0}
 
+# POP gets piecewise-linear correction scaling instead of flat additive (since
+# v0.6.5). Flat additive over-inflates clearly-clear-sky hours: a fitted POP
+# correction of -12% would push raw_model=0 to corrected=12, claiming a 12%
+# rain chance during obviously dry weather. The scaling is:
+#     applied(R) = POP_NOISE_FLOOR + (raw_correction − POP_NOISE_FLOOR) × R/100
+# At R=0%   →  applied ≈ POP_NOISE_FLOOR (negligible bump, stays near 0).
+# At R=50%  →  half the correction kicks in.
+# At R=100% →  full correction applies.
+# T=2% is a small "noise floor" that admits we don't know nothing without
+# forcing meaningful POP onto clearly-clear-sky hours. Other fields keep
+# the flat additive correction (temp/humidity/wind have no analogous
+# zero-floor problem).
+POP_NOISE_FLOOR = 2.0
+
 
 def _parse_local(stamp):
     return datetime.strptime(stamp, "%Y-%m-%dT%H:%M")
@@ -128,10 +142,21 @@ def apply_decay_corrections(weather_data):
                 c = float(c)
             except (TypeError, ValueError):
                 continue
-            if abs(c) > cap:
+            # POP: piecewise-linear scaling so clear-sky (R=0) hours don't get
+            # inflated by the full mean residual. Other fields: flat additive.
+            if short == "pp":
+                r_frac = max(0.0, min(1.0, float(val) / 100.0))
+                applied_c = POP_NOISE_FLOOR + (c - POP_NOISE_FLOOR) * r_frac
+            else:
+                applied_c = c
+            if abs(applied_c) > cap:
                 capped += 1
-                c = cap if c > 0 else -cap
-            arr[h] = round(val - c, digits)
+                applied_c = cap if applied_c > 0 else -cap
+            result = val - applied_c
+            # Clamp POP to [0, 100]; other fields have no hard bounds here.
+            if short == "pp":
+                result = max(0.0, min(100.0, result))
+            arr[h] = round(result, digits)
             applied += 1
 
     # Recompute derived arrays so they stay consistent with the corrected
