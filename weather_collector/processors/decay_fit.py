@@ -39,11 +39,23 @@ from ..utils import redact_secrets
 ERROR_LOG_PATH = "forecast_error_log.jsonl"
 CORRECTIONS_PATH = "decay_corrections.json"
 HISTORY_PATH = "decay_corrections_history.json"
+TIDE_PHASE_PATH = "tide_phase_corrections.json"
+TIDE_PHASE_HISTORY_PATH = "tide_phase_corrections_history.json"
 HISTORY_RETENTION_DAYS = 30
 TEMP_PATH = "forecast_error_log_flatten.tmp.jsonl"
 TZ = pytz.timezone("America/New_York")
 RETENTION_DAYS = 30
 LEAD_BINS = 48  # lead_h 0..47
+
+# Tide-phase binning (Section 5 — research/diagnostic, not in Apply).
+# 12 bins of ~1.03h each across the M2 cycle. Reference high tide at Salem
+# station 8442645: 2026-06-01 12:23 EDT = 16:23 UTC. Used as M2 phase=0
+# anchor — approximate vs NOAA harmonic predictions, but offset error just
+# shifts all bins by a constant, which doesn't affect the over-time
+# drift-detection test that motivates this feature.
+TIDE_PHASE_BINS = 12
+M2_PERIOD_HOURS = 12.4206
+M2_REFERENCE_UTC = datetime(2026, 6, 1, 16, 23, 0)
 
 # Recency weighting: each pair contributes exp(-age_days / TAU_DAYS) to its bin.
 # τ=14 days → half-weight at ~10 days, ~12% weight at 30 days. Lets the fit
@@ -55,6 +67,21 @@ LEAD_BINS = 48  # lead_h 0..47
 TAU_DAYS = 14
 
 FIELDS = ("t", "ws", "wg", "h", "dp", "pp")
+
+
+def _tide_phase_bin(obs_time_str):
+    """Return tide-phase bin index for obs_time, or None if unparseable."""
+    try:
+        local_naive = datetime.strptime(obs_time_str, "%Y-%m-%dT%H:%M")
+    except (ValueError, TypeError):
+        return None
+    local_aware = TZ.localize(local_naive)
+    utc_naive = local_aware.astimezone(pytz.UTC).replace(tzinfo=None)
+    hours_since_ref = (utc_naive - M2_REFERENCE_UTC).total_seconds() / 3600.0
+    # Python `%` keeps sign positive when divisor is positive, so negative
+    # ages (obs before reference) wrap correctly.
+    phase_frac = (hours_since_ref % M2_PERIOD_HOURS) / M2_PERIOD_HOURS
+    return min(int(phase_frac * TIDE_PHASE_BINS), TIDE_PHASE_BINS - 1)
 
 
 def fit_decay_corrections():
@@ -77,6 +104,11 @@ def fit_decay_corrections():
     sums = defaultdict(float)
     weights = defaultdict(float)
     raw_counts = defaultdict(int)
+    # Parallel accumulators binned by tide phase instead of lead_h — feeds the
+    # tide-phase historical view (Section 5). Same recency weighting.
+    tide_sums = defaultdict(float)
+    tide_weights = defaultdict(float)
+    tide_raw_counts = defaultdict(int)
     n_in = 0
     n_kept = 0
 
@@ -112,6 +144,11 @@ def fit_decay_corrections():
             sums[(field, lead_h)] += float(error) * w
             weights[(field, lead_h)] += w
             raw_counts[(field, lead_h)] += 1
+            tide_bin = _tide_phase_bin(obs_time)
+            if tide_bin is not None:
+                tide_sums[(field, tide_bin)] += float(error) * w
+                tide_weights[(field, tide_bin)] += w
+                tide_raw_counts[(field, tide_bin)] += 1
 
     corrections = {}
     n_samples = {}
@@ -150,6 +187,45 @@ def fit_decay_corrections():
         logging.info(f"  ✓ History: {len(kept)} fits in {HISTORY_RETENTION_DAYS}-day window")
     except Exception as e:
         logging.warning(f"  ⚠  History append failed: {redact_secrets(e)}")
+
+    # Tide-phase output + rolling history. Same shape as the lead-h history,
+    # but bins are tide phase (0..TIDE_PHASE_BINS-1) instead of lead_h.
+    # Diagnostic-only — never enters Apply. Watching this evolve across days
+    # tests whether forecast error tracks tide phase (stable curves → real
+    # tide signal; drifting curves → diurnal masquerading as tide).
+    tide_corrections = {}
+    tide_n_samples = {}
+    for f in FIELDS:
+        c_arr = [None] * TIDE_PHASE_BINS
+        n_arr = [0] * TIDE_PHASE_BINS
+        for b in range(TIDE_PHASE_BINS):
+            w_sum = tide_weights.get((f, b), 0.0)
+            n_arr[b] = tide_raw_counts.get((f, b), 0)
+            if w_sum > 0:
+                c_arr[b] = round(tide_sums[(f, b)] / w_sum, 3)
+        tide_corrections[f] = c_arr
+        tide_n_samples[f] = n_arr
+    tide_output = {
+        "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
+        "n_pairs": n_kept,
+        "retention_days": RETENTION_DAYS,
+        "weighting": {"method": "exponential_decay", "tau_days": TAU_DAYS},
+        "tide_phase_bins": TIDE_PHASE_BINS,
+        "m2_period_hours": M2_PERIOD_HOURS,
+        "corrections_by_tide_phase": tide_corrections,
+        "n_samples_by_tide_phase": tide_n_samples,
+    }
+    upload_json(tide_output, TIDE_PHASE_PATH, "tide_phase_corrections.json")
+    try:
+        tide_history = load_json(TIDE_PHASE_HISTORY_PATH, default={"history": []})
+        hist_cutoff = (now_naive - timedelta(days=HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+        kept_tp = [h for h in tide_history.get("history", [])
+                   if isinstance(h, dict) and h.get("fitted_at", "") >= hist_cutoff]
+        kept_tp.append(tide_output)
+        upload_json({"history": kept_tp}, TIDE_PHASE_HISTORY_PATH, "tide_phase_corrections_history.json")
+        logging.info(f"  ✓ Tide-phase history: {len(kept_tp)} fits in {HISTORY_RETENTION_DAYS}-day window")
+    except Exception as e:
+        logging.warning(f"  ⚠  Tide-phase history append failed: {redact_secrets(e)}")
 
     # Overwrite main with the pruned temp (resets compose component count to 1).
     try:

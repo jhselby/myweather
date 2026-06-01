@@ -209,10 +209,16 @@
 <h2 class="section">4. Decay curves over time — historical fits</h2>
 <div id="grid-history" class="grid"></div>
 
+<div id="status-tide" class="status" hidden></div>
+<h2 class="section">5. Tide-phase curves over time — does the error track the tide cycle?</h2>
+<div id="grid-tide" class="grid"></div>
+
 <script>
 const CORRECTIONS_URL = "https://data.wymancove.com/decay_corrections.json";
 const HISTORY_URL     = "https://data.wymancove.com/decay_corrections_history.json";
+const TIDE_HISTORY_URL = "https://data.wymancove.com/tide_phase_corrections_history.json";
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
+const M2_PERIOD_HOURS = 12.4206;
 
 const FIELDS = [
   { key: "t",  label: "Temperature", unit: "°F",  array: "corrected_temperature",     raw: "temperature" },
@@ -285,6 +291,63 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
       ],
     },
     options: chartOpts(field, { secondaryY: true, yTitle: `mean error (${field.unit})` }),
+  });
+}
+
+function buildTidePhaseHistoryChart(canvas, field, history, nBins) {
+  // Same color encoding as Section 4: oldest pale gray, newest solid blue.
+  // X-axis is hours since most recent high tide (0 → M2_PERIOD_HOURS).
+  // If lines stay stable across days → tide is the real driver of error.
+  // If lines drift/wander randomly → diurnal masquerading as tide.
+  const n = history.length;
+  const binWidth = M2_PERIOD_HOURS / nBins;
+  const labels = Array.from({ length: nBins }, (_, i) => +((i + 0.5) * binWidth).toFixed(2));
+  const datasets = history.map((entry, idx) => {
+    const t = n <= 1 ? 1 : idx / (n - 1);
+    const isNewest = idx === n - 1;
+    const corr = (entry.corrections_by_tide_phase || {})[field.key] || [];
+    const data = corr.map(v => (v === null || v === undefined ? NaN : v));
+    return {
+      label: entry.fitted_at || `fit ${idx + 1}`,
+      data,
+      borderColor: isNewest ? "rgba(74,163,255,1)" : `rgba(138,147,163,${0.20 + 0.55 * t})`,
+      backgroundColor: "rgba(0,0,0,0)",
+      borderWidth: isNewest ? 2 : 1,
+      pointRadius: 0,
+      tension: 0.3,
+      spanGaps: false,
+    };
+  });
+  return new Chart(canvas, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => `${items[0].label}h since high tide`,
+            label: (item) => `${item.dataset.label}: ${item.parsed.y == null || Number.isNaN(item.parsed.y) ? '—' : item.parsed.y.toFixed(2)}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "hours since prev high tide", color: "#8a93a3" },
+          ticks: { color: "#8a93a3" },
+          grid: { color: "#242833" },
+        },
+        y: {
+          title: { display: true, text: `mean error (${field.unit})`, color: "#8a93a3" },
+          ticks: { color: "#8a93a3" },
+          grid: { color: "#242833" },
+          beginAtZero: false,
+        },
+      },
+    },
   });
 }
 
@@ -686,6 +749,16 @@ async function load() {
     // Silent; history is optional.
   }
 
+  let tideHistDoc;
+  try {
+    const res = await fetch(TIDE_HISTORY_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) {
+      tideHistDoc = await res.json();
+    }
+  } catch (err) {
+    // Silent; tide-phase history is optional.
+  }
+
   renderMeta(corrDoc, wxDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
@@ -794,6 +867,35 @@ async function load() {
     }
   } else {
     showStatus("status-history", "No decay_corrections_history.json yet — appears after the next Fitter run (scheduled daily at 03:07 EDT, or manually via decay_fit.fit_decay_corrections()).");
+  }
+
+  // ── Section 5: tide-phase decay curves over time ──
+  if (tideHistDoc && Array.isArray(tideHistDoc.history) && tideHistDoc.history.length) {
+    const history = [...tideHistDoc.history].sort((a, b) =>
+      (a.fitted_at || "").localeCompare(b.fitted_at || ""));
+    const newest = history[history.length - 1];
+    const oldest = history[0];
+    const nBins = newest.tide_phase_bins || 12;
+    const grid = document.getElementById("grid-tide");
+    grid.innerHTML = "";
+    for (const f of FIELDS) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<span class="summary">${history.length} fits</span></h3>` +
+        `<div class="hist-legend">` +
+          `<span>${oldest.fitted_at}</span>` +
+          `<span class="hist-legend-bar"></span>` +
+          `<span>${newest.fitted_at}</span>` +
+          `<span class="hist-legend-hint">hover line for date</span>` +
+        `</div>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid.appendChild(card);
+      buildTidePhaseHistoryChart(card.querySelector("canvas"), f, history, nBins);
+    }
+  } else {
+    showStatus("status-tide", "No tide_phase_corrections_history.json yet — appears after the next Fitter run (the v0.6.7+ Fitter writes this alongside the lead-h history). Stable curves across days → tide-driven; drifting curves → diurnal masquerade.");
   }
 }
 
