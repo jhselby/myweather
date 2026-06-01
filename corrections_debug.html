@@ -124,6 +124,27 @@
   .offset-cell.warm { color: var(--warm); font-weight: 600; }
   .offset-cell.cool { color: var(--cool); font-weight: 600; }
   .offset-cell.zero { color: var(--muted); }
+  /* History chart age-color legend */
+  .hist-legend {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10.5px;
+    color: var(--muted);
+    margin: -4px 0 8px;
+  }
+  .hist-legend-bar {
+    display: inline-block;
+    flex: 0 0 auto;
+    width: 120px;
+    height: 7px;
+    border-radius: 3px;
+    background: linear-gradient(to right,
+      rgba(138,147,163,0.25),
+      rgba(138,147,163,0.55),
+      rgba(74,163,255,1));
+  }
+  .hist-legend-hint { margin-left: auto; opacity: 0.7; }
   /* Bias map */
   .bias-map-wrap {
     height: 460px;
@@ -760,7 +781,13 @@ async function load() {
       card.className = "card";
       card.innerHTML =
         `<h3><span class="name">${f.label} (${f.key})</span>` +
-        `<span class="summary">${history.length} fits · ${oldest.fitted_at} → ${newest.fitted_at}</span></h3>` +
+        `<span class="summary">${history.length} fits</span></h3>` +
+        `<div class="hist-legend">` +
+          `<span>${oldest.fitted_at}</span>` +
+          `<span class="hist-legend-bar"></span>` +
+          `<span>${newest.fitted_at}</span>` +
+          `<span class="hist-legend-hint">hover line for date</span>` +
+        `</div>` +
         `<div class="chart-wrap"><canvas></canvas></div>`;
       grid.appendChild(card);
       buildHistoryChart(card.querySelector("canvas"), f, history);
