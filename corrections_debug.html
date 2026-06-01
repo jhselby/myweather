@@ -210,20 +210,22 @@
 <div id="grid-history" class="grid"></div>
 
 <div id="status-tide" class="status" hidden></div>
-<h2 class="section">5. Tide-phase curves over time — does the error track the tide cycle?</h2>
+<h2 class="section">5. Tide-phase curves over time — does the error track the tide cycle? (statistical view)</h2>
 <div id="grid-tide" class="grid"></div>
 
 <div id="status-timeseries" class="status" hidden></div>
-<h2 class="section">6. Error vs tide elevation over time — do they oscillate together?</h2>
+<h2 class="section">6. Error vs tide elevation over time — do they oscillate together? (intuitive view)</h2>
 <div id="grid-timeseries" class="grid"></div>
+
 
 <script>
 const CORRECTIONS_URL = "https://data.wymancove.com/decay_corrections.json";
 const HISTORY_URL     = "https://data.wymancove.com/decay_corrections_history.json";
 const TIDE_HISTORY_URL = "https://data.wymancove.com/tide_phase_corrections_history.json";
-const TIMESERIES_URL   = "https://data.wymancove.com/time_series_diagnostic.json";
+const TIMESERIES_URL  = "https://data.wymancove.com/time_series_diagnostic.json";
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
 const M2_PERIOD_HOURS = 12.4206;
+const SALEM_M2_AMPLITUDE_FT = 4.0;
 
 const FIELDS = [
   { key: "t",  label: "Temperature", unit: "°F",  array: "corrected_temperature",     raw: "temperature" },
@@ -300,25 +302,15 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
 }
 
 function buildTimeSeriesChart(canvas, field, hours, errorSeries, tideSeries, leadH) {
-  // Two-axis chart: forecast error (left) + tide elevation (right) over time.
-  // Visual check for "do they oscillate together?" If yes, tide modulates
-  // the model's bias. If no, no tide signal at this lead for this field.
+  // Section 6 view: real clock time on x-axis, forecast error per hour on
+  // left y-axis, tide elevation on right y-axis. Visual check for "do these
+  // squiggles oscillate together?" Noisier than the phase-binned view in
+  // Section 5 but more directly readable.
   return new Chart(canvas, {
     type: "line",
     data: {
       labels: hours,
       datasets: [
-        {
-          label: `error at lead ${leadH}h (${field.unit})`,
-          data: errorSeries,
-          borderColor: "#4aa3ff",
-          backgroundColor: "rgba(0,0,0,0)",
-          borderWidth: 1.8,
-          pointRadius: 0,
-          tension: 0.25,
-          spanGaps: true,
-          yAxisID: "y",
-        },
         {
           label: "tide elevation (ft)",
           data: tideSeries,
@@ -331,6 +323,17 @@ function buildTimeSeriesChart(canvas, field, hours, errorSeries, tideSeries, lea
           yAxisID: "y2",
           fill: true,
         },
+        {
+          label: `error at lead ${leadH}h (${field.unit})`,
+          data: errorSeries,
+          borderColor: "#4aa3ff",
+          backgroundColor: "rgba(0,0,0,0)",
+          borderWidth: 1.8,
+          pointRadius: 0,
+          tension: 0.25,
+          spanGaps: true,
+          yAxisID: "y",
+        },
       ],
     },
     options: {
@@ -339,20 +342,13 @@ function buildTimeSeriesChart(canvas, field, hours, errorSeries, tideSeries, lea
       animation: false,
       plugins: {
         legend: { labels: { color: "#8a93a3", boxWidth: 10, font: { size: 11 } }, position: "bottom" },
-        tooltip: {
-          callbacks: {
-            title: (items) => items[0].label,
-          },
-        },
+        tooltip: { callbacks: { title: (items) => items[0].label } },
       },
       scales: {
         x: {
           ticks: {
-            color: "#8a93a3",
-            autoSkip: true,
-            maxTicksLimit: 8,
-            callback: function(value, index, ticks) {
-              // Show only date+hour, drop the ":00"
+            color: "#8a93a3", autoSkip: true, maxTicksLimit: 8,
+            callback: function(value) {
               const label = this.getLabelForValue(value);
               return label ? label.replace("T", " ").slice(5, 13) : "";
             },
@@ -377,19 +373,40 @@ function buildTimeSeriesChart(canvas, field, hours, errorSeries, tideSeries, lea
 }
 
 function buildTidePhaseHistoryChart(canvas, field, history, nBins) {
-  // Same color encoding as Section 4: oldest pale gray, newest solid blue.
-  // X-axis is hours since most recent high tide (0 → M2_PERIOD_HOURS).
-  // If lines stay stable across days → tide is the real driver of error.
-  // If lines drift/wander randomly → diurnal masquerading as tide.
+  // Multiple stacked error lines (oldest pale gray → newest solid blue) plus
+  // a single reference tide-elevation cosine on a secondary y-axis. X-axis is
+  // tide phase (hours since most recent high tide). If the error lines bump
+  // up where the tide line goes down (around low tide, hour 6), the bias
+  // tracks the tide. If they don't, no tide signal at this field.
   const n = history.length;
   const binWidth = M2_PERIOD_HOURS / nBins;
   const labels = Array.from({ length: nBins }, (_, i) => +((i + 0.5) * binWidth).toFixed(2));
-  const datasets = history.map((entry, idx) => {
+
+  // Reference tide elevation across the cycle — a clean cosine for visual
+  // anchoring. Real tide is sum of many harmonics but M2 dominates.
+  const tideRef = labels.map(h =>
+    SALEM_M2_AMPLITUDE_FT * Math.cos(2 * Math.PI * h / M2_PERIOD_HOURS));
+
+  const datasets = [];
+  // Tide reference first so it renders behind the error lines
+  datasets.push({
+    label: "tide elevation (ft, M2 ref)",
+    data: tideRef,
+    borderColor: "rgba(138,147,163,0.55)",
+    backgroundColor: "rgba(138,147,163,0.10)",
+    borderWidth: 1.2,
+    pointRadius: 0,
+    tension: 0.4,
+    fill: true,
+    yAxisID: "y2",
+  });
+  // Then stack error lines per day (oldest → newest)
+  history.forEach((entry, idx) => {
     const t = n <= 1 ? 1 : idx / (n - 1);
     const isNewest = idx === n - 1;
     const corr = (entry.corrections_by_tide_phase || {})[field.key] || [];
     const data = corr.map(v => (v === null || v === undefined ? NaN : v));
-    return {
+    datasets.push({
       label: entry.fitted_at || `fit ${idx + 1}`,
       data,
       borderColor: isNewest ? "rgba(74,163,255,1)" : `rgba(138,147,163,${0.20 + 0.55 * t})`,
@@ -398,8 +415,10 @@ function buildTidePhaseHistoryChart(canvas, field, history, nBins) {
       pointRadius: 0,
       tension: 0.3,
       spanGaps: false,
-    };
+      yAxisID: "y",
+    });
   });
+
   return new Chart(canvas, {
     type: "line",
     data: { labels, datasets },
@@ -408,7 +427,15 @@ function buildTidePhaseHistoryChart(canvas, field, history, nBins) {
       maintainAspectRatio: false,
       animation: false,
       plugins: {
-        legend: { display: false },
+        legend: {
+          // Only show the tide reference in the legend — error lines are too
+          // many to be useful and are encoded by the gradient + hover instead.
+          labels: {
+            color: "#8a93a3", boxWidth: 10, font: { size: 11 },
+            filter: (item) => item.text.startsWith("tide"),
+          },
+          position: "bottom",
+        },
         tooltip: {
           callbacks: {
             title: (items) => `${items[0].label}h since high tide`,
@@ -423,10 +450,17 @@ function buildTidePhaseHistoryChart(canvas, field, history, nBins) {
           grid: { color: "#242833" },
         },
         y: {
-          title: { display: true, text: `mean error (${field.unit})`, color: "#8a93a3" },
-          ticks: { color: "#8a93a3" },
+          position: "left",
+          title: { display: true, text: `mean error (${field.unit})`, color: "#4aa3ff" },
+          ticks: { color: "#4aa3ff" },
           grid: { color: "#242833" },
           beginAtZero: false,
+        },
+        y2: {
+          position: "right",
+          title: { display: true, text: "tide (ft, ref)", color: "#8a93a3" },
+          ticks: { color: "#8a93a3" },
+          grid: { display: false },
         },
       },
     },
@@ -844,12 +878,8 @@ async function load() {
   let tsDoc;
   try {
     const res = await fetch(TIMESERIES_URL + "?_=" + Date.now(), { cache: "no-store" });
-    if (res.ok) {
-      tsDoc = await res.json();
-    }
-  } catch (err) {
-    // Silent; time-series file is optional.
-  }
+    if (res.ok) tsDoc = await res.json();
+  } catch (err) { /* silent */ }
 
   renderMeta(corrDoc, wxDoc);
 
