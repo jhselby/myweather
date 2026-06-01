@@ -121,6 +121,24 @@
   .offset-table td.station { color: var(--ink); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
   .offset-table tr:last-child td { border-bottom: none; }
   .offset-table tr:hover td { background: rgba(255,255,255,0.02); }
+  /* Section controls (e.g. lead-time selector) */
+  .section-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: -4px 2px 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .section-controls select {
+    background: var(--panel);
+    color: var(--ink);
+    border: 1px solid #242833;
+    border-radius: 4px;
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+  .section-controls-hint { opacity: 0.7; }
   .offset-cell.warm { color: var(--warm); font-weight: 600; }
   .offset-cell.cool { color: var(--cool); font-weight: 600; }
   .offset-cell.zero { color: var(--muted); }
@@ -215,6 +233,11 @@
 
 <div id="status-timeseries" class="status" hidden></div>
 <h2 class="section">6. Error vs tide elevation over time — do they oscillate together? (intuitive view)</h2>
+<div class="section-controls">
+  <label for="ts-lead-select">Lead time:</label>
+  <select id="ts-lead-select"></select>
+  <span class="section-controls-hint">Higher leads = forecast made further ahead. Switch to see if the tide pattern is lead-specific.</span>
+</div>
 <div id="grid-timeseries" class="grid"></div>
 
 
@@ -1024,24 +1047,50 @@ async function load() {
   if (tsDoc && Array.isArray(tsDoc.hours) && tsDoc.hours.length) {
     const hours = tsDoc.hours;
     const tide = tsDoc.tide_elevation_ft || [];
-    const leadH = tsDoc.lead_h;
-    const grid = document.getElementById("grid-timeseries");
-    grid.innerHTML = "";
-    for (const f of FIELDS) {
-      const errors = (tsDoc.errors || {})[f.key] || [];
-      const errSeries = errors.map(v => (v === null || v === undefined ? NaN : v));
-      const tideSeries = tide.map(v => (v === null || v === undefined ? NaN : v));
-      const card = document.createElement("div");
-      card.className = "card";
-      card.innerHTML =
-        `<h3><span class="name">${f.label} (${f.key})</span>` +
-        `<span class="summary">lead ${leadH}h · last ${tsDoc.window_days}d · ${hours.length} hours</span></h3>` +
-        `<div class="chart-wrap"><canvas></canvas></div>`;
-      grid.appendChild(card);
-      buildTimeSeriesChart(card.querySelector("canvas"), f, hours, errSeries, tideSeries, leadH);
+    const tideSeries = tide.map(v => (v === null || v === undefined ? NaN : v));
+    // v0.6.8 wrote a single lead under `errors`; v0.6.11+ writes
+    // multiple under `errors_by_lead`. Handle both for backward compat.
+    const errorsByLead = tsDoc.errors_by_lead || null;
+    const legacyErrors = tsDoc.errors || null;
+    const leads = Array.isArray(tsDoc.leads_h)
+      ? tsDoc.leads_h
+      : (tsDoc.lead_h !== undefined ? [tsDoc.lead_h] : []);
+
+    const select = document.getElementById("ts-lead-select");
+    select.innerHTML = leads
+      .map(l => `<option value="${l}"${l === 18 ? " selected" : ""}>lead ${l}h</option>`)
+      .join("");
+
+    function renderTimeSeries(selectedLead) {
+      const grid = document.getElementById("grid-timeseries");
+      grid.innerHTML = "";
+      for (const f of FIELDS) {
+        let errors;
+        if (errorsByLead) {
+          errors = ((errorsByLead[String(selectedLead)] || {})[f.key]) || [];
+        } else if (legacyErrors) {
+          errors = legacyErrors[f.key] || [];
+        } else {
+          errors = [];
+        }
+        const errSeries = errors.map(v => (v === null || v === undefined ? NaN : v));
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML =
+          `<h3><span class="name">${f.label} (${f.key})</span>` +
+          `<span class="summary">lead ${selectedLead}h · last ${tsDoc.window_days}d · ${hours.length} hours</span></h3>` +
+          `<div class="chart-wrap"><canvas></canvas></div>`;
+        grid.appendChild(card);
+        buildTimeSeriesChart(card.querySelector("canvas"), f, hours, errSeries, tideSeries, selectedLead);
+      }
     }
+
+    const defaultLead = leads.includes(18) ? 18 : leads[Math.floor(leads.length / 2)] || 18;
+    renderTimeSeries(defaultLead);
+    select.value = String(defaultLead);
+    select.addEventListener("change", e => renderTimeSeries(Number(e.target.value)));
   } else {
-    showStatus("status-timeseries", "No time_series_diagnostic.json yet — appears after the next Fitter run (the v0.6.8+ Fitter writes this). Blue line = forecast error per hour; gray sinusoid = tide elevation. If they oscillate in sync, the tide drives the bias.");
+    showStatus("status-timeseries", "No time_series_diagnostic.json yet — appears after the next Fitter run. Blue line = forecast error per hour; gray sinusoid = tide elevation. If they oscillate in sync, the tide drives the bias.");
   }
 }
 

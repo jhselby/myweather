@@ -58,11 +58,13 @@ M2_PERIOD_HOURS = 12.4206
 M2_REFERENCE_UTC = datetime(2026, 6, 1, 16, 23, 0)
 
 # Time-series diagnostic (Section 6 — research). For each hour in the last
-# TIMESERIES_DAYS, compute mean error per field at TIMESERIES_LEAD lead, and
-# the approximate tide elevation at that hour. Lets the debug page render
-# "error vs time + tide overlay" so the eye can check if they oscillate
-# together. Lead 18h is where the tide signal is strongest in our data.
-TIMESERIES_LEAD = 18
+# TIMESERIES_DAYS, compute mean error per (field, lead) at each lead in
+# TIMESERIES_LEADS, plus the approximate tide elevation at that hour. Lets
+# the debug page render "error vs time + tide overlay" with a lead-time
+# selector. 6h steps gives 8 dropdown options — enough variety to explore
+# whether the tide pattern is lead-specific without cluttering the UI.
+TIMESERIES_LEADS = [0, 6, 12, 18, 24, 30, 36, 42]
+TIMESERIES_LEADS_SET = set(TIMESERIES_LEADS)  # for O(1) membership in the tight pair-log loop
 TIMESERIES_DAYS = 7
 TIMESERIES_PATH = "time_series_diagnostic.json"
 # Approximate M2 tidal amplitude at Salem (peak-to-mean) in feet. Real tide
@@ -185,12 +187,14 @@ def fit_decay_corrections():
                 tide_sums[(field, tide_bin)] += float(error) * w
                 tide_weights[(field, tide_bin)] += w
                 tide_raw_counts[(field, tide_bin)] += 1
-            # Time-series accumulation — only pairs at the chosen lead, recent
-            # enough to be in the time-series window, grouped per obs hour.
-            if lead_h == TIMESERIES_LEAD and obs_time >= ts_cutoff:
+            # Time-series accumulation — pairs at any of the chosen leads,
+            # recent enough to be in the time-series window, grouped per
+            # (field, lead, obs_hour). Each lead gets its own series for
+            # the Section 6 lead-time selector.
+            if lead_h in TIMESERIES_LEADS_SET and obs_time >= ts_cutoff:
                 obs_hour = obs_time[:13] + ":00"
-                ts_sums[(field, obs_hour)] += float(error)
-                ts_counts[(field, obs_hour)] += 1
+                ts_sums[(field, lead_h, obs_hour)] += float(error)
+                ts_counts[(field, lead_h, obs_hour)] += 1
 
     corrections = {}
     n_samples = {}
@@ -270,34 +274,37 @@ def fit_decay_corrections():
         logging.warning(f"  ⚠  Tide-phase history append failed: {redact_secrets(e)}")
 
     # Time-series diagnostic (Section 6) — last TIMESERIES_DAYS of hour-by-hour
-    # mean error per field at TIMESERIES_LEAD, plus an M2 tide-elevation curve
-    # at each hour. Lets the debug page render error and tide elevation on a
-    # shared time axis so the eye can check "do they oscillate together?"
-    ts_hours = sorted({h for (_, h) in ts_sums.keys()})
-    ts_errors = {f: [] for f in FIELDS}
-    ts_counts_per_hour = {f: [] for f in FIELDS}
+    # mean error per (field, lead), plus an M2 tide-elevation curve at each
+    # hour. Lets the debug page render error and tide elevation on a shared
+    # time axis and switch which lead is shown via the Section 6 dropdown.
+    # Time axis (`hours` + `tide_elevation_ft`) is shared across all leads.
+    ts_hours = sorted({h for (_, _, h) in ts_sums.keys()})
+    errors_by_lead = {str(lead): {f: [] for f in FIELDS} for lead in TIMESERIES_LEADS}
+    samples_by_lead = {str(lead): {f: [] for f in FIELDS} for lead in TIMESERIES_LEADS}
     for h in ts_hours:
-        for f in FIELDS:
-            c = ts_counts.get((f, h), 0)
-            ts_counts_per_hour[f].append(c)
-            if c > 0:
-                ts_errors[f].append(round(ts_sums[(f, h)] / c, 3))
-            else:
-                ts_errors[f].append(None)
+        for lead in TIMESERIES_LEADS:
+            lead_str = str(lead)
+            for f in FIELDS:
+                c = ts_counts.get((f, lead, h), 0)
+                samples_by_lead[lead_str][f].append(c)
+                if c > 0:
+                    errors_by_lead[lead_str][f].append(round(ts_sums[(f, lead, h)] / c, 3))
+                else:
+                    errors_by_lead[lead_str][f].append(None)
     ts_output = {
         "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
-        "lead_h": TIMESERIES_LEAD,
+        "leads_h": TIMESERIES_LEADS,
         "window_days": TIMESERIES_DAYS,
         "m2_period_hours": M2_PERIOD_HOURS,
         "salem_m2_amplitude_ft": SALEM_M2_AMPLITUDE_FT,
         "hours": ts_hours,
         "tide_elevation_ft": [_tide_elevation_ft(h) for h in ts_hours],
-        "errors": ts_errors,
-        "n_samples": ts_counts_per_hour,
+        "errors_by_lead": errors_by_lead,
+        "n_samples_by_lead": samples_by_lead,
     }
     try:
         upload_json(ts_output, TIMESERIES_PATH, "time_series_diagnostic.json")
-        logging.info(f"  ✓ Time-series: {len(ts_hours)} hours at lead {TIMESERIES_LEAD}h over last {TIMESERIES_DAYS}d")
+        logging.info(f"  ✓ Time-series: {len(ts_hours)} hours × {len(TIMESERIES_LEADS)} leads over last {TIMESERIES_DAYS}d")
     except Exception as e:
         logging.warning(f"  ⚠  Time-series write failed: {redact_secrets(e)}")
 
