@@ -32,12 +32,14 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from ..gcs_io import BUCKET, get_client, upload_json
+from ..gcs_io import BUCKET, get_client, load_json, upload_json
 from ..utils import redact_secrets
 
 
 ERROR_LOG_PATH = "forecast_error_log.jsonl"
 CORRECTIONS_PATH = "decay_corrections.json"
+HISTORY_PATH = "decay_corrections_history.json"
+HISTORY_RETENTION_DAYS = 30
 TEMP_PATH = "forecast_error_log_flatten.tmp.jsonl"
 TZ = pytz.timezone("America/New_York")
 RETENTION_DAYS = 30
@@ -133,6 +135,21 @@ def fit_decay_corrections():
         "n_samples": n_samples,
     }
     upload_json(output, CORRECTIONS_PATH, "decay_corrections.json")
+
+    # Append this fit to a rolling history file so the debug page can show
+    # how curves evolve over time. 30-day window. Each entry is a full copy
+    # of the fit (fitted_at, n_pairs, weighting, corrections, n_samples).
+    # Storage cost is trivial (~7 KB/fit × 30 = ~210 KB).
+    try:
+        history = load_json(HISTORY_PATH, default={"history": []})
+        hist_cutoff = (now_naive - timedelta(days=HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+        kept = [h for h in history.get("history", [])
+                if isinstance(h, dict) and h.get("fitted_at", "") >= hist_cutoff]
+        kept.append(output)
+        upload_json({"history": kept}, HISTORY_PATH, "decay_corrections_history.json")
+        logging.info(f"  ✓ History: {len(kept)} fits in {HISTORY_RETENTION_DAYS}-day window")
+    except Exception as e:
+        logging.warning(f"  ⚠  History append failed: {redact_secrets(e)}")
 
     # Overwrite main with the pruned temp (resets compose component count to 1).
     try:

@@ -184,8 +184,13 @@
 <div id="bias-map" class="bias-map-wrap"></div>
 <div id="bias-table-wrap"></div>
 
+<div id="status-history" class="status" hidden></div>
+<h2 class="section">4. Decay curves over time — historical fits</h2>
+<div id="grid-history" class="grid"></div>
+
 <script>
 const CORRECTIONS_URL = "https://data.wymancove.com/decay_corrections.json";
+const HISTORY_URL     = "https://data.wymancove.com/decay_corrections_history.json";
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
 
 const FIELDS = [
@@ -259,6 +264,63 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
       ],
     },
     options: chartOpts(field, { secondaryY: true, yTitle: `mean error (${field.unit})` }),
+  });
+}
+
+function buildHistoryChart(canvas, field, history) {
+  // history is a list of fit entries oldest→newest.
+  // Color gradient: oldest pale gray, newest solid blue.
+  // Hover tooltip shows fitted_at per line.
+  const labels = Array.from({ length: 48 }, (_, i) => i);
+  const n = history.length;
+  const datasets = history.map((entry, idx) => {
+    const t = n <= 1 ? 1 : idx / (n - 1);          // 0 = oldest, 1 = newest
+    const isNewest = idx === n - 1;
+    const corr = (entry.corrections || {})[field.key] || [];
+    const data = corr.map(v => (v === null || v === undefined ? NaN : v));
+    return {
+      label: entry.fitted_at || `fit ${idx + 1}`,
+      data,
+      borderColor: isNewest
+        ? "rgba(74,163,255,1)"                      // newest: solid blue
+        : `rgba(138,147,163,${0.20 + 0.55 * t})`,   // older: gray, fading with age
+      backgroundColor: "rgba(0,0,0,0)",
+      borderWidth: isNewest ? 2 : 1,
+      pointRadius: 0,
+      tension: 0.25,
+      spanGaps: false,
+    };
+  });
+  return new Chart(canvas, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },                 // too many lines for a useful legend
+        tooltip: {
+          callbacks: {
+            title: (items) => `lead ${items[0].label}h`,
+            label: (item) => `${item.dataset.label}: ${item.parsed.y == null || Number.isNaN(item.parsed.y) ? '—' : item.parsed.y.toFixed(2)}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "lead time (hours)", color: "#8a93a3" },
+          ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
+          grid: { color: "#242833" },
+        },
+        y: {
+          title: { display: true, text: `mean error (${field.unit})`, color: "#8a93a3" },
+          ticks: { color: "#8a93a3" },
+          grid: { color: "#242833" },
+          beginAtZero: false,
+        },
+      },
+    },
   });
 }
 
@@ -570,7 +632,7 @@ function renderBiasSection(wxDoc) {
 }
 
 async function load() {
-  let corrDoc, wxDoc;
+  let corrDoc, wxDoc, histDoc;
   try {
     const res = await fetch(CORRECTIONS_URL + "?_=" + Date.now(), { cache: "no-store" });
     if (!res.ok) {
@@ -591,6 +653,16 @@ async function load() {
     }
   } catch (err) {
     showStatus("status-live", `weather_data.json load failed: ${err.message}`);
+  }
+
+  try {
+    const res = await fetch(HISTORY_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) {
+      histDoc = await res.json();
+    }
+    // 404 is fine — history file may not exist yet on first run after deploy.
+  } catch (err) {
+    // Silent; history is optional.
   }
 
   renderMeta(corrDoc, wxDoc);
@@ -670,6 +742,32 @@ async function load() {
 
   // ── Section 3: station calibration offsets ──
   if (wxDoc) renderBiasSection(wxDoc);
+
+  // ── Section 4: decay curves over time ──
+  if (histDoc && Array.isArray(histDoc.history) && histDoc.history.length) {
+    // Sort chronologically oldest → newest so color gradient reads left-to-right.
+    const history = [...histDoc.history].sort((a, b) =>
+      (a.fitted_at || "").localeCompare(b.fitted_at || ""));
+    const newest = history[history.length - 1];
+    const oldest = history[0];
+    document.querySelector("h2.section + #grid-history") ||
+      document.getElementById("status-history") &&
+      (document.getElementById("status-history").hidden = true);
+    const grid = document.getElementById("grid-history");
+    grid.innerHTML = "";
+    for (const f of FIELDS) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<span class="summary">${history.length} fits · ${oldest.fitted_at} → ${newest.fitted_at}</span></h3>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid.appendChild(card);
+      buildHistoryChart(card.querySelector("canvas"), f, history);
+    }
+  } else {
+    showStatus("status-history", "No decay_corrections_history.json yet — appears after the next Fitter run (scheduled daily at 03:07 EDT, or manually via decay_fit.fit_decay_corrections()).");
+  }
 }
 
 load();
