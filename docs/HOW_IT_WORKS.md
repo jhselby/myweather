@@ -34,26 +34,29 @@ Ten external sources feed in every ten minutes.
 
 ---
 
-## The Three Correction Layers
+## The Four Correction Layers
 
-Every numeric forecast you see in the app — temperature, humidity, wind, dew point, gust, precipitation probability — has been through up to three layers of correction. Understanding the three layers makes everything else easier to read.
+Every numeric forecast you see in the app — temperature, humidity, wind, dew point, gust, precipitation probability — has been through up to four layers of work. Understanding all four makes everything else easier to read.
 
-**Layer 1 — Station-network bias correction (current hour, all forecast hours).**
-Each of the 38 local stations contributes to a weighted average based on distance (closer matters more, inverse-square) and elevation (similar height to the cove's 30 ft matters more than rooftop sensors). The system tracks each station's chronic offset over a 48-hour rolling window and subtracts that offset before letting it contribute — a station that consistently reads 2.7 °F too warm doesn't get to pull the consensus warm. The difference between this corrected local consensus and the raw model gives a single bias value per field. A Kalman gain (0.40 / 0.65 / 0.90 depending on how many stations agree, and by how much) decides how much of that bias to actually apply: 90% when 33 stations agree within 1 °F, less when the network is noisy. The result is `corrected_temperature`, `corrected_humidity`, etc. — the same flat correction is added to every forecast hour out to 48h.
+**Layer 1 — Raw model (HRRR / GFS).**
+The starting point. The Open-Meteo HRRR model gives a 48-hour forecast on a multi-kilometer grid; GFS extends days 3–7. Neither knows anything about Wyman Cove specifically. Every other layer is correcting what these two get wrong locally.
 
-**Layer 2 — Wind blend (forecast hours 0–24).**
-Wind is special. A weighted average of 38 stations is meaningless for wind because wind varies too much over short distances (a sensor behind a house reads differently from one at the water's edge). Instead, the system takes the maximum gust observed by any local station (including KBVY) and uses that as the current observed wind. For the next 24 hours of forecast, that observed wind is blended into the model on a linear decay: 100% observed at the current hour, 50/50 at hour 12, model-only by hour 24.
+**Layer 2 — Station observations correct the model (current hour, all forecast hours).**
+The 38 local stations contribute to a weighted average based on distance (closer matters more, inverse-square) and elevation (similar height to the cove's 30 ft matters more than rooftop sensors). The difference between this corrected local consensus and the raw model gives a single bias value per field. A Kalman gain (0.40 / 0.65 / 0.90 depending on how many stations agree, and by how much) decides how much of that bias to actually apply: 90% when 33 stations agree within 1 °F, less when the network is noisy. The result is `corrected_temperature`, `corrected_humidity`, etc. — the same flat correction is added to every forecast hour out to 48h. Wind is a special case under Layer 2: averaging 38 stations is meaningless because wind varies too much over short distances, so the system takes the maximum gust observed by any local station and blends it into the next 24 hours of the model on a linear decay (100% observed at hour 0, model-only by hour 24). Same concept — trust local observations over the model — just a different aggregation method for a different physical quantity.
 
-**Layer 3 — Lead-time decay correction (forecast hours 0–47).**
-This is the newest and probably most distinctive layer. Layer 1 corrects for "the model is biased right now"; Layer 3 corrects for "the model's bias changes the further out you forecast." The system measures its own past forecast errors by snapshot-versus-observation comparison, fits a mean error per (field, lead-hour) bin over a 30-day rolling window, and subtracts that residual from every forecast hour. The result: at lead 0 the correction is near zero (Layers 1 and 2 have already done their work); at lead 36h the correction can be 5–15 mph on gust, 12% on humidity, 1–2 °F on temperature.
+**Layer 3 — Adaptive station calibration (runs upstream of Layer 2 to make station data trustworthy).**
+Layer 2 only works if the station data itself is reliable, and personal weather stations drift. A sensor on a south-facing rooftop reads warm in summer. One in a shaded garden runs cold. Layer 3 tracks each station's chronic offset over a 48-hour rolling window using a leave-one-out technique: every run, each station's reading is compared against the weighted consensus of all its neighbors. A station that consistently reads 2.7 °F warmer than everyone else gets that offset subtracted before it contributes to the Layer 2 correction. This runs separately for day and night, since a sensor shaded in the afternoon may be accurate at midnight. Layer 3 runs *before* Layer 2 in execution order, but it's a distinct concept worth naming separately — Layer 2 is "how do we use stations to correct the model," Layer 3 is "how do we know which station readings to trust."
 
-These three layers don't fight each other. Layer 1 anchors the current hour to ground truth, Layer 2 smooths wind toward observed in the near term, Layer 3 removes systematic lead-time error from everything. Each is measured against post-prior-layer values, so applying all three doesn't double-count.
+**Layer 4 — Lead-time decay correction (forecast hours 0–47).**
+The newest layer. Layers 2 and 3 correct for "the model is biased right now"; Layer 4 corrects for "the model's bias changes the further out you forecast." The system measures its own past forecast errors by snapshot-versus-observation comparison, fits a recency-weighted mean error per (field, lead-hour) bin (exponential decay, τ=14 days), and subtracts that residual from every forecast hour. At lead 0 the correction is near zero (Layers 2 and 3 have already done their work); at lead 36h the correction can be 5–15 mph on gust, 12% on humidity, 1–2 °F on temperature.
+
+The four layers don't fight each other. Layer 1 is raw input; Layer 3 calibrates the data Layer 2 will consume; Layer 2 anchors the current hour to local truth; Layer 4 removes systematic lead-time error from everything downstream. Each is measured against post-prior-layer values, so the stack doesn't double-count.
 
 ---
 
-## The Decay-Curve Pipeline (Layer 3 in detail)
+## The Decay-Curve Pipeline (Layer 4 in detail)
 
-Layer 3 is built from four pieces that run inside the collector. None of them are visible to the user directly, but they're worth understanding because they're the part of the system that gets *better over time*.
+Layer 4 is built from four pieces that run inside the collector. None of them are visible to the user directly, but they're worth understanding because they're the part of the system that gets *better over time*.
 
 **Piece 1 — Logger.** Every 10-minute tick, the collector saves a snapshot of the corrected 48-hour forecast to `forecast_log.json` in GCS. The snapshot has the post-Layer-1 / post-Layer-2 values — temperature, dew point, humidity, wind, gust, and precipitation probability — for each of the next 48 hours. A 14-day rolling window of these snapshots is kept (~600 snapshots at steady state).
 
@@ -69,17 +72,17 @@ You can see all of this — the fitted curves, the live forecast with and withou
 
 ## Temperature
 
-Model HRRR temperature → Layer 1 (Kalman-blended station-network bias) → Layer 3 (lead-time decay correction). The current-hour display reads `corrected_temperature[0]`. Forecast hours read the rest of the array. Daily high and low are not the model's forecast — they're computed from a hybrid of observed and forecast: each tick logs the corrected local temperature, and the daily high is the max of all observed temperatures so far today plus the corrected forecast temperatures for the remaining hours. As the day progresses, observations replace forecast values, so the high and low end the day reflecting what actually happened.
+Layer 1 (HRRR raw) → Layer 2 (Kalman-blended station-network bias, calibrated by Layer 3) → Layer 4 (lead-time decay correction). The current-hour display reads `corrected_temperature[0]`. Forecast hours read the rest of the array. Daily high and low are not the model's forecast — they're computed from a hybrid of observed and forecast: each tick logs the corrected local temperature, and the daily high is the max of all observed temperatures so far today plus the corrected forecast temperatures for the remaining hours. As the day progresses, observations replace forecast values, so the high and low end the day reflecting what actually happened.
 
 ## Humidity and Dew Point
 
-Same pipeline as temperature: Layer 1 station-network correction (separately tracked humidity bias), then Layer 3 lead-time correction. Marine air is consistently more humid than model grids suggest — the Layer 1 correction regularly adds 4–6% RH. Dew point is computed from the corrected temperature and corrected humidity via the Magnus formula, and gets its own independent Layer 3 correction on top.
+Same pipeline as temperature: Layer 2 station-network correction (separately tracked humidity bias, with Layer 3 station calibration upstream), then Layer 4 lead-time correction. Marine air is consistently more humid than model grids suggest — the Layer 2 correction regularly adds 4–6% RH. Dew point is computed from the corrected temperature and corrected humidity via the Magnus formula, and gets its own independent Layer 4 correction on top.
 
 ## Wind and Gusts
 
 Current observed wind is the maximum of all fresh local readings (WU stations < 20 min old, Tempest < 20 min old, KBVY METAR, and the model as a floor). A sanity cap fires if the chosen value is more than 2.5× the WU network aggregate, which usually means a single bad sensor is spiking. Wind direction prefers the highest-gust *waterfront* Tempest station, falling back to whatever the max-gust source reports.
 
-For the 48-hour forecast: Layer 2 (24-hour linear blend from observed toward model) → Layer 3 (lead-time decay correction). At hour 0 the displayed wind is essentially the observation. By hour 24 the blend has faded out and only the model + decay correction remain.
+For the 48-hour forecast: Layer 2 wind blend (24-hour linear blend from observed toward model) → Layer 4 (lead-time decay correction). At hour 0 the displayed wind is essentially the observation. By hour 24 the blend has faded out and only the model + decay correction remain.
 
 ## Wind Impact Score
 
@@ -143,7 +146,7 @@ The local station network learns from itself, but a closed-loop self-calibration
 
 **KBVY as outside reference.** Beverly Airport, 6.3 miles away, sits outside the network and uses different instruments. The difference between the local corrected temperature and KBVY is logged every 10 minutes. A sudden change in that gap is an early warning that something in the local network has shifted in a way the leave-one-out couldn't catch.
 
-**The decay-curve fit.** Layer 3 fits forecast errors at every lead hour. If the model develops a new systematic bias at, say, lead 36h, the next daily Fitter run will see it in the data and the next collector tick will subtract it. The system corrects itself without anyone touching the code.
+**The decay-curve fit.** Layer 4 fits forecast errors at every lead hour. If the model develops a new systematic bias at, say, lead 36h, the next daily Fitter run will see it in the data and the next collector tick will subtract it. The system corrects itself without anyone touching the code.
 
 ---
 

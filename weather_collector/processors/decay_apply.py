@@ -59,6 +59,18 @@ TARGET_ARRAY = {
 # Per-field display rounding to match what the rest of the pipeline writes.
 ROUND_DIGITS = {"t": 1, "dp": 1, "h": 1, "ws": 1, "wg": 1, "pp": 0}
 
+# Physical bounds on the corrected forecast value per field. Without these,
+# a large negative-sign correction at low raw values can push results below
+# physically possible (e.g. wind gust = 3 mph + correction = -12 mph → -9 mph).
+# Tuple is (floor, ceiling); None means unbounded on that side. Temperature
+# and dew point intentionally have no floor — negative °F is valid.
+FIELD_BOUNDS = {
+    "ws": (0.0, None),
+    "wg": (0.0, None),
+    "h":  (0.0, 100.0),
+    "pp": (0.0, 100.0),
+}
+
 # POP gets piecewise-linear correction scaling instead of flat additive (since
 # v0.6.5). Flat additive over-inflates clearly-clear-sky hours: a fitted POP
 # correction of -12% would push raw_model=0 to corrected=12, claiming a 12%
@@ -153,9 +165,12 @@ def apply_decay_corrections(weather_data):
                 capped += 1
                 applied_c = cap if applied_c > 0 else -cap
             result = val - applied_c
-            # Clamp POP to [0, 100]; other fields have no hard bounds here.
-            if short == "pp":
-                result = max(0.0, min(100.0, result))
+            # Physical bounds per field (wind ≥ 0, humidity/POP in [0,100]).
+            lo, hi = FIELD_BOUNDS.get(short, (None, None))
+            if lo is not None and result < lo:
+                result = lo
+            if hi is not None and result > hi:
+                result = hi
             arr[h] = round(result, digits)
             applied += 1
 

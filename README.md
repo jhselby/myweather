@@ -64,7 +64,7 @@ Fetchers live in `weather_collector/fetchers/`:
 Processors live in `weather_collector/processors/` and compute derived scores from raw fetcher data:
 
 - **Correction pipeline:** `hyperlocal.py` (Layer 1 — temperature/humidity weighted-average corrections from WU + Tempest), `station_bias.py` (per-station Kalman bias tracking, 48h rolling window), `wind_blend.py` (Layer 2 — 24h linear blend of observed wind into the forecast), `corrected_hourly.py` (assembles the bias-corrected hourly arrays the frontend reads)
-- **Decay pipeline (Layer 3):** `forecast_snapshot.py` (logs the corrected 48h forecast every tick, 14-day rolling), `forecast_error_log.py` (pairs every observation against every snapshot that predicted its hour, appends to GCS via compose), `decay_fit.py` (daily fit of mean error per `(field, lead_h)` bin), `decay_apply.py` (subtracts the fitted residual from the live forecast)
+- **Decay pipeline (Layer 4):** `forecast_snapshot.py` (logs the corrected 48h forecast every tick, 14-day rolling), `forecast_error_log.py` (pairs every observation against every snapshot that predicted its hour, appends to GCS via compose), `decay_fit.py` (daily fit of mean error per `(field, lead_h)` bin), `decay_apply.py` (subtracts the fitted residual from the live forecast)
 - **Derived scores + detectors:** `wind_risk.py`, `fog.py`, `fog_metrics.py`, `frost.py`, `sunset_directional.py`, `sea_breeze.py`, `pressure.py`, `wet_bulb.py`, `precip_surface.py`, `precip_850mb.py`, `trough.py`, `thunderstorm.py`, `daily_extremes.py`, `current_derived.py`, `forecast_text.py`
 - **Helpers:** `normalize.py`, `hourly_7day.py`, `hourly_trim.py`
 
@@ -73,12 +73,12 @@ Processors live in `weather_collector/processors/` and compute derived scores fr
 The collector assembles everything into a single `weather_data.json` (~400 KB) and uploads it to the `myweather-data` GCS bucket. Several auxiliary files in the same bucket support the correction pipelines:
 
 - `frost_log.json` — rolling frost-event log
-- `station_history.json` — 48h rolling per-station bias history (Layer 1)
+- `station_history.json` — 48h rolling per-station bias history (Layer 3 — feeds Layer 2)
 - `obs_temp_log.json` — 24h rolling observation log
-- `forecast_log.json` — 48h corrected forecast snapshots, 14-day rolling (Layer 3, Piece 1)
-- `forecast_error_log.jsonl` — matched forecast-vs-observed pairs, 30-day rolling (Layer 3, Piece 2)
+- `forecast_log.json` — 48h corrected forecast snapshots, 14-day rolling (Layer 4, Piece 1)
+- `forecast_error_log.jsonl` — matched forecast-vs-observed pairs, 30-day rolling (Layer 4, Piece 2)
 - `forecast_error_state.json` — Joiner watermark
-- `decay_corrections.json` — fitted decay lookup table, rewritten daily (Layer 3, Piece 3)
+- `decay_corrections.json` — fitted decay lookup table, rewritten daily (Layer 4, Piece 3)
 
 ### Environment variables
 
@@ -108,7 +108,7 @@ It also re-fetches when the app resumes from background.
 
 ### Debug page
 
-A separate page at [wymancove.com/corrections_debug.html](https://wymancove.com/corrections_debug.html) renders three views of the correction pipelines: the fitted decay curves (Layer 3 output), the live forecast with vs without decay correction, and a per-station bias map showing every WU/Tempest station as a circle colored by its current chronic offset. Not linked from the PWA — debug-only.
+A separate page at [wymancove.com/corrections_debug.html](https://wymancove.com/corrections_debug.html) renders multiple views of the correction pipelines: the fitted decay curves (Layer 4 output), the live forecast with vs without decay correction, a per-station bias map showing every WU/Tempest station colored by its Layer 3 chronic offset, historical fits stacked over time, and tide-phase / tide-elevation diagnostic views. Not linked from the PWA — debug-only.
 
 ### Build step
 
