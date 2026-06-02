@@ -58,6 +58,14 @@ TIDE_PHASE_BINS = 12
 M2_PERIOD_HOURS = 12.4206
 M2_REFERENCE_UTC = datetime(2026, 6, 1, 16, 23, 0)
 
+# Diurnal (hour-of-day) binning. 24 bins, one per local hour 0..23.
+# Diurnal effects are typically the biggest unmodeled signal in coastal
+# microclimate forecasting (sea breeze, diurnal mixing, daytime convection),
+# bigger than tide effects in our data.
+DIURNAL_BINS = 24
+DIURNAL_PATH = "diurnal_corrections.json"
+DIURNAL_HISTORY_PATH = "diurnal_corrections_history.json"
+
 # Time-series diagnostic (Section 6 — research). For each hour in the last
 # TIMESERIES_DAYS, compute mean error per (field, lead) at each lead in
 # TIMESERIES_LEADS, plus the approximate tide elevation at that hour. Lets
@@ -176,6 +184,10 @@ def fit_decay_corrections():
     tide_sums = defaultdict(float)
     tide_weights = defaultdict(float)
     tide_raw_counts = defaultdict(int)
+    # Diurnal (hour-of-day) accumulators — feeds Layer 5 corrections + Section 7.
+    diurnal_sums = defaultdict(float)
+    diurnal_weights = defaultdict(float)
+    diurnal_raw_counts = defaultdict(int)
     # Time-series accumulators for Section 6 — only pairs at TIMESERIES_LEAD
     # within the last TIMESERIES_DAYS, grouped per obs hour. Unweighted (raw
     # mean per hour) because we want to see the actual hour-by-hour signal,
@@ -223,6 +235,16 @@ def fit_decay_corrections():
                 tide_sums[(field, tide_bin)] += float(error) * w
                 tide_weights[(field, tide_bin)] += w
                 tide_raw_counts[(field, tide_bin)] += 1
+            # Diurnal binning: hour-of-day from the obs_time string (cheap to
+            # parse — first 13 chars are "YYYY-MM-DDTHH").
+            try:
+                hod = int(obs_time[11:13])
+            except (ValueError, IndexError):
+                hod = None
+            if hod is not None and 0 <= hod < DIURNAL_BINS:
+                diurnal_sums[(field, hod)] += float(error) * w
+                diurnal_weights[(field, hod)] += w
+                diurnal_raw_counts[(field, hod)] += 1
             # Time-series accumulation — pairs at any of the chosen leads,
             # recent enough to be in the time-series window, grouped per
             # (field, lead, obs_hour). Each lead gets its own series for
@@ -308,6 +330,49 @@ def fit_decay_corrections():
         logging.info(f"  ✓ Tide-phase history: {len(kept_tp)} fits in {HISTORY_RETENTION_DAYS}-day window")
     except Exception as e:
         logging.warning(f"  ⚠  Tide-phase history append failed: {redact_secrets(e)}")
+
+    # Diurnal-hour output + rolling history. 24 bins, one per local hour.
+    # Feeds Layer 5 (Apply step subtracts these from each forecast hour based
+    # on that hour's local hour-of-day). The per-hour values are NORMALIZED
+    # to be mean-zero across the 24 bins so they don't double-count the
+    # overall mean error (which Layer 4 / decay already captures). Layer 5
+    # only contributes the deviation-from-average diurnal cycle.
+    diurnal_corrections = {}
+    diurnal_n_samples = {}
+    for f in FIELDS:
+        c_arr = [None] * DIURNAL_BINS
+        n_arr = [0] * DIURNAL_BINS
+        for b in range(DIURNAL_BINS):
+            w_sum = diurnal_weights.get((f, b), 0.0)
+            n_arr[b] = diurnal_raw_counts.get((f, b), 0)
+            if w_sum > 0:
+                c_arr[b] = round(diurnal_sums[(f, b)] / w_sum, 3)
+        # Mean-zero normalization across the populated bins.
+        valid = [v for v in c_arr if v is not None]
+        if valid:
+            mean_c = sum(valid) / len(valid)
+            c_arr = [round(v - mean_c, 3) if v is not None else None for v in c_arr]
+        diurnal_corrections[f] = c_arr
+        diurnal_n_samples[f] = n_arr
+    diurnal_output = {
+        "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
+        "n_pairs": n_kept,
+        "retention_days": RETENTION_DAYS,
+        "weighting": {"method": "exponential_decay", "tau_days": TAU_DAYS},
+        "diurnal_bins": DIURNAL_BINS,
+        "corrections_by_hour": diurnal_corrections,
+        "n_samples_by_hour": diurnal_n_samples,
+    }
+    upload_json(diurnal_output, DIURNAL_PATH, "diurnal_corrections.json")
+    try:
+        diurnal_history = load_json(DIURNAL_HISTORY_PATH, default={"history": []})
+        kept_d = [h for h in diurnal_history.get("history", [])
+                  if isinstance(h, dict) and h.get("fitted_at", "") >= hist_cutoff]
+        kept_d.append(diurnal_output)
+        upload_json({"history": kept_d}, DIURNAL_HISTORY_PATH, "diurnal_corrections_history.json")
+        logging.info(f"  ✓ Diurnal history: {len(kept_d)} fits in {HISTORY_RETENTION_DAYS}-day window")
+    except Exception as e:
+        logging.warning(f"  ⚠  Diurnal history append failed: {redact_secrets(e)}")
 
     # Time-series diagnostic (Section 6) — last TIMESERIES_DAYS of hour-by-hour
     # mean error per (field, lead), plus an M2 tide-elevation curve at each

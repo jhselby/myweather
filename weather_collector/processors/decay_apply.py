@@ -31,6 +31,7 @@ from ..utils import steadman_feels_like_f
 
 
 CORRECTIONS_PATH = "decay_corrections.json"
+DIURNAL_CORRECTIONS_PATH = "diurnal_corrections.json"
 TZ = pytz.timezone("America/New_York")
 STALE_DAYS = 7
 
@@ -174,6 +175,78 @@ def apply_decay_corrections(weather_data):
             arr[h] = round(result, digits)
             applied += 1
 
+    # ── Layer 5: diurnal (hour-of-day) correction ────────────────────────────
+    # Applied AFTER Layer 4 decay correction. For each forecast hour, look up
+    # the per-(field, hour_of_day) correction from diurnal_corrections.json
+    # and subtract it from the corresponding hourly array slot. Same sanity
+    # caps and physical bounds as Layer 4. Graceful no-op if the diurnal
+    # corrections file is missing, malformed, or stale.
+    diurnal_applied = 0
+    diurnal_capped = 0
+    diurnal_doc = load_json(DIURNAL_CORRECTIONS_PATH, default=None)
+    diurnal_fitted_at = None
+    diurnal_corrections = None
+    if diurnal_doc:
+        diurnal_fitted_at = diurnal_doc.get("fitted_at")
+        if diurnal_fitted_at:
+            try:
+                fdt = _parse_local(diurnal_fitted_at)
+                now_local = datetime.now(TZ).replace(tzinfo=None)
+                if (now_local - fdt) > timedelta(days=STALE_DAYS):
+                    logging.warning(f"  ⚠  Diurnal apply: stale (fitted {diurnal_fitted_at}) — skipping")
+                    diurnal_doc = None
+            except (ValueError, TypeError):
+                pass
+    if diurnal_doc:
+        diurnal_corrections = diurnal_doc.get("corrections_by_hour", {})
+        if not isinstance(diurnal_corrections, dict):
+            diurnal_corrections = None
+    times = hourly.get("times", []) if diurnal_corrections else []
+    if diurnal_corrections and times:
+        for short, array_name in TARGET_ARRAY.items():
+            arr = hourly.get(array_name)
+            if not isinstance(arr, list):
+                continue
+            per_hour = diurnal_corrections.get(short, [])
+            if not isinstance(per_hour, list) or len(per_hour) < 24:
+                continue
+            cap = CAPS.get(short, float("inf"))
+            digits = ROUND_DIGITS.get(short, 1)
+            lo, hi = FIELD_BOUNDS.get(short, (None, None))
+            for h in range(min(len(arr), len(times))):
+                val = arr[h]
+                ts = times[h]
+                if val is None or not isinstance(ts, str) or len(ts) < 13:
+                    continue
+                try:
+                    hod = int(ts[11:13])
+                except (ValueError, IndexError):
+                    continue
+                if not (0 <= hod < 24):
+                    continue
+                c = per_hour[hod]
+                if c is None:
+                    continue
+                try:
+                    c = float(c)
+                except (TypeError, ValueError):
+                    continue
+                if abs(c) > cap:
+                    diurnal_capped += 1
+                    c = cap if c > 0 else -cap
+                result = val - c
+                if lo is not None and result < lo:
+                    result = lo
+                if hi is not None and result > hi:
+                    result = hi
+                arr[h] = round(result, digits)
+                diurnal_applied += 1
+        if diurnal_applied:
+            msg = f"  ✓ Diurnal apply: {diurnal_applied} hourly cells corrected"
+            if diurnal_capped:
+                msg += f" ({diurnal_capped} capped at sanity bound)"
+            logging.info(msg)
+
     # Recompute derived arrays so they stay consistent with the corrected
     # base arrays. apparent_temp depends on temp/humidity/wind/radiation;
     # absolute_humidity depends on temp/dew_point.
@@ -236,4 +309,7 @@ def apply_decay_corrections(weather_data):
         "cells_corrected": applied,
         "cells_capped": capped,
         "per_field_24h": per_field_24h,
+        "diurnal_fitted_at": diurnal_fitted_at,
+        "diurnal_cells_corrected": diurnal_applied,
+        "diurnal_cells_capped": diurnal_capped,
     }

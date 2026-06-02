@@ -240,11 +240,16 @@
 </div>
 <div id="grid-timeseries" class="grid"></div>
 
+<div id="status-diurnal" class="status" hidden></div>
+<h2 class="section">7. Diurnal (hour-of-day) decay curves over time — Layer 5 corrections</h2>
+<div id="grid-diurnal" class="grid"></div>
+
 
 <script>
 const CORRECTIONS_URL = "https://data.wymancove.com/decay_corrections.json";
 const HISTORY_URL     = "https://data.wymancove.com/decay_corrections_history.json";
 const TIDE_HISTORY_URL = "https://data.wymancove.com/tide_phase_corrections_history.json";
+const DIURNAL_HISTORY_URL = "https://data.wymancove.com/diurnal_corrections_history.json";
 const TIMESERIES_URL  = "https://data.wymancove.com/time_series_diagnostic.json";
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
 const M2_PERIOD_HOURS = 12.4206;
@@ -325,6 +330,61 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
       ],
     },
     options: chartOpts(field, { secondaryY: true, yTitle: `mean error (${field.unit})` }),
+  });
+}
+
+function buildDiurnalHistoryChart(canvas, field, history, nBins) {
+  // X-axis is local hour of day (0-23). Multiple stacked error lines
+  // (oldest pale gray → newest solid blue). If shapes match across days,
+  // diurnal pattern is real and the Layer-5 correction will be stable.
+  const n = history.length;
+  const labels = Array.from({ length: nBins }, (_, i) => i);
+  const datasets = history.map((entry, idx) => {
+    const t = n <= 1 ? 1 : idx / (n - 1);
+    const isNewest = idx === n - 1;
+    const corr = (entry.corrections_by_hour || {})[field.key] || [];
+    const data = corr.map(v => (v === null || v === undefined ? NaN : v));
+    return {
+      label: entry.fitted_at || `fit ${idx + 1}`,
+      data,
+      borderColor: isNewest ? "rgba(74,163,255,1)" : `rgba(138,147,163,${0.20 + 0.55 * t})`,
+      backgroundColor: "rgba(0,0,0,0)",
+      borderWidth: isNewest ? 2 : 1,
+      pointRadius: 0,
+      tension: 0.3,
+      spanGaps: false,
+    };
+  });
+  return new Chart(canvas, {
+    type: "line",
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: (items) => `local hour ${items[0].label}`,
+            label: (item) => `${item.dataset.label}: ${item.parsed.y == null || Number.isNaN(item.parsed.y) ? '—' : item.parsed.y.toFixed(2)}`,
+          },
+        },
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "local hour (0 = midnight, 12 = noon)", color: "#8a93a3" },
+          ticks: { color: "#8a93a3", stepSize: 3 },
+          grid: { color: "#242833" },
+        },
+        y: {
+          title: { display: true, text: `mean error (${field.unit})`, color: "#8a93a3" },
+          ticks: { color: "#8a93a3" },
+          grid: { color: "#242833" },
+          beginAtZero: false,
+        },
+      },
+    },
   });
 }
 
@@ -908,6 +968,12 @@ async function load() {
     if (res.ok) tsDoc = await res.json();
   } catch (err) { /* silent */ }
 
+  let diurnalDoc;
+  try {
+    const res = await fetch(DIURNAL_HISTORY_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) diurnalDoc = await res.json();
+  } catch (err) { /* silent */ }
+
   renderMeta(corrDoc, wxDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
@@ -1095,6 +1161,35 @@ async function load() {
     select.addEventListener("change", e => renderTimeSeries(Number(e.target.value)));
   } else {
     showStatus("status-timeseries", "No time_series_diagnostic.json yet — appears after the next Fitter run. Blue line = forecast error per hour; gray sinusoid = tide elevation. If they oscillate in sync, the tide drives the bias.");
+  }
+
+  // ── Section 7: diurnal (hour-of-day) decay curves over time ──
+  if (diurnalDoc && Array.isArray(diurnalDoc.history) && diurnalDoc.history.length) {
+    const history = [...diurnalDoc.history].sort((a, b) =>
+      (a.fitted_at || "").localeCompare(b.fitted_at || ""));
+    const newest = history[history.length - 1];
+    const oldest = history[0];
+    const nBins = newest.diurnal_bins || 24;
+    const grid = document.getElementById("grid-diurnal");
+    grid.innerHTML = "";
+    for (const f of FIELDS) {
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<span class="summary">${history.length} fits</span></h3>` +
+        `<div class="hist-legend">` +
+          `<span>${oldest.fitted_at}</span>` +
+          `<span class="hist-legend-bar"></span>` +
+          `<span>${newest.fitted_at}</span>` +
+          `<span class="hist-legend-hint">hover line for date</span>` +
+        `</div>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid.appendChild(card);
+      buildDiurnalHistoryChart(card.querySelector("canvas"), f, history, nBins);
+    }
+  } else {
+    showStatus("status-diurnal", "No diurnal_corrections_history.json yet — appears after the next Fitter run (the v0.6.14+ Fitter writes this). Stable shapes across days → diurnal pattern is real and Layer 5 corrections are stable.");
   }
 }
 
