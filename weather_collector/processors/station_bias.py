@@ -33,8 +33,11 @@ def _sid(station):
 def _weight(station):
     dist = station.get('distance_mi')
     elev = station.get('elevation_ft')
-    if dist is None or elev is None or dist == 0 or dist > 1.5:
+    if dist is None or dist == 0 or dist > 2.5:
         return None
+    # No elevation data → no elevation penalty (treat as same as home)
+    if elev is None:
+        elev = ELEVATION_FT
     return (1.0 / dist ** 2) * math.exp(-abs(elev - ELEVATION_FT) / 30.0)
 
 
@@ -54,7 +57,7 @@ def _build_station_list(wu_data, tempest_data):
     stations = list(wu_data.get("stations", [])) if wu_data else []
     if tempest_data:
         for tb in tempest_data.get("stations", []):
-            if tb.get("valid") and tb.get("temperature_f") and tb.get("distance_mi") and tb.get("elevation_ft") is not None:
+            if tb.get("valid") and tb.get("temperature_f") and tb.get("distance_mi"):
                 stations.append(tb)
     return stations
 
