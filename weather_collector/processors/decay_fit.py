@@ -98,7 +98,7 @@ NOAA_TIDE_URL_TPL = (
 # to ~1.0 and behavior matches uniform.
 TAU_DAYS = 14
 
-FIELDS = ("t", "ws", "wg", "h", "dp", "pp")
+FIELDS = ("t", "ws", "wg", "h", "dp", "pp", "pr")
 
 
 def _tide_phase_bin(obs_time_str):

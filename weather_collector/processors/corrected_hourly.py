@@ -74,3 +74,16 @@ def add_corrected_hourly_arrays(weather_data):
     hourly["corrected_apparent_temperature"] = corrected_at
     hourly["corrected_dew_point"] = corrected_dp
     hourly["corrected_absolute_humidity"] = corrected_ah
+
+    # Pressure: model gives hPa/mb in `pressure` (post-normalize.py rename
+    # from pressure_msl); stations report inHg. Convert model to inHg, add
+    # Layer-2 bias. Layers 3 (decay) and 4 (diurnal) apply downstream to
+    # corrected_pressure_in directly.
+    pressure_bias_in = hyp.get("bias_pressure_in", 0) or 0
+    raw_pressure_mb = hourly.get("pressure", [])
+    if raw_pressure_mb:
+        raw_pressure_in = [round(p / 33.8639, 3) if p is not None else None for p in raw_pressure_mb]
+        hourly["raw_pressure_in"] = raw_pressure_in
+        hourly["corrected_pressure_in"] = [
+            round(p + pressure_bias_in, 3) if p is not None else None for p in raw_pressure_in
+        ]

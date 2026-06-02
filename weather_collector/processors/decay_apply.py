@@ -39,12 +39,13 @@ STALE_DAYS = 7
 # pathological fit cannot move the forecast more than this regardless of
 # what decay_corrections.json says.
 CAPS = {
-    "t":  5.0,   # °F
-    "dp": 5.0,   # °F
-    "h":  20.0,  # %
-    "ws": 10.0,  # mph
-    "wg": 15.0,  # mph
-    "pp": 25.0,  # %
+    "t":  5.0,    # °F
+    "dp": 5.0,    # °F
+    "h":  20.0,   # %
+    "ws": 10.0,   # mph
+    "wg": 15.0,   # mph
+    "pp": 25.0,   # %
+    "pr": 0.30,   # inHg (typical synoptic-scale pressure swing in a few hours; cap protects against fitter wackiness)
 }
 
 # Fitter short keys → which hourly array to mutate.
@@ -55,10 +56,11 @@ TARGET_ARRAY = {
     "ws": "wind_speed",
     "wg": "wind_gusts",
     "pp": "precipitation_probability",
+    "pr": "corrected_pressure_in",
 }
 
 # Per-field display rounding to match what the rest of the pipeline writes.
-ROUND_DIGITS = {"t": 1, "dp": 1, "h": 1, "ws": 1, "wg": 1, "pp": 0}
+ROUND_DIGITS = {"t": 1, "dp": 1, "h": 1, "ws": 1, "wg": 1, "pp": 0, "pr": 3}
 
 # Physical bounds on the corrected forecast value per field. Without these,
 # a large negative-sign correction at low raw values can push results below
@@ -70,6 +72,7 @@ FIELD_BOUNDS = {
     "wg": (0.0, None),
     "h":  (0.0, 100.0),
     "pp": (0.0, 100.0),
+    "pr": (25.0, 32.0),  # realistic Earth-surface inHg range; absurd Fitter outputs get clamped
 }
 
 # POP reverted to flat additive correction in v0.6.20 after offline Brier-score

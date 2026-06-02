@@ -44,6 +44,7 @@ FIELD_MAP = {
     "wg": "gust_mph",
     "h":  "humidity",
     "dp": "dew_point_f",
+    "pr": "pressure_in",
 }
 
 

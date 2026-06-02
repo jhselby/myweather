@@ -533,12 +533,13 @@ const M2_PERIOD_HOURS = 12.4206;
 const SALEM_M2_AMPLITUDE_FT = 5.0;
 
 const FIELDS = [
-  { key: "t",  label: "Temperature", unit: "°F",  array: "corrected_temperature",     raw: "temperature" },
-  { key: "dp", label: "Dew point",   unit: "°F",  array: "corrected_dew_point",       raw: "__dp_magnus__" },
-  { key: "h",  label: "Humidity",    unit: "%",   array: "corrected_humidity",        raw: "humidity" },
-  { key: "ws", label: "Wind speed",  unit: "mph", array: "wind_speed",                raw: "raw_wind_speed" },
-  { key: "wg", label: "Wind gust",   unit: "mph", array: "wind_gusts",                raw: "raw_wind_gusts" },
-  { key: "pp", label: "Precip prob", unit: "%",   array: "precipitation_probability", raw: "raw_precipitation_probability" },
+  { key: "t",  label: "Temperature", unit: "°F",   array: "corrected_temperature",     raw: "temperature" },
+  { key: "dp", label: "Dew point",   unit: "°F",   array: "corrected_dew_point",       raw: "__dp_magnus__" },
+  { key: "h",  label: "Humidity",    unit: "%",    array: "corrected_humidity",        raw: "humidity" },
+  { key: "ws", label: "Wind speed",  unit: "mph",  array: "wind_speed",                raw: "raw_wind_speed" },
+  { key: "wg", label: "Wind gust",   unit: "mph",  array: "wind_gusts",                raw: "raw_wind_gusts" },
+  { key: "pp", label: "Precip prob", unit: "%",    array: "precipitation_probability", raw: "raw_precipitation_probability" },
+  { key: "pr", label: "Pressure",    unit: "inHg", array: "corrected_pressure_in",     raw: "raw_pressure_in" },
 ];
 
 // Port of magnus_dew_point_f() in weather_collector/utils.py (constants 17.625, 243.04).
@@ -853,7 +854,7 @@ function renderAccuracySection(tsDoc) {
   const errsDay  = tsDoc.errors_by_lead[String(dayLead)]  || {};
   // Field-specific "good MAE" thresholds — tuned to typical model performance,
   // anything beyond is flagged as needs-attention.
-  const GOOD_MAE = { t: 1.5, dp: 2.0, h: 7, ws: 3, wg: 5, pp: 15 };
+  const GOOD_MAE = { t: 1.5, dp: 2.0, h: 7, ws: 3, wg: 5, pp: 15, pr: 0.05 };
   function stats(arr) {
     const vals = (arr || []).filter(v => v != null);
     if (!vals.length) return { mae: null, bias: null, n: 0 };
@@ -867,7 +868,7 @@ function renderAccuracySection(tsDoc) {
     const s24      = stats(near.slice(-24));
     const s7d      = stats(near);
     const sDay24   = stats(day.slice(-24));
-    const digits = f.key === "pp" ? 0 : (f.key === "h" ? 0 : 1);
+    const digits = f.key === "pp" ? 0 : (f.key === "h" ? 0 : (f.key === "pr" ? 3 : 1));
     const fmt = (v) => v == null ? "—" : v.toFixed(digits);
     const biasLine = (v) => {
       if (v == null) return "—";
@@ -1633,7 +1634,7 @@ async function load() {
     for (const f of FIELDS) {
       const n = (wxDoc.hourly[f.array] || []).length;
       const raw = rawValuesFor(f, wxDoc.hourly, n).map(v => (v == null ? NaN : Number(v)));
-      const digits = f.key === "pp" ? 0 : 1;
+      const digits = f.key === "pp" ? 0 : (f.key === "pr" ? 3 : 1);
       const nowVal = raw.length ? fmtFixed(raw[0], digits) : "—";
       const v24 = raw.length > 24 ? fmtFixed(raw[24], digits) : "—";
       const card = document.createElement("div");
@@ -1673,7 +1674,7 @@ async function load() {
     const grid = document.getElementById("grid-layer2");
     for (const f of FIELDS) {
       const s = _drillComputeSeries(f, wxDoc, corrDoc, diurnalCurrent);
-      const digits = f.key === "pp" ? 0 : 1;
+      const digits = f.key === "pp" ? 0 : (f.key === "pr" ? 3 : 1);
       const now = s.l2.length ? fmtFixed(s.l2[0], digits) : "—";
       const v24 = s.l2.length > 24 ? fmtFixed(s.l2[24], digits) : "—";
       const card = document.createElement("div");
@@ -1741,7 +1742,7 @@ async function load() {
       }
       const raw = rawValuesFor(f, wxDoc.hourly, n).map(v => (v == null ? NaN : Number(v)));
 
-      const digits = f.key === "pp" ? 0 : 1;
+      const digits = f.key === "pp" ? 0 : (f.key === "pr" ? 3 : 1);
       const nowVal = live.length ? fmtFixed(live[0], digits) : "—";
       const v24    = live.length > 24 ? fmtFixed(live[24], digits) : "—";
 

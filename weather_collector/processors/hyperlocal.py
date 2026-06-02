@@ -223,7 +223,11 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
 
             # Pressure octant-balanced
             if p_octant_means:
-                hyperlocal["corrected_pressure_in"] = round(sum(p_octant_means) / len(p_octant_means), 2)
+                corrected_pressure = sum(p_octant_means) / len(p_octant_means)
+                hyperlocal["corrected_pressure_in"] = round(corrected_pressure, 2)
+                if model_p_in is not None:
+                    hyperlocal["model_pressure_in"] = model_p_in
+                    hyperlocal["bias_pressure_in"] = round(corrected_pressure - model_p_in, 3)
     
     # Fallback: WU stations available but model temp missing — use WU average directly
     elif model_t is None and stations:

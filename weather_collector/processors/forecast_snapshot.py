@@ -36,6 +36,7 @@ def append_forecast_snapshot(hourly):
     gusts = hourly.get("wind_gusts", [])
     humid = hourly.get("corrected_humidity", hourly.get("humidity", []))
     pop   = hourly.get("precipitation_probability", [])
+    press = hourly.get("corrected_pressure_in", [])
 
     hours = []
     for i, t in enumerate(times[:SNAPSHOT_HOURS]):
@@ -56,6 +57,8 @@ def append_forecast_snapshot(hourly):
                     entry["dp"] = dp
         if i < len(pop) and pop[i] is not None:
             entry["pp"] = round(pop[i])
+        if i < len(press) and press[i] is not None:
+            entry["pr"] = round(press[i], 3)
         hours.append(entry)
 
     if not hours:
