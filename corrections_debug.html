@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MyWeather — Corrections Debug</title>
+<title>MyWeather — Forecast Pipeline</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -36,7 +36,9 @@
     border-bottom: 1px solid #242833;
   }
   h1 { font-size: 18px; margin: 0; font-weight: 600; }
+  html { scroll-padding-top: 60px; }
   h2.section {
+    scroll-margin-top: 60px;
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.08em;
@@ -306,6 +308,73 @@
   details.bias-accordion > *:last-child {
     margin-bottom: 14px;
   }
+  /* Page tagline under H1 */
+  .page-tagline {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 400;
+  }
+  /* Sticky TOC bar */
+  nav.toc {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,17,21,0.96);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border-bottom: 1px solid #242833;
+    padding: 8px 12px;
+    margin: 0 -12px 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  nav.toc a {
+    color: var(--ink);
+    background: #1a1f2a;
+    border: 1px solid #242833;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  nav.toc a:hover { background: #242a36; border-color: #3a3f48; }
+  nav.toc a.research { color: #d4a373; border-color: #3a2d1f; background: #1c1813; }
+  nav.toc a.accuracy { color: #74c38b; border-color: #1f3a25; background: #131c16; }
+  /* Forecast accuracy section */
+  .accuracy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .accuracy-card {
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--ink);
+    font-size: 12.5px;
+  }
+  .accuracy-card .field-name {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .accuracy-card .stat-line {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 11.5px;
+    padding: 2px 0;
+  }
+  .accuracy-card .stat-line strong { color: var(--ink); font-weight: 600; }
+  .accuracy-card.good    .field-name::after { content: " ✓"; color: #74c38b; }
+  .accuracy-card.poor    .field-name::after { content: " ⚠"; color: #d4a373; }
+  .research-heading { color: #d4a373; }
   .bias-legend {
     background: rgba(23,27,34,0.92);
     border: 1px solid #242833;
@@ -329,12 +398,32 @@
 </head>
 <body>
 <header>
-  <h1>Corrections debug</h1>
+  <h1>Forecast pipeline</h1>
+  <span class="page-tagline">Layer-by-layer anatomy of how Wyman Cove's forecast gets built — and how accurate it's turning out.</span>
   <span class="meta" id="meta">loading…</span>
 </header>
 
+<nav class="toc">
+  <a href="#sec-accuracy" class="accuracy">Accuracy</a>
+  <a href="#sec-drill">Drill-down</a>
+  <a href="#sec-layer1">L1 Raw</a>
+  <a href="#sec-layer2">L2 Mesonet</a>
+  <a href="#sec-layer3">L3 Decay</a>
+  <a href="#sec-layer4">L4 Diurnal</a>
+  <a href="#sec-research" class="research">Research</a>
+</nav>
+
+<!-- ───────────────────── Forecast accuracy ───────────────────── -->
+<h2 class="section" id="sec-accuracy">Forecast accuracy — is it actually working?</h2>
+<div class="layer-info-text">
+  Rolling-window comparison of the FINAL post-Layer-4 forecast against what was actually observed. The pipeline below tells you HOW the forecast is built; this section tells you IF it's working. Lower MAE (mean absolute error) is better. Bias direction shows whether the forecast tends to over- or under-shoot.
+  <div class="meta-line">Source: <code>time_series_diagnostic.json</code> (refreshed each Fitter run). Near-term column uses the shortest lead available (typically 6h); day-ahead uses lead 24h.</div>
+</div>
+<div id="status-accuracy" class="status" hidden></div>
+<div id="accuracy-grid" class="accuracy-grid"></div>
+
 <!-- ───────────────────── Drill-down ───────────────────── -->
-<h2 class="section">Single-field drill-down — see each correction layer build up</h2>
+<h2 class="section" id="sec-drill">Single-field drill-down — see each correction layer build up</h2>
 <div class="drill-controls">
   <div class="group">
     <span class="group-label">Field</span>
@@ -350,7 +439,7 @@
 <div id="status-drill" class="status" hidden></div>
 
 <!-- ───────────────────── Layer 1 ───────────────────── -->
-<h2 class="section">Layer 1 — Raw model (HRRR / GFS)</h2>
+<h2 class="section" id="sec-layer1">Layer 1 — Raw model (HRRR / GFS)</h2>
 <div class="layer-info-text">
   The starting point. Open-Meteo's HRRR (next 48h) and GFS (days 3–7) numerical weather models. Multi-kilometer grid resolution; the model has no specific knowledge of Wyman Cove. Every layer below corrects what the raw model gets wrong locally.
   <div class="meta-line">Curves below show the current raw model forecast per field — same dotted line that appears in the drill-down above.</div>
@@ -358,7 +447,7 @@
 <div id="grid-raw" class="grid"></div>
 
 <!-- ───────────────────── Layer 2 ───────────────────── -->
-<h2 class="section">Layer 2 — Mesonet corrections (local station network)</h2>
+<h2 class="section" id="sec-layer2">Layer 2 — Mesonet corrections (local station network)</h2>
 <div class="layer-info-text">
   The 81-station local network's collective read on what the raw model is missing. Two parallel aggregation paths under this layer, each suited to the noise behavior of its metric:
   <div class="meta-line"><strong>Temp / humidity / pressure (additive bias):</strong> each station's reading first calibrated against its own chronic offset (Kalman-tracked, rolling 48h, see 2a accordion). Per-octant <code>1/distance² × exp(-|elev_diff|/30)</code>-weighted mean of (station − model) bias. Final network bias = unweighted mean across non-empty octants. Temperature additionally gets scaled by the network Kalman gain K (sec 2c) before being added to the raw model.</div>
@@ -386,7 +475,7 @@
 </details>
 
 <!-- ───────────────────── Layer 3 ───────────────────── -->
-<h2 class="section">Layer 3 — Decay curves (lead-time correction)</h2>
+<h2 class="section" id="sec-layer3">Layer 3 — Decay curves (lead-time correction)</h2>
 
 <h3 class="subsection">3a. Fitted correction curves — what is being applied per lead hour</h3>
 <div id="status-corrections" class="status" hidden></div>
@@ -400,19 +489,26 @@
 <div id="status-history" class="status" hidden></div>
 <div id="grid-history" class="grid"></div>
 
-<h3 class="subsection">3d. Tide-phase curves over time — does the error track the tide cycle? (statistical view)</h3>
+<!-- ───────────────────── Layer 4 ───────────────────── -->
+<h2 class="section" id="sec-layer4">Layer 4 — Diurnal correction (hour-of-day)</h2>
+
+<h3 class="subsection">4a. Diurnal correction curves over time — historical fits</h3>
+<div id="status-diurnal" class="status" hidden></div>
+<div id="grid-diurnal" class="grid"></div>
+
+<!-- ───────────────────── Research ───────────────────── -->
+<h2 class="section research-heading" id="sec-research">Research — experimental signals (not applied to live forecast)</h2>
 <div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
-  <strong style="color:#d4a373;">Diagnostic only — not currently applied to the live forecast.</strong>
-  <div class="meta-line">Fitted alongside the lead-time decay curves so we can watch whether the bias actually tracks the tide cycle. If a clear, stable pattern emerges across days, this becomes a candidate for a real correction layer.</div>
+  <strong style="color:#d4a373;">Diagnostic only — these signals are tracked but not applied to the live forecast.</strong>
+  <div class="meta-line">If a clear, stable pattern emerges across days here, it becomes a candidate for a real correction layer. Currently exploring whether the residual forecast error correlates with the tide cycle.</div>
 </div>
+
+<h3 class="subsection">R1. Tide-phase curves over time — does the error track the tide cycle? (statistical view)</h3>
 <div id="status-tide" class="status" hidden></div>
 <div id="grid-tide" class="grid"></div>
 
-<h3 class="subsection">3e. Error vs tide elevation over time — do they oscillate together? (intuitive view)</h3>
-<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
-  <strong style="color:#d4a373;">Diagnostic only — not currently applied to the live forecast.</strong>
-  <div class="meta-line">Time-domain companion to 3d. If the error squiggle visibly tracks the tide squiggle here, the statistical signal in 3d is real, not noise.</div>
-</div>
+<h3 class="subsection">R2. Error vs tide elevation over time — do they oscillate together? (intuitive view)</h3>
+<div class="meta-line" style="margin-bottom:10px;">Time-domain companion to R1. If the error squiggle visibly tracks the tide squiggle here, the statistical signal in R1 is real, not noise.</div>
 <div id="status-timeseries" class="status" hidden></div>
 <div class="section-controls">
   <label for="ts-lead-select">Lead time:</label>
@@ -420,13 +516,6 @@
   <span class="section-controls-hint">Higher leads = forecast made further ahead. Switch to see if the tide pattern is lead-specific.</span>
 </div>
 <div id="grid-timeseries" class="grid"></div>
-
-<!-- ───────────────────── Layer 4 ───────────────────── -->
-<h2 class="section">Layer 4 — Diurnal correction (hour-of-day)</h2>
-
-<h3 class="subsection">4a. Diurnal correction curves over time — historical fits</h3>
-<div id="status-diurnal" class="status" hidden></div>
-<div id="grid-diurnal" class="grid"></div>
 
 
 <script>
@@ -745,6 +834,60 @@ function renderLayer2Panel(wxDoc) {
       `${hyp.stations_used ?? "?"}/${hyp.stations_total ?? "?"} stations · ` +
       `${hyp.confidence ?? "—"} confidence` +
     `</div>`;
+}
+
+// ── Forecast accuracy: how well does the final post-Layer-4 forecast
+// match what was actually observed? Reads time_series_diagnostic.json,
+// computes MAE + signed bias over the recent 24h and full 7d window at
+// the shortest available lead (= "near-term") and lead 24h (= "day-ahead").
+function renderAccuracySection(tsDoc) {
+  const grid = document.getElementById("accuracy-grid");
+  if (!tsDoc || !tsDoc.errors_by_lead || !Array.isArray(tsDoc.leads_h) || !tsDoc.leads_h.length) {
+    showStatus("status-accuracy", "Awaiting first Fitter run — no time_series_diagnostic.json yet.");
+    return;
+  }
+  const leads = [...tsDoc.leads_h].sort((a, b) => a - b);
+  const nearLead = leads[0];
+  const dayLead = leads.includes(24) ? 24 : leads[Math.min(leads.length - 1, 3)] || nearLead;
+  const errsNear = tsDoc.errors_by_lead[String(nearLead)] || {};
+  const errsDay  = tsDoc.errors_by_lead[String(dayLead)]  || {};
+  // Field-specific "good MAE" thresholds — tuned to typical model performance,
+  // anything beyond is flagged as needs-attention.
+  const GOOD_MAE = { t: 1.5, dp: 2.0, h: 7, ws: 3, wg: 5, pp: 15 };
+  function stats(arr) {
+    const vals = (arr || []).filter(v => v != null);
+    if (!vals.length) return { mae: null, bias: null, n: 0 };
+    const mae  = vals.reduce((s, v) => s + Math.abs(v), 0) / vals.length;
+    const bias = vals.reduce((s, v) => s + v, 0) / vals.length;
+    return { mae, bias, n: vals.length };
+  }
+  for (const f of FIELDS) {
+    const near = errsNear[f.key] || [];
+    const day  = errsDay[f.key]  || [];
+    const s24      = stats(near.slice(-24));
+    const s7d      = stats(near);
+    const sDay24   = stats(day.slice(-24));
+    const digits = f.key === "pp" ? 0 : (f.key === "h" ? 0 : 1);
+    const fmt = (v) => v == null ? "—" : v.toFixed(digits);
+    const biasLine = (v) => {
+      if (v == null) return "—";
+      const sign = v >= 0 ? "+" : "";
+      const dir = Math.abs(v) < 0.05 ? "" : (v >= 0 ? " (over)" : " (under)");
+      return `${sign}${fmt(v)}${f.unit}${dir}`;
+    };
+    const thresh = GOOD_MAE[f.key] || 1.5;
+    const status = s24.mae == null ? "" : (s24.mae <= thresh ? "good" : "poor");
+    const card = document.createElement("div");
+    card.className = "accuracy-card " + status;
+    card.innerHTML =
+      `<div class="field-name">${f.label}</div>` +
+      `<div class="stat-line"><span>Near-term MAE (last 24h, lead ${nearLead}h)</span><strong>${fmt(s24.mae)}${f.unit}</strong></div>` +
+      `<div class="stat-line"><span>7d MAE (lead ${nearLead}h)</span><strong>${fmt(s7d.mae)}${f.unit}</strong></div>` +
+      `<div class="stat-line"><span>Day-ahead MAE (last 24h, lead ${dayLead}h)</span><strong>${fmt(sDay24.mae)}${f.unit}</strong></div>` +
+      `<div class="stat-line"><span>Recent bias direction</span><strong>${biasLine(s24.bias)}</strong></div>` +
+      `<div class="stat-line"><span>Samples (7d)</span><strong>${s7d.n}</strong></div>`;
+    grid.appendChild(card);
+  }
 }
 
 // ── Layer 2 octant coverage: where did this tick's stations come from? ─
@@ -1466,6 +1609,7 @@ async function load() {
   } catch (err) { /* silent */ }
 
   renderMeta(corrDoc, wxDoc);
+  renderAccuracySection(tsDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
 
