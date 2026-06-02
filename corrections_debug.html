@@ -185,6 +185,36 @@
     line-height: 1.5;
   }
   .layer-info-text .meta-line { color: var(--muted); font-size: 11.5px; margin-top: 6px; }
+  .octant-rose {
+    display: grid;
+    grid-template-columns: repeat(3, 64px);
+    grid-template-rows: repeat(3, 36px);
+    gap: 4px;
+    margin: 10px 0 4px;
+    justify-content: start;
+  }
+  .octant-rose .oct {
+    border: 1px solid #242833;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 10.5px;
+    color: var(--ink);
+    background: #131722;
+  }
+  .octant-rose .oct .lbl { color: var(--muted); font-size: 9.5px; letter-spacing: 0.04em; }
+  .octant-rose .oct .cnt { font-weight: 600; }
+  .octant-rose .oct.empty { background: #2a1818; border-color: #5a2828; }
+  .octant-rose .oct.sparse { background: #2a2418; border-color: #5a4a28; }
+  .octant-rose .oct.ok { background: #16241a; border-color: #2a5a32; }
+  .octant-rose .home {
+    background: transparent;
+    border: 1px dashed #3a3f48;
+    color: var(--muted);
+    font-size: 9.5px;
+  }
   /* Drill-down section */
   .drill-controls {
     background: var(--panel);
@@ -330,6 +360,7 @@
 <!-- ───────────────────── Layer 2 ───────────────────── -->
 <h2 class="section">Layer 2 — Station network bias correction (+ wind blend)</h2>
 <div id="layer2-panel" class="layer-info-text">loading…</div>
+<div id="layer2-octants" class="layer-info-text">loading…</div>
 <div id="grid-layer2" class="grid"></div>
 
 <!-- ───────────────────── Layer 3 ───────────────────── -->
@@ -730,6 +761,27 @@ function renderLayer2Panel(wxDoc) {
       `${hyp.stations_used ?? "?"}/${hyp.stations_total ?? "?"} stations · ` +
       `${hyp.confidence ?? "—"} confidence` +
     `</div>`;
+}
+
+// ── Layer 2 octant coverage: where did this tick's stations come from? ─
+function renderOctantPanel(wxDoc) {
+  const el = document.getElementById("layer2-octants");
+  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+  const cov = hyp.octant_coverage || {};
+  const aggregation = hyp.aggregation || "—";
+  const wind_aggregation = (wxDoc && wxDoc.current && wxDoc.current.wind_aggregation) || "—";
+  const order = ["NW", "N", "NE", "W", "C", "E", "SW", "S", "SE"];  // 3×3 compass grid
+  function cell(label) {
+    if (label === "C") return `<div class="oct home">Wyman<br>Cove</div>`;
+    const n = cov[label] || 0;
+    const cls = n === 0 ? "empty" : (n < 2 ? "sparse" : "ok");
+    return `<div class="oct ${cls}"><span class="lbl">${label}</span><span class="cnt">${n}</span></div>`;
+  }
+  el.innerHTML =
+    `Where this tick's stations came from. Octant-balanced aggregation means each non-empty sector counts equally — a dense Marblehead octant with 12 stations gets the same weight as a sparse Salem octant with 2. ` +
+    `Red = no coverage (gap), amber = sparse (1 station), green = ok (≥2).` +
+    `<div class="octant-rose">${order.map(cell).join("")}</div>` +
+    `<div class="meta-line">Bias aggregation: <strong>${aggregation}</strong> · Wind aggregation: <strong>${wind_aggregation}</strong> · Octants populated: <strong>${hyp.octants_used ?? "—"}/8</strong></div>`;
 }
 
 // ── Layer 3 panel: Kalman gain summary + what it does ──────────────────
@@ -1433,7 +1485,10 @@ async function load() {
   }
 
   // ── Layer 2: station-network bias snapshot + post-L2 forecast grid ──
-  if (wxDoc) renderLayer2Panel(wxDoc);
+  if (wxDoc) {
+    renderLayer2Panel(wxDoc);
+    renderOctantPanel(wxDoc);
+  }
   if (wxDoc && wxDoc.hourly) {
     let diurnalCurrent = null;
     if (diurnalDoc && Array.isArray(diurnalDoc.history) && diurnalDoc.history.length) {

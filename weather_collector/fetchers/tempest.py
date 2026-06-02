@@ -14,9 +14,13 @@ from ..config import LAT, LON
 from ..utils import iso_utc_now
 import logging
 
-# Public Tempest stations within ~1.5mi of Wyman Cove
-# waterfront=True: on the harbor shoreline, most representative for wind
+# Public Tempest stations within ~2.5mi of Wyman Cove (expanded from 1.5mi
+# on 2026-06-02 alongside the WU sweep). Geo-balanced aggregation in
+# hyperlocal.py / wind_blend.py prevents over-representation from any one
+# direction. waterfront=True: on the harbor shoreline, most representative
+# for wind direction.
 TEMPEST_STATIONS = [
+    # Original 1.5mi set
     {"id": 204883, "name": "Willow Rd",    "waterfront": True},
     {"id": 85260,  "name": "Driftwood Rd", "waterfront": True},
     {"id": 192019, "name": "Neptune Rd",   "waterfront": True},
@@ -26,6 +30,24 @@ TEMPEST_STATIONS = [
     {"id": 135494, "name": "Lincoln Ave",  "waterfront": False},
     {"id": 192607, "name": "Willard Ln",   "waterfront": False},
     {"id": 86357,  "name": "ColleeninMHD", "waterfront": False},
+    # Added 2026-06-02: 1.5–2.5mi expansion (16 new)
+    {"id": 130945, "name": "Gallison Ave",                   "waterfront": False},
+    {"id": 159204, "name": "Marblehead",                     "waterfront": False},
+    {"id": 142949, "name": "Coolidge Rd",                    "waterfront": False},
+    {"id": 164230, "name": "Russell St",                     "waterfront": False},
+    {"id": 72262,  "name": "Spray Ave",                      "waterfront": False},
+    {"id": 100037, "name": "Bass Rock Ln",                   "waterfront": False},
+    {"id": 141896, "name": "Front St",                       "waterfront": False},
+    {"id": 85616,  "name": "Orleans",                        "waterfront": False},
+    {"id": 28679,  "name": "Broadmere Way",                  "waterfront": False},
+    {"id": 211335, "name": "Manton Rd",                      "waterfront": False},
+    {"id": 85569,  "name": "Preston Ct",                     "waterfront": False},
+    {"id": 178102, "name": "Broad St",                       "waterfront": False},
+    {"id": 109319, "name": "South Essex Sewerage District",  "waterfront": False},
+    {"id": 92837,  "name": "Harbor Ave",                     "waterfront": False},
+    {"id": 165151, "name": "Ocean ave MHD",                  "waterfront": False},
+    {"id": 51384,  "name": "Memorial Dr",                    "waterfront": False},
+    {"id": 170101, "name": "Marblehead Neck",                "waterfront": False},
 ]
 
 _API_KEY  = "6bff2f89-84ab-463c-886e-fc0f443da4cf"

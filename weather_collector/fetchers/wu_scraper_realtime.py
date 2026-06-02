@@ -21,8 +21,13 @@ import logging
 API_KEY = os.environ["WU_API_KEY"]
 BASE_URL = "https://api.weather.com/v2/pws/observations/all/1day"
 
-# Station IDs
+# Station IDs — populated from a 2.5mi-radius sweep of the WU PWS API on
+# 2026-06-02 (56 total inside the radius). Geo-balanced aggregation in
+# hyperlocal.py prevents over-representation from dense Marblehead-side
+# clusters; older 1.5mi-only list was Marblehead-tilted because Salem-side
+# PWS density drops sharply west of the harbor.
 STATIONS = [
+    # Original 1.5mi set
     "KMAMARBL63", "KMAMARBL69", "KMAMARBL112", "KMAMARBL108",
     "KMAMARBL39", "KMAMARBL4", "KMAMARBL36", "KMAMARBL57",
     "KMAMARBL56", "KMAMARBL89", "KMAMARBL78", "KMASALEM94",
@@ -31,6 +36,15 @@ STATIONS = [
     "KMAMARBL82", "KMAMARBL90", "KMAMARBL92", "KMAMARBL95",
     "KMAMARBL96", "KMAMARBL100", "KMAMARBL114", "KMAMARBL116",
     "KMAMARBL117",
+    # Added 2026-06-02: 1.5–2.5mi expansion, Salem-side gap fill
+    "KMAMARBL26", "KMAMARBL84", "KMAMARBL99", "KMAMARBL85",
+    "KMAMARBL8", "KMAMARBL118", "KMAMARBL64", "KMAMARBL1",
+    "KMAMARBL17", "KMAMARBL113", "KMAMARBL34",
+    "KMASALEM18", "KMASALEM91", "KMASALEM30", "KMASALEM35",
+    "KMASALEM15", "KMASALEM86", "KMASALEM111", "KMASALEM118",
+    "KMASALEM117", "KMASALEM74", "KMASALEM105", "KMASALEM87",
+    "KMASALEM37", "KMASALEM112", "KMASALEM116",
+    "KMASWAMP26", "KMASWAMP37", "KMASWAMP24", "KMASWAMP38", "KMASWAMP28",
 ]
 
 # Wyman Cove reference point (16 Indianhead Circle)
@@ -77,10 +91,35 @@ STATION_ELEVATIONS = {
     "KMAMARBL96": 33.0,
     "KMASALEM91": 36.0,
     "KMASALEM94": 22.0,
+    # Added 2026-06-02 (Open-Elevation API) for 1.5–2.5mi expansion
+    "KMAMARBL17": 26.2,
+    "KMAMARBL26": 101.7,
+    "KMAMARBL34": 59.1,
+    "KMAMARBL84": 68.9,
+    "KMAMARBL99": 42.7,
+    "KMASALEM15": 49.2,
+    "KMASALEM18": 49.2,
+    "KMASALEM30": 78.7,
+    "KMASALEM35": 45.9,
+    "KMASALEM37": 121.4,
+    "KMASALEM74": 134.5,
+    "KMASALEM86": 55.8,
+    "KMASALEM87": 36.1,
+    "KMASALEM105": 19.7,
+    "KMASALEM111": 23.0,
+    "KMASALEM112": 36.1,
+    "KMASALEM116": 55.8,
+    "KMASALEM117": 124.7,
+    "KMASALEM118": 29.5,
+    "KMASWAMP24": 45.9,
+    "KMASWAMP26": 49.2,
+    "KMASWAMP28": 39.4,
+    "KMASWAMP37": 59.1,
+    "KMASWAMP38": 108.3,
 }
 
 # Filtering thresholds
-MAX_DISTANCE_MI = 1.5  # Ignore stations farther than this
+MAX_DISTANCE_MI = 2.5  # Ignore stations farther than this (raised from 1.5 on 2026-06-02 with octant-balanced aggregation in hyperlocal.py)
 MIN_WIND_THRESHOLD = 0.3  # Wind below this = sensor failure
 MAX_TEMP_DEVIATION = 4.0  # Exclude temps >4°F from median
 

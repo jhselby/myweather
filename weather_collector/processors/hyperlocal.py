@@ -5,9 +5,28 @@ import math
 import statistics
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
-from ..config import ELEVATION_FT
+from ..config import ELEVATION_FT, LAT as HOME_LAT, LON as HOME_LON
 
 _EASTERN = ZoneInfo("America/New_York")
+
+# Octant labels (compass sectors, 45° each, centered on cardinal/intercardinal).
+# Index 0 = N (337.5°–22.5°), 1 = NE, 2 = E, ..., 7 = NW.
+OCTANT_LABELS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+MAX_STATION_DIST_MI = 2.5
+MIN_OCTANTS_FOR_BALANCED = 3  # need ≥ this many non-empty octants to use octant mean
+
+
+def _octant_index(station_lat, station_lon):
+    """Return 0–7 octant index of station relative to home (compass bearing)."""
+    if station_lat is None or station_lon is None:
+        return None
+    lat1 = math.radians(HOME_LAT)
+    lat2 = math.radians(station_lat)
+    dlon = math.radians(station_lon - HOME_LON)
+    x = math.sin(dlon) * math.cos(lat2)
+    y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon)
+    bearing = (math.degrees(math.atan2(x, y)) + 360.0) % 360.0
+    return int(((bearing + 22.5) % 360) / 45)
 
 
 def _kalman_gain(n_stations, bias_std):
@@ -76,75 +95,99 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
     pressure_offsets = _offsets.get("pressure", {})
 
     if model_t is not None and stations:
-        weighted_bias_sum = 0.0
-        total_weight = 0.0
-        station_biases = []
+        # Per-octant accumulators (8 sectors × {temp_bias, humidity, pressure})
+        oct_temp_wsum = [0.0] * 8
+        oct_temp_wt   = [0.0] * 8
+        oct_h_wsum    = [0.0] * 8
+        oct_h_wt      = [0.0] * 8
+        oct_p_wsum    = [0.0] * 8
+        oct_p_wt      = [0.0] * 8
+        oct_station_count = [0] * 8
+        station_biases = []  # kept for legacy bias_std fallback
         stations_used = 0
-        h_wsum = 0.0
-        h_wt = 0.0
-        p_wsum = 0.0
-        p_wt = 0.0
 
         for station in stations:
             station_temp = station.get('temperature_f')
             station_dist = station.get('distance_mi')
             station_elev = station.get('elevation_ft')
+            station_lat  = station.get('latitude')
+            station_lon  = station.get('longitude')
 
-            # Skip stations with missing data
-            if station_temp is None or station_dist is None or station_elev is None:
+            # Skip stations with missing core data
+            if station_temp is None or station_dist is None:
                 continue
-            if station_dist == 0 or station_dist > 1.5:  # Distance filter
+            if station_dist == 0 or station_dist > MAX_STATION_DIST_MI:
+                continue
+            # No-elevation stations get no elevation penalty (treated as same elev as home)
+            if station_elev is None:
+                station_elev = ELEVATION_FT
+            oct = _octant_index(station_lat, station_lon)
+            if oct is None:
                 continue
 
             sid = str(station.get('station_id') or station.get('station_name') or '')
 
             # Distance weight: 1/distance² (inverse square law)
             dist_weight = 1.0 / (station_dist ** 2)
-            # Elevation weight: exp(-|elev_diff|/30)
             elev_diff = abs(station_elev - ELEVATION_FT)
             elev_weight = math.exp(-elev_diff / 30.0)
             weight = dist_weight * elev_weight
 
-            # Temperature with bias correction
+            # Temperature bias
             corrected_temp_s = station_temp - temp_offsets.get(sid, 0.0)
             bias_at_station = corrected_temp_s - model_t
-            weighted_bias_sum += bias_at_station * weight
-            total_weight += weight
+            oct_temp_wsum[oct] += bias_at_station * weight
+            oct_temp_wt[oct]   += weight
+            oct_station_count[oct] += 1
             station_biases.append(bias_at_station)
             stations_used += 1
 
-            # Humidity with bias correction (single pass)
+            # Humidity
             raw_h = station.get('humidity_pct') or station.get('relative_humidity')
             if raw_h is not None:
                 corrected_h = raw_h - humidity_offsets.get(sid, 0.0)
-                h_wsum += corrected_h * weight
-                h_wt += weight
+                oct_h_wsum[oct] += corrected_h * weight
+                oct_h_wt[oct]   += weight
 
-            # Pressure with bias correction (single pass)
+            # Pressure
             raw_p = station.get('pressure_in')
             if raw_p is None:
                 p_mb = station.get('sea_level_pressure_mb')
                 raw_p = round(p_mb / 33.8639, 3) if p_mb is not None else None
             if raw_p is not None:
                 corrected_p = raw_p - pressure_offsets.get(sid, 0.0)
-                p_wsum += corrected_p * weight
-                p_wt += weight
+                oct_p_wsum[oct] += corrected_p * weight
+                oct_p_wt[oct]   += weight
 
-        # Calculate weighted average bias
-        if total_weight > 0 and stations_used >= 3:
-            weighted_bias = weighted_bias_sum / total_weight
+        # Octant-balanced means: per-octant weighted mean, then unweighted mean
+        # across non-empty octants. Prevents any compass sector with high PWS
+        # density from dominating the network bias.
+        temp_octant_means = [oct_temp_wsum[i] / oct_temp_wt[i] for i in range(8) if oct_temp_wt[i] > 0]
+        h_octant_means    = [oct_h_wsum[i]    / oct_h_wt[i]    for i in range(8) if oct_h_wt[i]    > 0]
+        p_octant_means    = [oct_p_wsum[i]    / oct_p_wt[i]    for i in range(8) if oct_p_wt[i]    > 0]
+        octants_used      = len(temp_octant_means)
 
-            # Calculate confidence based on bias agreement
-            if len(station_biases) > 1:
-                bias_std = statistics.stdev(station_biases)
-                if bias_std < 1.0:
-                    confidence = "High"
-                elif bias_std < 2.0:
-                    confidence = "Moderate"
-                else:
-                    confidence = "Low"
+        if stations_used >= 3 and (octants_used >= MIN_OCTANTS_FOR_BALANCED or stations_used >= 3):
+            # Use octant mean when we have ≥3 octants; otherwise fall back to
+            # flat mean across whatever bias values we collected (rare with
+            # 81-station catchment, but handles winter-sparse periods).
+            if octants_used >= MIN_OCTANTS_FOR_BALANCED:
+                weighted_bias = sum(temp_octant_means) / octants_used
+                aggregation = "octant_balanced"
+                # bias_std now measures geographic disagreement between octants
+                bias_std = statistics.stdev(temp_octant_means) if octants_used > 1 else None
             else:
-                bias_std = None
+                weighted_bias = sum(station_biases) / len(station_biases)
+                aggregation = "flat_fallback"
+                bias_std = statistics.stdev(station_biases) if len(station_biases) > 1 else None
+
+            if bias_std is None:
+                confidence = "Low"
+            elif bias_std < 1.0:
+                confidence = "High"
+            elif bias_std < 2.0:
+                confidence = "Moderate"
+            else:
                 confidence = "Low"
 
             K = _kalman_gain(stations_used, bias_std if bias_std is not None else 99)
@@ -157,25 +200,30 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             hyperlocal["stations_used"] = stations_used
             hyperlocal["stations_total"] = wu_stations_attempted + tempest_stations_attempted
             hyperlocal["confidence"] = confidence
-            hyperlocal["bias_std"] = round(bias_std, 2)
+            hyperlocal["bias_std"] = round(bias_std, 2) if bias_std is not None else None
+            hyperlocal["aggregation"] = aggregation
+            hyperlocal["octants_used"] = octants_used
+            hyperlocal["octant_coverage"] = {
+                OCTANT_LABELS[i]: oct_station_count[i] for i in range(8)
+            }
             if _offsets:
                 hyperlocal["station_offsets"] = _offsets
 
-            # For reference, also show simple WU average
             wu_t = wu_data.get("temperature_f") if wu_data else None
             if wu_t is not None:
                 hyperlocal["wu_avg_temp"] = round(wu_t, 1)
 
-            # Humidity from per-station weighted average
-            if h_wt > 0:
-                hyperlocal["corrected_humidity"] = round(h_wsum / h_wt, 1)
+            # Humidity octant-balanced
+            if h_octant_means:
+                corrected_humidity = sum(h_octant_means) / len(h_octant_means)
+                hyperlocal["corrected_humidity"] = round(corrected_humidity, 1)
                 if model_h is not None:
                     hyperlocal["model_humidity"] = model_h
-                    hyperlocal["bias_humidity"] = round((h_wsum / h_wt) - model_h, 1)
+                    hyperlocal["bias_humidity"] = round(corrected_humidity - model_h, 1)
 
-            # Pressure from per-station weighted average
-            if p_wt > 0:
-                hyperlocal["corrected_pressure_in"] = round(p_wsum / p_wt, 2)
+            # Pressure octant-balanced
+            if p_octant_means:
+                hyperlocal["corrected_pressure_in"] = round(sum(p_octant_means) / len(p_octant_means), 2)
     
     # Fallback: WU stations available but model temp missing — use WU average directly
     elif model_t is None and stations:
@@ -185,8 +233,10 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             st = station.get('temperature_f')
             sd = station.get('distance_mi')
             se = station.get('elevation_ft')
-            if st is None or sd is None or se is None or sd == 0 or sd > 1.5:
+            if st is None or sd is None or sd == 0 or sd > MAX_STATION_DIST_MI:
                 continue
+            if se is None:
+                se = ELEVATION_FT
             dist_w = 1.0 / (sd ** 2)
             elev_w = math.exp(-abs(se - ELEVATION_FT) / 30.0)
             w = dist_w * elev_w
@@ -195,7 +245,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
         if total_weight > 0:
             corrected = weighted_sum / total_weight
             hyperlocal["corrected_temp"] = round(corrected, 1)
-            hyperlocal["stations_used"] = len([s for s in stations if s.get('temperature_f') and s.get('distance_mi') and s['distance_mi'] <= 1.5])
+            hyperlocal["stations_used"] = len([s for s in stations if s.get('temperature_f') and s.get('distance_mi') and s['distance_mi'] <= MAX_STATION_DIST_MI])
             hyperlocal["confidence"] = "Moderate"
             hyperlocal["note"] = "GFS model unavailable, using WU stations directly"
 

@@ -7,9 +7,25 @@ Wind blending:
 Both mutate weather_data in place.
 """
 import logging
+import math
+import statistics
 from datetime import datetime, timezone
 
 import pytz
+from ..config import LAT as HOME_LAT, LON as HOME_LON
+
+
+def _octant_index(lat, lon):
+    """Compass octant 0–7 (0=N) of a station relative to home. None if no coords."""
+    if lat is None or lon is None:
+        return None
+    lat1 = math.radians(HOME_LAT)
+    lat2 = math.radians(lat)
+    dlon = math.radians(lon - HOME_LON)
+    x = math.sin(dlon) * math.cos(lat2)
+    y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon)
+    bearing = (math.degrees(math.atan2(x, y)) + 360.0) % 360.0
+    return int(((bearing + 22.5) % 360) / 45)
 
 
 # Observation freshness limits. Readings older than this are dropped.
@@ -63,6 +79,8 @@ def _wu_candidates(wu_data, now_utc):
             "speed": station.get("wind_speed_mph", 0),
             "direction": station.get("wind_direction"),
             "waterfront": station.get("waterfront", False),
+            "lat": station.get("latitude"),
+            "lon": station.get("longitude"),
         })
     return candidates
 
@@ -83,6 +101,8 @@ def _tempest_candidates(tempest_data):
             "speed": tb.get("wind_avg_mph", 0),
             "direction": tb.get("wind_direction"),
             "waterfront": tb.get("waterfront", False),
+            "lat": tb.get("latitude"),
+            "lon": tb.get("longitude"),
         })
     return candidates
 
@@ -123,11 +143,45 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data):
     candidates.extend(_tempest_candidates(tempest_data))
 
     if candidates:
-        # Max gust and max sustained selected independently
-        max_gust_entry = max(candidates, key=lambda x: x["gust"])
-        selected_gust = max_gust_entry["gust"]
-        max_speed_entry = max(candidates, key=lambda x: x["speed"])
-        selected_speed = max_speed_entry["speed"]
+        # Octant-balanced max selection (added 2026-06-02):
+        # 1. Tag each candidate with its compass octant relative to home.
+        #    Stations without coords (model, KBVY) are kept in a None bucket
+        #    that always participates — these aren't directional outliers.
+        # 2. Take the max gust/speed WITHIN each populated octant.
+        # 3. Take the MEDIAN across those octant maxes — rejects a single
+        #    station spike in one direction while preserving genuinely
+        #    regional wind events that show up in multiple octants.
+        # If only 1–2 octants have wind data, fall back to flat max (no
+        # geographic spread to balance against).
+        oct_gust   = {None: []}
+        oct_speed  = {None: []}
+        for c in candidates:
+            oct = _octant_index(c.get("lat"), c.get("lon"))
+            oct_gust.setdefault(oct, []).append(c)
+            oct_speed.setdefault(oct, []).append(c)
+        directional_octants = [o for o in oct_gust if o is not None and oct_gust[o]]
+        # Always keep the model/KBVY (None) entries in the max pool
+        if len(directional_octants) >= 3:
+            # Per-octant max → median across octants. Include None bucket as
+            # an additional "reference" octant so model/KBVY aren't ignored.
+            per_oct_max_gust  = [max(g["gust"]  for g in oct_gust[o])  for o in directional_octants]
+            per_oct_max_speed = [max(s["speed"] for s in oct_speed[o]) for o in directional_octants]
+            if oct_gust.get(None):
+                per_oct_max_gust.append(max(g["gust"]  for g in oct_gust[None]))
+                per_oct_max_speed.append(max(s["speed"] for s in oct_speed[None]))
+            selected_gust  = statistics.median(per_oct_max_gust)
+            selected_speed = statistics.median(per_oct_max_speed)
+            # For the "source" label (and direction lookup), pick the actual
+            # candidate whose gust matches the chosen median (closest match).
+            max_gust_entry = min(candidates, key=lambda c: abs(c["gust"]  - selected_gust))
+            max_speed_entry= min(candidates, key=lambda c: abs(c["speed"] - selected_speed))
+            wind_aggregation = f"octant_median ({len(directional_octants)} octants)"
+        else:
+            max_gust_entry  = max(candidates, key=lambda x: x["gust"])
+            max_speed_entry = max(candidates, key=lambda x: x["speed"])
+            selected_gust   = max_gust_entry["gust"]
+            selected_speed  = max_speed_entry["speed"]
+            wind_aggregation = f"flat_max ({len(directional_octants)} octants - sparse)"
 
         # Sanity cap: if the WU sensor network strongly disagrees with the
         # chosen speed, the model is likely wrong-high — trust the network.
@@ -166,6 +220,7 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data):
                 pass  # Keep existing numeric value from Open-Meteo
 
         current["condition_source"] = f"{max_gust_entry['source']} observed"
+        current["wind_aggregation"] = wind_aggregation
 
     # Final fallback: if GFS failed and nothing yielded a direction, use KBVY
     if current.get("wind_direction") is None and kbvy_data and kbvy_data.get("wind_dir") is not None:
