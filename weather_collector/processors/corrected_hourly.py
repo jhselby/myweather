@@ -20,7 +20,15 @@ def add_corrected_hourly_arrays(weather_data):
         return
 
     hyp = weather_data.get("hyperlocal", {})
-    temp_bias = hyp.get("weighted_bias", 0)
+    weighted_bias = hyp.get("weighted_bias", 0)
+    kalman_gain = hyp.get("kalman_gain", 1.0)
+    if kalman_gain is None:
+        kalman_gain = 1.0
+    # Layer 3 (Adaptive Bias Control): Kalman gain scales how aggressively
+    # the network bias is applied. Few stations / high scatter → low K → less
+    # bias trusted into the forecast. Matches the Right-Now calculation in
+    # hyperlocal.py: corrected_temp = model_t + K * weighted_bias.
+    temp_bias = kalman_gain * weighted_bias
     humid_bias = hyp.get("bias_humidity", 0)
 
     hourly = weather_data["hourly"]

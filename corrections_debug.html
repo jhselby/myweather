@@ -163,6 +163,65 @@
       rgba(74,163,255,1));
   }
   .hist-legend-hint { margin-left: auto; opacity: 0.7; }
+  /* Sub-section header inside a layer */
+  h3.subsection {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 18px 2px 8px;
+    padding-top: 6px;
+    border-top: 1px dashed #242833;
+  }
+  h3.subsection:first-of-type { border-top: none; padding-top: 0; }
+  /* Layer 2 bias-values panel */
+  .layer-info-text {
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .layer-info-text .meta-line { color: var(--muted); font-size: 11.5px; margin-top: 6px; }
+  /* Drill-down section */
+  .drill-controls {
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px;
+    font-size: 12px;
+  }
+  .drill-controls .group { display: flex; align-items: center; gap: 6px; }
+  .drill-controls .group-label { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 10.5px; }
+  .drill-controls label { color: var(--ink); cursor: pointer; user-select: none; padding: 2px 6px; border-radius: 4px; }
+  .drill-controls label:hover { background: rgba(255,255,255,0.04); }
+  .drill-controls input[type="radio"],
+  .drill-controls input[type="checkbox"] { vertical-align: middle; margin-right: 3px; }
+  .drill-controls button {
+    background: rgba(74,163,255,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(74,163,255,0.4);
+    border-radius: 4px;
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .drill-controls button:hover { background: rgba(74,163,255,0.25); }
+  .drill-chart-wrap {
+    position: relative;
+    height: 360px;
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    padding: 12px;
+  }
   /* Bias map */
   .bias-map-wrap {
     height: 460px;
@@ -182,6 +241,41 @@
     font-size: 12px;
   }
   .bias-map-wrap .leaflet-popup-tip { background: var(--panel); }
+  details.bias-accordion {
+    background: var(--panel);
+    border: 1px solid #242833;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 0;
+  }
+  details.bias-accordion > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--ink);
+    user-select: none;
+  }
+  details.bias-accordion > summary::-webkit-details-marker { display: none; }
+  details.bias-accordion > summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 8px;
+    color: var(--muted);
+    transition: transform 0.15s;
+  }
+  details.bias-accordion[open] > summary::before { transform: rotate(90deg); }
+  details.bias-accordion[open] > summary {
+    border-bottom: 1px solid #242833;
+    margin-bottom: 10px;
+  }
+  details.bias-accordion > *:not(summary) {
+    margin-left: 14px;
+    margin-right: 14px;
+  }
+  details.bias-accordion > *:last-child {
+    margin-bottom: 14px;
+  }
   .bias-legend {
     background: rgba(23,27,34,0.92);
     border: 1px solid #242833;
@@ -209,30 +303,76 @@
   <span class="meta" id="meta">loading…</span>
 </header>
 
+<!-- ───────────────────── Drill-down ───────────────────── -->
+<h2 class="section">Single-field drill-down — see each correction layer build up</h2>
+<div class="drill-controls">
+  <div class="group">
+    <span class="group-label">Field</span>
+    <span id="drill-field-radios"></span>
+  </div>
+  <div class="group">
+    <span class="group-label">Layers</span>
+    <span id="drill-layer-checks"></span>
+  </div>
+  <button id="drill-play">▶ Play layer build-up</button>
+</div>
+<div class="drill-chart-wrap"><canvas id="drill-canvas"></canvas></div>
+<div id="status-drill" class="status" hidden></div>
+
+<!-- ───────────────────── Layer 1 ───────────────────── -->
+<h2 class="section">Layer 1 — Raw model (HRRR / GFS)</h2>
+<div class="layer-info-text">
+  The starting point. Open-Meteo's HRRR (next 48h) and GFS (days 3–7) numerical weather models. Multi-kilometer grid resolution; the model has no specific knowledge of Wyman Cove. Every layer below corrects what the raw model gets wrong locally.
+  <div class="meta-line">Curves below show the current raw model forecast per field — same dotted line that appears in the drill-down above.</div>
+</div>
+<div id="grid-raw" class="grid"></div>
+
+<!-- ───────────────────── Layer 2 ───────────────────── -->
+<h2 class="section">Layer 2 — Station network bias correction (+ wind blend)</h2>
+<div id="layer2-panel" class="layer-info-text">loading…</div>
+<div id="grid-layer2" class="grid"></div>
+
+<!-- ───────────────────── Layer 3 ───────────────────── -->
+<h2 class="section">Layer 3 — Adaptive bias control (Kalman station calibration)</h2>
+<div id="layer3-panel" class="layer-info-text">loading…</div>
+<div id="grid-layer3" class="grid"></div>
+<details id="bias-details" class="bias-accordion">
+  <summary>Per-station detail — bias map &amp; offsets table</summary>
+  <div id="status-bias" class="status" hidden></div>
+  <div id="stats-bias" class="stats-panel" hidden></div>
+  <div id="bias-map" class="bias-map-wrap"></div>
+  <div id="bias-table-wrap"></div>
+</details>
+
+<!-- ───────────────────── Layer 4 ───────────────────── -->
+<h2 class="section">Layer 4 — Decay curves (lead-time correction)</h2>
+
+<h3 class="subsection">4a. Fitted correction curves — what is being applied per lead hour</h3>
 <div id="status-corrections" class="status" hidden></div>
-<h2 class="section">1. Fitted decay-correction curves — what is being applied</h2>
 <div id="grid-corrections" class="grid"></div>
 
+<h3 class="subsection">4b. Live forecast — with vs without decay correction</h3>
 <div id="status-live" class="status" hidden></div>
-<h2 class="section">2. Live forecast — with vs without corrections</h2>
 <div id="grid-live" class="grid"></div>
 
-<div id="status-bias" class="status" hidden></div>
-<h2 class="section">3. Station calibration offsets — per-station bias</h2>
-<div id="stats-bias" class="stats-panel" hidden></div>
-<div id="bias-map" class="bias-map-wrap"></div>
-<div id="bias-table-wrap"></div>
-
+<h3 class="subsection">4c. Decay curves over time — historical fits</h3>
 <div id="status-history" class="status" hidden></div>
-<h2 class="section">4. Decay curves over time — historical fits</h2>
 <div id="grid-history" class="grid"></div>
 
+<h3 class="subsection">4d. Tide-phase curves over time — does the error track the tide cycle? (statistical view)</h3>
+<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
+  <strong style="color:#d4a373;">Diagnostic only — not currently applied to the live forecast.</strong>
+  <div class="meta-line">Fitted alongside the lead-time decay curves so we can watch whether the bias actually tracks the tide cycle. If a clear, stable pattern emerges across days, this becomes a candidate for a real correction layer.</div>
+</div>
 <div id="status-tide" class="status" hidden></div>
-<h2 class="section">5. Tide-phase curves over time — does the error track the tide cycle? (statistical view)</h2>
 <div id="grid-tide" class="grid"></div>
 
+<h3 class="subsection">4e. Error vs tide elevation over time — do they oscillate together? (intuitive view)</h3>
+<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
+  <strong style="color:#d4a373;">Diagnostic only — not currently applied to the live forecast.</strong>
+  <div class="meta-line">Time-domain companion to 4d. If the error squiggle visibly tracks the tide squiggle here, the statistical signal in 4d is real, not noise.</div>
+</div>
 <div id="status-timeseries" class="status" hidden></div>
-<h2 class="section">6. Error vs tide elevation over time — do they oscillate together? (intuitive view)</h2>
 <div class="section-controls">
   <label for="ts-lead-select">Lead time:</label>
   <select id="ts-lead-select"></select>
@@ -240,8 +380,11 @@
 </div>
 <div id="grid-timeseries" class="grid"></div>
 
+<!-- ───────────────────── Layer 5 ───────────────────── -->
+<h2 class="section">Layer 5 — Diurnal decay curves (hour-of-day correction)</h2>
+
+<h3 class="subsection">5a. Diurnal correction curves over time — historical fits</h3>
 <div id="status-diurnal" class="status" hidden></div>
-<h2 class="section">7. Diurnal (hour-of-day) decay curves over time — Layer 5 corrections</h2>
 <div id="grid-diurnal" class="grid"></div>
 
 
@@ -314,6 +457,86 @@ function renderMeta(corrDoc, wxDoc) {
     `<a href="${WEATHER_URL}" target="_blank">weather</a>`;
 }
 
+function buildLayeredChart(canvas, field, raw, layered, layerColor) {
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: raw.map((_, i) => i),
+      datasets: [
+        {
+          label: "raw",
+          data: raw,
+          borderColor: "rgba(138,147,163,0.55)",
+          backgroundColor: "rgba(0,0,0,0)",
+          borderDash: [4, 4],
+          borderWidth: 1,
+          pointRadius: 0,
+          tension: 0.25,
+          spanGaps: true,
+        },
+        {
+          label: "after this layer",
+          data: layered,
+          borderColor: layerColor,
+          backgroundColor: "rgba(0,0,0,0)",
+          borderWidth: 1.75,
+          pointRadius: 0,
+          tension: 0.25,
+          spanGaps: true,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: "lead (h)", color: "#8a93a3" },
+             ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 8 },
+             grid: { color: "#242833" } },
+        y: { title: { display: true, text: field.unit, color: "#8a93a3" },
+             ticks: { color: "#8a93a3" },
+             grid: { color: "#242833" },
+             beginAtZero: false },
+      },
+    },
+  });
+}
+
+function buildRawChart(canvas, field, raw) {
+  return new Chart(canvas, {
+    type: "line",
+    data: {
+      labels: raw.map((_, i) => i),
+      datasets: [{
+        label: "raw model",
+        data: raw,
+        borderColor: "rgba(138,147,163,0.85)",
+        backgroundColor: "rgba(0,0,0,0)",
+        borderDash: [4, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        tension: 0.25,
+        spanGaps: true,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: "lead (h)", color: "#8a93a3" },
+             ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 8 },
+             grid: { color: "#242833" } },
+        y: { title: { display: true, text: field.unit, color: "#8a93a3" },
+             ticks: { color: "#8a93a3" },
+             grid: { color: "#242833" },
+             beginAtZero: false },
+      },
+    },
+  });
+}
+
 function buildCorrectionChart(canvas, field, corrections, counts) {
   const labels = Array.from({ length: corrections.length }, (_, i) => i);
   const series = corrections.map(v => (v === null || v === undefined ? NaN : v));
@@ -331,6 +554,203 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
     },
     options: chartOpts(field, { secondaryY: true, yTitle: `mean error (${field.unit})` }),
   });
+}
+
+// ── Drill-down: per-field, layer-by-layer build-up ──────────────────────
+const DRILL_LAYERS = [
+  { key: "raw", label: "Raw model", color: "rgba(138,147,163,0.55)", dash: [4,4] },
+  { key: "l2",  label: "+ Layer 2 (network bias, full)", color: "rgba(200,160,110,1)", dash: [6,3] },
+  { key: "l3",  label: "+ Layer 3 (Kalman-scaled bias)", color: "rgba(170,180,200,1)", dash: [] },
+  { key: "l4",  label: "+ Layer 4 (decay)", color: "rgba(110,180,235,1)", dash: [] },
+  { key: "l5",  label: "+ Layer 5 (diurnal) — final", color: "rgba(74,163,255,1)", dash: [] },
+];
+let _drillChart = null;
+let _drillState = { field: "t", visible: { raw: true, l2: true, l3: true, l4: true, l5: true } };
+
+function _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr) {
+  // Returns {leads: [...], raw: [...], l2: [...], l3: [...], l4: [...], l5: [...]}
+  //   raw  = model output, no corrections
+  //   l2   = raw + full station-network bias (K=1; what the network would apply at full confidence)
+  //   l3   = raw + Kalman-scaled bias = current corrected_* before decay/diurnal
+  //   l4   = l3 with Layer-4 decay applied
+  //   l5   = final shipped value (l4 + Layer-5 diurnal)
+  const hourly = (wxDoc && wxDoc.hourly) || {};
+  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+  const times = hourly.times || [];
+  const finalArr = hourly[field.array] || [];
+  let rawArr;
+  if (field.raw === "__dp_magnus__") {
+    const t = hourly.temperature || [];
+    const h = hourly.humidity || [];
+    rawArr = Array.from({ length: Math.min(t.length, h.length) },
+      (_, i) => magnusDpF(t[i], h[i]));
+  } else {
+    rawArr = hourly[field.raw] || hourly[field.array] || [];
+  }
+  // Layer-2 full bias per field (Kalman not yet applied).
+  // Temp uses weighted_bias; humidity uses bias_humidity; wind/gust/POP have
+  // no additive network bias in this pipeline → L2 == raw for those.
+  // Dew point's L2 is recomputed via Magnus from L2 temp + L2 humidity.
+  const wb = (hyp.weighted_bias == null) ? 0 : Number(hyp.weighted_bias);
+  const bh = (hyp.bias_humidity == null) ? 0 : Number(hyp.bias_humidity);
+  const K  = (hyp.kalman_gain == null) ? 1 : Number(hyp.kalman_gain);
+  function l2BiasFor(f, i) {
+    if (f.key === "t")  return wb;
+    if (f.key === "h")  return bh;
+    if (f.key === "dp") {
+      const t = hourly.temperature ? hourly.temperature[i] : null;
+      const h = hourly.humidity    ? hourly.humidity[i]    : null;
+      if (t == null || h == null) return 0;
+      const dpRaw = magnusDpF(t, h);
+      const dpL2  = magnusDpF(t + wb, h + bh);
+      if (dpRaw == null || dpL2 == null) return 0;
+      return dpL2 - dpRaw;
+    }
+    return 0;
+  }
+  const decayPerLead = (decayCorr && decayCorr.corrections && decayCorr.corrections[field.key]) || [];
+  const diurnalByHour = (diurnalCorr && diurnalCorr.corrections_by_hour && diurnalCorr.corrections_by_hour[field.key]) || [];
+  const n = Math.min(finalArr.length, times.length);
+  const leads = [], raw = [], l2 = [], l3 = [], l4 = [], l5 = [];
+  for (let i = 0; i < n; i++) {
+    leads.push(i);
+    const r = (rawArr[i] === null || rawArr[i] === undefined) ? NaN : Number(rawArr[i]);
+    const fin = (finalArr[i] === null || finalArr[i] === undefined) ? NaN : Number(finalArr[i]);
+    raw.push(r);
+    l5.push(fin);
+    let hod = NaN;
+    try { hod = parseInt(times[i].slice(11, 13), 10); } catch (e) {}
+    const dCor = (Number.isFinite(hod) && diurnalByHour[hod] != null) ? Number(diurnalByHour[hod]) : 0;
+    const lCor = (decayPerLead[i] != null) ? Number(decayPerLead[i]) : 0;
+    const l4v = Number.isFinite(fin) ? fin + dCor : NaN;
+    const l3v = Number.isFinite(l4v) ? l4v + lCor : NaN;
+    const l2bias = l2BiasFor(field, i);
+    // L2 = raw + full bias. For fields without a network bias term (wind, POP),
+    // l2bias is 0 → the L2 line overlays the raw line, which is correct.
+    const l2v = Number.isFinite(r) ? r + l2bias : NaN;
+    l4.push(l4v);
+    l3.push(l3v);
+    l2.push(l2v);
+  }
+  return { leads, raw, l2, l3, l4, l5 };
+}
+
+function _drillRender(wxDoc, decayCorr, diurnalCorr) {
+  const field = FIELDS.find(f => f.key === _drillState.field) || FIELDS[0];
+  const s = _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr);
+  const datasets = DRILL_LAYERS.filter(l => _drillState.visible[l.key]).map(l => ({
+    label: l.label,
+    data: s[l.key],
+    borderColor: l.color,
+    backgroundColor: "rgba(0,0,0,0)",
+    borderDash: l.dash,
+    borderWidth: l.key === "l5" ? 2 : (l.key === "raw" ? 1 : 1.5),
+    pointRadius: 0,
+    tension: 0.25,
+    spanGaps: true,
+  }));
+  if (_drillChart) _drillChart.destroy();
+  const canvas = document.getElementById("drill-canvas");
+  _drillChart = new Chart(canvas, {
+    type: "line",
+    data: { labels: s.leads, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      plugins: {
+        legend: { labels: { color: "#8a93a3", boxWidth: 10, font: { size: 11 } }, position: "bottom" },
+        tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
+      },
+      scales: {
+        x: { title: { display: true, text: "lead time (hours from now)", color: "#8a93a3" },
+             ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
+             grid: { color: "#242833" } },
+        y: { title: { display: true, text: `${field.label} (${field.unit})`, color: "#8a93a3" },
+             ticks: { color: "#8a93a3" },
+             grid: { color: "#242833" },
+             beginAtZero: false },
+      },
+    },
+  });
+}
+
+function _drillSetupControls(wxDoc, decayCorr, diurnalCorr) {
+  const fieldHost = document.getElementById("drill-field-radios");
+  fieldHost.innerHTML = FIELDS.map(f =>
+    `<label><input type="radio" name="drill-field" value="${f.key}"${f.key === _drillState.field ? " checked" : ""}> ${f.label}</label>`
+  ).join("");
+  fieldHost.addEventListener("change", (e) => {
+    if (e.target.name === "drill-field") {
+      _drillState.field = e.target.value;
+      _drillRender(wxDoc, decayCorr, diurnalCorr);
+    }
+  });
+  const layerHost = document.getElementById("drill-layer-checks");
+  layerHost.innerHTML = DRILL_LAYERS.map(l =>
+    `<label><input type="checkbox" data-layer="${l.key}"${_drillState.visible[l.key] ? " checked" : ""}> ${l.label}</label>`
+  ).join("");
+  layerHost.addEventListener("change", (e) => {
+    const k = e.target.dataset.layer;
+    if (k) {
+      _drillState.visible[k] = e.target.checked;
+      _drillRender(wxDoc, decayCorr, diurnalCorr);
+    }
+  });
+  document.getElementById("drill-play").addEventListener("click", () => {
+    // Animate: hide all, then reveal one at a time on a delay.
+    DRILL_LAYERS.forEach(l => { _drillState.visible[l.key] = false; });
+    layerHost.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
+    _drillRender(wxDoc, decayCorr, diurnalCorr);
+    DRILL_LAYERS.forEach((l, idx) => {
+      setTimeout(() => {
+        _drillState.visible[l.key] = true;
+        const cb = layerHost.querySelector(`input[data-layer="${l.key}"]`);
+        if (cb) cb.checked = true;
+        _drillRender(wxDoc, decayCorr, diurnalCorr);
+      }, 600 + idx * 900);
+    });
+  });
+}
+
+// ── Layer 2 panel: station-network bias snapshot ────────────────────────
+function renderLayer2Panel(wxDoc) {
+  const el = document.getElementById("layer2-panel");
+  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+  const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
+  const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
+  el.innerHTML =
+    `What the local station network thinks the model is biased by right now. These are the FULL (un-Kalman-scaled) values — Layer 3 below decides how much of each to actually apply, based on how trustworthy the network reading is. ` +
+    `Wind/gust use a different aggregation under this layer (max-selected observed value blended into the forecast on a linear 24h decay).` +
+    `<div class="meta-line">` +
+      `Temp <strong>${sgn(hyp.weighted_bias)}${fmt(hyp.weighted_bias)}°F</strong> · ` +
+      `Humidity <strong>${sgn(hyp.bias_humidity)}${fmt(hyp.bias_humidity, 1)}%</strong> · ` +
+      `Wind <strong>${sgn(hyp.bias_wind_speed)}${fmt(hyp.bias_wind_speed, 1)} mph</strong> · ` +
+      `Gust <strong>${sgn(hyp.bias_wind_gusts)}${fmt(hyp.bias_wind_gusts, 1)} mph</strong> · ` +
+      `${hyp.stations_used ?? "?"}/${hyp.stations_total ?? "?"} stations · ` +
+      `${hyp.confidence ?? "—"} confidence` +
+    `</div>`;
+}
+
+// ── Layer 3 panel: Kalman gain summary + what it does ──────────────────
+function renderLayer3Panel(wxDoc) {
+  const el = document.getElementById("layer3-panel");
+  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+  const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
+  const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
+  const K = (hyp.kalman_gain == null) ? null : Number(hyp.kalman_gain);
+  const wb = (hyp.weighted_bias == null) ? null : Number(hyp.weighted_bias);
+  const appliedTempBias = (K != null && wb != null) ? K * wb : null;
+  const pct = (K != null) ? Math.round(K * 100) : null;
+  el.innerHTML =
+    `Kalman gain throttles how aggressively the Layer-2 temperature bias is trusted. Few stations or high station-to-station scatter → low K → forecast moves less toward the network reading. ` +
+    `Currently applied to temperature only (matches the Right-Now card's behavior).` +
+    `<div class="meta-line">` +
+      `Kalman gain K <strong>${fmt(K, 3)}</strong>${pct != null ? ` (${pct}% of network bias trusted)` : ""} · ` +
+      `Layer-2 temp bias <strong>${sgn(wb)}${fmt(wb)}°F</strong> · ` +
+      `Layer-3 applied temp bias <strong>${sgn(appliedTempBias)}${fmt(appliedTempBias)}°F</strong>` +
+    `</div>` +
+    `<div class="meta-line">Station scatter (bias_std) <strong>${fmt(hyp.bias_std)}°F</strong> across ${hyp.stations_used ?? "?"} stations — drives K.</div>`;
 }
 
 function buildDiurnalHistoryChart(canvas, field, history, nBins) {
@@ -978,7 +1398,82 @@ async function load() {
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
 
-  // ── Section 1: fitted correction curves ──
+  // ── Drill-down: per-field, layer-by-layer build-up ──
+  if (wxDoc && wxDoc.hourly) {
+    // Use the newest entry from history as the "current" diurnal correction set.
+    let diurnalCurrent = null;
+    if (diurnalDoc && Array.isArray(diurnalDoc.history) && diurnalDoc.history.length) {
+      diurnalCurrent = [...diurnalDoc.history].sort((a, b) =>
+        (a.fitted_at || "").localeCompare(b.fitted_at || ""))[diurnalDoc.history.length - 1];
+    }
+    _drillSetupControls(wxDoc, corrDoc, diurnalCurrent);
+    _drillRender(wxDoc, corrDoc, diurnalCurrent);
+  } else {
+    showStatus("status-drill", "Drill-down needs weather_data.json — load failed above.");
+  }
+
+  // ── Layer 1: raw model curves ──
+  if (wxDoc && wxDoc.hourly) {
+    const grid = document.getElementById("grid-raw");
+    for (const f of FIELDS) {
+      const n = (wxDoc.hourly[f.array] || []).length;
+      const raw = rawValuesFor(f, wxDoc.hourly, n).map(v => (v == null ? NaN : Number(v)));
+      const digits = f.key === "pp" ? 0 : 1;
+      const nowVal = raw.length ? fmtFixed(raw[0], digits) : "—";
+      const v24 = raw.length > 24 ? fmtFixed(raw[24], digits) : "—";
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
+        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<span class="summary">now ${nowVal}${f.unit} · +24h ${v24}${f.unit}</span></h3>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid.appendChild(card);
+      buildRawChart(card.querySelector("canvas"), f, raw);
+    }
+  }
+
+  // ── Layer 2: station-network bias snapshot + post-L2 forecast grid ──
+  if (wxDoc) renderLayer2Panel(wxDoc);
+  if (wxDoc && wxDoc.hourly) {
+    let diurnalCurrent = null;
+    if (diurnalDoc && Array.isArray(diurnalDoc.history) && diurnalDoc.history.length) {
+      diurnalCurrent = [...diurnalDoc.history].sort((a, b) =>
+        (a.fitted_at || "").localeCompare(b.fitted_at || ""))[diurnalDoc.history.length - 1];
+    }
+    const L2_COLOR = "rgba(200,160,110,1)";
+    const L3_COLOR = "rgba(170,180,200,1)";
+    const grid2 = document.getElementById("grid-layer2");
+    const grid3 = document.getElementById("grid-layer3");
+    for (const f of FIELDS) {
+      const s = _drillComputeSeries(f, wxDoc, corrDoc, diurnalCurrent);
+      const digits = f.key === "pp" ? 0 : 1;
+      function summary(arr, label) {
+        const now = arr.length ? fmtFixed(arr[0], digits) : "—";
+        const v24 = arr.length > 24 ? fmtFixed(arr[24], digits) : "—";
+        return `${label} now ${now}${f.unit} · +24h ${v24}${f.unit}`;
+      }
+      // L2 grid card
+      const card2 = document.createElement("div");
+      card2.className = "card";
+      card2.innerHTML =
+        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<span class="summary">${summary(s.l2, "L2")}</span></h3>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid2.appendChild(card2);
+      buildLayeredChart(card2.querySelector("canvas"), f, s.raw, s.l2, L2_COLOR);
+      // L3 grid card
+      const card3 = document.createElement("div");
+      card3.className = "card";
+      card3.innerHTML =
+        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<span class="summary">${summary(s.l3, "L3")}</span></h3>` +
+        `<div class="chart-wrap"><canvas></canvas></div>`;
+      grid3.appendChild(card3);
+      buildLayeredChart(card3.querySelector("canvas"), f, s.raw, s.l3, L3_COLOR);
+    }
+  }
+
+  // ── Section 4a: fitted correction curves ──
   if (corrDoc) {
     const grid = document.getElementById("grid-corrections");
     for (const f of FIELDS) {
@@ -1001,7 +1496,7 @@ async function load() {
     }
   }
 
-  // ── Section 2: live forecast with vs without (+ raw) ──
+  // ── Section 4b: live forecast with vs without (+ raw) ──
   if (corrDoc && wxDoc && wxDoc.hourly) {
     if (!decayApplied) {
       showStatus("status-live", "Decay not yet applied to this payload (the tick that produced it ran on older code). Solid line = current live forecast; dashed line = what decay correction WILL produce on the next tick.");
@@ -1049,10 +1544,24 @@ async function load() {
     showStatus("status-live", "weather_data.json loaded but has no hourly block.");
   }
 
-  // ── Section 3: station calibration offsets ──
-  if (wxDoc) renderBiasSection(wxDoc);
+  // ── Layer 3: Kalman summary + station calibration offsets ──
+  if (wxDoc) {
+    renderLayer3Panel(wxDoc);
+    renderBiasSection(wxDoc);
+    // Leaflet computes container size at init time; if the <details> was
+    // collapsed it'll be 0×0 and tiles won't load until invalidateSize() runs
+    // after the accordion opens.
+    const biasDetails = document.getElementById("bias-details");
+    if (biasDetails) {
+      biasDetails.addEventListener("toggle", () => {
+        if (biasDetails.open && _biasMap) {
+          setTimeout(() => _biasMap.invalidateSize(), 50);
+        }
+      });
+    }
+  }
 
-  // ── Section 4: decay curves over time ──
+  // ── Section 4c: decay curves over time ──
   if (histDoc && Array.isArray(histDoc.history) && histDoc.history.length) {
     // Sort chronologically oldest → newest so color gradient reads left-to-right.
     const history = [...histDoc.history].sort((a, b) =>
@@ -1084,7 +1593,7 @@ async function load() {
     showStatus("status-history", "No decay_corrections_history.json yet — appears after the next Fitter run (scheduled daily at 03:07 EDT, or manually via decay_fit.fit_decay_corrections()).");
   }
 
-  // ── Section 5: tide-phase decay curves over time ──
+  // ── Section 4d: tide-phase decay curves over time ──
   if (tideHistDoc && Array.isArray(tideHistDoc.history) && tideHistDoc.history.length) {
     const history = [...tideHistDoc.history].sort((a, b) =>
       (a.fitted_at || "").localeCompare(b.fitted_at || ""));
@@ -1113,7 +1622,7 @@ async function load() {
     showStatus("status-tide", "No tide_phase_corrections_history.json yet — appears after the next Fitter run (the v0.6.7+ Fitter writes this alongside the lead-h history). Stable curves across days → tide-driven; drifting curves → diurnal masquerade.");
   }
 
-  // ── Section 6: error vs tide elevation over time ──
+  // ── Section 4e: error vs tide elevation over time ──
   if (tsDoc && Array.isArray(tsDoc.hours) && tsDoc.hours.length) {
     const hours = tsDoc.hours;
     const tide = tsDoc.tide_elevation_ft || [];
@@ -1163,7 +1672,7 @@ async function load() {
     showStatus("status-timeseries", "No time_series_diagnostic.json yet — appears after the next Fitter run. Blue line = forecast error per hour; gray sinusoid = tide elevation. If they oscillate in sync, the tide drives the bias.");
   }
 
-  // ── Section 7: diurnal (hour-of-day) decay curves over time ──
+  // ── Section 5a: diurnal (hour-of-day) decay curves over time ──
   if (diurnalDoc && Array.isArray(diurnalDoc.history) && diurnalDoc.history.length) {
     const history = [...diurnalDoc.history].sort((a, b) =>
       (a.fitted_at || "").localeCompare(b.fitted_at || ""));
