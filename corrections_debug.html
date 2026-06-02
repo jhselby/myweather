@@ -36,16 +36,36 @@
     border-bottom: 1px solid #242833;
   }
   h1 { font-size: 18px; margin: 0; font-weight: 600; }
-  html { scroll-padding-top: 60px; }
+  html { scroll-padding-top: 72px; }
   h2.section {
-    scroll-margin-top: 60px;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin: 22px 2px 10px;
+    scroll-margin-top: 72px;
+    font-size: 21px;
     font-weight: 600;
+    letter-spacing: -0.005em;
+    text-transform: none;
+    color: var(--ink);
+    margin: 34px -10px 14px;
+    padding: 14px 16px;
+    background: linear-gradient(90deg, rgba(74,163,255,0.10), rgba(74,163,255,0.00) 70%);
+    border-left: 3px solid var(--accent);
+    border-radius: 4px;
   }
+  h2.section.research-heading {
+    background: linear-gradient(90deg, rgba(212,163,115,0.10), rgba(212,163,115,0.00) 70%);
+    border-left-color: #d4a373;
+    color: #d4a373;
+  }
+  /* Flash the section heading when the user jumps to it via the TOC */
+  @keyframes section-flash {
+    0%   { background: rgba(74,163,255,0.45); }
+    100% { background: linear-gradient(90deg, rgba(74,163,255,0.10), rgba(74,163,255,0.00) 70%); }
+  }
+  @keyframes section-flash-research {
+    0%   { background: rgba(212,163,115,0.45); }
+    100% { background: linear-gradient(90deg, rgba(212,163,115,0.10), rgba(212,163,115,0.00) 70%); }
+  }
+  h2.section:target { animation: section-flash 1.2s ease-out; }
+  h2.section.research-heading:target { animation: section-flash-research 1.2s ease-out; }
   .meta { color: var(--muted); font-size: 12px; }
   .meta strong { color: var(--ink); font-weight: 500; }
   .meta a { color: var(--accent); }
