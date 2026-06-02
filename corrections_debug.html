@@ -358,39 +358,49 @@
 <div id="grid-raw" class="grid"></div>
 
 <!-- ───────────────────── Layer 2 ───────────────────── -->
-<h2 class="section">Layer 2 — Station network bias correction (+ wind blend)</h2>
-<div id="layer2-panel" class="layer-info-text">loading…</div>
+<h2 class="section">Layer 2 — Mesonet corrections (local station network)</h2>
+<div class="layer-info-text">
+  The 81-station local network's collective read on what the raw model is missing. Two parallel aggregation paths under this layer, each suited to the noise behavior of its metric:
+  <div class="meta-line"><strong>Temp / humidity / pressure (additive bias):</strong> each station's reading first calibrated against its own chronic offset (Kalman-tracked, rolling 48h, see 2a accordion). Per-octant <code>1/distance² × exp(-|elev_diff|/30)</code>-weighted mean of (station − model) bias. Final network bias = unweighted mean across non-empty octants. Temperature additionally gets scaled by the network Kalman gain K (sec 2c) before being added to the raw model.</div>
+  <div class="meta-line"><strong>Wind / gust (direct selection, no bias):</strong> no per-station calibration (per-station wind biases are too noisy to track meaningfully) and no additive bias term. Per-octant MAX gust → MEDIAN across populated octants. The chosen value is blended into the next 24h of the hourly forecast with a linear-decay weight (100% at hour 0, 0% at hour 24). No K scaling — the median-of-octants step is the confidence filter.</div>
+</div>
+
+<h3 class="subsection">2a. Octant coverage — where this tick's stations came from</h3>
 <div id="layer2-octants" class="layer-info-text">loading…</div>
+
+<h3 class="subsection">2b. Network bias estimate (full, un-confidence-scaled)</h3>
+<div id="layer2-panel" class="layer-info-text">loading…</div>
+
+<h3 class="subsection">2c. Network confidence (Kalman gain K)</h3>
+<div id="layer3-panel" class="layer-info-text">loading…</div>
+
+<h3 class="subsection">2d. Post-mesonet forecast — what gets passed to Layer 3</h3>
 <div id="grid-layer2" class="grid"></div>
 
-<!-- ───────────────────── Layer 3 ───────────────────── -->
-<h2 class="section">Layer 3 — Adaptive bias control (Kalman station calibration)</h2>
-<div id="layer3-panel" class="layer-info-text">loading…</div>
-<div id="grid-layer3" class="grid"></div>
 <details id="bias-details" class="bias-accordion">
-  <summary>Per-station detail — bias map &amp; offsets table</summary>
+  <summary>Per-station detail — mesonet map &amp; Kalman-tracked offsets table</summary>
   <div id="status-bias" class="status" hidden></div>
   <div id="stats-bias" class="stats-panel" hidden></div>
   <div id="bias-map" class="bias-map-wrap"></div>
   <div id="bias-table-wrap"></div>
 </details>
 
-<!-- ───────────────────── Layer 4 ───────────────────── -->
-<h2 class="section">Layer 4 — Decay curves (lead-time correction)</h2>
+<!-- ───────────────────── Layer 3 ───────────────────── -->
+<h2 class="section">Layer 3 — Decay curves (lead-time correction)</h2>
 
-<h3 class="subsection">4a. Fitted correction curves — what is being applied per lead hour</h3>
+<h3 class="subsection">3a. Fitted correction curves — what is being applied per lead hour</h3>
 <div id="status-corrections" class="status" hidden></div>
 <div id="grid-corrections" class="grid"></div>
 
-<h3 class="subsection">4b. Live forecast — with vs without decay correction</h3>
+<h3 class="subsection">3b. Live forecast — with vs without decay correction</h3>
 <div id="status-live" class="status" hidden></div>
 <div id="grid-live" class="grid"></div>
 
-<h3 class="subsection">4c. Decay curves over time — historical fits</h3>
+<h3 class="subsection">3c. Decay curves over time — historical fits</h3>
 <div id="status-history" class="status" hidden></div>
 <div id="grid-history" class="grid"></div>
 
-<h3 class="subsection">4d. Tide-phase curves over time — does the error track the tide cycle? (statistical view)</h3>
+<h3 class="subsection">3d. Tide-phase curves over time — does the error track the tide cycle? (statistical view)</h3>
 <div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
   <strong style="color:#d4a373;">Diagnostic only — not currently applied to the live forecast.</strong>
   <div class="meta-line">Fitted alongside the lead-time decay curves so we can watch whether the bias actually tracks the tide cycle. If a clear, stable pattern emerges across days, this becomes a candidate for a real correction layer.</div>
@@ -398,10 +408,10 @@
 <div id="status-tide" class="status" hidden></div>
 <div id="grid-tide" class="grid"></div>
 
-<h3 class="subsection">4e. Error vs tide elevation over time — do they oscillate together? (intuitive view)</h3>
+<h3 class="subsection">3e. Error vs tide elevation over time — do they oscillate together? (intuitive view)</h3>
 <div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
   <strong style="color:#d4a373;">Diagnostic only — not currently applied to the live forecast.</strong>
-  <div class="meta-line">Time-domain companion to 4d. If the error squiggle visibly tracks the tide squiggle here, the statistical signal in 4d is real, not noise.</div>
+  <div class="meta-line">Time-domain companion to 3d. If the error squiggle visibly tracks the tide squiggle here, the statistical signal in 3d is real, not noise.</div>
 </div>
 <div id="status-timeseries" class="status" hidden></div>
 <div class="section-controls">
@@ -411,10 +421,10 @@
 </div>
 <div id="grid-timeseries" class="grid"></div>
 
-<!-- ───────────────────── Layer 5 ───────────────────── -->
-<h2 class="section">Layer 5 — Diurnal decay curves (hour-of-day correction)</h2>
+<!-- ───────────────────── Layer 4 ───────────────────── -->
+<h2 class="section">Layer 4 — Diurnal correction (hour-of-day)</h2>
 
-<h3 class="subsection">5a. Diurnal correction curves over time — historical fits</h3>
+<h3 class="subsection">4a. Diurnal correction curves over time — historical fits</h3>
 <div id="status-diurnal" class="status" hidden></div>
 <div id="grid-diurnal" class="grid"></div>
 
@@ -588,25 +598,24 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
 }
 
 // ── Drill-down: per-field, layer-by-layer build-up ──────────────────────
+// 4 layers (raw → mesonet → decay → diurnal). Layer 2's internal K-scaling
+// detail lives inside Layer 2's own panel, not in the cross-layer view.
 const DRILL_LAYERS = [
-  { key: "raw", label: "Raw model", color: "rgba(138,147,163,0.55)", dash: [4,4] },
-  { key: "l2",  label: "+ Layer 2 (network bias, full)", color: "rgba(200,160,110,1)", dash: [6,3] },
-  { key: "l3",  label: "+ Layer 3 (Kalman-scaled bias)", color: "rgba(170,180,200,1)", dash: [] },
-  { key: "l4",  label: "+ Layer 4 (decay)", color: "rgba(110,180,235,1)", dash: [] },
-  { key: "l5",  label: "+ Layer 5 (diurnal) — final", color: "rgba(74,163,255,1)", dash: [] },
+  { key: "raw", label: "Raw model",                   color: "rgba(138,147,163,0.55)", dash: [4,4] },
+  { key: "l2",  label: "+ Layer 2 (mesonet)",         color: "rgba(170,180,200,1)",    dash: [] },
+  { key: "l3",  label: "+ Layer 3 (decay)",           color: "rgba(110,180,235,1)",    dash: [] },
+  { key: "l4",  label: "+ Layer 4 (diurnal) — final", color: "rgba(74,163,255,1)",     dash: [] },
 ];
 let _drillChart = null;
-let _drillState = { field: "t", visible: { raw: true, l2: true, l3: true, l4: true, l5: true } };
+let _drillState = { field: "t", visible: { raw: true, l2: true, l3: true, l4: true } };
 
 function _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr) {
-  // Returns {leads: [...], raw: [...], l2: [...], l3: [...], l4: [...], l5: [...]}
-  //   raw  = model output, no corrections
-  //   l2   = raw + full station-network bias (K=1; what the network would apply at full confidence)
-  //   l3   = raw + Kalman-scaled bias = current corrected_* before decay/diurnal
-  //   l4   = l3 with Layer-4 decay applied
-  //   l5   = final shipped value (l4 + Layer-5 diurnal)
+  // Returns {leads, raw, l2, l3, l4} — 4 layers, cumulative:
+  //   raw = model output, no corrections
+  //   l2  = mesonet-applied (raw + K * network_bias) = pre-decay corrected_* arrays
+  //   l3  = l2 with Layer-3 (decay) applied
+  //   l4  = final shipped value (l3 with Layer-4 diurnal)
   const hourly = (wxDoc && wxDoc.hourly) || {};
-  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
   const times = hourly.times || [];
   const finalArr = hourly[field.array] || [];
   let rawArr;
@@ -618,52 +627,28 @@ function _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr) {
   } else {
     rawArr = hourly[field.raw] || hourly[field.array] || [];
   }
-  // Layer-2 full bias per field (Kalman not yet applied).
-  // Temp uses weighted_bias; humidity uses bias_humidity; wind/gust/POP have
-  // no additive network bias in this pipeline → L2 == raw for those.
-  // Dew point's L2 is recomputed via Magnus from L2 temp + L2 humidity.
-  const wb = (hyp.weighted_bias == null) ? 0 : Number(hyp.weighted_bias);
-  const bh = (hyp.bias_humidity == null) ? 0 : Number(hyp.bias_humidity);
-  const K  = (hyp.kalman_gain == null) ? 1 : Number(hyp.kalman_gain);
-  function l2BiasFor(f, i) {
-    if (f.key === "t")  return wb;
-    if (f.key === "h")  return bh;
-    if (f.key === "dp") {
-      const t = hourly.temperature ? hourly.temperature[i] : null;
-      const h = hourly.humidity    ? hourly.humidity[i]    : null;
-      if (t == null || h == null) return 0;
-      const dpRaw = magnusDpF(t, h);
-      const dpL2  = magnusDpF(t + wb, h + bh);
-      if (dpRaw == null || dpL2 == null) return 0;
-      return dpL2 - dpRaw;
-    }
-    return 0;
-  }
   const decayPerLead = (decayCorr && decayCorr.corrections && decayCorr.corrections[field.key]) || [];
   const diurnalByHour = (diurnalCorr && diurnalCorr.corrections_by_hour && diurnalCorr.corrections_by_hour[field.key]) || [];
   const n = Math.min(finalArr.length, times.length);
-  const leads = [], raw = [], l2 = [], l3 = [], l4 = [], l5 = [];
+  const leads = [], raw = [], l2 = [], l3 = [], l4 = [];
   for (let i = 0; i < n; i++) {
     leads.push(i);
     const r = (rawArr[i] === null || rawArr[i] === undefined) ? NaN : Number(rawArr[i]);
     const fin = (finalArr[i] === null || finalArr[i] === undefined) ? NaN : Number(finalArr[i]);
     raw.push(r);
-    l5.push(fin);
+    l4.push(fin);
     let hod = NaN;
     try { hod = parseInt(times[i].slice(11, 13), 10); } catch (e) {}
     const dCor = (Number.isFinite(hod) && diurnalByHour[hod] != null) ? Number(diurnalByHour[hod]) : 0;
     const lCor = (decayPerLead[i] != null) ? Number(decayPerLead[i]) : 0;
-    const l4v = Number.isFinite(fin) ? fin + dCor : NaN;
-    const l3v = Number.isFinite(l4v) ? l4v + lCor : NaN;
-    const l2bias = l2BiasFor(field, i);
-    // L2 = raw + full bias. For fields without a network bias term (wind, POP),
-    // l2bias is 0 → the L2 line overlays the raw line, which is correct.
-    const l2v = Number.isFinite(r) ? r + l2bias : NaN;
-    l4.push(l4v);
+    // Back out diurnal to get post-decay (= old l3 line)
+    const l3v = Number.isFinite(fin) ? fin + dCor : NaN;
+    // Back out decay to get post-mesonet (= old corrected_* before any forecast-time correction)
+    const l2v = Number.isFinite(l3v) ? l3v + lCor : NaN;
     l3.push(l3v);
     l2.push(l2v);
   }
-  return { leads, raw, l2, l3, l4, l5 };
+  return { leads, raw, l2, l3, l4 };
 }
 
 function _drillRender(wxDoc, decayCorr, diurnalCorr) {
@@ -751,8 +736,7 @@ function renderLayer2Panel(wxDoc) {
   const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
   const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
   el.innerHTML =
-    `What the local station network thinks the model is biased by right now. These are the FULL (un-Kalman-scaled) values — Layer 3 below decides how much of each to actually apply, based on how trustworthy the network reading is. ` +
-    `Wind/gust use a different aggregation under this layer (max-selected observed value blended into the forecast on a linear 24h decay).` +
+    `What the local station network thinks the model is biased by right now. These are the FULL (un-confidence-scaled) values — section 2c below shows the Kalman gain K that decides how much of each to actually apply.` +
     `<div class="meta-line">` +
       `Temp <strong>${sgn(hyp.weighted_bias)}${fmt(hyp.weighted_bias)}°F</strong> · ` +
       `Humidity <strong>${sgn(hyp.bias_humidity)}${fmt(hyp.bias_humidity, 1)}%</strong> · ` +
@@ -778,8 +762,9 @@ function renderOctantPanel(wxDoc) {
     return `<div class="oct ${cls}"><span class="lbl">${label}</span><span class="cnt">${n}</span></div>`;
   }
   el.innerHTML =
-    `Where this tick's stations came from. Octant-balanced aggregation means each non-empty sector counts equally — a dense Marblehead octant with 12 stations gets the same weight as a sparse Salem octant with 2. ` +
-    `Red = no coverage (gap), amber = sparse (1 station), green = ok (≥2).` +
+    `The number in each cell is how many stations reported from that compass sector this tick. ` +
+    `Color flags <strong>per-sector reliability</strong>: red = no data from that direction, amber = single station (noisy, no cross-check), green = ≥2 stations (cross-check possible). ` +
+    `Color does <em>not</em> imply weighting — the aggregator weights every non-empty sector equally regardless of count (so a 12-station Marblehead sector doesn't outvote a 2-station Salem sector). Color is just a coverage-health flag.` +
     `<div class="octant-rose">${order.map(cell).join("")}</div>` +
     `<div class="meta-line">Bias aggregation: <strong>${aggregation}</strong> · Wind aggregation: <strong>${wind_aggregation}</strong> · Octants populated: <strong>${hyp.octants_used ?? "—"}/8</strong></div>`;
 }
@@ -1206,7 +1191,8 @@ function renderBiasMap(stationRows) {
       div.innerHTML =
         '<strong>Temp bias</strong><br>' +
         '−3°F<span class="scale"></span>+3°F<br>' +
-        '<span style="color:#8a93a3;">cool (under-reads) → warm (over-reads)</span>';
+        '<span style="color:#8a93a3;">cool (under-reads) → warm (over-reads)</span><br>' +
+        '<span style="color:#6e7785;">⬭ hollow ring = calibrating (need 6 readings)</span>';
       return div;
     };
     legend.addTo(_biasMap);
@@ -1219,22 +1205,41 @@ function renderBiasMap(stationRows) {
   const plotted = [];
   for (const r of stationRows) {
     if (typeof r.lat !== "number" || typeof r.lng !== "number") continue;
-    if (r.temp == null) continue;
-    const color = _offsetColor(r.temp);
-    const sign = r.temp >= 0 ? "+" : "";
-    const popup =
-      `<strong>${r.station}</strong><br>` +
-      (r.distance_mi != null ? `${r.distance_mi.toFixed(2)} mi from Wyman Cove<br>` : "") +
-      `Temp bias: <strong style="color:${color};">${sign}${r.temp.toFixed(2)}°F</strong>` +
-      (r.temp_day != null ? `<br>Day: ${r.temp_day >= 0 ? "+" : ""}${r.temp_day.toFixed(2)}°F` : "") +
-      (r.temp_night != null ? `<br>Night: ${r.temp_night >= 0 ? "+" : ""}${r.temp_night.toFixed(2)}°F` : "");
-    L.circleMarker([r.lat, r.lng], {
-      radius: 7,
-      fillColor: color,
-      color: "#0f1115",
-      weight: 1.5,
-      fillOpacity: 0.9,
-    }).bindPopup(popup).addTo(_biasMapLayer);
+    let marker;
+    if (r.temp == null) {
+      // Station fetched this tick but doesn't have a Kalman-tracked offset yet
+      // (needs MIN_READINGS=6 = ~1h of ticks). Render as a hollow gray ring so
+      // the geographic footprint is visible even when calibration is pending.
+      const popup =
+        `<strong>${r.station}</strong><br>` +
+        (r.distance_mi != null ? `${r.distance_mi.toFixed(2)} mi from Wyman Cove<br>` : "") +
+        `<span style="color:#8a93a3;">Calibrating — needs more readings</span>`;
+      marker = L.circleMarker([r.lat, r.lng], {
+        radius: 5,
+        fillColor: "transparent",
+        color: "#6e7785",
+        weight: 1.5,
+        fillOpacity: 0,
+        dashArray: "2,2",
+      }).bindPopup(popup);
+    } else {
+      const color = _offsetColor(r.temp);
+      const sign = r.temp >= 0 ? "+" : "";
+      const popup =
+        `<strong>${r.station}</strong><br>` +
+        (r.distance_mi != null ? `${r.distance_mi.toFixed(2)} mi from Wyman Cove<br>` : "") +
+        `Temp bias: <strong style="color:${color};">${sign}${r.temp.toFixed(2)}°F</strong>` +
+        (r.temp_day != null ? `<br>Day: ${r.temp_day >= 0 ? "+" : ""}${r.temp_day.toFixed(2)}°F` : "") +
+        (r.temp_night != null ? `<br>Night: ${r.temp_night >= 0 ? "+" : ""}${r.temp_night.toFixed(2)}°F` : "");
+      marker = L.circleMarker([r.lat, r.lng], {
+        radius: 7,
+        fillColor: color,
+        color: "#0f1115",
+        weight: 1.5,
+        fillOpacity: 0.9,
+      }).bindPopup(popup);
+    }
+    marker.addTo(_biasMapLayer);
     plotted.push([r.lat, r.lng]);
   }
 
@@ -1321,14 +1326,28 @@ function renderBiasSection(wxDoc) {
   const offsets = hyp.station_offsets || {};
   const stats = document.getElementById("stats-bias");
 
-  // Compose per-station rows by unioning every station mentioned across any offset type.
+  // Compose per-station rows by unioning every station mentioned across any
+  // offset type PLUS every station fetched this tick. Stations fetched but not
+  // yet calibrated (need MIN_READINGS=6 in Kalman tracker) will appear with
+  // null offset values — handled downstream by the map (hollow ring) and table
+  // (em-dash + sinks to bottom under nulls-last sort).
   const stationIds = new Set();
   for (const k of Object.keys(offsets)) {
     const o = offsets[k];
     if (o && typeof o === "object") Object.keys(o).forEach(s => stationIds.add(s));
   }
+  for (const s of (wxDoc.wu_stations && wxDoc.wu_stations.stations) || []) {
+    if (s && s.station_id != null && s.distance_mi != null && s.distance_mi <= 2.5) {
+      stationIds.add(String(s.station_id));
+    }
+  }
+  for (const s of (wxDoc.tempest && wxDoc.tempest.stations) || []) {
+    if (s && s.station_id != null && s.distance_mi != null && s.distance_mi <= 2.5) {
+      stationIds.add(String(s.station_id));
+    }
+  }
   if (!stationIds.size) {
-    showStatus("status-bias", "No station_offsets in weather_data.json yet.");
+    showStatus("status-bias", "No stations yet — first collector tick after deploy.");
     stats.hidden = true;
     return;
   }
@@ -1484,51 +1503,47 @@ async function load() {
     }
   }
 
-  // ── Layer 2: station-network bias snapshot + post-L2 forecast grid ──
+  // ── Layer 2 (Mesonet): octant rose, bias estimate, Kalman, station detail ──
   if (wxDoc) {
-    renderLayer2Panel(wxDoc);
-    renderOctantPanel(wxDoc);
+    renderOctantPanel(wxDoc);     // 2a
+    renderLayer2Panel(wxDoc);     // 2b
+    renderLayer3Panel(wxDoc);     // 2c (Kalman gain, function name kept for stability)
+    renderBiasSection(wxDoc);     // per-station detail accordion
+    const biasDetails = document.getElementById("bias-details");
+    if (biasDetails) {
+      biasDetails.addEventListener("toggle", () => {
+        if (biasDetails.open && _biasMap) {
+          setTimeout(() => _biasMap.invalidateSize(), 50);
+        }
+      });
+    }
   }
+  // 2d. Post-mesonet forecast grid — the K-scaled output that feeds Layer 3.
   if (wxDoc && wxDoc.hourly) {
     let diurnalCurrent = null;
     if (diurnalDoc && Array.isArray(diurnalDoc.history) && diurnalDoc.history.length) {
       diurnalCurrent = [...diurnalDoc.history].sort((a, b) =>
         (a.fitted_at || "").localeCompare(b.fitted_at || ""))[diurnalDoc.history.length - 1];
     }
-    const L2_COLOR = "rgba(200,160,110,1)";
-    const L3_COLOR = "rgba(170,180,200,1)";
-    const grid2 = document.getElementById("grid-layer2");
-    const grid3 = document.getElementById("grid-layer3");
+    const L2_COLOR = "rgba(170,180,200,1)";
+    const grid = document.getElementById("grid-layer2");
     for (const f of FIELDS) {
       const s = _drillComputeSeries(f, wxDoc, corrDoc, diurnalCurrent);
       const digits = f.key === "pp" ? 0 : 1;
-      function summary(arr, label) {
-        const now = arr.length ? fmtFixed(arr[0], digits) : "—";
-        const v24 = arr.length > 24 ? fmtFixed(arr[24], digits) : "—";
-        return `${label} now ${now}${f.unit} · +24h ${v24}${f.unit}`;
-      }
-      // L2 grid card
-      const card2 = document.createElement("div");
-      card2.className = "card";
-      card2.innerHTML =
+      const now = s.l2.length ? fmtFixed(s.l2[0], digits) : "—";
+      const v24 = s.l2.length > 24 ? fmtFixed(s.l2[24], digits) : "—";
+      const card = document.createElement("div");
+      card.className = "card";
+      card.innerHTML =
         `<h3><span class="name">${f.label} (${f.key})</span>` +
-        `<span class="summary">${summary(s.l2, "L2")}</span></h3>` +
+        `<span class="summary">post-L2 now ${now}${f.unit} · +24h ${v24}${f.unit}</span></h3>` +
         `<div class="chart-wrap"><canvas></canvas></div>`;
-      grid2.appendChild(card2);
-      buildLayeredChart(card2.querySelector("canvas"), f, s.raw, s.l2, L2_COLOR);
-      // L3 grid card
-      const card3 = document.createElement("div");
-      card3.className = "card";
-      card3.innerHTML =
-        `<h3><span class="name">${f.label} (${f.key})</span>` +
-        `<span class="summary">${summary(s.l3, "L3")}</span></h3>` +
-        `<div class="chart-wrap"><canvas></canvas></div>`;
-      grid3.appendChild(card3);
-      buildLayeredChart(card3.querySelector("canvas"), f, s.raw, s.l3, L3_COLOR);
+      grid.appendChild(card);
+      buildLayeredChart(card.querySelector("canvas"), f, s.raw, s.l2, L2_COLOR);
     }
   }
 
-  // ── Section 4a: fitted correction curves ──
+  // ── Section 3a: fitted correction curves ──
   if (corrDoc) {
     const grid = document.getElementById("grid-corrections");
     for (const f of FIELDS) {
@@ -1551,7 +1566,7 @@ async function load() {
     }
   }
 
-  // ── Section 4b: live forecast with vs without (+ raw) ──
+  // ── Section 3b: live forecast with vs without (+ raw) ──
   if (corrDoc && wxDoc && wxDoc.hourly) {
     if (!decayApplied) {
       showStatus("status-live", "Decay not yet applied to this payload (the tick that produced it ran on older code). Solid line = current live forecast; dashed line = what decay correction WILL produce on the next tick.");
@@ -1599,24 +1614,7 @@ async function load() {
     showStatus("status-live", "weather_data.json loaded but has no hourly block.");
   }
 
-  // ── Layer 3: Kalman summary + station calibration offsets ──
-  if (wxDoc) {
-    renderLayer3Panel(wxDoc);
-    renderBiasSection(wxDoc);
-    // Leaflet computes container size at init time; if the <details> was
-    // collapsed it'll be 0×0 and tiles won't load until invalidateSize() runs
-    // after the accordion opens.
-    const biasDetails = document.getElementById("bias-details");
-    if (biasDetails) {
-      biasDetails.addEventListener("toggle", () => {
-        if (biasDetails.open && _biasMap) {
-          setTimeout(() => _biasMap.invalidateSize(), 50);
-        }
-      });
-    }
-  }
-
-  // ── Section 4c: decay curves over time ──
+  // ── Section 3c: decay curves over time ──
   if (histDoc && Array.isArray(histDoc.history) && histDoc.history.length) {
     // Sort chronologically oldest → newest so color gradient reads left-to-right.
     const history = [...histDoc.history].sort((a, b) =>
@@ -1648,7 +1646,7 @@ async function load() {
     showStatus("status-history", "No decay_corrections_history.json yet — appears after the next Fitter run (scheduled daily at 03:07 EDT, or manually via decay_fit.fit_decay_corrections()).");
   }
 
-  // ── Section 4d: tide-phase decay curves over time ──
+  // ── Section 3d: tide-phase decay curves over time ──
   if (tideHistDoc && Array.isArray(tideHistDoc.history) && tideHistDoc.history.length) {
     const history = [...tideHistDoc.history].sort((a, b) =>
       (a.fitted_at || "").localeCompare(b.fitted_at || ""));
@@ -1677,7 +1675,7 @@ async function load() {
     showStatus("status-tide", "No tide_phase_corrections_history.json yet — appears after the next Fitter run (the v0.6.7+ Fitter writes this alongside the lead-h history). Stable curves across days → tide-driven; drifting curves → diurnal masquerade.");
   }
 
-  // ── Section 4e: error vs tide elevation over time ──
+  // ── Section 3e: error vs tide elevation over time ──
   if (tsDoc && Array.isArray(tsDoc.hours) && tsDoc.hours.length) {
     const hours = tsDoc.hours;
     const tide = tsDoc.tide_elevation_ft || [];
@@ -1727,7 +1725,7 @@ async function load() {
     showStatus("status-timeseries", "No time_series_diagnostic.json yet — appears after the next Fitter run. Blue line = forecast error per hour; gray sinusoid = tide elevation. If they oscillate in sync, the tide drives the bias.");
   }
 
-  // ── Section 5a: diurnal (hour-of-day) decay curves over time ──
+  // ── Section 4a: diurnal (hour-of-day) decay curves over time ──
   if (diurnalDoc && Array.isArray(diurnalDoc.history) && diurnalDoc.history.length) {
     const history = [...diurnalDoc.history].sort((a, b) =>
       (a.fitted_at || "").localeCompare(b.fitted_at || ""));
