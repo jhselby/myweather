@@ -46,6 +46,7 @@ CAPS = {
     "wg": 15.0,   # mph
     "pp": 25.0,   # %
     "pr": 0.30,   # inHg (typical synoptic-scale pressure swing in a few hours; cap protects against fitter wackiness)
+    "cc": 40.0,   # % (cloud cover varies hugely; cap prevents pathological corrections from flipping clear↔overcast)
 }
 
 # Fitter short keys → which hourly array to mutate.
@@ -57,10 +58,11 @@ TARGET_ARRAY = {
     "wg": "wind_gusts",
     "pp": "precipitation_probability",
     "pr": "corrected_pressure_in",
+    "cc": "cloud_cover",
 }
 
 # Per-field display rounding to match what the rest of the pipeline writes.
-ROUND_DIGITS = {"t": 1, "dp": 1, "h": 1, "ws": 1, "wg": 1, "pp": 0, "pr": 3}
+ROUND_DIGITS = {"t": 1, "dp": 1, "h": 1, "ws": 1, "wg": 1, "pp": 0, "pr": 3, "cc": 0}
 
 # Physical bounds on the corrected forecast value per field. Without these,
 # a large negative-sign correction at low raw values can push results below
@@ -73,6 +75,7 @@ FIELD_BOUNDS = {
     "h":  (0.0, 100.0),
     "pp": (0.0, 100.0),
     "pr": (25.0, 32.0),  # realistic Earth-surface inHg range; absurd Fitter outputs get clamped
+    "cc": (0.0, 100.0),
 }
 
 # POP reverted to flat additive correction in v0.6.20 after offline Brier-score
@@ -135,6 +138,9 @@ def apply_decay_corrections(weather_data):
     # wind/gust raw is captured upstream in blend_observed_into_hourly.)
     if "precipitation_probability" in hourly and "raw_precipitation_probability" not in hourly:
         hourly["raw_precipitation_probability"] = list(hourly["precipitation_probability"])
+    # Same for cloud_cover — mutated in place by the per-field loop below
+    if "cloud_cover" in hourly and "raw_cloud_cover" not in hourly:
+        hourly["raw_cloud_cover"] = list(hourly["cloud_cover"])
 
     applied = 0
     capped = 0

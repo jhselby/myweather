@@ -45,6 +45,7 @@ FIELD_MAP = {
     "h":  "humidity",
     "dp": "dew_point_f",
     "pr": "pressure_in",
+    "cc": "cloud_cover",
 }
 
 

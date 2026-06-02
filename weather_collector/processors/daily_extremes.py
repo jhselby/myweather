@@ -38,6 +38,12 @@ def _gather_current_observation(weather_data, current_hour_iso):
     hyp = weather_data.get("hyperlocal", {})
     cur = weather_data.get("current", {})
     der = weather_data.get("derived", {})
+    kbos = weather_data.get("kbos") or {}
+    # Cloud cover: KBOS METAR sky condition (real observation, ~15mi south coast).
+    # No fallback to model value — that would feed the Joiner forecast-vs-forecast
+    # pairs with zero error and pollute the Fitter. When KBOS is down, obs_log
+    # just omits the cloud field for that tick.
+    cloud_cover = kbos.get("cloud_cover_pct")
     return {
         "corrected_temp": hyp.get("corrected_temp"),
         "precip_in": _current_hour_precip_in(weather_data, current_hour_iso),
@@ -46,7 +52,7 @@ def _gather_current_observation(weather_data, current_hour_iso):
         "wind_dir": cur.get("wind_direction"),
         "dew_point_f": hyp.get("corrected_dew_point") or der.get("corrected_dew_point"),
         "pressure_in": hyp.get("corrected_pressure_in"),
-        "cloud_cover": cur.get("cloud_cover"),
+        "cloud_cover": cloud_cover,
         # Use the station-network–corrected humidity (matches how `corrected_temp`
         # is sourced two lines above). Storing raw model humidity here causes the
         # Joiner / Fitter to see the Kalman bias itself as "error," which makes

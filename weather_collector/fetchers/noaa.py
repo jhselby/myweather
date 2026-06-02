@@ -43,6 +43,37 @@ def decode_metar_wx(wx_string):
     
     return ", ".join(decoded) if decoded else wx_string
 
+# METAR sky-condition codes → percent cloud cover (NWS standard mapping)
+_METAR_COVER_PCT = {
+    "SKC": 0,  "NCD": 0,  "CLR": 0,  "NSC": 0,
+    "FEW": 12,
+    "SCT": 38,
+    "BKN": 75,
+    "OVC": 100,
+    "VV":  100,  # vertical visibility (indefinite ceiling, fog/heavy precip)
+}
+
+
+def _metar_cloud_cover_pct(clouds):
+    """Total sky cover from a METAR clouds[] array.
+
+    The Aviation Weather API returns clouds as a list of {cover, base} layers.
+    NWS convention: total sky cover = maximum coverage across all reported
+    layers (a single OVC layer at 5000ft means 100% sky cover even if lower
+    layers are FEW). Returns 0 when clouds is missing/empty (CLR).
+    """
+    if not clouds or not isinstance(clouds, list):
+        return 0
+    best = 0
+    for layer in clouds:
+        if not isinstance(layer, dict):
+            continue
+        pct = _METAR_COVER_PCT.get((layer.get("cover") or "").upper())
+        if pct is not None and pct > best:
+            best = pct
+    return best
+
+
 def fetch_kbos_obs():
     """Fetch KBOS METAR from Aviation Weather new API."""
     logging.info("📡 Fetching KBOS obs...")
@@ -69,11 +100,12 @@ def fetch_kbos_obs():
             "wind_speed_kt": obs.get("wspd"),
             "wind_gust_kt": obs.get("wgst"),
             "wind_dir": obs.get("wdir"),
-            "present_weather": decode_metar_wx(obs.get("wxString"))
+            "present_weather": decode_metar_wx(obs.get("wxString")),
+            "cloud_cover_pct": _metar_cloud_cover_pct(obs.get("clouds")),
         }
-        
+
         meta["status"] = "ok"
-        logging.info(f"  ✓ KBOS: {result.get('temp_f')}°F, {result.get('pressure_hpa')} hPa")
+        logging.info(f"  ✓ KBOS: {result.get('temp_f')}°F, {result.get('pressure_hpa')} hPa, cloud {result.get('cloud_cover_pct')}%")
         return result, meta
         
     except Exception as e:
