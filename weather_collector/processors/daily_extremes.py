@@ -43,11 +43,34 @@ def _gather_current_observation(weather_data, current_hour_iso):
     cur = weather_data.get("current", {})
     der = weather_data.get("derived", {})
     kbos = weather_data.get("kbos") or {}
+    tempest = weather_data.get("tempest") or {}
     # Cloud cover: KBOS METAR sky condition (real observation, ~15mi south coast).
     # No fallback to model value — that would feed the Joiner forecast-vs-forecast
     # pairs with zero error and pollute the Fitter. When KBOS is down, obs_log
     # just omits the cloud field for that tick.
     cloud_cover = kbos.get("cloud_cover_pct")
+    cloud_low   = kbos.get("cloud_low_pct")
+    cloud_mid   = kbos.get("cloud_mid_pct")
+    cloud_high  = kbos.get("cloud_high_pct")
+    # Solar radiation: median across all valid Tempest stations (single shaded
+    # station shouldn't drag the network observation down). None when no
+    # daytime Tempest readings — Joiner will skip those hours rather than
+    # feed it model values.
+    sr_values = [s.get("solar_radiation_wm2") for s in (tempest.get("stations") or [])
+                 if s.get("valid") and s.get("solar_radiation_wm2") is not None]
+    if sr_values:
+        sr_sorted = sorted(sr_values)
+        n = len(sr_sorted)
+        solar_wm2 = sr_sorted[n // 2] if n % 2 else (sr_sorted[n // 2 - 1] + sr_sorted[n // 2]) / 2
+    else:
+        solar_wm2 = None
+    # Precip amount: prefer WU network precip_rate_in (instantaneous, in/hr).
+    # Take the max across stations since rain is patchy and a single station
+    # in the rain cell catches the event the model is trying to forecast.
+    wu = weather_data.get("wu_stations") or {}
+    pr_rates = [s.get("precip_rate_in") for s in (wu.get("stations") or [])
+                if s.get("precip_rate_in") is not None]
+    precip_amount_in = max(pr_rates) if pr_rates else None
     return {
         "corrected_temp": hyp.get("corrected_temp"),
         "precip_in": _current_hour_precip_in(weather_data, current_hour_iso),
@@ -57,6 +80,11 @@ def _gather_current_observation(weather_data, current_hour_iso):
         "dew_point_f": hyp.get("corrected_dew_point") or der.get("corrected_dew_point"),
         "pressure_in": hyp.get("corrected_pressure_in"),
         "cloud_cover": cloud_cover,
+        "solar_wm2": solar_wm2,
+        "precip_amount_in": precip_amount_in,
+        "cloud_low": cloud_low,
+        "cloud_mid": cloud_mid,
+        "cloud_high": cloud_high,
         # Use the station-network–corrected humidity (matches how `corrected_temp`
         # is sourced two lines above). Storing raw model humidity here causes the
         # Joiner / Fitter to see the Kalman bias itself as "error," which makes

@@ -74,6 +74,42 @@ def _metar_cloud_cover_pct(clouds):
     return best
 
 
+def _metar_cloud_splits_pct(clouds):
+    """Per-altitude cloud cover from a METAR clouds[] array.
+
+    Uses FAA altitude bands: low < 6500ft, mid 6500–20000ft, high > 20000ft.
+    For each band, returns the MAX coverage across all layers in that band
+    (same NWS total-sky-cover convention applied within each band).
+    Returns (low_pct, mid_pct, high_pct), each 0–100 or None if no info.
+    """
+    if not clouds or not isinstance(clouds, list):
+        return 0, 0, 0
+    low = mid = high = 0
+    for layer in clouds:
+        if not isinstance(layer, dict):
+            continue
+        pct = _METAR_COVER_PCT.get((layer.get("cover") or "").upper())
+        if pct is None:
+            continue
+        base = layer.get("base")
+        if base is None:
+            # No altitude info (e.g., VV "vertical visibility" — surface fog).
+            # Treat as low cloud since that's the user-impact band.
+            if pct > low: low = pct
+            continue
+        try:
+            base_ft = float(base)
+        except (TypeError, ValueError):
+            continue
+        if base_ft < 6500:
+            if pct > low: low = pct
+        elif base_ft < 20000:
+            if pct > mid: mid = pct
+        else:
+            if pct > high: high = pct
+    return low, mid, high
+
+
 def fetch_kbos_obs():
     """Fetch KBOS METAR from Aviation Weather new API."""
     logging.info("📡 Fetching KBOS obs...")
@@ -91,6 +127,7 @@ def fetch_kbos_obs():
         obs = data[0]
         temp_c = obs.get("temp")
         
+        cloud_low, cloud_mid, cloud_high = _metar_cloud_splits_pct(obs.get("clouds"))
         result = {
             "station": obs.get("icaoId"),
             "temp_f": round(temp_c * 9/5 + 32, 1) if temp_c is not None else None,
@@ -102,10 +139,13 @@ def fetch_kbos_obs():
             "wind_dir": obs.get("wdir"),
             "present_weather": decode_metar_wx(obs.get("wxString")),
             "cloud_cover_pct": _metar_cloud_cover_pct(obs.get("clouds")),
+            "cloud_low_pct":  cloud_low,
+            "cloud_mid_pct":  cloud_mid,
+            "cloud_high_pct": cloud_high,
         }
 
         meta["status"] = "ok"
-        logging.info(f"  ✓ KBOS: {result.get('temp_f')}°F, {result.get('pressure_hpa')} hPa, cloud {result.get('cloud_cover_pct')}%")
+        logging.info(f"  ✓ KBOS: {result.get('temp_f')}°F, {result.get('pressure_hpa')} hPa, cloud {result.get('cloud_cover_pct')}% (L{cloud_low}/M{cloud_mid}/H{cloud_high})")
         return result, meta
         
     except Exception as e:

@@ -46,6 +46,11 @@ FIELD_MAP = {
     "dp": "dew_point_f",
     "pr": "pressure_in",
     "cc": "cloud_cover",
+    "sr": "solar_wm2",
+    "pa": "precip_amount_in",
+    "cl": "cloud_low",
+    "cm": "cloud_mid",
+    "ch": "cloud_high",
 }
 
 

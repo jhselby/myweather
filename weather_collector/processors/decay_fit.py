@@ -98,7 +98,12 @@ NOAA_TIDE_URL_TPL = (
 # to ~1.0 and behavior matches uniform.
 TAU_DAYS = 14
 
-FIELDS = ("t", "ws", "wg", "h", "dp", "pp", "pr", "cc")
+FIELDS = ("t", "ws", "wg", "h", "dp", "pp", "pr", "cc",
+          "sr",  # solar radiation (W/m², daytime non-zero only)
+          "pa",  # precipitation amount (in/hr, max-of-WU)
+          "cl",  # cloud cover low (% — METAR layers <6500ft)
+          "cm",  # cloud cover mid (% — METAR layers 6500-20000ft)
+          "ch")  # cloud cover high (% — METAR layers >20000ft)
 
 
 def _tide_phase_bin(obs_time_str):

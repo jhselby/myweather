@@ -47,6 +47,11 @@ CAPS = {
     "pp": 25.0,   # %
     "pr": 0.30,   # inHg (typical synoptic-scale pressure swing in a few hours; cap protects against fitter wackiness)
     "cc": 40.0,   # % (cloud cover varies hugely; cap prevents pathological corrections from flipping clear↔overcast)
+    "sr": 300.0,  # W/m² (solar varies wildly with sun angle + clouds; cap prevents pathological diurnal interactions)
+    "pa": 0.20,   # in/hr (rain rates are noisy and sparse — strict cap to prevent dry/wet flip pathology)
+    "cl": 40.0,   # % low cloud
+    "cm": 40.0,   # % mid cloud
+    "ch": 40.0,   # % high cloud
 }
 
 # Fitter short keys → which hourly array to mutate.
@@ -59,10 +64,16 @@ TARGET_ARRAY = {
     "pp": "precipitation_probability",
     "pr": "corrected_pressure_in",
     "cc": "cloud_cover",
+    "sr": "direct_radiation",
+    "pa": "precipitation",
+    "cl": "cloud_cover_low",
+    "cm": "cloud_cover_mid",
+    "ch": "cloud_cover_high",
 }
 
 # Per-field display rounding to match what the rest of the pipeline writes.
-ROUND_DIGITS = {"t": 1, "dp": 1, "h": 1, "ws": 1, "wg": 1, "pp": 0, "pr": 3, "cc": 0}
+ROUND_DIGITS = {"t": 1, "dp": 1, "h": 1, "ws": 1, "wg": 1, "pp": 0, "pr": 3, "cc": 0,
+                "sr": 0, "pa": 3, "cl": 0, "cm": 0, "ch": 0}
 
 # Physical bounds on the corrected forecast value per field. Without these,
 # a large negative-sign correction at low raw values can push results below
@@ -76,6 +87,11 @@ FIELD_BOUNDS = {
     "pp": (0.0, 100.0),
     "pr": (25.0, 32.0),  # realistic Earth-surface inHg range; absurd Fitter outputs get clamped
     "cc": (0.0, 100.0),
+    "sr": (0.0, 1400.0),  # peak solar at this latitude ~1100 W/m² noon-summer
+    "pa": (0.0, 5.0),     # in/hr — even extreme tropical rain rates rarely exceed this
+    "cl": (0.0, 100.0),
+    "cm": (0.0, 100.0),
+    "ch": (0.0, 100.0),
 }
 
 # POP reverted to flat additive correction in v0.6.20 after offline Brier-score
@@ -141,6 +157,16 @@ def apply_decay_corrections(weather_data):
     # Same for cloud_cover — mutated in place by the per-field loop below
     if "cloud_cover" in hourly and "raw_cloud_cover" not in hourly:
         hourly["raw_cloud_cover"] = list(hourly["cloud_cover"])
+    # v0.6.26: preserve raw copies of newly-added correction fields before mutation
+    for src, dst in [
+        ("direct_radiation",   "raw_direct_radiation"),
+        ("precipitation",      "raw_precipitation"),
+        ("cloud_cover_low",    "raw_cloud_cover_low"),
+        ("cloud_cover_mid",    "raw_cloud_cover_mid"),
+        ("cloud_cover_high",   "raw_cloud_cover_high"),
+    ]:
+        if src in hourly and dst not in hourly:
+            hourly[dst] = list(hourly[src])
 
     # v0.6.25: snapshot the post-Layer-2 state (= what corrected_hourly built,
     # before any forecast-time correction). This is the L2 layer's output —

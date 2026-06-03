@@ -41,6 +41,11 @@ def update_obs_temp_log(
     pressure_in=None,
     cloud_cover=None,
     humidity=None,
+    solar_wm2=None,
+    precip_amount_in=None,
+    cloud_low=None,
+    cloud_mid=None,
+    cloud_high=None,
 ):
     """Append one 10-min observed snapshot. Returns the post-write log dict.
 
@@ -79,6 +84,16 @@ def update_obs_temp_log(
         dp = magnus_dew_point_f(corrected_temp, humidity)
         if dp is not None:
             entry["dew_point_f"] = dp
+    if solar_wm2 is not None:
+        entry["solar_wm2"] = round(solar_wm2)
+    if precip_amount_in is not None:
+        entry["precip_amount_in"] = round(precip_amount_in, 3)
+    if cloud_low is not None:
+        entry["cloud_low"] = round(cloud_low)
+    if cloud_mid is not None:
+        entry["cloud_mid"] = round(cloud_mid)
+    if cloud_high is not None:
+        entry["cloud_high"] = round(cloud_high)
 
     entries.append(entry)
     entries.sort(key=lambda e: e.get("time", ""))

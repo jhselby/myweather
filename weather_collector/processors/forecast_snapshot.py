@@ -69,6 +69,26 @@ def append_forecast_snapshot(hourly):
                "l2": hourly.get("cloud_cover_post_l2", []),
                "l3": hourly.get("cloud_cover_post_l3", []),
                "l4": hourly.get("cloud_cover", [])},
+        "sr": {"l1": hourly.get("raw_direct_radiation", hourly.get("direct_radiation", [])),
+               "l2": hourly.get("direct_radiation_post_l2", []),
+               "l3": hourly.get("direct_radiation_post_l3", []),
+               "l4": hourly.get("direct_radiation", [])},
+        "pa": {"l1": hourly.get("raw_precipitation", hourly.get("precipitation", [])),
+               "l2": hourly.get("precipitation_post_l2", []),
+               "l3": hourly.get("precipitation_post_l3", []),
+               "l4": hourly.get("precipitation", [])},
+        "cl": {"l1": hourly.get("raw_cloud_cover_low", hourly.get("cloud_cover_low", [])),
+               "l2": hourly.get("cloud_cover_low_post_l2", []),
+               "l3": hourly.get("cloud_cover_low_post_l3", []),
+               "l4": hourly.get("cloud_cover_low", [])},
+        "cm": {"l1": hourly.get("raw_cloud_cover_mid", hourly.get("cloud_cover_mid", [])),
+               "l2": hourly.get("cloud_cover_mid_post_l2", []),
+               "l3": hourly.get("cloud_cover_mid_post_l3", []),
+               "l4": hourly.get("cloud_cover_mid", [])},
+        "ch": {"l1": hourly.get("raw_cloud_cover_high", hourly.get("cloud_cover_high", [])),
+               "l2": hourly.get("cloud_cover_high_post_l2", []),
+               "l3": hourly.get("cloud_cover_high_post_l3", []),
+               "l4": hourly.get("cloud_cover_high", [])},
     }
     # Dew point is derived from t + h via Magnus at each layer (no separate model array).
     # Backward-compat top-level keys (t / h / ws / wg / pp / pr / cc) kept = L4 final.
@@ -77,7 +97,8 @@ def append_forecast_snapshot(hourly):
         if val is None:
             return None
         if field == "pr":  return round(val, 3)
-        if field in ("pp", "cc"): return round(val)
+        if field == "pa":  return round(val, 3)
+        if field in ("pp", "cc", "cl", "cm", "ch", "sr"): return round(val)
         return round(val, 1)
 
     hours = []
@@ -98,7 +119,7 @@ def append_forecast_snapshot(hourly):
         # was taken BEFORE decay_apply so the legacy key was naturally L2. We
         # now snapshot AFTER decay_apply to capture all 4 layers — preserving
         # legacy semantics requires explicitly using the _l2 value here.
-        for field in ("t","h","ws","wg","pp","pr","cc"):
+        for field in ("t","h","ws","wg","pp","pr","cc","sr","pa","cl","cm","ch"):
             l2 = entry.get(f"{field}_l2")
             if l2 is not None:
                 entry[field] = l2

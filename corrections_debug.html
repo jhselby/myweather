@@ -606,6 +606,11 @@ const FIELDS = [
   { key: "pp", label: "Precip prob", unit: "%",    array: "precipitation_probability", raw: "raw_precipitation_probability" },
   { key: "pr", label: "Pressure",    unit: "inHg", array: "corrected_pressure_in",     raw: "raw_pressure_in" },
   { key: "cc", label: "Cloud cover", unit: "%",    array: "cloud_cover",               raw: "raw_cloud_cover" },
+  { key: "sr", label: "Solar rad.",  unit: "W/m²", array: "direct_radiation",          raw: "raw_direct_radiation" },
+  { key: "pa", label: "Precip amt",  unit: "in",   array: "precipitation",             raw: "raw_precipitation" },
+  { key: "cl", label: "Cloud low",   unit: "%",    array: "cloud_cover_low",           raw: "raw_cloud_cover_low" },
+  { key: "cm", label: "Cloud mid",   unit: "%",    array: "cloud_cover_mid",           raw: "raw_cloud_cover_mid" },
+  { key: "ch", label: "Cloud high",  unit: "%",    array: "cloud_cover_high",          raw: "raw_cloud_cover_high" },
 ];
 
 // Port of magnus_dew_point_f() in weather_collector/utils.py (constants 17.625, 243.04).
@@ -1720,7 +1725,7 @@ async function load() {
     for (const f of FIELDS) {
       const n = (wxDoc.hourly[f.array] || []).length;
       const raw = rawValuesFor(f, wxDoc.hourly, n).map(v => (v == null ? NaN : Number(v)));
-      const digits = (f.key === "pp" || f.key === "cc") ? 0 : (f.key === "pr" ? 3 : 1);
+      const digits = (f.key === "pp" || f.key === "cc" || f.key === "cl" || f.key === "cm" || f.key === "ch" || f.key === "sr") ? 0 : ((f.key === "pr" || f.key === "pa") ? 3 : 1);
       const nowVal = raw.length ? fmtFixed(raw[0], digits) : "—";
       const v24 = raw.length > 24 ? fmtFixed(raw[24], digits) : "—";
       const card = document.createElement("div");
@@ -1760,7 +1765,7 @@ async function load() {
     const grid = document.getElementById("grid-layer2");
     for (const f of FIELDS) {
       const s = _drillComputeSeries(f, wxDoc, corrDoc, diurnalCurrent);
-      const digits = (f.key === "pp" || f.key === "cc") ? 0 : (f.key === "pr" ? 3 : 1);
+      const digits = (f.key === "pp" || f.key === "cc" || f.key === "cl" || f.key === "cm" || f.key === "ch" || f.key === "sr") ? 0 : ((f.key === "pr" || f.key === "pa") ? 3 : 1);
       const now = s.l2.length ? fmtFixed(s.l2[0], digits) : "—";
       const v24 = s.l2.length > 24 ? fmtFixed(s.l2[24], digits) : "—";
       const card = document.createElement("div");
@@ -1828,7 +1833,7 @@ async function load() {
       }
       const raw = rawValuesFor(f, wxDoc.hourly, n).map(v => (v == null ? NaN : Number(v)));
 
-      const digits = (f.key === "pp" || f.key === "cc") ? 0 : (f.key === "pr" ? 3 : 1);
+      const digits = (f.key === "pp" || f.key === "cc" || f.key === "cl" || f.key === "cm" || f.key === "ch" || f.key === "sr") ? 0 : ((f.key === "pr" || f.key === "pa") ? 3 : 1);
       const nowVal = live.length ? fmtFixed(live[0], digits) : "—";
       const v24    = live.length > 24 ? fmtFixed(live[24], digits) : "—";
 
