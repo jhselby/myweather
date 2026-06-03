@@ -488,11 +488,12 @@
 <div id="accuracy-grid" class="accuracy-grid"></div>
 
 <!-- ───────────────────── Drill-down ───────────────────── -->
-<h2 class="section" id="sec-drill">Single-field drill-down — see each correction layer build up</h2>
+<h2 class="section" id="sec-drill">Drill-down — see each correction layer build up</h2>
 <div class="drill-controls">
   <div class="group">
-    <span class="group-label">Field</span>
-    <span id="drill-field-radios"></span>
+    <span class="group-label">Fields</span>
+    <span id="drill-field-checks"></span>
+    <button id="drill-clear-fields" type="button" style="margin-left:6px;font-size:11px;background:#1a1f2a;border:1px solid #242833;color:var(--muted);padding:3px 8px;border-radius:4px;cursor:pointer;">Clear all</button>
   </div>
   <div class="group">
     <span class="group-label">Layers</span>
@@ -500,7 +501,7 @@
   </div>
   <button id="drill-play">▶ Play layer build-up</button>
 </div>
-<div class="drill-chart-wrap"><canvas id="drill-canvas"></canvas></div>
+<div id="drill-canvases" class="grid"></div>
 <div id="status-drill" class="status" hidden></div>
 
 <!-- ───────────────────── Layer 1 ───────────────────── -->
@@ -767,8 +768,11 @@ const DRILL_LAYERS = [
   { key: "l3",  label: "+ Layer 3 (decay)",           color: "rgba(110,180,235,1)",    dash: [] },
   { key: "l4",  label: "+ Layer 4 (diurnal) — final", color: "rgba(74,163,255,1)",     dash: [] },
 ];
-let _drillChart = null;
-let _drillState = { field: "t", visible: { raw: true, l2: true, l3: true, l4: true } };
+let _drillCharts = [];  // one Chart.js instance per selected field
+let _drillState = {
+  fields: new Set(["t"]),  // multi-select; default just temperature
+  visible: { raw: true, l2: true, l3: true, l4: true },
+};
 
 function _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr) {
   // Returns {leads, raw, l2, l3, l4} — 4 layers, cumulative:
@@ -813,55 +817,79 @@ function _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr) {
 }
 
 function _drillRender(wxDoc, decayCorr, diurnalCorr) {
-  const field = FIELDS.find(f => f.key === _drillState.field) || FIELDS[0];
-  const s = _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr);
-  const datasets = DRILL_LAYERS.filter(l => _drillState.visible[l.key]).map(l => ({
-    label: l.label,
-    data: s[l.key],
-    borderColor: l.color,
-    backgroundColor: "rgba(0,0,0,0)",
-    borderDash: l.dash,
-    borderWidth: l.key === "l5" ? 2 : (l.key === "raw" ? 1 : 1.5),
-    pointRadius: 0,
-    tension: 0.25,
-    spanGaps: true,
-  }));
-  if (_drillChart) _drillChart.destroy();
-  const canvas = document.getElementById("drill-canvas");
-  _drillChart = new Chart(canvas, {
-    type: "line",
-    data: { labels: s.leads, datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 400 },
-      plugins: {
-        legend: { labels: { color: "#8a93a3", boxWidth: 10, font: { size: 11 } }, position: "bottom" },
-        tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
+  // Tear down any existing charts before rebuilding the grid.
+  for (const c of _drillCharts) { try { c.destroy(); } catch (e) {} }
+  _drillCharts = [];
+  const host = document.getElementById("drill-canvases");
+  host.innerHTML = "";
+  const selectedFields = FIELDS.filter(f => _drillState.fields.has(f.key));
+  if (!selectedFields.length) {
+    host.innerHTML = `<div class="layer-info-text" style="grid-column:1/-1;">Select one or more fields above to render drill-down charts.</div>`;
+    return;
+  }
+  for (const field of selectedFields) {
+    const s = _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr);
+    const datasets = DRILL_LAYERS.filter(l => _drillState.visible[l.key]).map(l => ({
+      label: l.label,
+      data: s[l.key],
+      borderColor: l.color,
+      backgroundColor: "rgba(0,0,0,0)",
+      borderDash: l.dash,
+      borderWidth: l.key === "l4" ? 2 : (l.key === "raw" ? 1 : 1.5),
+      pointRadius: 0,
+      tension: 0.25,
+      spanGaps: true,
+    }));
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML =
+      `<h3><span class="name">${field.label} (${field.key})</span>` +
+      `<span class="summary">${field.unit}</span></h3>` +
+      `<div class="chart-wrap"><canvas></canvas></div>`;
+    host.appendChild(card);
+    const canvas = card.querySelector("canvas");
+    const chart = new Chart(canvas, {
+      type: "line",
+      data: { labels: s.leads, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 400 },
+        plugins: {
+          legend: { labels: { color: "#8a93a3", boxWidth: 10, font: { size: 10.5 } }, position: "bottom" },
+          tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
+        },
+        scales: {
+          x: { title: { display: true, text: "lead time (hours from now)", color: "#8a93a3" },
+               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 8 },
+               grid: { color: "#242833" } },
+          y: { title: { display: true, text: field.unit, color: "#8a93a3" },
+               ticks: { color: "#8a93a3" },
+               grid: { color: "#242833" },
+               beginAtZero: false },
+        },
       },
-      scales: {
-        x: { title: { display: true, text: "lead time (hours from now)", color: "#8a93a3" },
-             ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
-             grid: { color: "#242833" } },
-        y: { title: { display: true, text: `${field.label} (${field.unit})`, color: "#8a93a3" },
-             ticks: { color: "#8a93a3" },
-             grid: { color: "#242833" },
-             beginAtZero: false },
-      },
-    },
-  });
+    });
+    _drillCharts.push(chart);
+  }
 }
 
 function _drillSetupControls(wxDoc, decayCorr, diurnalCorr) {
-  const fieldHost = document.getElementById("drill-field-radios");
+  const fieldHost = document.getElementById("drill-field-checks");
   fieldHost.innerHTML = FIELDS.map(f =>
-    `<label><input type="radio" name="drill-field" value="${f.key}"${f.key === _drillState.field ? " checked" : ""}> ${f.label}</label>`
+    `<label><input type="checkbox" data-field="${f.key}"${_drillState.fields.has(f.key) ? " checked" : ""}> ${f.label}</label>`
   ).join("");
   fieldHost.addEventListener("change", (e) => {
-    if (e.target.name === "drill-field") {
-      _drillState.field = e.target.value;
+    const k = e.target.dataset.field;
+    if (k) {
+      if (e.target.checked) _drillState.fields.add(k); else _drillState.fields.delete(k);
       _drillRender(wxDoc, decayCorr, diurnalCorr);
     }
+  });
+  document.getElementById("drill-clear-fields").addEventListener("click", () => {
+    _drillState.fields.clear();
+    fieldHost.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
+    _drillRender(wxDoc, decayCorr, diurnalCorr);
   });
   const layerHost = document.getElementById("drill-layer-checks");
   layerHost.innerHTML = DRILL_LAYERS.map(l =>
@@ -875,7 +903,8 @@ function _drillSetupControls(wxDoc, decayCorr, diurnalCorr) {
     }
   });
   document.getElementById("drill-play").addEventListener("click", () => {
-    // Animate: hide all, then reveal one at a time on a delay.
+    // Animate: hide all, then reveal one at a time on a delay. Applies to
+    // every selected field's chart in sync.
     DRILL_LAYERS.forEach(l => { _drillState.visible[l.key] = false; });
     layerHost.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
     _drillRender(wxDoc, decayCorr, diurnalCorr);
