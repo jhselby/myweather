@@ -481,8 +481,8 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — is it actually working?</h2>
 <div class="layer-info-text">
-  Per-field, per-layer comparison of forecast vs observation at lead 0h over the last 24h. Each row shows the MAE after that correction layer has been applied; the % is improvement vs the prior layer. If <strong>+ Diurnal</strong> only nudges MAE by 1–2%, the layer is polishing noise; if it cuts 20%+, it's doing real work. This is the highest-ROI signal for "which corrections matter and which are overkill".
-  <div class="meta-line">Source: <code>time_series_diagnostic.json</code>, <code>per_layer_stats</code> field (refreshed each Fitter run at 03:07 EDT). Populates from v0.6.25+ pair data only — older pairs lack per-layer detail. Bias direction shown in the layer rows (positive = over-forecast).</div>
+  Per-field MAE-vs-lead chart with each correction layer overlaid. X-axis = lead hour (0–47), Y-axis = mean absolute error in field units. The gap between <strong>Raw model</strong> (gray dashed) and <strong>+ Diurnal (final)</strong> (blue) at each lead is how much our pipeline is reducing forecast error vs the bare HRRR/GFS at that horizon.
+  <div class="meta-line">Lead 0 is circular by construction (forecast for now compared against the same-moment mesonet, so L2 ≈ 0); look at lead 1+ for real signal. Source: <code>time_series_diagnostic.json::per_layer_mae_by_lead</code>, 7-day window. Populates from v0.6.25+ pairs only — older pairs lack per-layer detail.</div>
 </div>
 <div id="status-accuracy" class="status" hidden></div>
 <div id="accuracy-grid" class="accuracy-grid"></div>
@@ -903,67 +903,77 @@ function renderLayer2Panel(wxDoc) {
     `</div>`;
 }
 
-// ── Forecast accuracy: per-field, per-layer 4-row table comparing each
-// correction stage's MAE against the same observations. Reads `per_layer_stats`
-// from time_series_diagnostic.json (populated by decay_fit.py at the daily
-// Fitter run). Layer names: l1=raw, l2=+mesonet, l3=+decay, l4=+diurnal=final.
+// ── Forecast accuracy: per-field MAE-vs-lead chart with 4 layers overlaid.
+// X-axis = lead hour 0..47, Y-axis = MAE in field units. Lines for L1 (raw),
+// L2 (+mesonet), L3 (+decay), L4 (+diurnal=final). Reads per_layer_mae_by_lead
+// from time_series_diagnostic.json. Lead 0 will show L2 ≈ 0 (circular by
+// construction — same correction on both sides of the comparison at the same
+// moment); meaningful comparison starts at lead 1+.
 function renderAccuracySection(tsDoc) {
   const grid = document.getElementById("accuracy-grid");
-  if (!tsDoc) {
-    showStatus("status-accuracy", "Awaiting first Fitter run — no time_series_diagnostic.json yet.");
+  if (!tsDoc || !tsDoc.per_layer_mae_by_lead) {
+    showStatus("status-accuracy", "Awaiting first Fitter run with per-layer pair data — no per_layer_mae_by_lead yet.");
     return;
   }
-  const pls = tsDoc.per_layer_stats || {};
-  // Field-specific "good MAE" thresholds — tuned to typical model performance.
-  const GOOD_MAE = { t: 1.5, dp: 2.0, h: 7, ws: 3, wg: 5, pp: 15, pr: 0.05, cc: 25 };
-  const LAYER_ROWS = [
-    { key: "l1", label: "Raw model" },
-    { key: "l2", label: "+ Mesonet" },
-    { key: "l3", label: "+ Decay" },
-    { key: "l4", label: "+ Diurnal (final)" },
+  const maeByLead = tsDoc.per_layer_mae_by_lead;
+  const nByLead   = tsDoc.per_layer_n_by_lead || {};
+  const LAYER_LINES = [
+    { key: "l1", label: "Raw model",        color: "rgba(138,147,163,0.75)", dash: [4,4] },
+    { key: "l2", label: "+ Mesonet",        color: "rgba(200,160,110,1)",    dash: [] },
+    { key: "l3", label: "+ Decay",          color: "rgba(110,180,235,1)",    dash: [] },
+    { key: "l4", label: "+ Diurnal (final)",color: "rgba(74,163,255,1)",     dash: [] },
   ];
+  // Use the existing accuracy-grid container but replace it with a wide grid
+  // of charts (re-using the .grid class from existing chart sections).
+  grid.className = "grid";  // override the .accuracy-grid 220px-min layout
   for (const f of FIELDS) {
-    const digits = (f.key === "pp" || f.key === "h" || f.key === "cc") ? 0 : (f.key === "pr" ? 3 : 1);
-    const fmt = (v) => v == null ? "—" : v.toFixed(digits);
-    const fieldStats = pls[f.key] || {};
-    const finalMae = (fieldStats.l4 && fieldStats.l4.mae_24h);
-    const thresh = GOOD_MAE[f.key] || 1.5;
-    const status = finalMae == null ? "" : (finalMae <= thresh ? "good" : "poor");
-    // Build the 4-row layer comparison
-    const rows = LAYER_ROWS.map((row) => {
-      const s = fieldStats[row.key] || {};
-      const mae24 = s.mae_24h;
-      const mae7d = s.mae_7d;
-      const bias24 = s.bias_24h;
-      // Improvement vs prior layer
-      let delta = "";
-      if (row.key !== "l1" && mae24 != null) {
-        const priorKey = { l2: "l1", l3: "l2", l4: "l3" }[row.key];
-        const priorMae = (fieldStats[priorKey] || {}).mae_24h;
-        if (priorMae != null && priorMae > 0) {
-          const pct = Math.round((1 - mae24 / priorMae) * 100);
-          delta = pct > 0 ? ` <span style="color:#74c38b;">(−${pct}%)</span>`
-               :  pct < 0 ? ` <span style="color:#d4a373;">(+${-pct}%)</span>`
-               :            ` <span style="color:var(--muted);">(0%)</span>`;
-        }
-      }
-      const sign = bias24 == null ? "" : (bias24 >= 0 ? "+" : "");
-      const biasText = bias24 == null ? "—" : `${sign}${fmt(bias24)}`;
-      return `<div class="stat-line">
-        <span>${row.label}</span>
-        <strong>${fmt(mae24)}${f.unit}${delta}</strong>
-      </div>`;
-    }).join("");
-    const samples = (fieldStats.l4 && fieldStats.l4.n_24h) || 0;
+    const fieldData = maeByLead[f.key] || {};
+    // Check if any layer has data
+    const hasAny = LAYER_LINES.some(l => (fieldData[l.key] || []).some(v => v != null));
+    if (!hasAny) continue;
+    const labels = Array.from({length: 48}, (_, i) => i);
+    const datasets = LAYER_LINES.map(l => ({
+      label: l.label,
+      data: (fieldData[l.key] || []).map(v => v == null ? NaN : v),
+      borderColor: l.color,
+      backgroundColor: "rgba(0,0,0,0)",
+      borderDash: l.dash,
+      borderWidth: l.key === "l1" ? 1.25 : 1.75,
+      pointRadius: 0,
+      tension: 0.25,
+      spanGaps: true,
+    }));
+    // Sample-count summary
+    const samples24 = (nByLead[f.key] || {}).l4 || [];
+    const totalSamples = samples24.reduce((s, v) => s + (v || 0), 0);
     const card = document.createElement("div");
-    card.className = "accuracy-card " + status;
+    card.className = "card";
     card.innerHTML =
-      `<div class="field-name">${f.label}</div>` +
-      `<div class="stat-line" style="color:var(--muted);font-size:10.5px;">` +
-        `<span>24h MAE per layer (n=${samples})</span><span></span>` +
-      `</div>` +
-      rows;
+      `<h3><span class="name">${f.label} (${f.key})</span>` +
+      `<span class="summary">MAE vs lead · ${totalSamples.toLocaleString()} pairs (7d)</span></h3>` +
+      `<div class="chart-wrap"><canvas></canvas></div>`;
     grid.appendChild(card);
+    new Chart(card.querySelector("canvas"), {
+      type: "line",
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: "#8a93a3", boxWidth: 10, font: { size: 10.5 } }, position: "bottom" },
+          tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
+        },
+        scales: {
+          x: { title: { display: true, text: "lead (h)", color: "#8a93a3" },
+               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
+               grid: { color: "#242833" } },
+          y: { title: { display: true, text: `MAE (${f.unit})`, color: "#8a93a3" },
+               ticks: { color: "#8a93a3" },
+               grid: { color: "#242833" },
+               beginAtZero: true },
+        },
+      },
+    });
   }
 }
 

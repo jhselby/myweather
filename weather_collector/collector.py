@@ -360,6 +360,17 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  Decay apply failed: {redact_secrets(e)}")
 
+    # Forecast snapshot — must run AFTER decay_apply so the snapshot has access
+    # to per-layer intermediate arrays (corrected_*_post_l2, corrected_*_post_l3)
+    # that decay_apply stamps as side effects. Legacy top-level keys in the
+    # snapshot still equal the L2 (pre-decay) value so the Fitter's decay
+    # calibration is unaffected by the timing change.
+    from .processors.forecast_snapshot import append_forecast_snapshot
+    try:
+        append_forecast_snapshot(weather_data.get("hourly", {}))
+    except Exception as e:
+        logging.warning(f"  ⚠  Forecast snapshot failed: {redact_secrets(e)}")
+
     # Match past forecast snapshots against observed hours and log the errors
     # (feeds the per-field decay-curve fitter). Non-essential to the main
     # payload — log and continue on failure.

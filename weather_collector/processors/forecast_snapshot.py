@@ -90,11 +90,18 @@ def append_forecast_snapshot(hourly):
             for lyr_key, arr in lyrs.items():
                 if i < len(arr) and arr[i] is not None:
                     entry[f"{field}_{lyr_key}"] = _round_for(field, arr[i])
-        # Backward-compat top-level keys (= L4 final). Joiner pre-v0.6.25 reads these.
+        # Backward-compat top-level keys. CRITICAL: these must equal the L2
+        # (pre-decay) value, NOT L4. The Fitter reads the top-level key as
+        # "the forecast" and calibrates decay corrections from (forecast - obs).
+        # If top-level = L4 (post-decay), the calibration would see ~0 error
+        # and decay corrections would shrink to zero. Pre-v0.6.25b the snapshot
+        # was taken BEFORE decay_apply so the legacy key was naturally L2. We
+        # now snapshot AFTER decay_apply to capture all 4 layers — preserving
+        # legacy semantics requires explicitly using the _l2 value here.
         for field in ("t","h","ws","wg","pp","pr","cc"):
-            l4 = entry.get(f"{field}_l4")
-            if l4 is not None:
-                entry[field] = l4
+            l2 = entry.get(f"{field}_l2")
+            if l2 is not None:
+                entry[field] = l2
         # Dew point per layer (derived from t/h at each layer via Magnus)
         for lyr_key in ("l1","l2","l3","l4"):
             tv = entry.get(f"t_{lyr_key}")
@@ -103,9 +110,9 @@ def append_forecast_snapshot(hourly):
                 dp = magnus_dew_point_f(tv, hv)
                 if dp is not None:
                     entry[f"dp_{lyr_key}"] = dp
-        # Backward-compat dp = dp_l4
-        if entry.get("dp_l4") is not None:
-            entry["dp"] = entry["dp_l4"]
+        # Legacy dp = dp_l2 for the same Fitter-calibration reason as above.
+        if entry.get("dp_l2") is not None:
+            entry["dp"] = entry["dp_l2"]
         hours.append(entry)
 
     if not hours:

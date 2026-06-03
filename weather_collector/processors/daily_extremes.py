@@ -11,7 +11,11 @@ from datetime import datetime, timedelta
 
 import pytz
 
-from .forecast_snapshot import append_forecast_snapshot
+# forecast_snapshot moved out of compute_daily_extremes (v0.6.25b) — it now
+# runs AFTER decay_apply in collector.py so the snapshot can capture all four
+# per-layer forecast values (raw, +L2, +L3, +L4). Legacy top-level keys (t, h,
+# etc.) in the snapshot still equal the pre-decay L2 value so the Fitter's
+# decay-correction calibration is unchanged.
 from .obs_log import update_obs_temp_log
 
 
@@ -107,10 +111,10 @@ def compute_daily_extremes(weather_data):
     tomorrow_str = (now_local + timedelta(days=1)).strftime("%Y-%m-%d")
     current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
 
-    # 1. Write current snapshot + 48h forecast snapshot to GCS
+    # 1. Write current snapshot to GCS. Forecast snapshot moved to collector.py
+    # (post-decay_apply) so it can capture all per-layer values.
     obs_values = _gather_current_observation(weather_data, current_hour_iso)
     obs_log = update_obs_temp_log(**obs_values)
-    append_forecast_snapshot(hourly)
     weather_data["obs_temp_log"] = obs_log
     entries = obs_log.get("entries", [])
 

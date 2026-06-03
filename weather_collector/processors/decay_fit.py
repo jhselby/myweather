@@ -195,20 +195,18 @@ def fit_decay_corrections():
     ts_cutoff = (now_naive - timedelta(days=TIMESERIES_DAYS)).strftime("%Y-%m-%dT%H:%M")
     ts_sums = defaultdict(float)   # key: (field, obs_hour_iso)
     ts_counts = defaultdict(int)
-    # v0.6.25 per-layer accumulators: aggregate |error| and signed error for
-    # each (field, layer) pair so the Forecast Accuracy section can render a
-    # 4-row table per field showing how each correction layer drops the MAE.
-    # Window: TIMESERIES_DAYS (7d) and recent 24h are computed separately.
-    # Only post-v0.6.25 pair rows have the per-layer error fields; pre-v0.6.25
-    # pairs are silently skipped from per-layer aggregation but still feed
-    # the legacy lead-time fit.
-    per_layer_abs_24h    = defaultdict(float)   # key: (field, layer) e.g. ('t','l2')
-    per_layer_signed_24h = defaultdict(float)
-    per_layer_n_24h      = defaultdict(int)
-    per_layer_abs_7d     = defaultdict(float)
-    per_layer_signed_7d  = defaultdict(float)
-    per_layer_n_7d       = defaultdict(int)
-    pl_cutoff_24h = (now_naive - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M")
+    # v0.6.25c per-layer × per-lead accumulators. For each (field, lead, layer)
+    # triplet aggregate |error| over the 7-day window. Lets the Forecast
+    # Accuracy section render one chart per field with 4 lines (one per layer)
+    # × 48 lead bins — showing where each correction layer adds value vs the
+    # raw model. Lead 0 will show L2 ≈ 0 by construction (circular comparison
+    # — same correction applied to both sides at the same moment); lead 1+
+    # is meaningful (snapshot's forecast made hours ago vs fresh mesonet obs).
+    # Only post-v0.6.25 pair rows have per-layer error fields; older pairs
+    # silently feed only the legacy lead-time fit, not the per-layer table.
+    per_layer_abs    = defaultdict(float)  # key: (field, lead_h, layer)
+    per_layer_signed = defaultdict(float)
+    per_layer_n      = defaultdict(int)
     n_in = 0
     n_kept = 0
 
@@ -267,24 +265,20 @@ def fit_decay_corrections():
                 obs_hour = obs_time[:13] + ":00"
                 ts_sums[(field, lead_h, obs_hour)] += float(error)
                 ts_counts[(field, lead_h, obs_hour)] += 1
-            # Per-layer accumulation for the Forecast Accuracy 4-row table.
-            # Use the smallest available lead (lead 0 = the "actual" forecast).
-            # Only newer pairs (post-v0.6.25 deploy) have the per-layer errors.
-            if lead_h == 0 and obs_time >= ts_cutoff:
-                in_24h = obs_time >= pl_cutoff_24h
+            # Per-layer × per-lead accumulation for the Forecast Accuracy chart.
+            # All lead bins, 7-day window. Only post-v0.6.25 pairs carry the
+            # per-layer error fields; older pairs silently skip this loop and
+            # only feed the legacy single-error aggregation above.
+            if obs_time >= ts_cutoff:
                 for lyr in ("l1", "l2", "l3", "l4"):
                     e = row.get(f"error_{lyr}")
                     if e is None:
                         continue
                     e = float(e)
-                    key = (field, lyr)
-                    per_layer_abs_7d[key]    += abs(e)
-                    per_layer_signed_7d[key] += e
-                    per_layer_n_7d[key]      += 1
-                    if in_24h:
-                        per_layer_abs_24h[key]    += abs(e)
-                        per_layer_signed_24h[key] += e
-                        per_layer_n_24h[key]      += 1
+                    key = (field, lead_h, lyr)
+                    per_layer_abs[key]    += abs(e)
+                    per_layer_signed[key] += e
+                    per_layer_n[key]      += 1
 
     corrections = {}
     n_samples = {}
@@ -446,26 +440,30 @@ def fit_decay_corrections():
         else:
             tide_elevation_ft.append(_tide_elevation_ft_m2(h))
 
-    # v0.6.25: per-layer stats per field — 4-row table for Forecast Accuracy.
-    # Computed at lead 0 only (= "actual" forecast at the time it was for).
-    # MAE = mean(|error|), bias = mean(signed error). Per layer (l1=raw, l2=mesonet,
-    # l3=+decay, l4=+diurnal=final). Populates from v0.6.25+ pair rows only;
-    # older pairs lack per-layer error fields and silently drop out.
-    per_layer_stats = {}
+    # v0.6.25c: per-layer × per-lead MAE grids for the Forecast Accuracy chart.
+    # For each (field, layer) emit a 48-bin array of MAE values (one per lead
+    # hour 0..47). Missing-data leads come out as null. Frontend renders one
+    # chart per field with 4 lines (raw, +mesonet, +decay, +final) × 48 leads.
+    per_layer_mae_by_lead  = {}
+    per_layer_bias_by_lead = {}
+    per_layer_n_by_lead    = {}
     for f in FIELDS:
-        stats = {}
+        per_layer_mae_by_lead[f]  = {}
+        per_layer_bias_by_lead[f] = {}
+        per_layer_n_by_lead[f]    = {}
         for lyr in ("l1", "l2", "l3", "l4"):
-            n7 = per_layer_n_7d.get((f, lyr), 0)
-            n24 = per_layer_n_24h.get((f, lyr), 0)
-            entry = {"n_7d": n7, "n_24h": n24}
-            if n7 > 0:
-                entry["mae_7d"] = round(per_layer_abs_7d[(f, lyr)] / n7, 3)
-                entry["bias_7d"] = round(per_layer_signed_7d[(f, lyr)] / n7, 3)
-            if n24 > 0:
-                entry["mae_24h"] = round(per_layer_abs_24h[(f, lyr)] / n24, 3)
-                entry["bias_24h"] = round(per_layer_signed_24h[(f, lyr)] / n24, 3)
-            stats[lyr] = entry
-        per_layer_stats[f] = stats
+            mae_arr  = [None] * LEAD_BINS
+            bias_arr = [None] * LEAD_BINS
+            n_arr    = [0]    * LEAD_BINS
+            for lead in range(LEAD_BINS):
+                n = per_layer_n.get((f, lead, lyr), 0)
+                n_arr[lead] = n
+                if n > 0:
+                    mae_arr[lead]  = round(per_layer_abs[(f, lead, lyr)] / n, 3)
+                    bias_arr[lead] = round(per_layer_signed[(f, lead, lyr)] / n, 3)
+            per_layer_mae_by_lead[f][lyr]  = mae_arr
+            per_layer_bias_by_lead[f][lyr] = bias_arr
+            per_layer_n_by_lead[f][lyr]    = n_arr
 
     ts_output = {
         "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
@@ -477,7 +475,9 @@ def fit_decay_corrections():
         "tide_elevation_ft": tide_elevation_ft,
         "errors_by_lead": errors_by_lead,
         "n_samples_by_lead": samples_by_lead,
-        "per_layer_stats": per_layer_stats,
+        "per_layer_mae_by_lead":  per_layer_mae_by_lead,
+        "per_layer_bias_by_lead": per_layer_bias_by_lead,
+        "per_layer_n_by_lead":    per_layer_n_by_lead,
     }
     try:
         upload_json(ts_output, TIMESERIES_PATH, "time_series_diagnostic.json")
