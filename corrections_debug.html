@@ -950,7 +950,7 @@ function renderAccuracySection(tsDoc) {
     card.className = "card";
     card.innerHTML =
       `<h3><span class="name">${f.label} (${f.key})</span>` +
-      `<span class="summary">MAE vs lead · ${totalSamples.toLocaleString()} pairs (7d)</span></h3>` +
+      `<span class="summary">Average forecast error by lead time · ${totalSamples.toLocaleString()} pairs (7d)</span></h3>` +
       `<div class="chart-wrap"><canvas></canvas></div>`;
     grid.appendChild(card);
     new Chart(card.querySelector("canvas"), {
@@ -964,10 +964,10 @@ function renderAccuracySection(tsDoc) {
           tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
         },
         scales: {
-          x: { title: { display: true, text: "lead (h)", color: "#8a93a3" },
+          x: { title: { display: true, text: "Hours ahead of forecast", color: "#8a93a3" },
                ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
                grid: { color: "#242833" } },
-          y: { title: { display: true, text: `MAE (${f.unit})`, color: "#8a93a3" },
+          y: { title: { display: true, text: `Average error (${f.unit})`, color: "#8a93a3" },
                ticks: { color: "#8a93a3" },
                grid: { color: "#242833" },
                beginAtZero: true },
