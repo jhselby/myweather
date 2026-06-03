@@ -66,6 +66,18 @@
   }
   h2.section:target { animation: section-flash 1.2s ease-out; }
   h2.section.research-heading:target { animation: section-flash-research 1.2s ease-out; }
+  /* Click-to-collapse on h2.section (v0.6.26b). State persisted to localStorage. */
+  h2.section { cursor: pointer; user-select: none; }
+  h2.section::after {
+    content: " ▾";
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 16px;
+    margin-left: 8px;
+    transition: transform 0.15s;
+    display: inline-block;
+  }
+  h2.section.collapsed::after { content: " ▸"; }
 
   /* ── Print / PDF: flip to light theme so text is readable on paper ────
      Canvas charts are rasterized with the dark theme baked in — those stay
@@ -2019,6 +2031,53 @@ async function load() {
     showStatus("status-diurnal", "No diurnal_corrections_history.json yet — appears after the next Fitter run (the v0.6.14+ Fitter writes this). Stable shapes across days → diurnal pattern is real and Layer 5 corrections are stable.");
   }
 }
+
+// Click-to-collapse on each h2.section, state persisted to localStorage by
+// section id. Wraps the content between each h2 and the next h2 in a
+// .section-body div so we can toggle a single element.
+function initCollapsibleSections() {
+  const STORAGE_KEY = "forecastPipelineCollapsed";
+  let stored;
+  try { stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+  catch (e) { stored = {}; }
+  const save = () => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(stored)); }
+    catch (e) {}
+  };
+  document.querySelectorAll("h2.section[id]").forEach(h2 => {
+    const id = h2.id;
+    // Collect siblings until next h2.section into a wrapper div
+    const body = [];
+    let next = h2.nextElementSibling;
+    while (next && !(next.tagName === "H2" && next.classList.contains("section"))) {
+      body.push(next);
+      next = next.nextElementSibling;
+    }
+    if (!body.length) return;
+    const wrap = document.createElement("div");
+    wrap.className = "section-body";
+    h2.parentNode.insertBefore(wrap, body[0]);
+    body.forEach(el => wrap.appendChild(el));
+    // Restore stored state
+    if (stored[id]) {
+      h2.classList.add("collapsed");
+      wrap.style.display = "none";
+    }
+    // Wire click handler
+    h2.addEventListener("click", (e) => {
+      // Allow clicks on any inner anchors/buttons to behave normally
+      if (e.target.tagName === "A" || e.target.tagName === "BUTTON") return;
+      const nowCollapsed = h2.classList.toggle("collapsed");
+      wrap.style.display = nowCollapsed ? "none" : "";
+      stored[id] = nowCollapsed;
+      save();
+      // If user clicked to EXPAND a section that's a TOC target, scroll it back
+      // into view (the toggle changes layout, may have shifted heading).
+      if (!nowCollapsed) h2.scrollIntoView({ behavior: "instant", block: "start" });
+    });
+  });
+}
+initCollapsibleSections();
 
 load();
 </script>
