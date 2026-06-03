@@ -30,9 +30,15 @@ def _octant_index(station_lat, station_lon):
 
 
 def _kalman_gain(n_stations, bias_std):
-    if n_stations >= 5 and bias_std < 1.0:
+    # Thresholds retuned in v0.6.23 for the v0.6.17 octant-scatter bias_std
+    # metric. Old (1.0 / 2.0) were calibrated for per-station scatter (~30
+    # individual readings disagreeing). Per-octant means are tighter (averages
+    # of averages), so under the new metric typical values land in the 0.3–1.0
+    # range — old thresholds always returned K=0.9, over-applying the bias.
+    # New (0.4 / 0.8) keep ~the same fraction of days in each bucket as before.
+    if n_stations >= 5 and bias_std < 0.4:
         return 0.90
-    elif n_stations >= 3 and bias_std < 2.0:
+    elif n_stations >= 3 and bias_std < 0.8:
         return 0.65
     else:
         return 0.40

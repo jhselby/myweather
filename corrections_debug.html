@@ -66,6 +66,51 @@
   }
   h2.section:target { animation: section-flash 1.2s ease-out; }
   h2.section.research-heading:target { animation: section-flash-research 1.2s ease-out; }
+
+  /* ── Print / PDF: flip to light theme so text is readable on paper ────
+     Canvas charts are rasterized with the dark theme baked in — those stay
+     dark rectangles. Everything else (headings, panels, cards, stats text)
+     flips to dark-on-light for legibility. */
+  @media print {
+    body { background: white !important; color: #111 !important; }
+    header h1 { color: #111 !important; }
+    .page-tagline { color: #555 !important; }
+    nav.toc { display: none !important; }
+    h2.section {
+      background: white !important;
+      color: #111 !important;
+      border-left-color: #5081d4 !important;
+      page-break-after: avoid;
+    }
+    h2.section.research-heading {
+      color: #8b5a2b !important;
+      border-left-color: #b6824a !important;
+    }
+    h3.subsection { color: #333 !important; border-top-color: #ccc !important; }
+    .layer-info-text, .card, .accuracy-card, details.bias-accordion {
+      background: white !important;
+      border-color: #ccc !important;
+      color: #111 !important;
+      page-break-inside: avoid;
+    }
+    .meta, .meta-line, .layer-info-text .meta-line { color: #555 !important; }
+    .accuracy-card .stat-line { color: #555 !important; }
+    .accuracy-card .stat-line strong { color: #111 !important; }
+    .stats-panel, .stats-panel strong { color: #111 !important; }
+    .card h3 .name { color: #111 !important; }
+    .card h3 .summary { color: #555 !important; }
+    .octant-rose .oct { background: #f4f4f4 !important; color: #111 !important; border-color: #ccc !important; }
+    .octant-rose .oct.empty  { background: #fde6e6 !important; border-color: #d4a !important; }
+    .octant-rose .oct.sparse { background: #fdf3e0 !important; border-color: #c93 !important; }
+    .octant-rose .oct.ok     { background: #e8f5ec !important; border-color: #5a8 !important; }
+    .octant-rose .oct .lbl   { color: #555 !important; }
+    .octant-rose .home       { background: white !important; color: #555 !important; }
+    details.bias-accordion > summary { color: #111 !important; }
+    /* Force the bias offsets table to readable colors */
+    table { color: #111 !important; }
+    th { background: #eee !important; color: #111 !important; border-color: #ccc !important; }
+    td { border-color: #eee !important; }
+  }
   .meta { color: var(--muted); font-size: 12px; }
   .meta strong { color: var(--ink); font-weight: 500; }
   .meta a { color: var(--accent); }
