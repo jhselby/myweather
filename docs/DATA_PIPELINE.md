@@ -1,14 +1,14 @@
 # MyWeather Data Pipeline Reference
-**Last Updated:** June 1, 2026 (4-layer reframing)
+**Last Updated:** June 3, 2026 (v0.6.25 — 4-layer mesonet reframing + 81-station expansion + pressure/cloud)
 **Purpose:** Complete technical specification of all data corrections and transformations. Line numbers intentionally omitted — file paths are the navigation aid; specific code locations move too often to keep accurate.
 
-> **Four-layer correction model.** Every numeric forecast (temp, humidity, dew point, wind, gust, POP) is the result of four layers of work, applied in this conceptual order:
+> **Four-layer correction model.** Every numeric forecast (temp, dew point, humidity, wind, gust, POP, pressure, cloud cover) is the result of up to four layers of work, applied in this conceptual order:
 > 1. **Raw model (HRRR / GFS)** — the input. Open-Meteo HRRR for 48h, GFS for days 3–7. Multi-km grid, knows nothing about Wyman Cove specifically.
-> 2. **Station observations correct the model** (`processors/hyperlocal.py` + `processors/corrected_hourly.py` + `processors/wind_blend.py`) — weighted-average bias from the 38-station WU/Tempest network applied to all 48 forecast hours. Wind is a special case under this layer: too spatially variable to average, so it uses a max-selected observation blended into the next 24h on a linear fade. Same concept (trust local data over model), different aggregation for a different physical quantity.
-> 3. **Adaptive station calibration** (`processors/station_bias.py`) — runs *upstream* of Layer 2 to make station data trustworthy. Kalman tracker on each station's chronic offset over a 48h rolling window with day/night split. A station that consistently reads warm gets that offset subtracted before it contributes to Layer 2. Without this, Layer 2's network average is polluted by miscalibrated sensors.
-> 4. **Lead-time decay correction** (`processors/decay_fit.py` + `processors/decay_apply.py`) — per-(field, lead_h) mean residual error, fitted daily from a 30-day rolling window of `(snapshot × observation)` pairs with exponential recency weighting (τ=14 days), subtracted from the Layer-2-corrected forecast each tick. See [§DECAY PIPELINE](#decay-pipeline-layer-4) below.
+> 2. **Mesonet corrections** (`processors/hyperlocal.py` + `processors/corrected_hourly.py` + `processors/wind_blend.py`, with `processors/station_bias.py` upstream) — the 81-station local network's collective read on what the raw model is missing. Four internal sub-steps: (a) **Collect** from WU + Tempest stations within 2.5mi; (b) **Per-station Kalman calibration** subtracts each station's chronic offset (48h rolling window, day/night split, leave-one-out vs. peers); (c) **Octant-balanced aggregation** groups stations by compass octant, computes distance²×elevation-weighted bias per octant, averages across non-empty octants — so dense Marblehead clusters don't outvote sparse Salem ones — with MAD-based outlier trimming within each octant; (d) **Network confidence Kalman gain K** (0.4/0.65/0.9 based on octant scatter) decides how much of the resulting bias to actually apply. Wind is a special case: per-octant max gust → median across octants, blended into the next 24h forecast on a linear fade. Cloud and POP have no per-station bias (stations don't measure them) — they pass through Layer 2 unchanged.
+> 3. **Lead-time decay correction** (`processors/decay_fit.py` + `processors/decay_apply.py`) — per-(field, lead_h) mean residual error, fitted every 6 hours (03:07/09:07/15:07/21:07 EDT) from a 30-day rolling window of `(snapshot × observation)` pairs with exponential recency weighting (τ=14 days), subtracted from the Layer-2-corrected forecast each tick. See [§DECAY PIPELINE](#decay-pipeline-layer-4) below.
+> 4. **Diurnal correction** (same `decay_fit.py` + `decay_apply.py`) — per-(field, hour-of-day) mean residual error, mean-zero normalized across 24 bins so it doesn't double-count Layer 3's overall bias. Captures clock-time patterns like afternoon sea-breeze humidity rise that don't follow lead-time.
 >
-> The frontend reads `hourly.corrected_temperature`, `hourly.corrected_humidity`, etc. directly — all four layers have already been applied by the collector.
+> The frontend reads `hourly.corrected_temperature`, `hourly.corrected_humidity`, `hourly.corrected_pressure_in`, `hourly.wind_speed`, `hourly.cloud_cover`, etc. directly — all four layers have already been applied by the collector. Per-layer intermediates (`*_post_l2`, `*_post_l3`) are also stamped as side effects for the diagnostic page's per-layer MAE chart.
 
 ---
 
@@ -18,13 +18,14 @@
 3. [Pressure](#pressure)
 4. [Wind Speed](#wind-speed)
 5. [Wind Gusts](#wind-gusts)
-6. [Wet Bulb Temperature](#wet-bulb-temperature)
-7. [Feels Like / Apparent Temperature](#feels-like--apparent-temperature)
-8. [Water Temperature](#water-temperature)
-9. [Birds (eBird)](#birds-ebird)
-10. [Hair Day Scoring](#hair-day-scoring)
-11. [Forecast Text Generation](#forecast-text-generation)
-12. [Data Flow Summary](#data-flow-summary)
+6. [Cloud Cover](#cloud-cover)
+7. [Wet Bulb Temperature](#wet-bulb-temperature)
+8. [Feels Like / Apparent Temperature](#feels-like--apparent-temperature)
+9. [Water Temperature](#water-temperature)
+10. [Birds (eBird)](#birds-ebird)
+11. [Hair Day Scoring](#hair-day-scoring)
+12. [Forecast Text Generation](#forecast-text-generation)
+13. [Data Flow Summary](#data-flow-summary)
 
 ---
 
@@ -34,9 +35,9 @@
 
 **Location:** `weather_collector/processors/hyperlocal.py`
 
-**Station sources:** 29 WU stations + up to 9 Tempest stations, all within 1.5 miles
+**Station sources:** up to 60 WU stations + up to 26 Tempest stations, all within 2.5 miles (expanded from 1.5mi/38 stations in v0.6.17)
 
-**Method:** Distance/elevation weighted bias correction with adaptive per-station offsets (diurnal split), Kalman gain blend
+**Method:** Octant-balanced bias correction with adaptive per-station offsets (diurnal split), MAD outlier trimming, Kalman gain blend
 
 **Formula:**
 ```python
@@ -47,17 +48,34 @@ corrected_station_temp = station_temp - chronic_offset[station_id]
 
 # Bias against model:
 bias_at_station = corrected_station_temp - model_temp
+
+# Per-station weight (within its octant):
 dist_weight = 1.0 / (station_dist ** 2)                    # Inverse square law
 elev_weight = exp(-|station_elev - 30ft| / 30)            # Exponential decay
 combined_weight = dist_weight × elev_weight
 
-# Weighted average of all biases:
-weighted_bias = Σ(bias_at_station × combined_weight) / Σ(combined_weight)
+# Octant assignment (v0.6.17):
+octant = compass_bearing_from_home(station_lat, station_lon) → one of N/NE/E/SE/S/SW/W/NW
 
-# Kalman gain — how much to trust stations vs. model:
-K = 0.90  if stations_used >= 5 and bias_std < 1.0°F   # High confidence
-K = 0.65  if stations_used >= 3 and bias_std < 2.0°F   # Moderate confidence
-K = 0.40  otherwise                                      # Low confidence / few stations
+# Per-octant aggregation (v0.6.24):
+# 1. Collect all stations per octant into a list of (bias, weight) pairs.
+# 2. MAD outlier trimming: drop any station whose bias is > 3.5 × 1.4826 × MAD
+#    from the octant median. MAD (not std) so the outlier can't inflate the
+#    threshold and protect itself.
+# 3. Weighted mean of survivors per octant.
+octant_bias[oct] = trimmed_weighted_mean(stations_in_octant)
+
+# Network bias = unweighted mean across non-empty octants (v0.6.17):
+# Each octant counts equally regardless of how many stations are in it —
+# prevents dense Marblehead clusters from outvoting sparse Salem ones.
+weighted_bias = mean(octant_bias[o] for o in 0..7 if octant has stations)
+
+# Kalman gain — how much to trust the network vs. model (v0.6.23 thresholds
+# retuned for octant-scatter metric, smaller than pre-v0.6.17 station-scatter):
+bias_std = stdev(octant_bias values)
+K = 0.90  if stations_used >= 5 and bias_std < 0.4°F   # High confidence (tight octant agreement)
+K = 0.65  if stations_used >= 3 and bias_std < 0.8°F   # Moderate confidence
+K = 0.40  otherwise                                      # Low confidence / few octants
 
 # Apply to model (model contributes when K < 1):
 corrected_temp = model_temp + K × weighted_bias
@@ -65,26 +83,32 @@ corrected_temp = model_temp + K × weighted_bias
 
 **Requirements:**
 - Minimum 3 stations with valid data
-- Stations must be within 1.5 miles
-- Stations must have temperature, distance, and elevation data
+- Stations must be within 2.5 miles
+- Stations must have temperature and distance data (elevation is fall-back-friendly: missing elev → treated as 30ft = home elevation, no penalty)
 
-**Confidence Calculation:**
+**Confidence Calculation (v0.6.23+):**
 ```python
-bias_std = standard_deviation(all_station_biases)
-if bias_std < 1.0°F:    confidence = "High"
-elif bias_std < 2.0°F:  confidence = "Moderate"
+# bias_std is now std-across-octants (not std-across-stations) — tighter values
+# than pre-v0.6.17 because octant means are averages of averages.
+bias_std = standard_deviation(octant_means)
+if bias_std < 0.4°F:    confidence = "High"
+elif bias_std < 0.8°F:  confidence = "Moderate"
 else:                   confidence = "Low"
 ```
 
 **Data Stored (in `weather_data["hyperlocal"]`):**
 - `model_temp` - Raw GFS/HRRR model temperature (°F)
-- `weighted_bias` - Calculated bias correction (°F, before K scaling)
+- `weighted_bias` - Calculated network bias (°F, before K scaling, after octant balancing)
 - `kalman_gain` - K value applied (0.40 / 0.65 / 0.90)
 - `corrected_temp` - model_temp + K × weighted_bias (°F)
-- `stations_used` - Number of stations with valid data in this run
-- `stations_total` - All attempted stations (29 WU + 9 Tempest = 38)
+- `stations_used` - Number of stations contributing data this run
+- `stations_total` - All attempted stations (typically ~86 = up to 60 WU + 26 Tempest)
 - `confidence` - "High", "Moderate", or "Low"
-- `bias_std` - Standard deviation of per-station biases (°F)
+- `bias_std` - Std deviation of per-OCTANT bias means (°F) — was per-station pre-v0.6.17
+- `aggregation` - "octant_balanced" or "flat_fallback" (used when < 3 octants populated)
+- `octants_used` - Count 0–8 of compass octants with at least one station this tick
+- `octant_coverage` - Dict mapping each octant label to its station count this tick
+- `outliers_trimmed` - Count of stations dropped as outliers by MAD trimming this tick
 - `station_offsets` - Chronic offsets applied this run (from station_bias.py), if any
 - `wu_avg_temp` - Simple WU multi-station average (for reference only)
 
@@ -228,15 +252,16 @@ bias_humidity = corrected_humidity - model_humidity
 
 **Location:** `weather_collector/processors/hyperlocal.py`
 
-**Method:** Distance/elevation weighted average across all stations with adaptive per-station bias correction. Falls back to KBOS or model if no station pressure data available.
+**Method (v0.6.21+):** Octant-balanced weighted average across all stations with adaptive per-station bias correction (same Layer 2 treatment as temperature/humidity). Falls back to KBOS or model if no station pressure data available.
 
 **Formula:**
 ```python
 # Per-station adaptive offset (from station_bias.py, once >= 6 readings):
 corrected_station_pressure = station_pressure_in - chronic_p_offset[station_id]
 
-# Distance/elevation weighted average:
-corrected_pressure_in = Σ(corrected_station_pressure × weight) / Σ(weight)
+# Per-octant weighted mean with MAD outlier trimming, then mean across octants:
+octant_pressure[oct] = trimmed_weighted_mean(stations_in_octant)
+corrected_pressure_in = mean(octant_pressure[o] for o in 0..7 if populated)
 
 # Fallback hierarchy if no station pressure data:
 corrected_pressure_in = kbos_pressure_in OR model_pressure_in
@@ -244,20 +269,23 @@ corrected_pressure_in = kbos_pressure_in OR model_pressure_in
 
 **Data Stored (in `weather_data["hyperlocal"]`):**
 - `model_pressure_in` - GFS/HRRR model pressure (inHg)
+- `bias_pressure_in` - corrected_pressure_in − model_pressure_in (inHg)
 - `kbos_pressure_in` - KBOS observation (inHg) [if available]
-- `corrected_pressure_in` - Weighted station average, or fallback (inHg)
+- `corrected_pressure_in` - Octant-balanced station average, or fallback (inHg)
 
-**Note:** Per-station chronic offsets kick in after ≥ 6 readings (~1 hour).
+**Note:** Per-station chronic offsets kick in after ≥ 6 readings (~1 hour). Pressure varies slowly over distance (synoptic scale ~100+ miles), so the network correction is typically tiny (~0.02 inHg).
 
 ---
 
 ### Forecast Hours (1-48) Handling
 
-**Backend:** NO correction applied
-**Frontend:** NO correction applied
-**Storage:** `weather_data["hourly"]["pressure"]` contains raw HRRR model data
+**Backend (v0.6.21+):** Full correction stack — Layer 2 (mesonet bias from `hyperlocal.bias_pressure_in` added in `corrected_hourly.py`), Layer 3 (decay), Layer 4 (diurnal).
+**Storage:**
+- `weather_data["hourly"]["pressure"]` — raw HRRR model in mb (post-normalize.py rename from `pressure_msl`)
+- `weather_data["hourly"]["raw_pressure_in"]` — raw model converted to inHg (preserved by `corrected_hourly.py`)
+- `weather_data["hourly"]["corrected_pressure_in"]` — fully corrected (Layer 2 + 3 + 4) in inHg
 
-**Rationale:** Pressure varies spatially; KBOS/WU observations may not apply to forecast locations
+**Rationale:** Pressure varies slowly so corrections stay small, but the infrastructure is symmetric with other fields for consistency. Model is already accurate (~0.02 inHg MAE typically).
 
 ---
 
@@ -441,10 +469,11 @@ Hour 25+: Raw model (no observed influence)
 
 **Two parallel systems exist - this is confusing:**
 
-#### System 1: Collector Max Selection (Used by Frontend)
-**Location:** `weather_collector/collector.py`
-**Method:** MAX gust across all stations (same as sustained wind)
-**Storage:** `weather_data["current"]["wind_gusts"]`
+#### System 1: Collector Octant-Median Selection (Used by Frontend)
+**Location:** `weather_collector/processors/wind_blend.py::select_observed_wind`
+**Method (v0.6.17+):** Per-octant MAX gust → MEDIAN across populated octants. A single sensor's gust spike won't move the forecast; a regional event seen in multiple compass directions will. Falls back to flat max-across-all-stations when fewer than 3 octants have wind data. Same logic for sustained wind (`wind_speed`).
+**Pre-v0.6.17:** flat MAX gust across all stations regardless of direction — replaced because a single Salem-ridge exposed sensor could spike the whole Wyman Cove forecast.
+**Storage:** `weather_data["current"]["wind_gusts"]` + `weather_data["current"]["wind_aggregation"]` (documents which mode this tick used)
 **This is what actually gets used**
 
 #### System 2: Hyperlocal Weighted Average (Calculated but Less Used)
@@ -466,7 +495,7 @@ corrected_gust = model_gust + bias_gust  # Same as wu_avg_gust
 
 **Requirements:**
 - Minimum 3 stations with gust data
-- Stations within 1.5 miles
+- Stations within 2.5 miles
 
 **Constraint:** Gusts enforced >= sustained wind
 ```python
@@ -531,6 +560,31 @@ for i in range(current_idx, current_idx + 24):
   - Model: `hyp.model_wind_gusts`
   - Bias: `hyp.bias_wind_gusts`
   - Corrected: `hyp.corrected_wind_gusts` (from hyperlocal weighted average)
+
+---
+
+## CLOUD COVER
+
+### Current Hour Calculation
+
+**Location:** Raw value comes from `hourly.cloud_cover` (Open-Meteo HRRR, post-Pirate-Weather override in `collector.py` when PW is fresher).
+
+**Method:** No Layer 2 correction — stations don't directly measure cloud cover. Layer 1 (model) is the only "current" cloud value displayed.
+
+---
+
+### Forecast Hours (1-48) Handling
+
+**Backend (v0.6.22+):** Layer 3 (decay) and Layer 4 (diurnal) corrections applied to `hourly.cloud_cover`. No Layer 2 (no station-network bias for cloud).
+
+**Observation source for the Fitter:** `kbos.cloud_cover_pct` — KBOS METAR sky-condition codes mapped to percent via NWS convention (SKC/CLR=0, FEW=12, SCT=38, BKN=75, OVC=100), taking the maximum coverage across all reported layers. Parsed in `weather_collector/fetchers/noaa.py::_metar_cloud_cover_pct`, piped into `obs_temp_log` via `daily_extremes.py::_gather_current_observation`. No fallback to model value — that would feed the Joiner forecast-vs-forecast pairs with zero error and pollute the Fitter.
+
+**Storage:**
+- `weather_data["hourly"]["cloud_cover"]` — Layer 1 + 3 + 4 corrected (mutated in place by `decay_apply.py`)
+- `weather_data["hourly"]["raw_cloud_cover"]` — preserved pre-correction copy
+- `weather_data["kbos"]["cloud_cover_pct"]` — current KBOS observation (0–100%)
+
+**Caveat:** KBOS is ~15mi south of Wyman Cove. Adequate for synoptic cloud patterns (frontal cloud, clear high pressure days) but blind to local marine-layer dynamics on the Marblehead peninsula. Future: blend with Tempest brightness/solar-radiation ratios as a daytime cloud proxy.
 
 ---
 
