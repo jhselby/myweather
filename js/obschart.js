@@ -300,6 +300,54 @@ function buildObsChart(entries) {
   });
 
   updateObsDataBar(entries.length - 1, entries);
+  // v0.6.32 — populate the forecast-accuracy block once the chart is built.
+  // Fetches time_series_diagnostic.json once per buildObsChart call.
+  renderForecastAccuracy();
+}
+
+// Fetches per-layer MAE data and renders the Forecast Accuracy block under the
+// Observed card on the Almanac tab. Shows MAE for the FINAL (Layer 4) forecast
+// against current obs, broken down by 6h-ahead and 24h-ahead lead times, for
+// each of the 4 most user-relevant fields. Refreshes on each buildObsChart call.
+async function renderForecastAccuracy() {
+  const rows = document.getElementById("forecastAccuracyRows");
+  if (!rows) return;
+  let ts;
+  try {
+    const res = await fetch(`https://data.wymancove.com/time_series_diagnostic.json?_=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) {
+      rows.innerHTML = `<span style="opacity:0.5;grid-column:1/-1;">awaiting first Fitter run</span>`;
+      return;
+    }
+    ts = await res.json();
+  } catch (e) {
+    rows.innerHTML = `<span style="opacity:0.5;grid-column:1/-1;">unavailable</span>`;
+    return;
+  }
+  const mae = ts.per_layer_mae_by_lead || {};
+  const ACC_FIELDS = [
+    { key: "t",  label: "Temp",     unit: "°F",   digits: 1 },
+    { key: "ws", label: "Wind",     unit: "mph",  digits: 1 },
+    { key: "wg", label: "Gust",     unit: "mph",  digits: 1 },
+    { key: "h",  label: "Humidity", unit: "%",    digits: 0 },
+    { key: "dp", label: "Dew point",unit: "°F",   digits: 1 },
+    { key: "pr", label: "Pressure", unit: "inHg", digits: 2 },
+    { key: "cc", label: "Cloud",    unit: "%",    digits: 0 },
+  ];
+  // Header row
+  let html = `<span></span>` +
+             `<span style="opacity:0.65;font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;">6h ahead</span>` +
+             `<span style="opacity:0.65;font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;">24h ahead</span>`;
+  for (const f of ACC_FIELDS) {
+    const layer4 = (mae[f.key] && mae[f.key].l4) || [];
+    const v6  = (layer4[6]  != null) ? layer4[6]  : null;
+    const v24 = (layer4[24] != null) ? layer4[24] : null;
+    const fmt = v => v == null ? "—" : `±${v.toFixed(f.digits)} ${f.unit}`;
+    html += `<span>${f.label}</span>` +
+            `<span><strong style="color:var(--text-primary);">${fmt(v6)}</strong></span>` +
+            `<span><strong style="color:var(--text-primary);">${fmt(v24)}</strong></span>`;
+  }
+  rows.innerHTML = html;
 }
 
 function renderObsChartCollapsedPreview(entries) {

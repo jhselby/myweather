@@ -1124,6 +1124,16 @@
               <div style="display:flex;align-items:center;gap:4px;"><div style="width:20px;height:2px;border-top:2px dashed rgba(160,90,230,0.85);flex-shrink:0;"></div>Wind</div>
               <div style="display:flex;align-items:center;gap:4px;"><div style="width:14px;height:10px;border-radius:1px;background:rgba(60,200,160,0.6);flex-shrink:0;"></div>Gust</div>
             </div>
+            <!-- Forecast accuracy block (v0.6.32) — populated by renderForecastAccuracy() in obschart.js -->
+            <div id="forecastAccuracyBlock" style="padding:10px 12px;border-top:1px solid rgba(255,255,255,0.07);font-size:0.78rem;color:var(--text-secondary);">
+              <div style="font-weight:600;color:var(--text-primary);margin-bottom:8px;">Forecast accuracy (last 7 days)</div>
+              <div id="forecastAccuracyRows" style="display:grid;grid-template-columns:max-content 1fr 1fr;gap:4px 16px;align-items:baseline;">
+                <span style="opacity:0.5;">loading…</span>
+              </div>
+              <div style="margin-top:8px;font-size:10.5px;opacity:0.55;line-height:1.4;">
+                Mean absolute error of our forecast vs observed conditions. Lower is better. 6h column = forecast made 6 hours ago for now; 24h = made yesterday at this time for now.
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1327,7 +1337,7 @@
   <script src="js/thunderstorm.js?v=47e14fef"></script>
   <script src="js/previews.js?v=6c884047"></script>
   <script src="js/tempchart.js?v=6560c27d"></script>
-  <script src="js/obschart.js?v=1b9abd19"></script>
+  <script src="js/obschart.js?v=9b3ff08d"></script>
   <script src="js/forecast.js?v=5b44ecee"></script>
   <script src="js/frost.js?v=45b487d0"></script>
   <script src="js/sunset.js?v=2c9f374c"></script>
@@ -1469,7 +1479,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.6.31</span>
+            <span class="version-pill" id="appVersion">v0.6.32</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
