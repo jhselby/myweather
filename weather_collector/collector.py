@@ -367,9 +367,28 @@ def main():
     # calibration is unaffected by the timing change.
     from .processors.forecast_snapshot import append_forecast_snapshot
     try:
-        append_forecast_snapshot(weather_data.get("hourly", {}))
+        append_forecast_snapshot(
+            weather_data.get("hourly", {}),
+            derived=weather_data.get("derived", {}),
+        )
     except Exception as e:
         logging.warning(f"  ⚠  Forecast snapshot failed: {redact_secrets(e)}")
+
+    # Per-station uptime tracking (v0.6.30). Records success/fail for every
+    # station we attempt this tick into a rolling 7d log; stamps the per-station
+    # uptime % summary into hyperlocal so the debug page can render it without
+    # a second GCS fetch.
+    try:
+        from .processors.station_uptime import update_station_uptime
+        from .fetchers.wu_scraper_realtime import STATIONS as WU_STATIONS
+        from .fetchers.tempest import TEMPEST_STATIONS as TP_STATIONS
+        attempted_wu = list(WU_STATIONS)
+        attempted_tp = [s["id"] for s in TP_STATIONS]
+        uptime_summary = update_station_uptime(weather_data, attempted_wu, attempted_tp)
+        if uptime_summary:
+            weather_data.setdefault("hyperlocal", {})["station_uptime"] = uptime_summary
+    except Exception as e:
+        logging.warning(f"  ⚠  Station uptime update failed: {redact_secrets(e)}")
 
     # Match past forecast snapshots against observed hours and log the errors
     # (feeds the per-field decay-curve fitter). Non-essential to the main

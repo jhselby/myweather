@@ -97,6 +97,35 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             continue
         lead_h = int(round((v_hour - run_hour).total_seconds() / 3600))
 
+        # v0.6.29 conditional-state metadata. Same value for every pair from
+        # this (snapshot, obs) join. Forecast-side state pulls from the
+        # snapshot's target_hour (which has the L2 values via legacy top-level
+        # keys) + snapshot-level fields. Observed-side state pulls from the
+        # obs_entry. The Fitter doesn't aggregate by these yet — they're
+        # logged for downstream stratification analyses (Research section).
+        state_fc = {}
+        for key, src in (("wind_speed","ws"), ("wind_dir","wd"),
+                          ("solar_wm2","sr"), ("cloud_cover","cc"),
+                          ("cloud_low","cl"), ("cloud_mid","cm"),
+                          ("cloud_high","ch"), ("pressure_in","pr"),
+                          ("precip_in","pa")):
+            v = target_hour.get(src)
+            if v is not None:
+                state_fc[key] = v
+        pt = snap.get("pressure_trend_hpa_3h")
+        if pt is not None:
+            state_fc["pressure_trend_hpa_3h"] = pt
+        state_obs = {}
+        for key, src in (("wind_speed","wind_mph"), ("wind_dir","wind_dir"),
+                          ("solar_wm2","solar_wm2"), ("cloud_cover","cloud_cover"),
+                          ("cloud_low","cloud_low"), ("cloud_mid","cloud_mid"),
+                          ("cloud_high","cloud_high"), ("pressure_in","pressure_in"),
+                          ("precip_in","precip_amount_in"), ("humidity","humidity"),
+                          ("temp","temp")):
+            v = obs_entry.get(src)
+            if v is not None:
+                state_obs[key] = v
+
         for short, long in FIELD_MAP.items():
             if short not in target_hour or target_hour[short] is None:
                 continue
@@ -123,6 +152,8 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                     "error_sin": round(math.sin(f_rad) - math.sin(o_rad), 5),
                     "error_cos": round(math.cos(f_rad) - math.cos(o_rad), 5),
                 }
+                if state_fc:  pair["state_fc"]  = state_fc
+                if state_obs: pair["state_obs"] = state_obs
                 pairs.append(pair)
                 continue
             pair = {
@@ -149,6 +180,8 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                         pair[f"error_{lyr}"] = round(_circular_diff_deg(float(v), obs_f), 3)
                     else:
                         pair[f"error_{lyr}"] = round(float(v) - obs_f, 3)
+            if state_fc:  pair["state_fc"]  = state_fc
+            if state_obs: pair["state_obs"] = state_obs
             pairs.append(pair)
         # POP: forecast probability vs binary observed rain occurrence
         # on the same 0-100 scale.

@@ -21,10 +21,15 @@ SNAPSHOT_HOURS = 48
 TZ = pytz.timezone("America/New_York")
 
 
-def append_forecast_snapshot(hourly):
+def append_forecast_snapshot(hourly, derived=None):
     """Append a snapshot of the corrected 48h forecast for later validation.
     Prunes snapshots older than RETENTION_DAYS on each write. No-op if the
     hourly data has no usable hours.
+
+    Optional `derived` argument (added v0.6.29) — when provided, snapshot-level
+    state fields like pressure_trend_hpa_3h are stamped as metadata on each
+    snapshot for downstream conditional-state analysis (same value applies to
+    all hours in this snapshot).
     """
     now_local = datetime.now(TZ)
     run_stamp = now_local.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
@@ -150,5 +155,12 @@ def append_forecast_snapshot(hourly):
 
     log = load_json(GCS_PATH, default={"snapshots": []})
     snapshots = [s for s in log.get("snapshots", []) if s.get("run", "") >= cutoff]
-    snapshots.append({"run": run_stamp, "hours": hours})
+    snap_entry = {"run": run_stamp, "hours": hours}
+    # Snapshot-level state fields (apply to all hours in this snapshot) — used
+    # by the Joiner to stamp state on each pair for conditional-state analysis.
+    if derived:
+        pt = derived.get("pressure_trend_hpa_3h")
+        if pt is not None:
+            snap_entry["pressure_trend_hpa_3h"] = round(float(pt), 2)
+    snapshots.append(snap_entry)
     upload_json({"snapshots": snapshots}, GCS_PATH, "forecast_log.json")
