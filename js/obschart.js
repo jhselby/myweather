@@ -325,6 +325,7 @@ async function renderForecastAccuracy() {
     return;
   }
   const mae = ts.per_layer_mae_by_lead || {};
+  const errorsByLead = ts.errors_by_lead || {};  // legacy per-hour mean error (L2-stage)
   const ACC_FIELDS = [
     { key: "t",  label: "Temp",     unit: "°F",   digits: 1 },
     { key: "ws", label: "Wind",     unit: "mph",  digits: 1 },
@@ -334,14 +335,26 @@ async function renderForecastAccuracy() {
     { key: "pr", label: "Pressure", unit: "inHg", digits: 2 },
     { key: "cc", label: "Cloud",    unit: "%",    digits: 0 },
   ];
-  // Header row
+  // Per-lead MAE from per_layer_mae_by_lead.l4 (the post-Layer-4 final
+  // forecast). Falls back to errors_by_lead[lead][field] mean-of-abs when
+  // L4 has no data at that lead — typically true for longer leads in the
+  // first 24-48h after a deploy that touched the snapshot/joiner format,
+  // because per-layer pair fields only exist on post-deploy snapshots.
+  function maeAt(fieldKey, lead) {
+    const l4 = (mae[fieldKey] && mae[fieldKey].l4) || [];
+    const direct = (l4[lead] != null) ? l4[lead] : null;
+    if (direct != null) return direct;
+    const arr = (errorsByLead[String(lead)] || {})[fieldKey] || [];
+    const valid = arr.filter(v => v != null);
+    if (!valid.length) return null;
+    return valid.reduce((s, v) => s + Math.abs(v), 0) / valid.length;
+  }
   let html = `<span></span>` +
              `<span style="opacity:0.65;font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;">6h ahead</span>` +
              `<span style="opacity:0.65;font-weight:600;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.05em;">24h ahead</span>`;
   for (const f of ACC_FIELDS) {
-    const layer4 = (mae[f.key] && mae[f.key].l4) || [];
-    const v6  = (layer4[6]  != null) ? layer4[6]  : null;
-    const v24 = (layer4[24] != null) ? layer4[24] : null;
+    const v6  = maeAt(f.key, 6);
+    const v24 = maeAt(f.key, 24);
     const fmt = v => v == null ? "—" : `±${v.toFixed(f.digits)} ${f.unit}`;
     html += `<span>${f.label}</span>` +
             `<span><strong style="color:var(--text-primary);">${fmt(v6)}</strong></span>` +
