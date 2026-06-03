@@ -113,6 +113,36 @@ def _build_weather_summary(weather_data):
     wind_impact = round(_combined, 1)
     wind_impact_label = worry_level(round(_combined))
 
+    # Sky/cloud cover (added v0.6.28) — gives Gemini the missing "sunny vs
+    # overcast" context. Uses the Layer-4-corrected hourly cloud_cover array.
+    cloud_arr = hourly.get("cloud_cover", [])
+    cloud_now = round(cloud_arr[0]) if cloud_arr and cloud_arr[0] is not None else None
+    cloud_24h = [v for v in cloud_arr[:24] if v is not None]
+    cloud_min_24 = round(min(cloud_24h)) if cloud_24h else None
+    cloud_max_24 = round(max(cloud_24h)) if cloud_24h else None
+    sky_line = ""
+    if cloud_now is not None:
+        if cloud_min_24 is not None and cloud_max_24 is not None and abs(cloud_max_24 - cloud_min_24) >= 25:
+            sky_line = f"Sky: {cloud_now}% cloud now, ranges {cloud_min_24}-{cloud_max_24}% next 24h"
+        else:
+            sky_line = f"Sky: {cloud_now}% cloud (steady through next 24h)"
+
+    # Pressure trend (added v0.6.28) — surfaces "front incoming" signals to
+    # Gemini. Use the raw 3h trend in hPa from `derived`, not just the binary
+    # alarm flag, so Gemini can mention modest rises/falls too.
+    p_trend = der.get("pressure_trend_hpa_3h")
+    pressure_line = ""
+    if p_trend is not None:
+        if p_trend <= -3.0:
+            pressure_line = f"Pressure: {p_trend:+.1f} hPa/3h — FALLING FAST (storm signal — front likely incoming)"
+        elif p_trend <= -1.5:
+            pressure_line = f"Pressure: {p_trend:+.1f} hPa/3h — falling (weather change possible)"
+        elif p_trend >= 3.0:
+            pressure_line = f"Pressure: {p_trend:+.1f} hPa/3h — rising fast (clearing/high pressure building)"
+        elif p_trend >= 1.5:
+            pressure_line = f"Pressure: {p_trend:+.1f} hPa/3h — rising (improving)"
+        # else: steady, don't clutter the prompt
+
     # Precip — only include if POP >= 20% somewhere in next 48h
     pop_arr = hourly.get("precipitation_probability", [])
     time_arr = hourly.get("times", [])
@@ -207,6 +237,10 @@ def _build_weather_summary(weather_data):
         f"Tomorrow high: {_temp_range(tomorrow_high)}, low: {_temp_range(tomorrow_low)}",
         f"Wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + f" | Local impact: {wind_impact_label}",
     ]
+    if sky_line:
+        lines.append(sky_line)
+    if pressure_line:
+        lines.append(pressure_line)
     if precip_line:
         lines.append(precip_line)
     if fog_line:
