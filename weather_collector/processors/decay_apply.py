@@ -164,9 +164,54 @@ def apply_decay_corrections(weather_data):
         ("cloud_cover_low",    "raw_cloud_cover_low"),
         ("cloud_cover_mid",    "raw_cloud_cover_mid"),
         ("cloud_cover_high",   "raw_cloud_cover_high"),
+        ("wind_direction",     "raw_wind_direction"),  # v0.6.27 circular correction
     ]:
         if src in hourly and dst not in hourly:
             hourly[dst] = list(hourly[src])
+
+    # v0.6.27 wind direction circular correction (Layer 3 only).
+    # Per-lead sin/cos component corrections fitted by decay_fit; apply via
+    # atan2 of the corrected (sin, cos) pair back to degrees [0, 360).
+    # Sanity cap on |sin/cos| correction to limit max angular shift (≈ asin(0.3)
+    # ≈ 17° single-axis, ~24° max combined). Without this an overfit lead-N
+    # correction from 1-2 pairs can flip the wind direction 170°. Pairs
+    # accumulate; cap stays in place to bound any future drift.
+    WD_COMPONENT_CAP = 0.30
+    wd_components = corrections.get("wd_components") or {}
+    wd_sin_corr = wd_components.get("sin") or []
+    wd_cos_corr = wd_components.get("cos") or []
+    wd_arr = hourly.get("wind_direction")
+    if isinstance(wd_arr, list) and wd_sin_corr and wd_cos_corr:
+        wd_applied = 0
+        wd_capped = 0
+        for h in range(min(len(wd_arr), len(wd_sin_corr), len(wd_cos_corr))):
+            v = wd_arr[h]
+            s_corr = wd_sin_corr[h]
+            c_corr = wd_cos_corr[h]
+            if v is None or s_corr is None or c_corr is None:
+                continue
+            try:
+                v_f = float(v); s = float(s_corr); c = float(c_corr)
+            except (TypeError, ValueError):
+                continue
+            # Cap sin and cos corrections independently
+            if abs(s) > WD_COMPONENT_CAP:
+                wd_capped += 1
+                s = WD_COMPONENT_CAP if s > 0 else -WD_COMPONENT_CAP
+            if abs(c) > WD_COMPONENT_CAP:
+                wd_capped += 1
+                c = WD_COMPONENT_CAP if c > 0 else -WD_COMPONENT_CAP
+            v_rad = math.radians(v_f)
+            new_sin = math.sin(v_rad) - s
+            new_cos = math.cos(v_rad) - c
+            if abs(new_sin) < 1e-9 and abs(new_cos) < 1e-9:
+                continue
+            new_deg = (math.degrees(math.atan2(new_sin, new_cos)) + 360.0) % 360.0
+            wd_arr[h] = round(new_deg)
+            wd_applied += 1
+        if wd_applied:
+            cap_note = f" ({wd_capped} sin/cos values capped)" if wd_capped else ""
+            logging.info(f"  ✓ Wind dir circular fit applied to {wd_applied} hourly cells{cap_note}")
 
     # v0.6.25: snapshot the post-Layer-2 state (= what corrected_hourly built,
     # before any forecast-time correction). This is the L2 layer's output —

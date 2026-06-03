@@ -89,6 +89,15 @@ def append_forecast_snapshot(hourly):
                "l2": hourly.get("cloud_cover_high_post_l2", []),
                "l3": hourly.get("cloud_cover_high_post_l3", []),
                "l4": hourly.get("cloud_cover_high", [])},
+        # Wind direction is circular — needs special sin/cos math in Fitter
+        # and Apply. No Layer 2 (no mesonet aggregation for direction yet) and
+        # no Layer 4 (no diurnal yet) — Layer 3 decay correction only in v0.6.27.
+        # l2 = l1, l4 = l3 by construction; kept in layers dict for snapshot
+        # consistency with the rest of the fields.
+        "wd": {"l1": hourly.get("raw_wind_direction", hourly.get("wind_direction", [])),
+               "l2": hourly.get("raw_wind_direction", hourly.get("wind_direction", [])),
+               "l3": hourly.get("wind_direction", []),
+               "l4": hourly.get("wind_direction", [])},
     }
     # Dew point is derived from t + h via Magnus at each layer (no separate model array).
     # Backward-compat top-level keys (t / h / ws / wg / pp / pr / cc) kept = L4 final.
@@ -98,7 +107,7 @@ def append_forecast_snapshot(hourly):
             return None
         if field == "pr":  return round(val, 3)
         if field == "pa":  return round(val, 3)
-        if field in ("pp", "cc", "cl", "cm", "ch", "sr"): return round(val)
+        if field in ("pp", "cc", "cl", "cm", "ch", "sr", "wd"): return round(val)
         return round(val, 1)
 
     hours = []
@@ -119,7 +128,7 @@ def append_forecast_snapshot(hourly):
         # was taken BEFORE decay_apply so the legacy key was naturally L2. We
         # now snapshot AFTER decay_apply to capture all 4 layers — preserving
         # legacy semantics requires explicitly using the _l2 value here.
-        for field in ("t","h","ws","wg","pp","pr","cc","sr","pa","cl","cm","ch"):
+        for field in ("t","h","ws","wg","pp","pr","cc","sr","pa","cl","cm","ch","wd"):
             l2 = entry.get(f"{field}_l2")
             if l2 is not None:
                 entry[field] = l2

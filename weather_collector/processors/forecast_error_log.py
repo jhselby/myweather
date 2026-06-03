@@ -51,7 +51,17 @@ FIELD_MAP = {
     "cl": "cloud_low",
     "cm": "cloud_mid",
     "ch": "cloud_high",
+    "wd": "wind_dir",  # circular field — Fitter handles via sin/cos components, see _circular_diff
 }
+
+import math
+
+def _circular_diff_deg(forecast_deg, observed_deg):
+    """Signed angular difference in [-180, 180] (forecast − observed, wrap-aware).
+    Example: forecast=5, observed=355 → +10 (not −350).
+    """
+    d = (forecast_deg - observed_deg + 180) % 360 - 180
+    return d
 
 
 def _parse(stamp):
@@ -95,6 +105,26 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                 continue
             forecast = float(target_hour[short])
             obs_f = float(observed)
+            # Wind direction is circular: error is angular difference, and the
+            # Fitter aggregates sin/cos components separately to avoid wrap-around
+            # pathologies in the mean.
+            if short == "wd":
+                err = _circular_diff_deg(forecast, obs_f)
+                f_rad = math.radians(forecast); o_rad = math.radians(obs_f)
+                pair = {
+                    "obs_time": obs_time,
+                    "run_time": run,
+                    "valid_time": obs_hour_iso,
+                    "lead_h": lead_h,
+                    "field": short,
+                    "forecast": round(forecast, 3),
+                    "observed": round(obs_f, 3),
+                    "error": round(err, 3),         # angular Δ in [-180, 180], for display
+                    "error_sin": round(math.sin(f_rad) - math.sin(o_rad), 5),
+                    "error_cos": round(math.cos(f_rad) - math.cos(o_rad), 5),
+                }
+                pairs.append(pair)
+                continue
             pair = {
                 "obs_time": obs_time,
                 "run_time": run,
@@ -109,12 +139,16 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             # captured them (post-deploy snapshots only). Pre-v0.6.25 snapshots
             # only have the top-level short keys, no _lN suffixes — those pairs
             # carry no per-layer detail and quietly contribute only to the L4
-            # accuracy stats.
+            # accuracy stats. For wind direction (wd) the per-layer error uses
+            # circular angular diff instead of linear subtract.
             for lyr in ("l1", "l2", "l3", "l4"):
                 v = target_hour.get(f"{short}_{lyr}")
                 if v is not None:
                     pair[f"forecast_{lyr}"] = round(float(v), 3)
-                    pair[f"error_{lyr}"] = round(float(v) - obs_f, 3)
+                    if short == "wd":
+                        pair[f"error_{lyr}"] = round(_circular_diff_deg(float(v), obs_f), 3)
+                    else:
+                        pair[f"error_{lyr}"] = round(float(v) - obs_f, 3)
             pairs.append(pair)
         # POP: forecast probability vs binary observed rain occurrence
         # on the same 0-100 scale.

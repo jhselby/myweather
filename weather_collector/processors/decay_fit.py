@@ -103,7 +103,8 @@ FIELDS = ("t", "ws", "wg", "h", "dp", "pp", "pr", "cc",
           "pa",  # precipitation amount (in/hr, max-of-WU)
           "cl",  # cloud cover low (% — METAR layers <6500ft)
           "cm",  # cloud cover mid (% — METAR layers 6500-20000ft)
-          "ch")  # cloud cover high (% — METAR layers >20000ft)
+          "ch",  # cloud cover high (% — METAR layers >20000ft)
+          "wd")  # wind direction (degrees, circular — fit via sin/cos components)
 
 
 def _tide_phase_bin(obs_time_str):
@@ -200,6 +201,16 @@ def fit_decay_corrections():
     ts_cutoff = (now_naive - timedelta(days=TIMESERIES_DAYS)).strftime("%Y-%m-%dT%H:%M")
     ts_sums = defaultdict(float)   # key: (field, obs_hour_iso)
     ts_counts = defaultdict(int)
+    # v0.6.27 wind-direction circular fit: accumulate sin/cos components per
+    # lead bin (the standard solution for circular variables — the wraparound
+    # at 0°/360° breaks the regular signed-error mean). Per pair we receive
+    # error_sin = sin(forecast_rad) − sin(observed_rad) (and same for cos)
+    # from the Joiner; per-lead means feed the Apply step which uses atan2 of
+    # the component-corrected (sin, cos) pair to recover an angle.
+    wd_sin_sums    = defaultdict(float)  # key: lead_h
+    wd_cos_sums    = defaultdict(float)
+    wd_sin_weights = defaultdict(float)
+    wd_cos_weights = defaultdict(float)
     # v0.6.25c per-layer × per-lead accumulators. For each (field, lead, layer)
     # triplet aggregate |error| over the 7-day window. Lets the Forecast
     # Accuracy section render one chart per field with 4 lines (one per layer)
@@ -247,6 +258,15 @@ def fit_decay_corrections():
             sums[(field, lead_h)] += float(error) * w
             weights[(field, lead_h)] += w
             raw_counts[(field, lead_h)] += 1
+            # Wind direction circular fit: accumulate sin/cos errors separately.
+            if field == "wd":
+                e_sin = row.get("error_sin")
+                e_cos = row.get("error_cos")
+                if e_sin is not None and e_cos is not None:
+                    wd_sin_sums[lead_h]    += float(e_sin) * w
+                    wd_cos_sums[lead_h]    += float(e_cos) * w
+                    wd_sin_weights[lead_h] += w
+                    wd_cos_weights[lead_h] += w
             tide_bin = _tide_phase_bin(obs_time)
             if tide_bin is not None:
                 tide_sums[(field, tide_bin)] += float(error) * w
@@ -297,6 +317,20 @@ def fit_decay_corrections():
                 c_arr[h] = round(sums[(f, h)] / w_sum, 3)
         corrections[f] = c_arr
         n_samples[f] = n_arr
+
+    # Wind direction circular fit: emit per-lead sin/cos correction arrays.
+    # Apply step uses them as: corrected_sin = sin(raw) − sin_corr; same for cos;
+    # then atan2(corrected_sin, corrected_cos) recovers the corrected angle.
+    wd_sin = [None] * LEAD_BINS
+    wd_cos = [None] * LEAD_BINS
+    for h in range(LEAD_BINS):
+        ws_sum = wd_sin_weights.get(h, 0.0)
+        wc_sum = wd_cos_weights.get(h, 0.0)
+        if ws_sum > 0:
+            wd_sin[h] = round(wd_sin_sums[h] / ws_sum, 5)
+        if wc_sum > 0:
+            wd_cos[h] = round(wd_cos_sums[h] / wc_sum, 5)
+    corrections["wd_components"] = {"sin": wd_sin, "cos": wd_cos}
 
     output = {
         "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
