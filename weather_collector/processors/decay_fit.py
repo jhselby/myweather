@@ -278,7 +278,14 @@ def fit_decay_corrections():
                 hod = int(obs_time[11:13])
             except (ValueError, IndexError):
                 hod = None
-            if hod is not None and 0 <= hod < DIURNAL_BINS:
+            # Wind direction excluded from diurnal fit (v0.6.31): the diurnal
+            # aggregator uses signed-mean-error which is meaningless for circular
+            # variables — produces nonsensical ±139°-magnitude "corrections" by
+            # averaging angular deltas that wrap. Same sin/cos special-case as
+            # decay would solve this, but Layer 4 for wd is deferred (v0.6.27
+            # scope: decay only). Skip entirely to keep diurnal_corrections.json
+            # free of bogus wd entries.
+            if hod is not None and 0 <= hod < DIURNAL_BINS and field != "wd":
                 diurnal_sums[(field, hod)] += float(error) * w
                 diurnal_weights[(field, hod)] += w
                 diurnal_raw_counts[(field, hod)] += 1
