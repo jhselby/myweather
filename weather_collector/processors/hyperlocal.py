@@ -14,6 +14,14 @@ _EASTERN = ZoneInfo("America/New_York")
 OCTANT_LABELS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 MAX_STATION_DIST_MI = 2.5
 MIN_OCTANTS_FOR_BALANCED = 3  # need ≥ this many non-empty octants to use octant mean
+# Outlier trimming (v0.6.24): drop stations whose value is > OUTLIER_K * MAD from
+# the octant's median before computing the octant weighted mean. MAD instead of
+# std is critical — std is inflated by the very outliers we want to catch, which
+# can make a +5°F sensor protect itself by widening the threshold past its own
+# deviation. MAD is unaffected. k=3.5 keeps almost all genuine variation while
+# rejecting busted-sensor reads (>~4°F from local median for temperature).
+OUTLIER_K = 3.5
+MIN_FOR_TRIMMING = 3  # need ≥3 stations in an octant to detect outliers meaningfully
 
 
 def _octant_index(station_lat, station_lon):
@@ -27,6 +35,43 @@ def _octant_index(station_lat, station_lon):
     y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon)
     bearing = (math.degrees(math.atan2(x, y)) + 360.0) % 360.0
     return int(((bearing + 22.5) % 360) / 45)
+
+
+def _trimmed_weighted_mean(items):
+    """MAD-trimmed weighted mean of (value, weight) tuples.
+
+    Returns (mean_or_None, n_trimmed). Used per-octant to drop a single
+    busted-sensor reading from corrupting the octant's contribution to the
+    network bias. With <MIN_FOR_TRIMMING items, no trimming is applied
+    (can't detect outliers from <3 samples); the unweighted-trimmed weighted
+    mean of all items is returned with n_trimmed=0.
+    """
+    if not items:
+        return None, 0
+    if len(items) < MIN_FOR_TRIMMING:
+        total_w = sum(w for _, w in items)
+        if total_w <= 0:
+            return None, 0
+        return sum(v * w for v, w in items) / total_w, 0
+    vals = [v for v, _ in items]
+    median = statistics.median(vals)
+    abs_devs = [abs(v - median) for v in vals]
+    mad = statistics.median(abs_devs)
+    # MAD = 0 means all values are identical (or all but one); fall back to
+    # no trimming so we don't reject every non-median point.
+    if mad <= 0:
+        kept = items
+    else:
+        # MAD * 1.4826 ≈ std for normal distributions; OUTLIER_K is multiples of std-equivalent
+        threshold = OUTLIER_K * 1.4826 * mad
+        kept = [(v, w) for v, w in items if abs(v - median) <= threshold]
+    if not kept:
+        kept = items  # safety: never trim everything
+    n_trimmed = len(items) - len(kept)
+    total_w = sum(w for _, w in kept)
+    if total_w <= 0:
+        return None, n_trimmed
+    return sum(v * w for v, w in kept) / total_w, n_trimmed
 
 
 def _kalman_gain(n_stations, bias_std):
@@ -101,13 +146,13 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
     pressure_offsets = _offsets.get("pressure", {})
 
     if model_t is not None and stations:
-        # Per-octant accumulators (8 sectors × {temp_bias, humidity, pressure})
-        oct_temp_wsum = [0.0] * 8
-        oct_temp_wt   = [0.0] * 8
-        oct_h_wsum    = [0.0] * 8
-        oct_h_wt      = [0.0] * 8
-        oct_p_wsum    = [0.0] * 8
-        oct_p_wt      = [0.0] * 8
+        # Per-octant lists of (value, weight) tuples — collected first, then
+        # MAD-trimmed and weighted-averaged per octant (see _trimmed_weighted_mean).
+        # Two-pass keeps outlier detection robust: a single +5°F busted sensor
+        # in a sparse octant gets dropped before contributing to the network bias.
+        oct_temp = [[] for _ in range(8)]
+        oct_h    = [[] for _ in range(8)]
+        oct_p    = [[] for _ in range(8)]
         oct_station_count = [0] * 8
         station_biases = []  # kept for legacy bias_std fallback
         stations_used = 0
@@ -142,8 +187,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             # Temperature bias
             corrected_temp_s = station_temp - temp_offsets.get(sid, 0.0)
             bias_at_station = corrected_temp_s - model_t
-            oct_temp_wsum[oct] += bias_at_station * weight
-            oct_temp_wt[oct]   += weight
+            oct_temp[oct].append((bias_at_station, weight))
             oct_station_count[oct] += 1
             station_biases.append(bias_at_station)
             stations_used += 1
@@ -152,8 +196,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             raw_h = station.get('humidity_pct') or station.get('relative_humidity')
             if raw_h is not None:
                 corrected_h = raw_h - humidity_offsets.get(sid, 0.0)
-                oct_h_wsum[oct] += corrected_h * weight
-                oct_h_wt[oct]   += weight
+                oct_h[oct].append((corrected_h, weight))
 
             # Pressure
             raw_p = station.get('pressure_in')
@@ -162,15 +205,17 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
                 raw_p = round(p_mb / 33.8639, 3) if p_mb is not None else None
             if raw_p is not None:
                 corrected_p = raw_p - pressure_offsets.get(sid, 0.0)
-                oct_p_wsum[oct] += corrected_p * weight
-                oct_p_wt[oct]   += weight
+                oct_p[oct].append((corrected_p, weight))
 
-        # Octant-balanced means: per-octant weighted mean, then unweighted mean
-        # across non-empty octants. Prevents any compass sector with high PWS
-        # density from dominating the network bias.
-        temp_octant_means = [oct_temp_wsum[i] / oct_temp_wt[i] for i in range(8) if oct_temp_wt[i] > 0]
-        h_octant_means    = [oct_h_wsum[i]    / oct_h_wt[i]    for i in range(8) if oct_h_wt[i]    > 0]
-        p_octant_means    = [oct_p_wsum[i]    / oct_p_wt[i]    for i in range(8) if oct_p_wt[i]    > 0]
+        # Trim outliers per octant, then take the octant weighted mean.
+        # n_trimmed_per_octant lets us report total trim count to the debug page.
+        temp_results = [_trimmed_weighted_mean(oct_temp[i]) for i in range(8)]
+        h_results    = [_trimmed_weighted_mean(oct_h[i])    for i in range(8)]
+        p_results    = [_trimmed_weighted_mean(oct_p[i])    for i in range(8)]
+        temp_octant_means = [m for m, _ in temp_results if m is not None]
+        h_octant_means    = [m for m, _ in h_results    if m is not None]
+        p_octant_means    = [m for m, _ in p_results    if m is not None]
+        outliers_trimmed  = sum(n for _, n in temp_results)
         octants_used      = len(temp_octant_means)
 
         if stations_used >= 3 and (octants_used >= MIN_OCTANTS_FOR_BALANCED or stations_used >= 3):
@@ -212,6 +257,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             hyperlocal["octant_coverage"] = {
                 OCTANT_LABELS[i]: oct_station_count[i] for i in range(8)
             }
+            hyperlocal["outliers_trimmed"] = outliers_trimmed
             if _offsets:
                 hyperlocal["station_offsets"] = _offsets
 

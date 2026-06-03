@@ -976,7 +976,7 @@ function renderOctantPanel(wxDoc) {
     `Color flags <strong>per-sector reliability</strong>: red = no data from that direction, amber = single station (noisy, no cross-check), green = ≥2 stations (cross-check possible). ` +
     `Color does <em>not</em> imply weighting — the aggregator weights every non-empty sector equally regardless of count (so a 12-station Marblehead sector doesn't outvote a 2-station Salem sector). Color is just a coverage-health flag.` +
     `<div class="octant-rose">${order.map(cell).join("")}</div>` +
-    `<div class="meta-line">Bias aggregation: <strong>${aggregation}</strong> · Wind aggregation: <strong>${wind_aggregation}</strong> · Octants populated: <strong>${hyp.octants_used ?? "—"}/8</strong></div>`;
+    `<div class="meta-line">Bias aggregation: <strong>${aggregation}</strong> · Wind aggregation: <strong>${wind_aggregation}</strong> · Octants populated: <strong>${hyp.octants_used ?? "—"}/8</strong> · Outliers trimmed this tick: <strong>${hyp.outliers_trimmed ?? 0}</strong></div>`;
 }
 
 // ── Layer 3 panel: Kalman gain summary + what it does ──────────────────
