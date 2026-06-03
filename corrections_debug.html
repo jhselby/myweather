@@ -481,8 +481,8 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — is it actually working?</h2>
 <div class="layer-info-text">
-  Rolling-window comparison of the FINAL post-Layer-4 forecast against what was actually observed. The pipeline below tells you HOW the forecast is built; this section tells you IF it's working. Lower MAE (mean absolute error) is better. Bias direction shows whether the forecast tends to over- or under-shoot.
-  <div class="meta-line">Source: <code>time_series_diagnostic.json</code> (refreshed each Fitter run). Near-term column uses the shortest lead available (typically 6h); day-ahead uses lead 24h.</div>
+  Per-field, per-layer comparison of forecast vs observation at lead 0h over the last 24h. Each row shows the MAE after that correction layer has been applied; the % is improvement vs the prior layer. If <strong>+ Diurnal</strong> only nudges MAE by 1–2%, the layer is polishing noise; if it cuts 20%+, it's doing real work. This is the highest-ROI signal for "which corrections matter and which are overkill".
+  <div class="meta-line">Source: <code>time_series_diagnostic.json</code>, <code>per_layer_stats</code> field (refreshed each Fitter run at 03:07 EDT). Populates from v0.6.25+ pair data only — older pairs lack per-layer detail. Bias direction shown in the layer rows (positive = over-forecast).</div>
 </div>
 <div id="status-accuracy" class="status" hidden></div>
 <div id="accuracy-grid" class="accuracy-grid"></div>
@@ -903,56 +903,66 @@ function renderLayer2Panel(wxDoc) {
     `</div>`;
 }
 
-// ── Forecast accuracy: how well does the final post-Layer-4 forecast
-// match what was actually observed? Reads time_series_diagnostic.json,
-// computes MAE + signed bias over the recent 24h and full 7d window at
-// the shortest available lead (= "near-term") and lead 24h (= "day-ahead").
+// ── Forecast accuracy: per-field, per-layer 4-row table comparing each
+// correction stage's MAE against the same observations. Reads `per_layer_stats`
+// from time_series_diagnostic.json (populated by decay_fit.py at the daily
+// Fitter run). Layer names: l1=raw, l2=+mesonet, l3=+decay, l4=+diurnal=final.
 function renderAccuracySection(tsDoc) {
   const grid = document.getElementById("accuracy-grid");
-  if (!tsDoc || !tsDoc.errors_by_lead || !Array.isArray(tsDoc.leads_h) || !tsDoc.leads_h.length) {
+  if (!tsDoc) {
     showStatus("status-accuracy", "Awaiting first Fitter run — no time_series_diagnostic.json yet.");
     return;
   }
-  const leads = [...tsDoc.leads_h].sort((a, b) => a - b);
-  const nearLead = leads[0];
-  const dayLead = leads.includes(24) ? 24 : leads[Math.min(leads.length - 1, 3)] || nearLead;
-  const errsNear = tsDoc.errors_by_lead[String(nearLead)] || {};
-  const errsDay  = tsDoc.errors_by_lead[String(dayLead)]  || {};
-  // Field-specific "good MAE" thresholds — tuned to typical model performance,
-  // anything beyond is flagged as needs-attention.
+  const pls = tsDoc.per_layer_stats || {};
+  // Field-specific "good MAE" thresholds — tuned to typical model performance.
   const GOOD_MAE = { t: 1.5, dp: 2.0, h: 7, ws: 3, wg: 5, pp: 15, pr: 0.05, cc: 25 };
-  function stats(arr) {
-    const vals = (arr || []).filter(v => v != null);
-    if (!vals.length) return { mae: null, bias: null, n: 0 };
-    const mae  = vals.reduce((s, v) => s + Math.abs(v), 0) / vals.length;
-    const bias = vals.reduce((s, v) => s + v, 0) / vals.length;
-    return { mae, bias, n: vals.length };
-  }
+  const LAYER_ROWS = [
+    { key: "l1", label: "Raw model" },
+    { key: "l2", label: "+ Mesonet" },
+    { key: "l3", label: "+ Decay" },
+    { key: "l4", label: "+ Diurnal (final)" },
+  ];
   for (const f of FIELDS) {
-    const near = errsNear[f.key] || [];
-    const day  = errsDay[f.key]  || [];
-    const s24      = stats(near.slice(-24));
-    const s7d      = stats(near);
-    const sDay24   = stats(day.slice(-24));
     const digits = (f.key === "pp" || f.key === "h" || f.key === "cc") ? 0 : (f.key === "pr" ? 3 : 1);
     const fmt = (v) => v == null ? "—" : v.toFixed(digits);
-    const biasLine = (v) => {
-      if (v == null) return "—";
-      const sign = v >= 0 ? "+" : "";
-      const dir = Math.abs(v) < 0.05 ? "" : (v >= 0 ? " (over)" : " (under)");
-      return `${sign}${fmt(v)}${f.unit}${dir}`;
-    };
+    const fieldStats = pls[f.key] || {};
+    const finalMae = (fieldStats.l4 && fieldStats.l4.mae_24h);
     const thresh = GOOD_MAE[f.key] || 1.5;
-    const status = s24.mae == null ? "" : (s24.mae <= thresh ? "good" : "poor");
+    const status = finalMae == null ? "" : (finalMae <= thresh ? "good" : "poor");
+    // Build the 4-row layer comparison
+    const rows = LAYER_ROWS.map((row) => {
+      const s = fieldStats[row.key] || {};
+      const mae24 = s.mae_24h;
+      const mae7d = s.mae_7d;
+      const bias24 = s.bias_24h;
+      // Improvement vs prior layer
+      let delta = "";
+      if (row.key !== "l1" && mae24 != null) {
+        const priorKey = { l2: "l1", l3: "l2", l4: "l3" }[row.key];
+        const priorMae = (fieldStats[priorKey] || {}).mae_24h;
+        if (priorMae != null && priorMae > 0) {
+          const pct = Math.round((1 - mae24 / priorMae) * 100);
+          delta = pct > 0 ? ` <span style="color:#74c38b;">(−${pct}%)</span>`
+               :  pct < 0 ? ` <span style="color:#d4a373;">(+${-pct}%)</span>`
+               :            ` <span style="color:var(--muted);">(0%)</span>`;
+        }
+      }
+      const sign = bias24 == null ? "" : (bias24 >= 0 ? "+" : "");
+      const biasText = bias24 == null ? "—" : `${sign}${fmt(bias24)}`;
+      return `<div class="stat-line">
+        <span>${row.label}</span>
+        <strong>${fmt(mae24)}${f.unit}${delta}</strong>
+      </div>`;
+    }).join("");
+    const samples = (fieldStats.l4 && fieldStats.l4.n_24h) || 0;
     const card = document.createElement("div");
     card.className = "accuracy-card " + status;
     card.innerHTML =
       `<div class="field-name">${f.label}</div>` +
-      `<div class="stat-line"><span>Near-term MAE (last 24h, lead ${nearLead}h)</span><strong>${fmt(s24.mae)}${f.unit}</strong></div>` +
-      `<div class="stat-line"><span>7d MAE (lead ${nearLead}h)</span><strong>${fmt(s7d.mae)}${f.unit}</strong></div>` +
-      `<div class="stat-line"><span>Day-ahead MAE (last 24h, lead ${dayLead}h)</span><strong>${fmt(sDay24.mae)}${f.unit}</strong></div>` +
-      `<div class="stat-line"><span>Recent bias direction</span><strong>${biasLine(s24.bias)}</strong></div>` +
-      `<div class="stat-line"><span>Samples (7d)</span><strong>${s7d.n}</strong></div>`;
+      `<div class="stat-line" style="color:var(--muted);font-size:10.5px;">` +
+        `<span>24h MAE per layer (n=${samples})</span><span></span>` +
+      `</div>` +
+      rows;
     grid.appendChild(card);
   }
 }

@@ -142,6 +142,15 @@ def apply_decay_corrections(weather_data):
     if "cloud_cover" in hourly and "raw_cloud_cover" not in hourly:
         hourly["raw_cloud_cover"] = list(hourly["cloud_cover"])
 
+    # v0.6.25: snapshot the post-Layer-2 state (= what corrected_hourly built,
+    # before any forecast-time correction). This is the L2 layer's output —
+    # needed downstream so the per-layer MAE accuracy section can compute
+    # "what the forecast looked like after mesonet, before decay" per pair.
+    for short, array_name in TARGET_ARRAY.items():
+        arr = hourly.get(array_name)
+        if isinstance(arr, list):
+            hourly[f"{array_name}_post_l2"] = list(arr)
+
     applied = 0
     capped = 0
     for short, array_name in TARGET_ARRAY.items():
@@ -175,6 +184,14 @@ def apply_decay_corrections(weather_data):
                 result = hi
             arr[h] = round(result, digits)
             applied += 1
+
+    # v0.6.25: snapshot post-Layer-3 (= after decay, before diurnal) for the
+    # per-layer MAE accuracy table. Each layer's output captured = (raw → L2 →
+    # L3 → L4 final) so the Fitter can compare per-pair errors at each stage.
+    for short, array_name in TARGET_ARRAY.items():
+        arr = hourly.get(array_name)
+        if isinstance(arr, list):
+            hourly[f"{array_name}_post_l3"] = list(arr)
 
     # ── Layer 5: diurnal (hour-of-day) correction ────────────────────────────
     # Applied AFTER Layer 4 decay correction. For each forecast hour, look up

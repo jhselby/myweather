@@ -89,16 +89,28 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             if observed is None:
                 continue
             forecast = float(target_hour[short])
-            pairs.append({
+            obs_f = float(observed)
+            pair = {
                 "obs_time": obs_time,
                 "run_time": run,
                 "valid_time": obs_hour_iso,
                 "lead_h": lead_h,
                 "field": short,
                 "forecast": round(forecast, 3),
-                "observed": round(float(observed), 3),
-                "error": round(forecast - float(observed), 3),
-            })
+                "observed": round(obs_f, 3),
+                "error": round(forecast - obs_f, 3),
+            }
+            # v0.6.25: per-layer forecast values + errors when the snapshot
+            # captured them (post-deploy snapshots only). Pre-v0.6.25 snapshots
+            # only have the top-level short keys, no _lN suffixes — those pairs
+            # carry no per-layer detail and quietly contribute only to the L4
+            # accuracy stats.
+            for lyr in ("l1", "l2", "l3", "l4"):
+                v = target_hour.get(f"{short}_{lyr}")
+                if v is not None:
+                    pair[f"forecast_{lyr}"] = round(float(v), 3)
+                    pair[f"error_{lyr}"] = round(float(v) - obs_f, 3)
+            pairs.append(pair)
         # POP: forecast probability vs binary observed rain occurrence
         # on the same 0-100 scale.
         if "pp" in target_hour and target_hour["pp"] is not None:
