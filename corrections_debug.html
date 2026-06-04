@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MyWeather — Forecast Pipeline</title>
+<title>Wyman Cove — Forecast Pipeline</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -385,6 +385,42 @@
   details.bias-accordion > *:last-child {
     margin-bottom: 14px;
   }
+  details.research-subsection {
+    background: #1c1813;
+    border: 1px solid #3a2d1f;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    padding: 0;
+  }
+  details.research-subsection > summary {
+    cursor: pointer;
+    list-style: none;
+    padding: 12px 16px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #d4a373;
+    user-select: none;
+  }
+  details.research-subsection > summary::-webkit-details-marker { display: none; }
+  details.research-subsection > summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 10px;
+    color: #d4a373;
+    transition: transform 0.15s;
+  }
+  details.research-subsection[open] > summary::before { transform: rotate(90deg); }
+  details.research-subsection[open] > summary {
+    border-bottom: 1px solid #3a2d1f;
+    margin-bottom: 12px;
+  }
+  details.research-subsection > *:not(summary) {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+  details.research-subsection > *:last-child {
+    margin-bottom: 16px;
+  }
   /* Page tagline under H1 */
   .page-tagline {
     display: block;
@@ -581,19 +617,23 @@
   <div class="meta-line">If a clear, stable pattern emerges across days here, it becomes a candidate for a real correction layer. Currently exploring whether the residual forecast error correlates with the tide cycle.</div>
 </div>
 
-<h3 class="subsection">R1. Tide-phase curves over time — does the error track the tide cycle? (statistical view)</h3>
-<div id="status-tide" class="status" hidden></div>
-<div id="grid-tide" class="grid"></div>
+<details class="research-subsection" id="r1-tide-phase">
+  <summary>R1. Tide-phase curves over time — does the error track the tide cycle? (statistical view)</summary>
+  <div id="status-tide" class="status" hidden></div>
+  <div id="grid-tide" class="grid"></div>
+</details>
 
-<h3 class="subsection">R2. Error vs tide elevation over time — do they oscillate together? (intuitive view)</h3>
-<div class="meta-line" style="margin-bottom:10px;">Time-domain companion to R1. If the error squiggle visibly tracks the tide squiggle here, the statistical signal in R1 is real, not noise.</div>
-<div id="status-timeseries" class="status" hidden></div>
-<div class="section-controls">
-  <label for="ts-lead-select">Lead time:</label>
-  <select id="ts-lead-select"></select>
-  <span class="section-controls-hint">Higher leads = forecast made further ahead. Switch to see if the tide pattern is lead-specific.</span>
-</div>
-<div id="grid-timeseries" class="grid"></div>
+<details class="research-subsection" id="r2-tide-timeseries">
+  <summary>R2. Error vs tide elevation over time — do they oscillate together? (intuitive view)</summary>
+  <div class="meta-line" style="margin-bottom:10px;">Time-domain companion to R1. If the error squiggle visibly tracks the tide squiggle here, the statistical signal in R1 is real, not noise.</div>
+  <div id="status-timeseries" class="status" hidden></div>
+  <div class="section-controls">
+    <label for="ts-lead-select">Lead time:</label>
+    <select id="ts-lead-select"></select>
+    <span class="section-controls-hint">Higher leads = forecast made further ahead. Switch to see if the tide pattern is lead-specific.</span>
+  </div>
+  <div id="grid-timeseries" class="grid"></div>
+</details>
 
 
 <script>
@@ -2123,6 +2163,21 @@ function initCollapsibleSections() {
   });
 }
 initCollapsibleSections();
+
+function initResearchAccordions() {
+  const KEY = "forecastPipelineResearchOpen";
+  let stored;
+  try { stored = JSON.parse(localStorage.getItem(KEY) || "{}"); }
+  catch (e) { stored = {}; }
+  document.querySelectorAll("details.research-subsection[id]").forEach(d => {
+    if (stored[d.id]) d.open = true;
+    d.addEventListener("toggle", () => {
+      stored[d.id] = d.open;
+      try { localStorage.setItem(KEY, JSON.stringify(stored)); } catch (e) {}
+    });
+  });
+}
+initResearchAccordions();
 
 load();
 </script>
