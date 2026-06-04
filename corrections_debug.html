@@ -829,47 +829,7 @@ function _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr) {
   return { leads, raw, l2, l3, l4 };
 }
 
-// v0.6.33 — field key → obs_temp_log field name. Used to overlay past 24h
-// observations on the drill-down chart alongside the forward forecast layers.
-const DRILL_OBS_KEY = {
-  t: "temp", h: "humidity", dp: "dew_point_f",
-  ws: "wind_mph", wg: "gust_mph", wd: "wind_dir",
-  pp: null,  // POP obs is binary derived from precip_in > 0 — handled specially below
-  pr: "pressure_in", cc: "cloud_cover",
-  cl: "cloud_low", cm: "cloud_mid", ch: "cloud_high",
-  sr: "solar_wm2", pa: "precip_amount_in",
-};
-
-// For each integer hour offset (-24..0), find the obs_log entry whose timestamp
-// is closest to that wall-clock hour back from now. Returns {hourOffset: value}.
-function _drillObsByHour(obsLog, field) {
-  const entries = (obsLog && obsLog.entries) || [];
-  if (!entries.length) return {};
-  const now = new Date();
-  const buckets = {};  // -24..0 → {dist_min, value}
-  const obsKey = DRILL_OBS_KEY[field.key];
-  for (const e of entries) {
-    if (!e.time) continue;
-    const t = new Date(e.time);
-    const offsetH = (t - now) / 3600000;
-    if (offsetH > 0.5 || offsetH < -24.5) continue;
-    const bucket = Math.round(offsetH);
-    let val;
-    if (field.key === "pp") {
-      val = (e.precip_in != null) ? (e.precip_in > 0 ? 100 : 0) : null;
-    } else if (obsKey) {
-      val = e[obsKey];
-    }
-    if (val == null) continue;
-    const dist = Math.abs(offsetH - bucket);
-    if (!(bucket in buckets) || dist < buckets[bucket].dist) {
-      buckets[bucket] = { dist, value: val };
-    }
-  }
-  return Object.fromEntries(Object.entries(buckets).map(([k, v]) => [k, v.value]));
-}
-
-function _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
+function _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc) {
   // Tear down any existing charts before rebuilding the grid.
   for (const c of _drillCharts) { try { c.destroy(); } catch (e) {} }
   _drillCharts = [];
@@ -895,27 +855,9 @@ function _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
   }
   for (const field of selectedFields) {
     const s = _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr);
-    const obsByHour = _drillObsByHour(obsLog, field);
-    // X-axis runs from -24 (past) to +47 (future). Forecast layers fill 0..47;
-    // observations fill -24..0 (with NaN for future).
-    const allLeads = [];
-    for (let i = -24; i <= 47; i++) allLeads.push(i);
-    function extendLayer(layerArr) {
-      // Prepend 24 NaN values for past hours; existing 48 forecast values fill 0..47.
-      const out = new Array(24).fill(NaN);
-      for (let i = 0; i < 48 && i < layerArr.length; i++) out.push(layerArr[i]);
-      while (out.length < 72) out.push(NaN);
-      return out;
-    }
-    const obsSeries = new Array(72).fill(NaN);
-    for (const [offsetStr, val] of Object.entries(obsByHour)) {
-      const offset = Number(offsetStr);
-      const idx = offset + 24;  // -24 → 0, 0 → 24
-      if (idx >= 0 && idx < 72) obsSeries[idx] = Number(val);
-    }
     const layerDatasets = DRILL_LAYERS.filter(l => _drillState.visible[l.key]).map(l => ({
       label: l.label,
-      data: extendLayer(s[l.key]),
+      data: s[l.key],
       borderColor: l.color,
       backgroundColor: "rgba(0,0,0,0)",
       borderDash: l.dash,
@@ -924,27 +866,14 @@ function _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
       tension: 0.25,
       spanGaps: true,
     }));
-    // Observation overlay — solid white dots + thin line, only past hours + lead 0.
-    const obsDataset = {
-      label: "Observed",
-      data: obsSeries,
-      borderColor: "rgba(255,255,255,0.85)",
-      backgroundColor: "rgba(255,255,255,0.85)",
-      borderWidth: 1,
-      pointRadius: 2,
-      pointBackgroundColor: "rgba(255,255,255,0.85)",
-      tension: 0.25,
-      spanGaps: false,
-    };
     // Confidence band around L4 — uses near-term (lead 6h) MAE as a single ±band
     // width applied flat across all forecast leads. Simpler than per-lead bands;
     // good enough for visual context. Skipped if MAE is unavailable.
     const bandWidth = maeAt(field.key, 6);
     let bandDatasets = [];
     if (bandWidth != null && _drillState.visible.l4) {
-      const l4Ext = extendLayer(s.l4);
-      const upper = l4Ext.map(v => isNaN(v) ? NaN : v + bandWidth);
-      const lower = l4Ext.map(v => isNaN(v) ? NaN : v - bandWidth);
+      const upper = s.l4.map(v => v == null || isNaN(v) ? NaN : v + bandWidth);
+      const lower = s.l4.map(v => v == null || isNaN(v) ? NaN : v - bandWidth);
       bandDatasets = [
         { label: `±${bandWidth.toFixed(2)} (near-term MAE)`, data: upper,
           borderColor: "rgba(74,163,255,0.0)", backgroundColor: "rgba(74,163,255,0.10)",
@@ -954,7 +883,7 @@ function _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
           borderWidth: 0, pointRadius: 0, fill: false, tension: 0.25, spanGaps: true, _isBand: true },
       ];
     }
-    const datasets = [...bandDatasets, ...layerDatasets, obsDataset];
+    const datasets = [...bandDatasets, ...layerDatasets];
     // MAE annotation
     const v6 = maeAt(field.key, 6);
     const v24 = maeAt(field.key, 24);
@@ -971,7 +900,7 @@ function _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
     const canvas = card.querySelector("canvas");
     const chart = new Chart(canvas, {
       type: "line",
-      data: { labels: allLeads, datasets },
+      data: { labels: s.leads, datasets },
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -980,25 +909,16 @@ function _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
           legend: {
             labels: {
               color: "#8a93a3", boxWidth: 10, font: { size: 10.5 },
-              // Hide band datasets from legend; keep layer + obs lines.
+              // Hide band datasets from legend; keep layer lines.
               filter: (item, data) => !data.datasets[item.datasetIndex]._isBand,
             },
             position: "bottom",
           },
-          tooltip: {
-            callbacks: {
-              title: (items) => {
-                const lead = Number(items[0].label);
-                if (lead < 0) return `${-lead}h ago (observed)`;
-                if (lead === 0) return `Now (lead 0)`;
-                return `+${lead}h (forecast)`;
-              },
-            },
-          },
+          tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
         },
         scales: {
-          x: { title: { display: true, text: "← past   |   future →   (hours)", color: "#8a93a3" },
-               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 10 },
+          x: { title: { display: true, text: "lead time (hours from now)", color: "#8a93a3" },
+               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 8 },
                grid: { color: "#242833" } },
           y: { title: { display: true, text: field.unit, color: "#8a93a3" },
                ticks: { color: "#8a93a3" },
@@ -1011,7 +931,7 @@ function _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
   }
 }
 
-function _drillSetupControls(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
+function _drillSetupControls(wxDoc, decayCorr, diurnalCorr, tsDoc) {
   const fieldHost = document.getElementById("drill-field-checks");
   fieldHost.innerHTML = FIELDS.map(f =>
     `<label><input type="checkbox" data-field="${f.key}"${_drillState.fields.has(f.key) ? " checked" : ""}> ${f.label}</label>`
@@ -1020,13 +940,13 @@ function _drillSetupControls(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
     const k = e.target.dataset.field;
     if (k) {
       if (e.target.checked) _drillState.fields.add(k); else _drillState.fields.delete(k);
-      _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog);
+      _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
     }
   });
   document.getElementById("drill-clear-fields").addEventListener("click", () => {
     _drillState.fields.clear();
     fieldHost.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
-    _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog);
+    _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
   });
   const layerHost = document.getElementById("drill-layer-checks");
   layerHost.innerHTML = DRILL_LAYERS.map(l =>
@@ -1036,7 +956,7 @@ function _drillSetupControls(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
     const k = e.target.dataset.layer;
     if (k) {
       _drillState.visible[k] = e.target.checked;
-      _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog);
+      _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
     }
   });
   document.getElementById("drill-play").addEventListener("click", () => {
@@ -1044,13 +964,13 @@ function _drillSetupControls(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog) {
     // every selected field's chart in sync.
     DRILL_LAYERS.forEach(l => { _drillState.visible[l.key] = false; });
     layerHost.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
-    _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog);
+    _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
     DRILL_LAYERS.forEach((l, idx) => {
       setTimeout(() => {
         _drillState.visible[l.key] = true;
         const cb = layerHost.querySelector(`input[data-layer="${l.key}"]`);
         if (cb) cb.checked = true;
-        _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc, obsLog);
+        _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
       }, 600 + idx * 900);
     });
   });
@@ -1879,15 +1799,8 @@ async function load() {
       diurnalCurrent = [...diurnalDoc.history].sort((a, b) =>
         (a.fitted_at || "").localeCompare(b.fitted_at || ""))[diurnalDoc.history.length - 1];
     }
-    // v0.6.33 — fetch obs_temp_log for the past-24h observation overlay on
-    // drill-down charts. tsDoc is already loaded above for the accuracy section.
-    let obsLog = null;
-    try {
-      const obsRes = await fetch(`https://data.wymancove.com/obs_temp_log.json?_=${Date.now()}`, { cache: "no-store" });
-      if (obsRes.ok) obsLog = await obsRes.json();
-    } catch (e) { /* silent — drill-down still works without obs overlay */ }
-    _drillSetupControls(wxDoc, corrDoc, diurnalCurrent, tsDoc, obsLog);
-    _drillRender(wxDoc, corrDoc, diurnalCurrent, tsDoc, obsLog);
+    _drillSetupControls(wxDoc, corrDoc, diurnalCurrent, tsDoc);
+    _drillRender(wxDoc, corrDoc, diurnalCurrent, tsDoc);
   } else {
     showStatus("status-drill", "Drill-down needs weather_data.json — load failed above.");
   }
