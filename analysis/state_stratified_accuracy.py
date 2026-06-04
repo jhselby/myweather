@@ -96,6 +96,12 @@ DIMENSIONS = [
     ("wind_speed",      "wind speed (obs)",    ["calm (<5)", "light (5-15)", "breezy (>15)"],         wind_speed_bin),
     ("cloud_cover",     "cloud cover (obs)",   ["clear (<25)", "partly (25-75)", "overcast (>75)"],   cloud_bin),
     ("pressure_trend",  "pressure trend (fc)", ["rising (>+0.5)", "steady", "falling (<-0.5)"],        pressure_trend_bin),
+    # v0.6.38 regime labels (state_obs.regime_flow / regime_synoptic).
+    # Pre-v0.6.38 pairs have no regime keys and are silently skipped here.
+    ("regime_flow",     "flow regime (obs)",   ["n", "ne", "e", "se", "s", "sw", "w", "nw", "calm"],   lambda v: v),
+    ("regime_synoptic", "synoptic (obs)",      ["nw_flow", "sw_flow", "se_flow", "ne_flow",
+                                                "sea_breeze", "nor_easter", "frontal",
+                                                "pre_frontal", "calm"],                                lambda v: v),
 ]
 
 
@@ -130,10 +136,12 @@ def main():
 
         # Classify each dimension
         vals = {
-            "wind_octant":    wind_octant(sobs.get("wind_dir")),
-            "wind_speed":     wind_speed_bin(sobs.get("wind_speed")),
-            "cloud_cover":    cloud_bin(sobs.get("cloud_cover")),
-            "pressure_trend": pressure_trend_bin(sfc.get("pressure_trend_hpa_3h")),
+            "wind_octant":     wind_octant(sobs.get("wind_dir")),
+            "wind_speed":      wind_speed_bin(sobs.get("wind_speed")),
+            "cloud_cover":     cloud_bin(sobs.get("cloud_cover")),
+            "pressure_trend":  pressure_trend_bin(sfc.get("pressure_trend_hpa_3h")),
+            "regime_flow":     sobs.get("regime_flow"),
+            "regime_synoptic": sobs.get("regime_synoptic"),
         }
 
         n_used += 1

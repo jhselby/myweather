@@ -27,6 +27,7 @@ import pytz
 
 from ..gcs_io import BUCKET, get_client, load_json, upload_json
 from ..utils import redact_secrets
+from .regime_classifier import classify_flow_regime, classify_synoptic_regime
 
 
 MAIN_PATH = "forecast_error_log.jsonl"
@@ -115,6 +116,22 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
         pt = snap.get("pressure_trend_hpa_3h")
         if pt is not None:
             state_fc["pressure_trend_hpa_3h"] = pt
+        # v0.6.38 regime labels — two orthogonal axes per state. flow is
+        # pure direction (which way is the air moving); synoptic is the
+        # coastal-flavored pattern (sea breeze, nor'easter, frontal, etc.).
+        try:
+            fc_hour_local = int(obs_hour_iso[11:13])
+        except (ValueError, IndexError, TypeError):
+            fc_hour_local = None
+        fc_flow = classify_flow_regime(state_fc.get("wind_dir"),
+                                       state_fc.get("wind_speed"))
+        fc_syn = classify_synoptic_regime(
+            state_fc.get("wind_dir"), state_fc.get("wind_speed"),
+            state_fc.get("pressure_in"), state_fc.get("pressure_trend_hpa_3h"),
+            fc_hour_local, target_hour.get("t"))
+        if fc_flow is not None: state_fc["regime_flow"] = fc_flow
+        if fc_syn is not None:  state_fc["regime_synoptic"] = fc_syn
+
         state_obs = {}
         for key, src in (("wind_speed","wind_mph"), ("wind_dir","wind_dir"),
                           ("solar_wm2","solar_wm2"), ("cloud_cover","cloud_cover"),
@@ -125,6 +142,22 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             v = obs_entry.get(src)
             if v is not None:
                 state_obs[key] = v
+        # Obs side: derive hour from obs_time, pull temp from obs_entry. Obs
+        # doesn't carry its own pressure trend so we reuse the snapshot's
+        # pt — synoptic pressure trend is slow-varying enough that the
+        # snapshot's value is a reasonable proxy.
+        try:
+            obs_hour_local = int(obs_time[11:13])
+        except (ValueError, IndexError, TypeError):
+            obs_hour_local = None
+        obs_flow = classify_flow_regime(state_obs.get("wind_dir"),
+                                        state_obs.get("wind_speed"))
+        obs_syn = classify_synoptic_regime(
+            state_obs.get("wind_dir"), state_obs.get("wind_speed"),
+            state_obs.get("pressure_in"), pt,
+            obs_hour_local, state_obs.get("temp"))
+        if obs_flow is not None: state_obs["regime_flow"] = obs_flow
+        if obs_syn is not None:  state_obs["regime_synoptic"] = obs_syn
 
         for short, long in FIELD_MAP.items():
             if short not in target_hour or target_hour[short] is None:
