@@ -15,10 +15,15 @@ Safe no-op if decay_corrections.json is missing, malformed, or stale
 (>STALE_DAYS old). Sanity caps prevent a pathological future fit from
 blowing up the forecast.
 
-After mutating corrected_temperature, corrected_humidity, corrected_dew_point,
-wind_speed, wind_gusts, and precipitation_probability, recomputes the
-derived corrected_apparent_temperature and corrected_absolute_humidity
-arrays so they stay consistent with the now-corrected base values.
+After mutating corrected_temperature, corrected_dew_point, wind_speed,
+wind_gusts, precipitation_probability, and others, recomputes the derived
+corrected_humidity (Magnus from corrected T + T_d), corrected_apparent_temperature
+(Steadman from corrected T, derived RH, wind, radiation), and
+corrected_absolute_humidity (from corrected T + T_d) so the full moisture
+state ships as one internally consistent (T, T_d, RH, AH) triple. The
+independent L2/L3/L4 corrections on humidity still run as background and
+appear in the per-layer pair-log entries — they're retained for comparison
+but the user-facing humidity is the derived value.
 """
 import logging
 import math
@@ -118,6 +123,21 @@ def _absolute_humidity(t_f, dp_f):
     dp_c = (dp_f - 32) * 5 / 9
     e = 6.112 * math.exp((17.67 * dp_c) / (dp_c + 243.5))
     return round((e * 216.7) / (t_c + 273.15), 1)
+
+
+def _relative_humidity(t_f, dp_f):
+    """Magnus formula: RH = 100 × e(T_d) / e_s(T). Inputs in °F. Returns RH
+    in [0, 100] or None on bad input. dp > t (unphysical) clamps to 100."""
+    if t_f is None or dp_f is None:
+        return None
+    if dp_f >= t_f:
+        return 100.0
+    t_c = (t_f - 32) * 5 / 9
+    dp_c = (dp_f - 32) * 5 / 9
+    a, b = 17.625, 243.04
+    e_s = math.exp(a * t_c / (t_c + b))
+    e   = math.exp(a * dp_c / (dp_c + b))
+    return max(0.0, min(100.0, 100.0 * e / e_s))
 
 
 def apply_decay_corrections(weather_data):
@@ -337,13 +357,25 @@ def apply_decay_corrections(weather_data):
             logging.info(msg)
 
     # Recompute derived arrays so they stay consistent with the corrected
-    # base arrays. apparent_temp depends on temp/humidity/wind/radiation;
-    # absolute_humidity depends on temp/dew_point.
+    # base arrays. corrected_humidity is derived from corrected_temperature +
+    # corrected_dew_point via Magnus so the (T, T_d, RH) triple is internally
+    # consistent — same approach apparent_temp and absolute_humidity already
+    # use. The independent L2/L3/L4 corrections on humidity still ran above
+    # (and their L1-L3 values are captured in the post_lN snapshots), but the
+    # final shipped value is the derived one. This keeps heat index, wet-bulb,
+    # and any downstream moisture product from disagreeing with each other.
     ct = hourly.get("corrected_temperature", [])
-    ch = hourly.get("corrected_humidity", [])
     cdp = hourly.get("corrected_dew_point", [])
     ws = hourly.get("wind_speed", [])
     dr = hourly.get("direct_radiation", [])
+
+    ch_arr = hourly.get("corrected_humidity")
+    if isinstance(ch_arr, list) and ct and cdp:
+        for i in range(min(len(ch_arr), len(ct), len(cdp))):
+            derived = _relative_humidity(ct[i], cdp[i])
+            if derived is not None:
+                ch_arr[i] = round(derived, 1)
+    ch = hourly.get("corrected_humidity", [])
 
     if "corrected_apparent_temperature" in hourly and ct:
         new_at = []
