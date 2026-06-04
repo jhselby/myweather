@@ -1151,6 +1151,28 @@ function renderLayer3Panel(wxDoc) {
     `<div class="meta-line">Station scatter (bias_std) <strong>${fmt(hyp.bias_std)}°F</strong> across ${hyp.stations_used ?? "?"} stations — drives K.</div>`;
 }
 
+// Draws a prominent zero line behind the dataset curves so the sign of the
+// fits (positive bias vs negative bias) is readable at a glance.
+const zeroLinePlugin = {
+  id: "zeroLine",
+  beforeDatasetsDraw(chart) {
+    const { ctx, chartArea, scales } = chart;
+    const yScale = scales.y;
+    if (!yScale) return;
+    if (0 < yScale.min || 0 > yScale.max) return;
+    const yPx = yScale.getPixelForValue(0);
+    ctx.save();
+    ctx.strokeStyle = "rgba(255,255,255,0.45)";
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(chartArea.left, yPx);
+    ctx.lineTo(chartArea.right, yPx);
+    ctx.stroke();
+    ctx.restore();
+  },
+};
+
 function buildDiurnalHistoryChart(canvas, field, history, nBins) {
   // X-axis is local hour of day (0-23). Multiple stacked error lines
   // (oldest pale gray → newest solid blue). If shapes match across days,
@@ -1176,6 +1198,7 @@ function buildDiurnalHistoryChart(canvas, field, history, nBins) {
   return new Chart(canvas, {
     type: "line",
     data: { labels, datasets },
+    plugins: [zeroLinePlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -1327,6 +1350,7 @@ function buildTidePhaseHistoryChart(canvas, field, history, nBins) {
   return new Chart(canvas, {
     type: "line",
     data: { labels, datasets },
+    plugins: [zeroLinePlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
@@ -1399,6 +1423,7 @@ function buildHistoryChart(canvas, field, history) {
   return new Chart(canvas, {
     type: "line",
     data: { labels, datasets },
+    plugins: [zeroLinePlugin],
     options: {
       responsive: true,
       maintainAspectRatio: false,
