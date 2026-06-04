@@ -140,6 +140,49 @@ def _relative_humidity(t_f, dp_f):
     return max(0.0, min(100.0, 100.0 * e / e_s))
 
 
+def recompute_derived_moisture_arrays(weather_data):
+    """Derive corrected_humidity from corrected (T, T_d) via Magnus, then
+    recompute corrected_apparent_temperature and corrected_absolute_humidity
+    from the now-consistent base arrays. Idempotent and safe to call multiple
+    times. Called both at the end of apply_decay_corrections (fresh-data path)
+    and from collector.main() after apply_stale_fallbacks (cached-data path)
+    so the (T, T_d, RH, AH) quadruple stays consistent regardless of which
+    path produced the hourly arrays."""
+    hourly = weather_data.get("hourly") if isinstance(weather_data, dict) else None
+    if not isinstance(hourly, dict):
+        return
+    ct  = hourly.get("corrected_temperature", [])
+    cdp = hourly.get("corrected_dew_point", [])
+    ws  = hourly.get("wind_speed", [])
+    dr  = hourly.get("direct_radiation", [])
+
+    ch_arr = hourly.get("corrected_humidity")
+    if isinstance(ch_arr, list) and ct and cdp:
+        for i in range(min(len(ch_arr), len(ct), len(cdp))):
+            derived = _relative_humidity(ct[i], cdp[i])
+            if derived is not None:
+                ch_arr[i] = round(derived, 1)
+    ch = hourly.get("corrected_humidity", [])
+
+    if "corrected_apparent_temperature" in hourly and ct:
+        new_at = []
+        for i in range(len(ct)):
+            t = ct[i] if i < len(ct) else None
+            h = ch[i] if i < len(ch) else None
+            w = ws[i] if i < len(ws) else None
+            d = dr[i] if i < len(dr) else None
+            new_at.append(steadman_feels_like_f(t, h, w, d))
+        hourly["corrected_apparent_temperature"] = new_at
+
+    if "corrected_absolute_humidity" in hourly and ct:
+        new_ah = []
+        for i in range(len(ct)):
+            t = ct[i] if i < len(ct) else None
+            d = cdp[i] if i < len(cdp) else None
+            new_ah.append(_absolute_humidity(t, d))
+        hourly["corrected_absolute_humidity"] = new_ah
+
+
 def apply_decay_corrections(weather_data):
     """Subtract per-(field, lead_h) mean error from each hourly forecast
     array. Mutates weather_data["hourly"] in place. Recomputes derived
@@ -356,44 +399,8 @@ def apply_decay_corrections(weather_data):
                 msg += f" ({diurnal_capped} capped at sanity bound)"
             logging.info(msg)
 
-    # Recompute derived arrays so they stay consistent with the corrected
-    # base arrays. corrected_humidity is derived from corrected_temperature +
-    # corrected_dew_point via Magnus so the (T, T_d, RH) triple is internally
-    # consistent — same approach apparent_temp and absolute_humidity already
-    # use. The independent L2/L3/L4 corrections on humidity still ran above
-    # (and their L1-L3 values are captured in the post_lN snapshots), but the
-    # final shipped value is the derived one. This keeps heat index, wet-bulb,
-    # and any downstream moisture product from disagreeing with each other.
-    ct = hourly.get("corrected_temperature", [])
-    cdp = hourly.get("corrected_dew_point", [])
-    ws = hourly.get("wind_speed", [])
-    dr = hourly.get("direct_radiation", [])
-
-    ch_arr = hourly.get("corrected_humidity")
-    if isinstance(ch_arr, list) and ct and cdp:
-        for i in range(min(len(ch_arr), len(ct), len(cdp))):
-            derived = _relative_humidity(ct[i], cdp[i])
-            if derived is not None:
-                ch_arr[i] = round(derived, 1)
-    ch = hourly.get("corrected_humidity", [])
-
-    if "corrected_apparent_temperature" in hourly and ct:
-        new_at = []
-        for i in range(len(ct)):
-            t = ct[i] if i < len(ct) else None
-            h = ch[i] if i < len(ch) else None
-            w = ws[i] if i < len(ws) else None
-            d = dr[i] if i < len(dr) else None
-            new_at.append(steadman_feels_like_f(t, h, w, d))
-        hourly["corrected_apparent_temperature"] = new_at
-
-    if "corrected_absolute_humidity" in hourly and ct:
-        new_ah = []
-        for i in range(len(ct)):
-            t = ct[i] if i < len(ct) else None
-            d = cdp[i] if i < len(cdp) else None
-            new_ah.append(_absolute_humidity(t, d))
-        hourly["corrected_absolute_humidity"] = new_ah
+    # Derive the consistent moisture quadruple from the now-corrected T + T_d.
+    recompute_derived_moisture_arrays(weather_data)
 
     if applied:
         msg = f"  ✓ Decay apply: {applied} hourly cells corrected"

@@ -49,7 +49,7 @@ from .processors.hourly_7day import normalize_for_payload, normalize_for_forecas
 from .processors.hourly_trim import trim_hourly_to_current_hour
 from .processors.forecast_error_log import update_forecast_error_log
 from .processors.decay_fit import fit_decay_corrections
-from .processors.decay_apply import apply_decay_corrections
+from .processors.decay_apply import apply_decay_corrections, recompute_derived_moisture_arrays
 from .processors.normalize import normalize_current, normalize_hourly, normalize_daily, empty_hourly
 
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -407,6 +407,12 @@ def main():
         logging.warning(f"  ⚠  Stale sources in this payload: {stale_sources}")
     else:
         weather_data.pop("stale_sources", None)
+
+    # Re-derive the moisture quadruple from whatever T + T_d are in hourly now.
+    # If hourly came from this run, decay_apply already did this; if it came
+    # from the stale cache, this run's call is what keeps (T, T_d, RH, AH)
+    # internally consistent. Idempotent — safe to always call.
+    recompute_derived_moisture_arrays(weather_data)
 
     # Upload weather data to GCS
     upload_json(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
