@@ -38,9 +38,11 @@ import urllib.request
 from collections import defaultdict
 from datetime import datetime
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+SKIP_CHARTS = os.environ.get("ANALYSIS_NO_CHARTS") == "1"
+if not SKIP_CHARTS:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -171,32 +173,30 @@ def main():
         sys.exit(1)
 
     # ── Plot ───────────────────────────────────────────────────────────────
-    fig, ax = plt.subplots(figsize=(9, 7))
-    # Perfect calibration diagonal
-    ax.plot([0, 100], [0, 100], color="#555", linestyle="--", linewidth=1, label="perfect calibration")
-
-    for label, vals, color in [
-        ("RAW MODEL (no correction)",                raw_R,           "#8a93a3"),
-        ("FLAT ADDITIVE (pre-v0.6.5)",               flat_corrected,  "#ef6450"),
-        (f"PIECEWISE SCALED (v0.6.5+, T={T})",       scaled_corrected,"#4aa3ff"),
-    ]:
-        mids, freqs, counts = reliability_curve(vals, obs)
-        xs = [m for m, f in zip(mids, freqs) if f is not None]
-        ys = [f for f in freqs if f is not None]
-        ax.plot(xs, ys, marker="o", linewidth=2, color=color, label=label)
-
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, 100)
-    ax.set_xlabel("Corrected POP forecast (%) — bin center")
-    ax.set_ylabel("Observed rain frequency (%)")
-    ax.set_title(f"POP reliability diagram  ·  n={n_pp:,} pp pairs  ·  corrections fitted {fitted_at}")
-    ax.grid(True, alpha=0.3)
-    ax.legend(loc="lower right", fontsize=10)
-    out_path = os.path.join(OUT_DIR, "pop_calibration.png")
-    fig.tight_layout()
-    fig.savefig(out_path, dpi=120)
-    plt.close(fig)
-    print(f"  ✓ {out_path}")
+    if not SKIP_CHARTS:
+        fig, ax = plt.subplots(figsize=(9, 7))
+        ax.plot([0, 100], [0, 100], color="#555", linestyle="--", linewidth=1, label="perfect calibration")
+        for label, vals, color in [
+            ("RAW MODEL (no correction)",                raw_R,           "#8a93a3"),
+            ("FLAT ADDITIVE (pre-v0.6.5)",               flat_corrected,  "#ef6450"),
+            (f"PIECEWISE SCALED (v0.6.5+, T={T})",       scaled_corrected,"#4aa3ff"),
+        ]:
+            mids, freqs, counts = reliability_curve(vals, obs)
+            xs = [m for m, f in zip(mids, freqs) if f is not None]
+            ys = [f for f in freqs if f is not None]
+            ax.plot(xs, ys, marker="o", linewidth=2, color=color, label=label)
+        ax.set_xlim(0, 100)
+        ax.set_ylim(0, 100)
+        ax.set_xlabel("Corrected POP forecast (%) — bin center")
+        ax.set_ylabel("Observed rain frequency (%)")
+        ax.set_title(f"POP reliability diagram  ·  n={n_pp:,} pp pairs  ·  corrections fitted {fitted_at}")
+        ax.grid(True, alpha=0.3)
+        ax.legend(loc="lower right", fontsize=10)
+        out_path = os.path.join(OUT_DIR, "pop_calibration.png")
+        fig.tight_layout()
+        fig.savefig(out_path, dpi=120)
+        plt.close(fig)
+        print(f"  ✓ {out_path}")
 
     # ── Summary text ───────────────────────────────────────────────────────
     summary = [

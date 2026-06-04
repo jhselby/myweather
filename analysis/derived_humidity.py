@@ -36,9 +36,11 @@ import urllib.request
 from collections import defaultdict
 from datetime import datetime
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+SKIP_CHARTS = os.environ.get("ANALYSIS_NO_CHARTS") == "1"
+if not SKIP_CHARTS:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
 
 
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
@@ -198,6 +200,9 @@ def main():
     print(f"  ✓ {summary_path}")
 
     # Chart.
+    if SKIP_CHARTS:
+        print("\n".join(summary_lines[-10:]))
+        return
     fig, ax = plt.subplots(figsize=(10, 6))
     xs = leads_sorted
     indep_y   = [indep_abs[l]   / n_per_lead[l] for l in xs]

@@ -21,3 +21,39 @@ logs:
 
 run-local:
 	@bash -lc 'set +x; set -a; source .env; set +a; python3 -c "from weather_collector.collector import run; run(None)"'
+
+# Run all analyses in TEXT-ONLY mode (skip matplotlib chart generation) and
+# concatenate every summary into a single bundle for easy upload.
+# Use `make analyze` for the fast text-only path.
+analyze:
+	@rm -f analysis/output/_combined.txt
+	@for f in analysis/*.py; do \
+	  echo ""; \
+	  echo "═══════════════════════════════════════════════════════════════"; \
+	  echo "▶ $$f"; \
+	  echo "═══════════════════════════════════════════════════════════════"; \
+	  ANALYSIS_NO_CHARTS=1 python3 "$$f" || echo "   (failed — continuing)"; \
+	done
+	@echo ""
+	@echo "Bundling summaries → analysis/output/_combined.txt"
+	@for s in analysis/output/*_summary.txt; do \
+	  printf "\n\n=== %s ===\n\n" "$$(basename "$$s")" >> analysis/output/_combined.txt; \
+	  cat "$$s" >> analysis/output/_combined.txt; \
+	done
+	@echo "Done — upload analysis/output/_combined.txt"
+
+# Run all analyses WITH chart generation. Slower (matplotlib). Produces
+# PNGs alongside text summaries for visual exploration. Use this when you
+# want to *see* the patterns, not just read the numbers.
+visualize:
+	@for f in analysis/*.py; do \
+	  echo ""; \
+	  echo "═══════════════════════════════════════════════════════════════"; \
+	  echo "▶ $$f"; \
+	  echo "═══════════════════════════════════════════════════════════════"; \
+	  python3 "$$f" || echo "   (failed — continuing)"; \
+	done
+	@echo ""
+	@echo "Charts in analysis/output/:"
+	@ls -1 analysis/output/*.png 2>/dev/null
+	@open analysis/output/ 2>/dev/null || true

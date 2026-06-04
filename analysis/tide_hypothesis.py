@@ -28,9 +28,11 @@ import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta
 
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
+SKIP_CHARTS = os.environ.get("ANALYSIS_NO_CHARTS") == "1"
+if not SKIP_CHARTS:
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -247,19 +249,35 @@ def plot_field(pairs, field_short, field_label, field_unit, hilo, out_path):
       row 2: mean error vs hour-of-day
     Same shape + period in both rows → likely confounded with diurnal.
     Pattern in one but not the other → that's the real driver."""
+    field_pairs = [p for p in pairs if p["field"] == field_short]
+    summary_lines = [f"\n=== {field_label} ({field_short}) ==="]
+
+    if SKIP_CHARTS:
+        # Text-only branch: compute bins, return summary, skip matplotlib.
+        for lead in LEADS_TO_PLOT:
+            lead_pairs = [p for p in field_pairs if p["lead_h"] == lead]
+            t_means, _ = _bin_by_tide(lead_pairs, hilo)
+            h_means, _ = _bin_by_hod(lead_pairs)
+            summary_lines.append(
+                f"  lead {lead}h tide bins: "
+                + ", ".join(f"{m:+.2f}" if not np.isnan(m) else "—" for m in t_means)
+            )
+            summary_lines.append(
+                f"  lead {lead}h HOD bins:  "
+                + ", ".join(f"{m:+.1f}" if not np.isnan(m) else "—" for m in h_means)
+            )
+        return summary_lines
+
     n_cols = len(LEADS_TO_PLOT)
     fig, axes = plt.subplots(2, n_cols, figsize=(3.5 * n_cols, 6.4), sharey="row")
     if n_cols == 1:
         axes = axes.reshape(2, 1)
 
-    field_pairs = [p for p in pairs if p["field"] == field_short]
     fig.suptitle(
         f"{field_label} ({field_unit}) — top: error vs tide phase  ·  "
         f"bottom: error vs hour-of-day  ·  total pairs: {len(field_pairs):,}",
         fontsize=11,
     )
-
-    summary_lines = [f"\n=== {field_label} ({field_short}) ==="]
 
     for col, lead in enumerate(LEADS_TO_PLOT):
         lead_pairs = [p for p in field_pairs if p["lead_h"] == lead]
@@ -307,6 +325,8 @@ def plot_stratified(pairs, field_short, field_label, field_unit, hilo, out_path)
     driver (pattern survives hour-of-day partitioning).
     If lines have very different shapes per stratum → hour-of-day is the
     driver and what looked like a tide pattern is just diurnal aliasing."""
+    if SKIP_CHARTS:
+        return  # Stratified view is chart-only; no text summary to emit.
     n_cols = len(LEADS_TO_PLOT)
     fig, axes = plt.subplots(1, n_cols, figsize=(3.5 * n_cols, 3.8), sharey=True)
     if n_cols == 1:
