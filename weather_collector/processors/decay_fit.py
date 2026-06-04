@@ -286,9 +286,18 @@ def fit_decay_corrections():
             # scope: decay only). Skip entirely to keep diurnal_corrections.json
             # free of bogus wd entries.
             if hod is not None and 0 <= hod < DIURNAL_BINS and field != "wd":
-                diurnal_sums[(field, hod)] += float(error) * w
-                diurnal_weights[(field, hod)] += w
-                diurnal_raw_counts[(field, hod)] += 1
+                # Fit only on L3 residual (error after decay). Fitting on L2
+                # error was structurally flawed: both decay (per-lead) and
+                # diurnal (per-hour) were picking up the same hour-bias signal,
+                # and mean-zero normalization didn't decouple them when lead
+                # and hour-of-day were correlated. Skip pre-v0.6.25 pairs that
+                # don't carry error_l3 entirely — the L3-bearing window will
+                # fill in as new pairs accumulate.
+                e_diurnal = row.get("error_l3")
+                if e_diurnal is not None:
+                    diurnal_sums[(field, hod)] += float(e_diurnal) * w
+                    diurnal_weights[(field, hod)] += w
+                    diurnal_raw_counts[(field, hod)] += 1
             # Time-series accumulation — pairs at any of the chosen leads,
             # recent enough to be in the time-series window, grouped per
             # (field, lead, obs_hour). Each lead gets its own series for
@@ -404,11 +413,13 @@ def fit_decay_corrections():
         logging.warning(f"  ⚠  Tide-phase history append failed: {redact_secrets(e)}")
 
     # Diurnal-hour output + rolling history. 24 bins, one per local hour.
-    # Feeds Layer 5 (Apply step subtracts these from each forecast hour based
-    # on that hour's local hour-of-day). The per-hour values are NORMALIZED
-    # to be mean-zero across the 24 bins so they don't double-count the
-    # overall mean error (which Layer 4 / decay already captures). Layer 5
-    # only contributes the deviation-from-average diurnal cycle.
+    # Feeds Layer 4 (Apply step subtracts these from each forecast hour based
+    # on that hour's local hour-of-day). Each per-hour value is the recency-
+    # weighted mean L3 residual at that hour — i.e. what's still systematically
+    # off after Layer 3 (decay) has been applied. No mean-zero normalization:
+    # since we're fitting on the L3 residual, Layer 3's contribution is already
+    # removed from the signal, and the raw per-hour mean is the correct
+    # remaining adjustment.
     diurnal_corrections = {}
     diurnal_n_samples = {}
     for f in FIELDS:
@@ -419,11 +430,6 @@ def fit_decay_corrections():
             n_arr[b] = diurnal_raw_counts.get((f, b), 0)
             if w_sum > 0:
                 c_arr[b] = round(diurnal_sums[(f, b)] / w_sum, 3)
-        # Mean-zero normalization across the populated bins.
-        valid = [v for v in c_arr if v is not None]
-        if valid:
-            mean_c = sum(valid) / len(valid)
-            c_arr = [round(v - mean_c, 3) if v is not None else None for v in c_arr]
         diurnal_corrections[f] = c_arr
         diurnal_n_samples[f] = n_arr
     diurnal_output = {
