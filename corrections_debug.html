@@ -221,6 +221,11 @@
   .offset-cell.warm { color: var(--warm); font-weight: 600; }
   .offset-cell.cool { color: var(--cool); font-weight: 600; }
   .offset-cell.zero { color: var(--muted); }
+  /* Uptime tier cells — green/amber/red for healthy/degraded/dead stations */
+  .uptime-cell.good { color: #4ad29a; font-weight: 600; }
+  .uptime-cell.warn { color: #f0b35e; font-weight: 600; }
+  .uptime-cell.bad  { color: #ef6450; font-weight: 600; }
+  .uptime-cell.dead { color: #c73d2d; font-weight: 700; }
   /* History chart age-color legend */
   .hist-legend {
     display: flex;
@@ -586,6 +591,13 @@
   <div id="stats-bias" class="stats-panel" hidden></div>
   <div id="bias-map" class="bias-map-wrap"></div>
   <div id="bias-table-wrap"></div>
+</details>
+
+<details id="uptime-details" class="bias-accordion">
+  <summary>Per-station uptime — fetch success rates (rolling window)</summary>
+  <div id="status-uptime" class="status" hidden></div>
+  <div id="stats-uptime" class="stats-panel" hidden></div>
+  <div id="uptime-table-wrap"></div>
 </details>
 
 <!-- ───────────────────── Layer 3 ───────────────────── -->
@@ -1795,6 +1807,105 @@ function renderBiasSection(wxDoc) {
   stats.hidden = false;
 }
 
+// ── Per-station uptime table ────────────────────────────────────────────────
+// Reads hyperlocal.station_uptime, renders a sortable table with
+// uptime_pct / n_success / n_attempts per station. Color tier cues highlight
+// dead stations (0%) and degraded ones (<80%). Sort defaults to worst-first.
+const _uptimeState = { rows: [], sortKey: "uptime_pct", sortDir: +1 };
+
+function _uptimeTier(pct, n_attempts) {
+  if (pct == null) return "";
+  if (n_attempts === 0) return "";
+  if (pct === 0) return "dead";
+  if (pct < 80) return "bad";
+  if (pct < 95) return "warn";
+  return "good";
+}
+
+function _renderUptimeTable() {
+  const wrap = document.getElementById("uptime-table-wrap");
+  const { rows, sortKey, sortDir } = _uptimeState;
+  if (!rows.length) { wrap.innerHTML = ""; return; }
+  const sorted = [...rows].sort((a, b) => {
+    const av = a[sortKey], bv = b[sortKey];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (sortKey === "station") return sortDir * String(av).localeCompare(String(bv));
+    return sortDir * (av - bv);
+  });
+  const head = `<tr>
+    <th data-col="station"     class="${sortKey === 'station' ? 'sorted' : ''}">Station</th>
+    <th data-col="uptime_pct"  class="${sortKey === 'uptime_pct' ? 'sorted' : ''}">Uptime %</th>
+    <th data-col="n_success"   class="${sortKey === 'n_success' ? 'sorted' : ''}">Successes</th>
+    <th data-col="n_attempts"  class="${sortKey === 'n_attempts' ? 'sorted' : ''}">Attempts</th>
+  </tr>`;
+  const body = sorted.map(r => {
+    const tier = _uptimeTier(r.uptime_pct, r.n_attempts);
+    const pctTxt = r.uptime_pct == null ? "—" : `${r.uptime_pct.toFixed(1)}%`;
+    return `<tr>
+      <td class="station">${r.station}</td>
+      <td class="uptime-cell ${tier}">${pctTxt}</td>
+      <td>${r.n_success ?? "—"}</td>
+      <td>${r.n_attempts ?? "—"}</td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML = `<table class="offset-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll("th[data-col]").forEach(th => {
+    th.addEventListener("click", () => {
+      const col = th.dataset.col;
+      if (_uptimeState.sortKey === col) {
+        _uptimeState.sortDir *= -1;
+      } else {
+        _uptimeState.sortKey = col;
+        // Default direction: stations alphabetical, all numerics worst-first (ascending pct, descending counts)
+        _uptimeState.sortDir = (col === "station" || col === "uptime_pct") ? +1 : -1;
+      }
+      _renderUptimeTable();
+    });
+  });
+}
+
+function renderUptimeSection(wxDoc) {
+  const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+  const uptime = hyp.station_uptime || {};
+  const stats = document.getElementById("stats-uptime");
+  const stations = Object.keys(uptime);
+  if (!stations.length) {
+    showStatus("status-uptime", "No station_uptime data yet — appears once the uptime tracker has logged at least one tick.");
+    stats.hidden = true;
+    return;
+  }
+  const rows = stations.map(s => {
+    const u = uptime[s] || {};
+    return {
+      station: s,
+      uptime_pct: typeof u.uptime_pct === "number" ? u.uptime_pct : null,
+      n_success: typeof u.n_success === "number" ? u.n_success : null,
+      n_attempts: typeof u.n_attempts === "number" ? u.n_attempts : null,
+    };
+  });
+  _uptimeState.rows = rows;
+  _renderUptimeTable();
+
+  // Summary stats — dead-count, mean uptime, attempt window
+  const validPcts = rows.map(r => r.uptime_pct).filter(v => v != null);
+  const mean = validPcts.length ? validPcts.reduce((a, b) => a + b, 0) / validPcts.length : null;
+  const dead = rows.filter(r => r.uptime_pct === 0).length;
+  const degraded = rows.filter(r => r.uptime_pct != null && r.uptime_pct > 0 && r.uptime_pct < 80).length;
+  const healthy = rows.filter(r => r.uptime_pct != null && r.uptime_pct >= 95).length;
+  const maxAttempts = Math.max(...rows.map(r => r.n_attempts ?? 0));
+  const parts = [
+    `<span><strong>${rows.length}</strong> stations · window <strong>${maxAttempts}</strong> ticks</span>`,
+    mean != null ? `<span>mean uptime <strong>${mean.toFixed(1)}%</strong></span>` : "",
+    `<span><strong>${healthy}</strong> healthy (≥95%)</span>`,
+    degraded ? `<span><strong>${degraded}</strong> degraded (&lt;80%)</span>` : "",
+    dead ? `<span><strong>${dead}</strong> dead (0%)</span>` : "",
+  ];
+  stats.innerHTML = parts.filter(Boolean).join("");
+  stats.hidden = false;
+}
+
 async function load() {
   let corrDoc, wxDoc, histDoc;
   try {
@@ -1896,6 +2007,7 @@ async function load() {
     renderLayer2Panel(wxDoc);     // 2b
     renderLayer3Panel(wxDoc);     // 2c (Kalman gain, function name kept for stability)
     renderBiasSection(wxDoc);     // per-station detail accordion
+    renderUptimeSection(wxDoc);   // per-station uptime accordion
     const biasDetails = document.getElementById("bias-details");
     if (biasDetails) {
       biasDetails.addEventListener("toggle", () => {

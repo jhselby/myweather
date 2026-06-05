@@ -22,7 +22,6 @@ import logging
 TEMPEST_STATIONS = [
     # Original 1.5mi set
     {"id": 204883, "name": "Willow Rd",    "waterfront": True},
-    {"id": 85260,  "name": "Driftwood Rd", "waterfront": True},
     {"id": 192019, "name": "Neptune Rd",   "waterfront": True},
     {"id": 193183, "name": "Baldwin Rd",   "waterfront": False},
     {"id": 193746, "name": "Maple St",     "waterfront": False},
@@ -32,22 +31,34 @@ TEMPEST_STATIONS = [
     {"id": 86357,  "name": "ColleeninMHD", "waterfront": False},
     # Added 2026-06-02: 1.5–2.5mi expansion (16 new)
     {"id": 130945, "name": "Gallison Ave",                   "waterfront": False},
-    {"id": 159204, "name": "Marblehead",                     "waterfront": False},
     {"id": 142949, "name": "Coolidge Rd",                    "waterfront": False},
     {"id": 164230, "name": "Russell St",                     "waterfront": False},
-    {"id": 72262,  "name": "Spray Ave",                      "waterfront": False},
-    {"id": 100037, "name": "Bass Rock Ln",                   "waterfront": False},
     {"id": 141896, "name": "Front St",                       "waterfront": False},
     {"id": 85616,  "name": "Orleans",                        "waterfront": False},
-    {"id": 28679,  "name": "Broadmere Way",                  "waterfront": False},
     {"id": 211335, "name": "Manton Rd",                      "waterfront": False},
     {"id": 85569,  "name": "Preston Ct",                     "waterfront": False},
     {"id": 178102, "name": "Broad St",                       "waterfront": False},
     {"id": 109319, "name": "South Essex Sewerage District",  "waterfront": False},
     {"id": 92837,  "name": "Harbor Ave",                     "waterfront": False},
     {"id": 165151, "name": "Ocean ave MHD",                  "waterfront": False},
-    {"id": 51384,  "name": "Memorial Dr",                    "waterfront": False},
     {"id": 170101, "name": "Marblehead Neck",                "waterfront": False},
+]
+
+# Culled 2026-06-04 (v0.6.40 session) — these stations return a partial obs
+# record through the public API: only lightning + precip fields, with temp /
+# wind / humidity blanked. Confirmed via direct API probe — the stations ARE
+# online and show full data on tempestwx.com, but the owners have restricted
+# field-level sharing for the developer API. Useless for our mesonet bias
+# correction (which requires temp + wind). If we ever want to enhance the
+# lightning or rainfall cards with more local sources, re-introduce these
+# under a separate code path that tolerates partial records.
+CULLED_TEMPEST_STATIONS = [
+    {"id": 28679,  "name": "Broadmere Way"},
+    {"id": 51384,  "name": "Memorial Dr"},
+    {"id": 72262,  "name": "Spray Ave"},
+    {"id": 85260,  "name": "Driftwood Rd"},
+    {"id": 100037, "name": "Bass Rock Ln"},
+    {"id": 159204, "name": "Marblehead"},
 ]
 
 _API_KEY  = "6bff2f89-84ab-463c-886e-fc0f443da4cf"
