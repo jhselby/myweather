@@ -2316,6 +2316,25 @@ function initResearchAccordions() {
 }
 initResearchAccordions();
 
+// Persist open/closed state of Layer 2's bias-accordion details
+// (#bias-details = per-station mesonet detail, #uptime-details = per-station
+// uptime). Same pattern as initResearchAccordions but keyed separately so the
+// stored states don't collide.
+function initBiasAccordions() {
+  const KEY = "forecastPipelineBiasAccordionsOpen";
+  let stored;
+  try { stored = JSON.parse(localStorage.getItem(KEY) || "{}"); }
+  catch (e) { stored = {}; }
+  document.querySelectorAll("details.bias-accordion[id]").forEach(d => {
+    if (stored[d.id]) d.open = true;
+    d.addEventListener("toggle", () => {
+      stored[d.id] = d.open;
+      try { localStorage.setItem(KEY, JSON.stringify(stored)); } catch (e) {}
+    });
+  });
+}
+initBiasAccordions();
+
 load();
 </script>
 </body>
