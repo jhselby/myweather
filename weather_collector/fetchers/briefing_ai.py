@@ -431,7 +431,11 @@ def generate_briefing(weather_data):
             _last_gemini_call_time = datetime.now(eastern)
             return briefing
     except Exception as e:
-        logging.warning(f"  ⚠ Briefing: Gemini failed ({type(e).__name__}), trying Groq...")
+        # Capture HTTP status + body excerpt to diagnose Cloud Function-side failures
+        # (key + payload were verified working locally; failure is environment-specific).
+        status = getattr(getattr(e, "response", None), "status_code", "n/a")
+        body = getattr(getattr(e, "response", None), "text", "") or ""
+        logging.warning(f"  ⚠ Briefing: Gemini failed ({type(e).__name__} status={status}), trying Groq... body[:300]={body[:300]!r}")
 
     # Groq fallback (OpenAI-compatible)
     if GROQ_API_KEY:

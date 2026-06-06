@@ -7,7 +7,7 @@ deploy-collector:
 	  --entry-point=run \
 	  --trigger-http \
 	  --no-allow-unauthenticated \
-	  --timeout=300s \
+	  --timeout=540s \
 	  --memory=1024MB \
 	  --max-instances=1 \
 	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811,GEMINI_MODEL=gemini-2.5-flash \

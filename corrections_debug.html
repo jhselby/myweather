@@ -569,7 +569,7 @@
 <h2 class="section" id="sec-layer2">Layer 2 — Mesonet corrections (local station network)</h2>
 <div class="layer-info-text">
   The 81-station local network's collective read on what the raw model is missing. Two parallel aggregation paths under this layer, each suited to the noise behavior of its metric:
-  <div class="meta-line"><strong>Temp / humidity / pressure (additive bias):</strong> each station's reading first calibrated against its own chronic offset (Kalman-tracked, rolling 48h, see 2a accordion). Per-octant <code>1/distance² × exp(-|elev_diff|/30)</code>-weighted mean of (station − model) bias. Final network bias = unweighted mean across non-empty octants. Temperature additionally gets scaled by the network Kalman gain K (sec 2c) before being added to the raw model.</div>
+  <div class="meta-line"><strong>Temp / humidity / pressure (additive bias):</strong> each station's reading first calibrated against its own chronic offset (Kalman-tracked, rolling 48h, see 2a accordion). Per-octant <code>1/distance² × exp(-|elev_diff|/30)</code>-weighted mean of (station − model) bias. Final network bias = unweighted mean across non-empty octants. Temperature and humidity additionally get scaled by their own network Kalman gain K (sec 2c) before being added to the raw model — separate K functions per field since temp scatter is in °F and humidity scatter is in %. Pressure is applied at full strength (station consensus matches model after altitude offsets).</div>
   <div class="meta-line"><strong>Wind / gust (direct selection, no bias):</strong> no per-station calibration (per-station wind biases are too noisy to track meaningfully) and no additive bias term. Per-octant MAX gust → MEDIAN across populated octants. The chosen value is blended into the next 24h of the hourly forecast with a linear-decay weight (100% at hour 0, 0% at hour 24). No K scaling — the median-of-octants step is the confidence filter.</div>
 </div>
 
@@ -1038,7 +1038,7 @@ function renderLayer2Panel(wxDoc) {
     `What the local station network thinks the model is biased by right now. These are the FULL (un-confidence-scaled) values — section 2c below shows the Kalman gain K that decides how much of each to actually apply.` +
     `<div class="meta-line">` +
       `Temp <strong>${sgn(hyp.weighted_bias)}${fmt(hyp.weighted_bias)}°F</strong> · ` +
-      `Humidity <strong>${sgn(hyp.bias_humidity)}${fmt(hyp.bias_humidity, 1)}%</strong> · ` +
+      `Humidity <strong>${sgn(hyp.weighted_bias_humidity)}${fmt(hyp.weighted_bias_humidity, 1)}%</strong> · ` +
       `Wind <strong>${sgn(hyp.bias_wind_speed)}${fmt(hyp.bias_wind_speed, 1)} mph</strong> · ` +
       `Gust <strong>${sgn(hyp.bias_wind_gusts)}${fmt(hyp.bias_wind_gusts, 1)} mph</strong> · ` +
       `${hyp.stations_used ?? "?"}/${hyp.stations_total ?? "?"} stations · ` +
@@ -1148,19 +1148,29 @@ function renderLayer3Panel(wxDoc) {
   const hyp = (wxDoc && wxDoc.hyperlocal) || {};
   const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
   const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
-  const K = (hyp.kalman_gain == null) ? null : Number(hyp.kalman_gain);
-  const wb = (hyp.weighted_bias == null) ? null : Number(hyp.weighted_bias);
-  const appliedTempBias = (K != null && wb != null) ? K * wb : null;
-  const pct = (K != null) ? Math.round(K * 100) : null;
+  const K  = (hyp.kalman_gain == null)          ? null : Number(hyp.kalman_gain);
+  const wb = (hyp.weighted_bias == null)        ? null : Number(hyp.weighted_bias);
+  const Kh = (hyp.kalman_gain_humidity == null) ? null : Number(hyp.kalman_gain_humidity);
+  const wh = (hyp.weighted_bias_humidity == null) ? null : Number(hyp.weighted_bias_humidity);
+  const appliedTempBias = (K  != null && wb != null) ? K  * wb : null;
+  const appliedHumidBias = (Kh != null && wh != null) ? Kh * wh : null;
+  const pct  = (K  != null) ? Math.round(K  * 100) : null;
+  const pctH = (Kh != null) ? Math.round(Kh * 100) : null;
   el.innerHTML =
-    `Kalman gain throttles how aggressively the Layer-2 temperature bias is trusted. Few stations or high station-to-station scatter → low K → forecast moves less toward the network reading. ` +
-    `Currently applied to temperature only (matches the Right-Now card's behavior).` +
-    `<div class="meta-line">` +
-      `Kalman gain K <strong>${fmt(K, 3)}</strong>${pct != null ? ` (${pct}% of network bias trusted)` : ""} · ` +
-      `Layer-2 temp bias <strong>${sgn(wb)}${fmt(wb)}°F</strong> · ` +
-      `Layer-3 applied temp bias <strong>${sgn(appliedTempBias)}${fmt(appliedTempBias)}°F</strong>` +
+    `Kalman gain throttles how aggressively the Layer-2 bias is trusted. Few stations or high station-to-station scatter → low K → forecast moves less toward the network reading. ` +
+    `Applied to temperature and humidity with separate threshold functions (temp scatter is in °F, humidity scatter is in %, so a single K function would miscalibrate one or the other).` +
+    `<div class="meta-line"><strong>Temp:</strong> ` +
+      `K <strong>${fmt(K, 3)}</strong>${pct != null ? ` (${pct}% trusted)` : ""} · ` +
+      `Layer-2 bias <strong>${sgn(wb)}${fmt(wb)}°F</strong> · ` +
+      `applied <strong>${sgn(appliedTempBias)}${fmt(appliedTempBias)}°F</strong> · ` +
+      `scatter <strong>${fmt(hyp.bias_std)}°F</strong> across ${hyp.stations_used ?? "?"} stations` +
     `</div>` +
-    `<div class="meta-line">Station scatter (bias_std) <strong>${fmt(hyp.bias_std)}°F</strong> across ${hyp.stations_used ?? "?"} stations — drives K.</div>`;
+    `<div class="meta-line"><strong>Humidity:</strong> ` +
+      `K <strong>${fmt(Kh, 3)}</strong>${pctH != null ? ` (${pctH}% trusted)` : ""} · ` +
+      `Layer-2 bias <strong>${sgn(wh)}${fmt(wh, 1)}%</strong> · ` +
+      `applied <strong>${sgn(appliedHumidBias)}${fmt(appliedHumidBias, 1)}%</strong> · ` +
+      `scatter <strong>${fmt(hyp.bias_std_humidity, 2)}%</strong> across ${hyp.stations_used_humidity ?? "?"} stations` +
+    `</div>`;
 }
 
 // Draws a prominent zero line behind the dataset curves so the sign of the
@@ -1796,11 +1806,13 @@ function renderBiasSection(wxDoc) {
   const parts = [
     `<span><strong>${hyp.stations_used ?? "?"}</strong> / ${hyp.stations_total ?? "?"} stations used · ${hyp.confidence ?? "—"} confidence</span>`,
     `<span>weighted temp bias <strong>${sgn(hyp.weighted_bias)}${fmt(hyp.weighted_bias)}°F</strong></span>`,
-    hyp.bias_humidity != null ? `<span>humidity bias <strong>${sgn(hyp.bias_humidity)}${fmt(hyp.bias_humidity, 1)}%</strong></span>` : "",
+    hyp.weighted_bias_humidity != null ? `<span>weighted humidity bias <strong>${sgn(hyp.weighted_bias_humidity)}${fmt(hyp.weighted_bias_humidity, 1)}%</strong></span>` : "",
     hyp.bias_wind_speed != null ? `<span>wind bias <strong>${sgn(hyp.bias_wind_speed)}${fmt(hyp.bias_wind_speed, 1)} mph</strong></span>` : "",
     hyp.bias_wind_gusts != null ? `<span>gust bias <strong>${sgn(hyp.bias_wind_gusts)}${fmt(hyp.bias_wind_gusts, 1)} mph</strong></span>` : "",
-    hyp.kalman_gain != null ? `<span>Kalman gain <strong>${fmt(hyp.kalman_gain, 3)}</strong></span>` : "",
-    hyp.bias_std != null ? `<span>bias σ <strong>${fmt(hyp.bias_std, 2)}°F</strong></span>` : "",
+    hyp.kalman_gain != null ? `<span>Kalman gain (T) <strong>${fmt(hyp.kalman_gain, 3)}</strong></span>` : "",
+    hyp.kalman_gain_humidity != null ? `<span>Kalman gain (RH) <strong>${fmt(hyp.kalman_gain_humidity, 3)}</strong></span>` : "",
+    hyp.bias_std != null ? `<span>bias σ (T) <strong>${fmt(hyp.bias_std, 2)}°F</strong></span>` : "",
+    hyp.bias_std_humidity != null ? `<span>bias σ (RH) <strong>${fmt(hyp.bias_std_humidity, 2)}%</strong></span>` : "",
     hyp.kbvy_temp_f != null ? `<span>KBVY <strong>${fmt(hyp.kbvy_temp_f, 1)}°F</strong> · local ${sgn(hyp.kbvy_local_delta)}${fmt(hyp.kbvy_local_delta, 1)}°F</span>` : "",
   ];
   stats.innerHTML = parts.filter(Boolean).join("");

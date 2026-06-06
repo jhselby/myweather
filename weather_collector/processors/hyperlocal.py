@@ -89,6 +89,21 @@ def _kalman_gain(n_stations, bias_std):
         return 0.40
 
 
+def _kalman_gain_humidity(n_stations, bias_std):
+    # Humidity octant-scatter scale is different from temperature: WU
+    # hygrometers are noisier (cheap sensors, calibration drift), so even in
+    # "agreement" cases octant-mean spread is typically 2-8% RH vs <1°F for
+    # temp. Thresholds (3.0 / 7.0) are a first-pass analog of the temp
+    # buckets (~"noticeable" / ~"significant disagreement") and will likely
+    # need empirical retuning once we have weeks of bias_std_humidity logged.
+    if n_stations >= 5 and bias_std < 3.0:
+        return 0.90
+    elif n_stations >= 3 and bias_std < 7.0:
+        return 0.65
+    else:
+        return 0.40
+
+
 def compute_dew_point_spread(temp_f, dew_point_f):
     """
     Compute dew point spread in Fahrenheit.
@@ -156,6 +171,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
         oct_station_count = [0] * 8
         station_biases = []  # kept for legacy bias_std fallback
         stations_used = 0
+        stations_used_humidity = 0
 
         for station in stations:
             station_temp = station.get('temperature_f')
@@ -197,6 +213,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             if raw_h is not None:
                 corrected_h = raw_h - humidity_offsets.get(sid, 0.0)
                 oct_h[oct].append((corrected_h, weight))
+                stations_used_humidity += 1
 
             # Pressure
             raw_p = station.get('pressure_in')
@@ -265,13 +282,25 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             if wu_t is not None:
                 hyperlocal["wu_avg_temp"] = round(wu_t, 1)
 
-            # Humidity octant-balanced
+            # Humidity octant-balanced + Kalman-blended against model.
+            # When model_h is missing, fall back to pure station mean (no blend).
             if h_octant_means:
-                corrected_humidity = sum(h_octant_means) / len(h_octant_means)
-                hyperlocal["corrected_humidity"] = round(corrected_humidity, 1)
+                station_mean_h = sum(h_octant_means) / len(h_octant_means)
                 if model_h is not None:
+                    weighted_bias_h = station_mean_h - model_h
+                    bias_std_h = statistics.stdev(h_octant_means) if len(h_octant_means) > 1 else None
+                    K_h = _kalman_gain_humidity(stations_used_humidity, bias_std_h if bias_std_h is not None else 99)
+                    corrected_humidity = model_h + K_h * weighted_bias_h
                     hyperlocal["model_humidity"] = model_h
+                    hyperlocal["weighted_bias_humidity"] = round(weighted_bias_h, 2)
+                    hyperlocal["bias_std_humidity"] = round(bias_std_h, 2) if bias_std_h is not None else None
+                    hyperlocal["kalman_gain_humidity"] = round(K_h, 2)
+                    hyperlocal["stations_used_humidity"] = stations_used_humidity
+                    hyperlocal["corrected_humidity"] = round(corrected_humidity, 1)
                     hyperlocal["bias_humidity"] = round(corrected_humidity - model_h, 1)
+                else:
+                    hyperlocal["corrected_humidity"] = round(station_mean_h, 1)
+                    hyperlocal["stations_used_humidity"] = stations_used_humidity
 
             # Pressure octant-balanced
             if p_octant_means:

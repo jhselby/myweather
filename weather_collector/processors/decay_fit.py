@@ -44,6 +44,12 @@ TIDE_PHASE_PATH = "tide_phase_corrections.json"
 TIDE_PHASE_HISTORY_PATH = "tide_phase_corrections_history.json"
 HISTORY_RETENTION_DAYS = 365  # ~annual cycle of fits; ~2.8 MB/year per history file
 TEMP_PATH = "forecast_error_log_flatten.tmp.jsonl"
+# Snapshot the live log to an immutable blob before reading. The Joiner appends
+# to forecast_error_log.jsonl every 10 min via GCS compose; a multi-minute read
+# of a multi-hundred-MB file racing with those appends caused stream-desync and
+# 404-on-pinned-generation errors (June 5, 2026). Reading from a server-side
+# copy sidesteps the race entirely. Cleaned up after the main rewrite swap.
+SNAPSHOT_PATH = "forecast_error_log_fitter_snapshot.jsonl"
 TZ = pytz.timezone("America/New_York")
 RETENTION_DAYS = 30
 LEAD_BINS = 48  # lead_h 0..47
@@ -227,7 +233,11 @@ def fit_decay_corrections():
     n_kept = 0
 
     temp_blob = bucket.blob(TEMP_PATH)
-    with main_blob.open("r") as fin, temp_blob.open("w") as fout:
+    # Server-side copy to an immutable snapshot; the Joiner can keep appending
+    # to main_blob during our read without affecting this handle.
+    snapshot_blob = bucket.copy_blob(main_blob, bucket, SNAPSHOT_PATH)
+    logging.info(f"  ℹ  Fitter: snapshotted {ERROR_LOG_PATH} -> {SNAPSHOT_PATH} ({snapshot_blob.size:,} bytes)")
+    with snapshot_blob.open("r") as fin, temp_blob.open("w") as fout:
         for raw in fin:
             line = raw.strip()
             if not line:
@@ -548,7 +558,17 @@ def fit_decay_corrections():
                 temp_blob.delete()
         except Exception:
             pass
+        try:
+            if snapshot_blob.exists():
+                snapshot_blob.delete()
+        except Exception:
+            pass
         raise
+
+    try:
+        snapshot_blob.delete()
+    except Exception as e:
+        logging.warning(f"  ⚠  Fitter: snapshot cleanup failed (non-fatal): {redact_secrets(e)}")
 
     pruned = n_in - n_kept
     logging.info(f"  ✓ Fitter: {n_in:,} pairs in, {n_kept:,} kept ({pruned:,} pruned >{RETENTION_DAYS}d)")
