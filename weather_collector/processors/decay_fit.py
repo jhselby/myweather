@@ -42,6 +42,14 @@ CORRECTIONS_PATH = "decay_corrections.json"
 HISTORY_PATH = "decay_corrections_history.json"
 TIDE_PHASE_PATH = "tide_phase_corrections.json"
 TIDE_PHASE_HISTORY_PATH = "tide_phase_corrections_history.json"
+
+# v0.6.47: hypothesis-tracking gates. The L2 lead-decay fix (v0.6.44) +
+# per-field L3/L4 whitelist (v0.6.45) closed the live-correction questions
+# the Fitter was originally built to support. The hypothesis-only branches
+# below are gated off to save GCP compute; the code stays for future revival.
+# See `corrections_debug.html` → Research & Diagnostics → "Discarded
+# hypotheses" for the final reports.
+RUN_TIDE_TRACKING = False  # weak signal entangled with diurnal — final 2026-06-08
 HISTORY_RETENTION_DAYS = 365  # ~annual cycle of fits; ~2.8 MB/year per history file
 TEMP_PATH = "forecast_error_log_flatten.tmp.jsonl"
 # Snapshot the live log to an immutable blob before reading. The Joiner appends
@@ -306,11 +314,12 @@ def fit_decay_corrections():
                     wd_cos_sums[lead_h]    += float(e_cos) * w
                     wd_sin_weights[lead_h] += w
                     wd_cos_weights[lead_h] += w
-            tide_bin = _tide_phase_bin(obs_time)
-            if tide_bin is not None:
-                tide_sums[(field, tide_bin)] += float(error) * w
-                tide_weights[(field, tide_bin)] += w
-                tide_raw_counts[(field, tide_bin)] += 1
+            if RUN_TIDE_TRACKING:
+                tide_bin = _tide_phase_bin(obs_time)
+                if tide_bin is not None:
+                    tide_sums[(field, tide_bin)] += float(error) * w
+                    tide_weights[(field, tide_bin)] += w
+                    tide_raw_counts[(field, tide_bin)] += 1
             # Diurnal binning: hour-of-day from the obs_time string (cheap to
             # parse — first 13 chars are "YYYY-MM-DDTHH").
             try:
@@ -427,44 +436,44 @@ def fit_decay_corrections():
     except Exception as e:
         logging.warning(f"  ⚠  History append failed: {redact_secrets(e)}")
 
-    # Tide-phase output + rolling history. Same shape as the lead-h history,
-    # but bins are tide phase (0..TIDE_PHASE_BINS-1) instead of lead_h.
-    # Diagnostic-only — never enters Apply. Watching this evolve across days
-    # tests whether forecast error tracks tide phase (stable curves → real
-    # tide signal; drifting curves → diurnal masquerading as tide).
-    tide_corrections = {}
-    tide_n_samples = {}
-    for f in FIELDS:
-        c_arr = [None] * TIDE_PHASE_BINS
-        n_arr = [0] * TIDE_PHASE_BINS
-        for b in range(TIDE_PHASE_BINS):
-            w_sum = tide_weights.get((f, b), 0.0)
-            n_arr[b] = tide_raw_counts.get((f, b), 0)
-            if w_sum > 0:
-                c_arr[b] = round(tide_sums[(f, b)] / w_sum, 3)
-        tide_corrections[f] = c_arr
-        tide_n_samples[f] = n_arr
-    tide_output = {
-        "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
-        "n_pairs": n_kept,
-        "retention_days": RETENTION_DAYS,
-        "weighting": {"method": "exponential_decay", "tau_days": TAU_DAYS},
-        "tide_phase_bins": TIDE_PHASE_BINS,
-        "m2_period_hours": M2_PERIOD_HOURS,
-        "corrections_by_tide_phase": tide_corrections,
-        "n_samples_by_tide_phase": tide_n_samples,
-    }
-    upload_json(tide_output, TIDE_PHASE_PATH, "tide_phase_corrections.json")
-    try:
-        tide_history = load_json(TIDE_PHASE_HISTORY_PATH, default={"history": []})
-        hist_cutoff = (now_naive - timedelta(days=HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
-        kept_tp = [h for h in tide_history.get("history", [])
-                   if isinstance(h, dict) and h.get("fitted_at", "") >= hist_cutoff]
-        kept_tp.append(tide_output)
-        upload_json({"history": kept_tp}, TIDE_PHASE_HISTORY_PATH, "tide_phase_corrections_history.json")
-        logging.info(f"  ✓ Tide-phase history: {len(kept_tp)} fits in {HISTORY_RETENTION_DAYS}-day window")
-    except Exception as e:
-        logging.warning(f"  ⚠  Tide-phase history append failed: {redact_secrets(e)}")
+    # Tide-phase output + rolling history. Gated off in v0.6.47 — hypothesis
+    # closed (weak, diurnal-entangled). Existing GCS files are left in place
+    # so the R1/R2 charts (now under "Discarded hypotheses") still render the
+    # frozen final state. Re-enable by flipping RUN_TIDE_TRACKING above.
+    if RUN_TIDE_TRACKING:
+        tide_corrections = {}
+        tide_n_samples = {}
+        for f in FIELDS:
+            c_arr = [None] * TIDE_PHASE_BINS
+            n_arr = [0] * TIDE_PHASE_BINS
+            for b in range(TIDE_PHASE_BINS):
+                w_sum = tide_weights.get((f, b), 0.0)
+                n_arr[b] = tide_raw_counts.get((f, b), 0)
+                if w_sum > 0:
+                    c_arr[b] = round(tide_sums[(f, b)] / w_sum, 3)
+            tide_corrections[f] = c_arr
+            tide_n_samples[f] = n_arr
+        tide_output = {
+            "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
+            "n_pairs": n_kept,
+            "retention_days": RETENTION_DAYS,
+            "weighting": {"method": "exponential_decay", "tau_days": TAU_DAYS},
+            "tide_phase_bins": TIDE_PHASE_BINS,
+            "m2_period_hours": M2_PERIOD_HOURS,
+            "corrections_by_tide_phase": tide_corrections,
+            "n_samples_by_tide_phase": tide_n_samples,
+        }
+        upload_json(tide_output, TIDE_PHASE_PATH, "tide_phase_corrections.json")
+        try:
+            tide_history = load_json(TIDE_PHASE_HISTORY_PATH, default={"history": []})
+            hist_cutoff = (now_naive - timedelta(days=HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+            kept_tp = [h for h in tide_history.get("history", [])
+                       if isinstance(h, dict) and h.get("fitted_at", "") >= hist_cutoff]
+            kept_tp.append(tide_output)
+            upload_json({"history": kept_tp}, TIDE_PHASE_HISTORY_PATH, "tide_phase_corrections_history.json")
+            logging.info(f"  ✓ Tide-phase history: {len(kept_tp)} fits in {HISTORY_RETENTION_DAYS}-day window")
+        except Exception as e:
+            logging.warning(f"  ⚠  Tide-phase history append failed: {redact_secrets(e)}")
 
     # Diurnal-hour output + rolling history. 24 bins, one per local hour.
     # Feeds Layer 4 (Apply step subtracts these from each forecast hour based
@@ -600,16 +609,24 @@ def fit_decay_corrections():
             ts_start, ts_end = now_naive - timedelta(days=TIMESERIES_DAYS + 1), now_naive + timedelta(days=1)
     else:
         ts_start, ts_end = now_naive - timedelta(days=TIMESERIES_DAYS + 1), now_naive + timedelta(days=1)
-    noaa_tides = _fetch_noaa_tide_hourly(
-        ts_start.strftime("%Y%m%d"), ts_end.strftime("%Y%m%d"),
-    )
-    tide_source = "noaa_harmonic" if noaa_tides else "m2_cosine_fallback"
-    tide_elevation_ft = []
-    for h in ts_hours:
-        if h in noaa_tides:
-            tide_elevation_ft.append(round(noaa_tides[h], 2))
-        else:
-            tide_elevation_ft.append(_tide_elevation_ft_m2(h))
+    # NOAA tide-elevation fetch + per-hour tide column for the time series.
+    # Gated off in v0.6.47 (tide hypothesis closed). Without it, ts_hours
+    # gets no tide_elevation_ft column; the R2 chart's tide overlay just
+    # disappears, which is fine for a discarded hypothesis.
+    if RUN_TIDE_TRACKING:
+        noaa_tides = _fetch_noaa_tide_hourly(
+            ts_start.strftime("%Y%m%d"), ts_end.strftime("%Y%m%d"),
+        )
+        tide_source = "noaa_harmonic" if noaa_tides else "m2_cosine_fallback"
+        tide_elevation_ft = []
+        for h in ts_hours:
+            if h in noaa_tides:
+                tide_elevation_ft.append(round(noaa_tides[h], 2))
+            else:
+                tide_elevation_ft.append(_tide_elevation_ft_m2(h))
+    else:
+        tide_source = "disabled"
+        tide_elevation_ft = []
 
     # v0.6.25c: per-layer × per-lead MAE grids for the Forecast Accuracy chart.
     # For each (field, layer) emit a 48-bin array of MAE values (one per lead

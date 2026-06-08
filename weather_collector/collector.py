@@ -417,16 +417,14 @@ def main():
     # Upload weather data to GCS
     upload_json(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
 
-    # Fit per-field per-lead_h decay corrections every 6 hours at the X:07
-    # tick (03:07, 09:07, 15:07, 21:07 EDT). Bumped from once-daily on
-    # 2026-06-03 during the active build phase — newly-deployed correction
-    # fields (pressure, cloud, per-layer tracking, etc.) get fitted same-day
-    # instead of waiting until the next 03:07. Each Fitter pass is ~$0.0001
-    # in compute, so 4×/day is still trivial. Revert to `hour == 3` once the
-    # stack stabilizes. Also prunes forecast_error_log.jsonl to RETENTION_DAYS
-    # and resets the GCS compose component count back to 1.
+    # Fit per-field per-lead_h decay corrections twice daily at the X:07 tick
+    # (03:07 EDT post-overnight + 15:07 EDT mid-afternoon). Dropped from 4×/day
+    # in v0.6.47 — the active build phase is over (L2 lead-decay shipped, L3/L4
+    # whitelist settled) and per-tick GCS cost was visible in the bill.
+    # Also prunes forecast_error_log.jsonl to RETENTION_DAYS and resets the GCS
+    # compose component count back to 1.
     now_local = datetime.now(pytz.timezone("America/New_York"))
-    if now_local.hour in (3, 9, 15, 21) and now_local.minute < 10:
+    if now_local.hour in (3, 15) and now_local.minute < 10:
         t0 = time.time()
         try:
             fit_decay_corrections()
