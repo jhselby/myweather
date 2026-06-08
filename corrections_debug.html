@@ -535,7 +535,7 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  Per-field MAE-vs-lead chart with each correction layer overlaid. X-axis = lead hour (0–47), Y-axis = mean absolute error in field units. The gap between <strong>Raw model</strong> (gray dashed) and <strong>+ Mesonet (final)</strong> (orange) at each lead is how much our pipeline is reducing forecast error vs the bare HRRR/GFS at that horizon. (L3/L4 paused in v0.6.44.)
+  Per-field MAE-vs-lead chart with each correction layer overlaid. X-axis = lead hour (0–47), Y-axis = mean absolute error in field units. The gap between <strong>Raw model</strong> (gray dashed) and the lowest enabled line at each lead is how much our pipeline is reducing forecast error vs the bare HRRR/GFS at that horizon. (L3/L4 per-field whitelist as of v0.6.45 — see banner above each layer.)
   <div class="meta-line">Lead 0 is circular by construction (forecast for now compared against the same-moment mesonet, so L2 ≈ 0); look at lead 1+ for real signal. Source: <code>time_series_diagnostic.json::per_layer_mae_by_lead</code>, 7-day window. Populates from v0.6.25+ pairs only — older pairs lack per-layer detail.</div>
 </div>
 <div id="status-accuracy" class="status" hidden></div>
@@ -605,8 +605,8 @@
 <h2 class="section" id="sec-layer3">Layer 3 — Decay curves (lead-time correction)</h2>
 
 <div id="banner-l3-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
-  <strong style="color:#d4a373;">⏸ Layer 3 paused (v0.6.44).</strong>
-  <div class="meta-line">The L2 audit showed L3 was net-negative on most fields because it was fitting residuals from a flat-applied L2 bias. L2 now applies bias × exp(-lead/τ); L3 is paused for ~14 days so the fitter rebuilds against the corrected residual. Fitted curves below show what L3 <em>would</em> have applied if enabled; nothing is being applied to the live forecast.</div>
+  <strong style="color:#d4a373;">⏸ Layer 3 — per-field whitelist (v0.6.45).</strong>
+  <div class="meta-line">Held-out MAE audit: L3 beats L2 on <strong>wind speed, gusts, high cloud, mid cloud</strong> — those stay enabled. Net-negative on temperature, humidity, dew point, solar, low cloud, pressure, precip — those are disabled. Fitter still publishes curves for disabled fields (diagnostic only); nothing is applied. Currently enabled: <span id="banner-l3-fields">—</span>.</div>
 </div>
 
 <h3 class="subsection">3a. Fitted correction curves — what is being applied per lead hour</h3>
@@ -625,8 +625,8 @@
 <h2 class="section" id="sec-layer4">Layer 4 — Diurnal correction (hour-of-day)</h2>
 
 <div id="banner-l4-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
-  <strong style="color:#d4a373;">⏸ Layer 4 paused (v0.6.44).</strong>
-  <div class="meta-line">Paused alongside L3 — same reason. Diurnal fits below show what L4 <em>would</em> have applied; nothing is being applied to the live forecast.</div>
+  <strong style="color:#d4a373;">⏸ Layer 4 — per-field whitelist (v0.6.45).</strong>
+  <div class="meta-line">Held-out MAE audit: L4 only beats L3 cleanly on <strong>high cloud</strong>; net-negative on the rest. Currently enabled: <span id="banner-l4-fields">—</span>. Disabled-field fits below are diagnostic only.</div>
 </div>
 
 <h3 class="subsection">4a. Diurnal correction curves over time — historical fits</h3>
@@ -728,13 +728,19 @@ function renderMeta(corrDoc, wxDoc) {
   const dm = (wxDoc && wxDoc.decay_meta) || null;
   const l3Banner = document.getElementById("banner-l3-paused");
   const l4Banner = document.getElementById("banner-l4-paused");
-  if (l3Banner) l3Banner.hidden = !(dm && dm.layer_3_paused);
-  if (l4Banner) l4Banner.hidden = !(dm && dm.layer_4_paused);
-  const paused = dm && (dm.layer_3_paused || dm.layer_4_paused);
+  const l3Fields = (dm && dm.layer_3_fields) || [];
+  const l4Fields = (dm && dm.layer_4_fields) || [];
+  const l3FieldsStr = l3Fields.length ? l3Fields.join(', ') : 'none';
+  const l4FieldsStr = l4Fields.length ? l4Fields.join(', ') : 'none';
+  // Banners surface whenever any field is disabled (i.e. not the full set).
+  if (l3Banner) l3Banner.hidden = false;
+  if (l4Banner) l4Banner.hidden = false;
+  const l3FieldsSpan = document.getElementById("banner-l3-fields");
+  const l4FieldsSpan = document.getElementById("banner-l4-fields");
+  if (l3FieldsSpan) l3FieldsSpan.textContent = l3FieldsStr;
+  if (l4FieldsSpan) l4FieldsSpan.textContent = l4FieldsStr;
   const applied = dm
-    ? (paused
-        ? `<strong style="color:#d4a373;">L3/L4 paused (v0.6.44)</strong> · L2 lead-decay only · ${dm.applied_at}`
-        : `<strong style="color:#4aa3ff;">decay applied ${dm.applied_at}</strong> (${dm.cells_corrected.toLocaleString()} cells${dm.cells_capped ? `, ${dm.cells_capped} capped` : ""})`)
+    ? `<strong style="color:#d4a373;">L3/L4 per-field (v0.6.45)</strong> · L3: ${l3FieldsStr} · L4: ${l4FieldsStr} · applied ${dm.applied_at}`
     : `<strong style="color:#ff9f4a;">decay NOT yet applied to this payload</strong>`;
   const fitted = corrDoc ? `fitted <strong>${corrDoc.fitted_at || "?"}</strong> · <strong>${(corrDoc.n_pairs || 0).toLocaleString()}</strong> pairs · ` : "";
   el.innerHTML =
@@ -847,9 +853,9 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
 // detail lives inside Layer 2's own panel, not in the cross-layer view.
 const DRILL_LAYERS = [
   { key: "raw", label: "Raw model",                   color: "rgba(138,147,163,0.55)", dash: [4,4] },
-  { key: "l2",  label: "+ Layer 2 (mesonet) — final", color: "rgba(170,180,200,1)",    dash: [] },
-  { key: "l3",  label: "+ Layer 3 (decay) — paused",  color: "rgba(110,180,235,1)",    dash: [] },
-  { key: "l4",  label: "+ Layer 4 (diurnal) — paused", color: "rgba(74,163,255,1)",     dash: [] },
+  { key: "l2",  label: "+ Layer 2 (mesonet)",         color: "rgba(170,180,200,1)",    dash: [] },
+  { key: "l3",  label: "+ Layer 3 (decay)",           color: "rgba(110,180,235,1)",    dash: [] },
+  { key: "l4",  label: "+ Layer 4 (diurnal)",         color: "rgba(74,163,255,1)",     dash: [] },
 ];
 let _drillCharts = [];  // one Chart.js instance per selected field
 let _drillState = {
@@ -1070,7 +1076,43 @@ function renderLayer2Panel(wxDoc) {
 // from time_series_diagnostic.json. Lead 0 will show L2 ≈ 0 (circular by
 // construction — same correction on both sides of the comparison at the same
 // moment); meaningful comparison starts at lead 1+.
-function renderAccuracySection(tsDoc) {
+// Build a small canvas swatch (filled color rect, optional white ✓ inside)
+// for use as a Chart.js legend pointStyle. Cached by (color, checked).
+const _swatchCache = new Map();
+function _legendSwatch(color, checked) {
+  const key = color + (checked ? "_y" : "_n");
+  if (_swatchCache.has(key)) return _swatchCache.get(key);
+  const c = document.createElement("canvas");
+  c.width = 16; c.height = 16;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, 16, 16);
+  if (checked) {
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.beginPath();
+    ctx.moveTo(3, 8.5);
+    ctx.lineTo(7, 12);
+    ctx.lineTo(13, 4.5);
+    ctx.stroke();
+  }
+  _swatchCache.set(key, c);
+  return c;
+}
+
+function renderAccuracySection(tsDoc, wxDoc) {
+  const dm = (wxDoc && wxDoc.decay_meta) || {};
+  const l3Fields = new Set(dm.layer_3_fields || []);
+  const l4Fields = new Set(dm.layer_4_fields || []);
+  const _layerApplied = (layerKey, fieldKey) => {
+    if (layerKey === "l1") return false;  // raw, never "applied"
+    if (layerKey === "l2") return true;   // L2 runs for every field
+    if (layerKey === "l3") return l3Fields.has(fieldKey);
+    if (layerKey === "l4") return l4Fields.has(fieldKey);
+    return false;
+  };
   const grid = document.getElementById("accuracy-grid");
   if (!tsDoc || !tsDoc.per_layer_mae_by_lead) {
     showStatus("status-accuracy", "Awaiting first Fitter run with per-layer pair data — no per_layer_mae_by_lead yet.");
@@ -1080,9 +1122,9 @@ function renderAccuracySection(tsDoc) {
   const nByLead   = tsDoc.per_layer_n_by_lead || {};
   const LAYER_LINES = [
     { key: "l1", label: "Raw model",          color: "rgba(138,147,163,0.75)", dash: [4,4] },
-    { key: "l2", label: "+ Mesonet (final)",  color: "rgba(200,160,110,1)",    dash: [] },
-    { key: "l3", label: "+ Decay (paused)",   color: "rgba(110,180,235,1)",    dash: [] },
-    { key: "l4", label: "+ Diurnal (paused)", color: "rgba(74,163,255,1)",     dash: [] },
+    { key: "l2", label: "Mesonet",            color: "rgba(200,160,110,1)",    dash: [] },
+    { key: "l3", label: "Decay",              color: "rgba(110,180,235,1)",    dash: [] },
+    { key: "l4", label: "Diurnal",            color: "rgba(74,163,255,1)",     dash: [] },
   ];
   // Use the existing accuracy-grid container but replace it with a wide grid
   // of charts (re-using the .grid class from existing chart sections).
@@ -1121,15 +1163,39 @@ function renderAccuracySection(tsDoc) {
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
-          legend: { labels: { color: "#8a93a3", boxWidth: 10, font: { size: 10.5 } }, position: "bottom" },
+          legend: {
+            position: "bottom",
+            labels: {
+              color: "#e7ecf3",
+              font: { size: 12, weight: "600" },
+              usePointStyle: true,
+              boxWidth: 14,
+              boxHeight: 14,
+              padding: 12,
+              generateLabels: (chart) => chart.data.datasets.map((ds, i) => {
+                const layer = LAYER_LINES[i] || {};
+                const applied = _layerApplied(layer.key, f.key);
+                return {
+                  text: ds.label,
+                  fillStyle: layer.color || ds.borderColor,
+                  strokeStyle: layer.color || ds.borderColor,
+                  fontColor: "#e7ecf3",
+                  lineWidth: 0,
+                  pointStyle: _legendSwatch(layer.color || ds.borderColor, applied),
+                  datasetIndex: i,
+                  hidden: !chart.isDatasetVisible(i),
+                };
+              }),
+            },
+          },
           tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
         },
         scales: {
-          x: { title: { display: true, text: "Hours ahead of forecast", color: "#8a93a3" },
-               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
+          x: { title: { display: true, text: "Hours ahead of forecast", color: "#e7ecf3", font: { size: 12, weight: "600" } },
+               ticks: { color: "#e7ecf3", autoSkip: true, maxTicksLimit: 12, font: { size: 12, weight: "600" } },
                grid: { color: "#242833" } },
-          y: { title: { display: true, text: `Average error (${f.unit})`, color: "#8a93a3" },
-               ticks: { color: "#8a93a3" },
+          y: { title: { display: true, text: `Average error (${f.unit})`, color: "#e7ecf3", font: { size: 12, weight: "600" } },
+               ticks: { color: "#e7ecf3", font: { size: 12, weight: "600" } },
                grid: { color: "#242833" },
                beginAtZero: true },
         },
@@ -1993,7 +2059,7 @@ async function load() {
   } catch (err) { /* silent */ }
 
   renderMeta(corrDoc, wxDoc);
-  renderAccuracySection(tsDoc);
+  renderAccuracySection(tsDoc, wxDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
 

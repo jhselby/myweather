@@ -163,73 +163,66 @@ function _renderDecayCorrections(data) {
     pr: ['Precip Rate',  ' in/h', 2],
   };
 
-  const paused = !!(dm.layer_3_paused || dm.layer_4_paused);
+  // v0.6.45: per-field L3/L4 whitelist. Show truthful +24h delta:
+  //  - For L3-enabled fields → per_field_24h (the actual L3 correction applied)
+  //  - For L2-only fields with bias (t/h/pr) → compute L2 lead-decayed delta
+  const l3Fields = new Set(dm.layer_3_fields || []);
   const hourly = (data && data.hourly) || {};
+  const per24 = dm.per_field_24h || {};
+  const l2Taus = (data.l2_decay_meta && data.l2_decay_meta.tau_hours) || {};
 
-  let rows = '';
-  let headerLeft = '';
-  let headerRight = '';
-  let footerText = '';
+  const delta24 = (correctedKey, rawKey, digits) => {
+    const corr = hourly[correctedKey];
+    const raw  = hourly[rawKey];
+    if (!Array.isArray(corr) || !Array.isArray(raw) || corr.length <= 24 || raw.length <= 24) return null;
+    if (corr[24] == null || raw[24] == null) return null;
+    return Number((corr[24] - raw[24]).toFixed(digits));
+  };
 
-  if (paused) {
-    // L3/L4 paused: show ACTUAL L2-lead-decayed delta at +24h, computed from
-    // the corrected vs raw hourly arrays. Truthful for what's being applied.
-    const l2Taus = (data.l2_decay_meta && data.l2_decay_meta.tau_hours) || {};
-    const delta24 = (correctedKey, rawKey, digits) => {
-      const corr = hourly[correctedKey];
-      const raw  = hourly[rawKey];
-      if (!Array.isArray(corr) || !Array.isArray(raw) || corr.length <= 24 || raw.length <= 24) return null;
-      if (corr[24] == null || raw[24] == null) return null;
-      return Number((corr[24] - raw[24]).toFixed(digits));
-    };
-    const items = [
-      { key: 't',  label: 'Temperature', unit: '°F',    digits: 2, delta: delta24('corrected_temperature', 'temperature', 2) },
-      { key: 'h',  label: 'Humidity',    unit: '%',     digits: 1, delta: delta24('corrected_humidity',    'humidity',    1) },
-      { key: 'pr', label: 'Pressure',    unit: ' inHg', digits: 3, delta: delta24('corrected_pressure_in', 'raw_pressure_in', 3) },
-    ];
-    rows = items.filter(x => x.delta != null).map(x => {
-      const v = x.delta;
-      const sign = v >= 0 ? '+' : '';
-      const color = v > 0 ? 'rgba(239,100,80,0.9)'
-                  : v < 0 ? 'rgba(80,160,239,0.9)'
-                  :         'rgba(180,180,180,0.7)';
-      const tau = l2Taus[x.key];
-      const tauStr = tau ? ` (τ=${tau >= 1e8 ? '∞' : tau + 'h'})` : '';
-      const display = `${sign}${v.toFixed(x.digits)}${x.unit === '°F' || x.unit === 'mph' ? ' ' + x.unit : x.unit}`;
-      return `<div style="display:flex;justify-content:space-between;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
-        <span style="opacity:0.7;font-size:0.78rem;">${x.label}<span style="opacity:0.5;">${tauStr}</span></span>
-        <span style="font-weight:700;color:${color};font-size:0.78rem;">${display}</span>
-      </div>`;
-    }).join('');
-    headerLeft = 'L2 bias at +24h (applied)';
-    headerRight = 'L3/L4 paused';
-    footerText = `Applied ${dm.applied_at || '?'} · L3/L4 paused since v0.6.44 · <a href="/corrections_debug.html" target="_blank" style="color:rgba(120,180,239,0.9);">why →</a>`;
-  } else {
-    const per24 = dm.per_field_24h || {};
-    const order = ['t', 'dp', 'h', 'ws', 'wg', 'pa', 'cc', 'sr', 'pp', 'pr'];
-    rows = order
-      .filter(k => k in per24)
-      .map(k => {
-        const v = Number(per24[k]);
-        const [label, unit, digits] = fieldSpec[k] || [k, '', 1];
-        const sign = v >= 0 ? '+' : '';
-        const color = v > 0 ? 'rgba(239,100,80,0.9)'
-                    : v < 0 ? 'rgba(80,160,239,0.9)'
-                    :         'rgba(180,180,180,0.7)';
-        const display = `${sign}${v.toFixed(digits)}${unit === '°F' || unit === 'mph' ? ' ' + unit : unit}`;
-        return `<div style="display:flex;justify-content:space-between;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
-          <span style="opacity:0.7;font-size:0.78rem;">${label}</span>
-          <span style="font-weight:700;color:${color};font-size:0.78rem;">${display}</span>
-        </div>`;
-      }).join('');
-    const cappedText = dm.cells_capped ? ` · ${dm.cells_capped} capped` : '';
-    const cells = dm.cells_corrected || 0;
-    headerLeft = '+24h forecast adjustment';
-    headerRight = `${cells} cells${cappedText}`;
-    footerText = `Applied ${dm.applied_at || '?'} · fitted ${dm.fitted_at || '?'} · <a href="/corrections_debug.html" target="_blank" style="color:rgba(120,180,239,0.9);">full curves →</a>`;
+  const rowItems = [];
+  const l2Map = {
+    t:  ['Temperature', '°F',    2, 'corrected_temperature', 'temperature'],
+    h:  ['Humidity',    '%',     1, 'corrected_humidity',    'humidity'],
+    pr: ['Pressure',    ' inHg', 3, 'corrected_pressure_in', 'raw_pressure_in'],
+  };
+  for (const [key, spec] of Object.entries(l2Map)) {
+    if (l3Fields.has(key)) continue;
+    const d = delta24(spec[3], spec[4], spec[2]);
+    if (d == null) continue;
+    rowItems.push({ key, label: spec[0], unit: spec[1], digits: spec[2], delta: d, source: 'L2' });
+  }
+  const l3Order = ['ws', 'wg', 'pp', 'cc', 'sr', 'pa', 'cl', 'cm', 'ch', 'dp'];
+  for (const key of l3Order) {
+    if (!(key in per24)) continue;
+    const [label, unit, digits] = fieldSpec[key] || [key, '', 1];
+    rowItems.push({ key, label, unit, digits, delta: Number(per24[key]), source: 'L3' });
   }
 
-  const title = paused ? 'Forecast Corrections at +24h ▾' : 'Forecast Decay Corrections ▾';
+  const rows = rowItems.map(x => {
+    const v = x.delta;
+    const sign = v >= 0 ? '+' : '';
+    const color = v > 0 ? 'rgba(239,100,80,0.9)'
+                : v < 0 ? 'rgba(80,160,239,0.9)'
+                :         'rgba(180,180,180,0.7)';
+    let tag = '';
+    if (x.source === 'L2') {
+      const tau = l2Taus[x.key];
+      tag = tau ? ` (L2 τ=${tau >= 1e8 ? '∞' : tau + 'h'})` : ' (L2)';
+    } else {
+      tag = ' (L3)';
+    }
+    const display = `${sign}${v.toFixed(x.digits)}${x.unit === '°F' || x.unit === 'mph' ? ' ' + x.unit : x.unit}`;
+    return `<div style="display:flex;justify-content:space-between;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
+      <span style="opacity:0.7;font-size:0.78rem;">${x.label}<span style="opacity:0.5;">${tag}</span></span>
+      <span style="font-weight:700;color:${color};font-size:0.78rem;">${display}</span>
+    </div>`;
+  }).join('');
+
+  const l3Count = (dm.layer_3_fields || []).length;
+  const headerLeft = '+24h forecast adjustment';
+  const headerRight = l3Count > 0 ? `L3 on: ${(dm.layer_3_fields || []).join('/')}` : 'L3/L4 paused';
+  const footerText = `Applied ${dm.applied_at || '?'} · per-field L3/L4 since v0.6.45 · <a href="/corrections_debug.html" target="_blank" style="color:rgba(120,180,239,0.9);">why →</a>`;
+  const title = 'Forecast Corrections at +24h ▾';
   container.innerHTML = `
     <div style="margin-top:14px;">
       <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'"
