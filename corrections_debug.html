@@ -587,8 +587,8 @@
 <h2 class="section" id="sec-layer3">Layer 3 — Decay curves (lead-time correction)</h2>
 
 <div id="banner-l3-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
-  <strong style="color:#d4a373;">⏸ Layer 3 — per-field whitelist (v0.6.45).</strong>
-  <div class="meta-line">Held-out MAE audit: L3 beats L2 on <strong>wind speed, gusts, high cloud, mid cloud</strong> — those stay enabled. Net-negative on temperature, humidity, dew point, solar, low cloud, pressure, precip — those are disabled. Fitter still publishes curves for disabled fields (diagnostic only); nothing is applied. Currently enabled: <span id="banner-l3-fields">—</span>.</div>
+  <strong style="color:#d4a373;">⏸ Layer 3 — per-field whitelist (v0.6.45, POP re-added v0.6.49).</strong>
+  <div class="meta-line">Held-out MAE audit: L3 beats L2 on <strong>wind speed, gusts, high cloud, mid cloud</strong> — those stay enabled. Net-negative on temperature, humidity, dew point, solar, low cloud, pressure, precip — those are disabled. <strong>POP</strong> is re-enabled in v0.6.49 because it's evaluated by Brier score, not MAE: the v0.6.20 calibration analysis showed flat-additive correction cuts Brier 5% (783→745). Currently enabled: <span id="banner-l3-fields">—</span>. Brier-evaluated: <span id="banner-l3-brier">—</span>.</div>
 </div>
 
 <h3 class="subsection">3a. Fitted correction curves — what is being applied per lead hour</h3>
@@ -695,8 +695,8 @@
   </details>
 
   <details class="research-subsection" id="r4e-pop-calibration">
-    <summary>R3e. POP calibration — flat additive vs piecewise scaled (frozen v0.6.20)</summary>
-    <div class="meta-line"><strong>Verdict:</strong> flat additive wins on Brier score (745.4 vs piecewise 768.9 vs raw 782.8). Shipped v0.6.20. Listed here for completeness; no Fitter compute to gate (decision was offline). Analysis: <code>analysis/pop_calibration.py</code>.</div>
+    <summary>R3e. POP calibration — flat additive vs piecewise scaled (settled v0.6.20, re-shipped v0.6.49)</summary>
+    <div class="meta-line"><strong>Verdict:</strong> flat additive wins on Brier score (745.4 vs piecewise 768.9 vs raw 782.8). Originally shipped v0.6.20. The v0.6.45 per-field whitelist incorrectly removed POP from L3 because the audit measured by MAE — wrong yardstick for a probabilistic forecast. Re-added in v0.6.49 with the table flag "[Brier]" so the MAE-based ⚠ rule doesn't fire on it. POP is back in <code>L3_FIELDS</code>; the flat-additive correction is being applied. Analysis: <code>analysis/pop_calibration.py</code>.</div>
   </details>
 </details>
 
@@ -780,8 +780,11 @@ function renderMeta(corrDoc, wxDoc) {
   if (l4Banner) l4Banner.hidden = false;
   const l3FieldsSpan = document.getElementById("banner-l3-fields");
   const l4FieldsSpan = document.getElementById("banner-l4-fields");
+  const l3BrierSpan  = document.getElementById("banner-l3-brier");
+  const l3BrierFields = (dm && dm.layer_3_brier_fields) || [];
   if (l3FieldsSpan) l3FieldsSpan.textContent = l3FieldsStr;
   if (l4FieldsSpan) l4FieldsSpan.textContent = l4FieldsStr;
+  if (l3BrierSpan)  l3BrierSpan.textContent  = l3BrierFields.length ? l3BrierFields.join(', ') : 'none';
   const applied = dm
     ? `<strong style="color:#d4a373;">L3/L4 per-field (v0.6.45)</strong> · L3: ${l3FieldsStr} · L4: ${l4FieldsStr} · applied ${dm.applied_at}`
     : `<strong style="color:#ff9f4a;">decay NOT yet applied to this payload</strong>`;
@@ -1264,6 +1267,9 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
   const dm = (wxDoc && wxDoc.decay_meta) || {};
   const l3Fields = new Set(dm.layer_3_fields || []);
   const l4Fields = new Set(dm.layer_4_fields || []);
+  // Fields judged by Brier, not MAE — suppress the MAE-based ⚠ rule.
+  // POP is the classic case: L3 hurts MAE but improves Brier (v0.6.20).
+  const brierFields = new Set(dm.layer_3_brier_fields || []);
 
   // Average MAE across a [lo, hi) lead range (inclusive lo, exclusive hi).
   const avgRange = (arr, lo, hi) => {
@@ -1316,9 +1322,12 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     const d2 = (l1 != null && l2 != null) ? (l2 - l1) : null;
     const d3 = (l2 != null && l3 != null) ? (l3 - l2) : null;
     const d4 = (l3 != null && l4 != null) ? (l4 - l3) : null;
-    const l3Worst = worstLosingBand(fd.l3, fd.l2);
-    const l4Worst = worstLosingBand(fd.l4, fd.l3);
-    rows.push({ f, l1, l2, l3, l4, d2, d3, d4, l3Worst, l4Worst,
+    // Brier-evaluated fields (POP) are intentionally exempt from the
+    // MAE-based ⚠ rule because L3 hurts their MAE while improving Brier.
+    const isBrier = brierFields.has(f.key);
+    const l3Worst = isBrier ? null : worstLosingBand(fd.l3, fd.l2);
+    const l4Worst = isBrier ? null : worstLosingBand(fd.l4, fd.l3);
+    rows.push({ f, l1, l2, l3, l4, d2, d3, d4, l3Worst, l4Worst, isBrier,
                 l3on: l3Fields.has(f.key), l4on: l4Fields.has(f.key) });
   }
   if (!rows.length) {
@@ -1368,8 +1377,9 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
   const body = rows.map(r => {
     const l3Suspect = r.l3on && !!r.l3Worst;
     const l4Suspect = r.l4on && !!r.l4Worst;
+    const brierTag = r.isBrier ? ` <span style="color:#d4a373;font-size:0.85em;">[Brier]</span>` : '';
     return `<tr>
-      <td><strong>${r.f.label}</strong> <span style="opacity:0.5;">(${r.f.key})</span></td>
+      <td><strong>${r.f.label}</strong> <span style="opacity:0.5;">(${r.f.key})</span>${brierTag}</td>
       <td>${fmt(r.l1, 2)}</td>
       <td>${fmt(r.l2, 2)}</td>
       ${deltaCell(r.d2, false, null)}

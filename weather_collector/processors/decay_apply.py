@@ -48,8 +48,19 @@ STALE_DAYS = 7
 # Snapshots (_post_l2, _post_l3) still happen for every field so the per-layer
 # MAE diagnostic continues to publish — disabled fields show L3 = L2 and
 # L4 = L3 by construction.
-L3_FIELDS = {"ws", "wg", "ch", "cm"}
+#
+# v0.6.49: POP ("pp") re-added — the v0.6.45 audit measured by MAE, which is
+# the wrong yardstick for a probabilistic forecast. The original v0.6.20 work
+# (`analysis/pop_calibration.py`) showed flat-additive POP correction cuts
+# Brier from 783 → 745 (5% improvement). The MAE-based audit was correctly
+# flagging that L3 hurts MAE on POP, but that's the *price* of better Brier
+# calibration, not a regression. POP is evaluated by Brier, not MAE — frontend
+# audit table flags pp as Brier-evaluated and suppresses the ⚠ rule for it.
+L3_FIELDS = {"ws", "wg", "ch", "cm", "pp"}
 L4_FIELDS = {"ch"}
+# Fields where the L3/L4 audit's MAE-based ⚠ rule should be suppressed because
+# the field's correction is justified by a different metric (Brier, etc.).
+L3_BRIER_FIELDS = {"pp"}
 
 # Sanity caps on |correction| per field in each field's native units. A
 # pathological fit cannot move the forecast more than this regardless of
@@ -458,6 +469,7 @@ def apply_decay_corrections(weather_data):
         "diurnal_cells_capped": diurnal_capped,
         "layer_3_fields": sorted(L3_FIELDS),
         "layer_4_fields": sorted(L4_FIELDS),
+        "layer_3_brier_fields": sorted(L3_BRIER_FIELDS),
         "layer_3_paused": len(L3_FIELDS) == 0,
         "layer_4_paused": len(L4_FIELDS) == 0,
     }
