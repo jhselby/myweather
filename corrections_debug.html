@@ -622,6 +622,8 @@
   <div class="meta-line">If a clear, stable pattern emerges across days here, it becomes a candidate for a real correction layer. Currently exploring whether the residual forecast error correlates with the tide cycle.</div>
 </div>
 
+<h3 class="subsection" style="margin-top:8px;color:#74c38b;">Diagnostics</h3>
+
 <details class="research-subsection" id="r0-l3l4-audit" open>
   <summary>R0. L3/L4 audit table — is each layer earning its keep?</summary>
   <div class="meta-line" style="margin-bottom:10px;">Average held-out MAE per field, per layer (across leads 1–47; lead 0 excluded as circular by construction). The same kind of table that drove the v0.6.45 per-field whitelist — but live, recomputed every fit cycle. Green Δ means the layer beats the layer below on average; red means it's losing on average. The <strong>⚠</strong> flag is stricter than the overall average: it fires when an enabled layer is losing by more than 3% in ANY lead band (1–6h, 6–24h, or 24–47h). The annotation shows which band and how much. Use this to catch regressions concentrated at long leads that the overall average can hide.</div>
@@ -630,7 +632,7 @@
 </details>
 
 <details class="research-subsection" id="sec-drill">
-  <summary>R3. Drill-down — see each correction layer build up (teaching view)</summary>
+  <summary>R1. Drill-down — see each correction layer build up (teaching view)</summary>
   <div class="meta-line" style="margin-bottom:10px;">Per-field, layer-by-layer build-up of the live forecast values (not errors). Pick fields and layers, hit Play to animate the layer reveal. With most L3/L4 layers disabled in v0.6.45, this view mostly shows three overlapping lines for fields where layers are no-ops — kept here for explaining the stack to someone new, not for diagnostics.</div>
   <div class="drill-controls">
     <div class="group">
@@ -648,19 +650,30 @@
   <div id="status-drill" class="status" hidden></div>
 </details>
 
+<h3 class="subsection" style="margin-top:24px;color:#d4a373;">Active hypotheses</h3>
+
+<details class="research-subsection" id="r2-state-stratified" open>
+  <summary>R2. State-stratified accuracy — which regimes does the model fail in? (active)</summary>
+  <div class="meta-line" style="margin-bottom:10px;">Per-field MAE sliced by atmospheric regime (wind direction, wind speed, cloud cover, pressure trend, flow regime, synoptic pattern). Bigger spread across bins = bigger payoff from building a regime-aware correction layer. Re-fit twice daily by the Fitter and published to <code>state_stratified_accuracy.json</code>. <strong>Caveat:</strong> magnitudes shown are from the rolling 30-day window, mostly pre-v0.6.45 pairs — they describe the L1→L4 stack's residual structure before the L2 lead-decay fix. Confirm the headline numbers survive after ~2026-06-22 (14 days of post-fix data).</div>
+  <div id="status-state-stratified" class="status" hidden></div>
+  <div id="grid-state-stratified"></div>
+</details>
+
+<h3 class="subsection" style="margin-top:24px;color:#a08070;">Discarded hypotheses</h3>
+
 <details class="research-subsection" id="r4-discarded">
-  <summary>R4. Discarded hypotheses — frozen reports</summary>
+  <summary>R3. Discarded hypotheses — frozen reports</summary>
   <div class="meta-line" style="margin-bottom:10px;">Hypotheses that were tested, settled, and removed from the live Fitter pipeline as of v0.6.47 to cut GCP compute. Code remains in place (gated behind module flags in <code>decay_fit.py</code>) so any of these can be revived in one line. The charts below show the final state at freeze time and will not update.</div>
 
   <details class="research-subsection" id="r1-tide-phase">
-    <summary>R4a. Tide-phase corrections — does forecast error track the tide cycle? (frozen 2026-06-08)</summary>
+    <summary>R3a. Tide-phase corrections — does forecast error track the tide cycle? (frozen 2026-06-08)</summary>
     <div class="meta-line" style="margin-bottom:10px;"><strong>Verdict:</strong> weak signal, mostly entangled with diurnal cycle. Per-field tide-phase curves were tracked across weeks; the signal that survived stratification was hard to distinguish from hour-of-day patterns we're already correcting in L4. Cost of keeping it running (NOAA fetch + 12-bin accumulator + GCS history per Fitter pass) wasn't justified. Analysis: <code>analysis/tide_hypothesis.py</code>. Fitter module flag: <code>RUN_TIDE_TRACKING</code>.</div>
     <div id="status-tide" class="status" hidden></div>
     <div id="grid-tide" class="grid"></div>
   </details>
 
   <details class="research-subsection" id="r2-tide-timeseries">
-    <summary>R4b. Error vs tide elevation over time — intuitive companion to R4a (frozen 2026-06-08)</summary>
+    <summary>R3b. Error vs tide elevation over time — intuitive companion to R4a (frozen 2026-06-08)</summary>
     <div class="meta-line" style="margin-bottom:10px;">Time-domain view. The frozen state below is the last fit before tide tracking was disabled.</div>
     <div id="status-timeseries" class="status" hidden></div>
     <div class="section-controls">
@@ -672,17 +685,17 @@
   </details>
 
   <details class="research-subsection" id="r4c-derived-humidity">
-    <summary>R4c. Derived humidity — Magnus(T_corrected, T_d_corrected) vs network-blended humidity (frozen 2026-06-08)</summary>
+    <summary>R3c. Derived humidity — Magnus(T_corrected, T_d_corrected) vs network-blended humidity (frozen 2026-06-08)</summary>
     <div class="meta-line"><strong>Verdict:</strong> equivalent. Tested whether deriving humidity from corrected temperature + corrected dew point via Magnus outperforms the L2 network-blended humidity. 27k triples, identical MAE within noise. We kept the derived path anyway because it keeps the (T, T_d, RH, AH) quadruple internally consistent — but the hypothesis "derivation is more accurate" is closed. Analysis: <code>analysis/derived_humidity.py</code>.</div>
   </details>
 
   <details class="research-subsection" id="r4d-tau-tuning">
-    <summary>R4d. L3/L4 recency window τ — sweep over fit-window decay constant (frozen 2026-06-08)</summary>
+    <summary>R3d. L3/L4 recency window τ — sweep over fit-window decay constant (frozen 2026-06-08)</summary>
     <div class="meta-line"><strong>Verdict:</strong> τ=14 days is fine within noise. Tested τ ∈ {7, 14, 21} days for the recency-weighted Fitter window across four reports. Held-out MAE differences under 2%, well below the run-to-run variance. τ=14d stays. With L3/L4 mostly disabled in v0.6.45, this knob barely matters anymore. Analysis: <code>analysis/decay_tau_tuning.py</code>.</div>
   </details>
 
   <details class="research-subsection" id="r4e-pop-calibration">
-    <summary>R4e. POP calibration — flat additive vs piecewise scaled (frozen v0.6.20)</summary>
+    <summary>R3e. POP calibration — flat additive vs piecewise scaled (frozen v0.6.20)</summary>
     <div class="meta-line"><strong>Verdict:</strong> flat additive wins on Brier score (745.4 vs piecewise 768.9 vs raw 782.8). Shipped v0.6.20. Listed here for completeness; no Fitter compute to gate (decision was offline). Analysis: <code>analysis/pop_calibration.py</code>.</div>
   </details>
 </details>
@@ -694,6 +707,7 @@ const HISTORY_URL     = "https://data.wymancove.com/decay_corrections_history.js
 const TIDE_HISTORY_URL = "https://data.wymancove.com/tide_phase_corrections_history.json";
 const DIURNAL_HISTORY_URL = "https://data.wymancove.com/diurnal_corrections_history.json";
 const TIMESERIES_URL  = "https://data.wymancove.com/time_series_diagnostic.json";
+const STATE_STRAT_URL = "https://data.wymancove.com/state_stratified_accuracy.json";
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
 const M2_PERIOD_HOURS = 12.4206;
 // Reference cosine amplitude for Section 5's phase-binned charts. Bumped from
@@ -1376,6 +1390,91 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
 
   grid.innerHTML = banner +
     `<div style="overflow-x:auto;"><table class="offset-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+}
+
+// ── R2: State-stratified accuracy (active hypothesis) ─────────────────
+// Renders the ranked-opportunities table + verdict from
+// state_stratified_accuracy.json (published by the Fitter). Plus a quick
+// drill-down chart for the #1 opportunity: per-bin MAE bar chart.
+function renderStateStratifiedSection(ssDoc) {
+  const grid = document.getElementById("grid-state-stratified");
+  if (!grid) return;
+  if (!ssDoc || !ssDoc.ranked_opportunities) {
+    showStatus("status-state-stratified",
+      "Awaiting first Fitter pass with v0.6.48 — state_stratified_accuracy.json not yet published.");
+    grid.innerHTML = "";
+    return;
+  }
+  document.getElementById("status-state-stratified").hidden = true;
+
+  const ranked = ssDoc.ranked_opportunities || [];
+  const verdict = ssDoc.verdict || "";
+  const fittedAt = ssDoc.fitted_at || "?";
+  const nUsed = (ssDoc.n_pairs_used || 0).toLocaleString();
+
+  // Top-N table
+  const top = ranked.slice(0, 10);
+  const rankRows = top.map(r => {
+    const isTop = r.rank === 1;
+    const color = r.spread >= 50 ? "#ef6450" : r.spread >= 10 ? "#f0b35e" : r.spread >= 3 ? "#74c38b" : "#8a93a3";
+    return `<tr${isTop ? ' style="background:rgba(212,163,115,0.06);"' : ''}>
+      <td style="text-align:right;opacity:0.6;">${r.rank}</td>
+      <td><strong>${r.field_label}</strong> <span style="opacity:0.5;">(${r.field_key})</span></td>
+      <td>${r.dimension_label}</td>
+      <td style="color:${color};font-weight:700;text-align:right;">${r.spread.toFixed(2)}</td>
+    </tr>`;
+  }).join("");
+
+  // Find top opportunity's bin data for a chart
+  let chartHtml = "";
+  if (top.length) {
+    const top1 = top[0];
+    const fieldRec = (ssDoc.fields || []).find(f => f.key === top1.field_key);
+    const dimRec = fieldRec && fieldRec.by_dimension && fieldRec.by_dimension[top1.dimension_key];
+    if (fieldRec && dimRec) {
+      const ovMae = fieldRec.overall.mae;
+      const maxMae = Math.max(...dimRec.bins.map(b => b.mae));
+      const barRows = dimRec.bins
+        .slice()
+        .sort((a, b) => b.mae - a.mae)
+        .map(b => {
+          const w = maxMae > 0 ? (b.mae / maxMae) * 100 : 0;
+          const aboveOverall = b.mae > ovMae;
+          const barColor = aboveOverall ? "rgba(239,100,80,0.6)" : "rgba(74,210,154,0.6)";
+          return `<tr>
+            <td style="white-space:nowrap;">${b.label}</td>
+            <td style="text-align:right;opacity:0.6;">${b.n.toLocaleString()}</td>
+            <td style="text-align:right;">${b.bias >= 0 ? '+' : ''}${b.bias.toFixed(2)}</td>
+            <td style="text-align:right;font-weight:600;">${b.mae.toFixed(2)} ${fieldRec.unit}</td>
+            <td style="width:40%;"><div style="background:${barColor};height:14px;width:${w}%;border-radius:2px;"></div></td>
+          </tr>`;
+        }).join("");
+      chartHtml = `
+        <div style="margin-top:18px;">
+          <div style="margin-bottom:6px;font-weight:600;color:#d4a373;">#1 opportunity: ${top1.field_label} (${fieldRec.unit}) × ${top1.dimension_label}</div>
+          <div class="meta-line" style="margin-bottom:8px;">Overall MAE: <strong>${ovMae.toFixed(2)} ${fieldRec.unit}</strong>. Bins sorted worst → best. Red bar = bin MAE above overall (model fails here); green = below (model OK here). Bigger gap top-to-bottom = bigger regime-conditional signal.</div>
+          <table class="offset-table"><thead><tr>
+            <th>Bin</th><th style="text-align:right;">n</th><th style="text-align:right;">bias</th><th style="text-align:right;">MAE</th><th>MAE vs worst</th>
+          </tr></thead><tbody>${barRows}</tbody></table>
+        </div>`;
+    }
+  }
+
+  const verdictColor = verdict.includes("worth building") ? "#4ad29a" : "#8a93a3";
+  const verdictBg    = verdict.includes("worth building") ? "#131c13" : "#1a1f2a";
+  const verdictBorder= verdict.includes("worth building") ? "#1f3a1f" : "#242833";
+
+  grid.innerHTML = `
+    <div class="layer-info-text" style="border-color:${verdictBorder};background:${verdictBg};margin-bottom:10px;">
+      <strong style="color:${verdictColor};">Verdict:</strong> ${verdict}
+      <div class="meta-line">Fitted ${fittedAt} · ${nUsed} pairs used.</div>
+    </div>
+    <div style="margin-bottom:6px;font-weight:600;">Ranked opportunities — top 10 by MAE spread across bins</div>
+    <table class="offset-table"><thead><tr>
+      <th style="text-align:right;">#</th><th>Field</th><th>Dimension</th><th style="text-align:right;">Spread</th>
+    </tr></thead><tbody>${rankRows}</tbody></table>
+    ${chartHtml}
+  `;
 }
 
 // ── Layer 2 octant coverage: where did this tick's stations come from? ─
@@ -2232,9 +2331,16 @@ async function load() {
     if (res.ok) diurnalDoc = await res.json();
   } catch (err) { /* silent */ }
 
+  let ssDoc;
+  try {
+    const res = await fetch(STATE_STRAT_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) ssDoc = await res.json();
+  } catch (err) { /* silent */ }
+
   renderMeta(corrDoc, wxDoc);
   renderAccuracySection(tsDoc, wxDoc);
   renderL3L4AuditSection(tsDoc, wxDoc);
+  renderStateStratifiedSection(ssDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
 

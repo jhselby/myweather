@@ -35,6 +35,7 @@ import pytz
 
 from ..gcs_io import BUCKET, get_client, load_json, upload_json
 from ..utils import redact_secrets
+from . import state_stratified
 
 
 ERROR_LOG_PATH = "forecast_error_log.jsonl"
@@ -221,6 +222,10 @@ def fit_decay_corrections():
     sums = defaultdict(float)
     weights = defaultdict(float)
     raw_counts = defaultdict(int)
+    # v0.6.48: state-stratified accuracy accumulators — equal-weight, fed
+    # in-loop alongside the recency-weighted fits above. See module docstring
+    # for the hypothesis under test.
+    state_acc = state_stratified.init_accumulators()
     # Parallel accumulators binned by tide phase instead of lead_h — feeds the
     # tide-phase historical view (Section 5). Same recency weighting.
     tide_sums = defaultdict(float)
@@ -289,6 +294,10 @@ def fit_decay_corrections():
                 continue
             n_kept += 1
             fout.write(line + "\n")
+            # State-stratified accumulators (equal-weight). Done before the
+            # field-required filter below because state_stratified has its
+            # own validity checks and tolerates rows the lead-h fit skips.
+            state_stratified.accumulate(state_acc, row)
             field = row.get("field")
             lead_h = row.get("lead_h")
             error = row.get("error")
@@ -514,6 +523,20 @@ def fit_decay_corrections():
         logging.info(f"  ✓ Diurnal history: {len(kept_d)} fits in {HISTORY_RETENTION_DAYS}-day window")
     except Exception as e:
         logging.warning(f"  ⚠  Diurnal history append failed: {redact_secrets(e)}")
+
+    # v0.6.48: state-stratified accuracy output. Equal-weight tables across
+    # the kept window — per-field per-dimension MAE + ranked opportunities +
+    # verdict line. Diagnostic-only (active hypothesis, not yet applied).
+    try:
+        ss_output = state_stratified.build_output(
+            state_acc, now_naive.strftime("%Y-%m-%dT%H:%M")
+        )
+        upload_json(ss_output, "state_stratified_accuracy.json",
+                    "state_stratified_accuracy.json")
+        logging.info(f"  ✓ State-stratified accuracy: {ss_output['n_pairs_used']:,} pairs used "
+                     f"({len(ss_output['ranked_opportunities'])} ranked opps)")
+    except Exception as e:
+        logging.warning(f"  ⚠  State-stratified accuracy failed: {redact_secrets(e)}")
 
     # L2 lead-decay τ fit. For each field, find the τ in L2_TAU_GRID that
     # minimizes weighted SSE of (err_l1 + exp(-lead/τ) × bias)² across all
