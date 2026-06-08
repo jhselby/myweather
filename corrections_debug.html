@@ -694,10 +694,9 @@
     <div class="meta-line"><strong>Verdict:</strong> τ=14 days is fine within noise. Tested τ ∈ {7, 14, 21} days for the recency-weighted Fitter window across four reports. Held-out MAE differences under 2%, well below the run-to-run variance. τ=14d stays. With L3/L4 mostly disabled in v0.6.45, this knob barely matters anymore. Analysis: <code>analysis/decay_tau_tuning.py</code>.</div>
   </details>
 
-  <details class="research-subsection" id="r4e-pop-calibration">
-    <summary>R3e. POP calibration — flat additive vs piecewise scaled (settled v0.6.20, re-shipped v0.6.49)</summary>
-    <div class="meta-line"><strong>Verdict:</strong> flat additive wins on Brier score (745.4 vs piecewise 768.9 vs raw 782.8). Originally shipped v0.6.20. The v0.6.45 per-field whitelist incorrectly removed POP from L3 because the audit measured by MAE — wrong yardstick for a probabilistic forecast. Re-added in v0.6.49 with the table flag "[Brier]" so the MAE-based ⚠ rule doesn't fire on it. POP is back in <code>L3_FIELDS</code>; the flat-additive correction is being applied. Analysis: <code>analysis/pop_calibration.py</code>.</div>
-  </details>
+  <!-- R3e (POP calibration) removed v0.6.50 — POP is back in L3_FIELDS and
+       documented in the L3 banner. The Discarded section is for genuinely
+       discarded hypotheses only. -->
 </details>
 
 
