@@ -72,6 +72,28 @@ DIURNAL_BINS = 24
 DIURNAL_PATH = "diurnal_corrections.json"
 DIURNAL_HISTORY_PATH = "diurnal_corrections_history.json"
 
+# L2 lead-decay τ fit (v0.6.44+). For each field, fit a single τ_hours such
+# that bias_applied(lead) = current_bias × exp(-lead/τ) minimizes weighted
+# squared residual vs the L1 error on recent pairs. Closed-form: each pair
+# contributes (err_l1 + decay × bias)² × w. Expanding gives three accumulators
+# per (field, lead): Σw·e², Σw·e·b, Σw·b² — independent of τ. Then we
+# grid-search τ to find the minimum SSE. Same recency-weighted window as the
+# rest of the fitter (TAU_DAYS=14).
+#
+# Fields fit: only those where L2 actually applies a bias to a forecast array.
+# dp is derived from (t, h); cc/sr/pa/cl/cm/ch have ~zero L2 bias in practice
+# (no Mesonet stations for those fields); wd is circular. ws/wg fit included
+# as diagnostic — they currently use flat (τ=∞) in production and the audit
+# confirmed that's correct, but tracking τ over time tells us if that flips.
+L2_DECAY_PATH = "l2_decay.json"
+L2_DECAY_HISTORY_PATH = "l2_decay_history.json"
+L2_TAU_FIELDS = ("t", "h", "pr", "ws", "wg")
+# Grid in hours. 1e9 ≈ ∞ → flat (current L2 behavior).
+L2_TAU_GRID = (0.5, 1, 2, 3, 4, 6, 8, 12, 18, 24, 36, 60, 120, 240, 1e9)
+# Minimum pairs for a τ fit to publish — otherwise leave field absent so the
+# loader falls back to DEFAULT_L2_TAUS in corrected_hourly.py.
+L2_TAU_MIN_PAIRS = 500
+
 # Time-series diagnostic (Section 6 — research). For each hour in the last
 # TIMESERIES_DAYS, compute mean error per (field, lead) at each lead in
 # TIMESERIES_LEADS, plus the approximate tide elevation at that hour. Lets
@@ -229,6 +251,13 @@ def fit_decay_corrections():
     per_layer_abs    = defaultdict(float)  # key: (field, lead_h, layer)
     per_layer_signed = defaultdict(float)
     per_layer_n      = defaultdict(int)
+    # L2 τ-fit accumulators. Keyed by (field, lead_h). Filled only when both
+    # error_l1 and error_l2 are present on the row so bias = err_l1 - err_l2
+    # is well-defined.
+    tau_e2 = defaultdict(float)  # Σ w · err_l1²
+    tau_eb = defaultdict(float)  # Σ w · err_l1 · bias
+    tau_b2 = defaultdict(float)  # Σ w · bias²
+    tau_n  = defaultdict(int)    # raw pair count per (field, lead)
     n_in = 0
     n_kept = 0
 
@@ -330,6 +359,21 @@ def fit_decay_corrections():
                     per_layer_abs[key]    += abs(e)
                     per_layer_signed[key] += e
                     per_layer_n[key]      += 1
+            # L2 τ-fit: only fields we publish τ for, only post-v0.6.25 rows
+            # carrying both error_l1 and error_l2 (so bias = err_l1 - err_l2
+            # is well-defined). Recency weighting reuses the same `w` as the
+            # legacy fit, so the windowing matches L3 and L4.
+            if field in L2_TAU_FIELDS:
+                e1 = row.get("error_l1")
+                e2 = row.get("error_l2")
+                if e1 is not None and e2 is not None:
+                    e1f = float(e1)
+                    bias = e1f - float(e2)
+                    key = (field, lead_h)
+                    tau_e2[key] += w * e1f * e1f
+                    tau_eb[key] += w * e1f * bias
+                    tau_b2[key] += w * bias * bias
+                    tau_n[key]  += 1
 
     corrections = {}
     n_samples = {}
@@ -461,6 +505,71 @@ def fit_decay_corrections():
         logging.info(f"  ✓ Diurnal history: {len(kept_d)} fits in {HISTORY_RETENTION_DAYS}-day window")
     except Exception as e:
         logging.warning(f"  ⚠  Diurnal history append failed: {redact_secrets(e)}")
+
+    # L2 lead-decay τ fit. For each field, find the τ in L2_TAU_GRID that
+    # minimizes weighted SSE of (err_l1 + exp(-lead/τ) × bias)² across all
+    # leads. SSE(τ) = Σ_l [e2[f,l] + 2·exp(-l/τ)·eb[f,l] + exp(-2l/τ)·b2[f,l]],
+    # so the per-(f,l) accumulators we built in the pair-log loop are
+    # sufficient. n_pairs threshold prevents publishing a noisy fit on a
+    # too-thin field.
+    tau_hours_out = {}
+    tau_n_pairs_out = {}
+    tau_sse_curve = {}  # for the history file — SSE at each grid point per field
+    for f in L2_TAU_FIELDS:
+        n_pairs = sum(tau_n.get((f, l), 0) for l in range(LEAD_BINS))
+        tau_n_pairs_out[f] = n_pairs
+        if n_pairs < L2_TAU_MIN_PAIRS:
+            continue
+        best_tau = None
+        best_sse = float("inf")
+        sse_at = {}
+        for tau in L2_TAU_GRID:
+            sse = 0.0
+            for l in range(LEAD_BINS):
+                if (f, l) not in tau_e2:
+                    continue
+                if tau >= 1e8:
+                    d = 1.0
+                    d2 = 1.0
+                else:
+                    d  = math.exp(-l / tau)
+                    d2 = math.exp(-2.0 * l / tau)
+                sse += tau_e2[(f, l)] + 2.0 * d * tau_eb[(f, l)] + d2 * tau_b2[(f, l)]
+            sse_at[("inf" if tau >= 1e8 else f"{tau:g}")] = round(sse, 4)
+            if sse < best_sse:
+                best_sse = sse
+                best_tau = tau
+        if best_tau is not None:
+            tau_hours_out[f] = "inf" if best_tau >= 1e8 else (
+                int(best_tau) if best_tau == int(best_tau) else round(best_tau, 2))
+            tau_sse_curve[f] = sse_at
+    # Loader treats string "inf" as flat (τ ≥ 1e8 in corrected_hourly.py).
+    # Numeric values are hours.
+    l2_decay_output = {
+        "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
+        "n_pairs_total": n_kept,
+        "retention_days": RETENTION_DAYS,
+        "weighting": {"method": "exponential_decay", "tau_days": TAU_DAYS},
+        "tau_hours": tau_hours_out,
+        "n_pairs_per_field": tau_n_pairs_out,
+        "sse_at_grid": tau_sse_curve,
+        "tau_grid_hours": [("inf" if t >= 1e8 else (int(t) if t == int(t) else t))
+                           for t in L2_TAU_GRID],
+        "min_pairs_threshold": L2_TAU_MIN_PAIRS,
+    }
+    upload_json(l2_decay_output, L2_DECAY_PATH, "l2_decay.json")
+    logging.info(f"  ✓ L2 τ fit: " + ", ".join(
+        f"{f}={tau_hours_out[f]}h" for f in L2_TAU_FIELDS if f in tau_hours_out
+    ))
+    try:
+        l2_history = load_json(L2_DECAY_HISTORY_PATH, default={"history": []})
+        kept_l2 = [h for h in l2_history.get("history", [])
+                   if isinstance(h, dict) and h.get("fitted_at", "") >= hist_cutoff]
+        kept_l2.append(l2_decay_output)
+        upload_json({"history": kept_l2}, L2_DECAY_HISTORY_PATH, "l2_decay_history.json")
+        logging.info(f"  ✓ L2 τ history: {len(kept_l2)} fits in {HISTORY_RETENTION_DAYS}-day window")
+    except Exception as e:
+        logging.warning(f"  ⚠  L2 τ history append failed: {redact_secrets(e)}")
 
     # Time-series diagnostic (Section 6) — last TIMESERIES_DAYS of hour-by-hour
     # mean error per (field, lead), plus an M2 tide-elevation curve at each

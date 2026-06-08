@@ -32,12 +32,24 @@ L2_DECAY_PATH = "l2_decay.json"
 
 
 def _load_l2_taus():
-    """Prefer a GCS-published refit; fall back to the inline defaults."""
+    """Prefer a GCS-published refit; fall back to the inline defaults.
+
+    Accepts numeric τ in hours; "inf" (str) or values >= 1e8 mean flat (current
+    L2 behavior). The fitter writes "inf" as a string when the grid search
+    picks the flat candidate; numeric values are kept as-is.
+    """
     doc = load_json(L2_DECAY_PATH, default=None)
     if isinstance(doc, dict):
         taus = doc.get("tau_hours")
         if isinstance(taus, dict):
-            return {k: float(v) for k, v in taus.items() if isinstance(v, (int, float))}
+            out = {}
+            for k, v in taus.items():
+                if isinstance(v, (int, float)):
+                    out[k] = float(v)
+                elif isinstance(v, str) and v.lower() in ("inf", "infinity"):
+                    out[k] = 1e9
+            if out:
+                return out
     return dict(DEFAULT_L2_TAUS)
 
 
