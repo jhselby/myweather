@@ -604,6 +604,11 @@
 <!-- ───────────────────── Layer 3 ───────────────────── -->
 <h2 class="section" id="sec-layer3">Layer 3 — Decay curves (lead-time correction)</h2>
 
+<div id="banner-l3-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
+  <strong style="color:#d4a373;">⏸ Layer 3 paused (v0.6.44).</strong>
+  <div class="meta-line">The L2 audit showed L3 was net-negative on most fields because it was fitting residuals from a flat-applied L2 bias. L2 now applies bias × exp(-lead/τ); L3 is paused for ~14 days so the fitter rebuilds against the corrected residual. Fitted curves below show what L3 <em>would</em> have applied if enabled; nothing is being applied to the live forecast.</div>
+</div>
+
 <h3 class="subsection">3a. Fitted correction curves — what is being applied per lead hour</h3>
 <div id="status-corrections" class="status" hidden></div>
 <div id="grid-corrections" class="grid"></div>
@@ -618,6 +623,11 @@
 
 <!-- ───────────────────── Layer 4 ───────────────────── -->
 <h2 class="section" id="sec-layer4">Layer 4 — Diurnal correction (hour-of-day)</h2>
+
+<div id="banner-l4-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
+  <strong style="color:#d4a373;">⏸ Layer 4 paused (v0.6.44).</strong>
+  <div class="meta-line">Paused alongside L3 — same reason. Diurnal fits below show what L4 <em>would</em> have applied; nothing is being applied to the live forecast.</div>
+</div>
 
 <h3 class="subsection">4a. Diurnal correction curves over time — historical fits</h3>
 <div id="status-diurnal" class="status" hidden></div>
@@ -716,8 +726,15 @@ function showStatus(id, msg) {
 function renderMeta(corrDoc, wxDoc) {
   const el = document.getElementById("meta");
   const dm = (wxDoc && wxDoc.decay_meta) || null;
+  const l3Banner = document.getElementById("banner-l3-paused");
+  const l4Banner = document.getElementById("banner-l4-paused");
+  if (l3Banner) l3Banner.hidden = !(dm && dm.layer_3_paused);
+  if (l4Banner) l4Banner.hidden = !(dm && dm.layer_4_paused);
+  const paused = dm && (dm.layer_3_paused || dm.layer_4_paused);
   const applied = dm
-    ? `<strong style="color:#4aa3ff;">decay applied ${dm.applied_at}</strong> (${dm.cells_corrected.toLocaleString()} cells${dm.cells_capped ? `, ${dm.cells_capped} capped` : ""})`
+    ? (paused
+        ? `<strong style="color:#d4a373;">L3/L4 paused (v0.6.44)</strong> · L2 lead-decay only · ${dm.applied_at}`
+        : `<strong style="color:#4aa3ff;">decay applied ${dm.applied_at}</strong> (${dm.cells_corrected.toLocaleString()} cells${dm.cells_capped ? `, ${dm.cells_capped} capped` : ""})`)
     : `<strong style="color:#ff9f4a;">decay NOT yet applied to this payload</strong>`;
   const fitted = corrDoc ? `fitted <strong>${corrDoc.fitted_at || "?"}</strong> · <strong>${(corrDoc.n_pairs || 0).toLocaleString()}</strong> pairs · ` : "";
   el.innerHTML =
