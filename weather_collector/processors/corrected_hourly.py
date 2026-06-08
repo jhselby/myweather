@@ -1,17 +1,51 @@
 """
 Build the bias-corrected hourly arrays that the frontend charts read:
-    - corrected_temperature        (raw + station-network temp bias)
-    - corrected_humidity           (raw + station-network humidity bias)
+    - corrected_temperature        (raw + station-network temp bias × decay(lead))
+    - corrected_humidity           (raw + station-network humidity bias × decay(lead))
     - corrected_apparent_temperature  (Steadman, with solar when available)
     - corrected_dew_point          (Magnus)
     - corrected_absolute_humidity  (g/m³, derived from corrected dew point)
 
 Must run AFTER build_hyperlocal_data (which sets the bias values).
 Mutates weather_data["hourly"] in place.
+
+L2 lead-decay (v0.6.44): instead of applying the station bias flat across
+all 48 lead hours, apply bias × exp(-lead/τ_field). τ is fit per field by
+analysis/l2_lead_decay_fit.py. Fields not in L2_TAUS (or τ ≥ 1e8) get
+flat application. Optional GCS override via l2_decay.json.
 """
 import math
 
+from ..gcs_io import load_json
 from ..utils import magnus_dew_point_f, steadman_feels_like_f
+
+
+# Default per-field τ in hours. Source: analysis/l2_lead_decay_fit.py run on
+# 73,510 train pairs (cutoff 2026-06-06). Held-out wins: t +5.1%, h +3.8%,
+# pr +4.2% vs flat L2. Fields not listed → flat application (current behavior).
+DEFAULT_L2_TAUS = {
+    "t":  4.0,    # temperature: bias mostly useful at very short leads
+    "h":  240.0,  # humidity: slow decay, bias persists across the horizon
+    "pr": 12.0,   # pressure: half-life ~8h
+}
+L2_DECAY_PATH = "l2_decay.json"
+
+
+def _load_l2_taus():
+    """Prefer a GCS-published refit; fall back to the inline defaults."""
+    doc = load_json(L2_DECAY_PATH, default=None)
+    if isinstance(doc, dict):
+        taus = doc.get("tau_hours")
+        if isinstance(taus, dict):
+            return {k: float(v) for k, v in taus.items() if isinstance(v, (int, float))}
+    return dict(DEFAULT_L2_TAUS)
+
+
+def _decay_factors(tau, n):
+    """exp(-lead/τ) for lead = 0..n-1. τ >= 1e8 (or None) → flat 1.0."""
+    if tau is None or tau >= 1e8:
+        return [1.0] * n
+    return [math.exp(-i / tau) for i in range(n)]
 
 
 def add_corrected_hourly_arrays(weather_data):
@@ -35,11 +69,19 @@ def add_corrected_hourly_arrays(weather_data):
     raw_temps = hourly.get("temperature", [])
     raw_humid = hourly.get("humidity", [])
 
+    taus = _load_l2_taus()
+    weather_data["l2_decay_meta"] = {"tau_hours": dict(taus)}
+    n_hours = max(len(raw_temps), len(raw_humid), 48)
+    t_decay = _decay_factors(taus.get("t"), n_hours)
+    h_decay = _decay_factors(taus.get("h"), n_hours)
+
     hourly["corrected_temperature"] = [
-        round(t + temp_bias, 1) if t is not None else None for t in raw_temps
+        round(t + temp_bias * t_decay[i], 1) if t is not None else None
+        for i, t in enumerate(raw_temps)
     ]
     hourly["corrected_humidity"] = [
-        round(h + humid_bias, 1) if h is not None else None for h in raw_humid
+        round(h + humid_bias * h_decay[i], 1) if h is not None else None
+        for i, h in enumerate(raw_humid)
     ]
 
     ct_arr = hourly["corrected_temperature"]
@@ -84,6 +126,8 @@ def add_corrected_hourly_arrays(weather_data):
     if raw_pressure_mb:
         raw_pressure_in = [round(p / 33.8639, 3) if p is not None else None for p in raw_pressure_mb]
         hourly["raw_pressure_in"] = raw_pressure_in
+        pr_decay = _decay_factors(taus.get("pr"), max(len(raw_pressure_in), 48))
         hourly["corrected_pressure_in"] = [
-            round(p + pressure_bias_in, 3) if p is not None else None for p in raw_pressure_in
+            round(p + pressure_bias_in * pr_decay[i], 3) if p is not None else None
+            for i, p in enumerate(raw_pressure_in)
         ]

@@ -40,6 +40,18 @@ DIURNAL_CORRECTIONS_PATH = "diurnal_corrections.json"
 TZ = pytz.timezone("America/New_York")
 STALE_DAYS = 7
 
+# v0.6.44: pause L3 (decay) and L4 (diurnal) entirely while L2 lead-decay
+# takes over the over-correction-at-far-leads job. Per-layer MAE audit showed
+# L3/L4 were net-negative on temp/humidity/dp/solar/clouds because they were
+# fitting residuals from a flat-applied L2 — corrupted signal. L2 now applies
+# bias × exp(-lead/τ) so the residuals coming into L3/L4 will be different.
+# Pause for ~14 days so the fitter rebuilds L3/L4 against the new residuals
+# before re-enabling. Flip these to True after the post-L2-fix audit.
+# Snapshots (_post_l2, _post_l3) still happen so the per-layer MAE diagnostic
+# continues to publish — with L3 and L4 layers = L2 by construction.
+APPLY_LAYER_3 = False
+APPLY_LAYER_4 = False
+
 # Sanity caps on |correction| per field in each field's native units. A
 # pathological fit cannot move the forecast more than this regardless of
 # what decay_corrections.json says.
@@ -244,7 +256,7 @@ def apply_decay_corrections(weather_data):
     wd_sin_corr = wd_components.get("sin") or []
     wd_cos_corr = wd_components.get("cos") or []
     wd_arr = hourly.get("wind_direction")
-    if isinstance(wd_arr, list) and wd_sin_corr and wd_cos_corr:
+    if APPLY_LAYER_3 and isinstance(wd_arr, list) and wd_sin_corr and wd_cos_corr:
         wd_applied = 0
         wd_capped = 0
         for h in range(min(len(wd_arr), len(wd_sin_corr), len(wd_cos_corr))):
@@ -287,37 +299,38 @@ def apply_decay_corrections(weather_data):
 
     applied = 0
     capped = 0
-    for short, array_name in TARGET_ARRAY.items():
-        arr = hourly.get(array_name)
-        if not isinstance(arr, list):
-            continue
-        per_lead = corrections.get(short, [])
-        if not isinstance(per_lead, list):
-            continue
-        cap = CAPS.get(short, float("inf"))
-        digits = ROUND_DIGITS.get(short, 1)
-        for h in range(min(len(arr), len(per_lead))):
-            val = arr[h]
-            c = per_lead[h]
-            if val is None or c is None:
+    if APPLY_LAYER_3:
+        for short, array_name in TARGET_ARRAY.items():
+            arr = hourly.get(array_name)
+            if not isinstance(arr, list):
                 continue
-            try:
-                c = float(c)
-            except (TypeError, ValueError):
+            per_lead = corrections.get(short, [])
+            if not isinstance(per_lead, list):
                 continue
-            applied_c = c
-            if abs(applied_c) > cap:
-                capped += 1
-                applied_c = cap if applied_c > 0 else -cap
-            result = val - applied_c
-            # Physical bounds per field (wind ≥ 0, humidity/POP in [0,100]).
-            lo, hi = FIELD_BOUNDS.get(short, (None, None))
-            if lo is not None and result < lo:
-                result = lo
-            if hi is not None and result > hi:
-                result = hi
-            arr[h] = round(result, digits)
-            applied += 1
+            cap = CAPS.get(short, float("inf"))
+            digits = ROUND_DIGITS.get(short, 1)
+            for h in range(min(len(arr), len(per_lead))):
+                val = arr[h]
+                c = per_lead[h]
+                if val is None or c is None:
+                    continue
+                try:
+                    c = float(c)
+                except (TypeError, ValueError):
+                    continue
+                applied_c = c
+                if abs(applied_c) > cap:
+                    capped += 1
+                    applied_c = cap if applied_c > 0 else -cap
+                result = val - applied_c
+                # Physical bounds per field (wind ≥ 0, humidity/POP in [0,100]).
+                lo, hi = FIELD_BOUNDS.get(short, (None, None))
+                if lo is not None and result < lo:
+                    result = lo
+                if hi is not None and result > hi:
+                    result = hi
+                arr[h] = round(result, digits)
+                applied += 1
 
     # v0.6.25: snapshot post-Layer-3 (= after decay, before diurnal) for the
     # per-layer MAE accuracy table. Each layer's output captured = (raw → L2 →
@@ -354,7 +367,7 @@ def apply_decay_corrections(weather_data):
         if not isinstance(diurnal_corrections, dict):
             diurnal_corrections = None
     times = hourly.get("times", []) if diurnal_corrections else []
-    if diurnal_corrections and times:
+    if APPLY_LAYER_4 and diurnal_corrections and times:
         for short, array_name in TARGET_ARRAY.items():
             arr = hourly.get(array_name)
             if not isinstance(arr, list):
@@ -440,4 +453,6 @@ def apply_decay_corrections(weather_data):
         "diurnal_fitted_at": diurnal_fitted_at,
         "diurnal_cells_corrected": diurnal_applied,
         "diurnal_cells_capped": diurnal_capped,
+        "layer_3_paused": not APPLY_LAYER_3,
+        "layer_4_paused": not APPLY_LAYER_4,
     }
