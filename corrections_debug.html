@@ -535,7 +535,7 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  Per-field MAE-vs-lead chart with each correction layer overlaid. X-axis = lead hour (0–47), Y-axis = mean absolute error in field units. The gap between <strong>Raw model</strong> (gray dashed) and <strong>+ Diurnal (final)</strong> (blue) at each lead is how much our pipeline is reducing forecast error vs the bare HRRR/GFS at that horizon.
+  Per-field MAE-vs-lead chart with each correction layer overlaid. X-axis = lead hour (0–47), Y-axis = mean absolute error in field units. The gap between <strong>Raw model</strong> (gray dashed) and <strong>+ Mesonet (final)</strong> (orange) at each lead is how much our pipeline is reducing forecast error vs the bare HRRR/GFS at that horizon. (L3/L4 paused in v0.6.44.)
   <div class="meta-line">Lead 0 is circular by construction (forecast for now compared against the same-moment mesonet, so L2 ≈ 0); look at lead 1+ for real signal. Source: <code>time_series_diagnostic.json::per_layer_mae_by_lead</code>, 7-day window. Populates from v0.6.25+ pairs only — older pairs lack per-layer detail.</div>
 </div>
 <div id="status-accuracy" class="status" hidden></div>
@@ -847,9 +847,9 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
 // detail lives inside Layer 2's own panel, not in the cross-layer view.
 const DRILL_LAYERS = [
   { key: "raw", label: "Raw model",                   color: "rgba(138,147,163,0.55)", dash: [4,4] },
-  { key: "l2",  label: "+ Layer 2 (mesonet)",         color: "rgba(170,180,200,1)",    dash: [] },
-  { key: "l3",  label: "+ Layer 3 (decay)",           color: "rgba(110,180,235,1)",    dash: [] },
-  { key: "l4",  label: "+ Layer 4 (diurnal) — final", color: "rgba(74,163,255,1)",     dash: [] },
+  { key: "l2",  label: "+ Layer 2 (mesonet) — final", color: "rgba(170,180,200,1)",    dash: [] },
+  { key: "l3",  label: "+ Layer 3 (decay) — paused",  color: "rgba(110,180,235,1)",    dash: [] },
+  { key: "l4",  label: "+ Layer 4 (diurnal) — paused", color: "rgba(74,163,255,1)",     dash: [] },
 ];
 let _drillCharts = [];  // one Chart.js instance per selected field
 let _drillState = {
@@ -1079,10 +1079,10 @@ function renderAccuracySection(tsDoc) {
   const maeByLead = tsDoc.per_layer_mae_by_lead;
   const nByLead   = tsDoc.per_layer_n_by_lead || {};
   const LAYER_LINES = [
-    { key: "l1", label: "Raw model",        color: "rgba(138,147,163,0.75)", dash: [4,4] },
-    { key: "l2", label: "+ Mesonet",        color: "rgba(200,160,110,1)",    dash: [] },
-    { key: "l3", label: "+ Decay",          color: "rgba(110,180,235,1)",    dash: [] },
-    { key: "l4", label: "+ Diurnal (final)",color: "rgba(74,163,255,1)",     dash: [] },
+    { key: "l1", label: "Raw model",          color: "rgba(138,147,163,0.75)", dash: [4,4] },
+    { key: "l2", label: "+ Mesonet (final)",  color: "rgba(200,160,110,1)",    dash: [] },
+    { key: "l3", label: "+ Decay (paused)",   color: "rgba(110,180,235,1)",    dash: [] },
+    { key: "l4", label: "+ Diurnal (paused)", color: "rgba(74,163,255,1)",     dash: [] },
   ];
   // Use the existing accuracy-grid container but replace it with a wide grid
   // of charts (re-using the .grid class from existing chart sections).

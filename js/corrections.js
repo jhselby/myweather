@@ -163,42 +163,87 @@ function _renderDecayCorrections(data) {
     pr: ['Precip Rate',  ' in/h', 2],
   };
 
-  const per24 = dm.per_field_24h || {};
-  // Display in a stable order (matches the debug page) so the user gets a
-  // consistent layout regardless of dict insertion order.
-  const order = ['t', 'dp', 'h', 'ws', 'wg', 'pa', 'cc', 'sr', 'pp', 'pr'];
-  const rows = order
-    .filter(k => k in per24)
-    .map(k => {
-      const v = Number(per24[k]);
-      const [label, unit, digits] = fieldSpec[k] || [k, '', 1];
+  const paused = !!(dm.layer_3_paused || dm.layer_4_paused);
+  const hourly = (data && data.hourly) || {};
+
+  let rows = '';
+  let headerLeft = '';
+  let headerRight = '';
+  let footerText = '';
+
+  if (paused) {
+    // L3/L4 paused: show ACTUAL L2-lead-decayed delta at +24h, computed from
+    // the corrected vs raw hourly arrays. Truthful for what's being applied.
+    const l2Taus = (data.l2_decay_meta && data.l2_decay_meta.tau_hours) || {};
+    const delta24 = (correctedKey, rawKey, digits) => {
+      const corr = hourly[correctedKey];
+      const raw  = hourly[rawKey];
+      if (!Array.isArray(corr) || !Array.isArray(raw) || corr.length <= 24 || raw.length <= 24) return null;
+      if (corr[24] == null || raw[24] == null) return null;
+      return Number((corr[24] - raw[24]).toFixed(digits));
+    };
+    const items = [
+      { key: 't',  label: 'Temperature', unit: '°F',    digits: 2, delta: delta24('corrected_temperature', 'temperature', 2) },
+      { key: 'h',  label: 'Humidity',    unit: '%',     digits: 1, delta: delta24('corrected_humidity',    'humidity',    1) },
+      { key: 'pr', label: 'Pressure',    unit: ' inHg', digits: 3, delta: delta24('corrected_pressure_in', 'raw_pressure_in', 3) },
+    ];
+    rows = items.filter(x => x.delta != null).map(x => {
+      const v = x.delta;
       const sign = v >= 0 ? '+' : '';
       const color = v > 0 ? 'rgba(239,100,80,0.9)'
                   : v < 0 ? 'rgba(80,160,239,0.9)'
                   :         'rgba(180,180,180,0.7)';
-      const display = `${sign}${v.toFixed(digits)}${unit === '°F' || unit === 'mph' ? ' ' + unit : unit}`;
+      const tau = l2Taus[x.key];
+      const tauStr = tau ? ` (τ=${tau >= 1e8 ? '∞' : tau + 'h'})` : '';
+      const display = `${sign}${v.toFixed(x.digits)}${x.unit === '°F' || x.unit === 'mph' ? ' ' + x.unit : x.unit}`;
       return `<div style="display:flex;justify-content:space-between;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
-        <span style="opacity:0.7;font-size:0.78rem;">${label}</span>
+        <span style="opacity:0.7;font-size:0.78rem;">${x.label}<span style="opacity:0.5;">${tauStr}</span></span>
         <span style="font-weight:700;color:${color};font-size:0.78rem;">${display}</span>
       </div>`;
     }).join('');
+    headerLeft = 'L2 bias at +24h (applied)';
+    headerRight = 'L3/L4 paused';
+    footerText = `Applied ${dm.applied_at || '?'} · L3/L4 paused since v0.6.44 · <a href="/corrections_debug.html" target="_blank" style="color:rgba(120,180,239,0.9);">why →</a>`;
+  } else {
+    const per24 = dm.per_field_24h || {};
+    const order = ['t', 'dp', 'h', 'ws', 'wg', 'pa', 'cc', 'sr', 'pp', 'pr'];
+    rows = order
+      .filter(k => k in per24)
+      .map(k => {
+        const v = Number(per24[k]);
+        const [label, unit, digits] = fieldSpec[k] || [k, '', 1];
+        const sign = v >= 0 ? '+' : '';
+        const color = v > 0 ? 'rgba(239,100,80,0.9)'
+                    : v < 0 ? 'rgba(80,160,239,0.9)'
+                    :         'rgba(180,180,180,0.7)';
+        const display = `${sign}${v.toFixed(digits)}${unit === '°F' || unit === 'mph' ? ' ' + unit : unit}`;
+        return `<div style="display:flex;justify-content:space-between;padding:4px 8px;border-bottom:1px solid rgba(255,255,255,0.05);">
+          <span style="opacity:0.7;font-size:0.78rem;">${label}</span>
+          <span style="font-weight:700;color:${color};font-size:0.78rem;">${display}</span>
+        </div>`;
+      }).join('');
+    const cappedText = dm.cells_capped ? ` · ${dm.cells_capped} capped` : '';
+    const cells = dm.cells_corrected || 0;
+    headerLeft = '+24h forecast adjustment';
+    headerRight = `${cells} cells${cappedText}`;
+    footerText = `Applied ${dm.applied_at || '?'} · fitted ${dm.fitted_at || '?'} · <a href="/corrections_debug.html" target="_blank" style="color:rgba(120,180,239,0.9);">full curves →</a>`;
+  }
 
-  const cappedText = dm.cells_capped ? ` · ${dm.cells_capped} capped` : '';
-  const cells = dm.cells_corrected || 0;
+  const title = paused ? 'Forecast Corrections at +24h ▾' : 'Forecast Decay Corrections ▾';
   container.innerHTML = `
     <div style="margin-top:14px;">
       <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'':'none'"
            style="font-size:0.78rem;font-weight:700;color:rgba(255,255,255,0.5);cursor:pointer;user-select:none;padding:4px 0;">
-        Forecast Decay Corrections ▾
+        ${title}
       </div>
       <div style="display:none;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:8px;overflow:hidden;margin-top:6px;">
         <div style="display:flex;justify-content:space-between;padding:5px 8px;background:rgba(255,255,255,0.05);border-bottom:1px solid rgba(255,255,255,0.1);">
-          <span style="font-weight:800;font-size:0.78rem;color:rgba(255,255,255,0.6);">+24h forecast adjustment</span>
-          <span style="font-weight:800;font-size:0.78rem;color:rgba(255,255,255,0.6);">${cells} cells${cappedText}</span>
+          <span style="font-weight:800;font-size:0.78rem;color:rgba(255,255,255,0.6);">${headerLeft}</span>
+          <span style="font-weight:800;font-size:0.78rem;color:rgba(255,255,255,0.6);">${headerRight}</span>
         </div>
         ${rows || `<div style="padding:8px;font-size:0.78rem;opacity:0.5;">No +24h correction data available yet.</div>`}
         <div style="padding:5px 8px;font-size:0.72rem;opacity:0.4;">
-          Applied ${dm.applied_at || '?'} · fitted ${dm.fitted_at || '?'} · <a href="/corrections_debug.html" target="_blank" style="color:rgba(120,180,239,0.9);">full curves →</a>
+          ${footerText}
         </div>
       </div>
     </div>`;
