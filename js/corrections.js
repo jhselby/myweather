@@ -151,18 +151,22 @@ function _renderDecayCorrections(data) {
 
   // Field key → [display label, unit, decimal places]
   const fieldSpec = {
-    t:  ['Temperature', '°F',  1],
-    dp: ['Dew Point',   '°F',  1],
-    h:  ['Humidity',    '%',   0],
-    ws: ['Wind Speed',  'mph', 1],
-    wg: ['Wind Gust',   'mph', 1],
-    pp: ['Precip Prob', '%',   0],
+    t:  ['Temperature',  '°F',    1],
+    dp: ['Dew Point',    '°F',    1],
+    h:  ['Humidity',     '%',     0],
+    ws: ['Wind Speed',   'mph',   1],
+    wg: ['Wind Gust',    'mph',   1],
+    pa: ['Pressure',     ' inHg', 2],
+    cc: ['Cloud Cover',  '%',     0],
+    sr: ['Solar Rad',    ' W/m²', 0],
+    pp: ['Precip Prob',  '%',     0],
+    pr: ['Precip Rate',  ' in/h', 2],
   };
 
   const per24 = dm.per_field_24h || {};
   // Display in a stable order (matches the debug page) so the user gets a
   // consistent layout regardless of dict insertion order.
-  const order = ['t', 'dp', 'h', 'ws', 'wg', 'pp'];
+  const order = ['t', 'dp', 'h', 'ws', 'wg', 'pa', 'cc', 'sr', 'pp', 'pr'];
   const rows = order
     .filter(k => k in per24)
     .map(k => {

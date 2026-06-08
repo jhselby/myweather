@@ -522,6 +522,7 @@
 </header>
 
 <nav class="toc">
+  <a href="/" style="color:#8a93a3;">← Back</a>
   <a href="#sec-accuracy" class="accuracy">Accuracy</a>
   <a href="#sec-drill">Drill-down</a>
   <a href="#sec-layer1">L1 Raw</a>
@@ -532,7 +533,7 @@
 </nav>
 
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
-<h2 class="section" id="sec-accuracy">Forecast accuracy — is it actually working?</h2>
+<h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
   Per-field MAE-vs-lead chart with each correction layer overlaid. X-axis = lead hour (0–47), Y-axis = mean absolute error in field units. The gap between <strong>Raw model</strong> (gray dashed) and <strong>+ Diurnal (final)</strong> (blue) at each lead is how much our pipeline is reducing forecast error vs the bare HRRR/GFS at that horizon.
   <div class="meta-line">Lead 0 is circular by construction (forecast for now compared against the same-moment mesonet, so L2 ≈ 0); look at lead 1+ for real signal. Source: <code>time_series_diagnostic.json::per_layer_mae_by_lead</code>, 7-day window. Populates from v0.6.25+ pairs only — older pairs lack per-layer detail.</div>
