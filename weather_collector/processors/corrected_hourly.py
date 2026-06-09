@@ -37,6 +37,11 @@ def _load_l2_taus():
     Accepts numeric τ in hours; "inf" (str) or values >= 1e8 mean flat (current
     L2 behavior). The fitter writes "inf" as a string when the grid search
     picks the flat candidate; numeric values are kept as-is.
+
+    Loader-side degenerate-fit guard: if every loaded numeric τ equals the
+    minimum grid value (0.5h) — the signature of a starved-signal fit — the
+    file is treated as missing and DEFAULT_L2_TAUS kicks in. Belt + suspenders
+    with the fitter-side write guard in decay_fit.py.
     """
     doc = load_json(L2_DECAY_PATH, default=None)
     if isinstance(doc, dict):
@@ -49,7 +54,15 @@ def _load_l2_taus():
                 elif isinstance(v, str) and v.lower() in ("inf", "infinity"):
                     out[k] = 1e9
             if out:
-                return out
+                numeric_vals = [v for v in out.values() if v < 1e8]
+                if numeric_vals and all(v == 0.5 for v in numeric_vals):
+                    import logging
+                    logging.warning(
+                        "  ⊘ L2 τ load: l2_decay.json is degenerate (every "
+                        "field at min τ=0.5h); using DEFAULT_L2_TAUS instead."
+                    )
+                else:
+                    return out
     return dict(DEFAULT_L2_TAUS)
 
 

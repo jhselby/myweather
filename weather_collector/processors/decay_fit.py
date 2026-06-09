@@ -589,10 +589,31 @@ def fit_decay_corrections():
                            for t in L2_TAU_GRID],
         "min_pairs_threshold": L2_TAU_MIN_PAIRS,
     }
-    upload_json(l2_decay_output, L2_DECAY_PATH, "l2_decay.json")
-    logging.info(f"  ✓ L2 τ fit: " + ", ".join(
-        f"{f}={tau_hours_out[f]}h" for f in L2_TAU_FIELDS if f in tau_hours_out
-    ))
+    # Degenerate-fit guard: when the pair log is starved of signal (recent
+    # OOMs, API outages, or just too few pairs maturing), every field's grid
+    # search collapses to the smallest τ in L2_TAU_GRID because every τ
+    # scores ~identically. Writing that to l2_decay.json clobbers months of
+    # validated τ knowledge with effectively-L1 behavior. Detect the obvious
+    # signature (every fitted field lands on the minimum grid τ) and refuse
+    # to overwrite the live file — the loader keeps reading the prior good
+    # values. History file still gets the degenerate fit for forensics.
+    min_grid_tau = min(t for t in L2_TAU_GRID if t < 1e8)
+    fitted_tau_values = [v for v in tau_hours_out.values()
+                         if isinstance(v, (int, float))]
+    degenerate = bool(fitted_tau_values) and all(
+        v == min_grid_tau for v in fitted_tau_values
+    )
+    if degenerate:
+        logging.warning(
+            f"  ⊘ L2 τ fit: DEGENERATE (every field landed on min grid "
+            f"τ={min_grid_tau}h) — not overwriting l2_decay.json. "
+            f"Previous good values preserved."
+        )
+    else:
+        upload_json(l2_decay_output, L2_DECAY_PATH, "l2_decay.json")
+        logging.info(f"  ✓ L2 τ fit: " + ", ".join(
+            f"{f}={tau_hours_out[f]}h" for f in L2_TAU_FIELDS if f in tau_hours_out
+        ))
     try:
         l2_history = load_json(L2_DECAY_HISTORY_PATH, default={"history": []})
         kept_l2 = [h for h in l2_history.get("history", [])
