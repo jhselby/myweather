@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.57 • June 9, 2026
+- **Octant coverage panel no longer reads all zeros during forecast-model fallback.** When Open-Meteo HRRR + GFS both 429 (today's repeating outage), `hyperlocal.py` takes a distance-weighted-mean branch that bypasses the L2 octant-balanced aggregation. That branch was writing `corrected_temp` and `stations_used` but not `octant_coverage` — so the debug-page octant panel saw `null`, rendered zeros across all eight sectors, and looked like the entire station network had gone dark. (It hadn't: 57 stations were contributing.) Fix: fallback branch now computes octant counts from station lat/lon regardless of model availability and writes the same `octant_coverage` / `octants_used` / `aggregation` fields ("fallback_distance_weighted") so the panel reflects reality.
+- **Fallback-mode banner on the octant panel.** When `hyperlocal.note` is set (the existing fallback indicator), the panel now shows an amber explainer card above the rose: "Fallback mode: GFS model unavailable, using WU stations directly. L2 octant-balanced aggregation didn't run this tick — counts below are real, but bias aggregation / Kalman gain / weighted-bias will be blank until the forecast model recovers." Stops the "WTF is happening" reaction when transient API outages knock the L2 path offline.
+
 ## v0.6.56 • June 9, 2026
 - **Settings gear icon no longer lights up on transient source failures that the fallback chain covers.** Old rule lit the dot on any critical-source error (Open-Meteo, WU, Pirate, NWS) — meaning every Open-Meteo 429 (which Pirate Weather backfilled successfully) made the gear scream for ~10 min even though the data shown was fine. New rule: gear lights only on (a) data staleness >25 min OR (b) briefing genuinely empty. The sources-panel dot keeps the per-source red/green colors for debug visibility — open settings to see the full health status.
 

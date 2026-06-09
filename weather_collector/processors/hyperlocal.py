@@ -314,6 +314,7 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
     elif model_t is None and stations:
         weighted_sum = 0.0
         total_weight = 0.0
+        oct_station_count_fb = [0] * 8
         for station in stations:
             st = station.get('temperature_f')
             sd = station.get('distance_mi')
@@ -327,12 +328,23 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             w = dist_w * elev_w
             weighted_sum += st * w
             total_weight += w
+            oct = _octant_index(station.get('latitude'), station.get('longitude'))
+            if oct is not None:
+                oct_station_count_fb[oct] += 1
         if total_weight > 0:
             corrected = weighted_sum / total_weight
             hyperlocal["corrected_temp"] = round(corrected, 1)
             hyperlocal["stations_used"] = len([s for s in stations if s.get('temperature_f') and s.get('distance_mi') and s['distance_mi'] <= MAX_STATION_DIST_MI])
             hyperlocal["confidence"] = "Moderate"
             hyperlocal["note"] = "GFS model unavailable, using WU stations directly"
+            # Populate octant_coverage even in fallback so the debug page shows
+            # accurate per-octant counts (the L2 octant aggregation block didn't
+            # run, but the geographic distribution of stations is still real).
+            hyperlocal["octant_coverage"] = {
+                OCTANT_LABELS[i]: oct_station_count_fb[i] for i in range(8)
+            }
+            hyperlocal["octants_used"] = sum(1 for n in oct_station_count_fb if n > 0)
+            hyperlocal["aggregation"] = "fallback_distance_weighted"
 
     # Fallback to PWS if WU not available
     elif model_t is not None and pws_data:

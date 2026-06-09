@@ -1605,7 +1605,15 @@ function renderOctantPanel(wxDoc) {
     const cls = n === 0 ? "empty" : (n < 2 ? "sparse" : "ok");
     return `<div class="oct ${cls}"><span class="lbl">${label}</span><span class="cnt">${n}</span></div>`;
   }
+  // Fallback-mode banner: when the upstream forecast model is unavailable
+  // (Open-Meteo 429, etc.), hyperlocal takes a distance-weighted-mean branch
+  // that bypasses the octant-balanced L2 path. The octant counts are still
+  // accurate (v0.6.57+), but the rest of the L2 panel reads differently.
+  const fallbackBanner = hyp.note
+    ? `<div class="meta-line" style="color:#fbbf24;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.3);border-radius:6px;padding:8px 10px;margin-bottom:10px;"><strong>⚠ Fallback mode:</strong> ${hyp.note}. L2 octant-balanced aggregation didn't run this tick — counts below are real, but bias aggregation, Kalman gain, and weighted-bias readings will be blank until the forecast model recovers.</div>`
+    : "";
   el.innerHTML =
+    fallbackBanner +
     `The number in each cell is how many stations reported from that compass sector this tick. ` +
     `Color flags <strong>per-sector reliability</strong>: red = no data from that direction, amber = single station (noisy, no cross-check), green = ≥2 stations (cross-check possible). ` +
     `Color does <em>not</em> imply weighting — the aggregator weights every non-empty sector equally regardless of count (so a 12-station Marblehead sector doesn't outvote a 2-station Salem sector). Color is just a coverage-health flag.` +
