@@ -169,6 +169,13 @@ function renderSources(sources, pwsStale) {
     const genAt = window.__lastWeatherData?.generated_at;
     const staleMinutes = genAt ? (Date.now() - new Date(genAt).getTime()) / 60000 : 999;
     const isStale = staleMinutes > 25;
-    settingsDot.style.display = (isStale || anyCriticalError) ? "block" : "none";
+    // Light the gear only when the data shown is actually bad — stale, or
+    // briefing genuinely empty. Transient source failures that the fallback
+    // chain covers (Open-Meteo 429 with Pirate Weather backfill, Gemini 503
+    // with cached headline, etc.) stay silent here. The sources-panel dot
+    // still shows red on any source error for debug visibility.
+    const briefing = window.__lastWeatherData?.briefing || {};
+    const briefingEmpty = !briefing.headline;
+    settingsDot.style.display = (isStale || briefingEmpty) ? "block" : "none";
   }
 }

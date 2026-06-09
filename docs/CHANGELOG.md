@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.56 • June 9, 2026
+- **Settings gear icon no longer lights up on transient source failures that the fallback chain covers.** Old rule lit the dot on any critical-source error (Open-Meteo, WU, Pirate, NWS) — meaning every Open-Meteo 429 (which Pirate Weather backfilled successfully) made the gear scream for ~10 min even though the data shown was fine. New rule: gear lights only on (a) data staleness >25 min OR (b) briefing genuinely empty. The sources-panel dot keeps the per-source red/green colors for debug visibility — open settings to see the full health status.
+
 ## v0.6.55 • June 9, 2026
 - **Briefing module audit + structural guardrails.** Read briefing_ai.py end-to-end after today's "torrential" and "Cloudy when clear" headlines made it through. Found and fixed the following:
   - **Post-generation sanity check (`_validate_headline`).** Every LLM-produced headline (Gemini or Groq) is now compared against the structured weather data before shipping. Rejects obvious contradictions: rain words when the prompt said "no significant rain," `clear`/`sunny` when cloud cover ≥ 75%, `cloudy`/`overcast` when cloud cover ≤ 20%, `torrential`/`deluge` when the data isn't actually labeled torrential. Conservative — only rejects clear contradictions, not borderline calls. Rejected headlines log a warning and fall through to the next source.
