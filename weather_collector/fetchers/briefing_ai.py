@@ -42,7 +42,7 @@ Rules:
 - Don't mention everything. Only what's worth knowing right now.
 - Never start with greetings or "Today will be."
 - Use the temperature ranges provided — never invent specific degree numbers. The only exact temperature is the current reading.
-- Wind Impact score already accounts for the cove's terrain exposure — it is the authoritative, hyperlocal wind measure, more accurate than raw forecast speed. Use it to set the tone. Mention the contrast with regional forecast only when it adds useful context. Never mention numerical impact scores — only use the impact label (Calm, Moderate, etc.).
+- Wind Impact score already accounts for the cove's terrain exposure — it is the authoritative, hyperlocal wind measure, more accurate than raw forecast speed. Use it to set the tone, and use the numerical score (provided alongside the label) to judge how strongly to lean on wind in the headline. Mention the contrast with regional forecast only when it adds useful context. Never write out the numerical impact score in your output — only use the impact label (Calm, Moderate, etc.) in the text.
 - Only mention precipitation if POP data is included. If no precip data is included, conditions are dry — do not mention rain.
 - Only mention fog or sea breeze if included in the data.
 - Ignore any alerts containing "TEST" — those are NWS transmission tests.
@@ -215,11 +215,11 @@ def _build_weather_summary(weather_data):
     if sb.get("active"):
         sb_line = f"Sea breeze: Active — {sb.get('reason', '')}"
 
-    # Alerts — filter TEST
+    # Alerts — filter TEST + empty events
     alerts = [a for a in alerts if 'TEST' not in (a.get('headline', '') + ' ' + a.get('description', '')).upper()]
-    alert_line = ""
-    if alerts:
-        alert_line = f"Alerts: {', '.join(a.get('event', '') for a in alerts[:3])}"
+    alert_events = [a.get('event', '').strip() for a in alerts[:3]]
+    alert_events = [e for e in alert_events if e]
+    alert_line = f"Alerts: {', '.join(alert_events)}" if alert_events else ""
 
     yesterday_high = der.get("yesterday_high")
     yesterday_precip = der.get("yesterday_precip_in")
@@ -238,7 +238,7 @@ def _build_weather_summary(weather_data):
         f"Yesterday: {', '.join(yesterday_parts)}" if yesterday_parts else None,
         f"Today high: {_temp_range(high)}, low: {_temp_range(low)}",
         f"Tomorrow high: {_temp_range(tomorrow_high)}, low: {_temp_range(tomorrow_low)}",
-        f"Wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + f" | Local impact: {wind_impact_label}",
+        f"Wind: {wind_speed} mph {wind_dir}" + (f", gusts {wind_gusts}" if wind_gusts > wind_speed + 5 else "") + f" | Local impact: {wind_impact_label} (score {wind_impact}/10, for your internal judgment only)",
     ]
     if sky_line:
         lines.append(sky_line)
@@ -257,7 +257,8 @@ def _build_weather_summary(weather_data):
     cape_label = ts.get("cape_label", "")
     risk_word = {"Extreme": "extreme", "High": "high", "Moderate": "moderate"}.get(cape_label, "low")
     if ts_severity in ("active", "severe"):
-        dist_str = f", closest {ts['min_distance_km']} km" if ts.get("min_distance_km") else ""
+        min_dist = ts.get("min_distance_km")
+        dist_str = f", closest {min_dist} km" if isinstance(min_dist, (int, float)) and min_dist > 0 else ""
         lines.append(f"{'Severe thunderstorm' if ts_severity == 'severe' else 'Thunderstorm'} in progress — {ts.get('lightning_count', 0)} strikes in past hour{dist_str}")
     elif ts_severity == "watch" and cape_label not in ("", "Weak"):
         lines.append(f"Thunderstorm risk: {risk_word} — do NOT overstate this, mention only briefly if relevant")
@@ -310,6 +311,64 @@ def _save_cached_briefing(briefing):
         logging.info(f"  ✓ Briefing cache saved")
     except Exception as e:
         logging.error(f"  ⚠ Briefing cache save failed: {redact_secrets(e)}")
+
+
+def _validate_headline(briefing, summary, weather_data):
+    """Sanity-check an LLM-generated headline against the structured weather
+    data we fed into the prompt. Catches obvious contradictions (rain when no
+    rain, clear when overcast, 'torrential' when actually light, etc.) before
+    they reach the user. Conservative — only rejects clear contradictions,
+    not borderline calls.
+
+    Returns (is_valid: bool, reason: str). Caller falls through to the next
+    headline source on False.
+    """
+    headline = briefing.get("headline", "").lower()
+    sub = briefing.get("subheadline", "").lower()
+    combined = f"{headline} {sub}"
+
+    # 1. Precip contradiction — prompt is told "no rain" but headline mentions it.
+    rain_words = ("rain", "shower", "drizzle", "downpour", "torrential",
+                  "deluge", "soaker", "thunderstorm", "thundershower", "snow")
+    if "No significant rain expected" in summary:
+        for w in rain_words:
+            if w in combined:
+                return False, f"mentions {w!r} but forecast shows no significant rain"
+
+    # 2. Sky contradiction vs current cloud cover (only flag the obvious ones).
+    cloud_arr = weather_data.get("hourly", {}).get("cloud_cover", [])
+    cloud_now = cloud_arr[0] if cloud_arr and cloud_arr[0] is not None else None
+    if cloud_now is not None:
+        if cloud_now >= 75 and ("clear" in combined or "sunny" in combined):
+            return False, f"says clear/sunny but cloud cover is {cloud_now}%"
+        if cloud_now <= 20 and ("cloudy" in combined or "overcast" in combined):
+            return False, f"says cloudy/overcast but cloud cover is {cloud_now}%"
+
+    # 3. Intensity word vs actual intensity label in the prompt.
+    if "torrential" in combined and "torrential" not in summary:
+        return False, "says 'torrential' but data doesn't label it that"
+    if "deluge" in combined and "torrential" not in summary:
+        return False, "says 'deluge' but data doesn't label it that"
+
+    return True, "ok"
+
+
+def _templated_briefing(weather_data):
+    """Last-resort deterministic headline built from structured data. Used when
+    Gemini, Groq, and the GCS cache have all failed (or all produced
+    contradictions). Boring but never wrong."""
+    cur = weather_data.get("current", {})
+    hyp = weather_data.get("hyperlocal", {})
+    der = weather_data.get("derived", {})
+    sky = cur.get("weather_description") or "Conditions"
+    temp = round(hyp.get("corrected_temp") or cur.get("temperature") or 0)
+    high = der.get("today_high")
+    high_str = f", high {_temp_range(high)}" if high is not None else ""
+    return {
+        "headline": f"{sky} at the cove",
+        "subheadline": f"Currently {temp}°F{high_str}.",
+        "model": "templated",
+    }
 
 
 def _should_call_gemini():
@@ -407,8 +466,8 @@ def generate_briefing(weather_data):
         }
     }
 
-    # Try Gemini first, with a single 5s retry on 503/429 (transient capacity
-    # errors clear quickly; saves a fallback hop to Groq for most of them).
+    # Try Gemini first, with a single 5s retry on any transient 5xx or 429.
+    # Capacity errors clear quickly; saves a fallback hop to Groq for most of them.
     gemini_ok = False
     try:
         resp = requests.post(
@@ -417,7 +476,7 @@ def generate_briefing(weather_data):
             json=payload,
             timeout=20
         )
-        if resp.status_code in (503, 429):
+        if resp.status_code == 429 or (500 <= resp.status_code < 600):
             logging.info(f"  ↻ Briefing: Gemini {resp.status_code}, retrying in 5s…")
             time.sleep(5)
             resp = requests.post(
@@ -437,12 +496,16 @@ def generate_briefing(weather_data):
         headline = result.get("headline", "").strip()
         subheadline = result.get("subheadline", "").strip()
         if headline:
-            logging.info(f"  ✓ Briefing (Gemini): {headline}")
             cached_at = datetime.now(eastern).isoformat()
             briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at, "model": "gemini"}
-            _save_cached_briefing(briefing)
-            _last_gemini_call_time = datetime.now(eastern)
-            return briefing
+            valid, reason = _validate_headline(briefing, summary, weather_data)
+            if valid:
+                logging.info(f"  ✓ Briefing (Gemini): {headline}")
+                _save_cached_briefing(briefing)
+                _last_gemini_call_time = datetime.now(eastern)
+                return briefing
+            else:
+                logging.warning(f"  ⊘ Briefing (Gemini) REJECTED ({reason}): {headline!r} — falling through")
     except Exception as e:
         # Capture HTTP status + body excerpt to diagnose Cloud Function-side failures
         # (key + payload were verified working locally; failure is environment-specific).
@@ -478,26 +541,43 @@ def generate_briefing(weather_data):
             headline = result.get("headline", "").strip()
             subheadline = result.get("subheadline", "").strip()
             if headline:
-                logging.info(f"  ✓ Briefing (Groq): {headline}")
                 cached_at = datetime.now(eastern).isoformat()
                 briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at, "model": "groq"}
-                _save_cached_briefing(briefing)
-                _last_gemini_call_time = datetime.now(eastern)
-                return briefing
+                valid, reason = _validate_headline(briefing, summary, weather_data)
+                if valid:
+                    logging.info(f"  ✓ Briefing (Groq): {headline}")
+                    # Intentionally NOT updating _last_gemini_call_time (let Gemini
+                    # be retried on the next collector run) and NOT saving Groq to
+                    # the cache (the cache is reserved for last-good Gemini, which
+                    # is higher quality than a fresh Groq fallback).
+                    return briefing
+                else:
+                    logging.warning(f"  ⊘ Briefing (Groq) REJECTED ({reason}): {headline!r} — falling through")
         except Exception as e:
             logging.error(f"  ⚠ Briefing: Groq failed ({type(e).__name__}: {redact_secrets(e)})")
 
-    # All attempts failed — set in-memory guard so we don't retry for 30 minutes
+    # All live LLM attempts failed (or both rejected by the validator).
+    # Set the throttle so we don't hammer Gemini in the next 30 min, then walk
+    # the safe-fallback chain: last-good cached Gemini → deterministic template.
     from datetime import datetime
     import pytz
     _last_gemini_call_time = datetime.now(pytz.timezone("America/New_York"))
 
     cached = _load_cached_briefing()
     if cached and cached.get("headline"):
-        logging.info(f"  ↩ Briefing: using cached headline")
-        return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", ""), "model": cached.get("model", "gemini")}
+        # Re-validate cached against current data — old cached headline might
+        # contradict today's conditions (e.g. cached during yesterday's rain).
+        valid, reason = _validate_headline(cached, summary, weather_data)
+        if valid:
+            logging.info(f"  ↩ Briefing: using cached headline")
+            return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", ""), "model": cached.get("model", "gemini")}
+        else:
+            logging.warning(f"  ⊘ Briefing cached headline REJECTED ({reason}) — using template")
 
-    return None
+    logging.info(f"  ⚙ Briefing: using deterministic template")
+    templated = _templated_briefing(weather_data)
+    templated["cached_at"] = datetime.now(pytz.timezone("America/New_York")).isoformat()
+    return templated
 
 
 def apply_briefing_to_weather_data(weather_data):

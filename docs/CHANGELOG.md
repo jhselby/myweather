@@ -1,5 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.55 • June 9, 2026
+- **Briefing module audit + structural guardrails.** Read briefing_ai.py end-to-end after today's "torrential" and "Cloudy when clear" headlines made it through. Found and fixed the following:
+  - **Post-generation sanity check (`_validate_headline`).** Every LLM-produced headline (Gemini or Groq) is now compared against the structured weather data before shipping. Rejects obvious contradictions: rain words when the prompt said "no significant rain," `clear`/`sunny` when cloud cover ≥ 75%, `cloudy`/`overcast` when cloud cover ≤ 20%, `torrential`/`deluge` when the data isn't actually labeled torrential. Conservative — only rejects clear contradictions, not borderline calls. Rejected headlines log a warning and fall through to the next source.
+  - **Deterministic template fallback (`_templated_briefing`).** Last-resort headline built directly from structured data (sky description + temp + high range). Used when Gemini, Groq, and the cached headline have all failed or all been rejected. Boring but never wrong.
+  - **Groq output no longer pollutes the cache.** Previously, a Groq fallback overwrote the GCS cache, meaning the next 30 min of cache hits served Groq's possibly-hallucinated headline. Cache now strictly holds the last validated Gemini headline.
+  - **Gemini throttle no longer trips on Groq success.** Previously, after Groq fired, the 30-min "don't call Gemini" timer reset — even though we'd never actually talked to Gemini. Gemini can now be retried on the very next collector run if its previous failure was transient.
+  - **Retry broadened from 503/429 to any 5xx + 429.** 500/502/504 used to fall straight through to Groq; now they get the same 5-second retry that 503/429 do.
+  - **Wind impact score exposed to the model.** Numeric score now in the data line alongside the label (the existing prompt rule against printing the number stays — score is for the model's internal judgment of how strongly to lean on wind, not for output). Joe's note that Gemini writes better headlines when it has a sense of impact severity, not just the category label.
+  - **Minor:** empty alert events filtered (no more `Alerts: , ,`); thunderstorm distance string suppressed when `min_distance_km` is None or 0.
+
 ## v0.6.54 • June 9, 2026
 - **Briefing precip-intensity unit bug fixed.** `briefing_ai.py:161` was comparing raw Open-Meteo precip values (mm/hr) against thresholds (1.0, 0.30, 0.10, 0.01) clearly intended as inches/hr — the format string on the next line literally writes the value with an `"/hr` (inch) suffix. Net effect: 1.0 mm/hr (real-world *light rain*) was being labeled "torrential" in the prompt fed to Gemini, which then faithfully echoed "torrential downpours" in the headline. Three consecutive briefings today used "torrential" on what was actually light rain in the forecast. Fix: divide peak_intensity by 25.4 so it's in inches/hr before the threshold compare; existing thresholds and the format string both make sense now.
 
