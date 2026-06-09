@@ -404,7 +404,8 @@ def generate_briefing(weather_data):
         }
     }
 
-    # Try Gemini first
+    # Try Gemini first, with a single 5s retry on 503/429 (transient capacity
+    # errors clear quickly; saves a fallback hop to Groq for most of them).
     gemini_ok = False
     try:
         resp = requests.post(
@@ -413,6 +414,15 @@ def generate_briefing(weather_data):
             json=payload,
             timeout=20
         )
+        if resp.status_code in (503, 429):
+            logging.info(f"  ↻ Briefing: Gemini {resp.status_code}, retrying in 5s…")
+            time.sleep(5)
+            resp = requests.post(
+                GEMINI_URL,
+                params={"key": GEMINI_API_KEY},
+                json=payload,
+                timeout=20
+            )
         resp.raise_for_status()
         data = resp.json()
         text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
@@ -446,7 +456,7 @@ def generate_briefing(weather_data):
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": f"Weather data for right now:\n{summary}{time_context}{prev_context}"},
                 ],
-                "temperature": 0.9,
+                "temperature": 0.5,
                 "max_tokens": 256,
             }
             resp = requests.post(
