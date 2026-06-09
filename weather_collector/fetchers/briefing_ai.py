@@ -158,7 +158,10 @@ def _build_weather_summary(weather_data):
             if p and p >= 30 and i < len(time_arr):
                 rain_start = time_arr[i]
                 break
-        peak_intensity = max((p or 0) for p in precip_arr[:48]) if precip_arr else 0
+        # Open-Meteo returns precip in mm/hr; convert to in/hr so the thresholds
+        # below (and the format string on line 169) read as intended. Without
+        # this divide, 1.0 mm/hr (light rain) was being labeled "torrential".
+        peak_intensity = max((p or 0) for p in precip_arr[:48]) / 25.4 if precip_arr else 0
         intensity_label = (
             "torrential" if peak_intensity >= 1.0 else
             "heavy"      if peak_intensity >= 0.30 else

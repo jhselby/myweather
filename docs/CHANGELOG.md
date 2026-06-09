@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.54 • June 9, 2026
+- **Briefing precip-intensity unit bug fixed.** `briefing_ai.py:161` was comparing raw Open-Meteo precip values (mm/hr) against thresholds (1.0, 0.30, 0.10, 0.01) clearly intended as inches/hr — the format string on the next line literally writes the value with an `"/hr` (inch) suffix. Net effect: 1.0 mm/hr (real-world *light rain*) was being labeled "torrential" in the prompt fed to Gemini, which then faithfully echoed "torrential downpours" in the headline. Three consecutive briefings today used "torrential" on what was actually light rain in the forecast. Fix: divide peak_intensity by 25.4 so it's in inches/hr before the threshold compare; existing thresholds and the format string both make sense now.
+
 ## v0.6.53 • June 9, 2026
 - **Open Graph / Twitter Card meta tags added** to `index.html`. Sharing the wymancove.com link in Instagram DMs, iMessage, X, Slack, etc. now produces a clean preview (title, description, 512×512 icon) instead of a bare URL. Uses the existing app icon as the preview image — a custom 1200×630 hero image would render better but is deferred until/if it matters.
 - **URL deep-link to a specific tab.** `tab_nav.js`'s restore IIFE now checks `?tab=<name>` from the URL before falling back to the localStorage `activeTab` value. Valid tabs: briefing, weather, hyperlocal, almanac, overhead. Lets the Instagram bio link `https://wymancove.com/?tab=briefing` open the app directly on the Briefing tab regardless of the user's last-active tab. Invalid `?tab=` values are ignored.
