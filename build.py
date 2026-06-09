@@ -199,7 +199,7 @@ def main():
     
     # Write version.json for update detection (always, regardless of asset changes)
     import json, re as _re
-    v_match = _re.search(r'id="appVersion"[^>]*>(v[\d.]+)<', modified_html)
+    v_match = _re.search(r'id="appVersion"[^>]*>(v[\d.]+[a-z]?)<', modified_html)
     if v_match:
         version_path = base_dir / 'version.json'
         with open(version_path, 'w') as vf:
