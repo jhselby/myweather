@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.53 • June 9, 2026
+- **Open Graph / Twitter Card meta tags added** to `index.html`. Sharing the wymancove.com link in Instagram DMs, iMessage, X, Slack, etc. now produces a clean preview (title, description, 512×512 icon) instead of a bare URL. Uses the existing app icon as the preview image — a custom 1200×630 hero image would render better but is deferred until/if it matters.
+- **URL deep-link to a specific tab.** `tab_nav.js`'s restore IIFE now checks `?tab=<name>` from the URL before falling back to the localStorage `activeTab` value. Valid tabs: briefing, weather, hyperlocal, almanac, overhead. Lets the Instagram bio link `https://wymancove.com/?tab=briefing` open the app directly on the Briefing tab regardless of the user's last-active tab. Invalid `?tab=` values are ignored.
+
 ## v0.6.52 • June 9, 2026
 - **Briefing reliability pass.** Three changes after this morning's wave of Gemini 503/429 failures and a Groq fallback that hallucinated "Cloudy Now" when the sky was clear:
   - **Gemini model switched from `gemini-2.5-flash` to `gemini-2.5-flash-lite`** in the Makefile env var. Flash Lite has more capacity headroom (less popular = fewer 503s); quality drop for a one-line headline is negligible. (The `CLAUDE.md` data-sources line already claimed Flash Lite was in use — code now matches the doc.)

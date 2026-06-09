@@ -155,9 +155,16 @@ function showTab(which) {
 })();
 
 // ── Restore active tab after the sync wrapper is in place ──
+// URL ?tab=<name> takes precedence over localStorage (used by deep links
+// from Instagram bio / shared URLs to land directly on a specific tab).
 (function() {
   try {
-    const t = localStorage.getItem('activeTab') || 'briefing';
+    const validTabs = ['briefing', 'weather', 'hyperlocal', 'almanac', 'overhead'];
+    const urlTab = new URLSearchParams(window.location.search).get('tab');
+    const stored = localStorage.getItem('activeTab');
+    const t = (urlTab && validTabs.includes(urlTab))
+      ? urlTab
+      : (stored || 'briefing');
     showTab(t);
   } catch(e) { showTab('weather'); }
 })();
