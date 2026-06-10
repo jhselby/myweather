@@ -48,6 +48,20 @@ function renderRightNow(data) {
       }
     }
   }
+  // Observed-sky override: the collector backs out cloud cover from
+  // observed solar vs clear-sky (derived.observed_sky_label). When that
+  // disagrees with the model on a non-precip day, trust the observation.
+  // Falls back to a direct-radiation heuristic if the derived field is
+  // missing (sun too low, no observed solar).
+  if (!/rain|snow|drizzle|sleet|shower|thunder|fog/i.test(desc)) {
+    const obsSky = der.observed_sky_label;
+    if (obsSky && obsSky !== desc) {
+      desc = obsSky;
+    } else if (!obsSky) {
+      const _drNow = data.hourly?.direct_radiation?.[0] ?? 0;
+      if (code === 3 && _drNow >= 250) desc = "Hazy";
+    }
+  }
 
   // ── Current temperature (big number + collapsed-tile temp + thermometer mercury) ──
   document.getElementById("currentTemp").innerHTML =

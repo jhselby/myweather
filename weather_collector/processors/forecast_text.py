@@ -224,7 +224,16 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     ]
     precip_probs = [hourly_data["precipitation_probability"][i] for i in period_indices]
     weather_codes = [hourly_data["weather_code"][i] for i in period_indices]
-    cloud_cover = [hourly_data["cloud_cover"][i] for i in period_indices]
+    # Prefer solar-derived cloud cover when present (catches model
+    # contradictions like "100% cloud_cover + 600 W/m² direct_radiation").
+    # Falls back to raw cloud_cover for nighttime hours where
+    # transmissivity is undefined. Built in current_derived.py.
+    _solar_cc = (derived or {}).get("forecast_cloud_cover_solar") or []
+    cloud_cover = [
+        (_solar_cc[i] if i < len(_solar_cc) and _solar_cc[i] is not None
+         else hourly_data["cloud_cover"][i])
+        for i in period_indices
+    ]
     # Fallback: infer precip type from weather_code if col_precip_type_850mb is None
     weather_codes_list = [hourly_data["weather_code"][i] for i in period_indices]
     for idx, ptype in enumerate(precip_types):
