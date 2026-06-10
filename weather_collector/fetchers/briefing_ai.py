@@ -152,16 +152,18 @@ def _build_weather_summary(weather_data):
         precip_line = "No significant rain expected next 48h — do NOT mention rain"
     elif max_pop >= 20:
         precip_arr = hourly.get("precipitation", [])
-        rain_inches = round(sum(precip_arr[:48]) / 25.4, 1) if precip_arr else 0
+        # hourly.precipitation is in INCHES — OM_UNITS in config.py requests
+        # precipitation_unit="inch" on every Open-Meteo call. The /25.4 that
+        # used to be here (and the one v0.6.54 added to peak_intensity) was
+        # wrong: it divided inches by 25.4, under-reporting rain 25×.
+        rain_inches = round(sum(precip_arr[:48]), 1) if precip_arr else 0
         rain_start = None
         for i, p in enumerate(pop_arr[:48]):
             if p and p >= 30 and i < len(time_arr):
                 rain_start = time_arr[i]
                 break
-        # Open-Meteo returns precip in mm/hr; convert to in/hr so the thresholds
-        # below (and the format string on line 169) read as intended. Without
-        # this divide, 1.0 mm/hr (light rain) was being labeled "torrential".
-        peak_intensity = max((p or 0) for p in precip_arr[:48]) / 25.4 if precip_arr else 0
+        # Already in in/hr — the thresholds below apply directly.
+        peak_intensity = max((p or 0) for p in precip_arr[:48]) if precip_arr else 0
         intensity_label = (
             "torrential" if peak_intensity >= 1.0 else
             "heavy"      if peak_intensity >= 0.30 else

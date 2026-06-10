@@ -56,6 +56,11 @@ STALE_DAYS = 7
 # flagging that L3 hurts MAE on POP, but that's the *price* of better Brier
 # calibration, not a regression. POP is evaluated by Brier, not MAE — frontend
 # audit table flags pp as Brier-evaluated and suppresses the ⚠ rule for it.
+# L3_FIELDS / L4_FIELDS are deliberate WHITELISTS — fields earn their way in
+# via held-out validation (walk-forward validator). The fitter still fits
+# everything (including wd sin/cos components) so the evidence exists to
+# enable a field later; corrections for non-whitelisted fields are computed
+# but never applied. wd being fitted-but-not-applied is by design, not a bug.
 L3_FIELDS = {"ws", "wg", "ch", "cm", "pp"}
 L4_FIELDS = {"ch"}
 # Fields where the L3/L4 audit's MAE-based ⚠ rule should be suppressed because

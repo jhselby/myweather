@@ -144,8 +144,12 @@
     for (let i = 0; i < Math.min(precipArr.length, 48); i++) {
       rainAmount += (precipArr[i] || 0);
     }
-    rainAmount = Math.round(rainAmount * 100) / 100; // mm
-    const rainInches = Math.round(rainAmount / 25.4 * 10) / 10; // convert mm to inches
+    // hourly.precipitation is in INCHES (collector requests
+    // precipitation_unit="inch" from Open-Meteo). The /25.4 that used to be
+    // here treated it as mm and under-reported rain 25× — that's why the
+    // briefing's rain totals always read 0.0".
+    rainAmount = Math.round(rainAmount * 100) / 100; // inches
+    const rainInches = Math.round(rainAmount * 10) / 10;
 
     // Find first/last hour with pop > 40%
     for (let i = 0; i < Math.min(popArr.length, 48); i++) {

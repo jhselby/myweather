@@ -24,16 +24,18 @@ TZ = pytz.timezone("America/New_York")
 
 def _current_hour_precip_in(weather_data, current_hour_iso):
     """Observed precip rate from WU rain gauges (real), falling back to
-    the forecast hourly precipitation array (converted mm → in)."""
+    the forecast hourly precipitation array (already in inches — OM_UNITS
+    requests precipitation_unit="inch"; a stale /25.4 here used to
+    under-report the fallback 25×)."""
     wu_rate = weather_data.get("wu_stations", {}).get("precip_rate_in")
     if wu_rate is not None:
         return wu_rate
     times = weather_data["hourly"].get("times", [])
-    precip_mm = weather_data["hourly"].get("precipitation", [])
+    precip_in = weather_data["hourly"].get("precipitation", [])
     if current_hour_iso in times:
         i = times.index(current_hour_iso)
-        if i < len(precip_mm) and precip_mm[i] is not None:
-            return precip_mm[i] / 25.4
+        if i < len(precip_in) and precip_in[i] is not None:
+            return precip_in[i]
     return None
 
 
