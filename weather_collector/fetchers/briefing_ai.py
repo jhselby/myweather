@@ -213,10 +213,27 @@ def _build_weather_summary(weather_data):
     if fog_prob > 0:
         fog_line = f"Fog: {der.get('fog_label', 'Possible')} ({fog_prob}%)"
 
-    # Sea breeze — only include if active
+    # Sea breeze — only include if active. Verbose form (not the compact
+    # frontend-card "reason" string) because Gemini misreads "Δ+22°F" as a
+    # temperature change applied by the breeze (v0.6.61 incident) instead of
+    # the land–water gradient that drives it. Naming the values explicitly
+    # removes the ambiguity at source.
     sb_line = ""
     if sb.get("active"):
-        sb_line = f"Sea breeze: Active — {sb.get('reason', '')}"
+        land_t = hyp.get("corrected_temp") or cur.get("temperature")
+        water_t = (weather_data.get("buoy_44013") or {}).get("water_temp_f")
+        sb_wind_mph = round(cur.get("wind_speed") or 0)
+        if land_t is not None and water_t is not None:
+            gap = land_t - water_t
+            sb_line = (
+                f"Sea breeze: Active — onshore flow off the harbor. "
+                f"Land {land_t:.1f}°F, water {water_t:.1f}°F "
+                f"(land–water gap of {gap:.1f}°F drives the breeze — "
+                f"this gradient is NOT a temperature change). "
+                f"Wind {sb_wind_mph} mph from {wind_dir}."
+            )
+        else:
+            sb_line = f"Sea breeze: Active — onshore flow off the harbor, wind {sb_wind_mph} mph from {wind_dir}."
 
     # Alerts — filter TEST + empty events
     alerts = [a for a in alerts if 'TEST' not in (a.get('headline', '') + ' ' + a.get('description', '')).upper()]
