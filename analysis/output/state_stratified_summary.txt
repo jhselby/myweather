@@ -1,0 +1,517 @@
+State-stratified accuracy — generated 2026-06-08T18:53:44
+Rows scanned:       3,691,431
+Rows with state:    1,771,479
+Rows used (field in {t,dp,h,ws,wg,cc,sr,pr,pa}): 1,771,479
+
+Per-field MAE stratified by observed/forecast state.
+  bias = signed mean error (forecast − obs); MAE = mean |error|.
+  Δ MAE = (bin MAE − overall MAE).
+
+=== Temperature (t) ===
+  overall:  n=209,730   bias=-0.617   MAE=4.011
+  by wind dir (obs):
+    bin                      n      bias       MAE     Δ MAE
+    N                   32,187    -0.472     3.184    -0.827
+    NE                  18,448    +0.016     3.423    -0.588
+    E                   10,025    +1.862     3.549    -0.462
+    SE                  35,532    -1.595     4.418    +0.407
+    S                   27,583    -0.490     5.011    +1.000
+    SW                  28,082    +0.206     3.748    -0.263
+    W                   16,583    +0.323     3.365    -0.646
+    NW                  41,290    -1.798     4.450    +0.439
+    → spread (max−min MAE across bins): 1.827
+  by wind speed (obs):
+    bin                      n      bias       MAE     Δ MAE
+    calm (<5)          142,087    -0.038     3.868    -0.143
+    light (5-15)        67,643    -1.835     4.311    +0.300
+    → spread (max−min MAE across bins): 0.443
+  by cloud cover (obs):
+    bin                      n      bias       MAE     Δ MAE
+    clear (<25)         87,281    -1.791     3.845    -0.166
+    partly (25-75)      36,814    +0.055     3.335    -0.676
+    overcast (>75)      84,232    +0.250     4.475    +0.464
+    → spread (max−min MAE across bins): 1.140
+  by pressure trend (fc):
+    bin                      n      bias       MAE     Δ MAE
+    rising (>+0.5)      57,622    -0.627     3.742    -0.269
+    steady              69,975    +0.104     3.830    -0.181
+    falling (<-0.5)     38,649    +1.042     4.166    +0.155
+    → spread (max−min MAE across bins): 0.424
+  by flow regime (obs):
+    bin                      n      bias       MAE     Δ MAE
+    n                   24,129    -0.824     3.160    -0.851
+    ne                  11,541    -0.230     3.555    -0.456
+    e                    5,565    +2.437     3.980    -0.031
+    se                  22,198    -0.602     3.886    -0.125
+    s                   12,186    +2.153     4.738    +0.727
+    sw                  12,699    +1.917     3.607    -0.404
+    w                    3,918    -0.807     3.650    -0.361
+    nw                  28,940    -2.305     4.409    +0.398
+    calm                49,823    +1.245     3.745    -0.266
+    → spread (max−min MAE across bins): 1.578
+  by synoptic (obs):
+    bin                      n      bias       MAE     Δ MAE
+    nw_flow             42,192    -1.680     3.952    -0.059
+    sw_flow             13,593    +1.693     3.680    -0.331
+    se_flow             19,685    +0.034     3.713    -0.298
+    ne_flow              8,921    -0.175     3.370    -0.641
+    sea_breeze          12,530    +0.617     4.570    +0.559
+    frontal              9,370    -1.377     3.437    -0.574
+    pre_frontal         13,758    +0.747     4.224    +0.213
+    calm                49,823    +1.245     3.745    -0.266
+    → spread (max−min MAE across bins): 1.200
+
+=== Dew point (dp) ===
+  overall:  n=205,082   bias=+0.506   MAE=4.323
+  by wind dir (obs):
+    bin                      n      bias       MAE     Δ MAE
+    N                   32,187    +1.705     4.550    +0.227
+    NE                  18,448    +2.097     4.284    -0.039
+    E                    9,446    +1.500     5.263    +0.940
+    SE                  35,239    +0.219     4.597    +0.273
+    S                   27,583    -1.578     5.071    +0.748
+    SW                  27,785    -0.069     3.957    -0.367
+    W                   13,976    +0.019     3.677    -0.646
+    NW                  40,418    +0.831     3.668    -0.655
+    → spread (max−min MAE across bins): 1.595
+  by wind speed (obs):
+    bin                      n      bias       MAE     Δ MAE
+    calm (<5)          137,439    -0.165     4.222    -0.102
+    light (5-15)        67,643    +1.870     4.530    +0.207
+    → spread (max−min MAE across bins): 0.308
+  by cloud cover (obs):
+    bin                      n      bias       MAE     Δ MAE
+    clear (<25)         82,633    -0.264     3.984    -0.340
+    partly (25-75)      36,814    +0.418     4.673    +0.350
+    overcast (>75)      84,232    +1.327     4.475    +0.151
+    → spread (max−min MAE across bins): 0.689
+  by pressure trend (fc):
+    bin                      n      bias       MAE     Δ MAE
+    rising (>+0.5)      56,934    +0.911     4.147    -0.176
+    steady              69,169    +0.850     4.214    -0.109
+    falling (<-0.5)     38,473    +0.626     4.523    +0.199
+    → spread (max−min MAE across bins): 0.375
+  by flow regime (obs):
+    bin                      n      bias       MAE     Δ MAE
+    n                   24,129    +1.886     4.797    +0.473
+    ne                  11,541    +2.632     4.922    +0.598
+    e                    5,565    +1.219     6.347    +2.024
+    se                  22,198    +0.226     5.089    +0.766
+    s                   12,186    -1.403     5.773    +1.450
+    sw                  12,699    +0.035     4.607    +0.284
+    w                    3,918    +0.980     4.353    +0.030
+    nw                  28,940    +1.378     3.652    -0.671
+    calm                49,823    +0.185     3.708    -0.615
+    → spread (max−min MAE across bins): 2.696
+  by synoptic (obs):
+    bin                      n      bias       MAE     Δ MAE
+    nw_flow             42,192    +1.523     4.305    -0.018
+    sw_flow             13,593    +0.019     5.006    +0.682
+    se_flow             19,685    -0.112     5.085    +0.761
+    ne_flow              8,921    +2.574     4.631    +0.308
+    sea_breeze          12,530    -0.799     5.877    +1.554
+    frontal              9,370    +2.091     3.363    -0.961
+    pre_frontal         13,758    +1.398     4.985    +0.661
+    calm                49,823    +0.185     3.708    -0.615
+    → spread (max−min MAE across bins): 2.514
+
+=== Humidity (h) ===
+  overall:  n=205,082   bias=+4.687   MAE=14.529
+  by wind dir (obs):
+    bin                      n      bias       MAE     Δ MAE
+    N                   32,187    +7.104    14.677    +0.148
+    NE                  18,448    +7.378    14.008    -0.521
+    E                    9,446    +2.637    13.469    -1.061
+    SE                  35,239    +5.090    15.923    +1.394
+    S                   27,583    +0.339    14.690    +0.160
+    SW                  27,785    +1.318    12.153    -2.376
+    W                   13,976    -0.365    12.815    -1.714
+    NW                  40,418    +8.693    15.798    +1.269
+    → spread (max−min MAE across bins): 3.770
+  by wind speed (obs):
+    bin                      n      bias       MAE     Δ MAE
+    calm (<5)          137,439    +1.839    13.843    -0.687
+    light (5-15)        67,643   +10.474    15.924    +1.395
+    → spread (max−min MAE across bins): 2.082
+  by cloud cover (obs):
+    bin                      n      bias       MAE     Δ MAE
+    clear (<25)         82,633    +5.022    13.125    -1.404
+    partly (25-75)      36,814    +2.257    14.873    +0.344
+    overcast (>75)      84,232    +5.549    15.763    +1.233
+    → spread (max−min MAE across bins): 2.638
+  by pressure trend (fc):
+    bin                      n      bias       MAE     Δ MAE
+    rising (>+0.5)      56,934    +6.015    14.235    -0.294
+    steady              69,169    +4.045    14.410    -0.119
+    falling (<-0.5)     38,473    +1.999    15.669    +1.140
+    → spread (max−min MAE across bins): 1.434
+  by flow regime (obs):
+    bin                      n      bias       MAE     Δ MAE
+    n                   24,129    +8.216    15.109    +0.579
+    ne                  11,541    +9.854    15.162    +0.632
+    e                    5,565    +2.400    14.579    +0.050
+    se                  22,198    +3.465    15.743    +1.214
+    s                   12,186    -3.368    15.493    +0.964
+    sw                  12,699    -0.137    12.845    -1.684
+    w                    3,918    +6.422    15.814    +1.285
+    nw                  28,940   +11.385    16.233    +1.704
+    calm                49,823    -0.552    13.743    -0.786
+    → spread (max−min MAE across bins): 3.388
+  by synoptic (obs):
+    bin                      n      bias       MAE     Δ MAE
+    nw_flow             42,192    +9.961    15.985    +1.455
+    sw_flow             13,593    +0.126    13.650    -0.879
+    se_flow             19,685    +1.593    14.802    +0.273
+    ne_flow              8,921    +9.354    14.606    +0.077
+    sea_breeze          12,530    +0.840    16.453    +1.923
+    frontal              9,370    +9.625    12.595    -1.935
+    pre_frontal         13,758    +5.263    16.800    +2.271
+    calm                49,823    -0.552    13.743    -0.786
+    → spread (max−min MAE across bins): 4.206
+
+=== Wind speed (ws) ===
+  overall:  n=209,730   bias=+0.902   MAE=2.379
+  by wind dir (obs):
+    bin                      n      bias       MAE     Δ MAE
+    N                   32,187    +1.755     2.721    +0.341
+    NE                  18,448    +1.681     2.723    +0.344
+    E                   10,025    +1.393     2.477    +0.097
+    SE                  35,532    +0.260     2.082    -0.298
+    S                   27,583    +0.820     2.366    -0.014
+    SW                  28,082    +1.095     1.988    -0.391
+    W                   16,583    +0.907     2.184    -0.196
+    NW                  41,290    +0.243     2.546    +0.167
+    → spread (max−min MAE across bins): 0.735
+  by wind speed (obs):
+    bin                      n      bias       MAE     Δ MAE
+    calm (<5)          142,087    +1.251     2.360    -0.020
+    light (5-15)        67,643    +0.168     2.421    +0.041
+    → spread (max−min MAE across bins): 0.061
+  by cloud cover (obs):
+    bin                      n      bias       MAE     Δ MAE
+    clear (<25)         87,281    +1.744     2.473    +0.094
+    partly (25-75)      36,814    +0.362     1.958    -0.421
+    overcast (>75)      84,232    +0.259     2.469    +0.090
+    → spread (max−min MAE across bins): 0.515
+  by pressure trend (fc):
+    bin                      n      bias       MAE     Δ MAE
+    rising (>+0.5)      57,622    +0.709     2.253    -0.127
+    steady              69,975    +0.387     2.220    -0.160
+    falling (<-0.5)     38,649    +1.051     2.673    +0.294
+    → spread (max−min MAE across bins): 0.454
+  by flow regime (obs):
+    bin                      n      bias       MAE     Δ MAE
+    n                   24,129    +1.762     2.750    +0.371
+    ne                  11,541    +1.800     2.899    +0.520
+    e                    5,565    +1.403     2.629    +0.249
+    se                  22,198    -0.084     2.098    -0.282
+    s                   12,186    +0.677     2.620    +0.241
+    sw                  12,699    +0.613     1.772    -0.607
+    w                    3,918    +0.217     2.468    +0.088
+    nw                  28,940    -0.333     2.562    +0.182
+    calm                49,823    +1.061     2.259    -0.120
+    → spread (max−min MAE across bins): 1.127
+  by synoptic (obs):
+    bin                      n      bias       MAE     Δ MAE
+    nw_flow             42,192    +0.538     2.577    +0.198
+    sw_flow             13,593    +0.572     1.932    -0.447
+    se_flow             19,685    +0.401     2.343    -0.036
+    ne_flow              8,921    +1.464     2.620    +0.241
+    sea_breeze          12,530    -0.034     2.134    -0.246
+    frontal              9,370    +2.128     3.170    +0.791
+    pre_frontal         13,758    +0.257     2.585    +0.206
+    calm                49,823    +1.061     2.259    -0.120
+    → spread (max−min MAE across bins): 1.239
+
+=== Wind gust (wg) ===
+  overall:  n=209,730   bias=+2.049   MAE=4.405
+  by wind dir (obs):
+    bin                      n      bias       MAE     Δ MAE
+    N                   32,187    +3.013     4.636    +0.230
+    NE                  18,448    +4.487     6.002    +1.596
+    E                   10,025    +3.778     5.205    +0.800
+    SE                  35,532    +0.806     4.204    -0.202
+    S                   27,583    +1.377     3.568    -0.837
+    SW                  28,082    +2.258     3.739    -0.666
+    W                   16,583    +2.126     3.912    -0.494
+    NW                  41,290    +1.135     4.703    +0.297
+    → spread (max−min MAE across bins): 2.434
+  by wind speed (obs):
+    bin                      n      bias       MAE     Δ MAE
+    calm (<5)          142,087    +2.626     4.481    +0.076
+    light (5-15)        67,643    +0.838     4.246    -0.160
+    → spread (max−min MAE across bins): 0.236
+  by cloud cover (obs):
+    bin                      n      bias       MAE     Δ MAE
+    clear (<25)         87,281    +3.754     4.898    +0.492
+    partly (25-75)      36,814    +0.190     3.523    -0.883
+    overcast (>75)      84,232    +1.090     4.300    -0.105
+    → spread (max−min MAE across bins): 1.375
+  by pressure trend (fc):
+    bin                      n      bias       MAE     Δ MAE
+    rising (>+0.5)      57,622    +1.381     4.043    -0.362
+    steady              69,975    +1.256     3.933    -0.473
+    falling (<-0.5)     38,649    +2.539     5.280    +0.874
+    → spread (max−min MAE across bins): 1.347
+  by flow regime (obs):
+    bin                      n      bias       MAE     Δ MAE
+    n                   24,129    +2.456     4.207    -0.198
+    ne                  11,541    +4.683     6.075    +1.670
+    e                    5,565    +3.317     4.926    +0.521
+    se                  22,198    -0.332     4.182    -0.223
+    s                   12,186    +1.023     3.443    -0.962
+    sw                  12,699    +0.814     2.800    -1.605
+    w                    3,918    +2.273     4.445    +0.040
+    nw                  28,940    +0.249     4.815    +0.409
+    calm                49,823    +2.779     4.566    +0.161
+    → spread (max−min MAE across bins): 3.275
+  by synoptic (obs):
+    bin                      n      bias       MAE     Δ MAE
+    nw_flow             42,192    +1.153     4.426    +0.021
+    sw_flow             13,593    +1.244     3.121    -1.285
+    se_flow             19,685    +0.841     4.415    +0.010
+    ne_flow              8,921    +3.838     5.214    +0.809
+    sea_breeze          12,530    -0.664     2.854    -1.551
+    frontal              9,370    +3.988     5.823    +1.418
+    pre_frontal         13,758    +0.921     4.867    +0.462
+    calm                49,823    +2.779     4.566    +0.161
+    → spread (max−min MAE across bins): 2.969
+
+=== Cloud cover (cc) ===
+  overall:  n=197,579   bias=-0.444   MAE=26.688
+  by wind dir (obs):
+    bin                      n      bias       MAE     Δ MAE
+    N                   32,929    +1.970    33.297    +6.609
+    NE                  18,791    -7.783    30.029    +3.341
+    E                    9,591    -6.804    27.880    +1.192
+    SE                  32,239    -0.945    31.551    +4.863
+    S                   22,775    -1.592    19.464    -7.224
+    SW                  24,667    +3.259    18.104    -8.585
+    W                   15,657    +9.894    23.801    -2.887
+    NW                  40,930    -2.681    26.026    -0.663
+    → spread (max−min MAE across bins): 15.194
+  by wind speed (obs):
+    bin                      n      bias       MAE     Δ MAE
+    calm (<5)          137,485    +6.164    26.265    -0.423
+    light (5-15)        60,094   -15.562    27.657    +0.969
+    → spread (max−min MAE across bins): 1.392
+  by cloud cover (obs):
+    bin                      n      bias       MAE     Δ MAE
+    clear (<25)         73,243    +9.959    20.187    -6.501
+    partly (25-75)      37,942    +9.433    36.459    +9.771
+    overcast (>75)      86,394   -13.602    27.909    +1.220
+    → spread (max−min MAE across bins): 16.272
+  by pressure trend (fc):
+    bin                      n      bias       MAE     Δ MAE
+    rising (>+0.5)      57,290    -0.729    26.979    +0.291
+    steady              69,362    +1.669    27.660    +0.971
+    falling (<-0.5)     38,343    -4.288    30.593    +3.905
+    → spread (max−min MAE across bins): 3.614
+  by flow regime (obs):
+    bin                      n      bias       MAE     Δ MAE
+    n                   24,620    -0.481    35.315    +8.627
+    ne                  11,669   -17.176    33.560    +6.872
+    e                    5,434   -15.948    32.277    +5.589
+    se                  22,542    -4.151    36.067    +9.378
+    s                   12,221    -5.432    21.684    -5.005
+    sw                  12,407    -0.475    19.403    -7.285
+    w                    4,026    -0.785    28.113    +1.425
+    nw                  29,050    -8.866    27.994    +1.306
+    calm                51,251   +11.555    26.572    -0.116
+    → spread (max−min MAE across bins): 16.664
+  by synoptic (obs):
+    bin                      n      bias       MAE     Δ MAE
+    nw_flow             42,809    -2.845    30.637    +3.949
+    sw_flow             13,474    -0.060    21.371    -5.317
+    se_flow             19,869    +1.800    35.308    +8.620
+    ne_flow              8,803   -15.657    32.911    +6.222
+    sea_breeze          12,920   -11.654    24.619    -2.069
+    frontal              9,298   -26.259    32.942    +6.253
+    pre_frontal         13,643    -5.867    30.806    +4.118
+    calm                51,251   +11.555    26.572    -0.116
+    → spread (max−min MAE across bins): 13.938
+
+=== Solar rad. (sr) ===
+  overall:  n=169,881   bias=+26.876   MAE=114.560
+  by wind dir (obs):
+    bin                      n      bias       MAE     Δ MAE
+    N                   30,844   +90.176   167.168   +52.608
+    NE                  18,277   +46.305   100.521   -14.039
+    E                    9,418   +38.980   124.287    +9.727
+    SE                  26,044   +43.417   129.217   +14.656
+    S                   15,665   -40.510   116.554    +1.993
+    SW                  18,798   +17.729    68.310   -46.251
+    W                   12,502    +1.702    81.069   -33.491
+    NW                  38,333    -7.299    99.366   -15.195
+    → spread (max−min MAE across bins): 98.858
+  by wind speed (obs):
+    bin                      n      bias       MAE     Δ MAE
+    calm (<5)          118,392    +3.426    99.143   -15.417
+    light (5-15)        51,489   +80.796   150.010   +35.450
+    → spread (max−min MAE across bins): 50.867
+  by cloud cover (obs):
+    bin                      n      bias       MAE     Δ MAE
+    clear (<25)         51,859   +17.388    71.523   -43.037
+    partly (25-75)      34,502   +69.878   135.711   +21.150
+    overcast (>75)      82,243   +14.417   131.985   +17.425
+    → spread (max−min MAE across bins): 64.188
+  by pressure trend (fc):
+    bin                      n      bias       MAE     Δ MAE
+    rising (>+0.5)      57,622   +18.532   115.383    +0.823
+    steady              69,975   +21.781   111.362    -3.198
+    falling (<-0.5)     38,649   +55.266   121.440    +6.880
+    → spread (max−min MAE across bins): 10.078
+  by flow regime (obs):
+    bin                      n      bias       MAE     Δ MAE
+    n                   23,184  +110.201   193.145   +78.585
+    ne                  11,459   +62.900   121.726    +7.165
+    e                    5,311   +46.505   154.898   +40.337
+    se                  20,121   +46.103   152.036   +37.475
+    s                    9,631   -65.406   145.335   +30.774
+    sw                  10,890   +26.269    85.851   -28.709
+    w                    3,667   +47.762   157.745   +43.185
+    nw                  28,042    +2.968    87.173   -27.387
+    calm                47,663   +15.724    72.791   -41.770
+    → spread (max−min MAE across bins): 120.355
+  by synoptic (obs):
+    bin                      n      bias       MAE     Δ MAE
+    nw_flow             40,346   +43.089   135.369   +20.809
+    sw_flow             11,384    +5.805    98.832   -15.729
+    se_flow             17,239   +16.729   132.937   +18.376
+    ne_flow              8,842   +72.095   133.138   +18.578
+    sea_breeze          10,371    -6.990   170.889   +56.329
+    frontal              9,370  +119.214   147.101   +32.541
+    pre_frontal         13,758   +38.919   129.673   +15.113
+    calm                47,663   +15.724    72.791   -41.770
+    → spread (max−min MAE across bins): 98.098
+
+=== Pressure (pr) ===
+  overall:  n=194,784   bias=-0.009   MAE=0.041
+  by wind dir (obs):
+    bin                      n      bias       MAE     Δ MAE
+    N                   32,179    -0.009     0.041    -0.000
+    NE                  18,448    -0.040     0.056    +0.014
+    E                    9,903    -0.051     0.062    +0.021
+    SE                  31,689    -0.000     0.039    -0.002
+    S                   22,431    -0.001     0.042    +0.001
+    SW                  24,469    +0.004     0.033    -0.008
+    W                   15,187    -0.017     0.044    +0.003
+    NW                  40,478    -0.003     0.035    -0.006
+    → spread (max−min MAE across bins): 0.029
+  by wind speed (obs):
+    bin                      n      bias       MAE     Δ MAE
+    calm (<5)          135,098    -0.013     0.042    +0.001
+    light (5-15)        59,686    -0.002     0.040    -0.001
+    → spread (max−min MAE across bins): 0.002
+  by cloud cover (obs):
+    bin                      n      bias       MAE     Δ MAE
+    clear (<25)         72,427    -0.000     0.040    -0.001
+    partly (25-75)      36,730    +0.002     0.038    -0.004
+    overcast (>75)      84,228    -0.023     0.044    +0.003
+    → spread (max−min MAE across bins): 0.006
+  by pressure trend (fc):
+    bin                      n      bias       MAE     Δ MAE
+    rising (>+0.5)      57,622    -0.008     0.037    -0.004
+    steady              69,975    -0.019     0.041    -0.000
+    falling (<-0.5)     38,649    -0.026     0.047    +0.005
+    → spread (max−min MAE across bins): 0.010
+  by flow regime (obs):
+    bin                      n      bias       MAE     Δ MAE
+    n                   24,125    -0.001     0.038    -0.004
+    ne                  11,541    -0.043     0.061    +0.020
+    e                    5,561    -0.047     0.063    +0.022
+    se                  22,188    -0.002     0.039    -0.002
+    s                   11,782    -0.013     0.043    +0.002
+    sw                  12,423    +0.004     0.032    -0.009
+    w                    3,918    +0.011     0.032    -0.009
+    nw                  28,852    +0.003     0.033    -0.008
+    calm                49,791    -0.024     0.043    +0.001
+    → spread (max−min MAE across bins): 0.032
+  by synoptic (obs):
+    bin                      n      bias       MAE     Δ MAE
+    nw_flow             42,100    +0.000     0.036    -0.006
+    sw_flow             13,281    +0.004     0.032    -0.009
+    se_flow             19,599    +0.001     0.041    -0.000
+    ne_flow              8,921    -0.037     0.057    +0.015
+    sea_breeze          12,238    -0.011     0.039    -0.002
+    frontal              9,370    -0.015     0.049    +0.007
+    pre_frontal         13,758    -0.020     0.042    +0.000
+    calm                49,791    -0.024     0.043    +0.001
+    → spread (max−min MAE across bins): 0.025
+
+=== Precip amt (pa) ===
+  overall:  n=169,881   bias=-0.003   MAE=0.011
+  by wind dir (obs):
+    bin                      n      bias       MAE     Δ MAE
+    N                   30,844    +0.002     0.007    -0.004
+    NE                  18,277    -0.010     0.023    +0.012
+    E                    9,418    +0.002     0.010    -0.001
+    SE                  26,044    +0.002     0.004    -0.007
+    S                   15,665    -0.005     0.008    -0.003
+    SW                  18,798    -0.006     0.008    -0.003
+    W                   12,502    -0.001     0.005    -0.006
+    NW                  38,333    -0.009     0.018    +0.007
+    → spread (max−min MAE across bins): 0.019
+  by wind speed (obs):
+    bin                      n      bias       MAE     Δ MAE
+    calm (<5)          118,392    -0.002     0.007    -0.003
+    light (5-15)        51,489    -0.007     0.019    +0.008
+    → spread (max−min MAE across bins): 0.011
+  by cloud cover (obs):
+    bin                      n      bias       MAE     Δ MAE
+    clear (<25)         51,859    +0.001     0.005    -0.006
+    partly (25-75)      34,502    -0.001     0.007    -0.004
+    overcast (>75)      82,243    -0.007     0.016    +0.006
+    → spread (max−min MAE across bins): 0.011
+  by pressure trend (fc):
+    bin                      n      bias       MAE     Δ MAE
+    rising (>+0.5)      57,622    -0.000     0.011    +0.000
+    steady              69,975    -0.004     0.011    +0.000
+    falling (<-0.5)     38,649    -0.007     0.011    +0.000
+    → spread (max−min MAE across bins): 0.000
+  by flow regime (obs):
+    bin                      n      bias       MAE     Δ MAE
+    n                   23,184    +0.002     0.008    -0.003
+    ne                  11,459    -0.018     0.035    +0.024
+    e                    5,311    +0.000     0.014    +0.003
+    se                  20,121    +0.004     0.004    -0.007
+    s                    9,631    -0.008     0.012    +0.001
+    sw                  10,890    -0.011     0.013    +0.002
+    w                    3,667    +0.003     0.007    -0.004
+    nw                  28,042    -0.012     0.024    +0.013
+    calm                47,663    +0.001     0.004    -0.007
+    → spread (max−min MAE across bins): 0.031
+  by synoptic (obs):
+    bin                      n      bias       MAE     Δ MAE
+    nw_flow             40,346    -0.004     0.017    +0.006
+    sw_flow             11,384    -0.007     0.011    -0.000
+    se_flow             17,239    +0.000     0.010    -0.001
+    ne_flow              8,842    -0.017     0.035    +0.025
+    sea_breeze          10,371    +0.002     0.002    -0.009
+    frontal              9,370    -0.015     0.020    +0.009
+    pre_frontal         13,758    -0.007     0.013    +0.002
+    calm                47,663    +0.001     0.004    -0.007
+    → spread (max−min MAE across bins): 0.034
+
+================================================================
+RANKED OPPORTUNITIES — top 15 (field, dimension) pairs
+Bigger spread = bigger payoff from stratifying corrections by this state.
+================================================================
+  rank    spread  field          dimension             
+     1   120.355  Solar rad.     flow regime (obs)     
+     2    98.858  Solar rad.     wind dir (obs)        
+     3    98.098  Solar rad.     synoptic (obs)        
+     4    64.188  Solar rad.     cloud cover (obs)     
+     5    50.867  Solar rad.     wind speed (obs)      
+     6    16.664  Cloud cover    flow regime (obs)     
+     7    16.272  Cloud cover    cloud cover (obs)     
+     8    15.194  Cloud cover    wind dir (obs)        
+     9    13.938  Cloud cover    synoptic (obs)        
+    10    10.078  Solar rad.     pressure trend (fc)   
+    11     4.206  Humidity       synoptic (obs)        
+    12     3.770  Humidity       wind dir (obs)        
+    13     3.614  Cloud cover    pressure trend (fc)   
+    14     3.388  Humidity       flow regime (obs)     
+    15     3.275  Wind gust      flow regime (obs)     
+
+Verdict: Solar rad. stratified by flow regime (obs) shows 120.35-unit spread across bins — worth building a regime-aware correction layer.

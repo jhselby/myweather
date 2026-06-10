@@ -1,0 +1,113 @@
+Walk-forward L3+L4 on/off validator — generated 2026-06-09T07:20:49
+Train cutoff: 2026-06-07T11:17 UTC  (test = last 2.0d)
+Enable states: (L3=off, L4=off) | (L3=on, L4=off) | (L3=on, L4=on)
+Recommendation rule: each enabled layer must beat the simpler state by ≥2% MAE.
+
+Per-field held-out MAE (lower = better):
+
+  field            n_test   L2 only     L2+L3    L2+L3+L4       recommend
+  -----------------------------------------------------------------------
+  Temperature      23,797     3.260     3.673       3.164         L2 only
+  Dew point        23,796     3.307     3.408       5.346         L2 only
+  Humidity         23,796    10.303    10.554      15.615         L2 only
+  Wind speed       23,797     5.171     3.440       3.404         L2 + L3
+  Wind gust        23,797    10.399     6.194       5.864    L2 + L3 + L4
+  Cloud cover      23,796    22.548    31.465      36.310         L2 only
+  Solar rad.       23,796   121.069   181.330     198.854         L2 only
+  Pressure         23,796     0.056     0.069       0.063         L2 only
+  Precip amt       23,796     0.017     0.018       0.023         L2 only
+  Cloud high       23,796    30.578    22.508      24.036         L2 + L3
+  Cloud mid        23,796    36.314    31.197      27.975    L2 + L3 + L4
+  Cloud low        23,796    31.363    32.620      34.232         L2 only
+
+Per-field MAE by lead band:
+
+  Temperature  (recommend: off_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724     1.773     1.796       2.176
+    6-11h      2,962     2.034     2.020       2.107
+    12-23h     6,015     2.148     2.264       2.908
+    24-47h    12,096     4.449     5.201       3.773
+
+  Dew point  (recommend: off_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724     1.350     1.313       3.867
+    6-11h      2,962     1.944     1.770       4.789
+    12-23h     6,014     2.718     2.476       5.437
+    24-47h    12,096     4.374     4.744       5.770
+
+  Humidity  (recommend: off_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724     5.205     5.131      14.285
+    6-11h      2,962     7.669     7.268      16.521
+    12-23h     6,014     7.665     6.646      16.976
+    24-47h    12,096    13.408    14.524      15.016
+
+  Wind speed  (recommend: on_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724     2.006     1.784       1.782
+    6-11h      2,962     3.011     2.146       2.193
+    12-23h     6,015     5.108     3.321       3.360
+    24-47h    12,096     6.444     4.188       4.089
+
+  Wind gust  (recommend: on_on):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724     3.044     2.448       2.264
+    6-11h      2,962     6.045     4.137       3.999
+    12-23h     6,015    10.939     6.510       6.178
+    24-47h    12,096    12.853     7.384       6.975
+
+  Cloud cover  (recommend: off_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724    23.248    20.061      24.128
+    6-11h      2,962    21.081    26.609      29.380
+    12-23h     6,014    15.385    24.711      27.762
+    24-47h    12,096    26.310    38.581      45.000
+
+  Solar rad.  (recommend: off_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724   117.188   120.254     156.434
+    6-11h      2,962   100.816   126.605     152.111
+    12-23h     6,014    84.437   120.338     128.616
+    24-47h    12,096   145.115   238.810     254.775
+
+  Pressure  (recommend: off_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724     0.021     0.026       0.022
+    6-11h      2,962     0.039     0.052       0.045
+    12-23h     6,014     0.045     0.057       0.053
+    24-47h    12,096     0.073     0.088       0.082
+
+  Precip amt  (recommend: off_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724     0.014     0.017       0.027
+    6-11h      2,962     0.017     0.019       0.029
+    12-23h     6,014     0.018     0.019       0.027
+    24-47h    12,096     0.017     0.017       0.018
+
+  Cloud high  (recommend: on_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724    22.773    24.331      25.699
+    6-11h      2,962    43.013    33.002      35.032
+    12-23h     6,014    46.472    34.018      35.687
+    24-47h    12,096    21.388    13.804      15.177
+
+  Cloud mid  (recommend: on_on):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724    23.918    25.994      23.453
+    6-11h      2,962    19.214    19.003      19.937
+    12-23h     6,014    23.167    21.363      23.760
+    24-47h    12,096    49.830    40.243      33.058
+
+  Cloud low  (recommend: off_off):
+    band           n   L2 only     L2+L3    L2+L3+L4
+    0-5h       2,724    29.853    32.519      37.479
+    6-11h      2,962    33.524    36.055      38.433
+    12-23h     6,014    27.713    29.410      31.423
+    24-47h    12,096    32.989    33.397      33.869
+
+Recommended config (drop into decay_apply.py):
+  L3_ENABLED = {'ws', 'wg', 'ch', 'cm'}
+  L4_ENABLED = {'wg', 'cm'}
+
+Verdict: Per-field split: L3 on for 4 field(s), L4 on for 2 field(s). Implement selective enable.
