@@ -560,19 +560,6 @@
 <h3 class="subsection">2a. Octant coverage — where this tick's stations came from</h3>
 <div id="layer2-octants" class="layer-info-text">loading…</div>
 
-<h3 class="subsection">2b. Network bias estimate (full, un-confidence-scaled)</h3>
-<div id="layer2-panel" class="layer-info-text">loading…</div>
-
-<h3 class="subsection">2c. Network confidence (Kalman gain K)</h3>
-<div id="layer3-panel" class="layer-info-text">loading…</div>
-
-<h3 class="subsection">2d. Lead-decay applied to L2 bias (v0.6.44)</h3>
-<div id="layer2-leaddecay-meta" class="layer-info-text">loading…</div>
-<div id="layer2-leaddecay-wrap" class="chart-wrap" style="height:260px;"><canvas id="layer2-leaddecay-canvas"></canvas></div>
-
-<h3 class="subsection">2e. Post-mesonet forecast — what gets passed to Layer 3</h3>
-<div id="grid-layer2" class="grid"></div>
-
 <details id="bias-details" class="bias-accordion">
   <summary>Per-station detail — mesonet map &amp; Kalman-tracked offsets table</summary>
   <div id="status-bias" class="status" hidden></div>
@@ -587,6 +574,19 @@
   <div id="stats-uptime" class="stats-panel" hidden></div>
   <div id="uptime-table-wrap"></div>
 </details>
+
+<h3 class="subsection">2b. Network bias estimate (full, un-confidence-scaled)</h3>
+<div id="layer2-panel" class="layer-info-text">loading…</div>
+
+<h3 class="subsection">2c. Network confidence (Kalman gain K)</h3>
+<div id="layer3-panel" class="layer-info-text">loading…</div>
+
+<h3 class="subsection">2d. Lead-decay applied to L2 bias (v0.6.44)</h3>
+<div id="layer2-leaddecay-meta" class="layer-info-text">loading…</div>
+<div id="layer2-leaddecay-wrap" class="chart-wrap" style="height:260px;"><canvas id="layer2-leaddecay-canvas"></canvas></div>
+
+<h3 class="subsection">2e. Post-mesonet forecast — what gets passed to Layer 3</h3>
+<div id="grid-layer2" class="grid"></div>
 
 <!-- ───────────────────── Layer 3 ───────────────────── -->
 <h2 class="section" id="sec-layer3">Layer 3 — Decay curves (lead-time correction)</h2>
