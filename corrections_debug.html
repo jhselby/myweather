@@ -1191,22 +1191,41 @@ function renderHeadlineBox(wxDoc) {
   const briefing = (wxDoc && wxDoc.briefing) || {};
   const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
 
+  // Detect degraded mode: when GFS/HRRR is unavailable, the pipeline falls
+  // back to using WU stations directly with no model comparison, so the
+  // bias fields aren't written. Render an explicit "paused" message instead
+  // of empty dashes that look like a broken card.
+  const degraded = (hyp.aggregation && /fallback/i.test(hyp.aggregation))
+                || (hyp.note && /unavailable/i.test(hyp.note))
+                || (hyp.weighted_bias == null && hyp.weighted_bias_humidity == null);
+
   const tb = hyp.weighted_bias;
   const hb = hyp.weighted_bias_humidity;
-  set("hbTempBias", tb == null ? "—" : `${tb >= 0 ? "+" : ""}${tb.toFixed(1)}°F`);
-  set("hbTempSub", tb == null ? "vs raw model"
-    : tb > 0 ? "model running cool — we warm it"
-    : tb < 0 ? "model running warm — we cool it"
-    : "model on target");
-  set("hbHumBias", hb == null ? "—" : `${hb >= 0 ? "+" : ""}${hb.toFixed(0)}%`);
-  set("hbHumSub", hb == null ? "vs raw model"
-    : hb > 0 ? "model running dry — we add moisture"
-    : hb < 0 ? "model running humid — we dry it"
-    : "model on target");
+  if (degraded) {
+    set("hbTempBias", "paused");
+    set("hbTempSub", "model unavailable — using stations directly");
+    set("hbHumBias", "paused");
+    set("hbHumSub", "model unavailable — using stations directly");
+  } else {
+    set("hbTempBias", tb == null ? "—" : `${tb >= 0 ? "+" : ""}${tb.toFixed(1)}°F`);
+    set("hbTempSub", tb == null ? "vs raw model"
+      : tb > 0 ? "model running cool — we warm it"
+      : tb < 0 ? "model running warm — we cool it"
+      : "model on target");
+    set("hbHumBias", hb == null ? "—" : `${hb >= 0 ? "+" : ""}${hb.toFixed(0)}%`);
+    set("hbHumSub", hb == null ? "vs raw model"
+      : hb > 0 ? "model running dry — we add moisture"
+      : hb < 0 ? "model running humid — we dry it"
+      : "model on target");
+  }
 
   set("hbConfidence", hyp.confidence || "—");
   const used = hyp.stations_used, total = hyp.stations_total;
-  set("hbStationsLine", (used != null && total != null) ? `${used} of ${total} stations reporting` : "— stations reporting");
+  let stationsLine;
+  if (used != null && total != null) stationsLine = `${used} of ${total} stations reporting`;
+  else if (used != null) stationsLine = `${used} stations reporting`;
+  else stationsLine = "— stations reporting";
+  set("hbStationsLine", stationsLine);
 
   const model = briefing.model || "—";
   const labels = { gemini: "Gemini", groq: "Groq (fallback)", templated: "Templated", "—": "—" };
