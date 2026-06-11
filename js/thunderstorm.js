@@ -49,7 +49,8 @@ function renderThunderstormCard(data) {
   const tileDetail = document.getElementById("tsDetailCollapsed");
   const tileCape   = document.getElementById("tsCapeCollapsed");
 
-  const displayLabel = ts?.severity === "watch" ? _riskLabel(ts.cape_label) : (cfg.label || "No Risk");
+  const riskLabelSource = ts?.cape_peak_label ?? ts?.cape_label;
+  const displayLabel = ts?.severity === "watch" ? _riskLabel(riskLabelSource) : (cfg.label || "No Risk");
   if (tileStatus) tileStatus.textContent = displayLabel;
   if (tileDetail && ts) {
     if (ts.active && ts.lightning_count > 0) {
@@ -84,7 +85,7 @@ function renderThunderstormCard(data) {
 
   // CAPE rows
   setT("tsCapeValue",     ts.cape_current != null ? `${ts.cape_current} J/kg` : "--");
-  setT("tsCapeLabelValue", ts.cape_label ? _riskLabel(ts.cape_label) : "--");
+  setT("tsCapeLabelValue", riskLabelSource ? _riskLabel(riskLabelSource) : "--");
   if (ts.cape_peak_value != null && ts.cape_peak_hour != null) {
     setT("tsCapePeakValue", `${ts.cape_peak_value} J/kg at ${_fmtTime(ts.cape_peak_hour)}`);
   } else {

@@ -271,16 +271,18 @@ def _build_weather_summary(weather_data):
     if sb_line:
         lines.append(sb_line)
 
-    # Thunderstorm
+    # Thunderstorm. Risk gating keys off the *peak* CAPE label (next 12h),
+    # not the current value — current CAPE at 8am is uselessly low almost
+    # every summer day, which used to mask the textbook NE pulse setups.
     ts = der.get("thunderstorm", {})
     ts_severity = ts.get("severity", "clear")
-    cape_label = ts.get("cape_label", "")
-    risk_word = {"Extreme": "extreme", "High": "high", "Moderate": "moderate"}.get(cape_label, "low")
+    risk_label = ts.get("cape_peak_label") or ts.get("cape_label", "")
+    risk_word = {"Extreme": "extreme", "High": "high", "Moderate": "moderate"}.get(risk_label, "low")
     if ts_severity in ("active", "severe"):
         min_dist = ts.get("min_distance_km")
         dist_str = f", closest {min_dist} km" if isinstance(min_dist, (int, float)) and min_dist > 0 else ""
         lines.append(f"{'Severe thunderstorm' if ts_severity == 'severe' else 'Thunderstorm'} in progress — {ts.get('lightning_count', 0)} strikes in past hour{dist_str}")
-    elif ts_severity == "watch" and cape_label not in ("", "Weak"):
+    elif ts_severity == "watch" and risk_label not in ("", "Weak", "Low", "Unknown"):
         lines.append(f"Thunderstorm risk: {risk_word} — do NOT overstate this, mention only briefly if relevant")
 
     pwat = der.get("precip_water_mm")

@@ -868,10 +868,13 @@
         color: ts.severity === "severe" ? "red" : "orange",
         isAlert: true,
       });
-    } else if (ts && ts.severity === "watch" && ts.cape_label !== "Weak") {
-      const riskDesc = ts.cape_label === "Extreme" ? "Extreme risk" :
-                       ts.cape_label === "High"    ? "High risk" :
-                                                     "Moderate risk";
+    } else if (ts && ts.severity === "watch" &&
+               (ts.cape_peak_label ?? ts.cape_label) !== "Weak" &&
+               (ts.cape_peak_label ?? ts.cape_label) !== "Low") {
+      const riskLabel = ts.cape_peak_label ?? ts.cape_label;
+      const riskDesc = riskLabel === "Extreme" ? "Extreme risk" :
+                       riskLabel === "High"    ? "High risk" :
+                                                 "Moderate risk";
       rows.push({
         label: "Thunderstorm risk",
         value: riskDesc,

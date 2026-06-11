@@ -58,13 +58,16 @@ def detect_thunderstorm(weather_data):
     # Active detection
     lightning_active = lightning_count >= 3 or (lightning_count >= 1 and is_close)
 
-    # Severity
+    # Severity. Watch also fires when the daytime peak (next 12h) reaches
+    # Moderate even if current CAPE is low — otherwise a hot afternoon setup
+    # reads as "clear" at 8am.
     if lightning_active:
         if is_close or (cape_current is not None and cape_current >= CAPE_HIGH and heavy_precip):
             severity = "severe"
         else:
             severity = "active"
-    elif cape_current is not None and cape_current >= CAPE_WEAK:
+    elif (cape_current is not None and cape_current >= CAPE_WEAK) or \
+         (cape_peak_value is not None and cape_peak_value >= CAPE_MODERATE):
         severity = "watch"
     else:
         severity = "clear"
@@ -92,6 +95,7 @@ def detect_thunderstorm(weather_data):
         "cape_label":          _cape_label(cape_current),
         "cape_peak_value":     cape_peak_value,
         "cape_peak_hour":      cape_peak_hour,
+        "cape_peak_label":     _cape_label(cape_peak_value),
         "cape_hourly":         hourly_payload,
         "precip_intensity":    cur_precip,
         "sky_override":        sky_override,
