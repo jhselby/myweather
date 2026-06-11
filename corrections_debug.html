@@ -551,7 +551,7 @@
 <!-- ───────────────────── Layer 2 ───────────────────── -->
 <h2 class="section" id="sec-layer2">Layer 2 — Mesonet corrections (local station network)</h2>
 <div class="layer-info-text">
-  The 81-station local network's collective read on what the raw model is missing. Two parallel aggregation paths under this layer, each suited to the noise behavior of its metric:
+  The <span id="layer2NetworkCount">66</span>-station local network's collective read on what the raw model is missing. Two parallel aggregation paths under this layer, each suited to the noise behavior of its metric:
   <div class="meta-line"><strong>Temp / humidity / pressure (additive bias):</strong> each station's reading first calibrated against its own chronic offset (Kalman-tracked, rolling 48h, see 2a accordion). Per-octant <code>1/distance² × exp(-|elev_diff|/30)</code>-weighted mean of (station − model) bias. Final network bias = unweighted mean across non-empty octants. Temperature and humidity additionally get scaled by their own network Kalman gain K (sec 2c) before being added to the raw model — separate K functions per field since temp scatter is in °F and humidity scatter is in %. Pressure is applied at full strength (station consensus matches model after altitude offsets).</div>
   <div class="meta-line"><strong>Lead-decay (v0.6.44):</strong> the bias is not applied flat across all 48 lead hours. Instead, each field gets <code>bias_applied(lead) = current_bias × exp(-lead/τ)</code> with a per-field τ fit by <code>analysis/l2_lead_decay_fit.py</code> and published to <code>l2_decay.json</code>. Defaults: τ_t=4h (temp bias decays fast — useful at short leads, near-zero by 24h), τ_h=240h (humidity bias persists across the whole horizon, essentially flat), τ_pr=12h (pressure ~half-life 8h). Fields without a τ (wind, clouds, solar, etc.) get flat L2 application by default — not because flat won a grid search, but because they were never fit. See sec 2d below for the live curves.</div>
   <div class="meta-line"><strong>Wind / gust (direct selection, no bias):</strong> no per-station calibration (per-station wind biases are too noisy to track meaningfully) and no additive bias term. Per-octant MAX gust → MEDIAN across populated octants. The chosen value is blended into the next 24h of the hourly forecast with a linear-decay weight (100% at hour 0, 0% at hour 24). No K scaling — the median-of-octants step is the confidence filter.</div>
@@ -1102,6 +1102,10 @@ function _drillSetupControls(wxDoc, decayCorr, diurnalCorr, tsDoc) {
 function renderLayer2Panel(wxDoc) {
   const el = document.getElementById("layer2-panel");
   const hyp = (wxDoc && wxDoc.hyperlocal) || {};
+  // Keep the static blurb's roster count in sync with live data so it doesn't
+  // drift after future culls/adds.
+  const ct = document.getElementById("layer2NetworkCount");
+  if (ct && hyp.stations_total != null) ct.textContent = hyp.stations_total;
   const fmt = (v, d = 2) => (v == null || Number.isNaN(v)) ? "—" : Number(v).toFixed(d);
   const sgn = (v) => v == null ? "" : (v >= 0 ? "+" : "");
   el.innerHTML =
