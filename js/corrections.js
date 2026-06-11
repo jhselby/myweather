@@ -84,13 +84,26 @@ function renderCorrectionsCard(data) {
     set('scBiasWetBulb', '--');
   }
 
-  // Feels Like
+  // Feels Like — shade (NWS heat index above 80°F+35% RH, else Australian AT
+  // with solar=0). Apples-to-apples with Open-Meteo's apparent_temperature,
+  // which is also shade-leaning. Full-sun Steadman lives in the Feels Like card.
   const modelFeelsLike = cur.apparent_temperature;
-  const feelsLike = der.corrected_feels_like;
+  let shadeFeels = der.heat_index;
+  if (shadeFeels == null) {
+    const T = hyp.corrected_temp ?? cur.temperature;
+    const RH = hyp.corrected_humidity ?? cur.humidity;
+    const ws = hyp.corrected_wind_speed ?? cur.wind_speed ?? 0;
+    if (T != null && RH != null) {
+      const Tc = (T - 32) * 5 / 9;
+      const wsMs = ws * 0.44704;
+      const e = (RH / 100) * 6.105 * Math.exp(17.27 * Tc / (237.7 + Tc));
+      shadeFeels = (Tc + 0.33 * e - 0.70 * wsMs - 4.00) * 9 / 5 + 32;
+    }
+  }
   set('scModelFeelsLike',     modelFeelsLike != null ? Math.round(modelFeelsLike) + '°F' : '--');
-  set('scCorrectedFeelsLike', feelsLike != null ? Math.round(feelsLike) + '°F' : '--');
-  if (modelFeelsLike != null && feelsLike != null) {
-    set('scBiasFeelsLike', (feelsLike - modelFeelsLike >= 0 ? '+' : '') + (feelsLike - modelFeelsLike).toFixed(1) + '°F');
+  set('scCorrectedFeelsLike', shadeFeels != null ? Math.round(shadeFeels) + '°F' : '--');
+  if (modelFeelsLike != null && shadeFeels != null) {
+    set('scBiasFeelsLike', (shadeFeels - modelFeelsLike >= 0 ? '+' : '') + (shadeFeels - modelFeelsLike).toFixed(1) + '°F');
   } else {
     set('scBiasFeelsLike', '--');
   }
