@@ -15,11 +15,16 @@ from datetime import datetime, timedelta
 import pytz
 
 from ..gcs_io import load_json, upload_json
+from ..fetchers.wu_scraper_realtime import CULLED_STATIONS as WU_CULLED
 
 
 GCS_PATH = "station_uptime.json"
 RETENTION_DAYS = 7
 TZ = pytz.timezone("America/New_York")
+# Culled stations stay in the on-disk log (for manual re-probe later) but are
+# hidden from the debug-page summary so the dead-count and mean-uptime aren't
+# polluted by stations we've deliberately stopped hitting.
+_CULLED = set(WU_CULLED)
 
 
 def update_station_uptime(weather_data, attempted_wu_ids, attempted_tempest_ids):
@@ -61,6 +66,8 @@ def update_station_uptime(weather_data, attempted_wu_ids, attempted_tempest_ids)
 
     summary = {}
     for sid, entries in stations.items():
+        if sid in _CULLED:
+            continue
         n = len(entries)
         if n == 0:
             continue
