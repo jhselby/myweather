@@ -193,7 +193,22 @@ def _generate_period_forecast(hrrr_data, gfs_data, target_date, is_daytime, peri
     
     if not period_indices:
         return None
-    
+
+    # Guard: when both HRRR + GFS fail and we fall back to a partial cached
+    # hourly block, period_indices may point past the end of the trimmed
+    # arrays. Trim to the shortest required array's length so we don't crash
+    # the whole collector run on a partial cache. If nothing usable survives,
+    # bail and let the caller skip this period.
+    required = ('temperature', 'apparent_temperature', 'wind_speed',
+                'wind_gusts', 'wind_direction',
+                'precipitation_probability', 'weather_code')
+    safe_len = min((len(hourly_data.get(k) or []) for k in required), default=0)
+    paired = [(i, h) for i, h in zip(period_indices, period_hours) if i < safe_len]
+    if not paired:
+        return None
+    period_indices = [i for i, _ in paired]
+    period_hours = [h for _, h in paired]
+
     # Extract data for this period
     temps = [hourly_data['temperature'][i] for i in period_indices]
     
