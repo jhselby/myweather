@@ -107,7 +107,7 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
         params = {
             "latitude": new_lat,
             "longitude": new_lon,
-            "hourly": "cloud_cover_low,cloud_cover_mid,cloud_cover_high,relative_humidity_2m",
+            "hourly": "cloud_cover_low,cloud_cover_mid,cloud_cover_high,relative_humidity_2m,total_column_integrated_water_vapour",
             "forecast_days": 5,
             **OM_UNITS,
         }
@@ -127,6 +127,7 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
                         "cloud_mid": data["hourly"].get("cloud_cover_mid", []),
                         "cloud_high": data["hourly"].get("cloud_cover_high", []),
                         "humidity": data["hourly"].get("relative_humidity_2m", []),
+                        "precip_water_mm": data["hourly"].get("total_column_integrated_water_vapour", []),
                     }
                 else:
                     logging.error(f"    ✗ {dist}mi - no data")

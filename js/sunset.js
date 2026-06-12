@@ -75,6 +75,13 @@ function renderSunsetQuality(data) {
     const high50 = avgWindow(cloud50, 'cloud_high')
                    ?? avgWindow(cloud25, 'cloud_high') ?? high25;
     const hum25 = avgWindow(cloud25 || cloud50 || cloud10, 'humidity') ?? 50;
+    // Precipitable water (column moisture, mm) — the haze knob.
+    // High PW washes out color regardless of how "clear" the sky looks to a
+    // transmissivity calc. Ground-truth: June 10 (PW 49) + June 12 (PW 44)
+    // both predicted Spectacular, both were duds. Penalty starts at 30mm,
+    // caps at 80% knockdown by 70mm. Plus a hard label ceiling — no
+    // Spectacular above 35mm PW, no Very Good above 50mm.
+    const pwat = avgWindow(cloud25 || cloud50 || cloud10, 'precip_water_mm') ?? 0;
     
     const totalCloud = (low10 + mid25 + high25) / 3;
     
@@ -142,7 +149,8 @@ function renderSunsetQuality(data) {
       ? Math.sin((low10 - 8) / 64 * Math.PI) * 0.35
       : 0;
 
-    let rawScore = (midScore * 0.7 + highBonus + lowCloudColor) * (1 - lowPenalty * 0.65) * humFactor;
+    const pwFactor = 1 - Math.min(0.8, Math.max(0, (pwat - 30)) / 40);
+    let rawScore = (midScore * 0.7 + highBonus + lowCloudColor) * (1 - lowPenalty * 0.65) * humFactor * pwFactor;
     rawScore = Math.max(1, Math.min(100, Math.round(rawScore * 100)));
 
     let label, color;
@@ -151,6 +159,10 @@ function renderSunsetQuality(data) {
     else if (rawScore >= 35) { label = "Good";         color = "rgba(255,220,100,0.9)"; }
     else if (rawScore >= 18) { label = "Fair";         color = "rgba(180,180,180,0.8)"; }
     else                     { label = "Poor";         color = "rgba(120,120,120,0.6)"; }
+    // Hard label ceiling on muggy days — even if cloud canvas looks right,
+    // column moisture above these thresholds kills color in practice.
+    if (pwat >= 50 && rawScore >= 55) { label = "Good";      color = "rgba(255,220,100,0.9)"; }
+    else if (pwat >= 35 && rawScore >= 75) { label = "Very Good"; color = "rgba(255,200,60,0.95)"; }
     const score = wineScale(rawScore);
     
     const dayLabel = day.day === 0 ? "Today" : day.day === 1 ? "Tomorrow"
@@ -162,9 +174,10 @@ function renderSunsetQuality(data) {
       avgLow: low10.toFixed(0),
       avgMid: midCloudAvg.toFixed(0),
       avgHigh: ((high25 + high50) / 2).toFixed(0),
-      avgHum: hum25.toFixed(0)
+      avgHum: hum25.toFixed(0),
+      avgPwat: pwat.toFixed(0)
     });
-    
+
 
   }
 
