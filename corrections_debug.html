@@ -747,6 +747,18 @@
   <div id="grid-state-stratified"></div>
 </details>
 
+<details class="research-subsection" id="r4-hrrr-gfs-spread">
+  <summary>R4. HRRR vs GFS spread as confidence signal (collecting since 2026-06-12)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> when HRRR and GFS disagree at a given forecast hour, actual error magnitude tends to be higher — i.e. <code>|HRRR − GFS|</code> per (field, lead) predicts <code>|forecast − obs|</code>. If true, the spread becomes a free uncertainty number that can widen displayed intervals and feed Gemini hedge language ("models disagree on tomorrow's high"). Data collection: HRRR L1 already in <code>forecast_log.json</code>; new <code>gfs_l1_log.json</code> captures GFS L1 per tick for the same 0-48h window. Analysis: join by (run, v), regress <code>|hrrr − gfs|</code> against pair-log <code>|err|</code> per field per lead band. <strong>First meaningful read:</strong> ~2026-06-19 (7 days). <strong>Decision rule:</strong> ship if median spearman ρ &gt; 0.25 for ≥3 fields and is consistent across lead bands; close if not.</div>
+  <div id="status-hrrr-gfs-spread" class="status">Collecting data. First read after ~2026-06-19.</div>
+</details>
+
+<details class="research-subsection" id="r5-cove-gradient">
+  <summary>R5. Cove gradient — is waterfront vs inland temp differential driven by land–water ΔT? (collecting since 2026-06-12)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> the air-temp differential <code>waterfront_median − inland_median</code> is correlated with the land–water thermal gap <code>(ambient_T − salem_water_T)</code>, stratified by wind regime and sea-breeze active state. If true, a Wyman-Cove-specific microclimate correction becomes possible — the L2 mesonet's octant-balanced aggregation currently smooths this out. Data collection: <code>cove_gradient_log.json</code> captures waterfront-tagged Tempest median (Willow, Neptune), inland Tempest median (18 stations), ambient T, wind dir/speed, salem_water_temp_f, buoy_water_temp_f, and sb_active per tick. <strong>First meaningful read:</strong> ~2026-06-19 (7 days). <strong>Surprise from tick #1:</strong> waterfront ran +4°F WARMER than inland during active sea breeze — opposite the hypothesis. One tick isn't a result; either the cove sits in a thermal pocket or the "waterfront" tag is misleading (sunny roof installs vs. exposed-to-flow). Watch for the sign across regimes. <strong>Decision rule:</strong> ship a regime-conditional correction if <code>delta_wf_inland = f(land_water_gap)</code> regression has ρ &gt; 0.30 within at least one regime bin (e.g., sb_active=True); close otherwise.</div>
+  <div id="status-cove-gradient" class="status">Collecting data. First read after ~2026-06-19.</div>
+</details>
+
 <h3 class="subsection" style="margin-top:24px;color:#a08070;">Discarded hypotheses</h3>
 
 <details class="research-subsection" id="r4-discarded">
