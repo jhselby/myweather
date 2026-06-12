@@ -257,6 +257,16 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     if ts.get("sky_override"):
         weather_data.setdefault("current", {})["condition_override"] = ts["sky_override"]
     
+    # Log raw GFS values for HRRR-vs-GFS spread analysis. Must run BEFORE
+    # normalize_for_forecast_generation rewrites the dict in place — the
+    # logger reads native Open-Meteo keys (temperature_2m, etc).
+    if hourly_7day_data and "hourly" in hourly_7day_data:
+        try:
+            from .processors.forecast_spread_log import append_gfs_snapshot
+            append_gfs_snapshot(hourly_7day_data["hourly"])
+        except Exception as e:
+            logging.warning(f"  ⚠  GFS spread snapshot failed: {redact_secrets(e)}")
+
     # Process 7-day hourly data for forecast text generation
     if hourly_7day_data and "hourly" in hourly_7day_data:
         normalize_for_forecast_generation(hourly_7day_data, weather_data)
