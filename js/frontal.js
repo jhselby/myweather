@@ -1,10 +1,10 @@
-// Frontal-passage card. Hidden when state=quiet; shows compact summary
-// when active or recent. Cause-attribution detail is here so users can
-// understand WHY the weather feels different rather than just see numbers.
+// Frontal-passage card. Always visible, content changes by state.
+// - quiet:  "No recent passage" + last-passage summary if any
+// - recent: "Front Passed" with cause attribution (last 12h)
+// - active: "Front Passing" with in-progress signature
 
 function _frontalRelative(tsLocal) {
   if (!tsLocal) return "";
-  // tsLocal is "YYYY-MM-DDTHH:MM" in America/New_York
   const ev = new Date(tsLocal.replace(" ", "T"));
   const diffMin = Math.round((Date.now() - ev.getTime()) / 60000);
   if (diffMin < 0) return "moments ago";
@@ -26,30 +26,53 @@ function _frontalTypeLabel(t) {
 function renderFrontal(weatherData) {
   const card = document.getElementById("frontalCard");
   if (!card) return;
-  const block = weatherData && weatherData.frontal;
-  if (!block || block.state === "quiet" || !block.event) {
-    card.style.display = "none";
-    return;
-  }
 
-  const ev = block.event;
-  const isActive = block.state === "active";
-  const typeLabel = _frontalTypeLabel(ev.type);
+  const block = (weatherData && weatherData.frontal) || {};
+  const state = block.state || "quiet";
+  const ev = block.event || null;
+  const recentEvents = block.recent_events || [];
+  const lastPast = recentEvents.length ? recentEvents[recentEvents.length - 1] : null;
 
-  // Card becomes visible
   card.style.display = "";
 
-  // Title + tile label
-  const titleText = isActive ? "Front Passing" : "Front Passed";
+  const setT = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val ?? "--"; };
   const titleEl = document.getElementById("frontalTitleText");
   const tileLabel = document.getElementById("frontalTileLabel");
-  if (titleEl) titleEl.textContent = titleText;
-  if (tileLabel) tileLabel.textContent = titleText;
-
-  // Collapsed preview
   const collapsedHead = document.getElementById("frontalCollapsedHeadline");
   const collapsedWhen = document.getElementById("frontalCollapsedWhen");
   const collapsedDetail = document.getElementById("frontalCollapsedDetails");
+
+  if (state === "quiet") {
+    if (titleEl) titleEl.textContent = "Front";
+    if (tileLabel) tileLabel.textContent = "Front";
+    if (collapsedHead) collapsedHead.textContent = "No recent passage";
+    if (collapsedWhen) collapsedWhen.textContent = lastPast
+      ? `Last front: ${_frontalRelative(lastPast.ts)}`
+      : "Watching for boundary shifts";
+    if (collapsedDetail) collapsedDetail.textContent = lastPast
+      ? `${_frontalTypeLabel(lastPast.type)} · ${lastPast.wd_from_oct || "?"} → ${lastPast.wd_to_oct || "?"}`
+      : "";
+
+    setT("frontalStatusBadge", "Quiet");
+    setT("frontalTypeValue", lastPast ? `${_frontalTypeLabel(lastPast.type)} (last)` : "--");
+    setT("frontalWhenValue", lastPast ? _frontalRelative(lastPast.ts) : "no passages logged yet");
+    setT("frontalConfidenceValue", "--");
+    setT("frontalDewpointValue", lastPast?.dp_drop_f != null
+      ? `${lastPast.dp_drop_f > 0 ? "dropped" : "rose"} ${Math.abs(lastPast.dp_drop_f).toFixed(1)}°F`
+      : "--");
+    setT("frontalWindValue", (lastPast?.wd_from_oct && lastPast?.wd_to_oct)
+      ? `${lastPast.wd_from_oct} → ${lastPast.wd_to_oct}`
+      : "--");
+    setT("frontalPressureValue", "--");
+    return;
+  }
+
+  const isActive = state === "active";
+  const typeLabel = _frontalTypeLabel(ev.type);
+  const titleText = isActive ? "Front Passing" : "Front Passed";
+  if (titleEl) titleEl.textContent = titleText;
+  if (tileLabel) tileLabel.textContent = titleText;
+
   if (collapsedHead) collapsedHead.textContent = isActive ? "⚡ Active" : "🌬 " + typeLabel;
   if (collapsedWhen) collapsedWhen.textContent = isActive
     ? `${typeLabel}, started ${_frontalRelative(ev.ts)}`
@@ -60,8 +83,6 @@ function renderFrontal(weatherData) {
   if (ev.wd_from_oct && ev.wd_to_oct) bits.push(`wind ${ev.wd_from_oct} → ${ev.wd_to_oct}`);
   if (collapsedDetail) collapsedDetail.textContent = bits.join(" · ");
 
-  // Expanded body
-  const setT = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val ?? "--"; };
   setT("frontalStatusBadge", isActive ? "Passing now" : "Recently passed");
   setT("frontalTypeValue", typeLabel);
   setT("frontalWhenValue", _frontalRelative(ev.ts));
