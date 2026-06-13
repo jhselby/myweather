@@ -622,6 +622,56 @@
           </div>
         </div>
 
+        <div id="frontalCard" class="card col-6" data-collapse-key="frontal" data-default-open="false" style="display:none;" onclick="if(!this.classList.contains('card-expanded')) toggleCard('frontal', this.querySelector('.card-title-collapsible'))">
+          <div class="card-title card-title-collapsible" style="cursor:default;">
+            <span id="frontalTitleText">Front</span><span class="collapse-chevron" style="display:none;">&#9660;</span>
+          </div>
+          <div class="card-collapsed-preview" style="display:none;position:relative;min-height:192px;margin:-16px;">
+            <div class="tile-label" style="top:12px;left:16px;" id="frontalTileLabel">Front</div>
+            <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:192px;padding-top:12px;">
+              <div id="frontalCollapsedHeadline" style="font-size:1.4rem;font-weight:600;margin-bottom:6px;">--</div>
+              <div id="frontalCollapsedWhen" style="font-size:0.85rem;opacity:0.85;margin-bottom:8px;text-align:center;padding:0 12px;"></div>
+              <div id="frontalCollapsedDetails" style="font-size:0.78rem;opacity:0.7;text-align:center;line-height:1.5;padding:0 12px;"></div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row" style="margin-bottom:14px;">
+              <div class="label">Status</div>
+              <div class="value" id="frontalStatusBadge">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Type</div>
+              <div class="value" id="frontalTypeValue">--</div>
+            </div>
+            <div class="row">
+              <div class="label">When</div>
+              <div class="value" id="frontalWhenValue">--</div>
+            </div>
+            <div class="row" style="margin-bottom:14px;">
+              <div class="label">Confidence</div>
+              <div class="value" id="frontalConfidenceValue">--</div>
+            </div>
+
+            <div class="text-secondary" style="font-size:0.82rem;margin-bottom:8px;font-weight:700;">What shifted</div>
+            <div class="row">
+              <div class="label">Dewpoint</div>
+              <div class="value" id="frontalDewpointValue">--</div>
+            </div>
+            <div class="row">
+              <div class="label">Wind direction</div>
+              <div class="value" id="frontalWindValue">--</div>
+            </div>
+            <div class="row" style="margin-bottom:14px;">
+              <div class="label">Pressure</div>
+              <div class="value" id="frontalPressureValue">--</div>
+            </div>
+
+            <div class="text-subtle" style="font-size:0.72rem;line-height:1.5;margin-top:20px;">
+              Frontal passages are detected from rate-of-change signatures in cove obs: dewpoint drop over 60 min, wind direction shift, and pressure bottoming out. Card hides when nothing is passing. Recent passages stay surfaced for 12 hours.
+            </div>
+          </div>
+        </div>
+
         <div class="card col-6" data-collapse-key="sea_breeze_detail" data-default-open="false" onclick="if(!this.classList.contains('card-expanded')) toggleCard('sea_breeze_detail', this.querySelector('.card-title-collapsible'))">
           <div class="card-title card-title-collapsible" style="cursor:default;">
             Sea Breeze<span class="collapse-chevron" style="display:none;">&#9660;</span>
@@ -1347,6 +1397,7 @@
   <script src="js/seabreeze.js?v=14e6104c"></script>
   <script src="js/feelslike.js?v=d8f5440f"></script>
   <script src="js/thunderstorm.js?v=edc5c80f"></script>
+  <script src="js/frontal.js?v=a8a384d3"></script>
   <script src="js/previews.js?v=6c884047"></script>
   <script src="js/tempchart.js?v=6560c27d"></script>
   <script src="js/obschart.js?v=0bca747a"></script>
@@ -1361,7 +1412,7 @@
   <script src="js/format.js?v=4b2c72ac"></script>
   <script src="js/theme.js?v=be472ad7"></script>
   <script src="js/tab_nav.js?v=eee3fa1c"></script>
-  <script src="js/app-main.js?v=413a9192"></script>
+  <script src="js/app-main.js?v=f14d9d74"></script>
   <script src="js/version_check.js?v=a824933b"></script>
   <script src="js/pull_refresh.js?v=2e8c84a6"></script>
   <script src="js/alarms.js?v=bf87aed1"></script>
@@ -1491,7 +1542,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.6.73</span>
+            <span class="version-pill" id="appVersion">v0.6.74</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->

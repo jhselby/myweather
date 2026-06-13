@@ -546,6 +546,7 @@ function loadWeatherData() {
         renderFogDetail(data);
         renderFeelsLikeCard(data);
         renderThunderstormCard(data);
+        renderFrontal(data);
         window.__thunderstorm = (data.derived?.thunderstorm?.severity && data.derived.thunderstorm.severity !== 'clear')
           ? data.derived.thunderstorm : null;
         initWindPills(data);

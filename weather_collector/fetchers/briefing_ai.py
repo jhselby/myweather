@@ -271,6 +271,36 @@ def _build_weather_summary(weather_data):
     if sb_line:
         lines.append(sb_line)
 
+    # Frontal-passage attribution. If a front passed within the last 12 hours,
+    # tell Gemini so the briefing can name the cause of the weather change
+    # rather than just listing the new numbers.
+    frontal = weather_data.get("frontal") or {}
+    frontal_state = frontal.get("state")
+    frontal_event = frontal.get("event") or {}
+    if frontal_state in ("active", "recent") and frontal_event:
+        ftype_label = {
+            "cold":       "cold front",
+            "warm":       "warm front",
+            "sea_breeze": "sea-breeze front",
+        }.get(frontal_event.get("type"), "front")
+        dp_drop = frontal_event.get("dp_drop_f")
+        wd_from_oct = frontal_event.get("wd_from_oct")
+        wd_to_oct = frontal_event.get("wd_to_oct")
+        ev_ts = frontal_event.get("ts")
+        when_phrase = "currently passing" if frontal_state == "active" else f"passed at {ev_ts[-5:]}"
+        bits = []
+        if dp_drop is not None and abs(dp_drop) >= 1:
+            verb = "dropped" if dp_drop > 0 else "rose"
+            bits.append(f"dewpoint {verb} {abs(dp_drop):.0f}°F")
+        if wd_from_oct and wd_to_oct:
+            bits.append(f"wind shifted {wd_from_oct}→{wd_to_oct}")
+        detail = "; ".join(bits) if bits else "transition in progress"
+        lines.append(
+            f"Frontal context: a {ftype_label} {when_phrase} ({detail}). "
+            f"This is the cause of the recent change in conditions — "
+            f"feel free to name it as such in the briefing."
+        )
+
     # Thunderstorm. Risk gating keys off the *peak* CAPE label (next 12h),
     # not the current value — current CAPE at 8am is uselessly low almost
     # every summer day, which used to mask the textbook NE pulse setups.

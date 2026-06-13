@@ -267,6 +267,28 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         except Exception as e:
             logging.warning(f"  ⚠  GFS spread snapshot failed: {redact_secrets(e)}")
 
+    # Cove-gradient hypothesis: log waterfront vs inland Tempest temps
+    # alongside the Salem Channel water temp so we can later test whether
+    # the (waterfront − inland) air-temp differential is driven by the
+    # land–water thermal gap. Stratifies on sea-breeze active and wind dir.
+    try:
+        from .processors.cove_gradient_log import append_cove_snapshot
+        append_cove_snapshot(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Cove gradient snapshot failed: {redact_secrets(e)}")
+
+    # Frontal-passage detection: log per-tick cove obs (T/Td/P/wind),
+    # then run the detector to classify quiet/active/recent. Surfaces a
+    # frontal block in weather_data for the frontend card + Gemini.
+    try:
+        from .processors.frontal_log import append_frontal_snapshot
+        from .processors.frontal_detection import detect_and_log_frontal
+        append_frontal_snapshot(weather_data)
+        weather_data["frontal"] = detect_and_log_frontal()
+    except Exception as e:
+        logging.warning(f"  ⚠  Frontal detection failed: {redact_secrets(e)}")
+        weather_data["frontal"] = {"state": "quiet", "event": None, "recent_events": []}
+
     # Process 7-day hourly data for forecast text generation
     if hourly_7day_data and "hourly" in hourly_7day_data:
         normalize_for_forecast_generation(hourly_7day_data, weather_data)
