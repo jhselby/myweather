@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.75 • June 13, 2026
+- **Backtest framework — Phase 1 (snapshot collector).** New `backtest_snapshot.py` writes per-tick raw L1 forecast arrays (T, Td, H, wind, pressure, clouds 0-47h leads) plus per-station observations (Tempest, WU medians, KBVY METAR) to per-day files at `backtest_snapshots/YYYY-MM-DD.json` with 14-day retention. Phase 1 is record-only — replay runner comes in phase 3. Foundational record so that any future correction-stack tuning idea (L3 regularization, L5 design, Kalman gain re-tuning, τ sweeps) can be tested in minutes by replaying historical ticks under alternative configs, instead of waiting 2 weeks per live-data iteration. Also commits cove_gradient_log.py which was deployed but never landed in the repo.
+
 ## v0.6.74b • June 13, 2026
 - Frontal events on debug page (F1 section under Active hypotheses). Live table reads `frontal_events_log.json` and lists detected passages in the 14-day window with type, confidence, dewpoint Δ, wind-octant shift, and pressure bounce. Sanity-check for whether the detector is catching real fronts before letting the briefing AI rely on it. Empty until first detection.
 

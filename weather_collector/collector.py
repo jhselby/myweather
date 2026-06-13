@@ -289,6 +289,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         logging.warning(f"  ⚠  Frontal detection failed: {redact_secrets(e)}")
         weather_data["frontal"] = {"state": "quiet", "event": None, "recent_events": []}
 
+
     # Process 7-day hourly data for forecast text generation
     if hourly_7day_data and "hourly" in hourly_7day_data:
         normalize_for_forecast_generation(hourly_7day_data, weather_data)
@@ -391,6 +392,16 @@ def main():
         apply_decay_corrections(weather_data)
     except Exception as e:
         logging.warning(f"  ⚠  Decay apply failed: {redact_secrets(e)}")
+
+    # Backtest snapshot: write raw L1 forecast arrays (now populated via
+    # decay_apply's raw_* stamping) + per-station obs. Backtest framework
+    # replays these to test alternative correction configs without waiting
+    # for live data. Phase 1: write only; replay runner comes in phase 3.
+    try:
+        from .processors.backtest_snapshot import write_snapshot
+        write_snapshot(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Backtest snapshot failed: {redact_secrets(e)}")
 
     # Forecast snapshot — must run AFTER decay_apply so the snapshot has access
     # to per-layer intermediate arrays (corrected_*_post_l2, corrected_*_post_l3)
