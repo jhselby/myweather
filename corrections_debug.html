@@ -772,6 +772,12 @@
   <div id="status-cove-gradient" class="status">Day-1 signal aligns with lee-warming model. Holding for 7-day confirmation before shipping.</div>
 </details>
 
+<details class="research-subsection" id="frontal-events">
+  <summary>F1. Frontal passage log — detector instrumentation (last 14 days)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live readout of detected frontal passages from <code>frontal_events_log.json</code>. The detector runs every tick in <code>frontal_detection.py</code>, reads a 90-minute rolling window from <code>frontal_obs_log.json</code>, and declares a passage when at least 2 of 3 signals fire: dewpoint drop &gt; 8°F, wind direction shift &gt; 60°, pressure inflection (local min then ≥0.02″ rise). Type classification uses the wind-shift target octant and pressure trend. Confidence is 67% with 2 signals and 100% with 3. <strong>Why it's here:</strong> sanity-check whether real fronts are being caught (and whether noise is being mistaken for fronts) before letting the briefing AI rely on the cause-attribution line. If the detector misses an obvious front or fires on a non-event, thresholds in <code>frontal_detection.py</code> are tunable.</div>
+  <div id="frontal-events-content" class="status">Loading detected passages...</div>
+</details>
+
 <h3 class="subsection" style="margin-top:24px;color:#a08070;">Discarded hypotheses</h3>
 
 <details class="research-subsection" id="r4-discarded">
@@ -821,6 +827,7 @@ const DIURNAL_HISTORY_URL = "https://data.wymancove.com/diurnal_corrections_hist
 const TIMESERIES_URL  = "https://data.wymancove.com/time_series_diagnostic.json";
 const STATE_STRAT_URL = "https://data.wymancove.com/state_stratified_accuracy.json";
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
+const FRONTAL_EVENTS_URL = "https://data.wymancove.com/frontal_events_log.json";
 const M2_PERIOD_HOURS = 12.4206;
 // Reference cosine amplitude for Section 5's phase-binned charts. Bumped from
 // 4.0 to 5.0 in v0.6.12 — closer to Salem's typical M2 amplitude. The
@@ -1682,6 +1689,54 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
 // Renders the ranked-opportunities table + verdict from
 // state_stratified_accuracy.json (published by the Fitter). Plus a quick
 // drill-down chart for the #1 opportunity: per-bin MAE bar chart.
+function renderFrontalEventsSection(doc) {
+  const el = document.getElementById("frontal-events-content");
+  if (!el) return;
+  if (!doc || !Array.isArray(doc.entries) || doc.entries.length === 0) {
+    el.textContent = "No passages detected yet. (First detection populates this log.)";
+    return;
+  }
+  const TYPE_LABEL = {
+    cold: "Cold front",
+    warm: "Warm front",
+    sea_breeze: "Sea-breeze front",
+    unknown: "Unclassified",
+  };
+  const entries = [...doc.entries].sort((a, b) => (b.ts || "").localeCompare(a.ts || ""));
+  const fmtSign = v => v == null ? "--" : (v > 0 ? `−${v.toFixed(1)}°F` : `+${Math.abs(v).toFixed(1)}°F`);
+  const fmtWd = e => (e.wd_from_oct && e.wd_to_oct) ? `${e.wd_from_oct} → ${e.wd_to_oct}` : "--";
+  const fmtP = e => (e.p_min_inhg != null && e.p_now_inhg != null) ? `${e.p_min_inhg.toFixed(2)} → ${e.p_now_inhg.toFixed(2)}″` : "--";
+  let html = `
+    <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
+      <thead>
+        <tr style="border-bottom:1px solid #555;">
+          <th style="text-align:left;padding:6px 10px 6px 0;">When</th>
+          <th style="text-align:left;padding:6px 10px 6px 0;">Type</th>
+          <th style="text-align:right;padding:6px 10px 6px 0;">Conf</th>
+          <th style="text-align:right;padding:6px 10px 6px 0;">Δ Dewpoint</th>
+          <th style="text-align:left;padding:6px 10px 6px 0;">Wind shift</th>
+          <th style="text-align:left;padding:6px 10px 6px 0;">Pressure</th>
+        </tr>
+      </thead>
+      <tbody>`;
+  for (const e of entries) {
+    html += `
+      <tr style="border-bottom:1px solid #333;">
+        <td style="padding:6px 10px 6px 0;">${e.ts || "--"}</td>
+        <td style="padding:6px 10px 6px 0;">${TYPE_LABEL[e.type] || e.type || "--"}</td>
+        <td style="padding:6px 10px 6px 0;text-align:right;">${e.confidence ?? "--"}%</td>
+        <td style="padding:6px 10px 6px 0;text-align:right;">${fmtSign(e.dp_drop_f)}</td>
+        <td style="padding:6px 10px 6px 0;">${fmtWd(e)}</td>
+        <td style="padding:6px 10px 6px 0;">${fmtP(e)}</td>
+      </tr>`;
+  }
+  html += `</tbody></table>
+    <div class="meta-line" style="margin-top:10px;font-size:0.85em;opacity:0.7;">
+      ${entries.length} detected passage${entries.length === 1 ? "" : "s"} in the 14-day window. Times in America/New_York.
+    </div>`;
+  el.innerHTML = html;
+}
+
 function renderStateStratifiedSection(ssDoc) {
   const grid = document.getElementById("grid-state-stratified");
   if (!grid) return;
@@ -2631,10 +2686,17 @@ async function load() {
     if (res.ok) ssDoc = await res.json();
   } catch (err) { /* silent */ }
 
+  let frontalEventsDoc;
+  try {
+    const res = await fetch(FRONTAL_EVENTS_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) frontalEventsDoc = await res.json();
+  } catch (err) { /* silent — file may not exist until first detection */ }
+
   renderMeta(corrDoc, wxDoc);
   renderAccuracySection(tsDoc, wxDoc);
   renderL3L4AuditSection(tsDoc, wxDoc);
   renderStateStratifiedSection(ssDoc);
+  renderFrontalEventsSection(frontalEventsDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
 
