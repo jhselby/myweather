@@ -754,9 +754,22 @@
 </details>
 
 <details class="research-subsection" id="r5-cove-gradient">
-  <summary>R5. Cove gradient — is waterfront vs inland temp differential driven by land–water ΔT? (collecting since 2026-06-12)</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> the air-temp differential <code>waterfront_median − inland_median</code> is correlated with the land–water thermal gap <code>(ambient_T − salem_water_T)</code>, stratified by wind regime and sea-breeze active state. If true, a Wyman-Cove-specific microclimate correction becomes possible — the L2 mesonet's octant-balanced aggregation currently smooths this out. Data collection: <code>cove_gradient_log.json</code> captures waterfront-tagged Tempest median (Willow, Neptune), inland Tempest median (18 stations), ambient T, wind dir/speed, salem_water_temp_f, buoy_water_temp_f, and sb_active per tick. <strong>First meaningful read:</strong> ~2026-06-19 (7 days). <strong>Surprise from tick #1:</strong> waterfront ran +4°F WARMER than inland during active sea breeze — opposite the hypothesis. One tick isn't a result; either the cove sits in a thermal pocket or the "waterfront" tag is misleading (sunny roof installs vs. exposed-to-flow). Watch for the sign across regimes. <strong>Decision rule:</strong> ship a regime-conditional correction if <code>delta_wf_inland = f(land_water_gap)</code> regression has ρ &gt; 0.30 within at least one regime bin (e.g., sb_active=True); close otherwise.</div>
-  <div id="status-cove-gradient" class="status">Collecting data. First read after ~2026-06-19.</div>
+  <summary>R5. Cove warming — does a sea breeze across the peninsula heat Wyman Cove vs inland? (collecting since 2026-06-12)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Reframed hypothesis (2026-06-13):</strong> Wyman Cove sits in the <em>lee</em> of the Marblehead peninsula on a S/SE/SW sea breeze. Marine air crosses ~2 miles of sun-heated land before reaching the cove, picking up surface heat in transit. Expected pattern: <code>delta_wf_inland = waterfront_median − inland_median</code> goes <strong>positive</strong> (cove warmer) when wind is from the S half AND sea breeze is active, with magnitude scaling to solar input (peaking ~12-14 EDT). Should flatten to zero when wind is from N/NE (cove is windward of peninsula) or after sunset (no surface heating). Original hypothesis ("waterfront cools during sea breeze") was geographically backwards and is closed.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Day-1 signal (104 ticks, 2026-06-12 to 06-13):</strong> matches the reframed model.
+    <table style="margin-top:8px;border-collapse:collapse;font-size:0.92em;">
+      <tr><th style="text-align:left;padding:2px 12px 2px 0;">Wind</th><th style="text-align:left;padding:2px 12px 2px 0;">Sea breeze</th><th style="text-align:right;padding:2px 12px 2px 0;">n</th><th style="text-align:right;padding:2px 12px 2px 0;">mean Δ°F</th></tr>
+      <tr><td>S</td><td>active</td><td style="text-align:right;">10</td><td style="text-align:right;color:#fb7c5c;"><strong>+3.4</strong></td></tr>
+      <tr><td>SE</td><td>active</td><td style="text-align:right;">29</td><td style="text-align:right;color:#fb7c5c;"><strong>+3.7</strong></td></tr>
+      <tr><td>SW</td><td>active</td><td style="text-align:right;">5</td><td style="text-align:right;color:#fb7c5c;"><strong>+3.8</strong></td></tr>
+      <tr><td>E</td><td>inactive</td><td style="text-align:right;">15</td><td style="text-align:right;color:#888;">+0.4</td></tr>
+      <tr><td>N</td><td>inactive</td><td style="text-align:right;">24</td><td style="text-align:right;color:#888;">+1.0</td></tr>
+      <tr><td>NE</td><td>inactive</td><td style="text-align:right;">9</td><td style="text-align:right;color:#888;">+0.5</td></tr>
+    </table>
+    Diurnal curve under active sea breeze tracks solar input: peaks +5.6°F at 12:00 EDT, decays to −0.2°F by 19:00. Both signals are physically coherent with the lee-warming model.
+  </div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Data collection:</strong> <code>cove_gradient_log.json</code> captures waterfront-tagged Tempest median (Willow, Neptune), inland Tempest median (~18 stations), ambient T, wind dir/speed, salem_water_temp_f, buoy_water_temp_f, sb_active, sb_likelihood per tick (14-day retention). <strong>First full read:</strong> ~2026-06-19 (7 days). <strong>Decision rule:</strong> ship a wind-octant + hour-of-day conditional correction (+°F added to cove forecast when wind is S/SE/SW AND sb_active AND daylight hours) if the day-1 pattern holds across 7 days. Magnitude target: ~+3–5°F midday on active S-half sea breeze, scaled by solar elevation.</div>
+  <div id="status-cove-gradient" class="status">Day-1 signal aligns with lee-warming model. Holding for 7-day confirmation before shipping.</div>
 </details>
 
 <h3 class="subsection" style="margin-top:24px;color:#a08070;">Discarded hypotheses</h3>
