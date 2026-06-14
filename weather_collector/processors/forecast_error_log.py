@@ -236,33 +236,56 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
     return pairs
 
 
-def _generate_new_pairs(forecast_log, obs_log, last_processed):
-    """Pure function — given inputs, return (new_pairs, latest_obs_time_processed).
+def _generate_new_pairs(forecast_log, obs_log, last_processed, last_processed_hour=""):
+    """Pure function — given inputs, return (new_pairs, latest_obs_time, latest_hour).
 
-    Emits pairs for every obs entry strictly past last_processed, regardless
-    of which hour bucket they fall in. Pairs are per-obs, not per-hour-bucket,
-    so emitting immediately at the next tick produces identical pair content
-    to waiting for the obs's hour to complete. Pre-v0.6.4 held back obs from
-    the current in-progress hour as a state-machine simplification.
+    Emits pairs for AT MOST ONE obs per hour. Multiple obs within the same
+    hour (e.g., ticks at :07, :17, :27, :37, :47, :57) are temporal sub-samples
+    of the same atmospheric state — pairing all of them against the same
+    hourly forecast inflates pair counts 6× without adding independent
+    information. Statistically that makes confidence intervals on MAE etc.
+    artificially tight by √6 ≈ 2.5×.
+
+    The first obs of each hour wins; later ticks in the same hour are
+    skipped. Across calls, last_processed_hour acts as a watermark on the
+    HOUR axis, so deduplication survives the joiner being invoked once per
+    10-min tick.
+
+    Existing pair-log rows (pre-this-fix) keep their 6× inflation; the
+    transition self-resolves as the 30-day retention window rolls forward.
     """
     snapshots = forecast_log.get("snapshots", [])
     obs_entries = obs_log.get("entries", [])
     if not snapshots or not obs_entries:
-        return [], last_processed
+        return [], last_processed, last_processed_hour
 
     new_pairs = []
     latest = last_processed
+    latest_hour = last_processed_hour
+    seen_hours_in_call = set()
+
     for e in obs_entries:
         t = e.get("time")
         if not t or len(t) < 13:
             continue
         if t <= last_processed:
             continue
-        hour_key = t[:13] + ":00"
-        new_pairs.extend(_pairs_for_obs(e, hour_key, snapshots))
+        hour_key_str = t[:13]  # "YYYY-MM-DDTHH"
+        # Skip if this hour was already emitted by a prior call or earlier
+        # in this call. String compare works because format is sortable.
+        if hour_key_str <= last_processed_hour:
+            continue
+        if hour_key_str in seen_hours_in_call:
+            continue
+        seen_hours_in_call.add(hour_key_str)
+
+        hour_key_iso = hour_key_str + ":00"
+        new_pairs.extend(_pairs_for_obs(e, hour_key_iso, snapshots))
         if t > latest:
             latest = t
-    return new_pairs, latest
+        if hour_key_str > latest_hour:
+            latest_hour = hour_key_str
+    return new_pairs, latest, latest_hour
 
 
 def update_forecast_error_log():
@@ -271,18 +294,26 @@ def update_forecast_error_log():
     Append-only via GCS compose. Constant per-tick cost regardless of how
     big the main file has grown.
     """
-    state = load_json(STATE_PATH, default={"last_processed": ""})
+    state = load_json(STATE_PATH, default={"last_processed": "", "last_processed_hour": ""})
     forecast_log = load_json(FORECAST_LOG_PATH, default={"snapshots": []})
     obs_log = load_json(OBS_LOG_PATH, default={"entries": []})
 
     last_processed = state.get("last_processed", "")
-    new_pairs, latest = _generate_new_pairs(forecast_log, obs_log, last_processed)
+    # If state predates the hour-watermark field, infer it from last_processed
+    # so we don't replay every recent obs against an empty hour watermark.
+    last_processed_hour = state.get("last_processed_hour") or last_processed[:13]
+    new_pairs, latest, latest_hour = _generate_new_pairs(
+        forecast_log, obs_log, last_processed, last_processed_hour
+    )
 
     if not new_pairs:
         # If we advanced the watermark with no eligible obs (rare), persist it
         # so we don't keep re-scanning the same window.
-        if latest != last_processed:
-            upload_json({"last_processed": latest}, STATE_PATH, "forecast_error_state.json")
+        if latest != last_processed or latest_hour != last_processed_hour:
+            upload_json(
+                {"last_processed": latest, "last_processed_hour": latest_hour},
+                STATE_PATH, "forecast_error_state.json",
+            )
         return
 
     client = get_client()
@@ -304,7 +335,10 @@ def update_forecast_error_log():
             # First run — promote temp to main, no compose needed.
             bucket.copy_blob(temp_blob, bucket, MAIN_PATH)
             temp_blob.delete()
-        upload_json({"last_processed": latest}, STATE_PATH, "forecast_error_state.json")
+        upload_json(
+            {"last_processed": latest, "last_processed_hour": latest_hour},
+            STATE_PATH, "forecast_error_state.json",
+        )
         logging.info(f"  ✓ Appended {len(new_pairs):,} forecast-error pairs (through {latest})")
     except Exception as e:
         logging.error(f"  ✗ Forecast error log append failed: {redact_secrets(e)}")
