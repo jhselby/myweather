@@ -36,13 +36,16 @@ def calculate_sunset_azimuth(lat, lon, sunset_time_iso):
     lat_rad = math.radians(lat)
     
     H = math.acos(-math.tan(lat_rad) * math.tan(dec))
-    
-    sin_az = math.sin(H)
-    cos_az = (math.sin(dec) - math.sin(lat_rad) * (-0.0145)) / (math.cos(lat_rad) * math.cos(-0.0145))
-    
-    azimuth = math.degrees(math.atan2(sin_az, cos_az))
-    azimuth = (azimuth + 180) % 360
-    
+
+    # Standard solar azimuth formula at altitude h (clockwise from north).
+    # alt = -0.0145 rad ≈ -0.83° accounts for atmospheric refraction at the
+    # geometric horizon (sun appears slightly higher than it really is).
+    alt = -0.0145
+    sin_az = -math.sin(H) * math.cos(dec) / math.cos(alt)
+    cos_az = (math.sin(dec) - math.sin(alt) * math.sin(lat_rad)) / (math.cos(alt) * math.cos(lat_rad))
+
+    azimuth = math.degrees(math.atan2(sin_az, cos_az)) % 360
+
     return round(azimuth, 1)
 
 
