@@ -289,6 +289,16 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         logging.warning(f"  ⚠  Frontal detection failed: {redact_secrets(e)}")
         weather_data["frontal"] = {"state": "quiet", "event": None, "recent_events": []}
 
+    # Cove correction (R5 candidate, gated OFF). Computes the candidate
+    # Δ°F that would apply given current wind octant + sea-breeze state +
+    # hour-of-day, stamps weather_data["cove_correction"], but does not
+    # modify forecasts until ENABLED is flipped post-06-19 R5 read.
+    try:
+        from .processors.cove_correction import stamp_cove_correction
+        stamp_cove_correction(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Cove correction stamp failed: {redact_secrets(e)}")
+
 
     # Process 7-day hourly data for forecast text generation
     if hourly_7day_data and "hourly" in hourly_7day_data:

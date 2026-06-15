@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.79 • June 15, 2026
+- **R5 cove correction lookup table — sketched, gated OFF.** New `cove_correction.py` implements the bidirectional bias seen in 3 days of R5 data: cove warms +1.5 to +2.1°F under active S/SE/SW sea breeze (peninsula-lee heating), cools −3 to −5°F at 06-10 AM EDT under offshore/calm conditions (morning marine cooling). Function indexed by (wind_octant, sb_active, hour_local). `weather_data["cove_correction"]` is stamped per tick with the candidate Δ°F + regime; `ENABLED = False` means corrected_temperature is NOT modified yet. Flip ENABLED to True after the formal 06-19 R5 read confirms the pattern across 7 days of data. Lets us log "what would have happened" silently in the meantime.
+
 ## v0.6.78 • June 15, 2026
 - **Backtest framework Phase 2 — config-driven decay_apply.** `apply_decay_corrections(weather_data, config=None)` now accepts an optional config dict that overrides the L3/L4 field whitelists. `config=None` resolves to module constants (production behavior unchanged). With this, the backtest replay runner (phase 3) can A/B alternative whitelists against historical snapshots without redeploying — the gate for unlocking "test any L3/L4 config in minutes instead of waiting 2 weeks per live re-run." Verified post-deploy tick produces identical decay_meta output (L3 = {ws,wg,ch,cm,pp}, L4 = {ch}) as before. Phase 3 (replay runner) is the next step.
 
