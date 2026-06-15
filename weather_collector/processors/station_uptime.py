@@ -16,6 +16,7 @@ import pytz
 
 from ..gcs_io import load_json, upload_json
 from ..fetchers.wu_scraper_realtime import CULLED_STATIONS as WU_CULLED
+from ..fetchers.tempest import CULLED_TEMPEST_STATIONS as TEMPEST_CULLED
 
 
 GCS_PATH = "station_uptime.json"
@@ -23,8 +24,10 @@ RETENTION_DAYS = 7
 TZ = pytz.timezone("America/New_York")
 # Culled stations stay in the on-disk log (for manual re-probe later) but are
 # hidden from the debug-page summary so the dead-count and mean-uptime aren't
-# polluted by stations we've deliberately stopped hitting.
-_CULLED = set(WU_CULLED)
+# polluted by stations we've deliberately stopped hitting. Both WU and Tempest
+# culls participate (Tempest cull added 2026-06-15 — previously only WU
+# culled stations were filtered, so Tempest zombies leaked to the UI).
+_CULLED = set(WU_CULLED) | {str(s["id"]) for s in TEMPEST_CULLED}
 
 
 def update_station_uptime(weather_data, attempted_wu_ids, attempted_tempest_ids):
