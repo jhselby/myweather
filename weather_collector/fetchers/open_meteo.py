@@ -156,7 +156,14 @@ def fetch_directional_clouds(lat, lon, bearing_deg, distances_miles, skip_retry=
 
 
 def fetch_hourly_gfs_7day():
-    """Fetch 7-day hourly forecast from GFS for detailed forecast text."""
+    """Fetch 7-day hourly forecast from GFS for detailed forecast text.
+
+    Must specify models=gfs_seamless explicitly. Without it, Open-Meteo's
+    default is "best available," which is HRRR for the first 48 hours.
+    For the forecast text that's fine (HRRR + GFS day 3-7 is what we want
+    visually), but for R4 (HRRR vs GFS spread) we need actual GFS in the
+    0-48h window so the comparison is meaningful.
+    """
     logging.info("📡 Fetching 7-day hourly (GFS)...")
     gfs_hourly = ",".join(HRRR_HOURLY_VARS + GFS_ADDITIONAL_HOURLY_VARS)
     params = {
@@ -164,6 +171,7 @@ def fetch_hourly_gfs_7day():
         "longitude": LON,
         "hourly": gfs_hourly,
         "forecast_days": 7,
+        "models": "gfs_seamless",
         **OM_UNITS,
     }
     return _om_get(params, "GFS 7-day hourly")

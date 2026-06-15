@@ -1,5 +1,11 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.92 • June 15, 2026
+- **R4/R5 first-read analysis scripts + the R4 fetcher bug they immediately surfaced.**
+  - New `analysis/r4_spread_analysis.py` — joins GFS L1 log against pair-log HRRR L1 + observed, computes Spearman ρ per field per lead band, emits ship/close verdict (ship if median ρ > 0.25 on ≥ 3 fields).
+  - New `analysis/r5_cove_analysis.py` — stratifies cove_gradient_log by (sb_active, wind_octant, hour-of-day), tests the two regime thresholds (S-half SB warming > +1°F, morning offshore cooling < −1°F, both with n ≥ 15 and within-bin std < 2.5°F). Day-4 data already passes both thresholds.
+  - **Bug surfaced by R4 test run**: `fetch_hourly_gfs_7day` didn't specify `models=gfs_seamless`, so Open-Meteo defaulted to "best available" (HRRR for 0-48h). For three days the `gfs_l1_log.json` has been capturing HRRR data, not GFS — spread = 0 by construction across all joined pairs. R4 hypothesis test was structurally invalid against this data. Added `models: gfs_seamless` to the params dict. R4 first-read date shifts to **~2026-06-22** (7 days of clean data from this fix).
+
 ## v0.6.91 • June 15, 2026
 - **R0 audit table — bias subtext + symmetric "missed opportunity" warning.**
   - **Bias next to MAE.** Each L1/L2/L3/L4 cell now shows the signed mean error (the bias) as dim subtext alongside the MAE: e.g. `2.75 +0.51`. Reveals "MAE flat but bias dropped" (correction is removing a systematic offset that MAE can't see) and the opposite "MAE flat but new bias introduced" (correction is shifting the error distribution badly). The data was already in `time_series_diagnostic.json::per_layer_bias_by_lead` — just surfacing it.
