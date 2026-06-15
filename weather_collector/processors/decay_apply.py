@@ -210,10 +210,24 @@ def recompute_derived_moisture_arrays(weather_data):
         hourly["corrected_absolute_humidity"] = new_ah
 
 
-def apply_decay_corrections(weather_data):
+def apply_decay_corrections(weather_data, config=None):
     """Subtract per-(field, lead_h) mean error from each hourly forecast
     array. Mutates weather_data["hourly"] in place. Recomputes derived
-    arrays. Safe no-op on missing, malformed, or stale corrections."""
+    arrays. Safe no-op on missing, malformed, or stale corrections.
+
+    config (optional): when provided, overrides production whitelists.
+      Recognized keys:
+        - "L3_FIELDS": set of field shorts → L3 applied (default L3_FIELDS)
+        - "L4_FIELDS": set of field shorts → L4 applied (default L4_FIELDS)
+      Anything not in the config dict falls back to module-level constants.
+      Used by the backtest framework to A/B alternative configs against
+      historical snapshots without redeploying.
+    """
+    # Resolve config-overridable knobs once, here. Everything downstream
+    # references the locals, not the module globals.
+    l3_fields = (config or {}).get("L3_FIELDS", L3_FIELDS)
+    l4_fields = (config or {}).get("L4_FIELDS", L4_FIELDS)
+
     hourly = weather_data.get("hourly")
     if not isinstance(hourly, dict):
         return
@@ -271,7 +285,7 @@ def apply_decay_corrections(weather_data):
     wd_sin_corr = wd_components.get("sin") or []
     wd_cos_corr = wd_components.get("cos") or []
     wd_arr = hourly.get("wind_direction")
-    if "wd" in L3_FIELDS and isinstance(wd_arr, list) and wd_sin_corr and wd_cos_corr:
+    if "wd" in l3_fields and isinstance(wd_arr, list) and wd_sin_corr and wd_cos_corr:
         wd_applied = 0
         wd_capped = 0
         for h in range(min(len(wd_arr), len(wd_sin_corr), len(wd_cos_corr))):
@@ -315,7 +329,7 @@ def apply_decay_corrections(weather_data):
     applied = 0
     capped = 0
     for short, array_name in TARGET_ARRAY.items():
-        if short not in L3_FIELDS:
+        if short not in l3_fields:
             continue
         arr = hourly.get(array_name)
         if not isinstance(arr, list):
@@ -384,7 +398,7 @@ def apply_decay_corrections(weather_data):
     times = hourly.get("times", []) if diurnal_corrections else []
     if diurnal_corrections and times:
         for short, array_name in TARGET_ARRAY.items():
-            if short not in L4_FIELDS:
+            if short not in l4_fields:
                 continue
             arr = hourly.get(array_name)
             if not isinstance(arr, list):
@@ -444,7 +458,7 @@ def apply_decay_corrections(weather_data):
     per_field_24h = {}
     LEAD_24H = 24
     for short in TARGET_ARRAY:
-        if short not in L3_FIELDS:
+        if short not in l3_fields:
             continue
         per_lead = corrections.get(short, [])
         if not isinstance(per_lead, list) or len(per_lead) <= LEAD_24H:
@@ -472,9 +486,9 @@ def apply_decay_corrections(weather_data):
         "diurnal_fitted_at": diurnal_fitted_at,
         "diurnal_cells_corrected": diurnal_applied,
         "diurnal_cells_capped": diurnal_capped,
-        "layer_3_fields": sorted(L3_FIELDS),
-        "layer_4_fields": sorted(L4_FIELDS),
+        "layer_3_fields": sorted(l3_fields),
+        "layer_4_fields": sorted(l4_fields),
         "layer_3_brier_fields": sorted(L3_BRIER_FIELDS),
-        "layer_3_paused": len(L3_FIELDS) == 0,
-        "layer_4_paused": len(L4_FIELDS) == 0,
+        "layer_3_paused": len(l3_fields) == 0,
+        "layer_4_paused": len(l4_fields) == 0,
     }

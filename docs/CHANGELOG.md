@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.78 • June 15, 2026
+- **Backtest framework Phase 2 — config-driven decay_apply.** `apply_decay_corrections(weather_data, config=None)` now accepts an optional config dict that overrides the L3/L4 field whitelists. `config=None` resolves to module constants (production behavior unchanged). With this, the backtest replay runner (phase 3) can A/B alternative whitelists against historical snapshots without redeploying — the gate for unlocking "test any L3/L4 config in minutes instead of waiting 2 weeks per live re-run." Verified post-deploy tick produces identical decay_meta output (L3 = {ws,wg,ch,cm,pp}, L4 = {ch}) as before. Phase 3 (replay runner) is the next step.
+
 ## v0.6.77 • June 14, 2026
 - **Pair-log dedup: one obs per hour, not six.** Joiner was emitting one pair per collector tick (6 per hour × N forecast snapshots × N fields) when only 1 per hour represents an independent atmospheric observation. Effect: pair counts inflated 6×, MAE comparisons unaffected (both sides equally inflated) but bootstrap-variance CIs were ~√6 ≈ 2.5× too tight. Added `last_processed_hour` watermark to `forecast_error_state.json` and a per-call `seen_hours_in_call` set; first obs of each hour wins, later ticks in same hour are skipped. Existing pair-log rows keep their 6× inflation until they age out of the 30-day retention window; new rows from now on are 1× per hour. Will unlock honest confidence intervals for any future L3 regularization or A/B work.
 
