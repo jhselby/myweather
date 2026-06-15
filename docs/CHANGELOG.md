@@ -1,5 +1,10 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.98 • June 15, 2026
+- **R4 and R5 status text updated to reflect today's findings.** Old text was stale:
+  - R5 said "Day-1 signal aligns... holding for 7-day confirmation" — now reflects that the day-4 evaluation script already passes both thresholds.
+  - R4 said "Collecting data. First read after ~2026-06-19" — now reflects the v0.6.92 fetcher fix and shifted first-read date to ~2026-06-22.
+
 ## v0.6.97 • June 15, 2026
 - **Three new debug-page sections** surfacing data that was being captured but not displayed:
   - **G1. Gated correction candidates.** Side-by-side cards showing R5 cove + L5 solar candidates each tick: current Δ, regime context, ENABLED/gated-off badge. Lets you watch what they'd do without flipping production.

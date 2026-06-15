@@ -750,7 +750,7 @@
 <details class="research-subsection" id="r4-hrrr-gfs-spread">
   <summary>R4. HRRR vs GFS spread as confidence signal (collecting since 2026-06-12)</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> when HRRR and GFS disagree at a given forecast hour, actual error magnitude tends to be higher — i.e. <code>|HRRR − GFS|</code> per (field, lead) predicts <code>|forecast − obs|</code>. If true, the spread becomes a free uncertainty number that can widen displayed intervals and feed Gemini hedge language ("models disagree on tomorrow's high"). Data collection: HRRR L1 already in <code>forecast_log.json</code>; new <code>gfs_l1_log.json</code> captures GFS L1 per tick for the same 0-48h window. Analysis: join by (run, v), regress <code>|hrrr − gfs|</code> against pair-log <code>|err|</code> per field per lead band. <strong>First meaningful read:</strong> ~2026-06-19 (7 days). <strong>Decision rule:</strong> ship if median spearman ρ &gt; 0.25 for ≥3 fields and is consistent across lead bands; close if not.</div>
-  <div id="status-hrrr-gfs-spread" class="status">Collecting data. First read after ~2026-06-19.</div>
+  <div id="status-hrrr-gfs-spread" class="status">⚠ Data invalidated 2026-06-15: <code>fetch_hourly_gfs_7day</code> was missing <code>models=gfs_seamless</code>, so Open-Meteo returned its "best available" (HRRR for 0-48h) instead of GFS. <code>gfs_l1_log.json</code> had been capturing HRRR data for three days — spread = 0 by construction in every joined comparison. Fix shipped v0.6.92. <strong>First read shifts to ~2026-06-22</strong> (7 days of clean data from the fix). Evaluation script ready at <code>analysis/r4_spread_analysis.py</code>.</div>
 </details>
 
 <details class="research-subsection" id="r5-cove-gradient">
@@ -769,7 +769,7 @@
     Diurnal curve under active sea breeze tracks solar input: peaks +5.6°F at 12:00 EDT, decays to −0.2°F by 19:00. Both signals are physically coherent with the lee-warming model.
   </div>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Data collection:</strong> <code>cove_gradient_log.json</code> captures waterfront-tagged Tempest median (Willow, Neptune), inland Tempest median (~18 stations), ambient T, wind dir/speed, salem_water_temp_f, buoy_water_temp_f, sb_active, sb_likelihood per tick (14-day retention). <strong>First full read:</strong> ~2026-06-19 (7 days). <strong>Decision rule:</strong> ship a wind-octant + hour-of-day conditional correction (+°F added to cove forecast when wind is S/SE/SW AND sb_active AND daylight hours) if the day-1 pattern holds across 7 days. Magnitude target: ~+3–5°F midday on active S-half sea breeze, scaled by solar elevation.</div>
-  <div id="status-cove-gradient" class="status">Day-1 signal aligns with lee-warming model. Holding for 7-day confirmation before shipping.</div>
+  <div id="status-cove-gradient" class="status">Day-4 evaluation script (<code>analysis/r5_cove_analysis.py</code>) already passes both regime tests: S-half sea-breeze warming = +1.73°F (threshold > +1°F), 06-10 EDT offshore cooling = −1.75°F (threshold &lt; −1°F), both with n ≥ 15 and within-bin std &lt; 2.5°F. Holding for the 7-day re-run on 06-19 before flipping <code>cove_correction.ENABLED</code>.</div>
 </details>
 
 <details class="research-subsection" id="gated-candidates">
