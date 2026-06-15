@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.89 • June 15, 2026
+- **R0 audit table: "off" cells now red instead of gray.** Per request — makes the row-level "do the colors agree?" scan instant. Green Δ paired with red off = a possible missing correction worth investigating; red Δ paired with red off = correctly disabled. Same logic as the existing green Δ + green ON = correctly enabled. The mismatches now POP visually instead of requiring the eye to translate "gray off" into "not applied."
+
 ## v0.6.88 • June 15, 2026
 - **L3/L4 historical-fit charts now show APPLIED / diagnostic per field.** The section banners said "Currently enabled: ch" etc., but individual chart titles gave no visual cue, so it was easy to confuse a winning-looking spaghetti chart with a field that's actually doing anything. Added a small colored pill in each chart header: green "APPLIED" for fields in `layer_3_fields` / `layer_4_fields`, gray "diagnostic" for the rest. Diagnostic-only charts are dimmed to 65% opacity so the eye lands on the applied ones first. Reads `wxDoc.decay_meta.layer_3_fields` / `layer_4_fields` so it always reflects current production whitelist without needing manual updates.
 

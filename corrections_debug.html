@@ -1649,7 +1649,10 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
       const label = suspect ? "ON ⚠" : "ON";
       return `<td style="color:${color};font-weight:700;">${label}</td>`;
     }
-    return `<td style="color:#8a93a3;">off</td>`;
+    // off is red so the row-level "do the colors agree?" scan is instant.
+    // Green Δ paired with red off = a possible missing correction;
+    // red Δ paired with red off = correctly disabled.
+    return `<td style="color:#ef6450;font-weight:700;">off</td>`;
   };
 
   const head = `<tr>
