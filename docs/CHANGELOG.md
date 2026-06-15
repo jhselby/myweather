@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.84 • June 15, 2026
+- **Backtest sweep surfaced on debug page** (B1 section under Active hypotheses). Reads `backtest_sweep_results.json` from GCS, renders a color-coded matrix comparing per-field MAE across configs (production, walkforward_15jun, walkforward_08jun, stable_core, l2_only). Green cell = candidate beats production by ≥1%, red = worse by ≥1%, faded = tied. Includes a config-definitions accordion so the UI is self-documenting. **Workflow**: re-run via `python3 -m backtest.sweep --days 2 --write-gcs` and the section refreshes. Added `--local-file` option to sweep so subsequent runs against a downloaded copy take ~30 sec instead of ~7-10 min via Cloudflare. First populated run (727K pairs / 2 days): wind L3 confirms huge MAE wins (ws −27%, wg −41% vs l2_only), cloud high L4 gives ~0.5% edge over L3-only.
+
 ## v0.6.83 • June 15, 2026
 - **Backtest framework Phase 4 — multi-config sweep.** New `backtest/sweep.py` runs N configs against the pair log in a single download (cached to `/tmp/myweather_pairlog_window.jsonl`, reused for 10 min so successive sweeps don't re-download). Pretty-prints a comparison matrix across all configs. **Performance gate:** the current 4 GB pair-log file is slow to stream end-to-end via gsutil (~10+ minutes). As the v0.6.77 dedup ages in over 30 days, the file shrinks to ~700 MB and the sweep becomes ~6× faster. Phase 3 (single-config evaluate) remains usable today for one-off questions. The framework is complete; production utility kicks in fully ~mid-July when the file is fully deduped.
 

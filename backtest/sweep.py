@@ -17,47 +17,55 @@ from datetime import datetime, timedelta, timezone
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
 
-def _download_test_window(test_days, cache_path="/tmp/myweather_pairlog_window.jsonl"):
-    """Download the pair-log rows in the last `test_days` window to a local
-    cache file. One network stream, then all subsequent reads are local.
+def _stream_pairlog(test_days, local_file=None):
+    """Stream pairs in the last `test_days` window.
 
-    Returns the cache path. Cache is reused if it's younger than 10 min
-    (lets you re-run a sweep with different configs without re-downloading).
+    If `local_file` is provided, read from that file (much faster, no
+    network roundtrip). Otherwise fetch via urllib from Cloudflare CDN
+    (takes ~7-10 min on the current 4 GB file, will shrink ~6× as the
+    v0.6.77 dedup ages in over 30 days).
     """
-    import os
-    import subprocess
-    if os.path.exists(cache_path):
-        age_s = datetime.now().timestamp() - os.path.getmtime(cache_path)
-        if age_s < 600:
-            sys.stderr.write(f"  Using cached pair-log window ({age_s/60:.1f} min old)\n")
-            return cache_path
     cutoff = (datetime.now(timezone.utc) - timedelta(days=test_days)).strftime("%Y-%m-%dT%H:%M")
-    sys.stderr.write(f"  Downloading pair-log via gsutil (cutoff={cutoff})...\n")
-    cmd = (
-        f"gsutil cat gs://myweather-data/forecast_error_log.jsonl | "
-        f"python3 -c \"import sys,json; cutoff='{cutoff}'; "
-        f"[sys.stdout.write(l) for l in sys.stdin if l.strip() and (json.loads(l).get('obs_time') or '') >= cutoff]\""
+    n_total = 0
+    n_in_window = 0
+
+    if local_file:
+        sys.stderr.write(f"  Reading from local file {local_file} (cutoff={cutoff})...\n")
+        with open(local_file) as f:
+            for raw in f:
+                if not raw or not raw.strip():
+                    continue
+                n_total += 1
+                try:
+                    r = json.loads(raw)
+                except json.JSONDecodeError:
+                    continue
+                if (r.get("obs_time") or "") < cutoff:
+                    continue
+                n_in_window += 1
+                yield r
+        sys.stderr.write(f"  Read {n_total:,} rows, {n_in_window:,} in window\n")
+        return
+
+    sys.stderr.write(f"  Streaming pair log via Cloudflare (cutoff={cutoff}, ~7-10 min)...\n")
+    req = urllib.request.Request(
+        ERROR_LOG_URL,
+        headers={"User-Agent": "myweather-backtest-sweep/1.0"},
     )
-    with open(cache_path, "w") as out:
-        result = subprocess.run(cmd, shell=True, stdout=out, stderr=subprocess.PIPE, timeout=600)
-    if result.returncode != 0:
-        sys.stderr.write(f"  Download failed: {result.stderr.decode()[:500]}\n")
-        return None
-    size_mb = os.path.getsize(cache_path) / 1024 / 1024
-    sys.stderr.write(f"  Cached {size_mb:.1f} MB to {cache_path}\n")
-    return cache_path
-
-
-def _stream_cached(cache_path):
-    """Yield decoded pair rows from the cache file."""
-    with open(cache_path) as f:
-        for line in f:
-            if not line.strip():
+    with urllib.request.urlopen(req, timeout=1800) as resp:
+        for raw in resp:
+            if not raw or not raw.strip():
                 continue
+            n_total += 1
             try:
-                yield json.loads(line)
+                r = json.loads(raw)
             except json.JSONDecodeError:
                 continue
+            if (r.get("obs_time") or "") < cutoff:
+                continue
+            n_in_window += 1
+            yield r
+    sys.stderr.write(f"  Streamed {n_total:,} rows, {n_in_window:,} in window\n")
 
 
 def _pick_forecast(pair, config):
@@ -75,7 +83,7 @@ def _pick_forecast(pair, config):
     return pair.get("forecast")
 
 
-def sweep(configs, test_days=2):
+def sweep(configs, test_days=2, local_file=None):
     """Evaluate a dict of named configs in one stream of the pair log.
 
     configs: {name: {"L3_FIELDS": set, "L4_FIELDS": set}}
@@ -89,12 +97,9 @@ def sweep(configs, test_days=2):
       }
     }
     """
-    cache = _download_test_window(test_days)
-    if cache is None:
-        raise SystemExit("Failed to download pair-log window")
     stats = {name: defaultdict(lambda: [0, 0.0]) for name in configs}
     total = 0
-    for pair in _stream_cached(cache):
+    for pair in _stream_pairlog(test_days, local_file=local_file):
         field = pair.get("field")
         obs = pair.get("observed")
         if field is None or obs is None:
@@ -153,6 +158,10 @@ def main():
     p.add_argument("--configs", default="production,walkforward_15jun,walkforward_08jun,stable_core,l2_only",
                    help="comma-separated config names")
     p.add_argument("--json", action="store_true")
+    p.add_argument("--write-gcs", action="store_true",
+                   help="upload result JSON to gs://myweather-data/backtest_sweep_results.json for the debug page")
+    p.add_argument("--local-file", default=None,
+                   help="read from local jsonl file instead of streaming via Cloudflare (much faster)")
     args = p.parse_args()
 
     config_names = [c.strip() for c in args.configs.split(",") if c.strip()]
@@ -164,12 +173,27 @@ def main():
     print(f"Window: last {args.days} days. Streaming pair log (may take 2-5 min)...")
     print()
 
-    result = sweep(selected, test_days=args.days)
+    result = sweep(selected, test_days=args.days, local_file=args.local_file)
 
     if args.json:
         print(json.dumps(result, indent=2, default=list))
     else:
         print_matrix(result)
+
+    if args.write_gcs:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from weather_collector.gcs_io import upload_json
+        # Include config definitions so the UI can show what each named
+        # config actually contains (otherwise the user has to look up the code).
+        result["config_defs"] = {
+            name: {"L3_FIELDS": sorted(cfg["L3_FIELDS"]), "L4_FIELDS": sorted(cfg["L4_FIELDS"])}
+            for name, cfg in selected.items()
+        }
+        result["generated_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        upload_json(result, "backtest_sweep_results.json", "backtest_sweep_results.json")
+        print()
+        print("Uploaded to gs://myweather-data/backtest_sweep_results.json")
+
     return 0
 
 

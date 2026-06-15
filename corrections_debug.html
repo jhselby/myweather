@@ -772,6 +772,12 @@
   <div id="status-cove-gradient" class="status">Day-1 signal aligns with lee-warming model. Holding for 7-day confirmation before shipping.</div>
 </details>
 
+<details class="research-subsection" id="backtest-sweep">
+  <summary>B1. Backtest sweep — alternative L3/L4 configs vs production</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 whitelists against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under, say, today's walk-forward verdict (L3 = {ws, wg, ch}, L4 = {}) vs current production (L3 = {ws, wg, ch, cm, pp}, L4 = {ch}) without waiting for a redeploy. <strong>Performance note:</strong> the sweep is currently slow because the pair log is 4 GB (will shrink ~6× once the v0.6.77 dedup ages in over 30 days). The sweep is re-run manually via <code>python3 -m backtest.sweep --write-gcs</code> — results below are from the last manual run.</div>
+  <div id="backtest-sweep-content" class="status">Loading sweep results...</div>
+</details>
+
 <details class="research-subsection" id="frontal-events">
   <summary>F1. Frontal passage log — detector instrumentation (last 14 days)</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live readout of detected frontal passages from <code>frontal_events_log.json</code>. The detector runs every tick in <code>frontal_detection.py</code>, reads a 90-minute rolling window from <code>frontal_obs_log.json</code>, and declares a passage when at least 2 of 3 signals fire: dewpoint drop &gt; 8°F, wind direction shift &gt; 60°, pressure inflection (local min then ≥0.02″ rise). Type classification uses the wind-shift target octant and pressure trend. Confidence is 67% with 2 signals and 100% with 3. <strong>Why it's here:</strong> sanity-check whether real fronts are being caught (and whether noise is being mistaken for fronts) before letting the briefing AI rely on the cause-attribution line. If the detector misses an obvious front or fires on a non-event, thresholds in <code>frontal_detection.py</code> are tunable.</div>
@@ -828,6 +834,7 @@ const TIMESERIES_URL  = "https://data.wymancove.com/time_series_diagnostic.json"
 const STATE_STRAT_URL = "https://data.wymancove.com/state_stratified_accuracy.json";
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
 const FRONTAL_EVENTS_URL = "https://data.wymancove.com/frontal_events_log.json";
+const BACKTEST_SWEEP_URL = "https://data.wymancove.com/backtest_sweep_results.json";
 const M2_PERIOD_HOURS = 12.4206;
 // Reference cosine amplitude for Section 5's phase-binned charts. Bumped from
 // 4.0 to 5.0 in v0.6.12 — closer to Salem's typical M2 amplitude. The
@@ -1689,6 +1696,82 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
 // Renders the ranked-opportunities table + verdict from
 // state_stratified_accuracy.json (published by the Fitter). Plus a quick
 // drill-down chart for the #1 opportunity: per-bin MAE bar chart.
+function renderBacktestSweepSection(doc) {
+  const el = document.getElementById("backtest-sweep-content");
+  if (!el) return;
+  if (!doc || !doc.results) {
+    el.innerHTML = `<em>No sweep results yet. Run manually:</em><br><code style="font-size:0.9em;">python3 -m backtest.sweep --days 2 --write-gcs</code>`;
+    return;
+  }
+  const results = doc.results;
+  const configDefs = doc.config_defs || {};
+  const names = Object.keys(results);
+  if (names.length === 0) {
+    el.textContent = "Sweep produced no results.";
+    return;
+  }
+
+  // Collect all fields seen across all configs
+  const allFields = new Set();
+  for (const name of names) {
+    for (const f of Object.keys(results[name])) allFields.add(f);
+  }
+  const fields = Array.from(allFields).sort();
+
+  // Find the production column (baseline for delta calc)
+  const baselineName = names.includes("production") ? "production" : names[0];
+
+  let html = `<div style="margin-bottom:12px;"><strong>Window:</strong> last ${doc.test_days?.toFixed(1) ?? "?"} days · <strong>${(doc.total_pairs ?? 0).toLocaleString()} pairs</strong> · ${doc.generated_at ? `generated ${doc.generated_at}` : ""}</div>`;
+
+  // Config legend
+  html += `<details style="margin-bottom:12px;"><summary style="cursor:pointer;font-size:0.9em;opacity:0.8;">Config definitions</summary><ul style="margin-top:6px;font-size:0.88em;">`;
+  for (const name of names) {
+    const cfg = configDefs[name] || {};
+    const l3 = (cfg.L3_FIELDS || []).join(", ") || "∅";
+    const l4 = (cfg.L4_FIELDS || []).join(", ") || "∅";
+    html += `<li><strong>${name}</strong>: L3 = {${l3}}, L4 = {${l4}}</li>`;
+  }
+  html += `</ul></details>`;
+
+  // Table
+  html += `<table style="width:100%;border-collapse:collapse;font-size:0.9em;">`;
+  html += `<thead><tr style="border-bottom:1px solid #555;"><th style="text-align:left;padding:6px 10px 6px 0;">field</th><th style="text-align:right;padding:6px 10px 6px 0;">n</th>`;
+  for (const name of names) {
+    const cls = name === baselineName ? "" : "";
+    html += `<th style="text-align:right;padding:6px 10px 6px 0;">${name}</th>`;
+  }
+  html += `</tr></thead><tbody>`;
+  for (const f of fields) {
+    const baseMae = results[baselineName]?.[f]?.mae;
+    const n = results[baselineName]?.[f]?.n ?? "--";
+    html += `<tr style="border-bottom:1px solid #333;"><td style="padding:6px 10px 6px 0;"><code>${f}</code></td><td style="text-align:right;padding:6px 10px 6px 0;">${typeof n === "number" ? n.toLocaleString() : n}</td>`;
+    for (const name of names) {
+      const mae = results[name]?.[f]?.mae;
+      if (mae == null) {
+        html += `<td style="text-align:right;padding:6px 10px 6px 0;opacity:0.4;">--</td>`;
+        continue;
+      }
+      let cellStyle = "text-align:right;padding:6px 10px 6px 0;";
+      let suffix = "";
+      if (name !== baselineName && baseMae != null) {
+        const pct = 100 * (mae - baseMae) / baseMae;
+        if (Math.abs(pct) >= 1.0) {
+          if (pct < 0) cellStyle += "color:#9be09b;";  // candidate wins (green)
+          else         cellStyle += "color:#ff9999;";  // candidate worse (red)
+          suffix = ` <span style="opacity:0.65;">(${pct > 0 ? "+" : ""}${pct.toFixed(1)}%)</span>`;
+        } else {
+          cellStyle += "opacity:0.6;";
+        }
+      }
+      html += `<td style="${cellStyle}">${mae.toFixed(3)}${suffix}</td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody></table>`;
+  html += `<div class="meta-line" style="margin-top:10px;font-size:0.85em;opacity:0.7;">Green: candidate beats <code>${baselineName}</code> by ≥1%. Red: candidate worse by ≥1%. Faded: tied.</div>`;
+  el.innerHTML = html;
+}
+
 function renderFrontalEventsSection(doc) {
   const el = document.getElementById("frontal-events-content");
   if (!el) return;
@@ -2692,11 +2775,18 @@ async function load() {
     if (res.ok) frontalEventsDoc = await res.json();
   } catch (err) { /* silent — file may not exist until first detection */ }
 
+  let backtestSweepDoc;
+  try {
+    const res = await fetch(BACKTEST_SWEEP_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) backtestSweepDoc = await res.json();
+  } catch (err) { /* silent — file may not exist until first manual run */ }
+
   renderMeta(corrDoc, wxDoc);
   renderAccuracySection(tsDoc, wxDoc);
   renderL3L4AuditSection(tsDoc, wxDoc);
   renderStateStratifiedSection(ssDoc);
   renderFrontalEventsSection(frontalEventsDoc);
+  renderBacktestSweepSection(backtestSweepDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
 
