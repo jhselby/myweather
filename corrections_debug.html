@@ -772,6 +772,18 @@
   <div id="status-cove-gradient" class="status">Day-1 signal aligns with lee-warming model. Holding for 7-day confirmation before shipping.</div>
 </details>
 
+<details class="research-subsection" id="gated-candidates">
+  <summary>G1. Gated correction candidates — what L5 / R5 would do right now</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> two corrections are sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast. <strong>R5 cove correction</strong> — regime+hour conditional Δ°F for waterfront temperature. <strong>L5 solar correction</strong> — synoptic regime conditional Δ W/m² for solar radiation. Flip to True after the date-gated evaluation passes (R5: ~2026-06-19, L5: ~2026-06-22).</div>
+  <div id="gated-candidates-content" class="status">Loading…</div>
+</details>
+
+<details class="research-subsection" id="shadow-whitelist">
+  <summary>S1. Shadow whitelist tuner — what would auto-tuner have chosen?</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per Fitter cycle, log what whitelist sets a naive MAE-based auto-tuner would recommend, alongside the current production whitelist. <strong>Threshold:</strong> a field is recommended ON if its layer beats the layer below by ≥3% in any lead band AND bias is no worse. <strong>Why it's here:</strong> the precondition for considering automation is "shadow tracks human decisions consistently." After 90+ days we can evaluate agreement rate. Until then, mismatches are <em>informative</em> (the pp case is a known Brier-blindspot), not actionable.</div>
+  <div id="shadow-whitelist-content" class="status">Loading…</div>
+</details>
+
 <details class="research-subsection" id="backtest-sweep">
   <summary>B1. Backtest sweep — alternative L3/L4 configs vs production</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 whitelists against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under, say, today's walk-forward verdict (L3 = {ws, wg, ch}, L4 = {}) vs current production (L3 = {ws, wg, ch, cm, pp}, L4 = {ch}) without waiting for a redeploy. <strong>Performance note:</strong> the sweep is currently slow because the pair log is 4 GB (will shrink ~6× once the v0.6.77 dedup ages in over 30 days). The sweep is re-run manually via <code>python3 -m backtest.sweep --write-gcs</code> — results below are from the last manual run.</div>
@@ -835,6 +847,7 @@ const STATE_STRAT_URL = "https://data.wymancove.com/state_stratified_accuracy.js
 const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
 const FRONTAL_EVENTS_URL = "https://data.wymancove.com/frontal_events_log.json";
 const BACKTEST_SWEEP_URL = "https://data.wymancove.com/backtest_sweep_results.json";
+const SHADOW_WHITELIST_URL = "https://data.wymancove.com/shadow_whitelist_log.json";
 const M2_PERIOD_HOURS = 12.4206;
 // Reference cosine amplitude for Section 5's phase-binned charts. Bumped from
 // 4.0 to 5.0 in v0.6.12 — closer to Salem's typical M2 amplitude. The
@@ -1898,6 +1911,103 @@ function renderBacktestSweepSection(doc) {
   el.innerHTML = html;
 }
 
+function renderGatedCandidatesSection(wxDoc) {
+  const el = document.getElementById("gated-candidates-content");
+  if (!el) return;
+  const cove = wxDoc?.cove_correction;
+  const solar = wxDoc?.solar_correction;
+  if (!cove && !solar) {
+    el.textContent = "No gated correction stamps in weather_data yet.";
+    return;
+  }
+  const fmtBadge = (applied) => applied
+    ? `<span style="color:#4ad29a;font-weight:700;">ENABLED</span>`
+    : `<span style="color:#8a93a3;font-weight:700;">gated off</span>`;
+
+  let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;">`;
+
+  if (cove) {
+    const d = cove.candidate_delta_f;
+    const r = cove.regime || {};
+    const sign = d >= 0 ? "+" : "";
+    const dColor = d === 0 ? "#8a93a3" : (d > 0 ? "#fb7c5c" : "#7ec8ff");
+    html += `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
+      <div style="margin-bottom:8px;"><strong>R5 Cove correction</strong> · ${fmtBadge(cove.applied)}</div>
+      <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(2)}°F</div>
+      <div class="meta-line" style="font-size:0.88em;">
+        Wind: ${r.wind_octant ?? '?'} (${r.wind_dir ?? '?'}°) ·
+        Sea breeze: ${r.sb_active ? 'active' : 'inactive'} ·
+        Hour: ${r.hour_local ?? '?'}:00 EDT
+      </div>
+      <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">${cove.note ?? ""}</div>
+    </div>`;
+  }
+
+  if (solar) {
+    const d = solar.candidate_delta_wm2;
+    const r = solar.regime || {};
+    const sign = d >= 0 ? "+" : "";
+    const dColor = d === 0 ? "#8a93a3" : (d > 0 ? "#fb7c5c" : "#7ec8ff");
+    html += `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
+      <div style="margin-bottom:8px;"><strong>L5 Solar regime correction</strong> · ${fmtBadge(solar.applied)}</div>
+      <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(1)} W/m²</div>
+      <div class="meta-line" style="font-size:0.88em;">
+        Synoptic regime: <code>${r.regime_synoptic ?? 'unknown'}</code> ·
+        Raw solar: ${r.raw_solar_wm2?.toFixed(0) ?? '?'} W/m² ·
+        Sun-up threshold: ${r.sun_up_threshold ?? '?'} W/m²
+      </div>
+      <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">${solar.note ?? ""}</div>
+    </div>`;
+  }
+
+  html += `</div>`;
+  el.innerHTML = html;
+}
+
+function renderShadowWhitelistSection(doc, wxDoc) {
+  const el = document.getElementById("shadow-whitelist-content");
+  if (!el) return;
+  const current_l3 = (wxDoc?.decay_meta?.layer_3_fields) || [];
+  const current_l4 = (wxDoc?.decay_meta?.layer_4_fields) || [];
+  if (!doc || !Array.isArray(doc.entries) || doc.entries.length === 0) {
+    el.innerHTML = `<em>No shadow log yet — the file gets populated after the next Fitter cycle following the v0.6.93 deploy.</em>`;
+    return;
+  }
+  const entries = [...doc.entries].sort((a, b) => (b.fitted_at || "").localeCompare(a.fitted_at || ""));
+  const latest = entries[0];
+  const fmtSet = (s) => s && s.length ? s.map(x => `<code>${x}</code>`).join(" ") : `<em>∅</em>`;
+
+  const matchL3 = JSON.stringify(latest.current_l3) === JSON.stringify(latest.shadow_l3);
+  const matchL4 = JSON.stringify(latest.current_l4) === JSON.stringify(latest.shadow_l4);
+
+  let html = `<div style="margin-bottom:14px;">
+    <strong>Latest shadow recommendation</strong> (${latest.fitted_at}):
+    <table style="margin-top:6px;border-collapse:collapse;font-size:0.92em;">
+      <tr><td style="padding:2px 12px 2px 0;">Production L3:</td><td>${fmtSet(latest.current_l3)}</td></tr>
+      <tr><td style="padding:2px 12px 2px 0;">Shadow L3:</td><td>${fmtSet(latest.shadow_l3)} ${matchL3 ? '<span style="color:#4ad29a;">match</span>' : '<span style="color:#fb7c5c;">differs</span>'}</td></tr>
+      <tr><td style="padding:2px 12px 2px 0;">Production L4:</td><td>${fmtSet(latest.current_l4)}</td></tr>
+      <tr><td style="padding:2px 12px 2px 0;">Shadow L4:</td><td>${fmtSet(latest.shadow_l4)} ${matchL4 ? '<span style="color:#4ad29a;">match</span>' : '<span style="color:#fb7c5c;">differs</span>'}</td></tr>
+    </table>
+  </div>`;
+
+  // History — show last 10 distinct recommendations
+  if (entries.length > 1) {
+    html += `<details style="margin-top:6px;"><summary style="cursor:pointer;font-weight:600;">History (last ${Math.min(entries.length, 10)} entries)</summary>
+      <table style="width:100%;border-collapse:collapse;font-size:0.85em;margin-top:6px;">
+      <thead><tr style="border-bottom:1px solid #555;"><th style="text-align:left;padding:4px 8px 4px 0;">fitted_at</th><th style="text-align:left;padding:4px 8px 4px 0;">shadow L3</th><th style="text-align:left;padding:4px 8px 4px 0;">shadow L4</th></tr></thead><tbody>`;
+    for (const e of entries.slice(0, 10)) {
+      html += `<tr style="border-bottom:1px solid #333;">
+        <td style="padding:4px 8px 4px 0;">${e.fitted_at}</td>
+        <td style="padding:4px 8px 4px 0;">${(e.shadow_l3 || []).join(', ') || '∅'}</td>
+        <td style="padding:4px 8px 4px 0;">${(e.shadow_l4 || []).join(', ') || '∅'}</td>
+      </tr>`;
+    }
+    html += `</tbody></table></details>`;
+  }
+
+  el.innerHTML = html;
+}
+
 function renderFrontalEventsSection(doc) {
   const el = document.getElementById("frontal-events-content");
   if (!el) return;
@@ -2907,12 +3017,20 @@ async function load() {
     if (res.ok) backtestSweepDoc = await res.json();
   } catch (err) { /* silent — file may not exist until first manual run */ }
 
+  let shadowWhitelistDoc;
+  try {
+    const res = await fetch(SHADOW_WHITELIST_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) shadowWhitelistDoc = await res.json();
+  } catch (err) { /* silent — file appears after first Fitter run post-deploy */ }
+
   renderMeta(corrDoc, wxDoc);
   renderAccuracySection(tsDoc, wxDoc);
   renderL3L4AuditSection(tsDoc, wxDoc);
   renderStateStratifiedSection(ssDoc);
   renderFrontalEventsSection(frontalEventsDoc);
   renderBacktestSweepSection(backtestSweepDoc);
+  renderGatedCandidatesSection(wxDoc);
+  renderShadowWhitelistSection(shadowWhitelistDoc, wxDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
 

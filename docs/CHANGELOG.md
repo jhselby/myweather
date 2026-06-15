@@ -1,5 +1,10 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.97 • June 15, 2026
+- **Three new debug-page sections** surfacing data that was being captured but not displayed:
+  - **G1. Gated correction candidates.** Side-by-side cards showing R5 cove + L5 solar candidates each tick: current Δ, regime context, ENABLED/gated-off badge. Lets you watch what they'd do without flipping production.
+  - **S1. Shadow whitelist tuner.** Reads `shadow_whitelist_log.json` and shows the latest recommendation vs production whitelist, with green "match" / red "differs" indicators. Includes collapsible history of last 10 distinct shadow recommendations.
+
 ## v0.6.96 • June 15, 2026
 - **L5 biases recomputed from daytime-only data.** New `analysis/l5_recompute_biases.py` filters solar pairs to daytime (forecast ≥ 50 W/m²) over the last 14 days, groups by `state_obs.regime_synoptic`, computes mean signed bias per regime. The original state_stratified biases averaged across night (when solar is zero), masking the daytime signal that actually matters when the correction fires. Replaced `_BIAS_BY_REGIME` with the recomputed values — several regimes had their sign flipped (nw_flow +13 → −58, ne_flow +1 → −138). Re-running the evaluation script: realistic overall MAE drops **−4.9%** (was −0.7% with original biases). Still **HOLD** because the 5.0% ship threshold isn't quite met AND only 2 regimes improve by ≥3% (need 5). The regimes that work: sw_flow (−18.3%), nw_flow (−13.4%). The regimes that hurt: ne_flow (+14.9%), se_flow (+6.0%). Diagnosis: within-regime variability — averaging different hour-of-day biases together. Next refinement = hour-of-day stratification within each regime.
 
