@@ -35,8 +35,9 @@ from datetime import datetime, timedelta, timezone
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from weather_collector.processors.solar_correction import (
-    compute_solar_correction, _BIAS_BY_REGIME, SUN_UP_THRESHOLD,
+    compute_solar_correction, _BIAS_FALLBACK_BY_REGIME, SUN_UP_THRESHOLD,
 )
+_BIAS_BY_REGIME = _BIAS_FALLBACK_BY_REGIME  # name alias for downstream reporting
 
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -111,16 +112,24 @@ def run_analysis(local_file=None, test_days=7):
         n_usable += 1
 
         base_err = abs(l1 - obs)
+        # Extract hour from valid_time (forecast valid hour, local EDT)
+        vt = r.get("valid_time") or ""
+        hour_local = None
+        if len(vt) >= 13:
+            try:
+                hour_local = int(vt[11:13])
+            except ValueError:
+                hour_local = None
 
         if regime_fc is not None:
-            delta = compute_solar_correction(regime_fc, l1)
+            delta = compute_solar_correction(regime_fc, l1, hour_local=hour_local)
             l5_err = abs((l1 + delta) - obs)
             s = realistic[regime_fc]
             s["n"] += 1
             s["sum_abs_base"] += base_err
             s["sum_abs_l5"] += l5_err
         if regime_obs is not None:
-            delta = compute_solar_correction(regime_obs, l1)
+            delta = compute_solar_correction(regime_obs, l1, hour_local=hour_local)
             l5_err = abs((l1 + delta) - obs)
             s = ceiling[regime_obs]
             s["n"] += 1

@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.101 • June 15, 2026
+- **L5 hour-of-day refinement → SHIP verdict at last.** New `analysis/l5_recompute_biases_hourly.py` recomputes solar biases as (regime × hour_local) cells (with regime-overall fallback when cell has fewer than 30 samples). Diagnosis confirmed: bias varies HUGELY by hour within each regime — ne_flow swings from −238 W/m² at 10:00 to +247 W/m² at 14:00 in the same regime. Averaging across hours produced systematically wrong corrections for any specific hour. `solar_correction.py` updated to lookup `_BIAS_BY_REGIME_HOUR[regime][hour]` first, fall back to `_BIAS_FALLBACK_BY_REGIME[regime]` when cell missing. Eval script passes `hour_local` extracted from `valid_time`. Re-running: **overall MAE drops 31.6% (was 4.9%)**, 7/8 regimes improve by ≥3% (was 2/8). 3 regimes (frontal, sea_breeze, se_flow) had their sign flip from making things worse to making things better. Only ne_flow still problematic (+6.4%, small sample). Per the date-gated discipline, NOT flipping ENABLED today — wait for 06-22 confirmation. But the 06-22 decision is now essentially "confirm and ship."
+
 ## v0.6.100 • June 15, 2026
 - More debug-page text sweep. Removed "someone new" framing from R1 drill-down (Joe pointed out — only audience is Joe + Claude). Accuracy chart intro cleaned up (removed stale v0.6.45 / v0.6.25 version refs, generalized to "layers that aren't applied sit on top of layer below"). R1 description rewritten as "sanity-checking a field's stack" instead of teaching aid.
 
