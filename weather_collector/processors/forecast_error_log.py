@@ -53,6 +53,7 @@ FIELD_MAP = {
     "cm": "cloud_mid",
     "ch": "cloud_high",
     "wd": "wind_dir",  # circular field — Fitter handles via sin/cos components, see _circular_diff
+    "pp": "precip_in", # binary obs: 0 if precip_in==0, 100 otherwise — special-cased in loop body
 }
 
 import math
@@ -162,9 +163,15 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
         for short, long in FIELD_MAP.items():
             if short not in target_hour or target_hour[short] is None:
                 continue
-            observed = obs_entry.get(long)
-            if observed is None:
+            raw_obs = obs_entry.get(long)
+            if raw_obs is None:
                 continue
+            # POP: forecast probability vs binary observed rain occurrence
+            # on the same 0-100 scale (any measurable precip in the hour = 100).
+            if short == "pp":
+                observed = 100.0 if float(raw_obs) > 0 else 0.0
+            else:
+                observed = raw_obs
             forecast = float(target_hour[short])
             obs_f = float(observed)
             # Wind direction is circular: error is angular difference, and the
@@ -216,23 +223,6 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             if state_fc:  pair["state_fc"]  = state_fc
             if state_obs: pair["state_obs"] = state_obs
             pairs.append(pair)
-        # POP: forecast probability vs binary observed rain occurrence
-        # on the same 0-100 scale.
-        if "pp" in target_hour and target_hour["pp"] is not None:
-            precip = obs_entry.get("precip_in")
-            if precip is not None:
-                forecast = float(target_hour["pp"])
-                observed_pp = 100.0 if precip > 0 else 0.0
-                pairs.append({
-                    "obs_time": obs_time,
-                    "run_time": run,
-                    "valid_time": obs_hour_iso,
-                    "lead_h": lead_h,
-                    "field": "pp",
-                    "forecast": round(forecast, 3),
-                    "observed": observed_pp,
-                    "error": round(forecast - observed_pp, 3),
-                })
     return pairs
 
 

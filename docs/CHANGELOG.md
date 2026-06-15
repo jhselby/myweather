@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.80 • June 15, 2026
+- **POP per-layer L4 tracking — known quirk fixed.** Pre-fix: POP pairs were emitted via a standalone code block that produced only a single `error` field, bypassing the per-layer (l1/l2/l3/l4) split that every other field carries. Debug page audit table couldn't show layer-by-layer MAE for POP. Fix: added `pp` to FIELD_MAP with `precip_in` as the obs source; added a one-line special case in the loop body for binary observed (100 if precip_in > 0 else 0); deleted the standalone POP block. POP pairs now flow through the same path as everything else and pick up `forecast_l1/l2/l3/l4` + `error_l1/l2/l3/l4` from the snapshot's per-layer stamps. Verified via smoke test (both wet and dry cases). New POP pairs from now forward will have full per-layer detail; existing pre-fix pairs age out over 30 days.
+
 ## v0.6.79 • June 15, 2026
 - **R5 cove correction lookup table — sketched, gated OFF.** New `cove_correction.py` implements the bidirectional bias seen in 3 days of R5 data: cove warms +1.5 to +2.1°F under active S/SE/SW sea breeze (peninsula-lee heating), cools −3 to −5°F at 06-10 AM EDT under offshore/calm conditions (morning marine cooling). Function indexed by (wind_octant, sb_active, hour_local). `weather_data["cove_correction"]` is stamped per tick with the candidate Δ°F + regime; `ENABLED = False` means corrected_temperature is NOT modified yet. Flip ENABLED to True after the formal 06-19 R5 read confirms the pattern across 7 days of data. Lets us log "what would have happened" silently in the meantime.
 
