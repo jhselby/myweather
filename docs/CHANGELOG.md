@@ -1,5 +1,11 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.90 • June 15, 2026
+- **R0 audit table — three readability fixes.**
+  - **"L3 live? / L4 live?" → "L3 Applied? / L4 Applied?"** with Yes/No instead of ON/off. More precise — "Applied" specifically says "the correction is being applied to this field's forecast." Considered Active/Enabled/Used/On as alternatives; Applied wins on semantic precision.
+  - **New "L2 Applied?" column.** L2 only runs for fields where we have an observation network (t, dp, h, ws, wg, pr); the others have no station-network source for the bias signal, so L2 = L1 by construction. New column makes that explicit with Yes (green) or "—" (gray neutral) for n/a.
+  - **Zero deltas now render neutral.** Previously a 0.00 delta showed as green (with ▼) or red (with ▲) depending on the unrounded sign — visually noisy. Anything that rounds to 0.00 now renders as plain "0.00" in gray, no arrow. Easier to scan because true wins and losses pop and ties recede.
+
 ## v0.6.89 • June 15, 2026
 - **R0 audit table: "off" cells now red instead of gray.** Per request — makes the row-level "do the colors agree?" scan instant. Green Δ paired with red off = a possible missing correction worth investigating; red Δ paired with red off = correctly disabled. Same logic as the existing green Δ + green ON = correctly enabled. The mismatches now POP visually instead of requiring the eye to translate "gray off" into "not applied."
 

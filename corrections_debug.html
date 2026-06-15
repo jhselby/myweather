@@ -1634,25 +1634,43 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
   // worstBand: { band, frac } if this layer is losing on any lead band by > margin, else null
   const deltaCell = (delta, enabled, worstBand) => {
     if (delta == null) return `<td>—</td>`;
-    const sign = delta <= 0 ? "▼" : "▲";
-    const color = delta <= 0 ? "#4ad29a" : "#ef6450";
+    // Anything that rounds to 0.00 is neither a win nor a loss — render neutral
+    const isZero = Math.abs(delta) < 0.005;
+    let txt, color;
+    if (isZero) {
+      txt = "0.00";
+      color = "#8a93a3";  // neutral gray
+    } else {
+      const sign = delta <= 0 ? "▼" : "▲";
+      color = delta <= 0 ? "#4ad29a" : "#ef6450";
+      txt = `${sign} ${Math.abs(delta).toFixed(2)}`;
+    }
     let flag = "";
     if (enabled && worstBand) {
       flag = ` ⚠ (${worstBand.band} +${(worstBand.frac * 100).toFixed(0)}%)`;
     }
-    const txt = `${sign} ${Math.abs(delta).toFixed(2)}${flag}`;
-    return `<td style="color:${color};font-weight:600;">${txt}</td>`;
+    return `<td style="color:${color};font-weight:600;">${txt}${flag}</td>`;
   };
-  const liveCell = (on, suspect) => {
+  // L2 runs only for fields where we have a station network to compute bias.
+  // Everything else has no obs source (no station measures cloud-at-altitude,
+  // surface solar, precip amount) so L2 = L1 by construction.
+  const L2_APPLIES_TO = new Set(["t", "dp", "h", "ws", "wg", "pr"]);
+  const l2AppliedCell = (fieldKey) => {
+    if (L2_APPLIES_TO.has(fieldKey)) {
+      return `<td style="color:#4ad29a;font-weight:700;">Yes</td>`;
+    }
+    return `<td style="color:#8a93a3;">—</td>`;
+  };
+  const appliedCell = (on, suspect) => {
     if (on) {
       const color = suspect ? "#ef6450" : "#4ad29a";
-      const label = suspect ? "ON ⚠" : "ON";
+      const label = suspect ? "Yes ⚠" : "Yes";
       return `<td style="color:${color};font-weight:700;">${label}</td>`;
     }
-    // off is red so the row-level "do the colors agree?" scan is instant.
-    // Green Δ paired with red off = a possible missing correction;
-    // red Δ paired with red off = correctly disabled.
-    return `<td style="color:#ef6450;font-weight:700;">off</td>`;
+    // No is red so the row-level "do the colors agree?" scan is instant.
+    // Green Δ paired with red No = a possible missing correction;
+    // red Δ paired with red No = correctly disabled.
+    return `<td style="color:#ef6450;font-weight:700;">No</td>`;
   };
 
   const head = `<tr>
@@ -1660,12 +1678,13 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     <th>L1 raw</th>
     <th>L2 mesonet</th>
     <th>Δ L2−L1</th>
+    <th>L2 Applied?</th>
     <th>L3 decay</th>
     <th>Δ L3−L2</th>
-    <th>L3 live?</th>
+    <th>L3 Applied?</th>
     <th>L4 diurnal</th>
     <th>Δ L4−L3</th>
-    <th>L4 live?</th>
+    <th>L4 Applied?</th>
   </tr>`;
   const body = rows.map(r => {
     const l3Suspect = r.l3on && !!r.l3Worst;
@@ -1676,12 +1695,13 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
       <td>${fmt(r.l1, 2)}</td>
       <td>${fmt(r.l2, 2)}</td>
       ${deltaCell(r.d2, false, null)}
+      ${l2AppliedCell(r.f.key)}
       <td>${fmt(r.l3, 2)}</td>
       ${deltaCell(r.d3, r.l3on, r.l3Worst)}
-      ${liveCell(r.l3on, l3Suspect)}
+      ${appliedCell(r.l3on, l3Suspect)}
       <td>${fmt(r.l4, 2)}</td>
       ${deltaCell(r.d4, r.l4on, r.l4Worst)}
-      ${liveCell(r.l4on, l4Suspect)}
+      ${appliedCell(r.l4on, l4Suspect)}
     </tr>`;
   }).join("");
 
