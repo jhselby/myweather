@@ -299,6 +299,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     except Exception as e:
         logging.warning(f"  ⚠  Cove correction stamp failed: {redact_secrets(e)}")
 
+    # Solar L5 correction (regime-aware solar, gated OFF). Indexed by
+    # derived.state.regime_synoptic. Stamps candidate Δ W/m² but does not
+    # modify direct_radiation until ENABLED is flipped post-06-22.
+    try:
+        from .processors.solar_correction import stamp_solar_correction
+        stamp_solar_correction(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Solar L5 stamp failed: {redact_secrets(e)}")
+
 
     # Process 7-day hourly data for forecast text generation
     if hourly_7day_data and "hourly" in hourly_7day_data:
