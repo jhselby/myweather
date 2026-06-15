@@ -775,7 +775,7 @@
 
 <details class="research-subsection" id="gated-candidates">
   <summary>G1. Gated correction candidates — what L5 / R5 would do right now</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> two corrections are sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast. <strong>R5 cove correction</strong> — regime+hour conditional Δ°F for waterfront temperature. <strong>L5 solar correction</strong> — synoptic regime conditional Δ W/m² for solar radiation. Flip to True after the date-gated evaluation passes (R5: ~2026-06-19, L5: ~2026-06-22).</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> two corrections are sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast. <strong>R5 cove correction</strong> — (wind_octant × sb_active × hour) conditional Δ°F for waterfront temperature; day-4 evaluation script already passes both regime thresholds (see R5 section). <strong>L5 solar correction</strong> — (regime_synoptic × hour_local) conditional Δ W/m² for solar radiation; 7-day evaluation shows overall MAE drops 31.6% with 7/8 regimes improving — a SHIP verdict pending the 06-22 confirmation re-run. Flip to True after the date-gated evaluation confirms (R5: ~2026-06-19, L5: ~2026-06-22).</div>
   <div id="gated-candidates-content" class="status">Loading…</div>
 </details>
 

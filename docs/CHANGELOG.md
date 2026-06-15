@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.102 • June 15, 2026
+- **G1 description updated for L5 hour-of-day + SHIP verdict.** Reflects today's evaluation result.
+- **L5 stamp now actually populates regime live.** Discovered checking the live stamp: `derived.state.regime_synoptic` was empty because the regime classifier only runs on pair-log records via the Joiner, not on the live forecast. Added an inline classifier call inside `stamp_solar_correction` so the G1 debug-page card has a regime to look up. Otherwise it'd always show 0 W/m² because regime was null.
+
 ## v0.6.101 • June 15, 2026
 - **L5 hour-of-day refinement → SHIP verdict at last.** New `analysis/l5_recompute_biases_hourly.py` recomputes solar biases as (regime × hour_local) cells (with regime-overall fallback when cell has fewer than 30 samples). Diagnosis confirmed: bias varies HUGELY by hour within each regime — ne_flow swings from −238 W/m² at 10:00 to +247 W/m² at 14:00 in the same regime. Averaging across hours produced systematically wrong corrections for any specific hour. `solar_correction.py` updated to lookup `_BIAS_BY_REGIME_HOUR[regime][hour]` first, fall back to `_BIAS_FALLBACK_BY_REGIME[regime]` when cell missing. Eval script passes `hour_local` extracted from `valid_time`. Re-running: **overall MAE drops 31.6% (was 4.9%)**, 7/8 regimes improve by ≥3% (was 2/8). 3 regimes (frontal, sea_breeze, se_flow) had their sign flip from making things worse to making things better. Only ne_flow still problematic (+6.4%, small sample). Per the date-gated discipline, NOT flipping ENABLED today — wait for 06-22 confirmation. But the 06-22 decision is now essentially "confirm and ship."
 

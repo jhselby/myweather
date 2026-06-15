@@ -122,6 +122,25 @@ def stamp_solar_correction(weather_data):
     state = derived.get("state") or {}
     regime = state.get("regime_synoptic")
 
+    # Live regime: the classifier currently only runs on pair-log records
+    # via the Joiner. For the live forecast we classify inline so the G1
+    # debug-page card actually has a regime to look up.
+    if regime is None:
+        try:
+            from .regime_classifier import classify_synoptic_regime
+            cur = weather_data.get("current") or {}
+            now_local_for_classify = datetime.now(TZ)
+            regime = classify_synoptic_regime(
+                wind_dir_deg=cur.get("wind_direction"),
+                wind_speed_mph=cur.get("wind_speed"),
+                pressure_in=(cur.get("pressure") * 0.02953 if cur.get("pressure") else None),
+                pressure_trend_3h=derived.get("pressure_trend_hpa_3h"),
+                hour_local=now_local_for_classify.hour,
+                temp_f=cur.get("temperature"),
+            )
+        except Exception:
+            regime = None
+
     hourly = weather_data.get("hourly") or {}
     raw_solar_arr = hourly.get("raw_direct_radiation") or hourly.get("direct_radiation") or []
     raw_solar_now = raw_solar_arr[0] if raw_solar_arr else None
