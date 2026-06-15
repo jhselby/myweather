@@ -43,20 +43,22 @@ TZ = pytz.timezone("America/New_York")
 ENABLED = False  # Flip to True after the 06-22 evaluation passes.
 SUN_UP_THRESHOLD = 50.0  # W/m² — suppress correction below this raw value.
 
-# Mean signed bias (forecast − observed) per synoptic regime, from
-# state_stratified_accuracy.json window ending 2026-06-15.
+# Mean signed bias (forecast − observed) per synoptic regime, computed
+# from DAYTIME ONLY pair-log data (raw_solar ≥ 50 W/m²) over a 14-day
+# window ending 2026-06-15. Originally seeded from state_stratified, but
+# that average included nighttime zeros which masked the daytime signal.
 # Sign convention: positive bias = forecast > observed.
 # Correction = −bias (subtract the systematic over/underprediction).
+# Regenerate via `python3 analysis/l5_recompute_biases.py`.
 _BIAS_BY_REGIME = {
-    "frontal":     +89.0,
-    "sw_flow":     -32.0,
-    "pre_frontal": -24.4,
-    "sea_breeze":  -24.3,
-    "nw_flow":     +13.3,
-    "calm":         -8.3,
-    "se_flow":      -8.1,
-    "ne_flow":      +1.0,
-    # Catch-all if regime classifier returns an unrecognized label.
+    "frontal":     +12.1,  # n=5,871,  σ=232.7
+    "sw_flow":    -122.8,  # n=19,989, σ=190.1
+    "pre_frontal": -65.6,  # n=23,994, σ=229.2
+    "sea_breeze":  -17.3,  # n=24,616, σ=239.8
+    "nw_flow":     -57.7,  # n=48,473, σ=210.0
+    "calm":        -57.9,  # n=30,521, σ=187.8
+    "se_flow":     -67.1,  # n=23,536, σ=238.4
+    "ne_flow":    -137.5,  # n=6,020,  σ=212.2
     "unknown":       0.0,
 }
 
