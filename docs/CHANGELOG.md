@@ -1,5 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.99 • June 15, 2026
+- **Debug page text sweep — clarify, de-version-cruft, re-sync with today's reality.**
+  - R0 audit description rewritten: explains bias subtext, neutral 0.00 deltas, both warning banners.
+  - R2 description rewritten: lead with "what this is" plain language, then "where it's pointing today" (solar dominates → that's why L5 was sketched).
+  - R5 day-1 table replaced with day-4 numbers (sample sizes 5-6× larger, magnitudes settled lower as expected); description updated to mention the evaluation script + cliff-edge waterfront elevations Joe confirmed, points at G1 for live candidate inspection.
+  - L3 / L4 paused banners dropped the version annotations ("v0.6.45, POP re-added v0.6.49") — they were context for past sessions, not current readers. L4 banner rewritten to explain WHY L4 is hard to win at, not just "diagnostic only."
+  - Discarded section left alone (it's historical archive — the version refs belong there).
+
 ## v0.6.98 • June 15, 2026
 - **R4 and R5 status text updated to reflect today's findings.** Old text was stale:
   - R5 said "Day-1 signal aligns... holding for 7-day confirmation" — now reflects that the day-4 evaluation script already passes both thresholds.

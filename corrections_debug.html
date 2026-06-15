@@ -673,8 +673,8 @@
 </div>
 
 <div id="banner-l3-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
-  <strong style="color:#d4a373;">⏸ Layer 3 — per-field whitelist (v0.6.45, POP re-added v0.6.49).</strong>
-  <div class="meta-line">Held-out MAE audit: L3 beats L2 on <strong>wind speed, gusts, high cloud, mid cloud</strong> — those stay enabled. Net-negative on temperature, humidity, dew point, solar, low cloud, pressure, precip — those are disabled. <strong>POP</strong> is re-enabled in v0.6.49 because it's evaluated by Brier score, not MAE: the v0.6.20 calibration analysis showed flat-additive correction cuts Brier 5% (783→745). Currently enabled: <span id="banner-l3-fields">—</span>. Brier-evaluated: <span id="banner-l3-brier">—</span>.</div>
+  <strong style="color:#d4a373;">⏸ Layer 3 — per-field whitelist.</strong>
+  <div class="meta-line">Held-out MAE audit picks the fields where L3 actually beats L2 — currently <strong>wind speed, gusts, high cloud, mid cloud</strong>. Other fields stay disabled because the correction at best ties (temperature, pressure) or actively hurts (humidity, dew point, solar, low cloud, precip). <strong>POP</strong> is the special case: it's evaluated by <em>Brier score</em>, not MAE, so the audit's MAE-based ⚠ rule is suppressed for it — the v0.6.20 calibration analysis showed flat-additive correction cuts Brier 5%. Currently applied: <span id="banner-l3-fields">—</span>. Brier-evaluated: <span id="banner-l3-brier">—</span>.</div>
 </div>
 
 <h3 class="subsection">3a. Fitted correction curves — what is being applied per lead hour</h3>
@@ -699,8 +699,8 @@
 </div>
 
 <div id="banner-l4-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
-  <strong style="color:#d4a373;">⏸ Layer 4 — per-field whitelist (v0.6.45).</strong>
-  <div class="meta-line">Held-out MAE audit: L4 only beats L3 cleanly on <strong>high cloud</strong>; net-negative on the rest. Currently enabled: <span id="banner-l4-fields">—</span>. Disabled-field fits below are diagnostic only.</div>
+  <strong style="color:#d4a373;">⏸ Layer 4 — per-field whitelist.</strong>
+  <div class="meta-line">L4 is the hardest layer to win at because it needs the SAME hour-of-day error pattern to recur every day, which most fields don't satisfy (cloud cover varies by sky regime; solar varies by clear-vs-cloudy; temperature by air mass). The held-out audit says only <strong>high cloud</strong> shows stable enough diurnal structure to correct. Currently applied: <span id="banner-l4-fields">—</span>. The other charts below show the fits for diagnostic purposes only — useful to spot whether any other field is starting to develop stable diurnal structure that might justify enabling later.</div>
 </div>
 
 <h3 class="subsection">4a. Diurnal correction curves over time — historical fits</h3>
@@ -714,7 +714,7 @@
 
 <details class="research-subsection" id="r0-l3l4-audit" open>
   <summary>R0. L3/L4 audit table — is each layer earning its keep?</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Average held-out MAE per field, per layer (across leads 1–47; lead 0 excluded as circular by construction). The same kind of table that drove the v0.6.45 per-field whitelist — but live, recomputed every fit cycle. Green Δ means the layer beats the layer below on average; red means it's losing on average. The <strong>⚠</strong> flag is stricter than the overall average: it fires when an enabled layer is losing by more than 3% in ANY lead band (1–6h, 6–24h, or 24–47h). The annotation shows which band and how much. Use this to catch regressions concentrated at long leads that the overall average can hide.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> the headline diagnostic for the correction stack — average held-out MAE per field, per layer (across leads 1–47). Recomputed every Fitter cycle. Each MAE cell shows the size of the typical error; the dim subtext next to it is the <em>bias</em> (signed mean error), revealing systematic offsets MAE alone can hide. The Δ columns compare each layer to the one below — green means it beats; red means it loses; gray "0.00" means tie. The Applied? columns are color-coded Yes (green) / No (red) / — (gray, n/a for L2 fields that don't have an obs network). <strong>Two banners watch for trouble:</strong> the red one fires if any enabled layer is losing by >3% in some lead band (1–6h / 6–24h / 24–47h) — catches regressions hidden by overall averages. The orange one fires if any disabled layer is <em>winning</em> by >3% in some band — catches opportunities we're leaving on the table. Both lists exactly which (field, layer, band) triggers so the alerts are actionable.</div>
   <div id="status-audit" class="status" hidden></div>
   <div id="grid-audit"></div>
 </details>
@@ -742,7 +742,7 @@
 
 <details class="research-subsection" id="r2-state-stratified" open>
   <summary>R2. State-stratified accuracy — which regimes does the model fail in? (active)</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Per-field MAE sliced by atmospheric regime (wind direction, wind speed, cloud cover, pressure trend, flow regime, synoptic pattern). Bigger spread across bins = bigger payoff from building a regime-aware correction layer. Re-fit twice daily by the Fitter and published to <code>state_stratified_accuracy.json</code>. <strong>Caveat:</strong> magnitudes shown are from the rolling 30-day window, mostly pre-v0.6.45 pairs — they describe the L1→L4 stack's residual structure before the L2 lead-decay fix. Confirm the headline numbers survive after ~2026-06-22 (14 days of post-fix data).</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per-field MAE sliced by atmospheric regime (wind direction, wind speed, cloud cover, pressure trend, flow regime, synoptic pattern). When a field's MAE varies a lot across regime bins, that's a sign a regime-aware correction layer could help — different regimes need different corrections, and a one-size-fits-all decay correction (L3) misses the structure. <strong>Where it's pointing today:</strong> solar dominates the top 5 ranked opportunities — synoptic regime gives a 144 W/m² bias spread between best and worst bins. That's why L5 (regime-aware solar) was sketched today in <code>solar_correction.py</code> (gated off; see G1). Re-fit twice daily by the Fitter, published to <code>state_stratified_accuracy.json</code>.</div>
   <div id="status-state-stratified" class="status" hidden></div>
   <div id="grid-state-stratified"></div>
 </details>
@@ -756,19 +756,20 @@
 <details class="research-subsection" id="r5-cove-gradient">
   <summary>R5. Cove warming — does a sea breeze across the peninsula heat Wyman Cove vs inland? (collecting since 2026-06-12)</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Reframed hypothesis (2026-06-13):</strong> Wyman Cove sits in the <em>lee</em> of the Marblehead peninsula on a S/SE/SW sea breeze. Marine air crosses ~2 miles of sun-heated land before reaching the cove, picking up surface heat in transit. Expected pattern: <code>delta_wf_inland = waterfront_median − inland_median</code> goes <strong>positive</strong> (cove warmer) when wind is from the S half AND sea breeze is active, with magnitude scaling to solar input (peaking ~12-14 EDT). Should flatten to zero when wind is from N/NE (cove is windward of peninsula) or after sunset (no surface heating). Original hypothesis ("waterfront cools during sea breeze") was geographically backwards and is closed.</div>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Day-1 signal (104 ticks, 2026-06-12 to 06-13):</strong> matches the reframed model.
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Day-4 signal (427 ticks through 2026-06-15):</strong> matches the reframed model, magnitudes settled lower than initial day-1 readings as the sample size grew.
     <table style="margin-top:8px;border-collapse:collapse;font-size:0.92em;">
       <tr><th style="text-align:left;padding:2px 12px 2px 0;">Wind</th><th style="text-align:left;padding:2px 12px 2px 0;">Sea breeze</th><th style="text-align:right;padding:2px 12px 2px 0;">n</th><th style="text-align:right;padding:2px 12px 2px 0;">mean Δ°F</th></tr>
-      <tr><td>S</td><td>active</td><td style="text-align:right;">10</td><td style="text-align:right;color:#fb7c5c;"><strong>+3.4</strong></td></tr>
-      <tr><td>SE</td><td>active</td><td style="text-align:right;">29</td><td style="text-align:right;color:#fb7c5c;"><strong>+3.7</strong></td></tr>
-      <tr><td>SW</td><td>active</td><td style="text-align:right;">5</td><td style="text-align:right;color:#fb7c5c;"><strong>+3.8</strong></td></tr>
-      <tr><td>E</td><td>inactive</td><td style="text-align:right;">15</td><td style="text-align:right;color:#888;">+0.4</td></tr>
-      <tr><td>N</td><td>inactive</td><td style="text-align:right;">24</td><td style="text-align:right;color:#888;">+1.0</td></tr>
-      <tr><td>NE</td><td>inactive</td><td style="text-align:right;">9</td><td style="text-align:right;color:#888;">+0.5</td></tr>
+      <tr><td>S</td><td>active</td><td style="text-align:right;">65</td><td style="text-align:right;color:#fb7c5c;"><strong>+1.6</strong></td></tr>
+      <tr><td>SE</td><td>active</td><td style="text-align:right;">55</td><td style="text-align:right;color:#fb7c5c;"><strong>+2.0</strong></td></tr>
+      <tr><td>SW</td><td>active</td><td style="text-align:right;">27</td><td style="text-align:right;color:#fb7c5c;"><strong>+1.4</strong></td></tr>
+      <tr><td>N</td><td>inactive</td><td style="text-align:right;">54</td><td style="text-align:right;color:#7ec8ff;"><strong>−0.6</strong></td></tr>
+      <tr><td>NE</td><td>inactive</td><td style="text-align:right;">16</td><td style="text-align:right;color:#7ec8ff;"><strong>−1.0</strong></td></tr>
+      <tr><td>E</td><td>inactive</td><td style="text-align:right;">48</td><td style="text-align:right;color:#7ec8ff;"><strong>−0.8</strong></td></tr>
+      <tr><td>NW</td><td>inactive</td><td style="text-align:right;">89</td><td style="text-align:right;color:#888;">0.0</td></tr>
     </table>
-    Diurnal curve under active sea breeze tracks solar input: peaks +5.6°F at 12:00 EDT, decays to −0.2°F by 19:00. Both signals are physically coherent with the lee-warming model.
+    Diurnal curve under offshore/calm conditions shows clean morning-marine-cooling: trough around −5°F at 11:00–13:00 EDT (cool air pool over Salem Sound persists; inland warms fast with sun while cove stays anchored to marine boundary). Both signals are physically coherent with the lee-warming model.
   </div>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Data collection:</strong> <code>cove_gradient_log.json</code> captures waterfront-tagged Tempest median (Willow, Neptune), inland Tempest median (~18 stations), ambient T, wind dir/speed, salem_water_temp_f, buoy_water_temp_f, sb_active, sb_likelihood per tick (14-day retention). <strong>First full read:</strong> ~2026-06-19 (7 days). <strong>Decision rule:</strong> ship a wind-octant + hour-of-day conditional correction (+°F added to cove forecast when wind is S/SE/SW AND sb_active AND daylight hours) if the day-1 pattern holds across 7 days. Magnitude target: ~+3–5°F midday on active S-half sea breeze, scaled by solar elevation.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Data collection:</strong> <code>cove_gradient_log.json</code> captures waterfront-tagged Tempest median (Willow Rd, Neptune Rd — both at cliff-edge elevations on the harbor, confirmed by Joe), inland Tempest median (~18 stations), ambient T, wind dir/speed, salem_water_temp_f, buoy_water_temp_f, sb_active, sb_likelihood per tick (14-day retention). <strong>Evaluation script:</strong> <code>analysis/r5_cove_analysis.py</code> runs the regime tests and emits a SHIP/HOLD verdict. <strong>First full read:</strong> ~2026-06-19 (7 days). <strong>Decision rule:</strong> ship a wind-octant + hour-of-day conditional correction if both regime tests pass with stable signal across the full week. The candidate correction is already stamped per tick on <code>weather_data.cove_correction</code> — see G1 below to inspect what it would do right now.</div>
   <div id="status-cove-gradient" class="status">Day-4 evaluation script (<code>analysis/r5_cove_analysis.py</code>) already passes both regime tests: S-half sea-breeze warming = +1.73°F (threshold > +1°F), 06-10 EDT offshore cooling = −1.75°F (threshold &lt; −1°F), both with n ≥ 15 and within-bin std &lt; 2.5°F. Holding for the 7-day re-run on 06-19 before flipping <code>cove_correction.ENABLED</code>.</div>
 </details>
 
