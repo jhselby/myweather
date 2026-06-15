@@ -1769,6 +1769,71 @@ function renderBacktestSweepSection(doc) {
   }
   html += `</tbody></table>`;
   html += `<div class="meta-line" style="margin-top:10px;font-size:0.85em;opacity:0.7;">Green: candidate beats <code>${baselineName}</code> by ≥1%. Red: candidate worse by ≥1%. Faded: tied.</div>`;
+
+  // Per-lead-band drilldown if available
+  if (doc.by_band) {
+    html += `<details style="margin-top:16px;"><summary style="cursor:pointer;font-weight:600;">By lead band — where do the wins live?</summary><div style="margin-top:10px;">`;
+    // For each field that has band data, show a small per-band table
+    const fieldsWithBands = new Set();
+    for (const name of names) {
+      for (const f of Object.keys(doc.by_band[name] || {})) fieldsWithBands.add(f);
+    }
+    const orderedBands = ["0-5h", "6-11h", "12-23h", "24-47h"];
+    // Only show fields where AT LEAST one band has non-tied MAE across configs
+    const interestingFields = [];
+    for (const f of fieldsWithBands) {
+      let anyDiff = false;
+      for (const band of orderedBands) {
+        const vals = names.map(n => doc.by_band[n]?.[f]?.[band]?.mae).filter(v => v != null);
+        if (vals.length >= 2 && (Math.max(...vals) - Math.min(...vals)) / Math.min(...vals) > 0.005) {
+          anyDiff = true;
+          break;
+        }
+      }
+      if (anyDiff) interestingFields.push(f);
+    }
+    interestingFields.sort();
+
+    if (interestingFields.length === 0) {
+      html += `<div style="opacity:0.7;">No per-band differences ≥0.5% across configs.</div>`;
+    } else {
+      for (const f of interestingFields) {
+        html += `<div style="margin-bottom:14px;"><strong style="font-family:monospace;">${f}</strong>`;
+        html += `<table style="width:100%;border-collapse:collapse;font-size:0.85em;margin-top:4px;">`;
+        html += `<thead><tr style="border-bottom:1px solid #555;"><th style="text-align:left;padding:3px 8px 3px 0;">band</th>`;
+        for (const name of names) html += `<th style="text-align:right;padding:3px 8px 3px 0;">${name}</th>`;
+        html += `</tr></thead><tbody>`;
+        for (const band of orderedBands) {
+          html += `<tr style="border-bottom:1px solid #222;"><td style="padding:3px 8px 3px 0;">${band}</td>`;
+          const baseMae = doc.by_band[baselineName]?.[f]?.[band]?.mae;
+          for (const name of names) {
+            const cell = doc.by_band[name]?.[f]?.[band];
+            const mae = cell?.mae;
+            if (mae == null) {
+              html += `<td style="text-align:right;padding:3px 8px 3px 0;opacity:0.3;">--</td>`;
+              continue;
+            }
+            let style = "text-align:right;padding:3px 8px 3px 0;";
+            let suffix = "";
+            if (name !== baselineName && baseMae != null) {
+              const pct = 100 * (mae - baseMae) / baseMae;
+              if (Math.abs(pct) >= 1.0) {
+                style += pct < 0 ? "color:#9be09b;" : "color:#ff9999;";
+                suffix = ` <span style="opacity:0.6;font-size:0.85em;">${pct > 0 ? "+" : ""}${pct.toFixed(0)}%</span>`;
+              } else {
+                style += "opacity:0.6;";
+              }
+            }
+            html += `<td style="${style}">${mae.toFixed(2)}${suffix}</td>`;
+          }
+          html += `</tr>`;
+        }
+        html += `</tbody></table></div>`;
+      }
+    }
+    html += `</div></details>`;
+  }
+
   el.innerHTML = html;
 }
 

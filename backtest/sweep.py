@@ -83,7 +83,17 @@ def _pick_forecast(pair, config):
     return pair.get("forecast")
 
 
-def sweep(configs, test_days=2, local_file=None):
+LEAD_BANDS = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
+
+
+def _band_for(lead_h):
+    for label, lo, hi in LEAD_BANDS:
+        if lo <= lead_h < hi:
+            return label
+    return None
+
+
+def sweep(configs, test_days=2, local_file=None, by_band=False):
     """Evaluate a dict of named configs in one stream of the pair log.
 
     configs: {name: {"L3_FIELDS": set, "L4_FIELDS": set}}
@@ -98,6 +108,7 @@ def sweep(configs, test_days=2, local_file=None):
     }
     """
     stats = {name: defaultdict(lambda: [0, 0.0]) for name in configs}
+    band_stats = {name: defaultdict(lambda: [0, 0.0]) for name in configs} if by_band else None
     total = 0
     for pair in _stream_pairlog(test_days, local_file=local_file):
         field = pair.get("field")
@@ -105,13 +116,20 @@ def sweep(configs, test_days=2, local_file=None):
         if field is None or obs is None:
             continue
         total += 1
+        lead_h = pair.get("lead_h")
+        band = _band_for(lead_h) if (by_band and lead_h is not None) else None
         for name, cfg in configs.items():
             fc = _pick_forecast(pair, cfg)
             if fc is None:
                 continue
+            ae = abs(fc - obs)
             s = stats[name][field]
             s[0] += 1
-            s[1] += abs(fc - obs)
+            s[1] += ae
+            if band is not None:
+                bs = band_stats[name][(field, band)]
+                bs[0] += 1
+                bs[1] += ae
 
     results = {}
     for name in configs:
@@ -119,7 +137,19 @@ def sweep(configs, test_days=2, local_file=None):
         for field, (n, sum_abs) in stats[name].items():
             per_field[field] = {"n": n, "mae": round(sum_abs / n, 4) if n else None}
         results[name] = per_field
-    return {"test_days": test_days, "total_pairs": total, "results": results}
+    out = {"test_days": test_days, "total_pairs": total, "results": results}
+
+    if by_band:
+        by_band_results = {}
+        for name in configs:
+            by_band_results[name] = {}
+            for (field, band), (n, sum_abs) in band_stats[name].items():
+                by_band_results[name].setdefault(field, {})[band] = {
+                    "n": n,
+                    "mae": round(sum_abs / n, 4) if n else None,
+                }
+        out["by_band"] = by_band_results
+    return out
 
 
 def print_matrix(sweep_result, sort_by="production"):
@@ -162,6 +192,8 @@ def main():
                    help="upload result JSON to gs://myweather-data/backtest_sweep_results.json for the debug page")
     p.add_argument("--local-file", default=None,
                    help="read from local jsonl file instead of streaming via Cloudflare (much faster)")
+    p.add_argument("--by-band", action="store_true",
+                   help="also compute per-lead-band MAE (0-5h, 6-11h, 12-23h, 24-47h)")
     args = p.parse_args()
 
     config_names = [c.strip() for c in args.configs.split(",") if c.strip()]
@@ -173,7 +205,7 @@ def main():
     print(f"Window: last {args.days} days. Streaming pair log (may take 2-5 min)...")
     print()
 
-    result = sweep(selected, test_days=args.days, local_file=args.local_file)
+    result = sweep(selected, test_days=args.days, local_file=args.local_file, by_band=args.by_band)
 
     if args.json:
         print(json.dumps(result, indent=2, default=list))

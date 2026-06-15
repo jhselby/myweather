@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.85 • June 15, 2026
+- **Per-lead-band sweep + debug-page drilldown.** `backtest.sweep --by-band` now also computes MAE per lead band (0-5h, 6-11h, 12-23h, 24-47h). The debug page's B1 section gets a "By lead band — where do the wins live?" accordion that auto-surfaces fields with ≥0.5% spread across configs, showing per-band MAE tables color-coded against production. Lets us see whether L3/L4 wins concentrate at long leads (typical pattern — corrections matter most when model uncertainty is largest) vs short leads (would be unusual). First populated run will reveal this for the current 5-config sweep — typically ws/wg gains pile up at 24-47h, cc/ch gains spread across lead bands.
+
 ## v0.6.84 • June 15, 2026
 - **Backtest sweep surfaced on debug page** (B1 section under Active hypotheses). Reads `backtest_sweep_results.json` from GCS, renders a color-coded matrix comparing per-field MAE across configs (production, walkforward_15jun, walkforward_08jun, stable_core, l2_only). Green cell = candidate beats production by ≥1%, red = worse by ≥1%, faded = tied. Includes a config-definitions accordion so the UI is self-documenting. **Workflow**: re-run via `python3 -m backtest.sweep --days 2 --write-gcs` and the section refreshes. Added `--local-file` option to sweep so subsequent runs against a downloaded copy take ~30 sec instead of ~7-10 min via Cloudflare. First populated run (727K pairs / 2 days): wind L3 confirms huge MAE wins (ws −27%, wg −41% vs l2_only), cloud high L4 gives ~0.5% edge over L3-only.
 
