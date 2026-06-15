@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.100 • June 15, 2026
+- More debug-page text sweep. Removed "someone new" framing from R1 drill-down (Joe pointed out — only audience is Joe + Claude). Accuracy chart intro cleaned up (removed stale v0.6.45 / v0.6.25 version refs, generalized to "layers that aren't applied sit on top of layer below"). R1 description rewritten as "sanity-checking a field's stack" instead of teaching aid.
+
 ## v0.6.99 • June 15, 2026
 - **Debug page text sweep — clarify, de-version-cruft, re-sync with today's reality.**
   - R0 audit description rewritten: explains bias subtext, neutral 0.00 deltas, both warning banners.

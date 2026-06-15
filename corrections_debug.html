@@ -602,8 +602,8 @@
 <div class="layer-info-text">
   <p class="layer-summary">For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model.</p>
   <details class="layer-methodology"><summary>How to read these charts</summary>
-    Per-field MAE-vs-lead chart with each correction layer overlaid. X-axis = lead hour (0–47), Y-axis = mean absolute error in field units. The gap between <strong>Raw model</strong> (gray dashed) and the lowest enabled line at each lead is how much our pipeline is reducing forecast error vs the bare HRRR/GFS at that horizon. (L3/L4 per-field whitelist as of v0.6.45 — see banner above each layer.)
-    <div class="meta-line">Lead 0 is circular by construction (forecast for now compared against the same-moment mesonet, so L2 ≈ 0); look at lead 1+ for real signal. Source: <code>time_series_diagnostic.json::per_layer_mae_by_lead</code>, 7-day window. Populates from v0.6.25+ pairs only — older pairs lack per-layer detail.</div>
+    Per-field MAE-vs-lead chart with each correction layer overlaid. X-axis = lead hour (0–47), Y-axis = mean absolute error in field units. The gap between <strong>Raw model</strong> (gray dashed) and the lowest enabled line at each lead is how much our pipeline is reducing forecast error vs the bare HRRR/GFS at that horizon. Layers that are not applied for a given field will sit on top of the layer below — that's expected, not a problem.
+    <div class="meta-line">Lead 0 is circular by construction (forecast for now compared against the same-moment mesonet, so L2 ≈ 0); look at lead 1+ for real signal. Source: <code>time_series_diagnostic.json::per_layer_mae_by_lead</code>, 7-day window.</div>
   </details>
 </div>
 <div id="status-accuracy" class="status" hidden></div>
@@ -721,7 +721,7 @@
 
 <details class="research-subsection" id="sec-drill">
   <summary>R1. Drill-down — see each correction layer build up (teaching view)</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Per-field, layer-by-layer build-up of the live forecast values (not errors). Pick fields and layers, hit Play to animate the layer reveal. With most L3/L4 layers disabled in v0.6.45, this view mostly shows three overlapping lines for fields where layers are no-ops — kept here for explaining the stack to someone new, not for diagnostics.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> a visual build-up of the live forecast, layer by layer. Pick a field, pick layers, hit Play to watch L1 → L2 → L3 → L4 animate onto the chart. For fields where the L3/L4 whitelist disables a layer, that layer's line sits exactly on top of the layer below — there's no correction being applied, so nothing changes visually. Useful for sanity-checking a specific field's stack when something looks off elsewhere.</div>
   <div class="drill-controls">
     <div class="group">
       <span class="group-label">Fields</span>
