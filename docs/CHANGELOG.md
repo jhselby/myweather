@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.81 • June 15, 2026
+- **Frontal detector dry-run validation.** Detector has been live since 06-13 but hadn't seen a real front (3 days of quiet weather), so end-to-end wiring was unverified. New `analysis/frontal_detector_test.py` exercises the detector with four synthetic signatures: textbook cold front, modest sea-breeze (should stay quiet — 1 signal of 3), noise (should stay quiet), strong sea-breeze (should fire — 2 signals). All four pass. Type classification correct in all firing cases. Detector is end-to-end functional; when a real front passes, the path obs_log → detector → events_log → weather_data → frontend card will deliver the event properly.
+
 ## v0.6.80 • June 15, 2026
 - **POP per-layer L4 tracking — known quirk fixed.** Pre-fix: POP pairs were emitted via a standalone code block that produced only a single `error` field, bypassing the per-layer (l1/l2/l3/l4) split that every other field carries. Debug page audit table couldn't show layer-by-layer MAE for POP. Fix: added `pp` to FIELD_MAP with `precip_in` as the obs source; added a one-line special case in the loop body for binary observed (100 if precip_in > 0 else 0); deleted the standalone POP block. POP pairs now flow through the same path as everything else and pick up `forecast_l1/l2/l3/l4` + `error_l1/l2/l3/l4` from the snapshot's per-layer stamps. Verified via smoke test (both wet and dry cases). New POP pairs from now forward will have full per-layer detail; existing pre-fix pairs age out over 30 days.
 
