@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.82 • June 15, 2026
+- **Backtest framework Phase 3 — pair-log replay runner.** New `backtest/replay.py` + `backtest/run.py` CLI. Given any L3/L4 enable config (subsets of currently-fitted fields), computes per-field MAE on held-out pair-log data using the per-layer `forecast_l1/l2/l3/l4` values already stamped on each pair. Named configs included: `production`, `walkforward_15jun`, `walkforward_08jun`, `stable_core`, `l2_only`. Supports A/B compare and single-config eval. Streams via gsutil to bypass Cloudflare CDN's slow 4 GB throughput. First A/B run (production vs walkforward_15jun) shows the configs are essentially tied — only `cm` shows a 1.45% difference in production's favor, all other fields tie at 0.00%. Backtest is faster than walk-forward but uses production-fit coefficients (some look-ahead bias) — walk-forward remains canonical for shipping decisions. Limitations documented: can't add fields not currently fitted, can't change coefficients/Kalman/τ — those need accumulated backtest snapshot data (Phase 4+).
+
 ## v0.6.81 • June 15, 2026
 - **Frontal detector dry-run validation.** Detector has been live since 06-13 but hadn't seen a real front (3 days of quiet weather), so end-to-end wiring was unverified. New `analysis/frontal_detector_test.py` exercises the detector with four synthetic signatures: textbook cold front, modest sea-breeze (should stay quiet — 1 signal of 3), noise (should stay quiet), strong sea-breeze (should fire — 2 signals). All four pass. Type classification correct in all firing cases. Detector is end-to-end functional; when a real front passes, the path obs_log → detector → events_log → weather_data → frontend card will deliver the event properly.
 
