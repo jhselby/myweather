@@ -717,6 +717,17 @@ def fit_decay_corrections():
     except Exception as e:
         logging.warning(f"  ⚠  Time-series write failed: {redact_secrets(e)}")
 
+    # Shadow whitelist tuner: log what the auto-tuner WOULD have recommended
+    # this Fitter cycle. Doesn't change production. Accumulates over months
+    # so we can later evaluate "how often does shadow agree with human choices?"
+    # — the precondition for considering automation.
+    try:
+        from .shadow_whitelist import log_shadow_recommendation
+        from .decay_apply import L3_FIELDS, L4_FIELDS
+        log_shadow_recommendation(ts_output, L3_FIELDS, L4_FIELDS)
+    except Exception as e:
+        logging.warning(f"  ⚠  Shadow whitelist log failed: {redact_secrets(e)}")
+
     # Overwrite main with the pruned temp (resets compose component count to 1).
     try:
         bucket.copy_blob(temp_blob, bucket, ERROR_LOG_PATH)

@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.93 • June 15, 2026
+- **Shadow whitelist tuner — logs what an auto-tuner would have chosen.** New `shadow_whitelist.py` runs after each Fitter cycle, reads `time_series_diagnostic.json`, applies the same 3%-per-band MAE rule + bias-no-worse-than-previous-layer rule that a naive auto-tuner would use, and logs recommended L3 / L4 whitelists to `shadow_whitelist_log.json` (60-day retention, deduplicated when recommendation unchanged). Does NOT modify production — pure observation. After 90+ days of logged decisions we can evaluate: how often does shadow agree with human-chosen production whitelist? If it tracks for 3 months with high agreement, automating becomes safer to consider. Initial run shows it would recommend adding t and pr to L3, dropping pp from L3 (its Brier blindspot — informative, not a bug), and shifting L4 from ch to ws+wg. None of these are urgent; the value is collecting the data to evaluate.
+
 ## v0.6.92 • June 15, 2026
 - **R4/R5 first-read analysis scripts + the R4 fetcher bug they immediately surfaced.**
   - New `analysis/r4_spread_analysis.py` — joins GFS L1 log against pair-log HRRR L1 + observed, computes Spearman ρ per field per lead band, emits ship/close verdict (ship if median ρ > 0.25 on ≥ 3 fields).
