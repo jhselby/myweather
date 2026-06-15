@@ -1,5 +1,10 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.91 • June 15, 2026
+- **R0 audit table — bias subtext + symmetric "missed opportunity" warning.**
+  - **Bias next to MAE.** Each L1/L2/L3/L4 cell now shows the signed mean error (the bias) as dim subtext alongside the MAE: e.g. `2.75 +0.51`. Reveals "MAE flat but bias dropped" (correction is removing a systematic offset that MAE can't see) and the opposite "MAE flat but new bias introduced" (correction is shifting the error distribution badly). The data was already in `time_series_diagnostic.json::per_layer_bias_by_lead` — just surfacing it.
+  - **Symmetric "disabled-but-should-be-enabled" banner.** Existing banner only flagged enabled layers losing by >3%. Added the mirror check: disabled layers WINNING by >3% in any lead band — opportunities we're leaving on the table. Lists which (field, layer, band, +%) triggers the alert. Same 3% threshold as the regression check, so guardrails stay consistent.
+
 ## v0.6.90 • June 15, 2026
 - **R0 audit table — three readability fixes.**
   - **"L3 live? / L4 live?" → "L3 Applied? / L4 Applied?"** with Yes/No instead of ON/off. More precise — "Applied" specifically says "the correction is being applied to this field's forecast." Considered Active/Enabled/Used/On as alternatives; Applied wins on semantic precision.

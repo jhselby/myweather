@@ -1554,6 +1554,7 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     return;
   }
   const maeByLead = tsDoc.per_layer_mae_by_lead;
+  const biasByLead = tsDoc.per_layer_bias_by_lead || {};
   const dm = (wxDoc && wxDoc.decay_meta) || {};
   const l3Fields = new Set(dm.layer_3_fields || []);
   const l4Fields = new Set(dm.layer_4_fields || []);
@@ -1612,12 +1613,24 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     const d2 = (l1 != null && l2 != null) ? (l2 - l1) : null;
     const d3 = (l2 != null && l3 != null) ? (l3 - l2) : null;
     const d4 = (l3 != null && l4 != null) ? (l4 - l3) : null;
+    // Signed mean error per layer — the BIAS, not MAE. Available for any
+    // field that has its per-layer signed-error accumulator populated.
+    // Reveals systematic offsets that MAE alone hides (e.g., a layer can
+    // leave MAE unchanged while correcting a real bias to ~zero).
+    const fb = biasByLead[f.key] || {};
+    const b1 = avg(fb.l1), b2 = avg(fb.l2), b3 = avg(fb.l3), b4 = avg(fb.l4);
     // Brier-evaluated fields (POP) are intentionally exempt from the
     // MAE-based ⚠ rule because L3 hurts their MAE while improving Brier.
     const isBrier = brierFields.has(f.key);
     const l3Worst = isBrier ? null : worstLosingBand(fd.l3, fd.l2);
     const l4Worst = isBrier ? null : worstLosingBand(fd.l4, fd.l3);
-    rows.push({ f, l1, l2, l3, l4, d2, d3, d4, l3Worst, l4Worst, isBrier,
+    // Symmetric check: disabled layers winning by >3% in any band — caught
+    // opportunities we're leaving on the table. (Same shape as l3Worst /
+    // l4Worst but with upper/lower swapped so wins, not losses, are flagged.)
+    const l3WinIfOff = isBrier ? null : worstLosingBand(fd.l2, fd.l3);
+    const l4WinIfOff = isBrier ? null : worstLosingBand(fd.l3, fd.l4);
+    rows.push({ f, l1, l2, l3, l4, b1, b2, b3, b4,
+                d2, d3, d4, l3Worst, l4Worst, l3WinIfOff, l4WinIfOff, isBrier,
                 l3on: l3Fields.has(f.key), l4on: l4Fields.has(f.key) });
   }
   if (!rows.length) {
@@ -1629,6 +1642,15 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
 
   // Cell renderers
   const fmt = (v, d) => v == null ? "—" : v.toFixed(d ?? 2);
+  // Bias subtext rendered alongside MAE in each cell. Signed value with sign
+  // prefix; dim small text so it doesn't crowd the headline MAE number.
+  // null/missing → empty (no subtext). Helps spot "MAE flat but bias dropped"
+  // and the opposite ("MAE flat but a new bias introduced") cases.
+  const biasSpan = (b, d) => {
+    if (b == null) return "";
+    const sign = b >= 0 ? "+" : "";
+    return ` <span style="opacity:0.55;font-size:0.85em;margin-left:4px;">${sign}${b.toFixed(d ?? 2)}</span>`;
+  };
   // delta: overall avg Δ (display number)
   // enabled: is this layer currently in L3_FIELDS / L4_FIELDS?
   // worstBand: { band, frac } if this layer is losing on any lead band by > margin, else null
@@ -1692,14 +1714,14 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     const brierTag = r.isBrier ? ` <span style="color:#d4a373;font-size:0.85em;">[Brier]</span>` : '';
     return `<tr>
       <td><strong>${r.f.label}</strong> <span style="opacity:0.5;">(${r.f.key})</span>${brierTag}</td>
-      <td>${fmt(r.l1, 2)}</td>
-      <td>${fmt(r.l2, 2)}</td>
+      <td>${fmt(r.l1, 2)}${biasSpan(r.b1, 2)}</td>
+      <td>${fmt(r.l2, 2)}${biasSpan(r.b2, 2)}</td>
       ${deltaCell(r.d2, false, null)}
       ${l2AppliedCell(r.f.key)}
-      <td>${fmt(r.l3, 2)}</td>
+      <td>${fmt(r.l3, 2)}${biasSpan(r.b3, 2)}</td>
       ${deltaCell(r.d3, r.l3on, r.l3Worst)}
       ${appliedCell(r.l3on, l3Suspect)}
-      <td>${fmt(r.l4, 2)}</td>
+      <td>${fmt(r.l4, 2)}${biasSpan(r.b4, 2)}</td>
       ${deltaCell(r.d4, r.l4on, r.l4Worst)}
       ${appliedCell(r.l4on, l4Suspect)}
     </tr>`;
@@ -1707,11 +1729,27 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
 
   const anySuspect = rows.some(r =>
     (r.l3on && !!r.l3Worst) || (r.l4on && !!r.l4Worst));
-  const banner = anySuspect
-    ? `<div class="layer-info-text" style="border-color:#3a1f1f;background:#1c1313;margin-bottom:10px;"><strong style="color:#ef6450;">⚠ At least one enabled layer is losing by >3% in a lead band.</strong><div class="meta-line">Review the rows marked ON ⚠ — the band annotation shows where the regression is. Cross-reference the <a href="#sec-accuracy">accuracy chart</a> for per-lead detail before flipping L3_FIELDS / L4_FIELDS.</div></div>`
+  const anyMissed = rows.some(r =>
+    (!r.l3on && !!r.l3WinIfOff) || (!r.l4on && !!r.l4WinIfOff));
+
+  const missedList = rows.filter(r =>
+    (!r.l3on && !!r.l3WinIfOff) || (!r.l4on && !!r.l4WinIfOff))
+    .map(r => {
+      const parts = [];
+      if (!r.l3on && r.l3WinIfOff) parts.push(`<code>${r.f.key}</code> L3 +${(r.l3WinIfOff.frac * 100).toFixed(0)}% at ${r.l3WinIfOff.band}`);
+      if (!r.l4on && r.l4WinIfOff) parts.push(`<code>${r.f.key}</code> L4 +${(r.l4WinIfOff.frac * 100).toFixed(0)}% at ${r.l4WinIfOff.band}`);
+      return parts.join("; ");
+    }).filter(Boolean).join(" · ");
+
+  const suspectBanner = anySuspect
+    ? `<div class="layer-info-text" style="border-color:#3a1f1f;background:#1c1313;margin-bottom:10px;"><strong style="color:#ef6450;">⚠ At least one enabled layer is losing by >3% in a lead band.</strong><div class="meta-line">Review the rows marked Yes ⚠ — the band annotation shows where the regression is. Cross-reference the <a href="#sec-accuracy">accuracy chart</a> for per-lead detail before flipping L3_FIELDS / L4_FIELDS.</div></div>`
     : `<div class="layer-info-text" style="border-color:#1f3a1f;background:#131c13;margin-bottom:10px;"><strong style="color:#4ad29a;">✓ No enabled layer is losing by >3% in any lead band.</strong><div class="meta-line">Current L3_FIELDS / L4_FIELDS still match the data across short, mid, and long leads.</div></div>`;
 
-  grid.innerHTML = banner +
+  const missedBanner = anyMissed
+    ? `<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-bottom:10px;"><strong style="color:#d4a373;">⚠ At least one disabled layer would win by >3% in a lead band.</strong><div class="meta-line">${missedList}. Possible opportunity to add to L3_FIELDS / L4_FIELDS — but verify the win is consistent across re-runs before flipping (matches the discipline of the walk-forward validator).</div></div>`
+    : `<div class="layer-info-text" style="border-color:#1f3a1f;background:#131c13;margin-bottom:10px;"><strong style="color:#4ad29a;">✓ No disabled layer is winning by >3% in any lead band.</strong><div class="meta-line">All No cells in L3 / L4 Applied are correctly off — no opportunities being left on the table.</div></div>`;
+
+  grid.innerHTML = suspectBanner + missedBanner +
     `<div style="overflow-x:auto;"><table class="offset-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
 }
 
