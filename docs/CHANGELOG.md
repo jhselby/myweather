@@ -1,5 +1,8 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.88 • June 15, 2026
+- **L3/L4 historical-fit charts now show APPLIED / diagnostic per field.** The section banners said "Currently enabled: ch" etc., but individual chart titles gave no visual cue, so it was easy to confuse a winning-looking spaghetti chart with a field that's actually doing anything. Added a small colored pill in each chart header: green "APPLIED" for fields in `layer_3_fields` / `layer_4_fields`, gray "diagnostic" for the rest. Diagnostic-only charts are dimmed to 65% opacity so the eye lands on the applied ones first. Reads `wxDoc.decay_meta.layer_3_fields` / `layer_4_fields` so it always reflects current production whitelist without needing manual updates.
+
 ## v0.6.87 • June 15, 2026
 - **Station uptime: stop showing zombie culled stations.** The 6 Tempest stations culled on 2026-06-04 (Broadmere Way, Memorial Dr, Spray Ave, Driftwood Rd, Bass Rock Ln, Marblehead) were still appearing on the debug page with "0% uptime, 0/183 ticks" — misleading because we weren't even attempting them. Two bugs: (1) `station_uptime.py:_CULLED` only included WU culled stations, not Tempest culls, so Tempest zombies leaked through the summary filter. Fixed by importing `CULLED_TEMPEST_STATIONS` into the filter set. (2) per-tick pruning only runs for stations being actively polled, so culled stations' old entries never aged out of the 7-day window. One-shot cleanup ran: 16 zombies removed (10 WU + 6 Tempest), 80 active stations remain in the summary. From now on, the per-station log will still keep historical entries for any sid that has them (useful for manual re-probe), but the summary block hides culled stations the same way it hides WU culls.
 

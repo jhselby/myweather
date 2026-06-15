@@ -3017,11 +3017,17 @@ async function load() {
       (document.getElementById("status-history").hidden = true);
     const grid = document.getElementById("grid-history");
     grid.innerHTML = "";
+    const l3Enabled = new Set((wxDoc && wxDoc.decay_meta && wxDoc.decay_meta.layer_3_fields) || []);
     for (const f of FIELDS) {
       const card = document.createElement("div");
       card.className = "card";
+      const isApplied = l3Enabled.has(f.key);
+      const badge = isApplied
+        ? `<span style="display:inline-block;padding:1px 7px;border-radius:9px;background:rgba(74,210,154,0.18);color:#4ad29a;font-size:0.72rem;font-weight:600;margin-left:6px;">APPLIED</span>`
+        : `<span style="display:inline-block;padding:1px 7px;border-radius:9px;background:rgba(140,140,140,0.12);color:#888;font-size:0.72rem;font-weight:600;margin-left:6px;">diagnostic</span>`;
+      if (!isApplied) card.style.opacity = "0.65";
       card.innerHTML =
-        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<h3><span class="name">${f.label} (${f.key})${badge}</span>` +
         `<span class="summary">${history.length} fits</span></h3>` +
         `<div class="hist-legend">` +
           `<span>${oldest.fitted_at}</span>` +
@@ -3125,11 +3131,17 @@ async function load() {
     const nBins = newest.diurnal_bins || 24;
     const grid = document.getElementById("grid-diurnal");
     grid.innerHTML = "";
+    const l4Enabled = new Set((wxDoc && wxDoc.decay_meta && wxDoc.decay_meta.layer_4_fields) || []);
     for (const f of FIELDS) {
       const card = document.createElement("div");
       card.className = "card";
+      const isApplied = l4Enabled.has(f.key);
+      const badge = isApplied
+        ? `<span style="display:inline-block;padding:1px 7px;border-radius:9px;background:rgba(74,210,154,0.18);color:#4ad29a;font-size:0.72rem;font-weight:600;margin-left:6px;">APPLIED</span>`
+        : `<span style="display:inline-block;padding:1px 7px;border-radius:9px;background:rgba(140,140,140,0.12);color:#888;font-size:0.72rem;font-weight:600;margin-left:6px;">diagnostic</span>`;
+      if (!isApplied) card.style.opacity = "0.65";
       card.innerHTML =
-        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<h3><span class="name">${f.label} (${f.key})${badge}</span>` +
         `<span class="summary">${history.length} fits</span></h3>` +
         `<div class="hist-legend">` +
           `<span>${oldest.fitted_at}</span>` +
