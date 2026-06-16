@@ -110,9 +110,9 @@ def _load_l2_taus():
             "reason": reason,
             "n_test": n_test,
             "improvement_vs_default_pct": improvement,
-            "rmse_default": h.get("rmse_default"),
-            "rmse_fitted": h.get("rmse_fitted"),
-            "rmse_flat": h.get("rmse_flat"),
+            "mae_default": h.get("mae_default"),
+            "mae_fitted": h.get("mae_fitted"),
+            "mae_flat": h.get("mae_flat"),
         }
         prefix = "✓" if source == "fitted" else " "
         logging.info(f"  {prefix} L2 τ[{field}]: {adopted}h ({source}; {reason})")

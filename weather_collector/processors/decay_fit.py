@@ -273,19 +273,18 @@ def fit_decay_corrections():
     per_layer_abs    = defaultdict(float)  # key: (field, lead_h, layer)
     per_layer_signed = defaultdict(float)
     per_layer_n      = defaultdict(int)
-    # L2 τ-fit accumulators. Keyed by (field, lead_h). Filled only when both
-    # error_l1 and error_l2 are present on the row so bias = err_l1 - err_l2
-    # is well-defined. Held-out split: pairs younger than L2_HELDOUT_DAYS feed
-    # the *_test accumulators (the test set the fit doesn't see), older pairs
-    # feed the train accumulators (used to pick τ).
-    tau_e2 = defaultdict(float)  # Σ w · err_l1²
-    tau_eb = defaultdict(float)  # Σ w · err_l1 · bias
-    tau_b2 = defaultdict(float)  # Σ w · bias²
-    tau_n  = defaultdict(int)    # raw pair count per (field, lead)
-    tau_e2_test = defaultdict(float)
-    tau_eb_test = defaultdict(float)
-    tau_b2_test = defaultdict(float)
-    tau_n_test  = defaultdict(int)
+    # L2 τ-fit accumulators (v0.6.105: switched from closed-form SSE to
+    # per-pair MAE iteration). The earlier SSE approach picked τ=0.5h on every
+    # held-out fit because squared-error penalty makes a handful of bias
+    # overshoots dominate the optimization, even when the average absolute
+    # error improved with a larger τ. Storing per-pair tuples means we can
+    # compute MAE = Σ w·|err_l1 + d·bias| / Σ w directly for each candidate τ.
+    # Train list feeds the search; test list scores the chosen τ on data the
+    # search never saw. Pair counts are modest (~70k train, ~11k test per
+    # field) so memory is trivial — ~few MB of tuples for the L2 block.
+    # Tuple shape: (lead_h, err_l1, bias, w). Keyed by field.
+    l2_train = defaultdict(list)
+    l2_test  = defaultdict(list)
     n_in = 0
     n_kept = 0
 
@@ -401,18 +400,17 @@ def fit_decay_corrections():
                 e2 = row.get("error_l2")
                 if e1 is not None and e2 is not None:
                     e1f = float(e1)
-                    bias = e1f - float(e2)
-                    key = (field, lead_h)
+                    # bias is defined so that err_l1 + 1.0*bias == err_l2 — i.e.,
+                    # at decay=1 the corrected residual equals the full-L2 error.
+                    # Sign matters: had been inverted since v0.6.44 (e1-e2),
+                    # which caused every fit to land at τ=0.5h regardless of
+                    # whether the L2 correction actually helped.
+                    bias = float(e2) - e1f
+                    pair = (lead_h, e1f, bias, w)
                     if age_days < L2_HELDOUT_DAYS:
-                        tau_e2_test[key] += w * e1f * e1f
-                        tau_eb_test[key] += w * e1f * bias
-                        tau_b2_test[key] += w * bias * bias
-                        tau_n_test[key]  += 1
+                        l2_test[field].append(pair)
                     else:
-                        tau_e2[key] += w * e1f * e1f
-                        tau_eb[key] += w * e1f * bias
-                        tau_b2[key] += w * bias * bias
-                        tau_n[key]  += 1
+                        l2_train[field].append(pair)
 
     corrections = {}
     n_samples = {}
@@ -559,83 +557,74 @@ def fit_decay_corrections():
     except Exception as e:
         logging.warning(f"  ⚠  State-stratified accuracy failed: {redact_secrets(e)}")
 
-    # L2 lead-decay τ fit with held-out validation.
+    # L2 lead-decay τ fit with held-out MAE validation.
     #
-    # In-sample fit alone collapses to min τ every time: applying a bias
-    # computed from recent pairs to those same pairs trivially fits lead 0,
-    # so smaller τ wins by suppressing the bias at longer leads where it
-    # doesn't generalize. The held-out split (older pairs = train, last
-    # L2_HELDOUT_DAYS = test) breaks that — at test time the bias was learned
-    # on data the test pairs never saw, so the lead-0 cheat disappears and
-    # whichever τ actually generalizes wins.
+    # Pick τ on TRAIN by MAE, score on TEST by MAE. Earlier closed-form SSE
+    # version picked τ=0.5h on every fit because squared-error penalty made
+    # outlier corrections dominate the optimization, even when the average
+    # absolute error favored a larger τ. MAE matches what the loader's
+    # guardrail actually cares about (forecast error users experience) and
+    # matches the metric the hardcoded defaults were originally fit on.
     #
-    # SSE on accumulators is exact: SSE(τ) = Σ_l [e2 + 2·exp(-l/τ)·eb +
-    # exp(-2l/τ)·b2]. Both train and test sets use the same closed form. The
-    # loader applies a guardrail before adopting any fitted τ, so we always
-    # write the fit (no in-fitter veto).
+    # No closed form for MAE — iterate per-pair for each τ candidate. With
+    # ~70k train and ~11k test pairs per field × 15 τ candidates × 5 fields,
+    # this is still well under a second of compute.
 
-    def _sse_at(tau, e2_acc, eb_acc, b2_acc, field):
-        sse = 0.0
-        for l in range(LEAD_BINS):
-            if (field, l) not in e2_acc:
-                continue
-            if tau >= 1e8:
-                d = 1.0
-                d2 = 1.0
-            else:
-                d  = math.exp(-l / tau)
-                d2 = math.exp(-2.0 * l / tau)
-            sse += e2_acc[(field, l)] + 2.0 * d * eb_acc[(field, l)] + d2 * b2_acc[(field, l)]
-        return sse
+    def _mae_at(tau, pairs):
+        if not pairs:
+            return None
+        if tau >= 1e8:
+            err_sum = sum(w * abs(e + b) for (_l, e, b, w) in pairs)
+        else:
+            err_sum = sum(w * abs(e + math.exp(-l / tau) * b) for (l, e, b, w) in pairs)
+        w_sum = sum(w for (_l, _e, _b, w) in pairs)
+        return err_sum / w_sum if w_sum > 0 else None
 
     tau_hours_out = {}
     tau_n_pairs_out_train = {}
     tau_n_pairs_out_test = {}
-    tau_sse_curve = {}  # train SSE at each grid point (diagnostics)
-    heldout_out = {}    # per-field test RMSE at flat/default/fitted τ
+    tau_mae_curve = {}  # train MAE at each grid point (diagnostics)
+    heldout_out = {}    # per-field test MAE at flat/default/fitted τ
     for f in L2_TAU_FIELDS:
-        n_train = sum(tau_n.get((f, l), 0) for l in range(LEAD_BINS))
-        n_test  = sum(tau_n_test.get((f, l), 0) for l in range(LEAD_BINS))
+        train_pairs = l2_train.get(f, [])
+        test_pairs  = l2_test.get(f, [])
+        n_train = len(train_pairs)
+        n_test  = len(test_pairs)
         tau_n_pairs_out_train[f] = n_train
         tau_n_pairs_out_test[f]  = n_test
         if n_train < L2_TAU_MIN_PAIRS:
             continue
-        # Pick τ on TRAIN.
+        # Pick τ on TRAIN by min MAE.
         best_tau = None
-        best_sse = float("inf")
-        sse_at = {}
+        best_mae = float("inf")
+        mae_at = {}
         for tau in L2_TAU_GRID:
-            sse = _sse_at(tau, tau_e2, tau_eb, tau_b2, f)
-            sse_at[("inf" if tau >= 1e8 else f"{tau:g}")] = round(sse, 4)
-            if sse < best_sse:
-                best_sse = sse
+            m = _mae_at(tau, train_pairs)
+            if m is None:
+                continue
+            mae_at[("inf" if tau >= 1e8 else f"{tau:g}")] = round(m, 6)
+            if m < best_mae:
+                best_mae = m
                 best_tau = tau
         if best_tau is None:
             continue
         tau_hours_out[f] = "inf" if best_tau >= 1e8 else (
             int(best_tau) if best_tau == int(best_tau) else round(best_tau, 2))
-        tau_sse_curve[f] = sse_at
-        # Score on TEST. Three baselines: flat (τ=inf, full bias every lead),
-        # default (the hardcoded value the loader would use if we publish
-        # nothing), and the fitted τ above. RMSE = sqrt(SSE/n) gives a
-        # comparable, intuitive "average error in the field's native units."
+        tau_mae_curve[f] = mae_at
+        # Score on TEST at flat / default / fitted.
         if n_test >= max(100, L2_TAU_MIN_PAIRS // 5):
-            sse_flat    = _sse_at(1e9, tau_e2_test, tau_eb_test, tau_b2_test, f)
-            sse_default = _sse_at(L2_DEFAULT_TAUS.get(f, 1e9),
-                                   tau_e2_test, tau_eb_test, tau_b2_test, f)
-            sse_fitted  = _sse_at(best_tau, tau_e2_test, tau_eb_test, tau_b2_test, f)
-            rmse_flat    = math.sqrt(max(0.0, sse_flat) / n_test)
-            rmse_default = math.sqrt(max(0.0, sse_default) / n_test)
-            rmse_fitted  = math.sqrt(max(0.0, sse_fitted) / n_test)
-            imp_vs_default = (100.0 * (rmse_default - rmse_fitted) / rmse_default
-                              if rmse_default > 0 else 0.0)
-            imp_vs_flat = (100.0 * (rmse_flat - rmse_fitted) / rmse_flat
-                           if rmse_flat > 0 else 0.0)
+            mae_flat    = _mae_at(1e9, test_pairs)
+            mae_default = _mae_at(L2_DEFAULT_TAUS.get(f, 1e9), test_pairs)
+            mae_fitted  = _mae_at(best_tau, test_pairs)
+            imp_vs_default = (100.0 * (mae_default - mae_fitted) / mae_default
+                              if (mae_default and mae_default > 0) else 0.0)
+            imp_vs_flat = (100.0 * (mae_flat - mae_fitted) / mae_flat
+                           if (mae_flat and mae_flat > 0) else 0.0)
             heldout_out[f] = {
                 "n_test": n_test,
-                "rmse_flat": round(rmse_flat, 4),
-                "rmse_default": round(rmse_default, 4),
-                "rmse_fitted": round(rmse_fitted, 4),
+                "mae_flat": round(mae_flat, 4) if mae_flat is not None else None,
+                "mae_default": round(mae_default, 4) if mae_default is not None else None,
+                "mae_fitted": round(mae_fitted, 4) if mae_fitted is not None else None,
                 "improvement_vs_default_pct": round(imp_vs_default, 2),
                 "improvement_vs_flat_pct": round(imp_vs_flat, 2),
             }
@@ -652,7 +641,7 @@ def fit_decay_corrections():
             "train": tau_n_pairs_out_train,
             "test": tau_n_pairs_out_test,
         },
-        "sse_at_grid": tau_sse_curve,
+        "mae_at_grid": tau_mae_curve,
         "tau_grid_hours": [("inf" if t >= 1e8 else (int(t) if t == int(t) else t))
                            for t in L2_TAU_GRID],
         "min_pairs_threshold": L2_TAU_MIN_PAIRS,
