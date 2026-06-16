@@ -1,3 +1,7 @@
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from _cache import cached_path
 #!/usr/bin/env python3
 """
 Decay τ tuning: is τ=14 days actually optimal? Maybe humidity wants a
@@ -49,8 +53,7 @@ LEAD_BINS = 48
 
 
 def _fetch_jsonl_lines(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "myweather-tau-tuning/1.0"})
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    with open(cached_path(url), 'rb') as resp:
         for raw in resp:
             line = raw.strip()
             if not line:

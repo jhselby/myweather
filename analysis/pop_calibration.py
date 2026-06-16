@@ -1,3 +1,7 @@
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from _cache import cached_path
 #!/usr/bin/env python3
 """
 Reliability check for the POP decay-correction scaling.
@@ -55,15 +59,13 @@ BIN_EDGES = [0, 2, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100.0001]
 
 
 def _fetch_json(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "myweather-pop-calibration/1.0"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with open(cached_path(url), 'rb') as resp:
         return json.load(resp)
 
 
 def _fetch_jsonl_lines(url):
     """Stream JSONL from a URL line by line — pair log is tens of MB."""
-    req = urllib.request.Request(url, headers={"User-Agent": "myweather-pop-calibration/1.0"})
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    with open(cached_path(url), 'rb') as resp:
         for raw in resp:
             line = raw.strip()
             if not line:

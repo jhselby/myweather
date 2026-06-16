@@ -1,3 +1,7 @@
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from _cache import cached_path
 #!/usr/bin/env python3
 """
 Walk-forward L3+L4 on/off validator.
@@ -64,8 +68,7 @@ MIN_RELATIVE_WIN = 0.02  # 2%
 
 
 def _fetch_lines(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "myweather-walkforward-l3l4/1.0"})
-    with urllib.request.urlopen(req, timeout=180) as resp:
+    with open(cached_path(url), 'rb') as resp:
         for raw in resp:
             line = raw.strip()
             if not line:

@@ -1,3 +1,7 @@
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from _cache import cached_path
 #!/usr/bin/env python3
 """
 R4 hypothesis: does HRRR vs GFS spread predict forecast error?
@@ -46,8 +50,7 @@ MIN_FIELDS_AGREE = 3   # # of fields that need to clear the threshold
 
 def _fetch_gfs_snapshots():
     """Load the full GFS L1 log into a {(run, valid, field): value} index."""
-    req = urllib.request.Request(GFS_LOG_URL, headers={"User-Agent": "myweather-r4/1.0"})
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    with open(cached_path(GFS_LOG_URL), 'rb') as resp:
         raw = resp.read()
     # Stored gzipped on GCS; Cloudflare may or may not decompress on the way.
     try:
@@ -85,9 +88,8 @@ def _stream_pair_log(local_file=None):
                 except json.JSONDecodeError:
                     continue
         return
-    req = urllib.request.Request(ERROR_LOG_URL, headers={"User-Agent": "myweather-r4/1.0"})
-    sys.stderr.write(f"  Streaming pair log via Cloudflare (~7-10 min)...\n")
-    with urllib.request.urlopen(req, timeout=1800) as resp:
+    sys.stderr.write(f"  Streaming pair log from local cache...\n")
+    with open(cached_path(ERROR_LOG_URL), "rb") as resp:
         for raw in resp:
             if not raw or not raw.strip():
                 continue

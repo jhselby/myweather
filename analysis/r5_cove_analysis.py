@@ -1,3 +1,7 @@
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from _cache import cached_path
 #!/usr/bin/env python3
 """
 R5 hypothesis: cove temperature gradient as a function of regime.
@@ -62,8 +66,7 @@ def _hour(ts):
 
 
 def _fetch():
-    req = urllib.request.Request(COVE_LOG_URL, headers={"User-Agent": "myweather-r5/1.0"})
-    with urllib.request.urlopen(req, timeout=60) as resp:
+    with open(cached_path(COVE_LOG_URL), 'rb') as resp:
         raw = resp.read()
     try:
         data = json.loads(raw)

@@ -31,39 +31,105 @@ DEFAULT_L2_TAUS = {
 L2_DECAY_PATH = "l2_decay.json"
 
 
+L2_GUARDRAIL_MIN_IMPROVEMENT_PCT = 0.0  # held-out must beat default (≥0%)
+L2_GUARDRAIL_MIN_N_TEST = 100           # need at least this many test pairs
+L2_GUARDRAIL_TAU_LOW_MULT = 0.25        # fitted τ must be ≥ 0.25× default
+L2_GUARDRAIL_TAU_HIGH_MULT = 4.0        # fitted τ must be ≤ 4× default
+
+
 def _load_l2_taus():
-    """Prefer a GCS-published refit; fall back to the inline defaults.
+    """Per-field guardrailed loader for L2 τ values.
 
-    Accepts numeric τ in hours; "inf" (str) or values >= 1e8 mean flat (current
-    L2 behavior). The fitter writes "inf" as a string when the grid search
-    picks the flat candidate; numeric values are kept as-is.
+    Returns (taus_dict, meta_dict). `taus_dict` is {field: τ_hours} for the
+    apply step; `meta_dict` is the debug-page-facing record of which τ was
+    adopted, why (source = "fitted" or "default"), and the held-out report
+    behind it.
 
-    Loader-side degenerate-fit guard: if every loaded numeric τ equals the
-    minimum grid value (0.5h) — the signature of a starved-signal fit — the
-    file is treated as missing and DEFAULT_L2_TAUS kicks in. Belt + suspenders
-    with the fitter-side write guard in decay_fit.py.
+    For each field, the fitter publishes a τ plus a held-out report. The
+    loader adopts the fitted τ only if BOTH:
+      • the fit beat the hardcoded default on held-out RMSE
+        (improvement_vs_default_pct ≥ L2_GUARDRAIL_MIN_IMPROVEMENT_PCT)
+        with at least L2_GUARDRAIL_MIN_N_TEST test pairs, AND
+      • the fitted τ is within [0.25×, 4×] of the default (sanity bound —
+        prevents a wild-swing publish from poisoning forecasts even if the
+        held-out score happens to favor it).
+    Otherwise, fall back to DEFAULT_L2_TAUS for that field. Field-level
+    guardrails so a bad fit on one field doesn't take the others down with it.
     """
+    import logging
     doc = load_json(L2_DECAY_PATH, default=None)
-    if isinstance(doc, dict):
-        taus = doc.get("tau_hours")
-        if isinstance(taus, dict):
-            out = {}
-            for k, v in taus.items():
-                if isinstance(v, (int, float)):
-                    out[k] = float(v)
-                elif isinstance(v, str) and v.lower() in ("inf", "infinity"):
-                    out[k] = 1e9
-            if out:
-                numeric_vals = [v for v in out.values() if v < 1e8]
-                if numeric_vals and all(v == 0.5 for v in numeric_vals):
-                    import logging
-                    logging.warning(
-                        "  ⊘ L2 τ load: l2_decay.json is degenerate (every "
-                        "field at min τ=0.5h); using DEFAULT_L2_TAUS instead."
-                    )
-                else:
-                    return out
-    return dict(DEFAULT_L2_TAUS)
+    taus_out = {}
+    meta_fields = {}
+    file_taus = (doc.get("tau_hours") if isinstance(doc, dict) else None) or {}
+    file_heldout = (doc.get("heldout") if isinstance(doc, dict) else None) or {}
+
+    for field, default_tau in DEFAULT_L2_TAUS.items():
+        v = file_taus.get(field)
+        if isinstance(v, str) and v.lower() in ("inf", "infinity"):
+            fitted_tau = 1e9
+        elif isinstance(v, (int, float)):
+            fitted_tau = float(v)
+        else:
+            fitted_tau = None
+
+        h = file_heldout.get(field) or {}
+        n_test = h.get("n_test", 0)
+        improvement = h.get("improvement_vs_default_pct", None)
+
+        adopted = default_tau
+        source = "default"
+        reason = "no fitted value published"
+
+        if fitted_tau is not None:
+            if improvement is None or n_test < L2_GUARDRAIL_MIN_N_TEST:
+                reason = f"no held-out score (n_test={n_test})"
+            elif improvement < L2_GUARDRAIL_MIN_IMPROVEMENT_PCT:
+                reason = (f"held-out improvement {improvement:+.2f}% "
+                          f"below threshold")
+            elif fitted_tau < 1e8 and not (
+                L2_GUARDRAIL_TAU_LOW_MULT * default_tau
+                <= fitted_tau
+                <= L2_GUARDRAIL_TAU_HIGH_MULT * default_tau
+            ):
+                reason = (f"fitted τ={fitted_tau}h outside guardrail "
+                          f"[{L2_GUARDRAIL_TAU_LOW_MULT * default_tau:.1f}, "
+                          f"{L2_GUARDRAIL_TAU_HIGH_MULT * default_tau:.1f}]h")
+            else:
+                adopted = fitted_tau
+                source = "fitted"
+                reason = (f"held-out {improvement:+.2f}% vs default, "
+                          f"n_test={n_test:,}")
+
+        taus_out[field] = adopted
+        meta_fields[field] = {
+            "tau_hours": (1e9 if adopted >= 1e8 else adopted),
+            "default_tau_hours": default_tau,
+            "fitted_tau_hours": (None if fitted_tau is None
+                                 else (1e9 if fitted_tau >= 1e8 else fitted_tau)),
+            "source": source,
+            "reason": reason,
+            "n_test": n_test,
+            "improvement_vs_default_pct": improvement,
+            "rmse_default": h.get("rmse_default"),
+            "rmse_fitted": h.get("rmse_fitted"),
+            "rmse_flat": h.get("rmse_flat"),
+        }
+        prefix = "✓" if source == "fitted" else " "
+        logging.info(f"  {prefix} L2 τ[{field}]: {adopted}h ({source}; {reason})")
+
+    meta_out = {
+        "tau_hours": {f: (1e9 if v >= 1e8 else v) for f, v in taus_out.items()},
+        "fields": meta_fields,
+        "fitted_at": (doc.get("fitted_at") if isinstance(doc, dict) else None),
+        "heldout_days": (doc.get("heldout_days") if isinstance(doc, dict) else None),
+        "guardrail": {
+            "min_improvement_pct": L2_GUARDRAIL_MIN_IMPROVEMENT_PCT,
+            "min_n_test": L2_GUARDRAIL_MIN_N_TEST,
+            "tau_low_mult": L2_GUARDRAIL_TAU_LOW_MULT,
+            "tau_high_mult": L2_GUARDRAIL_TAU_HIGH_MULT,
+        },
+    }
+    return taus_out, meta_out
 
 
 def _decay_factors(tau, n):
@@ -94,8 +160,8 @@ def add_corrected_hourly_arrays(weather_data):
     raw_temps = hourly.get("temperature", [])
     raw_humid = hourly.get("humidity", [])
 
-    taus = _load_l2_taus()
-    weather_data["l2_decay_meta"] = {"tau_hours": dict(taus)}
+    taus, l2_meta = _load_l2_taus()
+    weather_data["l2_decay_meta"] = l2_meta
     n_hours = max(len(raw_temps), len(raw_humid), 48)
     t_decay = _decay_factors(taus.get("t"), n_hours)
     h_decay = _decay_factors(taus.get("h"), n_hours)

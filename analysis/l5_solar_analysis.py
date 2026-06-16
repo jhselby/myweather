@@ -64,9 +64,8 @@ def _stream(local_file, test_days):
                     continue
                 yield r
         return
-    req = urllib.request.Request(ERROR_LOG_URL, headers={"User-Agent": "myweather-l5/1.0"})
-    sys.stderr.write(f"  Streaming pair log via Cloudflare (cutoff {cutoff}, ~7-10 min)...\n")
-    with urllib.request.urlopen(req, timeout=1800) as resp:
+    sys.stderr.write(f"  Streaming pair log from local cache (cutoff {cutoff})...\n")
+    with open(cached_path(ERROR_LOG_URL), "rb") as resp:
         for raw in resp:
             if not raw or not raw.strip():
                 continue

@@ -1,3 +1,7 @@
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from _cache import cached_path
 #!/usr/bin/env python3
 """
 State-stratified accuracy: slice forecast MAE by observed state to find
@@ -52,8 +56,7 @@ OCTANTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 
 
 def _fetch_jsonl_lines(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "myweather-state-stratified/1.0"})
-    with urllib.request.urlopen(req, timeout=120) as resp:
+    with open(cached_path(url), 'rb') as resp:
         for raw in resp:
             line = raw.strip()
             if not line:

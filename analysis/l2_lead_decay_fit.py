@@ -32,9 +32,12 @@ import argparse
 import json
 import math
 import os
-import urllib.request
+import sys
 from collections import defaultdict
 from datetime import datetime, timedelta
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from _cache import cached_path
 
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
@@ -55,9 +58,8 @@ RECENCY_TAU_DAYS = 14.0  # match the existing decay fitter's recency weighting
 
 
 def _fetch_lines(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "myweather-l2-decay-fit/1.0"})
-    with urllib.request.urlopen(req, timeout=180) as resp:
-        for raw in resp:
+    with open(cached_path(url), "rb") as f:
+        for raw in f:
             line = raw.strip()
             if not line:
                 continue

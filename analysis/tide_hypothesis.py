@@ -1,3 +1,7 @@
+
+import sys, os as _os
+sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from _cache import cached_path
 #!/usr/bin/env python3
 """
 Hypothesis test: do the decay-curve forecast errors correlate with tide phase?
@@ -65,8 +69,7 @@ def parse_local(stamp):
 
 def _fetch_json(url):
     """urllib.urlopen with a real User-Agent (Cloudflare blocks the default)."""
-    req = urllib.request.Request(url, headers={"User-Agent": "myweather-analysis/1.0"})
-    with urllib.request.urlopen(req, timeout=30) as resp:
+    with open(cached_path(url), 'rb') as resp:
         return json.load(resp)
 
 

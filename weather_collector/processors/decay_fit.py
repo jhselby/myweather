@@ -99,6 +99,15 @@ L2_DECAY_HISTORY_PATH = "l2_decay_history.json"
 L2_TAU_FIELDS = ("t", "h", "pr", "ws", "wg")
 # Grid in hours. 1e9 ≈ ∞ → flat (current L2 behavior).
 L2_TAU_GRID = (0.5, 1, 2, 3, 4, 6, 8, 12, 18, 24, 36, 60, 120, 240, 1e9)
+# Last N days of pairs held out as test set. Fit τ on the older "train" data,
+# then score it on the recent "test" data the fitter never saw. Without this
+# split the fit collapses to min τ in-sample (recent bias trivially fits recent
+# obs); the held-out score is the only thing that says "this τ generalizes."
+L2_HELDOUT_DAYS = 2.0
+# Default τ values (mirror of DEFAULT_L2_TAUS in corrected_hourly.py). Used as
+# the baseline to score "did the new fit beat the hardcoded defaults?" — the
+# guardrail in the loader uses that delta to decide whether to adopt.
+L2_DEFAULT_TAUS = {"t": 4.0, "h": 240.0, "pr": 12.0}
 # Minimum pairs for a τ fit to publish — otherwise leave field absent so the
 # loader falls back to DEFAULT_L2_TAUS in corrected_hourly.py.
 L2_TAU_MIN_PAIRS = 500
@@ -266,11 +275,17 @@ def fit_decay_corrections():
     per_layer_n      = defaultdict(int)
     # L2 τ-fit accumulators. Keyed by (field, lead_h). Filled only when both
     # error_l1 and error_l2 are present on the row so bias = err_l1 - err_l2
-    # is well-defined.
+    # is well-defined. Held-out split: pairs younger than L2_HELDOUT_DAYS feed
+    # the *_test accumulators (the test set the fit doesn't see), older pairs
+    # feed the train accumulators (used to pick τ).
     tau_e2 = defaultdict(float)  # Σ w · err_l1²
     tau_eb = defaultdict(float)  # Σ w · err_l1 · bias
     tau_b2 = defaultdict(float)  # Σ w · bias²
     tau_n  = defaultdict(int)    # raw pair count per (field, lead)
+    tau_e2_test = defaultdict(float)
+    tau_eb_test = defaultdict(float)
+    tau_b2_test = defaultdict(float)
+    tau_n_test  = defaultdict(int)
     n_in = 0
     n_kept = 0
 
@@ -388,10 +403,16 @@ def fit_decay_corrections():
                     e1f = float(e1)
                     bias = e1f - float(e2)
                     key = (field, lead_h)
-                    tau_e2[key] += w * e1f * e1f
-                    tau_eb[key] += w * e1f * bias
-                    tau_b2[key] += w * bias * bias
-                    tau_n[key]  += 1
+                    if age_days < L2_HELDOUT_DAYS:
+                        tau_e2_test[key] += w * e1f * e1f
+                        tau_eb_test[key] += w * e1f * bias
+                        tau_b2_test[key] += w * bias * bias
+                        tau_n_test[key]  += 1
+                    else:
+                        tau_e2[key] += w * e1f * e1f
+                        tau_eb[key] += w * e1f * bias
+                        tau_b2[key] += w * bias * bias
+                        tau_n[key]  += 1
 
     corrections = {}
     n_samples = {}
@@ -538,82 +559,123 @@ def fit_decay_corrections():
     except Exception as e:
         logging.warning(f"  ⚠  State-stratified accuracy failed: {redact_secrets(e)}")
 
-    # L2 lead-decay τ fit. For each field, find the τ in L2_TAU_GRID that
-    # minimizes weighted SSE of (err_l1 + exp(-lead/τ) × bias)² across all
-    # leads. SSE(τ) = Σ_l [e2[f,l] + 2·exp(-l/τ)·eb[f,l] + exp(-2l/τ)·b2[f,l]],
-    # so the per-(f,l) accumulators we built in the pair-log loop are
-    # sufficient. n_pairs threshold prevents publishing a noisy fit on a
-    # too-thin field.
+    # L2 lead-decay τ fit with held-out validation.
+    #
+    # In-sample fit alone collapses to min τ every time: applying a bias
+    # computed from recent pairs to those same pairs trivially fits lead 0,
+    # so smaller τ wins by suppressing the bias at longer leads where it
+    # doesn't generalize. The held-out split (older pairs = train, last
+    # L2_HELDOUT_DAYS = test) breaks that — at test time the bias was learned
+    # on data the test pairs never saw, so the lead-0 cheat disappears and
+    # whichever τ actually generalizes wins.
+    #
+    # SSE on accumulators is exact: SSE(τ) = Σ_l [e2 + 2·exp(-l/τ)·eb +
+    # exp(-2l/τ)·b2]. Both train and test sets use the same closed form. The
+    # loader applies a guardrail before adopting any fitted τ, so we always
+    # write the fit (no in-fitter veto).
+
+    def _sse_at(tau, e2_acc, eb_acc, b2_acc, field):
+        sse = 0.0
+        for l in range(LEAD_BINS):
+            if (field, l) not in e2_acc:
+                continue
+            if tau >= 1e8:
+                d = 1.0
+                d2 = 1.0
+            else:
+                d  = math.exp(-l / tau)
+                d2 = math.exp(-2.0 * l / tau)
+            sse += e2_acc[(field, l)] + 2.0 * d * eb_acc[(field, l)] + d2 * b2_acc[(field, l)]
+        return sse
+
     tau_hours_out = {}
-    tau_n_pairs_out = {}
-    tau_sse_curve = {}  # for the history file — SSE at each grid point per field
+    tau_n_pairs_out_train = {}
+    tau_n_pairs_out_test = {}
+    tau_sse_curve = {}  # train SSE at each grid point (diagnostics)
+    heldout_out = {}    # per-field test RMSE at flat/default/fitted τ
     for f in L2_TAU_FIELDS:
-        n_pairs = sum(tau_n.get((f, l), 0) for l in range(LEAD_BINS))
-        tau_n_pairs_out[f] = n_pairs
-        if n_pairs < L2_TAU_MIN_PAIRS:
+        n_train = sum(tau_n.get((f, l), 0) for l in range(LEAD_BINS))
+        n_test  = sum(tau_n_test.get((f, l), 0) for l in range(LEAD_BINS))
+        tau_n_pairs_out_train[f] = n_train
+        tau_n_pairs_out_test[f]  = n_test
+        if n_train < L2_TAU_MIN_PAIRS:
             continue
+        # Pick τ on TRAIN.
         best_tau = None
         best_sse = float("inf")
         sse_at = {}
         for tau in L2_TAU_GRID:
-            sse = 0.0
-            for l in range(LEAD_BINS):
-                if (f, l) not in tau_e2:
-                    continue
-                if tau >= 1e8:
-                    d = 1.0
-                    d2 = 1.0
-                else:
-                    d  = math.exp(-l / tau)
-                    d2 = math.exp(-2.0 * l / tau)
-                sse += tau_e2[(f, l)] + 2.0 * d * tau_eb[(f, l)] + d2 * tau_b2[(f, l)]
+            sse = _sse_at(tau, tau_e2, tau_eb, tau_b2, f)
             sse_at[("inf" if tau >= 1e8 else f"{tau:g}")] = round(sse, 4)
             if sse < best_sse:
                 best_sse = sse
                 best_tau = tau
-        if best_tau is not None:
-            tau_hours_out[f] = "inf" if best_tau >= 1e8 else (
-                int(best_tau) if best_tau == int(best_tau) else round(best_tau, 2))
-            tau_sse_curve[f] = sse_at
-    # Loader treats string "inf" as flat (τ ≥ 1e8 in corrected_hourly.py).
-    # Numeric values are hours.
+        if best_tau is None:
+            continue
+        tau_hours_out[f] = "inf" if best_tau >= 1e8 else (
+            int(best_tau) if best_tau == int(best_tau) else round(best_tau, 2))
+        tau_sse_curve[f] = sse_at
+        # Score on TEST. Three baselines: flat (τ=inf, full bias every lead),
+        # default (the hardcoded value the loader would use if we publish
+        # nothing), and the fitted τ above. RMSE = sqrt(SSE/n) gives a
+        # comparable, intuitive "average error in the field's native units."
+        if n_test >= max(100, L2_TAU_MIN_PAIRS // 5):
+            sse_flat    = _sse_at(1e9, tau_e2_test, tau_eb_test, tau_b2_test, f)
+            sse_default = _sse_at(L2_DEFAULT_TAUS.get(f, 1e9),
+                                   tau_e2_test, tau_eb_test, tau_b2_test, f)
+            sse_fitted  = _sse_at(best_tau, tau_e2_test, tau_eb_test, tau_b2_test, f)
+            rmse_flat    = math.sqrt(max(0.0, sse_flat) / n_test)
+            rmse_default = math.sqrt(max(0.0, sse_default) / n_test)
+            rmse_fitted  = math.sqrt(max(0.0, sse_fitted) / n_test)
+            imp_vs_default = (100.0 * (rmse_default - rmse_fitted) / rmse_default
+                              if rmse_default > 0 else 0.0)
+            imp_vs_flat = (100.0 * (rmse_flat - rmse_fitted) / rmse_flat
+                           if rmse_flat > 0 else 0.0)
+            heldout_out[f] = {
+                "n_test": n_test,
+                "rmse_flat": round(rmse_flat, 4),
+                "rmse_default": round(rmse_default, 4),
+                "rmse_fitted": round(rmse_fitted, 4),
+                "improvement_vs_default_pct": round(imp_vs_default, 2),
+                "improvement_vs_flat_pct": round(imp_vs_flat, 2),
+            }
+
     l2_decay_output = {
         "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
         "n_pairs_total": n_kept,
         "retention_days": RETENTION_DAYS,
+        "heldout_days": L2_HELDOUT_DAYS,
         "weighting": {"method": "exponential_decay", "tau_days": TAU_DAYS},
         "tau_hours": tau_hours_out,
-        "n_pairs_per_field": tau_n_pairs_out,
+        "heldout": heldout_out,
+        "n_pairs_per_field": {
+            "train": tau_n_pairs_out_train,
+            "test": tau_n_pairs_out_test,
+        },
         "sse_at_grid": tau_sse_curve,
         "tau_grid_hours": [("inf" if t >= 1e8 else (int(t) if t == int(t) else t))
                            for t in L2_TAU_GRID],
         "min_pairs_threshold": L2_TAU_MIN_PAIRS,
+        "default_taus": dict(L2_DEFAULT_TAUS),
     }
-    # Degenerate-fit guard: when the pair log is starved of signal (recent
-    # OOMs, API outages, or just too few pairs maturing), every field's grid
-    # search collapses to the smallest τ in L2_TAU_GRID because every τ
-    # scores ~identically. Writing that to l2_decay.json clobbers months of
-    # validated τ knowledge with effectively-L1 behavior. Detect the obvious
-    # signature (every fitted field lands on the minimum grid τ) and refuse
-    # to overwrite the live file — the loader keeps reading the prior good
-    # values. History file still gets the degenerate fit for forensics.
-    min_grid_tau = min(t for t in L2_TAU_GRID if t < 1e8)
-    fitted_tau_values = [v for v in tau_hours_out.values()
-                         if isinstance(v, (int, float))]
-    degenerate = bool(fitted_tau_values) and all(
-        v == min_grid_tau for v in fitted_tau_values
-    )
-    if degenerate:
-        logging.warning(
-            f"  ⊘ L2 τ fit: DEGENERATE (every field landed on min grid "
-            f"τ={min_grid_tau}h) — not overwriting l2_decay.json. "
-            f"Previous good values preserved."
-        )
-    else:
-        upload_json(l2_decay_output, L2_DECAY_PATH, "l2_decay.json")
-        logging.info(f"  ✓ L2 τ fit: " + ", ".join(
-            f"{f}={tau_hours_out[f]}h" for f in L2_TAU_FIELDS if f in tau_hours_out
-        ))
+    upload_json(l2_decay_output, L2_DECAY_PATH, "l2_decay.json")
+    # Per-field log line: fitted τ + held-out improvement vs default. The
+    # loader's guardrail decides whether each field is actually adopted; this
+    # log is the human-readable record of what the fitter proposed.
+    log_parts = []
+    for f in L2_TAU_FIELDS:
+        if f not in tau_hours_out:
+            continue
+        h = heldout_out.get(f, {})
+        if h:
+            log_parts.append(
+                f"{f}={tau_hours_out[f]}h ({h['improvement_vs_default_pct']:+.1f}% "
+                f"vs default, n_test={h['n_test']:,})"
+            )
+        else:
+            log_parts.append(f"{f}={tau_hours_out[f]}h (no held-out score)")
+    logging.info("  ✓ L2 τ fit: " + ", ".join(log_parts) if log_parts
+                 else "  ⊘ L2 τ fit: no fields had enough train pairs")
     try:
         l2_history = load_json(L2_DECAY_HISTORY_PATH, default={"history": []})
         kept_l2 = [h for h in l2_history.get("history", [])
