@@ -15,6 +15,26 @@ import pytz
 from ..config import LAT as HOME_LAT, LON as HOME_LON
 
 
+def _circular_mean(directions):
+    """Mean compass bearing in degrees from a list using sin/cos vectors.
+    Handles wrap-around correctly (mean of [350, 10] = 0, not 180).
+    Returns None if the input is empty or the resulting vector is degenerate."""
+    valid = [float(d) for d in directions if d is not None]
+    if not valid:
+        return None
+    sin_sum = sum(math.sin(math.radians(d)) for d in valid)
+    cos_sum = sum(math.cos(math.radians(d)) for d in valid)
+    if abs(sin_sum) < 1e-9 and abs(cos_sum) < 1e-9:
+        return None  # opposing vectors cancel out — no consensus
+    return math.degrees(math.atan2(sin_sum, cos_sum)) % 360
+
+
+def _circular_diff_deg(a, b):
+    """Smallest angular difference (0–180°) between two compass bearings."""
+    d = abs(a - b) % 360
+    return d if d <= 180 else 360 - d
+
+
 def _octant_index(lat, lon):
     """Compass octant 0–7 (0=N) of a station relative to home. None if no coords."""
     if lat is None or lon is None:
@@ -221,6 +241,47 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data):
 
         current["condition_source"] = f"{max_gust_entry['source']} observed"
         current["wind_aggregation"] = wind_aggregation
+
+        # Direction consensus guardrail (added 2026-06-15 after Neptune Rd
+        # was seen reporting 92° while every other source said NW ~310°).
+        # If the chosen direction is more than DIRECTION_OUTLIER_THRESHOLD
+        # off from the circular mean of every reliable direction source,
+        # the chosen station's sensor is likely misaligned/drifting — fall
+        # back to the consensus instead.
+        DIRECTION_OUTLIER_THRESHOLD = 90.0
+        DIRECTION_MIN_SOURCES = 3
+        consensus_dirs = []
+        if kbvy_data and kbvy_data.get("wind_dir") is not None:
+            consensus_dirs.append(kbvy_data["wind_dir"])
+        kbos = weather_data.get("kbos") or {}
+        if kbos.get("wind_dir") is not None:
+            consensus_dirs.append(kbos["wind_dir"])
+        buoy = weather_data.get("buoy_44013") or {}
+        if buoy.get("wind_dir") is not None:
+            consensus_dirs.append(buoy["wind_dir"])
+        for s in (tempest_data or {}).get("stations", []):
+            if s.get("valid") and s.get("wind_direction") is not None:
+                consensus_dirs.append(s["wind_direction"])
+        chosen = current.get("wind_direction")
+        if chosen is not None and len(consensus_dirs) >= DIRECTION_MIN_SOURCES:
+            consensus = _circular_mean(consensus_dirs)
+            if consensus is not None:
+                diff = _circular_diff_deg(chosen, consensus)
+                if diff > DIRECTION_OUTLIER_THRESHOLD:
+                    logging.warning(
+                        f"  ⚠️ Wind direction guardrail: chosen {chosen:.0f}° "
+                        f"(from {dir_source.get('source', '?')}) is {diff:.0f}° off "
+                        f"consensus {consensus:.0f}° across {len(consensus_dirs)} sources "
+                        f"— falling back to consensus"
+                    )
+                    current["wind_direction"] = round(consensus, 1)
+                    current["wind_direction_guardrail"] = {
+                        "rejected_value": chosen,
+                        "rejected_source": dir_source.get("source"),
+                        "consensus_value": round(consensus, 1),
+                        "consensus_n": len(consensus_dirs),
+                        "offset_deg": round(diff, 1),
+                    }
 
     # Final fallback: if GFS failed and nothing yielded a direction, use KBVY
     if current.get("wind_direction") is None and kbvy_data and kbvy_data.get("wind_dir") is not None:
