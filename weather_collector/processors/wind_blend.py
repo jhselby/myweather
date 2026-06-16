@@ -18,8 +18,18 @@ from ..config import LAT as HOME_LAT, LON as HOME_LON
 def _circular_mean(directions):
     """Mean compass bearing in degrees from a list using sin/cos vectors.
     Handles wrap-around correctly (mean of [350, 10] = 0, not 180).
-    Returns None if the input is empty or the resulting vector is degenerate."""
-    valid = [float(d) for d in directions if d is not None]
+    Returns None if the input is empty or the resulting vector is degenerate.
+
+    Skips non-numeric entries silently (METAR reports "VRB" for variable-direction
+    wind; we treat those as "no direction signal" rather than crashing)."""
+    valid = []
+    for d in directions:
+        if d is None:
+            continue
+        try:
+            valid.append(float(d))
+        except (TypeError, ValueError):
+            continue  # "VRB" from METAR, garbage strings, etc.
     if not valid:
         return None
     sin_sum = sum(math.sin(math.radians(d)) for d in valid)
