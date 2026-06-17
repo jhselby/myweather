@@ -509,6 +509,57 @@
     gap: 10px;
     margin-bottom: 16px;
   }
+  /* v2: per-chart whitelist badges + lead-band MAE table */
+  .field-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin: 4px 0 8px 0;
+  }
+  .field-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    line-height: 1.3;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .field-badge.active   { color: #9ad99a; background: #18241a; border-color: #284028; }
+  .field-badge.inactive { color: #c89090; background: #241818; border-color: #402828; }
+  .field-badge.na       { color: #8a8a8a; background: #1d1d20; border-color: #2c2c30; }
+  .field-badge.brier    { color: #d4b06a; background: #221c10; border-color: #3a2f1c; }
+  .band-table {
+    width: 100%;
+    margin-top: 8px;
+    font-size: 11px;
+    border-collapse: collapse;
+    color: #cfd6e1;
+  }
+  .band-table th,
+  .band-table td {
+    padding: 3px 6px;
+    text-align: right;
+    border-bottom: 1px solid #242833;
+  }
+  .band-table th:first-child,
+  .band-table td:first-child { text-align: left; color: #9aa3b2; font-weight: 500; }
+  .band-table thead th { color: #9aa3b2; font-weight: 600; background: #181c25; }
+  .band-table tbody tr.all-row td { border-top: 1px solid #2e3340; font-weight: 600; color: #e7ecf3; }
+  .band-table td.best { color: #9ad99a; font-weight: 600; }
+  .band-table td.worst { color: #c89090; }
+  /* Highlight columns whose corresponding layer is actively applied to this field.
+     The Raw column is never "applied" (it's the baseline). The Mesonet / Decay /
+     Diurnal columns get the box if that layer is on per the field's whitelist. */
+  .band-table th.layer-active,
+  .band-table td.layer-active {
+    border-left: 1px solid #4a7a5a;
+    border-right: 1px solid #4a7a5a;
+    background: rgba(74, 122, 90, 0.07);
+  }
+  .band-table thead th.layer-active { border-top: 1px solid #4a7a5a; }
+  .band-table tbody tr:last-child td.layer-active { border-bottom: 1px solid #4a7a5a; }
   .accuracy-card {
     background: var(--panel);
     border: 1px solid #242833;
@@ -601,8 +652,23 @@
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
   <p class="layer-summary">For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model.</p>
-  <details class="layer-methodology"><summary>How to read these charts</summary>
-    Per-field MAE-vs-lead chart with each correction layer overlaid. X-axis = lead hour (0–47), Y-axis = mean absolute error in field units. The gap between <strong>Raw model</strong> (gray dashed) and the lowest enabled line at each lead is how much our pipeline is reducing forecast error vs the bare HRRR/GFS at that horizon. Layers that are not applied for a given field will sit on top of the layer below — that's expected, not a problem.
+  <details class="layer-methodology" open><summary>How to read these charts</summary>
+    <div class="meta-line"><strong>What you're looking at.</strong> One small chart per weather field. The Y-axis is how wrong the forecast tends to be (in that field's units — °F, %, mph, etc.). The X-axis is hours into the future. Lower lines = more accurate. Lines climbing to the right is normal — forecasts get worse the further out you predict.</div>
+    <div class="meta-line"><strong>The four lines are cumulative correction layers, stacked from worst to best:</strong></div>
+    <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.5">
+      <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
+      <li><strong>Mesonet</strong> (orange): adds Layer 2 — what 60+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
+      <li><strong>Lead-time decay</strong> (light blue): adds Layer 3 — a historical per-lead bias correction learned from the pair log. Different bias for each lead hour: "this model tends to be 2°F too cool at lead 6, 1°F too warm at lead 12," etc.</li>
+      <li><strong>Hour of day</strong> (bright blue): adds Layer 4 — a diurnal correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). This is the final line — what users actually see in the app for fields where every layer is on.</li>
+    </ul>
+    <div class="meta-line"><strong>Why lines often lie on top of each other.</strong> Two different reasons, and the badges above each chart tell you which:
+      <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
+        <li><strong>Layer not applied to this field</strong> (badge shows <span class="field-badge inactive">L3 off</span> or similar). The walk-forward validator showed this layer makes things worse for that field, so we turned it off. The line for that layer is identical to the one below it by construction.</li>
+        <li><strong>Layer is applied but the correction is tiny</strong> (badge shows <span class="field-badge active">L3 ✓</span>). The raw model is already very close, so the correction barely moves the needle. Lines visually overlap but they're not identical.</li>
+      </ul>
+    </div>
+    <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> means a bias is added (temperature, humidity, pressure). <span class="field-badge active">L2 ✓ direct</span> means we replace the model wind with what the stations are reading. <span class="field-badge na">L2 n/a</span> means no station network exists for this field (clouds, solar, precip).</div>
+    <div class="meta-line"><strong>The table beneath each chart</strong> shows the same data as the chart but averaged into lead bands (0-5h, 6-11h, etc.). Numbers in field units. Compare a row across columns to see how each correction layer changes the error in that lead band — this is exactly the bucketing the walk-forward validator uses to decide what gets shipped.</div>
     <div class="meta-line">Lead 0 is circular by construction (forecast for now compared against the same-moment mesonet, so L2 ≈ 0); look at lead 1+ for real signal. Source: <code>time_series_diagnostic.json::per_layer_mae_by_lead</code>, 7-day window.</div>
   </details>
 </div>
@@ -1515,9 +1581,21 @@ function renderAccuracySection(tsDoc, wxDoc) {
   const dm = (wxDoc && wxDoc.decay_meta) || {};
   const l3Fields = new Set(dm.layer_3_fields || []);
   const l4Fields = new Set(dm.layer_4_fields || []);
+  const brierFields = new Set(dm.layer_3_brier_fields || []);
+  // L2 classification per field. Additive bias fields: t, dp, h, pr (mesonet
+  // network bias added). Direct-selection fields: ws, wg (station median
+  // replaces model wind). Other fields have no Layer 2 because no station
+  // network reports them. Mirrors the structure in weather_collector/
+  // processors/hyperlocal.py and select_observed_wind in wind_blend.py.
+  const L2_ADDITIVE = new Set(["t", "dp", "h", "pr"]);
+  const L2_DIRECT   = new Set(["ws", "wg"]);
   const _layerApplied = (layerKey, fieldKey) => {
-    if (layerKey === "l1") return false;  // raw, never "applied"
-    if (layerKey === "l2") return true;   // L2 runs for every field
+    // L1 (raw) is always part of the chain — it's the foundation every
+    // forecast starts from. Boxing/checkmarking it makes that explicit:
+    // for fields where every later layer is off (e.g., cloud cover), the
+    // user sees the bare model, and the chart should show it.
+    if (layerKey === "l1") return true;
+    if (layerKey === "l2") return L2_ADDITIVE.has(fieldKey) || L2_DIRECT.has(fieldKey);
     if (layerKey === "l3") return l3Fields.has(fieldKey);
     if (layerKey === "l4") return l4Fields.has(fieldKey);
     return false;
@@ -1532,9 +1610,114 @@ function renderAccuracySection(tsDoc, wxDoc) {
   const LAYER_LINES = [
     { key: "l1", label: "Raw model",          color: "rgba(138,147,163,0.75)", dash: [4,4] },
     { key: "l2", label: "Mesonet",            color: "rgba(200,160,110,1)",    dash: [] },
-    { key: "l3", label: "Decay",              color: "rgba(110,180,235,1)",    dash: [] },
-    { key: "l4", label: "Diurnal",            color: "rgba(74,163,255,1)",     dash: [] },
+    { key: "l3", label: "Lead-time decay",    color: "rgba(110,180,235,1)",    dash: [] },
+    { key: "l4", label: "Hour-of-day",        color: "rgba(74,163,255,1)",     dash: [] },
   ];
+
+  // v2: per-band MAE summary. Bands match the walk-forward validator buckets.
+  const BANDS = [
+    { label: "0-5h",   lo: 0,  hi: 6  },
+    { label: "6-11h",  lo: 6,  hi: 12 },
+    { label: "12-23h", lo: 12, hi: 24 },
+    { label: "24-47h", lo: 24, hi: 48 },
+  ];
+  const _bandAvg = (arr, lo, hi) => {
+    let sum = 0, n = 0;
+    for (let i = lo; i < hi; i++) {
+      const v = arr[i];
+      if (v != null && !Number.isNaN(v)) { sum += v; n++; }
+    }
+    return n > 0 ? sum / n : null;
+  };
+  const _fmt = (v, decimals) => v == null ? "—" : v.toFixed(decimals);
+  // Reasonable per-field decimal places based on the magnitude of typical errors.
+  const FIELD_DECIMALS = {
+    t: 2, dp: 2, h: 2, ws: 2, wg: 2, pp: 1, pr: 3, cc: 1, sr: 1, pa: 4, cl: 1, cm: 1, ch: 1,
+  };
+
+  // v2: per-chart whitelist badges. Layered explanation goes in the section
+  // header's <details> expander — keep individual badges short.
+  const _buildBadges = (fieldKey) => {
+    const badges = [];
+    // L2 badge
+    if (L2_ADDITIVE.has(fieldKey)) {
+      badges.push(`<span class="field-badge active">L2 ✓ additive</span>`);
+    } else if (L2_DIRECT.has(fieldKey)) {
+      badges.push(`<span class="field-badge active">L2 ✓ direct</span>`);
+    } else {
+      badges.push(`<span class="field-badge na">L2 n/a</span>`);
+    }
+    // L3 badge
+    if (l3Fields.has(fieldKey)) {
+      if (brierFields.has(fieldKey)) {
+        badges.push(`<span class="field-badge brier" title="L3 applied but evaluated by Brier score, not MAE">L3 ✓ (Brier)</span>`);
+      } else {
+        badges.push(`<span class="field-badge active">L3 ✓</span>`);
+      }
+    } else {
+      badges.push(`<span class="field-badge inactive">L3 off</span>`);
+    }
+    // L4 badge
+    if (l4Fields.has(fieldKey)) {
+      badges.push(`<span class="field-badge active">L4 ✓</span>`);
+    } else {
+      badges.push(`<span class="field-badge inactive">L4 off</span>`);
+    }
+    return `<div class="field-badges">${badges.join("")}</div>`;
+  };
+
+  // v2: lead-band MAE summary table per chart. Matches the bucketing the
+  // walk-forward validator uses to decide what gets shipped. The single
+  // rightmost active column gets a green box — that's the column whose
+  // value is what the user actually sees. Badges above the chart explain
+  // why earlier layers may also be active but don't get a box (no need to
+  // repeat the same info).
+  const _buildBandTable = (fieldData, fieldKey, decimals) => {
+    const rows = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);
+    // Per-column active flags, in column order matching LAYER_LINES.
+    const allActive = LAYER_LINES.map(l => _layerApplied(l.key, fieldKey));
+    // Highest-applied column wins the box; everything else stays unboxed.
+    let highestIdx = -1;
+    for (let i = allActive.length - 1; i >= 0; i--) {
+      if (allActive[i]) { highestIdx = i; break; }
+    }
+    const colActive = allActive.map((_, i) => i === highestIdx);
+    const _activeCls = (idx, extra) => {
+      const cls = [];
+      if (colActive[idx]) cls.push("layer-active");
+      if (extra) cls.push(extra);
+      return cls.length ? ` class="${cls.join(" ")}"` : "";
+    };
+    let html =
+      `<table class="band-table"><thead><tr>` +
+      `<th>Lead</th>` +
+      `<th${_activeCls(0)}>Raw</th>` +
+      `<th${_activeCls(1)}>Mesonet</th>` +
+      `<th${_activeCls(2)}>Lead decay</th>` +
+      `<th${_activeCls(3)}>Hour of day</th>` +
+      `</tr></thead><tbody>`;
+    for (const b of rows) {
+      const vals = LAYER_LINES.map(l => _bandAvg(fieldData[l.key] || [], b.lo, b.hi));
+      const present = vals.filter(v => v != null);
+      const best = present.length ? Math.min(...present) : null;
+      const worst = present.length ? Math.max(...present) : null;
+      const cls = b.isAll ? ' class="all-row"' : "";
+      html += `<tr${cls}><td>${b.label}</td>`;
+      for (let i = 0; i < vals.length; i++) {
+        const v = vals[i];
+        let extra = "";
+        if (v != null && present.length >= 2) {
+          if (v === best) extra = "best";
+          else if (v === worst) extra = "worst";
+        }
+        html += `<td${_activeCls(i, extra)}>${_fmt(v, decimals)}</td>`;
+      }
+      html += `</tr>`;
+    }
+    html += `</tbody></table>`;
+    return html;
+  };
+
   // Use the existing accuracy-grid container but replace it with a wide grid
   // of charts (re-using the .grid class from existing chart sections).
   grid.className = "grid";  // override the .accuracy-grid 220px-min layout
@@ -1560,10 +1743,13 @@ function renderAccuracySection(tsDoc, wxDoc) {
     const totalSamples = samples24.reduce((s, v) => s + (v || 0), 0);
     const card = document.createElement("div");
     card.className = "card";
+    const decimals = FIELD_DECIMALS[f.key] ?? 2;
     card.innerHTML =
       `<h3><span class="name">${f.label} (${f.key})</span>` +
       `<span class="summary">Average forecast error by lead time · ${totalSamples.toLocaleString()} pairs (7d)</span></h3>` +
-      `<div class="chart-wrap"><canvas></canvas></div>`;
+      _buildBadges(f.key) +
+      `<div class="chart-wrap"><canvas></canvas></div>` +
+      _buildBandTable(fieldData, f.key, decimals);
     grid.appendChild(card);
     new Chart(card.querySelector("canvas"), {
       type: "line",
@@ -1583,14 +1769,16 @@ function renderAccuracySection(tsDoc, wxDoc) {
               padding: 12,
               generateLabels: (chart) => chart.data.datasets.map((ds, i) => {
                 const layer = LAYER_LINES[i] || {};
-                const applied = _layerApplied(layer.key, f.key);
+                // v2: legend swatch shows color only — "which layer is active"
+                // moves entirely to the badges above the chart (no need to
+                // encode the same signal in three places).
                 return {
                   text: ds.label,
                   fillStyle: layer.color || ds.borderColor,
                   strokeStyle: layer.color || ds.borderColor,
                   fontColor: "#e7ecf3",
                   lineWidth: 0,
-                  pointStyle: _legendSwatch(layer.color || ds.borderColor, applied),
+                  pointStyle: _legendSwatch(layer.color || ds.borderColor, false),
                   datasetIndex: i,
                   hidden: !chart.isDatasetVisible(i),
                 };
@@ -2037,19 +2225,13 @@ function renderShadowWhitelistSection(doc, wxDoc) {
   const latest = entries[0];
   const fmtSet = (s) => s && s.length ? s.map(x => `<code>${x}</code>`).join(" ") : `<em>∅</em>`;
 
-  // fitted_at is recorded in America/New_York local time by the Fitter
-  // (decay_fit.py uses now_naive in TZ = America/New_York). Reformat to an
-  // unambiguous human-readable string so the timezone is obvious — the bare
-  // "2026-06-16T15:08" used to be misread as UTC.
+  // fitted_at is recorded in America/New_York local time by the Fitter.
+  // Reformat to "Mon Jun 16, 3:08 PM EDT" so the timezone is unambiguous.
   const _fmtLocal = (s) => {
     if (!s) return "—";
-    // Parse "YYYY-MM-DDTHH:MM" as a local America/New_York moment.
     const m = s.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
     if (!m) return s;
     const [_, y, mo, d, hh, mm] = m;
-    // Determine EDT vs EST by checking what UTC offset NY uses for this date.
-    // toLocaleString with explicit tz returns a string we can compare against
-    // the input to derive the offset (used only for the EDT/EST suffix).
     const dt = new Date(Date.UTC(+y, +mo - 1, +d, +hh, +mm));
     const tzShort = new Intl.DateTimeFormat("en-US", {
       timeZone: "America/New_York", timeZoneName: "short",
@@ -2068,8 +2250,6 @@ function renderShadowWhitelistSection(doc, wxDoc) {
   const matchL3 = JSON.stringify(latest.current_l3) === JSON.stringify(latest.shadow_l3);
   const matchL4 = JSON.stringify(latest.current_l4) === JSON.stringify(latest.shadow_l4);
 
-  // Agreement rate across all entries — the actual signal for the 90-day
-  // analysis. Surfaced live so we can watch it converge.
   const n = entries.length;
   let l3Matches = 0, l4Matches = 0;
   for (const e of entries) {
@@ -2088,8 +2268,6 @@ function renderShadowWhitelistSection(doc, wxDoc) {
     </table>
   </div>`;
 
-  // Agreement-rate panel — the signal for the 90-day "should we ever
-  // automate this?" question. Today's value is noisy; watch it stabilize.
   html += `<div style="margin-bottom:14px;padding:8px 12px;background:#181c25;border:1px solid #2a3142;border-radius:6px;font-size:0.92em;">
     <strong>Agreement with production</strong> across ${n} Fitter cycle${n === 1 ? "" : "s"} since shadow deployed:
     <ul style="margin:6px 0 0 18px;padding:0;line-height:1.5;">
@@ -2099,8 +2277,6 @@ function renderShadowWhitelistSection(doc, wxDoc) {
     <div class="meta-line" style="margin-top:6px;opacity:0.75;">Per the original design: ≥90 days of consistent agreement is the precondition for considering automation. Today's number is one read of a noisy window.</div>
   </div>`;
 
-  // History — all entries (uncapped). With 60-day retention and 2 cycles/day,
-  // max ~120 rows, fits easily in the accordion.
   if (entries.length > 1) {
     html += `<details style="margin-top:6px;"><summary style="cursor:pointer;font-weight:600;">History (all ${entries.length} entries since shadow deployed)</summary>
       <table style="width:100%;border-collapse:collapse;font-size:0.85em;margin-top:6px;">
