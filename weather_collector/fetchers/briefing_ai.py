@@ -329,6 +329,10 @@ def _build_weather_summary(weather_data):
 # Cache: last successful headline stored in GCS
 _BRIEFING_CACHE_PATH = "briefing_cache.json"
 _BRIEFING_INTERVAL_MINUTES = 30
+# v0.6.113: when Gemini returns 429 (daily quota blown), back off for this
+# many hours instead of retrying every 10 min for the rest of the day.
+# Google's free-tier solar-day quota resets at midnight Pacific.
+_GEMINI_429_COOLDOWN_HOURS = 4
 # In-memory guard: persists across invocations on the same instance (max-instances=1)
 _last_gemini_call_time = None
 
@@ -350,7 +354,13 @@ def _load_cached_briefing():
 
 
 def _save_cached_briefing(briefing):
-    """Save successful briefing to GCS."""
+    """Save successful briefing to GCS.
+
+    v0.6.113: preserve throttle timestamps (`last_attempt_at`, `last_429_at`)
+    from the existing cache file if present. Without this, a Groq save after
+    a Gemini-record-attempt clobbers the timestamps that drive the rate-limit
+    backoff, causing the retry loop to resume.
+    """
     try:
         from google.cloud import storage as gcs
         from datetime import datetime
@@ -359,6 +369,15 @@ def _save_cached_briefing(briefing):
         bucket = client.bucket("myweather-data")
         blob = bucket.blob(_BRIEFING_CACHE_PATH)
         briefing["cached_at"] = datetime.now(pytz.timezone("America/New_York")).isoformat()
+        # Preserve any throttle metadata written by _record_gemini_attempt.
+        if blob.exists():
+            try:
+                existing = json.loads(blob.download_as_text())
+                for k in ("last_attempt_at", "last_429_at"):
+                    if k in existing and k not in briefing:
+                        briefing[k] = existing[k]
+            except Exception:
+                pass
         blob.upload_from_string(json.dumps(briefing), content_type="application/json")
         logging.info(f"  ✓ Briefing cache saved")
     except Exception as e:
@@ -424,7 +443,20 @@ def _templated_briefing(weather_data):
 
 
 def _should_call_gemini():
-    """Only call Gemini every 30 minutes to stay under free tier quota."""
+    """Decide whether to call Gemini this tick.
+
+    Throttle rules (v0.6.113):
+      • If we hit a 429 (quota blown) recently, back off for _GEMINI_429_COOLDOWN_HOURS
+        (default 4h — well past Google's per-day quota reset). Saved as
+        `last_429_at` in GCS so it survives Cloud Run instance restarts.
+      • Otherwise, respect the normal _BRIEFING_INTERVAL_MINUTES guard, keyed
+        on `last_attempt_at` (any attempt, not just success). Failures used to
+        be tracked only in process memory, which got wiped on each new
+        instance — causing the retry loop we hit on 2026-06-17 (12h of 429s
+        every 10 min). Persisting attempt time makes the throttle durable.
+      • cached_at (last success) still drives the data we serve when the
+        throttle says skip.
+    """
     from datetime import datetime
     import pytz
     eastern = pytz.timezone("America/New_York")
@@ -444,16 +476,60 @@ def _should_call_gemini():
         blob = bucket.blob(_BRIEFING_CACHE_PATH)
         if blob.exists():
             data = json.loads(blob.download_as_text())
-            cached_at = data.get("cached_at")
-            if cached_at:
-                cached_time = datetime.fromisoformat(cached_at)
-                age_min = (now - cached_time).total_seconds() / 60
-                if age_min < _BRIEFING_INTERVAL_MINUTES:
-                    logging.info(f"  ⏭ Briefing: cached {age_min:.0f}m ago, skipping Gemini (interval: {_BRIEFING_INTERVAL_MINUTES}m)")
-                    return False, data
+            # v0.6.113: 429 backoff. If we just hit Google's daily quota,
+            # don't try again for several hours.
+            last_429_at = data.get("last_429_at")
+            if last_429_at:
+                try:
+                    t = datetime.fromisoformat(last_429_at)
+                    age_h = (now - t).total_seconds() / 3600
+                    if age_h < _GEMINI_429_COOLDOWN_HOURS:
+                        logging.info(f"  ⏭ Briefing: 429 cooldown ({age_h:.1f}h ago, "
+                                     f"waiting {_GEMINI_429_COOLDOWN_HOURS}h), skipping Gemini")
+                        return False, data
+                except Exception:
+                    pass
+            # v0.6.113: throttle on any-attempt, not just success. Prevents
+            # the every-tick retry loop when Gemini is failing.
+            last_attempt_at = data.get("last_attempt_at") or data.get("cached_at")
+            if last_attempt_at:
+                try:
+                    t = datetime.fromisoformat(last_attempt_at)
+                    age_min = (now - t).total_seconds() / 60
+                    if age_min < _BRIEFING_INTERVAL_MINUTES:
+                        logging.info(f"  ⏭ Briefing: last attempt {age_min:.0f}m ago, "
+                                     f"skipping Gemini (interval: {_BRIEFING_INTERVAL_MINUTES}m)")
+                        return False, data
+                except Exception:
+                    pass
     except Exception as e:
         logging.error(f"  ⚠ Briefing interval check failed: {redact_secrets(e)}")
     return True, None
+
+
+def _record_gemini_attempt(was_429=False):
+    """Persist the timestamp of this Gemini attempt to GCS so the throttle
+    survives Cloud Run instance restarts. Writes a thin update to
+    briefing_cache.json without disturbing the cached headline/subheadline.
+    """
+    from datetime import datetime
+    import pytz
+    try:
+        from google.cloud import storage as gcs
+        client = gcs.Client()
+        bucket = client.bucket("myweather-data")
+        blob = bucket.blob(_BRIEFING_CACHE_PATH)
+        now_iso = datetime.now(pytz.timezone("America/New_York")).isoformat()
+        if blob.exists():
+            data = json.loads(blob.download_as_text())
+        else:
+            data = {}
+        data["last_attempt_at"] = now_iso
+        if was_429:
+            data["last_429_at"] = now_iso
+        blob.upload_from_string(json.dumps(data), content_type="application/json")
+    except Exception as e:
+        logging.warning(f"  ⚠ Briefing: failed to record Gemini attempt timestamp: {redact_secrets(e)}")
 
 
 def generate_briefing(weather_data):
@@ -554,16 +630,24 @@ def generate_briefing(weather_data):
             if valid:
                 logging.info(f"  ✓ Briefing (Gemini): {headline}")
                 _save_cached_briefing(briefing)
+                _record_gemini_attempt(was_429=False)
                 _last_gemini_call_time = datetime.now(eastern)
                 return briefing
             else:
                 logging.warning(f"  ⊘ Briefing (Gemini) REJECTED ({reason}): {headline!r} — falling through")
+                _record_gemini_attempt(was_429=False)
+                _last_gemini_call_time = datetime.now(eastern)
     except Exception as e:
         # Capture HTTP status + body excerpt to diagnose Cloud Function-side failures
         # (key + payload were verified working locally; failure is environment-specific).
         status = getattr(getattr(e, "response", None), "status_code", "n/a")
         body = getattr(getattr(e, "response", None), "text", "") or ""
         logging.warning(f"  ⚠ Briefing: Gemini failed ({type(e).__name__} status={status}), trying Groq... body[:300]={body[:300]!r}")
+        # v0.6.113: persist the failure so the throttle survives instance
+        # restarts. 429 = daily quota — long cooldown. Other failures =
+        # normal 30-min throttle.
+        _record_gemini_attempt(was_429=(status == 429))
+        _last_gemini_call_time = datetime.now(eastern)
 
     # Groq fallback (OpenAI-compatible)
     if GROQ_API_KEY:
@@ -598,10 +682,16 @@ def generate_briefing(weather_data):
                 valid, reason = _validate_headline(briefing, summary, weather_data)
                 if valid:
                     logging.info(f"  ✓ Briefing (Groq): {headline}")
-                    # Intentionally NOT updating _last_gemini_call_time (let Gemini
-                    # be retried on the next collector run) and NOT saving Groq to
-                    # the cache (the cache is reserved for last-good Gemini, which
-                    # is higher quality than a fresh Groq fallback).
+                    # v0.6.113: save Groq successes to cache too. Pre-v0.6.113
+                    # we kept the cache "reserved for last-good Gemini" which
+                    # left the displayed briefing stale for hours when Gemini
+                    # was down. Letting Groq update the cache means users see
+                    # the freshest available briefing. When Gemini recovers,
+                    # its next success overwrites with the higher-quality
+                    # output. (We DO NOT update _last_gemini_call_time here —
+                    # the Gemini throttle is now persisted via _record_gemini_attempt
+                    # which was called from the Gemini failure path above.)
+                    _save_cached_briefing(briefing)
                     return briefing
                 else:
                     logging.warning(f"  ⊘ Briefing (Groq) REJECTED ({reason}): {headline!r} — falling through")
