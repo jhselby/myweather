@@ -96,7 +96,14 @@ def compute_recommendation(ts_diag):
         b4 = _avg(b.get("l4"))
 
         l3_ok = _recommend(l3_bands, l2_bands, b3, b2)
-        l4_ok = _recommend(l4_bands, l3_bands, b4, b3) if l3_ok else False  # only consider L4 if L3 is in
+        # v0.6.110: cascade constraint removed. The original logic gated L4
+        # consideration on L3 being recommended ("only consider L4 if L3 is
+        # in"). But L4 is fit on error_l3, which equals error_l2 by
+        # construction when L3 is off — so L4 ON without L3 is architecturally
+        # valid (L4 fits on the L2 residual). Removing the gate lets the
+        # shadow see "bad L3, good L4" cases for fields where the diurnal
+        # signal is real but the per-lead bias signal isn't.
+        l4_ok = _recommend(l4_bands, l3_bands, b4, b3)
         if l3_ok:
             rec_l3.add(f)
         if l4_ok:
@@ -106,11 +113,29 @@ def compute_recommendation(ts_diag):
     return rec_l3, rec_l4, per_field
 
 
-def log_shadow_recommendation(ts_diag, current_l3_fields, current_l4_fields):
+def log_shadow_recommendation(ts_diag, current_l3_fields, current_l4_fields,
+                              conditional_audits=None):
     """Compute the shadow recommendation and append to the log if it
     differs from the most recent entry (dedup on identical recommendations).
 
     Called by the Fitter after writing time_series_diagnostic.json.
+
+    `conditional_audits` (optional, v0.6.110+): dict mapping conditional-layer
+    name (e.g., "r5", "l5") to a verdict dict shaped like:
+        {
+            "verdict": "SHIP" | "HOLD" | "insufficient_data",
+            "enabled": bool,        # current production ENABLED state
+            "mae_baseline": float,
+            "mae_with_layer": float,
+            "improvement_pct": float,
+            "n_pairs": int,
+            "best_variant": "...",  # optional, for layers with multiple application strategies
+        }
+    These extend the existing per-field L3/L4 whitelist recommendation pattern
+    to cover layers that don't fit the per-field-whitelist model (R5 = single
+    on/off for one location; L5 = regime-conditional). Same shadow pattern,
+    different decision rule per layer. Future R6/L6/etc. can be added the
+    same way without further changes to this signature.
     """
     rec_l3, rec_l4, _per_field = compute_recommendation(ts_diag)
     fitted_at = ts_diag.get("fitted_at")
@@ -134,16 +159,38 @@ def log_shadow_recommendation(ts_diag, current_l3_fields, current_l4_fields):
         "would_change_l3": cur_l3_sorted != rec_l3_sorted,
         "would_change_l4": cur_l4_sorted != rec_l4_sorted,
     }
+    if conditional_audits:
+        entry["conditional_audits"] = conditional_audits
 
     log = load_json(LOG_PATH, default={"entries": []})
     entries = [e for e in log.get("entries", []) if e.get("fitted_at", "") >= cutoff]
-    # Dedup: skip if the last entry has the same shadow rec
+    # Dedup: skip if the last entry has the same shadow rec AND the same
+    # conditional audit verdicts (a flip from HOLD to SHIP on R5/L5 is
+    # meaningful and should produce a new entry even if L3/L4 are unchanged).
     if entries:
         last = entries[-1]
-        if (last.get("shadow_l3") == entry["shadow_l3"]
-            and last.get("shadow_l4") == entry["shadow_l4"]
-            and last.get("current_l3") == entry["current_l3"]
-            and last.get("current_l4") == entry["current_l4"]):
+        same_whitelists = (last.get("shadow_l3") == entry["shadow_l3"]
+                           and last.get("shadow_l4") == entry["shadow_l4"]
+                           and last.get("current_l3") == entry["current_l3"]
+                           and last.get("current_l4") == entry["current_l4"])
+        same_conditionals = _same_conditional_verdicts(
+            last.get("conditional_audits"), entry.get("conditional_audits"))
+        if same_whitelists and same_conditionals:
             return
     entries.append(entry)
     upload_json({"entries": entries}, LOG_PATH, LOG_PATH)
+
+
+def _same_conditional_verdicts(prev, curr):
+    """Two entries' conditional-audit verdicts are 'same' if every layer key
+    has the same `verdict` and `enabled` value. Numeric MAE values can drift
+    slightly between cycles without that being a meaningful change."""
+    prev = prev or {}
+    curr = curr or {}
+    if set(prev.keys()) != set(curr.keys()):
+        return False
+    for k in prev:
+        if (prev[k].get("verdict") != curr[k].get("verdict")
+            or prev[k].get("enabled") != curr[k].get("enabled")):
+            return False
+    return True

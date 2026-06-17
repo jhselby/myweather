@@ -2287,29 +2287,86 @@ function renderShadowWhitelistSection(doc, wxDoc) {
   }
   const pct = (k) => n > 0 ? `${Math.round(100 * k / n)}%` : "—";
 
+  // v0.6.110: conditional-layer audits (R5 today, L5 future) live alongside
+  // L3/L4 whitelist recommendations under `entry.conditional_audits`.
+  const _r5 = (e) => (e?.conditional_audits?.r5) || null;
+  const _condVerdictTag = (audit) => {
+    if (!audit) return '<span style="opacity:0.5;">—</span>';
+    const v = audit.verdict;
+    if (v === "SHIP")  return '<span style="color:#4ad29a;font-weight:600;">SHIP</span>';
+    if (v === "HOLD")  return '<span style="color:#fb7c5c;font-weight:600;">HOLD</span>';
+    return `<span style="opacity:0.55;">${v || "—"}</span>`;
+  };
+  const _condAgreeTag = (audit) => {
+    // For conditional layers, "agreement" = the audit's recommendation
+    // matches the current ENABLED state. SHIP+enabled or HOLD+disabled.
+    if (!audit) return null;
+    if (audit.verdict === "insufficient_data") return null;
+    const shouldEnable = audit.verdict === "SHIP";
+    return shouldEnable === !!audit.enabled;
+  };
+
+  const latestR5 = _r5(latest);
+
   let html = `<div style="margin-bottom:14px;">
     <strong>Latest shadow recommendation</strong> (${_fmtLocal(latest.fitted_at)}):
     <table style="margin-top:6px;border-collapse:collapse;font-size:0.92em;">
       <tr><td style="padding:2px 12px 2px 0;">Production L3:</td><td>${fmtSet(latest.current_l3)}</td></tr>
       <tr><td style="padding:2px 12px 2px 0;">Shadow L3:</td><td>${fmtSet(latest.shadow_l3)} ${matchL3 ? '<span style="color:#4ad29a;">match</span>' : '<span style="color:#fb7c5c;">differs</span>'}</td></tr>
       <tr><td style="padding:2px 12px 2px 0;">Production L4:</td><td>${fmtSet(latest.current_l4)}</td></tr>
-      <tr><td style="padding:2px 12px 2px 0;">Shadow L4:</td><td>${fmtSet(latest.shadow_l4)} ${matchL4 ? '<span style="color:#4ad29a;">match</span>' : '<span style="color:#fb7c5c;">differs</span>'}</td></tr>
-    </table>
+      <tr><td style="padding:2px 12px 2px 0;">Shadow L4:</td><td>${fmtSet(latest.shadow_l4)} ${matchL4 ? '<span style="color:#4ad29a;">match</span>' : '<span style="color:#fb7c5c;">differs</span>'}</td></tr>`;
+  if (latestR5) {
+    const enabledStr = latestR5.enabled ? "ENABLED" : "disabled";
+    let r5Detail = "";
+    if (latestR5.verdict === "SHIP" || latestR5.verdict === "HOLD") {
+      const impL4 = latestR5.improvement_on_top_of_l4_pct;
+      const impL1 = latestR5.improvement_replaces_stack_pct;
+      r5Detail = ` <span style="opacity:0.7;font-size:0.9em;">(R5+L4 ${impL4 >= 0 ? "+" : ""}${impL4?.toFixed(2)}%, R5 alone ${impL1 >= 0 ? "+" : ""}${impL1?.toFixed(2)}%, n=${(latestR5.n_pairs ?? 0).toLocaleString()})</span>`;
+    } else if (latestR5.verdict === "insufficient_data") {
+      r5Detail = ` <span style="opacity:0.7;font-size:0.9em;">(n=${(latestR5.n_pairs ?? 0).toLocaleString()}, need ≥200)</span>`;
+    }
+    html += `<tr><td style="padding:2px 12px 2px 0;">R5 cove (${enabledStr}):</td><td>${_condVerdictTag(latestR5)}${r5Detail}</td></tr>`;
+  }
+  html += `</table>
   </div>`;
+
+  // Agreement with production. For L3/L4 = whitelist match. For conditional
+  // layers (R5, future L5) = audit verdict aligns with current ENABLED state.
+  let r5Total = 0, r5Matches = 0;
+  for (const e of entries) {
+    const a = _r5(e);
+    const m = _condAgreeTag(a);
+    if (m === null) continue;  // insufficient_data doesn't count
+    r5Total++;
+    if (m) r5Matches++;
+  }
+  const r5Pct = (k, total) => total > 0 ? `${Math.round(100 * k / total)}%` : "—";
 
   html += `<div style="margin-bottom:14px;padding:8px 12px;background:#181c25;border:1px solid #2a3142;border-radius:6px;font-size:0.92em;">
     <strong>Agreement with production</strong> across ${n} Fitter cycle${n === 1 ? "" : "s"} since shadow deployed:
     <ul style="margin:6px 0 0 18px;padding:0;line-height:1.5;">
       <li>L3 match rate: <strong>${pct(l3Matches)}</strong> (${l3Matches} of ${n})</li>
-      <li>L4 match rate: <strong>${pct(l4Matches)}</strong> (${l4Matches} of ${n})</li>
-    </ul>
-    <div class="meta-line" style="margin-top:6px;opacity:0.75;">Per the original design: ≥90 days of consistent agreement is the precondition for considering automation. Today's number is one read of a noisy window.</div>
+      <li>L4 match rate: <strong>${pct(l4Matches)}</strong> (${l4Matches} of ${n})</li>`;
+  if (r5Total > 0) {
+    html += `<li>R5 match rate: <strong>${r5Pct(r5Matches, r5Total)}</strong> (${r5Matches} of ${r5Total} cycles with sufficient data) — audit verdict aligned with current ENABLED state</li>`;
+  }
+  html += `</ul>
+    <div class="meta-line" style="margin-top:6px;opacity:0.75;">Per the original design: ≥90 days of consistent agreement is the precondition for considering automation. For L3/L4 that's whitelist match; for conditional layers (R5, future L5) that's the audit verdict aligning with the current ENABLED flag. Today's numbers are one read of a noisy window.</div>
   </div>`;
 
   if (entries.length > 1) {
+    const showR5Col = entries.some(e => _r5(e));
     html += `<details style="margin-top:6px;"><summary style="cursor:pointer;font-weight:600;">History (all ${entries.length} entries since shadow deployed)</summary>
       <table style="width:100%;border-collapse:collapse;font-size:0.85em;margin-top:6px;">
-      <thead><tr style="border-bottom:1px solid #555;"><th style="text-align:left;padding:4px 8px 4px 0;">fitted_at</th><th style="text-align:left;padding:4px 8px 4px 0;">shadow L3</th><th style="text-align:left;padding:4px 8px 4px 0;">shadow L4</th><th style="text-align:left;padding:4px 8px 4px 0;">match?</th></tr></thead><tbody>`;
+      <thead><tr style="border-bottom:1px solid #555;">
+        <th style="text-align:left;padding:4px 8px 4px 0;">fitted_at</th>
+        <th style="text-align:left;padding:4px 8px 4px 0;">shadow L3</th>
+        <th style="text-align:left;padding:4px 8px 4px 0;">shadow L4</th>
+        <th style="text-align:left;padding:4px 8px 4px 0;">L3/L4 match?</th>`;
+    if (showR5Col) {
+      html += `<th style="text-align:left;padding:4px 8px 4px 0;">R5 audit</th>`;
+    }
+    html += `</tr></thead><tbody>`;
     for (const e of entries) {
       const eMatchL3 = JSON.stringify(e.current_l3) === JSON.stringify(e.shadow_l3);
       const eMatchL4 = JSON.stringify(e.current_l4) === JSON.stringify(e.shadow_l4);
@@ -2321,8 +2378,12 @@ function renderShadowWhitelistSection(doc, wxDoc) {
         <td style="padding:4px 8px 4px 0;">${_fmtLocal(e.fitted_at)}</td>
         <td style="padding:4px 8px 4px 0;">${(e.shadow_l3 || []).join(', ') || '∅'}</td>
         <td style="padding:4px 8px 4px 0;">${(e.shadow_l4 || []).join(', ') || '∅'}</td>
-        <td style="padding:4px 8px 4px 0;">${matchTag}</td>
-      </tr>`;
+        <td style="padding:4px 8px 4px 0;">${matchTag}</td>`;
+      if (showR5Col) {
+        const a = _r5(e);
+        html += `<td style="padding:4px 8px 4px 0;">${_condVerdictTag(a)}</td>`;
+      }
+      html += `</tr>`;
     }
     html += `</tbody></table></details>`;
   }
