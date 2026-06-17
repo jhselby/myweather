@@ -875,7 +875,7 @@
 
 <details class="research-subsection" id="backtest-sweep">
   <summary>B1. Backtest sweep — alternative L3/L4 configs vs production</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 whitelists against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under, say, today's walk-forward verdict (L3 = {ws, wg, ch}, L4 = {}) vs current production (L3 = {ws, wg, ch, cm, pp}, L4 = {ch}) without waiting for a redeploy. <strong>Performance note:</strong> the sweep is currently slow because the pair log is 4 GB (will shrink ~6× once the v0.6.77 dedup ages in over 30 days). The sweep is re-run manually via <code>python3 -m backtest.sweep --write-gcs</code> — results below are from the last manual run.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 whitelists against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under any candidate config without waiting for a redeploy. Current production is <code>L3 = {ws, wg, ch, pp}, L4 = {ch}</code> after dropping cm from L3 in v0.6.111 (walk-forward 06-15 + sweep 06-16 both flagged cm as MAE-negative). <strong>Performance note:</strong> sweep run via <code>python3 -m backtest.sweep --write-gcs</code> (use <code>--local-file ~/.cache/myweather/forecast_error_log.jsonl</code> for fast iteration). Results below are from the last manual run.</div>
   <div id="backtest-sweep-content" class="status">Loading sweep results...</div>
 </details>
 

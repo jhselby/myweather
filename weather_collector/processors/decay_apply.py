@@ -61,7 +61,12 @@ STALE_DAYS = 7
 # everything (including wd sin/cos components) so the evidence exists to
 # enable a field later; corrections for non-whitelisted fields are computed
 # but never applied. wd being fitted-but-not-applied is by design, not a bug.
-L3_FIELDS = {"ws", "wg", "ch", "cm", "pp"}
+# v0.6.111: cm removed from L3. Both methods that decide L3 membership agreed:
+# walk-forward validator (re-run 2026-06-15) recommended dropping cm; B1
+# backtest sweep (2026-06-16, 173k pairs over 2 days) confirmed cm out of L3
+# improves cloud-mid MAE by 3.8%. Two independent reads on different held-out
+# windows is the rule for shipping a whitelist change.
+L3_FIELDS = {"ws", "wg", "ch", "pp"}
 L4_FIELDS = {"ch"}
 # Fields where the L3/L4 audit's MAE-based ⚠ rule should be suppressed because
 # the field's correction is justified by a different metric (Brier, etc.).

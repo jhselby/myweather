@@ -29,9 +29,10 @@ from backtest.replay import evaluate_config, compare_configs
 
 # Canonical named configs for quick A/B work.
 NAMED_CONFIGS = {
-    # Current production (as of v0.6.81)
+    # Current production (as of v0.6.111: cm dropped from L3 after walk-forward
+    # 06-15 + sweep 06-16 agreement that cm in L3 was MAE-negative for cm).
     "production": {
-        "L3_FIELDS": {"ws", "wg", "ch", "cm", "pp"},
+        "L3_FIELDS": {"ws", "wg", "ch", "pp"},
         "L4_FIELDS": {"ch"},
     },
     # Today's walk-forward (2026-06-15) verdict — drops cm/pp from L3, clears L4
