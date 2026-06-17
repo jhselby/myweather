@@ -122,6 +122,44 @@
     table { color: #111 !important; }
     th { background: #eee !important; color: #111 !important; border-color: #ccc !important; }
     td { border-color: #eee !important; }
+    /* Override inline dark backgrounds (status panel cards, headline box,
+       verdict boxes, layer-info-text variants). Anything with an inline
+       hex background in the 0x10-0x3F range is a dark-theme color. */
+    [style*="background:#1"],
+    [style*="background:#2"],
+    [style*="background:#3"],
+    [style*="background: #1"],
+    [style*="background: #2"],
+    [style*="background: #3"],
+    [style*="background-color:#1"],
+    [style*="background-color:#2"],
+    [style*="background-color:#3"] {
+      background: white !important;
+      color: #111 !important;
+      border-color: #ccc !important;
+    }
+    /* Headline box (CSS-styled, not inline) */
+    #headlineBox, .hb-stat { background: white !important; color: #111 !important; border-color: #ccc !important; }
+    .hb-title, .hb-label, .hb-value, .hb-sub { color: #111 !important; }
+    .hb-label, .hb-sub { color: #555 !important; }
+    /* Status panel: keep colored accents on headings + borders, lose the fills */
+    [style*="background:#131a24"] strong { color: #2a4d8a !important; }
+    [style*="background:#101913"] > div:first-child { color: #1a6a3a !important; }
+    [style*="background:#191510"] > div:first-child { color: #8a5a1a !important; }
+    [style*="background:#191910"] > div:first-child { color: #8a7a1a !important; }
+    [style*="background:#131319"] > div:first-child { color: #5a4a9a !important; }
+    /* Field-state badges: light background, dark text */
+    .field-badge { background: #eee !important; color: #111 !important; border-color: #ccc !important; }
+    .field-badge.active { background: #e8f5ec !important; color: #1a6a3a !important; }
+    .field-badge.inactive { background: #f0f0f0 !important; color: #777 !important; }
+    .field-badge.na { background: #f4f4f4 !important; color: #888 !important; }
+    .field-badge.brier { background: #fdf3e0 !important; color: #8a5a1a !important; }
+    /* Band-table active column shading — light green tint */
+    .band-table .layer-active { background: #f0f8f2 !important; color: #111 !important; }
+    .band-table .best { color: #1a6a3a !important; font-weight: 600 !important; }
+    .band-table .worst { color: #a33 !important; }
+    .band-table td, .band-table th { background: white !important; color: #111 !important; border-color: #ddd !important; }
+    .band-table .all-row td { background: #f8f8f8 !important; }
   }
   .meta { color: var(--muted); font-size: 12px; }
   .meta strong { color: var(--ink); font-weight: 500; }

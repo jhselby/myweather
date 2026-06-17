@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.115 • June 17, 2026
+
+* **Debug page print stylesheet: consistent light treatment.** Printing `corrections_debug.html` to PDF produced a mixed result — sections styled by CSS classes (already covered by the existing `@media print` block) printed light, but sections with inline `style="background:#..."` (the new status panel cards, the headline box, the per-chart verdict boxes) kept their dark fills. Looked broken. Added attribute-selector overrides under `@media print` that catch any inline hex background in the dark-theme range (`#1xxxxx`, `#2xxxxx`, `#3xxxxx`) and force it to white with dark text. Status-panel card headings keep their colored accent (green/amber/yellow/purple) so the four cards remain visually distinct without backgrounds. Field-state badges (`L2 ✓`, `L3 off`, etc.) get light backgrounds with semantic colors. Band-table active-column shading switches to a light green tint instead of the dark green. Headline box stat cards print white.
+
 ## v0.6.114 • June 17, 2026
 
 * **Debug page gets a curated status panel at the top.** New "Status — where we are" section above the headline box, with four cards: Shipped & live, Gated off, Pending decision (dated), and Live hypotheses. Includes a "How to read the rest of this page" pointer paragraph and a prefix convention key (L = applied layer, R = research hypothesis, S = shadow tuner, G = guardrail, F = failure diagnostic). Hand-curated with a "Last curated: YYYY-MM-DD" stamp so a third-party reviewer can tell how stale the curation is. The rest of the page is automatic; this panel is not. Reason: the page now shows accurate state but doesn't tell a story — a smart outside reviewer can see the charts and numbers but can't piece together which hypotheses are alive vs gated vs dead. This panel fixes that without changing any of the auto-rendered sections below.
