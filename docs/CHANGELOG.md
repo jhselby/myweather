@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.114 • June 17, 2026
+
+* **Debug page gets a curated status panel at the top.** New "Status — where we are" section above the headline box, with four cards: Shipped & live, Gated off, Pending decision (dated), and Live hypotheses. Includes a "How to read the rest of this page" pointer paragraph and a prefix convention key (L = applied layer, R = research hypothesis, S = shadow tuner, G = guardrail, F = failure diagnostic). Hand-curated with a "Last curated: YYYY-MM-DD" stamp so a third-party reviewer can tell how stale the curation is. The rest of the page is automatic; this panel is not. Reason: the page now shows accurate state but doesn't tell a story — a smart outside reviewer can see the charts and numbers but can't piece together which hypotheses are alive vs gated vs dead. This panel fixes that without changing any of the auto-rendered sections below.
+
 ## v0.6.113 • June 17, 2026
 
 * **Briefing rate-limit retry loop fixed.** Symptom caught today: Gemini hit its daily quota at 04:37 UTC and we then retried every 10 minutes for **12 hours straight**, each call burning more quota and getting 429'd. Two causes: (1) the 30-min throttle was keyed on `cached_at` (last successful response) — when Gemini fails, `cached_at` stays stale and the throttle never fires. (2) The in-memory failure flag `_last_gemini_call_time` survives only within a single Cloud Run instance; new instances reset it to None and retry immediately. Fix: persist `last_attempt_at` to `briefing_cache.json` on every Gemini attempt (success OR failure), via a new `_record_gemini_attempt()` helper that writes a thin update without disturbing the cached headline. The throttle now respects any-attempt, not just success. Additionally: on HTTP 429 specifically, set `last_429_at` and apply a 4-hour cooldown (well past Google's daily-quota midnight-Pacific reset) instead of retrying every 10 min.

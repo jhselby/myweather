@@ -614,6 +614,7 @@
 
 <nav class="toc">
   <a href="/" style="color:#8a93a3;">← Back</a>
+  <a href="#sec-status">Status</a>
   <a href="#sec-accuracy" class="accuracy">Accuracy</a>
   <a href="#sec-layer1">L1 Raw</a>
   <a href="#sec-layer2">L2 Mesonet</a>
@@ -621,6 +622,72 @@
   <a href="#sec-layer4">L4 Diurnal</a>
   <a href="#sec-research" class="research">Research & Diagnostics</a>
 </nav>
+
+<a id="sec-status"></a>
+<!-- ───────────────────── Status panel ─────────────────────
+     Hand-curated orientation for an outside reviewer. Update whenever
+     a layer flips, an audit reads out, or a hypothesis dies. The rest
+     of the page is automatic; THIS panel is not. Stamp the date on
+     every edit so reviewers can tell how stale it is. -->
+<div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+    <strong style="color:#7fb3ff;font-size:1.05em;">Status — where we are</strong>
+    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-17</span>
+  </div>
+  <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime layer built but gated off. Three open hypotheses (R4, R5, L5) in shadow mode, with re-confirmation runs date-gated through 2026-06-22.</div>
+
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
+
+    <div style="border:1px solid #1f3a2a;background:#101913;padding:10px;border-radius:6px;">
+      <div style="color:#4ad29a;font-weight:600;margin-bottom:4px;">✅ Shipped &amp; live</div>
+      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
+        <li><strong>L1 → L2 → L3 → L4</strong> pipeline. L2 (mesonet) applies to t/dp/h/pr (additive) + ws/wg (direct).</li>
+        <li>L3 whitelist: <strong>ws, wg, ch, pp</strong>. <code>cm</code> dropped 2026-06-16 (v0.6.111) after walk-forward + sweep both flagged it MAE-negative.</li>
+        <li>L4 whitelist: <strong>ch only</strong>. Most fields lack stable hour-of-day structure.</li>
+        <li>L2 lead-decay τ refit live by the Fitter, with a per-field guardrail (must beat default on held-out RMSE, else fall back).</li>
+        <li>Briefing 429 cooldown (v0.6.113) — 4-hour throttle after Gemini hits rate limits; Groq fallback caches to GCS.</li>
+      </ul>
+    </div>
+
+    <div style="border:1px solid #3a2d1f;background:#191510;padding:10px;border-radius:6px;">
+      <div style="color:#d4a373;font-weight:600;margin-bottom:4px;">⏸ Gated off — built, not applied</div>
+      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
+        <li><strong>L5 (regime-conditional solar correction).</strong> <code>ENABLED=False</code> in <code>solar_correction.py</code>. Held-out audit ambiguous: SHIP on 7-day window (-19.3% MAE), HOLD on 30-day (-2.77%). Generalization issue. Decision deferred to 06-22 re-run.</li>
+        <li><strong>R5 (cove cross-current correction).</strong> Verdict <strong>HOLD</strong> locked in 2026-06-16. L2's station-weighting already captures the cove signal; R5 on top double-counted. Will not ship.</li>
+      </ul>
+    </div>
+
+    <div style="border:1px solid #3a3a1f;background:#191910;padding:10px;border-radius:6px;">
+      <div style="color:#e0d472;font-weight:600;margin-bottom:4px;">⏳ Pending decision (dated)</div>
+      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
+        <li><strong>2026-06-19 (Fri):</strong> R5 Step 1 regime confirmation. Formality — HOLD already locked, this just closes it out.</li>
+        <li><strong>2026-06-22 (Mon):</strong> Walk-forward L3/L4 re-run #2. If it agrees with the 06-15 read, ship the config as-is.</li>
+        <li><strong>2026-06-22 (Mon):</strong> L5 audit re-run on fresh window. Two consecutive agreeing audits required before flipping <code>ENABLED</code>.</li>
+        <li><strong>~2026-06-19:</strong> R4 first read (HRRR/GFS spread hypothesis). Logging since 06-12.</li>
+      </ul>
+    </div>
+
+    <div style="border:1px solid #2a2a3a;background:#131319;padding:10px;border-radius:6px;">
+      <div style="color:#a89ce0;font-weight:600;margin-bottom:4px;">🧪 Live hypotheses (research only)</div>
+      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
+        <li><strong>R4:</strong> Does HRRR vs GFS spread predict forecast error? — first read ~06-19.</li>
+        <li><strong>R5:</strong> Cove vs inland gradient correction. — closed, HOLD.</li>
+        <li><strong>L5:</strong> Regime-conditional solar bias. — built, gated, pending 06-22.</li>
+        <li><strong>L2-as-observation-only (architectural):</strong> Remove L2 from forecast pipeline; keep L2 only as training target for L3/L4/L5. Open question; not today's work. See memory note.</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="meta-line" style="margin-top:12px;border-top:1px solid #2a3a52;padding-top:10px;">
+    <strong>How to read the rest of this page.</strong>
+    Forecast accuracy section is the bottom-line MAE per layer per field (the green box on each chart = what users actually see). Layer sections (L1–L4) each show the live state of that layer and the diagnostics behind its whitelist. Research &amp; Diagnostics (bottom) holds the shadow tuner (S1), walk-forward sweep (R2), and per-hypothesis sections (R3–R5). The shadow tuner is the closest thing to "what would an auto-tuner pick if we trusted it" — currently informational only, no auto-application.
+  </div>
+
+  <div class="meta-line" style="margin-top:8px;opacity:0.75;">
+    <strong>Conventions:</strong> L = correction <em>layer</em> (applied to forecast). R = <em>research</em> hypothesis (logged, not applied). S = <em>shadow</em> tuner (what auto-tuner would do). G = guardrail check. F = failure/diagnostic.
+  </div>
+</div>
 
 <div id="headlineBox">
   <div class="hb-title">Right now — what the pipeline is doing</div>
