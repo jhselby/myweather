@@ -312,6 +312,19 @@ def fit_decay_corrections():
         logging.warning(f"  ⚠  R5 audit: cove log load failed: {redact_secrets(e)}")
     r5_acc = defaultdict(lambda: {"baseline": 0.0, "r5_l4": 0.0, "r5_l1": 0.0, "n": 0})
 
+    # v0.6.112 L5 solar audit accumulators. Same pattern as R5 but joins via
+    # the pair's own state_fc/state_obs.regime_synoptic instead of an external
+    # log — state metadata is on every post-v0.6.29 pair, so no extra fetch.
+    # "Realistic" uses state_fc.regime_synoptic (the regime the model thought
+    # we were in at forecast time — what production keys on at runtime, since
+    # solar_correction.stamp uses derived.state.regime_synoptic which is the
+    # current observed regime, equivalent to state_fc at the tick that fires).
+    from .solar_correction import (
+        compute_solar_correction as _l5_compute,
+        SUN_UP_THRESHOLD as _L5_SUN_UP,
+    )
+    l5_acc = defaultdict(lambda: {"baseline": 0.0, "l5": 0.0, "n": 0})
+
     n_in = 0
     n_kept = 0
 
@@ -418,6 +431,37 @@ def fit_decay_corrections():
                     per_layer_abs[key]    += abs(e)
                     per_layer_signed[key] += e
                     per_layer_n[key]      += 1
+            # v0.6.112 L5 solar audit accumulator. Solar pairs with state_fc
+            # regime, daytime (forecast_l1 ≥ SUN_UP_THRESHOLD), lead 1+.
+            # Mirrors analysis/l5_solar_analysis.py's "realistic" view.
+            if field == "sr" and lead_h >= 1:
+                state_fc = row.get("state_fc") or {}
+                regime_fc = state_fc.get("regime_synoptic")
+                f_l1 = row.get("forecast_l1")
+                e_l4_sr = row.get("error_l4")
+                if regime_fc and f_l1 is not None and e_l4_sr is not None:
+                    try:
+                        f_l1f = float(f_l1)
+                        e_l4f_sr = float(e_l4_sr)
+                        if f_l1f >= _L5_SUN_UP:
+                            try:
+                                hour_local_l5 = int(obs_time[11:13])
+                            except (ValueError, IndexError):
+                                hour_local_l5 = None
+                            l5_delta = _l5_compute(regime_fc, f_l1f, hour_local_l5)
+                            if   lead_h < 6:  band_l5 = "0-5h"
+                            elif lead_h < 12: band_l5 = "6-11h"
+                            elif lead_h < 24: band_l5 = "12-23h"
+                            else:             band_l5 = "24-47h"
+                            for bk in [(regime_fc, band_l5), (regime_fc, "all"),
+                                       ("any", band_l5), ("any", "all")]:
+                                a = l5_acc[bk]
+                                a["baseline"] += abs(e_l4f_sr)
+                                a["l5"]       += abs(e_l4f_sr + l5_delta)
+                                a["n"]        += 1
+                    except (TypeError, ValueError):
+                        pass
+
             # v0.6.110 R5 audit accumulator. Temperature pairs only, joined
             # against the cove-conditions snapshot at obs_time's hour bucket.
             # See cove_conds_map setup above and verdict computation below.
@@ -870,18 +914,69 @@ def fit_decay_corrections():
     except Exception as e:
         logging.warning(f"  ⚠  R5 audit failed: {redact_secrets(e)}")
 
+    # v0.6.112 L5 audit verdict — same pattern as R5 but for solar regime
+    # correction. Thresholds match analysis/l5_solar_analysis.py.
+    l5_audit_verdict = None
+    try:
+        from .solar_correction import ENABLED as L5_ENABLED
+        overall_l5 = l5_acc.get(("any", "all"))
+        if overall_l5 and overall_l5["n"] >= 500:
+            n_l5 = overall_l5["n"]
+            mae_b_l5 = overall_l5["baseline"] / n_l5
+            mae_a_l5 = overall_l5["l5"] / n_l5
+            d_l5 = (100.0 * (mae_b_l5 - mae_a_l5) / mae_b_l5) if mae_b_l5 > 0 else 0.0
+            # Count regimes with ≥3% individual improvement
+            L5_REGIMES = ("frontal", "sw_flow", "pre_frontal", "sea_breeze",
+                          "nw_flow", "calm", "se_flow", "ne_flow")
+            regimes_winning = 0
+            for r in L5_REGIMES:
+                rb = l5_acc.get((r, "all"))
+                if not rb or rb["n"] < 50:
+                    continue
+                rb_b = rb["baseline"] / rb["n"]
+                rb_a = rb["l5"] / rb["n"]
+                if rb_b > 0 and (rb_b - rb_a) / rb_b >= 0.03:
+                    regimes_winning += 1
+            ship = (d_l5 >= 5.0) and (regimes_winning >= 5)
+            verdict_l5 = "SHIP" if ship else "HOLD"
+            l5_audit_verdict = {
+                "verdict": verdict_l5,
+                "enabled": bool(L5_ENABLED),
+                "mae_baseline": round(mae_b_l5, 2),
+                "mae_with_layer": round(mae_a_l5, 2),
+                "improvement_pct": round(d_l5, 2),
+                "n_pairs": n_l5,
+                "regimes_winning": regimes_winning,
+                "regimes_total": len(L5_REGIMES),
+            }
+            logging.info(f"  ✓ L5 audit: {verdict_l5} (baseline MAE {mae_b_l5:.1f} W/m², "
+                         f"L5 {d_l5:+.2f}%, {regimes_winning}/{len(L5_REGIMES)} regimes winning, n={n_l5:,})")
+        else:
+            n_l5 = (overall_l5 or {}).get("n", 0)
+            l5_audit_verdict = {
+                "verdict": "insufficient_data",
+                "enabled": bool(L5_ENABLED),
+                "n_pairs": n_l5,
+            }
+            logging.info(f"  ⊘ L5 audit: insufficient data (n={n_l5}, need ≥500)")
+    except Exception as e:
+        logging.warning(f"  ⚠  L5 audit failed: {redact_secrets(e)}")
+
     # Shadow whitelist tuner: log what the auto-tuner WOULD have recommended
     # this Fitter cycle. Doesn't change production. Accumulates over months
     # so we can later evaluate "how often does shadow agree with human choices?"
-    # — the precondition for considering automation. v0.6.110: also logs the
-    # R5 audit verdict (and any other conditional-layer audits we add later)
-    # alongside the L3/L4 whitelist recommendations.
+    # — the precondition for considering automation. v0.6.110: also logs R5;
+    # v0.6.112: also logs L5. Same shape, plugs in via conditional_audits.
     try:
         from .shadow_whitelist import log_shadow_recommendation
         from .decay_apply import L3_FIELDS, L4_FIELDS
-        conditional_audits = {"r5": r5_audit_verdict} if r5_audit_verdict else None
+        conditional_audits = {}
+        if r5_audit_verdict:
+            conditional_audits["r5"] = r5_audit_verdict
+        if l5_audit_verdict:
+            conditional_audits["l5"] = l5_audit_verdict
         log_shadow_recommendation(ts_output, L3_FIELDS, L4_FIELDS,
-                                  conditional_audits=conditional_audits)
+                                  conditional_audits=conditional_audits or None)
     except Exception as e:
         logging.warning(f"  ⚠  Shadow whitelist log failed: {redact_secrets(e)}")
 
