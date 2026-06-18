@@ -661,6 +661,32 @@
   <a href="#sec-research" class="research">Research & Diagnostics</a>
 </nav>
 
+<div id="headlineBox">
+  <div class="hb-title">Right now — what the pipeline is doing</div>
+  <div class="hb-grid">
+    <div class="hb-stat">
+      <div class="hb-label">Temp correction</div>
+      <div class="hb-value" id="hbTempBias">—</div>
+      <div class="hb-sub" id="hbTempSub">vs raw model</div>
+    </div>
+    <div class="hb-stat">
+      <div class="hb-label">Humidity correction</div>
+      <div class="hb-value" id="hbHumBias">—</div>
+      <div class="hb-sub" id="hbHumSub">vs raw model</div>
+    </div>
+    <div class="hb-stat">
+      <div class="hb-label">Confidence</div>
+      <div class="hb-value" id="hbConfidence">—</div>
+      <div class="hb-sub" id="hbStationsLine">— stations reporting</div>
+    </div>
+    <div class="hb-stat">
+      <div class="hb-label">Briefing source</div>
+      <div class="hb-value" id="hbBriefingSource">—</div>
+      <div class="hb-sub" id="hbBriefingAge">—</div>
+    </div>
+  </div>
+</div>
+
 <a id="sec-status"></a>
 <!-- ───────────────────── Status panel ─────────────────────
      Hand-curated orientation for an outside reviewer. Update whenever
@@ -737,32 +763,6 @@
     <strong>Conventions:</strong> L = correction <em>layer</em> (applied to forecast). R = <em>research</em> hypothesis (logged, not applied). S = <em>shadow</em> tuner (what auto-tuner would do). G = guardrail check. F = failure/diagnostic.
   </div>
 </details>
-
-<div id="headlineBox">
-  <div class="hb-title">Right now — what the pipeline is doing</div>
-  <div class="hb-grid">
-    <div class="hb-stat">
-      <div class="hb-label">Temp correction</div>
-      <div class="hb-value" id="hbTempBias">—</div>
-      <div class="hb-sub" id="hbTempSub">vs raw model</div>
-    </div>
-    <div class="hb-stat">
-      <div class="hb-label">Humidity correction</div>
-      <div class="hb-value" id="hbHumBias">—</div>
-      <div class="hb-sub" id="hbHumSub">vs raw model</div>
-    </div>
-    <div class="hb-stat">
-      <div class="hb-label">Confidence</div>
-      <div class="hb-value" id="hbConfidence">—</div>
-      <div class="hb-sub" id="hbStationsLine">— stations reporting</div>
-    </div>
-    <div class="hb-stat">
-      <div class="hb-label">Briefing source</div>
-      <div class="hb-value" id="hbBriefingSource">—</div>
-      <div class="hb-sub" id="hbBriefingAge">—</div>
-    </div>
-  </div>
-</div>
 
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
