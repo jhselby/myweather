@@ -706,7 +706,7 @@
       <div style="color:#4ad29a;font-weight:600;margin-bottom:4px;">✅ Shipped &amp; live</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>L1 → L2 → L3 → L4</strong> pipeline. L2 (mesonet) applies to t/dp/h/pr (additive) + ws/wg (direct).</li>
-        <li>L3 whitelist: <strong>ws, wg, ch, pp</strong>. <code>cm</code> dropped 2026-06-16 (v0.6.111) after walk-forward + sweep both flagged it MAE-negative.</li>
+        <li>L3 whitelist: <strong>ws, wg, ch, cm, pp</strong>. Each field earns its keep on a 7-window MAE audit.</li>
         <li>L4 whitelist: <strong>ch only</strong>. Most fields lack stable hour-of-day structure.</li>
         <li>L2 lead-decay τ refit live by the Fitter, with a per-field guardrail (must beat default on held-out RMSE, else fall back).</li>
         <li>Briefing 429 cooldown (v0.6.113) — 4-hour throttle after Gemini hits rate limits; Groq fallback caches to GCS.</li>
@@ -741,7 +741,7 @@
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>Next Fitter cycle (~07:xx UTC):</strong> verify R6 audit verdict appears in <code>shadow_whitelist_log.json::conditional_audits.r6</code> and S1 section renders it; verify R5 entry is gone. v0.6.124 collector deploy carried both changes.</li>
         <li><strong>Daily through ~2026-06-24:</strong> re-run <code>simulate_windows.py</code>. If L5 turns to 7×SHIP, promote to Stage 3 (flip <code>ENABLED</code>).</li>
-        <li><strong>2026-06-22 (Mon):</strong> Walk-forward L3/L4 re-run #2. If it agrees with the 06-15 read, ship the config as-is. Note: today's re-run still recommends <code>cm</code> in L3 (vs production <code>pp</code>); walk-forward vs sweep conflict on <code>cm</code> remains unresolved.</li>
+        <li><strong>2026-06-22 (Mon):</strong> Walk-forward L3/L4 re-run #2. Routine re-confirmation; ship any changes only if 7-window simulation agrees.</li>
       </ul>
     </div>
 
@@ -749,7 +749,6 @@
       <div style="color:#a89ce0;font-weight:600;margin-bottom:4px;">🧪 Open architectural questions</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>L2-as-observation-only:</strong> Remove L2 from forecast pipeline; keep L2 only as training target for L3/L4/L5. Open question; not today's work. See memory note.</li>
-        <li><strong>Walk-forward vs sweep disagreement on cm:</strong> Two methods give different L3 whitelist recommendations. Promotion gate would flag this as FLICKER; production shipped on sweep evidence (v0.6.111). Reconcile on the 06-22 re-run.</li>
       </ul>
     </div>
 
@@ -964,7 +963,7 @@
 
 <details class="research-subsection" id="backtest-sweep">
   <summary>B1. Backtest sweep — alternative L3/L4 configs vs production</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 whitelists against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under any candidate config without waiting for a redeploy. Current production is <code>L3 = {ws, wg, ch, pp}, L4 = {ch}</code> after dropping cm from L3 in v0.6.111 (walk-forward 06-15 + sweep 06-16 both flagged cm as MAE-negative). <strong>Performance note:</strong> sweep run via <code>python3 -m backtest.sweep --write-gcs</code> (use <code>--local-file ~/.cache/myweather/forecast_error_log.jsonl</code> for fast iteration). Results below are from the last manual run.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 whitelists against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under any candidate config without waiting for a redeploy. Current production is <code>L3 = {ws, wg, ch, cm, pp}, L4 = {ch}</code>. <strong>Performance note:</strong> sweep run via <code>python3 -m backtest.sweep --write-gcs</code> (use <code>--local-file ~/.cache/myweather/forecast_error_log.jsonl</code> for fast iteration). Results below are from the last manual run.</div>
   <div id="backtest-sweep-content" class="status">Loading sweep results...</div>
 </details>
 

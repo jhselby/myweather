@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.125 • June 18, 2026
+
+* **L3 whitelist: cm added.** 7-window MAE audit across 06-12 to 06-18 (42k–53k pairs per window) shows cm-in-L3 beats cm-not-in-L3 by **+2.5% to +6.5% in every window**, unanimous. Production whitelist is now `L3 = {ws, wg, ch, cm, pp}`. Updated `weather_collector/processors/decay_apply.py:L3_FIELDS` and `backtest/run.py:NAMED_CONFIGS["production"]` to match. Debug page status panel + B1 backtest sweep description updated accordingly.
+
 ## v0.6.124 • June 18, 2026
 
 * **R6 promoted to Stage 2 (auto-wired) + R5 retired from Stage 2 (stripped).** Backend swap in `weather_collector/processors/decay_fit.py`: the old R5 accumulator setup (cove-conditions map load + per-pair scoring + verdict computation) and its `conditional_audits.r5` write are gone; R6 takes its place. R6's per-pair classifier reads `state_fc.regime_synoptic` and `state_obs.regime_synoptic` from the pair, buckets sum-of-abs-error by (field, lead_band, is_transition). Verdict counts (field, band) buckets where transition MAE exceeds stable MAE by ≥10% with both sides ≥200 pairs; SHIP if ≥10 buckets, HOLD otherwise. Same shape as the standalone `analysis/regime_transition_audit.py`. Verdict written under `conditional_audits.r6` for the S1 renderer.
