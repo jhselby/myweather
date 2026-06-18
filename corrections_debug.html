@@ -941,6 +941,37 @@
   <div class="meta-line" style="margin-bottom:10px;"><strong>Manual script:</strong> <code>analysis/regime_transition_audit.py</code> (single-window detail). <strong>Promotion gate:</strong> <code>analysis/simulate_windows.py</code> (7-window agreement test).</div>
 </details>
 
+<h3 class="subsection" style="margin-top:24px;color:#5d8fc4;">Operational tools — live audits &amp; shadow tracking</h3>
+
+<details class="research-subsection" id="gated-candidates">
+  <summary>G1. Gated correction candidates — what L5 / R5 would do right now</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> two corrections are sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast.
+    <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
+      <li><strong>R5 cove correction</strong> — <strong style="color:#fb7c5c;">RETIRED 2026-06-17.</strong> (wind_octant × sb_active × hour) conditional Δ°F. Re-audit on 2026-06-17 (n=32,816) confirmed HOLD: R5+L4 makes cove temperature −20.58% worse. L2's station weighting (Willow Rd + Neptune Rd at ~0.1–0.2 mi) already captures the waterfront signal. R5 wiring will be stripped from <code>decay_fit.py</code> in the next collector deploy. Standalone script <code>analysis/r5_audit.py</code> kept for quarterly re-checks.</li>
+      <li><strong>L5 solar correction</strong> — <strong style="color:#e0d472;">Stage 2, FLICKER on promotion gate.</strong> Simulator across 7 trailing cutoffs returned 5×HOLD then 2×SHIP. Reason: L5 lookup tables were refit on 2026-06-17 (v0.6.112); the first 5 windows were scored against OLD tables (HOLD), the last 2 against the NEW tables (SHIP). Until 7 consecutive cutoffs all SHIP under the post-refit tables, do not flip <code>ENABLED</code>. Re-run <code>analysis/simulate_windows.py</code> daily; eligible for promotion ~2026-06-24 if stable.</li>
+    </ul>
+  </div>
+  <div id="gated-candidates-content" class="status">Loading…</div>
+</details>
+
+<details class="research-subsection" id="shadow-whitelist">
+  <summary>S1. Shadow whitelist tuner — what would auto-tuner have chosen?</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per Fitter cycle, log what whitelist sets a naive MAE-based auto-tuner would recommend, alongside the current production whitelist. <strong>Threshold:</strong> a field is recommended ON if its layer beats the layer below by ≥3% in any lead band AND bias is no worse. <strong>Why it's here:</strong> the precondition for considering automation is "shadow tracks human decisions consistently." After 90+ days we can evaluate agreement rate. Until then, mismatches are <em>informative</em> (the pp case is a known Brier-blindspot), not actionable.</div>
+  <div id="shadow-whitelist-content" class="status">Loading…</div>
+</details>
+
+<details class="research-subsection" id="backtest-sweep">
+  <summary>B1. Backtest sweep — alternative L3/L4 configs vs production</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 whitelists against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under any candidate config without waiting for a redeploy. Current production is <code>L3 = {ws, wg, ch, pp}, L4 = {ch}</code> after dropping cm from L3 in v0.6.111 (walk-forward 06-15 + sweep 06-16 both flagged cm as MAE-negative). <strong>Performance note:</strong> sweep run via <code>python3 -m backtest.sweep --write-gcs</code> (use <code>--local-file ~/.cache/myweather/forecast_error_log.jsonl</code> for fast iteration). Results below are from the last manual run.</div>
+  <div id="backtest-sweep-content" class="status">Loading sweep results...</div>
+</details>
+
+<details class="research-subsection" id="frontal-events">
+  <summary>F1. Frontal passage log — detector instrumentation (last 14 days)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live readout of detected frontal passages from <code>frontal_events_log.json</code>. The detector runs every tick in <code>frontal_detection.py</code>, reads a 90-minute rolling window from <code>frontal_obs_log.json</code>, and declares a passage when at least 2 of 3 signals fire: dewpoint drop &gt; 8°F, wind direction shift &gt; 60°, pressure inflection (local min then ≥0.02″ rise). Type classification uses the wind-shift target octant and pressure trend. Confidence is 67% with 2 signals and 100% with 3. <strong>Why it's here:</strong> sanity-check whether real fronts are being caught (and whether noise is being mistaken for fronts) before letting the briefing AI rely on the cause-attribution line. If the detector misses an obvious front or fires on a non-event, thresholds in <code>frontal_detection.py</code> are tunable.</div>
+  <div id="frontal-events-content" class="status">Loading detected passages...</div>
+</details>
+
 <details class="research-subsection" id="retired-wrapper" style="margin-top:24px;border-color:#3a2a2a;background:#191313;">
   <summary style="color:#a08070;"><strong>Retired</strong> — hypotheses ruled out &amp; settled tunings (collapsed; click to expand)</summary>
   <div class="meta-line" style="margin-top:10px;"><strong>What these are:</strong> things we built, ran, and stopped running. Two kinds get mixed here: <strong>hypotheses</strong> (a real question we tested and the data answered no) and <strong>settled tunings</strong> (a parameter sweep that concluded "current value is fine"). Each entry is tagged. Kept as institutional memory so future-Joe doesn't burn a day re-inventing them. Standalone scripts in <code>analysis/</code> can be re-run at any time if conditions might have shifted.</div>
@@ -1022,35 +1053,6 @@
 
 </details>
 <!-- end of retired-wrapper -->
-
-<details class="research-subsection" id="gated-candidates">
-  <summary>G1. Gated correction candidates — what L5 / R5 would do right now</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> two corrections are sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast.
-    <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
-      <li><strong>R5 cove correction</strong> — <strong style="color:#fb7c5c;">RETIRED 2026-06-17.</strong> (wind_octant × sb_active × hour) conditional Δ°F. Re-audit on 2026-06-17 (n=32,816) confirmed HOLD: R5+L4 makes cove temperature −20.58% worse. L2's station weighting (Willow Rd + Neptune Rd at ~0.1–0.2 mi) already captures the waterfront signal. R5 wiring will be stripped from <code>decay_fit.py</code> in the next collector deploy. Standalone script <code>analysis/r5_audit.py</code> kept for quarterly re-checks.</li>
-      <li><strong>L5 solar correction</strong> — <strong style="color:#e0d472;">Stage 2, FLICKER on promotion gate.</strong> Simulator across 7 trailing cutoffs returned 5×HOLD then 2×SHIP. Reason: L5 lookup tables were refit on 2026-06-17 (v0.6.112); the first 5 windows were scored against OLD tables (HOLD), the last 2 against the NEW tables (SHIP). Until 7 consecutive cutoffs all SHIP under the post-refit tables, do not flip <code>ENABLED</code>. Re-run <code>analysis/simulate_windows.py</code> daily; eligible for promotion ~2026-06-24 if stable.</li>
-    </ul>
-  </div>
-  <div id="gated-candidates-content" class="status">Loading…</div>
-</details>
-
-<details class="research-subsection" id="shadow-whitelist">
-  <summary>S1. Shadow whitelist tuner — what would auto-tuner have chosen?</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per Fitter cycle, log what whitelist sets a naive MAE-based auto-tuner would recommend, alongside the current production whitelist. <strong>Threshold:</strong> a field is recommended ON if its layer beats the layer below by ≥3% in any lead band AND bias is no worse. <strong>Why it's here:</strong> the precondition for considering automation is "shadow tracks human decisions consistently." After 90+ days we can evaluate agreement rate. Until then, mismatches are <em>informative</em> (the pp case is a known Brier-blindspot), not actionable.</div>
-  <div id="shadow-whitelist-content" class="status">Loading…</div>
-</details>
-
-<details class="research-subsection" id="backtest-sweep">
-  <summary>B1. Backtest sweep — alternative L3/L4 configs vs production</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 whitelists against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under any candidate config without waiting for a redeploy. Current production is <code>L3 = {ws, wg, ch, pp}, L4 = {ch}</code> after dropping cm from L3 in v0.6.111 (walk-forward 06-15 + sweep 06-16 both flagged cm as MAE-negative). <strong>Performance note:</strong> sweep run via <code>python3 -m backtest.sweep --write-gcs</code> (use <code>--local-file ~/.cache/myweather/forecast_error_log.jsonl</code> for fast iteration). Results below are from the last manual run.</div>
-  <div id="backtest-sweep-content" class="status">Loading sweep results...</div>
-</details>
-
-<details class="research-subsection" id="frontal-events">
-  <summary>F1. Frontal passage log — detector instrumentation (last 14 days)</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live readout of detected frontal passages from <code>frontal_events_log.json</code>. The detector runs every tick in <code>frontal_detection.py</code>, reads a 90-minute rolling window from <code>frontal_obs_log.json</code>, and declares a passage when at least 2 of 3 signals fire: dewpoint drop &gt; 8°F, wind direction shift &gt; 60°, pressure inflection (local min then ≥0.02″ rise). Type classification uses the wind-shift target octant and pressure trend. Confidence is 67% with 2 signals and 100% with 3. <strong>Why it's here:</strong> sanity-check whether real fronts are being caught (and whether noise is being mistaken for fronts) before letting the briefing AI rely on the cause-attribution line. If the detector misses an obvious front or fires on a non-event, thresholds in <code>frontal_detection.py</code> are tunable.</div>
-  <div id="frontal-events-content" class="status">Loading detected passages...</div>
-</details>
 
 <!-- R3 retired-hypothesis sub-items moved up under the consolidated
      "Retired hypotheses" header (alongside R4 and R5). Single canonical

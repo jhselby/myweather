@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.123 • June 18, 2026
+
+* **Research & Diagnostics section reorder + new Operational tools subheader.** Joe's catch — when the Retired wrapper was expanded, G1/S1/B1/F1 appeared right after it with no subheader, so they visually bled into looking retired. Two fixes: (1) added an "Operational tools — live audits & shadow tracking" subheader before G1; (2) reordered so the narrative is Diagnostics → Active hypotheses → Operational tools → Retired. Retired is now unambiguously the last block on the page; everything above it is alive.
+
 ## v0.6.122 • June 18, 2026
 
 * **Retired section: wrap in a single collapsed details block.** Joe's catch — "in what way is the shadow whitelist tuner retired?" The previous h3 header had no visual closing marker, so G1 / S1 / B1 / F1 (which are all live) looked like they were still inside the Retired section. Fix: wrapped the entire Retired block in one outer `<details>` that's collapsed by default. When collapsed it's a single line; the boundary is unambiguous and everything below is obviously NOT retired.
