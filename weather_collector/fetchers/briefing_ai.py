@@ -8,6 +8,7 @@ from ..utils import redact_secrets
 import json
 import logging
 import os
+import re
 import time
 from datetime import datetime
 
@@ -412,27 +413,35 @@ def _validate_headline(briefing, summary, weather_data):
     sub = briefing.get("subheadline", "").lower()
     combined = f"{headline} {sub}"
 
+    # Word-boundary matcher. Substring matching falsely rejected valid headlines
+    # whose sub said "skies clearing overnight" on a 100%-cloud day, because
+    # "clear" is a substring of "clearing". (Caught 2026-06-18 after two
+    # rejections — Gemini 09:37 and Groq 12:17 — both fell through to a stale
+    # cached headline from hours earlier.)
+    def has_word(word):
+        return re.search(rf"\b{re.escape(word)}\b", combined) is not None
+
     # 1. Precip contradiction — prompt is told "no rain" but headline mentions it.
     rain_words = ("rain", "shower", "drizzle", "downpour", "torrential",
                   "deluge", "soaker", "thunderstorm", "thundershower", "snow")
     if "No significant rain expected" in summary:
         for w in rain_words:
-            if w in combined:
+            if has_word(w):
                 return False, f"mentions {w!r} but forecast shows no significant rain"
 
     # 2. Sky contradiction vs current cloud cover (only flag the obvious ones).
     cloud_arr = weather_data.get("hourly", {}).get("cloud_cover", [])
     cloud_now = cloud_arr[0] if cloud_arr and cloud_arr[0] is not None else None
     if cloud_now is not None:
-        if cloud_now >= 75 and ("clear" in combined or "sunny" in combined):
+        if cloud_now >= 75 and (has_word("clear") or has_word("sunny")):
             return False, f"says clear/sunny but cloud cover is {cloud_now}%"
-        if cloud_now <= 20 and ("cloudy" in combined or "overcast" in combined):
+        if cloud_now <= 20 and (has_word("cloudy") or has_word("overcast")):
             return False, f"says cloudy/overcast but cloud cover is {cloud_now}%"
 
     # 3. Intensity word vs actual intensity label in the prompt.
-    if "torrential" in combined and "torrential" not in summary:
+    if has_word("torrential") and "torrential" not in summary:
         return False, "says 'torrential' but data doesn't label it that"
-    if "deluge" in combined and "torrential" not in summary:
+    if has_word("deluge") and "torrential" not in summary:
         return False, "says 'deluge' but data doesn't label it that"
 
     return True, "ok"
