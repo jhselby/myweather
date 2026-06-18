@@ -1,5 +1,12 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.124 • June 18, 2026
+
+* **R6 promoted to Stage 2 (auto-wired) + R5 retired from Stage 2 (stripped).** Backend swap in `weather_collector/processors/decay_fit.py`: the old R5 accumulator setup (cove-conditions map load + per-pair scoring + verdict computation) and its `conditional_audits.r5` write are gone; R6 takes its place. R6's per-pair classifier reads `state_fc.regime_synoptic` and `state_obs.regime_synoptic` from the pair, buckets sum-of-abs-error by (field, lead_band, is_transition). Verdict counts (field, band) buckets where transition MAE exceeds stable MAE by ≥10% with both sides ≥200 pairs; SHIP if ≥10 buckets, HOLD otherwise. Same shape as the standalone `analysis/regime_transition_audit.py`. Verdict written under `conditional_audits.r6` for the S1 renderer.
+* **Debug-page S1 renderer updated.** R5 row + history column removed; R6 row + history column added. The R6 row shows the verdict, flagged-buckets count, worst (field, band, penalty %), and total pair count. R6's "match rate" line explains the quirk that a match here means verdict=HOLD until L6 is built (no production layer to compare against yet).
+* **Status panel + R6 section + G1 prose updated** to reflect Stage 2 status: "Promotion candidate" card became "Stage 2 — auto-wired audits" listing L5 + R6. The "Pending decision" card now says verify on next Fitter cycle.
+* **Verification:** next Fitter cycle (~07:xx or 19:xx UTC) should produce a `shadow_whitelist_log.json` entry with `conditional_audits.r6` populated and no `conditional_audits.r5`. Watch for the S1 section rendering an "R6 regime-transition (audit only): ..." row.
+
 ## v0.6.123 • June 18, 2026
 
 * **Research & Diagnostics section reorder + new Operational tools subheader.** Joe's catch — when the Retired wrapper was expanded, G1/S1/B1/F1 appeared right after it with no subheader, so they visually bled into looking retired. Two fixes: (1) added an "Operational tools — live audits & shadow tracking" subheader before G1; (2) reordered so the narrative is Diagnostics → Active hypotheses → Operational tools → Retired. Retired is now unambiguously the last block on the page; everything above it is alive.

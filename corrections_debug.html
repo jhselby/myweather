@@ -696,7 +696,7 @@
 <details class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;" open>
   <summary style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">
     <strong style="color:#7fb3ff;font-size:1.05em;">Status — where we are</strong>
-    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-18 (click to collapse)</span>
+    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-18 v0.6.124 (click to collapse)</span>
   </summary>
   <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime layer built but gated off (flickering on promotion gate). R6 passed the 7-cutoff promotion gate, queued to auto-wire next collector deploy. R5 and R4 retired after audits ruled them out.</div>
 
@@ -721,16 +721,17 @@
     </div>
 
     <div style="border:1px solid #2a3a2a;background:#131913;padding:10px;border-radius:6px;">
-      <div style="color:#4ad29a;font-weight:600;margin-bottom:4px;">🚀 Promotion candidate (queued for next deploy)</div>
+      <div style="color:#4ad29a;font-weight:600;margin-bottom:4px;">📡 Stage 2 — auto-wired audits (logged every Fitter cycle)</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>R6 (regime-transition penalty).</strong> Passed promotion gate 7/7 cutoffs SHIP on 2026-06-17. 19–32 (field × lead band) buckets show ≥10% MAE penalty across every window. Pending: strip auto-wire into <code>decay_fit.py</code> + collector deploy. After 7+ days of stable Stage 2 verdicts, design L6 (transition-aware confidence band or per-field L1 fallback).</li>
+        <li><strong>L5 (regime-conditional solar correction).</strong> Audit verdict in <code>conditional_audits.l5</code>. Promotion gate flickering as of 06-17. Watching for 7 consecutive SHIP cutoffs before flipping ENABLED.</li>
+        <li><strong>R6 (regime-transition penalty).</strong> NEW in v0.6.124. Audit verdict in <code>conditional_audits.r6</code>. First populated entry after next Fitter cycle. Watching for 7+ days of stable Stage 2 verdicts before designing L6.</li>
       </ul>
     </div>
 
     <div style="border:1px solid #3a2a2a;background:#191313;padding:10px;border-radius:6px;">
       <div style="color:#fb7c5c;font-weight:600;margin-bottom:4px;">🗄 Retired — ruled out, kept as institutional memory</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>R5 (cove cross-current).</strong> Retired 2026-06-17 — HOLD locked at −20.58% MAE on 32,816 pairs. L2's waterfront-weighted station blend already captures the signal; R5 double-counts. Stage 2 wiring will be stripped from <code>decay_fit.py</code> on next collector deploy. Script <code>analysis/r5_audit.py</code> kept for quarterly re-checks.</li>
+        <li><strong>R5 (cove cross-current).</strong> Retired 2026-06-17 — HOLD locked at −20.58% MAE on 32,816 pairs. L2's waterfront-weighted station blend already captures the signal; R5 double-counts. Stage 2 wiring stripped from <code>decay_fit.py</code> in v0.6.124 (2026-06-18). Script <code>analysis/r5_audit.py</code> kept for quarterly re-checks.</li>
         <li><strong>R4 (HRRR vs GFS spread).</strong> Retired 2026-06-17 — CLOSE verdict on 112,877 joined pairs; max |ρ|=0.012 across all fields. Spread is not a useful uncertainty signal. Was never auto-wired (Stage 1 only); no decay_fit.py changes needed. Script kept.</li>
       </ul>
     </div>
@@ -738,7 +739,7 @@
     <div style="border:1px solid #3a3a1f;background:#191910;padding:10px;border-radius:6px;">
       <div style="color:#e0d472;font-weight:600;margin-bottom:4px;">⏳ Pending decision (dated)</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>Next collector deploy:</strong> strip R5 auto-wire from <code>decay_fit.py</code>; add R6 accumulators + verdict to <code>conditional_audits.r6</code>; add R6 renderer to S1 section. Verify on next Fitter cycle.</li>
+        <li><strong>Next Fitter cycle (~07:xx UTC):</strong> verify R6 audit verdict appears in <code>shadow_whitelist_log.json::conditional_audits.r6</code> and S1 section renders it; verify R5 entry is gone. v0.6.124 collector deploy carried both changes.</li>
         <li><strong>Daily through ~2026-06-24:</strong> re-run <code>simulate_windows.py</code>. If L5 turns to 7×SHIP, promote to Stage 3 (flip <code>ENABLED</code>).</li>
         <li><strong>2026-06-22 (Mon):</strong> Walk-forward L3/L4 re-run #2. If it agrees with the 06-15 read, ship the config as-is. Note: today's re-run still recommends <code>cm</code> in L3 (vs production <code>pp</code>); walk-forward vs sweep conflict on <code>cm</code> remains unresolved.</li>
       </ul>
@@ -930,15 +931,16 @@
 </details>
 
 <details class="research-subsection" id="r6-regime-transition" open>
-  <summary>R6. Regime-transition penalty — promotion gate PASSED, ready to auto-wire (2026-06-17)</summary>
+  <summary>R6. Regime-transition penalty — Stage 2 (auto-wired in Fitter v0.6.124, 2026-06-18)</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> pairs where <code>state_fc.regime_synoptic</code> (regime the model predicted for the obs hour) differs from <code>state_obs.regime_synoptic</code> (regime that actually materialized) should show materially worse MAE than "stable" pairs where the regimes agree. If true, the system should widen confidence bands — or fall back to L1 — when the model itself signals a regime transition in the forecast window. <strong>Data:</strong> pair log + state metadata, already logged since v0.6.29.</div>
   <div class="meta-line" style="margin-bottom:10px;background:#101913;border:1px solid #1f3a2a;border-radius:6px;padding:10px 12px;">
     <strong style="color:#4ad29a;">✓ Promotion gate passed (7/7 cutoffs agree)</strong>
     <div style="margin-top:6px;">Ran <code>analysis/simulate_windows.py</code> across 7 trailing daily cutoffs (06-12 → 06-18), each on a 7-day window. All 7 cutoffs returned SHIP with 19, 24, 23, 23, 25, 31, 32 flagged (field × lead band) buckets — stable strong signal across the full range.</div>
     <div style="margin-top:6px;"><strong>First-read details (06-17, 134k pairs):</strong> 25 of 56 buckets show ≥10% transition penalty. Strongest effects: wind speed +73% at 0-5h, wind direction +45–72% across all bands, wind gust +63% at 0-5h, temperature +12–24% at 0-23h. ~40% of pairs are "transition" pairs — common, not edge case. Solar at 12-23h <em>improves</em> by ~19% on transition pairs (likely "transitioning to clear" is easier than "stable cloudy" — for later investigation).</div>
-    <div style="margin-top:6px;"><strong>Next step:</strong> auto-wire into <code>decay_fit.py</code> per cycle (Stage 2). Verdict logged under <code>conditional_audits.r6</code> alongside R5/L5. Design space for L6 once Stage 2 confirms over 7+ days under shipped wiring: transition-aware confidence band or per-field L1 fallback when the forecast predicts a regime change in the valid window.</div>
+    <div style="margin-top:6px;"><strong>Stage 2 wiring (v0.6.124, 2026-06-18):</strong> R6 audit runs in <code>decay_fit.py</code> on every Fitter cycle (twice daily). Verdict logged under <code>conditional_audits.r6</code> alongside L5. First populated entry will appear in the S1 section after the next cycle (~07:xx or 19:xx UTC). At the same time, R5 wiring was stripped — the Fitter no longer pays for a dead audit.</div>
+    <div style="margin-top:6px;"><strong>Design space for L6</strong> once Stage 2 confirms over 7+ days under shipped wiring: transition-aware confidence band or per-field L1 fallback when the forecast predicts a regime change in the valid window.</div>
   </div>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Manual script:</strong> <code>analysis/regime_transition_audit.py</code> (single-window detail). <strong>Promotion gate:</strong> <code>analysis/simulate_windows.py</code> (7-window agreement test).</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Manual script:</strong> <code>analysis/regime_transition_audit.py</code> (single-window detail). <strong>Promotion gate:</strong> <code>analysis/simulate_windows.py</code> (7-window agreement test). Live verdict appears in S1 below once the first Fitter cycle runs.</div>
 </details>
 
 <h3 class="subsection" style="margin-top:24px;color:#5d8fc4;">Operational tools — live audits &amp; shadow tracking</h3>
@@ -947,7 +949,7 @@
   <summary>G1. Gated correction candidates — what L5 / R5 would do right now</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> two corrections are sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast.
     <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
-      <li><strong>R5 cove correction</strong> — <strong style="color:#fb7c5c;">RETIRED 2026-06-17.</strong> (wind_octant × sb_active × hour) conditional Δ°F. Re-audit on 2026-06-17 (n=32,816) confirmed HOLD: R5+L4 makes cove temperature −20.58% worse. L2's station weighting (Willow Rd + Neptune Rd at ~0.1–0.2 mi) already captures the waterfront signal. R5 wiring will be stripped from <code>decay_fit.py</code> in the next collector deploy. Standalone script <code>analysis/r5_audit.py</code> kept for quarterly re-checks.</li>
+      <li><strong>R5 cove correction</strong> — <strong style="color:#fb7c5c;">RETIRED 2026-06-17.</strong> (wind_octant × sb_active × hour) conditional Δ°F. Re-audit on 2026-06-17 (n=32,816) confirmed HOLD: R5+L4 makes cove temperature −20.58% worse. L2's station weighting (Willow Rd + Neptune Rd at ~0.1–0.2 mi) already captures the waterfront signal. R5 Stage 2 wiring stripped from <code>decay_fit.py</code> in v0.6.124. Standalone script <code>analysis/r5_audit.py</code> kept for quarterly re-checks.</li>
       <li><strong>L5 solar correction</strong> — <strong style="color:#e0d472;">Stage 2, FLICKER on promotion gate.</strong> Simulator across 7 trailing cutoffs returned 5×HOLD then 2×SHIP. Reason: L5 lookup tables were refit on 2026-06-17 (v0.6.112); the first 5 windows were scored against OLD tables (HOLD), the last 2 against the NEW tables (SHIP). Until 7 consecutive cutoffs all SHIP under the post-refit tables, do not flip <code>ENABLED</code>. Re-run <code>analysis/simulate_windows.py</code> daily; eligible for promotion ~2026-06-24 if stable.</li>
     </ul>
   </div>
@@ -2420,11 +2422,11 @@ function renderShadowWhitelistSection(doc, wxDoc) {
   }
   const pct = (k) => n > 0 ? `${Math.round(100 * k / n)}%` : "—";
 
-  // v0.6.110+: conditional-layer audits (R5 + L5 today, future R6/L6/...)
+  // v0.6.110+: conditional-layer audits (L5 + R6 today; R5 retired 2026-06-17)
   // live alongside L3/L4 whitelist recommendations under
   // `entry.conditional_audits`. Helpers accept any layer name.
-  const _r5 = (e) => (e?.conditional_audits?.r5) || null;
   const _l5 = (e) => (e?.conditional_audits?.l5) || null;
+  const _r6 = (e) => (e?.conditional_audits?.r6) || null;
   const _condVerdictTag = (audit) => {
     if (!audit) return '<span style="opacity:0.5;">—</span>';
     const v = audit.verdict;
@@ -2441,8 +2443,8 @@ function renderShadowWhitelistSection(doc, wxDoc) {
     return shouldEnable === !!audit.enabled;
   };
 
-  const latestR5 = _r5(latest);
   const latestL5 = _l5(latest);
+  const latestR6 = _r6(latest);
 
   let html = `<div style="margin-bottom:14px;">
     <strong>Latest shadow recommendation</strong> (${_fmtLocal(latest.fitted_at)}):
@@ -2451,18 +2453,6 @@ function renderShadowWhitelistSection(doc, wxDoc) {
       <tr><td style="padding:2px 12px 2px 0;">Shadow L3:</td><td>${fmtSet(latest.shadow_l3)} ${matchL3 ? '<span style="color:#4ad29a;">match</span>' : '<span style="color:#fb7c5c;">differs</span>'}</td></tr>
       <tr><td style="padding:2px 12px 2px 0;">Production L4:</td><td>${fmtSet(latest.current_l4)}</td></tr>
       <tr><td style="padding:2px 12px 2px 0;">Shadow L4:</td><td>${fmtSet(latest.shadow_l4)} ${matchL4 ? '<span style="color:#4ad29a;">match</span>' : '<span style="color:#fb7c5c;">differs</span>'}</td></tr>`;
-  if (latestR5) {
-    const enabledStr = latestR5.enabled ? "ENABLED" : "disabled";
-    let r5Detail = "";
-    if (latestR5.verdict === "SHIP" || latestR5.verdict === "HOLD") {
-      const impL4 = latestR5.improvement_on_top_of_l4_pct;
-      const impL1 = latestR5.improvement_replaces_stack_pct;
-      r5Detail = ` <span style="opacity:0.7;font-size:0.9em;">(R5+L4 ${impL4 >= 0 ? "+" : ""}${impL4?.toFixed(2)}%, R5 alone ${impL1 >= 0 ? "+" : ""}${impL1?.toFixed(2)}%, n=${(latestR5.n_pairs ?? 0).toLocaleString()})</span>`;
-    } else if (latestR5.verdict === "insufficient_data") {
-      r5Detail = ` <span style="opacity:0.7;font-size:0.9em;">(n=${(latestR5.n_pairs ?? 0).toLocaleString()}, need ≥200)</span>`;
-    }
-    html += `<tr><td style="padding:2px 12px 2px 0;">R5 cove (${enabledStr}):</td><td>${_condVerdictTag(latestR5)}${r5Detail}</td></tr>`;
-  }
   if (latestL5) {
     const enabledStr = latestL5.enabled ? "ENABLED" : "disabled";
     let l5Detail = "";
@@ -2475,6 +2465,20 @@ function renderShadowWhitelistSection(doc, wxDoc) {
       l5Detail = ` <span style="opacity:0.7;font-size:0.9em;">(n=${(latestL5.n_pairs ?? 0).toLocaleString()}, need ≥500)</span>`;
     }
     html += `<tr><td style="padding:2px 12px 2px 0;">L5 solar (${enabledStr}):</td><td>${_condVerdictTag(latestL5)}${l5Detail}</td></tr>`;
+  }
+  if (latestR6) {
+    let r6Detail = "";
+    if (latestR6.verdict === "SHIP" || latestR6.verdict === "HOLD") {
+      const f = latestR6.n_flagged_buckets ?? 0;
+      const e = latestR6.n_evaluated_buckets ?? 0;
+      const wf = latestR6.worst_field;
+      const wb = latestR6.worst_band;
+      const wp = latestR6.worst_penalty_pct;
+      r6Detail = ` <span style="opacity:0.7;font-size:0.9em;">(${f}/${e} buckets ≥10% penalty${wf ? `, worst: ${wf} ${wb} ${wp?.toFixed(1)}%` : ""}, n=${(latestR6.n_pairs ?? 0).toLocaleString()})</span>`;
+    } else if (latestR6.verdict === "insufficient_data") {
+      r6Detail = ` <span style="opacity:0.7;font-size:0.9em;">(n=${(latestR6.n_pairs ?? 0).toLocaleString()}, no bucket met ≥200/side)</span>`;
+    }
+    html += `<tr><td style="padding:2px 12px 2px 0;">R6 regime-transition (audit only):</td><td>${_condVerdictTag(latestR6)}${r6Detail}</td></tr>`;
   }
   html += `</table>
   </div>`;
@@ -2493,8 +2497,8 @@ function renderShadowWhitelistSection(doc, wxDoc) {
     }
     return { total, matches };
   };
-  const r5Tally = _condTally(_r5);
   const l5Tally = _condTally(_l5);
+  const r6Tally = _condTally(_r6);
   const condPct = (k, total) => total > 0 ? `${Math.round(100 * k / total)}%` : "—";
 
   html += `<div style="margin-bottom:14px;padding:8px 12px;background:#181c25;border:1px solid #2a3142;border-radius:6px;font-size:0.92em;">
@@ -2502,19 +2506,19 @@ function renderShadowWhitelistSection(doc, wxDoc) {
     <ul style="margin:6px 0 0 18px;padding:0;line-height:1.5;">
       <li>L3 match rate: <strong>${pct(l3Matches)}</strong> (${l3Matches} of ${n})</li>
       <li>L4 match rate: <strong>${pct(l4Matches)}</strong> (${l4Matches} of ${n})</li>`;
-  if (r5Tally.total > 0) {
-    html += `<li>R5 match rate: <strong>${condPct(r5Tally.matches, r5Tally.total)}</strong> (${r5Tally.matches} of ${r5Tally.total} cycles with sufficient data)</li>`;
-  }
   if (l5Tally.total > 0) {
     html += `<li>L5 match rate: <strong>${condPct(l5Tally.matches, l5Tally.total)}</strong> (${l5Tally.matches} of ${l5Tally.total} cycles with sufficient data)</li>`;
   }
+  if (r6Tally.total > 0) {
+    html += `<li>R6 match rate: <strong>${condPct(r6Tally.matches, r6Tally.total)}</strong> (${r6Tally.matches} of ${r6Tally.total} cycles with sufficient data — note R6 has no production layer yet, so a match here means verdict=HOLD; a SHIP verdict will look like "differs" until L6 is built)</li>`;
+  }
   html += `</ul>
-    <div class="meta-line" style="margin-top:6px;opacity:0.75;">Per the original design: ≥90 days of consistent agreement is the precondition for considering automation. For L3/L4 that's whitelist match; for conditional layers (R5, L5, …) that's the audit verdict aligning with the current ENABLED flag. Today's numbers are one read of a noisy window.</div>
+    <div class="meta-line" style="margin-top:6px;opacity:0.75;">Per the original design: ≥90 days of consistent agreement is the precondition for considering automation. For L3/L4 that's whitelist match; for conditional layers (L5, R6, …) that's the audit verdict aligning with the current ENABLED flag. Today's numbers are one read of a noisy window.</div>
   </div>`;
 
   if (entries.length > 1) {
-    const showR5Col = entries.some(e => _r5(e));
     const showL5Col = entries.some(e => _l5(e));
+    const showR6Col = entries.some(e => _r6(e));
     html += `<details style="margin-top:6px;"><summary style="cursor:pointer;font-weight:600;">History (all ${entries.length} entries since shadow deployed)</summary>
       <table style="width:100%;border-collapse:collapse;font-size:0.85em;margin-top:6px;">
       <thead><tr style="border-bottom:1px solid #555;">
@@ -2522,11 +2526,11 @@ function renderShadowWhitelistSection(doc, wxDoc) {
         <th style="text-align:left;padding:4px 8px 4px 0;">shadow L3</th>
         <th style="text-align:left;padding:4px 8px 4px 0;">shadow L4</th>
         <th style="text-align:left;padding:4px 8px 4px 0;">L3/L4 match?</th>`;
-    if (showR5Col) {
-      html += `<th style="text-align:left;padding:4px 8px 4px 0;">R5 audit</th>`;
-    }
     if (showL5Col) {
       html += `<th style="text-align:left;padding:4px 8px 4px 0;">L5 audit</th>`;
+    }
+    if (showR6Col) {
+      html += `<th style="text-align:left;padding:4px 8px 4px 0;">R6 audit</th>`;
     }
     html += `</tr></thead><tbody>`;
     for (const e of entries) {
@@ -2541,11 +2545,11 @@ function renderShadowWhitelistSection(doc, wxDoc) {
         <td style="padding:4px 8px 4px 0;">${(e.shadow_l3 || []).join(', ') || '∅'}</td>
         <td style="padding:4px 8px 4px 0;">${(e.shadow_l4 || []).join(', ') || '∅'}</td>
         <td style="padding:4px 8px 4px 0;">${matchTag}</td>`;
-      if (showR5Col) {
-        html += `<td style="padding:4px 8px 4px 0;">${_condVerdictTag(_r5(e))}</td>`;
-      }
       if (showL5Col) {
         html += `<td style="padding:4px 8px 4px 0;">${_condVerdictTag(_l5(e))}</td>`;
+      }
+      if (showR6Col) {
+        html += `<td style="padding:4px 8px 4px 0;">${_condVerdictTag(_r6(e))}</td>`;
       }
       html += `</tr>`;
     }

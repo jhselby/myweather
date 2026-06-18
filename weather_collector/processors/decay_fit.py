@@ -286,31 +286,15 @@ def fit_decay_corrections():
     l2_train = defaultdict(list)
     l2_test  = defaultdict(list)
 
-    # v0.6.110 R5 audit accumulators. For each temperature pair where we can
-    # look up the cove conditions at obs_time, score three configs:
-    #   baseline           = |error_l4|
-    #   r5_on_top_of_l4    = |error_l4 + R5_delta|
-    #   r5_replaces_stack  = |error_l1 + R5_delta|
-    # Tally sum-of-abs-error per (regime, band) bucket. Shadow tuner reads
-    # the verdict and logs it alongside L3/L4 recommendations every cycle.
-    # See analysis/r5_audit.py for the same logic in standalone CLI form.
-    from .cove_correction import compute_cove_correction as _r5_compute
-    cove_conds_map = {}  # "YYYY-MM-DDTHH" -> (wind_dir, sb_active, hour_local)
-    try:
-        cove_doc = load_json("cove_gradient_log.json", default={"entries": []})
-        for e in (cove_doc.get("entries") or []):
-            ts = e.get("ts") or ""
-            if len(ts) < 13:
-                continue
-            try:
-                hour_local = int(ts[11:13])
-            except (ValueError, IndexError):
-                continue
-            # Last write wins for same hour (closest to the boundary).
-            cove_conds_map[ts[:13]] = (e.get("wind_dir"), bool(e.get("sb_active")), hour_local)
-    except Exception as e:
-        logging.warning(f"  ⚠  R5 audit: cove log load failed: {redact_secrets(e)}")
-    r5_acc = defaultdict(lambda: {"baseline": 0.0, "r5_l4": 0.0, "r5_l1": 0.0, "n": 0})
+    # v0.6.124 R6 audit accumulators (replaces v0.6.110 R5 wiring; R5 retired
+    # 2026-06-17). For each pair with both state_fc.regime_synoptic and
+    # state_obs.regime_synoptic, classify as stable (regimes agree) or
+    # transition (regimes disagree — model expected A, B happened). Tally
+    # sum-of-abs-error per (field, lead_band, is_transition). Verdict counts
+    # buckets where transition MAE is ≥10% worse than stable MAE with both
+    # sides ≥200 pairs; SHIP if ≥10 buckets, HOLD otherwise.
+    # See analysis/regime_transition_audit.py and analysis/simulate_windows.py.
+    r6_acc = defaultdict(lambda: {"sum_abs": 0.0, "n": 0})
 
     # v0.6.112 L5 solar audit accumulators. Same pattern as R5 but joins via
     # the pair's own state_fc/state_obs.regime_synoptic instead of an external
@@ -462,35 +446,28 @@ def fit_decay_corrections():
                     except (TypeError, ValueError):
                         pass
 
-            # v0.6.110 R5 audit accumulator. Temperature pairs only, joined
-            # against the cove-conditions snapshot at obs_time's hour bucket.
-            # See cove_conds_map setup above and verdict computation below.
-            if field == "t" and cove_conds_map and len(obs_time) >= 13:
-                cond = cove_conds_map.get(obs_time[:13])
-                if cond is not None:
-                    e_l1 = row.get("error_l1")
-                    e_l4 = row.get("error_l4")
-                    if e_l1 is not None and e_l4 is not None:
-                        try:
-                            e_l1f = float(e_l1)
-                            e_l4f = float(e_l4)
-                            wind_dir, sb_active, hour_local = cond
-                            delta = _r5_compute(wind_dir, sb_active, hour_local)
-                            # Lead band for bucketing
-                            if   lead_h < 6:  band = "0-5h"
-                            elif lead_h < 12: band = "6-11h"
-                            elif lead_h < 24: band = "12-23h"
-                            else:             band = "24-47h"
-                            regime = "sb_active" if sb_active else "sb_inactive"
-                            for bk in [(regime, band), (regime, "all"),
-                                       ("any", band), ("any", "all")]:
-                                a = r5_acc[bk]
-                                a["baseline"] += abs(e_l4f)
-                                a["r5_l4"]    += abs(e_l4f + delta)
-                                a["r5_l1"]    += abs(e_l1f + delta)
-                                a["n"]        += 1
-                        except (TypeError, ValueError):
-                            pass
+            # v0.6.124 R6 audit accumulator. Any pair where both state_fc
+            # and state_obs carry regime_synoptic — classify stable vs
+            # transition, bucket by (field, band, is_transition). Uses the
+            # final-answer "error" column (whatever the highest applied layer
+            # produced).
+            sfc_r6 = row.get("state_fc") or {}
+            sob_r6 = row.get("state_obs") or {}
+            rfc_r6 = sfc_r6.get("regime_synoptic")
+            rob_r6 = sob_r6.get("regime_synoptic")
+            err_r6 = row.get("error")
+            if rfc_r6 and rob_r6 and err_r6 is not None:
+                if   lead_h < 6:  band_r6 = "0-5h"
+                elif lead_h < 12: band_r6 = "6-11h"
+                elif lead_h < 24: band_r6 = "12-23h"
+                else:             band_r6 = "24-47h"
+                is_trans = (rfc_r6 != rob_r6)
+                try:
+                    a = r6_acc[(field, band_r6, is_trans)]
+                    a["sum_abs"] += abs(float(err_r6))
+                    a["n"]       += 1
+                except (TypeError, ValueError):
+                    pass
             # L2 τ-fit: only fields we publish τ for, only post-v0.6.25 rows
             # carrying both error_l1 and error_l2 (so bias = err_l1 - err_l2
             # is well-defined). Recency weighting reuses the same `w` as the
@@ -868,51 +845,62 @@ def fit_decay_corrections():
     except Exception as e:
         logging.warning(f"  ⚠  Time-series write failed: {redact_secrets(e)}")
 
-    # v0.6.110 R5 audit verdict — compute from accumulators built during the
-    # main pair-stream loop above. Same logic as analysis/r5_audit.py CLI.
-    r5_audit_verdict = None
+    # v0.6.124 R6 audit verdict — compute from accumulators built during the
+    # main pair-stream loop above. Same logic as analysis/regime_transition_audit.py.
+    # Counts (field, band) buckets where transition MAE exceeds stable MAE
+    # by ≥10% with both sides having ≥200 pairs; SHIP if ≥10 buckets, else HOLD.
+    r6_audit_verdict = None
     try:
-        from .cove_correction import ENABLED as R5_ENABLED
-        overall = r5_acc.get(("any", "all"))
-        if overall and overall["n"] >= 200:  # MIN_PAIRS_FOR_VERDICT
-            n = overall["n"]
-            mae_b = overall["baseline"] / n
-            mae_l4 = overall["r5_l4"] / n
-            mae_l1 = overall["r5_l1"] / n
-            d_l4 = (100.0 * (mae_b - mae_l4) / mae_b) if mae_b > 0 else 0.0
-            d_l1 = (100.0 * (mae_b - mae_l1) / mae_b) if mae_b > 0 else 0.0
-            best_variant = None
-            best_delta = 0.0
-            if d_l4 >= 1.0 and d_l4 > best_delta:
-                best_variant = "r5_on_top_of_l4"
-                best_delta = d_l4
-            if d_l1 >= 1.0 and d_l1 > best_delta:
-                best_variant = "r5_replaces_stack"
-                best_delta = d_l1
-            verdict = "SHIP" if best_variant else "HOLD"
-            r5_audit_verdict = {
-                "verdict": verdict,
-                "enabled": bool(R5_ENABLED),
-                "mae_baseline": round(mae_b, 4),
-                "mae_on_top_of_l4": round(mae_l4, 4),
-                "mae_replaces_stack": round(mae_l1, 4),
-                "improvement_on_top_of_l4_pct": round(d_l4, 2),
-                "improvement_replaces_stack_pct": round(d_l1, 2),
-                "best_variant": best_variant,  # None if HOLD
-                "n_pairs": n,
+        R6_PENALTY_PCT = 10.0
+        R6_MIN_PER_BUCKET = 200
+        R6_MIN_FLAGGED = 10
+        # Collect all (field, band) keys present in the accumulator.
+        r6_fields = {k[0] for k in r6_acc.keys()}
+        r6_bands_present = ["0-5h", "6-11h", "12-23h", "24-47h"]
+        flagged = 0
+        evaluated = 0
+        worst = None  # (field, band, penalty_pct)
+        for fld in r6_fields:
+            for bnd in r6_bands_present:
+                s = r6_acc.get((fld, bnd, False))
+                t = r6_acc.get((fld, bnd, True))
+                if not s or not t:
+                    continue
+                if s["n"] < R6_MIN_PER_BUCKET or t["n"] < R6_MIN_PER_BUCKET:
+                    continue
+                evaluated += 1
+                mae_s = s["sum_abs"] / s["n"]
+                mae_t = t["sum_abs"] / t["n"]
+                if mae_s > 0:
+                    pct = 100.0 * (mae_t - mae_s) / mae_s
+                    if pct >= R6_PENALTY_PCT:
+                        flagged += 1
+                    if worst is None or pct > worst[2]:
+                        worst = (fld, bnd, pct)
+        total_pairs = sum(v["n"] for v in r6_acc.values())
+        if evaluated > 0:
+            verdict_r6 = "SHIP" if flagged >= R6_MIN_FLAGGED else "HOLD"
+            r6_audit_verdict = {
+                "verdict": verdict_r6,
+                "enabled": False,  # R6 has no production layer yet
+                "n_flagged_buckets": flagged,
+                "n_evaluated_buckets": evaluated,
+                "worst_field": worst[0] if worst else None,
+                "worst_band": worst[1] if worst else None,
+                "worst_penalty_pct": round(worst[2], 2) if worst else None,
+                "n_pairs": total_pairs,
             }
-            logging.info(f"  ✓ R5 audit: {verdict} (baseline MAE {mae_b:.3f}°F, "
-                         f"R5+L4 {d_l4:+.2f}%, R5 alone {d_l1:+.2f}%, n={n:,})")
+            logging.info(f"  ✓ R6 audit: {verdict_r6} ({flagged}/{evaluated} buckets "
+                         f"≥{R6_PENALTY_PCT:.0f}% transition penalty, n={total_pairs:,})")
         else:
-            n = (overall or {}).get("n", 0)
-            r5_audit_verdict = {
+            r6_audit_verdict = {
                 "verdict": "insufficient_data",
-                "enabled": bool(R5_ENABLED),
-                "n_pairs": n,
+                "enabled": False,
+                "n_pairs": total_pairs,
             }
-            logging.info(f"  ⊘ R5 audit: insufficient data (n={n}, need ≥200)")
+            logging.info(f"  ⊘ R6 audit: insufficient data (n={total_pairs}, no bucket met ≥{R6_MIN_PER_BUCKET}/side)")
     except Exception as e:
-        logging.warning(f"  ⚠  R5 audit failed: {redact_secrets(e)}")
+        logging.warning(f"  ⚠  R6 audit failed: {redact_secrets(e)}")
 
     # v0.6.112 L5 audit verdict — same pattern as R5 but for solar regime
     # correction. Thresholds match analysis/l5_solar_analysis.py.
@@ -965,16 +953,16 @@ def fit_decay_corrections():
     # Shadow whitelist tuner: log what the auto-tuner WOULD have recommended
     # this Fitter cycle. Doesn't change production. Accumulates over months
     # so we can later evaluate "how often does shadow agree with human choices?"
-    # — the precondition for considering automation. v0.6.110: also logs R5;
-    # v0.6.112: also logs L5. Same shape, plugs in via conditional_audits.
+    # — the precondition for considering automation. v0.6.112: logs L5;
+    # v0.6.124: logs R6 (R5 retired). Same shape, plugs in via conditional_audits.
     try:
         from .shadow_whitelist import log_shadow_recommendation
         from .decay_apply import L3_FIELDS, L4_FIELDS
         conditional_audits = {}
-        if r5_audit_verdict:
-            conditional_audits["r5"] = r5_audit_verdict
         if l5_audit_verdict:
             conditional_audits["l5"] = l5_audit_verdict
+        if r6_audit_verdict:
+            conditional_audits["r6"] = r6_audit_verdict
         log_shadow_recommendation(ts_output, L3_FIELDS, L4_FIELDS,
                                   conditional_audits=conditional_audits or None)
     except Exception as e:
