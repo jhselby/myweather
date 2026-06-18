@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.118 • June 18, 2026
+
+* **Status panel is now collapsible.** Wrapped the Status — where we are panel in `<details open>` so it matches the rest of the page's collapsible sections. Click the header to fold it away once you've absorbed the current state; expand it again when something looks off elsewhere and you want to re-check what's pending.
+
 ## v0.6.117 • June 18, 2026
 
 * **Promotion-gate simulator + four hypothesis status changes.** New `analysis/simulate_windows.py` runs L5 / R5 / R6 verdicts across 7 trailing daily cutoffs (each on a 7-day window) in a single pair-log pass. The promotion rule: a hypothesis only earns Stage 1 → Stage 2 (or Stage 2 → Stage 3) advancement if all 7 cutoffs return the same verdict. Any flicker = stay put.

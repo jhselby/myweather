@@ -667,11 +667,11 @@
      a layer flips, an audit reads out, or a hypothesis dies. The rest
      of the page is automatic; THIS panel is not. Stamp the date on
      every edit so reviewers can tell how stale it is. -->
-<div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
+<details class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;" open>
+  <summary style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">
     <strong style="color:#7fb3ff;font-size:1.05em;">Status — where we are</strong>
-    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-18</span>
-  </div>
+    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-18 (click to collapse)</span>
+  </summary>
   <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime layer built but gated off (flickering on promotion gate). R6 passed the 7-cutoff promotion gate, queued to auto-wire next collector deploy. R5 and R4 retired after audits ruled them out.</div>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
@@ -736,7 +736,7 @@
   <div class="meta-line" style="margin-top:8px;opacity:0.75;">
     <strong>Conventions:</strong> L = correction <em>layer</em> (applied to forecast). R = <em>research</em> hypothesis (logged, not applied). S = <em>shadow</em> tuner (what auto-tuner would do). G = guardrail check. F = failure/diagnostic.
   </div>
-</div>
+</details>
 
 <div id="headlineBox">
   <div class="hb-title">Right now — what the pipeline is doing</div>
