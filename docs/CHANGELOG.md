@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.126 • June 18, 2026
+
+* **Briefing: switch to `gemini-2.5-flash-lite` + stop retrying on 429.** Two changes to `briefing_ai.py`. (1) `GEMINI_MODEL` default reverts from `gemini-2.5-flash` (set in v0.5.146 because flash-lite was returning 503 — it has since GA'd) to `gemini-2.5-flash-lite`. Free-tier daily limit jumps from 250 RPD to 1000 RPD — 4× the headroom for our 144 calls/day pattern. (2) The inner Gemini retry loop (around line 607) no longer retries on 429. 429 means "you exceeded quota"; retrying the same key 5 seconds later just burns ANOTHER request from the quota that just rejected us. Pre-fix, every rate-limited tick was double-counted — the multiplicative explanation for why we hit the daily ceiling fast. 5xx (transient capacity) still retries once with 5s sleep, since those clear quickly.
+
 ## v0.6.125 • June 18, 2026
 
 * **L3 whitelist: cm added.** 7-window MAE audit across 06-12 to 06-18 (42k–53k pairs per window) shows cm-in-L3 beats cm-not-in-L3 by **+2.5% to +6.5% in every window**, unanimous. Production whitelist is now `L3 = {ws, wg, ch, cm, pp}`. Updated `weather_collector/processors/decay_apply.py:L3_FIELDS` and `backtest/run.py:NAMED_CONFIGS["production"]` to match. Debug page status panel + B1 backtest sweep description updated accordingly.

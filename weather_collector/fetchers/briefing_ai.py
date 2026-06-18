@@ -15,7 +15,7 @@ import pytz
 import requests
 
 GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
@@ -594,8 +594,10 @@ def generate_briefing(weather_data):
         }
     }
 
-    # Try Gemini first, with a single 5s retry on any transient 5xx or 429.
-    # Capacity errors clear quickly; saves a fallback hop to Groq for most of them.
+    # Try Gemini first, with a single 5s retry only on transient 5xx.
+    # NEVER retry on 429: that's "you exceeded quota," and retrying burns
+    # another call from the same quota that just rejected us. Pre-v0.6.126
+    # this would double the quota burn on every rate-limited tick.
     gemini_ok = False
     try:
         resp = requests.post(
@@ -604,7 +606,7 @@ def generate_briefing(weather_data):
             json=payload,
             timeout=20
         )
-        if resp.status_code == 429 or (500 <= resp.status_code < 600):
+        if 500 <= resp.status_code < 600:
             logging.info(f"  ↻ Briefing: Gemini {resp.status_code}, retrying in 5s…")
             time.sleep(5)
             resp = requests.post(
