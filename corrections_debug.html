@@ -941,42 +941,42 @@
   <div class="meta-line" style="margin-bottom:10px;"><strong>Manual script:</strong> <code>analysis/regime_transition_audit.py</code> (single-window detail). <strong>Promotion gate:</strong> <code>analysis/simulate_windows.py</code> (7-window agreement test).</div>
 </details>
 
-<h3 class="subsection" style="margin-top:24px;">Retired hypotheses</h3>
+<h3 class="subsection" style="margin-top:24px;">Retired — hypotheses ruled out & settled tunings</h3>
 <div class="layer-info-text" style="margin-bottom:10px;border-color:#3a2a2a;background:#191313;">
-  <div class="meta-line"><strong>What these are:</strong> hypotheses we built, audited, and ruled out. Kept here as institutional memory so future-Joe doesn't burn a day re-inventing them. Each one's standalone analysis script in <code>analysis/</code> can be re-run at any time if conditions might have shifted (new stations, regime classifier change, seasonal turn). Stage 2 auto-wiring (if any was added) gets stripped from <code>decay_fit.py</code> in a follow-up commit — keeping dead audits running every cycle is overhead with no upside.</div>
+  <div class="meta-line"><strong>What these are:</strong> things we built, ran, and stopped running. Two kinds get mixed here: <strong>hypotheses</strong> (a real question we tested and the data answered no) and <strong>settled tunings</strong> (a parameter sweep that concluded "current value is fine"). Each entry is tagged. Kept as institutional memory so future-Joe doesn't burn a day re-inventing them. Standalone scripts in <code>analysis/</code> can be re-run at any time if conditions might have shifted.</div>
 </div>
 
 <details class="research-subsection" id="retired-tide-phase">
-  <summary>Tide-phase corrections — does forecast error track the tide cycle? (RETIRED 2026-06-08)</summary>
+  <summary>[HYPOTHESIS] Tide-phase corrections — does forecast error track the tide cycle? (RETIRED 2026-06-08)</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Verdict:</strong> weak signal, mostly entangled with diurnal cycle. Per-field tide-phase curves were tracked across weeks; the signal that survived stratification was hard to distinguish from hour-of-day patterns we're already correcting in L4. Cost of keeping it running (NOAA fetch + 12-bin accumulator + GCS history per Fitter pass) wasn't justified. Analysis: <code>analysis/tide_hypothesis.py</code>. Fitter module flag: <code>RUN_TIDE_TRACKING</code>. Frozen charts below show the final state at retirement; they will not update.</div>
   <div id="status-tide" class="status" hidden></div>
   <div id="grid-tide" class="grid"></div>
-</details>
 
-<details class="research-subsection" id="retired-tide-timeseries">
-  <summary>Error vs tide elevation over time — companion to the tide-phase view (RETIRED 2026-06-08)</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Time-domain view. The frozen state below is the last fit before tide tracking was disabled.</div>
-  <div id="status-timeseries" class="status" hidden></div>
-  <div class="section-controls">
-    <label for="ts-lead-select">Lead time:</label>
-    <select id="ts-lead-select"></select>
-    <span class="section-controls-hint">Higher leads = forecast made further ahead. Switch to see if the tide pattern is lead-specific.</span>
-  </div>
-  <div id="grid-timeseries" class="grid"></div>
+  <details style="margin-top:10px;">
+    <summary style="cursor:pointer;font-size:0.92em;opacity:0.85;">Companion view — error vs tide elevation over time (frozen)</summary>
+    <div class="meta-line" style="margin-top:8px;">Time-domain rendering of the same data as the bucketed chart above. Different angle on the same retired hypothesis. The frozen state below is the last fit before tide tracking was disabled.</div>
+    <div id="status-timeseries" class="status" hidden></div>
+    <div class="section-controls">
+      <label for="ts-lead-select">Lead time:</label>
+      <select id="ts-lead-select"></select>
+      <span class="section-controls-hint">Higher leads = forecast made further ahead. Switch to see if the tide pattern is lead-specific.</span>
+    </div>
+    <div id="grid-timeseries" class="grid"></div>
+  </details>
 </details>
 
 <details class="research-subsection" id="retired-derived-humidity">
-  <summary>Derived humidity — Magnus(T_corrected, T_d_corrected) vs network-blended humidity (RETIRED 2026-06-08)</summary>
+  <summary>[HYPOTHESIS] Derived humidity — Magnus(T_corrected, T_d_corrected) vs network-blended humidity (RETIRED 2026-06-08)</summary>
   <div class="meta-line"><strong>Verdict:</strong> equivalent. Tested whether deriving humidity from corrected temperature + corrected dew point via Magnus outperforms the L2 network-blended humidity. 27k triples, identical MAE within noise. We kept the derived path anyway because it keeps the (T, T_d, RH, AH) quadruple internally consistent — but the hypothesis "derivation is more accurate" is closed. Analysis: <code>analysis/derived_humidity.py</code>.</div>
 </details>
 
 <details class="research-subsection" id="retired-tau-tuning">
-  <summary>L3/L4 recency window τ — sweep over fit-window decay constant (RETIRED 2026-06-08)</summary>
-  <div class="meta-line"><strong>Verdict:</strong> τ=14 days is fine within noise. This is the Fitter's recency-weighting τ (how much old pairs count when fitting decay curves) — <em>not</em> the L2 lead-decay τ added in v0.6.44, which controls how a current bias is spread across forecast leads (see sec 2d). Tested τ ∈ {7, 14, 21} days across four reports. Held-out MAE differences under 2%, well below run-to-run variance. τ=14d stays. With L3/L4 mostly disabled in v0.6.45, this knob barely matters anymore. Analysis: <code>analysis/decay_tau_tuning.py</code>.</div>
+  <summary>[SETTLED TUNING] L3/L4 recency window τ — sweep over fit-window decay constant (RETIRED 2026-06-08)</summary>
+  <div class="meta-line"><strong>Verdict:</strong> τ=14 days is fine within noise. Not a hypothesis — a parameter sweep over the Fitter's recency-weighting τ (how much old pairs count when fitting decay curves). <em>Not</em> the L2 lead-decay τ added in v0.6.44, which controls how a current bias is spread across forecast leads (see sec 2d). Tested τ ∈ {7, 14, 21} days across four reports. Held-out MAE differences under 2%, well below run-to-run variance. τ=14d stays. With L3/L4 mostly disabled in v0.6.45, this knob barely matters anymore. Analysis: <code>analysis/decay_tau_tuning.py</code>.</div>
 </details>
 
 <details class="research-subsection" id="r4-hrrr-gfs-spread">
-  <summary>R4 (RETIRED 2026-06-17). HRRR vs GFS spread as confidence signal — verdict: CLOSE</summary>
+  <summary>[HYPOTHESIS] R4 — HRRR vs GFS spread as confidence signal (RETIRED 2026-06-17, verdict: CLOSE)</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> when HRRR and GFS disagree at a given forecast hour, actual error magnitude tends to be higher — i.e. <code>|HRRR − GFS|</code> per (field, lead) predicts <code>|forecast − obs|</code>. If true, the spread becomes a free uncertainty number that can widen displayed intervals and feed Gemini hedge language ("models disagree on tomorrow's high"). Data collection: HRRR L1 already in <code>forecast_log.json</code>; <code>gfs_l1_log.json</code> captures GFS L1 per tick for the same 0-48h window. Decision rule was: ship if median Spearman ρ &gt; 0.25 for ≥3 fields, consistent across lead bands.</div>
   <div class="meta-line" style="margin-bottom:10px;background:#241818;border:1px solid #402828;border-radius:6px;padding:10px 12px;">
     <strong style="color:#fb7c5c;">CLOSE verdict (2026-06-17, 112,877 joined pairs):</strong>
@@ -985,7 +985,7 @@
 </details>
 
 <details class="research-subsection" id="r5-cove-gradient">
-  <summary>R5 (RETIRED 2026-06-17). Cove warming — sea breeze across the peninsula heats Wyman Cove vs inland — verdict: HOLD (L2 already captures it)</summary>
+  <summary>[HYPOTHESIS] R5 — Cove warming — sea breeze across the peninsula heats Wyman Cove vs inland (RETIRED 2026-06-17, verdict: HOLD — L2 already captures it)</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Reframed hypothesis (2026-06-13):</strong> Wyman Cove sits in the <em>lee</em> of the Marblehead peninsula on a S/SE/SW sea breeze. Marine air crosses ~2 miles of sun-heated land before reaching the cove, picking up surface heat in transit. Expected pattern: <code>delta_wf_inland = waterfront_median − inland_median</code> goes <strong>positive</strong> (cove warmer) when wind is from the S half AND sea breeze is active, with magnitude scaling to solar input (peaking ~12-14 EDT). Should flatten to zero when wind is from N/NE (cove is windward of peninsula) or after sunset (no surface heating). Original hypothesis ("waterfront cools during sea breeze") was geographically backwards and is closed.</div>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Day-4 signal (427 ticks through 2026-06-15):</strong> matches the reframed model, magnitudes settled lower than initial day-1 readings as the sample size grew.
     <table style="margin-top:8px;border-collapse:collapse;font-size:0.92em;">
