@@ -353,13 +353,20 @@ def _load_cached_briefing():
     return None
 
 
-def _save_cached_briefing(briefing):
-    """Save successful briefing to GCS.
+def _update_briefing_cache(briefing=None, was_429=False):
+    """Atomic read-modify-write on briefing_cache.json.
 
-    v0.6.113: preserve throttle timestamps (`last_attempt_at`, `last_429_at`)
-    from the existing cache file if present. Without this, a Groq save after
-    a Gemini-record-attempt clobbers the timestamps that drive the rate-limit
-    backoff, causing the retry loop to resume.
+    v0.6.128: replaces the prior split between `_save_cached_briefing` (briefing
+    fields) and `_record_gemini_attempt` (throttle timestamps). When the success
+    path called both in sequence, only the second write's effect survived in
+    GCS — the file's metageneration showed a single write, with old briefing
+    fields and a fresh last_attempt_at, leaving the cache stale for the 20-min
+    throttle window. Collapsing to one read-modify-write eliminates the race.
+
+    `briefing` is None for failure-path throttle updates (no headline change),
+    or a dict of {headline, subheadline, model[, cached_at]} for a fresh
+    Gemini/Groq success. `was_429` only matters when `briefing` is None — a
+    successful call never sets last_429_at.
     """
     try:
         from google.cloud import storage as gcs
@@ -368,20 +375,27 @@ def _save_cached_briefing(briefing):
         client = gcs.Client()
         bucket = client.bucket("myweather-data")
         blob = bucket.blob(_BRIEFING_CACHE_PATH)
-        briefing["cached_at"] = datetime.now(pytz.timezone("America/New_York")).isoformat()
-        # Preserve any throttle metadata written by _record_gemini_attempt.
+        now_iso = datetime.now(pytz.timezone("America/New_York")).isoformat()
         if blob.exists():
             try:
-                existing = json.loads(blob.download_as_text())
-                for k in ("last_attempt_at", "last_429_at"):
-                    if k in existing and k not in briefing:
-                        briefing[k] = existing[k]
+                data = json.loads(blob.download_as_text())
             except Exception:
-                pass
-        blob.upload_from_string(json.dumps(briefing), content_type="application/json")
-        logging.info(f"  ✓ Briefing cache saved")
+                data = {}
+        else:
+            data = {}
+        if briefing is not None:
+            data["headline"] = briefing.get("headline", "")
+            data["subheadline"] = briefing.get("subheadline", "")
+            data["model"] = briefing.get("model", "")
+            data["cached_at"] = briefing.get("cached_at") or now_iso
+        data["last_attempt_at"] = now_iso
+        if was_429:
+            data["last_429_at"] = now_iso
+        blob.upload_from_string(json.dumps(data), content_type="application/json")
+        if briefing is not None:
+            logging.info(f"  ✓ Briefing cache saved ({data.get('model','?')})")
     except Exception as e:
-        logging.error(f"  ⚠ Briefing cache save failed: {redact_secrets(e)}")
+        logging.error(f"  ⚠ Briefing cache update failed: {redact_secrets(e)}")
 
 
 def _validate_headline(briefing, summary, weather_data):
@@ -507,29 +521,6 @@ def _should_call_gemini():
     return True, None
 
 
-def _record_gemini_attempt(was_429=False):
-    """Persist the timestamp of this Gemini attempt to GCS so the throttle
-    survives Cloud Run instance restarts. Writes a thin update to
-    briefing_cache.json without disturbing the cached headline/subheadline.
-    """
-    from datetime import datetime
-    import pytz
-    try:
-        from google.cloud import storage as gcs
-        client = gcs.Client()
-        bucket = client.bucket("myweather-data")
-        blob = bucket.blob(_BRIEFING_CACHE_PATH)
-        now_iso = datetime.now(pytz.timezone("America/New_York")).isoformat()
-        if blob.exists():
-            data = json.loads(blob.download_as_text())
-        else:
-            data = {}
-        data["last_attempt_at"] = now_iso
-        if was_429:
-            data["last_429_at"] = now_iso
-        blob.upload_from_string(json.dumps(data), content_type="application/json")
-    except Exception as e:
-        logging.warning(f"  ⚠ Briefing: failed to record Gemini attempt timestamp: {redact_secrets(e)}")
 
 
 def generate_briefing(weather_data):
@@ -628,13 +619,12 @@ def generate_briefing(weather_data):
             valid, reason = _validate_headline(briefing, summary, weather_data)
             if valid:
                 logging.info(f"  ✓ Briefing (Gemini): {headline}")
-                _save_cached_briefing(briefing)
-                _record_gemini_attempt(was_429=False)
+                _update_briefing_cache(briefing=briefing)
                 _last_gemini_call_time = datetime.now(eastern)
                 return briefing
             else:
                 logging.warning(f"  ⊘ Briefing (Gemini) REJECTED ({reason}): {headline!r} — falling through")
-                _record_gemini_attempt(was_429=False)
+                _update_briefing_cache(was_429=False)
                 _last_gemini_call_time = datetime.now(eastern)
     except Exception as e:
         # Capture HTTP status + body excerpt to diagnose Cloud Function-side failures
@@ -645,7 +635,7 @@ def generate_briefing(weather_data):
         # v0.6.113: persist the failure so the throttle survives instance
         # restarts. 429 = daily quota — long cooldown. Other failures =
         # normal 30-min throttle.
-        _record_gemini_attempt(was_429=(status == 429))
+        _update_briefing_cache(was_429=(status == 429))
         _last_gemini_call_time = datetime.now(eastern)
 
     # Groq fallback (OpenAI-compatible)
@@ -688,9 +678,9 @@ def generate_briefing(weather_data):
                     # the freshest available briefing. When Gemini recovers,
                     # its next success overwrites with the higher-quality
                     # output. (We DO NOT update _last_gemini_call_time here —
-                    # the Gemini throttle is now persisted via _record_gemini_attempt
-                    # which was called from the Gemini failure path above.)
-                    _save_cached_briefing(briefing)
+                    # the Gemini throttle is already persisted from the Gemini
+                    # failure path above.)
+                    _update_briefing_cache(briefing=briefing)
                     return briefing
                 else:
                     logging.warning(f"  ⊘ Briefing (Groq) REJECTED ({reason}): {headline!r} — falling through")
