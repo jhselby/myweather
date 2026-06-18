@@ -672,7 +672,7 @@
     <strong style="color:#7fb3ff;font-size:1.05em;">Status — where we are</strong>
     <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-17</span>
   </div>
-  <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime layer built but gated off. Three open hypotheses (R4, R5, L5) in shadow mode, with re-confirmation runs date-gated through 2026-06-22.</div>
+  <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime layer built but gated off. Four open hypotheses (R4, R5, L5, R6) in shadow / preview mode, with re-confirmation runs date-gated through 2026-06-22.</div>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
 
@@ -708,9 +708,10 @@
     <div style="border:1px solid #2a2a3a;background:#131319;padding:10px;border-radius:6px;">
       <div style="color:#a89ce0;font-weight:600;margin-bottom:4px;">🧪 Live hypotheses (research only)</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>R4:</strong> Does HRRR vs GFS spread predict forecast error? — first read ~06-19.</li>
+        <li><strong>R4:</strong> Does HRRR vs GFS spread predict forecast error? — first read ~06-22 (was 06-19, slipped after data invalidation).</li>
         <li><strong>R5:</strong> Cove vs inland gradient correction. — closed, HOLD.</li>
         <li><strong>L5:</strong> Regime-conditional solar bias. — built, gated, pending 06-22.</li>
+        <li><strong>R6:</strong> Regime-transition penalty (NEW 06-17). First read: 25/56 buckets show ≥10% MAE penalty when forecast and observed regime disagree. Re-confirm 06-22; if it holds, design as L6 (confidence-widening or L1 fallback during predicted transitions).</li>
         <li><strong>L2-as-observation-only (architectural):</strong> Remove L2 from forecast pipeline; keep L2 only as training target for L3/L4/L5. Open question; not today's work. See memory note.</li>
       </ul>
     </div>
@@ -916,6 +917,13 @@
   <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per-field MAE sliced by atmospheric regime (wind direction, wind speed, cloud cover, pressure trend, flow regime, synoptic pattern). When a field's MAE varies a lot across regime bins, that's a sign a regime-aware correction layer could help — different regimes need different corrections, and a one-size-fits-all decay correction (L3) misses the structure. <strong>Where it's pointing today:</strong> solar dominates the top 5 ranked opportunities — synoptic regime gives a 144 W/m² bias spread between best and worst bins. That's why L5 (regime-aware solar) was sketched today in <code>solar_correction.py</code> (gated off; see G1). Re-fit twice daily by the Fitter, published to <code>state_stratified_accuracy.json</code>.</div>
   <div id="status-state-stratified" class="status" hidden></div>
   <div id="grid-state-stratified"></div>
+</details>
+
+<details class="research-subsection" id="r6-regime-transition" open>
+  <summary>R6. Regime-transition penalty — does forecast accuracy collapse around fronts? (first read 2026-06-17)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> pairs where <code>state_fc.regime_synoptic</code> (regime the model predicted for the obs hour) differs from <code>state_obs.regime_synoptic</code> (regime that actually materialized) should show materially worse MAE than "stable" pairs where the regimes agree. If true, the system should widen confidence bands — or fall back to L1 — when the model itself signals a regime transition in the forecast window. <strong>Data:</strong> pair log + state metadata, already logged since v0.6.29. No new collection needed.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>First read (2026-06-17, 134k pairs):</strong> hypothesis strongly confirmed. 25 of 56 (field × lead band) buckets show ≥10% transition penalty. Strongest effects on <strong>wind speed (+73% at 0-5h)</strong>, <strong>wind direction (+45–72% across all bands)</strong>, <strong>wind gust (+63% at 0-5h)</strong>, and <strong>temperature (+12–24% at 0-23h)</strong>. ~40% of pairs are "transition" pairs — high enough that this isn't a rare edge case. Counter-intuitive note: solar at 12-23h <em>improves</em> by ~19% on transition pairs — likely "transitioning to clear" is easier than "stable cloudy"; will investigate later.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Decision rule:</strong> re-confirm on 2026-06-22 with a week more data. If the wind / temp / pressure effects hold ≥10% across re-runs, design a transition-aware confidence band (or per-field L1 fallback during predicted transitions) as L6. <strong>Manual script:</strong> <code>analysis/regime_transition_audit.py</code>. Re-run weekly; set <code>MYWEATHER_REFRESH=1</code> for decision-grade output.</div>
 </details>
 
 <details class="research-subsection" id="r4-hrrr-gfs-spread">
