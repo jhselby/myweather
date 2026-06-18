@@ -25,8 +25,19 @@ def cached_path(url, max_age_hours=12, refresh=None):
     stale = not path.exists() or (time.time() - path.stat().st_mtime) / 3600 > max_age_hours
     if refresh or stale:
         print(f"  ⇣ caching {url}")
+        # Atomic write: stream to .tmp, then os.replace into place. Without
+        # this, a parallel reader can iterate the partial file mid-download
+        # (caught 2026-06-18 in r5_audit.py — first run reported "0 matched
+        # pairs" because it read the cache while it was still streaming).
+        tmp = path.with_suffix(path.suffix + ".tmp")
         req = urllib.request.Request(url, headers={"User-Agent": "myweather-analysis/1.0"})
-        with urllib.request.urlopen(req, timeout=1800) as r, open(path, "wb") as f:
-            while chunk := r.read(1 << 20):
-                f.write(chunk)
+        try:
+            with urllib.request.urlopen(req, timeout=1800) as r, open(tmp, "wb") as f:
+                while chunk := r.read(1 << 20):
+                    f.write(chunk)
+            os.replace(tmp, path)
+        except BaseException:
+            if tmp.exists():
+                tmp.unlink()
+            raise
     return path
