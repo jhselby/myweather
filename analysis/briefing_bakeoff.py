@@ -146,25 +146,38 @@ def parse_headline(raw_text):
 # --- The bake-off ------------------------------------------------------------
 
 CONFIGS = [
-    # (label, provider, model, temperature)
+    # (label, provider, model, temperature, status)
+    # status is "evaluated" (already measured in a prior run) or "new" (not yet measured).
+    # --new-only filters to status="new" so re-runs don't re-burn quota on the Groq
+    # configs we already characterized 2026-06-18.
+    #
     # Gemini intentionally excluded from this list to avoid burning the live
     # quota during testing. To include it, add a row with provider="gemini".
     #
     # Baseline: current production
-    ("Groq Llama-3.3 70B @ 0.5 (CURRENT PROD)",    "groq", "llama-3.3-70b-versatile", 0.5),
+    ("Groq Llama-3.3 70B @ 0.5 (CURRENT PROD)",    "groq", "llama-3.3-70b-versatile", 0.5, "evaluated"),
     # Same model, just turn the dial up
-    ("Groq Llama-3.3 70B @ 0.85",                  "groq", "llama-3.3-70b-versatile", 0.85),
+    ("Groq Llama-3.3 70B @ 0.85",                  "groq", "llama-3.3-70b-versatile", 0.85, "evaluated"),
     # Other Groq-hosted models (verified live 2026-06-18 via /v1/models)
-    ("Groq Llama-4 Scout 17B @ 0.85",              "groq", "meta-llama/llama-4-scout-17b-16e-instruct", 0.85),
-    ("Groq GPT-OSS 120B @ 0.85",                   "groq", "openai/gpt-oss-120b", 0.85),
-    ("Groq GPT-OSS 20B @ 0.85",                    "groq", "openai/gpt-oss-20b", 0.85),
-    ("Groq Qwen-3.6 27B @ 0.85",                   "groq", "qwen/qwen3.6-27b", 0.85),
-    ("Groq Qwen-3 32B @ 0.85",                     "groq", "qwen/qwen3-32b", 0.85),
+    ("Groq Llama-4 Scout 17B @ 0.85",              "groq", "meta-llama/llama-4-scout-17b-16e-instruct", 0.85, "evaluated"),
+    ("Groq GPT-OSS 120B @ 0.85",                   "groq", "openai/gpt-oss-120b", 0.85, "evaluated"),
+    ("Groq GPT-OSS 20B @ 0.85",                    "groq", "openai/gpt-oss-20b", 0.85, "evaluated"),
+    ("Groq Qwen-3.6 27B @ 0.85",                   "groq", "qwen/qwen3.6-27b", 0.85, "evaluated"),
+    ("Groq Qwen-3 32B @ 0.85",                     "groq", "qwen/qwen3-32b", 0.85, "evaluated"),
     # OpenRouter free routes (verified live 2026-06-18)
-    ("OpenRouter Hermes-3 Llama-405B (free)",      "openrouter", "nousresearch/hermes-3-llama-3.1-405b:free", 0.85),
-    ("OpenRouter Qwen-3 80B (free)",               "openrouter", "qwen/qwen3-next-80b-a3b-instruct:free", 0.85),
-    ("OpenRouter Gemma-4 31B (free)",              "openrouter", "google/gemma-4-31b-it:free", 0.85),
-    ("OpenRouter Dolphin-Mistral 24B (free)",      "openrouter", "cognitivecomputations/dolphin-mistral-24b-venice-edition:free", 0.85),
+    ("OpenRouter Hermes-3 Llama-405B (free)",      "openrouter", "nousresearch/hermes-3-llama-3.1-405b:free", 0.85, "new"),
+    ("OpenRouter Qwen-3 80B (free)",               "openrouter", "qwen/qwen3-next-80b-a3b-instruct:free", 0.85, "new"),
+    ("OpenRouter Gemma-4 31B (free)",              "openrouter", "google/gemma-4-31b-it:free", 0.85, "evaluated"),
+    ("OpenRouter Dolphin-Mistral 24B (free)",      "openrouter", "cognitivecomputations/dolphin-mistral-24b-venice-edition:free", 0.85, "new"),
+    # Big-brain OpenRouter free routes added 2026-06-18 (per Joe's "what else free")
+    ("OpenRouter Nemotron-3 Ultra 550B (free)",    "openrouter", "nvidia/nemotron-3-ultra-550b-a55b:free", 0.85, "new"),
+    ("OpenRouter Nemotron-3 Super 120B (free)",    "openrouter", "nvidia/nemotron-3-super-120b-a12b:free", 0.85, "new"),
+    # OpenRouter PAID — DeepSeek tier (no free routes available 2026-06-18).
+    # Per-call cost is fractions of a cent; including for quality comparison only.
+    # Will 402 if your OpenRouter account has no credits — that's fine, treat as skip.
+    ("OpenRouter DeepSeek V4 Pro (PAID ~$0.87/M)", "openrouter", "deepseek/deepseek-v4-pro", 0.85, "new"),
+    ("OpenRouter DeepSeek V4 Flash (PAID ~$0.18/M)", "openrouter", "deepseek/deepseek-v4-flash", 0.85, "new"),
+    ("OpenRouter DeepSeek V3.2 (PAID ~$0.34/M)",   "openrouter", "deepseek/deepseek-v3.2", 0.85, "new"),
 ]
 
 
@@ -172,7 +185,10 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--runs", type=int, default=1, help="samples per config (default 1)")
     ap.add_argument("--data", type=str, default=None, help="path to a weather_data.json to use (default: live from GCS)")
+    ap.add_argument("--new-only", action="store_true",
+                    help='skip configs marked "evaluated" — only run "new" ones (saves Groq quota on re-runs)')
     args = ap.parse_args()
+    selected = [c for c in CONFIGS if not args.new_only or c[4] == "new"]
 
     print("  ⇣ fetching weather_data.json…")
     if args.data:
@@ -194,8 +210,9 @@ def main():
     callers = {"groq": call_groq, "openrouter": call_openrouter, "gemini": call_gemini}
 
     bar = "─" * 78
+    print(f"  running {len(selected)} of {len(CONFIGS)} configs{' (--new-only)' if args.new_only else ''}")
     print(bar)
-    for label, provider, model, temp in CONFIGS:
+    for label, provider, model, temp, _status in selected:
         key = keys.get(provider)
         if not key:
             print(f"⊘ {label}\n  (no {provider} key available — skipping)\n{bar}")
