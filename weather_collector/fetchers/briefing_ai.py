@@ -728,8 +728,19 @@ def generate_briefing(weather_data):
         # contradict today's conditions (e.g. cached during yesterday's rain).
         valid, reason = _validate_headline(cached, summary, weather_data)
         if valid:
-            logging.info(f"  ↩ Briefing: using cached headline")
-            return {"headline": cached["headline"], "subheadline": cached.get("subheadline", ""), "cached_at": cached.get("cached_at", ""), "model": cached.get("model", "gemini")}
+            logging.info(f"  ↩ Briefing: using cached headline (stale rescue — both Gemini and Groq tiers failed/rejected this tick)")
+            # v0.6.131: stamp `stale: True` so the sources drawer can show this
+            # as a stale rescue instead of a fresh briefing. Without this flag
+            # the displayed briefing looks like a normal "gemini" headline that
+            # happens to be getting old, hiding the fact that the live LLM
+            # pipeline silently fell back to a previous-tick cache.
+            return {
+                "headline": cached["headline"],
+                "subheadline": cached.get("subheadline", ""),
+                "cached_at": cached.get("cached_at", ""),
+                "model": cached.get("model", "gemini"),
+                "stale": True,
+            }
         else:
             logging.warning(f"  ⊘ Briefing cached headline REJECTED ({reason}) — using template")
 

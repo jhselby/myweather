@@ -144,6 +144,13 @@ function renderSources(sources, pwsStale) {
 
       const rowOpacity = isStandbyBriefingSource ? "opacity:0.4;" : "";
       const standbyTag = isStandbyBriefingSource ? ` <span style="font-size:0.7rem;opacity:0.6;">(standby)</span>` : "";
+      // v0.6.131: stale-rescue detection. When generate_briefing() falls
+      // through to the "last-good cached" branch because every live LLM tier
+      // failed/was-rejected this tick, the collector stamps briefing.stale=true.
+      // Surface that visually so an old-but-still-displayed briefing reads as
+      // a stale rescue instead of a "fresh" headline that just happens to be
+      // aging within the throttle window.
+      const briefingStale = window.__lastWeatherData?.briefing?.stale === true;
       // When the Groq waterfall is active, surface WHICH Groq model is
       // serving (briefing.model is e.g. "groq/openai/gpt-oss-120b"). For
       // Gemini we already know the model id from the static name.
@@ -151,7 +158,15 @@ function renderSources(sources, pwsStale) {
       if (isActiveBriefingSource && key === "groq" && briefingModel.startsWith("groq/")) {
         activeDetail = `: ${briefingModel.slice(5)}`;
       }
-      const activeTag = isActiveBriefingSource ? ` <span style="font-size:0.7rem;color:rgba(100,220,100,0.8);">(active${activeDetail})</span>` : "";
+      const activeTagColor = (isActiveBriefingSource && briefingStale)
+        ? "rgba(250,180,80,0.9)"   // amber — stale rescue
+        : "rgba(100,220,100,0.8)"; // green — fresh/throttled-normal
+      const activeTagLabel = (isActiveBriefingSource && briefingStale)
+        ? `stale rescue${activeDetail}`
+        : `active${activeDetail}`;
+      const activeTag = isActiveBriefingSource
+        ? ` <span style="font-size:0.7rem;color:${activeTagColor};">(${activeTagLabel})</span>`
+        : "";
       return `<div style="${rowStyle}${rowOpacity}">
         <span style="${badgeStyle(ok)}">${ok ? "●" : "○"}</span> <span style="${nameStyle}">${name}${activeTag}${standbyTag}</span>
         <span style="${ageStyle(ok)}">${age}</span>
