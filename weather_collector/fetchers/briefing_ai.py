@@ -598,23 +598,20 @@ def generate_briefing(weather_data):
     # NEVER retry on 429: that's "you exceeded quota," and retrying burns
     # another call from the same quota that just rejected us. Pre-v0.6.126
     # this would double the quota burn on every rate-limited tick.
+    # v0.6.127: header auth (x-goog-api-key) instead of URL ?key=. The URL
+    # form was 429-ing intermittently from Cloud Run egress IPs while the
+    # exact same key + payload via header form succeeded from elsewhere
+    # (verified 2026-06-18 with 10 rapid back-to-back calls). Header form is
+    # Google's current recommended auth and keeps the key out of URL access
+    # logs as a side benefit.
+    gemini_headers = {"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"}
     gemini_ok = False
     try:
-        resp = requests.post(
-            GEMINI_URL,
-            params={"key": GEMINI_API_KEY},
-            json=payload,
-            timeout=20
-        )
+        resp = requests.post(GEMINI_URL, headers=gemini_headers, json=payload, timeout=20)
         if 500 <= resp.status_code < 600:
             logging.info(f"  ↻ Briefing: Gemini {resp.status_code}, retrying in 5s…")
             time.sleep(5)
-            resp = requests.post(
-                GEMINI_URL,
-                params={"key": GEMINI_API_KEY},
-                json=payload,
-                timeout=20
-            )
+            resp = requests.post(GEMINI_URL, headers=gemini_headers, json=payload, timeout=20)
         resp.raise_for_status()
         data = resp.json()
         text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
@@ -644,7 +641,7 @@ def generate_briefing(weather_data):
         # (key + payload were verified working locally; failure is environment-specific).
         status = getattr(getattr(e, "response", None), "status_code", "n/a")
         body = getattr(getattr(e, "response", None), "text", "") or ""
-        logging.warning(f"  ⚠ Briefing: Gemini failed ({type(e).__name__} status={status}), trying Groq... body[:300]={body[:300]!r}")
+        logging.warning(f"  ⚠ Briefing: Gemini failed ({type(e).__name__} status={status}), trying Groq... body[:2000]={body[:2000]!r}")
         # v0.6.113: persist the failure so the throttle survives instance
         # restarts. 429 = daily quota — long cooldown. Other failures =
         # normal 30-min throttle.
