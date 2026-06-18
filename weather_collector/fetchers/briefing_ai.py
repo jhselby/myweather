@@ -20,7 +20,16 @@ GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-GROQ_MODEL = "llama-3.3-70b-versatile"
+# v0.6.130: two-tier Groq waterfall. GPT-OSS-120B is the primary fallback when
+# Gemini fails — it produces the most atmospheric, sea-breeze-aware briefings
+# of the Groq lineup. Llama-3.3 is the secondary fallback if GPT-OSS itself
+# fails (rare). Both at temperature 0.85 — 0.5 was the dominant cause of
+# stilted prose, not the model itself.
+GROQ_MODELS = [
+    "openai/gpt-oss-120b",
+    "llama-3.3-70b-versatile",
+]
+GROQ_TEMPERATURE = 0.85
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove — on the Salem Harbor side of Marblehead's peninsula, with open water to the north and northwest.
@@ -46,6 +55,7 @@ Rules:
 - Wind Impact score already accounts for the cove's terrain exposure — it is the authoritative, hyperlocal wind measure, more accurate than raw forecast speed. Use it to set the tone, and use the numerical score (provided alongside the label) to judge how strongly to lean on wind in the headline. Mention the contrast with regional forecast only when it adds useful context. Never write out the numerical impact score in your output — only use the impact label (Calm, Moderate, etc.) in the text.
 - Only mention precipitation if POP data is included. If no precip data is included, conditions are dry — do not mention rain.
 - Precip intensity words must match the data line. If the summary says "light," do not write "heavy," "downpour," "torrential," "deluge," "soaking," or "severe." Only use "torrential" or "deluge" when the data line explicitly says "torrential." Only use "heavy" or "downpour" when the data line says "heavy" or "torrential." When in doubt, use the exact word from the data line.
+- Never cite specific precipitation amounts in inches (e.g., "0.1 inches", "a tenth of an inch") for light, brief, or moderate rain. Use qualitative descriptors: "a quick shower," "light rain," "brief drizzle," "scattered showers," "moderate rain." Only cite a specific amount when the data line shows ≥0.5 inches total — and even then, prefer rounded language ("about an inch," "over half an inch") to decimals.
 - Only mention fog or sea breeze if included in the data.
 - Ignore any alerts containing "TEST" — those are NWS transmission tests.
 - If a previous briefing is provided and the forecast has shifted meaningfully (timing, rain/snow line, temperature trend), note the change briefly in the subheadline (e.g., "rain timing pushed back two hours" or "snow line crept east since this morning"). If nothing significant changed, say nothing about the prior forecast — do not write phrases like "no change since last update" or "consistent with the prior forecast."
@@ -530,6 +540,55 @@ def _should_call_gemini():
     return True, None
 
 
+def _call_groq_waterfall(summary, time_context, prev_context, weather_data, eastern):
+    """Try each model in GROQ_MODELS in order. Return the first briefing that
+    succeeds and passes the validator, or None if all fail. Logs each step.
+    """
+    user_msg = f"Weather data for right now:\n{summary}{time_context}{prev_context}"
+    for model in GROQ_MODELS:
+        try:
+            resp = requests.post(
+                GROQ_URL,
+                headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
+                json={
+                    "model": model,
+                    "messages": [
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": user_msg},
+                    ],
+                    "temperature": GROQ_TEMPERATURE,
+                    "max_tokens": 600,
+                },
+                timeout=20,
+            )
+            resp.raise_for_status()
+            text = resp.json()["choices"][0]["message"]["content"].strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            result = json.loads(text.strip())
+            headline = result.get("headline", "").strip()
+            subheadline = result.get("subheadline", "").strip()
+            if not headline:
+                logging.warning(f"  ⊘ Briefing (Groq/{model}): empty headline — trying next")
+                continue
+            cached_at = datetime.now(eastern).isoformat()
+            briefing = {
+                "headline": headline,
+                "subheadline": subheadline,
+                "cached_at": cached_at,
+                "model": f"groq/{model}",
+            }
+            valid, reason = _validate_headline(briefing, summary, weather_data)
+            if valid:
+                logging.info(f"  ✓ Briefing (Groq/{model}): {headline}")
+                _update_briefing_cache(briefing=briefing)
+                return briefing
+            logging.warning(f"  ⊘ Briefing (Groq/{model}) REJECTED ({reason}): {headline!r} — trying next")
+        except Exception as e:
+            logging.error(f"  ⚠ Briefing: Groq/{model} failed ({type(e).__name__}: {redact_secrets(e)}) — trying next")
+    return None
 
 
 def generate_briefing(weather_data):
@@ -647,54 +706,14 @@ def generate_briefing(weather_data):
         _update_briefing_cache(was_429=(status == 429))
         _last_gemini_call_time = datetime.now(eastern)
 
-    # Groq fallback (OpenAI-compatible)
+    # Groq waterfall (OpenAI-compatible). Tries each model in GROQ_MODELS in
+    # order; first one that succeeds + passes the validator wins. Voice stays
+    # within the Groq lineup (no provider switch on intra-fallback), so the
+    # user-perceived narrator only changes if the whole Groq layer fails.
     if GROQ_API_KEY:
-        try:
-            groq_payload = {
-                "model": GROQ_MODEL,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": f"Weather data for right now:\n{summary}{time_context}{prev_context}"},
-                ],
-                "temperature": 0.5,
-                "max_tokens": 256,
-            }
-            resp = requests.post(
-                GROQ_URL,
-                headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-                json=groq_payload,
-                timeout=15
-            )
-            resp.raise_for_status()
-            text = resp.json()["choices"][0]["message"]["content"].strip()
-            if text.startswith("```"):
-                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-            if text.endswith("```"):
-                text = text[:-3]
-            result = json.loads(text.strip())
-            headline = result.get("headline", "").strip()
-            subheadline = result.get("subheadline", "").strip()
-            if headline:
-                cached_at = datetime.now(eastern).isoformat()
-                briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at, "model": "groq"}
-                valid, reason = _validate_headline(briefing, summary, weather_data)
-                if valid:
-                    logging.info(f"  ✓ Briefing (Groq): {headline}")
-                    # v0.6.113: save Groq successes to cache too. Pre-v0.6.113
-                    # we kept the cache "reserved for last-good Gemini" which
-                    # left the displayed briefing stale for hours when Gemini
-                    # was down. Letting Groq update the cache means users see
-                    # the freshest available briefing. When Gemini recovers,
-                    # its next success overwrites with the higher-quality
-                    # output. (We DO NOT update _last_gemini_call_time here —
-                    # the Gemini throttle is already persisted from the Gemini
-                    # failure path above.)
-                    _update_briefing_cache(briefing=briefing)
-                    return briefing
-                else:
-                    logging.warning(f"  ⊘ Briefing (Groq) REJECTED ({reason}): {headline!r} — falling through")
-        except Exception as e:
-            logging.error(f"  ⚠ Briefing: Groq failed ({type(e).__name__}: {redact_secrets(e)})")
+        groq_briefing = _call_groq_waterfall(summary, time_context, prev_context, weather_data, eastern)
+        if groq_briefing is not None:
+            return groq_briefing
 
     # All live LLM attempts failed (or both rejected by the validator).
     # Set the throttle so we don't hammer Gemini in the next 30 min, then walk

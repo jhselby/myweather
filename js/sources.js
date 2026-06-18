@@ -13,8 +13,8 @@ const SOURCE_META = {
   nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead (api.weather.gov)" },
   pirate_weather: { name: "Pirate Weather", desc: "Pirate Weather API — next 60 minutes precipitation, plus solar and CAPE" },
   ebird:        { name: "eBird",        desc: "Cornell eBird recent and notable bird observations near Marblehead" },
-  gemini:       { name: "Gemini 2.5 Flash", desc: "Google Gemini AI — primary briefing headline generator (free tier)" },
-  groq:         { name: "Groq / Llama 3",  desc: "Groq API running Llama 3 8B — fallback briefing generator when Gemini is unavailable (free tier)" },
+  gemini:       { name: "Gemini 2.5 Flash-Lite", desc: "Google Gemini AI — primary briefing headline generator (free tier)" },
+  groq:         { name: "Groq", desc: "Groq AI — fallback briefing waterfall: openai/gpt-oss-120b → llama-3.3-70b-versatile (free tier)" },
   tempest:      { name: "Tempest",      desc: "WeatherFlow Tempest — 3 public stations within 0.4mi (Willow Rd, Driftwood Rd, Neptune Rd); lightning, solar radiation, wind lull, wet bulb" },
 };
 
@@ -59,10 +59,12 @@ function renderSources(sources, pwsStale) {
       if (CRITICAL_SOURCES.has(key)) anyCriticalError = true;
     }
   });
-  // Briefing counts as critical only if both Gemini and Groq are unavailable
+  // Briefing counts as critical only if both Gemini and Groq are unavailable.
+  // briefing.model is "gemini" or "groq/<model-id>" (v0.6.130+).
   const briefingModel = window.__lastWeatherData?.briefing?.model;
-  const geminiOk = sources['gemini']?.status === 'ok' || briefingModel === 'gemini';
-  const groqOk   = sources['groq']?.status === 'ok'   || briefingModel === 'groq';
+  const briefingProvider = briefingModel?.startsWith("groq/") ? "groq" : briefingModel;
+  const geminiOk = sources['gemini']?.status === 'ok' || briefingProvider === 'gemini';
+  const groqOk   = sources['groq']?.status === 'ok'   || briefingProvider === 'groq';
   if (!geminiOk && !groqOk) anyCriticalError = true;
 
   const table = document.getElementById("sourcesTable");
@@ -81,10 +83,12 @@ function renderSources(sources, pwsStale) {
     <div style="font-weight:900;font-size:0.75rem;color:rgba(255,255,255,0.35);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;">Live Data Sources</div>
     ${order.map(key => {
       const s = sources[key];
+      // briefing.model is "gemini" or "groq/<model-id>" (v0.6.130+).
       const briefingModel = window.__lastWeatherData?.briefing?.model || "gemini";
+      const briefingProvider = briefingModel.startsWith("groq/") ? "groq" : briefingModel;
       const isBriefingSource = key === "gemini" || key === "groq";
-      const isActiveBriefingSource = isBriefingSource && key === briefingModel;
-      const isStandbyBriefingSource = isBriefingSource && key !== briefingModel;
+      const isActiveBriefingSource = isBriefingSource && key === briefingProvider;
+      const isStandbyBriefingSource = isBriefingSource && key !== briefingProvider;
       if (!s && !isBriefingSource) return "";
       const ok = isBriefingSource ? isActiveBriefingSource : s.status === "ok";
       let age = "--";
@@ -140,7 +144,14 @@ function renderSources(sources, pwsStale) {
 
       const rowOpacity = isStandbyBriefingSource ? "opacity:0.4;" : "";
       const standbyTag = isStandbyBriefingSource ? ` <span style="font-size:0.7rem;opacity:0.6;">(standby)</span>` : "";
-      const activeTag  = isActiveBriefingSource  ? ` <span style="font-size:0.7rem;color:rgba(100,220,100,0.8);">(active)</span>` : "";
+      // When the Groq waterfall is active, surface WHICH Groq model is
+      // serving (briefing.model is e.g. "groq/openai/gpt-oss-120b"). For
+      // Gemini we already know the model id from the static name.
+      let activeDetail = "";
+      if (isActiveBriefingSource && key === "groq" && briefingModel.startsWith("groq/")) {
+        activeDetail = `: ${briefingModel.slice(5)}`;
+      }
+      const activeTag = isActiveBriefingSource ? ` <span style="font-size:0.7rem;color:rgba(100,220,100,0.8);">(active${activeDetail})</span>` : "";
       return `<div style="${rowStyle}${rowOpacity}">
         <span style="${badgeStyle(ok)}">${ok ? "●" : "○"}</span> <span style="${nameStyle}">${name}${activeTag}${standbyTag}</span>
         <span style="${ageStyle(ok)}">${age}</span>
