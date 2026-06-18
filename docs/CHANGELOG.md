@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.122 • June 18, 2026
+
+* **Retired section: wrap in a single collapsed details block.** Joe's catch — "in what way is the shadow whitelist tuner retired?" The previous h3 header had no visual closing marker, so G1 / S1 / B1 / F1 (which are all live) looked like they were still inside the Retired section. Fix: wrapped the entire Retired block in one outer `<details>` that's collapsed by default. When collapsed it's a single line; the boundary is unambiguous and everything below is obviously NOT retired.
+
 ## v0.6.121 • June 18, 2026
 
 * **Retired section: tag each entry by kind.** Joe's catch — "Retired hypotheses" was hiding the fact that not every entry under it was actually a hypothesis. Renamed the header to "Retired — hypotheses ruled out & settled tunings" and tagged every entry: `[HYPOTHESIS]` for things we tested and the data answered no (tide-phase, derived humidity, R4, R5), `[SETTLED TUNING]` for parameter sweeps that concluded "current value is fine" (τ-tuning). Folded the tide-timeseries entry into the tide-phase entry as a "companion view" sub-details — they were two views of the same retired hypothesis, not separate items.
