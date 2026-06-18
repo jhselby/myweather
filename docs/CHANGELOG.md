@@ -1,5 +1,9 @@
 # v0.6.0 — Decay-correction milestone
 
+## v0.6.120 • June 18, 2026
+
+* **Debug-page taxonomy cleanup.** R1 → D1 (drill-down isn't a research hypothesis; it's a teaching/demo view). Status panel convention key gains `D = drill-down / teaching view` and `B = backtest`. The duplicate "Discarded hypotheses" section is merged into the single "Retired hypotheses" header at the top of Research & Diagnostics — the four 06-08 retired items (tide-phase, tide-timeseries, derived humidity, τ-tuning) now sit alongside R4 and R5 under one consolidated header. No more "Discarded vs Retired" word collision — one canonical place for things that were tested, settled, and removed. R3a/b/c/d losing the R prefix since they were never research-hypothesis-numbered in the new taxonomy.
+
 ## v0.6.119 • June 18, 2026
 
 * **Headline box moved above the Status panel.** "Right now — what the pipeline is doing" is the live, fresh data you actually check daily (current temp correction, humidity correction, confidence, briefing source). It now sits at the top of the page where it belongs. The curated Status panel is still right below, collapsed-or-not at your discretion.

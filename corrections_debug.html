@@ -760,7 +760,7 @@
   </div>
 
   <div class="meta-line" style="margin-top:8px;opacity:0.75;">
-    <strong>Conventions:</strong> L = correction <em>layer</em> (applied to forecast). R = <em>research</em> hypothesis (logged, not applied). S = <em>shadow</em> tuner (what auto-tuner would do). G = guardrail check. F = failure/diagnostic.
+    <strong>Conventions:</strong> L = correction <em>layer</em> (applied to forecast). R = <em>research</em> hypothesis (logged, not applied). S = <em>shadow</em> tuner (what auto-tuner would do). G = guardrail check / candidate stamp. F = failure/diagnostic. B = backtest. D = drill-down / teaching view.
   </div>
 </details>
 
@@ -902,7 +902,7 @@
 </details>
 
 <details class="research-subsection" id="sec-drill">
-  <summary>R1. Drill-down — see each correction layer build up (teaching view)</summary>
+  <summary>D1. Drill-down — see each correction layer build up (teaching view)</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> a visual build-up of the live forecast, layer by layer. Pick a field, pick layers, hit Play to watch L1 → L2 → L3 → L4 animate onto the chart. For fields where the L3/L4 whitelist disables a layer, that layer's line sits exactly on top of the layer below — there's no correction being applied, so nothing changes visually. Useful for sanity-checking a specific field's stack when something looks off elsewhere.</div>
   <div class="drill-controls">
     <div class="group">
@@ -945,6 +945,35 @@
 <div class="layer-info-text" style="margin-bottom:10px;border-color:#3a2a2a;background:#191313;">
   <div class="meta-line"><strong>What these are:</strong> hypotheses we built, audited, and ruled out. Kept here as institutional memory so future-Joe doesn't burn a day re-inventing them. Each one's standalone analysis script in <code>analysis/</code> can be re-run at any time if conditions might have shifted (new stations, regime classifier change, seasonal turn). Stage 2 auto-wiring (if any was added) gets stripped from <code>decay_fit.py</code> in a follow-up commit — keeping dead audits running every cycle is overhead with no upside.</div>
 </div>
+
+<details class="research-subsection" id="retired-tide-phase">
+  <summary>Tide-phase corrections — does forecast error track the tide cycle? (RETIRED 2026-06-08)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Verdict:</strong> weak signal, mostly entangled with diurnal cycle. Per-field tide-phase curves were tracked across weeks; the signal that survived stratification was hard to distinguish from hour-of-day patterns we're already correcting in L4. Cost of keeping it running (NOAA fetch + 12-bin accumulator + GCS history per Fitter pass) wasn't justified. Analysis: <code>analysis/tide_hypothesis.py</code>. Fitter module flag: <code>RUN_TIDE_TRACKING</code>. Frozen charts below show the final state at retirement; they will not update.</div>
+  <div id="status-tide" class="status" hidden></div>
+  <div id="grid-tide" class="grid"></div>
+</details>
+
+<details class="research-subsection" id="retired-tide-timeseries">
+  <summary>Error vs tide elevation over time — companion to the tide-phase view (RETIRED 2026-06-08)</summary>
+  <div class="meta-line" style="margin-bottom:10px;">Time-domain view. The frozen state below is the last fit before tide tracking was disabled.</div>
+  <div id="status-timeseries" class="status" hidden></div>
+  <div class="section-controls">
+    <label for="ts-lead-select">Lead time:</label>
+    <select id="ts-lead-select"></select>
+    <span class="section-controls-hint">Higher leads = forecast made further ahead. Switch to see if the tide pattern is lead-specific.</span>
+  </div>
+  <div id="grid-timeseries" class="grid"></div>
+</details>
+
+<details class="research-subsection" id="retired-derived-humidity">
+  <summary>Derived humidity — Magnus(T_corrected, T_d_corrected) vs network-blended humidity (RETIRED 2026-06-08)</summary>
+  <div class="meta-line"><strong>Verdict:</strong> equivalent. Tested whether deriving humidity from corrected temperature + corrected dew point via Magnus outperforms the L2 network-blended humidity. 27k triples, identical MAE within noise. We kept the derived path anyway because it keeps the (T, T_d, RH, AH) quadruple internally consistent — but the hypothesis "derivation is more accurate" is closed. Analysis: <code>analysis/derived_humidity.py</code>.</div>
+</details>
+
+<details class="research-subsection" id="retired-tau-tuning">
+  <summary>L3/L4 recency window τ — sweep over fit-window decay constant (RETIRED 2026-06-08)</summary>
+  <div class="meta-line"><strong>Verdict:</strong> τ=14 days is fine within noise. This is the Fitter's recency-weighting τ (how much old pairs count when fitting decay curves) — <em>not</em> the L2 lead-decay τ added in v0.6.44, which controls how a current bias is spread across forecast leads (see sec 2d). Tested τ ∈ {7, 14, 21} days across four reports. Held-out MAE differences under 2%, well below run-to-run variance. τ=14d stays. With L3/L4 mostly disabled in v0.6.45, this knob barely matters anymore. Analysis: <code>analysis/decay_tau_tuning.py</code>.</div>
+</details>
 
 <details class="research-subsection" id="r4-hrrr-gfs-spread">
   <summary>R4 (RETIRED 2026-06-17). HRRR vs GFS spread as confidence signal — verdict: CLOSE</summary>
@@ -1021,45 +1050,9 @@
   <div id="frontal-events-content" class="status">Loading detected passages...</div>
 </details>
 
-<h3 class="subsection" style="margin-top:24px;color:#a08070;">Discarded hypotheses</h3>
-
-<details class="research-subsection" id="r4-discarded">
-  <summary>R3. Discarded hypotheses — frozen reports</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Hypotheses that were tested, settled, and removed from the live Fitter pipeline as of v0.6.47 to cut GCP compute. Code remains in place (gated behind module flags in <code>decay_fit.py</code>) so any of these can be revived in one line. The charts below show the final state at freeze time and will not update.</div>
-
-  <details class="research-subsection" id="r1-tide-phase">
-    <summary>R3a. Tide-phase corrections — does forecast error track the tide cycle? (frozen 2026-06-08)</summary>
-    <div class="meta-line" style="margin-bottom:10px;"><strong>Verdict:</strong> weak signal, mostly entangled with diurnal cycle. Per-field tide-phase curves were tracked across weeks; the signal that survived stratification was hard to distinguish from hour-of-day patterns we're already correcting in L4. Cost of keeping it running (NOAA fetch + 12-bin accumulator + GCS history per Fitter pass) wasn't justified. Analysis: <code>analysis/tide_hypothesis.py</code>. Fitter module flag: <code>RUN_TIDE_TRACKING</code>.</div>
-    <div id="status-tide" class="status" hidden></div>
-    <div id="grid-tide" class="grid"></div>
-  </details>
-
-  <details class="research-subsection" id="r2-tide-timeseries">
-    <summary>R3b. Error vs tide elevation over time — intuitive companion to R4a (frozen 2026-06-08)</summary>
-    <div class="meta-line" style="margin-bottom:10px;">Time-domain view. The frozen state below is the last fit before tide tracking was disabled.</div>
-    <div id="status-timeseries" class="status" hidden></div>
-    <div class="section-controls">
-      <label for="ts-lead-select">Lead time:</label>
-      <select id="ts-lead-select"></select>
-      <span class="section-controls-hint">Higher leads = forecast made further ahead. Switch to see if the tide pattern is lead-specific.</span>
-    </div>
-    <div id="grid-timeseries" class="grid"></div>
-  </details>
-
-  <details class="research-subsection" id="r4c-derived-humidity">
-    <summary>R3c. Derived humidity — Magnus(T_corrected, T_d_corrected) vs network-blended humidity (frozen 2026-06-08)</summary>
-    <div class="meta-line"><strong>Verdict:</strong> equivalent. Tested whether deriving humidity from corrected temperature + corrected dew point via Magnus outperforms the L2 network-blended humidity. 27k triples, identical MAE within noise. We kept the derived path anyway because it keeps the (T, T_d, RH, AH) quadruple internally consistent — but the hypothesis "derivation is more accurate" is closed. Analysis: <code>analysis/derived_humidity.py</code>.</div>
-  </details>
-
-  <details class="research-subsection" id="r4d-tau-tuning">
-    <summary>R3d. L3/L4 recency window τ — sweep over fit-window decay constant (frozen 2026-06-08)</summary>
-    <div class="meta-line"><strong>Verdict:</strong> τ=14 days is fine within noise. This is the Fitter's recency-weighting τ (how much old pairs count when fitting decay curves) — <em>not</em> the L2 lead-decay τ added in v0.6.44, which controls how a current bias is spread across forecast leads (see sec 2d). Tested τ ∈ {7, 14, 21} days across four reports. Held-out MAE differences under 2%, well below run-to-run variance. τ=14d stays. With L3/L4 mostly disabled in v0.6.45, this knob barely matters anymore. Analysis: <code>analysis/decay_tau_tuning.py</code>.</div>
-  </details>
-
-  <!-- R3e (POP calibration) removed v0.6.50 — POP is back in L3_FIELDS and
-       documented in the L3 banner. The Discarded section is for genuinely
-       discarded hypotheses only. -->
-</details>
+<!-- R3 retired-hypothesis sub-items moved up under the consolidated
+     "Retired hypotheses" header (alongside R4 and R5). Single canonical
+     section for things that were tested, settled, and removed. -->
 
 
 <script>
