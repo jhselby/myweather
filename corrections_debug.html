@@ -670,9 +670,9 @@
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
   <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;">
     <strong style="color:#7fb3ff;font-size:1.05em;">Status — where we are</strong>
-    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-17</span>
+    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-18</span>
   </div>
-  <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime layer built but gated off. Four open hypotheses (R4, R5, L5, R6) in shadow / preview mode, with re-confirmation runs date-gated through 2026-06-22.</div>
+  <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime layer built but gated off (flickering on promotion gate). R6 passed the 7-cutoff promotion gate, queued to auto-wire next collector deploy. R5 and R4 retired after audits ruled them out.</div>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
 
@@ -690,29 +690,39 @@
     <div style="border:1px solid #3a2d1f;background:#191510;padding:10px;border-radius:6px;">
       <div style="color:#d4a373;font-weight:600;margin-bottom:4px;">⏸ Gated off — built, not applied</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>L5 (regime-conditional solar correction).</strong> <code>ENABLED=False</code> in <code>solar_correction.py</code>. Held-out audit ambiguous: SHIP on 7-day window (-19.3% MAE), HOLD on 30-day (-2.77%). Generalization issue. Decision deferred to 06-22 re-run.</li>
-        <li><strong>R5 (cove cross-current correction).</strong> Verdict <strong>HOLD</strong> locked in 2026-06-16. L2's station-weighting already captures the cove signal; R5 on top double-counted. Will not ship.</li>
+        <li><strong>L5 (regime-conditional solar correction).</strong> <code>ENABLED=False</code> in <code>solar_correction.py</code>. Promotion gate (<code>simulate_windows.py</code>) returned FLICKER (5×HOLD then 2×SHIP) on 2026-06-17 — table refit on the same day. Stays at Stage 2. Re-run promotion gate daily; eligible for Stage 3 (flip ENABLED) ~2026-06-24 if 7 consecutive cutoffs all SHIP under the post-refit tables.</li>
+      </ul>
+    </div>
+
+    <div style="border:1px solid #2a3a2a;background:#131913;padding:10px;border-radius:6px;">
+      <div style="color:#4ad29a;font-weight:600;margin-bottom:4px;">🚀 Promotion candidate (queued for next deploy)</div>
+      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
+        <li><strong>R6 (regime-transition penalty).</strong> Passed promotion gate 7/7 cutoffs SHIP on 2026-06-17. 19–32 (field × lead band) buckets show ≥10% MAE penalty across every window. Pending: strip auto-wire into <code>decay_fit.py</code> + collector deploy. After 7+ days of stable Stage 2 verdicts, design L6 (transition-aware confidence band or per-field L1 fallback).</li>
+      </ul>
+    </div>
+
+    <div style="border:1px solid #3a2a2a;background:#191313;padding:10px;border-radius:6px;">
+      <div style="color:#fb7c5c;font-weight:600;margin-bottom:4px;">🗄 Retired — ruled out, kept as institutional memory</div>
+      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
+        <li><strong>R5 (cove cross-current).</strong> Retired 2026-06-17 — HOLD locked at −20.58% MAE on 32,816 pairs. L2's waterfront-weighted station blend already captures the signal; R5 double-counts. Stage 2 wiring will be stripped from <code>decay_fit.py</code> on next collector deploy. Script <code>analysis/r5_audit.py</code> kept for quarterly re-checks.</li>
+        <li><strong>R4 (HRRR vs GFS spread).</strong> Retired 2026-06-17 — CLOSE verdict on 112,877 joined pairs; max |ρ|=0.012 across all fields. Spread is not a useful uncertainty signal. Was never auto-wired (Stage 1 only); no decay_fit.py changes needed. Script kept.</li>
       </ul>
     </div>
 
     <div style="border:1px solid #3a3a1f;background:#191910;padding:10px;border-radius:6px;">
       <div style="color:#e0d472;font-weight:600;margin-bottom:4px;">⏳ Pending decision (dated)</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>2026-06-19 (Fri):</strong> R5 Step 1 regime confirmation. Formality — HOLD already locked, this just closes it out.</li>
-        <li><strong>2026-06-22 (Mon):</strong> Walk-forward L3/L4 re-run #2. If it agrees with the 06-15 read, ship the config as-is.</li>
-        <li><strong>2026-06-22 (Mon):</strong> L5 audit re-run on fresh window. Two consecutive agreeing audits required before flipping <code>ENABLED</code>.</li>
-        <li><strong>~2026-06-19:</strong> R4 first read (HRRR/GFS spread hypothesis). Logging since 06-12.</li>
+        <li><strong>Next collector deploy:</strong> strip R5 auto-wire from <code>decay_fit.py</code>; add R6 accumulators + verdict to <code>conditional_audits.r6</code>; add R6 renderer to S1 section. Verify on next Fitter cycle.</li>
+        <li><strong>Daily through ~2026-06-24:</strong> re-run <code>simulate_windows.py</code>. If L5 turns to 7×SHIP, promote to Stage 3 (flip <code>ENABLED</code>).</li>
+        <li><strong>2026-06-22 (Mon):</strong> Walk-forward L3/L4 re-run #2. If it agrees with the 06-15 read, ship the config as-is. Note: today's re-run still recommends <code>cm</code> in L3 (vs production <code>pp</code>); walk-forward vs sweep conflict on <code>cm</code> remains unresolved.</li>
       </ul>
     </div>
 
     <div style="border:1px solid #2a2a3a;background:#131319;padding:10px;border-radius:6px;">
-      <div style="color:#a89ce0;font-weight:600;margin-bottom:4px;">🧪 Live hypotheses (research only)</div>
+      <div style="color:#a89ce0;font-weight:600;margin-bottom:4px;">🧪 Open architectural questions</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>R4:</strong> Does HRRR vs GFS spread predict forecast error? — first read ~06-22 (was 06-19, slipped after data invalidation).</li>
-        <li><strong>R5:</strong> Cove vs inland gradient correction. — closed, HOLD.</li>
-        <li><strong>L5:</strong> Regime-conditional solar bias. — built, gated, pending 06-22.</li>
-        <li><strong>R6:</strong> Regime-transition penalty (NEW 06-17). First read: 25/56 buckets show ≥10% MAE penalty when forecast and observed regime disagree. Re-confirm 06-22; if it holds, design as L6 (confidence-widening or L1 fallback during predicted transitions).</li>
-        <li><strong>L2-as-observation-only (architectural):</strong> Remove L2 from forecast pipeline; keep L2 only as training target for L3/L4/L5. Open question; not today's work. See memory note.</li>
+        <li><strong>L2-as-observation-only:</strong> Remove L2 from forecast pipeline; keep L2 only as training target for L3/L4/L5. Open question; not today's work. See memory note.</li>
+        <li><strong>Walk-forward vs sweep disagreement on cm:</strong> Two methods give different L3 whitelist recommendations. Promotion gate would flag this as FLICKER; production shipped on sweep evidence (v0.6.111). Reconcile on the 06-22 re-run.</li>
       </ul>
     </div>
 
@@ -920,20 +930,33 @@
 </details>
 
 <details class="research-subsection" id="r6-regime-transition" open>
-  <summary>R6. Regime-transition penalty — does forecast accuracy collapse around fronts? (first read 2026-06-17)</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> pairs where <code>state_fc.regime_synoptic</code> (regime the model predicted for the obs hour) differs from <code>state_obs.regime_synoptic</code> (regime that actually materialized) should show materially worse MAE than "stable" pairs where the regimes agree. If true, the system should widen confidence bands — or fall back to L1 — when the model itself signals a regime transition in the forecast window. <strong>Data:</strong> pair log + state metadata, already logged since v0.6.29. No new collection needed.</div>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>First read (2026-06-17, 134k pairs):</strong> hypothesis strongly confirmed. 25 of 56 (field × lead band) buckets show ≥10% transition penalty. Strongest effects on <strong>wind speed (+73% at 0-5h)</strong>, <strong>wind direction (+45–72% across all bands)</strong>, <strong>wind gust (+63% at 0-5h)</strong>, and <strong>temperature (+12–24% at 0-23h)</strong>. ~40% of pairs are "transition" pairs — high enough that this isn't a rare edge case. Counter-intuitive note: solar at 12-23h <em>improves</em> by ~19% on transition pairs — likely "transitioning to clear" is easier than "stable cloudy"; will investigate later.</div>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Decision rule:</strong> re-confirm on 2026-06-22 with a week more data. If the wind / temp / pressure effects hold ≥10% across re-runs, design a transition-aware confidence band (or per-field L1 fallback during predicted transitions) as L6. <strong>Manual script:</strong> <code>analysis/regime_transition_audit.py</code>. Re-run weekly; set <code>MYWEATHER_REFRESH=1</code> for decision-grade output.</div>
+  <summary>R6. Regime-transition penalty — promotion gate PASSED, ready to auto-wire (2026-06-17)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> pairs where <code>state_fc.regime_synoptic</code> (regime the model predicted for the obs hour) differs from <code>state_obs.regime_synoptic</code> (regime that actually materialized) should show materially worse MAE than "stable" pairs where the regimes agree. If true, the system should widen confidence bands — or fall back to L1 — when the model itself signals a regime transition in the forecast window. <strong>Data:</strong> pair log + state metadata, already logged since v0.6.29.</div>
+  <div class="meta-line" style="margin-bottom:10px;background:#101913;border:1px solid #1f3a2a;border-radius:6px;padding:10px 12px;">
+    <strong style="color:#4ad29a;">✓ Promotion gate passed (7/7 cutoffs agree)</strong>
+    <div style="margin-top:6px;">Ran <code>analysis/simulate_windows.py</code> across 7 trailing daily cutoffs (06-12 → 06-18), each on a 7-day window. All 7 cutoffs returned SHIP with 19, 24, 23, 23, 25, 31, 32 flagged (field × lead band) buckets — stable strong signal across the full range.</div>
+    <div style="margin-top:6px;"><strong>First-read details (06-17, 134k pairs):</strong> 25 of 56 buckets show ≥10% transition penalty. Strongest effects: wind speed +73% at 0-5h, wind direction +45–72% across all bands, wind gust +63% at 0-5h, temperature +12–24% at 0-23h. ~40% of pairs are "transition" pairs — common, not edge case. Solar at 12-23h <em>improves</em> by ~19% on transition pairs (likely "transitioning to clear" is easier than "stable cloudy" — for later investigation).</div>
+    <div style="margin-top:6px;"><strong>Next step:</strong> auto-wire into <code>decay_fit.py</code> per cycle (Stage 2). Verdict logged under <code>conditional_audits.r6</code> alongside R5/L5. Design space for L6 once Stage 2 confirms over 7+ days under shipped wiring: transition-aware confidence band or per-field L1 fallback when the forecast predicts a regime change in the valid window.</div>
+  </div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Manual script:</strong> <code>analysis/regime_transition_audit.py</code> (single-window detail). <strong>Promotion gate:</strong> <code>analysis/simulate_windows.py</code> (7-window agreement test).</div>
 </details>
 
+<h3 class="subsection" style="margin-top:24px;">Retired hypotheses</h3>
+<div class="layer-info-text" style="margin-bottom:10px;border-color:#3a2a2a;background:#191313;">
+  <div class="meta-line"><strong>What these are:</strong> hypotheses we built, audited, and ruled out. Kept here as institutional memory so future-Joe doesn't burn a day re-inventing them. Each one's standalone analysis script in <code>analysis/</code> can be re-run at any time if conditions might have shifted (new stations, regime classifier change, seasonal turn). Stage 2 auto-wiring (if any was added) gets stripped from <code>decay_fit.py</code> in a follow-up commit — keeping dead audits running every cycle is overhead with no upside.</div>
+</div>
+
 <details class="research-subsection" id="r4-hrrr-gfs-spread">
-  <summary>R4. HRRR vs GFS spread as confidence signal (collecting since 2026-06-12)</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> when HRRR and GFS disagree at a given forecast hour, actual error magnitude tends to be higher — i.e. <code>|HRRR − GFS|</code> per (field, lead) predicts <code>|forecast − obs|</code>. If true, the spread becomes a free uncertainty number that can widen displayed intervals and feed Gemini hedge language ("models disagree on tomorrow's high"). Data collection: HRRR L1 already in <code>forecast_log.json</code>; new <code>gfs_l1_log.json</code> captures GFS L1 per tick for the same 0-48h window. Analysis: join by (run, v), regress <code>|hrrr − gfs|</code> against pair-log <code>|err|</code> per field per lead band. <strong>First meaningful read:</strong> ~2026-06-19 (7 days). <strong>Decision rule:</strong> ship if median spearman ρ &gt; 0.25 for ≥3 fields and is consistent across lead bands; close if not.</div>
-  <div id="status-hrrr-gfs-spread" class="status">⚠ Data invalidated 2026-06-15: <code>fetch_hourly_gfs_7day</code> was missing <code>models=gfs_seamless</code>, so Open-Meteo returned its "best available" (HRRR for 0-48h) instead of GFS. <code>gfs_l1_log.json</code> had been capturing HRRR data for three days — spread = 0 by construction in every joined comparison. Fix shipped v0.6.92. <strong>First read shifts to ~2026-06-22</strong> (7 days of clean data from the fix). Evaluation script ready at <code>analysis/r4_spread_analysis.py</code>.</div>
+  <summary>R4 (RETIRED 2026-06-17). HRRR vs GFS spread as confidence signal — verdict: CLOSE</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>Hypothesis:</strong> when HRRR and GFS disagree at a given forecast hour, actual error magnitude tends to be higher — i.e. <code>|HRRR − GFS|</code> per (field, lead) predicts <code>|forecast − obs|</code>. If true, the spread becomes a free uncertainty number that can widen displayed intervals and feed Gemini hedge language ("models disagree on tomorrow's high"). Data collection: HRRR L1 already in <code>forecast_log.json</code>; <code>gfs_l1_log.json</code> captures GFS L1 per tick for the same 0-48h window. Decision rule was: ship if median Spearman ρ &gt; 0.25 for ≥3 fields, consistent across lead bands.</div>
+  <div class="meta-line" style="margin-bottom:10px;background:#241818;border:1px solid #402828;border-radius:6px;padding:10px 12px;">
+    <strong style="color:#fb7c5c;">CLOSE verdict (2026-06-17, 112,877 joined pairs):</strong>
+    <div style="margin-top:6px;">0 of 6 fields above the 0.25 ρ threshold. Maximum observed |ρ| = 0.012 (wind speed at 1-6h) — essentially zero correlation. HRRR vs GFS spread does NOT predict forecast error magnitude. Retired without auto-wiring. <strong>Manual script:</strong> <code>analysis/r4_spread_analysis.py</code> — re-run quarterly or after a model release.</div>
+  </div>
 </details>
 
 <details class="research-subsection" id="r5-cove-gradient">
-  <summary>R5. Cove warming — does a sea breeze across the peninsula heat Wyman Cove vs inland? (collecting since 2026-06-12)</summary>
+  <summary>R5 (RETIRED 2026-06-17). Cove warming — sea breeze across the peninsula heats Wyman Cove vs inland — verdict: HOLD (L2 already captures it)</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Reframed hypothesis (2026-06-13):</strong> Wyman Cove sits in the <em>lee</em> of the Marblehead peninsula on a S/SE/SW sea breeze. Marine air crosses ~2 miles of sun-heated land before reaching the cove, picking up surface heat in transit. Expected pattern: <code>delta_wf_inland = waterfront_median − inland_median</code> goes <strong>positive</strong> (cove warmer) when wind is from the S half AND sea breeze is active, with magnitude scaling to solar input (peaking ~12-14 EDT). Should flatten to zero when wind is from N/NE (cove is windward of peninsula) or after sunset (no surface heating). Original hypothesis ("waterfront cools during sea breeze") was geographically backwards and is closed.</div>
   <div class="meta-line" style="margin-bottom:10px;"><strong>Day-4 signal (427 ticks through 2026-06-15):</strong> matches the reframed model, magnitudes settled lower than initial day-1 readings as the sample size grew.
     <table style="margin-top:8px;border-collapse:collapse;font-size:0.92em;">
@@ -973,8 +996,8 @@
   <summary>G1. Gated correction candidates — what L5 / R5 would do right now</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> two corrections are sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast.
     <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
-      <li><strong>R5 cove correction</strong> — (wind_octant × sb_active × hour) conditional Δ°F for cove temperature. <strong style="color:#fb7c5c;">Step 2 audit verdict: HOLD</strong> (2026-06-16, n=29,444). Applying R5 makes cove temperature forecasts 19.6% worse — L2's station weighting already captures the waterfront signal; R5 double-counts. R5 stays as a diagnostic; the value shown below is what R5 would compute, not what would actually improve the forecast. See R5 section above for full audit numbers.</li>
-      <li><strong>L5 solar correction</strong> — (regime_synoptic × hour_local) conditional Δ W/m² for solar radiation. 7-day evaluation shows overall MAE drops 31.6% with 7/8 regimes improving — a SHIP candidate pending the 06-22 confirmation re-run and (per the lesson learned from R5) a held-out MAE audit of its own before flipping ENABLED.</li>
+      <li><strong>R5 cove correction</strong> — <strong style="color:#fb7c5c;">RETIRED 2026-06-17.</strong> (wind_octant × sb_active × hour) conditional Δ°F. Re-audit on 2026-06-17 (n=32,816) confirmed HOLD: R5+L4 makes cove temperature −20.58% worse. L2's station weighting (Willow Rd + Neptune Rd at ~0.1–0.2 mi) already captures the waterfront signal. R5 wiring will be stripped from <code>decay_fit.py</code> in the next collector deploy. Standalone script <code>analysis/r5_audit.py</code> kept for quarterly re-checks.</li>
+      <li><strong>L5 solar correction</strong> — <strong style="color:#e0d472;">Stage 2, FLICKER on promotion gate.</strong> Simulator across 7 trailing cutoffs returned 5×HOLD then 2×SHIP. Reason: L5 lookup tables were refit on 2026-06-17 (v0.6.112); the first 5 windows were scored against OLD tables (HOLD), the last 2 against the NEW tables (SHIP). Until 7 consecutive cutoffs all SHIP under the post-refit tables, do not flip <code>ENABLED</code>. Re-run <code>analysis/simulate_windows.py</code> daily; eligible for promotion ~2026-06-24 if stable.</li>
     </ul>
   </div>
   <div id="gated-candidates-content" class="status">Loading…</div>
