@@ -32,6 +32,12 @@ GROQ_MODELS = [
 GROQ_TEMPERATURE = 0.85
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 
+# Gemini disabled 2026-06-18: new project's free-tier quota (20/day) gets
+# exhausted by mid-evening with our 10-min tick cadence, leaving every late
+# attempt 429'd. Flip back to True once we either pay for a tier or stretch
+# the briefing throttle past the quota's per-day budget.
+GEMINI_ENABLED = False
+
 SYSTEM_PROMPT = """You are the briefing voice for a hyperlocal weather station at Wyman Cove — on the Salem Harbor side of Marblehead's peninsula, with open water to the north and northwest.
 
 Site exposure by wind direction (0=no shelter, 1=fully exposed):
@@ -58,6 +64,7 @@ Rules:
 - Never cite specific precipitation amounts in inches (e.g., "0.1 inches", "a tenth of an inch") for light, brief, or moderate rain. Use qualitative descriptors: "a quick shower," "light rain," "brief drizzle," "scattered showers," "moderate rain." Only cite a specific amount when the data line shows ≥0.5 inches total — and even then, prefer rounded language ("about an inch," "over half an inch") to decimals.
 - Only mention fog or sea breeze if included in the data.
 - Ignore any alerts containing "TEST" — those are NWS transmission tests.
+- If the data includes an "Alerts:" line (one or more active NWS alerts), the HEADLINE must state the alert and nothing else. Format: "NWS <Alert Name> in effect" (e.g., "NWS Severe Thunderstorm Watch in effect", "NWS Coastal Flood Advisory in effect"). If multiple alerts are listed, name the most severe one only. Do NOT add weather commentary to the headline when an alert is present. The SUBHEADLINE then carries your normal forecast — temps, timing, wind — and may add brief alert context if useful. Do not repeat the alert name verbatim in the sub.
 - If a previous briefing is provided and the forecast has shifted meaningfully (timing, rain/snow line, temperature trend), note the change briefly in the subheadline (e.g., "rain timing pushed back two hours" or "snow line crept east since this morning"). If nothing significant changed, say nothing about the prior forecast — do not write phrases like "no change since last update" or "consistent with the prior forecast."
 - The headline and subheadline must not repeat the same information. If the headline says "cooler Thursday," the subheadline must add something new — don't restate it.
 - Respond in JSON only, no markdown fences: {"headline": "...", "subheadline": "..."}"""
@@ -155,20 +162,23 @@ def _build_weather_summary(weather_data):
             pressure_line = f"Pressure: {p_trend:+.1f} hPa/3h — rising (improving)"
         # else: steady, don't clutter the prompt
 
-    # Precip — only include if POP >= 20% somewhere in next 48h
+    # Precip — only mention rain if BOTH max_pop >= 30% AND rain_inches >= 0.05".
+    # Previously the gate was just max_pop >= 20, which let through a 20% POP /
+    # 0.0" total combo as a "rain in play" prompt; Gemini then hallucinated
+    # "heavy rain overnight" off that (v0.6.132 incident, 2026-06-18 21:17 tick).
     pop_arr = hourly.get("precipitation_probability", [])
     time_arr = hourly.get("times", [])
+    precip_arr = hourly.get("precipitation", [])
     max_pop = max((p or 0) for p in pop_arr[:48]) if pop_arr else 0
+    # hourly.precipitation is in INCHES — OM_UNITS in config.py requests
+    # precipitation_unit="inch" on every Open-Meteo call. The /25.4 that
+    # used to be here (and the one v0.6.54 added to peak_intensity) was
+    # wrong: it divided inches by 25.4, under-reporting rain 25×.
+    rain_inches = round(sum(precip_arr[:48]), 2) if precip_arr else 0
     precip_line = ""
-    if max_pop < 20:
+    if max_pop < 30 or rain_inches < 0.05:
         precip_line = "No significant rain expected next 48h — do NOT mention rain"
-    elif max_pop >= 20:
-        precip_arr = hourly.get("precipitation", [])
-        # hourly.precipitation is in INCHES — OM_UNITS in config.py requests
-        # precipitation_unit="inch" on every Open-Meteo call. The /25.4 that
-        # used to be here (and the one v0.6.54 added to peak_intensity) was
-        # wrong: it divided inches by 25.4, under-reporting rain 25×.
-        rain_inches = round(sum(precip_arr[:48]), 1) if precip_arr else 0
+    else:
         rain_start = None
         for i, p in enumerate(pop_arr[:48]):
             if p and p >= 30 and i < len(time_arr):
@@ -308,8 +318,10 @@ def _build_weather_summary(weather_data):
         detail = "; ".join(bits) if bits else "transition in progress"
         lines.append(
             f"Frontal context: a {ftype_label} {when_phrase} ({detail}). "
-            f"This is the cause of the recent change in conditions — "
-            f"feel free to name it as such in the briefing."
+            f"This is the cause of the recent change in conditions. "
+            f"If you mention it, use natural phrases like \"after the {ftype_label},\" "
+            f"\"behind the {ftype_label},\" or \"the {ftype_label} brought…\" — "
+            f"never use \"front\" as a verb (no \"fronted,\" \"fronting\")."
         )
 
     # Thunderstorm. Risk gating keys off the *peak* CAPE label (next 12h),
@@ -431,12 +443,19 @@ def _validate_headline(briefing, summary, weather_data):
     def has_word(word):
         return re.search(rf"\b{re.escape(word)}\b", combined) is not None
 
-    # 1. Precip contradiction — prompt is told "no rain" but headline mentions it.
+    def has_headline_word(word):
+        return re.search(rf"\b{re.escape(word)}\b", headline) is not None
+
+    # 1. Precip contradiction — prompt is told "no rain" but the HEADLINE mentions it.
+    # Headline-only because subs commonly carry negated mentions ("no rain expected,"
+    # "clearing — rain stays south") that read fine and shouldn't trip rejection.
+    # Caught 2026-06-18 21:17 when Groq Llama produced "Clearing Tonight" and got
+    # rejected because the sub said "no rain expected."
     rain_words = ("rain", "shower", "drizzle", "downpour", "torrential",
                   "deluge", "soaker", "thunderstorm", "thundershower", "snow")
     if "No significant rain expected" in summary:
         for w in rain_words:
-            if has_word(w):
+            if has_headline_word(w):
                 return False, f"mentions {w!r} but forecast shows no significant rain"
 
     # 2. Sky contradiction vs current cloud cover (only flag the obvious ones).
@@ -663,48 +682,49 @@ def generate_briefing(weather_data):
     # (verified 2026-06-18 with 10 rapid back-to-back calls). Header form is
     # Google's current recommended auth and keeps the key out of URL access
     # logs as a side benefit.
-    gemini_headers = {"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"}
-    gemini_ok = False
-    try:
-        resp = requests.post(GEMINI_URL, headers=gemini_headers, json=payload, timeout=20)
-        if 500 <= resp.status_code < 600:
-            logging.info(f"  ↻ Briefing: Gemini {resp.status_code}, retrying in 5s…")
-            time.sleep(5)
+    if GEMINI_ENABLED:
+        gemini_headers = {"x-goog-api-key": GEMINI_API_KEY, "Content-Type": "application/json"}
+        gemini_ok = False
+        try:
             resp = requests.post(GEMINI_URL, headers=gemini_headers, json=payload, timeout=20)
-        resp.raise_for_status()
-        data = resp.json()
-        text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
-        if text.startswith("```"):
-            text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-        if text.endswith("```"):
-            text = text[:-3]
-        result = json.loads(text.strip())
-        headline = result.get("headline", "").strip()
-        subheadline = result.get("subheadline", "").strip()
-        if headline:
-            cached_at = datetime.now(eastern).isoformat()
-            briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at, "model": "gemini"}
-            valid, reason = _validate_headline(briefing, summary, weather_data)
-            if valid:
-                logging.info(f"  ✓ Briefing (Gemini): {headline}")
-                _update_briefing_cache(briefing=briefing)
-                _last_gemini_call_time = datetime.now(eastern)
-                return briefing
-            else:
-                logging.warning(f"  ⊘ Briefing (Gemini) REJECTED ({reason}): {headline!r} — falling through")
-                _update_briefing_cache(was_429=False)
-                _last_gemini_call_time = datetime.now(eastern)
-    except Exception as e:
-        # Capture HTTP status + body excerpt to diagnose Cloud Function-side failures
-        # (key + payload were verified working locally; failure is environment-specific).
-        status = getattr(getattr(e, "response", None), "status_code", "n/a")
-        body = getattr(getattr(e, "response", None), "text", "") or ""
-        logging.warning(f"  ⚠ Briefing: Gemini failed ({type(e).__name__} status={status}), trying Groq... body[:2000]={body[:2000]!r}")
-        # v0.6.113: persist the failure so the throttle survives instance
-        # restarts. 429 = daily quota — long cooldown. Other failures =
-        # normal 30-min throttle.
-        _update_briefing_cache(was_429=(status == 429))
-        _last_gemini_call_time = datetime.now(eastern)
+            if 500 <= resp.status_code < 600:
+                logging.info(f"  ↻ Briefing: Gemini {resp.status_code}, retrying in 5s…")
+                time.sleep(5)
+                resp = requests.post(GEMINI_URL, headers=gemini_headers, json=payload, timeout=20)
+            resp.raise_for_status()
+            data = resp.json()
+            text = data["candidates"][0]["content"]["parts"][0]["text"].strip()
+            if text.startswith("```"):
+                text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            result = json.loads(text.strip())
+            headline = result.get("headline", "").strip()
+            subheadline = result.get("subheadline", "").strip()
+            if headline:
+                cached_at = datetime.now(eastern).isoformat()
+                briefing = {"headline": headline, "subheadline": subheadline, "cached_at": cached_at, "model": "gemini"}
+                valid, reason = _validate_headline(briefing, summary, weather_data)
+                if valid:
+                    logging.info(f"  ✓ Briefing (Gemini): {headline}")
+                    _update_briefing_cache(briefing=briefing)
+                    _last_gemini_call_time = datetime.now(eastern)
+                    return briefing
+                else:
+                    logging.warning(f"  ⊘ Briefing (Gemini) REJECTED ({reason}): {headline!r} — falling through")
+                    _update_briefing_cache(was_429=False)
+                    _last_gemini_call_time = datetime.now(eastern)
+        except Exception as e:
+            # Capture HTTP status + body excerpt to diagnose Cloud Function-side failures
+            # (key + payload were verified working locally; failure is environment-specific).
+            status = getattr(getattr(e, "response", None), "status_code", "n/a")
+            body = getattr(getattr(e, "response", None), "text", "") or ""
+            logging.warning(f"  ⚠ Briefing: Gemini failed ({type(e).__name__} status={status}), trying Groq... body[:2000]={body[:2000]!r}")
+            # v0.6.113: persist the failure so the throttle survives instance
+            # restarts. 429 = daily quota — long cooldown. Other failures =
+            # normal 30-min throttle.
+            _update_briefing_cache(was_429=(status == 429))
+            _last_gemini_call_time = datetime.now(eastern)
 
     # Groq waterfall (OpenAI-compatible). Tries each model in GROQ_MODELS in
     # order; first one that succeeds + passes the validator wins. Voice stays
