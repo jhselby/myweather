@@ -696,9 +696,9 @@
 <details class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;" open>
   <summary style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">
     <strong style="color:#7fb3ff;font-size:1.05em;">Status — where we are</strong>
-    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-18 v0.6.124 (click to collapse)</span>
+    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-19 v0.6.137 (click to collapse)</span>
   </summary>
-  <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime layer built but gated off (flickering on promotion gate). R6 passed the 7-cutoff promotion gate, queued to auto-wire next collector deploy. R5 and R4 retired after audits ruled them out.</div>
+  <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime layer built but gated off (flickering on promotion gate). R6 auto-wired Stage 2 in v0.6.124, watching for 7-day stable verdicts before designing L6. R5 and R4 retired after audits ruled them out.</div>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
 
@@ -709,6 +709,7 @@
         <li>L3 whitelist: <strong>ws, wg, ch, cm, pp</strong>. Each field earns its keep on a 7-window MAE audit.</li>
         <li>L4 whitelist: <strong>ch only</strong>. Most fields lack stable hour-of-day structure.</li>
         <li>L2 lead-decay τ refit live by the Fitter, with a per-field guardrail (must beat default on held-out RMSE, else fall back).</li>
+        <li>Cloud obs (cc/cl/cm/ch) blended from KBOS + KBVY METAR sky-condition (v0.6.134). Mean-of-two when both present, single source on a fetch fail. Feeds the pair log so L3/L4 can be evaluated for cloud fields — not an L2-layer correction.</li>
         <li>Briefing 429 cooldown (v0.6.113) — 4-hour throttle after Gemini hits rate limits; Groq fallback caches to GCS.</li>
       </ul>
     </div>
@@ -739,9 +740,9 @@
     <div style="border:1px solid #3a3a1f;background:#191910;padding:10px;border-radius:6px;">
       <div style="color:#e0d472;font-weight:600;margin-bottom:4px;">⏳ Pending decision (dated)</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>Next Fitter cycle (~07:xx UTC):</strong> verify R6 audit verdict appears in <code>shadow_whitelist_log.json::conditional_audits.r6</code> and S1 section renders it; verify R5 entry is gone. v0.6.124 collector deploy carried both changes.</li>
         <li><strong>Daily through ~2026-06-24:</strong> re-run <code>simulate_windows.py</code>. If L5 turns to 7×SHIP, promote to Stage 3 (flip <code>ENABLED</code>).</li>
-        <li><strong>2026-06-22 (Mon):</strong> Walk-forward L3/L4 re-run #2. Routine re-confirmation; ship any changes only if 7-window simulation agrees.</li>
+        <li><strong>2026-06-22 (Mon):</strong> Walk-forward L3/L4 re-run #2. Routine re-confirmation on the current whitelist; ship any changes only if 7-window simulation agrees.</li>
+        <li><strong>2026-06-26 (Fri):</strong> First walk-forward read on cc/cl L3/L4 inclusion under KBVY-blended obs (v0.6.134 shipped 06-19; 7+ days of dual-source pair data by 06-26). If SHIP, confirmation read 07-03 per 7-window discipline before editing <code>L3_FIELDS</code>/<code>L4_FIELDS</code>.</li>
       </ul>
     </div>
 
@@ -783,7 +784,7 @@
         <li><strong>Layer is applied but the correction is tiny</strong> (badge shows <span class="field-badge active">L3 ✓</span>). The raw model is already very close, so the correction barely moves the needle. Lines visually overlap but they're not identical.</li>
       </ul>
     </div>
-    <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> means a bias is added (temperature, humidity, pressure). <span class="field-badge active">L2 ✓ direct</span> means we replace the model wind with what the stations are reading. <span class="field-badge na">L2 n/a</span> means no station network exists for this field (clouds, solar, precip).</div>
+    <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> means a bias is added (temperature, humidity, pressure). <span class="field-badge active">L2 ✓ direct</span> means we replace the model wind with what the stations are reading. <span class="field-badge na">L2 n/a</span> means no station network applies a bias for this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is still n/a as a forecast correction, but obs truth for cc/cl/cm/ch now comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
     <div class="meta-line"><strong>The table beneath each chart</strong> shows the same data as the chart but averaged into lead bands (0-5h, 6-11h, etc.). Numbers in field units. Compare a row across columns to see how each correction layer changes the error in that lead band — this is exactly the bucketing the walk-forward validator uses to decide what gets shipped.</div>
     <div class="meta-line">Lead 0 is circular by construction (forecast for now compared against the same-moment mesonet, so L2 ≈ 0); look at lead 1+ for real signal. Source: <code>time_series_diagnostic.json::per_layer_mae_by_lead</code>, 7-day window.</div>
   </details>
