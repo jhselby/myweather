@@ -20,14 +20,19 @@ GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
 GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-# v0.6.130: two-tier Groq waterfall. GPT-OSS-120B is the primary fallback when
-# Gemini fails — it produces the most atmospheric, sea-breeze-aware briefings
-# of the Groq lineup. Llama-3.3 is the secondary fallback if GPT-OSS itself
-# fails (rare). Both at temperature 0.85 — 0.5 was the dominant cause of
-# stilted prose, not the model itself.
+# v0.6.130: two-tier Groq waterfall. GPT-OSS-120B is the primary briefing source —
+# it produces the most atmospheric, sea-breeze-aware briefings of the Groq lineup.
+# Llama-3.3 is the secondary fallback if GPT-OSS fails. Both at temperature 0.85
+# — 0.5 was the dominant cause of stilted prose, not the model itself.
+# v0.6.140: per-model overrides. gpt-oss is a reasoning model; its default
+# behavior burns the token budget on chain-of-thought before emitting the JSON
+# response, leaving empty content (the JSONDecodeError "char 0" loop we saw
+# ~12x/day on 2026-06-19). reasoning_effort=low caps the CoT budget; the
+# bumped max_tokens gives headroom even if CoT runs long. Llama is non-reasoning
+# and doesn't need either knob.
 GROQ_MODELS = [
-    "openai/gpt-oss-120b",
-    "llama-3.3-70b-versatile",
+    {"name": "openai/gpt-oss-120b",      "max_tokens": 1500, "reasoning_effort": "low"},
+    {"name": "llama-3.3-70b-versatile",  "max_tokens": 600},
 ]
 GROQ_TEMPERATURE = 0.85
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
@@ -553,17 +558,22 @@ def _should_call_gemini():
             data = json.loads(blob.download_as_text())
             # v0.6.113: 429 backoff. If we just hit Google's daily quota,
             # don't try again for several hours.
-            last_429_at = data.get("last_429_at")
-            if last_429_at:
-                try:
-                    t = datetime.fromisoformat(last_429_at)
-                    age_h = (now - t).total_seconds() / 3600
-                    if age_h < _GEMINI_429_COOLDOWN_HOURS:
-                        logging.info(f"  ⏭ Briefing: 429 cooldown ({age_h:.1f}h ago, "
-                                     f"waiting {_GEMINI_429_COOLDOWN_HOURS}h), skipping Gemini")
-                        return False, data
-                except Exception:
-                    pass
+            # v0.6.139: only applies when Gemini is enabled. Previously a stale
+            # last_429_at value could gate the entire briefing function — including
+            # Groq — even after GEMINI_ENABLED was flipped off in v0.6.133, because
+            # the caller short-circuits to cached output when this returns False.
+            if GEMINI_ENABLED:
+                last_429_at = data.get("last_429_at")
+                if last_429_at:
+                    try:
+                        t = datetime.fromisoformat(last_429_at)
+                        age_h = (now - t).total_seconds() / 3600
+                        if age_h < _GEMINI_429_COOLDOWN_HOURS:
+                            logging.info(f"  ⏭ Briefing: 429 cooldown ({age_h:.1f}h ago, "
+                                         f"waiting {_GEMINI_429_COOLDOWN_HOURS}h), skipping Gemini")
+                            return False, data
+                    except Exception:
+                        pass
             # v0.6.113: throttle on any-attempt, not just success. Prevents
             # the every-tick retry loop when Gemini is failing.
             last_attempt_at = data.get("last_attempt_at") or data.get("cached_at")
@@ -587,20 +597,28 @@ def _call_groq_waterfall(summary, time_context, prev_context, weather_data, east
     succeeds and passes the validator, or None if all fail. Logs each step.
     """
     user_msg = f"Weather data for right now:\n{summary}{time_context}{prev_context}"
-    for model in GROQ_MODELS:
+    for model_cfg in GROQ_MODELS:
+        model = model_cfg["name"]
         try:
+            # response_format=json_object forces the model to emit JSON only,
+            # no reasoning preamble, no markdown fences. This is the primary
+            # guard against the "empty content" failure mode.
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_msg},
+                ],
+                "temperature": GROQ_TEMPERATURE,
+                "max_tokens": model_cfg.get("max_tokens", 600),
+                "response_format": {"type": "json_object"},
+            }
+            if "reasoning_effort" in model_cfg:
+                payload["reasoning_effort"] = model_cfg["reasoning_effort"]
             resp = requests.post(
                 GROQ_URL,
                 headers={"Authorization": f"Bearer {GROQ_API_KEY}", "Content-Type": "application/json"},
-                json={
-                    "model": model,
-                    "messages": [
-                        {"role": "system", "content": SYSTEM_PROMPT},
-                        {"role": "user", "content": user_msg},
-                    ],
-                    "temperature": GROQ_TEMPERATURE,
-                    "max_tokens": 600,
-                },
+                json=payload,
                 timeout=20,
             )
             resp.raise_for_status()

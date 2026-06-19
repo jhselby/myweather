@@ -710,7 +710,7 @@
         <li>L4 whitelist: <strong>ch only</strong>. Most fields lack stable hour-of-day structure.</li>
         <li>L2 lead-decay τ refit live by the Fitter, with a per-field guardrail (must beat default on held-out RMSE, else fall back).</li>
         <li>Cloud obs (cc/cl/cm/ch) blended from KBOS + KBVY METAR sky-condition (v0.6.134). Mean-of-two when both present, single source on a fetch fail. Feeds the pair log so L3/L4 can be evaluated for cloud fields — not an L2-layer correction.</li>
-        <li>Briefing 429 cooldown (v0.6.113) — 4-hour throttle after Gemini hits rate limits; Groq fallback caches to GCS.</li>
+        <li>Briefing waterfall: Groq primary (openai/gpt-oss-120b → llama-3.3-70b-versatile), 30-min interval throttle on any attempt, GCS-cached headline as last-good fallback. Gemini code path retained but <code>GEMINI_ENABLED=False</code> since v0.6.133; 429 cooldown gated on the same flag in v0.6.139.</li>
       </ul>
     </div>
 
@@ -2072,8 +2072,16 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
   // delta: overall avg Δ (display number)
   // enabled: is this layer currently in L3_FIELDS / L4_FIELDS?
   // worstBand: { band, frac } if this layer is losing on any lead band by > margin, else null
-  const deltaCell = (delta, enabled, worstBand) => {
+  const deltaCell = (delta, enabled, worstBand, isBrier) => {
     if (delta == null) return `<td>—</td>`;
+    // Brier-evaluated fields (POP): the MAE Δ is informational only — Brier
+    // is the decision metric, and L3 raising MAE is the *price* of Brier
+    // improvement (v0.6.20 analysis: ~5% Brier cut). Render neutral so the
+    // table doesn't visually scream "regression" on a row where L3 is correct.
+    if (isBrier) {
+      const txt = `${delta.toFixed(2)} <span style="opacity:0.6;font-size:0.85em;">(by MAE — Brier decides)</span>`;
+      return `<td style="color:#d4a373;font-weight:600;" title="POP is evaluated by Brier score, not MAE. L3 raising MAE here is expected; v0.6.20 analysis showed flat-additive cuts Brier ~5%.">${txt}</td>`;
+    }
     // Anything that rounds to 0.00 is neither a win nor a loss — render neutral
     const isZero = Math.abs(delta) < 0.005;
     let txt, color;
@@ -2090,6 +2098,12 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
       flag = ` ⚠ (${worstBand.band} +${(worstBand.frac * 100).toFixed(0)}%)`;
     }
     return `<td style="color:${color};font-weight:600;">${txt}${flag}</td>`;
+  };
+  // L3 MAE cell for Brier-evaluated fields: dim it so the eye doesn't anchor
+  // on a number that isn't the decision metric. Kept visible because some
+  // readers do want the MAE for cross-reference.
+  const brierMutedMaeCell = (mae, bias, decimals) => {
+    return `<td style="opacity:0.55;" title="MAE shown for reference. POP is evaluated by Brier score, not MAE.">${fmt(mae, decimals)}${biasSpan(bias, decimals)}</td>`;
   };
   // L2 runs only for fields where we have a station network to compute bias.
   // Everything else has no obs source (no station measures cloud-at-altitude,
@@ -2129,18 +2143,21 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
   const body = rows.map(r => {
     const l3Suspect = r.l3on && !!r.l3Worst;
     const l4Suspect = r.l4on && !!r.l4Worst;
-    const brierTag = r.isBrier ? ` <span style="color:#d4a373;font-size:0.85em;">[Brier]</span>` : '';
+    const brierTag = r.isBrier ? ` <span style="color:#d4a373;font-size:0.85em;" title="POP evaluated by Brier score, not MAE">[Brier]</span>` : '';
+    const l3MaeCell = r.isBrier
+      ? brierMutedMaeCell(r.l3, r.b3, 2)
+      : `<td>${fmt(r.l3, 2)}${biasSpan(r.b3, 2)}</td>`;
     return `<tr>
       <td><strong>${r.f.label}</strong> <span style="opacity:0.5;">(${r.f.key})</span>${brierTag}</td>
       <td>${fmt(r.l1, 2)}${biasSpan(r.b1, 2)}</td>
       <td>${fmt(r.l2, 2)}${biasSpan(r.b2, 2)}</td>
-      ${deltaCell(r.d2, false, null)}
+      ${deltaCell(r.d2, false, null, false)}
       ${l2AppliedCell(r.f.key)}
-      <td>${fmt(r.l3, 2)}${biasSpan(r.b3, 2)}</td>
-      ${deltaCell(r.d3, r.l3on, r.l3Worst)}
+      ${l3MaeCell}
+      ${deltaCell(r.d3, r.l3on, r.l3Worst, r.isBrier)}
       ${appliedCell(r.l3on, l3Suspect)}
       <td>${fmt(r.l4, 2)}${biasSpan(r.b4, 2)}</td>
-      ${deltaCell(r.d4, r.l4on, r.l4Worst)}
+      ${deltaCell(r.d4, r.l4on, r.l4Worst, false)}
       ${appliedCell(r.l4on, l4Suspect)}
     </tr>`;
   }).join("");
@@ -2167,8 +2184,16 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     ? `<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-bottom:10px;"><strong style="color:#d4a373;">⚠ At least one disabled layer would win by >3% in a lead band.</strong><div class="meta-line">${missedList}. Possible opportunity to add to L3_FIELDS / L4_FIELDS — but verify the win is consistent across re-runs before flipping (matches the discipline of the walk-forward validator).</div></div>`
     : `<div class="layer-info-text" style="border-color:#1f3a1f;background:#131c13;margin-bottom:10px;"><strong style="color:#4ad29a;">✓ No disabled layer is winning by >3% in any lead band.</strong><div class="meta-line">All No cells in L3 / L4 Applied are correctly off — no opportunities being left on the table.</div></div>`;
 
+  const brierFootnote = rows.some(r => r.isBrier)
+    ? `<div class="meta-line" style="margin-top:10px;font-size:0.85em;opacity:0.75;">
+         <strong style="color:#d4a373;">[Brier]</strong> rows are evaluated by Brier score, not MAE.
+         The MAE numbers and Δ are shown for reference (dimmed) but do not drive the Applied? decision —
+         L3 raising MAE on POP is the expected price of a ~5% Brier improvement (v0.6.20 analysis).
+       </div>`
+    : "";
   grid.innerHTML = suspectBanner + missedBanner +
-    `<div style="overflow-x:auto;"><table class="offset-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+    `<div style="overflow-x:auto;"><table class="offset-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>` +
+    brierFootnote;
 }
 
 // ── R2: State-stratified accuracy (active hypothesis) ─────────────────
