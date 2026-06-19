@@ -170,7 +170,8 @@ def fetch_kbvy_obs():
         
         obs = data[0]
         temp_c = obs.get("temp")
-        
+
+        cloud_low, cloud_mid, cloud_high = _metar_cloud_splits_pct(obs.get("clouds"))
         result = {
             "station": obs.get("icaoId"),
             "temp_f": round(temp_c * 9/5 + 32, 1) if temp_c is not None else None,
@@ -180,10 +181,14 @@ def fetch_kbvy_obs():
             "wind_gust_kt": obs.get("wgst"),
             "wind_dir": obs.get("wdir"),
             "present_weather": decode_metar_wx(obs.get("wxString")),
+            "cloud_cover_pct": _metar_cloud_cover_pct(obs.get("clouds")),
+            "cloud_low_pct":  cloud_low,
+            "cloud_mid_pct":  cloud_mid,
+            "cloud_high_pct": cloud_high,
         }
-        
+
         meta["status"] = "ok"
-        logging.info(f"  ✓ KBVY: {result.get('temp_f')}°F")
+        logging.info(f"  ✓ KBVY: {result.get('temp_f')}°F, cloud {result.get('cloud_cover_pct')}% (L{cloud_low}/M{cloud_mid}/H{cloud_high})")
         return result, meta
         
     except Exception as e:

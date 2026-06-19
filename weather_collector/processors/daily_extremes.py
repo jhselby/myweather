@@ -45,15 +45,26 @@ def _gather_current_observation(weather_data, current_hour_iso):
     cur = weather_data.get("current", {})
     der = weather_data.get("derived", {})
     kbos = weather_data.get("kbos") or {}
+    kbvy = weather_data.get("kbvy") or {}
     tempest = weather_data.get("tempest") or {}
-    # Cloud cover: KBOS METAR sky condition (real observation, ~15mi south coast).
-    # No fallback to model value — that would feed the Joiner forecast-vs-forecast
-    # pairs with zero error and pollute the Fitter. When KBOS is down, obs_log
-    # just omits the cloud field for that tick.
-    cloud_cover = kbos.get("cloud_cover_pct")
-    cloud_low   = kbos.get("cloud_low_pct")
-    cloud_mid   = kbos.get("cloud_mid_pct")
-    cloud_high  = kbos.get("cloud_high_pct")
+    # Cloud cover: blend KBVY (~2.5mi NW) and KBOS (~12mi S coastal) METAR sky
+    # condition. KBVY is the closer source; KBOS adds a coastal cross-check.
+    # Mean of the two when both present, single source when one is missing,
+    # None when both are missing. No fallback to model value — that would feed
+    # the Joiner forecast-vs-forecast pairs with zero error and pollute the
+    # Fitter.
+    def _blend(a, b):
+        if a is None and b is None:
+            return None
+        if a is None:
+            return b
+        if b is None:
+            return a
+        return round((a + b) / 2)
+    cloud_cover = _blend(kbvy.get("cloud_cover_pct"), kbos.get("cloud_cover_pct"))
+    cloud_low   = _blend(kbvy.get("cloud_low_pct"),   kbos.get("cloud_low_pct"))
+    cloud_mid   = _blend(kbvy.get("cloud_mid_pct"),   kbos.get("cloud_mid_pct"))
+    cloud_high  = _blend(kbvy.get("cloud_high_pct"),  kbos.get("cloud_high_pct"))
     # Solar radiation: median across all valid Tempest stations (single shaded
     # station shouldn't drag the network observation down). None when no
     # daytime Tempest readings — Joiner will skip those hours rather than
