@@ -53,8 +53,9 @@ NW to N (320°–360°): 1.0 — open harbor, max exposure
 Tone: seasoned local neighbor — observant, direct, helpful. Not a weather channel. Pick what matters, ignore the rest. On a quiet day, say little.
 
 Rules:
-- HEADLINE: Under 12 words. One breath. Lead with the weather story.
-- SUBHEADLINE: 1-2 sentences. Specific times, temps, wind if relevant. Skip anything unremarkable.
+- HEADLINE: Under 12 words. One breath. Lead with the weather story. The headline describes conditions RIGHT NOW — don't put forward-looking trend language ("clearing later," "rain by evening") in the headline.
+- SUBHEADLINE: 1-2 sentences. Specific times, temps, wind if relevant. Skip anything unremarkable. The subheadline is where forward-looking trend language belongs — what's coming next, when, and how much it shifts from now.
+- Sky words match current cloud cover. The "Sky:" line gives you cloud cover right now and the 24h range. In the HEADLINE, do not write "clear" or "sunny" if Sky-now is ≥ 50%, and do not write "cloudy" or "overcast" if Sky-now is ≤ 30%. The SUBHEADLINE may describe future sky changes ("clearing this afternoon," "clouds moving in by evening") as long as the 24h range supports it.
 - Don't mention everything. Only what's worth knowing right now.
 - Never start with greetings or "Today will be."
 - Use the temperature ranges provided — never invent specific degree numbers. The only exact temperature is the current reading.
@@ -433,45 +434,67 @@ def _validate_headline(briefing, summary, weather_data):
     """
     headline = briefing.get("headline", "").lower()
     sub = briefing.get("subheadline", "").lower()
-    combined = f"{headline} {sub}"
 
-    # Word-boundary matcher. Substring matching falsely rejected valid headlines
-    # whose sub said "skies clearing overnight" on a 100%-cloud day, because
-    # "clear" is a substring of "clearing". (Caught 2026-06-18 after two
-    # rejections — Gemini 09:37 and Groq 12:17 — both fell through to a stale
-    # cached headline from hours earlier.)
-    def has_word(word):
-        return re.search(rf"\b{re.escape(word)}\b", combined) is not None
-
-    def has_headline_word(word):
+    # Word-boundary matchers scoped to each clause. The headline describes RIGHT
+    # NOW; the sub describes FORECAST TREND. Rejecting the sub on present-tense
+    # rules is what caused the 2026-06-18 "clearing overnight" and 2026-06-19
+    # 12:17 false rejections — the sub legitimately said "sun returns later"
+    # while cloud_now was 100%. Now each clause is validated against the data
+    # window that matches its semantic role.
+    def in_headline(word):
         return re.search(rf"\b{re.escape(word)}\b", headline) is not None
+
+    def in_sub(word):
+        return re.search(rf"\b{re.escape(word)}\b", sub) is not None
 
     # 1. Precip contradiction — prompt is told "no rain" but the HEADLINE mentions it.
     # Headline-only because subs commonly carry negated mentions ("no rain expected,"
     # "clearing — rain stays south") that read fine and shouldn't trip rejection.
-    # Caught 2026-06-18 21:17 when Groq Llama produced "Clearing Tonight" and got
-    # rejected because the sub said "no rain expected."
     rain_words = ("rain", "shower", "drizzle", "downpour", "torrential",
                   "deluge", "soaker", "thunderstorm", "thundershower", "snow")
     if "No significant rain expected" in summary:
         for w in rain_words:
-            if has_headline_word(w):
+            if in_headline(w):
                 return False, f"mentions {w!r} but forecast shows no significant rain"
 
-    # 2. Sky contradiction vs current cloud cover (only flag the obvious ones).
+    # 2. Sky contradiction — headline vs NOW, sub vs FORECAST TREND.
     cloud_arr = weather_data.get("hourly", {}).get("cloud_cover", [])
     cloud_now = cloud_arr[0] if cloud_arr and cloud_arr[0] is not None else None
-    if cloud_now is not None:
-        if cloud_now >= 75 and (has_word("clear") or has_word("sunny")):
-            return False, f"says clear/sunny but cloud cover is {cloud_now}%"
-        if cloud_now <= 20 and (has_word("cloudy") or has_word("overcast")):
-            return False, f"says cloudy/overcast but cloud cover is {cloud_now}%"
+    # 24h forward-window for the sub check. Skip index 0 (that's "now" — the
+    # headline owns it). Include index 1..23 inclusive (next 23 hours).
+    cloud_fwd = [v for v in cloud_arr[1:24] if v is not None]
+    cloud_fwd_min = min(cloud_fwd) if cloud_fwd else None
+    cloud_fwd_max = max(cloud_fwd) if cloud_fwd else None
 
-    # 3. Intensity word vs actual intensity label in the prompt.
-    if has_word("torrential") and "torrential" not in summary:
-        return False, "says 'torrential' but data doesn't label it that"
-    if has_word("deluge") and "torrential" not in summary:
-        return False, "says 'deluge' but data doesn't label it that"
+    if cloud_now is not None:
+        # Headline: must match RIGHT NOW. Thresholds match the prompt rule
+        # (50% / 30%) so the validator can't reject a headline the prompt
+        # would have allowed.
+        if cloud_now >= 50 and (in_headline("clear") or in_headline("sunny")):
+            return False, f"headline says clear/sunny but cloud cover is {cloud_now}%"
+        if cloud_now <= 30 and (in_headline("cloudy") or in_headline("overcast")):
+            return False, f"headline says cloudy/overcast but cloud cover is {cloud_now}%"
+
+    # Sub trend check: only reject if the sub claims a sky change that the
+    # forecast doesn't support at any point in the next 23 hours.
+    sub_says_clearing = (in_sub("clear") or in_sub("clearing")
+                        or in_sub("sunny") or in_sub("sun"))
+    sub_says_clouding = (in_sub("cloudy") or in_sub("overcast")
+                        or in_sub("clouding"))
+    if cloud_fwd_min is not None and sub_says_clearing and cloud_fwd_min > 60:
+        return False, (f"sub implies sky clears but forecast stays "
+                       f"{cloud_fwd_min}%+ cloudy for next 23h")
+    if cloud_fwd_max is not None and sub_says_clouding and cloud_fwd_max < 40:
+        return False, (f"sub implies clouds move in but forecast stays "
+                       f"under {cloud_fwd_max}% for next 23h")
+
+    # 3. Intensity word vs actual intensity label in the prompt. Headline-only
+    # for the same reason precip is headline-only: subs may use the word in
+    # negation ("no torrential rain expected") or in trend language.
+    if in_headline("torrential") and "torrential" not in summary:
+        return False, "headline says 'torrential' but data doesn't label it that"
+    if in_headline("deluge") and "torrential" not in summary:
+        return False, "headline says 'deluge' but data doesn't label it that"
 
     return True, "ok"
 

@@ -13,8 +13,8 @@ const SOURCE_META = {
   nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead (api.weather.gov)" },
   pirate_weather: { name: "Pirate Weather", desc: "Pirate Weather API — next 60 minutes precipitation, plus solar and CAPE" },
   ebird:        { name: "eBird",        desc: "Cornell eBird recent and notable bird observations near Marblehead" },
-  gemini:       { name: "Gemini 2.5 Flash-Lite", desc: "Google Gemini AI — primary briefing headline generator (free tier)" },
-  groq:         { name: "Groq", desc: "Groq AI — fallback briefing waterfall: openai/gpt-oss-120b → llama-3.3-70b-versatile (free tier)" },
+  gemini:       { name: "Gemini 2.5 Flash-Lite", desc: "Google Gemini AI — disabled; Groq waterfall is the briefing source (free tier)" },
+  groq:         { name: "Groq", desc: "Groq AI — primary briefing waterfall: openai/gpt-oss-120b → llama-3.3-70b-versatile (free tier)" },
   tempest:      { name: "Tempest",      desc: "WeatherFlow Tempest — 3 public stations within 0.4mi (Willow Rd, Driftwood Rd, Neptune Rd); lightning, solar radiation, wind lull, wet bulb" },
 };
 
@@ -143,7 +143,8 @@ function renderSources(sources, pwsStale) {
       }
 
       const rowOpacity = isStandbyBriefingSource ? "opacity:0.4;" : "";
-      const standbyTag = isStandbyBriefingSource ? ` <span style="font-size:0.7rem;opacity:0.6;">(standby)</span>` : "";
+      const standbyLabel = key === "gemini" ? "disabled" : "standby";
+      const standbyTag = isStandbyBriefingSource ? ` <span style="font-size:0.7rem;opacity:0.6;">(${standbyLabel})</span>` : "";
       // v0.6.131: stale-rescue detection. When generate_briefing() falls
       // through to the "last-good cached" branch because every live LLM tier
       // failed/was-rejected this tick, the collector stamps briefing.stale=true.
