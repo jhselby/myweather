@@ -89,6 +89,37 @@ def _kalman_gain(n_stations, bias_std):
         return 0.40
 
 
+def _kalman_gain_cloud(n_sources, bias_std):
+    """L2 Kalman gain for cloud cover. Sources are KBOS + KBVY METARs (n_sources
+    is typically 1 or 2). Tuned for cloud-cover scale (percentage points), not
+    temperature.
+
+    Unlike temp/humidity where station disagreement implies sensor noise, for
+    cloud cover KBOS-vs-KBVY disagreement usually reflects REAL spatial
+    gradient — cloud fields are inherently patchy and the airports are 12mi
+    apart. So we don't downweight obs as aggressively when sources disagree.
+    Thresholds (retuned 2026-06-20 evening after K=0.55 displayed 35% under
+    KBOS=75/KBVY=38 reality of partly-to-mostly cloudy):
+      <20 pp = "agreement"          → K=0.90
+      <40 pp = "moderate gradient"  → K=0.70
+      ≥40 pp                        → K=0.50 (large gradient — obs still beat
+                                              raw HRRR but with more caution)
+      single source                 → K=0.35
+    With n=2 we keep K high because the alternative (raw HRRR cloud at 0-hr)
+    is typically MAE 20-30 pp per the R0 audit — METAR ceilometer obs are
+    materially more trustworthy than that even with mid-range disagreement.
+    """
+    if n_sources >= 2 and bias_std < 20.0:
+        return 0.90
+    elif n_sources >= 2 and bias_std < 40.0:
+        return 0.70
+    elif n_sources >= 2:
+        return 0.50
+    elif n_sources >= 1:
+        return 0.35
+    return 0.0
+
+
 def _kalman_gain_humidity(n_stations, bias_std):
     # Humidity octant-scatter scale is different from temperature: WU
     # hygrometers are noisier (cheap sensors, calibration drift), so even in
@@ -313,6 +344,12 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
                 if model_p_in is not None:
                     hyperlocal["model_pressure_in"] = model_p_in
                     hyperlocal["bias_pressure_in"] = round(corrected_pressure - model_p_in, 3)
+
+            # Cloud cover L2 (added 2026-06-20): handled by a separate
+            # processor (cloud_obs_blend.py) that runs AFTER trim so the
+            # model reference is HRRR hourly[0], not the GFS-sourced
+            # current.cloud_cover. Same _kalman_gain_cloud() function is
+            # used there. See cloud_obs_blend.py for the wiring.
     
     # Fallback: WU stations available but model temp missing — use WU average directly
     elif model_t is None and stations:

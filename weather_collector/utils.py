@@ -96,9 +96,16 @@ def steadman_feels_like_f(temp_f, rh_pct=None, wind_mph=None, solar_wm2=None):
 
 
 def get_weather_description(code: int) -> str:
-    """Convert WMO weather code to human-readable description."""
+    """Convert WMO weather code to human-readable description.
+
+    Code 100 (Mostly Cloudy) is a local extension to fill the perceptual gap
+    between Partly Cloudy and Overcast — added 2026-06-20 v0.6.154.
+    Set by current_from_hourly._derive_weather_code() based on the 5-band
+    cloud_cover thresholds matching NWS/civilian convention. Code 100 is
+    out of WMO range; only our internal derive function emits it.
+    """
     codes = {
-        0: "Clear", 1: "Mostly Clear", 2: "Partly Cloudy", 3: "Overcast",
+        0: "Clear", 1: "Mostly Clear", 2: "Partly Cloudy", 100: "Mostly Cloudy", 3: "Overcast",
         45: "Fog", 48: "Freezing Fog",
         51: "Light Drizzle", 53: "Drizzle", 55: "Heavy Drizzle",
         61: "Light Rain", 63: "Rain", 65: "Heavy Rain",
@@ -113,7 +120,7 @@ def get_weather_description(code: int) -> str:
 def get_weather_emoji(code: int) -> str:
     """Convert WMO weather code to emoji."""
     emojis = {
-        0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️",
+        0: "☀️", 1: "🌤️", 2: "⛅", 100: "🌥️", 3: "☁️",
         45: "🌫️", 48: "🌫️",
         51: "🌦️", 53: "🌧️", 55: "🌧️",
         61: "🌧️", 63: "🌧️", 65: "🌧️",

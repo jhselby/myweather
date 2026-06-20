@@ -264,7 +264,15 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data,
             if kbvy_data.get("wind_dir") is not None:
                 auth_dirs.append(kbvy_data["wind_dir"])
         auth_speed = statistics.median(auth_speeds) if len(auth_speeds) >= 2 else None
-        auth_gust = statistics.median(auth_gusts) if len(auth_gusts) >= 2 else None
+        # Gust: drop the n>=2 requirement (v0.6.154). METAR convention only
+        # reports gust when it exceeds the steady wind by ≥10 kt, so a
+        # missing-gust source means "no notable gust here," NOT "no data."
+        # With a single authoritative gust value still trustworthy as a
+        # floor, we use it whenever any airport reports one. Caught
+        # 2026-06-20: KBVY had wind=10kt and no gust, KBOS had gust=23kt,
+        # auth-floor only fired on speed and kept the PWS-octant gust of
+        # 8.4 mph — physically impossible (gust < wind).
+        auth_gust = statistics.median(auth_gusts) if len(auth_gusts) >= 1 else None
         if auth_speed is not None and auth_speed > selected_speed * AUTH_SPEED_RATIO:
             logging.warning(
                 f"  ⚠️ Wind authoritative-floor: KBOS+KBVY median "
@@ -363,6 +371,24 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data,
                         "consensus_n": len(consensus_dirs),
                         "offset_deg": round(diff, 1),
                     }
+
+    # Physical sanity floor (v0.6.154): gust >= wind. By definition a gust is
+    # a transient peak above the sustained wind speed. When the selectors
+    # source wind and gust from different paths (e.g., auth-floor speed from
+    # KBOS+KBVY but octant-median gust from PWS), it's possible to display
+    # gust < wind. METAR convention only reports gust when it exceeds wind
+    # by ≥10 kt — so a missing METAR gust means "wind is steady, no notable
+    # gust," not "no data." Floor gust = wind × 1.05 in that case (small
+    # premium to read as a true peak rather than equal-to-sustained).
+    cur_w = current.get("wind_speed")
+    cur_g = current.get("wind_gusts")
+    if cur_w is not None and cur_g is not None and cur_g < cur_w:
+        new_g = round(cur_w * 1.05, 1)
+        logging.info(
+            f"  ↪ Wind gust floor: gust {cur_g} < wind {cur_w} (physically "
+            f"impossible) — raising to {new_g}"
+        )
+        current["wind_gusts"] = new_g
 
     # Final fallback: if GFS failed and nothing yielded a direction, use KBVY
     if current.get("wind_direction") is None and kbvy_data and kbvy_data.get("wind_dir") is not None:

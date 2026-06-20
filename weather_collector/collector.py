@@ -423,6 +423,19 @@ def main():
     # Trim hourly arrays so they start at the current local hour
     trim_hourly_to_current_hour(weather_data)
 
+    # L2 cloud blend — Kalman-gated KBOS+KBVY METAR override of hourly[0]
+    # cloud_cover (+ L/M/H splits). Same _kalman_gain_cloud() pattern as the
+    # temp/humidity L2 logic in hyperlocal.py, just runs AFTER trim so the
+    # model reference is HRRR (correct) rather than GFS (the parallel-fetch
+    # bug being fixed). When sources agree (low bias_std) K is high → obs
+    # dominates; when sources disagree wildly K is low → HRRR dominates.
+    try:
+        from .processors.cloud_obs_blend import blend_metar_cloud_into_hourly
+        blend_metar_cloud_into_hourly(weather_data,
+                                      fetched.kbos_data, fetched.kbvy_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  L2 cloud blend skipped: {redact_secrets(e)}")
+
     # Apply per-lead decay corrections (Piece 4) on top of the existing bias
     # correction and wind blend. Runs after trim so array index == lead_h.
     # Snapshot was already logged inside build_weather_data, so this does not
@@ -431,6 +444,18 @@ def main():
         apply_decay_corrections(weather_data)
     except Exception as e:
         logging.warning(f"  ⚠  Decay apply failed: {redact_secrets(e)}")
+
+    # FOUNDATIONAL: sync weather_data["current"] from corrected hourly[0].
+    # Every "current conditions" card across the app reads current.*; the
+    # contract is that those values are the L1→L4-corrected hourly[0]
+    # values, not raw model or parallel GFS. Runs last so it sees the
+    # output of every layer above. See processors/current_from_hourly.py
+    # for the full design note.
+    try:
+        from .processors.current_from_hourly import sync_current_from_hourly_corrected
+        sync_current_from_hourly_corrected(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  current sync from hourly[0] skipped: {redact_secrets(e)}")
 
     # Backtest snapshot: write raw L1 forecast arrays (now populated via
     # decay_apply's raw_* stamping) + per-station obs. Backtest framework
