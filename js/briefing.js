@@ -1020,6 +1020,37 @@
 
 })();
 
+// L6 confidence-layer status line.
+// Shown only when data.confidence.applied (L6 ENABLED) AND in_transition.
+// Both are False during Stage 3 (v0.6.141), so the line is dormant until the
+// calibration audit confirms the bands and ENABLED is flipped.
+function renderRegimeStatus(data) {
+  const el = document.getElementById('briefRegimeStatus');
+  if (!el) return;
+  const c = data && data.confidence;
+  if (!c || !c.applied || !c.in_transition) {
+    el.style.display = 'none';
+    return;
+  }
+  // Summarize the directional structure of what's wired: how many fields
+  // widen vs narrow on this transition. Useful at-a-glance signal.
+  let widen = 0, narrow = 0;
+  for (const field of Object.keys(c.cells || {})) {
+    for (const band of Object.keys(c.cells[field] || {})) {
+      const entry = c.cells[field][band];
+      if (entry.direction === 'WIDEN')  widen++;
+      if (entry.direction === 'NARROW') narrow++;
+    }
+  }
+  const obs = c.regime_obs || 'unknown';
+  const pred = c.regime_pred || 'unknown';
+  el.textContent =
+    'Regime transition: ' + obs + ' → ' + pred +
+    ' · widened confidence on ' + widen + ' field/bands' +
+    (narrow > 0 ? ', tighter on ' + narrow : '') + '.';
+  el.style.display = 'block';
+}
+
 // Briefing Tab Renderer
 function renderBriefing(data) {
   if (typeof generateBriefing !== 'function') return;
@@ -1056,6 +1087,10 @@ function renderBriefing(data) {
   }
   const sm = document.getElementById('briefSummary');
   if (sm) sm.textContent = b.summary;
+  // L6 confidence layer status line. Gated by data.confidence.applied so the
+  // dormant Stage 3 candidate (ENABLED=False in confidence_layer.py) stays
+  // invisible until calibration confirms the bands are honest. v0.6.141.
+  renderRegimeStatus(data);
   const sn = document.getElementById('briefTempNow');
   if (sn) sn.innerHTML = (b.stats.now ?? '--') + '<span class="unit">°</span>';
   const sh = document.getElementById('briefTempHigh');
