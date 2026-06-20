@@ -34,16 +34,16 @@ STATIONS = [
     "KMAMARBL22", "KMAMARBL42", "KMAMARBL43",
     "KMAMARBL68", "KMAMARBL75", "KMAMARBL76",
     "KMAMARBL82", "KMAMARBL90", "KMAMARBL92",
-    "KMAMARBL96", "KMAMARBL100", "KMAMARBL116",
+    "KMAMARBL100", "KMAMARBL116",
     # Added 2026-06-02: 1.5–2.5mi expansion, Salem-side gap fill
-    "KMAMARBL99", "KMAMARBL85",
+    "KMAMARBL85",
     "KMAMARBL8", "KMAMARBL64", "KMAMARBL1",
-    "KMAMARBL113", "KMAMARBL34",
-    "KMASALEM18", "KMASALEM91", "KMASALEM30",
+    "KMAMARBL113",
+    "KMASALEM91", "KMASALEM30",
     "KMASALEM15", "KMASALEM118",
     "KMASALEM117", "KMASALEM74", "KMASALEM105", "KMASALEM87",
     "KMASALEM37", "KMASALEM112", "KMASALEM116",
-    "KMASWAMP26", "KMASWAMP37", "KMASWAMP24", "KMASWAMP38",
+    "KMASWAMP26", "KMASWAMP37", "KMASWAMP38",
 ]
 
 # Culled 2026-06-04 (v0.6.40 session) — WU API returns HTTP 204 (No Content)
@@ -58,6 +58,14 @@ CULLED_STATIONS = [
     # Culled 2026-06-10 (v0.6.64): 0% uptime across the full 7-day station_uptime
     # window (1002/1002 fetch-fails each). Same shape as the 2026-06-04 cull.
     "KMAMARBL40", "KMAMARBL61", "KMAMARBL95", "KMAMARBL114",
+    # Culled 2026-06-19 (v0.6.144): 0% uptime on the 06-19 station_uptime audit.
+    # All five were in the expanded 1.5–2.5mi Salem-side set added 06-02; uptime
+    # never recovered. The two stations with broken humidity sensors but valid
+    # temp/wind/pressure (KMASALEM15 -71%, KMAMARBL87 -76%) were NOT culled —
+    # the per-tick outlier trim handles the bad humidity without sacrificing
+    # the other fields.
+    "KMAMARBL96", "KMAMARBL99", "KMAMARBL34",
+    "KMASALEM18", "KMASWAMP24",
 ]
 
 # Wyman Cove reference point (16 Indianhead Circle)
