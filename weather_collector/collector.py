@@ -96,7 +96,8 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     
     
     # Wind: override model with best available observation
-    select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data)
+    select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data,
+                         kbos_data=kbos_data)
 
     # Hourly forecast
     normalized_hourly = normalize_hourly(hourly_data)

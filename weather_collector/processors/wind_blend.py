@@ -137,13 +137,18 @@ def _tempest_candidates(tempest_data):
     return candidates
 
 
-def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data):
+def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data,
+                         kbos_data=None):
     """Override model wind with the best available observation.
 
     Mutates weather_data["current"] in place, setting:
       - wind_speed, wind_gusts, wind_direction (chosen values)
       - model_wind_speed, model_wind_gusts (preserved original model values)
       - condition_source (e.g., "Tempest_PoolHouse observed")
+
+    kbos_data passed in explicitly (added 2026-06-20) because the collector
+    writes weather_data["kbos"] AFTER this function runs — looking via
+    weather_data.get("kbos") returns None at this point.
     """
     current = weather_data["current"]
 
@@ -232,6 +237,52 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data):
         current["wind_gusts"] = selected_gust
         current["wind_speed"] = selected_speed
 
+        # Authoritative-source floor (added 2026-06-20 after octant_median
+        # underreported 10/15 mph during a real 17/27 mph W event — every
+        # PWS had wind_dir=None and median across sheltered backyard octants
+        # dropped well below the true wind).
+        #
+        # KBOS and KBVY are land airports within ~15 miles, mounted at proper
+        # exposure. Buoy 44013 is excluded — it's 25 mi offshore in open
+        # water, a different wind regime entirely. When BOTH airports agree
+        # AND their mean is materially higher than what the octant logic
+        # picked, defer to them. Mirrors the existing WU_CAP guardrail in
+        # the opposite direction.
+        AUTH_SPEED_RATIO = 1.4
+        auth_speeds, auth_gusts, auth_dirs = [], [], []
+        kbos = kbos_data or weather_data.get("kbos") or {}
+        if kbos.get("wind_speed_kt") is not None:
+            auth_speeds.append(kbos["wind_speed_kt"] * KT_TO_MPH)
+            if kbos.get("wind_gust_kt") is not None:
+                auth_gusts.append(kbos["wind_gust_kt"] * KT_TO_MPH)
+            if kbos.get("wind_dir") is not None:
+                auth_dirs.append(kbos["wind_dir"])
+        if kbvy_data and kbvy_data.get("wind_speed_kt") is not None:
+            auth_speeds.append(kbvy_data["wind_speed_kt"] * KT_TO_MPH)
+            if kbvy_data.get("wind_gust_kt") is not None:
+                auth_gusts.append(kbvy_data["wind_gust_kt"] * KT_TO_MPH)
+            if kbvy_data.get("wind_dir") is not None:
+                auth_dirs.append(kbvy_data["wind_dir"])
+        auth_speed = statistics.median(auth_speeds) if len(auth_speeds) >= 2 else None
+        auth_gust = statistics.median(auth_gusts) if len(auth_gusts) >= 2 else None
+        if auth_speed is not None and auth_speed > selected_speed * AUTH_SPEED_RATIO:
+            logging.warning(
+                f"  ⚠️ Wind authoritative-floor: KBOS+KBVY median "
+                f"{auth_speed:.1f} mph > {AUTH_SPEED_RATIO}× selected "
+                f"{selected_speed:.1f} mph — deferring to airport towers"
+            )
+            selected_speed = round(auth_speed, 1)
+            if auth_gust is not None:
+                selected_gust = round(auth_gust, 1)
+            current["wind_speed"] = selected_speed
+            current["wind_gusts"] = selected_gust
+            current["wind_aggregation"] = "authoritative_floor (KBOS+KBVY)"
+            current["condition_source"] = "KBOS+KBVY consensus"
+            current["wind_authoritative_floor"] = {
+                "auth_speed": round(auth_speed, 1),
+                "n_sources": len(auth_speeds),
+            }
+
         # Direction: prefer the freshest waterfront Tempest, fall back to max-gust source
         waterfront_tempest = [
             c for c in candidates
@@ -248,9 +299,25 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data):
                 current["wind_direction"] = float(dir_source["direction"])
             except (ValueError, TypeError):
                 pass  # Keep existing numeric value from Open-Meteo
+        elif len(auth_dirs) >= 2:
+            # No PWS provided direction (today's failure mode: all Tempest
+            # and WU report wind_dir=None during the 17/27 W event). Don't
+            # leave the model's value standing — it was 87° off W. Use the
+            # authoritative tower-source mean instead.
+            auth_dir = _circular_mean(auth_dirs)
+            if auth_dir is not None:
+                current["wind_direction"] = round(auth_dir, 1)
+                logging.info(
+                    f"  ↪ Wind direction: no PWS direction data; using "
+                    f"KBOS/KBVY/buoy circular mean {auth_dir:.0f}° "
+                    f"(n={len(auth_dirs)}) instead of model {current.get('model_wind_speed')}"
+                )
 
-        current["condition_source"] = f"{max_gust_entry['source']} observed"
-        current["wind_aggregation"] = wind_aggregation
+        # Don't clobber condition_source/aggregation if the authoritative
+        # floor already labeled them.
+        if not current.get("wind_aggregation", "").startswith("authoritative"):
+            current["condition_source"] = f"{max_gust_entry['source']} observed"
+            current["wind_aggregation"] = wind_aggregation
 
         # Direction consensus guardrail (added 2026-06-15 after Neptune Rd
         # was seen reporting 92° while every other source said NW ~310°).
@@ -258,12 +325,16 @@ def select_observed_wind(weather_data, kbvy_data, wu_data, tempest_data):
         # off from the circular mean of every reliable direction source,
         # the chosen station's sensor is likely misaligned/drifting — fall
         # back to the consensus instead.
-        DIRECTION_OUTLIER_THRESHOLD = 90.0
+        # Threshold tightened 2026-06-20 from 90° → 60°. Today's failure
+        # was chosen=352° (model fallback) vs consensus=265° — circular
+        # diff = 87°, which slipped under the old 90° gate. 60° still
+        # leaves comfortable room for legitimate boundary-layer turns.
+        DIRECTION_OUTLIER_THRESHOLD = 60.0
         DIRECTION_MIN_SOURCES = 3
         consensus_dirs = []
         if kbvy_data and kbvy_data.get("wind_dir") is not None:
             consensus_dirs.append(kbvy_data["wind_dir"])
-        kbos = weather_data.get("kbos") or {}
+        kbos = kbos_data or weather_data.get("kbos") or {}
         if kbos.get("wind_dir") is not None:
             consensus_dirs.append(kbos["wind_dir"])
         buoy = weather_data.get("buoy_44013") or {}

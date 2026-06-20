@@ -23,14 +23,16 @@ FROST_LOG_FILE = Path("/tmp/frost_log.json")
 # Wind Exposure Model
 
 WIND_EXPOSURE_TABLE = [
-    [  0,  25, 1.00],  # N-NNE - open harbor, max exposure
-    [ 25,  45, 0.70],  # NE - 39ft terrain ~200ft away, partial blocking
-    [ 45, 100, 0.25],  # E-ESE - 39-68ft Westlot/Ridge terrain close, heavy blocking
-    [100, 200, 0.08],  # SE-S - Marblehead + local terrain, maximum shelter
-    [200, 260, 0.10],  # SSW-WSW - 39-78ft Crestwood/Pinecliff close, heavy blocking
-    [260, 290, 0.40],  # W - 39ft close but harbor opens beyond, moderate
-    [290, 320, 0.75],  # WNW-NW - harbor opening, high exposure
-    [320, 360, 1.00],  # NW-N - open harbor, max exposure
+    # Joe's direct-exposure window (2026-06-20): 270° (W) through just past
+    # 0° (N) is open to the wind. Shelter builds from there going either
+    # direction — gradient zones bracket the direct band.
+    [  0,  15, 1.00],  # N - still direct ("just past 0")
+    [ 15,  45, 0.70],  # NNE-NE - shelter starts building CW
+    [ 45, 100, 0.25],  # E-ESE - 39-68ft Westlot/Ridge terrain close
+    [100, 200, 0.08],  # SE-S - Marblehead + local terrain, max shelter
+    [200, 245, 0.10],  # SSW-WSW - 39-78ft Crestwood/Pinecliff close
+    [245, 270, 0.55],  # W-edge - shelter releasing toward direct band
+    [270, 360, 1.00],  # W through N - direct exposure
 ]
 WORRY_NOTICEABLE, WORRY_NOTABLE, WORRY_SIGNIFICANT, WORRY_SEVERE = 5, 12, 20, 30
 
