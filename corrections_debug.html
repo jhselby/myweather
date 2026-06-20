@@ -2473,8 +2473,21 @@ function renderShadowWhitelistSection(doc, wxDoc) {
   const latestL5 = _l5(latest);
   const latestR6 = _r6(latest);
 
+  // Promotion-gate progress: the shadow recommendation must hold for ≥7
+  // consecutive Fitter cycles before it's treated as a confident signal for
+  // the formal walk-forward L3/L4 audit. held_cycles is bumped on dedup-skip
+  // by the Fitter; last_evaluated_at on the log root proves the tuner ran
+  // even when no entry was appended.
+  const HOLD_GATE = 7;
+  const held = Number(latest.held_cycles || 1);
+  const lastEval = doc.last_evaluated_at || latest.last_seen_at || latest.fitted_at;
+  const gateState = held >= HOLD_GATE
+    ? `<span style="color:#4ad29a;font-weight:600;">at gate (${held}/${HOLD_GATE})</span>`
+    : `<span style="opacity:0.85;">${held}/${HOLD_GATE} cycles toward gate</span>`;
+
   let html = `<div style="margin-bottom:14px;">
-    <strong>Latest shadow recommendation</strong> (${_fmtLocal(latest.fitted_at)}):
+    <strong>Latest shadow recommendation</strong> (${_fmtLocal(latest.fitted_at)})
+    <span style="opacity:0.7;font-size:0.9em;">— held ${held} Fitter cycle${held === 1 ? "" : "s"}, ${gateState}; tuner last evaluated ${_fmtLocal(lastEval)}</span>:
     <table style="margin-top:6px;border-collapse:collapse;font-size:0.92em;">
       <tr><td style="padding:2px 12px 2px 0;">Production L3:</td><td>${fmtSet(latest.current_l3)}</td></tr>
       <tr><td style="padding:2px 12px 2px 0;">Shadow L3:</td><td>${fmtSet(latest.shadow_l3)} ${matchL3 ? '<span style="color:#4ad29a;">match</span>' : '<span style="color:#fb7c5c;">differs</span>'}</td></tr>

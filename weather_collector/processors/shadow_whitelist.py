@@ -164,9 +164,13 @@ def log_shadow_recommendation(ts_diag, current_l3_fields, current_l4_fields,
 
     log = load_json(LOG_PATH, default={"entries": []})
     entries = [e for e in log.get("entries", []) if e.get("fitted_at", "") >= cutoff]
-    # Dedup: skip if the last entry has the same shadow rec AND the same
-    # conditional audit verdicts (a flip from HOLD to SHIP on R5/L5 is
+    last_evaluated_at = fitted_at
+    # Dedup: skip appending if the last entry has the same shadow rec AND the
+    # same conditional audit verdicts (a flip from HOLD to SHIP on R5/L5 is
     # meaningful and should produce a new entry even if L3/L4 are unchanged).
+    # On a dedup-skip we still bump the last entry's held_cycles + the log's
+    # last_evaluated_at so consumers can see "tuner ran, rec stable" rather
+    # than misreading the unchanged file mtime as "tuner stalled".
     if entries:
         last = entries[-1]
         same_whitelists = (last.get("shadow_l3") == entry["shadow_l3"]
@@ -176,9 +180,16 @@ def log_shadow_recommendation(ts_diag, current_l3_fields, current_l4_fields,
         same_conditionals = _same_conditional_verdicts(
             last.get("conditional_audits"), entry.get("conditional_audits"))
         if same_whitelists and same_conditionals:
+            last["held_cycles"] = int(last.get("held_cycles", 1)) + 1
+            last["last_seen_at"] = fitted_at
+            upload_json({"entries": entries, "last_evaluated_at": last_evaluated_at},
+                        LOG_PATH, LOG_PATH)
             return
+    entry["held_cycles"] = 1
+    entry["last_seen_at"] = fitted_at
     entries.append(entry)
-    upload_json({"entries": entries}, LOG_PATH, LOG_PATH)
+    upload_json({"entries": entries, "last_evaluated_at": last_evaluated_at},
+                LOG_PATH, LOG_PATH)
 
 
 def _same_conditional_verdicts(prev, curr):
