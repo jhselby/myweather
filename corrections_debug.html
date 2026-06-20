@@ -945,6 +945,38 @@
   <div class="meta-line" style="margin-bottom:10px;"><strong>Manual script:</strong> <code>analysis/regime_transition_audit.py</code> (single-window detail). <strong>Promotion gate:</strong> <code>analysis/simulate_windows.py</code> (7-window agreement test). Live verdict appears in S1 below once the first Fitter cycle runs.</div>
 </details>
 
+<details class="research-subsection" id="hypothesis-backlog" style="margin-top:18px;border-color:#3a3a55;background:#13131e;">
+  <summary style="color:#a8a8d0;"><strong>Backlog</strong> — Stage 1 candidates (curated text, not yet running)</summary>
+  <div class="meta-line" style="margin-top:10px;"><strong>What these are:</strong> hypothesis ideas at Stage 1 of the promotion pipeline — written down, not yet wired to a script. Promotion path: Stage 1 (this list) → Stage 2 (one-off <code>analysis/*</code> script + verdict) → Stage 3 (auto-wired in Fitter, logged per cycle) → Stage 4 (shipped layer or confidence widening).</div>
+
+  <div class="meta-line" style="margin-top:8px;background:#101019;border:1px solid #2a2a3a;border-radius:6px;padding:10px 12px;">
+    <strong style="color:#d4a373;">Framing (2026-06-20):</strong> the 8 ideas Joe listed don't peer-rank cleanly as "8 future layers." Most are confidence signals, not bias signals — they belong as <em>axes</em> of L6, not as standalone L7/L8/L9. The two real bias-correction candidates (marine layer, radiational cooling) overlap heavily with L2 (waterfront capture) and L4 (diurnal). Grouped below by how they should actually be worked.
+  </div>
+
+  <h4 style="color:#4ad29a;margin-top:16px;margin-bottom:6px;">Group A — L6 multi-axis confidence extension (this week)</h4>
+  <div class="meta-line" style="margin-bottom:8px;">L6 currently widens/narrows confidence on a single axis (regime-synoptic transition, stamped 06-19). These three add orthogonal axes to the same calibration table. All use data already in the pair log. All feed the existing L6 Stage 3.5 calibration audit on 2026-06-26 — no new infrastructure.</div>
+  <ul style="margin:0 0 0 22px;padding:0;line-height:1.55;">
+    <li style="margin-bottom:8px;"><strong style="color:#4ad29a;">★ Station-cluster disagreement</strong> (Joe top-3). When Marblehead / Salem / Swampscott PWS clusters disagree on temp / humidity / wind, that-hour forecast error is plausibly higher. One scalar per tick: cluster-spread σ. Verdict: does it correlate with |error| by field? If yes → L6 axis.</li>
+    <li style="margin-bottom:8px;"><strong>KBOS-vs-KBVY cloud disagreement.</strong> Same idea applied to the new blended cloud obs (v0.6.134). When the two METAR sources disagree sharply on sky cover, cloud confidence widens. Companion to cluster-spread — runs on the same script with a different metric.</li>
+    <li style="margin-bottom:8px;"><strong>Pressure-tendency regime.</strong> dP/dt (falling fast / flat / rising post-frontal) as an orthogonal regime axis to L6's current synoptic classifier. Pair log already has pressure history.</li>
+  </ul>
+
+  <h4 style="color:#5d8fc4;margin-top:18px;margin-bottom:6px;">Group B — Bias candidates (paced, individually)</h4>
+  <ul style="margin:0 0 0 22px;padding:0;line-height:1.55;">
+    <li style="margin-bottom:8px;"><strong style="color:#4ad29a;">★ Cloud-ceiling regime correction</strong> (Joe top-3). cc/cl/cm/ch L3/L4 walk-forward read is already gated to ~2026-06-26 — runs alongside it. Test whether errors differ by low-cloud-present vs mid/high-only and by ceiling-trend direction. May come out as a bias or as a confidence axis; the same script answers both.</li>
+    <li style="margin-bottom:8px;"><strong style="color:#4ad29a;">★ Marine-layer / harbor inversion correction</strong> (Joe top-3). <em>Risk:</em> 5-axis bins (hour × wd × ws × T-Td × dP/dt) on cove-only data tears sample size apart, AND L2's waterfront weighting (Willow Rd + Neptune Rd) may already capture it. <em>Pilot first:</em> single-axis (NE flow only, sunrise hour only) to see if any cove-specific signal survives L2. Wait for the L2-as-observation-only architectural decision to land before going multi-axis.</li>
+    <li style="margin-bottom:8px;"><strong>Clear-night radiational cooling.</strong> Bins are physical and clean: clear sky + low wind + dry air. Narrow window (only nights, only ~30% of nights match) — sample size may be thin after stratification. Reasonable Q3 candidate.</li>
+  </ul>
+
+  <h4 style="color:#a08070;margin-top:18px;margin-bottom:6px;">Group C — Lower priority (dominated by existing layers)</h4>
+  <ul style="margin:0 0 0 22px;padding:0;line-height:1.55;">
+    <li style="margin-bottom:8px;"><strong>Wind-direction sector correction for gusts.</strong> L3 already does heavy lifting on ws/wg (in production whitelist). The bar is "does directional structure survive after L3 has eaten the bulk signal?" — high bar. Worth revisiting if Group A/B come up empty.</li>
+    <li style="margin-bottom:8px;"><strong>Sea-breeze onset/decay timing (5-phase).</strong> Overlaps marine layer (#1) on onshore-flow hours and L4 diurnal on timing. If marine layer pilots out, this folds in; if it doesn't, this probably doesn't either.</li>
+  </ul>
+
+  <div class="meta-line" style="margin-top:14px;opacity:0.8;">Promotion rule: write a single-shot script in <code>analysis/</code>. Stage 2 verdict must hold across at least 2 reads spaced 3+ days apart. Group A candidates promote to L6 axes (no R-number); Group B candidates earn R-numbers if they survive the 7-window walk-forward gate.</div>
+</details>
+
 <h3 class="subsection" style="margin-top:24px;color:#5d8fc4;">Operational tools — live audits &amp; shadow tracking</h3>
 
 <details class="research-subsection" id="gated-candidates">
