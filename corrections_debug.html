@@ -696,7 +696,7 @@
 <details class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;" open>
   <summary style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">
     <strong style="color:#7fb3ff;font-size:1.05em;">Status — where we are</strong>
-    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-19 v0.6.142 (click to collapse)</span>
+    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-19 v0.6.145 (click to collapse)</span>
   </summary>
   <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production (L1 raw → L2 mesonet → L3 lead-decay → L4 hour-of-day). L5 regime solar layer built but gated off (flickering on promotion gate). L6 confidence layer (first non-MAE-reducing layer) Stages 1-4a shipped 2026-06-19 in v0.6.141/142, gated; calibration audit due ~06-26. R6 audit was the original input for L6 but the bias-correction interpretation was ruled out — L6 pivoted to confidence-widening. R5 and R4 retired after audits ruled them out.</div>
 
@@ -776,7 +776,7 @@
     <div class="meta-line"><strong>The four lines are cumulative correction layers, stacked from worst to best:</strong></div>
     <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.5">
       <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
-      <li><strong>Mesonet</strong> (orange): adds Layer 2 — what 60+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
+      <li><strong>Mesonet</strong> (orange): adds Layer 2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
       <li><strong>Lead-time decay</strong> (light blue): adds Layer 3 — a historical per-lead bias correction learned from the pair log. Different bias for each lead hour: "this model tends to be 2°F too cool at lead 6, 1°F too warm at lead 12," etc.</li>
       <li><strong>Hour of day</strong> (bright blue): adds Layer 4 — a diurnal correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). This is the final line — what users actually see in the app for fields where every layer is on.</li>
     </ul>
