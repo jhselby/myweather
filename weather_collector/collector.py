@@ -204,6 +204,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     update_history(_station_history, wu_data, tempest_data)
     save_history(_station_history, _gcs, BUCKET)
 
+    # Per-tick inter-cluster spread (Marblehead/Salem/Swampscott PWS clusters).
+    # Best-effort logger feeding the L6 confidence-layer axis evaluation.
+    # Orthogonality to R6 confirmed 2026-06-20 (16/20 field-band combos).
+    try:
+        from .processors.cluster_spread import stamp_and_log as stamp_cluster_spread
+        stamp_cluster_spread(weather_data, wu_data, _gcs, BUCKET)
+    except Exception as e:
+        logging.warning(f"  ⚠  cluster_spread skipped: {e}")
+
     # Bias-corrected hourly arrays (must run after build_hyperlocal_data)
     add_corrected_hourly_arrays(weather_data)
     _hyp = weather_data.get("hyperlocal", {})
