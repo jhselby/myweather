@@ -208,8 +208,12 @@ def build_hyperlocal_data(weather_data, wu_data, pws_data, kbos_data, tempest_da
             station_biases.append(bias_at_station)
             stations_used += 1
 
-            # Humidity
-            raw_h = station.get('humidity_pct') or station.get('relative_humidity')
+            # Humidity. Skip stations on the broken-sensor denylist (see
+            # station_bias.HUMIDITY_DENYLIST). Their temp/wind/pressure are
+            # still useful so we don't cull the station entirely.
+            from .station_bias import HUMIDITY_DENYLIST
+            raw_h = (None if sid in HUMIDITY_DENYLIST
+                     else station.get('humidity_pct') or station.get('relative_humidity'))
             if raw_h is not None:
                 corrected_h = raw_h - humidity_offsets.get(sid, 0.0)
                 oct_h[oct].append((corrected_h, weight))

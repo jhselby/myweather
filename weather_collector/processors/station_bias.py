@@ -41,7 +41,26 @@ def _weight(station):
     return (1.0 / dist ** 2) * math.exp(-abs(elev - ELEVATION_FT) / 30.0)
 
 
+"""Per-station denylists for fields where a specific sensor is known broken
+but the station's other readings are still useful. Caught on the 2026-06-19
+audit: KMASALEM15 humidity bias -71.2%, KMAMARBL87 -76.3% — both stations
+report valid temp/wind/pressure. The MAD outlier trim already drops these
+values per-tick, but explicit denylisting keeps the trim's noise floor clean
+and makes the broken sensor visible in code.
+"""
+HUMIDITY_DENYLIST = frozenset({
+    "KMASALEM15",
+    "KMAMARBL87",
+})
+
+
+def _sid_for_denylist(station):
+    return station.get('station_id') or station.get('station_name')
+
+
 def _humidity(station):
+    if _sid_for_denylist(station) in HUMIDITY_DENYLIST:
+        return None
     return station.get('humidity_pct') or station.get('relative_humidity')
 
 
