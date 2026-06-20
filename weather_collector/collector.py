@@ -308,6 +308,16 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     except Exception as e:
         logging.warning(f"  ⚠  Solar L5 stamp failed: {redact_secrets(e)}")
 
+    # Confidence-layer L6 (regime-transition aware uncertainty, gated OFF).
+    # Stamps per-(field, band) widened/narrowed MAE bands on transition hours.
+    # Does NOT modify any forecast value — this is the first non-MAE-reducing
+    # layer in the stack. See [[project-l6-pivot-to-confidence]].
+    try:
+        from .processors.confidence_layer import stamp_confidence
+        stamp_confidence(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Confidence L6 stamp failed: {redact_secrets(e)}")
+
 
     # Process 7-day hourly data for forecast text generation
     if hourly_7day_data and "hourly" in hourly_7day_data:
