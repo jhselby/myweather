@@ -6,8 +6,8 @@ const SOURCE_META = {
   ecmwf_daily:  { name: "ECMWF",        desc: "European Centre model — 10-day daily forecast (Open-Meteo)" },
   pws:          { name: "PWS",           desc: "Single weather station KMAMARBL63 (Castle Hill, 0.27mi) — fallback only" },
   wu_stations:  { name: "WU Multi",     desc: "Distance- and elevation-weighted, quality-filtered local personal weather stations" },
-  kbos:         { name: "KBOS",         desc: "Boston Logan Airport ASOS — observed temp, pressure, tendency (NWS/aviationweather.gov)" },
-  kbvy:         { name: "KBVY",         desc: "Beverly Airport ASOS — observed temp, wind (NWS/aviationweather.gov)" },
+  kbos:         { name: "KBOS",         desc: "Boston Logan Airport ASOS — observed temp, pressure, tendency, cloud cover + L/M/H splits (NWS/aviationweather.gov)" },
+  kbvy:         { name: "KBVY",         desc: "Beverly Airport ASOS — observed temp, wind, cloud cover + L/M/H splits (NWS/aviationweather.gov)" },
   buoy_44013:   { name: "Buoy 44013",   desc: "NOAA Boston Buoy (16mi ENE) — water temp, waves, offshore wind (NDBC)" },
   tides:        { name: "Tides",        desc: "NOAA CO-OPS tide predictions — Salem Harbor station 8442645" },
   nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead (api.weather.gov)" },
@@ -15,7 +15,7 @@ const SOURCE_META = {
   ebird:        { name: "eBird",        desc: "Cornell eBird recent and notable bird observations near Marblehead" },
   gemini:       { name: "Gemini 2.5 Flash-Lite", desc: "Google Gemini AI — disabled; Groq waterfall is the briefing source (free tier)" },
   groq:         { name: "Groq", desc: "Groq AI — primary briefing waterfall: openai/gpt-oss-120b → llama-3.3-70b-versatile (free tier)" },
-  tempest:      { name: "Tempest",      desc: "WeatherFlow Tempest — 3 public stations within 0.4mi (Willow Rd, Driftwood Rd, Neptune Rd); lightning, solar radiation, wind lull, wet bulb" },
+  tempest:      { name: "Tempest",      desc: "WeatherFlow Tempest — 20 public stations within ~2.5mi (Willow Rd, Neptune Rd waterfront anchors); lightning, solar radiation, wind lull, wet bulb" },
 };
 
 const STATIC_SOURCES = [
