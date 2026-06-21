@@ -129,16 +129,16 @@ function renderSources(sources, pwsStale) {
             })),
           ].sort((a, b) => a.dist - b.dist);
           extraDetail = `
-            <div style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:0.75rem;">
-              <div style="font-weight:800;margin-bottom:6px;color:rgba(255,255,255,0.7);">
+            <details style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:0.75rem;">
+              <summary style="font-weight:800;color:rgba(255,255,255,0.7);cursor:pointer;list-style:none;">
                 ${allStations.length} Stations • ${quality.stations_used_temp || 0} used for temp • ${quality.stations_used_wind || 0} used for wind
-              </div>
-              <div style="color:rgba(255,255,255,0.5);line-height:1.6;">
+              </summary>
+              <div style="color:rgba(255,255,255,0.5);line-height:1.6;margin-top:6px;">
                 ${allStations.map(st =>
                   `<span style="color:rgba(255,255,255,0.3);font-size:0.7rem;">[${st.tag}]</span> ${st.label} (${st.dist}mi) - ${st.temp}, ${st.wind}${st.valid ? "" : " ⚠︎"}`
                 ).join('<br>')}
               </div>
-            </div>`;
+            </details>`;
         }
       }
 
