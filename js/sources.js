@@ -13,8 +13,7 @@ const SOURCE_META = {
   nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead (api.weather.gov)" },
   pirate_weather: { name: "Pirate Weather", desc: "Pirate Weather API — next 60 minutes precipitation, plus solar and CAPE" },
   ebird:        { name: "eBird",        desc: "Cornell eBird recent and notable bird observations near Marblehead" },
-  gemini:       { name: "Gemini 2.5 Flash-Lite", desc: "Google Gemini AI — disabled; Groq waterfall is the briefing source (free tier)" },
-  groq:         { name: "Groq", desc: "Groq AI — primary briefing waterfall: openai/gpt-oss-120b → llama-3.3-70b-versatile (free tier)" },
+  groq:         { name: "Groq", desc: "Groq AI — briefing waterfall: openai/gpt-oss-120b → llama-3.3-70b-versatile (free tier)" },
   tempest:      { name: "Tempest",      desc: "WeatherFlow Tempest — 20 public stations within ~2.5mi (Willow Rd, Neptune Rd waterfront anchors); lightning, solar radiation, wind lull, wet bulb" },
 };
 
@@ -59,13 +58,12 @@ function renderSources(sources, pwsStale) {
       if (CRITICAL_SOURCES.has(key)) anyCriticalError = true;
     }
   });
-  // Briefing counts as critical only if both Gemini and Groq are unavailable.
-  // briefing.model is "gemini" or "groq/<model-id>" (v0.6.130+).
+  // Briefing counts as critical only if Groq is unavailable.
+  // briefing.model is "groq/<model-id>" (Gemini retired from drawer in v0.6.164).
   const briefingModel = window.__lastWeatherData?.briefing?.model;
   const briefingProvider = briefingModel?.startsWith("groq/") ? "groq" : briefingModel;
-  const geminiOk = sources['gemini']?.status === 'ok' || briefingProvider === 'gemini';
-  const groqOk   = sources['groq']?.status === 'ok'   || briefingProvider === 'groq';
-  if (!geminiOk && !groqOk) anyCriticalError = true;
+  const groqOk = sources['groq']?.status === 'ok' || briefingProvider === 'groq';
+  if (!groqOk) anyCriticalError = true;
 
   const table = document.getElementById("sourcesTable");
   const tableModal = document.getElementById("sourcesTableModal");
@@ -84,11 +82,11 @@ function renderSources(sources, pwsStale) {
     ${order.map(key => {
       const s = sources[key];
       // briefing.model is "gemini" or "groq/<model-id>" (v0.6.130+).
-      const briefingModel = window.__lastWeatherData?.briefing?.model || "gemini";
+      const briefingModel = window.__lastWeatherData?.briefing?.model || "";
       const briefingProvider = briefingModel.startsWith("groq/") ? "groq" : briefingModel;
-      const isBriefingSource = key === "gemini" || key === "groq";
+      const isBriefingSource = key === "groq";
       const isActiveBriefingSource = isBriefingSource && key === briefingProvider;
-      const isStandbyBriefingSource = isBriefingSource && key !== briefingProvider;
+      const isStandbyBriefingSource = false;
       if (!s && !isBriefingSource) return "";
       const ok = isBriefingSource ? isActiveBriefingSource : s.status === "ok";
       let age = "--";
