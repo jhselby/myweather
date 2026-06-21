@@ -5,7 +5,7 @@ const SOURCE_META = {
   hrrr_hourly:  { name: "HRRR",         desc: "High-Resolution Rapid Refresh — 48h hourly forecast, cloud layers, upper-air (NOAA)" },
   ecmwf_daily:  { name: "ECMWF",        desc: "European Centre model — 10-day daily forecast (Open-Meteo)" },
   pws:          { name: "PWS",           desc: "Single weather station KMAMARBL63 (Castle Hill, 0.27mi) — fallback only" },
-  wu_stations:  { name: "WU Multi",     desc: "Distance- and elevation-weighted, quality-filtered local personal weather stations" },
+  wu_stations:  { name: "Mesonet",      desc: "Distance- and elevation-weighted, quality-filtered local personal weather stations" },
   kbos:         { name: "KBOS",         desc: "Boston Logan Airport ASOS — observed temp, pressure, tendency, cloud cover + L/M/H splits (NWS/aviationweather.gov)" },
   kbvy:         { name: "KBVY",         desc: "Beverly Airport ASOS — observed temp, wind, cloud cover + L/M/H splits (NWS/aviationweather.gov)" },
   buoy_44013:   { name: "Buoy 44013",   desc: "NOAA Boston Buoy (16mi ENE) — water temp, waves, offshore wind (NDBC)" },
@@ -102,6 +102,7 @@ function renderSources(sources, pwsStale) {
       const name = key === "pws" ? pwsName : meta.name;
 
       let extraDetail = "";
+      let descOverride = null;
       if (key === "wu_stations" && ok) {
         const wu = window.__lastWeatherData?.wu_stations;
         const tempest = window.__lastWeatherData?.tempest;
@@ -126,11 +127,10 @@ function renderSources(sources, pwsStale) {
               valid: st.valid !== false,
             })),
           ].sort((a, b) => a.dist - b.dist);
+          descOverride = `${allStations.length} stations • ${quality.stations_used_temp || 0} used for temp • ${quality.stations_used_wind || 0} used for wind`;
           extraDetail = `
             <details style="margin-top:8px;padding:10px;background:rgba(255,255,255,0.03);border-radius:8px;font-size:0.75rem;">
-              <summary style="font-weight:800;color:rgba(255,255,255,0.7);cursor:pointer;list-style:none;">
-                ${allStations.length} Stations • ${quality.stations_used_temp || 0} used for temp • ${quality.stations_used_wind || 0} used for wind
-              </summary>
+              <summary style="font-weight:800;color:rgba(255,255,255,0.7);cursor:pointer;list-style:none;">Station list</summary>
               <div style="color:rgba(255,255,255,0.5);line-height:1.6;margin-top:6px;">
                 ${allStations.map(st =>
                   `<span style="color:rgba(255,255,255,0.3);font-size:0.7rem;">[${st.tag}]</span> ${st.label} (${st.dist}mi) - ${st.temp}, ${st.wind}${st.valid ? "" : " ⚠︎"}`
@@ -169,7 +169,7 @@ function renderSources(sources, pwsStale) {
       return `<div style="${rowStyle}${rowOpacity}">
         <span style="${badgeStyle(ok)}">${ok ? "●" : "○"}</span> <span style="${nameStyle}">${name}${activeTag}${standbyTag}</span>
         <span style="${ageStyle(ok)}">${age}</span>
-        <span style="${descStyle}">${meta.desc}${s?.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${_fmtError(s.error)}</span>` : ""}</span>
+        <span style="${descStyle}">${descOverride || meta.desc}${s?.error ? ` <span style="color:rgba(255,120,120,0.8);">— ${_fmtError(s.error)}</span>` : ""}</span>
         ${extraDetail}
       </div>`;
     }).join("")}
