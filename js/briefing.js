@@ -111,8 +111,12 @@
       else tempBand = "hot";
     }
 
-    // Wind band — from impact score (accounts for local exposure), not raw speed
-    const _expTable = [[0,25,1],[25,45,.7],[45,100,.25],[100,200,.08],[200,260,.1],[260,290,.4],[290,320,.75],[320,360,1]];
+    // Wind band — from impact score (accounts for local exposure), not raw speed.
+    // Reads exposure table + worry thresholds from the payload so values stay in
+    // lock-step with config.py (single source of truth — fixed 2026-06-20 after
+    // audit caught a stale hardcoded table here).
+    const _expTable = data.wind_exposure_table
+      || [[0,25,1],[25,45,.7],[45,100,.25],[100,200,.08],[200,260,.1],[260,360,1]];
     const _dir = cur.wind_direction;
     let _ef = 0.5;
     if (_dir != null) {
@@ -121,11 +125,12 @@
     }
     const _ws = (s) => s * Math.pow(_ef, 1.5);
     const _impact = windSpeed < 15 ? _ws(windSpeed) : _ws(windGust);
+    const _wt = data.worry_thresholds || { noticeable: 5, notable: 12, significant: 20, severe: 30 };
     let windBand = "calm";
-    if (_impact >= 30) windBand = "dangerous";
-    else if (_impact >= 16) windBand = "windy";
-    else if (_impact >= 10) windBand = "breezy";
-    else if (_impact >= 5) windBand = "light";
+    if (_impact >= _wt.severe) windBand = "dangerous";
+    else if (_impact >= _wt.significant) windBand = "windy";
+    else if (_impact >= _wt.notable) windBand = "breezy";
+    else if (_impact >= _wt.noticeable) windBand = "light";
 
     // Wind for display — use the same corrected mph values as the wind card
     const windMph = windSpeed;

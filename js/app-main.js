@@ -228,10 +228,12 @@
       [290, 320, 0.75],
       [320, 360, 1.00],
     ];
-    const WORRY_NOTICEABLE  =  5;
-    const WORRY_NOTABLE     = 12;
-    const WORRY_SIGNIFICANT = 20;
-    const WORRY_SEVERE      = 30;
+    // Default worry thresholds; overridden from data.worry_thresholds when
+    // present (collector-exported, single source of truth with config.py).
+    let WORRY_NOTICEABLE  =  5;
+    let WORRY_NOTABLE     = 12;
+    let WORRY_SIGNIFICANT = 20;
+    let WORRY_SEVERE      = 30;
 
     function getExposureFactor(deg) {
       const d = ((deg % 360) + 360) % 360;
@@ -352,6 +354,15 @@ function loadWeatherData() {
         // Use exposure table from data if available (single source of truth with collector)
         if (Array.isArray(data.wind_exposure_table) && data.wind_exposure_table.length > 0) {
           WIND_EXPOSURE_TABLE = data.wind_exposure_table;
+        }
+        // Same single-source-of-truth for worry thresholds — collector
+        // exports config.py WORRY_* as data.worry_thresholds. Falls back
+        // to defaults defined above if missing (older payload).
+        if (data.worry_thresholds) {
+          WORRY_NOTICEABLE  = data.worry_thresholds.noticeable  ?? WORRY_NOTICEABLE;
+          WORRY_NOTABLE     = data.worry_thresholds.notable     ?? WORRY_NOTABLE;
+          WORRY_SIGNIFICANT = data.worry_thresholds.significant ?? WORRY_SIGNIFICANT;
+          WORRY_SEVERE      = data.worry_thresholds.severe      ?? WORRY_SEVERE;
         }
         window._combinedWindImpact = combinedWindImpact;
         window._worryLevel = worryLevel;

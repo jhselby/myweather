@@ -76,6 +76,17 @@ def blend_metar_cloud_into_hourly(weather_data, kbos_data, kbvy_data):
     if K == 0.0:
         return
 
+    # Preserve raw HRRR cloud arrays BEFORE we mutate any of them. The
+    # backtest framework and any "what would the raw model alone predict"
+    # reads `hourly["raw_cloud_cover*"]` as the L1 truth. apply_decay's
+    # later raw-preservation block (decay_apply.py:267-275) runs AFTER
+    # this mutation; if we don't preserve here, raw_cloud_cover[0] will
+    # be the L2-blended value, not the raw HRRR L1.
+    for hourly_key, _ in fields:
+        raw_key = "raw_" + hourly_key
+        if hourly_key in hourly and raw_key not in hourly:
+            hourly[raw_key] = list(hourly[hourly_key])
+
     applied = []
     for hourly_key, metar_key in fields:
         obs_vals = _collect(kbos_data, metar_key) + _collect(kbvy_data, metar_key)

@@ -14,7 +14,8 @@ from pathlib import Path
 
 import pytz
 
-from .config import LAT, LON, SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE
+from .config import (LAT, LON, SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE,
+                     WORRY_NOTICEABLE, WORRY_NOTABLE, WORRY_SIGNIFICANT, WORRY_SEVERE)
 from .gcs_io import BUCKET, get_client, upload_json
 from .stale_cache import apply_stale_fallbacks, load_prev_weather_data
 from .utils import iso_utc_now, compute_age_minutes, redact_secrets
@@ -84,6 +85,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         "location": LOCATION_NAME,
         "sources": sources,
         "wind_exposure_table": [list(row) for row in WIND_EXPOSURE_TABLE],
+        # Single source of truth for wind-impact thresholds. Both briefing.js
+        # and app-main.js read from here so they label the same wind event
+        # the same way. See config.py WORRY_NOTICEABLE..WORRY_SEVERE.
+        "worry_thresholds": {
+            "noticeable":  WORRY_NOTICEABLE,
+            "notable":     WORRY_NOTABLE,
+            "significant": WORRY_SIGNIFICANT,
+            "severe":      WORRY_SEVERE,
+        },
     }
 
     # Current conditions
