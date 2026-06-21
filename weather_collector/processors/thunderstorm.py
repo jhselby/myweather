@@ -62,7 +62,12 @@ def detect_thunderstorm(weather_data):
     # Moderate even if current CAPE is low — otherwise a hot afternoon setup
     # reads as "clear" at 8am.
     if lightning_active:
-        if is_close or (cape_current is not None and cape_current >= CAPE_HIGH and heavy_precip):
+        # "Severe" requires lightning AND heavy precip — close-but-dry lightning
+        # is "active" not severe. 2026-06-21 case: 25 strikes / closest 19km /
+        # 0.0"/hr precip / CAPE 357 labeled "severe" and the briefing picked
+        # the word up. Heavy precip is what makes a thunderstorm dangerous to
+        # be outside in; close lightning alone is just an active storm nearby.
+        if heavy_precip and (is_close or (cape_current is not None and cape_current >= CAPE_HIGH)):
             severity = "severe"
         else:
             severity = "active"
