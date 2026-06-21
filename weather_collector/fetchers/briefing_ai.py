@@ -60,6 +60,7 @@ Tone: seasoned local neighbor — observant, direct, helpful. Not a weather chan
 Rules:
 - HEADLINE: Under 12 words. One breath. Lead with the weather story. Anchor in conditions RIGHT NOW. You may name a change in progress using trend verbs ("clearing," "brightening," "clouds moving in," "burning off") — but do not use sky state words ("sunny," "clear," "cloudy") to describe future conditions; those belong in the sub. Never use a generic sky label as the whole headline — "Partly Cloudy," "Mostly Sunny," "Cloudy Skies," "Cloudy" alone — those are weather-channel boilerplate that convey nothing specific to today. Sky words in the headline must always be paired with something specific: a temp, a wind, a trend, or a time. On a quiet day, lead with the most specific thing happening — the temp range, the wind, the trend — not the cloud label.
 - A pleasant day IS the story. If today is comfortable — sunny, mild, light wind, low humidity, clear — lead with that. Do not reach into tomorrow or later this week for something more dramatic. The headline answers "what is today like?" — if today is great, say so specifically (temp, sky, breeze). Future drama (tomorrow's rain, a weekend storm, a cold front three days out) belongs in the subheadline. Examples of good quiet-day headlines: "Sunny and 74° with a light NW breeze," "Clear, dry, and mild through the afternoon," "Beach day: sun, 78°, and southwest 10." Only lead with a future event when today is genuinely uneventful AND something materially worse is on the way (severe storms, washout, big swing).
+- When the day is genuinely exceptional — in either direction — name the feeling. "Beautiful morning at the cove," "Picture-perfect afternoon," "Miserable cold rain all day," "Brutal heat and humidity," "Stunning summer Sunday" are all valid headlines when the data clearly earns the label. Tests for "beautiful/picture-perfect/stunning": clear or mostly clear sky (<30% cloud), comfortable temp (60s–80s in summer, 30s–50s in winter), light wind (Impact = Calm or Light), low humidity (<60% if available), no precip. Tests for "miserable/brutal": sustained heavy precip OR temp+wind+humidity that makes outdoor life unpleasant. Mediocre or mixed days stay descriptive — don't force a verdict the data doesn't earn.
 - SUBHEADLINE: 1-2 sentences. Specific times, temps, wind if relevant. Skip anything unremarkable. The subheadline is where forward-looking trend language belongs — what's coming next, when, and how much it shifts from now.
 - Sky words match current cloud cover. The "Sky:" line gives you cloud cover right now and the 24h range. In the HEADLINE, do not write "clear" or "sunny" if Sky-now is ≥ 50%, and do not write "cloudy" or "overcast" if Sky-now is ≤ 30%. The SUBHEADLINE may describe future sky changes ("clearing this afternoon," "clouds moving in by evening") as long as the 24h range supports it.
 - Don't mention everything. Only what's worth knowing right now.
@@ -462,6 +463,49 @@ def _validate_headline(briefing, summary, weather_data):
         for w in rain_words:
             if in_headline(w):
                 return False, f"mentions {w!r} but forecast shows no significant rain"
+
+    # 1b. Present-tense precip claim — headline says rain right now but the data
+    # shows none. Triggered by 2026-06-21 17:47 ET headline "Light rain and 71°
+    # with calm NE breeze" when current.weather_description was "Overcast",
+    # current.precipitation was 0.0", and Pirate minutely[:10] was all 0. The
+    # model knows storms passed nearby but had no live rain signal.
+    #
+    # Allow trend/future forms: "rain easing", "rain expected later", "rain
+    # tomorrow", "showers this evening" — those describe wind-down or future
+    # state legitimately.
+    cur_desc = (weather_data.get("current", {}).get("weather_description") or "").lower()
+    cur_precip = (weather_data.get("hourly", {}).get("precipitation", [None]) or [None])[0]
+    minutely = (weather_data.get("pirate_weather", {}).get("minutely") or [])[:10]
+    minutely_dry = all((pt.get("precip_intensity") or 0) == 0 for pt in minutely) if minutely else True
+    desc_has_rain = any(w in cur_desc for w in ("rain", "shower", "drizzle", "snow", "storm"))
+    data_dry_now = (
+        (cur_precip is None or cur_precip == 0)
+        and minutely_dry
+        and not desc_has_rain
+    )
+    if data_dry_now:
+        future_markers = ("tomorrow", "tonight", "later", "expected", "incoming",
+                          "approaching", "coming", "ahead", "soon", "begins",
+                          "arrives", "monday", "tuesday", "wednesday", "thursday",
+                          "friday", "saturday", "sunday")
+        trend_verbs    = ("easing", "ending", "tapering", "exiting", "clearing")
+        for w in ("rain", "raining", "rains", "shower", "showers", "drizzle", "downpour"):
+            if in_headline(w):
+                has_future = any(fm in headline for fm in future_markers)
+                has_trend  = any(tv in headline for tv in trend_verbs)
+                if not (has_future or has_trend):
+                    return False, (f"headline says {w!r} (present-tense) but "
+                                   f"weather_description={cur_desc!r}, precip=0, "
+                                   f"and next 10min are dry")
+
+    # 1c. Sky-card consistency — when current.weather_description is known,
+    # the headline must not claim a sky state that contradicts it. This makes
+    # the sky card and the headline read off the same authoritative label.
+    if cur_desc:
+        if "overcast" in cur_desc and (in_headline("clear") or in_headline("sunny")):
+            return False, f"headline says clear/sunny but weather_description={cur_desc!r}"
+        if ("clear" in cur_desc or "sunny" in cur_desc) and (in_headline("overcast") or in_headline("cloudy")):
+            return False, f"headline says overcast/cloudy but weather_description={cur_desc!r}"
 
     # 2. Sky contradiction — headline vs NOW, sub vs FORECAST TREND.
     cloud_arr = weather_data.get("hourly", {}).get("cloud_cover", [])
