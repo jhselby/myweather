@@ -31,6 +31,8 @@ import urllib.request
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
+from _cache import cached_path
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"

@@ -144,6 +144,18 @@ NOAA_TIDE_URL_TPL = (
 # to ~1.0 and behavior matches uniform.
 TAU_DAYS = 14
 
+# Per-field τ overrides for fields where decay_tau_tuning.py shows ≥5% MAE
+# improvement vs the global τ=14. Only fields that clear the 5% floor go
+# here; marginal differences stay at the default. Re-validate weekly via
+# analysis/decay_tau_tuning.py.
+TAU_DAYS_BY_FIELD = {
+    "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read)
+}
+
+
+def _tau_for_field(field):
+    return TAU_DAYS_BY_FIELD.get(field, TAU_DAYS)
+
 FIELDS = ("t", "ws", "wg", "h", "dp", "pp", "pr", "cc",
           "sr",  # solar radiation (W/m², daytime non-zero only)
           "pa",  # precipitation amount (in/hr, max-of-WU)
@@ -348,7 +360,7 @@ def fit_decay_corrections():
             except ValueError:
                 continue
             age_days = max(0.0, (now_naive - obs_dt).total_seconds() / 86400.0)
-            w = math.exp(-age_days / TAU_DAYS)
+            w = math.exp(-age_days / _tau_for_field(field))
             sums[(field, lead_h)] += float(error) * w
             weights[(field, lead_h)] += w
             raw_counts[(field, lead_h)] += 1
