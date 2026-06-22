@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.201 • June 22, 2026</strong></summary>
+
+- **Marine-layer sandbox field-name bugs (silent no-op fix).** `stamp_marine_layer_correction` was reading `hourly.time` (singular) and `hourly.wind_direction_10m`, but the live payload uses `hourly.times` (plural) and `hourly.wind_direction`. The function's early-return on empty arrays meant no stamp + no error log. Fixed by trying the correct names first, with the wrong names as fallbacks. Verified by reading the live payload's `hourly` keys before deploying.
+- **L2 K-taper simulation reframes the Stage 1 finding to h-only.** New `analysis/h_lead_l2_ktaper_sim.py` models the actual ship: replace flat K with K×ramp(lead) and recompute MAE per pair. Result on today's window: **h gains +7.75% with soft_ramp (100% at lead 0 → 40% floor at lead 24)**; t and pr show ≤0.3% drift across every ramp shape — flat K is optimal for them. The per-lead-band MAE pattern from `h_lead_l2.py` was real but didn't translate to a per-pair simulation gain for t/pr because the small mid-lead help approximately cancels the long-lead waste. Stage 1 entry on debug page rewritten to reflect h-only target. Useful lesson recorded: lead-band MAE shape ≠ shippable gain; always simulate the actual modification before promoting.
+
+</details>
+
+<details>
 <summary><strong>v0.6.200 • June 22, 2026</strong></summary>
 
 - **New hypothesis: lead-conditional L2 Kalman gain (Stage 1, Group D).** Three Stage 0 scripts written + run: `h_asymmetric_l3.py`, `h_regime_l3.py`, `h_lead_l2.py`. The lead-conditional L2 K hit hard: additive L2 bias (t, h, pr) gives huge gains in the first 5 hours and decays to near-zero by 24-47h. Multi-cutoff verified across 06-15 / 06-18 / 06-22 windows: h @ 0-5h holds rock-solid at +45/+47/+45%; t @ 0-5h at +16/+16/+22%; pr @ 0-5h at +10/+12/+16%. 24-47h gains weak or flickering — L2's flat K is wasting correction at long leads. Wind already linearly tapers K 0→100% across hours 0-24; the proposal is to generalize the shape to additive-bias fields. Promoted to Stage 1 with re-confirm date 2026-06-29 (alongside walk-forward #4). New "Group D — Methodological refinements" section added to the curated backlog on the debug page.

@@ -96,9 +96,9 @@ def stamp_marine_layer_correction(weather_data):
     NOT modify cloud_cover. Phase 2 will walk the hourly cc array.
     """
     hourly = weather_data.get("hourly") or {}
-    times = hourly.get("time") or []
+    times = hourly.get("times") or hourly.get("time") or []
     cc_arr = hourly.get("cloud_cover") or []
-    wd_arr = hourly.get("wind_direction_10m") or hourly.get("wind_direction") or []
+    wd_arr = hourly.get("wind_direction") or hourly.get("wind_direction_10m") or []
     if not times or not cc_arr:
         return
 
