@@ -1389,7 +1389,7 @@
 
 
   </div>
-  <script src="js/briefing.js?v=bcb1d2d9"></script>
+  <script src="js/briefing.js?v=fdb4a887"></script>
   <script src="js/wind.js?v=2d8ef9d7"></script>
   <script src="js/corrections.js?v=347854d6"></script>
   <script src="js/sky.js?v=e79e6941"></script>
@@ -1422,7 +1422,7 @@
   <script src="js/alarms.js?v=bf87aed1"></script>
   <script src="js/alerts.js?v=2b854a8b"></script>
   <script src="js/right_now.js?v=d1517106"></script>
-  <script src="js/changelog_loader.js?v=eb2d0222"></script>
+  <script src="js/changelog_loader.js?v=16725a3f"></script>
   
   <script>
   // Hide alerts on non-weather tabs using CSS class
@@ -1546,7 +1546,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.6.174</span>
+            <span class="version-pill" id="appVersion">v0.6.175</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
@@ -1575,19 +1575,11 @@
           <div id="nerdStuffBody" style="display:none;margin-top:12px;">
             <!-- Changelog -->
             <div class="modal-setting-group">
-              <div id="changelogToggle" onclick="event.stopPropagation();toggleSettingsPanel('changelogBody',['changelogBody','howItWorksBody','dataPipelineBody','licensesBody'])"
+              <div id="changelogToggle" onclick="event.stopPropagation();toggleSettingsPanel('changelogBody',['changelogBody','licensesBody'])"
                    style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
                 Changelog ▾
               </div>
               <div id="changelogBody" style="display:none;font-size:0.8rem;line-height:1.7;color:var(--muted);max-height:260px;overflow-y:auto;margin-top:8px;"></div>
-            </div>
-            <!-- How It Works -->
-            <div class="modal-setting-group">
-              <div onclick="event.stopPropagation();toggleSettingsPanel('howItWorksBody',['changelogBody','howItWorksBody','dataPipelineBody','licensesBody'])"
-                   style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
-                How It Works ▾
-              </div>
-              <div id="howItWorksBody" style="display:none;font-size:0.8rem;line-height:1.7;color:var(--muted);max-height:400px;overflow-y:auto;margin-top:8px;"></div>
             </div>
             <!-- Forecast Pipeline (live diagnostics) -->
             <div class="modal-setting-group">
@@ -1596,21 +1588,13 @@
                 Forecast Pipeline (live) ↗
               </a>
               <div style="font-size:0.75rem;line-height:1.5;color:var(--muted);margin-top:4px;">
-                Layer-by-layer view of how today's forecast is built, current accuracy stats, per-station bias map.
+                Layer-by-layer view of how today's forecast is built, current accuracy stats, per-station bias map. (The math docs that used to live here are retired — the debug page is the live canonical reference.)
               </div>
-            </div>
-            <!-- Data Pipeline -->
-            <div class="modal-setting-group">
-              <div id="dataPipelineToggle" onclick="event.stopPropagation();toggleSettingsPanel('dataPipelineBody',['changelogBody','howItWorksBody','dataPipelineBody','licensesBody'])"
-                   style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
-                Data Pipeline Reference ▾
-              </div>
-              <div id="dataPipelineBody" style="display:none;font-size:0.8rem;line-height:1.7;color:var(--muted);max-height:400px;overflow-y:auto;margin-top:8px;"></div>
             </div>
 
             <!-- Licenses -->
             <div class="modal-setting-group">
-              <div onclick="event.stopPropagation();toggleSettingsPanel('licensesBody',['changelogBody','howItWorksBody','dataPipelineBody','licensesBody'])"
+              <div onclick="event.stopPropagation();toggleSettingsPanel('licensesBody',['changelogBody','licensesBody'])"
                    style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
                 Licenses ▾
               </div>
