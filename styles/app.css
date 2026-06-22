@@ -2140,7 +2140,12 @@ body.theme-light .hyperlocal-link:hover {
   flex: 1;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
+  /* Hide the internal scroll indicator — was clipping right-aligned content
+     (Stage 4b ± confidence tails) inside expanded cards. v0.6.187 hid the
+     page-level scrollbar; this is the card-internal one Joe flagged after. */
+  scrollbar-width: none;
 }
+.card.card-expanded .card-body::-webkit-scrollbar { display: none; }
 .card.card-expanded .card-title-collapsible {
   display: flex !important;
   opacity: 1 !important;
