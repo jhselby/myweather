@@ -306,7 +306,11 @@ def fit_decay_corrections():
     # buckets where transition MAE is ≥10% worse than stable MAE with both
     # sides ≥200 pairs; SHIP if ≥10 buckets, HOLD otherwise.
     # See analysis/regime_transition_audit.py and analysis/simulate_windows.py.
-    r6_acc = defaultdict(lambda: {"sum_abs": 0.0, "n": 0})
+    # v0.6.179: recency-weighted R6 audit (same fix as v0.6.178 L5). Each
+    # pair contributes |error|·w with w=exp(-age_days / TAU_DAYS) so recent
+    # transitions weigh more than 4-week-old ones. n stays unweighted for
+    # display.
+    r6_acc = defaultdict(lambda: {"sum_abs": 0.0, "weight": 0.0, "n": 0})
 
     # v0.6.112 L5 solar audit accumulators. Same pattern as R5 but joins via
     # the pair's own state_fc/state_obs.regime_synoptic instead of an external
@@ -484,7 +488,8 @@ def fit_decay_corrections():
                 is_trans = (rfc_r6 != rob_r6)
                 try:
                     a = r6_acc[(field, band_r6, is_trans)]
-                    a["sum_abs"] += abs(float(err_r6))
+                    a["sum_abs"] += abs(float(err_r6)) * w
+                    a["weight"]  += w
                     a["n"]       += 1
                 except (TypeError, ValueError):
                     pass
@@ -889,8 +894,8 @@ def fit_decay_corrections():
                 if s["n"] < R6_MIN_PER_BUCKET or t["n"] < R6_MIN_PER_BUCKET:
                     continue
                 evaluated += 1
-                mae_s = s["sum_abs"] / s["n"]
-                mae_t = t["sum_abs"] / t["n"]
+                mae_s = s["sum_abs"] / (s["weight"] or 1.0)
+                mae_t = t["sum_abs"] / (t["weight"] or 1.0)
                 if mae_s > 0:
                     pct = 100.0 * (mae_t - mae_s) / mae_s
                     if pct >= R6_PENALTY_PCT:
