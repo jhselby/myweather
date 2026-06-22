@@ -319,7 +319,14 @@ def fit_decay_corrections():
         compute_solar_correction as _l5_compute,
         SUN_UP_THRESHOLD as _L5_SUN_UP,
     )
-    l5_acc = defaultdict(lambda: {"baseline": 0.0, "l5": 0.0, "n": 0})
+    # v0.6.178: recency-weighted L5 audit. Each pair contributes
+    # abs_error × exp(-age_days / TAU_DAYS) to baseline and l5; "weight"
+    # accumulates Σw so the displayed MAE is Σ(w·|e|) / Σw (weighted mean).
+    # "n" stays as unweighted count for display ("audit ran on N pairs").
+    # Matches the recency weighting used by the rest of the Fitter; prior
+    # versions averaged all 30 retention-days equally and ran ~2pp more
+    # optimistic than the 7-day simulator on the same biases.
+    l5_acc = defaultdict(lambda: {"baseline": 0.0, "l5": 0.0, "weight": 0.0, "n": 0})
 
     n_in = 0
     n_kept = 0
@@ -452,8 +459,9 @@ def fit_decay_corrections():
                             for bk in [(regime_fc, band_l5), (regime_fc, "all"),
                                        ("any", band_l5), ("any", "all")]:
                                 a = l5_acc[bk]
-                                a["baseline"] += abs(e_l4f_sr)
-                                a["l5"]       += abs(e_l4f_sr + l5_delta)
+                                a["baseline"] += abs(e_l4f_sr) * w
+                                a["l5"]       += abs(e_l4f_sr + l5_delta) * w
+                                a["weight"]   += w
                                 a["n"]        += 1
                     except (TypeError, ValueError):
                         pass
@@ -922,8 +930,9 @@ def fit_decay_corrections():
         overall_l5 = l5_acc.get(("any", "all"))
         if overall_l5 and overall_l5["n"] >= 500:
             n_l5 = overall_l5["n"]
-            mae_b_l5 = overall_l5["baseline"] / n_l5
-            mae_a_l5 = overall_l5["l5"] / n_l5
+            w_l5 = overall_l5["weight"] or 1.0
+            mae_b_l5 = overall_l5["baseline"] / w_l5
+            mae_a_l5 = overall_l5["l5"] / w_l5
             d_l5 = (100.0 * (mae_b_l5 - mae_a_l5) / mae_b_l5) if mae_b_l5 > 0 else 0.0
             # Count regimes with ≥3% individual improvement
             L5_REGIMES = ("frontal", "sw_flow", "pre_frontal", "sea_breeze",
@@ -933,8 +942,9 @@ def fit_decay_corrections():
                 rb = l5_acc.get((r, "all"))
                 if not rb or rb["n"] < 50:
                     continue
-                rb_b = rb["baseline"] / rb["n"]
-                rb_a = rb["l5"] / rb["n"]
+                rb_w = rb["weight"] or 1.0
+                rb_b = rb["baseline"] / rb_w
+                rb_a = rb["l5"] / rb_w
                 if rb_b > 0 and (rb_b - rb_a) / rb_b >= 0.03:
                     regimes_winning += 1
             ship = (d_l5 >= 5.0) and (regimes_winning >= 5)
