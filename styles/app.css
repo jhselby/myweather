@@ -199,6 +199,17 @@
       grid-auto-rows: 192px;
     }
 
+    /* Conditional risk/event cards (fog, thunderstorm, frontal, sea_breeze)
+       dim and drop to the bottom of the grid when their underlying signal
+       is inactive. Active cards keep their natural order in the grid (order:0)
+       so they bubble back up. */
+    .card.card-inactive {
+      order: 100;
+      opacity: 0.45;
+      filter: saturate(0.4);
+    }
+    .card.card-inactive:hover { opacity: 0.6; }
+
     .card{
       grid-column: span 6;
       background: var(--card);
