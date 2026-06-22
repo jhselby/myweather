@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-06-20T19:15:00.109455+00:00",
-  "source": "l6_confidence_premium_v2.json",
+  "generated_at": "2026-06-22T13:36:40.384884+00:00",
+  "source": "c1_confidence_premium_v2.json",
   "curation_rules": {
     "legacy_sample_floor": 1000,
     "legacy_magnitude_floor_pct": 5.0,
@@ -14,8 +14,8 @@
     "min_n_multi": 30,
     "spread_field": "spread_t",
     "spread_cuts": {
-      "q1": 0.5169,
-      "q3": 1.1227
+      "q1": 0.4,
+      "q3": 0.9419
     },
     "pt_bins": [
       {
@@ -60,1024 +60,4678 @@
   "cells": {
     "t": {
       "0-5h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 1.3638,
-        "transition_mae": 1.3239,
-        "premium_abs": -0.0398,
-        "premium_pct": -2.92,
-        "n_stable": 6229,
-        "n_transition": 4419,
-        "rationale": "magnitude floor (|-2.92%| < 5.0%)",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 2.7664,
-        "transition_mae": 2.7555,
-        "premium_abs": -0.0109,
-        "premium_pct": -0.39,
-        "n_stable": 21142,
-        "n_transition": 24380,
-        "rationale": "magnitude floor (|-0.39%| < 5.0%)",
+        "status": "MARGINAL",
+        "direction": "NARROW",
+        "stable_mae": 1.2835,
+        "transition_mae": 1.207,
+        "premium_abs": -0.0765,
+        "premium_pct": -5.96,
+        "n_stable": 6042,
+        "n_transition": 4360,
+        "rationale": "premium -5.96% in 5-10% band",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.2167,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 1.3056,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.5,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 1.4148,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.3105,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.9221,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.9567,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 1.0737,
+            "n": 297,
+            "rationale": "delta -16.35%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "direction": null,
+        "stable_mae": 2.6145,
+        "transition_mae": 2.6535,
+        "premium_abs": 0.039,
+        "premium_pct": 1.49,
+        "n_stable": 20564,
+        "n_transition": 24770,
+        "rationale": "magnitude floor (|+1.49%| < 5.0%)",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 2.962,
+            "n": 463,
+            "rationale": "delta +13.29%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.4214,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.0579,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 3.1351,
+            "n": 812,
+            "rationale": "delta +19.91%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.5342,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.6906,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 3.9815,
+            "n": 378,
+            "rationale": "delta +52.29%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.25,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.1067,
+            "n": 583,
+            "rationale": "delta -19.42%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.3635,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.8269,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.6516,
+            "n": 624,
+            "rationale": "magnitude floor (|+1.42%| < 5.0%)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.2846,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.9763,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.0471,
+            "n": 1229,
+            "rationale": "delta -21.70%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.1762,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.0102,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
-        "status": "MARGINAL",
+        "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 2.3314,
-        "transition_mae": 2.4784,
-        "premium_abs": 0.1469,
-        "premium_pct": 6.3,
-        "n_stable": 10800,
-        "n_transition": 11846,
-        "rationale": "premium +6.30% in 5-10% band",
+        "stable_mae": 2.085,
+        "transition_mae": 2.2996,
+        "premium_abs": 0.2146,
+        "premium_pct": 10.29,
+        "n_stable": 9928,
+        "n_transition": 12608,
+        "rationale": "premium +10.29%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 2.4415,
+            "n": 480,
+            "rationale": "delta +17.10%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 1.3904,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 2.2161,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 1.8235,
+            "n": 400,
+            "rationale": "delta -12.54%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.5651,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.0164,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 1.7753,
+            "n": 764,
+            "rationale": "delta -14.85%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.7982,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.8862,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.3116,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.7452,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "MARGINAL",
+            "direction": "NARROW",
+            "mae": 1.9402,
+            "n": 264,
+            "rationale": "delta -6.94% in 5-10% band"
           }
         }
       },
       "6-11h": {
-        "status": "MARGINAL",
+        "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 2.0087,
-        "transition_mae": 2.1657,
-        "premium_abs": 0.157,
-        "premium_pct": 7.82,
-        "n_stable": 6196,
-        "n_transition": 5127,
-        "rationale": "premium +7.82% in 5-10% band",
-        "by_axes": {}
+        "stable_mae": 1.8721,
+        "transition_mae": 2.1038,
+        "premium_abs": 0.2316,
+        "premium_pct": 12.37,
+        "n_stable": 5903,
+        "n_transition": 5384,
+        "rationale": "premium +12.37%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 2.5044,
+            "n": 248,
+            "rationale": "delta +33.77%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.0479,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.9687,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.6447,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "NARROW",
+            "mae": 1.7725,
+            "n": 396,
+            "rationale": "delta -5.32% in 5-10% band"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.1753,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "ws": {
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 0.9793,
-        "transition_mae": 1.3241,
-        "premium_abs": 0.3448,
-        "premium_pct": 35.2,
-        "n_stable": 6229,
-        "n_transition": 4419,
-        "rationale": "premium +35.20%, n\u22651000",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "SHIP",
-        "direction": "WIDEN",
-        "stable_mae": 2.434,
-        "transition_mae": 2.7835,
-        "premium_abs": 0.3495,
-        "premium_pct": 14.36,
-        "n_stable": 21142,
-        "n_transition": 24380,
-        "rationale": "premium +14.36%, n\u22651000",
+        "stable_mae": 1.0807,
+        "transition_mae": 1.5624,
+        "premium_abs": 0.4817,
+        "premium_pct": 44.58,
+        "n_stable": 6042,
+        "n_transition": 4360,
+        "rationale": "premium +44.58%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.63,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 2.6782,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.8959,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 3.2485,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.1629,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.5654,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.8825,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 1.8993,
+            "n": 297,
+            "rationale": "delta +75.75%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SHIP",
+        "direction": "WIDEN",
+        "stable_mae": 2.5261,
+        "transition_mae": 2.9973,
+        "premium_abs": 0.4712,
+        "premium_pct": 18.65,
+        "n_stable": 20564,
+        "n_transition": 24770,
+        "rationale": "premium +18.65%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 6.5527,
+            "n": 463,
+            "rationale": "delta +159.40%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.3752,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.8618,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 5.7246,
+            "n": 812,
+            "rationale": "delta +126.62%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.3711,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.1906,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 4.9151,
+            "n": 378,
+            "rationale": "delta +94.57%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.89,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 4.8782,
+            "n": 583,
+            "rationale": "delta +93.11%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.773,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.4577,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 3.971,
+            "n": 624,
+            "rationale": "delta +57.20%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.9231,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.35,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 3.5351,
+            "n": 1229,
+            "rationale": "delta +39.94%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.6274,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.3,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 1.7877,
-        "transition_mae": 2.1527,
-        "premium_abs": 0.365,
-        "premium_pct": 20.42,
-        "n_stable": 10800,
-        "n_transition": 11846,
-        "rationale": "premium +20.42%, n\u22651000",
+        "stable_mae": 1.7843,
+        "transition_mae": 2.2938,
+        "premium_abs": 0.5094,
+        "premium_pct": 28.55,
+        "n_stable": 9928,
+        "n_transition": 12608,
+        "rationale": "premium +28.55%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 4.1727,
+            "n": 480,
+            "rationale": "delta +133.86%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 6.1173,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 5.9984,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 4.7292,
+            "n": 400,
+            "rationale": "delta +165.05%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.8778,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.5452,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 3.0902,
+            "n": 764,
+            "rationale": "delta +73.19%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.4636,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.6469,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.6779,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.1742,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 3.8042,
+            "n": 264,
+            "rationale": "delta +113.20%, n\u2265200"
           }
         }
       },
       "6-11h": {
-        "status": "MARGINAL",
+        "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 1.4721,
-        "transition_mae": 1.5485,
-        "premium_abs": 0.0763,
-        "premium_pct": 5.19,
-        "n_stable": 6196,
-        "n_transition": 5127,
-        "rationale": "premium +5.19% in 5-10% band",
-        "by_axes": {}
+        "stable_mae": 1.6424,
+        "transition_mae": 2.0882,
+        "premium_abs": 0.4458,
+        "premium_pct": 27.14,
+        "n_stable": 5903,
+        "n_transition": 5384,
+        "rationale": "premium +27.14%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 5.6597,
+            "n": 248,
+            "rationale": "delta +244.60%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.2542,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.1731,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.6316,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 4.45,
+            "n": 396,
+            "rationale": "delta +170.94%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.0,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "wg": {
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 1.5972,
-        "transition_mae": 2.0448,
-        "premium_abs": 0.4476,
-        "premium_pct": 28.02,
-        "n_stable": 6229,
-        "n_transition": 4419,
-        "rationale": "premium +28.02%, n\u22651000",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "SHIP",
-        "direction": "WIDEN",
-        "stable_mae": 4.7628,
-        "transition_mae": 5.478,
-        "premium_abs": 0.7152,
-        "premium_pct": 15.02,
-        "n_stable": 21142,
-        "n_transition": 24380,
-        "rationale": "premium +15.02%, n\u22651000",
+        "stable_mae": 1.8188,
+        "transition_mae": 2.5147,
+        "premium_abs": 0.6959,
+        "premium_pct": 38.26,
+        "n_stable": 6042,
+        "n_transition": 4360,
+        "rationale": "premium +38.26%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 10.3,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 4.9268,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 12.6041,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 6.3964,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 8.6467,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.7433,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.3483,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 2.3145,
+            "n": 297,
+            "rationale": "delta +27.25%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SHIP",
+        "direction": "WIDEN",
+        "stable_mae": 4.7704,
+        "transition_mae": 5.2813,
+        "premium_abs": 0.5109,
+        "premium_pct": 10.71,
+        "n_stable": 20564,
+        "n_transition": 24770,
+        "rationale": "premium +10.71%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 6.9812,
+            "n": 463,
+            "rationale": "delta +46.34%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.9803,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.2789,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 8.5837,
+            "n": 812,
+            "rationale": "delta +79.94%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.3727,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.1625,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 8.4283,
+            "n": 378,
+            "rationale": "delta +76.68%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 11.845,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 6.7499,
+            "n": 583,
+            "rationale": "delta +41.50%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.5081,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 11.3154,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 6.9183,
+            "n": 624,
+            "rationale": "delta +45.03%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 11.3192,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.9,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 3.9544,
+            "n": 1229,
+            "rationale": "delta -17.11%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.5929,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.3347,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 3.3828,
-        "transition_mae": 3.9382,
-        "premium_abs": 0.5554,
-        "premium_pct": 16.42,
-        "n_stable": 10800,
-        "n_transition": 11846,
-        "rationale": "premium +16.42%, n\u22651000",
+        "stable_mae": 3.382,
+        "transition_mae": 3.9257,
+        "premium_abs": 0.5437,
+        "premium_pct": 16.08,
+        "n_stable": 9928,
+        "n_transition": 12608,
+        "rationale": "premium +16.08%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 7.7681,
+            "n": 480,
+            "rationale": "delta +129.69%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 19.6635,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 10.5903,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 7.15,
+            "n": 400,
+            "rationale": "delta +111.41%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.6905,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.1452,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 5.059,
+            "n": 764,
+            "rationale": "delta +49.59%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.8527,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.6231,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.6379,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.9355,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 5.4697,
+            "n": 264,
+            "rationale": "delta +61.73%, n\u2265200"
           }
         }
       },
       "6-11h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 2.7359,
-        "transition_mae": 2.7137,
-        "premium_abs": -0.0222,
-        "premium_pct": -0.81,
-        "n_stable": 6196,
-        "n_transition": 5127,
-        "rationale": "magnitude floor (|-0.81%| < 5.0%)",
-        "by_axes": {}
+        "status": "SHIP",
+        "direction": "WIDEN",
+        "stable_mae": 3.0084,
+        "transition_mae": 3.6612,
+        "premium_abs": 0.6528,
+        "premium_pct": 21.7,
+        "n_stable": 5903,
+        "n_transition": 5384,
+        "rationale": "premium +21.70%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 11.5137,
+            "n": 248,
+            "rationale": "delta +282.72%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.041,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 11.3081,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 8.2412,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 8.2447,
+            "n": 396,
+            "rationale": "delta +174.06%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.4055,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "h": {
       "0-5h": {
-        "status": "MARGINAL",
-        "direction": "WIDEN",
-        "stable_mae": 5.4489,
-        "transition_mae": 5.9807,
-        "premium_abs": 0.5318,
-        "premium_pct": 9.76,
-        "n_stable": 6208,
-        "n_transition": 4423,
-        "rationale": "premium +9.76% in 5-10% band",
-        "by_axes": {}
-      },
-      "24-47h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 10.1671,
-        "transition_mae": 9.9988,
-        "premium_abs": -0.1682,
-        "premium_pct": -1.65,
-        "n_stable": 21117,
-        "n_transition": 24269,
-        "rationale": "magnitude floor (|-1.65%| < 5.0%)",
+        "stable_mae": 4.5132,
+        "transition_mae": 4.7051,
+        "premium_abs": 0.1919,
+        "premium_pct": 4.25,
+        "n_stable": 6021,
+        "n_transition": 4364,
+        "rationale": "magnitude floor (|+4.25%| < 5.0%)",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 5.0833,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 2.4613,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 4.9164,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 3.9985,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.6552,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.8163,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.78,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 5.4842,
+            "n": 297,
+            "rationale": "delta +21.51%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "direction": null,
+        "stable_mae": 9.3324,
+        "transition_mae": 9.216,
+        "premium_abs": -0.1164,
+        "premium_pct": -1.25,
+        "n_stable": 20539,
+        "n_transition": 24659,
+        "rationale": "magnitude floor (|-1.25%| < 5.0%)",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 7.54,
+            "n": 463,
+            "rationale": "delta -19.21%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.7402,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.9566,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 8.253,
+            "n": 812,
+            "rationale": "delta -11.57%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.1193,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.5266,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 8.0746,
+            "n": 378,
+            "rationale": "delta -13.48%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.985,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 8.3115,
+            "n": 583,
+            "rationale": "delta -10.94%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.7365,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 8.9385,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 4.2654,
+            "n": 624,
+            "rationale": "delta -54.29%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.8077,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.8026,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 7.9538,
+            "n": 1229,
+            "rationale": "delta -14.77%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.9083,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.098,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 9.1164,
-        "transition_mae": 9.0245,
-        "premium_abs": -0.0919,
-        "premium_pct": -1.01,
-        "n_stable": 10800,
-        "n_transition": 11774,
-        "rationale": "magnitude floor (|-1.01%| < 5.0%)",
+        "stable_mae": 8.0403,
+        "transition_mae": 8.3359,
+        "premium_abs": 0.2956,
+        "premium_pct": 3.68,
+        "n_stable": 9928,
+        "n_transition": 12536,
+        "rationale": "magnitude floor (|+3.68%| < 5.0%)",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 9.3367,
+            "n": 480,
+            "rationale": "delta +16.12%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 10.9365,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 6.6145,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "WIDEN",
+            "mae": 8.8062,
+            "n": 400,
+            "rationale": "delta +9.53% in 5-10% band"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 14.0413,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.7671,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "WIDEN",
+            "mae": 8.5429,
+            "n": 764,
+            "rationale": "delta +6.25% in 5-10% band"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.1745,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.86,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.0168,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.8161,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 9.2932,
+            "n": 264,
+            "rationale": "delta +15.58%, n\u2265200"
           }
         }
       },
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 8.1689,
-        "transition_mae": 8.1234,
-        "premium_abs": -0.0456,
-        "premium_pct": -0.56,
-        "n_stable": 6180,
-        "n_transition": 5107,
-        "rationale": "magnitude floor (|-0.56%| < 5.0%)",
-        "by_axes": {}
+        "stable_mae": 7.3728,
+        "transition_mae": 7.5882,
+        "premium_abs": 0.2155,
+        "premium_pct": 2.92,
+        "n_stable": 5887,
+        "n_transition": 5364,
+        "rationale": "magnitude floor (|+2.92%| < 5.0%)",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 10.973,
+            "n": 248,
+            "rationale": "delta +48.83%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.7299,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.8306,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 8.164,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 9.4758,
+            "n": 396,
+            "rationale": "delta +28.52%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.7315,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "dp": {
       "0-5h": {
-        "status": "MARGINAL",
-        "direction": "WIDEN",
-        "stable_mae": 2.0935,
-        "transition_mae": 2.2834,
-        "premium_abs": 0.1899,
-        "premium_pct": 9.07,
-        "n_stable": 6208,
-        "n_transition": 4423,
-        "rationale": "premium +9.07% in 5-10% band",
-        "by_axes": {}
-      },
-      "24-47h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 3.5923,
-        "transition_mae": 3.7664,
-        "premium_abs": 0.1741,
-        "premium_pct": 4.85,
-        "n_stable": 21117,
-        "n_transition": 24269,
-        "rationale": "magnitude floor (|+4.85%| < 5.0%)",
+        "stable_mae": 1.9522,
+        "transition_mae": 1.9768,
+        "premium_abs": 0.0246,
+        "premium_pct": 1.26,
+        "n_stable": 6021,
+        "n_transition": 4364,
+        "rationale": "magnitude floor (|+1.26%| < 5.0%)",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 6.5733,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 1.2803,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.4863,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 0.7954,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.6657,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.3981,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.2392,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 1.5071,
+            "n": 297,
+            "rationale": "delta -22.80%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "direction": null,
+        "stable_mae": 3.4067,
+        "transition_mae": 3.4239,
+        "premium_abs": 0.0172,
+        "premium_pct": 0.5,
+        "n_stable": 20539,
+        "n_transition": 24659,
+        "rationale": "magnitude floor (|+0.50%| < 5.0%)",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 1.9473,
+            "n": 463,
+            "rationale": "delta -42.84%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.0795,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.1961,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.6015,
+            "n": 812,
+            "rationale": "delta -23.64%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.5567,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.3938,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 3.882,
+            "n": 378,
+            "rationale": "delta +13.95%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.195,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.669,
+            "n": 583,
+            "rationale": "delta -21.65%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.877,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.8385,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.1787,
+            "n": 624,
+            "rationale": "delta -36.05%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.2404,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.4105,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 1.8388,
+            "n": 1229,
+            "rationale": "delta -46.02%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.078,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.0061,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 3.344,
-        "transition_mae": 3.3064,
-        "premium_abs": -0.0376,
-        "premium_pct": -1.13,
-        "n_stable": 10800,
-        "n_transition": 11774,
-        "rationale": "magnitude floor (|-1.13%| < 5.0%)",
+        "stable_mae": 3.3281,
+        "transition_mae": 3.1895,
+        "premium_abs": -0.1386,
+        "premium_pct": -4.16,
+        "n_stable": 9928,
+        "n_transition": 12536,
+        "rationale": "magnitude floor (|-4.16%| < 5.0%)",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.4292,
+            "n": 480,
+            "rationale": "delta -27.01%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 5.1442,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 3.2403,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "WIDEN",
+            "mae": 3.561,
+            "n": 400,
+            "rationale": "delta +7.00% in 5-10% band"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.5222,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.3082,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.4429,
+            "n": 764,
+            "rationale": "delta -26.60%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.8345,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.3538,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.8295,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.2032,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.4167,
+            "n": 264,
+            "rationale": "delta -27.38%, n\u2265200"
           }
         }
       },
       "6-11h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 3.0834,
-        "transition_mae": 2.9562,
-        "premium_abs": -0.1273,
-        "premium_pct": -4.13,
-        "n_stable": 6180,
-        "n_transition": 5107,
-        "rationale": "magnitude floor (|-4.13%| < 5.0%)",
-        "by_axes": {}
+        "status": "MARGINAL",
+        "direction": "NARROW",
+        "stable_mae": 3.0364,
+        "transition_mae": 2.7795,
+        "premium_abs": -0.2569,
+        "premium_pct": -8.46,
+        "n_stable": 5887,
+        "n_transition": 5364,
+        "rationale": "premium -8.46% in 5-10% band",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.1387,
+            "n": 248,
+            "rationale": "delta -29.56%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.8833,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 3.0819,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.3842,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 2.0884,
+            "n": 396,
+            "rationale": "delta -31.22%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 2.674,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "pr": {
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 0.0148,
-        "transition_mae": 0.0168,
-        "premium_abs": 0.002,
-        "premium_pct": 13.66,
-        "n_stable": 6229,
-        "n_transition": 4419,
-        "rationale": "premium +13.66%, n\u22651000",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 0.0418,
-        "transition_mae": 0.0427,
-        "premium_abs": 0.0009,
-        "premium_pct": 2.2,
-        "n_stable": 21142,
-        "n_transition": 24380,
-        "rationale": "magnitude floor (|+2.20%| < 5.0%)",
+        "stable_mae": 0.0144,
+        "transition_mae": 0.0159,
+        "premium_abs": 0.0014,
+        "premium_pct": 10.01,
+        "n_stable": 6042,
+        "n_transition": 4360,
+        "rationale": "premium +10.01%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0035,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 0.0116,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0181,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 0.0162,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0116,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.014,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0116,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0122,
+            "n": 297,
+            "rationale": "delta -15.28%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "direction": null,
+        "stable_mae": 0.0386,
+        "transition_mae": 0.0379,
+        "premium_abs": -0.0006,
+        "premium_pct": -1.66,
+        "n_stable": 20564,
+        "n_transition": 24770,
+        "rationale": "magnitude floor (|-1.66%| < 5.0%)",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0171,
+            "n": 463,
+            "rationale": "delta -55.70%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0123,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.017,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0197,
+            "n": 812,
+            "rationale": "delta -48.96%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0156,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0157,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.021,
+            "n": 378,
+            "rationale": "delta -45.60%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.011,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0194,
+            "n": 583,
+            "rationale": "delta -49.74%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0106,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0101,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0187,
+            "n": 624,
+            "rationale": "delta -51.55%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0185,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0179,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0178,
+            "n": 1229,
+            "rationale": "delta -53.89%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0201,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0191,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 0.0308,
-        "transition_mae": 0.0314,
-        "premium_abs": 0.0005,
-        "premium_pct": 1.71,
-        "n_stable": 10800,
-        "n_transition": 11846,
-        "rationale": "magnitude floor (|+1.71%| < 5.0%)",
+        "status": "SHIP",
+        "direction": "NARROW",
+        "stable_mae": 0.0299,
+        "transition_mae": 0.0261,
+        "premium_abs": -0.0038,
+        "premium_pct": -12.76,
+        "n_stable": 9928,
+        "n_transition": 12608,
+        "rationale": "premium -12.76%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0091,
+            "n": 480,
+            "rationale": "delta -69.57%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0072,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 0.0055,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0143,
+            "n": 400,
+            "rationale": "delta -52.17%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0139,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0211,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0152,
+            "n": 764,
+            "rationale": "delta -49.16%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0142,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0258,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0223,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0227,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0201,
+            "n": 264,
+            "rationale": "delta -32.78%, n\u2265200"
           }
         }
       },
       "6-11h": {
-        "status": "SHIP",
+        "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 0.0202,
-        "transition_mae": 0.0232,
-        "premium_abs": 0.003,
-        "premium_pct": 14.84,
-        "n_stable": 6196,
-        "n_transition": 5127,
-        "rationale": "premium +14.84%, n\u22651000",
-        "by_axes": {}
+        "stable_mae": 0.019,
+        "transition_mae": 0.0205,
+        "premium_abs": 0.0015,
+        "premium_pct": 7.76,
+        "n_stable": 5903,
+        "n_transition": 5384,
+        "rationale": "premium +7.76% in 5-10% band",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0162,
+            "n": 248,
+            "rationale": "delta -14.74%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0187,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0112,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0161,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0142,
+            "n": 396,
+            "rationale": "delta -25.26%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0115,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "cc": {
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 25.2738,
-        "transition_mae": 24.4469,
-        "premium_abs": -0.8269,
-        "premium_pct": -3.27,
-        "n_stable": 6212,
-        "n_transition": 4368,
-        "rationale": "magnitude floor (|-3.27%| < 5.0%)",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 30.0657,
-        "transition_mae": 30.8629,
-        "premium_abs": 0.7972,
-        "premium_pct": 2.65,
-        "n_stable": 21114,
-        "n_transition": 24122,
-        "rationale": "magnitude floor (|+2.65%| < 5.0%)",
+        "stable_mae": 26.1149,
+        "transition_mae": 27.1167,
+        "premium_abs": 1.0019,
+        "premium_pct": 3.84,
+        "n_stable": 6025,
+        "n_transition": 4309,
+        "rationale": "magnitude floor (|+3.84%| < 5.0%)",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.3333,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 18.9648,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 32.3562,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 30.6429,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 43.8,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.9904,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 46.9333,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 49.6465,
+            "n": 297,
+            "rationale": "delta +90.11%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "MARGINAL",
+        "direction": "WIDEN",
+        "stable_mae": 30.6719,
+        "transition_mae": 32.4668,
+        "premium_abs": 1.7949,
+        "premium_pct": 5.85,
+        "n_stable": 20536,
+        "n_transition": 24512,
+        "rationale": "premium +5.85% in 5-10% band",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.3607,
+            "n": 463,
+            "rationale": "magnitude floor (|-4.27%| < 5.0%)"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.2735,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 12.8553,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 35.1355,
+            "n": 812,
+            "rationale": "delta +14.55%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 22.5455,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 22.2188,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.9603,
+            "n": 378,
+            "rationale": "magnitude floor (|-2.32%| < 5.0%)"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 23.0,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 38.6072,
+            "n": 583,
+            "rationale": "delta +25.87%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 23.3378,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 20.2692,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 46.992,
+            "n": 624,
+            "rationale": "delta +53.21%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 33.2692,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 41.0526,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 52.454,
+            "n": 1229,
+            "rationale": "delta +71.02%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.5952,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 32.3061,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 26.1098,
-        "transition_mae": 29.2747,
-        "premium_abs": 3.165,
-        "premium_pct": 12.12,
-        "n_stable": 10793,
-        "n_transition": 11709,
-        "rationale": "premium +12.12%, n\u22651000",
+        "stable_mae": 26.8955,
+        "transition_mae": 30.965,
+        "premium_abs": 4.0696,
+        "premium_pct": 15.13,
+        "n_stable": 9921,
+        "n_transition": 12471,
+        "rationale": "premium +15.13%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 33.2833,
+            "n": 480,
+            "rationale": "delta +23.75%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 62.6154,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 55.7097,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 33.515,
+            "n": 400,
+            "rationale": "delta +24.61%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 21.1905,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 40.9315,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 44.3953,
+            "n": 764,
+            "rationale": "delta +65.07%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 66.6364,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 56.6615,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 63.6,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 77.3226,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 15.4659,
+            "n": 264,
+            "rationale": "delta -42.50%, n\u2265200"
           }
         }
       },
       "6-11h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 27.5497,
-        "transition_mae": 27.236,
-        "premium_abs": -0.3137,
-        "premium_pct": -1.14,
-        "n_stable": 6196,
-        "n_transition": 5055,
-        "rationale": "magnitude floor (|-1.14%| < 5.0%)",
-        "by_axes": {}
+        "status": "MARGINAL",
+        "direction": "WIDEN",
+        "stable_mae": 27.3512,
+        "transition_mae": 29.9864,
+        "premium_abs": 2.6353,
+        "premium_pct": 9.63,
+        "n_stable": 5903,
+        "n_transition": 5312,
+        "rationale": "premium +9.63% in 5-10% band",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 34.8427,
+            "n": 248,
+            "rationale": "delta +27.39%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 19.125,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 34.9438,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 53.4561,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 50.7702,
+            "n": 396,
+            "rationale": "delta +85.62%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 38.4932,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "sr": {
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 83.0209,
-        "transition_mae": 86.7454,
-        "premium_abs": 3.7245,
-        "premium_pct": 4.49,
-        "n_stable": 6229,
-        "n_transition": 4419,
-        "rationale": "magnitude floor (|+4.49%| < 5.0%)",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 106.4994,
-        "transition_mae": 105.6571,
-        "premium_abs": -0.8423,
-        "premium_pct": -0.79,
-        "n_stable": 21142,
-        "n_transition": 24380,
-        "rationale": "magnitude floor (|-0.79%| < 5.0%)",
+        "stable_mae": 84.969,
+        "transition_mae": 84.4358,
+        "premium_abs": -0.5333,
+        "premium_pct": -0.63,
+        "n_stable": 6042,
+        "n_transition": 4360,
+        "rationale": "magnitude floor (|-0.63%| < 5.0%)",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 172.3333,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 140.5915,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 205.7945,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 109.6582,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 89.6571,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 81.6923,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 39.0917,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 37.9024,
+            "n": 297,
+            "rationale": "delta -55.39%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "direction": null,
+        "stable_mae": 99.0077,
+        "transition_mae": 99.6658,
+        "premium_abs": 0.6581,
+        "premium_pct": 0.66,
+        "n_stable": 20564,
+        "n_transition": 24770,
+        "rationale": "magnitude floor (|+0.66%| < 5.0%)",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "MARGINAL",
+            "direction": "NARROW",
+            "mae": 93.6868,
+            "n": 463,
+            "rationale": "delta -5.37% in 5-10% band"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 71.1026,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 83.6184,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "WIDEN",
+            "mae": 107.0111,
+            "n": 812,
+            "rationale": "delta +8.08% in 5-10% band"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 89.7059,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 80.875,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "MARGINAL",
+            "direction": "WIDEN",
+            "mae": 106.5212,
+            "n": 378,
+            "rationale": "delta +7.59% in 5-10% band"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 231.375,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 200.3105,
+            "n": 583,
+            "rationale": "delta +102.32%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 297.2973,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 240.4615,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 72.8958,
+            "n": 624,
+            "rationale": "delta -26.37%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 94.9231,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 109.8947,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 67.9536,
+            "n": 1229,
+            "rationale": "delta -31.37%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 87.744,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 68.6939,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 107.3716,
-        "transition_mae": 86.1647,
-        "premium_abs": -21.2069,
-        "premium_pct": -19.75,
-        "n_stable": 10800,
-        "n_transition": 11846,
-        "rationale": "premium -19.75%, n\u22651000",
+        "stable_mae": 104.9189,
+        "transition_mae": 84.7735,
+        "premium_abs": -20.1454,
+        "premium_pct": -19.2,
+        "n_stable": 9928,
+        "n_transition": 12608,
+        "rationale": "premium -19.20%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "WIDEN",
+            "mae": 114.8146,
+            "n": 480,
+            "rationale": "delta +9.43% in 5-10% band"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 364.3269,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 178.2903,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 159.015,
+            "n": 400,
+            "rationale": "delta +51.56%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 50.6667,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 24.4932,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 99.7736,
+            "n": 764,
+            "rationale": "magnitude floor (|-4.90%| < 5.0%)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 32.6364,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 30.0615,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 137.3684,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 1.0323,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "MARGINAL",
+            "direction": "NARROW",
+            "mae": 96.7121,
+            "n": 264,
+            "rationale": "delta -7.82% in 5-10% band"
           }
         }
       },
       "6-11h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 91.0644,
-        "transition_mae": 93.6813,
-        "premium_abs": 2.6169,
-        "premium_pct": 2.87,
-        "n_stable": 6196,
-        "n_transition": 5127,
-        "rationale": "magnitude floor (|+2.87%| < 5.0%)",
-        "by_axes": {}
+        "status": "SHIP",
+        "direction": "NARROW",
+        "stable_mae": 95.5675,
+        "transition_mae": 85.5327,
+        "premium_abs": -10.0348,
+        "premium_pct": -10.5,
+        "n_stable": 5903,
+        "n_transition": 5384,
+        "rationale": "premium -10.50%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 127.8024,
+            "n": 248,
+            "rationale": "delta +33.73%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 131.0069,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 140.2562,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 220.7544,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 50.1692,
+            "n": 396,
+            "rationale": "delta -47.50%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 98.7671,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "pa": {
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 0.0088,
-        "transition_mae": 0.0197,
-        "premium_abs": 0.0108,
-        "premium_pct": 122.3,
-        "n_stable": 6229,
-        "n_transition": 4419,
-        "rationale": "premium +122.30%, n\u22651000",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "SHIP",
-        "direction": "WIDEN",
-        "stable_mae": 0.0123,
-        "transition_mae": 0.0209,
-        "premium_abs": 0.0085,
-        "premium_pct": 69.35,
-        "n_stable": 21142,
-        "n_transition": 24380,
-        "rationale": "premium +69.35%, n\u22651000",
+        "stable_mae": 0.0087,
+        "transition_mae": 0.0136,
+        "premium_abs": 0.0049,
+        "premium_pct": 56.85,
+        "n_stable": 6042,
+        "n_transition": 4360,
+        "rationale": "premium +56.85%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 0.0282,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
+            "mae": 0.0011,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0109,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0151,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0011,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0006,
+            "n": 297,
+            "rationale": "delta -93.10%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SHIP",
+        "direction": "WIDEN",
+        "stable_mae": 0.0114,
+        "transition_mae": 0.0174,
+        "premium_abs": 0.006,
+        "premium_pct": 53.08,
+        "n_stable": 20564,
+        "n_transition": 24770,
+        "rationale": "premium +53.08%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 0.0171,
+            "n": 463,
+            "rationale": "delta +50.00%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0219,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0099,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 0.0166,
+            "n": 812,
+            "rationale": "delta +45.61%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0024,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0026,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0116,
+            "n": 378,
+            "rationale": "magnitude floor (|+1.75%| < 5.0%)"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
             "mae": 0.0,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 0.0162,
+            "n": 583,
+            "rationale": "delta +42.11%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0216,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0016,
+            "n": 624,
+            "rationale": "delta -85.96%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0015,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0013,
+            "n": 1229,
+            "rationale": "delta -88.60%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0004,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0002,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 0.0141,
-        "transition_mae": 0.0178,
-        "premium_abs": 0.0037,
-        "premium_pct": 26.44,
-        "n_stable": 10800,
-        "n_transition": 11846,
-        "rationale": "premium +26.44%, n\u22651000",
+        "stable_mae": 0.0118,
+        "transition_mae": 0.0137,
+        "premium_abs": 0.0019,
+        "premium_pct": 15.7,
+        "n_stable": 9928,
+        "n_transition": 12608,
+        "rationale": "premium +15.70%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0053,
+            "n": 480,
+            "rationale": "delta -55.08%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
             "mae": 0.0,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0122,
+            "n": 400,
+            "rationale": "magnitude floor (|+3.39%| < 5.0%)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.031,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0023,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0007,
+            "n": 764,
+            "rationale": "delta -94.07%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0013,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0013,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0073,
+            "n": 264,
+            "rationale": "delta -38.14%, n\u2265200"
           }
         }
       },
       "6-11h": {
         "status": "REVIEW",
         "direction": "NARROW",
-        "stable_mae": 0.0156,
-        "transition_mae": 0.0138,
-        "premium_abs": -0.0018,
-        "premium_pct": -11.24,
-        "n_stable": 6196,
-        "n_transition": 5127,
-        "rationale": "premium -11.24%, n\u22651000 [contradicts field's dominant WIDEN pattern]",
-        "by_axes": {}
+        "stable_mae": 0.0129,
+        "transition_mae": 0.0115,
+        "premium_abs": -0.0014,
+        "premium_pct": -10.58,
+        "n_stable": 5903,
+        "n_transition": 5384,
+        "rationale": "premium -10.58%, n\u22651000 [contradicts field's dominant WIDEN pattern]",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0075,
+            "n": 248,
+            "rationale": "delta -41.86%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0122,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0088,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 0.0048,
+            "n": 396,
+            "rationale": "delta -62.79%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 0.0011,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "cl": {
       "0-5h": {
         "status": "MARGINAL",
-        "direction": "WIDEN",
-        "stable_mae": 12.3014,
-        "transition_mae": 13.2264,
-        "premium_abs": 0.9251,
-        "premium_pct": 7.52,
-        "n_stable": 6212,
-        "n_transition": 4368,
-        "rationale": "premium +7.52% in 5-10% band",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 20.8129,
-        "transition_mae": 21.1682,
-        "premium_abs": 0.3554,
-        "premium_pct": 1.71,
-        "n_stable": 21114,
-        "n_transition": 24122,
-        "rationale": "magnitude floor (|+1.71%| < 5.0%)",
+        "direction": "NARROW",
+        "stable_mae": 12.3243,
+        "transition_mae": 11.0954,
+        "premium_abs": -1.2289,
+        "premium_pct": -9.97,
+        "n_stable": 6025,
+        "n_transition": 4309,
+        "rationale": "premium -9.97% in 5-10% band",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 34.7333,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 9.0282,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 28.3288,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 13.199,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 15.1905,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 17.7596,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.8083,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 7.4377,
+            "n": 297,
+            "rationale": "delta -39.65%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "direction": null,
+        "stable_mae": 20.9314,
+        "transition_mae": 20.4293,
+        "premium_abs": -0.5021,
+        "premium_pct": -2.4,
+        "n_stable": 20536,
+        "n_transition": 24512,
+        "rationale": "magnitude floor (|-2.40%| < 5.0%)",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 28.892,
+            "n": 463,
+            "rationale": "delta +38.03%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 14.4103,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 13.0263,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 33.7943,
+            "n": 812,
+            "rationale": "delta +61.45%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 20.3904,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 18.0312,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 36.1534,
+            "n": 378,
+            "rationale": "delta +72.72%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 19.95,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 29.6089,
+            "n": 583,
+            "rationale": "delta +41.46%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 28.5946,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 22.6538,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 15.5032,
+            "n": 624,
+            "rationale": "delta -25.93%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 31.1154,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 26.2632,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 12.7128,
+            "n": 1229,
+            "rationale": "delta -39.26%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.5774,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 4.5918,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 19.2784,
-        "transition_mae": 12.6662,
-        "premium_abs": -6.6123,
-        "premium_pct": -34.3,
-        "n_stable": 10793,
-        "n_transition": 11709,
-        "rationale": "premium -34.30%, n\u22651000",
+        "stable_mae": 19.9082,
+        "transition_mae": 12.3328,
+        "premium_abs": -7.5754,
+        "premium_pct": -38.05,
+        "n_stable": 9921,
+        "n_transition": 12471,
+        "rationale": "premium -38.05%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "NARROW",
+            "mae": 18.4958,
+            "n": 480,
+            "rationale": "delta -7.09% in 5-10% band"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 15.4615,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 9.0968,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 30.2625,
+            "n": 400,
+            "rationale": "delta +52.01%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 48.3016,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 12.8219,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 12.1898,
+            "n": 764,
+            "rationale": "delta -38.77%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.1091,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.3769,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 31.2,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 51.6129,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 6.8106,
+            "n": 264,
+            "rationale": "delta -65.79%, n\u2265200"
           }
         }
       },
       "6-11h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 17.1646,
-        "transition_mae": 11.1765,
-        "premium_abs": -5.9882,
-        "premium_pct": -34.89,
-        "n_stable": 6196,
-        "n_transition": 5055,
-        "rationale": "premium -34.89%, n\u22651000",
-        "by_axes": {}
+        "stable_mae": 17.2978,
+        "transition_mae": 10.7402,
+        "premium_abs": -6.5576,
+        "premium_pct": -37.91,
+        "n_stable": 5903,
+        "n_transition": 5312,
+        "rationale": "premium -37.91%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 21.3911,
+            "n": 248,
+            "rationale": "delta +23.66%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.0764,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 20.9625,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 17.2368,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 12.4015,
+            "n": 396,
+            "rationale": "delta -28.31%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 39.7534,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "cm": {
       "0-5h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 21.4427,
-        "transition_mae": 17.5183,
-        "premium_abs": -3.9244,
-        "premium_pct": -18.3,
-        "n_stable": 6212,
-        "n_transition": 4368,
-        "rationale": "premium -18.30%, n\u22651000",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "MARGINAL",
-        "direction": "WIDEN",
-        "stable_mae": 21.2415,
-        "transition_mae": 23.0315,
-        "premium_abs": 1.79,
-        "premium_pct": 8.43,
-        "n_stable": 21114,
-        "n_transition": 24122,
-        "rationale": "premium +8.43% in 5-10% band",
+        "stable_mae": 21.1232,
+        "transition_mae": 17.7327,
+        "premium_abs": -3.3905,
+        "premium_pct": -16.05,
+        "n_stable": 6025,
+        "n_transition": 4309,
+        "rationale": "premium -16.05%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 84.2333,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 17.9437,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 88.0,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 30.2551,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 24.6286,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.1731,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 12.2833,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 14.1953,
+            "n": 297,
+            "rationale": "delta -32.80%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SHIP",
+        "direction": "WIDEN",
+        "stable_mae": 20.5968,
+        "transition_mae": 23.9163,
+        "premium_abs": 3.3195,
+        "premium_pct": 16.12,
+        "n_stable": 20536,
+        "n_transition": 24512,
+        "rationale": "premium +16.12%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 20.0972,
+            "n": 463,
+            "rationale": "magnitude floor (|-2.43%| < 5.0%)"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.3333,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 17.3553,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 37.1884,
+            "n": 812,
+            "rationale": "delta +80.55%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.385,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.875,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 37.4233,
+            "n": 378,
+            "rationale": "delta +81.69%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 34.65,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 41.7736,
+            "n": 583,
+            "rationale": "delta +102.82%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 25.4324,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 37.2692,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "MARGINAL",
+            "direction": "WIDEN",
+            "mae": 21.7468,
+            "n": 624,
+            "rationale": "delta +5.58% in 5-10% band"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 12.5769,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 25.6579,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 24.3873,
+            "n": 1229,
+            "rationale": "delta +18.40%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 23.9643,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 28.4694,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 20.0104,
-        "transition_mae": 23.5442,
-        "premium_abs": 3.5338,
-        "premium_pct": 17.66,
-        "n_stable": 10793,
-        "n_transition": 11709,
-        "rationale": "premium +17.66%, n\u22651000",
+        "stable_mae": 19.3804,
+        "transition_mae": 24.3077,
+        "premium_abs": 4.9273,
+        "premium_pct": 25.42,
+        "n_stable": 9921,
+        "n_transition": 12471,
+        "rationale": "premium +25.42%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 38.4417,
+            "n": 480,
+            "rationale": "delta +98.35%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 88.0,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 63.3226,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 33.0875,
+            "n": 400,
+            "rationale": "delta +70.73%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 38.0952,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 31.9315,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 24.7788,
+            "n": 764,
+            "rationale": "delta +27.85%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 13.4545,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.3077,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 16.6316,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.2258,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 11.2348,
+            "n": 264,
+            "rationale": "delta -42.03%, n\u2265200"
           }
         }
       },
       "6-11h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 24.4976,
-        "transition_mae": 18.5549,
-        "premium_abs": -5.9427,
-        "premium_pct": -24.26,
-        "n_stable": 6196,
-        "n_transition": 5055,
-        "rationale": "premium -24.26%, n\u22651000",
-        "by_axes": {}
+        "stable_mae": 24.308,
+        "transition_mae": 21.0766,
+        "premium_abs": -3.2314,
+        "premium_pct": -13.29,
+        "n_stable": 5903,
+        "n_transition": 5312,
+        "rationale": "premium -13.29%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 42.3347,
+            "n": 248,
+            "rationale": "delta +74.16%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 13.4028,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 35.0063,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 27.5965,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "NARROW",
+            "mae": 22.8485,
+            "n": 396,
+            "rationale": "delta -6.00% in 5-10% band"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 33.1233,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "ch": {
       "0-5h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 28.8735,
-        "transition_mae": 20.9865,
-        "premium_abs": -7.887,
-        "premium_pct": -27.32,
-        "n_stable": 6212,
-        "n_transition": 4368,
-        "rationale": "premium -27.32%, n\u22651000",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "REVIEW",
-        "direction": "WIDEN",
-        "stable_mae": 24.2808,
-        "transition_mae": 26.7057,
-        "premium_abs": 2.4249,
-        "premium_pct": 9.99,
-        "n_stable": 21114,
-        "n_transition": 24122,
-        "rationale": "premium +9.99% in 5-10% band [contradicts field's dominant NARROW pattern]",
+        "stable_mae": 28.0529,
+        "transition_mae": 21.3783,
+        "premium_abs": -6.6747,
+        "premium_pct": -23.79,
+        "n_stable": 6025,
+        "n_transition": 4309,
+        "rationale": "premium -23.79%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 26.8,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 8.1549,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 2.0,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 6.3265,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 23.6571,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.9327,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 30.0667,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 31.5421,
+            "n": 297,
+            "rationale": "delta +12.44%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "REVIEW",
+        "direction": "WIDEN",
+        "stable_mae": 24.3617,
+        "transition_mae": 26.6597,
+        "premium_abs": 2.298,
+        "premium_pct": 9.43,
+        "n_stable": 20536,
+        "n_transition": 24512,
+        "rationale": "premium +9.43% in 5-10% band [contradicts field's dominant NARROW pattern]",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 18.7905,
+            "n": 463,
+            "rationale": "delta -22.87%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.8889,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.5789,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 16.5837,
+            "n": 812,
+            "rationale": "delta -31.93%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.7112,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.1562,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 15.4392,
+            "n": 378,
+            "rationale": "delta -36.63%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.075,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 19.9365,
+            "n": 583,
+            "rationale": "delta -18.16%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 13.8378,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 9.8846,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 21.1522,
+            "n": 624,
+            "rationale": "delta -13.17%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 7.4231,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 6.1053,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "WIDEN",
+            "mae": 26.1343,
+            "n": 1229,
+            "rationale": "delta +7.28% in 5-10% band"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 12.2381,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 8.551,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 25.8521,
-        "transition_mae": 23.2566,
-        "premium_abs": -2.5956,
-        "premium_pct": -10.04,
-        "n_stable": 10793,
-        "n_transition": 11709,
-        "rationale": "premium -10.04%, n\u22651000",
+        "stable_mae": 25.0662,
+        "transition_mae": 22.3316,
+        "premium_abs": -2.7346,
+        "premium_pct": -10.91,
+        "n_stable": 9921,
+        "n_transition": 12471,
+        "rationale": "premium -10.91%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 6.3792,
+            "n": 480,
+            "rationale": "delta -74.55%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0385,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 5.4194,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 14.57,
+            "n": 400,
+            "rationale": "delta -41.87%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 5.3333,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 12.3973,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 22.4948,
+            "n": 764,
+            "rationale": "delta -10.26%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 36.2909,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.4462,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.8211,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 21.8387,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 12.2689,
+            "n": 264,
+            "rationale": "delta -51.05%, n\u2265200"
           }
         }
       },
       "6-11h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 30.2703,
-        "transition_mae": 18.4605,
-        "premium_abs": -11.8098,
-        "premium_pct": -39.01,
-        "n_stable": 6196,
-        "n_transition": 5055,
-        "rationale": "premium -39.01%, n\u22651000",
-        "by_axes": {}
+        "stable_mae": 28.5211,
+        "transition_mae": 19.1276,
+        "premium_abs": -9.3935,
+        "premium_pct": -32.94,
+        "n_stable": 5903,
+        "n_transition": 5312,
+        "rationale": "premium -32.94%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 9.0403,
+            "n": 248,
+            "rationale": "delta -68.30%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 11.2639,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 18.6625,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 39.3596,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "NARROW",
+            "mae": 26.9975,
+            "n": 396,
+            "rationale": "delta -5.34% in 5-10% band"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 17.8767,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "wd": {
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 79.1058,
-        "transition_mae": 103.9652,
-        "premium_abs": 24.8594,
-        "premium_pct": 31.43,
-        "n_stable": 6229,
-        "n_transition": 4419,
-        "rationale": "premium +31.43%, n\u22651000",
-        "by_axes": {}
-      },
-      "24-47h": {
-        "status": "SHIP",
-        "direction": "WIDEN",
-        "stable_mae": 77.5446,
-        "transition_mae": 99.1607,
-        "premium_abs": 21.6161,
-        "premium_pct": 27.88,
-        "n_stable": 21142,
-        "n_transition": 24380,
-        "rationale": "premium +27.88%, n\u22651000",
+        "stable_mae": 73.9063,
+        "transition_mae": 94.0346,
+        "premium_abs": 20.1283,
+        "premium_pct": 27.23,
+        "n_stable": 6042,
+        "n_transition": 4360,
+        "rationale": "premium +27.23%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 16.4333,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 21.3028,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
           },
           "Q1::rising::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 9.1507,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 119.801,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 85.8095,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 122.7885,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 93.5583,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 88.138,
+            "n": 297,
+            "rationale": "delta +19.26%, n\u2265200"
+          }
+        }
+      },
+      "24-47h": {
+        "status": "SHIP",
+        "direction": "WIDEN",
+        "stable_mae": 72.9675,
+        "transition_mae": 91.5667,
+        "premium_abs": 18.5992,
+        "premium_pct": 25.49,
+        "n_stable": 20564,
+        "n_transition": 24770,
+        "rationale": "premium +25.49%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 61.257,
+            "n": 463,
+            "rationale": "delta -16.05%, n\u2265200"
+          },
+          "Q1::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 19.1538,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 49.6579,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
+          },
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 112.4261,
+            "n": 812,
+            "rationale": "delta +54.08%, n\u2265200"
+          },
+          "Q1::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 97.1176,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 99.1875,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 80.4921,
+            "n": 378,
+            "rationale": "delta +10.31%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 110.475,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 89.7307,
+            "n": 583,
+            "rationale": "delta +22.97%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 59.4865,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 101.8077,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 91.4567,
+            "n": 624,
+            "rationale": "delta +25.34%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 170.0,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 115.2895,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 93.6273,
+            "n": 1229,
+            "rationale": "delta +28.31%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 75.5833,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 83.6531,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
-        "status": "SHIP",
+        "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 86.4494,
-        "transition_mae": 99.4295,
-        "premium_abs": 12.9802,
-        "premium_pct": 15.01,
-        "n_stable": 10800,
-        "n_transition": 11846,
-        "rationale": "premium +15.01%, n\u22651000",
+        "stable_mae": 81.8796,
+        "transition_mae": 88.4706,
+        "premium_abs": 6.5909,
+        "premium_pct": 8.05,
+        "n_stable": 9928,
+        "n_transition": 12608,
+        "rationale": "premium +8.05% in 5-10% band",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 102.5104,
+            "n": 480,
+            "rationale": "delta +25.20%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 3.6731,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 150.8387,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 96.4425,
+            "n": 400,
+            "rationale": "delta +17.79%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 91.4127,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 87.8767,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 83.5,
+            "n": 764,
+            "rationale": "magnitude floor (|+1.98%| < 5.0%)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 90.6727,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 98.8923,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 111.2737,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 179.3548,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 31.4508,
+            "n": 264,
+            "rationale": "delta -61.59%, n\u2265200"
           }
         }
       },
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 78.0689,
-        "transition_mae": 101.647,
-        "premium_abs": 23.5781,
-        "premium_pct": 30.2,
-        "n_stable": 6196,
-        "n_transition": 5127,
-        "rationale": "premium +30.20%, n\u22651000",
-        "by_axes": {}
+        "stable_mae": 74.0068,
+        "transition_mae": 94.5052,
+        "premium_abs": 20.4984,
+        "premium_pct": 27.7,
+        "n_stable": 5903,
+        "n_transition": 5384,
+        "rationale": "premium +27.70%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 121.5161,
+            "n": 248,
+            "rationale": "delta +64.20%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 36.8264,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 111.475,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 80.2105,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 91.4773,
+            "n": 396,
+            "rationale": "delta +23.61%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 19.9726,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       }
     },
     "pp": {
       "24-47h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 32.7975,
-        "transition_mae": 21.0942,
-        "premium_abs": -11.7034,
-        "premium_pct": -35.68,
-        "n_stable": 9834,
-        "n_transition": 7910,
-        "rationale": "premium -35.68%, n\u22651000",
+        "stable_mae": 30.2107,
+        "transition_mae": 21.5299,
+        "premium_abs": -8.6807,
+        "premium_pct": -28.73,
+        "n_stable": 11749,
+        "n_transition": 11730,
+        "rationale": "premium -28.73%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 15.9503,
+            "n": 463,
+            "rationale": "delta -47.20%, n\u2265200"
+          },
+          "Q1::flat::stable": {
             "status": "SKIP",
             "direction": null,
-            "mae": 0.0,
-            "n": 30,
-            "rationale": "sample floor (n=30)"
+            "mae": 14.8632,
+            "n": 117,
+            "rationale": "sample floor (n=117)"
+          },
+          "Q1::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 10.8158,
+            "n": 76,
+            "rationale": "sample floor (n=76)"
           },
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 17.1675,
+            "n": 812,
+            "rationale": "delta -43.17%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 6.7534,
-            "n": 73,
-            "rationale": "sample floor (n=73)"
+            "mae": 13.2086,
+            "n": 187,
+            "rationale": "sample floor (n=187)"
+          },
+          "Q1::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 12.5625,
+            "n": 64,
+            "rationale": "sample floor (n=64)"
+          },
+          "Q4::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 17.3122,
+            "n": 378,
+            "rationale": "delta -42.70%, n\u2265200"
+          },
+          "Q4::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 16.1,
+            "n": 40,
+            "rationale": "sample floor (n=40)"
+          },
+          "Q4::rising::transition": {
+            "status": "SHIP",
+            "direction": "WIDEN",
+            "mae": 42.3756,
+            "n": 583,
+            "rationale": "delta +40.27%, n\u2265200"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 29.0811,
+            "n": 74,
+            "rationale": "sample floor (n=74)"
+          },
+          "Q4::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 15.7692,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 18.1138,
+            "n": 624,
+            "rationale": "delta -40.04%, n\u2265200"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 23.8077,
+            "n": 52,
+            "rationale": "sample floor (n=52)"
+          },
+          "Q23::falling::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 13.3947,
+            "n": 38,
+            "rationale": "sample floor (n=38)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 18.1456,
+            "n": 1229,
+            "rationale": "delta -39.94%, n\u2265200"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 15.0714,
+            "n": 168,
+            "rationale": "sample floor (n=168)"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 14.8776,
+            "n": 49,
+            "rationale": "sample floor (n=49)"
           }
         }
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 31.8318,
-        "transition_mae": 25.8793,
-        "premium_abs": -5.9525,
-        "premium_pct": -18.7,
-        "n_stable": 4863,
-        "n_transition": 4093,
-        "rationale": "premium -18.70%, n\u22651000",
+        "stable_mae": 31.0535,
+        "transition_mae": 25.052,
+        "premium_abs": -6.0015,
+        "premium_pct": -19.33,
+        "n_stable": 5362,
+        "n_transition": 6418,
+        "rationale": "premium -19.33%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 18.7125,
+            "n": 480,
+            "rationale": "delta -39.74%, n\u2265200"
+          },
+          "Q1::flat::transition": {
             "status": "SKIP",
             "direction": null,
-            "mae": 16.2115,
-            "n": 52,
-            "rationale": "sample floor (n=52)"
+            "mae": 17.4516,
+            "n": 62,
+            "rationale": "sample floor (n=62)"
+          },
+          "Q4::rising::transition": {
+            "status": "MARGINAL",
+            "direction": "WIDEN",
+            "mae": 33.335,
+            "n": 400,
+            "rationale": "delta +7.35% in 5-10% band"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 38.0635,
+            "n": 63,
+            "rationale": "sample floor (n=63)"
+          },
+          "Q4::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 35.2877,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 20.1126,
+            "n": 764,
+            "rationale": "delta -35.23%, n\u2265200"
+          },
+          "Q23::falling::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 22.9818,
+            "n": 55,
+            "rationale": "sample floor (n=55)"
+          },
+          "Q23::flat::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 24.0462,
+            "n": 130,
+            "rationale": "sample floor (n=130)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 19.6632,
+            "n": 95,
+            "rationale": "sample floor (n=95)"
+          },
+          "Q23::flat::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 19.4194,
+            "n": 31,
+            "rationale": "sample floor (n=31)"
+          },
+          "Q1::rising::stable": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 18.1818,
+            "n": 264,
+            "rationale": "delta -41.45%, n\u2265200"
           }
         }
       },
       "6-11h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 31.4297,
-        "transition_mae": 26.9509,
-        "premium_abs": -4.4787,
-        "premium_pct": -14.25,
-        "n_stable": 2637,
-        "n_transition": 1814,
-        "rationale": "premium -14.25%, n\u22651000",
-        "by_axes": {}
+        "stable_mae": 30.6319,
+        "transition_mae": 25.9521,
+        "premium_abs": -4.6798,
+        "premium_pct": -15.28,
+        "n_stable": 3026,
+        "n_transition": 2837,
+        "rationale": "premium -15.28%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 17.6331,
+            "n": 248,
+            "rationale": "delta -42.44%, n\u2265200"
+          },
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 19.9028,
+            "n": 144,
+            "rationale": "sample floor (n=144)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 35.0625,
+            "n": 160,
+            "rationale": "sample floor (n=160)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 20.9211,
+            "n": 114,
+            "rationale": "sample floor (n=114)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 22.8182,
+            "n": 396,
+            "rationale": "delta -25.51%, n\u2265200"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 31.9589,
+            "n": 73,
+            "rationale": "sample floor (n=73)"
+          }
+        }
       },
       "0-5h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 29.5287,
-        "transition_mae": 28.8185,
-        "premium_abs": -0.7102,
-        "premium_pct": -2.41,
-        "n_stable": 2232,
-        "n_transition": 1603,
-        "rationale": "magnitude floor (|-2.41%| < 5.0%)",
-        "by_axes": {}
+        "status": "SHIP",
+        "direction": "NARROW",
+        "stable_mae": 29.4962,
+        "transition_mae": 26.2315,
+        "premium_abs": -3.2647,
+        "premium_pct": -11.07,
+        "n_stable": 2640,
+        "n_transition": 2406,
+        "rationale": "premium -11.07%, n\u22651000",
+        "by_axes": {
+          "Q1::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 25.838,
+            "n": 142,
+            "rationale": "sample floor (n=142)"
+          },
+          "Q1::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 17.5969,
+            "n": 196,
+            "rationale": "sample floor (n=196)"
+          },
+          "Q4::rising::transition": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 41.5429,
+            "n": 105,
+            "rationale": "sample floor (n=105)"
+          },
+          "Q4::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 33.7596,
+            "n": 104,
+            "rationale": "sample floor (n=104)"
+          },
+          "Q23::rising::stable": {
+            "status": "SKIP",
+            "direction": null,
+            "mae": 25.95,
+            "n": 120,
+            "rationale": "sample floor (n=120)"
+          },
+          "Q23::rising::transition": {
+            "status": "SHIP",
+            "direction": "NARROW",
+            "mae": 18.6094,
+            "n": 297,
+            "rationale": "delta -36.91%, n\u2265200"
+          }
+        }
       }
     }
   }
