@@ -574,7 +574,7 @@ function loadWeatherData() {
         _setCardActive("thunderstorm",       _ts && _ts !== "clear");
         _setCardActive("frontal",            (data.frontal?.state || "quiet") !== "quiet");
         _setCardActive("sea_breeze_detail",  !!data.sea_breeze?.active);
-        _setCardActive("fog_risk",           (data.derived?.fog_likelihood ?? 0) >= 30);
+        _setCardActive("fog_risk",           (data.derived?.fog_probability ?? 0) >= 30);
         initWindPills(data);
 
         const windNowEl      = document.getElementById("windNowWind");

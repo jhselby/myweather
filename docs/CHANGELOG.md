@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.198 • June 22, 2026</strong></summary>
+
+- **C1 confidence table re-curated (Stage 1 + Stage 2 refresh).** Dry-run of `c1_calibration_audit.py` ahead of the 06-26 gated read showed 12 of 41 cells DRIFTED — wind ws/wg at short leads (+20-42%), pa across all bands (+24-90%), pr at mid leads (-10 to -21%), sr 12-23h (-19%). Curated bands were ~14 days stale; sea-breeze seasonality + marine-layer escalation had shifted the underlying spreads. Re-ran `c1_confidence_calibration.py` + `c1_curate_confidence_table.py` → fresh `c1_confidence_curated.json` with **46 cells wired** (was 39): 34 SHIP + 10 MARGINAL + 2 REVIEW (excluded) + 10 SKIP. Post-refresh re-audit landed at 70.45% pass rate, still under the 75% threshold — the bands are structurally fresher and broader, but 7d-window MAE variance makes the strict gate hard to clear. Audit framework verified working (caught real drift on first dry run). 06-26 audit will likely also HOLD unless threshold is loosened or measurement window is widened, but the deployed bands themselves are now strictly better than before.
+- **Shadow whitelist tuner — pp Brier exclusion.** S1 panel L3 match rate was reading 0% across all 7 logged cycles. Diagnosed as a metric-mismatch artifact: production keeps `pp` in L3 for the -5% Brier improvement (v0.6.20), but the shadow tuner is MAE-only and will always recommend dropping it. Added a `BRIER_FIELDS = {"pp"}` strip on both sides of the L3/L4 set comparison in `corrections_debug.html` so the displayed match rate reflects the metric the shadow tuner actually evaluates. Today's panel should now show ~100% L3 match — accurately reflecting that production is tuned correctly on MAE-graded fields.
+- **Fog card activation bug.** `app-main.js:577` read `data.derived.fog_likelihood` to decide whether the fog risk card should dim out as inactive — but the collector field is `fog_probability`. Result: card stayed grayed even at 95% fog probability with a "Likely" label. Renamed the JS reference. Verified live data: `fog_probability=95, fog_label="Likely"` → card now activates and gets the appropriate `tile-fog-high` gradient.
+
+</details>
+
+<details>
 <summary><strong>v0.6.197 • June 22, 2026</strong></summary>
 
 - **Backtest sweep default window 2d → 7d.** `backtest/sweep.py` `test_days` default + `--days` CLI default both bumped. 2-day windows kept echoing whatever short-term regime we were in — today's walk-forward L3/L4 #3 diagnostic showed the same window-artifact pattern (ws/wg L3 "losing" at 2d, winning -26%/-35% at 10d). The B1 sweep was reading the same false alarm. Re-ran with new default: wind L3 wins -34.9% wg, -24.6% ws, ch L3+L4 wins -24.5% over l2_only on 599,504 pairs. Result written to `gs://myweather-data/backtest_sweep_results.json`; debug page B1 caption auto-updates to "Window: last 7.0 days".

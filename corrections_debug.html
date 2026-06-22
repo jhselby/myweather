@@ -2484,14 +2484,19 @@ function renderShadowWhitelistSection(doc, wxDoc) {
     return `${dow} ${mon} ${+d}, ${h12}:${mm} ${ampm} ${tzShort}`;
   };
 
-  const matchL3 = JSON.stringify(latest.current_l3) === JSON.stringify(latest.shadow_l3);
-  const matchL4 = JSON.stringify(latest.current_l4) === JSON.stringify(latest.shadow_l4);
+  // pp ships for Brier (-5%, v0.6.20) not MAE, but the shadow tuner is MAE-only.
+  // Exclude pp from the comparison so the match rate reflects the metric the
+  // shadow tuner actually evaluates, not a known structural disagreement.
+  const BRIER_FIELDS = new Set(["pp"]);
+  const stripBrier = (arr) => (arr || []).filter(f => !BRIER_FIELDS.has(f));
+  const matchL3 = JSON.stringify(stripBrier(latest.current_l3)) === JSON.stringify(stripBrier(latest.shadow_l3));
+  const matchL4 = JSON.stringify(stripBrier(latest.current_l4)) === JSON.stringify(stripBrier(latest.shadow_l4));
 
   const n = entries.length;
   let l3Matches = 0, l4Matches = 0;
   for (const e of entries) {
-    if (JSON.stringify(e.current_l3) === JSON.stringify(e.shadow_l3)) l3Matches++;
-    if (JSON.stringify(e.current_l4) === JSON.stringify(e.shadow_l4)) l4Matches++;
+    if (JSON.stringify(stripBrier(e.current_l3)) === JSON.stringify(stripBrier(e.shadow_l3))) l3Matches++;
+    if (JSON.stringify(stripBrier(e.current_l4)) === JSON.stringify(stripBrier(e.shadow_l4))) l4Matches++;
   }
   const pct = (k) => n > 0 ? `${Math.round(100 * k / n)}%` : "—";
 
@@ -2652,8 +2657,8 @@ function renderShadowWhitelistSection(doc, wxDoc) {
     }
     html += `</tr></thead><tbody>`;
     for (const e of entries) {
-      const eMatchL3 = JSON.stringify(e.current_l3) === JSON.stringify(e.shadow_l3);
-      const eMatchL4 = JSON.stringify(e.current_l4) === JSON.stringify(e.shadow_l4);
+      const eMatchL3 = JSON.stringify(stripBrier(e.current_l3)) === JSON.stringify(stripBrier(e.shadow_l3));
+      const eMatchL4 = JSON.stringify(stripBrier(e.current_l4)) === JSON.stringify(stripBrier(e.shadow_l4));
       const matchTag = (eMatchL3 && eMatchL4) ? '<span style="color:#4ad29a;">both</span>'
                        : eMatchL3 ? '<span style="color:#d4b06a;">L3 only</span>'
                        : eMatchL4 ? '<span style="color:#d4b06a;">L4 only</span>'
