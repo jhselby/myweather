@@ -196,7 +196,10 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 22px;
-      padding: 14px 14px 12px;
+      /* Extra right-padding (was 14px) gives clearance from iOS Safari's
+         overlay scroll indicator on the viewport's right edge. Was clipping
+         the Stage 4b ± confidence tails on right-aligned values. */
+      padding: 14px 22px 12px 14px;
       box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 12px 32px rgba(0,0,0,0.50);
       backdrop-filter: blur(16px);
       position: relative;
