@@ -342,8 +342,18 @@ function renderWindTile(data) {
 
   if (!speedEl || !gustsEl || !impactEl) return;
 
-  speedEl.textContent = windSpeed != null ? Math.round(windSpeed) : '--';
-  gustsEl.textContent = gustSpeed != null ? Math.round(gustSpeed) : '--';
+  if (windSpeed != null) {
+    const wsBand = window.c1Band ? c1Band(data, "ws", "0-5h") : "";
+    speedEl.innerHTML = `${Math.round(windSpeed)}${wsBand}`;
+  } else {
+    speedEl.textContent = '--';
+  }
+  if (gustSpeed != null) {
+    const wgBand = window.c1Band ? c1Band(data, "wg", "0-5h") : "";
+    gustsEl.innerHTML = `${Math.round(gustSpeed)}${wgBand}`;
+  } else {
+    gustsEl.textContent = '--';
+  }
 
   if (dirLabelEl) {
     dirLabelEl.textContent = windDir != null ? toCompass(windDir, false) : '--';

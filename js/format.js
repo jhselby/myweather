@@ -22,6 +22,28 @@ function fmtRelAge(dt) {
 }
 window.fmtRelAge = fmtRelAge;
 
+// C1 confidence-band suffix. Reads data.confidence.cells[field][band].displayed_mae
+// and returns ` ±N` styled with dim text. Returns empty string when:
+//   - confidence layer not applied (gated off)
+//   - cell missing / null displayed_mae
+//   - half-range suppression: when displayed_mae > 0.5 × cellRange (e.g. ±30 on
+//     a 0-100% scale), we suppress because the band is louder than the value.
+//
+// Stage 4b (v0.6.181): rendered live even when applied=false, because the
+// cells are stamped today and the visual sanity-check is the whole point of
+// a live preview. Final ENABLED flip in the Fitter doesn't change the markup.
+function c1Band(data, field, band, opts = {}) {
+  const cell = data?.confidence?.cells?.[field]?.[band];
+  if (!cell) return "";
+  const mae = cell.displayed_mae;
+  if (mae == null) return "";
+  const halfRange = opts.halfRange ?? null;
+  if (halfRange != null && mae > halfRange) return "";
+  const txt = mae < 10 ? mae.toFixed(1) : Math.round(mae).toString();
+  return ` <span style="opacity:0.45;font-size:0.65em;font-weight:400;">±${txt}</span>`;
+}
+window.c1Band = c1Band;
+
 // Single canonical compass function — replaces both old degreesToCompass and degToCompass.
 function toCompass(deg, withDeg = true) {
   if (deg == null || isNaN(deg)) return "--";

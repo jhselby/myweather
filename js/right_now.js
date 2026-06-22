@@ -65,7 +65,7 @@ function renderRightNow(data) {
 
   // ── Current temperature (big number + collapsed-tile temp + thermometer mercury) ──
   document.getElementById("currentTemp").innerHTML =
-    `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>`;
+    `${Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0)}<span class="temp-unit">°F</span>${window.c1Band ? c1Band(data, "t", "0-5h") : ""}`;
   const ctc = document.getElementById("currentTempCollapsed");
   if (ctc) {
     const temp = Math.round(data.hyperlocal?.corrected_temp ?? cur.temperature ?? 0);
@@ -202,8 +202,10 @@ function renderRightNow(data) {
     if (windDir != null && (windSpeed != null || gustValue != null)) {
       const combined = Math.round(combinedWindImpact(windSpeed, gustValue, windDir));
       const level    = worryLevel(combined);
-      const spdStr   = windSpeed != null ? `${Math.round(windSpeed)} mph` : "--";
-      const gustStr  = gustValue != null ? ` · Gusts ${Math.round(gustValue)} mph` : "";
+      const wsBand   = window.c1Band ? c1Band(data, "ws", "0-5h") : "";
+      const wgBand   = window.c1Band ? c1Band(data, "wg", "0-5h") : "";
+      const spdStr   = windSpeed != null ? `${Math.round(windSpeed)} mph${wsBand}` : "--";
+      const gustStr  = gustValue != null ? ` · Gusts ${Math.round(gustValue)} mph${wgBand}` : "";
       windImpactNowEl.innerHTML = `${combined} (${level.label}) · ${windDirStr} ${spdStr}${gustStr}`;
     } else {
       windImpactNowEl.textContent = "--";
@@ -224,8 +226,11 @@ function renderRightNow(data) {
   document.getElementById("pressureNow").textContent = `${pressure} ${trendShort}${pressureChange}`.trim();
 
   const displayHumidity = hyp.corrected_humidity ?? cur.humidity;
-  document.getElementById("humidityNow").textContent =
-    displayHumidity != null ? `${Math.round(displayHumidity)}%` : "--%";
+  const humidityEl = document.getElementById("humidityNow");
+  if (humidityEl) {
+    const hBand = window.c1Band ? c1Band(data, "h", "0-5h") : "";
+    humidityEl.innerHTML = displayHumidity != null ? `${Math.round(displayHumidity)}%${hBand}` : "--%";
+  }
 
   document.getElementById("visibilityNow").textContent =
     cur.visibility != null ? `${(cur.visibility / 1609.34).toFixed(1)} mi` : "-- mi";
