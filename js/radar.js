@@ -201,7 +201,6 @@ function radarToggleMapType() {
 function initCollapsedRadarMap() {
   const mapEl = document.getElementById('radarMapCollapsed');
   if (!mapEl || window._collapsedRadarInitialized) {
-    console.log('Exiting - no element or already initialized');
     return;
   }
   
@@ -250,7 +249,6 @@ function initCollapsedRadarMap() {
   setTimeout(() => {
     const svgEl = document.querySelector('#radarMapCollapsed svg');
       if (!svgEl) {
-      console.log('No SVG element found!');
       return;
     }
     

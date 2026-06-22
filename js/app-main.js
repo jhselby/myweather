@@ -636,7 +636,6 @@ function loadWeatherData() {
           // Use MutationObserver to detect when preview becomes visible
           const observer = new MutationObserver(() => {
             if (radarPreview.style.display !== 'none' && !window._collapsedRadarInitialized) {
-              console.log('Radar preview is now visible, initializing...');
               setTimeout(initCollapsedRadarMap, 100);
               observer.disconnect();
             }
