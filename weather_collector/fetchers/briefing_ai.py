@@ -507,6 +507,24 @@ def _validate_headline(briefing, summary, weather_data):
         if ("clear" in cur_desc or "sunny" in cur_desc) and (in_headline("overcast") or in_headline("cloudy")):
             return False, f"headline says overcast/cloudy but weather_description={cur_desc!r}"
 
+    # 1d. Alert hallucination check — headline claims "NWS ... in effect" or
+    # similar alert framing, but the data has no active alerts. Caught
+    # 2026-06-22 09:37 ET when the headline read "NWS Flood Watch in effect"
+    # with weather_data.alerts == []. Model fabricated the alert from the
+    # forecast (torrential rain incoming) rather than from any data line.
+    raw_alerts = weather_data.get("alerts", []) or []
+    non_test_alerts = [a for a in raw_alerts
+                       if "TEST" not in (a.get("headline", "") + " " + a.get("description", "")).upper()]
+    if not non_test_alerts:
+        alert_phrases = ("nws ", "watch in effect", "warning in effect",
+                         "advisory in effect", "flood watch", "flood warning",
+                         "tornado watch", "tornado warning", "severe thunderstorm watch",
+                         "severe thunderstorm warning", "coastal flood")
+        for phrase in alert_phrases:
+            if phrase in headline:
+                return False, (f"headline claims alert {phrase!r} but "
+                               f"weather_data.alerts is empty")
+
     # 2. Sky contradiction — headline vs NOW, sub vs FORECAST TREND.
     cloud_arr = weather_data.get("hourly", {}).get("cloud_cover", [])
     cloud_now = cloud_arr[0] if cloud_arr and cloud_arr[0] is not None else None
