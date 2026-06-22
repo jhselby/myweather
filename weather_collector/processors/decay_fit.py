@@ -227,6 +227,46 @@ L5_GATE_HISTORY_PATH = "l5_gate_history.json"
 L5_GATE_WINDOW_DAYS = 7
 L5_GATE_HISTORY_RETENTION_DAYS = 30  # keep enough scrollback for debug page
 
+MARINE_WATCH_PATH = "marine_layer_watch.json"
+MARINE_WATCH_RETENTION_DAYS = 30
+
+
+def _compute_marine_layer_watch(marine_acc, fitted_at):
+    """Stage 2.5: append today's marine-layer NE+morn cc bias to
+    marine_layer_watch.json, prune to retention, return the latest snapshot.
+
+    Signed bias = (forecast - observed) mean error in the NE+morn stratum
+    (wd 45-105°, hour 4-9 EDT). Positive = forecast over-calls clouds.
+    Stage 1 baseline (2026-06-21): +28.1 mean / +25.0 median, n=3,119.
+    Stage 3 promotion still gated on the Sun-morning weekly verdict.
+    """
+    in_n = marine_acc["n"]
+    out_n = marine_acc["out_n"]
+    if in_n < 10:
+        return None  # too thin to log meaningfully
+    in_w = marine_acc["weight"] or 1.0
+    out_w = marine_acc["out_weight"] or 1.0
+    in_bias = marine_acc["signed_sum"] / in_w
+    in_abs  = marine_acc["abs_sum"] / in_w
+    out_bias = (marine_acc["out_signed_sum"] / out_w) if out_n else None
+    out_abs  = (marine_acc["out_abs_sum"] / out_w) if out_n else None
+    entry = {
+        "fitted_at": fitted_at,
+        "in_bin_signed_bias": round(in_bias, 2),
+        "in_bin_mae":         round(in_abs, 2),
+        "in_bin_n":           in_n,
+        "out_bin_signed_bias": round(out_bias, 2) if out_bias is not None else None,
+        "out_bin_mae":        round(out_abs, 2) if out_abs is not None else None,
+        "out_bin_n":          out_n,
+    }
+    log = load_json(MARINE_WATCH_PATH, default={"entries": []})
+    entries = log.get("entries", [])
+    entries.append(entry)
+    cutoff = (datetime.now(TZ) - timedelta(days=MARINE_WATCH_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    entries = [e for e in entries if e.get("fitted_at", "") >= cutoff]
+    upload_json({"entries": entries}, MARINE_WATCH_PATH, MARINE_WATCH_PATH)
+    return entry
+
 
 def _compute_l5_gate_7d(this_cycle):
     """Append this cycle's L5 verdict to l5_gate_history.json and compute the
@@ -372,6 +412,13 @@ def fit_decay_corrections():
     # transitions weigh more than 4-week-old ones. n stays unweighted for
     # display.
     r6_acc = defaultdict(lambda: {"sum_abs": 0.0, "weight": 0.0, "n": 0})
+    # v0.6.182: marine-layer Stage 2.5 — daily passive watch. Accumulates
+    # signed cc error in the NE+morn stratum (wd 45-105°, obs hour 4-9 EDT)
+    # so the marine-layer hypothesis Stage 2 weekly read isn't the only
+    # visibility on the bias. Stage 3 wiring still requires the weekly
+    # verdict to stabilize (see [[project-todo]] weekly Sun re-reads).
+    marine_acc = {"signed_sum": 0.0, "abs_sum": 0.0, "weight": 0.0, "n": 0,
+                  "out_signed_sum": 0.0, "out_abs_sum": 0.0, "out_weight": 0.0, "out_n": 0}
 
     # v0.6.112 L5 solar audit accumulators. Same pattern as R5 but joins via
     # the pair's own state_fc/state_obs.regime_synoptic instead of an external
@@ -552,6 +599,28 @@ def fit_decay_corrections():
                     a["sum_abs"] += abs(float(err_r6)) * w
                     a["weight"]  += w
                     a["n"]       += 1
+            # v0.6.182 marine-layer watch — stratify cc errors by (wd ∈ [45,105],
+            # obs hour ∈ [4,9] EDT). Recency-weighted like everything else.
+            if field == "cc":
+                state_obs_ml = row.get("state_obs") or {}
+                wd_ml = state_obs_ml.get("wind_dir")
+                err_ml = row.get("error_l4") if row.get("error_l4") is not None else row.get("error")
+                if wd_ml is not None and err_ml is not None:
+                    try:
+                        hour_ml = int(obs_time[11:13])
+                    except (ValueError, IndexError):
+                        hour_ml = None
+                    if hour_ml is not None:
+                        try:
+                            err_mlf = float(err_ml)
+                            in_bin = (45 <= wd_ml <= 105) and (4 <= hour_ml <= 9)
+                            prefix = "" if in_bin else "out_"
+                            marine_acc[prefix + "signed_sum"] += err_mlf * w
+                            marine_acc[prefix + "abs_sum"]    += abs(err_mlf) * w
+                            marine_acc[prefix + "weight"]     += w
+                            marine_acc[prefix + "n"]          += 1
+                        except (TypeError, ValueError):
+                            pass
                 except (TypeError, ValueError):
                     pass
             # L2 τ-fit: only fields we publish τ for, only post-v0.6.25 rows
@@ -1055,6 +1124,19 @@ def fit_decay_corrections():
     except Exception as e:
         logging.warning(f"  ⚠  L5 audit failed: {redact_secrets(e)}")
 
+    # v0.6.182 marine-layer Stage 2.5 watch — log NE+morn cc bias per cycle.
+    marine_watch = None
+    try:
+        marine_watch = _compute_marine_layer_watch(marine_acc, output["fitted_at"])
+        if marine_watch:
+            logging.info(f"  ✓ Marine-layer watch: in-bin signed bias "
+                         f"{marine_watch['in_bin_signed_bias']:+.1f}pp "
+                         f"(n={marine_watch['in_bin_n']}), out-bin "
+                         f"{marine_watch['out_bin_signed_bias']:+.1f}pp "
+                         f"(n={marine_watch['out_bin_n']})")
+    except Exception as e:
+        logging.warning(f"  ⚠  Marine-layer watch failed: {redact_secrets(e)}")
+
     # Shadow whitelist tuner: log what the auto-tuner WOULD have recommended
     # this Fitter cycle. Doesn't change production. Accumulates over months
     # so we can later evaluate "how often does shadow agree with human choices?"
@@ -1068,6 +1150,8 @@ def fit_decay_corrections():
             conditional_audits["l5"] = l5_audit_verdict
         if r6_audit_verdict:
             conditional_audits["r6"] = r6_audit_verdict
+        if marine_watch:
+            conditional_audits["marine_layer_watch"] = marine_watch
         log_shadow_recommendation(ts_output, L3_FIELDS, L4_FIELDS,
                                   conditional_audits=conditional_audits or None)
     except Exception as e:

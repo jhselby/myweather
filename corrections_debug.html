@@ -2499,6 +2499,7 @@ function renderShadowWhitelistSection(doc, wxDoc) {
   // `entry.conditional_audits`. Helpers accept any layer name.
   const _l5 = (e) => (e?.conditional_audits?.l5) || null;
   const _r6 = (e) => (e?.conditional_audits?.r6) || null;
+  const _ml = (e) => (e?.conditional_audits?.marine_layer_watch) || null;
   const _condVerdictTag = (audit) => {
     if (!audit) return '<span style="opacity:0.5;">—</span>';
     const v = audit.verdict;
@@ -2517,6 +2518,7 @@ function renderShadowWhitelistSection(doc, wxDoc) {
 
   const latestL5 = _l5(latest);
   const latestR6 = _r6(latest);
+  const latestML = _ml(latest);
 
   // Promotion-gate progress: the shadow recommendation must hold for ≥7
   // consecutive Fitter cycles before it's treated as a confident signal for
@@ -2578,6 +2580,22 @@ function renderShadowWhitelistSection(doc, wxDoc) {
       r6Detail = ` <span style="opacity:0.7;font-size:0.9em;">(n=${(latestR6.n_pairs ?? 0).toLocaleString()}, no bucket met ≥200/side)</span>`;
     }
     html += `<tr><td style="padding:2px 12px 2px 0;">R6 regime-transition (audit only):</td><td>${_condVerdictTag(latestR6)}${r6Detail}</td></tr>`;
+  }
+  // v0.6.182: marine-layer Stage 2.5 daily watch — signed cc bias in the
+  // NE+morn stratum. No SHIP/HOLD verdict yet (Stage 3 promotion gated on
+  // weekly stability); this row is observational.
+  if (latestML) {
+    const inBias = latestML.in_bin_signed_bias;
+    const inN    = latestML.in_bin_n;
+    const outBias = latestML.out_bin_signed_bias;
+    // Compare to Stage 1 baseline +28pp; render amber if drifting >±10pp from baseline.
+    const drift = Math.abs(inBias - 28);
+    const color = drift > 15 ? "#fb7c5c" : drift > 10 ? "#e0d472" : "#9bc8e0";
+    const mlDetail = ` <span style="opacity:0.7;font-size:0.9em;">(in-bin ` +
+      `<span style="color:${color};font-weight:600;">${inBias >= 0 ? "+" : ""}${inBias.toFixed(1)}pp</span>` +
+      ` n=${inN}; out-of-bin ${outBias >= 0 ? "+" : ""}${outBias?.toFixed(1)}pp; ` +
+      `Stage 1 baseline +28pp; Stage 3 gated on Sun-morning weekly verdict)</span>`;
+    html += `<tr><td style="padding:2px 12px 2px 0;">Marine-layer watch (Stage 2.5):</td><td>${mlDetail}</td></tr>`;
   }
   html += `</table>
   </div>`;
