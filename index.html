@@ -1422,7 +1422,7 @@
   <script src="js/alarms.js?v=bf87aed1"></script>
   <script src="js/alerts.js?v=2b854a8b"></script>
   <script src="js/right_now.js?v=d1517106"></script>
-  <script src="js/changelog_loader.js?v=16725a3f"></script>
+  <script src="js/changelog_loader.js?v=22e462a3"></script>
   
   <script>
   // Hide alerts on non-weather tabs using CSS class
@@ -1546,7 +1546,7 @@
         <div class="modal-setting-group" style="border-top:1px solid var(--border);padding-top:16px;margin-top:8px;">
           <div style="display:flex;align-items:center;gap:10px;">
             <div class="modal-setting-label">Version</div>
-            <span class="version-pill" id="appVersion">v0.6.175</span>
+            <span class="version-pill" id="appVersion">v0.6.176</span>
           </div>
         </div>
         <!-- Data timestamps (always visible) -->
@@ -1598,11 +1598,7 @@
                    style="font-size:0.85rem;font-weight:700;color:var(--muted);cursor:pointer;user-select:none;">
                 Licenses ▾
               </div>
-              <div id="licensesBody" style="display:none;font-size:0.8rem;line-height:1.7;color:var(--muted);margin-top:8px;">
-                <strong>SunCalc 1.9.0</strong> — BSD-2-Clause<br>
-                <strong>Leaflet 1.9.4</strong> — BSD-2-Clause<br>
-                <strong>Chart.js 4.4.4</strong> — MIT
-              </div>
+              <div id="licensesBody" style="display:none;font-size:0.8rem;line-height:1.7;color:var(--muted);max-height:400px;overflow-y:auto;margin-top:8px;"></div>
             </div>
           </div>
         </div>

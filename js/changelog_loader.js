@@ -18,6 +18,40 @@ async function loadChangelog() {
   }
 }
 
+async function loadLicenses() {
+  try {
+    const response = await fetch('docs/LICENSES.md');
+    const text = await response.text();
+    document.getElementById('licensesBody').innerHTML = parseLicensesMarkdown(text);
+  } catch (err) {
+    console.error('Failed to load licenses:', err);
+    document.getElementById('licensesBody').innerHTML = '<p style="color:rgba(255,255,255,0.4);">Licenses unavailable</p>';
+  }
+}
+
+function parseLicensesMarkdown(md) {
+  let html = md;
+  // Strip top-level title (already labeled by the panel header).
+  html = html.replace(/^# [^\n]*\n+/, '');
+  // # / ## / ### headings → styled spans (different weight/size).
+  html = html.replace(/^## (.+)$/gm,
+    '<div style="font-size:0.95em;font-weight:900;color:rgba(255,255,255,0.85);margin:14px 0 4px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:3px;">$1</div>');
+  html = html.replace(/^### (.+)$/gm,
+    '<div style="font-size:0.88em;font-weight:800;color:rgba(255,255,255,0.75);margin:10px 0 2px;">$1</div>');
+  // Bold + inline code.
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong style="color:rgba(255,255,255,0.85);">$1</strong>');
+  html = html.replace(/`([^`]+)`/g,
+    '<code style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:3px;font-family:\'SF Mono\',Monaco,monospace;font-size:0.85em;">$1</code>');
+  // Auto-link bare URLs (after backtick handling so we don't link inside code).
+  html = html.replace(/(?<!["'>=])(https?:\/\/[^\s<)]+)/g,
+    '<a href="$1" target="_blank" rel="noopener" style="color:rgba(140,180,240,0.85);">$1</a>');
+  // List items.
+  html = html.replace(/^- (.+)$/gm, '<div style="margin:1px 0 1px 12px;">• $1</div>');
+  // Paragraph breaks.
+  html = html.replace(/\n\n+/g, '<br>');
+  return html;
+}
+
 function parseChangelogMarkdown(md) {
   // The file is now mostly HTML: each day-group is wrapped in <details>
   // /<summary> for collapsibility. We pass those through and only transform
@@ -54,4 +88,5 @@ function parseChangelogMarkdown(md) {
 // Call on page load
 document.addEventListener('DOMContentLoaded', () => {
   loadChangelog();
+  loadLicenses();
 });
