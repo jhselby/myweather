@@ -206,6 +206,26 @@ def main():
             json.dump({"version": v_match.group(1)}, vf)
         print(f"  ✓ version.json → {v_match.group(1)}")
 
+        # Bump sw.js CACHE_VERSION to match — without this, the service worker
+        # keeps serving the previous version's app shell (index.html, app.css,
+        # briefing.css, app-main.js, briefing.js) until the user reloads twice.
+        # Root cause of the "no difference" frustration in v0.6.186-189 work.
+        sw_path = base_dir / 'sw.js'
+        if sw_path.exists():
+            with open(sw_path, 'r') as sf:
+                sw_content = sf.read()
+            new_cache_version = f"wc-{v_match.group(1)}"
+            new_sw_content, n_subs = _re.subn(
+                r"const CACHE_VERSION = '[^']*';",
+                f"const CACHE_VERSION = '{new_cache_version}';",
+                sw_content,
+                count=1,
+            )
+            if n_subs and new_sw_content != sw_content:
+                with open(sw_path, 'w') as sf:
+                    sf.write(new_sw_content)
+                print(f"  ✓ sw.js CACHE_VERSION → {new_cache_version}")
+
     if not changes:
         print("\n⚠️  No changes made - all assets already up to date or missing")
         return 0
