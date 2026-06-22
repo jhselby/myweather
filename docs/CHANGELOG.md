@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.194 • June 22, 2026</strong></summary>
+
+- **Tempest cull: Preston Ct (85569).** Moved from `TEMPEST_STATIONS` to `CULLED_TEMPEST_STATIONS` in `weather_collector/fetchers/tempest.py`. 7-day uptime was 5.7% (57/1008 successes) — either offline or hit the same field-level API sharing restriction as the 06-04 batch. 60 → 60 active mesonet seats (45 WU + 19 Tempest – 5 humidity denylist).
+
+</details>
+
+<details>
 <summary><strong>v0.6.158–v0.6.174 • June 21, 2026</strong></summary>
 
 A long Sunday — 17 versions shipped, 16 manual analyses run, two production bugs caught and fixed in live operation.

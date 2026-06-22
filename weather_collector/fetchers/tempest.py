@@ -36,7 +36,6 @@ TEMPEST_STATIONS = [
     {"id": 141896, "name": "Front St",                       "waterfront": False},
     {"id": 85616,  "name": "Orleans",                        "waterfront": False},
     {"id": 211335, "name": "Manton Rd",                      "waterfront": False},
-    {"id": 85569,  "name": "Preston Ct",                     "waterfront": False},
     {"id": 178102, "name": "Broad St",                       "waterfront": False},
     {"id": 109319, "name": "South Essex Sewerage District",  "waterfront": False},
     {"id": 92837,  "name": "Harbor Ave",                     "waterfront": False},
@@ -59,6 +58,9 @@ CULLED_TEMPEST_STATIONS = [
     {"id": 85260,  "name": "Driftwood Rd"},
     {"id": 100037, "name": "Bass Rock Ln"},
     {"id": 159204, "name": "Marblehead"},
+    # Culled 2026-06-22 — 7-day uptime 5.7% (57/1008 successes). Either offline
+    # or has the same field-level sharing restriction as the 06-04 batch.
+    {"id": 85569,  "name": "Preston Ct"},
 ]
 
 _API_KEY  = "6bff2f89-84ab-463c-886e-fc0f443da4cf"
