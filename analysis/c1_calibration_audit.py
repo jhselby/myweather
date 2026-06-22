@@ -1,12 +1,12 @@
 """
-L6 confidence-layer — Stage 3.5 calibration audit.
+C1 confidence-layer — Stage 3.5 calibration audit.
 
 Per the hypothesis promotion pipeline ([[feedback-hypothesis-promotion-pipeline]]):
 the layer is gated (`ENABLED=False`) until the displayed bands are confirmed to
 contain truth at the claimed rate. This script does that confirmation.
 
 Method:
-  1. Load the Stage 2 curated table at weather_collector/data/l6_confidence_curated.json
+  1. Load the Stage 2 curated table at weather_collector/data/c1_confidence_curated.json
   2. Re-measure per-(field, band) stable_mae and transition_mae on RECENT pair-log
      data (default: last 7 days), the same window users would see when ENABLED.
   3. For each wired cell, compute drift = (measured - curated) / curated. Tag as:
@@ -17,12 +17,12 @@ Method:
 
 When this script returns PASS (typically after ~7 days of accumulated stamped
 data), flipping confidence_layer.ENABLED=True is safe. Re-run weekly; if drift
-emerges, re-curate (run l6_confidence_calibration.py + l6_curate_confidence_table.py)
+emerges, re-curate (run c1_confidence_calibration.py + c1_curate_confidence_table.py)
 and re-deploy.
 
 Run:
-  python3 analysis/l6_calibration_audit.py
-  python3 analysis/l6_calibration_audit.py --days 14   # use a wider window
+  python3 analysis/c1_calibration_audit.py
+  python3 analysis/c1_calibration_audit.py --days 14   # use a wider window
 """
 import argparse
 import json
@@ -52,7 +52,7 @@ PASS_FRACTION = 0.75           # ≥75% of non-THIN cells must CALIBRATE
 
 CURATED_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "weather_collector", "data", "l6_confidence_curated.json",
+    "weather_collector", "data", "c1_confidence_curated.json",
 )
 
 
@@ -142,12 +142,12 @@ def classify_cell(curated, measured):
 
 def run_audit(window_days):
     if not os.path.exists(CURATED_PATH):
-        sys.exit(f"Missing curated table at {CURATED_PATH} — run l6_curate_confidence_table.py first")
+        sys.exit(f"Missing curated table at {CURATED_PATH} — run c1_curate_confidence_table.py first")
     with open(CURATED_PATH) as f:
         curated_doc = json.load(f)
     curated_cells = curated_doc.get("cells", {})
 
-    print(f"L6 calibration audit · window={window_days}d · "
+    print(f"C1 calibration audit · window={window_days}d · "
           f"calibration_threshold=±{int(CALIBRATION_THRESHOLD*100)}% · "
           f"pass_fraction={int(PASS_FRACTION*100)}%")
     print("=" * 96)
@@ -163,7 +163,7 @@ def run_audit(window_days):
     for field, bands in curated_cells.items():
         for band, c in bands.items():
             # Only audit cells that the curated table actually wired (SHIP or
-            # MARGINAL). REVIEW/SKIP cells are excluded from L6 stamping in
+            # MARGINAL). REVIEW/SKIP cells are excluded from C1 stamping in
             # confidence_layer.py and therefore from audit by symmetry.
             if c.get("status") not in ("SHIP", "MARGINAL"):
                 continue
@@ -201,7 +201,7 @@ def run_audit(window_days):
             print("  HOLD reason: < 10 judgeable cells. Window too short, or pair log too sparse.")
         else:
             print(f"  HOLD reason: pass rate {pass_rate:.2%} < {PASS_FRACTION:.0%} threshold.")
-            print(f"  Next step: re-curate (l6_confidence_calibration.py + l6_curate_confidence_table.py)")
+            print(f"  Next step: re-curate (c1_confidence_calibration.py + c1_curate_confidence_table.py)")
             print(f"  to capture the drift, then re-deploy.")
 
     return verdict, results

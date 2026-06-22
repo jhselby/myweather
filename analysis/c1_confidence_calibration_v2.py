@@ -1,5 +1,5 @@
 """
-L6 confidence-layer calibration — Stage 1 v2 (multi-axis).
+C1 confidence-layer calibration — Stage 1 v2 (multi-axis).
 
 Extends the original (transition-only) calibration to a 3-axis table:
 
@@ -37,8 +37,8 @@ Data sources joined:
   - cluster_spread_log.json     per-tick scalar, joined by obs_time within ±10min
 
 Run:
-  python3 analysis/l6_confidence_calibration_v2.py
-  MYWEATHER_REFRESH=1 python3 analysis/l6_confidence_calibration_v2.py
+  python3 analysis/c1_confidence_calibration_v2.py
+  MYWEATHER_REFRESH=1 python3 analysis/c1_confidence_calibration_v2.py
 """
 import json
 import os
@@ -78,7 +78,7 @@ MIN_N_LEGACY = 100      # legacy single-axis floor (matches v1)
 MIN_N_MULTI = 30        # multi-axis floor — cells are 8-32× sparser
 TICK_JOIN_TOLERANCE_MIN = 15   # cluster_spread tick matched if within this window
 
-OUTPUT_JSON = os.path.join(os.path.dirname(__file__), "output", "l6_confidence_premium_v2.json")
+OUTPUT_JSON = os.path.join(os.path.dirname(__file__), "output", "c1_confidence_premium_v2.json")
 
 
 def _band_for_lead(lead_h):
@@ -179,7 +179,7 @@ def _spread_quartile(v, q1, q3):
 
 
 def measure():
-    print(f"L6 multi-axis calibration · {TEST_DAYS}-day window")
+    print(f"C1 multi-axis calibration · {TEST_DAYS}-day window")
     print("=" * 80)
     print("[1/3] Loading cluster_spread index...")
     spread_idx, sq1, sq3 = _load_cluster_spread_index()
@@ -351,7 +351,7 @@ def main():
         }, f, indent=2)
     print(f"\nWrote {OUTPUT_JSON}")
     print()
-    print("Next: re-run l6_curate_confidence_table.py to produce the curated")
+    print("Next: re-run c1_curate_confidence_table.py to produce the curated")
     print("table. The v1 curator reads stable_mae/transition_mae and ignores")
     print("the by_axes sub-table — safe to run today. A v2 curator that")
     print("emits per-axis SHIP/SKIP rows is the next piece.")

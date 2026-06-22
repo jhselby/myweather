@@ -235,7 +235,7 @@ def main():
     else:
         print("VERDICT: SMOKE_DEAD — no (field, band) shows ratio >= 1.2.")
         print("Recommendation: deprioritize cluster-spread axis. Revisit only")
-        print("if other L6 axes (regime-synoptic, dP/dt) also come up empty.")
+        print("if other C1 axes (regime-synoptic, dP/dt) also come up empty.")
     print("=" * 72)
 
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)

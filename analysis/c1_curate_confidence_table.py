@@ -1,7 +1,7 @@
 """
-L6 confidence-layer — Stage 2 curated table.
+C1 confidence-layer — Stage 2 curated table.
 
-Takes the Stage 1 calibration output (`l6_confidence_premium.json`) and
+Takes the Stage 1 calibration output (`c1_confidence_premium.json`) and
 applies documented curation rules to produce a production-ready lookup table
 that `weather_collector/processors/confidence_layer.py` will consume.
 
@@ -21,7 +21,7 @@ Curation rules:
     pattern get tagged "REVIEW" — manual judgment before wiring.
 
 Run:
-  python3 analysis/l6_curate_confidence_table.py
+  python3 analysis/c1_curate_confidence_table.py
 """
 import json
 import os
@@ -38,10 +38,10 @@ MAGNITUDE_FLOOR_PCT = 5.0    # min |premium_pct| to wire
 # weather_collector/data/ so it ships with the Cloud Function deploy. The
 # analysis/output/ tree is in .gitignore (so it doesn't ship), which is why
 # the production artifact lives in the collector tree instead.
-STAGE1_PATH = os.path.join(os.path.dirname(__file__), "output", "l6_confidence_premium.json")
+STAGE1_PATH = os.path.join(os.path.dirname(__file__), "output", "c1_confidence_premium.json")
 OUTPUT_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "weather_collector", "data", "l6_confidence_curated.json",
+    "weather_collector", "data", "c1_confidence_curated.json",
 )
 
 
@@ -146,7 +146,7 @@ def print_summary(curated):
     """Human-readable text table — what cells ship, what's marginal, what's skipped."""
     field_order = ["ws", "wg", "wd", "t", "dp", "h", "pa", "pr", "cc", "cl", "cm", "ch", "sr", "pp"]
     field_order = [f for f in field_order if f in curated["cells"]]
-    print(f"L6 confidence-layer Stage 2 curated table")
+    print(f"C1 confidence-layer Stage 2 curated table")
     print(f"  sample_floor={SAMPLE_FLOOR}  magnitude_floor={MAGNITUDE_FLOOR_PCT}%")
     print("=" * 90)
     print(f"{'field':<6} {'band':<8} {'status':<9} {'direction':<8} "
@@ -172,7 +172,7 @@ def print_summary(curated):
 
 def main():
     if not os.path.exists(STAGE1_PATH):
-        sys.exit(f"Missing Stage 1 input {STAGE1_PATH} — run l6_confidence_calibration.py first")
+        sys.exit(f"Missing Stage 1 input {STAGE1_PATH} — run c1_confidence_calibration.py first")
     curated = curate()
     print_summary(curated)
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)

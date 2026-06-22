@@ -1,9 +1,9 @@
 """
-L6 confidence-layer calibration — Stage 1 manual analysis.
+C1 confidence-layer calibration — Stage 1 manual analysis.
 
 Per the hypothesis promotion pipeline ([[feedback-hypothesis-promotion-pipeline]]):
-this is the Stage 1 manual analysis for L6 framed as a confidence-widening
-layer (not a bias-correction layer). The earlier bias-correction L6 path was
+this is the Stage 1 manual analysis for C1 framed as a confidence-widening
+layer (not a bias-correction layer). The earlier bias-correction C1 path was
 ruled out 2026-06-19 — every formulation of regime_bias and l1_fallback
 either regressed or barely cleared zero across leakage-free per-cutoff tests.
 
@@ -15,16 +15,16 @@ uncertainty on transition hours rather than try to move the forecast value.
 What this script measures: for each (field, lead_band), the MAE on stable
 pairs (state_fc.regime_synoptic == state_obs.regime_synoptic) vs transition
 pairs (rfc != rob). The DELTA is the "transition uncertainty premium" — the
-calibration target for an L6 confidence-widening lookup table.
+calibration target for an C1 confidence-widening lookup table.
 
 Output:
   - Text table: per (field, band) stable_mae, transition_mae, premium, n
-  - JSON file at analysis/output/l6_confidence_premium.json — feeds the
+  - JSON file at analysis/output/c1_confidence_premium.json — feeds the
     eventual `confidence_layer.py` processor when it's built
 
 Run:
-  python3 analysis/l6_confidence_calibration.py
-  MYWEATHER_REFRESH=1 python3 analysis/l6_confidence_calibration.py  # force fresh cache
+  python3 analysis/c1_confidence_calibration.py
+  MYWEATHER_REFRESH=1 python3 analysis/c1_confidence_calibration.py  # force fresh cache
 """
 import json
 import os
@@ -32,7 +32,7 @@ import sys
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 
-# Path bootstrapping so `python3 analysis/l6_confidence_calibration.py` runs
+# Path bootstrapping so `python3 analysis/c1_confidence_calibration.py` runs
 # without -m. Mirrors the pattern in other analysis/ scripts.
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -59,7 +59,7 @@ TEST_DAYS = 14
 # user-facing confidence bands.
 MIN_N = 100
 
-OUTPUT_JSON = os.path.join(os.path.dirname(__file__), "output", "l6_confidence_premium.json")
+OUTPUT_JSON = os.path.join(os.path.dirname(__file__), "output", "c1_confidence_premium.json")
 
 
 def _band_for_lead(lead_h):
@@ -159,7 +159,7 @@ def measure_premium():
 
 
 def main():
-    print(f"L6 confidence-layer calibration · {TEST_DAYS}-day window · min_n={MIN_N}")
+    print(f"C1 confidence-layer calibration · {TEST_DAYS}-day window · min_n={MIN_N}")
     print("=" * 80)
     cells, seen, used = measure_premium()
     print(f"Pairs scanned: {seen:,}   used: {used:,}")

@@ -9,7 +9,7 @@ forecast |error|, AND is the signal orthogonal to:
 
 Unlike cluster-spread, dP/dt is already in the pair log going back the
 full retention window. No persistent logger needed. If verdict is clean,
-this becomes an L6 axis purely by extending the cal-table key tuple.
+this becomes an C1 axis purely by extending the cal-table key tuple.
 
 Method:
   1. Stream pair log.
@@ -31,7 +31,7 @@ Verdict per (field, band):
   THIN         — insufficient sample in any bin
 
 Overall:
-  PROMOTE if >=3 ORTHOGONAL verdicts (treat as L6 axis #3)
+  PROMOTE if >=3 ORTHOGONAL verdicts (treat as C1 axis #3)
   KILL    if >=80% REDUNDANT
   else AMBIGUOUS
 """
@@ -74,7 +74,7 @@ def pt_bin(pt):
 
 def main():
     print("=" * 80)
-    print("PRESSURE-TENDENCY (dP/dt) L6 AXIS — STAGE 2")
+    print("PRESSURE-TENDENCY (dP/dt) C1 AXIS — STAGE 2")
     print("=" * 80)
 
     print("\n[1/4] Streaming pair log...")
@@ -244,14 +244,14 @@ def main():
           f"THIN:       {counts['THIN']}")
     print()
     if counts["ORTHOGONAL"] >= 3:
-        print("  → PROMOTE: pressure tendency is an additive L6 axis. Next step:")
-        print("    extend l6_confidence_calibration.py key tuple to include")
+        print("  → PROMOTE: pressure tendency is an additive C1 axis. Next step:")
+        print("    extend c1_confidence_calibration.py key tuple to include")
         print("    pt_bin; no collector change needed (data already in pair log).")
     elif counts["REDUNDANT"] >= 0.8 * (32 - counts["THIN"]):
         print("  → KILL: pressure tendency is mostly redundant with other axes.")
     elif counts["CONFOUNDED"] > counts["ORTHOGONAL"]:
         print("  → PROBABLY KILL: pt signal exists only inside transition pairs,")
-        print("    which L6 already captures via the regime axis.")
+        print("    which C1 already captures via the regime axis.")
     else:
         print("  → AMBIGUOUS — review the per-cell table; check whether a couple")
         print("    fields are doing all the lifting.")

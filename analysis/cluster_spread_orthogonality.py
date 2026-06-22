@@ -1,11 +1,11 @@
 """
-Orthogonality check: is cluster-spread signal additive to L6's existing
+Orthogonality check: is cluster-spread signal additive to C1's existing
 R6 regime-transition signal, or redundant with it?
 
 Background: cluster_spread_smoketest.py returned 18/20 (field, band)
 combinations SMOKE_ALIVE with Q4/Q1 MAE ratios up to 3.14×. If those
 high-spread ticks are the same ticks where state_fc.regime_synoptic
-!= state_obs.regime_synoptic (R6's transition signal), then L6 already
+!= state_obs.regime_synoptic (R6's transition signal), then C1 already
 captures it — cluster-spread is redundant, not orthogonal.
 
 Method:

@@ -1,7 +1,7 @@
 """
-L6 confidence-layer Stage 2 v2 — multi-axis curated table.
+C1 confidence-layer Stage 2 v2 — multi-axis curated table.
 
-Reads `analysis/output/l6_confidence_premium_v2.json` (multi-axis Stage 1)
+Reads `analysis/output/c1_confidence_premium_v2.json` (multi-axis Stage 1)
 and emits a curated table that BOTH the existing single-axis
 `confidence_layer.py` (legacy `stable_mae`/`transition_mae` per (field, band))
 AND a Stage 4-updated multi-axis lookup can consume.
@@ -19,7 +19,7 @@ they're 8–24× sparser by construction. Magnitude floor is relative to the
 legacy stable_mae for that (field, band), so "WIDEN by ≥5%" is consistent.
 
 Run:
-  python3 analysis/l6_curate_confidence_table_v2.py
+  python3 analysis/c1_curate_confidence_table_v2.py
 """
 import json
 import os
@@ -39,10 +39,10 @@ MULTI_SAMPLE_FLOOR = 200
 MULTI_MAGNITUDE_FLOOR_PCT = 5.0
 
 STAGE1_PATH = os.path.join(os.path.dirname(__file__), "output",
-                           "l6_confidence_premium_v2.json")
+                           "c1_confidence_premium_v2.json")
 OUTPUT_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "weather_collector", "data", "l6_confidence_curated_v2.json",
+    "weather_collector", "data", "c1_confidence_curated_v2.json",
 )
 
 
@@ -173,7 +173,7 @@ def print_summary(doc):
     field_order = ["ws", "wg", "wd", "t", "dp", "h", "pa", "pr",
                    "cc", "cl", "cm", "ch", "sr", "pp"]
     field_order = [f for f in field_order if f in doc["cells"]]
-    print("L6 confidence-layer Stage 2 v2 curated table")
+    print("C1 confidence-layer Stage 2 v2 curated table")
     print(f"  legacy: sample≥{SAMPLE_FLOOR}, |Δ|≥{MAGNITUDE_FLOOR_PCT}%")
     print(f"  multi:  sample≥{MULTI_SAMPLE_FLOOR}, |Δ|≥{MULTI_MAGNITUDE_FLOOR_PCT}%")
     print("=" * 92)
@@ -202,7 +202,7 @@ def print_summary(doc):
 def main():
     if not os.path.exists(STAGE1_PATH):
         sys.exit(f"Missing Stage 1 v2 input {STAGE1_PATH} — "
-                 "run l6_confidence_calibration_v2.py first")
+                 "run c1_confidence_calibration_v2.py first")
     doc = curate()
     print_summary(doc)
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
