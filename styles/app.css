@@ -2141,11 +2141,21 @@ body.theme-light .hyperlocal-link:hover {
   min-height: 0;
   -webkit-overflow-scrolling: touch;
   /* Hide the internal scroll indicator — was clipping right-aligned content
-     (Stage 4b ± confidence tails) inside expanded cards. v0.6.187 hid the
-     page-level scrollbar; this is the card-internal one Joe flagged after. */
-  scrollbar-width: none;
+     (Stage 4b ± confidence tails) inside expanded cards. Older Safari needs
+     width:0/height:0 in addition to display:none; -ms-overflow-style covers
+     legacy Edge. */
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
 }
-.card.card-expanded .card-body::-webkit-scrollbar { display: none; }
+.card.card-expanded .card-body::-webkit-scrollbar,
+.card.card-expanded .card-body::-webkit-scrollbar-thumb,
+.card.card-expanded .card-body::-webkit-scrollbar-track {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  -webkit-appearance: none !important;
+  background: transparent !important;
+}
 .card.card-expanded .card-title-collapsible {
   display: flex !important;
   opacity: 1 !important;
