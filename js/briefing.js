@@ -1025,8 +1025,8 @@
 
 })();
 
-// L6 confidence-layer status line.
-// Shown only when data.confidence.applied (L6 ENABLED) AND in_transition.
+// C1 confidence-layer status line.
+// Shown only when data.confidence.applied (C1 ENABLED) AND in_transition.
 // Both are False during Stage 3 (v0.6.141), so the line is dormant until the
 // calibration audit confirms the bands and ENABLED is flipped.
 function renderRegimeStatus(data) {
@@ -1092,7 +1092,7 @@ function renderBriefing(data) {
   }
   const sm = document.getElementById('briefSummary');
   if (sm) sm.textContent = b.summary;
-  // L6 confidence layer status line. Gated by data.confidence.applied so the
+  // C1 confidence layer status line. Gated by data.confidence.applied so the
   // dormant Stage 3 candidate (ENABLED=False in confidence_layer.py) stays
   // invisible until calibration confirms the bands are honest. v0.6.141.
   renderRegimeStatus(data);
