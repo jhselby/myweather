@@ -216,7 +216,7 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     save_history(_station_history, _gcs, BUCKET)
 
     # Per-tick inter-cluster spread (Marblehead/Salem/Swampscott PWS clusters).
-    # Best-effort logger feeding the L6 confidence-layer axis evaluation.
+    # Best-effort logger feeding the C1 confidence-layer axis evaluation.
     # Orthogonality to R6 confirmed 2026-06-20 (16/20 field-band combos).
     try:
         from .processors.cluster_spread import stamp_and_log as stamp_cluster_spread
@@ -328,15 +328,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     except Exception as e:
         logging.warning(f"  ⚠  Solar L5 stamp failed: {redact_secrets(e)}")
 
-    # Confidence-layer L6 (regime-transition aware uncertainty, gated OFF).
+    # Confidence-layer C1 (regime-transition aware uncertainty, gated OFF).
     # Stamps per-(field, band) widened/narrowed MAE bands on transition hours.
     # Does NOT modify any forecast value — this is the first non-MAE-reducing
-    # layer in the stack. See [[project-l6-pivot-to-confidence]].
+    # layer in the stack. See [[project-c1-pivot-to-confidence]].
     try:
         from .processors.confidence_layer import stamp_confidence
         stamp_confidence(weather_data)
     except Exception as e:
-        logging.warning(f"  ⚠  Confidence L6 stamp failed: {redact_secrets(e)}")
+        logging.warning(f"  ⚠  C1 confidence stamp failed: {redact_secrets(e)}")
 
 
     # Process 7-day hourly data for forecast text generation

@@ -1,4 +1,4 @@
-"""Per-tick inter-cluster spread metric for L6 axis evaluation.
+"""Per-tick inter-cluster spread metric for C1 axis evaluation.
 
 Computes the std across cluster-median values for temperature and humidity
 from the live WU PWS network, grouped by station_id prefix
@@ -11,9 +11,9 @@ Origin: 2026-06-20 cluster-spread hypothesis (backlog item #5). Smoke test
 on 2 days returned 18/20 (field, band) combos with Q4/Q1 MAE ratio >= 1.20
 (temp 0-5h hit 3.14×). Orthogonality check vs R6 transition flag returned
 16/20 ORTHOGONAL — P(transition | high spread) only +9.5 pp above
-P(transition | low spread). Cluster-spread is a genuinely new L6 axis,
+P(transition | low spread). Cluster-spread is a genuinely new C1 axis,
 not a re-detection of regime-transition. This logger captures the metric
-each tick so the L6 Stage 3.5 calibration audit (~2026-06-27) has 7+ days
+each tick so the C1 Stage 3.5 calibration audit (~2026-06-27) has 7+ days
 of paired-with-pair-log data.
 
 Stored as cluster_spread_log.json in GCS. 60-day retention.

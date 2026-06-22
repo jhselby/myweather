@@ -1,5 +1,5 @@
 """
-L6 confidence layer — stamps per-(field, band) uncertainty bands on transition
+C1 confidence layer — stamps per-(field, band) uncertainty bands on transition
 hours. Gated OFF in Stage 3.
 
 Premise (2026-06-19 pivot): the regime-transition penalty is real but uncorrectable
@@ -11,7 +11,7 @@ mid/high and precip-prob at short leads — when a front is moving the cloud
 structure is determined; in stable regimes the model has to guess patchy
 distributions and gets them wrong more often).
 
-Calibration source: analysis/output/l6_confidence_curated.json (Stage 2 curated
+Calibration source: analysis/output/c1_confidence_curated.json (Stage 2 curated
 table). Cells are tagged SHIP / MARGINAL / REVIEW / SKIP. Stage 3 wires
 SHIP and MARGINAL; ignores REVIEW (manual outlier flag) and SKIP (below
 sample or magnitude floor).
@@ -31,7 +31,7 @@ Output:
     "cells":         {field: {band: {stable_mae, transition_mae, displayed_mae, direction}, …}}
   }
 Does NOT modify any forecast value; this is the first non-MAE-reducing layer
-(see [[project-l6-pivot-to-confidence]]).
+(see [[project-c1-pivot-to-confidence]]).
 """
 import json
 import logging
@@ -61,11 +61,11 @@ _WIRED_STATUSES = ("SHIP", "MARGINAL")
 # pt-aware lookups. Falls back to v1 if v2 hasn't been generated yet.
 _CURATED_PATH_V2 = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "data", "l6_confidence_curated_v2.json",
+    "data", "c1_confidence_curated_v2.json",
 )
 _CURATED_PATH_V1 = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "data", "l6_confidence_curated.json",
+    "data", "c1_confidence_curated.json",
 )
 _CURATED_PATH = _CURATED_PATH_V2 if os.path.exists(_CURATED_PATH_V2) else _CURATED_PATH_V1
 
@@ -197,7 +197,7 @@ def stamp_confidence(weather_data):
     """Stamp the candidate confidence-band table on `weather_data["confidence"]`.
 
     Does NOT mutate any forecast value, regardless of ENABLED — this is by
-    design (L6 is non-MAE-reducing). The ENABLED flag only controls whether
+    design (C1 is non-MAE-reducing). The ENABLED flag only controls whether
     downstream UI should treat the stamped values as authoritative.
     """
     # Predicted regime: prefer the joiner-stamped value when present (rare in
@@ -267,9 +267,9 @@ def stamp_confidence(weather_data):
             "table_version":   "v2" if _CURATED_PATH.endswith("_v2.json") else "v1",
         },
         "note": (
-            "Candidate L6 confidence-layer bands. Gated OFF until UI calibration "
+            "Candidate C1 confidence-layer bands. Gated OFF until UI calibration "
             "audit confirms displayed bands contain truth at the claimed rate."
             if not ENABLED else
-            "L6 confidence-layer bands applied (read by UI for transition-aware uncertainty)."
+            "C1 confidence-layer bands applied (read by UI for transition-aware uncertainty)."
         ),
     }

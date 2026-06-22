@@ -134,7 +134,7 @@ def log_shadow_recommendation(ts_diag, current_l3_fields, current_l4_fields,
     These extend the existing per-field L3/L4 whitelist recommendation pattern
     to cover layers that don't fit the per-field-whitelist model (R5 = single
     on/off for one location; L5 = regime-conditional). Same shadow pattern,
-    different decision rule per layer. Future R6/L6/etc. can be added the
+    different decision rule per layer. Future R6/C1/etc. can be added the
     same way without further changes to this signature.
     """
     rec_l3, rec_l4, _per_field = compute_recommendation(ts_diag)
