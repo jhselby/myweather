@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.200 • June 22, 2026</strong></summary>
+
+- **New hypothesis: lead-conditional L2 Kalman gain (Stage 1, Group D).** Three Stage 0 scripts written + run: `h_asymmetric_l3.py`, `h_regime_l3.py`, `h_lead_l2.py`. The lead-conditional L2 K hit hard: additive L2 bias (t, h, pr) gives huge gains in the first 5 hours and decays to near-zero by 24-47h. Multi-cutoff verified across 06-15 / 06-18 / 06-22 windows: h @ 0-5h holds rock-solid at +45/+47/+45%; t @ 0-5h at +16/+16/+22%; pr @ 0-5h at +10/+12/+16%. 24-47h gains weak or flickering — L2's flat K is wasting correction at long leads. Wind already linearly tapers K 0→100% across hours 0-24; the proposal is to generalize the shape to additive-bias fields. Promoted to Stage 1 with re-confirm date 2026-06-29 (alongside walk-forward #4). New "Group D — Methodological refinements" section added to the curated backlog on the debug page.
+- **Regime-conditional L3 hypothesis killed cleanly.** `h_regime_l3.py` showed L3 wins in every regime for ws/wg/ch/cm (no regime where L3 loses by ≥3% with n≥500). pp loses in every regime but that's the documented Brier exception, already handled by the R0 audit's MAE-Δ suppression. The current whitelist is correctly tuned per-regime; no opportunity here. Useful negative result — eliminates a hypothesis without wasting Stage 2 cycles on it.
+- **Asymmetric L3 — design seed.** `h_asymmetric_l3.py` showed dramatic asymmetry: wind L3 wins +57% on over-calls but loses -120 to -166% on under-calls; ch +24% vs -13%. Not directly actionable (you can't predict over- vs under-call before obs comes in), but informs a future "L3-with-confidence-gate" hypothesis: skip L3 when recent bias trend isn't strong enough to predict the sign. Logged as design input, not promoted.
+
+</details>
+
+<details>
 <summary><strong>v0.6.199 • June 22, 2026</strong></summary>
 
 - **Marine-layer cc correction — Stage 3 sandbox (gated OFF).** New `weather_collector/processors/marine_layer_correction.py` stamps `weather_data["marine_layer_correction"]` every tick with the NE-flow-morning cc over-call deltas from Stage 2 (06-21 read): -18.8% at 6-11h, -31.8% at 12-23h, -35.5% at 24-47h. Gate: `wd ∈ [45°, 105°)` AND `hour_local ∈ [4, 9)`. Cap: 40% magnitude (inherits L5's cc cap). 0-5h band skipped (Stage 2 bias was -2.0, indistinguishable from noise). Wired into `collector.py` after solar_correction stamp. `ENABLED=False` until weekly Sun-morning re-reads (06-28 / 07-05 / 07-12) confirm. Live stamping starts now so we can validate per-tick gated-leads counts match forecast conditions before flipping the switch. Smoke-tested: 5/5 gate scenarios produce expected deltas; cloud_cover unmodified at ENABLED=False.

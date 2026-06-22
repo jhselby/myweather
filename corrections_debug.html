@@ -977,6 +977,11 @@
     <li style="margin-bottom:8px;"><strong>Sea-breeze onset/decay timing (5-phase).</strong> Overlaps marine layer (#1) on onshore-flow hours and L4 diurnal on timing. If marine layer pilots out, this folds in; if it doesn't, this probably doesn't either.</li>
   </ul>
 
+  <h4 style="color:#7090a0;margin-top:18px;margin-bottom:6px;">Group D — Methodological refinements (modify existing layers, not new ones)</h4>
+  <ul style="margin:0 0 0 22px;padding:0;line-height:1.55;">
+    <li style="margin-bottom:8px;"><strong style="color:#e0d472;">★ Lead-conditional L2 Kalman gain (Stage 0 finding 2026-06-22).</strong> Additive L2 bias (t, h, pr) is currently applied with flat K across all 48 forecast leads. <code>analysis/h_lead_l2.py</code> across 3 cutoffs (06-15, 06-18, 06-22, 7d windows each) shows the gain is concentrated in the first 5 hours and decays sharply: <strong>h: +45/+47/+45% at 0-5h → -2.9 to +12% at 24-47h. t: +16/+16/+22% at 0-5h → 0 to -2% at 24-47h. pr: +10/+12/+16% at 0-5h → -5 to +1% at 24-47h.</strong> 0-5h band is rock-solid stable across cutoffs (h is unchanged within 2pp). 24-47h gain is weak/flickering — L2 isn't actively harmful there as the first read suggested, just wasted. Wind already implements a linear K-taper 100%→0% across hours 0-24 (per L2 wind selection note in section 2c); extending the same shape to additive-bias fields (t, h, pr) would stop wasting K at long leads and likely recover the ~2-5% pp drift at 24-47h. <em>Re-confirm date: 2026-06-29</em> alongside walk-forward L3/L4 #4. If 0-5h gains stay in current ranges (h≥40%, t≥15%, pr≥8%), promote to Stage 2 by implementing a K-taper schedule in <code>hyperlocal.py</code> with the same shape as the wind ramp.</li>
+  </ul>
+
   <div class="meta-line" style="margin-top:14px;opacity:0.8;">Promotion rule: write a single-shot script in <code>analysis/</code>. Stage 2 verdict must hold across at least 2 reads spaced 3+ days apart. Group A candidates promote to C1 axes (C1a, C1b, C1c, ... — no R-number); Group B candidates earn R-numbers if they survive the 7-window walk-forward gate.</div>
 </details>
 
