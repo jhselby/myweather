@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.199 • June 22, 2026</strong></summary>
+
+- **Marine-layer cc correction — Stage 3 sandbox (gated OFF).** New `weather_collector/processors/marine_layer_correction.py` stamps `weather_data["marine_layer_correction"]` every tick with the NE-flow-morning cc over-call deltas from Stage 2 (06-21 read): -18.8% at 6-11h, -31.8% at 12-23h, -35.5% at 24-47h. Gate: `wd ∈ [45°, 105°)` AND `hour_local ∈ [4, 9)`. Cap: 40% magnitude (inherits L5's cc cap). 0-5h band skipped (Stage 2 bias was -2.0, indistinguishable from noise). Wired into `collector.py` after solar_correction stamp. `ENABLED=False` until weekly Sun-morning re-reads (06-28 / 07-05 / 07-12) confirm. Live stamping starts now so we can validate per-tick gated-leads counts match forecast conditions before flipping the switch. Smoke-tested: 5/5 gate scenarios produce expected deltas; cloud_cover unmodified at ENABLED=False.
+- **τ sweep extended to 35d/42d.** `analysis/decay_tau_tuning.py` grid extended. Findings: curve hasn't flattened — 6 of 9 fields prefer τ=42, the longest tested. `pa` at τ=42 gives +8.2% (yesterday's τ=28 was +9.4%, within noise — no change). `pr` moved from -1.10% at τ=28 (yesterday, fell back to default) to +3.1% at τ=42 (today, approaching 5% threshold). One more read could promote `pr` to τ=42; watch. Other improving fields (ws +2.2%, wg +1.8%) below threshold.
+
+</details>
+
+<details>
 <summary><strong>v0.6.198 • June 22, 2026</strong></summary>
 
 - **C1 confidence table re-curated (Stage 1 + Stage 2 refresh).** Dry-run of `c1_calibration_audit.py` ahead of the 06-26 gated read showed 12 of 41 cells DRIFTED — wind ws/wg at short leads (+20-42%), pa across all bands (+24-90%), pr at mid leads (-10 to -21%), sr 12-23h (-19%). Curated bands were ~14 days stale; sea-breeze seasonality + marine-layer escalation had shifted the underlying spreads. Re-ran `c1_confidence_calibration.py` + `c1_curate_confidence_table.py` → fresh `c1_confidence_curated.json` with **46 cells wired** (was 39): 34 SHIP + 10 MARGINAL + 2 REVIEW (excluded) + 10 SKIP. Post-refresh re-audit landed at 70.45% pass rate, still under the 75% threshold — the bands are structurally fresher and broader, but 7d-window MAE variance makes the strict gate hard to clear. Audit framework verified working (caught real drift on first dry run). 06-26 audit will likely also HOLD unless threshold is loosened or measurement window is widened, but the deployed bands themselves are now strictly better than before.

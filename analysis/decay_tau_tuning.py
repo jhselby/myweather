@@ -48,7 +48,7 @@ FIELD_LABELS = {
     "ws": "Wind speed", "wg": "Wind gust", "cc": "Cloud cover",
     "sr": "Solar rad.", "pr": "Pressure", "pa": "Precip amt",
 }
-TAUS = [7, 10, 14, 21, 28]
+TAUS = [7, 10, 14, 21, 28, 35, 42]
 LEAD_BINS = 48
 
 

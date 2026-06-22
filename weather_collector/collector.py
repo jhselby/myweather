@@ -328,6 +328,16 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     except Exception as e:
         logging.warning(f"  ⚠  Solar L5 stamp failed: {redact_secrets(e)}")
 
+    # Marine-layer cc correction (Stage 3 sandbox, gated OFF). Stamps the
+    # NE-flow-morning cc over-call from Stage 2 (2026-06-21 read) so we
+    # can observe per-tick what would be subtracted; flip ENABLED after
+    # weekly Sun-morning re-reads through 07-12 confirm.
+    try:
+        from .processors.marine_layer_correction import stamp_marine_layer_correction
+        stamp_marine_layer_correction(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Marine layer stamp failed: {redact_secrets(e)}")
+
     # Confidence-layer C1 (regime-transition aware uncertainty, gated OFF).
     # Stamps per-(field, band) widened/narrowed MAE bands on transition hours.
     # Does NOT modify any forecast value — this is the first non-MAE-reducing
