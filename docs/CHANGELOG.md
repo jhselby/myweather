@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.195 • June 22, 2026</strong></summary>
+
+- **L3 per-field τ override #2: `pa` (precip amount) → τ=28d.** `decay_tau_tuning.py` re-read on 06-22 (held-out 145k pairs) showed precip amount gains -9.4% MAE at τ=28 vs the τ=14 default. Joins `pp` in the `TAU_DAYS_BY_FIELD` map (second override). Same precip-family pattern: noisier observation truth, smoother bias estimate wins. Next Fitter cycle (21:07 EDT) refits `pa` corrections with the longer window; `decay_corrections.json` metadata will stamp `tau_days_by_field: {pp: 28, pa: 28}`.
+- **Walk-forward L3/L4 #3 read (06-22) + 5d/10d diagnostic.** Default 2d run flagged ws/wg L3 drops (L2-only verdict). Wider windows reinstated wind L3 wins (ws -26%, wg -35% at 10d) — diagnosed as 2d-window artifact, not a real regression. ch L3+L4 + cm L3 stable across all reads. Wind L4 dead at every window. No whitelist edit. Debug page "pending decisions" updated.
+
+</details>
+
+<details>
 <summary><strong>v0.6.194 • June 22, 2026</strong></summary>
 
 - **Tempest cull: Preston Ct (85569).** Moved from `TEMPEST_STATIONS` to `CULLED_TEMPEST_STATIONS` in `weather_collector/fetchers/tempest.py`. 7-day uptime was 5.7% (57/1008 successes) — either offline or hit the same field-level API sharing restriction as the 06-04 batch. 60 → 60 active mesonet seats (45 WU + 19 Tempest – 5 humidity denylist).

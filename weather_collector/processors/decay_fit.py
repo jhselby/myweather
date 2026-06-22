@@ -150,6 +150,7 @@ TAU_DAYS = 14
 # analysis/decay_tau_tuning.py.
 TAU_DAYS_BY_FIELD = {
     "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read)
+    "pa": 28,  # +9.4% MAE held-out vs τ=14 (2026-06-22 read)
 }
 
 
