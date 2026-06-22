@@ -2549,7 +2549,21 @@ function renderShadowWhitelistSection(doc, wxDoc) {
     } else if (latestL5.verdict === "insufficient_data") {
       l5Detail = ` <span style="opacity:0.7;font-size:0.9em;">(n=${(latestL5.n_pairs ?? 0).toLocaleString()}, need ≥500)</span>`;
     }
-    html += `<tr><td style="padding:2px 12px 2px 0;">L5 solar (${enabledStr}):</td><td>${_condVerdictTag(latestL5)}${l5Detail}</td></tr>`;
+    // v0.6.180: trailing-7-day gate, auto-computed in the Fitter from
+    // l5_gate_history.json. Mirrors analysis/simulate_windows.py without
+    // requiring a manual run.
+    let gateLine = "";
+    const g7 = latestL5.gate_7d;
+    if (g7) {
+      const color = g7.gate_clear ? "#4ad29a" : "#e0d472";
+      const label = g7.gate_clear ? "CLEAR" : "FLICKER";
+      gateLine = `<tr><td style="padding:2px 12px 2px 0;opacity:0.7;">↳ 7-day promotion gate:</td>` +
+                 `<td><span style="color:${color};font-weight:600;">${label}</span>` +
+                 ` <span style="opacity:0.7;font-size:0.9em;">` +
+                 `(${g7.ship_days} SHIP / ${g7.hold_days} HOLD${g7.insufficient_days ? ` / ${g7.insufficient_days} insufficient` : ""}` +
+                 ` over ${g7.total_days} of ${g7.history_window_days} days; streak ${g7.latest_streak_ship} cycle${g7.latest_streak_ship === 1 ? "" : "s"})</span></td></tr>`;
+    }
+    html += `<tr><td style="padding:2px 12px 2px 0;">L5 solar (${enabledStr}):</td><td>${_condVerdictTag(latestL5)}${l5Detail}</td></tr>${gateLine}`;
   }
   if (latestR6) {
     let r6Detail = "";

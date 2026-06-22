@@ -223,6 +223,67 @@ def _fetch_noaa_tide_hourly(start_date_yyyymmdd, end_date_yyyymmdd):
     return out
 
 
+L5_GATE_HISTORY_PATH = "l5_gate_history.json"
+L5_GATE_WINDOW_DAYS = 7
+L5_GATE_HISTORY_RETENTION_DAYS = 30  # keep enough scrollback for debug page
+
+
+def _compute_l5_gate_7d(this_cycle):
+    """Append this cycle's L5 verdict to l5_gate_history.json and compute the
+    trailing-7-day promotion-gate status.
+
+    Day-level rollup: a day's verdict is SHIP only if every Fitter cycle that
+    day was SHIP. Mirrors the strictness of analysis/simulate_windows.py's
+    7-of-7 rule but applied to Fitter-cycle days instead of cutoff windows.
+
+    Returns dict {ship_days, hold_days, insufficient_days, total_days,
+                  gate_clear, latest_streak_ship, history_window_days}.
+    """
+    history = load_json(L5_GATE_HISTORY_PATH, default={"entries": []})
+    entries = history.get("entries", [])
+    entries.append(this_cycle)
+    # Prune to retention window.
+    cutoff = (datetime.now(TZ) - timedelta(days=L5_GATE_HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    entries = [e for e in entries if e.get("fitted_at", "") >= cutoff]
+    upload_json({"entries": entries}, L5_GATE_HISTORY_PATH, L5_GATE_HISTORY_PATH)
+
+    # Compute 7-day gate by day-rolling up entries.
+    window_cutoff = (datetime.now(TZ) - timedelta(days=L5_GATE_WINDOW_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    recent = [e for e in entries if e.get("fitted_at", "") >= window_cutoff]
+    by_day = {}
+    for e in recent:
+        day = e.get("fitted_at", "")[:10]  # YYYY-MM-DD
+        if not day:
+            continue
+        by_day.setdefault(day, []).append(e.get("verdict", ""))
+    ship_days = hold_days = insufficient_days = 0
+    for day, verdicts in by_day.items():
+        if all(v == "SHIP" for v in verdicts):
+            ship_days += 1
+        elif any(v == "insufficient_data" for v in verdicts):
+            insufficient_days += 1
+        else:
+            hold_days += 1
+    total_days = len(by_day)
+    gate_clear = total_days >= L5_GATE_WINDOW_DAYS and hold_days == 0 and insufficient_days == 0
+    # Trailing SHIP streak — newest entries first.
+    streak = 0
+    for e in reversed(recent):
+        if e.get("verdict") == "SHIP":
+            streak += 1
+        else:
+            break
+    return {
+        "ship_days": ship_days,
+        "hold_days": hold_days,
+        "insufficient_days": insufficient_days,
+        "total_days": total_days,
+        "gate_clear": gate_clear,
+        "latest_streak_ship": streak,
+        "history_window_days": L5_GATE_WINDOW_DAYS,
+    }
+
+
 def fit_decay_corrections():
     """Daily Fitter entry point."""
     client = get_client()
@@ -966,6 +1027,23 @@ def fit_decay_corrections():
             }
             logging.info(f"  ✓ L5 audit: {verdict_l5} (baseline MAE {mae_b_l5:.1f} W/m², "
                          f"L5 {d_l5:+.2f}%, {regimes_winning}/{len(L5_REGIMES)} regimes winning, n={n_l5:,})")
+            # v0.6.180: trailing-7-day promotion-gate status. Auto-aggregates
+            # the Fitter's per-cycle L5 verdicts into a 7-day rolling read so
+            # the debug page can show gate status without anyone running
+            # analysis/simulate_windows.py. Persisted in l5_gate_history.json.
+            try:
+                _gate = _compute_l5_gate_7d({
+                    "fitted_at": output["fitted_at"],
+                    "verdict": verdict_l5,
+                    "improvement_pct": round(d_l5, 2),
+                    "regimes_winning": regimes_winning,
+                })
+                if _gate:
+                    l5_audit_verdict["gate_7d"] = _gate
+                    logging.info(f"  ✓ L5 gate 7d: {_gate.get('ship_days')}/{_gate.get('total_days')} SHIP days "
+                                 f"({'CLEAR' if _gate.get('gate_clear') else 'FLICKER'})")
+            except Exception as e:
+                logging.warning(f"  ⚠  L5 gate_7d failed: {redact_secrets(e)}")
         else:
             n_l5 = (overall_l5 or {}).get("n", 0)
             l5_audit_verdict = {
