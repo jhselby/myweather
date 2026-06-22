@@ -599,6 +599,8 @@ def fit_decay_corrections():
                     a["sum_abs"] += abs(float(err_r6)) * w
                     a["weight"]  += w
                     a["n"]       += 1
+                except (TypeError, ValueError):
+                    pass
             # v0.6.182 marine-layer watch — stratify cc errors by (wd ∈ [45,105],
             # obs hour ∈ [4,9] EDT). Recency-weighted like everything else.
             if field == "cc":
@@ -621,8 +623,6 @@ def fit_decay_corrections():
                             marine_acc[prefix + "n"]          += 1
                         except (TypeError, ValueError):
                             pass
-                except (TypeError, ValueError):
-                    pass
             # L2 τ-fit: only fields we publish τ for, only post-v0.6.25 rows
             # carrying both error_l1 and error_l2 (so bias = err_l1 - err_l2
             # is well-defined). Recency weighting reuses the same `w` as the
