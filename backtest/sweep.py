@@ -93,7 +93,7 @@ def _band_for(lead_h):
     return None
 
 
-def sweep(configs, test_days=2, local_file=None, by_band=False):
+def sweep(configs, test_days=7, local_file=None, by_band=False):
     """Evaluate a dict of named configs in one stream of the pair log.
 
     configs: {name: {"L3_FIELDS": set, "L4_FIELDS": set}}
@@ -184,7 +184,7 @@ def main():
 
     import argparse
     p = argparse.ArgumentParser(description="Multi-config backtest sweep")
-    p.add_argument("--days", type=float, default=2.0)
+    p.add_argument("--days", type=float, default=7.0)
     p.add_argument("--configs", default="production,walkforward_15jun,walkforward_08jun,stable_core,l2_only",
                    help="comma-separated config names")
     p.add_argument("--json", action="store_true")

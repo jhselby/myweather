@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.197 • June 22, 2026</strong></summary>
+
+- **Backtest sweep default window 2d → 7d.** `backtest/sweep.py` `test_days` default + `--days` CLI default both bumped. 2-day windows kept echoing whatever short-term regime we were in — today's walk-forward L3/L4 #3 diagnostic showed the same window-artifact pattern (ws/wg L3 "losing" at 2d, winning -26%/-35% at 10d). The B1 sweep was reading the same false alarm. Re-ran with new default: wind L3 wins -34.9% wg, -24.6% ws, ch L3+L4 wins -24.5% over l2_only on 599,504 pairs. Result written to `gs://myweather-data/backtest_sweep_results.json`; debug page B1 caption auto-updates to "Window: last 7.0 days".
+
+</details>
+
+<details>
 <summary><strong>v0.6.196 • June 22, 2026</strong></summary>
 
 - **Debug page sync.** L3 per-field τ override paragraph now lists both `pp` and `pa` (was `pp` only — pre-v0.6.195). L5 promotion-gate verdict refreshed to today's 2×SHIP / 5×HOLD (was the 06-21 post-refit 3/4 snapshot), with a note that `l5_solar_analysis.py` reads SHIP on the standalone window while the 7-day-trailing gate hasn't cleared.
