@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.202 • June 22, 2026</strong></summary>
+
+- **Second Stage 0 brainstorm batch — 4 new scripts, 1 ship candidate, 2 kills, 1 design seed.** Wrote and ran `h_cloud_diurnal.py`, `h_l3_regime_mismatch.py`, `h_run_time_bias.py`, and the follow-up `h_cloud_l4_sim.py`.
+- **★ Cloud-cover → L4 whitelist (Stage 1, Group D).** Diurnal stratification on cc/cl/cm/ch showed huge signed bias spreads — cc 33pp, ch 51pp, cl 24pp, cm 25pp — across hour-of-day. Model over-calls cloud cover heavily pre-dawn (cc +29pp at 04Z, ch +42pp at 04Z), under-calls afternoons. The train/test L4-fit simulation (70/30 split, mean-zero-normalized per-hour correction) however shows only **cc clears the 5% ship threshold (+5.0%)**; ch +2.8%, cm +1.8%, cl -0.8% (actually hurts). Same lesson as L2 K-taper sim earlier today: bias spread ≠ shippable gain. Stage 1 scope = cc only. Re-confirm 06-29; if ≥3% holds, 7-cutoff simulator gate (per the cm-drop cautionary tale) before adding "cc" to L4_FIELDS.
+- **L3 regime-mismatch kill.** `h_l3_regime_mismatch.py` showed L3 wins less under regime mismatch (ws +50% on match → +40% on mismatch, 10pp gap) but still wins big on both sides. Gating L3 to regime-agreement would lose the +40% to clean up marginal noise. Not worth it.
+- **Run-time issuance bias — held.** `h_run_time_bias.py` showed clean sinusoidal pattern on humidity L1 MAE by run_time hour (8.0 at run_h=0-2Z → 10.5 at run_h=12-13Z, 32.9% spread). t and cm also ≥10% spread. But this could be confounded with valid-time-of-day (each run_h pairs with a specific obs distribution). Needs a controlled follow-up that holds valid_time fixed. Logged as design seed, not promoted.
+
+</details>
+
+<details>
 <summary><strong>v0.6.201 • June 22, 2026</strong></summary>
 
 - **Marine-layer sandbox field-name bugs (silent no-op fix).** `stamp_marine_layer_correction` was reading `hourly.time` (singular) and `hourly.wind_direction_10m`, but the live payload uses `hourly.times` (plural) and `hourly.wind_direction`. The function's early-return on empty arrays meant no stamp + no error log. Fixed by trying the correct names first, with the wrong names as fallbacks. Verified by reading the live payload's `hourly` keys before deploying.
