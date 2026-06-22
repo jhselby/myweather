@@ -903,7 +903,7 @@
 
 <details class="research-subsection" id="r0-l3l4-audit" open>
   <summary>R0. L3/L4 audit table — is each layer earning its keep?</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> the headline diagnostic for the correction stack — average held-out MAE per field, per layer (across leads 1–47). Recomputed every Fitter cycle. Each MAE cell shows the size of the typical error; the dim subtext next to it is the <em>bias</em> (signed mean error), revealing systematic offsets MAE alone can hide. The Δ columns compare each layer to the one below — green means it beats; red means it loses; gray "0.00" means tie. The Applied? columns are color-coded Yes (green) / No (red) / — (gray, n/a for L2 fields that don't have an obs network). <strong>Two banners watch for trouble:</strong> the red one fires if any enabled layer is losing by >3% in some lead band (1–6h / 6–24h / 24–47h) — catches regressions hidden by overall averages. The orange one fires if any disabled layer is <em>winning</em> by >3% in some band — catches opportunities we're leaving on the table. Both lists exactly which (field, layer, band) triggers so the alerts are actionable.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> the headline diagnostic for the correction stack — average held-out MAE per field, per layer (across leads 1–47). Recomputed every Fitter cycle. Each MAE cell shows the size of the typical error; the dim subtext next to it is the <em>bias</em> (signed mean error), revealing systematic offsets MAE alone can hide. The Δ columns compare each layer to the one below — green means it beats AND it's applied; <span style="color:#d4a373;">amber means it beats but is NOT applied</span> (missed opportunity, matches the orange banner color); red means it loses; gray "0.00" means tie. The Applied? columns are color-coded Yes (green) / No (red) / — (gray, n/a for L2 fields that don't have an obs network). <strong>Two banners watch for trouble:</strong> the red one fires if any enabled layer is losing by >3% in some lead band (1–6h / 6–24h / 24–47h) — catches regressions hidden by overall averages. The orange one fires if any disabled layer is <em>winning</em> by >3% in some band — catches opportunities we're leaving on the table. Both lists exactly which (field, layer, band) triggers so the alerts are actionable.</div>
   <div id="status-audit" class="status" hidden></div>
   <div id="grid-audit"></div>
 </details>
@@ -2109,7 +2109,7 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
   // delta: overall avg Δ (display number)
   // enabled: is this layer currently in L3_FIELDS / L4_FIELDS?
   // worstBand: { band, frac } if this layer is losing on any lead band by > margin, else null
-  const deltaCell = (delta, enabled, worstBand, isBrier) => {
+  const deltaCell = (delta, enabled, worstBand, isBrier, winIfOff) => {
     if (delta == null) return `<td>—</td>`;
     // Brier-evaluated fields (POP): the MAE Δ is informational only — Brier
     // is the decision metric, and L3 raising MAE is the *price* of Brier
@@ -2127,12 +2127,22 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
       color = "#8a93a3";  // neutral gray
     } else {
       const sign = delta <= 0 ? "▼" : "▲";
-      color = delta <= 0 ? "#4ad29a" : "#ef6450";
+      // Layer-disabled-but-winning gets amber to match the "missed
+      // opportunity" banner — a green ▼ next to a red "Applied? No" was
+      // confusing (the cell said "good," the banner said "act"). Amber
+      // signals "positive but inactive — opportunity exists."
+      if (delta < 0 && !enabled && winIfOff) {
+        color = "#d4a373";  // amber, same as the orange opportunity banner
+      } else {
+        color = delta <= 0 ? "#4ad29a" : "#ef6450";
+      }
       txt = `${sign} ${Math.abs(delta).toFixed(2)}`;
     }
     let flag = "";
     if (enabled && worstBand) {
       flag = ` ⚠ (${worstBand.band} +${(worstBand.frac * 100).toFixed(0)}%)`;
+    } else if (!enabled && winIfOff) {
+      flag = ` ⚠ (${winIfOff.band} +${(winIfOff.frac * 100).toFixed(0)}%)`;
     }
     return `<td style="color:${color};font-weight:600;">${txt}${flag}</td>`;
   };
@@ -2191,10 +2201,10 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
       ${deltaCell(r.d2, false, null, false)}
       ${l2AppliedCell(r.f.key)}
       ${l3MaeCell}
-      ${deltaCell(r.d3, r.l3on, r.l3Worst, r.isBrier)}
+      ${deltaCell(r.d3, r.l3on, r.l3Worst, r.isBrier, r.l3WinIfOff)}
       ${appliedCell(r.l3on, l3Suspect)}
       <td>${fmt(r.l4, 2)}${biasSpan(r.b4, 2)}</td>
-      ${deltaCell(r.d4, r.l4on, r.l4Worst, false)}
+      ${deltaCell(r.d4, r.l4on, r.l4Worst, false, r.l4WinIfOff)}
       ${appliedCell(r.l4on, l4Suspect)}
     </tr>`;
   }).join("");
