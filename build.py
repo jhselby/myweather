@@ -226,6 +226,34 @@ def main():
                     sf.write(new_sw_content)
                 print(f"  ✓ sw.js CACHE_VERSION → {new_cache_version}")
 
+    # Cache-bust dynamically-loaded scripts referenced inside JS files
+    # (e.g. js/overhead.js loaded via document.createElement('script') in
+    # app-main.js). Static <script>/<link> tags are handled by the HTML
+    # pass above; this pass picks up the lazy-load case.
+    js_dir = base_dir / 'js'
+    js_lazy_bumps = []
+    if js_dir.is_dir():
+        lazy_pattern = re.compile(r"(['\"])(js/([a-z_]+\.js))\?v=[a-f0-9]+\1")
+        for js_file in sorted(js_dir.glob('*.js')):
+            with open(js_file, 'r') as jf:
+                jf_content = jf.read()
+            def _swap(m):
+                quote, target_path, target_name = m.group(1), m.group(2), m.group(3)
+                target_full = base_dir / target_path
+                target_hash = calculate_file_hash(target_full)
+                if target_hash is None:
+                    return m.group(0)
+                replacement = f"{quote}{target_path}?v={target_hash}{quote}"
+                if replacement != m.group(0):
+                    js_lazy_bumps.append(f"  ✓ {js_file.name} → lazy-load {target_path} ?v={target_hash}")
+                return replacement
+            new_jf_content = lazy_pattern.sub(_swap, jf_content)
+            if new_jf_content != jf_content:
+                with open(js_file, 'w') as jf:
+                    jf.write(new_jf_content)
+    for line in js_lazy_bumps:
+        print(line)
+
     if not changes:
         print("\n⚠️  No changes made - all assets already up to date or missing")
         return 0
