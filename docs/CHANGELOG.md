@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.207 • June 23, 2026</strong></summary>
+
+- **3 more Stage 0 scripts + 2 new Stage 1 promotions + 1 kill.** Wrote `h_pre_frontal.py`, `h_solar_cloud_selfcheck.py`, `h_forecast_coherence.py`.
+- **★ C1e extended bidirectional (pre+post-frontal).** `h_pre_frontal.py` showed pre-frontal MAE hits **wind hardest** — opposite physics from post-frontal which hits clouds. ws +143% at 3-6h before passage, wg +138%, cm +98%. Temp/humidity actually LOWER pre-frontal. Orthogonality check (`h_pre_front_orthogonality.py`): 8 ortho cells but all at 24-47h band (short-lead × pre-frontal × no-transition × no-post-frontal is too sparse). Narrow promote — extends C1e from one-sided (post) to bidirectional via `time_to_nearest_front_h` signed value.
+- **★ C1f: state_fc.precip_in>0 as confidence axis (broadest scope today).** `h_forecast_coherence.py` showed when model forecasts precip but obs reports clear sky (n=257), every field's MAE explodes — cl +959%, pa +674%, cm +547%, t +89%, h +76%. Generalization: `precip_fc>0` ALONE is a confidence axis. Orthogonality (`h_precip_fc_orthogonality.py`): **13 ORTHOGONAL vs C1a, 8 ORTHOGONAL vs C1e, 21 total** across t/h/ws/wg/cl/cm/ch. cl 3.5-3.7× elevation is the cleanest cell. cc REDUNDANT (definitionally correlated with precip_fc). Wire as binary axis in `confidence_layer.py` v3.
+- **KILL: state_fc.solar_wm2 × cloud MAE.** Apparent cloud-MAE-by-solar spread (cl 134%, cm 376%) is just the day/night cloud bias the cc→L4 hypothesis already addresses. Same axis, different slice. Duplicate.
+
+</details>
+
+<details>
 <summary><strong>v0.6.206 • June 23, 2026</strong></summary>
 
 - **C1e orthogonality check — narrow promote.** `analysis/h_hsf_orthogonality.py` cross-tabbed each (field, lead-band) by hsf_group (0-24h post-frontal vs ≥24h baseline) × C1a transition flag (state_fc.regime ≠ state_obs.regime). Verdict: **6 ORTHOGONAL / 23 REDUNDANT / 4 CONFOUNDED / 3 AMBIGUOUS**. The ORTHOGONAL cells are tightly concentrated: ch (all 4 bands, stable post/baseline ratio 2.08-2.91×) and cc (12-23h, 24-47h, stable 1.45-1.62×). Everything else — temp, wind, humidity, dewpoint, cl, cm, short-lead cc — is redundant with C1a (regime-transition already captures the post-frontal effect for those fields). Verdict overall: PROMOTE as **narrow C1e covering only ch (all bands) + cc (long-lead)**. Not a generic axis. Compounds with C1a: when both fire, ch MAE hits 6.64× baseline at 6-11h. Stage 2 wires hsf into `confidence_layer.py` v3 as the 4th axis (alongside C1a/C1b/C1c). Stage 1 re-confirm 2026-06-29.
