@@ -1,6 +1,21 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.204 • June 23, 2026</strong></summary>
+
+- **Debug page Stage 0 explorations log.** Six smoke tests from last night's third Stage 0 brainstorm batch now documented on the debug page under the new "Stage 0 explorations — completed, not promoted" subsection. Tracks each script + verdict + reason so future Joe doesn't re-explore them without new evidence: asymmetric L3 (design seed), regime-conditional L3 (killed), L3 regime mismatch (killed), run-time issuance bias (design seed, needs valid-time control), hours-since-front (failed on GCS 403), L4 window size (methodological null), lead-bin granularity (methodological null), solar zenith × cloud (duplicate of cc→L4), weekday vs weekend (likely artifact at 21d window, revisit 2027).
+- **New Stage 1 candidate: regime-conditional dewpoint depression correction.** Added under Group D. `h_dewpoint_depression.py` joined t-rows and dp-rows at each obs_time (n=121,922); overall depression |err|=4.36°F with near-zero overall bias, but stratified by observed regime: frontal -2.19°F (n=5,243), sea_breeze +1.45°F (n=5,119), sw_flow +1.41°F (n=15,661). Frontal forecasts say drier than reality, sea_breeze + SW says wetter. Re-confirm 2026-06-29 alongside walk-forward #4 and other Group D candidates. Stage 2 needs sub-analysis: which of t or dp contributes more to the residual? Likely dp (L2/L3/L4 already correct t aggressively). Implementation = regime-conditional dp shift table, L5-shape but dp-only. Affects fog probability, feels-like, comfort scoring downstream.
+
+</details>
+
+<details>
+<summary><strong>v0.6.203 • June 22, 2026</strong></summary>
+
+- **Top-3 markers updated.** ★-marker on the curated backlog moved from the 06-20 Joe-top-3 (marine-layer, cloud-ceiling regime, cluster-spread) to the two NEW Group D candidates that emerged 06-22 (humidity K-taper, cc→L4). Memory note records why: expected user-MAE delta per unit time favors the newer Stage 1 candidates given today's evidence. Old top-3 items still active in their respective groups; rank ordering reflects current EV, not historical interest.
+
+</details>
+
+<details>
 <summary><strong>v0.6.202 • June 22, 2026</strong></summary>
 
 - **Second Stage 0 brainstorm batch — 4 new scripts, 1 ship candidate, 2 kills, 1 design seed.** Wrote and ran `h_cloud_diurnal.py`, `h_l3_regime_mismatch.py`, `h_run_time_bias.py`, and the follow-up `h_cloud_l4_sim.py`.
