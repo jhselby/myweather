@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.212 • June 23, 2026</strong></summary>
+
+- **Kills + nulls moved into Retired section.** Per Joe's instruction — Retired is the canonical home for ruled-out hypotheses, not the Stage 0 explorations log. Added "Recently ruled out — 2026-06-22 to 06-23 Stage 0 kills" subsection at the top of the Retired wrapper with compact entries (no charts, just verdict + script ref). Removed duplicate entries from Stage 0 explorations log so each kill lives in exactly one place. Stage 0 log now holds only design seeds, promoted breadcrumbs, data-limitation flags, and the wd×ws_obs script bug. 7 kills + tunings relocated: regime-conditional L3, L3 regime mismatch, lead × C1a, solar zenith × cloud (duplicate), state_fc.solar_wm2 × cloud (duplicate), weekday vs weekend artifact, L4 window-size null, lead-bin granularity null.
+
+</details>
+
+<details>
 <summary><strong>v0.6.211 • June 23, 2026</strong></summary>
 
 - **Tier labels added inline to every Stage 1 candidate** (was only in the comparison table — Joe caught the gap). Each entry now shows [Tier N] color-coded next to the wired badge: green=1, yellow=2, brown=3. Eight Stage 1 entries updated across Group A + Group D.
