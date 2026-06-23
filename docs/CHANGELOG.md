@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.210 • June 23, 2026</strong></summary>
+
+- **Debug-page-is-canon convention codified.** Joe explicitly said "I want that page to be the canon" (2026-06-23). Two non-negotiable rules now in memory under `feedback_debug_page_canon.md`: (1) every Stage 1+ candidate carries a wired-state badge (🟢 Auto-wired · 🟡 Hybrid · ⚫ Manual · 🔒 Gated off) right next to the title; (2) every manual run updates the relevant page entry with new numbers + date stamp. Memory and changelog accumulate sediment — the page IS read.
+- **Wiring badges added inline to every Stage 1+ candidate** on the Backlog + Group A + Group B + Group D + S1 sections. Prioritization table now has a "Wired" column and a "Last manual run" column. Legend rendered at the bottom of the table.
+- **`h_cloud_l4_sim.py` gained `--cutoff DATE` argument** for cleaner multi-cutoff stability testing.
+- **★ cc → L4 hypothesis WEAKENED on 06-23 re-run.** Today's read: cc +2.7% (was +5.0% on 06-22 — below 3% ship floor). ch rose to +4.5%, cm +2.7%, cl -2.0%. Day-over-day cc dropped 2.3pp — more window-sensitive than humidity K-taper. cc demoted from Tier 1 ship-ready to "watch" status; needs ≥2 future reads ≥3% before earning the 7-cutoff simulator gate. ch could take over as the priority cloud field if its rise stabilizes. cl confirmed disqualified.
+
+</details>
+
+<details>
 <summary><strong>v0.6.209 • June 23, 2026</strong></summary>
 
 - **Final Stage 0 batch + prioritization lockdown.** Wrote 4 more scripts (`h_rh_saturation.py`, `h_ws_wd_error.py`, `h_trend_direction.py`, `h_lead_c1a.py`), found 2 new Stage 1 candidates + 1 kill + 1 script bug to debug later.

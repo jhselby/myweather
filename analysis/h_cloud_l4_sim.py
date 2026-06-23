@@ -20,13 +20,18 @@ Method:
 Decision rule: ≥5% MAE drop on test = strong Stage 1 candidate. ≥3% =
 proceed to 7-window confirmation.
 """
-import os, sys, json
+import os, sys, json, argparse
 from collections import defaultdict
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
+
+ap = argparse.ArgumentParser()
+ap.add_argument("--cutoff", default=None, help="ISO date; only rows with obs_time < cutoff are used (default: all)")
+args = ap.parse_args()
+CUTOFF = args.cutoff or "9999"
 
 # Collect all qualifying rows per field
 rows_by_field = defaultdict(list)  # field -> [(obs_dt, hour_utc, baseline, observed)]
@@ -41,6 +46,8 @@ with open(cached_path(URL), "rb") as fh:
             continue
         ot = r.get("obs_time") or ""
         if len(ot) < 13:
+            continue
+        if ot >= CUTOFF:
             continue
         try:
             hour = int(ot[11:13])
