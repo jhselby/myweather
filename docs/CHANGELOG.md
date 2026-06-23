@@ -1,6 +1,18 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.209 • June 23, 2026</strong></summary>
+
+- **Final Stage 0 batch + prioritization lockdown.** Wrote 4 more scripts (`h_rh_saturation.py`, `h_ws_wd_error.py`, `h_trend_direction.py`, `h_lead_c1a.py`), found 2 new Stage 1 candidates + 1 kill + 1 script bug to debug later.
+- **★ C1g RH ≥95% fog axis (Stage 1, Tier 2).** When state_obs.humidity hits saturation, cm MAE +158%, ch +139%, pa +4649%. Cloud cover saturates -59% (model less wrong because clouds are usually there). Temp/dp converge. Promote as obs-keyed confidence axis. Needs ortho check vs cc-saturation and C1f.
+- **★ C1h trend direction (Stage 1, Tier 3).** When model predicts sharp 0→6h cloud change, accuracy collapses: cl rising +1030%, cm rising +315%, ch rising +91%. Stable forecasts dramatically better. Real signal but only 1 read; magnitudes need 30d window confirmation.
+- **KILL: Lead × C1a transition interaction.** Only ch shows monotonic lead-growing penalty, and ch is already in C1e — redundant.
+- **Bug logged: wd × ws_obs join.** `h_ws_wd_error.py` returned empty output. Investigate later.
+- **Prioritization framework added to debug page Backlog section.** All 9 Stage 1 candidates ranked into 3 tiers with re-run scripts and promote criteria, so manual weekly re-reads can decide which graduate to Stage 2 implementation. Tier 1 = 3 candidates ready to ship when 06-29 confirms (C1f, humidity K-taper, cc→L4). Tier 2 = 3 candidates needing stability proof (cloud saturation-unbiasing, C1e bidirectional, C1g RH≥95%). Tier 3 = 2 candidates needing more evidence (C1h trend, dp depression).
+
+</details>
+
+<details>
 <summary><strong>v0.6.208 • June 23, 2026</strong></summary>
 
 - **4 more Stage 0 scripts; 1 new Stage 1 (architectural); 2 design seeds; 1 data limitation.**
