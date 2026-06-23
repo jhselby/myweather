@@ -22,9 +22,10 @@ FIELDS = ["t", "h", "ws", "wg", "cc", "ch", "cm", "cl"]
 BANDS = [(0, 3, "0-3h"), (3, 6, "3-6h"), (6, 12, "6-12h"),
          (12, 24, "12-24h"), (24, 999, "≥24h")]
 
-# Load frontal passages
+# Load frontal passages (Cloudflare blocks default urllib UA; spoof curl)
 try:
-    with urllib.request.urlopen(FRONT_URL, timeout=15) as r:
+    req = urllib.request.Request(FRONT_URL, headers={"User-Agent": "curl/8.4.0"})
+    with urllib.request.urlopen(req, timeout=15) as r:
         front_doc = json.loads(r.read())
 except Exception as e:
     print(f"Couldn't load frontal log: {e}"); sys.exit(1)

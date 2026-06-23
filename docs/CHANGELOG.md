@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.205 • June 23, 2026</strong></summary>
+
+- **Hours-since-front × MAE — debugged and promoted.** Yesterday's 06-22 run hit HTTP 403 because Cloudflare blocks the default `python-urllib/3.x` User-Agent. Fixed by adding `User-Agent: curl/8.4.0` header in `analysis/h_hours_since_front.py`. Re-ran successfully: joined 306,612 pair-log rows with 6 frontal passages (06-17 to 06-22). Big finding: **cloud-high (ch) MAE runs 3.5× baseline for the entire 24h post-passage window** (+253-281% across all 4 bands); cc +94/+117/+54/+7%, cm +60/+47/+43/+21%, h +23/+32/+16/+3%. t mixed (+14% short, -31% mid-window). Promoted to Stage 1 as **C1e axis candidate**. Next step (Stage 1.5) is orthogonality check vs C1a (regime-transition penalty): C1a measures "model thinks different regime than reality" while C1e measures "absolute time since transition" — related but distinct. If orthogonal across (field, band) cells, ship as C1e; if redundant, fold into C1a as time-since-passage stratification. Caveat: only 6 frontal passages in sample, so magnitudes may be overfit to specific weather; direction is robust but size needs more passages.
+
+</details>
+
+<details>
 <summary><strong>v0.6.204 • June 23, 2026</strong></summary>
 
 - **Debug page Stage 0 explorations log.** Six smoke tests from last night's third Stage 0 brainstorm batch now documented on the debug page under the new "Stage 0 explorations — completed, not promoted" subsection. Tracks each script + verdict + reason so future Joe doesn't re-explore them without new evidence: asymmetric L3 (design seed), regime-conditional L3 (killed), L3 regime mismatch (killed), run-time issuance bias (design seed, needs valid-time control), hours-since-front (failed on GCS 403), L4 window size (methodological null), lead-bin granularity (methodological null), solar zenith × cloud (duplicate of cc→L4), weekday vs weekend (likely artifact at 21d window, revisit 2027).
