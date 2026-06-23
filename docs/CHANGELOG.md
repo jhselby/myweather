@@ -1,6 +1,17 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.208 • June 23, 2026</strong></summary>
+
+- **4 more Stage 0 scripts; 1 new Stage 1 (architectural); 2 design seeds; 1 data limitation.**
+- **★ Cloud saturation-unbiasing (Stage 1, Group D).** `h_cloud_floor_ceiling.py` revealed dramatic asymmetry at forecast saturation extremes: cc fc=95-100% averages -32.7pp signed bias, cl 95-100% averages **-63.4pp** (n=13,391), cm -54.3pp, ch -47.5pp. When the model commits to "fully cloudy," observation runs 50-60 pp lower on average. **Architectural significance:** no existing layer (L1-L4) conditions on the forecast VALUE bin — they condition on lead and hour-of-day. The current correction stack structurally cannot fix this saturation bias. Stage 2 implementation = "saturation unbiasing" pre-correction (likely L2.5, between mesonet and decay) learning per-forecast-value-bin signed shifts.
+- **Design seed — precip_obs > 0 as obs-keyed confidence mirror.** Worst case: false-alarm cell (precip_fc>0, precip_obs=0, n=2,904) shows cl +283%, wg +57%, h +50%, cm +107%. Real signal but architecturally tricky — at current tick we have precip_obs[now] not precip_obs[future]. Different mechanism than C1f. Could extend as "currently-raining widens future cloud/wind confidence." Needs design before promoting.
+- **Design seed — cloud composition (layered skies).** wg +65% on three-layer, ws +25% on two-layer, t/h ~18-35%. Real but small; cloud portion confounded with cc magnitude.
+- **Data limitation — front-type asymmetry.** `frontal_events_log.json` carries type field but detector only classifies sea_breeze (1 of 6); rest are "unknown." Need `frontal_detection.py` to learn cold/warm classification (wind-rotation direction + pressure-tendency shape) before this becomes testable.
+
+</details>
+
+<details>
 <summary><strong>v0.6.207 • June 23, 2026</strong></summary>
 
 - **3 more Stage 0 scripts + 2 new Stage 1 promotions + 1 kill.** Wrote `h_pre_frontal.py`, `h_solar_cloud_selfcheck.py`, `h_forecast_coherence.py`.
