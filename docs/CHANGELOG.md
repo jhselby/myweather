@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.211 • June 23, 2026</strong></summary>
+
+- **Tier labels added inline to every Stage 1 candidate** (was only in the comparison table — Joe caught the gap). Each entry now shows [Tier N] color-coded next to the wired badge: green=1, yellow=2, brown=3. Eight Stage 1 entries updated across Group A + Group D.
+- **C1g and C1h promoted to proper Group A entries** with full Stage 1 narratives. They were previously only listed in the prioritization table + Stage 0 explorations log — incomplete per the canon rule. Each entry now carries its full hypothesis statement, magnitude findings, architectural slot, and open-questions section.
+
+</details>
+
+<details>
 <summary><strong>v0.6.210 • June 23, 2026</strong></summary>
 
 - **Debug-page-is-canon convention codified.** Joe explicitly said "I want that page to be the canon" (2026-06-23). Two non-negotiable rules now in memory under `feedback_debug_page_canon.md`: (1) every Stage 1+ candidate carries a wired-state badge (🟢 Auto-wired · 🟡 Hybrid · ⚫ Manual · 🔒 Gated off) right next to the title; (2) every manual run updates the relevant page entry with new numbers + date stamp. Memory and changelog accumulate sediment — the page IS read.
