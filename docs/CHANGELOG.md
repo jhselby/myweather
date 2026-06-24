@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.219 • June 24, 2026</strong></summary>
+
+- **Debug page cleanup.** Fixed two stale lines from today's marathon: pipeline-count line read "7 active candidates" but should have been 6 after h K-taper shipped (the count was set before v0.6.218 promoted). Also removed a duplicate-fragment in the Group D h K-taper entry — a leftover passage from when I edited the "promote to Stage 2 by adding..." text into the SHIPPED block. Debug page is now consistent with the live production state.
+
+</details>
+
+<details>
 <summary><strong>v0.6.218 • June 24, 2026</strong></summary>
 
 - **Stage 2 SHIP: Humidity K-taper (lead-conditional L2 Kalman gain).** `weather_collector/processors/corrected_hourly.py` now applies a piecewise-linear soft_ramp to the L2 humidity bias instead of the prior exp(-lead/240) shape. Curve: K(0h)=1.0 → K(6h)=0.85 → K(12h)=0.70 → K(18h)=0.55 → K(24h+)=0.40. The prior exponential was effectively flat (~91% at lead 24); the soft_ramp pulls the L2 bias toward 40% at long leads where the station-network signal is stale. New `_soft_ramp_factors()` helper alongside `_decay_factors()`. `t` and `pr` continue to use the exponential decay (≤0.5% drift across ramp shapes — flat K is optimal for them). `weather_data["l2_decay_meta"]["humidity_shape"]` exposes the curve for the debug page.
