@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.216 • June 24, 2026</strong></summary>
+
+- **Stage 4 UI-readiness audit infrastructure landed.** `analysis/c1_stage4_audit.py` compares each SHIP cell's calibrated MAE against its realized MAE on a 7d recent-holdout window vs a 7d preceding calib window. PASS ≤20% drift, WATCH ≤40%, FAIL >40%. Handles both the legacy single-axis (transition × stable) cells AND the v3 multi-axis cells (Q × pt × trans × c1f). First read: legacy axis (62 SHIP cells) returned 17 PASS / 20 WATCH / 25 FAIL — NOT READY, with FAILs dominated by `pp` (Brier-evaluated, MAE is the wrong yardstick) and `pa` (precip amount, naturally bursty). Multi-axis (296 SHIP cells) DEFERRED — cluster_spread_log only goes back to 06-20 (~4 days); calib window needs 14 days of history. **First multi-axis audit ETA ~2026-07-04** as cluster_spread accumulates.
+- **wind_shift_rate KILLED same-day.** `analysis/h_wind_shift_rate_orthogonality.py` cross-tabbed the rotating ≥80° wind class vs C1a transition flag across 9 fields × 4 bands. Result: **1 ORTHOGONAL / 22 REDUNDANT / 2 CONFOUNDED / 11 AMBIGUOUS.** C1a already captures the signal (wind shifts and regime transitions co-occur). Only ch at 24-47h is independently orthogonal — too narrow to ship as a standalone axis. Moved to Retired section per the canon rule.
+- Stage 1 pipeline now 8 active candidates (was 10 this morning): cc→L4 + C1f shipped Stage 2; wind_shift_rate killed; humidity K-taper / cloud saturation / C1e / C1g / C1h / dp depression still in queue.
+
+</details>
+
+<details>
 <summary><strong>v0.6.215 • June 24, 2026</strong></summary>
 
 - **Stage 2 SHIP: C1f precip_fc>0 wired as 4th confidence-layer axis.** `analysis/c1_confidence_calibration_v2.py` now stratifies multi-axis cells by a binary `c1f` flag drawn from `state_fc.precip_in > 0`. `weather_collector/processors/confidence_layer.py` computes the live c1f flag per-band (each band uses its own lead window of `hourly.precipitation`) and appends it to the lookup axis_key. Regenerated curated v3 table on 14-day window (1.29M pairs, 296,898 multi-axis pairs joined): **296 SHIP / 42 MARGINAL / 1048 SKIP** across 39 axis-keys. Top SHIP-bearing keys: Q23::rising::transition::p0 (43 cells), Q23::rising::stable::p0 (41), Q1::rising::transition::p0 (41). p1 cells are sparser (~5-10% prior on precip_fc>0) — most p1 cells SKIP on sample floor for now; will fill in as more rain-regime data accumulates.
