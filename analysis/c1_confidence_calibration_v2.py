@@ -1,11 +1,12 @@
 """
 C1 confidence-layer calibration — Stage 1 v2 (multi-axis).
 
-Extends the original (transition-only) calibration to a 3-axis table:
+Extends the original (transition-only) calibration to a 4-axis table:
 
   axis_1: transition_flag      ∈ {stable, transition}     (legacy axis)
   axis_2: cluster_spread_q     ∈ {Q1, Q2, Q3, Q4}         (new — promoted 2026-06-20)
   axis_3: pressure_tendency    ∈ {falling_fast, falling, flat, rising}  (new — promoted 2026-06-20)
+  axis_4: c1f_precip_fc        ∈ {p0, p1}                 (new — promoted 2026-06-24, 23 ortho cells)
 
 Per-cell MAE measured across the test window; cell sample size determines
 SHIP/MARGINAL/SKIP classification at curate-time (Stage 2).
@@ -73,9 +74,13 @@ PT_BINS = [
     ("rising",       0.3,          float("inf")),
 ]
 
+# C1f axis (v3): binary precip_fc>0 flag from state_fc.precip_in.
+# Promoted 2026-06-24 — h_precip_fc_orthogonality.py returned 23 ortho cells.
+C1F_LABELS = ("p0", "p1")
+
 TEST_DAYS = 14
 MIN_N_LEGACY = 100      # legacy single-axis floor (matches v1)
-MIN_N_MULTI = 30        # multi-axis floor — cells are 8-32× sparser
+MIN_N_MULTI = 30        # multi-axis floor — cells are 8-32× sparser (now 16-64×)
 TICK_JOIN_TOLERANCE_MIN = 15   # cluster_spread tick matched if within this window
 
 OUTPUT_JSON = os.path.join(os.path.dirname(__file__), "output", "c1_confidence_premium_v2.json")
@@ -191,7 +196,7 @@ def measure():
 
     # Legacy aggregator: (field, band, is_transition) -> [sum_abs_err, n]
     legacy_accs = defaultdict(lambda: [0.0, 0])
-    # Multi-axis aggregator: (field, band, spread_q, pt_label, is_trans) -> [sum_abs_err, n]
+    # Multi-axis aggregator: (field, band, spread_q, pt_label, is_trans, c1f) -> [sum_abs_err, n]
     multi_accs = defaultdict(lambda: [0.0, 0])
 
     print("[2/3] Streaming pair log...")
@@ -255,8 +260,11 @@ def measure():
                     pairs_skip_no_spread += 1
                 continue
 
-            multi_accs[(field, band, spread_q, pt_label, is_trans)][0] += abs_err
-            multi_accs[(field, band, spread_q, pt_label, is_trans)][1] += 1
+            # C1f axis (v3): state_fc.precip_in > 0 → "p1", else "p0".
+            c1f = "p1" if (sfc.get("precip_in") or 0) > 0 else "p0"
+
+            multi_accs[(field, band, spread_q, pt_label, is_trans, c1f)][0] += abs_err
+            multi_accs[(field, band, spread_q, pt_label, is_trans, c1f)][1] += 1
             pairs_used_multi += 1
 
     print(f"  pairs scanned: {pairs_seen:,}")
@@ -296,11 +304,11 @@ def measure():
             }
 
     # Attach the multi-axis sub-table.
-    for (field, band, spread_q, pt_label, is_trans), (s_e, n) in multi_accs.items():
+    for (field, band, spread_q, pt_label, is_trans, c1f), (s_e, n) in multi_accs.items():
         if n < MIN_N_MULTI:
             continue
         slot = "transition" if is_trans else "stable"
-        key = f"{spread_q}::{pt_label}::{slot}"
+        key = f"{spread_q}::{pt_label}::{slot}::{c1f}"
         # Only attach if the legacy entry exists for this (field, band) — keeps
         # the table consistent (legacy entry is the parent).
         legacy_entry = out_cells.get(field, {}).get(band)
@@ -335,6 +343,7 @@ def main():
                 "transition":    ["stable", "transition"],
                 "spread_q":      ["Q1", "Q23", "Q4"],
                 "pt":            [b[0] for b in PT_BINS],
+                "c1f":           list(C1F_LABELS),
             },
             "spread_field":  SPREAD_FIELD,
             "join_tolerance_min": TICK_JOIN_TOLERANCE_MIN,

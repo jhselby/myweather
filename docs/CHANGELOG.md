@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.215 • June 24, 2026</strong></summary>
+
+- **Stage 2 SHIP: C1f precip_fc>0 wired as 4th confidence-layer axis.** `analysis/c1_confidence_calibration_v2.py` now stratifies multi-axis cells by a binary `c1f` flag drawn from `state_fc.precip_in > 0`. `weather_collector/processors/confidence_layer.py` computes the live c1f flag per-band (each band uses its own lead window of `hourly.precipitation`) and appends it to the lookup axis_key. Regenerated curated v3 table on 14-day window (1.29M pairs, 296,898 multi-axis pairs joined): **296 SHIP / 42 MARGINAL / 1048 SKIP** across 39 axis-keys. Top SHIP-bearing keys: Q23::rising::transition::p0 (43 cells), Q23::rising::stable::p0 (41), Q1::rising::transition::p0 (41). p1 cells are sparser (~5-10% prior on precip_fc>0) — most p1 cells SKIP on sample floor for now; will fill in as more rain-regime data accumulates.
+- **ENABLED still False.** Stage 3 stamps the bands on `weather_data["confidence"]` so the live signal is observable, but ENABLED=False keeps the UI from consuming them as authoritative. Stage 4 gate = UI calibration audit confirming displayed bands contain truth at the claimed rate.
+- **Debug page updated** to mark C1f entry [🟢 Auto-wired · STAGE 2 SHIPPED 2026-06-24] in the prioritization table and the Group A Stage 1 entry per the canon rule.
+- Pipeline ship count today: cc → L4 (v0.6.214) + C1f (v0.6.215). Two Stage 2 promotions in one session.
+
+</details>
+
+<details>
 <summary><strong>v0.6.214 • June 24, 2026</strong></summary>
 
 - **Stage 2 SHIP: cc → L4.** Added `cc` to `L4_FIELDS` in `weather_collector/processors/decay_apply.py:70`. Cloud-cover forecasts now receive the diurnal hour-of-day correction alongside `ch`. Justified by `h_cloud_l4_sim.py` 70/30 train/test simulation: +5.0% MAE improvement on both 2026-06-22 and 2026-06-24 reads (06-23 dipped to +2.7% — a 1-day artifact). Two reads ≥3% with one ≥5% clears the 2-read promotion gate. cm rides along at +3.0% on 06-24 (was +2.7% on 06-23) — borderline; reconfirm 2026-06-29 before adding. cl stays disqualified. Monitor cc per-layer MAE on the live audit table over the next 7 days; if cc L4 doesn't beat L3 by ≥3% in production, revert.

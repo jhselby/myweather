@@ -151,6 +151,34 @@ def _current_spread_quartile(weather_data):
     return "Q23"
 
 
+_C1F_BAND_LEADS = {
+    "0-5h":   (0, 6),
+    "6-11h":  (6, 12),
+    "12-23h": (12, 24),
+    "24-47h": (24, 48),
+}
+
+
+def _c1f_per_band(weather_data):
+    """Per-band C1f flag: "p1" if hourly precipitation forecast > 0 anywhere in
+    that band's lead window, "p0" otherwise. Returns {band_label: "p0"|"p1"|None}.
+    Mirrors how state_fc.precip_in was used in the v3 calibration — each pair-log
+    row inherited the precip flag of its specific target hour.
+    """
+    h = weather_data.get("hourly") or {}
+    precip = h.get("precipitation") or []
+    if not precip:
+        return {band: None for band in _C1F_BAND_LEADS}
+    out = {}
+    for band, (lo, hi) in _C1F_BAND_LEADS.items():
+        window = precip[lo:hi]
+        if not window:
+            out[band] = None
+            continue
+        out[band] = "p1" if any((v or 0) > 0 for v in window) else "p0"
+    return out
+
+
 def _current_pt_bin(weather_data):
     """Classify the live pressure_trend_hpa_3h via the curated table's pt_bins."""
     if not _CURATED_META:
@@ -212,12 +240,12 @@ def stamp_confidence(weather_data):
         regime_pred and regime_obs and regime_pred != regime_obs
     )
 
-    # Compute the live axis values once — they don't vary across (field, band).
+    # Compute the live axis values once — three of four are global. C1f varies
+    # per band so it's computed inside the band loop below.
     spread_q = _current_spread_quartile(weather_data)
     pt_label = _current_pt_bin(weather_data)
     trans_label = "transition" if in_transition else "stable"
-    axis_key = (f"{spread_q}::{pt_label}::{trans_label}"
-                if (spread_q and pt_label) else None)
+    c1f_per_band = _c1f_per_band(weather_data)
 
     cells_out = {}
     multi_hits = 0
@@ -228,8 +256,13 @@ def stamp_confidence(weather_data):
             transit = entry["transition_mae"]
             # Legacy displayed_mae — what a v1-aware UI sees.
             legacy_displayed = transit if in_transition else stable
-            # Multi-axis lookup. If the specific (spread_q × pt_bin × trans)
-            # cell is wired, prefer that. Otherwise fall back to legacy.
+            # Multi-axis lookup. Build the 4-axis key for THIS band (C1f
+            # depends on the band's lead window). If the specific
+            # (spread_q × pt_bin × trans × c1f) cell is wired, prefer that.
+            # Otherwise fall back to legacy.
+            c1f_band = c1f_per_band.get(band)
+            axis_key = (f"{spread_q}::{pt_label}::{trans_label}::{c1f_band}"
+                        if (spread_q and pt_label and c1f_band) else None)
             axis_mae = None
             axis_direction = None
             axis_status = None
@@ -262,9 +295,9 @@ def stamp_confidence(weather_data):
         "live_axes": {
             "spread_quartile": spread_q,
             "pt_bin":          pt_label,
-            "axis_key":        axis_key,
+            "c1f_per_band":    c1f_per_band,
             "multi_hits":      multi_hits,
-            "table_version":   "v2" if _CURATED_PATH.endswith("_v2.json") else "v1",
+            "table_version":   "v3" if _CURATED_PATH.endswith("_v2.json") else "v1",
         },
         "note": (
             "Candidate C1 confidence-layer bands. Gated OFF until UI calibration "
