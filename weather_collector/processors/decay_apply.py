@@ -66,8 +66,13 @@ STALE_DAYS = 7
 # backtest sweep (2026-06-16, 173k pairs over 2 days) confirmed cm out of L3
 # improves cloud-mid MAE by 3.8%. Two independent reads on different held-out
 # windows is the rule for shipping a whitelist change.
+# v0.6.213: cc added to L4. h_cloud_l4_sim.py 70/30 train/test simulation
+# returned cc +5.0% MAE improvement on 2026-06-22 AND 2026-06-24 reads
+# (06-23 dipped to +2.7% — a 1-day artifact). Two reads >=3% with one read
+# >=5% clears the 2-read promotion gate. cm rides along at +3.0% on 06-24
+# (was +2.7% on 06-23) — borderline; reconfirm 06-29 before adding.
 L3_FIELDS = {"ws", "wg", "ch", "cm", "pp"}
-L4_FIELDS = {"ch"}
+L4_FIELDS = {"ch", "cc"}
 # Fields where the L3/L4 audit's MAE-based ⚠ rule should be suppressed because
 # the field's correction is justified by a different metric (Brier, etc.).
 L3_BRIER_FIELDS = {"pp"}

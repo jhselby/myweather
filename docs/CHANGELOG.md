@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.214 • June 24, 2026</strong></summary>
+
+- **Stage 2 SHIP: cc → L4.** Added `cc` to `L4_FIELDS` in `weather_collector/processors/decay_apply.py:70`. Cloud-cover forecasts now receive the diurnal hour-of-day correction alongside `ch`. Justified by `h_cloud_l4_sim.py` 70/30 train/test simulation: +5.0% MAE improvement on both 2026-06-22 and 2026-06-24 reads (06-23 dipped to +2.7% — a 1-day artifact). Two reads ≥3% with one ≥5% clears the 2-read promotion gate. cm rides along at +3.0% on 06-24 (was +2.7% on 06-23) — borderline; reconfirm 2026-06-29 before adding. cl stays disqualified. Monitor cc per-layer MAE on the live audit table over the next 7 days; if cc L4 doesn't beat L3 by ≥3% in production, revert.
+- **Debug page updated** to mark cc→L4 entry [🟢 Auto-wired · STAGE 2 SHIPPED 2026-06-24] in both the prioritization table and the Group D Stage 1 entry per the canon rule.
+
+</details>
+
+<details>
 <summary><strong>v0.6.213 • June 24, 2026</strong></summary>
 
 - **Full Stage 1 manual re-run batch — debug page updated all at once.** Ran all 8 Stage 1 candidate scripts in parallel with refreshed pair-log cache (MYWEATHER_REFRESH=1 on first script, others share cache). Updated prioritization table + each candidate's Group A/D entry with new last-run dates and result deltas per the canon rule. Key shifts: (1) **cc → L4 recovered to +5.0%** (from +2.7% on 06-23), passing the 2-read ≥3% gate — now SHIP-READY, promoting to Stage 2 implementation (add `cc` to L4 whitelist in `decay_apply.py`); cm rides along at +3.0%. (2) **C1f precip_fc>0 strengthened** to 23 ortho cells (up from 21). (3) **Humidity K-taper held** at +6.60% soft_ramp (was +7.75%, still well above 5% floor). (4) **C1e post-frontal weakened** from 6 ortho to 3 (signal degrading as 06-17→-22 frontal cluster ages out; ch holds). (5) **dp depression nor_easter +3.79°F NEW** flag (n=279, small but extreme). (6) Cloud saturation, C1g, C1h all direction-stable across both reads.
