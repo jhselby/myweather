@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.218 • June 24, 2026</strong></summary>
+
+- **Stage 2 SHIP: Humidity K-taper (lead-conditional L2 Kalman gain).** `weather_collector/processors/corrected_hourly.py` now applies a piecewise-linear soft_ramp to the L2 humidity bias instead of the prior exp(-lead/240) shape. Curve: K(0h)=1.0 → K(6h)=0.85 → K(12h)=0.70 → K(18h)=0.55 → K(24h+)=0.40. The prior exponential was effectively flat (~91% at lead 24); the soft_ramp pulls the L2 bias toward 40% at long leads where the station-network signal is stale. New `_soft_ramp_factors()` helper alongside `_decay_factors()`. `t` and `pr` continue to use the exponential decay (≤0.5% drift across ramp shapes — flat K is optimal for them). `weather_data["l2_decay_meta"]["humidity_shape"]` exposes the curve for the debug page.
+- Justified by `analysis/h_lead_l2_ktaper_sim.py`: two confirming reads on a 7-day window — +7.75% MAE improvement on 2026-06-22, +6.60% on 2026-06-24. Direction-stable across both reads. Joe's-top-3 candidate since 06-22.
+- **Debug page updated** to mark Humidity K-taper [🟢 Auto-wired · STAGE 2 SHIPPED 2026-06-24]. Monitor cc L4 + h K-taper on the live audit table for 7 days; revert either if their layer doesn't beat the prior layer by ≥3% in production.
+- **Today's final tally:** 3 Stage 2 ships (cc → L4, C1f, h K-taper), 2 orthogonality kills (wind_shift_rate, C1g), 1 audit infra (Stage 4). Stage 1 pipeline: 10 → 6 active candidates.
+
+</details>
+
+<details>
 <summary><strong>v0.6.217 • June 24, 2026</strong></summary>
 
 - **C1g KILLED — orthogonality check.** `analysis/h_c1g_orthogonality.py` cross-tabbed C1g (obs_humidity ≥95, fog regime) vs C1f (precip_fc>0) and vs cc-saturation (cc_fc≥95). Marginalized over the unused axis. Result: **1 ORTHOGONAL / 69 REDUNDANT / 0 CONFOUNDED / 2 AMBIGUOUS** across 72 cells. The Stage 0 +134% cm / +149% ch elevation was sampling-driven — fog co-occurs strongly with both rain-forecast (C1f) and high-cc-forecast (cc-saturation). When you control for either, fog rows actually have *smaller* MAE than non-fog (ratio 0.02–0.25× across cl/cm/ch in the F=False or S=False subsets). No independent widening signal. Moved to Retired section per the canon rule. Second same-day kill (wind_shift_rate also killed earlier this morning).

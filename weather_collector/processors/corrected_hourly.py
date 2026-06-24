@@ -139,6 +139,26 @@ def _decay_factors(tau, n):
     return [math.exp(-i / tau) for i in range(n)]
 
 
+# v0.6.218: lead-conditional K-taper for humidity (Joe top-3 Stage 2 ship).
+# Replaces the prior exp(-lead/240) shape (which was effectively flat across
+# 48 leads) with a piecewise-linear soft_ramp that better matches the per-lead
+# bias-decay profile observed in pair-log data. Ramps from 1.0 at lead 0 →
+# H_SOFT_RAMP_FLOOR at lead H_SOFT_RAMP_END, then floors.
+#
+# Calibration: analysis/h_lead_l2_ktaper_sim.py. Two confirming reads on a
+# 7-day window: +7.75% MAE improvement on 2026-06-22, +6.60% on 2026-06-24.
+# t and pr show ≤0.5% drift across all ramp shapes — flat K is optimal for
+# them, so only h gets the soft_ramp treatment.
+H_SOFT_RAMP_FLOOR = 0.4
+H_SOFT_RAMP_END = 24
+
+
+def _soft_ramp_factors(n, floor=H_SOFT_RAMP_FLOOR, end=H_SOFT_RAMP_END):
+    """Piecewise-linear K-taper for humidity. 1.0 at lead 0 → `floor` at
+    lead `end`; held at `floor` for leads >= end."""
+    return [max(floor, 1.0 - (1.0 - floor) * i / end) for i in range(n)]
+
+
 def add_corrected_hourly_arrays(weather_data):
     """Populate the five corrected hourly arrays. No-op if hourly is missing."""
     if "hourly" not in weather_data:
@@ -164,7 +184,16 @@ def add_corrected_hourly_arrays(weather_data):
     weather_data["l2_decay_meta"] = l2_meta
     n_hours = max(len(raw_temps), len(raw_humid), 48)
     t_decay = _decay_factors(taus.get("t"), n_hours)
-    h_decay = _decay_factors(taus.get("h"), n_hours)
+    # v0.6.218: humidity uses soft_ramp instead of exp(-lead/τ). The loaded
+    # h-τ is preserved in l2_meta for debug-page transparency but ignored here.
+    h_decay = _soft_ramp_factors(n_hours)
+    l2_meta["humidity_shape"] = {
+        "kind": "soft_ramp",
+        "floor": H_SOFT_RAMP_FLOOR,
+        "end_lead_h": H_SOFT_RAMP_END,
+        "note": ("Lead-conditional K-taper shipped v0.6.218 — "
+                 "h_lead_l2_ktaper_sim.py: +7.75% on 06-22, +6.60% on 06-24."),
+    }
 
     hourly["corrected_temperature"] = [
         round(t + temp_bias * t_decay[i], 1) if t is not None else None
