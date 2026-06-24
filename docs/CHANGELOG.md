@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.217 • June 24, 2026</strong></summary>
+
+- **C1g KILLED — orthogonality check.** `analysis/h_c1g_orthogonality.py` cross-tabbed C1g (obs_humidity ≥95, fog regime) vs C1f (precip_fc>0) and vs cc-saturation (cc_fc≥95). Marginalized over the unused axis. Result: **1 ORTHOGONAL / 69 REDUNDANT / 0 CONFOUNDED / 2 AMBIGUOUS** across 72 cells. The Stage 0 +134% cm / +149% ch elevation was sampling-driven — fog co-occurs strongly with both rain-forecast (C1f) and high-cc-forecast (cc-saturation). When you control for either, fog rows actually have *smaller* MAE than non-fog (ratio 0.02–0.25× across cl/cm/ch in the F=False or S=False subsets). No independent widening signal. Moved to Retired section per the canon rule. Second same-day kill (wind_shift_rate also killed earlier this morning).
+- **Stage 1 pipeline now 7 active candidates** (was 10 this morning). Today's tally: 2 Stage 2 ships (cc→L4, C1f) + 2 orthogonality kills (wind_shift_rate, C1g). Solid Stage 0→ortho discipline.
+
+</details>
+
+<details>
 <summary><strong>v0.6.216 • June 24, 2026</strong></summary>
 
 - **Stage 4 UI-readiness audit infrastructure landed.** `analysis/c1_stage4_audit.py` compares each SHIP cell's calibrated MAE against its realized MAE on a 7d recent-holdout window vs a 7d preceding calib window. PASS ≤20% drift, WATCH ≤40%, FAIL >40%. Handles both the legacy single-axis (transition × stable) cells AND the v3 multi-axis cells (Q × pt × trans × c1f). First read: legacy axis (62 SHIP cells) returned 17 PASS / 20 WATCH / 25 FAIL — NOT READY, with FAILs dominated by `pp` (Brier-evaluated, MAE is the wrong yardstick) and `pa` (precip amount, naturally bursty). Multi-axis (296 SHIP cells) DEFERRED — cluster_spread_log only goes back to 06-20 (~4 days); calib window needs 14 days of history. **First multi-axis audit ETA ~2026-07-04** as cluster_spread accumulates.
