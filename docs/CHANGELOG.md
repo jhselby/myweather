@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.221 • June 24, 2026</strong></summary>
+
+- **Debug page page-1 summary fix.** The "Shipped & live" card still read `L4 whitelist: ch only` after cc → L4 shipped earlier today. Joe caught it on a read-through. Updated to `L4 whitelist: ch, cc` with the cc-added note. Added a fourth canon rule to memory: skim the page-1 summary on every Stage 2 ship for stale references.
+
+</details>
+
+<details>
 <summary><strong>v0.6.220 • June 24, 2026</strong></summary>
 
 - **Added "Since last curation" block at top of debug page.** Per Joe's request: a tight delta-list right below the curated-stamp summarizing what shipped, killed, weakened, or built since the previous curation. Glyph palette: ✓ shipped, ✗ killed, ↺ weakened, ⚙ infrastructure. The block replaces the implicit "you'd have to read the whole page to know what changed today" pattern with an explicit at-a-glance status. Will get rewritten each curation so the debug page is always preceded by a fresh diff against the prior state.
