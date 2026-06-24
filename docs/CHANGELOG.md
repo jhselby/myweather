@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.220 • June 24, 2026</strong></summary>
+
+- **Added "Since last curation" block at top of debug page.** Per Joe's request: a tight delta-list right below the curated-stamp summarizing what shipped, killed, weakened, or built since the previous curation. Glyph palette: ✓ shipped, ✗ killed, ↺ weakened, ⚙ infrastructure. The block replaces the implicit "you'd have to read the whole page to know what changed today" pattern with an explicit at-a-glance status. Will get rewritten each curation so the debug page is always preceded by a fresh diff against the prior state.
+
+</details>
+
+<details>
 <summary><strong>v0.6.219 • June 24, 2026</strong></summary>
 
 - **Debug page cleanup.** Fixed two stale lines from today's marathon: pipeline-count line read "7 active candidates" but should have been 6 after h K-taper shipped (the count was set before v0.6.218 promoted). Also removed a duplicate-fragment in the Group D h K-taper entry — a leftover passage from when I edited the "promote to Stage 2 by adding..." text into the SHIPPED block. Debug page is now consistent with the live production state.

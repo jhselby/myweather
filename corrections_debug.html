@@ -696,9 +696,25 @@
 <details class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;" open>
   <summary style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;cursor:pointer;list-style:none;">
     <strong style="color:#7fb3ff;font-size:1.05em;">Status — where we are</strong>
-    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-24 v0.6.219 (click to collapse)</span>
+    <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-24 v0.6.220 (click to collapse)</span>
   </summary>
-  <div class="meta-line" style="margin-top:8px;"><strong>One-line summary:</strong> 4-layer correction stack in production. L1 raw HRRR → L2 mesonet (Kalman-blended local network: temp, humidity, pressure, wind, cloud) → L3 per-lead decay → L4 hour-of-day diurnal. Every "current conditions" card reads the L1→L4-corrected hourly[0] value. L5 regime-conditional solar correction built, gated. C1 confidence layer (first non-MAE-reducing output — named C-class to distinguish from L-class correction layers that change forecast values) built with multi-axis support: C1a regime transition, C1b cluster spread, C1c pressure tendency. Gated pending calibration audit. R2 state-stratified accuracy and R6 regime-transition penalty audits run every Fitter cycle. R3 (derived humidity), R4 (HRRR-GFS spread), R5 (cove cross-current) retired.</div>
+
+  <div style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+    <div style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-24, v0.6.213 → v0.6.220)</div>
+    <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;">
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Cloud-cover (cc) → L4 shipped — <code>decay_apply.py</code> v0.6.214</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> C1f precip_fc&gt;0 axis shipped — <code>confidence_layer.py</code> v3 + curated v3 table, v0.6.215</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Humidity K-taper (soft_ramp 1.0 → 0.4) shipped — <code>corrected_hourly.py</code> v0.6.218</li>
+      <li><span style="color:#fb7c5c;font-weight:600;">✗</span> Wind-shift-rate killed — <code>h_wind_shift_rate_orthogonality.py</code> 1 ortho / 22 redundant, v0.6.216</li>
+      <li><span style="color:#fb7c5c;font-weight:600;">✗</span> C1g (RH≥95% fog) killed — <code>h_c1g_orthogonality.py</code> 1 ortho / 69 redundant, v0.6.217</li>
+      <li><span style="color:#e0d472;font-weight:600;">↺</span> C1e post-frontal weakened (6 ortho → 3, ch only) — needs more frontal passages</li>
+      <li><span style="color:#7090a0;font-weight:600;">⚙</span> Stage 4 audit infra built — <code>analysis/c1_stage4_audit.py</code>; legacy NOT READY (pp/pa drag), multi DEFERRED to ~2026-07-04, v0.6.216</li>
+      <li><span style="color:#7090a0;font-weight:600;">⚙</span> Full Stage 1 manual re-run batch (8 candidates, all dates refreshed), v0.6.213</li>
+    </ul>
+    <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Pipeline delta: 10 → 6 active Stage 1 candidates. Next manual re-reads scheduled 2026-06-29 alongside walk-forward L3/L4 #4.</div>
+  </div>
+
+  <div class="meta-line" style="margin-top:12px;"><strong>One-line summary:</strong> 4-layer correction stack in production. L1 raw HRRR → L2 mesonet (Kalman-blended local network: temp, humidity, pressure, wind, cloud) → L3 per-lead decay → L4 hour-of-day diurnal. Every "current conditions" card reads the L1→L4-corrected hourly[0] value. L5 regime-conditional solar correction built, gated. C1 confidence layer (first non-MAE-reducing output — named C-class to distinguish from L-class correction layers that change forecast values) built with multi-axis support: C1a regime transition, C1b cluster spread, C1c pressure tendency. Gated pending calibration audit. R2 state-stratified accuracy and R6 regime-transition penalty audits run every Fitter cycle. R3 (derived humidity), R4 (HRRR-GFS spread), R5 (cove cross-current) retired.</div>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
 
