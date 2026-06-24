@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.213 • June 24, 2026</strong></summary>
+
+- **Full Stage 1 manual re-run batch — debug page updated all at once.** Ran all 8 Stage 1 candidate scripts in parallel with refreshed pair-log cache (MYWEATHER_REFRESH=1 on first script, others share cache). Updated prioritization table + each candidate's Group A/D entry with new last-run dates and result deltas per the canon rule. Key shifts: (1) **cc → L4 recovered to +5.0%** (from +2.7% on 06-23), passing the 2-read ≥3% gate — now SHIP-READY, promoting to Stage 2 implementation (add `cc` to L4 whitelist in `decay_apply.py`); cm rides along at +3.0%. (2) **C1f precip_fc>0 strengthened** to 23 ortho cells (up from 21). (3) **Humidity K-taper held** at +6.60% soft_ramp (was +7.75%, still well above 5% floor). (4) **C1e post-frontal weakened** from 6 ortho to 3 (signal degrading as 06-17→-22 frontal cluster ages out; ch holds). (5) **dp depression nor_easter +3.79°F NEW** flag (n=279, small but extreme). (6) Cloud saturation, C1g, C1h all direction-stable across both reads.
+- **Four new Stage 0 hypotheses tested.** `h_wind_shift_rate.py` — rotating ≥80° wind shift class shows ch +33%★, cm +24%, cc +15% MAE elevation; **promoted to Stage 1 as alt-transition axis** (Tier 2, needs orthogonality vs C1a). `h_mesonet_conf.py` — regime-scatter proxy null across all fields (0.93×–1.22×); retired. `h_persistence.py` — ws/wg lose to "current obs" baseline at all leads, initially flagged as possible mph/m/s unit bug; investigated and ruled out (both fc and obs are mph; L2+L3 already correct the 2× model over-prediction from 4.17→2.44 mph MAE; live frontend already does persistence-blending via blend_observed_into_hourly). Retired as expected behavior. `h_lightning_proximity.py` — pair log doesn't carry lightning data; infrastructure gap, not killed.
+- **Stage 1 pipeline now 10 candidates** (was 9). cc→L4 ready to promote to Stage 2 implementation 2026-06-24.
+
+</details>
+
+<details>
 <summary><strong>v0.6.212 • June 23, 2026</strong></summary>
 
 - **Kills + nulls moved into Retired section.** Per Joe's instruction — Retired is the canonical home for ruled-out hypotheses, not the Stage 0 explorations log. Added "Recently ruled out — 2026-06-22 to 06-23 Stage 0 kills" subsection at the top of the Retired wrapper with compact entries (no charts, just verdict + script ref). Removed duplicate entries from Stage 0 explorations log so each kill lives in exactly one place. Stage 0 log now holds only design seeds, promoted breadcrumbs, data-limitation flags, and the wd×ws_obs script bug. 7 kills + tunings relocated: regime-conditional L3, L3 regime mismatch, lead × C1a, solar zenith × cloud (duplicate), state_fc.solar_wm2 × cloud (duplicate), weekday vs weekend artifact, L4 window-size null, lead-bin granularity null.
