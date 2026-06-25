@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.228 • June 25, 2026</strong></summary>
+
+- Debug page data refresh: L5 status updated to live trajectory (4 SHIP / 0 HOLD over trailing 7d, 6-cycle SHIP streak; earliest plausible promotion now late-June if streak holds); C1 axes list in the one-line summary now includes C1f; cove section split into the retired global R5 decision and the current module-scoped gate (1/2 confirming reads, next read ~2026-07-01).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.227 • June 25, 2026</strong></summary>
 
 - Divergence report: DISAGREE → GATED for clarity; status icons added (✓ aligned, ⏳ gated, ↑ ready-to-enable, ↓ ready-to-drop, ✗ unknown).
