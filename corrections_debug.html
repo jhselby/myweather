@@ -719,23 +719,23 @@
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
 
     <div style="border:1px solid #1f3a2a;background:#101913;padding:10px;border-radius:6px;">
-      <div style="color:#4ad29a;font-weight:600;margin-bottom:4px;">✅ Shipped &amp; live</div>
+      <div style="color:#4ad29a;font-weight:600;margin-bottom:4px;">✅ Production stack</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>L1 → L2 → L3 → L4</strong> pipeline. L2 applies to <code>t / dp / h / pr / cc</code> (additive bias with Kalman gain) and <code>ws / wg</code> (direct selection).</li>
-        <li>L3 whitelist: <strong>ws, wg, ch, cm, pp</strong>. Each field earns its keep on a 7-window MAE audit.</li>
+        <li>L3 whitelist: <strong>ws, wg, ch, cm, pp</strong>. Each field remains enabled only if it continues to beat the layer below on the rolling 7-window held-out audit.</li>
         <li>L4 whitelist: <strong>ch, cc</strong>. cc added 2026-06-24 v0.6.214 after a 2-read ≥3% gate cleared. Most other fields lack stable hour-of-day structure.</li>
         <li>L2 lead-decay τ refit live by the Fitter with a per-field guardrail (fitted τ adopted only if it beats default on held-out RMSE and lands within 0.25×–4× of default; otherwise fall back).</li>
         <li><strong>L2 wind selection:</strong> per-octant max → median across octants for the local network. KBOS+KBVY authoritative-source floor overrides when the airports' median speed exceeds the octant pick by &gt;1.4×. Direction-outlier guardrail rejects chosen direction if it's &gt;60° off the airport+buoy+Tempest consensus. Physical sanity floor enforces gust ≥ wind on the final values.</li>
-        <li><strong>L2 cloud blend:</strong> KBOS+KBVY METAR sky-condition obs (cloud_cover + L/M/H splits) Kalman-blended against HRRR hourly[0]. Cloud-tuned gain: K=0.90 (σ&lt;20pp), K=0.70 (σ&lt;40pp), K=0.50 (σ≥40pp), K=0.35 (single source). Treats airport disagreement as real spatial gradient between Boston and Beverly, not sensor noise. Same K applied to total + splits to keep them self-consistent.</li>
-        <li><strong>Current-conditions sync:</strong> <code>weather_data["current"]</code> is populated as the last pipeline step from corrected hourly[0] after every layer has run. Preserves wind metadata and condition_source from upstream observation overrides; re-derives weather_code from corrected cloud + precip.</li>
+        <li><strong>L2 cloud blend:</strong> KBOS+KBVY METAR sky-condition obs (cloud_cover + L/M/H splits) Kalman-blended against HRRR hourly[0]. Cloud-tuned gain: K=0.90 (σ&lt;20pp), K=0.70 (σ&lt;40pp), K=0.50 (σ≥40pp), K=0.35 (single source). Treats disagreement between KBOS (Boston) and KBVY (Beverly) as a real coastal spatial gradient rather than sensor noise. Same K applied to total + splits to keep them self-consistent.</li>
+        <li><strong>Current-conditions sync:</strong> The current-conditions card is populated only after every correction layer has run from <code>weather_data["current"]</code> ← corrected hourly[0], so the displayed "now" exactly matches the corrected forecast pipeline. Preserves <code>condition_source</code> from upstream observation overrides; re-derives <code>weather_code</code> from corrected cloud + precip.</li>
       </ul>
     </div>
 
     <div style="border:1px solid #3a2d1f;background:#191510;padding:10px;border-radius:6px;">
       <div style="color:#d4a373;font-weight:600;margin-bottom:4px;">⏸ Gated off — built, not applied</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟡 Hybrid · 🔒 stamps every tick in <code>solar_correction.py</code>, ENABLED=False · 🟢 verdict auto-computed in <code>conditional_audits.l5</code> + <code>l5_gate_history.json</code> each Fitter cycle]</span> <strong>L5 — regime-conditional solar correction.</strong> <code>ENABLED=False</code> in <code>solar_correction.py</code>. Stage 2 promotion gate currently FLICKER (2×SHIP / 5×HOLD as of 2026-06-22; ceiling +5.9% improvement). Slight regression from 06-21's 3×SHIP / 4×HOLD read — 06-22 cutoff sits at +4.5%, just under the 5% SHIP bar. Standalone <code>l5_solar_analysis.py</code> on today's window reads -20.4% overall MAE with 7/8 regimes improving — i.e. today is a strong L5 day, but the 7-day-trailing gate has too many sub-threshold cutoffs to clear.</li>
-        <li><strong>C1 — multi-axis confidence layer.</strong> <code>ENABLED=False</code> in <code>confidence_layer.py</code>. <em>First non-MAE-reducing layer in the stack.</em> Three axes: regime-synoptic transition (state_fc vs state_obs), cluster-spread quartile (Q1/Q23/Q4 from KMAMARBL/KMASALEM/KMASWAMP temp medians), and pressure-tendency bin (falling_fast / falling / flat / rising from state_fc.pressure_trend_hpa_3h). Per (field, lead_band) cell carries per-axis displayed MAE; runtime classifies live axes each tick, looks up the matching cell in <code>c1_confidence_curated_v2.json</code>, falls back to legacy single-axis cell on miss. Calibration-verdict, not MAE-verdict.</li>
+        <li><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟡 Hybrid · 🔒 stamps every tick in <code>solar_correction.py</code>, ENABLED=False · 🟢 verdict auto-computed in <code>conditional_audits.l5</code> + <code>l5_gate_history.json</code> each Fitter cycle]</span> <strong>L5 — regime-conditional solar correction.</strong> <code>ENABLED=False</code> in <code>solar_correction.py</code>. Stage 2 promotion gate currently FLICKER (2×SHIP / 5×HOLD as of 2026-06-22; ceiling +5.9% improvement). Slight regression from 06-21's 3×SHIP / 4×HOLD read — 06-22 cutoff sits at +4.5%, just under the 5% SHIP bar. Standalone <code>l5_solar_analysis.py</code> on today's window reads -20.4% overall MAE with 7/8 regimes improving — i.e. today's snapshot strongly favors L5, but the 7-day-trailing gate has too many sub-threshold cutoffs to clear.</li>
+        <li><strong>C1 — multi-axis confidence layer.</strong> <code>ENABLED=False</code> in <code>confidence_layer.py</code>. <em>First non-MAE-reducing layer in the stack.</em> Three axes: regime-synoptic transition (state_fc vs state_obs), cluster-spread quartile (Q1/Q23/Q4 from KMAMARBL/KMASALEM/KMASWAMP temp medians), and pressure-tendency bin (falling_fast / falling / flat / rising from state_fc.pressure_trend_hpa_3h). Per (field, lead_band) cell carries per-axis displayed MAE; runtime classifies live axes each tick, looks up the matching cell in <code>c1_confidence_curated_v2.json</code>, falls back to legacy single-axis cell on miss. <strong>Calibration-verdict, not MAE-verdict.</strong></li>
       </ul>
     </div>
 
@@ -758,7 +758,7 @@
     </div>
 
     <div style="border:1px solid #3a3a1f;background:#191910;padding:10px;border-radius:6px;">
-      <div style="color:#e0d472;font-weight:600;margin-bottom:4px;">⏳ Pending decision (dated)</div>
+      <div style="color:#e0d472;font-weight:600;margin-bottom:4px;">⏳ Next scheduled decisions (dated)</div>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>Daily through mid-July:</strong> L5 promotion gate re-run. Flip <code>ENABLED</code> on 7×SHIP cutoffs. 06-24 estimate was retired 06-21 after the post-refit gate held at 3×SHIP / 4×HOLD; current data has too many trailing HOLD cutoffs in the 7-window to clear before early-to-mid July even on an all-SHIP run from here.</li>
         <li><strong>2026-06-29 (Mon):</strong> Walk-forward L3/L4 re-run #4. Last read (06-22) showed 2d window flagged ws/wg L3 drops but 5d/10d diagnostic windows reinstated wind L3 wins (ws -26%, wg -35% at 10d) — diagnosed as 2d-window artifact. ch L3+L4 + cm L3 stable across 3 reads. Wind L4 dead at all windows (2 consecutive reads agreeing; still below 7-window gate). No whitelist edit.</li>
@@ -906,7 +906,7 @@
 
 <div id="banner-l4-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
   <strong style="color:#d4a373;">⏸ Layer 4 — per-field whitelist.</strong>
-  <div class="meta-line">L4 is the hardest layer to win at because it needs the SAME hour-of-day error pattern to recur every day, which most fields don't satisfy (cloud cover varies by sky regime; solar varies by clear-vs-cloudy; temperature by air mass). The held-out audit says only <strong>high cloud</strong> shows stable enough diurnal structure to correct. Currently applied: <span id="banner-l4-fields">—</span>. The other charts below show the fits for diagnostic purposes only — useful to spot whether any other field is starting to develop stable diurnal structure that might justify enabling later.</div>
+  <div class="meta-line">L4 corrects the portion of forecast error that repeats with time of day. It is the hardest layer to earn because the same hour-of-day bias must recur consistently across many days. Most fields fail that test because their dominant errors are driven by changing weather regimes (air mass, cloud regime, frontal timing, etc.) rather than the clock. Cloud cover (cc) and high cloud (ch) are the two exceptions, showing a sufficiently stable diurnal signal to pass the held-out audit and earn promotion. Currently applied: <span id="banner-l4-fields">—</span>. The remaining plots are retained as diagnostics to watch for new hour-of-day structure that may justify future promotion.</div>
 </div>
 
 <h3 class="subsection">4a. Diurnal correction curves over time — historical fits</h3>
@@ -969,7 +969,7 @@
   <div class="meta-line" style="margin-top:10px;"><strong>What these are:</strong> hypothesis ideas at Stage 1 of the promotion pipeline — written down, not yet wired to a script. Promotion path: Stage 1 (this list) → Stage 2 (one-off <code>analysis/*</code> script + verdict) → Stage 3 (auto-wired in Fitter, logged per cycle) → Stage 4 (shipped layer or confidence widening).</div>
 
   <div class="meta-line" style="margin-top:8px;background:#101019;border:1px solid #2a2a3a;border-radius:6px;padding:10px 12px;">
-    <strong style="color:#d4a373;">Framing (2026-06-20):</strong> the 8 ideas Joe listed don't peer-rank cleanly as "8 future layers." Most are confidence signals, not bias signals — they belong as <em>axes</em> of C1, not as standalone L7/L8. The two real bias-correction candidates (marine layer, radiational cooling) overlap heavily with L2 (waterfront capture) and L4 (diurnal). Grouped below by how they should actually be worked.
+    <strong style="color:#d4a373;">Framing (2026-06-20):</strong> the 8 ideas Joe listed don't peer-rank cleanly as "8 future layers." Most surviving hypotheses measure forecast uncertainty, not forecast bias — they belong as <em>axes</em> of C1, not as standalone L7/L8. The two real bias-correction candidates (marine layer, radiational cooling) overlap heavily with L2 (waterfront capture) and L4 (diurnal). Grouped below by how they should actually be worked.
   </div>
 
   <h4 style="color:#4ad29a;margin-top:16px;margin-bottom:6px;">Group A — C1 multi-axis confidence extension</h4>
