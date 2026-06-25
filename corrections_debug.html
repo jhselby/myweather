@@ -106,6 +106,9 @@
       page-break-inside: avoid;
     }
     .meta, .meta-line, .layer-info-text .meta-line { color: #555 !important; }
+    .since-last-curation { background: white !important; border-color: #ccc !important; color: #111 !important; }
+    .since-last-curation ul { color: #111 !important; }
+    .since-last-curation .since-last-curation-title { color: #2554a0 !important; }
     .accuracy-card .stat-line { color: #555 !important; }
     .accuracy-card .stat-line strong { color: #111 !important; }
     .stats-panel, .stats-panel strong { color: #111 !important; }
@@ -699,9 +702,9 @@
     <span style="font-size:0.85em;opacity:0.7;">Last curated: 2026-06-24 v0.6.221 (click to collapse)</span>
   </summary>
 
-  <div style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-    <div style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-24, v0.6.213 → v0.6.220)</div>
-    <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;">
+  <div class="since-last-curation" style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-24, v0.6.213 → v0.6.220)</div>
+    <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
       <li><span style="color:#4ad29a;font-weight:600;">✓</span> Cloud-cover (cc) → L4 shipped — <code>decay_apply.py</code> v0.6.214</li>
       <li><span style="color:#4ad29a;font-weight:600;">✓</span> C1f precip_fc&gt;0 axis shipped — <code>confidence_layer.py</code> v3 + curated v3 table, v0.6.215</li>
       <li><span style="color:#4ad29a;font-weight:600;">✓</span> Humidity K-taper (soft_ramp 1.0 → 0.4) shipped — <code>corrected_hourly.py</code> v0.6.218</li>

@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.224 • June 25, 2026</strong></summary>
+
+- Debug page "Since last curation" box: list text was inheriting too-dark color against the dark callout background (icons rendered, prose did not). Added explicit list color and a `.since-last-curation` print rule so the box flips to white background / dark text on print to match the rest of the page.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.223 • June 25, 2026</strong></summary>
 
 - Debug page copy pass: L4 intro rewritten to reflect cc+ch shipped and the "stable hour-of-day signal" framing; "Shipped & live" → "Production stack"; L3 whitelist line clarified ("remains enabled only if it continues to beat the layer below"); L2 cloud blend names KBOS (Boston) and KBVY (Beverly) explicitly as coastal-gradient sources; current-conditions sync gains plain-language opener while keeping the `weather_data["current"]` / `condition_source` / `weather_code` debug handles; L5 phrasing softened ("today's snapshot strongly favors L5"); "Calibration-verdict, not MAE-verdict" bolded as the structural insight; "Pending decision (dated)" → "Next scheduled decisions (dated)"; "Most are confidence signals, not bias signals" → "Most surviving hypotheses measure forecast uncertainty, not forecast bias."
