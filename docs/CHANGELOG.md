@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.225 • June 25, 2026</strong></summary>
+
+- Analysis tooling: single-command digest runner (`analysis/runlog/run_digest.sh`) executes all 63 analysis scripts and writes one summary at `analysis/output/DIGEST.txt`. Output includes pass/fail table, executive summary (deltas vs prior run), per-script verdict + tail, and a divergence report (production state vs latest script verdict, with streak counters against per-key promotion gates). History accumulates in `analysis/output/runlog/digest_history.jsonl` so gates become actionable as reads stack up. Skipping a script: rename it to `*.py.skip`.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.224 • June 25, 2026</strong></summary>
 
 - Debug page "Since last curation" box: list text was inheriting too-dark color against the dark callout background (icons rendered, prose did not). Added explicit list color and a `.since-last-curation` print rule so the box flips to white background / dark text on print to match the rest of the page.
