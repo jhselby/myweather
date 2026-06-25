@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.222 • June 24, 2026</strong></summary>
+
+- Wind card (Weather tab): removed C1 ±uncertainty suffix from collapsed-preview sustained/gust numbers — restores prior cleaner look. Confidence bands still live on the expanded chart.
+- Debug page: cove gradient diurnal trough updated to refit values (−3.7°F at 12:00 EDT, n=1,732 over 12 days). Day-4 octant snapshot replaced with day-12 refit (S/SE/SW sea-breeze warming and N/NE/E/NW offshore cooling now reflect 1,732-tick window).
+- `cove_correction.py` lookup tables refreshed from r5_cove_analysis day-12 read (n=1,732). Module remains `ENABLED = False` — input values updated for whenever the second confirming read clears the gate.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.221 • June 24, 2026</strong></summary>
 
 - **Debug page page-1 summary fix.** The "Shipped & live" card still read `L4 whitelist: ch only` after cc → L4 shipped earlier today. Joe caught it on a read-through. Updated to `L4 whitelist: ch, cc` with the cc-added note. Added a fourth canon rule to memory: skim the page-1 summary on every Stage 2 ship for stale references.

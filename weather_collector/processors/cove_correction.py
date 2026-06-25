@@ -43,16 +43,16 @@ def _octant(wind_dir_deg):
 # grew — these reflect the 3-day means with n ≥ 13 per bin (smaller bins
 # left out for stability). Bins missing here fall back to 0 (no correction).
 _DELTA_BY_OCTANT = {
-    (True,  "S"):   +1.6,
-    (True,  "SE"):  +2.1,
-    (True,  "SW"):  +1.5,
-    (False, "N"):   -0.6,
+    (True,  "S"):   +1.5,
+    (True,  "SE"):  +2.0,
+    (True,  "SW"):  +1.1,
+    (False, "N"):   -1.0,
     (False, "NE"):  -1.0,
-    (False, "E"):   -0.8,
-    (False, "NW"):   0.0,
-    (False, "SE"):  +0.2,
-    (False, "SW"):  +0.9,
-    (False, "W"):   +1.4,
+    (False, "E"):   -1.3,
+    (False, "NW"):  -0.9,
+    (False, "SE"):  +0.1,
+    (False, "SW"):  +0.3,
+    (False, "W"):   -0.2,
 }
 
 # Hour-of-day modulation for offshore/inactive sea breeze regime ONLY.
@@ -60,11 +60,11 @@ _DELTA_BY_OCTANT = {
 # are already well-represented by the constant octant value because the
 # breeze itself only fires 14-18 EDT.
 _HOUR_DELTA_SB_OFF = {
-    0: +0.2, 1: +0.1, 2: +0.1, 3:  0.0,
-    4: -1.4, 5: -2.0, 6: -3.4, 7: -4.3, 8: -4.8, 9: -4.6, 10: -4.5,
-    11: -2.2, 12: -1.5, 13: -1.3,
-    14: +0.6, 15: +1.8, 16: +2.4, 17: +1.3, 18: +0.5,
-    19: +1.5, 20: +1.2, 21: +0.7, 22: +0.4, 23: +0.2,
+    0: +0.5, 1: +0.4, 2: +0.2, 3: +0.2,
+    4: +0.3, 5: +0.1, 6: -0.2, 7: -0.3, 8: -0.9, 9: -1.6, 10: -2.9,
+    11: -3.2, 12: -3.7, 13: -2.9, 14: -3.0,
+    15: -1.9, 16: -1.6, 17: -1.1, 18: -0.3,
+    19: +0.3, 20: +0.5, 21: +0.2, 22: +0.1, 23: +0.3,
 }
 
 

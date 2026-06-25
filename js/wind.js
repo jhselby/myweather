@@ -343,14 +343,12 @@ function renderWindTile(data) {
   if (!speedEl || !gustsEl || !impactEl) return;
 
   if (windSpeed != null) {
-    const wsBand = window.c1Band ? c1Band(data, "ws", "0-5h") : "";
-    speedEl.innerHTML = `${Math.round(windSpeed)}${wsBand}`;
+    speedEl.textContent = Math.round(windSpeed);
   } else {
     speedEl.textContent = '--';
   }
   if (gustSpeed != null) {
-    const wgBand = window.c1Band ? c1Band(data, "wg", "0-5h") : "";
-    gustsEl.innerHTML = `${Math.round(gustSpeed)}${wgBand}`;
+    gustsEl.textContent = Math.round(gustSpeed);
   } else {
     gustsEl.textContent = '--';
   }

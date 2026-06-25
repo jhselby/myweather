@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-06-24T14:28:47.621531+00:00",
+  "generated_at": "2026-06-24T19:19:06.693260+00:00",
   "source": "c1_confidence_premium_v2.json",
   "curation_rules": {
     "legacy_sample_floor": 1000,
@@ -66,13 +66,13 @@
       "0-5h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 1.2735,
-        "transition_mae": 1.2954,
-        "premium_abs": 0.0218,
-        "premium_pct": 1.71,
-        "n_stable": 5651,
-        "n_transition": 4603,
-        "rationale": "magnitude floor (|+1.71%| < 5.0%)",
+        "stable_mae": 1.2717,
+        "transition_mae": 1.2957,
+        "premium_abs": 0.024,
+        "premium_pct": 1.89,
+        "n_stable": 5487,
+        "n_transition": 4588,
+        "rationale": "magnitude floor (|+1.89%| < 5.0%)",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -86,7 +86,7 @@
             "direction": "NARROW",
             "mae": 1.1858,
             "n": 211,
-            "rationale": "delta -6.89% in 5-10% band"
+            "rationale": "delta -6.75% in 5-10% band"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -107,14 +107,14 @@
             "direction": "NARROW",
             "mae": 0.7814,
             "n": 264,
-            "rationale": "delta -38.64%, n\u2265200"
+            "rationale": "delta -38.55%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.0253,
             "n": 396,
-            "rationale": "delta -19.49%, n\u2265200"
+            "rationale": "delta -19.38%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -212,13 +212,13 @@
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 2.4402,
-        "transition_mae": 2.747,
-        "premium_abs": 0.3068,
-        "premium_pct": 12.57,
-        "n_stable": 21255,
-        "n_transition": 24462,
-        "rationale": "premium +12.57%, n\u22651000",
+        "stable_mae": 2.429,
+        "transition_mae": 2.7192,
+        "premium_abs": 0.2902,
+        "premium_pct": 11.95,
+        "n_stable": 20873,
+        "n_transition": 24149,
+        "rationale": "premium +11.95%, n\u22651000",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -232,7 +232,7 @@
             "direction": null,
             "mae": 2.3661,
             "n": 623,
-            "rationale": "magnitude floor (|-3.04%| < 5.0%)"
+            "rationale": "magnitude floor (|-2.59%| < 5.0%)"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -253,14 +253,14 @@
             "direction": "WIDEN",
             "mae": 2.6127,
             "n": 927,
-            "rationale": "delta +7.07% in 5-10% band"
+            "rationale": "delta +7.56% in 5-10% band"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.975,
             "n": 280,
-            "rationale": "delta -19.06%, n\u2265200"
+            "rationale": "delta -18.69%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -274,7 +274,7 @@
             "direction": "WIDEN",
             "mae": 2.8345,
             "n": 655,
-            "rationale": "delta +16.16%, n\u2265200"
+            "rationale": "delta +16.69%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -288,7 +288,7 @@
             "direction": "NARROW",
             "mae": 2.0338,
             "n": 943,
-            "rationale": "delta -16.65%, n\u2265200"
+            "rationale": "delta -16.27%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -309,35 +309,35 @@
             "direction": null,
             "mae": 2.3651,
             "n": 1343,
-            "rationale": "magnitude floor (|-3.08%| < 5.0%)"
+            "rationale": "magnitude floor (|-2.63%| < 5.0%)"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.3909,
             "n": 298,
-            "rationale": "delta -43.00%, n\u2265200"
+            "rationale": "delta -42.74%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.1347,
             "n": 248,
-            "rationale": "delta -53.50%, n\u2265200"
+            "rationale": "delta -53.29%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 2.2061,
             "n": 1726,
-            "rationale": "delta -9.59% in 5-10% band"
+            "rationale": "delta -9.18% in 5-10% band"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.6439,
             "n": 344,
-            "rationale": "delta -32.63%, n\u2265200"
+            "rationale": "delta -32.32%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -351,7 +351,7 @@
             "direction": "WIDEN",
             "mae": 4.5324,
             "n": 580,
-            "rationale": "delta +85.74%, n\u2265200"
+            "rationale": "delta +86.60%, n\u2265200"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -382,11 +382,11 @@
             "rationale": "sample floor (n=64)"
           },
           "Q23::flat::transition::p0": {
-            "status": "SKIP",
-            "direction": null,
+            "status": "MARGINAL",
+            "direction": "WIDEN",
             "mae": 2.5614,
             "n": 241,
-            "rationale": "magnitude floor (|+4.97%| < 5.0%)"
+            "rationale": "delta +5.45% in 5-10% band"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -414,7 +414,7 @@
             "direction": "WIDEN",
             "mae": 2.7555,
             "n": 344,
-            "rationale": "delta +12.92%, n\u2265200"
+            "rationale": "delta +13.44%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -477,20 +477,20 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 1.8839,
-        "transition_mae": 2.3108,
-        "premium_abs": 0.4269,
-        "premium_pct": 22.66,
-        "n_stable": 9976,
-        "n_transition": 12778,
-        "rationale": "premium +22.66%, n\u22651000",
+        "stable_mae": 1.8757,
+        "transition_mae": 2.3131,
+        "premium_abs": 0.4374,
+        "premium_pct": 23.32,
+        "n_stable": 9774,
+        "n_transition": 12640,
+        "rationale": "premium +23.32%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 2.0323,
             "n": 575,
-            "rationale": "delta +7.88% in 5-10% band"
+            "rationale": "delta +8.35% in 5-10% band"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -511,7 +511,7 @@
             "direction": "NARROW",
             "mae": 1.6361,
             "n": 642,
-            "rationale": "delta -13.15%, n\u2265200"
+            "rationale": "delta -12.77%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -532,28 +532,28 @@
             "direction": null,
             "mae": 1.9214,
             "n": 991,
-            "rationale": "magnitude floor (|+1.99%| < 5.0%)"
+            "rationale": "magnitude floor (|+2.44%| < 5.0%)"
           },
           "Q23::falling::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.2154,
             "n": 221,
-            "rationale": "delta -35.48%, n\u2265200"
+            "rationale": "delta -35.20%, n\u2265200"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.1451,
             "n": 244,
-            "rationale": "delta -39.22%, n\u2265200"
+            "rationale": "delta -38.95%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.6107,
             "n": 431,
-            "rationale": "delta -14.50%, n\u2265200"
+            "rationale": "delta -14.13%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -588,7 +588,7 @@
             "direction": "NARROW",
             "mae": 1.5737,
             "n": 213,
-            "rationale": "delta -16.47%, n\u2265200"
+            "rationale": "delta -16.10%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -665,20 +665,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 1.8421,
-        "transition_mae": 2.0841,
-        "premium_abs": 0.242,
-        "premium_pct": 13.14,
-        "n_stable": 5769,
-        "n_transition": 5625,
-        "rationale": "premium +13.14%, n\u22651000",
+        "stable_mae": 1.8395,
+        "transition_mae": 2.0836,
+        "premium_abs": 0.2441,
+        "premium_pct": 13.27,
+        "n_stable": 5607,
+        "n_transition": 5607,
+        "rationale": "premium +13.27%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 1.7728,
             "n": 279,
-            "rationale": "magnitude floor (|-3.76%| < 5.0%)"
+            "rationale": "magnitude floor (|-3.63%| < 5.0%)"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -692,21 +692,21 @@
             "direction": "NARROW",
             "mae": 1.4478,
             "n": 268,
-            "rationale": "delta -21.40%, n\u2265200"
+            "rationale": "delta -21.29%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 1.9103,
             "n": 281,
-            "rationale": "magnitude floor (|+3.70%| < 5.0%)"
+            "rationale": "magnitude floor (|+3.85%| < 5.0%)"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.5347,
             "n": 528,
-            "rationale": "delta -16.69%, n\u2265200"
+            "rationale": "delta -16.57%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -813,13 +813,13 @@
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 1.2339,
-        "transition_mae": 1.7797,
-        "premium_abs": 0.5459,
-        "premium_pct": 44.24,
-        "n_stable": 5651,
-        "n_transition": 4603,
-        "rationale": "premium +44.24%, n\u22651000",
+        "stable_mae": 1.2434,
+        "transition_mae": 1.7823,
+        "premium_abs": 0.5389,
+        "premium_pct": 43.34,
+        "n_stable": 5487,
+        "n_transition": 4588,
+        "rationale": "premium +43.34%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -833,7 +833,7 @@
             "direction": "WIDEN",
             "mae": 2.8028,
             "n": 211,
-            "rationale": "delta +127.15%, n\u2265200"
+            "rationale": "delta +125.41%, n\u2265200"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -854,14 +854,14 @@
             "direction": "WIDEN",
             "mae": 2.5015,
             "n": 264,
-            "rationale": "delta +102.73%, n\u2265200"
+            "rationale": "delta +101.18%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 2.0551,
             "n": 396,
-            "rationale": "delta +66.55%, n\u2265200"
+            "rationale": "delta +65.28%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -959,13 +959,13 @@
       "24-47h": {
         "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 2.7626,
-        "transition_mae": 2.9754,
-        "premium_abs": 0.2129,
-        "premium_pct": 7.71,
-        "n_stable": 21255,
-        "n_transition": 24462,
-        "rationale": "premium +7.71% in 5-10% band",
+        "stable_mae": 2.7397,
+        "transition_mae": 2.9604,
+        "premium_abs": 0.2207,
+        "premium_pct": 8.06,
+        "n_stable": 20873,
+        "n_transition": 24149,
+        "rationale": "premium +8.06% in 5-10% band",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -979,7 +979,7 @@
             "direction": "WIDEN",
             "mae": 5.3191,
             "n": 623,
-            "rationale": "delta +92.54%, n\u2265200"
+            "rationale": "delta +94.15%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -1000,14 +1000,14 @@
             "direction": "WIDEN",
             "mae": 5.0924,
             "n": 927,
-            "rationale": "delta +84.33%, n\u2265200"
+            "rationale": "delta +85.87%, n\u2265200"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 4.4754,
             "n": 280,
-            "rationale": "delta +62.00%, n\u2265200"
+            "rationale": "delta +63.35%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -1021,7 +1021,7 @@
             "direction": "WIDEN",
             "mae": 3.905,
             "n": 655,
-            "rationale": "delta +41.35%, n\u2265200"
+            "rationale": "delta +42.53%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -1035,7 +1035,7 @@
             "direction": "WIDEN",
             "mae": 4.3476,
             "n": 943,
-            "rationale": "delta +57.37%, n\u2265200"
+            "rationale": "delta +58.69%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -1056,35 +1056,35 @@
             "direction": "WIDEN",
             "mae": 3.4662,
             "n": 1343,
-            "rationale": "delta +25.47%, n\u2265200"
+            "rationale": "delta +26.52%, n\u2265200"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 3.8614,
             "n": 298,
-            "rationale": "delta +39.77%, n\u2265200"
+            "rationale": "delta +40.94%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 4.6145,
             "n": 248,
-            "rationale": "delta +67.03%, n\u2265200"
+            "rationale": "delta +68.43%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 3.1202,
             "n": 1726,
-            "rationale": "delta +12.94%, n\u2265200"
+            "rationale": "delta +13.89%, n\u2265200"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 3.2942,
             "n": 344,
-            "rationale": "delta +19.24%, n\u2265200"
+            "rationale": "delta +20.24%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -1098,7 +1098,7 @@
             "direction": null,
             "mae": 2.8534,
             "n": 580,
-            "rationale": "magnitude floor (|+3.29%| < 5.0%)"
+            "rationale": "magnitude floor (|+4.15%| < 5.0%)"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -1133,7 +1133,7 @@
             "direction": "WIDEN",
             "mae": 3.8664,
             "n": 241,
-            "rationale": "delta +39.96%, n\u2265200"
+            "rationale": "delta +41.12%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -1161,7 +1161,7 @@
             "direction": "WIDEN",
             "mae": 3.4866,
             "n": 344,
-            "rationale": "delta +26.21%, n\u2265200"
+            "rationale": "delta +27.26%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -1224,20 +1224,20 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 2.1109,
-        "transition_mae": 2.3505,
-        "premium_abs": 0.2396,
-        "premium_pct": 11.35,
-        "n_stable": 9976,
-        "n_transition": 12778,
-        "rationale": "premium +11.35%, n\u22651000",
+        "stable_mae": 2.1032,
+        "transition_mae": 2.3349,
+        "premium_abs": 0.2317,
+        "premium_pct": 11.02,
+        "n_stable": 9774,
+        "n_transition": 12640,
+        "rationale": "premium +11.02%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 3.7929,
             "n": 575,
-            "rationale": "delta +79.68%, n\u2265200"
+            "rationale": "delta +80.34%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -1258,7 +1258,7 @@
             "direction": "WIDEN",
             "mae": 4.2569,
             "n": 642,
-            "rationale": "delta +101.66%, n\u2265200"
+            "rationale": "delta +102.40%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -1279,28 +1279,28 @@
             "direction": "WIDEN",
             "mae": 3.1045,
             "n": 991,
-            "rationale": "delta +47.07%, n\u2265200"
+            "rationale": "delta +47.61%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 1.991,
             "n": 221,
-            "rationale": "delta -5.68% in 5-10% band"
+            "rationale": "delta -5.33% in 5-10% band"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 2.4807,
             "n": 244,
-            "rationale": "delta +17.52%, n\u2265200"
+            "rationale": "delta +17.95%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 3.6617,
             "n": 431,
-            "rationale": "delta +73.47%, n\u2265200"
+            "rationale": "delta +74.10%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -1335,7 +1335,7 @@
             "direction": "WIDEN",
             "mae": 3.7404,
             "n": 213,
-            "rationale": "delta +77.19%, n\u2265200"
+            "rationale": "delta +77.84%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -1412,20 +1412,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 1.8733,
-        "transition_mae": 2.2657,
-        "premium_abs": 0.3923,
-        "premium_pct": 20.94,
-        "n_stable": 5769,
-        "n_transition": 5625,
-        "rationale": "premium +20.94%, n\u22651000",
+        "stable_mae": 1.888,
+        "transition_mae": 2.2666,
+        "premium_abs": 0.3786,
+        "premium_pct": 20.05,
+        "n_stable": 5607,
+        "n_transition": 5607,
+        "rationale": "premium +20.05%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 5.0075,
             "n": 279,
-            "rationale": "delta +167.31%, n\u2265200"
+            "rationale": "delta +165.23%, n\u2265200"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -1439,21 +1439,21 @@
             "direction": "WIDEN",
             "mae": 5.1989,
             "n": 268,
-            "rationale": "delta +177.53%, n\u2265200"
+            "rationale": "delta +175.37%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 3.2943,
             "n": 281,
-            "rationale": "delta +75.86%, n\u2265200"
+            "rationale": "delta +74.49%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 3.59,
             "n": 528,
-            "rationale": "delta +91.64%, n\u2265200"
+            "rationale": "delta +90.15%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -1560,13 +1560,13 @@
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 1.924,
-        "transition_mae": 2.5452,
-        "premium_abs": 0.6212,
-        "premium_pct": 32.29,
-        "n_stable": 5651,
-        "n_transition": 4603,
-        "rationale": "premium +32.29%, n\u22651000",
+        "stable_mae": 1.9327,
+        "transition_mae": 2.5479,
+        "premium_abs": 0.6152,
+        "premium_pct": 31.83,
+        "n_stable": 5487,
+        "n_transition": 4588,
+        "rationale": "premium +31.83%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -1580,7 +1580,7 @@
             "direction": "WIDEN",
             "mae": 4.5991,
             "n": 211,
-            "rationale": "delta +139.04%, n\u2265200"
+            "rationale": "delta +137.96%, n\u2265200"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -1601,14 +1601,14 @@
             "direction": "WIDEN",
             "mae": 2.5447,
             "n": 264,
-            "rationale": "delta +32.26%, n\u2265200"
+            "rationale": "delta +31.67%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 2.6818,
             "n": 396,
-            "rationale": "delta +39.39%, n\u2265200"
+            "rationale": "delta +38.76%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -1706,13 +1706,13 @@
       "24-47h": {
         "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 4.7483,
-        "transition_mae": 5.1786,
-        "premium_abs": 0.4303,
-        "premium_pct": 9.06,
-        "n_stable": 21255,
-        "n_transition": 24462,
-        "rationale": "premium +9.06% in 5-10% band",
+        "stable_mae": 4.717,
+        "transition_mae": 5.1542,
+        "premium_abs": 0.4372,
+        "premium_pct": 9.27,
+        "n_stable": 20873,
+        "n_transition": 24149,
+        "rationale": "premium +9.27% in 5-10% band",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -1726,7 +1726,7 @@
             "direction": "WIDEN",
             "mae": 7.6393,
             "n": 623,
-            "rationale": "delta +60.88%, n\u2265200"
+            "rationale": "delta +61.95%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -1747,14 +1747,14 @@
             "direction": "WIDEN",
             "mae": 8.3654,
             "n": 927,
-            "rationale": "delta +76.18%, n\u2265200"
+            "rationale": "delta +77.35%, n\u2265200"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 6.0425,
             "n": 280,
-            "rationale": "delta +27.26%, n\u2265200"
+            "rationale": "delta +28.10%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -1768,7 +1768,7 @@
             "direction": "WIDEN",
             "mae": 5.7534,
             "n": 655,
-            "rationale": "delta +21.17%, n\u2265200"
+            "rationale": "delta +21.97%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -1782,7 +1782,7 @@
             "direction": "WIDEN",
             "mae": 5.5572,
             "n": 943,
-            "rationale": "delta +17.04%, n\u2265200"
+            "rationale": "delta +17.81%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -1803,35 +1803,35 @@
             "direction": null,
             "mae": 4.5503,
             "n": 1343,
-            "rationale": "magnitude floor (|-4.17%| < 5.0%)"
+            "rationale": "magnitude floor (|-3.53%| < 5.0%)"
           },
           "Q23::flat::stable::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 4.747,
             "n": 298,
-            "rationale": "magnitude floor (|-0.03%| < 5.0%)"
+            "rationale": "magnitude floor (|+0.64%| < 5.0%)"
           },
           "Q23::falling::stable::p0": {
-            "status": "SKIP",
-            "direction": null,
+            "status": "MARGINAL",
+            "direction": "WIDEN",
             "mae": 4.9847,
             "n": 248,
-            "rationale": "magnitude floor (|+4.98%| < 5.0%)"
+            "rationale": "delta +5.68% in 5-10% band"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 3.8813,
             "n": 1726,
-            "rationale": "delta -18.26%, n\u2265200"
+            "rationale": "delta -17.72%, n\u2265200"
           },
           "Q23::rising::stable::p1": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 4.3919,
             "n": 344,
-            "rationale": "delta -7.51% in 5-10% band"
+            "rationale": "delta -6.89% in 5-10% band"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -1845,7 +1845,7 @@
             "direction": "NARROW",
             "mae": 3.0862,
             "n": 580,
-            "rationale": "delta -35.00%, n\u2265200"
+            "rationale": "delta -34.57%, n\u2265200"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -1880,7 +1880,7 @@
             "direction": "WIDEN",
             "mae": 5.1071,
             "n": 241,
-            "rationale": "delta +7.56% in 5-10% band"
+            "rationale": "delta +8.27% in 5-10% band"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -1908,7 +1908,7 @@
             "direction": "WIDEN",
             "mae": 7.5613,
             "n": 344,
-            "rationale": "delta +59.24%, n\u2265200"
+            "rationale": "delta +60.30%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -1971,20 +1971,20 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 3.518,
-        "transition_mae": 3.9826,
-        "premium_abs": 0.4646,
-        "premium_pct": 13.21,
-        "n_stable": 9976,
-        "n_transition": 12778,
-        "rationale": "premium +13.21%, n\u22651000",
+        "stable_mae": 3.5204,
+        "transition_mae": 3.9499,
+        "premium_abs": 0.4295,
+        "premium_pct": 12.2,
+        "n_stable": 9774,
+        "n_transition": 12640,
+        "rationale": "premium +12.20%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 6.984,
             "n": 575,
-            "rationale": "delta +98.52%, n\u2265200"
+            "rationale": "delta +98.39%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -2005,7 +2005,7 @@
             "direction": "WIDEN",
             "mae": 6.2601,
             "n": 642,
-            "rationale": "delta +77.94%, n\u2265200"
+            "rationale": "delta +77.82%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -2026,28 +2026,28 @@
             "direction": "WIDEN",
             "mae": 4.5879,
             "n": 991,
-            "rationale": "delta +30.41%, n\u2265200"
+            "rationale": "delta +30.32%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 2.7158,
             "n": 221,
-            "rationale": "delta -22.80%, n\u2265200"
+            "rationale": "delta -22.86%, n\u2265200"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 2.9652,
             "n": 244,
-            "rationale": "delta -15.71%, n\u2265200"
+            "rationale": "delta -15.77%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 5.0299,
             "n": 431,
-            "rationale": "delta +42.98%, n\u2265200"
+            "rationale": "delta +42.88%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -2082,7 +2082,7 @@
             "direction": "WIDEN",
             "mae": 5.3502,
             "n": 213,
-            "rationale": "delta +52.08%, n\u2265200"
+            "rationale": "delta +51.98%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -2159,20 +2159,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 3.1529,
-        "transition_mae": 3.6091,
-        "premium_abs": 0.4561,
-        "premium_pct": 14.47,
-        "n_stable": 5769,
-        "n_transition": 5625,
-        "rationale": "premium +14.47%, n\u22651000",
+        "stable_mae": 3.1675,
+        "transition_mae": 3.6106,
+        "premium_abs": 0.4431,
+        "premium_pct": 13.99,
+        "n_stable": 5607,
+        "n_transition": 5607,
+        "rationale": "premium +13.99%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 9.6129,
             "n": 279,
-            "rationale": "delta +204.89%, n\u2265200"
+            "rationale": "delta +203.49%, n\u2265200"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -2186,21 +2186,21 @@
             "direction": "WIDEN",
             "mae": 8.5604,
             "n": 268,
-            "rationale": "delta +171.51%, n\u2265200"
+            "rationale": "delta +170.26%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 5.2491,
             "n": 281,
-            "rationale": "delta +66.48%, n\u2265200"
+            "rationale": "delta +65.72%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 5.9496,
             "n": 528,
-            "rationale": "delta +88.70%, n\u2265200"
+            "rationale": "delta +87.83%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -2307,13 +2307,13 @@
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 3.9441,
-        "transition_mae": 4.5079,
-        "premium_abs": 0.5638,
-        "premium_pct": 14.29,
-        "n_stable": 5630,
-        "n_transition": 4607,
-        "rationale": "premium +14.29%, n\u22651000",
+        "stable_mae": 3.9394,
+        "transition_mae": 4.509,
+        "premium_abs": 0.5696,
+        "premium_pct": 14.46,
+        "n_stable": 5466,
+        "n_transition": 4592,
+        "rationale": "premium +14.46%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -2327,7 +2327,7 @@
             "direction": "NARROW",
             "mae": 3.2773,
             "n": 211,
-            "rationale": "delta -16.91%, n\u2265200"
+            "rationale": "delta -16.81%, n\u2265200"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -2348,14 +2348,14 @@
             "direction": "NARROW",
             "mae": 3.3277,
             "n": 264,
-            "rationale": "delta -15.63%, n\u2265200"
+            "rationale": "delta -15.53%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 4.023,
             "n": 396,
-            "rationale": "magnitude floor (|+2.00%| < 5.0%)"
+            "rationale": "magnitude floor (|+2.12%| < 5.0%)"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -2453,13 +2453,13 @@
       "24-47h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 8.5081,
-        "transition_mae": 8.8192,
-        "premium_abs": 0.3111,
-        "premium_pct": 3.66,
-        "n_stable": 21230,
-        "n_transition": 24351,
-        "rationale": "magnitude floor (|+3.66%| < 5.0%)",
+        "stable_mae": 8.3418,
+        "transition_mae": 8.7223,
+        "premium_abs": 0.3805,
+        "premium_pct": 4.56,
+        "n_stable": 20848,
+        "n_transition": 24038,
+        "rationale": "magnitude floor (|+4.56%| < 5.0%)",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -2473,7 +2473,7 @@
             "direction": "NARROW",
             "mae": 3.8067,
             "n": 623,
-            "rationale": "delta -55.26%, n\u2265200"
+            "rationale": "delta -54.37%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -2494,14 +2494,14 @@
             "direction": "NARROW",
             "mae": 6.7986,
             "n": 927,
-            "rationale": "delta -20.09%, n\u2265200"
+            "rationale": "delta -18.50%, n\u2265200"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 6.0689,
             "n": 280,
-            "rationale": "delta -28.67%, n\u2265200"
+            "rationale": "delta -27.25%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -2515,7 +2515,7 @@
             "direction": "NARROW",
             "mae": 7.3774,
             "n": 655,
-            "rationale": "delta -13.29%, n\u2265200"
+            "rationale": "delta -11.56%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -2525,11 +2525,11 @@
             "rationale": "sample floor (n=60)"
           },
           "Q4::rising::transition::p0": {
-            "status": "SKIP",
-            "direction": null,
+            "status": "MARGINAL",
+            "direction": "WIDEN",
             "mae": 8.781,
             "n": 943,
-            "rationale": "magnitude floor (|+3.21%| < 5.0%)"
+            "rationale": "delta +5.27% in 5-10% band"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -2550,35 +2550,35 @@
             "direction": "NARROW",
             "mae": 5.7665,
             "n": 1343,
-            "rationale": "delta -32.22%, n\u2265200"
+            "rationale": "delta -30.87%, n\u2265200"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 5.2755,
             "n": 298,
-            "rationale": "delta -37.99%, n\u2265200"
+            "rationale": "delta -36.76%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 5.9371,
             "n": 248,
-            "rationale": "delta -30.22%, n\u2265200"
+            "rationale": "delta -28.83%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
-            "status": "MARGINAL",
-            "direction": "NARROW",
+            "status": "SKIP",
+            "direction": null,
             "mae": 7.9339,
             "n": 1726,
-            "rationale": "delta -6.75% in 5-10% band"
+            "rationale": "magnitude floor (|-4.89%| < 5.0%)"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 3.5956,
             "n": 344,
-            "rationale": "delta -57.74%, n\u2265200"
+            "rationale": "delta -56.90%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -2592,7 +2592,7 @@
             "direction": "NARROW",
             "mae": 6.2593,
             "n": 580,
-            "rationale": "delta -26.43%, n\u2265200"
+            "rationale": "delta -24.96%, n\u2265200"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -2627,7 +2627,7 @@
             "direction": "WIDEN",
             "mae": 9.8187,
             "n": 241,
-            "rationale": "delta +15.40%, n\u2265200"
+            "rationale": "delta +17.70%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -2655,7 +2655,7 @@
             "direction": "NARROW",
             "mae": 2.4224,
             "n": 344,
-            "rationale": "delta -71.53%, n\u2265200"
+            "rationale": "delta -70.96%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -2716,22 +2716,22 @@
         }
       },
       "12-23h": {
-        "status": "MARGINAL",
+        "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 7.071,
-        "transition_mae": 7.7768,
-        "premium_abs": 0.7058,
-        "premium_pct": 9.98,
-        "n_stable": 9976,
-        "n_transition": 12706,
-        "rationale": "premium +9.98% in 5-10% band",
+        "stable_mae": 6.9912,
+        "transition_mae": 7.7519,
+        "premium_abs": 0.7607,
+        "premium_pct": 10.88,
+        "n_stable": 9774,
+        "n_transition": 12568,
+        "rationale": "premium +10.88%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
-            "status": "MARGINAL",
+            "status": "SHIP",
             "direction": "WIDEN",
             "mae": 7.7722,
             "n": 575,
-            "rationale": "delta +9.92% in 5-10% band"
+            "rationale": "delta +11.17%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -2752,7 +2752,7 @@
             "direction": "WIDEN",
             "mae": 8.5483,
             "n": 642,
-            "rationale": "delta +20.89%, n\u2265200"
+            "rationale": "delta +22.27%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -2773,28 +2773,28 @@
             "direction": "WIDEN",
             "mae": 7.9903,
             "n": 991,
-            "rationale": "delta +13.00%, n\u2265200"
+            "rationale": "delta +14.29%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 3.9787,
             "n": 221,
-            "rationale": "delta -43.73%, n\u2265200"
+            "rationale": "delta -43.09%, n\u2265200"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 4.659,
             "n": 244,
-            "rationale": "delta -34.11%, n\u2265200"
+            "rationale": "delta -33.36%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
-            "status": "SHIP",
+            "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 6.3613,
             "n": 431,
-            "rationale": "delta -10.04%, n\u2265200"
+            "rationale": "delta -9.01% in 5-10% band"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -2829,7 +2829,7 @@
             "direction": "WIDEN",
             "mae": 9.0136,
             "n": 213,
-            "rationale": "delta +27.47%, n\u2265200"
+            "rationale": "delta +28.93%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -2906,20 +2906,20 @@
       "6-11h": {
         "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 6.4961,
-        "transition_mae": 7.0932,
-        "premium_abs": 0.5971,
-        "premium_pct": 9.19,
-        "n_stable": 5753,
-        "n_transition": 5605,
-        "rationale": "premium +9.19% in 5-10% band",
+        "stable_mae": 6.4911,
+        "transition_mae": 7.0855,
+        "premium_abs": 0.5945,
+        "premium_pct": 9.16,
+        "n_stable": 5591,
+        "n_transition": 5587,
+        "rationale": "premium +9.16% in 5-10% band",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 7.3032,
             "n": 279,
-            "rationale": "delta +12.42%, n\u2265200"
+            "rationale": "delta +12.51%, n\u2265200"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -2933,21 +2933,21 @@
             "direction": "WIDEN",
             "mae": 7.8948,
             "n": 268,
-            "rationale": "delta +21.53%, n\u2265200"
+            "rationale": "delta +21.62%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 6.99,
             "n": 281,
-            "rationale": "delta +7.60% in 5-10% band"
+            "rationale": "delta +7.69% in 5-10% band"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 7.322,
             "n": 528,
-            "rationale": "delta +12.71%, n\u2265200"
+            "rationale": "delta +12.80%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -3054,13 +3054,13 @@
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 1.6237,
-        "transition_mae": 1.8669,
-        "premium_abs": 0.2432,
-        "premium_pct": 14.98,
-        "n_stable": 5630,
-        "n_transition": 4607,
-        "rationale": "premium +14.98%, n\u22651000",
+        "stable_mae": 1.6239,
+        "transition_mae": 1.8692,
+        "premium_abs": 0.2453,
+        "premium_pct": 15.11,
+        "n_stable": 5466,
+        "n_transition": 4592,
+        "rationale": "premium +15.11%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -3095,14 +3095,14 @@
             "direction": "NARROW",
             "mae": 1.1091,
             "n": 264,
-            "rationale": "delta -31.69%, n\u2265200"
+            "rationale": "delta -31.70%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.1626,
             "n": 396,
-            "rationale": "delta -28.40%, n\u2265200"
+            "rationale": "delta -28.41%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -3200,13 +3200,13 @@
       "24-47h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 3.0729,
-        "transition_mae": 3.1533,
-        "premium_abs": 0.0805,
-        "premium_pct": 2.62,
-        "n_stable": 21230,
-        "n_transition": 24351,
-        "rationale": "magnitude floor (|+2.62%| < 5.0%)",
+        "stable_mae": 3.0084,
+        "transition_mae": 3.1162,
+        "premium_abs": 0.1078,
+        "premium_pct": 3.58,
+        "n_stable": 20848,
+        "n_transition": 24038,
+        "rationale": "magnitude floor (|+3.58%| < 5.0%)",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -3220,7 +3220,7 @@
             "direction": "NARROW",
             "mae": 2.352,
             "n": 623,
-            "rationale": "delta -23.46%, n\u2265200"
+            "rationale": "delta -21.82%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -3241,14 +3241,14 @@
             "direction": "NARROW",
             "mae": 2.3833,
             "n": 927,
-            "rationale": "delta -22.44%, n\u2265200"
+            "rationale": "delta -20.78%, n\u2265200"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 2.3143,
             "n": 280,
-            "rationale": "delta -24.69%, n\u2265200"
+            "rationale": "delta -23.07%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -3262,7 +3262,7 @@
             "direction": "WIDEN",
             "mae": 3.4385,
             "n": 655,
-            "rationale": "delta +11.90%, n\u2265200"
+            "rationale": "delta +14.30%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -3276,7 +3276,7 @@
             "direction": "NARROW",
             "mae": 2.5645,
             "n": 943,
-            "rationale": "delta -16.54%, n\u2265200"
+            "rationale": "delta -14.76%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -3297,35 +3297,35 @@
             "direction": "NARROW",
             "mae": 2.1821,
             "n": 1343,
-            "rationale": "delta -28.99%, n\u2265200"
+            "rationale": "delta -27.47%, n\u2265200"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 2.144,
             "n": 298,
-            "rationale": "delta -30.23%, n\u2265200"
+            "rationale": "delta -28.73%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 2.1363,
             "n": 248,
-            "rationale": "delta -30.48%, n\u2265200"
+            "rationale": "delta -28.99%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 2.4375,
             "n": 1726,
-            "rationale": "delta -20.68%, n\u2265200"
+            "rationale": "delta -18.98%, n\u2265200"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.241,
             "n": 344,
-            "rationale": "delta -59.61%, n\u2265200"
+            "rationale": "delta -58.75%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -3335,11 +3335,11 @@
             "rationale": "sample floor (n=105)"
           },
           "Q23::rising::transition::p1": {
-            "status": "SKIP",
-            "direction": null,
+            "status": "MARGINAL",
+            "direction": "WIDEN",
             "mae": 3.1966,
             "n": 580,
-            "rationale": "magnitude floor (|+4.03%| < 5.0%)"
+            "rationale": "delta +6.26% in 5-10% band"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -3374,7 +3374,7 @@
             "direction": "NARROW",
             "mae": 2.3398,
             "n": 241,
-            "rationale": "delta -23.86%, n\u2265200"
+            "rationale": "delta -22.22%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -3402,7 +3402,7 @@
             "direction": "NARROW",
             "mae": 2.2738,
             "n": 344,
-            "rationale": "delta -26.00%, n\u2265200"
+            "rationale": "delta -24.42%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -3465,20 +3465,20 @@
       "12-23h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 2.7427,
-        "transition_mae": 2.775,
-        "premium_abs": 0.0323,
-        "premium_pct": 1.18,
-        "n_stable": 9976,
-        "n_transition": 12706,
-        "rationale": "magnitude floor (|+1.18%| < 5.0%)",
+        "stable_mae": 2.6943,
+        "transition_mae": 2.7747,
+        "premium_abs": 0.0804,
+        "premium_pct": 2.98,
+        "n_stable": 9774,
+        "n_transition": 12568,
+        "rationale": "magnitude floor (|+2.98%| < 5.0%)",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 2.1254,
             "n": 575,
-            "rationale": "delta -22.51%, n\u2265200"
+            "rationale": "delta -21.11%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -3499,7 +3499,7 @@
             "direction": "WIDEN",
             "mae": 3.1389,
             "n": 642,
-            "rationale": "delta +14.45%, n\u2265200"
+            "rationale": "delta +16.50%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -3520,28 +3520,28 @@
             "direction": "NARROW",
             "mae": 2.3279,
             "n": 991,
-            "rationale": "delta -15.12%, n\u2265200"
+            "rationale": "delta -13.60%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.6335,
             "n": 221,
-            "rationale": "delta -40.44%, n\u2265200"
+            "rationale": "delta -39.37%, n\u2265200"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.7635,
             "n": 244,
-            "rationale": "delta -35.70%, n\u2265200"
+            "rationale": "delta -34.55%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 2.2935,
             "n": 431,
-            "rationale": "delta -16.38%, n\u2265200"
+            "rationale": "delta -14.88%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -3576,7 +3576,7 @@
             "direction": "WIDEN",
             "mae": 2.9197,
             "n": 213,
-            "rationale": "delta +6.45% in 5-10% band"
+            "rationale": "delta +8.37% in 5-10% band"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -3653,20 +3653,20 @@
       "6-11h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 2.5882,
-        "transition_mae": 2.5114,
-        "premium_abs": -0.0768,
-        "premium_pct": -2.97,
-        "n_stable": 5753,
-        "n_transition": 5605,
-        "rationale": "magnitude floor (|-2.97%| < 5.0%)",
+        "stable_mae": 2.5814,
+        "transition_mae": 2.5129,
+        "premium_abs": -0.0685,
+        "premium_pct": -2.65,
+        "n_stable": 5591,
+        "n_transition": 5587,
+        "rationale": "magnitude floor (|-2.65%| < 5.0%)",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.8061,
             "n": 279,
-            "rationale": "delta -30.22%, n\u2265200"
+            "rationale": "delta -30.03%, n\u2265200"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -3680,21 +3680,21 @@
             "direction": "NARROW",
             "mae": 2.3925,
             "n": 268,
-            "rationale": "delta -7.56% in 5-10% band"
+            "rationale": "delta -7.32% in 5-10% band"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.7,
             "n": 281,
-            "rationale": "delta -34.32%, n\u2265200"
+            "rationale": "delta -34.14%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 1.7492,
             "n": 528,
-            "rationale": "delta -32.42%, n\u2265200"
+            "rationale": "delta -32.24%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -3799,15 +3799,15 @@
     },
     "pr": {
       "0-5h": {
-        "status": "SHIP",
+        "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 0.0137,
+        "stable_mae": 0.0139,
         "transition_mae": 0.0151,
-        "premium_abs": 0.0014,
-        "premium_pct": 10.34,
-        "n_stable": 5651,
-        "n_transition": 4603,
-        "rationale": "premium +10.34%, n\u22651000",
+        "premium_abs": 0.0012,
+        "premium_pct": 8.97,
+        "n_stable": 5487,
+        "n_transition": 4588,
+        "rationale": "premium +8.97% in 5-10% band",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -3821,7 +3821,7 @@
             "direction": "WIDEN",
             "mae": 0.0184,
             "n": 211,
-            "rationale": "delta +34.31%, n\u2265200"
+            "rationale": "delta +32.37%, n\u2265200"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -3838,18 +3838,18 @@
             "rationale": "sample floor (n=112)"
           },
           "Q23::rising::stable::p0": {
-            "status": "MARGINAL",
+            "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0124,
             "n": 264,
-            "rationale": "delta -9.49% in 5-10% band"
+            "rationale": "delta -10.79%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 0.0126,
             "n": 396,
-            "rationale": "delta -8.03% in 5-10% band"
+            "rationale": "delta -9.35% in 5-10% band"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -3948,12 +3948,12 @@
         "status": "SKIP",
         "direction": null,
         "stable_mae": 0.0358,
-        "transition_mae": 0.0358,
-        "premium_abs": -0.0,
-        "premium_pct": -0.01,
-        "n_stable": 21255,
-        "n_transition": 24462,
-        "rationale": "magnitude floor (|-0.01%| < 5.0%)",
+        "transition_mae": 0.0357,
+        "premium_abs": -0.0001,
+        "premium_pct": -0.16,
+        "n_stable": 20873,
+        "n_transition": 24149,
+        "rationale": "magnitude floor (|-0.16%| < 5.0%)",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -4212,20 +4212,20 @@
       "12-23h": {
         "status": "MARGINAL",
         "direction": "NARROW",
-        "stable_mae": 0.0278,
-        "transition_mae": 0.0254,
-        "premium_abs": -0.0024,
-        "premium_pct": -8.78,
-        "n_stable": 9976,
-        "n_transition": 12778,
-        "rationale": "premium -8.78% in 5-10% band",
+        "stable_mae": 0.0281,
+        "transition_mae": 0.0255,
+        "premium_abs": -0.0026,
+        "premium_pct": -9.35,
+        "n_stable": 9774,
+        "n_transition": 12640,
+        "rationale": "premium -9.35% in 5-10% band",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0199,
             "n": 575,
-            "rationale": "delta -28.42%, n\u2265200"
+            "rationale": "delta -29.18%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -4246,7 +4246,7 @@
             "direction": "NARROW",
             "mae": 0.0171,
             "n": 642,
-            "rationale": "delta -38.49%, n\u2265200"
+            "rationale": "delta -39.15%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -4267,28 +4267,28 @@
             "direction": "NARROW",
             "mae": 0.0165,
             "n": 991,
-            "rationale": "delta -40.65%, n\u2265200"
+            "rationale": "delta -41.28%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 0.0268,
             "n": 221,
-            "rationale": "magnitude floor (|-3.60%| < 5.0%)"
+            "rationale": "magnitude floor (|-4.63%| < 5.0%)"
           },
           "Q23::flat::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 0.0289,
             "n": 244,
-            "rationale": "magnitude floor (|+3.96%| < 5.0%)"
+            "rationale": "magnitude floor (|+2.85%| < 5.0%)"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0203,
             "n": 431,
-            "rationale": "delta -26.98%, n\u2265200"
+            "rationale": "delta -27.76%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -4323,7 +4323,7 @@
             "direction": null,
             "mae": 0.0267,
             "n": 213,
-            "rationale": "magnitude floor (|-3.96%| < 5.0%)"
+            "rationale": "magnitude floor (|-4.98%| < 5.0%)"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -4400,20 +4400,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 0.0163,
-        "transition_mae": 0.0204,
-        "premium_abs": 0.0041,
-        "premium_pct": 25.18,
-        "n_stable": 5769,
-        "n_transition": 5625,
-        "rationale": "premium +25.18%, n\u22651000",
+        "stable_mae": 0.0165,
+        "transition_mae": 0.0205,
+        "premium_abs": 0.0039,
+        "premium_pct": 23.76,
+        "n_stable": 5607,
+        "n_transition": 5607,
+        "rationale": "premium +23.76%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 0.0154,
             "n": 279,
-            "rationale": "delta -5.52% in 5-10% band"
+            "rationale": "delta -6.67% in 5-10% band"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -4423,25 +4423,25 @@
             "rationale": "sample floor (n=125)"
           },
           "Q4::rising::transition::p0": {
-            "status": "MARGINAL",
+            "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0148,
             "n": 268,
-            "rationale": "delta -9.20% in 5-10% band"
+            "rationale": "delta -10.30%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 0.0152,
             "n": 281,
-            "rationale": "delta -6.75% in 5-10% band"
+            "rationale": "delta -7.88% in 5-10% band"
           },
           "Q23::rising::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 0.0165,
             "n": 528,
-            "rationale": "magnitude floor (|+1.23%| < 5.0%)"
+            "rationale": "magnitude floor (|+0.00%| < 5.0%)"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -4546,15 +4546,15 @@
     },
     "cc": {
       "0-5h": {
-        "status": "SKIP",
-        "direction": null,
-        "stable_mae": 25.0451,
-        "transition_mae": 26.2832,
-        "premium_abs": 1.2381,
-        "premium_pct": 4.94,
-        "n_stable": 5634,
-        "n_transition": 4552,
-        "rationale": "magnitude floor (|+4.94%| < 5.0%)",
+        "status": "MARGINAL",
+        "direction": "WIDEN",
+        "stable_mae": 24.6618,
+        "transition_mae": 26.2539,
+        "premium_abs": 1.5921,
+        "premium_pct": 6.46,
+        "n_stable": 5470,
+        "n_transition": 4537,
+        "rationale": "premium +6.46% in 5-10% band",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -4568,7 +4568,7 @@
             "direction": "WIDEN",
             "mae": 28.7773,
             "n": 211,
-            "rationale": "delta +14.90%, n\u2265200"
+            "rationale": "delta +16.69%, n\u2265200"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -4589,14 +4589,14 @@
             "direction": "WIDEN",
             "mae": 39.1402,
             "n": 264,
-            "rationale": "delta +56.28%, n\u2265200"
+            "rationale": "delta +58.71%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 41.4773,
             "n": 396,
-            "rationale": "delta +65.61%, n\u2265200"
+            "rationale": "delta +68.18%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -4694,13 +4694,13 @@
       "24-47h": {
         "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 28.749,
-        "transition_mae": 30.8154,
-        "premium_abs": 2.0663,
-        "premium_pct": 7.19,
-        "n_stable": 21227,
-        "n_transition": 24204,
-        "rationale": "premium +7.19% in 5-10% band",
+        "stable_mae": 28.947,
+        "transition_mae": 31.0483,
+        "premium_abs": 2.1013,
+        "premium_pct": 7.26,
+        "n_stable": 20845,
+        "n_transition": 23891,
+        "rationale": "premium +7.26% in 5-10% band",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -4714,7 +4714,7 @@
             "direction": "NARROW",
             "mae": 10.2873,
             "n": 623,
-            "rationale": "delta -64.22%, n\u2265200"
+            "rationale": "delta -64.46%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -4735,14 +4735,14 @@
             "direction": "NARROW",
             "mae": 26.863,
             "n": 927,
-            "rationale": "delta -6.56% in 5-10% band"
+            "rationale": "delta -7.20% in 5-10% band"
           },
           "Q1::flat::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 27.9357,
             "n": 280,
-            "rationale": "magnitude floor (|-2.83%| < 5.0%)"
+            "rationale": "magnitude floor (|-3.49%| < 5.0%)"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -4756,7 +4756,7 @@
             "direction": "WIDEN",
             "mae": 32.9954,
             "n": 655,
-            "rationale": "delta +14.77%, n\u2265200"
+            "rationale": "delta +13.99%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -4770,7 +4770,7 @@
             "direction": "WIDEN",
             "mae": 43.1813,
             "n": 943,
-            "rationale": "delta +50.20%, n\u2265200"
+            "rationale": "delta +49.17%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -4791,35 +4791,35 @@
             "direction": "WIDEN",
             "mae": 45.9538,
             "n": 1343,
-            "rationale": "delta +59.84%, n\u2265200"
+            "rationale": "delta +58.75%, n\u2265200"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 21.9899,
             "n": 298,
-            "rationale": "delta -23.51%, n\u2265200"
+            "rationale": "delta -24.03%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 29.8185,
             "n": 248,
-            "rationale": "magnitude floor (|+3.72%| < 5.0%)"
+            "rationale": "magnitude floor (|+3.01%| < 5.0%)"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 42.7879,
             "n": 1726,
-            "rationale": "delta +48.83%, n\u2265200"
+            "rationale": "delta +47.81%, n\u2265200"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 9.0087,
             "n": 344,
-            "rationale": "delta -68.66%, n\u2265200"
+            "rationale": "delta -68.88%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -4833,7 +4833,7 @@
             "direction": "NARROW",
             "mae": 2.3552,
             "n": 580,
-            "rationale": "delta -91.81%, n\u2265200"
+            "rationale": "delta -91.86%, n\u2265200"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -4868,7 +4868,7 @@
             "direction": "NARROW",
             "mae": 25.0788,
             "n": 241,
-            "rationale": "delta -12.77%, n\u2265200"
+            "rationale": "delta -13.36%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -4896,7 +4896,7 @@
             "direction": "NARROW",
             "mae": 3.8576,
             "n": 344,
-            "rationale": "delta -86.58%, n\u2265200"
+            "rationale": "delta -86.67%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -4959,20 +4959,20 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 25.6481,
-        "transition_mae": 29.703,
-        "premium_abs": 4.0548,
-        "premium_pct": 15.81,
-        "n_stable": 9969,
-        "n_transition": 12641,
-        "rationale": "premium +15.81%, n\u22651000",
+        "stable_mae": 25.8614,
+        "transition_mae": 29.8721,
+        "premium_abs": 4.0107,
+        "premium_pct": 15.51,
+        "n_stable": 9767,
+        "n_transition": 12503,
+        "rationale": "premium +15.51%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 27.2817,
             "n": 575,
-            "rationale": "delta +6.37% in 5-10% band"
+            "rationale": "delta +5.49% in 5-10% band"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -4993,7 +4993,7 @@
             "direction": "WIDEN",
             "mae": 33.8598,
             "n": 642,
-            "rationale": "delta +32.02%, n\u2265200"
+            "rationale": "delta +30.93%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -5014,28 +5014,28 @@
             "direction": "WIDEN",
             "mae": 45.3169,
             "n": 991,
-            "rationale": "delta +76.69%, n\u2265200"
+            "rationale": "delta +75.23%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 26.2579,
             "n": 221,
-            "rationale": "magnitude floor (|+2.38%| < 5.0%)"
+            "rationale": "magnitude floor (|+1.53%| < 5.0%)"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 47.3934,
             "n": 244,
-            "rationale": "delta +84.78%, n\u2265200"
+            "rationale": "delta +83.26%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 35.7216,
             "n": 431,
-            "rationale": "delta +39.28%, n\u2265200"
+            "rationale": "delta +38.13%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -5070,7 +5070,7 @@
             "direction": "NARROW",
             "mae": 20.9812,
             "n": 213,
-            "rationale": "delta -18.20%, n\u2265200"
+            "rationale": "delta -18.87%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -5145,22 +5145,22 @@
         }
       },
       "6-11h": {
-        "status": "SHIP",
+        "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 26.5413,
-        "transition_mae": 29.2276,
-        "premium_abs": 2.6863,
-        "premium_pct": 10.12,
-        "n_stable": 5769,
-        "n_transition": 5553,
-        "rationale": "premium +10.12%, n\u22651000",
+        "stable_mae": 26.789,
+        "transition_mae": 29.275,
+        "premium_abs": 2.486,
+        "premium_pct": 9.28,
+        "n_stable": 5607,
+        "n_transition": 5535,
+        "rationale": "premium +9.28% in 5-10% band",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 29.5341,
             "n": 279,
-            "rationale": "delta +11.28%, n\u2265200"
+            "rationale": "delta +10.25%, n\u2265200"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -5174,21 +5174,21 @@
             "direction": "WIDEN",
             "mae": 40.2612,
             "n": 268,
-            "rationale": "delta +51.69%, n\u2265200"
+            "rationale": "delta +50.29%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 40.0569,
             "n": 281,
-            "rationale": "delta +50.92%, n\u2265200"
+            "rationale": "delta +49.53%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 48.7917,
             "n": 528,
-            "rationale": "delta +83.83%, n\u2265200"
+            "rationale": "delta +82.13%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -5295,13 +5295,13 @@
       "0-5h": {
         "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 84.8326,
-        "transition_mae": 89.5438,
-        "premium_abs": 4.7112,
-        "premium_pct": 5.55,
-        "n_stable": 5651,
-        "n_transition": 4603,
-        "rationale": "premium +5.55% in 5-10% band",
+        "stable_mae": 84.6258,
+        "transition_mae": 89.5865,
+        "premium_abs": 4.9607,
+        "premium_pct": 5.86,
+        "n_stable": 5487,
+        "n_transition": 4588,
+        "rationale": "premium +5.86% in 5-10% band",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -5315,7 +5315,7 @@
             "direction": "WIDEN",
             "mae": 107.218,
             "n": 211,
-            "rationale": "delta +26.39%, n\u2265200"
+            "rationale": "delta +26.70%, n\u2265200"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -5336,14 +5336,14 @@
             "direction": "NARROW",
             "mae": 60.5379,
             "n": 264,
-            "rationale": "delta -28.64%, n\u2265200"
+            "rationale": "delta -28.46%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 55.399,
             "n": 396,
-            "rationale": "delta -34.70%, n\u2265200"
+            "rationale": "delta -34.54%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -5441,13 +5441,13 @@
       "24-47h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 94.134,
-        "transition_mae": 97.1048,
-        "premium_abs": 2.9708,
-        "premium_pct": 3.16,
-        "n_stable": 21255,
-        "n_transition": 24462,
-        "rationale": "magnitude floor (|+3.16%| < 5.0%)",
+        "stable_mae": 93.8156,
+        "transition_mae": 96.2998,
+        "premium_abs": 2.4841,
+        "premium_pct": 2.65,
+        "n_stable": 20873,
+        "n_transition": 24149,
+        "rationale": "magnitude floor (|+2.65%| < 5.0%)",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -5461,7 +5461,7 @@
             "direction": "NARROW",
             "mae": 64.9615,
             "n": 623,
-            "rationale": "delta -30.99%, n\u2265200"
+            "rationale": "delta -30.76%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -5482,14 +5482,14 @@
             "direction": null,
             "mae": 95.8673,
             "n": 927,
-            "rationale": "magnitude floor (|+1.84%| < 5.0%)"
+            "rationale": "magnitude floor (|+2.19%| < 5.0%)"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 65.2786,
             "n": 280,
-            "rationale": "delta -30.65%, n\u2265200"
+            "rationale": "delta -30.42%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -5503,7 +5503,7 @@
             "direction": "WIDEN",
             "mae": 153.3298,
             "n": 655,
-            "rationale": "delta +62.88%, n\u2265200"
+            "rationale": "delta +63.44%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -5517,7 +5517,7 @@
             "direction": "WIDEN",
             "mae": 177.7211,
             "n": 943,
-            "rationale": "delta +88.80%, n\u2265200"
+            "rationale": "delta +89.44%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -5538,35 +5538,35 @@
             "direction": null,
             "mae": 92.8548,
             "n": 1343,
-            "rationale": "magnitude floor (|-1.36%| < 5.0%)"
+            "rationale": "magnitude floor (|-1.02%| < 5.0%)"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 84.4128,
             "n": 298,
-            "rationale": "delta -10.33%, n\u2265200"
+            "rationale": "delta -10.02%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 114.9234,
             "n": 248,
-            "rationale": "delta +22.08%, n\u2265200"
+            "rationale": "delta +22.50%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 73.2045,
             "n": 1726,
-            "rationale": "delta -22.23%, n\u2265200"
+            "rationale": "delta -21.97%, n\u2265200"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 48.8517,
             "n": 344,
-            "rationale": "delta -48.10%, n\u2265200"
+            "rationale": "delta -47.93%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -5580,7 +5580,7 @@
             "direction": "WIDEN",
             "mae": 101.6466,
             "n": 580,
-            "rationale": "delta +7.98% in 5-10% band"
+            "rationale": "delta +8.35% in 5-10% band"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -5615,7 +5615,7 @@
             "direction": "NARROW",
             "mae": 72.6432,
             "n": 241,
-            "rationale": "delta -22.83%, n\u2265200"
+            "rationale": "delta -22.57%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -5643,7 +5643,7 @@
             "direction": "NARROW",
             "mae": 19.8953,
             "n": 344,
-            "rationale": "delta -78.86%, n\u2265200"
+            "rationale": "delta -78.79%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -5706,20 +5706,20 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 105.7097,
-        "transition_mae": 82.8976,
-        "premium_abs": -22.8121,
-        "premium_pct": -21.58,
-        "n_stable": 9976,
-        "n_transition": 12778,
-        "rationale": "premium -21.58%, n\u22651000",
+        "stable_mae": 103.8813,
+        "transition_mae": 83.1643,
+        "premium_abs": -20.717,
+        "premium_pct": -19.94,
+        "n_stable": 9774,
+        "n_transition": 12640,
+        "rationale": "premium -19.94%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 95.9217,
             "n": 575,
-            "rationale": "delta -9.26% in 5-10% band"
+            "rationale": "delta -7.66% in 5-10% band"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -5740,7 +5740,7 @@
             "direction": "WIDEN",
             "mae": 150.4237,
             "n": 642,
-            "rationale": "delta +42.30%, n\u2265200"
+            "rationale": "delta +44.80%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -5761,28 +5761,28 @@
             "direction": "WIDEN",
             "mae": 119.0727,
             "n": 991,
-            "rationale": "delta +12.64%, n\u2265200"
+            "rationale": "delta +14.62%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 51.1629,
             "n": 221,
-            "rationale": "delta -51.60%, n\u2265200"
+            "rationale": "delta -50.75%, n\u2265200"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 60.5451,
             "n": 244,
-            "rationale": "delta -42.73%, n\u2265200"
+            "rationale": "delta -41.72%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 128.6032,
             "n": 431,
-            "rationale": "delta +21.66%, n\u2265200"
+            "rationale": "delta +23.80%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -5817,7 +5817,7 @@
             "direction": "WIDEN",
             "mae": 119.23,
             "n": 213,
-            "rationale": "delta +12.79%, n\u2265200"
+            "rationale": "delta +14.78%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -5894,20 +5894,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 99.0992,
-        "transition_mae": 81.6012,
-        "premium_abs": -17.4979,
-        "premium_pct": -17.66,
-        "n_stable": 5769,
-        "n_transition": 5625,
-        "rationale": "premium -17.66%, n\u22651000",
+        "stable_mae": 98.2406,
+        "transition_mae": 81.583,
+        "premium_abs": -16.6576,
+        "premium_pct": -16.96,
+        "n_stable": 5607,
+        "n_transition": 5607,
+        "rationale": "premium -16.96%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 114.871,
             "n": 279,
-            "rationale": "delta +15.92%, n\u2265200"
+            "rationale": "delta +16.93%, n\u2265200"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -5921,21 +5921,21 @@
             "direction": "WIDEN",
             "mae": 169.8694,
             "n": 268,
-            "rationale": "delta +71.41%, n\u2265200"
+            "rationale": "delta +72.91%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 146.9431,
             "n": 281,
-            "rationale": "delta +48.28%, n\u2265200"
+            "rationale": "delta +49.57%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 70.0057,
             "n": 528,
-            "rationale": "delta -29.36%, n\u2265200"
+            "rationale": "delta -28.74%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -6042,13 +6042,13 @@
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 0.0175,
-        "transition_mae": 0.0266,
-        "premium_abs": 0.009,
-        "premium_pct": 51.58,
-        "n_stable": 5651,
-        "n_transition": 4603,
-        "rationale": "premium +51.58%, n\u22651000",
+        "stable_mae": 0.0181,
+        "transition_mae": 0.0267,
+        "premium_abs": 0.0086,
+        "premium_pct": 47.67,
+        "n_stable": 5487,
+        "n_transition": 4588,
+        "rationale": "premium +47.67%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -6062,7 +6062,7 @@
             "direction": "NARROW",
             "mae": 0.0033,
             "n": 211,
-            "rationale": "delta -81.14%, n\u2265200"
+            "rationale": "delta -81.77%, n\u2265200"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -6083,14 +6083,14 @@
             "direction": "NARROW",
             "mae": 0.003,
             "n": 264,
-            "rationale": "delta -82.86%, n\u2265200"
+            "rationale": "delta -83.43%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.01,
             "n": 396,
-            "rationale": "delta -42.86%, n\u2265200"
+            "rationale": "delta -44.75%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -6188,13 +6188,13 @@
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 0.0193,
-        "transition_mae": 0.0335,
-        "premium_abs": 0.0141,
-        "premium_pct": 73.07,
-        "n_stable": 21255,
-        "n_transition": 24462,
-        "rationale": "premium +73.07%, n\u22651000",
+        "stable_mae": 0.0197,
+        "transition_mae": 0.0339,
+        "premium_abs": 0.0142,
+        "premium_pct": 72.26,
+        "n_stable": 20873,
+        "n_transition": 24149,
+        "rationale": "premium +72.26%, n\u22651000",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -6208,7 +6208,7 @@
             "direction": "WIDEN",
             "mae": 0.0325,
             "n": 623,
-            "rationale": "delta +68.39%, n\u2265200"
+            "rationale": "delta +64.97%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -6229,14 +6229,14 @@
             "direction": "WIDEN",
             "mae": 0.0239,
             "n": 927,
-            "rationale": "delta +23.83%, n\u2265200"
+            "rationale": "delta +21.32%, n\u2265200"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.007,
             "n": 280,
-            "rationale": "delta -63.73%, n\u2265200"
+            "rationale": "delta -64.47%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -6250,7 +6250,7 @@
             "direction": "NARROW",
             "mae": 0.0108,
             "n": 655,
-            "rationale": "delta -44.04%, n\u2265200"
+            "rationale": "delta -45.18%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -6264,7 +6264,7 @@
             "direction": "NARROW",
             "mae": 0.0158,
             "n": 943,
-            "rationale": "delta -18.13%, n\u2265200"
+            "rationale": "delta -19.80%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -6285,35 +6285,35 @@
             "direction": "NARROW",
             "mae": 0.0061,
             "n": 1343,
-            "rationale": "delta -68.39%, n\u2265200"
+            "rationale": "delta -69.04%, n\u2265200"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0112,
             "n": 298,
-            "rationale": "delta -41.97%, n\u2265200"
+            "rationale": "delta -43.15%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0108,
             "n": 248,
-            "rationale": "delta -44.04%, n\u2265200"
+            "rationale": "delta -45.18%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
-            "status": "SKIP",
-            "direction": null,
+            "status": "MARGINAL",
+            "direction": "NARROW",
             "mae": 0.0185,
             "n": 1726,
-            "rationale": "magnitude floor (|-4.15%| < 5.0%)"
+            "rationale": "delta -6.09% in 5-10% band"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 0.0419,
             "n": 344,
-            "rationale": "delta +117.10%, n\u2265200"
+            "rationale": "delta +112.69%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -6327,7 +6327,7 @@
             "direction": "WIDEN",
             "mae": 0.0749,
             "n": 580,
-            "rationale": "delta +288.08%, n\u2265200"
+            "rationale": "delta +280.20%, n\u2265200"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -6362,7 +6362,7 @@
             "direction": null,
             "mae": 0.0199,
             "n": 241,
-            "rationale": "magnitude floor (|+3.11%| < 5.0%)"
+            "rationale": "magnitude floor (|+1.02%| < 5.0%)"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -6390,7 +6390,7 @@
             "direction": "WIDEN",
             "mae": 0.1932,
             "n": 344,
-            "rationale": "delta +901.04%, n\u2265200"
+            "rationale": "delta +880.71%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -6453,20 +6453,20 @@
       "12-23h": {
         "status": "MARGINAL",
         "direction": "NARROW",
-        "stable_mae": 0.0283,
-        "transition_mae": 0.0262,
-        "premium_abs": -0.0021,
-        "premium_pct": -7.46,
-        "n_stable": 9976,
-        "n_transition": 12778,
-        "rationale": "premium -7.46% in 5-10% band",
+        "stable_mae": 0.0289,
+        "transition_mae": 0.0265,
+        "premium_abs": -0.0024,
+        "premium_pct": -8.35,
+        "n_stable": 9774,
+        "n_transition": 12640,
+        "rationale": "premium -8.35% in 5-10% band",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0111,
             "n": 575,
-            "rationale": "delta -60.78%, n\u2265200"
+            "rationale": "delta -61.59%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -6487,7 +6487,7 @@
             "direction": "NARROW",
             "mae": 0.0136,
             "n": 642,
-            "rationale": "delta -51.94%, n\u2265200"
+            "rationale": "delta -52.94%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -6508,28 +6508,28 @@
             "direction": "NARROW",
             "mae": 0.0216,
             "n": 991,
-            "rationale": "delta -23.67%, n\u2265200"
+            "rationale": "delta -25.26%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 0.0289,
             "n": 221,
-            "rationale": "magnitude floor (|+2.12%| < 5.0%)"
+            "rationale": "magnitude floor (|+0.00%| < 5.0%)"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0172,
             "n": 244,
-            "rationale": "delta -39.22%, n\u2265200"
+            "rationale": "delta -40.48%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0071,
             "n": 431,
-            "rationale": "delta -74.91%, n\u2265200"
+            "rationale": "delta -75.43%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -6564,7 +6564,7 @@
             "direction": "NARROW",
             "mae": 0.0129,
             "n": 213,
-            "rationale": "delta -54.42%, n\u2265200"
+            "rationale": "delta -55.36%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -6641,20 +6641,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 0.0269,
+        "stable_mae": 0.0277,
         "transition_mae": 0.0199,
-        "premium_abs": -0.0071,
-        "premium_pct": -26.3,
-        "n_stable": 5769,
-        "n_transition": 5625,
-        "rationale": "premium -26.30%, n\u22651000",
+        "premium_abs": -0.0078,
+        "premium_pct": -28.14,
+        "n_stable": 5607,
+        "n_transition": 5607,
+        "rationale": "premium -28.14%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0039,
             "n": 279,
-            "rationale": "delta -85.50%, n\u2265200"
+            "rationale": "delta -85.92%, n\u2265200"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -6668,21 +6668,21 @@
             "direction": "NARROW",
             "mae": 0.0101,
             "n": 268,
-            "rationale": "delta -62.45%, n\u2265200"
+            "rationale": "delta -63.54%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0042,
             "n": 281,
-            "rationale": "delta -84.39%, n\u2265200"
+            "rationale": "delta -84.84%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 0.0071,
             "n": 528,
-            "rationale": "delta -73.61%, n\u2265200"
+            "rationale": "delta -74.37%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -6789,13 +6789,13 @@
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 14.1796,
-        "transition_mae": 15.8372,
-        "premium_abs": 1.6576,
-        "premium_pct": 11.69,
-        "n_stable": 5634,
-        "n_transition": 4552,
-        "rationale": "premium +11.69%, n\u22651000",
+        "stable_mae": 14.3528,
+        "transition_mae": 15.8644,
+        "premium_abs": 1.5116,
+        "premium_pct": 10.53,
+        "n_stable": 5470,
+        "n_transition": 4537,
+        "rationale": "premium +10.53%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -6805,11 +6805,11 @@
             "rationale": "sample floor (n=131)"
           },
           "Q1::rising::transition::p0": {
-            "status": "SKIP",
-            "direction": null,
+            "status": "MARGINAL",
+            "direction": "NARROW",
             "mae": 13.5213,
             "n": 211,
-            "rationale": "magnitude floor (|-4.64%| < 5.0%)"
+            "rationale": "delta -5.79% in 5-10% band"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -6830,14 +6830,14 @@
             "direction": "NARROW",
             "mae": 4.9394,
             "n": 264,
-            "rationale": "delta -65.17%, n\u2265200"
+            "rationale": "delta -65.59%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 15.5253,
             "n": 396,
-            "rationale": "delta +9.49% in 5-10% band"
+            "rationale": "delta +8.17% in 5-10% band"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -6935,13 +6935,13 @@
       "24-47h": {
         "status": "MARGINAL",
         "direction": "WIDEN",
-        "stable_mae": 22.6983,
-        "transition_mae": 24.4922,
-        "premium_abs": 1.7939,
-        "premium_pct": 7.9,
-        "n_stable": 21227,
-        "n_transition": 24204,
-        "rationale": "premium +7.90% in 5-10% band",
+        "stable_mae": 22.8053,
+        "transition_mae": 24.602,
+        "premium_abs": 1.7967,
+        "premium_pct": 7.88,
+        "n_stable": 20845,
+        "n_transition": 23891,
+        "rationale": "premium +7.88% in 5-10% band",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -6955,7 +6955,7 @@
             "direction": "NARROW",
             "mae": 11.1926,
             "n": 623,
-            "rationale": "delta -50.69%, n\u2265200"
+            "rationale": "delta -50.92%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -6976,14 +6976,14 @@
             "direction": "WIDEN",
             "mae": 27.2859,
             "n": 927,
-            "rationale": "delta +20.21%, n\u2265200"
+            "rationale": "delta +19.65%, n\u2265200"
           },
           "Q1::flat::transition::p0": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 21.4143,
             "n": 280,
-            "rationale": "delta -5.66% in 5-10% band"
+            "rationale": "delta -6.10% in 5-10% band"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -6997,7 +6997,7 @@
             "direction": "WIDEN",
             "mae": 25.8855,
             "n": 655,
-            "rationale": "delta +14.04%, n\u2265200"
+            "rationale": "delta +13.51%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -7011,7 +7011,7 @@
             "direction": "WIDEN",
             "mae": 25.6151,
             "n": 943,
-            "rationale": "delta +12.85%, n\u2265200"
+            "rationale": "delta +12.32%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -7032,35 +7032,35 @@
             "direction": "NARROW",
             "mae": 16.1929,
             "n": 1343,
-            "rationale": "delta -28.66%, n\u2265200"
+            "rationale": "delta -29.00%, n\u2265200"
           },
           "Q23::flat::stable::p0": {
             "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 24.302,
             "n": 298,
-            "rationale": "delta +7.07% in 5-10% band"
+            "rationale": "delta +6.56% in 5-10% band"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 18.504,
             "n": 248,
-            "rationale": "delta -18.48%, n\u2265200"
+            "rationale": "delta -18.86%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 19.0382,
             "n": 1726,
-            "rationale": "delta -16.12%, n\u2265200"
+            "rationale": "delta -16.52%, n\u2265200"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 28.3576,
             "n": 344,
-            "rationale": "delta +24.93%, n\u2265200"
+            "rationale": "delta +24.35%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -7074,7 +7074,7 @@
             "direction": "WIDEN",
             "mae": 47.0862,
             "n": 580,
-            "rationale": "delta +107.44%, n\u2265200"
+            "rationale": "delta +106.47%, n\u2265200"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -7109,7 +7109,7 @@
             "direction": null,
             "mae": 22.0373,
             "n": 241,
-            "rationale": "magnitude floor (|-2.91%| < 5.0%)"
+            "rationale": "magnitude floor (|-3.37%| < 5.0%)"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -7137,7 +7137,7 @@
             "direction": "NARROW",
             "mae": 16.8198,
             "n": 344,
-            "rationale": "delta -25.90%, n\u2265200"
+            "rationale": "delta -26.25%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -7200,20 +7200,20 @@
       "12-23h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 21.4592,
-        "transition_mae": 15.7283,
-        "premium_abs": -5.7309,
-        "premium_pct": -26.71,
-        "n_stable": 9969,
-        "n_transition": 12641,
-        "rationale": "premium -26.71%, n\u22651000",
+        "stable_mae": 21.6943,
+        "transition_mae": 15.6726,
+        "premium_abs": -6.0216,
+        "premium_pct": -27.76,
+        "n_stable": 9767,
+        "n_transition": 12503,
+        "rationale": "premium -27.76%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 14.7113,
             "n": 575,
-            "rationale": "delta -31.45%, n\u2265200"
+            "rationale": "delta -32.19%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -7234,7 +7234,7 @@
             "direction": "WIDEN",
             "mae": 27.3785,
             "n": 642,
-            "rationale": "delta +27.58%, n\u2265200"
+            "rationale": "delta +26.20%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -7255,28 +7255,28 @@
             "direction": "NARROW",
             "mae": 15.5621,
             "n": 991,
-            "rationale": "delta -27.48%, n\u2265200"
+            "rationale": "delta -28.27%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 17.0136,
             "n": 221,
-            "rationale": "delta -20.72%, n\u2265200"
+            "rationale": "delta -21.58%, n\u2265200"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 18.2295,
             "n": 244,
-            "rationale": "delta -15.05%, n\u2265200"
+            "rationale": "delta -15.97%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 11.0951,
             "n": 431,
-            "rationale": "delta -48.30%, n\u2265200"
+            "rationale": "delta -48.86%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -7311,7 +7311,7 @@
             "direction": "NARROW",
             "mae": 11.0892,
             "n": 213,
-            "rationale": "delta -48.32%, n\u2265200"
+            "rationale": "delta -48.88%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -7388,20 +7388,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 19.1865,
-        "transition_mae": 14.8676,
-        "premium_abs": -4.3189,
-        "premium_pct": -22.51,
-        "n_stable": 5769,
-        "n_transition": 5553,
-        "rationale": "premium -22.51%, n\u22651000",
+        "stable_mae": 19.4222,
+        "transition_mae": 14.877,
+        "premium_abs": -4.5452,
+        "premium_pct": -23.4,
+        "n_stable": 5607,
+        "n_transition": 5535,
+        "rationale": "premium -23.40%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 18.2115,
             "n": 279,
-            "rationale": "delta -5.08% in 5-10% band"
+            "rationale": "delta -6.23% in 5-10% band"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -7415,21 +7415,21 @@
             "direction": null,
             "mae": 19.0037,
             "n": 268,
-            "rationale": "magnitude floor (|-0.95%| < 5.0%)"
+            "rationale": "magnitude floor (|-2.15%| < 5.0%)"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 13.274,
             "n": 281,
-            "rationale": "delta -30.82%, n\u2265200"
+            "rationale": "delta -31.66%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 16.6193,
             "n": 528,
-            "rationale": "delta -13.38%, n\u2265200"
+            "rationale": "delta -14.43%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -7536,13 +7536,13 @@
       "0-5h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 29.0955,
-        "transition_mae": 23.7496,
-        "premium_abs": -5.3459,
-        "premium_pct": -18.37,
-        "n_stable": 5634,
-        "n_transition": 4552,
-        "rationale": "premium -18.37%, n\u22651000",
+        "stable_mae": 28.5771,
+        "transition_mae": 23.6077,
+        "premium_abs": -4.9695,
+        "premium_pct": -17.39,
+        "n_stable": 5470,
+        "n_transition": 4537,
+        "rationale": "premium -17.39%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -7556,7 +7556,7 @@
             "direction": "NARROW",
             "mae": 25.0995,
             "n": 211,
-            "rationale": "delta -13.73%, n\u2265200"
+            "rationale": "delta -12.17%, n\u2265200"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -7577,14 +7577,14 @@
             "direction": "NARROW",
             "mae": 26.3333,
             "n": 264,
-            "rationale": "delta -9.49% in 5-10% band"
+            "rationale": "delta -7.85% in 5-10% band"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 22.9798,
             "n": 396,
-            "rationale": "delta -21.02%, n\u2265200"
+            "rationale": "delta -19.59%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -7682,13 +7682,13 @@
       "24-47h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 30.7984,
-        "transition_mae": 30.2295,
-        "premium_abs": -0.5689,
-        "premium_pct": -1.85,
-        "n_stable": 21227,
-        "n_transition": 24204,
-        "rationale": "magnitude floor (|-1.85%| < 5.0%)",
+        "stable_mae": 30.8059,
+        "transition_mae": 30.3028,
+        "premium_abs": -0.5032,
+        "premium_pct": -1.63,
+        "n_stable": 20845,
+        "n_transition": 23891,
+        "rationale": "magnitude floor (|-1.63%| < 5.0%)",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -7702,7 +7702,7 @@
             "direction": "WIDEN",
             "mae": 49.6485,
             "n": 623,
-            "rationale": "delta +61.20%, n\u2265200"
+            "rationale": "delta +61.17%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -7723,14 +7723,14 @@
             "direction": "WIDEN",
             "mae": 40.068,
             "n": 927,
-            "rationale": "delta +30.10%, n\u2265200"
+            "rationale": "delta +30.07%, n\u2265200"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 36.6429,
             "n": 280,
-            "rationale": "delta +18.98%, n\u2265200"
+            "rationale": "delta +18.95%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -7744,7 +7744,7 @@
             "direction": "WIDEN",
             "mae": 41.513,
             "n": 655,
-            "rationale": "delta +34.79%, n\u2265200"
+            "rationale": "delta +34.76%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -7758,7 +7758,7 @@
             "direction": "WIDEN",
             "mae": 43.5938,
             "n": 943,
-            "rationale": "delta +41.55%, n\u2265200"
+            "rationale": "delta +41.51%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -7779,35 +7779,35 @@
             "direction": "WIDEN",
             "mae": 45.3656,
             "n": 1343,
-            "rationale": "delta +47.30%, n\u2265200"
+            "rationale": "delta +47.26%, n\u2265200"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 41.094,
             "n": 298,
-            "rationale": "delta +33.43%, n\u2265200"
+            "rationale": "delta +33.40%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 44.4355,
             "n": 248,
-            "rationale": "delta +44.28%, n\u2265200"
+            "rationale": "delta +44.24%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 34.9444,
             "n": 1726,
-            "rationale": "delta +13.46%, n\u2265200"
+            "rationale": "delta +13.43%, n\u2265200"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 68.7413,
             "n": 344,
-            "rationale": "delta +123.20%, n\u2265200"
+            "rationale": "delta +123.14%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -7821,7 +7821,7 @@
             "direction": "WIDEN",
             "mae": 47.4362,
             "n": 580,
-            "rationale": "delta +54.02%, n\u2265200"
+            "rationale": "delta +53.98%, n\u2265200"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -7856,7 +7856,7 @@
             "direction": "NARROW",
             "mae": 22.5394,
             "n": 241,
-            "rationale": "delta -26.82%, n\u2265200"
+            "rationale": "delta -26.83%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -7884,7 +7884,7 @@
             "direction": "WIDEN",
             "mae": 76.689,
             "n": 344,
-            "rationale": "delta +149.00%, n\u2265200"
+            "rationale": "delta +148.94%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -7947,20 +7947,20 @@
       "12-23h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 30.2951,
-        "transition_mae": 28.8132,
-        "premium_abs": -1.4819,
-        "premium_pct": -4.89,
-        "n_stable": 9969,
-        "n_transition": 12641,
-        "rationale": "magnitude floor (|-4.89%| < 5.0%)",
+        "stable_mae": 30.2198,
+        "transition_mae": 28.8106,
+        "premium_abs": -1.4092,
+        "premium_pct": -4.66,
+        "n_stable": 9767,
+        "n_transition": 12503,
+        "rationale": "magnitude floor (|-4.66%| < 5.0%)",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 35.4087,
             "n": 575,
-            "rationale": "delta +16.88%, n\u2265200"
+            "rationale": "delta +17.17%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -7981,7 +7981,7 @@
             "direction": null,
             "mae": 31.4439,
             "n": 642,
-            "rationale": "magnitude floor (|+3.79%| < 5.0%)"
+            "rationale": "magnitude floor (|+4.05%| < 5.0%)"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -8002,28 +8002,28 @@
             "direction": "WIDEN",
             "mae": 38.4975,
             "n": 991,
-            "rationale": "delta +27.08%, n\u2265200"
+            "rationale": "delta +27.39%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 40.7014,
             "n": 221,
-            "rationale": "delta +34.35%, n\u2265200"
+            "rationale": "delta +34.68%, n\u2265200"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 35.373,
             "n": 244,
-            "rationale": "delta +16.76%, n\u2265200"
+            "rationale": "delta +17.05%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 31.587,
             "n": 431,
-            "rationale": "magnitude floor (|+4.26%| < 5.0%)"
+            "rationale": "magnitude floor (|+4.52%| < 5.0%)"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -8058,7 +8058,7 @@
             "direction": "NARROW",
             "mae": 14.6761,
             "n": 213,
-            "rationale": "delta -51.56%, n\u2265200"
+            "rationale": "delta -51.44%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -8135,20 +8135,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 33.2047,
-        "transition_mae": 26.9588,
-        "premium_abs": -6.246,
-        "premium_pct": -18.81,
-        "n_stable": 5769,
-        "n_transition": 5553,
-        "rationale": "premium -18.81%, n\u22651000",
+        "stable_mae": 32.9197,
+        "transition_mae": 26.8582,
+        "premium_abs": -6.0616,
+        "premium_pct": -18.41,
+        "n_stable": 5607,
+        "n_transition": 5535,
+        "rationale": "premium -18.41%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 31.5806,
             "n": 279,
-            "rationale": "magnitude floor (|-4.89%| < 5.0%)"
+            "rationale": "magnitude floor (|-4.07%| < 5.0%)"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -8162,21 +8162,21 @@
             "direction": "WIDEN",
             "mae": 38.5485,
             "n": 268,
-            "rationale": "delta +16.09%, n\u2265200"
+            "rationale": "delta +17.10%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 33.5907,
             "n": 281,
-            "rationale": "magnitude floor (|+1.16%| < 5.0%)"
+            "rationale": "magnitude floor (|+2.04%| < 5.0%)"
           },
           "Q23::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 35.3201,
             "n": 528,
-            "rationale": "delta +6.37% in 5-10% band"
+            "rationale": "delta +7.29% in 5-10% band"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -8283,13 +8283,13 @@
       "0-5h": {
         "status": "MARGINAL",
         "direction": "NARROW",
-        "stable_mae": 33.8232,
-        "transition_mae": 30.5626,
-        "premium_abs": -3.2606,
-        "premium_pct": -9.64,
-        "n_stable": 5634,
-        "n_transition": 4552,
-        "rationale": "premium -9.64% in 5-10% band",
+        "stable_mae": 33.7982,
+        "transition_mae": 30.5532,
+        "premium_abs": -3.2449,
+        "premium_pct": -9.6,
+        "n_stable": 5470,
+        "n_transition": 4537,
+        "rationale": "premium -9.60% in 5-10% band",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -8303,7 +8303,7 @@
             "direction": "NARROW",
             "mae": 8.3412,
             "n": 211,
-            "rationale": "delta -75.34%, n\u2265200"
+            "rationale": "delta -75.32%, n\u2265200"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -8324,14 +8324,14 @@
             "direction": "WIDEN",
             "mae": 37.0947,
             "n": 264,
-            "rationale": "delta +9.67% in 5-10% band"
+            "rationale": "delta +9.75% in 5-10% band"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 44.899,
             "n": 396,
-            "rationale": "delta +32.75%, n\u2265200"
+            "rationale": "delta +32.84%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -8429,13 +8429,13 @@
       "24-47h": {
         "status": "REVIEW",
         "direction": "WIDEN",
-        "stable_mae": 30.6622,
-        "transition_mae": 33.7825,
-        "premium_abs": 3.1203,
-        "premium_pct": 10.18,
-        "n_stable": 21227,
-        "n_transition": 24204,
-        "rationale": "premium +10.18%, n\u22651000 [contradicts field's dominant NARROW pattern]",
+        "stable_mae": 30.95,
+        "transition_mae": 33.9566,
+        "premium_abs": 3.0066,
+        "premium_pct": 9.71,
+        "n_stable": 20845,
+        "n_transition": 23891,
+        "rationale": "premium +9.71% in 5-10% band [contradicts field's dominant NARROW pattern]",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -8449,7 +8449,7 @@
             "direction": "WIDEN",
             "mae": 36.817,
             "n": 623,
-            "rationale": "delta +20.07%, n\u2265200"
+            "rationale": "delta +18.96%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -8470,14 +8470,14 @@
             "direction": "NARROW",
             "mae": 27.1909,
             "n": 927,
-            "rationale": "delta -11.32%, n\u2265200"
+            "rationale": "delta -12.15%, n\u2265200"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 23.6179,
             "n": 280,
-            "rationale": "delta -22.97%, n\u2265200"
+            "rationale": "delta -23.69%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -8491,7 +8491,7 @@
             "direction": "NARROW",
             "mae": 25.1786,
             "n": 655,
-            "rationale": "delta -17.88%, n\u2265200"
+            "rationale": "delta -18.65%, n\u2265200"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -8505,7 +8505,7 @@
             "direction": null,
             "mae": 29.4316,
             "n": 943,
-            "rationale": "magnitude floor (|-4.01%| < 5.0%)"
+            "rationale": "magnitude floor (|-4.91%| < 5.0%)"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -8526,35 +8526,35 @@
             "direction": "WIDEN",
             "mae": 40.7223,
             "n": 1343,
-            "rationale": "delta +32.81%, n\u2265200"
+            "rationale": "delta +31.57%, n\u2265200"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 43.9027,
             "n": 298,
-            "rationale": "delta +43.18%, n\u2265200"
+            "rationale": "delta +41.85%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 40.1048,
             "n": 248,
-            "rationale": "delta +30.80%, n\u2265200"
+            "rationale": "delta +29.58%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 40.0185,
             "n": 1726,
-            "rationale": "delta +30.51%, n\u2265200"
+            "rationale": "delta +29.30%, n\u2265200"
           },
           "Q23::rising::stable::p1": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 78.9099,
             "n": 344,
-            "rationale": "delta +157.35%, n\u2265200"
+            "rationale": "delta +154.96%, n\u2265200"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -8568,7 +8568,7 @@
             "direction": "WIDEN",
             "mae": 84.2741,
             "n": 580,
-            "rationale": "delta +174.85%, n\u2265200"
+            "rationale": "delta +172.29%, n\u2265200"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -8603,7 +8603,7 @@
             "direction": "WIDEN",
             "mae": 35.8257,
             "n": 241,
-            "rationale": "delta +16.84%, n\u2265200"
+            "rationale": "delta +15.75%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -8631,7 +8631,7 @@
             "direction": "WIDEN",
             "mae": 56.6395,
             "n": 344,
-            "rationale": "delta +84.72%, n\u2265200"
+            "rationale": "delta +83.00%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -8694,20 +8694,20 @@
       "12-23h": {
         "status": "MARGINAL",
         "direction": "NARROW",
-        "stable_mae": 32.5553,
-        "transition_mae": 29.4449,
-        "premium_abs": -3.1104,
-        "premium_pct": -9.55,
-        "n_stable": 9969,
-        "n_transition": 12641,
-        "rationale": "premium -9.55% in 5-10% band",
+        "stable_mae": 32.9009,
+        "transition_mae": 29.6393,
+        "premium_abs": -3.2616,
+        "premium_pct": -9.91,
+        "n_stable": 9767,
+        "n_transition": 12503,
+        "rationale": "premium -9.91% in 5-10% band",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 16.5322,
             "n": 575,
-            "rationale": "delta -49.22%, n\u2265200"
+            "rationale": "delta -49.75%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -8728,7 +8728,7 @@
             "direction": "NARROW",
             "mae": 25.4766,
             "n": 642,
-            "rationale": "delta -21.74%, n\u2265200"
+            "rationale": "delta -22.57%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -8745,32 +8745,32 @@
             "rationale": "sample floor (n=112)"
           },
           "Q23::rising::transition::p0": {
-            "status": "MARGINAL",
-            "direction": "WIDEN",
+            "status": "SKIP",
+            "direction": null,
             "mae": 34.3835,
             "n": 991,
-            "rationale": "delta +5.62% in 5-10% band"
+            "rationale": "magnitude floor (|+4.51%| < 5.0%)"
           },
           "Q23::falling::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 59.4932,
             "n": 221,
-            "rationale": "delta +82.75%, n\u2265200"
+            "rationale": "delta +80.83%, n\u2265200"
           },
           "Q23::flat::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 43.2992,
             "n": 244,
-            "rationale": "delta +33.00%, n\u2265200"
+            "rationale": "delta +31.60%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 43.7053,
             "n": 431,
-            "rationale": "delta +34.25%, n\u2265200"
+            "rationale": "delta +32.84%, n\u2265200"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -8805,7 +8805,7 @@
             "direction": "NARROW",
             "mae": 19.8357,
             "n": 213,
-            "rationale": "delta -39.07%, n\u2265200"
+            "rationale": "delta -39.71%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -8882,20 +8882,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "NARROW",
-        "stable_mae": 35.0813,
-        "transition_mae": 27.6991,
-        "premium_abs": -7.3822,
-        "premium_pct": -21.04,
-        "n_stable": 5769,
-        "n_transition": 5553,
-        "rationale": "premium -21.04%, n\u22651000",
+        "stable_mae": 35.4912,
+        "transition_mae": 27.7588,
+        "premium_abs": -7.7324,
+        "premium_pct": -21.79,
+        "n_stable": 5607,
+        "n_transition": 5535,
+        "rationale": "premium -21.79%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "NARROW",
             "mae": 11.3333,
             "n": 279,
-            "rationale": "delta -67.69%, n\u2265200"
+            "rationale": "delta -68.07%, n\u2265200"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -8909,21 +8909,21 @@
             "direction": null,
             "mae": 34.0,
             "n": 268,
-            "rationale": "magnitude floor (|-3.08%| < 5.0%)"
+            "rationale": "magnitude floor (|-4.20%| < 5.0%)"
           },
           "Q23::rising::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 45.7367,
             "n": 281,
-            "rationale": "delta +30.37%, n\u2265200"
+            "rationale": "delta +28.87%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 37.733,
             "n": 528,
-            "rationale": "delta +7.56% in 5-10% band"
+            "rationale": "delta +6.32% in 5-10% band"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -9030,13 +9030,13 @@
       "0-5h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 85.6234,
-        "transition_mae": 103.9972,
-        "premium_abs": 18.3737,
-        "premium_pct": 21.46,
-        "n_stable": 5651,
-        "n_transition": 4603,
-        "rationale": "premium +21.46%, n\u22651000",
+        "stable_mae": 87.4068,
+        "transition_mae": 104.1667,
+        "premium_abs": 16.76,
+        "premium_pct": 19.17,
+        "n_stable": 5487,
+        "n_transition": 4588,
+        "rationale": "premium +19.17%, n\u22651000",
         "by_axes": {
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -9046,11 +9046,11 @@
             "rationale": "sample floor (n=131)"
           },
           "Q1::rising::transition::p0": {
-            "status": "MARGINAL",
-            "direction": "WIDEN",
+            "status": "SKIP",
+            "direction": null,
             "mae": 90.5166,
             "n": 211,
-            "rationale": "delta +5.71% in 5-10% band"
+            "rationale": "magnitude floor (|+3.56%| < 5.0%)"
           },
           "Q4::rising::transition::p0": {
             "status": "SKIP",
@@ -9071,14 +9071,14 @@
             "direction": "WIDEN",
             "mae": 127.7917,
             "n": 264,
-            "rationale": "delta +49.25%, n\u2265200"
+            "rationale": "delta +46.20%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 104.1717,
             "n": 396,
-            "rationale": "delta +21.66%, n\u2265200"
+            "rationale": "delta +19.18%, n\u2265200"
           },
           "Q23::rising::transition::p1": {
             "status": "SKIP",
@@ -9176,13 +9176,13 @@
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 82.4337,
-        "transition_mae": 102.0212,
-        "premium_abs": 19.5875,
-        "premium_pct": 23.76,
-        "n_stable": 21255,
-        "n_transition": 24462,
-        "rationale": "premium +23.76%, n\u22651000",
+        "stable_mae": 83.5182,
+        "transition_mae": 102.9034,
+        "premium_abs": 19.3853,
+        "premium_pct": 23.21,
+        "n_stable": 20873,
+        "n_transition": 24149,
+        "rationale": "premium +23.21%, n\u22651000",
         "by_axes": {
           "Q1::falling_fast::stable::p0": {
             "status": "SKIP",
@@ -9196,7 +9196,7 @@
             "direction": "NARROW",
             "mae": 17.3531,
             "n": 623,
-            "rationale": "delta -78.95%, n\u2265200"
+            "rationale": "delta -79.22%, n\u2265200"
           },
           "Q1::flat::stable::p0": {
             "status": "SKIP",
@@ -9217,14 +9217,14 @@
             "direction": "WIDEN",
             "mae": 119.3528,
             "n": 927,
-            "rationale": "delta +44.79%, n\u2265200"
+            "rationale": "delta +42.91%, n\u2265200"
           },
           "Q1::flat::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 103.325,
             "n": 280,
-            "rationale": "delta +25.34%, n\u2265200"
+            "rationale": "delta +23.72%, n\u2265200"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -9238,7 +9238,7 @@
             "direction": "WIDEN",
             "mae": 88.484,
             "n": 655,
-            "rationale": "delta +7.34% in 5-10% band"
+            "rationale": "delta +5.95% in 5-10% band"
           },
           "Q4::falling::stable::p0": {
             "status": "SKIP",
@@ -9252,7 +9252,7 @@
             "direction": "WIDEN",
             "mae": 116.3924,
             "n": 943,
-            "rationale": "delta +41.20%, n\u2265200"
+            "rationale": "delta +39.36%, n\u2265200"
           },
           "Q4::flat::transition::p0": {
             "status": "SKIP",
@@ -9273,35 +9273,35 @@
             "direction": null,
             "mae": 84.4408,
             "n": 1343,
-            "rationale": "magnitude floor (|+2.43%| < 5.0%)"
+            "rationale": "magnitude floor (|+1.10%| < 5.0%)"
           },
           "Q23::flat::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 128.5705,
             "n": 298,
-            "rationale": "delta +55.97%, n\u2265200"
+            "rationale": "delta +53.94%, n\u2265200"
           },
           "Q23::falling::stable::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 181.3347,
             "n": 248,
-            "rationale": "delta +119.98%, n\u2265200"
+            "rationale": "delta +117.12%, n\u2265200"
           },
           "Q23::rising::transition::p0": {
             "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 89.4166,
             "n": 1726,
-            "rationale": "delta +8.47% in 5-10% band"
+            "rationale": "delta +7.06% in 5-10% band"
           },
           "Q23::rising::stable::p1": {
-            "status": "MARGINAL",
-            "direction": "WIDEN",
+            "status": "SKIP",
+            "direction": null,
             "mae": 87.1017,
             "n": 344,
-            "rationale": "delta +5.66% in 5-10% band"
+            "rationale": "magnitude floor (|+4.29%| < 5.0%)"
           },
           "Q23::flat::stable::p1": {
             "status": "SKIP",
@@ -9315,7 +9315,7 @@
             "direction": "WIDEN",
             "mae": 133.3328,
             "n": 580,
-            "rationale": "delta +61.75%, n\u2265200"
+            "rationale": "delta +59.65%, n\u2265200"
           },
           "Q23::flat::transition::p1": {
             "status": "SKIP",
@@ -9350,7 +9350,7 @@
             "direction": "WIDEN",
             "mae": 88.1245,
             "n": 241,
-            "rationale": "delta +6.90% in 5-10% band"
+            "rationale": "delta +5.52% in 5-10% band"
           },
           "Q23::falling::transition::p0": {
             "status": "SKIP",
@@ -9378,7 +9378,7 @@
             "direction": "NARROW",
             "mae": 30.6366,
             "n": 344,
-            "rationale": "delta -62.83%, n\u2265200"
+            "rationale": "delta -63.32%, n\u2265200"
           },
           "Q4::rising::stable::p1": {
             "status": "SKIP",
@@ -9441,20 +9441,20 @@
       "12-23h": {
         "status": "SKIP",
         "direction": null,
-        "stable_mae": 93.3822,
-        "transition_mae": 96.3916,
-        "premium_abs": 3.0094,
-        "premium_pct": 3.22,
-        "n_stable": 9976,
-        "n_transition": 12778,
-        "rationale": "magnitude floor (|+3.22%| < 5.0%)",
+        "stable_mae": 95.064,
+        "transition_mae": 96.9667,
+        "premium_abs": 1.9026,
+        "premium_pct": 2.0,
+        "n_stable": 9774,
+        "n_transition": 12640,
+        "rationale": "magnitude floor (|+2.00%| < 5.0%)",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SKIP",
             "direction": null,
             "mae": 97.3739,
             "n": 575,
-            "rationale": "magnitude floor (|+4.27%| < 5.0%)"
+            "rationale": "magnitude floor (|+2.43%| < 5.0%)"
           },
           "Q1::falling::transition::p0": {
             "status": "SKIP",
@@ -9471,11 +9471,11 @@
             "rationale": "sample floor (n=150)"
           },
           "Q4::rising::transition::p0": {
-            "status": "MARGINAL",
-            "direction": "WIDEN",
+            "status": "SKIP",
+            "direction": null,
             "mae": 99.2461,
             "n": 642,
-            "rationale": "delta +6.28% in 5-10% band"
+            "rationale": "magnitude floor (|+4.40%| < 5.0%)"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
@@ -9492,32 +9492,32 @@
             "rationale": "sample floor (n=112)"
           },
           "Q23::rising::transition::p0": {
-            "status": "MARGINAL",
+            "status": "SHIP",
             "direction": "NARROW",
             "mae": 84.7881,
             "n": 991,
-            "rationale": "delta -9.20% in 5-10% band"
+            "rationale": "delta -10.81%, n\u2265200"
           },
           "Q23::falling::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 121.5792,
             "n": 221,
-            "rationale": "delta +30.20%, n\u2265200"
+            "rationale": "delta +27.89%, n\u2265200"
           },
           "Q23::flat::transition::p0": {
-            "status": "SHIP",
+            "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 104.2951,
             "n": 244,
-            "rationale": "delta +11.69%, n\u2265200"
+            "rationale": "delta +9.71% in 5-10% band"
           },
           "Q23::rising::stable::p0": {
             "status": "MARGINAL",
             "direction": "WIDEN",
             "mae": 102.1114,
             "n": 431,
-            "rationale": "delta +9.35% in 5-10% band"
+            "rationale": "delta +7.41% in 5-10% band"
           },
           "Q4::falling::transition::p0": {
             "status": "SKIP",
@@ -9552,7 +9552,7 @@
             "direction": "NARROW",
             "mae": 27.5211,
             "n": 213,
-            "rationale": "delta -70.53%, n\u2265200"
+            "rationale": "delta -71.05%, n\u2265200"
           },
           "Q1::falling::stable::p0": {
             "status": "SKIP",
@@ -9629,20 +9629,20 @@
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "stable_mae": 84.9594,
-        "transition_mae": 104.2976,
-        "premium_abs": 19.3382,
-        "premium_pct": 22.76,
-        "n_stable": 5769,
-        "n_transition": 5625,
-        "rationale": "premium +22.76%, n\u22651000",
+        "stable_mae": 86.6941,
+        "transition_mae": 104.5078,
+        "premium_abs": 17.8136,
+        "premium_pct": 20.55,
+        "n_stable": 5607,
+        "n_transition": 5607,
+        "rationale": "premium +20.55%, n\u22651000",
         "by_axes": {
           "Q1::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 108.1756,
             "n": 279,
-            "rationale": "delta +27.33%, n\u2265200"
+            "rationale": "delta +24.78%, n\u2265200"
           },
           "Q1::rising::stable::p0": {
             "status": "SKIP",
@@ -9656,21 +9656,21 @@
             "direction": "WIDEN",
             "mae": 128.0896,
             "n": 268,
-            "rationale": "delta +50.77%, n\u2265200"
+            "rationale": "delta +47.75%, n\u2265200"
           },
           "Q23::rising::stable::p0": {
             "status": "MARGINAL",
             "direction": "NARROW",
             "mae": 79.726,
             "n": 281,
-            "rationale": "delta -6.16% in 5-10% band"
+            "rationale": "delta -8.04% in 5-10% band"
           },
           "Q23::rising::transition::p0": {
             "status": "SHIP",
             "direction": "WIDEN",
             "mae": 100.2443,
             "n": 528,
-            "rationale": "delta +17.99%, n\u2265200"
+            "rationale": "delta +15.63%, n\u2265200"
           },
           "Q4::rising::stable::p0": {
             "status": "SKIP",
