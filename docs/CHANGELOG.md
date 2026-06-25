@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.229 • June 25, 2026</strong></summary>
+
+- Divergence-report streak counter now collapses multiple runs on the same calendar day into one read. Prevents re-running the digest on cached data from falsely advancing the gate counter — gates are designed around independent reads on different days.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.228 • June 25, 2026</strong></summary>
 
 - Debug page data refresh: L5 status updated to live trajectory (4 SHIP / 0 HOLD over trailing 7d, 6-cycle SHIP streak; earliest plausible promotion now late-June if streak holds); C1 axes list in the one-line summary now includes C1f; cove section split into the retired global R5 decision and the current module-scoped gate (1/2 confirming reads, next read ~2026-07-01).

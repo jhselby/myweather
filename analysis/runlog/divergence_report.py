@@ -137,10 +137,17 @@ def _streak_for(key, today_claim):
                 continue
     if not rows:
         return 0, None
-    # Group by run_at and pick the most recent timestamp as "today"; count
-    # backward from there.
+    # Group by calendar day and keep one row per day (the latest run that day).
+    # Multiple digest runs on the same day collapse into one "read" so that
+    # re-running on cached data doesn't falsely advance the streak — the gate
+    # is designed around independent reads on different days.
     rows.sort(key=lambda r: r["run_at"])
-    today_run = rows[-1]["run_at"]
+    per_day = {}
+    for r in rows:
+        day = r["run_at"][:10]
+        per_day[day] = r  # later runs overwrite earlier ones for the same day
+    rows = sorted(per_day.values(), key=lambda r: r["run_at"])
+
     today_norm = sorted(today_claim) if isinstance(today_claim, (list, set, tuple)) else today_claim
     streak = 0
     oldest = None
