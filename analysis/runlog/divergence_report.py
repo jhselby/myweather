@@ -279,11 +279,19 @@ def main():
     print("DIVERGENCE REPORT — production vs latest script verdict")
     print("=" * 78)
     print()
-    print(f"{'KEY':<16} {'PRODUCTION':<20} {'SCRIPT WANTS':<20} {'STATUS':<14} STREAK")
-    print("-" * 90)
+    print(f"  {'KEY':<14} {'PRODUCTION':<20} {'SCRIPT WANTS':<20} {'STATUS':<8} STREAK")
+    print("  " + "-" * 88)
     # L5 has its own Fitter-cycle trajectory tracker — use that instead of
     # the freshly-started divergence streak for the L5_ENABLED row.
     l5_traj = _l5_trajectory_state()
+
+    def _direction(p, w):
+        """↑ = production should enable/grow, ↓ = production should disable/shrink."""
+        if isinstance(p, bool) and isinstance(w, bool):
+            return "↑" if (w and not p) else "↓"
+        if isinstance(p, (set, list, tuple, frozenset)) and isinstance(w, (set, list, tuple, frozenset)):
+            return "↓" if len(set(w)) <= len(set(p)) else "↑"
+        return "·"
 
     final_statuses = []
     for k, p, w, status, notes in rows:
@@ -293,7 +301,6 @@ def main():
         if len(w_s) > 19: w_s = w_s[:18] + "…"
         if status == "DISAGREE":
             if k == "L5_ENABLED" and l5_traj is not None:
-                # Read from live trajectory file, not divergence history.
                 if l5_traj["gate_clear"]:
                     streak_s = (f"GATE CLEARED ({l5_traj['ship_days']}/"
                                 f"{L5_GATE_WINDOW_DAYS} ship days)")
@@ -302,6 +309,7 @@ def main():
                     streak_s = (f"{l5_traj['ship_days']}/{L5_GATE_WINDOW_DAYS} "
                                 f"ship days · {l5_traj['hold_days']} hold · "
                                 f"{l5_traj['streak_cycles']}-cycle SHIP streak")
+                    status = "GATED"
             else:
                 streak, _oldest = _streak_for(k, w)
                 count = streak + 1  # today's run itself counts as one read
@@ -311,22 +319,35 @@ def main():
                     status = "READY"
                 elif gate is not None:
                     streak_s = f"{count}/{gate} ({gate - count} to go)"
+                    status = "GATED"
                 else:
                     streak_s = f"{count}/?"
+                    status = "GATED"
         else:
             streak_s = "—"
+
+        # Icon: ✓ agree, ⏳ gated, ↑/↓ ready (with direction), ✗ unknown.
+        if status == "AGREE":
+            icon = "✓"
+        elif status == "GATED":
+            icon = "⏳"
+        elif status == "READY":
+            icon = _direction(p, w)  # ↑ or ↓
+        else:
+            icon = "✗"
+
         final_statuses.append(status)
-        line = f"{k:<16} {p_s:<20} {w_s:<20} {status:<14} {streak_s}"
+        line = f"{icon} {k:<14} {p_s:<20} {w_s:<20} {status:<8} {streak_s}"
         if notes:
             line += f"   ({notes})"
         print(line)
     print()
-    n_dis = sum(1 for s in final_statuses if s == "DISAGREE")
+    n_gated = sum(1 for s in final_statuses if s == "GATED")
     n_ready = sum(1 for s in final_statuses if s == "READY")
     n_unk = sum(1 for s in final_statuses if s == "UNKNOWN")
     n_ok = sum(1 for s in final_statuses if s == "AGREE")
-    print(f"Summary: {n_ready} gate-cleared, {n_dis} disagreement(s) below gate, "
-          f"{n_unk} unknown, {n_ok} agreement(s).")
+    print(f"Summary: {n_ready} gate-cleared, {n_gated} gated, "
+          f"{n_unk} unknown, {n_ok} aligned.")
 
 
 if __name__ == "__main__":

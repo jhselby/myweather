@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.227 • June 25, 2026</strong></summary>
+
+- Divergence report: DISAGREE → GATED for clarity; status icons added (✓ aligned, ⏳ gated, ↑ ready-to-enable, ↓ ready-to-drop, ✗ unknown).
+- Debug page: "Calibration-verdict, not MAE-verdict." → "C1 is evaluated by calibration, not forecast error." as its own sentence; removed redundant "Currently applied:" line from L4 intro; "Current-conditions sync" → "Current conditions" in the Production stack list.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.226 • June 25, 2026</strong></summary>
 
 - `analysis/walkforward_l3l4_validator.py` default cutoff bumped from 2d → 10d. The 2d window is regime-fragile (documented 06-22 diagnostic) and causes the divergence-report streak counter to bounce.
