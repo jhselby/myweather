@@ -16,6 +16,7 @@ Run: python3 analysis/output/runlog/divergence_report.py
 import ast
 import json
 import re
+import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -32,6 +33,88 @@ GATES = {
     "L5_ENABLED": 7,  # L5 trajectory gate
     "COVE_ENABLED": 2,  # post-build confirmation reads; first one in hand
 }
+
+
+L5_GATE_HISTORY_URL = "https://data.wymancove.com/l5_gate_history.json"
+L5_GATE_HISTORY_CACHE = REPO / ".cache_l5_gate_history.json"  # local cache path
+L5_GATE_WINDOW_DAYS = 7  # mirror weather_collector.processors.decay_fit
+
+
+def _fetch_l5_gate_history():
+    """Fetch the live L5 gate history from data.wymancove.com.
+
+    Tiny file (~few KB), no caching needed — but we tolerate fetch failure
+    by falling back to the on-disk cache.
+    """
+    try:
+        req = urllib.request.Request(
+            L5_GATE_HISTORY_URL, headers={"User-Agent": "myweather-divergence/1.0"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            data = r.read()
+        L5_GATE_HISTORY_CACHE.write_bytes(data)
+        return json.loads(data)
+    except Exception:
+        if L5_GATE_HISTORY_CACHE.exists():
+            try:
+                return json.loads(L5_GATE_HISTORY_CACHE.read_bytes())
+            except Exception:
+                return None
+        return None
+
+
+def _l5_trajectory_state():
+    """Return (ship_days, hold_days, total_days, streak_ship, gate_clear)
+    from the live L5 gate history, or None if unavailable.
+
+    Day-rollup mirrors decay_fit._compute_l5_gate_7d: a day counts as SHIP
+    only if every Fitter cycle that day was SHIP. Gate clears when
+    7 SHIP days with 0 HOLD and 0 insufficient_data.
+    """
+    hist = _fetch_l5_gate_history()
+    if not hist:
+        return None
+    entries = hist.get("entries", [])
+    if not entries:
+        return None
+    # Trim to the trailing window the live code uses.
+    entries_sorted = sorted(entries, key=lambda e: e.get("fitted_at", ""))
+    if len(entries_sorted) > 100:
+        entries_sorted = entries_sorted[-100:]
+    # Day rollup over the last 7 days of entries we have.
+    from collections import defaultdict
+    by_day = defaultdict(list)
+    for e in entries_sorted:
+        day = e.get("fitted_at", "")[:10]
+        if day:
+            by_day[day].append(e.get("verdict", ""))
+    # Take the latest 7 unique days.
+    latest_days = sorted(by_day)[-L5_GATE_WINDOW_DAYS:]
+    ship = hold = insuff = 0
+    for d in latest_days:
+        verdicts = by_day[d]
+        if all(v == "SHIP" for v in verdicts):
+            ship += 1
+        elif any(v == "insufficient_data" for v in verdicts):
+            insuff += 1
+        else:
+            hold += 1
+    # Streak of trailing SHIP entries (cycle-level, not day-level).
+    streak = 0
+    for e in reversed(entries_sorted):
+        if e.get("verdict") == "SHIP":
+            streak += 1
+        else:
+            break
+    gate_clear = (len(latest_days) >= L5_GATE_WINDOW_DAYS
+                  and hold == 0 and insuff == 0)
+    return {
+        "ship_days": ship,
+        "hold_days": hold,
+        "insufficient_days": insuff,
+        "total_days": len(latest_days),
+        "streak_cycles": streak,
+        "gate_clear": gate_clear,
+    }
 
 
 def _streak_for(key, today_claim):
@@ -198,6 +281,10 @@ def main():
     print()
     print(f"{'KEY':<16} {'PRODUCTION':<20} {'SCRIPT WANTS':<20} {'STATUS':<14} STREAK")
     print("-" * 90)
+    # L5 has its own Fitter-cycle trajectory tracker — use that instead of
+    # the freshly-started divergence streak for the L5_ENABLED row.
+    l5_traj = _l5_trajectory_state()
+
     final_statuses = []
     for k, p, w, status, notes in rows:
         p_s = str(p) if p is not None else "—"
@@ -205,16 +292,27 @@ def main():
         if len(p_s) > 19: p_s = p_s[:18] + "…"
         if len(w_s) > 19: w_s = w_s[:18] + "…"
         if status == "DISAGREE":
-            streak, _oldest = _streak_for(k, w)
-            count = streak + 1  # today's run itself counts as one read
-            gate = GATES.get(k)
-            if gate is not None and count >= gate:
-                streak_s = f"GATE CLEARED ({count}/{gate})"
-                status = "READY"
-            elif gate is not None:
-                streak_s = f"{count}/{gate} ({gate - count} to go)"
+            if k == "L5_ENABLED" and l5_traj is not None:
+                # Read from live trajectory file, not divergence history.
+                if l5_traj["gate_clear"]:
+                    streak_s = (f"GATE CLEARED ({l5_traj['ship_days']}/"
+                                f"{L5_GATE_WINDOW_DAYS} ship days)")
+                    status = "READY"
+                else:
+                    streak_s = (f"{l5_traj['ship_days']}/{L5_GATE_WINDOW_DAYS} "
+                                f"ship days · {l5_traj['hold_days']} hold · "
+                                f"{l5_traj['streak_cycles']}-cycle SHIP streak")
             else:
-                streak_s = f"{count}/?"
+                streak, _oldest = _streak_for(k, w)
+                count = streak + 1  # today's run itself counts as one read
+                gate = GATES.get(k)
+                if gate is not None and count >= gate:
+                    streak_s = f"GATE CLEARED ({count}/{gate})"
+                    status = "READY"
+                elif gate is not None:
+                    streak_s = f"{count}/{gate} ({gate - count} to go)"
+                else:
+                    streak_s = f"{count}/?"
         else:
             streak_s = "—"
         final_statuses.append(status)

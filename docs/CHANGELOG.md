@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.226 • June 25, 2026</strong></summary>
+
+- `analysis/walkforward_l3l4_validator.py` default cutoff bumped from 2d → 10d. The 2d window is regime-fragile (documented 06-22 diagnostic) and causes the divergence-report streak counter to bounce.
+- Divergence report L5 row now reads from the live Fitter-cycle trajectory file (`data.wymancove.com/l5_gate_history.json`) instead of the freshly-started divergence-history streak. Shows ship-days / hold-days / SHIP streak so the L5 row reflects the actual promotion gate, not just today's reads.
+- Runner skips files matching `*.skip*` in the name (parked scripts).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.225 • June 25, 2026</strong></summary>
 
 - Analysis tooling: single-command digest runner (`analysis/runlog/run_digest.sh`) executes all 63 analysis scripts and writes one summary at `analysis/output/DIGEST.txt`. Output includes pass/fail table, executive summary (deltas vs prior run), per-script verdict + tail, and a divergence report (production state vs latest script verdict, with streak counters against per-key promotion gates). History accumulates in `analysis/output/runlog/digest_history.jsonl` so gates become actionable as reads stack up. Skipping a script: rename it to `*.py.skip`.

@@ -25,6 +25,8 @@ trap 'rm -f "$BODY"' EXIT
 for f in analysis/*.py; do
   name=$(basename "$f" .py)
   [ "$name" = "_cache" ] && continue
+  # Skip anything with .skip in the name (parked scripts).
+  case "$name" in *.skip*) continue ;; esac
   out="$LOG_DIR/${name}.log"
   start=$(date +%s)
 

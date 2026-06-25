@@ -81,8 +81,9 @@ def _fetch_lines(url):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cutoff-days", type=float, default=2.0,
-                    help="Hold out the last N days as test (default 2.0)")
+    ap.add_argument("--cutoff-days", type=float, default=10.0,
+                    help="Hold out the last N days as test (default 10.0; "
+                         "2d/5d are regime-fragile per 06-22 diagnostic)")
     args = ap.parse_args()
 
     os.makedirs(OUT_DIR, exist_ok=True)
