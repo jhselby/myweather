@@ -1924,13 +1924,14 @@ function renderAccuracySection(tsDoc, wxDoc) {
   const maeByLead = tsDoc.per_layer_mae_by_lead;
   const nByLead   = tsDoc.per_layer_n_by_lead || {};
   const LAYER_LINES = [
-    { key: "l1", label: "Raw model",          color: "rgba(138,147,163,0.75)", dash: [4,4] },
-    { key: "l2", label: "Mesonet",            color: "rgba(200,160,110,1)",    dash: [] },
-    { key: "l3", label: "Lead-time decay",    color: "rgba(110,180,235,1)",    dash: [] },
-    { key: "l4", label: "Hour-of-day",        color: "rgba(74,163,255,1)",     dash: [] },
-    // L6 (cove regime) renders only for the temperature field; for other
-    // fields per_layer_mae_by_lead has no l6 entry and the line drops out.
-    { key: "l6", label: "Cove regime (L6)",   color: "rgba(74,210,154,1)",     dash: [] },
+    { key: "l1", label: "Raw model",          shortLabel: "Raw",         color: "rgba(138,147,163,0.75)", dash: [4,4] },
+    { key: "l2", label: "Mesonet",            shortLabel: "Mesonet",     color: "rgba(200,160,110,1)",    dash: [] },
+    { key: "l3", label: "Lead-time decay",    shortLabel: "Lead decay",  color: "rgba(110,180,235,1)",    dash: [] },
+    { key: "l4", label: "Hour-of-day",        shortLabel: "Hour of day", color: "rgba(74,163,255,1)",     dash: [] },
+    // L6 (cove regime) renders only for the temperature field. _layersFor()
+    // filters this entry out for every other field so the column / legend
+    // entry / line don't show up on charts where they have no data.
+    { key: "l6", label: "Cove regime (L6)",   shortLabel: "L6 cove",     color: "rgba(74,210,154,1)",     dash: [] },
   ];
 
   // v2: per-band MAE summary. Bands match the walk-forward validator buckets.
@@ -1991,10 +1992,16 @@ function renderAccuracySection(tsDoc, wxDoc) {
   // value is what the user actually sees. Badges above the chart explain
   // why earlier layers may also be active but don't get a box (no need to
   // repeat the same info).
+  // Per-field layer set: drop l6 for fields where it doesn't apply (it would
+  // render as an empty column / legend entry on every non-temperature card).
+  const _layersFor = (fieldKey) =>
+    LAYER_LINES.filter(l => l.key !== "l6" || fieldKey === "t");
+
   const _buildBandTable = (fieldData, fieldKey, decimals) => {
     const rows = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);
-    // Per-column active flags, in column order matching LAYER_LINES.
-    const allActive = LAYER_LINES.map(l => _layerApplied(l.key, fieldKey));
+    const LAYERS = _layersFor(fieldKey);
+    // Per-column active flags, in column order matching LAYERS.
+    const allActive = LAYERS.map(l => _layerApplied(l.key, fieldKey));
     // Highest-applied column wins the box; everything else stays unboxed.
     let highestIdx = -1;
     for (let i = allActive.length - 1; i >= 0; i--) {
@@ -2010,13 +2017,10 @@ function renderAccuracySection(tsDoc, wxDoc) {
     let html =
       `<table class="band-table"><thead><tr>` +
       `<th>Lead</th>` +
-      `<th${_activeCls(0)}>Raw</th>` +
-      `<th${_activeCls(1)}>Mesonet</th>` +
-      `<th${_activeCls(2)}>Lead decay</th>` +
-      `<th${_activeCls(3)}>Hour of day</th>` +
+      LAYERS.map((l, i) => `<th${_activeCls(i)}>${l.shortLabel || l.label}</th>`).join("") +
       `</tr></thead><tbody>`;
     for (const b of rows) {
-      const vals = LAYER_LINES.map(l => _bandAvg(fieldData[l.key] || [], b.lo, b.hi));
+      const vals = LAYERS.map(l => _bandAvg(fieldData[l.key] || [], b.lo, b.hi));
       const present = vals.filter(v => v != null);
       const best = present.length ? Math.min(...present) : null;
       const worst = present.length ? Math.max(...present) : null;
@@ -2042,11 +2046,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
   grid.className = "grid";  // override the .accuracy-grid 220px-min layout
   for (const f of FIELDS) {
     const fieldData = maeByLead[f.key] || {};
+    const LAYERS = _layersFor(f.key);
     // Check if any layer has data
-    const hasAny = LAYER_LINES.some(l => (fieldData[l.key] || []).some(v => v != null));
+    const hasAny = LAYERS.some(l => (fieldData[l.key] || []).some(v => v != null));
     if (!hasAny) continue;
     const labels = Array.from({length: 48}, (_, i) => i);
-    const datasets = LAYER_LINES.map(l => ({
+    const datasets = LAYERS.map(l => ({
       label: l.label,
       data: (fieldData[l.key] || []).map(v => v == null ? NaN : v),
       borderColor: l.color,

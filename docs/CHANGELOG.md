@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.233 • June 26, 2026</strong></summary>
+
+- Forecast Accuracy band-table headers were hardcoded to 4 columns while data rows iterated `LAYER_LINES` (now 5 with L6) — so the temperature card had a 5th data column with no header label. Headers now generated from the same array as the data. Non-temperature cards filter L6 out of their layer set so the legend / column / line don't render where they'd never have data.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.232 • June 26, 2026</strong></summary>
 
 - **L6 ordering fix.** Cove correction was previously applied inside `build_weather_data` BEFORE L3/L4 ran, so the Δ was silently absorbed into the L2 column and L3/L4 stacked on top of cove-modified temperatures. Moved `stamp_cove_correction` to after `apply_decay_corrections` so cove is genuinely the last layer in the stack. Forecast snapshot now distinguishes `t_l4` (pre-cove) from `t_l6` (post-cove); pair log captures `error_l6` for temperature rows; Fitter aggregates L6 into `per_layer_mae_by_lead`. Debug page Forecast Accuracy chart now shows L6 as its own line, populated only for the temperature row.
