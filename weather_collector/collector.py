@@ -573,7 +573,22 @@ def main():
 
 # Cloud Function entry point
 def run(request):
-    """HTTP entry point for Cloud Functions."""
+    """HTTP entry point for Cloud Functions.
+
+    `?fit=1` short-circuits the normal collector run and triggers the
+    Decay-Fitter once. Used to force a Fitter rebuild outside the normal
+    03:07 / 15:07 EDT windows when we need fresh per_layer_mae numbers
+    (e.g. after an L6 implementation fix).
+    """
+    if request is not None and hasattr(request, "args"):
+        if request.args.get("fit") == "1":
+            t0 = time.time()
+            try:
+                fit_decay_corrections()
+                return (f"Fitter ran in {time.time() - t0:.1f}s", 200)
+            except Exception as e:
+                logging.warning(f"  ⚠  Manual fit failed: {redact_secrets(e)}")
+                return (f"Fitter failed: {e}", 500)
     try:
         main()
         return ("OK", 200)

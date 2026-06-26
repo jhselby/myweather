@@ -540,7 +540,20 @@ def fit_decay_corrections():
             if obs_time >= ts_cutoff:
                 # l6 is temperature-only (cove regime). The pair log emits
                 # error_l6 only for t rows, so this loop is safe across fields.
+                # However: pairs produced between the L6 ship (06-26 ~08:00)
+                # and the per-lead fix (v0.6.237 deploy at 06-26 17:19 EDT)
+                # carry an `error_l6` value computed from the old uniform-Δ
+                # implementation that applied the current-tick Δ to all 48
+                # leads — wildly wrong at distant leads. Filter those out of
+                # the L6 aggregation by snapshot run_time so the Forecast
+                # Accuracy chart shows only the per-lead-correct era. Remove
+                # this guard once the bad rows age out of the 7d window
+                # (~2026-07-03).
+                L6_VALID_FROM = "2026-06-26T17:19"
+                run_time = row.get("run_time", "")
                 for lyr in ("l1", "l2", "l3", "l4", "l6"):
+                    if lyr == "l6" and run_time < L6_VALID_FROM:
+                        continue
                     e = row.get(f"error_{lyr}")
                     if e is None:
                         continue

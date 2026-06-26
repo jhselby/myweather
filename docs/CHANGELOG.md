@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.238 • June 26, 2026</strong></summary>
+
+- Fitter L6 filter: pairs whose snapshot was generated between the L6 ship (06-26 ~08:00) and the per-lead fix (v0.6.237 deploy at 06-26 17:19 EDT) carry an `error_l6` from the old uniform-Δ implementation that applied the current-tick Δ to all 48 leads. Filter those rows out of the L6 per-layer aggregation by `run_time` so the Forecast Accuracy chart shows only per-lead-correct era. Remove the guard once those rows age out of the 7-day window (~2026-07-03).
+- New collector entry-point query: `?fit=1` short-circuits the normal collector run and triggers the Decay-Fitter once. Used to force a Fitter rebuild outside the 03:07 / 15:07 EDT windows after an L6 implementation change. Fitter rebuilt at 17:36 EDT; L6 starts clean from there.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.237 • June 26, 2026</strong></summary>
 
 - **L6 per-lead application.** `cove_correction.py` previously applied the current-tick Δ°F to all 48 forecast leads — wrong by 3–5°F at distant leads when the regime swing crossed zero (e.g. applying noon's −3.7°F to a midnight lead). Now each forecast lead gets the Δ°F appropriate to that lead's projected regime: forecast wind direction from `hourly.wind_direction[i]`, local hour parsed from `hourly.times[i]`, and a heuristic `sb_active` (on in 13–18 EDT with S-half wind, off otherwise — coarser than the live detector but uses only forecast wind dir). `weather_data.cove_correction` now also includes a `per_lead_delta_summary` block (min/max/mean Δ) so the L6 chart can show the spread. Live verification: range −3.7 to +2.0 across the 48-hour horizon.
