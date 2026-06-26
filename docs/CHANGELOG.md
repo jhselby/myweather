@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.243 • June 26, 2026</strong></summary>
+
+- Debug page Status section's "Open architectural questions" sub-box gains a new entry: **ws L3 long-lead regression** — per-lead chart shows L3 makes wind speed +20–31% worse at leads 18–47h while wg L3 helps −15 to −22% over the same band. Walkforward validator's per-field aggregate hides this. Queued (not today's work): add per-band rollup to walkforward output, then drop ws from L3 or wire per-(field, lead_band) whitelist in `decay_apply.py`. Memory note: `project_ws_l3_long_lead_regression`.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.242 • June 26, 2026</strong></summary>
 
 - L6 prose accuracy fix on the debug page. Two places (Layer 6 section summary + cove R5 section's "Current status") described the morning marine-cooling regime as *"06–13 EDT under offshore flow"* — both wrong. Per the actual lookup table, cooling is negligible at 06:00 (−0.2 °F), meaningful starting 09:00 (−1.6 °F), peak at 12:00 (−3.7 °F), holds through 14:00 (−3.0 °F), recovers through 17:00 — so the honest window is **09–16 EDT**. And the sb-off branch fires when the sea breeze is inactive regardless of wind direction, not specifically under offshore flow. Both phrases corrected.
