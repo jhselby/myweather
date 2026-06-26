@@ -1,6 +1,20 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.235 • June 26, 2026</strong></summary>
+
+- Consistent layer naming pass across the debug page. Each L-class now follows `LN — <structure> correction` with scope in parens when field-limited:
+  - L1 — Raw model (baseline)
+  - L2 — Aggregate-bias correction
+  - L3 — Lead-decay correction
+  - L4 — Diurnal correction
+  - L5 — Synoptic-regime correction (solar)
+  - L6 — Microclimate correction (temperature)
+- Updated section headers, TOC link, chart legend / band-table headers, one-line summary, Production stack list, methodology prose, the "Since last curation" entry, and L6 section summary (now leads with "first layer trained on a spatial differential between station subgroups" — the actual architectural distinction). Comments in JS are left as-is.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.234 • June 26, 2026</strong></summary>
 
 - Debug page data refresh: L5 trajectory updated to live values (5 SHIP / 0 HOLD, 8-cycle SHIP streak — two more SHIP days to clear); "Since last curation" block rotated to reflect today's curation cycle (L6 ship + ordering fix + tooling pipeline) and the new active-candidate count.
