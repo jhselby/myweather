@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.234 • June 26, 2026</strong></summary>
+
+- Debug page data refresh: L5 trajectory updated to live values (5 SHIP / 0 HOLD, 8-cycle SHIP streak — two more SHIP days to clear); "Since last curation" block rotated to reflect today's curation cycle (L6 ship + ordering fix + tooling pipeline) and the new active-candidate count.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.233 • June 26, 2026</strong></summary>
 
 - Forecast Accuracy band-table headers were hardcoded to 4 columns while data rows iterated `LAYER_LINES` (now 5 with L6) — so the temperature card had a 5th data column with no header label. Headers now generated from the same array as the data. Non-temperature cards filter L6 out of their layer set so the legend / column / line don't render where they'd never have data.
