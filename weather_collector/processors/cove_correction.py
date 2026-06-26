@@ -130,6 +130,11 @@ def stamp_cove_correction(weather_data):
         hourly = weather_data.get("hourly") or {}
         ct = hourly.get("corrected_temperature")
         if isinstance(ct, list) and ct:
+            # Snapshot the pre-cove L4 array so the per-layer accuracy chart
+            # can isolate L4 vs (L4+L6) for temperature. forecast_snapshot.py
+            # reads this as the l4 layer; the post-cove array (assigned just
+            # below) is captured as l6.
+            hourly["corrected_temperature_post_l4"] = list(ct)
             # Apply the same delta to all leads — for now. A more honest
             # implementation would project the regime forward (which wind
             # octant is expected at each lead hour?) but that's noise on

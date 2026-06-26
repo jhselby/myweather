@@ -309,15 +309,10 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         logging.warning(f"  ⚠  Frontal detection failed: {redact_secrets(e)}")
         weather_data["frontal"] = {"state": "quiet", "event": None, "recent_events": []}
 
-    # Cove correction (R5 candidate, gated OFF). Computes the candidate
-    # Δ°F that would apply given current wind octant + sea-breeze state +
-    # hour-of-day, stamps weather_data["cove_correction"], but does not
-    # modify forecasts until ENABLED is flipped post-06-19 R5 read.
-    try:
-        from .processors.cove_correction import stamp_cove_correction
-        stamp_cove_correction(weather_data)
-    except Exception as e:
-        logging.warning(f"  ⚠  Cove correction stamp failed: {redact_secrets(e)}")
+    # Cove correction was previously stamped here; moved post-decay_apply so
+    # the cove Δ sits BETWEEN L4 and the snapshot (genuine L6), rather than
+    # being silently absorbed into the L2 column when L3/L4 run on top of it.
+    # See call site after apply_decay_corrections in run_collector.
 
     # Solar L5 correction (regime-aware solar, gated OFF). Indexed by
     # derived.state.regime_synoptic. Stamps candidate Δ W/m² but does not
@@ -464,6 +459,18 @@ def main():
         apply_decay_corrections(weather_data)
     except Exception as e:
         logging.warning(f"  ⚠  Decay apply failed: {redact_secrets(e)}")
+
+    # L6 — cove regime correction. Stamped here, after L3/L4, so the cove Δ
+    # is the last layer in the temperature stack and the snapshot/pair log
+    # can isolate it as its own column. Modifies corrected_temperature in
+    # place when ENABLED=True; the pre-cove array is preserved as
+    # corrected_temperature_post_l4 inside stamp_cove_correction so the
+    # forecast snapshot can attribute L4 vs (L4+L6) cleanly.
+    try:
+        from .processors.cove_correction import stamp_cove_correction
+        stamp_cove_correction(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Cove correction stamp failed: {redact_secrets(e)}")
 
     # FOUNDATIONAL: sync weather_data["current"] from corrected hourly[0].
     # Every "current conditions" card across the app reads current.*; the

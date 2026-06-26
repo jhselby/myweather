@@ -538,7 +538,9 @@ def fit_decay_corrections():
             # per-layer error fields; older pairs silently skip this loop and
             # only feed the legacy single-error aggregation above.
             if obs_time >= ts_cutoff:
-                for lyr in ("l1", "l2", "l3", "l4"):
+                # l6 is temperature-only (cove regime). The pair log emits
+                # error_l6 only for t rows, so this loop is safe across fields.
+                for lyr in ("l1", "l2", "l3", "l4", "l6"):
                     e = row.get(f"error_{lyr}")
                     if e is None:
                         continue
@@ -967,7 +969,7 @@ def fit_decay_corrections():
         per_layer_mae_by_lead[f]  = {}
         per_layer_bias_by_lead[f] = {}
         per_layer_n_by_lead[f]    = {}
-        for lyr in ("l1", "l2", "l3", "l4"):
+        for lyr in ("l1", "l2", "l3", "l4", "l6"):
             mae_arr  = [None] * LEAD_BINS
             bias_arr = [None] * LEAD_BINS
             n_arr    = [0]    * LEAD_BINS

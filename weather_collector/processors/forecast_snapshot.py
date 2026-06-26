@@ -45,10 +45,17 @@ def append_forecast_snapshot(hourly, derived=None):
     #   L4 (final)      = the live corrected_* / _post_diurnal array
     # Fields with no L2 (wind/POP/cloud) have L1 == L2.
     layers = {
+        # Temperature: cove L6 sits AFTER L4 in the stack. When ENABLED, the
+        # pre-cove L4 array is preserved as corrected_temperature_post_l4 by
+        # stamp_cove_correction so we can isolate L6's contribution; when
+        # disabled, the post_l4 key is absent and l4 falls back to the live
+        # corrected_temperature (cove is a no-op in that path).
         "t":  {"l1": hourly.get("temperature", []),
                "l2": hourly.get("corrected_temperature_post_l2", []),
                "l3": hourly.get("corrected_temperature_post_l3", []),
-               "l4": hourly.get("corrected_temperature", [])},
+               "l4": hourly.get("corrected_temperature_post_l4",
+                                hourly.get("corrected_temperature", [])),
+               "l6": hourly.get("corrected_temperature", [])},
         "h":  {"l1": hourly.get("humidity", []),
                "l2": hourly.get("corrected_humidity_post_l2", []),
                "l3": hourly.get("corrected_humidity_post_l3", []),

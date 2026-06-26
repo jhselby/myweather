@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.232 • June 26, 2026</strong></summary>
+
+- **L6 ordering fix.** Cove correction was previously applied inside `build_weather_data` BEFORE L3/L4 ran, so the Δ was silently absorbed into the L2 column and L3/L4 stacked on top of cove-modified temperatures. Moved `stamp_cove_correction` to after `apply_decay_corrections` so cove is genuinely the last layer in the stack. Forecast snapshot now distinguishes `t_l4` (pre-cove) from `t_l6` (post-cove); pair log captures `error_l6` for temperature rows; Fitter aggregates L6 into `per_layer_mae_by_lead`. Debug page Forecast Accuracy chart now shows L6 as its own line, populated only for the temperature row.
+- New Layer 6 debug-page section with subsections 6a (live correction), 6b (lookup tables with APPLIED badge on the active branch), 6c (waterfront-vs-inland Δ history), 6d (cove-specific MAE evaluation: L4 vs L4+L6).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.231 • June 26, 2026</strong></summary>
 
 - **L6 — cove regime correction shipped.** `cove_correction.ENABLED = True`. Two consecutive PASS reads on `r5_cove_analysis.py` (06-25, 06-26) cleared the post-build confirmation gate. Per-tick Δ°F now applied to `corrected_temperature` at all leads, indexed by (wind octant × sea-breeze active × hour-of-day). Scope-limited to the cove output only — distinct from the retired global R5. Lookup table built on 12-day waterfront-vs-inland gradient log (n=1,732). Debug page updated: one-line summary, Production stack list, and cove section all reflect the new L6 in the live pipeline.
