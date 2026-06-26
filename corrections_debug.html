@@ -3880,6 +3880,14 @@ async function load() {
     }
   }
 
+  // L3 whitelist — same source the 3c badges read from. Used to tag each
+  // chart in 3a/3b/3c so the field-level applied-vs-diagnostic status is
+  // visible no matter which subsection you're scanning.
+  const l3WhitelistApplied = new Set((wxDoc && wxDoc.decay_meta && wxDoc.decay_meta.layer_3_fields) || []);
+  const l3AppliedBadge = (k) => l3WhitelistApplied.has(k)
+    ? `<span style="display:inline-block;padding:1px 7px;border-radius:9px;background:rgba(74,210,154,0.18);color:#4ad29a;font-size:0.72rem;font-weight:600;margin-left:6px;">APPLIED</span>`
+    : `<span style="display:inline-block;padding:1px 7px;border-radius:9px;background:rgba(140,140,140,0.12);color:#888;font-size:0.72rem;font-weight:600;margin-left:6px;">diagnostic</span>`;
+
   // ── Section 3a: fitted correction curves ──
   if (corrDoc) {
     const grid = document.getElementById("grid-corrections");
@@ -3894,8 +3902,9 @@ async function load() {
 
       const card = document.createElement("div");
       card.className = "card";
+      if (!l3WhitelistApplied.has(f.key)) card.style.opacity = "0.65";
       card.innerHTML =
-        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<h3><span class="name">${f.label} (${f.key})${l3AppliedBadge(f.key)}</span>` +
         `<span class="summary">|mean| ${meanAbs} ${f.unit} · ${totalN.toLocaleString()} pairs</span></h3>` +
         `<div class="chart-wrap"><canvas></canvas></div>`;
       grid.appendChild(card);
@@ -3940,8 +3949,9 @@ async function load() {
 
       const card = document.createElement("div");
       card.className = "card";
+      if (!l3WhitelistApplied.has(f.key)) card.style.opacity = "0.65";
       card.innerHTML =
-        `<h3><span class="name">${f.label} (${f.key})</span>` +
+        `<h3><span class="name">${f.label} (${f.key})${l3AppliedBadge(f.key)}</span>` +
         `<span class="summary">now ${nowVal}${f.unit} · +24h ${v24}${f.unit}</span></h3>` +
         `<div class="chart-wrap"><canvas></canvas></div>`;
       grid.appendChild(card);

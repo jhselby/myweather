@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.230 • June 25, 2026</strong></summary>
+
+- Debug page sections 3a (fitted correction curves) and 3b (live forecast with vs without) now show the same APPLIED / diagnostic badge per field that 3c already used, and dim diagnostic cards to 0.65 opacity. Whitelist status is now consistent across all three subsections of L3.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.229 • June 25, 2026</strong></summary>
 
 - Divergence-report streak counter now collapses multiple runs on the same calendar day into one read. Prevents re-running the digest on cached data from falsely advancing the gate counter — gates are designed around independent reads on different days.
