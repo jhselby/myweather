@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.242 • June 26, 2026</strong></summary>
+
+- L6 prose accuracy fix on the debug page. Two places (Layer 6 section summary + cove R5 section's "Current status") described the morning marine-cooling regime as *"06–13 EDT under offshore flow"* — both wrong. Per the actual lookup table, cooling is negligible at 06:00 (−0.2 °F), meaningful starting 09:00 (−1.6 °F), peak at 12:00 (−3.7 °F), holds through 14:00 (−3.0 °F), recovers through 17:00 — so the honest window is **09–16 EDT**. And the sb-off branch fires when the sea breeze is inactive regardless of wind direction, not specifically under offshore flow. Both phrases corrected.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.241 • June 26, 2026</strong></summary>
 
 - Debug page L6 visibility pass — three places that still described a 4-layer stack updated to match the shipped 5-layer reality:
