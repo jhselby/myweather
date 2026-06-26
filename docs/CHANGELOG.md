@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.241 • June 26, 2026</strong></summary>
+
+- Debug page L6 visibility pass — three places that still described a 4-layer stack updated to match the shipped 5-layer reality:
+  - **TOC chip strip** gains an `L6 Microclimate` chip between L4 Diurnal and Research & Diagnostics, linking to `#sec-layer6`.
+  - **"How to read these charts" methodology accordion** in Forecast Accuracy: lead-in rewritten from "four lines" → honest "L1–L4 stack across every field; L6 only stacks on the temperature card"; new Microclimate bullet added; the hedged "For fields where L6 is off" parenthetical on the Diurnal bullet replaced with a clean "every field except temperature, this is the final line."
+  - **Per-field badge row** on the Forecast Accuracy temperature card now shows a green `L6 ✓ microclimate` badge alongside L2 / L3 / L4. Other fields don't render an L6 badge (structurally absent — same approach `_layersFor()` already takes for the chart legend).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.240 • June 26, 2026</strong></summary>
 
 - L6 conditional audit added alongside L5 and R6. Every Fitter cycle compares paired L4 vs L4+L6 MAE on cove temperature (rows that pass the L6 valid-from filter and carry both error fields) and emits a SHIP/HOLD verdict. SHIP threshold: L6 beats L4 MAE by ≥2%. Verdict persisted to `l6_gate_history.json` with the same 7-day rolling gate shape as L5. Since L6 is already shipped, the gate asks "is L6 still earning its place?" — a 7-day HOLD-dominant window would be grounds to revert `cove_correction.ENABLED`.

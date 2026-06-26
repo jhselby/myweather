@@ -661,6 +661,7 @@
   <a href="#sec-layer2">L2 Aggregate bias</a>
   <a href="#sec-layer3">L3 Decay</a>
   <a href="#sec-layer4">L4 Diurnal</a>
+  <a href="#sec-layer6">L6 Microclimate</a>
   <a href="#sec-research" class="research">Research & Diagnostics</a>
 </nav>
 
@@ -796,12 +797,13 @@
   <p class="layer-summary">For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model.</p>
   <details class="layer-methodology" open><summary>How to read these charts</summary>
     <div class="meta-line"><strong>What you're looking at.</strong> One small chart per weather field. The Y-axis is how wrong the forecast tends to be (in that field's units — °F, %, mph, etc.). The X-axis is hours into the future. Lower lines = more accurate. Lines climbing to the right is normal — forecasts get worse the further out you predict.</div>
-    <div class="meta-line"><strong>The four lines are cumulative correction layers, stacked from worst to best:</strong></div>
+    <div class="meta-line"><strong>The lines are cumulative correction layers. L1–L4 stack across every field; L6 only stacks on the temperature card. Lowest line = lowest typical error = what users actually see.</strong></div>
     <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.5">
       <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
       <li><strong>Aggregate bias</strong> (orange): adds Layer 2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
       <li><strong>Lead decay</strong> (light blue): adds Layer 3 — a historical per-lead bias correction learned from the pair log. Different bias for each lead hour: "this model tends to be 2°F too cool at lead 6, 1°F too warm at lead 12," etc.</li>
-      <li><strong>Diurnal</strong> (bright blue): adds Layer 4 — a hour-of-day bias correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). For fields where L6 is off, this is the final line — what users actually see in the app.</li>
+      <li><strong>Diurnal</strong> (bright blue): adds Layer 4 — a hour-of-day bias correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). For every field except temperature, this is the final line.</li>
+      <li><strong>Microclimate</strong> (mint green): adds Layer 6 — a per-lead Δ°F that captures the cove's microclimate via a waterfront-vs-inland spatial gradient. Only present on the temperature card; other fields have no L6 line by construction. For temperature, this is the final line — what users actually see.</li>
     </ul>
     <div class="meta-line"><strong>Why lines often lie on top of each other.</strong> Two different reasons, and the badges above each chart tell you which:
       <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
@@ -1982,6 +1984,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
       badges.push(`<span class="field-badge active">L4 ✓</span>`);
     } else {
       badges.push(`<span class="field-badge inactive">L4 off</span>`);
+    }
+    // L6 badge — temperature only; structurally absent from other fields.
+    // Mirrors `_layersFor()` which already filters L6 out of the chart legend
+    // for non-temperature cards.
+    if (fieldKey === "t") {
+      badges.push(`<span class="field-badge active">L6 ✓ microclimate</span>`);
     }
     return `<div class="field-badges">${badges.join("")}</div>`;
   };
