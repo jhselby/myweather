@@ -2633,6 +2633,7 @@ function renderShadowWhitelistSection(doc, wxDoc) {
   // live alongside L3/L4 whitelist recommendations under
   // `entry.conditional_audits`. Helpers accept any layer name.
   const _l5 = (e) => (e?.conditional_audits?.l5) || null;
+  const _l6 = (e) => (e?.conditional_audits?.l6) || null;
   const _r6 = (e) => (e?.conditional_audits?.r6) || null;
   const _ml = (e) => (e?.conditional_audits?.marine_layer_watch) || null;
   const _condVerdictTag = (audit) => {
@@ -2652,6 +2653,7 @@ function renderShadowWhitelistSection(doc, wxDoc) {
   };
 
   const latestL5 = _l5(latest);
+  const latestL6 = _l6(latest);
   const latestR6 = _r6(latest);
   const latestML = _ml(latest);
 
@@ -2701,6 +2703,34 @@ function renderShadowWhitelistSection(doc, wxDoc) {
                  ` over ${g7.total_days} of ${g7.history_window_days} days; streak ${g7.latest_streak_ship} cycle${g7.latest_streak_ship === 1 ? "" : "s"})</span></td></tr>`;
     }
     html += `<tr><td style="padding:2px 12px 2px 0;">L5 solar (${enabledStr}):</td><td>${_condVerdictTag(latestL5)}${l5Detail}</td></tr>${gateLine}`;
+  }
+  if (latestL6) {
+    const enabledStr = latestL6.enabled ? "ENABLED" : "disabled";
+    let l6Detail = "";
+    if (latestL6.verdict === "SHIP" || latestL6.verdict === "HOLD") {
+      const mb = latestL6.mae_baseline;
+      const ma = latestL6.mae_with_layer;
+      const imp = latestL6.improvement_pct;
+      const thr = latestL6.ship_threshold_pct ?? 2;
+      l6Detail = ` <span style="opacity:0.7;font-size:0.9em;">(L4 MAE ${mb?.toFixed(2)}°F, L4+L6 ${ma?.toFixed(2)}°F, Δ ${imp >= 0 ? "+" : ""}${imp?.toFixed(2)}% vs L4; SHIP threshold ≥${thr}%; n=${(latestL6.n_pairs ?? 0).toLocaleString()})</span>`;
+    } else if (latestL6.verdict === "insufficient_data") {
+      l6Detail = ` <span style="opacity:0.7;font-size:0.9em;">(n=${(latestL6.n_pairs ?? 0).toLocaleString()}, need ≥100 post-deploy pair rows; first clean reads start ~6h after deploy)</span>`;
+    }
+    // 7-day promotion gate for L6 — same shape as L5, but for a shipped
+    // layer this asks "is L6 still earning its place?" rather than "should
+    // we ship?". A 7-day HOLD-dominant window would be grounds to revert.
+    let gateLineL6 = "";
+    const g7l6 = latestL6.gate_7d;
+    if (g7l6) {
+      const color = g7l6.gate_clear ? "#4ad29a" : "#e0d472";
+      const label = g7l6.gate_clear ? "CLEAR" : "FLICKER";
+      gateLineL6 = `<tr><td style="padding:2px 12px 2px 0;opacity:0.7;">↳ 7-day keep gate:</td>` +
+                   `<td><span style="color:${color};font-weight:600;">${label}</span>` +
+                   ` <span style="opacity:0.7;font-size:0.9em;">` +
+                   `(${g7l6.ship_days} SHIP / ${g7l6.hold_days} HOLD${g7l6.insufficient_days ? ` / ${g7l6.insufficient_days} insufficient` : ""}` +
+                   ` over ${g7l6.total_days} of ${g7l6.history_window_days} days; streak ${g7l6.latest_streak_ship} cycle${g7l6.latest_streak_ship === 1 ? "" : "s"})</span></td></tr>`;
+    }
+    html += `<tr><td style="padding:2px 12px 2px 0;">L6 microclimate (${enabledStr}):</td><td>${_condVerdictTag(latestL6)}${l6Detail}</td></tr>${gateLineL6}`;
   }
   if (latestR6) {
     let r6Detail = "";
@@ -2770,6 +2800,7 @@ function renderShadowWhitelistSection(doc, wxDoc) {
 
   if (entries.length > 1) {
     const showL5Col = entries.some(e => _l5(e));
+    const showL6Col = entries.some(e => _l6(e));
     const showR6Col = entries.some(e => _r6(e));
     html += `<details style="margin-top:6px;"><summary style="cursor:pointer;font-weight:600;">History (all ${entries.length} entries since shadow deployed)</summary>
       <table style="width:100%;border-collapse:collapse;font-size:0.85em;margin-top:6px;">
@@ -2780,6 +2811,9 @@ function renderShadowWhitelistSection(doc, wxDoc) {
         <th style="text-align:left;padding:4px 8px 4px 0;">L3/L4 match?</th>`;
     if (showL5Col) {
       html += `<th style="text-align:left;padding:4px 8px 4px 0;">L5 audit</th>`;
+    }
+    if (showL6Col) {
+      html += `<th style="text-align:left;padding:4px 8px 4px 0;">L6 audit</th>`;
     }
     if (showR6Col) {
       html += `<th style="text-align:left;padding:4px 8px 4px 0;">R6 audit</th>`;
@@ -2799,6 +2833,9 @@ function renderShadowWhitelistSection(doc, wxDoc) {
         <td style="padding:4px 8px 4px 0;">${matchTag}</td>`;
       if (showL5Col) {
         html += `<td style="padding:4px 8px 4px 0;">${_condVerdictTag(_l5(e))}</td>`;
+      }
+      if (showL6Col) {
+        html += `<td style="padding:4px 8px 4px 0;">${_condVerdictTag(_l6(e))}</td>`;
       }
       if (showR6Col) {
         html += `<td style="padding:4px 8px 4px 0;">${_condVerdictTag(_r6(e))}</td>`;

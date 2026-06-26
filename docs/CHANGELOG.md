@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.240 • June 26, 2026</strong></summary>
+
+- L6 conditional audit added alongside L5 and R6. Every Fitter cycle compares paired L4 vs L4+L6 MAE on cove temperature (rows that pass the L6 valid-from filter and carry both error fields) and emits a SHIP/HOLD verdict. SHIP threshold: L6 beats L4 MAE by ≥2%. Verdict persisted to `l6_gate_history.json` with the same 7-day rolling gate shape as L5. Since L6 is already shipped, the gate asks "is L6 still earning its place?" — a 7-day HOLD-dominant window would be grounds to revert `cove_correction.ENABLED`.
+- Debug page S1 audit table now shows an L6 column alongside L5 and R6, and an "L6 microclimate (ENABLED): SHIP/HOLD" row in the Latest panel with MAE numbers, improvement %, sample size, and the trailing 7-day keep-gate status. First Fitter cycle landed `insufficient_data` (n=4) as expected — real SHIP/HOLD verdicts start once n≥100, roughly 6 hours of post-deploy pair-log accumulation.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.239 • June 26, 2026</strong></summary>
 
 - Debug page L6 audit pass — make all L6 text reflect the per-lead application that shipped earlier today (v0.6.237). Updates:

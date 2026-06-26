@@ -228,6 +228,17 @@ L5_GATE_HISTORY_PATH = "l5_gate_history.json"
 L5_GATE_WINDOW_DAYS = 7
 L5_GATE_HISTORY_RETENTION_DAYS = 30  # keep enough scrollback for debug page
 
+# L6 audit (microclimate / cove temperature). Mirrors L5: per-cycle SHIP/HOLD
+# verdict + 7-day rolling gate. L6 already shipped (v0.6.231/237) — the audit
+# answers "is L6 still earning its place?" If a 7-day window shows HOLD-dominant,
+# that's grounds to flip cove_correction.ENABLED back to False.
+L6_GATE_HISTORY_PATH = "l6_gate_history.json"
+L6_GATE_WINDOW_DAYS = 7
+L6_GATE_HISTORY_RETENTION_DAYS = 30
+L6_VALID_FROM = "2026-06-26T17:19"  # per-lead deploy; pre-deploy pairs excluded
+L6_AUDIT_MIN_PAIRS = 100             # smaller than L5 (500) — single field
+L6_AUDIT_SHIP_THRESHOLD_PCT = 2.0    # SHIP if L6 beats L4 MAE by ≥2%
+
 MARINE_WATCH_PATH = "marine_layer_watch.json"
 MARINE_WATCH_RETENTION_DAYS = 30
 
@@ -325,6 +336,54 @@ def _compute_l5_gate_7d(this_cycle):
     }
 
 
+def _compute_l6_gate_7d(this_cycle):
+    """Append this cycle's L6 verdict to l6_gate_history.json and compute the
+    trailing-7-day gate status. Same shape as `_compute_l5_gate_7d` but for
+    a shipped layer — gate_clear means L6 is still earning its place;
+    7 days of HOLD-dominant verdicts would be grounds to revert ENABLED.
+    """
+    history = load_json(L6_GATE_HISTORY_PATH, default={"entries": []})
+    entries = history.get("entries", [])
+    entries.append(this_cycle)
+    cutoff = (datetime.now(TZ) - timedelta(days=L6_GATE_HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    entries = [e for e in entries if e.get("fitted_at", "") >= cutoff]
+    upload_json({"entries": entries}, L6_GATE_HISTORY_PATH, L6_GATE_HISTORY_PATH)
+
+    window_cutoff = (datetime.now(TZ) - timedelta(days=L6_GATE_WINDOW_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    recent = [e for e in entries if e.get("fitted_at", "") >= window_cutoff]
+    by_day = {}
+    for e in recent:
+        day = e.get("fitted_at", "")[:10]
+        if not day:
+            continue
+        by_day.setdefault(day, []).append(e.get("verdict", ""))
+    ship_days = hold_days = insufficient_days = 0
+    for day, verdicts in by_day.items():
+        if all(v == "SHIP" for v in verdicts):
+            ship_days += 1
+        elif any(v == "insufficient_data" for v in verdicts):
+            insufficient_days += 1
+        else:
+            hold_days += 1
+    total_days = len(by_day)
+    gate_clear = total_days >= L6_GATE_WINDOW_DAYS and hold_days == 0 and insufficient_days == 0
+    streak = 0
+    for e in reversed(recent):
+        if e.get("verdict") == "SHIP":
+            streak += 1
+        else:
+            break
+    return {
+        "ship_days": ship_days,
+        "hold_days": hold_days,
+        "insufficient_days": insufficient_days,
+        "total_days": total_days,
+        "gate_clear": gate_clear,
+        "latest_streak_ship": streak,
+        "history_window_days": L6_GATE_WINDOW_DAYS,
+    }
+
+
 def fit_decay_corrections():
     """Daily Fitter entry point."""
     client = get_client()
@@ -387,6 +446,14 @@ def fit_decay_corrections():
     per_layer_abs    = defaultdict(float)  # key: (field, lead_h, layer)
     per_layer_signed = defaultdict(float)
     per_layer_n      = defaultdict(int)
+    # L6 audit accumulator: per-cycle MAE for L4 vs L6 on temperature, counted
+    # only over pair rows where both error_l4 and error_l6 are present AND the
+    # run_time passes the L6 valid-from filter. Paired comparison eliminates
+    # the sample-size bias that would otherwise favor whichever layer has more
+    # rows in the window.
+    l6_audit_abs_l4 = 0.0
+    l6_audit_abs_l6 = 0.0
+    l6_audit_n      = 0
     # L2 τ-fit accumulators (v0.6.105: switched from closed-form SSE to
     # per-pair MAE iteration). The earlier SSE approach picked τ=0.5h on every
     # held-out fit because squared-error penalty makes a handful of bias
@@ -549,8 +616,16 @@ def fit_decay_corrections():
                 # Accuracy chart shows only the per-lead-correct era. Remove
                 # this guard once the bad rows age out of the 7d window
                 # (~2026-07-03).
-                L6_VALID_FROM = "2026-06-26T17:19"
                 run_time = row.get("run_time", "")
+                # L6 audit: paired (L4 vs L6) MAE on temperature rows that
+                # pass the L6 valid-from filter and carry both error fields.
+                if field == "t" and run_time >= L6_VALID_FROM:
+                    e_l4_aud = row.get("error_l4")
+                    e_l6_aud = row.get("error_l6")
+                    if e_l4_aud is not None and e_l6_aud is not None:
+                        l6_audit_abs_l4 += abs(float(e_l4_aud))
+                        l6_audit_abs_l6 += abs(float(e_l6_aud))
+                        l6_audit_n      += 1
                 for lyr in ("l1", "l2", "l3", "l4", "l6"):
                     if lyr == "l6" and run_time < L6_VALID_FROM:
                         continue
@@ -1140,6 +1215,54 @@ def fit_decay_corrections():
     except Exception as e:
         logging.warning(f"  ⚠  L5 audit failed: {redact_secrets(e)}")
 
+    # L6 audit verdict — paired L4 vs L4+L6 MAE on cove temperature.
+    # Same shape as L5 (per-cycle verdict + 7-day gate) but for a shipped
+    # layer: SHIP = "L6 still earning its place this cycle"; persistent HOLD
+    # over a 7-day window would be grounds to flip cove_correction.ENABLED
+    # back to False.
+    l6_audit_verdict = None
+    try:
+        from .cove_correction import ENABLED as L6_ENABLED
+        if l6_audit_n >= L6_AUDIT_MIN_PAIRS:
+            mae_b = l6_audit_abs_l4 / l6_audit_n
+            mae_a = l6_audit_abs_l6 / l6_audit_n
+            improvement_pct = (100.0 * (mae_b - mae_a) / mae_b) if mae_b > 0 else 0.0
+            ship = improvement_pct >= L6_AUDIT_SHIP_THRESHOLD_PCT
+            verdict_l6 = "SHIP" if ship else "HOLD"
+            l6_audit_verdict = {
+                "verdict": verdict_l6,
+                "enabled": bool(L6_ENABLED),
+                "mae_baseline": round(mae_b, 3),
+                "mae_with_layer": round(mae_a, 3),
+                "improvement_pct": round(improvement_pct, 2),
+                "n_pairs": l6_audit_n,
+                "ship_threshold_pct": L6_AUDIT_SHIP_THRESHOLD_PCT,
+            }
+            logging.info(f"  ✓ L6 audit: {verdict_l6} (L4 MAE {mae_b:.2f}°F, "
+                         f"L4+L6 {mae_a:.2f}°F, Δ {improvement_pct:+.2f}%, n={l6_audit_n:,})")
+            try:
+                _gate = _compute_l6_gate_7d({
+                    "fitted_at": output["fitted_at"],
+                    "verdict": verdict_l6,
+                    "improvement_pct": round(improvement_pct, 2),
+                    "n_pairs": l6_audit_n,
+                })
+                if _gate:
+                    l6_audit_verdict["gate_7d"] = _gate
+                    logging.info(f"  ✓ L6 gate 7d: {_gate.get('ship_days')}/{_gate.get('total_days')} SHIP days "
+                                 f"({'CLEAR' if _gate.get('gate_clear') else 'FLICKER'})")
+            except Exception as e:
+                logging.warning(f"  ⚠  L6 gate_7d failed: {redact_secrets(e)}")
+        else:
+            l6_audit_verdict = {
+                "verdict": "insufficient_data",
+                "enabled": bool(L6_ENABLED),
+                "n_pairs": l6_audit_n,
+            }
+            logging.info(f"  ⊘ L6 audit: insufficient data (n={l6_audit_n}, need ≥{L6_AUDIT_MIN_PAIRS})")
+    except Exception as e:
+        logging.warning(f"  ⚠  L6 audit failed: {redact_secrets(e)}")
+
     # v0.6.182 marine-layer Stage 2.5 watch — log NE+morn cc bias per cycle.
     marine_watch = None
     try:
@@ -1164,6 +1287,8 @@ def fit_decay_corrections():
         conditional_audits = {}
         if l5_audit_verdict:
             conditional_audits["l5"] = l5_audit_verdict
+        if l6_audit_verdict:
+            conditional_audits["l6"] = l6_audit_verdict
         if r6_audit_verdict:
             conditional_audits["r6"] = r6_audit_verdict
         if marine_watch:
