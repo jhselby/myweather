@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.231 • June 26, 2026</strong></summary>
+
+- **L6 — cove regime correction shipped.** `cove_correction.ENABLED = True`. Two consecutive PASS reads on `r5_cove_analysis.py` (06-25, 06-26) cleared the post-build confirmation gate. Per-tick Δ°F now applied to `corrected_temperature` at all leads, indexed by (wind octant × sea-breeze active × hour-of-day). Scope-limited to the cove output only — distinct from the retired global R5. Lookup table built on 12-day waterfront-vs-inland gradient log (n=1,732). Debug page updated: one-line summary, Production stack list, and cove section all reflect the new L6 in the live pipeline.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.230 • June 25, 2026</strong></summary>
 
 - Debug page sections 3a (fitted correction curves) and 3b (live forecast with vs without) now show the same APPLIED / diagnostic badge per field that 3c already used, and dim diagnostic cards to 0.65 opacity. Whitelist status is now consistent across all three subsections of L3.

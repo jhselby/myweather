@@ -26,7 +26,7 @@ import pytz
 
 
 TZ = pytz.timezone("America/New_York")
-ENABLED = False  # Flip to True after 06-19 R5 read confirms the pattern.
+ENABLED = True  # Shipped 2026-06-26 after 2/2 confirming reads on r5_cove_analysis.py.
 
 # Octant labels in clockwise order from north.
 _OCTANTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
@@ -120,10 +120,9 @@ def stamp_cove_correction(weather_data):
             "hour_local": hour_local,
         },
         "note": (
-            "Candidate cove-specific correction from R5 lookup. Gated OFF "
-            "until 7-day R5 read on 2026-06-19 confirms the pattern."
+            "Candidate cove correction from R5 lookup; gated OFF."
             if not ENABLED
-            else "R5 correction applied to corrected_temperature."
+            else "L6 cove correction applied to corrected_temperature."
         ),
     }
 
