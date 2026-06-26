@@ -701,17 +701,19 @@
   <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-06-26 v0.6.235 · click any sub-box header to collapse it.</div>
 
   <div class="since-last-curation" style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-26, v0.6.221 → v0.6.233)</div>
+    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-26, v0.6.221 → v0.6.238)</div>
     <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
       <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>L6 — microclimate correction (temperature) shipped</strong> — <code>cove_correction.py</code> ENABLED=True after 2-read confirmation gate cleared (06-25 + 06-26), v0.6.231</li>
       <li><span style="color:#4ad29a;font-weight:600;">✓</span> L6 ordering fix — cove now sits AFTER L4 in pair log + snapshot (was silently absorbed into L2 column), v0.6.232</li>
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Debug page L6 section (6a–6d) + L6 line on Forecast Accuracy chart for the t card</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>L6 per-lead application</strong> — initial impl applied current-tick Δ uniformly to all 48 leads; fix projects regime forward per lead (forecast wind dir + parsed hour + heuristic sb), v0.6.237</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Fitter L6 row filter — pair rows from the broken-impl window (06-26 08:00 → 17:19) excluded from L6 aggregation by snapshot run_time; guard removed once they age out ~07-03, v0.6.238</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Debug page L6 section (6a–6d) + L6 line on Forecast Accuracy chart for the t card + consistent layer naming (L2 aggregate-bias / L3 lead-decay / L4 diurnal / L5 synoptic-regime / L6 microclimate), v0.6.230, v0.6.235</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Status section restyled as h2.section with individually collapsible sub-boxes, v0.6.236</li>
       <li><span style="color:#7090a0;font-weight:600;">⚙</span> Analysis digest pipeline + divergence report + history-aware streak counter (<code>analysis/runlog/</code>), v0.6.225–v0.6.229</li>
       <li><span style="color:#7090a0;font-weight:600;">⚙</span> Walk-forward L3/L4 default cutoff raised from 2d → 10d (2d window is regime-fragile), v0.6.226</li>
-      <li><span style="color:#7090a0;font-weight:600;">⚙</span> Wind card cleanup — C1 ± suffix removed from collapsed-preview numbers (still on the chart), v0.6.222</li>
-      <li><span style="color:#7090a0;font-weight:600;">⚙</span> L5 status, cove section, cove octant table all data-refreshed to live values (v0.6.224, v0.6.228)</li>
+      <li><span style="color:#7090a0;font-weight:600;">⚙</span> Collector <code>?fit=1</code> bypass to trigger Decay-Fitter outside 03:07 / 15:07 windows, v0.6.238</li>
     </ul>
-    <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Pipeline delta: 6 → 5 active Stage 1 candidates (cove off the gated list, now in L6). Cluster-spread re-audit ~2026-06-27; walk-forward L3/L4 #4 + Stage 1 batch re-read 2026-06-29.</div>
+    <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Pipeline delta: 6 → 5 active Stage 1 candidates (cove off the gated list, now in L6). Cluster-spread re-audit ~2026-06-27; walk-forward L3/L4 #4 + Stage 1 batch re-read 2026-06-29. L6 first clean Fitter read available now (n grows over the next ~24h as fresh pairs accumulate); full 7-day window clean by 2026-07-03.</div>
   </div>
 
   <div class="meta-line" style="margin-top:12px;"><strong>One-line summary:</strong> 5-layer correction stack in production. L1 raw HRRR → L2 aggregate-bias correction (Kalman-blended local network: temp, humidity, pressure, wind, cloud) → L3 lead-decay correction (per-lead-hour) → L4 diurnal correction (hour-of-day) → L6 microclimate correction (temperature, conditional on wind octant × sea-breeze × hour). Every "current conditions" card reads the L1→L6-corrected hourly[0] value. L5 synoptic-regime correction (solar) built, gated. C1 confidence layer (first non-MAE-reducing output — named C-class to distinguish from L-class correction layers that change forecast values) built with multi-axis support: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence. Gated pending calibration audit. R2 state-stratified accuracy and R6 regime-transition penalty audits run every Fitter cycle. R3 (derived humidity), R4 (HRRR-GFS spread), R5 (cove cross-current global formulation) retired.</div>
@@ -722,7 +724,7 @@
       <summary style="color:#4ad29a;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">✅ Production stack</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>L1 → L2 → L3 → L4 → L6</strong> pipeline. L2 applies to <code>t / dp / h / pr / cc</code> (additive bias with Kalman gain) and <code>ws / wg</code> (direct selection).</li>
-        <li><strong>L6 — microclimate correction (temperature, shipped 2026-06-26).</strong> Per-tick Δ°F applied to <code>corrected_temperature</code> at all leads, indexed by (wind octant × sea-breeze active × hour-of-day). Built off a 12-day waterfront-vs-inland spatial gradient log (n=1,732) — the first layer trained on a within-network spatial signal rather than aggregate forecast error. Two PASS reads on <code>r5_cove_analysis.py</code> cleared the post-build confirmation gate (sea-breeze +1.55°F warming, morning offshore −1.21°F cooling). Module: <code>weather_collector/processors/cove_correction.py</code>, <code>ENABLED = True</code>.</li>
+        <li><strong>L6 — microclimate correction (temperature, shipped 2026-06-26).</strong> Per-lead Δ°F applied to <code>corrected_temperature</code>: each forecast lead gets the Δ for its own projected regime (forecast wind dir + parsed local hour + heuristic sb_active). Indexed by (wind octant × sea-breeze active × hour-of-day). Built off a 12-day waterfront-vs-inland spatial gradient log (n=1,732) — the first layer trained on a within-network spatial signal rather than aggregate forecast error. Two PASS reads on <code>r5_cove_analysis.py</code> cleared the post-build confirmation gate (sea-breeze +1.55°F warming, morning offshore −1.21°F cooling). Module: <code>weather_collector/processors/cove_correction.py</code>, <code>ENABLED = True</code>.</li>
         <li>L3 whitelist: <strong>ws, wg, ch, cm, pp</strong>. Each field remains enabled only if it continues to beat the layer below on the rolling 7-window held-out audit.</li>
         <li>L4 whitelist: <strong>ch, cc</strong>. cc added 2026-06-24 v0.6.214 after a 2-read ≥3% gate cleared. Most other fields lack stable hour-of-day structure.</li>
         <li>L2 lead-decay τ refit live by the Fitter with a per-field guardrail (fitted τ adopted only if it beats default on held-out RMSE and lands within 0.25×–4× of default; otherwise fall back).</li>
@@ -780,7 +782,7 @@
 
   <div class="meta-line" style="margin-top:12px;border-top:1px solid #2a3a52;padding-top:10px;">
     <strong>How to read the rest of this page.</strong>
-    Forecast accuracy section is the bottom-line MAE per layer per field (the green box on each chart = what users actually see). Layer sections (L1–L4) each show the live state of that layer and the diagnostics behind its whitelist. Research &amp; Diagnostics (bottom) holds R2 (state-stratified accuracy) and R6 (regime-transition penalty, C1a's input signal) under "Active hypotheses"; the curated Stage-1 Backlog list (8 candidates grouped A/B/C); operational tools G1/S1/B1/F1 (gated candidates, shadow whitelist, backtest sweep, frontal events); and a Retired collapsible (R3 derived humidity, R4 HRRR/GFS spread, R5 cove cross-current — all ruled out by audits). The shadow tuner now carries a 7-cycle promotion-gate counter (v0.6.147) — when an unchanged recommendation holds 7 Fitter cycles, it's eligible to weigh into the next walk-forward read.
+    Forecast accuracy section is the bottom-line MAE per layer per field (the green box on each chart = what users actually see). Layer sections (L1–L4 and L6) each show the live state of that layer and the diagnostics behind it. Research &amp; Diagnostics (bottom) holds R2 (state-stratified accuracy) and R6 (regime-transition penalty, C1a's input signal) under "Active hypotheses"; the curated Stage-1 Backlog list (8 candidates grouped A/B/C); operational tools G1/S1/B1/F1 (gated candidates, shadow whitelist, backtest sweep, frontal events); and a Retired collapsible (R3 derived humidity, R4 HRRR/GFS spread, R5 cove cross-current — all ruled out by audits). The shadow tuner now carries a 7-cycle promotion-gate counter (v0.6.147) — when an unchanged recommendation holds 7 Fitter cycles, it's eligible to weigh into the next walk-forward read.
   </div>
 
   <div class="meta-line" style="margin-top:8px;opacity:0.75;">
@@ -919,8 +921,9 @@
 <div class="layer-info-text">
   <p class="layer-summary">A small Δ°F added to the temperature forecast based on a within-network spatial signal: how much the waterfront stations (Willow Rd, Neptune Rd) typically diverge from the inland-network median under different wind / sea-breeze / hour combinations. L1–L5 are trained on forecast-vs-aggregated-obs errors; L6 is the first layer trained on a spatial differential between station subgroups. Two physical regimes: cove warms a few °F under S/SE/SW sea-breeze (peninsula-lee heating) and cools a few °F during 06–13 EDT under offshore flow (cool marine pool over Salem Sound).</p>
   <details class="layer-methodology"><summary>How L6 works</summary>
-    <div class="meta-line">Per-tick the collector reads current wind direction, sea-breeze state, and hour-of-day. It looks up a Δ°F from one of two tables: <code>(sb_active, wind_octant)</code> when the sea breeze is active, or <code>(hour_of_day)</code> when it's off. The Δ is added to the cove's displayed temperature and applied to every forecast lead's <code>corrected_temperature</code>. Tables built from a 12-day waterfront-vs-inland gradient log (<code>cove_gradient_log.json</code>, n=1,732); cleared a 2-read confirmation gate on <code>r5_cove_analysis.py</code> (2026-06-25 SHIP + 2026-06-26 SHIP, both regime tests PASS).</div>
-    <div class="meta-line"><strong>Scope note:</strong> L6's evaluation lives here, not in the network-wide Forecast Accuracy section below — L6 changes only the cove output, so averaging it into network-wide MAE would dilute (or worse, mis-attribute) the signal. 6d below evaluates L6 specifically against cove obs.</div>
+    <div class="meta-line">Each forecast lead gets its own Δ°F. For lead <em>i</em>, the collector reads the forecast wind direction (<code>hourly.wind_direction[i]</code>), parses the local hour from <code>hourly.times[i]</code>, and applies a heuristic <code>sb_active</code> (on during 13–18 EDT with S-half wind, off otherwise — coarser than the live sb detector but the only fields we have forecast for). It then looks up a Δ°F from one of two tables — <code>(sb_active, wind_octant)</code> when sb is on, <code>(hour_of_day)</code> when sb is off — and adds it to that lead's <code>corrected_temperature</code> cell. Tables built from a 12-day waterfront-vs-inland gradient log (<code>cove_gradient_log.json</code>, n=1,732); cleared a 2-read confirmation gate on <code>r5_cove_analysis.py</code> (2026-06-25 SHIP + 2026-06-26 SHIP, both regime tests PASS).</div>
+    <div class="meta-line"><strong>Why per-lead matters.</strong> The first ship (v0.6.231) applied the current-tick Δ to all 48 leads — wrong by 3–5°F at distant leads when the table swing crossed zero (e.g. applying noon's −3.7°F to a midnight lead). Per-lead projection (v0.6.237) fixed this. Across the 48-hour horizon the per-lead Δ now ranges roughly −3.7 to +2.0°F with a near-zero mean, exactly as expected from the lookup-table shape.</div>
+    <div class="meta-line"><strong>Where L6 is evaluated.</strong> Two places: (1) 6d below uses <code>cove_gradient_log.json</code> directly (cove-specific obs vs displayed temp); (2) the Forecast Accuracy chart's temperature card has a green L6 line built from pair-log rows with <code>error_l6</code>. Pre-deploy pair rows (06-26 ~08:00 → 06-26 17:19) used the broken uniform-Δ implementation and are filtered out of the Fitter's L6 aggregation — the L6 line will populate only with post-v0.6.237 rows. Full-window clean read by 2026-07-03 once the bad rows age out naturally.</div>
   </details>
 </div>
 
@@ -1201,7 +1204,7 @@
     </ul>
     <div style="margin-top:6px;">The L2-overlap hypothesis was empirically confirmed. L2's <code>1/distance² × elevation</code> station weighting for the cove is dominated by the two waterfront Tempests (Willow Rd, Neptune Rd at ~0.1–0.2 mi). L2's "cove bias" is effectively "waterfront bias" by construction. Layering R5's (waterfront − inland) delta on top double-counts the same signal — the cove obs is already waterfront-influenced via L2, so adding more waterfront delta pushes the forecast AWAY from the obs.</div>
     <div style="margin-top:6px;"><strong>Decision (global R5, retired 2026-06-17):</strong> <code>r5_audit.py</code>'s held-out test of R5 applied across the full pipeline showed it makes cove temp 20–22% worse — L2's waterfront-weighted station blend already captures the signal, so layering R5 on top double-counts. That global formulation stays retired.</div>
-    <div style="margin-top:6px;"><strong>Current status (L6 — cove correction, shipped 2026-06-26):</strong> <code>cove_correction.py</code> is live — applies a per-tick (wind × sb × hour) Δ°F to <code>corrected_temperature</code> at all leads, scope-limited to the cove output. Narrower than the retired global R5: the lookup table is the bidirectional gradient (positive on S-half sea-breeze days, negative on morning offshore flow), not a network-wide bias. Cleared a 2-read confirmation gate on <code>r5_cove_analysis.py</code> (06-25 SHIP + 06-26 SHIP, both regime tests PASS). <code>ENABLED = True</code> as of v0.6.231. The G1 card below shows the live Δ°F per regime.</div>
+    <div style="margin-top:6px;"><strong>Current status (L6 — microclimate correction, shipped 2026-06-26):</strong> <code>cove_correction.py</code> is live — applies a per-lead Δ°F to each forecast lead of <code>corrected_temperature</code>, with the Δ for lead <em>i</em> looked up against the forecast regime at lead <em>i</em> (forecast wind direction, parsed local hour, heuristic sb_active). Per-lead replaced an initial v0.6.231 implementation that applied the current-tick Δ to all 48 leads (wrong at distant leads when the table swing crossed zero); the fix shipped in v0.6.237. Lookup tables remain the bidirectional gradient (positive on S-half sea-breeze, negative on 06–13 EDT offshore flow). Cleared a 2-read confirmation gate on <code>r5_cove_analysis.py</code> (06-25 SHIP + 06-26 SHIP, both regime tests PASS). <code>ENABLED = True</code> as of v0.6.231. Full diagnostics in <a href="#sec-layer6">Layer 6</a>.</div>
     <div style="margin-top:6px;">One niche subtlety in the breakdown: long-lead (24-47h) sea-breeze forecasts get +7.85% MAE improvement with R5. At long leads, L2's τ=4h decay has long since faded, so R5 has something L2 doesn't. Not worth shipping a conditional correction for, but documented.</div>
   </div>
   <div id="status-cove-gradient" class="status" hidden></div>
@@ -4160,8 +4163,13 @@ const COVE_HOUR_DELTA_SB_OFF = {
   0:+0.5, 1:+0.4, 2:+0.2, 3:+0.2, 4:+0.3, 5:+0.1, 6:-0.2, 7:-0.3, 8:-0.9, 9:-1.6, 10:-2.9, 11:-3.2,
   12:-3.7, 13:-2.9, 14:-3.0, 15:-1.9, 16:-1.6, 17:-1.1, 18:-0.3, 19:+0.3, 20:+0.5, 21:+0.2, 22:+0.1, 23:+0.3,
 };
-// Approx flip timestamp — update if the ENABLED flag is ever toggled again.
-const L6_ENABLED_AT = "2026-06-26T07";
+// Per-lead-correct L6 start time. The initial L6 ship (06-26 ~08:00) applied
+// the current-tick Δ uniformly to all 48 leads, which broke the "L4 only
+// (reconstructed)" math here because subtracting today's lookup Δ from a
+// pre-fix ambient_t doesn't recover the original L4 value. Anchor on the
+// per-lead deploy (v0.6.237 at 17:19 EDT) so the 6d evaluation only uses
+// rows whose ambient_t actually equals L4 + lookup(per-lead-regime).
+const L6_ENABLED_AT = "2026-06-26T17:19";
 
 function computeL6Delta(windDir, sbActive, hourLocal) {
   if (windDir == null || hourLocal == null) return 0;
@@ -4189,7 +4197,14 @@ function renderL6Live(wx) {
   const c = wx && wx.cove_correction;
   if (!c) { showStatus("status-l6-live", "No cove_correction in weather_data.json."); return; }
   const r = c.regime || {};
+  const s = c.per_lead_delta_summary || {};
   const dCol = c.candidate_delta_f > 0 ? '#fb7c5c' : (c.candidate_delta_f < 0 ? '#7ec8ff' : '#888');
+  const fmtΔ = v => v == null ? '—' : (v >= 0 ? '+' : '') + Number(v).toFixed(2) + '°F';
+  const summaryRow = (s.min != null || s.max != null || s.mean != null)
+    ? `
+        <div style="color:var(--text-secondary);">Per-lead Δ range (48h)</div>
+        <div>${fmtΔ(s.min)} → ${fmtΔ(s.max)} &nbsp;<span style="opacity:0.65;">mean ${fmtΔ(s.mean)}</span></div>`
+    : '';
   grid.innerHTML = `
     <div class="card" style="padding:14px;">
       <h3 style="margin:0 0 10px;"><span class="name">Current cove correction</span></h3>
@@ -4200,10 +4215,11 @@ function renderL6Live(wx) {
         <div>${r.sb_active ? 'active' : 'inactive'}</div>
         <div style="color:var(--text-secondary);">Local hour</div>
         <div>${r.hour_local == null ? '—' : (String(r.hour_local).padStart(2,'0') + ':00')}</div>
-        <div style="color:var(--text-secondary);">Lookup branch</div>
+        <div style="color:var(--text-secondary);">Lookup branch (now)</div>
         <div>${r.sb_active ? '_DELTA_BY_OCTANT (sb-active)' : '_HOUR_DELTA_SB_OFF (sb-off)'}</div>
-        <div style="color:var(--text-secondary);">Δ°F applied</div>
+        <div style="color:var(--text-secondary);">Δ°F now (lead 0)</div>
         <div style="font-weight:600;color:${dCol};">${c.candidate_delta_f >= 0 ? '+' : ''}${c.candidate_delta_f.toFixed(1)}°F</div>
+        ${summaryRow}
         <div style="color:var(--text-secondary);">ENABLED</div>
         <div>${c.applied ? '<span style="color:#4ad29a;font-weight:600;">true</span>' : '<span style="color:#888;">false</span>'}</div>
       </div>

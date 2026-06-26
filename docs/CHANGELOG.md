@@ -1,6 +1,18 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.239 • June 26, 2026</strong></summary>
+
+- Debug page L6 audit pass — make all L6 text reflect the per-lead application that shipped earlier today (v0.6.237). Updates:
+  - Layer 6 section "How L6 works" methodology now describes per-lead projection (forecast wind dir + parsed local hour + heuristic sb_active), why per-lead matters (uniform-Δ implementation was wrong by 3–5 °F at distant leads), and where L6 is evaluated (both 6d and the Forecast Accuracy chart, with the pre-deploy contamination called out and the natural 7-day clean-out date).
+  - 6a "Live correction" card adds a "Per-lead Δ range (48h)" row from `weather_data.cove_correction.per_lead_delta_summary` so you can see at a glance whether the per-lead projection is producing the expected spread, not just the current-tick Δ.
+  - 6d "L6 evaluation" anchors `L6_ENABLED_AT` on the per-lead deploy timestamp (17:19 EDT) so the L4 reconstruction is honest — subtracting today's lookup Δ from ambient_t only works against the per-lead-correct era.
+  - Production stack list entry, cove R5 section's "Current status" block, and the "Since last curation" block all rotated to match.
+  - Status section's "How to read the rest of this page" text updated to "Layer sections (L1–L4 and L6)" — was stuck at L1–L4 since before L6 shipped.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.238 • June 26, 2026</strong></summary>
 
 - Fitter L6 filter: pairs whose snapshot was generated between the L6 ship (06-26 ~08:00) and the per-lead fix (v0.6.237 deploy at 06-26 17:19 EDT) carry an `error_l6` from the old uniform-Δ implementation that applied the current-tick Δ to all 48 leads. Filter those rows out of the L6 per-layer aggregation by `run_time` so the Forecast Accuracy chart shows only per-lead-correct era. Remove the guard once those rows age out of the 7-day window (~2026-07-03).
