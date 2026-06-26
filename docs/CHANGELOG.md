@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.237 • June 26, 2026</strong></summary>
+
+- **L6 per-lead application.** `cove_correction.py` previously applied the current-tick Δ°F to all 48 forecast leads — wrong by 3–5°F at distant leads when the regime swing crossed zero (e.g. applying noon's −3.7°F to a midnight lead). Now each forecast lead gets the Δ°F appropriate to that lead's projected regime: forecast wind direction from `hourly.wind_direction[i]`, local hour parsed from `hourly.times[i]`, and a heuristic `sb_active` (on in 13–18 EDT with S-half wind, off otherwise — coarser than the live detector but uses only forecast wind dir). `weather_data.cove_correction` now also includes a `per_lead_delta_summary` block (min/max/mean Δ) so the L6 chart can show the spread. Live verification: range −3.7 to +2.0 across the 48-hour horizon.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.236 • June 26, 2026</strong></summary>
 
 - Status section now uses `<h2 class="section" id="sec-status">` so its header matches the Layer section headers and inherits the same click-to-collapse behavior. Each of the six sub-boxes (Production stack, Gated off, Stage 2 audits, Retired, Next scheduled decisions, Open architectural questions) is now an individual `<details>` collapsible. Defaults: Production stack, Gated off, Next scheduled decisions are open; Stage 2 audits, Retired, Open architectural questions are closed so the at-a-glance view leads with actionable state rather than reference material.

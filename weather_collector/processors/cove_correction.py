@@ -92,23 +92,68 @@ def compute_cove_correction(wind_dir_deg, sb_active, hour_local):
         return _HOUR_DELTA_SB_OFF.get(hour_local, 0.0)
 
 
-def stamp_cove_correction(weather_data):
-    """Compute the candidate cove correction for current conditions and
-    stamp it on weather_data. Does NOT modify forecast arrays (Phase 1).
+def _sb_active_forecast(hour_local, wind_dir_deg):
+    """Heuristic forecast of sb_active at a future hour.
 
-    When ENABLED is flipped to True, the corrected_temperature array will
-    have the per-hour correction applied. For now the candidate is just
-    logged for the debug page and silent validation.
+    The live sb detector reads wind speed, temperature gradient, and other
+    fields we don't have for forecast hours — only forecast wind direction.
+    Proxy: sea breeze typically fires 13–18 EDT with S-half wind direction
+    (SE / S / SW). Off otherwise. Coarser than the live detector but adequate
+    for projecting the regime forward to label which lookup branch each
+    forecast lead should use.
+    """
+    if hour_local is None or wind_dir_deg is None:
+        return False
+    if not (13 <= hour_local <= 18):
+        return False
+    return _octant(wind_dir_deg) in {"S", "SE", "SW"}
+
+
+def stamp_cove_correction(weather_data):
+    """Stamp `weather_data["cove_correction"]` with the current regime + Δ,
+    and when ENABLED apply a per-lead Δ°F to corrected_temperature.
+
+    Per-lead application (v0.6.237+): each forecast lead is corrected with
+    the Δ°F appropriate to *that* lead's projected regime (forecast wind
+    direction + hour-of-day + heuristic sb_active), not the current-tick Δ
+    applied uniformly across all 48 leads. The old single-Δ behavior was
+    wrong by 3–5 °F at distant leads when the regime swing in the lookup
+    tables crossed zero (e.g. applying a noon −3.7 °F to a midnight lead).
     """
     current = weather_data.get("current") or {}
     sb = weather_data.get("sea_breeze") or {}
+    hourly = weather_data.get("hourly") or {}
 
+    # Current-tick regime — used for the candidate stamp (what's being applied
+    # to the displayed "now" temperature).
     wind_dir = current.get("wind_direction")
     sb_active = bool(sb.get("active"))
     now_local = datetime.now(TZ)
     hour_local = now_local.hour
-
     delta = compute_cove_correction(wind_dir, sb_active, hour_local)
+
+    # Per-lead Δ°F array, parallel to hourly["corrected_temperature"].
+    # Falls back to the current-tick Δ for leads where forecast wind dir or
+    # timestamp is missing.
+    times = hourly.get("times") or []
+    fc_wind_dir = hourly.get("wind_direction") or []
+    per_lead_deltas = []
+    for i, t in enumerate(times):
+        try:
+            h_i = int(str(t)[11:13])
+        except (TypeError, ValueError, IndexError):
+            h_i = hour_local
+        wd_i = fc_wind_dir[i] if i < len(fc_wind_dir) and fc_wind_dir[i] is not None else wind_dir
+        sb_i = _sb_active_forecast(h_i, wd_i)
+        per_lead_deltas.append(compute_cove_correction(wd_i, sb_i, h_i))
+
+    summary = {}
+    if per_lead_deltas:
+        summary = {
+            "min":  round(min(per_lead_deltas), 2),
+            "max":  round(max(per_lead_deltas), 2),
+            "mean": round(sum(per_lead_deltas) / len(per_lead_deltas), 2),
+        }
 
     weather_data["cove_correction"] = {
         "candidate_delta_f": round(delta, 2),
@@ -119,15 +164,15 @@ def stamp_cove_correction(weather_data):
             "sb_active": sb_active,
             "hour_local": hour_local,
         },
+        "per_lead_delta_summary": summary,
         "note": (
             "Candidate cove correction from R5 lookup; gated OFF."
             if not ENABLED
-            else "L6 cove correction applied to corrected_temperature."
+            else "L6 cove correction applied per-lead to corrected_temperature."
         ),
     }
 
     if ENABLED:
-        hourly = weather_data.get("hourly") or {}
         ct = hourly.get("corrected_temperature")
         if isinstance(ct, list) and ct:
             # Snapshot the pre-cove L4 array so the per-layer accuracy chart
@@ -135,11 +180,13 @@ def stamp_cove_correction(weather_data):
             # reads this as the l4 layer; the post-cove array (assigned just
             # below) is captured as l6.
             hourly["corrected_temperature_post_l4"] = list(ct)
-            # Apply the same delta to all leads — for now. A more honest
-            # implementation would project the regime forward (which wind
-            # octant is expected at each lead hour?) but that's noise on
-            # noise without forecast wind state.
-            hourly["corrected_temperature"] = [
-                round(v + delta, 1) if v is not None else None
-                for v in ct
+            n = min(len(ct), len(per_lead_deltas))
+            new_ct = [
+                round(ct[i] + per_lead_deltas[i], 1) if ct[i] is not None else None
+                for i in range(n)
             ]
+            # Preserve any trailing leads beyond what we had forecast wind for
+            # by leaving them at L4 (no L6 contribution).
+            if len(ct) > n:
+                new_ct.extend(ct[n:])
+            hourly["corrected_temperature"] = new_ct
