@@ -699,22 +699,18 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Status — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-06-26 v0.6.235 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-06-27 v0.6.245 · click any sub-box header to collapse it.</div>
 
   <div class="since-last-curation" style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-26, v0.6.221 → v0.6.238)</div>
+    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-27, v0.6.239 → v0.6.245)</div>
     <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>L6 — microclimate correction (temperature) shipped</strong> — <code>cove_correction.py</code> ENABLED=True after 2-read confirmation gate cleared (06-25 + 06-26), v0.6.231</li>
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> L6 ordering fix — cove now sits AFTER L4 in pair log + snapshot (was silently absorbed into L2 column), v0.6.232</li>
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>L6 per-lead application</strong> — initial impl applied current-tick Δ uniformly to all 48 leads; fix projects regime forward per lead (forecast wind dir + parsed hour + heuristic sb), v0.6.237</li>
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Fitter L6 row filter — pair rows from the broken-impl window (06-26 08:00 → 17:19) excluded from L6 aggregation by snapshot run_time; guard removed once they age out ~07-03, v0.6.238</li>
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Debug page L6 section (6a–6d) + L6 line on Forecast Accuracy chart for the t card + consistent layer naming (L2 aggregate-bias / L3 lead-decay / L4 diurnal / L5 synoptic-regime / L6 microclimate), v0.6.230, v0.6.235</li>
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Status section restyled as h2.section with individually collapsible sub-boxes, v0.6.236</li>
-      <li><span style="color:#7090a0;font-weight:600;">⚙</span> Analysis digest pipeline + divergence report + history-aware streak counter (<code>analysis/runlog/</code>), v0.6.225–v0.6.229</li>
-      <li><span style="color:#7090a0;font-weight:600;">⚙</span> Walk-forward L3/L4 default cutoff raised from 2d → 10d (2d window is regime-fragile), v0.6.226</li>
-      <li><span style="color:#7090a0;font-weight:600;">⚙</span> Collector <code>?fit=1</code> bypass to trigger Decay-Fitter outside 03:07 / 15:07 windows, v0.6.238</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>L6 conditional audit + S1 column</strong> — L6 verdict surfaced in <code>conditional_audits</code>; first Fitter cycle landed with n=4 insufficient_data, v0.6.240</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Debug page L6 visibility — TOC chip, methodology copy, temperature badge, v0.6.241</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> L6 prose accuracy — 06-13 EDT/offshore → 09-16 EDT/sb-inactive (matches lookup-table semantics), v0.6.242</li>
+      <li><span style="color:#7090a0;font-weight:600;">⚙</span> ws L3 long-lead regression queued in Open architectural questions — L3 makes ws +20-31% worse at leads 18-47h while wg L3 helps -15 to -22% same band; needs walkforward per-band rollup before drop, v0.6.243</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Debug page L6 audit text added (v0.6.239); paired-L4 baseline column added v0.6.244 then pulled v0.6.245 (inconsistent with how L3/L4 launches were handled — replaced with a one-line note above the legend)</li>
     </ul>
-    <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Pipeline delta: 6 → 5 active Stage 1 candidates (cove off the gated list, now in L6). Cluster-spread re-audit ~2026-06-27; walk-forward L3/L4 #4 + Stage 1 batch re-read 2026-06-29. L6 first clean Fitter read available now (n grows over the next ~24h as fresh pairs accumulate); full 7-day window clean by 2026-07-03.</div>
+    <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Pipeline delta: still 5 active Stage 1 candidates. Walk-forward L3/L4 #4 + Stage 1 batch re-read 2026-06-29. L6 still building toward its first clean read — n=4 as of 2026-06-27; full 7-day window clean by 2026-07-03.</div>
   </div>
 
   <div class="meta-line" style="margin-top:12px;"><strong>One-line summary:</strong> 5-layer correction stack in production. L1 raw HRRR → L2 aggregate-bias correction (Kalman-blended local network: temp, humidity, pressure, wind, cloud) → L3 lead-decay correction (per-lead-hour) → L4 diurnal correction (hour-of-day) → L6 microclimate correction (temperature, conditional on wind octant × sea-breeze × hour). Every "current conditions" card reads the L1→L6-corrected hourly[0] value. L5 synoptic-regime correction (solar) built, gated. C1 confidence layer (first non-MAE-reducing output — named C-class to distinguish from L-class correction layers that change forecast values) built with multi-axis support: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence. Gated pending calibration audit. R2 state-stratified accuracy and R6 regime-transition penalty audits run every Fitter cycle. R3 (derived humidity), R4 (HRRR-GFS spread), R5 (cove cross-current global formulation) retired.</div>
@@ -766,9 +762,9 @@
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>Daily through mid-July:</strong> L5 promotion gate re-run. Flip <code>ENABLED</code> on 7×SHIP cutoffs. 06-24 estimate was retired 06-21 after the post-refit gate held at 3×SHIP / 4×HOLD; current data has too many trailing HOLD cutoffs in the 7-window to clear before early-to-mid July even on an all-SHIP run from here.</li>
         <li><strong>2026-06-29 (Mon):</strong> Walk-forward L3/L4 re-run #4. Last read (06-22) showed 2d window flagged ws/wg L3 drops but 5d/10d diagnostic windows reinstated wind L3 wins (ws -26%, wg -35% at 10d) — diagnosed as 2d-window artifact. ch L3+L4 + cm L3 stable across 3 reads. Wind L4 dead at all windows (2 consecutive reads agreeing; still below 7-window gate). No whitelist edit.</li>
-        <li><strong>2026-06-26 (Fri):</strong> Walk-forward read on cc/cl L3/L4 inclusion under KBVY-blended obs. 7+ days of dual-source pair data accumulated by then. Confirmation read 2026-07-03 before editing <code>L3_FIELDS</code> / <code>L4_FIELDS</code>.</li>
-        <li><strong>2026-06-26 (Fri):</strong> C1 calibration audit (single-axis + v2 multi-axis). Calibration metric — does the claimed band contain truth at the claimed rate. Multi-axis cells need ~155k joined pairs to clear the n≥200 floor. Honest calibration → flip <code>confidence_layer.ENABLED=True</code>.</li>
-        <li><strong>2026-06-26 (Fri):</strong> KBOS-vs-KBVY cloud disagreement smoke test. Does inter-source σ predict cloud-field |error|? If alive, becomes a 4th C1 axis (C1d).</li>
+        <li><strong>2026-06-27 (Sat) — DONE:</strong> Walk-forward read on cc/cl L3/L4 inclusion under KBVY-blended obs. No additions; instead the validator wants to <em>drop</em> existing fields — L3 pp drop (GATED 2/7), L4 cc drop (GATED 3/7). Next read 2026-06-29 (Mon).</li>
+        <li><strong>2026-06-27 (Sat) — DONE:</strong> C1 calibration audit (single-axis + v2 multi-axis). Legacy verdict <strong>HOLD</strong> — pass rate 47.92% (&lt;75% threshold), 23 CALIBRATED / 25 DRIFTED. Re-curate to absorb the drift, then re-deploy. v2 multi-axis <strong>DEFERRED</strong> to ~2026-07-04 (cluster_spread log still accumulating). <code>confidence_layer.ENABLED</code> stays False.</li>
+        <li><strong>Not in digest:</strong> KBOS-vs-KBVY cloud disagreement smoke test. Either not built yet or named differently — needs investigation before next batch.</li>
       </ul>
     </details>
 
