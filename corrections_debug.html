@@ -805,6 +805,7 @@
       <li><strong>Lead decay</strong> (light blue): adds Layer 3 — a historical per-lead bias correction learned from the pair log. Different bias for each lead hour: "this model tends to be 2°F too cool at lead 6, 1°F too warm at lead 12," etc.</li>
       <li><strong>Diurnal</strong> (bright blue): adds Layer 4 — a hour-of-day bias correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). For every field except temperature, this is the final line.</li>
       <li><strong>Microclimate</strong> (mint green): adds Layer 6 — a per-lead Δ°F that captures the cove's microclimate via a waterfront-vs-inland spatial gradient. Only present on the temperature card; other fields have no L6 line by construction. For temperature, this is the final line — what users actually see.</li>
+      <li><strong>Diurnal (paired with L6)</strong> (blue, dashed, t card only): L4's MAE restricted to the same row subset that has <code>error_l6</code>. While L6's history is still shorter than the 7-day window (it shipped 2026-06-26), the regular Diurnal line averages over rows L6 wasn't applied to, so it's not a fair baseline for L6. <strong>Compare Microclimate to this dashed line for the honest read.</strong> Self-retires once L6 has a full 7d (~2026-07-03) — paired and unpaired L4 will converge.</li>
     </ul>
     <div class="meta-line"><strong>Why lines often lie on top of each other.</strong> Two different reasons, and the badges above each chart tell you which:
       <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
@@ -1935,6 +1936,11 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // out for every other field so the column / legend / line don't render
     // where they'd never have data.
     { key: "l6", label: "Microclimate (L6)",               shortLabel: "Microclimate",   color: "rgba(74,210,154,1)",     dash: [] },
+    // L4 baseline restricted to the same row subset that has error_l6 — gives
+    // the t card an apples-to-apples comparison for L6 while L6 is still
+    // catching up to L4's 7-day history. _layersFor() filters this to t only.
+    // Self-retires once full-window L6 data is in (~2026-07-03).
+    { key: "l4_paired_l6", label: "Diurnal (paired with L6)", shortLabel: "Diurnal (paired)", color: "rgba(74,163,255,0.7)", dash: [6,4] },
   ];
 
   // v2: per-band MAE summary. Bands match the walk-forward validator buckets.
@@ -2004,7 +2010,10 @@ function renderAccuracySection(tsDoc, wxDoc) {
   // Per-field layer set: drop l6 for fields where it doesn't apply (it would
   // render as an empty column / legend entry on every non-temperature card).
   const _layersFor = (fieldKey) =>
-    LAYER_LINES.filter(l => l.key !== "l6" || fieldKey === "t");
+    LAYER_LINES.filter(l => {
+      if (l.key === "l6" || l.key === "l4_paired_l6") return fieldKey === "t";
+      return true;
+    });
 
   const _buildBandTable = (fieldData, fieldKey, decimals) => {
     const rows = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);

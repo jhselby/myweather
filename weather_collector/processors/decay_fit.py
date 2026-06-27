@@ -623,9 +623,19 @@ def fit_decay_corrections():
                     e_l4_aud = row.get("error_l4")
                     e_l6_aud = row.get("error_l6")
                     if e_l4_aud is not None and e_l6_aud is not None:
-                        l6_audit_abs_l4 += abs(float(e_l4_aud))
+                        e_l4_f = float(e_l4_aud)
+                        l6_audit_abs_l4 += abs(e_l4_f)
                         l6_audit_abs_l6 += abs(float(e_l6_aud))
                         l6_audit_n      += 1
+                        # Paired L4 baseline for the t card: same row subset
+                        # that L6 was applied to, so the chart can compare
+                        # apples-to-apples instead of (L4 over 7d) vs (L6
+                        # over post-VALID slice). Self-retires once the broken-
+                        # impl rows age out and L6 has a full 7d (~2026-07-03).
+                        key_p = (field, lead_h, "l4_paired_l6")
+                        per_layer_abs[key_p]    += abs(e_l4_f)
+                        per_layer_signed[key_p] += e_l4_f
+                        per_layer_n[key_p]      += 1
                 for lyr in ("l1", "l2", "l3", "l4", "l6"):
                     if lyr == "l6" and run_time < L6_VALID_FROM:
                         continue
@@ -1057,7 +1067,7 @@ def fit_decay_corrections():
         per_layer_mae_by_lead[f]  = {}
         per_layer_bias_by_lead[f] = {}
         per_layer_n_by_lead[f]    = {}
-        for lyr in ("l1", "l2", "l3", "l4", "l6"):
+        for lyr in ("l1", "l2", "l3", "l4", "l6", "l4_paired_l6"):
             mae_arr  = [None] * LEAD_BINS
             bias_arr = [None] * LEAD_BINS
             n_arr    = [0]    * LEAD_BINS
