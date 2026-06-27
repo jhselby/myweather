@@ -169,5 +169,11 @@ def append_forecast_snapshot(hourly, derived=None):
         pt = derived.get("pressure_trend_hpa_3h")
         if pt is not None:
             snap_entry["pressure_trend_hpa_3h"] = round(float(pt), 2)
+        sigma = derived.get("cloud_inter_source_sigma")
+        if sigma is not None:
+            snap_entry["cloud_inter_source_sigma"] = round(float(sigma), 2)
+        n_src = derived.get("cloud_n_sources")
+        if n_src is not None:
+            snap_entry["cloud_n_sources"] = int(n_src)
     snapshots.append(snap_entry)
     upload_json({"snapshots": snapshots}, GCS_PATH, "forecast_log.json")

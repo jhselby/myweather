@@ -117,6 +117,10 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
         pt = snap.get("pressure_trend_hpa_3h")
         if pt is not None:
             state_fc["pressure_trend_hpa_3h"] = pt
+        # C1d candidate: inter-source σ from the KBOS+KBVY cloud blend at
+        # snapshot run time. Joins onto every pair row from this snapshot.
+        cloud_sigma = snap.get("cloud_inter_source_sigma")
+        cloud_n_src = snap.get("cloud_n_sources")
         # v0.6.38 regime labels — two orthogonal axes per state. flow is
         # pure direction (which way is the air moving); synoptic is the
         # coastal-flavored pattern (sea breeze, nor'easter, frontal, etc.).
@@ -194,6 +198,10 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                 }
                 if state_fc:  pair["state_fc"]  = state_fc
                 if state_obs: pair["state_obs"] = state_obs
+                if cloud_sigma is not None:
+                    pair["cloud_inter_source_sigma"] = cloud_sigma
+                if cloud_n_src is not None:
+                    pair["cloud_n_sources"] = cloud_n_src
                 pairs.append(pair)
                 continue
             pair = {
@@ -225,6 +233,10 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                         pair[f"error_{lyr}"] = round(float(v) - obs_f, 3)
             if state_fc:  pair["state_fc"]  = state_fc
             if state_obs: pair["state_obs"] = state_obs
+            if cloud_sigma is not None:
+                pair["cloud_inter_source_sigma"] = cloud_sigma
+            if cloud_n_src is not None:
+                pair["cloud_n_sources"] = cloud_n_src
             pairs.append(pair)
     return pairs
 

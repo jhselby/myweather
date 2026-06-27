@@ -764,7 +764,7 @@
         <li><strong>2026-06-29 (Mon):</strong> Walk-forward L3/L4 re-run #4. Last read (06-22) showed 2d window flagged ws/wg L3 drops but 5d/10d diagnostic windows reinstated wind L3 wins (ws -26%, wg -35% at 10d) — diagnosed as 2d-window artifact. ch L3+L4 + cm L3 stable across 3 reads. Wind L4 dead at all windows (2 consecutive reads agreeing; still below 7-window gate). No whitelist edit.</li>
         <li><strong>2026-06-27 (Sat) — DONE:</strong> Walk-forward read on cc/cl L3/L4 inclusion under KBVY-blended obs. No additions; instead the validator wants to <em>drop</em> existing fields — L3 pp drop (GATED 2/7), L4 cc drop (GATED 3/7). Next read 2026-06-29 (Mon).</li>
         <li><strong>2026-06-27 (Sat) — DONE:</strong> C1 calibration audit (single-axis + v2 multi-axis). Legacy verdict <strong>HOLD</strong> — pass rate 47.92% (&lt;75% threshold), 23 CALIBRATED / 25 DRIFTED. Re-curate to absorb the drift, then re-deploy. v2 multi-axis <strong>DEFERRED</strong> to ~2026-07-04 (cluster_spread log still accumulating). <code>confidence_layer.ENABLED</code> stays False.</li>
-        <li><strong>Not in digest:</strong> KBOS-vs-KBVY cloud disagreement smoke test. Either not built yet or named differently — needs investigation before next batch.</li>
+        <li><strong>2026-07-04 (Sat) — DATA ACCUMULATING:</strong> KBOS-vs-KBVY cloud disagreement (C1d candidate). Built v0.6.247 — <code>cloud_obs_blend.py</code> stamps <code>derived.cloud_inter_source_sigma</code>, snapshot writer + pair-log joiner carry it onto each row. <code>analysis/h_cloud_disagreement.py</code> reports INSUFFICIENT until ~5,000 post-wiring rows accumulate (~7 days). First real read on/after 2026-07-04.</li>
       </ul>
     </details>
 

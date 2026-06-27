@@ -127,6 +127,12 @@ def blend_metar_cloud_into_hourly(weather_data, kbos_data, kbvy_data):
         "hour":           hourly["times"][0],
         "fields_applied": applied,
     }
+    # Snapshot-level stamp so forecast_snapshot.py can carry σ onto each
+    # snap_entry, and forecast_error_log.py can attach it to pair rows.
+    # Hypothesis (C1d candidate): inter-source σ predicts cloud-field |error|.
+    derived = weather_data.setdefault("derived", {})
+    derived["cloud_inter_source_sigma"] = round(cc_bias_std, 2)
+    derived["cloud_n_sources"] = n_sources
     cc = next((a for a in applied if a["field"] == "cloud_cover"), None)
     if cc:
         logging.info(
