@@ -798,7 +798,8 @@
       <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
       <li><strong>Aggregate bias</strong> (orange): adds Layer 2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
       <li><strong>Lead decay</strong> (light blue): adds Layer 3 — a historical per-lead bias correction learned from the pair log. Different bias for each lead hour: "this model tends to be 2°F too cool at lead 6, 1°F too warm at lead 12," etc.</li>
-      <li><strong>Diurnal</strong> (bright blue): adds Layer 4 — a hour-of-day bias correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). For every field except temperature, this is the final line.</li>
+      <li><strong>Diurnal</strong> (bright blue): adds Layer 4 — a hour-of-day bias correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). For every field except temperature and solar radiation, this is the final line.</li>
+      <li><strong>Synoptic-regime</strong> (amber): adds Layer 5 — a per-regime W/m² delta on direct solar radiation. The classifier looks at current wind direction, speed, pressure trend, hour, and temp; the regime label keys into a per-regime calibrated delta. Only present on the solar (sr) card; other fields have no L5 line by construction. For solar, this is the final line. Shipped 2026-06-28 v0.6.248 after a 7/7 gate-clear streak; the L5 MAE window is still catching up to L3/L4 until ~2026-07-05 so comparisons against the Diurnal line aren't apples-to-apples until then.</li>
       <li><strong>Microclimate</strong> (mint green): adds Layer 6 — a per-lead Δ°F that captures the cove's microclimate via a waterfront-vs-inland spatial gradient. Only present on the temperature card; other fields have no L6 line by construction. For temperature, this is the final line — what users actually see. <em>Note: L6 shipped 2026-06-26, so its MAE averages over a shorter window than L3/L4 until ~2026-07-03 — comparisons against the Diurnal line aren't apples-to-apples until then.</em></li>
     </ul>
     <div class="meta-line"><strong>Why lines often lie on top of each other.</strong> Two different reasons, and the badges above each chart tell you which:
@@ -1910,6 +1911,8 @@ function renderAccuracySection(tsDoc, wxDoc) {
     if (layerKey === "l2") return L2_ADDITIVE.has(fieldKey) || L2_DIRECT.has(fieldKey);
     if (layerKey === "l3") return l3Fields.has(fieldKey);
     if (layerKey === "l4") return l4Fields.has(fieldKey);
+    // L5 (synoptic-regime solar) is solar-radiation-only.
+    if (layerKey === "l5") return fieldKey === "sr";
     // L6 (cove regime correction) is temperature-only.
     if (layerKey === "l6") return fieldKey === "t";
     return false;
@@ -1926,6 +1929,10 @@ function renderAccuracySection(tsDoc, wxDoc) {
     { key: "l2", label: "Aggregate-bias (L2)",             shortLabel: "Aggregate bias", color: "rgba(200,160,110,1)",    dash: [] },
     { key: "l3", label: "Lead-decay (L3)",                 shortLabel: "Lead decay",     color: "rgba(110,180,235,1)",    dash: [] },
     { key: "l4", label: "Diurnal (L4)",                    shortLabel: "Diurnal",        color: "rgba(74,163,255,1)",     dash: [] },
+    // L5 (synoptic-regime, solar radiation only) — _layersFor() filters this
+    // entry out for every other field so the column / legend / line don't
+    // render where they'd never have data.
+    { key: "l5", label: "Synoptic-regime (L5)",            shortLabel: "Synoptic regime",color: "rgba(255,184,77,1)",     dash: [] },
     // L6 (microclimate, temperature only) — _layersFor() filters this entry
     // out for every other field so the column / legend / line don't render
     // where they'd never have data.
@@ -1981,6 +1988,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
     } else {
       badges.push(`<span class="field-badge inactive">L4 off</span>`);
     }
+    // L5 badge — solar-radiation only; structurally absent from other fields.
+    // Mirrors `_layersFor()` which filters L5 out of the chart legend for
+    // non-solar cards.
+    if (fieldKey === "sr") {
+      badges.push(`<span class="field-badge active">L5 ✓ synoptic</span>`);
+    }
     // L6 badge — temperature only; structurally absent from other fields.
     // Mirrors `_layersFor()` which already filters L6 out of the chart legend
     // for non-temperature cards.
@@ -1999,7 +2012,11 @@ function renderAccuracySection(tsDoc, wxDoc) {
   // Per-field layer set: drop l6 for fields where it doesn't apply (it would
   // render as an empty column / legend entry on every non-temperature card).
   const _layersFor = (fieldKey) =>
-    LAYER_LINES.filter(l => l.key !== "l6" || fieldKey === "t");
+    LAYER_LINES.filter(l => {
+      if (l.key === "l5") return fieldKey === "sr";
+      if (l.key === "l6") return fieldKey === "t";
+      return true;
+    });
 
   const _buildBandTable = (fieldData, fieldKey, decimals) => {
     const rows = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);
