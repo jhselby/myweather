@@ -236,6 +236,7 @@ L6_GATE_HISTORY_PATH = "l6_gate_history.json"
 L6_GATE_WINDOW_DAYS = 7
 L6_GATE_HISTORY_RETENTION_DAYS = 30
 L6_VALID_FROM = "2026-06-26T17:19"  # per-lead deploy; pre-deploy pairs excluded
+L5_VALID_FROM = "2026-06-28T07:05"  # ENABLED=True deploy; pre-deploy sr_l5 rows are absent anyway, this guards the post-fix snapshot window
 L6_AUDIT_MIN_PAIRS = 100             # smaller than L5 (500) — single field
 L6_AUDIT_SHIP_THRESHOLD_PCT = 2.0    # SHIP if L6 beats L4 MAE by ≥2%
 
@@ -626,8 +627,10 @@ def fit_decay_corrections():
                         l6_audit_abs_l4 += abs(float(e_l4_aud))
                         l6_audit_abs_l6 += abs(float(e_l6_aud))
                         l6_audit_n      += 1
-                for lyr in ("l1", "l2", "l3", "l4", "l6"):
+                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6"):
                     if lyr == "l6" and run_time < L6_VALID_FROM:
+                        continue
+                    if lyr == "l5" and run_time < L5_VALID_FROM:
                         continue
                     e = row.get(f"error_{lyr}")
                     if e is None:
@@ -1057,7 +1060,7 @@ def fit_decay_corrections():
         per_layer_mae_by_lead[f]  = {}
         per_layer_bias_by_lead[f] = {}
         per_layer_n_by_lead[f]    = {}
-        for lyr in ("l1", "l2", "l3", "l4", "l6"):
+        for lyr in ("l1", "l2", "l3", "l4", "l5", "l6"):
             mae_arr  = [None] * LEAD_BINS
             bias_arr = [None] * LEAD_BINS
             n_arr    = [0]    * LEAD_BINS

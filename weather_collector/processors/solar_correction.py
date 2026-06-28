@@ -252,6 +252,10 @@ def stamp_solar_correction(weather_data):
         # easy to audit. Refinement: project the regime forward.
         target = hourly.get("direct_radiation")
         if isinstance(target, list) and target:
+            # Preserve pre-L5 array so forecast_snapshot.py can attribute
+            # sr_l4 (post-decay) separately from sr_l5 (post-L5). Same
+            # pattern as corrected_temperature_post_l4 in cove_correction.py.
+            hourly["direct_radiation_post_l4"] = list(target)
             hourly["direct_radiation"] = [
                 round(v + delta, 1) if (v is not None and v >= SUN_UP_THRESHOLD) else v
                 for v in target

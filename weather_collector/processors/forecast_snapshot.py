@@ -81,10 +81,18 @@ def append_forecast_snapshot(hourly, derived=None):
                "l2": hourly.get("cloud_cover_post_l2", []),
                "l3": hourly.get("cloud_cover_post_l3", []),
                "l4": hourly.get("cloud_cover", [])},
+        # Solar: L5 (regime correction) sits AFTER L4 in the stack — same
+        # shape as cove L6 for temperature. When ENABLED, pre-L5 array is
+        # preserved as direct_radiation_post_l4 so l4 stays L4-only; the
+        # post-L5 array (live direct_radiation) is captured as l5. When
+        # disabled, post_l4 is absent and l4 falls back to direct_radiation
+        # (L5 is a no-op in that path).
         "sr": {"l1": hourly.get("raw_direct_radiation", hourly.get("direct_radiation", [])),
                "l2": hourly.get("direct_radiation_post_l2", []),
                "l3": hourly.get("direct_radiation_post_l3", []),
-               "l4": hourly.get("direct_radiation", [])},
+               "l4": hourly.get("direct_radiation_post_l4",
+                                hourly.get("direct_radiation", [])),
+               "l5": hourly.get("direct_radiation", [])},
         "pa": {"l1": hourly.get("raw_precipitation", hourly.get("precipitation", [])),
                "l2": hourly.get("precipitation_post_l2", []),
                "l3": hourly.get("precipitation_post_l3", []),

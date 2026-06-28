@@ -220,10 +220,11 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             # carry no per-layer detail and quietly contribute only to the L4
             # accuracy stats. For wind direction (wd) the per-layer error uses
             # circular angular diff instead of linear subtract.
-            # l6 only present for `t` (cove regime correction). Other fields
-            # have nothing past l4. Iterating ("l1","l2","l3","l4","l6") is
-            # safe because target_hour.get returns None for absent keys.
-            for lyr in ("l1", "l2", "l3", "l4", "l6"):
+            # l5 only present for `sr` (regime-aware solar). l6 only present
+            # for `t` (cove regime correction). Other fields have nothing past
+            # l4. Iterating ("l1","l2","l3","l4","l5","l6") is safe because
+            # target_hour.get returns None for absent keys.
+            for lyr in ("l1", "l2", "l3", "l4", "l5", "l6"):
                 v = target_hour.get(f"{short}_{lyr}")
                 if v is not None:
                     pair[f"forecast_{lyr}"] = round(float(v), 3)
