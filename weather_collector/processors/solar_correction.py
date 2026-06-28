@@ -40,7 +40,7 @@ import pytz
 
 
 TZ = pytz.timezone("America/New_York")
-ENABLED = False  # Flip to True after the 06-22 evaluation passes.
+ENABLED = True  # Shipped 2026-06-28 v0.6.248 after L5 gate cleared 7/7 ship days.
 SUN_UP_THRESHOLD = 50.0  # W/m² — suppress correction below this raw value.
 
 # Mean signed bias (forecast − observed) by (regime × hour_local) cell,
