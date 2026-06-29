@@ -77,6 +77,20 @@ L4_FIELDS = {"ch", "cc"}
 # the field's correction is justified by a different metric (Brier, etc.).
 L3_BRIER_FIELDS = {"pp"}
 
+# Calm-wind L3 skip — gated Stage 2 candidate (2026-06-29).
+# Discovery: l3_regime_lead_analysis.py shows L3 LOSES catastrophically on
+# ws/wg when forecast wind speed at the lead is <3 mph: -19.8% at 0-5h,
+# -45.5% at 6-11h, -70.3% at 12-23h, -68.9% at 24-47h (ws); similar for wg.
+# When forecast wind is ≥3 mph, L3 wins by +5% to +47% across all leads.
+# Hypothesis: L3's lead-decay correction was learned on mixed wind regimes
+# and over-corrects when the model is already predicting calm — the bias
+# it's subtracting was a feature of windy-regime forecasts, not calm-regime
+# forecasts. Skipping L3 on the calm-wind cell preserves the wins elsewhere.
+# Gated OFF here pending Stage 2 audit (shadow data + held-out confirmation).
+CALM_GATE_ENABLED = False
+CALM_GATE_THRESHOLD_MPH = 3.0
+CALM_GATE_FIELDS = {"ws", "wg"}
+
 # Sanity caps on |correction| per field in each field's native units. A
 # pathological fit cannot move the forecast more than this regardless of
 # what decay_corrections.json says.
@@ -338,6 +352,12 @@ def apply_decay_corrections(weather_data, config=None):
 
     applied = 0
     capped = 0
+    calm_skipped = 0
+    # Post-L2 wind speed array, used for the calm-wind L3 gate check on
+    # ws/wg. Read once outside the loop. We gate on the post-L2 value (not
+    # the post-L3 value, since L3 hasn't been applied yet here) because
+    # that's the model's current best estimate of wind at the lead.
+    ws_post_l2 = hourly.get("wind_speed_post_l2") if CALM_GATE_ENABLED else None
     for short, array_name in TARGET_ARRAY.items():
         if short not in l3_fields:
             continue
@@ -353,6 +373,18 @@ def apply_decay_corrections(weather_data, config=None):
             val = arr[h]
             c = per_lead[h]
             if val is None or c is None:
+                continue
+            # Calm-wind L3 skip (gated). Skip the L3 correction at this lead
+            # when the field is ws/wg AND the forecast wind speed at this
+            # lead is below the calm threshold. See CALM_GATE_* constants
+            # above for the discovery + reasoning.
+            if (CALM_GATE_ENABLED
+                    and short in CALM_GATE_FIELDS
+                    and ws_post_l2 is not None
+                    and h < len(ws_post_l2)
+                    and ws_post_l2[h] is not None
+                    and ws_post_l2[h] < CALM_GATE_THRESHOLD_MPH):
+                calm_skipped += 1
                 continue
             try:
                 c = float(c)
