@@ -661,7 +661,8 @@
   <a href="#sec-layer2">L2 Aggregate bias</a>
   <a href="#sec-layer3">L3 Decay</a>
   <a href="#sec-layer4">L4 Diurnal</a>
-  <a href="#sec-layer6">L6 Microclimate</a>
+  <a href="#sec-layer5">L5 Synoptic (sr)</a>
+  <a href="#sec-layer6">L6 Microclimate (t)</a>
   <a href="#sec-research" class="research">Research & Diagnostics</a>
 </nav>
 
@@ -699,17 +700,18 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Status — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-06-28 v0.6.248 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-06-29 v0.6.251 · click any sub-box header to collapse it.</div>
 
   <div class="since-last-curation" style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-28, v0.6.246 → v0.6.248)</div>
+    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-29, v0.6.249 → v0.6.251)</div>
     <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>L5 — synoptic-regime correction (solar) SHIPPED</strong> — <code>solar_correction.ENABLED=True</code> after gate cleared 7/7 ship days, v0.6.248</li>
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> Debug page status refresh — Since-last-curation rolled forward; resolved 06-26 entries (walk-forward, C1 calibration HOLD, KBOS-vs-KBVY infrastructure built), v0.6.246</li>
-      <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>C1d candidate built</strong> — <code>cloud_obs_blend.py</code> stamps inter-source σ, snapshot writer + pair-log joiner carry it; <code>h_cloud_disagreement.py</code> reports SMOKE_ALIVE after 24h (faster than expected), v0.6.247</li>
-      <li><span style="color:#7090a0;font-weight:600;">⚙</span> <strong>Cove/L6 verdict flipped SHIP → HOLD</strong> in <code>r5_cove_analysis</code> (morning offshore cooling regime did not pass threshold); divergence gate 1/2 toward disable. Watching — not acting.</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>L5 attribution fix</strong> — initial ship absorbed L5 into the L4 column (same bug shape as the earlier L6-into-L2). Now preserves <code>direct_radiation_post_l4</code> and emits <code>sr_l5</code> as its own snapshot column. v0.6.249</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>L5 chart + badge wired</strong> — sr card now shows an amber L5 line + column + "L5 ✓ synoptic" badge. v0.6.250</li>
+      <li><span style="color:#4ad29a;font-weight:600;">✓</span> <strong>L5 placeholder section</strong> — Layer 5 header + summary + 5a–5d placeholders landed between L4 and L6 in this curation pass. Full subsection build deferred to the specialists refactor. v0.6.251</li>
+      <li><span style="color:#7090a0;font-weight:600;">⚙</span> <strong>Cove/L6 disable-gate CLEARED 2/2</strong> on 2026-06-29 — <code>r5_cove_analysis</code> second consecutive HOLD verdict. Morning offshore cooling regime mean Δ = -0.67°F vs -1.0°F threshold; sea-breeze regime still passing strongly at +1.69°F. <strong>Holding L6 enabled</strong> pending investigation (likely seasonal attenuation of morning offshore signal as solstice approaches).</li>
+      <li><span style="color:#7090a0;font-weight:600;">⚙</span> <strong>Walk-forward L3/L4 read #4 (2026-06-29):</strong> L3 wants to drop pp + ws (2/7 — ws is new today, streak reset); L4 wants to drop cc (5/7 — 2 reads to clear). No whitelist edits.</li>
     </ul>
-    <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Pipeline delta: 5 → 4 active Stage 1 candidates (L5 shipped). Walk-forward L3/L4 #4 + Stage 1 batch re-read 2026-06-29. L3 gate reset to 1/7 (drop set expanded to pp+ws); L4 drop-cc gate at 4/7. C1d orthogonality script queued for after the budget refresh. L6 full 7-day window clean by 2026-07-03.</div>
+    <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Pipeline delta: L5 shipped + audited. L6 held under cleared disable-gate (decision pending). C1d still SMOKE_ALIVE — orthogonality script queued for post-2026-06-30. Walk-forward L3/L4 re-runs: L4 drop-cc earliest clear 2026-07-03; L3 drop-pp+ws earliest clear 2026-07-06. L5 first clean 7-day audit window closes ~2026-07-05. L6 full 7-day window clean by 2026-07-03.</div>
   </div>
 
   <div class="meta-line" style="margin-top:12px;"><strong>One-line summary:</strong> 5-layer correction stack in production. L1 raw HRRR → L2 aggregate-bias correction (Kalman-blended local network: temp, humidity, pressure, wind, cloud) → L3 lead-decay correction (per-lead-hour) → L4 diurnal correction (hour-of-day) → L6 microclimate correction (temperature, conditional on wind octant × sea-breeze × hour). Every "current conditions" card reads the L1→L6-corrected hourly[0] value. L5 synoptic-regime correction (solar) built, gated. C1 confidence layer (first non-MAE-reducing output — named C-class to distinguish from L-class correction layers that change forecast values) built with multi-axis support: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence. Gated pending calibration audit. R2 state-stratified accuracy and R6 regime-transition penalty audits run every Fitter cycle. R3 (derived humidity), R4 (HRRR-GFS spread), R5 (cove cross-current global formulation) retired.</div>
@@ -759,11 +761,17 @@
     <details open style="border:1px solid #3a3a1f;background:#191910;padding:10px;border-radius:6px;">
       <summary style="color:#e0d472;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">⏳ Next scheduled decisions (dated)</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>Daily through mid-July:</strong> L5 promotion gate re-run. Flip <code>ENABLED</code> on 7×SHIP cutoffs. 06-24 estimate was retired 06-21 after the post-refit gate held at 3×SHIP / 4×HOLD; current data has too many trailing HOLD cutoffs in the 7-window to clear before early-to-mid July even on an all-SHIP run from here.</li>
-        <li><strong>2026-06-29 (Mon):</strong> Walk-forward L3/L4 re-run #4. Last read (06-22) showed 2d window flagged ws/wg L3 drops but 5d/10d diagnostic windows reinstated wind L3 wins (ws -26%, wg -35% at 10d) — diagnosed as 2d-window artifact. ch L3+L4 + cm L3 stable across 3 reads. Wind L4 dead at all windows (2 consecutive reads agreeing; still below 7-window gate). No whitelist edit.</li>
-        <li><strong>2026-06-27 (Sat) — DONE:</strong> Walk-forward read on cc/cl L3/L4 inclusion under KBVY-blended obs. No additions; instead the validator wants to <em>drop</em> existing fields — L3 pp drop (GATED 2/7), L4 cc drop (GATED 3/7). Next read 2026-06-29 (Mon).</li>
-        <li><strong>2026-06-27 (Sat) — DONE:</strong> C1 calibration audit (single-axis + v2 multi-axis). Legacy verdict <strong>HOLD</strong> — pass rate 47.92% (&lt;75% threshold), 23 CALIBRATED / 25 DRIFTED. Re-curate to absorb the drift, then re-deploy. v2 multi-axis <strong>DEFERRED</strong> to ~2026-07-04 (cluster_spread log still accumulating). <code>confidence_layer.ENABLED</code> stays False.</li>
-        <li><strong>2026-07-04 (Sat) — DATA ACCUMULATING:</strong> KBOS-vs-KBVY cloud disagreement (C1d candidate). Built v0.6.247 — <code>cloud_obs_blend.py</code> stamps <code>derived.cloud_inter_source_sigma</code>, snapshot writer + pair-log joiner carry it onto each row. <code>analysis/h_cloud_disagreement.py</code> reports INSUFFICIENT until ~5,000 post-wiring rows accumulate (~7 days). First real read on/after 2026-07-04.</li>
+        <li><strong>2026-06-28 (Sun) — DONE:</strong> L5 promotion gate cleared 7/7 ship days; <code>solar_correction.ENABLED=True</code>. Attribution fix + chart wiring + placeholder section landed by 2026-06-29.</li>
+        <li><strong>2026-06-27 (Sat) — DONE:</strong> Walk-forward read on cc/cl L3/L4 inclusion under KBVY-blended obs. No additions; validator instead wants to <em>drop</em> existing fields. (See 06-29 read below for latest counts.)</li>
+        <li><strong>2026-06-27 (Sat) — DONE:</strong> C1 calibration audit (single + v2). Legacy <strong>HOLD</strong> at 47.92% pass rate. v2 multi-axis <strong>DEFERRED</strong> to ~2026-07-04. <code>confidence_layer.ENABLED</code> stays False.</li>
+        <li><strong>2026-06-28 (Sun) — DONE:</strong> C1d (KBOS-vs-KBVY cloud disagreement) returned <strong>SMOKE_ALIVE</strong> after only 24h of post-wiring rows. Next: write <code>h_cloud_disagreement_orthogonality.py</code> before promoting. Queued for post-2026-06-30.</li>
+        <li><strong>2026-06-29 (Mon) — DONE:</strong> Walk-forward L3/L4 read #4. L3 wants to drop pp + ws (gate 2/7 — ws is new today, streak reset). L4 wants to drop cc (gate 5/7 — 2 reads to clear). No whitelist edits.</li>
+        <li><strong>2026-06-29 (Mon) — HELD:</strong> Cove/L6 disable-gate cleared 2/2 (r5_cove_analysis second consecutive HOLD). Holding L6 enabled while investigating; morning offshore regime weakening (-0.67°F vs -1.0°F threshold) likely seasonal, sea-breeze regime still strong (+1.69°F).</li>
+        <li><strong>2026-07-03 (Fri) — UPCOMING:</strong> Earliest possible L4 drop-cc gate clear (5/7 + 2 more SHIP-direction reads). Also: L6 full 7-day pair window clean of broken-impl rows; L6 disable-gate maturity check if held this long.</li>
+        <li><strong>2026-07-04 (Sat) — UPCOMING:</strong> C1 v2 multi-axis calibration audit first eligible (cluster_spread log accumulates over ~7 days from build).</li>
+        <li><strong>2026-07-05 (Sun) — UPCOMING:</strong> L5 first clean 7-day audit window closes — first real Fitter audit of L5 vs L4 on solar.</li>
+        <li><strong>2026-07-06 (Mon) — UPCOMING:</strong> Earliest possible L3 drop-pp+ws gate clear (currently 2/7).</li>
+        <li><strong>Watch:</strong> L6 cove disable-gate. Held but in a cleared state; each subsequent r5_cove_analysis HOLD verdict reinforces the case; a single SHIP flips the gate back. Decision point if signal stays weak through ~2026-07-03.</li>
       </ul>
     </details>
 
@@ -771,7 +779,9 @@
       <summary style="color:#a89ce0;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">🧪 Open architectural questions</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>L2-as-observation-only:</strong> Remove L2 from forecast pipeline; keep L2 only as training target for L3/L4/L5. Open question; not today's work. See memory note.</li>
-        <li><strong>ws L3 long-lead regression:</strong> Per-lead chart shows L3 makes wind speed +20-31% worse at leads 18-47h while wg L3 helps -15 to -22% over the same band. Walkforward validator's per-field aggregate hides this. Queued (2026-06-26): add per-band rollup to the walkforward output, then drop ws from L3 or wire a per-(field, lead_band) whitelist in <code>decay_apply.py</code>. Not today's work. See <code>project_ws_l3_long_lead_regression</code> memory note.</li>
+        <li><strong>ws L3 long-lead regression:</strong> Per-lead chart shows L3 makes wind speed +20-31% worse at leads 18-47h while wg L3 helps -15 to -22% over the same band. Walkforward validator's per-field aggregate has now picked up ws — drop-pp+ws gate at 2/7 on 2026-06-29. Per-(field, lead_band) whitelist in <code>decay_apply.py</code> is still the more refined fix if a flat drop turns out to over-shoot. See <code>project_ws_l3_long_lead_regression</code> memory note.</li>
+        <li><strong>Per-regime gating for L6 (cove):</strong> Today's r5_cove_analysis (2026-06-29) showed sea-breeze regime passing strongly (+1.69°F, n=353) while morning offshore failed (-0.67°F vs -1.0°F threshold). Disable-gate cleared 2/2 in the disable direction but we're holding because killing the whole layer kills the sea-breeze win too. Open: should L6 apply per-regime instead of all-or-nothing, and should the lookup table refit with recency weighting so seasonal drift (morning marine cooling attenuating toward solstice) gets absorbed instead of fighting the audit? Investigation deferred to post-2026-06-30.</li>
+        <li><strong>Specialists vs layers naming:</strong> L5 and L6 are field-specific specialists (sr-only, t-only), not general-purpose layers like L2/L3/L4. The "Layer N" naming will grow noisy with every new specialist. Plan: group field-specific correctors under a parent "Field-specific corrections (specialists)" section; keep L_N internally for stack order but use plain-language names in headings. Restructure deferred to post-2026-06-30. See <code>project_specialists_vs_layers</code> memory note.</li>
       </ul>
     </details>
 
@@ -779,7 +789,7 @@
 
   <div class="meta-line" style="margin-top:12px;border-top:1px solid #2a3a52;padding-top:10px;">
     <strong>How to read the rest of this page.</strong>
-    Forecast accuracy section is the bottom-line MAE per layer per field (the green box on each chart = what users actually see). Layer sections (L1–L4 and L6) each show the live state of that layer and the diagnostics behind it. Research &amp; Diagnostics (bottom) holds R2 (state-stratified accuracy) and R6 (regime-transition penalty, C1a's input signal) under "Active hypotheses"; the curated Stage-1 Backlog list (8 candidates grouped A/B/C); operational tools G1/S1/B1/F1 (gated candidates, shadow whitelist, backtest sweep, frontal events); and a Retired collapsible (R3 derived humidity, R4 HRRR/GFS spread, R5 cove cross-current — all ruled out by audits). The shadow tuner now carries a 7-cycle promotion-gate counter (v0.6.147) — when an unchanged recommendation holds 7 Fitter cycles, it's eligible to weigh into the next walk-forward read.
+    Forecast accuracy section is the bottom-line MAE per layer per field (the green box on each chart = what users actually see). Layer sections (L1–L4 general-purpose, plus L5 solar and L6 temperature as field-specific specialists) each show the live state of that layer and the diagnostics behind it. L5's section is a placeholder for now — see "Where we are" inside its header — with full subsections coming after the specialists refactor. Research &amp; Diagnostics (bottom) holds R2 (state-stratified accuracy) and R6 (regime-transition penalty, C1a's input signal) under "Active hypotheses"; the curated Stage-1 Backlog list (8 candidates grouped A/B/C); operational tools G1/S1/B1/F1 (gated candidates, shadow whitelist, backtest sweep, frontal events); and a Retired collapsible (R3 derived humidity, R4 HRRR/GFS spread, R5 cove cross-current — all ruled out by audits). The shadow tuner now carries a 7-cycle promotion-gate counter (v0.6.147) — when an unchanged recommendation holds 7 Fitter cycles, it's eligible to weigh into the next walk-forward read.
   </div>
 
   <div class="meta-line" style="margin-top:8px;opacity:0.75;">
@@ -914,6 +924,38 @@
 <h3 class="subsection">4a. Diurnal correction curves over time — historical fits</h3>
 <div id="status-diurnal" class="status" hidden></div>
 <div id="grid-diurnal" class="grid"></div>
+
+<!-- ───────────────────── Layer 5 — Synoptic-regime correction (solar) ───────────────────── -->
+<h2 class="section" id="sec-layer5">Layer 5 — Synoptic-regime correction (solar)</h2>
+<div class="layer-info-text" style="border-color:#3a2f1f;background:#1a160e;">
+  <p class="layer-summary">A per-regime W/m² delta applied to direct solar radiation. The classifier reads current wind direction, speed, pressure trend, hour, and temp; the regime label keys into a calibrated per-regime delta. L1–L4 are trained on general bias correction; L5 is the first layer trained on synoptic-state stratification — different "kinds of weather" get different corrections.</p>
+  <details class="layer-methodology"><summary>How L5 works (compact summary)</summary>
+    <div class="meta-line">Each tick, <code>solar_correction.stamp_solar_correction()</code> classifies the current synoptic regime (one of nw_flow / ne_flow / sw_flow / se_flow / sea_breeze / frontal / pre_frontal / nor_easter / calm) using <code>regime_classifier.classify_synoptic_regime()</code>. It then looks up the calibrated delta for that regime and applies it to every lead's <code>direct_radiation</code> where the lead's raw value is above <code>SUN_UP_THRESHOLD</code> (50 W/m²). The live moment's raw also gates the delta — if it's pre-sunrise locally, delta = 0 regardless of regime.</div>
+    <div class="meta-line"><strong>Live snapshot reads via</strong> <code>weather_data["solar_correction"]</code> — exposes <code>candidate_delta_wm2</code>, <code>applied</code>, and the classified regime metadata. <strong>Per-layer attribution</strong> lives in <code>direct_radiation_post_l4</code> (pre-L5 array, preserved before mutation) and live <code>direct_radiation</code> (post-L5). The snapshot writer emits <code>sr_l4</code> and <code>sr_l5</code> separately so the Fitter can audit L5 vs L4 cleanly.</div>
+  </details>
+  <div class="meta-line" style="margin-top:8px;padding:8px 10px;background:#0e1620;border-radius:4px;border:1px solid #2a3a52;color:#cfd8e3;">
+    <strong style="color:#7fb3ff;">Where we are (2026-06-29):</strong>
+    <ul style="margin:6px 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;">
+      <li><strong>Shipped 2026-06-28 v0.6.248</strong> — <code>ENABLED=True</code> after the L5 gate cleared 7/7 ship days (12-cycle SHIP streak).</li>
+      <li><strong>Attribution fix v0.6.249</strong> — initial ship was silently absorbing L5 into the L4 column (same bug shape as the L6-absorbed-into-L2 issue). Fixed by preserving <code>direct_radiation_post_l4</code> before mutation and adding <code>sr_l5</code> to the snapshot writer.</li>
+      <li><strong>Chart wiring v0.6.250</strong> — sr card now shows an amber L5 line + column + "L5 ✓ synoptic" badge. <code>_layersFor()</code> filters the L5 entry to the sr card only.</li>
+      <li><strong>Audit status:</strong> divergence report shows AGREE (production matches script verdict). L5_VALID_FROM = 2026-06-28T07:05 — first clean 7-day Fitter audit window closes ~2026-07-05.</li>
+      <li><strong>Subsections 5a–5d (live state, regime classifier output, per-regime delta table, audit panel)</strong> — placeholders below; full build coming with the specialists refactor planned post-2026-06-30.</li>
+    </ul>
+  </div>
+</div>
+
+<h3 class="subsection">5a. Live correction — what is being applied right now</h3>
+<div class="meta-line" style="opacity:0.7;font-style:italic;">Placeholder — populated with the specialists refactor (post-2026-06-30). Today, see <code>weather_data["solar_correction"]</code> in the snapshot for live state.</div>
+
+<h3 class="subsection">5b. Regime classifier — current state breakdown</h3>
+<div class="meta-line" style="opacity:0.7;font-style:italic;">Placeholder — populated with the specialists refactor. Today, the classifier state is logged each tick in <code>solar_correction.regime</code>.</div>
+
+<h3 class="subsection">5c. Per-regime delta table</h3>
+<div class="meta-line" style="opacity:0.7;font-style:italic;">Placeholder — populated with the specialists refactor. Today, see <code>solar_correction.REGIME_DELTAS</code> for the calibrated per-regime W/m² values.</div>
+
+<h3 class="subsection">5d. L5 vs L4 audit (held-out MAE)</h3>
+<div class="meta-line" style="opacity:0.7;font-style:italic;">Placeholder — populated with the specialists refactor. Today, the per-layer Forecast Accuracy chart's sr card is the canonical audit; first clean read ~2026-07-05.</div>
 
 <!-- ───────────────────── Layer 6 — Microclimate correction ───────────────────── -->
 <h2 class="section" id="sec-layer6">Layer 6 — Microclimate correction (temperature)</h2>
