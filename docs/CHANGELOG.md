@@ -1,6 +1,47 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.249–v0.6.257 • June 29, 2026</strong></summary>
+
+* **L5 attribution fix (v0.6.249).** The v0.6.248 ship silently absorbed L5 into the L4 column — `stamp_solar_correction` mutated `hourly.direct_radiation` in place, and the snapshot writer read that as `sr_l4`. Same bug shape as the earlier L6-into-L2 issue. Fixed by preserving `direct_radiation_post_l4` before mutation and adding an `sr_l5` column to the snapshot writer; `forecast_error_log.py` + `decay_fit.py` layer iterations extended to include `l5`. `L5_VALID_FROM = "2026-06-28T07:05"` gates pre-fix rows out of L5 aggregation.
+
+* **L5 chart + badge wired (v0.6.250).** Forecast Accuracy chart's sr card now shows an amber L5 line + column + `L5 ✓ synoptic` badge. `_layersFor()` and `_shouldShow()` filter the L5 entry to the sr card only — symmetric with how L6 lands on the t card. Methodology accordion gets an L5 bullet next to L6.
+
+* **Debug page content refresh (v0.6.251).** Status header + Since-last-curation block rolled forward; pipeline-delta line refreshed with current gate counters and earliest-clear dates; new **Layer 5 — Synoptic-regime correction (solar)** section between L4 and L6 with summary + 5a–5d placeholder subsections (full subsection build deferred); TOC chip row gains an L5 anchor; upcoming-gates list resolved 06-26/06-29 entries and added 07-03/07-04/07-05/07-06 milestones plus an L6 cove-watch line; open architectural questions list adds per-regime L6 gating and the specialists-vs-layers naming question.
+
+* **L3 regime × lead-band analysis + gated calm-wind L3 skip (v0.6.252).** New `analysis/l3_regime_lead_analysis.py` splits L3 marginal effect (|error_l2| vs |error_l3|) by (synoptic regime × lead_band) and (forecast wind speed × lead_band) for ws/wg/ch/cm. Resolves the apparent contradiction between `h_regime_l3` (ws L3 wins under every regime) and the per-lead chart (ws L3 hurts at leads 18–47h) — the real story is calm forecast wind, not lead distance: ws/wg L3 LOSES −19.8% to −69% MAE when fc_ws<3 mph, WINS +5% to +47% when ≥3 mph. `decay_apply.py` gains a gated calm-wind L3 skip — `CALM_GATE_ENABLED=False` by default; when flipped, ws/wg L3 corrections zero out at any lead where `wind_speed_post_l2[lead]<3.0` mph. Standard Stage 2 promotion: audit a few digest cycles before flipping. Auto-picked up by the daily digest run.
+
+* **Debug page roll-forward for v0.6.252 + calm-wind gate milestone (v0.6.253).** Since-last-curation block extended to v0.6.252; pipeline-delta line references the calm-wind gate flip target; upcoming-gates list gets a 2026-07-02 milestone for the earliest `CALM_GATE_ENABLED` flip.
+
+* **L4 regime × lead-band analysis + fresh C1 curated tables (v0.6.254).** New `analysis/l4_regime_lead_analysis.py` mirrors the L3 script for L4 fields (ch, cc). First-run result: ch L4 is unambiguously good across every (regime, lead_band) cell (27 WIN / 5 flat / 0 LOSES). cc L4 has a specific frontal-regime weakness (LOSES at frontal × {6–11h, 12–23h, 24–47h} and ne_flow × 0–5h) but WIN or flat in every other regime — the walk-forward's flat-drop-cc gate at 5/7 is reading regime-specific weakness, not field-wide failure. C1 calibration re-curate sanity check: pass rate moved 47.92% → 61.36% with fresh data — still HOLD (<75% threshold) but confirms re-curating absorbs real drift; fresh curated tables (32 SHIP / 12 MARGINAL / 12 SKIP) staged for next collector tick.
+
+* **Debug page roll-forward for v0.6.254 + regime/lead-band pattern (v0.6.255).** Since-last-curation block extended through v0.6.255 with L4 regime × lead-band result, cm L3 reframing (06-24 all-windows-OFF verdict contradicted — long-lead WIN with regime-specific frontal losses), and the C1 re-curate finding. Pipeline-delta line flags the emerging meta-pattern: walk-forward flat-drop verdicts consistently hide regime-specific weakness. Open architectural questions list gets a meta-pattern entry pointing at a future per-(field, regime, lead_band) skip table in `decay_apply.py`.
+
+* **C1d killed by orthogonality (v0.6.256).** New `analysis/h_cloud_disagreement_orthogonality.py` companion to yesterday's smoke test. Verdict: **KILL C1d** — holding C1a (transition) fixed, the σ_HIGH/σ_LOW MAE ratio inverts to <1.0 in 3 of 4 (field, band) cells that cleared the n≥100 floor. The σ signal was the regime-transition signal C1a already encodes. C1e check insufficient (n=0 cells) — could refine with more data, but C1a redundancy is decisive. SMOKE_ALIVE → orthogonality KILL flow worked as designed; saved us from promoting a redundant axis.
+
+* **Debug page roll-forward for v0.6.256 (v0.6.257).** Since-last-curation block gets the C1d KILL bullet; pipeline-delta line updated; upcoming-gates 06-28 entry resolved with the 2026-06-29 KILL outcome.
+
+</details>
+
+<details open>
+<summary><strong>v0.6.248 • June 28, 2026</strong></summary>
+
+- **L5 synoptic-regime solar correction SHIPPED.** `solar_correction.ENABLED=True` after the L5 promotion gate cleared 7/7 ship days (12-cycle SHIP streak). The amber L5 line on the sr card and the `L5 ✓ synoptic` badge come with v0.6.250's chart wiring (June 29); the v0.6.249 attribution fix (June 29) was needed to make the column actually populate. L5 row moved out of "Gated off — built, not applied" in the debug page.
+
+</details>
+
+<details open>
+<summary><strong>v0.6.244–v0.6.247 • June 27, 2026</strong></summary>
+
+* **t-card paired-L4 baseline series added and pulled (v0.6.244 → v0.6.245).** Initial v0.6.244 added a dashed-blue "Diurnal (paired with L6)" series on the t card so L6 could be compared against L4 restricted to the same row subset L6 had been applied to (L6 had a shorter history than L3/L4 until ~2026-07-03). After a short discussion the column was pulled — we didn't build one for L3 or L4 when they shipped, so adding one for L6 was inconsistent. Replaced with a one-line note above the legend explaining the window mismatch will self-resolve by ~2026-07-03.
+
+* **Debug page status refresh (v0.6.246).** Since-last-curation block rolled forward; the three 2026-06-26 upcoming-gates entries resolved with today's digest outcomes — walk-forward read returned no L3/L4 additions (instead recommended drops), C1 calibration HOLD at 47.92%, KBOS-vs-KBVY smoke test flagged for investigation.
+
+* **C1d candidate infrastructure built (v0.6.247).** New `cloud_obs_blend.py` stamps `derived.cloud_inter_source_sigma` from the KBOS+KBVY cc `bias_std` at L2 blend time. `forecast_snapshot.py` carries it onto each `snap_entry` next to `pressure_trend_hpa_3h`; `forecast_error_log.py` attaches it (plus `cloud_n_sources`) to every pair row. New `analysis/h_cloud_disagreement.py` smoke-tests whether high inter-source σ predicts cloud-field |error|. Same infrastructure-gap pattern as `h_lightning_proximity`.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.243 • June 26, 2026</strong></summary>
 
 - Debug page Status section's "Open architectural questions" sub-box gains a new entry: **ws L3 long-lead regression** — per-lead chart shows L3 makes wind speed +20–31% worse at leads 18–47h while wg L3 helps −15 to −22% over the same band. Walkforward validator's per-field aggregate hides this. Queued (not today's work): add per-band rollup to walkforward output, then drop ws from L3 or wire per-(field, lead_band) whitelist in `decay_apply.py`. Memory note: `project_ws_l3_long_lead_regression`.
