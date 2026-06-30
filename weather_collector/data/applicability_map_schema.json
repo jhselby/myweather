@@ -1,0 +1,114 @@
+{
+  "_doc": [
+    "Schema example for weather_data['applicability_map'].",
+    "Each correction module exposes describe_applicability() returning a list",
+    "of entries with the shape below. The collector concatenates the lists into",
+    "weather_data['applicability_map']['layers'] each tick. corrections_debug.html",
+    "renders Section D from the whole list and renders per-layer slices by",
+    "filtering on layer_id.",
+    "",
+    "Field shape:",
+    "  layer_id     — stable ID for ordering/filtering ('L3', 'L4', 'L5', 'L6', 'C1', ...)",
+    "  name         — human-readable name shown on the page",
+    "  category     — 'general-purpose' | 'specialist' | 'confidence'",
+    "  fields       — list of per-field gating descriptors (see below)",
+    "",
+    "Per-field descriptor:",
+    "  field         — short code matching pair-log field names ('t', 'ws', 'cc', ...)",
+    "  fires_when    — free-text predicate; first cut, structured later if Section D needs to compute on it",
+    "  gated_by      — name of the module-level constant the gate reads, or omitted if always-on",
+    "  current_state — what the gate is doing RIGHT NOW (resolves the constant for the reader)",
+    "  notes         — optional, anything the reader needs to interpret the row",
+    "",
+    "C1 NOTE: confidence layer doesn't fit 'fires for field X' cleanly — it",
+    "applies along axes (transition, post-frontal, pressure trend, etc.) that",
+    "cross fields. Open design question per project_applicability_map_design.md;",
+    "the entry below uses an 'axes' subkey as a placeholder."
+  ],
+  "applicability_map": {
+    "generated_at": "2026-06-30T11:37:01Z",
+    "layers": [
+      {
+        "layer_id": "L3",
+        "name": "Lead-decay correction",
+        "category": "general-purpose",
+        "fields": [
+          {
+            "field": "ws",
+            "fires_when": "L3_FIELDS contains ws (always, at every lead)",
+            "gated_by": "CALM_GATE_ENABLED",
+            "current_state": "calm-wind gate off; firing for all ws leads",
+            "notes": "Flipping CALM_GATE_ENABLED to True will skip L3 ws/wg at any lead where fc_wind_speed_post_l2 < 3 mph"
+          },
+          {
+            "field": "wg",
+            "fires_when": "L3_FIELDS contains wg (always, at every lead)",
+            "gated_by": "CALM_GATE_ENABLED",
+            "current_state": "calm-wind gate off; firing for all wg leads"
+          },
+          {
+            "field": "ch",
+            "fires_when": "L3_FIELDS contains ch (always, at every lead)"
+          },
+          {
+            "field": "cm",
+            "fires_when": "L3_FIELDS contains cm (always, at every lead)"
+          },
+          {
+            "field": "pp",
+            "fires_when": "L3_FIELDS contains pp (always, at every lead)"
+          }
+        ]
+      },
+      {
+        "layer_id": "L4",
+        "name": "Diurnal correction",
+        "category": "general-purpose",
+        "fields": [
+          {
+            "field": "ch",
+            "fires_when": "L4_FIELDS contains ch (always, at every lead)"
+          },
+          {
+            "field": "cc",
+            "fires_when": "L4_FIELDS contains cc (always, at every lead)",
+            "notes": "v0.6.254 regime analysis: cc L4 LOSES in frontal regime only; per-(field, regime, lead_band) whitelist is the right refinement"
+          }
+        ]
+      },
+      {
+        "layer_id": "L6",
+        "name": "Cove microclimate correction",
+        "category": "specialist",
+        "fields": [
+          {
+            "field": "t",
+            "fires_when": "ENABLED AND sb_active_forecast(lead) is True AND fc_wind_octant(lead) in {S, SE, SW}",
+            "gated_by": "ENABLED",
+            "current_state": "ENABLED True; warming branch active, cooling branch disabled v0.6.259",
+            "notes": "Sb_off branch returns 0.0 since v0.6.259 (cooling Δ ≤ -2°F was doubling MAE; r5_cove_analysis cooling gradient FAIL'd threshold). See project_l6_l2_double_counting_hypothesis."
+          }
+        ]
+      },
+      {
+        "layer_id": "C1",
+        "name": "Confidence layer",
+        "category": "confidence",
+        "axes": [
+          {
+            "axis_id": "C1a",
+            "name": "Regime transition",
+            "fires_when": "state_fc.regime_synoptic != state_obs.regime_synoptic at run time",
+            "applies_to_bands": "MAE inflated → widen σ for affected (field, band) cells per curated table"
+          },
+          {
+            "axis_id": "C1f",
+            "name": "Pre-frontal proximity",
+            "fires_when": "hours_until_front <= 6"
+          }
+        ],
+        "_axes_note": "Placeholder shape — full C1 entry needs sub-design (see project_applicability_map_design.md open questions). Real entry would enumerate all live C1 axes (C1a/C1c/C1e/C1f) and the (field, band) cells each axis modifies."
+      }
+    ]
+  }
+}

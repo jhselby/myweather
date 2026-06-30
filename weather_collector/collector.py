@@ -472,6 +472,29 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  Cove correction stamp failed: {redact_secrets(e)}")
 
+    # Applicability map — each correction module exposes describe_applicability()
+    # returning a list of layer descriptors (schema in weather_collector/data/
+    # applicability_map_schema.json). Collected here once per tick, after every
+    # gate above has resolved its current state. The debug page reads this block
+    # to render Section D (global) and per-layer filtered slices.
+    try:
+        from .processors.decay_apply import describe_applicability as _da_decay
+        from .processors.solar_correction import describe_applicability as _da_solar
+        from .processors.cove_correction import describe_applicability as _da_cove
+        from .processors.confidence_layer import describe_applicability as _da_c1
+        layers = []
+        for fn in (_da_decay, _da_solar, _da_cove, _da_c1):
+            try:
+                layers.extend(fn())
+            except Exception as e:
+                logging.warning(f"  ⚠  Applicability descriptor failed for {fn.__module__}: {redact_secrets(e)}")
+        weather_data["applicability_map"] = {
+            "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "layers": layers,
+        }
+    except Exception as e:
+        logging.warning(f"  ⚠  Applicability map assembly failed: {redact_secrets(e)}")
+
     # FOUNDATIONAL: sync weather_data["current"] from corrected hourly[0].
     # Every "current conditions" card across the app reads current.*; the
     # contract is that those values are the L1→L4-corrected hourly[0]

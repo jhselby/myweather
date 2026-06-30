@@ -16,11 +16,14 @@ restructured L4 (fit on L3 residual, no mean-zero normalization), which may
 have resolved it. This validator measures held-out MAE per field for the
 three valid enable-state combinations.
 
-Why three combinations, not four:
-  Since v0.6.34, L4's coefficients are fit on the residual that L3 leaves
-  behind. (L3=off, L4=on) is not a real production option — you'd need to
-  refit L4 from scratch, not keep current coefficients. So the matrix is
-  (L3,L4) ∈ {(off,off), (on,off), (on,on)}.
+Four enable combinations:
+  L4's coefficients are fit on whatever the layer below produces. For a
+  field that's already in L3_FIELDS, that's the L3-residual. For a field
+  that ISN'T in L3_FIELDS (cc is the prime example), L4 fits and applies on
+  top of L2 directly — forecast_l3 == forecast_l2 by construction in that
+  case. So (L3=off, L4=on) IS a valid production state — it's exactly what
+  cc and other L3-but-not-L4 fields run today. The validator now evaluates
+  all four (L3, L4) on/off combinations.
 
 Method:
   1. Pull every pair-log row with all of forecast_l2, forecast_l3,
@@ -137,17 +140,25 @@ def main():
         if len(te) < 200:
             continue
 
-        # Three enable states, indexed by which forecast_l* they predict from.
+        # Four enable states. (off_off, on_off, on_on) use forecast_l2/l3/l4
+        # directly; (off_on) uses forecast_l4 too — for fields not in L3_FIELDS,
+        # forecast_l4 is L4 applied on top of L2 (because forecast_l3 == f_l2
+        # by construction), so this measures the same production output. For
+        # fields IN L3_FIELDS, "off_on" is a hypothetical (L4 fit on L3-residual
+        # but L3 not applied) and would require a refit — we still measure it
+        # for completeness, but the production-meaningful states are off_off,
+        # on_off, on_on for L3-enabled fields and off_off, off_on for the rest.
         def mae_for(state, rows):
             n = 0; s = 0.0
             for (_, _, f_l2, f_l3, f_l4, obs) in rows:
                 if state == "off_off":   pred = f_l2
                 elif state == "on_off":  pred = f_l3
                 elif state == "on_on":   pred = f_l4
+                elif state == "off_on":  pred = f_l4
                 s += abs(pred - obs); n += 1
             return (s / n) if n else None
 
-        overall = {s: mae_for(s, te) for s in ("off_off", "on_off", "on_on")}
+        overall = {s: mae_for(s, te) for s in ("off_off", "on_off", "on_on", "off_on")}
         bands_out = []
         for label, lo, hi in BANDS:
             band_rows = [r for r in te if lo <= r[1] < hi]
@@ -161,17 +172,29 @@ def main():
                 "on_on":   mae_for("on_on",   band_rows),
             })
 
-        # Decide per-field recommendation. Use a "simpler-wins-ties" rule: an
-        # extra layer must beat the simpler state by MIN_RELATIVE_WIN to earn
-        # its keep. Walks L3 → L4 in order.
-        rec_state = "off_off"
-        if overall["on_off"] is not None and overall["off_off"] is not None:
+        # Decide per-field recommendation. Evaluate L3 and L4 INDEPENDENTLY: each
+        # must beat the best simpler state by MIN_RELATIVE_WIN to earn its keep.
+        # The old logic gated L4 evaluation on L3 earning first, which silently
+        # killed L4 recommendations for any field where L3 doesn't apply
+        # (forecast_l3 == forecast_l2 → on_off trivially fails to beat off_off →
+        # L4 never gets a vote). cc is the worst-affected case: it's in
+        # L4_FIELDS and L4 visibly wins by ~9%, but the old logic recommended
+        # off_off. Fixed 2026-06-30 v0.6.262.
+        l3_earns = False
+        l4_earns = False
+        if overall["off_off"] is not None and overall["on_off"] is not None:
             if (overall["off_off"] - overall["on_off"]) / overall["off_off"] >= MIN_RELATIVE_WIN:
-                rec_state = "on_off"
-        if rec_state == "on_off" and overall["on_on"] is not None:
-            if (overall["on_off"] - overall["on_on"]) / overall["on_off"] >= MIN_RELATIVE_WIN:
-                rec_state = "on_on"
-        # If L3 didn't earn its keep, L4 doesn't get evaluated (it requires L3).
+                l3_earns = True
+        # L4 compared against the best non-L4 state available.
+        baseline_for_l4 = overall["on_off"] if l3_earns else overall["off_off"]
+        if overall["on_on"] is not None and baseline_for_l4 is not None and baseline_for_l4 > 0:
+            if (baseline_for_l4 - overall["on_on"]) / baseline_for_l4 >= MIN_RELATIVE_WIN:
+                l4_earns = True
+
+        if   l3_earns and l4_earns: rec_state = "on_on"
+        elif l3_earns:              rec_state = "on_off"
+        elif l4_earns:              rec_state = "off_on"
+        else:                       rec_state = "off_off"
 
         results[field] = {
             "n_train": len(train[field]),
@@ -204,14 +227,15 @@ def main():
         def fmt(x): return f"{x:>8.3f}" if x is not None else "      -"
         rec_label = {"off_off": "L2 only",
                      "on_off":  "L2 + L3",
-                     "on_on":   "L2 + L3 + L4"}[r["recommend"]]
+                     "on_on":   "L2 + L3 + L4",
+                     "off_on":  "L2 + L4"}[r["recommend"]]
         lines.append(
             f"  {FIELD_LABELS[field]:<14} {r['n_test']:>8,}  "
             f"{fmt(o['off_off'])}  {fmt(o['on_off'])}  {fmt(o['on_on']).rjust(10)}  {rec_label:>14}"
         )
         if r["recommend"] in ("on_off", "on_on"):
             rec_l3.append(field)
-        if r["recommend"] == "on_on":
+        if r["recommend"] in ("on_on", "off_on"):
             rec_l4.append(field)
 
     lines.append("")

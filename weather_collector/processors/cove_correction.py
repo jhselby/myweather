@@ -68,6 +68,42 @@ _HOUR_DELTA_SB_OFF = {
 }
 
 
+def describe_applicability():
+    """Applicability descriptor for L6 (cove microclimate correction). One field (t).
+    After v0.6.259 the cooling branch (sb_off) is disabled — only the sea-breeze
+    warming branch fires. See weather_collector/data/applicability_map_schema.json.
+    """
+    if ENABLED:
+        fires_when = (
+            "ENABLED AND sb_active_forecast(lead) is True "
+            "AND fc_wind_octant(lead) in {S, SE, SW} "
+            "(sb_off branch zeroed v0.6.259)"
+        )
+        current_state = (
+            "ENABLED True; warming branch only — sea-breeze octants S/SE/SW add "
+            "+1.1 to +2.0°F. Cooling branch (sb_off offshore hour table) returns 0.0 "
+            "since v0.6.259 (was doubling MAE; r5_cove_analysis offshore-cooling FAIL)"
+        )
+    else:
+        fires_when = "OFF — would fire when ENABLED on sb_active S/SE/SW leads"
+        current_state = "ENABLED False; no cove correction applied"
+    return [
+        {
+            "layer_id": "L6",
+            "name": "Cove microclimate correction",
+            "category": "specialist",
+            "fields": [
+                {
+                    "field": "t",
+                    "fires_when": fires_when,
+                    "gated_by": "ENABLED",
+                    "current_state": current_state,
+                }
+            ],
+        }
+    ]
+
+
 def compute_cove_correction(wind_dir_deg, sb_active, hour_local):
     """Return candidate Δ°F to add to inland-trained forecast for the cove.
 

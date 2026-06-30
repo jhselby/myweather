@@ -170,6 +170,37 @@ _BIAS_BY_REGIME_HOUR = {
 }
 
 
+def describe_applicability():
+    """Applicability descriptor for L5 (solar regime correction). One field (sr).
+    See weather_collector/data/applicability_map_schema.json for the shape.
+    """
+    if ENABLED:
+        fires_when = (
+            "ENABLED AND raw_solar_wm2 >= SUN_UP_THRESHOLD "
+            "AND _BIAS_BY_REGIME_HOUR has entry for (regime_synoptic, hour_local) "
+            "(else _BIAS_FALLBACK_BY_REGIME)"
+        )
+        current_state = "ENABLED True; applying per (regime, hour) bias for sr above sun-up threshold"
+    else:
+        fires_when = "OFF — would fire when ENABLED, above sun-up threshold, with regime+hour bias entry"
+        current_state = "ENABLED False; no sr correction applied"
+    return [
+        {
+            "layer_id": "L5",
+            "name": "Synoptic-regime solar correction",
+            "category": "specialist",
+            "fields": [
+                {
+                    "field": "sr",
+                    "fires_when": fires_when,
+                    "gated_by": "ENABLED",
+                    "current_state": current_state,
+                }
+            ],
+        }
+    ]
+
+
 def compute_solar_correction(regime_synoptic, raw_solar_wm2, hour_local=None):
     """Return candidate Δ W/m² to add to L1 solar forecast.
 

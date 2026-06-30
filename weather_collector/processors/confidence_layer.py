@@ -73,6 +73,61 @@ TZ = pytz.timezone("America/New_York")
 MB_TO_INHG = 1.0 / 33.8639
 
 
+def describe_applicability():
+    """Applicability descriptor for C1 (confidence layer). C1 doesn't fit the
+    per-field model the other layers use — it widens/narrows uncertainty bands
+    along orthogonal AXES that cross multiple (field, band) cells via a curated
+    lookup table. Uses an 'axes' subkey instead of 'fields'. See the C1 note
+    in weather_collector/data/applicability_map_schema.json.
+    """
+    axes = [
+        {
+            "axis_id": "C1a",
+            "name": "Regime transition",
+            "fires_when": "state_obs.regime_synoptic != state_pred.regime_synoptic at run time",
+        },
+        {
+            "axis_id": "C1f",
+            "name": "Pre-frontal proximity",
+            "fires_when": "hours_until_front <= 6 (per-band)",
+        },
+        {
+            "axis_id": "pt_bin",
+            "name": "Pressure tendency band",
+            "fires_when": "current pressure trend bin (rising/falling/stable) from snapshot pressure_trend_hpa_3h",
+        },
+        {
+            "axis_id": "cluster_spread",
+            "name": "Mesonet cluster spread quartile",
+            "fires_when": "Q1-Q4 quartile of current-tick station-cluster spread (multi-axis lookup only)",
+        },
+    ]
+    if ENABLED:
+        current_state = (
+            "ENABLED True; stamping displayed bands via curated table at "
+            f"{os.path.basename(_CURATED_PATH)} for cells with status in {_WIRED_STATUSES}"
+        )
+    else:
+        current_state = (
+            "ENABLED False — confidence block is stamped on weather_data for transparency "
+            "but bands are NOT shown to users. Flip after Stage 4 calibration audit."
+        )
+    return [
+        {
+            "layer_id": "C1",
+            "name": "Confidence layer",
+            "category": "confidence",
+            "axes": axes,
+            "gated_by": "ENABLED",
+            "current_state": current_state,
+            "notes": (
+                "Does NOT modify any forecast value. Curated cells with status in "
+                f"{_WIRED_STATUSES} are wired; REVIEW + SKIP excluded."
+            ),
+        }
+    ]
+
+
 def _load_curated_table():
     """Read the Stage 2 curated table. Returns (wired_cells, meta).
       wired_cells: {field: {band: {legacy fields..., "by_axes": {key: {mae, n, status, direction}, …}}}}

@@ -163,6 +163,57 @@ FIELD_BOUNDS = {
 # correction as every other field.
 
 
+def describe_applicability():
+    """Return applicability descriptors for the L3 and L4 layers this module
+    applies. Collector concatenates output across all correction modules into
+    weather_data['applicability_map']['layers'] each tick; the debug page
+    renders Section D from the full union and per-layer slices by filtering
+    on layer_id. Schema example: weather_collector/data/applicability_map_schema.json.
+    """
+    l3_fields = []
+    for f in sorted(L3_FIELDS):
+        entry = {"field": f}
+        if f in CALM_GATE_FIELDS:
+            entry["gated_by"] = "CALM_GATE_ENABLED"
+            if CALM_GATE_ENABLED:
+                entry["fires_when"] = (
+                    f"L3_FIELDS contains {f} AND fc_wind_speed_post_l2[lead] "
+                    f">= {CALM_GATE_THRESHOLD_MPH} mph"
+                )
+                entry["current_state"] = (
+                    f"calm-wind gate on; skipping L3 {f} at any lead with "
+                    f"fc_ws < {CALM_GATE_THRESHOLD_MPH} mph"
+                )
+            else:
+                entry["fires_when"] = f"L3_FIELDS contains {f} (always, at every lead)"
+                entry["current_state"] = (
+                    f"calm-wind gate off; firing for all {f} leads"
+                )
+        else:
+            entry["fires_when"] = f"L3_FIELDS contains {f} (always, at every lead)"
+        l3_fields.append(entry)
+
+    l4_fields = [
+        {"field": f, "fires_when": f"L4_FIELDS contains {f} (always, at every lead)"}
+        for f in sorted(L4_FIELDS)
+    ]
+
+    return [
+        {
+            "layer_id": "L3",
+            "name": "Lead-decay correction",
+            "category": "general-purpose",
+            "fields": l3_fields,
+        },
+        {
+            "layer_id": "L4",
+            "name": "Diurnal correction",
+            "category": "general-purpose",
+            "fields": l4_fields,
+        },
+    ]
+
+
 def _parse_local(stamp):
     return datetime.strptime(stamp, "%Y-%m-%dT%H:%M")
 
