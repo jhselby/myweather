@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.259 • June 30, 2026</strong></summary>
+
+- **L6 cooling branch disabled (cove_correction.py).** New `analysis/l6_l2_double_counting.py` ran 19,975 t pairs where L6 fired. Original "L2 already pulls toward cove → L6 double-counts" hypothesis rejected: L2 only erases 3.7% of L1's MAE on cove rows. Real cause: L1 itself is structurally cold ~2.25 °F at the cove (HRRR microclimate gap L2's Kalman blend doesn't close). Stratifying by the signed applied Δ exposed the asymmetry — when L6 cooled by ≥2 °F (n=3,284, all from the sb_off offshore hour table), MAE 3.52 → 6.16 (−74.9%); when L6 warmed (sb_active sea-breeze branch), MAE neutral-to-better (mid-warm Δ +10.1%). **Independently confirmed by today's `r5_cove_analysis` digest:** S/SE/SW sea-breeze warming gradient PASS (+1.80°F, n=382, threshold +1.0°F), 06-10 EDT offshore cooling gradient FAIL (−0.54°F, n=286, threshold −1.0°F) — the cooling gradient the lookup encodes isn't reliably present in the obs anymore. The divergence-report `COVE_ENABLED True→False READY (3/2)` signal is the binary form of the same finding; this ship is the refined response (kill the failing branch, keep the working one). Fix: `compute_cove_correction` now returns 0.0 in the sb_off branch instead of the `_HOUR_DELTA_SB_OFF` value. Sea-breeze warming branch (sb_active, S/SE/SW) unchanged. Sanity check confirmed L2 == L4 on every t pair (T not in L3_FIELDS/L4_FIELDS), so the production audit's "L4 vs L4+L6" framing IS a clean "L2 vs L2+L6" comparison. Expected effect on next `l6_gate_history.json` reads: still HOLD (because the L6 audit measures vs L4-with-L6-applied, and we're shrinking what L6 does), but the magnitude of HOLD should compress as the worst cooling rows stop firing. Long-term Fix B (refit the lookup against L2-baseline) still queued — see `project_l6_l2_double_counting_hypothesis`.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.249–v0.6.257 • June 29, 2026</strong></summary>
 
 * **L5 attribution fix (v0.6.249).** The v0.6.248 ship silently absorbed L5 into the L4 column — `stamp_solar_correction` mutated `hourly.direct_radiation` in place, and the snapshot writer read that as `sr_l4`. Same bug shape as the earlier L6-into-L2 issue. Fixed by preserving `direct_radiation_post_l4` before mutation and adding an `sr_l5` column to the snapshot writer; `forecast_error_log.py` + `decay_fit.py` layer iterations extended to include `l5`. `L5_VALID_FROM = "2026-06-28T07:05"` gates pre-fix rows out of L5 aggregation.

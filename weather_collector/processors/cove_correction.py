@@ -88,8 +88,15 @@ def compute_cove_correction(wind_dir_deg, sb_active, hour_local):
         # Sea-breeze regime: use the constant octant value.
         return _DELTA_BY_OCTANT.get((True, oct_), 0.0)
     else:
-        # Offshore/calm regime: hour-of-day dominates.
-        return _HOUR_DELTA_SB_OFF.get(hour_local, 0.0)
+        # Offshore/calm regime DISABLED 2026-06-30. Diagnostic in
+        # analysis/l6_l2_double_counting.py showed L1 is already cold-biased
+        # ~2.25 °F at the cove and L2 only erases ~3.7% of that. Applying
+        # the morning offshore cooling Δ on top doubled MAE on cooling rows
+        # (Δ ≤ -2 °F bucket: MAE 3.52 → 6.16, -74.9%). The sb_active
+        # warming branch is neutral/positive and stays on. Re-enable only
+        # after refitting the lookup against (cove_truth − L2_forecast_at_cove)
+        # — see project_l6_l2_double_counting_hypothesis Fix B.
+        return 0.0
 
 
 def _sb_active_forecast(hour_local, wind_dir_deg):
