@@ -655,7 +655,7 @@
 
 <nav class="toc">
   <a href="/" style="color:#8a93a3;">← Back</a>
-  <a href="#sec-status">Status</a>
+  <a href="#sec-status">Engineering updates</a>
   <a href="#sec-accuracy" class="accuracy">Accuracy</a>
   <a href="#sec-applicability">Applicability</a>
   <a href="#sec-layer1">L1 Raw</a>
@@ -665,6 +665,7 @@
   <a href="#sec-layer5">L5 Synoptic (sr)</a>
   <a href="#sec-layer6">L6 Microclimate (t)</a>
   <a href="#sec-research" class="research">Research & Diagnostics</a>
+  <a href="#sec-archive">Archive</a>
 </nav>
 
 <div id="headlineBox">
@@ -699,16 +700,22 @@
      a layer flips, an audit reads out, or a hypothesis dies. The rest
      of the page is automatic; THIS panel is not. Stamp the date on
      every edit so reviewers can tell how stale it is. -->
-<h2 class="section" id="sec-status">Status — where we are</h2>
+<h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
   <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-06-30 v0.6.262 · click any sub-box header to collapse it.</div>
 
   <div class="since-last-curation" style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
     <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Today (2026-06-30)</div>
     <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
-      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.259</strong> — L6 cooling branch off. sb_off offshore-hour Δ table was doubling MAE on cove-temp rows (paired-MAE + <code>r5_cove_analysis</code> agree). Warming branch retained.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.259</strong> — L6 cooling branch off. sb_off offshore-hour Δ table materially increased paired MAE on cove-temp rows (paired-MAE + <code>r5_cove_analysis</code> agree). Warming branch retained.</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.260</strong> — Applicability map shipped end-to-end. Modules expose <code>describe_applicability()</code>; collector stamps <code>weather_data["applicability_map"]</code>; new <a href="#sec-applicability">Applicability map</a> section reads it.</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.262 — walk-forward validator bugfix.</strong> Old logic gated L4 evaluation on L3 earning its keep first; for fields not in L3_FIELDS (cc, t, dp, h, ws, wg, sr, pr, pa) <code>forecast_l3 == forecast_l2</code> by construction, so L3 trivially "didn't earn" and L4 was never evaluated. Fix evaluates L3 and L4 independently and adds <code>off_on</code> as a valid state. Re-ran: now recommends <strong>L4 on for cc + h</strong> (cc 32.78 vs L2 36.06 = 9.1%; h 6.05 vs L2 6.39 = 5.2%) plus the existing <strong>L3 {ch, cm}, L4 {ch}</strong>. The "drop-cc" gate the divergence-report was building toward was a phantom from the bug — the chart was right all along.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.262 — walk-forward validator bugfix.</strong>
+        <ul style="margin:4px 0 0 18px;padding:0;list-style:none;">
+          <li><strong>Bug:</strong> L4 evaluation was gated on L3 earning its keep first. For fields not in <code>L3_FIELDS</code> (cc, t, dp, h, ws, wg, sr, pr, pa), <code>forecast_l3 == forecast_l2</code> by construction, so L3 trivially "didn't earn" and L4 was never evaluated.</li>
+          <li><strong>Effect:</strong> cc and h L4 wins were invisible for weeks; the divergence-report was building toward a phantom "drop-cc" gate.</li>
+          <li><strong>Result:</strong> validator now evaluates L3 and L4 independently (<code>off_on</code> added as a valid state). Recommends <strong>L4 on for cc + h</strong> (cc 32.78 vs L2 36.06 = 9.1%; h 6.05 vs L2 6.39 = 5.2%) on top of the existing <strong>L3 {ch, cm}, L4 {ch}</strong>.</li>
+        </ul>
+      </li>
       <li><span style="color:#7090a0;">⚙</span> <strong>New candidate: add h to L4.</strong> Validator now reads h L4 as +5.2% MAE win, previously hidden. Same per-(field, regime, lead_band) caution applies before flipping — confirm across 2 daily digest cycles.</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>simulate_windows says L5 → RETIRE</strong> — conflicts with divergence-report AGREE. L5 shipped 2 days ago; investigate, don't act.</li>
     </ul>
@@ -718,19 +725,28 @@
 
     <details open style="border:1px solid #1f3a2a;background:#101913;padding:10px;border-radius:6px;">
       <summary style="color:#4ad29a;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">✅ Production stack</summary>
-      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>Pipeline:</strong> L1 raw HRRR → L2 mesonet blend → L3 lead-decay → L4 diurnal → L5 synoptic-regime (sr only) → L6 microclimate (t only). Every "current conditions" card reads the corrected hourly[0].</li>
-        <li><strong>L2:</strong> additive bias on <code>t / dp / h / pr / cc</code> (Kalman gain); direct selection on <code>ws / wg</code>.</li>
-        <li><strong>L3 applies to:</strong> {ws, wg, ch, cm, pp}. <strong>L4 applies to:</strong> {ch, cc}. See <a href="#sec-applicability">Applicability map</a> for live triggers + gates (e.g. CALM_GATE_ENABLED for ws/wg).</li>
-        <li><strong>L5</strong> — synoptic-regime solar correction. Shipped 2026-06-28 v0.6.248. Per-(regime, hour) bias on sr above sun-up threshold.</li>
-        <li><strong>L6</strong> — cove microclimate. Shipped 2026-06-26; cooling branch surgically disabled 2026-06-30 v0.6.259. Sea-breeze warming branch (sb_active, S/SE/SW) active.</li>
+      <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Core pipeline <span style="font-weight:normal;opacity:0.7;">— general-purpose, can apply to any field</span></div>
+      <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
+        <li><strong>L1</strong> raw HRRR / GFS — the starting point every other layer corrects.</li>
+        <li><strong>L2</strong> mesonet blend — additive bias on <code>t / dp / h / pr / cc</code> (Kalman gain); direct selection on <code>ws / wg</code>.</li>
+        <li><strong>L3</strong> lead-decay — applies to {ws, wg, ch, cm, pp}.</li>
+        <li><strong>L4</strong> diurnal — applies to {ch, cc}.</li>
+        <li style="list-style:none;margin-left:-16px;opacity:0.75;font-size:0.9em;">Cards read corrected <code>hourly[0]</code>. See <a href="#sec-applicability">Applicability map</a> for live triggers + gates (e.g. CALM_GATE_ENABLED for ws/wg).</li>
+      </ul>
+      <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Specialists <span style="font-weight:normal;opacity:0.7;">— single-field, parallel to the core stack</span></div>
+      <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
+        <li><strong>L5</strong> synoptic-regime solar correction (sr only). Shipped 2026-06-28 v0.6.248. Per-(regime, hour) bias on sr above sun-up threshold.</li>
+        <li><strong>L6</strong> cove microclimate (t only). Shipped 2026-06-26; cooling branch surgically disabled 2026-06-30 v0.6.259. Sea-breeze warming branch (sb_active, S/SE/SW) active.</li>
+      </ul>
+      <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
+      <ul style="margin:2px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
+        <li><strong>C1</strong> multi-axis confidence layer — <em>gated off (ENABLED=False)</em>. Stamps <code>weather_data["confidence"]</code> every tick. Four axes: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence. Flip after Stage 4 audit clears (first multi-axis read ~2026-07-04).</li>
       </ul>
     </details>
 
     <details open style="border:1px solid #3a2d1f;background:#191510;padding:10px;border-radius:6px;">
       <summary style="color:#d4a373;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">⏸ Built, not applied (gated off)</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>C1 — multi-axis confidence layer.</strong> Stamps <code>weather_data["confidence"]</code> every tick; <code>ENABLED=False</code>. Four axes: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence. Evaluated by calibration, not MAE. Flip after Stage 4 audit clears (first multi-axis read ~2026-07-04).</li>
         <li><strong>Calm-wind L3 skip</strong> (<code>CALM_GATE_ENABLED=False</code> in <code>decay_apply.py</code>, v0.6.252). Flip zeroes ws/wg L3 corrections when fc_ws &lt; 3 mph. Earliest flip ~2026-07-02 after Stage 2 audit cycles.</li>
         <li><strong>Marine-layer correction sandbox</strong> — stamps <code>weather_data["marine_layer_correction"]</code> every tick, <code>ENABLED=False</code>. NE+morn cc bias currently +32.65 mean / +43.00 median cumulative (in +25–+40 watch band). Flip target mid-July if trend holds.</li>
       </ul>
@@ -746,12 +762,35 @@
     <details open style="border:1px solid #3a3a1f;background:#191910;padding:10px;border-radius:6px;">
       <summary style="color:#e0d472;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">⏳ Upcoming decisions</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>07-01 (Wed):</strong> Validator's old drop-cc gate signal was a phantom (fixed in v0.6.262). New validator reads recommend <strong>add h to L4</strong> (+5.2%). Confirm across 2 daily digest cycles before flipping.</li>
-        <li><strong>07-02 (Thu):</strong> Earliest flip date for <code>CALM_GATE_ENABLED=True</code>.</li>
-        <li><strong>07-04 (Sat):</strong> C1 v2 multi-axis calibration audit first eligible.</li>
+        <li><strong>07-01 (Wed): Add h to L4_FIELDS?</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>Q:</strong> Should h be added to L4?</li>
+            <li><strong>E:</strong> Post-v0.6.262 walk-forward validator reads h L4 as +5.2% MAE win (previously hidden by the gating bug). Standard 2-read gate applies.</li>
+            <li><strong>D:</strong> Flip if a 2nd daily digest cycle confirms AND <code>l4_regime_lead_analysis</code> on h shows no regime-specific weakness.</li>
+          </ul>
+        </li>
+        <li style="margin-top:6px;"><strong>07-02 (Thu): Flip <code>CALM_GATE_ENABLED</code> to True?</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>Q:</strong> Skip ws/wg L3 corrections when fc_ws &lt; 3 mph?</li>
+            <li><strong>E:</strong> Needs 2–3 daily digest cycles of <code>l3_regime_lead_analysis</code> confirming the calm-cell L3 LOSES verdict is stable.</li>
+            <li><strong>D:</strong> Flip when cycles confirm.</li>
+          </ul>
+        </li>
+        <li style="margin-top:6px;"><strong>07-04 (Sat):</strong> C1 v2 multi-axis calibration audit first eligible.</li>
         <li><strong>07-05 (Sun):</strong> L5 first clean 7-day audit window closes.</li>
-        <li><strong>07-06 (Mon):</strong> Earliest L3 drop-pp+ws gate clear.</li>
-        <li><strong>Watch:</strong> next 2–3 days of <code>l6_gate_history.json</code> — HOLD magnitude expected to compress post-v0.6.259. If not, L6 Fix B moves up.</li>
+        <li style="margin-top:6px;"><strong>07-06 (Mon): Drop pp + ws from L3_FIELDS?</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>Q:</strong> Should pp and ws be removed from L3?</li>
+            <li><strong>E:</strong> pp loses on MAE but is Brier-evaluated (documented exception); ws loses at long leads (18–47h) per the ws L3 long-lead regression.</li>
+            <li><strong>D:</strong> Don't drop wholesale — this is the case for the per-(field, regime, lead_band) skip table. Flip date marks "validator gate clears," not an action.</li>
+          </ul>
+        </li>
+        <li style="margin-top:6px;"><strong>Watch: did L6 Fix A reduce paired MAE as expected?</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>E:</strong> Next 2–3 days of <code>l6_gate_history.json</code>. HOLD magnitude should compress post-v0.6.259.</li>
+            <li><strong>D:</strong> If it doesn't compress, escalate L6 Fix B (refit lookup against L2 baseline).</li>
+          </ul>
+        </li>
       </ul>
     </details>
 
@@ -775,10 +814,10 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  <p class="layer-summary">For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model.</p>
+  <p class="layer-summary"><strong>The lowest line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model.</p>
   <details class="layer-methodology" open><summary>How to read these charts</summary>
     <div class="meta-line"><strong>What you're looking at.</strong> One small chart per weather field. The Y-axis is how wrong the forecast tends to be (in that field's units — °F, %, mph, etc.). The X-axis is hours into the future. Lower lines = more accurate. Lines climbing to the right is normal — forecasts get worse the further out you predict.</div>
-    <div class="meta-line"><strong>The lines are cumulative correction layers. L1–L4 stack across every field; L6 only stacks on the temperature card. Lowest line = lowest typical error = what users actually see.</strong></div>
+    <div class="meta-line"><strong>The lines are cumulative correction layers. L1–L4 stack across every field; L5 only stacks on the solar (sr) card; L6 only stacks on the temperature card. Lowest line = lowest typical error = what users actually see.</strong></div>
     <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.5">
       <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
       <li><strong>Aggregate bias</strong> (orange): adds Layer 2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
@@ -811,14 +850,86 @@
      are step 6, deferred. -->
 <h2 class="section" id="sec-applicability">Applicability map — what corrections trigger, and why</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <p class="layer-summary">For every correction layer, this shows exactly which fields it triggers on right now and what gates it. Built each tick from <code>describe_applicability()</code> in each correction module, so the page can never drift from the code.</p>
+  <p class="layer-summary">Every correction module describes its own applicability. This table is rendered directly from the code. For every correction layer, this shows exactly which fields it applies to right now and what gates it. Built each tick from <code>describe_applicability()</code> in each correction module, so <strong>the page can never drift from the code.</strong></p>
   <details class="layer-methodology"><summary>How to read this</summary>
     <div class="meta-line">Three categories: <strong>General-purpose</strong> layers (L1–L4) can apply to any field; the per-field applicability set controls which actually trigger. <strong>Specialists</strong> (L5, L6) target a single field by design. <strong>Confidence</strong> (C1) doesn't modify forecast values; it widens or narrows uncertainty bands along orthogonal axes (transition, pressure tendency, mesonet spread, pre-frontal proximity) that cross multiple (field, band) cells.</div>
-    <div class="meta-line"><strong>triggers when</strong> is the predicate in plain text. <strong>gated by</strong> names the module-level constant the gate reads (omitted if always-on). <strong>current state</strong> resolves the constant for the reader — what the gate is doing this very tick.</div>
+    <div class="meta-line"><strong>applies when</strong> is the predicate in plain text. <strong>gated by</strong> names the module-level constant the gate reads (omitted if always-on). <strong>current state</strong> resolves the constant for the reader — what the gate is doing this very tick.</div>
+    <div class="meta-line"><strong>Terminology key:</strong> <em>applies</em> = correction applied to a (field, row) this tick · <em>enabled</em> = feature switch (the module-level constant is on) · <em>active</em> = runtime branch (which code path actually fired).</div>
     <div class="meta-line">Source: <code>weather_data.applicability_map.layers</code>. Schema: <code>weather_collector/data/applicability_map_schema.json</code>. If this section says "not available," the collector hasn't shipped the block yet — it landed v0.6.260.</div>
   </details>
 </div>
 <div id="status-applicability" class="status" hidden></div>
+
+<!-- L2 row group — hand-curated; L2 module doesn't expose describe_applicability() yet.
+     Promote to the dynamic block once that lands. -->
+<div class="layer-info-text" style="margin-bottom:12px;border-color:#3a4f6a;">
+  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+    <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">L2 — Aggregate bias (mesonet blend)</span>
+    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;background:#1f2a3a;border:1px solid #3a4f6a;color:#9fb8d8;">general-purpose</span>
+    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.7em;background:#2a2a3a;border:1px solid #4a4a5a;color:#a8a8b8;font-style:italic;">hand-curated · promote to <code>describe_applicability()</code></span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:0.92em;">
+    <thead>
+      <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
+        <th style="padding:4px 10px 4px 0;">field</th>
+        <th style="padding:4px 10px;">applies when</th>
+        <th style="padding:4px 10px;">gated by</th>
+        <th style="padding:4px 0 4px 10px;">current state</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>t</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias from station network, scaled by Kalman gain K</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>dp</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias from station network</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>h</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias scaled by Kalman gain K</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>pr</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias at full strength (station consensus matches model after altitude offsets)</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cc</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — Kalman-blended KBOS + KBVY METAR override (sky-condition → cloud_cover_pct)</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cl</code> / <code>cm</code> / <code>ch</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Derived</strong> — same Kalman K propagated to L/M/H splits to keep them self-consistent with cc</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>ws</code> / <code>wg</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — direct selection from per-octant median (no per-station bias track); KBOS+KBVY authoritative-source floor when both agree at &gt;1.4× the octant median</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies (direct)</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>sr</code> / <code>pp</code> / <code>pa</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>N/A</strong> — no station network for this field; L2 row is structurally empty</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;"><span style="opacity:0.6;">n/a</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
 <div id="applicability-content"></div>
 
 <!-- ───────────────────── Layer 1 ───────────────────── -->
@@ -878,93 +989,142 @@
 
 <!-- ───────────────────── Layer 3 ───────────────────── -->
 <h2 class="section" id="sec-layer3">Layer 3 — Lead-decay correction</h2>
+
+<!-- 1. What it does -->
 <div class="layer-info-text">
   <p class="layer-summary">How the model's error tends to grow with each hour into the future — and the per-field nudge we apply to push back against that drift.</p>
   <details class="layer-methodology"><summary>How decay correction works</summary>
-    For each field and each lead hour, we learn from millions of historical pairs how far off the model usually is — then bend the forecast back toward truth by that amount. Some fields (wind, gusts, high & mid cloud, POP) genuinely benefit; others net-negative on held-out data and are paused (see banner). Tracked over a 30-day window with an exponential recency weighting — default τ=14 days, with per-field overrides for fields where <code>analysis/decay_tau_tuning.py</code> shows ≥5% MAE improvement vs the default. Current overrides: <code>pp</code> (POP) at τ=28d (+11.1% held-out, 2026-06-21 v0.6.167) and <code>pa</code> (precip amount) at τ=28d (+9.4% held-out, 2026-06-22 v0.6.195). Both precip fields preferred a smoother bias estimate than the τ=14 default.
+    For each field and each lead hour, we learn from millions of historical pairs how far off the model usually is — then bend the forecast back toward truth by that amount. Some fields (wind, gusts, high & mid cloud, POP) genuinely benefit; others net-negative on held-out data and are paused (see Applicability below). Tracked over a 30-day window with an exponential recency weighting — default τ=14 days, with per-field overrides for fields where <code>analysis/decay_tau_tuning.py</code> shows ≥5% MAE improvement vs the default. Current overrides: <code>pp</code> (POP) at τ=28d (+11.1% held-out, 2026-06-21 v0.6.167) and <code>pa</code> (precip amount) at τ=28d (+9.4% held-out, 2026-06-22 v0.6.195). Both precip fields preferred a smoother bias estimate than the τ=14 default.
   </details>
 </div>
 
-<div id="banner-l3-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
-  <strong style="color:#d4a373;">⏸ Layer 3 — per-field applicability.</strong>
-  <div class="meta-line">Held-out MAE audit picks the fields where L3 actually beats L2 — currently <strong>wind speed, gusts, high cloud, mid cloud</strong>. Other fields stay disabled because the correction at best ties (temperature, pressure) or actively hurts (humidity, dew point, solar, low cloud, precip). <strong>POP</strong> is the special case: it's evaluated by <em>Brier score</em>, not MAE, so the audit's MAE-based ⚠ rule is suppressed for it — the v0.6.20 calibration analysis showed flat-additive correction cuts Brier 5%. Currently applied: <span id="banner-l3-fields">—</span>. Brier-evaluated: <span id="banner-l3-brier">—</span>.</div>
+<!-- 2. Applicability -->
+<h3 class="subsection">Applicability</h3>
+<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
+  <div class="meta-line">Held-out MAE audit picks the fields where L3 actually beats L2 — currently <strong>wind speed, gusts, high cloud, mid cloud</strong>. Other fields stay off because the correction at best ties (temperature, pressure) or actively hurts (humidity, dew point, solar, low cloud, precip). <strong>POP</strong> is the special case: it's evaluated by <em>Brier score</em>, not MAE, so the audit's MAE-based ⚠ rule is suppressed for it — the v0.6.20 calibration analysis showed flat-additive correction cuts Brier 5%. Currently applied: <span id="banner-l3-fields">—</span>. Brier-evaluated: <span id="banner-l3-brier">—</span>. See <a href="#sec-applicability">Applicability map</a> for live triggers and per-field gates.</div>
+</div>
+<div id="banner-l3-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-top:8px;" hidden>
+  <strong style="color:#d4a373;">⏸ Layer 3 — applicability state changed.</strong>
 </div>
 
-<h3 class="subsection">3a. Fitted correction curves — what is being applied per lead hour</h3>
-<div id="status-corrections" class="status" hidden></div>
-<div id="grid-corrections" class="grid"></div>
-
-<h3 class="subsection">3b. Live forecast — with vs without decay correction</h3>
+<!-- 3. Live state -->
+<h3 class="subsection">Live state — with vs without decay correction</h3>
 <div id="status-live" class="status" hidden></div>
 <div id="grid-live" class="grid"></div>
 
-<h3 class="subsection">3c. Decay curves over time — historical fits</h3>
-<div id="status-history" class="status" hidden></div>
-<div id="grid-history" class="grid"></div>
+<!-- 4. Historical calibration (collapsed) -->
+<details>
+  <summary><h3 class="subsection" style="display:inline;">Historical calibration — fitted correction curves per lead hour</h3></summary>
+  <div id="status-corrections" class="status" hidden></div>
+  <div id="grid-corrections" class="grid"></div>
+</details>
+
+<!-- 5. Calibration history (collapsed) -->
+<details>
+  <summary><h3 class="subsection" style="display:inline;">Calibration history — decay curves over time</h3></summary>
+  <div id="status-history" class="status" hidden></div>
+  <div id="grid-history" class="grid"></div>
+</details>
 
 <!-- ───────────────────── Layer 4 ───────────────────── -->
 <h2 class="section" id="sec-layer4">Layer 4 — Diurnal correction</h2>
+
+<!-- 1. What it does -->
 <div class="layer-info-text">
-  <p class="layer-summary">A separate correction for the part of model error that follows the sun — e.g., bias that's different at 3 AM than at 3 PM. Currently active only for high cloud.</p>
+  <p class="layer-summary">A separate correction for the part of model error that follows the sun — e.g., bias that's different at 3 AM than at 3 PM. Currently applied to high cloud and cloud cover.</p>
   <details class="layer-methodology"><summary>How diurnal correction works</summary>
     Bins historical errors by hour-of-day (0–23) and fits the persistent pattern at each hour. Most fields don't have a clean diurnal signal once L2/L3 have run, so this layer's applicability set is narrow — currently <code>{ch, cc}</code> (cc added 2026-06-24 v0.6.214). Fits for fields outside the applicability set are still computed below for diagnostic purposes. See the <a href="#sec-applicability">Applicability map</a> for the live trigger state.
   </details>
 </div>
 
-<div id="banner-l4-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;" hidden>
-  <strong style="color:#d4a373;">⏸ Layer 4 — per-field applicability.</strong>
-  <div class="meta-line">L4 corrects the portion of forecast error that repeats with time of day. It is the hardest layer to earn because the same hour-of-day bias must recur consistently across many days. Most fields fail that test because their dominant errors are driven by changing weather regimes (air mass, cloud regime, frontal timing, etc.) rather than the clock. Cloud cover (cc) and high cloud (ch) are the two exceptions, showing a sufficiently stable diurnal signal to pass the held-out audit and earn promotion. The remaining plots are retained as diagnostics to watch for new hour-of-day structure that may justify future promotion.</div>
+<!-- 2. Applicability -->
+<h3 class="subsection">Applicability</h3>
+<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
+  <div class="meta-line">L4 corrects the portion of forecast error that repeats with time of day. It is the hardest layer to earn because the same hour-of-day bias must recur consistently across many days. Most fields fail that test because their dominant errors are driven by changing weather regimes (air mass, cloud regime, frontal timing, etc.) rather than the clock. Currently applied to <strong>{ch, cc}</strong> — the two fields showing a stable enough diurnal signal to pass the held-out audit. Fits for the remaining fields are retained in the calibration sections below as diagnostics. See <a href="#sec-applicability">Applicability map</a> for live gates.</div>
+</div>
+<div id="banner-l4-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-top:8px;" hidden>
+  <strong style="color:#d4a373;">⏸ Layer 4 — applicability state changed.</strong>
 </div>
 
-<h3 class="subsection">4a. Diurnal correction curves over time — historical fits</h3>
+<!-- 3. Live state -->
+<h3 class="subsection">Live state — what L4 is doing this tick</h3>
+<div class="layer-info-text">
+  <div class="meta-line" style="opacity:0.75;">No dedicated live-state panel yet. Current per-tick L4 deltas land in <code>weather_data.hourly[*].corrected_&lt;field&gt;</code>; the applied-vs-unapplied comparison is visible via the L4 lines on the per-field accuracy charts at the top of the page. <em>Future build-out — placeholder for a dedicated live snapshot mirroring L3 §3.</em></div>
+</div>
+
+<!-- 4. Historical calibration -->
+<!-- Left open by default: this is L4's only data view today; collapsing it would hide everything. -->
+<h3 class="subsection">Historical calibration — diurnal correction curves over time</h3>
 <div id="status-diurnal" class="status" hidden></div>
 <div id="grid-diurnal" class="grid"></div>
 
-<!-- ───────────────────── Layer 5 — Synoptic-regime correction (solar) ───────────────────── -->
-<h2 class="section" id="sec-layer5">Layer 5 — Synoptic-regime correction (solar)</h2>
-<div class="layer-info-text" style="border-color:#3a2f1f;background:#1a160e;">
-  <p class="layer-summary">A per-regime W/m² delta applied to direct solar radiation. The classifier reads current wind direction, speed, pressure trend, hour, and temp; the regime label keys into a calibrated per-regime delta. L1–L4 are trained on general bias correction; L5 is the first layer trained on synoptic-state stratification — different "kinds of weather" get different corrections.</p>
-  <details class="layer-methodology"><summary>How L5 works (compact summary)</summary>
-    <div class="meta-line">Each tick, <code>solar_correction.stamp_solar_correction()</code> classifies the current synoptic regime (one of nw_flow / ne_flow / sw_flow / se_flow / sea_breeze / frontal / pre_frontal / nor_easter / calm) using <code>regime_classifier.classify_synoptic_regime()</code>. It then looks up the calibrated delta for that regime and applies it to every lead's <code>direct_radiation</code> where the lead's raw value is above <code>SUN_UP_THRESHOLD</code> (50 W/m²). The live moment's raw also gates the delta — if it's pre-sunrise locally, delta = 0 regardless of regime.</div>
-    <div class="meta-line"><strong>Live snapshot reads via</strong> <code>weather_data["solar_correction"]</code> — exposes <code>candidate_delta_wm2</code>, <code>applied</code>, and the classified regime metadata. <strong>Per-layer attribution</strong> lives in <code>direct_radiation_post_l4</code> (pre-L5 array, preserved before mutation) and live <code>direct_radiation</code> (post-L5). The snapshot writer emits <code>sr_l4</code> and <code>sr_l5</code> separately so the Fitter can audit L5 vs L4 cleanly.</div>
-  </details>
-  <div class="meta-line" style="margin-top:8px;padding:8px 10px;background:#0e1620;border-radius:4px;border:1px solid #2a3a52;color:#cfd8e3;">
-    <strong style="color:#7fb3ff;">Where we are (2026-06-30):</strong>
-    <ul style="margin:6px 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;">
-      <li><strong>Shipped 2026-06-28 v0.6.248</strong> — <code>ENABLED=True</code> after the L5 gate cleared 7/7 ship days (12-cycle SHIP streak).</li>
-      <li><strong>Attribution fix v0.6.249</strong> — initial ship was silently absorbing L5 into the L4 column (same bug shape as the L6-absorbed-into-L2 issue). Fixed by preserving <code>direct_radiation_post_l4</code> before mutation and adding <code>sr_l5</code> to the snapshot writer.</li>
-      <li><strong>Chart wiring v0.6.250</strong> — sr card now shows an amber L5 line + column + "L5 ✓ synoptic" badge. <code>_layersFor()</code> filters the L5 entry to the sr card only.</li>
-      <li><strong>Audit status:</strong> divergence-report row says AGREE (production matches script verdict). L5_VALID_FROM = 2026-06-28T07:05 — first clean 7-day Fitter audit window closes ~2026-07-05. Today's <code>simulate_windows</code> reports HOLD across 7 cutoffs (recommend RETIRE) — conflicts with divergence-report's AGREE; investigation queued, no action.</li>
-      <li><strong>Live trigger predicate</strong> shown in the <a href="#sec-applicability">Applicability map</a> section above.</li>
-    </ul>
-  </div>
+<!-- 5. Calibration history -->
+<!-- L4 doesn't separate current fit from history — the fits-over-time view above is both. -->
+<h3 class="subsection" style="opacity:0.65;">Calibration history</h3>
+<div class="layer-info-text">
+  <div class="meta-line" style="opacity:0.7;">L4 doesn't currently maintain a separate fit-history view — the curves-over-time panel above serves both "current fit" and "how it's changed" roles. Split out if/when a dedicated current-fit snapshot ships.</div>
 </div>
 
-<h3 class="subsection">5a. Live correction — what is being applied right now</h3>
-<div class="meta-line">L5's live state is stamped each tick on <code>weather_data["solar_correction"]</code>. The block carries: the candidate Δ W/m² for the current tick (looked up from <code>_BIAS_BY_REGIME_HOUR[regime][hour]</code>, falling back to <code>_BIAS_FALLBACK_BY_REGIME[regime]</code> when the hour cell is thin); the classified current regime; the live raw and corrected solar radiation; and a per-lead Δ array parallel to <code>hourly.direct_radiation</code>. The applied Δ is gated on <code>raw_solar_wm2 ≥ SUN_UP_THRESHOLD</code> (50 W/m²) — pre-sunrise or fully overcast suppression sets Δ = 0 regardless of regime.</div>
-<div class="meta-line" style="margin-top:6px;">Read it directly via the JSON tab or with <code>curl -s https://data.wymancove.com/weather_data.json | jq .solar_correction</code>. A dedicated live-state panel here is queued behind the C1 calibration audit (higher-priority Stage 4 work). The per-lead Δ is also baked into the sr card on the Forecast Accuracy chart above — that's the visible "did L5 fire this tick" surface for now.</div>
+<!-- ───────────────────── Layer 5 — Synoptic-regime correction (solar) ───────────────────── -->
+<h2 class="section" id="sec-layer5">Layer 5 — Synoptic-regime correction (solar)</h2>
 
-<h3 class="subsection">5b. Regime classifier — what label keys the lookup</h3>
-<div class="meta-line">The classifier is <code>regime_classifier.classify_synoptic_regime(wind_dir, wind_speed, pressure_in, pressure_trend_hpa_3h, hour_local, temp)</code>. It returns one of nine labels: <strong>nw_flow, ne_flow, sw_flow, se_flow, sea_breeze, frontal, pre_frontal, nor_easter, calm</strong> (plus <code>unknown</code> when inputs are missing). Each label keys a row in the per-(regime, hour) bias table. The same classifier feeds C1a's transition axis (state_fc vs state_obs regime) — so the L5 label and the C1a transition flag are produced by a single source of truth.</div>
-<div class="meta-line" style="margin-top:6px;">For the live regime, see the L1–L4 stack's regime classification on each tick — it surfaces in multiple places already (Production Stack box above, drill-down D1 below, R2 state-stratified panel, R6 transition audit). The L5 module reads the same value via <code>state.regime_synoptic</code> in <code>weather_data["derived"]</code>.</div>
+<!-- 1. What it does -->
+<div class="layer-info-text" style="border-color:#3a2f1f;background:#1a160e;">
+  <p class="layer-summary">A per-regime W/m² delta applied to direct solar radiation. The classifier reads current wind direction, speed, pressure trend, hour, and temp; the regime label keys into a calibrated per-regime delta. L1–L4 are trained on general bias correction; L5 is the first layer trained on synoptic-state stratification — different "kinds of weather" get different corrections.</p>
+  <details class="layer-methodology"><summary>How L5 works — Classify → Lookup → Apply</summary>
+    <div class="meta-line"><strong>1. Classify.</strong> <code>regime_classifier.classify_synoptic_regime(wind_dir, wind_speed, pressure_in, pressure_trend_hpa_3h, hour_local, temp)</code> returns one of nine labels — nw_flow, ne_flow, sw_flow, se_flow, sea_breeze, frontal, pre_frontal, nor_easter, calm (plus <code>unknown</code> when inputs are missing).</div>
+    <div class="meta-line"><strong>2. Lookup.</strong> Per-(regime, hour) Δ W/m² from <code>_BIAS_BY_REGIME_HOUR[regime][hour_local]</code> in <code>solar_correction.py</code>; falls back to <code>_BIAS_FALLBACK_BY_REGIME[regime]</code> when the hour cell has too few samples.</div>
+    <div class="meta-line"><strong>3. Apply.</strong> Added to every lead's <code>direct_radiation</code> where the lead's raw value is above <code>SUN_UP_THRESHOLD</code> (50 W/m²). Pre-sunrise / fully overcast leads get Δ = 0 regardless of regime.</div>
+  </details>
+</div>
 
-<h3 class="subsection">5c. Per-regime delta table — what the lookup contains</h3>
-<div class="meta-line">L5's bias tables live in <code>weather_collector/processors/solar_correction.py</code> as two Python dicts:</div>
-<ul class="meta-line" style="margin:6px 0 6px 22px;padding:0;line-height:1.55;font-size:0.92em;">
-  <li><code>_BIAS_FALLBACK_BY_REGIME</code> — single Δ W/m² per regime; used when the per-hour cell has too few samples. Latest fit values: frontal −81.1, sw_flow −79.3, pre_frontal −107.3, sea_breeze −44.6, nw_flow −40.8, calm −57.2, se_flow −114.9, ne_flow −206.3, unknown 0.0. Sign convention: positive = forecast over-predicts; correction = −bias.</li>
-  <li><code>_BIAS_BY_REGIME_HOUR</code> — nested <code>{regime: {hour_local: Δ}}</code>; primary source per tick. Diagnoses the within-regime hour-of-day swing that the regime-only first pass missed (e.g. ne_flow goes from −238 W/m² at 10:00 to +247 W/m² at 14:00).</li>
-</ul>
-<div class="meta-line" style="margin-top:6px;">Refit cadence: regenerate via <code>python3 analysis/l5_recompute_biases_hourly.py</code> after at least 7 days of accumulated DAYTIME pair rows (raw_solar ≥ 50 W/m²). The daily digest prints a drop-in replacement table; mid-trajectory refits invalidate the audit window — wait for a clean break.</div>
+<!-- 2. Applicability -->
+<h3 class="subsection">Applicability</h3>
+<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
+  <div class="meta-line">L5 is a specialist — it only applies to direct solar radiation (<code>sr</code>). Other fields have no L5 line on their accuracy charts by construction. See <a href="#sec-applicability">Applicability map</a> for the live trigger predicate (<code>SOLAR_CORRECTION_ENABLED</code> + the sun-up gate).</div>
+</div>
 
-<h3 class="subsection">5d. L5 vs L4 audit — held-out MAE</h3>
-<div class="meta-line"><strong>Primary view:</strong> the Forecast Accuracy chart above. The sr card carries five lines (Raw → L2 → L3 → L4 → L5); the green box on the L5 line is the final user-visible MAE. Lead-band table beneath the chart shows per-(field, lead_band) numbers.</div>
-<div class="meta-line" style="margin-top:6px;"><strong>Fitter audit:</strong> verdict logged to <code>conditional_audits.l5</code> each Fitter cycle, recency-weighted since v0.6.178 (<code>exp(−age_days/14)</code>). The trailing 7-day rolling gate lives in <code>l5_gate_history.json</code> and surfaces beneath the L5 row in the S1 Shadow Tuner section below. First fully clean 7-day window closes ~2026-07-05 (L5_VALID_FROM = 2026-06-28T07:05; pre-fix pair rows excluded from L5 aggregation).</div>
-<div class="meta-line" style="margin-top:6px;"><strong>Open watch:</strong> today's <code>simulate_windows</code> says L5 should RETIRE (HOLD verdict across 7 cutoffs, magnitudes −0.5% to +4.5%). The divergence report says AGREE (script verdict matches production True). Two different rollups disagreeing — investigation queued for a fresh session; no action since L5 shipped only 2 days ago and reverting on this conflict would be premature.</div>
+<!-- 3. Live state -->
+<h3 class="subsection">Live state — what L5 is doing this tick</h3>
+<div class="layer-info-text">
+  <div class="meta-line">L5's live state is stamped each tick on <code>weather_data["solar_correction"]</code>: the candidate Δ W/m², the classified regime, live raw and corrected solar radiation, and a per-lead Δ array parallel to <code>hourly.direct_radiation</code>.</div>
+  <div class="meta-line" style="margin-top:6px;opacity:0.85;">Read directly via <code>curl -s https://data.wymancove.com/weather_data.json | jq .solar_correction</code>. The per-lead Δ is also baked into the sr card on the Forecast Accuracy chart above — that's the visible "did L5 fire this tick" surface for now. <em>Future build-out — dedicated live snapshot panel queued behind the C1 calibration audit.</em></div>
+</div>
+
+<!-- 4. Engineering status -->
+<h3 class="subsection">Engineering status</h3>
+<div class="layer-info-text" style="border-color:#2a3a52;background:#0e1620;">
+  <div class="meta-line" style="margin-bottom:4px;"><strong style="color:#7fb3ff;">Where we are (2026-06-30):</strong></div>
+  <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;">
+    <li><strong>Shipped 2026-06-28 v0.6.248</strong> — <code>ENABLED=True</code> after the L5 gate cleared 7/7 ship days (12-cycle SHIP streak).</li>
+    <li><strong>Attribution fix v0.6.249</strong> — initial ship was silently absorbing L5 into the L4 column (same bug shape as the L6-absorbed-into-L2 issue). Fixed by preserving <code>direct_radiation_post_l4</code> before mutation and adding <code>sr_l5</code> to the snapshot writer.</li>
+    <li><strong>Chart wiring v0.6.250</strong> — sr card now shows an amber L5 line + column + "L5 ✓ synoptic" badge. <code>_layersFor()</code> filters the L5 entry to the sr card only.</li>
+    <li><strong>Audit status:</strong> divergence-report row says AGREE (production matches script verdict). <code>L5_VALID_FROM = 2026-06-28T07:05</code> — first clean 7-day Fitter audit window closes ~2026-07-05. Today's <code>simulate_windows</code> reports HOLD across 7 cutoffs (recommend RETIRE) — conflicts with divergence-report's AGREE; investigation queued, no action.</li>
+  </ul>
+</div>
+
+<!-- 5. Developer notes (collapsed) -->
+<details>
+  <summary><h3 class="subsection" style="display:inline;">Developer notes — classifier, lookup tables, audit details</h3></summary>
+
+  <div class="meta-line" style="margin-top:8px;"><strong>Regime classifier — what label keys the lookup.</strong> <code>regime_classifier.classify_synoptic_regime(...)</code> returns one of nine labels (see step 1 above). The same classifier feeds C1a's transition axis (state_fc vs state_obs regime), so the L5 label and the C1a transition flag are produced by a single source of truth. For the live regime, see the L1–L4 stack's regime classification — it surfaces in multiple places (Production Stack box above, drill-down D1 below, R2 state-stratified panel, R6 transition audit). The L5 module reads the same value via <code>state.regime_synoptic</code> in <code>weather_data["derived"]</code>.</div>
+
+  <div class="meta-line" style="margin-top:10px;"><strong>Per-regime delta table — what the lookup contains.</strong> L5's bias tables live in <code>weather_collector/processors/solar_correction.py</code> as two Python dicts:</div>
+  <ul class="meta-line" style="margin:6px 0 6px 22px;padding:0;line-height:1.55;font-size:0.92em;">
+    <li><code>_BIAS_FALLBACK_BY_REGIME</code> — single Δ W/m² per regime; used when the per-hour cell has too few samples. Latest fit values: frontal −81.1, sw_flow −79.3, pre_frontal −107.3, sea_breeze −44.6, nw_flow −40.8, calm −57.2, se_flow −114.9, ne_flow −206.3, unknown 0.0. Sign convention: positive = forecast over-predicts; correction = −bias.</li>
+    <li><code>_BIAS_BY_REGIME_HOUR</code> — nested <code>{regime: {hour_local: Δ}}</code>; primary source per tick. Diagnoses the within-regime hour-of-day swing that the regime-only first pass missed (e.g. ne_flow goes from −238 W/m² at 10:00 to +247 W/m² at 14:00).</li>
+  </ul>
+  <div class="meta-line" style="margin-top:6px;">Refit cadence: regenerate via <code>python3 analysis/l5_recompute_biases_hourly.py</code> after at least 7 days of accumulated DAYTIME pair rows (raw_solar ≥ 50 W/m²). The daily digest prints a drop-in replacement table; mid-trajectory refits invalidate the audit window — wait for a clean break.</div>
+
+  <div class="meta-line" style="margin-top:10px;"><strong>L5 vs L4 audit — held-out MAE.</strong> <em>Primary view:</em> the Forecast Accuracy chart above. The sr card carries five lines (Raw → L2 → L3 → L4 → L5); the green box on the L5 line is the final user-visible MAE. Lead-band table beneath the chart shows per-(field, lead_band) numbers.</div>
+  <div class="meta-line" style="margin-top:6px;"><em>Fitter audit:</em> verdict logged to <code>conditional_audits.l5</code> each Fitter cycle, recency-weighted since v0.6.178 (<code>exp(−age_days/14)</code>). The trailing 7-day rolling gate lives in <code>l5_gate_history.json</code> and surfaces beneath the L5 row in the S1 Shadow Tuner section below. First fully clean 7-day window closes ~2026-07-05 (pre-fix pair rows excluded from L5 aggregation).</div>
+  <div class="meta-line" style="margin-top:6px;"><em>Open watch:</em> today's <code>simulate_windows</code> says L5 should RETIRE (HOLD verdict across 7 cutoffs, magnitudes −0.5% to +4.5%). The divergence report says AGREE (script verdict matches production True). Two different rollups disagreeing — investigation queued; no action since L5 shipped only 2 days ago and reverting on this conflict would be premature.</div>
+</details>
 
 <!-- ───────────────────── Layer 6 — Microclimate correction ───────────────────── -->
 <h2 class="section" id="sec-layer6">Layer 6 — Microclimate correction (temperature)</h2>
 <div class="layer-info-text">
-  <p class="layer-summary">A small Δ°F added to the temperature forecast based on a within-network spatial signal: how much the waterfront stations (Willow Rd, Neptune Rd) typically diverge from the inland-network median under different wind / sea-breeze / hour combinations. L1–L5 are trained on forecast-vs-aggregated-obs errors; L6 is the first layer trained on a spatial differential between station subgroups. <strong>Current state (v0.6.259+): warming branch only.</strong> The cove warms a few °F under S/SE/SW sea-breeze (peninsula-lee heating) — this branch is active. The cooling branch (09–16 EDT under sb-inactive, was up to −3.7 °F around noon) was disabled 2026-06-30 — paired-MAE analysis showed it was doubling temperature MAE on rows where it fired (L1 is structurally cold ~2.25 °F at the cove; subtracting more made the gap worse), and <code>r5_cove_analysis</code> independently showed the cooling gradient no longer passes its threshold. Lookup table values for the cooling branch remain in code as historical record; <code>compute_cove_correction()</code> returns 0.0 for sb_off. See <a href="#sec-applicability">Applicability map</a> for the live trigger predicate.</p>
+  <p class="layer-summary">A small Δ°F added to the temperature forecast based on a within-network spatial signal: how much the waterfront stations (Willow Rd, Neptune Rd) typically diverge from the inland-network median under different wind / sea-breeze / hour combinations. L1–L5 are trained on forecast-vs-aggregated-obs errors; L6 is the first layer trained on a spatial differential between station subgroups. <strong>Current state (v0.6.259+): warming branch only.</strong> The cove warms a few °F under S/SE/SW sea-breeze (peninsula-lee heating) — this branch is active. The cooling branch (09–16 EDT under sb-inactive, was up to −3.7 °F around noon) was disabled 2026-06-30 — paired-MAE analysis showed it materially increased paired temperature MAE on rows where it fired (L1 is structurally cold ~2.25 °F at the cove; subtracting more made the gap worse), and <code>r5_cove_analysis</code> independently showed the cooling gradient no longer passes its threshold. Lookup table values for the cooling branch remain in code as historical record; <code>compute_cove_correction()</code> returns 0.0 for sb_off. See <a href="#sec-applicability">Applicability map</a> for the live trigger predicate.</p>
   <details class="layer-methodology"><summary>How L6 works</summary>
     <div class="meta-line">Each forecast lead gets its own Δ°F. For lead <em>i</em>, the collector reads the forecast wind direction (<code>hourly.wind_direction[i]</code>), parses the local hour from <code>hourly.times[i]</code>, and applies a heuristic <code>sb_active</code> (on during 13–18 EDT with S-half wind, off otherwise — coarser than the live sb detector but the only fields we have forecast for). When <code>sb_active</code> is True AND the forecast wind octant is S/SE/SW, it looks up Δ°F from <code>_DELTA_BY_OCTANT[(True, octant)]</code> (+1.1 to +2.0 °F) and adds it to that lead's <code>corrected_temperature</code> cell. When <code>sb_active</code> is False, Δ is 0.0 (cooling branch disabled v0.6.259). Tables built from a 12-day waterfront-vs-inland gradient log (<code>cove_gradient_log.json</code>, n=1,732); the sea-breeze branch cleared a 2-read confirmation gate on <code>r5_cove_analysis.py</code> (2026-06-25 SHIP + 2026-06-26 SHIP) and continues to PASS its threshold (+1.80°F on 2026-06-30).</div>
     <div class="meta-line"><strong>Why per-lead matters.</strong> The first ship (v0.6.231) applied the current-tick Δ to all 48 leads — wrong by 3–5°F at distant leads when the table swing crossed zero (e.g. applying noon's −3.7°F to a midnight lead). Per-lead projection (v0.6.237) fixed this. Across the 48-hour horizon the per-lead Δ now ranges roughly −3.7 to +2.0°F with a near-zero mean, exactly as expected from the lookup-table shape.</div>
@@ -1017,8 +1177,36 @@
   <div id="drill-canvases" class="grid"></div>
   <div id="status-drill" class="status" hidden></div>
 </details>
+<details class="research-subsection" id="gated-candidates">
+  <summary>G1. Gated correction candidates — what C1 would do right now</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> corrections sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast or display.
+    <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
+      <li><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟡 Hybrid · 🔒 stamps every tick in <code>collector.py</code> via <code>confidence_layer.py</code>, ENABLED=False · 🟢 Stage 4 audit script lives at <code>analysis/c1_stage4_audit.py</code>]</span> <strong>C1 confidence layer (multi-axis v3).</strong> Every tick stamps <code>weather_data["confidence"]</code> with per-(field, band) displayed bands + a <code>live_axes</code> block. <code>applied=False</code> until the calibration audit gate clears. <strong>Curated v3 table:</strong> 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys (Q × pt × trans × c1f); 1.29M pairs scanned, 296,898 multi-axis pairs joined on 14-day window. <strong>Stage 4 audit:</strong> compares calibrated MAE on a 7d calib window vs a 7d recent holdout window; PASS ≤20% drift, WATCH ≤40%, FAIL &gt;40%. Latest read (2026-06-30): legacy axis 27 PASS / 19 WATCH / 16 FAIL — NOT READY, dominated by pp (Brier-evaluated, wrong yardstick) + pa (precip amount, bursty). Multi-axis (587 SHIP cells in v2 curated table) still working through calibration drift; first clean multi-axis audit ETA ~2026-07-04. C1d (KBOS-vs-KBVY σ axis) killed by orthogonality 2026-06-29 — see Retired. Stage 4b in-card ± preview (right_now + wind cards) shipped v0.6.181.</li>
+    </ul>
+  </div>
+  <div id="gated-candidates-content" class="status">Loading…</div>
+</details>
 
-<h3 class="subsection" style="margin-top:24px;color:#d4a373;">Active hypotheses</h3>
+<details class="research-subsection" id="shadow-whitelist">
+  <summary>S1. Shadow applicability tuner — what would auto-tuner have chosen?</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per Fitter cycle, log which L3 and L4 fields a naive MAE-based auto-tuner would include in <code>L3_FIELDS</code> / <code>L4_FIELDS</code>, alongside production. <strong>Threshold:</strong> a field is recommended ON if its layer beats the layer below by ≥3% in any lead band AND bias is no worse. <strong>Scope:</strong> just field membership — does NOT reason about per-field gates like <code>CALM_GATE_ENABLED</code> (the calm-wind ws/wg skip) or any per-(field, regime, lead_band) skip table. Those richer gates live in the <a href="#sec-applicability">Applicability map</a>; the shadow tuner only addresses the on/off-per-field axis. <strong>Why it's here:</strong> the precondition for considering automation is "shadow tracks human decisions consistently." After 90+ days we can evaluate agreement rate. Until then, mismatches are <em>informative</em> (the pp case is a known Brier-blindspot), not actionable.</div>
+  <div id="shadow-whitelist-content" class="status">Loading…</div>
+</details>
+
+<details class="research-subsection" id="backtest-sweep">
+  <summary>B1. Backtest sweep — alternative L3/L4 configs vs production</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 applicability configurations against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under any candidate config without waiting for a redeploy. Current production is <code>L3 = {ws, wg, ch, cm, pp}, L4 = {ch, cc}</code>. <strong>Performance note:</strong> sweep run via <code>python3 -m backtest.sweep --write-gcs</code> (use <code>--local-file ~/.cache/myweather/forecast_error_log.jsonl</code> for fast iteration). Results below are from the last manual run.</div>
+  <div id="backtest-sweep-content" class="status">Loading sweep results...</div>
+</details>
+
+<details class="research-subsection" id="frontal-events">
+  <summary>F1. Frontal passage log — detector instrumentation (last 14 days)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live readout of detected frontal passages from <code>frontal_events_log.json</code>. The detector runs every tick in <code>frontal_detection.py</code>, reads a 90-minute rolling window from <code>frontal_obs_log.json</code>, and declares a passage when at least 2 of 3 signals fire: dewpoint drop &gt; 8°F, wind direction shift &gt; 60°, pressure inflection (local min then ≥0.02″ rise). Type classification uses the wind-shift target octant and pressure trend. Confidence is 67% with 2 signals and 100% with 3. <strong>Why it's here:</strong> sanity-check whether real fronts are being caught (and whether noise is being mistaken for fronts) before letting the briefing AI rely on the cause-attribution line. If the detector misses an obvious front or fires on a non-event, thresholds in <code>frontal_detection.py</code> are tunable.</div>
+  <div id="frontal-events-content" class="status">Loading detected passages...</div>
+</details>
+
+
+<h3 class="subsection" style="margin-top:24px;color:#d4a373;">Candidates</h3>
 
 <details class="research-subsection" id="r2-state-stratified" open>
   <summary>R2. State-stratified accuracy — which regimes does the model fail in? (active)</summary>
@@ -1100,8 +1288,11 @@
 
   <div class="meta-line" style="margin-top:14px;opacity:0.8;">Promotion rule: write a single-shot script in <code>analysis/</code>. Stage 2 verdict must hold across at least 2 reads spaced 3+ days apart. Group A candidates promote to C1 axes (C1a, C1b, C1c, ... — no R-number); Group B candidates earn R-numbers if they survive the 7-window walk-forward gate.</div>
 
-  <h4 style="color:#888;margin-top:22px;margin-bottom:6px;">Stage 0 explorations — completed, design seeds + breadcrumbs</h4>
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.85;">Surviving Stage 0 outputs: design seeds for future hypotheses, breadcrumbs pointing to promoted Stage 1 candidates above, data-limitation flags, and one open bug. Kills + methodological nulls live in the <strong>Retired</strong> section below (single source of truth).</div>
+  </details>
+
+<h3 class="subsection" style="margin-top:24px;color:#888;">Experiments</h3>
+<h4 style="color:#888;margin-top:22px;margin-bottom:6px;">Stage 0 explorations — completed, design seeds + breadcrumbs</h4>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.85;">Surviving Stage 0 outputs: design seeds for future hypotheses, breadcrumbs pointing to promoted Stage 1 candidates above, data-limitation flags, and one open bug. Kills + methodological nulls live in the <strong>Archive</strong> section below (single source of truth).</div>
   <ul style="margin:0 0 0 22px;padding:0;line-height:1.55;font-size:0.92em;">
     <li style="margin-bottom:6px;"><strong>Asymmetric L3 (over- vs under-call partition).</strong> Wind L3 wins +57% on over-calls but loses -120 to -166% on under-calls; ch +24% vs -13%. Real asymmetry but not directly actionable — you can't predict which side a future pair falls on. Logged as design seed for a future "L3-with-confidence-gate" hypothesis. (<code>h_asymmetric_l3.py</code>)</li>
     <li style="margin-bottom:6px;"><strong>Run-time issuance bias.</strong> HRRR initialization hour shows clean sinusoidal pattern on humidity L1 MAE (8.0 at run_h=0-2Z → 10.5 at run_h=12-13Z, 33% spread); t and cm also ≥10% spread. But potentially confounded with valid-time-of-day (each run_h correlates with specific obs distributions). Needs a controlled follow-up that holds valid_time fixed. Design seed; not promoted. (<code>h_run_time_bias.py</code>)</li>
@@ -1118,41 +1309,15 @@
     <li style="margin-bottom:6px;"><strong>Wind direction shift rate (|Δwd_3h|) × MAE.</strong> Stage 0 ran 2026-06-24 — rotating ≥80° class showed ch +33%, cm +24%, cc +15% MAE elevation. Promoted to Stage 1 as alt-transition axis candidate, then <span style="color:#fb7c5c;">KILLED same day</span> by orthogonality check: <code>h_wind_shift_rate_orthogonality.py</code> returned <strong>1 ortho / 22 redundant / 2 confounded / 11 ambiguous</strong>. C1a (regime transition) already captures the same physical pattern — wind shifts and regime transitions co-occur. Only ch at 24-47h was independently orthogonal, too narrow to ship alone. Moved to Retired section. (<code>h_wind_shift_rate.py</code>, <code>h_wind_shift_rate_orthogonality.py</code>)</li>
     <li style="margin-bottom:6px;"><strong>Lightning proximity × MAE.</strong> Stage 0 attempted 2026-06-24. Pair log doesn't carry lightning data per row (Tempest <code>lightning_strike_last_3hr</code> + <code>lightning_strike_last_distance</code> live in station_history.json, not forecast_error_log.jsonl). <span style="color:#a08070;">INFRASTRUCTURE GAP — not killed.</span> Re-test once a <code>lightning_proximity_km</code> field is added to pair-log rows in <code>forecast_error_log.py</code>. (<code>h_lightning_proximity.py</code>)</li>
   </ul>
-</details>
 
-<h3 class="subsection" style="margin-top:24px;color:#5d8fc4;">Operational tools — live audits &amp; shadow tracking</h3>
 
-<details class="research-subsection" id="gated-candidates">
-  <summary>G1. Gated correction candidates — what C1 would do right now</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> corrections sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast or display.
-    <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
-      <li><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟡 Hybrid · 🔒 stamps every tick in <code>collector.py</code> via <code>confidence_layer.py</code>, ENABLED=False · 🟢 Stage 4 audit script lives at <code>analysis/c1_stage4_audit.py</code>]</span> <strong>C1 confidence layer (multi-axis v3).</strong> Every tick stamps <code>weather_data["confidence"]</code> with per-(field, band) displayed bands + a <code>live_axes</code> block. <code>applied=False</code> until the calibration audit gate clears. <strong>Curated v3 table:</strong> 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys (Q × pt × trans × c1f); 1.29M pairs scanned, 296,898 multi-axis pairs joined on 14-day window. <strong>Stage 4 audit:</strong> compares calibrated MAE on a 7d calib window vs a 7d recent holdout window; PASS ≤20% drift, WATCH ≤40%, FAIL &gt;40%. Latest read (2026-06-30): legacy axis 27 PASS / 19 WATCH / 16 FAIL — NOT READY, dominated by pp (Brier-evaluated, wrong yardstick) + pa (precip amount, bursty). Multi-axis (587 SHIP cells in v2 curated table) still working through calibration drift; first clean multi-axis audit ETA ~2026-07-04. C1d (KBOS-vs-KBVY σ axis) killed by orthogonality 2026-06-29 — see Retired. Stage 4b in-card ± preview (right_now + wind cards) shipped v0.6.181.</li>
-    </ul>
-  </div>
-  <div id="gated-candidates-content" class="status">Loading…</div>
-</details>
-
-<details class="research-subsection" id="shadow-whitelist">
-  <summary>S1. Shadow applicability tuner — what would auto-tuner have chosen?</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per Fitter cycle, log which L3 and L4 fields a naive MAE-based auto-tuner would include in <code>L3_FIELDS</code> / <code>L4_FIELDS</code>, alongside production. <strong>Threshold:</strong> a field is recommended ON if its layer beats the layer below by ≥3% in any lead band AND bias is no worse. <strong>Scope:</strong> just field membership — does NOT reason about per-field gates like <code>CALM_GATE_ENABLED</code> (the calm-wind ws/wg skip) or any per-(field, regime, lead_band) skip table. Those richer gates live in the <a href="#sec-applicability">Applicability map</a>; the shadow tuner only addresses the on/off-per-field axis. <strong>Why it's here:</strong> the precondition for considering automation is "shadow tracks human decisions consistently." After 90+ days we can evaluate agreement rate. Until then, mismatches are <em>informative</em> (the pp case is a known Brier-blindspot), not actionable.</div>
-  <div id="shadow-whitelist-content" class="status">Loading…</div>
-</details>
-
-<details class="research-subsection" id="backtest-sweep">
-  <summary>B1. Backtest sweep — alternative L3/L4 configs vs production</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live A/B comparison of candidate L3/L4 applicability configurations against production, computed by replaying the held-out pair log under each enable config. Lets us see what MAE would have looked like under any candidate config without waiting for a redeploy. Current production is <code>L3 = {ws, wg, ch, cm, pp}, L4 = {ch, cc}</code>. <strong>Performance note:</strong> sweep run via <code>python3 -m backtest.sweep --write-gcs</code> (use <code>--local-file ~/.cache/myweather/forecast_error_log.jsonl</code> for fast iteration). Results below are from the last manual run.</div>
-  <div id="backtest-sweep-content" class="status">Loading sweep results...</div>
-</details>
-
-<details class="research-subsection" id="frontal-events">
-  <summary>F1. Frontal passage log — detector instrumentation (last 14 days)</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> live readout of detected frontal passages from <code>frontal_events_log.json</code>. The detector runs every tick in <code>frontal_detection.py</code>, reads a 90-minute rolling window from <code>frontal_obs_log.json</code>, and declares a passage when at least 2 of 3 signals fire: dewpoint drop &gt; 8°F, wind direction shift &gt; 60°, pressure inflection (local min then ≥0.02″ rise). Type classification uses the wind-shift target octant and pressure trend. Confidence is 67% with 2 signals and 100% with 3. <strong>Why it's here:</strong> sanity-check whether real fronts are being caught (and whether noise is being mistaken for fronts) before letting the briefing AI rely on the cause-attribution line. If the detector misses an obvious front or fires on a non-event, thresholds in <code>frontal_detection.py</code> are tunable.</div>
-  <div id="frontal-events-content" class="status">Loading detected passages...</div>
-</details>
-
-<details class="research-subsection" id="retired-wrapper" style="margin-top:24px;border-color:#3a2a2a;background:#191313;">
-  <summary style="color:#a08070;"><strong>Retired</strong> — hypotheses ruled out &amp; settled tunings (collapsed; click to expand)</summary>
-  <div class="meta-line" style="margin-top:10px;"><strong>What these are:</strong> things we built, ran, and stopped running. Two kinds get mixed here: <strong>hypotheses</strong> (a real question we tested and the data answered no) and <strong>settled tunings</strong> (a parameter sweep that concluded "current value is fine"). Each entry is tagged. Kept as institutional memory so future-Joe doesn't burn a day re-inventing them. Standalone scripts in <code>analysis/</code> can be re-run at any time if conditions might have shifted.</div>
+<!-- ───────────────────── Archive ─────────────────────
+     Retired ideas & historical investigations. Promoted out of
+     Research → Retired into its own top-level section. -->
+<h2 class="section" id="sec-archive">Archive — Retired ideas &amp; historical investigations</h2>
+<div class="layer-info-text" style="border-color:#3a2a2a;background:#191313;">
+  <p class="layer-summary">Things we built, ran, and stopped running. Two kinds get mixed here: <strong>hypotheses</strong> (a real question we tested and the data answered no) and <strong>settled tunings</strong> (a parameter sweep that concluded "current value is fine"). Each entry is tagged. Kept as institutional memory so future-Joe doesn't burn a day re-inventing them. Standalone scripts in <code>analysis/</code> can be re-run at any time if conditions might have shifted.</p>
+</div>
 
   <div style="margin-top:18px;padding:10px;border:1px solid #3a2a2a;background:#1a1414;border-radius:6px;">
     <div style="color:#fb7c5c;font-weight:600;margin-bottom:6px;">Recently ruled out — 2026-06-22 to 06-29 Stage 0/1 kills</div>
@@ -1163,13 +1328,13 @@
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Lead-h × C1a transition interaction.</strong> <em>Killed 2026-06-23.</em> Hypothesis: C1a penalty grows with lead. Result: mostly flat. Only ch shows monotonic growth (+0.31 short→long); cm marginal. ch is already in C1e, so redundant. No need for lead-conditional C1a bands. (<code>analysis/h_lead_c1a.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Solar zenith × cloud MAE.</strong> <em>Killed 2026-06-23 — duplicate.</em> Strong cloud-MAE spread by solar bin (cl 60%, cm 43%, ch 36%) but this is the same day/night cloud bias the cc→L4 Stage 1 hypothesis already addresses. Same signal sliced differently. (<code>analysis/h_solar_cloud_selfcheck.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Weekday vs weekend anthropogenic bias.</strong> <em>Killed 2026-06-22 — likely artifact.</em> Apparent gaps (t +1.14°F, h -2.65%, ws +1.34 mph between weekday and weekend) but the 21-day window contains only 3 weekends — one unusual Saturday biases the whole number. Day-of-week × weather correlation high at small N. Revisit with ≥6 months data (earliest April 2027). (<code>analysis/h_weekday_temp.py</code>)</li>
-      <li style="margin-bottom:6px;"><strong>[TUNING] L4 fit-window size sweep (7/14/21/30d).</strong> <em>Settled 2026-06-23.</em> All window sizes essentially tie for every L4-enabled field; 7d marginally worse for ch/cm. Current 30d is correct. (<code>analysis/h_l4_window_size.py</code>)</li>
+      <li style="margin-bottom:6px;"><strong>[TUNING] L4 fit-window size sweep (7/14/21/30d).</strong> <em>Settled 2026-06-23.</em> All window sizes essentially tie for every L4-applied field; 7d marginally worse for ch/cm. Current 30d is correct. (<code>analysis/h_l4_window_size.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[TUNING] Lead-bin granularity (10 fine bands).</strong> <em>Settled 2026-06-23.</em> Finer bins reveal expected lead-decay shapes (wind L2 ramps from full at lead 1h to zero at lead 24h) but no hidden ship gains. Current 4-band [0-5/6-11/12-23/24-47] structure isn't hiding signal. (<code>analysis/h_lead_granularity.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Mesonet confidence regime × MAE.</strong> <em>Killed 2026-06-24 — null.</em> Used state_obs.regime_synoptic (sea_breeze + frontal = high-scatter; calm + nw_flow + sw_flow = low-scatter) as proxy for mesonet confidence label. High/low scatter MAE ratios across all 9 fields: 0.93×–1.22× (only cm hit ⚠ at 1.22×). No meaningful spread; regime classification doesn't carry through as a confidence axis on its own. (<code>analysis/h_mesonet_conf.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] C1g — RH ≥95% (fog) as confidence axis.</strong> <em>Killed 2026-06-24 — orthogonality check.</em> Stage 0 (<code>h_rh_saturation.py</code>) showed cm +134%, ch +149%, cl saturating +67% MAE elevation. Promoted to Stage 1 Tier 2, then killed same week by <code>h_c1g_orthogonality.py</code>: 1 ortho / 69 redundant / 0 confounded / 2 ambiguous. The elevation was sampling-driven — fog (obs_humidity ≥95) heavily co-occurs with both rain-forecast (C1f) and cc_fc ≥95 (cc-saturation). In the F=False or S=False subsets, fog rows show ratios 0.02–0.25× (smaller MAE than non-fog) — i.e. C1g either reduces error (when conditions disagree with model) or merely tracks F/S (when conditions agree). No independent widening signal. (<code>analysis/h_rh_saturation.py</code>, <code>analysis/h_c1g_orthogonality.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Wind shift rate (|Δwd_3h|) as alt-transition axis.</strong> <em>Killed 2026-06-24 — same-day kill via orthogonality.</em> Stage 0 showed rotating ≥80° wind class elevates cloud MAE (ch +33%, cm +24%, cc +15%). But the orthogonality check vs C1a (regime transition flag) returned 1 ortho / 22 redundant / 2 confounded / 11 ambiguous across 9 fields × 4 lead bands. Wind shifts and regime transitions co-occur; C1a already captures the signal. Only ch at 24-47h shows independent signal — too narrow to ship as a standalone axis. (<code>analysis/h_wind_shift_rate.py</code>, <code>analysis/h_wind_shift_rate_orthogonality.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] C1d — KBOS-vs-KBVY cloud disagreement σ as confidence axis.</strong> <em>Killed 2026-06-29 — orthogonality check inverted the signal.</em> Stage 0 (<code>h_cloud_disagreement.py</code> 2026-06-28) returned SMOKE_ALIVE — cloud-MAE elevated in the high σ_KBOS-vs-KBVY quartile. Promoted to Stage 1. Orthogonality follow-up (<code>h_cloud_disagreement_orthogonality.py</code> 2026-06-29) held C1a (regime transition) fixed and recomputed σ_HIGH/σ_LOW MAE ratio: ratio <strong>inverted to &lt;1.0 in 3 of 4 cells</strong> that cleared the n floor. The σ signal was capturing the regime-transition signal C1a already encodes. C1e (post-frontal) cross-check insufficient (n=0). C1d does not promote. Pattern preserved: SMOKE_ALIVE → orthogonality KILL — always run the orthogonality check vs every live C1 axis before promoting. (<code>analysis/h_cloud_disagreement.py</code>, <code>analysis/h_cloud_disagreement_orthogonality.py</code>)</li>
-      <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] L6 cooling branch (sb_off offshore-morning Δ table) — original "double-counting" diagnosis.</strong> <em>Killed 2026-06-30 — rejected by data, replaced by surgical fix.</em> Initial diagnosis: L2's mesonet blend already pulls cove temperature toward truth, so L6's additional cooling Δ double-counts. <code>analysis/l6_l2_double_counting.py</code> on 19,975 t pairs where L6 fired showed L2 only erases 3.7% of L1's MAE on cove rows — barely moves the needle. The hypothesis was wrong; L2 isn't double-counting anything. Real cause: L1 is structurally cold ~2.25°F at the cove (HRRR microclimate gap L2 doesn't close). L6's cooling branch was pouring more cooling on an already-cold baseline, doubling MAE on rows where it fired (Δ ≤ −2 °F bucket: 3.52 → 6.16, −74.9%). Warming branch (sb_active S/SE/SW) was neutral-to-helpful. Action: surgical disable of cooling branch only (v0.6.259); warming branch retained. Long-term Fix B (refit lookup against L2 baseline) queued. (<code>analysis/l6_l2_double_counting.py</code>; memory: <code>project_l6_l2_double_counting_hypothesis</code>)</li>
+      <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] L6 cooling branch (sb_off offshore-morning Δ table) — original "double-counting" diagnosis.</strong> <em>Killed 2026-06-30 — rejected by data, replaced by surgical fix.</em> Initial diagnosis: L2's mesonet blend already pulls cove temperature toward truth, so L6's additional cooling Δ double-counts. <code>analysis/l6_l2_double_counting.py</code> on 19,975 t pairs where L6 fired showed L2 only erases 3.7% of L1's MAE on cove rows — barely moves the needle. The hypothesis was wrong; L2 isn't double-counting anything. Real cause: L1 is structurally cold ~2.25°F at the cove (HRRR microclimate gap L2 doesn't close). L6's cooling branch was pouring more cooling on an already-cold baseline, materially increasing paired MAE on rows where it fired (Δ ≤ −2 °F bucket: 3.52 → 6.16, −74.9%). Warming branch (sb_active S/SE/SW) was neutral-to-helpful. Action: surgical disable of cooling branch only (v0.6.259); warming branch retained. Long-term Fix B (refit lookup against L2 baseline) queued. (<code>analysis/l6_l2_double_counting.py</code>; memory: <code>project_l6_l2_double_counting_hypothesis</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Naive persistence baseline vs HRRR.</strong> <em>Killed 2026-06-24 — expected behavior, not a bug.</em> Compared error_l1 vs "use current obs as constant forecast": persistence wins ws/wg at all leads (+95% to +526%), cc at short leads. Initial alarm: possible mph→m/s unit mismatch on forecast_l1. <strong>Investigated and ruled out:</strong> both fc and obs are mph (config.py:46 sets wind_speed_unit=mph for all Open-Meteo calls; wind_blend.py converts METAR knots → mph). The 2× ratio is a real model over-prediction for our sheltered coastal location, and L2+L3 already correct it (raw ws L1 MAE 4.17 mph → L3 2.44 mph). Live frontend already does persistence-style blending via <code>blend_observed_into_hourly</code> (BLEND_HOURS=24, weight=1.0 at current hour). Pair log captures the pre-blend raw, which is why error_l1 looks bad. Nothing actionable. (<code>analysis/h_persistence.py</code>)</li>
     </ul>
   </div>
@@ -1244,14 +1409,11 @@
     </ul>
     <div style="margin-top:6px;">The L2-overlap hypothesis was empirically confirmed. L2's <code>1/distance² × elevation</code> station weighting for the cove is dominated by the two waterfront Tempests (Willow Rd, Neptune Rd at ~0.1–0.2 mi). L2's "cove bias" is effectively "waterfront bias" by construction. Layering R5's (waterfront − inland) delta on top double-counts the same signal — the cove obs is already waterfront-influenced via L2, so adding more waterfront delta pushes the forecast AWAY from the obs.</div>
     <div style="margin-top:6px;"><strong>Decision (global R5, retired 2026-06-17):</strong> <code>r5_audit.py</code>'s held-out test of R5 applied across the full pipeline showed it makes cove temp 20–22% worse — L2's waterfront-weighted station blend already captures the signal, so layering R5 on top double-counts. That global formulation stays retired.</div>
-    <div style="margin-top:6px;"><strong>Current status (L6 — microclimate correction, shipped 2026-06-26; cooling branch disabled 2026-06-30 v0.6.259):</strong> <code>cove_correction.py</code> is live. Sea-breeze WARMING branch active: when sb_active is True AND wind octant ∈ {S, SE, SW}, applies +1.1 to +2.0 °F per lead. sb_off COOLING branch returns 0.0 — paired-MAE analysis showed it was doubling cove temp MAE on rows where it fired (L1 structurally cold ~2.25 °F at cove; subtracting more made the gap worse), independently confirmed by <code>r5_cove_analysis</code> (cooling gradient FAIL −0.54°F vs −1.0°F threshold). Cooling-table values remain in code as historical record. Full diagnostics in <a href="#sec-layer6">Layer 6</a>; live trigger in <a href="#sec-applicability">Applicability map</a>.</div>
+    <div style="margin-top:6px;"><strong>Current status (L6 — microclimate correction, shipped 2026-06-26; cooling branch disabled 2026-06-30 v0.6.259):</strong> <code>cove_correction.py</code> is live. Sea-breeze WARMING branch active: when sb_active is True AND wind octant ∈ {S, SE, SW}, applies +1.1 to +2.0 °F per lead. sb_off COOLING branch returns 0.0 — paired-MAE analysis showed it materially increased paired cove temp MAE on rows where it fired (L1 structurally cold ~2.25 °F at cove; subtracting more made the gap worse), independently confirmed by <code>r5_cove_analysis</code> (cooling gradient FAIL −0.54°F vs −1.0°F threshold). Cooling-table values remain in code as historical record. Full diagnostics in <a href="#sec-layer6">Layer 6</a>; live trigger in <a href="#sec-applicability">Applicability map</a>.</div>
     <div style="margin-top:6px;">One niche subtlety in the breakdown: long-lead (24-47h) sea-breeze forecasts get +7.85% MAE improvement with R5. At long leads, L2's τ=4h decay has long since faded, so R5 has something L2 doesn't. Not worth shipping a conditional correction for, but documented.</div>
   </div>
   <div id="status-cove-gradient" class="status" hidden></div>
 </details>
-
-</details>
-<!-- end of retired-wrapper -->
 
 <!-- R3 retired-hypothesis sub-items moved up under the consolidated
      "Retired hypotheses" header (alongside R4 and R5). Single canonical
@@ -1726,7 +1888,7 @@ function renderApplicabilityMap(wxDoc) {
           <thead>
             <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
               <th style="padding:4px 10px 4px 0;">${colLabel}</th>
-              <th style="padding:4px 10px;">triggers when</th>
+              <th style="padding:4px 10px;">applies when</th>
               <th style="padding:4px 10px;">gated by</th>
               <th style="padding:4px 0 4px 10px;">current state</th>
             </tr>
@@ -2715,7 +2877,7 @@ function renderGatedCandidatesSection(wxDoc) {
       <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(2)}°F</div>
       <div class="meta-line" style="font-size:0.88em;">${inputs}</div>
       <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">
-        Live per-tick Δ°F applied to <code>corrected_temperature</code> when sb_active is True and the wind octant is S/SE/SW (sea-breeze warming branch). Returns 0.0 when sb_active is False (cooling branch disabled v0.6.259; was doubling MAE). See <a href="#sec-layer6">Layer 6</a> for full state, <a href="#sec-applicability">Applicability map</a> for the live trigger predicate.
+        Live per-tick Δ°F applied to <code>corrected_temperature</code> when sb_active is True and the wind octant is S/SE/SW (sea-breeze warming branch). Returns 0.0 when sb_active is False (cooling branch disabled v0.6.259; was materially increasing paired MAE). See <a href="#sec-layer6">Layer 6</a> for full state, <a href="#sec-applicability">Applicability map</a> for the live trigger predicate.
       </div>
     </div>`;
   }
