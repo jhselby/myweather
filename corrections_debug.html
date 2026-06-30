@@ -601,6 +601,19 @@
   }
   .band-table thead th.layer-active { border-top: 1px solid #4a7a5a; }
   .band-table tbody tr:last-child td.layer-active { border-bottom: 1px solid #4a7a5a; }
+  /* Production column — the line users actually see. Distinct from the
+     applicability highlight: this isn't "L3 is on for this field," it's
+     "this is the composed output the user gets." Brighter and bolder. */
+  .band-table th.production-col,
+  .band-table td.production-col {
+    border-left: 1.5px solid #ffffff;
+    border-right: 1.5px solid #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+    color: #ffffff !important;
+    font-weight: 700;
+  }
+  .band-table thead th.production-col { border-top: 1.5px solid #ffffff; }
+  .band-table tbody tr:last-child td.production-col { border-bottom: 1.5px solid #ffffff; }
   .accuracy-card {
     background: var(--panel);
     border: 1px solid #242833;
@@ -814,10 +827,11 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  <p class="layer-summary"><strong>The lowest line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model.</p>
+  <p class="layer-summary"><strong>The bright white "Production" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are diagnostic; the Production line tracks whichever composition of layers is the user-visible answer for that field.</p>
   <details class="layer-methodology" open><summary>How to read these charts</summary>
     <div class="meta-line"><strong>What you're looking at.</strong> One small chart per weather field. The Y-axis is how wrong the forecast tends to be (in that field's units — °F, %, mph, etc.). The X-axis is hours into the future. Lower lines = more accurate. Lines climbing to the right is normal — forecasts get worse the further out you predict.</div>
-    <div class="meta-line"><strong>The lines are cumulative correction layers. L1–L4 stack across every field; L5 only stacks on the solar (sr) card; L6 only stacks on the temperature card. Lowest line = lowest typical error = what users actually see.</strong></div>
+    <div class="meta-line"><strong>The colored lines are diagnostic — one per correction layer. L1–L4 stack across every field; L5 only stacks on the solar (sr) card; L6 only stacks on the temperature card. The bright white Production line on top traces the actual user-visible output, layer by layer, per field — there's no single "applied" layer because every field composes its own subset of the stack.</strong></div>
+    <div class="meta-line"><strong>The Production column</strong> in the table beneath each chart is the same value as the Production line, averaged per lead band. Use it for "what's our actual error?" Use the per-layer columns to see which step contributed what.</div>
     <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.5">
       <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
       <li><strong>Aggregate bias</strong> (orange): adds Layer 2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
@@ -2318,30 +2332,40 @@ function renderAccuracySection(tsDoc, wxDoc) {
       return true;
     });
 
+  // Production layer for a field: the deepest applied layer in the pipeline.
+  // L1→L2→L3→L4→L5/L6 are evaluated in order; the last one that applies for
+  // this field is what users see. Falls back to "l1" if nothing else applies.
+  const _productionLayerKey = (fieldKey) => {
+    const ordered = _layersFor(fieldKey);
+    for (let i = ordered.length - 1; i >= 0; i--) {
+      if (_layerApplied(ordered[i].key, fieldKey)) return ordered[i].key;
+    }
+    return "l1";
+  };
+
   const _buildBandTable = (fieldData, fieldKey, decimals) => {
     const rows = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);
     const LAYERS = _layersFor(fieldKey);
-    // Per-column active flags, in column order matching LAYERS.
-    const allActive = LAYERS.map(l => _layerApplied(l.key, fieldKey));
-    // Highest-applied column wins the box; everything else stays unboxed.
-    let highestIdx = -1;
-    for (let i = allActive.length - 1; i >= 0; i--) {
-      if (allActive[i]) { highestIdx = i; break; }
-    }
-    const colActive = allActive.map((_, i) => i === highestIdx);
+    // Every applied layer column gets the .layer-active highlight (shows
+    // applicability). The new Production column (last) gets the heavier
+    // .production-col styling (shows the user-visible answer).
+    const colActive = LAYERS.map(l => _layerApplied(l.key, fieldKey));
     const _activeCls = (idx, extra) => {
       const cls = [];
       if (colActive[idx]) cls.push("layer-active");
       if (extra) cls.push(extra);
       return cls.length ? ` class="${cls.join(" ")}"` : "";
     };
+    const prodKey = _productionLayerKey(fieldKey);
     let html =
       `<table class="band-table"><thead><tr>` +
       `<th>Lead</th>` +
       LAYERS.map((l, i) => `<th${_activeCls(i)}>${l.shortLabel || l.label}</th>`).join("") +
+      `<th class="production-col">Production</th>` +
       `</tr></thead><tbody>`;
     for (const b of rows) {
       const vals = LAYERS.map(l => _bandAvg(fieldData[l.key] || [], b.lo, b.hi));
+      const prodVal = _bandAvg(fieldData[prodKey] || [], b.lo, b.hi);
       const present = vals.filter(v => v != null);
       const best = present.length ? Math.min(...present) : null;
       const worst = present.length ? Math.max(...present) : null;
@@ -2356,6 +2380,7 @@ function renderAccuracySection(tsDoc, wxDoc) {
         }
         html += `<td${_activeCls(i, extra)}>${_fmt(v, decimals)}</td>`;
       }
+      html += `<td class="production-col">${_fmt(prodVal, decimals)}</td>`;
       html += `</tr>`;
     }
     html += `</tbody></table>`;
@@ -2383,6 +2408,22 @@ function renderAccuracySection(tsDoc, wxDoc) {
       tension: 0.25,
       spanGaps: true,
     }));
+    // Production line — bright white, thick, drawn on top of the per-layer
+    // diagnostic lines. It tracks whichever layer is the user-visible answer
+    // for this field per _productionLayerKey().
+    const prodKey = _productionLayerKey(f.key);
+    datasets.push({
+      label: "Production",
+      data: (fieldData[prodKey] || []).map(v => v == null ? NaN : v),
+      borderColor: "rgba(255,255,255,1)",
+      backgroundColor: "rgba(0,0,0,0)",
+      borderDash: [],
+      borderWidth: 3.5,
+      pointRadius: 0,
+      tension: 0.25,
+      spanGaps: true,
+      // Pushed last in the datasets array → drawn on top by default.
+    });
     // Sample-count summary
     const samples24 = (nByLead[f.key] || {}).l4 || [];
     const totalSamples = samples24.reduce((s, v) => s + (v || 0), 0);
