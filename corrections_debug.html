@@ -827,11 +827,11 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  <p class="layer-summary"><strong>The bright white "Production" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are diagnostic; the Production line tracks whichever composition of layers is the user-visible answer for that field.</p>
+  <p class="layer-summary"><strong>The bright white "Production*" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are population-level diagnostics; the Production line is the user-visible answer. <em>* Approximation: Production currently tracks the deepest applied layer per field. Once per-row applied-layer stamping ships in the collector, this line will reflect the true per-row pipeline output (calm-wind gate skips, marine layer triggers, L6 regime branches, etc.).</em></p>
   <details class="layer-methodology" open><summary>How to read these charts</summary>
     <div class="meta-line"><strong>What you're looking at.</strong> One small chart per weather field. The Y-axis is how wrong the forecast tends to be (in that field's units — °F, %, mph, etc.). The X-axis is hours into the future. Lower lines = more accurate. Lines climbing to the right is normal — forecasts get worse the further out you predict.</div>
-    <div class="meta-line"><strong>The colored lines are diagnostic — one per correction layer. L1–L4 stack across every field; L5 only stacks on the solar (sr) card; L6 only stacks on the temperature card. The bright white Production line on top traces the actual user-visible output, layer by layer, per field — there's no single "applied" layer because every field composes its own subset of the stack.</strong></div>
-    <div class="meta-line"><strong>The Production column</strong> in the table beneath each chart is the same value as the Production line, averaged per lead band. Use it for "what's our actual error?" Use the per-layer columns to see which step contributed what.</div>
+    <div class="meta-line"><strong>The colored lines are population-level diagnostics — one per correction layer. They show "what each layer would yield on average if applied to every row in the band," regardless of whether it actually fired. L1–L4 are drawn for every field; L5 only for sr; L6 only for t. The bright white Production* line on top traces the actual user-visible output.</strong></div>
+    <div class="meta-line"><strong>No more applied-column highlighting.</strong> Under conditional gates (calm-wind skip, marine-layer trigger, L6 regime branches, an eventual per-(field, regime, lead_band) skip table) different rows in the same lead band took different paths through the stack — there's no single "applied" column to box. Per-layer columns stay as population-level diagnostics; the Production column is the only conditional-aware summary. If Production isn't the lowest line, that's the signal to check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
     <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.5">
       <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
       <li><strong>Aggregate bias</strong> (orange): adds Layer 2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
@@ -2346,22 +2346,16 @@ function renderAccuracySection(tsDoc, wxDoc) {
   const _buildBandTable = (fieldData, fieldKey, decimals) => {
     const rows = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);
     const LAYERS = _layersFor(fieldKey);
-    // Every applied layer column gets the .layer-active highlight (shows
-    // applicability). The new Production column (last) gets the heavier
-    // .production-col styling (shows the user-visible answer).
-    const colActive = LAYERS.map(l => _layerApplied(l.key, fieldKey));
-    const _activeCls = (idx, extra) => {
-      const cls = [];
-      if (colActive[idx]) cls.push("layer-active");
-      if (extra) cls.push(extra);
-      return cls.length ? ` class="${cls.join(" ")}"` : "";
-    };
+    // Per-layer columns are population-level diagnostics (MAE if this layer's
+    // correction were applied to every row in the band). No applied-layer
+    // highlighting — under conditional gates there's no single "applied"
+    // column. Production column carries the user-visible signal.
     const prodKey = _productionLayerKey(fieldKey);
     let html =
       `<table class="band-table"><thead><tr>` +
       `<th>Lead</th>` +
-      LAYERS.map((l, i) => `<th${_activeCls(i)}>${l.shortLabel || l.label}</th>`).join("") +
-      `<th class="production-col">Production</th>` +
+      LAYERS.map(l => `<th>${l.shortLabel || l.label}</th>`).join("") +
+      `<th class="production-col" title="Approximation — equals the deepest applied layer for this field. Pending per-row applied-layer stamping in the collector.">Production*</th>` +
       `</tr></thead><tbody>`;
     for (const b of rows) {
       const vals = LAYERS.map(l => _bandAvg(fieldData[l.key] || [], b.lo, b.hi));
@@ -2375,10 +2369,10 @@ function renderAccuracySection(tsDoc, wxDoc) {
         const v = vals[i];
         let extra = "";
         if (v != null && present.length >= 2) {
-          if (v === best) extra = "best";
-          else if (v === worst) extra = "worst";
+          if (v === best) extra = ' class="best"';
+          else if (v === worst) extra = ' class="worst"';
         }
-        html += `<td${_activeCls(i, extra)}>${_fmt(v, decimals)}</td>`;
+        html += `<td${extra}>${_fmt(v, decimals)}</td>`;
       }
       html += `<td class="production-col">${_fmt(prodVal, decimals)}</td>`;
       html += `</tr>`;
@@ -2413,12 +2407,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // for this field per _productionLayerKey().
     const prodKey = _productionLayerKey(f.key);
     datasets.push({
-      label: "Production",
+      label: "Production*",
       data: (fieldData[prodKey] || []).map(v => v == null ? NaN : v),
       borderColor: "rgba(255,255,255,1)",
       backgroundColor: "rgba(0,0,0,0)",
       borderDash: [],
-      borderWidth: 3.5,
+      borderWidth: 3,
       pointRadius: 0,
       tension: 0.25,
       spanGaps: true,
