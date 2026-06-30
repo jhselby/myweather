@@ -744,7 +744,7 @@
         <li><strong>L2</strong> mesonet blend — additive bias on <code>t / dp / h / pr / cc</code> (Kalman gain); direct selection on <code>ws / wg</code>.</li>
         <li><strong>L3</strong> lead-decay — applies to {ws, wg, ch, cm, pp}.</li>
         <li><strong>L4</strong> diurnal — applies to {ch, cc}.</li>
-        <li style="list-style:none;margin-left:-16px;opacity:0.75;font-size:0.9em;">Cards read corrected <code>hourly[0]</code>. See <a href="#sec-applicability">Applicability map</a> for live triggers + gates (e.g. CALM_GATE_ENABLED for ws/wg).</li>
+        <li style="list-style:none;margin-left:-16px;opacity:0.75;font-size:0.9em;">Cards read corrected <code>hourly[0]</code>. See <a href="#sec-applicability">Applicability map</a> for live triggers + gates (e.g. L6 regime branches for t, L5 sun-up threshold for sr).</li>
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Specialists <span style="font-weight:normal;opacity:0.7;">— single-field, parallel to the core stack</span></div>
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
@@ -760,7 +760,6 @@
     <details open style="border:1px solid #3a2d1f;background:#191510;padding:10px;border-radius:6px;">
       <summary style="color:#d4a373;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">⏸ Built, not applied (gated off)</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>Calm-wind L3 skip</strong> (<code>CALM_GATE_ENABLED=False</code> in <code>decay_apply.py</code>, v0.6.252). Flip zeroes ws/wg L3 corrections when fc_ws &lt; 3 mph. Earliest flip ~2026-07-02 after Stage 2 audit cycles.</li>
         <li><strong>Marine-layer correction sandbox</strong> — stamps <code>weather_data["marine_layer_correction"]</code> every tick, <code>ENABLED=False</code>. NE+morn cc bias currently +32.65 mean / +43.00 median cumulative (in +25–+40 watch band). Flip target mid-July if trend holds.</li>
       </ul>
     </details>
@@ -768,7 +767,7 @@
     <details style="border:1px solid #3a2a2a;background:#191313;padding:10px;border-radius:6px;">
       <summary style="color:#fb7c5c;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">🗄 Retired — kept as institutional memory</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>R3</strong> derived humidity · <strong>R4</strong> HRRR-GFS spread · <strong>R5</strong> cove cross-current · <strong>C1d</strong> KBOS-KBVY σ · <strong>C1g</strong> RH≥95% fog · <strong>Δwd_3h</strong> wind shift rate · <strong>L6 cooling branch</strong> (sb_off table). Full kill rationales in <a href="#retired-wrapper">Research → Retired</a>.</li>
+        <li><strong>R3</strong> derived humidity · <strong>R4</strong> HRRR-GFS spread · <strong>R5</strong> cove cross-current · <strong>C1d</strong> KBOS-KBVY σ · <strong>C1g</strong> RH≥95% fog · <strong>Δwd_3h</strong> wind shift rate · <strong>L6 cooling branch</strong> (sb_off table) · <strong>CALM_GATE</strong> (fc_ws&lt;3 ws/wg L3 skip — wrong intervention, ne_flow is the actual loser). Full kill rationales in <a href="#sec-archive">Archive</a>.</li>
       </ul>
     </details>
 
@@ -782,11 +781,11 @@
             <li><strong>D:</strong> Flip if a 2nd daily digest cycle confirms AND <code>l4_regime_lead_analysis</code> on h shows no regime-specific weakness.</li>
           </ul>
         </li>
-        <li style="margin-top:6px;"><strong>07-02 (Thu): Flip <code>CALM_GATE_ENABLED</code> to True?</strong>
+        <li style="margin-top:6px;"><strong>07-02 (Thu): Calm-wind gate — RETIRE (wrong intervention).</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Skip ws/wg L3 corrections when fc_ws &lt; 3 mph?</li>
-            <li><strong>E:</strong> Needs 2–3 daily digest cycles of <code>l3_regime_lead_analysis</code> confirming the calm-cell L3 LOSES verdict is stable.</li>
-            <li><strong>D:</strong> Flip when cycles confirm.</li>
+            <li><strong>Q:</strong> Should <code>CALM_GATE_ENABLED</code> flip to True (skip ws/wg L3 when fc_ws &lt; 3)?</li>
+            <li><strong>E:</strong> 2026-06-30 <code>l3_regime_lead_analysis</code> run (694K L3-field pair rows): ws L3 in the <strong>calm</strong> regime <strong>WINS +15.3% / +29.9% / +44.0% / +44.3%</strong> across lead bands (n = 4.8K → 20.4K). The regression Joe noticed lives in <strong>ne_flow</strong> (L3 LOSES at every lead band, n = 1.0K → 4.1K) and short-lead <strong>sea_breeze</strong>, not in calm. The fc_ws&lt;3 gate would skip L3 exactly where it wins biggest.</li>
+            <li><strong>D:</strong> Do NOT flip CALM_GATE. Retire the gate; <code>CALM_GATE_ENABLED</code> removal from <code>decay_apply.py</code> queued for the next collector ship. The actual fix is a per-(field, regime, lead_band) skip table targeting ne_flow (all bands) + sea_breeze (short leads) — already in Open architectural questions.</li>
           </ul>
         </li>
         <li style="margin-top:6px;"><strong>07-04 (Sat):</strong> C1 v2 multi-axis calibration audit first eligible.</li>
@@ -810,10 +809,13 @@
     <details style="border:1px solid #2a2a3a;background:#131319;padding:10px;border-radius:6px;">
       <summary style="color:#a89ce0;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">🧪 Open architectural questions</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>Per-(field, regime, lead_band) skip table for L3/L4.</strong> Pattern confirmed on 4 fields (ws/wg/cc/cm): walk-forward flat-drop verdicts hide regime-specific weakness. Bigger commit than the calm-wind gate.</li>
+        <li><strong>Per-(field, regime, lead_band) skip table for L3/L4.</strong> Pattern confirmed on 4 fields (ws/wg/cc/cm): walk-forward flat-drop verdicts hide regime-specific weakness. <strong>2026-06-30 ws-by-regime read:</strong> the actual ws L3 losers are <strong>ne_flow (all 4 bands)</strong> and <strong>sea_breeze short-lead</strong>; ws L3 wins big (+15% to +44%) in the calm regime — which is why the killed CALM_GATE was the wrong intervention. First skip-table cells: <code>(ws, ne_flow, *)</code> and <code>(ws, sea_breeze, 0-11h)</code>.</li>
         <li><strong>L6 lookup refit (Fix B).</strong> Rebuild table against L2-corrected baseline instead of raw waterfront-vs-inland gradient. Hold for 2–3 days of post-v0.6.259 reads first.</li>
         <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/L5 only. See memory note.</li>
         <li><strong>Scorecard banner.</strong> Add "Stack vs raw: −X% MAE across N fields" above Status. Small follow-up.</li>
+        <li><strong>Per-lead Brier for PP (queued 2026-06-30).</strong> PP card on Forecast Accuracy currently shows MAE because that's all <code>per_layer_mae_by_lead.pp</code> carries. PP's actual ship gate is Brier — the v0.6.20 calibration analysis showed L3 raises PP MAE but cuts Brier ~5%, so the chart can mislead. Fitter ship: emit <code>per_layer_brier_by_lead.pp</code> + <code>per_layer_brier_n_by_lead.pp</code> alongside MAE; frontend swaps the PP card's y-axis and band-table column to Brier. Disclaimer banner on the PP card flags the current state.</li>
+        <li><strong>KBOS+KBVY cloud blend — promote to full L2? (queued 2026-06-30).</strong> Today <code>blend_metar_cloud_into_hourly()</code> mutates <code>hourly[0]</code> only — obs override for the current hour, not propagated as an L2 bias across leads. Promote = apply <code>bias = obs − raw_hrrr</code> across all 48 leads (with/without τ-decay), so L3/L4 evaluate against L2-corrected cc and the lead-12h forecast benefits from lead-0 disagreement. Stage 0 gate: <code>analysis/h_cloud_bias_persistence.py</code> measuring <code>corr(bias[lead_0], error_l1[lead_N])</code> for N ∈ [1, 24]. Ship if ≥0.30 at lead 6h AND ≥0.15 at lead 12h. Coordinate with the marine-layer sandbox to avoid double-counting in NE+morn.</li>
+        <li><strong>dp L4 regime cross-cut (queued 2026-06-30).</strong> Chart shows dp L4 lowest in every band (0.3–1.3% wins) but walkforward verdict is L2 only — below the 3% ship threshold. Run <code>l4_regime_lead_analysis</code> on dp; if a regime shows ≥3% with stable n, dp goes in the per-(field, regime, lead_band) skip table, not into <code>L4_FIELDS</code> flat. (Compounds with the existing Stage 1 dewpoint-depression-by-regime candidate.)</li>
       </ul>
     </details>
 
@@ -827,11 +829,11 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  <p class="layer-summary"><strong>The bright white "Production*" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are population-level diagnostics; the Production line is the user-visible answer. <em>* Approximation: Production currently tracks the deepest applied layer per field. Once per-row applied-layer stamping ships in the collector, this line will reflect the true per-row pipeline output (calm-wind gate skips, marine layer triggers, L6 regime branches, etc.).</em></p>
+  <p class="layer-summary"><strong>The bright white "Production*" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are population-level diagnostics; the Production line is the user-visible answer. <em>* Approximation: Production currently tracks the deepest applied layer per field. Once per-row applied-layer stamping ships in the collector, this line will reflect the true per-row pipeline output (marine layer triggers, L6 regime branches, the future per-(field, regime, lead_band) skip table, etc.).</em></p>
   <details class="layer-methodology" open><summary>How to read these charts</summary>
     <div class="meta-line"><strong>What you're looking at.</strong> One small chart per weather field. The Y-axis is how wrong the forecast tends to be (in that field's units — °F, %, mph, etc.). The X-axis is hours into the future. Lower lines = more accurate. Lines climbing to the right is normal — forecasts get worse the further out you predict.</div>
     <div class="meta-line"><strong>The colored lines are population-level diagnostics — one per correction layer. They show "what each layer would yield on average if applied to every row in the band," regardless of whether it actually fired. L1–L4 are drawn for every field; L5 only for sr; L6 only for t. The bright white Production* line on top traces the actual user-visible output.</strong></div>
-    <div class="meta-line"><strong>No more applied-column highlighting.</strong> Under conditional gates (calm-wind skip, marine-layer trigger, L6 regime branches, an eventual per-(field, regime, lead_band) skip table) different rows in the same lead band took different paths through the stack — there's no single "applied" column to box. Per-layer columns stay as population-level diagnostics; the Production column is the only conditional-aware summary. If Production isn't the lowest line, that's the signal to check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
+    <div class="meta-line"><strong>No more applied-column highlighting.</strong> Under conditional gates (marine-layer trigger, L6 regime branches, the future per-(field, regime, lead_band) skip table) different rows in the same lead band took different paths through the stack — there's no single "applied" column to box. Per-layer columns stay as population-level diagnostics; the Production column is the only conditional-aware summary. If Production isn't the lowest line, that's the signal to check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
     <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.5">
       <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
       <li><strong>Aggregate bias</strong> (orange): adds Layer 2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
@@ -918,13 +920,13 @@
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cc</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — Kalman-blended KBOS + KBVY METAR override (sky-condition → cloud_cover_pct)</td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — Kalman-blended KBOS + KBVY METAR override on <code>hourly[0]</code> (current-hour value used by cards). <em>Not propagated across forecast leads</em> — promotion to a true per-lead L2 bias correction is queued (see Open architectural questions).</td>
         <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cl</code> / <code>cm</code> / <code>ch</code></td>
-        <td style="padding:6px 10px;vertical-align:top;"><strong>Derived</strong> — same Kalman K propagated to L/M/H splits to keep them self-consistent with cc</td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Derived</strong> — same Kalman K applied to L/M/H splits on <code>hourly[0]</code> to keep them self-consistent with cc. <em>Not propagated across leads</em>, same as cc.</td>
         <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
       </tr>
@@ -1348,6 +1350,7 @@
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] C1g — RH ≥95% (fog) as confidence axis.</strong> <em>Killed 2026-06-24 — orthogonality check.</em> Stage 0 (<code>h_rh_saturation.py</code>) showed cm +134%, ch +149%, cl saturating +67% MAE elevation. Promoted to Stage 1 Tier 2, then killed same week by <code>h_c1g_orthogonality.py</code>: 1 ortho / 69 redundant / 0 confounded / 2 ambiguous. The elevation was sampling-driven — fog (obs_humidity ≥95) heavily co-occurs with both rain-forecast (C1f) and cc_fc ≥95 (cc-saturation). In the F=False or S=False subsets, fog rows show ratios 0.02–0.25× (smaller MAE than non-fog) — i.e. C1g either reduces error (when conditions disagree with model) or merely tracks F/S (when conditions agree). No independent widening signal. (<code>analysis/h_rh_saturation.py</code>, <code>analysis/h_c1g_orthogonality.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Wind shift rate (|Δwd_3h|) as alt-transition axis.</strong> <em>Killed 2026-06-24 — same-day kill via orthogonality.</em> Stage 0 showed rotating ≥80° wind class elevates cloud MAE (ch +33%, cm +24%, cc +15%). But the orthogonality check vs C1a (regime transition flag) returned 1 ortho / 22 redundant / 2 confounded / 11 ambiguous across 9 fields × 4 lead bands. Wind shifts and regime transitions co-occur; C1a already captures the signal. Only ch at 24-47h shows independent signal — too narrow to ship as a standalone axis. (<code>analysis/h_wind_shift_rate.py</code>, <code>analysis/h_wind_shift_rate_orthogonality.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] C1d — KBOS-vs-KBVY cloud disagreement σ as confidence axis.</strong> <em>Killed 2026-06-29 — orthogonality check inverted the signal.</em> Stage 0 (<code>h_cloud_disagreement.py</code> 2026-06-28) returned SMOKE_ALIVE — cloud-MAE elevated in the high σ_KBOS-vs-KBVY quartile. Promoted to Stage 1. Orthogonality follow-up (<code>h_cloud_disagreement_orthogonality.py</code> 2026-06-29) held C1a (regime transition) fixed and recomputed σ_HIGH/σ_LOW MAE ratio: ratio <strong>inverted to &lt;1.0 in 3 of 4 cells</strong> that cleared the n floor. The σ signal was capturing the regime-transition signal C1a already encodes. C1e (post-frontal) cross-check insufficient (n=0). C1d does not promote. Pattern preserved: SMOKE_ALIVE → orthogonality KILL — always run the orthogonality check vs every live C1 axis before promoting. (<code>analysis/h_cloud_disagreement.py</code>, <code>analysis/h_cloud_disagreement_orthogonality.py</code>)</li>
+      <li style="margin-bottom:6px;"><strong>[GATE] CALM_GATE_ENABLED — fc_ws&lt;3 ws/wg L3 skip.</strong> <em>Killed 2026-06-30 — wrong intervention.</em> Built in v0.6.252 as an off-by-default gate, intended to skip ws/wg L3 corrections when forecast wind speed &lt; 3 mph (the apparent "L3 hurts at low wind speeds" pattern from earlier reads). 2026-06-30 <code>l3_regime_lead_analysis</code> on 694,842 L3-field pair rows showed the calm-regime L3 actually <strong>WINS</strong> across every lead band (+15.3% / +29.9% / +44.0% / +44.3%, n = 4.8K → 20.4K). The real ws L3 losers are <strong>ne_flow</strong> at every band (n = 1.0K → 4.1K, −5% to −9%) and short-lead <strong>sea_breeze</strong> (n=966, −9.5% at 0-5h; n=918, −15.2% at 6-11h). The fc_ws&lt;3 gate would have skipped L3 exactly where it wins biggest. CALM_GATE_ENABLED removal from <code>decay_apply.py</code> queued for the next collector ship (gate is currently False so it's a no-op in code; removal is cleanup). The actual fix is the per-(field, regime, lead_band) skip table targeting ne_flow + short-lead sea_breeze (queued in Open architectural questions). (<code>analysis/l3_regime_lead_analysis.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] L6 cooling branch (sb_off offshore-morning Δ table) — original "double-counting" diagnosis.</strong> <em>Killed 2026-06-30 — rejected by data, replaced by surgical fix.</em> Initial diagnosis: L2's mesonet blend already pulls cove temperature toward truth, so L6's additional cooling Δ double-counts. <code>analysis/l6_l2_double_counting.py</code> on 19,975 t pairs where L6 fired showed L2 only erases 3.7% of L1's MAE on cove rows — barely moves the needle. The hypothesis was wrong; L2 isn't double-counting anything. Real cause: L1 is structurally cold ~2.25°F at the cove (HRRR microclimate gap L2 doesn't close). L6's cooling branch was pouring more cooling on an already-cold baseline, materially increasing paired MAE on rows where it fired (Δ ≤ −2 °F bucket: 3.52 → 6.16, −74.9%). Warming branch (sb_active S/SE/SW) was neutral-to-helpful. Action: surgical disable of cooling branch only (v0.6.259); warming branch retained. Long-term Fix B (refit lookup against L2 baseline) queued. (<code>analysis/l6_l2_double_counting.py</code>; memory: <code>project_l6_l2_double_counting_hypothesis</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Naive persistence baseline vs HRRR.</strong> <em>Killed 2026-06-24 — expected behavior, not a bug.</em> Compared error_l1 vs "use current obs as constant forecast": persistence wins ws/wg at all leads (+95% to +526%), cc at short leads. Initial alarm: possible mph→m/s unit mismatch on forecast_l1. <strong>Investigated and ruled out:</strong> both fc and obs are mph (config.py:46 sets wind_speed_unit=mph for all Open-Meteo calls; wind_blend.py converts METAR knots → mph). The 2× ratio is a real model over-prediction for our sheltered coastal location, and L2+L3 already correct it (raw ws L1 MAE 4.17 mph → L3 2.44 mph). Live frontend already does persistence-style blending via <code>blend_observed_into_hourly</code> (BLEND_HOURS=24, weight=1.0 at current hour). Pair log captures the pre-blend raw, which is why error_l1 looks bad. Nothing actionable. (<code>analysis/h_persistence.py</code>)</li>
     </ul>
@@ -2424,9 +2427,23 @@ function renderAccuracySection(tsDoc, wxDoc) {
     const card = document.createElement("div");
     card.className = "card";
     const decimals = FIELD_DECIMALS[f.key] ?? 2;
+    // PP gets a "displayed = MAE, decided by Brier" disclaimer banner.
+    // The chart shows MAE because that's what per_layer_mae_by_lead.pp
+    // carries, but PP's actual ship gate is Brier score — the two can
+    // disagree (v0.6.20 calibration analysis: L3 raises MAE but cuts
+    // Brier 5%). Until the Fitter emits per_layer_brier_by_lead the
+    // chart can't render the decision metric directly.
+    const ppDisclaimer = f.key === "pp"
+      ? `<div class="meta-line" style="margin:6px 0 4px;padding:6px 10px;border:1px solid #3a2f1f;background:#1a160e;color:#e0d472;font-size:0.85em;border-radius:4px;">
+           <strong>Note:</strong> chart shows MAE, but PP is decided by <strong>Brier score</strong>, not MAE.
+           L3 currently raises MAE for PP but cuts Brier ~5% (v0.6.20 calibration). Per-lead Brier
+           backend ship queued (see Open architectural questions).
+         </div>`
+      : "";
     card.innerHTML =
       `<h3><span class="name">${f.label} (${f.key})</span>` +
-      `<span class="summary">Average forecast error by lead time · ${totalSamples.toLocaleString()} pairs (7d)</span></h3>` +
+      `<span class="summary">${f.key === "pp" ? "Average MAE by lead time (decision metric = Brier)" : "Average forecast error by lead time"} · ${totalSamples.toLocaleString()} pairs (7d)</span></h3>` +
+      ppDisclaimer +
       _buildBadges(f.key) +
       `<div class="chart-wrap"><canvas></canvas></div>` +
       _buildBandTable(fieldData, f.key, decimals);
@@ -2477,7 +2494,7 @@ function renderAccuracySection(tsDoc, wxDoc) {
           x: { title: { display: true, text: "Hours ahead of forecast", color: "#e7ecf3", font: { size: 12, weight: "600" } },
                ticks: { color: "#e7ecf3", autoSkip: true, maxTicksLimit: 12, font: { size: 12, weight: "600" } },
                grid: { color: "#242833" } },
-          y: { title: { display: true, text: `Average error (${f.unit})`, color: "#e7ecf3", font: { size: 12, weight: "600" } },
+          y: { title: { display: true, text: f.key === "pp" ? `MAE (${f.unit}) — decision metric: Brier` : `Average error (${f.unit})`, color: "#e7ecf3", font: { size: 12, weight: "600" } },
                ticks: { color: "#e7ecf3", font: { size: 12, weight: "600" } },
                grid: { color: "#242833" },
                beginAtZero: true },
