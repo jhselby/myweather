@@ -665,8 +665,23 @@ def fit_decay_corrections():
                         per_layer_brier_sq[key] += (e / 100.0) ** 2
                 # Production error — read once per row (outside the per-layer
                 # loop). Uses whichever error_l{applied_layer} the pair-log
-                # writer stamped.
+                # writer stamped. For pre-v0.6.269 rows that DON'T carry the
+                # stamp, derive it from forecast_lN equality — every gate is
+                # deterministic at forecast time, so the applied layer is the
+                # deepest one whose forecast (or equivalently, error) differs
+                # from the previous captured layer. This retro-fills Production
+                # for the full 7-day window immediately post-v0.6.269 deploy
+                # instead of waiting for the window to fill with stamped rows.
                 applied = row.get("applied_layer")
+                if not applied:
+                    prev_e = None
+                    for lyr in ("l1", "l2", "l3", "l4", "l5", "l6"):
+                        e_lyr = row.get(f"error_{lyr}")
+                        if e_lyr is None:
+                            continue
+                        if prev_e is None or abs(float(e_lyr) - prev_e) > 1e-6:
+                            applied = lyr
+                        prev_e = float(e_lyr)
                 if applied:
                     e_prod = row.get(f"error_{applied}")
                     if e_prod is not None:
