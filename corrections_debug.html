@@ -813,7 +813,7 @@
         <li><strong>L6 lookup refit (Fix B).</strong> Rebuild table against L2-corrected baseline instead of raw waterfront-vs-inland gradient. Hold for 2–3 days of post-v0.6.259 reads first.</li>
         <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/L5 only. See memory note.</li>
         <li><strong>Scorecard banner.</strong> Add "Stack vs raw: −X% MAE across N fields" above Status. Small follow-up.</li>
-        <li><strong>Per-lead Brier for PP (queued 2026-06-30).</strong> PP card on Forecast Accuracy currently shows MAE because that's all <code>per_layer_mae_by_lead.pp</code> carries. PP's actual ship gate is Brier — the v0.6.20 calibration analysis showed L3 raises PP MAE but cuts Brier ~5%, so the chart can mislead. Fitter ship: emit <code>per_layer_brier_by_lead.pp</code> + <code>per_layer_brier_n_by_lead.pp</code> alongside MAE; frontend swaps the PP card's y-axis and band-table column to Brier. Disclaimer banner on the PP card flags the current state.</li>
+        <li><strong>Per-lead Brier for PP — SHIPPED 2026-07-01.</strong> Fitter emits <code>per_layer_brier_by_lead.pp</code> in <code>time_series_diagnostic.json</code> alongside MAE/bias/n (v0.6.267 collector). Frontend PP card swaps to Brier-native rendering the moment the key populates. Graceful fallback: if Brier is absent (pre-15:xx-Fitter-cycle), PP card falls back to MAE + orange disclaimer; when Brier populates, card auto-swaps to Brier + green banner.</li>
         <li><strong>KBOS+KBVY cloud blend → full L2 — HOLD (resolved 2026-06-30).</strong> <code>analysis/h_cloud_bias_persistence.py</code> ran on 3,866 distinct HRRR runs, 1,902–1,952 paired observations per cloud-lead. <strong>cc lead 6h gate: FAIL (ρ = −0.04). cc lead 12h gate: FAIL (ρ = −0.10).</strong> Bias does not persist past ~3h on any cloud field; propagating it to lead 6h+ would inject error, not reduce it. <strong>Decision:</strong> formalize <code>hourly[0]</code>-only as the intentional behavior — stop calling it a half-built L2.</li>
         <li><strong>NEW Stage 1 candidate (spun out from #4): tight-τ cloud bias propagation across leads 1–3h.</strong> Pearson at lead 1h is <strong>+0.50/+0.57/+0.55/+0.66</strong> for cc/cl/cm/ch — strong, clean signal. Degrades to weak by lead 3h. Architectural slot: short-lead τ-decayed bias propagation (~2h half-life) on top of the existing hourly[0] override. Would need its own analysis to estimate MAE impact (probably small — first 3 leads only). Not blocking anything; logged for the backlog.</li>
         <li><strong>dp L4 — confirmed skip-table case (resolved 2026-06-30).</strong> <code>l4_regime_lead_analysis</code> on dp returns <strong>8 WIN / 9 flat / 15 L4 LOSES / 4 thin</strong>. <em>Wins:</em> frontal (all bands), nw_flow 24-47h, se_flow 12-23h+, sw_flow 24-47h, calm 12-23h. <em>Losses:</em> ne_flow all bands (−10% to −19%), sea_breeze all bands (−4.5% to −18.5%), nw_flow short leads, pre_frontal 0-5h, sw_flow short leads. <strong>Do NOT add dp to L4_FIELDS flat</strong> — population wash is below threshold for exactly this reason. dp goes in the per-(field, regime, lead_band) skip table alongside ws. <strong>ne_flow is the consistent loser on both ws and dp</strong> — confirms the regime axis is doing real work, not noise.</li>
@@ -2242,6 +2242,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
   }
   const maeByLead = tsDoc.per_layer_mae_by_lead;
   const nByLead   = tsDoc.per_layer_n_by_lead || {};
+  // PP's decision metric is Brier, not MAE. Populated by decay_fit.py
+  // (v0.6.267 collector ship) as per_layer_brier_by_lead.pp.{l1..l6}[lead].
+  // Graceful fallback: if the key is absent (pre-deploy or Fitter hasn't
+  // re-run yet), the PP card falls back to MAE-with-disclaimer.
+  const brierByLead = tsDoc.per_layer_brier_by_lead || {};
+  const ppBrierAvailable = Array.isArray((brierByLead.pp || {}).l1);
   const LAYER_LINES = [
     { key: "l1", label: "Raw model",                       shortLabel: "Raw",            color: "rgba(138,147,163,0.75)", dash: [4,4] },
     { key: "l2", label: "Aggregate-bias (L2)",             shortLabel: "Aggregate bias", color: "rgba(200,160,110,1)",    dash: [] },
@@ -2277,6 +2283,8 @@ function renderAccuracySection(tsDoc, wxDoc) {
   const FIELD_DECIMALS = {
     t: 2, dp: 2, h: 2, ws: 2, wg: 2, pp: 1, pr: 3, cc: 1, sr: 1, pa: 4, cl: 1, cm: 1, ch: 1,
   };
+  // Brier scores are in [0, 1] — need more precision than MAE decimals.
+  const PP_BRIER_DECIMALS = 4;
 
   // v2: per-chart whitelist badges. Layered explanation goes in the section
   // header's <details> expander — keep individual badges short.
@@ -2389,7 +2397,11 @@ function renderAccuracySection(tsDoc, wxDoc) {
   // of charts (re-using the .grid class from existing chart sections).
   grid.className = "grid";  // override the .accuracy-grid 220px-min layout
   for (const f of FIELDS) {
-    const fieldData = maeByLead[f.key] || {};
+    // For pp: swap in Brier data when available so the chart + band table
+    // render the decision metric directly. Fallback to MAE for backward
+    // compat (pre-Brier-key GCS state, or if Brier key is empty).
+    const useBrier = f.key === "pp" && ppBrierAvailable;
+    const fieldData = useBrier ? (brierByLead[f.key] || {}) : (maeByLead[f.key] || {});
     const LAYERS = _layersFor(f.key);
     // Check if any layer has data
     const hasAny = LAYERS.some(l => (fieldData[l.key] || []).some(v => v != null));
@@ -2427,23 +2439,32 @@ function renderAccuracySection(tsDoc, wxDoc) {
     const totalSamples = samples24.reduce((s, v) => s + (v || 0), 0);
     const card = document.createElement("div");
     card.className = "card";
-    const decimals = FIELD_DECIMALS[f.key] ?? 2;
-    // PP gets a "displayed = MAE, decided by Brier" disclaimer banner.
-    // The chart shows MAE because that's what per_layer_mae_by_lead.pp
-    // carries, but PP's actual ship gate is Brier score — the two can
-    // disagree (v0.6.20 calibration analysis: L3 raises MAE but cuts
-    // Brier 5%). Until the Fitter emits per_layer_brier_by_lead the
-    // chart can't render the decision metric directly.
-    const ppDisclaimer = f.key === "pp"
-      ? `<div class="meta-line" style="margin:6px 0 4px;padding:6px 10px;border:1px solid #3a2f1f;background:#1a160e;color:#e0d472;font-size:0.85em;border-radius:4px;">
-           <strong>Note:</strong> chart shows MAE, but PP is decided by <strong>Brier score</strong>, not MAE.
-           L3 currently raises MAE for PP but cuts Brier ~5% (v0.6.20 calibration). Per-lead Brier
-           backend ship queued (see Open architectural questions).
-         </div>`
-      : "";
+    // PP renders in Brier when available (v0.6.267+ Fitter), MAE otherwise.
+    // Decimal precision differs — Brier lives in [0, 1]; MAE for pp is in the
+    // 20-25% range.
+    const decimals = useBrier ? PP_BRIER_DECIMALS : (FIELD_DECIMALS[f.key] ?? 2);
+    let ppDisclaimer = "";
+    let summaryText;
+    if (f.key === "pp") {
+      if (useBrier) {
+        ppDisclaimer = `<div class="meta-line" style="margin:6px 0 4px;padding:6px 10px;border:1px solid #1f3a2a;background:#101913;color:#9ad99a;font-size:0.85em;border-radius:4px;">
+             <strong>Decision metric:</strong> Brier score (0 = perfect, 1 = worst). Lower is better, same as the other cards.
+             L3 currently raises PP MAE but cuts Brier ~5% (v0.6.20 calibration analysis) — this chart shows the metric that actually drives the decision.
+           </div>`;
+        summaryText = "Average Brier by lead time";
+      } else {
+        ppDisclaimer = `<div class="meta-line" style="margin:6px 0 4px;padding:6px 10px;border:1px solid #3a2f1f;background:#1a160e;color:#e0d472;font-size:0.85em;border-radius:4px;">
+             <strong>Note:</strong> chart shows MAE, but PP is decided by <strong>Brier score</strong>, not MAE.
+             L3 currently raises MAE for PP but cuts Brier ~5% (v0.6.20 calibration). Brier data pending next Fitter cycle (per_layer_brier_by_lead not yet in <code>time_series_diagnostic.json</code>).
+           </div>`;
+        summaryText = "Average MAE by lead time (decision metric = Brier)";
+      }
+    } else {
+      summaryText = "Average forecast error by lead time";
+    }
     card.innerHTML =
       `<h3><span class="name">${f.label} (${f.key})</span>` +
-      `<span class="summary">${f.key === "pp" ? "Average MAE by lead time (decision metric = Brier)" : "Average forecast error by lead time"} · ${totalSamples.toLocaleString()} pairs (7d)</span></h3>` +
+      `<span class="summary">${summaryText} · ${totalSamples.toLocaleString()} pairs (7d)</span></h3>` +
       ppDisclaimer +
       _buildBadges(f.key) +
       `<div class="chart-wrap"><canvas></canvas></div>` +
@@ -2495,7 +2516,7 @@ function renderAccuracySection(tsDoc, wxDoc) {
           x: { title: { display: true, text: "Hours ahead of forecast", color: "#e7ecf3", font: { size: 12, weight: "600" } },
                ticks: { color: "#e7ecf3", autoSkip: true, maxTicksLimit: 12, font: { size: 12, weight: "600" } },
                grid: { color: "#242833" } },
-          y: { title: { display: true, text: f.key === "pp" ? `MAE (${f.unit}) — decision metric: Brier` : `Average error (${f.unit})`, color: "#e7ecf3", font: { size: 12, weight: "600" } },
+          y: { title: { display: true, text: f.key === "pp" ? (useBrier ? "Brier score (0 = best, 1 = worst)" : `MAE (${f.unit}) — decision metric: Brier`) : `Average error (${f.unit})`, color: "#e7ecf3", font: { size: 12, weight: "600" } },
                ticks: { color: "#e7ecf3", font: { size: 12, weight: "600" } },
                grid: { color: "#242833" },
                beginAtZero: true },
