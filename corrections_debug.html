@@ -721,22 +721,36 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-06-30 v0.6.262 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-01 v0.6.273 · click any sub-box header to collapse it.</div>
 
   <div class="since-last-curation" style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Today (2026-06-30)</div>
+    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Since last curation (2026-06-30 → 2026-07-01)</div>
     <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
-      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.259</strong> — L6 cooling branch off. sb_off offshore-hour Δ table materially increased paired MAE on cove-temp rows (paired-MAE + <code>r5_cove_analysis</code> agree). Warming branch retained.</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.260</strong> — Applicability map shipped end-to-end. Modules expose <code>describe_applicability()</code>; collector stamps <code>weather_data["applicability_map"]</code>; new <a href="#sec-applicability">Applicability map</a> section reads it.</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.262 — walk-forward validator bugfix.</strong>
-        <ul style="margin:4px 0 0 18px;padding:0;list-style:none;">
-          <li><strong>Bug:</strong> L4 evaluation was gated on L3 earning its keep first. For fields not in <code>L3_FIELDS</code> (cc, t, dp, h, ws, wg, sr, pr, pa), <code>forecast_l3 == forecast_l2</code> by construction, so L3 trivially "didn't earn" and L4 was never evaluated.</li>
-          <li><strong>Effect:</strong> cc and h L4 wins were invisible for weeks; the divergence-report was building toward a phantom "drop-cc" gate.</li>
-          <li><strong>Result:</strong> validator now evaluates L3 and L4 independently (<code>off_on</code> added as a valid state). Recommends <strong>L4 on for cc + h</strong> (cc 32.78 vs L2 36.06 = 9.1%; h 6.05 vs L2 6.39 = 5.2%) on top of the existing <strong>L3 {ch, cm}, L4 {ch}</strong>.</li>
-        </ul>
-      </li>
-      <li><span style="color:#7090a0;">⚙</span> <strong>New candidate: add h to L4.</strong> Validator now reads h L4 as +5.2% MAE win, previously hidden. Same per-(field, regime, lead_band) caution applies before flipping — confirm across 2 daily digest cycles.</li>
-      <li><span style="color:#7090a0;">⚙</span> <strong>simulate_windows says L5 → RETIRE</strong> — conflicts with divergence-report AGREE. L5 shipped 2 days ago; investigate, don't act.</li>
+      <li><strong style="color:#7fb3ff;">2026-06-30 morning</strong> (v0.6.259–v0.6.262)</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.259</strong> — L6 cooling branch off. Warming branch (sb_active S/SE/SW) retained; sb_off returns 0.0.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.260</strong> — Applicability map shipped end-to-end. <code>describe_applicability()</code> in 4 modules → <code>weather_data["applicability_map"]</code>; new <a href="#sec-applicability">Applicability map</a> section reads it.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.262</strong> — walkforward validator bugfix. L4 was gated on L3 earning its keep first; for fields not in L3_FIELDS, L3 trivially "didn't earn" → L4 never evaluated. Fix decoupled. Now recommends L4 on for cc + h.</li>
+
+      <li style="margin-top:8px;"><strong style="color:#7fb3ff;">2026-06-30 evening</strong> (v0.6.263–v0.6.266) — <em>debug page canonical UX pass</em></li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.263</strong> — Big UX pass driven by <code>Wyman_Cove_Engineering_TODO_Combined.txt</code>. Renames (Status → Engineering updates, triggers → applies). Accuracy intro reframed around "the lowest line is what users see." Applicability map intro + Terminology key. Production Stack reframed as Core / Specialists / Confidence (C1 promoted in). Q/E/D format on Upcoming Decisions. L3/L4 + L5 restructured to 5-block layout (What / Applicability / Live / Historical calibration / Calibration history). L2 row group added to Applicability Map (hand-curated). R&D reorganized into Diagnostics / Candidates / Experiments. New top-level Archive section.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.264</strong> — Production line + column on accuracy charts (removes single-"applied" framing). <code>_productionLayerKey</code> picks the deepest applied layer per field.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.265</strong> — Joe's redirect: dropped <code>.layer-active</code> per-column highlighting (no single applied layer under conditional gates). Production marked <em>Production*</em> as approximation pending per-row stamping.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.266</strong> — <strong>CALM_GATE killed as wrong intervention</strong>. <code>l3_regime_lead_analysis</code> on 694K L3-field pair rows: ws L3 in the calm regime WINS +15% to +44%; real losers are ne_flow (all bands) + short-lead sea_breeze. fc_ws&lt;3 gate would have skipped L3 exactly where it wins biggest. PP card MAE-vs-Brier disclaimer added. KBOS+KBVY cloud blend prose fixed — hourly[0]-only, not per-lead.</li>
+
+      <li style="margin-top:8px;"><strong style="color:#7fb3ff;">2026-07-01</strong> (v0.6.267–v0.6.273)</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.267</strong> — Collector: CALM_GATE code removed from <code>decay_apply.py</code>; per-lead Brier for PP wired in <code>decay_fit.py</code> (<code>per_layer_brier_by_lead.pp</code>). Analysis: dp L4 regime cross-cut (do NOT add to L4_FIELDS — skip-table case; ne_flow consistent loser on both ws AND dp); <code>h_cloud_bias_persistence.py</code> Stage 0 HOLD (bias doesn't persist past ~3h; cc lead 6h ρ=−0.04, lead 12h ρ=−0.10).</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.268</strong> — PP card Brier-native frontend with graceful MAE fallback. Auto-swaps at next Fitter cycle after <code>per_layer_brier_by_lead.pp</code> populates.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.269</strong> — Per-row applied-layer stamping. <code>forecast_snapshot.py</code> derives <code>{field}_applied</code>; <code>forecast_error_log.py</code> copies to pair rows; <code>decay_fit.py</code> aggregates real <code>per_layer_mae_by_lead[field].production</code>. 15:07 Fitter cycle post-deploy: 9/48 leads populated per field (~184 rows total), filling by 07-08.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.270</strong> — Scorecard banner (Overall / Winning fields / Biggest gain / Biggest regression). C1 curated tables re-run (Legacy 30 SHIP; V2 multi-axis 619 SHIP).</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.271</strong> — <code>TAU_DAYS_BY_FIELD["ws"] = 7</code> (+6.7% held-out MAE per <code>decay_tau_tuning</code>). C1e telemetry stamp on <code>weather_data.confidence.live_axes.hsf_group</code>.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.272</strong> — <strong>C1e end-to-end</strong>. v2 curator extended to 5-tuple axis_key with hsf dimension; 840 SHIP / 118 MARGINAL / 1828 SKIP (of 2,786) — up from 619 SHIP of 1,764. <code>stamp_confidence()</code> axis_key composes the 5-tuple. C1 calibration audit pp Brier exemption (pass rate 55.81% → 61.54%).</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.273</strong> — Frontend hybrid Production array. Reads real <code>.production[lead]</code> where populated; falls back to approximation elsewhere. Chart + band table + scorecard all use the hybrid. <code>*</code> marker auto-drops per-card once real coverage exceeds 40/48 leads.</li>
+
+      <li style="margin-top:8px;"><strong style="color:#7fb3ff;">Still open watches</strong></li>
+      <li><span style="color:#7090a0;">⚙</span> <strong>L6 post-fix compression</strong> — 07-01 03:07 read at −22.58%. Expected linear to ~0% by 07-07 as post-fix data fills the 7-day window. If it plateaus, Fix B (refit lookup against L2 baseline) moves up.</li>
+      <li><span style="color:#7090a0;">⚙</span> <strong>L5 RETIRE-vs-AGREE puzzle</strong> — <code>simulate_windows</code> says HOLD across all 7 cutoffs (recommend RETIRE); divergence-report says AGREE. Two rollups disagreeing. Investigation queued.</li>
+      <li><span style="color:#7090a0;">⚙</span> <strong>h → L4 promotion</strong> — 1/7 cycles toward gate clear (6 to go). Also confirm regime-stable via <code>l4_regime_lead_analysis</code> before flipping.</li>
+      <li><span style="color:#7090a0;">⚙</span> <strong>C1 calibration audit still HOLD</strong> — pass rate 61.54% (post pp-exempt). Genuine drift on cm/ch/sr/cc/pr/t/pa. Recuration + Brier-based drift check for pp next; will look again with the 5-axis curated table active.</li>
     </ul>
   </div>
 
@@ -759,7 +773,7 @@
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
       <ul style="margin:2px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>C1</strong> multi-axis confidence layer — <em>gated off (ENABLED=False)</em>. Stamps <code>weather_data["confidence"]</code> every tick. Four axes: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence. Flip after Stage 4 audit clears (first multi-axis read ~2026-07-04).</li>
+        <li><strong>C1</strong> multi-axis confidence layer — <em>gated off (ENABLED=False)</em>. Stamps <code>weather_data["confidence"]</code> every tick. Five axes: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence, C1e hours-since-front (shipped 2026-07-01 v0.6.272). Flip after Stage 4 audit clears (currently HOLD at 61.54% post pp-Brier exemption).</li>
       </ul>
     </details>
 
@@ -791,7 +805,7 @@
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
             <li><strong>Q:</strong> Should <code>CALM_GATE_ENABLED</code> flip to True (skip ws/wg L3 when fc_ws &lt; 3)?</li>
             <li><strong>E:</strong> 2026-06-30 <code>l3_regime_lead_analysis</code> run (694K L3-field pair rows): ws L3 in the <strong>calm</strong> regime <strong>WINS +15.3% / +29.9% / +44.0% / +44.3%</strong> across lead bands (n = 4.8K → 20.4K). The regression Joe noticed lives in <strong>ne_flow</strong> (L3 LOSES at every lead band, n = 1.0K → 4.1K) and short-lead <strong>sea_breeze</strong>, not in calm. The fc_ws&lt;3 gate would skip L3 exactly where it wins biggest.</li>
-            <li><strong>D:</strong> Do NOT flip CALM_GATE. Retire the gate; <code>CALM_GATE_ENABLED</code> removal from <code>decay_apply.py</code> queued for the next collector ship. The actual fix is a per-(field, regime, lead_band) skip table targeting ne_flow (all bands) + sea_breeze (short leads) — already in Open architectural questions.</li>
+            <li><strong>D:</strong> Do NOT flip CALM_GATE. Gate retired; <code>CALM_GATE_ENABLED</code> removed from <code>decay_apply.py</code> in v0.6.267 collector (live). The actual fix is a per-(field, regime, lead_band) skip table targeting ne_flow (all bands) + sea_breeze (short leads) — already in Open architectural questions.</li>
           </ul>
         </li>
         <li style="margin-top:6px;"><strong>07-04 (Sat):</strong> C1 v2 multi-axis calibration audit first eligible.</li>
@@ -819,9 +833,9 @@
         <li><strong>L6 lookup refit (Fix B).</strong> Rebuild table against L2-corrected baseline instead of raw waterfront-vs-inland gradient. Hold for 2–3 days of post-v0.6.259 reads first.</li>
         <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/L5 only. See memory note.</li>
         <li><strong>Scorecard banner — SHIPPED 2026-07-01.</strong> One-line "Stack vs raw: X% Production MAE across N non-Brier fields, M/N net-positive, worst regression: …" above Engineering updates. Uses the same `_productionLayerKey` logic as the accuracy chart so "stack" = actual production output per field. Brier-evaluated fields (pp) excluded — MAE isn't their decision metric.</li>
-        <li><strong>C1e telemetry — SHIPPED 2026-07-01 (Stage 3 machinery, widening deferred).</strong> <code>h_hsf_orthogonality</code> promoted C1e (hours-since-front) on 2026-07-01 daily digest: 9 orthogonal cells vs C1a, strongest on ch (all bands), cm (all bands), cc long-lead, cl 6-11h. Wire-up: <code>_current_hsf_group()</code> classifies live tick as "post" (&lt;24h since last frontal passage) or "baseline" (≥24h) from <code>frontal_events_log.json</code>. Stamped on <code>weather_data.confidence.live_axes.hsf_group</code>. Full multi-axis widening pending Stage 2 v2 curator extension to include hsf as a 5th key dimension in <code>by_axes</code>. Follow-up: extend curator, re-curate against pair-log rows with joined hsf, extend axis_key in <code>stamp_confidence()</code> to include the hsf dimension.</li>
+        <li><strong>C1e (hours-since-front) — SHIPPED 2026-07-01 (Stage 3 wired end-to-end via v0.6.272 curator).</strong> Promoted by <code>h_hsf_orthogonality</code> on the 2026-07-01 daily digest: 9 orthogonal cells vs C1a, strongest on ch (all bands), cm (all bands), cc long-lead, cl 6-11h. Wire-up: <code>_current_hsf_group()</code> classifies live tick as "post" (&lt;24h since last frontal passage) or "baseline" (≥24h) from <code>frontal_events_log.json</code>. Stamped on <code>weather_data.confidence.live_axes.hsf_group</code>. Stage 2 v2 curator extended to include hsf as a 5th key dimension; regenerated multi-axis table: <strong>840 SHIP / 118 MARGINAL / 1828 SKIP (of 2,786)</strong> — up from 619 SHIP of 1,764 pre-extension. <code>stamp_confidence()</code> axis_key composes the 5-tuple <code>spread_q::pt_bin::trans::c1f::hsf</code>; falls back to legacy stable/transition when any axis is missing at the tick.</li>
         <li><strong>Per-field τ (recency weighting) — SHIPPED 2026-07-01.</strong> <code>TAU_DAYS_BY_FIELD["ws"] = 7</code> added in <code>decay_fit.py</code>. 2026-07-01 <code>decay_tau_tuning</code> read: ws gains +6.7% MAE held-out vs global τ=14. wg at +4.0% is close but below the 5% ship floor — stays at global default. pp and pa already have τ=28 overrides from earlier reads.</li>
-        <li><strong>Per-row applied-layer stamping — collector SHIPPED 2026-07-01 (backend).</strong> <code>forecast_snapshot.py</code> derives <code>{field}_applied</code> per (field, lead) by walking L1→L6 arrays and finding the deepest layer whose value changed (every gate today is deterministic at forecast time, so equality walk is exact). <code>forecast_error_log.py</code> copies onto each pair-log row as <code>applied_layer</code>. <code>decay_fit.py</code> aggregates <code>per_layer_mae_by_lead[field].production</code> from per-row <code>error_l{applied_layer}</code>. Pending: 7-day window fill + frontend swap (drop the Production* asterisk approximation once <code>.production</code> populates).</li>
+        <li><strong>Per-row applied-layer stamping — SHIPPED 2026-07-01 end-to-end.</strong> <code>forecast_snapshot.py</code> derives <code>{field}_applied</code> per (field, lead) by walking L1→L6 arrays and finding the deepest layer whose value changed (every gate today is deterministic at forecast time, so equality walk is exact). <code>forecast_error_log.py</code> copies onto each pair-log row as <code>applied_layer</code>. <code>decay_fit.py</code> aggregates <code>per_layer_mae_by_lead[field].production</code>. First 15:07 Fitter cycle populated 9/48 leads with ~184 total rows across all fields. Frontend swap wired: hybrid array reads <code>.production[lead]</code> where populated, falls back to deepest-applied-layer MAE elsewhere. The <code>*</code> marker auto-drops per-card once real coverage exceeds 40/48 leads. Full window fill by ~2026-07-08.</li>
         <li><strong>Per-lead Brier for PP — SHIPPED 2026-07-01.</strong> Fitter emits <code>per_layer_brier_by_lead.pp</code> in <code>time_series_diagnostic.json</code> alongside MAE/bias/n (v0.6.267 collector). Frontend PP card swaps to Brier-native rendering the moment the key populates. Graceful fallback: if Brier is absent (pre-15:xx-Fitter-cycle), PP card falls back to MAE + orange disclaimer; when Brier populates, card auto-swaps to Brier + green banner.</li>
         <li><strong>KBOS+KBVY cloud blend → full L2 — HOLD (resolved 2026-06-30).</strong> <code>analysis/h_cloud_bias_persistence.py</code> ran on 3,866 distinct HRRR runs, 1,902–1,952 paired observations per cloud-lead. <strong>cc lead 6h gate: FAIL (ρ = −0.04). cc lead 12h gate: FAIL (ρ = −0.10).</strong> Bias does not persist past ~3h on any cloud field; propagating it to lead 6h+ would inject error, not reduce it. <strong>Decision:</strong> formalize <code>hourly[0]</code>-only as the intentional behavior — stop calling it a half-built L2.</li>
         <li><strong>NEW Stage 1 candidate (spun out from #4): tight-τ cloud bias propagation across leads 1–3h.</strong> Pearson at lead 1h is <strong>+0.50/+0.57/+0.55/+0.66</strong> for cc/cl/cm/ch — strong, clean signal. Degrades to weak by lead 3h. Architectural slot: short-lead τ-decayed bias propagation (~2h half-life) on top of the existing hourly[0] override. Would need its own analysis to estimate MAE impact (probably small — first 3 leads only). Not blocking anything; logged for the backlog.</li>
@@ -839,7 +853,7 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  <p class="layer-summary"><strong>The bright white "Production*" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are population-level diagnostics; the Production line is the user-visible answer. <em>* Approximation: Production currently tracks the deepest applied layer per field. Once per-row applied-layer stamping ships in the collector, this line will reflect the true per-row pipeline output (marine layer triggers, L6 regime branches, the future per-(field, regime, lead_band) skip table, etc.).</em></p>
+  <p class="layer-summary"><strong>The bright white "Production" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are population-level diagnostics; the Production line is the user-visible answer. <em>Production is currently a hybrid: real per-row aggregate from <code>per_layer_mae_by_lead[field].production</code> where the 7-day window has post-v0.6.269 stamped pair rows, with the deepest-applied-layer approximation used for leads that haven't accumulated stamps yet. Coverage rose from ~9/48 leads at the initial deploy and fills toward 48/48 over the week; the "*" marker drops per-card once real coverage exceeds 40/48 leads.</em></p>
   <details class="layer-methodology" open><summary>How to read these charts</summary>
     <div class="meta-line"><strong>What you're looking at.</strong> One small chart per weather field. The Y-axis is how wrong the forecast tends to be (in that field's units — °F, %, mph, etc.). The X-axis is hours into the future. Lower lines = more accurate. Lines climbing to the right is normal — forecasts get worse the further out you predict.</div>
     <div class="meta-line"><strong>The colored lines are population-level diagnostics — one per correction layer. They show "what each layer would yield on average if applied to every row in the band," regardless of whether it actually fired. L1–L4 are drawn for every field; L5 only for sr; L6 only for t. The bright white Production* line on top traces the actual user-visible output.</strong></div>
@@ -1360,7 +1374,7 @@
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] C1g — RH ≥95% (fog) as confidence axis.</strong> <em>Killed 2026-06-24 — orthogonality check.</em> Stage 0 (<code>h_rh_saturation.py</code>) showed cm +134%, ch +149%, cl saturating +67% MAE elevation. Promoted to Stage 1 Tier 2, then killed same week by <code>h_c1g_orthogonality.py</code>: 1 ortho / 69 redundant / 0 confounded / 2 ambiguous. The elevation was sampling-driven — fog (obs_humidity ≥95) heavily co-occurs with both rain-forecast (C1f) and cc_fc ≥95 (cc-saturation). In the F=False or S=False subsets, fog rows show ratios 0.02–0.25× (smaller MAE than non-fog) — i.e. C1g either reduces error (when conditions disagree with model) or merely tracks F/S (when conditions agree). No independent widening signal. (<code>analysis/h_rh_saturation.py</code>, <code>analysis/h_c1g_orthogonality.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Wind shift rate (|Δwd_3h|) as alt-transition axis.</strong> <em>Killed 2026-06-24 — same-day kill via orthogonality.</em> Stage 0 showed rotating ≥80° wind class elevates cloud MAE (ch +33%, cm +24%, cc +15%). But the orthogonality check vs C1a (regime transition flag) returned 1 ortho / 22 redundant / 2 confounded / 11 ambiguous across 9 fields × 4 lead bands. Wind shifts and regime transitions co-occur; C1a already captures the signal. Only ch at 24-47h shows independent signal — too narrow to ship as a standalone axis. (<code>analysis/h_wind_shift_rate.py</code>, <code>analysis/h_wind_shift_rate_orthogonality.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] C1d — KBOS-vs-KBVY cloud disagreement σ as confidence axis.</strong> <em>Killed 2026-06-29 — orthogonality check inverted the signal.</em> Stage 0 (<code>h_cloud_disagreement.py</code> 2026-06-28) returned SMOKE_ALIVE — cloud-MAE elevated in the high σ_KBOS-vs-KBVY quartile. Promoted to Stage 1. Orthogonality follow-up (<code>h_cloud_disagreement_orthogonality.py</code> 2026-06-29) held C1a (regime transition) fixed and recomputed σ_HIGH/σ_LOW MAE ratio: ratio <strong>inverted to &lt;1.0 in 3 of 4 cells</strong> that cleared the n floor. The σ signal was capturing the regime-transition signal C1a already encodes. C1e (post-frontal) cross-check insufficient (n=0). C1d does not promote. Pattern preserved: SMOKE_ALIVE → orthogonality KILL — always run the orthogonality check vs every live C1 axis before promoting. (<code>analysis/h_cloud_disagreement.py</code>, <code>analysis/h_cloud_disagreement_orthogonality.py</code>)</li>
-      <li style="margin-bottom:6px;"><strong>[GATE] CALM_GATE_ENABLED — fc_ws&lt;3 ws/wg L3 skip.</strong> <em>Killed 2026-06-30 — wrong intervention.</em> Built in v0.6.252 as an off-by-default gate, intended to skip ws/wg L3 corrections when forecast wind speed &lt; 3 mph (the apparent "L3 hurts at low wind speeds" pattern from earlier reads). 2026-06-30 <code>l3_regime_lead_analysis</code> on 694,842 L3-field pair rows showed the calm-regime L3 actually <strong>WINS</strong> across every lead band (+15.3% / +29.9% / +44.0% / +44.3%, n = 4.8K → 20.4K). The real ws L3 losers are <strong>ne_flow</strong> at every band (n = 1.0K → 4.1K, −5% to −9%) and short-lead <strong>sea_breeze</strong> (n=966, −9.5% at 0-5h; n=918, −15.2% at 6-11h). The fc_ws&lt;3 gate would have skipped L3 exactly where it wins biggest. CALM_GATE_ENABLED removal from <code>decay_apply.py</code> queued for the next collector ship (gate is currently False so it's a no-op in code; removal is cleanup). The actual fix is the per-(field, regime, lead_band) skip table targeting ne_flow + short-lead sea_breeze (queued in Open architectural questions). (<code>analysis/l3_regime_lead_analysis.py</code>)</li>
+      <li style="margin-bottom:6px;"><strong>[GATE] CALM_GATE_ENABLED — fc_ws&lt;3 ws/wg L3 skip.</strong> <em>Killed 2026-06-30 — wrong intervention.</em> Built in v0.6.252 as an off-by-default gate, intended to skip ws/wg L3 corrections when forecast wind speed &lt; 3 mph (the apparent "L3 hurts at low wind speeds" pattern from earlier reads). 2026-06-30 <code>l3_regime_lead_analysis</code> on 694,842 L3-field pair rows showed the calm-regime L3 actually <strong>WINS</strong> across every lead band (+15.3% / +29.9% / +44.0% / +44.3%, n = 4.8K → 20.4K). The real ws L3 losers are <strong>ne_flow</strong> at every band (n = 1.0K → 4.1K, −5% to −9%) and short-lead <strong>sea_breeze</strong> (n=966, −9.5% at 0-5h; n=918, −15.2% at 6-11h). The fc_ws&lt;3 gate would have skipped L3 exactly where it wins biggest. CALM_GATE_ENABLED removed from <code>decay_apply.py</code> in v0.6.267 collector (live). The actual fix is the per-(field, regime, lead_band) skip table targeting ne_flow + short-lead sea_breeze (queued in Open architectural questions). (<code>analysis/l3_regime_lead_analysis.py</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] L6 cooling branch (sb_off offshore-morning Δ table) — original "double-counting" diagnosis.</strong> <em>Killed 2026-06-30 — rejected by data, replaced by surgical fix.</em> Initial diagnosis: L2's mesonet blend already pulls cove temperature toward truth, so L6's additional cooling Δ double-counts. <code>analysis/l6_l2_double_counting.py</code> on 19,975 t pairs where L6 fired showed L2 only erases 3.7% of L1's MAE on cove rows — barely moves the needle. The hypothesis was wrong; L2 isn't double-counting anything. Real cause: L1 is structurally cold ~2.25°F at the cove (HRRR microclimate gap L2 doesn't close). L6's cooling branch was pouring more cooling on an already-cold baseline, materially increasing paired MAE on rows where it fired (Δ ≤ −2 °F bucket: 3.52 → 6.16, −74.9%). Warming branch (sb_active S/SE/SW) was neutral-to-helpful. Action: surgical disable of cooling branch only (v0.6.259); warming branch retained. Long-term Fix B (refit lookup against L2 baseline) queued. (<code>analysis/l6_l2_double_counting.py</code>; memory: <code>project_l6_l2_double_counting_hypothesis</code>)</li>
       <li style="margin-bottom:6px;"><strong>[HYPOTHESIS] Naive persistence baseline vs HRRR.</strong> <em>Killed 2026-06-24 — expected behavior, not a bug.</em> Compared error_l1 vs "use current obs as constant forecast": persistence wins ws/wg at all leads (+95% to +526%), cc at short leads. Initial alarm: possible mph→m/s unit mismatch on forecast_l1. <strong>Investigated and ruled out:</strong> both fc and obs are mph (config.py:46 sets wind_speed_unit=mph for all Open-Meteo calls; wind_blend.py converts METAR knots → mph). The 2× ratio is a real model over-prediction for our sheltered coastal location, and L2+L3 already correct it (raw ws L1 MAE 4.17 mph → L3 2.44 mph). Live frontend already does persistence-style blending via <code>blend_observed_into_hourly</code> (BLEND_HOURS=24, weight=1.0 at current hour). Pair log captures the pre-blend raw, which is why error_l1 looks bad. Nothing actionable. (<code>analysis/h_persistence.py</code>)</li>
     </ul>
@@ -2252,6 +2266,17 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     }
     return "l1";
   };
+  // Hybrid Production array — mirror of the accuracy chart's renderer.
+  const _prodArr = (layers, fieldKey) => {
+    const real = layers.production;
+    const approx = layers[_prodKey(fieldKey)] || [];
+    if (!Array.isArray(real)) return approx;
+    const out = new Array(Math.max(real.length, approx.length, 48)).fill(null);
+    for (let i = 0; i < out.length; i++) {
+      out[i] = (real[i] != null) ? real[i] : (approx[i] != null ? approx[i] : null);
+    }
+    return out;
+  };
   const _avg1to47 = (arr) => {
     if (!Array.isArray(arr)) return null;
     let s = 0, n = 0;
@@ -2270,7 +2295,7 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     if (brierFields.has(fieldKey)) continue;
     const layers = mae[fieldKey];
     const rawMae = _avg1to47(layers.l1);
-    const prodMae = _avg1to47(layers[_prodKey(fieldKey)]);
+    const prodMae = _avg1to47(_prodArr(layers, fieldKey));
     if (rawMae == null || prodMae == null || rawMae === 0) continue;
     const pct = (prodMae - rawMae) / rawMae * 100;
     rows.push({ field: fieldKey, pct });
@@ -2281,20 +2306,41 @@ function renderScorecardBanner(tsDoc, wxDoc) {
   }
   const meanPct = rows.reduce((s, r) => s + r.pct, 0) / rows.length;
   const netPositive = rows.filter(r => r.pct < 0).length;
+  // Biggest gain = most negative (Production MAE dropped furthest below raw).
+  // Biggest regression = most positive (Production worse than raw). Either
+  // may be absent — no gains means every field is worse; no regressions means
+  // every field is at or better than raw.
+  const best = rows.reduce((b, r) => (b == null || r.pct < b.pct ? r : b), null);
   const worst = rows.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
-  const worstStr = worst && worst.pct > 0
-    ? ` · worst regression: <code>${worst.field}</code> ${worst.pct >= 0 ? "+" : ""}${worst.pct.toFixed(1)}%`
-    : " · no field is worse than raw";
   const meanColor = meanPct < 0 ? "#4ad29a" : "#fb7c5c";
+  const fmt = (r, color) => r
+    ? `<code>${r.field}</code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`
+    : "—";
+  const bestCell = best && best.pct < 0 ? fmt(best, "#4ad29a") : "—";
+  const worstCell = worst && worst.pct > 0 ? fmt(worst, "#fb7c5c") : "—";
   host.hidden = false;
   host.innerHTML = `
-    <strong style="color:${meanColor};">Stack vs raw:</strong> Production MAE averaged
-    <strong style="color:${meanColor};">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong>
-    across <strong>${rows.length}</strong> non-Brier field${rows.length === 1 ? "" : "s"} ·
-    <strong>${netPositive}/${rows.length}</strong> net-positive${worstStr}.
-    <span style="opacity:0.65;font-size:0.85em;margin-left:6px;">
-      (lower is better · leads 1–47h · pp excluded — Brier not MAE)
-    </span>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:baseline;">
+      <div>
+        <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Overall</div>
+        <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong></div>
+      </div>
+      <div>
+        <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Winning fields</div>
+        <div><strong>${netPositive}/${rows.length}</strong></div>
+      </div>
+      <div>
+        <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Biggest gain</div>
+        <div>${bestCell}</div>
+      </div>
+      <div>
+        <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Biggest regression</div>
+        <div>${worstCell}</div>
+      </div>
+    </div>
+    <div style="opacity:0.55;font-size:0.78em;margin-top:6px;">
+      Production MAE vs raw model, averaged over leads 1–47h. Lower is better. pp excluded (Brier, not MAE).
+    </div>
   `;
 }
 
@@ -2444,6 +2490,25 @@ function renderAccuracySection(tsDoc, wxDoc) {
     }
     return "l1";
   };
+  // Hybrid Production array: real per-row aggregate from
+  // per_layer_mae_by_lead[field].production where populated, approximation
+  // (deepest applied layer MAE) elsewhere. Right after the v0.6.269 deploy
+  // only recent leads have applied_layer-stamped pair rows, so the .production
+  // array is sparse; hybrid mode lets the chart show real numbers for those
+  // leads and fall back to the approximation for the rest. Over the 7-day
+  // window fill the coverage rises to 100% and hybrid == real everywhere.
+  const _hybridProductionArray = (fieldData, fieldKey) => {
+    const real = fieldData.production;
+    const approx = fieldData[_productionLayerKey(fieldKey)];
+    if (!Array.isArray(real)) return approx || [];
+    const approxArr = Array.isArray(approx) ? approx : [];
+    const out = new Array(Math.max(real.length, approxArr.length, 48)).fill(null);
+    for (let i = 0; i < out.length; i++) {
+      const r = real[i];
+      out[i] = (r != null) ? r : (approxArr[i] != null ? approxArr[i] : null);
+    }
+    return out;
+  };
 
   const _buildBandTable = (fieldData, fieldKey, decimals) => {
     const rows = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);
@@ -2452,16 +2517,22 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // correction were applied to every row in the band). No applied-layer
     // highlighting — under conditional gates there's no single "applied"
     // column. Production column carries the user-visible signal.
-    const prodKey = _productionLayerKey(fieldKey);
+    const prodArr = _hybridProductionArray(fieldData, fieldKey);
+    const realCovered = Array.isArray(fieldData.production)
+      ? fieldData.production.filter(v => v != null).length
+      : 0;
+    const prodTitle = realCovered >= 40
+      ? "Real per-row aggregate from per_layer_mae_by_lead[field].production."
+      : `Hybrid — real per-row aggregate where per_layer_mae_by_lead[field].production is populated (${realCovered}/48 leads), approximation (deepest applied layer MAE) elsewhere. Fills as the 7-day window post-v0.6.269 deploy accumulates stamped pair rows.`;
     let html =
       `<table class="band-table"><thead><tr>` +
       `<th>Lead</th>` +
       LAYERS.map(l => `<th>${l.shortLabel || l.label}</th>`).join("") +
-      `<th class="production-col" title="Approximation — equals the deepest applied layer for this field. Pending per-row applied-layer stamping in the collector.">Production*</th>` +
+      `<th class="production-col" title="${prodTitle}">Production${realCovered >= 40 ? "" : "*"}</th>` +
       `</tr></thead><tbody>`;
     for (const b of rows) {
       const vals = LAYERS.map(l => _bandAvg(fieldData[l.key] || [], b.lo, b.hi));
-      const prodVal = _bandAvg(fieldData[prodKey] || [], b.lo, b.hi);
+      const prodVal = _bandAvg(prodArr, b.lo, b.hi);
       const present = vals.filter(v => v != null);
       const best = present.length ? Math.min(...present) : null;
       const worst = present.length ? Math.max(...present) : null;
@@ -2508,13 +2579,17 @@ function renderAccuracySection(tsDoc, wxDoc) {
       tension: 0.25,
       spanGaps: true,
     }));
-    // Production line — bright white, thick, drawn on top of the per-layer
-    // diagnostic lines. It tracks whichever layer is the user-visible answer
-    // for this field per _productionLayerKey().
-    const prodKey = _productionLayerKey(f.key);
+    // Production line — hybrid: real per-row aggregate where
+    // per_layer_mae_by_lead[field].production is populated, approximation
+    // (deepest applied layer MAE) elsewhere. Drops the "*" marker once the
+    // real coverage crosses 40/48 leads (window mostly full).
+    const prodArrChart = _hybridProductionArray(fieldData, f.key);
+    const realCoveredChart = Array.isArray(fieldData.production)
+      ? fieldData.production.filter(v => v != null).length
+      : 0;
     datasets.push({
-      label: "Production*",
-      data: (fieldData[prodKey] || []).map(v => v == null ? NaN : v),
+      label: realCoveredChart >= 40 ? "Production" : "Production*",
+      data: prodArrChart.map(v => v == null ? NaN : v),
       borderColor: "rgba(255,255,255,1)",
       backgroundColor: "rgba(0,0,0,0)",
       borderDash: [],
