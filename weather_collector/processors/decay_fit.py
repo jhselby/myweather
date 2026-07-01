@@ -151,6 +151,7 @@ TAU_DAYS = 14
 TAU_DAYS_BY_FIELD = {
     "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read)
     "pa": 28,  # +9.4% MAE held-out vs τ=14 (2026-06-22 read)
+    "ws": 7,   # +6.7% MAE held-out vs τ=14 (2026-07-01 read; wg at +4.0% is close but below 5% floor, stays at global default)
 }
 
 

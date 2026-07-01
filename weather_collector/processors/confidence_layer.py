@@ -40,6 +40,7 @@ from datetime import datetime
 
 import pytz
 
+from ..gcs_io import load_json
 from .regime_classifier import classify_synoptic_regime
 
 
@@ -100,6 +101,15 @@ def describe_applicability():
             "axis_id": "cluster_spread",
             "name": "Mesonet cluster spread quartile",
             "fires_when": "Q1-Q4 quartile of current-tick station-cluster spread (multi-axis lookup only)",
+        },
+        {
+            "axis_id": "C1e",
+            "name": "Hours since front (post-frontal window)",
+            "fires_when": (
+                "hours since most recent frontal passage < 24 (post) vs ≥ 24 (baseline). "
+                "Stage 3 telemetry only — live axis stamped on weather_data.confidence.live_axes; "
+                "multi-axis widening pending Stage 2 curator extension to include the hsf dimension."
+            ),
         },
     ]
     if ENABLED:
@@ -234,6 +244,52 @@ def _c1f_per_band(weather_data):
     return out
 
 
+# C1e — hours-since-front axis. 2026-07-01 h_hsf_orthogonality promotion:
+# 9 ORTHOGONAL cells / 23 REDUNDANT / 4 AMBIGUOUS vs C1a; strongest on
+# ch (all bands), cm (all bands), cc long-lead, cl 6-11h. Post-frontal
+# window = 24h; ≥24h since last passage = baseline. Stamped live here as
+# telemetry — actual widening kicks in once the Stage 2 v2 curator is
+# extended to include hsf as a 5th key dimension in the by_axes table.
+_C1E_POST_WINDOW_H = 24
+
+
+def _current_hsf_group(weather_data):
+    """Classify current hour into 'post' (0-24h since last front) or
+    'baseline' (≥24h). Reads the frontal_events_log written by
+    frontal_detection.py. Returns None if the log can't be loaded or no
+    passages are on record — the multi-axis lookup treats None as
+    "axis unavailable, use legacy fallback."
+    """
+    try:
+        doc = load_json("frontal_events_log.json", default={}) or {}
+    except Exception as e:
+        logging.debug(f"  ⚠ confidence_layer C1e: frontal log load failed: {e}")
+        return None
+    events = doc.get("events") or doc.get("entries") or doc.get("frontal_events") or []
+    if not events and isinstance(doc, list):
+        events = doc
+    if not events:
+        return None
+    now = datetime.now(TZ).replace(second=0, microsecond=0)
+    now_naive = datetime(now.year, now.month, now.day, now.hour, now.minute)
+    latest = None
+    for e in events:
+        ts = e.get("ts") or e.get("timestamp") or e.get("when")
+        if not ts:
+            continue
+        try:
+            ts_clean = ts.replace("Z", "").replace("+00:00", "")
+            dt = datetime.fromisoformat(ts_clean[:19])
+        except Exception:
+            continue
+        if dt <= now_naive and (latest is None or dt > latest):
+            latest = dt
+    if latest is None:
+        return None
+    hours = (now_naive - latest).total_seconds() / 3600.0
+    return "post" if hours < _C1E_POST_WINDOW_H else "baseline"
+
+
 def _current_pt_bin(weather_data):
     """Classify the live pressure_trend_hpa_3h via the curated table's pt_bins."""
     if not _CURATED_META:
@@ -301,6 +357,11 @@ def stamp_confidence(weather_data):
     pt_label = _current_pt_bin(weather_data)
     trans_label = "transition" if in_transition else "stable"
     c1f_per_band = _c1f_per_band(weather_data)
+    # C1e — hours-since-front axis. Live telemetry only for now; the multi-
+    # axis key below is unchanged (curator doesn't emit hsf-keyed cells yet).
+    # Once the Stage 2 v2 curator is extended to include hsf as a 5th key
+    # dimension, extend axis_key here to `spread_q::pt_label::trans_label::c1f_band::hsf_group`.
+    hsf_group = _current_hsf_group(weather_data)
 
     cells_out = {}
     multi_hits = 0
@@ -351,6 +412,7 @@ def stamp_confidence(weather_data):
             "spread_quartile": spread_q,
             "pt_bin":          pt_label,
             "c1f_per_band":    c1f_per_band,
+            "hsf_group":       hsf_group,  # C1e — 2026-07-01, telemetry only
             "multi_hits":      multi_hits,
             "table_version":   "v3" if _CURATED_PATH.endswith("_v2.json") else "v1",
         },
