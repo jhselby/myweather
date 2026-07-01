@@ -707,6 +707,12 @@
   </div>
 </div>
 
+<!-- ───────────────────── Scorecard banner ─────────────────────
+     One-line headline computed from time_series_diagnostic.json:
+     stack-vs-raw MAE delta averaged across fields, net-positive count,
+     worst regression called out. Auto-computed each Fitter cycle. -->
+<div id="scorecard-banner" class="layer-info-text" style="border-color:#1f3a2a;background:#101913;margin-bottom:14px;padding:10px 14px;font-size:0.95em;" hidden></div>
+
 <a id="sec-status"></a>
 <!-- ───────────────────── Status panel ─────────────────────
      Hand-curated orientation for an outside reviewer. Update whenever
@@ -812,7 +818,7 @@
         <li><strong>Per-(field, regime, lead_band) skip table for L3/L4.</strong> Pattern confirmed on 4 fields (ws/wg/cc/cm): walk-forward flat-drop verdicts hide regime-specific weakness. <strong>2026-06-30 ws-by-regime read:</strong> the actual ws L3 losers are <strong>ne_flow (all 4 bands)</strong> and <strong>sea_breeze short-lead</strong>; ws L3 wins big (+15% to +44%) in the calm regime — which is why the killed CALM_GATE was the wrong intervention. First skip-table cells (post-2026-06-30 reads): <code>(ws, ne_flow, *)</code>, <code>(ws, sea_breeze, 0-11h)</code>, <code>(dp, ne_flow, *)</code>, <code>(dp, sea_breeze, *)</code>, <code>(dp, nw_flow, 0-11h)</code>. Add-on cells (dp ON in skip semantics): <code>(dp, frontal, *)</code>, <code>(dp, nw_flow, 24-47h)</code>, <code>(dp, se_flow, 12-23h+)</code>, <code>(dp, sw_flow, 24-47h)</code>, <code>(dp, calm, 12-23h)</code>. <strong>ne_flow is the consistent loser on both ws and dp</strong> — the regime axis is doing real work.</li>
         <li><strong>L6 lookup refit (Fix B).</strong> Rebuild table against L2-corrected baseline instead of raw waterfront-vs-inland gradient. Hold for 2–3 days of post-v0.6.259 reads first.</li>
         <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/L5 only. See memory note.</li>
-        <li><strong>Scorecard banner.</strong> Add "Stack vs raw: −X% MAE across N fields" above Status. Small follow-up.</li>
+        <li><strong>Scorecard banner — SHIPPED 2026-07-01.</strong> One-line "Stack vs raw: X% Production MAE across N non-Brier fields, M/N net-positive, worst regression: …" above Engineering updates. Uses the same `_productionLayerKey` logic as the accuracy chart so "stack" = actual production output per field. Brier-evaluated fields (pp) excluded — MAE isn't their decision metric.</li>
         <li><strong>Per-row applied-layer stamping — collector SHIPPED 2026-07-01 (backend).</strong> <code>forecast_snapshot.py</code> derives <code>{field}_applied</code> per (field, lead) by walking L1→L6 arrays and finding the deepest layer whose value changed (every gate today is deterministic at forecast time, so equality walk is exact). <code>forecast_error_log.py</code> copies onto each pair-log row as <code>applied_layer</code>. <code>decay_fit.py</code> aggregates <code>per_layer_mae_by_lead[field].production</code> from per-row <code>error_l{applied_layer}</code>. Pending: 7-day window fill + frontend swap (drop the Production* asterisk approximation once <code>.production</code> populates).</li>
         <li><strong>Per-lead Brier for PP — SHIPPED 2026-07-01.</strong> Fitter emits <code>per_layer_brier_by_lead.pp</code> in <code>time_series_diagnostic.json</code> alongside MAE/bias/n (v0.6.267 collector). Frontend PP card swaps to Brier-native rendering the moment the key populates. Graceful fallback: if Brier is absent (pre-15:xx-Fitter-cycle), PP card falls back to MAE + orange disclaimer; when Brier populates, card auto-swaps to Brier + green banner.</li>
         <li><strong>KBOS+KBVY cloud blend → full L2 — HOLD (resolved 2026-06-30).</strong> <code>analysis/h_cloud_bias_persistence.py</code> ran on 3,866 distinct HRRR runs, 1,902–1,952 paired observations per cloud-lead. <strong>cc lead 6h gate: FAIL (ρ = −0.04). cc lead 12h gate: FAIL (ρ = −0.10).</strong> Bias does not persist past ~3h on any cloud field; propagating it to lead 6h+ would inject error, not reduce it. <strong>Decision:</strong> formalize <code>hourly[0]</code>-only as the intentional behavior — stop calling it a half-built L2.</li>
@@ -2207,6 +2213,87 @@ function _legendSwatch(color, checked) {
   }
   _swatchCache.set(key, c);
   return c;
+}
+
+// ── Scorecard banner: one-line summary of the stack's overall performance.
+// Reads per_layer_mae_by_lead from time_series_diagnostic.json, computes each
+// field's overall stack-vs-raw MAE delta averaged across all leads (1-47), and
+// summarizes: mean delta, count of net-positive fields, worst regression. Uses
+// the same _productionLayerKey logic as the accuracy chart so "stack" = actual
+// production output per field, not just a hardcoded L4.
+function renderScorecardBanner(tsDoc, wxDoc) {
+  const host = document.getElementById("scorecard-banner");
+  if (!host) return;
+  if (!tsDoc || !tsDoc.per_layer_mae_by_lead) {
+    host.hidden = true;
+    return;
+  }
+  const dm = (wxDoc && wxDoc.decay_meta) || {};
+  const l3Fields = new Set(dm.layer_3_fields || []);
+  const l4Fields = new Set(dm.layer_4_fields || []);
+  const L2_ADDITIVE = new Set(["t", "dp", "h", "pr"]);
+  const L2_DIRECT   = new Set(["ws", "wg"]);
+  const brierFields = new Set(dm.layer_3_brier_fields || ["pp"]);
+  // Same rule as _layerApplied in renderAccuracySection.
+  const _applied = (layerKey, fieldKey) => {
+    if (layerKey === "l1") return true;
+    if (layerKey === "l2") return L2_ADDITIVE.has(fieldKey) || L2_DIRECT.has(fieldKey);
+    if (layerKey === "l3") return l3Fields.has(fieldKey);
+    if (layerKey === "l4") return l4Fields.has(fieldKey);
+    if (layerKey === "l5") return fieldKey === "sr";
+    if (layerKey === "l6") return fieldKey === "t";
+    return false;
+  };
+  const _prodKey = (fieldKey) => {
+    for (const k of ["l6", "l5", "l4", "l3", "l2", "l1"]) {
+      if (_applied(k, fieldKey)) return k;
+    }
+    return "l1";
+  };
+  const _avg1to47 = (arr) => {
+    if (!Array.isArray(arr)) return null;
+    let s = 0, n = 0;
+    for (let i = 1; i < arr.length && i < 48; i++) {
+      if (arr[i] != null) { s += arr[i]; n++; }
+    }
+    return n > 0 ? s / n : null;
+  };
+  // Iterate every field with per-layer MAE data. Skip Brier-evaluated fields
+  // (pp) since MAE isn't their decision metric — averaging them into the
+  // stack-vs-raw delta would drag the number in a direction that doesn't
+  // reflect user-visible skill.
+  const rows = [];
+  const mae = tsDoc.per_layer_mae_by_lead;
+  for (const fieldKey of Object.keys(mae)) {
+    if (brierFields.has(fieldKey)) continue;
+    const layers = mae[fieldKey];
+    const rawMae = _avg1to47(layers.l1);
+    const prodMae = _avg1to47(layers[_prodKey(fieldKey)]);
+    if (rawMae == null || prodMae == null || rawMae === 0) continue;
+    const pct = (prodMae - rawMae) / rawMae * 100;
+    rows.push({ field: fieldKey, pct });
+  }
+  if (rows.length === 0) {
+    host.hidden = true;
+    return;
+  }
+  const meanPct = rows.reduce((s, r) => s + r.pct, 0) / rows.length;
+  const netPositive = rows.filter(r => r.pct < 0).length;
+  const worst = rows.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
+  const worstStr = worst && worst.pct > 0
+    ? ` · worst regression: <code>${worst.field}</code> ${worst.pct >= 0 ? "+" : ""}${worst.pct.toFixed(1)}%`
+    : " · no field is worse than raw";
+  const meanColor = meanPct < 0 ? "#4ad29a" : "#fb7c5c";
+  host.hidden = false;
+  host.innerHTML = `
+    <strong style="color:${meanColor};">Stack vs raw:</strong> Production MAE averaged
+    <strong style="color:${meanColor};">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong>
+    across <strong>${rows.length}</strong> non-Brier field${rows.length === 1 ? "" : "s"} ·
+    <strong>${netPositive}/${rows.length}</strong> net-positive${worstStr}.
+    <span style="opacity:0.65;font-size:0.85em;margin-left:6px;">
+      (lower is better · leads 1–47h · pp excluded — Brier not MAE)
+    </span>
+  `;
 }
 
 function renderAccuracySection(tsDoc, wxDoc) {
@@ -4287,6 +4374,7 @@ async function load() {
   } catch (err) { /* silent — file appears after first Fitter run post-deploy */ }
 
   renderMeta(corrDoc, wxDoc);
+  renderScorecardBanner(tsDoc, wxDoc);
   renderAccuracySection(tsDoc, wxDoc);
   renderL3L4AuditSection(tsDoc, wxDoc);
   renderStateStratifiedSection(ssDoc);
