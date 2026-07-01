@@ -47,6 +47,16 @@ BANDS = [
 
 # Calibration thresholds. Tunable.
 CALIBRATION_THRESHOLD = 0.20   # |drift| < 20% to count as CALIBRATED
+
+# Fields where MAE is not the decision metric — the drift check treats a
+# large MAE swing as evidence of miscalibration, but for pp the actual gate
+# is Brier score (v0.6.20 calibration analysis: L3 raises PP MAE but cuts
+# Brier ~5%). Applying the MAE-based drift rule to pp mis-tags cells as
+# DRIFTED even when the Brier calibration is stable. Excluded from the
+# CALIBRATED/DRIFTED tally and reported separately as BRIER_EXEMPT. When
+# per_layer_brier_by_lead.pp populates in time_series_diagnostic.json
+# (v0.6.267 collector), swap in a Brier-based drift check for pp instead.
+BRIER_EVALUATED = {"pp"}
 MIN_N = 200                    # cells with fewer recent pairs tagged THIN
 PASS_FRACTION = 0.75           # ≥75% of non-THIN cells must CALIBRATE
 
@@ -168,7 +178,11 @@ def run_audit(window_days):
             if c.get("status") not in ("SHIP", "MARGINAL"):
                 continue
             m = measured.get(field, {}).get(band)
-            status, ds, dt = classify_cell(c, m)
+            if field in BRIER_EVALUATED:
+                # MAE-based drift rule doesn't apply — record separately.
+                status, ds, dt = "BRIER_EXEMPT", None, None
+            else:
+                status, ds, dt = classify_cell(c, m)
             cur_str  = f"{c['stable_mae']:.3f}→{c['transition_mae']:.3f}"
             if m and m.get("stable_mae") is not None and m.get("transition_mae") is not None:
                 mea_str = f"{m['stable_mae']:.3f}→{m['transition_mae']:.3f}"
@@ -185,15 +199,17 @@ def run_audit(window_days):
             })
         print()
 
-    counts = {"CALIBRATED": 0, "DRIFTED": 0, "THIN": 0}
+    counts = {"CALIBRATED": 0, "DRIFTED": 0, "THIN": 0, "BRIER_EXEMPT": 0}
     for r in results:
         counts[r["status"]] = counts.get(r["status"], 0) + 1
     judgeable = counts["CALIBRATED"] + counts["DRIFTED"]
     pass_rate = (counts["CALIBRATED"] / judgeable) if judgeable else 0.0
     verdict = "PASS" if pass_rate >= PASS_FRACTION and judgeable >= 10 else "HOLD"
     print("=" * 96)
-    print(f"Totals: {counts['CALIBRATED']} CALIBRATED, {counts['DRIFTED']} DRIFTED, {counts['THIN']} THIN")
-    print(f"Pass rate (CALIBRATED / judgeable): {pass_rate:.2%}")
+    print(f"Totals: {counts['CALIBRATED']} CALIBRATED, {counts['DRIFTED']} DRIFTED, "
+          f"{counts['THIN']} THIN, {counts['BRIER_EXEMPT']} BRIER_EXEMPT")
+    print(f"Pass rate (CALIBRATED / judgeable): {pass_rate:.2%}   "
+          f"(BRIER_EXEMPT cells excluded — pp gate is Brier, not MAE)")
     print(f"Verdict: {verdict}")
     if verdict == "HOLD":
         print()

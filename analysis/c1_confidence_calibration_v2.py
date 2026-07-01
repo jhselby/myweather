@@ -1,12 +1,13 @@
 """
 C1 confidence-layer calibration — Stage 1 v2 (multi-axis).
 
-Extends the original (transition-only) calibration to a 4-axis table:
+Extends the original (transition-only) calibration to a 5-axis table:
 
   axis_1: transition_flag      ∈ {stable, transition}     (legacy axis)
   axis_2: cluster_spread_q     ∈ {Q1, Q2, Q3, Q4}         (new — promoted 2026-06-20)
   axis_3: pressure_tendency    ∈ {falling_fast, falling, flat, rising}  (new — promoted 2026-06-20)
   axis_4: c1f_precip_fc        ∈ {p0, p1}                 (new — promoted 2026-06-24, 23 ortho cells)
+  axis_5: hsf_group (C1e)      ∈ {post, baseline}         (new — promoted 2026-07-01, 9 ortho cells vs C1a)
 
 Per-cell MAE measured across the test window; cell sample size determines
 SHIP/MARGINAL/SKIP classification at curate-time (Stage 2).
@@ -54,6 +55,11 @@ from analysis._cache import cached_path  # noqa: E402
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 CLUSTER_SPREAD_URL = "https://data.wymancove.com/cluster_spread_log.json"
+FRONTAL_EVENTS_URL = "https://data.wymancove.com/frontal_events_log.json"
+
+# C1e — post-frontal window (hsf_group). Mirrors analysis/h_hsf_orthogonality.py.
+C1E_POST_WINDOW_H = 24
+C1E_LABELS = ("post", "baseline")
 
 # Use temp-spread (spread_t) as the canonical cluster-spread axis. Humidity
 # spread (spread_h) tracks it closely on a 2-day smoke; if calibration shows
@@ -102,6 +108,62 @@ def _pt_bin(pt):
         if lo <= pt < hi:
             return label
     return None
+
+
+def _load_frontal_passages():
+    """Return sorted list of frontal passage datetimes (naive), or [] on
+    failure / empty log. Same schema-forgiveness as h_hours_since_front.py."""
+    try:
+        path = cached_path(FRONTAL_EVENTS_URL)
+    except Exception as e:
+        print(f"  ⚠ frontal_events_log fetch failed: {e}")
+        return []
+    try:
+        with open(path) as f:
+            doc = json.load(f)
+    except Exception as e:
+        print(f"  ⚠ frontal_events_log parse failed: {e}")
+        return []
+    events = doc.get("events") or doc.get("entries") or doc.get("frontal_events") or []
+    if not events and isinstance(doc, list):
+        events = doc
+    out = []
+    for e in events:
+        ts = e.get("ts") or e.get("timestamp") or e.get("when")
+        if not ts:
+            continue
+        try:
+            ts_clean = ts.replace("Z", "").replace("+00:00", "")
+            out.append(datetime.fromisoformat(ts_clean[:19]))
+        except Exception:
+            continue
+    out.sort()
+    return out
+
+
+def _hsf_group(passages, obs_iso):
+    """Bucket obs_time into 'post' (0-24h since latest passage ≤ obs) or
+    'baseline' (≥24h). Returns None if no passage precedes the obs."""
+    if not passages or not obs_iso:
+        return None
+    try:
+        obs_dt = datetime.fromisoformat(obs_iso.replace("Z", "").replace("+00:00", "")[:19])
+    except Exception:
+        return None
+    # Binary search for most recent passage ≤ obs.
+    lo, hi = 0, len(passages)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if passages[mid] <= obs_dt:
+            lo = mid + 1
+        else:
+            hi = mid
+    if lo == 0:
+        return None
+    delta_h = (obs_dt - passages[lo - 1]).total_seconds() / 3600.0
+    if delta_h < 0:
+        return None
+    return "post" if delta_h < C1E_POST_WINDOW_H else "baseline"
 
 
 def _tick_key(iso_ts):
@@ -186,8 +248,10 @@ def _spread_quartile(v, q1, q3):
 def measure():
     print(f"C1 multi-axis calibration · {TEST_DAYS}-day window")
     print("=" * 80)
-    print("[1/3] Loading cluster_spread index...")
+    print("[1/3] Loading cluster_spread index + frontal passages...")
     spread_idx, sq1, sq3 = _load_cluster_spread_index()
+    passages = _load_frontal_passages()
+    print(f"  cluster_spread ticks: {len(spread_idx):,}   frontal passages: {len(passages)}")
     # Stash the cuts on a side-channel so main() can write them to the JSON
     measure._sq1 = sq1
     measure._sq3 = sq3
@@ -196,7 +260,7 @@ def measure():
 
     # Legacy aggregator: (field, band, is_transition) -> [sum_abs_err, n]
     legacy_accs = defaultdict(lambda: [0.0, 0])
-    # Multi-axis aggregator: (field, band, spread_q, pt_label, is_trans, c1f) -> [sum_abs_err, n]
+    # Multi-axis aggregator: (field, band, spread_q, pt_label, is_trans, c1f, hsf) -> [sum_abs_err, n]
     multi_accs = defaultdict(lambda: [0.0, 0])
 
     print("[2/3] Streaming pair log...")
@@ -205,6 +269,7 @@ def measure():
     pairs_used_legacy = 0
     pairs_used_multi = 0
     pairs_skip_no_spread = 0
+    pairs_skip_no_hsf = 0
 
     with open(path) as f:
         for line in f:
@@ -263,14 +328,21 @@ def measure():
             # C1f axis (v3): state_fc.precip_in > 0 → "p1", else "p0".
             c1f = "p1" if (sfc.get("precip_in") or 0) > 0 else "p0"
 
-            multi_accs[(field, band, spread_q, pt_label, is_trans, c1f)][0] += abs_err
-            multi_accs[(field, band, spread_q, pt_label, is_trans, c1f)][1] += 1
+            # C1e axis (v4): hours since most recent frontal passage.
+            hsf = _hsf_group(passages, ot)
+            if hsf is None:
+                pairs_skip_no_hsf += 1
+                continue
+
+            multi_accs[(field, band, spread_q, pt_label, is_trans, c1f, hsf)][0] += abs_err
+            multi_accs[(field, band, spread_q, pt_label, is_trans, c1f, hsf)][1] += 1
             pairs_used_multi += 1
 
     print(f"  pairs scanned: {pairs_seen:,}")
     print(f"  legacy axis used: {pairs_used_legacy:,}")
     print(f"  multi-axis used:  {pairs_used_multi:,}  "
-          f"(skipped {pairs_skip_no_spread:,} for no cluster_spread join)")
+          f"(skipped {pairs_skip_no_spread:,} for no cluster_spread join, "
+          f"{pairs_skip_no_hsf:,} for no frontal passage before obs)")
 
     print("[3/3] Building output table...")
     # Legacy view (Stage 2 v1 reads this exactly as before)
@@ -304,11 +376,13 @@ def measure():
             }
 
     # Attach the multi-axis sub-table.
-    for (field, band, spread_q, pt_label, is_trans, c1f), (s_e, n) in multi_accs.items():
+    for (field, band, spread_q, pt_label, is_trans, c1f, hsf), (s_e, n) in multi_accs.items():
         if n < MIN_N_MULTI:
             continue
         slot = "transition" if is_trans else "stable"
-        key = f"{spread_q}::{pt_label}::{slot}::{c1f}"
+        # 5-tuple key. confidence_layer.py::stamp_confidence composes the
+        # same shape from live axes when looking up the current cell.
+        key = f"{spread_q}::{pt_label}::{slot}::{c1f}::{hsf}"
         # Only attach if the legacy entry exists for this (field, band) — keeps
         # the table consistent (legacy entry is the parent).
         legacy_entry = out_cells.get(field, {}).get(band)
@@ -344,6 +418,7 @@ def main():
                 "spread_q":      ["Q1", "Q23", "Q4"],
                 "pt":            [b[0] for b in PT_BINS],
                 "c1f":           list(C1F_LABELS),
+                "hsf":           list(C1E_LABELS),
             },
             "spread_field":  SPREAD_FIELD,
             "join_tolerance_min": TICK_JOIN_TOLERANCE_MIN,

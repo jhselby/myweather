@@ -107,8 +107,9 @@ def describe_applicability():
             "name": "Hours since front (post-frontal window)",
             "fires_when": (
                 "hours since most recent frontal passage < 24 (post) vs ≥ 24 (baseline). "
-                "Stage 3 telemetry only — live axis stamped on weather_data.confidence.live_axes; "
-                "multi-axis widening pending Stage 2 curator extension to include the hsf dimension."
+                "Live axis stamped on weather_data.confidence.live_axes.hsf_group; "
+                "multi-axis widening lookup wired via 5-tuple axis_key. Post-2026-07-01 "
+                "curated tables emit hsf-keyed cells; earlier tables fall back to legacy."
             ),
         },
     ]
@@ -357,10 +358,9 @@ def stamp_confidence(weather_data):
     pt_label = _current_pt_bin(weather_data)
     trans_label = "transition" if in_transition else "stable"
     c1f_per_band = _c1f_per_band(weather_data)
-    # C1e — hours-since-front axis. Live telemetry only for now; the multi-
-    # axis key below is unchanged (curator doesn't emit hsf-keyed cells yet).
-    # Once the Stage 2 v2 curator is extended to include hsf as a 5th key
-    # dimension, extend axis_key here to `spread_q::pt_label::trans_label::c1f_band::hsf_group`.
+    # C1e — hours-since-front axis. Post-2026-07-01 the v2 curator emits
+    # 5-tuple keys `spread_q::pt_label::trans::c1f::hsf_group`; the axis_key
+    # composition below matches. Live tick classifies from frontal_events_log.
     hsf_group = _current_hsf_group(weather_data)
 
     cells_out = {}
@@ -377,8 +377,12 @@ def stamp_confidence(weather_data):
             # (spread_q × pt_bin × trans × c1f) cell is wired, prefer that.
             # Otherwise fall back to legacy.
             c1f_band = c1f_per_band.get(band)
-            axis_key = (f"{spread_q}::{pt_label}::{trans_label}::{c1f_band}"
-                        if (spread_q and pt_label and c1f_band) else None)
+            # 5-tuple axis_key (curator v4 emits keys with hsf as the 5th
+            # dimension after 2026-07-01). Falls through to None if ANY
+            # required axis is missing at this tick — that's the "axis
+            # unavailable, use legacy fallback" case.
+            axis_key = (f"{spread_q}::{pt_label}::{trans_label}::{c1f_band}::{hsf_group}"
+                        if (spread_q and pt_label and c1f_band and hsf_group) else None)
             axis_mae = None
             axis_direction = None
             axis_status = None
