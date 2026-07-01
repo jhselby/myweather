@@ -853,7 +853,7 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  <p class="layer-summary"><strong>The bright white "Production" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are population-level diagnostics; the Production line is the user-visible answer. <em>Production is currently a hybrid: real per-row aggregate from <code>per_layer_mae_by_lead[field].production</code> where the 7-day window has post-v0.6.269 stamped pair rows, with the deepest-applied-layer approximation used for leads that haven't accumulated stamps yet. Coverage rose from ~9/48 leads at the initial deploy and fills toward 48/48 over the week; the "*" marker drops per-card once real coverage exceeds 40/48 leads.</em></p>
+  <p class="layer-summary"><strong>The bright white "Production" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are population-level diagnostics; the Production line is the user-visible answer. <em>Production is currently a hybrid: real per-row aggregate from <code>per_layer_mae_by_lead[field].production</code> where the per-lead sample count clears n≥30 (from <code>per_layer_n_by_lead[field].production</code>), with the deepest-applied-layer approximation used elsewhere. n≥30 keeps small-sample noise from swinging the line — a single unlucky pair on a lead with n=1 could otherwise dominate. Coverage fills over the 7-day window post-v0.6.269 deploy; the "*" marker drops per-card once ≥40/48 leads clear the floor.</em></p>
   <details class="layer-methodology" open><summary>How to read these charts</summary>
     <div class="meta-line"><strong>What you're looking at.</strong> One small chart per weather field. The Y-axis is how wrong the forecast tends to be (in that field's units — °F, %, mph, etc.). The X-axis is hours into the future. Lower lines = more accurate. Lines climbing to the right is normal — forecasts get worse the further out you predict.</div>
     <div class="meta-line"><strong>The colored lines are population-level diagnostics — one per correction layer. They show "what each layer would yield on average if applied to every row in the band," regardless of whether it actually fired. L1–L4 are drawn for every field; L5 only for sr; L6 only for t. The bright white Production* line on top traces the actual user-visible output.</strong></div>
@@ -2266,14 +2266,22 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     }
     return "l1";
   };
-  // Hybrid Production array — mirror of the accuracy chart's renderer.
-  const _prodArr = (layers, fieldKey) => {
+  // Hybrid Production array — mirror of the accuracy chart's renderer,
+  // including the n≥30 min-sample floor. Below the floor the real value is
+  // small-sample noise; fall back to approximation.
+  const PROD_MIN_N = 30;
+  const _prodArr = (layers, fieldKey, nLayers) => {
     const real = layers.production;
     const approx = layers[_prodKey(fieldKey)] || [];
     if (!Array.isArray(real)) return approx;
+    const nArr = (nLayers && nLayers.production) || null;
     const out = new Array(Math.max(real.length, approx.length, 48)).fill(null);
     for (let i = 0; i < out.length; i++) {
-      out[i] = (real[i] != null) ? real[i] : (approx[i] != null ? approx[i] : null);
+      const r = real[i];
+      const n = Array.isArray(nArr) ? (nArr[i] || 0) : Infinity;
+      out[i] = (r != null && n >= PROD_MIN_N)
+        ? r
+        : (approx[i] != null ? approx[i] : null);
     }
     return out;
   };
@@ -2295,7 +2303,8 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     if (brierFields.has(fieldKey)) continue;
     const layers = mae[fieldKey];
     const rawMae = _avg1to47(layers.l1);
-    const prodMae = _avg1to47(_prodArr(layers, fieldKey));
+    const nLayers = (tsDoc.per_layer_n_by_lead || {})[fieldKey];
+    const prodMae = _avg1to47(_prodArr(layers, fieldKey, nLayers));
     if (rawMae == null || prodMae == null || rawMae === 0) continue;
     const pct = (prodMae - rawMae) / rawMae * 100;
     rows.push({ field: fieldKey, pct });
@@ -2490,22 +2499,44 @@ function renderAccuracySection(tsDoc, wxDoc) {
     }
     return "l1";
   };
+  // Minimum n per lead to use the real per-row Production value. Below this,
+  // the real MAE is dominated by small-sample noise (a single unlucky pair
+  // can swing the number wildly), so the deepest-applied-layer approximation
+  // is more informative. 30 rows = MAE CI roughly ±10-15% for typical
+  // distributions; matches MIN_N_MULTI in the C1 curator's multi-axis floor.
+  const _PRODUCTION_MIN_N = 30;
   // Hybrid Production array: real per-row aggregate from
-  // per_layer_mae_by_lead[field].production where populated, approximation
-  // (deepest applied layer MAE) elsewhere. Right after the v0.6.269 deploy
-  // only recent leads have applied_layer-stamped pair rows, so the .production
-  // array is sparse; hybrid mode lets the chart show real numbers for those
-  // leads and fall back to the approximation for the rest. Over the 7-day
-  // window fill the coverage rises to 100% and hybrid == real everywhere.
+  // per_layer_mae_by_lead[field].production where populated AND per-lead n
+  // clears the min-sample floor, approximation (deepest applied layer MAE)
+  // elsewhere. Right after the v0.6.269 deploy only recent leads have any
+  // applied_layer-stamped pair rows, and even those start with tiny n. Over
+  // the 7-day window fill, real leads accumulate stamps and cross the floor.
+  const _productionCoverage = (fieldData) => {
+    const real = fieldData.production;
+    const nArr = (fieldData.production_n) || fieldData._production_n || null;
+    // n array comes from tsDoc.per_layer_n_by_lead[field].production, passed
+    // in on fieldData by the caller. Fall back to "count non-null" if n is
+    // unavailable (older tsDoc shape).
+    if (!Array.isArray(real)) return 0;
+    if (!Array.isArray(nArr)) return real.filter(v => v != null).length;
+    let c = 0;
+    for (let i = 0; i < real.length; i++) {
+      if (real[i] != null && (nArr[i] || 0) >= _PRODUCTION_MIN_N) c++;
+    }
+    return c;
+  };
   const _hybridProductionArray = (fieldData, fieldKey) => {
     const real = fieldData.production;
+    const nArr = fieldData.production_n;
     const approx = fieldData[_productionLayerKey(fieldKey)];
     if (!Array.isArray(real)) return approx || [];
     const approxArr = Array.isArray(approx) ? approx : [];
     const out = new Array(Math.max(real.length, approxArr.length, 48)).fill(null);
     for (let i = 0; i < out.length; i++) {
       const r = real[i];
-      out[i] = (r != null) ? r : (approxArr[i] != null ? approxArr[i] : null);
+      const n = Array.isArray(nArr) ? (nArr[i] || 0) : Infinity;
+      const useReal = (r != null) && (n >= _PRODUCTION_MIN_N);
+      out[i] = useReal ? r : (approxArr[i] != null ? approxArr[i] : null);
     }
     return out;
   };
@@ -2518,12 +2549,10 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // highlighting — under conditional gates there's no single "applied"
     // column. Production column carries the user-visible signal.
     const prodArr = _hybridProductionArray(fieldData, fieldKey);
-    const realCovered = Array.isArray(fieldData.production)
-      ? fieldData.production.filter(v => v != null).length
-      : 0;
+    const realCovered = _productionCoverage(fieldData);
     const prodTitle = realCovered >= 40
-      ? "Real per-row aggregate from per_layer_mae_by_lead[field].production."
-      : `Hybrid — real per-row aggregate where per_layer_mae_by_lead[field].production is populated (${realCovered}/48 leads), approximation (deepest applied layer MAE) elsewhere. Fills as the 7-day window post-v0.6.269 deploy accumulates stamped pair rows.`;
+      ? "Real per-row aggregate from per_layer_mae_by_lead[field].production (all leads above n≥30 min-sample floor)."
+      : `Hybrid — real per-row aggregate where per_layer_mae_by_lead[field].production has n≥${_PRODUCTION_MIN_N} (${realCovered}/48 leads clear the floor), approximation (deepest applied layer MAE) elsewhere. Fills as the 7-day window post-v0.6.269 deploy accumulates stamped pair rows.`;
     let html =
       `<table class="band-table"><thead><tr>` +
       `<th>Lead</th>` +
@@ -2563,6 +2592,13 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // compat (pre-Brier-key GCS state, or if Brier key is empty).
     const useBrier = f.key === "pp" && ppBrierAvailable;
     const fieldData = useBrier ? (brierByLead[f.key] || {}) : (maeByLead[f.key] || {});
+    // Attach the per-lead n array for the Production hybrid so the helper
+    // can enforce the min-sample floor. Comes from
+    // per_layer_n_by_lead[field].production. Absent for Brier since PP
+    // Brier renders as its own metric, not via the Production line.
+    if (!useBrier) {
+      fieldData.production_n = (nByLead[f.key] || {}).production;
+    }
     const LAYERS = _layersFor(f.key);
     // Check if any layer has data
     const hasAny = LAYERS.some(l => (fieldData[l.key] || []).some(v => v != null));
@@ -2584,9 +2620,7 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // (deepest applied layer MAE) elsewhere. Drops the "*" marker once the
     // real coverage crosses 40/48 leads (window mostly full).
     const prodArrChart = _hybridProductionArray(fieldData, f.key);
-    const realCoveredChart = Array.isArray(fieldData.production)
-      ? fieldData.production.filter(v => v != null).length
-      : 0;
+    const realCoveredChart = _productionCoverage(fieldData);
     datasets.push({
       label: realCoveredChart >= 40 ? "Production" : "Production*",
       data: prodArrChart.map(v => v == null ? NaN : v),
