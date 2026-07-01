@@ -447,6 +447,14 @@ def fit_decay_corrections():
     per_layer_abs    = defaultdict(float)  # key: (field, lead_h, layer)
     per_layer_signed = defaultdict(float)
     per_layer_n      = defaultdict(int)
+    # Per-layer Brier-score accumulator for pp (POP). PP's decision metric is
+    # Brier, not MAE — the v0.6.20 calibration analysis showed L3 raises PP
+    # MAE but cuts Brier ~5%. The pair-log `observed` for pp is already
+    # binary (0.0 / 100.0), so Brier per pair = ((forecast_l - observed)/100)²
+    # = (error_l/100)². Only populated for field == "pp". Frontend reads
+    # per_layer_brier_by_lead["pp"] to render the PP card in the decision
+    # metric.
+    per_layer_brier_sq = defaultdict(float)
     # L6 audit accumulator: per-cycle MAE for L4 vs L6 on temperature, counted
     # only over pair rows where both error_l4 and error_l6 are present AND the
     # run_time passes the L6 valid-from filter. Paired comparison eliminates
@@ -640,6 +648,10 @@ def fit_decay_corrections():
                     per_layer_abs[key]    += abs(e)
                     per_layer_signed[key] += e
                     per_layer_n[key]      += 1
+                    # Brier accumulator — only populated for pp; other fields
+                    # never read from this bucket downstream.
+                    if field == "pp":
+                        per_layer_brier_sq[key] += (e / 100.0) ** 2
             # v0.6.112 L5 solar audit accumulator. Solar pairs with state_fc
             # regime, daytime (forecast_l1 ≥ SUN_UP_THRESHOLD), lead 1+.
             # Mirrors analysis/l5_solar_analysis.py's "realistic" view.
@@ -1056,6 +1068,10 @@ def fit_decay_corrections():
     per_layer_mae_by_lead  = {}
     per_layer_bias_by_lead = {}
     per_layer_n_by_lead    = {}
+    # Per-lead Brier only emitted for pp — that's the field whose decision
+    # metric differs from MAE. Frontend PP card reads this to render the
+    # chart in the correct scoring rule.
+    per_layer_brier_by_lead = {}
     for f in FIELDS:
         per_layer_mae_by_lead[f]  = {}
         per_layer_bias_by_lead[f] = {}
@@ -1073,6 +1089,15 @@ def fit_decay_corrections():
             per_layer_mae_by_lead[f][lyr]  = mae_arr
             per_layer_bias_by_lead[f][lyr] = bias_arr
             per_layer_n_by_lead[f][lyr]    = n_arr
+    # Emit Brier for pp only, mirroring the mae/bias structure.
+    per_layer_brier_by_lead["pp"] = {}
+    for lyr in ("l1", "l2", "l3", "l4", "l5", "l6"):
+        brier_arr = [None] * LEAD_BINS
+        for lead in range(LEAD_BINS):
+            n = per_layer_n.get(("pp", lead, lyr), 0)
+            if n > 0:
+                brier_arr[lead] = round(per_layer_brier_sq[("pp", lead, lyr)] / n, 4)
+        per_layer_brier_by_lead["pp"][lyr] = brier_arr
 
     ts_output = {
         "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
@@ -1084,9 +1109,10 @@ def fit_decay_corrections():
         "tide_elevation_ft": tide_elevation_ft,
         "errors_by_lead": errors_by_lead,
         "n_samples_by_lead": samples_by_lead,
-        "per_layer_mae_by_lead":  per_layer_mae_by_lead,
-        "per_layer_bias_by_lead": per_layer_bias_by_lead,
-        "per_layer_n_by_lead":    per_layer_n_by_lead,
+        "per_layer_mae_by_lead":   per_layer_mae_by_lead,
+        "per_layer_bias_by_lead":  per_layer_bias_by_lead,
+        "per_layer_n_by_lead":     per_layer_n_by_lead,
+        "per_layer_brier_by_lead": per_layer_brier_by_lead,
     }
     try:
         upload_json(ts_output, TIMESERIES_PATH, "time_series_diagnostic.json")

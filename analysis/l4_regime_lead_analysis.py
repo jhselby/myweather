@@ -45,9 +45,12 @@ from _cache import cached_path  # noqa: E402
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUTPUT_PATH = os.path.join(SCRIPT_DIR, "output", "l4_regime_lead_analysis.txt")
 
-# L4_FIELDS in production: {ch, cc}. Both included here. (pp is Brier-evaluated
-# so excluded same as in the L3 analysis; pp also isn't in L4_FIELDS anyway.)
-FIELDS = ("ch", "cc")
+# L4_FIELDS in production: {ch, cc, h} after the post-walkforward-bugfix re-run
+# recommended h. dp added 2026-06-30 to investigate the chart-vs-validator
+# discrepancy (chart shows dp L4 lowest by 0.3-1.3%; validator below 3% gate).
+# Recent pair rows (2026-06-30+) carry error_l4 for all fields; older rows
+# without it are skipped at the e3/e4-None check.
+FIELDS = ("ch", "cc", "dp")
 LEAD_BANDS = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
 FC_WIND_BINS = [
     ("0-3 calm",     0,   3),
