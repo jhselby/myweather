@@ -130,6 +130,33 @@ def append_forecast_snapshot(hourly, derived=None):
         if field in ("pp", "cc", "cl", "cm", "ch", "sr", "wd"): return round(val)
         return round(val, 1)
 
+    def _derive_applied_layer(field_layers, i, eps=1e-6):
+        """Deepest layer whose value at index i differs from the previously
+        captured layer's value by > eps. Every correction gate today is
+        deterministic at forecast time (L2/L3/L4 by field membership; L5 by
+        sun-up threshold; L6 by regime + sea-breeze; marine-layer by wd+hour;
+        future skip table by state_fc regime). All those decisions land in
+        the per-layer arrays as either "changed the value" (fired) or
+        "identical to prior layer" (skipped). So this equality-based walk
+        recovers the actual applied layer per (field, lead) — the value
+        users see is arr_applied[i]. Falls back to "l1" if nothing above l1
+        has a distinct value.
+        """
+        applied = None
+        prev_val = None
+        for lk in ("l1", "l2", "l3", "l4", "l5", "l6"):
+            arr = field_layers.get(lk) or []
+            if i >= len(arr) or arr[i] is None:
+                continue
+            v = arr[i]
+            if applied is None:
+                applied = lk
+                prev_val = v
+            elif abs(v - prev_val) > eps:
+                applied = lk
+                prev_val = v
+        return applied or "l1"
+
     hours = []
     for i, t in enumerate(times[:SNAPSHOT_HOURS]):
         if not t:
@@ -140,6 +167,17 @@ def append_forecast_snapshot(hourly, derived=None):
             for lyr_key, arr in lyrs.items():
                 if i < len(arr) and arr[i] is not None:
                     entry[f"{field}_{lyr_key}"] = _round_for(field, arr[i])
+        # v0.6.269: applied-layer stamp per (field, lead). Recovers the actual
+        # user-visible layer for this lead so the pair-log downstream can
+        # score a real per-row Production error instead of the approximation
+        # that treats one layer as "the applied one" per field. Skipped for wd
+        # (all layers structurally equal after the l3 rewrite) and dp (derived,
+        # applied stamp inherited from t's applied layer).
+        for field, lyrs in layers.items():
+            if field == "wd":
+                continue
+            applied = _derive_applied_layer(lyrs, i)
+            entry[f"{field}_applied"] = applied
         # Backward-compat top-level keys. CRITICAL: these must equal the L2
         # (pre-decay) value, NOT L4. The Fitter reads the top-level key as
         # "the forecast" and calibrates decay corrections from (forecast - obs).
@@ -163,6 +201,22 @@ def append_forecast_snapshot(hourly, derived=None):
         # Legacy dp = dp_l2 for the same Fitter-calibration reason as above.
         if entry.get("dp_l2") is not None:
             entry["dp"] = entry["dp_l2"]
+        # Applied-layer stamp for dp — same equality walk as above but on the
+        # derived dp_lN values we just computed.
+        dp_applied = None
+        prev = None
+        for lk in ("l1","l2","l3","l4"):
+            v = entry.get(f"dp_{lk}")
+            if v is None:
+                continue
+            if dp_applied is None:
+                dp_applied = lk
+                prev = v
+            elif abs(v - prev) > 1e-6:
+                dp_applied = lk
+                prev = v
+        if dp_applied:
+            entry["dp_applied"] = dp_applied
         hours.append(entry)
 
     if not hours:

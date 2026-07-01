@@ -232,6 +232,12 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                         pair[f"error_{lyr}"] = round(_circular_diff_deg(float(v), obs_f), 3)
                     else:
                         pair[f"error_{lyr}"] = round(float(v) - obs_f, 3)
+            # v0.6.269: applied-layer stamp — the layer whose forecast IS
+            # what users saw for this (field, run, lead). Fitter aggregates
+            # per_layer_mae_by_lead[field].production from this.
+            applied = target_hour.get(f"{short}_applied")
+            if applied:
+                pair["applied_layer"] = applied
             if state_fc:  pair["state_fc"]  = state_fc
             if state_obs: pair["state_obs"] = state_obs
             if cloud_sigma is not None:

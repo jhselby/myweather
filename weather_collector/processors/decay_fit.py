@@ -455,6 +455,16 @@ def fit_decay_corrections():
     # per_layer_brier_by_lead["pp"] to render the PP card in the decision
     # metric.
     per_layer_brier_sq = defaultdict(float)
+    # v0.6.269: per-row Production error accumulator. Reads applied_layer from
+    # each pair-log row (stamped by forecast_error_log.py) and uses the
+    # corresponding error_l{applied_layer}. Aggregates into a real
+    # per_layer_mae_by_lead[field].production alongside the per-layer
+    # arrays — replaces the frontend's deepest-applied-layer approximation.
+    # Rows without applied_layer (pre-v0.6.269 pair-log entries) don't
+    # contribute; approximation stays authoritative until the 7-day window
+    # fills with stamped rows.
+    per_field_prod_abs = defaultdict(float)  # key: (field, lead_h)
+    per_field_prod_n   = defaultdict(int)
     # L6 audit accumulator: per-cycle MAE for L4 vs L6 on temperature, counted
     # only over pair rows where both error_l4 and error_l6 are present AND the
     # run_time passes the L6 valid-from filter. Paired comparison eliminates
@@ -652,6 +662,15 @@ def fit_decay_corrections():
                     # never read from this bucket downstream.
                     if field == "pp":
                         per_layer_brier_sq[key] += (e / 100.0) ** 2
+                # Production error — read once per row (outside the per-layer
+                # loop). Uses whichever error_l{applied_layer} the pair-log
+                # writer stamped.
+                applied = row.get("applied_layer")
+                if applied:
+                    e_prod = row.get(f"error_{applied}")
+                    if e_prod is not None:
+                        per_field_prod_abs[(field, lead_h)] += abs(float(e_prod))
+                        per_field_prod_n[(field, lead_h)]   += 1
             # v0.6.112 L5 solar audit accumulator. Solar pairs with state_fc
             # regime, daytime (forecast_l1 ≥ SUN_UP_THRESHOLD), lead 1+.
             # Mirrors analysis/l5_solar_analysis.py's "realistic" view.
@@ -1089,6 +1108,18 @@ def fit_decay_corrections():
             per_layer_mae_by_lead[f][lyr]  = mae_arr
             per_layer_bias_by_lead[f][lyr] = bias_arr
             per_layer_n_by_lead[f][lyr]    = n_arr
+        # v0.6.269: real Production MAE per lead, aggregated from per-row
+        # applied_layer stamps. Frontend swaps its deepest-applied-layer
+        # approximation for this once populated.
+        prod_arr = [None] * LEAD_BINS
+        prod_n_arr = [0] * LEAD_BINS
+        for lead in range(LEAD_BINS):
+            n_p = per_field_prod_n.get((f, lead), 0)
+            prod_n_arr[lead] = n_p
+            if n_p > 0:
+                prod_arr[lead] = round(per_field_prod_abs[(f, lead)] / n_p, 3)
+        per_layer_mae_by_lead[f]["production"] = prod_arr
+        per_layer_n_by_lead[f]["production"]   = prod_n_arr
     # Emit Brier for pp only, mirroring the mae/bias structure.
     per_layer_brier_by_lead["pp"] = {}
     for lyr in ("l1", "l2", "l3", "l4", "l5", "l6"):
