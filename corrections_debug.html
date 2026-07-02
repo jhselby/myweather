@@ -676,7 +676,7 @@
   <a href="#sec-layer3">L3 Decay</a>
   <a href="#sec-layer4">L4 Diurnal</a>
   <a href="#sec-layer5">L5 Synoptic (sr)</a>
-  <a href="#sec-layer6">L6 Microclimate (t)</a>
+  <a href="#sec-archive-l6" style="opacity:0.7;">L6 Microclimate (dormant)</a>
   <a href="#sec-research" class="research">Research & Diagnostics</a>
   <a href="#sec-archive">Archive</a>
 </nav>
@@ -1250,31 +1250,9 @@
   <div class="meta-line" style="margin-top:6px;"><em>Open watch:</em> today's <code>simulate_windows</code> says L5 should RETIRE (HOLD verdict across 7 cutoffs, magnitudes −0.5% to +4.5%). The divergence report says AGREE (script verdict matches production True). Two different rollups disagreeing — investigation queued; no action since L5 shipped only 2 days ago and reverting on this conflict would be premature.</div>
 </details>
 
-<!-- ───────────────────── Layer 6 — Microclimate correction ───────────────────── -->
-<h2 class="section" id="sec-layer6">Layer 6 — Microclimate correction (temperature)</h2>
-<div class="layer-info-text">
-  <p class="layer-summary">A small Δ°F added to the temperature forecast based on a within-network spatial signal: how much the waterfront stations (Willow Rd, Neptune Rd) typically diverge from the inland-network median under different wind / sea-breeze / hour combinations. L1–L5 are trained on forecast-vs-aggregated-obs errors; L6 is the first layer trained on a spatial differential between station subgroups. <strong>Current state (v0.6.259+): warming branch only.</strong> The cove warms a few °F under S/SE/SW sea-breeze (peninsula-lee heating) — this branch is active. The cooling branch (09–16 EDT under sb-inactive, was up to −3.7 °F around noon) was disabled 2026-06-30 — paired-MAE analysis showed it materially increased paired temperature MAE on rows where it fired (L1 is structurally cold ~2.25 °F at the cove; subtracting more made the gap worse), and <code>r5_cove_analysis</code> independently showed the cooling gradient no longer passes its threshold. Lookup table values for the cooling branch remain in code as historical record; <code>compute_cove_correction()</code> returns 0.0 for sb_off. See <a href="#sec-applicability">Applicability map</a> for the live trigger predicate.</p>
-  <details class="layer-methodology"><summary>How L6 works</summary>
-    <div class="meta-line">Each forecast lead gets its own Δ°F. For lead <em>i</em>, the collector reads the forecast wind direction (<code>hourly.wind_direction[i]</code>), parses the local hour from <code>hourly.times[i]</code>, and applies a heuristic <code>sb_active</code> (on during 13–18 EDT with S-half wind, off otherwise — coarser than the live sb detector but the only fields we have forecast for). When <code>sb_active</code> is True AND the forecast wind octant is S/SE/SW, it looks up Δ°F from <code>_DELTA_BY_OCTANT[(True, octant)]</code> (+1.1 to +2.0 °F) and adds it to that lead's <code>corrected_temperature</code> cell. When <code>sb_active</code> is False, Δ is 0.0 (cooling branch disabled v0.6.259). Tables built from a 12-day waterfront-vs-inland gradient log (<code>cove_gradient_log.json</code>, n=1,732); the sea-breeze branch cleared a 2-read confirmation gate on <code>r5_cove_analysis.py</code> (2026-06-25 SHIP + 2026-06-26 SHIP) and continues to PASS its threshold (+1.80°F on 2026-06-30).</div>
-    <div class="meta-line"><strong>Why per-lead matters.</strong> The first ship (v0.6.231) applied the current-tick Δ to all 48 leads — wrong by 3–5°F at distant leads when the table swing crossed zero (e.g. applying noon's −3.7°F to a midnight lead). Per-lead projection (v0.6.237) fixed this. Across the 48-hour horizon the per-lead Δ now ranges roughly −3.7 to +2.0°F with a near-zero mean, exactly as expected from the lookup-table shape.</div>
-    <div class="meta-line"><strong>Where L6 is evaluated.</strong> Two places: (1) 6d below uses <code>cove_gradient_log.json</code> directly (cove-specific obs vs displayed temp); (2) the Forecast Accuracy chart's temperature card has a green L6 line built from pair-log rows with <code>error_l6</code>. Pre-deploy pair rows (06-26 ~08:00 → 06-26 17:19) used the broken uniform-Δ implementation and are filtered out of the Fitter's L6 aggregation — the L6 line will populate only with post-v0.6.237 rows. Full-window clean read by 2026-07-03 once the bad rows age out naturally.</div>
-  </details>
-</div>
-
-<h3 class="subsection">6a. Live correction — what is being applied right now</h3>
-<div id="status-l6-live" class="status" hidden></div>
-<div id="grid-l6-live"></div>
-
-<h3 class="subsection">6b. Lookup tables — full per-regime Δ°F catalog</h3>
-<div id="grid-l6-tables"></div>
-
-<h3 class="subsection">6c. Waterfront-vs-inland Δ over time</h3>
-<div id="status-l6-history" class="status" hidden></div>
-<div id="grid-l6-history"></div>
-
-<h3 class="subsection">6d. L6 evaluation — cove obs vs (L4 only) vs (L4 + L6)</h3>
-<div id="status-l6-mae" class="status" hidden></div>
-<div id="grid-l6-mae"></div>
+<!-- L6 (microclimate correction) moved to Archive 2026-07-02 (v0.6.278):
+     full disable of both branches. See #sec-archive-l6 for the dormant
+     entry + Fix B path back. Cove gradient logging continues to run. -->
 
 <!-- ───────────────────── Research ───────────────────── -->
 <h2 class="section research-heading" id="sec-research">Research & Diagnostics — experimental signals + audit views (not applied to live forecast)</h2>
@@ -1445,8 +1423,26 @@
      Research → Retired into its own top-level section. -->
 <h2 class="section" id="sec-archive">Archive — Retired ideas &amp; historical investigations</h2>
 <div class="layer-info-text" style="border-color:#3a2a2a;background:#191313;">
-  <p class="layer-summary">Things we built, ran, and stopped running. Two kinds get mixed here: <strong>hypotheses</strong> (a real question we tested and the data answered no) and <strong>settled tunings</strong> (a parameter sweep that concluded "current value is fine"). Each entry is tagged. Kept as institutional memory so future-Joe doesn't burn a day re-inventing them. Standalone scripts in <code>analysis/</code> can be re-run at any time if conditions might have shifted.</p>
+  <p class="layer-summary">Things we built, ran, and stopped running. Three kinds get mixed here: <strong>hypotheses</strong> (a real question we tested and the data answered no), <strong>settled tunings</strong> (a parameter sweep that concluded "current value is fine"), and <strong>dormant layers</strong> (built + shipped + since disabled but with a defined path back — L6 is the first example). Each entry is tagged. Kept as institutional memory so future-Joe doesn't burn a day re-inventing them. Standalone scripts in <code>analysis/</code> can be re-run at any time if conditions might have shifted.</p>
 </div>
+
+<details class="research-subsection" id="sec-archive-l6" style="margin-top:12px;border-color:#3a2a2a;background:#191313;" open>
+  <summary style="color:#a08070;"><strong>[DORMANT LAYER] L6 — Cove microclimate correction (temperature)</strong> — <em>Both branches disabled 2026-07-01 v0.6.276; dormant pending Fix B (refit against L2-corrected baseline)</em></summary>
+  <div class="meta-line" style="margin-top:10px;"><strong>Not killed — dormant.</strong> The code is intact but <code>compute_cove_correction()</code> returns 0.0 in both branches. Lookup tables + <code>cove_gradient_log.json</code> continue to log per-tick waterfront-vs-inland gradient data (cheap; will be the input for Fix B).</div>
+  <div class="meta-line" style="margin-top:10px;"><strong>Original design.</strong> A small Δ°F added to the temperature forecast based on how much the waterfront stations (Willow Rd, Neptune Rd) typically diverge from the inland-network median under different wind / sea-breeze / hour combinations. L6 was the first correction trained on a spatial differential between station subgroups (L1–L5 are trained on forecast-vs-aggregated-obs errors).</div>
+  <div class="meta-line" style="margin-top:10px;"><strong>Shipped 2026-06-26 v0.6.238.</strong> Cleared a 2-read confirmation gate on <code>r5_cove_analysis.py</code> (06-25 SHIP + 06-26 SHIP). Per-lead projection fix 2026-06-26 v0.6.237 (initial ship applied current-tick Δ to all 48 leads — wrong by 3–5°F at distant leads when the table crossed zero). Cooling branch (sb_off morning offshore-hour table) disabled 2026-06-30 v0.6.259 after paired-MAE analysis on 19,975 t rows: cooling branch materially increased MAE on cooling rows (Δ ≤ −2°F bucket: 3.52 → 6.16, −74.9%). Warming branch (sb_active + S/SE/SW octant) retained at that time.</div>
+  <div class="meta-line" style="margin-top:10px;"><strong>Full disable 2026-07-01 v0.6.276.</strong> Real per-row Production data (from v0.6.269 applied-layer stamping + v0.6.275 retro backfill on 47,301 T pair rows) exposed the warming branch as also net-negative:
+    <ul style="margin:4px 0 4px 22px;padding:0;line-height:1.5;">
+      <li>T Production real MAE = 2.91°F</li>
+      <li>T L2 alone MAE = 2.59°F (12% better than Production)</li>
+      <li>T raw L1 MAE = 2.66°F (9% better than Production)</li>
+      <li>Math: Production = 0.7·L2 + 0.3·L6-fired ⇒ L6-fired rows MAE ≈ 3.66°F, vs L2 on same rows ≈ 2.59°F. Warming branch ~40% worse than L2 on the rows where it fires.</li>
+    </ul>
+    Root cause: L2's Kalman blend for T is dominated by waterfront Tempests (Willow Rd, Neptune Rd at ~0.1–0.2 mi from the cove) — L2 already carries "waterfront bias" by station weighting. Adding a (waterfront − inland) warming Δ on top double-counts the same signal. Same double-counting hypothesis as the 06-30 cooling-branch kill, just for the other branch this time.
+  </div>
+  <div class="meta-line" style="margin-top:10px;"><strong>Path back — Fix B.</strong> Refit the lookup table against <em>(cove obs − L2 forecast at cove)</em> instead of the raw (waterfront − inland) gradient. That measures what L6 <em>should</em> add on top of L2, not the total waterfront divergence L2 already captures. Real work; not queued for a specific date. Preview any Fix B result via <code>analysis/production_whatif.py</code> before re-enabling.</div>
+  <div class="meta-line" style="margin-top:10px;opacity:0.85;">Related files: <code>weather_collector/processors/cove_correction.py</code>, <code>analysis/l6_l2_double_counting.py</code>, <code>analysis/r5_cove_analysis.py</code>, <code>cove_gradient_log.json</code> (still updating).</div>
+</details>
 
   <div style="margin-top:18px;padding:10px;border:1px solid #3a2a2a;background:#1a1414;border-radius:6px;">
     <div style="color:#fb7c5c;font-weight:600;margin-bottom:6px;">Recently ruled out — 2026-06-22 to 06-29 Stage 0/1 kills</div>
@@ -1539,7 +1535,7 @@
     </ul>
     <div style="margin-top:6px;">The L2-overlap hypothesis was empirically confirmed. L2's <code>1/distance² × elevation</code> station weighting for the cove is dominated by the two waterfront Tempests (Willow Rd, Neptune Rd at ~0.1–0.2 mi). L2's "cove bias" is effectively "waterfront bias" by construction. Layering R5's (waterfront − inland) delta on top double-counts the same signal — the cove obs is already waterfront-influenced via L2, so adding more waterfront delta pushes the forecast AWAY from the obs.</div>
     <div style="margin-top:6px;"><strong>Decision (global R5, retired 2026-06-17):</strong> <code>r5_audit.py</code>'s held-out test of R5 applied across the full pipeline showed it makes cove temp 20–22% worse — L2's waterfront-weighted station blend already captures the signal, so layering R5 on top double-counts. That global formulation stays retired.</div>
-    <div style="margin-top:6px;"><strong>Current status (L6 — microclimate correction, shipped 2026-06-26; cooling branch disabled 2026-06-30 v0.6.259):</strong> <code>cove_correction.py</code> is live. Sea-breeze WARMING branch active: when sb_active is True AND wind octant ∈ {S, SE, SW}, applies +1.1 to +2.0 °F per lead. sb_off COOLING branch returns 0.0 — paired-MAE analysis showed it materially increased paired cove temp MAE on rows where it fired (L1 structurally cold ~2.25 °F at cove; subtracting more made the gap worse), independently confirmed by <code>r5_cove_analysis</code> (cooling gradient FAIL −0.54°F vs −1.0°F threshold). Cooling-table values remain in code as historical record. Full diagnostics in <a href="#sec-layer6">Layer 6</a>; live trigger in <a href="#sec-applicability">Applicability map</a>.</div>
+    <div style="margin-top:6px;"><strong>Current status (L6 — microclimate correction, dormant 2026-07-01 v0.6.276):</strong> Both branches now return 0.0. Cooling branch killed 2026-06-30 v0.6.259 (paired-MAE showed it materially increased cove temp MAE); warming branch killed 2026-07-01 v0.6.276 after real per-row Production exposed the same double-counting for the sea-breeze direction. Lookup tables + <code>cove_gradient_log.json</code> continue to log for eventual Fix B. Full rationale in <a href="#sec-archive-l6">Archive → L6</a>.</div>
     <div style="margin-top:6px;">One niche subtlety in the breakdown: long-lead (24-47h) sea-breeze forecasts get +7.85% MAE improvement with R5. At long leads, L2's τ=4h decay has long since faded, so R5 has something L2 doesn't. Not worth shipping a conditional correction for, but documented.</div>
   </div>
   <div id="status-cove-gradient" class="status" hidden></div>
@@ -3239,7 +3235,7 @@ function renderGatedCandidatesSection(wxDoc) {
       <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(2)}°F</div>
       <div class="meta-line" style="font-size:0.88em;">${inputs}</div>
       <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">
-        Live per-tick Δ°F applied to <code>corrected_temperature</code> when sb_active is True and the wind octant is S/SE/SW (sea-breeze warming branch). Returns 0.0 when sb_active is False (cooling branch disabled v0.6.259; was materially increasing paired MAE). See <a href="#sec-layer6">Layer 6</a> for full state, <a href="#sec-applicability">Applicability map</a> for the live trigger predicate.
+        Historic Δ°F display. L6 both branches disabled 2026-07-01 v0.6.276 — <code>compute_cove_correction()</code> returns 0.0 always. The cove-gradient log continues to update per tick as the input for eventual Fix B (refit against L2 baseline). See <a href="#sec-archive-l6">Archive → L6</a> for the full dormant-layer entry.
       </div>
     </div>`;
   }
