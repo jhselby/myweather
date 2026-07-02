@@ -721,7 +721,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-02 v0.6.277 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-02 v0.6.280 · click any sub-box header to collapse it.</div>
 
   <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-02</div>
@@ -747,8 +747,8 @@
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ws</code> wind speed</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct-selection → L3 lead-decay</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#fb7c5c;font-weight:600;">+23.6% <span style="opacity:0.9;font-size:0.9em;">OPEN REGRESSION</span></td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct-selection → L3 lead-decay <span style="opacity:0.6;">(L3 skipped in ne_flow all bands + sea_breeze 0-11h per v0.6.279 skip table)</span></td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#e0d472;">+25.7% <span style="opacity:0.7;font-size:0.9em;">in flight — target +22.7% under skip table alone, +19.6% under full targeted package</span></td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wg</code> wind gust</td>
@@ -792,8 +792,8 @@
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>sr</code> solar radiation</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 → L5 synoptic-regime</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#e0d472;">0% <span style="opacity:0.7;font-size:0.9em;">retro-backfill artifact — target −19% by 07-05 (pre-L5-in-log rows age out)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 → L5 synoptic-regime <span style="opacity:0.6;">(L5 skipped in ne_flow + calm regimes per v0.6.280; was +32% / +10% worse in those regimes)</span></td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#e0d472;">0% <span style="opacity:0.7;font-size:0.9em;">retro-backfill artifact — target ~−19% by 07-05 (pre-L5-in-log rows age out); +marginal from L5 skip cells layered on top</span></td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pa</code> precip amount</td>
@@ -803,8 +803,8 @@
       </tbody>
     </table>
     <div style="margin-top:10px;font-size:0.88em;line-height:1.5;">
-      <strong>Open regression:</strong> <code>ws</code>. What-if preview says skip-table (ne_flow all bands + short-lead sea_breeze) + L2 direct-selection drop still leaves ws at ~+17% vs raw. Something structural about wind at this site — investigation queued (see Open architectural questions).<br>
-      <strong>In flight — window fill 07-05 → 07-08:</strong> <code>t</code>, <code>pr</code>, <code>sr</code>. Trust the target column, not today's number. The current Fitter output is a 7-day rolling average that includes ~86% pre-deploy rows.<br>
+      <strong>Open regression:</strong> <code>ws</code>. Today's number +25.7%. Skip table shipped v0.6.279 → target +22.7%. Full targeted package (adds L2 direct-selection drop) → target +19.6% per <code>analysis/production_whatif.py</code>. Even under the full package, ~+17-20% remains — something structural about wind at this site. Investigation queued (see Open architectural questions).<br>
+      <strong>In flight — window fill 07-05 → 07-08:</strong> <code>t</code>, <code>pr</code>, <code>sr</code>, <code>ws</code>. Trust the target column, not today's number. The current Fitter output is a 7-day rolling average that includes pre-deploy rows.<br>
       <strong>Stable wins:</strong> <code>ch</code> −46%, <code>wg</code> −15.5%, <code>cc</code> −14.7%, <code>cm</code> −6.8%, <code>dp</code> −6.1%, <code>h</code> −2.3%.
     </div>
   </div>
@@ -834,6 +834,10 @@
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.274</strong> — Hybrid Production requires per-lead n≥30. Below the floor, real value is small-sample noise; fall back to approximation.</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.275</strong> — Fitter retro-computes <code>applied_layer</code> for pre-v0.6.269 pair-log rows via the same equality walk. Production aggregates against the full 7-day window immediately, not just post-deploy rows.</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.276</strong> — <strong>L6 warming branch disabled + pr L2 additive disabled.</strong> Real per-row Production (47K rows post-retro-backfill) exposed T at +9% worse than raw (L6 warming double-counts L2's waterfront-weighted blend) and pr at +2% worse than raw (K=1 additive is noisy after altitude offsets). Preview via <code>analysis/production_whatif.py</code>: L6 warming off → T flips +9.7% BAD → −2.6% GOOD; pr L2 off → +2.4% BAD → 0%. Both branches of L6 now return 0.0; pr <code>corrected_pressure_in ≡ raw_pressure_in</code>. Re-enable L6 only after Fix B refit against L2 baseline.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.277</strong> — Debug page canon: "Current pipeline state" summary block added at top of Engineering updates (one-glance view of every field: applied layers + Production vs raw + in-flight flags). Plus two truth patches (Applicability map L2 row group for pr = disabled; Production Stack Core-pipeline L2 line drops pr from additive).</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.278</strong> — <strong>L6 section moved to Archive as first dormant-layer entry.</strong> Section was rendering false data (L6 evaluation charts, live correction panel) after both branches were disabled. Cut from main pipeline flow; full historical rationale + Fix B path at <a href="#sec-archive-l6">Archive → L6</a>. Archive intro extended to name "dormant layers" as a third category alongside hypotheses + settled tunings. TOC link renamed "L6 Microclimate (dormant)."</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.279</strong> — <strong>Skip-table architecture shipped</strong> in <code>decay_apply.py</code> for L3/L4. First cells: <code>(ws, l3, ne_flow, *)</code>, <code>(ws, l3, sea_breeze, 0-11h)</code> from the 06-30 regime cross-cut. Plus <strong>ws τ=7 reverted</strong> to global τ=14 after today's <code>decay_tau_tuning</code> flipped the yesterday-SHIP verdict to "KEEP GLOBAL — no field gains ≥5%." Two consecutive reads disagreeing at the ship threshold = the original was noise. Preview via <code>production_whatif.py</code>: ws Production +25.7% → +22.7% under skip cells alone.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.280</strong> — <strong>L5 skip regimes added</strong> (ne_flow, calm) in <code>solar_correction.py</code>. Today's <code>l5_solar_analysis</code>: L5 helps overall by −6.5% but hurts <strong>+32.3%</strong> in ne_flow (n=1497) and +10.7% in calm (n=347). <code>compute_solar_correction</code> returns 0.0 in these regimes. Also extended <code>production_whatif.py</code> with an <code>sr_L5_skip</code> intervention scenario.</li>
 
       <li style="margin-top:8px;"><strong style="color:#7fb3ff;">Still open watches</strong></li>
       <li><span style="color:#4ad29a;">✓</span> <strong>L6 warming branch verdict — RESOLVED 2026-07-01.</strong> Both branches now disabled (v0.6.276). Real per-row Production made the call in one Fitter cycle instead of the 7-day window fill originally planned. Fix B (refit against L2 baseline) is the only path to re-enable L6.</li>
