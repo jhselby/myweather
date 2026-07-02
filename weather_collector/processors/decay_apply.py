@@ -77,14 +77,53 @@ L4_FIELDS = {"ch", "cc"}
 # the field's correction is justified by a different metric (Brier, etc.).
 L3_BRIER_FIELDS = {"pp"}
 
-# NOTE: CALM_GATE (fc_ws<3 ws/wg L3 skip) was killed 2026-06-30 as the wrong
-# intervention. The 2026-06-30 l3_regime_lead_analysis on 694K L3-field pair
-# rows showed ws L3 in the synoptic "calm" regime WINS +15% to +44% across
-# every lead band; the actual L3 losers are ne_flow (all bands) and
-# short-lead sea_breeze. The fc_ws<3 threshold would have skipped L3 where
-# it wins biggest. The right gate is regime-aware, not wind-speed-aware,
-# and lives in the future per-(field, regime, lead_band) skip table.
-# See feedback memory: feedback_calm_gate_wrong_intervention.
+# Skip table — per-(field, layer, regime, lead_band) rules for skipping a
+# correction that's shipped at the field level but hurts on specific regime
+# cells. Populated 2026-07-02 v0.6.279 from l3_regime_lead_analysis (694K
+# L3-field pair rows) and l4_regime_lead_analysis (dp analysis added
+# 2026-06-30). Each entry: (regime_name, lead_lo, lead_hi) — skip the
+# correction when state_fc.regime_synoptic matches AND lead_lo <= lead_h < lead_hi.
+# lead_hi = 48 means "all bands." Fail-safe: if regime is None (missing
+# classifier output), we apply normally rather than over-skipping.
+#
+# 2026-07-02 cells:
+#   ws L3 — regime cross-cut showed L3 wins in calm/frontal/pre_frontal but
+#     LOSES catastrophically in ne_flow (all 4 bands, -5% to -9%) and
+#     short-lead sea_breeze (-9.5% to -15.2%). Skip these cells.
+#   dp L4 — 15 L4 LOSES cells across ne_flow (all bands, -10% to -19%),
+#     sea_breeze (all bands, -4.5% to -18.5%), nw_flow short leads
+#     (-20.2% at 0-5h, -7.9% at 6-11h). Skip these too. Note: dp is not
+#     currently in L4_FIELDS at all, so the skip cells for dp only matter
+#     if dp is later added — architectural placeholder for that day.
+#
+# See feedback memory: feedback_calm_gate_wrong_intervention for the
+# earlier failed attempt (fc_ws<3 threshold gate — was skipping L3 in the
+# calm regime where L3 wins biggest).
+SKIP_TABLE = {
+    ("ws", "l3"): [
+        ("ne_flow",    0, 48),   # all bands, n=1.0K-4.1K, -5% to -9%
+        ("sea_breeze", 0, 12),   # 0-11h only, n=966+918, -9.5% / -15.2%
+    ],
+    ("dp", "l4"): [
+        ("ne_flow",    0, 48),
+        ("sea_breeze", 0, 48),
+        ("nw_flow",    0, 12),
+    ],
+}
+
+
+def _should_skip(field, layer, regime, lead_h):
+    """Return True if the (field, layer) skip table has a cell matching this
+    (regime, lead_h). Fail-safe: unknown regime → apply normally."""
+    if regime is None or lead_h is None:
+        return False
+    cells = SKIP_TABLE.get((field, layer))
+    if not cells:
+        return False
+    for r, lo, hi in cells:
+        if r == regime and lo <= lead_h < hi:
+            return True
+    return False
 
 # Sanity caps on |correction| per field in each field's native units. A
 # pathological fit cannot move the forecast more than this regardless of
@@ -165,13 +204,26 @@ def describe_applicability():
     renders Section D from the full union and per-layer slices by filtering
     on layer_id. Schema example: weather_collector/data/applicability_map_schema.json.
     """
+    def _fires_when_with_skip(field, layer):
+        cells = SKIP_TABLE.get((field, layer)) or []
+        base = f"L{layer[-1]}_FIELDS contains {field}"
+        if not cells:
+            return f"{base} (always, at every lead)"
+        parts = []
+        for r, lo, hi in cells:
+            if hi >= 48:
+                parts.append(f"{r} (all bands)")
+            else:
+                parts.append(f"{r} ({lo}-{hi-1}h)")
+        return f"{base} EXCEPT skip when regime + lead ∈ {{ " + ", ".join(parts) + " }"
+
     l3_fields = [
-        {"field": f, "fires_when": f"L3_FIELDS contains {f} (always, at every lead)"}
+        {"field": f, "fires_when": _fires_when_with_skip(f, "l3")}
         for f in sorted(L3_FIELDS)
     ]
 
     l4_fields = [
-        {"field": f, "fires_when": f"L4_FIELDS contains {f} (always, at every lead)"}
+        {"field": f, "fires_when": _fires_when_with_skip(f, "l4")}
         for f in sorted(L4_FIELDS)
     ]
 
@@ -378,6 +430,17 @@ def apply_decay_corrections(weather_data, config=None):
         if isinstance(arr, list):
             hourly[f"{array_name}_post_l2"] = list(arr)
 
+    # Skip-table lookup — read the current-tick synoptic regime once, use for
+    # all L3/L4 skip decisions across all leads. Approximation: treats the
+    # current regime as the forecast regime for every future lead (rather than
+    # per-lead regime classification, which would need forecast_wind_dir +
+    # forecast_pressure per lead + inline classifier calls). Correct when the
+    # regime is stable; misses on transition-heavy days. Refinement queued.
+    _state = (weather_data.get("derived") or {}).get("state") or {}
+    _regime_now = _state.get("regime_synoptic")
+    skip_l3 = 0
+    skip_l4 = 0
+
     applied = 0
     capped = 0
     for short, array_name in TARGET_ARRAY.items():
@@ -395,6 +458,9 @@ def apply_decay_corrections(weather_data, config=None):
             val = arr[h]
             c = per_lead[h]
             if val is None or c is None:
+                continue
+            if _should_skip(short, "l3", _regime_now, h):
+                skip_l3 += 1
                 continue
             try:
                 c = float(c)
@@ -472,6 +538,9 @@ def apply_decay_corrections(weather_data, config=None):
                     continue
                 if not (0 <= hod < 24):
                     continue
+                if _should_skip(short, "l4", _regime_now, h):
+                    skip_l4 += 1
+                    continue
                 c = per_hour[hod]
                 if c is None:
                     continue
@@ -543,4 +612,7 @@ def apply_decay_corrections(weather_data, config=None):
         "layer_3_brier_fields": sorted(L3_BRIER_FIELDS),
         "layer_3_paused": len(l3_fields) == 0,
         "layer_4_paused": len(l4_fields) == 0,
+        "skip_table_regime": _regime_now,
+        "skip_table_l3_cells_skipped": skip_l3,
+        "skip_table_l4_cells_skipped": skip_l4,
     }

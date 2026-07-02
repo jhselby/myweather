@@ -151,7 +151,11 @@ TAU_DAYS = 14
 TAU_DAYS_BY_FIELD = {
     "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read)
     "pa": 28,  # +9.4% MAE held-out vs τ=14 (2026-06-22 read)
-    "ws": 7,   # +6.7% MAE held-out vs τ=14 (2026-07-01 read; wg at +4.0% is close but below 5% floor, stays at global default)
+    # 2026-07-01 read landed ws at +6.7% held-out and we shipped τ_ws=7 in
+    # v0.6.271. 2026-07-02 daily digest reversed the verdict: "KEEP τ=14
+    # GLOBAL — no field gains ≥5% vs τ=14. Per-field τ would add complexity
+    # for noise-level gains." Two consecutive reads disagreed at the ship
+    # threshold → the original SHIP was noise. Reverted 2026-07-02 v0.6.279.
 }
 
 
