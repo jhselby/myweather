@@ -855,13 +855,13 @@
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>L1</strong> raw HRRR / GFS — the starting point every other layer corrects.</li>
         <li><strong>L2</strong> mesonet blend — additive bias on <code>t / dp / h</code> (Kalman gain) + KBOS+KBVY hourly[0] blend on <code>cc / cl / cm / ch</code>; direct selection on <code>ws / wg</code>. <code>pr</code> disabled 2026-07-01 v0.6.276.</li>
-        <li><strong>L3</strong> lead-decay — applies to {ws, wg, ch, cm, pp}.</li>
+        <li><strong>L3</strong> lead-decay — applies to {ws, wg, ch, cm, pp}. Skip table (v0.6.279): ws L3 skipped in ne_flow (all bands) + sea_breeze (0-11h) per <code>l3_regime_lead_analysis</code>.</li>
         <li><strong>L4</strong> diurnal — applies to {ch, cc}.</li>
         <li style="list-style:none;margin-left:-16px;opacity:0.75;font-size:0.9em;">Cards read corrected <code>hourly[0]</code>. See <a href="#sec-applicability">Applicability map</a> for live triggers + gates (e.g. L6 regime branches for t, L5 sun-up threshold for sr).</li>
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Specialists <span style="font-weight:normal;opacity:0.7;">— single-field, parallel to the core stack</span></div>
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>L5</strong> synoptic-regime solar correction (sr only). Shipped 2026-06-28 v0.6.248. Per-(regime, hour) bias on sr above sun-up threshold.</li>
+        <li><strong>L5</strong> synoptic-regime solar correction (sr only). Shipped 2026-06-28 v0.6.248. Per-(regime, hour) bias on sr above sun-up threshold. Skip regimes (v0.6.280): ne_flow (was +32% worse), calm (+10.7%) — return 0.0 per <code>l5_solar_analysis</code>.</li>
         <li><strong>L6</strong> cove microclimate (t only). Shipped 2026-06-26. <strong>Both branches disabled</strong> — cooling 2026-06-30 v0.6.259; warming 2026-07-01 v0.6.276 after real per-row Production exposed the warming branch as double-counting L2's waterfront-Tempest weighting. <code>compute_cove_correction()</code> is a no-op. Re-enable only after Fix B (refit lookup against L2 baseline).</li>
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
@@ -880,40 +880,33 @@
     <details style="border:1px solid #3a2a2a;background:#191313;padding:10px;border-radius:6px;">
       <summary style="color:#fb7c5c;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">🗄 Retired — kept as institutional memory</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>R3</strong> derived humidity · <strong>R4</strong> HRRR-GFS spread · <strong>R5</strong> cove cross-current · <strong>C1d</strong> KBOS-KBVY σ · <strong>C1g</strong> RH≥95% fog · <strong>Δwd_3h</strong> wind shift rate · <strong>L6 cooling branch</strong> (sb_off table) · <strong>CALM_GATE</strong> (fc_ws&lt;3 ws/wg L3 skip — wrong intervention, ne_flow is the actual loser). Full kill rationales in <a href="#sec-archive">Archive</a>.</li>
+        <li><strong>R3</strong> derived humidity · <strong>R4</strong> HRRR-GFS spread · <strong>R5</strong> cove cross-current · <strong>C1d</strong> KBOS-KBVY σ (re-confirmed killed 2026-07-02) · <strong>C1g</strong> RH≥95% fog · <strong>Δwd_3h</strong> wind shift rate · <strong>CALM_GATE</strong> (fc_ws&lt;3 ws/wg L3 skip; wrong intervention) · <strong>L6</strong> (both branches disabled 2026-07-01; dormant pending Fix B) · <strong>pr L2 additive</strong> (K=1 station consensus noise dominated; disabled 2026-07-01) · <strong>ws τ=7 override</strong> (shipped 07-01, reverted 07-02 after digest flip). Full rationales in <a href="#sec-archive">Archive</a>.</li>
       </ul>
     </details>
 
     <details open style="border:1px solid #3a3a1f;background:#191910;padding:10px;border-radius:6px;">
       <summary style="color:#e0d472;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">⏳ Upcoming decisions</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>07-01 (Wed): Add h to L4_FIELDS?</strong>
+        <li><strong>07-03 (Fri): Add h + sr to L4_FIELDS?</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Should h be added to L4?</li>
-            <li><strong>E:</strong> Post-v0.6.262 walk-forward validator reads h L4 as +5.2% MAE win (previously hidden by the gating bug). Standard 2-read gate applies.</li>
-            <li><strong>D:</strong> Flip if a 2nd daily digest cycle confirms AND <code>l4_regime_lead_analysis</code> on h shows no regime-specific weakness.</li>
-          </ul>
-        </li>
-        <li style="margin-top:6px;"><strong>07-02 (Thu): Calm-wind gate — RETIRE (wrong intervention).</strong>
-          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Should <code>CALM_GATE_ENABLED</code> flip to True (skip ws/wg L3 when fc_ws &lt; 3)?</li>
-            <li><strong>E:</strong> 2026-06-30 <code>l3_regime_lead_analysis</code> run (694K L3-field pair rows): ws L3 in the <strong>calm</strong> regime <strong>WINS +15.3% / +29.9% / +44.0% / +44.3%</strong> across lead bands (n = 4.8K → 20.4K). The regression Joe noticed lives in <strong>ne_flow</strong> (L3 LOSES at every lead band, n = 1.0K → 4.1K) and short-lead <strong>sea_breeze</strong>, not in calm. The fc_ws&lt;3 gate would skip L3 exactly where it wins biggest.</li>
-            <li><strong>D:</strong> Do NOT flip CALM_GATE. Gate retired; <code>CALM_GATE_ENABLED</code> removed from <code>decay_apply.py</code> in v0.6.267 collector (live). The actual fix is a per-(field, regime, lead_band) skip table targeting ne_flow (all bands) + sea_breeze (short leads) — already in Open architectural questions.</li>
+            <li><strong>Q:</strong> Should h and sr be added to L4?</li>
+            <li><strong>E:</strong> 2026-07-02 walkforward now recommends L4_ENABLED = {h, cc, sr, ch} — adds h and sr on top of current {ch, cc}. h at +5.2% MAE win consistent from 06-30 reads.</li>
+            <li><strong>D:</strong> Do NOT add wholesale. Run <code>l4_regime_lead_analysis</code> on h + sr and preview both via <code>production_whatif.py</code> before shipping. sr is especially suspect right now given L5 already applies + retro-backfill artifact contaminates its baseline.</li>
           </ul>
         </li>
         <li style="margin-top:6px;"><strong>07-04 (Sat):</strong> C1 v2 multi-axis calibration audit first eligible.</li>
-        <li><strong>07-05 (Sun):</strong> L5 first clean 7-day audit window closes.</li>
+        <li><strong>07-05 (Sun):</strong> L5 first clean 7-day audit window closes; sr Production baseline stops being retro-backfill-contaminated.</li>
         <li style="margin-top:6px;"><strong>07-06 (Mon): Drop pp + ws from L3_FIELDS?</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
             <li><strong>Q:</strong> Should pp and ws be removed from L3?</li>
-            <li><strong>E:</strong> pp loses on MAE but is Brier-evaluated (documented exception); ws loses at long leads (18–47h) per the ws L3 long-lead regression.</li>
-            <li><strong>D:</strong> Don't drop wholesale — this is the case for the per-(field, regime, lead_band) skip table. Flip date marks "validator gate clears," not an action.</li>
+            <li><strong>E:</strong> Walkforward recommends dropping both. pp loses on MAE but is Brier-evaluated (documented exception; keep on Brier basis). ws now has skip table active (v0.6.279) — flip date marks validator agreement, not action.</li>
+            <li><strong>D:</strong> Don't drop wholesale. Skip table already handles ws regime cells. Add more skip cells if the wider regressions show up in the Fitter.</li>
           </ul>
         </li>
-        <li style="margin-top:6px;"><strong>Watch: did L6 Fix A reduce paired MAE as expected?</strong>
+        <li style="margin-top:6px;"><strong>07-08 (Mon): Fitter window fully post-deploy.</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>E:</strong> Next 2–3 days of <code>l6_gate_history.json</code>. HOLD magnitude should compress post-v0.6.259.</li>
-            <li><strong>D:</strong> If it doesn't compress, escalate L6 Fix B (refit lookup against L2 baseline).</li>
+            <li><strong>E:</strong> Real Production numbers for T, pr, ws, sr should have converged to what <code>production_whatif.py</code> predicts (T ~−2.6%, pr ~0%, ws ~+22.7%, sr ~−19%).</li>
+            <li><strong>D:</strong> If reality diverges from prediction by more than ±3pp on any field, investigate. If reality matches, framework validated; keep new "Production vs raw" gate as primary ship criterion.</li>
           </ul>
         </li>
       </ul>
@@ -927,7 +920,7 @@
         <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/L5 only. See memory note.</li>
         <li><strong>Scorecard banner — SHIPPED 2026-07-01.</strong> One-line "Stack vs raw: X% Production MAE across N non-Brier fields, M/N net-positive, worst regression: …" above Engineering updates. Uses the same `_productionLayerKey` logic as the accuracy chart so "stack" = actual production output per field. Brier-evaluated fields (pp) excluded — MAE isn't their decision metric.</li>
         <li><strong>C1e (hours-since-front) — SHIPPED 2026-07-01 (Stage 3 wired end-to-end via v0.6.272 curator).</strong> Promoted by <code>h_hsf_orthogonality</code> on the 2026-07-01 daily digest: 9 orthogonal cells vs C1a, strongest on ch (all bands), cm (all bands), cc long-lead, cl 6-11h. Wire-up: <code>_current_hsf_group()</code> classifies live tick as "post" (&lt;24h since last frontal passage) or "baseline" (≥24h) from <code>frontal_events_log.json</code>. Stamped on <code>weather_data.confidence.live_axes.hsf_group</code>. Stage 2 v2 curator extended to include hsf as a 5th key dimension; regenerated multi-axis table: <strong>840 SHIP / 118 MARGINAL / 1828 SKIP (of 2,786)</strong> — up from 619 SHIP of 1,764 pre-extension. <code>stamp_confidence()</code> axis_key composes the 5-tuple <code>spread_q::pt_bin::trans::c1f::hsf</code>; falls back to legacy stable/transition when any axis is missing at the tick.</li>
-        <li><strong>Per-field τ (recency weighting) — SHIPPED 2026-07-01.</strong> <code>TAU_DAYS_BY_FIELD["ws"] = 7</code> added in <code>decay_fit.py</code>. 2026-07-01 <code>decay_tau_tuning</code> read: ws gains +6.7% MAE held-out vs global τ=14. wg at +4.0% is close but below the 5% ship floor — stays at global default. pp and pa already have τ=28 overrides from earlier reads.</li>
+        <li><strong>Per-field τ (recency weighting) — SHIPPED 2026-07-01, REVERTED 2026-07-02 v0.6.279.</strong> ws τ=7 shipped based on 07-01 <code>decay_tau_tuning</code> read (+6.7% held-out). 07-02 digest flipped verdict to "KEEP τ=14 GLOBAL — no field gains ≥5%." Two consecutive reads disagreeing at the ship threshold = the original was noise. Reverted; ws back on global τ=14. Lesson: single-day tuning reads at borderline magnitudes shouldn't ship. pp and pa τ=28 overrides retained (both hold on today's read).</li>
         <li><strong>Per-row applied-layer stamping — SHIPPED 2026-07-01 end-to-end.</strong> <code>forecast_snapshot.py</code> derives <code>{field}_applied</code> per (field, lead) by walking L1→L6 arrays and finding the deepest layer whose value changed (every gate today is deterministic at forecast time, so equality walk is exact). <code>forecast_error_log.py</code> copies onto each pair-log row as <code>applied_layer</code>. <code>decay_fit.py</code> aggregates <code>per_layer_mae_by_lead[field].production</code>. First 15:07 Fitter cycle populated 9/48 leads with ~184 total rows across all fields. Frontend swap wired: hybrid array reads <code>.production[lead]</code> where populated, falls back to deepest-applied-layer MAE elsewhere. The <code>*</code> marker auto-drops per-card once real coverage exceeds 40/48 leads. Full window fill by ~2026-07-08.</li>
         <li><strong>Per-lead Brier for PP — SHIPPED 2026-07-01.</strong> Fitter emits <code>per_layer_brier_by_lead.pp</code> in <code>time_series_diagnostic.json</code> alongside MAE/bias/n (v0.6.267 collector). Frontend PP card swaps to Brier-native rendering the moment the key populates. Graceful fallback: if Brier is absent (pre-15:xx-Fitter-cycle), PP card falls back to MAE + orange disclaimer; when Brier populates, card auto-swaps to Brier + green banner.</li>
         <li><strong>KBOS+KBVY cloud blend → full L2 — HOLD (resolved 2026-06-30).</strong> <code>analysis/h_cloud_bias_persistence.py</code> ran on 3,866 distinct HRRR runs, 1,902–1,952 paired observations per cloud-lead. <strong>cc lead 6h gate: FAIL (ρ = −0.04). cc lead 12h gate: FAIL (ρ = −0.10).</strong> Bias does not persist past ~3h on any cloud field; propagating it to lead 6h+ would inject error, not reduce it. <strong>Decision:</strong> formalize <code>hourly[0]</code>-only as the intentional behavior — stop calling it a half-built L2.</li>
