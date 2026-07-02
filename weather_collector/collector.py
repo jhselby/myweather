@@ -50,7 +50,7 @@ from .processors.hourly_7day import normalize_for_payload, normalize_for_forecas
 from .processors.hourly_trim import trim_hourly_to_current_hour
 from .processors.forecast_error_log import update_forecast_error_log
 from .processors.decay_fit import fit_decay_corrections
-from .processors.decay_apply import apply_decay_corrections, recompute_derived_moisture_arrays
+from .processors.decay_apply import apply_decay_corrections, recompute_derived_moisture_arrays, preserve_raw_forecast_arrays
 from .processors.normalize import normalize_current, normalize_hourly, normalize_daily, empty_hourly
 
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -314,9 +314,17 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # being silently absorbed into the L2 column when L3/L4 run on top of it.
     # See call site after apply_decay_corrections in run_collector.
 
-    # Solar L5 correction (regime-aware solar, gated OFF). Indexed by
-    # derived.state.regime_synoptic. Stamps candidate Δ W/m² but does not
-    # modify direct_radiation until ENABLED is flipped post-06-22.
+    # v0.6.285: preserve raw forecast arrays BEFORE any correction runs. Was
+    # buried inside apply_decay_corrections (which runs AFTER L5), so
+    # raw_direct_radiation was capturing the L5-corrected value instead of raw
+    # HRRR. Debug page's Raw model line for sr was showing L5-corrected numbers
+    # as a result. Fixed by preserving here (idempotent — decay_apply still
+    # calls this too, both paths are guarded by `dst not in hourly`).
+    preserve_raw_forecast_arrays(weather_data)
+
+    # Solar L5 correction (regime-aware solar). Indexed by
+    # derived.state.regime_synoptic. Live since 2026-06-28 v0.6.248; skip
+    # regimes ne_flow + calm since 2026-07-02 v0.6.280.
     try:
         from .processors.solar_correction import stamp_solar_correction
         stamp_solar_correction(weather_data)

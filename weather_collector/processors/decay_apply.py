@@ -271,6 +271,39 @@ def _relative_humidity(t_f, dp_f):
     return max(0.0, min(100.0, 100.0 * e / e_s))
 
 
+def preserve_raw_forecast_arrays(weather_data):
+    """Preserve raw HRRR/GFS forecast arrays as `raw_*` copies BEFORE any
+    correction layer runs. Called from the collector early in the pipeline
+    (before stamp_solar_correction, apply_decay_corrections, stamp_cove_correction).
+
+    Idempotent — guarded by `dst not in hourly`, so calling it multiple times
+    (from decay_apply as well as the collector) has no effect after the first
+    call. This is a bugfix landed 2026-07-02 v0.6.285: previously the
+    preservation lived only inside apply_decay_corrections, which runs AFTER
+    stamp_solar_correction — so raw_direct_radiation captured post-L5 values,
+    not raw HRRR. Debug page's "Raw model" line for sr was showing L5-corrected
+    values as a result. User-facing forecasts were unaffected (direct_radiation
+    is post-L5 by design); only diagnostics were wrong.
+    """
+    hourly = weather_data.get("hourly") or {}
+    if not hourly:
+        return
+    if "precipitation_probability" in hourly and "raw_precipitation_probability" not in hourly:
+        hourly["raw_precipitation_probability"] = list(hourly["precipitation_probability"])
+    if "cloud_cover" in hourly and "raw_cloud_cover" not in hourly:
+        hourly["raw_cloud_cover"] = list(hourly["cloud_cover"])
+    for src, dst in [
+        ("direct_radiation",   "raw_direct_radiation"),
+        ("precipitation",      "raw_precipitation"),
+        ("cloud_cover_low",    "raw_cloud_cover_low"),
+        ("cloud_cover_mid",    "raw_cloud_cover_mid"),
+        ("cloud_cover_high",   "raw_cloud_cover_high"),
+        ("wind_direction",     "raw_wind_direction"),
+    ]:
+        if src in hourly and dst not in hourly:
+            hourly[dst] = list(hourly[src])
+
+
 def recompute_derived_moisture_arrays(weather_data):
     """Derive corrected_humidity from corrected (T, T_d) via Magnus, then
     recompute corrected_apparent_temperature and corrected_absolute_humidity
@@ -357,25 +390,14 @@ def apply_decay_corrections(weather_data, config=None):
         logging.warning("  ⚠  Decay apply: corrections malformed — skipping")
         return
 
-    # Preserve raw POP before the per-field loop mutates it. (temp/humidity
-    # have separate corrected_* arrays so their raw arrays already survive;
-    # wind/gust raw is captured upstream in blend_observed_into_hourly.)
-    if "precipitation_probability" in hourly and "raw_precipitation_probability" not in hourly:
-        hourly["raw_precipitation_probability"] = list(hourly["precipitation_probability"])
-    # Same for cloud_cover — mutated in place by the per-field loop below
-    if "cloud_cover" in hourly and "raw_cloud_cover" not in hourly:
-        hourly["raw_cloud_cover"] = list(hourly["cloud_cover"])
-    # v0.6.26: preserve raw copies of newly-added correction fields before mutation
-    for src, dst in [
-        ("direct_radiation",   "raw_direct_radiation"),
-        ("precipitation",      "raw_precipitation"),
-        ("cloud_cover_low",    "raw_cloud_cover_low"),
-        ("cloud_cover_mid",    "raw_cloud_cover_mid"),
-        ("cloud_cover_high",   "raw_cloud_cover_high"),
-        ("wind_direction",     "raw_wind_direction"),  # v0.6.27 circular correction
-    ]:
-        if src in hourly and dst not in hourly:
-            hourly[dst] = list(hourly[src])
+    # Idempotent-preserve; the collector calls preserve_raw_forecast_arrays
+    # earlier now (2026-07-02 v0.6.285) so raw_* arrays survive even when
+    # a correction runs before apply_decay_corrections (L5 solar was the
+    # first one — solar_correction was mutating direct_radiation before
+    # this block preserved it, so raw_direct_radiation ended up holding
+    # the L5-corrected value). The guard `dst not in hourly` makes this
+    # a no-op when the earlier preservation already ran.
+    preserve_raw_forecast_arrays(weather_data)
 
     # v0.6.27 wind direction circular correction (Layer 3 only).
     # Per-lead sin/cos component corrections fitted by decay_fit; apply via
