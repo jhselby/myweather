@@ -916,7 +916,7 @@
       <summary style="color:#a89ce0;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">🧪 Open architectural questions</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>Per-(field, regime, lead_band) skip table for L3/L4 — SHIPPED 2026-07-02 v0.6.279.</strong> Architecture lives in <code>decay_apply.py::SKIP_TABLE</code> — dict keyed by <code>(field, layer)</code> → list of <code>(regime, lead_lo, lead_hi)</code> tuples. Apply loops call <code>_should_skip()</code> before applying the correction. Fail-safe on missing regime (apply normally). Uses <code>state.regime_synoptic</code> (current-tick classification) across all forecast leads — coarser than per-lead regime classification, refinement queued. Cells populated at ship: <code>(ws, l3, ne_flow, *)</code>, <code>(ws, l3, sea_breeze, 0-11h)</code>, <code>(dp, l4, ne_flow, *)</code>, <code>(dp, l4, sea_breeze, *)</code>, <code>(dp, l4, nw_flow, 0-11h)</code>. dp cells are dormant configuration (dp is not currently in L4_FIELDS; they activate if dp is later added). <code>describe_applicability()</code> now surfaces skip cells in the Applicability map. Skip counts logged per tick in <code>decay_meta.skip_table_l3_cells_skipped</code> / <code>l4_cells_skipped</code>. Next: extend to L5 via similar mechanism in <code>solar_correction.py</code> (ne_flow +32% and calm +10% cells known).</li>
-        <li><strong>L6 lookup refit (Fix B).</strong> Rebuild table against L2-corrected baseline instead of raw waterfront-vs-inland gradient. Hold for 2–3 days of post-v0.6.259 reads first.</li>
+        <li><strong>L6 lookup refit (Fix B).</strong> Rebuild the cove-microclimate lookup table against <em>(cove_obs − L2_forecast_at_cove)</em> instead of the raw waterfront-vs-inland gradient. Both L6 branches were disabled 2026-07-01 v0.6.276 after real per-row Production exposed the warming branch as also net-negative (12% worse than L2 alone). L6 is now dormant. <code>cove_gradient_log.json</code> continues to accumulate per-tick data as the input for the eventual refit. Not queued for a date.</li>
         <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/L5 only. See memory note.</li>
         <li><strong>Scorecard banner — SHIPPED 2026-07-01.</strong> One-line "Stack vs raw: X% Production MAE across N non-Brier fields, M/N net-positive, worst regression: …" above Engineering updates. Uses the same `_productionLayerKey` logic as the accuracy chart so "stack" = actual production output per field. Brier-evaluated fields (pp) excluded — MAE isn't their decision metric.</li>
         <li><strong>C1e (hours-since-front) — SHIPPED 2026-07-01 (Stage 3 wired end-to-end via v0.6.272 curator).</strong> Promoted by <code>h_hsf_orthogonality</code> on the 2026-07-01 daily digest: 9 orthogonal cells vs C1a, strongest on ch (all bands), cm (all bands), cc long-lead, cl 6-11h. Wire-up: <code>_current_hsf_group()</code> classifies live tick as "post" (&lt;24h since last frontal passage) or "baseline" (≥24h) from <code>frontal_events_log.json</code>. Stamped on <code>weather_data.confidence.live_axes.hsf_group</code>. Stage 2 v2 curator extended to include hsf as a 5th key dimension; regenerated multi-axis table: <strong>840 SHIP / 118 MARGINAL / 1828 SKIP (of 2,786)</strong> — up from 619 SHIP of 1,764 pre-extension. <code>stamp_confidence()</code> axis_key composes the 5-tuple <code>spread_q::pt_bin::trans::c1f::hsf</code>; falls back to legacy stable/transition when any axis is missing at the tick.</li>
@@ -1314,7 +1314,7 @@
 
 <details class="research-subsection" id="r2-state-stratified" open>
   <summary>R2. State-stratified accuracy — which regimes does the model fail in? (active)</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per-field MAE sliced by atmospheric regime (wind direction, wind speed, cloud cover, pressure trend, flow regime, synoptic pattern). When a field's MAE varies a lot across regime bins, that's a sign a regime-aware correction layer could help. <strong>Already-addressed rows are tagged.</strong> The raw ranking still puts solar at the top because the raw L1/L2 bias spread is real, but L5 has shipped — sr rows are marked "addressed" and dimmed. Temperature rows are also tagged (L6 covers the cove microclimate regime axis, warming branch). The "Top actionable opportunity" chart skips past tagged rows to surface the highest-ranked unaddressed signal. Re-fit twice daily by the Fitter, published to <code>state_stratified_accuracy.json</code>.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per-field MAE sliced by atmospheric regime (wind direction, wind speed, cloud cover, pressure trend, flow regime, synoptic pattern). When a field's MAE varies a lot across regime bins, that's a sign a regime-aware correction layer could help. <strong>Already-addressed rows are tagged.</strong> The raw ranking still puts solar at the top because the raw L1/L2 bias spread is real, but L5 has shipped — sr rows are marked "addressed" and dimmed. Temperature rows are NO LONGER tagged as "addressed" because L6 is dormant since 2026-07-01 v0.6.276 (both branches returned net-negative Production numbers; refit against L2 baseline queued as Fix B). The "Top actionable opportunity" chart skips past tagged rows to surface the highest-ranked unaddressed signal. Re-fit twice daily by the Fitter, published to <code>state_stratified_accuracy.json</code>.</div>
   <div id="status-state-stratified" class="status" hidden></div>
   <div id="grid-state-stratified"></div>
 </details>
@@ -3228,7 +3228,7 @@ function renderGatedCandidatesSection(wxDoc) {
       ? `Wind: ${r.wind_octant ?? '?'} (${r.wind_dir ?? '?'}°) · Sea breeze: active · Hour: ${r.hour_local ?? '?'}:00 EDT`
       : `Sea breeze: inactive · Hour: ${r.hour_local ?? '?'}:00 EDT <span style="opacity:0.6;">(wind not used at inactive)</span>`;
     html += `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
-      <div style="margin-bottom:8px;"><strong>L6 Cove correction</strong> · ${fmtBadge(cove.applied)} <span style="opacity:0.7;font-size:0.85em;">(warming branch only since v0.6.259)</span></div>
+      <div style="margin-bottom:8px;"><strong>L6 Cove correction</strong> · <span style="opacity:0.85;font-size:0.85em;color:#a08070;">DORMANT since 2026-07-01 v0.6.276</span> <span style="opacity:0.7;font-size:0.85em;">(both branches disabled)</span></div>
       <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(2)}°F</div>
       <div class="meta-line" style="font-size:0.88em;">${inputs}</div>
       <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">
@@ -3242,8 +3242,16 @@ function renderGatedCandidatesSection(wxDoc) {
     const r = solar.regime || {};
     const sign = d >= 0 ? "+" : "";
     const dColor = d === 0 ? "#8a93a3" : (d > 0 ? "#fb7c5c" : "#7ec8ff");
+    // v0.6.280: L5 skips ne_flow and calm regimes (was +32% / +10% worse
+    // per l5_solar_analysis). Surface the skip explicitly when it's firing
+    // so the card doesn't look broken (0.0 W/m² with a real regime label).
+    const L5_SKIP_REGIMES = new Set(["ne_flow", "calm"]);
+    const skipping = L5_SKIP_REGIMES.has(r.regime_synoptic);
+    const skipNote = skipping
+      ? ` <span style="color:#a08070;font-size:0.85em;">(skipped — ${r.regime_synoptic} is in L5_SKIP_REGIMES since v0.6.280)</span>`
+      : '';
     html += `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
-      <div style="margin-bottom:8px;"><strong>L5 Solar regime correction</strong> · ${fmtBadge(solar.applied)}</div>
+      <div style="margin-bottom:8px;"><strong>L5 Solar regime correction</strong> · ${fmtBadge(solar.applied)}${skipNote}</div>
       <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(1)} W/m²</div>
       <div class="meta-line" style="font-size:0.88em;">
         Synoptic regime: <code>${r.regime_synoptic ?? 'unknown'}</code> ·
@@ -3597,8 +3605,10 @@ function renderStateStratifiedSection(ssDoc) {
   // raw L1/L2 data, but they're not actionable opportunities — note them in
   // the table and skip them when picking the #1 opportunity to chart.
   const ADDRESSED = {
-    sr: "L5 — synoptic-regime correction (shipped 2026-06-28 v0.6.248)",
-    t:  "L6 — cove microclimate correction (shipped 2026-06-26; warming branch active)",
+    sr: "L5 — synoptic-regime correction (shipped 2026-06-28 v0.6.248; skip regimes ne_flow + calm since v0.6.280)",
+    // t was previously tagged (L6 warming branch active). L6 is now dormant
+    // (v0.6.276, both branches disabled); T is NOT an addressed opportunity
+    // anymore — put it back on the "actionable" list until Fix B ships.
   };
 
   // Top-N table
