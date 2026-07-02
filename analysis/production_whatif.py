@@ -64,6 +64,14 @@ WS_SKIP_CELLS = [
     ("sea_breeze", 6, 12),
 ]
 
+# L5 (sr) skip cells: from 2026-07-02 l5_solar_analysis output.
+# ne_flow: +32.3% WORSE with L5 (n=1497), calm: +10.7% worse (n=347).
+# Other regimes helpful (-5% to -20%). Skip L5 in these two, use L4.
+SR_L5_SKIP_CELLS = [
+    ("ne_flow",   0, 48),  # all bands
+    ("calm",      0, 48),
+]
+
 
 def _applied_from_walk(row):
     """Deepest layer whose error differs from the previous captured layer.
@@ -92,6 +100,23 @@ def _ws_l3_skip(row):
     if lead is None:
         return False
     for r, lo, hi in WS_SKIP_CELLS:
+        if regime == r and lo <= lead < hi:
+            return True
+    return False
+
+
+def _sr_l5_skip(row):
+    """Return True if this sr row falls in an L5 skip cell (skip L5, use L4)."""
+    if row.get("field") != "sr":
+        return False
+    state_obs = row.get("state_obs") or {}
+    regime = state_obs.get("regime_synoptic")
+    if not regime:
+        return False
+    lead = row.get("lead_h")
+    if lead is None:
+        return False
+    for r, lo, hi in SR_L5_SKIP_CELLS:
         if regime == r and lo <= lead < hi:
             return True
     return False
@@ -146,12 +171,25 @@ def _intervention_error(row, intervention):
             applied = "l2"
         else:
             applied = _applied_from_walk(row)
+    elif intervention == "sr_L5_skip":
+        # For sr rows in L5 skip cells (ne_flow + calm), use L4 error instead
+        # of L5. Note: sr has no L2/L3 (structurally l4 == l1 for sr since
+        # there's no mesonet L2 for solar and L3 isn't in sr's applicability
+        # set), so "skip L5 → use L4" effectively means "use raw L1" for sr.
+        # error_l4 will equal error_l1 by construction — using error_l4 is
+        # correct and future-proof (if sr ever gets L3 or L4 corrections).
+        if field == "sr" and _sr_l5_skip(row):
+            applied = "l4"
+        else:
+            applied = _applied_from_walk(row)
     elif intervention == "all_targeted":
-        # Combine A + B + C + D.
+        # Combine L6 off + pr L2 drop + ws L2 drop + ws L3 skip + sr L5 skip.
         if field == "t":
             applied = "l2"
         elif field == "pr":
             applied = "l1"
+        elif field == "sr" and _sr_l5_skip(row):
+            applied = "l4"
         elif field == "ws":
             # L2 drop + skip-cell L3 drop.
             if _ws_l3_skip(row):
@@ -323,7 +361,8 @@ def main():
         ("L2_ws_drop",       "ws: drop L2 direct-selection (keep L3 where it fires)"),
         ("L2_pr_drop",       "pr: drop L2 additive"),
         ("ws_L3_skip",       "ws: skip L3 in (ne_flow *, sea_breeze 0-11h); keep L2"),
-        ("all_targeted",     "combined: L6 off + ws L2 drop + pr L2 drop + ws L3 skip"),
+        ("sr_L5_skip",       "sr: skip L5 in (ne_flow *, calm *); use L4"),
+        ("all_targeted",     "combined: L6 off + ws L2 drop + pr L2 drop + ws L3 skip + sr L5 skip"),
     ]
 
     aggs = {}

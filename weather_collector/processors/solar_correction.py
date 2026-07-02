@@ -177,12 +177,14 @@ def describe_applicability():
     if ENABLED:
         fires_when = (
             "ENABLED AND raw_solar_wm2 >= SUN_UP_THRESHOLD "
+            "AND regime_synoptic NOT IN L5_SKIP_REGIMES "
             "AND _BIAS_BY_REGIME_HOUR has entry for (regime_synoptic, hour_local) "
-            "(else _BIAS_FALLBACK_BY_REGIME)"
+            "(else _BIAS_FALLBACK_BY_REGIME). "
+            "Skip regimes (2026-07-02): ne_flow (was +32% worse with L5), calm (+10.7%)."
         )
-        current_state = "ENABLED True; applying per (regime, hour) bias for sr above sun-up threshold"
+        current_state = "ENABLED True; applying per (regime, hour) bias for sr above sun-up threshold except ne_flow and calm regimes"
     else:
-        fires_when = "OFF — would fire when ENABLED, above sun-up threshold, with regime+hour bias entry"
+        fires_when = "OFF — would fire when ENABLED, above sun-up threshold, non-skip regime, with regime+hour bias entry"
         current_state = "ENABLED False; no sr correction applied"
     return [
         {
@@ -201,18 +203,33 @@ def describe_applicability():
     ]
 
 
+# Skip regimes for L5 solar correction. 2026-07-02 l5_solar_analysis on
+# 17,578 sr pair rows showed L5 helps overall by -6.5% MAE but hurts
+# catastrophically in two regimes:
+#   ne_flow:  +32.3% WORSE with L5 (n=1497)
+#   calm:     +10.7% worse (n=347)
+# All other regimes: -5% to -20% (helpful). Skip L5 in these two — return
+# 0.0 so the sr forecast falls back to raw L1 (no L2/L3/L4 apply to sr).
+# Same architectural pattern as decay_apply.py::SKIP_TABLE.
+L5_SKIP_REGIMES = {"ne_flow", "calm"}
+
+
 def compute_solar_correction(regime_synoptic, raw_solar_wm2, hour_local=None):
     """Return candidate Δ W/m² to add to L1 solar forecast.
 
     Indexed by (regime × hour_local). Falls back to regime-overall bias
     when the hour cell has too few samples to trust.
 
-    Returns 0.0 if regime unknown, raw_solar missing, or below SUN_UP_THRESHOLD
-    (night-time, no real solar to correct).
+    Returns 0.0 if regime unknown, raw_solar missing, below SUN_UP_THRESHOLD
+    (night-time, no real solar to correct), OR regime is in L5_SKIP_REGIMES.
     """
     if regime_synoptic is None or raw_solar_wm2 is None:
         return 0.0
     if raw_solar_wm2 < SUN_UP_THRESHOLD:
+        return 0.0
+    if regime_synoptic in L5_SKIP_REGIMES:
+        # 2026-07-02: L5 is net-negative in these regimes; skip. See
+        # analysis/l5_solar_analysis.py for the per-regime numbers.
         return 0.0
     # Try (regime, hour) cell first; fall back to regime overall.
     regime_cells = _BIAS_BY_REGIME_HOUR.get(regime_synoptic, {})
