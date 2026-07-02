@@ -70,22 +70,26 @@ _HOUR_DELTA_SB_OFF = {
 
 def describe_applicability():
     """Applicability descriptor for L6 (cove microclimate correction). One field (t).
-    After v0.6.259 the cooling branch (sb_off) is disabled — only the sea-breeze
-    warming branch fires. See weather_collector/data/applicability_map_schema.json.
+    Both branches disabled 2026-07-01 after per-row Production data exposed
+    the warming branch as also net-negative. See
+    weather_collector/data/applicability_map_schema.json.
     """
     if ENABLED:
         fires_when = (
-            "ENABLED AND sb_active_forecast(lead) is True "
-            "AND fc_wind_octant(lead) in {S, SE, SW} "
-            "(sb_off branch zeroed v0.6.259)"
+            "ENABLED — but both branches return 0.0 since v0.6.276. "
+            "compute_cove_correction() is a no-op; L6 has no effective firing state."
         )
         current_state = (
-            "ENABLED True; warming branch only — sea-breeze octants S/SE/SW add "
-            "+1.1 to +2.0°F. Cooling branch (sb_off offshore hour table) returns 0.0 "
-            "since v0.6.259 (was doubling MAE; r5_cove_analysis offshore-cooling FAIL)"
+            "ENABLED True but no-op; both warming (sb_active S/SE/SW) and cooling "
+            "(sb_off morning table) branches return 0.0. Cooling killed 2026-06-30 "
+            "(v0.6.259) — L1 already cold-biased ~2.25°F, cooling doubled MAE. "
+            "Warming killed 2026-07-01 (v0.6.276) — real per-row Production showed "
+            "L6-fired rows at MAE 3.66 vs L2 alone 2.59 on same rows (~40% worse); "
+            "L2 already weights waterfront Tempests heavily, warming Δ double-counts. "
+            "Refit lookup against L2-corrected baseline (Fix B) before re-enabling."
         )
     else:
-        fires_when = "OFF — would fire when ENABLED on sb_active S/SE/SW leads"
+        fires_when = "OFF — no branches active"
         current_state = "ENABLED False; no cove correction applied"
     return [
         {
@@ -120,6 +124,26 @@ def compute_cove_correction(wind_dir_deg, sb_active, hour_local):
     if oct_ is None:
         return 0.0
 
+    # BOTH BRANCHES DISABLED 2026-07-01. Cooling branch was killed 2026-06-30
+    # (see block below); on 2026-07-01 the real per-row Production data (from
+    # v0.6.269 applied-layer stamping + v0.6.275 retro backfill) exposed that
+    # the *warming* branch is also net-negative:
+    #   - T Production real = 2.91°F MAE vs L2 alone = 2.59°F (12% worse)
+    #   - T Production real vs raw L1 = 2.66°F (9% worse than raw)
+    #   - Math: Production = 0.7·L2 + 0.3·L6-fired → L6-fired MAE ≈ 3.66°F
+    #     vs L2 alone at 2.59°F on the same rows. Warming branch is ~40%
+    #     worse than L2 on the rows where it fires.
+    # Root cause matches the original double-counting hypothesis for the
+    # warming case too: L2's Kalman blend for T is dominated by waterfront
+    # Tempests (Willow Rd, Neptune Rd) at ~0.1-0.2 mi from the cove — L2
+    # already carries "waterfront bias" by station weighting. Adding a
+    # (waterfront - inland) warming Δ on top double-counts the same signal.
+    # analysis/production_whatif.py preview: disabling warming branch flips
+    # T Production from +9.7% BAD to -2.6% GOOD (12.3 pp improvement).
+    # Re-enable only after refitting the lookup against L2-corrected baseline
+    # (Fix B in project_l6_l2_double_counting_hypothesis).
+    return 0.0
+    # ----- retained for context (both branches now return 0.0 above) -----
     if sb_active:
         # Sea-breeze regime: use the constant octant value.
         return _DELTA_BY_OCTANT.get((True, oct_), 0.0)
@@ -129,9 +153,8 @@ def compute_cove_correction(wind_dir_deg, sb_active, hour_local):
         # ~2.25 °F at the cove and L2 only erases ~3.7% of that. Applying
         # the morning offshore cooling Δ on top doubled MAE on cooling rows
         # (Δ ≤ -2 °F bucket: MAE 3.52 → 6.16, -74.9%). The sb_active
-        # warming branch is neutral/positive and stays on. Re-enable only
-        # after refitting the lookup against (cove_truth − L2_forecast_at_cove)
-        # — see project_l6_l2_double_counting_hypothesis Fix B.
+        # warming branch was retained here originally; killed 2026-07-01
+        # after real per-row Production data exposed the same over-count.
         return 0.0
 
 

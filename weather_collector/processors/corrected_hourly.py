@@ -238,16 +238,21 @@ def add_corrected_hourly_arrays(weather_data):
     hourly["corrected_absolute_humidity"] = corrected_ah
 
     # Pressure: model gives hPa/mb in `pressure` (post-normalize.py rename
-    # from pressure_msl); stations report inHg. Convert model to inHg, add
-    # Layer-2 bias. Layers 3 (decay) and 4 (diurnal) apply downstream to
-    # corrected_pressure_in directly.
-    pressure_bias_in = hyp.get("bias_pressure_in", 0) or 0
+    # from pressure_msl); stations report inHg. Convert model to inHg.
+    # L2 additive bias DISABLED 2026-07-01. Real per-row Production data
+    # (v0.6.269 + v0.6.275 retro backfill) exposed that pr L2 additive was
+    # making Production +2.4% worse than raw. Station consensus vs model
+    # after altitude offsets is noisy enough at K=1 (pressure was applied
+    # at full strength on the theory that station altitudes fully
+    # compensate). The theory didn't hold at the population level.
+    # analysis/production_whatif.py preview: dropping L2 for pr flips
+    # Production from +2.4% BAD to 0% (matches raw). Small absolute
+    # (~0.001 inHg) but consistently in the wrong direction. Passing
+    # bias_pressure_in = 0 keeps `corrected_pressure_in` in the output
+    # for downstream L3/L4 compatibility, but with no additive shift
+    # applied — corrected_pressure_in ≡ raw_pressure_in now.
     raw_pressure_mb = hourly.get("pressure", [])
     if raw_pressure_mb:
         raw_pressure_in = [round(p / 33.8639, 3) if p is not None else None for p in raw_pressure_mb]
         hourly["raw_pressure_in"] = raw_pressure_in
-        pr_decay = _decay_factors(taus.get("pr"), max(len(raw_pressure_in), 48))
-        hourly["corrected_pressure_in"] = [
-            round(p + pressure_bias_in * pr_decay[i], 3) if p is not None else None
-            for i, p in enumerate(raw_pressure_in)
-        ]
+        hourly["corrected_pressure_in"] = list(raw_pressure_in)
