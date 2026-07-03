@@ -71,7 +71,7 @@ STALE_DAYS = 7
 # (06-23 dipped to +2.7% — a 1-day artifact). Two reads >=3% with one read
 # >=5% clears the 2-read promotion gate. cm rides along at +3.0% on 06-24
 # (was +2.7% on 06-23) — borderline; reconfirm 06-29 before adding.
-L3_FIELDS = {"ws", "wg", "ch", "cm", "pp"}
+L3_FIELDS = {"ws", "wg", "ch", "cm", "pp"}  # ws + wg strip candidacy queued but NOT shipped — new per-cell walkforward day-1 read agreed with existing production_whatif, but the live-layer change gate requires 7 consecutive daily reads + 2 tools answering different questions. Earliest ship: 2026-07-10 if the picture holds.
 L4_FIELDS = {"ch", "cc"}
 # Fields where the L3/L4 audit's MAE-based ⚠ rule should be suppressed because
 # the field's correction is justified by a different metric (Brier, etc.).

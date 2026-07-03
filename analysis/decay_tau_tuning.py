@@ -184,18 +184,56 @@ def main():
     best_counter = Counter(t for _, t, _ in optimums)
     lines.append(f"Best-τ distribution across {len(optimums)} fields: " +
                  ", ".join(f"τ={t}: {n}" for t, n in sorted(best_counter.items())))
+    # Persistence — τ tuning ships flip on noise at the 5% threshold. Require
+    # 3 consecutive daily reads agreeing on which fields cross before emitting
+    # an IMPLEMENT verdict. Store today's high-water set, check history.
+    import json as _json
+    from datetime import date as _date
+    HISTORY = os.path.join(OUT_DIR, "decay_tau_tuning_history.jsonl")
+    today_iso = _date.today().isoformat()
+    winning_fields_today = sorted(f for f, _, w in optimums if w >= 5.0)
+    # Append today's record (skip if already logged today so the digest can
+    # re-run without inflating streaks).
+    prior_rows = []
+    if os.path.exists(HISTORY):
+        with open(HISTORY) as f:
+            for line in f:
+                try: prior_rows.append(_json.loads(line))
+                except _json.JSONDecodeError: pass
+    if not (prior_rows and prior_rows[-1].get("date") == today_iso):
+        with open(HISTORY, "a") as f:
+            f.write(_json.dumps({"date": today_iso, "winning_fields": winning_fields_today}) + "\n")
+    # Compute consecutive-agreement streak on today's winning set.
+    all_rows = prior_rows[:]
+    if not (all_rows and all_rows[-1].get("date") == today_iso):
+        all_rows.append({"date": today_iso, "winning_fields": winning_fields_today})
+    streak = 0
+    for row in reversed(all_rows):
+        if sorted(row.get("winning_fields", [])) == winning_fields_today:
+            streak += 1
+        else:
+            break
+    CONFIRMATION_STREAK = 3
+
     # Verdict
     all_14 = all(bt == 14 for _, bt, _ in optimums)
-    big_wins = sum(1 for _, _, w in optimums if w >= 5.0)
+    big_wins = len(winning_fields_today)
     if all_14:
         verdict = "KEEP τ=14 GLOBAL — every field's best τ is 14d. No reason to change."
     elif big_wins == 0:
         verdict = ("KEEP τ=14 GLOBAL — best-τ varies but no field gains ≥5% vs τ=14. "
                    "Per-field τ would add complexity for noise-level gains.")
+    elif streak < CONFIRMATION_STREAK:
+        verdict = (f"HOLD — {big_wins} field(s) currently at ≥5% ({', '.join(winning_fields_today)}), "
+                   f"but only {streak}/{CONFIRMATION_STREAK} consecutive daily reads agree on this set. "
+                   f"5% threshold is noise-adjacent; ws τ=7 shipped 07-01 and reverted 07-02 for exactly "
+                   f"this reason. No ship until streak clears.")
     else:
-        verdict = (f"IMPLEMENT PER-FIELD τ — {big_wins} field(s) gain ≥5% MAE vs τ=14. "
+        verdict = (f"IMPLEMENT PER-FIELD τ — {big_wins} field(s) gain ≥5% MAE vs τ=14 "
+                   f"({', '.join(winning_fields_today)}) confirmed by {streak} consecutive daily reads. "
                    f"Worth ~30 min in decay_fit.py to make τ a per-field constant.")
     lines.append("")
+    lines.append(f"Confirmation streak: {streak}/{CONFIRMATION_STREAK} (winning set: {winning_fields_today or 'none'})")
     lines.append(f"Verdict: {verdict}")
     summary_path = os.path.join(OUT_DIR, "decay_tau_tuning_summary.txt")
     with open(summary_path, "w") as f:

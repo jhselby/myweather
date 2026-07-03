@@ -229,13 +229,47 @@ def main():
             lines.append(f"    {label:<8} {n_b:>7,}  {m1:>8.3f}  {m2:>8.3f}  {m3:>9.3f}")
 
     lines.append("")
+    # Per-cell verdict: aggregate win is only shippable if the decay helps in
+    # EVERY lead band (or is flat) — not if it wins overall by helping 24-47h
+    # a lot while hurting 0-11h. Aggregate wins that hide per-band damage are
+    # exactly the failure mode we're trying to stop shipping.
+    ship_wins = []      # win in aggregate AND net-non-negative per band
+    mixed_wins = []     # aggregate win but at least one band gets worse
+    BAND_LOSS_PCT = 2.0   # a band that gets ≥2% worse under decay is damage
+    for field, agg_win, tau in big_wins:
+        r = results[field]
+        # Check each band's decay vs flat.
+        bad_bands = []
+        for label, n_b, m1, m2, m3 in r["bands"]:
+            if m2 > 0:
+                band_delta = (m2 - m3) / m2 * 100  # positive = decay helps
+                if band_delta <= -BAND_LOSS_PCT:
+                    bad_bands.append((label, band_delta))
+        if bad_bands:
+            mixed_wins.append((field, agg_win, tau, bad_bands))
+        else:
+            ship_wins.append((field, agg_win, tau))
+
     if not big_wins:
         verdict = ("KEEP L2 FLAT — no field gains ≥2% MAE from the lead-decay vs current "
                    "flat application. The L2 over-correction hypothesis isn't supported.")
+    elif ship_wins:
+        win_str = ", ".join(f"{f} (+{w:.1f}%, τ={'∞' if t>=1e8 else f'{t:g}h'})" for f, w, t in ship_wins)
+        verdict = (f"IMPLEMENT L2 LEAD-DECAY — {len(ship_wins)} field(s) gain ≥2% MAE vs flat and don't "
+                   f"lose in any lead band: {win_str}. Productionize as l2_decay.json with per-field τ.")
+        if mixed_wins:
+            mixed_str = "; ".join(
+                f"{f} (+{w:.1f}% overall, but {', '.join(f'{lbl} {d:+.1f}%' for lbl,d in bb)})"
+                for f, w, t, bb in mixed_wins)
+            verdict += f"  MIXED (do NOT ship these — aggregate wins but per-band damage): {mixed_str}."
     else:
-        win_str = ", ".join(f"{f} (+{w:.1f}%, τ={'∞' if t>=1e8 else f'{t:g}h'})" for f, w, t in big_wins)
-        verdict = (f"IMPLEMENT L2 LEAD-DECAY — {len(big_wins)} field(s) gain ≥2% MAE vs flat: "
-                   f"{win_str}. Productionize as l2_decay.json with per-field τ.")
+        # All big_wins were mixed. Downgrade to HOLD.
+        mixed_str = "; ".join(
+            f"{f} (+{w:.1f}% overall, but {', '.join(f'{lbl} {d:+.1f}%' for lbl,d in bb)})"
+            for f, w, t, bb in mixed_wins)
+        verdict = (f"HOLD — {len(mixed_wins)} field(s) gain ≥2% overall but LOSE materially in at least "
+                   f"one lead band. Aggregate ship signal but per-band damage: {mixed_str}. "
+                   f"Per-lead-band whitelist candidate, not a wholesale L2-decay ship.")
     lines.append(f"Verdict: {verdict}")
 
     summary_path = os.path.join(OUT_DIR, "l2_lead_decay_summary.txt")

@@ -874,7 +874,7 @@
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>L1</strong> raw HRRR / GFS — the starting point every other layer corrects.</li>
         <li><strong>L2</strong> mesonet blend — additive bias on <code>t / dp / h</code> (Kalman gain) + KBOS+KBVY hourly[0] blend on <code>cc / cl / cm / ch</code>; direct selection on <code>ws / wg</code>. <code>pr</code> disabled 2026-07-01 v0.6.276.</li>
-        <li><strong>L3</strong> lead-decay — applies to {ws, wg, ch, cm, pp}. Skip table (v0.6.279): ws L3 skipped in ne_flow (all bands) + sea_breeze (0-11h) per <code>l3_regime_lead_analysis</code>.</li>
+        <li><strong>L3</strong> lead-decay — applies to {ws, wg, ch, cm, pp}. Skip table (v0.6.279): ws L3 skipped in ne_flow (all bands) + sea_breeze (0-11h) per <code>l3_regime_lead_analysis</code>. <strong>ws + wg strip candidacy: day 1/7 under the new live-layer change gate</strong> (walkforward per-cell + production_whatif agreed 07-03; earliest ship 2026-07-10 if 7 consecutive daily reads agree AND a second tool answering a different question agrees).</li>
         <li><strong>L4</strong> diurnal — applies to {ch, cc}.</li>
         <li style="list-style:none;margin-left:-16px;opacity:0.75;font-size:0.9em;">Cards read corrected <code>hourly[0]</code>. See <a href="#sec-applicability">Applicability map</a> for live triggers + gates (e.g. L3 skip cells for ws in ne_flow / short-lead sea_breeze, L5 skip regimes for sr in ne_flow / calm, sun-up threshold on L5).</li>
       </ul>

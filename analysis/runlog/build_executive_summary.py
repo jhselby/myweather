@@ -31,6 +31,73 @@ VERDICT_LINE_RE = re.compile(
     r"(VERDICT\s*[:\(]|^[ \t]*Verdict\s*:|^[ \t]*→[ \t]*[A-Z]|^[ \t]*RESULT\s*:)"
 )
 
+# Scripts that emit per-(field, regime, lead_band) or per-cell verdicts — the
+# resolution required to ship a live-pipeline change without hiding regime-
+# specific damage in an aggregate. Only "promote" verdicts from these scripts
+# get surfaced as "New promotions." Everything else routes to "New candidates
+# (aggregate-only — cross-cut required before shipping)" so morning-digest
+# readers don't act on a single-number ship signal.
+#
+# This list is a WHITELIST — new scripts default to aggregate until proven
+# otherwise. Codified 2026-07-03 after the h + L4 walkforward-vs-cross-cut
+# incident: aggregate said +5.2% overall win; per-cell cross-cut said 21
+# L4 LOSES / 4 WIN. See feedback_do_it_right.
+SHIP_RESOLUTION_SCRIPTS = frozenset({
+    "walkforward_l3l4_validator",
+    "l3_regime_lead_analysis",
+    "l4_regime_lead_analysis",
+    "l5_solar_analysis",
+    "c1_calibration_audit",
+    "c1_stage4_audit",
+    "production_whatif",
+    # Orthogonality checks emit per-axis-pair verdicts — sufficient for the
+    # promote/kill signals they're designed to give.
+    "cluster_spread_orthogonality",
+    "h_c1g_orthogonality",
+    "h_cloud_disagreement_orthogonality",
+    "h_hsf_orthogonality",
+    "h_precip_fc_orthogonality",
+    "h_pre_front_orthogonality",
+    "h_wind_shift_rate_orthogonality",
+})
+
+# Live-layer change gate (codified 2026-07-03):
+#   1. 7 consecutive daily digest reads all agreeing on the verdict.
+#   2. At least 2 tools answering DIFFERENT questions agreeing (not just 2
+#      tools reading the same data).
+#   3. Per-cell resolution (SHIP_RESOLUTION_SCRIPTS whitelist above).
+#   4. Post-deploy verification within 1 Fitter cycle (separate infra, TODO).
+#   5. Post-ship 14-day watch for verdict flips (separate infra, TODO).
+# This dict groups tools by the question they answer. A ship candidate needs
+# promote-verdicts from AT LEAST 2 GROUPS.
+TOOL_QUESTION_GROUPS = {
+    "per_cell_aggregate": {
+        "walkforward_l3l4_validator",       # per-(regime, lead_band), MAE
+    },
+    "regime_conditional": {
+        "l3_regime_lead_analysis",
+        "l4_regime_lead_analysis",
+        "l5_solar_analysis",
+    },
+    "live_pipeline_replay": {
+        "production_whatif",                # simulates the actual pipeline
+    },
+    "calibration_drift": {
+        "c1_calibration_audit",
+        "c1_stage4_audit",
+    },
+    "orthogonality": {
+        "cluster_spread_orthogonality",
+        "h_c1g_orthogonality",
+        "h_cloud_disagreement_orthogonality",
+        "h_hsf_orthogonality",
+        "h_precip_fc_orthogonality",
+        "h_pre_front_orthogonality",
+        "h_wind_shift_rate_orthogonality",
+    },
+}
+CONFIRMATION_STREAK_DAYS = 7
+
 
 def extract_verdict(log_path: Path) -> str | None:
     """Return a one-line verdict string or None."""
@@ -97,7 +164,10 @@ def main():
 
     prior = load_prior_state()
     current = {}
-    promotes_new, kills_new, changed, failures = [], [], [], []
+    # "promotes_new" is only for scripts at ship resolution. Aggregate-only
+    # scripts route to "candidates_new" so morning readers see the signal
+    # without treating it as ship-ready.
+    promotes_new, candidates_new, kills_new, changed, failures = [], [], [], [], []
 
     for name, status, secs in rows:
         log = LOG_DIR / f"{name}.log"
@@ -111,12 +181,13 @@ def main():
 
         prior_b = prior.get(name, {}).get("bucket")
         prior_v = prior.get(name, {}).get("verdict")
+        ship_res = name in SHIP_RESOLUTION_SCRIPTS
 
         if prior_b is None:
             # first time we've seen this script — only count it as "new" if it
             # actually produced a verdict
             if b == "promote":
-                promotes_new.append((name, verdict))
+                (promotes_new if ship_res else candidates_new).append((name, verdict))
             elif b == "kill":
                 kills_new.append((name, verdict))
             continue
@@ -124,7 +195,7 @@ def main():
         if b != prior_b:
             changed.append((name, prior_v, verdict))
             if b == "promote" and prior_b != "promote":
-                promotes_new.append((name, verdict))
+                (promotes_new if ship_res else candidates_new).append((name, verdict))
             if b == "kill" and prior_b != "kill":
                 kills_new.append((name, verdict))
 
@@ -137,9 +208,82 @@ def main():
     out.append(f"Pass: {n_pass}")
     out.append(f"Fail: {n_fail}")
     out.append("")
-    out.append("New promotions:")
-    if promotes_new:
-        for n, v in promotes_new:
+    # Compute confirmation streaks across HISTORY_PATH. For each ship-resolution
+    # script currently in promote bucket, walk back through history to count
+    # consecutive daily reads that were also in promote bucket. Ship-eligible
+    # verdicts require CONFIRMATION_STREAK_DAYS AND multi-group agreement.
+    from collections import defaultdict as _dd
+    streaks = {}  # script_name -> consecutive promote days
+    prior_by_script_day = _dd(dict)
+    if HISTORY_PATH.exists():
+        for row in HISTORY_PATH.read_text().splitlines():
+            try:
+                r = json.loads(row)
+            except json.JSONDecodeError:
+                continue
+            if not r.get("script") or r["script"].startswith("_claim:"):
+                continue
+            day = (r.get("run_at") or "")[:10]  # YYYY-MM-DD
+            if day:
+                prior_by_script_day[r["script"]][day] = r.get("bucket")
+    from datetime import date as _date, timedelta as _td
+    today_d = _date.today()
+    for name, info in current.items():
+        if info["bucket"] != "promote":
+            continue
+        s = 1  # today counts
+        d = today_d
+        while True:
+            d = d - _td(days=1)
+            prev_bucket = prior_by_script_day.get(name, {}).get(d.isoformat())
+            if prev_bucket == "promote":
+                s += 1
+                continue
+            break
+        streaks[name] = s
+
+    # Split promotes_new into ship-eligible vs still-confirming.
+    def _group_of(script_name):
+        for g, members in TOOL_QUESTION_GROUPS.items():
+            if script_name in members:
+                return g
+        return None
+    all_promote_ship_res = [n for n in current
+                            if current[n]["bucket"] == "promote" and n in SHIP_RESOLUTION_SCRIPTS]
+    promoting_groups = {_group_of(n) for n in all_promote_ship_res if _group_of(n)}
+    n_groups = len(promoting_groups)
+
+    ship_eligible = []      # cleared 7 days + ≥2 groups agreeing
+    still_confirming = []   # in promote bucket but streak < 7 OR only 1 group
+    for name, verdict in promotes_new:
+        streak = streaks.get(name, 1)
+        if streak >= CONFIRMATION_STREAK_DAYS and n_groups >= 2:
+            ship_eligible.append((name, verdict, streak))
+        else:
+            reason = []
+            if streak < CONFIRMATION_STREAK_DAYS:
+                reason.append(f"{streak}/{CONFIRMATION_STREAK_DAYS} days confirmed")
+            if n_groups < 2:
+                reason.append(f"only {n_groups} tool-group agreeing (need 2)")
+            still_confirming.append((name, verdict, "; ".join(reason)))
+
+    out.append("SHIP-ELIGIBLE (cleared 7-day + multi-tool gate):")
+    if ship_eligible:
+        for n, v, s in ship_eligible:
+            out.append(f"  • {n} — {v}  [{s}/7 days confirmed]")
+    else:
+        out.append("  • none")
+    out.append("")
+    out.append("Still confirming (per-cell tool says promote but gate not cleared):")
+    if still_confirming:
+        for n, v, why in still_confirming:
+            out.append(f"  • {n} — {v}  [{why}]")
+    else:
+        out.append("  • none")
+    out.append("")
+    out.append("New candidates (aggregate-only tools — cross-cut required before shipping):")
+    if candidates_new:
+        for n, v in candidates_new:
             out.append(f"  • {n} — {v}")
     else:
         out.append("  • none")
