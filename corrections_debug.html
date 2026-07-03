@@ -2480,8 +2480,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
     if (layerKey === "l4") return l4Fields.has(fieldKey);
     // L5 (synoptic-regime solar) is solar-radiation-only.
     if (layerKey === "l5") return fieldKey === "sr";
-    // L6 (cove regime correction) is temperature-only.
-    if (layerKey === "l6") return fieldKey === "t";
+    // L6 (cove regime correction) — dormant since 2026-07-01 v0.6.276;
+    // ENABLED flipped to False 07-03 v0.6.286. Treat as not-applied so
+    // Production line for T reads off L4 (the actual deepest live layer),
+    // not L6 (which would silently equal L4 since compute_cove_correction
+    // returns 0.0 unconditionally).
+    if (layerKey === "l6") return false;
     return false;
   };
   const grid = document.getElementById("accuracy-grid");
@@ -2569,11 +2573,11 @@ function renderAccuracySection(tsDoc, wxDoc) {
     if (fieldKey === "sr") {
       badges.push(`<span class="field-badge active">L5 ✓ synoptic</span>`);
     }
-    // L6 badge — temperature only; structurally absent from other fields.
-    // Mirrors `_layersFor()` which already filters L6 out of the chart legend
-    // for non-temperature cards.
+    // L6 badge — temperature only; dormant since 2026-07-01 v0.6.276 (both
+    // branches return 0.0; top-level ENABLED flipped to False in v0.6.286).
+    // Kept as "off" indicator so the T card doesn't imply L6 is active.
     if (fieldKey === "t") {
-      badges.push(`<span class="field-badge active">L6 ✓ microclimate</span>`);
+      badges.push(`<span class="field-badge inactive">L6 off (dormant)</span>`);
     }
     return `<div class="field-badges">${badges.join("")}</div>`;
   };
@@ -2589,7 +2593,10 @@ function renderAccuracySection(tsDoc, wxDoc) {
   const _layersFor = (fieldKey) =>
     LAYER_LINES.filter(l => {
       if (l.key === "l5") return fieldKey === "sr";
-      if (l.key === "l6") return fieldKey === "t";
+      // L6 dormant since 2026-07-01 v0.6.276 (both branches disabled;
+      // ENABLED flipped 07-03 v0.6.286). Filter out entirely so the T
+      // chart doesn't render an L6 line that sits on top of L4.
+      if (l.key === "l6") return false;
       return true;
     });
 
