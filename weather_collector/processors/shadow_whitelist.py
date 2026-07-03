@@ -51,26 +51,34 @@ def _band_avgs(arr):
 
 def _recommend(upper_mae, lower_mae, upper_bias, lower_bias):
     """Should `upper` layer be enabled vs `lower`?
-    Returns True if upper beats lower by ≥ SUSPECT_MARGIN in any band
-    AND upper's bias is no worse (in absolute value) than lower's.
+
+    Rebuilt 2026-07-03: previous rule was "any band wins by ≥3%," which
+    happily shipped fields that won at 24-47h while losing at 0-5h. That's
+    the exact aggregate-hides-per-band-damage failure mode we've been
+    fixing across the framework. New rule:
+      - At least one band wins by ≥ SUSPECT_MARGIN, AND
+      - NO band loses by ≥ SUSPECT_MARGIN.
+    Any losing band means the recommendation is "not shippable as a flat
+    field switch — consider a per-band skip cell instead."
     """
     if not upper_mae or not lower_mae:
         return False
-    # MAE: any band wins by ≥3%
     any_band_win = False
     for band in LEAD_BANDS:
         u = upper_mae.get(band[0])
         l = lower_mae.get(band[0])
         if u is None or l is None or l <= 0:
             continue
-        if (l - u) / l >= SUSPECT_MARGIN:
+        delta_pct = (l - u) / l   # positive = upper helps
+        if delta_pct <= -SUSPECT_MARGIN:
+            # Layer hurts this band. Not shippable as a flat field switch.
+            return False
+        if delta_pct >= SUSPECT_MARGIN:
             any_band_win = True
-            break
     if not any_band_win:
         return False
     # Bias: overall (lead 1-47) absolute value didn't get worse
     if upper_bias is None or lower_bias is None:
-        # Bias data missing for one side — fall back to MAE-only decision
         return True
     return abs(upper_bias) <= abs(lower_bias) + 0.05  # 0.05 slop
 

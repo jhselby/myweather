@@ -98,6 +98,16 @@ TOOL_QUESTION_GROUPS = {
 }
 CONFIRMATION_STREAK_DAYS = 7
 
+# Post-ship 14-day watch. Any live-layer change is monitored for verdict
+# flips during the 14 days after it ships. The ledger lives at
+# analysis/output/runlog/shipped_ledger.jsonl — one JSON line per ship.
+# Format: {"shipped_at": "YYYY-MM-DD", "script": "walkforward_l3l4_validator",
+#          "change": "human-readable description of what shipped",
+#          "verdict_at_ship": "the winning verdict text at ship time"}
+# Watch window is computed as shipped_at + POST_SHIP_WATCH_DAYS.
+POST_SHIP_WATCH_DAYS = 14
+SHIPPED_LEDGER_PATH = HERE / "shipped_ledger.jsonl"
+
 
 def extract_verdict(log_path: Path) -> str | None:
     """Return a one-line verdict string or None."""
@@ -288,6 +298,60 @@ def main():
     else:
         out.append("  • none")
     out.append("")
+
+    # Post-ship 14-day watch: scan shipped_ledger for any active-watch ships,
+    # flag any whose responsible script has flipped verdict since ship.
+    post_ship_alerts = []
+    if SHIPPED_LEDGER_PATH.exists():
+        from datetime import date as _dt_date, timedelta as _dt_td
+        today_date = _dt_date.today()
+        for line in SHIPPED_LEDGER_PATH.read_text().splitlines():
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            shipped_str = entry.get("shipped_at")
+            script = entry.get("script")
+            if not shipped_str or not script:
+                continue
+            try:
+                shipped_date = _dt_date.fromisoformat(shipped_str)
+            except ValueError:
+                continue
+            watch_until = shipped_date + _dt_td(days=POST_SHIP_WATCH_DAYS)
+            if today_date > watch_until:
+                continue  # watch window closed
+            # Fetch current verdict.
+            cur_info = current.get(script) or {}
+            cur_bucket = cur_info.get("bucket")
+            verdict_at_ship = entry.get("verdict_at_ship") or ""
+            # Divergence if current bucket is no longer "promote" (assuming ship
+            # was of a promote-verdict). Includes flip to kill or hold.
+            if cur_bucket not in ("promote", None):
+                days_since = (today_date - shipped_date).days
+                post_ship_alerts.append({
+                    "script": script,
+                    "shipped_at": shipped_str,
+                    "change": entry.get("change") or "(no change description)",
+                    "verdict_at_ship": verdict_at_ship,
+                    "current_verdict": cur_info.get("verdict") or "(no current verdict)",
+                    "days_since": days_since,
+                    "watch_remaining": (watch_until - today_date).days,
+                })
+
+    out.append("Post-ship 14-day watch alerts (verdict flipped after ship):")
+    if post_ship_alerts:
+        for a in post_ship_alerts:
+            out.append(f"  ⚠  {a['script']} — {a['change']}")
+            out.append(f"     shipped {a['shipped_at']} ({a['days_since']}d ago; {a['watch_remaining']}d watch remaining)")
+            out.append(f"     verdict at ship:   {a['verdict_at_ship']}")
+            out.append(f"     current verdict:   {a['current_verdict']}")
+    else:
+        out.append("  • none")
+    out.append("")
+
     out.append("New kills:")
     if kills_new:
         for n, v in kills_new:

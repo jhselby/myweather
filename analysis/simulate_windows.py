@@ -188,21 +188,33 @@ def main():
 
     def l5_verdict(acc):
         # acc: regime → [base, with_l5, n]
+        # Per-cell verdict: aggregate wins hide per-regime damage, so ship
+        # requires overall + ≥5 regimes winning + NO regime losing ≥3%. The
+        # loss-check catches the failure mode that pre-ship-gate was blind to
+        # in the June 28 L5 ship (ne_flow +32% worse showed up post-ship;
+        # the aggregate cleared the gate cleanly).
         total_b = sum(v[0] for v in acc.values())
         total_l5 = sum(v[1] for v in acc.values())
         total_n = sum(v[2] for v in acc.values())
         if total_n < 1000:
-            return ("INSUF", 0.0, 0, total_n)
+            return ("INSUF", 0.0, 0, 0, total_n)
         overall_pct = 100.0 * (total_b - total_l5) / total_b if total_b else 0.0
         regimes_winning = 0
+        regimes_losing  = 0
+        losing_regimes = []
         for r, (b, l5_, n) in acc.items():
             if n < 100 or b == 0:
                 continue
             pct = 100.0 * (b - l5_) / b
             if pct >= L5_REGIME_SHIP_PCT:
                 regimes_winning += 1
-        ship = (overall_pct >= L5_OVERALL_SHIP_PCT and regimes_winning >= L5_REGIMES_NEEDED)
-        return ("SHIP" if ship else "HOLD", overall_pct, regimes_winning, total_n)
+            elif pct <= -L5_REGIME_SHIP_PCT:
+                regimes_losing += 1
+                losing_regimes.append((r, pct))
+        ship = (overall_pct >= L5_OVERALL_SHIP_PCT
+                and regimes_winning >= L5_REGIMES_NEEDED
+                and regimes_losing == 0)
+        return ("SHIP" if ship else "HOLD", overall_pct, regimes_winning, regimes_losing, total_n)
 
     def r5_verdict(acc):
         b, w, n = acc.get("all", [0, 0, 0])
@@ -234,13 +246,13 @@ def main():
     print("-" * 96)
     l5_verdicts, r5_verdicts, r6_verdicts = [], [], []
     for i, c in enumerate(cutoffs):
-        v_l5, pct_l5, reg_l5, n_l5 = l5_verdict(L5[i])
+        v_l5, pct_l5, reg_l5, loss_l5, n_l5 = l5_verdict(L5[i])
         v_r5, pct_r5, n_r5 = r5_verdict(R5[i])
         v_r6, flag_r6, ev_r6 = r6_verdict(R6[i])
         l5_verdicts.append(v_l5)
         r5_verdicts.append(v_r5)
         r6_verdicts.append(v_r6)
-        l5_str = f"{v_l5}  {pct_l5:+5.1f}%  {reg_l5}/8r  n={n_l5:,}"
+        l5_str = f"{v_l5}  {pct_l5:+5.1f}%  {reg_l5}W/{loss_l5}L/8r  n={n_l5:,}"
         r5_str = f"{v_r5}  {pct_r5:+5.1f}%  n={n_r5:,}"
         r6_str = f"{v_r6}  {flag_r6}/{ev_r6} buckets"
         print(f"{c.isoformat():<14} {l5_str:<32} {r5_str:<24} {r6_str:<24}")

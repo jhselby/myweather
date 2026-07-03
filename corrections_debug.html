@@ -2397,21 +2397,45 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     }
     return n > 0 ? s / n : null;
   };
+  // Per-band average — used to surface the worst (field, band) cell so the
+  // banner doesn't hide short-lead damage inside a favorable overall mean.
+  const _avgBand = (arr, lo, hi) => {
+    if (!Array.isArray(arr)) return null;
+    let s = 0, n = 0;
+    for (let i = lo; i < hi && i < arr.length; i++) {
+      if (arr[i] != null) { s += arr[i]; n++; }
+    }
+    return n > 0 ? s / n : null;
+  };
+  const BANDS = [{ label: "0-5h", lo: 1, hi: 6 },
+                 { label: "6-11h", lo: 6, hi: 12 },
+                 { label: "12-23h", lo: 12, hi: 24 },
+                 { label: "24-47h", lo: 24, hi: 48 }];
   // Iterate every field with per-layer MAE data. Skip Brier-evaluated fields
   // (pp) since MAE isn't their decision metric — averaging them into the
   // stack-vs-raw delta would drag the number in a direction that doesn't
   // reflect user-visible skill.
   const rows = [];
+  const cellRows = [];  // per-(field, band) for worst-cell surfacing
   const mae = tsDoc.per_layer_mae_by_lead;
   for (const fieldKey of Object.keys(mae)) {
     if (brierFields.has(fieldKey)) continue;
     const layers = mae[fieldKey];
     const rawMae = _avg1to47(layers.l1);
     const nLayers = (tsDoc.per_layer_n_by_lead || {})[fieldKey];
-    const prodMae = _avg1to47(_prodArr(layers, fieldKey, nLayers));
+    const prodArr = _prodArr(layers, fieldKey, nLayers);
+    const prodMae = _avg1to47(prodArr);
     if (rawMae == null || prodMae == null || rawMae === 0) continue;
     const pct = (prodMae - rawMae) / rawMae * 100;
     rows.push({ field: fieldKey, pct });
+    // Per-band cells for worst-cell tracker.
+    for (const b of BANDS) {
+      const rawB = _avgBand(layers.l1, b.lo, b.hi);
+      const prodB = _avgBand(prodArr, b.lo, b.hi);
+      if (rawB == null || prodB == null || rawB === 0) continue;
+      cellRows.push({ field: fieldKey, band: b.label,
+                      pct: (prodB - rawB) / rawB * 100 });
+    }
   }
   if (rows.length === 0) {
     host.hidden = true;
@@ -2425,15 +2449,23 @@ function renderScorecardBanner(tsDoc, wxDoc) {
   // every field is at or better than raw.
   const best = rows.reduce((b, r) => (b == null || r.pct < b.pct ? r : b), null);
   const worst = rows.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
+  // Worst per-(field, band) cell — surfaces short-lead damage the field-level
+  // mean can hide. If Production is under water at any lead band, this shows
+  // it even when the overall banner is green.
+  const worstBand = cellRows.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
   const meanColor = meanPct < 0 ? "#4ad29a" : "#fb7c5c";
   const fmt = (r, color) => r
     ? `<code>${r.field}</code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`
     : "—";
+  const fmtBand = (r, color) => r
+    ? `<code>${r.field}</code>@${r.band} <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`
+    : "—";
   const bestCell = best && best.pct < 0 ? fmt(best, "#4ad29a") : "—";
   const worstCell = worst && worst.pct > 0 ? fmt(worst, "#fb7c5c") : "—";
+  const worstBandCell = worstBand && worstBand.pct > 0 ? fmtBand(worstBand, "#fb7c5c") : "—";
   host.hidden = false;
   host.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;align-items:baseline;">
+    <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:baseline;">
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Overall</div>
         <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong></div>
@@ -2447,12 +2479,16 @@ function renderScorecardBanner(tsDoc, wxDoc) {
         <div>${bestCell}</div>
       </div>
       <div>
-        <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Biggest regression</div>
+        <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Biggest field regression</div>
         <div>${worstCell}</div>
+      </div>
+      <div>
+        <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Worst cell (field@band)</div>
+        <div>${worstBandCell}</div>
       </div>
     </div>
     <div style="opacity:0.55;font-size:0.78em;margin-top:6px;">
-      Production MAE vs raw model, averaged over leads 1–47h. Lower is better. pp excluded (Brier, not MAE).
+      Production MAE vs raw model, averaged over leads 1–47h (Overall) or per lead band (Worst cell). Lower is better. pp excluded (Brier, not MAE). Worst-cell number surfaces short-lead damage that a favorable field-level average could hide.
     </div>
   `;
 }
