@@ -1,6 +1,19 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.286 • July 3, 2026</strong></summary>
+
+- **L5 per-lead delta fix.** `stamp_solar_correction` was computing a single Δ from the current tick's regime + current hour's raw solar value, then applying that scalar to all 48 forecast leads. When the collector ran below the sun-up threshold (pre-dawn / dawn — every ~6 AM tick this week), delta = 0 → no L5 correction anywhere in the 48h forecast. Live since L5 shipped 2026-06-28 v0.6.248. Fixed by iterating the `direct_radiation` array with each lead's own raw value + parsed local hour, matching the pattern `cove_correction.stamp_cove_correction()` already uses. L5 now fires at every daytime lead in every non-skip regime. Clean 7-day audit window closes ~2026-07-10.
+
+- **L6 ENABLED = False.** Both L6 branches were disabled inside `compute_cove_correction()` on 07-01 v0.6.276 (function returns 0.0 unconditionally), but the top-level `ENABLED` flag was never flipped. Kept `stamp_cove_correction` telemetry claiming `applied: True`, `describe_applicability()` reporting L6 as active, and the T-card badge showing "L6 ✓ microclimate." All cosmetic — L6 was already a no-op numerically — but the debug page + applicability map were lying. Flipped to `ENABLED = False` so telemetry matches reality.
+
+- **Walkforward L3+L4 validator rewrite — per-(field, regime, lead_band) shape.** Old aggregate output shape led to shipping decisions that missed regime-specific damage (see the h + L4 walkforward-vs-cross-cut incident: aggregate said +5.2% overall win; per-cell cross-cut said 21 L4 LOSES / 4 WIN). Rewrite emits per-cell verdicts under BOTH `state_fc` (skip-gate side) and `state_obs` (efficacy side) bindings. SHIP only when both views agree; ENT (entangled) flag when they disagree — a correction that's entangled with classifier accuracy can't be shipped clean by any skip table. Drop-in `L3_FIELDS` / `L4_FIELDS` / `SKIP_TABLE` proposal ready to paste into `decay_apply.py`.
+
+- **Debug page canon catch-up.** Version stamp, "Current pipeline state" date, "Since last curation" range, and the full list of v0.6.281–286 entries added. Stage 4 audit numbers refreshed (15 PASS / 11 WATCH / 22 FAIL vs previous 27/19/16). C1 calibration pass rate refreshed (50% vs previous 61.54%). L5 "Where we are" section rewritten with both 07-03 collector bug fixes + updated clean-window date (07-10, not 07-05). Upcoming Decisions block updated: h + sr to L4 held pending reconciliation between walkforward and l4_regime_lead_analysis (h) and clean data window (sr).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.262 • June 30, 2026</strong></summary>
 
 - **walk-forward L3/L4 validator bugfix.** The per-field recommendation logic in `analysis/walkforward_l3l4_validator.py` gated L4 evaluation on L3 earning its keep first — but for fields not in `L3_FIELDS` (cc, t, dp, h, ws, wg, sr, pr, pa), `forecast_l3 == forecast_l2` by construction, so L3 trivially "didn't earn the ≥2% threshold" and L4 was silently never evaluated. Result: the validator recommended `off_off` for nearly every field, including cc where L4 visibly beats baseline 36.06 → 32.78 (9.1%) at every lead band. Fix evaluates L3 and L4 INDEPENDENTLY: each compared to the best simpler state available. Added `off_on` as a valid recommendation (matches actual production state for fields like cc that are in L4_FIELDS but not L3_FIELDS). Re-running the validator now produces correct recommendations: **L3_ENABLED = {ch, cm}** (unchanged), **L4_ENABLED = {h, cc, ch}** — cc stays in L4 (the "drop-cc gate" was a phantom from the bug), and **h emerges as a new L4 candidate** (5.2% MAE win, 6.39 → 6.05). Status entry reframed accordingly. Bug-rationale comments preserved inline; docstring rewritten to describe the four-state validator and the L3-not-in-L3_FIELDS case explicitly.

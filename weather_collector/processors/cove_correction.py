@@ -26,7 +26,7 @@ import pytz
 
 
 TZ = pytz.timezone("America/New_York")
-ENABLED = True  # Shipped 2026-06-26 after 2/2 confirming reads on r5_cove_analysis.py.
+ENABLED = False  # Shipped 2026-06-26; both branches disabled 2026-07-01 v0.6.276 (compute_cove_correction returns 0.0); top-level flag flipped 2026-07-03 so badges + applicability map + telemetry stop lying. Re-enable only after Fix B refit against L2 baseline.
 
 # Octant labels in clockwise order from north.
 _OCTANTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]

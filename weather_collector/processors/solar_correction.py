@@ -293,18 +293,25 @@ def stamp_solar_correction(weather_data):
     }
 
     if ENABLED:
-        # When we flip the switch, apply the delta to direct_radiation array
-        # only at lead positions where raw_solar is above SUN_UP_THRESHOLD.
-        # Forecasts at lead L use the SAME regime label as right now — a
-        # simplification (the regime might evolve), but conservative and
-        # easy to audit. Refinement: project the regime forward.
+        # Per-lead: compute Δ from THIS lead's raw solar value + local hour,
+        # not the current-tick scalar. Prior implementation used one delta
+        # computed at hour_local=now → zero at every pre-sunrise / post-sunset
+        # collector tick (raw_solar_now < SUN_UP_THRESHOLD), and mis-applied
+        # a single hour's regime-bias to every forecast lead when it did
+        # fire. Regime is still current-tick (not projected forward).
         target = hourly.get("direct_radiation")
         if isinstance(target, list) and target:
-            # Preserve pre-L5 array so forecast_snapshot.py can attribute
-            # sr_l4 (post-decay) separately from sr_l5 (post-L5). Same
-            # pattern as corrected_temperature_post_l4 in cove_correction.py.
             hourly["direct_radiation_post_l4"] = list(target)
-            hourly["direct_radiation"] = [
-                round(v + delta, 1) if (v is not None and v >= SUN_UP_THRESHOLD) else v
-                for v in target
-            ]
+            times = hourly.get("times") or []
+            new_arr = []
+            for i, v in enumerate(target):
+                if v is None:
+                    new_arr.append(v)
+                    continue
+                try:
+                    h_i = int(str(times[i])[11:13])
+                except (TypeError, ValueError, IndexError):
+                    h_i = now_local.hour
+                lead_delta = compute_solar_correction(regime, v, hour_local=h_i)
+                new_arr.append(round(v + lead_delta, 1) if lead_delta else v)
+            hourly["direct_radiation"] = new_arr

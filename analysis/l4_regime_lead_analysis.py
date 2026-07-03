@@ -50,7 +50,7 @@ OUTPUT_PATH = os.path.join(SCRIPT_DIR, "output", "l4_regime_lead_analysis.txt")
 # discrepancy (chart shows dp L4 lowest by 0.3-1.3%; validator below 3% gate).
 # Recent pair rows (2026-06-30+) carry error_l4 for all fields; older rows
 # without it are skipped at the e3/e4-None check.
-FIELDS = ("ch", "cc", "dp")
+FIELDS = ("ch", "cc", "dp", "h")
 LEAD_BANDS = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
 FC_WIND_BINS = [
     ("0-3 calm",     0,   3),
