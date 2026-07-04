@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.294 • July 4, 2026</strong></summary>
+
+- **Debug page "Recent activity" block trimmed to a rolling 3-day window.** The block (formerly "Since last curation") had been accumulating every version since 2026-06-30 — 30+ ship entries by 07-04, defeating the purpose of a daily read. Retention rule codified: today + 2 prior calendar days of ship entries; older content lives in `docs/CHANGELOG.md`. Consolidated 07-02 → 07-04 into compact bullets (one bullet per day for related version bumps). Living-reference blocks retained: "Live-layer change gate — rule of the road" (added a second bullet explicitly reminding that the gate governs live-layer flips, not exploration — see `feedback-dont-over-gate`) and "Still open watches" (refreshed: 07-08 T convergence checkpoint added; h→L4 marked FROZEN; C1 calibration pass rate updated 50.00% → 52.63% from today's digest; C1 Stage 4 INSUFFICIENT-DATA re-check ~07-11 noted).
+
+- **Memory note added: `feedback-recent-activity-rolling-window`.** Codifies the retention rule so future curations don't let the block grow forever again.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.293 • July 4, 2026</strong></summary>
 
 - **Print-safe debug page.** Existing `@media print` block covered inline dark backgrounds starting with `#1`/`#2`/`#3`, but the "Current pipeline state" block at the top of Engineering updates uses `background:#0e1620` — `#0` prefix, slipped through, printed as light text on black. Extended attribute selectors to include `#0`; added a descendant rule so nested inline light colors on originally-dark blocks also get forced dark; added a final safety pass that forces any element with an inline `color:#7…#f` (dark-theme accent) to `#111` in print. Field-badge and band-table accent colors preserved (class-based rules retain their specificity). Nothing prints as light text on dark now.
