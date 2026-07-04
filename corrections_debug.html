@@ -882,7 +882,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.302 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.303 · click any sub-box header to collapse it.</div>
 
   <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-04</div>
@@ -1119,10 +1119,10 @@
     <div class="meta-line"><strong>No more applied-column highlighting.</strong> Under conditional gates (skip table for ws L3 in ne_flow / sea_breeze, Lsr skip regimes for sr in ne_flow / calm, marine-layer trigger) different rows in the same lead band took different paths through the stack — there's no single "applied" column to box. Per-layer columns stay as population-level diagnostics; the Production column is the only conditional-aware summary. If Production isn't the lowest line, that's the signal to check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
     <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.5">
       <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
-      <li><strong>Aggregate bias</strong> (orange): adds Layer 2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
-      <li><strong>Lead decay</strong> (light blue): adds Layer 3 — a historical per-lead bias correction learned from the pair log. Different bias for each lead hour: "this model tends to be 2°F too cool at lead 6, 1°F too warm at lead 12," etc.</li>
-      <li><strong>Diurnal</strong> (bright blue): adds Layer 4 — a hour-of-day bias correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). For every field except temperature and solar radiation, this is the final line.</li>
-      <li><strong>Synoptic-regime</strong> (amber): adds Layer 5 — a per-regime W/m² delta on direct solar radiation. The classifier looks at current wind direction, speed, pressure trend, hour, and temp; the regime label keys into a per-regime calibrated delta. Only present on the solar (sr) card; other fields have no Lsr line by construction. Shipped 2026-06-28 v0.6.248 after a 7/7 gate-clear streak. Skip regimes 2026-07-02 v0.6.280: ne_flow (+32% worse) and calm (+10% worse) return 0.0, so on those rows the Lsr line sits on the L4 line. Two collector bugs fixed 2026-07-03 (raw_direct_radiation pollution + per-lead scalar); Lsr MAE window catches up to L3/L4 around 2026-07-10 once post-fix pair rows fill the 7-day aggregation window.</li>
+      <li><strong>Aggregate bias</strong> (orange): adds L2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
+      <li><strong>Lead decay</strong> (light blue): adds L3 — a historical per-lead bias correction learned from the pair log. Different bias for each lead hour: "this model tends to be 2°F too cool at lead 6, 1°F too warm at lead 12," etc.</li>
+      <li><strong>Diurnal</strong> (bright blue): adds L4 — a hour-of-day bias correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). For every field except temperature and solar radiation, this is the final line.</li>
+      <li><strong>Synoptic-regime</strong> (amber): adds Lsr — a per-regime W/m² delta on direct solar radiation. The classifier looks at current wind direction, speed, pressure trend, hour, and temp; the regime label keys into a per-regime calibrated delta. Only present on the solar (sr) card; other fields have no Lsr line by construction. Shipped 2026-06-28 v0.6.248 after a 7/7 gate-clear streak. Skip regimes 2026-07-02 v0.6.280: ne_flow (+32% worse) and calm (+10% worse) return 0.0, so on those rows the Lsr line sits on the L4 line. Two collector bugs fixed 2026-07-03 (raw_direct_radiation pollution + per-lead scalar); Lsr MAE window catches up to L3/L4 around 2026-07-10 once post-fix pair rows fill the 7-day aggregation window.</li>
       <li><strong>Microclimate</strong> (mint green): <em>Lt dormant since 2026-07-01 v0.6.276 — both branches return 0.0. The Lt line on the T card will sit exactly on the L4 line by construction until Fix B ships. See <a href="#sec-rd-lt">R&amp;D → Lt</a> for the full dormant-layer entry.</em></li>
     </ul>
     <div class="meta-line"><strong>Why lines often lie on top of each other.</strong> Two different reasons, and the badges above each chart tell you which:
@@ -1231,8 +1231,8 @@
 
 <div id="applicability-content"></div>
 
-<!-- ───────────────────── Layer 1 ───────────────────── -->
-<h2 class="section" id="sec-layer1">Layer 1 — Raw model (HRRR / GFS)</h2>
+<!-- ───────────────────── L1 ───────────────────── -->
+<h2 class="section" id="sec-layer1">L1 — Raw model (HRRR / GFS)</h2>
 <div class="layer-info-text">
   <p class="layer-summary">The bare government weather model. Knows nothing about Wyman Cove specifically. Everything below corrects what it gets wrong here.</p>
   <details class="layer-methodology"><summary>About the raw model</summary>
@@ -1242,8 +1242,8 @@
 </div>
 <div id="grid-raw" class="grid"></div>
 
-<!-- ───────────────────── Layer 2 ───────────────────── -->
-<h2 class="section" id="sec-layer2">Layer 2 — Aggregate-bias correction (local station network)</h2>
+<!-- ───────────────────── L2 ───────────────────── -->
+<h2 class="section" id="sec-layer2">L2 — Aggregate-bias correction (local station network)</h2>
 <div class="layer-info-text">
   <p class="layer-summary">What our <span id="layer2NetworkCount">66</span> nearby weather stations say the model is getting wrong <em>right now</em> — and how much of that signal we trust.</p>
   <details class="layer-methodology"><summary>How the network correction is built</summary>
@@ -1283,11 +1283,11 @@
 <div id="layer2-leaddecay-meta" class="layer-info-text">loading…</div>
 <div id="layer2-leaddecay-wrap" class="chart-wrap" style="height:260px;"><canvas id="layer2-leaddecay-canvas"></canvas></div>
 
-<h3 class="subsection">2e. Post-aggregate-bias forecast — what gets passed to Layer 3</h3>
+<h3 class="subsection">2e. Post-aggregate-bias forecast — what gets passed to L3</h3>
 <div id="grid-layer2" class="grid"></div>
 
-<!-- ───────────────────── Layer 3 ───────────────────── -->
-<h2 class="section" id="sec-layer3">Layer 3 — Lead-decay correction</h2>
+<!-- ───────────────────── L3 ───────────────────── -->
+<h2 class="section" id="sec-layer3">L3 — Lead-decay correction</h2>
 
 <!-- 1. What it does -->
 <div class="layer-info-text">
@@ -1303,7 +1303,7 @@
   <div class="meta-line">Held-out MAE audit picks the fields where L3 actually beats L2 — currently <strong>wind speed, gusts, high cloud, mid cloud</strong>. Other fields stay off because the correction at best ties (temperature, pressure) or actively hurts (humidity, dew point, solar, low cloud, precip). <strong>POP</strong> is the special case: it's evaluated by <em>Brier score</em>, not MAE, so the audit's MAE-based ⚠ rule is suppressed for it — the v0.6.20 calibration analysis showed flat-additive correction cuts Brier 5%. Currently applied: <span id="banner-l3-fields">—</span>. Brier-evaluated: <span id="banner-l3-brier">—</span>. See <a href="#sec-applicability">Applicability map</a> for live triggers and per-field gates.</div>
 </div>
 <div id="banner-l3-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-top:8px;" hidden>
-  <strong style="color:#d4a373;">⏸ Layer 3 — applicability state changed.</strong>
+  <strong style="color:#d4a373;">⏸ L3 — applicability state changed.</strong>
 </div>
 
 <!-- 3. Live state -->
@@ -1325,8 +1325,8 @@
   <div id="grid-history" class="grid"></div>
 </details>
 
-<!-- ───────────────────── Layer 4 ───────────────────── -->
-<h2 class="section" id="sec-layer4">Layer 4 — Diurnal correction</h2>
+<!-- ───────────────────── L4 ───────────────────── -->
+<h2 class="section" id="sec-layer4">L4 — Diurnal correction</h2>
 
 <!-- 1. What it does -->
 <div class="layer-info-text">
@@ -1342,7 +1342,7 @@
   <div class="meta-line">L4 corrects the portion of forecast error that repeats with time of day. It is the hardest layer to earn because the same hour-of-day bias must recur consistently across many days. Most fields fail that test because their dominant errors are driven by changing weather regimes (air mass, cloud regime, frontal timing, etc.) rather than the clock. Currently applied to <strong>{ch, cc}</strong> — the two fields showing a stable enough diurnal signal to pass the held-out audit. Fits for the remaining fields are retained in the calibration sections below as diagnostics. See <a href="#sec-applicability">Applicability map</a> for live gates.</div>
 </div>
 <div id="banner-l4-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-top:8px;" hidden>
-  <strong style="color:#d4a373;">⏸ Layer 4 — applicability state changed.</strong>
+  <strong style="color:#d4a373;">⏸ L4 — applicability state changed.</strong>
 </div>
 
 <!-- 3. Live state -->
@@ -1364,7 +1364,7 @@
   <div class="meta-line" style="opacity:0.7;">L4 doesn't currently maintain a separate fit-history view — the curves-over-time panel above serves both "current fit" and "how it's changed" roles. Split out if/when a dedicated current-fit snapshot ships.</div>
 </div>
 
-<!-- ───────────────────── Layer 5 — Synoptic-regime correction (solar) ───────────────────── -->
+<!-- ───────────────────── Lsr — Synoptic-regime correction (solar specialist) ───────────────────── -->
 <h2 class="section" id="sec-layer5">Lsr — Synoptic-regime correction (solar specialist)</h2>
 
 <!-- 1. What it does -->
@@ -1932,9 +1932,9 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
 // detail lives inside Layer 2's own panel, not in the cross-layer view.
 const DRILL_LAYERS = [
   { key: "raw", label: "Raw model",                   color: "rgba(138,147,163,0.55)", dash: [4,4] },
-  { key: "l2",  label: "+ Layer 2 (aggregate bias)",  color: "rgba(170,180,200,1)",    dash: [] },
-  { key: "l3",  label: "+ Layer 3 (lead decay)",      color: "rgba(110,180,235,1)",    dash: [] },
-  { key: "l4",  label: "+ Layer 4 (diurnal)",         color: "rgba(74,163,255,1)",     dash: [] },
+  { key: "l2",  label: "+ L2 (aggregate bias)",       color: "rgba(170,180,200,1)",    dash: [] },
+  { key: "l3",  label: "+ L3 (lead decay)",           color: "rgba(110,180,235,1)",    dash: [] },
+  { key: "l4",  label: "+ L4 (diurnal)",              color: "rgba(74,163,255,1)",     dash: [] },
 ];
 let _drillCharts = [];  // one Chart.js instance per selected field
 let _drillState = {
@@ -5214,7 +5214,7 @@ async function load() {
       buildDiurnalHistoryChart(card.querySelector("canvas"), f, history, nBins);
     }
   } else {
-    showStatus("status-diurnal", "No diurnal_corrections_history.json yet — appears after the next Fitter run (the v0.6.14+ Fitter writes this). Stable shapes across days → diurnal pattern is real and Layer 5 corrections are stable.");
+    showStatus("status-diurnal", "No diurnal_corrections_history.json yet — appears after the next Fitter run (the v0.6.14+ Fitter writes this). Stable shapes across days → diurnal pattern is real and Lsr corrections are stable.");
   }
 }
 

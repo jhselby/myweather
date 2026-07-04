@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.303 • July 4, 2026</strong></summary>
+
+- **Section-title standardization.** All layer section headers now read as `L{X} — {what it does}` for consistency. "Layer 1 — Raw model" → "L1 — Raw model"; same for L2, L3, L4. Lsr already followed the format. Prose in the accuracy-chart color-key legend, the "post-aggregate-bias" subsection header, the L3/L4 applicability-change banners, and the chart-legend labels for drill-down layers were all switched from "Layer N" to "L{N}." One user-facing status message that referenced "Layer 5 corrections" now correctly reads "Lsr corrections." HTML section-boundary comments switched to the new style. Non-user-facing CSS and JS comments were left alone; they aren't visible.
+- **Convention recap in memory.** `project_specialists_vs_layers` extended: **names are stable across ENABLED state.** Lsr is Lsr on or off; Lc will still be Lc after ENABLED=True. Visual "what's firing this tick" belongs to display state (badges, colors, the tri-column band's ✓/○), not to the name. Codified after a brief detour today where I considered on/off-drives-numbering and Joe correctly reverted after seeing it brought back the bookkeeping-in-terminology problem the scope rule was invented to solve.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.302 • July 4, 2026</strong></summary>
 
 - **G1 = candidates only.** Lt and Lsr live-state panels moved to their own sections. Lt's per-tick card now renders inside the R&D → Lt subsection (where the dormant-layer entry already lived); Lsr's card renders inside the Lsr h2 section under "Live state — what Lsr is doing this tick" (which had prose but no data view before). G1 shows only Lc (the actual gated candidate). Renamed G1 summary to "what Lc would do this tick."
