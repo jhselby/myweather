@@ -1,6 +1,19 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.296 • July 4, 2026</strong></summary>
+
+- **Specialist reclass — debug page rename.** Codified naming convention: core stack layers are numbered L1–L{N} (multi-field, general-dimension corrections); specialists get letter-suffix names describing what they act on. Applied to the debug page canon: current L5 synoptic-regime solar → **Lsr**; current L6 cove microclimate → **Lt**. 120 references renamed across corrections_debug.html: section headers, TOC, tri-column current-state band, Production Stack, Applicability map, Retired hypotheses, chart labels, badges, and prose. Anchor IDs (`sec-layer5`, `sec-archive-l6`) preserved for URL stability; only display text changed.
+
+- **Naming convention (dynamic).** A specialist earns a numbered slot when it proves broadly applicable (Lsr → L{N} if it later covers more than one field). A numbered layer loses its number if it demotes to specialist scope. Naming reflects current architectural fit, not historical branding. Codified in memory `project-specialists-vs-layers`.
+
+- **Frees the L5 slot for the next core layer.** Design conversation this evening settled the architectural home for the Cloud saturation-unbiasing correction (`h_cloud_floor_ceiling.py` — cl 95-100 +64.7pp, 3 direction-stable reads). It ships as new core **L5** (cloud-scoped, forecast-value axis; peer of L3-lead and L4-hour in the pair-log family; post-L4, pre-Lsr). Stage 2 wiring is the next ship. All references to the discarded "L2.5" and "L3-axis extension" naming proposals removed from the debug page.
+
+- **Collector-side rename queued.** `solar_correction.py`, `cove_correction.py`, frontend JS badge strings, and analysis scripts still contain L5/L6 references. Those ride along with the L5-cloud-saturation ship since they need coordinated updates and there's no urgency to touch them in isolation. Stamp keys (e.g. `weather_data["solar_correction"]`) stay stable for pair-log parser compatibility.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.295 • July 4, 2026</strong></summary>
 
 - **Tri-column current-state band added above Engineering updates.** Three cards side-by-side (stack vertically on mobile): 🟢 What's running, 🟡 What's improving, 🔵 What's being evaluated next. Answers the "where do things stand right now" question in one glance without scrolling through history. Sits above the fold, right below the auto-computed scorecard banner. Retention rules noted in the section comment: What's running = live state, no history; What's improving = active Stage 1 only; What's being evaluated next = forward calendar + frozen items + post-ship watches.
