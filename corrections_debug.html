@@ -760,6 +760,121 @@
      worst regression called out. Auto-computed each Fitter cycle. -->
 <div id="scorecard-banner" class="layer-info-text" style="border-color:#1f3a2a;background:#101913;margin-bottom:14px;padding:10px 14px;font-size:0.95em;" hidden></div>
 
+<!-- ───────────────────── Tri-column current-state band ─────────────────────
+     Forward-looking summary of the three lenses that matter for a daily
+     read: what's running, what's improving, what's being evaluated next.
+     Hand-curated (like Engineering updates below); update when a layer
+     flips, a Stage 1 candidate moves, or a date on the calendar advances.
+     Stays above the fold so the reader gets state-of-the-work in one
+     glance without scrolling. Retention rule for the three lists:
+       - What's running: current live state, no history (kill trail below)
+       - What's improving: active Stage 1 candidates only (retired below)
+       - What's being evaluated next: forward calendar + frozen items -->
+<section id="tri-column-band" style="margin:0 0 20px 0;">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;">
+
+    <!-- What's running -->
+    <div style="border:1px solid #1f3a2a;background:#0d1512;padding:12px 14px;border-radius:8px;">
+      <div style="color:#4ad29a;font-weight:600;margin-bottom:8px;font-size:0.95em;">🟢 What's running</div>
+      <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
+        <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Stack</div>
+        <ul style="margin:0 0 8px 16px;padding:0;">
+          <li>L2 mesonet blend: t · h · dp · cc · cl · cm · ch · ws · wg <span style="opacity:0.7;">(pr off 07-01)</span></li>
+          <li>L3 lead-decay: ws · wg · ch · cm · pp <span style="opacity:0.7;">(skip: ws in ne_flow all bands + sea_breeze 0-11h)</span></li>
+          <li>L4 diurnal: <code>{ch, cc}</code></li>
+          <li>L5 synoptic (sr): skip ne_flow + calm <span style="opacity:0.7;">· L6 dormant</span></li>
+        </ul>
+        <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Production vs raw</div>
+        <ul style="margin:0 0 8px 16px;padding:0;">
+          <li><span style="color:#4ad29a;">✓ ch −46%</span>  ·  <span style="color:#4ad29a;">wg −16%</span>  ·  <span style="color:#4ad29a;">cc −15%</span></li>
+          <li><span style="color:#4ad29a;">✓ cm −7%</span>  ·  <span style="color:#4ad29a;">dp −6%</span>  ·  <span style="color:#4ad29a;">h −2%</span></li>
+          <li><span style="color:#e0d472;">⚠ ws +25.7% (open regression)</span></li>
+          <li><span style="opacity:0.85;">⏳ t, pr in-flight → 07-08 · sr → 07-10</span></li>
+        </ul>
+        <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Guards</div>
+        <ul style="margin:0 0 0 16px;padding:0;">
+          <li><span style="color:#4ad29a;">🟢 raw-baseline verifier: healthy</span> <span style="opacity:0.7;">(no drift)</span></li>
+          <li><span style="color:#4ad29a;">🟢 live-layer change gate active</span> <span style="opacity:0.7;">(7-day / 2-tool / per-cell / no-ENT)</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- What's improving -->
+    <div style="border:1px solid #3a2f1f;background:#15120d;padding:12px 14px;border-radius:8px;">
+      <div style="color:#e0d472;font-weight:600;margin-bottom:8px;font-size:0.95em;">🟡 What's improving</div>
+      <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
+        <div style="opacity:0.7;font-size:0.9em;margin-bottom:6px;">5 active Stage 1 candidates · all auto-run in daily digest</div>
+
+        <div style="padding:6px 8px;border-left:2px solid #4ad29a;background:#0f1712;margin-bottom:6px;border-radius:2px;">
+          <div><strong>Cloud saturation-unbiasing</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ ship-ready</span></div>
+          <div style="opacity:0.85;">cl 95-100 <strong>+64.7pp</strong> · 3 direction-stable reads</div>
+          <div style="color:#9ab0a0;">→ L2.5 vs L3-axis design decision</div>
+        </div>
+
+        <div style="padding:6px 8px;border-left:2px solid #e0d472;background:#171410;margin-bottom:6px;border-radius:2px;">
+          <div><strong>C1h trend-direction</strong></div>
+          <div style="opacity:0.85;">cl rising +922% n=238 · cm rising +294% n=376</div>
+          <div style="color:#9ab0a0;">→ write <code>h_c1h_orthogonality.py</code> vs C1f + C1e</div>
+        </div>
+
+        <div style="padding:6px 8px;border-left:2px solid #a08070;background:#171310;margin-bottom:6px;border-radius:2px;">
+          <div><strong>dp depression regime</strong> <span style="color:#e0d472;font-size:0.85em;">⚠ decaying</span></div>
+          <div style="opacity:0.85;">frontal −2.19 → −1.98 → <strong>−1.51°F</strong></div>
+          <div style="color:#9ab0a0;">→ decide action floor before signal falls out</div>
+        </div>
+
+        <div style="padding:6px 8px;border-left:2px solid #7fb3ff;background:#101318;margin-bottom:6px;border-radius:2px;">
+          <div><strong>C1d cloud disagreement</strong> <span style="color:#e0d472;font-size:0.85em;">resurrected</span></div>
+          <div style="opacity:0.85;">KILL → MIXED (3 ortho / 20 redundant / 9 other)</div>
+          <div style="color:#9ab0a0;">→ 7-day narrow-promote gate: day 1/7</div>
+        </div>
+
+        <div style="padding:6px 8px;border-left:2px solid #7fb3ff;background:#101318;border-radius:2px;">
+          <div><strong>Pre-frontal cloud widening</strong> <span style="color:#e0d472;font-size:0.85em;">new</span></div>
+          <div style="opacity:0.85;">MIXED (2 orthogonal cells across both checks)</div>
+          <div style="color:#9ab0a0;">→ 7-day narrow-promote gate: day 1/7</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- What's being evaluated next -->
+    <div style="border:1px solid #1f2f3a;background:#0d1218;padding:12px 14px;border-radius:8px;">
+      <div style="color:#7fb3ff;font-weight:600;margin-bottom:8px;font-size:0.95em;">🔵 What's being evaluated next</div>
+      <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
+        <div style="color:#9ab0a0;font-weight:600;margin-bottom:4px;">Calendar</div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-bottom:8px;">
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Mon 07-06</div>
+          <div>ws/pp L3 strip? Skip cells only, don't drop.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Mon 07-08</div>
+          <div>T Production convergence check (7-day fill; L6 rows aged out).</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-10</div>
+          <div>sr clean read · L5 skip regime re-audit.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-10</div>
+          <div>ws / wg L3 strip earliest ship (day 8/7 gate).</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-11</div>
+          <div>C1 Stage 4 multi-axis re-check (was INSUFFICIENT).</div>
+        </div>
+
+        <div style="color:#a08070;font-weight:600;margin-bottom:4px;">Frozen</div>
+        <ul style="margin:0 0 8px 16px;padding:0;">
+          <li><strong>h → L4</strong> — walkforward SHIP vs <code>l4_regime_lead_analysis</code> KILL disagree. Reconcile before touching.</li>
+          <li><strong>sr → L4</strong> — baseline corrupted through 07-10.</li>
+          <li><strong>L5 skip regime changes</strong> — re-audit 07-10, not before.</li>
+        </ul>
+
+        <div style="color:#9ab0a0;font-weight:600;margin-bottom:4px;">Post-ship watches</div>
+        <ul style="margin:0 0 0 16px;padding:0;">
+          <li>⚠ L5 SHIP → HOLD (bug-contaminated verdicts) · self-resolves ~07-10</li>
+          <li>⚠ L5 skip regimes (07-02) — same underlying cause · same resolution</li>
+          <li>v0.6.291 verifier — 14-day watch; healthy since ship</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+  <div style="margin-top:8px;font-size:0.8em;opacity:0.7;text-align:center;">Details for each cell live in the sections below · <a href="#sec-status" style="color:#7fb3ff;">Engineering updates</a> · <a href="#sec-accuracy" style="color:#7fb3ff;">Accuracy</a> · <a href="#sec-research" style="color:#7fb3ff;">Research &amp; Diagnostics</a></div>
+</section>
+
 <a id="sec-status"></a>
 <!-- ───────────────────── Status panel ─────────────────────
      Hand-curated orientation for an outside reviewer. Update whenever
@@ -768,7 +883,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.294 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.295 · click any sub-box header to collapse it.</div>
 
   <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-04</div>
@@ -1279,15 +1394,19 @@
 <h3 class="subsection">Engineering status</h3>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#0e1620;">
   <div class="meta-line" style="margin-bottom:4px;"><strong style="color:#7fb3ff;">Where we are (2026-07-04):</strong></div>
-  <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;">
-    <li><strong>Shipped 2026-06-28 v0.6.248</strong> — <code>ENABLED=True</code> after the L5 gate cleared 7/7 ship days (12-cycle SHIP streak).</li>
-    <li><strong>Attribution fix v0.6.249</strong> — initial ship was silently absorbing L5 into the L4 column (same bug shape as the L6-absorbed-into-L2 issue). Fixed by preserving <code>direct_radiation_post_l4</code> before mutation and adding <code>sr_l5</code> to the snapshot writer.</li>
-    <li><strong>Chart wiring v0.6.250</strong> — sr card now shows an amber L5 line + column + "L5 ✓ synoptic" badge. <code>_layersFor()</code> filters the L5 entry to the sr card only.</li>
-    <li><strong>Skip regimes v0.6.280 (2026-07-02)</strong> — ne_flow (+32.3% worse) and calm (+10.7% worse) now return 0.0 in <code>compute_solar_correction</code>. Per today's <code>l5_solar_analysis</code>: overall L5 net −7.5% MAE across 8 regimes, but only 3 clear the +3% improvement threshold (sea_breeze, nw_flow, se_flow) — verdict HOLD gates further refinement, not the shipped layer.</li>
-    <li><strong>Raw-array pollution fix v0.6.285 (2026-07-02 evening)</strong> — <code>raw_direct_radiation</code> was being captured AFTER L5 mutated <code>direct_radiation</code>, so the "raw" baseline in the debug page + Production accumulator was itself L5-corrected on all post-06-28 pair rows. Fixed by extracting raw preservation into <code>preserve_raw_forecast_arrays()</code> and calling it BEFORE stamp_solar_correction. <strong>Structural guard added v0.6.291 (2026-07-04):</strong> <code>weather_collector/processors/raw_integrity.py</code> deep-copies every raw-counterpart hourly array at pipeline start and asserts equality at pipeline end. Any future layer that mutates a source array before its <code>raw_*</code> copy exists will now fire a drift event on the next tick and land in the daily digest, instead of hiding for a week.</li>
-    <li><strong>Per-lead delta fix 2026-07-03</strong> — <code>stamp_solar_correction</code> was computing a single delta from the CURRENT tick's raw solar + hour, then applying that scalar to all 48 forecast leads. At pre-dawn / dawn ticks the current raw was below the 50 W/m² sun-up threshold, delta = 0, no L5 applied to any lead. Fixed by iterating over the forecast array with each lead's own raw value + parsed local hour. L5 now fires at every daytime lead in every non-skip regime.</li>
-    <li><strong>Audit status:</strong> divergence-report row says AGREE (production matches script verdict). <code>L5_VALID_FROM = 2026-06-28T07:05</code>, but the two collector bugs above mean the pair-log record of L5 in the wild before 07-03 is only a sliver of what L5 will do post-fix. First actually clean 7-day audit window closes ~2026-07-10. Today's <code>simulate_windows</code> HOLD verdict + today's <code>l5_solar_analysis</code> HOLD verdict both read against the corrupted window — treat as informational until the 07-10 re-run.</li>
-  </ul>
+  <div style="font-size:0.92em;line-height:1.55;margin-bottom:6px;">L5 lives in production for sr. Skip regimes: ne_flow + calm. Two collector bugs fixed 2026-07-02 → 2026-07-03; first clean 7-day audit window closes <strong>~2026-07-10</strong>. Structural raw-baseline verifier (v0.6.291) now catches the mutation class that hid the raw-column pollution for a week.</div>
+  <details style="margin-top:6px;">
+    <summary style="cursor:pointer;color:#7fb3ff;font-size:0.9em;opacity:0.85;">Full L5 shipped-history log (v0.6.248 → v0.6.291)</summary>
+    <ul style="margin:8px 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;">
+      <li><strong>Shipped 2026-06-28 v0.6.248</strong> — <code>ENABLED=True</code> after the L5 gate cleared 7/7 ship days (12-cycle SHIP streak).</li>
+      <li><strong>Attribution fix v0.6.249</strong> — initial ship was silently absorbing L5 into the L4 column (same bug shape as the L6-absorbed-into-L2 issue). Fixed by preserving <code>direct_radiation_post_l4</code> before mutation and adding <code>sr_l5</code> to the snapshot writer.</li>
+      <li><strong>Chart wiring v0.6.250</strong> — sr card now shows an amber L5 line + column + "L5 ✓ synoptic" badge. <code>_layersFor()</code> filters the L5 entry to the sr card only.</li>
+      <li><strong>Skip regimes v0.6.280 (2026-07-02)</strong> — ne_flow (+32.3% worse) and calm (+10.7% worse) now return 0.0 in <code>compute_solar_correction</code>. Per today's <code>l5_solar_analysis</code>: overall L5 net −7.5% MAE across 8 regimes, but only 3 clear the +3% improvement threshold (sea_breeze, nw_flow, se_flow) — verdict HOLD gates further refinement, not the shipped layer.</li>
+      <li><strong>Raw-array pollution fix v0.6.285 (2026-07-02 evening)</strong> — <code>raw_direct_radiation</code> was being captured AFTER L5 mutated <code>direct_radiation</code>, so the "raw" baseline in the debug page + Production accumulator was itself L5-corrected on all post-06-28 pair rows. Fixed by extracting raw preservation into <code>preserve_raw_forecast_arrays()</code> and calling it BEFORE stamp_solar_correction. <strong>Structural guard added v0.6.291 (2026-07-04):</strong> <code>weather_collector/processors/raw_integrity.py</code> deep-copies every raw-counterpart hourly array at pipeline start and asserts equality at pipeline end. Any future layer that mutates a source array before its <code>raw_*</code> copy exists will now fire a drift event on the next tick and land in the daily digest, instead of hiding for a week.</li>
+      <li><strong>Per-lead delta fix 2026-07-03</strong> — <code>stamp_solar_correction</code> was computing a single delta from the CURRENT tick's raw solar + hour, then applying that scalar to all 48 forecast leads. At pre-dawn / dawn ticks the current raw was below the 50 W/m² sun-up threshold, delta = 0, no L5 applied to any lead. Fixed by iterating over the forecast array with each lead's own raw value + parsed local hour. L5 now fires at every daytime lead in every non-skip regime.</li>
+      <li><strong>Audit status:</strong> divergence-report row says AGREE (production matches script verdict). <code>L5_VALID_FROM = 2026-06-28T07:05</code>, but the two collector bugs above mean the pair-log record of L5 in the wild before 07-03 is only a sliver of what L5 will do post-fix. First actually clean 7-day audit window closes ~2026-07-10. Today's <code>simulate_windows</code> HOLD verdict + today's <code>l5_solar_analysis</code> HOLD verdict both read against the corrupted window — treat as informational until the 07-10 re-run.</li>
+    </ul>
+  </details>
 </div>
 
 <!-- 5. Developer notes (collapsed) -->

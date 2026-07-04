@@ -1,6 +1,21 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.295 • July 4, 2026</strong></summary>
+
+- **Tri-column current-state band added above Engineering updates.** Three cards side-by-side (stack vertically on mobile): 🟢 What's running, 🟡 What's improving, 🔵 What's being evaluated next. Answers the "where do things stand right now" question in one glance without scrolling through history. Sits above the fold, right below the auto-computed scorecard banner. Retention rules noted in the section comment: What's running = live state, no history; What's improving = active Stage 1 only; What's being evaluated next = forward calendar + frozen items + post-ship watches.
+
+- **What's running card.** Compact stack (L2/L3/L4/L5 with skip qualifiers, L6 dormant), Production vs raw scorecard (6 stable wins + 1 open regression + in-flight), guards row (verifier healthy, live-layer change gate active).
+
+- **What's improving card.** Mini stacked cards for the 5 active Stage 1 candidates, each with today's read + concrete next action. Ship-ready Cloud saturation-unbiasing gets top slot with a green left-border; dp depression regime gets a "decaying" amber flag noting the frontal bias is shrinking; C1d resurrected and pre-frontal flagged as narrow-promote candidates with day 1/7 gate progress.
+
+- **What's being evaluated next card.** Calendar grid (07-06, 07-08, 07-10, 07-11) with what fires when + expected action. Frozen bucket (h→L4, sr→L4, L5 skip regime changes) below. Post-ship watches (L5 SHIP→HOLD alerts, v0.6.291 verifier watch) at bottom.
+
+- **L5 "Engineering status" shipped-history log collapsed.** The seven historical bullets (v0.6.248 initial ship through v0.6.286 per-lead delta fix) now live inside a closed `<details>` block. Section summary compresses to a one-liner + the current-state facts (skip regimes, clean audit window date, verifier note). Reduces vertical noise while keeping the full history a click away.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.294 • July 4, 2026</strong></summary>
 
 - **Debug page "Recent activity" block trimmed to a rolling 3-day window.** The block (formerly "Since last curation") had been accumulating every version since 2026-06-30 — 30+ ship entries by 07-04, defeating the purpose of a daily read. Retention rule codified: today + 2 prior calendar days of ship entries; older content lives in `docs/CHANGELOG.md`. Consolidated 07-02 → 07-04 into compact bullets (one bullet per day for related version bumps). Living-reference blocks retained: "Live-layer change gate — rule of the road" (added a second bullet explicitly reminding that the gate governs live-layer flips, not exploration — see `feedback-dont-over-gate`) and "Still open watches" (refreshed: 07-08 T convergence checkpoint added; h→L4 marked FROZEN; C1 calibration pass rate updated 50.00% → 52.63% from today's digest; C1 Stage 4 INSUFFICIENT-DATA re-check ~07-11 noted).
