@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.297 • July 4, 2026</strong></summary>
+
+- **Cloud saturation-unbiasing reclassified as specialist Lc.** Corrected the specialist convention: the distinguishing test is **universal vs. domain-scoped**, not single-field vs. multi-field. Cloud saturation hits four fields (cc/cl/cm/ch) but is a specialist because the physics (bounded-percentage sigmoid saturation) is inherent to cloud fields — won't apply to wind, temperature, precipitation. Renamed the 5 remaining L5 references on the debug page to Lc. The L5 slot is again unused. Sibling of Lsr (solar) and Lt (temperature) in the specialist family.
+
+- **Memory updated: `project-specialists-vs-layers`.** Distinguishing rule made explicit: universal (any field via whitelist) → numbered core; domain-scoped (physics bound to a field type) → letter-suffix specialist. Corrects the earlier "multi-field = core" framing that would have put Lc in the wrong slot.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.296 • July 4, 2026</strong></summary>
 
 - **Specialist reclass — debug page rename.** Codified naming convention: core stack layers are numbered L1–L{N} (multi-field, general-dimension corrections); specialists get letter-suffix names describing what they act on. Applied to the debug page canon: current L5 synoptic-regime solar → **Lsr**; current L6 cove microclimate → **Lt**. 120 references renamed across corrections_debug.html: section headers, TOC, tri-column current-state band, Production Stack, Applicability map, Retired hypotheses, chart labels, badges, and prose. Anchor IDs (`sec-layer5`, `sec-archive-l6`) preserved for URL stability; only display text changed.
