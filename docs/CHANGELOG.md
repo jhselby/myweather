@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.302 • July 4, 2026</strong></summary>
+
+- **G1 = candidates only.** Lt and Lsr live-state panels moved to their own sections. Lt's per-tick card now renders inside the R&D → Lt subsection (where the dormant-layer entry already lived); Lsr's card renders inside the Lsr h2 section under "Live state — what Lsr is doing this tick" (which had prose but no data view before). G1 shows only Lc (the actual gated candidate). Renamed G1 summary to "what Lc would do this tick."
+- **JS refactor.** Split the old `renderGatedCandidatesSection` into `renderLtLiveState`, `renderLsrLiveState`, and a slimmed-down `renderGatedCandidatesSection` that only handles Lc. Shared badge helper factored out. Dispatch loop calls all three each tick.
+- **Semantic**: G1 is for candidates awaiting a promotion decision. Dormant layers (like Lt) aren't candidates. Shipped-and-live layers (like Lsr) aren't candidates. Only Lc is a candidate today (7-day gate, day 1/7).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.301 • July 4, 2026</strong></summary>
 
 - **G1 section renamed.** "Gated correction candidates — what C1 would do right now" → "Gated correction candidates — what Lt, Lsr, and Lc would do this tick." The old tail claimed C1 (confidence layer) but the section actually renders per-tick stamps for the three specialists (Lt, Lsr, Lc). Fixed the label to match the content.

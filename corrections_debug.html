@@ -882,7 +882,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.301 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.302 · click any sub-box header to collapse it.</div>
 
   <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-04</div>
@@ -1386,8 +1386,8 @@
 <!-- 3. Live state -->
 <h3 class="subsection">Live state — what Lsr is doing this tick</h3>
 <div class="layer-info-text">
-  <div class="meta-line">Lsr's live state is stamped each tick on <code>weather_data["solar_correction"]</code>: the candidate Δ W/m², the classified regime, live raw and corrected solar radiation, and a per-lead Δ array parallel to <code>hourly.direct_radiation</code>.</div>
-  <div class="meta-line" style="margin-top:6px;opacity:0.85;">Read directly via <code>curl -s https://data.wymancove.com/weather_data.json | jq .solar_correction</code>. The per-lead Δ is also baked into the sr card on the Forecast Accuracy chart above — that's the visible "did Lsr fire this tick" surface for now. <em>Future build-out — dedicated live snapshot panel queued behind the C1 calibration audit.</em></div>
+  <div id="lsr-live-state" class="status">Loading…</div>
+  <div class="meta-line" style="margin-top:10px;opacity:0.75;">Read directly via <code>curl -s https://data.wymancove.com/weather_data.json | jq .solar_correction</code>. The per-lead Δ is also baked into the sr card on the Forecast Accuracy chart above.</div>
 </div>
 
 <!-- 4. Engineering status -->
@@ -1462,7 +1462,7 @@
   <div id="status-drill" class="status" hidden></div>
 </details>
 <details class="research-subsection" id="gated-candidates">
-  <summary>G1. Gated correction candidates — what Lt, Lsr, and Lc would do this tick</summary>
+  <summary>G1. Gated correction candidates — what Lc would do this tick</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> corrections sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast or display.
     <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
       <li><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟡 Hybrid · 🔒 stamps every tick in <code>collector.py</code> via <code>confidence_layer.py</code>, ENABLED=False · 🟢 Stage 4 audit script lives at <code>analysis/c1_stage4_audit.py</code>]</span> <strong>C1 confidence layer (multi-axis v3).</strong> Every tick stamps <code>weather_data["confidence"]</code> with per-(field, band) displayed bands + a <code>live_axes</code> block. <code>applied=False</code> until the calibration audit gate clears. <strong>Curated v3 table:</strong> 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys (Q × pt × trans × c1f); 1.29M pairs scanned, 296,898 multi-axis pairs joined on 14-day window. <strong>Stage 4 audit:</strong> compares calibrated MAE on a 7d calib window vs a 7d recent holdout window; PASS ≤20% drift, WATCH ≤40%, FAIL &gt;40%. Latest read (2026-07-03): legacy axis 15 PASS / 11 WATCH / 22 FAIL — NOT READY, dominated by pa (precip amount, bursty; top drifters pa/24-47h +342%, pa/6-11h +203%) + cl. Multi-axis: 926 INSUFFICIENT — still not enough holdout pairs yet. C1d (KBOS-vs-KBVY σ axis) killed by orthogonality 2026-06-29 — see Retired. Stage 4b in-card ± preview (right_now + wind cards) shipped v0.6.181.</li>
@@ -1603,6 +1603,7 @@
      because R&D is the top-level bookmark. -->
 <details class="research-subsection" id="sec-rd-lt" style="margin-top:12px;border-color:#3a2a2a;background:#191313;" open>
   <summary style="color:#a08070;"><strong>[DORMANT LAYER] Lt — Cove microclimate correction (temperature)</strong> — <em>Both branches disabled 2026-07-01 v0.6.276; dormant pending Fix B (refit against L2-corrected baseline)</em></summary>
+  <div id="lt-live-state" class="status" style="margin-top:10px;">Loading…</div>
   <div class="meta-line" style="margin-top:10px;"><strong>Not killed — dormant.</strong> The code is intact but <code>compute_cove_correction()</code> returns 0.0 in both branches. Lookup tables + <code>cove_gradient_log.json</code> continue to log per-tick waterfront-vs-inland gradient data (cheap; will be the input for Fix B).</div>
   <div class="meta-line" style="margin-top:10px;"><strong>Original design.</strong> A small Δ°F added to the temperature forecast based on how much the waterfront stations (Willow Rd, Neptune Rd) typically diverge from the inland-network median under different wind / sea-breeze / hour combinations. Lt was the first correction trained on a spatial differential between station subgroups (L1–Lsr are trained on forecast-vs-aggregated-obs errors).</div>
   <div class="meta-line" style="margin-top:10px;"><strong>Shipped 2026-06-26 v0.6.238.</strong> Cleared a 2-read confirmation gate on <code>r5_cove_analysis.py</code> (06-25 SHIP + 06-26 SHIP). Per-lead projection fix 2026-06-26 v0.6.237 (initial ship applied current-tick Δ to all 48 leads — wrong by 3–5°F at distant leads when the table crossed zero). Cooling branch (sb_off morning offshore-hour table) disabled 2026-06-30 v0.6.259 after paired-MAE analysis on 19,975 t rows: cooling branch materially increased MAE on cooling rows (Δ ≤ −2°F bucket: 3.52 → 6.16, −74.9%). Warming branch (sb_active + S/SE/SW octant) retained at that time.</div>
@@ -3430,70 +3431,89 @@ function renderBacktestSweepSection(doc) {
   el.innerHTML = html;
 }
 
+// Shared badge helper.
+function _fmtEnabledBadge(applied) {
+  return applied
+    ? `<span style="color:#4ad29a;font-weight:700;">ENABLED</span>`
+    : `<span style="color:#8a93a3;font-weight:700;">gated off</span>`;
+}
+
+// Lt live state — renders inside the R&D → Lt subsection. Lt is dormant,
+// so this is a historic-Δ display (both branches return 0.0). Lives here
+// (not G1) because Lt is not a candidate — it's a disabled shipped layer.
+function renderLtLiveState(wxDoc) {
+  const el = document.getElementById("lt-live-state");
+  if (!el) return;
+  const cove = wxDoc?.cove_correction;
+  if (!cove) {
+    el.textContent = "No cove_correction stamp in weather_data yet.";
+    return;
+  }
+  const d = cove.candidate_delta_f;
+  const r = cove.regime || {};
+  const sign = d >= 0 ? "+" : "";
+  const dColor = d === 0 ? "#8a93a3" : (d > 0 ? "#fb7c5c" : "#7ec8ff");
+  const inputs = r.sb_active
+    ? `Wind: ${r.wind_octant ?? '?'} (${r.wind_dir ?? '?'}°) · Sea breeze: active · Hour: ${r.hour_local ?? '?'}:00 EDT`
+    : `Sea breeze: inactive · Hour: ${r.hour_local ?? '?'}:00 EDT <span style="opacity:0.6;">(wind not used at inactive)</span>`;
+  el.innerHTML = `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
+    <div style="margin-bottom:8px;"><strong>Live state this tick</strong> · <span style="opacity:0.85;font-size:0.85em;color:#a08070;">DORMANT since 2026-07-01 v0.6.276</span> <span style="opacity:0.7;font-size:0.85em;">(both branches disabled)</span></div>
+    <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(2)}°F</div>
+    <div class="meta-line" style="font-size:0.88em;">${inputs}</div>
+    <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">
+      Historic Δ°F display. <code>compute_cove_correction()</code> returns 0.0 always. The cove-gradient log continues to update per tick as the input for eventual Fix B (refit against L2 baseline).
+    </div>
+  </div>`;
+}
+
+// Lsr live state — renders inside the Lsr h2 section. Lsr is on and
+// applying every daytime tick, so this shows the current Δ, regime,
+// and skip-regime note when applicable.
+function renderLsrLiveState(wxDoc) {
+  const el = document.getElementById("lsr-live-state");
+  if (!el) return;
+  const solar = wxDoc?.solar_correction;
+  if (!solar) {
+    el.textContent = "No solar_correction stamp in weather_data yet.";
+    return;
+  }
+  const d = solar.candidate_delta_wm2;
+  const r = solar.regime || {};
+  const sign = d >= 0 ? "+" : "";
+  const dColor = d === 0 ? "#8a93a3" : (d > 0 ? "#fb7c5c" : "#7ec8ff");
+  // v0.6.280: Lsr skips ne_flow and calm regimes.
+  const LSR_SKIP_REGIMES = new Set(["ne_flow", "calm"]);
+  const skipping = LSR_SKIP_REGIMES.has(r.regime_synoptic);
+  const skipNote = skipping
+    ? ` <span style="color:#a08070;font-size:0.85em;">(skipped — ${r.regime_synoptic} is in LSR_SKIP_REGIMES since v0.6.280)</span>`
+    : '';
+  el.innerHTML = `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
+    <div style="margin-bottom:8px;"><strong>Live state this tick</strong> · ${_fmtEnabledBadge(solar.applied)}${skipNote}</div>
+    <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(1)} W/m²</div>
+    <div class="meta-line" style="font-size:0.88em;">
+      Synoptic regime: <code>${r.regime_synoptic ?? 'unknown'}</code> ·
+      Raw solar: ${r.raw_solar_wm2?.toFixed(0) ?? '?'} W/m² ·
+      Sun-up threshold: ${r.sun_up_threshold ?? '?'} W/m²
+    </div>
+    <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">${solar.note ?? ""}</div>
+  </div>`;
+}
+
+// G1 = candidates only. Today that's Lc (cloud saturation, ENABLED=False
+// on 7-day live-layer change gate). Lt and Lsr render in their own
+// sections — they're not candidates: Lt is dormant, Lsr is shipped.
 function renderGatedCandidatesSection(wxDoc) {
   const el = document.getElementById("gated-candidates-content");
   if (!el) return;
-  const cove = wxDoc?.cove_correction;
-  const solar = wxDoc?.solar_correction;
   const csc = wxDoc?.cloud_saturation_correction;
-  if (!cove && !solar && !csc) {
-    el.textContent = "No gated correction stamps in weather_data yet.";
+  if (!csc) {
+    el.textContent = "No candidate correction stamps in weather_data yet.";
     return;
   }
-  const fmtBadge = (applied) => applied
-    ? `<span style="color:#4ad29a;font-weight:700;">ENABLED</span>`
-    : `<span style="color:#8a93a3;font-weight:700;">gated off</span>`;
 
   let html = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:16px;">`;
 
-  if (cove) {
-    const d = cove.candidate_delta_f;
-    const r = cove.regime || {};
-    const sign = d >= 0 ? "+" : "";
-    const dColor = d === 0 ? "#8a93a3" : (d > 0 ? "#fb7c5c" : "#7ec8ff");
-    // Inputs that actually drive the lookup: when sb is inactive, the code
-    // uses ONLY hour-of-day; wind direction is ignored. Surface that here so
-    // the card stops looking like it's keying off three dimensions when it's
-    // really only keying off one (or two, when sb is active).
-    const inputs = r.sb_active
-      ? `Wind: ${r.wind_octant ?? '?'} (${r.wind_dir ?? '?'}°) · Sea breeze: active · Hour: ${r.hour_local ?? '?'}:00 EDT`
-      : `Sea breeze: inactive · Hour: ${r.hour_local ?? '?'}:00 EDT <span style="opacity:0.6;">(wind not used at inactive)</span>`;
-    html += `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
-      <div style="margin-bottom:8px;"><strong>Lt Cove correction</strong> · <span style="opacity:0.85;font-size:0.85em;color:#a08070;">DORMANT since 2026-07-01 v0.6.276</span> <span style="opacity:0.7;font-size:0.85em;">(both branches disabled)</span></div>
-      <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(2)}°F</div>
-      <div class="meta-line" style="font-size:0.88em;">${inputs}</div>
-      <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">
-        Historic Δ°F display. Lt both branches disabled 2026-07-01 v0.6.276 — <code>compute_cove_correction()</code> returns 0.0 always. The cove-gradient log continues to update per tick as the input for eventual Fix B (refit against L2 baseline). See <a href="#sec-rd-lt">R&amp;D → Lt</a> for the full dormant-layer entry.
-      </div>
-    </div>`;
-  }
-
-  if (solar) {
-    const d = solar.candidate_delta_wm2;
-    const r = solar.regime || {};
-    const sign = d >= 0 ? "+" : "";
-    const dColor = d === 0 ? "#8a93a3" : (d > 0 ? "#fb7c5c" : "#7ec8ff");
-    // v0.6.280: Lsr skips ne_flow and calm regimes (was +32% / +10% worse
-    // per l5_solar_analysis). Surface the skip explicitly when it's firing
-    // so the card doesn't look broken (0.0 W/m² with a real regime label).
-    const L5_SKIP_REGIMES = new Set(["ne_flow", "calm"]);
-    const skipping = L5_SKIP_REGIMES.has(r.regime_synoptic);
-    const skipNote = skipping
-      ? ` <span style="color:#a08070;font-size:0.85em;">(skipped — ${r.regime_synoptic} is in L5_SKIP_REGIMES since v0.6.280)</span>`
-      : '';
-    html += `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
-      <div style="margin-bottom:8px;"><strong>Lsr Solar regime correction</strong> · ${fmtBadge(solar.applied)}${skipNote}</div>
-      <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(1)} W/m²</div>
-      <div class="meta-line" style="font-size:0.88em;">
-        Synoptic regime: <code>${r.regime_synoptic ?? 'unknown'}</code> ·
-        Raw solar: ${r.raw_solar_wm2?.toFixed(0) ?? '?'} W/m² ·
-        Sun-up threshold: ${r.sun_up_threshold ?? '?'} W/m²
-      </div>
-      <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">${solar.note ?? ""}</div>
-    </div>`;
-  }
-
-  // Lc — cloud saturation-unbiasing. Currently ENABLED=False (telemetry
+  // Lc — cloud saturation-unbiasing. ENABLED=False today (telemetry
   // watch). Shows per-field cells_fired / n_leads + mean-|Δ| so the 7-day
   // gate watcher can eyeball whether the fit is stable across ticks.
   if (csc) {
@@ -4875,6 +4895,8 @@ async function load() {
   renderStateStratifiedSection(ssDoc);
   renderFrontalEventsSection(frontalEventsDoc);
   renderBacktestSweepSection(backtestSweepDoc);
+  renderLtLiveState(wxDoc);
+  renderLsrLiveState(wxDoc);
   renderGatedCandidatesSection(wxDoc);
   renderShadowWhitelistSection(shadowWhitelistDoc, wxDoc);
 
