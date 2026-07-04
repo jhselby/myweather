@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.293 • July 4, 2026</strong></summary>
+
+- **Print-safe debug page.** Existing `@media print` block covered inline dark backgrounds starting with `#1`/`#2`/`#3`, but the "Current pipeline state" block at the top of Engineering updates uses `background:#0e1620` — `#0` prefix, slipped through, printed as light text on black. Extended attribute selectors to include `#0`; added a descendant rule so nested inline light colors on originally-dark blocks also get forced dark; added a final safety pass that forces any element with an inline `color:#7…#f` (dark-theme accent) to `#111` in print. Field-badge and band-table accent colors preserved (class-based rules retain their specificity). Nothing prints as light text on dark now.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.292 • July 4, 2026</strong></summary>
 
 - **Debug page hypothesis-state refresh.** Stage 1 rolling table + long-form bullets walked forward from 06-24 stamps to 07-04. Every candidate now reflects today's digest verdict, not the 10-day-old snapshot. Live changes: (1) **Cloud saturation-unbiasing** ship criterion met — direction-stable across 3 reads spanning 11 days on cl 95-100 (+63.4 → +57.5 → +64.7 pp); flagged as highest-leverage next move, ready for L2.5 vs L3-axis architectural design decision. (2) **C1h trend-direction** — n on cm/ch/cc/t rising cells now ≥340; next action is writing `h_c1h_orthogonality.py` vs C1f + C1e. (3) **dp depression regime** — frontal bias decaying (-2.19 → -1.98 → -1.51); course-of-action question added about when a decaying signal falls below action threshold. (4) **C1d cloud disagreement** — RESURRECTED. Killed 06-29 as a global axis, but 07-04 read flipped to MIXED (3 orthogonal / 20 redundant / 9 other); narrow-promote path is a valid option. (5) **h_pre_front_orthogonality** — new MIXED verdict, same narrow-promote path. (6) **cm ride-along on L4** — declined; sim flipped from +3.0% (06-24) to -3.8% today. Rolling-table legend updated: all candidates now auto-run in the daily digest (was ⚫ Manual, now 🟢 Auto).

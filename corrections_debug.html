@@ -127,19 +127,66 @@
     td { border-color: #eee !important; }
     /* Override inline dark backgrounds (status panel cards, headline box,
        verdict boxes, layer-info-text variants). Anything with an inline
-       hex background in the 0x10-0x3F range is a dark-theme color. */
+       hex background in the 0x00-0x3F range is a dark-theme color. */
+    [style*="background:#0"],
     [style*="background:#1"],
     [style*="background:#2"],
     [style*="background:#3"],
+    [style*="background: #0"],
     [style*="background: #1"],
     [style*="background: #2"],
     [style*="background: #3"],
+    [style*="background-color:#0"],
     [style*="background-color:#1"],
     [style*="background-color:#2"],
     [style*="background-color:#3"] {
       background: white !important;
       color: #111 !important;
       border-color: #ccc !important;
+    }
+    /* Any descendant of an originally-dark block inherits the safe print
+       palette — kills nested light-color inline styles that would otherwise
+       stay light on the now-white background. */
+    [style*="background:#0"] *,
+    [style*="background:#1"] *,
+    [style*="background:#2"] *,
+    [style*="background:#3"] *,
+    [style*="background: #0"] *,
+    [style*="background: #1"] *,
+    [style*="background: #2"] *,
+    [style*="background: #3"] *,
+    [style*="background-color:#0"] *,
+    [style*="background-color:#1"] *,
+    [style*="background-color:#2"] *,
+    [style*="background-color:#3"] * {
+      background: transparent !important;
+      color: #111 !important;
+      border-color: #ccc !important;
+    }
+    /* Final safety pass: no element in the printed document may render as
+       light text. Any inline color in the light range (#7-#f leading digit)
+       is a dark-theme accent that needs to be forced dark for print.
+       Runs AFTER the accent overrides above so the light-color kill doesn't
+       take out legitimate colored badges like .field-badge.active green. */
+    [style*="color:#7"],
+    [style*="color:#8"],
+    [style*="color:#9"],
+    [style*="color:#a"],
+    [style*="color:#b"],
+    [style*="color:#c"],
+    [style*="color:#d"],
+    [style*="color:#e"],
+    [style*="color:#f"],
+    [style*="color: #7"],
+    [style*="color: #8"],
+    [style*="color: #9"],
+    [style*="color: #a"],
+    [style*="color: #b"],
+    [style*="color: #c"],
+    [style*="color: #d"],
+    [style*="color: #e"],
+    [style*="color: #f"] {
+      color: #111 !important;
     }
     /* Headline box (CSS-styled, not inline) */
     #headlineBox, .hb-stat { background: white !important; color: #111 !important; border-color: #ccc !important; }
