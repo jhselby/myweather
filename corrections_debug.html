@@ -882,7 +882,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.300 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.301 · click any sub-box header to collapse it.</div>
 
   <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-04</div>
@@ -1462,7 +1462,7 @@
   <div id="status-drill" class="status" hidden></div>
 </details>
 <details class="research-subsection" id="gated-candidates">
-  <summary>G1. Gated correction candidates — what C1 would do right now</summary>
+  <summary>G1. Gated correction candidates — what Lt, Lsr, and Lc would do this tick</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> corrections sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast or display.
     <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
       <li><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟡 Hybrid · 🔒 stamps every tick in <code>collector.py</code> via <code>confidence_layer.py</code>, ENABLED=False · 🟢 Stage 4 audit script lives at <code>analysis/c1_stage4_audit.py</code>]</span> <strong>C1 confidence layer (multi-axis v3).</strong> Every tick stamps <code>weather_data["confidence"]</code> with per-(field, band) displayed bands + a <code>live_axes</code> block. <code>applied=False</code> until the calibration audit gate clears. <strong>Curated v3 table:</strong> 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys (Q × pt × trans × c1f); 1.29M pairs scanned, 296,898 multi-axis pairs joined on 14-day window. <strong>Stage 4 audit:</strong> compares calibrated MAE on a 7d calib window vs a 7d recent holdout window; PASS ≤20% drift, WATCH ≤40%, FAIL &gt;40%. Latest read (2026-07-03): legacy axis 15 PASS / 11 WATCH / 22 FAIL — NOT READY, dominated by pa (precip amount, bursty; top drifters pa/24-47h +342%, pa/6-11h +203%) + cl. Multi-axis: 926 INSUFFICIENT — still not enough holdout pairs yet. C1d (KBOS-vs-KBVY σ axis) killed by orthogonality 2026-06-29 — see Retired. Stage 4b in-card ± preview (right_now + wind cards) shipped v0.6.181.</li>

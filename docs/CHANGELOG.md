@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.301 • July 4, 2026</strong></summary>
+
+- **G1 section renamed.** "Gated correction candidates — what C1 would do right now" → "Gated correction candidates — what Lt, Lsr, and Lc would do this tick." The old tail claimed C1 (confidence layer) but the section actually renders per-tick stamps for the three specialists (Lt, Lsr, Lc). Fixed the label to match the content.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.300 • July 4, 2026</strong></summary>
 
 - **Divergence report keys renamed** to match the specialist convention: `L5_ENABLED` → `LSR_ENABLED`, `COVE_ENABLED` → `LT_ENABLED`. Applied consistently across `analysis/runlog/divergence_report.py`, `analysis/runlog/claims.py`, and `weather_collector/processors/decay_fit.py` (which aliased the ENABLED constants under the old names). Python constant names inside the specialist modules themselves (`solar_correction.ENABLED`, `cove_correction.ENABLED`) stay as `ENABLED` — those are per-module locals, not the divergence-tracking labels.
