@@ -1,6 +1,23 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.292 • July 4, 2026</strong></summary>
+
+- **Debug page hypothesis-state refresh.** Stage 1 rolling table + long-form bullets walked forward from 06-24 stamps to 07-04. Every candidate now reflects today's digest verdict, not the 10-day-old snapshot. Live changes: (1) **Cloud saturation-unbiasing** ship criterion met — direction-stable across 3 reads spanning 11 days on cl 95-100 (+63.4 → +57.5 → +64.7 pp); flagged as highest-leverage next move, ready for L2.5 vs L3-axis architectural design decision. (2) **C1h trend-direction** — n on cm/ch/cc/t rising cells now ≥340; next action is writing `h_c1h_orthogonality.py` vs C1f + C1e. (3) **dp depression regime** — frontal bias decaying (-2.19 → -1.98 → -1.51); course-of-action question added about when a decaying signal falls below action threshold. (4) **C1d cloud disagreement** — RESURRECTED. Killed 06-29 as a global axis, but 07-04 read flipped to MIXED (3 orthogonal / 20 redundant / 9 other); narrow-promote path is a valid option. (5) **h_pre_front_orthogonality** — new MIXED verdict, same narrow-promote path. (6) **cm ride-along on L4** — declined; sim flipped from +3.0% (06-24) to -3.8% today. Rolling-table legend updated: all candidates now auto-run in the daily digest (was ⚫ Manual, now 🟢 Auto).
+
+- **Upcoming Decisions section reflowed.** 07-03 h + sr → L4 marked FROZEN (walkforward SHIP vs l4_regime_lead_analysis KILL disagreement on h; sr baseline corrupted through 07-10). Added: 07-04 v0.6.291 raw-baseline verifier ship + C1 v2 multi-axis audit INSUFFICIENT-DATA result. 07-08 T Production convergence check explicitly framed as the diagnostic that decides whether the deferred `applied_layer` walker moves from nice-to-have to blocking. 07-10 Fri consolidated: sr clean read + ws/wg L3 strip earliest ship + L5 skip-cell re-audit. Ongoing L5 post-ship watch alerts through 07-10 tagged as expected/known-cause.
+
+- **Product ideas section added to Upcoming Decisions.** Wyman Cove Swim Index (WCSI) noted as a product-facing scoring idea combining rainfall runoff / tidal flushing / outfall / beach closures / wind direction. Details + open design questions in the `project-todo` memory. No date; pull in on a low-load day.
+
+- **Retired section — C1d annotated with 07-04 resurrection.** Global kill stands; the 3 orthogonal cells are now a valid narrow-promote candidate tracked as "Still confirming, day 1/7" in the digest exec summary.
+
+- **Rolling-table framing note.** New callout under the table synthesizes course-of-action: Cloud saturation-unbiasing is the highest-leverage next move; C1h has enough n to run its owed ortho check; C1d/pre-frontal narrow-promote is a low-effort ship if 7-day agreement holds. Explicit reminder that the live-layer gate governs live-layer flips only, not exploration or Stage 1 refinement — see the new `feedback-dont-over-gate` memory.
+
+- **Framework hygiene: "Current pipeline state" date bumped 07-03 → 07-04.** L5 "Where we are" section date bumped as well.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.291 • July 4, 2026</strong></summary>
 
 - **Shape 1 raw-baseline verifier shipped.** Structural guard for the L5-class silent failure that ate a week of solar analyses ending 2026-07-02. New `weather_collector/processors/raw_integrity.py`: `snapshot_raw_baseline()` called from `collector.py:145` — before `blend_observed_into_hourly`, which is the first correction to touch any hourly array — deep-copies every hourly array with a `raw_*` counterpart. `verify_raw_integrity()` runs at the end of `build_weather_data` (line 394) and compares each `raw_<field>` against the snapshot byte-for-byte. Any drift is appended to `gs://myweather-data/raw_pollution_log.jsonl` with field, source, first-bad index, and max delta. Covers 10 fields: `direct_radiation`, `precipitation`, `precipitation_probability`, `cloud_cover`, `cloud_cover_low`, `cloud_cover_mid`, `cloud_cover_high`, `wind_direction`, `wind_speed`, `wind_gusts`. Non-blocking by design (raw pollution corrupts analyses, not user-facing forecasts, so a bug in the verifier can't take down the pipeline).
