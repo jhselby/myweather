@@ -135,7 +135,7 @@ def bucket(verdict: str | None) -> str:
     if verdict is None:
         return "no_verdict"
     v = verdict.upper()
-    if "KILL" in v or "RETIRE" in v:
+    if "KILL" in v or "RETIRE" in v or "DRIFT" in v:
         return "kill"
     if "SHIP" in v or "PROMOTE" in v or "IMPLEMENT" in v:
         return "promote"

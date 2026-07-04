@@ -1,6 +1,19 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.291 • July 4, 2026</strong></summary>
+
+- **Shape 1 raw-baseline verifier shipped.** Structural guard for the L5-class silent failure that ate a week of solar analyses ending 2026-07-02. New `weather_collector/processors/raw_integrity.py`: `snapshot_raw_baseline()` called from `collector.py:145` — before `blend_observed_into_hourly`, which is the first correction to touch any hourly array — deep-copies every hourly array with a `raw_*` counterpart. `verify_raw_integrity()` runs at the end of `build_weather_data` (line 394) and compares each `raw_<field>` against the snapshot byte-for-byte. Any drift is appended to `gs://myweather-data/raw_pollution_log.jsonl` with field, source, first-bad index, and max delta. Covers 10 fields: `direct_radiation`, `precipitation`, `precipitation_probability`, `cloud_cover`, `cloud_cover_low`, `cloud_cover_mid`, `cloud_cover_high`, `wind_direction`, `wind_speed`, `wind_gusts`. Non-blocking by design (raw pollution corrupts analyses, not user-facing forecasts, so a bug in the verifier can't take down the pipeline).
+
+- **Digest-side companion.** New `analysis/raw_integrity_check.py` reads the pollution log and emits CLEAN when the log is absent or drift-free in the last 24h, DRIFT otherwise. `build_executive_summary.py` bucket taxonomy extended: DRIFT now surfaces as a `kill` verdict so pollution events land prominently in the exec summary instead of hiding in the `info` bucket. Silent baseline: absent log == healthy.
+
+- **First-deploy ordering fix.** Initial deploy caught a false-positive drift on `raw_wind_speed` and `raw_wind_gusts` at index 0 — the snapshot was originally placed after `preserve_raw_forecast_arrays` (line 324), which is downstream of `blend_observed_into_hourly` at line 139. `wind_blend`'s own lazy `raw_wind_speed` init correctly captures pre-blend HRRR, so the raw was right and the snapshot was late. Snapshot moved upstream of every layer that touches hourly arrays; false positives cleared from GCS; healthy since 11:37 UTC on the fresh deploy.
+
+- **Debug page canon.** New v0.6.291 entry in "Since last curation" (extended range to 2026-07-04). L5 engineering-status section annotates the v0.6.285 raw-pollution-fix bullet with a note that v0.6.291 is the structural guard: any future layer that mutates a source array before its `raw_*` copy exists will now fire a drift event on the next tick and land in the digest, instead of hiding for a week.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.286 • July 3, 2026</strong></summary>
 
 - **L5 per-lead delta fix.** `stamp_solar_correction` was computing a single Δ from the current tick's regime + current hour's raw solar value, then applying that scalar to all 48 forecast leads. When the collector ran below the sun-up threshold (pre-dawn / dawn — every ~6 AM tick this week), delta = 0 → no L5 correction anywhere in the 48h forecast. Live since L5 shipped 2026-06-28 v0.6.248. Fixed by iterating the `direct_radiation` array with each lead's own raw value + parsed local hour, matching the pattern `cove_correction.stamp_cove_correction()` already uses. L5 now fires at every daytime lead in every non-skip regime. Clean 7-day audit window closes ~2026-07-10.

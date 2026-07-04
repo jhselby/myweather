@@ -51,6 +51,7 @@ from .processors.hourly_trim import trim_hourly_to_current_hour
 from .processors.forecast_error_log import update_forecast_error_log
 from .processors.decay_fit import fit_decay_corrections
 from .processors.decay_apply import apply_decay_corrections, recompute_derived_moisture_arrays, preserve_raw_forecast_arrays
+from .processors.raw_integrity import snapshot_raw_baseline, verify_raw_integrity
 from .processors.normalize import normalize_current, normalize_hourly, normalize_daily, empty_hourly
 
 FROST_LOG_GCS_PATH = "frost_log.json"
@@ -133,6 +134,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
             # HRRR returned data but cloud cover is empty — patch from PW
             weather_data["hourly"]["cloud_cover"] = pirate_data["hourly_cloud_cover"][:len(weather_data["hourly"]["times"])]
             logging.warning("  ⚠️ HRRR cloud cover empty — patched from Pirate Weather")
+
+    # Snapshot every hourly array with a raw_ counterpart, BEFORE any layer
+    # runs. verify_raw_integrity at end of build_weather_data compares each
+    # raw_<field> against this snapshot and logs drift to
+    # raw_pollution_log.jsonl. Catches the L5-class failure (layer mutates
+    # source array before raw_ copy exists). Must sit before
+    # blend_observed_into_hourly, which is the first correction to touch
+    # wind_speed[0] / wind_gusts[0].
+    _raw_baseline = snapshot_raw_baseline(weather_data)
 
     # Blend observed wind into the next 24h of forecast (exposed coastal location)
     blend_observed_into_hourly(weather_data)
@@ -376,6 +386,14 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
     if birds_data:
         weather_data["birds"] = birds_data
+
+    # Non-blocking invariant check: raw_<field> arrays must still equal the
+    # snapshot taken before any correction layer ran. Drift is logged to
+    # raw_pollution_log.jsonl in GCS. See processors/raw_integrity.py.
+    try:
+        verify_raw_integrity(weather_data, _raw_baseline)
+    except Exception as e:
+        logging.warning(f"  ⚠  raw_integrity verify raised: {redact_secrets(e)}")
 
     return weather_data
 
