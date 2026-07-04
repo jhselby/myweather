@@ -30,8 +30,8 @@ HISTORY_PATH = LOG_DIR / "digest_history.jsonl"
 GATES = {
     "L3_FIELDS": 7,   # whitelist-promotion-gate
     "L4_FIELDS": 7,
-    "L5_ENABLED": 7,  # L5 trajectory gate
-    "COVE_ENABLED": 2,  # post-build confirmation reads; first one in hand
+    "LSR_ENABLED": 7,  # L5 trajectory gate
+    "LT_ENABLED": 2,  # post-build confirmation reads; first one in hand
 }
 
 
@@ -190,8 +190,8 @@ def probe_production():
     return {
         "L3_FIELDS": read_const(decay, "L3_FIELDS"),
         "L4_FIELDS": read_const(decay, "L4_FIELDS"),
-        "L5_ENABLED": read_const(solar, "ENABLED"),
-        "COVE_ENABLED": read_const(cove, "ENABLED"),
+        "LSR_ENABLED": read_const(solar, "ENABLED"),
+        "LT_ENABLED": read_const(cove, "ENABLED"),
         "LC_ENABLED": read_const(cloud_sat, "ENABLED") if cloud_sat.exists() else None,
         "MARINE_ENABLED": read_const(marine, "ENABLED") if marine.exists() else None,
         "L2_TAUS": read_const(hourly, "DEFAULT_L2_TAUS"),
@@ -263,22 +263,22 @@ def main():
     # L5 solar
     v = state.get("l5_solar_analysis", {}).get("verdict")
     wants_bool = claim_bool_ship(v)
-    p = prod.get("L5_ENABLED")
+    p = prod.get("LSR_ENABLED")
     if wants_bool is None:
-        rows.append(("L5_ENABLED", p, None, "UNKNOWN", "verdict didn't classify"))
+        rows.append(("LSR_ENABLED", p, None, "UNKNOWN", "verdict didn't classify"))
     else:
         status = "AGREE" if p == wants_bool else "DISAGREE"
-        rows.append(("L5_ENABLED", p, wants_bool, status, ""))
+        rows.append(("LSR_ENABLED", p, wants_bool, status, ""))
 
     # Cove
     v = state.get("r5_cove_analysis", {}).get("verdict")
     wants_bool = claim_bool_ship(v)
-    p = prod.get("COVE_ENABLED")
+    p = prod.get("LT_ENABLED")
     if wants_bool is None:
-        rows.append(("COVE_ENABLED", p, None, "UNKNOWN", "verdict didn't classify"))
+        rows.append(("LT_ENABLED", p, None, "UNKNOWN", "verdict didn't classify"))
     else:
         status = "AGREE" if p == wants_bool else "DISAGREE"
-        rows.append(("COVE_ENABLED", p, wants_bool, status, ""))
+        rows.append(("LT_ENABLED", p, wants_bool, status, ""))
 
     # Lc — cloud saturation-unbiasing. lc_fit.py emits "Verdict: FIT — N SHIP
     # cell(s) ready to wire into Lc." when the pair-log has SHIP cells,
@@ -312,7 +312,7 @@ def main():
     print(f"  {'KEY':<14} {'PRODUCTION':<20} {'SCRIPT WANTS':<20} {'STATUS':<8} STREAK")
     print("  " + "-" * 88)
     # L5 has its own Fitter-cycle trajectory tracker — use that instead of
-    # the freshly-started divergence streak for the L5_ENABLED row.
+    # the freshly-started divergence streak for the LSR_ENABLED row.
     l5_traj = _l5_trajectory_state()
 
     def _direction(p, w):
@@ -330,7 +330,7 @@ def main():
         if len(p_s) > 19: p_s = p_s[:18] + "…"
         if len(w_s) > 19: w_s = w_s[:18] + "…"
         if status == "DISAGREE":
-            if k == "L5_ENABLED" and l5_traj is not None:
+            if k == "LSR_ENABLED" and l5_traj is not None:
                 if l5_traj["gate_clear"]:
                     streak_s = (f"GATE CLEARED ({l5_traj['ship_days']}/"
                                 f"{L5_GATE_WINDOW_DAYS} ship days)")

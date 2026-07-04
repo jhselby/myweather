@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.300 • July 4, 2026</strong></summary>
+
+- **Divergence report keys renamed** to match the specialist convention: `L5_ENABLED` → `LSR_ENABLED`, `COVE_ENABLED` → `LT_ENABLED`. Applied consistently across `analysis/runlog/divergence_report.py`, `analysis/runlog/claims.py`, and `weather_collector/processors/decay_fit.py` (which aliased the ENABLED constants under the old names). Python constant names inside the specialist modules themselves (`solar_correction.ENABLED`, `cove_correction.ENABLED`) stay as `ENABLED` — those are per-module locals, not the divergence-tracking labels.
+- **Lt moved from Archive to Research & Diagnostics.** Rule: disabled layers don't get separate top-level sections; dormant work lives in R&D. Physical DOM node relocated (kept the content verbatim); anchor renamed `sec-archive-l6` → `sec-rd-lt`; all three intra-page references updated. Archive intro adjusted — it no longer claims "dormant layers" as one of its categories; a pointer sends readers to the R&D → Lt entry instead.
+- **TOC bookmark for Lt removed.** Top-of-page nav only carries top-level h2 sections. Lt is a subsection of R&D now, so its individual bookmark comes off. Readers still find it under R&D.
+- **Follow-on effect on the divergence-report streak history.** `claims.py` will start emitting the new key names tonight; the streak tracker keys off the label, so the first read under the new names will show a fresh streak (previous history was under the old labels). That's a one-time reset, not a bug. Watching the next several digest cycles will re-establish the streak under the corrected names.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.299 • July 4, 2026</strong></summary>
 
 - **Lc live-state panel added to G1. Gated correction candidates.** Third card alongside Lt and Lsr. Renders per-tick from `weather_data["cloud_saturation_correction"]`: enabled state + gate-day badge, total cells firing this tick, per-field table (cells fire / leads, mean |Δ| pp, max |Δ| pp), and fit-table generated_at. When `ENABLED=False` (today), reads as "dormant · telemetry only (7-day live-layer change gate; day 1/7 as of 2026-07-04)" — the exact table a reader needs to watch across the 7-day gate. When flipped `ENABLED=True`, the badge turns green and the descriptor switches to "Live: hourly.cloud_cover* arrays are shifted..."

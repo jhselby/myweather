@@ -52,9 +52,9 @@ def compute_claims(state: dict) -> dict:
         claims["L3_FIELDS"] = wf.get("L3_FIELDS")
         claims["L4_FIELDS"] = wf.get("L4_FIELDS")
     v = state.get("l5_solar_analysis", {}).get("verdict")
-    claims["L5_ENABLED"] = _claim_bool_ship(v)
+    claims["LSR_ENABLED"] = _claim_bool_ship(v)
     v = state.get("r5_cove_analysis", {}).get("verdict")
-    claims["COVE_ENABLED"] = _claim_bool_ship(v)
+    claims["LT_ENABLED"] = _claim_bool_ship(v)
     return claims
 
 

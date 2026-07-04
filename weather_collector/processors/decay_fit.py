@@ -1232,7 +1232,7 @@ def fit_decay_corrections():
     # correction. Thresholds match analysis/l5_solar_analysis.py.
     l5_audit_verdict = None
     try:
-        from .solar_correction import ENABLED as L5_ENABLED
+        from .solar_correction import ENABLED as LSR_ENABLED
         overall_l5 = l5_acc.get(("any", "all"))
         if overall_l5 and overall_l5["n"] >= 500:
             n_l5 = overall_l5["n"]
@@ -1257,7 +1257,7 @@ def fit_decay_corrections():
             verdict_l5 = "SHIP" if ship else "HOLD"
             l5_audit_verdict = {
                 "verdict": verdict_l5,
-                "enabled": bool(L5_ENABLED),
+                "enabled": bool(LSR_ENABLED),
                 "mae_baseline": round(mae_b_l5, 2),
                 "mae_with_layer": round(mae_a_l5, 2),
                 "improvement_pct": round(d_l5, 2),
@@ -1288,7 +1288,7 @@ def fit_decay_corrections():
             n_l5 = (overall_l5 or {}).get("n", 0)
             l5_audit_verdict = {
                 "verdict": "insufficient_data",
-                "enabled": bool(L5_ENABLED),
+                "enabled": bool(LSR_ENABLED),
                 "n_pairs": n_l5,
             }
             logging.info(f"  ⊘ L5 audit: insufficient data (n={n_l5}, need ≥500)")
@@ -1302,7 +1302,7 @@ def fit_decay_corrections():
     # back to False.
     l6_audit_verdict = None
     try:
-        from .cove_correction import ENABLED as L6_ENABLED
+        from .cove_correction import ENABLED as LT_ENABLED
         if l6_audit_n >= L6_AUDIT_MIN_PAIRS:
             mae_b = l6_audit_abs_l4 / l6_audit_n
             mae_a = l6_audit_abs_l6 / l6_audit_n
@@ -1311,7 +1311,7 @@ def fit_decay_corrections():
             verdict_l6 = "SHIP" if ship else "HOLD"
             l6_audit_verdict = {
                 "verdict": verdict_l6,
-                "enabled": bool(L6_ENABLED),
+                "enabled": bool(LT_ENABLED),
                 "mae_baseline": round(mae_b, 3),
                 "mae_with_layer": round(mae_a, 3),
                 "improvement_pct": round(improvement_pct, 2),
@@ -1336,7 +1336,7 @@ def fit_decay_corrections():
         else:
             l6_audit_verdict = {
                 "verdict": "insufficient_data",
-                "enabled": bool(L6_ENABLED),
+                "enabled": bool(LT_ENABLED),
                 "n_pairs": l6_audit_n,
             }
             logging.info(f"  ⊘ L6 audit: insufficient data (n={l6_audit_n}, need ≥{L6_AUDIT_MIN_PAIRS})")
