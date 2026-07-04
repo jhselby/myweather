@@ -1,6 +1,17 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.298 • July 4, 2026</strong></summary>
+
+- **Lc (cloud saturation-unbiasing) — code shipped, ENABLED=False.** New specialist correction on cloud fields (cc, cl, cm, ch), fitted from pair-log. Post-L4 per-(field, value_bin) shift with clamp to [0, 100]. Live-layer change gate: 7-day agreement + telemetry watch before flipping ENABLED.
+- **`analysis/lc_fit.py`** — fits the per-(field, bin) shift table from `forecast_error_log.jsonl`. Uses the deepest available forecast_lN (L4 if present, else L3/L2/L1) — matches the runtime order Lc sees. Ship rules per cell: n ≥ 200, |mean_bias| ≥ 5.0 pp, post-shift MAE improvement ≥ 2%. First fit: **15 SHIP / 0 MARGINAL / 9 SKIP** of 24 cells. Biggest impact: cl 80-95 −55% MAE, cl 95-100 −47%, cl 50-80 −47%, ch 50-80 −37%, cm 95-100 −34%. Skip cells cluster at low-end bins (0-5, 5-20) where the mean-shift correction interacts badly with the [0, 100] clamp and adds error rather than removing it. cc 5-20 has −20pp mean bias but only +0.8% MAE improvement — bimodal obs distribution defeats mean-shift; SKIP verdict is correct.
+- **`weather_collector/data/lc_correction_table.json`** — fit output the collector consumes. Contains generated_at, fit_rules, and per-(field, bin) `{shift, n, mae_pre, mae_post, improve_pct, verdict}`.
+- **`weather_collector/processors/cloud_saturation_correction.py`** — new processor. `stamp_cloud_saturation_correction(weather_data)` runs after L3/L4 and Lt in the pipeline. Even with ENABLED=False, stamps `weather_data["cloud_saturation_correction"]` telemetry every tick (per-field per-lead would-be deltas, cells_fired count, fit-table meta) so the 7-day watch can read what the layer would do. When flipped ENABLED=True, mutates `hourly["cloud_cover*"]` arrays in place, preserving pre-Lc state as `hourly["cloud_cover*_post_l4"]` for forecast-snapshot attribution. Applicability descriptor added, wired into `applicability_map` assembly in `collector.py`.
+- **Debug page canon.** Production Stack Specialists list includes Lc with fit-result summary. Applicability-map intro category text updated (specialists = domain-scoped by construction, not single-field). Tri-column band's What's-improving Lc card reads "code shipped, gate day 1/7." Category prose updated from "single-field, parallel to the core stack" to "domain-scoped, parallel to the core stack" for consistency with the corrected specialist definition.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.297 • July 4, 2026</strong></summary>
 
 - **Cloud saturation-unbiasing reclassified as specialist Lc.** Corrected the specialist convention: the distinguishing test is **universal vs. domain-scoped**, not single-field vs. multi-field. Cloud saturation hits four fields (cc/cl/cm/ch) but is a specialist because the physics (bounded-percentage sigmoid saturation) is inherent to cloud fields — won't apply to wind, temperature, precipitation. Renamed the 5 remaining L5 references on the debug page to Lc. The L5 slot is again unused. Sibling of Lsr (solar) and Lt (temperature) in the specialist family.

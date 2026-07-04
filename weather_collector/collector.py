@@ -486,17 +486,28 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  Decay apply failed: {redact_secrets(e)}")
 
-    # L6 — cove regime correction. Stamped here, after L3/L4, so the cove Δ
+    # Lt — cove regime correction. Stamped here, after L3/L4, so the cove Δ
     # is the last layer in the temperature stack and the snapshot/pair log
     # can isolate it as its own column. Modifies corrected_temperature in
     # place when ENABLED=True; the pre-cove array is preserved as
     # corrected_temperature_post_l4 inside stamp_cove_correction so the
-    # forecast snapshot can attribute L4 vs (L4+L6) cleanly.
+    # forecast snapshot can attribute L4 vs (L4+Lt) cleanly.
     try:
         from .processors.cove_correction import stamp_cove_correction
         stamp_cove_correction(weather_data)
     except Exception as e:
         logging.warning(f"  ⚠  Cove correction stamp failed: {redact_secrets(e)}")
+
+    # Lc — cloud saturation-unbiasing (specialist, cc/cl/cm/ch). Post-L4
+    # per-(field, value_bin) shift learned by analysis/lc_fit.py. Runs after
+    # L3/L4 so the input is the L4-corrected forecast. ENABLED gated —
+    # module still stamps telemetry when False so we can watch it under
+    # the 7-day live-layer change gate before flipping.
+    try:
+        from .processors.cloud_saturation_correction import stamp_cloud_saturation_correction
+        stamp_cloud_saturation_correction(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  Cloud saturation stamp failed: {redact_secrets(e)}")
 
     # Applicability map — each correction module exposes describe_applicability()
     # returning a list of layer descriptors (schema in weather_collector/data/
@@ -507,9 +518,10 @@ def main():
         from .processors.decay_apply import describe_applicability as _da_decay
         from .processors.solar_correction import describe_applicability as _da_solar
         from .processors.cove_correction import describe_applicability as _da_cove
+        from .processors.cloud_saturation_correction import describe_applicability as _da_lc
         from .processors.confidence_layer import describe_applicability as _da_c1
         layers = []
-        for fn in (_da_decay, _da_solar, _da_cove, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_cove, _da_lc, _da_c1):
             try:
                 layers.extend(fn())
             except Exception as e:

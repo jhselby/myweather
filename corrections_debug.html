@@ -806,9 +806,9 @@
         <div style="opacity:0.7;font-size:0.9em;margin-bottom:6px;">5 active Stage 1 candidates · all auto-run in daily digest</div>
 
         <div style="padding:6px 8px;border-left:2px solid #4ad29a;background:#0f1712;margin-bottom:6px;border-radius:2px;">
-          <div><strong>Cloud saturation-unbiasing</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ ship-ready</span></div>
-          <div style="opacity:0.85;">cl 95-100 <strong>+64.7pp</strong> · 3 direction-stable reads</div>
-          <div style="color:#9ab0a0;">→ Stage 2 wiring (settled 07-04: ships as new specialist Lc, post-L4, pre-Lsr)</div>
+          <div><strong>Lc — cloud saturation-unbiasing</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ code shipped, gate day 1/7</span></div>
+          <div style="opacity:0.85;">15 SHIP cells / 24 · biggest: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37% MAE</div>
+          <div style="color:#9ab0a0;">→ ENABLED=False (telemetry watch); flip after 7-day agreement</div>
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #e0d472;background:#171410;margin-bottom:6px;border-radius:2px;">
@@ -883,7 +883,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.297 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.298 · click any sub-box header to collapse it.</div>
 
   <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-04</div>
@@ -1018,10 +1018,11 @@
         <li><strong>L4</strong> diurnal — applies to {ch, cc}.</li>
         <li style="list-style:none;margin-left:-16px;opacity:0.75;font-size:0.9em;">Cards read corrected <code>hourly[0]</code>. See <a href="#sec-applicability">Applicability map</a> for live triggers + gates (e.g. L3 skip cells for ws in ne_flow / short-lead sea_breeze, Lsr skip regimes for sr in ne_flow / calm, sun-up threshold on Lsr).</li>
       </ul>
-      <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Specialists <span style="font-weight:normal;opacity:0.7;">— single-field, parallel to the core stack</span></div>
+      <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Specialists <span style="font-weight:normal;opacity:0.7;">— domain-scoped, parallel to the core stack</span></div>
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>Lsr</strong> synoptic-regime solar correction (sr only). Shipped 2026-06-28 v0.6.248. Per-(regime, hour) bias on sr above sun-up threshold. Skip regimes (v0.6.280): ne_flow (was +32% worse), calm (+10.7%) — return 0.0 per <code>l5_solar_analysis</code>.</li>
         <li><strong>Lt</strong> cove microclimate (t only). Shipped 2026-06-26. <strong>Both branches disabled</strong> — cooling 2026-06-30 v0.6.259; warming 2026-07-01 v0.6.276 after real per-row Production exposed the warming branch as double-counting L2's waterfront-Tempest weighting. <code>compute_cove_correction()</code> is a no-op. Re-enable only after Fix B (refit lookup against L2 baseline).</li>
+        <li><strong>Lc</strong> cloud saturation-unbiasing (cc/cl/cm/ch). Shipped code 2026-07-04 v0.6.298 — <code>ENABLED=False</code>, telemetry-only per the live-layer change gate. Post-L4 per-(field, value_bin) shift; fit table at <code>weather_collector/data/lc_correction_table.json</code> from <code>analysis/lc_fit.py</code>. 15 SHIP cells / 24 total. Biggest impact predicted: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37% MAE reduction. Skip cells cluster at low-end bins (0-5 / 5-20) where the shift+clamp interaction adds error. 7-day gate: day 1/7.</li>
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
       <ul style="margin:2px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
@@ -1151,7 +1152,7 @@
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
   <p class="layer-summary">Every correction module describes its own applicability. This table is rendered directly from the code. For every correction layer, this shows exactly which fields it applies to right now and what gates it. Built each tick from <code>describe_applicability()</code> in each correction module, so <strong>the page can never drift from the code.</strong></p>
   <details class="layer-methodology"><summary>How to read this</summary>
-    <div class="meta-line">Three categories: <strong>General-purpose</strong> layers (L1–L4) can apply to any field; the per-field applicability set controls which actually trigger. <strong>Specialists</strong> (Lsr, Lt) target a single field by design. <strong>Confidence</strong> (C1) doesn't modify forecast values; it widens or narrows uncertainty bands along orthogonal axes (transition, pressure tendency, mesonet spread, pre-frontal proximity) that cross multiple (field, band) cells.</div>
+    <div class="meta-line">Three categories: <strong>General-purpose</strong> layers (L1–L4) can apply to any field; the per-field applicability set controls which actually trigger. <strong>Specialists</strong> (Lsr, Lt, Lc) are domain-scoped by construction — the physics of the correction binds them to a field type. <strong>Confidence</strong> (C1) doesn't modify forecast values; it widens or narrows uncertainty bands along orthogonal axes (transition, pressure tendency, mesonet spread, pre-frontal proximity) that cross multiple (field, band) cells.</div>
     <div class="meta-line"><strong>applies when</strong> is the predicate in plain text. <strong>gated by</strong> names the module-level constant the gate reads (omitted if always-on). <strong>current state</strong> resolves the constant for the reader — what the gate is doing this very tick.</div>
     <div class="meta-line"><strong>Terminology key:</strong> <em>applies</em> = correction applied to a (field, row) this tick · <em>enabled</em> = feature switch (the module-level constant is on) · <em>active</em> = runtime branch (which code path actually fired).</div>
     <div class="meta-line">Source: <code>weather_data.applicability_map.layers</code>. Schema: <code>weather_collector/data/applicability_map_schema.json</code>. If this section says "not available," the collector hasn't shipped the block yet — it landed v0.6.260.</div>
