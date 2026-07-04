@@ -185,12 +185,14 @@ def probe_production():
     cove = REPO / "weather_collector/processors/cove_correction.py"
     marine = REPO / "weather_collector/processors/marine_layer_correction.py"
     hourly = REPO / "weather_collector/processors/corrected_hourly.py"
+    cloud_sat = REPO / "weather_collector/processors/cloud_saturation_correction.py"
 
     return {
         "L3_FIELDS": read_const(decay, "L3_FIELDS"),
         "L4_FIELDS": read_const(decay, "L4_FIELDS"),
         "L5_ENABLED": read_const(solar, "ENABLED"),
         "COVE_ENABLED": read_const(cove, "ENABLED"),
+        "LC_ENABLED": read_const(cloud_sat, "ENABLED") if cloud_sat.exists() else None,
         "MARINE_ENABLED": read_const(marine, "ENABLED") if marine.exists() else None,
         "L2_TAUS": read_const(hourly, "DEFAULT_L2_TAUS"),
     }
@@ -277,6 +279,27 @@ def main():
     else:
         status = "AGREE" if p == wants_bool else "DISAGREE"
         rows.append(("COVE_ENABLED", p, wants_bool, status, ""))
+
+    # Lc — cloud saturation-unbiasing. lc_fit.py emits "Verdict: FIT — N SHIP
+    # cell(s) ready to wire into Lc." when the pair-log has SHIP cells,
+    # otherwise "Verdict: HOLD — no cells cleared the SHIP gate." The 7-day
+    # live-layer change gate lives in the exec summary, not here; this row
+    # just surfaces whether production ENABLED matches what the fit says
+    # would work if wired.
+    v = state.get("lc_fit", {}).get("verdict")
+    p = prod.get("LC_ENABLED")
+    if v is None:
+        rows.append(("LC_ENABLED", p, None, "UNKNOWN", "lc_fit hasn't reported"))
+    else:
+        wants_bool = True if "FIT" in v.upper() and "SHIP" in v.upper() else (False if "HOLD" in v.upper() else None)
+        if wants_bool is None:
+            rows.append(("LC_ENABLED", p, None, "UNKNOWN", "verdict didn't classify"))
+        elif p == wants_bool:
+            rows.append(("LC_ENABLED", p, wants_bool, "AGREE", ""))
+        else:
+            # DISAGREE means "fit says ship-ready, production not enabled."
+            # Note the 7-day gate so a reader doesn't think we're stalling.
+            rows.append(("LC_ENABLED", p, wants_bool, "DISAGREE", "7-day live-layer gate — flip after 7 daily reads agree"))
 
     # Marine layer — stage1+stage2 don't print a clean VERDICT line yet.
     # Skip for today; surface as TODO.

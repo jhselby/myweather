@@ -883,7 +883,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.298 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.299 · click any sub-box header to collapse it.</div>
 
   <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-04</div>
@@ -3431,7 +3431,8 @@ function renderGatedCandidatesSection(wxDoc) {
   if (!el) return;
   const cove = wxDoc?.cove_correction;
   const solar = wxDoc?.solar_correction;
-  if (!cove && !solar) {
+  const csc = wxDoc?.cloud_saturation_correction;
+  if (!cove && !solar && !csc) {
     el.textContent = "No gated correction stamps in weather_data yet.";
     return;
   }
@@ -3485,6 +3486,67 @@ function renderGatedCandidatesSection(wxDoc) {
         Sun-up threshold: ${r.sun_up_threshold ?? '?'} W/m²
       </div>
       <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">${solar.note ?? ""}</div>
+    </div>`;
+  }
+
+  // Lc — cloud saturation-unbiasing. Currently ENABLED=False (telemetry
+  // watch). Shows per-field cells_fired / n_leads + mean-|Δ| so the 7-day
+  // gate watcher can eyeball whether the fit is stable across ticks.
+  if (csc) {
+    const enabled = !!csc.enabled;
+    const pf = csc.per_field || {};
+    const stats = {};
+    let anyFired = 0;
+    for (const [field, data] of Object.entries(pf)) {
+      const deltas = (data.deltas || []).filter(d => typeof d === "number" && d !== 0);
+      const abs = deltas.map(d => Math.abs(d));
+      const meanAbs = abs.length ? abs.reduce((a, b) => a + b, 0) / abs.length : 0;
+      const maxAbs = abs.length ? Math.max(...abs) : 0;
+      stats[field] = {
+        fired: data.cells_fired ?? 0,
+        n: data.n_leads ?? 0,
+        meanAbs,
+        maxAbs,
+      };
+      anyFired += (data.cells_fired || 0);
+    }
+    const stateColor = enabled ? "#4ad29a" : "#a08070";
+    const stateLabel = enabled ? "ENABLED" : "dormant · telemetry only";
+    const gateNote = enabled
+      ? ""
+      : ` <span style="opacity:0.7;font-size:0.85em;">(7-day live-layer change gate; day 1/7 as of 2026-07-04)</span>`;
+    html += `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
+      <div style="margin-bottom:8px;"><strong>Lc Cloud saturation-unbiasing</strong> · <span style="color:${stateColor};font-weight:700;">${stateLabel}</span>${gateNote}</div>
+      <div style="font-size:1.4rem;font-weight:600;color:${enabled ? "#4ad29a" : "#e0d472"};margin-bottom:8px;">
+        ${anyFired} cells firing this tick
+        <span style="font-size:0.7em;opacity:0.7;font-weight:400;">across cc / cl / cm / ch</span>
+      </div>
+      <table style="width:100%;font-size:0.85em;border-collapse:collapse;">
+        <thead><tr style="color:#8a93a3;text-align:left;">
+          <th style="padding:3px 6px 3px 0;">Field</th>
+          <th style="padding:3px 6px;text-align:right;">Cells fire / leads</th>
+          <th style="padding:3px 6px;text-align:right;">mean |Δ| pp</th>
+          <th style="padding:3px 0 3px 6px;text-align:right;">max |Δ| pp</th>
+        </tr></thead>
+        <tbody>
+          ${["cc", "cl", "cm", "ch"].map(f => {
+            const s = stats[f] || { fired: 0, n: 0, meanAbs: 0, maxAbs: 0 };
+            const rowColor = s.fired > 0 ? "#cfd8e3" : "#8a93a3";
+            return `<tr style="border-top:1px solid #232936;color:${rowColor};">
+              <td style="padding:4px 6px 4px 0;"><code>${f}</code></td>
+              <td style="padding:4px 6px;text-align:right;">${s.fired} / ${s.n}</td>
+              <td style="padding:4px 6px;text-align:right;">${s.meanAbs.toFixed(1)}</td>
+              <td style="padding:4px 0 4px 6px;text-align:right;">${s.maxAbs.toFixed(1)}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+      <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:8px;">
+        ${enabled
+          ? `Live: <code>hourly.cloud_cover*</code> arrays are shifted by the per-lead Δ then clamped to [0, 100]. Pre-Lc arrays preserved as <code>hourly.cloud_cover*_post_l4</code> for attribution.`
+          : `Not currently mutating any forecast values. When ENABLED=True, each of the "cells fire" leads above will shift by that lead's Δ pp (with clamp to [0, 100]).`}
+        Fit table <code>lc_correction_table.json</code> generated ${csc.fit_table_generated_at ? new Date(csc.fit_table_generated_at).toISOString().slice(0, 10) : "?"}.
+      </div>
     </div>`;
   }
 

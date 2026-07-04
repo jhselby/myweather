@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.299 • July 4, 2026</strong></summary>
+
+- **Lc live-state panel added to G1. Gated correction candidates.** Third card alongside Lt and Lsr. Renders per-tick from `weather_data["cloud_saturation_correction"]`: enabled state + gate-day badge, total cells firing this tick, per-field table (cells fire / leads, mean |Δ| pp, max |Δ| pp), and fit-table generated_at. When `ENABLED=False` (today), reads as "dormant · telemetry only (7-day live-layer change gate; day 1/7 as of 2026-07-04)" — the exact table a reader needs to watch across the 7-day gate. When flipped `ENABLED=True`, the badge turns green and the descriptor switches to "Live: hourly.cloud_cover* arrays are shifted..."
+- **`divergence_report.py` tracks `LC_ENABLED`.** New row surfaces production vs. `lc_fit.py` verdict. Today (before the first digest run of lc_fit): UNKNOWN, "lc_fit hasn't reported." After tonight's digest, once `lc_fit` writes its state entry, the row will read `DISAGREE — 7-day live-layer gate — flip after 7 daily reads agree` — the gate progress is the reader's mental model, not a divergence to act on.
+- **`analysis/lc_fit.py` auto-runs in the daily digest.** It's under `analysis/*.py`, so `run_digest.sh` picks it up. Each night the fit table refreshes against latest pair-log; the exec-summary's SHIP-ELIGIBLE bucket enforces the 7-day agreement rule before we consider flipping `LC_ENABLED=True`.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.298 • July 4, 2026</strong></summary>
 
 - **Lc (cloud saturation-unbiasing) — code shipped, ENABLED=False.** New specialist correction on cloud fields (cc, cl, cm, ch), fitted from pair-log. Post-L4 per-(field, value_bin) shift with clamp to [0, 100]. Live-layer change gate: 7-day agreement + telemetry watch before flipping ENABLED.
