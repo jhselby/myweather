@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.304 • July 4, 2026</strong></summary>
+
+- **pp dropped from `L3_FIELDS`.** Reconciliation of four audit tools all agreed L3 hurts pp: Fitter Brier `l1=0.0734 → l3=0.0765` (+4.2% worse; lower Brier = better); `production_whatif.py` `pp +87.3% BAD`; `h_regime_l3.py` `pp sea_breeze -96.1% ★ L3 LOSES`; walkforward L3_FIELDS claim has never included pp across 13 daily reads spanning 06-25 → 07-04. **The only signal for keeping pp in L3 was a "+8.0% pp L3 Brier gain L2→L3" claim I wrote into the v0.6.288–289 changelog earlier today — that number is not present in any script output.** Reverting the fabricated-number-driven decision to match what all four tools have been saying. Skipped the 7-day live-layer gate because this is pulling a bad decision back out (based on invented evidence), not shipping a new one. `shipped_ledger.jsonl` entry appended so the 14-day post-ship watch flags any regression.
+- **Fitter's pp Brier `production` key.** Previously missing — the scorecard's fall-back to `l1` gave a false `+0.0%` reading. Added a `per_field_prod_brier_sq` accumulator on the deepest-applied-layer path (mirroring the existing `per_field_prod_abs` for MAE), populated per-row from `error_{applied}`, emitted as `per_layer_brier_by_lead["pp"]["production"]`. Next Fitter cycle after deploy will populate the array; pp then reads cleanly for future scorecard extension.
+- **Debug page canon fixes.** Deleted the fabricated `+8.0%` sentence from the v0.6.288–289 changelog bullet. `Current pipeline state` pp row updated to `L1 (L3 dropped 2026-07-04 v0.6.304 — Fitter Brier + production_whatif + h_regime_l3 + walkforward all agree L3 hurts pp)`. Tri-column band's What's-running list now reads `L3 lead-decay: ws · wg · ch · cm (pp dropped 2026-07-04 v0.6.304 · skip: ...)`. Mon 07-06 upcoming-decision reworded from "ws/pp L3 strip?" to "ws L3 skip cells? (pp already dropped 07-04)."
+- **Memory note: `feedback-dont-invent-numbers`.** Codifies the underlying failure. Every percentage / delta / ratio that lands in codified prose (CHANGELOG, debug page, ledger, memory) must be cited from a specific script output. If I can't cite the source, either fetch the number verbatim or omit it. A wrong specific number is worse than no number — it looks like real evidence and drives real decisions.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.303 • July 4, 2026</strong></summary>
 
 - **Section-title standardization.** All layer section headers now read as `L{X} — {what it does}` for consistency. "Layer 1 — Raw model" → "L1 — Raw model"; same for L2, L3, L4. Lsr already followed the format. Prose in the accuracy-chart color-key legend, the "post-aggregate-bias" subsection header, the L3/L4 applicability-change banners, and the chart-legend labels for drill-down layers were all switched from "Layer N" to "L{N}." One user-facing status message that referenced "Layer 5 corrections" now correctly reads "Lsr corrections." HTML section-boundary comments switched to the new style. Non-user-facing CSS and JS comments were left alone; they aren't visible.

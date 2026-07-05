@@ -468,8 +468,9 @@ def fit_decay_corrections():
     # Rows without applied_layer (pre-v0.6.269 pair-log entries) don't
     # contribute; approximation stays authoritative until the 7-day window
     # fills with stamped rows.
-    per_field_prod_abs = defaultdict(float)  # key: (field, lead_h)
-    per_field_prod_n   = defaultdict(int)
+    per_field_prod_abs      = defaultdict(float)  # key: (field, lead_h)
+    per_field_prod_n        = defaultdict(int)
+    per_field_prod_brier_sq = defaultdict(float)  # pp only; (field, lead_h)
     # L6 audit accumulator: per-cycle MAE for L4 vs L6 on temperature, counted
     # only over pair rows where both error_l4 and error_l6 are present AND the
     # run_time passes the L6 valid-from filter. Paired comparison eliminates
@@ -691,6 +692,11 @@ def fit_decay_corrections():
                     if e_prod is not None:
                         per_field_prod_abs[(field, lead_h)] += abs(float(e_prod))
                         per_field_prod_n[(field, lead_h)]   += 1
+                        # Real per-row Production Brier accumulator for pp.
+                        # Mirrors per_layer_brier_sq: divide by 100 to move
+                        # error into probability space (0–1), then square.
+                        if field == "pp":
+                            per_field_prod_brier_sq[(field, lead_h)] += (float(e_prod) / 100.0) ** 2
             # v0.6.112 L5 solar audit accumulator. Solar pairs with state_fc
             # regime, daytime (forecast_l1 ≥ SUN_UP_THRESHOLD), lead 1+.
             # Mirrors analysis/l5_solar_analysis.py's "realistic" view.
@@ -1149,6 +1155,15 @@ def fit_decay_corrections():
             if n > 0:
                 brier_arr[lead] = round(per_layer_brier_sq[("pp", lead, lyr)] / n, 4)
         per_layer_brier_by_lead["pp"][lyr] = brier_arr
+    # Real per-row Production Brier for pp — mirrors the MAE production key.
+    # v0.6.304: populate this so pp lands cleanly in the scorecard (was
+    # missing; scorecard fell back to l1 which gave a false 0% delta).
+    prod_brier_arr = [None] * LEAD_BINS
+    for lead in range(LEAD_BINS):
+        n_p = per_field_prod_n.get(("pp", lead), 0)
+        if n_p > 0:
+            prod_brier_arr[lead] = round(per_field_prod_brier_sq[("pp", lead)] / n_p, 4)
+    per_layer_brier_by_lead["pp"]["production"] = prod_brier_arr
 
     ts_output = {
         "fitted_at": now_naive.strftime("%Y-%m-%dT%H:%M"),
