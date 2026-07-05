@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.306 • July 4, 2026</strong></summary>
+
+- **Scorecard subtitle: third row for flat fields.** Was showing 10/13 fields (7 winning + 3 regressing); the 3 flat fields (pa, cl, ppᴮ) had no home in the display. Added a neutral-gray `○` row so all 13 fields are visible. Bucket boundary tightened to ±0.5pp so noise-level rows (e.g. cl at −0.2%) fall into "flat" rather than sneaking into "winning." Primary count of winning fields stays strict (pct < 0) for consistency with prior tallies.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.305 • July 4, 2026</strong></summary>
 
 - **Scorecard includes pp via Brier.** pp is now scored in the "Winning fields" count using `per_layer_brier_by_lead.pp` instead of being filtered out entirely. Same "how much did we reduce the raw error metric" semantics for both MAE-scored and Brier-scored fields; superscript `ᴮ` marks the Brier field to keep the scoring rule visible. Count becomes N/13 (was N/12). Uses production Brier when populated; falls back to the deepest-applied-layer Brier otherwise. For pp under the current `L3_FIELDS = {ws, wg, ch, cm}` (no pp), deepest applied = L1 = raw → delta 0% — an honest read while pp has no correction path.

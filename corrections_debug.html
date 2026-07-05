@@ -882,7 +882,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.305 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.306 · click any sub-box header to collapse it.</div>
 
   <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-04</div>
@@ -2633,9 +2633,16 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     return;
   }
   const meanPct = rows.reduce((s, r) => s + r.pct, 0) / rows.length;
-  const winningRows = rows.filter(r => r.pct < 0);
-  const regressingRows = rows.filter(r => r.pct > 0);
-  const netPositive = winningRows.length;
+  // Bucket at ±0.5pp so noise-level rows sort into "flat" rather than
+  // shading the winning/regressing tallies (a −0.2% field is not really
+  // a win). The main "Winning fields" count still uses strict <0 so it
+  // stays consistent with prior behavior; the subtitle uses buckets to
+  // account for every field.
+  const FLAT_EPS = 0.5;
+  const winningRows = rows.filter(r => r.pct <= -FLAT_EPS);
+  const regressingRows = rows.filter(r => r.pct >= FLAT_EPS);
+  const flatRows = rows.filter(r => Math.abs(r.pct) < FLAT_EPS);
+  const netPositive = rows.filter(r => r.pct < 0).length;
   // Biggest gain = most negative (Production MAE dropped furthest below raw).
   // Biggest regression = most positive (Production worse than raw). Either
   // may be absent — no gains means every field is worse; no regressions means
@@ -2667,9 +2674,10 @@ function renderScorecardBanner(tsDoc, wxDoc) {
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Winning fields</div>
         <div><strong>${netPositive}/${rows.length}</strong></div>
-        <div style="font-size:0.7em;opacity:0.55;margin-top:2px;line-height:1.35;">
-          ${winningRows.length ? `<span style="color:#4ad29a;">✓ ${winningRows.map(r => _fieldLabel(r)).join(" ")}</span>` : ""}
+        <div style="font-size:0.7em;opacity:0.6;margin-top:2px;line-height:1.4;">
+          ${winningRows.length ? `<div style="color:#4ad29a;">✓ ${winningRows.map(r => _fieldLabel(r)).join(" ")}</div>` : ""}
           ${regressingRows.length ? `<div style="color:#fb7c5c;">✗ ${regressingRows.map(r => _fieldLabel(r)).join(" ")}</div>` : ""}
+          ${flatRows.length ? `<div style="color:#8a93a3;">○ ${flatRows.map(r => _fieldLabel(r)).join(" ")}</div>` : ""}
         </div>
       </div>
       <div>
