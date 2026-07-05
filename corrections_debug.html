@@ -882,7 +882,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.304 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-04 v0.6.305 · click any sub-box header to collapse it.</div>
 
   <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-04</div>
@@ -2577,10 +2577,13 @@ function renderScorecardBanner(tsDoc, wxDoc) {
                  { label: "6-11h", lo: 6, hi: 12 },
                  { label: "12-23h", lo: 12, hi: 24 },
                  { label: "24-47h", lo: 24, hi: 48 }];
-  // Iterate every field with per-layer MAE data. Skip Brier-evaluated fields
-  // (pp) since MAE isn't their decision metric — averaging them into the
-  // stack-vs-raw delta would drag the number in a direction that doesn't
-  // reflect user-visible skill.
+  // Iterate every field with per-layer data. MAE-scored fields go through
+  // the standard raw-vs-production compare. Brier-scored fields (pp) use
+  // per_layer_brier_by_lead["pp"] instead — same "how much did we reduce
+  // the raw error metric" semantics, different underlying scoring rule.
+  // The scorecard mixes both because for the reader the question is "how
+  // much better is Production than raw," and that question is well-defined
+  // in either scoring rule.
   const rows = [];
   const cellRows = [];  // per-(field, band) for worst-cell surfacing
   const mae = tsDoc.per_layer_mae_by_lead;
@@ -2603,12 +2606,36 @@ function renderScorecardBanner(tsDoc, wxDoc) {
                       pct: (prodB - rawB) / rawB * 100 });
     }
   }
+  // pp — Brier-native scoring. Falls back to the deepest-applied Brier
+  // layer if production key isn't populated yet (Fitter cycles twice daily
+  // at 03:07 + 15:07 EDT; after v0.6.304 shipped 2026-07-04 the production
+  // key needs one cycle before it appears). Lower Brier = better, so pct
+  // stays sign-consistent with the MAE rows.
+  const brierDoc = tsDoc.per_layer_brier_by_lead || {};
+  for (const fieldKey of Object.keys(brierDoc)) {
+    if (!brierFields.has(fieldKey)) continue;
+    const bl = brierDoc[fieldKey] || {};
+    const rawBrier = _avg1to47(bl.l1);
+    // Try production first; fall back to the deepest applied layer for
+    // this field. For pp under current L3_FIELDS = {ws,wg,ch,cm} (no pp),
+    // deepest applied = l1 → prod = raw, giving a legitimate 0% delta.
+    let prodBrier = _avg1to47(bl.production);
+    if (prodBrier == null) {
+      const key = _prodKey(fieldKey);
+      prodBrier = _avg1to47(bl[key]);
+    }
+    if (rawBrier == null || prodBrier == null || rawBrier === 0) continue;
+    const pct = (prodBrier - rawBrier) / rawBrier * 100;
+    rows.push({ field: fieldKey, pct, brier: true });
+  }
   if (rows.length === 0) {
     host.hidden = true;
     return;
   }
   const meanPct = rows.reduce((s, r) => s + r.pct, 0) / rows.length;
-  const netPositive = rows.filter(r => r.pct < 0).length;
+  const winningRows = rows.filter(r => r.pct < 0);
+  const regressingRows = rows.filter(r => r.pct > 0);
+  const netPositive = winningRows.length;
   // Biggest gain = most negative (Production MAE dropped furthest below raw).
   // Biggest regression = most positive (Production worse than raw). Either
   // may be absent — no gains means every field is worse; no regressions means
@@ -2620,8 +2647,9 @@ function renderScorecardBanner(tsDoc, wxDoc) {
   // it even when the overall banner is green.
   const worstBand = cellRows.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
   const meanColor = meanPct < 0 ? "#4ad29a" : "#fb7c5c";
+  const _fieldLabel = (r) => r.brier ? `${r.field}<sup style="opacity:0.7;">B</sup>` : r.field;
   const fmt = (r, color) => r
-    ? `<code>${r.field}</code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`
+    ? `<code>${_fieldLabel(r)}</code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`
     : "—";
   const fmtBand = (r, color) => r
     ? `<code>${r.field}</code>@${r.band} <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`
@@ -2639,6 +2667,10 @@ function renderScorecardBanner(tsDoc, wxDoc) {
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Winning fields</div>
         <div><strong>${netPositive}/${rows.length}</strong></div>
+        <div style="font-size:0.7em;opacity:0.55;margin-top:2px;line-height:1.35;">
+          ${winningRows.length ? `<span style="color:#4ad29a;">✓ ${winningRows.map(r => _fieldLabel(r)).join(" ")}</span>` : ""}
+          ${regressingRows.length ? `<div style="color:#fb7c5c;">✗ ${regressingRows.map(r => _fieldLabel(r)).join(" ")}</div>` : ""}
+        </div>
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Biggest gain</div>

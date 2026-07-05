@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.305 • July 4, 2026</strong></summary>
+
+- **Scorecard includes pp via Brier.** pp is now scored in the "Winning fields" count using `per_layer_brier_by_lead.pp` instead of being filtered out entirely. Same "how much did we reduce the raw error metric" semantics for both MAE-scored and Brier-scored fields; superscript `ᴮ` marks the Brier field to keep the scoring rule visible. Count becomes N/13 (was N/12). Uses production Brier when populated; falls back to the deepest-applied-layer Brier otherwise. For pp under the current `L3_FIELDS = {ws, wg, ch, cm}` (no pp), deepest applied = L1 = raw → delta 0% — an honest read while pp has no correction path.
+- **Winning-fields subtitle.** Small text under the "N/M" number lists the actual winning fields (green ✓) and regressing fields (red ✗). Answers "which 7 of 12?" at a glance without asking. Same list, small font, low-opacity — doesn't fight the primary numbers for attention.
+- **Result today**: 7 winning (ch, cc, dp, h, cm, wg, sr), 3 regressing (pr, t, ws), 3 flat (pa, cl, ppᴮ). Once the next Fitter cycle populates the pp Brier production key, pp will read from real per-row Brier instead of the l1 fallback (and today's L1-only path means 0% anyway).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.304 • July 4, 2026</strong></summary>
 
 - **pp dropped from `L3_FIELDS`.** Reconciliation of four audit tools all agreed L3 hurts pp: Fitter Brier `l1=0.0734 → l3=0.0765` (+4.2% worse; lower Brier = better); `production_whatif.py` `pp +87.3% BAD`; `h_regime_l3.py` `pp sea_breeze -96.1% ★ L3 LOSES`; walkforward L3_FIELDS claim has never included pp across 13 daily reads spanning 06-25 → 07-04. **The only signal for keeping pp in L3 was a "+8.0% pp L3 Brier gain L2→L3" claim I wrote into the v0.6.288–289 changelog earlier today — that number is not present in any script output.** Reverting the fabricated-number-driven decision to match what all four tools have been saying. Skipped the 7-day live-layer gate because this is pulling a bad decision back out (based on invented evidence), not shipping a new one. `shipped_ledger.jsonl` entry appended so the 14-day post-ship watch flags any regression.
