@@ -1,6 +1,23 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.307 • July 5, 2026</strong></summary>
+
+- **Digest suppress-until infrastructure.** Morning digest was firing ⚠ `l5_solar_analysis` post-ship watch alerts every day even though the debug page already ruled the verdict contaminated through 07-10 (raw_direct_radiation pollution + per-lead scalar bugs, both fixed 07-03; 7-day rolling window doesn't fill with clean rows until 07-10). Structural fix: `shipped_ledger.jsonl` entries now carry optional `suppress_until` (YYYY-MM-DD) + `suppress_reason`. `build_executive_summary.py` honors them — suppressed alerts route to a separate "Suppressed (known contamination — do not act)" block and drop out of the top-of-digest ⚠ slot. Applied to both open Lsr ledger entries (v0.6.248 shipping L5 + v0.6.280 skip regimes) with `suppress_until: 2026-07-10`. Alerts self-resurface once the date passes — either self-resolving as clean rows fill the window, or resurfacing for real action. Also codified as memory `feedback_check_contamination_before_acting`: before recommending action on any ⚠ alert, check the debug page + ledger for a suppress-until / contamination note first.
+
+</details>
+
+<details>
+<summary><strong>v0.6.279–v0.6.285 • July 2, 2026</strong></summary>
+
+- **v0.6.279 skip-table architecture.** Shipped in `decay_apply.py` for L3/L4. First cells: `(ws, l3, ne_flow, *)`, `(ws, l3, sea_breeze, 0-11h)`. ws τ=7 reverted to global τ=14 after read flipped. Preview via `production_whatif.py`: ws +25.7% → +22.7%.
+- **v0.6.280 Lsr skip regimes.** ne_flow (+32% worse) and calm (+11% worse). `compute_solar_correction` returns 0.0 in these regimes; sr forecast falls back to raw L1 (no L2/L3/L4 apply to sr).
+- **v0.6.281–v0.6.284 canon-page catch-up sweep.** 12 stale spots knocked out across L3/Lsr prose, Upcoming, Retired, Open Q, Production Stack, Lt/Lsr render staleness.
+- **v0.6.285 raw_direct_radiation pollution fix.** Week-long pipeline-order bug live since Lsr shipped 2026-06-28: `raw_direct_radiation` was captured AFTER Lsr mutated `direct_radiation`, so debug page + Production accumulator saw Lsr-corrected values as "raw." Fixed by extracting raw preservation into `preserve_raw_forecast_arrays()` and calling BEFORE `stamp_solar_correction`. Structural guard added in v0.6.291.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.306 • July 4, 2026</strong></summary>
 
 - **Scorecard subtitle: third row for flat fields.** Was showing 10/13 fields (7 winning + 3 regressing); the 3 flat fields (pa, cl, ppᴮ) had no home in the display. Added a neutral-gray `○` row so all 13 fields are visible. Bucket boundary tightened to ±0.5pp so noise-level rows (e.g. cl at −0.2%) fall into "flat" rather than sneaking into "winning." Primary count of winning fields stays strict (pct < 0) for consistency with prior tallies.

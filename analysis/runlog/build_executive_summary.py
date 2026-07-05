@@ -302,6 +302,7 @@ def main():
     # Post-ship 14-day watch: scan shipped_ledger for any active-watch ships,
     # flag any whose responsible script has flipped verdict since ship.
     post_ship_alerts = []
+    suppressed_alerts = []
     if SHIPPED_LEDGER_PATH.exists():
         from datetime import date as _dt_date, timedelta as _dt_td
         today_date = _dt_date.today()
@@ -323,6 +324,26 @@ def main():
             watch_until = shipped_date + _dt_td(days=POST_SHIP_WATCH_DAYS)
             if today_date > watch_until:
                 continue  # watch window closed
+            # Suppression: ledger entry can carry `suppress_until` (YYYY-MM-DD)
+            # and `suppress_reason`. Used when a verdict is known-contaminated
+            # (e.g., a bug was fixed and the rolling window needs N days of
+            # clean rows before the verdict is trustworthy again). Alerts in
+            # this state route to a separate suppressed-alerts list instead
+            # of the noisy top-of-digest slot.
+            suppress_until_str = entry.get("suppress_until")
+            if suppress_until_str:
+                try:
+                    suppress_until_date = _dt_date.fromisoformat(suppress_until_str)
+                except ValueError:
+                    suppress_until_date = None
+                if suppress_until_date and today_date <= suppress_until_date:
+                    suppressed_alerts.append({
+                        "script": script,
+                        "change": entry.get("change") or "(no change description)",
+                        "suppress_until": suppress_until_str,
+                        "suppress_reason": entry.get("suppress_reason") or "(no reason given)",
+                    })
+                    continue
             # Fetch current verdict.
             cur_info = current.get(script) or {}
             cur_bucket = cur_info.get("bucket")
@@ -351,6 +372,12 @@ def main():
     else:
         out.append("  • none")
     out.append("")
+    if suppressed_alerts:
+        out.append("Suppressed (known contamination — do not act):")
+        for a in suppressed_alerts:
+            out.append(f"  · {a['script']} — {a['change']}")
+            out.append(f"    suppress until {a['suppress_until']}: {a['suppress_reason']}")
+        out.append("")
 
     out.append("New kills:")
     if kills_new:
