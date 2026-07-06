@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.308 • July 6, 2026</strong></summary>
+
+- **Fetch total shortwave + diffuse radiation from Open-Meteo.** Investigation into "sr τ=24h L2 lead-decay" ship candidate exposed a unit mismatch masquerading as a station bias: model `direct_radiation` is direct-beam only, but Tempest station `solar_radiation_wm2` measures total shortwave (direct + diffuse). Current tick had 18/19 Tempest stations reporting sr at 96–165 W/m² while model direct_radiation[0] = 4 W/m². That gap has been contaminating Lsr — its per-regime bias magnitudes (−60 to −110 W/m²) are fitting the direct-vs-total unit gap on top of any real regime signal, which likely explains why Lsr tanks in ne_flow + calm (highly variable cloud cover → the unit gap swings hardest there). Step 1 of the fix chain: start fetching `shortwave_radiation` and `diffuse_radiation` alongside `direct_radiation` so we have apples-to-apples data to compare against Tempest. No downstream code changes yet — Lsr / pair log / debug chart still use `direct_radiation`. Once a few hours of paired shortwave data accumulate, we can quantify how much of Lsr's "regime bias" was really the unit gap, then decide the migration path.
+
+</details>
+
+<details>
 <summary><strong>v0.6.307 • July 5, 2026</strong></summary>
 
 - **Digest suppress-until infrastructure.** Morning digest was firing ⚠ `l5_solar_analysis` post-ship watch alerts every day even though the debug page already ruled the verdict contaminated through 07-10 (raw_direct_radiation pollution + per-lead scalar bugs, both fixed 07-03; 7-day rolling window doesn't fill with clean rows until 07-10). Structural fix: `shipped_ledger.jsonl` entries now carry optional `suppress_until` (YYYY-MM-DD) + `suppress_reason`. `build_executive_summary.py` honors them — suppressed alerts route to a separate "Suppressed (known contamination — do not act)" block and drop out of the top-of-digest ⚠ slot. Applied to both open Lsr ledger entries (v0.6.248 shipping L5 + v0.6.280 skip regimes) with `suppress_until: 2026-07-10`. Alerts self-resurface once the date passes — either self-resolving as clean rows fill the window, or resurfacing for real action. Also codified as memory `feedback_check_contamination_before_acting`: before recommending action on any ⚠ alert, check the debug page + ledger for a suppress-until / contamination note first.

@@ -20,6 +20,8 @@ _HOURLY_KEY_MAP = {
     "cloud_cover_mid": "cloud_cover_mid",
     "cloud_cover_high": "cloud_cover_high",
     "direct_radiation": "direct_radiation",
+    "diffuse_radiation": "diffuse_radiation",
+    "shortwave_radiation": "shortwave_radiation",
     "uv_index": "uv_index",
     "wind_speed": "wind_speed_10m",
     "wind_direction": "wind_direction_10m",
