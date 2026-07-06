@@ -73,7 +73,10 @@ def classify_synoptic_regime(wind_dir_deg, wind_speed_mph, pressure_in,
     d = float(wind_dir_deg) % 360
 
     # Nor'easter pattern: NE flow + low pressure + strong wind.
-    if 30 <= d < 80:
+    # Range extended to 90° 2026-07-06 v0.6.310 — the prior [30, 80) branch
+    # left a 10° gap [80, 90) that returned None. At Marblehead, easterly
+    # winds (~85°) behave more like NE flow (marine, cool) than SE flow.
+    if 30 <= d < 90:
         if (pressure_in is not None and pressure_in < 29.9
                 and wind_speed_mph >= 12):
             return "nor_easter"

@@ -1,6 +1,20 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.311 • July 6, 2026</strong></summary>
+
+- **Fix 10° coverage gap in `classify_synoptic_regime`.** Caught immediately after v0.6.310 wired `derived.state` — post-deploy verification showed `regime_synoptic: null` on a tick where the classifier should have returned a label. Inputs looked fine (wind_dir=84.4°, wind_speed=9.8, pressure=1021.5 hPa, temp=70.6°F, pressure_trend_3h=0.6). Cause: `classify_synoptic_regime` had branches `30 ≤ d < 80` (NE), `90 ≤ d < 200` (SE), `200 ≤ d < 290` (SW), `290 ≤ d or d < 30` (NW) — leaving `[80, 90)` uncovered. Any easterly wind in that 10° window returned None. This has been silently affecting every pair-log record + live tick since the classifier was written. Fix: extend NE range to `[30, 90)` so easterly winds classify as `ne_flow` (matches Marblehead's marine/cool-air behavior for east winds). Post-fix expectation: current tick's regime_synoptic becomes `ne_flow`, `skip_table_l3_cells_skipped` finally non-zero because ws L3's ne_flow skip cells activate.
+
+</details>
+
+<details>
+<summary><strong>v0.6.310 • July 6, 2026</strong></summary>
+
+- **Populate `derived.state` every tick — L3/L4 skip table starts firing.** Silent structural bug caught while chasing the shortwave work: multiple processors (`decay_apply.py`, `solar_correction.py`, `backtest_snapshot.py`, `confidence_layer.py`, `state_stratified.py`) read `weather_data["derived"]["state"]["regime_synoptic"]`, but nothing in the codebase ever WROTE to `derived["state"]`. Every read got `None`. `solar_correction.py` worked around it by classifying inline (line 255-269 comment says exactly that). But `decay_apply.py:461` didn't — it read None and `_should_skip()` fail-safed to False on every row, which means the L3/L4 skip table shipped v0.6.279 on 2026-07-02 **has never fired since ship day**. Current tick's GCS `weather_data.json` proves it: `skip_table_l3_cells_skipped: 0`, `skip_table_l4_cells_skipped: 0`, `skip_table_regime: None`. Every ws L3 row in ne_flow all bands + sea_breeze 0-11h has been applying despite the skip cells being populated in `SKIP_TABLE`. That's four days of the +25.7% ws Production regression that the skip table was designed to fix continuing to hit users. New `processors/state_stamp.py::stamp_state()` runs after `preserve_raw_forecast_arrays` and before `stamp_solar_correction` / `apply_decay_corrections`. It calls `classify_synoptic_regime` + `classify_flow_regime` on current-tick wind/pressure/temp and populates `derived["state"]` with `regime_synoptic`, `regime_flow`, `wind_dir`, `wind_speed`, `wind_octant`, `cloud_cover` — matching the schema every downstream reader expects. Expected impact: next-tick `skip_table_l3_cells_skipped > 0` when the regime is ne_flow or sea_breeze, and the ws Production %-vs-raw should shrink toward what `production_whatif.py ws_L3_skip` predicted.
+
+</details>
+
+<details>
 <summary><strong>v0.6.309 • July 6, 2026</strong></summary>
 
 - **Shadow-log model shortwave + diffuse on every sr pair row.** Next step in the sr Lsr unit-mismatch fix chain (see v0.6.308). Every sr pair row in `forecast_error_log.jsonl` now carries `forecast_shortwave` (from Open-Meteo `shortwave_radiation`) and `forecast_diffuse` (from `diffuse_radiation`) alongside the existing `forecast_l1` (direct-beam only). Primary sr forecast stays direct-beam for now — this is diagnostic data. `analysis/sr_shortwave_bias.py` reads the pair log and compares `|observed − forecast_direct|` vs `|observed − forecast_shortwave|` per regime; expected outcome once a few hours of daytime pairs accumulate: shortwave MAE much lower than direct-beam MAE in every regime (because Tempest measures total shortwave), with the largest collapse in ne_flow + calm where Lsr misbehaves worst. That result would confirm Lsr has been fitting the definitional gap and give us the number to justify the migration to shortwave-as-primary. Wired in `forecast_snapshot.py` (stamps `sr_sw`/`sr_diffuse` per hour) + `forecast_error_log.py` (propagates to pair rows).
