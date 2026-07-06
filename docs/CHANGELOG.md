@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.309 • July 6, 2026</strong></summary>
+
+- **Shadow-log model shortwave + diffuse on every sr pair row.** Next step in the sr Lsr unit-mismatch fix chain (see v0.6.308). Every sr pair row in `forecast_error_log.jsonl` now carries `forecast_shortwave` (from Open-Meteo `shortwave_radiation`) and `forecast_diffuse` (from `diffuse_radiation`) alongside the existing `forecast_l1` (direct-beam only). Primary sr forecast stays direct-beam for now — this is diagnostic data. `analysis/sr_shortwave_bias.py` reads the pair log and compares `|observed − forecast_direct|` vs `|observed − forecast_shortwave|` per regime; expected outcome once a few hours of daytime pairs accumulate: shortwave MAE much lower than direct-beam MAE in every regime (because Tempest measures total shortwave), with the largest collapse in ne_flow + calm where Lsr misbehaves worst. That result would confirm Lsr has been fitting the definitional gap and give us the number to justify the migration to shortwave-as-primary. Wired in `forecast_snapshot.py` (stamps `sr_sw`/`sr_diffuse` per hour) + `forecast_error_log.py` (propagates to pair rows).
+
+</details>
+
+<details>
 <summary><strong>v0.6.308 • July 6, 2026</strong></summary>
 
 - **Fetch total shortwave + diffuse radiation from Open-Meteo.** Investigation into "sr τ=24h L2 lead-decay" ship candidate exposed a unit mismatch masquerading as a station bias: model `direct_radiation` is direct-beam only, but Tempest station `solar_radiation_wm2` measures total shortwave (direct + diffuse). Current tick had 18/19 Tempest stations reporting sr at 96–165 W/m² while model direct_radiation[0] = 4 W/m². That gap has been contaminating Lsr — its per-regime bias magnitudes (−60 to −110 W/m²) are fitting the direct-vs-total unit gap on top of any real regime signal, which likely explains why Lsr tanks in ne_flow + calm (highly variable cloud cover → the unit gap swings hardest there). Step 1 of the fix chain: start fetching `shortwave_radiation` and `diffuse_radiation` alongside `direct_radiation` so we have apples-to-apples data to compare against Tempest. No downstream code changes yet — Lsr / pair log / debug chart still use `direct_radiation`. Once a few hours of paired shortwave data accumulate, we can quantify how much of Lsr's "regime bias" was really the unit gap, then decide the migration path.

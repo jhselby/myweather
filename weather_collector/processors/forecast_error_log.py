@@ -238,6 +238,17 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             applied = target_hour.get(f"{short}_applied")
             if applied:
                 pair["applied_layer"] = applied
+            # v0.6.309: shadow-log model shortwave + diffuse for sr pairs so
+            # we can compare against Tempest's total-shortwave obs on the same
+            # units. `forecast` (direct-beam only) stays the primary forecast —
+            # this is diagnostic-only until we decide the migration path.
+            if short == "sr":
+                sw = target_hour.get("sr_sw")
+                if sw is not None:
+                    pair["forecast_shortwave"] = int(sw)
+                diff_v = target_hour.get("sr_diffuse")
+                if diff_v is not None:
+                    pair["forecast_diffuse"] = int(diff_v)
             if state_fc:  pair["state_fc"]  = state_fc
             if state_obs: pair["state_obs"] = state_obs
             if cloud_sigma is not None:

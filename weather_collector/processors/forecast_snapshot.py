@@ -217,6 +217,19 @@ def append_forecast_snapshot(hourly, derived=None):
                 prev = v
         if dp_applied:
             entry["dp_applied"] = dp_applied
+        # v0.6.309: shadow-log shortwave + diffuse solar radiation from
+        # Open-Meteo alongside sr's direct_radiation. Diagnostic only —
+        # Tempest station sr sensors measure total shortwave, so pairing
+        # them against direct-beam-only forecast_l1 gives a "bias" that's
+        # really a definitional gap. Storing sw + diffuse per-hour lets
+        # forecast_error_log stamp them on each sr pair for an apples-to-
+        # apples model-vs-obs comparison.
+        sw_arr = hourly.get("shortwave_radiation", [])
+        diff_arr = hourly.get("diffuse_radiation", [])
+        if i < len(sw_arr) and sw_arr[i] is not None:
+            entry["sr_sw"] = round(float(sw_arr[i]))
+        if i < len(diff_arr) and diff_arr[i] is not None:
+            entry["sr_diffuse"] = round(float(diff_arr[i]))
         hours.append(entry)
 
     if not hours:
