@@ -659,6 +659,10 @@
     color: #ffffff !important;
     font-weight: 700;
   }
+  /* Value coloring vs raw baseline: green if Production beats raw by >0.5%
+     in that band, red if worse by >0.5%, else white (flat / noise). */
+  .band-table td.production-col.prod-better { color: #74c38b !important; }
+  .band-table td.production-col.prod-worse  { color: #d47070 !important; }
   .band-table thead th.production-col { border-top: 1.5px solid #ffffff; }
   .band-table tbody tr:last-child td.production-col { border-bottom: 1.5px solid #ffffff; }
   .accuracy-card {
@@ -2942,7 +2946,17 @@ function renderAccuracySection(tsDoc, wxDoc) {
         }
         html += `<td${extra}>${_fmt(v, decimals)}</td>`;
       }
-      html += `<td class="production-col">${_fmt(prodVal, decimals)}</td>`;
+      // Compare Production to Raw (L1) in this band; ±0.5% flat band matches
+      // the scorecard's FLAT_EPS so the two views agree on what counts as
+      // "not really a win / loss."
+      const rawVal = vals[0];
+      let prodCls = "production-col";
+      if (prodVal != null && rawVal != null && rawVal > 0) {
+        const pct = (prodVal - rawVal) / rawVal * 100;
+        if (pct <= -0.5) prodCls += " prod-better";
+        else if (pct >= 0.5) prodCls += " prod-worse";
+      }
+      html += `<td class="${prodCls}">${_fmt(prodVal, decimals)}</td>`;
       html += `</tr>`;
     }
     html += `</tbody></table>`;

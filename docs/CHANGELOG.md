@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.313 • July 7, 2026</strong></summary>
+
+- **Accuracy card Production column: red/green color-coding per lead band.** Was `color: #ffffff !important` with no comparison logic — every Production cell rendered white regardless of value. Now each cell compares its Production MAE to the same band's Raw (L1) MAE: green if Production < Raw by >0.5% (correction helped), red if Production > Raw by >0.5% (correction hurt), white if within ±0.5% (noise / flat). Threshold matches the scorecard's `FLAT_EPS` so per-band coloring and the scorecard's flat bucket agree on what counts as signal.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.312 • July 7, 2026</strong></summary>
 
 - **Debug page canon refresh + analysis wiring.** Sweep: "Last curated" and "Current pipeline state" dates bumped to 2026-07-07. Recent activity rolling window rotated (07-04 entries fall off; new 07-07 entries added). Calendar past-dated "Mon 07-06" entry removed; added 07-11 sr shortwave-vs-cc confound checkpoint. sr Lsr snapshot (both quick-view row and long-form Engineering status paragraph) updated with the first shadow-log read outcome (n=1,200, day 1): the unit-mismatch hypothesis was partially wrong — shortwave MAE is *not* uniformly smaller than direct-beam MAE; direction is regime-specific. nw_flow shortwave MAE −55%; pre_frontal/sea_breeze/unknown show shortwave *worse* with bias flipping from direct-under to shortwave-over. Prior "switch to shortwave + refit Lsr" fix chain now on hold pending Cause A (cc-miss surfacing through sr) vs Cause B (real Open-Meteo diffuse/aerosol gap) resolution. Analysis changes shipped alongside: `analysis/runlog/divergence_report.py` regex fix (was greping `L3_ENABLED`/`L4_ENABLED`, walkforward emits `L3_FIELDS`/`L4_FIELDS` — both keys silently fell into UNKNOWN status in every digest); new `analysis/sr_shortwave_cc_confound.py` diagnostic to disentangle Cause A vs B, queued for first real read ~2026-07-11.
