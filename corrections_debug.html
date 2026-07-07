@@ -842,8 +842,6 @@
       <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:4px;">Calendar</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-bottom:8px;">
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Mon 07-06</div>
-          <div>ws L3 skip cells? (pp already dropped 07-04)</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Mon 07-08</div>
           <div>T Production convergence check (7-day fill; Lt rows aged out).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-10</div>
@@ -852,6 +850,8 @@
           <div>ws / wg L3 strip earliest ship (day 8/7 gate).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-11</div>
           <div>C1 Stage 4 multi-axis re-check (was INSUFFICIENT).</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-11</div>
+          <div>sr shortwave-vs-cc confound first read (v0.6.309 shadow log fills).</div>
         </div>
 
         <div style="color:#a08070;font-weight:600;margin-bottom:4px;">Frozen</div>
@@ -882,11 +882,11 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-06 v0.6.311 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-07 v0.6.311 · click any sub-box header to collapse it.</div>
 
-  <div style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
-    <div style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;">Current pipeline state — 2026-07-06</div>
-    <div style="font-size:0.82em;opacity:0.7;margin-bottom:8px;">One-glance state of every field. Production numbers reflect what real per-row aggregation says right now; entries flagged <em>"in flight"</em> are cases where today's deploy hasn't propagated through the rolling window yet — the number today is stale, the target is where it will settle when the window fills.</div>
+  <details open style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
+    <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — 2026-07-07</summary>
+    <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. Production numbers reflect what real per-row aggregation says right now; entries flagged <em>"in flight"</em> are cases where today's deploy hasn't propagated through the rolling window yet — the number today is stale, the target is where it will settle when the window fills.</div>
     <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
       <thead>
         <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
@@ -954,7 +954,7 @@
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>sr</code> solar radiation</td>
           <td style="padding:5px 10px;vertical-align:top;">L1 → Lsr synoptic-regime <span style="opacity:0.6;">(Lsr skipped in ne_flow + calm regimes per v0.6.280; was +32% / +10% worse in those regimes)</span> <span style="opacity:0.6;">— <strong>unit-mismatch investigation open</strong> (v0.6.308–309): model <code>direct_radiation</code> is direct-beam only, Tempest <code>solar_radiation_wm2</code> is total shortwave; Lsr's regime biases likely fitting the definitional gap on top of any real regime signal</span></td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#e0d472;">0% <span style="opacity:0.7;font-size:0.9em;">two live bugs fixed 07-02/07-03: raw_direct_radiation pollution (v0.6.285) + Lsr per-lead scalar (07-03). Clean read after post-fix pair rows fill the window, ~2026-07-10. Separately: shortwave shadow-log now stamped on every sr pair (v0.6.309) — <code>analysis/sr_shortwave_bias.py</code> quantifies the unit-gap share of Lsr's regime bias once ~24h of daytime pairs accumulate (~2026-07-07 evening).</span></td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#e0d472;">0% <span style="opacity:0.7;font-size:0.9em;">two live bugs fixed 07-02/07-03: raw_direct_radiation pollution (v0.6.285) + Lsr per-lead scalar (07-03). Clean read after post-fix pair rows fill the window, ~2026-07-10. <strong>Shortwave shadow-log first read (07-07, n=1,200):</strong> shortwave MAE is <em>not</em> uniformly smaller than direct-beam MAE — outcome is regime-specific. nw_flow: shortwave better (−55% MAE). pre_frontal / sea_breeze / unknown: shortwave <em>worse</em> (bias flips from direct-under to shortwave-over by ~+12 / +169 / +367 W/m²). Signals a real over-forecast in Open-Meteo's total shortwave in cloudy/marine regimes on top of the direct-vs-total unit gap. Cause-A (cc-miss surfacing through sr) vs Cause-B (Open-Meteo diffuse/aerosol gap) confound diagnostic queued (<code>analysis/sr_shortwave_cc_confound.py</code>), first real read ~2026-07-11. Sample thin (day 1); watch for stabilization.</span></td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pa</code> precip amount</td>
@@ -968,18 +968,18 @@
       <strong>In flight — window fill 07-08 → 07-13:</strong> <code>t</code>, <code>pr</code> by 07-08; <code>sr</code> by 07-10 (both Lsr collector bugs fixed 07-03); <code>ws</code> by 07-13 (skip table finally firing 07-06 — 7-day rolling window doesn't fill with post-fix rows until then). Trust the target column, not today's number. Current Fitter output is a 7-day rolling average that includes pre-fix rows.<br>
       <strong>Stable wins:</strong> <code>ch</code> −46%, <code>wg</code> −15.5%, <code>cc</code> −14.7%, <code>cm</code> −6.8%, <code>dp</code> −6.1%, <code>h</code> −2.3%.
     </div>
-  </div>
+  </details>
 
-  <div class="since-last-curation" style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-    <div class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;">Recent activity — rolling 3-day window <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">(older entries in <code>docs/CHANGELOG.md</code>; retention: today + 2 prior days, trimmed on next curation)</span></div>
+  <details open class="since-last-curation" style="margin-top:10px;padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+    <summary class="since-last-curation-title" style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Recent activity — rolling 3-day window <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">(older entries in <code>docs/CHANGELOG.md</code>; retention: today + 2 prior days, trimmed on next curation)</span></summary>
     <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
 
-      <li><strong style="color:#7fb3ff;">2026-07-04 (Sat)</strong></li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.291</strong> — <strong>Shape 1 raw-baseline verifier shipped.</strong> Structural fix for the Lsr-class silent failure (v0.6.285). New <code>weather_collector/processors/raw_integrity.py</code>: <code>snapshot_raw_baseline()</code> at <code>collector.py:145</code> deep-copies every hourly array with a <code>raw_*</code> counterpart; <code>verify_raw_integrity()</code> at end of <code>build_weather_data</code> compares each <code>raw_&lt;field&gt;</code> against the snapshot. Drift → <code>gs://myweather-data/raw_pollution_log.jsonl</code>. New <code>analysis/raw_integrity_check.py</code> reads the log and emits CLEAN / DRIFT in the digest (DRIFT bucketed as kill in exec summary). Covers 10 fields. Non-blocking. Any future layer that mutates a source array before its raw_ copy exists now fires a drift event on the next tick.</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.292</strong> — Debug page hypothesis-state refresh. Stage 1 rolling table + long-form bullets walked from 06-24 stamps to 07-04. Course-of-action framing added. Live changes: <strong>Cloud saturation-unbiasing</strong> hits ship criterion (3 direction-stable reads, cl 95-100 ≥50pp) — highest-leverage next move, architectural decision settled 07-04 (new specialist Lc for clouds, post-L4, pre-Lsr); <strong>C1h trend-direction</strong> has enough n (≥340 on cm/ch/cc/t rising) to run the owed ortho check; <strong>C1d KBOS-vs-KBVY cloud disagreement</strong> RESURRECTED from KILL to MIXED (3 orthogonal cells) as narrow-promote candidate; <strong>h_pre_front_orthogonality</strong> MIXED as another narrow-promote; <strong>cm ride-along on L4 declined</strong> (sim flipped +3.0% → -3.8%). Upcoming Decisions reflowed with 07-08 T convergence + 07-10 sr clean read. WCSI product-idea entry added.</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.293</strong> — Print-safe debug page. Existing @media print rules covered inline backgrounds starting with <code>#1</code>/<code>#2</code>/<code>#3</code> but missed the <code>#0e1620</code> "Current pipeline state" block. Extended to include <code>#0</code>, added descendant rules for nested light-color inline styles, and a final safety pass forcing any inline <code>color:#7..#f</code> to <code>#111</code>. Nothing prints as light text on dark now.</li>
+      <li><strong style="color:#7fb3ff;">2026-07-07 (Tue) — today</strong></li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>sr shortwave shadow-log first read</strong> — <code>analysis/sr_shortwave_bias.py</code> ran on the v0.6.309 data (n=1,200 pair rows, day 1 of shadow logging). Result did <em>not</em> match the "unit-mismatch collapses Lsr's regime bias in every regime" hypothesis. Direction is regime-specific: nw_flow shortwave MAE −55% (unit fix pays off), but pre_frontal / sea_breeze / unknown show shortwave <em>worse</em> — bias flips direction from direct-under to shortwave-over by +12 / +169 / +367 W/m². Signals a real over-forecast in Open-Meteo's total shortwave in cloudy/marine regimes on top of the definitional gap. Prior "switch to shortwave + refit Lsr" fix chain is on hold until Cause A (cc-miss surfacing through sr) vs Cause B (real Open-Meteo diffuse/aerosol gap) resolves.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>New diagnostic: <code>analysis/sr_shortwave_cc_confound.py</code></strong> — queued to disentangle Cause A vs B. Joins each sr shadow-log row to the paired cc row at same (run_time, valid_time), stratifies sr signed error by |Δcc| bins. If overshoot concentrates on cc-miss rows (|Δcc|&gt;25), Cause A dominates → invest in cc, not sr. If overshoot persists at matched cc (|Δcc|&lt;10), Cause B → new regime-conditional sr correction warranted. Prints INSUFFICIENT until pre_frontal + sea_breeze each have 300+ rows; first real read ~2026-07-11 as v0.6.309 shadow log fills.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>Divergence-reporter L3/L4 regex fix</strong> — <code>analysis/runlog/divergence_report.py</code> was grepping for <code>L3_ENABLED = {...}</code> / <code>L4_ENABLED = {...}</code> but <code>walkforward_l3l4_validator</code> emits <code>L3_FIELDS</code> / <code>L4_FIELDS</code>. Both keys silently fell into UNKNOWN status in every digest since the walkforward output was renamed. Now surfaces gated status with actual proposed diffs: L3 wants to drop ws, wg (day 1/7); L4 wants to add sr (day 1/7 — but sr is under Lsr contamination suppression until 07-10, so this gate should not clear before then). Small root-cause fix; example of the silent-failure class the <code>feedback_verify_writers_for_read_paths</code> memory covers.</li>
 
-      <li style="margin-top:8px;"><strong style="color:#7fb3ff;">2026-07-06 (Mon) — today</strong></li>
+      <li style="margin-top:8px;"><strong style="color:#7fb3ff;">2026-07-06 (Mon)</strong></li>
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.311</strong> — <strong>Fix 10° coverage gap in <code>classify_synoptic_regime</code>.</strong> Caught immediately after v0.6.310 wired <code>derived.state</code> — post-deploy tick showed <code>regime_synoptic: null</code> despite clean inputs (wind_dir=84.4°, wind_speed=9.8, pressure=1021.5 hPa, temp=70.6°F). Cause: branches were <code>[30, 80)</code> NE, <code>[90, 200)</code> SE, <code>[200, 290)</code> SW, <code>[290, 360)∪[0, 30)</code> NW — <code>[80, 90)</code> uncovered. Every easterly wind in that 10° window returned None, silently affecting every pair-log record + live tick since the classifier was written. Fix: extend NE to <code>[30, 90)</code>. Post-fix expectation: current tick becomes <code>ne_flow</code>, ws L3's ne_flow skip cells finally activate.</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.310</strong> — <strong>Populate <code>derived.state</code> every tick — L3/L4 skip table starts firing.</strong> Silent structural bug caught while chasing the shortwave work: <code>decay_apply.py</code>, <code>solar_correction.py</code>, <code>backtest_snapshot.py</code>, <code>confidence_layer.py</code>, <code>state_stratified.py</code> all read <code>derived.state.regime_synoptic</code>, but nothing WROTE to <code>derived["state"]</code>. Every read got <code>None</code>. <code>solar_correction.py</code> worked around it via inline classification; <code>decay_apply.py</code> didn't — <code>_should_skip()</code> fail-safed to False on every row. Result: the L3/L4 skip table shipped v0.6.279 on 2026-07-02 <strong>has never fired since ship day</strong>. Current tick's GCS proves it: <code>skip_table_l3_cells_skipped: 0</code>, <code>skip_table_regime: None</code>. Every ws L3 row in ne_flow all bands + sea_breeze 0-11h has been applying despite the skip cells being populated. Four days of the +25.7% ws Production regression the skip table was designed to fix continuing to hit users. New <code>processors/state_stamp.py::stamp_state()</code> runs before <code>stamp_solar_correction</code>/<code>apply_decay_corrections</code> and populates <code>derived["state"]</code> from current wind/pressure/temp + <code>derived.pressure_trend_hpa_3h</code>. Expected impact: next-tick <code>skip_table_l3_cells_skipped &gt; 0</code> under ne_flow/sea_breeze, and ws Production %-vs-raw shrinks toward <code>production_whatif.py ws_L3_skip</code>'s prediction.</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.309</strong> — <strong>Shadow-log model shortwave + diffuse on every sr pair row.</strong> Step 2 of the sr Lsr unit-mismatch fix chain (v0.6.308 started fetching the arrays; this stamps them into pair rows). Every sr pair in <code>forecast_error_log.jsonl</code> now carries <code>forecast_shortwave</code> and <code>forecast_diffuse</code> alongside the existing direct-beam <code>forecast_l1</code>. Primary sr forecast stays direct-beam for now — this is diagnostic data. New <code>analysis/sr_shortwave_bias.py</code> compares <code>|observed − forecast_direct|</code> vs <code>|observed − forecast_shortwave|</code> per regime; expected outcome once a few hours of daytime pairs accumulate: shortwave MAE much lower than direct-beam MAE in every regime, with the largest collapse in ne_flow + calm where Lsr misbehaves worst. That would confirm Lsr has been fitting the definitional gap and give us the number to justify the migration to shortwave-as-primary.</li>
@@ -1000,7 +1000,7 @@
       <li><span style="color:#7090a0;">⚙</span> <strong>C1 Stage 4 audit — NOT READY.</strong> Multi-axis holdout INSUFFICIENT (0/921 cells with enough data). Re-check ~2026-07-11.</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>T Production convergence — 07-08 checkpoint.</strong> If T doesn't converge to L2 line by 07-08 as pre-07-01 Lt-tagged rows age out, the deferred "dormant-aware applied_layer walker + retro-restamp" becomes blocking.</li>
     </ul>
-  </div>
+  </details>
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
 
@@ -1299,10 +1299,6 @@
 <div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
   <div class="meta-line">Held-out MAE audit picks the fields where L3 actually beats L2 — currently <strong>wind speed, gusts, high cloud, mid cloud</strong>. Other fields stay off because the correction at best ties (temperature, pressure) or actively hurts (humidity, dew point, solar, low cloud, precip). <strong>POP</strong> is the special case: it's evaluated by <em>Brier score</em>, not MAE, so the audit's MAE-based ⚠ rule is suppressed for it — the v0.6.20 calibration analysis showed flat-additive correction cuts Brier 5%. Currently applied: <span id="banner-l3-fields">—</span>. Brier-evaluated: <span id="banner-l3-brier">—</span>. See <a href="#sec-applicability">Applicability map</a> for live triggers and per-field gates.</div>
 </div>
-<div id="banner-l3-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-top:8px;" hidden>
-  <strong style="color:#d4a373;">⏸ L3 — applicability state changed.</strong>
-</div>
-
 <!-- 3. Live state -->
 <h3 class="subsection">Live state — with vs without decay correction</h3>
 <div id="status-live" class="status" hidden></div>
@@ -1338,10 +1334,6 @@
 <div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
   <div class="meta-line">L4 corrects the portion of forecast error that repeats with time of day. It is the hardest layer to earn because the same hour-of-day bias must recur consistently across many days. Most fields fail that test because their dominant errors are driven by changing weather regimes (air mass, cloud regime, frontal timing, etc.) rather than the clock. Currently applied to <strong>{ch, cc}</strong> — the two fields showing a stable enough diurnal signal to pass the held-out audit. Fits for the remaining fields are retained in the calibration sections below as diagnostics. See <a href="#sec-applicability">Applicability map</a> for live gates.</div>
 </div>
-<div id="banner-l4-paused" class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-top:8px;" hidden>
-  <strong style="color:#d4a373;">⏸ L4 — applicability state changed.</strong>
-</div>
-
 <!-- 3. Live state -->
 <h3 class="subsection">Live state — what L4 is doing this tick</h3>
 <div class="layer-info-text">
@@ -1390,8 +1382,8 @@
 <!-- 4. Engineering status -->
 <h3 class="subsection">Engineering status</h3>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#0e1620;">
-  <div class="meta-line" style="margin-bottom:4px;"><strong style="color:#7fb3ff;">Where we are (2026-07-06):</strong></div>
-  <div style="font-size:0.92em;line-height:1.55;margin-bottom:6px;">Lsr lives in production for sr. Skip regimes: ne_flow + calm. Two collector bugs fixed 2026-07-02 → 2026-07-03; first clean 7-day audit window closes <strong>~2026-07-10</strong>. Structural raw-baseline verifier (v0.6.291) now catches the mutation class that hid the raw-column pollution for a week. <strong>New investigation open (v0.6.308–309):</strong> Lsr's regime biases likely fitting a direct-vs-total-shortwave unit gap on top of any real regime signal — model <code>direct_radiation</code> is direct-beam only, Tempest <code>solar_radiation_wm2</code> is total shortwave. Shortwave shadow-log now stamped on every sr pair; <code>analysis/sr_shortwave_bias.py</code> quantifies the gap once ~24h of daytime pairs accumulate (~2026-07-07 evening). Likely fix chain if confirmed: switch sr forecast to shortwave, build sr L2 from 18 Tempest solar sensors, refit Lsr against clean baseline — Lsr's regime cells may collapse.</div>
+  <div class="meta-line" style="margin-bottom:4px;"><strong style="color:#7fb3ff;">Where we are (2026-07-07):</strong></div>
+  <div style="font-size:0.92em;line-height:1.55;margin-bottom:6px;">Lsr lives in production for sr. Skip regimes: ne_flow + calm. Two collector bugs fixed 2026-07-02 → 2026-07-03; first clean 7-day audit window closes <strong>~2026-07-10</strong>. Structural raw-baseline verifier (v0.6.291) now catches the mutation class that hid the raw-column pollution for a week. <strong>Investigation update (v0.6.308–309, first shadow-log read 07-07 n=1,200):</strong> the unit-mismatch hypothesis was partially wrong. Shortwave MAE is <em>not</em> uniformly smaller than direct-beam MAE. Direction is regime-specific: nw_flow shortwave MAE −55% (unit fix pays off there), but pre_frontal / sea_breeze / unknown show shortwave <em>worse</em> — bias flips from direct-under to shortwave-over by +12 / +169 / +367 W/m². Signals a real over-forecast in Open-Meteo's total shortwave in cloudy/marine regimes on top of the direct-vs-total gap. Two candidate causes: (A) model under-forecasts cc in those regimes → its total_shortwave mechanically overshoots; (B) real Open-Meteo diffuse/aerosol modeling gap that persists at matched cc. Confound diagnostic queued (<code>analysis/sr_shortwave_cc_confound.py</code>, first real read ~2026-07-11). Prior "likely fix chain: switch to shortwave + refit Lsr" is on hold until Cause A vs B resolves — under A, the fix is in cc not sr; under B, it's a new regime-conditional sr correction.</div>
   <details style="margin-top:6px;">
     <summary style="cursor:pointer;color:#7fb3ff;font-size:0.9em;opacity:0.85;">Full Lsr shipped-history log (v0.6.248 → v0.6.291)</summary>
     <ul style="margin:8px 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;">
@@ -1541,7 +1533,7 @@
   </ul>
 
   <div style="border:1px solid #3a3a1f;background:#191910;padding:12px;border-radius:6px;margin-top:18px;">
-    <div style="color:#e0d472;font-weight:600;margin-bottom:6px;">📊 Stage 1 candidates — rolling table (all analyses now auto-run in daily digest; last batch: 2026-07-04)</div>
+    <div style="color:#e0d472;font-weight:600;margin-bottom:6px;">📊 Stage 1 candidates — rolling table (all analyses now auto-run in daily digest; last batch: 2026-07-07 · cell dates below reflect last read that materially changed the verdict, not last run)</div>
     <div class="meta-line" style="margin-bottom:6px;">The Stage 1 queue is deep enough that not all candidates ship at once. Framework rebuild 2026-07-03 (v0.6.288–289) means every candidate script runs in the nightly digest; the "Last manual run" column now reflects the last digest date the numbers survived a change. Tier system below ranks by expected value (probability × user-visible impact × implementation effort). Live-layer flips require the 7-day/2-tool/per-cell/no-ENT gate; hypothesis exploration and Stage 1 refinement do not — see [[feedback-dont-over-gate]].</div>
     <table class="meta-line" style="width:100%;font-size:0.88em;border-collapse:collapse;margin-top:8px;">
       <tr style="opacity:0.7;"><th style="text-align:left;padding:3px 8px;">Tier</th><th style="text-align:left;padding:3px 8px;">Candidate</th><th style="text-align:left;padding:3px 8px;">Wired</th><th style="text-align:left;padding:3px 8px;">Last manual run</th><th style="text-align:left;padding:3px 8px;">Promote criterion</th></tr>
@@ -1799,15 +1791,10 @@ function showStatus(id, msg) {
 function renderMeta(corrDoc, wxDoc) {
   const el = document.getElementById("meta");
   const dm = (wxDoc && wxDoc.decay_meta) || null;
-  const l3Banner = document.getElementById("banner-l3-paused");
-  const l4Banner = document.getElementById("banner-l4-paused");
   const l3Fields = (dm && dm.layer_3_fields) || [];
   const l4Fields = (dm && dm.layer_4_fields) || [];
   const l3FieldsStr = l3Fields.length ? l3Fields.join(', ') : 'none';
   const l4FieldsStr = l4Fields.length ? l4Fields.join(', ') : 'none';
-  // Banners surface whenever any field is disabled (i.e. not the full set).
-  if (l3Banner) l3Banner.hidden = false;
-  if (l4Banner) l4Banner.hidden = false;
   const l3FieldsSpan = document.getElementById("banner-l3-fields");
   const l4FieldsSpan = document.getElementById("banner-l4-fields");
   const l3BrierSpan  = document.getElementById("banner-l3-brier");
@@ -2608,6 +2595,11 @@ function renderScorecardBanner(tsDoc, wxDoc) {
   // at 03:07 + 15:07 EDT; after v0.6.304 shipped 2026-07-04 the production
   // key needs one cycle before it appears). Lower Brier = better, so pct
   // stays sign-consistent with the MAE rows.
+  // Brier-scored fields (pp) are kept in a separate array and rendered as
+  // their own tile. Mixing Brier% and MAE% in the same mean/counts would be
+  // dishonest — a 10% Brier drop and a 10% MAE drop don't have the same
+  // meaning even if they share the "% of raw error erased" framing.
+  const brierRows = [];
   const brierDoc = tsDoc.per_layer_brier_by_lead || {};
   for (const fieldKey of Object.keys(brierDoc)) {
     if (!brierFields.has(fieldKey)) continue;
@@ -2623,13 +2615,24 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     }
     if (rawBrier == null || prodBrier == null || rawBrier === 0) continue;
     const pct = (prodBrier - rawBrier) / rawBrier * 100;
-    rows.push({ field: fieldKey, pct, brier: true });
+    brierRows.push({ field: fieldKey, pct, brier: true });
   }
   if (rows.length === 0) {
     host.hidden = true;
     return;
   }
   const meanPct = rows.reduce((s, r) => s + r.pct, 0) / rows.length;
+  // Median across the same MAE rows. Robust to tiny-denominator amplification
+  // (e.g. pressure raw MAE ~0.019 → any small change reads as huge %). When
+  // mean and median diverge, the story is "concentrated wins vs broad wins" —
+  // that gap is itself a useful signal.
+  const _median = (nums) => {
+    const s = [...nums].sort((a, b) => a - b);
+    const n = s.length;
+    if (n === 0) return null;
+    return n % 2 ? s[(n - 1) >> 1] : (s[n / 2 - 1] + s[n / 2]) / 2;
+  };
+  const medianPct = _median(rows.map(r => r.pct));
   // Bucket at ±0.5pp so noise-level rows sort into "flat" rather than
   // shading the winning/regressing tallies (a −0.2% field is not really
   // a win). The main "Winning fields" count still uses strict <0 so it
@@ -2639,7 +2642,11 @@ function renderScorecardBanner(tsDoc, wxDoc) {
   const winningRows = rows.filter(r => r.pct <= -FLAT_EPS);
   const regressingRows = rows.filter(r => r.pct >= FLAT_EPS);
   const flatRows = rows.filter(r => Math.abs(r.pct) < FLAT_EPS);
-  const netPositive = rows.filter(r => r.pct < 0).length;
+  // Denominator excludes flat fields (|pct|<FLAT_EPS) — those are either
+  // uncorrected (pa) or corrected only at lead 0 which the 1-47h average
+  // deliberately excludes (cl). Counting them against the pipeline would
+  // conflate "no attempt made" with "attempt failed."
+  const scoredCount = winningRows.length + regressingRows.length;
   // Biggest gain = most negative (Production MAE dropped furthest below raw).
   // Biggest regression = most positive (Production worse than raw). Either
   // may be absent — no gains means every field is worse; no regressions means
@@ -2666,11 +2673,12 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:baseline;">
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Overall</div>
-        <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong></div>
+        <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">mean</span></div>
+        ${medianPct != null ? `<div style="font-size:0.85em;margin-top:2px;"><strong style="color:${medianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${medianPct >= 0 ? "+" : ""}${medianPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">median</span></div>` : ""}
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Winning fields</div>
-        <div><strong>${netPositive}/${rows.length}</strong></div>
+        <div><strong>${winningRows.length}/${scoredCount}</strong>${flatRows.length ? `<span style="font-size:0.75em;opacity:0.65;margin-left:6px;">· ${flatRows.length} flat</span>` : ""}</div>
         <div style="font-size:0.7em;opacity:0.6;margin-top:2px;line-height:1.4;">
           ${winningRows.length ? `<div style="color:#4ad29a;">✓ ${winningRows.map(r => _fieldLabel(r)).join(" ")}</div>` : ""}
           ${regressingRows.length ? `<div style="color:#fb7c5c;">✗ ${regressingRows.map(r => _fieldLabel(r)).join(" ")}</div>` : ""}
@@ -2690,8 +2698,16 @@ function renderScorecardBanner(tsDoc, wxDoc) {
         <div>${worstBandCell}</div>
       </div>
     </div>
+    ${brierRows.length ? `
+    <div style="margin-top:8px;padding-top:6px;border-top:1px solid #1a2530;font-size:0.85em;">
+      <span style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-right:8px;">Brier-scored</span>
+      ${brierRows.map(r => {
+        const color = r.pct < 0 ? "#4ad29a" : (r.pct > 0 ? "#fb7c5c" : "#8a93a3");
+        return `<code>${r.field}<sup style="opacity:0.7;">B</sup></code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`;
+      }).join(" · ")}
+    </div>` : ""}
     <div style="opacity:0.55;font-size:0.78em;margin-top:6px;">
-      Production MAE vs raw model, averaged over leads 1–47h (Overall) or per lead band (Worst cell). Lower is better. pp excluded (Brier, not MAE). Worst-cell number surfaces short-lead damage that a favorable field-level average could hide.
+      Production MAE vs raw model, averaged over leads 1–47h (Overall) or per lead band (Worst cell). Lower is better. pp shown separately (Brier, not MAE — same "% of raw error erased" framing, different scoring rule). Worst-cell number surfaces short-lead damage that a favorable field-level average could hide.
     </div>
   `;
 }
