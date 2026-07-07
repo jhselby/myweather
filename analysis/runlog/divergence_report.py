@@ -201,14 +201,14 @@ def probe_production():
 # ─────────────────── script-verdict → production-claim ────────────────────
 
 def claim_from_walkforward(verdict: str):
-    """walkforward_l3l4_validator's last log emits two `L3_ENABLED` and
-    `L4_ENABLED` lines we can scrape from the underlying log file."""
+    """walkforward_l3l4_validator's last log emits `L3_FIELDS` and
+    `L4_FIELDS` lines we can scrape from the underlying log file."""
     log = LOG_DIR / "walkforward_l3l4_validator.log"
     if not log.exists():
         return None
     txt = log.read_text()
-    m3 = re.search(r"L3_ENABLED\s*=\s*(\{[^}]*\})", txt)
-    m4 = re.search(r"L4_ENABLED\s*=\s*(\{[^}]*\})", txt)
+    m3 = re.search(r"L3_FIELDS\s*=\s*(\{[^}]*\})", txt)
+    m4 = re.search(r"L4_FIELDS\s*=\s*(\{[^}]*\})", txt)
     try:
         l3 = ast.literal_eval(m3.group(1)) if m3 else None
         l4 = ast.literal_eval(m4.group(1)) if m4 else None
