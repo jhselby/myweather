@@ -910,7 +910,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-07 v0.6.315 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-07 v0.6.315a · click any sub-box header to collapse it.</div>
 
   <details open style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — 2026-07-07</summary>
@@ -2711,9 +2711,15 @@ function renderScorecardBanner(tsDoc, wxDoc) {
   // stays consistent with prior behavior; the subtitle uses buckets to
   // account for every field.
   const FLAT_EPS = 0.5;
-  const winningRows = rows.filter(r => r.pct <= -FLAT_EPS);
-  const regressingRows = rows.filter(r => r.pct >= FLAT_EPS);
-  const flatRows = rows.filter(r => Math.abs(r.pct) < FLAT_EPS);
+  // Winning-count is a categorical yes/no ("does Production beat raw for
+  // this field") — well-defined regardless of whether the underlying metric
+  // is MAE or Brier. So brier rows count toward the tally. The numeric mean
+  // and median stay MAE-only because averaging Brier% with MAE% would
+  // conflate scoring rules that don't share units.
+  const countingRows = rows.concat(brierRows);
+  const winningRows = countingRows.filter(r => r.pct <= -FLAT_EPS);
+  const regressingRows = countingRows.filter(r => r.pct >= FLAT_EPS);
+  const flatRows = countingRows.filter(r => Math.abs(r.pct) < FLAT_EPS);
   // Denominator excludes flat fields (|pct|<FLAT_EPS) — those are either
   // uncorrected (pa) or corrected only at lead 0 which the 1-47h average
   // deliberately excludes (cl). Counting them against the pipeline would
