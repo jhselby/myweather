@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.315 • July 7, 2026</strong></summary>
+
+- **"Right now" headline box: 4-tile grid → all-fields correction table.** Old box showed an arbitrary 4-tile subset (Temp / Humidity / Confidence / Briefing source) — two field tiles that duplicated the pipeline state table below, plus two operational-status tiles. Replaced with a 13-row table showing Field / Raw model / Production / Correction for every field the pipeline has raw-vs-corrected data for at `hourly[0]` — the current-tick composed shift the pipeline is applying to THIS forecast (fills a gap: no other page section shows composed current-tick corrections in one view). Field labels carry symbol in parens (`Temperature (t)`, `Wind speed (ws)`, etc.) to teach the vocabulary the scorecard uses. Correction column color-coded green (pipeline adds), red (subtracts), gray (flat). For percentage-valued fields (h, cc/cl/cm/ch, pp), the correction unit is `pts` not `%` to avoid the "+57%" reading as a multiplier ambiguity. t/h source `hyperlocal.weighted_bias` (raw derived as corrected − bias); other fields source `hourly.raw_*` directly. Degraded-mode handling preserved (t/h show "paused" when GFS/HRRR unavailable). Confidence + Briefing source drop to a compact ops-status footer row below the table.
+- **Scorecard banner moved above "Right now" box** — headline-at-top convention (the top-line pipeline health number is the first thing a debug visitor sees). Was headline / scorecard; now scorecard / headline.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.314 • July 7, 2026</strong></summary>
 
 - **C1h ortho check shipped + PROMOTE verdict.** New `analysis/h_c1h_orthogonality.py`: for each pair row at lead L≥6, computes trend-direction axis H = |fc[L] − fc[L−6]| > per-field threshold (mirrors `h_trend_direction.py` thresholds), then cross-tabs by (field × band × H × C1f × C1e) to test whether C1h's MAE elevation persists inside AND outside the incumbent-fires subset. Result: **10 orthogonal cells / 29 judged across two checks → PROMOTE narrow scope {cc, cl, cm}.** Detail: cm orthogonal in all 3 bands vs C1f (mid cloud rising is its own signal); cl orthogonal in all 3 bands vs C1e with elevation up to 6.00× at 6-11h (huge signal outside the post-frontal window); cc orthogonal at 6-11h vs both. ch ambiguous everywhere — would not ship for ch; t redundant on both checks — would not ship for t. Debug page updated to reflect: tri-column "What's improving" card shows ✓ ortho passed + narrow-promote gate day 1/7; long-form Stage 1 bullet + rolling table row updated with full verdict. C1h now on the 7-day live-layer change gate (earliest ship 2026-07-14) and separately gated on C1 as a whole clearing Stage 4 audit (currently NOT READY).

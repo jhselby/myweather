@@ -397,6 +397,35 @@
     font-size: 17px; font-weight: 600; color: var(--ink);
   }
   #headlineBox .hb-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  /* Current-tick correction table — one row per field showing what the
+     pipeline is shifting THIS tick's forecast by, in native units. */
+  #headlineBox .hb-corr-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12.5px; color: var(--ink);
+    margin-top: 4px;
+  }
+  #headlineBox .hb-corr-table th {
+    text-align: right; font-weight: 500; font-size: 10.5px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); padding: 4px 8px 6px 8px;
+    border-bottom: 1px solid #242833;
+  }
+  #headlineBox .hb-corr-table th:first-child { text-align: left; }
+  #headlineBox .hb-corr-table td {
+    padding: 5px 8px; border-bottom: 1px solid #1c1f28;
+    text-align: right; font-variant-numeric: tabular-nums;
+  }
+  #headlineBox .hb-corr-table td:first-child { text-align: left; color: var(--muted); }
+  #headlineBox .hb-corr-table td.corr-pos { color: #74c38b; font-weight: 600; }
+  #headlineBox .hb-corr-table td.corr-neg { color: #d47070; font-weight: 600; }
+  #headlineBox .hb-corr-table td.corr-flat { color: var(--muted); }
+  #headlineBox .hb-ops-row {
+    display: flex; flex-wrap: wrap; gap: 10px 16px;
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid #242833;
+    font-size: 12px; color: var(--muted);
+  }
+  #headlineBox .hb-ops-row strong { color: var(--ink); font-weight: 600; }
   .octant-rose {
     display: grid;
     grid-template-columns: repeat(3, 64px);
@@ -731,37 +760,32 @@
   <a href="#sec-archive">Archive</a>
 </nav>
 
-<div id="headlineBox">
-  <div class="hb-title">Right now — what the pipeline is doing</div>
-  <div class="hb-grid">
-    <div class="hb-stat">
-      <div class="hb-label">Temp correction</div>
-      <div class="hb-value" id="hbTempBias">—</div>
-      <div class="hb-sub" id="hbTempSub">vs raw model</div>
-    </div>
-    <div class="hb-stat">
-      <div class="hb-label">Humidity correction</div>
-      <div class="hb-value" id="hbHumBias">—</div>
-      <div class="hb-sub" id="hbHumSub">vs raw model</div>
-    </div>
-    <div class="hb-stat">
-      <div class="hb-label">Confidence</div>
-      <div class="hb-value" id="hbConfidence">—</div>
-      <div class="hb-sub" id="hbStationsLine">— stations reporting</div>
-    </div>
-    <div class="hb-stat">
-      <div class="hb-label">Briefing source</div>
-      <div class="hb-value" id="hbBriefingSource">—</div>
-      <div class="hb-sub" id="hbBriefingAge">—</div>
-    </div>
-  </div>
-</div>
-
 <!-- ───────────────────── Scorecard banner ─────────────────────
      One-line headline computed from time_series_diagnostic.json:
      stack-vs-raw MAE delta averaged across fields, net-positive count,
      worst regression called out. Auto-computed each Fitter cycle. -->
 <div id="scorecard-banner" class="layer-info-text" style="border-color:#1f3a2a;background:#101913;margin-bottom:14px;padding:10px 14px;font-size:0.95em;" hidden></div>
+
+<div id="headlineBox">
+  <div class="hb-title">Right now — what the pipeline is doing</div>
+  <table class="hb-corr-table">
+    <thead>
+      <tr>
+        <th>Field</th>
+        <th>Raw model</th>
+        <th>Production</th>
+        <th>Correction</th>
+      </tr>
+    </thead>
+    <tbody id="hbCorrRows">
+      <tr><td colspan="4" style="color:var(--muted);opacity:0.6;padding:8px;">Loading current tick…</td></tr>
+    </tbody>
+  </table>
+  <div class="hb-ops-row">
+    <div>Confidence: <strong id="hbConfidence">—</strong> <span id="hbStationsLine" style="opacity:0.75;">· — stations reporting</span></div>
+    <div>Briefing source: <strong id="hbBriefingSource">—</strong> <span id="hbBriefingAge" style="opacity:0.75;">· —</span></div>
+  </div>
+</div>
 
 <!-- ───────────────────── Tri-column current-state band ─────────────────────
      Forward-looking summary of the three lenses that matter for a daily
@@ -886,7 +910,7 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-07 v0.6.314a · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-07 v0.6.315 · click any sub-box header to collapse it.</div>
 
   <details open style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
     <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — 2026-07-07</summary>
@@ -2224,34 +2248,74 @@ function renderApplicabilityMap(wxDoc) {
 function renderHeadlineBox(wxDoc) {
   const hyp = (wxDoc && wxDoc.hyperlocal) || {};
   const briefing = (wxDoc && wxDoc.briefing) || {};
+  const hourly = (wxDoc && wxDoc.hourly) || {};
   const set = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
 
   // Detect degraded mode: when GFS/HRRR is unavailable, the pipeline falls
   // back to using WU stations directly with no model comparison, so the
-  // bias fields aren't written. Render an explicit "paused" message instead
-  // of empty dashes that look like a broken card.
+  // bias fields aren't written. In that case t/h rows fall back to
+  // "paused" but other fields (raw_* arrays) can still populate.
   const degraded = (hyp.aggregation && /fallback/i.test(hyp.aggregation))
                 || (hyp.note && /unavailable/i.test(hyp.note))
                 || (hyp.weighted_bias == null && hyp.weighted_bias_humidity == null);
 
-  const tb = hyp.weighted_bias;
-  const hb = hyp.weighted_bias_humidity;
-  if (degraded) {
-    set("hbTempBias", "paused");
-    set("hbTempSub", "model unavailable — using stations directly");
-    set("hbHumBias", "paused");
-    set("hbHumSub", "model unavailable — using stations directly");
-  } else {
-    set("hbTempBias", tb == null ? "—" : `${tb >= 0 ? "+" : ""}${tb.toFixed(1)}°F`);
-    set("hbTempSub", tb == null ? "vs raw model"
-      : tb > 0 ? "model running cool — we warm it"
-      : tb < 0 ? "model running warm — we cool it"
-      : "model on target");
-    set("hbHumBias", hb == null ? "—" : `${hb >= 0 ? "+" : ""}${hb.toFixed(0)}%`);
-    set("hbHumSub", hb == null ? "vs raw model"
-      : hb > 0 ? "model running dry — we add moisture"
-      : hb < 0 ? "model running humid — we dry it"
-      : "model on target");
+  // ── Current-tick correction table ──
+  // Convention: correction = corrected[0] − raw[0]. Positive = the pipeline
+  // added to raw (warmer, wetter, more wind, etc.); negative = subtracted.
+  // For t/h the raw model isn't stored directly; derive raw = corrected − bias,
+  // where hyp.weighted_bias IS the amount added to raw to get corrected.
+  const h0 = (arr) => Array.isArray(arr) && arr.length ? arr[0] : null;
+  const t_cor = h0(hourly.temperature);
+  const h_cor = h0(hourly.humidity);
+  const tb = hyp.weighted_bias;         // t correction (°F)
+  const hb = hyp.weighted_bias_humidity; // h correction (%)
+  const t_raw = (t_cor != null && tb != null) ? t_cor - tb : null;
+  const h_raw = (h_cor != null && hb != null) ? h_cor - hb : null;
+
+  const rows = [
+    // { label, raw, corrected, correction, unit, decimals }
+    { label: "Temperature (t)",  raw: t_raw, cor: t_cor, delta: tb, unit: "°F", dec: 1 },
+    { label: "Humidity (h)",     raw: h_raw, cor: h_cor, delta: hb, unit: "%",  dec: 0 },
+    { label: "Wind speed (ws)",  raw: h0(hourly.raw_wind_speed),    cor: h0(hourly.wind_speed),    unit: "mph", dec: 1 },
+    { label: "Wind gusts (wg)",  raw: h0(hourly.raw_wind_gusts),    cor: h0(hourly.wind_gusts),    unit: "mph", dec: 1 },
+    { label: "Wind dir (wd)",    raw: h0(hourly.raw_wind_direction),cor: h0(hourly.wind_direction),unit: "°",   dec: 0 },
+    { label: "Cloud cover (cc)", raw: h0(hourly.raw_cloud_cover),   cor: h0(hourly.cloud_cover),   unit: "%",   dec: 0 },
+    { label: "Cloud low (cl)",   raw: h0(hourly.raw_cloud_cover_low), cor: h0(hourly.cloud_cover_low),  unit: "%", dec: 0 },
+    { label: "Cloud mid (cm)",   raw: h0(hourly.raw_cloud_cover_mid), cor: h0(hourly.cloud_cover_mid),  unit: "%", dec: 0 },
+    { label: "Cloud high (ch)",  raw: h0(hourly.raw_cloud_cover_high),cor: h0(hourly.cloud_cover_high), unit: "%", dec: 0 },
+    { label: "Solar rad (sr)",   raw: h0(hourly.raw_direct_radiation),cor: h0(hourly.direct_radiation), unit: "W/m²", dec: 0 },
+    { label: "Precip prob (pp)", raw: h0(hourly.raw_precipitation_probability), cor: h0(hourly.precipitation_probability), unit: "%", dec: 0 },
+    { label: "Precip amt (pa)",  raw: h0(hourly.raw_precipitation), cor: h0(hourly.precipitation),  unit: "in", dec: 2 },
+    { label: "Pressure (pr)",    raw: h0(hourly.raw_pressure_in),   cor: h0(hourly.corrected_pressure_in), unit: "inHg", dec: 2 },
+  ];
+
+  const _fmt = (v, unit, dec) => v == null ? "—" : `${Number(v).toFixed(dec)} ${unit}`;
+  const _fmtDelta = (raw, cor, unit, dec, presetDelta) => {
+    // If caller passed an explicit delta (t/h), use it; else compute cor−raw.
+    let d = presetDelta;
+    if (d == null && raw != null && cor != null) d = cor - raw;
+    if (d == null) return { txt: "—", cls: "corr-flat" };
+    const eps = Math.pow(10, -dec) / 2;  // half a display-precision unit
+    const cls = d > eps ? "corr-pos" : d < -eps ? "corr-neg" : "corr-flat";
+    const sign = d > 0 ? "+" : d < 0 ? "−" : "";
+    // For percentage-valued fields (cloud cover, humidity, precip prob),
+    // the correction is an additive percentage-point shift, not a
+    // multiplicative %. Use "pts" to make that unambiguous — "+57 %" reads
+    // like a 1.57× multiplier; "+57 pts" reads correctly as a level shift.
+    const deltaUnit = unit === "%" ? "pts" : unit;
+    return { txt: `${sign}${Math.abs(d).toFixed(dec)} ${deltaUnit}`, cls };
+  };
+
+  const tbody = document.getElementById("hbCorrRows");
+  if (tbody) {
+    tbody.innerHTML = rows.map(r => {
+      const del = _fmtDelta(r.raw, r.cor, r.unit, r.dec, r.delta);
+      const rawTxt = (degraded && (r.label === "Temperature" || r.label === "Humidity"))
+        ? '<span style="opacity:0.6;">paused</span>' : _fmt(r.raw, r.unit, r.dec);
+      const corTxt = (degraded && (r.label === "Temperature" || r.label === "Humidity"))
+        ? '<span style="opacity:0.6;">—</span>' : _fmt(r.cor, r.unit, r.dec);
+      return `<tr><td>${r.label}</td><td>${rawTxt}</td><td>${corTxt}</td><td class="${del.cls}">${del.txt}</td></tr>`;
+    }).join("");
   }
 
   set("hbConfidence", hyp.confidence || "—");
