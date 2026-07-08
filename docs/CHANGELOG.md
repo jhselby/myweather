@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.316c • July 8, 2026</strong></summary>
+
+- **Retire the migration-language caveat on the accuracy section.** 7-day window fully filled with post-v0.6.269 stamped rows per plan; live GCS confirms every primary field at 48/48 coverage (cc/ch/cl/cm/dp/h/pa/pp/pr/sr/t/wg/ws), which crosses the ≥40/48 threshold and drops the "*" marker on every Production card. Only wd stays at 0/48 (circular field, structural — separate treatment). Debug-page prose on the Accuracy section and the "Per-row applied-layer stamping" ship-log item now describe the auto-drop as a stable steady state rather than a pending migration. n≥30 noise-floor rationale kept — small-sample noise protection is orthogonal to the migration window.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.316b • July 8, 2026</strong></summary>
 
 - **Lc gate history writer + 7-day rolling check.** `analysis/lc_fit.py` now appends each run to `.cache_lc_gate_history.json` (30-day retention) and prints a 7-day rolling gate summary: entries/distinct days in window, FIT/HOLD day rollup, trailing FIT streak, and SHIP-cell stability (which cells' verdicts changed within the window). `gate_clear` requires ≥7 distinct days + zero HOLD days + zero SHIP-set changes. Mirrors the `.cache_l5_gate_history.json` pattern, adapted for the analysis-side context (lc_fit runs inside the nightly digest via the `for f in analysis/*.py` loop). **Real state:** today = day 1/7. The previously prose-codified "day 5/7" was fiction — the nightly digest was running `lc_fit` but nothing persisted per-run verdicts, so no dated evidence existed for the manual count. Same silent-failure class as `feedback_verify_writers_for_read_paths`. Silver lining: today's SHIP set (15 cells) matches the 07-04 ship-day read in shape and magnitude — directional evidence is fine, formal gate is now machine-enforced going forward. Earliest real flip: 2026-07-15.
