@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.316b • July 8, 2026</strong></summary>
+
+- **Lc gate history writer + 7-day rolling check.** `analysis/lc_fit.py` now appends each run to `.cache_lc_gate_history.json` (30-day retention) and prints a 7-day rolling gate summary: entries/distinct days in window, FIT/HOLD day rollup, trailing FIT streak, and SHIP-cell stability (which cells' verdicts changed within the window). `gate_clear` requires ≥7 distinct days + zero HOLD days + zero SHIP-set changes. Mirrors the `.cache_l5_gate_history.json` pattern, adapted for the analysis-side context (lc_fit runs inside the nightly digest via the `for f in analysis/*.py` loop). **Real state:** today = day 1/7. The previously prose-codified "day 5/7" was fiction — the nightly digest was running `lc_fit` but nothing persisted per-run verdicts, so no dated evidence existed for the manual count. Same silent-failure class as `feedback_verify_writers_for_read_paths`. Silver lining: today's SHIP set (15 cells) matches the 07-04 ship-day read in shape and magnitude — directional evidence is fine, formal gate is now machine-enforced going forward. Earliest real flip: 2026-07-15.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.316a • July 8, 2026</strong></summary>
 
 - **Canon page sweep for v0.6.316 ship.** Recent-activity block gets today's entry (v0.6.316 Stage 3 wiring + Stage 1/2 build for both axes) and the 07-05 entry rotates out per the rolling 3-day window. Executive-summary cards for C1h + C1d flip from candidate ("ortho passed", "resurrected") to Stage-3-wired-gated-OFF with correct day counts (C1h day 2/7 as of 07-07 verdict; C1d day 5/7 as of 07-04 verdict; pre-frontal day 5/7). Retired section's "C1d killed 06-29 / re-confirmed 07-02" language deleted and replaced with a pointer to the C1 confidence-layer section (C1d is no longer purely retired). Big C1 confidence-layer bullet updated: 5 axes → 7 axes, marginal C1h/C1d wiring flagged as standalone tables kept off the multi-axis join to avoid cell-dilution. Stage 1 rolling-table entries + killed-hypothesis C1d block sync'd to the same Stage 3 stamp. Scope note added: C1h wiring is broader than the ortho-verdict narrow scope (ch ambiguous, t redundant included) — Stage 4 audit filters at flip. Applicability map on live GCS confirmed rendering all 7 axes.

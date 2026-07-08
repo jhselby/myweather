@@ -29,7 +29,7 @@ import json
 import os
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -38,6 +38,15 @@ from analysis._cache import cached_path
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_PATH = Path(__file__).resolve().parent.parent / "weather_collector" / "data" / "lc_correction_table.json"
+
+# Rolling gate history — appended each run, retained 30 days, checked over
+# the last 7 days by the divergence report. Mirrors the .cache_l5_gate_history.json
+# pattern; kept as a repo-root dotfile so it is committed with the codebase and
+# survives across analysis sessions. Machine-enforces the 7-day live-layer change
+# gate that `feedback_dont_over_gate` codifies (gate governs flips, not exploration).
+GATE_HISTORY_PATH = Path(__file__).resolve().parent.parent / ".cache_lc_gate_history.json"
+GATE_HISTORY_RETENTION_DAYS = 30
+GATE_WINDOW_DAYS = 7
 
 CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
 
@@ -188,12 +197,152 @@ def main():
     print(f"wrote {OUT_PATH}")
     print()
 
+    # Append this run to gate history + compute rolling 7-day status.
+    gate = _append_and_summarize_gate_history({
+        "fitted_at": datetime.now().strftime("%Y-%m-%dT%H:%M"),
+        "verdict": "FIT" if ship > 0 else "HOLD",
+        "ship_count": ship,
+        "marginal_count": marginal,
+        "skip_count": skip,
+        "thin_count": thin,
+        "verdicts": verdicts,
+    })
+    _print_gate_summary(gate)
+
     # Verdict line the digest can pick up
     if ship == 0:
         print("Verdict: HOLD — no cells cleared the SHIP gate.")
         return 0
     print(f"Verdict: FIT — {ship} SHIP cell(s) ready to wire into Lc.")
     return 0
+
+
+def _append_and_summarize_gate_history(this_entry):
+    """Append this run to .cache_lc_gate_history.json, prune to 30-day
+    retention, then compute a 7-day rolling gate summary.
+
+    Returns a dict:
+      entries_in_window: count of runs in last 7 days
+      fit_days / hold_days: day-level rollup (day is FIT only if EVERY run
+        that day was FIT — same strictness as L5's rule)
+      gate_clear: True when ≥7 distinct days present, no HOLD days, no
+        SHIP-cell-set change over the window
+      latest_streak_fit: trailing FIT-run streak
+      ship_cell_stability: {"stable": True|False, "current_ship_cells": [...],
+        "cells_changed_in_window": [(field, bin, from, to)]}
+    """
+    try:
+        history = json.loads(GATE_HISTORY_PATH.read_text())
+    except FileNotFoundError:
+        history = {"entries": []}
+    except Exception as e:
+        print(f"  ⚠ gate history load failed: {e} — starting fresh")
+        history = {"entries": []}
+
+    entries = history.get("entries", [])
+    entries.append(this_entry)
+
+    # Prune retention.
+    now = datetime.now()
+    cutoff_ret = (now - timedelta(days=GATE_HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    entries = [e for e in entries if e.get("fitted_at", "") >= cutoff_ret]
+    GATE_HISTORY_PATH.write_text(json.dumps({"entries": entries}, indent=2))
+
+    # 7-day rolling window.
+    cutoff_win = (now - timedelta(days=GATE_WINDOW_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    window = [e for e in entries if e.get("fitted_at", "") >= cutoff_win]
+
+    by_day = {}
+    for e in window:
+        day = e.get("fitted_at", "")[:10]
+        if day:
+            by_day.setdefault(day, []).append(e)
+
+    fit_days = 0
+    hold_days = 0
+    for day, day_entries in by_day.items():
+        if all(x.get("verdict") == "FIT" for x in day_entries):
+            fit_days += 1
+        else:
+            hold_days += 1
+
+    # Trailing FIT-run streak — newest first.
+    streak = 0
+    for e in reversed(window):
+        if e.get("verdict") == "FIT":
+            streak += 1
+        else:
+            break
+
+    # Per-cell stability: has the SHIP set changed within the window?
+    current_ship = _ship_set(this_entry.get("verdicts") or {})
+    cells_changed = []
+    seen_ship = current_ship
+    for e in reversed(window[:-1]):  # exclude the entry we just appended
+        prior = _ship_set(e.get("verdicts") or {})
+        for k in current_ship ^ prior:
+            was = "SHIP" if k in prior else "not-SHIP"
+            now_v = "SHIP" if k in current_ship else "not-SHIP"
+            cells_changed.append((k[0], k[1], was, now_v))
+        # Only count the first change we find per cell — walking backward the
+        # oldest visible diff wins. Simpler: dedup afterward.
+    seen = set()
+    dedup = []
+    for c in cells_changed:
+        key = (c[0], c[1])
+        if key in seen:
+            continue
+        seen.add(key)
+        dedup.append(c)
+    cells_changed = dedup
+
+    stable = len(cells_changed) == 0
+    gate_clear = len(by_day) >= GATE_WINDOW_DAYS and hold_days == 0 and stable
+
+    return {
+        "entries_in_window": len(window),
+        "days_in_window": len(by_day),
+        "fit_days": fit_days,
+        "hold_days": hold_days,
+        "gate_clear": gate_clear,
+        "latest_streak_fit": streak,
+        "ship_cell_stability": {
+            "stable": stable,
+            "current_ship_cells": sorted(current_ship),
+            "cells_changed_in_window": cells_changed,
+        },
+        "history_window_days": GATE_WINDOW_DAYS,
+    }
+
+
+def _ship_set(verdicts_by_field):
+    """Return the set of (field, bin) tuples with verdict SHIP."""
+    return {
+        (field, lab)
+        for field, bins in verdicts_by_field.items()
+        for lab, v in bins.items()
+        if v == "SHIP"
+    }
+
+
+def _print_gate_summary(gate):
+    """One-block print of the rolling gate state — for a human eyeballing
+    the digest output, and for the divergence report to grep."""
+    print("Lc 7-day rolling gate:")
+    print(f"  window: {gate['history_window_days']} days · runs seen: {gate['entries_in_window']} · "
+          f"distinct days: {gate['days_in_window']}")
+    print(f"  fit_days: {gate['fit_days']} · hold_days: {gate['hold_days']} · "
+          f"latest FIT streak: {gate['latest_streak_fit']}")
+    stab = gate["ship_cell_stability"]
+    print(f"  SHIP-cell stability: {'STABLE' if stab['stable'] else 'CHANGED'} · "
+          f"current SHIP set: {len(stab['current_ship_cells'])} cells")
+    if stab["cells_changed_in_window"]:
+        print("  cells whose SHIP verdict changed within window:")
+        for f, b, was, now_v in stab["cells_changed_in_window"]:
+            print(f"    {f} {b}: {was} → {now_v}")
+    print(f"  gate_clear: {gate['gate_clear']}   (requires ≥{GATE_WINDOW_DAYS} distinct days, "
+          "no HOLD days, no SHIP-set changes)")
+    print()
 
 
 if __name__ == "__main__":
