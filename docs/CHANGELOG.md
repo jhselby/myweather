@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.316a • July 8, 2026</strong></summary>
+
+- **Canon page sweep for v0.6.316 ship.** Recent-activity block gets today's entry (v0.6.316 Stage 3 wiring + Stage 1/2 build for both axes) and the 07-05 entry rotates out per the rolling 3-day window. Executive-summary cards for C1h + C1d flip from candidate ("ortho passed", "resurrected") to Stage-3-wired-gated-OFF with correct day counts (C1h day 2/7 as of 07-07 verdict; C1d day 5/7 as of 07-04 verdict; pre-frontal day 5/7). Retired section's "C1d killed 06-29 / re-confirmed 07-02" language deleted and replaced with a pointer to the C1 confidence-layer section (C1d is no longer purely retired). Big C1 confidence-layer bullet updated: 5 axes → 7 axes, marginal C1h/C1d wiring flagged as standalone tables kept off the multi-axis join to avoid cell-dilution. Stage 1 rolling-table entries + killed-hypothesis C1d block sync'd to the same Stage 3 stamp. Scope note added: C1h wiring is broader than the ortho-verdict narrow scope (ch ambiguous, t redundant included) — Stage 4 audit filters at flip. Applicability map on live GCS confirmed rendering all 7 axes.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.316 • July 8, 2026</strong></summary>
 
 - **C1h + C1d Stage 3 wired (gated OFF).** `confidence_layer.py` now loads two new curated marginal-premium tables (`c1h_curated.json`, `c1d_curated.json`) and composes them multiplicatively on top of the existing `base_displayed` MAE. C1h reads `forecast_log.json` for the ~6h-old L1 snapshot (rejects matches >90 min off), compares to current L1 at each band's midpoint target hour, fires when `|Δ| > THRESH[field]` (cc 20, cl 15, cm 15, ch 15, t 3). C1d classifies live `cloud_inter_source_sigma` against Q1/Q3 cuts (`≥Q3 → "high"`) and applies the WIDEN/NARROW premium from the curated cell. Both add per-cell `c1h` + `c1d` sub-dicts to `weather_data.confidence.cells[field][band]` and telemetry to `live_axes` (`c1d_slot`, `c1h_hits`, `c1d_hits`). Stage 3 stamp is transparency-only — `ENABLED` still False; Stage 4 audit gates the flip.
