@@ -36,7 +36,7 @@ Does NOT modify any forecast value; this is the first non-MAE-reducing layer
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import pytz
 
@@ -69,6 +69,19 @@ _CURATED_PATH_V1 = os.path.join(
     "data", "c1_confidence_curated.json",
 )
 _CURATED_PATH = _CURATED_PATH_V2 if os.path.exists(_CURATED_PATH_V2) else _CURATED_PATH_V1
+
+# Standalone marginal-premium tables. Both are stamp-time multipliers that
+# compose on top of the base displayed_mae (legacy or multi-axis lookup).
+# See analysis/c1h_calibration.py + analysis/c1d_calibration.py for how the
+# tables were built; c1h_curate.py + c1d_curate.py apply SHIP/MARGINAL gating.
+_C1H_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data", "c1h_curated.json",
+)
+_C1D_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "data", "c1d_curated.json",
+)
 
 TZ = pytz.timezone("America/New_York")
 MB_TO_INHG = 1.0 / 33.8639
@@ -110,6 +123,25 @@ def describe_applicability():
                 "Live axis stamped on weather_data.confidence.live_axes.hsf_group; "
                 "multi-axis widening lookup wired via 5-tuple axis_key. Post-2026-07-01 "
                 "curated tables emit hsf-keyed cells; earlier tables fall back to legacy."
+            ),
+        },
+        {
+            "axis_id": "C1h",
+            "name": "Trend direction (6h forecast shift)",
+            "fires_when": (
+                "|forecast_l1[lead] − forecast_l1[lead−6]| > per-field threshold "
+                f"(cc 20, cl 15, cm 15, ch 15, t 3). Wired 2026-07-08 as a "
+                f"marginal multiplier composed on top of the base displayed_mae; "
+                f"reads {os.path.basename(_C1H_PATH)}."
+            ),
+        },
+        {
+            "axis_id": "C1d",
+            "name": "Cloud KBOS-vs-KBVY disagreement",
+            "fires_when": (
+                "current cloud_inter_source_sigma ≥ Q3 (high-disagreement slot). "
+                f"Wired 2026-07-08 as a marginal multiplier composed on top of "
+                f"the base displayed_mae; reads {os.path.basename(_C1D_PATH)}."
             ),
         },
     ]
@@ -198,6 +230,79 @@ def _load_curated_table():
 # is re-run, and re-importing the processor module is required for collector
 # reload anyway.
 _CURATED_CELLS, _CURATED_META = _load_curated_table()
+
+
+def _load_marginal_table(path, slot_names):
+    """Load a marginal-premium curated table (c1h or c1d shape).
+    Returns (cells, meta) where cells is {field: {band: {direction, premium_pct,
+    status}}} filtered to SHIP/MARGINAL, and meta is the file-level dict
+    (sigma_cuts, thresholds, etc.) or {}.
+    """
+    try:
+        with open(path) as f:
+            doc = json.load(f)
+    except FileNotFoundError:
+        logging.warning(f"  ⚠ confidence_layer: marginal table missing at {path}")
+        return {}, {}
+    except Exception as e:
+        logging.warning(f"  ⚠ confidence_layer: marginal table load failed at {path}: {e}")
+        return {}, {}
+    out = {}
+    for field, bands in (doc.get("cells") or {}).items():
+        for band, entry in bands.items():
+            if entry.get("status") not in _WIRED_STATUSES:
+                continue
+            direction = entry.get("direction")
+            pct = entry.get("premium_pct")
+            if direction not in ("WIDEN", "NARROW") or pct is None:
+                continue
+            out.setdefault(field, {})[band] = {
+                "direction":   direction,
+                "premium_pct": float(pct),
+                "status":      entry.get("status"),
+            }
+    meta = {k: v for k, v in doc.items() if k != "cells"}
+    return out, meta
+
+
+_C1H_CELLS, _C1H_META = _load_marginal_table(_C1H_PATH, ("flat", "fires"))
+_C1D_CELLS, _C1D_META = _load_marginal_table(_C1D_PATH, ("low", "high"))
+_C1H_THRESH = (_C1H_META.get("stage1_meta") or {}).get("thresholds") or {}
+_C1D_SIGMA_CUTS = _C1D_META.get("sigma_cuts") or {}
+
+
+# Field-to-hourly-array mapping for C1h L1 lookup at stamp time. C1h fires
+# when |L1[lead] − L1[lead-6]| exceeds THRESH for the target hour. Uses the
+# raw / L1 arrays so the axis reads the model's own trend, not our L4 output.
+_C1H_L1_KEY = {
+    "cc": "raw_cloud_cover",
+    "cl": "raw_cloud_cover_low",
+    "cm": "raw_cloud_cover_mid",
+    "ch": "raw_cloud_cover_high",
+    "t":  "temperature",  # raw t is 'temperature' (no raw_ prefix; L1 = model)
+}
+
+# Snapshot-log lookup keys for each field (matches forecast_snapshot.py's
+# per-layer stamps: field_l1). We use the L1 value from the ~6h-old snapshot
+# for the same target hour.
+_C1H_SNAP_KEY = {
+    "cc": "cc_l1",
+    "cl": "cl_l1",
+    "cm": "cm_l1",
+    "ch": "ch_l1",
+    "t":  "t_l1",
+}
+
+# Band midpoint hours used to pick the representative target for C1h stamp-time
+# firing. The per-band aggregation is a simplification of the per-hour axis;
+# calibration averaged premium across all hours in the band, so the midpoint
+# is a reasonable representative. See CLAUDE.md rule 4 — the actual per-band
+# firing rate over time will show whether midpoint is close enough.
+_C1H_BAND_MID = {
+    "6-11h":  9,
+    "12-23h": 18,
+    "24-47h": 36,
+}
 
 
 def _current_spread_quartile(weather_data):
@@ -307,6 +412,141 @@ def _current_pt_bin(weather_data):
     return None
 
 
+def _current_c1d_slot(weather_data):
+    """Classify current cloud_inter_source_sigma into 'low'/'high'/None.
+    Middle-band (Q1 < σ < Q3) returns None → axis inactive at this tick.
+    Cuts come from the curated file (analysis-side pins them via c1d_calibration.py).
+    """
+    q1 = _C1D_SIGMA_CUTS.get("q1")
+    q3 = _C1D_SIGMA_CUTS.get("q3")
+    if q1 is None or q3 is None:
+        return None
+    derived = weather_data.get("derived") or {}
+    sigma = derived.get("cloud_inter_source_sigma")
+    if sigma is None:
+        return None
+    if sigma <= q1:
+        return "low"
+    if sigma >= q3:
+        return "high"
+    return None
+
+
+def _load_prior_snapshot(hours_ago):
+    """Return the forecast_log snapshot whose run_stamp is closest to
+    `hours_ago` hours before now, or None. The snapshot log is written once
+    per collector tick (~10 min); we round to the nearest available entry.
+    """
+    try:
+        doc = load_json("forecast_log.json", default={"snapshots": []}) or {}
+    except Exception as e:
+        logging.debug(f"  ⚠ confidence_layer C1h: forecast_log load failed: {e}")
+        return None
+    snapshots = doc.get("snapshots") or []
+    if not snapshots:
+        return None
+    target = datetime.now(TZ).replace(second=0, microsecond=0)
+    target_naive = datetime(target.year, target.month, target.day,
+                            target.hour, target.minute)
+    target_naive -= timedelta(hours=hours_ago)
+    best = None
+    best_dt = None
+    best_delta = None
+    for s in snapshots:
+        rs = s.get("run")
+        if not rs:
+            continue
+        try:
+            dt = datetime.fromisoformat(rs[:19])
+        except Exception:
+            continue
+        delta = abs((dt - target_naive).total_seconds())
+        if best is None or delta < best_delta:
+            best = s
+            best_dt = dt
+            best_delta = delta
+    # Guardrail: reject if best match is >90 min off — the snapshot log
+    # probably has a gap and C1h should silently skip rather than fire on
+    # stale data.
+    if best is None or best_delta > 90 * 60:
+        return None
+    return best
+
+
+def _c1h_fires_per_band_field(weather_data):
+    """For each (field, band), decide whether C1h fires at stamp time.
+    Compares the current forecast_l1 for the band's representative target
+    hour against the L1 value at the same absolute target time in the
+    ~6h-old snapshot from forecast_log.json. Fires when |Δ| > THRESH[field].
+
+    Returns {(field, band): "fires"|"flat"|None}. None means axis inactive
+    (missing data on either side) — caller falls back to no premium.
+    """
+    out = {}
+    if not _C1H_CELLS:
+        return out
+    hourly = weather_data.get("hourly") or {}
+    times = hourly.get("times") or hourly.get("time") or []
+    if not times:
+        return out
+    prior = _load_prior_snapshot(6)
+    if not prior:
+        # No usable 6h-old snapshot → all bands report None (safe fallback).
+        for field, bands in _C1H_CELLS.items():
+            for band in bands:
+                out[(field, band)] = None
+        return out
+    # Build a lookup from target-time string → hour entry in the prior snapshot.
+    prior_by_v = {}
+    for h in (prior.get("hours") or []):
+        v = h.get("v")
+        if v:
+            prior_by_v[v] = h
+
+    for field, bands in _C1H_CELLS.items():
+        thr = _C1H_THRESH.get(field)
+        cur_key = _C1H_L1_KEY.get(field)
+        snap_key = _C1H_SNAP_KEY.get(field)
+        cur_arr = hourly.get(cur_key) or [] if cur_key else []
+        for band in bands:
+            mid_lead = _C1H_BAND_MID.get(band)
+            if thr is None or mid_lead is None or mid_lead >= len(times):
+                out[(field, band)] = None
+                continue
+            target_t = times[mid_lead]
+            cur_v = cur_arr[mid_lead] if mid_lead < len(cur_arr) else None
+            prior_hour = prior_by_v.get(target_t)
+            if cur_v is None or prior_hour is None:
+                out[(field, band)] = None
+                continue
+            prior_v = prior_hour.get(snap_key)
+            if prior_v is None:
+                out[(field, band)] = None
+                continue
+            try:
+                delta = abs(float(cur_v) - float(prior_v))
+            except (TypeError, ValueError):
+                out[(field, band)] = None
+                continue
+            out[(field, band)] = "fires" if delta > thr else "flat"
+    return out
+
+
+def _apply_marginal(base_mae, direction, premium_pct):
+    """Multiplicatively compose a marginal-axis premium onto base_mae.
+    WIDEN → multiply by (1 + |pct|/100). NARROW → multiply by max(0, 1 − |pct|/100).
+    Returns (new_mae, multiplier_applied).
+    """
+    if base_mae is None or direction not in ("WIDEN", "NARROW") or premium_pct is None:
+        return base_mae, 1.0
+    pct = abs(float(premium_pct)) / 100.0
+    if direction == "WIDEN":
+        m = 1.0 + pct
+    else:
+        m = max(0.0, 1.0 - pct)
+    return base_mae * m, m
+
+
 def _classify_current_regime(weather_data):
     """Classify the live regime from current observed conditions. Returns
     None if any required field is missing — caller treats that as "no
@@ -363,13 +603,34 @@ def stamp_confidence(weather_data):
     # composition below matches. Live tick classifies from frontal_events_log.
     hsf_group = _current_hsf_group(weather_data)
 
+    # Marginal-axis live values. C1d is a scalar (one slot for the whole
+    # tick). C1h is per (field, band). Both are None-safe — a missing axis
+    # value means the marginal multiplier is 1.0 for the affected cell.
+    c1d_slot = _current_c1d_slot(weather_data)
+    c1h_by_cell = _c1h_fires_per_band_field(weather_data)
+    c1h_hits = 0
+    c1d_hits = 0
+
+    # Union of fields that appear in any of the three tables so C1h/C1d can
+    # contribute cells even where the legacy v2/v1 table has none. Non-legacy
+    # fields fall through with legacy_displayed=None; the multiplier still
+    # composes onto whatever base_mae the multi-axis lookup provides (or None,
+    # in which case the cell reports axis effects but no MAE).
+    all_fields = set(_CURATED_CELLS.keys()) | set(_C1H_CELLS.keys()) | set(_C1D_CELLS.keys())
+
     cells_out = {}
     multi_hits = 0
-    for field, bands in _CURATED_CELLS.items():
+    for field in all_fields:
+        bands = _CURATED_CELLS.get(field, {})
         cells_out[field] = {}
-        for band, entry in bands.items():
-            stable = entry["stable_mae"]
-            transit = entry["transition_mae"]
+        # Also include bands present only in c1h/c1d.
+        extra_bands = set()
+        for tbl in (_C1H_CELLS, _C1D_CELLS):
+            extra_bands |= set(tbl.get(field, {}).keys())
+        for band in set(bands.keys()) | extra_bands:
+            entry = bands.get(band, {})
+            stable = entry.get("stable_mae")
+            transit = entry.get("transition_mae")
             # Legacy displayed_mae — what a v1-aware UI sees.
             legacy_displayed = transit if in_transition else stable
             # Multi-axis lookup. Build the 4-axis key for THIS band (C1f
@@ -386,23 +647,69 @@ def stamp_confidence(weather_data):
             axis_mae = None
             axis_direction = None
             axis_status = None
-            if axis_key:
+            if axis_key and entry:
                 hit = (entry.get("by_axes") or {}).get(axis_key)
                 if hit:
                     axis_mae = hit["mae"]
                     axis_direction = hit.get("direction")
                     axis_status = hit.get("status")
                     multi_hits += 1
-            displayed_mae = axis_mae if axis_mae is not None else legacy_displayed
+            base_displayed = axis_mae if axis_mae is not None else legacy_displayed
+
+            # Compose marginal premiums (C1h, C1d) on top of base_displayed.
+            # Each is a multiplicative WIDEN/NARROW that only applies when its
+            # live axis value activates the wired cell.
+            c1h_cell = _C1H_CELLS.get(field, {}).get(band)
+            c1h_state = c1h_by_cell.get((field, band))  # "fires" | "flat" | None
+            c1h_direction = None
+            c1h_pct = None
+            c1h_applied = False
+            if c1h_cell and c1h_state == "fires":
+                c1h_direction = c1h_cell["direction"]
+                c1h_pct = c1h_cell["premium_pct"]
+                c1h_applied = True
+                c1h_hits += 1
+
+            c1d_cell = _C1D_CELLS.get(field, {}).get(band)
+            c1d_direction = None
+            c1d_pct = None
+            c1d_applied = False
+            if c1d_cell and c1d_slot == "high":
+                # c1d cells' direction is the effect of the HIGH slot vs LOW.
+                # Only apply when live σ is in the HIGH slot; LOW is the
+                # baseline the calibration was measured against.
+                c1d_direction = c1d_cell["direction"]
+                c1d_pct = c1d_cell["premium_pct"]
+                c1d_applied = True
+                c1d_hits += 1
+
+            displayed_mae = base_displayed
+            displayed_mae, m_h = _apply_marginal(displayed_mae, c1h_direction, c1h_pct)
+            displayed_mae, m_d = _apply_marginal(displayed_mae, c1d_direction, c1d_pct)
 
             cells_out[field][band] = {
                 "stable_mae":     stable,
                 "transition_mae": transit,
+                "base_displayed": base_displayed,
                 "displayed_mae":  displayed_mae,
                 "direction":      axis_direction or entry.get("direction"),
                 "premium_pct":    entry.get("premium_pct"),
                 "status":         axis_status or entry.get("status"),
                 "axis_source":    ("multi" if axis_mae is not None else "legacy"),
+                "c1h": {
+                    "applied":     c1h_applied,
+                    "state":       c1h_state,
+                    "direction":   c1h_cell["direction"] if c1h_cell else None,
+                    "premium_pct": c1h_cell["premium_pct"] if c1h_cell else None,
+                    "multiplier":  round(m_h, 4),
+                },
+                "c1d": {
+                    "applied":     c1d_applied,
+                    "slot":        c1d_slot,
+                    "direction":   c1d_cell["direction"] if c1d_cell else None,
+                    "premium_pct": c1d_cell["premium_pct"] if c1d_cell else None,
+                    "multiplier":  round(m_d, 4),
+                },
             }
 
     weather_data["confidence"] = {
@@ -417,6 +724,9 @@ def stamp_confidence(weather_data):
             "pt_bin":          pt_label,
             "c1f_per_band":    c1f_per_band,
             "hsf_group":       hsf_group,  # C1e — 2026-07-01, telemetry only
+            "c1d_slot":        c1d_slot,   # C1d — 2026-07-08, marginal wired
+            "c1h_hits":        c1h_hits,   # C1h — 2026-07-08, marginal wired
+            "c1d_hits":        c1d_hits,
             "multi_hits":      multi_hits,
             "table_version":   "v3" if _CURATED_PATH.endswith("_v2.json") else "v1",
         },

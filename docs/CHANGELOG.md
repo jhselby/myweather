@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.316 • July 8, 2026</strong></summary>
+
+- **C1h + C1d Stage 3 wired (gated OFF).** `confidence_layer.py` now loads two new curated marginal-premium tables (`c1h_curated.json`, `c1d_curated.json`) and composes them multiplicatively on top of the existing `base_displayed` MAE. C1h reads `forecast_log.json` for the ~6h-old L1 snapshot (rejects matches >90 min off), compares to current L1 at each band's midpoint target hour, fires when `|Δ| > THRESH[field]` (cc 20, cl 15, cm 15, ch 15, t 3). C1d classifies live `cloud_inter_source_sigma` against Q1/Q3 cuts (`≥Q3 → "high"`) and applies the WIDEN/NARROW premium from the curated cell. Both add per-cell `c1h` + `c1d` sub-dicts to `weather_data.confidence.cells[field][band]` and telemetry to `live_axes` (`c1d_slot`, `c1h_hits`, `c1d_hits`). Stage 3 stamp is transparency-only — `ENABLED` still False; Stage 4 audit gates the flip.
+- **Stage 1 + Stage 2 for both axes**: `analysis/c1h_calibration.py` + `c1h_curate.py` produced 15/15 SHIP cells (all WIDEN; strongest cl 6-11h +290%, ch 6-11h +183%). `analysis/c1d_calibration.py` + `c1d_curate.py` produced 13 SHIP + 1 MARGINAL + 2 SKIP (ch short-lead +85-93%; cc 24-47h MARGINAL NARROW -7.06% — outlier detector under 75% dominance threshold, flagged for the eventual Stage 4 audit).
+- **Live tick verification (14:07 UTC)**: 4 C1h fires (cc/ch/t 6-11h widen ×1.47/×2.83/×1.24 matching curated pcts); C1d slot `null` this tick (σ in middle Q1<σ<Q3 band, baseline no-op). `applied: False` throughout — no UI impact.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.315 • July 7, 2026</strong></summary>
 
 - **"Right now" headline box: 4-tile grid → all-fields correction table.** Old box showed an arbitrary 4-tile subset (Temp / Humidity / Confidence / Briefing source) — two field tiles that duplicated the pipeline state table below, plus two operational-status tiles. Replaced with a 13-row table showing Field / Raw model / Production / Correction for every field the pipeline has raw-vs-corrected data for at `hourly[0]` — the current-tick composed shift the pipeline is applying to THIS forecast (fills a gap: no other page section shows composed current-tick corrections in one view). Field labels carry symbol in parens (`Temperature (t)`, `Wind speed (ws)`, etc.) to teach the vocabulary the scorecard uses. Correction column color-coded green (pipeline adds), red (subtracts), gray (flat). For percentage-valued fields (h, cc/cl/cm/ch, pp), the correction unit is `pts` not `%` to avoid the "+57%" reading as a multiplier ambiguity. t/h source `hyperlocal.weighted_bias` (raw derived as corrected − bias); other fields source `hourly.raw_*` directly. Degraded-mode handling preserved (t/h show "paused" when GFS/HRRR unavailable). Confidence + Briefing source drop to a compact ops-status footer row below the table.
