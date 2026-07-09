@@ -1202,49 +1202,49 @@
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>t</code></td>
         <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias from station network, scaled by Kalman gain K</td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 10px;vertical-align:top;">always on</td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>dp</code></td>
         <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias from station network</td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 10px;vertical-align:top;">always on</td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>h</code></td>
         <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — additive bias scaled by Kalman gain K</td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 10px;vertical-align:top;">always on <span style="opacity:0.65;font-size:0.9em;">(K-taper 1.0 → 0.4 by lead 24h)</span></td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>pr</code></td>
         <td style="padding:6px 10px;vertical-align:top;"><strong>DISABLED 2026-07-01 v0.6.276</strong> — <code>corrected_pressure_in ≡ raw_pressure_in</code>. Prior "K=1 additive on station-consensus vs model after altitude offsets" was making Production +2.4% worse than raw at the population level (station consensus noise dominated the small bias signal). Preview via <code>analysis/production_whatif.py</code>: dropping L2 for pr flips Production from +2.4% BAD to 0%.</td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.6;">disabled at module level</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;"><span style="opacity:0.7;">disabled</span> <span style="opacity:0.6;font-size:0.9em;">(pr passes through as raw)</span></td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cc</code></td>
         <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — Kalman-blended KBOS + KBVY METAR override on <code>hourly[0]</code> (current-hour value used by cards). <em>Not propagated across forecast leads</em> — promotion to a true per-lead L2 bias correction is queued (see Open architectural questions).</td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 10px;vertical-align:top;">always on <span style="opacity:0.65;font-size:0.9em;">(needs KBOS or KBVY at current hour)</span></td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cl</code> / <code>cm</code> / <code>ch</code></td>
         <td style="padding:6px 10px;vertical-align:top;"><strong>Derived</strong> — same Kalman K applied to L/M/H splits on <code>hourly[0]</code> to keep them self-consistent with cc. <em>Not propagated across leads</em>, same as cc.</td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 10px;vertical-align:top;">always on <span style="opacity:0.65;font-size:0.9em;">(derives from cc)</span></td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>ws</code> / <code>wg</code></td>
         <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — direct selection from per-octant median (no per-station bias track); KBOS+KBVY authoritative-source floor when both agree at &gt;1.4× the octant median</td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 10px;vertical-align:top;">always on <span style="opacity:0.65;font-size:0.9em;">(direct-selection, not additive)</span></td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;">applies (direct)</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>sr</code> / <code>pp</code> / <code>pa</code></td>
         <td style="padding:6px 10px;vertical-align:top;"><strong>N/A</strong> — no station network for this field; L2 row is structurally empty</td>
-        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.5;">—</span></td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.6;">n/a — no obs network</span></td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;"><span style="opacity:0.6;">n/a</span></td>
       </tr>
     </tbody>
@@ -1521,7 +1521,7 @@
 
 <details class="research-subsection" id="r2-state-stratified" open>
   <summary>R2. State-stratified accuracy — which regimes does the model fail in? (active)</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per-field MAE sliced by atmospheric regime (wind direction, wind speed, cloud cover, pressure trend, flow regime, synoptic pattern). When a field's MAE varies a lot across regime bins, that's a sign a regime-aware correction layer could help. <strong>Already-addressed rows are tagged.</strong> The raw ranking still puts solar at the top because the raw L1/L2 bias spread is real, but Lsr has shipped — sr rows are marked "addressed" and dimmed. Temperature rows are NO LONGER tagged as "addressed" because Lt is dormant since 2026-07-01 v0.6.276 (both branches returned net-negative Production numbers; refit against L2 baseline queued as Fix B). The "Top actionable opportunity" chart skips past tagged rows to surface the highest-ranked unaddressed signal. Re-fit twice daily by the Fitter, published to <code>state_stratified_accuracy.json</code>.</div>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> per-field MAE sliced by atmospheric regime (wind direction, wind speed, cloud cover, pressure trend, flow regime, synoptic pattern). When a field's MAE varies a lot across regime bins, that's a sign a regime-aware correction layer could help. <strong>Addressed rows are excluded from the top-10 by default.</strong> Fields with a shipped correction (currently: <code>sr</code> → Lsr since 2026-06-28 v0.6.248) would otherwise dominate the top of the raw ranking, because the raw L1/L2 bias spread is real — the correction absorbs the signal downstream. Filtering keeps the top-10 slate on 10 actionable opportunities. Addressed rows are kept accessible in a collapsible "Excluded from top-10" block below the table so a shipped-correction regression (spread stays high AND per-layer MAE drifts) still surfaces. Temperature rows are NO LONGER excluded because Lt is dormant since 2026-07-01 v0.6.276 (both branches returned net-negative Production numbers; refit against L2 baseline queued as Fix B). The "Top actionable opportunity" chart uses the top-10's #1 directly. Re-fit twice daily by the Fitter, published to <code>state_stratified_accuracy.json</code>.</div>
   <div id="status-state-stratified" class="status" hidden></div>
   <div id="grid-state-stratified"></div>
 </details>
@@ -2199,11 +2199,17 @@ function renderApplicabilityMap(wxDoc) {
           ? `${escape(r.axis_id || "?")} <span style="opacity:0.65;">— ${escape(r.name || "")}</span>`
           : `<code>${escape(r.field || "?")}</code>`;
         const triggers = escape(r.fires_when || "—");
-        const gated = r.gated_by
-          ? `<code style="opacity:0.85;">${escape(r.gated_by)}</code>`
+        // Fall back to layer-level gated_by / current_state when the per-row
+        // descriptor omits it. C1 axes inherit the same ENABLED gate as the
+        // layer, so duplicating it on each axis row is redundant — the
+        // renderer just resolves the inheritance here.
+        const gatedRaw = r.gated_by || L.gated_by;
+        const gated = gatedRaw
+          ? `<code style="opacity:0.85;">${escape(gatedRaw)}</code>`
           : `<span style="opacity:0.5;">—</span>`;
-        const state = r.current_state
-          ? `<span style="opacity:0.9;">${escape(r.current_state)}</span>`
+        const stateRaw = r.current_state || L.current_state;
+        const state = stateRaw
+          ? `<span style="opacity:0.9;">${escape(stateRaw)}</span>`
           : `<span style="opacity:0.5;">—</span>`;
         const notes = r.notes
           ? `<div style="margin-top:3px;opacity:0.7;font-size:0.85em;">${escape(r.notes)}</div>`
@@ -4172,30 +4178,58 @@ function renderStateStratifiedSection(ssDoc) {
     // anymore — put it back on the "actionable" list until Fix B ships.
   };
 
-  // Top-N table
-  const top = ranked.slice(0, 10);
+  // Top-10 actionable — filter out addressed rows FIRST, then slice. Original
+  // ranks are preserved in the # column so readers see the raw spread position
+  // (a jump from #4 to #6 means #5 was addressed). Addressed rows go into a
+  // collapsible block below so they stay available for regression watch
+  // without eating slots on the actionable slate.
+  const unaddressed = ranked.filter(r => !ADDRESSED[r.field_key]);
+  const addressed = ranked.filter(r => ADDRESSED[r.field_key]);
+  const top = unaddressed.slice(0, 10);
   const rankRows = top.map(r => {
-    const addressed = ADDRESSED[r.field_key];
-    const isTop = r.rank === 1 && !addressed;
+    const isTop = r === top[0];
     const color = r.spread >= 50 ? "#ef6450" : r.spread >= 10 ? "#f0b35e" : r.spread >= 3 ? "#74c38b" : "#8a93a3";
-    const rowStyle = isTop ? ' style="background:rgba(212,163,115,0.06);"' :
-                     addressed ? ' style="opacity:0.5;"' : '';
-    const addressedTag = addressed
-      ? ` <span style="display:inline-block;padding:1px 6px;border-radius:4px;background:rgba(74,210,154,0.12);color:#74c38b;font-size:0.78em;font-weight:600;margin-left:6px;">addressed</span>`
-      : '';
+    const rowStyle = isTop ? ' style="background:rgba(212,163,115,0.06);"' : '';
     return `<tr${rowStyle}>
       <td style="text-align:right;opacity:0.6;">${r.rank}</td>
-      <td><strong>${r.field_label}</strong> <span style="opacity:0.5;">(${r.field_key})</span>${addressedTag}</td>
+      <td><strong>${r.field_label}</strong> <span style="opacity:0.5;">(${r.field_key})</span></td>
       <td>${r.dimension_label}</td>
       <td style="color:${color};font-weight:700;text-align:right;">${r.spread.toFixed(2)}</td>
     </tr>`;
   }).join("");
 
-  // #1 opportunity chart: pick the highest-ranked field whose regime signal
-  // ISN'T already addressed by a shipped correction. Solar/sr is the obvious
-  // top of the raw ranking; it's already Lsr's beat, so skip past it.
-  const actionableTop = top.find(r => !ADDRESSED[r.field_key]);
-  const addressedSkipped = top.filter(r => ADDRESSED[r.field_key]).length;
+  // Addressed rows — collapsible block below top-10. Kept visible so a
+  // regression in the shipped correction (e.g., Lsr dies) surfaces via
+  // spread numbers still being high on the "addressed" side.
+  const addressedRows = addressed.map(r => {
+    const color = r.spread >= 50 ? "#ef6450" : r.spread >= 10 ? "#f0b35e" : r.spread >= 3 ? "#74c38b" : "#8a93a3";
+    return `<tr style="opacity:0.75;">
+      <td style="text-align:right;opacity:0.6;">${r.rank}</td>
+      <td><strong>${r.field_label}</strong> <span style="opacity:0.5;">(${r.field_key})</span></td>
+      <td>${r.dimension_label}</td>
+      <td style="color:${color};font-weight:700;text-align:right;">${r.spread.toFixed(2)}</td>
+    </tr>`;
+  }).join("");
+  const addressedBlockHtml = addressed.length
+    ? `<details style="margin-top:12px;padding:8px 12px;border:1px solid #1f3a2a;background:rgba(74,210,154,0.03);border-radius:6px;">
+         <summary style="color:#74c38b;font-weight:600;font-size:0.9em;cursor:pointer;">
+           Excluded from top-10 as addressed by a shipped correction
+           <span style="opacity:0.7;font-weight:400;">— ${addressed.length} row${addressed.length === 1 ? '' : 's'} across ${new Set(addressed.map(r => r.field_key)).size} field${new Set(addressed.map(r => r.field_key)).size === 1 ? '' : 's'}</span>
+         </summary>
+         <div class="meta-line" style="margin:6px 0 8px 0;font-size:0.88em;opacity:0.85;">
+           ${Object.entries(ADDRESSED).map(([k, note]) => `<div><code>${k}</code> — ${note}</div>`).join("")}
+         </div>
+         <div class="meta-line" style="margin-bottom:6px;font-size:0.85em;opacity:0.7;">These rows still rank because the raw L1/L2 bias spread is real; a shipped correction absorbs the signal downstream. If a row's spread stays high AND the shipped correction's per-layer MAE also drifts, the correction has regressed.</div>
+         <table class="offset-table"><thead><tr>
+           <th style="text-align:right;">#</th><th>Field</th><th>Dimension</th><th style="text-align:right;">Spread</th>
+         </tr></thead><tbody>${addressedRows}</tbody></table>
+       </details>`
+    : "";
+
+  // #1 opportunity chart: top-10 is already all actionable, so top[0] IS the
+  // #1 opportunity — no filter needed downstream.
+  const actionableTop = top[0];
+  const addressedSkipped = addressed.length;
 
   let chartHtml = "";
   if (actionableTop) {
@@ -4221,7 +4255,7 @@ function renderStateStratifiedSection(ssDoc) {
           </tr>`;
         }).join("");
       const skipNote = addressedSkipped
-        ? ` <span style="opacity:0.65;font-weight:400;font-size:0.85em;">(skipped ${addressedSkipped} higher-ranked entr${addressedSkipped === 1 ? 'y' : 'ies'} already addressed by a shipped correction layer)</span>`
+        ? ` <span style="opacity:0.65;font-weight:400;font-size:0.85em;">(${addressedSkipped} addressed row${addressedSkipped === 1 ? '' : 's'} excluded — see block below)</span>`
         : '';
       chartHtml = `
         <div style="margin-top:18px;">
@@ -4243,10 +4277,11 @@ function renderStateStratifiedSection(ssDoc) {
       <strong style="color:${verdictColor};">Verdict:</strong> ${verdict}
       <div class="meta-line">Fitted ${fittedAt} · ${nUsed} pairs used.</div>
     </div>
-    <div style="margin-bottom:6px;font-weight:600;">Ranked opportunities — top 10 by MAE spread across bins</div>
+    <div style="margin-bottom:6px;font-weight:600;">Ranked opportunities — top 10 actionable by MAE spread across bins</div>
     <table class="offset-table"><thead><tr>
       <th style="text-align:right;">#</th><th>Field</th><th>Dimension</th><th style="text-align:right;">Spread</th>
     </tr></thead><tbody>${rankRows}</tbody></table>
+    ${addressedBlockHtml}
     ${chartHtml}
   `;
 }

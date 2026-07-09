@@ -219,15 +219,21 @@ def describe_applicability():
                 parts.append(f"{r} ({lo}-{hi-1}h)")
         return f"{base} EXCEPT skip when regime + lead ∈ {{ " + ", ".join(parts) + " }"
 
-    l3_fields = [
-        {"field": f, "fires_when": _fires_when_with_skip(f, "l3")}
-        for f in sorted(L3_FIELDS)
-    ]
+    def _descriptor(field, layer):
+        layer_name = f"L{layer[-1]}_FIELDS"
+        has_skip = bool(SKIP_TABLE.get((field, layer)))
+        gated_by = f"{layer_name} + SKIP_TABLE" if has_skip else layer_name
+        current_state = ("firing at every lead" if not has_skip
+                         else "firing except in skip cells (see 'applies when')")
+        return {
+            "field": field,
+            "fires_when": _fires_when_with_skip(field, layer),
+            "gated_by": gated_by,
+            "current_state": current_state,
+        }
 
-    l4_fields = [
-        {"field": f, "fires_when": _fires_when_with_skip(f, "l4")}
-        for f in sorted(L4_FIELDS)
-    ]
+    l3_fields = [_descriptor(f, "l3") for f in sorted(L3_FIELDS)]
+    l4_fields = [_descriptor(f, "l4") for f in sorted(L4_FIELDS)]
 
     return [
         {
