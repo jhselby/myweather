@@ -27,12 +27,14 @@ but the user-facing humidity is the derived value.
 """
 import logging
 import math
+from collections import defaultdict
 from datetime import datetime, timedelta
 
 import pytz
 
 from ..gcs_io import load_json
 from ..utils import steadman_feels_like_f
+from . import gate_firing_log
 
 
 CORRECTIONS_PATH = "decay_corrections.json"
@@ -462,6 +464,13 @@ def apply_decay_corrections(weather_data, config=None):
     _regime_now = _state.get("regime_synoptic")
     skip_l3 = 0
     skip_l4 = 0
+    # Per-field firing counters for the gate-firing log (Phase (a)). "Fires" =
+    # correction actually mutated the array. "Skips" = skip table matched.
+    # Both are keyed by the L3/L4 whitelist fields only; fields NOT in the
+    # whitelist don't appear (that's a config-level dormancy the applied-layer
+    # audit already catches).
+    l3_by_field = defaultdict(lambda: {"fires": 0, "skips": 0})
+    l4_by_field = defaultdict(lambda: {"fires": 0, "skips": 0})
 
     applied = 0
     capped = 0
@@ -483,6 +492,7 @@ def apply_decay_corrections(weather_data, config=None):
                 continue
             if _should_skip(short, "l3", _regime_now, h):
                 skip_l3 += 1
+                l3_by_field[short]["skips"] += 1
                 continue
             try:
                 c = float(c)
@@ -500,6 +510,14 @@ def apply_decay_corrections(weather_data, config=None):
                 result = hi
             arr[h] = round(result, digits)
             applied += 1
+            l3_by_field[short]["fires"] += 1
+
+    # Log L3 firings. Zero-fire fields are not in this dict — the rollup script
+    # infers dormancy by cross-referencing L3_FIELDS against the aggregated log.
+    gate_firing_log.record_firing(
+        operator="L3", regime=_regime_now,
+        by_field=dict(l3_by_field), leads=48,
+    )
 
     # v0.6.25: snapshot post-Layer-3 (= after decay, before diurnal) for the
     # per-layer MAE accuracy table. Each layer's output captured = (raw → L2 →
@@ -562,6 +580,7 @@ def apply_decay_corrections(weather_data, config=None):
                     continue
                 if _should_skip(short, "l4", _regime_now, h):
                     skip_l4 += 1
+                    l4_by_field[short]["skips"] += 1
                     continue
                 c = per_hour[hod]
                 if c is None:
@@ -580,11 +599,21 @@ def apply_decay_corrections(weather_data, config=None):
                     result = hi
                 arr[h] = round(result, digits)
                 diurnal_applied += 1
+                l4_by_field[short]["fires"] += 1
         if diurnal_applied:
             msg = f"  ✓ Diurnal apply: {diurnal_applied} hourly cells corrected"
             if diurnal_capped:
                 msg += f" ({diurnal_capped} capped at sanity bound)"
             logging.info(msg)
+
+    # Log L4 firings. Emitted unconditionally (even if diurnal_doc was missing
+    # or stale) so the aggregator can distinguish "L4 fields exist but nothing
+    # fired" (dormancy: file missing) from "L4 fired on 0 cells" (silent
+    # skip-table match).
+    gate_firing_log.record_firing(
+        operator="L4", regime=_regime_now,
+        by_field=dict(l4_by_field), leads=48,
+    )
 
     # Derive the consistent moisture quadruple from the now-corrected T + T_d.
     recompute_derived_moisture_arrays(weather_data)

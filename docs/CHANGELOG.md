@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.318 • July 9, 2026</strong></summary>
+
+- **Gate-firing log — Phase (a): collector-side counters.** New `weather_collector/processors/gate_firing_log.py` provides `record_firing(operator, regime, by_field, leads)` (module-level tick buffer) and `flush_to_gcs()` (append via GCS compose, same pattern as `forecast_error_log`). `decay_apply.py` now tracks per-field `fires` and `skips` counts through the L3 and L4 loops and calls `record_firing` after each pass. `collector.py` flushes the buffer at end of every tick after the weather_data upload. Failsafe: any GCS error logs + drops the buffer, does not affect the already-published weather_data. **First tick after deploy (09:57 local):** `gate_firing_log.jsonl` created with 2 rows — L3 pre_frontal (ws/wg/cm/ch all 48 fires 0 skips), L4 pre_frontal (cc/ch same). Ready for the `ne_flow` / short-lead `sea_breeze` ticks where the skip table will populate `skips` counts. **Phase (b) — 7-day rollup writer to `gate_firing_freq.json` — queued.** **Phase (c) — debug page render adjacent to Applicability map — queued.** Definition of "fired" = correction actually mutated the array (not "would have applied"); the log distinguishes real firing from silent dormancy of the class that hid ws L3 for 4 days after v0.6.279.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.317a • July 9, 2026</strong></summary>
 
 Analysis-side bundle from the afternoon Stage 4 rework — three linked pieces:

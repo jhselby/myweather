@@ -623,6 +623,15 @@ def main():
     # Upload weather data to GCS
     upload_json(weather_data, WEATHER_DATA_GCS_PATH, "weather_data.json")
 
+    # Flush gate-firing records buffered by decay_apply / etc. this tick.
+    # Fail-safe: any exception logs + drops the buffer, does not affect the
+    # already-published weather_data.
+    try:
+        from .processors.gate_firing_log import flush_to_gcs as flush_gate_firings
+        flush_gate_firings()
+    except Exception as e:
+        logging.warning(f"  ⚠  Gate-firing log flush failed: {redact_secrets(e)}")
+
     # Fit per-field per-lead_h decay corrections twice daily at the X:07 tick
     # (03:07 EDT post-overnight + 15:07 EDT mid-afternoon). Dropped from 4×/day
     # in v0.6.47 — the active build phase is over (L2 lead-decay shipped, L3/L4
