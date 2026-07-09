@@ -2274,6 +2274,7 @@ function renderGateFiring(doc) {
   const escape = (s) => String(s == null ? "" : s)
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+  // Dormancy flag detail (used in expandable block)
   const flags = doc.dormancy_flags || {};
   const flagBlocks = [];
   if (flags.operators_never_fired && flags.operators_never_fired.length) {
@@ -2298,21 +2299,77 @@ function renderGateFiring(doc) {
           `<li><code>${escape(o)}/${escape(f)}/${escape(r)}</code> — ${n} ticks in regime, 0 fires</li>`).join("")}
       </ul>`);
   }
-  const noFlags = flagBlocks.length === 0
-    ? `<div style="opacity:0.8;">✓ No dormancy flags — every declared operator × field × regime fired at least once.</div>`
-    : "";
 
-  const stamp = `
+  // ── Summary aggregates over the full rollup ──────────────────────────────
+  // Operators with ENABLED=False at time of writing. Any fires reported for
+  // them counts as "fires while disabled" — the class of bug where the code
+  // path executes despite the gate being off.
+  const DISABLED_OPERATORS = new Set(["Lt", "Lc", "MLC"]);
+
+  const operators = Object.keys(doc.by_operator_field_regime).sort();
+  const opFieldPairs = new Set();
+  let totalFires = 0;
+  let totalSkips = 0;
+  let cellsWithSkips = 0;
+  let firesWhileDisabled = 0;
+  for (const op of operators) {
+    const fields = Object.keys(doc.by_operator_field_regime[op]);
+    for (const f of fields) {
+      opFieldPairs.add(`${op}/${f}`);
+      const regimes = Object.keys(doc.by_operator_field_regime[op][f]);
+      for (const r of regimes) {
+        const c = doc.by_operator_field_regime[op][f][r];
+        totalFires += c.fires;
+        totalSkips += c.skips;
+        if (c.skips > 0) cellsWithSkips += 1;
+        if (DISABLED_OPERATORS.has(op)) firesWhileDisabled += c.fires;
+      }
+    }
+  }
+  const dormancyCount = silentByRegime.length
+                      + (flags.operator_field_pairs_never_fired || []).length
+                      + (flags.operators_never_fired || []).length;
+
+  const ok = (n) => n === 0
+    ? `<span style="color:#4ad29a;">${n} ✓</span>`
+    : `<span style="color:#fb7c5c;font-weight:700;">${n} ⚠</span>`;
+
+  const summary = `
     <div class="meta-line" style="margin-bottom:10px;opacity:0.85;">
       Window: <code>${escape(doc.window_start)}</code> → <code>${escape(doc.window_end)}</code>
       · ticks: <strong>${doc.tick_count}</strong>
       · generated: <code>${escape(doc.generated_at)}</code>
     </div>
-    <div style="border:1px solid #2a3a52;background:#101820;border-radius:6px;padding:10px 14px;margin-bottom:14px;">
-      ${flagBlocks.join("") || noFlags}
+    <div style="border:1px solid #2a3a52;background:#101820;border-radius:6px;padding:12px 16px;margin-bottom:12px;">
+      <table style="border-collapse:collapse;font-size:0.95em;">
+        <tbody>
+          <tr><td style="padding:3px 16px 3px 0;opacity:0.85;">Operators monitored</td>
+              <td style="padding:3px 0;text-align:right;font-weight:600;">${operators.length}</td>
+              <td style="padding:3px 0 3px 12px;opacity:0.7;font-size:0.9em;">${operators.map(o => `<code>${escape(o)}</code>`).join(" ")}</td></tr>
+          <tr><td style="padding:3px 16px 3px 0;opacity:0.85;">Field × operator pairs</td>
+              <td style="padding:3px 0;text-align:right;font-weight:600;">${opFieldPairs.size}</td>
+              <td></td></tr>
+          <tr><td style="padding:3px 16px 3px 0;opacity:0.85;">Skip-table cells firing</td>
+              <td style="padding:3px 0;text-align:right;font-weight:600;">${cellsWithSkips}</td>
+              <td style="padding:3px 0 3px 12px;opacity:0.7;font-size:0.9em;">${totalSkips.toLocaleString()} skip event${totalSkips === 1 ? '' : 's'} in window</td></tr>
+          <tr><td style="padding:3px 16px 3px 0;opacity:0.85;">Dormancy flags</td>
+              <td style="padding:3px 0;text-align:right;">${ok(dormancyCount)}</td>
+              <td style="padding:3px 0 3px 12px;opacity:0.7;font-size:0.9em;">operator × field × regime cells with 0 fires despite ≥5 ticks in regime</td></tr>
+          <tr><td style="padding:3px 16px 3px 0;opacity:0.85;">Fires while disabled</td>
+              <td style="padding:3px 0;text-align:right;">${ok(firesWhileDisabled)}</td>
+              <td style="padding:3px 0 3px 12px;opacity:0.7;font-size:0.9em;">across <code>${[...DISABLED_OPERATORS].join("</code> <code>")}</code> (all ENABLED=False)</td></tr>
+        </tbody>
+      </table>
     </div>`;
 
-  const operators = Object.keys(doc.by_operator_field_regime).sort();
+  // Detail: dormancy specifics (collapsible only when there are flags)
+  const dormancyDetail = flagBlocks.length
+    ? `<div style="border:1px solid #3a2a2a;background:#191313;border-radius:6px;padding:10px 14px;margin-bottom:12px;">
+         ${flagBlocks.join("")}
+       </div>`
+    : "";
+
+  // Detail: full per-(op, field, regime) table
   const rows = [];
   for (const op of operators) {
     const fields = Object.keys(doc.by_operator_field_regime[op]).sort();
@@ -2339,26 +2396,31 @@ function renderGateFiring(doc) {
       }
     }
   }
+  const detailTable = `
+    <details style="margin-top:8px;">
+      <summary style="cursor:pointer;color:#7fb3ff;font-weight:600;font-size:0.9em;">
+        Per-cell detail — ${rows.length} row${rows.length === 1 ? '' : 's'}
+        (operator × field × regime with fires / skips / ticks / rate)
+      </summary>
+      <div class="layer-info-text" style="border-color:#2a3a52;margin-top:8px;">
+        <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
+          <thead>
+            <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
+              <th style="padding:4px 10px 4px 0;">operator</th>
+              <th style="padding:4px 10px;">field</th>
+              <th style="padding:4px 10px;">regime</th>
+              <th style="padding:4px 10px;text-align:right;">fires</th>
+              <th style="padding:4px 10px;text-align:right;">skips</th>
+              <th style="padding:4px 10px;text-align:right;">ticks</th>
+              <th style="padding:4px 0 4px 10px;text-align:right;">rate/tick</th>
+            </tr>
+          </thead>
+          <tbody>${rows.join("")}</tbody>
+        </table>
+      </div>
+    </details>`;
 
-  const table = `
-    <div class="layer-info-text" style="border-color:#2a3a52;">
-      <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
-        <thead>
-          <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
-            <th style="padding:4px 10px 4px 0;">operator</th>
-            <th style="padding:4px 10px;">field</th>
-            <th style="padding:4px 10px;">regime</th>
-            <th style="padding:4px 10px;text-align:right;">fires</th>
-            <th style="padding:4px 10px;text-align:right;">skips</th>
-            <th style="padding:4px 10px;text-align:right;">ticks</th>
-            <th style="padding:4px 0 4px 10px;text-align:right;">rate/tick</th>
-          </tr>
-        </thead>
-        <tbody>${rows.join("")}</tbody>
-      </table>
-    </div>`;
-
-  host.innerHTML = stamp + table;
+  host.innerHTML = summary + dormancyDetail + detailTable;
 }
 
 function renderHeadlineBox(wxDoc) {

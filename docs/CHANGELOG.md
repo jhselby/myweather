@@ -1,6 +1,19 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.319e • July 9, 2026</strong></summary>
+
+- **Gate-firing frequency default view: summary-first, detail expandable.** The Runtime firing subsection was rendering the full per-(operator × field × regime) table by default — verbose when everything is healthy. Restructured to lead with a compact 5-row summary block:
+  - <em>Operators monitored: N</em> (with operator list)
+  - <em>Field × operator pairs: N</em>
+  - <em>Skip-table cells firing: N</em> (with total skip event count)
+  - <em>Dormancy flags: N ✓/⚠</em> (silent-dormancy candidates from the rollup)
+  - <em>Fires while disabled: N ✓/⚠</em> (fires reported for Lt / Lc / MLC, all `ENABLED=False` — nonzero would mean the code path executed despite the gate being off)
+  Two rightmost checks show green ✓ when 0, red ⚠ when nonzero. Per-cell table moved into a `<details>` block with a "Per-cell detail — N rows" summary line. Dormancy detail block only renders when there are flags to show. Same JSON payload, cleaner default hierarchy.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.319d • July 9, 2026</strong></summary>
 
 - **Recent activity block bumped for afternoon ships.** Consolidated the four verdict-language fixes (v0.6.316e / v0.6.318d / v0.6.319b) into a single "4th instance in 3 days" bullet; added new bullets for v0.6.318f→v0.6.319 (Applicability map merge + full column populate + ranked-opportunities excluded block) and v0.6.319c (dp depression frontal branch closed / nor_easter watch opened). "Last curated" bumped to 07-09 v0.6.319c.
