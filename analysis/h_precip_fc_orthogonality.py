@@ -118,9 +118,19 @@ print()
 ortho = v1['ORTHOGONAL'] + v2['ORTHOGONAL']
 red   = v1['REDUNDANT'] + v2['REDUNDANT']
 total = sum(v1.values()) + sum(v2.values())
+# C1f (precip_fc>0) was shipped as a live confidence axis on 2026-06-24
+# v0.6.215 (confidence_layer.py:104 axis_id "C1f"). This script is a
+# stability re-check, not a candidate promotion — its "PROMOTE" branch
+# needs to acknowledge the axis is already live so future digests don't
+# misread the verdict as a new candidate needing action.
 if ortho >= 8:
-    print(f"→ PROMOTE: precip_fc is independent of both C1a and C1e ({ortho} orthogonal cells).")
+    print(f"→ STABLE: C1f (precip_fc>0) remains independent of both C1a and "
+          f"C1e ({ortho} orthogonal cells). Axis is live since v0.6.215 "
+          f"(2026-06-24); this is a stability re-check pass, not a new candidate.")
 elif red / total >= 0.7 if total else False:
-    print("→ KILL: precip_fc is captured by existing axes.")
+    print("→ REGRESSION WATCH: C1f is now captured by newer axes — "
+          "consider retiring from the multi-axis join. (Axis is live since "
+          "v0.6.215; if this verdict persists ≥3 daily reads, action needed.)")
 else:
-    print(f"→ MIXED: {ortho} orthogonal across both checks. Narrow promote on orthogonal cells.")
+    print(f"→ MIXED: {ortho} orthogonal across both checks. C1f is live "
+          f"since v0.6.215; watch for verdict stability across the 7-day gate.")

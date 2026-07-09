@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.318d • July 9, 2026</strong></summary>
+
+- **Fix `h_precip_fc_orthogonality.py` verdict wording** — the ≥8-orthogonal-cells branch was printing "→ PROMOTE: precip_fc is independent…" which made today's digest surface C1f as a new candidate needing action. But C1f (precip_fc>0) has been a live confidence axis since v0.6.215 on 2026-06-24 — this script is a stability re-check against the newer C1e axis (shipped 07-01), not a candidate for promotion. Reworded all three branches (PROMOTE / KILL / MIXED) to acknowledge the axis is already live: "→ STABLE" for the re-check-pass branch, "→ REGRESSION WATCH" for the redundant-heavy branch, and MIXED gets a "watch for verdict stability" caveat. Same "stated intent vs code behavior" pattern documented this morning on `h_wind_shift_rate_orthogonality`; extended note in the `feedback_stated_intent_vs_code_behavior` memory.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.318c • July 9, 2026</strong></summary>
 
 - **Delete dead L6/Cove UI code from `corrections_debug.html` (213 lines).** `loadL6()` + `renderL6Live` + `renderL6Tables` + `renderL6History` + `renderL6MAE` + `COVE_DELTA_BY_OCTANT` + `COVE_HOUR_DELTA_SB_OFF` all wrote to DOM element IDs (`grid-l6-live`, `status-l6-live`) that no longer exist in the file — the Lt live-state UI section was removed when Lt went dormant on 2026-07-01, but the JS wasn't cleaned up. Result was a console error on every page load: `TypeError: null is not an object (evaluating 'grid.innerHTML = …')` inside `renderL6Live` line 5533. Deleting the entire orphaned block gets rid of the error and removes stale cove lookup tables that hadn't been synced to `cove_correction.py` in weeks. Lt still has its "[DORMANT LAYER]" R&D section on the debug page — that section is untouched; it reads its own `<div id="lt-live-state">` from `renderLtLiveState()`, which is unrelated to the deleted L6 code.
