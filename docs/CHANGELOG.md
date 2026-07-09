@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.319d • July 9, 2026</strong></summary>
+
+- **Recent activity block bumped for afternoon ships.** Consolidated the four verdict-language fixes (v0.6.316e / v0.6.318d / v0.6.319b) into a single "4th instance in 3 days" bullet; added new bullets for v0.6.318f→v0.6.319 (Applicability map merge + full column populate + ranked-opportunities excluded block) and v0.6.319c (dp depression frontal branch closed / nor_easter watch opened). "Last curated" bumped to 07-09 v0.6.319c.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.319c • July 9, 2026</strong></summary>
 
 - **dp depression regime — frontal branch closed, nor_easter watch opened.** Today's `h_dewpoint_depression.py` confirmed the frontal signal fell below the 1.5°F action floor: −2.19 → −1.98 → −1.51 → **−0.87°F** across four reads. Branch retired; Stage 1 candidacy on frontal-dp-depression closed. Meanwhile, `nor_easter` surfaced at +3.79°F ★ — passes the magnitude floor but n=279 (nor_easters are rare, sample won't grow fast). New watch: 3 consecutive reads with n growing AND |bias| holding above 1.5°F before Stage 2 curation. sw_flow softened +1.40 → +0.95⚠ (into watch band). Updates: (1) Stage 1 candidate card on debug page, (2) hypothesis tracking table row, (3) `project_todo.md` item 3.
