@@ -35,7 +35,7 @@ import pytz
 
 from ..gcs_io import BUCKET, get_client, load_json, upload_json
 from ..utils import redact_secrets
-from . import state_stratified
+from . import applied_layer_audit, state_stratified
 
 
 ERROR_LOG_PATH = "forecast_error_log.jsonl"
@@ -392,6 +392,19 @@ def _compute_l6_gate_7d(this_cycle):
 
 def fit_decay_corrections():
     """Daily Fitter entry point."""
+    # Preflight: applied-layer consistency audit. Catches the class of
+    # mismatch that hid the ws L3 skip-table dormancy for 4 days — config
+    # declares a correction but nothing writes the state it reads. If the
+    # audit fails, refuse to publish new decay_corrections; the previous
+    # (still-valid) corrections stay in place, and the failures land in
+    # the next daily digest via the analysis CLI wrapper.
+    ok, _, failures = applied_layer_audit.run_audit()
+    if not ok:
+        logging.error("  ✗  Fitter preflight FAILED — refusing to publish decay_corrections.")
+        for f in failures:
+            logging.error(f"      · {f}")
+        return
+
     client = get_client()
     bucket = client.bucket(BUCKET)
     main_blob = bucket.blob(ERROR_LOG_PATH)

@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.317 • July 9, 2026</strong></summary>
+
+- **Fitter preflight — applied-layer consistency gate.** Audit logic refactored from `analysis/applied_layer_audit.py` into `weather_collector/processors/applied_layer_audit.py::run_audit()`; the analysis CLI is now a thin wrapper delegating to the same function. `decay_fit.py::fit_decay_corrections()` calls `run_audit()` at the top of every daily Fitter tick; on any failure it logs the specific problems and returns without publishing new `decay_corrections.json` — the previous (still-valid) corrections stay in place. Same two categories as the standalone: (A) every field in `L3_FIELDS`/`L4_FIELDS`/`SKIP_TABLE` resolves in `TARGET_ARRAY` + `CAPS`; (B) every declared `derived.X.Y` read in the correction stack has a writer somewhere under `weather_collector/`. Closes the loop between "Fitter tick recommends" and "would this recommendation actually apply?" Upgrades the audit from a next-morning digest surface to a real-time deploy gate.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.316e • July 9, 2026</strong></summary>
 
 Analysis-side bundle — three small, unrelated additions/fixes ganged into one push:
