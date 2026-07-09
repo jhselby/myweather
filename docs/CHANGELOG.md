@@ -1,6 +1,19 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.316e • July 9, 2026</strong></summary>
+
+Analysis-side bundle — three small, unrelated additions/fixes ganged into one push:
+
+- **`analysis/applied_layer_audit.py` — new.** Static consistency checker for the correction stack. Catches the class of mismatch that hid the ws L3 skip-table dormancy for 4 days: config declares a field gets a correction, but nothing writes the state the correction reads from. Two categories: (A) every field in `L3_FIELDS` / `L4_FIELDS` / `SKIP_TABLE` resolves in `TARGET_ARRAY` + `CAPS`; (B) hand-curated table of `(reader_module, derived_path, writer_regex)` — each declared derived read has a writer somewhere under `weather_collector/`. Seeded with three known reads of `derived.state.regime_synoptic`. Exit 0 clean, exit 1 on any failure. Auto-picked up by the nightly digest's `analysis/*.py` loop — first digest run 07-09 06:25 PASSes green. Fitter-preflight wiring is a separate follow-up.
+- **`analysis/h_wind_shift_rate_orthogonality.py` — verdict guard.** Added an `ortho == 0 → KILL` branch above the `red/total ≥ 0.7` KILL check. Yesterday's digest surfaced this as MIXED with `0 ortho / 36 total. Narrow promote or hold.` — nonsensical, since there are no orthogonal cells to narrow-promote. Root cause: today's balance was `0 ortho / 25 red / 0 confounded / 11 ambiguous` — redundant ratio 25/36 = 69.4%, just below the 0.7 KILL threshold, so it fell through to MIXED. Semantically 0 orthogonal is a KILL regardless of the specific redundant ratio. Guard fires cleanly on today's numbers; verdict now reads `→ KILL: wind_shift_rate is captured by C1a (0 orthogonal cells / 36 — nothing to narrow-promote).` Restores the 06-24 kill conclusion.
+- **`analysis/c1_stage4_audit.py` — non-precip subset audit added.** New `SUBSET_EXCLUDE_FIELDS = {"pp", "pa"}` + `subset_view()` helper computes a parallel counts / recommendation over the SHIP-cell results with pp + pa filtered out. Prints alongside the primary verdict for both legacy and multi-axis views; JSON output gains `non_precip_subset` blocks. Motivation: the 07-08 07-11 contingency assumed the Stage 4 failure was measurement-only (MAE→0 drift-metric blowup on pa/pp dry-regime cells) and that a partial ENABLE would be safe on the non-precip subset. Today's first read disconfirms: legacy full 17 PASS / 12 WATCH / 13 FAIL (40%); subset 15 PASS / 10 WATCH / 7 FAIL (47%). Excluding pp + pa cut 6 FAILs but only lifted pass rate by 7pp — still below the 60% MIXED threshold. Top non-precip drifter: `cm/0-5h [stable] +78.2%`. So the escape hatch generalized to the legacy C1 axis is off the table; the standalone C1h + C1d table path remains viable. 07-11 checkpoint plan tightened accordingly in memory.
+
+No live pipeline changes; all three files are analysis-only. No collector deploy.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.316d • July 8, 2026</strong></summary>
 
 - **07-08 checkpoint closed + debug-page scorecard refresh.** T Production convergence verified via today's 15:07 Fitter: T Prod −1.1% vs raw / +0.3% vs L2 (sitting on the L2 line); pr flat 0%; ws +5.3% vs raw (skip table healthy — already below both +22.7% and +19.6% targets, still shrinking); sr −4.6% vs raw (baseline still contaminated through 07-10, expected). Removed the "07-08 T Production convergence check" checkpoint from all three debug-page slots (Calendar, inline commentary, Q/E/D detail block) — the whole "Mon 07-08" day-of-week rendering bug was orthogonal to the passing verdict, so removing the block also drops the misrendered label. Winning-fields summary + Real-Production-per-field table refreshed to today's numbers for t/pr/ws — t swapped from "+9.3% in flight" (yellow) to "−1.1%" (green), pr from "+2.6% in flight" (yellow) to "0.0% (flat)" (dim), ws story kept intact but leading percentage moved 25.7% → 5.3% with the "already below target" clause added.

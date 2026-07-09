@@ -50,6 +50,14 @@ DRIFT_PASS_PCT = 20.0
 DRIFT_WATCH_PCT = 40.0
 SHIP_STATUSES = ("SHIP",)  # MARGINAL excluded from Stage 4 audit by design
 
+# Fields excluded from the "non-precip subset" recommendation. The Stage 4
+# drift metric blows up when calib MAE → 0 (per project_stage4_audit_metric_limitation);
+# pa is bursty in-band + sparse and drives most FAILs, and pp is Brier-evaluated so
+# an MAE drift bound doesn't map to its user-facing decision anyway. The subset
+# view lets us see whether the non-precip cells (t/h/wind/cloud) are stable
+# enough to greenlight a partial ENABLE without waiting on pp/pa.
+SUBSET_EXCLUDE_FIELDS = frozenset({"pp", "pa"})
+
 SPREAD_FIELD = "spread_t"
 TICK_TOLERANCE_MIN = 15
 
@@ -270,6 +278,19 @@ def recommendation(counts):
     return "NOT READY — drift exceeds tolerance on majority of cells"
 
 
+def subset_view(results, exclude):
+    """Rebuild counts + recommendation over a subset of results with fields
+    in `exclude` filtered out. Used for the non-precip subset audit."""
+    counts = {"PASS": 0, "WATCH": 0, "FAIL": 0, "INSUFFICIENT": 0}
+    kept = []
+    for r in results:
+        if r["field"] in exclude:
+            continue
+        counts[r["verdict"]] = counts.get(r["verdict"], 0) + 1
+        kept.append(r)
+    return counts, recommendation(counts), kept
+
+
 def main():
     legacy_ship, multi_ship, curated_doc = collect_ship_cells()
     print(f"C1 Stage 4 audit — {len(legacy_ship)} legacy + {len(multi_ship)} multi-axis SHIP cells")
@@ -331,18 +352,40 @@ def main():
                  "expect first multi-axis audit ≈ 2026-07-04"
                  if multi_deferred else recommendation(multi_counts))
 
+    legacy_subset_counts, legacy_subset_rec, _ = subset_view(
+        legacy_results, SUBSET_EXCLUDE_FIELDS,
+    )
+    if multi_deferred:
+        multi_subset_counts, multi_subset_rec = None, None
+    else:
+        multi_subset_counts, multi_subset_rec, _ = subset_view(
+            multi_results, SUBSET_EXCLUDE_FIELDS,
+        )
+
+    excl_label = ", ".join(sorted(SUBSET_EXCLUDE_FIELDS))
     print()
     print(f"Legacy axis (transition × stable, no spread/pt/c1f):")
     print(f"  {legacy_counts['PASS']} PASS / {legacy_counts['WATCH']} WATCH / "
           f"{legacy_counts['FAIL']} FAIL / {legacy_counts['INSUFFICIENT']} INSUFFICIENT "
           f"(of {len(legacy_ship)})")
     print(f"  → {legacy_rec}")
+    print(f"  Non-precip subset (excluding {excl_label}): "
+          f"{legacy_subset_counts['PASS']} PASS / {legacy_subset_counts['WATCH']} WATCH / "
+          f"{legacy_subset_counts['FAIL']} FAIL / "
+          f"{legacy_subset_counts['INSUFFICIENT']} INSUFFICIENT")
+    print(f"  → {legacy_subset_rec}")
     print()
     print(f"Multi-axis (Q × pt × trans × c1f):")
     print(f"  {multi_counts['PASS']} PASS / {multi_counts['WATCH']} WATCH / "
           f"{multi_counts['FAIL']} FAIL / {multi_counts['INSUFFICIENT']} INSUFFICIENT "
           f"(of {len(multi_ship)})")
     print(f"  → {multi_rec}")
+    if not multi_deferred:
+        print(f"  Non-precip subset (excluding {excl_label}): "
+              f"{multi_subset_counts['PASS']} PASS / {multi_subset_counts['WATCH']} WATCH / "
+              f"{multi_subset_counts['FAIL']} FAIL / "
+              f"{multi_subset_counts['INSUFFICIENT']} INSUFFICIENT")
+        print(f"  → {multi_subset_rec}")
 
     # Top 5 worst drifters across both views
     all_drifters = sorted(
@@ -372,11 +415,23 @@ def main():
         "legacy_axis": {
             "counts": legacy_counts,
             "recommendation": legacy_rec,
+            "non_precip_subset": {
+                "excluded_fields": sorted(SUBSET_EXCLUDE_FIELDS),
+                "counts": legacy_subset_counts,
+                "recommendation": legacy_subset_rec,
+            },
             "results": legacy_results,
         },
         "multi_axis": {
             "counts": multi_counts,
             "recommendation": multi_rec,
+            "non_precip_subset": (
+                None if multi_deferred else {
+                    "excluded_fields": sorted(SUBSET_EXCLUDE_FIELDS),
+                    "counts": multi_subset_counts,
+                    "recommendation": multi_subset_rec,
+                }
+            ),
             "deferred": multi_deferred,
             "results": multi_results,
         },

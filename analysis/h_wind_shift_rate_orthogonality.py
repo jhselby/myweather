@@ -137,6 +137,9 @@ red = verdicts['REDUNDANT']
 if ortho >= 6:
     print(f"→ PROMOTE: wind_shift_rate is independent of C1a ({ortho} ortho cells). "
           f"Ship as C1i axis on orthogonal cells only.")
+elif ortho == 0:
+    print(f"→ KILL: wind_shift_rate is captured by C1a "
+          f"(0 orthogonal cells / {total} — nothing to narrow-promote).")
 elif total and red / total >= 0.7:
     print("→ KILL: wind_shift_rate is captured by C1a (regime transition already covers it).")
 else:
