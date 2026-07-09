@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.319a • July 9, 2026</strong></summary>
+
+- **"Current pipeline state" summary block date bumped 2026-07-07 → 2026-07-09.** The date on the collapsible one-glance summary was 2 days stale — someone updated the numbers during yesterday's + today's canon sweeps but missed the summary header. Table data itself is fresh (t −1.1%, pr 0%, ws +5.3% per 07-08 v0.6.316d refresh + 07-09 v0.6.318e ws update).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.319 • July 9, 2026</strong></summary>
 
 Three related debug-page cleanups bundled after the deploy-verify cycle:
