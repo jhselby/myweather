@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.319f • July 9, 2026</strong></summary>
+
+- **Section 2e "Post-aggregate-bias forecast" marked as engineering view (pre-clamp).** The grid of per-field cards under that heading renders values *after* L2 bias offset but *before* downstream layer clamping (`FIELD_BOUNDS` in `decay_apply.py`), so cloud cover can legitimately show 121%, precip probability −6%, precip amount −0.025 in — physically impossible outputs that are correct as diagnostic intermediates but could be mistaken for user forecasts. Header now reads "…engineering view (pre-clamp)" and a highlighted caveat block above the grid explains what these values mean, with the redirect: if any of these look wrong for user display, check the L3 / L4 / clamp path, not this section.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.319e • July 9, 2026</strong></summary>
 
 - **Gate-firing frequency default view: summary-first, detail expandable.** The Runtime firing subsection was rendering the full per-(operator × field × regime) table by default — verbose when everything is healthy. Restructured to lead with a compact 5-row summary block:

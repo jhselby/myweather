@@ -1320,7 +1320,10 @@
 <div id="layer2-leaddecay-meta" class="layer-info-text">loading…</div>
 <div id="layer2-leaddecay-wrap" class="chart-wrap" style="height:260px;"><canvas id="layer2-leaddecay-canvas"></canvas></div>
 
-<h3 class="subsection">2e. Post-aggregate-bias forecast — what gets passed to L3</h3>
+<h3 class="subsection">2e. Post-aggregate-bias forecast — what gets passed to L3 <span style="font-weight:normal;color:#e0d472;opacity:0.85;">· engineering view (pre-clamp)</span></h3>
+<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-bottom:10px;">
+  <p class="layer-summary" style="margin:0;"><strong style="color:#d4a373;">⚠ These are internal pipeline values, not user forecasts.</strong> After the aggregate-bias correction is applied but <em>before</em> downstream layers and physical-bounds clamping (<code>FIELD_BOUNDS</code> in <code>decay_apply.py</code>). Values can legitimately fall outside physical ranges here — <code>cloud_cover 121%</code>, <code>precip_probability −6%</code>, <code>precip_amount −0.025 in</code> — because the bias offset is additive and the clamp comes downstream. If any of these look wrong for user display, check the L3 / L4 / cloud-clamp path, not this section.</p>
+</div>
 <div id="grid-layer2" class="grid"></div>
 
 <!-- ───────────────────── L3 ───────────────────── -->
