@@ -1,6 +1,21 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.318a • July 9, 2026</strong></summary>
+
+- **Gate-firing log — extended to Lsr, MLC, Lc, Lt + Phase (b) rollup.** Each of the four specialist correctors now emits a per-tick firing row alongside L3/L4. Semantics per operator:
+  - **Lsr** (`solar_correction.py`): `fires` = leads where compute_solar_correction returned a non-zero delta (sun up, non-skip regime, table hit); `skips` = leads where sun was up + regime was in `L5_SKIP_REGIMES` (would-have-fired-but-suppressed). ENABLED=True; expect real fire counts on daytime ticks.
+  - **MLC** (`marine_layer_correction.py`): `fires` = 0 (ENABLED=False); `skips` = `len(per_lead)` (gated-off would-have-fired count). Records even when weather_data has no cc array so the rollup can distinguish "MLC didn't run" from "MLC ran with 0 fires."
+  - **Lc** (`cloud_saturation_correction.py`): `fires` = 0 per field (ENABLED=False); `skips` = per-field `cells_fired` count. First live tick showed cc=44/cl=18/cm=20/ch=38 — the would-fire volume that made this a high-impact ship candidate.
+  - **Lt** (`cove_correction.py`): `fires` = 0 (ENABLED=False + both branches return 0.0); `skips` = 0 (nothing to suppress since compute returns 0). Presence of the row confirms Lt runs each tick, absence of fires confirms the dormant state.
+- **`analysis/gate_firing_rollup.py`** — Phase (b) 7-day rollup writer. Reads `gate_firing_log.jsonl` from GCS, aggregates by (operator, field, regime), computes per-tick fire rate, and emits `analysis/output/gate_firing_rollup.json` with `dormancy_flags` (`operators_never_fired`, `operator_field_pairs_never_fired`, `operator_field_regime_never_fired_with_nonzero_ticks`). Nightly digest picks it up automatically via `analysis/*.py` loop.
+- **Phase (c) — debug page render adjacent to Applicability map — queued** for a follow-up session once a few days of log accumulate.
+
+Deploy verified 10:38 local — first post-deploy tick emitted all 6 expected operator rows (L3, L4, Lsr, MLC, Lc, Lt) with correct fire/skip counts.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.318 • July 9, 2026</strong></summary>
 
 - **Gate-firing log — Phase (a): collector-side counters.** New `weather_collector/processors/gate_firing_log.py` provides `record_firing(operator, regime, by_field, leads)` (module-level tick buffer) and `flush_to_gcs()` (append via GCS compose, same pattern as `forecast_error_log`). `decay_apply.py` now tracks per-field `fires` and `skips` counts through the L3 and L4 loops and calls `record_firing` after each pass. `collector.py` flushes the buffer at end of every tick after the weather_data upload. Failsafe: any GCS error logs + drops the buffer, does not affect the already-published weather_data. **First tick after deploy (09:57 local):** `gate_firing_log.jsonl` created with 2 rows — L3 pre_frontal (ws/wg/cm/ch all 48 fires 0 skips), L4 pre_frontal (cc/ch same). Ready for the `ne_flow` / short-lead `sea_breeze` ticks where the skip table will populate `skips` counts. **Phase (b) — 7-day rollup writer to `gate_firing_freq.json` — queued.** **Phase (c) — debug page render adjacent to Applicability map — queued.** Definition of "fired" = correction actually mutated the array (not "would have applied"); the log distinguishes real firing from silent dormancy of the class that hid ws L3 for 4 days after v0.6.279.

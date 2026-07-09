@@ -26,9 +26,29 @@ Decision rule (ship if):
 Sign convention: bias = forecast - observed. Bias is positive (model
 over-calls), so correction = -bias (subtract overprediction from forecast).
 """
+import logging
 from datetime import datetime, timedelta
 
 import pytz
+
+from ..utils import redact_secrets
+
+
+def _record_mlc_firing(regime, gated_count):
+    """Emit MLC firing record for the gate_firing_log. When ENABLED=False,
+    every gated lead counts as a "skip" (would-have-fired). When True,
+    every gated lead counts as a "fire.\""""
+    try:
+        from . import gate_firing_log
+        fires = gated_count if ENABLED else 0
+        skips = 0 if ENABLED else gated_count
+        gate_firing_log.record_firing(
+            operator="MLC", regime=regime,
+            by_field={"cc": {"fires": fires, "skips": skips}},
+            leads=48,
+        )
+    except Exception as e:
+        logging.warning(f"  ⚠  gate_firing record (MLC) failed: {redact_secrets(e)}")
 
 
 TZ = pytz.timezone("America/New_York")
@@ -99,7 +119,13 @@ def stamp_marine_layer_correction(weather_data):
     times = hourly.get("times") or hourly.get("time") or []
     cc_arr = hourly.get("cloud_cover") or []
     wd_arr = hourly.get("wind_direction") or hourly.get("wind_direction_10m") or []
+    _regime_now = (
+        (weather_data.get("derived") or {}).get("state") or {}
+    ).get("regime_synoptic")
     if not times or not cc_arr:
+        # Still log a zero-fire row so the rollup can distinguish "MLC
+        # didn't run this tick" from "MLC ran with 0 fires."
+        _record_mlc_firing(_regime_now, gated_count=0)
         return
 
     now_local = datetime.now(TZ)
@@ -149,6 +175,10 @@ def stamp_marine_layer_correction(weather_data):
             else "Marine-layer cc correction applied to cloud_cover."
         ),
     }
+
+    # Log firing for MLC. When ENABLED=False, `len(per_lead)` is the
+    # would-have-fired count → skips. When ENABLED=True, it's fires.
+    _record_mlc_firing(_regime_now, gated_count=len(per_lead))
 
     if ENABLED:
         # When flipped, subtract bias from cloud_cover at gated lead hours.

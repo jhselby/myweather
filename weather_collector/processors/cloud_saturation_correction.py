@@ -182,3 +182,28 @@ def stamp_cloud_saturation_correction(weather_data):
         "fit_rules": table.get("fit_rules"),
         "per_field": per_field,
     }
+
+    # Log firing for Lc. When ENABLED=False, `cells_fired` is the would-
+    # have-fired count → skips. When True, fires.
+    try:
+        import logging as _logging
+        from . import gate_firing_log
+        from ..utils import redact_secrets as _redact
+        regime = ((weather_data.get("derived") or {}).get("state") or {}).get("regime_synoptic")
+        by_field = {}
+        for field, meta in per_field.items():
+            f = meta.get("cells_fired", 0) or 0
+            by_field[field] = {
+                "fires": f if ENABLED else 0,
+                "skips": 0 if ENABLED else f,
+            }
+        if by_field:
+            gate_firing_log.record_firing(
+                operator="Lc", regime=regime,
+                by_field=by_field, leads=48,
+            )
+    except Exception as _e:
+        try:
+            _logging.warning(f"  ⚠  gate_firing record (Lc) failed: {_redact(_e)}")
+        except Exception:
+            pass

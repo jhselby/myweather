@@ -238,6 +238,11 @@ def stamp_cove_correction(weather_data):
         ),
     }
 
+    # Fires = count of leads with a non-zero Δ that got applied. Since both
+    # Lt branches currently return 0.0 (both disabled 2026-07-01), this
+    # tally will be 0 regardless of ENABLED — which is the correct dormant
+    # signal for the gate-firing log.
+    lt_fires = 0
     if ENABLED:
         ct = hourly.get("corrected_temperature")
         if isinstance(ct, list) and ct:
@@ -256,3 +261,26 @@ def stamp_cove_correction(weather_data):
             if len(ct) > n:
                 new_ct.extend(ct[n:])
             hourly["corrected_temperature"] = new_ct
+            lt_fires = sum(1 for d in per_lead_deltas if d)
+
+    # Log firing for Lt. Skips counts leads with non-zero Δ that were computed
+    # but not applied (ENABLED=False). When both branches are gated to 0 as
+    # they are today, both fires and skips are 0 — the row still appears in
+    # the log so the rollup knows Lt ran this tick.
+    try:
+        import logging as _logging
+        from . import gate_firing_log
+        from ..utils import redact_secrets as _redact
+        regime = ((weather_data.get("derived") or {}).get("state") or {}).get("regime_synoptic")
+        would_fire = sum(1 for d in per_lead_deltas if d)
+        gate_firing_log.record_firing(
+            operator="Lt", regime=regime,
+            by_field={"t": {"fires": lt_fires,
+                            "skips": 0 if ENABLED else would_fire}},
+            leads=48,
+        )
+    except Exception as _e:
+        try:
+            _logging.warning(f"  ⚠  gate_firing record (Lt) failed: {_redact(_e)}")
+        except Exception:
+            pass

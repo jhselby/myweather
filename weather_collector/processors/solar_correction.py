@@ -34,9 +34,12 @@ Two practical caveats baked in:
      window as of v0.6.93. They will be refreshed by a follow-up commit
      that auto-pulls the latest state_stratified instead of hardcoding.
 """
+import logging
 from datetime import datetime
 
 import pytz
+
+from ..utils import redact_secrets
 
 
 TZ = pytz.timezone("America/New_York")
@@ -292,6 +295,12 @@ def stamp_solar_correction(weather_data):
         ),
     }
 
+    # Per-lead fires counter for the gate-firing log. Populated in the
+    # ENABLED branch below; stays at zero when ENABLED=False (proves the
+    # gate is holding).
+    sr_fires = 0
+    sr_would_have_fired_but_skipped = 0
+
     if ENABLED:
         # Per-lead: compute Δ from THIS lead's raw solar value + local hour,
         # not the current-tick scalar. Prior implementation used one delta
@@ -304,6 +313,7 @@ def stamp_solar_correction(weather_data):
             hourly["direct_radiation_post_l4"] = list(target)
             times = hourly.get("times") or []
             new_arr = []
+            regime_is_skipped = regime in L5_SKIP_REGIMES
             for i, v in enumerate(target):
                 if v is None:
                     new_arr.append(v)
@@ -313,5 +323,27 @@ def stamp_solar_correction(weather_data):
                 except (TypeError, ValueError, IndexError):
                     h_i = now_local.hour
                 lead_delta = compute_solar_correction(regime, v, hour_local=h_i)
-                new_arr.append(round(v + lead_delta, 1) if lead_delta else v)
+                if lead_delta:
+                    sr_fires += 1
+                    new_arr.append(round(v + lead_delta, 1))
+                else:
+                    new_arr.append(v)
+                    # Distinguish "sun up + non-skip regime + zero delta from
+                    # table" from "sun up + skip regime → suppressed" — the
+                    # latter is the interesting Lsr-skip-in-action count.
+                    if regime_is_skipped and v is not None and v >= SUN_UP_THRESHOLD:
+                        sr_would_have_fired_but_skipped += 1
             hourly["direct_radiation"] = new_arr
+
+    # Log firing for Lsr. by_field carries just "sr" since Lsr is a
+    # single-field specialist.
+    try:
+        from . import gate_firing_log
+        gate_firing_log.record_firing(
+            operator="Lsr", regime=regime,
+            by_field={"sr": {"fires": sr_fires,
+                             "skips": sr_would_have_fired_but_skipped}},
+            leads=48,
+        )
+    except Exception as e:
+        logging.warning(f"  ⚠  gate_firing record (Lsr) failed: {redact_secrets(e)}")
