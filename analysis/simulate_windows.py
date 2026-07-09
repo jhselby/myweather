@@ -259,20 +259,47 @@ def main():
 
     # ─── Agreement summary ───────────────────────────────────────────────────
 
+    # Hypotheses whose signal is already shipped in a different form. The
+    # simulate_windows Stage 1 check is still valuable — it's a health readout
+    # for the axis/layer that DID ship — but "PROMOTE" is the wrong verb since
+    # promoting again would double-count. See feedback_stated_intent_vs_code_behavior.
+    ALREADY_SHIPPED_AS = {
+        # R6 (regime-transition penalty) pivoted from would-be bias correction
+        # to confidence axis C1a on 2026-06-19 v0.6.141. The transition signal
+        # is live via confidence_layer.py C1a; promoting R6 as a bias
+        # correction would either duplicate C1a or reverse the pivot decision.
+        "R6": "C1a — Regime transition (confidence axis, live since v0.6.141 2026-06-19)",
+    }
+
     print()
     print("=" * 96)
     print("PROMOTION-GATE VERDICT (7-window agreement required for Stage 1 → Stage 2):")
     print()
     for name, verdicts in [("L5", l5_verdicts), ("R5", r5_verdicts), ("R6", r6_verdicts)]:
         unique = set(verdicts)
+        shipped_as = ALREADY_SHIPPED_AS.get(name)
         if len(unique) == 1:
             v = next(iter(unique))
-            status = "PROMOTE" if v == "SHIP" else "RETIRE" if v == "HOLD" else "INSUF"
-            print(f"  {name}: all 7 cutoffs agree → {v}    → {status}")
+            if shipped_as:
+                # Live axis / layer already ships this signal. Reinterpret SHIP
+                # as a health check pass; HOLD as a regression warning.
+                if v == "SHIP":
+                    print(f"  {name}: all 7 cutoffs agree → SHIP    → STABLE "
+                          f"({name} signal already live as {shipped_as}; this is a health check pass)")
+                elif v == "HOLD":
+                    print(f"  {name}: all 7 cutoffs agree → HOLD    → REGRESSION WATCH "
+                          f"({name} signal already live as {shipped_as}; underlying signal weakened)")
+                else:
+                    print(f"  {name}: all 7 cutoffs agree → {v}    → INSUF "
+                          f"({name} signal already live as {shipped_as})")
+            else:
+                status = "PROMOTE" if v == "SHIP" else "RETIRE" if v == "HOLD" else "INSUF"
+                print(f"  {name}: all 7 cutoffs agree → {v}    → {status}")
         else:
             counts = {v: verdicts.count(v) for v in unique}
             counts_str = ", ".join(f"{v}={n}" for v, n in counts.items())
-            print(f"  {name}: FLICKER ({counts_str})    → stay at Stage 1; do not promote")
+            note = f" ({name} signal already live as {shipped_as})" if shipped_as else ""
+            print(f"  {name}: FLICKER ({counts_str})    → stay at Stage 1; do not promote{note}")
 
 
 if __name__ == "__main__":

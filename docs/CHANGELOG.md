@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.319b • July 9, 2026</strong></summary>
+
+- **Fix `simulate_windows.py` R6 verdict wording.** Digest was reporting "R6: all 7 cutoffs agree → SHIP → PROMOTE" which read as a new-candidate promotion signal. But R6 (regime-transition penalty) was pivoted from would-be bias correction to confidence axis **C1a** on 2026-06-19 v0.6.141 per `project_c1_pivot_to_confidence`. The signal is already live in `confidence_layer.py:104` — today's SHIP verdict is a health-check pass on C1a, not a Stage 1→2 promotion. Added an `ALREADY_SHIPPED_AS` map so R6's SHIP now prints as "→ STABLE (R6 signal already live as C1a — Regime transition (confidence axis, live since v0.6.141 2026-06-19); this is a health check pass)". HOLD would print as "REGRESSION WATCH" (underlying signal weakened). Extensible — future hypotheses that get repurposed to other architectural slots go into the map instead of being retagged one by one.
+- **Fourth instance of "stated intent vs code behavior" today.** Divergence-reporter regex (07-07), scorecard-Brier folding (07-07), wind-shift-rate ortho=0 (07-09 AM), precip_fc live-axis (07-09 PM), simulate_windows R6 (07-09 PM). Bright-line rule now codified in the memory: any script that outputs an action verb like "PROMOTE" / "KILL" / "SHIP" / "RETIRE" needs an "already live?" check against production before its verdict is trustworthy.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.319a • July 9, 2026</strong></summary>
 
 - **"Current pipeline state" summary block date bumped 2026-07-07 → 2026-07-09.** The date on the collapsible one-glance summary was 2 days stale — someone updated the numbers during yesterday's + today's canon sweeps but missed the summary header. Table data itself is fresh (t −1.1%, pr 0%, ws +5.3% per 07-08 v0.6.316d refresh + 07-09 v0.6.318e ws update).
