@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.316d • July 8, 2026</strong></summary>
+
+- **07-08 checkpoint closed + debug-page scorecard refresh.** T Production convergence verified via today's 15:07 Fitter: T Prod −1.1% vs raw / +0.3% vs L2 (sitting on the L2 line); pr flat 0%; ws +5.3% vs raw (skip table healthy — already below both +22.7% and +19.6% targets, still shrinking); sr −4.6% vs raw (baseline still contaminated through 07-10, expected). Removed the "07-08 T Production convergence check" checkpoint from all three debug-page slots (Calendar, inline commentary, Q/E/D detail block) — the whole "Mon 07-08" day-of-week rendering bug was orthogonal to the passing verdict, so removing the block also drops the misrendered label. Winning-fields summary + Real-Production-per-field table refreshed to today's numbers for t/pr/ws — t swapped from "+9.3% in flight" (yellow) to "−1.1%" (green), pr from "+2.6% in flight" (yellow) to "0.0% (flat)" (dim), ws story kept intact but leading percentage moved 25.7% → 5.3% with the "already below target" clause added.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.316c • July 8, 2026</strong></summary>
 
 - **Retire the migration-language caveat on the accuracy section.** 7-day window fully filled with post-v0.6.269 stamped rows per plan; live GCS confirms every primary field at 48/48 coverage (cc/ch/cl/cm/dp/h/pa/pp/pr/sr/t/wg/ws), which crosses the ≥40/48 threshold and drops the "*" marker on every Production card. Only wd stays at 0/48 (circular field, structural — separate treatment). Debug-page prose on the Accuracy section and the "Per-row applied-layer stamping" ship-log item now describe the auto-drop as a stable steady state rather than a pending migration. n≥30 noise-floor rationale kept — small-sample noise protection is orthogonal to the migration window.
