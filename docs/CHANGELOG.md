@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.318e • July 9, 2026</strong></summary>
+
+- **Debug page canon sweep — rotate Recent activity window + refresh accuracy blurb.** "Last curated" bumped to 07-09 v0.6.318d. New "2026-07-09 (Thu) — today" section added with 6 thematic bullets covering today's 9 commits: Fitter preflight (v0.6.317), Stage 4 refined view + non-precip subset + mixture check (v0.6.316e, v0.6.317a), cl marine-layer Stage 1 sanity check (negative), gate-firing log three-phase pipeline (v0.6.318, .318a, .318b), verdict-language fixes (v0.6.316e, v0.6.318d), dead L6/Cove UI cleanup (v0.6.318c). "2026-07-08 (Wed) — today" marker rotated to just "(Wed)". "2026-07-06 (Mon)" section trimmed per the rolling 3-day window rule (4 entries → CHANGELOG). "Still open watches" C1 lines updated: calibration audit pass rate refreshed to today's 63.64%; Stage 4 line rewritten to reflect the refined-view MIXED (27/1/2) with real DEGRADED = 2 cells (ws/24-47h transition + cl/12-23h stable). Accuracy section blurb refreshed — <code>ws</code> now +5.3% down from +25.7% pre-skip-table (still an open regression per Stage 4), t and pr in-flight language removed (both landed 07-08).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.318d • July 9, 2026</strong></summary>
 
 - **Fix `h_precip_fc_orthogonality.py` verdict wording** — the ≥8-orthogonal-cells branch was printing "→ PROMOTE: precip_fc is independent…" which made today's digest surface C1f as a new candidate needing action. But C1f (precip_fc>0) has been a live confidence axis since v0.6.215 on 2026-06-24 — this script is a stability re-check against the newer C1e axis (shipped 07-01), not a candidate for promotion. Reworded all three branches (PROMOTE / KILL / MIXED) to acknowledge the axis is already live: "→ STABLE" for the re-check-pass branch, "→ REGRESSION WATCH" for the redundant-heavy branch, and MIXED gets a "watch for verdict stability" caveat. Same "stated intent vs code behavior" pattern documented this morning on `h_wind_shift_rate_orthogonality`; extended note in the `feedback_stated_intent_vs_code_behavior` memory.
