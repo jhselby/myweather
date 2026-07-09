@@ -30,6 +30,7 @@ from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis._cache import cached_path  # noqa: E402
+from analysis.c1_stage4_mixture_check import refine_verdicts  # noqa: E402
 
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
@@ -291,6 +292,66 @@ def subset_view(results, exclude):
     return counts, recommendation(counts), kept
 
 
+def refined_view(results, calib_window, recent_window, pair_log_path):
+    """Reclassify FAILs and WATCHes using the mixture-check bin stratification.
+    Produces a parallel counts + recommendation that honestly separates
+    cell-level degradation from metric-artifact classes (near-zero calib,
+    mixture drift, unsigned improvement, angular-MAE fields) — see
+    project_stage4_audit_metric_limitation.
+
+    Refined verdict mapping:
+      raw PASS          → PASS         (never re-examined)
+      raw INSUFFICIENT  → INSUFFICIENT
+      raw WATCH | FAIL  → per-cell mixture check:
+        DEGRADED  → FAIL       (real cell-level degradation)
+        IMPROVED  → PASS       (recent MAE < calib MAE — model got better)
+        SAFE      → PASS       (top-line drift is mixture, within-bin stable)
+        PARTIAL   → WATCH      (borderline; watch for next window)
+        SKIP      → excluded from denominator (metric-artifact field)
+        THIN      → keep raw verdict (bin sample floor not met)
+    """
+    to_refine = [(r["field"], r["band"], r["key"], r)
+                 for r in results if r["verdict"] in ("FAIL", "WATCH")]
+    refined_by_key = {}
+    if to_refine:
+        refinements = refine_verdicts(to_refine, calib_window, recent_window,
+                                       pair_log_path=pair_log_path)
+        for ref in refinements:
+            refined_by_key[(ref["field"], ref["band"], ref["key"])] = ref
+    counts = {"PASS": 0, "WATCH": 0, "FAIL": 0, "INSUFFICIENT": 0}
+    excluded_skip = 0
+    per_cell = []
+    for r in results:
+        key = (r["field"], r["band"], r["key"])
+        if r["verdict"] not in ("FAIL", "WATCH"):
+            new_verdict = r["verdict"]
+            per_cell.append({**r, "refined_verdict": new_verdict,
+                             "refined_reason": None})
+        else:
+            ref = refined_by_key.get(key)
+            mv = (ref or {}).get("verdict")
+            if mv in ("IMPROVED", "SAFE"):
+                new_verdict = "PASS"
+            elif mv == "DEGRADED":
+                new_verdict = "FAIL"
+            elif mv == "PARTIAL":
+                new_verdict = "WATCH"
+            elif mv == "THIN":
+                # Not enough per-bin samples for a mixture verdict — keep raw.
+                new_verdict = r["verdict"]
+            elif mv == "SKIP":
+                excluded_skip += 1
+                per_cell.append({**r, "refined_verdict": "SKIP",
+                                 "refined_reason": "metric-artifact field"})
+                continue
+            else:
+                new_verdict = r["verdict"]
+            per_cell.append({**r, "refined_verdict": new_verdict,
+                             "refined_reason": mv})
+        counts[new_verdict] = counts.get(new_verdict, 0) + 1
+    return counts, recommendation(counts), excluded_skip, per_cell
+
+
 def main():
     legacy_ship, multi_ship, curated_doc = collect_ship_cells()
     print(f"C1 Stage 4 audit — {len(legacy_ship)} legacy + {len(multi_ship)} multi-axis SHIP cells")
@@ -362,6 +423,23 @@ def main():
             multi_results, SUBSET_EXCLUDE_FIELDS,
         )
 
+    calib_win = (calib_start, calib_end)
+    recent_win = (recent_start, recent_end)
+    (legacy_refined_counts, legacy_refined_rec,
+     legacy_refined_skip, legacy_refined_results) = refined_view(
+        legacy_results, calib_win, recent_win, pair_path,
+    )
+    if multi_deferred:
+        multi_refined_counts = None
+        multi_refined_rec = None
+        multi_refined_skip = 0
+        multi_refined_results = None
+    else:
+        (multi_refined_counts, multi_refined_rec,
+         multi_refined_skip, multi_refined_results) = refined_view(
+            multi_results, calib_win, recent_win, pair_path,
+        )
+
     excl_label = ", ".join(sorted(SUBSET_EXCLUDE_FIELDS))
     print()
     print(f"Legacy axis (transition × stable, no spread/pt/c1f):")
@@ -374,6 +452,12 @@ def main():
           f"{legacy_subset_counts['FAIL']} FAIL / "
           f"{legacy_subset_counts['INSUFFICIENT']} INSUFFICIENT")
     print(f"  → {legacy_subset_rec}")
+    print(f"  Refined (per-cell mixture check on WATCH+FAIL): "
+          f"{legacy_refined_counts['PASS']} PASS / {legacy_refined_counts['WATCH']} WATCH / "
+          f"{legacy_refined_counts['FAIL']} FAIL / "
+          f"{legacy_refined_counts['INSUFFICIENT']} INSUFFICIENT "
+          f"(+{legacy_refined_skip} excluded as metric-artifact)")
+    print(f"  → {legacy_refined_rec}")
     print()
     print(f"Multi-axis (Q × pt × trans × c1f):")
     print(f"  {multi_counts['PASS']} PASS / {multi_counts['WATCH']} WATCH / "
@@ -386,6 +470,12 @@ def main():
               f"{multi_subset_counts['FAIL']} FAIL / "
               f"{multi_subset_counts['INSUFFICIENT']} INSUFFICIENT")
         print(f"  → {multi_subset_rec}")
+        print(f"  Refined (per-cell mixture check on WATCH+FAIL): "
+              f"{multi_refined_counts['PASS']} PASS / {multi_refined_counts['WATCH']} WATCH / "
+              f"{multi_refined_counts['FAIL']} FAIL / "
+              f"{multi_refined_counts['INSUFFICIENT']} INSUFFICIENT "
+              f"(+{multi_refined_skip} excluded as metric-artifact)")
+        print(f"  → {multi_refined_rec}")
 
     # Top 5 worst drifters across both views
     all_drifters = sorted(
@@ -420,6 +510,12 @@ def main():
                 "counts": legacy_subset_counts,
                 "recommendation": legacy_subset_rec,
             },
+            "refined": {
+                "counts": legacy_refined_counts,
+                "recommendation": legacy_refined_rec,
+                "skipped_as_metric_artifact": legacy_refined_skip,
+                "results": legacy_refined_results,
+            },
             "results": legacy_results,
         },
         "multi_axis": {
@@ -430,6 +526,14 @@ def main():
                     "excluded_fields": sorted(SUBSET_EXCLUDE_FIELDS),
                     "counts": multi_subset_counts,
                     "recommendation": multi_subset_rec,
+                }
+            ),
+            "refined": (
+                None if multi_deferred else {
+                    "counts": multi_refined_counts,
+                    "recommendation": multi_refined_rec,
+                    "skipped_as_metric_artifact": multi_refined_skip,
+                    "results": multi_refined_results,
                 }
             ),
             "deferred": multi_deferred,

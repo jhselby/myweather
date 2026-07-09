@@ -1,6 +1,19 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.317a • July 9, 2026</strong></summary>
+
+Analysis-side bundle from the afternoon Stage 4 rework — three linked pieces:
+
+- **`analysis/c1_stage4_mixture_check.py` — new.** Per-cell forecast-value quartile stratification for Stage 4 FAILs. Classifies each cell DEGRADED (any populous bin signed-drift ≥ +40% → real cell-level degradation) / IMPROVED (all populous bins ≤ 0% → recent MAE ≤ calib, model got better) / SAFE (all ≤ +25% → mixture drift, within-bin stable) / PARTIAL / SKIP (metric-artifact fields: pp, pa, wd) / THIN. Exposes `refine_verdicts()` as a shared function so the standalone CLI and the main audit both use the same logic.
+- **`analysis/c1_stage4_audit.py` — refined view integrated.** After primary classification, every FAIL and WATCH cell runs through the mixture check; a `refined` block with counts + recommendation + per-cell results lands in stdout and JSON alongside the raw view. Today's numbers: raw 18 PASS / 11 WATCH / 13 FAIL → NOT READY; refined 27 PASS / 1 WATCH / 2 FAIL / +12 excluded as metric-artifact → MIXED (pass rate 90%, FAIL rate 6.7% — just above the 5% READY cap). Real DEGRADED cells surfaced: ws/24-47h transition (three wind bins degrading, corroborates ws L3 strip candidate), cl/12-23h stable (b1 low-forecast bin MAE nearly doubled). Documented in `project_stage4_audit_metric_limitation` as the third-blowup-mode fix (unsigned improvement reading as failure) landing alongside the mixture and near-zero-calib fixes.
+- **`analysis/marine_layer_cl_stage1.py` — new.** Stage 1 sanity check for a candidate cl marine-layer analog, prompted by the cl/12-23h stable DEGRADED verdict. Tested two triggers (regime=nw_flow, and wd 270-360°) × three hour buckets. Result: **the cl over-forecast at night+eve is regime-agnostic** — nw_flow-active and nw_flow-inactive both show +17 pp signed bias, so this is a diurnal pattern, not a marine-layer pattern. Weekly trend shows the bias fading fast (W25=+20 → W28=+2), so it's likely a transient. Adds cl → L4 (diurnal correction) as a Stage 1 candidate to re-read weekly through W29-W31 before promotion decision.
+
+No live-pipeline changes; all three files are analysis-only. Nightly digest auto-picks up `marine_layer_cl_stage1` on next run; `c1_stage4_mixture_check` runs as a shared module import from the main audit but is also runnable as a standalone.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.317 • July 9, 2026</strong></summary>
 
 - **Fitter preflight — applied-layer consistency gate.** Audit logic refactored from `analysis/applied_layer_audit.py` into `weather_collector/processors/applied_layer_audit.py::run_audit()`; the analysis CLI is now a thin wrapper delegating to the same function. `decay_fit.py::fit_decay_corrections()` calls `run_audit()` at the top of every daily Fitter tick; on any failure it logs the specific problems and returns without publishing new `decay_corrections.json` — the previous (still-valid) corrections stay in place. Same two categories as the standalone: (A) every field in `L3_FIELDS`/`L4_FIELDS`/`SKIP_TABLE` resolves in `TARGET_ARRAY` + `CAPS`; (B) every declared `derived.X.Y` read in the correction stack has a writer somewhere under `weather_collector/`. Closes the loop between "Fitter tick recommends" and "would this recommendation actually apply?" Upgrades the audit from a next-morning digest surface to a real-time deploy gate.
