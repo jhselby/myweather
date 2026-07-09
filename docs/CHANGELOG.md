@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.318f • July 9, 2026</strong></summary>
+
+- **Merge Gate-firing frequency into the Applicability map section.** Two lenses on the same object — Applicability = "what's *configured* to fire and under what gates" (static), Runtime firing = "what's *actually* firing per operator × field × regime" (7-day rolling). Neither is complete alone: applicability alone hides silent dormancy; firing alone doesn't tell you what SHOULD have fired. Section header renamed from "Applicability map — what corrections trigger, and why" to "Applicability map — what corrections trigger, why, and when they actually fire". Intro block updated to describe the two-lens split. The standalone `<h2 id="sec-gate-firing">` deleted; its content moved to a bordered sub-block right after the dynamic applicability blocks. TOC "Gate firing" entry removed — one anchor now covers both lenses. Yesterday's recent-activity Phase-(c) bullet updated to reflect the merge.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.318e • July 9, 2026</strong></summary>
 
 - **Debug page canon sweep — rotate Recent activity window + refresh accuracy blurb.** "Last curated" bumped to 07-09 v0.6.318d. New "2026-07-09 (Thu) — today" section added with 6 thematic bullets covering today's 9 commits: Fitter preflight (v0.6.317), Stage 4 refined view + non-precip subset + mixture check (v0.6.316e, v0.6.317a), cl marine-layer Stage 1 sanity check (negative), gate-firing log three-phase pipeline (v0.6.318, .318a, .318b), verdict-language fixes (v0.6.316e, v0.6.318d), dead L6/Cove UI cleanup (v0.6.318c). "2026-07-08 (Wed) — today" marker rotated to just "(Wed)". "2026-07-06 (Mon)" section trimmed per the rolling 3-day window rule (4 entries → CHANGELOG). "Still open watches" C1 lines updated: calibration audit pass rate refreshed to today's 63.64%; Stage 4 line rewritten to reflect the refined-view MIXED (27/1/2) with real DEGRADED = 2 cells (ws/24-47h transition + cl/12-23h stable). Accuracy section blurb refreshed — <code>ws</code> now +5.3% down from +25.7% pre-skip-table (still an open regression per Stage 4), t and pr in-flight language removed (both landed 07-08).
