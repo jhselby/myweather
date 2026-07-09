@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.318c • July 9, 2026</strong></summary>
+
+- **Delete dead L6/Cove UI code from `corrections_debug.html` (213 lines).** `loadL6()` + `renderL6Live` + `renderL6Tables` + `renderL6History` + `renderL6MAE` + `COVE_DELTA_BY_OCTANT` + `COVE_HOUR_DELTA_SB_OFF` all wrote to DOM element IDs (`grid-l6-live`, `status-l6-live`) that no longer exist in the file — the Lt live-state UI section was removed when Lt went dormant on 2026-07-01, but the JS wasn't cleaned up. Result was a console error on every page load: `TypeError: null is not an object (evaluating 'grid.innerHTML = …')` inside `renderL6Live` line 5533. Deleting the entire orphaned block gets rid of the error and removes stale cove lookup tables that hadn't been synced to `cove_correction.py` in weeks. Lt still has its "[DORMANT LAYER]" R&D section on the debug page — that section is untouched; it reads its own `<div id="lt-live-state">` from `renderLtLiveState()`, which is unrelated to the deleted L6 code.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.318b • July 9, 2026</strong></summary>
 
 - **Gate-firing frequency — Phase (c): debug page render.** New section on `corrections_debug.html` adjacent to the Applicability map (`#sec-gate-firing`, TOC entry "Gate firing"). Fetches `https://data.wymancove.com/gate_firing_rollup.json`, renders a table of operator × field × regime with fires / skips / ticks / rate-per-tick columns. Dormancy flags block at the top surfaces (a) operators that never fired, (b) operator+field pairs that never fired across any regime, (c) ★ silent-dormancy candidates — cells where the operator ran ≥5 ticks in that regime with 0 fires. That last class is the exact signature that hid the ws L3 skip-table dormancy for 4 days after v0.6.279; catching it in the log is the point.
