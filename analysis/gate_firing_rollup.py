@@ -209,6 +209,20 @@ def print_summary(out):
         print("  none — every declared operator × field × regime fired at least once")
 
 
+def _upload_to_gcs(out):
+    """Publish the rollup to GCS so the debug page can fetch it via
+    https://data.wymancove.com/gate_firing_rollup.json. Runs from Joe's Mac
+    in the digest; Cloud Function collector doesn't need write access here.
+    Silent no-op on any failure — the local artifact still lands."""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from weather_collector.gcs_io import upload_json
+        upload_json(out, "gate_firing_rollup.json", "gate_firing_rollup.json")
+        print("  ✓ Published to gs://myweather-data/gate_firing_rollup.json")
+    except Exception as e:
+        print(f"  ⚠ GCS upload skipped ({type(e).__name__}: {e}) — local file still written")
+
+
 def main():
     rows = _load_rows()
     if not rows:
@@ -226,6 +240,7 @@ def main():
     print_summary(out)
     print()
     print(f"Wrote {OUTPUT_JSON}")
+    _upload_to_gcs(out)
 
 
 if __name__ == "__main__":

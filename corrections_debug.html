@@ -751,6 +751,7 @@
   <a href="#sec-status">Engineering updates</a>
   <a href="#sec-accuracy" class="accuracy">Accuracy</a>
   <a href="#sec-applicability">Applicability</a>
+  <a href="#sec-gate-firing">Gate firing</a>
   <a href="#sec-layer1">L1 Raw</a>
   <a href="#sec-layer2">L2 Aggregate bias</a>
   <a href="#sec-layer3">L3 Decay</a>
@@ -1250,6 +1251,19 @@
 </div>
 
 <div id="applicability-content"></div>
+
+<!-- ─────────── Gate-firing frequency (7-day rollup) ─────────── -->
+<h2 class="section" id="sec-gate-firing">Gate-firing frequency — what's actually contributing (7-day)</h2>
+<div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
+  <p class="layer-summary">Complements the Applicability map: <strong>Applicability describes what's <em>configured</em> to fire; this table shows what's <em>actually</em> firing.</strong> Silent dormancy — a correction whose config says "enabled" but whose code path never mutates a value — is invisible to the config-side audit. The class of bug that hid ws L3 for 4 days after v0.6.279.</p>
+  <details class="layer-methodology"><summary>How to read this</summary>
+    <div class="meta-line"><strong>Fires</strong> = the correction actually mutated a hourly-array value at that lead. Not "would have applied." <strong>Skips</strong> = the correction WOULD have fired but was suppressed by the skip table (L3 ws in ne_flow / short-lead sea_breeze; Lsr sr in ne_flow / calm) or by a gate being OFF (Lc, MLC currently ENABLED=False → all matching cells count as skips). <strong>Ticks</strong> = tick count where the operator ran and current-tick regime matched.</div>
+    <div class="meta-line"><strong>Rate/tick</strong> = fires ÷ ticks_in_regime. For L3/L4 with 48 leads, a healthy fire rate is close to 48 (or (48 − typical skip count) for skip-table cells). Lsr's fire rate is bounded by daylight leads. <strong>★</strong> marks (operator × field × regime) cells that ran ≥5 ticks with 0 fires — silent-dormancy candidates.</div>
+    <div class="meta-line">Source: <code>gate_firing_rollup.json</code> from <code>analysis/gate_firing_rollup.py</code> (7-day rolling window over <code>gate_firing_log.jsonl</code>). Per-tick log written by <code>weather_collector/processors/gate_firing_log.py</code> (v0.6.318). Rollup refreshes nightly with the digest.</div>
+  </details>
+</div>
+<div id="status-gate-firing" class="status" hidden></div>
+<div id="gate-firing-content"></div>
 
 <!-- ───────────────────── L1 ───────────────────── -->
 <h2 class="section" id="sec-layer1">L1 — Raw model (HRRR / GFS)</h2>
@@ -1754,6 +1768,7 @@ const WEATHER_URL     = "https://data.wymancove.com/weather_data.json";
 const FRONTAL_EVENTS_URL = "https://data.wymancove.com/frontal_events_log.json";
 const BACKTEST_SWEEP_URL = "https://data.wymancove.com/backtest_sweep_results.json";
 const SHADOW_WHITELIST_URL = "https://data.wymancove.com/shadow_whitelist_log.json";
+const GATE_FIRING_URL = "https://data.wymancove.com/gate_firing_rollup.json";
 const M2_PERIOD_HOURS = 12.4206;
 // Reference cosine amplitude for Section 5's phase-binned charts. Bumped from
 // 4.0 to 5.0 in v0.6.12 — closer to Salem's typical M2 amplitude. The
@@ -2234,6 +2249,107 @@ function renderApplicabilityMap(wxDoc) {
     : "";
 
   host.innerHTML = stamp + blocks;
+}
+
+function renderGateFiring(doc) {
+  const host = document.getElementById("gate-firing-content");
+  if (!host) return;
+  if (!doc || !doc.by_operator_field_regime) {
+    host.innerHTML = `<div class="layer-info-text" style="opacity:0.75;font-style:italic;">
+      No <code>gate_firing_rollup.json</code> yet — the nightly digest publishes it after the first
+      run of <code>analysis/gate_firing_rollup.py</code>. Per-tick log started v0.6.318; the rollup
+      lands the following night.
+    </div>`;
+    return;
+  }
+  const escape = (s) => String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  const flags = doc.dormancy_flags || {};
+  const flagBlocks = [];
+  if (flags.operators_never_fired && flags.operators_never_fired.length) {
+    flagBlocks.push(`
+      <div style="color:#e0d472;margin-bottom:4px;"><strong>⚠ Operators never fired:</strong>
+        ${flags.operators_never_fired.map(o => `<code>${escape(o)}</code>`).join(", ")}</div>`);
+  }
+  if (flags.operator_field_pairs_never_fired && flags.operator_field_pairs_never_fired.length) {
+    flagBlocks.push(`
+      <div style="color:#e0d472;margin-bottom:4px;"><strong>⚠ Operator+field pairs never fired
+        (${flags.operator_field_pairs_never_fired.length}):</strong>
+        ${flags.operator_field_pairs_never_fired.map(([o,f]) =>
+          `<code>${escape(o)}/${escape(f)}</code>`).join(", ")}</div>`);
+  }
+  const silentByRegime = flags.operator_field_regime_never_fired_with_nonzero_ticks || [];
+  if (silentByRegime.length) {
+    flagBlocks.push(`
+      <div style="color:#fb7c5c;margin-bottom:4px;"><strong>★ Silent-dormancy candidates
+        (operator ran ≥5 ticks in this regime, 0 fires — like the ws-L3-in-ne_flow bug):</strong></div>
+      <ul style="margin:2px 0 0 20px;padding:0;color:#e0d472;">
+        ${silentByRegime.map(([o,f,r,n]) =>
+          `<li><code>${escape(o)}/${escape(f)}/${escape(r)}</code> — ${n} ticks in regime, 0 fires</li>`).join("")}
+      </ul>`);
+  }
+  const noFlags = flagBlocks.length === 0
+    ? `<div style="opacity:0.8;">✓ No dormancy flags — every declared operator × field × regime fired at least once.</div>`
+    : "";
+
+  const stamp = `
+    <div class="meta-line" style="margin-bottom:10px;opacity:0.85;">
+      Window: <code>${escape(doc.window_start)}</code> → <code>${escape(doc.window_end)}</code>
+      · ticks: <strong>${doc.tick_count}</strong>
+      · generated: <code>${escape(doc.generated_at)}</code>
+    </div>
+    <div style="border:1px solid #2a3a52;background:#101820;border-radius:6px;padding:10px 14px;margin-bottom:14px;">
+      ${flagBlocks.join("") || noFlags}
+    </div>`;
+
+  const operators = Object.keys(doc.by_operator_field_regime).sort();
+  const rows = [];
+  for (const op of operators) {
+    const fields = Object.keys(doc.by_operator_field_regime[op]).sort();
+    for (const f of fields) {
+      const regimes = Object.keys(doc.by_operator_field_regime[op][f]).sort();
+      for (const r of regimes) {
+        const c = doc.by_operator_field_regime[op][f][r];
+        const silent = c.fires === 0 && c.ticks_in_regime >= 5;
+        const rateColor = silent
+          ? "color:#fb7c5c;font-weight:600;"
+          : (c.fire_rate_per_tick > 0 ? "color:#4ad29a;" : "opacity:0.7;");
+        rows.push(`
+          <tr style="border-top:1px solid #232936;">
+            <td style="padding:5px 10px 5px 0;vertical-align:top;"><code>${escape(op)}</code></td>
+            <td style="padding:5px 10px;vertical-align:top;"><code>${escape(f)}</code></td>
+            <td style="padding:5px 10px;vertical-align:top;">${escape(r)}</td>
+            <td style="padding:5px 10px;vertical-align:top;text-align:right;">${c.fires.toLocaleString()}</td>
+            <td style="padding:5px 10px;vertical-align:top;text-align:right;">${c.skips.toLocaleString()}</td>
+            <td style="padding:5px 10px;vertical-align:top;text-align:right;">${c.ticks_in_regime}</td>
+            <td style="padding:5px 0 5px 10px;vertical-align:top;text-align:right;${rateColor}">
+              ${c.fire_rate_per_tick.toFixed(2)}${silent ? " ★" : ""}
+            </td>
+          </tr>`);
+      }
+    }
+  }
+
+  const table = `
+    <div class="layer-info-text" style="border-color:#2a3a52;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.9em;">
+        <thead>
+          <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
+            <th style="padding:4px 10px 4px 0;">operator</th>
+            <th style="padding:4px 10px;">field</th>
+            <th style="padding:4px 10px;">regime</th>
+            <th style="padding:4px 10px;text-align:right;">fires</th>
+            <th style="padding:4px 10px;text-align:right;">skips</th>
+            <th style="padding:4px 10px;text-align:right;">ticks</th>
+            <th style="padding:4px 0 4px 10px;text-align:right;">rate/tick</th>
+          </tr>
+        </thead>
+        <tbody>${rows.join("")}</tbody>
+      </table>
+    </div>`;
+
+  host.innerHTML = stamp + table;
 }
 
 function renderHeadlineBox(wxDoc) {
@@ -5020,6 +5136,12 @@ async function load() {
     if (res.ok) shadowWhitelistDoc = await res.json();
   } catch (err) { /* silent — file appears after first Fitter run post-deploy */ }
 
+  let gateFiringDoc;
+  try {
+    const res = await fetch(GATE_FIRING_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) gateFiringDoc = await res.json();
+  } catch (err) { /* silent — file appears after first digest rollup */ }
+
   renderMeta(corrDoc, wxDoc);
   renderScorecardBanner(tsDoc, wxDoc);
   renderAccuracySection(tsDoc, wxDoc);
@@ -5073,6 +5195,9 @@ async function load() {
 
   // ── Applicability map (Section D): global view of what fires when ──
   if (wxDoc) renderApplicabilityMap(wxDoc);
+
+  // ── Gate-firing frequency: what's actually contributing (7-day) ──
+  renderGateFiring(gateFiringDoc);
 
   // ── Layer 2 (Mesonet): octant rose, bias estimate, Kalman, station detail ──
   if (wxDoc) {

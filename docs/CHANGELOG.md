@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.318b • July 9, 2026</strong></summary>
+
+- **Gate-firing frequency — Phase (c): debug page render.** New section on `corrections_debug.html` adjacent to the Applicability map (`#sec-gate-firing`, TOC entry "Gate firing"). Fetches `https://data.wymancove.com/gate_firing_rollup.json`, renders a table of operator × field × regime with fires / skips / ticks / rate-per-tick columns. Dormancy flags block at the top surfaces (a) operators that never fired, (b) operator+field pairs that never fired across any regime, (c) ★ silent-dormancy candidates — cells where the operator ran ≥5 ticks in that regime with 0 fires. That last class is the exact signature that hid the ws L3 skip-table dormancy for 4 days after v0.6.279; catching it in the log is the point.
+- **`analysis/gate_firing_rollup.py`** now also publishes to GCS (`upload_json` from `weather_collector.gcs_io`) so the debug page can fetch the artifact via `data.wymancove.com`. Digest cron on Joe's Mac has the necessary gcloud auth; failure is silent — the local `analysis/output/gate_firing_rollup.json` still lands.
+
+Together with v0.6.318 + v0.6.318a, the full three-phase gate-firing pipeline is now operational: Phase (a) per-tick logging → Phase (b) 7-day rollup with dormancy flags → Phase (c) debug-page surface. Complements the applied-layer audit (v0.6.317) — audit is static config coherence, rollup is runtime firing visibility.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.318a • July 9, 2026</strong></summary>
 
 - **Gate-firing log — extended to Lsr, MLC, Lc, Lt + Phase (b) rollup.** Each of the four specialist correctors now emits a per-tick firing row alongside L3/L4. Semantics per operator:
