@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.319c • July 9, 2026</strong></summary>
+
+- **dp depression regime — frontal branch closed, nor_easter watch opened.** Today's `h_dewpoint_depression.py` confirmed the frontal signal fell below the 1.5°F action floor: −2.19 → −1.98 → −1.51 → **−0.87°F** across four reads. Branch retired; Stage 1 candidacy on frontal-dp-depression closed. Meanwhile, `nor_easter` surfaced at +3.79°F ★ — passes the magnitude floor but n=279 (nor_easters are rare, sample won't grow fast). New watch: 3 consecutive reads with n growing AND |bias| holding above 1.5°F before Stage 2 curation. sw_flow softened +1.40 → +0.95⚠ (into watch band). Updates: (1) Stage 1 candidate card on debug page, (2) hypothesis tracking table row, (3) `project_todo.md` item 3.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.319b • July 9, 2026</strong></summary>
 
 - **Fix `simulate_windows.py` R6 verdict wording.** Digest was reporting "R6: all 7 cutoffs agree → SHIP → PROMOTE" which read as a new-candidate promotion signal. But R6 (regime-transition penalty) was pivoted from would-be bias correction to confidence axis **C1a** on 2026-06-19 v0.6.141 per `project_c1_pivot_to_confidence`. The signal is already live in `confidence_layer.py:104` — today's SHIP verdict is a health-check pass on C1a, not a Stage 1→2 promotion. Added an `ALREADY_SHIPPED_AS` map so R6's SHIP now prints as "→ STABLE (R6 signal already live as C1a — Regime transition (confidence axis, live since v0.6.141 2026-06-19); this is a health check pass)". HOLD would print as "REGRESSION WATCH" (underlying signal weakened). Extensible — future hypotheses that get repurposed to other architectural slots go into the map instead of being retagged one by one.
