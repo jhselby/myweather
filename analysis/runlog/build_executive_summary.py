@@ -429,7 +429,29 @@ def main():
             }) + "\n")
         # Claim rows are stored under a "_claim:" prefix so streak walkers
         # can grep them efficiently.
+        #
+        # Dormancy guard (2026-07-10): the L3/L4 streak sat wedged at 0 for a
+        # week because compute_claims() returned {L3_FIELDS: None, L4_FIELDS:
+        # None} on every digest run while the source script's verdict was
+        # populated. Writing that null row RESETS the streak on the next
+        # divergence read. So: if the source script's verdict is present but
+        # the derived claim is None, skip the row and warn — the streak
+        # walker will then find yesterday's row and hold, not reset.
+        _claim_source = {
+            "L3_FIELDS": "walkforward_l3l4_validator",
+            "L4_FIELDS": "walkforward_l3l4_validator",
+            "LSR_ENABLED": "l5_solar_analysis",
+            "LT_ENABLED": "r5_cove_analysis",
+        }
         for key, val in today_claims.items():
+            if val is None:
+                src = _claim_source.get(key)
+                if src and current.get(src, {}).get("verdict"):
+                    print(f"WARN: _claim:{key} came back None but {src} verdict "
+                          f"is populated — skipping row to protect streak. "
+                          f"Likely walkforward summary parse failure.",
+                          file=sys.stderr)
+                    continue
             f.write(json.dumps({
                 "run_at": run_at,
                 "script": f"_claim:{key}",

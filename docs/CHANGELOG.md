@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.320 • July 10, 2026</strong></summary>
+
+- **Digest streak-infra dormancy fix.** The L3-drop-ws whitelist streak had been wedged at 0/7 for **7 consecutive days** (07-04 → 07-10) because every morning digest wrote `_claim:L3_FIELDS: null` into `digest_history.jsonl` even while the source `walkforward_l3l4_validator` verdict was populated in the same row. Root cause: `analysis/runlog/claims.py::_claim_walkforward()` reads the .log via a stdout-redirect from bash `>`, subject to Python's block-buffered stdout at child-exit. `analysis/runlog/divergence_report.py::claim_from_walkforward()` was a byte-for-byte duplicate of the same parser and succeeded in the same digest run seconds later — one path wedged the streak while the other displayed the correct verdict every morning. Same silent-dormancy class as the applied-layer audit (v0.6.317) and gate-firing log (v0.6.318), but the streak infrastructure had no equivalent guard. Fix: (1) `claims.py` falls back to `walkforward_l3l4_summary.txt` (direct `with open("w")` — deterministic flush) if the .log regex misses; (2) `divergence_report.py` imports the one canonical impl from `claims.py`, killing the duplicate; (3) `build_executive_summary.py` dormancy-guards the null-claim-with-populated-source-verdict case (skip write + WARN to stderr instead of poisoning the streak); (4) `_streak_for` filters today by UTC date rather than `rows[:-1]` — safe against skipped writes.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.319f • July 9, 2026</strong></summary>
 
 - **Section 2e "Post-aggregate-bias forecast" marked as engineering view (pre-clamp).** The grid of per-field cards under that heading renders values *after* L2 bias offset but *before* downstream layer clamping (`FIELD_BOUNDS` in `decay_apply.py`), so cloud cover can legitimately show 121%, precip probability −6%, precip amount −0.025 in — physically impossible outputs that are correct as diagnostic intermediates but could be mistaken for user forecasts. Header now reads "…engineering view (pre-clamp)" and a highlighted caveat block above the grid explains what these values mean, with the redirect: if any of these look wrong for user display, check the L3 / L4 / clamp path, not this section.

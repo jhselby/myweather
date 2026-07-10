@@ -149,9 +149,17 @@ def _streak_for(key, today_claim):
     rows = sorted(per_day.values(), key=lambda r: r["run_at"])
 
     today_norm = sorted(today_claim) if isinstance(today_claim, (list, set, tuple)) else today_claim
+    # Skip today by DATE, not by index — the dormancy guard in
+    # build_executive_summary may refrain from writing today's row when the
+    # source script's log parse fails. `rows[:-1]` used to assume today's row
+    # was always present as the last element; if it isn't, we'd have dropped
+    # yesterday and reset the streak. Filter by date instead.
+    from datetime import datetime, timezone
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    prior_rows = [r for r in rows if r["run_at"][:10] != today_str]
     streak = 0
     oldest = None
-    for r in reversed(rows[:-1]):  # skip today's row
+    for r in reversed(prior_rows):
         c = r.get("claim")
         c_norm = sorted(c) if isinstance(c, list) else c
         if c_norm == today_norm:
@@ -200,21 +208,12 @@ def probe_production():
 
 # ─────────────────── script-verdict → production-claim ────────────────────
 
-def claim_from_walkforward(verdict: str):
-    """walkforward_l3l4_validator's last log emits `L3_FIELDS` and
-    `L4_FIELDS` lines we can scrape from the underlying log file."""
-    log = LOG_DIR / "walkforward_l3l4_validator.log"
-    if not log.exists():
-        return None
-    txt = log.read_text()
-    m3 = re.search(r"L3_FIELDS\s*=\s*(\{[^}]*\})", txt)
-    m4 = re.search(r"L4_FIELDS\s*=\s*(\{[^}]*\})", txt)
-    try:
-        l3 = ast.literal_eval(m3.group(1)) if m3 else None
-        l4 = ast.literal_eval(m4.group(1)) if m4 else None
-    except Exception:
-        return None
-    return {"L3_FIELDS": l3, "L4_FIELDS": l4}
+# claim_from_walkforward was a duplicate of claims._claim_walkforward. Removed
+# 2026-07-10 after we caught the two identical copies producing different
+# answers in the same digest run — divergence report succeeded while
+# build_executive_summary's copy wrote null claims for 7 straight days, wedging
+# the L3 whitelist-drop streak at 0. One implementation now, imported below.
+from claims import _claim_walkforward as claim_from_walkforward  # noqa: E402
 
 
 def claim_bool_ship(verdict: str) -> bool | None:
@@ -240,7 +239,7 @@ def main():
 
     # L3 / L4 whitelist (walkforward)
     wf = state.get("walkforward_l3l4_validator", {}).get("verdict")
-    wants = claim_from_walkforward(wf) if wf else None
+    wants = claim_from_walkforward() if wf else None
     if wants:
         for k in ("L3_FIELDS", "L4_FIELDS"):
             p, w = prod.get(k), wants.get(k)

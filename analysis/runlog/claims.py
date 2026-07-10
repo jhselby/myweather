@@ -11,16 +11,30 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 LOG_DIR = HERE.parent / "output" / "runlog"
+# walkforward writes this file directly via `with open(..., "w")` — flushes and
+# closes deterministically, unlike the stdout-redirected .log which is subject
+# to Python's block-buffered stdout behavior when the child process exits mid-
+# flush. The .log path stays as first-try (canonical for other consumers), the
+# .txt path is the belt-and-suspenders fallback for the "null claim written on
+# every digest run since 07-04" wedge.
+SUMMARY_PATH = LOG_DIR.parent / "walkforward_l3l4_summary.txt"
 
 
 def _claim_walkforward():
-    """Extract L3/L4 sets from the most recent walkforward run's log."""
-    log = LOG_DIR / "walkforward_l3l4_validator.log"
-    if not log.exists():
+    """Extract L3/L4 sets from the most recent walkforward run's summary."""
+    m3 = m4 = None
+    for path in (LOG_DIR / "walkforward_l3l4_validator.log", SUMMARY_PATH):
+        if not path.exists():
+            continue
+        txt = path.read_text()
+        if m3 is None:
+            m3 = re.search(r"L3_FIELDS\s*=\s*(\{[^}]*\})", txt)
+        if m4 is None:
+            m4 = re.search(r"L4_FIELDS\s*=\s*(\{[^}]*\})", txt)
+        if m3 and m4:
+            break
+    if m3 is None and m4 is None:
         return None
-    txt = log.read_text()
-    m3 = re.search(r"L3_ENABLED\s*=\s*(\{[^}]*\})", txt)
-    m4 = re.search(r"L4_ENABLED\s*=\s*(\{[^}]*\})", txt)
     try:
         l3 = ast.literal_eval(m3.group(1)) if m3 else None
         l4 = ast.literal_eval(m4.group(1)) if m4 else None
