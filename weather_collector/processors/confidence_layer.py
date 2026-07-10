@@ -130,9 +130,16 @@ def describe_applicability():
             "name": "Trend direction (6h forecast shift)",
             "fires_when": (
                 "|forecast_l1[lead] − forecast_l1[lead−6]| > per-field threshold "
-                f"(cc 20, cl 15, cm 15, ch 15, t 3). Wired 2026-07-08 as a "
-                f"marginal multiplier composed on top of the base displayed_mae; "
-                f"reads {os.path.basename(_C1H_PATH)}."
+                f"(cc 20, cl 15, cm 15, ch 15, t 3), AND the per-cell co-axis "
+                f"ortho gate permits. 2026-07-10: h_c1h_orthogonality first "
+                f"read (11/30 orthogonal cells overall) surfaced per-cell "
+                f"double-count risk vs C1f (precip_fc) and C1e (post-frontal). "
+                f"Only cl × 3 bands fire freely; cc/cm/ch/t cells are gated on "
+                f"the axis they're non-orthogonal to (or skipped entirely for "
+                f"cells REDUND to both — all t cells, ch 24-47h). Wired "
+                f"2026-07-08 as a marginal multiplier composed on top of the "
+                f"base displayed_mae; reads {os.path.basename(_C1H_PATH)} + "
+                f"the in-code _C1H_CO_AXIS_GATE table."
             ),
         },
         {
@@ -302,6 +309,40 @@ _C1H_BAND_MID = {
     "6-11h":  9,
     "12-23h": 18,
     "24-47h": 36,
+}
+
+# Per-cell co-axis ortho gate. Source: h_c1h_orthogonality.py first read
+# 2026-07-10 (see analysis/output/runlog/h_c1h_orthogonality.log). C1h passed
+# the overall PROMOTE gate (11 orthogonal cells / 30 judged), but per-cell
+# only cl × 3 bands are ortho to BOTH C1f (precip_fc > 0.01) and C1e
+# (post-frontal < 24h). The remaining 12 SHIP cells are wholly-or-partially
+# redundant with a co-axis — firing them when that co-axis is on would
+# double-widen the confidence band without adding independent signal.
+#
+# Semantics per cell:
+#   require_c1f_off = True  → suppress fire when C1f (precip_fc>0 in band) is on
+#   require_c1e_off = True  → suppress fire when C1e (post-frontal <24h) is on
+#   always_skip     = True  → REDUND to both axes; never fire (signal is fully
+#                             captured by the incumbent axes)
+# Cells not listed here have no gate (fire whenever threshold met). Any new
+# c1h cell added to the curated table must be added here explicitly — the
+# fire path defaults to "always allow" and needs an ortho verdict to gate.
+_C1H_CO_AXIS_GATE = {
+    ("cl", "6-11h"):  {},   # ORTHO/ORTHO — fire freely
+    ("cl", "12-23h"): {},
+    ("cl", "24-47h"): {},
+    ("cc", "6-11h"):  {"require_c1e_off": True},   # ORTHO F, AMBIG E
+    ("cc", "12-23h"): {"require_c1e_off": True},
+    ("cc", "24-47h"): {"require_c1f_off": True, "require_c1e_off": True},  # CONFOUND F, AMBIG E
+    ("cm", "6-11h"):  {"require_c1f_off": True},   # AMBIG F, ORTHO E
+    ("cm", "12-23h"): {"require_c1f_off": True},
+    ("cm", "24-47h"): {"require_c1f_off": True},
+    ("ch", "6-11h"):  {"require_c1f_off": True, "require_c1e_off": True},  # AMBIG F, CONFOUND E
+    ("ch", "12-23h"): {"require_c1f_off": True, "require_c1e_off": True},
+    ("ch", "24-47h"): {"always_skip": True},                                # REDUND both
+    ("t",  "6-11h"):  {"always_skip": True},                                # REDUND both
+    ("t",  "12-23h"): {"always_skip": True},
+    ("t",  "24-47h"): {"always_skip": True},
 }
 
 
@@ -477,10 +518,17 @@ def _c1h_fires_per_band_field(weather_data):
     """For each (field, band), decide whether C1h fires at stamp time.
     Compares the current forecast_l1 for the band's representative target
     hour against the L1 value at the same absolute target time in the
-    ~6h-old snapshot from forecast_log.json. Fires when |Δ| > THRESH[field].
+    ~6h-old snapshot from forecast_log.json. Fires when |Δ| > THRESH[field]
+    AND the per-cell co-axis gate (_C1H_CO_AXIS_GATE) permits — see
+    h_c1h_orthogonality.py for the source verdicts. Cells that are REDUND
+    to both incumbent axes never fire; cells that are AMBIG/CONFOUND to one
+    axis are suppressed when that axis is currently active.
 
-    Returns {(field, band): "fires"|"flat"|None}. None means axis inactive
-    (missing data on either side) — caller falls back to no premium.
+    Returns {(field, band): "fires"|"flat"|"coax_gated"|None}. None means
+    the trend axis is inactive (missing data on either side); "coax_gated"
+    means the trend crossed the threshold but the co-axis ortho gate
+    suppressed the fire. Both non-"fires" states cause the caller to skip
+    the marginal premium.
     """
     out = {}
     if not _C1H_CELLS:
@@ -503,12 +551,32 @@ def _c1h_fires_per_band_field(weather_data):
         if v:
             prior_by_v[v] = h
 
+    # Co-axis live state for the ortho gate. C1f is per-band (precip in the
+    # band's lead window). C1e is a single "post"/"baseline" for the whole
+    # tick — post-frontal < 24h since latest passage.
+    c1f_state = _c1f_per_band(weather_data)   # {band: "p0"|"p1"|None}
+    c1e_state = _current_hsf_group(weather_data)  # "post"|"baseline"|None
+
     for field, bands in _C1H_CELLS.items():
         thr = _C1H_THRESH.get(field)
         cur_key = _C1H_L1_KEY.get(field)
         snap_key = _C1H_SNAP_KEY.get(field)
         cur_arr = hourly.get(cur_key) or [] if cur_key else []
         for band in bands:
+            # Missing gate entry = ortho verdict never applied to this cell.
+            # Fail closed: refuse to fire until a human curates the gate.
+            # Prevents silent add-without-ortho when new cells promote via
+            # c1h_curate but the ortho eval isn't refreshed. See
+            # h_c1h_orthogonality.py for the source verdicts.
+            if (field, band) not in _C1H_CO_AXIS_GATE:
+                out[(field, band)] = "coax_gated"
+                continue
+            gate = _C1H_CO_AXIS_GATE[(field, band)]
+            # Fast path: cells that are REDUND to both incumbent axes never
+            # fire regardless of trend. Skip the L1 lookup entirely.
+            if gate.get("always_skip"):
+                out[(field, band)] = "coax_gated"
+                continue
             mid_lead = _C1H_BAND_MID.get(band)
             if thr is None or mid_lead is None or mid_lead >= len(times):
                 out[(field, band)] = None
@@ -528,7 +596,18 @@ def _c1h_fires_per_band_field(weather_data):
             except (TypeError, ValueError):
                 out[(field, band)] = None
                 continue
-            out[(field, band)] = "fires" if delta > thr else "flat"
+            if delta <= thr:
+                out[(field, band)] = "flat"
+                continue
+            # Trend threshold crossed. Apply the co-axis ortho gate: if the
+            # cell is non-ortho to a currently-firing co-axis, suppress.
+            if gate.get("require_c1f_off") and c1f_state.get(band) == "p1":
+                out[(field, band)] = "coax_gated"
+                continue
+            if gate.get("require_c1e_off") and c1e_state == "post":
+                out[(field, band)] = "coax_gated"
+                continue
+            out[(field, band)] = "fires"
     return out
 
 
