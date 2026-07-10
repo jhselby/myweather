@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.323a • July 10, 2026</strong></summary>
+
+- **Debug page canon sweep after v0.6.323 counters ship.** Every "day N/7" gate reference on the page was carrying pre-v0.6.323 aspirational numbers (LC "day 1/7 as of 07-04", C1h "day 2/7", C1d "day 5/7", ws L3 "day 8/7", pre-frontal "day 5/7"). Swept the whole page: "Last curated" bumped to v0.6.323. Priority scoreboard (top block): all four gate rows now note the counter is real and started at day 1/7 today; pre-frontal explicitly marked "no counter wired" (no Stage 3 curated table to walk yet). Calendar block: 07-10 rows retired — sr clean read pushed to 07-11 (window closes tonight), ws L3 strip pushed to 07-16, LC/C1h/C1d rows added for 07-16, ws-octant weekly re-read added for 07-17. Correction-stack narrative (L3 lead-decay row + Lc row): "earliest ship 07-10" swapped to 07-16 with the streak-infra reference. Historical timeline block (07-10 outcome): rewrote the "sr clean + ws L3 strip earliest ship" bullet to state what actually happened (sr suppression closes tonight; ws L3 strip didn't ship because the gate was fiction). C1 confidence section (G1 gated candidates): noted the C1h + C1d narrow-promote counters wired in v0.6.323. Recent activity: added v0.6.323 entry summarizing all three counter fixes + false alarms owned + C1 gate-firing coverage. Also fixed a JS-rendered hardcoded "day 1/7 as of 2026-07-04" caption in the Lc live-state block. No code changes — canon only.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.323 • July 10, 2026</strong></summary>
 
 - **Silent-dormancy audit — three more gaps closed, ripple from v0.6.320.** Following the v0.6.320 streak-infra fix, ran a co-owner audit of every "day N/7 gate" mentioned in memory + on the debug page to check which had real counters behind them. Three had none — all aspirational text.
