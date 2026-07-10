@@ -32,6 +32,7 @@ GATES = {
     "L4_FIELDS": 7,
     "LSR_ENABLED": 7,  # L5 trajectory gate
     "LT_ENABLED": 2,  # post-build confirmation reads; first one in hand
+    "LC_ENABLED": 7,  # 7-day live-layer change gate (wired 2026-07-10)
 }
 
 
@@ -297,8 +298,12 @@ def main():
             rows.append(("LC_ENABLED", p, wants_bool, "AGREE", ""))
         else:
             # DISAGREE means "fit says ship-ready, production not enabled."
-            # Note the 7-day gate so a reader doesn't think we're stalling.
-            rows.append(("LC_ENABLED", p, wants_bool, "DISAGREE", "7-day live-layer gate — flip after 7 daily reads agree"))
+            # Streak counter (added 2026-07-10) walks _claim:LC_ENABLED rows
+            # in digest_history.jsonl — writer wired in claims.py::compute_claims.
+            # Before 07-10 this row rendered "1/? · flip after 7 daily reads
+            # agree" as literal text with no counter behind it; today's fix
+            # made the counter real.
+            rows.append(("LC_ENABLED", p, wants_bool, "DISAGREE", ""))
 
     # Marine layer — stage1+stage2 don't print a clean VERDICT line yet.
     # Skip for today; surface as TODO.

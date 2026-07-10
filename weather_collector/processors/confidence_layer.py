@@ -41,6 +41,7 @@ from datetime import datetime, timedelta
 import pytz
 
 from ..gcs_io import load_json
+from . import gate_firing_log
 from .regime_classifier import classify_synoptic_regime
 
 
@@ -689,6 +690,18 @@ def stamp_confidence(weather_data):
     c1h_by_cell = _c1h_fires_per_band_field(weather_data)
     c1h_hits = 0
     c1d_hits = 0
+    # Per-field gate-firing counters for gate_firing_log (added 2026-07-10 to
+    # close the C1-axis coverage gap surfaced by the same silent-dormancy
+    # audit that caught the L3 streak wedge). record_firing() is called at
+    # the end of stamp_confidence().
+    #   fires = the axis actually widened at least one (field, band) cell
+    #   skips = the axis WOULD have widened but was suppressed:
+    #     - C1h: c1h_by_cell state == "coax_gated" (ortho gate suppression)
+    #     - C1d: c1d_cell present but c1d_slot != "high" is NOT counted as
+    #       a skip because c1d only widens the HIGH slot by design; the LOW
+    #       slot is the calibration baseline, not a suppression.
+    _c1h_by_field = {}  # {field: {"fires": N, "skips": N}}
+    _c1d_by_field = {}
 
     # Union of fields that appear in any of the three tables so C1h/C1d can
     # contribute cells even where the legacy v2/v1 table has none. Non-legacy
@@ -739,7 +752,7 @@ def stamp_confidence(weather_data):
             # Each is a multiplicative WIDEN/NARROW that only applies when its
             # live axis value activates the wired cell.
             c1h_cell = _C1H_CELLS.get(field, {}).get(band)
-            c1h_state = c1h_by_cell.get((field, band))  # "fires" | "flat" | None
+            c1h_state = c1h_by_cell.get((field, band))  # "fires" | "flat" | "coax_gated" | None
             c1h_direction = None
             c1h_pct = None
             c1h_applied = False
@@ -748,6 +761,13 @@ def stamp_confidence(weather_data):
                 c1h_pct = c1h_cell["premium_pct"]
                 c1h_applied = True
                 c1h_hits += 1
+                _c1h_by_field.setdefault(field, {"fires": 0, "skips": 0})["fires"] += 1
+            elif c1h_cell and c1h_state == "coax_gated":
+                # Would-fire suppressed by the per-cell co-axis ortho gate
+                # (v0.6.321). Tracked as skips so a future dormancy audit
+                # can distinguish "gate is working" from "cell never fires
+                # in practice."
+                _c1h_by_field.setdefault(field, {"fires": 0, "skips": 0})["skips"] += 1
 
             c1d_cell = _C1D_CELLS.get(field, {}).get(band)
             c1d_direction = None
@@ -761,6 +781,7 @@ def stamp_confidence(weather_data):
                 c1d_pct = c1d_cell["premium_pct"]
                 c1d_applied = True
                 c1d_hits += 1
+                _c1d_by_field.setdefault(field, {"fires": 0, "skips": 0})["fires"] += 1
 
             displayed_mae = base_displayed
             displayed_mae, m_h = _apply_marginal(displayed_mae, c1h_direction, c1h_pct)
@@ -816,3 +837,23 @@ def stamp_confidence(weather_data):
             "C1 confidence-layer bands applied (read by UI for transition-aware uncertainty)."
         ),
     }
+
+    # Emit gate-firing counters for the marginal C1 axes (added 2026-07-10 to
+    # close the C1-axis coverage gap in gate_firing_log.jsonl). Same regime
+    # basis as L3/L4/Lc — regime_obs at stamp time. C1e is a lookup key into
+    # the multi-axis join, not a marginal premium, so it's not recorded here
+    # (its firing would double-count with the multi_hits counter). Errors are
+    # swallowed so a telemetry failure never breaks the collector run.
+    try:
+        if _c1h_by_field:
+            gate_firing_log.record_firing(
+                operator="C1h", regime=regime_obs,
+                by_field=_c1h_by_field, leads=48,
+            )
+        if _c1d_by_field:
+            gate_firing_log.record_firing(
+                operator="C1d", regime=regime_obs,
+                by_field=_c1d_by_field, leads=48,
+            )
+    except Exception as _e:
+        logging.debug(f"  ⚠ confidence_layer: gate_firing_log record failed: {_e}")

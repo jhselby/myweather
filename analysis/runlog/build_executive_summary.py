@@ -402,6 +402,64 @@ def main():
     else:
         out.append("  • none")
     out.append("")
+
+    # Narrow-promote gates for the C1 marginal-axis Stage 3 tables. The gate
+    # is "7 consecutive daily digest reads agreeing on the SHIP scope of the
+    # curated table." Wired 2026-07-10 — same session that caught the L3/L4
+    # streak-infra wedge; C1h/C1d gates had been aspirational text with no
+    # counter behind them for weeks. today_claims is computed inline here
+    # (the history-append block below also uses it — that block runs after
+    # print so we compute claims eagerly to feed both consumers).
+    from datetime import datetime as _dt_datetime, timezone as _dt_timezone
+    sys.path.insert(0, str(HERE))
+    from claims import compute_claims as _compute_claims
+    _early_run_at = _dt_datetime.now(_dt_timezone.utc).strftime("%Y-%m-%dT%H:%M")
+    _early_today_claims = _compute_claims(current)
+    _NARROW_PROMOTE_GATES = {
+        "C1H_SHIP_CELLS": ("C1h", 7),
+        "C1D_SHIP_CELLS": ("C1d", 7),
+    }
+    _narrow_lines = []
+    for key, (label, gate_n) in _NARROW_PROMOTE_GATES.items():
+        today_claim = _early_today_claims.get(key)
+        if today_claim is None:
+            _narrow_lines.append(f"  • {label}: no claim today (curated table missing or empty)")
+            continue
+        streak = 0
+        oldest = None
+        if HISTORY_PATH.exists():
+            needle = f'"_claim:{key}"'
+            rows = []
+            for line in HISTORY_PATH.read_text().splitlines():
+                if needle not in line:
+                    continue
+                try:
+                    rows.append(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+            rows.sort(key=lambda r: r["run_at"])
+            per_day = {}
+            for r in rows:
+                per_day[r["run_at"][:10]] = r
+            rows = sorted(per_day.values(), key=lambda r: r["run_at"])
+            today_str = _early_run_at[:10]
+            for r in reversed([x for x in rows if x["run_at"][:10] != today_str]):
+                c = r.get("claim")
+                if c == today_claim:
+                    streak += 1
+                    oldest = r["run_at"]
+                else:
+                    break
+        count = streak + 1
+        if count >= gate_n:
+            marker = f"✓ GATE CLEARED ({count}/{gate_n} days, oldest match {oldest})"
+        else:
+            marker = f"⏳ {count}/{gate_n} ({gate_n - count} to go)"
+        _narrow_lines.append(f"  • {label}: {marker}  · {len(today_claim)} SHIP cells today")
+    out.append("Narrow-promote gates (C1 marginal-axis Stage 3):")
+    out.extend(_narrow_lines)
+    out.append("")
+
     out.append("==================================================")
     out.append("")
 
@@ -442,6 +500,9 @@ def main():
             "L4_FIELDS": "walkforward_l3l4_validator",
             "LSR_ENABLED": "l5_solar_analysis",
             "LT_ENABLED": "r5_cove_analysis",
+            "LC_ENABLED": "lc_fit",
+            "C1H_SHIP_CELLS": "c1h_curate",
+            "C1D_SHIP_CELLS": "c1d_curate",
         }
         for key, val in today_claims.items():
             if val is None:

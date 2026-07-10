@@ -6,6 +6,7 @@ both the divergence report (today's snapshot) and the history-aware streak
 counter (consistency over N reads).
 """
 import ast
+import json
 import re
 from pathlib import Path
 
@@ -54,6 +55,44 @@ def _claim_bool_ship(verdict):
     return None
 
 
+def _claim_marginal_ship_cells(curated_json_name: str):
+    """Read a C1 marginal-axis curated table (c1h_curated.json / c1d_curated.json)
+    and return the sorted list of SHIP cells as [[field, band], ...]. Used to
+    track the "N-day narrow-promote gate" — the axis is ready to flip when the
+    SHIP scope has been stable for N consecutive daily digest reads. Returns
+    None if the file can't be read.
+    """
+    path = HERE.parents[1] / "weather_collector" / "data" / curated_json_name
+    if not path.exists():
+        return None
+    try:
+        doc = json.load(open(path))
+    except Exception:
+        return None
+    cells = doc.get("cells") or {}
+    ship = []
+    for field, bands in cells.items():
+        for band, cell in bands.items():
+            if cell.get("status") == "SHIP":
+                ship.append([field, band])
+    return sorted(ship) if ship else None
+
+
+def _claim_lc_enabled(verdict):
+    """lc_fit emits 'Verdict: FIT — N SHIP cell(s) ready to wire into Lc.'
+    when the pair-log has SHIP cells, otherwise 'Verdict: HOLD — no cells...'.
+    Matches the semantics divergence_report.py uses when displaying LC_ENABLED.
+    """
+    if verdict is None:
+        return None
+    v = verdict.upper()
+    if "FIT" in v and "SHIP" in v:
+        return True
+    if "HOLD" in v:
+        return False
+    return None
+
+
 def compute_claims(state: dict) -> dict:
     """Return today's production-claims keyed by the same field names that
     `divergence_report.probe_production` returns. Values may be None.
@@ -69,6 +108,21 @@ def compute_claims(state: dict) -> dict:
     claims["LSR_ENABLED"] = _claim_bool_ship(v)
     v = state.get("r5_cove_analysis", {}).get("verdict")
     claims["LT_ENABLED"] = _claim_bool_ship(v)
+    # LC_ENABLED added 2026-07-10 — the 7-day live-layer change gate on Lc was
+    # aspirational text in memory until now (no claim writer, so no streak).
+    # Same silent-dormancy class as the L3/L4 wedge caught this morning; the
+    # gate has been "day 1/? · flip after 7 daily reads agree" for the
+    # entire Lc code-shipped-but-gated-OFF window.
+    v = state.get("lc_fit", {}).get("verdict")
+    claims["LC_ENABLED"] = _claim_lc_enabled(v)
+    # C1H_SHIP_CELLS + C1D_SHIP_CELLS — 7-day narrow-promote gates for the
+    # marginal-axis Stage 3 tables. Same aspirational-text situation as
+    # LC_ENABLED: memory + debug page have showed "day N/7" for weeks
+    # without any counter behind them. Streak walker treats the sorted
+    # SHIP-cell list as a claim; consecutive days with identical set
+    # advance the gate.
+    claims["C1H_SHIP_CELLS"] = _claim_marginal_ship_cells("c1h_curated.json")
+    claims["C1D_SHIP_CELLS"] = _claim_marginal_ship_cells("c1d_curated.json")
     return claims
 
 
