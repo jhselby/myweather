@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.322a • July 10, 2026</strong></summary>
+
+- **Debug canon refresh for today's three ships.** "Last curated" bumped to v0.6.322. Recent activity block rotated: today's four entries (v0.6.320 streak-infra fix, v0.6.321 C1h ortho gate, v0.6.322 ws-octant Stage 0, and the read-side confirmations for C1h ortho + verdict-language guards + applied-layer audit second live tick) added at the top; 07-07 entries rotated out per the rolling 3-day retention rule. C1 confidence section (G1 gated candidates) updated: retracted the v0.6.316 "⚠ Scope note: broader than narrow-promote scope" caveat that today's v0.6.321 co-axis ortho gate resolved; Stage 4 latest read updated to the 07-09 refined view (27 PASS / 1 WATCH / 2 FAIL / MIXED). Stage 1 candidates rolling table: C1h row updated to reflect wired ortho gate; new "Per-octant ws L2 additive" row added under NEW candidates with the 3-weekly-re-read gate; header count 5 → 7 active. Group A C1h Stage 1 section rewritten to summarize the ortho verdicts + wired gate in place of the old scope caveat. No functional code changes — canon only.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.322 • July 10, 2026</strong></summary>
 
 - **`h_ws_octant_bias.py` — Stage 0 diagnostic for direction-conditional raw ws bias.** Bins raw ws forecast error (signed) by observed wind octant × lead band, with an `obs ≥ 5 mph` "moderate+" subset that filters out calm-wind wd noise. First read (07-10) surfaced a real signal: HRRR **over-forecasts moderate+ ws by +0.9 to +1.9 mph on SW/S/E/NE octants, near-zero on NW/N/W**. Story matches Marblehead geometry — SW/S/E winds cross land/town on final approach so friction reduces obs below HRRR's open-water expectation; NW/N/W come across water in the last stretch so HRRR is right. NE +0.91 mph doesn't fit the simple friction story — possible Salem Neck / Beverly peninsula partial blockage or Salem Sound channel effects. **Queued as Stage 1 candidate**, not fast-tracked: three weekly re-reads (07-17, 07-24, 07-31) to confirm sign-stability, a regime cross-cut to rule out `sw_flow`-regime confounding, and NE-outlier resolution before writing Stage 1. Directly targets the queued "ws structural residual" investigation (~+17-20% MAE vs raw after full targeted package). Current ws L2 is per-octant-max → median blend with no additive component, so this signal passes through untouched. Script picked up automatically by `run_digest.sh` for the weekly cadence.
