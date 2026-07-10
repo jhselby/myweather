@@ -103,7 +103,17 @@ def main():
             if not regime:
                 continue
             fc_l1 = r.get("forecast_l1")
-            fc_prod = r.get("forecast")
+            # Production = deepest available layer, not the pair-log `forecast`
+            # field. The pair log's `forecast` is captured at pair-log time —
+            # for L2-additive-bias fields (dp/h/t/ws/wg/pr) L2 has already run,
+            # so `forecast` == `forecast_l4`; but for fields where the correction
+            # runs later (cc/cl/cm/ch under L3/L4, sr under Lsr, pa) `forecast`
+            # is L1-raw and the actual applied output lives in forecast_l4 (or
+            # further). Caught 2026-07-10 when the odometer showed ch −0.14%
+            # vs raw while state_stratified showed −49%. That gap was this bug.
+            fc_prod = (r.get("forecast_l4") or r.get("forecast_l3")
+                       or r.get("forecast_l2") or r.get("forecast_l1")
+                       or r.get("forecast"))
             obs = r.get("observed")
             if fc_l1 is None or fc_prod is None or obs is None:
                 continue
