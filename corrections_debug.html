@@ -2825,9 +2825,16 @@ function renderScorecardBanner(tsDoc, wxDoc) {
   // The scorecard mixes both because for the reader the question is "how
   // much better is Production than raw," and that question is well-defined
   // in either scoring rule.
+  //
+  // v0.6.325 — added RMSE (root mean squared error) and bias (mean signed
+  // error) alongside MAE. This is what real NWS/ECMWF verification reports
+  // publish: MAE says "typical error size," RMSE says "how bad are the
+  // occasional blow-ups," bias says "systematic drift over/under."
   const rows = [];
   const cellRows = [];  // per-(field, band) for worst-cell surfacing
   const mae = tsDoc.per_layer_mae_by_lead;
+  const rmse = tsDoc.per_layer_rmse_by_lead || {};
+  const biasByLead = tsDoc.per_layer_bias_by_lead || {};
   for (const fieldKey of Object.keys(mae)) {
     if (brierFields.has(fieldKey)) continue;
     const layers = mae[fieldKey];
@@ -2837,7 +2844,20 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     const prodMae = _avg1to47(prodArr);
     if (rawMae == null || prodMae == null || rawMae === 0) continue;
     const pct = (prodMae - rawMae) / rawMae * 100;
-    rows.push({ field: fieldKey, pct });
+    // RMSE — same shape, different summation math. Production RMSE is
+    // published directly by the Fitter now; fall back to null if unavailable
+    // (transitional — cycles once per Fitter tick, so first read after
+    // deploy may not have it).
+    const rmseLayers = rmse[fieldKey] || {};
+    const rawRmse  = _avg1to47(rmseLayers.l1);
+    const prodRmse = _avg1to47(rmseLayers.production);
+    const rmsePct = (rawRmse != null && prodRmse != null && rawRmse > 0)
+      ? (prodRmse - rawRmse) / rawRmse * 100 : null;
+    // Signed bias — Production layer directly. Positive = Production
+    // over-forecasts on average; negative = under-forecasts. Field units.
+    const biasLayers = biasByLead[fieldKey] || {};
+    const prodBias = _avg1to47(biasLayers.production);
+    rows.push({ field: fieldKey, pct, rmsePct, prodBias });
     // Per-band cells for worst-cell tracker.
     for (const b of BANDS) {
       const rawB = _avgBand(layers.l1, b.lo, b.hi);
@@ -2879,6 +2899,13 @@ function renderScorecardBanner(tsDoc, wxDoc) {
     return;
   }
   const meanPct = rows.reduce((s, r) => s + r.pct, 0) / rows.length;
+  // RMSE mean across fields that have it. Falls back gracefully if the
+  // Fitter hasn't emitted per_layer_rmse_by_lead yet (first tick after
+  // v0.6.325 deploy).
+  const rmseAvailable = rows.filter(r => r.rmsePct != null);
+  const meanRmsePct = rmseAvailable.length
+    ? rmseAvailable.reduce((s, r) => s + r.rmsePct, 0) / rmseAvailable.length
+    : null;
   // Median across the same MAE rows. Robust to tiny-denominator amplification
   // (e.g. pressure raw MAE ~0.019 → any small change reads as huge %). When
   // mean and median diverge, the story is "concentrated wins vs broad wins" —
@@ -2928,16 +2955,35 @@ function renderScorecardBanner(tsDoc, wxDoc) {
   const fmtBand = (r, color) => r
     ? `<code>${r.field}</code>@${r.band} <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`
     : "—";
-  const bestCell = best && best.pct < 0 ? fmt(best, "#4ad29a") : "—";
-  const worstCell = worst && worst.pct > 0 ? fmt(worst, "#fb7c5c") : "—";
+  // Field-level formatter that emits MAE% (primary) with RMSE% and bias
+  // as compact secondary rows. Same shape for best/worst tiles.
+  const _fmtField = (r, color) => {
+    if (!r) return "—";
+    const label = _fieldLabel(r);
+    let out = `<code>${label}</code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">MAE</span>`;
+    if (r.rmsePct != null) {
+      const rColor = r.rmsePct < 0 ? "#4ad29a" : (r.rmsePct > 0 ? "#fb7c5c" : "#8a93a3");
+      out += `<div style="font-size:0.78em;margin-top:1px;"><strong style="color:${rColor};">${r.rmsePct >= 0 ? "+" : ""}${r.rmsePct.toFixed(1)}%</strong><span style="font-size:0.75em;opacity:0.55;margin-left:3px;">RMSE</span></div>`;
+    }
+    if (r.prodBias != null && Math.abs(r.prodBias) > 0.005) {
+      const bColor = "#a8b4c2";
+      out += `<div style="font-size:0.75em;margin-top:1px;opacity:0.7;"><strong style="color:${bColor};">${r.prodBias >= 0 ? "+" : ""}${r.prodBias.toFixed(2)}</strong><span style="font-size:0.75em;opacity:0.55;margin-left:3px;">bias</span></div>`;
+    }
+    return out;
+  };
+  const bestCell = best && best.pct < 0 ? _fmtField(best, "#4ad29a") : "—";
+  const worstCell = worst && worst.pct > 0 ? _fmtField(worst, "#fb7c5c") : "—";
   const worstBandCell = worstBand && worstBand.pct > 0 ? fmtBand(worstBand, "#fb7c5c") : "—";
+  // Overall RMSE color mirrors the MAE color logic.
+  const rmseColor = meanRmsePct != null && meanRmsePct < 0 ? "#4ad29a" : "#fb7c5c";
   host.hidden = false;
   host.innerHTML = `
     <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:baseline;">
       <div>
-        <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Overall</div>
-        <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">mean</span></div>
-        ${medianPct != null ? `<div style="font-size:0.85em;margin-top:2px;"><strong style="color:${medianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${medianPct >= 0 ? "+" : ""}${medianPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">median</span></div>` : ""}
+        <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Overall vs raw</div>
+        <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean</span></div>
+        ${meanRmsePct != null ? `<div style="font-size:0.85em;margin-top:2px;"><strong style="color:${rmseColor};">${meanRmsePct >= 0 ? "+" : ""}${meanRmsePct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">RMSE mean</span></div>` : ""}
+        ${medianPct != null ? `<div style="font-size:0.78em;margin-top:2px;opacity:0.75;"><strong style="color:${medianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${medianPct >= 0 ? "+" : ""}${medianPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE median</span></div>` : ""}
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Winning fields</div>
@@ -2969,8 +3015,13 @@ function renderScorecardBanner(tsDoc, wxDoc) {
         return `<code>${r.field}<sup style="opacity:0.7;">B</sup></code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`;
       }).join(" · ")}
     </div>` : ""}
-    <div style="opacity:0.55;font-size:0.78em;margin-top:6px;">
-      Production MAE vs raw model, averaged over leads 1–47h (Overall) or per lead band (Worst cell). Lower is better. pp shown separately (Brier, not MAE — same "% of raw error erased" framing, different scoring rule). Worst-cell number surfaces short-lead damage that a favorable field-level average could hide.
+    <div style="opacity:0.55;font-size:0.78em;margin-top:6px;line-height:1.5;">
+      <strong>What this measures.</strong> Production forecast error compared to raw HRRR/GFS, averaged over leads 1–47h. Both computed against the same local-network observations (mesonet Kalman blend for temp/wind/humidity/pressure; KBOS+KBVY METAR for cloud; Tempest median for solar; max WU precip gauges). Lower error is better; negative % means we beat raw. Three metrics side-by-side because they answer different questions:
+      <br><strong>MAE</strong> = average of |error|. Typical error size on a normal day.
+      <strong>RMSE</strong> = root of mean squared error. Same shape but weights big misses more — if RMSE is worse than MAE, the pipeline occasionally has blow-ups it hides in typical-day averages. NWS and ECMWF publish both.
+      <strong>Bias</strong> = signed mean error (in field units, e.g., °F for temp). Positive = we usually over-forecast; negative = we usually under-forecast. Systematic drift MAE hides.
+      <br><strong>pp</strong> shown separately (Brier, not MAE — probability forecast, different scoring rule). <strong>Worst-cell number</strong> surfaces short-lead damage a favorable field average could hide.
+      <br><em>Not yet measured (planned):</em> skill vs. persistence (does the pipeline beat "same as it is now" at short lead?); reliability decomposition on pp (when we say 30%, does it happen 30% of the time?). Both real gaps vs. an NWS-style verification report.
     </div>
   `;
 }
