@@ -72,6 +72,54 @@ SR_L5_SKIP_CELLS = [
     ("calm",      0, 48),
 ]
 
+# cc L4 skip cells: from 2026-07-11 l4_regime_lead_analysis regime-gate sweep.
+# ne_flow/0-5h: -3.6% (n=1,197). pre_frontal/0-5h: -4.4% (n=2,675).
+# Under regime-gate-first framework (see [[feedback-regime-gate-first]]).
+# cc is currently in L4_FIELDS but has 2 LOSE cells; skip L4 there, use L3
+# (which for cc is equivalent to L2 since cc isn't in L3_FIELDS).
+CC_L4_SKIP_CELLS = [
+    ("ne_flow",     0, 6),
+    ("pre_frontal", 0, 6),
+]
+
+# ws L3 skip cells BY fc_ws BIN (from 2026-07-11 halves-stability sweep).
+# Both halves show catastrophic L3 loss when forecast wind is < 3 mph:
+#   0-5h:   -4.4% recent, -17.3% prior
+#   12-23h: -31.2% recent, -77.5% prior
+#   24-47h: -25.2% recent, -66.0% prior
+# Mechanism: L3's per-lead additive constant is wrong for near-calm winds
+# where a small absolute bias is a huge relative error.
+# Structure: (fc_ws_lo, fc_ws_hi, lead_lo, lead_hi). Skip if fc_ws in [lo, hi).
+WS_FCWS_SKIP_CELLS = [
+    (0.0, 3.0,  0,  6),   # 0-3 calm, 0-5h
+    (0.0, 3.0, 12, 24),   # 0-3 calm, 12-23h
+    (0.0, 3.0, 24, 48),   # 0-3 calm, 24-47h
+]
+
+# wg L3 skip cells (from 2026-07-11 halves-stability sweep + full sweep).
+# All calm-regime cells show catastrophic L3 loss both halves (-13% to -66%).
+# sea_breeze/6-11h stable LOSE (-12.6% recent, -2.0% prior).
+# Mechanism: L3 per-lead constant is structurally wrong for near-calm winds
+# AND for sea_breeze transition window with bidirectional bias.
+WG_SKIP_CELLS = [
+    ("calm",       0,  6),   # 0-5h
+    ("calm",      12, 24),   # 12-23h
+    ("calm",      24, 48),   # 24-47h
+    ("sea_breeze", 6, 12),   # 6-11h
+]
+
+# ws L3 additional REGIME skip cells (from full sweep). Adds to WS_SKIP_CELLS.
+# Note: fc_ws-based calm skip cells + regime "calm" cells overlap heavily
+# (regime classifier calls calm when fc_ws<3). We use regime "calm" here
+# to keep the axis consistent with the wg skip table structure.
+# nw_flow/24-47h: stable -10% loss, n=12k combined, currently not skipped.
+WS_SKIP_CELLS_EXTRA = [
+    ("nw_flow", 24, 48),
+    ("calm",     0,  6),
+    ("calm",    12, 24),
+    ("calm",    24, 48),
+]
+
 
 def _applied_from_walk(row):
     """Deepest layer whose error differs from the previous captured layer.
@@ -92,8 +140,8 @@ def _ws_l3_skip(row):
     """Return True if this ws row falls in a skip cell (skip L3, use L2)."""
     if row.get("field") != "ws":
         return False
-    state_obs = row.get("state_obs") or {}
-    regime = state_obs.get("regime_synoptic")
+    state_fc = row.get("state_fc") or {}
+    regime = state_fc.get("regime_synoptic")
     if not regime:
         return False
     lead = row.get("lead_h")
@@ -109,14 +157,82 @@ def _sr_l5_skip(row):
     """Return True if this sr row falls in an L5 skip cell (skip L5, use L4)."""
     if row.get("field") != "sr":
         return False
-    state_obs = row.get("state_obs") or {}
-    regime = state_obs.get("regime_synoptic")
+    state_fc = row.get("state_fc") or {}
+    regime = state_fc.get("regime_synoptic")
     if not regime:
         return False
     lead = row.get("lead_h")
     if lead is None:
         return False
     for r, lo, hi in SR_L5_SKIP_CELLS:
+        if regime == r and lo <= lead < hi:
+            return True
+    return False
+
+
+def _cc_l4_skip(row):
+    """Return True if this cc row falls in a proposed L4 skip cell."""
+    if row.get("field") != "cc":
+        return False
+    state_fc = row.get("state_fc") or {}
+    regime = state_fc.get("regime_synoptic")
+    if not regime:
+        return False
+    lead = row.get("lead_h")
+    if lead is None:
+        return False
+    for r, lo, hi in CC_L4_SKIP_CELLS:
+        if regime == r and lo <= lead < hi:
+            return True
+    return False
+
+
+def _ws_l3_skip_fcws(row):
+    """Return True if this ws row falls in a proposed fc_ws-based L3 skip cell."""
+    if row.get("field") != "ws":
+        return False
+    state_fc = row.get("state_fc") or {}
+    fc_ws = state_fc.get("wind_speed")
+    if fc_ws is None:
+        return False
+    lead = row.get("lead_h")
+    if lead is None:
+        return False
+    for fw_lo, fw_hi, ll, lh in WS_FCWS_SKIP_CELLS:
+        if fw_lo <= fc_ws < fw_hi and ll <= lead < lh:
+            return True
+    return False
+
+
+def _wg_l3_skip(row):
+    """Return True if this wg row falls in a proposed L3 skip cell."""
+    if row.get("field") != "wg":
+        return False
+    state_fc = row.get("state_fc") or {}
+    regime = state_fc.get("regime_synoptic")
+    if not regime:
+        return False
+    lead = row.get("lead_h")
+    if lead is None:
+        return False
+    for r, lo, hi in WG_SKIP_CELLS:
+        if regime == r and lo <= lead < hi:
+            return True
+    return False
+
+
+def _ws_l3_skip_extra(row):
+    """Return True if this ws row falls in a NEW regime skip cell from the full sweep."""
+    if row.get("field") != "ws":
+        return False
+    state_fc = row.get("state_fc") or {}
+    regime = state_fc.get("regime_synoptic")
+    if not regime:
+        return False
+    lead = row.get("lead_h")
+    if lead is None:
+        return False
+    for r, lo, hi in WS_SKIP_CELLS_EXTRA:
         if regime == r and lo <= lead < hi:
             return True
     return False
@@ -180,6 +296,44 @@ def _intervention_error(row, intervention):
         # correct and future-proof (if sr ever gets L3 or L4 corrections).
         if field == "sr" and _sr_l5_skip(row):
             applied = "l4"
+        else:
+            applied = _applied_from_walk(row)
+    elif intervention == "cc_L4_skip_regimes":
+        # For cc rows in the proposed L4 skip cells, use L3 error instead of L4.
+        # cc isn't in L3_FIELDS so error_l3 == error_l2 by construction.
+        if field == "cc" and _cc_l4_skip(row):
+            applied = "l3"
+        else:
+            applied = _applied_from_walk(row)
+    elif intervention == "ws_L3_skip_fcws":
+        # For ws rows in the proposed fc_ws-based L3 skip cells, use L2 instead.
+        if field == "ws" and _ws_l3_skip_fcws(row):
+            applied = "l2"
+        else:
+            applied = _applied_from_walk(row)
+    elif intervention == "wg_L3_skip":
+        # For wg rows in the proposed L3 skip cells, use L2 instead.
+        if field == "wg" and _wg_l3_skip(row):
+            applied = "l2"
+        else:
+            applied = _applied_from_walk(row)
+    elif intervention == "halves_sweep_combined":
+        # Combined: ws fc_ws skip + wg regime skip. Both cleared halves check.
+        if field == "ws" and _ws_l3_skip_fcws(row):
+            applied = "l2"
+        elif field == "wg" and _wg_l3_skip(row):
+            applied = "l2"
+        else:
+            applied = _applied_from_walk(row)
+    elif intervention == "full_sweep_ships":
+        # ALL currently-actionable skip cells from the halves-verified full sweep.
+        # ws L3: skip fc_ws-calm + nw_flow/24-47h + calm-regime bands.
+        # wg L3: skip calm-regime all bands + sea_breeze/6-11h.
+        # (h L2 + dp L2 ne_flow cells omitted — architecture change, not config-only.)
+        if field == "ws" and (_ws_l3_skip_fcws(row) or _ws_l3_skip_extra(row)):
+            applied = "l2"
+        elif field == "wg" and _wg_l3_skip(row):
+            applied = "l2"
         else:
             applied = _applied_from_walk(row)
     elif intervention == "all_targeted":
@@ -362,6 +516,11 @@ def main():
         ("L2_pr_drop",       "pr: drop L2 additive"),
         ("ws_L3_skip",       "ws: skip L3 in (ne_flow *, sea_breeze 0-11h); keep L2"),
         ("sr_L5_skip",       "sr: skip L5 in (ne_flow *, calm *); use L4"),
+        ("cc_L4_skip_regimes","cc: skip L4 in (ne_flow 0-5h, pre_frontal 0-5h); use L3"),
+        ("ws_L3_skip_fcws",  "ws: skip L3 when fc_ws<3 mph at 0-5h/12-23h/24-47h; use L2"),
+        ("wg_L3_skip",       "wg: skip L3 in (sea_breeze 6-11h); use L2"),
+        ("halves_sweep_combined", "ws fc_ws skip + wg regime skip (halves-verified)"),
+        ("full_sweep_ships",  "all config-only halves-verified skip cells (ws + wg L3)"),
         ("all_targeted",     "combined: L6 off + ws L2 drop + pr L2 drop + ws L3 skip + sr L5 skip"),
     ]
 

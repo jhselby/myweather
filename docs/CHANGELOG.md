@@ -1,6 +1,22 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.326 • July 11, 2026</strong></summary>
+
+- **Phase 2 persistence-skill baseline shipped.** New `analysis/h_persistence_skill.py`. 12 fields, MAE + RMSE + skill vs L1/L4. Results: 6 fields ADD VALUE (t/dp/h/pr/ws/sr), 3 MIXED (wg/cc/pp), 3 NO SKILL (cl/cm/ch). ch loses to persistence at every band despite L3+L4.
+- **ch regime-gate design verified.** New `analysis/h_ch_persistence_blend.py`. Halves-check confirmed: L4 for `frontal` regime, persistence elsewhere → −19.6% pooled ch MAE. Only Joe-inspired regime-gate cleared halves stability.
+- **Full regime-gate sweep tool.** New `analysis/h_full_regime_sweep.py`. Comprehensive halves-check across every (field, layer, regime, lead_band). 11 SKIP + 2 ADD candidates surfaced; halves-agreement mandatory.
+- **Regime-gate-first framework codified.** Default framing for heterogeneous findings: gate ON where wins, OFF elsewhere — ship. Split-halves stability check codified as pre-ship gate (stronger than "wait 7 days"). Three noise patterns documented (recent-anomaly, older-residue-dominated, oscillation).
+- **`production_whatif.py` bug caught + fixed.** Was evaluating regime-based skip cells on `state_obs`; live `decay_apply.py` uses `state_fc`. wg calm/24-47h flipped +42.8% → −62.9% under correct axis. Live shipped gates always used state_fc so behave correctly; only production_whatif estimates were biased.
+- **Stage 4 refined view updated.** 27/1/2 → 26/0/9 after single-day window roll. 8 of 9 FAILs are cm × every band × difficulty key. Diagnosed as HRRR mid-cloud distribution shift 07-04→07-11 (mean cm forecast 16% → 47%), not a pipeline bug. Legacy ship BLOCKED; re-audit 07-18.
+- **Lc anomaly-week HOLD.** Per-bin bias check on 07-04→07-11 window: cc 50-80/80-95 would over-correct 20-23pp; cl mid-high 11-30pp; cm 50-80 would under-correct 13pp. Do NOT flip ENABLED=True until 07-18 window roll + refit.
+- **Gate-firing rollup — expected-dormant allowlist.** `analysis/gate_firing_rollup.py` now distinguishes ⚠ UNEXPECTED from ✓ EXPECTED (Lc/Lt/MLC gate-pending; C1h/t designed dormant). Silent dormancy still surfaces if it happens.
+- **Debug page prose condensation pass.** ~15 sections rewritten tight (info retained, verbosity cut 30-70% each). C1 confidence layer block, R0 audit description, R2 state-stratified, Lc + dp Stage 1 candidates, retired archive, recent activity, live-layer gate, open watches.
+- **Debug page canon updates.** Stage 4 numbers (26/0/9 + cm anomaly), h → L4 re-freeze reason (halves-check), persistence-skill script referenced (integration pending), Lc anomaly-week HOLD caveat added.
+
+</details>
+
+<details>
 <summary><strong>v0.6.325a • July 10, 2026</strong></summary>
 
 - **Debug page prose sweep — measurement framework.** Joe pushed back that v0.6.325 shipped only the scorecard tile logic, not the reader-facing rewrite he'd asked for ("write up the debug page so it talks about the right stuff"). Owned the miss, did the prose pass. Added a new collapsible <strong>"How we measure whether the forecast is good — the metric framework"</strong> section between the priority scoreboard and Engineering Updates. Covers: the core comparison shape (same pairs, same observations, same target), what "observed" means per field (mesonet Kalman blend for t/dp/h/ws/wg/pr, KBOS+KBVY METAR mean for cloud, Tempest median for sr, max WU gauges for pa, binary for pp), the three side-by-side metrics (MAE = typical error, RMSE = weights big misses, bias = systematic drift), why pp uses Brier not MAE, and the honest list of what's not yet measured (skill vs persistence, skill vs climatology, pp reliability decomposition). Explicit historical wording caveat: section descriptions written before v0.6.325 reference MAE as if it were the only measure — read them with the RMSE + bias context now available. <em>Accuracy section prose</em>: added metric caveat noting the L2-additive-bias fields (dp/h/ws/wg) have a 3-7pp gap between MAE improvement and RMSE improvement — the corrections occasionally add error on days when the raw model was already near-perfect. <em>Stage 4 audit prose</em>: added caveat that this scores drift on MAE only and would tell a different story on RMSE or on a raw-MAE-quartile-conditioned distribution (the difficulty lens exists but Stage 4 doesn't use it in its verdict yet). <em>State-stratified section prose</em>: similar caveat about MAE-only ranking. No code changes.

@@ -194,17 +194,45 @@ def print_summary(out):
 
     print()
     flags = out["dormancy_flags"]
+    # Expected-dormant allowlist. Anything listed here fires the "expected" bucket
+    # instead of the ⚠ bucket. Keep the reason inline so it's obvious when to remove.
+    EXPECTED_DORMANT_OPERATORS = {
+        "Lc":  "shipped 2026-07-04 v0.6.298 with ENABLED=False; waiting on 7-day gate clear",
+        "Lt":  "both branches disabled 2026-07-01; dormant pending Fix B refit",
+        "MLC": "marine-layer cc sandbox, ENABLED=False, waiting on trend to hold",
+    }
+    EXPECTED_DORMANT_PAIRS = {
+        ("C1h", "t"): "REDUND to both C1f and C1e per co-axis ortho gate (v0.6.321); designed never to fire",
+    }
+
+    ops_unexpected = [op for op in flags["operators_never_fired"] if op not in EXPECTED_DORMANT_OPERATORS]
+    ops_expected   = [op for op in flags["operators_never_fired"] if op in EXPECTED_DORMANT_OPERATORS]
+    pairs_unexpected = [(o,f) for o,f in flags["operator_field_pairs_never_fired"] if (o,f) not in EXPECTED_DORMANT_PAIRS]
+    pairs_expected   = [(o,f) for o,f in flags["operator_field_pairs_never_fired"] if (o,f) in EXPECTED_DORMANT_PAIRS]
+
     print("DORMANCY FLAGS")
-    if flags["operators_never_fired"]:
-        print(f"  Operators never fired: {flags['operators_never_fired']}")
-    if flags["operator_field_pairs_never_fired"]:
-        print(f"  Operator+field pairs never fired ({len(flags['operator_field_pairs_never_fired'])}):")
-        for op, f in flags["operator_field_pairs_never_fired"]:
-            print(f"    {op}/{f}")
-    if flags["operator_field_regime_never_fired_with_nonzero_ticks"]:
-        print(f"  Operator+field never fired in regime that DID run (≥5 ticks) — silent dormancy candidates:")
-        for op, f, r, nt in flags["operator_field_regime_never_fired_with_nonzero_ticks"]:
-            print(f"    {op}/{f}/{r} — {nt} ticks in that regime, 0 fires")
+    if ops_unexpected or pairs_unexpected or flags["operator_field_regime_never_fired_with_nonzero_ticks"]:
+        print("  ⚠ UNEXPECTED (action needed):")
+        if ops_unexpected:
+            print(f"    Operators never fired: {ops_unexpected}")
+        if pairs_unexpected:
+            print(f"    Operator+field pairs never fired ({len(pairs_unexpected)}):")
+            for op, f in pairs_unexpected:
+                print(f"      {op}/{f}")
+        if flags["operator_field_regime_never_fired_with_nonzero_ticks"]:
+            print(f"    Operator+field never fired in regime that DID run (≥5 ticks) — silent dormancy candidates:")
+            for op, f, r, nt in flags["operator_field_regime_never_fired_with_nonzero_ticks"]:
+                print(f"      {op}/{f}/{r} — {nt} ticks in that regime, 0 fires")
+    else:
+        print("  ⚠ UNEXPECTED: none")
+
+    if ops_expected or pairs_expected:
+        print("  ✓ EXPECTED (waiting on gate / designed dormant):")
+        for op in ops_expected:
+            print(f"    {op} — {EXPECTED_DORMANT_OPERATORS[op]}")
+        for op, f in pairs_expected:
+            print(f"    {op}/{f} — {EXPECTED_DORMANT_PAIRS[(op, f)]}")
+
     if not any(flags.values()):
         print("  none — every declared operator × field × regime fired at least once")
 
