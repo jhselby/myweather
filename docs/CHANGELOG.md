@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.325a • July 10, 2026</strong></summary>
+
+- **Debug page prose sweep — measurement framework.** Joe pushed back that v0.6.325 shipped only the scorecard tile logic, not the reader-facing rewrite he'd asked for ("write up the debug page so it talks about the right stuff"). Owned the miss, did the prose pass. Added a new collapsible <strong>"How we measure whether the forecast is good — the metric framework"</strong> section between the priority scoreboard and Engineering Updates. Covers: the core comparison shape (same pairs, same observations, same target), what "observed" means per field (mesonet Kalman blend for t/dp/h/ws/wg/pr, KBOS+KBVY METAR mean for cloud, Tempest median for sr, max WU gauges for pa, binary for pp), the three side-by-side metrics (MAE = typical error, RMSE = weights big misses, bias = systematic drift), why pp uses Brier not MAE, and the honest list of what's not yet measured (skill vs persistence, skill vs climatology, pp reliability decomposition). Explicit historical wording caveat: section descriptions written before v0.6.325 reference MAE as if it were the only measure — read them with the RMSE + bias context now available. <em>Accuracy section prose</em>: added metric caveat noting the L2-additive-bias fields (dp/h/ws/wg) have a 3-7pp gap between MAE improvement and RMSE improvement — the corrections occasionally add error on days when the raw model was already near-perfect. <em>Stage 4 audit prose</em>: added caveat that this scores drift on MAE only and would tell a different story on RMSE or on a raw-MAE-quartile-conditioned distribution (the difficulty lens exists but Stage 4 doesn't use it in its verdict yet). <em>State-stratified section prose</em>: similar caveat about MAE-only ranking. No code changes.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.325 • July 10, 2026</strong></summary>
 
 - **Scorecard now measures what real weather models measure.** Joe pushed on whether the current MAE-only headline is honest ("beats raw by 9% on average" — is that the right question?). Walked through what NWS and ECMWF actually publish for forecast verification: MAE, RMSE, bias, sample counts, skill scores vs reference forecasts (persistence + climatology), Brier + reliability for probabilistic. We were doing MAE and Brier (for pp) — legit but incomplete. Phase 1 ships the trivially-computable additions:
