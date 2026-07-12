@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.327 • July 12, 2026</strong></summary>
+
+- **ch persistence gate Stage 2 preview + Stage 3 wired (ENABLED=False).** Follow-on to Sunday digest ship candidate. New `analysis/h_ch_persistence_blend_stage2.py` runs per-(regime × lead_band) halves-verified split of Joe's regime-gate design. Verdict: **22 SHIP / 6 MARGIN / 8 SKIP / 1 THIN** of 37 cells. SKIP concentration exposed by halves check — sw_flow long-lead (3 of 4 bands flip signs between halves), pre_frontal/24-47h loses full window +9.6%. Clean gate would have regressed real volume; cell-conditioned gate ships only where verified. New processor `weather_collector/processors/ch_persistence_gate.py` reads curated JSON, runs after Lc, replaces `hourly.cloud_cover_high` with persistence-of-obs on firing cells. Persistence source: `cloud_l2_meta.obs_mean` (pure KBOS+KBVY blend, pre-Kalman) with `hourly[0]` fallback. `frontal` regime always uses L4 by design. Telemetry stamped every tick; applicability_map contribution wired. Flip ENABLED=True only after 7-day live-layer change gate + no halves-flip in weekly re-reads.
+
+</details>
+
+<details>
 <summary><strong>v0.6.326 • July 11, 2026</strong></summary>
 
 - **Phase 2 persistence-skill baseline shipped.** New `analysis/h_persistence_skill.py`. 12 fields, MAE + RMSE + skill vs L1/L4. Results: 6 fields ADD VALUE (t/dp/h/pr/ws/sr), 3 MIXED (wg/cc/pp), 3 NO SKILL (cl/cm/ch). ch loses to persistence at every band despite L3+L4.

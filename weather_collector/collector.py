@@ -520,6 +520,17 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  Cloud saturation stamp failed: {redact_secrets(e)}")
 
+    # ch persistence gate — regime × lead_band bypass of L4 for ch. Runs
+    # AFTER Lc so persistence overwrites L4+Lc where the gate fires; Lc's
+    # shift was fit against L4 and would re-introduce bias if applied on
+    # top of persistence. ENABLED gated; module still stamps telemetry
+    # when False for the 7-day live-layer change gate.
+    try:
+        from .processors.ch_persistence_gate import stamp_ch_persistence_gate
+        stamp_ch_persistence_gate(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  ch persistence gate stamp failed: {redact_secrets(e)}")
+
     # Applicability map — each correction module exposes describe_applicability()
     # returning a list of layer descriptors (schema in weather_collector/data/
     # applicability_map_schema.json). Collected here once per tick, after every
@@ -531,8 +542,9 @@ def main():
         from .processors.cove_correction import describe_applicability as _da_cove
         from .processors.cloud_saturation_correction import describe_applicability as _da_lc
         from .processors.confidence_layer import describe_applicability as _da_c1
+        from .processors.ch_persistence_gate import describe_applicability as _da_chpg
         layers = []
-        for fn in (_da_decay, _da_solar, _da_cove, _da_lc, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_cove, _da_lc, _da_chpg, _da_c1):
             try:
                 layers.extend(fn())
             except Exception as e:
