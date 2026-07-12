@@ -941,7 +941,7 @@
 
     <p><strong>Measurement gaps:</strong></p>
     <ul style="margin:4px 0 8px 20px;padding:0;">
-      <li><strong>Persistence skill</strong> — shipped 2026-07-11 (<code>h_persistence_skill.py</code>): 6 fields ADD VALUE (t/dp/h/pr/ws/sr), 3 MIXED (wg/cc/pp), 3 NO SKILL — <em>ch loses to persistence at every band despite L3+L4</em>. Response for ch: <strong>ch persistence gate shipped 07-12 v0.6.327 (ENABLED=False, day 1/7)</strong> — cell-conditioned per (regime × lead_band). cl and cm same NO SKILL bucket, regime-gated approach queued. Scorecard integration still pending.</li>
+      <li><strong>Persistence skill</strong> — shipped 2026-07-11 (<code>h_persistence_skill.py</code>). Baseline: 5 ADD VALUE (t/h/pr/ws/sr), 4 MIXED (dp/wg/cc/pp), 3 NO SKILL — <em>cl/cm/ch lose to persistence at every band despite L3+L4</em>. <strong>Scorecard integration shipped 07-12 v0.6.328</strong> — the "vs Persistence" line in the scorecard banner (above) is live-updated from <code>persistence_skill.json</code>. Response for ch: <strong>ch persistence gate shipped 07-12 v0.6.327 (ENABLED=False, day 1/7)</strong>. cl explored 07-12 → different regime shape, HOLD pending 07-19. cm queued past 07-18 anomaly rollout.</li>
       <li><strong>Climatology skill</strong> — long-lead reference. Needs a climatology dataset.</li>
       <li><strong>pp Brier reliability decomposition</strong> — does "30% chance" actually happen 30% of the time? Aggregate Brier only, no decomposition.</li>
     </ul>
@@ -1829,6 +1829,7 @@ const FRONTAL_EVENTS_URL = "https://data.wymancove.com/frontal_events_log.json";
 const BACKTEST_SWEEP_URL = "https://data.wymancove.com/backtest_sweep_results.json";
 const SHADOW_WHITELIST_URL = "https://data.wymancove.com/shadow_whitelist_log.json";
 const GATE_FIRING_URL = "https://data.wymancove.com/gate_firing_rollup.json";
+const PERSISTENCE_URL = "https://data.wymancove.com/persistence_skill.json";
 const M2_PERIOD_HOURS = 12.4206;
 // Reference cosine amplitude for Section 5's phase-binned charts. Bumped from
 // 4.0 to 5.0 in v0.6.12 — closer to Salem's typical M2 amplitude. The
@@ -2798,7 +2799,7 @@ function _legendSwatch(color, checked) {
 // summarizes: mean delta, count of net-positive fields, worst regression. Uses
 // the same _productionLayerKey logic as the accuracy chart so "stack" = actual
 // production output per field, not just a hardcoded L4.
-function renderScorecardBanner(tsDoc, wxDoc) {
+function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
   const host = document.getElementById("scorecard-banner");
   if (!host) return;
   if (!tsDoc || !tsDoc.per_layer_mae_by_lead) {
@@ -3065,13 +3066,39 @@ function renderScorecardBanner(tsDoc, wxDoc) {
         return `<code>${r.field}<sup style="opacity:0.7;">B</sup></code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`;
       }).join(" · ")}
     </div>` : ""}
+    ${(() => {
+      // Persistence-skill line — pipeline vs "same as now" reference forecast.
+      // Uses persistence_skill.json published by analysis/h_persistence_skill.py
+      // in the daily digest. Silent no-op if the file is missing (pre-first-run
+      // or GCS blip). Skill = 1 - L4_MAE / persistence_MAE per field; positive
+      // means the pipeline beats persistence. Verdict rules match the analysis
+      // script (see verdict_rules block in the JSON).
+      if (!persistDoc || !persistDoc.fields || !persistDoc.summary) return "";
+      const s = persistDoc.summary;
+      const fields = persistDoc.fields;
+      const addFields   = Object.entries(fields).filter(([, v]) => v.verdict === "ADDS VALUE").map(([f]) => f);
+      const mixedFields = Object.entries(fields).filter(([, v]) => v.verdict === "MIXED").map(([f]) => f);
+      const noFields    = Object.entries(fields).filter(([, v]) => v.verdict === "NO SKILL").map(([f]) => f);
+      return `
+    <div style="margin-top:8px;padding-top:6px;border-top:1px solid #1a2530;font-size:0.85em;">
+      <span style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-right:8px;">vs Persistence</span>
+      <strong style="color:#4ad29a;">${s.add}</strong><span style="opacity:0.6;">/${s.total} add value</span>
+      <span style="opacity:0.5;margin:0 6px;">·</span>
+      <strong style="color:#e0d472;">${s.mixed}</strong><span style="opacity:0.6;"> mixed</span>
+      <span style="opacity:0.5;margin:0 6px;">·</span>
+      <strong style="color:#fb7c5c;">${s.no_skill}</strong><span style="opacity:0.6;"> no skill</span>
+      ${addFields.length   ? `<div style="font-size:0.75em;opacity:0.6;margin-top:2px;"><span style="color:#4ad29a;">✓</span> ${addFields.join(" ")}</div>` : ""}
+      ${mixedFields.length ? `<div style="font-size:0.75em;opacity:0.6;"><span style="color:#e0d472;">~</span> ${mixedFields.join(" ")}</div>` : ""}
+      ${noFields.length    ? `<div style="font-size:0.75em;opacity:0.6;"><span style="color:#fb7c5c;">✗</span> ${noFields.join(" ")} <span style="opacity:0.55;">— pipeline behind naive persistence</span></div>` : ""}
+    </div>`;
+    })()}
     <div style="opacity:0.55;font-size:0.78em;margin-top:6px;line-height:1.5;">
       <strong>What this measures.</strong> Production forecast error compared to raw HRRR/GFS, averaged over leads 1–47h. Both computed against the same local-network observations (mesonet Kalman blend for temp/wind/humidity/pressure; KBOS+KBVY METAR for cloud; Tempest median for solar; max WU precip gauges). Lower error is better; negative % means we beat raw. Three metrics side-by-side because they answer different questions:
       <br><strong>MAE</strong> = average of |error|. Typical error size on a normal day.
       <strong>RMSE</strong> = root of mean squared error. Same shape but weights big misses more — if RMSE is worse than MAE, the pipeline occasionally has blow-ups it hides in typical-day averages. NWS and ECMWF publish both.
       <strong>Bias</strong> = signed mean error (in field units, e.g., °F for temp). Positive = we usually over-forecast; negative = we usually under-forecast. Systematic drift MAE hides.
       <br><strong>pp</strong> shown separately (Brier, not MAE — probability forecast, different scoring rule). <strong>Worst-cell number</strong> surfaces short-lead damage a favorable field average could hide.
-      <br><em>Measurement gaps:</em> pp Brier reliability decomposition (when we say 30%, does it happen 30% of the time?). Persistence skill baseline <strong>shipped 2026-07-11</strong> (<code>h_persistence_skill.py</code>) — awaits scorecard integration.
+      <br><em>Measurement gaps:</em> pp Brier reliability decomposition (when we say 30%, does it happen 30% of the time?). Persistence skill line (below) shows how the L4-corrected stack does against "same as now" per field — skill = 1 − L4_MAE / persistence_MAE, ADDS VALUE = skill ≥ +0.10 on both MAE and RMSE in ≥ 3 of 4 lead bands with no BEHIND band.
     </div>
   `;
 }
@@ -5350,8 +5377,14 @@ async function load() {
     if (res.ok) gateFiringDoc = await res.json();
   } catch (err) { /* silent — file appears after first digest rollup */ }
 
+  let persistenceDoc;
+  try {
+    const res = await fetch(PERSISTENCE_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) persistenceDoc = await res.json();
+  } catch (err) { /* silent — file appears after digest publishes it */ }
+
   renderMeta(corrDoc, wxDoc);
-  renderScorecardBanner(tsDoc, wxDoc);
+  renderScorecardBanner(tsDoc, wxDoc, persistenceDoc);
   renderAccuracySection(tsDoc, wxDoc);
   renderL3L4AuditSection(tsDoc, wxDoc);
   renderStateStratifiedSection(ssDoc);

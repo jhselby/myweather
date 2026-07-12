@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.328 • July 12, 2026</strong></summary>
+
+- **Persistence-skill → scorecard integration.** Closes the "shipped 2026-07-11 (`h_persistence_skill.py`) — awaits scorecard integration" gap that the scorecard prose has been advertising. `analysis/h_persistence_skill.py` now emits an enriched JSON with a per-field summary block (verdict + n-weighted pooled skill_l4_mae + band counts) and a top-line rollup (5 ADD / 4 MIXED / 3 NO SKILL), and publishes it to `gs://myweather-data/persistence_skill.json`. Debug page fetches `persistence_skill.json` alongside `time_series_diagnostic.json` and renders a "vs Persistence" line beneath the scorecard grid (`renderScorecardBanner` now takes a third `persistDoc` argument): 5/12 add value, 4 mixed, 3 no skill, with the ADD / MIXED / NO SKILL field lists. Scorecard prose measurement-gaps sentence rewritten — no longer says "awaits scorecard integration."
+
+</details>
+
+<details>
 <summary><strong>v0.6.327c • July 12, 2026</strong></summary>
 
 - **cl persistence investigation — Stage 1+2 explored, HOLD.** New `analysis/h_cl_persistence_blend.py` + `analysis/h_cl_linear_ramp_stage2.py`. cl does NOT have ch's regime shape: regime_gate + persist_only halves diverge (Δ_A −14% / Δ_B +13-15%, anomaly-inflated); linear_ramp τ scan monotonic-with-τ (no natural sweet spot); per-regime shows cloudy-active regimes (se_flow/calm/unknown, ~32% volume) want persistence while clear-flow regimes (sw_flow with tiny base MAE + nw_flow/pre_frontal/ne_flow/sea_breeze/frontal, ~68% volume) want L1 baseline. Stage 2 at τ=36 per (regime × lead_band): 20 SHIP / 2 MARGIN / 14 SKIP / 1 THIN; the 12-23h band is a graveyard (7 of 9 regimes SKIP). **Real signal: 0-5h narrow persistence gate — all 9 regimes SHIP at 0-5h.** Deferred: re-verify 2026-07-19 post-anomaly. If halves converge and 0-5h SHIPs hold, ship narrow `cl_persistence_short_lead.py` (all regimes, no skip table, leads ≤ 5h only). Otherwise cl gets no gate. Debug page updated: recent activity 07-12 entry, What's-improving panel new cl block, calendar 07-19 cl re-verify entry, hypothesis backlog table new NEW row. Memory saved: `project_cl_persistence_investigation.md`.

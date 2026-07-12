@@ -308,19 +308,90 @@ def emit(per_cell):
     return "\n".join(lines)
 
 
+def _per_field_summary(per_cell):
+    """Build the per-field summary the debug-page scorecard consumes:
+    verdict + pooled skill (weighted by n across bands) + band counts.
+    Skill pooled uses n-weighted MAE averages so a large 24-47h band
+    dominates its cell contribution appropriately."""
+    from collections import defaultdict as _dd
+    by_field = _dd(dict)
+    for (f, b), cell in per_cell.items():
+        by_field[f][b] = cell
+    fields = {}
+    for f, band_cells in by_field.items():
+        v_field = verdict_field(band_cells)
+        n_add = sum(1 for c in band_cells.values() if verdict_cell(c) == "ADDS VALUE")
+        n_beh = sum(1 for c in band_cells.values() if verdict_cell(c) == "BEHIND")
+        n_mar = sum(1 for c in band_cells.values() if verdict_cell(c) == "MARGINAL")
+        # n-weighted pooled MAE for persist and L4
+        num_p, num_4, den = 0.0, 0.0, 0
+        for c in band_cells.values():
+            n = c["n"]
+            num_p += c["mae_persist"] * n
+            num_4 += c["mae_l4"] * n
+            den += n
+        mae_p_pooled = (num_p / den) if den else None
+        mae_4_pooled = (num_4 / den) if den else None
+        skill_l4_mae_pooled = (1 - mae_4_pooled / mae_p_pooled) if (
+            mae_p_pooled and mae_p_pooled > 0) else None
+        fields[f] = {
+            "verdict": v_field,
+            "n_bands_add": n_add,
+            "n_bands_marginal": n_mar,
+            "n_bands_behind": n_beh,
+            "n_bands_total": len(band_cells),
+            "mae_persist_pooled": round(mae_p_pooled, 3) if mae_p_pooled is not None else None,
+            "mae_l4_pooled": round(mae_4_pooled, 3) if mae_4_pooled is not None else None,
+            "skill_l4_mae_pooled": round(skill_l4_mae_pooled, 3) if skill_l4_mae_pooled is not None else None,
+            "n": den,
+        }
+    return fields
+
+
+def _upload_to_gcs(payload):
+    """Publish persistence-skill JSON to GCS so the debug-page scorecard
+    can fetch it via https://data.wymancove.com/persistence_skill.json.
+    Silent no-op on any failure — local artifact still lands."""
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from weather_collector.gcs_io import upload_json
+        upload_json(payload, "persistence_skill.json", "persistence_skill.json")
+        print("  ✓ Published to gs://myweather-data/persistence_skill.json")
+    except Exception as e:
+        print(f"  ⚠ GCS upload skipped ({type(e).__name__}: {e}) — local file still written")
+
+
 def main():
+    from datetime import datetime as _dt, timezone as _tz
     per_cell = compute()
     text = emit(per_cell)
     print(text)
     os.makedirs(os.path.dirname(OUT_TXT), exist_ok=True)
     with open(OUT_TXT, "w") as fh:
         fh.write(text + "\n")
-    # JSON with flat cells for downstream (scorecard consumption)
-    flat = [{"field": f, "band": b, **v} for (f, b), v in per_cell.items()]
+    # Enriched JSON: cells (as before) + per-field summary + top-line rollup.
+    flat_cells = [{"field": f, "band": b, **v} for (f, b), v in per_cell.items()]
+    fields = _per_field_summary(per_cell)
+    n_add = sum(1 for x in fields.values() if x["verdict"] == "ADDS VALUE")
+    n_mix = sum(1 for x in fields.values() if x["verdict"] == "MIXED")
+    n_no  = sum(1 for x in fields.values() if x["verdict"] == "NO SKILL")
+    payload = {
+        "generated_at": _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "source": "forecast_error_log.jsonl",
+        "verdict_rules": {
+            "cell": "ADDS VALUE if skill_l4_mae >= 0.10 AND skill_l4_rmse >= 0.10; BEHIND if either < 0; else MARGINAL",
+            "field": "ADDS VALUE if >= 3 bands ADDS VALUE and no BEHIND; NO SKILL if 0 bands ADDS VALUE; else MIXED",
+            "min_n_per_cell": MIN_N_PER_CELL,
+        },
+        "summary": {"add": n_add, "mixed": n_mix, "no_skill": n_no, "total": len(fields)},
+        "fields": fields,
+        "cells": flat_cells,
+    }
     with open(OUT_JSON, "w") as fh:
-        json.dump({"cells": flat}, fh, indent=2)
+        json.dump(payload, fh, indent=2)
     print(f"\nwrote {OUT_TXT}", file=sys.stderr)
     print(f"wrote {OUT_JSON}", file=sys.stderr)
+    _upload_to_gcs(payload)
 
 
 if __name__ == "__main__":
