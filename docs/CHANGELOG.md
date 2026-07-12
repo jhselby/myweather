@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.327b • July 12, 2026</strong></summary>
+
+- **Debug page stale-date + counter pass + collapse-all toggle.** Joe caught "Last curated: 2026-07-10" + "Current pipeline state — 2026-07-09" — updated both to 2026-07-12. Live counters updated to current values: ws L3 strip day 2→3/7, Lc gate day 2→3/7, C1h + C1d narrow-promote streaks explicitly noted as day 1/7 today after SHIP-set instability reset (14 SHIP cells today for C1h vs 15 at ship; 12 vs 13+1 for C1d) — earliest flip pushed to 07-18. What's-improving panel: ch persistence gate added as new entry; C1h/C1d aspirational-history text replaced with current-state values. Calendar rewritten around today's forward view (07-15 cl Stage 1, 07-16 ws L3, 07-17 ws octant, 07-18 C1 Stage 4 + Lc window + C1h/C1d earliest, 07-19 ch persistence gate flip). Collapse-all / Expand-all toggle button added above the 4-card stack grid (Production stack, Built-not-applied, Retired, Upcoming decisions, Open architectural).
+
+</details>
+
+<details>
 <summary><strong>v0.6.327a • July 12, 2026</strong></summary>
 
 - **Debug page updated for v0.6.327 ship.** Recent activity block: added 07-12 (Sun) entry for ch persistence gate + landmark thread parked note; moved misplaced 07-11 entry into a proper 07-11 (Sat) block; trimmed stale 07-09 + 07-08 entries per rolling 3-day window. Still open watches: added ch persistence gate 7-day counter (day 1/7, earliest 07-19). Production stack Specialists: added ch persistence gate row. Scorecard measurement-gaps prose: ch response line now points at the shipped gate. Hypothesis backlog table: new SHIPPED row for ch persistence gate; active-candidates summary updated (3 → 4 Stage 3-gated; framing pointed at 07-19 as next flip candidate).

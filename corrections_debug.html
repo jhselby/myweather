@@ -830,18 +830,24 @@
     <div style="border:1px solid #3a2f1f;background:#15120d;padding:12px 14px;border-radius:8px;">
       <div style="color:#e0d472;font-weight:600;margin-bottom:8px;font-size:0.95em;">🟡 What's improving</div>
       <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
-        <div style="opacity:0.7;font-size:0.9em;margin-bottom:6px;">7 active Stage 1 candidates · all auto-run in daily digest</div>
+        <div style="opacity:0.7;font-size:0.9em;margin-bottom:6px;">8 active Stage 1+3 candidates · all auto-run in daily digest</div>
 
         <div style="padding:6px 8px;border-left:2px solid #4ad29a;background:#0f1712;margin-bottom:6px;border-radius:2px;">
-          <div><strong>Lc — cloud saturation-unbiasing</strong> <span style="color:#e0d472;font-size:0.85em;">⚠ code shipped, gate day 2/7 — HOLD flip until 2026-07-18 (HRRR cm anomaly week rolls out)</span></div>
+          <div><strong>ch persistence gate</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ Stage 3 wired 2026-07-12 v0.6.327 · ENABLED=False · gate day 1/7</span></div>
+          <div style="opacity:0.85;">22 SHIP + 6 MARGIN cells fire persistence-of-obs; 8 SKIP + <em>frontal</em> fall back to L4. Cell-conditioned per (regime × lead_band), halves-verified. Runs AFTER Lc; replaces <code>cloud_cover_high</code> on firing cells with pure KBOS+KBVY blended obs.</div>
+          <div style="color:#9ab0a0;">→ 7-day live-layer gate day 1/7 (07-12). Earliest flip <strong>2026-07-19</strong>. Weekly Sunday re-run of Stage 2 governs SHIP/SKIP cell-set stability.</div>
+        </div>
+
+        <div style="padding:6px 8px;border-left:2px solid #4ad29a;background:#0f1712;margin-bottom:6px;border-radius:2px;">
+          <div><strong>Lc — cloud saturation-unbiasing</strong> <span style="color:#e0d472;font-size:0.85em;">⚠ code shipped, gate day 3/7 (07-12) — HOLD flip until 2026-07-18 (HRRR cm anomaly week rolls out)</span></div>
           <div style="opacity:0.85;">15 SHIP cells / 24 · biggest: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37% MAE</div>
-          <div style="color:#9ab0a0;">→ ENABLED=False (telemetry watch); <strong>real 7-day counter wired 2026-07-10 v0.6.323 — starts at day 1/7 today</strong> (prior "day 1/7 as of 07-04" text was aspirational — no counter existed). Earliest ship 2026-07-16.</div>
+          <div style="color:#9ab0a0;">→ ENABLED=False (telemetry watch). Earliest ship <strong>2026-07-16</strong>, HOLD until 07-18 for anomaly rollout + refit sign confirm.</div>
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #7fb3ff;background:#101318;margin-bottom:6px;border-radius:2px;">
           <div><strong>C1h trend-direction</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ Stage 3 wired 07-08 · per-cell ortho gate 07-10 · gated OFF</span></div>
           <div style="opacity:0.85;">15 SHIP cells (all WIDEN) live-stamping on <code>confidence.cells[field][band].c1h</code>. Per-cell co-axis ortho gate (v0.6.321) suppresses cells non-orthogonal to the currently-firing co-axis — cl fires freely, ch 24-47h + t × 3 never fire.</div>
-          <div style="color:#9ab0a0;">→ <strong>Real 7-day narrow-promote counter wired 2026-07-10 v0.6.323 — starts at day 1/7 today</strong> (prior "day 2/7" text was aspirational — no counter existed). Gated on C1 Stage 4 (re-check 07-11).</div>
+          <div style="color:#9ab0a0;">→ Narrow-promote counter: <strong>day 1/7 (07-12) · 14 SHIP cells today</strong> — SHIP-set instability reset the streak from 07-10. Earliest ship pushed to <strong>2026-07-18</strong>. Gated on C1 Stage 4 (re-check 07-18).</div>
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #a08070;background:#171310;margin-bottom:6px;border-radius:2px;">
@@ -853,7 +859,7 @@
         <div style="padding:6px 8px;border-left:2px solid #7fb3ff;background:#101318;margin-bottom:6px;border-radius:2px;">
           <div><strong>C1d cloud disagreement</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ Stage 3 wired 07-08 · gated OFF</span></div>
           <div style="opacity:0.85;">13 SHIP + 1 MARGINAL cells stamping on <code>confidence.cells[field][band].c1d</code>. Fires when live <code>cloud_inter_source_sigma</code> ≥ Q3 (44.55). cc 24-47h MARGINAL NARROW −7.06% is a documented outlier — flagged for Stage 4 review.</div>
-          <div style="color:#9ab0a0;">→ <strong>Real 7-day narrow-promote counter wired 2026-07-10 v0.6.323 — starts at day 1/7 today</strong> (prior "day 5/7" text was aspirational — no counter existed). Earliest ship pushed 07-11 → 2026-07-16.</div>
+          <div style="color:#9ab0a0;">→ Narrow-promote counter: <strong>day 1/7 (07-12) · 12 SHIP cells today</strong> — SHIP-set instability reset the streak from 07-10. Earliest ship <strong>2026-07-18</strong>.</div>
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #7fb3ff;background:#101318;border-radius:2px;">
@@ -870,18 +876,18 @@
       <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:4px;">Calendar</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-bottom:8px;">
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-11</div>
-          <div><strong>sr clean read</strong> · first clean digest after Lsr contamination window closes 07-10. Lsr skip regime re-audit (whether ne_flow / calm still net-negative when Lsr fires at every daytime lead).</div>
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-11</div>
-          <div>C1 Stage 4 legacy ship was blocked 2026-07-11 (cm degradation from HRRR anomaly). Next window: 2026-07-18.</div>
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-11</div>
-          <div>sr shortwave-vs-cc confound first read (v0.6.309 shadow log fills).</div>
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-16</div>
-          <div>ws / wg L3 strip earliest ship (real day-1/7 counter as of v0.6.320 07-10; prior "day 8/7 · earliest 07-10" was aspirational because the streak-infra was silently wedged for 7 days).</div>
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-16</div>
-          <div>LC / C1h / C1d narrow-promote gates earliest ship (real day-1/7 counters as of v0.6.323 07-10; prior "day N/7" text was aspirational — no counters existed).</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Wed 07-15</div>
+          <div>cl regime-gated persistence blend Stage 1 read (following ch pattern). Halves-check verdict expected.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Thu 07-16</div>
+          <div>ws L3 strip earliest ship (real counter day 3/7 as of 07-12; needs 4 more clean reads).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-17</div>
           <div><code>h_ws_octant_bias</code> first weekly re-read for direction-stability check.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-18</div>
+          <div>C1 Stage 4 legacy ship next eligible window (cm anomaly rolls out; blocked 07-11). Lc flip window opens if refit confirms signs hold.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-18</div>
+          <div>C1h + C1d narrow-promote earliest ship (both at day 1/7 07-12 after SHIP-set reset).</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 07-19</div>
+          <div><strong>ch persistence gate ENABLED=True earliest flip</strong> — 7-day gate clears; SHIP/SKIP cell-set stability re-verified via weekly Stage 2 re-run.</div>
         </div>
 
         <div style="color:#a08070;font-weight:600;margin-bottom:4px;">Frozen</div>
@@ -947,10 +953,10 @@
      every edit so reviewers can tell how stale it is. -->
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-10 v0.6.323 · click any sub-box header to collapse it.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-12 v0.6.327a · click any sub-box header to collapse it, or use the toggle below.</div>
 
   <details open style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
-    <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — 2026-07-09</summary>
+    <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — 2026-07-12</summary>
     <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. Production numbers reflect what real per-row aggregation says right now; entries flagged <em>"in flight"</em> are cases where today's deploy hasn't propagated through the rolling window yet — the number today is stale, the target is where it will settle when the window fills.</div>
     <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
       <thead>
@@ -1067,7 +1073,12 @@
     </ul>
   </details>
 
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
+  <div style="display:flex;justify-content:flex-end;margin-top:8px;">
+    <button id="stack-cards-toggle" type="button"
+            style="background:#1e2a3a;color:#9fb8d8;border:1px solid #3a4a5a;border-radius:4px;padding:4px 10px;font-size:0.85em;cursor:pointer;"
+            onclick="(function(){var g=document.getElementById('stack-cards-grid');if(!g)return;var cards=g.querySelectorAll('details');var anyOpen=false;cards.forEach(function(d){if(d.open)anyOpen=true;});cards.forEach(function(d){d.open=!anyOpen;});var b=document.getElementById('stack-cards-toggle');if(b)b.textContent=anyOpen?'Expand all':'Collapse all';})()">Collapse all</button>
+  </div>
+  <div id="stack-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
 
     <details open style="border:1px solid #1f3a2a;background:#101913;padding:10px;border-radius:6px;">
       <summary style="color:#4ad29a;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">✅ Production stack</summary>
@@ -1075,7 +1086,7 @@
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>L1</strong> raw HRRR / GFS — the starting point every other layer corrects.</li>
         <li><strong>L2</strong> mesonet blend — additive bias on <code>t / dp / h</code> (Kalman gain) + KBOS+KBVY hourly[0] blend on <code>cc / cl / cm / ch</code>; direct selection on <code>ws / wg</code>. <code>pr</code> disabled 2026-07-01 v0.6.276.</li>
-        <li><strong>L3</strong> lead-decay — {ws, wg, ch, cm, pp}. Skip table (v0.6.279): ws in ne_flow all + sea_breeze 0-11h. <strong>ws strip candidacy: day 2/7</strong> — walkforward wants to drop ws (stable since 07-08); wg no longer in drop-set. Earliest ship 07-16. Prior "day 8/7 / earliest 07-10" was fiction (streak-counter wedged 7 days due to stdout-buffered read in claims.py; fixed v0.6.320).</li>
+        <li><strong>L3</strong> lead-decay — {ws, wg, ch, cm, pp}. Skip table (v0.6.279): ws in ne_flow all + sea_breeze 0-11h. <strong>ws strip candidacy: day 3/7 (07-12)</strong> — walkforward wants to drop ws (stable since 07-08); wg no longer in drop-set. Earliest ship 07-16. Prior "day 8/7 / earliest 07-10" was fiction (streak-counter wedged 7 days due to stdout-buffered read in claims.py; fixed v0.6.320).</li>
         <li><strong>L4</strong> diurnal — applies to {ch, cc}.</li>
         <li style="list-style:none;margin-left:-16px;opacity:0.75;font-size:0.9em;">Cards read corrected <code>hourly[0]</code>. See <a href="#sec-applicability">Applicability map</a> for live triggers + gates (e.g. L3 skip cells for ws in ne_flow / short-lead sea_breeze, Lsr skip regimes for sr in ne_flow / calm, sun-up threshold on Lsr).</li>
       </ul>
@@ -1083,7 +1094,7 @@
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>Lsr</strong> synoptic-regime solar (sr only). Shipped 06-28 v0.6.248. Per-(regime, hour) bias above sun-up. Skip: ne_flow, calm.</li>
         <li><strong>Lt</strong> cove microclimate (t only). Shipped 06-26; both branches disabled (cooling 06-30, warming 07-01) after per-row Production exposed net-negative. Dormant pending Fix B refit.</li>
-        <li><strong>Lc</strong> cloud saturation-unbiasing (cc/cl/cm/ch). Shipped 07-04 v0.6.298, ENABLED=False. Per-(field, value_bin) shift, 15 SHIP / 24 total. Biggest predicted: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37%. <strong>7-day gate: day 2/7. Anomaly-week HOLD:</strong> per-bin check on 07-04→07-11 anomaly shows cc 50-80/80-95 would over-correct 20-23pp; cl mid-high 11-30pp; cm 50-80 would under-correct 13pp. <strong>Do NOT flip until 07-18</strong> after anomaly rolls out AND refit confirms signs hold.</li>
+        <li><strong>Lc</strong> cloud saturation-unbiasing (cc/cl/cm/ch). Shipped 07-04 v0.6.298, ENABLED=False. Per-(field, value_bin) shift, 15 SHIP / 24 total. Biggest predicted: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37%. <strong>7-day gate: day 3/7 (07-12). Anomaly-week HOLD:</strong> per-bin check on 07-04→07-11 anomaly shows cc 50-80/80-95 would over-correct 20-23pp; cl mid-high 11-30pp; cm 50-80 would under-correct 13pp. <strong>Do NOT flip until 07-18</strong> after anomaly rolls out AND refit confirms signs hold.</li>
         <li><strong>ch persistence gate</strong> ch only. Shipped 07-12 v0.6.327, ENABLED=False. Runs AFTER Lc; where the gate fires, replaces L4+Lc-corrected <code>cloud_cover_high</code> with persistence-of-obs (KBOS+KBVY blended obs at forecast issue time, carried flat). Cell-conditioned: <strong>22 SHIP / 6 MARGIN</strong> use persistence; <strong>8 SKIP + <em>frontal</em> regime</strong> fall back to L4. Halves-verified per (regime × lead_band). 7-day gate: day 1/7. Earliest flip 07-19.</li>
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
