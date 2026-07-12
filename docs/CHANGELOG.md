@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.327c • July 12, 2026</strong></summary>
+
+- **cl persistence investigation — Stage 1+2 explored, HOLD.** New `analysis/h_cl_persistence_blend.py` + `analysis/h_cl_linear_ramp_stage2.py`. cl does NOT have ch's regime shape: regime_gate + persist_only halves diverge (Δ_A −14% / Δ_B +13-15%, anomaly-inflated); linear_ramp τ scan monotonic-with-τ (no natural sweet spot); per-regime shows cloudy-active regimes (se_flow/calm/unknown, ~32% volume) want persistence while clear-flow regimes (sw_flow with tiny base MAE + nw_flow/pre_frontal/ne_flow/sea_breeze/frontal, ~68% volume) want L1 baseline. Stage 2 at τ=36 per (regime × lead_band): 20 SHIP / 2 MARGIN / 14 SKIP / 1 THIN; the 12-23h band is a graveyard (7 of 9 regimes SKIP). **Real signal: 0-5h narrow persistence gate — all 9 regimes SHIP at 0-5h.** Deferred: re-verify 2026-07-19 post-anomaly. If halves converge and 0-5h SHIPs hold, ship narrow `cl_persistence_short_lead.py` (all regimes, no skip table, leads ≤ 5h only). Otherwise cl gets no gate. Debug page updated: recent activity 07-12 entry, What's-improving panel new cl block, calendar 07-19 cl re-verify entry, hypothesis backlog table new NEW row. Memory saved: `project_cl_persistence_investigation.md`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.327b • July 12, 2026</strong></summary>
 
 - **Debug page stale-date + counter pass + collapse-all toggle.** Joe caught "Last curated: 2026-07-10" + "Current pipeline state — 2026-07-09" — updated both to 2026-07-12. Live counters updated to current values: ws L3 strip day 2→3/7, Lc gate day 2→3/7, C1h + C1d narrow-promote streaks explicitly noted as day 1/7 today after SHIP-set instability reset (14 SHIP cells today for C1h vs 15 at ship; 12 vs 13+1 for C1d) — earliest flip pushed to 07-18. What's-improving panel: ch persistence gate added as new entry; C1h/C1d aspirational-history text replaced with current-state values. Calendar rewritten around today's forward view (07-15 cl Stage 1, 07-16 ws L3, 07-17 ws octant, 07-18 C1 Stage 4 + Lc window + C1h/C1d earliest, 07-19 ch persistence gate flip). Collapse-all / Expand-all toggle button added above the 4-card stack grid (Production stack, Built-not-applied, Retired, Upcoming decisions, Open architectural).
