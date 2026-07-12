@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.327a • July 12, 2026</strong></summary>
+
+- **Debug page updated for v0.6.327 ship.** Recent activity block: added 07-12 (Sun) entry for ch persistence gate + landmark thread parked note; moved misplaced 07-11 entry into a proper 07-11 (Sat) block; trimmed stale 07-09 + 07-08 entries per rolling 3-day window. Still open watches: added ch persistence gate 7-day counter (day 1/7, earliest 07-19). Production stack Specialists: added ch persistence gate row. Scorecard measurement-gaps prose: ch response line now points at the shipped gate. Hypothesis backlog table: new SHIPPED row for ch persistence gate; active-candidates summary updated (3 → 4 Stage 3-gated; framing pointed at 07-19 as next flip candidate).
+
+</details>
+
+<details>
 <summary><strong>v0.6.327 • July 12, 2026</strong></summary>
 
 - **ch persistence gate Stage 2 preview + Stage 3 wired (ENABLED=False).** Follow-on to Sunday digest ship candidate. New `analysis/h_ch_persistence_blend_stage2.py` runs per-(regime × lead_band) halves-verified split of Joe's regime-gate design. Verdict: **22 SHIP / 6 MARGIN / 8 SKIP / 1 THIN** of 37 cells. SKIP concentration exposed by halves check — sw_flow long-lead (3 of 4 bands flip signs between halves), pre_frontal/24-47h loses full window +9.6%. Clean gate would have regressed real volume; cell-conditioned gate ships only where verified. New processor `weather_collector/processors/ch_persistence_gate.py` reads curated JSON, runs after Lc, replaces `hourly.cloud_cover_high` with persistence-of-obs on firing cells. Persistence source: `cloud_l2_meta.obs_mean` (pure KBOS+KBVY blend, pre-Kalman) with `hourly[0]` fallback. `frontal` regime always uses L4 by design. Telemetry stamped every tick; applicability_map contribution wired. Flip ENABLED=True only after 7-day live-layer change gate + no halves-flip in weekly re-reads.
