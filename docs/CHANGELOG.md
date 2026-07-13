@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.332 • July 13, 2026</strong></summary>
+
+- **Persistence-skill post-ship watch wired.** New `persistence_skill_watch()` in `analysis/runlog/build_executive_summary.py` compares today's `h_persistence_skill.json` per-field verdicts (ADDS VALUE / MIXED / NO SKILL) against a snapshot of last run's, stored at `analysis/output/runlog/persistence_skill_snapshot.json`. Two alert types emitted in the executive summary: (1) **regression** — field was ADDS VALUE last run and isn't today, and (2) **at-risk** — currently ADDS VALUE but pooled skill `< 0.20` (thin margin, could slip). Snapshot is overwritten on every run so tomorrow's digest compares against today. Motivation: `ws` in today's digest is +0.16 pooled — one bad run below `+0.10` and it drops from ADDS VALUE to MIXED silently. Watch surfaces those flips at exec-summary altitude next to post-ship 14-day alerts. First run after this ships will emit "no regressions" (seeds the snapshot); regressions caught starting the next digest.
+
+</details>
+
+<details>
 <summary><strong>v0.6.331 • July 13, 2026</strong></summary>
 
 - **h/l4 narrow-add streak counter wired — infrastructure for 07-18 ship candidate.** `h_full_regime_sweep.py` now emits `weather_collector/data/h_l4_add_candidates.json` alongside its text report, listing every h/l4 cell that cleared the halves-check ADD-candidate bar (both halves ≥3% delta, currently OFF). `analysis/runlog/claims.py` reads that JSON via existing `_claim_marginal_ship_cells` (schema matches c1h/c1d/pre_frontal — same `cells[key][band].status` shape); `analysis/runlog/build_executive_summary.py` registers `H_L4_ADD_CANDIDATES: ("h/l4 narrow-add", 7)` in `_NARROW_PROMOTE_GATES` and `_claim_source`. Digest's "Narrow-promote gates" block will now show a 4th line tracking the h/l4 ADD-candidate set. Refactor: `emit()` now returns `(text, add_candidates)` tuple so `main()` doesn't re-derive the list — single source of truth for the halves-check logic. Current 07-13 finding: **h/l4/calm/12-23h** (A_Δ=+5.0% n=704, B_Δ=+11.2% n=750, impact 5,893) plus **h/l4/calm/0-5h** (A=+3.8% B=+3.8%) — two-tool AGREE only on 12-23h per `l4_regime_lead_analysis` cross-check. Day 2/7 in the streak; earliest live-layer flip 07-18 pending 5 more agreeing daily digest reads. Ship-day code change (deferred to 07-18): add `"h"` to `L4_FIELDS` + narrow whitelist entry to `decay_apply.py` so h/l4 only fires in calm/12-23h.

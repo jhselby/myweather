@@ -108,6 +108,17 @@ CONFIRMATION_STREAK_DAYS = 7
 POST_SHIP_WATCH_DAYS = 14
 SHIPPED_LEDGER_PATH = HERE / "shipped_ledger.jsonl"
 
+# Persistence-skill watch. h_persistence_skill.py emits per-field ADDS
+# VALUE / MIXED / NO SKILL every digest run. Watch detects two conditions:
+#   1. Regression: a field that was ADDS VALUE last run and isn't today.
+#   2. At-risk: currently ADDS VALUE but skill_l4_mae_pooled below margin
+#      (thin — could slip on the next run).
+# Snapshot of last run's per-field verdicts lives at the path below;
+# overwritten each digest.
+PERSISTENCE_SKILL_JSON_PATH = HERE.parent / "output" / "h_persistence_skill.json"
+PERSISTENCE_SKILL_SNAPSHOT_PATH = LOG_DIR / "persistence_skill_snapshot.json"
+PERSISTENCE_SKILL_THIN_MARGIN = 0.20
+
 
 def extract_verdict(log_path: Path) -> str | None:
     """Return a one-line verdict string or None."""
@@ -151,6 +162,71 @@ def load_prior_state():
         return json.loads(STATE_PATH.read_text())
     except Exception:
         return {}
+
+
+def persistence_skill_watch():
+    """Return (regression_lines, at_risk_lines). Compares today's h_persistence_skill.json
+    against last run's snapshot; overwrites the snapshot with today's data.
+
+    Regression: field was ADDS VALUE last run, isn't today.
+    At-risk: currently ADDS VALUE but pooled skill below PERSISTENCE_SKILL_THIN_MARGIN.
+    """
+    if not PERSISTENCE_SKILL_JSON_PATH.exists():
+        return None, None
+    try:
+        today = json.loads(PERSISTENCE_SKILL_JSON_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None, None
+    fields_today = today.get("fields") or {}
+    if not fields_today:
+        return None, None
+
+    prior_fields = {}
+    if PERSISTENCE_SKILL_SNAPSHOT_PATH.exists():
+        try:
+            prior_fields = (json.loads(PERSISTENCE_SKILL_SNAPSHOT_PATH.read_text())
+                            .get("fields") or {})
+        except (json.JSONDecodeError, OSError):
+            prior_fields = {}
+
+    regression_lines = []
+    at_risk_lines = []
+    for f in sorted(fields_today.keys()):
+        info = fields_today[f] or {}
+        v_today = info.get("verdict")
+        skill = info.get("skill_l4_mae_pooled")
+        v_prior = (prior_fields.get(f) or {}).get("verdict")
+        skill_prior = (prior_fields.get(f) or {}).get("skill_l4_mae_pooled")
+        if v_prior == "ADDS VALUE" and v_today != "ADDS VALUE":
+            sk_txt = f"skill {skill:+.2f}" if skill is not None else "skill n/a"
+            sk_prior_txt = f" (was {skill_prior:+.2f})" if skill_prior is not None else ""
+            regression_lines.append(
+                f"  ⚠ {f}: ADDS VALUE → {v_today} — {sk_txt}{sk_prior_txt}"
+            )
+        if v_today == "ADDS VALUE" and skill is not None and skill < PERSISTENCE_SKILL_THIN_MARGIN:
+            at_risk_lines.append(
+                f"  · {f}: ADDS VALUE but pooled skill {skill:+.2f} "
+                f"(< {PERSISTENCE_SKILL_THIN_MARGIN:+.2f} margin — could slip)"
+            )
+
+    snapshot = {
+        "recorded_at": today.get("generated_at"),
+        "fields": {
+            f: {
+                "verdict": (info or {}).get("verdict"),
+                "skill_l4_mae_pooled": (info or {}).get("skill_l4_mae_pooled"),
+            }
+            for f, info in fields_today.items()
+        },
+    }
+    try:
+        LOG_DIR.mkdir(parents=True, exist_ok=True)
+        PERSISTENCE_SKILL_SNAPSHOT_PATH.write_text(
+            json.dumps(snapshot, indent=2, sort_keys=True)
+        )
+    except OSError:
+        pass
+    return regression_lines, at_risk_lines
 
 
 def main():
@@ -378,6 +454,22 @@ def main():
             out.append(f"  · {a['script']} — {a['change']}")
             out.append(f"    suppress until {a['suppress_until']}: {a['suppress_reason']}")
         out.append("")
+
+    # Persistence-skill watch: field-level regressions and at-risk fields.
+    ps_regressions, ps_at_risk = persistence_skill_watch()
+    out.append("Persistence-skill watch (per-field verdict flips vs prior run):")
+    if ps_regressions is None:
+        out.append("  • no snapshot yet (h_persistence_skill.json missing or unparseable)")
+    elif ps_regressions:
+        for line in ps_regressions:
+            out.append(line)
+    else:
+        out.append("  • no regressions")
+    if ps_at_risk:
+        out.append("  At-risk (currently ADDS VALUE, thin margin):")
+        for line in ps_at_risk:
+            out.append(line)
+    out.append("")
 
     out.append("New kills:")
     if kills_new:
