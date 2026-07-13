@@ -799,6 +799,8 @@
        - What's improving: active Stage 1 candidates only (retired below)
        - What's being evaluated next: forward calendar + frozen items -->
 <section id="tri-column-band" style="margin:0 0 20px 0;">
+  <details open>
+    <summary style="cursor:pointer;color:#9ab0a0;font-weight:600;font-size:0.9em;margin-bottom:8px;list-style:revert;">Current state — What's running · improving · being evaluated</summary>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;">
 
     <!-- What's running -->
@@ -916,6 +918,7 @@
     </div>
 
   </div>
+  </details>
   <div style="margin-top:8px;font-size:0.8em;opacity:0.7;text-align:center;">Details for each cell live in the sections below · <a href="#sec-status" style="color:#7fb3ff;">Engineering updates</a> · <a href="#sec-accuracy" style="color:#7fb3ff;">Accuracy</a> · <a href="#sec-research" style="color:#7fb3ff;">Research &amp; Diagnostics</a></div>
 
 <details style="margin-top:14px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
@@ -1015,74 +1018,88 @@
         <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
           <th style="padding:4px 8px 4px 0;">Field</th>
           <th style="padding:4px 10px;">Applied layers</th>
-          <th style="padding:4px 0 4px 10px;">Production vs raw</th>
+          <th style="padding:4px 10px;">vs raw</th>
+          <th style="padding:4px 0 4px 10px;">Status</th>
         </tr>
       </thead>
       <tbody>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>t</code> temperature</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 additive <span style="opacity:0.6;">(Lt retired 07-13)</span></td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#4ad29a;">−1.1%</td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 additive</td>
+          <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−1.1%</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable.</strong> Lt retired 07-13 (Fix B +0.29% held-out). Persistence-skill +0.68 pooled — L2 doing more than we thought.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>h</code> humidity</td>
           <td style="padding:5px 10px;vertical-align:top;">L1 → L2 additive → L4 diurnal</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#4ad29a;">−2.3%</td>
+          <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−2.3%</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win.</strong> h/l4/calm/12-23h narrow-add candidate (day 2/7, earliest 07-18).</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ws</code> wind speed</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct-selection → L3 lead-decay <span style="opacity:0.6;">(L3 skip table: ne_flow all + sea_breeze 0-11h)</span></td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#e0d472;">+5.3% <span style="opacity:0.7;font-size:0.9em;">L3 drop candidacy day 4/7. Earliest strip 07-16.</span></td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct → L3 lead-decay <span style="opacity:0.6;">(skip: ne_flow all + sea_breeze 0-11h)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;color:#e0d472;">+5.3%</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#e0d472;">Open regression.</strong> Walkforward L3 drop day 4/7. Earliest strip 07-16. Persistence-skill +0.16 flagged at-risk (v0.6.332 watch).</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wg</code> wind gust</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct-selection → L3 lead-decay</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#4ad29a;">−15.5%</td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct → L3 lead-decay</td>
+          <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−15.5%</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win vs raw,</strong> but v0.6.339 Stage 0 diagnostic: L3 regresses in 10 cells (calm all bands +23-77%; unknown +22-38%). Skip-table extension candidate, needs 3-day streak.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>dp</code> dew point</td>
           <td style="padding:5px 10px;vertical-align:top;">L1 → L2 additive <span style="opacity:0.6;">(derived from corrected t, h via Magnus)</span></td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#4ad29a;">−6.1%</td>
+          <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−6.1%</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win, derived.</strong> Rides t + h improvements. Frontal regime bias closed 07-09.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cc</code> cloud cover</td>
           <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend → L4 diurnal</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#4ad29a;">−14.7%</td>
+          <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−14.7%</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win.</strong> Lc Stage 3 dormant (gate day 4/7). Anomaly-week HOLD to 07-18.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ch</code> high cloud</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend → L3 lead-decay → L4 diurnal</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#4ad29a;font-weight:600;">−46.4%</td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY blend → L3 lead-decay → L4 diurnal</td>
+          <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;font-weight:600;">−46.4%</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Best-performing field vs raw</strong> — but persistence-skill Prod −1.08 vs L4-alone −0.29 (v0.6.336): L3 doing damage. <strong>ch persistence gate pending</strong> (day 2/7, flip 07-19).</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cl</code> low cloud</td>
           <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;">−0.2% <span style="font-size:0.9em;">(flat)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">−0.2% <span style="font-size:0.9em;">(flat)</span></td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Flat vs raw.</strong> <strong>cl persistence short-lead gate pending</strong> (Stage 3 wired 07-13, day 1/7, flip 07-19 — narrow 0-5h all 9 regimes).</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cm</code> mid cloud</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend → L3 lead-decay</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#4ad29a;">−6.8%</td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY blend → L3 lead-decay</td>
+          <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−6.8%</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win.</strong> HRRR cm-distribution anomaly 07-04→07-11 recovered (v0.6.333 anomaly detector confirms). C1 Stage 4 re-audit 07-18.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pp</code> precip probability</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(L3 dropped 2026-07-04 v0.6.304 — Fitter Brier + production_whatif + h_regime_l3 + walkforward all agree L3 hurts pp)</span></td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;">Brier-evaluated <span style="font-size:0.9em;">(MAE view is a category error)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(L3 dropped 07-04 — hurts Brier despite MAE gain)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">Brier-evaluated</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Brier-evaluated.</strong> v0.6.335 Phase 3 decomposition: CALIBRATED +8.4% vs raw, BSS +0.126. Systematic under-forecast at fc 30-50% (obs freq 66%) flagged as future Stage 0.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pr</code> pressure</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(L2 additive disabled 2026-07-01 v0.6.276)</span></td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;">0.0% <span style="font-size:0.9em;">(flat)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(L2 additive disabled 07-01)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">0.0% <span style="font-size:0.9em;">(flat)</span></td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Flat.</strong> L2 additive disabled 07-01 (K=1 noise dominated). No open action.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>sr</code> solar radiation</td>
-          <td style="padding:5px 10px;vertical-align:top;">L1 → Lsr synoptic-regime <span style="opacity:0.6;">(skip: ne_flow + calm)</span> <span style="opacity:0.6;">— unit-mismatch open: model direct-beam vs Tempest total-shortwave</span></td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;color:#e0d472;">0% <span style="opacity:0.7;font-size:0.9em;">Shortwave shadow-log: regime-specific (nw_flow −55% MAE; pre_frontal / sea_breeze / unknown worse). Fix chain regime-conditional. See R&amp;D → sr confound.</span></td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 → Lsr synoptic-regime <span style="opacity:0.6;">(skip: ne_flow + calm)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;color:#e0d472;">0%</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#e0d472;">Unit-mismatch open</strong> (direct-beam model vs total-shortwave obs). Shortwave shadow-log: regime-specific (nw_flow −55%; pre_frontal / sea_breeze / unknown worse). Fix chain regime-conditional.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pa</code> precip amount</td>
           <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(no L2/L3/L4 apply)</span></td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;">0% <span style="font-size:0.9em;">(bursty; no correction reliably beats raw)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">0% <span style="font-size:0.9em;">(bursty)</span></td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only.</strong> τ 28 → 42 07-13 (v0.6.334, 3/3 streak, +5.5% MAE vs τ=14).</td>
         </tr>
       </tbody>
     </table>
@@ -3162,14 +3179,17 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
       ${noRows.length    ? `<div style="font-size:0.78em;"><span style="color:#fb7c5c;">✗</span> ${_join(noRows)} <span style="opacity:0.55;">— strict verdict; only negative pooled numbers are genuine losses</span></div>` : ""}
     </div>`;
     })()}
-    <div style="opacity:0.55;font-size:0.78em;margin-top:6px;line-height:1.5;">
-      <strong>What this measures.</strong> Production forecast error compared to raw HRRR/GFS, averaged over leads 1–47h. Both computed against the same local-network observations (mesonet Kalman blend for temp/wind/humidity/pressure; KBOS+KBVY METAR for cloud; Tempest median for solar; max WU precip gauges). Lower error is better; negative % means we beat raw. Three metrics side-by-side because they answer different questions:
-      <br><strong>MAE</strong> = average of |error|. Typical error size on a normal day.
-      <strong>RMSE</strong> = root of mean squared error. Same shape but weights big misses more — if RMSE is worse than MAE, the pipeline occasionally has blow-ups it hides in typical-day averages. NWS and ECMWF publish both.
-      <strong>Bias</strong> = signed mean error (in field units, e.g., °F for temp). Positive = we usually over-forecast; negative = we usually under-forecast. Systematic drift MAE hides.
-      <br><strong>pp</strong> shown separately (Brier, not MAE — probability forecast, different scoring rule). <strong>Worst-cell number</strong> surfaces short-lead damage a favorable field average could hide.
-      <br><em>Measurement gaps:</em> pp Brier reliability decomposition (when we say 30%, does it happen 30% of the time?). Persistence skill line (below) shows how the L4-corrected stack does against "same as now" per field — skill = 1 − L4_MAE / persistence_MAE, ADDS VALUE = skill ≥ +0.10 on both MAE and RMSE in ≥ 3 of 4 lead bands with no BEHIND band.
-    </div>
+    <details style="margin-top:6px;">
+      <summary style="opacity:0.55;font-size:0.78em;cursor:pointer;list-style:revert;"><strong>What this measures</strong></summary>
+      <div style="opacity:0.55;font-size:0.78em;margin-top:4px;line-height:1.5;">
+        Production forecast error compared to raw HRRR/GFS, averaged over leads 1–47h. Both computed against the same local-network observations (mesonet Kalman blend for temp/wind/humidity/pressure; KBOS+KBVY METAR for cloud; Tempest median for solar; max WU precip gauges). Lower error is better; negative % means we beat raw. Three metrics side-by-side because they answer different questions:
+        <br><strong>MAE</strong> = average of |error|. Typical error size on a normal day.
+        <strong>RMSE</strong> = root of mean squared error. Same shape but weights big misses more — if RMSE is worse than MAE, the pipeline occasionally has blow-ups it hides in typical-day averages. NWS and ECMWF publish both.
+        <strong>Bias</strong> = signed mean error (in field units, e.g., °F for temp). Positive = we usually over-forecast; negative = we usually under-forecast. Systematic drift MAE hides.
+        <br><strong>pp</strong> shown separately (Brier, not MAE — probability forecast, different scoring rule). <strong>Worst-cell number</strong> surfaces short-lead damage a favorable field average could hide.
+        <br><em>Measurement gaps:</em> pp Brier reliability decomposition (when we say 30%, does it happen 30% of the time?). Persistence skill line (above) shows how the L4-corrected stack does against "same as now" per field — skill = 1 − L4_MAE / persistence_MAE, ADDS VALUE = skill ≥ +0.10 on both MAE and RMSE in ≥ 3 of 4 lead bands with no BEHIND band.
+      </div>
+    </details>
   `;
 }
 
