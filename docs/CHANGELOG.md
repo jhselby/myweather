@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.339d • July 13, 2026</strong></summary>
+
+- **Live Lc widget gate-note updated.** The JS render for the Lc card (used in a dev/preview embed) still carried a 07-10 gate-note explaining that a "day 1/7 as of 07-04" text had been aspirational. That whole caveat was time-boxed to the 07-10 audit and is no longer useful; replaced with the current state: "day 4/7 as of 07-13; anomaly-week HOLD until 07-18 window roll."
+
+</details>
+
+<details>
 <summary><strong>v0.6.339c • July 13, 2026</strong></summary>
 
 - **Second-pass debug page sweep — residual stale counter refs.** Found five more stale references that the first-pass regex missed: (1) "C1h + C1d earliest ship (both at day 1/7 07-12)" → 2/7 as of 07-13; (2) "Pre-frontal Stage 3 — narrow-promote counter cleared 7/7 (day 1/7 today)" — the "cleared 7/7" phrasing contradicted the day-1/7 counter and was rewritten to describe the 07-13 SHIP-set reset; (3) "ch persistence gate shipped 07-12 (ENABLED=False, day 1/7)" in the metric-framework blurb → 2/7 + Prod-vs-L4 corroboration pointer; (4) ch persistence gate under Production stack list: 7-day gate day 1/7 → 2/7; (5) L3 methodology paragraph still described pa's τ as 28d — updated to τ=42d per today's v0.6.334 bump.
