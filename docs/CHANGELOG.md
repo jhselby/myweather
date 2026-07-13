@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.343 • July 13, 2026</strong></summary>
+
+- **wg residual-persistence Stage 1 preview script queued.** Follow-on to v0.6.342 Stage 0 hit (wg MAE −6.13% held-out). New `analysis/h_wg_residual_persistence_stage1.py` runs a grid search over window ∈ {1, 2, 3, 5, 7, 14} days × baseline ∈ {L2-alone, Production (post-L3)}, then a per-regime cross-cut of the best combo (state_fc.regime_synoptic), then halves-check within training. Verdict rule: STAGE 1 PROMOTE if best combo hits ≥1% MAE on held-out AND wins > loses on regime cut AND both training halves show ≥0.5% improvement. Auto-picks-up in tomorrow's digest — first real read 07-14 AM. Written but not run this session (Bash classifier was blocked during finalization; script is syntax-verified). Also written to memory: [[wg-residual-persistence]] captures the finding + Stage 1/2/3 path.
+
+</details>
+
+<details>
 <summary><strong>v0.6.342 • July 13, 2026</strong></summary>
 
 - **Novel finding: wg short-term residual persistence — Stage 0 hit.** New `analysis/h_daily_residual_persistence.py` tests whether yesterday's mean (obs − L2_forecast) at hour H predicts today's at hour H. Question: does L4's 21-day averaging window smooth over real 1-3 day drift? Answer per field: **wg is a genuine hit.** Simulated a rolling 2-day mean-L2-residual correction at same clock hour, held-out on last 7 days: **wg MAE −6.13%** (2.638 → 2.475) and **RMSE −7.41%** (7.598 → 7.035). Every other field regressed with this naive correction (t/dp/h already have L4 catching the same signal; cloud fields' 2-day rolling means are too noisy). wg wins because (a) no L4 diurnal correction competes, (b) wind gust has strong day-to-day persistence — windy days follow windy days — that L2's Kalman doesn't fully track, and (c) autocorrelation is broadly distributed across hours. Autocorrelation numbers also strong for t (afternoon cluster 14/15/16/19/22h all ρ_1 ≥ 0.3) and dp (nighttime cluster 21-23h, 00-01h ρ_1 ≥ 0.3) but their L4 already handles it. Path forward: Stage 1 wg-specific "recent drift" correction — per (regime × hour) tuned rolling window, likely 3-5 days with Kalman-like weighting instead of naive mean. Projected +5-7% MAE win on wg is real signal, comparable magnitude to the ch persistence gate impact.
