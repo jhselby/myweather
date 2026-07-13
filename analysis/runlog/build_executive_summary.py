@@ -119,6 +119,11 @@ PERSISTENCE_SKILL_JSON_PATH = HERE.parent / "output" / "h_persistence_skill.json
 PERSISTENCE_SKILL_SNAPSHOT_PATH = LOG_DIR / "persistence_skill_snapshot.json"
 PERSISTENCE_SKILL_THIN_MARGIN = 0.20
 
+# Anomaly detector — pair-log distribution-shift alert per field. Motivated
+# by the 07-11 cm Stage 4 flip that would have been visible a week earlier
+# if forecast-value distribution shift were tracked as its own signal.
+ANOMALY_DETECTOR_JSON_PATH = HERE.parent / "output" / "anomaly_detector.json"
+
 
 def extract_verdict(log_path: Path) -> str | None:
     """Return a one-line verdict string or None."""
@@ -162,6 +167,35 @@ def load_prior_state():
         return json.loads(STATE_PATH.read_text())
     except Exception:
         return {}
+
+
+def anomaly_detector_summary():
+    """Return list of alert lines from anomaly_detector.json, or None if absent."""
+    if not ANOMALY_DETECTOR_JSON_PATH.exists():
+        return None
+    try:
+        doc = json.loads(ANOMALY_DETECTOR_JSON_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    fields = doc.get("fields") or {}
+    lines = []
+    for f, d in sorted(fields.items()):
+        v = d.get("verdict")
+        if v not in ("ANOMALY", "WATCH"):
+            continue
+        mae_pct = d.get("mae_pct_change")
+        sigmas = d.get("d_fc_mean_sigmas")
+        bin_shift = d.get("max_bin_shift_pp")
+        parts = []
+        if mae_pct is not None:
+            parts.append(f"ΔMAE {mae_pct:+.1f}%")
+        if sigmas is not None:
+            parts.append(f"Δfc_mean {sigmas:+.1f}σ")
+        if bin_shift is not None:
+            parts.append(f"bin shift {bin_shift:.1f}pp")
+        mark = "★" if v == "ANOMALY" else "⚠"
+        lines.append(f"  {mark} {f}: {v} — {', '.join(parts)}")
+    return lines
 
 
 def persistence_skill_watch():
@@ -469,6 +503,18 @@ def main():
         out.append("  At-risk (currently ADDS VALUE, thin margin):")
         for line in ps_at_risk:
             out.append(line)
+    out.append("")
+
+    # Pair-log distribution-shift alerts.
+    anomaly_lines = anomaly_detector_summary()
+    out.append("Pair-log anomaly alerts (distribution shift vs baseline):")
+    if anomaly_lines is None:
+        out.append("  • detector not run yet (anomaly_detector.json missing)")
+    elif anomaly_lines:
+        for line in anomaly_lines:
+            out.append(line)
+    else:
+        out.append("  • all fields CLEAN")
     out.append("")
 
     out.append("New kills:")

@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.333 • July 13, 2026</strong></summary>
+
+- **Pair-log anomaly detector shipped.** New `analysis/anomaly_detector.py` reads `forecast_error_log.jsonl` and compares two adjacent windows per field — last 7 days (recent) vs prior 21 days (baseline) — flagging fields whose forecast-value distribution has moved past threshold. Motivated by the 2026-07-11 cm Stage 4 flip (project_cm_stage4_degradation): between 06-27→07-04 and 07-04→07-11, cm HRRR forecast mean shifted 16% → 47% and MAE 15 → 33 — a boundary-condition-level change Stage 4's mixture check treated as one signal. Per-field metrics: forecast mean shift in σ-units (relative to baseline std), MAE % change, signed-bias shift, max quartile-bin population shift in pp. Verdict rule: **ANOMALY** if MAE > +50% AND (|Δfc_mean| > 1σ OR bias shift > 3σ_err); **WATCH** if MAE > +30% OR |Δfc_mean| > 1σ OR max bin frac Δ > 15pp; **CLEAN** otherwise; **THIN** if < 500 pairs in either window. Wired into digest exec summary: new "Pair-log anomaly alerts" block sits right after persistence-skill watch, one line per non-CLEAN field. Today's first read: 0 ANOMALY / 1 WATCH (pr, driven by 24.7pp precip-rate bin shift — expected given precip rate distributions are heavy-tailed) / 12 CLEAN. cm has recovered — recent MAE 23.2 vs baseline 26.7 — matches the "cause (b) transient weather" branch predicted in the cm-stage4-degradation memo.
+
+</details>
+
+<details>
 <summary><strong>v0.6.332 • July 13, 2026</strong></summary>
 
 - **Persistence-skill post-ship watch wired.** New `persistence_skill_watch()` in `analysis/runlog/build_executive_summary.py` compares today's `h_persistence_skill.json` per-field verdicts (ADDS VALUE / MIXED / NO SKILL) against a snapshot of last run's, stored at `analysis/output/runlog/persistence_skill_snapshot.json`. Two alert types emitted in the executive summary: (1) **regression** — field was ADDS VALUE last run and isn't today, and (2) **at-risk** — currently ADDS VALUE but pooled skill `< 0.20` (thin margin, could slip). Snapshot is overwritten on every run so tomorrow's digest compares against today. Motivation: `ws` in today's digest is +0.16 pooled — one bad run below `+0.10` and it drops from ADDS VALUE to MIXED silently. Watch surfaces those flips at exec-summary altitude next to post-ship 14-day alerts. First run after this ships will emit "no regressions" (seeds the snapshot); regressions caught starting the next digest.
