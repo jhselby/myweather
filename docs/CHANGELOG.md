@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.340 • July 13, 2026</strong></summary>
+
+- **Forecast Accuracy chart rewrite — only-applied layers + RMSE + bias tables.** Two long-standing issues fixed together: (1) most cards showed 4-5 chart lines stacked on top of each other because inactive layer arrays equal the previous applied layer's — visual noise for zero signal. Now `_layersFor()` filters to only-applied layers (L1 always, then only those with `_layerApplied()` true) — so temperature renders Raw + L2 + Production, wg renders Raw + L2 + L3 + Production, pa renders just Raw + Production. Same filter runs on the MAE band table columns. (2) MAE-only view missed occasional big misses (which show in RMSE) and systematic drift (which shows in signed bias). New `_buildMetricTable()` renders RMSE + bias companion tables below the MAE table for each card, using `tsDoc.per_layer_rmse_by_lead` and `tsDoc.per_layer_bias_by_lead`. Same "only-applied layers" filter applies. PP-Brier cards skip these — Brier already carries the second view. Bias table shows signed values with + prefix for positive to make sign obvious; near-zero cells get the "best" tint. Bias uses one extra decimal place so small drifts are visible. Also: Lt badge updated "off (dormant)" → "retired" (title tooltip gives the Fix B rationale). Section-intro prose rewritten to match — dropped the "colored lines are population-level diagnostics" caveat since inactive lines no longer render, and added the RMSE-catches-big-misses / bias-catches-drift framing.
+
+</details>
+
+<details>
 <summary><strong>v0.6.339d • July 13, 2026</strong></summary>
 
 - **Live Lc widget gate-note updated.** The JS render for the Lc card (used in a dev/preview embed) still carried a 07-10 gate-note explaining that a "day 1/7 as of 07-04" text had been aspirational. That whole caveat was time-boxed to the 07-10 audit and is no longer useful; replaced with the current state: "day 4/7 as of 07-13; anomaly-week HOLD until 07-18 window roll."
