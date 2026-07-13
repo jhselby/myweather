@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.339b • July 13, 2026</strong></summary>
+
+- **Debug page reorg — Recent activity moved to its own top-level section + today's ships consolidated.** Two structural changes: **(1)** the "Recent activity" collapsible was previously nested inside "Engineering updates" — an odd hierarchy since it's more of a change log than a state snapshot. Moved to a new `<h2 id="sec-recent">` section directly above `#sec-status`, with a matching nav link between "Back" and "Engineering updates." **(2)** Today's 07-13 block collapsed from 10 individual version bullets into 7 theme groups: Lt retirement (v0.6.329 + 329a); cl gate wire (v0.6.330); measurement framework (v0.6.335 / 336 / 337); watch infrastructure (v0.6.331 / 332 / 333); pa τ (v0.6.334); wg L3 Stage 0 (v0.6.339); debug page sweeps (v0.6.338 / 338a / 339a). Same information density, half the visual footprint. Also cleaned two stale "Upcoming decisions" entries: the ch persistence gate line advanced day 1 → 2/7 (plus a Prod-vs-L4 corroboration pointer); the "h → L4 re-frozen" line rewritten to reflect that v0.6.331 streak counter now backs the flip criterion (7-day gate, day 2/7, earliest 07-18).
+
+</details>
+
+<details>
 <summary><strong>v0.6.339a • July 13, 2026</strong></summary>
 
 - **Debug page sweep — trim stale prose in Engineering updates.** Header curation stamp advanced 07-12 v0.6.327a → 07-13 v0.6.339. Table date advanced 07-12 → 07-13. Trimmed verbose descriptors: t row "Lt both branches disabled 2026-07-01 v0.6.276" → "Lt retired 07-13"; ws row dropped the "silent-failure fix v0.6.310+311" backstory (7 days old, window has settled) — now just says "L3 skip table: ne_flow all + sea_breeze 0-11h" + "L3 drop candidacy day 4/7"; sr row collapsed the multi-paragraph unit-mismatch investigation into a one-line pointer with the shortwave shadow-log key finding preserved. Bottom summary rewritten: dropped 07-08 "In flight" line entirely (closed 5 days ago), added the 07-13 wg L3 Stage-0 finding. Recent activity block: 07-10 (Fri) entries dropped (outside the stated 3-day rolling window; already in CHANGELOG.md) — replaced with a one-line pointer. Net delta: ~14 lines trimmed from the state table + ~7 lines from Recent activity.
