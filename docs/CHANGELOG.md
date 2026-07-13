@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.328b • July 12, 2026</strong></summary>
+
+- **Digest exec summary — persistence-skill verdict line surfaces pooled shape.** The prior verdict line said "5 ADDS VALUE, 4 MIXED, 3 NO SKILL" and hid that only ch is a real loss while cm's NO SKILL label is misleading. `h_persistence_skill.py` now computes n-weighted pooled skill_L4_MAE per field and emits: "Verdict: 5 ADD, 4 MIXED, 3 NO SKILL — genuine loss: ch (−0.26) — strict-NO-SKILL but positive pooled: cm (+0.14)." Fields within ±0.05 of zero pooled (cl at −0.017) are ties, not flagged as losses either way. Line stays under `extract_verdict()`'s 140-char cap so `analysis/runlog/build_executive_summary.py` picks it up cleanly.
+
+</details>
+
+<details>
 <summary><strong>v0.6.328a • July 12, 2026</strong></summary>
 
 - **Persistence-skill line — show pooled skill per field.** The "3 NO SKILL" verdict label was hiding shape — cm has +0.14 pooled skill (positive) but got the NO SKILL label because one lead band is BEHIND, tripping the strict "≥3 bands ADD, no BEHIND" rule. Only ch (−0.26) is genuinely losing pooled. Scorecard "vs Persistence" line now shows the pooled skill_L4_MAE next to each field slug (n-weighted across bands), sorted best-first within each verdict bucket. Verdict rule unchanged. NO SKILL row footer reframed: "strict verdict; only negative pooled numbers are genuine losses."

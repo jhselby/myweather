@@ -297,13 +297,63 @@ def emit(per_cell):
             flag = "★" if v == "ADDS VALUE" else ("★" if v == "NO SKILL" else "⚠")
             lines.append(f"  {f:<6}  {flag} {v}")
 
-    # Verdict line for the digest parser
+    # Verdict line for the digest parser. Extended v0.6.328b so the daily
+    # exec summary distinguishes strict-label-but-positive-pooled fields
+    # (e.g., cm labeled NO SKILL with +0.14 pooled skill from a single
+    # BEHIND lead band) from genuinely-behind fields (e.g., ch at −0.26).
+    # extract_verdict() in analysis/runlog/build_executive_summary.py takes
+    # the LAST "Verdict:" line, so keep this single-line.
     n_add = sum(1 for v in field_verdicts.values() if v == "ADDS VALUE")
     n_mix = sum(1 for v in field_verdicts.values() if v == "MIXED")
     n_no  = sum(1 for v in field_verdicts.values() if v == "NO SKILL")
+    # n-weighted pooled skill_l4_mae per field, then classify.
+    pooled = {}
+    for f, cells in ((f, {b: per_cell.get((f, b)) for _, _, b in BANDS})
+                     for f in FIELDS):
+        num_p = num_4 = 0.0
+        den = 0
+        for c in cells.values():
+            if c is None:
+                continue
+            num_p += c["mae_persist"] * c["n"]
+            num_4 += c["mae_l4"] * c["n"]
+            den += c["n"]
+        if den and num_p > 0:
+            pooled[f] = 1 - num_4 / num_p
+    # Skill within ±TIE_EPS pooled is a wash, not a "genuine loss" — cl at
+    # −0.017 is within noise of persistence, not meaningfully worse.
+    TIE_EPS = 0.05
+    genuinely_behind = sorted(
+        (f for f in field_verdicts
+         if pooled.get(f) is not None and pooled[f] < -TIE_EPS),
+        key=lambda f: pooled[f],
+    )
+    strict_label = sorted(
+        (f for f in field_verdicts
+         if field_verdicts[f] == "NO SKILL"
+         and pooled.get(f) is not None and pooled[f] > TIE_EPS),
+        key=lambda f: -pooled[f],
+    )
+    parts = [f"Verdict: {n_add} ADD, {n_mix} MIXED, {n_no} NO SKILL"]
+    if genuinely_behind:
+        gb = ", ".join(f"{f} ({pooled[f]:+.2f})" for f in genuinely_behind)
+        parts.append(f"genuine loss: {gb}")
+    else:
+        parts.append("no genuine pooled losses")
+    if strict_label:
+        sl = ", ".join(f"{f} ({pooled[f]:+.2f})" for f in strict_label)
+        parts.append(f"strict-NO-SKILL but positive pooled: {sl}")
+    line = " — ".join(parts) + "."
+    # Cap at extract_verdict's 140-char truncation with a small safety margin.
+    if len(line) > 140:
+        # Prefer to drop the strict-label clause first (secondary insight).
+        if strict_label:
+            parts = parts[:-1]
+            line = " — ".join(parts) + "."
+        if len(line) > 140:
+            line = line[:137] + "..."
     lines.append("")
-    lines.append(f"Verdict: {n_add} ADDS VALUE, {n_mix} MIXED, {n_no} NO SKILL "
-                 f"(of {len(field_verdicts)} fields with sufficient data).")
+    lines.append(line)
 
     return "\n".join(lines)
 
