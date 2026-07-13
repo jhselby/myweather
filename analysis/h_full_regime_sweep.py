@@ -242,17 +242,69 @@ def emit(buckets):
     lines.append("")
     lines.append(f"Verdict: {len(skip_candidates)} SKIP candidates, {len(add_candidates)} ADD candidates cleared halves check.")
 
-    return "\n".join(lines)
+    return "\n".join(lines), add_candidates
+
+
+def _emit_add_candidates_json(add_candidates):
+    """Emit the ADD candidates as a curated JSON so the daily digest can
+    walk the SHIP-cell list as a 7-day live-layer-change-gate streak
+    claim (analogous to c1h/c1d/pre_frontal). Wired 2026-07-13 v0.6.331
+    after h/l4/calm/12-23h found on 07-12 + 07-13 (day 2/7). When the
+    ADD candidate set stays stable for 7 consecutive daily digest reads,
+    the finding is ready for a live-layer change ship — actual code
+    change on ship day is: (a) add field to L4_FIELDS, (b) add narrow
+    whitelist entry to decay_apply.py.
+
+    Cell key encoding: `<field>.<layer>.<regime>` at the field level,
+    band at the band level. This lets _claim_marginal_ship_cells consume
+    it with no code change (returns [[field.layer.regime, band], ...]).
+    """
+    from datetime import datetime as _dt, timezone as _tz
+    OUT_JSON = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), "..", "weather_collector", "data",
+        "h_l4_add_candidates.json"
+    ))
+    cells = {}
+    for c in add_candidates:
+        # Only h/l4 fields tracked here — this axis is a live-layer gate
+        # for the L4 whitelist, not a generic ADD tracker. Broadening
+        # scope would need per-field-per-layer gates registered in
+        # build_executive_summary._NARROW_PROMOTE_GATES; skipped for now.
+        if c["field"] != "h" or c["layer"] != "l4":
+            continue
+        key = f"{c['field']}.{c['layer']}.{c['regime']}"
+        cells.setdefault(key, {})[c["band"]] = {
+            "status": "SHIP",
+            "delta_a_pct": round(c["delta_a"], 2),
+            "delta_b_pct": round(c["delta_b"], 2),
+            "n_a": c["n_a"],
+            "n_b": c["n_b"],
+            "impact": round(c["impact"], 0),
+        }
+    payload = {
+        "generated_at": _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "source": "h_full_regime_sweep.py",
+        "scope": "h/l4 ADD candidates only — one live-layer change gate per (field, layer) axis",
+        "cells": cells,
+    }
+    try:
+        os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
+        with open(OUT_JSON, "w") as fh:
+            json.dump(payload, fh, indent=2)
+        print(f"→ wrote {OUT_JSON}  ({sum(len(b) for b in cells.values())} h/l4 ADD cells)")
+    except Exception as e:
+        print(f"⚠ ADD candidates JSON write failed: {e}")
 
 
 def main():
     buckets = compute()
-    text = emit(buckets)
+    text, add_candidates = emit(buckets)
     print(text)
     os.makedirs(os.path.dirname(OUT_TXT), exist_ok=True)
     with open(OUT_TXT, "w") as fh:
         fh.write(text + "\n")
     print(f"\nwrote {OUT_TXT}", file=sys.stderr)
+    _emit_add_candidates_json(add_candidates)
 
 
 if __name__ == "__main__":

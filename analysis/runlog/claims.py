@@ -141,6 +141,14 @@ def compute_claims(state: dict) -> dict:
     claims["PRE_FRONTAL_SHIP_CELLS"] = _claim_marginal_ship_cells(
         "pre_frontal_curated.json", allow_empty=True
     )
+    # H_L4_ADD_CANDIDATES — 7-day live-layer change gate for the h/l4 narrow
+    # add finding (h/l4/calm/12-23h found 07-12 + 07-13, day 2/7 on 07-13).
+    # SHIP cells come from h_full_regime_sweep.py's ADD-candidate emit. Empty
+    # list is meaningful — "no new add candidates" is a legitimate stable
+    # state to track.
+    claims["H_L4_ADD_CANDIDATES"] = _claim_marginal_ship_cells(
+        "h_l4_add_candidates.json", allow_empty=True
+    )
     return claims
 
 

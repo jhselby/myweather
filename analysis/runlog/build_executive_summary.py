@@ -419,6 +419,7 @@ def main():
         "C1H_SHIP_CELLS": ("C1h", 7),
         "C1D_SHIP_CELLS": ("C1d", 7),
         "PRE_FRONTAL_SHIP_CELLS": ("pre-frontal", 7),
+        "H_L4_ADD_CANDIDATES": ("h/l4 narrow-add", 7),
     }
     _narrow_lines = []
     for key, (label, gate_n) in _NARROW_PROMOTE_GATES.items():
@@ -505,6 +506,7 @@ def main():
             "C1H_SHIP_CELLS": "c1h_curate",
             "C1D_SHIP_CELLS": "c1d_curate",
             "PRE_FRONTAL_SHIP_CELLS": "h_pre_front_orthogonality",
+            "H_L4_ADD_CANDIDATES": "h_full_regime_sweep",
         }
         for key, val in today_claims.items():
             if val is None:
