@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.339c • July 13, 2026</strong></summary>
+
+- **Second-pass debug page sweep — residual stale counter refs.** Found five more stale references that the first-pass regex missed: (1) "C1h + C1d earliest ship (both at day 1/7 07-12)" → 2/7 as of 07-13; (2) "Pre-frontal Stage 3 — narrow-promote counter cleared 7/7 (day 1/7 today)" — the "cleared 7/7" phrasing contradicted the day-1/7 counter and was rewritten to describe the 07-13 SHIP-set reset; (3) "ch persistence gate shipped 07-12 (ENABLED=False, day 1/7)" in the metric-framework blurb → 2/7 + Prod-vs-L4 corroboration pointer; (4) ch persistence gate under Production stack list: 7-day gate day 1/7 → 2/7; (5) L3 methodology paragraph still described pa's τ as 28d — updated to τ=42d per today's v0.6.334 bump.
+
+</details>
+
+<details>
 <summary><strong>v0.6.339b • July 13, 2026</strong></summary>
 
 - **Debug page reorg — Recent activity moved to its own top-level section + today's ships consolidated.** Two structural changes: **(1)** the "Recent activity" collapsible was previously nested inside "Engineering updates" — an odd hierarchy since it's more of a change log than a state snapshot. Moved to a new `<h2 id="sec-recent">` section directly above `#sec-status`, with a matching nav link between "Back" and "Engineering updates." **(2)** Today's 07-13 block collapsed from 10 individual version bullets into 7 theme groups: Lt retirement (v0.6.329 + 329a); cl gate wire (v0.6.330); measurement framework (v0.6.335 / 336 / 337); watch infrastructure (v0.6.331 / 332 / 333); pa τ (v0.6.334); wg L3 Stage 0 (v0.6.339); debug page sweeps (v0.6.338 / 338a / 339a). Same information density, half the visual footprint. Also cleaned two stale "Upcoming decisions" entries: the ch persistence gate line advanced day 1 → 2/7 (plus a Prod-vs-L4 corroboration pointer); the "h → L4 re-frozen" line rewritten to reflect that v0.6.331 streak counter now backs the flip criterion (7-day gate, day 2/7, earliest 07-18).

@@ -890,13 +890,13 @@
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-18</div>
           <div>C1 Stage 4 legacy ship next eligible window (cm anomaly rolls out; blocked 07-11). Lc flip window opens if refit confirms signs hold.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-18</div>
-          <div>C1h + C1d narrow-promote earliest ship (both at day 1/7 07-12 after SHIP-set reset).</div>
+          <div>C1h + C1d narrow-promote earliest ship (both at day 2/7 as of 07-13).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 07-19</div>
           <div><strong>ch persistence gate ENABLED=True earliest flip</strong> — 7-day gate clears; SHIP/SKIP cell-set stability re-verified via weekly Stage 2 re-run.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 07-19</div>
           <div><strong>cl persistence re-verify</strong> — first post-anomaly read of <code>h_cl_persistence_blend.py</code> + <code>h_cl_linear_ramp_stage2.py</code>. If halves converge and 0-5h SHIPs hold, ship narrow persistence gate for cl at leads ≤ 5h.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 07-19</div>
-          <div><strong>Pre-frontal Stage 3 earliest wire-up</strong> — narrow-promote counter cleared 7/7 (day 1/7 today). If SHIP cell set stable + C1 Stage 4 clear, wire pre-frontal as new confidence axis.</div>
+          <div><strong>Pre-frontal Stage 3 earliest wire-up</strong> — narrow-promote counter day 1/7 (07-13 reset — SHIP-set changed vs 07-12). If counter clears 7/7 + C1 Stage 4 clear, wire pre-frontal as new confidence axis.</div>
         </div>
 
         <div style="color:#a08070;font-weight:600;margin-bottom:4px;">Frozen</div>
@@ -944,7 +944,7 @@
 
     <p><strong>Measurement gaps:</strong></p>
     <ul style="margin:4px 0 8px 20px;padding:0;">
-      <li><strong>Persistence skill</strong> — shipped 2026-07-11 (<code>h_persistence_skill.py</code>). Baseline: 5 ADD VALUE (t/h/pr/ws/sr), 4 MIXED (dp/wg/cc/pp), 3 NO SKILL — <em>cl/cm/ch lose to persistence at every band despite L3+L4</em>. <strong>Scorecard integration shipped 07-12 v0.6.328</strong> — the "vs Persistence" line in the scorecard banner (above) is live-updated from <code>persistence_skill.json</code>. Response for ch: <strong>ch persistence gate shipped 07-12 v0.6.327 (ENABLED=False, day 1/7)</strong>. cl explored 07-12 → different regime shape, HOLD pending 07-19. cm queued past 07-18 anomaly rollout.</li>
+      <li><strong>Persistence skill</strong> — shipped 2026-07-11 (<code>h_persistence_skill.py</code>). Baseline: 5 ADD VALUE (t/h/pr/ws/sr), 4 MIXED (dp/wg/cc/pp), 3 NO SKILL — <em>cl/cm/ch lose to persistence at every band despite L3+L4</em>. <strong>Scorecard integration shipped 07-12 v0.6.328</strong> — the "vs Persistence" line in the scorecard banner (above) is live-updated from <code>persistence_skill.json</code>. Response for ch: <strong>ch persistence gate shipped 07-12 v0.6.327 (ENABLED=False, day 2/7)</strong>. v0.6.336 Prod-vs-L4 audit corroborates: ch Prod −1.08 vs L4-alone −0.29 (L3 doing damage). cl explored 07-12 → different regime shape, HOLD pending 07-19. cm queued past 07-18 anomaly rollout.</li>
       <li><strong>Climatology skill</strong> — long-lead reference. Needs a climatology dataset.</li>
       <li><strong>pp Brier reliability decomposition</strong> — does "30% chance" actually happen 30% of the time? Aggregate Brier only, no decomposition.</li>
     </ul>
@@ -1115,7 +1115,7 @@
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>Lsr</strong> synoptic-regime solar (sr only). Shipped 06-28 v0.6.248. Per-(regime, hour) bias above sun-up. Skip: ne_flow, calm.</li>
         <li><strong>Lc</strong> cloud saturation-unbiasing (cc/cl/cm/ch). Shipped 07-04 v0.6.298, ENABLED=False. Per-(field, value_bin) shift, 15 SHIP / 24 total. Biggest predicted: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37%. <strong>7-day gate: day 4/7 (07-13). Anomaly-week HOLD:</strong> per-bin check on 07-04→07-11 anomaly shows cc 50-80/80-95 would over-correct 20-23pp; cl mid-high 11-30pp; cm 50-80 would under-correct 13pp. <strong>Do NOT flip until 07-18</strong> after anomaly rolls out AND refit confirms signs hold.</li>
-        <li><strong>ch persistence gate</strong> ch only. Shipped 07-12 v0.6.327, ENABLED=False. Runs AFTER Lc; where the gate fires, replaces L4+Lc-corrected <code>cloud_cover_high</code> with persistence-of-obs (KBOS+KBVY blended obs at forecast issue time, carried flat). Cell-conditioned: <strong>22 SHIP / 6 MARGIN</strong> use persistence; <strong>8 SKIP + <em>frontal</em> regime</strong> fall back to L4. Halves-verified per (regime × lead_band). 7-day gate: day 1/7. Earliest flip 07-19.</li>
+        <li><strong>ch persistence gate</strong> ch only. Shipped 07-12 v0.6.327, ENABLED=False. Runs AFTER Lc; where the gate fires, replaces L4+Lc-corrected <code>cloud_cover_high</code> with persistence-of-obs (KBOS+KBVY blended obs at forecast issue time, carried flat). Cell-conditioned: <strong>22 SHIP / 6 MARGIN</strong> use persistence; <strong>8 SKIP + <em>frontal</em> regime</strong> fall back to L4. Halves-verified per (regime × lead_band). 7-day gate: day 2/7. Earliest flip 07-19.</li>
         <li><strong>cl persistence short-lead gate</strong> cl only. Shipped 07-13 v0.6.330, ENABLED=False. Narrow architecture — replaces <code>cloud_cover_low</code> with persistence-of-obs at leads 0-5h in <strong>all 9 regimes</strong>. Longer bands SKIP by design (Stage 2 halves-check 07-12 diverged from HRRR anomaly contamination; only 0-5h SHIPs cleanly). 9 SHIP cells / 36. 7-day gate: day 1/7 pending 07-19 halves-verified re-run of <code>h_cl_linear_ramp_stage2.py</code>. If clean-window read still shows all 9 regimes SHIP at 0-5h, flip ENABLED=True. Otherwise cl gets no gate.</li>
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
@@ -1434,7 +1434,7 @@
 <div class="layer-info-text">
   <p class="layer-summary">How the model's error tends to grow with each hour into the future — and the per-field nudge we apply to push back against that drift.</p>
   <details class="layer-methodology"><summary>How decay correction works</summary>
-    For each field and each lead hour, we learn from millions of historical pairs how far off the model usually is — then bend the forecast back toward truth by that amount. Some fields (wind, gusts, high & mid cloud, POP) genuinely benefit; others net-negative on held-out data and are paused (see Applicability below). Tracked over a 30-day window with an exponential recency weighting — default τ=14 days, with per-field overrides for fields where <code>analysis/decay_tau_tuning.py</code> shows ≥5% MAE improvement vs the default. Current overrides: <code>pp</code> (POP) at τ=28d (+11.1% held-out, 2026-06-21 v0.6.167) and <code>pa</code> (precip amount) at τ=28d (+9.4% held-out, 2026-06-22 v0.6.195). Both precip fields preferred a smoother bias estimate than the τ=14 default.
+    For each field and each lead hour, we learn from millions of historical pairs how far off the model usually is — then bend the forecast back toward truth by that amount. Some fields (wind, gusts, high & mid cloud, POP) genuinely benefit; others net-negative on held-out data and are paused (see Applicability below). Tracked over a 30-day window with an exponential recency weighting — default τ=14 days, with per-field overrides for fields where <code>analysis/decay_tau_tuning.py</code> shows ≥5% MAE improvement vs the default. Current overrides: <code>pp</code> (POP) at τ=28d (+11.1% held-out, 2026-06-21 v0.6.167) and <code>pa</code> (precip amount) at τ=42d (+5.5% held-out vs τ=14, 3/3 confirmation streak, 2026-07-13 v0.6.334; bumped from prior τ=28d).
   </details>
 </div>
 
