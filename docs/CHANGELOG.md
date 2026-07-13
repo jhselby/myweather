@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.328c • July 12, 2026</strong></summary>
+
+- **Upcoming decisions block — rewritten current-forward.** Joe caught that the block was 90% stale: 07-03 "h + sr to L4" FROZEN entry was superseded 07-11 (re-frozen after halves-check), 07-04 C1 Stage 4 "re-check ~07-11" already happened + blocked, 07-04 raw-baseline verifier was already shipped, 07-06 pp/ws L3 drop was already decided ("don't drop wholesale"), 07-10 outcome was materialized, plus an explicitly-labeled "superseded above" block and a "Lsr post-ship watch through 07-10" note that had auto-lifted. Replaced with 8 actually-upcoming Q/E/D entries: Thu 07-16 ws L3 strip, Fri 07-17 ws octant re-read 1/3, Sat 07-18 C1 Stage 4 + Lc anomaly HOLD, Sun 07-19 ch persistence gate flip + cl narrow gate, h→L4 un-freeze eligibility, pre-frontal counter infra gap, and the Wyman Cove Swim Index product idea (kept — no date). Summary caption clarifies "forward-only; outcomes move to Recent activity" so the block doesn't accumulate history again.
+
+</details>
+
+<details>
 <summary><strong>v0.6.328b • July 12, 2026</strong></summary>
 
 - **Digest exec summary — persistence-skill verdict line surfaces pooled shape.** The prior verdict line said "5 ADDS VALUE, 4 MIXED, 3 NO SKILL" and hid that only ch is a real loss while cm's NO SKILL label is misleading. `h_persistence_skill.py` now computes n-weighted pooled skill_L4_MAE per field and emits: "Verdict: 5 ADD, 4 MIXED, 3 NO SKILL — genuine loss: ch (−0.26) — strict-NO-SKILL but positive pooled: cm (+0.14)." Fields within ±0.05 of zero pooled (cl at −0.017) are ties, not flagged as losses either way. Line stays under `extract_verdict()`'s 140-char cap so `analysis/runlog/build_executive_summary.py` picks it up cleanly.

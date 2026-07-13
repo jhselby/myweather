@@ -1125,37 +1125,71 @@
     </details>
 
     <details open style="border:1px solid #3a3a1f;background:#191910;padding:10px;border-radius:6px;">
-      <summary style="color:#e0d472;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">⏳ Upcoming decisions</summary>
+      <summary style="color:#e0d472;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">⏳ Upcoming decisions <span style="font-weight:normal;opacity:0.6;font-size:0.85em;">(forward-only; outcomes move to Recent activity)</span></summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>07-03 (Fri): Add h + sr to L4_FIELDS? — FROZEN.</strong>
+
+        <li style="margin-top:6px;"><strong>Thu 07-16 — ws L3 strip: ship or hold?</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Should h and sr be added to L4?</li>
-            <li><strong>E:</strong> Walkforward SHIP for h disagrees with <code>l4_regime_lead_analysis</code> KILL verdict — the two tools answer different questions and can't both be right without reconciliation. Likely a time-window mismatch. sr baseline still corrupted through 07-10 by the Lsr per-lead scalar bug.</li>
-            <li><strong>D:</strong> FROZEN. Reconcile walkforward vs l4_regime_lead_analysis on h before touching. Align both on the same window, re-read. Do not ship until they agree.</li>
+            <li><strong>Q:</strong> Drop ws from <code>L3_FIELDS</code>?</li>
+            <li><strong>E:</strong> Walkforward recommends drop. Real counter <strong>day 3/7 as of 07-12</strong> (v0.6.320 fix retired the aspirational "day 8/7" fiction). ws skip table (v0.6.279) already handles ne_flow all bands + sea_breeze 0-11h. wg no longer in drop-set.</li>
+            <li><strong>D:</strong> Ship the strip if walkforward + <code>l3_regime_lead_analysis</code> + <code>production_whatif</code> all agree on the 07-16 read.</li>
           </ul>
         </li>
-        <li style="margin-top:6px;"><strong>07-04 (Sat) — TODAY:</strong> C1 v2 multi-axis calibration audit first eligible — <strong>ran, verdict INSUFFICIENT-DATA</strong> (0 PASS / 0 WATCH / 0 FAIL / 921 INSUFFICIENT of 921 cells). Multi-axis holdout pool hasn't filled yet. Re-check ~2026-07-11 after another week of pair-log accumulation.</li>
-        <li><strong>07-04 (Sat) — TODAY: SHIPPED v0.6.291 — Shape 1 raw-baseline verifier.</strong>
+
+        <li style="margin-top:6px;"><strong>Fri 07-17 — <code>h_ws_octant_bias</code> weekly re-read (1 of 3).</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Structural guard against the Lsr-class silent failure (raw_ column mutated before snapshot).</li>
-            <li><strong>D:</strong> Shipped. <code>weather_collector/processors/raw_integrity.py</code>: <code>snapshot_raw_baseline</code> at pipeline start, <code>verify_raw_integrity</code> before write; drift → <code>raw_pollution_log.jsonl</code> in GCS; digest picks up via <code>analysis/raw_integrity_check.py</code>; DRIFT bucketed as kill in exec summary. Healthy since 11:37 UTC.</li>
+            <li><strong>Q:</strong> Is the +0.9 to +1.9 mph over-forecast on SW/S/E/NE octants direction-stable and independent of sw_flow regime?</li>
+            <li><strong>E:</strong> Stage 0 read 07-10 flagged Marblehead-geometry friction story. Weekly reads 07-17, 07-24, 07-31 required.</li>
+            <li><strong>D:</strong> If sign stable + regime cross-cut clean by 07-31, promote to Stage 1 for the per-octant ws L2 additive.</li>
           </ul>
         </li>
-        <li style="margin-top:6px;"><strong>07-06 (Mon): Drop pp + ws from L3_FIELDS?</strong>
+
+        <li style="margin-top:6px;"><strong>Sat 07-18 — C1 Stage 4 legacy ship: unblock or defer?</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Should pp and ws be removed from L3?</li>
-            <li><strong>E:</strong> Walkforward recommends dropping both. pp verified 07-03 at +8.0% Brier gain (Brier-evaluated exception; keep). ws skip table active (v0.6.279) already handles ne_flow + sea_breeze 0-11h cells.</li>
-            <li><strong>D:</strong> Don't drop wholesale. Skip table handles ws regime cells. Add more skip cells if wider regressions show up in the Fitter.</li>
+            <li><strong>Q:</strong> Does the C1 Stage 4 audit clear once the HRRR cm-distribution anomaly rolls out of the recent window?</li>
+            <li><strong>E:</strong> 07-11 refined view was 26 PASS / 0 WATCH / 9 FAIL / 7 SKIP — 8 of 9 FAILs cm × every band × key. Diagnosed as HRRR distribution shift 07-04→07-11 (mean cm forecast 16% → 47%). Anomaly window rolls out by 07-18.</li>
+            <li><strong>D:</strong> If pass rate ≥ 75% on the 07-18 read, flip <code>C1 ENABLED=True</code> and unblock C1h + C1d narrow-promote earliest ships. If not, defer another week.</li>
           </ul>
         </li>
-        <li style="margin-top:6px;"><strong>07-10 (Fri) — outcome:</strong> sr baseline suppression window closes tonight; first clean read lands in 07-11 digest. ws L3 strip did NOT ship — the "day 8/7" gate was fiction: streak-infra was silently wedged at 0 for 7 days due to a stdout-buffered read in <code>claims.py</code>. Caught + fixed 07-10 v0.6.320; earliest ws L3 strip now 07-16 with real counter. wg no longer in the drop-set. Lsr skip regime re-audit deferred to 07-11 with sr clean read.</li>
-        <li style="margin-top:6px;"><strong>Original plan text (retained for context, superseded above):</strong>
+
+        <li style="margin-top:6px;"><strong>Sat 07-18 — Lc anomaly-week HOLD: flip ENABLED=True?</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>E:</strong> sr Production baseline stops being polluted (Lsr per-lead fix landed 07-03). Re-run <code>l5_solar_analysis</code> — first clean read. ws + wg L3 strip candidacy hits day 8/7 IF picture holds; earliest ship of the strip. Lsr skip regime re-audit (ne_flow, calm) whether they still net-negative when Lsr fires at every daytime lead.</li>
-            <li><strong>D:</strong> Ship the L3 strip if all three tools (walkforward, l3_regime_lead_analysis, production_whatif) agree on 7-day streak. Re-audit Lsr skip cells.</li>
+            <li><strong>Q:</strong> Does Lc's per-bin shift table hold sign + magnitude on the post-anomaly refit?</li>
+            <li><strong>E:</strong> Per-bin check on 07-04→07-11 anomaly showed cc 50-80/80-95 would over-correct 20-23pp, cl mid-high 11-30pp, cm 50-80 would under-correct 13pp. Explicit HOLD until 07-18. Real gate counter day 3/7.</li>
+            <li><strong>D:</strong> If refit signs hold AND live-layer 7-day gate clears, flip <code>cloud_saturation_correction.ENABLED=True</code>. Else refit only, re-audit 07-25.</li>
           </ul>
         </li>
-        <li style="margin-top:6px;"><strong>Ongoing through 07-10: Lsr post-ship watch alerts expected.</strong> Morning digest will show ⚠ <code>l5_solar_analysis</code> watch alerts for ~9 more days. Cause is known (bug-contaminated verdicts pre-07-03); don't act on them. Should self-resolve after 07-10 as clean pair rows fill the window.</li>
+
+        <li style="margin-top:6px;"><strong>Sun 07-19 — ch persistence gate: flip ENABLED=True?</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>Q:</strong> Does the Stage 2 SHIP/SKIP cell set (22 SHIP / 6 MARGIN / 8 SKIP / 1 THIN as of 07-12 ship) hold across the weekly re-run?</li>
+            <li><strong>E:</strong> Shipped 07-12 v0.6.327 ENABLED=False, day 1/7 counter starts today. Weekly Sunday re-run of <code>h_ch_persistence_blend_stage2.py</code> is the 7-day gate. Any halves sign-flip in a SHIP cell demotes it to SKIP.</li>
+            <li><strong>D:</strong> If cell-set stable + halves consistent, flip <code>ch_persistence_gate.ENABLED=True</code>. Watch 14-day post-ship for verdict flips.</li>
+          </ul>
+        </li>
+
+        <li style="margin-top:6px;"><strong>Sun 07-19 — cl persistence: ship 0-5h narrow gate, or nothing?</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>Q:</strong> Post-anomaly, do the halves converge for cl regime_gate + persist_only? And do all 9 regimes still SHIP at 0-5h at τ=24?</li>
+            <li><strong>E:</strong> 07-12 Stage 1+2 found: halves divergence on regime_gate + persist_only was likely anomaly-inflated. linear_ramp τ scan monotonic-with-τ (red flag). The physically-real signal is <strong>0-5h narrow persistence gate — all 9 regimes SHIP at 0-5h</strong>.</li>
+            <li><strong>D:</strong> If halves converge and 0-5h SHIPs hold, ship <code>cl_persistence_short_lead.py</code> (persist replaces cl at lead ≤ 5h, all regimes, no skip table). Else cl gets no gate.</li>
+          </ul>
+        </li>
+
+        <li style="margin-top:6px;"><strong>h → L4 (re-frozen 07-11) — un-freeze eligibility 07-18+.</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>E:</strong> Un-froze 07-11 under regime-gate framing (12 WIN / 20 flat / 0 LOSE) then re-froze same day: halves-check killed 7 of 12 WIN cells (HRRR anomaly). <code>h_full_regime_sweep</code> currently flags h/l4/calm/12-23h as ADD candidate (impact 5,598) — small but halves-verified inside calm regime.</li>
+            <li><strong>D:</strong> Re-run halves-check 07-18+. If 5+ of the 12 WIN cells stabilize post-anomaly, ship as regime-gated L4 (skip the flip cells). If only the single calm/12-23h cell survives, ship narrow.</li>
+          </ul>
+        </li>
+
+        <li style="margin-top:6px;"><strong>Pre-frontal narrow-promote gate — infrastructure gap.</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>E:</strong> Stage 1 MIXED as of 07-04. No counter wired — same aspirational-text pattern that C1h/C1d/LC had pre-v0.6.323. Fix needs a Stage 3 curated table for pre-frontal to walk (unlike C1h/C1d there's no existing table).</li>
+            <li><strong>D:</strong> No date. Build when either (a) verdict flips to promote and forces the issue, or (b) low-load day picks it up.</li>
+          </ul>
+        </li>
+
         <li style="margin-top:6px;"><strong>Product ideas (not correction-stack):</strong> <em>Wyman Cove Swim Index (WCSI)</em> — swim-safety score combining recent rainfall runoff, tidal flushing, outfall observations, Salem-area beach closures, wind direction. Scoring proposal + open design questions in <code>project-todo</code> memory. No date; pull in on a low-load day.</li>
       </ul>
     </details>
