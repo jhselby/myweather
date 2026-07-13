@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.348 • July 13, 2026</strong></summary>
+
+- **MLC collapse diagnosis: not the cm anomaly, separate event at 07-07.** Segmented the marine_layer_watch time series by window to test the "same as cm HRRR shift?" hypothesis. Per-window in-bin bias: pre-anomaly (06-22→07-04) +37.01, cm-anomaly-window (07-04→07-07) +33.02, cliff (07-07→07-10) +13.80, post-cliff (07-10→07-14) +8.85. **MLC held ~+33 through the entire 07-04→07-07 cm-anomaly window** before collapsing on 07-07 — three days after the cm shift began. If the same HRRR upstream change caused both, they'd move together. They didn't. Also: in_bin_n grew (3734 → 4217) — so not stratum-shrink; there are actually MORE NE-flow-morning pairs recently and they're just genuinely less biased. Something in NE-morning cc physics changed sharply on 07-07. Best remaining hypotheses: mid-summer seasonal drop in NE-flow inversions, or an HRRR NE-morning boundary condition shift distinct from cm. Debug page + memory updated with narrower diagnosis; MLC.ENABLED stays False indefinitely; re-engage flip criterion only if in_bias recovers to +25+ within 3 weeks.
+
+</details>
+
+<details>
 <summary><strong>v0.6.347 • July 13, 2026</strong></summary>
 
 - **Marine-layer stratum bias-collapse detector + COLLAPSE finding.** Investigating the "flip target mid-July if trend holds" TODO surfaced that the trend did NOT hold — the MLC in-bin signal has been collapsing since 07-07. New `analysis/marine_layer_anomaly.py` reads `marine_layer_watch.json` (per-tick fit output) and compares recent-7d vs baseline-21d mean of `in_bin_signed_bias`. Three verdicts: COLLAPSE (|Δ|≥15 AND recent<15), DECAY (|Δ|≥10 AND recent<baseline), STABLE. **First run flags COLLAPSE:** baseline +36.27 → recent +10.97 (Δ −25.29); out-of-bin control flat (+10.67 → +11.09), confirming this isn't a global cc shift. Also wired into `build_executive_summary.py` alongside the pair-log anomaly detector so future collapses/decays surface at exec-summary altitude in the daily digest. Debug page MLC entry rewritten to reflect the collapse; project-todo memory refreshed. **Decision:** MLC.ENABLED stays False; flipping now would over-correct cc by ~+25pp inside the gate. Two candidate causes to investigate: same 07-04 HRRR anomaly window as cm, or a mid-summer seasonal drop in NE-flow inversions.
