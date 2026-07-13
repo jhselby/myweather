@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.334 • July 13, 2026</strong></summary>
+
+- **Per-field τ bump for pa: 28 → 42.** `decay_tau_tuning.py` today's read: pa gains +5.5% MAE vs τ=14 at best-τ=42, confirmed by 3-consecutive-daily-read streak (the anti-noise gate that killed the July 1 ws τ=7 ship). Updated `TAU_DAYS_BY_FIELD["pa"]` in `weather_collector/processors/decay_fit.py`. Fitter runs once a day, so the change takes effect at the next `decay_fit` pass. Sits alongside the already-tuned `pp: 28` (from 06-21).
+
+</details>
+
+<details>
 <summary><strong>v0.6.333 • July 13, 2026</strong></summary>
 
 - **Pair-log anomaly detector shipped.** New `analysis/anomaly_detector.py` reads `forecast_error_log.jsonl` and compares two adjacent windows per field — last 7 days (recent) vs prior 21 days (baseline) — flagging fields whose forecast-value distribution has moved past threshold. Motivated by the 2026-07-11 cm Stage 4 flip (project_cm_stage4_degradation): between 06-27→07-04 and 07-04→07-11, cm HRRR forecast mean shifted 16% → 47% and MAE 15 → 33 — a boundary-condition-level change Stage 4's mixture check treated as one signal. Per-field metrics: forecast mean shift in σ-units (relative to baseline std), MAE % change, signed-bias shift, max quartile-bin population shift in pp. Verdict rule: **ANOMALY** if MAE > +50% AND (|Δfc_mean| > 1σ OR bias shift > 3σ_err); **WATCH** if MAE > +30% OR |Δfc_mean| > 1σ OR max bin frac Δ > 15pp; **CLEAN** otherwise; **THIN** if < 500 pairs in either window. Wired into digest exec summary: new "Pair-log anomaly alerts" block sits right after persistence-skill watch, one line per non-CLEAN field. Today's first read: 0 ANOMALY / 1 WATCH (pr, driven by 24.7pp precip-rate bin shift — expected given precip rate distributions are heavy-tailed) / 12 CLEAN. cm has recovered — recent MAE 23.2 vs baseline 26.7 — matches the "cause (b) transient weather" branch predicted in the cm-stage4-degradation memo.
