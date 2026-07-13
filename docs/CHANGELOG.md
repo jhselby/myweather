@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.350a • July 13, 2026</strong></summary>
+
+- **v0.6.350 fix: fill in Production column for RMSE + bias rows.** The redesign shipped with "—" placeholder in the Production column for the RMSE and bias sub-rows, on the theory that hybrid-Production was MAE-only. Wrong — `per_layer_rmse_by_lead` and `per_layer_bias_by_lead` both publish a populated `production` key (48 values per field, done by `decay_fit.py` alongside the per-layer arrays). Read directly from `data.production` for the RMSE + bias Production cells so the column fills correctly. Also dropped the now-incorrect "no Production column" caveat from the intro prose.
+
+</details>
+
+<details>
 <summary><strong>v0.6.350 • July 13, 2026</strong></summary>
 
 - **Accuracy section redesign — kill charts, one combined table per card.** Joe raised that the section had become "a lot less useful" after v0.6.340 added RMSE + bias companion tables (chart + 3 tables per card = wall of vertical space). Discussion surfaced the real root cause: charts USED to be useful when they showed each layer's individual contribution, but two mid-summer changes ate that value — (1) v0.6.340's `_layersFor()` filter dropped inactive layer lines (correct fix for lots of stacked identical lines, but robbed the chart of its per-layer visual story) and (2) the thick Production line added earlier dominates the eye. Redesign: each card now renders a single band-table with rows grouped as (band × metric) — 5 bands (0-5h / 6-11h / 12-23h / 24-47h / ALL) × 3 metric rows (MAE primary, RMSE + bias as visually secondary sub-rows). Same information density, roughly half the vertical footprint, and the eye lands directly on the tables where every actionable decision is made anyway. Killed `_buildBandTable` + `_buildMetricTable` + the entire `new Chart(...)` block; replaced with `_buildCombinedTable`. pp-Brier cards still render Brier-only (no MAE/RMSE/bias companion story to tell for probabilistic forecasts). Intro prose rewritten — dropped the "colored lines" paragraph and legend explanation, added per-metric usage notes (MAE = primary L3/L4 whitelist metric; RMSE = watch for band where RMSE jumps proportionally more than MAE = occasional big misses; bias = signed drift). Design note added to the intro explaining why the charts are gone.

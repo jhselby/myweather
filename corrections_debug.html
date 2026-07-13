@@ -1289,7 +1289,7 @@
       <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
         <li><strong>MAE</strong> — average absolute error. The primary metric; drives L3/L4 whitelist decisions. Best cell in row highlighted green, worst red.</li>
         <li><strong>RMSE</strong> — squared-error root. Higher than MAE by a factor set by how tail-heavy the errors are. Watch for a band where RMSE jumps proportionally more than MAE — that's occasional big misses hiding behind an OK average.</li>
-        <li><strong>bias</strong> — mean signed error (forecast − obs). Near-zero = calibrated on average. Persistent + or − by band signals systematic drift. RMSE + bias are population-level per-layer diagnostics; no Production column (hybrid aggregation is MAE-specific).</li>
+        <li><strong>bias</strong> — mean signed error (forecast − obs). Near-zero = calibrated on average. Persistent + or − by band signals systematic drift.</li>
       </ul>
     </div>
     <div class="meta-line"><strong>Layer labels:</strong>
@@ -3465,11 +3465,13 @@ function renderAccuracySection(tsDoc, wxDoc) {
           : _fmt(v, metric === "bias" ? decimals + 1 : decimals);
         row += `<td${extra}>${shown}</td>`;
       }
-      // Production column: only MAE has a hybrid aggregate. RMSE + bias show —.
+      // Production column: MAE uses the hybrid per-row aggregate.
+      // RMSE + bias read directly from data.production (populated by
+      // decay_fit.py alongside per-layer arrays).
+      let prodVal, prodCls = "production-col";
       if (metric === "mae") {
-        const prodVal = _bandAvg(prodArr, band.lo, band.hi);
+        prodVal = _bandAvg(prodArr, band.lo, band.hi);
         const rawVal = vals[0];
-        let prodCls = "production-col";
         if (prodVal != null && rawVal != null && rawVal > 0) {
           const pct = (prodVal - rawVal) / rawVal * 100;
           if (pct <= -0.5) prodCls += " prod-better";
@@ -3477,7 +3479,11 @@ function renderAccuracySection(tsDoc, wxDoc) {
         }
         row += `<td class="${prodCls}">${_fmt(prodVal, decimals)}</td>`;
       } else {
-        row += `<td class="production-col">—</td>`;
+        prodVal = _bandAvg((data || {}).production || [], band.lo, band.hi);
+        const shownProd = metric === "bias" && prodVal != null && prodVal > 0
+          ? `+${_fmt(prodVal, decimals + 1)}`
+          : _fmt(prodVal, metric === "bias" ? decimals + 1 : decimals);
+        row += `<td class="${prodCls}">${shownProd}</td>`;
       }
       row += `</tr>`;
       return row;
