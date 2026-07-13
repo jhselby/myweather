@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.338a • July 13, 2026</strong></summary>
+
+- **Two prose cleanups on the accuracy section.** Dropped the "the `*` marker on the Production line auto-drops... satisfied since 2026-07-08" clause — the auto-drop already fired 5 days ago (chart code at line 3388 still handles the star conditionally, unchanged). Dropped "Lt only for t" from the population-diagnostics blurb — Lt retired 07-13, no Lt line drawn anymore. HTML parse-clean.
+
+</details>
+
+<details>
 <summary><strong>v0.6.338 • July 13, 2026</strong></summary>
 
 - **Debug page sweep after 7-ship session.** Counters advanced from 07-12 baselines to 07-13: ch persistence gate 1/7 → 2/7 (with a new note referencing the v0.6.336 Prod-vs-L4 corroboration); Lc 3/7 → 4/7; C1h + C1d Stage 3 counters 1/7 → 2/7; ws L3 strip 3/7 → 4/7 (bulk `day 3/7 (07-12)` and `day 3/7 as of 07-12` replaced with `day 4/7 (07-13)` / `day 4/7 as of 07-13`); pre-frontal Stage 3 wire-up eligibility note updated to reflect today's 1/7 reset (SHIP-set changed vs yesterday). Added "Recent activity" entries for the 7 ships from this session (v0.6.331 through v0.6.337). HTML parse-verified; served-page verified via local http.server. Following [[feedback_debug_page_canon]] — page IS source of truth, must skim after every ship.
