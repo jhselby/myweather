@@ -124,6 +124,10 @@ PERSISTENCE_SKILL_THIN_MARGIN = 0.20
 # if forecast-value distribution shift were tracked as its own signal.
 ANOMALY_DETECTOR_JSON_PATH = HERE.parent / "output" / "anomaly_detector.json"
 
+# Marine-layer stratum bias-collapse detector — companion to the global
+# anomaly detector, targeting the ~3%-of-cc stratum where MLC lives.
+MARINE_LAYER_ANOMALY_JSON_PATH = HERE.parent / "output" / "marine_layer_anomaly.json"
+
 
 def extract_verdict(log_path: Path) -> str | None:
     """Return a one-line verdict string or None."""
@@ -196,6 +200,25 @@ def anomaly_detector_summary():
         mark = "★" if v == "ANOMALY" else "⚠"
         lines.append(f"  {mark} {f}: {v} — {', '.join(parts)}")
     return lines
+
+
+def marine_layer_anomaly_summary():
+    """Return a one-line alert if the MLC in-bin bias collapsed/decayed, or None."""
+    if not MARINE_LAYER_ANOMALY_JSON_PATH.exists():
+        return None
+    try:
+        doc = json.loads(MARINE_LAYER_ANOMALY_JSON_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    verdict = doc.get("verdict")
+    if verdict not in ("COLLAPSE", "DECAY"):
+        return None
+    base = doc.get("in_bin_bias_baseline_mean")
+    rec = doc.get("in_bin_bias_recent_mean")
+    if base is None or rec is None:
+        return f"  ★ MLC in-bin bias: {verdict}"
+    mark = "★" if verdict == "COLLAPSE" else "⚠"
+    return f"  {mark} MLC in-bin bias: {verdict} — baseline {base:+.2f} → recent {rec:+.2f} (Δ {rec - base:+.2f})"
 
 
 def persistence_skill_watch():
@@ -535,6 +558,9 @@ def main():
             out.append(line)
     else:
         out.append("  • all fields CLEAN")
+    ml_line = marine_layer_anomaly_summary()
+    if ml_line:
+        out.append(ml_line)
     out.append("")
 
     out.append("New kills:")

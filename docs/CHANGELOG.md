@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.347 • July 13, 2026</strong></summary>
+
+- **Marine-layer stratum bias-collapse detector + COLLAPSE finding.** Investigating the "flip target mid-July if trend holds" TODO surfaced that the trend did NOT hold — the MLC in-bin signal has been collapsing since 07-07. New `analysis/marine_layer_anomaly.py` reads `marine_layer_watch.json` (per-tick fit output) and compares recent-7d vs baseline-21d mean of `in_bin_signed_bias`. Three verdicts: COLLAPSE (|Δ|≥15 AND recent<15), DECAY (|Δ|≥10 AND recent<baseline), STABLE. **First run flags COLLAPSE:** baseline +36.27 → recent +10.97 (Δ −25.29); out-of-bin control flat (+10.67 → +11.09), confirming this isn't a global cc shift. Also wired into `build_executive_summary.py` alongside the pair-log anomaly detector so future collapses/decays surface at exec-summary altitude in the daily digest. Debug page MLC entry rewritten to reflect the collapse; project-todo memory refreshed. **Decision:** MLC.ENABLED stays False; flipping now would over-correct cc by ~+25pp inside the gate. Two candidate causes to investigate: same 07-04 HRRR anomaly window as cm, or a mid-summer seasonal drop in NE-flow inversions.
+
+</details>
+
+<details>
 <summary><strong>v0.6.346 • July 13, 2026</strong></summary>
 
 - **Retire "*" migration language on the accuracy section.** Three stale bits from the 07-01 → 07-08 per-row-stamping migration cleaned out: (1) MAE band-table tooltip's fallback text no longer says "Per-row stamping shipped 2026-07-01; 7-day window fully fills 2026-07-08" — replaced with "Thin-sample fallback only — protects against noisy per-lead averages." Reframes the sub-floor path as an ongoing safety net, not a migration artifact. (2) "Current pipeline state" table intro dropped the "entries flagged 'in flight' are cases where today's deploy hasn't propagated" caveat — no cell has been flagged in-flight for over a week, and the deploy-propagation framing was migration-specific. Now: "Production numbers are real per-row aggregates over the rolling 7-day window." (3) Engineering-updates per-row-stamping entry dropped "; 7-day window fully filled 2026-07-08" and the "The `*` marker auto-drops per-card at ≥40/48 leads covered" line — reframed the thin-sample fallback in the same "rare-lead safety net, not a migration artifact" language. **Left unchanged:** the `realCovered >= 40 ? "" : "*"` conditional in the chart code (safety net if we ever drop back below the floor) + all n≥30 min-sample floor language (real ongoing noise guard, per project-todo instruction).
