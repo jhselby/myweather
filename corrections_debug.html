@@ -809,7 +809,7 @@
           <li>L2 mesonet blend: t · h · dp · cc · cl · cm · ch · ws · wg <span style="opacity:0.7;">(pr off 07-01)</span></li>
           <li>L3 lead-decay: ws · wg · ch · cm <span style="opacity:0.7;">(pp dropped 2026-07-04 v0.6.304 · skip: ws in ne_flow all bands + sea_breeze 0-11h)</span></li>
           <li>L4 diurnal: <code>{ch, cc}</code></li>
-          <li>Lsr synoptic (sr): skip ne_flow + calm <span style="opacity:0.7;">· Lt dormant</span></li>
+          <li>Lsr synoptic (sr): skip ne_flow + calm <span style="opacity:0.7;">· Lt retired 07-13 (Fix B held-out +0.29%)</span></li>
         </ul>
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Production vs raw</div>
         <ul style="margin:0 0 8px 16px;padding:0;">
@@ -1107,7 +1107,6 @@
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Specialists <span style="font-weight:normal;opacity:0.7;">— domain-scoped, parallel to the core stack</span></div>
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>Lsr</strong> synoptic-regime solar (sr only). Shipped 06-28 v0.6.248. Per-(regime, hour) bias above sun-up. Skip: ne_flow, calm.</li>
-        <li><em>Lt cove microclimate: <strong style="color:#fb7c5c;">RETIRED 07-13</strong> after Fix B refit against L2 baseline held-out +0.29% (below +1.0% gate). Moved to Retired below.</em></li>
         <li><strong>Lc</strong> cloud saturation-unbiasing (cc/cl/cm/ch). Shipped 07-04 v0.6.298, ENABLED=False. Per-(field, value_bin) shift, 15 SHIP / 24 total. Biggest predicted: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37%. <strong>7-day gate: day 3/7 (07-12). Anomaly-week HOLD:</strong> per-bin check on 07-04→07-11 anomaly shows cc 50-80/80-95 would over-correct 20-23pp; cl mid-high 11-30pp; cm 50-80 would under-correct 13pp. <strong>Do NOT flip until 07-18</strong> after anomaly rolls out AND refit confirms signs hold.</li>
         <li><strong>ch persistence gate</strong> ch only. Shipped 07-12 v0.6.327, ENABLED=False. Runs AFTER Lc; where the gate fires, replaces L4+Lc-corrected <code>cloud_cover_high</code> with persistence-of-obs (KBOS+KBVY blended obs at forecast issue time, carried flat). Cell-conditioned: <strong>22 SHIP / 6 MARGIN</strong> use persistence; <strong>8 SKIP + <em>frontal</em> regime</strong> fall back to L4. Halves-verified per (regime × lead_band). 7-day gate: day 1/7. Earliest flip 07-19.</li>
       </ul>

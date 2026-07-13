@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.329a • July 13, 2026</strong></summary>
+
+- **Debug page — Lt out of Production stack list entirely.** Joe caught that the previous ship left an inline "RETIRED — moved to Retired below" pointer in the Production stack Specialists list. That's noise once Lt is fully retired. Removed the line; Lt now appears only in the Retired list (with the updated rationale from v0.6.329) and in a single top-of-page compact reference. "What's shipped" list at the top of the page: "Lt dormant" → "Lt retired 07-13 (Fix B held-out +0.29%)".
+
+</details>
+
+<details>
 <summary><strong>v0.6.329 • July 13, 2026</strong></summary>
 
 - **Lt Fix B answered — retired.** Ran `analysis/l6_fix_b_refit.py` on 202,321 pair rows (154k train / 47k held-out). Held-out MAE improvement **+0.29%** — well below the +1.0% ship gate. Panel B (sb_off × hour-of-day) looked like a real overnight cove-cooling signal on training (00-06h mean residual +0.9 to +2.1°F, 7 SHIP bins), but the wins dissolve out-of-sample. Panel A (sb_on × octant) came back with 0 SHIP bins entirely — the warming-branch signal was largely a fitting-against-raw-L1 artifact. **Mechanism:** L2's Kalman blend re-fits per-tick based on obs-vs-model bias and absorbs the same microclimate signal dynamically — a static hourly cove table would be adding a delta L2 already added. Net wash on held-out. Closes the 12-day "dormant pending Fix B refit" thread going back to 07-01. Lt permanently retired (both branches, ENABLED=False). Debug page updated: Built-not-applied entry moved to Retired with rationale; R&D queue Fix B entry closed; Microclimate line reworded to "retired" (was "until Fix B ships"); Recent activity 07-13 entry added. Memory: `project_lt_fix_b_answered.md`. Reinforces the persistence-skill picture from 07-12 — t is +0.68 pooled skill (one of the strongest fields), because L2's Kalman blend is doing more work than we thought.
