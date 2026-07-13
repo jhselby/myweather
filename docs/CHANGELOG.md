@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.339 • July 13, 2026</strong></summary>
+
+- **wg L3 regression diagnostic — Stage 0 finding.** Follow-on to today's v0.6.336 result (wg Prod persistence skill −0.09 vs L4-alone +0.10 = a 19pp drag through the L3 step). New `analysis/h_wg_l3_regression.py` compares per-row L2 forecast (pre-L3) to L3 forecast (Production for wg — top-level `forecast`) against persistence per (regime × lead_band). Verdict rule: L3 HURTS if MAE_L3 > MAE_L2 by ≥3% AND L2 already beats persistence. **First read: 10 HURT cells / 36 judged** — all in a coherent physical pattern: **`calm` regime blown across every band** (+23%, +62%, +77%, +73%), **`unknown` regime across 3 bands** (+22 to +38%), **sea_breeze/6-11h + sea_breeze/24-47h, ne_flow/6-11h**. Fits the same architecture as the ws L3 skip table (ne_flow all + sea_breeze 0-11h): narrow whitelist / broad skip-table extension, ship where L3 wins (18 HELPS cells including frontal all bands + pre_frontal 24-47h at −22%). NOT shippable today — this is Stage 0. Needs 3-day confirmation streak per [[feedback-hypothesis-promotion-pipeline]] before Stage 1. Explains why v0.6.336 flagged wg L3 as damaging: `calm` alone (14,591 rows in 7d) accounts for most of the pooled skill drop.
+
+</details>
+
+<details>
 <summary><strong>v0.6.338a • July 13, 2026</strong></summary>
 
 - **Two prose cleanups on the accuracy section.** Dropped the "the `*` marker on the Production line auto-drops... satisfied since 2026-07-08" clause — the auto-drop already fired 5 days ago (chart code at line 3388 still handles the star conditionally, unchanged). Dropped "Lt only for t" from the population-diagnostics blurb — Lt retired 07-13, no Lt line drawn anymore. HTML parse-clean.
