@@ -664,6 +664,17 @@
   .band-table td:first-child { text-align: left; color: #9aa3b2; font-weight: 500; }
   .band-table thead th { color: #9aa3b2; font-weight: 600; background: #181c25; }
   .band-table tbody tr.all-row td { border-top: 1px solid #2e3340; font-weight: 600; color: #e7ecf3; }
+  /* v0.6.350 — combined band+metric table. MAE rows carry the primary signal;
+     RMSE + bias rows are visually secondary (dimmer + smaller). Band-start
+     rows carry a subtle top border to segment the bands. */
+  .band-table tbody tr.metric-rmse td,
+  .band-table tbody tr.metric-bias td { color: #8a94a3; font-size: 10px; }
+  .band-table tbody tr.band-start td { border-top: 1px solid #2a2f3a; }
+  .band-table tbody tr.metric-label,
+  .band-table tbody tr td.metric-label {
+    color: #6d7683; font-weight: 400; padding-left: 14px; font-size: 10px;
+  }
+  .band-table tbody tr td.band-label { color: #9aa3b2; font-weight: 600; }
   .band-table td.best { color: #9ad99a; font-weight: 600; }
   .band-table td.worst { color: #c89090; }
   /* Highlight columns whose corresponding layer is actively applied to this field.
@@ -981,6 +992,7 @@
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.340 — Forecast Accuracy chart rewrite.</strong> Two long-standing issues fixed together: (1) most cards showed 4-5 stacked identical lines because inactive layer arrays equal the previous applied — visual noise for zero signal. `_layersFor()` now filters to only-applied layers (L1 + those with `_layerApplied()` true) — so t renders Raw+L2+Prod, wg renders Raw+L2+L3+Prod, pa renders Raw+Prod. Same filter on MAE band table. (2) MAE-only view missed big misses (in RMSE) and systematic drift (in bias). New `_buildMetricTable()` renders RMSE + bias companion tables below each card's MAE table.</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.341 — three UI cleanups on the top of the page.</strong> (1) Scorecard "What this measures" prose wrapped in `<details>` — was always-visible, wasting real estate below the metric grid. (2) Tri-column band (running / improving / evaluated) wrapped in `<details open>` with a single "Current state" summary. (3) Status column added to Current pipeline state table — per-field one-liner surfaces the interesting story ("ch: Best vs raw but Prod −1.08 vs L4-alone −0.29 — L3 doing damage") without expanding the Applied-layers column into prose.</li>
       <li style="margin-top:6px;"><span style="color:#e0d472;">★</span> <strong>v0.6.342 — NOVEL FINDING: wg short-term residual persistence (Stage 0 hit).</strong> New `analysis/h_daily_residual_persistence.py` tests whether yesterday's mean (obs − L2_forecast) at hour H predicts today's at hour H — i.e., does L4's 21-day window smooth over real 1-3 day drift? Simulated a rolling 2-day mean-L2-residual correction at same clock hour, held-out on last 7 days (49,804 rows): <strong>wg MAE −6.13%</strong> (2.638 → 2.475), <strong>RMSE −7.41%</strong> (7.598 → 7.035). Every other field regressed with this naive correction (t/dp/h already have L4 catching the signal; cloud fields' 2-day rolling means too noisy). wg wins because (a) no L4 diurnal correction competes (wg not in `L4_FIELDS`), (b) wind gust has strong day-to-day persistence — windy days follow windy days — that L2's Kalman doesn't fully track, (c) autocorrelation broadly distributed across hours. Comparable impact class to the ch persistence gate.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.350 — Accuracy section redesign: kill charts, one combined table per card.</strong> Per-card chart plus three separate tables (MAE / RMSE / bias, added v0.6.340) replaced with a single table grouped by band × metric — 5 bands × 3 metric rows each, MAE row primary + RMSE + bias as dimmer sub-rows underneath. Charts had stopped adding signal once (a) v0.6.340 filtered inactive layer lines out and (b) the thick Production line ate the visual focus. Same data, roughly half the vertical footprint per card, and the eye lands directly on the tables where the decisions actually get made. pp-Brier cards still render Brier-only. Intro prose rewritten to match — dropped the "colored lines" paragraphs, added per-metric usage notes (MAE primary, RMSE catches occasional big misses, bias catches drift).</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.343 — wg residual-persistence Stage 1 preview script written.</strong> `analysis/h_wg_residual_persistence_stage1.py` runs a grid over window ∈ {1, 2, 3, 5, 7, 14} days × baseline ∈ {L2-alone, Production (post-L3)}, then per-regime cross-cut of the best combo, then halves-check within training. Verdict rule: STAGE 1 PROMOTE if best combo hits ≥1% MAE on held-out AND wins > loses on regime cut AND both training halves show ≥0.5% improvement. Auto-picks-up in tomorrow's digest.</li>
       <li style="margin-top:6px;"><span style="color:#e0d472;">★</span> <strong>v0.6.344 — Stage 1 preview first read: MARGINAL.</strong> Ran the grid at end-of-session. <strong>Bigger window is better on aggregate:</strong> window=14d, L2-alone → <strong>MAE +17.04%</strong>, RMSE +14.92% held-out. But two red flags: (1) per-regime cross-cut shows <strong>`calm` LOSES −71.29%</strong> and `unknown` −2.24% — regime gate required, cannot ship pooled. Five regimes WIN (ne_flow +7.95%, nw_flow +18.06%, pre_frontal +18.89%, se_flow +28.38%, sw_flow +22.71%). (2) Halves check FAILS: first half +18.44%, second half +0.49% — effect is not stable window-to-window. Verdict rule fires MARGINAL — re-run in 3 days after training rolls. Also confirmed: <strong>L2-alone and Production give identical results</strong> because wg isn't in `L3_FIELDS` — no L3 interference. Path forward stays Stage 2 (exp-decay τ weighting) + Stage 3 (regime-gated wire-up mirroring ws/wg L3 skip-table pattern) but held pending 3-day halves-stable read.</li>
 
@@ -1269,28 +1281,28 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  <p class="layer-summary"><strong>The bright white "Production" line is the forecast users actually see. Lower is better.</strong> For each field, this shows how far off the forecast tends to be at each future hour — and how much each correction layer narrows that gap vs the bare raw model. The per-layer lines (orange, blue, amber, mint) are population-level diagnostics; the Production line is the user-visible answer. <em>Production is real per-row aggregate from <code>per_layer_mae_by_lead[field].production</code> where the per-lead sample count clears n≥30 (from <code>per_layer_n_by_lead[field].production</code>); deepest-applied-layer MAE fills any leads still below the floor. n≥30 keeps small-sample noise from swinging the line — a single unlucky pair on a lead with n=1 could otherwise dominate.</em></p>
-  <details class="layer-methodology" open><summary>How to read these charts</summary>
-    <div class="meta-line"><strong>What you're looking at.</strong> One small chart per weather field. The Y-axis is how wrong the forecast tends to be (in that field's units — °F, %, mph, etc.). The X-axis is hours into the future. Lower lines = more accurate. Lines climbing to the right is normal — forecasts get worse the further out you predict.</div>
-    <div class="meta-line"><strong>The colored lines show each layer that's actually applied to this field (per the badges above each chart) — Raw at the bottom, then any applied correction layers, then Production on top in bright white. Inactive layers don't render because their per-lead MAE array equals the previous applied layer's; showing them stacked lines on top of each other made the chart noisy without adding signal. Below each MAE table, RMSE + bias tables give the same per-band per-layer view for those metrics — RMSE catches occasional big misses that MAE averages away, bias catches systematic drift.</strong></div>
-    <div class="meta-line"><strong>No more applied-column highlighting.</strong> Under conditional gates (skip table for ws L3 in ne_flow / sea_breeze, Lsr skip regimes for sr in ne_flow / calm, marine-layer trigger) different rows in the same lead band took different paths through the stack — there's no single "applied" column to box. Per-layer columns stay as population-level diagnostics; the Production column is the only conditional-aware summary. If Production isn't the lowest line, that's the signal to check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
-    <ul style="margin:6px 0 6px 18px; padding:0; line-height:1.5">
-      <li><strong>Raw model</strong> (gray, dashed): the bare HRRR/GFS forecast for this exact coordinate. Knows nothing about Wyman Cove specifically. The starting point.</li>
-      <li><strong>Aggregate bias</strong> (orange): adds L2 — what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
-      <li><strong>Lead decay</strong> (light blue): adds L3 — a historical per-lead bias correction learned from the pair log. Different bias for each lead hour: "this model tends to be 2°F too cool at lead 6, 1°F too warm at lead 12," etc.</li>
-      <li><strong>Diurnal</strong> (bright blue): adds L4 — a hour-of-day bias correction. Different bias for each hour of the day (6am forecasts vs 2pm forecasts get different corrections, regardless of lead time). For every field except temperature and solar radiation, this is the final line.</li>
-      <li><strong>Synoptic-regime</strong> (amber): adds Lsr — a per-regime W/m² delta on direct solar radiation. The classifier looks at current wind direction, speed, pressure trend, hour, and temp; the regime label keys into a per-regime calibrated delta. Only present on the solar (sr) card; other fields have no Lsr line by construction. Shipped 2026-06-28 v0.6.248 after a 7/7 gate-clear streak. Skip regimes 2026-07-02 v0.6.280: ne_flow (+32% worse) and calm (+10% worse) return 0.0, so on those rows the Lsr line sits on the L4 line. Two collector bugs fixed 2026-07-03 (raw_direct_radiation pollution + per-lead scalar); Lsr MAE window catches up to L3/L4 around 2026-07-10 once post-fix pair rows fill the 7-day aggregation window.</li>
-      <li><strong>Microclimate</strong> (mint green): <em>Lt retired 2026-07-13. Both branches return 0.0; the Lt line on the T card sits exactly on the L4 line by construction. Fix B refit against L2 baseline held-out +0.29% MAE (below +1.0% gate); L2's Kalman blend already captures the signal. See <a href="#sec-rd-lt">R&amp;D → Lt</a>.</em></li>
-    </ul>
-    <div class="meta-line"><strong>Why lines often lie on top of each other.</strong> Two different reasons, and the badges above each chart tell you which:
+  <p class="layer-summary"><strong>The bright white "Production" column is the forecast users actually see. Lower is better.</strong> For each field, one combined table shows how far off the forecast tends to be at each lead band — <strong>MAE</strong> (typical error), <strong>RMSE</strong> (occasional big misses that MAE averages away), <strong>bias</strong> (systematic drift, signed) — per correction layer. Compare a MAE row across columns to see where each layer helps or hurts. <em>Production is a real per-row aggregate from <code>per_layer_mae_by_lead[field].production</code> where the per-lead sample count clears n≥30 (from <code>per_layer_n_by_lead[field].production</code>); deepest-applied-layer MAE fills leads still below the floor.</em></p>
+  <details class="layer-methodology"><summary>How to read these tables</summary>
+    <div class="meta-line"><strong>What you're looking at.</strong> One card per field. Each card shows a table with rows grouped by lead band (0-5h, 6-11h, 12-23h, 24-47h, ALL). Under each band, three metric rows: MAE (primary), RMSE (secondary), bias (secondary, signed). Columns are the correction layers actually applied to that field, plus the Production output on the right.</div>
+    <div class="meta-line"><strong>Only-applied layers.</strong> Layers that aren't applied to a field don't render as columns because their per-lead MAE array equals the previous applied layer's — noise. The badges above the table (L2 ✓, L3 ✓, L4 off, etc.) confirm the applied set. If Production isn't the lowest MAE, check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
+    <div class="meta-line"><strong>Per-metric usage:</strong>
       <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
-        <li><strong>Layer not applied to this field</strong> (badge shows <span class="field-badge inactive">L3 off</span> or similar). The walk-forward validator showed this layer makes things worse for that field, so we turned it off. The line for that layer is identical to the one below it by construction.</li>
-        <li><strong>Layer is applied but the correction is tiny</strong> (badge shows <span class="field-badge active">L3 ✓</span>). The raw model is already very close, so the correction barely moves the needle. Lines visually overlap but they're not identical.</li>
+        <li><strong>MAE</strong> — average absolute error. The primary metric; drives L3/L4 whitelist decisions. Best cell in row highlighted green, worst red.</li>
+        <li><strong>RMSE</strong> — squared-error root. Higher than MAE by a factor set by how tail-heavy the errors are. Watch for a band where RMSE jumps proportionally more than MAE — that's occasional big misses hiding behind an OK average.</li>
+        <li><strong>bias</strong> — mean signed error (forecast − obs). Near-zero = calibrated on average. Persistent + or − by band signals systematic drift. RMSE + bias are population-level per-layer diagnostics; no Production column (hybrid aggregation is MAE-specific).</li>
       </ul>
     </div>
-    <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> means a bias is added (temperature, humidity, pressure). <span class="field-badge active">L2 ✓ direct</span> means we replace the model wind with what the stations are reading. <span class="field-badge na">L2 n/a</span> means no station network applies a bias for this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is still n/a as a forecast correction, but obs truth for cc/cl/cm/ch now comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
-    <div class="meta-line"><strong>The table beneath each chart</strong> shows the same data as the chart but averaged into lead bands (0-5h, 6-11h, etc.). Numbers in field units. Compare a row across columns to see how each correction layer changes the error in that lead band — this is exactly the bucketing the walk-forward validator uses to decide what gets shipped.</div>
-    <div class="meta-line">Lead 0 is circular by construction (forecast for now compared against the same-moment mesonet, so L2 ≈ 0); look at lead 1+ for real signal. Source: <code>time_series_diagnostic.json::per_layer_mae_by_lead</code>, 7-day window.</div>
+    <div class="meta-line"><strong>Layer labels:</strong>
+      <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
+        <li><strong>Raw</strong>: bare HRRR/GFS forecast for this coordinate. Knows nothing about Wyman Cove.</li>
+        <li><strong>Aggregate bias (L2)</strong>: what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
+        <li><strong>Lead decay (L3)</strong>: historical per-lead bias correction from the pair log.</li>
+        <li><strong>Diurnal (L4)</strong>: hour-of-day bias correction. Final line for every field except sr.</li>
+        <li><strong>Synoptic-regime (Lsr)</strong>: per-regime W/m² delta on direct solar radiation. Only present on sr.</li>
+      </ul>
+    </div>
+    <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> = bias added (t, dp, h, pr). <span class="field-badge active">L2 ✓ direct</span> = station median replaces model wind (ws, wg). <span class="field-badge na">L2 n/a</span> = no station network reports this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is n/a as a forecast correction, but obs truth for cc/cl/cm/ch comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
+    <div class="meta-line">Bands match the walk-forward validator buckets — this is exactly the granularity that drives shipping decisions. Source: <code>time_series_diagnostic.json::per_layer_{mae,rmse,bias}_by_lead</code>, 7-day window. <em>Design note (v0.6.350):</em> previously carried a per-card chart + 3 separate tables. The chart mostly restated what the MAE band table already showed; killed for signal density.</div>
   </details>
 </div>
 <div id="status-accuracy" class="status" hidden></div>
@@ -3398,163 +3410,112 @@ function renderAccuracySection(tsDoc, wxDoc) {
     return out;
   };
 
-  const _buildBandTable = (fieldData, fieldKey, decimals) => {
-    const rows = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);
+  // v0.6.350 redesign: one combined table per card replaces the prior
+  // chart + 3 separate tables (MAE / RMSE / bias). Structure per band:
+  //   band-start row: MAE   (primary, colored best/worst, Production column)
+  //   sub-row       : RMSE  (secondary, dimmer)
+  //   sub-row       : bias  (secondary, signed)
+  // Production column is MAE-only (hybrid aggregation is MAE-specific).
+  // RMSE + bias rows show — in the Production column.
+  const _buildCombinedTable = (fieldData, fieldKey, decimals,
+                               rmseData, biasData) => {
+    const bands = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);
     const LAYERS = _layersFor(fieldKey);
-    // Per-layer columns are population-level diagnostics (MAE if this layer's
-    // correction were applied to every row in the band). No applied-layer
-    // highlighting — under conditional gates there's no single "applied"
-    // column. Production column carries the user-visible signal.
     const prodArr = _hybridProductionArray(fieldData, fieldKey);
     const realCovered = _productionCoverage(fieldData);
     const prodTitle = realCovered >= 40
       ? "Real per-row aggregate from per_layer_mae_by_lead[field].production (all leads above n≥30 min-sample floor)."
-      : `Hybrid — real per-row aggregate where per_layer_mae_by_lead[field].production has n≥${_PRODUCTION_MIN_N} (${realCovered}/48 leads clear the floor); deepest applied layer MAE fills the sub-floor leads. Thin-sample fallback only — protects against noisy per-lead averages.`;
+      : `Hybrid — real per-row aggregate where per_layer_mae_by_lead[field].production has n≥${_PRODUCTION_MIN_N} (${realCovered}/48 leads clear the floor); deepest applied layer MAE fills the sub-floor leads.`;
+
+    const hasRmse = rmseData && LAYERS.some(l => Array.isArray(rmseData[l.key]) && rmseData[l.key].some(v => v != null));
+    const hasBias = biasData && LAYERS.some(l => Array.isArray(biasData[l.key]) && biasData[l.key].some(v => v != null));
+
     let html =
       `<table class="band-table"><thead><tr>` +
-      `<th>Lead</th>` +
+      `<th>Band</th><th>Metric</th>` +
       LAYERS.map(l => `<th>${l.shortLabel || l.label}</th>`).join("") +
       `<th class="production-col" title="${prodTitle}">Production${realCovered >= 40 ? "" : "*"}</th>` +
       `</tr></thead><tbody>`;
-    for (const b of rows) {
-      const vals = LAYERS.map(l => _bandAvg(fieldData[l.key] || [], b.lo, b.hi));
-      const prodVal = _bandAvg(prodArr, b.lo, b.hi);
+
+    const renderMetricRow = (data, metric, band, isFirstInBand, isAllBand) => {
+      const vals = LAYERS.map(l => _bandAvg((data || {})[l.key] || [], band.lo, band.hi));
       const present = vals.filter(v => v != null);
       const best = present.length ? Math.min(...present) : null;
       const worst = present.length ? Math.max(...present) : null;
-      const cls = b.isAll ? ' class="all-row"' : "";
-      html += `<tr${cls}><td>${b.label}</td>`;
+      const trCls = [
+        `metric-${metric}`,
+        isFirstInBand ? "band-start" : "",
+        isAllBand && metric === "mae" ? "all-row" : "",
+      ].filter(Boolean).join(" ");
+      let row = `<tr class="${trCls}">`;
+      row += `<td class="band-label">${isFirstInBand ? band.label : ""}</td>`;
+      row += `<td class="metric-label">${metric.toUpperCase()}</td>`;
       for (let i = 0; i < vals.length; i++) {
         const v = vals[i];
         let extra = "";
-        if (v != null && present.length >= 2) {
+        // Best/worst coloring only meaningful on unsigned metrics (MAE, RMSE).
+        // Bias is signed — near-zero is best, don't rank by magnitude for
+        // "best/worst" cell tint.
+        if (metric !== "bias" && v != null && present.length >= 2) {
           if (v === best) extra = ' class="best"';
           else if (v === worst) extra = ' class="worst"';
         }
-        html += `<td${extra}>${_fmt(v, decimals)}</td>`;
+        const shown = metric === "bias" && v != null && v > 0
+          ? `+${_fmt(v, decimals + 1)}`
+          : _fmt(v, metric === "bias" ? decimals + 1 : decimals);
+        row += `<td${extra}>${shown}</td>`;
       }
-      // Compare Production to Raw (L1) in this band; ±0.5% flat band matches
-      // the scorecard's FLAT_EPS so the two views agree on what counts as
-      // "not really a win / loss."
-      const rawVal = vals[0];
-      let prodCls = "production-col";
-      if (prodVal != null && rawVal != null && rawVal > 0) {
-        const pct = (prodVal - rawVal) / rawVal * 100;
-        if (pct <= -0.5) prodCls += " prod-better";
-        else if (pct >= 0.5) prodCls += " prod-worse";
-      }
-      html += `<td class="${prodCls}">${_fmt(prodVal, decimals)}</td>`;
-      html += `</tr>`;
-    }
-    html += `</tbody></table>`;
-    return html;
-  };
-
-  // v0.6.340: RMSE + bias companion tables per card. Same shape as the
-  // MAE band table but rendered from per_layer_rmse_by_lead and
-  // per_layer_bias_by_lead. No Production column — those metrics aren't
-  // aggregated the same way as MAE (hybrid Production reflects per-row
-  // Production stamping, which is MAE-specific). If either metric key is
-  // absent from tsDoc (older Fitter shape), the table simply isn't rendered.
-  // metric: "RMSE" | "bias" — used for title + coloring conventions.
-  // "bias" is signed → don't color best/worst by magnitude; color signed.
-  const _buildMetricTable = (dataByLayer, fieldKey, decimals, metric) => {
-    if (!dataByLayer) return "";
-    const LAYERS = _layersFor(fieldKey);
-    // Check that at least one active layer has data — otherwise skip.
-    const anyData = LAYERS.some(l => Array.isArray(dataByLayer[l.key]) && dataByLayer[l.key].some(v => v != null));
-    if (!anyData) return "";
-    const rows = BANDS.concat([{ label: "ALL", lo: 0, hi: 48, isAll: true }]);
-    let html =
-      `<table class="band-table" style="margin-top:6px;"><thead><tr>` +
-      `<th colspan="${LAYERS.length + 1}" style="text-align:left;font-weight:600;color:#9ab0a0;font-size:0.85em;padding-bottom:2px;">${metric}</th>` +
-      `</tr><tr>` +
-      `<th>Lead</th>` +
-      LAYERS.map(l => `<th>${l.shortLabel || l.label}</th>`).join("") +
-      `</tr></thead><tbody>`;
-    for (const b of rows) {
-      const vals = LAYERS.map(l => _bandAvg(dataByLayer[l.key] || [], b.lo, b.hi));
-      const cls = b.isAll ? ' class="all-row"' : "";
-      html += `<tr${cls}><td>${b.label}</td>`;
-      for (const v of vals) {
-        let extra = "";
-        if (metric === "bias" && v != null) {
-          // Signed: green for near-zero (|bias| < 0.5% of raw ALL-MAE would
-          // matter, but that's noisy — use a simpler magnitude threshold per
-          // field decimals), amber otherwise. Just a subtle tint.
-          const mag = Math.abs(v);
-          if (mag < Math.pow(10, -decimals)) extra = ' class="best"';
+      // Production column: only MAE has a hybrid aggregate. RMSE + bias show —.
+      if (metric === "mae") {
+        const prodVal = _bandAvg(prodArr, band.lo, band.hi);
+        const rawVal = vals[0];
+        let prodCls = "production-col";
+        if (prodVal != null && rawVal != null && rawVal > 0) {
+          const pct = (prodVal - rawVal) / rawVal * 100;
+          if (pct <= -0.5) prodCls += " prod-better";
+          else if (pct >= 0.5) prodCls += " prod-worse";
         }
-        // For bias, prefix + for positive to make sign obvious.
-        const formatted = (metric === "bias" && v != null && v > 0)
-          ? `+${_fmt(v, decimals)}`
-          : _fmt(v, decimals);
-        html += `<td${extra}>${formatted}</td>`;
+        row += `<td class="${prodCls}">${_fmt(prodVal, decimals)}</td>`;
+      } else {
+        row += `<td class="production-col">—</td>`;
       }
-      html += `</tr>`;
+      row += `</tr>`;
+      return row;
+    };
+
+    for (const b of bands) {
+      html += renderMetricRow(fieldData, "mae", b, true, b.isAll);
+      if (hasRmse) html += renderMetricRow(rmseData, "rmse", b, false, b.isAll);
+      if (hasBias) html += renderMetricRow(biasData, "bias", b, false, b.isAll);
     }
     html += `</tbody></table>`;
     return html;
   };
 
-  // Use the existing accuracy-grid container but replace it with a wide grid
-  // of charts (re-using the .grid class from existing chart sections).
-  grid.className = "grid";  // override the .accuracy-grid 220px-min layout
+  // v0.6.350: Chart per-card removed. Prior version stacked chart + 3 tables
+  // (MAE / RMSE / bias). The chart added little the tables didn't already
+  // convey once (a) v0.6.340 filtered inactive layer lines out and (b) the
+  // thick Production line ate the visual focus. Cards now render as one
+  // combined table via _buildCombinedTable, keyed on the accuracy-grid
+  // container using the existing 2-col grid (.grid class).
+  grid.className = "grid";
   for (const f of FIELDS) {
-    // For pp: swap in Brier data when available so the chart + band table
-    // render the decision metric directly. Fallback to MAE for backward
-    // compat (pre-Brier-key GCS state, or if Brier key is empty).
+    // For pp: swap in Brier data when available so the band table renders the
+    // decision metric directly. Fallback to MAE for backward compat.
     const useBrier = f.key === "pp" && ppBrierAvailable;
     const fieldData = useBrier ? (brierByLead[f.key] || {}) : (maeByLead[f.key] || {});
-    // Attach the per-lead n array for the Production hybrid so the helper
-    // can enforce the min-sample floor. Comes from
-    // per_layer_n_by_lead[field].production. Absent for Brier since PP
-    // Brier renders as its own metric, not via the Production line.
+    // Attach per-lead n array for the Production hybrid (min-sample floor).
     if (!useBrier) {
       fieldData.production_n = (nByLead[f.key] || {}).production;
     }
     const LAYERS = _layersFor(f.key);
-    // Check if any layer has data
     const hasAny = LAYERS.some(l => (fieldData[l.key] || []).some(v => v != null));
     if (!hasAny) continue;
-    const labels = Array.from({length: 48}, (_, i) => i);
-    const datasets = LAYERS.map(l => ({
-      label: l.label,
-      data: (fieldData[l.key] || []).map(v => v == null ? NaN : v),
-      borderColor: l.color,
-      backgroundColor: "rgba(0,0,0,0)",
-      borderDash: l.dash,
-      borderWidth: l.key === "l1" ? 1.25 : 1.75,
-      pointRadius: 0,
-      tension: 0.25,
-      spanGaps: true,
-    }));
-    // Production line — hybrid: real per-row aggregate where
-    // per_layer_mae_by_lead[field].production is populated, approximation
-    // (deepest applied layer MAE) elsewhere. Drops the "*" marker once the
-    // real coverage crosses 40/48 leads (window mostly full).
-    const prodArrChart = _hybridProductionArray(fieldData, f.key);
-    const realCoveredChart = _productionCoverage(fieldData);
-    datasets.push({
-      label: realCoveredChart >= 40 ? "Production" : "Production*",
-      data: prodArrChart.map(v => v == null ? NaN : v),
-      borderColor: "rgba(255,255,255,1)",
-      backgroundColor: "rgba(0,0,0,0)",
-      borderDash: [],
-      borderWidth: 3,
-      pointRadius: 0,
-      tension: 0.25,
-      spanGaps: true,
-      // Pushed last in the datasets array → drawn on top by default.
-    });
-    // Sample-count summary
+
     const samples24 = (nByLead[f.key] || {}).l4 || [];
     const totalSamples = samples24.reduce((s, v) => s + (v || 0), 0);
     const card = document.createElement("div");
     card.className = "card";
-    // PP renders in Brier when available (v0.6.267+ Fitter), MAE otherwise.
-    // Decimal precision differs — Brier lives in [0, 1]; MAE for pp is in the
-    // 20-25% range.
     const decimals = useBrier ? PP_BRIER_DECIMALS : (FIELD_DECIMALS[f.key] ?? 2);
     let ppDisclaimer = "";
     let summaryText;
@@ -3562,87 +3523,32 @@ function renderAccuracySection(tsDoc, wxDoc) {
       if (useBrier) {
         ppDisclaimer = `<div class="meta-line" style="margin:6px 0 4px;padding:6px 10px;border:1px solid #1f3a2a;background:#101913;color:#9ad99a;font-size:0.85em;border-radius:4px;">
              <strong>Decision metric:</strong> Brier score (0 = perfect, 1 = worst). Lower is better, same as the other cards.
-             L3 currently raises PP MAE but cuts Brier ~5% (v0.6.20 calibration analysis) — this chart shows the metric that actually drives the decision.
+             L3 currently raises PP MAE but cuts Brier ~5% (v0.6.20 calibration analysis) — this table shows the metric that actually drives the decision.
            </div>`;
-        summaryText = "Average Brier by lead time";
+        summaryText = "Brier score by lead band";
       } else {
         ppDisclaimer = `<div class="meta-line" style="margin:6px 0 4px;padding:6px 10px;border:1px solid #3a2f1f;background:#1a160e;color:#e0d472;font-size:0.85em;border-radius:4px;">
-             <strong>Note:</strong> chart shows MAE, but PP is decided by <strong>Brier score</strong>, not MAE.
-             L3 currently raises MAE for PP but cuts Brier ~5% (v0.6.20 calibration). Brier data pending next Fitter cycle (per_layer_brier_by_lead not yet in <code>time_series_diagnostic.json</code>).
+             <strong>Note:</strong> table shows MAE, but PP is decided by <strong>Brier score</strong>, not MAE.
+             L3 currently raises MAE for PP but cuts Brier ~5% (v0.6.20 calibration). Brier data pending next Fitter cycle.
            </div>`;
-        summaryText = "Average MAE by lead time (decision metric = Brier)";
+        summaryText = "MAE by lead band (decision metric = Brier)";
       }
     } else {
-      summaryText = "Average forecast error by lead time";
+      summaryText = "Forecast error by lead band — MAE / RMSE / bias";
     }
-    // RMSE + bias sub-tables (v0.6.340). PP-Brier cards skip these — the
-    // Brier metric already IS the "second view," no MAE-versus-RMSE story to
-    // tell. Bias decimals bumped +1 so small signed drifts are visible.
-    const rmseTable = useBrier ? "" : _buildMetricTable(rmseByLead[f.key], f.key, decimals, "RMSE");
-    const biasTable = useBrier ? "" : _buildMetricTable(biasByLead[f.key], f.key, decimals + 1, "bias");
+    // pp-Brier renders just its own metric — RMSE + bias companion rows don't
+    // apply. All other fields show the combined MAE / RMSE / bias table.
+    const combinedTable = useBrier
+      ? _buildCombinedTable(fieldData, f.key, decimals, null, null)
+      : _buildCombinedTable(fieldData, f.key, decimals,
+                            rmseByLead[f.key], biasByLead[f.key]);
     card.innerHTML =
       `<h3><span class="name">${f.label} (${f.key})</span>` +
       `<span class="summary">${summaryText} · ${totalSamples.toLocaleString()} pairs (7d)</span></h3>` +
       ppDisclaimer +
       _buildBadges(f.key) +
-      `<div class="chart-wrap"><canvas></canvas></div>` +
-      _buildBandTable(fieldData, f.key, decimals) +
-      rmseTable +
-      biasTable;
+      combinedTable;
     grid.appendChild(card);
-    new Chart(card.querySelector("canvas"), {
-      type: "line",
-      data: { labels, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: "bottom",
-            labels: {
-              color: "#e7ecf3",
-              font: { size: 12, weight: "600" },
-              usePointStyle: true,
-              boxWidth: 14,
-              boxHeight: 14,
-              padding: 12,
-              generateLabels: (chart) => chart.data.datasets.map((ds, i) => {
-                // v2: legend swatch shows color only — "which layer is active"
-                // moves entirely to the badges above the chart (no need to
-                // encode the same signal in three places).
-                // Fix v0.6.260: read color from ds.borderColor directly (which
-                // came from the filtered LAYERS array per field). Indexing
-                // LAYER_LINES[i] was wrong because _layersFor() drops Lsr for
-                // non-solar fields and Lt for non-temperature fields — the
-                // index alignment broke, so e.g. the T card's Lt legend swatch
-                // was picking up Lsr's amber instead of Lt's mint green.
-                const color = ds.borderColor;
-                return {
-                  text: ds.label,
-                  fillStyle: color,
-                  strokeStyle: color,
-                  fontColor: "#e7ecf3",
-                  lineWidth: 0,
-                  pointStyle: _legendSwatch(color, false),
-                  datasetIndex: i,
-                  hidden: !chart.isDatasetVisible(i),
-                };
-              }),
-            },
-          },
-          tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
-        },
-        scales: {
-          x: { title: { display: true, text: "Hours ahead of forecast", color: "#e7ecf3", font: { size: 12, weight: "600" } },
-               ticks: { color: "#e7ecf3", autoSkip: true, maxTicksLimit: 12, font: { size: 12, weight: "600" } },
-               grid: { color: "#242833" } },
-          y: { title: { display: true, text: f.key === "pp" ? (useBrier ? "Brier score (0 = best, 1 = worst)" : `MAE (${f.unit}) — decision metric: Brier`) : `Average error (${f.unit})`, color: "#e7ecf3", font: { size: 12, weight: "600" } },
-               ticks: { color: "#e7ecf3", font: { size: 12, weight: "600" } },
-               grid: { color: "#242833" },
-               beginAtZero: true },
-        },
-      },
-    });
   }
 }
 
