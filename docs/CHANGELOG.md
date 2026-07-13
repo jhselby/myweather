@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.337 • July 13, 2026</strong></summary>
+
+- **Production-vs-L4 persistence skill delta surfaced at exec-summary altitude.** v0.6.336 added the numbers to `h_persistence_skill.json` and printed a supplemental line in the log tail — buried. Now `persistence_skill_watch()` in `analysis/runlog/build_executive_summary.py` returns a third list (`prod_delta_lines`) of every field where `|skill_prod − skill_l4| ≥ 0.02`. Rendered as a sub-block "Production vs L4 delta (L3 + specialists visibly moving persistence skill)" right under the at-risk lines. Direction markers: `→` when Production improves, `↓` when Production hurts. Today's read: 4 fields ↓ (ch −0.79, wg −0.19, cc −0.10, cm −0.04) + 1 field → (pp +0.14). Snapshot format extended to carry `skill_prod_mae_pooled` alongside `skill_l4_mae_pooled`, so tomorrow's regression detection catches Production-side flips too.
+
+</details>
+
+<details>
 <summary><strong>v0.6.336 • July 13, 2026</strong></summary>
 
 - **persistence-skill: recompute vs per-row Production alongside L4.** Phase 2 follow-on (ii) from measurement roadmap. `h_persistence_skill.py` now accumulates `ae_prod`/`se_prod` from the pair log's top-level `forecast` field (target_hour[short] — what users actually saw, including L3+specialists), and computes `skill_prod_mae`/`skill_prod_rmse` per cell + `skill_prod_mae_pooled` per field in the JSON. New "Production vs L4 delta" line appended after the main verdict flags any field where |skill_prod − skill_l4| ≥ 0.02 (specialists actually moving the number). **Today's first read surfaces two real findings:** (1) **ch is L4 −0.29 → Prod −1.08** — the ch pipeline (L3 firing + L4) is 3.7× worse against persistence than L4 alone. Confirms the ch persistence gate wired 07-12 is targeting the right layer; the L3 contribution is doing damage. (2) **wg L4 +0.10 → Prod −0.09** — wg L3 pushes wg from marginal-positive persistence skill to negative. Also cc goes +0.13 → +0.03 (L3 costs cc skill) and pp goes +0.18 → +0.32 (calibrator helps). Backward-compatible — existing `skill_l4_mae_pooled` key untouched, so persistence-skill watch (v0.6.332) snapshot continues to compare against L4.
