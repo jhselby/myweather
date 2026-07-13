@@ -531,6 +531,18 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  ch persistence gate stamp failed: {redact_secrets(e)}")
 
+    # cl persistence short-lead gate — narrow 0-5h persistence bypass for
+    # cloud_cover_low, all 9 regimes. Runs AFTER Lc for the same
+    # bias-reintroduction reason as ch. Independent of ch_persistence_gate
+    # (touches different field). ENABLED gated pending 07-19 halves-verified
+    # re-run of h_cl_linear_ramp_stage2.py; module stamps telemetry when
+    # False for the 7-day live-layer change gate.
+    try:
+        from .processors.cl_persistence_short_lead import stamp_cl_persistence_short_lead
+        stamp_cl_persistence_short_lead(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  cl persistence short-lead stamp failed: {redact_secrets(e)}")
+
     # Applicability map — each correction module exposes describe_applicability()
     # returning a list of layer descriptors (schema in weather_collector/data/
     # applicability_map_schema.json). Collected here once per tick, after every
@@ -543,8 +555,9 @@ def main():
         from .processors.cloud_saturation_correction import describe_applicability as _da_lc
         from .processors.confidence_layer import describe_applicability as _da_c1
         from .processors.ch_persistence_gate import describe_applicability as _da_chpg
+        from .processors.cl_persistence_short_lead import describe_applicability as _da_clpsl
         layers = []
-        for fn in (_da_decay, _da_solar, _da_cove, _da_lc, _da_chpg, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_cove, _da_lc, _da_chpg, _da_clpsl, _da_c1):
             try:
                 layers.extend(fn())
             except Exception as e:

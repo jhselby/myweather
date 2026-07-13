@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.330 • July 13, 2026</strong></summary>
+
+- **cl persistence short-lead gate Stage 3 wired (ENABLED=False) — pre-emptive ship for 07-19 flip decision.** Saves a Sunday-morning scramble if the halves-verified re-run confirms the 07-12 finding. New processor `weather_collector/processors/cl_persistence_short_lead.py` mirrors ch_persistence_gate structure with narrow architecture: replaces `cloud_cover_low` with persistence-of-obs at leads 0-5h in **all 9 regimes**; longer bands SKIP by design (Stage 2 halves-check 07-12 diverged from HRRR anomaly window contamination; only 0-5h SHIPs cleanly). 9 SHIP cells / 36 in `weather_collector/data/cl_persistence_gate_curated.json`. Persistence source priority: `cloud_l2_meta.obs_mean` (pure KBOS+KBVY pre-Kalman) → `hourly[0].cloud_cover_low` fallback → no-op. Runs AFTER Lc (same bias-reintroduction rationale as ch gate — Lc's shift was fit against L4, would re-introduce bias on persistence). Applicability_map descriptor wired; gate_firing_log records fires/skips per tick. Sanity-tested inline: sw_flow synthetic fires 5 leads at 0-5h + 42 skips elsewhere; unknown regime falls back to hourly[0] correctly. Debug page updated in 4 places: Production stack Specialists list (new cl gate row), Still open watches (new day-1/7 counter), What's-improving (Stage 3 wired ✓), Upcoming decisions Sun 07-19 (was "ship or nothing?" → now "flip ENABLED?"), Recent activity 07-13 entry. If 07-19 halves-verified re-run confirms all 9 regimes still SHIP at 0-5h in a clean window, flip ENABLED=True. Otherwise gate stays OFF permanently.
+
+</details>
+
+<details>
 <summary><strong>v0.6.329a • July 13, 2026</strong></summary>
 
 - **Debug page — Lt out of Production stack list entirely.** Joe caught that the previous ship left an inline "RETIRED — moved to Retired below" pointer in the Production stack Specialists list. That's noise once Lt is fully retired. Removed the line; Lt now appears only in the Retired list (with the updated rationale from v0.6.329) and in a single top-of-page compact reference. "What's shipped" list at the top of the page: "Lt dormant" → "Lt retired 07-13 (Fix B held-out +0.29%)".

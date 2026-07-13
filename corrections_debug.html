@@ -868,10 +868,10 @@
           <div style="color:#9ab0a0;">→ Real 7-day narrow-promote counter wired 2026-07-12 v0.6.328d — closes the last "no counter wired" gap flagged after v0.6.323. Day 1/7 today. Earliest Stage 3 wire-up eligibility: 2026-07-19.</div>
         </div>
 
-        <div style="padding:6px 8px;border-left:2px solid #e0d472;background:#171310;border-radius:2px;">
-          <div><strong>cl persistence investigation</strong> <span style="color:#e0d472;font-size:0.85em;">Stage 1+2 explored 07-12 · HOLD</span></div>
-          <div style="opacity:0.85;">cl does NOT have ch's shape. Halves diverge on regime_gate + persist_only (anomaly-inflated). linear_ramp τ scan monotonic (red flag, no natural sweet spot). Per-regime: cloudy-active regimes (se_flow/calm/unknown, 32% of volume) want persistence; clear-flow regimes (sw_flow &c, 68% of volume) want L1 baseline. Real signal: <strong>0-5h narrow persistence gate — all 9 regimes SHIP at 0-5h</strong>.</div>
-          <div style="color:#9ab0a0;">→ HOLD. Re-verify 2026-07-19 post-anomaly. If halves converge and 0-5h SHIPs hold, ship narrow gate <code>cl_persistence_short_lead.py</code>. Otherwise cl gets no gate.</div>
+        <div style="padding:6px 8px;border-left:2px solid #4ad29a;background:#0f1712;border-radius:2px;">
+          <div><strong>cl persistence short-lead gate</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ Stage 3 wired 07-13 v0.6.330 · gate day 1/7</span></div>
+          <div style="opacity:0.85;">Narrow architecture — persistence at 0-5h in all 9 regimes; longer bands SKIP by design. 9 SHIP cells / 36. Sanity-tested inline (sw_flow synthetic fires 5 leads at 0-5h + 42 skips elsewhere; unknown regime falls back to <code>hourly[0]</code> correctly).</div>
+          <div style="color:#9ab0a0;">→ Pre-emptive Stage 3 ship — code is one-flag-flip from live. Sun 07-19 halves-verified re-run of <code>h_cl_linear_ramp_stage2.py</code> is the flip gate. If clean-window halves converge and all 9 regimes still SHIP at 0-5h, flip ENABLED. Otherwise gate stays OFF permanently.</div>
         </div>
       </div>
     </div>
@@ -1054,6 +1054,7 @@
     <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
 
       <li><strong style="color:#7fb3ff;">2026-07-13 (Mon) — today</strong></li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.330 — cl persistence short-lead gate Stage 3 wired (ENABLED=False), pre-emptive ship for 07-19 flip.</strong> New processor <code>weather_collector/processors/cl_persistence_short_lead.py</code> mirroring ch_persistence_gate structure but with narrow architecture: replaces <code>cloud_cover_low</code> with persistence-of-obs at leads 0-5h in <strong>all 9 regimes</strong>; longer bands SKIP by design. 9 SHIP cells / 36 in <code>weather_collector/data/cl_persistence_gate_curated.json</code>. Persistence source: <code>cloud_l2_meta.obs_mean</code> (pure KBOS+KBVY, pre-Kalman) with <code>hourly[0].cloud_cover_low</code> fallback. Runs AFTER Lc (same bias-reintroduction rationale as ch gate). Applicability_map descriptor wired. Sanity-tested inline (sw_flow synthetic: 5 fires 0-5h + 42 skips; unknown regime fallback works). Speculative — if 07-19 halves-verified re-run of <code>h_cl_linear_ramp_stage2.py</code> confirms all 9 regimes still SHIP at 0-5h in the clean window, flip ENABLED=True. Otherwise gate stays OFF permanently. Building it now saves a Sunday-morning scramble. See [[project-cl-persistence-investigation]].</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>Lt Fix B answered — retired.</strong> Ran <code>analysis/l6_fix_b_refit.py</code>. Held-out MAE improvement <strong>+0.29%</strong> (below +1.0% ship gate). Panel B (sb_off × hour) looked like a real overnight cove-cooling signal on training (00-06h +0.9 to +2.1°F, 7 SHIP bins), but the improvement dissolves out-of-sample. Panel A (sb_on × octant) came back with 0 SHIP bins entirely. Mechanism: L2's Kalman blend re-fits per-tick and absorbs the same microclimate signal dynamically — a static hourly cove table would add a delta L2 already added. Closes the 12-day "dormant pending Fix B" thread. Lt now permanently retired (both branches, ENABLED=False). See [[project-lt-fix-b-answered]].</li>
       <li><span style="color:#7090a0;">◉</span> <strong>Reinforces persistence-skill picture</strong> from 07-12: t is one of the strongest fields (+0.68 pooled skill). L2's Kalman blend is doing more work than we thought — that's why persistence has such a small margin.</li>
 
@@ -1079,6 +1080,7 @@
 
       <li style="margin-top:8px;"><strong style="color:#7fb3ff;">Still open watches</strong></li>
       <li><span style="color:#7090a0;">⚙</span> <strong>ch persistence gate 7-day gate — day 1/7.</strong> Shipped 07-12 v0.6.327 ENABLED=False. Weekly Sunday re-run of Stage 2 checks the SHIP/SKIP cell set; any new halves sign-flip in a SHIP cell demotes it to SKIP. Earliest flip 07-19.</li>
+      <li><span style="color:#7090a0;">⚙</span> <strong>cl persistence short-lead gate 7-day gate — day 1/7.</strong> Shipped 07-13 v0.6.330 ENABLED=False (narrow: 0-5h all 9 regimes). Sun 07-19 halves-verified re-run of <code>h_cl_linear_ramp_stage2.py</code> is the flip gate. If clean-window halves converge AND all 9 regimes SHIP at 0-5h, flip. Otherwise no gate.</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>Lsr 14-day watch</strong> — alerts suppressed through 07-10 (v0.6.307). Auto-lifts.</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>h → L4 — re-frozen 07-11.</strong> Un-froze under regime-gate frame; re-froze after halves-check killed 7 of 12 WIN cells (HRRR anomaly). Un-freeze: halves-agree after 07-18 window roll.</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>Lsr RETIRE-vs-AGREE puzzle</strong> — simulate_windows says HOLD across 7 cutoffs; divergence-report says AGREE. Investigation queued.</li>
@@ -1109,6 +1111,7 @@
         <li><strong>Lsr</strong> synoptic-regime solar (sr only). Shipped 06-28 v0.6.248. Per-(regime, hour) bias above sun-up. Skip: ne_flow, calm.</li>
         <li><strong>Lc</strong> cloud saturation-unbiasing (cc/cl/cm/ch). Shipped 07-04 v0.6.298, ENABLED=False. Per-(field, value_bin) shift, 15 SHIP / 24 total. Biggest predicted: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37%. <strong>7-day gate: day 3/7 (07-12). Anomaly-week HOLD:</strong> per-bin check on 07-04→07-11 anomaly shows cc 50-80/80-95 would over-correct 20-23pp; cl mid-high 11-30pp; cm 50-80 would under-correct 13pp. <strong>Do NOT flip until 07-18</strong> after anomaly rolls out AND refit confirms signs hold.</li>
         <li><strong>ch persistence gate</strong> ch only. Shipped 07-12 v0.6.327, ENABLED=False. Runs AFTER Lc; where the gate fires, replaces L4+Lc-corrected <code>cloud_cover_high</code> with persistence-of-obs (KBOS+KBVY blended obs at forecast issue time, carried flat). Cell-conditioned: <strong>22 SHIP / 6 MARGIN</strong> use persistence; <strong>8 SKIP + <em>frontal</em> regime</strong> fall back to L4. Halves-verified per (regime × lead_band). 7-day gate: day 1/7. Earliest flip 07-19.</li>
+        <li><strong>cl persistence short-lead gate</strong> cl only. Shipped 07-13 v0.6.330, ENABLED=False. Narrow architecture — replaces <code>cloud_cover_low</code> with persistence-of-obs at leads 0-5h in <strong>all 9 regimes</strong>. Longer bands SKIP by design (Stage 2 halves-check 07-12 diverged from HRRR anomaly contamination; only 0-5h SHIPs cleanly). 9 SHIP cells / 36. 7-day gate: day 1/7 pending 07-19 halves-verified re-run of <code>h_cl_linear_ramp_stage2.py</code>. If clean-window read still shows all 9 regimes SHIP at 0-5h, flip ENABLED=True. Otherwise cl gets no gate.</li>
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
       <ul style="margin:2px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
@@ -1174,11 +1177,11 @@
           </ul>
         </li>
 
-        <li style="margin-top:6px;"><strong>Sun 07-19 — cl persistence: ship 0-5h narrow gate, or nothing?</strong>
+        <li style="margin-top:6px;"><strong>Sun 07-19 — cl persistence short-lead gate: flip ENABLED=True?</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Post-anomaly, do the halves converge for cl regime_gate + persist_only? And do all 9 regimes still SHIP at 0-5h at τ=24?</li>
-            <li><strong>E:</strong> 07-12 Stage 1+2 found: halves divergence on regime_gate + persist_only was likely anomaly-inflated. linear_ramp τ scan monotonic-with-τ (red flag). The physically-real signal is <strong>0-5h narrow persistence gate — all 9 regimes SHIP at 0-5h</strong>.</li>
-            <li><strong>D:</strong> If halves converge and 0-5h SHIPs hold, ship <code>cl_persistence_short_lead.py</code> (persist replaces cl at lead ≤ 5h, all regimes, no skip table). Else cl gets no gate.</li>
+            <li><strong>Q:</strong> Post-anomaly, do the halves converge for cl at 0-5h in all 9 regimes?</li>
+            <li><strong>E:</strong> Processor Stage 3 shipped 07-13 v0.6.330 (pre-emptive). ENABLED=False; telemetry stamping every tick. Waiting on 07-19 re-run of <code>h_cl_linear_ramp_stage2.py</code> in a clean (post-anomaly) window.</li>
+            <li><strong>D:</strong> If all 9 regimes SHIP at 0-5h in the clean window read AND halves converge, flip <code>cl_persistence_short_lead.ENABLED=True</code>. If any regime demotes at 0-5h, remove from SHIP set and re-verify. If halves still diverge, gate stays OFF permanently and we accept cl has no persistence-gateable signal.</li>
           </ul>
         </li>
 
