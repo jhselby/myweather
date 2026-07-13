@@ -119,10 +119,15 @@ def compute():
     # Pass 2: score each pair row against persistence + L1 + L4.
     print("[2/3] Scoring pair rows vs persistence baseline...", file=sys.stderr)
     # accum[(field, band)] = dict of counters
+    # Production (fc_prod) = top-level `forecast` field in pair log, which is
+    # target_hour[short] — the value users saw at the time. For fields with
+    # specialists post-L4 (sr → Lsr; t → Lt when live), this differs from
+    # forecast_l4. Track separately so sr shows honest Production skill.
     accum = defaultdict(lambda: {"n": 0,
                                  "ae_pers": 0.0, "se_pers": 0.0,
                                  "ae_l1": 0.0,   "se_l1": 0.0,
-                                 "ae_l4": 0.0,   "se_l4": 0.0})
+                                 "ae_l4": 0.0,   "se_l4": 0.0,
+                                 "ae_prod": 0.0, "se_prod": 0.0})
     n_joined = 0
     n_orphan = 0
     with open(path, "rb") as fh:
@@ -150,7 +155,8 @@ def compute():
             ob = r.get("observed")
             fc1 = r.get("forecast_l1")
             fc4 = r.get("forecast_l4")
-            if rt is None or ob is None or fc1 is None or fc4 is None:
+            fc_prod = r.get("forecast")
+            if rt is None or ob is None or fc1 is None or fc4 is None or fc_prod is None:
                 continue
             persist = obs_ts[f].get(hour_floor(rt))
             if persist is None:
@@ -162,12 +168,15 @@ def compute():
             e_p = persist - ob
             e_1 = fc1 - ob
             e_4 = fc4 - ob
+            e_prod = fc_prod - ob
             a["ae_pers"] += abs(e_p)
             a["se_pers"] += e_p * e_p
             a["ae_l1"]   += abs(e_1)
             a["se_l1"]   += e_1 * e_1
             a["ae_l4"]   += abs(e_4)
             a["se_l4"]   += e_4 * e_4
+            a["ae_prod"] += abs(e_prod)
+            a["se_prod"] += e_prod * e_prod
 
     print(f"    joined {n_joined:,} rows to persistence baseline; "
           f"{n_orphan:,} orphans (no obs at run_time)", file=sys.stderr)
@@ -185,10 +194,14 @@ def compute():
         rmse_1 = math.sqrt(a["se_l1"] / n)
         mae_4 = a["ae_l4"] / n
         rmse_4 = math.sqrt(a["se_l4"] / n)
+        mae_prod = a["ae_prod"] / n
+        rmse_prod = math.sqrt(a["se_prod"] / n)
         skill_l1_mae = 1 - mae_1 / mae_p if mae_p > 0 else None
         skill_l1_rmse = 1 - rmse_1 / rmse_p if rmse_p > 0 else None
         skill_l4_mae = 1 - mae_4 / mae_p if mae_p > 0 else None
         skill_l4_rmse = 1 - rmse_4 / rmse_p if rmse_p > 0 else None
+        skill_prod_mae = 1 - mae_prod / mae_p if mae_p > 0 else None
+        skill_prod_rmse = 1 - rmse_prod / rmse_p if rmse_p > 0 else None
         per_cell[(f, band)] = {
             "n": n,
             "mae_persist": round(mae_p, 3),
@@ -197,10 +210,14 @@ def compute():
             "rmse_l1": round(rmse_1, 3),
             "mae_l4": round(mae_4, 3),
             "rmse_l4": round(rmse_4, 3),
+            "mae_prod": round(mae_prod, 3),
+            "rmse_prod": round(rmse_prod, 3),
             "skill_l1_mae": round(skill_l1_mae, 3) if skill_l1_mae is not None else None,
             "skill_l1_rmse": round(skill_l1_rmse, 3) if skill_l1_rmse is not None else None,
             "skill_l4_mae": round(skill_l4_mae, 3) if skill_l4_mae is not None else None,
             "skill_l4_rmse": round(skill_l4_rmse, 3) if skill_l4_rmse is not None else None,
+            "skill_prod_mae": round(skill_prod_mae, 3) if skill_prod_mae is not None else None,
+            "skill_prod_rmse": round(skill_prod_rmse, 3) if skill_prod_rmse is not None else None,
         }
 
     return per_cell
@@ -355,6 +372,33 @@ def emit(per_cell):
     lines.append("")
     lines.append(line)
 
+    # Production vs L4 diff — surfaces where specialists move the number
+    # (sr via Lsr; historically t via Lt). n-weighted pooled MAE per field.
+    prod_pooled = {}
+    for f, cells in ((f, {b: per_cell.get((f, b)) for _, _, b in BANDS})
+                     for f in FIELDS):
+        num_p = num_prod = 0.0
+        den = 0
+        for c in cells.values():
+            if c is None:
+                continue
+            num_p    += c["mae_persist"] * c["n"]
+            num_prod += c["mae_prod"] * c["n"]
+            den += c["n"]
+        if den and num_p > 0:
+            prod_pooled[f] = 1 - num_prod / num_p
+    specialists = []
+    for f in field_verdicts:
+        p = prod_pooled.get(f)
+        l = pooled.get(f)
+        if p is None or l is None:
+            continue
+        if abs(p - l) >= 0.02:  # ≥2pp skill delta = specialist actually moving numbers
+            specialists.append((f, l, p))
+    if specialists:
+        parts_sp = [f"{f}: L4 {l:+.2f} → Prod {p:+.2f}" for f, l, p in specialists]
+        lines.append(f"Production vs L4 delta (specialists visible): {', '.join(parts_sp)}.")
+
     return "\n".join(lines)
 
 
@@ -373,16 +417,20 @@ def _per_field_summary(per_cell):
         n_add = sum(1 for c in band_cells.values() if verdict_cell(c) == "ADDS VALUE")
         n_beh = sum(1 for c in band_cells.values() if verdict_cell(c) == "BEHIND")
         n_mar = sum(1 for c in band_cells.values() if verdict_cell(c) == "MARGINAL")
-        # n-weighted pooled MAE for persist and L4
-        num_p, num_4, den = 0.0, 0.0, 0
+        # n-weighted pooled MAE for persist, L4, and Production
+        num_p, num_4, num_prod, den = 0.0, 0.0, 0.0, 0
         for c in band_cells.values():
             n = c["n"]
             num_p += c["mae_persist"] * n
             num_4 += c["mae_l4"] * n
+            num_prod += c["mae_prod"] * n
             den += n
         mae_p_pooled = (num_p / den) if den else None
         mae_4_pooled = (num_4 / den) if den else None
+        mae_prod_pooled = (num_prod / den) if den else None
         skill_l4_mae_pooled = (1 - mae_4_pooled / mae_p_pooled) if (
+            mae_p_pooled and mae_p_pooled > 0) else None
+        skill_prod_mae_pooled = (1 - mae_prod_pooled / mae_p_pooled) if (
             mae_p_pooled and mae_p_pooled > 0) else None
         fields[f] = {
             "verdict": v_field,
@@ -392,7 +440,9 @@ def _per_field_summary(per_cell):
             "n_bands_total": len(band_cells),
             "mae_persist_pooled": round(mae_p_pooled, 3) if mae_p_pooled is not None else None,
             "mae_l4_pooled": round(mae_4_pooled, 3) if mae_4_pooled is not None else None,
+            "mae_prod_pooled": round(mae_prod_pooled, 3) if mae_prod_pooled is not None else None,
             "skill_l4_mae_pooled": round(skill_l4_mae_pooled, 3) if skill_l4_mae_pooled is not None else None,
+            "skill_prod_mae_pooled": round(skill_prod_mae_pooled, 3) if skill_prod_mae_pooled is not None else None,
             "n": den,
         }
     return fields
