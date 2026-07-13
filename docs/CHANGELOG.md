@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.345 • July 13, 2026</strong></summary>
+
+- **gate_firing_rollup EXPECTED_DORMANT allowlist refresh.** The dormancy audit shipped 07-09 v0.6.318 was flagging 4 operators + 4 cells as ⚠ UNEXPECTED that are actually designed dormant. Extended `EXPECTED_DORMANT_OPERATORS` in `analysis/gate_firing_rollup.py` to cover post-v0.6.318 ships: `ch_persistence_gate` (v0.6.327, ENABLED=False awaiting 7-day gate) and `cl_persistence_short_lead` (v0.6.330, ENABLED=False awaiting halves-verified re-run). Refreshed `Lt` entry from "dormant pending Fix B" to "retired 07-13." Added new `EXPECTED_DORMANT_CELLS` allowlist (keyed on operator × field × regime triples) covering the 4 designed skips: L3/ws/ne_flow (SKIP_TABLE v0.6.279), Lsr/sr/ne_flow + calm (v0.6.280), C1h/ch/ne_flow (co-axis ortho gate v0.6.321). Re-ran + published to GCS: `⚠ UNEXPECTED: none` — signal-rich bucket, no more false positives to filter through. project-todo memory refreshed (the whole "build the table" entry was stale — it's been live since 07-09).
+
+</details>
+
+<details>
 <summary><strong>v0.6.344 • July 13, 2026</strong></summary>
 
 - **wg residual-persistence Stage 1 first read — MARGINAL.** Ran `analysis/h_wg_residual_persistence_stage1.py` end-of-session (202,321 rows, 152,517 train / 49,804 test). Bigger window wins on aggregate: **window=14d, MAE +17.04%**, RMSE +14.92% held-out (vs the naive 2-day rolling mean's +6.13%). L2-alone and Production give identical numbers — confirms no L3 interference (wg not in `L3_FIELDS`). **Two red flags block promotion:** (1) per-regime cross-cut — 5 regimes WIN (se_flow +28.38%, sw_flow +22.71%, pre_frontal +18.89%, nw_flow +18.06%, ne_flow +7.95%) but **`calm` LOSES −71.29%** (n=1,221) and `unknown` −2.24%; regime gate mandatory. (2) Halves check FAILS — first half (6/13→6/24) +18.44%, second half (6/24→7/05) +0.49%; effect real but window-to-window unstable. Verdict per script: MARGINAL, re-run in 3 days. Path forward stays Stage 2 (exp-decay τ + regime gate skip calm/unknown) + Stage 3 wire-up, held pending 07-16 halves-stable read. Debug page updated: Recent activity extended through v0.6.344, new wg residual-persistence watch row (day 1/7), wg state-table status column reflects both open threads, new Upcoming decisions entry Thu 07-16. Memory [[wg-residual-persistence]] refreshed with grid + regime + halves numbers.

@@ -198,20 +198,34 @@ def print_summary(out):
     # instead of the ⚠ bucket. Keep the reason inline so it's obvious when to remove.
     EXPECTED_DORMANT_OPERATORS = {
         "Lc":  "shipped 2026-07-04 v0.6.298 with ENABLED=False; waiting on 7-day gate clear",
-        "Lt":  "both branches disabled 2026-07-01; dormant pending Fix B refit",
+        "Lt":  "retired 2026-07-13 (Fix B refit +0.29% held-out, below +1.0% gate)",
         "MLC": "marine-layer cc sandbox, ENABLED=False, waiting on trend to hold",
+        "ch_persistence_gate":   "shipped 2026-07-12 v0.6.327 with ENABLED=False; 7-day gate, earliest flip 07-19",
+        "cl_persistence_short_lead": "shipped 2026-07-13 v0.6.330 with ENABLED=False; narrow 0-5h all 9 regimes, flip decision 07-19",
     }
     EXPECTED_DORMANT_PAIRS = {
         ("C1h", "t"): "REDUND to both C1f and C1e per co-axis ortho gate (v0.6.321); designed never to fire",
+    }
+    # (operator, field, regime) triples that are designed skips — SKIP_TABLE
+    # entries in decay_apply.py, Lsr regime skip list, C1h co-axis gate skips.
+    # Keep the reason inline so it's obvious when to remove.
+    EXPECTED_DORMANT_CELLS = {
+        ("L3", "ws", "ne_flow"):       "SKIP_TABLE (decay_apply.py v0.6.279): ws L3 skipped in ne_flow all bands",
+        ("Lsr", "sr", "ne_flow"):      "Lsr skip regime (solar_correction.py v0.6.280): sr Lsr off in ne_flow",
+        ("Lsr", "sr", "calm"):         "Lsr skip regime (solar_correction.py v0.6.280): sr Lsr off in calm",
+        ("C1h", "ch", "ne_flow"):      "co-axis ortho gate (confidence_layer.py v0.6.321): ch/ne_flow REDUND",
     }
 
     ops_unexpected = [op for op in flags["operators_never_fired"] if op not in EXPECTED_DORMANT_OPERATORS]
     ops_expected   = [op for op in flags["operators_never_fired"] if op in EXPECTED_DORMANT_OPERATORS]
     pairs_unexpected = [(o,f) for o,f in flags["operator_field_pairs_never_fired"] if (o,f) not in EXPECTED_DORMANT_PAIRS]
     pairs_expected   = [(o,f) for o,f in flags["operator_field_pairs_never_fired"] if (o,f) in EXPECTED_DORMANT_PAIRS]
+    cells_flagged = flags["operator_field_regime_never_fired_with_nonzero_ticks"]
+    cells_unexpected = [(o,f,r,nt) for o,f,r,nt in cells_flagged if (o,f,r) not in EXPECTED_DORMANT_CELLS]
+    cells_expected   = [(o,f,r,nt) for o,f,r,nt in cells_flagged if (o,f,r) in EXPECTED_DORMANT_CELLS]
 
     print("DORMANCY FLAGS")
-    if ops_unexpected or pairs_unexpected or flags["operator_field_regime_never_fired_with_nonzero_ticks"]:
+    if ops_unexpected or pairs_unexpected or cells_unexpected:
         print("  ⚠ UNEXPECTED (action needed):")
         if ops_unexpected:
             print(f"    Operators never fired: {ops_unexpected}")
@@ -219,19 +233,21 @@ def print_summary(out):
             print(f"    Operator+field pairs never fired ({len(pairs_unexpected)}):")
             for op, f in pairs_unexpected:
                 print(f"      {op}/{f}")
-        if flags["operator_field_regime_never_fired_with_nonzero_ticks"]:
+        if cells_unexpected:
             print(f"    Operator+field never fired in regime that DID run (≥5 ticks) — silent dormancy candidates:")
-            for op, f, r, nt in flags["operator_field_regime_never_fired_with_nonzero_ticks"]:
+            for op, f, r, nt in cells_unexpected:
                 print(f"      {op}/{f}/{r} — {nt} ticks in that regime, 0 fires")
     else:
         print("  ⚠ UNEXPECTED: none")
 
-    if ops_expected or pairs_expected:
+    if ops_expected or pairs_expected or cells_expected:
         print("  ✓ EXPECTED (waiting on gate / designed dormant):")
         for op in ops_expected:
             print(f"    {op} — {EXPECTED_DORMANT_OPERATORS[op]}")
         for op, f in pairs_expected:
             print(f"    {op}/{f} — {EXPECTED_DORMANT_PAIRS[(op, f)]}")
+        for op, f, r, nt in cells_expected:
+            print(f"    {op}/{f}/{r} — {EXPECTED_DORMANT_CELLS[(op, f, r)]}")
 
     if not any(flags.values()):
         print("  none — every declared operator × field × regime fired at least once")
