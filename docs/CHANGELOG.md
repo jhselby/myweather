@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.339a • July 13, 2026</strong></summary>
+
+- **Debug page sweep — trim stale prose in Engineering updates.** Header curation stamp advanced 07-12 v0.6.327a → 07-13 v0.6.339. Table date advanced 07-12 → 07-13. Trimmed verbose descriptors: t row "Lt both branches disabled 2026-07-01 v0.6.276" → "Lt retired 07-13"; ws row dropped the "silent-failure fix v0.6.310+311" backstory (7 days old, window has settled) — now just says "L3 skip table: ne_flow all + sea_breeze 0-11h" + "L3 drop candidacy day 4/7"; sr row collapsed the multi-paragraph unit-mismatch investigation into a one-line pointer with the shortwave shadow-log key finding preserved. Bottom summary rewritten: dropped 07-08 "In flight" line entirely (closed 5 days ago), added the 07-13 wg L3 Stage-0 finding. Recent activity block: 07-10 (Fri) entries dropped (outside the stated 3-day rolling window; already in CHANGELOG.md) — replaced with a one-line pointer. Net delta: ~14 lines trimmed from the state table + ~7 lines from Recent activity.
+
+</details>
+
+<details>
 <summary><strong>v0.6.339 • July 13, 2026</strong></summary>
 
 - **wg L3 regression diagnostic — Stage 0 finding.** Follow-on to today's v0.6.336 result (wg Prod persistence skill −0.09 vs L4-alone +0.10 = a 19pp drag through the L3 step). New `analysis/h_wg_l3_regression.py` compares per-row L2 forecast (pre-L3) to L3 forecast (Production for wg — top-level `forecast`) against persistence per (regime × lead_band). Verdict rule: L3 HURTS if MAE_L3 > MAE_L2 by ≥3% AND L2 already beats persistence. **First read: 10 HURT cells / 36 judged** — all in a coherent physical pattern: **`calm` regime blown across every band** (+23%, +62%, +77%, +73%), **`unknown` regime across 3 bands** (+22 to +38%), **sea_breeze/6-11h + sea_breeze/24-47h, ne_flow/6-11h**. Fits the same architecture as the ws L3 skip table (ne_flow all + sea_breeze 0-11h): narrow whitelist / broad skip-table extension, ship where L3 wins (18 HELPS cells including frontal all bands + pre_frontal 24-47h at −22%). NOT shippable today — this is Stage 0. Needs 3-day confirmation streak per [[feedback-hypothesis-promotion-pipeline]] before Stage 1. Explains why v0.6.336 flagged wg L3 as damaging: `calm` alone (14,591 rows in 7d) accounts for most of the pooled skill drop.
