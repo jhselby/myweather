@@ -418,6 +418,7 @@ def main():
     _NARROW_PROMOTE_GATES = {
         "C1H_SHIP_CELLS": ("C1h", 7),
         "C1D_SHIP_CELLS": ("C1d", 7),
+        "PRE_FRONTAL_SHIP_CELLS": ("pre-frontal", 7),
     }
     _narrow_lines = []
     for key, (label, gate_n) in _NARROW_PROMOTE_GATES.items():
@@ -503,6 +504,7 @@ def main():
             "LC_ENABLED": "lc_fit",
             "C1H_SHIP_CELLS": "c1h_curate",
             "C1D_SHIP_CELLS": "c1d_curate",
+            "PRE_FRONTAL_SHIP_CELLS": "h_pre_front_orthogonality",
         }
         for key, val in today_claims.items():
             if val is None:

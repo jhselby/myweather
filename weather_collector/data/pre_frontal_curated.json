@@ -1,0 +1,183 @@
+{
+  "generated_at": "2026-07-13T01:02:01Z",
+  "source": "h_pre_front_orthogonality.py",
+  "ship_rule": "cell is SHIP iff ORTHOGONAL vs C1a AND ORTHOGONAL vs C1e",
+  "cells": {
+    "cc": {
+      "0-5h": {
+        "status": "SKIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "12-23h": {
+        "status": "SKIP",
+        "vs_c1a": "AMBIGUOUS",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      },
+      "6-11h": {
+        "status": "SKIP",
+        "vs_c1a": "CONFOUNDED",
+        "vs_c1e": "AMBIGUOUS"
+      }
+    },
+    "ch": {
+      "0-5h": {
+        "status": "SHIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "ORTHOGONAL"
+      },
+      "12-23h": {
+        "status": "SHIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "ORTHOGONAL"
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      },
+      "6-11h": {
+        "status": "SKIP",
+        "vs_c1a": "CONFOUNDED",
+        "vs_c1e": "AMBIGUOUS"
+      }
+    },
+    "cl": {
+      "0-5h": {
+        "status": "SKIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "12-23h": {
+        "status": "SKIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "24-47h": {
+        "status": "SHIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "ORTHOGONAL"
+      },
+      "6-11h": {
+        "status": "SKIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "AMBIGUOUS"
+      }
+    },
+    "cm": {
+      "0-5h": {
+        "status": "SKIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "12-23h": {
+        "status": "SHIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "ORTHOGONAL"
+      },
+      "24-47h": {
+        "status": "SHIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "ORTHOGONAL"
+      },
+      "6-11h": {
+        "status": "SKIP",
+        "vs_c1a": "ORTHOGONAL",
+        "vs_c1e": "AMBIGUOUS"
+      }
+    },
+    "h": {
+      "0-5h": {
+        "status": "SKIP",
+        "vs_c1a": "AMBIGUOUS",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "12-23h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "vs_c1a": "AMBIGUOUS",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "6-11h": {
+        "status": "SKIP",
+        "vs_c1a": "CONFOUNDED",
+        "vs_c1e": "AMBIGUOUS"
+      }
+    },
+    "t": {
+      "0-5h": {
+        "status": "SKIP",
+        "vs_c1a": "AMBIGUOUS",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "12-23h": {
+        "status": "SKIP",
+        "vs_c1a": "CONFOUNDED",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "vs_c1a": "AMBIGUOUS",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "6-11h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      }
+    },
+    "wg": {
+      "0-5h": {
+        "status": "SKIP",
+        "vs_c1a": "CONFOUNDED",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "12-23h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      },
+      "6-11h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      }
+    },
+    "ws": {
+      "0-5h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      },
+      "12-23h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      },
+      "24-47h": {
+        "status": "SKIP",
+        "vs_c1a": "AMBIGUOUS",
+        "vs_c1e": "AMBIGUOUS"
+      },
+      "6-11h": {
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
+      }
+    }
+  }
+}

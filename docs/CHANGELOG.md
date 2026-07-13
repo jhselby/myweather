@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.328d • July 12, 2026</strong></summary>
+
+- **Pre-frontal narrow-promote counter wired — closes the last aspirational-text gap.** After v0.6.320-323's silent-dormancy audit wired real counters for L3 drop-ws, LC_ENABLED, C1h + C1d, pre-frontal was the one remaining "no counter wired" gate — flagged explicitly on the debug page as "same aspirational-text pattern as C1h/C1d/LC pre-v0.6.323." `analysis/h_pre_front_orthogonality.py` now captures per-cell verdicts from both check loops (vs C1a, vs C1e) and emits `weather_collector/data/pre_frontal_curated.json` at end of run: `cells[field][band] = {status: SHIP iff ORTHOGONAL on BOTH checks else SKIP}`. First read today: 5 SHIP cells — ch 0-5h, ch 12-23h, cl 24-47h, cm 12-23h, cm 24-47h. `claims._claim_marginal_ship_cells` extended with `allow_empty=True` (returns `[]` not `None` when SHIP set is empty — legitimate stable state to track for a sparse axis like pre-frontal, unlike C1h/C1d where empty means the curator hasn't run yet). New `PRE_FRONTAL_SHIP_CELLS` claim + `pre-frontal` narrow-promote gate registered in `build_executive_summary._NARROW_PROMOTE_GATES`. Day 1/7 today; earliest Stage 3 wire-up 2026-07-19. Debug page updated: What's-improving Pre-frontal block flipped from "no counter wired" to "counter wired ✓"; Upcoming decisions replaced "infrastructure gap" entry with a real 07-19 wire-up Q/E/D; calendar gained 07-19 Pre-frontal entry.
+
+</details>
+
+<details>
 <summary><strong>v0.6.328c • July 12, 2026</strong></summary>
 
 - **Upcoming decisions block — rewritten current-forward.** Joe caught that the block was 90% stale: 07-03 "h + sr to L4" FROZEN entry was superseded 07-11 (re-frozen after halves-check), 07-04 C1 Stage 4 "re-check ~07-11" already happened + blocked, 07-04 raw-baseline verifier was already shipped, 07-06 pp/ws L3 drop was already decided ("don't drop wholesale"), 07-10 outcome was materialized, plus an explicitly-labeled "superseded above" block and a "Lsr post-ship watch through 07-10" note that had auto-lifted. Replaced with 8 actually-upcoming Q/E/D entries: Thu 07-16 ws L3 strip, Fri 07-17 ws octant re-read 1/3, Sat 07-18 C1 Stage 4 + Lc anomaly HOLD, Sun 07-19 ch persistence gate flip + cl narrow gate, h→L4 un-freeze eligibility, pre-frontal counter infra gap, and the Wyman Cove Swim Index product idea (kept — no date). Summary caption clarifies "forward-only; outcomes move to Recent activity" so the block doesn't accumulate history again.

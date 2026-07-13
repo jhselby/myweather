@@ -863,9 +863,9 @@
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #7fb3ff;background:#101318;margin-bottom:6px;border-radius:2px;">
-          <div><strong>Pre-frontal cloud widening</strong> <span style="color:#e0d472;font-size:0.85em;">Stage 1</span></div>
-          <div style="opacity:0.85;">MIXED (2 orthogonal cells across both checks)</div>
-          <div style="color:#9ab0a0;">→ 7-day narrow-promote gate: <strong>no counter wired</strong> — same aspirational-text pattern as C1h/C1d/LC pre-v0.6.323. Not fixed today because there's no Stage 3 curated table for pre-frontal to walk (unlike C1h/C1d). Gate becomes real when a curated table exists. Verdict origin: 07-04.</div>
+          <div><strong>Pre-frontal cloud widening</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ Stage 2 curated 07-12 · counter wired</span></div>
+          <div style="opacity:0.85;">Latest ortho read: 5 SHIP cells (cell is SHIP iff ORTHOGONAL vs C1a AND vs C1e). Written to <code>weather_collector/data/pre_frontal_curated.json</code>.</div>
+          <div style="color:#9ab0a0;">→ Real 7-day narrow-promote counter wired 2026-07-12 v0.6.328d — closes the last "no counter wired" gap flagged after v0.6.323. Day 1/7 today. Earliest Stage 3 wire-up eligibility: 2026-07-19.</div>
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #e0d472;background:#171310;border-radius:2px;">
@@ -894,6 +894,8 @@
           <div><strong>ch persistence gate ENABLED=True earliest flip</strong> — 7-day gate clears; SHIP/SKIP cell-set stability re-verified via weekly Stage 2 re-run.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 07-19</div>
           <div><strong>cl persistence re-verify</strong> — first post-anomaly read of <code>h_cl_persistence_blend.py</code> + <code>h_cl_linear_ramp_stage2.py</code>. If halves converge and 0-5h SHIPs hold, ship narrow persistence gate for cl at leads ≤ 5h.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 07-19</div>
+          <div><strong>Pre-frontal Stage 3 earliest wire-up</strong> — narrow-promote counter cleared 7/7 (day 1/7 today). If SHIP cell set stable + C1 Stage 4 clear, wire pre-frontal as new confidence axis.</div>
         </div>
 
         <div style="color:#a08070;font-weight:600;margin-bottom:4px;">Frozen</div>
@@ -1054,6 +1056,7 @@
       <li><strong style="color:#7fb3ff;">2026-07-12 (Sun) — today</strong></li>
       <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.327 — ch persistence gate Stage 3 wired (ENABLED=False).</strong> Follow-on to Sunday digest's SHIP candidate. New <code>analysis/h_ch_persistence_blend_stage2.py</code> disaggregated Joe's regime-gate design per (regime × lead_band) with halves-verified verdicts: <strong>22 SHIP / 6 MARGIN / 8 SKIP / 1 THIN</strong> of 37 judged cells. Halves check exposed structure the pooled Stage 1 hid — <em>sw_flow</em> long-lead (3 of 4 bands sign-flip between recent + prior 15d halves), <em>pre_frontal/24-47h</em> loses full window +9.6% (n=11,983). Clean gate would have regressed real volume; cell-conditioned gate ships only where verified. New processor <code>weather_collector/processors/ch_persistence_gate.py</code> reads <code>ch_persistence_gate_curated.json</code>, runs AFTER Lc so persistence overwrites L4+Lc where the gate fires (Lc's shift was fit against L4, would re-introduce bias on top of persistence). Persistence source: <code>cloud_l2_meta.fields_applied.obs_mean</code> (pure KBOS+KBVY blend, pre-Kalman) with <code>hourly[0]</code> fallback. <em>frontal</em> regime always falls to L4 by design. First-tick verification (nw_flow): 5 fires 0-5h (SHIP), 12 fires 12-23h (MARGIN), 0 fires 6-11h + 24-47h (SKIP) — matches Stage 2 preview exactly. Applicability_map descriptor wired. <strong>7-day live-layer change gate: day 1/7 today. Earliest flip: 07-19.</strong> Related: <a href="#sec-applicability">Applicability map</a> now shows the new layer.</li>
       <li><span style="color:#7090a0;">◉</span> <strong>Landmark thread parked, not shipped.</strong> Stage 1 flagged persistence-only ALSO beats baseline pooled. Stage 2 revealed persistence-only vs baseline fails in the same 6 cells the cell-conditioned gate skips (nw_flow/6-11, pre_frontal/24-47, sw_flow/6-11). The regime-gate design collapses into a superset of persistence-only + skip fallbacks. Global persistence-only DNS.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>v0.6.328d — pre-frontal narrow-promote counter wired.</strong> Closes the last "no counter wired" gap flagged after the v0.6.320-323 silent-dormancy audit. <code>analysis/h_pre_front_orthogonality.py</code> now emits <code>weather_collector/data/pre_frontal_curated.json</code> at end of run — cells[field][band] = {status: SHIP if ORTHOGONAL vs C1a AND vs C1e else SKIP}. First read today: 5 SHIP cells (ch 0-5h, ch 12-23h, cl 24-47h, cm 12-23h, cm 24-47h). <code>claims.py::_claim_marginal_ship_cells</code> extended with <code>allow_empty=True</code> so empty SHIP sets count as valid tracked state (pre-frontal starts sparse). <code>PRE_FRONTAL_SHIP_CELLS</code> claim + <code>pre-frontal</code> narrow-promote gate registered in <code>build_executive_summary.py::_NARROW_PROMOTE_GATES</code>. Day 1/7 today; earliest Stage 3 wire-up 2026-07-19.</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>cl persistence investigation — HOLD, not shipped.</strong> New <code>analysis/h_cl_persistence_blend.py</code> + <code>analysis/h_cl_linear_ramp_stage2.py</code>. cl does NOT have ch's shape: regime_gate + persist_only fail halves stability (Δ_A −14% / Δ_B +13-15% — anomaly-inflated recent wins). Per-regime shows cloudy-active regimes (se_flow, calm, unknown, ~32% of volume) want persistence; clear-flow regimes (sw_flow with tiny base MAE ~8-14, plus nw_flow/pre_frontal/ne_flow/sea_breeze/frontal, ~68% of volume) want L1 baseline. linear_ramp τ scan showed monotonic-with-τ improvement (τ=12 → −4.1%, τ=36 → −8.7%) — red flag, no natural sweet spot. Per (regime × lead_band) at τ=36: 20 SHIP / 2 MARGIN / 14 SKIP / 1 THIN, with 12-23h a graveyard (7 of 9 SKIP). <strong>Honest signal: 0-5h narrow persistence gate would ship — all 9 regimes SHIP at 0-5h.</strong> Deferred: re-verify 07-19+ post-anomaly before deciding architecture. See [[project-cl-persistence-investigation]].</li>
 
       <li style="margin-top:8px;"><strong style="color:#7fb3ff;">2026-07-11 (Sat)</strong></li>
@@ -1183,10 +1186,11 @@
           </ul>
         </li>
 
-        <li style="margin-top:6px;"><strong>Pre-frontal narrow-promote gate — infrastructure gap.</strong>
+        <li style="margin-top:6px;"><strong>Sun 07-19 — pre-frontal narrow-promote earliest wire-up.</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>E:</strong> Stage 1 MIXED as of 07-04. No counter wired — same aspirational-text pattern that C1h/C1d/LC had pre-v0.6.323. Fix needs a Stage 3 curated table for pre-frontal to walk (unlike C1h/C1d there's no existing table).</li>
-            <li><strong>D:</strong> No date. Build when either (a) verdict flips to promote and forces the issue, or (b) low-load day picks it up.</li>
+            <li><strong>Q:</strong> Does the pre-frontal ORTHOGONAL-on-both-checks SHIP set stay stable for 7 consecutive daily digest reads?</li>
+            <li><strong>E:</strong> Counter wired 07-12 v0.6.328d (closed the last aspirational "no counter wired" gap). <code>h_pre_front_orthogonality.py</code> now emits <code>pre_frontal_curated.json</code>; 5 SHIP cells today. Day 1/7.</li>
+            <li><strong>D:</strong> If gate clears + Stage 4 audit clears for C1 overall, wire pre-frontal as a Stage 3 axis in <code>confidence_layer.py</code> (per-cell WIDEN table, analogous to how C1h/C1d were wired in v0.6.316).</li>
           </ul>
         </li>
 

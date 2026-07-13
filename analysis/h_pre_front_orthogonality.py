@@ -72,6 +72,16 @@ with open(cached_path(PAIR_URL), "rb") as fh:
         sums[(f, band, A, B, C)][0] += 1
         sums[(f, band, A, B, C)][1] += abs(err)
 
+# Per-cell verdict maps — captured during both loops so we can emit the
+# Stage 2 curated table at end. SHIP = ORTHOGONAL in BOTH checks (the
+# axis needs to be independent of both C1a and C1e to earn a Stage 3
+# stamp). Consumed by analysis/runlog/claims.py::_claim_marginal_ship_cells
+# via the "PRE_FRONTAL_SHIP_CELLS" gate registered in
+# build_executive_summary.py — 7-day narrow-promote counter analogous
+# to C1h/C1d.
+_cell_v1 = {}  # (field, band) -> verdict vs C1a
+_cell_v2 = {}  # (field, band) -> verdict vs C1e
+
 # Pairwise: pre-frontal vs each other axis
 print("Pre-frontal × C1a (transition) orthogonality")
 print(f"{'field':<5} {'band':<6} {'stable_pre/base':>15} {'trans_pre/base':>14}  vs_C1a")
@@ -101,6 +111,7 @@ for f in FIELDS:
         else:
             verdict = "AMBIGUOUS"
         v1[verdict] += 1
+        _cell_v1[(f, label)] = verdict
         print(f"{f:<5} {label:<6} {r_st:>14.2f}× {r_tr:>13.2f}×  {verdict}")
     print()
 print(f"vs C1a: ORTHOGONAL: {v1['ORTHOGONAL']}, REDUNDANT: {v1['REDUNDANT']}, CONFOUNDED: {v1['CONFOUNDED']}, AMBIGUOUS: {v1['AMBIGUOUS']}\n")
@@ -134,10 +145,51 @@ for f in FIELDS:
         else:
             verdict = "AMBIGUOUS"
         v2[verdict] += 1
+        _cell_v2[(f, label)] = verdict
         rp_str = "    n/a" if r_post != r_post else f"{r_post:>13.2f}×"
         print(f"{f:<5} {label:<6} {r_no_post:>14.2f}× {rp_str}  {verdict}")
     print()
 print(f"vs C1e: ORTHOGONAL: {v2['ORTHOGONAL']}, REDUNDANT: {v2['REDUNDANT']}, AMBIGUOUS: {v2['AMBIGUOUS']}")
+print()
+
+# Emit Stage 2 curated table for the narrow-promote gate. SHIP = ORTHOGONAL
+# on BOTH checks (independence from C1a AND C1e). Anything else = SKIP.
+# Cells that only appeared in one loop (sample floor filtered them from the
+# other) fall through to SKIP. Written to weather_collector/data/ so
+# claims._claim_marginal_ship_cells reads it via the standard path.
+from datetime import datetime as _dt, timezone as _tz
+_CURATED_PATH = os.path.abspath(os.path.join(
+    os.path.dirname(__file__), "..", "weather_collector", "data", "pre_frontal_curated.json"
+))
+_cells_out = {}
+_cell_keys = set(_cell_v1.keys()) | set(_cell_v2.keys())
+_ship_count = 0
+for (f, band) in sorted(_cell_keys):
+    v_a = _cell_v1.get((f, band))
+    v_e = _cell_v2.get((f, band))
+    if v_a == "ORTHOGONAL" and v_e == "ORTHOGONAL":
+        status = "SHIP"
+        _ship_count += 1
+    else:
+        status = "SKIP"
+    _cells_out.setdefault(f, {})[band] = {
+        "status": status,
+        "vs_c1a": v_a,
+        "vs_c1e": v_e,
+    }
+_curated_payload = {
+    "generated_at": _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "source": "h_pre_front_orthogonality.py",
+    "ship_rule": "cell is SHIP iff ORTHOGONAL vs C1a AND ORTHOGONAL vs C1e",
+    "cells": _cells_out,
+}
+try:
+    os.makedirs(os.path.dirname(_CURATED_PATH), exist_ok=True)
+    with open(_CURATED_PATH, "w") as _fh:
+        json.dump(_curated_payload, _fh, indent=2)
+    print(f"→ wrote {_CURATED_PATH}  ({_ship_count} SHIP cells / {len(_cell_keys)} judged)")
+except Exception as _e:
+    print(f"⚠ curated table write failed: {_e}")
 print()
 total = sum(v1.values()) + sum(v2.values())
 ortho = v1['ORTHOGONAL'] + v2['ORTHOGONAL']

@@ -55,12 +55,18 @@ def _claim_bool_ship(verdict):
     return None
 
 
-def _claim_marginal_ship_cells(curated_json_name: str):
-    """Read a C1 marginal-axis curated table (c1h_curated.json / c1d_curated.json)
-    and return the sorted list of SHIP cells as [[field, band], ...]. Used to
-    track the "N-day narrow-promote gate" — the axis is ready to flip when the
-    SHIP scope has been stable for N consecutive daily digest reads. Returns
-    None if the file can't be read.
+def _claim_marginal_ship_cells(curated_json_name: str, allow_empty: bool = False):
+    """Read a marginal-axis curated table (c1h_curated.json / c1d_curated.json /
+    pre_frontal_curated.json) and return the sorted list of SHIP cells as
+    [[field, band], ...]. Used to track the "N-day narrow-promote gate" — the
+    axis is ready to flip when the SHIP scope has been stable for N consecutive
+    daily digest reads. Returns None if the file can't be read.
+
+    `allow_empty=True` lets an empty SHIP set count as a valid claim (returned
+    as `[]` rather than None). Use this for axes where "no SHIP cells" is a
+    legitimate stable state to track (e.g., pre-frontal starts empty and might
+    stay that way for weeks). The default False matches C1h/C1d, where an
+    empty SHIP set means the curated table hasn't been generated yet.
     """
     path = HERE.parents[1] / "weather_collector" / "data" / curated_json_name
     if not path.exists():
@@ -75,7 +81,9 @@ def _claim_marginal_ship_cells(curated_json_name: str):
         for band, cell in bands.items():
             if cell.get("status") == "SHIP":
                 ship.append([field, band])
-    return sorted(ship) if ship else None
+    if ship:
+        return sorted(ship)
+    return [] if allow_empty else None
 
 
 def _claim_lc_enabled(verdict):
@@ -123,6 +131,16 @@ def compute_claims(state: dict) -> dict:
     # advance the gate.
     claims["C1H_SHIP_CELLS"] = _claim_marginal_ship_cells("c1h_curated.json")
     claims["C1D_SHIP_CELLS"] = _claim_marginal_ship_cells("c1d_curated.json")
+    # PRE_FRONTAL_SHIP_CELLS — 7-day narrow-promote gate for pre-frontal
+    # widening. Wired 2026-07-12 v0.6.328d — closes the last aspirational
+    # "no counter wired" gate flagged on the debug page. SHIP cells come
+    # from h_pre_front_orthogonality.py (cell is SHIP iff ORTHOGONAL vs
+    # both C1a AND C1e). Empty list is meaningful — "consistent zero SHIP
+    # for 7 days" is a legitimate stable state, so we return [] (not None)
+    # when the table exists but no cells qualify.
+    claims["PRE_FRONTAL_SHIP_CELLS"] = _claim_marginal_ship_cells(
+        "pre_frontal_curated.json", allow_empty=True
+    )
     return claims
 
 
