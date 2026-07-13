@@ -3072,13 +3072,32 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
       // in the daily digest. Silent no-op if the file is missing (pre-first-run
       // or GCS blip). Skill = 1 - L4_MAE / persistence_MAE per field; positive
       // means the pipeline beats persistence. Verdict rules match the analysis
-      // script (see verdict_rules block in the JSON).
+      // script (see verdict_rules block in the JSON). Per-field pooled skill
+      // shown alongside the label because the verdict rule ("≥3 bands ADD
+      // with no BEHIND") is strict enough to label positive-pooled fields
+      // like cm as "NO SKILL" when one lead band is BEHIND — showing the
+      // pooled number restores the shape without weakening the rule.
       if (!persistDoc || !persistDoc.fields || !persistDoc.summary) return "";
       const s = persistDoc.summary;
       const fields = persistDoc.fields;
-      const addFields   = Object.entries(fields).filter(([, v]) => v.verdict === "ADDS VALUE").map(([f]) => f);
-      const mixedFields = Object.entries(fields).filter(([, v]) => v.verdict === "MIXED").map(([f]) => f);
-      const noFields    = Object.entries(fields).filter(([, v]) => v.verdict === "NO SKILL").map(([f]) => f);
+      // Sort within each verdict bucket by pooled skill descending — the
+      // biggest wins go first, so the eye lands on the strongest.
+      const _entries = (verdict) => Object.entries(fields)
+        .filter(([, v]) => v.verdict === verdict)
+        .sort((a, b) => (b[1].skill_l4_mae_pooled ?? -Infinity)
+                      - (a[1].skill_l4_mae_pooled ?? -Infinity));
+      const addRows   = _entries("ADDS VALUE");
+      const mixedRows = _entries("MIXED");
+      const noRows    = _entries("NO SKILL");
+      // Format one field like "t +0.68" — signed to 2 decimals, opacity-dimmed
+      // for the number so the field slug stays the primary reading target.
+      const _fmt = (f, v) => {
+        const s = v.skill_l4_mae_pooled;
+        if (s == null) return `<code>${f}</code>`;
+        const sign = s >= 0 ? "+" : "";
+        return `<code>${f}</code><span style="opacity:0.55;margin-left:2px;">${sign}${s.toFixed(2)}</span>`;
+      };
+      const _join = (rows) => rows.map(([f, v]) => _fmt(f, v)).join(" · ");
       return `
     <div style="margin-top:8px;padding-top:6px;border-top:1px solid #1a2530;font-size:0.85em;">
       <span style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-right:8px;">vs Persistence</span>
@@ -3087,9 +3106,10 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
       <strong style="color:#e0d472;">${s.mixed}</strong><span style="opacity:0.6;"> mixed</span>
       <span style="opacity:0.5;margin:0 6px;">·</span>
       <strong style="color:#fb7c5c;">${s.no_skill}</strong><span style="opacity:0.6;"> no skill</span>
-      ${addFields.length   ? `<div style="font-size:0.75em;opacity:0.6;margin-top:2px;"><span style="color:#4ad29a;">✓</span> ${addFields.join(" ")}</div>` : ""}
-      ${mixedFields.length ? `<div style="font-size:0.75em;opacity:0.6;"><span style="color:#e0d472;">~</span> ${mixedFields.join(" ")}</div>` : ""}
-      ${noFields.length    ? `<div style="font-size:0.75em;opacity:0.6;"><span style="color:#fb7c5c;">✗</span> ${noFields.join(" ")} <span style="opacity:0.55;">— pipeline behind naive persistence</span></div>` : ""}
+      <span style="opacity:0.5;margin-left:8px;font-size:0.75em;">(numbers = pooled skill vs persistence: 1 − L4_MAE / persist_MAE, n-weighted across bands)</span>
+      ${addRows.length   ? `<div style="font-size:0.78em;margin-top:3px;"><span style="color:#4ad29a;">✓</span> ${_join(addRows)}</div>` : ""}
+      ${mixedRows.length ? `<div style="font-size:0.78em;"><span style="color:#e0d472;">~</span> ${_join(mixedRows)}</div>` : ""}
+      ${noRows.length    ? `<div style="font-size:0.78em;"><span style="color:#fb7c5c;">✗</span> ${_join(noRows)} <span style="opacity:0.55;">— strict verdict; only negative pooled numbers are genuine losses</span></div>` : ""}
     </div>`;
     })()}
     <div style="opacity:0.55;font-size:0.78em;margin-top:6px;line-height:1.5;">

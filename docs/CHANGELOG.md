@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.328a • July 12, 2026</strong></summary>
+
+- **Persistence-skill line — show pooled skill per field.** The "3 NO SKILL" verdict label was hiding shape — cm has +0.14 pooled skill (positive) but got the NO SKILL label because one lead band is BEHIND, tripping the strict "≥3 bands ADD, no BEHIND" rule. Only ch (−0.26) is genuinely losing pooled. Scorecard "vs Persistence" line now shows the pooled skill_L4_MAE next to each field slug (n-weighted across bands), sorted best-first within each verdict bucket. Verdict rule unchanged. NO SKILL row footer reframed: "strict verdict; only negative pooled numbers are genuine losses."
+
+</details>
+
+<details>
 <summary><strong>v0.6.328 • July 12, 2026</strong></summary>
 
 - **Persistence-skill → scorecard integration.** Closes the "shipped 2026-07-11 (`h_persistence_skill.py`) — awaits scorecard integration" gap that the scorecard prose has been advertising. `analysis/h_persistence_skill.py` now emits an enriched JSON with a per-field summary block (verdict + n-weighted pooled skill_l4_mae + band counts) and a top-line rollup (5 ADD / 4 MIXED / 3 NO SKILL), and publishes it to `gs://myweather-data/persistence_skill.json`. Debug page fetches `persistence_skill.json` alongside `time_series_diagnostic.json` and renders a "vs Persistence" line beneath the scorecard grid (`renderScorecardBanner` now takes a third `persistDoc` argument): 5/12 add value, 4 mixed, 3 no skill, with the ADD / MIXED / NO SKILL field lists. Scorecard prose measurement-gaps sentence rewritten — no longer says "awaits scorecard integration."
