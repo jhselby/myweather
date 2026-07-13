@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.342 • July 13, 2026</strong></summary>
+
+- **Novel finding: wg short-term residual persistence — Stage 0 hit.** New `analysis/h_daily_residual_persistence.py` tests whether yesterday's mean (obs − L2_forecast) at hour H predicts today's at hour H. Question: does L4's 21-day averaging window smooth over real 1-3 day drift? Answer per field: **wg is a genuine hit.** Simulated a rolling 2-day mean-L2-residual correction at same clock hour, held-out on last 7 days: **wg MAE −6.13%** (2.638 → 2.475) and **RMSE −7.41%** (7.598 → 7.035). Every other field regressed with this naive correction (t/dp/h already have L4 catching the same signal; cloud fields' 2-day rolling means are too noisy). wg wins because (a) no L4 diurnal correction competes, (b) wind gust has strong day-to-day persistence — windy days follow windy days — that L2's Kalman doesn't fully track, and (c) autocorrelation is broadly distributed across hours. Autocorrelation numbers also strong for t (afternoon cluster 14/15/16/19/22h all ρ_1 ≥ 0.3) and dp (nighttime cluster 21-23h, 00-01h ρ_1 ≥ 0.3) but their L4 already handles it. Path forward: Stage 1 wg-specific "recent drift" correction — per (regime × hour) tuned rolling window, likely 3-5 days with Kalman-like weighting instead of naive mean. Projected +5-7% MAE win on wg is real signal, comparable magnitude to the ch persistence gate impact.
+
+</details>
+
+<details>
 <summary><strong>v0.6.341 • July 13, 2026</strong></summary>
 
 - **Three UI cleanups on the top of the page.** (1) Scorecard "What this measures" prose wrapped in a `<details>` so it's collapsible — was always-visible, took vertical real estate below the metric grid. (2) Tri-column band (What's running / improving / evaluated) wrapped in a `<details open>` collapsible with a single "Current state" summary. Full state still visible by default; one click hides it if the reader only wants scorecard + accuracy chart. (3) **Status column added to the Current pipeline state table** with per-field one-liner summaries — e.g., `ws: Open regression. Walkforward L3 drop day 4/7. Earliest strip 07-16.` and `ch: Best-performing field vs raw — but persistence-skill Prod −1.08 vs L4-alone −0.29 (v0.6.336): L3 doing damage. ch persistence gate pending (day 2/7, flip 07-19).` and `wg: Stable win vs raw, but v0.6.339 Stage 0 diagnostic: L3 regresses in 10 cells (calm all bands +23-77%; unknown +22-38%).` One-line status per field surfaces the interesting story without expanding the "Applied layers" column into prose. Applied-layers cells trimmed to just the stack list, status story moves right.
