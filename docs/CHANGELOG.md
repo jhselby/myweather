@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.346 • July 13, 2026</strong></summary>
+
+- **Retire "*" migration language on the accuracy section.** Three stale bits from the 07-01 → 07-08 per-row-stamping migration cleaned out: (1) MAE band-table tooltip's fallback text no longer says "Per-row stamping shipped 2026-07-01; 7-day window fully fills 2026-07-08" — replaced with "Thin-sample fallback only — protects against noisy per-lead averages." Reframes the sub-floor path as an ongoing safety net, not a migration artifact. (2) "Current pipeline state" table intro dropped the "entries flagged 'in flight' are cases where today's deploy hasn't propagated" caveat — no cell has been flagged in-flight for over a week, and the deploy-propagation framing was migration-specific. Now: "Production numbers are real per-row aggregates over the rolling 7-day window." (3) Engineering-updates per-row-stamping entry dropped "; 7-day window fully filled 2026-07-08" and the "The `*` marker auto-drops per-card at ≥40/48 leads covered" line — reframed the thin-sample fallback in the same "rare-lead safety net, not a migration artifact" language. **Left unchanged:** the `realCovered >= 40 ? "" : "*"` conditional in the chart code (safety net if we ever drop back below the floor) + all n≥30 min-sample floor language (real ongoing noise guard, per project-todo instruction).
+
+</details>
+
+<details>
 <summary><strong>v0.6.345 • July 13, 2026</strong></summary>
 
 - **gate_firing_rollup EXPECTED_DORMANT allowlist refresh.** The dormancy audit shipped 07-09 v0.6.318 was flagging 4 operators + 4 cells as ⚠ UNEXPECTED that are actually designed dormant. Extended `EXPECTED_DORMANT_OPERATORS` in `analysis/gate_firing_rollup.py` to cover post-v0.6.318 ships: `ch_persistence_gate` (v0.6.327, ENABLED=False awaiting 7-day gate) and `cl_persistence_short_lead` (v0.6.330, ENABLED=False awaiting halves-verified re-run). Refreshed `Lt` entry from "dormant pending Fix B" to "retired 07-13." Added new `EXPECTED_DORMANT_CELLS` allowlist (keyed on operator × field × regime triples) covering the 4 designed skips: L3/ws/ne_flow (SKIP_TABLE v0.6.279), Lsr/sr/ne_flow + calm (v0.6.280), C1h/ch/ne_flow (co-axis ortho gate v0.6.321). Re-ran + published to GCS: `⚠ UNEXPECTED: none` — signal-rich bucket, no more false positives to filter through. project-todo memory refreshed (the whole "build the table" entry was stale — it's been live since 07-09).
