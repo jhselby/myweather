@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.338 • July 13, 2026</strong></summary>
+
+- **Debug page sweep after 7-ship session.** Counters advanced from 07-12 baselines to 07-13: ch persistence gate 1/7 → 2/7 (with a new note referencing the v0.6.336 Prod-vs-L4 corroboration); Lc 3/7 → 4/7; C1h + C1d Stage 3 counters 1/7 → 2/7; ws L3 strip 3/7 → 4/7 (bulk `day 3/7 (07-12)` and `day 3/7 as of 07-12` replaced with `day 4/7 (07-13)` / `day 4/7 as of 07-13`); pre-frontal Stage 3 wire-up eligibility note updated to reflect today's 1/7 reset (SHIP-set changed vs yesterday). Added "Recent activity" entries for the 7 ships from this session (v0.6.331 through v0.6.337). HTML parse-verified; served-page verified via local http.server. Following [[feedback_debug_page_canon]] — page IS source of truth, must skim after every ship.
+
+</details>
+
+<details>
 <summary><strong>v0.6.337 • July 13, 2026</strong></summary>
 
 - **Production-vs-L4 persistence skill delta surfaced at exec-summary altitude.** v0.6.336 added the numbers to `h_persistence_skill.json` and printed a supplemental line in the log tail — buried. Now `persistence_skill_watch()` in `analysis/runlog/build_executive_summary.py` returns a third list (`prod_delta_lines`) of every field where `|skill_prod − skill_l4| ≥ 0.02`. Rendered as a sub-block "Production vs L4 delta (L3 + specialists visibly moving persistence skill)" right under the at-risk lines. Direction markers: `→` when Production improves, `↓` when Production hurts. Today's read: 4 fields ↓ (ch −0.79, wg −0.19, cc −0.10, cm −0.04) + 1 field → (pp +0.14). Snapshot format extended to carry `skill_prod_mae_pooled` alongside `skill_l4_mae_pooled`, so tomorrow's regression detection catches Production-side flips too.
