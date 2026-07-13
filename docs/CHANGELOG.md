@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.335 • July 13, 2026</strong></summary>
+
+- **pp Brier decomposition — Phase 3 of measurement framework.** New `analysis/pp_brier_decomposition.py` splits pp aggregate Brier into the three canonical components: **Reliability** (Σ (fc − obs_freq)² per bin — calibration), **Resolution** (Σ (obs_freq − obs_bar)² — discrimination), and **Uncertainty** (obs_bar × (1 − obs_bar) — climatology). Runs per lead band (0-5h / 6-11h / 12-23h / 24-47h) and pooled, for both raw (forecast_l1) and corrected (post-Fitter forecast) stages. Reports **Brier Skill Score vs climatology** = 1 − Brier/Uncertainty. Verdict rule: CALIBRATED if corrected Reliability improves and Resolution doesn't drop; MIXED if calibrator over-shrinks toward base rate; NOT CALIBRATED if Reliability worsened. Emits per-bin calibration gap table (`fc_mean − obs_freq`) — the diagnostic for finding "when we say X%, does it actually happen X% of the time." Today's first read: pooled corrected Reliability 0.01438 vs raw 0.01570 → **CALIBRATED, +8.4% better** (Δ Brier −0.00704). BSS +0.126 vs climatology. **New diagnostic finding:** systematic under-forecasting at moderate probabilities — when corrected says 30-40%, obs freq is 66% (gap −0.31); when corrected says 40-50%, obs freq is 66% (gap −0.22). Calibrator is well-calibrated at extremes but too conservative in the middle. Not immediately actionable — logged as a Stage 0 signal for a possible narrower calibration lookup in future.
+
+</details>
+
+<details>
 <summary><strong>v0.6.334 • July 13, 2026</strong></summary>
 
 - **Per-field τ bump for pa: 28 → 42.** `decay_tau_tuning.py` today's read: pa gains +5.5% MAE vs τ=14 at best-τ=42, confirmed by 3-consecutive-daily-read streak (the anti-noise gate that killed the July 1 ws τ=7 ship). Updated `TAU_DAYS_BY_FIELD["pa"]` in `weather_collector/processors/decay_fit.py`. Fitter runs once a day, so the change takes effect at the next `decay_fit` pass. Sits alongside the already-tuned `pp: 28` (from 06-21).
