@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.344 • July 13, 2026</strong></summary>
+
+- **wg residual-persistence Stage 1 first read — MARGINAL.** Ran `analysis/h_wg_residual_persistence_stage1.py` end-of-session (202,321 rows, 152,517 train / 49,804 test). Bigger window wins on aggregate: **window=14d, MAE +17.04%**, RMSE +14.92% held-out (vs the naive 2-day rolling mean's +6.13%). L2-alone and Production give identical numbers — confirms no L3 interference (wg not in `L3_FIELDS`). **Two red flags block promotion:** (1) per-regime cross-cut — 5 regimes WIN (se_flow +28.38%, sw_flow +22.71%, pre_frontal +18.89%, nw_flow +18.06%, ne_flow +7.95%) but **`calm` LOSES −71.29%** (n=1,221) and `unknown` −2.24%; regime gate mandatory. (2) Halves check FAILS — first half (6/13→6/24) +18.44%, second half (6/24→7/05) +0.49%; effect real but window-to-window unstable. Verdict per script: MARGINAL, re-run in 3 days. Path forward stays Stage 2 (exp-decay τ + regime gate skip calm/unknown) + Stage 3 wire-up, held pending 07-16 halves-stable read. Debug page updated: Recent activity extended through v0.6.344, new wg residual-persistence watch row (day 1/7), wg state-table status column reflects both open threads, new Upcoming decisions entry Thu 07-16. Memory [[wg-residual-persistence]] refreshed with grid + regime + halves numbers.
+
+</details>
+
+<details>
 <summary><strong>v0.6.343 • July 13, 2026</strong></summary>
 
 - **wg residual-persistence Stage 1 preview script queued.** Follow-on to v0.6.342 Stage 0 hit (wg MAE −6.13% held-out). New `analysis/h_wg_residual_persistence_stage1.py` runs a grid search over window ∈ {1, 2, 3, 5, 7, 14} days × baseline ∈ {L2-alone, Production (post-L3)}, then a per-regime cross-cut of the best combo (state_fc.regime_synoptic), then halves-check within training. Verdict rule: STAGE 1 PROMOTE if best combo hits ≥1% MAE on held-out AND wins > loses on regime cut AND both training halves show ≥0.5% improvement. Auto-picks-up in tomorrow's digest — first real read 07-14 AM. Written but not run this session (Bash classifier was blocked during finalization; script is syntax-verified). Also written to memory: [[wg-residual-persistence]] captures the finding + Stage 1/2/3 path.
