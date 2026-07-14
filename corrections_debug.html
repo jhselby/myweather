@@ -1624,9 +1624,12 @@
   <div class="meta-line" style="margin-top:6px;"><em>Open watch:</em> today's <code>simulate_windows</code> says Lsr should RETIRE (HOLD verdict across 7 cutoffs, magnitudes −0.5% to +4.5%). The divergence report says AGREE (script verdict matches production True). Two different rollups disagreeing — investigation queued; no action since Lsr shipped only 2 days ago and reverting on this conflict would be premature.</div>
 </details>
 
-<!-- Lt (microclimate correction) moved to Archive 2026-07-02 (v0.6.278):
-     full disable of both branches. See #sec-rd-lt for the dormant
-     entry + Fix B path back. Cove gradient logging continues to run. -->
+<!-- Lt (microclimate correction) originally moved to Archive 2026-07-02
+     (v0.6.278) after full disable of both branches. Retired 2026-07-13
+     v0.6.329 after Fix B refit failed the +1% ship gate (+0.29% held-out).
+     See #sec-rd-lt for the retired-layer entry. Cove gradient logging
+     continues to run (14d rolling, cheap diagnostic). -->
+
 
 <!-- ───────────────────── Research ───────────────────── -->
 <h2 class="section research-heading" id="sec-research">Research & Diagnostics — experimental signals + audit views (not applied to live forecast)</h2>
@@ -1918,7 +1921,7 @@
     </ul>
     <div style="margin-top:6px;">The L2-overlap hypothesis was empirically confirmed. L2's <code>1/distance² × elevation</code> station weighting for the cove is dominated by the two waterfront Tempests (Willow Rd, Neptune Rd at ~0.1–0.2 mi). L2's "cove bias" is effectively "waterfront bias" by construction. Layering R5's (waterfront − inland) delta on top double-counts the same signal — the cove obs is already waterfront-influenced via L2, so adding more waterfront delta pushes the forecast AWAY from the obs.</div>
     <div style="margin-top:6px;"><strong>Decision (global R5, retired 2026-06-17):</strong> <code>r5_audit.py</code>'s held-out test of R5 applied across the full pipeline showed it makes cove temp 20–22% worse — L2's waterfront-weighted station blend already captures the signal, so layering R5 on top double-counts. That global formulation stays retired.</div>
-    <div style="margin-top:6px;"><strong>Current status (Lt — microclimate correction, dormant 2026-07-01 v0.6.276):</strong> Both branches now return 0.0. Cooling branch killed 2026-06-30 v0.6.259 (paired-MAE showed it materially increased cove temp MAE); warming branch killed 2026-07-01 v0.6.276 after real per-row Production exposed the same double-counting for the sea-breeze direction. Lookup tables + <code>cove_gradient_log.json</code> continue to log for eventual Fix B. Full rationale in <a href="#sec-rd-lt">R&amp;D → Lt</a>.</div>
+    <div style="margin-top:6px;"><strong>Current status (Lt — microclimate correction, RETIRED 2026-07-13 v0.6.329):</strong> Both branches return 0.0. Cooling branch killed 2026-06-30 v0.6.259 (paired-MAE showed it materially increased cove temp MAE); warming branch killed 2026-07-01 v0.6.276 after real per-row Production exposed the same double-counting for the sea-breeze direction; Fix B refit tried 2026-07-13 (<code>analysis/l6_fix_b_refit.py</code>) and failed at held-out +0.29% vs +1.0% ship gate. Lookup tables + <code>cove_gradient_log.json</code> continue to log per-tick against a possible future reactivation (seasonal shift, sensor swap, or materially different mechanism). Full rationale in <a href="#sec-rd-lt">R&amp;D → Lt</a>.</div>
     <div style="margin-top:6px;">One niche subtlety in the breakdown: long-lead (24-47h) sea-breeze forecasts get +7.85% MAE improvement with R5. At long leads, L2's τ=4h decay has long since faded, so R5 has something L2 doesn't. Not worth shipping a conditional correction for, but documented.</div>
   </div>
   <div id="status-cove-gradient" class="status" hidden></div>
@@ -3261,11 +3264,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
     if (layerKey === "l4") return l4Fields.has(fieldKey);
     // Lsr (synoptic-regime solar) is solar-radiation-only.
     if (layerKey === "l5") return fieldKey === "sr";
-    // Lt (cove regime correction) — dormant since 2026-07-01 v0.6.276;
-    // ENABLED flipped to False 07-03 v0.6.286. Treat as not-applied so
-    // Production line for T reads off L4 (the actual deepest live layer),
-    // not Lt (which would silently equal L4 since compute_cove_correction
-    // returns 0.0 unconditionally).
+    // Lt (cove regime correction) — RETIRED 2026-07-13 v0.6.329 after Fix B
+    // refit failed +1% ship gate (+0.29% held-out). ENABLED flipped False
+    // 07-03 v0.6.286; both branches killed 07-01 v0.6.276 before that.
+    // Treat as not-applied so Production line for T reads off L4 (the
+    // actual deepest live layer), not Lt (which would silently equal L4
+    // since compute_cove_correction returns 0.0 unconditionally).
     if (layerKey === "l6") return false;
     return false;
   };
@@ -3976,9 +3980,10 @@ function _fmtEnabledBadge(applied) {
     : `<span style="color:#8a93a3;font-weight:700;">gated off</span>`;
 }
 
-// Lt live state — renders inside the R&D → Lt subsection. Lt is dormant,
-// so this is a historic-Δ display (both branches return 0.0). Lives here
-// (not G1) because Lt is not a candidate — it's a disabled shipped layer.
+// Lt live state — renders inside the R&D → Lt subsection. Lt is RETIRED
+// (07-13 v0.6.329 after Fix B refit failed +1% ship gate), so this is a
+// historic-Δ display (both branches return 0.0). Lives here (not G1)
+// because Lt is not a candidate — it's a retired shipped layer.
 function renderLtLiveState(wxDoc) {
   const el = document.getElementById("lt-live-state");
   if (!el) return;
@@ -3995,11 +4000,11 @@ function renderLtLiveState(wxDoc) {
     ? `Wind: ${r.wind_octant ?? '?'} (${r.wind_dir ?? '?'}°) · Sea breeze: active · Hour: ${r.hour_local ?? '?'}:00 EDT`
     : `Sea breeze: inactive · Hour: ${r.hour_local ?? '?'}:00 EDT <span style="opacity:0.6;">(wind not used at inactive)</span>`;
   el.innerHTML = `<div style="border:1px solid #3a3f48;border-radius:6px;padding:14px;background:#1a1f28;">
-    <div style="margin-bottom:8px;"><strong>Live state this tick</strong> · <span style="opacity:0.85;font-size:0.85em;color:#a08070;">DORMANT since 2026-07-01 v0.6.276</span> <span style="opacity:0.7;font-size:0.85em;">(both branches disabled)</span></div>
+    <div style="margin-bottom:8px;"><strong>Live state this tick</strong> · <span style="opacity:0.85;font-size:0.85em;color:#a08070;">RETIRED 2026-07-13 v0.6.329</span> <span style="opacity:0.7;font-size:0.85em;">(Fix B refit failed +1% ship gate; both branches disabled)</span></div>
     <div style="font-size:1.8rem;font-weight:600;color:${dColor};margin-bottom:8px;">${sign}${d?.toFixed(2)}°F</div>
     <div class="meta-line" style="font-size:0.88em;">${inputs}</div>
     <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">
-      Historic Δ°F display. <code>compute_cove_correction()</code> returns 0.0 always. The cove-gradient log continues to update per tick as the input for eventual Fix B (refit against L2 baseline).
+      Historic Δ°F display of what Lt WOULD have added under its old lookup tables. <code>compute_cove_correction()</code> returns 0.0 always. The cove-gradient log continues to update per tick (14d rolling on GCS) as diagnostic surface in case a future reactivation attempt is warranted.
     </div>
   </div>`;
 }
@@ -4039,7 +4044,8 @@ function renderLsrLiveState(wxDoc) {
 
 // G1 = candidates only. Today that's Lc (cloud saturation, ENABLED=False
 // on 7-day live-layer change gate). Lt and Lsr render in their own
-// sections — they're not candidates: Lt is dormant, Lsr is shipped.
+// sections — they're not candidates: Lt is retired (07-13 v0.6.329,
+// Fix B refit failed), Lsr is shipped.
 function renderGatedCandidatesSection(wxDoc) {
   const el = document.getElementById("gated-candidates-content");
   if (!el) return;
@@ -4456,9 +4462,12 @@ function renderStateStratifiedSection(ssDoc) {
   // the table and skip them when picking the #1 opportunity to chart.
   const ADDRESSED = {
     sr: "Lsr — synoptic-regime correction (shipped 2026-06-28 v0.6.248; skip regimes ne_flow + calm since v0.6.280)",
-    // t was previously tagged (Lt warming branch active). Lt is now dormant
-    // (v0.6.276, both branches disabled); T is NOT an addressed opportunity
-    // anymore — put it back on the "actionable" list until Fix B ships.
+    // t was previously tagged (Lt warming branch active). Lt is RETIRED
+    // 07-13 v0.6.329 after Fix B refit failed +1% ship gate. T stays on
+    // the "actionable" list but per 07-14 v0.6.351d t L2 skip-table Stage 1
+    // preview (0 SKIP / 6 MARGIN / 30 KEEP), T is confirmed at ceiling —
+    // no per-cell L2 extraction is available. Any future T improvement
+    // requires a materially different signal source.
   };
 
   // Top-10 actionable — filter out addressed rows FIRST, then slice. Original

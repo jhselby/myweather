@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.351e • July 14, 2026</strong></summary>
+
+- **Rule 5 sweep — Lt stale-reference cleanup found by grep.** Immediately after codifying the new "transition-invalidation sweep" rule (Rule 5 in `feedback_debug_page_canon.md` memory), ran the rule on the debug page and it caught six more stale Lt references I missed in earlier sweeps: (1) R&D cove-gradient section prose still called Lt "dormant 2026-07-01 v0.6.276" and mentioned "eventual Fix B"; (2) HTML comment above the R&D block still said "Fix B path back"; (3) live-widget label showed "DORMANT since 2026-07-01 v0.6.276" and prose about "eventual Fix B"; (4) `_layerApplied()` JS comment described Lt as "dormant since"; (5) `renderLtLiveState()` docstring said "Lt is dormant"; (6) `ADDRESSED` table comment for `t` said "until Fix B ships." All six updated to reflect Lt retired 07-13 v0.6.329 after Fix B refit failed +1% ship gate. Also updated the `t` addressed-table comment with the 07-14 v0.6.351d ceiling verdict — future readers see the current state, not a promise from a plan that already ran and failed. Direct validation that Rule 5's grep-then-fix-every-hit discipline was needed.
+
+</details>
+
+<details>
 <summary><strong>v0.6.351d • July 14, 2026</strong></summary>
 
 - **t L2 skip-table Stage 1 preview — clean null.** New `analysis/h_t_l2_regression_stage1.py`. Prompted by the "Winning fields" panel showing t as ✗ (Production doesn't beat raw). Halves-verified per (regime × lead_band): **0 SKIP / 6 MARGIN / 30 KEEP / 1 THIN**. L2 clearly HELPS at short leads (0-5h: sw_flow −30%, calm −24%, nw_flow −21%, pre_frontal −18%, se_flow −16%, sea_breeze −10%). L2 is FLAT at 6-11h + 12-23h + 24-47h across every regime (most cells within ±2%). 6 MARGIN cells all under the +3% floor. The pooled "Production ≈ raw" state comes from L2 saving 20-30% at short leads being canceled by many long-lead cells each adding tiny +1-2% noise; volume-weighted they roughly cancel, but no single cell has extractable damage. **Verdict: t is at ceiling** under the (regime × lead_band) slicing. Raw HRRR is genuinely good at temperature at this coordinate; L2 provides big short-lead wins that dilute across the full pool. This is a confirmed-at-ceiling result, not a "we could try harder" — Stage 1 answered the question.
