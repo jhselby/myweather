@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.351c • July 14, 2026</strong></summary>
+
+- **ws L3 skip-table Stage 1 preview + debug page category-tag redesign.** New `analysis/h_ws_l3_regression_stage1.py` (mirror of today's wg L3 Stage 1). Halves-verified per (regime × lead_band): **10 SKIP cells** — calm all 4 bands (+25/60/76/73%), nw_flow 24-47 (+29% both halves positive — validates the "just skip nw_flow" intuition per-cell), sea_breeze 6-11 (already skipped v0.6.279) + 24-47 (new), unknown 6-11 + 12-23 + 24-47. 20 KEEP, 4 MARGIN, 1 THIN, 2 PERSISTENCE_TERRITORY. Key architectural learning: nw_flow doesn't lose broadly — just at 24-47h; other nw_flow bands KEEP. A whole-regime `("nw_flow", 0, 48)` skip would have been too coarse and killed L3 on 3 regime-bands where it helps. Proposed merged skip table: `SKIP_TABLE[("ws","l3")] = [("ne_flow",0,48), ("sea_breeze",0,12), ("calm",1,48), ("nw_flow",24,48), ("sea_breeze",24,48), ("unknown",6,48)]`. After all skips, L3 still fires on ~77% of ws rows. Not wired; 7-day streak + halves stability. Earliest ship 07-21 — would dissolve the walkforward "drop ws" flat-drop verdict by removing pooled damage without sacrificing L3 wins in frontal/pre_frontal/se_flow/sw_flow at short leads.
+- **Debug page — Recent activity category tags.** Replaced leading ✓/★ symbols with category prefix tags (DISCOVERY / INFRASTRUCTURE / DASHBOARD / PIPELINE) in the rolling 3-day Recent activity block. Muted small-caps colored tags for scan-ability without visual noise. DISCOVERY = Stage 0/1 findings, landmark investigations. INFRASTRUCTURE = tooling, gates, scripts wired to digest, script bugfixes. DASHBOARD = debug page / briefing / PWA UI changes. PIPELINE = Stage 3 wires, ENABLED flips, live-layer changes to the forecast. Bundled-scope entries (v0.6.351b was Discovery + Infrastructure) use primary category with secondary noted in prose.
+
+</details>
+
+<details>
 <summary><strong>v0.6.351b • July 14, 2026</strong></summary>
 
 - **Lt stale-gate cleanup + wg L3 skip-table Stage 1 preview.** Two housekeeping items.
