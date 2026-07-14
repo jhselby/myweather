@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.351b • July 14, 2026</strong></summary>
+
+- **Lt stale-gate cleanup + wg L3 skip-table Stage 1 preview.** Two housekeeping items.
+  - **Divergence report — LT_ENABLED row.** Was reading verdict from `r5_cove_analysis` (older tool, still says SHIP against L1 which is not the operative baseline), producing `LT_ENABLED=False / script wants True / GATE CLEARED (2/2)` every daily digest — a recurring false-positive since Lt was retired 07-13 via Fix B. Switched the row to read from `l6_fix_b_refit` (the authoritative retirement decision, HOLD +0.29% below +1% gate). Row now shows AGREE. Digest summary went from "1 gate-cleared" to "0 gate-cleared."
+  - **wg L3 skip-table Stage 1 preview** — new `analysis/h_wg_l3_regression_stage1.py`. Follow-on to Stage 0 (v0.6.339, 07-13) which flagged 10-11 wg L3 regression cells. Halves-verified verdict per (regime × lead_band) on the same 30d window/halves as ch persistence gate Stage 2. Result: **6 SKIP cells** (calm all 4 bands +25/60/76/73%; sea_breeze 0-5 +4.6%; unknown 24-47 +35%), 20 KEEP, 2 MARGIN, 1 THIN, and **8 PERSISTENCE_TERRITORY** cells that belong to today's wg residual persistence gate discussion instead (5 of the 6 wg persistence gate SHIP cells match here — correct disaggregation between two independent interventions). Proposed skip-table extension: `SKIP_TABLE[("wg", "l3")] = [("calm", 1, 48), ("sea_breeze", 1, 6), ("unknown", 24, 48)]`. Not wired — needs 7-day streak per whitelist-promotion-gate + weekly halves stability. Script auto-runs in nightly digest.
+
+</details>
+
+<details>
 <summary><strong>v0.6.351a • July 14, 2026</strong></summary>
 
 - **ch persistence LANDMARK answered — keep the shipped gate.** Today's `h_ch_persistence_blend.py` flagged "persistence-only ALSO beats baseline on halves — consider pulling ch from L3+L4 entirely." Investigated the head-to-head: regime_gate 19.092 pooled MAE vs persist_only 19.119 (0.14% relative, tied in noise). Half A persist wins by 0.05 MAE; half B gate wins by 0.13 MAE. Gate's per-cell halves-stability enforcement is doing real work — `pre_frontal/24-47` (n=11,611) is +5.07% loss for persist_only that the gate hedges by falling back to L4; halves-unstable cells (ne_flow/24-47, nw_flow/6-11+24-47, sw_flow/6-11+12-23+24-47) get the same L4 hedge under the gate. Landmark's "consider" clause was ambiguous — it meant persist_only ALSO clears halves-vs-baseline, not that it beats the shipped gate. Do NOT rip out ch from L3+L4; shipped-dormant gate is the right architecture and 07-19 flip proceeds as planned. Bonus finding: today's Stage 2 re-fit shows SHIP set flexed 22→24 SHIP (one previously-SKIP cell now SHIPs) — safer direction but the 07-19 stability check will register a formal change; flip decision includes whether to flex the gate to include the new SHIP cell if its halves are stable on 07-19 re-fit.

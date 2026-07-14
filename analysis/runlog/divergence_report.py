@@ -270,15 +270,23 @@ def main():
         status = "AGREE" if p == wants_bool else "DISAGREE"
         rows.append(("LSR_ENABLED", p, wants_bool, status, ""))
 
-    # Cove
-    v = state.get("r5_cove_analysis", {}).get("verdict")
+    # Cove (Lt). RETIRED 2026-07-13 via l6_fix_b_refit.py (Fix B held-out
+    # +0.29%, below +1.0% ship gate — L2's Kalman blend absorbs the
+    # microclimate signal, static cove table is double-count). Row now reads
+    # from l6_fix_b_refit (the authoritative retirement decision) instead of
+    # r5_cove_analysis (older tool, still says SHIP against L1 which is not
+    # the operative baseline). If l6_fix_b_refit ever flips back to SHIP,
+    # revisit the retirement; until then this row will always AGREE with
+    # LT_ENABLED=False.
+    v = state.get("l6_fix_b_refit", {}).get("verdict")
     wants_bool = claim_bool_ship(v)
     p = prod.get("LT_ENABLED")
     if wants_bool is None:
         rows.append(("LT_ENABLED", p, None, "UNKNOWN", "verdict didn't classify"))
     else:
         status = "AGREE" if p == wants_bool else "DISAGREE"
-        rows.append(("LT_ENABLED", p, wants_bool, status, ""))
+        note = "Lt retired 07-13; l6_fix_b_refit is the authoritative source"
+        rows.append(("LT_ENABLED", p, wants_bool, status, note))
 
     # Lc — cloud saturation-unbiasing. lc_fit.py emits "Verdict: FIT — N SHIP
     # cell(s) ready to wire into Lc." when the pair-log has SHIP cells,
