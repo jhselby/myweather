@@ -543,6 +543,18 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  cl persistence short-lead stamp failed: {redact_secrets(e)}")
 
+    # wg residual persistence gate — regime × lead_band L2-residual add-on
+    # for wind_gusts. Reads hourly.wind_gusts_post_l2 stashed by decay_apply
+    # and adds the fitted per-clock-hour L2 residual mean on top, replacing
+    # the L3-corrected wg value in SHIP cells (6 long-lead flow-regime cells
+    # per Stage 2 preview). ENABLED gated; module still stamps telemetry when
+    # False for the 7-day live-layer change gate.
+    try:
+        from .processors.wg_residual_persistence import stamp_wg_residual_persistence
+        stamp_wg_residual_persistence(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  wg residual persistence stamp failed: {redact_secrets(e)}")
+
     # Applicability map — each correction module exposes describe_applicability()
     # returning a list of layer descriptors (schema in weather_collector/data/
     # applicability_map_schema.json). Collected here once per tick, after every
@@ -556,8 +568,9 @@ def main():
         from .processors.confidence_layer import describe_applicability as _da_c1
         from .processors.ch_persistence_gate import describe_applicability as _da_chpg
         from .processors.cl_persistence_short_lead import describe_applicability as _da_clpsl
+        from .processors.wg_residual_persistence import describe_applicability as _da_wgrp
         layers = []
-        for fn in (_da_decay, _da_solar, _da_cove, _da_lc, _da_chpg, _da_clpsl, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_cove, _da_lc, _da_chpg, _da_clpsl, _da_wgrp, _da_c1):
             try:
                 layers.extend(fn())
             except Exception as e:

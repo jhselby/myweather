@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.351 • July 14, 2026</strong></summary>
+
+- **wg residual persistence Stage 3 wired ENABLED=False.** Stage 1 (07-13, window=14d) held +16.54% pooled MAE improvement on held-out with 6/7 regimes WIN + both halves positive; refit today at wider audit granularity as Stage 2 preview (`analysis/h_wg_residual_persistence_stage2.py`). Per-cell (regime × lead_band) verdict: 6 SHIP / 0 MARGIN / 30 SKIP / 1 THIN (37 judged). All 6 SHIP cells are long-lead (12-23h and 24-47h) in flow regimes — `frontal 24-47` (−49.01%), `pre_frontal 24-47` (−29.12%), `se_flow 12-23` (−18.92%), `se_flow 24-47` (−32.22%), `sw_flow 12-23` (−23.29%), `sw_flow 24-47` (−25.29%). Every short-lead (0-5h, 6-11h) cell SKIPs in every regime — L2's Kalman blend already tracks recent obs, so a 14-day residual mean re-adds stale bias at close-in leads. Stage 1's pooled win was carried by the massive n at long leads (sw_flow 24-47 alone: 23,812 rows). Second consecutive gate this month where the regime-gate-first frame ([[feedback_regime_gate_first]]) converts a mixed-pooled finding into a clean per-cell ship map; ch persistence 07-12 was the first. Stage 2 script emits a 24-slot per-clock-hour L2-residual correction (mean over last 14d from most recent pair-log date) into `wg_residual_persistence_curated.json` alongside the cell verdicts; processor reads both. New processor `wg_residual_persistence.py` mirrors the ch persistence gate shape: reads `hourly.wind_gusts_post_l2` + curated JSON, replaces `hourly.wind_gusts` in SHIP cells with `fc_l2 + hour_of_day_correction`, preserves pre-gate array as `hourly.wind_gusts_post_l3_pre_wgrp` for attribution, stamps telemetry + gate_firing_log. Placed AFTER decay_apply so it overrides L3's wg output. `ENABLED=False`; earliest flip after 7 daily reads with SHIP-set stability (2026-07-21).
+
+</details>
+
+<details>
 <summary><strong>v0.6.350a • July 13, 2026</strong></summary>
 
 - **v0.6.350 fix: fill in Production column for RMSE + bias rows.** The redesign shipped with "—" placeholder in the Production column for the RMSE and bias sub-rows, on the theory that hybrid-Production was MAE-only. Wrong — `per_layer_rmse_by_lead` and `per_layer_bias_by_lead` both publish a populated `production` key (48 values per field, done by `decay_fit.py` alongside the per-layer arrays). Read directly from `data.production` for the RMSE + bias Production cells so the column fills correctly. Also dropped the now-incorrect "no Production column" caveat from the intro prose.
