@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.352a • July 15, 2026</strong></summary>
+
+- **Lt conflict — divergence-report rationale updated + retirement holds.** `l6_fix_b_refit.py` flipped HOLD → SHIP (held-out +0.29% → +1.34%) after a 2-day window roll on essentially identical training data (154,498/47,823 → 154,698/47,716). Panel B refit table is unchanged from the 07-13 retirement read — same 7 SHIP bins overnight, same means. Mechanism argument for retirement (L2's Kalman blend absorbs the signal per-tick, static delta double-counts) unchanged, so **retirement holds** pending 2-window stability on 07-16 + 07-17. Fixed the internally-contradictory comment + note in `analysis/runlog/divergence_report.py` around the LT_ENABLED row: was still saying "will always AGREE with LT_ENABLED=False" while the row was rendering GATE CLEARED (3/2) READY. New text acknowledges the SHIP verdict and states the watch. `_claim:LT_ENABLED=true` has actually been firing continuously since 07-13 T11:53 — retirement was correctly made on mechanism, not on the immediate script number. Bundled with today's routine curated-table refreshes from the analysis pipeline (c1/c1d/c1h/ch/lc/pre-frontal/t/wg/ws/wg-residual + gate-history caches).
+
+</details>
+
+<details>
 <summary><strong>v0.6.352 • July 15, 2026</strong></summary>
 
 - **Alerts card: consolidate same-event alerts + agency-name acronyms.** Wyman Cove was showing three near-identical "Air Quality Alert" cards this morning — same title, description truncated before the disambiguator, looked like a rendering bug but was three genuine NWS-relayed MA DEP alerts (two Fine Particulates with different expiries, one Ground Level Ozone). Fix in `buildWatchRows()` (js/briefing.js): group `s.alerts` by `event`; single-alert case unchanged; multi-alert same-event case renders one row with each alert's first sentence on its own line (`<br>`-joined). Also added an `agencyAcronyms` map applied to detail text — "Massachusetts Department of Environmental Protection" → "MA DEP", plus MEMA, MA DPH, NHC, SPC, WPC, NWS, USCG, USGS, EPA, FEMA, and NH DES / RI DEM / ME DEP for neighboring states whose plumes could reach us. Ordered longest-first so longer names beat any shorter substring. Adding future issuers is a one-line insert. No dedupe — every alert still appears; only visual layout consolidates.

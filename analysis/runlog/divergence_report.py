@@ -270,14 +270,15 @@ def main():
         status = "AGREE" if p == wants_bool else "DISAGREE"
         rows.append(("LSR_ENABLED", p, wants_bool, status, ""))
 
-    # Cove (Lt). RETIRED 2026-07-13 via l6_fix_b_refit.py (Fix B held-out
-    # +0.29%, below +1.0% ship gate — L2's Kalman blend absorbs the
-    # microclimate signal, static cove table is double-count). Row now reads
-    # from l6_fix_b_refit (the authoritative retirement decision) instead of
-    # r5_cove_analysis (older tool, still says SHIP against L1 which is not
-    # the operative baseline). If l6_fix_b_refit ever flips back to SHIP,
-    # revisit the retirement; until then this row will always AGREE with
-    # LT_ENABLED=False.
+    # Cove (Lt). RETIRED 2026-07-13 on mechanism grounds — Fix B refit
+    # against L2 baseline improved held-out MAE by only +0.29% (below +1.0%
+    # ship gate); L2's Kalman blend absorbs the microclimate signal per-tick
+    # so a static cove table double-counts. Reads from l6_fix_b_refit (not
+    # r5_cove_analysis, which is L1-baseline and not the operative gate).
+    # As of 07-15 the script flipped SHIP (+1.34% held-out) after a 2-day
+    # window roll. Retirement stands until we see 2-window stability at
+    # ≥+1.0% — one flip after a window roll is exactly the noise-floor
+    # pattern the anti-overfit gates exist to reject.
     v = state.get("l6_fix_b_refit", {}).get("verdict")
     wants_bool = claim_bool_ship(v)
     p = prod.get("LT_ENABLED")
@@ -285,7 +286,7 @@ def main():
         rows.append(("LT_ENABLED", p, None, "UNKNOWN", "verdict didn't classify"))
     else:
         status = "AGREE" if p == wants_bool else "DISAGREE"
-        note = "Lt retired 07-13; l6_fix_b_refit is the authoritative source"
+        note = "Lt retired 07-13 (mechanism); 07-15 script flip to SHIP awaiting 2-window stability"
         rows.append(("LT_ENABLED", p, wants_bool, status, note))
 
     # Lc — cloud saturation-unbiasing. lc_fit.py emits "Verdict: FIT — N SHIP
