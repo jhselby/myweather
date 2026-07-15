@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.352 • July 15, 2026</strong></summary>
+
+- **Alerts card: consolidate same-event alerts + agency-name acronyms.** Wyman Cove was showing three near-identical "Air Quality Alert" cards this morning — same title, description truncated before the disambiguator, looked like a rendering bug but was three genuine NWS-relayed MA DEP alerts (two Fine Particulates with different expiries, one Ground Level Ozone). Fix in `buildWatchRows()` (js/briefing.js): group `s.alerts` by `event`; single-alert case unchanged; multi-alert same-event case renders one row with each alert's first sentence on its own line (`<br>`-joined). Also added an `agencyAcronyms` map applied to detail text — "Massachusetts Department of Environmental Protection" → "MA DEP", plus MEMA, MA DPH, NHC, SPC, WPC, NWS, USCG, USGS, EPA, FEMA, and NH DES / RI DEM / ME DEP for neighboring states whose plumes could reach us. Ordered longest-first so longer names beat any shorter substring. Adding future issuers is a one-line insert. No dedupe — every alert still appears; only visual layout consolidates.
+
+</details>
+
+<details>
 <summary><strong>v0.6.351f • July 14, 2026</strong></summary>
 
 - **Rule 5 broader sweep — 4 more stale reference-section refs across today's transitions.** After v0.6.351e caught Lt-specific staleness, ran Rule 5 grep across ALL of today's transitions (ch landmark, ws L3 Stage 1, wg L3 Stage 1, t L2 Stage 1) and found four more stale references in persistent reference sections: (1) Production stack card L3 bullet had "ws strip candidacy: day 4/7 (07-13)" — updated to day 5/7 (07-14) with pointer to today's Stage 1 halves-verified answer; (2) Persistence-skill framework bullet had "ch persistence gate ... day 2/7" and "ch Prod −1.08 vs L4-alone −0.29" — updated to day 3/7 (07-14), landmark-answered note, current Prod −1.10 / L4 −0.30; (3) Specialists card Lc bullet had "day 4/7 (07-13)" — updated to day 5/7 (07-14); (4) C1h/C1d confidence layer prose had "Earliest ship 07-16" — updated to reflect today's SHIP-set reset pushing earliest to 07-21. Recent activity chronological entries kept as-was (historical narrative is correct even when superseded).

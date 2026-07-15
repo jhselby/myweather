@@ -822,12 +822,49 @@
     const der = s._data.derived || {};
     const sb = s._data.sea_breeze || {};
 
-    // 1. NWS alerts (highest urgency)
+    // 1. NWS alerts (highest urgency) — consolidate same-event alerts into one row.
+    // Agency-name → acronym map. Ordered longest-first so longer names match before
+    // any shorter substring (e.g. "Massachusetts Department of Environmental Protection"
+    // must beat "Environmental Protection Agency"). Add/prune entries as new issuers show up.
+    const agencyAcronyms = [
+      ["Massachusetts Department of Environmental Protection", "MA DEP"],
+      ["New Hampshire Department of Environmental Services",   "NH DES"],
+      ["Rhode Island Department of Environmental Management",  "RI DEM"],
+      ["Maine Department of Environmental Protection",         "ME DEP"],
+      ["Massachusetts Emergency Management Agency",            "MEMA"],
+      ["Massachusetts Department of Public Health",            "MA DPH"],
+      ["Federal Emergency Management Agency",                  "FEMA"],
+      ["Environmental Protection Agency",                      "EPA"],
+      ["National Hurricane Center",                            "NHC"],
+      ["Storm Prediction Center",                              "SPC"],
+      ["Weather Prediction Center",                            "WPC"],
+      ["National Weather Service",                             "NWS"],
+      ["U.S. Geological Survey",                               "USGS"],
+      ["U.S. Coast Guard",                                     "USCG"],
+    ];
+    const shortenAgencies = (txt) => {
+      let out = txt || "";
+      for (const [full, abbr] of agencyAcronyms) out = out.split(full).join(abbr);
+      return out;
+    };
+
+    const alertsByEvent = new Map();
     for (const a of s.alerts) {
+      const key = a.event || "Alert";
+      if (!alertsByEvent.has(key)) alertsByEvent.set(key, []);
+      alertsByEvent.get(key).push(a);
+    }
+    for (const [event, group] of alertsByEvent) {
+      let detail;
+      if (group.length === 1) {
+        detail = shortenAgencies((group[0].description || "").slice(0, 120));
+      } else {
+        detail = group.map(a => shortenAgencies((a.description || "").split(".")[0].trim())).filter(Boolean).join("<br>");
+      }
       rows.push({
         label: "Alert",
-        value: a.event,
-        detail: a.description ? a.description.slice(0, 120) : "",
+        value: event,
+        detail,
         color: "red",
         isAlert: true,
       });
