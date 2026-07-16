@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353c • July 16, 2026</strong></summary>
+
+- **sr sea_breeze Lsr refit Stage 1 — PROMOTE.** New `analysis/sr_sea_breeze_lsr_refit_stage1.py`. Follow-on to 07-11 confound diagnostic that found sea_breeze has +83.6 W/m² matched-cc bin bias in total_shortwave (Cause B evidence). Method: for sea_breeze sr rows, split 60/40 by obs date, fit per-local-hour signed bias of `(forecast_shortwave − observed)` on train, test intervention vs baseline (current Prod post-Lsr on direct_radiation). First read: n=3,548 total, held-out **baseline MAE 137.93 → intervention MAE 77.64 (+43.71%)**. Halves check A→B +26.55% / B→A +38.58% — both confirm. Ship gate: PROMOTE. Fit shows overall bias +67.60 matches confound direction — real overshoot. Caveats logged: small sample (3 test days), high underlying variance between halves (baseline MAE 298 vs 131 — one hotter half), only 7 hours populated in bias table. **Next:** Stage 2 = full per (regime × hour) cross-cut across all regimes + multi-week stability check. If Stage 2 holds, Stage 3 wires a shortwave-source fallback for winning regimes. Auto-picked up by daily digest via `analysis/*.py` glob. Memory `project_sr_unit_mismatch.md` updated with Stage 1 outcome.
+
+</details>
+
+<details>
 <summary><strong>v0.6.353b • July 16, 2026</strong></summary>
 
 - **Rule 5 automation — `scripts/check_stale_refs.py` + `make check-stale`.** Converts today's failure mode (v0.6.352c missed 10+ stale refs, needed v0.6.352d re-sweep) into a mechanical check. Grep-scans `corrections_debug.html` for predictive-tense date refs: day counters `(MM-DD)`, `as of MM-DD`, `HOLD until MM-DD`, `earliest ship/flip MM-DD`. Exits 1 on any hit older than 2 days. Historical mentions (`shipped 07-12`, session narratives, changelog dates) deliberately left alone — only rots-with-time refs are flagged. `feedback_debug_page_canon.md` memory extended with automation note. Verified: passes today, catches 17 refs when simulated at 2026-07-20. Runs manually today; wiring into pre-commit / build.py deferred pending Joe's call.
