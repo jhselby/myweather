@@ -6059,6 +6059,29 @@ load();
     };
   }
 
+  // 7-day trailing rolling mean. Skips nulls, returns null for positions
+  // with fewer than MIN_ROLLING_POINTS non-null values in the trailing window.
+  // Purpose: complement the ship-date annotations — daily line shows day-
+  // to-day variability + discrete ship jumps; rolling mean shows whether a
+  // jump is sustained (mean bends within a week) or reverts (mean flat).
+  const ROLLING_WINDOW_DAYS = 7;
+  const MIN_ROLLING_POINTS = 4;
+  function rollingMean(values) {
+    const out = new Array(values.length).fill(null);
+    for (let i = 0; i < values.length; i++) {
+      const start = Math.max(0, i - ROLLING_WINDOW_DAYS + 1);
+      let sum = 0, n = 0;
+      for (let j = start; j <= i; j++) {
+        if (values[j] !== null && values[j] !== undefined && !isNaN(values[j])) {
+          sum += values[j];
+          n += 1;
+        }
+      }
+      if (n >= MIN_ROLLING_POINTS) out[i] = sum / n;
+    }
+    return out;
+  }
+
   function render() {
     if (!payload) return;
     const field = fieldSel.value;
@@ -6076,6 +6099,36 @@ load();
       tension: 0.2,
       spanGaps: true,
     }));
+
+    // Rolling-mean overlays for Raw and Prod only (the "before vs after"
+    // pair). Skipping L2/L3 rolling means keeps the chart from becoming
+    // 8-line noise; the pair the reader watches for drift is Raw ↔ Prod.
+    // Softened alpha (~0.35) so the daily line stays visually dominant.
+    const softenAlpha = 0.35;
+    const softColorFor = (key) => key === "raw"
+      ? `rgba(138,147,163,${softenAlpha})`
+      : `rgba(74,210,154,${softenAlpha})`;   // prod green
+    for (const L of LAYERS) {
+      if (L.key !== "raw" && L.key !== "prod") continue;
+      const daily = seriesFor(field, L.key, metric);
+      const smoothed = rollingMean(daily);
+      if (smoothed.some(v => v !== null)) {
+        datasets.push({
+          label: `${L.label} (7d mean)`,
+          data: smoothed,
+          borderColor: softColorFor(L.key),
+          backgroundColor: "rgba(0,0,0,0)",
+          borderWidth: 4,
+          pointRadius: 0,
+          tension: 0.35,
+          spanGaps: true,
+          borderCapStyle: "round",
+          borderJoinStyle: "round",
+          borderDash: [],
+          order: 10,   // draw behind daily lines (higher order = drawn earlier)
+        });
+      }
+    }
 
     if (chart) chart.destroy();
     chart = new Chart(canvas, {

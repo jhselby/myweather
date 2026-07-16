@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353i • July 16, 2026</strong></summary>
+
+- **Accuracy-over-time chart: 7-day rolling mean overlays on Raw and Prod.** Chose rolling mean over linear regression (no functional assumption) and only overlay on Raw + Prod (not L2/L3) to avoid 8-line noise — the reader watches Raw ↔ Prod for drift. Complements the ship-date annotations: if a ship's effect is sustained the rolling mean bends within a week; if it reverts, mean stays flat. Rendered thicker (4px) with 0.35 alpha so daily line stays visually dominant. Kicks in once at least 4 non-null points in the trailing 7-day window are available (skips the first few days after a fresh dataset appears). Frontend-only change; no schema or analysis-script update needed since the daily values are already in the payload.
+
+</details>
+
+<details>
 <summary><strong>v0.6.353h • July 16, 2026</strong></summary>
 
 - **Accuracy-over-time chart: persistent history so x-axis grows past pair-log retention.** Pair log capped at 30 days by `decay_fit.py::RETENTION_DAYS`, so a re-aggregate-from-scratch view maxes out there. Rewrote `analysis/mae_over_time.py` to (1) fetch the prior `mae_over_time.json` from GCS, (2) recompute per-day rollup from the current pair log, (3) merge: overwrite the last `MERGE_REFRESH_DAYS=3` days (still-live cells may add pairs mid-day), preserve older days already recorded (their pair-log rows may have been pruned since). Storage math kept honest: each (day × field × layer) cell is ~90 bytes → ~5 KB/day → ~1.8 MB/year. Today's file at 31 days is 256 KB. First merge run: 1456 kept from prior, 156 overwritten (last 3 days), 0 new. Chart's x-axis is now retention-independent — grows one day at a time indefinitely, capped by nothing except GCS storage (trivial for years). Codifies the "always be mindful of data volume" principle by putting the storage math and knobs (MIN_N_PER_DAY, MERGE_REFRESH_DAYS) at the top of the script for future readers.
