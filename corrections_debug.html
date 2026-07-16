@@ -956,6 +956,7 @@
       <option value="mae" selected>MAE</option>
       <option value="rmse">RMSE</option>
       <option value="bias">Bias (signed)</option>
+      <option value="brier">Brier (for pp)</option>
     </select></label>
     <span id="mae-time-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
   </div>
@@ -5971,7 +5972,9 @@ load();
 
 // ─── Accuracy over time chart (sec-mae-over-time) ────────────────────────
 // Self-contained — fetches mae_over_time.json, populates field dropdown,
-// renders a Chart.js line comparing Raw vs Prod on the selected metric.
+// renders a Chart.js line comparing Raw / L2 / L3 / Prod. Draws vertical
+// ship-date annotations per field so a mid-window ship is visually
+// separable from a mid-window weather event.
 (function initMaeOverTimeChart() {
   const CHART_URL = "https://data.wymancove.com/mae_over_time.json";
   const canvas = document.getElementById("mae-time-canvas");
@@ -5990,6 +5993,27 @@ load();
     sr: "Solar rad (W/m²)", pr: "Pressure (inHg)", pp: "Precip prob (0-1)", pa: "Precip amt (in)",
   };
 
+  // Layer render config. Duplicate lines (e.g., L3=L2 for t) will overlap
+  // visually — that's honest signal: the layer isn't doing work for this field.
+  const LAYERS = [
+    { key: "raw",  label: "Raw",  color: "rgba(138,147,163,0.8)", dash: [4,4],  width: 1.25 },
+    { key: "l2",   label: "L2",   color: "#7fb3ff",               dash: [],     width: 1.25 },
+    { key: "l3",   label: "L3",   color: "#e0d472",               dash: [],     width: 1.25 },
+    { key: "prod", label: "Prod", color: "#4ad29a",               dash: [],     width: 1.75 },
+  ];
+
+  // Per-field ship-date / event annotations. Keep short — only events with
+  // visible expected impact on the chart. Dormant ships (ENABLED=False)
+  // deliberately not annotated since they don't move Production.
+  const SHIP_EVENTS = {
+    ws: [{date: "2026-07-06", label: "L3 skip-table firing"}],
+    sr: [{date: "2026-07-06", label: "Lsr correction firing"}],
+    t:  [{date: "2026-07-13", label: "Lt retired"}],
+    pa: [{date: "2026-07-13", label: "τ 28→42"}],
+    pp: [{date: "2026-07-04", label: "pp dropped from L3"}],
+    cm: [{date: "2026-07-04", label: "HRRR cm anomaly onset"}],
+  };
+
   function seriesFor(field, layer, metric) {
     const layerSeries = (payload.series[field] || {})[layer] || {};
     return payload.days.map(d => {
@@ -5998,28 +6022,65 @@ load();
     });
   }
 
+  // Chart.js plugin: draw vertical dashed lines at ship-date events for the
+  // currently-selected field. Registered per-chart via `plugins:` option.
+  function shipEventsPlugin(getField, getPayload) {
+    return {
+      id: "shipEvents",
+      afterDatasetsDraw(chart) {
+        const field = getField();
+        const events = SHIP_EVENTS[field] || [];
+        if (!events.length) return;
+        const days = getPayload().days;
+        const {ctx, chartArea: {top, bottom}, scales: {x}} = chart;
+        ctx.save();
+        ctx.strokeStyle = "rgba(224,164,115,0.6)";
+        ctx.fillStyle = "rgba(224,164,115,0.9)";
+        ctx.setLineDash([3, 3]);
+        ctx.lineWidth = 1;
+        ctx.font = "10px system-ui, sans-serif";
+        for (const ev of events) {
+          const idx = days.indexOf(ev.date);
+          if (idx < 0) continue;
+          const px = x.getPixelForValue(idx);
+          ctx.beginPath();
+          ctx.moveTo(px, top);
+          ctx.lineTo(px, bottom);
+          ctx.stroke();
+          // Rotated label at top of plot area
+          ctx.save();
+          ctx.translate(px + 3, top + 4);
+          ctx.rotate(Math.PI / 2);
+          ctx.fillText(ev.label, 0, 0);
+          ctx.restore();
+        }
+        ctx.restore();
+      },
+    };
+  }
+
   function render() {
     if (!payload) return;
     const field = fieldSel.value;
     const metric = metricSel.value;
-    const raw = seriesFor(field, "raw", metric);
-    const prod = seriesFor(field, "prod", metric);
-    const label = (metric === "bias") ? "Bias (signed)" : metric.toUpperCase();
+    const label = (metric === "bias") ? "Bias (signed)" : metric === "brier" ? "Brier" : metric.toUpperCase();
+
+    const datasets = LAYERS.map(L => ({
+      label: L.label,
+      data: seriesFor(field, L.key, metric),
+      borderColor: L.color,
+      backgroundColor: "rgba(0,0,0,0)",
+      borderDash: L.dash,
+      borderWidth: L.width,
+      pointRadius: 0,
+      tension: 0.2,
+      spanGaps: true,
+    }));
 
     if (chart) chart.destroy();
     chart = new Chart(canvas, {
       type: "line",
-      data: {
-        labels: payload.days,
-        datasets: [
-          { label: "Raw", data: raw,
-            borderColor: "rgba(138,147,163,0.7)", backgroundColor: "rgba(0,0,0,0)",
-            borderDash: [4,4], borderWidth: 1.25, pointRadius: 0, tension: 0.2, spanGaps: true },
-          { label: "Prod", data: prod,
-            borderColor: "#4ad29a", backgroundColor: "rgba(0,0,0,0)",
-            borderWidth: 1.75, pointRadius: 0, tension: 0.2, spanGaps: true },
-        ],
-      },
+      data: { labels: payload.days, datasets },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: {
@@ -6036,6 +6097,7 @@ load();
                beginAtZero: (metric !== "bias") },
         },
       },
+      plugins: [shipEventsPlugin(() => fieldSel.value, () => payload)],
     });
   }
 
@@ -6043,7 +6105,6 @@ load();
     .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
     .then(p => {
       payload = p;
-      // Populate field dropdown from present fields in the payload.
       fieldSel.innerHTML = "";
       (payload.fields || []).forEach(f => {
         const opt = document.createElement("option");
@@ -6051,11 +6112,15 @@ load();
         opt.textContent = FIELD_LABELS[f] || f;
         fieldSel.appendChild(opt);
       });
-      // Default: temperature if present, else first field.
       if (payload.fields.includes("t")) fieldSel.value = "t";
       statusEl.textContent = `${payload.days.length} days · refit ${payload.generated_at || ""}`;
       render();
-      fieldSel.addEventListener("change", render);
+      fieldSel.addEventListener("change", () => {
+        // Auto-suggest Brier when user picks pp
+        if (fieldSel.value === "pp" && metricSel.value === "mae") metricSel.value = "brier";
+        else if (fieldSel.value !== "pp" && metricSel.value === "brier") metricSel.value = "mae";
+        render();
+      });
       metricSel.addEventListener("change", render);
     })
     .catch(err => {

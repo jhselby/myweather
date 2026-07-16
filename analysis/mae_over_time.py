@@ -23,7 +23,7 @@ import math
 import os
 import sys
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
@@ -36,10 +36,13 @@ FIELDS = ["t", "dp", "h", "ws", "wg", "cc", "cl", "cm", "ch", "sr", "pr", "pp", 
 MIN_N_PER_DAY = 200  # skip (field, day) cells with too few pairs — avoids noise spikes on thin days
 
 
+LAYER_KEYS = [("raw", "error_l1"), ("l2", "error_l2"), ("l3", "error_l3"), ("prod", "error_l4")]
+
+
 def main():
     path = cached_path(ERROR_LOG_URL)
-    # (day, field) → {"raw": [errs], "prod": [errs]}
-    buckets = defaultdict(lambda: {"raw": [], "prod": []})
+    # (day, field) → {layer: [errs]}
+    buckets = defaultdict(lambda: {ln: [] for ln, _ in LAYER_KEYS})
     n_total = 0
     with open(path) as f:
         for line in f:
@@ -52,36 +55,48 @@ def main():
             if not ot:
                 continue
             day = ot[:10]
-            e1 = r.get("error_l1")
-            e4 = r.get("error_l4")
-            if e1 is None or e4 is None:
+            skip = False
+            per_layer = {}
+            for ln, key in LAYER_KEYS:
+                e = r.get(key)
+                if e is None:
+                    skip = True
+                    break
+                per_layer[ln] = e
+            if skip:
                 continue
-            buckets[(day, fld)]["raw"].append(e1)
-            buckets[(day, fld)]["prod"].append(e4)
+            for ln, e in per_layer.items():
+                buckets[(day, fld)][ln].append(e)
 
     days = sorted({d for d, _ in buckets})
     fields_present = sorted({f for _, f in buckets})
 
-    # series[field][layer][day] = {n, mae, rmse, bias}
+    # series[field][layer][day] = {n, mae, rmse, bias, brier}
+    # brier = mean(err²) — same math as RMSE² but Brier is the conventional
+    # name for probabilistic forecasts (pp). Emitted for every field; the
+    # frontend surfaces it as a metric option and it's meaningful for pp
+    # in particular (0-1 probability vs 0/1 observation).
     series = defaultdict(lambda: defaultdict(dict))
     for (day, fld), errs in buckets.items():
-        for layer_name in ("raw", "prod"):
+        for layer_name in errs:
             xs = errs[layer_name]
             n = len(xs)
             if n < MIN_N_PER_DAY:
                 continue
             mae = sum(abs(x) for x in xs) / n
-            rmse = math.sqrt(sum(x * x for x in xs) / n)
+            sqerr_mean = sum(x * x for x in xs) / n
+            rmse = math.sqrt(sqerr_mean)
             bias = sum(xs) / n
             series[fld][layer_name][day] = {
                 "n": n,
                 "mae": round(mae, 4),
                 "rmse": round(rmse, 4),
                 "bias": round(bias, 4),
+                "brier": round(sqerr_mean, 4),
             }
 
     payload = {
-        "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source": "forecast_error_log.jsonl",
         "min_n_per_day": MIN_N_PER_DAY,
         "days": days,
