@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353g • July 16, 2026</strong></summary>
+
+- **Debug page Rule 5 sweep — Stage 4 refresh after refined-primary + multi-axis-fix.** After v0.6.353e (refined view → primary) and v0.6.353f (silent 15-day multi-axis stratification bug fix), the debug page still described Stage 4 with 07-11 numbers and "legacy ship" framing. Grep + edit pass caught 6 stale spots: (1) calendar Sat 07-18 entry dropped "legacy" and noted refined + fix; (2) Still-open watches Stage 4 line rewritten with today's numbers (legacy MIXED 26/3/12, multi-axis NOT READY 195/139/320/143 +216); (3) Applied-layer table cc Status column updated to note the refined promotion + multi-axis fix; (4) C1 Applicability map bullet: replaced "HOLD at 61.54%" with today's dual-axis status; (5) Upcoming decisions Q/E/D block: reframed as refined-view-primary, both axes must pass, added the multi-axis-new-baseline caveat; (6) C1 confidence layer detail paragraph (~line 1671): updated the "Latest (07-11 refined)" numbers to today's dual-axis picture and added the silent-bug-caught narrative for future readers.
+
+</details>
+
+<details>
 <summary><strong>v0.6.353f • July 16, 2026</strong></summary>
 
 - **Stage 4 audit multi-axis: fix silent 15-day dead-stratification bug.** After v0.6.353e promoted the mixture-normalized refined view to primary, noticed the multi-axis was reporting 1013 cells all n=0 (INSUFFICIENT). Investigation: on 2026-07-01 v0.6.272, `c1_confidence_calibration_v2.py` extended the axis_key format from 4 parts (`sq::pt::slot::c1f`) to 5 parts (`sq::pt::slot::c1f::hsf`) when C1e (hours-since-front) shipped end-to-end. The curated ship-cells were emitted with 5-part keys; `c1_stage4_audit.py::stratify()` was never updated and kept building 4-part accumulator keys. Every ship-cell lookup missed → all cells reported n=0 → all INSUFFICIENT. **The multi-axis Stage 4 audit has been effectively dead for 15 days** — nobody caught it because the legacy axis (t/dp/h/... single-axis view) kept producing plausible-looking numbers. Fix: added `_load_frontal_passages()` and `_hsf_group()` mirroring the calibration script, extended axis_key to 5 parts. First real read: **195 PASS / 139 WATCH / 320 FAIL / 143 INSUFFICIENT / +216 excluded (as metric-artifact)** — refined verdict NOT READY, which is now genuine signal instead of "our stratifier is broken." Motivation to investigate came from #4 elevating refined view — the raw broken numbers were visible in the primary block instead of hidden. Illustrates why the earlier "trust refined" split-view design was masking a real bug: any downstream metric that reported the multi_axis result was reporting infrastructure failure, not calibration state.

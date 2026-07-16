@@ -906,7 +906,7 @@
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-17</div>
           <div><code>h_ws_octant_bias</code> first of 3 weekly re-reads (07-17, 07-24, 07-31) gating ws additive-L2 Stage 1 candidacy.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-18</div>
-          <div>C1 Stage 4 legacy ship next eligible window (cm anomaly rolls out; blocked 07-11).</div>
+          <div>C1 Stage 4 next eligible window (cm anomaly rolls out; blocked 07-11). Refined view is primary since 07-16 v0.6.353e; multi-axis stratification bug fixed same day v0.6.353f (silent since 07-01 hsf axis add).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 07-19</div>
           <div><strong>ch persistence gate ENABLED=True earliest flip</strong> — 7-day gate clears; SHIP/SKIP cell-set stability re-verified via weekly Stage 2 re-run.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 07-19</div>
@@ -1042,7 +1042,7 @@
       <li><span style="color:#7090a0;">⚙</span> <strong>h → L4 — re-frozen 07-11.</strong> Halves-check killed 7 of 12 WIN cells (HRRR anomaly). Un-freeze: halves-agree after 07-18 window roll.</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>Lsr RETIRE-vs-AGREE puzzle</strong> — simulate_windows says HOLD across 7 cutoffs; divergence-report says AGREE. Investigation queued.</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>C1 calibration audit — HOLD 65.62%.</strong> Re-curate + Brier check next. Blocked until 07-18 anomaly rollout.</li>
-      <li><span style="color:#7090a0;">⚙</span> <strong>C1 Stage 4 — MIXED, 8/9 FAILs are cm.</strong> Diagnosed as HRRR mid-cloud shift 07-04→07-11; not a pipeline bug. Legacy ship BLOCKED; re-audit 07-18. (Anomaly detector v0.6.333 confirms cm has recovered.)</li>
+      <li><span style="color:#7090a0;">⚙</span> <strong>C1 Stage 4 — refined view now primary (v0.6.353e), multi-axis stratification fixed (v0.6.353f).</strong> Legacy axis today: 26 PASS / 3 WATCH / 12 FAIL → MIXED. Multi-axis today (post-fix): 195 PASS / 139 WATCH / 320 FAIL / 143 INSUFFICIENT / +216 excluded → NOT READY. Multi-axis had been silently dead 07-01 → 07-16 (hsf axis-key mismatch since C1e shipped). Anomaly detector confirms cm has recovered. Re-audit 07-18.</li>
     </ul>
   </details>
 </div>
@@ -1116,7 +1116,7 @@
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cm</code> mid cloud</td>
           <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY blend → L3 lead-decay</td>
           <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−6.8%</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win.</strong> HRRR cm-distribution anomaly 07-04→07-11 recovered (v0.6.333 anomaly detector confirms). C1 Stage 4 re-audit 07-18.</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win.</strong> HRRR cm-distribution anomaly 07-04→07-11 recovered (v0.6.333 anomaly detector confirms). C1 Stage 4 refined view now primary (07-16 v0.6.353e); multi-axis bug fixed same day (v0.6.353f). Re-audit 07-18.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pp</code> precip probability</td>
@@ -1180,7 +1180,7 @@
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
       <ul style="margin:2px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>C1</strong> multi-axis confidence layer — <em>gated off (ENABLED=False)</em>. Stamps <code>weather_data["confidence"]</code> every tick. Five axes: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence, C1e hours-since-front (shipped 2026-07-01 v0.6.272). Flip after Stage 4 audit clears (currently HOLD at 61.54% post pp-Brier exemption).</li>
+        <li><strong>C1</strong> multi-axis confidence layer — <em>gated off (ENABLED=False)</em>. Stamps <code>weather_data["confidence"]</code> every tick. Five axes: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence, C1e hours-since-front (shipped 2026-07-01 v0.6.272). Flip after Stage 4 audit clears. As of 07-16 v0.6.353e/f, refined view is primary and multi-axis stratification fixed; today's read HOLD on both axes (legacy MIXED, multi-axis NOT READY at 195P/139W/320F).</li>
       </ul>
     </details>
 
@@ -1217,11 +1217,11 @@
           </ul>
         </li>
 
-        <li style="margin-top:6px;"><strong>Sat 07-18 — C1 Stage 4 legacy ship: unblock or defer?</strong>
+        <li style="margin-top:6px;"><strong>Sat 07-18 — C1 Stage 4 ship: unblock or defer?</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Does the C1 Stage 4 audit clear once the HRRR cm-distribution anomaly rolls out of the recent window?</li>
-            <li><strong>E:</strong> 07-11 refined view was 26 PASS / 0 WATCH / 9 FAIL / 7 SKIP — 8 of 9 FAILs cm × every band × key. Diagnosed as HRRR distribution shift 07-04→07-11 (mean cm forecast 16% → 47%). Anomaly window rolls out by 07-18.</li>
-            <li><strong>D:</strong> If pass rate ≥ 75% on the 07-18 read, flip <code>C1 ENABLED=True</code> and unblock C1h + C1d narrow-promote earliest ships. If not, defer another week.</li>
+            <li><strong>Q:</strong> Does the C1 Stage 4 refined view clear once the HRRR cm-distribution anomaly rolls out of the recent window? Both axes must pass (legacy single-axis + multi-axis 5-tuple).</li>
+            <li><strong>E:</strong> Today 07-16 (post v0.6.353e/f — refined view now primary, multi-axis stratification bug fixed): legacy MIXED (26 PASS / 3 WATCH / 12 FAIL); multi-axis NOT READY (195 PASS / 139 WATCH / 320 FAIL / 143 INSUFFICIENT). Multi-axis had been silently dead 07-01 → 07-16 so this is its first honest read. Anomaly window rolls out by 07-18 which should clear the cm-driven failures on legacy; multi-axis needs its own accumulation.</li>
+            <li><strong>D:</strong> Legacy read: if pass rate ≥ 75% AND multi-axis pass rate ≥ some floor (TBD after 07-18 first-real-read baseline), flip <code>C1 ENABLED=True</code> and unblock C1h + C1d narrow-promote earliest ships. If either fails, defer another week and re-baseline the multi-axis expectations.</li>
           </ul>
         </li>
 
@@ -1668,7 +1668,7 @@
   <summary>G1. Gated correction candidates — what Lc would do this tick</summary>
   <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> corrections sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast or display.
     <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
-      <li><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟡 Hybrid · 🔒 stamps every tick, ENABLED=False · 🟢 <code>c1_stage4_audit.py</code>]</span> <strong>C1 confidence layer (multi-axis v3 + marginal C1h/C1d).</strong> Every tick stamps <code>weather_data["confidence"]</code> with per-(field, band) bands + <code>live_axes</code>. <code>applied=False</code> until audit clears. <strong>Curated v3:</strong> 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys (Q × pt × trans × c1f × hsf); 1.29M pairs, 297k multi-axis on 14d window. <strong>Marginal axes v0.6.316 (07-08):</strong> C1h (trend-direction, 15 SHIP) + C1d (KBOS-vs-KBVY σ, 13 SHIP+1 MARGINAL) as standalone tables composed multiplicatively — kept off multi-axis join to avoid cell-dilution. C1h reads ~6h-old L1 snapshot; C1d classifies live <code>cloud_inter_source_sigma</code> vs Q1/Q3. <strong>C1h co-axis ortho gate v0.6.321 (07-10):</strong> first read passed PROMOTE (11 ortho / 30 judged) but only <em>cl × 3 bands</em> are ortho to both C1f + C1e. Wired <code>_C1H_CO_AXIS_GATE</code>: cl fires freely; cc/cm/ch conditionally suppressed when the non-ortho co-axis fires; ch 24-47h + t × 3 (REDUND both) never fire. <code>coax_gated</code> state distinct from <code>flat</code>; fails closed. <strong>Stage 4 audit:</strong> 7d calib vs 7d recent holdout; PASS ≤20% drift, WATCH ≤40%, FAIL &gt;40%. <em>MAE-only caveat: drift on RMSE or raw-MAE-quartile-conditioned would separate calibrated-band drift from easier-weather drift. Lens script exists, not yet in verdict.</em> <strong>Latest (07-11 refined):</strong> 26 PASS / 0 WATCH / 9 FAIL / 7 SKIP — MIXED. Flipped from 27/1/2 after one-day window roll; 8 of 9 FAILs are cm × every band × key. Diagnosed as HRRR cm distribution shift 07-04→07-11 (mean cm forecast 16% → 47%, bias +21%). Legacy ship BLOCKED; re-audit 07-18. <strong>C1h + C1d 7-day counters v0.6.323 (07-10):</strong> read sorted SHIP-cell lists per digest; consecutive matches walk the streak. As of 07-16: C1h at 2/7 (14 SHIP cells), C1d at 1/7 (12 SHIP cells, reset within window). Earliest ship 07-21 (C1h) / 07-22 (C1d). Stage 4b in-card ± preview shipped v0.6.181.</li>
+      <li><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟡 Hybrid · 🔒 stamps every tick, ENABLED=False · 🟢 <code>c1_stage4_audit.py</code>]</span> <strong>C1 confidence layer (multi-axis v3 + marginal C1h/C1d).</strong> Every tick stamps <code>weather_data["confidence"]</code> with per-(field, band) bands + <code>live_axes</code>. <code>applied=False</code> until audit clears. <strong>Curated v3:</strong> 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys (Q × pt × trans × c1f × hsf); 1.29M pairs, 297k multi-axis on 14d window. <strong>Marginal axes v0.6.316 (07-08):</strong> C1h (trend-direction, 15 SHIP) + C1d (KBOS-vs-KBVY σ, 13 SHIP+1 MARGINAL) as standalone tables composed multiplicatively — kept off multi-axis join to avoid cell-dilution. C1h reads ~6h-old L1 snapshot; C1d classifies live <code>cloud_inter_source_sigma</code> vs Q1/Q3. <strong>C1h co-axis ortho gate v0.6.321 (07-10):</strong> first read passed PROMOTE (11 ortho / 30 judged) but only <em>cl × 3 bands</em> are ortho to both C1f + C1e. Wired <code>_C1H_CO_AXIS_GATE</code>: cl fires freely; cc/cm/ch conditionally suppressed when the non-ortho co-axis fires; ch 24-47h + t × 3 (REDUND both) never fire. <code>coax_gated</code> state distinct from <code>flat</code>; fails closed. <strong>Stage 4 audit:</strong> 7d calib vs 7d recent holdout; PASS ≤20% drift, WATCH ≤40%, FAIL &gt;40%. <em>MAE-only caveat: drift on RMSE or raw-MAE-quartile-conditioned would separate calibrated-band drift from easier-weather drift. Lens script exists, not yet in verdict.</em> <strong>Latest (07-16 post v0.6.353e/f):</strong> refined view now authoritative (was buried third since 07-09; promoted to primary 07-16). Legacy axis: 26 PASS / 3 WATCH / 12 FAIL → MIXED. Multi-axis (5-tuple sq×pt×trans×c1f×hsf): 195 PASS / 139 WATCH / 320 FAIL / 143 INSUFFICIENT / +216 excluded → NOT READY. <em>Silent 15-day bug caught 07-16:</em> C1e added hsf axis 07-01 v0.6.272 extending the curated keys from 4-part to 5-part, but `c1_stage4_audit.py::stratify()` kept building 4-part accumulator keys — every ship-cell lookup missed, all 1013 cells reported n=0. Legacy single-axis view kept working so no metric surfaced total failure; the elevation of refined-to-primary in v0.6.353e exposed the "1013 INSUFFICIENT" symptom which led to the fix in v0.6.353f. Ship BLOCKED; re-audit 07-18. <strong>C1h + C1d 7-day counters v0.6.323 (07-10):</strong> read sorted SHIP-cell lists per digest; consecutive matches walk the streak. As of 07-16: C1h at 2/7 (14 SHIP cells), C1d at 1/7 (12 SHIP cells, reset within window). Earliest ship 07-21 (C1h) / 07-22 (C1d). Stage 4b in-card ± preview shipped v0.6.181.</li>
     </ul>
   </div>
   <div id="gated-candidates-content" class="status">Loading…</div>
