@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353l • July 16, 2026</strong></summary>
+
+- **Accuracy over time: sparkline grid + Current-state section promoted + Safari reload-with-hash fix.** Three chunks bundled: (1) Added a per-field sparkline grid below the detail chart inside the accuracy-over-time section — 13 mini-charts (~190×80 each) showing Raw + Prod rolling 7-day means; click any panel to focus the detail chart above on that field; reacts to the metric selector. Sparklines auto-skip fields without enough history. (2) Promoted the "Current state — what's running · improving · being evaluated" tri-column band to an `h2.section` with id `sec-current-state` matching the visual + collapse behavior of Recent activity / Engineering updates / Forecast accuracy. Removed the old orphan wrapping `<section id="tri-column-band">` + inner `<details>`. Per-band tables inside Forecast Accuracy also promoted to `<details open id="sec-per-band">` for symmetry with the accuracy-over-time details. (3) Fixed a 3-layer Safari reload-with-hash bug that manifested as R&D auto-expanding on Cmd-R: added `history.scrollRestoration = "manual"` to stop Safari's default scroll-to-hash on reload; added an `{expandAllInner: false}` opt on `openSectionByHash`'s load-time call so the aggressive "expand every inner `<details>`" only fires on live TOC clicks; and on reload only (`performance.navigation type === "reload"`), strip the URL hash via `history.replaceState` before any DOM parses so CSS `:target` never matches and the flash animation doesn't fire. Preserves hash behavior for fresh navigation (shared links, cross-page). Chrome unaffected because it already uses scroll restoration.
+
+</details>
+
+<details>
 <summary><strong>v0.6.353k • July 16, 2026</strong></summary>
 
 - **Move orphaned metric-framework explainer into Forecast Accuracy section.** v0.6.353j moved the accuracy-over-time chart into the Accuracy section but left the "How we measure whether the forecast is good — the metric framework" `<details>` block behind, stranded between the tri-column band and the Recent Activity section with no context for what it was explaining. Joe caught it. Moved the block to sit right below the section intro (collapsed by default; open to see per-field observed sources, MAE/RMSE/bias/Brier definitions, measurement gaps like persistence skill and Brier reliability decomp). Reader flow now: intro → optional metric definitions → accuracy-over-time chart → per-band tables intro → per-field tables.

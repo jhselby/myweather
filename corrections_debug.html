@@ -4,6 +4,23 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Wyman Cove — Forecast Pipeline</title>
+<script>
+  // Tell the browser to restore prior scroll position on reload instead of
+  // scrolling to the URL hash (Safari's default). Set as early as possible.
+  if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+
+  // On RELOAD only: strip the URL hash before any DOM parses. Without this,
+  // Safari's Cmd-R with e.g. #sec-research in the URL both scrolls to R&D
+  // and triggers the CSS :target flash animation on the h2. Preserves hash
+  // for fresh navigation (shared links, TOC clicks) — those use navType
+  // "navigate", not "reload".
+  try {
+    const nav = performance.getEntriesByType && performance.getEntriesByType("navigation")[0];
+    if (nav && nav.type === "reload" && window.location.hash) {
+      history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
+  } catch (e) {}
+</script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -809,10 +826,8 @@
        - What's running: current live state, no history (kill trail below)
        - What's improving: active Stage 1 candidates only (retired below)
        - What's being evaluated next: forward calendar + frozen items -->
-<section id="tri-column-band" style="margin:0 0 20px 0;">
-  <details open>
-    <summary style="cursor:pointer;color:#9ab0a0;font-weight:600;font-size:0.9em;margin-bottom:8px;list-style:revert;">Current state — What's running · improving · being evaluated</summary>
-  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;">
+<h2 class="section" id="sec-current-state">Current state <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— what's running · improving · being evaluated</span></h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;">
 
     <!-- What's running -->
     <div style="border:1px solid #1f3a2a;background:#0d1512;padding:12px 14px;border-radius:8px;">
@@ -943,11 +958,8 @@
       </div>
     </div>
 
-  </div>
-  </details>
-  <div style="margin-top:8px;font-size:0.8em;opacity:0.7;text-align:center;">Details for each cell live in the sections below · <a href="#sec-status" style="color:#7fb3ff;">Engineering updates</a> · <a href="#sec-accuracy" style="color:#7fb3ff;">Accuracy</a> · <a href="#sec-research" style="color:#7fb3ff;">Research &amp; Diagnostics</a></div>
-
-</section>
+</div>
+<div style="margin-top:8px;font-size:0.8em;opacity:0.7;text-align:center;">Details for each cell live in the sections below · <a href="#sec-status" style="color:#7fb3ff;">Engineering updates</a> · <a href="#sec-accuracy" style="color:#7fb3ff;">Accuracy</a> · <a href="#sec-research" style="color:#7fb3ff;">Research &amp; Diagnostics</a></div>
 
 <a id="sec-status"></a>
 <!-- ───────────────────── Status panel ─────────────────────
@@ -1304,35 +1316,45 @@
       </select></label>
       <span id="mae-time-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
     </div>
+    <!-- Detail chart — one field at a time, all four layers + ship annotations. -->
+    <div style="margin:6px 0;font-size:0.8em;color:#8a93a3;">Detail view for selected field (Raw / L2 / L3 / Prod + rolling means + ship annotations):</div>
     <div class="chart-wrap" style="height:280px;"><canvas id="mae-time-canvas"></canvas></div>
+    <!-- Sparkline grid — scan-all view. Each cell shows Raw + Prod rolling
+         7-day means for one field. Click a cell to focus the detail chart
+         above on that field. Reacts to the metric selector. -->
+    <div style="margin:14px 0 6px 0;font-size:0.8em;color:#8a93a3;">Scan all fields (click any panel to focus the detail chart above):</div>
+    <div id="mae-time-sparklines" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;"></div>
   </details>
 
-  <p class="layer-summary" style="margin-top:14px;"><strong>Per-field breakdown by lead band (below).</strong> The bright white "Production" column is the forecast users actually see. Lower is better. For each field, one combined table shows how far off the forecast tends to be at each lead band — <strong>MAE</strong> (typical error), <strong>RMSE</strong> (occasional big misses that MAE averages away), <strong>bias</strong> (systematic drift, signed) — per correction layer. Compare a MAE row across columns to see where each layer helps or hurts.</p>
-  <details class="layer-methodology"><summary>How to read these tables</summary>
-    <div class="meta-line"><strong>What you're looking at.</strong> One card per field. Each card shows a table with rows grouped by lead band (0-5h, 6-11h, 12-23h, 24-47h, ALL). Under each band, three metric rows: MAE (primary), RMSE (secondary), bias (secondary, signed). Columns are the correction layers actually applied to that field, plus the Production output on the right.</div>
-    <div class="meta-line"><strong>Only-applied layers.</strong> Layers that aren't applied to a field don't render as columns because their per-lead MAE array equals the previous applied layer's — noise. The badges above the table (L2 ✓, L3 ✓, L4 off, etc.) confirm the applied set. If Production isn't the lowest MAE, check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
-    <div class="meta-line"><strong>Per-metric usage:</strong>
-      <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
-        <li><strong>MAE</strong> — average absolute error. The primary metric; drives L3/L4 whitelist decisions. Best cell in row highlighted green, worst red.</li>
-        <li><strong>RMSE</strong> — squared-error root. Higher than MAE by a factor set by how tail-heavy the errors are. Watch for a band where RMSE jumps proportionally more than MAE — that's occasional big misses hiding behind an OK average.</li>
-        <li><strong>bias</strong> — mean signed error (forecast − obs). Near-zero = calibrated on average. Persistent + or − by band signals systematic drift.</li>
-      </ul>
-    </div>
-    <div class="meta-line"><strong>Layer labels:</strong>
-      <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
-        <li><strong>Raw</strong>: bare HRRR/GFS forecast for this coordinate. Knows nothing about Wyman Cove.</li>
-        <li><strong>Aggregate bias (L2)</strong>: what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
-        <li><strong>Lead decay (L3)</strong>: historical per-lead bias correction from the pair log.</li>
-        <li><strong>Diurnal (L4)</strong>: hour-of-day bias correction. Final line for every field except sr.</li>
-        <li><strong>Synoptic-regime (Lsr)</strong>: per-regime W/m² delta on direct solar radiation. Only present on sr.</li>
-      </ul>
-    </div>
-    <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> = bias added (t, dp, h, pr). <span class="field-badge active">L2 ✓ direct</span> = station median replaces model wind (ws, wg). <span class="field-badge na">L2 n/a</span> = no station network reports this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is n/a as a forecast correction, but obs truth for cc/cl/cm/ch comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
-    <div class="meta-line">Bands match the walk-forward validator buckets — this is exactly the granularity that drives shipping decisions. Source: <code>time_series_diagnostic.json::per_layer_{mae,rmse,bias}_by_lead</code>, 7-day window. <em>Design note (v0.6.350):</em> previously carried a per-card chart + 3 separate tables. The chart mostly restated what the MAE band table already showed; killed for signal density.</div>
+  <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-per-band">
+    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📊 Per-field breakdown by lead band — MAE / RMSE / bias per correction layer</summary>
+    <p class="layer-summary" style="margin-top:10px;">The bright white "Production" column is the forecast users actually see. Lower is better. For each field, one combined table shows how far off the forecast tends to be at each lead band — <strong>MAE</strong> (typical error), <strong>RMSE</strong> (occasional big misses that MAE averages away), <strong>bias</strong> (systematic drift, signed) — per correction layer. Compare a MAE row across columns to see where each layer helps or hurts.</p>
+    <details class="layer-methodology"><summary>How to read these tables</summary>
+      <div class="meta-line"><strong>What you're looking at.</strong> One card per field. Each card shows a table with rows grouped by lead band (0-5h, 6-11h, 12-23h, 24-47h, ALL). Under each band, three metric rows: MAE (primary), RMSE (secondary), bias (secondary, signed). Columns are the correction layers actually applied to that field, plus the Production output on the right.</div>
+      <div class="meta-line"><strong>Only-applied layers.</strong> Layers that aren't applied to a field don't render as columns because their per-lead MAE array equals the previous applied layer's — noise. The badges above the table (L2 ✓, L3 ✓, L4 off, etc.) confirm the applied set. If Production isn't the lowest MAE, check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
+      <div class="meta-line"><strong>Per-metric usage:</strong>
+        <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
+          <li><strong>MAE</strong> — average absolute error. The primary metric; drives L3/L4 whitelist decisions. Best cell in row highlighted green, worst red.</li>
+          <li><strong>RMSE</strong> — squared-error root. Higher than MAE by a factor set by how tail-heavy the errors are. Watch for a band where RMSE jumps proportionally more than MAE — that's occasional big misses hiding behind an OK average.</li>
+          <li><strong>bias</strong> — mean signed error (forecast − obs). Near-zero = calibrated on average. Persistent + or − by band signals systematic drift.</li>
+        </ul>
+      </div>
+      <div class="meta-line"><strong>Layer labels:</strong>
+        <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
+          <li><strong>Raw</strong>: bare HRRR/GFS forecast for this coordinate. Knows nothing about Wyman Cove.</li>
+          <li><strong>Aggregate bias (L2)</strong>: what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
+          <li><strong>Lead decay (L3)</strong>: historical per-lead bias correction from the pair log.</li>
+          <li><strong>Diurnal (L4)</strong>: hour-of-day bias correction. Final line for every field except sr.</li>
+          <li><strong>Synoptic-regime (Lsr)</strong>: per-regime W/m² delta on direct solar radiation. Only present on sr.</li>
+        </ul>
+      </div>
+      <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> = bias added (t, dp, h, pr). <span class="field-badge active">L2 ✓ direct</span> = station median replaces model wind (ws, wg). <span class="field-badge na">L2 n/a</span> = no station network reports this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is n/a as a forecast correction, but obs truth for cc/cl/cm/ch comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
+      <div class="meta-line">Bands match the walk-forward validator buckets — this is exactly the granularity that drives shipping decisions. Source: <code>time_series_diagnostic.json::per_layer_{mae,rmse,bias}_by_lead</code>, 7-day window. <em>Design note (v0.6.350):</em> previously carried a per-card chart + 3 separate tables. The chart mostly restated what the MAE band table already showed; killed for signal density.</div>
+    </details>
+    <div id="status-accuracy" class="status" hidden></div>
+    <div id="accuracy-grid" class="accuracy-grid"></div>
   </details>
 </div>
-<div id="status-accuracy" class="status" hidden></div>
-<div id="accuracy-grid" class="accuracy-grid"></div>
 
 <!-- ───────────────────── Applicability map (Section D) ─────────────────────
      Global "what corrections trigger, and why" view, code-derived. Each
@@ -5915,8 +5937,9 @@ initBiasAccordions();
 // (and any <details> ancestors of the target), so the section is fully
 // visible after the scroll. Without this, collapsed accordions (R0 audit,
 // uptime, etc.) stay hidden when navigated to by hash.
-function openSectionByHash(hash) {
+function openSectionByHash(hash, opts) {
   if (!hash || hash === "#") return;
+  const expandAllInner = !opts || opts.expandAllInner !== false;
   const id = hash.startsWith("#") ? hash.slice(1) : hash;
   const target = document.getElementById(id);
   if (!target) return;
@@ -5946,8 +5969,13 @@ function openSectionByHash(hash) {
     const wrap = target.nextElementSibling;
     if (wrap && wrap.classList && wrap.classList.contains("section-body")) {
       wrap.style.display = "";
-      // 2. Open every <details> inside the section body.
-      wrap.querySelectorAll("details").forEach(d => { d.open = true; });
+      // 2. Open every <details> inside the section body — only on active
+      //    clicks/hashchanges (user's fresh intent to see everything).
+      //    Skipped on page load so Cmd-R with hash present doesn't nuke
+      //    persisted expand state (e.g., R&D's research-subsection accordions).
+      if (expandAllInner) {
+        wrap.querySelectorAll("details").forEach(d => { d.open = true; });
+      }
     }
   }
 }
@@ -5968,7 +5996,9 @@ document.addEventListener("click", (e) => {
 }, true);
 window.addEventListener("hashchange", () => openSectionByHash(window.location.hash));
 if (window.location.hash) {
-  setTimeout(() => openSectionByHash(window.location.hash), 0);
+  // Page-load path: don't force-open every inner <details>. Respect user's
+  // persisted expand states (matters for R&D's research-subsection accordions).
+  setTimeout(() => openSectionByHash(window.location.hash, { expandAllInner: false }), 0);
 }
 
 load();
@@ -6157,6 +6187,81 @@ load();
     });
   }
 
+  // Sparkline grid — one mini-chart per field, Raw + Prod rolling means only.
+  // Click to focus detail chart. Reacts to the metric selector.
+  const sparklineGridEl = document.getElementById("mae-time-sparklines");
+  let sparklineCharts = [];
+  function renderSparklines() {
+    if (!payload || !sparklineGridEl) return;
+    for (const c of sparklineCharts) { try { c.destroy(); } catch (_) {} }
+    sparklineCharts = [];
+    sparklineGridEl.innerHTML = "";
+    const metric = metricSel.value;
+    const metricLabel = (metric === "bias") ? "Bias" : metric === "brier" ? "Brier" : metric.toUpperCase();
+    for (const fld of (payload.fields || [])) {
+      const rawDaily = seriesFor(fld, "raw", metric);
+      const prodDaily = seriesFor(fld, "prod", metric);
+      const rawMean = rollingMean(rawDaily);
+      const prodMean = rollingMean(prodDaily);
+      // Skip fields with no rolling-mean data (too early in history)
+      if (!rawMean.some(v => v !== null) && !prodMean.some(v => v !== null)) continue;
+      // Latest non-null Prod value for the header
+      let latestProd = null;
+      for (let i = prodMean.length - 1; i >= 0; i--) {
+        if (prodMean[i] !== null) { latestProd = prodMean[i]; break; }
+      }
+      let latestRaw = null;
+      for (let i = rawMean.length - 1; i >= 0; i--) {
+        if (rawMean[i] !== null) { latestRaw = rawMean[i]; break; }
+      }
+      const cell = document.createElement("div");
+      cell.style.cssText = "display:flex;flex-direction:column;gap:2px;cursor:pointer;padding:6px 8px;border:1px solid #232936;border-radius:4px;background:#0a0f16;transition:border-color 0.15s;";
+      cell.onmouseover = () => cell.style.borderColor = "#3a4f6a";
+      cell.onmouseout = () => cell.style.borderColor = "#232936";
+      cell.onclick = () => {
+        fieldSel.value = fld;
+        if (fld === "pp" && metricSel.value === "mae") metricSel.value = "brier";
+        else if (fld !== "pp" && metricSel.value === "brier") metricSel.value = "mae";
+        render();
+        renderSparklines();
+      };
+      const header = document.createElement("div");
+      const shortLabel = (FIELD_LABELS[fld] || fld).split(" (")[0];
+      const isSelected = (fieldSel.value === fld);
+      header.innerHTML = `<span style="font-size:0.78em;color:${isSelected ? '#7fb3ff' : '#cfd8e3'};font-weight:${isSelected ? '600' : '500'};">${shortLabel}</span>` +
+        (latestProd !== null ? ` <span style="font-size:0.72em;color:#4ad29a;opacity:0.85;">${metricLabel} ${latestProd.toFixed(latestProd < 1 ? 3 : 1)}</span>` : "");
+      cell.appendChild(header);
+      const canvasWrap = document.createElement("div");
+      canvasWrap.style.cssText = "height:56px;position:relative;";
+      const canvas = document.createElement("canvas");
+      canvasWrap.appendChild(canvas);
+      cell.appendChild(canvasWrap);
+      sparklineGridEl.appendChild(cell);
+      sparklineCharts.push(new Chart(canvas, {
+        type: "line",
+        data: {
+          labels: payload.days,
+          datasets: [
+            { data: rawMean, borderColor: "rgba(138,147,163,0.55)",
+              backgroundColor: "rgba(0,0,0,0)", borderWidth: 1.25,
+              pointRadius: 0, tension: 0.35, spanGaps: true },
+            { data: prodMean, borderColor: "#4ad29a",
+              backgroundColor: "rgba(0,0,0,0)", borderWidth: 1.5,
+              pointRadius: 0, tension: 0.35, spanGaps: true },
+          ],
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false, animation: false,
+          plugins: { legend: { display: false }, tooltip: { enabled: false } },
+          scales: {
+            x: { display: false },
+            y: { display: false, beginAtZero: (metric !== "bias") },
+          },
+        },
+      }));
+    }
+  }
+
   fetch(CHART_URL + "?_=" + Date.now())
     .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
     .then(p => {
@@ -6170,14 +6275,19 @@ load();
       });
       if (payload.fields.includes("t")) fieldSel.value = "t";
       statusEl.textContent = `${payload.days.length} days · refit ${payload.generated_at || ""}`;
+      renderSparklines();
       render();
       fieldSel.addEventListener("change", () => {
         // Auto-suggest Brier when user picks pp
         if (fieldSel.value === "pp" && metricSel.value === "mae") metricSel.value = "brier";
         else if (fieldSel.value !== "pp" && metricSel.value === "brier") metricSel.value = "mae";
         render();
+        renderSparklines();
       });
-      metricSel.addEventListener("change", render);
+      metricSel.addEventListener("change", () => {
+        renderSparklines();
+        render();
+      });
     })
     .catch(err => {
       statusEl.textContent = `chart unavailable (${err.message})`;
