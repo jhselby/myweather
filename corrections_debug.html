@@ -2007,10 +2007,25 @@ function renderMeta(corrDoc, wxDoc) {
     ? `decay applied ${dm.applied_at}`
     : `<strong style="color:#ff9f4a;">decay NOT yet applied to this payload</strong>`;
   const fitted = corrDoc ? `fitted <strong>${corrDoc.fitted_at || "?"}</strong> · <strong>${(corrDoc.n_pairs || 0).toLocaleString()}</strong> pairs · ` : "";
+  const versionSpan = `<strong id="meta-version" style="color:#7fb3ff;">…</strong> · `;
   el.innerHTML =
+    versionSpan +
     `${fitted}${applied} · ` +
     `<a href="${CORRECTIONS_URL}" target="_blank">corrections</a> · ` +
     `<a href="${WEATHER_URL}" target="_blank">weather</a>`;
+  // Fetch deployed version (cache-busted) and swap into the placeholder — lets
+  // the reader see at a glance whether the live page matches the latest ship.
+  fetch('version.json?_=' + Date.now())
+    .then(r => r.ok ? r.json() : null)
+    .then(v => {
+      const vs = document.getElementById('meta-version');
+      if (vs && v && v.version) vs.textContent = v.version;
+      else if (vs) vs.textContent = '?';
+    })
+    .catch(() => {
+      const vs = document.getElementById('meta-version');
+      if (vs) vs.textContent = '?';
+    });
 }
 
 function buildLayeredChart(canvas, field, raw, layered, layerColor) {

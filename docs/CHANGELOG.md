@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.352e • July 16, 2026</strong></summary>
+
+- **Debug page top-line: prepend live deployed version.** Joe wants to see at a glance whether the live page matches the latest ship — added a fetch of `version.json?_=<ts>` (cache-busted, same pattern as `js/version_check.js`) to `renderMeta()` and prepended `<strong id="meta-version">…</strong> · ` to the tagline. Placeholder shows `…` until fetch resolves, then swaps to `v0.6.352e` (or `?` on error). Sits before `fitted … · N pairs · decay applied … · corrections · weather`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.352d • July 16, 2026</strong></summary>
 
 - **Rule 5 full-page sweep after v0.6.352c missed 10+ stale refs.** Joe caught the v0.6.352c "tri-column only" sweep as insufficient — Rule 5 (transition-invalidation) says grep the ENTIRE page. This commit does that: (a) `h/l4 narrow-add` in Applicability map advanced day 2/7 → day 4/7, refined to name both SHIP cells (calm/0-5h + calm/12-23h) and earliest flip 07-19; (b) L3 Applicability map bullet reframed — walkforward "drop ws" gate cleared 7/7 today, but HELD in favor of 07-21 skip-table per `production_whatif` evidence (`ws_L3_skip` −10.6% overall matches wholesale `L2_ws_drop` −10.7%); (c) Lc Applicability map bullet rewritten around two-gates-per-layer split — earliest flip 07-17 (not 07-18); (d) Upcoming decisions Q/E/D block: "Thu 07-16 — ws L3 strip" marked answered (HOLD → skip-table); Lc entry reframed to Fri 07-17; ch persistence counter day 5/7; h/l4 narrow-add updated to Sun 07-19 covering both cells with on-rails evidence; pre-frontal day 4/7; wg residual day 3/7; (e) C1h/C1d prose in confidence layer description advanced to 07-16 numbers (C1h 2/7 with 14 SHIP, C1d 1/7 with 12 SHIP reset); (f) Stage 1 candidates table ch persistence + wg residual rows advanced; (g) live Lc widget's inline gate-note template literal rewritten (was "day 4/7 as of 07-13 · Anomaly-week HOLD until 07-18"); (h) Recent activity block re-trimmed to rolling 3-day window (today + 2 prior — 07-13/07-12/07-11 moved to changelog reference); today 07-16 and yesterday 07-15 entries added; (i) Current pipeline state header + "Last curated" advanced to 07-16 v0.6.352d; h status row updated with h/l4 on-rails detail; (j) Still-open watches added Lc earliest-flip 07-17 entry, advanced counters on wg residual/ch persistence/cl persistence. See [[feedback_debug_page_canon]] Rule 5.
