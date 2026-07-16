@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.352c • July 16, 2026</strong></summary>
+
+- **Tri-column band sweep — Running/Improving/Evaluating brought current to 07-16.** Debug page tri-column at the top-of-fold was 2 days stale across ~15 spots. Updated: (a) Production vs raw dropped the stale sr suppression-window line and rewrote the ws regression as a 24-47h vacuum flagged for the 07-21 stack. (b) 8 active Stage 1+3 candidates (was mis-labeled "11") — all day-counters advanced to 07-16 values: ch persistence day 5/7, cl persistence day 4/7, wg residual day 3/7, C1h 2/7 (14 SHIP cells), C1d 1/7 (12 SHIP cells, reset), pre-frontal 4/7. (c) Lc entry rewritten to reflect today's two-gates-per-layer split — divergence-report 7/7 but `lc_fit` gate_clear=False; earliest flip is tomorrow 07-17 when 07-10 rolls out of the fitter's window (was previously "HOLD until 07-18" which conflated anomaly-hold with gate-math). (d) Calendar rebuilt: past 07-16 entry removed, 07-17 Lc flip + h_ws_octant_bias added, 07-19 h/l4 narrow-add added (SHIP set stable 4 days), 07-22 C1h/C1d earliest ship added. (e) Frozen section replaced Lsr/sr entries (all cleared 07-10/07-11) with MLC dormancy (indefinite) + MLC seasonal redesign (needs autumn data). (f) Post-ship watches replaced 2 stale Lsr entries with wg persistence-skill thin-margin watch (verify 07-22 whether 24-47h skill_prod moves after the 07-21 stack) and Lt retirement 2-window stability check.
+
+</details>
+
+<details>
 <summary><strong>v0.6.352b • July 16, 2026</strong></summary>
 
 - **MLC collapse diagnosed — real break 06-30, pre-HRRR, stratum-local; hold indefinitely.** New `analysis/marine_layer_collapse_diagnostic.py` recomputes the NE-flow-morning cc in-bin signed bias fresh per obs day (independent of Fitter's cumulative aggregation): +42.7 (06-28) → +16.6 (06-30) → +3.9 (07-05) → never above +5 after. The 07-07 "cliff" `marine_layer_anomaly.py` reported was the growing cumulative window catching up to the older shift, not the actual break. Split at 07-04 (cm HRRR-anomaly onset): in-bin Δ = −48.6 vs out-of-bin Δ = −5.0 (9.8× ratio) — stratum-local, not cc-wide, and pre-HRRR. Companion cl signal weakens same week (marine_layer_cl_stage1 W29 −2.98 vs +12/+22/+17/+13 W25–W28). Diagnosis: likely seasonal marine-layer weakening as SST warms into July; will not re-arm when cm HRRR anomaly clears — different event. Debug page MLC bullets (Built-not-applied + hypothesis-backlog) updated with the real trajectory and diagnosis; redesign candidate flagged as time-of-year gating on the MLC bin.
