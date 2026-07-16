@@ -947,6 +947,21 @@
   </details>
   <div style="margin-top:8px;font-size:0.8em;opacity:0.7;text-align:center;">Details for each cell live in the sections below · <a href="#sec-status" style="color:#7fb3ff;">Engineering updates</a> · <a href="#sec-accuracy" style="color:#7fb3ff;">Accuracy</a> · <a href="#sec-research" style="color:#7fb3ff;">Research &amp; Diagnostics</a></div>
 
+<details style="margin-top:14px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📈 Accuracy over time — Raw vs Production, per-day trajectory</summary>
+  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup of the pair log. Chart shows the trajectory of Raw (bare HRRR/GFS) vs Production (full correction stack) so you can see whether the correction stack is drifting week-over-week or whether a recent ship actually moved the needle. Fires earlier than the 2-window anomaly detector for gradual drift. Source: <code>mae_over_time.json</code> (refreshed by <code>analysis/mae_over_time.py</code> in the daily digest). Pair log currently holds ~30 days of history.</div>
+  <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
+    <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
+    <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
+      <option value="mae" selected>MAE</option>
+      <option value="rmse">RMSE</option>
+      <option value="bias">Bias (signed)</option>
+    </select></label>
+    <span id="mae-time-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
+  </div>
+  <div class="chart-wrap" style="height:280px;"><canvas id="mae-time-canvas"></canvas></div>
+</details>
+
 <details style="margin-top:14px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
   <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">How we measure whether the forecast is good — the metric framework</summary>
   <div style="font-size:0.9em;line-height:1.55;margin-top:8px;color:#cfd8e3;">
@@ -5953,6 +5968,101 @@ if (window.location.hash) {
 }
 
 load();
+
+// ─── Accuracy over time chart (sec-mae-over-time) ────────────────────────
+// Self-contained — fetches mae_over_time.json, populates field dropdown,
+// renders a Chart.js line comparing Raw vs Prod on the selected metric.
+(function initMaeOverTimeChart() {
+  const CHART_URL = "https://data.wymancove.com/mae_over_time.json";
+  const canvas = document.getElementById("mae-time-canvas");
+  const fieldSel = document.getElementById("mae-time-field");
+  const metricSel = document.getElementById("mae-time-metric");
+  const statusEl = document.getElementById("mae-time-status");
+  if (!canvas || !fieldSel || !metricSel) return;
+
+  let payload = null;
+  let chart = null;
+
+  const FIELD_LABELS = {
+    t: "Temperature (°F)", dp: "Dewpoint (°F)", h: "Humidity (%)",
+    ws: "Wind speed (mph)", wg: "Wind gust (mph)",
+    cc: "Cloud cover (%)", cl: "Cloud low (%)", cm: "Cloud mid (%)", ch: "Cloud high (%)",
+    sr: "Solar rad (W/m²)", pr: "Pressure (inHg)", pp: "Precip prob (0-1)", pa: "Precip amt (in)",
+  };
+
+  function seriesFor(field, layer, metric) {
+    const layerSeries = (payload.series[field] || {})[layer] || {};
+    return payload.days.map(d => {
+      const cell = layerSeries[d];
+      return cell ? cell[metric] : null;
+    });
+  }
+
+  function render() {
+    if (!payload) return;
+    const field = fieldSel.value;
+    const metric = metricSel.value;
+    const raw = seriesFor(field, "raw", metric);
+    const prod = seriesFor(field, "prod", metric);
+    const label = (metric === "bias") ? "Bias (signed)" : metric.toUpperCase();
+
+    if (chart) chart.destroy();
+    chart = new Chart(canvas, {
+      type: "line",
+      data: {
+        labels: payload.days,
+        datasets: [
+          { label: "Raw", data: raw,
+            borderColor: "rgba(138,147,163,0.7)", backgroundColor: "rgba(0,0,0,0)",
+            borderDash: [4,4], borderWidth: 1.25, pointRadius: 0, tension: 0.2, spanGaps: true },
+          { label: "Prod", data: prod,
+            borderColor: "#4ad29a", backgroundColor: "rgba(0,0,0,0)",
+            borderWidth: 1.75, pointRadius: 0, tension: 0.2, spanGaps: true },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: "#cfd8e3" } },
+          tooltip: { mode: "index", intersect: false },
+        },
+        scales: {
+          x: { title: { display: true, text: "obs date", color: "#8a93a3" },
+               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
+               grid: { color: "#242833" } },
+          y: { title: { display: true, text: `${label} — ${FIELD_LABELS[field] || field}`, color: "#8a93a3" },
+               ticks: { color: "#8a93a3" },
+               grid: { color: "#242833" },
+               beginAtZero: (metric !== "bias") },
+        },
+      },
+    });
+  }
+
+  fetch(CHART_URL + "?_=" + Date.now())
+    .then(r => r.ok ? r.json() : Promise.reject(new Error(`HTTP ${r.status}`)))
+    .then(p => {
+      payload = p;
+      // Populate field dropdown from present fields in the payload.
+      fieldSel.innerHTML = "";
+      (payload.fields || []).forEach(f => {
+        const opt = document.createElement("option");
+        opt.value = f;
+        opt.textContent = FIELD_LABELS[f] || f;
+        fieldSel.appendChild(opt);
+      });
+      // Default: temperature if present, else first field.
+      if (payload.fields.includes("t")) fieldSel.value = "t";
+      statusEl.textContent = `${payload.days.length} days · refit ${payload.generated_at || ""}`;
+      render();
+      fieldSel.addEventListener("change", render);
+      metricSel.addEventListener("change", render);
+    })
+    .catch(err => {
+      statusEl.textContent = `chart unavailable (${err.message})`;
+      statusEl.style.color = "#e08070";
+    });
+})();
 </script>
 </body>
 </html>

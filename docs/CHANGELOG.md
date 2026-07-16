@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353 • July 16, 2026</strong></summary>
+
+- **Accuracy over time — new chart card on debug page.** New `analysis/mae_over_time.py` aggregates `forecast_error_log.jsonl` per (obs_day × field × layer), emitting per-day MAE + RMSE + bias for Raw and Prod. Publishes `mae_over_time.json` to GCS (same pattern as `h_persistence_skill.py`). Auto-picked up by the daily digest via `analysis/*.py` glob. Filter: min 200 pairs/day to skip noise-thin cells. New collapsible section 📈 "Accuracy over time" placed right after the tri-column band (self-contained IIFE at end of script block, uses existing Chart.js 4.4.4 CDN). Field dropdown + metric dropdown (MAE / RMSE / signed bias), one Chart.js line canvas comparing Raw (dashed grey) vs Prod (solid green) over the last ~30 days. First read: 2,814,904 pair rows → 31 days × 13 fields. Fills the gap the 2-window anomaly detector doesn't cover — surfaces gradual drift and lets you visually verify that a recent ship actually moved the needle. Next iteration if useful: add L2/L3 series, pp Brier variant, ship-date annotations. Half-day estimate landed in ~1 hour.
+
+</details>
+
+<details>
 <summary><strong>v0.6.352e • July 16, 2026</strong></summary>
 
 - **Debug page top-line: prepend live deployed version.** Joe wants to see at a glance whether the live page matches the latest ship — added a fetch of `version.json?_=<ts>` (cache-busted, same pattern as `js/version_check.js`) to `renderMeta()` and prepended `<strong id="meta-version">…</strong> · ` to the tagline. Placeholder shows `…` until fetch resolves, then swaps to `v0.6.352e` (or `?` on error). Sits before `fitted … · N pairs · decay applied … · corrections · weather`.
