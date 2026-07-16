@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.352b • July 16, 2026</strong></summary>
+
+- **MLC collapse diagnosed — real break 06-30, pre-HRRR, stratum-local; hold indefinitely.** New `analysis/marine_layer_collapse_diagnostic.py` recomputes the NE-flow-morning cc in-bin signed bias fresh per obs day (independent of Fitter's cumulative aggregation): +42.7 (06-28) → +16.6 (06-30) → +3.9 (07-05) → never above +5 after. The 07-07 "cliff" `marine_layer_anomaly.py` reported was the growing cumulative window catching up to the older shift, not the actual break. Split at 07-04 (cm HRRR-anomaly onset): in-bin Δ = −48.6 vs out-of-bin Δ = −5.0 (9.8× ratio) — stratum-local, not cc-wide, and pre-HRRR. Companion cl signal weakens same week (marine_layer_cl_stage1 W29 −2.98 vs +12/+22/+17/+13 W25–W28). Diagnosis: likely seasonal marine-layer weakening as SST warms into July; will not re-arm when cm HRRR anomaly clears — different event. Debug page MLC bullets (Built-not-applied + hypothesis-backlog) updated with the real trajectory and diagnosis; redesign candidate flagged as time-of-year gating on the MLC bin.
+
+</details>
+
+<details>
 <summary><strong>v0.6.352a • July 15, 2026</strong></summary>
 
 - **Lt conflict — divergence-report rationale updated + retirement holds.** `l6_fix_b_refit.py` flipped HOLD → SHIP (held-out +0.29% → +1.34%) after a 2-day window roll on essentially identical training data (154,498/47,823 → 154,698/47,716). Panel B refit table is unchanged from the 07-13 retirement read — same 7 SHIP bins overnight, same means. Mechanism argument for retirement (L2's Kalman blend absorbs the signal per-tick, static delta double-counts) unchanged, so **retirement holds** pending 2-window stability on 07-16 + 07-17. Fixed the internally-contradictory comment + note in `analysis/runlog/divergence_report.py` around the LT_ENABLED row: was still saying "will always AGREE with LT_ENABLED=False" while the row was rendering GATE CLEARED (3/2) READY. New text acknowledges the SHIP verdict and states the watch. `_claim:LT_ENABLED=true` has actually been firing continuously since 07-13 T11:53 — retirement was correctly made on mechanism, not on the immediate script number. Bundled with today's routine curated-table refreshes from the analysis pipeline (c1/c1d/c1h/ch/lc/pre-frontal/t/wg/ws/wg-residual + gate-history caches).
