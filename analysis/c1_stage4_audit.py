@@ -35,10 +35,13 @@ from analysis.c1_stage4_mixture_check import refine_verdicts  # noqa: E402
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 CLUSTER_SPREAD_URL = "https://data.wymancove.com/cluster_spread_log.json"
+FRONTAL_EVENTS_URL = "https://data.wymancove.com/frontal_events_log.json"
 CURATED_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "weather_collector", "data", "c1_confidence_curated_v2.json",
 )
+# C1e — post-frontal window group. Mirrors c1_confidence_calibration_v2.py.
+C1E_POST_WINDOW_H = 24
 OUTPUT_JSON = os.path.join(os.path.dirname(__file__), "output",
                            "c1_stage4_audit.json")
 
@@ -161,12 +164,70 @@ def collect_ship_cells():
     return legacy, multi, doc
 
 
-def stratify(pair_log_path, spread_idx, q1, q3, calib_window, recent_window):
+def _load_frontal_passages():
+    """Return sorted list of frontal passage datetimes (naive), or [] on
+    failure/empty log. Mirrors c1_confidence_calibration_v2._load_frontal_passages."""
+    try:
+        path = cached_path(FRONTAL_EVENTS_URL)
+    except Exception as e:
+        print(f"  ⚠ frontal_events_log fetch failed: {e}")
+        return []
+    try:
+        with open(path) as f:
+            doc = json.load(f)
+    except Exception as e:
+        print(f"  ⚠ frontal_events_log parse failed: {e}")
+        return []
+    events = doc.get("events") or doc.get("entries") or doc.get("frontal_events") or []
+    if not events and isinstance(doc, list):
+        events = doc
+    out = []
+    for e in events:
+        ts = e.get("ts") or e.get("timestamp") or e.get("when")
+        if not ts:
+            continue
+        try:
+            ts_clean = ts.replace("Z", "").replace("+00:00", "")
+            out.append(datetime.fromisoformat(ts_clean[:19]))
+        except Exception:
+            continue
+    out.sort()
+    return out
+
+
+def _hsf_group(passages, obs_iso):
+    """'post' if 0-24h since latest passage ≤ obs, else 'baseline'. None if
+    no passage precedes the obs. Mirrors c1_confidence_calibration_v2."""
+    if not passages or not obs_iso:
+        return None
+    try:
+        obs_dt = datetime.fromisoformat(obs_iso.replace("Z", "").replace("+00:00", "")[:19])
+    except Exception:
+        return None
+    lo, hi = 0, len(passages)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        if passages[mid] <= obs_dt:
+            lo = mid + 1
+        else:
+            hi = mid
+    if lo == 0:
+        return None
+    delta_h = (obs_dt - passages[lo - 1]).total_seconds() / 3600.0
+    if delta_h < 0:
+        return None
+    return "post" if delta_h < C1E_POST_WINDOW_H else "baseline"
+
+
+def stratify(pair_log_path, spread_idx, q1, q3, calib_window, recent_window, passages):
     """Single pass over the pair log; accumulate two parallel views:
       legacy_accs[(field, band, slot, window)]    -> [n, sum_abs_err]
       multi_accs[(field, band, axis_key, window)] -> [n, sum_abs_err]
     The legacy aggregator works for every pair; the multi aggregator only
-    sees pairs whose tick is within the cluster_spread log's coverage.
+    sees pairs whose tick is within the cluster_spread log's coverage AND
+    have a preceding frontal passage (needed for the hsf axis).
+    Multi-axis key shape matches c1_confidence_calibration_v2:
+      f"{sq}::{pt}::{slot}::{c1f}::{hsf}"  (5 parts, added hsf on 2026-07-01)
     """
     legacy_accs = defaultdict(lambda: [0, 0.0])
     multi_accs = defaultdict(lambda: [0, 0.0])
@@ -220,7 +281,10 @@ def stratify(pair_log_path, spread_idx, q1, q3, calib_window, recent_window):
             if pt is None or sq is None:
                 continue
             c1f = "p1" if (sfc.get("precip_in") or 0) > 0 else "p0"
-            axis_key = f"{sq}::{pt}::{slot}::{c1f}"
+            hsf = _hsf_group(passages, ot)
+            if hsf is None:
+                continue
+            axis_key = f"{sq}::{pt}::{slot}::{c1f}::{hsf}"
             cell_m = multi_accs[(field, band, axis_key, window)]
             cell_m[0] += 1
             cell_m[1] += abs_err
@@ -381,14 +445,19 @@ def main():
         else:
             print(f"  Q1≤{q1:.3f}, Q3≥{q3:.3f}, earliest tick {earliest_spread}")
 
-    print("[2/3] Streaming pair log...")
+    print("[2/3] Loading frontal passages for hsf axis...")
+    passages = _load_frontal_passages()
+    print(f"  {len(passages)} passages loaded")
+
+    print("[3/4] Streaming pair log...")
     pair_path = cached_path(PAIR_LOG_URL)
     legacy_accs, multi_accs = stratify(
         pair_path, spread_idx, q1, q3,
         (calib_start, calib_end), (recent_start, recent_end),
+        passages,
     )
 
-    print("[3/3] Computing drift per SHIP cell...")
+    print("[4/4] Computing drift per SHIP cell...")
     legacy_counts, legacy_results = classify_cells(
         legacy_ship, legacy_accs,
         key_builder=lambda e: (e[0], e[1], e[2]),  # (field, band, slot)
