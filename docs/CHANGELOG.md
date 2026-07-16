@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353b • July 16, 2026</strong></summary>
+
+- **Rule 5 automation — `scripts/check_stale_refs.py` + `make check-stale`.** Converts today's failure mode (v0.6.352c missed 10+ stale refs, needed v0.6.352d re-sweep) into a mechanical check. Grep-scans `corrections_debug.html` for predictive-tense date refs: day counters `(MM-DD)`, `as of MM-DD`, `HOLD until MM-DD`, `earliest ship/flip MM-DD`. Exits 1 on any hit older than 2 days. Historical mentions (`shipped 07-12`, session narratives, changelog dates) deliberately left alone — only rots-with-time refs are flagged. `feedback_debug_page_canon.md` memory extended with automation note. Verified: passes today, catches 17 refs when simulated at 2026-07-20. Runs manually today; wiring into pre-commit / build.py deferred pending Joe's call.
+
+</details>
+
+<details>
 <summary><strong>v0.6.353a • July 16, 2026</strong></summary>
 
 - **Accuracy-over-time chart v2: L2/L3 layers + Brier + ship-date annotations.** Three follow-ons landed in one pass. (1) `analysis/mae_over_time.py` now emits all four layers (Raw / L2 / L3 / Prod) instead of just Raw/Prod — chart shows the intermediate layers so you can see which layer moved the needle (e.g., wg's L2 shoulder vs L3 shoulder vs Prod, or t's flat L2=L3=Prod confirming t is at ceiling). Also emits Brier = mean(err²) per (day × field × layer) alongside MAE/RMSE/bias. (2) Frontend chart adds `Brier (for pp)` as a metric option; auto-switches to Brier when pp is selected (and back to MAE for other fields). (3) Per-field ship-date annotations drawn as vertical dashed amber lines with rotated labels — ws 07-06 (L3 skip-table firing after 4-day silent dormancy — the big visible move), sr 07-06 (Lsr correction firing after bug fixes), t 07-13 (Lt retired), pa 07-13 (τ 28→42), pp 07-04 (dropped from L3), cm 07-04 (HRRR cm anomaly onset, a data event not a ship but affects trajectory). Dormant ships (ENABLED=False) deliberately not annotated since they don't move Production. Implemented as a Chart.js `afterDatasetsDraw` plugin, no new CDN. Fixed `datetime.utcnow()` deprecation warning in the analysis script while I was in there.

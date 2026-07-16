@@ -42,6 +42,12 @@ analyze:
 	done
 	@echo "Done — upload analysis/output/_combined.txt"
 
+# Rule 5 check — grep the debug page for stale predictive-tense refs
+# (day counters, "earliest flip / ship", "HOLD until", "as of MM-DD").
+# Historical refs left alone. Exit 1 on any hit. See scripts/check_stale_refs.py.
+check-stale:
+	@python3 scripts/check_stale_refs.py
+
 # Run all analyses WITH chart generation. Slower (matplotlib). Produces
 # PNGs alongside text summaries for visual exploration. Use this when you
 # want to *see* the patterns, not just read the numbers.
