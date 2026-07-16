@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353d • July 16, 2026</strong></summary>
+
+- **Makefile cleanup — remove dead `make analyze` target + `_combined.txt` bundle.** Both were added 06-04 (v0.6.13 era) as a "run every analysis + concat to one file for upload" convenience. Fully superseded 07-09 when the digest pipeline (`analysis/runlog/run_digest.sh` + `build_executive_summary.py`) shipped — produces a structured DIGEST.txt with executive summary, pass/fail table, per-script verdicts, and streak counters that the raw concat never had. No script, doc, memory, or recent commit references `_combined.txt` (grep-verified). `make analyze` gone; `make visualize` kept (chart generation + open-dir UX not covered by run_digest.sh). Left a pointer comment in the Makefile explaining the removal + steering readers to run_digest.sh.
+
+</details>
+
+<details>
 <summary><strong>v0.6.353c • July 16, 2026</strong></summary>
 
 - **sr sea_breeze Lsr refit Stage 1 — PROMOTE.** New `analysis/sr_sea_breeze_lsr_refit_stage1.py`. Follow-on to 07-11 confound diagnostic that found sea_breeze has +83.6 W/m² matched-cc bin bias in total_shortwave (Cause B evidence). Method: for sea_breeze sr rows, split 60/40 by obs date, fit per-local-hour signed bias of `(forecast_shortwave − observed)` on train, test intervention vs baseline (current Prod post-Lsr on direct_radiation). First read: n=3,548 total, held-out **baseline MAE 137.93 → intervention MAE 77.64 (+43.71%)**. Halves check A→B +26.55% / B→A +38.58% — both confirm. Ship gate: PROMOTE. Fit shows overall bias +67.60 matches confound direction — real overshoot. Caveats logged: small sample (3 test days), high underlying variance between halves (baseline MAE 298 vs 131 — one hotter half), only 7 hours populated in bias table. **Next:** Stage 2 = full per (regime × hour) cross-cut across all regimes + multi-week stability check. If Stage 2 holds, Stage 3 wires a shortwave-source fallback for winning regimes. Auto-picked up by daily digest via `analysis/*.py` glob. Memory `project_sr_unit_mismatch.md` updated with Stage 1 outcome.

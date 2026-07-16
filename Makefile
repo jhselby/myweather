@@ -22,25 +22,12 @@ logs:
 run-local:
 	@bash -lc 'set +x; set -a; source .env; set +a; python3 -c "from weather_collector.collector import run; run(None)"'
 
-# Run all analyses in TEXT-ONLY mode (skip matplotlib chart generation) and
-# concatenate every summary into a single bundle for easy upload.
-# Use `make analyze` for the fast text-only path.
-analyze:
-	@rm -f analysis/output/_combined.txt
-	@for f in analysis/*.py; do \
-	  echo ""; \
-	  echo "═══════════════════════════════════════════════════════════════"; \
-	  echo "▶ $$f"; \
-	  echo "═══════════════════════════════════════════════════════════════"; \
-	  ANALYSIS_NO_CHARTS=1 python3 "$$f" || echo "   (failed — continuing)"; \
-	done
-	@echo ""
-	@echo "Bundling summaries → analysis/output/_combined.txt"
-	@for s in analysis/output/*_summary.txt; do \
-	  printf "\n\n=== %s ===\n\n" "$$(basename "$$s")" >> analysis/output/_combined.txt; \
-	  cat "$$s" >> analysis/output/_combined.txt; \
-	done
-	@echo "Done — upload analysis/output/_combined.txt"
+# Note: the old `make analyze` target (bundled all *_summary.txt files
+# into analysis/output/_combined.txt for manual upload) was superseded by
+# `analysis/runlog/run_digest.sh`, which runs every script and builds a
+# structured DIGEST.txt with executive summary, pass/fail table, per-
+# script verdicts, and streak counters. If you want a raw all-scripts
+# run, invoke run_digest.sh directly. Removed 2026-07-16 as dead code.
 
 # Rule 5 check — grep the debug page for stale predictive-tense refs
 # (day counters, "earliest flip / ship", "HOLD until", "as of MM-DD").
