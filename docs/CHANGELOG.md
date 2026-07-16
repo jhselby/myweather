@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353e • July 16, 2026</strong></summary>
+
+- **Stage 4 audit: promote mixture-normalized refined view to primary.** The TODO queued 07-09 called for a mixture-normalized drift metric. The refined-view infrastructure landed the same day but stayed buried — printed third, and the raw legacy metric was still the top-line verdict downstream. This commit finishes the promotion: (a) `c1_stage4_audit.py` prints refined FIRST for both legacy_axis and multi_axis (labeled PRIMARY), then legacy view (labeled `[legacy — not authoritative]`); (b) closes with a pinned `Verdict: <refined_rec>` line so `extract_verdict()` in the digest exec summary picks refined instead of legacy; (c) JSON gets a new top-level `primary` field (source = `multi_axis.refined` when present, else `legacy_axis.refined`) so downstream code reads `primary.recommendation` — legacy `legacy_axis.recommendation` and `multi_axis.recommendation` retained for backward compat. Today's read shows the impact: legacy said `NOT READY — drift exceeds tolerance on majority of cells` (20 PASS / 23 WATCH / 15 FAIL), refined said `MIXED — most cells stable but tail unstable; hold` (27 PASS / 4 WATCH / 10 FAIL / +17 excluded as metric-artifact). Same underlying data; refined controls for near-zero-calib, mixture drift, and unsigned-improvement artifacts that inflate the legacy metric. Memory `project_stage4_audit_metric_limitation` updated with the "codified in-script" note. Full TODO item closed.
+
+</details>
+
+<details>
 <summary><strong>v0.6.353d • July 16, 2026</strong></summary>
 
 - **Makefile cleanup — remove dead `make analyze` target + `_combined.txt` bundle.** Both were added 06-04 (v0.6.13 era) as a "run every analysis + concat to one file for upload" convenience. Fully superseded 07-09 when the digest pipeline (`analysis/runlog/run_digest.sh` + `build_executive_summary.py`) shipped — produces a structured DIGEST.txt with executive summary, pass/fail table, per-script verdicts, and streak counters that the raw concat never had. No script, doc, memory, or recent commit references `_combined.txt` (grep-verified). `make analyze` gone; `make visualize` kept (chart generation + open-dir UX not covered by run_digest.sh). Left a pointer comment in the Makefile explaining the removal + steering readers to run_digest.sh.

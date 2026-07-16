@@ -440,42 +440,59 @@ def main():
             multi_results, calib_win, recent_win, pair_path,
         )
 
+    # Print order (2026-07-16 promotion): refined view FIRST, legacy second.
+    # Motivation: memory project_stage4_audit_metric_limitation documents
+    # that raw drift_pct systematically over-reports failure on three modes
+    # (near-zero calib, mixture drift, unsigned improvement). Refined view
+    # via c1_stage4_mixture_check controls for all three. Practical rule
+    # since 07-09 was "trust refined"; putting refined first codifies it.
+    # extract_verdict() in build_executive_summary picks matches[-1], so
+    # legacy last means legacy is the digest verdict — flipping the order
+    # here also flips which is authoritative in the exec summary.
     excl_label = ", ".join(sorted(SUBSET_EXCLUDE_FIELDS))
     print()
     print(f"Legacy axis (transition × stable, no spread/pt/c1f):")
-    print(f"  {legacy_counts['PASS']} PASS / {legacy_counts['WATCH']} WATCH / "
-          f"{legacy_counts['FAIL']} FAIL / {legacy_counts['INSUFFICIENT']} INSUFFICIENT "
-          f"(of {len(legacy_ship)})")
-    print(f"  → {legacy_rec}")
-    print(f"  Non-precip subset (excluding {excl_label}): "
-          f"{legacy_subset_counts['PASS']} PASS / {legacy_subset_counts['WATCH']} WATCH / "
-          f"{legacy_subset_counts['FAIL']} FAIL / "
-          f"{legacy_subset_counts['INSUFFICIENT']} INSUFFICIENT")
-    print(f"  → {legacy_subset_rec}")
-    print(f"  Refined (per-cell mixture check on WATCH+FAIL): "
+    print(f"  Refined (per-cell mixture check on WATCH+FAIL) — PRIMARY: "
           f"{legacy_refined_counts['PASS']} PASS / {legacy_refined_counts['WATCH']} WATCH / "
           f"{legacy_refined_counts['FAIL']} FAIL / "
           f"{legacy_refined_counts['INSUFFICIENT']} INSUFFICIENT "
           f"(+{legacy_refined_skip} excluded as metric-artifact)")
     print(f"  → {legacy_refined_rec}")
+    print(f"  Legacy view (raw drift %, kept for backward-compat): "
+          f"{legacy_counts['PASS']} PASS / {legacy_counts['WATCH']} WATCH / "
+          f"{legacy_counts['FAIL']} FAIL / {legacy_counts['INSUFFICIENT']} INSUFFICIENT "
+          f"(of {len(legacy_ship)})")
+    print(f"  → {legacy_rec}   [legacy — not authoritative]")
+    print(f"  Non-precip subset (excluding {excl_label}, raw): "
+          f"{legacy_subset_counts['PASS']} PASS / {legacy_subset_counts['WATCH']} WATCH / "
+          f"{legacy_subset_counts['FAIL']} FAIL / "
+          f"{legacy_subset_counts['INSUFFICIENT']} INSUFFICIENT")
+    print(f"  → {legacy_subset_rec}   [legacy — not authoritative]")
     print()
     print(f"Multi-axis (Q × pt × trans × c1f):")
-    print(f"  {multi_counts['PASS']} PASS / {multi_counts['WATCH']} WATCH / "
-          f"{multi_counts['FAIL']} FAIL / {multi_counts['INSUFFICIENT']} INSUFFICIENT "
-          f"(of {len(multi_ship)})")
-    print(f"  → {multi_rec}")
     if not multi_deferred:
-        print(f"  Non-precip subset (excluding {excl_label}): "
-              f"{multi_subset_counts['PASS']} PASS / {multi_subset_counts['WATCH']} WATCH / "
-              f"{multi_subset_counts['FAIL']} FAIL / "
-              f"{multi_subset_counts['INSUFFICIENT']} INSUFFICIENT")
-        print(f"  → {multi_subset_rec}")
-        print(f"  Refined (per-cell mixture check on WATCH+FAIL): "
+        print(f"  Refined (per-cell mixture check on WATCH+FAIL) — PRIMARY: "
               f"{multi_refined_counts['PASS']} PASS / {multi_refined_counts['WATCH']} WATCH / "
               f"{multi_refined_counts['FAIL']} FAIL / "
               f"{multi_refined_counts['INSUFFICIENT']} INSUFFICIENT "
               f"(+{multi_refined_skip} excluded as metric-artifact)")
         print(f"  → {multi_refined_rec}")
+    print(f"  Legacy view (raw drift %, kept for backward-compat): "
+          f"{multi_counts['PASS']} PASS / {multi_counts['WATCH']} WATCH / "
+          f"{multi_counts['FAIL']} FAIL / {multi_counts['INSUFFICIENT']} INSUFFICIENT "
+          f"(of {len(multi_ship)})")
+    print(f"  → {multi_rec}   [legacy — not authoritative]")
+    if not multi_deferred:
+        print(f"  Non-precip subset (excluding {excl_label}, raw): "
+              f"{multi_subset_counts['PASS']} PASS / {multi_subset_counts['WATCH']} WATCH / "
+              f"{multi_subset_counts['FAIL']} FAIL / "
+              f"{multi_subset_counts['INSUFFICIENT']} INSUFFICIENT")
+        print(f"  → {multi_subset_rec}   [legacy — not authoritative]")
+    # Final verdict line — pinned last so extract_verdict() matches[-1] returns
+    # the refined verdict for the digest exec summary.
+    primary_rec = multi_refined_rec if not multi_deferred else legacy_refined_rec
+    print()
+    print(f"Verdict: {primary_rec}   (mixture-normalized refined view — primary since 2026-07-16 v0.6.353e)")
 
     # Top 5 worst drifters across both views
     all_drifters = sorted(
@@ -491,6 +508,18 @@ def main():
                   f"calib={r['mae_calib']:.3f} recent={r['mae_recent']:.3f} "
                   f"drift={r['drift_pct']:+.1f}% ({r['verdict']})")
 
+    # Primary (mixture-normalized refined view) — the authoritative summary.
+    # Legacy raw drift_pct kept under legacy_axis.* and multi_axis.* for
+    # backward compat but not the source of truth since 2026-07-16.
+    if multi_deferred:
+        primary_counts = legacy_refined_counts
+        primary_recommendation = legacy_refined_rec
+        primary_source = "legacy_axis.refined (multi-axis deferred)"
+    else:
+        primary_counts = multi_refined_counts
+        primary_recommendation = multi_refined_rec
+        primary_source = "multi_axis.refined"
+
     out = {
         "generated_at": now.isoformat(),
         "windows": {
@@ -501,6 +530,12 @@ def main():
             "min_n_cell": MIN_N_CELL,
             "drift_pass_pct": DRIFT_PASS_PCT,
             "drift_watch_pct": DRIFT_WATCH_PCT,
+        },
+        "primary": {
+            "counts": primary_counts,
+            "recommendation": primary_recommendation,
+            "source": primary_source,
+            "note": "Mixture-normalized refined view. Controls for near-zero-calib, mixture drift, and unsigned-improvement artifacts that inflate the raw drift metric. Trust this over legacy_axis.recommendation / multi_axis.recommendation.",
         },
         "legacy_axis": {
             "counts": legacy_counts,
