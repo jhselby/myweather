@@ -947,40 +947,6 @@
   </details>
   <div style="margin-top:8px;font-size:0.8em;opacity:0.7;text-align:center;">Details for each cell live in the sections below · <a href="#sec-status" style="color:#7fb3ff;">Engineering updates</a> · <a href="#sec-accuracy" style="color:#7fb3ff;">Accuracy</a> · <a href="#sec-research" style="color:#7fb3ff;">Research &amp; Diagnostics</a></div>
 
-<details style="margin-top:14px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">How we measure whether the forecast is good — the metric framework</summary>
-  <div style="font-size:0.9em;line-height:1.55;margin-top:8px;color:#cfd8e3;">
-    <p><strong>Core comparison:</strong> pipeline error vs. raw HRRR/GFS error on the same forecast-observation pairs. Every metric on this page averages those errors differently.</p>
-
-    <p><strong>"Observed" per field</strong> (best local measurement, not absolute truth):</p>
-    <ul style="margin:4px 0 8px 20px;padding:0;">
-      <li><strong>t, dp, h, ws, wg, pr</strong>: mesonet Kalman blend across 60 WU + 26 Tempest stations within ~2.5 mi, station-bias corrected.</li>
-      <li><strong>cc, cl, cm, ch</strong>: mean of KBOS + KBVY METAR sky reports (octa → percent). Coarser than mesonet.</li>
-      <li><strong>sr</strong>: median across valid Tempest solar_radiation_wm2.</li>
-      <li><strong>pa</strong>: max WU precip_rate_in across stations (patchy-rain-aware).</li>
-      <li><strong>pp</strong>: binary — any measurable rain this hour (0 or 100).</li>
-      <li><strong>wd</strong>: station wind_direction, circular error.</li>
-    </ul>
-
-    <p><strong>Three metrics per NWS/ECMWF conventions:</strong></p>
-    <ul style="margin:4px 0 8px 20px;padding:0;">
-      <li><strong>MAE</strong> — mean |error|. "Typical-day miss." Historical page text usually means this.</li>
-      <li><strong>RMSE</strong> — root mean squared error. Weights big misses harder; if RMSE improvement lags MAE, pipeline has hidden blow-ups.</li>
-      <li><strong>Bias</strong> — signed mean error. Positive = over-forecast; negative = under. Catches systematic drift MAE masks.</li>
-    </ul>
-
-    <p><strong>pp uses Brier score</strong>, not MAE (binary obs vs. probability forecast). Brier = mean of (fc/100 − obs/100)². Same "% erased" framing.</p>
-
-    <p><strong>Measurement gaps:</strong></p>
-    <ul style="margin:4px 0 8px 20px;padding:0;">
-      <li><strong>Persistence skill</strong> — shipped 2026-07-11 (<code>h_persistence_skill.py</code>). Baseline: 5 ADD VALUE (t/h/pr/ws/sr), 4 MIXED (dp/wg/cc/pp), 3 NO SKILL — <em>cl/cm/ch lose to persistence at every band despite L3+L4</em>. <strong>Scorecard integration shipped 07-12 v0.6.328</strong> — the "vs Persistence" line in the scorecard banner (above) is live-updated from <code>persistence_skill.json</code>. Response for ch: <strong>ch persistence gate shipped 07-12 v0.6.327 (ENABLED=False, day 5/7 as of 07-16)</strong>. Landmark answered 07-14 v0.6.351a: persist_only ties gate pooled but gate wins halves-hedge; keep the shipped gate. Prod-vs-L4 audit corroborates: ch Prod −1.10 vs L4-alone −0.30 as of 07-14 (L3 doing damage). cl narrow persistence gate shipped Stage 3 07-13 v0.6.330 (day 4/7). cm queued past 07-18 anomaly rollout.</li>
-      <li><strong>Climatology skill</strong> — long-lead reference. Needs a climatology dataset.</li>
-      <li><strong>pp Brier reliability decomposition</strong> — does "30% chance" actually happen 30% of the time? Aggregate Brier only, no decomposition.</li>
-    </ul>
-
-    <p><strong>Historical wording caveat:</strong> section text written pre-v0.6.325 (2026-07-10) treats MAE as the only measure. Read alongside RMSE + bias — disagreements usually mean occasional big misses or systematic drift.</p>
-  </div>
-</details>
 </section>
 
 <a id="sec-status"></a>
@@ -1289,6 +1255,41 @@
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
   <p class="layer-summary">Two lenses on the same question. <strong>First (Accuracy over time, below):</strong> the per-obs-day trajectory of Raw vs Production — is the stack drifting? Did a recent ship move the needle? <strong>Second (per-field tables, further down):</strong> the current-window breakdown by lead band per field — where in the 0-47h horizon is each correction layer helping or hurting? The over-time view is the drift detector; the per-band tables are the shipping-decision granularity. <em>Production in both views is a real per-row aggregate — for over-time from <code>mae_over_time.json</code>, for the per-band tables from <code>per_layer_mae_by_lead[field].production</code> where the per-lead sample count clears n≥30.</em></p>
+
+  <details style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">How we measure whether the forecast is good — the metric framework</summary>
+    <div style="font-size:0.9em;line-height:1.55;margin-top:8px;color:#cfd8e3;">
+      <p><strong>Core comparison:</strong> pipeline error vs. raw HRRR/GFS error on the same forecast-observation pairs. Every metric on this page averages those errors differently.</p>
+
+      <p><strong>"Observed" per field</strong> (best local measurement, not absolute truth):</p>
+      <ul style="margin:4px 0 8px 20px;padding:0;">
+        <li><strong>t, dp, h, ws, wg, pr</strong>: mesonet Kalman blend across 60 WU + 26 Tempest stations within ~2.5 mi, station-bias corrected.</li>
+        <li><strong>cc, cl, cm, ch</strong>: mean of KBOS + KBVY METAR sky reports (octa → percent). Coarser than mesonet.</li>
+        <li><strong>sr</strong>: median across valid Tempest solar_radiation_wm2.</li>
+        <li><strong>pa</strong>: max WU precip_rate_in across stations (patchy-rain-aware).</li>
+        <li><strong>pp</strong>: binary — any measurable rain this hour (0 or 100).</li>
+        <li><strong>wd</strong>: station wind_direction, circular error.</li>
+      </ul>
+
+      <p><strong>Three metrics per NWS/ECMWF conventions:</strong></p>
+      <ul style="margin:4px 0 8px 20px;padding:0;">
+        <li><strong>MAE</strong> — mean |error|. "Typical-day miss." Historical page text usually means this.</li>
+        <li><strong>RMSE</strong> — root mean squared error. Weights big misses harder; if RMSE improvement lags MAE, pipeline has hidden blow-ups.</li>
+        <li><strong>Bias</strong> — signed mean error. Positive = over-forecast; negative = under. Catches systematic drift MAE masks.</li>
+      </ul>
+
+      <p><strong>pp uses Brier score</strong>, not MAE (binary obs vs. probability forecast). Brier = mean of (fc/100 − obs/100)². Same "% erased" framing.</p>
+
+      <p><strong>Measurement gaps:</strong></p>
+      <ul style="margin:4px 0 8px 20px;padding:0;">
+        <li><strong>Persistence skill</strong> — shipped 2026-07-11 (<code>h_persistence_skill.py</code>). Baseline: 5 ADD VALUE (t/h/pr/ws/sr), 4 MIXED (dp/wg/cc/pp), 3 NO SKILL — <em>cl/cm/ch lose to persistence at every band despite L3+L4</em>. <strong>Scorecard integration shipped 07-12 v0.6.328</strong> — the "vs Persistence" line in the scorecard banner (above) is live-updated from <code>persistence_skill.json</code>. Response for ch: <strong>ch persistence gate shipped 07-12 v0.6.327 (ENABLED=False, day 5/7 as of 07-16)</strong>. Landmark answered 07-14 v0.6.351a: persist_only ties gate pooled but gate wins halves-hedge; keep the shipped gate. Prod-vs-L4 audit corroborates: ch Prod −1.10 vs L4-alone −0.30 as of 07-14 (L3 doing damage). cl narrow persistence gate shipped Stage 3 07-13 v0.6.330 (day 4/7). cm queued past 07-18 anomaly rollout.</li>
+        <li><strong>Climatology skill</strong> — long-lead reference. Needs a climatology dataset.</li>
+        <li><strong>pp Brier reliability decomposition</strong> — does "30% chance" actually happen 30% of the time? Aggregate Brier only, no decomposition.</li>
+      </ul>
+
+      <p><strong>Historical wording caveat:</strong> section text written pre-v0.6.325 (2026-07-10) treats MAE as the only measure. Read alongside RMSE + bias — disagreements usually mean occasional big misses or systematic drift.</p>
+    </div>
+  </details>
 
   <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
     <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📈 Accuracy over time — Raw vs Production, per-day trajectory</summary>

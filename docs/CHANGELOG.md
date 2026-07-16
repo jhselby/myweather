@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353k • July 16, 2026</strong></summary>
+
+- **Move orphaned metric-framework explainer into Forecast Accuracy section.** v0.6.353j moved the accuracy-over-time chart into the Accuracy section but left the "How we measure whether the forecast is good — the metric framework" `<details>` block behind, stranded between the tri-column band and the Recent Activity section with no context for what it was explaining. Joe caught it. Moved the block to sit right below the section intro (collapsed by default; open to see per-field observed sources, MAE/RMSE/bias/Brier definitions, measurement gaps like persistence skill and Brier reliability decomp). Reader flow now: intro → optional metric definitions → accuracy-over-time chart → per-band tables intro → per-field tables.
+
+</details>
+
+<details>
 <summary><strong>v0.6.353j • July 16, 2026</strong></summary>
 
 - **Accuracy-over-time chart moved into the Forecast Accuracy section.** Was a standalone collapsible right after the tri-column band; now lives at the top of the Forecast Accuracy section as the first view. Reframed the section intro as "Two lenses on the same question": (1) over-time trajectory = drift detector, is Prod moving? (2) per-field per-band tables = shipping-decision granularity, where in the horizon is each layer helping. Chart is `<details open>` so it's visible by default. `#sec-mae-over-time` anchor preserved so prior links still resolve. Also refreshed the chart's descriptor paragraph — mentions L2/L3 series, rolling-mean overlays, ship-date annotations, and the retention-independent accumulating history (was still saying "pair log holds ~30 days" which became misleading after v0.6.353h).
