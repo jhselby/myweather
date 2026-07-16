@@ -947,22 +947,6 @@
   </details>
   <div style="margin-top:8px;font-size:0.8em;opacity:0.7;text-align:center;">Details for each cell live in the sections below · <a href="#sec-status" style="color:#7fb3ff;">Engineering updates</a> · <a href="#sec-accuracy" style="color:#7fb3ff;">Accuracy</a> · <a href="#sec-research" style="color:#7fb3ff;">Research &amp; Diagnostics</a></div>
 
-<details style="margin-top:14px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
-  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📈 Accuracy over time — Raw vs Production, per-day trajectory</summary>
-  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup of the pair log. Chart shows the trajectory of Raw (bare HRRR/GFS) vs Production (full correction stack) so you can see whether the correction stack is drifting week-over-week or whether a recent ship actually moved the needle. Fires earlier than the 2-window anomaly detector for gradual drift. Source: <code>mae_over_time.json</code> (refreshed by <code>analysis/mae_over_time.py</code> in the daily digest). Pair log currently holds ~30 days of history.</div>
-  <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
-    <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
-    <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
-      <option value="mae" selected>MAE</option>
-      <option value="rmse">RMSE</option>
-      <option value="bias">Bias (signed)</option>
-      <option value="brier">Brier (for pp)</option>
-    </select></label>
-    <span id="mae-time-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
-  </div>
-  <div class="chart-wrap" style="height:280px;"><canvas id="mae-time-canvas"></canvas></div>
-</details>
-
 <details style="margin-top:14px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
   <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">How we measure whether the forecast is good — the metric framework</summary>
   <div style="font-size:0.9em;line-height:1.55;margin-top:8px;color:#cfd8e3;">
@@ -1304,7 +1288,25 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  <p class="layer-summary"><strong>The bright white "Production" column is the forecast users actually see. Lower is better.</strong> For each field, one combined table shows how far off the forecast tends to be at each lead band — <strong>MAE</strong> (typical error), <strong>RMSE</strong> (occasional big misses that MAE averages away), <strong>bias</strong> (systematic drift, signed) — per correction layer. Compare a MAE row across columns to see where each layer helps or hurts. <em>Production is a real per-row aggregate from <code>per_layer_mae_by_lead[field].production</code> where the per-lead sample count clears n≥30 (from <code>per_layer_n_by_lead[field].production</code>); deepest-applied-layer MAE fills leads still below the floor.</em></p>
+  <p class="layer-summary">Two lenses on the same question. <strong>First (Accuracy over time, below):</strong> the per-obs-day trajectory of Raw vs Production — is the stack drifting? Did a recent ship move the needle? <strong>Second (per-field tables, further down):</strong> the current-window breakdown by lead band per field — where in the 0-47h horizon is each correction layer helping or hurting? The over-time view is the drift detector; the per-band tables are the shipping-decision granularity. <em>Production in both views is a real per-row aggregate — for over-time from <code>mae_over_time.json</code>, for the per-band tables from <code>per_layer_mae_by_lead[field].production</code> where the per-lead sample count clears n≥30.</em></p>
+
+  <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
+    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📈 Accuracy over time — Raw vs Production, per-day trajectory</summary>
+    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (bare HRRR/GFS), L2, L3, and Production (full correction stack). Rolling 7-day mean overlays on Raw and Prod smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed by <code>analysis/mae_over_time.py</code> in the daily digest.</div>
+    <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
+      <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
+      <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
+        <option value="mae" selected>MAE</option>
+        <option value="rmse">RMSE</option>
+        <option value="bias">Bias (signed)</option>
+        <option value="brier">Brier (for pp)</option>
+      </select></label>
+      <span id="mae-time-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
+    </div>
+    <div class="chart-wrap" style="height:280px;"><canvas id="mae-time-canvas"></canvas></div>
+  </details>
+
+  <p class="layer-summary" style="margin-top:14px;"><strong>Per-field breakdown by lead band (below).</strong> The bright white "Production" column is the forecast users actually see. Lower is better. For each field, one combined table shows how far off the forecast tends to be at each lead band — <strong>MAE</strong> (typical error), <strong>RMSE</strong> (occasional big misses that MAE averages away), <strong>bias</strong> (systematic drift, signed) — per correction layer. Compare a MAE row across columns to see where each layer helps or hurts.</p>
   <details class="layer-methodology"><summary>How to read these tables</summary>
     <div class="meta-line"><strong>What you're looking at.</strong> One card per field. Each card shows a table with rows grouped by lead band (0-5h, 6-11h, 12-23h, 24-47h, ALL). Under each band, three metric rows: MAE (primary), RMSE (secondary), bias (secondary, signed). Columns are the correction layers actually applied to that field, plus the Production output on the right.</div>
     <div class="meta-line"><strong>Only-applied layers.</strong> Layers that aren't applied to a field don't render as columns because their per-lead MAE array equals the previous applied layer's — noise. The badges above the table (L2 ✓, L3 ✓, L4 off, etc.) confirm the applied set. If Production isn't the lowest MAE, check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>

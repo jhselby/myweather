@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353j • July 16, 2026</strong></summary>
+
+- **Accuracy-over-time chart moved into the Forecast Accuracy section.** Was a standalone collapsible right after the tri-column band; now lives at the top of the Forecast Accuracy section as the first view. Reframed the section intro as "Two lenses on the same question": (1) over-time trajectory = drift detector, is Prod moving? (2) per-field per-band tables = shipping-decision granularity, where in the horizon is each layer helping. Chart is `<details open>` so it's visible by default. `#sec-mae-over-time` anchor preserved so prior links still resolve. Also refreshed the chart's descriptor paragraph — mentions L2/L3 series, rolling-mean overlays, ship-date annotations, and the retention-independent accumulating history (was still saying "pair log holds ~30 days" which became misleading after v0.6.353h).
+
+</details>
+
+<details>
 <summary><strong>v0.6.353i • July 16, 2026</strong></summary>
 
 - **Accuracy-over-time chart: 7-day rolling mean overlays on Raw and Prod.** Chose rolling mean over linear regression (no functional assumption) and only overlay on Raw + Prod (not L2/L3) to avoid 8-line noise — the reader watches Raw ↔ Prod for drift. Complements the ship-date annotations: if a ship's effect is sustained the rolling mean bends within a week; if it reverts, mean stays flat. Rendered thicker (4px) with 0.35 alpha so daily line stays visually dominant. Kicks in once at least 4 non-null points in the trailing 7-day window are available (skips the first few days after a fresh dataset appears). Frontend-only change; no schema or analysis-script update needed since the daily values are already in the payload.
