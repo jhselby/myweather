@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.353h • July 16, 2026</strong></summary>
+
+- **Accuracy-over-time chart: persistent history so x-axis grows past pair-log retention.** Pair log capped at 30 days by `decay_fit.py::RETENTION_DAYS`, so a re-aggregate-from-scratch view maxes out there. Rewrote `analysis/mae_over_time.py` to (1) fetch the prior `mae_over_time.json` from GCS, (2) recompute per-day rollup from the current pair log, (3) merge: overwrite the last `MERGE_REFRESH_DAYS=3` days (still-live cells may add pairs mid-day), preserve older days already recorded (their pair-log rows may have been pruned since). Storage math kept honest: each (day × field × layer) cell is ~90 bytes → ~5 KB/day → ~1.8 MB/year. Today's file at 31 days is 256 KB. First merge run: 1456 kept from prior, 156 overwritten (last 3 days), 0 new. Chart's x-axis is now retention-independent — grows one day at a time indefinitely, capped by nothing except GCS storage (trivial for years). Codifies the "always be mindful of data volume" principle by putting the storage math and knobs (MIN_N_PER_DAY, MERGE_REFRESH_DAYS) at the top of the script for future readers.
+
+</details>
+
+<details>
 <summary><strong>v0.6.353g • July 16, 2026</strong></summary>
 
 - **Debug page Rule 5 sweep — Stage 4 refresh after refined-primary + multi-axis-fix.** After v0.6.353e (refined view → primary) and v0.6.353f (silent 15-day multi-axis stratification bug fix), the debug page still described Stage 4 with 07-11 numbers and "legacy ship" framing. Grep + edit pass caught 6 stale spots: (1) calendar Sat 07-18 entry dropped "legacy" and noted refined + fix; (2) Still-open watches Stage 4 line rewritten with today's numbers (legacy MIXED 26/3/12, multi-axis NOT READY 195/139/320/143 +216); (3) Applied-layer table cc Status column updated to note the refined promotion + multi-axis fix; (4) C1 Applicability map bullet: replaced "HOLD at 61.54%" with today's dual-axis status; (5) Upcoming decisions Q/E/D block: reframed as refined-view-primary, both axes must pass, added the multi-axis-new-baseline caveat; (6) C1 confidence layer detail paragraph (~line 1671): updated the "Latest (07-11 refined)" numbers to today's dual-axis picture and added the silent-bug-caught narrative for future readers.
