@@ -77,10 +77,18 @@ def append_forecast_snapshot(hourly, derived=None):
                "l2": hourly.get("corrected_pressure_in_post_l2", []),
                "l3": hourly.get("corrected_pressure_in_post_l3", []),
                "l4": hourly.get("corrected_pressure_in", [])},
+        # Clouds: Lc (cloud saturation-unbiasing) sits AFTER L4 for
+        # cc / cl / cm / ch. When ENABLED, pre-Lc array is preserved as
+        # <field>_post_l4 by stamp_cloud_saturation_correction so we can
+        # isolate Lc's contribution; when disabled, post_l4 is absent and
+        # l4 falls back to the live array (Lc is a no-op in that path).
+        # Lc rides the l6 slot (Lt was L6-temperature-only, retired 07-13).
         "cc": {"l1": hourly.get("raw_cloud_cover", hourly.get("cloud_cover", [])),
                "l2": hourly.get("cloud_cover_post_l2", []),
                "l3": hourly.get("cloud_cover_post_l3", []),
-               "l4": hourly.get("cloud_cover", [])},
+               "l4": hourly.get("cloud_cover_post_l4",
+                                hourly.get("cloud_cover", [])),
+               "l6": hourly.get("cloud_cover", [])},
         # Solar: L5 (regime correction) sits AFTER L4 in the stack — same
         # shape as cove L6 for temperature. When ENABLED, pre-L5 array is
         # preserved as direct_radiation_post_l4 so l4 stays L4-only; the
@@ -100,15 +108,21 @@ def append_forecast_snapshot(hourly, derived=None):
         "cl": {"l1": hourly.get("raw_cloud_cover_low", hourly.get("cloud_cover_low", [])),
                "l2": hourly.get("cloud_cover_low_post_l2", []),
                "l3": hourly.get("cloud_cover_low_post_l3", []),
-               "l4": hourly.get("cloud_cover_low", [])},
+               "l4": hourly.get("cloud_cover_low_post_l4",
+                                hourly.get("cloud_cover_low", [])),
+               "l6": hourly.get("cloud_cover_low", [])},
         "cm": {"l1": hourly.get("raw_cloud_cover_mid", hourly.get("cloud_cover_mid", [])),
                "l2": hourly.get("cloud_cover_mid_post_l2", []),
                "l3": hourly.get("cloud_cover_mid_post_l3", []),
-               "l4": hourly.get("cloud_cover_mid", [])},
+               "l4": hourly.get("cloud_cover_mid_post_l4",
+                                hourly.get("cloud_cover_mid", [])),
+               "l6": hourly.get("cloud_cover_mid", [])},
         "ch": {"l1": hourly.get("raw_cloud_cover_high", hourly.get("cloud_cover_high", [])),
                "l2": hourly.get("cloud_cover_high_post_l2", []),
                "l3": hourly.get("cloud_cover_high_post_l3", []),
-               "l4": hourly.get("cloud_cover_high", [])},
+               "l4": hourly.get("cloud_cover_high_post_l4",
+                                hourly.get("cloud_cover_high", [])),
+               "l6": hourly.get("cloud_cover_high", [])},
         # Wind direction is circular — needs special sin/cos math in Fitter
         # and Apply. No Layer 2 (no mesonet aggregation for direction yet) and
         # no Layer 4 (no diurnal yet) — Layer 3 decay correction only in v0.6.27.

@@ -785,6 +785,7 @@
   <a href="#sec-layer3">L3 Decay</a>
   <a href="#sec-layer4">L4 Diurnal</a>
   <a href="#sec-layer5">Lsr Synoptic (sr)</a>
+  <a href="#sec-lc">Lc Cloud saturation (cc/cl/cm/ch)</a>
   <a href="#sec-research" class="research">Research & Diagnostics</a>
   <a href="#sec-archive">Archive</a>
 </nav>
@@ -839,6 +840,7 @@
           <li>L3 lead-decay: ws · wg · ch · cm <span style="opacity:0.7;">(pp dropped 2026-07-04 v0.6.304 · skip: ws in ne_flow all bands + sea_breeze 0-11h)</span></li>
           <li>L4 diurnal: <code>{ch, cc}</code></li>
           <li>Lsr synoptic (sr): skip ne_flow + calm <span style="opacity:0.7;">· Lt retired 07-13 (Fix B held-out +0.29%)</span></li>
+          <li>Lc cloud saturation-unbiasing (cc · cl · cm · ch) <span style="opacity:0.7;">· FLIPPED 07-17 v0.6.355 · 14-day watch through 07-31</span></li>
         </ul>
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Production vs raw</div>
         <ul style="margin:0 0 8px 16px;padding:0;">
@@ -867,9 +869,9 @@
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #4ad29a;background:#0f1712;margin-bottom:6px;border-radius:2px;">
-          <div><strong>Lc — cloud saturation-unbiasing</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ code shipped 07-04, divergence-report gate 7/7 today; lc_fit's own gate still False (cm 20-50 flipped into SHIP set 07-11, inside 7-day window) — clears tomorrow when 07-10 rolls out</span></div>
-          <div style="opacity:0.85;">16 SHIP cells / 24 · biggest: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37% MAE. SHIP set has been identical 6 consecutive days (07-11 → 07-16).</div>
-          <div style="color:#9ab0a0;">→ ENABLED=False. Earliest flip <strong>2026-07-17</strong> (tomorrow) if the SHIP set holds one more day and the cumulative-window gate clears. Two-gates-per-layer cross-check: divergence streak counter is not the same as the fitter's own stability gate.</div>
+          <div><strong>Lc — cloud saturation-unbiasing</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ FLIPPED 2026-07-17 v0.6.355 — 14-day post-ship watch</span></div>
+          <div style="opacity:0.85;">16 SHIP cells / 24 · biggest predicted lifts: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37% MAE. First tick: 113 cells fired across cc/cl/cm/ch.</div>
+          <div style="color:#9ab0a0;">→ Watch runs through <strong>2026-07-31</strong>. Triggers: any cc/cl/cm/ch cell flipping COLLAPSE in the anomaly detector; 07-19 Sunday <code>lc_fit</code> re-run showing SHIP-set change. See <a href="#sec-lc" style="color:#7fb3ff;">Lc layer section</a> for live tick telemetry.</div>
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #7fb3ff;background:#101318;margin-bottom:6px;border-radius:2px;">
@@ -917,8 +919,6 @@
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:4px;">Calendar</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-bottom:8px;">
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-17</div>
-          <div><strong>Lc flip earliest</strong> — SHIP set has been identical (16 cells) every day 07-11 → 07-16 (6 days). Fitter's 7-day window drops 07-10 tomorrow → gate_clear should be True. Cross-check `lc_fit` gate before flipping.</div>
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-17</div>
           <div><code>h_ws_octant_bias</code> first of 3 weekly re-reads (07-17, 07-24, 07-31) gating ws additive-L2 Stage 1 candidacy.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-18</div>
           <div>C1 Stage 4 next eligible window (cm anomaly rolls out; blocked 07-11). Refined view is primary since 07-16 v0.6.353e; multi-axis stratification bug fixed same day v0.6.353f (silent since 07-01 hsf axis add).</div>
@@ -940,6 +940,8 @@
           <div>C1h narrow-promote earliest ship (day 2/7 today after 07-14 SHIP-set reset).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Wed 07-22</div>
           <div>C1d narrow-promote earliest ship (day 1/7 today after in-window SHIP-set reset).</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-31</div>
+          <div><strong>Lc 14-day post-ship watch closes</strong> — flipped 07-17 v0.6.355. Triggers: any cc/cl/cm/ch cell flipping COLLAPSE in the anomaly detector; SHIP-set changes in <code>lc_fit</code> weekly re-runs. Clean close → Lc joins the routine correction stack without further ceremony.</div>
         </div>
 
         <div style="color:#a08070;font-weight:600;margin-bottom:4px;">Frozen</div>
@@ -1183,11 +1185,11 @@
           </ul>
         </li>
 
-        <li style="margin-top:6px;"><strong>Fri 07-17 — Lc: flip ENABLED=True?</strong>
+        <li style="margin-top:6px;"><strong>Fri 07-17 — Lc: flip ENABLED=True?</strong> <span style="color:#4ad29a;">ANSWERED — FLIPPED v0.6.355</span>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Do BOTH gates (divergence-report streak + <code>lc_fit</code> SHIP-set stability) clear tomorrow?</li>
-            <li><strong>E:</strong> Divergence-report gate cleared 7/7 as of 07-16. <code>lc_fit</code>'s own gate is still False today (cm 20-50 flipped into SHIP set 07-11, inside 7-day window). SHIP set has been identical (16 cells) 07-11 → 07-16 — 6 consecutive stable days. Tomorrow's fitter window drops 07-10 → gate_clear should be True. Two-gates-per-layer cross-check codified in [[feedback_two_gates_per_layer]] after Lc 07-15 near-miss.</li>
-            <li><strong>D:</strong> If <code>lc_fit</code> gate clears on 07-17 morning + SHIP set unchanged, flip <code>cloud_saturation_correction.ENABLED=True</code>. If SHIP set moves overnight, clock resets — earliest becomes 07-24.</li>
+            <li><strong>Q:</strong> Do BOTH gates (divergence-report streak + <code>lc_fit</code> SHIP-set stability) clear on 07-17?</li>
+            <li><strong>A:</strong> Yes on both. Divergence-report cleared 8/7 (one day past minimum); <code>lc_fit</code> gate_clear=True (07-10 rolled out of the 7-day window); SHIP set = 16 cells identical 7 consecutive days (07-11 → 07-17); no cc/cl/cm/ch ANOMALY. Two-gates-per-layer cross-check per [[feedback_two_gates_per_layer]].</li>
+            <li><strong>Outcome:</strong> Flipped 15:19 EDT. First live tick (15:27): 113 cells fired — cc 46/48, ch 39/48, cm 19/48, cl 9/48. 14-day post-ship watch runs through 2026-07-31 — see the <a href="#sec-lc" style="color:#7fb3ff;">Lc layer section</a>.</li>
           </ul>
         </li>
 
@@ -1340,8 +1342,9 @@
           <li><strong>Raw</strong>: bare HRRR/GFS forecast for this coordinate. Knows nothing about Wyman Cove.</li>
           <li><strong>Aggregate bias (L2)</strong>: what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
           <li><strong>Lead decay (L3)</strong>: historical per-lead bias correction from the pair log.</li>
-          <li><strong>Diurnal (L4)</strong>: hour-of-day bias correction. Final line for every field except sr.</li>
+          <li><strong>Diurnal (L4)</strong>: hour-of-day bias correction. Final line for t / dp / h / ws / wg / pp.</li>
           <li><strong>Synoptic-regime (Lsr)</strong>: per-regime W/m² delta on direct solar radiation. Only present on sr.</li>
+          <li><strong>Cloud saturation (Lc)</strong>: per-(field, value_bin) percentage-point shift, clamped to [0, 100]. Final line for cc / cl / cm / ch. FLIPPED 2026-07-17 v0.6.355 — see <a href="#sec-lc">Lc layer section</a> for details.</li>
         </ul>
       </div>
       <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> = bias added (t, dp, h, pr). <span class="field-badge active">L2 ✓ direct</span> = station median replaces model wind (ws, wg). <span class="field-badge na">L2 n/a</span> = no station network reports this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is n/a as a forecast correction, but obs truth for cc/cl/cm/ch comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
@@ -1655,6 +1658,59 @@
      continues to run (14d rolling, cheap diagnostic). -->
 
 
+<!-- ───────────────────── Lc — Cloud saturation-unbiasing ───────────────────── -->
+<h2 class="section" id="sec-lc">Lc — Cloud saturation-unbiasing (cloud specialist)</h2>
+
+<!-- 1. What it does -->
+<div class="layer-info-text" style="border-color:#3a2f1f;background:#1a160e;">
+  <p class="layer-summary">A per-(field, value_bin) percentage-point shift applied to the L4-corrected forecast for cc / cl / cm / ch. The bias pattern Lc unwinds is <em>saturation</em>: the models systematically overshoot at 0-5% cloud (cc bin 0-5 mean bias +16 pp — model says a little cloud, obs says none) and undershoot at high fractions (cc 95-100: −37 pp; cl 80-95: −62 pp; ch 95-100: −86 pp). The same shape holds across all four cloud fields but with different magnitudes. Lc reads each L4-corrected value, keys into a curated (field, value_bin) → shift table where the fitter's SHIP verdict is set, adds the shift, and clamps to [0, 100]. <strong>SHIP cells:</strong> 16 of 24 total — cc: 0-5, 50-80, 80-95, 95-100; cl / cm / ch: 20-50, 50-80, 80-95, 95-100. SKIP cells (bins that stayed within the ±5 pp noise floor across the 30-day window) pass through unchanged.</p>
+  <details class="layer-methodology"><summary>How Lc works — Preserve → Lookup → Shift → Clamp</summary>
+    <div class="meta-line"><strong>1. Preserve.</strong> Before mutation, stash the L4-corrected array as <code>hourly.&lt;field&gt;_post_l4</code>. Pair log + debug page read this to attribute L4 vs (L4+Lc) cleanly.</div>
+    <div class="meta-line"><strong>2. Lookup.</strong> For each lead 0-47, determine the value bin from <code>[0, 5, 20, 50, 80, 95, 100]</code>. If the (field, bin) cell has SHIP verdict in <code>lc_correction_table.json</code>, read its Δ pp; else Δ = 0 (SKIP — the L4 value passes through unchanged).</div>
+    <div class="meta-line"><strong>3. Apply.</strong> Add Δ to the value and clamp to [0, 100]. Writes back to <code>hourly.&lt;field&gt;</code>.</div>
+    <div class="meta-line" style="opacity:0.75;font-size:0.9em;">Sign convention: the fitter's stored <em>bias</em> is (forecast − observed); the applied <em>shift</em> is <code>−bias</code>, pulling the forecast toward the observation.</div>
+  </details>
+</div>
+
+<!-- 2. Applicability -->
+<h3 class="subsection">Applicability</h3>
+<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;">
+  <div class="meta-line">Lc is a specialist — applies only to cc / cl / cm / ch. Fires when the L4-corrected forecast falls in a SHIP-verdict value bin (16 of 24 cells; see <a href="#sec-applicability">Applicability map</a> for the full per-cell shift table + verdict list).</div>
+</div>
+
+<!-- 3. Live state -->
+<h3 class="subsection">Live state — what Lc is doing this tick</h3>
+<div class="layer-info-text">
+  <div id="lc-live-state" class="status">Loading…</div>
+  <div class="meta-line" style="margin-top:10px;opacity:0.75;">Read directly via <code>curl -s https://data.wymancove.com/weather_data.json | jq .cloud_saturation_correction</code>. The per-lead Δ is also baked into cc / cl / cm / ch cards on the Forecast Accuracy chart above.</div>
+</div>
+
+<!-- 4. Engineering status -->
+<h3 class="subsection">Engineering status</h3>
+<div class="layer-info-text" style="border-color:#2a3a52;background:#0e1620;">
+  <div class="meta-line" style="margin-bottom:4px;"><strong style="color:#7fb3ff;">Where we are (2026-07-17):</strong></div>
+  <div style="font-size:0.92em;line-height:1.55;margin-bottom:6px;">
+    <strong>FLIPPED 2026-07-17 v0.6.355</strong> after 8/7-day gate clear, 16 SHIP cells stable 7 consecutive days (07-11 → 07-17), <code>LC_ENABLED</code> READY on divergence report, and no cc/cl/cm/ch ANOMALY in the pair-log anomaly detector. First live tick (15:27 EDT): <strong>113 cells fired</strong> — cc 46/48, ch 39/48, cm 19/48, cl 9/48; mean |Δ| in the expected 28-42 pp range per field. <strong>14-day post-ship watch runs through 2026-07-31.</strong> Predicted biggest Prod MAE lifts: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37%. <strong>Watch triggers:</strong> (a) any cc/cl/cm/ch cell flipping COLLAPSE in the anomaly detector within 14 days; (b) 07-19 Sunday <code>lc_fit</code> re-run showing SHIP-set change. <strong>Contingency:</strong> revert = flip <code>ENABLED = False</code> in <code>cloud_saturation_correction.py:29</code> → <code>make deploy-collector</code> → document failure mode; next earliest-flip attempt +14 days minimum. Two-gates-per-layer cross-check via [[feedback_two_gates_per_layer]].
+  </div>
+  <details style="margin-top:6px;">
+    <summary style="cursor:pointer;color:#7fb3ff;font-size:0.9em;opacity:0.85;">Full Lc shipped-history log (v0.6.298 → v0.6.355)</summary>
+    <ul style="margin:8px 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;">
+      <li><strong>Code shipped 2026-07-04 v0.6.298</strong> — <code>weather_collector/processors/cloud_saturation_correction.py</code> at <code>ENABLED=False</code>. Fit script <code>analysis/lc_fit.py</code> emits <code>lc_correction_table.json</code> with per-(field, value_bin) shift + SHIP/SKIP verdict + n_samples.</li>
+      <li><strong>Two-gates-per-layer codified 2026-07-15 v0.6.352a</strong> — divergence-report streak counter is not the same gate as <code>lc_fit</code>'s own SHIP-set stability gate. Cross-check both before flipping. Applied here: divergence gate cleared 07-10 (7/7) while <code>lc_fit</code> gate remained False through 07-16 because cm 20-50 flipped into the SHIP set 07-11 (inside the 7-day stability window).</li>
+      <li><strong>ENABLED=True 2026-07-17 v0.6.355</strong> — 8/7-day divergence-report clear + <code>lc_fit</code> gate True (07-10 rolled out of the 7-day window today) + 16 SHIP cells identical 7 consecutive days (07-11 → 07-17) + no cc/cl/cm/ch ANOMALY. Deploy sequence: line 29 flip → <code>make deploy-collector</code> → :07 tick verified → GCS confirmed → frontend push. 14-day post-ship watch begins.</li>
+    </ul>
+  </details>
+</div>
+
+<!-- 5. Developer notes -->
+<details>
+  <summary><h3 class="subsection" style="display:inline;">Developer notes — fit table, refit cadence</h3></summary>
+  <div class="meta-line" style="margin-top:8px;"><strong>Fit table location.</strong> <code>weather_collector/data/lc_correction_table.json</code>. Structure: <code>{field: {value_bin: {shift, verdict, n_samples, mae_pre, mae_post, delta_pct}}}</code>. Loaded at import time in <code>cloud_saturation_correction.py</code> via <code>_load_correction_table()</code>.</div>
+  <div class="meta-line" style="margin-top:6px;"><strong>Refit cadence.</strong> <code>analysis/lc_fit.py</code> runs in the daily digest and rewrites the JSON in-place. SHIP-set stability (7 consecutive days with the same SHIP cells + no HOLD days) is the fitter's own gate; it lives in <code>.cache_lc_gate_history.json</code>.</div>
+  <div class="meta-line" style="margin-top:6px;"><strong>Value-bin edges.</strong> <code>[0, 5, 20, 50, 80, 95, 100]</code> percentage-points — six bins per field × four fields = 24 cells. Bin 5-20 is currently SKIP for all four fields (mid-low cloud has near-zero systematic bias).</div>
+</details>
+
+
 <!-- ───────────────────── Research ───────────────────── -->
 <h2 class="section research-heading" id="sec-research">Research & Diagnostics — experimental signals + audit views (not applied to live forecast)</h2>
 
@@ -1686,13 +1742,12 @@
   <div id="status-drill" class="status" hidden></div>
 </details>
 <details class="research-subsection" id="gated-candidates">
-  <summary>G1. Gated correction candidates — what Lc would do this tick</summary>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> corrections sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast or display.
+  <summary>G1. Gated correction candidates — C1 confidence layer (Stage 3 dormant)</summary>
+  <div class="meta-line" style="margin-bottom:10px;"><strong>What this is:</strong> corrections sketched in code with <code>ENABLED = False</code>. They stamp their candidate values on <code>weather_data</code> every tick so we can observe what they <em>would</em> do without actually modifying the forecast or display. Lc lived here until it flipped 2026-07-17 — see the <a href="#sec-lc">Lc layer section</a> for its live telemetry.
     <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
       <li><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟡 Hybrid · 🔒 stamps every tick, ENABLED=False · 🟢 <code>c1_stage4_audit.py</code>]</span> <strong>C1 confidence layer (multi-axis v3 + marginal C1h/C1d).</strong> Every tick stamps <code>weather_data["confidence"]</code> with per-(field, band) bands + <code>live_axes</code>. <code>applied=False</code> until audit clears. <strong>Curated v3:</strong> 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys (Q × pt × trans × c1f × hsf); 1.29M pairs, 297k multi-axis on 14d window. <strong>Marginal axes v0.6.316 (07-08):</strong> C1h (trend-direction, 15 SHIP) + C1d (KBOS-vs-KBVY σ, 13 SHIP+1 MARGINAL) as standalone tables composed multiplicatively — kept off multi-axis join to avoid cell-dilution. C1h reads ~6h-old L1 snapshot; C1d classifies live <code>cloud_inter_source_sigma</code> vs Q1/Q3. <strong>C1h co-axis ortho gate v0.6.321 (07-10):</strong> first read passed PROMOTE (11 ortho / 30 judged) but only <em>cl × 3 bands</em> are ortho to both C1f + C1e. Wired <code>_C1H_CO_AXIS_GATE</code>: cl fires freely; cc/cm/ch conditionally suppressed when the non-ortho co-axis fires; ch 24-47h + t × 3 (REDUND both) never fire. <code>coax_gated</code> state distinct from <code>flat</code>; fails closed. <strong>Stage 4 audit:</strong> 7d calib vs 7d recent holdout; PASS ≤20% drift, WATCH ≤40%, FAIL &gt;40%. <em>MAE-only caveat: drift on RMSE or raw-MAE-quartile-conditioned would separate calibrated-band drift from easier-weather drift. Lens script exists, not yet in verdict.</em> <strong>Latest (07-16 post v0.6.353e/f):</strong> refined view now authoritative (was buried third since 07-09; promoted to primary 07-16). Legacy axis: 26 PASS / 3 WATCH / 12 FAIL → MIXED. Multi-axis (5-tuple sq×pt×trans×c1f×hsf): 195 PASS / 139 WATCH / 320 FAIL / 143 INSUFFICIENT / +216 excluded → NOT READY. <em>Silent 15-day bug caught 07-16:</em> C1e added hsf axis 07-01 v0.6.272 extending the curated keys from 4-part to 5-part, but `c1_stage4_audit.py::stratify()` kept building 4-part accumulator keys — every ship-cell lookup missed, all 1013 cells reported n=0. Legacy single-axis view kept working so no metric surfaced total failure; the elevation of refined-to-primary in v0.6.353e exposed the "1013 INSUFFICIENT" symptom which led to the fix in v0.6.353f. Ship BLOCKED; re-audit 07-18. <strong>C1h + C1d 7-day counters v0.6.323 (07-10):</strong> read sorted SHIP-cell lists per digest; consecutive matches walk the streak. As of 07-16: C1h at 2/7 (14 SHIP cells), C1d at 1/7 (12 SHIP cells, reset within window). Earliest ship 07-21 (C1h) / 07-22 (C1d). Stage 4b in-card ± preview shipped v0.6.181.</li>
     </ul>
   </div>
-  <div id="gated-candidates-content" class="status">Loading…</div>
 </details>
 
 <details class="research-subsection" id="shadow-whitelist">
@@ -1775,7 +1830,7 @@
       <tr><td style="padding:3px 8px;color:#4ad29a;"><strong>SHIPPED</strong></td><td style="padding:3px 8px;">C1f precip_fc&gt;0</td><td style="padding:3px 8px;">🟢 Auto-wired</td><td style="padding:3px 8px;"><strong>STAGE 2 SHIPPED 2026-06-24 v0.6.215</strong> — 4th axis added to <code>confidence_layer.py</code>. Curated v3 table: 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys. 14d window, 1.29M pairs. ENABLED=False (Stage 4 gates UI consumption).</td><td style="padding:3px 8px;">✓ promoted; live next collector tick</td></tr>
       <tr><td style="padding:3px 8px;color:#4ad29a;"><strong>SHIPPED</strong></td><td style="padding:3px 8px;">Humidity K-taper</td><td style="padding:3px 8px;">🟢 Auto-wired</td><td style="padding:3px 8px;"><strong>STAGE 2 SHIPPED 2026-06-24 v0.6.218</strong> — soft_ramp wired in <code>corrected_hourly.py</code>: K(0h)=1.0 → K(24h)=0.4, floor 0.4 for leads 24-47. h_lead_l2_ktaper_sim.py reads: +7.75% (06-22), +6.60% (06-24).</td><td style="padding:3px 8px;">✓ promoted; live next collector tick</td></tr>
       <tr><td style="padding:3px 8px;color:#4ad29a;"><strong>SHIPPED</strong></td><td style="padding:3px 8px;">cc → L4</td><td style="padding:3px 8px;">🟢 Auto-wired</td><td style="padding:3px 8px;"><strong>STAGE 2 SHIPPED 2026-06-24 v0.6.214</strong> — cc added to <code>L4_FIELDS</code> in <code>decay_apply.py:70</code>. Latest sim read (07-04): cc <strong>+5.1%</strong>, cm <strong>−3.8%</strong>. <strong>cm ride-along declined</strong> — flipped from +3.0% (06-24) to net-negative today, does not clear the ship gate. cc alone remains the L4 cloud addition.</td><td style="padding:3px 8px;">✓ promoted; live next collector tick</td></tr>
-      <tr><td style="padding:3px 8px;color:#e0d472;"><strong>2</strong></td><td style="padding:3px 8px;">Cloud saturation-unbiasing</td><td style="padding:3px 8px;">🟢 Auto (daily digest)</td><td style="padding:3px 8px;"><strong>2026-07-04</strong> (<code>h_cloud_floor_ceiling.py</code>) — cl 95-100 <strong>+64.7pp</strong> (06-23 +63.4 → 06-24 +57.5 → 07-04 +64.7); cc +34.2, cm +55.6, ch +49.9. Direction-stable across 3 reads spanning ~11 days; magnitude drifted +7pp on cl.</td><td style="padding:3px 8px;">✓ Direction-stable 3/3. Architectural home settled 2026-07-04: ships as new specialist <strong>Lc</strong> (cloud-domain-scoped, forecast-value axis, post-L4, pre-Lsr). Stage 2 wiring next.</td></tr>
+      <tr><td style="padding:3px 8px;color:#4ad29a;"><strong>SHIPPED</strong></td><td style="padding:3px 8px;">Cloud saturation-unbiasing (Lc)</td><td style="padding:3px 8px;">🟢 Auto-wired (daily digest)</td><td style="padding:3px 8px;"><strong>STAGE 3 CODE 2026-07-04 v0.6.298 · FLIPPED 2026-07-17 v0.6.355</strong> — <code>weather_collector/processors/cloud_saturation_correction.py</code>. Per-(field, value_bin) shift on cc/cl/cm/ch after L4. 16 SHIP / 8 SKIP of 24 cells; SHIP set stable 7 consecutive days (07-11 → 07-17). First tick 113 cells fired. Biggest predicted lifts: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37%.</td><td style="padding:3px 8px;">✓ Flipped after 8/7-day divergence + <code>lc_fit</code> gate + no cc/cl/cm/ch ANOMALY. 14-day watch through 2026-07-31.</td></tr>
       <tr><td style="padding:3px 8px;color:#4ad29a;"><strong>SHIPPED</strong></td><td style="padding:3px 8px;">ch persistence gate</td><td style="padding:3px 8px;">🟢 Auto-wired (daily digest)</td><td style="padding:3px 8px;"><strong>STAGE 3 SHIPPED 2026-07-12 v0.6.327</strong> — <code>weather_collector/processors/ch_persistence_gate.py</code>. Stage 2 (<code>h_ch_persistence_blend_stage2.py</code>) per (regime × lead_band): 22 SHIP / 6 MARGIN / 8 SKIP / 1 THIN. Halves-check exposed sw_flow long-lead sign flips + pre_frontal/24-47 +9.6% loss the pooled Stage 1 hid. Runs AFTER Lc; replaces cloud_cover_high with persistence-of-obs where gate fires; frontal always L4. First-tick nw_flow: 5 fires 0-5, 12 fires 12-23, 30 skips on SKIP cells — matches preview exactly. <strong>Corroboration:</strong> Production-vs-L4 persistence skill audit shows ch pipeline at Prod −1.10 vs L4-alone −0.30 (07-14) — L3 doing damage on ch, not just L4; persistence-first for non-frontal cells removes both layers of damage at once.</td><td style="padding:3px 8px;">Stage 3 stamped, ENABLED=False. <strong>7-day live-layer change gate: day 5/7 (07-16). Earliest flip: 07-19.</strong> Weekly Sunday re-run of Stage 2 governs SHIP/SKIP cell-set stability; any new halves flip demotes cell to SKIP.</td></tr>
       <tr><td style="padding:3px 8px;color:#4ad29a;"><strong>SHIPPED</strong></td><td style="padding:3px 8px;">wg residual persistence gate</td><td style="padding:3px 8px;">🟢 Auto-wired (daily digest)</td><td style="padding:3px 8px;"><strong>STAGE 3 SHIPPED 2026-07-14 v0.6.351</strong> — <code>weather_collector/processors/wg_residual_persistence.py</code>. Stage 2 (<code>h_wg_residual_persistence_stage2.py</code>) per (regime × lead_band): <strong>6 SHIP / 0 MARGIN / 30 SKIP / 1 THIN</strong> of 37. All 6 SHIP cells long-lead in flow regimes: frontal 24-47 (−49%), pre_frontal 24-47 (−29%), se_flow 12-23 (−19%) + 24-47 (−32%), sw_flow 12-23 (−23%) + 24-47 (−25%). Every 0-5h + 6-11h cell SKIPs in every regime — L2's Kalman already tracks recent obs, so a 14d residual mean re-adds stale bias close-in. Correction = <code>fc_l2</code> + prior-14d mean L2-residual at same clock hour; the 24-slot per-hour table + cell verdicts are emitted together in <code>wg_residual_persistence_curated.json</code> and refit each Stage 2 run. Runs AFTER decay_apply so it overrides L3 in SHIP cells. First-tick frontal regime: 24 fires at 24-47h band, matches preview exactly. Second consecutive gate this month where regime-gate-first frame converts a mixed-pooled Stage 1 into a clean per-cell ship map.</td><td style="padding:3px 8px;">Stage 3 stamped, ENABLED=False. <strong>7-day live-layer change gate: day 3/7 (07-16). Earliest flip: 07-21.</strong> Weekly re-run of Stage 2 governs SHIP/SKIP cell-set stability + refreshes hour-of-day corrections; any halves sign-flip in a SHIP cell demotes it to SKIP. Processor sanity-clamps |correction| &gt; 15 mph as a refit-blowup guard.</td></tr>
       <tr><td style="padding:3px 8px;color:#e0d472;"><strong>NEW</strong></td><td style="padding:3px 8px;">cl persistence gate (narrow)</td><td style="padding:3px 8px;">🟢 Auto (daily digest, from 2026-07-13)</td><td style="padding:3px 8px;"><strong>2026-07-12</strong> Stage 1+2 explored. <code>h_cl_persistence_blend.py</code> + <code>h_cl_linear_ramp_stage2.py</code>. cl does NOT have ch's shape. regime_gate + persist_only halves DIVERGE (Δ_A −14% / Δ_B +13-15% — anomaly-inflated). linear_ramp τ scan monotonic-with-τ (no natural sweet spot, red flag). Per-regime: cloudy-active {se_flow, calm, unknown} (~32% volume) want persistence; clear-flow regimes want L1 baseline (~68%). Stage 2 τ=36 per (regime × lead_band): 20 SHIP / 14 SKIP; 12-23h a graveyard (7 of 9 SKIP). <strong>Real signal: 0-5h narrow persistence gate — all 9 regimes SHIP at 0-5h.</strong></td><td style="padding:3px 8px;">HOLD. Re-verify 2026-07-19 post-anomaly. If halves converge and 0-5h SHIPs hold, ship narrow <code>cl_persistence_short_lead.py</code> (persist replaces cl at lead ≤ 5h, all regimes, no skip table). Otherwise cl gets no gate. See [[project-cl-persistence-investigation]].</td></tr>
@@ -1797,7 +1852,7 @@
     <li style="margin-bottom:8px;"><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟢 Auto-wired · <code>corrected_hourly.py</code> v0.6.218]</span> <strong style="color:#4ad29a;">★ Humidity K-taper</strong> — <strong style="color:#4ad29a;">SHIPPED 2026-06-24 v0.6.218.</strong> soft_ramp K curve for L2 humidity bias (1.0 at lead 0 → 0.4 floor at lead 24). Live; t/pr stay flat-K. History in git log.</li>
     <li style="margin-bottom:8px;"><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟢 Auto-wired · <code>decay_apply.py</code>]</span> <strong style="color:#4ad29a;">★ Cloud cover → L4</strong> — <strong style="color:#4ad29a;">SHIPPED 2026-06-24 v0.6.214.</strong> <code>L4_FIELDS = {"ch", "cc"}</code>. cc L4 currently winning at every lead band (see Forecast Accuracy chart). History in git log.</li>
 
-    <li style="margin-bottom:8px;"><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟢 Auto · last run 07-04] <span style="color:#e0d472;">[Tier 2]</span></span> <strong style="color:#e0d472;">★ Cloud saturation-unbiasing (Stage 1).</strong> <code>h_cloud_floor_ceiling.py</code> stratifies cloud forecasts by forecast-value bin, measures signed bias. Dramatic asymmetry at saturation extremes. cl 95-100 trajectory: 06-23 +63.4pp → 06-24 +57.5 → 07-04 +64.7pp — direction-stable ~62pp. Latest reads: cc 95-100 +34.2pp, cm +55.6, ch +49.9, cc 0-5 floor −19.2pp. Ship criterion met (≥3 direction-stable reads across ~11 days). <strong>Architectural:</strong> L3 conditions on (field, lead), L4 on (field, hour); neither on forecast VALUE. Stack structurally can't fix saturation bias. <strong>Stage 2:</strong> per-(field, value_bin) shift applied after L2/L3/L4. Est. 5-15% MAE reduction at extremes. <strong>Home settled 07-04:</strong> ships as specialist <strong>Lc</strong> (domain-scoped, forecast-value axis; sibling of Lsr/Lt). Next: fit shift table, wire <code>stamp_cloud_saturation_correction()</code>, add Lc column to cloud cards.</li>
+    <li style="margin-bottom:8px;"><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟢 Auto-wired · <code>cloud_saturation_correction.py</code>]</span> <strong style="color:#4ad29a;">★ Cloud saturation-unbiasing (Lc)</strong> — <strong style="color:#4ad29a;">SHIPPED 2026-07-04 v0.6.298 · FLIPPED 2026-07-17 v0.6.355.</strong> Discovery: <code>h_cloud_floor_ceiling.py</code> stratifies cloud forecasts by forecast-value bin. Dramatic asymmetry at saturation extremes: cl 95-100 tracked +64.7pp (over 3 direction-stable reads 06-23 → 07-04); cc 95-100 +34.2pp, cm +55.6, ch +49.9, cc 0-5 floor −19.2pp. Architectural: L3 conditions on (field, lead), L4 on (field, hour); neither on forecast VALUE — Stack structurally can't fix saturation bias without a new specialist. Home settled 2026-07-04: shipped as <strong>Lc</strong>, per-(field, value_bin) shift after L4. Flipped 07-17 after 8/7-day gate + 16 SHIP cells stable 7 days + no ANOMALY. See <a href="#sec-lc" style="color:#7fb3ff;">Lc layer section</a>.</li>
 
     <li style="margin-bottom:8px;"><span style="opacity:0.85;font-weight:normal;font-size:0.9em;">[🟢 Auto · last run 07-04] <span style="color:#a08070;">[Tier 3]</span></span> <strong style="color:#e0d472;">Regime-conditional dp depression correction.</strong> (t − dp) drives fog/heat-index/comfort; residual after individual t/dp corrections may persist. <code>h_dewpoint_depression.py</code> joins t + dp at obs_time. 06-22 |err|=4.36°F → 07-04 3.82°F (overall decaying). <strong>Regime bias:</strong> frontal −2.19 → −1.98 → −1.51 (direction-stable, magnitude decaying). sea_breeze +1.45 → +1.21. sw_flow ~+1.40. nor_easter +3.79★ (n=279). Ship magnitude shrinking — if frontal drops below ~−1°F, folds into "caught elsewhere." Physical: fronts bring unresolved moist air; sea breeze brings dry inland air faster than model expects. Stage 2 needs t-vs-dp residual attribution; residual likely lives in dp.</li>
   </ul>
@@ -3303,13 +3358,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
     if (layerKey === "l4") return l4Fields.has(fieldKey);
     // Lsr (synoptic-regime solar) is solar-radiation-only.
     if (layerKey === "l5") return fieldKey === "sr";
-    // Lt (cove regime correction) — RETIRED 2026-07-13 v0.6.329 after Fix B
-    // refit failed +1% ship gate (+0.29% held-out). ENABLED flipped False
-    // 07-03 v0.6.286; both branches killed 07-01 v0.6.276 before that.
-    // Treat as not-applied so Production line for T reads off L4 (the
-    // actual deepest live layer), not Lt (which would silently equal L4
-    // since compute_cove_correction returns 0.0 unconditionally).
-    if (layerKey === "l6") return false;
+    // l6 slot: Lc (cloud saturation-unbiasing) for cc/cl/cm/ch since
+    // 2026-07-17 v0.6.355. Lt previously owned l6 for temperature only;
+    // retired 2026-07-13 v0.6.329 after Fix B refit failed +1% ship gate.
+    // Filter l6 to the cloud fields so Production for cc/cl/cm/ch reads
+    // off Lc and Production for T reads off L4.
+    if (layerKey === "l6") return ["cc","cl","cm","ch"].includes(fieldKey);
     return false;
   };
   const grid = document.getElementById("accuracy-grid");
@@ -3338,10 +3392,11 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // entry out for every other field so the column / legend / line don't
     // render where they'd never have data.
     { key: "l5", label: "Synoptic-regime (Lsr)",            shortLabel: "Synoptic regime",color: "rgba(255,184,77,1)",     dash: [] },
-    // Lt (microclimate, temperature only) — _layersFor() filters this entry
-    // out for every other field so the column / legend / line don't render
-    // where they'd never have data.
-    { key: "l6", label: "Microclimate (Lt)",               shortLabel: "Microclimate",   color: "rgba(74,210,154,1)",     dash: [] },
+    // Lc (cloud saturation-unbiasing, cc/cl/cm/ch only) rides the l6 slot.
+    // Lt was L6-temperature-only, retired 2026-07-13; l6 was unused for
+    // any live field until Lc flipped 2026-07-17 v0.6.355. _layersFor()
+    // filters this entry to cc/cl/cm/ch cards only.
+    { key: "l6", label: "Cloud saturation (Lc)",            shortLabel: "Saturation",     color: "rgba(210,110,180,1)",    dash: [] },
   ];
 
   // v2: per-band MAE summary. Bands match the walk-forward validator buckets.
@@ -3400,6 +3455,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // non-solar cards.
     if (fieldKey === "sr") {
       badges.push(`<span class="field-badge active">Lsr ✓ synoptic</span>`);
+    }
+    // Lc badge — cc/cl/cm/ch only. Flipped 2026-07-17 v0.6.355; 14-day
+    // post-ship watch through 2026-07-31. Mirrors `_layersFor()` which
+    // routes the l6 slot to Lc for the cloud fields.
+    if (["cc","cl","cm","ch"].includes(fieldKey)) {
+      badges.push(`<span class="field-badge active" title="Cloud saturation-unbiasing. FLIPPED 2026-07-17 v0.6.355. Per-(field, value_bin) percentage-point shift after L4. 14-day post-ship watch through 2026-07-31.">Lc ✓ saturation</span>`);
     }
     // Lt badge — temperature only; retired 2026-07-13 v0.6.329 after Fix B
     // refit against L2 baseline held-out at +0.29% (below +1% ship gate).
@@ -4084,12 +4145,12 @@ function renderLsrLiveState(wxDoc) {
 // Post-ship + candidate telemetry. Lc (cloud saturation) FLIPPED
 // 2026-07-17 v0.6.355 — 14-day watch begins. Widget shows per-tick
 // fire counts + mean |Δ| so the watch can eyeball stability.
-function renderGatedCandidatesSection(wxDoc) {
-  const el = document.getElementById("gated-candidates-content");
+function renderLcLiveState(wxDoc) {
+  const el = document.getElementById("lc-live-state");
   if (!el) return;
   const csc = wxDoc?.cloud_saturation_correction;
   if (!csc) {
-    el.textContent = "No candidate correction stamps in weather_data yet.";
+    el.textContent = "No Lc stamp in weather_data yet.";
     return;
   }
 
@@ -5523,7 +5584,7 @@ async function load() {
   renderBacktestSweepSection(backtestSweepDoc);
   renderLtLiveState(wxDoc);
   renderLsrLiveState(wxDoc);
-  renderGatedCandidatesSection(wxDoc);
+  renderLcLiveState(wxDoc);
   renderShadowWhitelistSection(shadowWhitelistDoc, wxDoc);
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
