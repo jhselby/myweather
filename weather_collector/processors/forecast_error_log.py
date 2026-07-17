@@ -282,6 +282,28 @@ def _generate_new_pairs(forecast_log, obs_log, last_processed, last_processed_ho
     if not snapshots or not obs_entries:
         return [], last_processed, last_processed_hour
 
+    # Snapshot-side dedup companion to the obs-side dedup below. The forecast
+    # log carries one snapshot per 10-min tick (:07/:17/:27/:37/:47/:57), but
+    # HRRR advances hourly — the 6 snapshots within a run hour cache the same
+    # underlying model output and produce the same lead_h for a given obs,
+    # yielding 6 identical pair rows. Keep only the earliest snapshot per
+    # run-hour so pair counts reflect independent forecasts. Caught 2026-07-17
+    # after the pair log hit 2.5 GB (30-day window); with this dedup it drops
+    # to ~400 MB and Fitter n's stop being inflated by 6× (CIs were tight by
+    # √6 ≈ 2.5×). Old inflated rows self-resolve as the 30-day retention rolls.
+    seen_run_hours = set()
+    deduped = []
+    for s in sorted(snapshots, key=lambda x: x.get("run", "")):
+        run = s.get("run")
+        if not run or len(run) < 13:
+            continue
+        run_hour = run[:13]
+        if run_hour in seen_run_hours:
+            continue
+        seen_run_hours.add(run_hour)
+        deduped.append(s)
+    snapshots = deduped
+
     new_pairs = []
     latest = last_processed
     latest_hour = last_processed_hour

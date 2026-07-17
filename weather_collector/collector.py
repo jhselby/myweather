@@ -352,6 +352,18 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     except Exception as e:
         logging.warning(f"  ⚠  Solar L5 stamp failed: {redact_secrets(e)}")
 
+    # sr sea_breeze cc-gated Lsr override (Stage 3 sandbox, gated OFF).
+    # 2026-07-17 Stage 2 PROMOTE (pooled +25.27%, halves +29.0%/+21.5%,
+    # lead-band clean). Overrides Lsr's direct_radiation with per-hour-
+    # bias-corrected shortwave_radiation on cc-gated sea_breeze cells.
+    # Runs after Lsr so the override sits on top of a defined baseline;
+    # flip ENABLED after 07-24 weekly halves re-run confirms.
+    try:
+        from .processors.sr_sea_breeze_lsr_override import stamp_sr_sea_breeze_correction
+        stamp_sr_sea_breeze_correction(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  sr sea_breeze override stamp failed: {redact_secrets(e)}")
+
     # Marine-layer cc correction (Stage 3 sandbox, gated OFF). Stamps the
     # NE-flow-morning cc over-call from Stage 2 (2026-06-21 read) so we
     # can observe per-tick what would be subtracted; flip ENABLED after
@@ -569,8 +581,9 @@ def main():
         from .processors.ch_persistence_gate import describe_applicability as _da_chpg
         from .processors.cl_persistence_short_lead import describe_applicability as _da_clpsl
         from .processors.wg_residual_persistence import describe_applicability as _da_wgrp
+        from .processors.sr_sea_breeze_lsr_override import describe_applicability as _da_lsb
         layers = []
-        for fn in (_da_decay, _da_solar, _da_cove, _da_lc, _da_chpg, _da_clpsl, _da_wgrp, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpsl, _da_wgrp, _da_c1):
             try:
                 layers.extend(fn())
             except Exception as e:

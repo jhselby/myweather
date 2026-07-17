@@ -1,0 +1,24 @@
+{
+  "cc_gate": {
+    "hi": 75.0,
+    "lo": 25.0,
+    "rule": "apply iff cc < lo OR cc >= hi"
+  },
+  "enabled": false,
+  "field": "sr",
+  "generated": "2026-07-16T19:07",
+  "hourly_bias_wm2": {
+    "12": -19.79,
+    "13": -21.54,
+    "14": 52.06,
+    "15": 10.4,
+    "16": 197.98,
+    "17": 137.1,
+    "18": 186.78,
+    "19": 129.08
+  },
+  "overall_bias_wm2": 108.26,
+  "regime": "sea_breeze",
+  "source": "sr_sea_breeze_lsr_refit_stage2.py",
+  "verdict": "PROMOTE"
+}

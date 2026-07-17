@@ -6,8 +6,8 @@ Use:
         for line in f: ...
 """
 import os
+import subprocess
 import time
-import urllib.request
 from pathlib import Path
 
 CACHE_DIR = Path.home() / ".cache" / "myweather"
@@ -25,16 +25,25 @@ def cached_path(url, max_age_hours=12, refresh=None):
     stale = not path.exists() or (time.time() - path.stat().st_mtime) / 3600 > max_age_hours
     if refresh or stale:
         print(f"  ⇣ caching {url}")
-        # Atomic write: stream to .tmp, then os.replace into place. Without
-        # this, a parallel reader can iterate the partial file mid-download
-        # (caught 2026-06-18 in r5_audit.py — first run reported "0 matched
-        # pairs" because it read the cache while it was still streaming).
+        # Atomic write: curl → .tmp, then os.replace into place. Without this,
+        # a parallel reader can iterate the partial file mid-download (caught
+        # 2026-06-18 in r5_audit.py — first run reported "0 matched pairs"
+        # because it read the cache while it was still streaming).
+        #
+        # curl instead of urllib.request: urlopen stalls at ~40 MB on large
+        # Cloudflare-fronted composite GCS objects (caught 2026-07-17 when
+        # the 2.5 GB pair log hung the digest for 25 min at the anomaly
+        # detector). curl handles the same fetch at ~24 MB/s.
         tmp = path.with_suffix(path.suffix + ".tmp")
-        req = urllib.request.Request(url, headers={"User-Agent": "myweather-analysis/1.0"})
         try:
-            with urllib.request.urlopen(req, timeout=1800) as r, open(tmp, "wb") as f:
-                while chunk := r.read(1 << 20):
-                    f.write(chunk)
+            subprocess.run(
+                ["curl", "--fail", "--silent", "--show-error",
+                 "--retry", "3", "--retry-delay", "2",
+                 "--max-time", "1800",
+                 "-A", "myweather-analysis/1.0",
+                 "-o", str(tmp), url],
+                check=True,
+            )
             os.replace(tmp, path)
         except BaseException:
             if tmp.exists():
