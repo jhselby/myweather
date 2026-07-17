@@ -918,8 +918,6 @@
       <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:4px;">Calendar</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-bottom:8px;">
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-17</div>
-          <div><code>h_ws_octant_bias</code> first of 3 weekly re-reads (07-17, 07-24, 07-31) gating ws additive-L2 Stage 1 candidacy.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sat 07-18</div>
           <div>C1 Stage 4 next eligible window (cm anomaly rolls out; blocked 07-11). Refined view is primary since 07-16 v0.6.353e; multi-axis stratification bug fixed same day v0.6.353f (silent since 07-01 hsf axis add).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 07-19</div>
@@ -940,6 +938,8 @@
           <div>C1h narrow-promote earliest ship (day 2/7 today after 07-14 SHIP-set reset).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Wed 07-22</div>
           <div>C1d narrow-promote earliest ship (day 1/7 today after in-window SHIP-set reset).</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-24</div>
+          <div><code>h_ws_octant_bias</code> re-read 2 of 3 (07-17 ✓ · 07-24 · 07-31) gating ws additive-L2 Stage 1 candidacy. <strong>07-17 verdict: ⚠ SUGGESTIVE</strong> — 2 REAL octants (E +1.84 mph, S +0.99 mph HRRR over-forecast), 2 WATCH (NE, SW calm-flip), 4 flat. Not enough across-octants signal to justify per-octant L2 correction yet.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-31</div>
           <div><strong>Lc 14-day post-ship watch closes</strong> — flipped 07-17 v0.6.355. Triggers: any cc/cl/cm/ch cell flipping COLLAPSE in the anomaly detector; SHIP-set changes in <code>lc_fit</code> weekly re-runs. Clean close → Lc joins the routine correction stack without further ceremony.</div>
         </div>
@@ -6335,12 +6335,22 @@ load();
       });
       if (payload.fields.includes("t")) fieldSel.value = "t";
       statusEl.textContent = `${payload.days.length} days · refit ${payload.generated_at || ""}`;
+      // Brier is only meaningful for pp (binary obs vs. probability forecast).
+      // Gray out the Brier option in the metric dropdown when a non-pp field
+      // is selected so users don't try to pick it and get silently kicked
+      // back to the prior metric.
+      const brierOpt = metricSel.querySelector('option[value="brier"]');
+      const syncBrierAvailability = () => {
+        if (brierOpt) brierOpt.disabled = fieldSel.value !== "pp";
+      };
+      syncBrierAvailability();
       renderSparklines();
       render();
       fieldSel.addEventListener("change", () => {
         // Auto-suggest Brier when user picks pp
         if (fieldSel.value === "pp" && metricSel.value === "mae") metricSel.value = "brier";
         else if (fieldSel.value !== "pp" && metricSel.value === "brier") metricSel.value = "mae";
+        syncBrierAvailability();
         render();
         renderSparklines();
       });
