@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.356b • July 17, 2026</strong></summary>
+
+- **Correction-candidates table: Stage column + stage-ordered rows + sr Lsb row added + cl persistence Stage 3 status corrected + per-octant ws L2 07-17 result.** Section header "Stage 1 candidates" was stale — table always held candidates at every pipeline stage. Added a first "Stage" column with 4·LIVE (green) / 3·gated (yellow) / 2 (light orange) / 1 (light orange) / 0 (brown) labels; reordered rows top-down by stage so what's shipping surfaces above what's exploring. Added a stage-key legend to the section intro. **New row:** sr sea_breeze Lsb (Stage 3, shipped 07-17 v0.6.354, halves re-run 07-24). **Row corrected:** cl persistence gate (narrow) row was still labeled Stage 1+2 explored / HOLD — actually Stage 3 shipped 07-13 v0.6.330 in `cl_persistence_short_lead.py`, ENABLED=False, flip decision 07-19. **Row updated:** per-octant ws L2 additive now carries today's 07-17 re-read 1-of-3 verdict (⚠ SUGGESTIVE, 2 REAL + 2 WATCH + 4 flat). Footer summary re-counted: 5 Stage 4 live + 6 Stage 3 gated + 4 Stage 1 + 1 Stage 0.
+
+</details>
+
+<details>
 <summary><strong>v0.6.356a • July 17, 2026</strong></summary>
 
 - **Accuracy-over-time metric dropdown: disable Brier for non-pp fields + calendar reorder + h_ws_octant_bias 07-17 result.** (1) Metric dropdown on the accuracy-over-time chart now grays out the "Brier (for pp)" option whenever the selected field isn't pp — previously the option stayed selectable and picking it silently kicked back to the prior metric. Applied on load + on field change. (2) Calendar entry for Fri 07-17 h_ws_octant_bias re-read advanced to Fri 07-24 (re-read 2 of 3) with today's verdict inline: ⚠ SUGGESTIVE — 2 REAL octants (E +1.84 mph, S +0.99 mph HRRR over-forecast), 2 WATCH (NE, SW calm-flip), 4 flat; not enough across-octants signal to justify per-octant L2 correction yet. Re-anchored chronologically between Wed 07-22 and Fri 07-31.
