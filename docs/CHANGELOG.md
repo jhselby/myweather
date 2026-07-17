@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.356c • July 17, 2026</strong></summary>
+
+- **Correction-candidates table: drop shipped rows + reorder Stage 0 → Stage 3 + sr Engineering row updated.** Follow-on to v0.6.356b feedback: the 5 shipped (Stage 4 LIVE) rows are already documented in their own layer sections and Group D refinements, so leaving them in the candidates table was noise. Removed. Table now shows in-flight only: 6 Stage 3 gated + 4 Stage 1 + 1 Stage 0, ordered from earliest stage to latest so what's still open surfaces first. Section header clarifies Stage 4 items live elsewhere. Also updated the sr row in the Current-pipeline-state table (Engineering section): was "Unit-mismatch open · Shortwave shadow-log regime-specific," now reads "Unit-mismatch addressed, not yet live" with the Lsb Stage 3 wiring context — the sandbox stamps candidates but ENABLED=False, so production sr is still Lsr-on-direct-radiation until the 07-24 halves re-run gates the flip.
+
+</details>
+
+<details>
 <summary><strong>v0.6.356b • July 17, 2026</strong></summary>
 
 - **Correction-candidates table: Stage column + stage-ordered rows + sr Lsb row added + cl persistence Stage 3 status corrected + per-octant ws L2 07-17 result.** Section header "Stage 1 candidates" was stale — table always held candidates at every pipeline stage. Added a first "Stage" column with 4·LIVE (green) / 3·gated (yellow) / 2 (light orange) / 1 (light orange) / 0 (brown) labels; reordered rows top-down by stage so what's shipping surfaces above what's exploring. Added a stage-key legend to the section intro. **New row:** sr sea_breeze Lsb (Stage 3, shipped 07-17 v0.6.354, halves re-run 07-24). **Row corrected:** cl persistence gate (narrow) row was still labeled Stage 1+2 explored / HOLD — actually Stage 3 shipped 07-13 v0.6.330 in `cl_persistence_short_lead.py`, ENABLED=False, flip decision 07-19. **Row updated:** per-octant ws L2 additive now carries today's 07-17 re-read 1-of-3 verdict (⚠ SUGGESTIVE, 2 REAL + 2 WATCH + 4 flat). Footer summary re-counted: 5 Stage 4 live + 6 Stage 3 gated + 4 Stage 1 + 1 Stage 0.
