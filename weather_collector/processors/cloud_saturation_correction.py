@@ -26,7 +26,7 @@ import logging
 from pathlib import Path
 
 
-ENABLED = False  # Live-layer change gate: 7-day agreement + 2-tool + per-cell + no-ENT before flipping True. Fit shipped 2026-07-04.
+ENABLED = True  # Flipped 2026-07-17 v0.6.355 after 8/7-day gate clear, 16 SHIP cells stable, LC_ENABLED READY on divergence report, no cc/cl/cm/ch ANOMALY. Fit shipped 2026-07-04.
 
 CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
 

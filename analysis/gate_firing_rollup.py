@@ -197,9 +197,9 @@ def print_summary(out):
     # Expected-dormant allowlist. Anything listed here fires the "expected" bucket
     # instead of the ⚠ bucket. Keep the reason inline so it's obvious when to remove.
     EXPECTED_DORMANT_OPERATORS = {
-        "Lc":  "shipped 2026-07-04 v0.6.298 with ENABLED=False; waiting on 7-day gate clear",
         "Lt":  "retired 2026-07-13 (Fix B refit +0.29% held-out, below +1.0% gate)",
         "MLC": "marine-layer cc sandbox, ENABLED=False, waiting on trend to hold",
+        "Lsb": "sr sea_breeze cc-gated Lsr override, shipped 2026-07-17 v0.6.354 ENABLED=False; halves re-run 07-24",
         "ch_persistence_gate":   "shipped 2026-07-12 v0.6.327 with ENABLED=False; 7-day gate, earliest flip 07-19",
         "cl_persistence_short_lead": "shipped 2026-07-13 v0.6.330 with ENABLED=False; narrow 0-5h all 9 regimes, flip decision 07-19",
     }
