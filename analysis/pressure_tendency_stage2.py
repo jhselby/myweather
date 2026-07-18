@@ -244,9 +244,9 @@ def main():
           f"THIN:       {counts['THIN']}")
     print()
     if counts["ORTHOGONAL"] >= 3:
-        print("  → PROMOTE: pressure tendency is an additive C1 axis. Next step:")
-        print("    extend c1_confidence_calibration.py key tuple to include")
-        print("    pt_bin; no collector change needed (data already in pair log).")
+        print("  → STABLE: pressure tendency is an additive C1 axis. Axis is live")
+        print("    since 2026-06-20 as axis_3 in c1_confidence_calibration_v2.py;")
+        print("    this is a stability re-check pass, not a new candidate.")
     elif counts["REDUNDANT"] >= 0.8 * (32 - counts["THIN"]):
         print("  → KILL: pressure tendency is mostly redundant with other axes.")
     elif counts["CONFOUNDED"] > counts["ORTHOGONAL"]:

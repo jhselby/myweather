@@ -150,8 +150,11 @@ TAU_DAYS = 14
 # analysis/decay_tau_tuning.py.
 TAU_DAYS_BY_FIELD = {
     "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read)
-    "pa": 42,  # +5.5% MAE held-out vs τ=14 (2026-07-13 read; 3/3 confirmation
-    #          streak; bumped from prior 28 which was tuned 2026-06-22).
+    "pa": 7,   # +5.9% MAE held-out vs τ=14 (2026-07-18 read; 8/3 confirmation
+    #          streak; dropped from prior 42 tuned 2026-07-13 — pa's best-τ has
+    #          swung 28→42→7 across three reads. Streak gates membership in the
+    #          ≥5% winning set, not the specific τ value, so a per-field τ that
+    #          keeps drifting is expected here; re-validate weekly.
     # 2026-07-01 read landed ws at +6.7% held-out and we shipped τ_ws=7 in
     # v0.6.271. 2026-07-02 daily digest reversed the verdict: "KEEP τ=14
     # GLOBAL — no field gains ≥5% vs τ=14. Per-field τ would add complexity

@@ -1,7 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.357 • July 18, 2026</strong></summary>
+
+- **Per-field decay τ: pa dropped 42 → 7.** `decay_tau_tuning` verdict IMPLEMENT PER-FIELD τ — pa gains +5.9% held-out MAE vs τ=14 at best τ=7, confirmed by 8/3 consecutive daily reads (streak gate cleared). Updated `decay_fit.py` `TAU_DAYS_BY_FIELD["pa"]` accordingly. Noted in the code comment that pa's best-τ has swung 28→42→7 across three reads and the streak gates set membership, not the specific τ value; re-validate weekly. Also removed the retired `tide_hypothesis.py` from the digest run list (renamed to `.skip.py`) — settled prior, NOAA data-source failure was generating a spurious FAIL each digest.
+
+</details>
+
+<details>
 <summary><strong>v0.6.356c • July 17, 2026</strong></summary>
+
 
 - **Correction-candidates table: drop shipped rows + reorder Stage 0 → Stage 3 + sr Engineering row updated.** Follow-on to v0.6.356b feedback: the 5 shipped (Stage 4 LIVE) rows are already documented in their own layer sections and Group D refinements, so leaving them in the candidates table was noise. Removed. Table now shows in-flight only: 6 Stage 3 gated + 4 Stage 1 + 1 Stage 0, ordered from earliest stage to latest so what's still open surfaces first. Section header clarifies Stage 4 items live elsewhere. Also updated the sr row in the Current-pipeline-state table (Engineering section): was "Unit-mismatch open · Shortwave shadow-log regime-specific," now reads "Unit-mismatch addressed, not yet live" with the Lsb Stage 3 wiring context — the sandbox stamps candidates but ENABLED=False, so production sr is still Lsr-on-direct-radiation until the 07-24 halves re-run gates the flip.
 
