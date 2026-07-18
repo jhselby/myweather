@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.357a • July 18, 2026</strong></summary>
+
+- **Debug page Rule 5 sweep to 07-18 + h Stage 1 preview + digest cleanup.** Debug page updated across ~20 sites: (1) pa τ history + chart annotation + technical description reflect today's 42 → 7 drop; (2) C1 Stage 4 07-18 answered DEFERRED to 07-25 (cm mixture-check still DEGRADED); "re-audit 07-18" refs → 07-25 everywhere; (3) all narrow-promote + wired-gate counters advanced 07-16 → 07-18 (ch persistence day 7/7 CLEARED, wg residual day 5/7, cl persistence day 6/7, h/l4 narrow-add day 6/7, pre-frontal day 6/7, C1h day 4/7, C1d day 1/7 reset again with 13 SHIP cells); (4) walkforward "drop ws" now 9/7 (still HELD in favor of skip-table 07-21); (5) tide_hypothesis path updated to `.skip.py`; (6) Recent activity row added for today's ships. Added new analysis script `h_h_residual_persistence_stage1.py` (Stage 0 hit for h; Stage 1 preview MARGINAL — halves-fragile like wg).
+
+</details>
+
+<details>
 <summary><strong>v0.6.357 • July 18, 2026</strong></summary>
 
 - **Per-field decay τ: pa dropped 42 → 7.** `decay_tau_tuning` verdict IMPLEMENT PER-FIELD τ — pa gains +5.9% held-out MAE vs τ=14 at best τ=7, confirmed by 8/3 consecutive daily reads (streak gate cleared). Updated `decay_fit.py` `TAU_DAYS_BY_FIELD["pa"]` accordingly. Noted in the code comment that pa's best-τ has swung 28→42→7 across three reads and the streak gates set membership, not the specific τ value; re-validate weekly. Also removed the retired `tide_hypothesis.py` from the digest run list (renamed to `.skip.py`) — settled prior, NOAA data-source failure was generating a spurious FAIL each digest.
