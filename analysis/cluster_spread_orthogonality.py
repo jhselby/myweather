@@ -261,7 +261,10 @@ def main():
     total_judgeable = sum(counts[k] for k in ("ORTHOGONAL", "CONFOUNDED",
                                               "REDUNDANT", "AMBIGUOUS"))
     if counts["ORTHOGONAL"] >= 3:
-        print("  → SHIP PERSISTENT LOGGER: cluster-spread is genuinely additive to R6.")
+        print("  → STABLE: cluster-spread axis is live as axis_2 in")
+        print("    c1_confidence_calibration_v2.py since 2026-06-20; persistent logger")
+        print("    (processors/cluster_spread.py) has been running the same window.")
+        print("    This is a stability re-check pass, not a new candidate.")
     elif total_judgeable and counts["REDUNDANT"] / max(total_judgeable, 1) >= 0.8:
         print("  → KILL: cluster-spread is mostly redundant with R6 transition signal.")
     elif counts["CONFOUNDED"] > counts["ORTHOGONAL"]:

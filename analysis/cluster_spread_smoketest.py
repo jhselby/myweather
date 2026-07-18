@@ -230,8 +230,9 @@ def main():
     if smoke_alive:
         print("VERDICT: SMOKE_ALIVE — at least one (field, band) shows MAE in")
         print("highest-spread quartile ≥1.2x MAE in lowest-spread quartile.")
-        print("Recommendation: ship persistent cluster_spread logger and")
-        print("re-audit at n=7 days (~2026-06-27).")
+        print("STABLE: persistent cluster_spread logger has been live since")
+        print("2026-06-20 (processors/cluster_spread.py, gs://cluster_spread_log.json);")
+        print("this is a stability re-check pass, not a new candidate.")
     else:
         print("VERDICT: SMOKE_DEAD — no (field, band) shows ratio >= 1.2.")
         print("Recommendation: deprioritize cluster-spread axis. Revisit only")
