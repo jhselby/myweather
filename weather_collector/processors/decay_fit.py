@@ -150,9 +150,16 @@ TAU_DAYS = 14
 # analysis/decay_tau_tuning.py.
 TAU_DAYS_BY_FIELD = {
     "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read). 2026-07-19
-    #          read shows +3.2% — below the 5% floor. Not reverted today
-    #          (needs multi-read history like ws/pa before flipping); flagged
-    #          for the next τ-audit day.
+    #          re-measurement via extended decay_tau_tuning (v0.6.363, first
+    #          time pp was included in the tuner): τ=7 wins +13.7% vs τ=14
+    #          among decay options, BUT raw-baseline (7.391 MAE) beats every
+    #          decay-τ option (τ=7 = 9.924). Any decay correction hurts pp on
+    #          MAE. Note this entry is INERT — pp isn't in L3_FIELDS or
+    #          L4_FIELDS in decay_apply.py, so no correction is applied to pp
+    #          in production. This override only affects the Fitter's reported
+    #          per_layer_mae for pp (analysis/reporting), not user-visible
+    #          forecasts. Left in place for reporting consistency; removing
+    #          would change reported per_layer_mae values only.
     # 2026-07-01 read landed ws at +6.7% held-out and we shipped τ_ws=7 in
     # v0.6.271. 2026-07-02 daily digest reversed the verdict: "KEEP τ=14
     # GLOBAL — no field gains ≥5% vs τ=14. Per-field τ would add complexity

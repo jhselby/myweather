@@ -42,11 +42,21 @@ from datetime import datetime, timedelta
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
 
-FIELDS = ["t", "dp", "h", "ws", "wg", "cc", "sr", "pr", "pa"]
+FIELDS = ["t", "dp", "h", "ws", "wg", "cc", "sr", "pr", "pa", "pp"]
 FIELD_LABELS = {
     "t": "Temperature", "dp": "Dew point", "h": "Humidity",
     "ws": "Wind speed", "wg": "Wind gust", "cc": "Cloud cover",
     "sr": "Solar rad.", "pr": "Pressure", "pa": "Precip amt",
+    # v0.6.363: pp added to close the fire-and-forget gap on
+    # TAU_DAYS_BY_FIELD["pp"]=28 (shipped 2026-06-21, never re-validated
+    # in the daily digest). Metric is MAE — not the standard Brier for
+    # probabilistic forecasts, but directionally correct for tau tuning:
+    # error = fc_prob − obs_binary ∈ [−1, 1], and the decay-τ scan asks
+    # "does a decay-weighted per-lead bias correction help?" MAE captures
+    # that directionally. If pp comes back with best-τ = τ_max (any
+    # correction hurts), the τ=28 override should be dropped in favor
+    # of no decay correction, not global τ=14.
+    "pp": "Precip prob",
 }
 TAUS = [7, 10, 14, 21, 28, 35, 42]
 LEAD_BINS = 48

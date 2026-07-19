@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.363 • July 19, 2026</strong></summary>
+
+- **decay_tau_tuning: extend to pp + document that the pp override is inert.** Answering the "shouldn't we extend the tuner before concluding we can't measure it?" question. Added `pp` to `FIELDS` in `analysis/decay_tau_tuning.py` with a label + rationale comment. First measurement: pp best-τ = 7 wins +13.7% vs τ=14 among decay options — but **raw baseline (7.391 MAE) beats every decay-τ option (best τ=7 = 9.924, +34% worse than raw)**. Any decay-τ bias correction hurts pp on MAE. Verified this is a moot finding for production: `decay_apply.py:76-80` excludes pp from L3_FIELDS and L4_FIELDS, `L3_BRIER_FIELDS = {"pp"}` is only an audit-suppression flag, and pair-log rows confirm `applied_layer:"l1"` for pp. So `TAU_DAYS_BY_FIELD["pp"] = 28` in `decay_fit.py` is INERT — it only affects the Fitter's reported per_layer_mae for pp (analysis/reporting), not user-visible forecasts. Annotated the config entry accordingly rather than removing it. The lasting value: pp is now permanently measured in the daily digest, so any future proposal to actually APPLY bias correction to pp will be gated by "does the tuner say correction helps vs baseline?" — currently no.
+
+</details>
+
+<details>
 <summary><strong>v0.6.362a • July 19, 2026</strong></summary>
 
 - **Correction: pp τ=28 override has been unvalidated since 2026-06-21, not a "revert candidate."** Earlier I told Joe tomorrow's list included a "pp τ=28 revert check" — that was a misread. The `decay_tau_tuning.py` summary I quoted was for pa (precip amount), not pp (precip probability). Reviewed the tuner: `FIELDS = ["t", "dp", "h", "ws", "wg", "cc", "sr", "pr", "pa"]` at line 45 — **pp is excluded entirely** because it's Brier-native rather than MAE-decay-fit. So `TAU_DAYS_BY_FIELD["pp"] = 28` has been shipped for ~30 days without a single daily re-validation. Not a bug per se (the tuner design predates the pp override) but a latent gap worth naming. Booked to 07-20 as an open question: extend the tuner with a pp-specific Brier-decomposition τ scan, accept the fire-and-forget config, or revert on the argument "we can't measure it, don't trust it." Debug page and project_todo memory corrected accordingly.
