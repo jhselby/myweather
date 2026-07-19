@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.362a • July 19, 2026</strong></summary>
+
+- **Correction: pp τ=28 override has been unvalidated since 2026-06-21, not a "revert candidate."** Earlier I told Joe tomorrow's list included a "pp τ=28 revert check" — that was a misread. The `decay_tau_tuning.py` summary I quoted was for pa (precip amount), not pp (precip probability). Reviewed the tuner: `FIELDS = ["t", "dp", "h", "ws", "wg", "cc", "sr", "pr", "pa"]` at line 45 — **pp is excluded entirely** because it's Brier-native rather than MAE-decay-fit. So `TAU_DAYS_BY_FIELD["pp"] = 28` has been shipped for ~30 days without a single daily re-validation. Not a bug per se (the tuner design predates the pp override) but a latent gap worth naming. Booked to 07-20 as an open question: extend the tuner with a pp-specific Brier-decomposition τ scan, accept the fire-and-forget config, or revert on the argument "we can't measure it, don't trust it." Debug page and project_todo memory corrected accordingly.
+
+</details>
+
+<details>
 <summary><strong>v0.6.362 • July 19, 2026</strong></summary>
 
 - **Jaccard-similarity streak walker — uncorks C1h + C1d GATE CLEARED (hidden by exact-match for 10 days).** Replaces `build_executive_summary.py`'s exact-identity claim comparison (`c == today_claim`) with Jaccard similarity ≥ 0.8. Fixes the brittleness that caused three false readings today: h/l4 fossil catch (Jaccard = 0 → correctly resets), pre-frontal same-day 5-cell shuffle with 2 changed cells (Jaccard = 3/7 ≈ 0.43 → correctly stays reset), and — the smoke-test win — **C1h and C1d both flip from ⏳ 5/7 and 1/7 to ✓ GATE CLEARED (10/7 days each, oldest match 2026-07-10-14:21)**. The "in-window SHIP-set churn" reports since 07-10 were single-cell borderline drift the exact-match walker was penalising; both axes have been structurally stable the whole time. Threshold picked at 0.8 to allow single-cell drift in a 5-6 cell set (Jaccard ≥ 0.83) but not two-cell drift (Jaccard ≤ 0.6). Also documented `_claim_match()` helper with in-file rationale. Debug page counter sites updated across 4 locations (C1h + C1d tri-column narrow-promote sections + upcoming-decisions rows). No collector effects — analysis-side only.
