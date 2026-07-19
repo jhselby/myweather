@@ -41,9 +41,12 @@ OUT_JSON = os.path.abspath(os.path.join(
     HERE, "..", "weather_collector", "data", "ch_persistence_gate_curated.json"
 ))
 
-WIN_A_LO, WIN_A_HI = "2026-06-26T00:00", "2026-07-11T00:00"
-WIN_B_LO, WIN_B_HI = "2026-06-11T00:00", "2026-06-26T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-06-11T00:00", "2026-07-11T00:00"
+# 2026-07-19: slid forward 8 days so the "recent" half covers the MLC
+# collapse / cc-cluster distribution shift (see h_ch_persistence_blend.py
+# for the parallel edit).
+WIN_A_LO, WIN_A_HI = "2026-07-04T00:00", "2026-07-19T00:00"
+WIN_B_LO, WIN_B_HI = "2026-06-19T00:00", "2026-07-04T00:00"
+WIN_FULL_LO, WIN_FULL_HI = "2026-06-19T00:00", "2026-07-19T00:00"
 
 FIELD = "ch"
 MIN_N_CELL = 200

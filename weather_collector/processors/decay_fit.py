@@ -149,17 +149,21 @@ TAU_DAYS = 14
 # here; marginal differences stay at the default. Re-validate weekly via
 # analysis/decay_tau_tuning.py.
 TAU_DAYS_BY_FIELD = {
-    "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read)
-    "pa": 7,   # +5.9% MAE held-out vs τ=14 (2026-07-18 read; 8/3 confirmation
-    #          streak; dropped from prior 42 tuned 2026-07-13 — pa's best-τ has
-    #          swung 28→42→7 across three reads. Streak gates membership in the
-    #          ≥5% winning set, not the specific τ value, so a per-field τ that
-    #          keeps drifting is expected here; re-validate weekly.
+    "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read). 2026-07-19
+    #          read shows +3.2% — below the 5% floor. Not reverted today
+    #          (needs multi-read history like ws/pa before flipping); flagged
+    #          for the next τ-audit day.
     # 2026-07-01 read landed ws at +6.7% held-out and we shipped τ_ws=7 in
     # v0.6.271. 2026-07-02 daily digest reversed the verdict: "KEEP τ=14
     # GLOBAL — no field gains ≥5% vs τ=14. Per-field τ would add complexity
     # for noise-level gains." Two consecutive reads disagreed at the ship
     # threshold → the original SHIP was noise. Reverted 2026-07-02 v0.6.279.
+    # 2026-07-13 read shipped τ_pa=42 (+X% vs τ=14). 2026-07-18 read
+    # dropped pa to τ=7 (+5.9% vs τ=14, 8/3 confirmation streak) shipped
+    # v0.6.357. 2026-07-19 read: pa +0.9% vs τ=14 — below the 5% floor and
+    # every field's best-τ collapsed to 7 with no field clearing the floor.
+    # Same fact pattern as the 07-02 ws revert (two consecutive reads
+    # disagreed at the ship threshold → original SHIP was noise). Reverted.
 }
 
 

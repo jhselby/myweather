@@ -36,7 +36,7 @@ import logging
 from pathlib import Path
 
 
-ENABLED = False  # Live-layer change gate: 7-day agreement + halves-stability + no-halves-flip before flipping True. Stage 2 preview shipped 2026-07-12.
+ENABLED = True  # Flipped 2026-07-19 v0.6.358 after 7-day gate cleared + refreshed-window rerun confirmed SHIP: 27 SHIP cells, halves A -17.84% / B -37.61%, regime_gate FULL -29.53%. Stage 2 preview shipped 2026-07-12.
 
 FIELD = "ch"
 HOURLY_KEY = "cloud_cover_high"
