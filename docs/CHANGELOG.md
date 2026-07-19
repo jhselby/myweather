@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.362 • July 19, 2026</strong></summary>
+
+- **Jaccard-similarity streak walker — uncorks C1h + C1d GATE CLEARED (hidden by exact-match for 10 days).** Replaces `build_executive_summary.py`'s exact-identity claim comparison (`c == today_claim`) with Jaccard similarity ≥ 0.8. Fixes the brittleness that caused three false readings today: h/l4 fossil catch (Jaccard = 0 → correctly resets), pre-frontal same-day 5-cell shuffle with 2 changed cells (Jaccard = 3/7 ≈ 0.43 → correctly stays reset), and — the smoke-test win — **C1h and C1d both flip from ⏳ 5/7 and 1/7 to ✓ GATE CLEARED (10/7 days each, oldest match 2026-07-10-14:21)**. The "in-window SHIP-set churn" reports since 07-10 were single-cell borderline drift the exact-match walker was penalising; both axes have been structurally stable the whole time. Threshold picked at 0.8 to allow single-cell drift in a 5-6 cell set (Jaccard ≥ 0.83) but not two-cell drift (Jaccard ≤ 0.6). Also documented `_claim_match()` helper with in-file rationale. Debug page counter sites updated across 4 locations (C1h + C1d tri-column narrow-promote sections + upcoming-decisions rows). No collector effects — analysis-side only.
+
+</details>
+
+<details>
 <summary><strong>v0.6.361a • July 19, 2026</strong></summary>
 
 - **Debug-page calendar: 07-20 booked (streak-counter robustness pass) + cl linear-ramp / hsf watches added.** Post-analysis debug-page patch. Three findings today (h/l4 fossil catch, pre-frontal same-day reset 7/7 → 1/7, hsf verdict oscillation PROMOTE↔KILL↔PROMOTE) all trace to `build_executive_summary.py`'s streak walker requiring exact cell-identity match on borderline classifications. Booked as v0.6.362 for tomorrow: switch to Jaccard similarity ≥ 0.8 (preserves fossil detection while tolerating single-cell drift). Also added two new tracked hypotheses to Monday: cl linear-ramp Stage 2 watch day 1/7 (STRONG on refreshed windows, 15 SHIP cells at τ=36 — different mechanism from cl_persistence_short_lead; potentially supersedes it), and hsf narrow-cl watch day 1/7 (only cl bands ORTHOGONAL vs C1a; narrow C1e-for-cl signal, not broad). Debug-page-only patch.

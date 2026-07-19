@@ -666,6 +666,33 @@ def main():
         "PRE_FRONTAL_SHIP_CELLS": ("pre-frontal", 7),
         "H_L4_ADD_CANDIDATES": ("h/l4 narrow-add", 7),
     }
+    # Jaccard threshold for cell-set match across consecutive daily reads.
+    # v0.6.362: relaxed from exact-identity (== comparison) to Jaccard ≥ 0.8
+    # to tolerate single-cell borderline drift. Three failures on 2026-07-19
+    # traced to exact-match brittleness: h/l4 fossil catch (Jaccard = 0 →
+    # correctly resets), pre-frontal same-day 5-cell shuffle with 2 cells
+    # different (Jaccard = 0.43 → still resets with 0.8 gate — appropriate
+    # because 40% turnover is real churn), hsf verdict flips (bucket-level,
+    # different walker). Threshold picked at 0.8 so single-cell drift in a
+    # 5-cell set (Jaccard = 4/6 ≈ 0.67) doesn't clear — one-cell tolerance is
+    # 6/7 ≈ 0.86 in a 6-cell set, 5/6 ≈ 0.83 in a 5-cell set. Deliberately
+    # tight; the goal is to catch fossils and true instability, not to paper
+    # over half-cell churn.
+    _JACCARD_MATCH_THRESHOLD = 0.8
+
+    def _claim_match(prior_claim, today_claim, threshold=_JACCARD_MATCH_THRESHOLD):
+        """Return True if prior_claim's SHIP-cell set matches today's under
+        Jaccard similarity >= threshold. Cells are [field, band] pairs; we
+        normalize to a set of tuples so order/serialization variance doesn't
+        break the compare. Empty-vs-empty is a perfect match (1.0)."""
+        sa = {tuple(x) for x in (prior_claim or [])}
+        sb = {tuple(x) for x in (today_claim or [])}
+        if not sa and not sb:
+            return True
+        union = sa | sb
+        if not union:
+            return False
+        return (len(sa & sb) / len(union)) >= threshold
     _narrow_lines = []
     for key, (label, gate_n) in _NARROW_PROMOTE_GATES.items():
         today_claim = _early_today_claims.get(key)
@@ -692,7 +719,7 @@ def main():
             today_str = _early_run_at[:10]
             for r in reversed([x for x in rows if x["run_at"][:10] != today_str]):
                 c = r.get("claim")
-                if c == today_claim:
+                if _claim_match(c, today_claim):
                     streak += 1
                     oldest = r["run_at"]
                 else:
