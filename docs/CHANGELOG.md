@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.359a • July 19, 2026</strong></summary>
+
+- **Post-digest-rerun debug page patch: cl HOLD + hsf discovery + pre-frontal reset.** Full digest rerun after v0.6.359 revealed three items that changed the story. (1) **cl narrow persistence gate HOLD.** Refreshed `h_cl_persistence_blend` (post-window-slide): "mixed — regime_gate doesn't cleanly beat baseline on halves check." Only 4/9 regimes SHIP at 0-5h (se_flow, ne_flow, calm, unknown). Design gate requires all 9 → OFF permanently per the 07-13 criterion. Updated ~7 sites in the debug page: earlier "flip candidate now" claims from v0.6.358a were premature (based on the sibling `h_cl_linear_ramp_stage2`'s STRONG verdict, but that's a different mechanism — linear ramp, not persistence blend). Linear ramp is worth separate Stage 2 investigation. (2) **NEW candidate: hsf (hours-since-front).** `h_hsf_orthogonality` flipped KILL → PROMOTE: "hours-since-front is independent of C1a AND C1e." hsf was killed 06-27 as C1a re-skin; the ortho check now disagrees. Streak 1/7 today; needs 6 more days of PROMOTE, then Stage 1. Added to course-of-action framing. (3) **Pre-frontal streak reset.** Narrow-promote counter went 7/7 CLEARED at 05:52 → 1/7 at 09:01 rerun despite still 5 SHIP cells — cell identity drifted between runs (borderline churn, not fossil). Streak restarts.
+
+</details>
+
+<details>
 <summary><strong>v0.6.359 • July 19, 2026</strong></summary>
 
 - **Digest stale-window guard (structural fossil-window fix).** New `stale_window_audit()` in `analysis/runlog/build_executive_summary.py` scans every `analysis/*.py` for date literals in `WIN_*` assignments; any script whose max window-date is more than 3 days behind today is flagged in a `⚠ STALE ANALYSIS WINDOWS` section at the top of DIGEST.txt exec summary, above SHIP-ELIGIBLE. This is the structural counterpart to yesterday's v0.6.358 fossil-window sweep: the ad-hoc slide caught 8 scripts by hand; this guard catches any future hardcoded date literals automatically, before a 7-day streak on stale data becomes a ship signal. First run immediately caught a 9th fossil I missed in the manual sweep — `h_cl_persistence_blend.py` — which was also slid to 07-19 windows. Post-slide the audit reports 0 stale scripts. See `[[feedback_fossil_windows]]`.
