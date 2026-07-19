@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.359 • July 19, 2026</strong></summary>
+
+- **Digest stale-window guard (structural fossil-window fix).** New `stale_window_audit()` in `analysis/runlog/build_executive_summary.py` scans every `analysis/*.py` for date literals in `WIN_*` assignments; any script whose max window-date is more than 3 days behind today is flagged in a `⚠ STALE ANALYSIS WINDOWS` section at the top of DIGEST.txt exec summary, above SHIP-ELIGIBLE. This is the structural counterpart to yesterday's v0.6.358 fossil-window sweep: the ad-hoc slide caught 8 scripts by hand; this guard catches any future hardcoded date literals automatically, before a 7-day streak on stale data becomes a ship signal. First run immediately caught a 9th fossil I missed in the manual sweep — `h_cl_persistence_blend.py` — which was also slid to 07-19 windows. Post-slide the audit reports 0 stale scripts. See `[[feedback_fossil_windows]]`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.358a • July 19, 2026</strong></summary>
 
 - **Debug page Rule 5 sweep to 07-19.** Full-page grep + update after v0.6.358 ship. ch persistence gate rows across ~10 sites: ENABLED=False · day 7/7 CLEARED → FLIPPED 07-19 · 14-day watch through 08-02, with the refreshed gate shape (27 SHIP, sw_flow/24-47 promoted). h/l4 narrow-add rows across ~5 sites: "on rails, day 6/7" → FOSSIL CAUGHT (streak reset 1/7, retest 07-26+). Counter advances 07-18 → 07-19: C1h day 5/7 (14 SHIP), C1d day 1/7 reset again (14 SHIP), pre-frontal 7/7 CLEARED, wg residual day 6/7, cl persistence day 7/7. Candidates table refreshed with post-shift SKIP-cell counts (ws L3 9, wg L3 12, wg residual 8 SHIP, cl linear ramp 15 SHIP STRONG). pa τ Applicability description updated with the revert. Recent activity 07-18 rolled off "today"; new v0.6.358 + v0.6.358a rows added. Course-of-action framing updated to reflect ch persistence LIVE + h/l4 held.

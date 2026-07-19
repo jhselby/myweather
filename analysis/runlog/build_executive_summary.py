@@ -173,6 +173,56 @@ def load_prior_state():
         return {}
 
 
+STALE_WINDOW_DAYS = 3  # any script whose max date literal is older than
+                       # today − STALE_WINDOW_DAYS is a fossil-window suspect.
+DATE_LITERAL_RE = re.compile(r'"(20\d\d)-(\d\d)-(\d\d)T?')
+
+
+def stale_window_audit():
+    """Scan analysis/*.py for hardcoded date literals in window constants.
+
+    Return a list of warning lines for scripts whose max date literal is
+    older than today − STALE_WINDOW_DAYS. This catches the fossil-window
+    class of bug: hardcoded WIN_A_LO/HI/WIN_FULL_LO/HI constants that
+    were set once and never refreshed, causing the daily digest to
+    re-read the same fossilized verdict for weeks. See
+    [[feedback_fossil_windows]] (07-19 h/l4 narrow-add incident:
+    7/7 gate cleared on a window that ended 8 days behind today).
+    """
+    import datetime
+    analysis_dir = HERE.parent  # analysis/
+    today = datetime.date.today()
+    threshold = today - datetime.timedelta(days=STALE_WINDOW_DAYS)
+
+    stale = []
+    for py in sorted(analysis_dir.glob("*.py")):
+        try:
+            src = py.read_text()
+        except OSError:
+            continue
+        # Only care about assignments to WIN_* names — this scopes the
+        # audit to window constants and avoids false positives on scripts
+        # that print historical dates in log text.
+        max_date = None
+        for line in src.splitlines():
+            s = line.strip()
+            if not s.startswith("WIN_"):
+                continue
+            for m in DATE_LITERAL_RE.finditer(line):
+                try:
+                    d = datetime.date(int(m.group(1)), int(m.group(2)),
+                                      int(m.group(3)))
+                except ValueError:
+                    continue
+                if max_date is None or d > max_date:
+                    max_date = d
+        if max_date is not None and max_date < threshold:
+            age = (today - max_date).days
+            stale.append(f"  ⚠ {py.name}: max window date {max_date.isoformat()} "
+                        f"({age}d behind today)")
+    return stale
+
+
 def anomaly_detector_summary():
     """Return list of alert lines from anomaly_detector.json, or None if absent."""
     if not ANOMALY_DETECTOR_JSON_PATH.exists():
@@ -367,6 +417,17 @@ def main():
     out.append(f"Pass: {n_pass}")
     out.append(f"Fail: {n_fail}")
     out.append("")
+
+    stale_lines = stale_window_audit()
+    if stale_lines:
+        out.append("⚠ STALE ANALYSIS WINDOWS (fossil-window suspects):")
+        out.extend(stale_lines)
+        out.append(f"  → Windows are ≥{STALE_WINDOW_DAYS}d behind today. Any 7-day "
+                   "streak or gate-cleared verdict on these scripts is likely a")
+        out.append("    fossil (re-read of the same data). Slide the WIN_ constants "
+                   "forward before trusting a ship signal. See feedback_fossil_windows.")
+        out.append("")
+
     # Compute confirmation streaks across HISTORY_PATH. For each ship-resolution
     # script currently in promote bucket, walk back through history to count
     # consecutive daily reads that were also in promote bucket. Ship-eligible
