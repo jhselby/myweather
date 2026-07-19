@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.361a • July 19, 2026</strong></summary>
+
+- **Debug-page calendar: 07-20 booked (streak-counter robustness pass) + cl linear-ramp / hsf watches added.** Post-analysis debug-page patch. Three findings today (h/l4 fossil catch, pre-frontal same-day reset 7/7 → 1/7, hsf verdict oscillation PROMOTE↔KILL↔PROMOTE) all trace to `build_executive_summary.py`'s streak walker requiring exact cell-identity match on borderline classifications. Booked as v0.6.362 for tomorrow: switch to Jaccard similarity ≥ 0.8 (preserves fossil detection while tolerating single-cell drift). Also added two new tracked hypotheses to Monday: cl linear-ramp Stage 2 watch day 1/7 (STRONG on refreshed windows, 15 SHIP cells at τ=36 — different mechanism from cl_persistence_short_lead; potentially supersedes it), and hsf narrow-cl watch day 1/7 (only cl bands ORTHOGONAL vs C1a; narrow C1e-for-cl signal, not broad). Debug-page-only patch.
+
+</details>
+
+<details>
 <summary><strong>v0.6.361 • July 19, 2026</strong></summary>
 
 - **Pair-log schema extension for post-Lc specialists (ch_persistence_gate, cl_persistence).** Ship 2 of the accuracy-chart attribution work started in v0.6.360. Splits the currently-mixed Lc/persistence signal into two distinct lines. Backend changes: (1) `forecast_snapshot.py` — for ch/cl, the `l6` slot now points at `<field>_post_lc` with fallback to live (attributes Lc's output alone); added new `chp` (ch) and `clp` (cl) slots pointing at the live final (post-persistence). `_derive_applied_layer` walks the new specialist slots so `applied_layer` correctly stamps `chp`/`clp` on cells where the persistence gate fires. (2) `forecast_error_log.py` — iterates `("l1","l2","l3","l4","l5","l6","chp","clp")` when emitting per-layer error columns to the pair log. (3) `analysis/mae_over_time.py` — extends `PERMISSIVE_LAYER_KEYS` with `("chp","error_chp")` and `("clp","error_clp")`. (4) Frontend `corrections_debug.html` — extends `FIELD_LAYERS` and `LAYER_STYLE`; ch legend now specifies `Raw / L2 / L3 / L4 / Lc / ch-persist`, cl gets `Raw / L2 / Lc / cl-persist` (dormant → filtered out until it flips). `layersForField()` gained an isProd-promotion fallback so if the config's isProd layer got filtered out for insufficient coverage, the last remaining non-raw layer is promoted (rolling-mean overlay stays attached). Pair-log columns start accumulating today; specialist lines will appear on the chart around 2026-07-22 (once ≥3 days of coverage clear). No effect on non-cloud fields.
