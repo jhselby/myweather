@@ -1312,7 +1312,7 @@
 
   <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
     <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📈 Accuracy over time — Raw vs Production, per-day trajectory</summary>
-    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (bare HRRR/GFS), L2, L3, and Production (full correction stack). Rolling 7-day mean overlays on Raw and Prod smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed by <code>analysis/mae_over_time.py</code> in the daily digest.</div>
+    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (bare HRRR/GFS) and every correction layer applicable to the selected field — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed by <code>analysis/mae_over_time.py</code> in the daily digest. (v0.6.360: dynamic legend + specialist labels — Lsr for sr, Lc for cloud fields. Post-Lc specialists like ch_persistence_gate currently absorbed into the Lc line; per-specialist attribution ships next.)</div>
     <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
       <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
       <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
@@ -6087,14 +6087,64 @@ load();
     sr: "Solar rad (W/m²)", pr: "Pressure (inHg)", pp: "Precip prob (0-1)", pa: "Precip amt (in)",
   };
 
-  // Layer render config. Duplicate lines (e.g., L3=L2 for t) will overlap
-  // visually — that's honest signal: the layer isn't doing work for this field.
-  const LAYERS = [
-    { key: "raw",  label: "Raw",  color: "rgba(138,147,163,0.8)", dash: [4,4],  width: 1.25 },
-    { key: "l2",   label: "L2",   color: "#7fb3ff",               dash: [],     width: 1.25 },
-    { key: "l3",   label: "L3",   color: "#e0d472",               dash: [],     width: 1.25 },
-    { key: "prod", label: "Prod", color: "#4ad29a",               dash: [],     width: 1.75 },
-  ];
+  // Per-field layer config. Specialist labels (Lsr, Lc) reflect what the
+  // numbered slot actually captures for that field per forecast_snapshot.py:
+  //   - sr's l5 = Lsr (synoptic solar bias correction)
+  //   - cc/cl/cm/ch's l6 = Lc (cloud saturation-unbiasing; shipped 07-17)
+  //   - t's l6 = Lt (retired 07-13; still in pair log but flat vs prod)
+  // For fields where a specialist supersedes prod (sr's Lsr is the final
+  // applied value, cc/cl/cm/ch's Lc is the final applied), the specialist
+  // slot is marked `isProd:true` and the "prod" slot is elided since
+  // that key on the JSON is pre-specialist post-K-taper.
+  //
+  // Legend is filtered further at render time: a layer with zero non-null
+  // days in the visible payload is dropped entirely (e.g. sr has no L2
+  // coverage — that line just doesn't appear). See LAYER_STYLE below for
+  // color/dash. (v0.6.360.)
+  const LAYER_STYLE = {
+    raw:  { color: "rgba(138,147,163,0.8)", dash: [4,4], width: 1.25 },
+    l2:   { color: "#7fb3ff", dash: [], width: 1.25 },
+    l3:   { color: "#e0d472", dash: [], width: 1.25 },
+    l4:   { color: "#c48fe0", dash: [], width: 1.25 },
+    l5:   { color: "#4ad29a", dash: [], width: 1.75 },   // Lsr for sr — isProd
+    l6:   { color: "#4ad29a", dash: [], width: 1.75 },   // Lc for clouds — isProd; Lt for t (flat)
+    prod: { color: "#4ad29a", dash: [], width: 1.75 },
+  };
+  const FIELD_LAYERS = {
+    // sr: Lsr is the final applied value; l4/prod key is pre-Lsr, filtered out
+    sr: [{key:"raw", label:"Raw"}, {key:"l5", label:"Lsr", isProd:true}],
+    // cc/cl/cm/ch: Lc rides l6 and is the final applied value post-07-17
+    cc: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc", isProd:true}],
+    cl: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc", isProd:true}],
+    cm: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc", isProd:true}],
+    ch: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc", isProd:true}],
+    // t: Lt retired 07-13, l6 series flat vs l4/prod; keep prod as authoritative
+    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod", label:"Prod", isProd:true}],
+    // Non-cloud, non-specialist fields
+    h:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
+    dp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
+    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod", label:"Prod", isProd:true}],
+    wg: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod", label:"Prod", isProd:true}],
+    pp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
+    pr: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
+    pa: [{key:"raw", label:"Raw"}, {key:"prod", label:"Prod", isProd:true}],
+  };
+  // Layer must have at least this many non-null days in the payload to
+  // appear in the legend. Prevents 1-2 stragglers (e.g. cc l6 the day Lc
+  // shipped) from being drawn as a two-point line.
+  const MIN_DAYS_FOR_LEGEND = 3;
+  function layersForField(field) {
+    const config = FIELD_LAYERS[field] || FIELD_LAYERS.t;
+    const series = (payload && payload.series && payload.series[field]) || {};
+    return config
+      .filter(L => {
+        const days = series[L.key] || {};
+        let n = 0;
+        for (const k in days) if (days[k] && days[k].n) n++;
+        return n >= MIN_DAYS_FOR_LEGEND;
+      })
+      .map(L => ({ ...L, ...LAYER_STYLE[L.key] }));
+  }
 
   // Per-field ship-date / event annotations. Keep short — only events with
   // visible expected impact on the chart. Dormant ships (ENABLED=False)
@@ -6109,7 +6159,8 @@ load();
     cl: [{date: "2026-07-17", label: "Lc ENABLED"}],
     cm: [{date: "2026-07-04", label: "HRRR cm anomaly onset"},
          {date: "2026-07-17", label: "Lc ENABLED"}],
-    ch: [{date: "2026-07-17", label: "Lc ENABLED"}],
+    ch: [{date: "2026-07-17", label: "Lc ENABLED"},
+         {date: "2026-07-19", label: "ch persistence LIVE"}],
   };
 
   function seriesFor(field, layer, metric) {
@@ -6186,7 +6237,8 @@ load();
     const metric = metricSel.value;
     const label = (metric === "bias") ? "Bias (signed)" : metric === "brier" ? "Brier" : metric.toUpperCase();
 
-    const datasets = LAYERS.map(L => ({
+    const activeLayers = layersForField(field);
+    const datasets = activeLayers.map(L => ({
       label: L.label,
       data: seriesFor(field, L.key, metric),
       borderColor: L.color,
@@ -6198,16 +6250,17 @@ load();
       spanGaps: true,
     }));
 
-    // Rolling-mean overlays for Raw and Prod only (the "before vs after"
-    // pair). Skipping L2/L3 rolling means keeps the chart from becoming
-    // 8-line noise; the pair the reader watches for drift is Raw ↔ Prod.
-    // Softened alpha (~0.35) so the daily line stays visually dominant.
+    // Rolling-mean overlays for Raw and the final applied layer (isProd)
+    // per field. Skipping intermediate layers' rolling means keeps the
+    // chart from becoming N-line noise; the pair the reader watches for
+    // drift is Raw ↔ [final]. Softened alpha (~0.35) so the daily line
+    // stays visually dominant.
     const softenAlpha = 0.35;
     const softColorFor = (key) => key === "raw"
       ? `rgba(138,147,163,${softenAlpha})`
-      : `rgba(74,210,154,${softenAlpha})`;   // prod green
-    for (const L of LAYERS) {
-      if (L.key !== "raw" && L.key !== "prod") continue;
+      : `rgba(74,210,154,${softenAlpha})`;   // final applied green
+    for (const L of activeLayers) {
+      if (L.key !== "raw" && !L.isProd) continue;
       const daily = seriesFor(field, L.key, metric);
       const smoothed = rollingMean(daily);
       if (smoothed.some(v => v !== null)) {

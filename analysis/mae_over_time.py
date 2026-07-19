@@ -49,7 +49,19 @@ MIN_N_PER_DAY = 200  # skip (field, day) cells with too few pairs — avoids noi
 # may have already been pruned past its 30-day retention.
 MERGE_REFRESH_DAYS = 3
 
-LAYER_KEYS = [("raw", "error_l1"), ("l2", "error_l2"), ("l3", "error_l3"), ("prod", "error_l4")]
+# Strict layers: every pair must have all four to contribute. Preserves
+# the comparability guarantee of the raw/l2/l3/prod comparison — same
+# sample under each layer.
+STRICT_LAYER_KEYS = [("raw", "error_l1"), ("l2", "error_l2"), ("l3", "error_l3"), ("prod", "error_l4")]
+
+# Permissive specialist layers: contribute independently when present, skip
+# silently when absent (Lsr only on sr; Lc on cc/cl/cm/ch; Lt on t, dormant).
+# Their MAE is over a different sample than the strict layers — that's the
+# honest reading for specialist attribution and lets the frontend filter
+# the legend to layers with actual data for the selected field. (v0.6.360.)
+PERMISSIVE_LAYER_KEYS = [("l5", "error_l5"), ("l6", "error_l6")]
+
+LAYER_KEYS = STRICT_LAYER_KEYS + PERMISSIVE_LAYER_KEYS
 
 
 def load_prior_history():
@@ -95,7 +107,7 @@ def compute_fresh_rollup():
             day = ot[:10]
             per_layer = {}
             skip = False
-            for ln, key in LAYER_KEYS:
+            for ln, key in STRICT_LAYER_KEYS:
                 e = r.get(key)
                 if e is None:
                     skip = True
@@ -103,6 +115,10 @@ def compute_fresh_rollup():
                 per_layer[ln] = e
             if skip:
                 continue
+            for ln, key in PERMISSIVE_LAYER_KEYS:
+                e = r.get(key)
+                if e is not None:
+                    per_layer[ln] = e
             for ln, e in per_layer.items():
                 buckets[(day, fld)][ln].append(e)
 
