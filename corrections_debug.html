@@ -1312,7 +1312,7 @@
 
   <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
     <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📈 Accuracy over time — Raw vs Production, per-day trajectory</summary>
-    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (bare HRRR/GFS) and every correction layer applicable to the selected field — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed by <code>analysis/mae_over_time.py</code> in the daily digest. (v0.6.360: dynamic legend + specialist labels — Lsr for sr, Lc for cloud fields. Post-Lc specialists like ch_persistence_gate currently absorbed into the Lc line; per-specialist attribution ships next.)</div>
+    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (bare HRRR/GFS) and every correction layer applicable to the selected field — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed by <code>analysis/mae_over_time.py</code> in the daily digest. (v0.6.361: per-specialist attribution — Lsr, Lc, and post-Lc specialists (ch-persist, cl-persist) each plotted separately once ≥3 days of data have accumulated. New collector-side pair-log columns start accruing today; specialist lines will appear on the chart around 2026-07-22.)</div>
     <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
       <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
       <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
@@ -6107,17 +6107,23 @@ load();
     l3:   { color: "#e0d472", dash: [], width: 1.25 },
     l4:   { color: "#c48fe0", dash: [], width: 1.25 },
     l5:   { color: "#4ad29a", dash: [], width: 1.75 },   // Lsr for sr — isProd
-    l6:   { color: "#4ad29a", dash: [], width: 1.75 },   // Lc for clouds — isProd; Lt for t (flat)
+    l6:   { color: "#e08fd0", dash: [], width: 1.25 },   // Lc for clouds; Lt for t (flat vs prod)
     prod: { color: "#4ad29a", dash: [], width: 1.75 },
+    // v0.6.361: post-Lc specialists — plotted on top of l6
+    chp:  { color: "#4ad29a", dash: [], width: 1.75 },   // ch_persistence_gate — isProd for ch
+    clp:  { color: "#4ad29a", dash: [], width: 1.75 },   // cl_persistence_short_lead — isProd for cl when live
   };
   const FIELD_LAYERS = {
     // sr: Lsr is the final applied value; l4/prod key is pre-Lsr, filtered out
     sr: [{key:"raw", label:"Raw"}, {key:"l5", label:"Lsr", isProd:true}],
-    // cc/cl/cm/ch: Lc rides l6 and is the final applied value post-07-17
+    // cc/cl/cm/ch: Lc rides l6. cm/cc have no post-Lc specialist. cl has
+    // cl_persistence_short_lead (clp; dormant). ch has ch_persistence_gate
+    // (chp; LIVE since v0.6.358). When chp/clp have data, they become the
+    // isProd layer (final applied) and Lc demotes to intermediate.
     cc: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc", isProd:true}],
-    cl: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc", isProd:true}],
+    cl: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc"},                          {key:"clp", label:"cl-persist", isProd:true}],
     cm: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc", isProd:true}],
-    ch: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc", isProd:true}],
+    ch: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist", isProd:true}],
     // t: Lt retired 07-13, l6 series flat vs l4/prod; keep prod as authoritative
     t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod", label:"Prod", isProd:true}],
     // Non-cloud, non-specialist fields
@@ -6136,14 +6142,22 @@ load();
   function layersForField(field) {
     const config = FIELD_LAYERS[field] || FIELD_LAYERS.t;
     const series = (payload && payload.series && payload.series[field]) || {};
-    return config
-      .filter(L => {
-        const days = series[L.key] || {};
-        let n = 0;
-        for (const k in days) if (days[k] && days[k].n) n++;
-        return n >= MIN_DAYS_FOR_LEGEND;
-      })
-      .map(L => ({ ...L, ...LAYER_STYLE[L.key] }));
+    const filtered = config.filter(L => {
+      const days = series[L.key] || {};
+      let n = 0;
+      for (const k in days) if (days[k] && days[k].n) n++;
+      return n >= MIN_DAYS_FOR_LEGEND;
+    });
+    // Ensure exactly one layer carries isProd (the rolling-mean overlay
+    // attaches to it). If the config's isProd layer got filtered out
+    // (e.g. ch's chp hasn't accumulated data yet), promote the last
+    // remaining non-raw layer.
+    if (!filtered.some(L => L.isProd)) {
+      for (let i = filtered.length - 1; i >= 0; i--) {
+        if (filtered[i].key !== "raw") { filtered[i] = { ...filtered[i], isProd: true }; break; }
+      }
+    }
+    return filtered.map(L => ({ ...L, ...LAYER_STYLE[L.key] }));
   }
 
   // Per-field ship-date / event annotations. Keep short — only events with

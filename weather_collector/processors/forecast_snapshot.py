@@ -105,24 +105,37 @@ def append_forecast_snapshot(hourly, derived=None):
                "l2": hourly.get("precipitation_post_l2", []),
                "l3": hourly.get("precipitation_post_l3", []),
                "l4": hourly.get("precipitation", [])},
+        # v0.6.361: same pattern as ch — l6 attributes Lc alone, "clp"
+        # attributes cl_persistence_short_lead (currently dormant; slot
+        # populates whenever the gate flips ENABLED).
         "cl": {"l1": hourly.get("raw_cloud_cover_low", hourly.get("cloud_cover_low", [])),
                "l2": hourly.get("cloud_cover_low_post_l2", []),
                "l3": hourly.get("cloud_cover_low_post_l3", []),
                "l4": hourly.get("cloud_cover_low_post_l4",
                                 hourly.get("cloud_cover_low", [])),
-               "l6": hourly.get("cloud_cover_low", [])},
+               "l6": hourly.get("cloud_cover_low_post_lc",
+                                hourly.get("cloud_cover_low", [])),
+               "clp": hourly.get("cloud_cover_low", [])},
         "cm": {"l1": hourly.get("raw_cloud_cover_mid", hourly.get("cloud_cover_mid", [])),
                "l2": hourly.get("cloud_cover_mid_post_l2", []),
                "l3": hourly.get("cloud_cover_mid_post_l3", []),
                "l4": hourly.get("cloud_cover_mid_post_l4",
                                 hourly.get("cloud_cover_mid", [])),
                "l6": hourly.get("cloud_cover_mid", [])},
+        # v0.6.361: l6 for ch now attributes Lc's contribution alone —
+        # points at post_lc (pre-persistence-gate) when the persistence gate
+        # preserved it, else falls back to the live array (same as before,
+        # since with persistence disabled the live array IS post-Lc). The
+        # "chp" slot captures post-persistence-gate (the true final applied)
+        # so ch_persistence_gate's impact can be plotted separately from Lc.
         "ch": {"l1": hourly.get("raw_cloud_cover_high", hourly.get("cloud_cover_high", [])),
                "l2": hourly.get("cloud_cover_high_post_l2", []),
                "l3": hourly.get("cloud_cover_high_post_l3", []),
                "l4": hourly.get("cloud_cover_high_post_l4",
                                 hourly.get("cloud_cover_high", [])),
-               "l6": hourly.get("cloud_cover_high", [])},
+               "l6": hourly.get("cloud_cover_high_post_lc",
+                                hourly.get("cloud_cover_high", [])),
+               "chp": hourly.get("cloud_cover_high", [])},
         # Wind direction is circular — needs special sin/cos math in Fitter
         # and Apply. No Layer 2 (no mesonet aggregation for direction yet) and
         # no Layer 4 (no diurnal yet) — Layer 3 decay correction only in v0.6.27.
@@ -158,7 +171,10 @@ def append_forecast_snapshot(hourly, derived=None):
         """
         applied = None
         prev_val = None
-        for lk in ("l1", "l2", "l3", "l4", "l5", "l6"):
+        # v0.6.361: iteration order = pipeline order. Specialists that run
+        # after Lc/L5 (chp, clp) walked last so applied_layer stamps them
+        # when their contribution differs from the prior layer.
+        for lk in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp"):
             arr = field_layers.get(lk) or []
             if i >= len(arr) or arr[i] is None:
                 continue

@@ -59,7 +59,12 @@ STRICT_LAYER_KEYS = [("raw", "error_l1"), ("l2", "error_l2"), ("l3", "error_l3")
 # Their MAE is over a different sample than the strict layers — that's the
 # honest reading for specialist attribution and lets the frontend filter
 # the legend to layers with actual data for the selected field. (v0.6.360.)
-PERMISSIVE_LAYER_KEYS = [("l5", "error_l5"), ("l6", "error_l6")]
+PERMISSIVE_LAYER_KEYS = [("l5", "error_l5"), ("l6", "error_l6"),
+                         # v0.6.361: post-Lc specialists — chp (ch_persistence_gate,
+                         # ch only) and clp (cl_persistence_short_lead, cl only).
+                         # Chart legend shows them as their own lines once a few
+                         # days of data have accumulated.
+                         ("chp", "error_chp"), ("clp", "error_clp")]
 
 LAYER_KEYS = STRICT_LAYER_KEYS + PERMISSIVE_LAYER_KEYS
 
