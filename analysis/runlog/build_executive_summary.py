@@ -475,7 +475,19 @@ def main():
 
     ship_eligible = []      # cleared 7 days + ≥2 groups agreeing
     still_confirming = []   # in promote bucket but streak < 7 OR only 1 group
-    for name, verdict in promotes_new:
+    # v0.6.364: iterate ALL ship-resolution scripts currently in promote
+    # bucket, not just those that transitioned to promote today
+    # (`promotes_new`). Previous behaviour missed sustained promotes — a
+    # script that hit promote days ago and stayed there never re-entered
+    # promotes_new, so it never surfaced in ship-eligible even after its
+    # streak cleared. Uncovered while investigating v0.6.362 (C1h/C1d
+    # narrow-promote GATE CLEARED but SHIP-ELIGIBLE said "none"; those
+    # C1h/C1d specifically use the narrow-promote gate walker rather than
+    # this SHIP-eligible walker, so this fix targets a related but distinct
+    # class of the same problem — sustained promotes on ship-resolution
+    # scripts).
+    for name in sorted(all_promote_ship_res):
+        verdict = current[name]["verdict"]
         streak = streaks.get(name, 1)
         if streak >= CONFIRMATION_STREAK_DAYS and n_groups >= 2:
             ship_eligible.append((name, verdict, streak))

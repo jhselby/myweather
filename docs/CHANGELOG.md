@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.364 • July 19, 2026</strong></summary>
+
+- **SHIP-ELIGIBLE surfaces sustained promotes, not just today's bucket transitions.** Previously the SHIP-ELIGIBLE section iterated `promotes_new` (scripts that flipped INTO promote bucket today). A ship-resolution script that transitioned days or weeks ago and stayed in promote bucket never re-entered `promotes_new` and thus never surfaced in ship-eligible even after clearing the 7-day streak + multi-tool gate. Same class of brittleness as v0.6.362's exact-match cell-set walker but on the script-level walker. Fix: iterate `all_promote_ship_res` (all promote-bucket ship-resolution scripts) instead. **Four sustained signals surface today for the first time:** `h_cloud_disagreement_orthogonality` (C1d) at 16/7 days, `h_pre_front_orthogonality` at 23/7 days, `walkforward_l3l4_validator` at 25/7 days (all three cleared and gated on other conditions — Stage 4 audit, cell-set stability, dropping wg/ws — so none auto-flip), plus `h_wind_shift_rate_orthogonality` at 6/7 days now visible in "still confirming." Pattern reinforces [[feedback_streak_walker_robustness]]: streak walkers built on transition-only detection miss sustained signals.
+
+</details>
+
+<details>
 <summary><strong>v0.6.363 • July 19, 2026</strong></summary>
 
 - **decay_tau_tuning: extend to pp + document that the pp override is inert.** Answering the "shouldn't we extend the tuner before concluding we can't measure it?" question. Added `pp` to `FIELDS` in `analysis/decay_tau_tuning.py` with a label + rationale comment. First measurement: pp best-τ = 7 wins +13.7% vs τ=14 among decay options — but **raw baseline (7.391 MAE) beats every decay-τ option (best τ=7 = 9.924, +34% worse than raw)**. Any decay-τ bias correction hurts pp on MAE. Verified this is a moot finding for production: `decay_apply.py:76-80` excludes pp from L3_FIELDS and L4_FIELDS, `L3_BRIER_FIELDS = {"pp"}` is only an audit-suppression flag, and pair-log rows confirm `applied_layer:"l1"` for pp. So `TAU_DAYS_BY_FIELD["pp"] = 28` in `decay_fit.py` is INERT — it only affects the Fitter's reported per_layer_mae for pp (analysis/reporting), not user-visible forecasts. Annotated the config entry accordingly rather than removing it. The lasting value: pp is now permanently measured in the daily digest, so any future proposal to actually APPLY bias correction to pp will be gated by "does the tuner say correction helps vs baseline?" — currently no.
