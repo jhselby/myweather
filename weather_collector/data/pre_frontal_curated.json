@@ -1,18 +1,18 @@
 {
-  "generated_at": "2026-07-16T10:16:07Z",
+  "generated_at": "2026-07-19T13:15:08Z",
   "source": "h_pre_front_orthogonality.py",
   "ship_rule": "cell is SHIP iff ORTHOGONAL vs C1a AND ORTHOGONAL vs C1e",
   "cells": {
     "cc": {
       "0-5h": {
         "status": "SKIP",
-        "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       },
       "12-23h": {
         "status": "SKIP",
-        "vs_c1a": "AMBIGUOUS",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       },
       "24-47h": {
         "status": "SKIP",
@@ -21,20 +21,20 @@
       },
       "6-11h": {
         "status": "SKIP",
-        "vs_c1a": "CONFOUNDED",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       }
     },
     "ch": {
       "0-5h": {
-        "status": "SHIP",
-        "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "ORTHOGONAL"
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       },
       "12-23h": {
-        "status": "SHIP",
-        "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "ORTHOGONAL"
+        "status": "SKIP",
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       },
       "24-47h": {
         "status": "SKIP",
@@ -43,8 +43,8 @@
       },
       "6-11h": {
         "status": "SKIP",
-        "vs_c1a": "CONFOUNDED",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       }
     },
     "cl": {
@@ -71,9 +71,9 @@
     },
     "cm": {
       "0-5h": {
-        "status": "SKIP",
+        "status": "SHIP",
         "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1e": "ORTHOGONAL"
       },
       "12-23h": {
         "status": "SHIP",
@@ -86,16 +86,16 @@
         "vs_c1e": "ORTHOGONAL"
       },
       "6-11h": {
-        "status": "SKIP",
+        "status": "SHIP",
         "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1e": "ORTHOGONAL"
       }
     },
     "h": {
       "0-5h": {
         "status": "SKIP",
-        "vs_c1a": "AMBIGUOUS",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       },
       "12-23h": {
         "status": "SKIP",
@@ -104,30 +104,30 @@
       },
       "24-47h": {
         "status": "SKIP",
-        "vs_c1a": "AMBIGUOUS",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       },
       "6-11h": {
         "status": "SKIP",
-        "vs_c1a": "CONFOUNDED",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       }
     },
     "t": {
       "0-5h": {
         "status": "SKIP",
-        "vs_c1a": "AMBIGUOUS",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       },
       "12-23h": {
         "status": "SKIP",
-        "vs_c1a": "CONFOUNDED",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       },
       "24-47h": {
         "status": "SKIP",
-        "vs_c1a": "AMBIGUOUS",
-        "vs_c1e": "AMBIGUOUS"
+        "vs_c1a": "REDUNDANT",
+        "vs_c1e": "REDUNDANT"
       },
       "6-11h": {
         "status": "SKIP",
@@ -138,7 +138,7 @@
     "wg": {
       "0-5h": {
         "status": "SKIP",
-        "vs_c1a": "CONFOUNDED",
+        "vs_c1a": "AMBIGUOUS",
         "vs_c1e": "AMBIGUOUS"
       },
       "12-23h": {
@@ -165,12 +165,12 @@
       },
       "12-23h": {
         "status": "SKIP",
-        "vs_c1a": "REDUNDANT",
-        "vs_c1e": "REDUNDANT"
+        "vs_c1a": "AMBIGUOUS",
+        "vs_c1e": "AMBIGUOUS"
       },
       "24-47h": {
         "status": "SKIP",
-        "vs_c1a": "AMBIGUOUS",
+        "vs_c1a": "ORTHOGONAL",
         "vs_c1e": "AMBIGUOUS"
       },
       "6-11h": {
