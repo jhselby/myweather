@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.368b • July 20, 2026</strong></summary>
+
+- **Debug page Rule 5 sweep for v0.6.367 + v0.6.368/368a.** Updates across `corrections_debug.html`: (a) **wd pipeline row** — L1 → "L1 + L2 (wind_blend circular)"; description flipped from "raw HRRR only" to "L2 shipped 07-20 v0.6.368a" with first-tick verify numbers. (b) **wd persistence gate candidate block** — reframed from "first-ever wd correction" to "second wd correction candidate" (L2 already ships short-lead; persistence gate targets long-lead regime-transitions). Wiring status updated: wd first-class in anomaly_detector + h_persistence_skill + accuracy chart + mae_over_time + Fitter per-layer (v0.6.365b/d + v0.6.367); L2 blend live (v0.6.368a); remaining item is applied_layer stamping for the specialist flip. (c) **L2 Applicability table wd row** — flipped from "N/A — circular field, L2's linear math doesn't apply" to "SHIPPED — circular unit-vector blend solves the wrap-around." (d) **FIELD_LAYERS accuracy chart config** — wd goes from `raw-only isProd` to `[raw, l2 isProd]`. (e) **Group D refinements** — added two new entries: wd L2 (v0.6.368/368a) and joiner per-layer wd errors (v0.6.367). (f) **Recent activity 07-20** — count updated to "7 ships + 2 dashboards + 1 kill"; three new SHIP entries appended (v0.6.367, v0.6.368, v0.6.368a). (g) **Post-ship watches** — added wd L2 watch through 08-03, calling out the calm-floor guard as the most likely failure mode. (h) **L2 lead-decay chart** (`renderL2LeadDecay`) — line label updated from "Wind / Gust (linear 0–24h)" → "Wind speed / gust / dir (linear 0–24h)"; description note added explaining wd uses circular sin/cos on the same ramp. wd was already on the correct curve (same wind_blend code path) but the labels didn't reflect it. (i) **Last-curated stamp** advanced to v0.6.368b.
+
+</details>
+
+<details>
 <summary><strong>v0.6.368a • July 20, 2026</strong></summary>
 
 - **wd L2 blend hotfix — wrong field key.** v0.6.368 read `cur.get("wind_dir")` in `wind_blend.py` — but `weather_data["current"]` stores the field as `wind_direction` (see line 311 setter: `current["wind_direction"] = ...`). Confused with `obs_temp_log` where the column is named `wind_dir`. Result: `observed_dir` was always None post-deploy → `blend_dir` False → blend never fired → raw_wind_direction == wind_direction across all leads. Fixed by using the correct key. Re-verified against production-shaped data (raw=[166,146,...], obs=207) → blend produces [207,205,202,199,197,194] as expected.
