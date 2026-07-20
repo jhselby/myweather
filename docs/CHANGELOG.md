@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.365c • July 20, 2026</strong></summary>
+
+- **Debug page Rule 5 sweep for today's ships.** Targeted updates across `corrections_debug.html` (not a rewrite): (a) **LSR RETIRE-vs-AGREE puzzle resolved.** Removed the "investigation queued" language across two sites (course-of-action list + Lsr layer's Open watch note); replaced with the resolution — divergence-report claim was sourced from `l5_solar_analysis` (candidate script, not live gate), fixed in v0.6.365 by routing through the live Fitter cycle gate history. (b) **Added wd persistence gate candidate block** under Gate candidates — Stage 2 preview + processor drafted 07-20, ENABLED=False, day 1/7, 5 SHIP + 1 MARGIN cells with composed-gate MAE reductions −4% to −26%. (c) **Added L3 asymmetric fc-bin candidate block** — Stage 1 preview 07-20, 92 SKIP cells across wg + ws, wiring blocked on `decay_apply.py` SKIP_TABLE fc-bin refactor. (d) **Calendar** — added Mon 07-27 entries for wd persistence gate + L3 asymmetric earliest-flip. (e) **Recent activity** — 07-19 rolled off "today", 07-20 added with 3 SHIP + 1 KILL entries (v0.6.365 / .365a / .365b). Last-curated stamp advanced to 07-20 v0.6.365c.
+
+</details>
+
+<details>
 <summary><strong>v0.6.365b • July 20, 2026</strong></summary>
 
 - **Promote `wd` to first-class field in anomaly_detector + h_persistence_skill.** Both scripts previously excluded wd because it's circular (359° and 1° are 2° apart, not 358°) and linear-MAE math produces nonsense. Now wd is in the field roster with a `CIRCULAR_FIELDS = {"wd"}` guard: linear fc_mean / quartile bin-shift triggers are skipped (they'd false-fire on wraparound), while MAE + bias-shift use the pair log's already-circular `error` field. h_persistence_skill uses `angular_diff` for wd err computation. Two useful signals now show: (a) anomaly_detector: wd MAE 61°→48° (−21.7%) verdict CLEAN. (b) h_persistence_skill: **wd 0-5h BEHIND** (persistence 50° beats L1 56°), 6-47h ADDS VALUE — meta-confirmation that yesterday's wd_persistence_gate targets the right band. Prep work for shipping the gate 6 days from now when the 7-day narrow-promote counter clears. Remaining wd-promotion touchpoints (mae_over_time, applied_layer_audit, decay_tau_tuning) skipped for now — most either don't apply to wd until it has correction layers, or need larger per-script refactors.
