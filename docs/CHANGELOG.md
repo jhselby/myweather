@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.366a • July 20, 2026</strong></summary>
+
+- **Debug page Rule 5 sweep for v0.6.366.** Targeted updates across `corrections_debug.html`: (a) **Gate candidates block** — L3 asymmetric fc-bin skip row flipped Stage 1 preview → SHIPPED for wg (green border, ✓ WIRED + LIVE 07-20 v0.6.366, 48 SKIP cells, first-tick verify note); ws sub-note explains blanket-vs-asymmetric conflict deferring the swap to 07-27. (b) **Calendar Mon 07-27** entry rewritten from "L3 asymmetric earliest ship, blocked on refactor" → "ws swap-in earliest ship, wg already live." (c) **Recent activity 07-20** — daily summary count updated to "4 ships + 1 dashboard + 1 kill", v0.6.366 added to list; new SHIP entry describes the wiring, ws deferral rationale, and first-tick verify. (d) **Open architectural questions** — SKIP_TABLE architecture description extended with v0.6.366 fc-bin dimension clause. (e) **Last-curated** stamp advanced 07-20 v0.6.365c → v0.6.366.
+
+</details>
+
+<details>
 <summary><strong>v0.6.366 • July 20, 2026</strong></summary>
 
 - **L3 asymmetric fc-bin skip machinery — wg wired.** Extends `decay_apply.py`'s `SKIP_TABLE` with a per-cell fc-magnitude dimension. Stage 1 analysis (07-20 `h_l3_asymmetric_stage1.py`) showed L3 is a mean-bias subtraction that helps on over-forecast rows (high raw fc) and hurts on under-forecast rows (low raw fc); splitting fc into per-(regime, band) quartiles isolates 92 SKIP cells across wg + ws where L3 stably loses. **This ship wires the machinery for wg only (48 SKIP cells).** New `_should_skip_asymmetric()` reads `weather_collector/data/wg_l3_asymmetric_skip_curated.json` and looks up (regime, band, fc-bin) using `hourly["raw_wind_gusts"]` (preserved by `wind_blend.py` before decay). Fail-safe: missing raw fc, unknown regime, or no cuts for cell → do not skip; never turns L3 OFF where the existing hardcoded `SKIP_TABLE` said ON. `decay_meta.skip_table_l3_asymmetric_cells_skipped` counter added for the debug page. `describe_applicability()` extended to name `SKIP_TABLE_ASYMMETRIC` in the wg entry. **ws deferred** — its two existing blanket entries (`ne_flow` all, `sea_breeze 0-11`) disagree with the newer asymmetric grid at exactly those cells (asymmetric says KEEP where hardcoded says SKIP). Replacing them is a live-layer flip that needs the standing 7-window whitelist promotion gate; earliest swap-in 07-27 once the streak clears.
