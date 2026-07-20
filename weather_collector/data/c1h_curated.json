@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-20T10:05:53.995097+00:00",
+  "generated_at": "2026-07-20T12:32:44.205023+00:00",
   "source": "c1h_confidence_premium.json",
   "axis": "c1h_trend_direction",
   "slots": [
@@ -31,190 +31,190 @@
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 2.3866,
-        "fires_mae": 2.8594,
-        "premium_abs": 0.4727,
-        "premium_pct": 19.81,
-        "n_flat": 10516,
-        "n_fires": 27572,
+        "flat_mae": 2.4121,
+        "fires_mae": 2.8434,
+        "premium_abs": 0.4313,
+        "premium_pct": 17.88,
+        "n_flat": 10128,
+        "n_fires": 27816,
         "threshold": 3,
-        "rationale": "premium +19.81%, n\u22651000"
+        "rationale": "premium +17.88%, n\u22651000"
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 1.8444,
-        "fires_mae": 2.133,
-        "premium_abs": 0.2886,
-        "premium_pct": 15.65,
-        "n_flat": 5357,
-        "n_fires": 13687,
+        "flat_mae": 1.8627,
+        "fires_mae": 2.1222,
+        "premium_abs": 0.2595,
+        "premium_pct": 13.93,
+        "n_flat": 5193,
+        "n_fires": 13779,
         "threshold": 3,
-        "rationale": "premium +15.65%, n\u22651000"
+        "rationale": "premium +13.93%, n\u22651000"
       },
       "6-11h": {
-        "status": "SKIP",
-        "direction": null,
-        "flat_mae": 1.9666,
-        "fires_mae": 1.8727,
-        "premium_abs": -0.0939,
-        "premium_pct": -4.78,
-        "n_flat": 2315,
-        "n_fires": 5934,
+        "status": "MARGINAL",
+        "direction": "NARROW",
+        "flat_mae": 1.9928,
+        "fires_mae": 1.8599,
+        "premium_abs": -0.1329,
+        "premium_pct": -6.67,
+        "n_flat": 2233,
+        "n_fires": 5995,
         "threshold": 3,
-        "rationale": "magnitude floor (|-4.78%| < 5.0%)"
+        "rationale": "premium -6.67% in 5-10% band"
       }
     },
     "cc": {
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 23.3836,
-        "fires_mae": 32.4098,
-        "premium_abs": 9.0262,
-        "premium_pct": 38.6,
-        "n_flat": 18968,
-        "n_fires": 19168,
+        "flat_mae": 22.9146,
+        "fires_mae": 32.4096,
+        "premium_abs": 9.495,
+        "premium_pct": 41.44,
+        "n_flat": 18819,
+        "n_fires": 19173,
         "threshold": 20,
-        "rationale": "premium +38.60%, n\u22651000"
+        "rationale": "premium +41.44%, n\u22651000"
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 19.7489,
-        "fires_mae": 31.2589,
-        "premium_abs": 11.51,
-        "premium_pct": 58.28,
-        "n_flat": 9594,
-        "n_fires": 9474,
+        "flat_mae": 19.2889,
+        "fires_mae": 31.267,
+        "premium_abs": 11.9781,
+        "premium_pct": 62.1,
+        "n_flat": 9520,
+        "n_fires": 9476,
         "threshold": 20,
-        "rationale": "premium +58.28%, n\u22651000"
+        "rationale": "premium +62.10%, n\u22651000"
       },
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 17.4146,
-        "fires_mae": 31.4575,
-        "premium_abs": 14.0429,
-        "premium_pct": 80.64,
-        "n_flat": 4723,
-        "n_fires": 3530,
+        "flat_mae": 17.0443,
+        "fires_mae": 31.4583,
+        "premium_abs": 14.414,
+        "premium_pct": 84.57,
+        "n_flat": 4697,
+        "n_fires": 3535,
         "threshold": 20,
-        "rationale": "premium +80.64%, n\u22651000"
+        "rationale": "premium +84.57%, n\u22651000"
       }
     },
     "cl": {
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 8.8739,
-        "fires_mae": 36.8355,
-        "premium_abs": 27.9616,
-        "premium_pct": 315.1,
-        "n_flat": 24129,
-        "n_fires": 13959,
+        "flat_mae": 8.6469,
+        "fires_mae": 36.9709,
+        "premium_abs": 28.324,
+        "premium_pct": 327.56,
+        "n_flat": 24171,
+        "n_fires": 13773,
         "threshold": 15,
-        "rationale": "premium +315.10%, n\u22651000"
+        "rationale": "premium +327.56%, n\u22651000"
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 7.5342,
-        "fires_mae": 34.585,
-        "premium_abs": 27.0508,
-        "premium_pct": 359.04,
-        "n_flat": 13702,
-        "n_fires": 5342,
+        "flat_mae": 7.387,
+        "fires_mae": 34.6357,
+        "premium_abs": 27.2488,
+        "premium_pct": 368.88,
+        "n_flat": 13756,
+        "n_fires": 5216,
         "threshold": 15,
-        "rationale": "premium +359.04%, n\u22651000"
+        "rationale": "premium +368.88%, n\u22651000"
       },
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 6.5578,
-        "fires_mae": 31.5861,
-        "premium_abs": 25.0283,
-        "premium_pct": 381.65,
-        "n_flat": 6147,
-        "n_fires": 2102,
+        "flat_mae": 6.2963,
+        "fires_mae": 31.5005,
+        "premium_abs": 25.2042,
+        "premium_pct": 400.3,
+        "n_flat": 6170,
+        "n_fires": 2058,
         "threshold": 15,
-        "rationale": "premium +381.65%, n\u22651000"
+        "rationale": "premium +400.30%, n\u22651000"
       }
     },
     "cm": {
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 18.552,
-        "fires_mae": 31.9103,
-        "premium_abs": 13.3583,
-        "premium_pct": 72.0,
-        "n_flat": 27351,
-        "n_fires": 10737,
+        "flat_mae": 17.9379,
+        "fires_mae": 31.9274,
+        "premium_abs": 13.9895,
+        "premium_pct": 77.99,
+        "n_flat": 27246,
+        "n_fires": 10698,
         "threshold": 15,
-        "rationale": "premium +72.00%, n\u22651000"
+        "rationale": "premium +77.99%, n\u22651000"
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 15.8969,
-        "fires_mae": 30.9686,
-        "premium_abs": 15.0717,
-        "premium_pct": 94.81,
-        "n_flat": 14777,
-        "n_fires": 4267,
+        "flat_mae": 15.2985,
+        "fires_mae": 30.9984,
+        "premium_abs": 15.6998,
+        "premium_pct": 102.62,
+        "n_flat": 14712,
+        "n_fires": 4260,
         "threshold": 15,
-        "rationale": "premium +94.81%, n\u22651000"
+        "rationale": "premium +102.62%, n\u22651000"
       },
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 16.1352,
+        "flat_mae": 15.4803,
         "fires_mae": 31.5202,
-        "premium_abs": 15.385,
-        "premium_pct": 95.35,
-        "n_flat": 6192,
+        "premium_abs": 16.0399,
+        "premium_pct": 103.61,
+        "n_flat": 6171,
         "n_fires": 2057,
         "threshold": 15,
-        "rationale": "premium +95.35%, n\u22651000"
+        "rationale": "premium +103.61%, n\u22651000"
       }
     },
     "ch": {
       "24-47h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 9.717,
-        "fires_mae": 24.293,
-        "premium_abs": 14.576,
-        "premium_pct": 150.0,
-        "n_flat": 16105,
-        "n_fires": 21983,
+        "flat_mae": 9.5955,
+        "fires_mae": 24.4802,
+        "premium_abs": 14.8848,
+        "premium_pct": 155.12,
+        "n_flat": 16390,
+        "n_fires": 21554,
         "threshold": 15,
-        "rationale": "premium +150.00%, n\u22651000"
+        "rationale": "premium +155.12%, n\u22651000"
       },
       "12-23h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 9.8767,
-        "fires_mae": 28.352,
-        "premium_abs": 18.4753,
-        "premium_pct": 187.06,
-        "n_flat": 8728,
-        "n_fires": 10316,
+        "flat_mae": 9.7554,
+        "fires_mae": 28.5713,
+        "premium_abs": 18.8158,
+        "premium_pct": 192.88,
+        "n_flat": 8868,
+        "n_fires": 10104,
         "threshold": 15,
-        "rationale": "premium +187.06%, n\u22651000"
+        "rationale": "premium +192.88%, n\u22651000"
       },
       "6-11h": {
         "status": "SHIP",
         "direction": "WIDEN",
-        "flat_mae": 9.6668,
-        "fires_mae": 31.5167,
-        "premium_abs": 21.8499,
-        "premium_pct": 226.03,
-        "n_flat": 4568,
-        "n_fires": 3681,
+        "flat_mae": 9.5424,
+        "fires_mae": 31.7737,
+        "premium_abs": 22.2313,
+        "premium_pct": 232.97,
+        "n_flat": 4631,
+        "n_fires": 3597,
         "threshold": 15,
-        "rationale": "premium +226.03%, n\u22651000"
+        "rationale": "premium +232.97%, n\u22651000"
       }
     }
   }
