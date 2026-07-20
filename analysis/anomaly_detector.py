@@ -49,7 +49,15 @@ PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_TXT = os.path.join(SCRIPT_DIR, "output", "anomaly_detector.txt")
 OUT_JSON = os.path.join(SCRIPT_DIR, "output", "anomaly_detector.json")
 
-FIELDS = ["t", "dp", "h", "pr", "ws", "wg", "cc", "cl", "cm", "ch", "sr", "pp", "pa"]
+FIELDS = ["t", "dp", "h", "pr", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pp", "pa"]
+
+# Fields with circular (angular) values. For these, `error` is already
+# angular-diff-normalized in the pair log (see forecast_error_log.py's
+# _circular_diff_deg) so MAE and bias work as-is. Linear-mean and
+# quartile-bin stats on raw fc/obs values are MEANINGLESS for circular
+# fields (359° and 1° are 2° apart but linear-mean is 180°), so skip
+# fc_shift + bin_shift trigger flags — rely on MAE + bias-shift only.
+CIRCULAR_FIELDS = {"wd"}
 
 RECENT_DAYS = 7
 BASELINE_DAYS = 21   # window immediately prior to recent
@@ -200,9 +208,15 @@ def evaluate(per_field, windows):
         # Trigger flags
         mae_anomaly = mae_pct > MAE_ANOMALY_PCT
         mae_watch = mae_pct > MAE_WATCH_PCT
-        fc_shift = (b_fc_s["std"] > 0 and abs(d_fc_mean) > FC_MEAN_SIGMA_MULTIPLE * b_fc_s["std"])
         bias_shift = (b_er_s["std"] > 0 and abs(d_bias) > BIAS_SHIFT_MULTIPLE * b_er_s["std"])
-        bin_shift = max_bin_shift_pp > BIN_FRAC_SHIFT_PP
+        # Circular fields have meaningless linear fc_mean / quartile stats — see
+        # CIRCULAR_FIELDS comment. Rely on MAE + bias-shift only for those.
+        if f in CIRCULAR_FIELDS:
+            fc_shift = False
+            bin_shift = False
+        else:
+            fc_shift = (b_fc_s["std"] > 0 and abs(d_fc_mean) > FC_MEAN_SIGMA_MULTIPLE * b_fc_s["std"])
+            bin_shift = max_bin_shift_pp > BIN_FRAC_SHIFT_PP
 
         if mae_anomaly and (fc_shift or bias_shift):
             verdict = "ANOMALY"

@@ -43,8 +43,10 @@ Overall verdict per field (all leads pooled):
   ★ NO SKILL     0 bands ADDS VALUE
 
 Design notes:
-  - wd (wind direction) excluded — circular metric; skill score formula
-    only makes sense for scalar fields.
+  - wd (wind direction) uses `angular_diff` (0-180° absolute) instead of
+    linear subtract. MAE/RMSE aggregation is otherwise identical since
+    both accumulators use |err| and err². Signed-bias analytics don't
+    apply to wd (would need circular-mean sin/cos treatment).
   - Uses forecast_l4 as pipeline proxy. For sr and t, actual Production
     includes Lsr / Lt specialist corrections applied after L4; both
     specialists are documented in memory as regime-conditional. Report
@@ -65,9 +67,23 @@ OUT_TXT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 OUT_JSON = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                         "output", "h_persistence_skill.json")
 
-FIELDS = ["t", "dp", "h", "pr", "ws", "wg", "cc", "cl", "cm", "ch", "sr", "pp"]
+FIELDS = ["t", "dp", "h", "pr", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pp"]
+CIRCULAR_FIELDS = {"wd"}
 BANDS = [(1, 6, "0-5h"), (6, 12, "6-11h"), (12, 24, "12-23h"), (24, 48, "24-47h")]
 MIN_N_PER_CELL = 200
+
+
+def angular_diff(a, b):
+    """Absolute angular difference on [0, 180] for degrees on [0, 360)."""
+    d = abs(float(a) - float(b)) % 360.0
+    return d if d <= 180.0 else 360.0 - d
+
+
+def err_val(field, a, b):
+    """Signed err for scalar fields, absolute angular diff for circular."""
+    if field in CIRCULAR_FIELDS:
+        return angular_diff(a, b)
+    return float(a) - float(b)
 
 
 def band_of(lead):
@@ -153,10 +169,12 @@ def compute():
                 continue
             rt = r.get("run_time")
             ob = r.get("observed")
-            fc1 = r.get("forecast_l1")
-            fc4 = r.get("forecast_l4")
             fc_prod = r.get("forecast")
-            if rt is None or ob is None or fc1 is None or fc4 is None or fc_prod is None:
+            # Fields with no correction stack (e.g. wd) don't populate forecast_l1/l4.
+            # Fall back to top-level forecast (which is L1-semantic anyway for those).
+            fc1 = r.get("forecast_l1", fc_prod)
+            fc4 = r.get("forecast_l4", fc_prod)
+            if rt is None or ob is None or fc_prod is None or fc1 is None or fc4 is None:
                 continue
             persist = obs_ts[f].get(hour_floor(rt))
             if persist is None:
@@ -165,10 +183,10 @@ def compute():
             n_joined += 1
             a = accum[(f, band)]
             a["n"] += 1
-            e_p = persist - ob
-            e_1 = fc1 - ob
-            e_4 = fc4 - ob
-            e_prod = fc_prod - ob
+            e_p = err_val(f, persist, ob)
+            e_1 = err_val(f, fc1, ob)
+            e_4 = err_val(f, fc4, ob)
+            e_prod = err_val(f, fc_prod, ob)
             a["ae_pers"] += abs(e_p)
             a["se_pers"] += e_p * e_p
             a["ae_l1"]   += abs(e_1)

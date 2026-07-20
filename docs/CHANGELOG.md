@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.365b • July 20, 2026</strong></summary>
+
+- **Promote `wd` to first-class field in anomaly_detector + h_persistence_skill.** Both scripts previously excluded wd because it's circular (359° and 1° are 2° apart, not 358°) and linear-MAE math produces nonsense. Now wd is in the field roster with a `CIRCULAR_FIELDS = {"wd"}` guard: linear fc_mean / quartile bin-shift triggers are skipped (they'd false-fire on wraparound), while MAE + bias-shift use the pair log's already-circular `error` field. h_persistence_skill uses `angular_diff` for wd err computation. Two useful signals now show: (a) anomaly_detector: wd MAE 61°→48° (−21.7%) verdict CLEAN. (b) h_persistence_skill: **wd 0-5h BEHIND** (persistence 50° beats L1 56°), 6-47h ADDS VALUE — meta-confirmation that yesterday's wd_persistence_gate targets the right band. Prep work for shipping the gate 6 days from now when the 7-day narrow-promote counter clears. Remaining wd-promotion touchpoints (mae_over_time, applied_layer_audit, decay_tau_tuning) skipped for now — most either don't apply to wd until it has correction layers, or need larger per-script refactors.
+
+</details>
+
+<details>
 <summary><strong>v0.6.365a • July 20, 2026</strong></summary>
 
 - **cc-sat correction killed same-day + cleanup.** The 80-SHIP-cell finding from v0.6.365 was 80% a rediscovery of Lc. The Stage 1 script measured Δ against the pair log's top-level `forecast` field, which carries L1 semantics for cloud fields even after Lc shipped 07-17. Real bias post-Lc on the same rows: ch +5pp, cm +7pp, cl −29pp (Lc slightly over-corrects). Regime-conditional cl alternative failed halves check (Δ swings 14-57pp across the 06-30 mixture seam) — Lc's fc_cl-binned approach wins on all-time training data. Deleted `analysis/h_rh_saturation_stage1.py` and the three orphan `<field>_cc_sat_correction_curated.json` files. Saved lesson to memory as [[feedback_measure_against_live_stack_baseline]]: when measuring a NEW candidate correction's gain, use the highest currently-applied layer's `forecast_lN` key as baseline, not the flat `forecast` field. Prevention checklist banked. One narrow survivor flagged for future work: pre_frontal 0-5 cl (fog-during-front-approach pattern where Lc under-corrects due to fc_cl bin misclassification).
