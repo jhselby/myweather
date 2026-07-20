@@ -435,7 +435,7 @@ def blend_observed_into_hourly(weather_data):
     cur = weather_data.get("current", {})
     observed_gust = cur.get("wind_gusts")
     observed_speed = cur.get("wind_speed")
-    observed_dir = cur.get("wind_dir")
+    observed_dir = cur.get("wind_direction")
     if not observed_gust and not observed_speed and observed_dir is None:
         return
 

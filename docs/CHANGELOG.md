@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.368a • July 20, 2026</strong></summary>
+
+- **wd L2 blend hotfix — wrong field key.** v0.6.368 read `cur.get("wind_dir")` in `wind_blend.py` — but `weather_data["current"]` stores the field as `wind_direction` (see line 311 setter: `current["wind_direction"] = ...`). Confused with `obs_temp_log` where the column is named `wind_dir`. Result: `observed_dir` was always None post-deploy → `blend_dir` False → blend never fired → raw_wind_direction == wind_direction across all leads. Fixed by using the correct key. Re-verified against production-shaped data (raw=[166,146,...], obs=207) → blend produces [207,205,202,199,197,194] as expected.
+
+</details>
+
+<details>
 <summary><strong>v0.6.368 • July 20, 2026</strong></summary>
 
 - **wd added to L2 — circular unit-vector blend in `wind_blend.py`.** Same architecture as ws/wg L2 (linear decay-blend of current obs into first `BLEND_HOURS=24` of hourly fc), but circular math: convert both obs wd and fc wd to `(sin, cos)`, weighted unit-vector average, `atan2` back to degrees, wrap to `[0, 360)`. Linear weighted-average would produce garbage on wraparound (avg of 350° + 10° = 180° instead of 0°). Calm-floor guard `WIND_DIR_MIN_SPEED = 3.0 mph` skips cells where both obs and fc wind speed are below the floor — direction is physically undefined at calm speeds and blending would inject junk. Consensus obs wd (`weather_data["current"]["wind_dir"]`) has been collected/stored for months; this ship just wires it into the pipeline side of L2. Post-blend `raw_wind_direction` preserved for the debug page's Raw baseline. Also updated `forecast_snapshot.py`'s wd layers map — `l2` was hardcoded to `raw_wind_direction` (correct pre-v0.6.368, wrong now); flipped to `hourly["wind_direction"]` so the Fitter's `per_layer_mae_by_lead["wd"]["l2"]` starts measuring the blended value against ground truth. Verified via 6 unit tests (wraparound, decay taper, calm floor both-directions, no-obs no-op, raw preservation, opposing-direction full-obs-weight).
