@@ -682,7 +682,14 @@ def fit_decay_corrections():
                         l6_audit_abs_l4 += abs(float(e_l4_aud))
                         l6_audit_abs_l6 += abs(float(e_l6_aud))
                         l6_audit_n      += 1
-                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6"):
+                # v0.6.369: chp (ch_persistence_gate) + clp (cl_persistence_
+                # short_lead) added so specialists that ship AFTER Lc get their
+                # own per-layer MAE series. error_chp/error_clp are None on
+                # every non-ch/non-cl row so the loop no-ops harmlessly. Fixes
+                # silent-absorption into Production per [[feedback_specialist_
+                # attribution_wiring]] — ch_persistence 14d watch (shipped
+                # 2026-07-19 v0.6.358) needs an isolated chp series.
+                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp"):
                     if lyr == "l6" and run_time < L6_VALID_FROM:
                         continue
                     if lyr == "l5" and run_time < L5_VALID_FROM:
@@ -1159,7 +1166,12 @@ def fit_decay_corrections():
         per_layer_bias_by_lead[f] = {}
         per_layer_rmse_by_lead[f] = {}
         per_layer_n_by_lead[f]    = {}
-        for lyr in ("l1", "l2", "l3", "l4", "l5", "l6"):
+        # v0.6.369: chp/clp emitted for every field to keep the tsd schema
+        # regular. Frontend _layerApplied() filters them to (ch, cl) — same
+        # pattern as l5→sr and l6→cloud fields. Irrelevant fields get all-None
+        # arrays which are harmless and match the l5/l6 shape for non-owner
+        # fields today.
+        for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp"):
             mae_arr  = [None] * LEAD_BINS
             bias_arr = [None] * LEAD_BINS
             rmse_arr = [None] * LEAD_BINS

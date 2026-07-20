@@ -3421,6 +3421,13 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // Filter l6 to the cloud fields so Production for cc/cl/cm/ch reads
     // off Lc and Production for T reads off L4.
     if (layerKey === "l6") return ["cc","cl","cm","ch"].includes(fieldKey);
+    // v0.6.369: chp (ch_persistence_gate, LIVE since 2026-07-19 v0.6.358) and
+    // clp (cl_persistence_short_lead, LIVE since 2026-07-19 v0.6.361). These
+    // are post-Lc specialists that mutate hourly.<field> and get their own
+    // per-layer MAE series in the tsd as of v0.6.369. Filter to their owner
+    // field so the accuracy chart / legend / column render only where real.
+    if (layerKey === "chp") return fieldKey === "ch";
+    if (layerKey === "clp") return fieldKey === "cl";
     return false;
   };
   const grid = document.getElementById("accuracy-grid");
@@ -3454,6 +3461,12 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // any live field until Lc flipped 2026-07-17 v0.6.355. _layersFor()
     // filters this entry to cc/cl/cm/ch cards only.
     { key: "l6", label: "Cloud saturation (Lc)",            shortLabel: "Saturation",     color: "rgba(210,110,180,1)",    dash: [] },
+    // v0.6.369: post-Lc persistence specialists. chp on ch (LIVE 2026-07-19
+    // v0.6.358), clp on cl (LIVE 2026-07-19 v0.6.361). _layerApplied() filters
+    // to their owner field. Colors match the production-line config below
+    // (chp:#4ad29a green; clp same family, one hue over).
+    { key: "chp", label: "ch persistence (chp)",            shortLabel: "ch persistence", color: "rgba(74,210,154,1)",     dash: [] },
+    { key: "clp", label: "cl persistence (clp)",            shortLabel: "cl persistence", color: "rgba(140,210,120,1)",    dash: [] },
   ];
 
   // v2: per-band MAE summary. Bands match the walk-forward validator buckets.
