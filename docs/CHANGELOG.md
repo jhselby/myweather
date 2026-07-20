@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.367 • July 20, 2026</strong></summary>
+
+- **Fitter now emits real per-layer wd MAE/RMSE/bias — wd appears in WINNING FIELDS tile.** The joiner was writing wd pairs on a dedicated code path (`forecast_error_log.py:184-206`) that produced `error` + `error_sin` + `error_cos` but skipped the per-layer loop that every other field ran, so `error_l1`..`error_l4` were absent. Downstream the Fitter saw those as `None` and left `per_layer_mae_by_lead["wd"]` all-null; the debug page's WINNING FIELDS scorecard silently dropped wd via its `if (rawMae == null) continue` filter. Fixed by adding the layer loop inside the wd branch using `_circular_diff_deg` (circular angular diff, wrap-aware) for the per-layer errors. wd has no correction layers today so error_l1..error_l4 are all identical circular diffs → Prod = raw → wd will land in the ○ flat row of the scorecard (correct — "no attempt made"). Once `wd_persistence_gate` flips (~07-27) or any future L2/L3/L4 wd correction lands, a real Δ will surface automatically. Frontend requires no change — the tile picks wd up as soon as the Fitter's next cycle (03:07 or 15:07 EDT) has enough post-fix pairs to clear the n≥30 floor.
+
+</details>
+
+<details>
 <summary><strong>v0.6.366a • July 20, 2026</strong></summary>
 
 - **Debug page Rule 5 sweep for v0.6.366.** Targeted updates across `corrections_debug.html`: (a) **Gate candidates block** — L3 asymmetric fc-bin skip row flipped Stage 1 preview → SHIPPED for wg (green border, ✓ WIRED + LIVE 07-20 v0.6.366, 48 SKIP cells, first-tick verify note); ws sub-note explains blanket-vs-asymmetric conflict deferring the swap to 07-27. (b) **Calendar Mon 07-27** entry rewritten from "L3 asymmetric earliest ship, blocked on refactor" → "ws swap-in earliest ship, wg already live." (c) **Recent activity 07-20** — daily summary count updated to "4 ships + 1 dashboard + 1 kill", v0.6.366 added to list; new SHIP entry describes the wiring, ws deferral rationale, and first-tick verify. (d) **Open architectural questions** — SKIP_TABLE architecture description extended with v0.6.366 fc-bin dimension clause. (e) **Last-curated** stamp advanced 07-20 v0.6.365c → v0.6.366.

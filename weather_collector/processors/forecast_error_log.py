@@ -196,6 +196,20 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                     "error_sin": round(math.sin(f_rad) - math.sin(o_rad), 5),
                     "error_cos": round(math.cos(f_rad) - math.cos(o_rad), 5),
                 }
+                # v0.6.367: emit forecast_lN + error_lN for wd on the same
+                # cadence as every other field. Errors use circular angular
+                # diff. Enables per-layer wd MAE aggregation in the Fitter's
+                # per_layer_mae_by_lead["wd"], which was previously all-null
+                # because this wd branch bypassed the per-layer loop below.
+                # Frontend WINNING FIELDS tile then picks wd up automatically
+                # (currently shows Prod == raw since wd has no correction
+                # layers yet; will surface a real Δ once wd_persistence_gate
+                # or a future L2/L3/L4 wd correction ships).
+                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp"):
+                    v = target_hour.get(f"{short}_{lyr}")
+                    if v is not None:
+                        pair[f"forecast_{lyr}"] = round(float(v), 3)
+                        pair[f"error_{lyr}"] = round(_circular_diff_deg(float(v), obs_f), 3)
                 if state_fc:  pair["state_fc"]  = state_fc
                 if state_obs: pair["state_obs"] = state_obs
                 if cloud_sigma is not None:
