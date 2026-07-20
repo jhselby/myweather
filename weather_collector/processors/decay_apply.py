@@ -25,10 +25,12 @@ independent L2/L3/L4 corrections on humidity still run as background and
 appear in the per-layer pair-log entries — they're retained for comparison
 but the user-facing humidity is the derived value.
 """
+import json
 import logging
 import math
 from collections import defaultdict
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import pytz
 
@@ -127,6 +129,131 @@ def _should_skip(field, layer, regime, lead_h):
             return True
     return False
 
+
+# ── Asymmetric fc-bin skip table (v0.6.366 scaffolding) ────────────────────
+# Extends SKIP_TABLE with a per-cell fc-magnitude dimension. Stage 1 analysis
+# (h_l3_asymmetric_stage1.py) showed L3 is a mean-bias subtraction that helps
+# on over-forecast rows (high raw fc) and hurts on under-forecast rows (low
+# raw fc). Split fc into per-(regime, band) quartiles and skip L3 in the
+# quartiles where L3 stably loses on both halves + full window.
+#
+# Wired for wg only in first cut. ws deferred — its existing hardcoded
+# SKIP_TABLE entries (ne_flow all, sea_breeze 0-11) disagree with the newer
+# asymmetric grid at those cells; replacing them is a live-layer flip that
+# needs 7-window agreement (whitelist promotion gate) before shipping.
+#
+# Fail-safe: any lookup miss (regime unknown, band unknown, no cuts for
+# that cell, raw fc unavailable, fc bin lands outside SKIP set) → do not
+# skip. Never turns L3 OFF where the existing SKIP_TABLE said ON.
+_ASYMMETRIC_SKIP_PATHS = {
+    ("wg", "l3"): Path(__file__).resolve().parent.parent / "data" / "wg_l3_asymmetric_skip_curated.json",
+}
+_ASYMMETRIC_CACHE = {}
+_LEAD_BANDS = [
+    ("0-5",    0,  5),
+    ("6-11",   6, 11),
+    ("12-23", 12, 23),
+    ("24-47", 24, 47),
+]
+# Which hourly array holds the raw (pre-L2) forecast for each field.
+# Populated by wind_blend (ws/wg) and preserve_raw_forecast_arrays (cloud/
+# precip/solar/wd). Absent for fields that no upstream step preserves.
+_RAW_ARRAY = {
+    "ws": "raw_wind_speed",
+    "wg": "raw_wind_gusts",
+    "pp": "raw_precipitation_probability",
+    "cc": "raw_cloud_cover",
+    "cl": "raw_cloud_cover_low",
+    "cm": "raw_cloud_cover_mid",
+    "ch": "raw_cloud_cover_high",
+    "sr": "raw_direct_radiation",
+    "pa": "raw_precipitation",
+}
+
+
+def _load_asymmetric_table(field, layer):
+    key = (field, layer)
+    if key in _ASYMMETRIC_CACHE:
+        return _ASYMMETRIC_CACHE[key]
+    path = _ASYMMETRIC_SKIP_PATHS.get(key)
+    if path is None:
+        _ASYMMETRIC_CACHE[key] = None
+        return None
+    try:
+        doc = json.loads(path.read_text())
+    except FileNotFoundError:
+        logging.warning(f"  ⚠  Asymmetric skip table missing at {path}; L3 asymmetric skip disabled for {field}")
+        _ASYMMETRIC_CACHE[key] = None
+        return None
+    except Exception as e:
+        logging.warning(f"  ⚠  Asymmetric skip table load failed for {field}: {e}")
+        _ASYMMETRIC_CACHE[key] = None
+        return None
+    # Pre-index: {(regime, band): (q1, q2, q3)} and set of (regime, band, "Q1..Q4") SKIPs.
+    cuts_by_cell = {}
+    for cell_key, qs in (doc.get("fc_quartile_cuts") or {}).items():
+        try:
+            regime, band = cell_key.split("|", 1)
+            cuts_by_cell[(regime, band)] = (float(qs["q1"]), float(qs["q2"]), float(qs["q3"]))
+        except (KeyError, ValueError, TypeError):
+            continue
+    skip_bins = set()
+    for regime, bands in (doc.get("cells") or {}).items():
+        for band, quarts in (bands or {}).items():
+            for qname, cell in (quarts or {}).items():
+                if isinstance(cell, dict) and cell.get("verdict") == "SKIP":
+                    skip_bins.add((regime, band, qname))
+    indexed = {"cuts": cuts_by_cell, "skip_bins": skip_bins}
+    _ASYMMETRIC_CACHE[key] = indexed
+    return indexed
+
+
+def _lead_band(lead_h):
+    if lead_h is None:
+        return None
+    for name, lo, hi in _LEAD_BANDS:
+        if lo <= lead_h <= hi:
+            return name
+    return None
+
+
+def _fc_bin(fc, cuts):
+    """Bucket raw fc into Q1..Q4 using precomputed (q1, q2, q3) breakpoints."""
+    if fc is None or cuts is None:
+        return None
+    q1, q2, q3 = cuts
+    if fc < q1:
+        return "Q1"
+    if fc < q2:
+        return "Q2"
+    if fc < q3:
+        return "Q3"
+    return "Q4"
+
+
+def _should_skip_asymmetric(field, layer, regime, lead_h, raw_fc):
+    """Return True if (regime, band, fc-bin) is a SKIP cell in the asymmetric
+    table. Fail-safe: any missing input → return False (do not skip)."""
+    if regime is None or lead_h is None or raw_fc is None:
+        return False
+    table = _load_asymmetric_table(field, layer)
+    if not table:
+        return False
+    band = _lead_band(lead_h)
+    if band is None:
+        return False
+    cuts = table["cuts"].get((regime, band))
+    if cuts is None:
+        return False
+    try:
+        fc_val = float(raw_fc)
+    except (TypeError, ValueError):
+        return False
+    fb = _fc_bin(fc_val, cuts)
+    if fb is None:
+        return False
+    return (regime, band, fb) in table["skip_bins"]
+
 # Sanity caps on |correction| per field in each field's native units. A
 # pathological fit cannot move the forecast more than this regardless of
 # what decay_corrections.json says.
@@ -208,22 +335,32 @@ def describe_applicability():
     """
     def _fires_when_with_skip(field, layer):
         cells = SKIP_TABLE.get((field, layer)) or []
+        asym = _load_asymmetric_table(field, layer)
         base = f"L{layer[-1]}_FIELDS contains {field}"
-        if not cells:
-            return f"{base} (always, at every lead)"
         parts = []
         for r, lo, hi in cells:
             if hi >= 48:
                 parts.append(f"{r} (all bands)")
             else:
                 parts.append(f"{r} ({lo}-{hi-1}h)")
+        if asym and asym.get("skip_bins"):
+            parts.append(f"{len(asym['skip_bins'])} asymmetric fc-bin cells")
+        if not parts:
+            return f"{base} (always, at every lead)"
         return f"{base} EXCEPT skip when regime + lead ∈ {{ " + ", ".join(parts) + " }"
 
     def _descriptor(field, layer):
         layer_name = f"L{layer[-1]}_FIELDS"
         has_skip = bool(SKIP_TABLE.get((field, layer)))
-        gated_by = f"{layer_name} + SKIP_TABLE" if has_skip else layer_name
-        current_state = ("firing at every lead" if not has_skip
+        asym = _load_asymmetric_table(field, layer)
+        has_asym = bool(asym and asym.get("skip_bins"))
+        gate_parts = [layer_name]
+        if has_skip:
+            gate_parts.append("SKIP_TABLE")
+        if has_asym:
+            gate_parts.append("SKIP_TABLE_ASYMMETRIC")
+        gated_by = " + ".join(gate_parts)
+        current_state = ("firing at every lead" if not (has_skip or has_asym)
                          else "firing except in skip cells (see 'applies when')")
         return {
             "field": field,
@@ -469,6 +606,7 @@ def apply_decay_corrections(weather_data, config=None):
     _state = (weather_data.get("derived") or {}).get("state") or {}
     _regime_now = _state.get("regime_synoptic")
     skip_l3 = 0
+    skip_l3_asymmetric = 0
     skip_l4 = 0
     # Per-field firing counters for the gate-firing log (Phase (a)). "Fires" =
     # correction actually mutated the array. "Skips" = skip table matched.
@@ -491,6 +629,10 @@ def apply_decay_corrections(weather_data, config=None):
             continue
         cap = CAPS.get(short, float("inf"))
         digits = ROUND_DIGITS.get(short, 1)
+        # Raw pre-L2 forecast used for asymmetric fc-bin skip; None if the
+        # upstream preservation step didn't run for this field.
+        raw_name = _RAW_ARRAY.get(short)
+        raw_arr = hourly.get(raw_name) if raw_name else None
         for h in range(min(len(arr), len(per_lead))):
             val = arr[h]
             c = per_lead[h]
@@ -498,6 +640,12 @@ def apply_decay_corrections(weather_data, config=None):
                 continue
             if _should_skip(short, "l3", _regime_now, h):
                 skip_l3 += 1
+                l3_by_field[short]["skips"] += 1
+                continue
+            raw_fc = raw_arr[h] if isinstance(raw_arr, list) and h < len(raw_arr) else None
+            if _should_skip_asymmetric(short, "l3", _regime_now, h, raw_fc):
+                skip_l3 += 1
+                skip_l3_asymmetric += 1
                 l3_by_field[short]["skips"] += 1
                 continue
             try:
@@ -671,5 +819,6 @@ def apply_decay_corrections(weather_data, config=None):
         "layer_4_paused": len(l4_fields) == 0,
         "skip_table_regime": _regime_now,
         "skip_table_l3_cells_skipped": skip_l3,
+        "skip_table_l3_asymmetric_cells_skipped": skip_l3_asymmetric,
         "skip_table_l4_cells_skipped": skip_l4,
     }

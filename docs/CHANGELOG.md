@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.366 • July 20, 2026</strong></summary>
+
+- **L3 asymmetric fc-bin skip machinery — wg wired.** Extends `decay_apply.py`'s `SKIP_TABLE` with a per-cell fc-magnitude dimension. Stage 1 analysis (07-20 `h_l3_asymmetric_stage1.py`) showed L3 is a mean-bias subtraction that helps on over-forecast rows (high raw fc) and hurts on under-forecast rows (low raw fc); splitting fc into per-(regime, band) quartiles isolates 92 SKIP cells across wg + ws where L3 stably loses. **This ship wires the machinery for wg only (48 SKIP cells).** New `_should_skip_asymmetric()` reads `weather_collector/data/wg_l3_asymmetric_skip_curated.json` and looks up (regime, band, fc-bin) using `hourly["raw_wind_gusts"]` (preserved by `wind_blend.py` before decay). Fail-safe: missing raw fc, unknown regime, or no cuts for cell → do not skip; never turns L3 OFF where the existing hardcoded `SKIP_TABLE` said ON. `decay_meta.skip_table_l3_asymmetric_cells_skipped` counter added for the debug page. `describe_applicability()` extended to name `SKIP_TABLE_ASYMMETRIC` in the wg entry. **ws deferred** — its two existing blanket entries (`ne_flow` all, `sea_breeze 0-11`) disagree with the newer asymmetric grid at exactly those cells (asymmetric says KEEP where hardcoded says SKIP). Replacing them is a live-layer flip that needs the standing 7-window whitelist promotion gate; earliest swap-in 07-27 once the streak clears.
+
+</details>
+
+<details>
 <summary><strong>v0.6.365d • July 20, 2026</strong></summary>
 
 - **wd field promotion — accuracy chart + pipeline table.** Followed on 07-20 v0.6.365b's promotion of wd in the analysis scripts by making wd visible on the debug page's user-facing views. (a) **Current pipeline state table** — added a wd row: raw HRRR only today (no L2/L3/L4), circular MAE 61°, with in-flight persistence-gate candidate context (5 SHIP + 1 MARGIN cells, earliest flip 07-27). Header date advanced 07-19 → 07-20. (b) **Accuracy chart** — added wd to `FIELD_LABELS` (dropdown label "Wind direction (°)") and `FIELD_LAYERS` (raw-only, marked isProd — placeholder for the future specialist layer). (c) **`analysis/mae_over_time.py`** — added wd to `FIELDS` + new `L1_ONLY_FIELDS = {"wd"}` path that routes the pair log's top-level `error` field (already circular-angular for wd) to the "raw" layer. Re-ran the script; published JSON now carries 14 fields (was 13), 35 days total, wd data available for the chart. (d) **L2 Applicability table** — added a wd row with N/A verdict (circular field; L2's linear additive math doesn't apply; would need sin/cos vector-mean to make sense).
