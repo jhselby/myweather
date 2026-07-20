@@ -1050,7 +1050,7 @@
   <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-20 v0.6.365c · click any sub-box header to collapse it, or use the toggle below.</div>
 
   <details open style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
-    <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — 2026-07-19</summary>
+    <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — 2026-07-20</summary>
     <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. Production numbers are real per-row aggregates over the rolling 7-day window.</div>
     <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
       <thead>
@@ -1139,6 +1139,12 @@
           <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(no L2/L3/L4 apply)</span></td>
           <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">0% <span style="font-size:0.9em;">(bursty)</span></td>
           <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only.</strong> τ 28 → 42 07-13 (v0.6.334, 3/3 streak, +5.5% MAE vs τ=14) → 7 07-18 (v0.6.357, 8/3 streak, +5.9% MAE vs τ=14) → <strong>reverted to global τ=14 07-19</strong> (v0.6.358, +0.9% vs τ=14 today, below the 5% floor; matches 07-02 ws revert precedent).</td>
+        </tr>
+        <tr style="border-top:1px solid #232936;">
+          <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wd</code> wind direction</td>
+          <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(no L2/L3/L4; wd persistence gate drafted 07-20 v0.6.365 ENABLED=False)</span></td>
+          <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">— <span style="font-size:0.9em;">(circular, MAE 61° raw)</span></td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#e0d472;">First wd correction candidate in flight.</strong> Currently raw HRRR only. Stage 2 preview 07-20 v0.6.365 wired a predicted-transition persistence-of-obs override: <strong>5 SHIP + 1 MARGIN cells</strong>, composed-gate MAE reductions <strong>−26% sw_flow 0-5, −20% calm 24-47, −12% se_flow 0-5</strong>. Processor <code>wd_persistence_gate.py</code> drafted; not yet wired into <code>collector.py</code>. Field promotion started v0.6.365b (wd now first-class in <code>anomaly_detector</code> + <code>h_persistence_skill</code>). h_persistence_skill: <strong>wd 0-5h BEHIND</strong> (persistence 50° beats L1 56°), 6-47h ADDS VALUE. Earliest flip <strong>2026-07-27</strong>.</td>
         </tr>
       </tbody>
     </table>
@@ -1477,6 +1483,12 @@
         <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>sr</code> / <code>pp</code> / <code>pa</code></td>
         <td style="padding:6px 10px;vertical-align:top;"><strong>N/A</strong> — no station network for this field; L2 row is structurally empty</td>
         <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.6;">n/a — no obs network</span></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;"><span style="opacity:0.6;">n/a</span></td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>wd</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>N/A</strong> — circular field (0-360°); L2's linear additive bias math doesn't apply. Would need circular vector-mean (sin/cos aggregate) to make sense here. Not currently wired. First wd correction is instead the persistence-of-obs specialist gate drafted 07-20 v0.6.365 (see <a href="#sec-status">Engineering updates</a>).</td>
+        <td style="padding:6px 10px;vertical-align:top;"><span style="opacity:0.6;">n/a — circular</span></td>
         <td style="padding:6px 0 6px 10px;vertical-align:top;"><span style="opacity:0.6;">n/a</span></td>
       </tr>
     </tbody>
@@ -6111,7 +6123,7 @@ load();
 
   const FIELD_LABELS = {
     t: "Temperature (°F)", dp: "Dewpoint (°F)", h: "Humidity (%)",
-    ws: "Wind speed (mph)", wg: "Wind gust (mph)",
+    ws: "Wind speed (mph)", wg: "Wind gust (mph)", wd: "Wind direction (°)",
     cc: "Cloud cover (%)", cl: "Cloud low (%)", cm: "Cloud mid (%)", ch: "Cloud high (%)",
     sr: "Solar rad (W/m²)", pr: "Pressure (inHg)", pp: "Precip prob (0-1)", pa: "Precip amt (in)",
   };
@@ -6163,6 +6175,11 @@ load();
     pp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
     pr: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
     pa: [{key:"raw", label:"Raw"}, {key:"prod", label:"Prod", isProd:true}],
+    // wd: L1-only (no correction stack today). wd_persistence_gate drafted 07-20
+    // v0.6.365 ENABLED=False — when wired, add a specialist layer (e.g. `wdp`)
+    // that becomes isProd and demotes raw. Circular metric: MAE values are
+    // absolute angular diff on [0, 180].
+    wd: [{key:"raw", label:"Raw", isProd:true}],
   };
   // Layer must have at least this many non-null days in the payload to
   // appear in the legend. Prevents 1-2 stragglers (e.g. cc l6 the day Lc

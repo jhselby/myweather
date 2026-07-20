@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.365d • July 20, 2026</strong></summary>
+
+- **wd field promotion — accuracy chart + pipeline table.** Followed on 07-20 v0.6.365b's promotion of wd in the analysis scripts by making wd visible on the debug page's user-facing views. (a) **Current pipeline state table** — added a wd row: raw HRRR only today (no L2/L3/L4), circular MAE 61°, with in-flight persistence-gate candidate context (5 SHIP + 1 MARGIN cells, earliest flip 07-27). Header date advanced 07-19 → 07-20. (b) **Accuracy chart** — added wd to `FIELD_LABELS` (dropdown label "Wind direction (°)") and `FIELD_LAYERS` (raw-only, marked isProd — placeholder for the future specialist layer). (c) **`analysis/mae_over_time.py`** — added wd to `FIELDS` + new `L1_ONLY_FIELDS = {"wd"}` path that routes the pair log's top-level `error` field (already circular-angular for wd) to the "raw" layer. Re-ran the script; published JSON now carries 14 fields (was 13), 35 days total, wd data available for the chart. (d) **L2 Applicability table** — added a wd row with N/A verdict (circular field; L2's linear additive math doesn't apply; would need sin/cos vector-mean to make sense).
+
+</details>
+
+<details>
 <summary><strong>v0.6.365c • July 20, 2026</strong></summary>
 
 - **Debug page Rule 5 sweep for today's ships.** Targeted updates across `corrections_debug.html` (not a rewrite): (a) **LSR RETIRE-vs-AGREE puzzle resolved.** Removed the "investigation queued" language across two sites (course-of-action list + Lsr layer's Open watch note); replaced with the resolution — divergence-report claim was sourced from `l5_solar_analysis` (candidate script, not live gate), fixed in v0.6.365 by routing through the live Fitter cycle gate history. (b) **Added wd persistence gate candidate block** under Gate candidates — Stage 2 preview + processor drafted 07-20, ENABLED=False, day 1/7, 5 SHIP + 1 MARGIN cells with composed-gate MAE reductions −4% to −26%. (c) **Added L3 asymmetric fc-bin candidate block** — Stage 1 preview 07-20, 92 SKIP cells across wg + ws, wiring blocked on `decay_apply.py` SKIP_TABLE fc-bin refactor. (d) **Calendar** — added Mon 07-27 entries for wd persistence gate + L3 asymmetric earliest-flip. (e) **Recent activity** — 07-19 rolled off "today", 07-20 added with 3 SHIP + 1 KILL entries (v0.6.365 / .365a / .365b). Last-curated stamp advanced to 07-20 v0.6.365c.

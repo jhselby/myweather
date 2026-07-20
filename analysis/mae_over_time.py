@@ -40,8 +40,15 @@ ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 HISTORY_URL = "https://data.wymancove.com/mae_over_time.json"
 OUT_JSON = os.path.join(SCRIPT_DIR, "output", "mae_over_time.json")
 
-FIELDS = ["t", "dp", "h", "ws", "wg", "cc", "cl", "cm", "ch", "sr", "pr", "pp", "pa"]
+FIELDS = ["t", "dp", "h", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pr", "pp", "pa"]
 MIN_N_PER_DAY = 200  # skip (field, day) cells with too few pairs — avoids noise spikes
+
+# Fields with no L2/L3/L4 correction stack — pair-log rows only carry the top-level
+# `error` key, not error_l1/l2/l3/l4. Route them through the permissive path with a
+# single "raw" layer sourced from `error` (which IS L1 for these fields). Currently
+# just wd (circular; the pair log emits circular-angular error directly). Add
+# wd_persistence_gate output as a "chp"-style specialist layer once that gate wires.
+L1_ONLY_FIELDS = {"wd"}
 
 # Overwrite the last N days on every run — recent days may still be
 # accumulating pairs, so re-aggregation gets fresher numbers. Days older
@@ -111,19 +118,27 @@ def compute_fresh_rollup():
                 continue
             day = ot[:10]
             per_layer = {}
-            skip = False
-            for ln, key in STRICT_LAYER_KEYS:
-                e = r.get(key)
+            if fld in L1_ONLY_FIELDS:
+                # Fields without a correction stack. `error` in the pair log IS the
+                # raw-vs-obs metric (circular for wd). Route to the "raw" layer.
+                e = r.get("error")
                 if e is None:
-                    skip = True
-                    break
-                per_layer[ln] = e
-            if skip:
-                continue
-            for ln, key in PERMISSIVE_LAYER_KEYS:
-                e = r.get(key)
-                if e is not None:
+                    continue
+                per_layer["raw"] = e
+            else:
+                skip = False
+                for ln, key in STRICT_LAYER_KEYS:
+                    e = r.get(key)
+                    if e is None:
+                        skip = True
+                        break
                     per_layer[ln] = e
+                if skip:
+                    continue
+                for ln, key in PERMISSIVE_LAYER_KEYS:
+                    e = r.get(key)
+                    if e is not None:
+                        per_layer[ln] = e
             for ln, e in per_layer.items():
                 buckets[(day, fld)][ln].append(e)
 
