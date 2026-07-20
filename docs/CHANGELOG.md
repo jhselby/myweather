@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.368 • July 20, 2026</strong></summary>
+
+- **wd added to L2 — circular unit-vector blend in `wind_blend.py`.** Same architecture as ws/wg L2 (linear decay-blend of current obs into first `BLEND_HOURS=24` of hourly fc), but circular math: convert both obs wd and fc wd to `(sin, cos)`, weighted unit-vector average, `atan2` back to degrees, wrap to `[0, 360)`. Linear weighted-average would produce garbage on wraparound (avg of 350° + 10° = 180° instead of 0°). Calm-floor guard `WIND_DIR_MIN_SPEED = 3.0 mph` skips cells where both obs and fc wind speed are below the floor — direction is physically undefined at calm speeds and blending would inject junk. Consensus obs wd (`weather_data["current"]["wind_dir"]`) has been collected/stored for months; this ship just wires it into the pipeline side of L2. Post-blend `raw_wind_direction` preserved for the debug page's Raw baseline. Also updated `forecast_snapshot.py`'s wd layers map — `l2` was hardcoded to `raw_wind_direction` (correct pre-v0.6.368, wrong now); flipped to `hourly["wind_direction"]` so the Fitter's `per_layer_mae_by_lead["wd"]["l2"]` starts measuring the blended value against ground truth. Verified via 6 unit tests (wraparound, decay taper, calm floor both-directions, no-obs no-op, raw preservation, opposing-direction full-obs-weight).
+
+</details>
+
+<details>
 <summary><strong>v0.6.367 • July 20, 2026</strong></summary>
 
 - **Fitter now emits real per-layer wd MAE/RMSE/bias — wd appears in WINNING FIELDS tile.** The joiner was writing wd pairs on a dedicated code path (`forecast_error_log.py:184-206`) that produced `error` + `error_sin` + `error_cos` but skipped the per-layer loop that every other field ran, so `error_l1`..`error_l4` were absent. Downstream the Fitter saw those as `None` and left `per_layer_mae_by_lead["wd"]` all-null; the debug page's WINNING FIELDS scorecard silently dropped wd via its `if (rawMae == null) continue` filter. Fixed by adding the layer loop inside the wd branch using `_circular_diff_deg` (circular angular diff, wrap-aware) for the per-layer errors. wd has no correction layers today so error_l1..error_l4 are all identical circular diffs → Prod = raw → wd will land in the ○ flat row of the scorecard (correct — "no attempt made"). Once `wd_persistence_gate` flips (~07-27) or any future L2/L3/L4 wd correction lands, a real Δ will surface automatically. Frontend requires no change — the tile picks wd up as soon as the Fitter's next cycle (03:07 or 15:07 EDT) has enough post-fix pairs to clear the n≥30 floor.

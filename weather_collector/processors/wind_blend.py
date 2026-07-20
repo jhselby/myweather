@@ -76,6 +76,10 @@ KT_TO_MPH = 1.15078
 # Hourly blend horizon: weight decays linearly from 100% observed at hour 0
 # to 0% observed at hour BLEND_HOURS, replacing the model's wind in between.
 BLEND_HOURS = 24
+# Below this wind speed (mph), wind direction is physically undefined /
+# dominated by turbulence. wd L2 blend skips cells where both obs and fc
+# speeds fall below this floor. "Light and variable" per Beaufort scale.
+WIND_DIR_MIN_SPEED = 3.0
 
 _TZ_EASTERN = pytz.timezone("America/New_York")
 
@@ -404,6 +408,12 @@ def blend_observed_into_hourly(weather_data):
     hour → 0% observed BLEND_HOURS out. Compensates for the model
     under-reading wind at exposed coastal locations.
 
+    Wind direction (v0.6.368) uses a circular unit-vector blend — the linear
+    weighted-average path used for ws/wg would produce garbage for wd
+    (average of 350° and 10° = 180°, not 0°). Skipped when both obs and
+    fc wind speed at that hour fall below WIND_DIR_MIN_SPEED, since
+    direction is physically undefined at calm speeds.
+
     No-op when there's no hourly data, no current wind to blend in, or
     the hourly arrays don't include wind_gusts.
     """
@@ -414,22 +424,27 @@ def blend_observed_into_hourly(weather_data):
     # Preserve raw (pre-blend) wind values so downstream (decay debug page,
     # anything else) can show what the forecast would be with NO local
     # corrections applied at all. temp/humidity/POP retain their raw arrays
-    # naturally — only wind/gust get mutated in place here.
+    # naturally — only wind/gust/dir get mutated in place here.
     if "wind_speed" in hourly and "raw_wind_speed" not in hourly:
         hourly["raw_wind_speed"] = list(hourly["wind_speed"])
     if "raw_wind_gusts" not in hourly:
         hourly["raw_wind_gusts"] = list(hourly["wind_gusts"])
+    if "wind_direction" in hourly and "raw_wind_direction" not in hourly:
+        hourly["raw_wind_direction"] = list(hourly["wind_direction"])
 
     cur = weather_data.get("current", {})
     observed_gust = cur.get("wind_gusts")
     observed_speed = cur.get("wind_speed")
-    if not observed_gust and not observed_speed:
+    observed_dir = cur.get("wind_dir")
+    if not observed_gust and not observed_speed and observed_dir is None:
         return
 
     times = hourly.get("times", [])
     gusts = hourly.get("wind_gusts", [])
     speeds = hourly.get("wind_speed", [])
+    dirs = hourly.get("wind_direction", [])
     blend_speed = bool(observed_speed) and bool(speeds)
+    blend_dir = observed_dir is not None and bool(dirs)
 
     now_local = datetime.now(_TZ_EASTERN)
     current_hour_iso = now_local.replace(minute=0, second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
@@ -445,3 +460,20 @@ def blend_observed_into_hourly(weather_data):
             gusts[i] = (observed_gust * weight) + (gusts[i] * (1 - weight))
         if blend_speed and i < len(speeds):
             speeds[i] = (observed_speed * weight) + (speeds[i] * (1 - weight))
+        # Circular wd blend — unit-vector weighted mean, then atan2 back to
+        # degrees. Skip when both obs and fc speeds are below the calm floor
+        # (direction is noise at low speeds; blending would inject junk).
+        if blend_dir and i < len(dirs) and dirs[i] is not None:
+            fc_speed_i = speeds[i] if blend_speed and i < len(speeds) else observed_speed
+            obs_speed_now = observed_speed if observed_speed is not None else 0.0
+            if max(obs_speed_now, fc_speed_i or 0.0) >= WIND_DIR_MIN_SPEED:
+                try:
+                    obs_rad = math.radians(float(observed_dir))
+                    fc_rad = math.radians(float(dirs[i]))
+                except (TypeError, ValueError):
+                    continue
+                s = weight * math.sin(obs_rad) + (1 - weight) * math.sin(fc_rad)
+                c = weight * math.cos(obs_rad) + (1 - weight) * math.cos(fc_rad)
+                if abs(s) < 1e-9 and abs(c) < 1e-9:
+                    continue  # blended vector collapsed to origin — keep fc
+                dirs[i] = round((math.degrees(math.atan2(s, c)) + 360.0) % 360.0)

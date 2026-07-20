@@ -137,12 +137,14 @@ def append_forecast_snapshot(hourly, derived=None):
                                 hourly.get("cloud_cover_high", [])),
                "chp": hourly.get("cloud_cover_high", [])},
         # Wind direction is circular — needs special sin/cos math in Fitter
-        # and Apply. No Layer 2 (no mesonet aggregation for direction yet) and
-        # no Layer 4 (no diurnal yet) — Layer 3 decay correction only in v0.6.27.
-        # l2 = l1, l4 = l3 by construction; kept in layers dict for snapshot
-        # consistency with the rest of the fields.
+        # and Apply. v0.6.368 added wd to L2 (wind_blend circular unit-vector
+        # blend of current obs wd into near-lead fc, weight decays over
+        # BLEND_HOURS, calm-floor guard skips ≤3 mph cells). No L3 (wd not in
+        # L3_FIELDS whitelist yet) and no L4 (diurnal is meaningless for
+        # circular signed-mean). l3 = l4 = l2 by construction until wd earns
+        # a downstream layer.
         "wd": {"l1": hourly.get("raw_wind_direction", hourly.get("wind_direction", [])),
-               "l2": hourly.get("raw_wind_direction", hourly.get("wind_direction", [])),
+               "l2": hourly.get("wind_direction", []),
                "l3": hourly.get("wind_direction", []),
                "l4": hourly.get("wind_direction", [])},
     }
