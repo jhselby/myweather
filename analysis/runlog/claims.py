@@ -11,7 +11,9 @@ import re
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
 LOG_DIR = HERE.parent / "output" / "runlog"
+L5_GATE_HISTORY_CACHE = REPO / ".cache_l5_gate_history.json"
 # walkforward writes this file directly via `with open(..., "w")` — flushes and
 # closes deterministically, unlike the stdout-redirected .log which is subject
 # to Python's block-buffered stdout behavior when the child process exits mid-
@@ -86,6 +88,51 @@ def _claim_marginal_ship_cells(curated_json_name: str, allow_empty: bool = False
     return [] if allow_empty else None
 
 
+def _claim_lsr_enabled():
+    """Derive live-Lsr claim from the Fitter's per-cycle gate history.
+
+    The live Lsr uses `_BIAS_BY_HOUR_REGIME` (hourly × regime lookup) and
+    emits SHIP/HOLD/insufficient_data verdicts per 12h Fitter cycle to
+    l5_gate_history.json — that is the authoritative live-gate signal.
+    Prior implementation read `l5_solar_analysis` (which tests a CANDIDATE
+    regime-only lookup, not the live layer); its HOLD verdict caused the
+    divergence report to falsely claim "READY to disable live Lsr" while
+    the live gate was 100% SHIP for months. Fixed 2026-07-20.
+
+    Day-rollup mirrors `divergence_report._l5_trajectory_state`: a day
+    counts as SHIP only if every cycle that day was SHIP. Latest 7 days
+    all SHIP → True (keep on). ≥7 non-SHIP days → False (retire). Anything
+    else → None (mixed history, no clean claim).
+    """
+    if not L5_GATE_HISTORY_CACHE.exists():
+        return None
+    try:
+        hist = json.loads(L5_GATE_HISTORY_CACHE.read_text())
+    except Exception:
+        return None
+    entries = hist.get("entries") or []
+    if not entries:
+        return None
+    from collections import defaultdict
+    by_day = defaultdict(list)
+    for e in entries:
+        day = (e.get("fitted_at") or "")[:10]
+        if day:
+            by_day[day].append((e.get("verdict") or "").upper())
+    latest_days = sorted(by_day)[-7:]
+    if len(latest_days) < 7:
+        return None
+    ship_days = sum(1 for d in latest_days if all(v == "SHIP" for v in by_day[d]))
+    hold_days = sum(1 for d in latest_days
+                    if not all(v == "SHIP" for v in by_day[d])
+                    and not any(v == "INSUFFICIENT_DATA" for v in by_day[d]))
+    if ship_days == 7:
+        return True
+    if hold_days == 7:
+        return False
+    return None
+
+
 def _claim_lc_enabled(verdict):
     """lc_fit emits 'Verdict: FIT — N SHIP cell(s) ready to wire into Lc.'
     when the pair-log has SHIP cells, otherwise 'Verdict: HOLD — no cells...'.
@@ -112,8 +159,7 @@ def compute_claims(state: dict) -> dict:
     if wf:
         claims["L3_FIELDS"] = wf.get("L3_FIELDS")
         claims["L4_FIELDS"] = wf.get("L4_FIELDS")
-    v = state.get("l5_solar_analysis", {}).get("verdict")
-    claims["LSR_ENABLED"] = _claim_bool_ship(v)
+    claims["LSR_ENABLED"] = _claim_lsr_enabled()
     v = state.get("r5_cove_analysis", {}).get("verdict")
     claims["LT_ENABLED"] = _claim_bool_ship(v)
     # LC_ENABLED added 2026-07-10 — the 7-day live-layer change gate on Lc was

@@ -260,12 +260,16 @@ def main():
                 notes = "; ".join(bits)
             rows.append((k, p, w, status, notes))
 
-    # L5 solar
-    v = state.get("l5_solar_analysis", {}).get("verdict")
-    wants_bool = claim_bool_ship(v)
+    # L5 Lsr — claim comes from the live Fitter's per-cycle gate history
+    # (l5_gate_history.json), NOT from l5_solar_analysis. l5_solar_analysis
+    # tests a CANDIDATE regime-only bias lookup, not the live hourly Lsr;
+    # its HOLD verdict caused this row to falsely read "READY to disable"
+    # for months while the live gate was 100% SHIP. Fixed 2026-07-20.
+    from claims import _claim_lsr_enabled
+    wants_bool = _claim_lsr_enabled()
     p = prod.get("LSR_ENABLED")
     if wants_bool is None:
-        rows.append(("LSR_ENABLED", p, None, "UNKNOWN", "verdict didn't classify"))
+        rows.append(("LSR_ENABLED", p, None, "UNKNOWN", "gate history unavailable or mixed"))
     else:
         status = "AGREE" if p == wants_bool else "DISAGREE"
         rows.append(("LSR_ENABLED", p, wants_bool, status, ""))

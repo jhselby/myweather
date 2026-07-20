@@ -784,7 +784,10 @@ def main():
         _claim_source = {
             "L3_FIELDS": "walkforward_l3l4_validator",
             "L4_FIELDS": "walkforward_l3l4_validator",
-            "LSR_ENABLED": "l5_solar_analysis",
+            # LSR_ENABLED comes from the live Fitter gate history cache
+            # (.cache_l5_gate_history.json), not a script's verdict — no
+            # source-script null-protect applies. Fixed 2026-07-20.
+            "LSR_ENABLED": None,
             "LT_ENABLED": "r5_cove_analysis",
             "LC_ENABLED": "lc_fit",
             "C1H_SHIP_CELLS": "c1h_curate",
@@ -801,6 +804,18 @@ def main():
                           f"Likely walkforward summary parse failure.",
                           file=sys.stderr)
                     continue
+                # LSR_ENABLED-specific: null claim can also mean the gate
+                # history cache is transiently missing (network failure on
+                # yesterday's divergence_report fetch). Preserve streak by
+                # skipping the row in that case; only write None when the
+                # cache is present but yields a mixed / non-decisive history.
+                if key == "LSR_ENABLED":
+                    from claims import L5_GATE_HISTORY_CACHE
+                    if not L5_GATE_HISTORY_CACHE.exists():
+                        print("WARN: _claim:LSR_ENABLED came back None and "
+                              "L5 gate history cache is missing — skipping "
+                              "row to protect streak.", file=sys.stderr)
+                        continue
             f.write(json.dumps({
                 "run_at": run_at,
                 "script": f"_claim:{key}",

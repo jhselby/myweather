@@ -1,0 +1,441 @@
+{
+  "generated_at": "2026-07-20T11:57:59.784763+00:00",
+  "source": "forecast_error_log.jsonl",
+  "field": "wd",
+  "stage": 2,
+  "windows": {
+    "A_recent_15d": [
+      "2026-07-04T00:00",
+      "2026-07-19T00:00"
+    ],
+    "B_prior_15d": [
+      "2026-06-19T00:00",
+      "2026-07-04T00:00"
+    ],
+    "FULL_30d": [
+      "2026-06-19T00:00",
+      "2026-07-19T00:00"
+    ]
+  },
+  "fit_rules": {
+    "min_n_cell": 200,
+    "mae_improve_floor_pct": 3.0,
+    "halves_stability_required": true,
+    "lead_bands": [
+      "0-5",
+      "6-11",
+      "12-23",
+      "24-47"
+    ],
+    "arithmetic": "circular_angular_diff"
+  },
+  "signal_quality": {
+    "tp": 73480,
+    "fp": 48746,
+    "fn": 17296,
+    "tn": 37861,
+    "precision_pct": 60.12,
+    "recall_pct": 80.95,
+    "accuracy_pct": 62.77,
+    "fire_rate_pct": 68.91
+  },
+  "gate": {
+    "fire_condition": "state_curr != state_fc.regime_synoptic (per lead)",
+    "baseline": "L1 (raw HRRR forecast)",
+    "intervention": "persistence-of-obs (flat carry of wd obs at hour_floor(run_time))",
+    "fire_cells": [
+      {
+        "fc_regime": "calm",
+        "lead_band": "12-23",
+        "verdict": "SHIP"
+      },
+      {
+        "fc_regime": "calm",
+        "lead_band": "24-47",
+        "verdict": "SHIP"
+      },
+      {
+        "fc_regime": "pre_frontal",
+        "lead_band": "0-5",
+        "verdict": "SHIP"
+      },
+      {
+        "fc_regime": "se_flow",
+        "lead_band": "0-5",
+        "verdict": "SHIP"
+      },
+      {
+        "fc_regime": "sw_flow",
+        "lead_band": "0-5",
+        "verdict": "SHIP"
+      },
+      {
+        "fc_regime": "sw_flow",
+        "lead_band": "6-11",
+        "verdict": "MARGIN"
+      }
+    ]
+  },
+  "cells": {
+    "calm": {
+      "0-5": {
+        "n_fires": 204,
+        "mae_l1": 80.613,
+        "mae_gate": 57.255,
+        "delta_full_pct": -28.98,
+        "delta_a_pct": 0.32,
+        "delta_b_pct": -36.62,
+        "verdict": "SKIP"
+      },
+      "6-11": {
+        "n_fires": 131,
+        "mae_l1": 85.313,
+        "mae_gate": 77.924,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
+      },
+      "12-23": {
+        "n_fires": 886,
+        "mae_l1": 82.133,
+        "mae_gate": 66.498,
+        "delta_full_pct": -19.04,
+        "delta_a_pct": -23.85,
+        "delta_b_pct": -17.7,
+        "verdict": "SHIP"
+      },
+      "24-47": {
+        "n_fires": 5392,
+        "mae_l1": 90.925,
+        "mae_gate": 70.899,
+        "delta_full_pct": -22.02,
+        "delta_a_pct": -29.55,
+        "delta_b_pct": -19.57,
+        "verdict": "SHIP"
+      }
+    },
+    "frontal": {
+      "0-5": {
+        "n_fires": 67,
+        "mae_l1": 51.328,
+        "mae_gate": 80.254,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
+      },
+      "6-11": {
+        "n_fires": 84,
+        "mae_l1": 78.786,
+        "mae_gate": 110.476,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
+      },
+      "12-23": {
+        "n_fires": 159,
+        "mae_l1": 84.95,
+        "mae_gate": 95.428,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
+      },
+      "24-47": {
+        "n_fires": 304,
+        "mae_l1": 44.826,
+        "mae_gate": 101.674,
+        "delta_full_pct": 126.82,
+        "delta_a_pct": null,
+        "delta_b_pct": 126.82,
+        "verdict": "SKIP"
+      }
+    },
+    "ne_flow": {
+      "0-5": {
+        "n_fires": 898,
+        "mae_l1": 65.783,
+        "mae_gate": 76.724,
+        "delta_full_pct": 16.63,
+        "delta_a_pct": 13.18,
+        "delta_b_pct": 21.87,
+        "verdict": "SKIP"
+      },
+      "6-11": {
+        "n_fires": 1717,
+        "mae_l1": 62.257,
+        "mae_gate": 102.573,
+        "delta_full_pct": 64.76,
+        "delta_a_pct": 59.57,
+        "delta_b_pct": 71.96,
+        "verdict": "SKIP"
+      },
+      "12-23": {
+        "n_fires": 3780,
+        "mae_l1": 62.22,
+        "mae_gate": 84.326,
+        "delta_full_pct": 35.53,
+        "delta_a_pct": 38.76,
+        "delta_b_pct": 30.6,
+        "verdict": "SKIP"
+      },
+      "24-47": {
+        "n_fires": 8285,
+        "mae_l1": 53.291,
+        "mae_gate": 96.291,
+        "delta_full_pct": 80.69,
+        "delta_a_pct": 100.45,
+        "delta_b_pct": 43.89,
+        "verdict": "SKIP"
+      }
+    },
+    "nor_easter": {
+      "0-5": {
+        "n_fires": 11,
+        "mae_l1": 58.455,
+        "mae_gate": 109.545,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
+      }
+    },
+    "nw_flow": {
+      "0-5": {
+        "n_fires": 766,
+        "mae_l1": 43.984,
+        "mae_gate": 54.766,
+        "delta_full_pct": 24.51,
+        "delta_a_pct": -2.5,
+        "delta_b_pct": 55.2,
+        "verdict": "SKIP"
+      },
+      "6-11": {
+        "n_fires": 1448,
+        "mae_l1": 38.224,
+        "mae_gate": 87.102,
+        "delta_full_pct": 127.87,
+        "delta_a_pct": 148.91,
+        "delta_b_pct": 96.59,
+        "verdict": "SKIP"
+      },
+      "12-23": {
+        "n_fires": 3190,
+        "mae_l1": 36.629,
+        "mae_gate": 97.776,
+        "delta_full_pct": 166.93,
+        "delta_a_pct": 179.69,
+        "delta_b_pct": 153.39,
+        "verdict": "SKIP"
+      },
+      "24-47": {
+        "n_fires": 7068,
+        "mae_l1": 37.559,
+        "mae_gate": 102.49,
+        "delta_full_pct": 172.87,
+        "delta_a_pct": 221.41,
+        "delta_b_pct": 124.58,
+        "verdict": "SKIP"
+      }
+    },
+    "pre_frontal": {
+      "0-5": {
+        "n_fires": 335,
+        "mae_l1": 53.887,
+        "mae_gate": 48.815,
+        "delta_full_pct": -9.41,
+        "delta_a_pct": -15.54,
+        "delta_b_pct": -5.49,
+        "verdict": "SHIP"
+      },
+      "6-11": {
+        "n_fires": 477,
+        "mae_l1": 56.803,
+        "mae_gate": 69.914,
+        "delta_full_pct": 23.08,
+        "delta_a_pct": 18.15,
+        "delta_b_pct": 25.85,
+        "verdict": "SKIP"
+      },
+      "12-23": {
+        "n_fires": 956,
+        "mae_l1": 55.691,
+        "mae_gate": 78.731,
+        "delta_full_pct": 41.37,
+        "delta_a_pct": 42.33,
+        "delta_b_pct": 40.82,
+        "verdict": "SKIP"
+      },
+      "24-47": {
+        "n_fires": 1785,
+        "mae_l1": 55.896,
+        "mae_gate": 79.931,
+        "delta_full_pct": 43.0,
+        "delta_a_pct": 78.07,
+        "delta_b_pct": 23.57,
+        "verdict": "SKIP"
+      }
+    },
+    "se_flow": {
+      "0-5": {
+        "n_fires": 1563,
+        "mae_l1": 74.347,
+        "mae_gate": 59.258,
+        "delta_full_pct": -20.3,
+        "delta_a_pct": -20.54,
+        "delta_b_pct": -20.23,
+        "verdict": "SHIP"
+      },
+      "6-11": {
+        "n_fires": 3521,
+        "mae_l1": 69.222,
+        "mae_gate": 93.735,
+        "delta_full_pct": 35.41,
+        "delta_a_pct": 56.03,
+        "delta_b_pct": 26.46,
+        "verdict": "SKIP"
+      },
+      "12-23": {
+        "n_fires": 8712,
+        "mae_l1": 68.843,
+        "mae_gate": 101.139,
+        "delta_full_pct": 46.91,
+        "delta_a_pct": 90.99,
+        "delta_b_pct": 26.7,
+        "verdict": "SKIP"
+      },
+      "24-47": {
+        "n_fires": 17705,
+        "mae_l1": 68.175,
+        "mae_gate": 106.584,
+        "delta_full_pct": 56.34,
+        "delta_a_pct": 122.23,
+        "delta_b_pct": 27.56,
+        "verdict": "SKIP"
+      }
+    },
+    "sea_breeze": {
+      "0-5": {
+        "n_fires": 659,
+        "mae_l1": 54.889,
+        "mae_gate": 77.838,
+        "delta_full_pct": 41.81,
+        "delta_a_pct": 52.02,
+        "delta_b_pct": 36.07,
+        "verdict": "SKIP"
+      },
+      "6-11": {
+        "n_fires": 1071,
+        "mae_l1": 60.029,
+        "mae_gate": 98.81,
+        "delta_full_pct": 64.6,
+        "delta_a_pct": 84.13,
+        "delta_b_pct": 46.0,
+        "verdict": "SKIP"
+      },
+      "12-23": {
+        "n_fires": 1351,
+        "mae_l1": 60.696,
+        "mae_gate": 94.665,
+        "delta_full_pct": 55.97,
+        "delta_a_pct": 80.7,
+        "delta_b_pct": 37.11,
+        "verdict": "SKIP"
+      },
+      "24-47": {
+        "n_fires": 3730,
+        "mae_l1": 61.876,
+        "mae_gate": 98.771,
+        "delta_full_pct": 59.63,
+        "delta_a_pct": 96.63,
+        "delta_b_pct": 39.04,
+        "verdict": "SKIP"
+      }
+    },
+    "sw_flow": {
+      "0-5": {
+        "n_fires": 4663,
+        "mae_l1": 62.136,
+        "mae_gate": 41.412,
+        "delta_full_pct": -33.35,
+        "delta_a_pct": -36.37,
+        "delta_b_pct": -30.73,
+        "verdict": "SHIP"
+      },
+      "6-11": {
+        "n_fires": 5892,
+        "mae_l1": 60.204,
+        "mae_gate": 53.671,
+        "delta_full_pct": -10.85,
+        "delta_a_pct": -0.39,
+        "delta_b_pct": -17.41,
+        "verdict": "MARGIN"
+      },
+      "12-23": {
+        "n_fires": 11109,
+        "mae_l1": 63.236,
+        "mae_gate": 59.165,
+        "delta_full_pct": -6.44,
+        "delta_a_pct": 11.86,
+        "delta_b_pct": -17.55,
+        "verdict": "SKIP"
+      },
+      "24-47": {
+        "n_fires": 20524,
+        "mae_l1": 60.293,
+        "mae_gate": 78.17,
+        "delta_full_pct": 29.65,
+        "delta_a_pct": 78.96,
+        "delta_b_pct": -1.32,
+        "verdict": "SKIP"
+      }
+    },
+    "unknown": {
+      "0-5": {
+        "n_fires": 352,
+        "mae_l1": 67.196,
+        "mae_gate": 65.577,
+        "delta_full_pct": -2.41,
+        "delta_a_pct": -21.07,
+        "delta_b_pct": 4.31,
+        "verdict": "SKIP"
+      },
+      "6-11": {
+        "n_fires": 602,
+        "mae_l1": 68.412,
+        "mae_gate": 92.432,
+        "delta_full_pct": 35.11,
+        "delta_a_pct": 42.68,
+        "delta_b_pct": 32.24,
+        "verdict": "SKIP"
+      },
+      "12-23": {
+        "n_fires": 1176,
+        "mae_l1": 68.158,
+        "mae_gate": 93.423,
+        "delta_full_pct": 37.07,
+        "delta_a_pct": 47.45,
+        "delta_b_pct": 28.81,
+        "verdict": "SKIP"
+      },
+      "24-47": {
+        "n_fires": 1653,
+        "mae_l1": 66.666,
+        "mae_gate": 119.053,
+        "delta_full_pct": 78.58,
+        "delta_a_pct": 122.11,
+        "delta_b_pct": 51.17,
+        "verdict": "SKIP"
+      }
+    }
+  },
+  "rollup": {
+    "ship": 5,
+    "margin": 1,
+    "skip": 26,
+    "thin": 5
+  },
+  "notes": "Stage 2 preview. Not wired to production. Fire condition uses predicted-transition signal (state_curr != state_fc.regime); both knowable at forecast time. Wire via wd_persistence_gate processor with ENABLED=False on ship and 7-day narrow-promote gate."
+}
