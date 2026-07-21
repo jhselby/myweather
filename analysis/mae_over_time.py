@@ -132,12 +132,21 @@ def compute_fresh_rollup():
 
             per_layer = {}
             if fld in L1_ONLY_FIELDS:
-                # Fields without a correction stack. `error` in the pair log IS the
-                # raw-vs-obs metric (circular for wd). Route to the "raw" layer.
+                # Fields without an L3/L4 correction stack. `error` in the pair log
+                # IS the raw-vs-obs metric (circular for wd). Route to "raw".
+                # v0.6.371b: also emit L2 for wd (wind_blend circular unit-vector
+                # blend, shipped 07-20 v0.6.368a). error_l2 populates on wd pairs
+                # via v0.6.367; STRICT completeness gate would demand error_l3/l4
+                # (which wd doesn't have yet) so wd stays in L1_ONLY but reads its
+                # own L2 inline. Post-wdp 07-27, add error_wdp here too per the
+                # wdp_ship_patches.md Site 7 (option (a)).
                 e = r.get("error")
                 if e is None:
                     continue
                 per_layer["raw"] = e
+                e_l2 = r.get("error_l2")
+                if e_l2 is not None:
+                    per_layer["l2"] = e_l2
             else:
                 skip = False
                 for ln, key in STRICT_LAYER_KEYS:
