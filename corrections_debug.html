@@ -1314,7 +1314,7 @@
 <!-- ───────────────────── Forecast accuracy ───────────────────── -->
 <h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
 <div class="layer-info-text">
-  <p class="layer-summary">Two lenses on the same question. <strong>First (Accuracy over time, below):</strong> the per-obs-day trajectory of Raw vs Production — is the stack drifting? Did a recent ship move the needle? <strong>Second (per-field tables, further down):</strong> the current-window breakdown by lead band per field — where in the 0-47h horizon is each correction layer helping or hurting? The over-time view is the drift detector; the per-band tables are the shipping-decision granularity. <em>Production in the per-band tables IS a real per-row aggregate — <code>per_layer_mae_by_lead[field].production</code> read where the per-lead sample count clears n≥30, keyed on <code>applied_layer</code> stamps. Production in the over-time chart is NOT (yet) a real per-row aggregate — <code>mae_over_time.json</code>'s <code>"prod"</code> series is <code>error_l4</code> daily-bucketed; for fields where a specialist supersedes L4 (sr/cc/cm's Lc; ch's chp; cl's clp) the frontend elides the misleading "prod" line and marks the specialist line as isProd instead. Those specialist lines only average rows where the gate FIRED — so their sample is smaller than raw/L2/L3 on the same chart. Real per-row Prod for over-time is a v0.6.371 ship (adds a <code>"prod_real"</code> series keyed on applied_layer, parallel to how per-band tables already work).</em></p>
+  <p class="layer-summary">Two lenses on the same question. <strong>First (Accuracy over time, below):</strong> the per-obs-day trajectory of Raw vs Production — is the stack drifting? Did a recent ship move the needle? <strong>Second (per-field tables, further down):</strong> the current-window breakdown by lead band per field — where in the 0-47h horizon is each correction layer helping or hurting? The over-time view is the drift detector; the per-band tables are the shipping-decision granularity. <em>Production in both views IS a real per-row aggregate. Per-band tables: <code>per_layer_mae_by_lead[field].production</code> where the per-lead sample count clears n≥30, keyed on <code>applied_layer</code> stamps. Over-time chart: <code>mae_over_time.json</code>'s <code>"prod_real"</code> series, bucketed per obs-day from the same <code>applied_layer</code> stamps (v0.6.371). Both surface the same "what users actually saw" quantity, just at different aggregation grains. Specialist lines (Lsr, Lc, chp, clp) remain visible on the over-time chart as intermediate series showing gate-fired-only MAE — smaller sample than Raw/L2/L3/Prod, useful for isolating each specialist's per-lead lift during 14-day watches.</em></p>
 
   <details style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
     <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">How we measure whether the forecast is good — the metric framework</summary>
@@ -1353,7 +1353,7 @@
 
   <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
     <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📈 Accuracy over time — Raw vs Production, per-day trajectory</summary>
-    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (bare HRRR/GFS) and every correction layer applicable to the selected field — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed by <code>analysis/mae_over_time.py</code> in the daily digest. (v0.6.361: per-specialist attribution — Lsr, Lc, and post-Lc specialists (ch-persist, cl-persist) each plotted separately once ≥3 days of data have accumulated. New collector-side pair-log columns start accruing today; specialist lines will appear on the chart around 2026-07-22.)</div>
+    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (bare HRRR/GFS) and every correction layer applicable to the selected field — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed by <code>analysis/mae_over_time.py</code> in the daily digest. (v0.6.361: per-specialist attribution — Lsr, Lc, and post-Lc specialists (ch-persist, cl-persist) each plotted separately once ≥3 days of data have accumulated. New collector-side pair-log columns start accruing today; specialist lines will appear on the chart around 2026-07-22. v0.6.371: the 'Prod' line is now the real per-row aggregate keyed on applied_layer stamps — sample-comparable to Raw/L2/L3 on the same chart. Pre-v0.6.371 it was L4's daily MAE for non-specialist fields and a specialist line for cc/cl/cm/ch/sr (gate-fired-only, sample-mismatched).)</div>
     <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
       <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
       <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
@@ -6175,30 +6175,37 @@ load();
     l6:   { color: "#e08fd0", dash: [], width: 1.25 },   // Lc for clouds; Lt for t (flat vs prod)
     prod: { color: "#4ad29a", dash: [], width: 1.75 },
     // v0.6.361: post-Lc specialists — plotted on top of l6
-    chp:  { color: "#4ad29a", dash: [], width: 1.75 },   // ch_persistence_gate — isProd for ch
-    clp:  { color: "#4ad29a", dash: [], width: 1.75 },   // cl_persistence_short_lead — isProd for cl when live
+    chp:  { color: "#4ad29a", dash: [], width: 1.25 },   // ch_persistence_gate — intermediate; prod_real is isProd for ch
+    clp:  { color: "#4ad29a", dash: [], width: 1.25 },   // cl_persistence_short_lead — intermediate; prod_real is isProd for cl
+    // v0.6.371: real per-row Prod trajectory keyed on applied_layer stamp.
+    // Distinct yellow to visually own the "final applied" line; specialists
+    // (Lsr/Lc/chp/clp) demote to intermediate width.
+    prod_real: { color: "#e0d472", dash: [], width: 2.0 },
   };
   const FIELD_LAYERS = {
     // sr: Lsr is the final applied value; l4/prod key is pre-Lsr, filtered out
-    sr: [{key:"raw", label:"Raw"}, {key:"l5", label:"Lsr", isProd:true}],
+    // v0.6.371: prod_real is the real per-row Prod aggregate (applied_layer-keyed,
+    // sample-comparable to raw/l2/l3). Specialists (Lsr, Lc, chp, clp) remain
+    // visible as intermediate lines showing gate-fired-only MAE.
+    sr: [{key:"raw", label:"Raw"}, {key:"l5", label:"Lsr"}, {key:"prod_real", label:"Prod", isProd:true}],
     // cc/cl/cm/ch: Lc rides l6. cm/cc have no post-Lc specialist. cl has
     // cl_persistence_short_lead (clp; dormant). ch has ch_persistence_gate
-    // (chp; LIVE since v0.6.358). When chp/clp have data, they become the
-    // isProd layer (final applied) and Lc demotes to intermediate.
-    cc: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc", isProd:true}],
-    cl: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc"},                          {key:"clp", label:"cl-persist", isProd:true}],
-    cm: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc", isProd:true}],
-    ch: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist", isProd:true}],
+    // (chp; LIVE since v0.6.358). Specialists demote to intermediate; prod_real
+    // is isProd (v0.6.371).
+    cc: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"prod_real", label:"Prod", isProd:true}],
+    cl: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc"}, {key:"clp", label:"cl-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
+    cm: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ch: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
     // t: Lt retired 07-13, l6 series flat vs l4/prod; keep prod as authoritative
-    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod", label:"Prod", isProd:true}],
+    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod_real", label:"Prod", isProd:true}],
     // Non-cloud, non-specialist fields
-    h:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
-    dp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
-    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod", label:"Prod", isProd:true}],
-    wg: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod", label:"Prod", isProd:true}],
-    pp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
-    pr: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod", label:"Prod", isProd:true}],
-    pa: [{key:"raw", label:"Raw"}, {key:"prod", label:"Prod", isProd:true}],
+    h:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
+    dp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wg: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod_real", label:"Prod", isProd:true}],
+    pp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
+    pr: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
+    pa: [{key:"raw", label:"Raw"}, {key:"prod_real", label:"Prod", isProd:true}],
     // wd: L1 + L2 blend (v0.6.368a — wind_blend circular unit-vector blend of
     // current obs into first 24 leads, calm floor ≥3 mph). No L3/L4 yet.
     // wd_persistence_gate drafted 07-20 v0.6.365 ENABLED=False — when wired,

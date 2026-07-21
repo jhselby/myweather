@@ -105,6 +105,12 @@ def compute_fresh_rollup():
     """Compute per-day per-field per-layer aggregates from the current pair log."""
     path = cached_path(ERROR_LOG_URL)
     buckets = defaultdict(lambda: {ln: [] for ln, _ in LAYER_KEYS})
+    # prod_real: real per-row Production aggregate, keyed on applied_layer stamp
+    # (parallel to decay_fit.py:712-729 for per-band tables). Independent of the
+    # STRICT layer completeness gate — contributes whenever applied_layer +
+    # error_{applied} are both present. Pre-v0.6.269 rows without stamps are
+    # skipped; those age out of the 30-day pair log by 07-31. (v0.6.371.)
+    prod_real_buckets = defaultdict(list)
     n_total = 0
     with open(path) as f:
         for line in f:
@@ -117,6 +123,13 @@ def compute_fresh_rollup():
             if not ot:
                 continue
             day = ot[:10]
+
+            applied = r.get("applied_layer")
+            if applied:
+                e_applied = r.get(f"error_{applied}")
+                if e_applied is not None:
+                    prod_real_buckets[(day, fld)].append(float(e_applied))
+
             per_layer = {}
             if fld in L1_ONLY_FIELDS:
                 # Fields without a correction stack. `error` in the pair log IS the
@@ -160,6 +173,22 @@ def compute_fresh_rollup():
                 "bias": round(bias, 4),
                 "brier": round(sqerr_mean, 4),
             }
+
+    for (day, fld), xs in prod_real_buckets.items():
+        n = len(xs)
+        if n < MIN_N_PER_DAY:
+            continue
+        mae = sum(abs(x) for x in xs) / n
+        sqerr_mean = sum(x * x for x in xs) / n
+        rmse = math.sqrt(sqerr_mean)
+        bias = sum(xs) / n
+        fresh[fld]["prod_real"][day] = {
+            "n": n,
+            "mae": round(mae, 4),
+            "rmse": round(rmse, 4),
+            "bias": round(bias, 4),
+            "brier": round(sqerr_mean, 4),
+        }
     return fresh, n_total
 
 
