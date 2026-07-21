@@ -205,8 +205,8 @@ def main():
             continue
         r = results[field]
         tau_disp = "∞" if r["tau"] >= 1e8 else f"{r['tau']:g}"
-        flat_vs_l1 = (r["mae_l1"] - r["mae_l2flat"]) / r["mae_l1"] * 100
-        decay_vs_flat = (r["mae_l2flat"] - r["mae_l2decay"]) / r["mae_l2flat"] * 100
+        flat_vs_l1 = (r["mae_l1"] - r["mae_l2flat"]) / r["mae_l1"] * 100 if r["mae_l1"] else 0.0
+        decay_vs_flat = (r["mae_l2flat"] - r["mae_l2decay"]) / r["mae_l2flat"] * 100 if r["mae_l2flat"] else 0.0
         lines.append(
             f"  {FIELD_LABELS[field]:<14} {r['n_test']:>8,} {tau_disp:>9}  "
             f"{r['mae_l1']:>8.3f}  {r['mae_l2flat']:>8.3f}  {r['mae_l2decay']:>9.3f}  "
