@@ -137,16 +137,28 @@ def _should_skip(field, layer, regime, lead_h):
 # raw fc). Split fc into per-(regime, band) quartiles and skip L3 in the
 # quartiles where L3 stably loses on both halves + full window.
 #
-# Wired for wg only in first cut. ws deferred — its existing hardcoded
-# SKIP_TABLE entries (ne_flow all, sea_breeze 0-11) disagree with the newer
-# asymmetric grid at those cells; replacing them is a live-layer flip that
-# needs 7-window agreement (whitelist promotion gate) before shipping.
+# Wired for wg (v0.6.366) and ws (v0.6.370). ws is ADDITIVE on top of the
+# existing hardcoded SKIP_TABLE entries — since the apply loop checks
+# `_should_skip` (regime × lead_band) FIRST at line 641 and only falls
+# through to `_should_skip_asymmetric` if the old table did not fire, the
+# old ws hardcode (ne_flow all, sea_breeze 0-11) always wins where the two
+# would overlap. Asymmetric only adds skips in *other* regimes/bands where
+# the fc_bin gate stably says L3 hurts. This is not the live-layer flip
+# the [[feedback_whitelist_promotion_gate]] governs — that would be
+# REPLACING the old hardcode with asymmetric-only rules, which could
+# re-enable L3 in previously-skipped cells. Kept for the day 7-window
+# agreement clears (~07-27).
+#
+# cm is not wired: Stage 1 07-20 emitted 0 SKIP cells for cm (the fc-bin
+# split produces no stable-halves L3 losers). Curated JSON exists but
+# adding it to this map would be a no-op.
 #
 # Fail-safe: any lookup miss (regime unknown, band unknown, no cuts for
 # that cell, raw fc unavailable, fc bin lands outside SKIP set) → do not
 # skip. Never turns L3 OFF where the existing SKIP_TABLE said ON.
 _ASYMMETRIC_SKIP_PATHS = {
     ("wg", "l3"): Path(__file__).resolve().parent.parent / "data" / "wg_l3_asymmetric_skip_curated.json",
+    ("ws", "l3"): Path(__file__).resolve().parent.parent / "data" / "ws_l3_asymmetric_skip_curated.json",
 }
 _ASYMMETRIC_CACHE = {}
 _LEAD_BANDS = [
