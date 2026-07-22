@@ -194,9 +194,16 @@ def write_summary(result, path):
     lines.append("")
 
     if result["ship"]:
-        lines.append(f"VERDICT: SHIP — flip cove_correction.ENABLED = True.")
-        lines.append(f"  Both regime tests pass. The bidirectional pattern is stable enough")
-        lines.append(f"  to apply as a per-tick conditional correction on corrected_temperature.")
+        # 2026-07-22 (v0.6.372c): this is a MEASUREMENT-stability verdict, not a
+        # ship decision. r5_audit.py is Step 2 (held-out MAE cross-cut vs L4)
+        # and is authoritative for the flip. Latest r5_audit read: HOLD — L2's
+        # station weighting already absorbs 100% of the gradient (R5+L4 = baseline
+        # +0.00% at every regime × band cell). See docstring of r5_audit.py.
+        lines.append(f"VERDICT: PATTERN-STABLE — measurement thresholds pass, but ship decision deferred to r5_audit.py.")
+        lines.append(f"  Both regime tests pass on the raw gradient log — the bidirectional pattern is real.")
+        lines.append(f"  DO NOT flip cove_correction.ENABLED on this verdict alone: r5_audit's held-out MAE")
+        lines.append(f"  cross-cut against L4 is what governs shipping. As long as r5_audit says HOLD")
+        lines.append(f"  (L2 mesonet already captures the waterfront signal), this stays a diagnostic.")
     else:
         reasons = []
         if not result["sb_ok"]:
