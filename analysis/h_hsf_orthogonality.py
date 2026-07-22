@@ -178,13 +178,21 @@ for f in FIELDS:
 print("=" * 90)
 print(f"Overall: ORTHOGONAL: {verdict_count['ORTHOGONAL']}, REDUNDANT: {verdict_count['REDUNDANT']}, "
       f"CONFOUNDED: {verdict_count['CONFOUNDED']}, AMBIGUOUS: {verdict_count['AMBIGUOUS']}")
+# Population tag — this script's verdict is highly sensitive to frontal
+# passage count and pair-log join rate. The tag is inlined on the verdict
+# line so the digest surfaces the caveat automatically. THIN is anything
+# below 15 passages (rule of thumb: <15 leaves per-regime cells with n<30
+# after the matched-regime split, which trips MIN_N_REG). See v0.6.373.
+_pop_pct = (n_use / n_in * 100) if n_in else 0.0
+_pop_qual = "THIN" if len(passage_dts) < 15 else "OK"
+_pop_tag = f"[n={len(passage_dts)} passages, {_pop_pct:.0f}% join → {_pop_qual}]"
 total = sum(verdict_count.values())
 if total == 0:
-    print("  → THIN: all cells under-sampled. Re-run after more frontal passages accumulate.")
+    print(f"  → THIN: all cells under-sampled. Re-run after more frontal passages accumulate.  {_pop_tag}")
 elif verdict_count["ORTHOGONAL"] >= 3:
-    print("  → PROMOTE: hours-since-front is independent of C1a. Ship as C1e axis.")
+    print(f"  → PROMOTE: hours-since-front is independent of C1a. Ship as C1e axis.  {_pop_tag}")
 elif verdict_count["REDUNDANT"] / total >= 0.8:
-    print("  → KILL: hours-since-front is just C1a re-skinned. Fold into C1a's bias table if anywhere.")
+    print(f"  → KILL: hours-since-front is just C1a re-skinned. Fold into C1a's bias table if anywhere.  {_pop_tag}")
 else:
     print(f"  → AMBIGUOUS: ORTHOGONAL fraction {verdict_count['ORTHOGONAL']/total:.0%}. "
-          "Re-run after more frontal passages accumulate.")
+          f"Re-run after more frontal passages accumulate.  {_pop_tag}")

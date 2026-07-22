@@ -53,8 +53,10 @@ def hu(obs_dt):
 # axes: A=pre_frontal (hu<24), B=transition (C1a), C=post_frontal (hsf<24)
 # regime = state_fc.regime_synoptic (Simpson's-paradox stratifier, 2026-07-22)
 sums = defaultdict(lambda: [0, 0.0])  # (field, band, A, B, C, regime) -> [n, sum|err|]
+n_in = n_use = 0
 with open(cached_path(PAIR_URL), "rb") as fh:
     for raw in fh:
+        n_in += 1
         try: r = json.loads(raw)
         except: continue
         f = r.get("field")
@@ -77,6 +79,7 @@ with open(cached_path(PAIR_URL), "rb") as fh:
         B = (sf != so)
         sums[(f, band, A, B, C, sf)][0] += 1
         sums[(f, band, A, B, C, sf)][1] += abs(err)
+        n_use += 1
 
 MIN_N_REG = 30
 MIN_REGIMES = 2
@@ -218,11 +221,17 @@ try:
 except Exception as _e:
     print(f"⚠ curated table write failed: {_e}")
 print()
+# Population tag — this script's verdict is highly sensitive to frontal
+# passage count and pair-log join rate. Inlined on the verdict line so the
+# digest surfaces the caveat automatically. THIN when <15 passages. v0.6.373.
+_pop_pct = (n_use / n_in * 100) if n_in else 0.0
+_pop_qual = "THIN" if len(passage_dts) < 15 else "OK"
+_pop_tag = f"[n={len(passage_dts)} passages, {_pop_pct:.0f}% join → {_pop_qual}]"
 total = sum(v1.values()) + sum(v2.values())
 ortho = v1['ORTHOGONAL'] + v2['ORTHOGONAL']
 if ortho >= 6:
-    print(f"→ PROMOTE: pre-frontal is independent of both C1a and C1e ({ortho} orthogonal cells).")
+    print(f"→ PROMOTE: pre-frontal is independent of both C1a and C1e ({ortho} orthogonal cells).  {_pop_tag}")
 elif sum(v1[k] for k in ('REDUNDANT',)) + sum(v2[k] for k in ('REDUNDANT',)) >= 0.7*total:
-    print("→ KILL: pre-frontal is largely captured by existing axes.")
+    print(f"→ KILL: pre-frontal is largely captured by existing axes.  {_pop_tag}")
 else:
-    print(f"→ MIXED: {ortho} orthogonal across both checks. Narrow promote on the orthogonal cells.")
+    print(f"→ MIXED: {ortho} orthogonal across both checks. Narrow promote on the orthogonal cells.  {_pop_tag}")

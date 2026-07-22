@@ -1,0 +1,12 @@
+{
+  "_comment": "Suppress-until registry for the executive-summary builder. When a digest alert is known-explained (settled memory, expected-until-window-rolls, etc.), add an entry here so it moves to the 'Suppressed (known)' section instead of retriggering triage cycles. Entry format: {tool, signal (optional — matches on verdict substring; null = any), suppress_until (YYYY-MM-DD, inclusive), reason, memory_ref}. See build_executive_summary.py::check_suppression.",
+  "suppressions": [
+    {
+      "tool": "marine_layer_anomaly",
+      "signal": "COLLAPSE",
+      "suppress_until": "2026-08-06",
+      "reason": "Known 06-30 seasonal marine-layer weakening. anomaly detector's 21d baseline still contains pre-break data; alert will keep firing until baseline window rolls past 2026-06-30 (approx 2026-08-06). Not new signal.",
+      "memory_ref": "project_mlc_diagnosis.md"
+    }
+  ]
+}

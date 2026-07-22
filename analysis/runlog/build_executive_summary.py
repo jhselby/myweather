@@ -98,6 +98,24 @@ TOOL_QUESTION_GROUPS = {
 }
 CONFIRMATION_STREAK_DAYS = 7
 
+# Companion-tool pairs — two-step designs where Step 1 measures a signal
+# (magnitude / stability / orthogonality) and Step 2 is the authoritative
+# ship-decision cross-cut. When both ran in the same digest, the "New
+# candidates" section emits the resolved combined verdict (Step 2 wins)
+# instead of leaving Step 1 as a task for the reader. Added 2026-07-22
+# (v0.6.373) after the r5_cove_analysis SHIP vs r5_audit HOLD re-triage:
+# both ran in the same digest and the resolution was already in the file
+# 200 lines later, but the exec summary listed Step 1 alone as "cross-cut
+# required" as if the audit hadn't run.
+#
+# Format: step1_script -> step2_script. Both must be in `current` for the
+# resolution to apply; otherwise Step 1 emits standalone as before.
+COMPANION_PAIRS = {
+    "r5_cove_analysis": "r5_audit",
+    "h_dp_residual_persistence_stage1": "h_dp_residual_persistence_stage2",
+    "h_wg_residual_persistence_stage1": "h_wg_residual_persistence_stage2",
+}
+
 # Post-ship 14-day watch. Any live-layer change is monitored for verdict
 # flips during the 14 days after it ships. The ledger lives at
 # analysis/output/runlog/shipped_ledger.jsonl — one JSON line per ship.
@@ -127,6 +145,61 @@ ANOMALY_DETECTOR_JSON_PATH = HERE.parent / "output" / "anomaly_detector.json"
 # Marine-layer stratum bias-collapse detector — companion to the global
 # anomaly detector, targeting the ~3%-of-cc stratum where MLC lives.
 MARINE_LAYER_ANOMALY_JSON_PATH = HERE.parent / "output" / "marine_layer_anomaly.json"
+
+# Suppress-until registry — settled-known signals that should route to a
+# "Suppressed (known)" section instead of the top-of-digest alert slot.
+# See weather_collector/data/digest_suppress.json for entry format.
+# Added 2026-07-22 (v0.6.373) after the MLC ★ COLLAPSE re-triage incident:
+# the 07-16 diagnosis had already settled that the collapse was a real 06-30
+# seasonal break, and the alert would continue firing daily until the
+# anomaly detector's 21d baseline window rolls past 06-30 (~08-06).
+SUPPRESS_REGISTRY_PATH = HERE.parent.parent / "weather_collector" / "data" / "digest_suppress.json"
+
+
+def _load_suppress_registry():
+    """Load the suppress-until registry as a list of entries with parsed dates.
+    Filters out entries whose suppress_until date has passed."""
+    if not SUPPRESS_REGISTRY_PATH.exists():
+        return []
+    try:
+        doc = json.loads(SUPPRESS_REGISTRY_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return []
+    import datetime
+    today = datetime.date.today()
+    active = []
+    for entry in doc.get("suppressions") or []:
+        end_str = entry.get("suppress_until") or ""
+        try:
+            end_date = datetime.date.fromisoformat(end_str)
+        except ValueError:
+            continue
+        if today > end_date:
+            continue
+        active.append(entry)
+    return active
+
+
+def check_suppression(tool: str, signal: str | None = None, verdict: str | None = None):
+    """Return the matching suppression entry or None.
+
+    Match rules:
+      - tool must equal entry.tool
+      - if entry.signal is None → matches any signal for that tool
+      - if entry.signal is a string → matches when signal == entry.signal OR
+        when the verdict string contains entry.signal (case-insensitive).
+    """
+    for entry in _load_suppress_registry():
+        if entry.get("tool") != tool:
+            continue
+        want_sig = entry.get("signal")
+        if want_sig is None:
+            return entry
+        if signal is not None and signal == want_sig:
+            return entry
+        if verdict is not None and want_sig.upper() in verdict.upper():
+            return entry
+    return None
 
 
 def extract_verdict(log_path: Path) -> str | None:
@@ -253,22 +326,27 @@ def anomaly_detector_summary():
 
 
 def marine_layer_anomaly_summary():
-    """Return a one-line alert if the MLC in-bin bias collapsed/decayed, or None."""
+    """Return (line, suppression_entry_or_None). `line` is the alert text or None
+    if no alert. If a suppression matches, the alert routes to the Suppressed
+    section instead of the top-of-digest slot."""
     if not MARINE_LAYER_ANOMALY_JSON_PATH.exists():
-        return None
+        return None, None
     try:
         doc = json.loads(MARINE_LAYER_ANOMALY_JSON_PATH.read_text())
     except (json.JSONDecodeError, OSError):
-        return None
+        return None, None
     verdict = doc.get("verdict")
     if verdict not in ("COLLAPSE", "DECAY"):
-        return None
+        return None, None
     base = doc.get("in_bin_bias_baseline_mean")
     rec = doc.get("in_bin_bias_recent_mean")
     if base is None or rec is None:
-        return f"  ★ MLC in-bin bias: {verdict}"
-    mark = "★" if verdict == "COLLAPSE" else "⚠"
-    return f"  {mark} MLC in-bin bias: {verdict} — baseline {base:+.2f} → recent {rec:+.2f} (Δ {rec - base:+.2f})"
+        line = f"  ★ MLC in-bin bias: {verdict}"
+    else:
+        mark = "★" if verdict == "COLLAPSE" else "⚠"
+        line = f"  {mark} MLC in-bin bias: {verdict} — baseline {base:+.2f} → recent {rec:+.2f} (Δ {rec - base:+.2f})"
+    suppression = check_suppression("marine_layer_anomaly", signal=verdict, verdict=verdict)
+    return line, suppression
 
 
 def persistence_skill_watch():
@@ -516,7 +594,26 @@ def main():
     out.append("New candidates (aggregate-only tools — cross-cut required before shipping):")
     if candidates_new:
         for n, v in candidates_new:
-            out.append(f"  • {n} — {v}")
+            companion = COMPANION_PAIRS.get(n)
+            comp_info = current.get(companion) if companion else None
+            if comp_info and comp_info.get("verdict"):
+                # Companion (Step 2) ran and produced a verdict → resolve.
+                # Step 2's bucket determines the resolution: promote/hold/kill.
+                comp_verdict = comp_info["verdict"]
+                comp_bucket = comp_info.get("bucket", "info")
+                if comp_bucket == "promote":
+                    tag = "RESOLVED SHIP"
+                elif comp_bucket == "kill":
+                    tag = "RESOLVED KILL"
+                elif comp_bucket == "hold":
+                    tag = "RESOLVED HOLD"
+                else:
+                    tag = "RESOLVED (see companion)"
+                out.append(f"  • {n} — {tag} per {companion}")
+                out.append(f"      step 1 said: {v}")
+                out.append(f"      step 2 says: {comp_verdict}")
+            else:
+                out.append(f"  • {n} — {v}")
     else:
         out.append("  • none")
     out.append("")
@@ -631,10 +728,33 @@ def main():
             out.append(line)
     else:
         out.append("  • all fields CLEAN")
-    ml_line = marine_layer_anomaly_summary()
+    ml_line, ml_suppression = marine_layer_anomaly_summary()
+    ml_suppressed_line = None
     if ml_line:
-        out.append(ml_line)
+        if ml_suppression:
+            ml_suppressed_line = (ml_line, ml_suppression)
+        else:
+            out.append(ml_line)
     out.append("")
+
+    # Suppressed alerts (settled-known signals per digest_suppress.json). Kept
+    # visible but out of the top-of-digest slot so they don't retrigger triage.
+    suppressed_signals = []
+    if ml_suppressed_line:
+        line, sup = ml_suppressed_line
+        suppressed_signals.append({
+            "line": line,
+            "reason": sup.get("reason") or "(no reason)",
+            "until": sup.get("suppress_until") or "(no date)",
+            "memory": sup.get("memory_ref") or "",
+        })
+    if suppressed_signals:
+        out.append("Suppressed (known — see memory; do not re-triage):")
+        for s in suppressed_signals:
+            out.append(s["line"] + f"    [suppressed → {s['until']}]")
+            memref = f"  [[{s['memory']}]]" if s["memory"] else ""
+            out.append(f"    reason: {s['reason']}{memref}")
+        out.append("")
 
     out.append("New kills:")
     if kills_new:
