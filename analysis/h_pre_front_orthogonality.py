@@ -3,6 +3,11 @@
 Check if pre-frontal signal is independent of (a) C1a regime-transition penalty
 and (b) the C1e post-frontal axis we just promoted. If yes, ship as either an
 extension of C1e (bidirectional) or a new C1g axis.
+
+2026-07-22 (v0.6.372a): matched-regime baseline (same Simpson's-paradox fix
+applied to h_hsf_orthogonality.py — see [[project_c1e_hsf_kill_investigation]]).
+Ratios computed per regime with MIN_N_REG=30, aggregated as weighted mean
+weighted by min(n_pre, n_base). Cell needs ≥2 regimes contributing to score.
 """
 import os, sys, json, urllib.request
 from collections import defaultdict
@@ -46,7 +51,8 @@ def hu(obs_dt):
     return (passage_dts[lo] - obs_dt).total_seconds()/3600 if lo < len(passage_dts) else None
 
 # axes: A=pre_frontal (hu<24), B=transition (C1a), C=post_frontal (hsf<24)
-sums = defaultdict(lambda: [0, 0.0])  # (field, band, A, B, C) -> [n, sum|err|]
+# regime = state_fc.regime_synoptic (Simpson's-paradox stratifier, 2026-07-22)
+sums = defaultdict(lambda: [0, 0.0])  # (field, band, A, B, C, regime) -> [n, sum|err|]
 with open(cached_path(PAIR_URL), "rb") as fh:
     for raw in fh:
         try: r = json.loads(raw)
@@ -69,8 +75,39 @@ with open(cached_path(PAIR_URL), "rb") as fh:
         A = s_hu  < WIN_H
         C = s_hsf < WIN_H
         B = (sf != so)
-        sums[(f, band, A, B, C)][0] += 1
-        sums[(f, band, A, B, C)][1] += abs(err)
+        sums[(f, band, A, B, C, sf)][0] += 1
+        sums[(f, band, A, B, C, sf)][1] += abs(err)
+
+MIN_N_REG = 30
+MIN_REGIMES = 2
+
+def matched_ratio(f, band, pre_filter, base_filter):
+    """Compute matched-regime post/baseline ratio.
+    pre_filter and base_filter are (A, B, C) tuples that select the numerator
+    and denominator subsets. Returns (weighted_ratio, total_n_pre, n_regimes).
+    """
+    regimes = set()
+    for key in sums.keys():
+        if key[0] == f and key[1] == band:
+            regimes.add(key[5])
+    num = 0.0
+    wsum = 0.0
+    n_pre_total = 0
+    n_reg = 0
+    for reg in regimes:
+        n_p, e_p = sums.get((f, band, *pre_filter, reg), (0, 0.0))
+        n_b, e_b = sums.get((f, band, *base_filter, reg), (0, 0.0))
+        if n_p < MIN_N_REG or n_b < MIN_N_REG or e_b == 0:
+            continue
+        ratio = (e_p / n_p) / (e_b / n_b)
+        w = min(n_p, n_b)
+        num += ratio * w
+        wsum += w
+        n_pre_total += n_p
+        n_reg += 1
+    if wsum == 0:
+        return 0.0, 0, 0
+    return num / wsum, n_pre_total, n_reg
 
 # Per-cell verdict maps — captured during both loops so we can emit the
 # Stage 2 curated table at end. SHIP = ORTHOGONAL in BOTH checks (the
@@ -82,26 +119,21 @@ with open(cached_path(PAIR_URL), "rb") as fh:
 _cell_v1 = {}  # (field, band) -> verdict vs C1a
 _cell_v2 = {}  # (field, band) -> verdict vs C1e
 
-# Pairwise: pre-frontal vs each other axis
-print("Pre-frontal × C1a (transition) orthogonality")
-print(f"{'field':<5} {'band':<6} {'stable_pre/base':>15} {'trans_pre/base':>14}  vs_C1a")
-print("-" * 70)
+# Pairwise: pre-frontal vs each other axis (matched-regime aggregation)
+print("Pre-frontal × C1a (transition) orthogonality  [matched-regime, MIN_N_REG=30, ≥2 regimes]")
+print(f"{'field':<5} {'band':<6} {'stable_pre/base':>15} {'st_nR':>5} {'trans_pre/base':>14} {'tr_nR':>5}  vs_C1a")
+print("-" * 85)
 v1 = defaultdict(int)
 for f in FIELDS:
     for label, _, _ in BANDS:
-        # Within transition=False: pre vs baseline (both axes need C=False to isolate)
-        def get(A, B, C):
-            n, e = sums.get((f, label, A, B, C), (0, 0.0))
-            return n, (e/n if n else 0)
-        # post=False, transition=False subset: pre vs baseline
-        n_pre_st, m_pre_st = get(True, False, False)
-        n_base_st, m_base_st = get(False, False, False)
-        n_pre_tr, m_pre_tr = get(True, True, False)
-        n_base_tr, m_base_tr = get(False, True, False)
-        if min(n_pre_st, n_base_st, n_pre_tr, n_base_tr) < 100:
+        # stable subset: transition=False, post=False; pre=True vs pre=False
+        r_st, n_pre_st, nR_st = matched_ratio(f, label,
+            pre_filter=(True, False, False), base_filter=(False, False, False))
+        # transition subset: transition=True, post=False; pre=True vs pre=False
+        r_tr, n_pre_tr, nR_tr = matched_ratio(f, label,
+            pre_filter=(True, True, False), base_filter=(False, True, False))
+        if nR_st < MIN_REGIMES or nR_tr < MIN_REGIMES:
             continue
-        r_st = m_pre_st/m_base_st if m_base_st else 0
-        r_tr = m_pre_tr/m_base_tr if m_base_tr else 0
         if r_st >= 1.30 and r_tr >= 1.30:
             verdict = "ORTHOGONAL"
         elif r_st <= 1.10:
@@ -112,33 +144,28 @@ for f in FIELDS:
             verdict = "AMBIGUOUS"
         v1[verdict] += 1
         _cell_v1[(f, label)] = verdict
-        print(f"{f:<5} {label:<6} {r_st:>14.2f}× {r_tr:>13.2f}×  {verdict}")
+        print(f"{f:<5} {label:<6} {r_st:>14.2f}× {nR_st:>5} {r_tr:>13.2f}× {nR_tr:>5}  {verdict}")
     print()
 print(f"vs C1a: ORTHOGONAL: {v1['ORTHOGONAL']}, REDUNDANT: {v1['REDUNDANT']}, CONFOUNDED: {v1['CONFOUNDED']}, AMBIGUOUS: {v1['AMBIGUOUS']}\n")
 
-print("Pre-frontal × post-frontal (C1e) orthogonality")
-print(f"{'field':<5} {'band':<6} {'~post_pre/base':>15} {'post_pre/base':>14}  vs_C1e")
-print("-" * 70)
+print("Pre-frontal × post-frontal (C1e) orthogonality  [matched-regime, MIN_N_REG=30, ≥2 regimes]")
+print(f"{'field':<5} {'band':<6} {'~post_pre/base':>15} {'np_nR':>5} {'post_pre/base':>14} {'p_nR':>4}  vs_C1e")
+print("-" * 85)
 v2 = defaultdict(int)
 for f in FIELDS:
     for label, _, _ in BANDS:
-        def get(A, B, C):
-            n, e = sums.get((f, label, A, B, C), (0, 0.0))
-            return n, (e/n if n else 0)
-        # B=False (no transition) and split on C
-        n_pre_pf, m_pre_pf = get(True, False, False)   # pre AND not post
-        n_base_pf, m_base_pf = get(False, False, False)
-        n_pre_p, m_pre_p = get(True, False, True)      # pre AND post (rare)
-        n_base_p, m_base_p = get(False, False, True)    # not pre AND post
-        if min(n_pre_pf, n_base_pf, n_base_p) < 100:
+        # not-post subset (B=False, C=False): pre vs baseline
+        r_no_post, n_pre_np, nR_np = matched_ratio(f, label,
+            pre_filter=(True, False, False), base_filter=(False, False, False))
+        # post subset (B=False, C=True): pre AND post vs not-pre AND post (often thin)
+        r_post, n_pre_p, nR_p = matched_ratio(f, label,
+            pre_filter=(True, False, True), base_filter=(False, False, True))
+        if nR_np < MIN_REGIMES:
             continue
-        r_no_post = m_pre_pf/m_base_pf if m_base_pf else 0
-        # Within post=True: hard to evaluate "pre AND post" if rare
-        if n_pre_p < 50:
-            r_post = float('nan')
-        else:
-            r_post = m_pre_p/m_base_p if m_base_p else 0
-        if r_no_post >= 1.30 and (r_post != r_post or r_post >= 1.30):
+        # If post-subset too thin, accept ORTHO on not-post evidence alone (matches
+        # pre-fix behavior where n_pre_p < 50 fell through to NaN and ORTHO passed).
+        post_ok = (nR_p < MIN_REGIMES) or (r_post >= 1.30)
+        if r_no_post >= 1.30 and post_ok:
             verdict = "ORTHOGONAL"
         elif r_no_post <= 1.10:
             verdict = "REDUNDANT"
@@ -146,8 +173,8 @@ for f in FIELDS:
             verdict = "AMBIGUOUS"
         v2[verdict] += 1
         _cell_v2[(f, label)] = verdict
-        rp_str = "    n/a" if r_post != r_post else f"{r_post:>13.2f}×"
-        print(f"{f:<5} {label:<6} {r_no_post:>14.2f}× {rp_str}  {verdict}")
+        rp_str = "    n/a" if nR_p < MIN_REGIMES else f"{r_post:>13.2f}×"
+        print(f"{f:<5} {label:<6} {r_no_post:>14.2f}× {nR_np:>5} {rp_str} {nR_p:>4}  {verdict}")
     print()
 print(f"vs C1e: ORTHOGONAL: {v2['ORTHOGONAL']}, REDUNDANT: {v2['REDUNDANT']}, AMBIGUOUS: {v2['AMBIGUOUS']}")
 print()
