@@ -10,10 +10,15 @@ Method:
   2. Stream pair log. For each row, tag with:
        hsf_group   : "post" (0-24h since last front) | "baseline" (≥24h)
        transition  : True if state_fc.regime_synoptic != state_obs.regime_synoptic
-  3. Cross-tab MAE by (field, lead_band, hsf_group, transition).
-  4. For each (field, band): does post/baseline MAE ratio hold WITHIN
-     transition=False subset? If yes → orthogonal. If ratio collapses
-     to ~1.0 on transition=False → redundant with C1a.
+       regime      : state_fc.regime_synoptic (the Simpson's-paradox stratifier)
+  3. Cross-tab MAE by (field, lead_band, hsf_group, transition, regime).
+  4. For each (field, band, transition): compute post/baseline ratio WITHIN
+     each regime with min-n on both sides, then aggregate as a weighted mean
+     across regimes (weight = min(n_post, n_base)). This is the
+     matched-regime-baseline fix (2026-07-22, [[project_c1e_hsf_kill_investigation]]).
+     The pre-fix global-baseline ratio inverted for artifact reasons in windows
+     where "baseline" mixed elevated-error regimes and "post" happened to catch
+     cleaner airmasses — see [[feedback_measure_against_live_stack_baseline]].
 
 Verdicts per (field, band):
   ORTHOGONAL   — post/baseline >= 1.30 within transition=False AND
@@ -22,7 +27,8 @@ Verdicts per (field, band):
                  All elevation is C1a in disguise.
   CONFOUNDED   — post/baseline only inflated within transition=True.
                  C1e amplifies C1a, doesn't add signal.
-  THIN         — Insufficient sample in one or more subsets.
+  THIN         — Insufficient sample in one or more subsets (also fires when
+                 fewer than 2 regimes have both post and baseline populations).
 
 Overall: PROMOTE if ≥3 (field, band) ORTHOGONAL. KILL if ≥80% REDUNDANT.
 """
@@ -69,7 +75,7 @@ def hours_since(obs_dt):
     delta = (obs_dt - passage_dts[lo - 1]).total_seconds() / 3600
     return delta if delta >= 0 else None
 
-# (field, band, hsf_group, transition) -> [n, sum|err|]
+# (field, band, hsf_group, transition, regime) -> [n, sum|err|]
 sums = defaultdict(lambda: [0, 0.0])
 n_in = n_use = 0
 print("Streaming pair log...")
@@ -105,32 +111,57 @@ with open(cached_path(PAIR_URL), "rb") as fh:
         if not sf or not so:
             continue
         transition = (sf != so)
-        s = sums[(f, band, hsf_group, transition)]
+        s = sums[(f, band, hsf_group, transition, sf)]
         s[0] += 1; s[1] += abs(err)
         n_use += 1
 print(f"  {n_use:,} of {n_in:,} pairs joined\n")
 
-# Per (field, band): compute post/baseline ratio for each transition subset
-print(f"{'field':<5} {'band':<7} {'stable_n_post':>13} {'stable_ratio':>12} {'trans_n_post':>12} {'trans_ratio':>11}  verdict")
-print("-" * 90)
+# Matched-regime aggregation: for each (field, band, transition), compute
+# post/baseline ratio WITHIN each regime that has ≥MIN_N_REG pairs on both
+# sides, then take a weighted mean weighted by min(n_post, n_base). Verdict
+# applies to the aggregated ratio. See docstring for rationale.
+MIN_N_REG = 30
+
+def matched_ratio(f, band, transition):
+    """Return (weighted_ratio, total_n_post, n_regimes_used) for (f, band, transition).
+    Aggregates per-regime post/baseline ratios weighted by min(n_post, n_base).
+    Returns (0.0, 0, 0) if no regime has enough samples on both sides."""
+    regimes = set()
+    for key in sums.keys():
+        if key[0] == f and key[1] == band and key[3] == transition:
+            regimes.add(key[4])
+    num = 0.0
+    wsum = 0.0
+    n_post_total = 0
+    n_reg = 0
+    for reg in regimes:
+        n_p, e_p = sums.get((f, band, "post", transition, reg), (0, 0.0))
+        n_b, e_b = sums.get((f, band, "baseline", transition, reg), (0, 0.0))
+        if n_p < MIN_N_REG or n_b < MIN_N_REG or e_b == 0:
+            continue
+        ratio = (e_p / n_p) / (e_b / n_b)
+        w = min(n_p, n_b)
+        num += ratio * w
+        wsum += w
+        n_post_total += n_p
+        n_reg += 1
+    if wsum == 0:
+        return 0.0, 0, 0
+    return num / wsum, n_post_total, n_reg
+
+# Per (field, band): compute matched post/baseline ratio for each transition subset
+print(f"{'field':<5} {'band':<7} {'stable_n_post':>13} {'stable_ratio':>12} {'st_nR':>5}"
+      f" {'trans_n_post':>12} {'trans_ratio':>11} {'tr_nR':>5}  verdict")
+print("-" * 100)
 verdict_count = defaultdict(int)
 for f in FIELDS:
     for label, lo, hi in BANDS:
-        cells = {(g, t): sums.get((f, label, g, t), (0, 0.0))
-                 for g in ("post", "baseline") for t in (False, True)}
-        # Check sample sizes
-        thin = any(c[0] < 100 for c in cells.values())
-        if thin:
+        st_ratio, st_post_n, st_nR = matched_ratio(f, label, False)
+        tr_ratio, tr_post_n, tr_nR = matched_ratio(f, label, True)
+        # Thin: need at least 2 regimes contributing on BOTH transition subsets
+        if st_nR < 2 or tr_nR < 2:
             continue
-        # Stable (transition=False) ratio
-        st_post_n, st_post_e = cells[("post", False)]
-        st_base_n, st_base_e = cells[("baseline", False)]
-        st_ratio = (st_post_e/st_post_n) / (st_base_e/st_base_n) if st_base_e > 0 else 0
-        # Transition (transition=True) ratio
-        tr_post_n, tr_post_e = cells[("post", True)]
-        tr_base_n, tr_base_e = cells[("baseline", True)]
-        tr_ratio = (tr_post_e/tr_post_n) / (tr_base_e/tr_base_n) if tr_base_e > 0 else 0
-        # Verdict
+        # Verdict on matched-regime ratios
         if st_ratio >= 1.30 and tr_ratio >= 1.30:
             verdict = "ORTHOGONAL"
         elif st_ratio <= 1.10:
@@ -140,7 +171,8 @@ for f in FIELDS:
         else:
             verdict = "AMBIGUOUS"
         verdict_count[verdict] += 1
-        print(f"{f:<5} {label:<7} {st_post_n:>13,} {st_ratio:>11.2f}× {tr_post_n:>12,} {tr_ratio:>10.2f}×  {verdict}")
+        print(f"{f:<5} {label:<7} {st_post_n:>13,} {st_ratio:>11.2f}× {st_nR:>5}"
+              f" {tr_post_n:>12,} {tr_ratio:>10.2f}× {tr_nR:>5}  {verdict}")
     print()
 
 print("=" * 90)
