@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.372d • July 22, 2026</strong></summary>
+
+- **dp residual persistence — Stage 2 preview scaffolded, 8 SHIP / 2 MARGIN / 26 SKIP / 1 THIN.** Digest AM promoted `h_dp_residual_persistence_stage1` from STAGE 1 MARGINAL (07-21 halves sign-flip) to STAGE 1 PROMOTE (test +11.14% MAE, 4/6 regime WIN, halves both positive at +3.81% / +4.74%). Natural next step per [[feedback_hypothesis_promotion_pipeline]] is Stage 2 per-cell verification with halves-stability requirement. New script `analysis/h_dp_residual_persistence_stage2.py` — copy-and-swap from `h_wg_residual_persistence_stage2.py` (identical machinery, FIELD="dp", output paths + units updated). Same windows as wg (WIN_A 07-04→07-19, WIN_B 06-19→07-04, FULL 06-19→07-19); MIN_N_CELL=200, MAE_IMPROVE_FLOOR_PCT=3.0. **Clean cluster: all 8 SHIP cells at 6-47h leads; zero SHIP at 0-5h across all 9 regimes** (prior-day-at-hour residual too coarse for short-lead dp — matches physical intuition). Best cells sw_flow 24-47h (−18.46%), sw_flow 12-23h (−16.87%), frontal 24-47h (−14.09%), sw_flow 6-11h (−12.03%), pre_frontal 24-47h (−10.73%). MARGIN: nw_flow 12-23h, se_flow 12-23h. Emitted `weather_collector/data/dp_residual_persistence_curated.json` as preview only — NOT wired to production. Next: Stage 3 processor on the wg_residual_persistence template with ENABLED=False (not today). Full details in `project_dp_residual_persistence` memory.
+
+</details>
+
+<details>
 <summary><strong>v0.6.372c • July 22, 2026</strong></summary>
 
 - **r5_cove_analysis SHIP verdict changed to PATTERN-STABLE — cross-cut resolution (RESOLVED HOLD).** Digest AM showed `r5_cove_analysis` VERDICT: SHIP + "flip cove_correction.ENABLED = True", listed under "aggregate-only tools — cross-cut required." Traced to two-tool disagreement: `r5_cove_analysis.py` is Step 1 (measurement stability on the raw gradient log), `r5_audit.py` is Step 2 (held-out MAE cross-cut vs L4) — same digest showed r5_audit HOLD at every regime × band cell: **R5+L4 = baseline +0.00% on 92,828 held-out pairs, R5-alone is worse everywhere (−0.22% to −33.68%).** L2 station weighting already absorbs 100% of the gradient signal — matches [[project_l6_l2_double_counting_hypothesis]] and the dormant state of `cove_correction.py` (both branches disabled 07-01, top-level flag OFF since 07-03). Changed r5_cove_analysis.py verdict wording so the aggregate PASS on the raw gradient no longer claims "flip cove_correction.ENABLED = True" as a ship decision it isn't equipped to make — the new PATTERN-STABLE line explicitly defers to r5_audit and cites the L2 double-count. Should stop the digest's "changed verdicts" section from re-flagging this as a fresh SHIP flip in future runs.
