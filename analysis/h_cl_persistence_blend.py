@@ -47,9 +47,9 @@ OUT_TXT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 # Halves windows match the ch script exactly.
 # 2026-07-19: slid forward 8 days so windows cover post-shift data
 # (MLC collapse / cc-cluster distribution shift). See v0.6.359.
-WIN_A_LO, WIN_A_HI = "2026-07-04T00:00", "2026-07-19T00:00"  # recent 15d
-WIN_B_LO, WIN_B_HI = "2026-06-19T00:00", "2026-07-04T00:00"  # prior 15d
-WIN_FULL_LO, WIN_FULL_HI = "2026-06-19T00:00", "2026-07-19T00:00"  # 30d combined
+WIN_A_LO, WIN_A_HI = "2026-07-08T00:00", "2026-07-23T00:00"  # recent 15d
+WIN_B_LO, WIN_B_HI = "2026-06-23T00:00", "2026-07-08T00:00"  # prior 15d
+WIN_FULL_LO, WIN_FULL_HI = "2026-06-23T00:00", "2026-07-23T00:00"  # 30d combined
 
 FIELD = "cl"
 MIN_N_REGIME = 300

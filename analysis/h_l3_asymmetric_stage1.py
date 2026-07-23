@@ -50,9 +50,9 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_TXT = os.path.join(HERE, "output", "h_l3_asymmetric_stage1.txt")
 DATA_DIR = os.path.abspath(os.path.join(HERE, "..", "weather_collector", "data"))
 
-WIN_A_LO, WIN_A_HI = "2026-07-04T00:00", "2026-07-19T00:00"
-WIN_B_LO, WIN_B_HI = "2026-06-19T00:00", "2026-07-04T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-06-19T00:00", "2026-07-19T00:00"
+WIN_A_LO, WIN_A_HI = "2026-07-08T00:00", "2026-07-23T00:00"
+WIN_B_LO, WIN_B_HI = "2026-06-23T00:00", "2026-07-08T00:00"
+WIN_FULL_LO, WIN_FULL_HI = "2026-06-23T00:00", "2026-07-23T00:00"
 
 # Fields with real asymmetric-L3 findings per Stage 0 (h_asymmetric_l3.py).
 FIELDS = ("wg", "ws", "cm")

@@ -47,9 +47,9 @@ OUT_JSON = os.path.abspath(os.path.join(
 ))
 
 # Mirror ch persistence blend windows: post-06-30 mixture-shift seam split.
-WIN_A_LO, WIN_A_HI = "2026-07-04T00:00", "2026-07-19T00:00"
-WIN_B_LO, WIN_B_HI = "2026-06-19T00:00", "2026-07-04T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-06-19T00:00", "2026-07-19T00:00"
+WIN_A_LO, WIN_A_HI = "2026-07-08T00:00", "2026-07-23T00:00"
+WIN_B_LO, WIN_B_HI = "2026-06-23T00:00", "2026-07-08T00:00"
+WIN_FULL_LO, WIN_FULL_HI = "2026-06-23T00:00", "2026-07-23T00:00"
 
 FIELD = "wd"
 MIN_N_CELL = 200

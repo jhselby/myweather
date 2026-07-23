@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.374 • July 23, 2026</strong></summary>
+
+- **Fossil-window slide across 13 analysis scripts + digest re-run refresh.** Morning digest flagged 13 scripts with WIN_ constants anchored at 2026-07-19 (4 days behind today), risking fossil re-reads per [[feedback_fossil_windows]]. Slid WIN_A/B/FULL forward 4 days on `h_ch_persistence_blend{,_stage2}`, `h_cl_linear_ramp_stage2`, `h_cl_persistence_blend`, `h_dp_residual_persistence_stage2`, `h_full_regime_sweep`, `h_l3_asymmetric_stage1`, `h_t_l2_regression_stage1`, `h_wd_persistence_gate_stage1{,2}`, `h_wg_l3_regression_stage1`, `h_wg_residual_persistence_stage2`, `h_ws_l3_regression_stage1`. New windows: A=[07-08→07-23], B=[06-23→07-08], FULL=[06-23→07-23]. Re-ran digest — all fossil warnings cleared; SHIP-eligible set unchanged (h_cloud_disagreement_orthogonality, h_pre_front_orthogonality, h_wind_shift_rate_orthogonality, walkforward_l3l4_validator); prior "Changed verdicts" (cluster_spread_orthogonality, h_dp_residual_persistence_stage1) both stabilized under fresh windows. **C1h narrow-promote gate confirmed CLEARED 14/7** — no code change (C1h already live since 2026-07-10 per confidence_layer.py:80 + `_C1H_CO_AXIS_GATE` whitelist), curated tables regenerated with fresh premium %'s. `c1h_curated.json` had 2 cosmetic verdict shifts in the `t` field (24-47h SHIP→SKIP, 12-23h MARGINAL→SKIP) — both were `always_skip: True` in the ortho gate and never fired. All other L2/L3/L4/C1 curated tables refreshed as part of the digest run (`c1_confidence_curated{,_v2}`, `c1d_curated`, `ch_persistence_gate_curated`, `cm_l3_asymmetric_skip_curated`, `dp_residual_persistence_curated`, `h_l4_add_candidates`, `lc_correction_table`, `pre_frontal_curated`, `sr_sea_breeze_lsr_curated`, `t_l2_skip_table_curated`, `wd_persistence_gate_curated`, `wg_l3_asymmetric_skip_curated`, `wg_l3_skip_table_curated`, `wg_residual_persistence_curated`, `ws_l3_asymmetric_skip_curated`, `ws_l3_skip_table_curated`).
+
+</details>
+
+<details>
 <summary><strong>v0.6.373 • July 22, 2026</strong></summary>
 
 - **Digest self-triage infrastructure — three structural fixes to `build_executive_summary.py` addressing the "morning digest keeps producing flip-worthy conclusions" pattern.** Motivated by today's session: h_hsf KILL diagnosed as artifact then walked back, r5_cove SHIP proposed as new work when r5_audit had already answered it 200 lines later in the same digest, MLC ★ COLLAPSE surfaced as fresh alert despite being a known-settled 06-30 seasonal signal.
