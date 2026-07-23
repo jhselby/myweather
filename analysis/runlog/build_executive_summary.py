@@ -42,6 +42,50 @@ VERDICT_LINE_RE = re.compile(
 # otherwise. Codified 2026-07-03 after the h + L4 walkforward-vs-cross-cut
 # incident: aggregate said +5.2% overall win; per-cell cross-cut said 21
 # L4 LOSES / 4 WIN. See feedback_do_it_right.
+# Scripts that emit action verbs (SHIP/PROMOTE/IMPLEMENT/"Move to Stage N"/
+# "STAGE 1 HIT") for pipelines that are ALREADY LIVE. The verdict is a stability
+# re-check, not a new action item. Relabels to STABLE before bucketing so the
+# morning-digest reader doesn't propose already-done work.
+#
+# Six prior instances documented (feedback_stated_intent_vs_code_behavior +
+# project_07_18_session): divergence-reporter regex (07-07), scorecard-Brier
+# folding (07-07), wind-shift-rate ortho=0 (07-09 AM), C1f precip_fc live
+# (07-09 PM), simulate_windows R6 (07-09 PM), h_l3_asymmetric_stage1 "Move
+# to Stage 2 wiring" (07-23). Ideal fix is to add a STABLE self-check to the
+# emitting script following h_precip_fc_orthogonality.py's pattern; this
+# registry is the digest-side backstop that catches scripts not yet fixed.
+KNOWN_LIVE_PIPELINES = {
+    "h_l3_asymmetric_stage1": {
+        "target": "L3 asymmetric fc-bin SKIP tables (wg, ws)",
+        "since": "v0.6.366 (wg) / v0.6.370 (ws)",
+        "date": "2026-07-20",
+    },
+    # Add entries as instances are caught. When adding, prefer to also add a
+    # STABLE self-check to the script itself (see h_precip_fc_orthogonality.py).
+}
+
+
+def relabel_stable_recheck(script_name, verdict):
+    """If script_name is a KNOWN_LIVE_PIPELINES entry and the verdict is
+    action-verb-shaped, relabel to STABLE. Returns (new_verdict, was_relabeled).
+    HOLD/MARGIN/KILL/WASH verdicts pass through unchanged — they're their own
+    signals even for live pipelines.
+    """
+    if script_name not in KNOWN_LIVE_PIPELINES or verdict is None:
+        return verdict, False
+    v_upper = verdict.upper()
+    action_verbs = ("SHIP", "PROMOTE", "IMPLEMENT",
+                    "MOVE TO STAGE", "STAGE 1 HIT", "STAGE 2 HIT",
+                    "STAGE 1 PROMOTE", "STAGE 2 PROMOTE")
+    if not any(verb in v_upper for verb in action_verbs):
+        return verdict, False
+    entry = KNOWN_LIVE_PIPELINES[script_name]
+    relabeled = (f"STABLE — {entry['target']} already live since "
+                 f"{entry['since']} ({entry['date']}). Re-check pass. "
+                 f"Original: {verdict}")
+    return relabeled, True
+
+
 SHIP_RESOLUTION_SCRIPTS = frozenset({
     "walkforward_l3l4_validator",
     "l3_regime_lead_analysis",
@@ -228,6 +272,11 @@ def bucket(verdict: str | None) -> str:
     if verdict is None:
         return "no_verdict"
     v = verdict.upper()
+    # STABLE must be checked BEFORE SHIP/PROMOTE — the KNOWN_LIVE_PIPELINES
+    # relabel prefixes with "STABLE — ..." but keeps "Original: <PROMOTE>" for
+    # transparency, so a naive SHIP/PROMOTE check would still bucket as promote.
+    if v.startswith("STABLE") or "STABLE —" in v[:20]:
+        return "info"
     if "KILL" in v or "RETIRE" in v or "DRIFT" in v:
         return "kill"
     if "SHIP" in v or "PROMOTE" in v or "IMPLEMENT" in v:
@@ -455,10 +504,16 @@ def main():
     # scripts route to "candidates_new" so morning readers see the signal
     # without treating it as ship-ready.
     promotes_new, candidates_new, kills_new, changed, failures = [], [], [], [], []
+    # Track what got auto-relabeled by KNOWN_LIVE_PIPELINES so the digest can
+    # show it explicitly rather than silently suppressing.
+    stable_recheck_relabels = []
 
     for name, status, secs in rows:
         log = LOG_DIR / f"{name}.log"
         verdict = extract_verdict(log)
+        verdict, relabeled = relabel_stable_recheck(name, verdict)
+        if relabeled:
+            stable_recheck_relabels.append((name, verdict))
         b = bucket(verdict)
         current[name] = {"verdict": verdict, "bucket": b}
 
@@ -617,6 +672,20 @@ def main():
     else:
         out.append("  • none")
     out.append("")
+
+    # STABLE re-check relabels — transparency for what KNOWN_LIVE_PIPELINES
+    # auto-suppressed this run. Prevents silent suppression from hiding a
+    # verdict that should be re-checked (e.g., if the target got unwired
+    # without updating the registry).
+    if stable_recheck_relabels:
+        out.append("Auto-relabeled STABLE (KNOWN_LIVE_PIPELINES — target already live):")
+        for n, v in stable_recheck_relabels:
+            entry = KNOWN_LIVE_PIPELINES.get(n, {})
+            out.append(f"  • {n} — {entry.get('target', '?')} "
+                       f"(since {entry.get('since', '?')})")
+        out.append("  → Verify these targets are actually still live if any "
+                   "look stale. Registry lives in build_executive_summary.py.")
+        out.append("")
 
     # Post-ship 14-day watch: scan shipped_ledger for any active-watch ships,
     # flag any whose responsible script has flipped verdict since ship.

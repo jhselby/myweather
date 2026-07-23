@@ -254,6 +254,15 @@ def main():
     for line in js_lazy_bumps:
         print(line)
 
+    # Auto-refresh debug page day counters + last-curated banner. Codified
+    # 2026-07-23 after repeated instances of me proposing work based on stale
+    # debug page state — the day counter drifted N days past its ship date
+    # because Rule 5 sweeps were manual. Machine-enforced counter advancement
+    # kills the class. Registry lives at top of function; add on every ship
+    # that opens a 14-day watch. Only in-window ships are touched; expired
+    # watches (elapsed > watch_days) are left alone for a human to close.
+    _refresh_debug_page(base_dir)
+
     if not changes:
         print("\n⚠️  No changes made - all assets already up to date or missing")
         return 0
@@ -271,6 +280,103 @@ def main():
     print("=" * 60)
     
     return 0
+
+
+# Ship events with active 14-day post-ship watches. Each entry:
+#   version: the version string that appears on the day-counter line in the
+#            debug page (used as the same-line anchor for substitution).
+#   date:    ISO ship date. Today's day counter = today − date.
+#   watch_days: watch window length (14 for standard post-ship watches).
+#
+# Add entries here whenever a live-layer change ships. Remove when the watch
+# closes cleanly (or leave in place — the refresh only touches in-window ships).
+SHIP_EVENTS = [
+    {"version": "v0.6.355",  "date": "2026-07-17", "watch_days": 14},  # Lc
+    {"version": "v0.6.358",  "date": "2026-07-19", "watch_days": 14},  # ch persistence gate
+    {"version": "v0.6.368a", "date": "2026-07-20", "watch_days": 14},  # wd L2 blend
+    {"version": "v0.6.370",  "date": "2026-07-20", "watch_days": 14},  # ws L3 asymmetric SKIP
+]
+
+
+def _refresh_debug_page(base_dir):
+    """Advance day-counter references on lines that also mention a SHIP_EVENTS
+    version, and bump the 'Last curated:' banner to today.
+
+    Regex 'day N/W' on the same line as version string → 'day <elapsed>/W'.
+    Version-string anchor keeps stray '14-day' text (e.g. 'day 7/14' as a
+    future decision date) from being clobbered — those lines don't carry the
+    version. Ships past their watch window are left alone.
+    """
+    from datetime import date as _dt_date
+    debug_path = base_dir / 'corrections_debug.html'
+    if not debug_path.is_file():
+        return
+    today = _dt_date.today()
+    content = debug_path.read_text(encoding='utf-8')
+    orig_content = content
+    changes = []
+
+    for event in SHIP_EVENTS:
+        try:
+            ship_date = _dt_date.fromisoformat(event["date"])
+        except ValueError:
+            continue
+        elapsed = (today - ship_date).days
+        watch = event["watch_days"]
+        if elapsed < 0 or elapsed > watch:
+            continue
+        # Convention: "day 1 = ship day", matches prior changelog usage.
+        # (E.g. v0.6.371a advanced Lc from day 4 → 5 on 07-21, four days
+        # after Lc shipped 07-17.)
+        day_n = elapsed + 1
+        version = event["version"]
+        # Escape "." in "v0.6.355" for the regex.
+        vpat = re.escape(version)
+        # Only substitute the counter that immediately follows the version
+        # string (up to ~140 chars away — enough for `(v0.6.355, 07-17) — day
+        # 7/14` and its variants; short enough not to reach a neighbouring
+        # event's counter on the same line). If several ship-events share a
+        # line (historical changelog entries), each event's iteration only
+        # touches its own nearby counter — not all counters on the line.
+        counter_re = re.compile(
+            rf"({vpat})([^<]{{0,140}}?\b)(day|Day)( )(\d+)/{watch}\b"
+        )
+        new_lines = []
+        touched_this_event = 0
+        for line in content.splitlines(keepends=True):
+            if version not in line:
+                new_lines.append(line)
+                continue
+            def _sub(m):
+                nonlocal touched_this_event
+                old_n = int(m.group(5))
+                if old_n == day_n:
+                    return m.group(0)
+                touched_this_event += 1
+                return f"{m.group(1)}{m.group(2)}{m.group(3)}{m.group(4)}{day_n}/{watch}"
+            new_lines.append(counter_re.sub(_sub, line))
+        if touched_this_event:
+            changes.append(f"  ✓ {version} → day {day_n}/{watch} "
+                           f"({touched_this_event} site{'s' if touched_this_event > 1 else ''})")
+        content = "".join(new_lines)
+
+    # Bump 'Last curated:' banner to today. Matches:
+    #   Last curated: 2026-07-23 v0.6.375a · click any sub-box...
+    curated_re = re.compile(
+        r"(Last curated:\s*)(\d{4}-\d{2}-\d{2})(\s+v[\d.]+[a-z]?)"
+    )
+    today_iso = today.isoformat()
+    def _bump_curated(m):
+        if m.group(2) == today_iso:
+            return m.group(0)
+        changes.append(f"  ✓ Last curated → {today_iso}{m.group(3)}")
+        return f"{m.group(1)}{today_iso}{m.group(3)}"
+    content = curated_re.sub(_bump_curated, content)
+
+    if content != orig_content:
+        debug_path.write_text(content, encoding='utf-8')
+        for line in changes:
+            print(line)
 
 
 if __name__ == '__main__':
