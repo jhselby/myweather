@@ -893,25 +893,25 @@
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #7fb3ff;background:#101318;margin-bottom:6px;border-radius:2px;">
-          <div><strong>Pre-frontal cloud widening</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ Stage 2 curated 07-12 · counter wired</span></div>
-          <div style="opacity:0.85;">Latest ortho read: 7 SHIP cells (cell is SHIP iff ORTHOGONAL vs C1a AND vs C1e). Written to <code>weather_collector/data/pre_frontal_curated.json</code>. <em>v0.6.372b matched-regime fix expanded the set 5→7; Jaccard 5/7 = 0.71 &lt; 0.8 → narrow-promote streak restarts tomorrow.</em></div>
-          <div style="color:#9ab0a0;">→ Real 7-day narrow-promote counter wired 2026-07-12 v0.6.328d. <strong>Day 7/7 CLEARED at 05:52 → reset 1/7 at 09:01 rerun</strong> (5 SHIP cells but cell identity drifted). Streak restarts today.</div>
+          <div><strong>Pre-frontal cloud widening</strong> <span style="color:#e0d472;font-size:0.85em;">⚙ Stage 2 curated 07-12 · counter wired · blocked on population (n=8 passages, THIN)</span></div>
+          <div style="opacity:0.85;">Latest ortho read: 7 SHIP cells (cell is SHIP iff ORTHOGONAL vs C1a AND vs C1e). Written to <code>weather_collector/data/pre_frontal_curated.json</code>. <em>v0.6.372b matched-regime fix HOLDS PROMOTE with the corrected baseline; SHIP set expanded 5→7. Digest currently at streak 1/7 due to cell-set drift + population still THIN.</em></div>
+          <div style="color:#9ab0a0;">→ Real 7-day narrow-promote counter wired 2026-07-12 v0.6.328d. <strong>Blocked on population:</strong> only n=8 frontal passages in the current window, 17% pair-log join rate — both matched-regime KILL (h_hsf) and matched-regime PROMOTE (h_pre_front) share this THIN caveat. Do NOT act on either verdict until passage count ≥ 15 (probably 08-05 to 08-15). See [[project_c1e_hsf_kill_investigation]].</div>
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #4ad29a;background:#0f1712;margin-bottom:6px;border-radius:2px;">
-          <div><strong>cl persistence short-lead gate</strong> <span style="color:#e0d472;font-size:0.85em;">⚙ Stage 3 wired 07-13 v0.6.330 · gate day 7/7 but blend flip criteria NOT met on refreshed windows — halves-mixed (only 4/9 regimes SHIP at 0-5h). Not flipping today. Linear-ramp sibling STRONG but different mechanism.</span></div>
-          <div style="opacity:0.85;">Narrow architecture — persistence at 0-5h in all 9 regimes; longer bands SKIP by design. 9 SHIP cells / 36. Sanity-tested inline (sw_flow synthetic fires 5 leads at 0-5h + 42 skips elsewhere; unknown regime falls back to <code>hourly[0]</code> correctly).</div>
-          <div style="color:#9ab0a0;">→ Pre-emptive Stage 3 ship — code is one-flag-flip from live. Sun 07-19 halves-verified re-run of <code>h_cl_linear_ramp_stage2.py</code> is the flip gate. If clean-window halves converge and all 9 regimes still SHIP at 0-5h, flip ENABLED. Otherwise gate stays OFF permanently.</div>
+          <div><strong>cl persistence short-lead gate</strong> <span style="color:#a08070;font-size:0.85em;">⚙ Stage 3 wired 07-13 v0.6.330 · ENABLED=False permanently per 07-13 design criterion — halves-mixed (only 4/9 regimes SHIP at 0-5h) fails the "all 9 regimes" gate. Regime-gated variant proposed — re-audit 07-24 per [[project_clp_regime_gate_opportunity]].</span></div>
+          <div style="opacity:0.85;">Narrow architecture — persistence at 0-5h in all 9 regimes; longer bands SKIP by design. Design criterion locked at 07-13: all 9 regimes must SHIP at 0-5h with halves-agree, or gate stays OFF. Refreshed <code>h_cl_persistence_blend</code>: halves-mixed, 4/9 regimes SHIP at 0-5h (se_flow, ne_flow, calm, unknown).</div>
+          <div style="color:#9ab0a0;">→ Design gate not met → OFF permanently for the all-9-regime variant. Sibling <code>h_cl_linear_ramp_stage2</code> (τ=36 linear-ramp) STRONG with 17 SHIP cells on 07-23 windows — different mechanism, separate Stage 2 investigation. [[project_clp_regime_gate_opportunity]] proposes regime-gated variant (fires only where clp CRUSHES Lc at short lead: −55 to −73%). Re-audit 07-24.</div>
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #4ad29a;background:#0f1712;border-radius:2px;">
-          <div><strong>wg residual persistence gate</strong> <span style="color:#e0d472;font-size:0.85em;">⚙ Stage 3 wired 07-14 v0.6.351 · 07-21 flip HOLD (Jaccard 0.45 vs 07-14) · new 10-cell baseline · earliest flip 07-27</span></div>
-          <div style="opacity:0.85;">Long-lead-only architecture — adds a per-clock-hour L2-residual mean (prior 14d) on top of <code>fc_l2</code>. <strong>07-20 evening re-run:</strong> 10 SHIP / 4 MARGIN / 22 SKIP of 37 cells (was 8 SHIP on 07-19). Cell-set drift too large vs the 07-14 baseline (Jaccard 0.45) — 7-window streak reset to day 1/7 on the new 10-cell baseline. Short leads (0-5h + 6-11h) still SKIP in every regime — L2's Kalman already tracks recent obs, adding a 14-day mean re-introduces stale bias close-in.</div>
-          <div style="color:#9ab0a0;">→ Runs AFTER decay_apply so it overrides L3's wg output where the gate fires. Regime-gate-first frame converts a mixed-pooled finding into a clean per-cell ship map. <strong>07-21 flip HELD</strong> — Jaccard 0.45 vs 07-14 baseline is well below the 0.8 stability threshold; the 10-cell set needs its own 7-day agreement window. <strong>Earliest flip 2026-07-27</strong> (day 1/7 today on the new baseline). Weekly re-run of <code>h_wg_residual_persistence_stage2.py</code> refreshes both the cell verdicts and the 24-slot per-clock-hour correction table.</div>
+          <div><strong>wg residual persistence gate</strong> <span style="color:#e0d472;font-size:0.85em;">⚙ Stage 3 wired 07-14 v0.6.351 · 07-21 flip HOLD (Jaccard 0.45 vs 07-14) · new 10-cell baseline · day 3/7 · earliest flip 07-27</span></div>
+          <div style="opacity:0.85;">Long-lead-only architecture — adds a per-clock-hour L2-residual mean (prior 14d) on top of <code>fc_l2</code>. <strong>07-20 evening re-run:</strong> 10 SHIP / 4 MARGIN / 22 SKIP of 37 cells (was 8 SHIP on 07-19). Cell-set drift too large vs the 07-14 baseline (Jaccard 0.45) — 7-window streak reset to day 1/7 on the new 10-cell baseline (now day 3/7 as of 07-23). Short leads (0-5h + 6-11h) still SKIP in every regime — L2's Kalman already tracks recent obs, adding a 14-day mean re-introduces stale bias close-in.</div>
+          <div style="color:#9ab0a0;">→ Runs AFTER decay_apply so it overrides L3's wg output where the gate fires. Regime-gate-first frame converts a mixed-pooled finding into a clean per-cell ship map. <strong>07-21 flip HELD</strong> — Jaccard 0.45 vs 07-14 baseline is well below the 0.8 stability threshold; the 10-cell set needs its own 7-day agreement window. <strong>Earliest flip 2026-07-27</strong> (day 3/7 today on the new baseline). Weekly re-run of <code>h_wg_residual_persistence_stage2.py</code> refreshes both the cell verdicts and the 24-slot per-clock-hour correction table.</div>
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #e0d472;background:#0f1712;margin-top:6px;border-radius:2px;">
-          <div><strong>wd persistence gate</strong> <span style="color:#e0d472;font-size:0.85em;">⚙ Stage 2 preview + processor drafted 07-20 v0.6.365 · ENABLED=False · gate day 1/7</span></div>
+          <div><strong>wd persistence gate</strong> <span style="color:#e0d472;font-size:0.85em;">⚙ Stage 2 preview + processor drafted 07-20 v0.6.365 · ENABLED=False · gate day 4/7</span></div>
           <div style="opacity:0.85;">Second wd correction candidate (L2 blend shipped 07-20 v0.6.368a covers short leads; this gate targets long-lead regime-transition cells). Fire condition: <code>state_curr.regime != state_fc.regime[lead]</code> (predicted-transition signal, known at forecast time) AND cell (fc_regime, band) is SHIP/MARGIN. Replaces wd with persistence-of-obs (current <code>wind_direction</code> post-wind_blend consensus). 5 SHIP + 1 MARGIN cells: calm 12-23/24-47, pre_frontal 0-5, se_flow 0-5, sw_flow 0-5 (SHIP) + sw_flow 6-11 (MARGIN). Composed-gate MAE reductions: sw_flow 0-5 −26%, calm 24-47 −20%, calm 12-23 −12%, se_flow 0-5 −12%. Signal quality: 60% precision, 81% recall on actual transitions. Uses circular <code>angular_diff</code> throughout.</div>
           <div style="color:#9ab0a0;">→ Processor <code>weather_collector/processors/wd_persistence_gate.py</code> drafted; not yet wired into <code>collector.py</code>. <strong>wd first-class throughout the diagnostic surface as of 07-20:</strong> anomaly_detector + h_persistence_skill (v0.6.365b), accuracy chart + pipeline table + mae_over_time (v0.6.365d), Fitter per_layer_mae/rmse/bias (v0.6.367 — joiner emits per-layer wd errors circularly), <strong>L2 blend live in wind_blend</strong> (v0.6.368a — same architecture as ws/wg, unit-vector circular mean). Remaining wiring for the specialist flip on 07-27: applied_layer stamping in <code>forecast_snapshot.py:207-208</code> currently skips wd; needs a <code>wdp</code> layer alongside <code>chp</code>/<code>clp</code>. Earliest flip <strong>2026-07-27</strong>. Meta-validation: <code>h_persistence_skill</code> shows wd 0-5h BEHIND (persistence 50° beats L1 56°) — confirms the gate targets the right band.</div>
         </div>
@@ -958,9 +958,9 @@
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Wed 07-22</div>
           <div><strong>h daily-residual persistence Stage 1 re-run</strong> — MARGINAL 07-19 (halves sign-flip). Halves check governs Stage 1 → Stage 2 transition.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">ongoing</div>
-          <div><strong style="color:#4ad29a;">C1h narrow-promote GATE CLEARED (Jaccard walker v0.6.362, 12/7 days today).</strong> Earliest ship gated on C1 Stage 4 (07-25 re-check).</div>
+          <div><strong style="color:#4ad29a;">C1h narrow-promote GATE CLEARED (Jaccard walker v0.6.362, 14/7 days today).</strong> Earliest ship gated on C1 Stage 4 (07-25 re-check).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">ongoing</div>
-          <div><strong>C1d narrow-promote counter — 1/7 today (11 SHIP cells).</strong> In-window SHIP-set churn resets exact-match; Jaccard walker still watching for stable 6/7-window agreement. Earliest ship gated on C1 Stage 4 (07-25 re-check).</div>
+          <div><strong>C1d narrow-promote counter — 3/7 today (9 SHIP cells).</strong> In-window SHIP-set churn resets exact-match; Jaccard walker still watching for stable 7/7-window agreement. Earliest ship gated on C1 Stage 4 (07-25 re-check).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Fri 07-24</div>
           <div><code>h_ws_octant_bias</code> re-read 2 of 3 (07-17 ✓ · 07-24 · 07-31) gating ws additive-L2 Stage 1 candidacy. <strong>07-17 verdict: ⚠ SUGGESTIVE</strong> — 2 REAL octants (E +1.84 mph, S +0.99 mph HRRR over-forecast), 2 WATCH (NE, SW calm-flip), 4 flat. Not enough across-octants signal to justify per-octant L2 correction yet.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Mon 07-27</div>
@@ -980,10 +980,10 @@
 
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:4px;">Post-ship watches</div>
         <ul style="margin:0 0 0 16px;padding:0;">
-          <li><strong>Lc (v0.6.355, 07-17) — day 5/14 through 07-31.</strong> Trigger: any cc/cl/cm/ch cell flipping COLLAPSE in the anomaly detector.</li>
-          <li><strong>ch persistence gate (v0.6.358, 07-19) — day 3/14 through 08-02.</strong> Watchable per-lead as of v0.6.369 attribution wiring. First honest reads: chp lead 1 = 2.4 vs Lc 12.4 (−81%), lead 2 = 4.9 vs 11.3 (−56%). Trigger: chp series drifting toward Lc in per-band tables; scorecard <code>production</code> slipping vs baseline.</li>
-          <li><strong>wd L2 blend (v0.6.368a, 07-20) — day 2/14 through 08-03.</strong> First circular field entering L2. Trigger: spurious wd swings at short-lead on the wind card, or Fitter's <code>per_layer_mae_by_lead["wd"]["l2"]</code> flipping worse than l1 after n crosses 100 per lead. Calm-floor guard (WIND_DIR_MIN_SPEED = 3.0 mph) is the most likely failure mode — log per-cycle skip rate as a proxy.</li>
-          <li><strong>ws L3 asymmetric SKIP additive (v0.6.370, 07-20) — day 2/14 through 08-03.</strong> Trigger: 24-47h ws MAE moves wrong direction (23 of 40 SKIPs concentrated there per <code>project_ws_l3_long_lead_regression</code>).</li>
+          <li><strong>Lc (v0.6.355, 07-17) — day 6/14 through 07-31.</strong> Trigger: any cc/cl/cm/ch cell flipping COLLAPSE in the anomaly detector.</li>
+          <li><strong>ch persistence gate (v0.6.358, 07-19) — day 5/14 through 08-02.</strong> Watchable per-lead as of v0.6.369 attribution wiring. First honest reads: chp lead 1 = 2.4 vs Lc 12.4 (−81%), lead 2 = 4.9 vs 11.3 (−56%). <strong style="color:#e0d472;">Active regression sub-watch:</strong> 07-21 day 3 read showed mid-lead 6-20h chp vs Lc regression +14→+53%. Re-check 07-25 (see <a href="#" style="color:#7fb3ff;">[[project_chp_midlead_regression_watch]]</a>). Persistence-skill Prod −1.32 vs L4 −0.28 diagnosed 07-23 as pair-log-window lagging indicator, not a live regression. Trigger: chp series drifting toward Lc in per-band tables; scorecard <code>production</code> slipping vs baseline.</li>
+          <li><strong>wd L2 blend (v0.6.368a, 07-20) — day 4/14 through 08-03.</strong> First circular field entering L2. Trigger: spurious wd swings at short-lead on the wind card, or Fitter's <code>per_layer_mae_by_lead["wd"]["l2"]</code> flipping worse than l1 after n crosses 100 per lead. Calm-floor guard (WIND_DIR_MIN_SPEED = 3.0 mph) is the most likely failure mode — log per-cycle skip rate as a proxy.</li>
+          <li><strong>ws L3 asymmetric SKIP additive (v0.6.370, 07-20) — day 4/14 through 08-03.</strong> Trigger: 24-47h ws MAE moves wrong direction (23 of 40 SKIPs concentrated there per <code>project_ws_l3_long_lead_regression</code>). Current cell count: 25 SKIP (was 44 at Stage 1 07-20; natural evolution as windows accumulated).</li>
           <li>wg persistence-skill thin margin — pooled L4 skill +0.169 (&lt; +0.20 hold margin). True drag is 24-47h (skill_prod −0.022, Prod=L1). Both 07-27 ships (wg residual persistence + wg L3 skip-table extension) target 24-47h — verify skill_prod at 24-47h moves post-flip.</li>
           <li>Lt retirement 2-window stability check — 07-16 + 07-17 (l6_fix_b_refit flipped SHIP → HOLD on 07-16 confirming Lt retirement mechanism).</li>
           <li>v0.6.291 raw-baseline verifier — healthy since ship, no drift events.</li>
@@ -1037,7 +1037,7 @@
       <li><span style="color:#4ad29a;">✓</span> <strong>ch persistence gate — LIVE 07-19 v0.6.358. Day 5/14.</strong> 27 SHIP cells on refreshed windows; 14-day watch through 08-02. See <a href="#" style="color:#7fb3ff;">[[project_chp_midlead_regression_watch]]</a> — mid-lead 6-20h chp vs Lc regression under active watch; re-check 07-25. Persistence-skill Prod −1.32 vs L4 −0.28 diagnosed 07-23 as pair-log-window lagging indicator, not a live regression.</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>wd L2 blend — LIVE 07-20 v0.6.368a. Day 4/14.</strong> Circular unit-vector blend live in <code>wind_blend.py</code>. Watch through 08-03. First Fitter cycle emitted per-layer wd MAE across all 48 leads (v0.6.367 joiner fix).</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>ws L3 asymmetric fc-bin SKIP — LIVE 07-20 v0.6.370. Day 4/14.</strong> Additive on top of existing regime × band SKIP_TABLE; 25 curated SKIP cells today (was 44 at scaffold). 14-day watch through 08-03. Hardcode-REPLACEMENT deferred to 07-27+ pending 7-window cell-set stability.</li>
-      <li><span style="color:#7090a0;">⚙</span> <strong>cl persistence short-lead gate — day 7/7 but HOLD.</strong> Refreshed <code>h_cl_persistence_blend</code>: halves-mixed, 4/9 regimes SHIP at 0-5h; design requires all 9 → not flipping. Sibling <code>h_cl_linear_ramp_stage2</code> STRONG (15 cells) but different mechanism.</li>
+      <li><span style="color:#a08070;">✗</span> <strong>cl persistence short-lead gate — OFF permanently.</strong> Refreshed <code>h_cl_persistence_blend</code>: halves-mixed, 4/9 regimes SHIP at 0-5h; design requires all 9. Sibling <code>h_cl_linear_ramp_stage2</code> STRONG (17 cells today) — separate mechanism. Regime-gated clp variant re-audit 07-24 per [[project_clp_regime_gate_opportunity]].</li>
       <li><span style="color:#e07272;">✗</span> <strong>h/l4 narrow-add — FOSSIL CAUGHT 07-19.</strong> Was "on rails" day 6/7 → 0 SHIP cells on refreshed windows, streak reset 1/7. Retest 07-26+.</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>h → L4 — re-frozen 07-11.</strong> Halves-check killed 7 of 12 WIN cells (HRRR anomaly). Un-freeze: halves-agree after 07-25 window roll (07-18 read still cm-contaminated).</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>Lsr RETIRE-vs-AGREE puzzle RESOLVED 07-20 v0.6.365.</strong> Root cause: divergence-report claim was sourced from <code>l5_solar_analysis</code> (a candidate simpler-lookup script), not the live Fitter gate history. Its HOLD verdict was falsely rendered as "READY to disable" for months. Fixed by routing LSR_ENABLED claim through <code>.cache_l5_gate_history.json</code>. Live gate = 100% SHIP for 30+ days, imp 13-21%. Divergence now correctly shows AGREE.</li>
@@ -1052,7 +1052,7 @@
   <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-23 v0.6.375a · click any sub-box header to collapse it, or use the toggle below.</div>
 
   <details open style="margin-top:10px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
-    <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — 2026-07-21</summary>
+    <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — 2026-07-23</summary>
     <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. Production numbers are real per-row aggregates over the rolling 7-day window.</div>
     <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
       <thead>
@@ -1098,7 +1098,7 @@
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cc</code> cloud cover</td>
           <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend → L4 diurnal → Lc <span style="opacity:0.6;">(flipped 07-17)</span></td>
           <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−14.7%</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win + Lc live.</strong> Lc FLIPPED 07-17 v0.6.355 after 8/7-day gate clear. 14-day post-ship watch begins today; predicted MAE improvements documented in the applicability-map bullet below.</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win + Lc live.</strong> Lc FLIPPED 07-17 v0.6.355 after 8/7-day gate clear. 14-day post-ship watch through 07-31 (day 6/14); predicted MAE improvements documented in the applicability-map bullet below.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ch</code> high cloud</td>
@@ -1179,14 +1179,14 @@
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Specialists <span style="font-weight:normal;opacity:0.7;">— domain-scoped, parallel to the core stack</span></div>
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
         <li><strong>Lsr</strong> synoptic-regime solar (sr only). Shipped 06-28 v0.6.248. Per-(regime, hour) bias above sun-up. Skip: ne_flow, calm.</li>
-        <li><strong>Lc</strong> cloud saturation-unbiasing (cc/cl/cm/ch). <strong>FLIPPED 2026-07-17 v0.6.355</strong> after 8/7-day divergence-report gate + lc_fit gate both cleared, 16 SHIP cells stable 7 consecutive days (07-11 → 07-17), no cc/cl/cm/ch ANOMALY. Per-(field, value_bin) shift, 16 SHIP / 24 total. Biggest predicted: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37%. 14-day post-ship watch begins today — accuracy-over-time chart will show the trajectory. Two-gates-per-layer cross-check per [[feedback_two_gates_per_layer]].</li>
-        <li><strong>ch persistence gate</strong> ch only. Shipped 07-12 v0.6.327, <strong style="color:#4ad29a;">FLIPPED 07-19 v0.6.358 ENABLED=True</strong>. Runs AFTER Lc; where the gate fires, replaces L4+Lc-corrected <code>cloud_cover_high</code> with persistence-of-obs (KBOS+KBVY blended obs at forecast issue time, carried flat). Refreshed-window cell shape: <strong>27 SHIP / 6 MARGIN / 3 SKIP / 1 THIN</strong> use persistence; <strong>SKIP cells (calm/24-47, ne_flow/24-47, nw_flow/24-47) + <em>frontal</em> regime</strong> fall back to L4. Live gate shape changed from stale-window preview: sw_flow/24-47 promoted SKIP→SHIP; calm/24-47 demoted SHIP→SKIP. 14-day post-ship watch through 08-02.</li>
-        <li><strong>cl persistence short-lead gate</strong> cl only. Shipped 07-13 v0.6.330, ENABLED=False. Narrow architecture — replaces <code>cloud_cover_low</code> with persistence-of-obs at leads 0-5h in <strong>all 9 regimes</strong>. 7-day gate: day 7/7 today. <strong>Not flipping today.</strong> Refreshed <code>h_cl_persistence_blend</code> (post-window-slide): "mixed — regime_gate doesn't cleanly beat baseline on halves check." Only 4/9 regimes SHIP at 0-5h (se_flow, ne_flow, calm, unknown). Design gate requires all 9 → gate stays OFF permanently per the 07-13 criterion. Sibling <code>h_cl_linear_ramp_stage2</code> (linear-ramp, τ=36) DID go MODERATE → STRONG 15 SHIP cells on refreshed windows — different mechanism, worth separate Stage 2 investigation.</li>
-        <li><strong>wg residual persistence gate</strong> wg only. Shipped 07-14 v0.6.351, ENABLED=False. Runs AFTER decay_apply; where the gate fires, replaces the L3-corrected <code>wind_gusts</code> value with (<code>fc_l2</code> + hour-of-day L2-residual correction fitted over prior 14d). <strong>07-20 evening re-run:</strong> 10 SHIP / 4 MARGIN / 22 SKIP of 37 cells (was 8 SHIP on 07-19). Jaccard 0.45 vs 07-14 baseline forced 07-21 flip HOLD — cell-set drift too large. New 10-cell baseline needs its own 7-day agreement window. 7-day gate: day 1/7 on new baseline. Earliest flip 07-27.</li>
+        <li><strong>Lc</strong> cloud saturation-unbiasing (cc/cl/cm/ch). <strong>FLIPPED 2026-07-17 v0.6.355</strong> after 8/7-day divergence-report gate + lc_fit gate both cleared, 16 SHIP cells stable 7 consecutive days (07-11 → 07-17), no cc/cl/cm/ch ANOMALY. Per-(field, value_bin) shift, 16 SHIP / 24 total. Biggest predicted: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37%. <strong>14-day post-ship watch: day 6/14 through 07-31</strong> — accuracy-over-time chart tracks the trajectory. Two-gates-per-layer cross-check per [[feedback_two_gates_per_layer]].</li>
+        <li><strong>ch persistence gate</strong> ch only. Shipped 07-12 v0.6.327, <strong style="color:#4ad29a;">FLIPPED 07-19 v0.6.358 ENABLED=True</strong>. Runs AFTER Lc; where the gate fires, replaces L4+Lc-corrected <code>cloud_cover_high</code> with persistence-of-obs. Refreshed-window cell shape: <strong>27 SHIP / 6 MARGIN / 3 SKIP / 1 THIN</strong> use persistence; SKIP cells + <em>frontal</em> regime fall back to L4. Live gate: fired 19,508 times in the last 7 days across 8 non-frontal regimes. <strong>14-day post-ship watch: day 5/14 through 08-02.</strong> <strong style="color:#e0d472;">Active regression watch:</strong> 07-21 day 3 read showed mid-lead 6-20h chp vs Lc regression +14→+53% (short-lead 1-5h chp still winning as designed). Suspected cause: Stage 2 SHIP-set measured against L4, not Lc-in-stack. Re-check 07-25 — if regression persists at ≥ +20% with n ≥ 100, rebuild Stage 2 against <code>forecast_l6</code> baseline. See [[project_chp_midlead_regression_watch]].</li>
+        <li><strong>cl persistence short-lead gate</strong> cl only. Shipped 07-13 v0.6.330, <strong>ENABLED=False — permanently, per 07-13 design criterion</strong>. Narrow architecture — replaces <code>cloud_cover_low</code> with persistence-of-obs at leads 0-5h in <strong>all 9 regimes</strong>. Refreshed <code>h_cl_persistence_blend</code>: halves-mixed, 4/9 regimes SHIP at 0-5h (se_flow, ne_flow, calm, unknown). Design gate requires all 9 → OFF permanently. Sibling <code>h_cl_linear_ramp_stage2</code> (linear-ramp, τ=36) is STRONG with 17 SHIP cells on 07-23 windows — different mechanism, separate Stage 2 investigation. Also [[project_clp_regime_gate_opportunity]] proposes a regime-gated variant (fires only where clp CRUSHES Lc at short lead: −55 to −73%) — re-audit 07-24.</li>
+        <li><strong>wg residual persistence gate</strong> wg only. Shipped 07-14 v0.6.351, ENABLED=False. Runs AFTER decay_apply; where the gate fires, replaces the L3-corrected <code>wind_gusts</code> value with (<code>fc_l2</code> + hour-of-day L2-residual correction fitted over prior 14d). <strong>07-20 evening re-run:</strong> 10 SHIP / 4 MARGIN / 22 SKIP of 37 cells (was 8 SHIP on 07-19). Jaccard 0.45 vs 07-14 baseline forced 07-21 flip HOLD — cell-set drift too large. New 10-cell baseline needs its own 7-day agreement window. 7-day gate: <strong>day 3/7 on new baseline (07-23)</strong>. Earliest flip 07-27.</li>
       </ul>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
       <ul style="margin:2px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>C1</strong> multi-axis confidence layer — <em>gated off (ENABLED=False)</em>. Stamps <code>weather_data["confidence"]</code> every tick. Five axes: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence, C1e hours-since-front (shipped 2026-07-01 v0.6.272). Flip after Stage 4 audit clears. As of 07-16 v0.6.353e/f, refined view is primary and multi-axis stratification fixed; today's read HOLD on both axes (legacy MIXED, multi-axis NOT READY at 195P/139W/320F).</li>
+        <li><strong>C1</strong> multi-axis confidence layer — <em>gated off (ENABLED=False)</em>. Stamps <code>weather_data["confidence"]</code> every tick. Axes: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence, C1e hours-since-front (07-01 v0.6.272), <strong>C1d KBOS-vs-KBVY σ (07-08 Stage 3)</strong>, <strong>C1h trend direction (v0.6.316 07-10, narrow-promote gate CLEARED 14/7 today)</strong>. Flip after Stage 4 audit clears. Refined view primary since 07-16 v0.6.353e; today's read HOLD on both axes (legacy MIXED, multi-axis NOT READY per <code>c1_stage4_mixture_check</code> — cm cells still DEGRADED, 06-30 anomaly aging out). Re-audit 07-25. Note: C1h + C1d curated tables ARE read live at stamp time (<code>confidence_layer.py</code>), gated per-cell by co-axis ortho whitelist; downstream user-visible band widening is what "ENABLED=False" refers to.</li>
       </ul>
     </details>
 
@@ -1208,82 +1208,75 @@
       <summary style="color:#e0d472;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">⏳ Upcoming decisions <span style="font-weight:normal;opacity:0.6;font-size:0.85em;">(forward-only; outcomes move to Recent activity)</span></summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
 
-        <li style="margin-top:6px;"><strong style="color:#4ad29a;">Thu 07-16 — ws L3 strip: HELD; asymmetric skip-table ADDITIVE LIVE 07-20 v0.6.370.</strong>
+        <li style="margin-top:6px;"><strong>Fri 07-24 — sr Lsb Stage 3 halves re-run.</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Drop ws from <code>L3_FIELDS</code>?</li>
-            <li><strong>Answered 07-20:</strong> No — additive ws L3 asymmetric fc-bin SKIP wired live (40 net-new SKIPs, 23 at 24-47h). Surgically excises the long-lead L3 regression without touching cells where L3 helps at short lead. Hardcode-REPLACEMENT (live-layer flip; could re-enable L3 in currently-skipped cells) still deferred to 07-27 pending 7-window cell-set stability. Wholesale drop remains HELD.</li>
+            <li><strong>Q:</strong> Do the Lsb halves re-run cleanly and gate the ENABLED flip?</li>
+            <li><strong>E:</strong> sr sea_breeze Lsb Stage 3 wired 07-17 v0.6.354 · ENABLED=False. Overrides Lsr's direct-beam output with (shortwave − bias(hod)) on sea_breeze rows where cc &lt; 25 or cc ≥ 75. Stage 2 baseline: pooled +25.27%, halves +29.0% / +21.5%, lead-band clean.</li>
+            <li><strong>D:</strong> If halves stay within ±5pp of pooled and cell-set stable → flip <code>Lsb.ENABLED=True</code>. Any halves sign-flip → HOLD one more window.</li>
           </ul>
         </li>
 
-        <li style="margin-top:6px;"><strong>Fri 07-17 — <code>h_ws_octant_bias</code> weekly re-read (1 of 3).</strong>
+        <li style="margin-top:6px;"><strong>Fri 07-24 — clp regime-gate re-audit (Tue Fitter Stage 1 opportunity).</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Is the +0.9 to +1.9 mph over-forecast on SW/S/E/NE octants direction-stable and independent of sw_flow regime?</li>
-            <li><strong>E:</strong> Stage 0 read 07-10 flagged Marblehead-geometry friction story. Weekly reads 07-17, 07-24, 07-31 required.</li>
-            <li><strong>D:</strong> If sign stable + regime cross-cut clean by 07-31, promote to Stage 1 for the per-octant ws L2 additive.</li>
+            <li><strong>Q:</strong> Does the regime-gated clp variant (fires only where the all-9-regime clp CRUSHES Lc at short lead: −55 to −73%) hold under fresh windows?</li>
+            <li><strong>E:</strong> 07-21 Tue Fitter surfaced clp beating Lc at short lead across most regimes, but the design gate (all 9 SHIP at 0-5h) is too strict. Per [[feedback_regime_gate_first]] the regime-gated variant is worth its own Stage 1 read. See [[project_clp_regime_gate_opportunity]].</li>
+            <li><strong>D:</strong> If ≥6/9 regimes SHIP with matched-baseline halves clean → promote regime-gated variant to Stage 2. Otherwise HOLD.</li>
           </ul>
         </li>
 
-        <li style="margin-top:6px;"><strong>Sat 07-18 — C1 Stage 4 ship: unblock or defer?</strong> <span style="color:#d4a373;">ANSWERED — DEFERRED to 07-25</span>
+        <li style="margin-top:6px;"><strong>Sat 07-25 — chp mid-lead 6-20h regression re-check (14-day watch day 7/14).</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Does the C1 Stage 4 refined view clear once the HRRR cm-distribution anomaly rolls out of the recent window? Both axes must pass (legacy single-axis + multi-axis 5-tuple).</li>
-            <li><strong>A:</strong> No — refined view NOT READY today. <code>c1_stage4_mixture_check.py</code> shows all cm cells still DEGRADED (0-5h/6-11h/12-23h stable + transition). Difficulty lens: 9/104 REAL DRIFT, 55/104 weather-confound, 32/104 small-safe, 8 review. cm anomaly hasn't fully aged out of the calib window yet.</li>
-            <li><strong>Outcome:</strong> Deferred one week. Re-check <strong>Sat 07-25</strong> when more of the cm anomaly window has aged out. Partial re-curate on the 8 non-cm REAL DRIFT cells is an option if 07-25 is still contaminated.</li>
+            <li><strong>Q:</strong> Does the mid-lead 6-20h chp-vs-Lc gap persist at ≥ +20% with n ≥ 100 per lead?</li>
+            <li><strong>E:</strong> chp shipped 07-19 v0.6.358 ENABLED=True. Day 3 read (07-21) showed +14→+53% worse than Lc at 6-20h leads (n=30-45); short-lead 1-5h chp still winning as designed (−77% → −6%). Suspected cause: chp's Stage 2 SHIP-set was measured vs L4, not vs Lc-in-stack. See [[project_chp_midlead_regression_watch]].</li>
+            <li><strong>D:</strong> If regression persists at ≥ +20% with n ≥ 100 → rebuild <code>h_ch_persistence_blend_stage2.py</code> against <code>forecast_l6</code> (Lc-corrected) baseline; expected result is mid-lead SHIP cells demote to SKIP, short-lead cells keep SHIP. Do NOT demote cells by hand — Stage 2 owns the decision.</li>
           </ul>
         </li>
 
-        <li style="margin-top:6px;"><strong>Fri 07-17 — Lc: flip ENABLED=True?</strong> <span style="color:#4ad29a;">ANSWERED — FLIPPED v0.6.355</span>
+        <li style="margin-top:6px;"><strong>Sat 07-25 — C1 Stage 4 re-audit + C1 calibration audit re-curate.</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Do BOTH gates (divergence-report streak + <code>lc_fit</code> SHIP-set stability) clear on 07-17?</li>
-            <li><strong>A:</strong> Yes on both. Divergence-report cleared 8/7 (one day past minimum); <code>lc_fit</code> gate_clear=True (07-10 rolled out of the 7-day window); SHIP set = 16 cells identical 7 consecutive days (07-11 → 07-17); no cc/cl/cm/ch ANOMALY. Two-gates-per-layer cross-check per [[feedback_two_gates_per_layer]].</li>
-            <li><strong>Outcome:</strong> Flipped 15:19 EDT. First live tick (15:27): 113 cells fired — cc 46/48, ch 39/48, cm 19/48, cl 9/48. 14-day post-ship watch runs through 2026-07-31 — see the <a href="#sec-lc" style="color:#7fb3ff;">Lc layer section</a>.</li>
+            <li><strong>Q:</strong> Does the C1 Stage 4 refined view clear now that more of the HRRR cm-distribution anomaly has aged out of the calib window? Does <code>c1_calibration_audit</code> pass rate climb above 75%?</li>
+            <li><strong>E:</strong> 07-18 read: refined view NOT READY, cm cells still DEGRADED. <code>c1_calibration_audit</code> HOLD 17.95% today (32/39 CALIBRATED cells drifted). Both blocked on the 06-30 → 07-11 cm-anomaly window aging out of recent baseline.</li>
+            <li><strong>D:</strong> If refined-view mixture-check clears + calibration audit ≥ 75% → run <code>c1_confidence_calibration</code> + <code>c1_curate_confidence_table</code> to capture the drift + re-deploy. Partial re-curate on the 8 non-cm REAL DRIFT cells is a fallback if cm still contaminates.</li>
           </ul>
         </li>
 
-        <li style="margin-top:6px;"><strong style="color:#4ad29a;">Sun 07-19 — ch persistence gate: flip ENABLED=True? — ANSWERED YES (v0.6.358).</strong>
+        <li style="margin-top:6px;"><strong>Mon 07-27 — wg residual persistence gate: flip ENABLED=True?</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Does the Stage 2 SHIP/SKIP cell set hold across the weekly re-run? (Ship-time 07-12: 22 SHIP / 6 MARGIN / 8 SKIP / 1 THIN. Today 07-14: 24 SHIP / 5 MARGIN / 7 SKIP / 1 THIN — one previously-SKIP cell now SHIPs, safer direction but formal change.)</li>
-            <li><strong>E:</strong> Shipped 07-12 v0.6.327 ENABLED=False. Gate day 7/7 CLEARED (07-18). Weekly Sunday re-run of <code>h_ch_persistence_blend_stage2.py</code> is the 7-day gate. Any halves sign-flip in a SHIP cell demotes it to SKIP. Persistence-skill audit corroborates direction: ch Prod −1.10 vs L4-alone −0.30 (07-14 digest). <strong>Landmark answered 07-14:</strong> persist_only pooled 19.119 vs gate 19.092 — tied in noise, gate wins on halves-instability hedge; do NOT rip out ch from L3+L4.</li>
-            <li><strong>D:</strong> If cell-set stable-or-safer-flex + halves consistent, flip <code>ch_persistence_gate.ENABLED=True</code>. Watch 14-day post-ship for verdict flips. If the flexed SHIP cell (from 07-14 fit) has stable halves on 07-19 re-fit, include it; if halves are unstable, hold at SKIP and flip the rest.</li>
+            <li><strong>Q:</strong> Does the 10-SHIP/4-MARGIN/22-SKIP cell set from 07-20 hold Jaccard ≥ 0.8 across 7 daily re-runs?</li>
+            <li><strong>E:</strong> Shipped 07-14 v0.6.351 ENABLED=False. 07-20 evening re-run shifted 8 → 10 SHIP; Jaccard 0.45 vs 07-14 forced 07-21 flip HOLD. New baseline day 3/7 today (07-23). Sanity clamp on |correction| &gt; 15 mph in place.</li>
+            <li><strong>D:</strong> If cell-set stable + halves consistent → flip <code>wg_residual_persistence.ENABLED=True</code>; 14-day watch through 08-10.</li>
           </ul>
         </li>
 
-        <li style="margin-top:6px;"><strong>Sun 07-19 — cl persistence short-lead gate: flip ENABLED=True?</strong>
+        <li style="margin-top:6px;"><strong>Mon 07-27 — ws L3 hardcode-REPLACEMENT (asymmetric-only rules).</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Post-anomaly, do the halves converge for cl at 0-5h in all 9 regimes?</li>
-            <li><strong>E:</strong> Processor Stage 3 shipped 07-13 v0.6.330 (pre-emptive). ENABLED=False; telemetry stamping every tick. Waiting on 07-19 re-run of <code>h_cl_linear_ramp_stage2.py</code> in a clean (post-anomaly) window.</li>
-            <li><strong>D:</strong> If all 9 regimes SHIP at 0-5h in the clean window read AND halves converge, flip <code>cl_persistence_short_lead.ENABLED=True</code>. If any regime demotes at 0-5h, remove from SHIP set and re-verify. If halves still diverge, gate stays OFF permanently and we accept cl has no persistence-gateable signal.</li>
-          </ul>
-        </li>
-
-        <li style="margin-top:6px;"><strong style="color:#e07272;">Sun 07-19 — h/l4 narrow-add: flip live? — ANSWERED NO (fossil caught).</strong>
-          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Does the 2-cell SHIP set (h/l4/calm/12-23h + h/l4/calm/0-5h) hold across all 7 daily digest reads?</li>
-            <li><strong>E:</strong> <span style="color:#e07272;">FOSSIL. Underlying script had windows hardcoded to 06-11→07-11; 07-19 window refresh (06-19→07-19) collapsed 2 SHIP cells to 0 and reset the streak 1/7.</span> The "SHIP set identical 6 consecutive days" reading was 6 identical reads of the same fossilized window, not 6 independent daily verifications.</li>
-            <li><strong>D:</strong> HOLD. Not shipping h to L4. Retest earliest 2026-07-26 on genuinely fresh data. New lesson: [[feedback_fossil_windows]].</li>
-          </ul>
-        </li>
-
-        <li style="margin-top:6px;"><strong>Sun 07-19 — pre-frontal narrow-promote earliest wire-up.</strong>
-          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Does the pre-frontal ORTHOGONAL-on-both-checks SHIP set stay stable for 7 consecutive daily digest reads?</li>
-            <li><strong>E:</strong> Counter wired 07-12 v0.6.328d (closed the last aspirational "no counter wired" gap). <code>h_pre_front_orthogonality.py</code> now emits <code>pre_frontal_curated.json</code>; 5 SHIP cells today. Day 6/7 (07-18).</li>
-            <li><strong>D:</strong> If gate clears + Stage 4 audit clears for C1 overall, wire pre-frontal as a Stage 3 axis in <code>confidence_layer.py</code> (per-cell WIDEN table, analogous to how C1h/C1d were wired in v0.6.316).</li>
-          </ul>
-        </li>
-
-        <li style="margin-top:6px;"><strong style="color:#e0d472;">Tue 07-21 — wg residual persistence gate: flip HELD → 07-27.</strong>
-          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
-            <li><strong>Q:</strong> Does the Stage 2 SHIP/SKIP cell set hold across the weekly re-runs?</li>
-            <li><strong>A:</strong> No — 07-20 evening re-run shifted from 8 SHIP to <strong>10 SHIP / 4 MARGIN / 22 SKIP</strong>. Jaccard 0.45 vs 07-14 baseline (well below 0.8 stability threshold). The 10-cell set is a new baseline that needs its own 7-day agreement window.</li>
-            <li><strong>Outcome:</strong> 07-21 flip HOLD. Earliest flip 07-27 (day 1/7 today on new baseline). Same weekly re-run gate; sanity clamp on |correction| &gt; 15 mph still in place.</li>
+            <li><strong>Q:</strong> Does the ws asymmetric SKIP cell set hold Jaccard ≥ 0.8 across 7 daily re-runs?</li>
+            <li><strong>E:</strong> ws L3 asymmetric wired ADDITIVELY 07-20 v0.6.370 (25 curated SKIP cells today; 40 net-new SKIPs vs old hardcode; concentrated at 12-47h). Hardcode-REPLACEMENT is the actual live-layer flip — could re-enable L3 in currently-blanket-skipped cells (ne_flow all + sea_breeze 0-11h).</li>
+            <li><strong>D:</strong> If cell-set stable + no new regression cells → flip to asymmetric-only rules for ws; 14-day watch. If ne_flow cells re-emerge as regressions, keep old hardcode.</li>
           </ul>
         </li>
 
         <li style="margin-top:6px;"><strong>Mon 07-27 — wdp (wd_persistence_gate): flip ENABLED=True?</strong>
           <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
             <li><strong>Q:</strong> Does the Stage 2 SHIP/MARGIN cell set (5 SHIP + 1 MARGIN as of 07-20) hold across 7 daily reads? Does the 7-site wiring land cleanly (per <code>docs/preflight/wdp_ship_patches.md</code>)?</li>
-            <li><strong>E:</strong> Stage 2 preview + processor drafted 07-20 v0.6.365 ENABLED=False. Composed-gate MAE reductions: sw_flow 0-5 −26%, calm 24-47 −20%, calm 12-23 −12%, se_flow 0-5 −12%. Signal quality: 60% precision, 81% recall on transitions. Pre-mortem doc lands all 7 wiring sites as copy-paste patches (collector wire, snapshot layers, applied_layer walk, pair-log emission, Fitter accumulator + emission, frontend 5 sub-sites, mae_over_time L1_ONLY branch).</li>
+            <li><strong>E:</strong> Stage 2 preview + processor drafted 07-20 v0.6.365 ENABLED=False. Composed-gate MAE reductions: sw_flow 0-5 −26%, calm 24-47 −20%, calm 12-23 −12%, se_flow 0-5 −12%. Signal quality: 60% precision, 81% recall on transitions. Pre-mortem doc lands all 7 wiring sites as copy-paste patches.</li>
             <li><strong>D:</strong> If cell-set stable across 07-21 → 07-26 daily reads, execute the pre-mortem in order. Post-ship: 14-day watch through 08-10 for calm-floor guard misfires + composed-gate MAE reductions.</li>
+          </ul>
+        </li>
+
+        <li style="margin-top:6px;"><strong>Fri 07-31 — <code>h_ws_octant_bias</code> weekly re-read (3 of 3).</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>Q:</strong> Is the +0.9 to +1.9 mph over-forecast on SW/S/E/NE octants direction-stable and independent of sw_flow regime?</li>
+            <li><strong>E:</strong> Stage 0 read 07-10 flagged Marblehead-geometry friction story. Weekly reads on 07-17, 07-24, 07-31 required.</li>
+            <li><strong>D:</strong> If sign stable + regime cross-cut clean by 07-31, promote to Stage 1 for the per-octant ws L2 additive.</li>
+          </ul>
+        </li>
+
+        <li style="margin-top:6px;"><strong>Blocked on population — h_hsf, h_pre_front narrow-promote.</strong>
+          <ul style="margin:2px 0 0 14px;padding:0;list-style:none;opacity:0.92;">
+            <li><strong>Q:</strong> Do these THIN scripts accumulate ≥ 15 frontal passages so the SHIP/KILL verdicts stop riding an 8-passage window?</li>
+            <li><strong>E:</strong> Both currently at n=8 passages, 17-19% pair-log join rate. <code>h_hsf_orthogonality</code>: KILL survives matched-regime fix (v0.6.372a), but cl 24-47h cell strengthened ORTHO → narrow C1e-restricted-to-cl-long-lead axis waiting on population. <code>h_pre_front_orthogonality</code>: PROMOTE holds matched-regime fix (v0.6.372b), SHIP cells 5 → 7. See [[project_c1e_hsf_kill_investigation]].</li>
+            <li><strong>D:</strong> Do NOT act on either verdict at n=8. Re-audit when passages ≥ 15 (probably 08-05 to 08-15 depending on frontal cadence).</li>
           </ul>
         </li>
 
@@ -1677,8 +1670,8 @@
 <!-- 4. Engineering status -->
 <h3 class="subsection">Engineering status</h3>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#0e1620;">
-  <div class="meta-line" style="margin-bottom:4px;"><strong style="color:#7fb3ff;">Where we are (2026-07-07):</strong></div>
-  <div style="font-size:0.92em;line-height:1.55;margin-bottom:6px;">Lsr lives in production for sr. Skip regimes: ne_flow + calm. Two collector bugs fixed 2026-07-02 → 2026-07-03; first clean 7-day audit window closes <strong>~2026-07-10</strong>. Structural raw-baseline verifier (v0.6.291) now catches the mutation class that hid the raw-column pollution for a week. <strong>Investigation update (v0.6.308–309, first shadow-log read 07-07 n=1,200):</strong> the unit-mismatch hypothesis was partially wrong. Shortwave MAE is <em>not</em> uniformly smaller than direct-beam MAE. Direction is regime-specific: nw_flow shortwave MAE −55% (unit fix pays off there), but pre_frontal / sea_breeze / unknown show shortwave <em>worse</em> — bias flips from direct-under to shortwave-over by +12 / +169 / +367 W/m². Signals a real over-forecast in Open-Meteo's total shortwave in cloudy/marine regimes on top of the direct-vs-total gap. Two candidate causes: (A) model under-forecasts cc in those regimes → its total_shortwave mechanically overshoots; (B) real Open-Meteo diffuse/aerosol modeling gap that persists at matched cc. Confound diagnostic queued (<code>analysis/sr_shortwave_cc_confound.py</code>, first real read ~2026-07-11). Prior "likely fix chain: switch to shortwave + refit Lsr" is on hold until Cause A vs B resolves — under A, the fix is in cc not sr; under B, it's a new regime-conditional sr correction.</div>
+  <div class="meta-line" style="margin-bottom:4px;"><strong style="color:#7fb3ff;">Where we are (2026-07-23):</strong></div>
+  <div style="font-size:0.92em;line-height:1.55;margin-bottom:6px;">Lsr lives in production for sr. Skip regimes: ne_flow + calm. Structural raw-baseline verifier (v0.6.291) catches raw-column mutation drift automatically. <strong>Unit-mismatch resolution — Lsb Stage 3 wired 07-17 v0.6.354, ENABLED=False.</strong> Overrides Lsr's direct-beam output with (shortwave − bias(hod)) on sea_breeze rows where cc &lt; 25 or cc ≥ 75 (the two ends where the direct-vs-shortwave gap flipped sign in the 07-07 shadow-log). Stage 2 baseline: pooled +25.27%, halves +29.0% / +21.5%, lead-band clean. Middle cc bins (25-74) still fall back to Lsr's original direct-beam correction. Broader unit-mismatch across other regimes (pre_frontal +12, unknown +367 W/m²) still open — Lsb is the narrow, halves-clean win; the wider redesign is separate. <strong>Halves re-run 07-24 gates the ENABLED flip.</strong> Divergence-report LSR_ENABLED source bug fixed 07-20 v0.6.365 (was reading <code>l5_solar_analysis</code>, now routes through <code>.cache_l5_gate_history.json</code>) — status now correctly AGREE, live gate 100% SHIP for 30+ days.</div>
   <details style="margin-top:6px;">
     <summary style="cursor:pointer;color:#7fb3ff;font-size:0.9em;opacity:0.85;">Full Lsr shipped-history log (v0.6.248 → v0.6.291)</summary>
     <ul style="margin:8px 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;">
