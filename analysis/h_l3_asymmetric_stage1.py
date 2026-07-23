@@ -371,11 +371,13 @@ def emit(field, accum, cuts, lines):
             "thin": len(thin_cells),
         },
         "notes": (
-            "Stage 1 preview. Not wired to production. SKIP verdict at "
-            "(regime, band, fc_bin) means: fall back to L2 (no L3) when the "
-            "raw fc at forecast time falls into fc_bin for its (regime, band). "
-            "Requires an extension of decay_apply's SKIP_TABLE architecture to "
-            "condition skips on fc-bin (currently only regime × band)."
+            "Live. Read by decay_apply._load_asymmetric_table + "
+            "_should_skip_asymmetric (v0.6.366 wg, v0.6.370 ws — additive on "
+            "top of existing regime × band SKIP_TABLE). SKIP verdict at "
+            "(regime, band, fc_bin) fires: fall back to L2 (no L3) when raw "
+            "fc at forecast time falls into fc_bin for its (regime, band). "
+            "Cells that match the pre-existing SKIP_TABLE fire the older gate "
+            "first; this table only adds skips, never removes them."
         ),
     }
 
@@ -403,9 +405,9 @@ def main():
     for f, n in verdicts:
         lines.append(f"  {f}: {n} SKIP cells")
     if total_skip >= 4:
-        lines.append(f"Verdict: STAGE 1 HIT — {total_skip} SKIP cells across {len(FIELDS)} fields "
+        lines.append(f"Verdict: LIVE — {total_skip} SKIP cells across {len(FIELDS)} fields "
                      f"({', '.join(f for f, n in verdicts if n)}). "
-                     f"Move to Stage 2 wiring (extend SKIP_TABLE with fc-bin dimension).")
+                     f"Table wired in decay_apply.py since v0.6.366 (wg) / v0.6.370 (ws).")
     elif total_skip:
         lines.append(f"Verdict: MARGINAL — {total_skip} SKIP cells across fields.")
     else:
