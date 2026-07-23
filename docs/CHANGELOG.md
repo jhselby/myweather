@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.377 • July 23, 2026</strong></summary>
+
+- **Fix (4) — cross-script contradiction registry.** Same failure family as v0.6.376's KNOWN_LIVE_PIPELINES (propose action from one script's verdict without cross-checking), different manifestation. Class case: ch persistence gate — `h_ch_persistence_blend` says SHIP with 15-30% regime wins, `h_persistence_skill` says ch Prod −1.32 BEHIND. Both readings are real (blend uses fresh windows; persistence-skill scans full pair log including pre-flip Lc-only rows). A morning read of only one produces a wrong action. New `TARGET_SCRIPT_GROUPS` registry in `build_executive_summary.py` — `{target: {target_desc, scripts, resolution_note}}`. New `cross_script_contradictions(current)` scans registered targets; if scripts on the same target have MORE THAN ONE non-info bucket (info skipped so STABLE re-checks don't false-positive), emits a `⚠ CROSS-SCRIPT CONTRADICTIONS` section right after Auto-relabeled STABLE, listing each script's bucket + short verdict + a resolution_note explaining the "expected" disagreement + when to actually worry. Verified live: seeded with the chp case; today's digest now surfaces the contradiction at the top with the pair-log-lagging-indicator resolution note pointing to [[project_chp_midlead_regression_watch]]. Design note: don't over-register — a busy contradictions section becomes noise. Only register targets where the disagreement is common enough that a fresh morning read would miss the second script. [[project_already_live_backstops]] updated with the fix-(4) section documenting where to add entries.
+
+</details>
+
+<details>
 <summary><strong>v0.6.376 • July 23, 2026</strong></summary>
 
 - **Structural fixes for the "propose work that's already done" failure mode.** Six prior instances documented in memory ([[feedback_stated_intent_vs_code_behavior]] + [[project_07_18_session]]): scripts that emit action verbs (SHIP/PROMOTE/IMPLEMENT/"Move to Stage N") for pipelines already live pollute the morning digest, and I read the verdict as-is and propose the action. Rule exists ("any script emitting PROMOTE/KILL/SHIP/RETIRE needs an 'already live?' check") but lives in on-demand memory that doesn't auto-inject when I read a digest. Three machine-enforced structural fixes so the class dies:

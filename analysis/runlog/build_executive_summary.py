@@ -86,6 +86,72 @@ def relabel_stable_recheck(script_name, verdict):
     return relabeled, True
 
 
+# Cross-script contradictions on the same target. Same failure family as
+# KNOWN_LIVE_PIPELINES (proposing action based on one script's verdict without
+# checking whether other scripts on the same target disagree), just a different
+# manifestation. Class case (2026-07-23): ch persistence gate — h_ch_persistence_blend
+# says SHIP with 15-30% regime wins, h_persistence_skill says ch Prod −1.32 BEHIND.
+# Both readings are real; they measure different windows (blend script uses fresh
+# 30d; persistence_skill uses full pair log including pre-flip Lc-only rows). A
+# morning read of only one produces a wrong action.
+#
+# Each entry lists the scripts that measure a live target + a resolution note
+# explaining how to interpret disagreement. If bucket() gives different results
+# across the listed scripts, digest emits a CROSS-SCRIPT CONTRADICTIONS section.
+TARGET_SCRIPT_GROUPS = {
+    "ch_persistence_gate": {
+        "target_desc": "ch persistence gate (chp) — live layer since 07-19 v0.6.358",
+        "scripts": [
+            "h_ch_persistence_blend",
+            "h_ch_persistence_blend_stage2",
+            "h_persistence_skill",
+        ],
+        "resolution_note": (
+            "h_persistence_skill scans full pair log (~30d, no date filter). "
+            "chp shipped 07-19 → only ~4-14d of clean post-flip rows. "
+            "h_ch_persistence_blend uses fresh windows. Expect blend script to "
+            "lead persistence-skill until pair log ages out pre-flip. See "
+            "[[project_chp_midlead_regression_watch]]."
+        ),
+    },
+    # Add entries as instances are caught. Only add when both scripts really
+    # measure the same target; don't over-register (a busy contradictions
+    # section becomes noise).
+}
+
+
+def cross_script_contradictions(current):
+    """Return a list of contradiction records for the digest output.
+
+    A contradiction fires when the scripts in a TARGET_SCRIPT_GROUPS entry
+    have MORE THAN ONE non-info bucket. Info/no_verdict buckets are skipped
+    (a stability re-check or non-verdict script isn't a real disagreement).
+    """
+    out = []
+    for target, group in TARGET_SCRIPT_GROUPS.items():
+        rows = []
+        buckets = set()
+        for script in group["scripts"]:
+            info = current.get(script)
+            if not info:
+                continue
+            b = info.get("bucket")
+            v = info.get("verdict")
+            if b in (None, "no_verdict"):
+                continue
+            rows.append((script, b, v))
+            if b != "info":
+                buckets.add(b)
+        if len(buckets) > 1:
+            out.append({
+                "target": target,
+                "target_desc": group["target_desc"],
+                "rows": rows,
+                "resolution_note": group["resolution_note"],
+            })
+    return out
+
+
 SHIP_RESOLUTION_SCRIPTS = frozenset({
     "walkforward_l3l4_validator",
     "l3_regime_lead_analysis",
@@ -685,6 +751,23 @@ def main():
                        f"(since {entry.get('since', '?')})")
         out.append("  → Verify these targets are actually still live if any "
                    "look stale. Registry lives in build_executive_summary.py.")
+        out.append("")
+
+    # Cross-script contradictions — same target, disagreeing verdicts. The
+    # class case (2026-07-23) is chp: h_ch_persistence_blend SHIP vs
+    # h_persistence_skill BEHIND. Both real, measuring different windows.
+    # A morning read of only one produces a wrong action.
+    contradictions = cross_script_contradictions(current)
+    if contradictions:
+        out.append("⚠ CROSS-SCRIPT CONTRADICTIONS (same target, disagreeing verdicts):")
+        for c in contradictions:
+            out.append(f"  • {c['target']} — {c['target_desc']}")
+            for script, bucket_name, verdict in c["rows"]:
+                short_v = verdict if len(verdict) <= 90 else verdict[:87] + "..."
+                out.append(f"      {script} [{bucket_name}] → {short_v}")
+            out.append(f"      Resolution: {c['resolution_note']}")
+        out.append("  → Do NOT act on one script's verdict alone. Read the "
+                   "resolution note before proposing action.")
         out.append("")
 
     # Post-ship 14-day watch: scan shipped_ledger for any active-watch ships,
