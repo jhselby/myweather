@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.375a • July 23, 2026</strong></summary>
+
+- **Debug page Rule 5 sweep for v0.6.374/375 + calendar / counter refresh.** Rolled Recent activity to 07-23 (added 07-22 entries promoted from CHANGELOG covering v0.6.372a-d + v0.6.373; demoted 07-21 from "today"; rolled 07-20 and 07-19 blocks off to trimmed line). Advanced 14-day watch counters: Lc day 6/14 (07-17 ship, watch through 07-31), chp day 5/14 (07-19 ship, watch through 08-02), wd L2 day 4/14 (07-20 v0.6.368a hotfix, watch through 08-03), ws L3 asymmetric day 4/14 (07-20 v0.6.370, watch through 08-03). wg residual persistence counter advanced day 1/7 → 3/7 (new baseline started 07-21). Added chp link to [[project_chp_midlead_regression_watch]] with 07-23 note that persistence-skill Prod −1.32 is a lagging pair-log-window indicator, not a live regression. Last-curated banner bumped 07-21 v0.6.371a → 07-23 v0.6.375a.
+
+</details>
+
+<details>
 <summary><strong>v0.6.375 • July 23, 2026</strong></summary>
 
 - **h_l3_asymmetric_stage1.py — stale-text cleanup.** Verdict line said "Move to Stage 2 wiring (extend SKIP_TABLE with fc-bin dimension)" and JSON `notes` field said "Stage 1 preview. Not wired to production." Both are false since v0.6.366 (wg) / v0.6.370 (ws) — decay_apply.py has `_load_asymmetric_table` + `_should_skip_asymmetric` + `_fc_bin` and calls them in the L3 apply loop; both `wg_l3_asymmetric_skip_curated.json` and `ws_l3_asymmetric_skip_curated.json` are read live. Rewrote verdict to "LIVE — table wired since v0.6.366/370" and rewrote `notes` to describe live semantics + additive-on-top-of-existing-SKIP_TABLE behavior. Also refreshed [[project_l3_asymmetric_fc_bin]] memory to mark Stage 2 wiring DONE. Current cells: wg 37 SKIP, ws 25 SKIP (down from 48+44 at Stage 1 07-20; some cells demoted to KEEP/MARGIN as windows accumulated). Per [[feedback_stated_intent_vs_code_behavior]].
