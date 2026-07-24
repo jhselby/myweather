@@ -60,6 +60,43 @@ KNOWN_LIVE_PIPELINES = {
         "since": "v0.6.366 (wg) / v0.6.370 (ws)",
         "date": "2026-07-20",
     },
+    "h_c1h_orthogonality": {
+        "target": "C1h trend-direction axis in confidence_layer.py "
+                  "(_C1H_CELLS + _C1H_CO_AXIS_GATE)",
+        "since": "v0.6.316",
+        "date": "2026-07-10",
+    },
+    "h_cloud_disagreement_orthogonality": {
+        "target": "C1d KBOS-vs-KBVY σ axis in confidence_layer.py "
+                  "(c1d_curated.json loader)",
+        "since": "Stage 3",
+        "date": "2026-07-08",
+    },
+    "h_ch_persistence_blend": {
+        "target": "ch persistence gate (chp) — L4-vs-persistence regime gate",
+        "since": "v0.6.358",
+        "date": "2026-07-19",
+    },
+    "h_ch_persistence_blend_stage2": {
+        "target": "ch persistence gate (chp) Stage 2 curated skip table "
+                  "(ch_persistence_gate_curated.json)",
+        "since": "v0.6.358",
+        "date": "2026-07-19",
+    },
+    "lc_fit": {
+        "target": "Lc lead-decay correction (lc_correction_table.json). "
+                  "Fitter re-emits SHIP cells each run; live table already reads them.",
+        "since": "v0.6.354",
+        "date": "2026-07-17",
+    },
+    # NOT registered (deliberate):
+    #   walkforward_l3l4_validator — composite. L4 {ch,cc} half live but L3
+    #     half proposes real drop of wg/ws. Registering would suppress the
+    #     drop signal.
+    #   cluster_spread_orthogonality / cluster_spread_smoketest — already
+    #     emit their own STABLE self-check line.
+    #   h_precip_fc_orthogonality — already emits its own STABLE self-check.
+    #
     # Add entries as instances are caught. When adding, prefer to also add a
     # STABLE self-check to the script itself (see h_precip_fc_orthogonality.py).
 }
