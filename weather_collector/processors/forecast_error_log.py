@@ -237,7 +237,8 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             # l5 only present for `sr` (regime-aware solar). l6 only present
             # for `t` (cove regime correction, retired) and cc/cl/cm/ch (Lc).
             # v0.6.361: chp only for ch (ch_persistence_gate output post-Lc);
-            # clp only for cl (cl_persistence_short_lead output post-Lc).
+            # clp only for cl (cl_persistence_gate output post-Lc — v0.6.379
+            # successor to the retired cl_persistence_short_lead).
             # These stay flat vs l6 whenever the specialist gate is disabled
             # or skips the cell. Iterating the full list is safe because
             # target_hour.get returns None for absent keys.

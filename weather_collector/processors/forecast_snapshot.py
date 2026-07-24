@@ -105,9 +105,10 @@ def append_forecast_snapshot(hourly, derived=None):
                "l2": hourly.get("precipitation_post_l2", []),
                "l3": hourly.get("precipitation_post_l3", []),
                "l4": hourly.get("precipitation", [])},
-        # v0.6.361: same pattern as ch — l6 attributes Lc alone, "clp"
-        # attributes cl_persistence_short_lead (currently dormant; slot
-        # populates whenever the gate flips ENABLED).
+        # v0.6.361 pattern (same as ch): l6 attributes Lc alone, "clp"
+        # attributes cl_persistence_gate (v0.6.379 successor to the retired
+        # cl_persistence_short_lead). Slot populates whenever the gate flips
+        # ENABLED; today it mirrors the post-Lc array.
         "cl": {"l1": hourly.get("raw_cloud_cover_low", hourly.get("cloud_cover_low", [])),
                "l2": hourly.get("cloud_cover_low_post_l2", []),
                "l3": hourly.get("cloud_cover_low_post_l3", []),

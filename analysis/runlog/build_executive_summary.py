@@ -83,6 +83,18 @@ KNOWN_LIVE_PIPELINES = {
         "since": "v0.6.358",
         "date": "2026-07-19",
     },
+    "h_cl_persistence_blend": {
+        "target": "cl persistence gate (clp) — regime x lead_band bypass "
+                  "(cl_persistence_gate.py, ENABLED=False pending 7-day flip gate)",
+        "since": "v0.6.379",
+        "date": "2026-07-24",
+    },
+    "h_cl_persistence_blend_stage2": {
+        "target": "cl persistence gate (clp) Stage 2 curated cell table "
+                  "(cl_persistence_gate_curated.json)",
+        "since": "v0.6.379",
+        "date": "2026-07-24",
+    },
     "lc_fit": {
         "target": "Lc lead-decay correction (lc_correction_table.json). "
                   "Fitter re-emits SHIP cells each run; live table already reads them.",

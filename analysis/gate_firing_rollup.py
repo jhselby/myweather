@@ -201,7 +201,7 @@ def print_summary(out):
         "MLC": "marine-layer cc sandbox, ENABLED=False, waiting on trend to hold",
         "Lsb": "sr sea_breeze cc-gated Lsr override, shipped 2026-07-17 v0.6.354 ENABLED=False; halves re-run 07-24",
         "ch_persistence_gate":   "shipped 2026-07-12 v0.6.327 with ENABLED=False; 7-day gate, earliest flip 07-19",
-        "cl_persistence_short_lead": "shipped 2026-07-13 v0.6.330 with ENABLED=False; narrow 0-5h all 9 regimes, flip decision 07-19",
+        "cl_persistence_gate": "shipped 2026-07-24 v0.6.379 with ENABLED=False (successor to cl_persistence_short_lead — narrow 0-5h shape retired); 7-day gate, flip earliest 07-31",
     }
     EXPECTED_DORMANT_PAIRS = {
         ("C1h", "t"): "REDUND to both C1f and C1e per co-axis ortho gate (v0.6.321); designed never to fire",

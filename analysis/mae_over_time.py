@@ -68,7 +68,8 @@ STRICT_LAYER_KEYS = [("raw", "error_l1"), ("l2", "error_l2"), ("l3", "error_l3")
 # the legend to layers with actual data for the selected field. (v0.6.360.)
 PERMISSIVE_LAYER_KEYS = [("l5", "error_l5"), ("l6", "error_l6"),
                          # v0.6.361: post-Lc specialists — chp (ch_persistence_gate,
-                         # ch only) and clp (cl_persistence_short_lead, cl only).
+                         # ch only) and clp (cl_persistence_gate, cl only —
+                         # v0.6.379 successor to cl_persistence_short_lead).
                          # Chart legend shows them as their own lines once a few
                          # days of data have accumulated.
                          ("chp", "error_chp"), ("clp", "error_clp")]

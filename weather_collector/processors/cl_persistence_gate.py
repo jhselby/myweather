@@ -1,52 +1,53 @@
-"""cl persistence short-lead gate — narrow 0-5h persistence for cloud_cover_low.
+"""cl persistence gate — regime x lead_band conditioned bypass for cl.
 
-Sibling of [[ch_persistence_gate]] with a much simpler shape. Where ch
-has cell-conditioned per (regime × lead_band) SHIP/SKIP verdicts, cl's
-Stage 2 preview (h_cl_linear_ramp_stage2.py, 07-12) showed:
+Successor to `cl_persistence_short_lead.py` (retired 2026-07-24 v0.6.379).
+The short-lead gate was a narrow shape hypothesis (all 9 regimes at 0-5h)
+awaiting the 07-19 halves-verified re-run. That re-run
+(h_cl_persistence_blend_stage2.py) shows the narrow shape is wrong on
+two counts: (1) persistence wins BEYOND 0-5h in several regimes
+(calm all-leads, se_flow all-leads, unknown all-leads, nw_flow 24-47h);
+(2) persistence LOSES at 0-5h in sea_breeze on halves-stability. So the
+gate needs full regime x lead_band conditioning, mirroring ch.
 
-  - Halves on regime_gate + persist_only DIVERGE (anomaly-inflated
-    recent wins; prior half loses)
-  - linear_ramp τ scan monotonic-with-τ (red flag — no natural sweet spot)
-  - BUT: 0-5h band ships in all 9 regimes even under τ scan noise
+Whitelist shape (shorter than blacklist per Stage 2 preview): baseline
+by default, use persistence only on SHIP + MARGIN cells. frontal is
+excluded from the whitelist by contract (gate uses baseline for frontal
+by design; MARGIN 0.0% cells there are a definitional artifact).
 
-So cl's ship criterion is narrow — persistence at very short lead only,
-where the physical signal (obs is fresh, atmosphere hasn't evolved) is
-strongest. All 9 regimes SHIP at 0-5h. Longer bands would need a lot
-more architecture; not attempted.
+Runtime persistence source:
+  Preferred: cloud_l2_meta.fields_applied[cloud_cover_low].obs_mean
+             (pure KBOS+KBVY blended obs, pre-Kalman-shrinkage).
+  Fallback:  hourly[0].cloud_cover_low (Kalman-blended value).
+  If neither is available, the gate is a no-op this tick.
 
-Ships ENABLED=False pending post-anomaly halves-verified re-run
-(2026-07-19). If halves converge and 0-5h SHIPs hold in the clean
-window, flip ENABLED=True. If not, cl gets no gate.
+Placement: runs AFTER Lc so persistence overwrites Lc output where the
+gate fires. Lc was fit against L1 for cl (no L4 exists) and would
+re-introduce bias if applied on top of persistence.
 
-Placement: runs AFTER Lc (same rationale as ch_persistence_gate — Lc's
-shift was fit against L4-corrected values; applying it on top of
-persistence would re-introduce bias). Runs BEFORE ch_persistence_gate
-purely by pipeline order — both are independent and don't touch the
-same field.
+Baseline for cl = raw L1 (no L4 correction exists for cl). SKIP cells
+and frontal fall back to the L1/Lc value already in the hourly array;
+the gate only overwrites when it fires.
 
-Persistence source (priority order):
-  1. cloud_l2_meta.fields_applied[cloud_cover_low].obs_mean — pure
-     KBOS+KBVY blended obs at forecast issue time, pre-Kalman shrinkage.
-     Matches h_cl_persistence_blend.py's semantic exactly.
-  2. hourly[0].cloud_cover_low — Kalman-blended value (deviates from
-     pure obs only when K<1).
-  3. Neither present → gate is a no-op this tick.
+When ENABLED=False the module still stamps telemetry (what would be
+overwritten) so the 7-day live-layer change gate can watch it. Flip
+ENABLED=True only after gate agreement across 7 daily reads. See
+[[feedback_whitelist_promotion_gate]] and [[feedback_regime_gate_first]].
 """
 import json
 import logging
 from pathlib import Path
 
 
-ENABLED = False  # Live-layer change gate: 7-day agreement + halves-verified re-run 2026-07-19+ before flipping True. Stage 3 shipped 2026-07-13 v0.6.330.
+ENABLED = False  # Stage 3 shipped 2026-07-24 v0.6.379. 7-day live-layer change gate: flip earliest 2026-07-31 after 7 daily reads agree on SHIP cell set.
 
 FIELD = "cl"
 HOURLY_KEY = "cloud_cover_low"
 
 _LEAD_BANDS = [
-    ("0-5h",   1,  5),
-    ("6-11h",  6, 11),
-    ("12-23h", 12, 23),
-    ("24-47h", 24, 47),
+    ("0-5",   1,  5),
+    ("6-11",  6, 11),
+    ("12-23", 12, 23),
+    ("24-47", 24, 47),
 ]
 
 _TABLE_PATH = Path(__file__).resolve().parent.parent / "data" / "cl_persistence_gate_curated.json"
@@ -54,18 +55,16 @@ _TABLE_CACHE = None
 
 
 def _load_table():
-    """Load and cache the curated cell table. Missing / malformed →
-    empty table (gate is a no-op)."""
     global _TABLE_CACHE
     if _TABLE_CACHE is not None:
         return _TABLE_CACHE
     try:
         _TABLE_CACHE = json.loads(_TABLE_PATH.read_text())
     except FileNotFoundError:
-        logging.warning(f"  ⚠  cl persistence gate table missing at {_TABLE_PATH}; gate will not fire")
+        logging.warning(f"  cl persistence gate table missing at {_TABLE_PATH}; gate will not fire")
         _TABLE_CACHE = {"cells": {}}
     except Exception as e:
-        logging.warning(f"  ⚠  cl persistence gate table load failed: {e}")
+        logging.warning(f"  cl persistence gate table load failed: {e}")
         _TABLE_CACHE = {"cells": {}}
     return _TABLE_CACHE
 
@@ -78,18 +77,19 @@ def _lead_band(lead_h):
 
 
 def _cell_fires(cells, regime, band):
-    """True iff (regime, band) is SHIP. No MARGIN in cl narrow-gate — the
-    Stage 2 read gave clean 0-5h SHIPs and clear SKIPs elsewhere."""
+    """True if (regime, band) is SHIP or MARGIN. frontal always falls to
+    baseline regardless of table content (gate contract; frontal MARGIN
+    cells are a definitional 0.0% artifact, not a persistence signal)."""
+    if regime == "frontal":
+        return False
     cell = cells.get(regime, {}).get(band)
     if not cell:
         return False
-    return cell.get("status") == "SHIP"
+    verdict = cell.get("verdict")
+    return verdict in ("SHIP", "MARGIN")
 
 
 def _persistence_source(weather_data):
-    """Return (value, source_label) or (None, None). Matches
-    ch_persistence_gate._persistence_source semantic exactly, adapted
-    for cloud_cover_low."""
     hourly = weather_data.get("hourly") or {}
 
     meta = hourly.get("cloud_l2_meta") or {}
@@ -107,57 +107,59 @@ def _persistence_source(weather_data):
 
 
 def describe_applicability():
-    """Applicability descriptor for the cl persistence gate."""
     table = _load_table()
     cells = table.get("cells", {})
     if ENABLED:
         fires_when = ("ENABLED — replaces cl (cloud_cover_low) with "
-                      "persistence-of-obs when (regime, lead_band) is SHIP. "
-                      "Narrow: all 9 regimes SHIP at 0-5h only.")
+                      "persistence-of-obs when (regime, lead_band) is SHIP or MARGIN. "
+                      "frontal + SKIP cells fall back to baseline (raw L1).")
         state_prefix = "ENABLED True"
     else:
         fires_when = ("OFF — ENABLED False. Telemetry stamped for 7-day watch; "
-                      "no cl values modified. Waiting on 07-19 halves-verified "
-                      "re-run before flip.")
+                      "no cl values modified.")
         state_prefix = "ENABLED False"
 
-    ship_cells, skip_cells = [], []
+    ship_cells, skip_cells, thin_cells, margin_cells = [], [], [], []
     for regime, bandmap in cells.items():
         for band, cell in bandmap.items():
+            v = cell.get("verdict")
             key = f"{regime}/{band}"
-            v = cell.get("status")
             if v == "SHIP":
                 ship_cells.append(key)
+            elif v == "MARGIN":
+                margin_cells.append(key)
             elif v == "SKIP":
                 skip_cells.append(key)
+            elif v == "THIN":
+                thin_cells.append(key)
     current_state = (
-        f"{state_prefix}. Cells — SHIP: {len(ship_cells)} "
-        f"(all 9 regimes at 0-5h), SKIP: {len(skip_cells)} (longer bands)."
+        f"{state_prefix}. Cells — SHIP: {len(ship_cells)}, MARGIN: {len(margin_cells)}, "
+        f"SKIP: {len(skip_cells)} (fall back to baseline), THIN: {len(thin_cells)}. "
+        f"frontal always baseline by design."
     )
 
     return [{
-        "layer_id": "cl_persistence_short_lead",
-        "name": "cl persistence gate (short-lead only, all regimes)",
+        "layer_id": "cl_persistence_gate",
+        "name": "cl persistence gate (regime x lead_band bypass)",
         "category": "specialist",
         "fields": [{
             "field": FIELD,
             "fires_when": fires_when,
-            "gated_by": ("ENABLED + SHIP verdict per (regime, lead_band). "
-                         "Narrow-gate shape: 0-5h in all 9 regimes."),
+            "gated_by": ("ENABLED + SHIP/MARGIN verdict per (regime, lead_band); "
+                         "frontal always falls to baseline"),
             "current_state": current_state,
         }],
     }]
 
 
-def stamp_cl_persistence_short_lead(weather_data):
-    """Stamp `weather_data['cl_persistence_short_lead']` telemetry per
-    lead. When ENABLED=True, overwrite `hourly.cloud_cover_low` on cells
-    that fire; preserve pre-gate array as
-    `hourly['cloud_cover_low_post_lc']` for snapshot attribution."""
+def stamp_cl_persistence_gate(weather_data):
+    """Stamp `weather_data['cl_persistence_gate']` telemetry per lead.
+    When ENABLED=True, overwrite hourly.cloud_cover_low on cells that
+    fire; preserve pre-gate array as hourly['cloud_cover_low_post_lc']."""
     hourly = weather_data.get("hourly") or {}
     arr = hourly.get(HOURLY_KEY)
     if not isinstance(arr, list) or not arr:
-        weather_data["cl_persistence_short_lead"] = {
+        weather_data["cl_persistence_gate"] = {
             "enabled": ENABLED,
             "status": "no_hourly_array",
         }
@@ -172,12 +174,14 @@ def stamp_cl_persistence_short_lead(weather_data):
 
     n_leads = len(arr)
     per_lead_would_apply = [None] * n_leads
+    per_lead_bands = [None] * n_leads
     per_lead_fires = [False] * n_leads
     fires_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
     skips_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
 
     for i in range(n_leads):
         band = _lead_band(i)
+        per_lead_bands[i] = band
         if band is None or persist_val is None:
             continue
         if _cell_fires(cells, regime, band):
@@ -197,7 +201,7 @@ def stamp_cl_persistence_short_lead(weather_data):
                 new_arr[i] = max(0.0, min(100.0, persist_val))
         hourly[HOURLY_KEY] = new_arr
 
-    weather_data["cl_persistence_short_lead"] = {
+    weather_data["cl_persistence_gate"] = {
         "enabled": ENABLED,
         "regime": regime,
         "persistence_value": (round(persist_val, 3) if persist_val is not None else None),
@@ -213,7 +217,7 @@ def stamp_cl_persistence_short_lead(weather_data):
         total_fires = sum(fires_by_band.values())
         total_skips = sum(skips_by_band.values())
         gate_firing_log.record_firing(
-            operator="cl_persistence_short_lead",
+            operator="cl_persistence_gate",
             regime=regime,
             by_field={FIELD: {
                 "fires": total_fires if ENABLED else 0,
@@ -223,6 +227,6 @@ def stamp_cl_persistence_short_lead(weather_data):
         )
     except Exception as e:
         try:
-            logging.warning(f"  ⚠  gate_firing record (cl_persistence_short_lead) failed: {e}")
+            logging.warning(f"  gate_firing record (cl_persistence_gate) failed: {e}")
         except Exception:
             pass
