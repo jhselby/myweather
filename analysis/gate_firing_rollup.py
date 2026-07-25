@@ -202,6 +202,8 @@ def print_summary(out):
         "Lsb": "sr sea_breeze cc-gated Lsr override, shipped 2026-07-17 v0.6.354 ENABLED=False; halves re-run 07-24",
         "ch_persistence_gate":   "shipped 2026-07-12 v0.6.327 with ENABLED=False; 7-day gate, earliest flip 07-19",
         "cl_persistence_gate": "shipped 2026-07-24 v0.6.379 with ENABLED=False (successor to cl_persistence_short_lead — narrow 0-5h shape retired); 7-day gate, flip earliest 07-31",
+        "cl_persistence_short_lead": "retired 2026-07-24 v0.6.379 (replaced by cl_persistence_gate); historical log entries age out of the 7-day window by 2026-07-31 — remove this line then",
+        "wg_residual_persistence": "shipped 2026-07-14 with ENABLED=False; Stage 2 preview + 7-day gate, flip earliest 2026-07-27",
     }
     EXPECTED_DORMANT_PAIRS = {
         ("C1h", "t"): "REDUND to both C1f and C1e per co-axis ortho gate (v0.6.321); designed never to fire",
@@ -214,6 +216,7 @@ def print_summary(out):
         ("Lsr", "sr", "ne_flow"):      "Lsr skip regime (solar_correction.py v0.6.280): sr Lsr off in ne_flow",
         ("Lsr", "sr", "calm"):         "Lsr skip regime (solar_correction.py v0.6.280): sr Lsr off in calm",
         ("C1h", "ch", "ne_flow"):      "co-axis ortho gate (confidence_layer.py v0.6.321): ch/ne_flow REDUND",
+        ("ch_persistence_gate", "ch", "frontal"): "ch_persistence_gate.py:82 — frontal always falls to L4 by design (only regime where L4 beats persistence). 0 fires in frontal is correct.",
     }
 
     ops_unexpected = [op for op in flags["operators_never_fired"] if op not in EXPECTED_DORMANT_OPERATORS]
