@@ -101,6 +101,13 @@ KNOWN_LIVE_PIPELINES = {
         "since": "v0.6.354",
         "date": "2026-07-17",
     },
+    "h_dp_residual_persistence_stage2": {
+        "target": "dp residual persistence gate (dprp) — regime x lead_band "
+                  "L2-residual add-on (dp_residual_persistence.py, ENABLED=False "
+                  "pending 7-day flip gate)",
+        "since": "v0.6.380",
+        "date": "2026-07-25",
+    },
     # NOT registered (deliberate):
     #   walkforward_l3l4_validator — composite. L4 {ch,cc} half live but L3
     #     half proposes real drop of wg/ws. Registering would suppress the

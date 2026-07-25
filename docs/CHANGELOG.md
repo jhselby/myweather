@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.380 • July 25, 2026</strong></summary>
+
+- **dp residual persistence — Stage 3 wire (ENABLED=False).** New `weather_collector/processors/dp_residual_persistence.py` cloned from `wg_residual_persistence.py`: reads `hourly.corrected_dew_point_post_l2` stashed by decay_apply, adds fitted per-clock-hour L2 residual mean, replaces post-L3 dp in SHIP/MARGIN cells. Stage 2 preview (2026-07-22) gate shape: 8 SHIP long-lead cells (frontal 12-47h, nw_flow 24-47h, pre_frontal 12-47h, sw_flow 6-47h) + 2 MARGIN + 26 SKIP short-lead cells. Sanity clamp `_MAX_ABS_CORRECTION_F = 10.0` (Stage 2 hour_of_day fit range is |≤3.15|°F — clamp is a data-pathology guard). Wired in `collector.py` after wg_residual_persistence in the specialist stack; describe_applicability added to the layers list. Preserve-before-mutate pre-key `corrected_dew_point_post_l3_pre_dprp` per feedback_preserve_before_mutate. Same 7-day live-layer flip gate as wg/cl/ch; ENABLED=True earliest 2026-08-01. `KNOWN_LIVE_PIPELINES` registry entry added for `h_dp_residual_persistence_stage2` in the same commit per v0.6.378 lesson. `gate_firing_rollup` EXPECTED_DORMANT_OPERATORS entry added so Day-0 telemetry doesn't fire a spurious UNEXPECTED alert. Not localhost-tested (collector-side, no UI change).
+
+</details>
+
+<details>
 <summary><strong>v0.6.379b • July 24, 2026</strong></summary>
 
 - **Debug page — Calendar + Upcoming decisions Fri 07-24 sweep + Recent activity rollover.** Removed 3 stale Fri 07-24 rows from Calendar block (line 934-939) + 2 stale Fri 07-24 rows from Upcoming decisions block (line 1201-1215) — all three were outcomes today, not upcoming. **clp regime-gate variant re-audit:** superseded by v0.6.379 Stage 3 wire (bigger scope than the entry proposed — full regime × lead_band, not narrow 3-regime). **sr Lsb Stage 3 halves re-run:** ran in digest, verdict HOLD (pooled +7.34%, halves +24.1% / −1.6%, halves diverged &gt; ±5pp gate) — stays ENABLED=False. **h_ws_octant_bias re-read 2/3:** ran in digest, verdict 4 REAL octants (NE +0.81, E +1.71, SW −0.80, W −0.92 mph) — up from 07-17's 2 REAL + 2 WATCH (NE and W promoted from WATCH). Signal strengthening. Read #3 due 07-31. **Recent activity:** rolled 07-23 from "today" to "(Thu)"; added 2026-07-24 (Fri) as today with the 3-ship summary + the sr Lsb HOLD + h_ws_octant 4-REAL outcomes. Not localhost-tested (text-only edits to existing block structure). Not a full Rule 5 sweep — day counters and other blocks are the fitter's job via build.py SHIP_EVENTS auto-refresh (v0.6.376 fix #3), which touched what it needed to during the v0.6.379 build.

@@ -568,6 +568,19 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  wg residual persistence stamp failed: {redact_secrets(e)}")
 
+    # dp residual persistence gate — regime × lead_band L2-residual add-on
+    # for dew point. Reads hourly.corrected_dew_point_post_l2 stashed by
+    # decay_apply and adds the fitted per-clock-hour L2 residual mean on top,
+    # replacing the L3-corrected dp value in SHIP cells (8 long-lead cells:
+    # frontal/nw_flow/pre_frontal/sw_flow at 6-47h per Stage 2 preview).
+    # ENABLED gated; module still stamps telemetry when False for the 7-day
+    # live-layer change gate.
+    try:
+        from .processors.dp_residual_persistence import stamp_dp_residual_persistence
+        stamp_dp_residual_persistence(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  dp residual persistence stamp failed: {redact_secrets(e)}")
+
     # Applicability map — each correction module exposes describe_applicability()
     # returning a list of layer descriptors (schema in weather_collector/data/
     # applicability_map_schema.json). Collected here once per tick, after every
@@ -582,9 +595,10 @@ def main():
         from .processors.ch_persistence_gate import describe_applicability as _da_chpg
         from .processors.cl_persistence_gate import describe_applicability as _da_clpg
         from .processors.wg_residual_persistence import describe_applicability as _da_wgrp
+        from .processors.dp_residual_persistence import describe_applicability as _da_dprp
         from .processors.sr_sea_breeze_lsr_override import describe_applicability as _da_lsb
         layers = []
-        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_c1):
             try:
                 layers.extend(fn())
             except Exception as e:

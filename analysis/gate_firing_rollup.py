@@ -204,6 +204,7 @@ def print_summary(out):
         "cl_persistence_gate": "shipped 2026-07-24 v0.6.379 with ENABLED=False (successor to cl_persistence_short_lead — narrow 0-5h shape retired); 7-day gate, flip earliest 07-31",
         "cl_persistence_short_lead": "retired 2026-07-24 v0.6.379 (replaced by cl_persistence_gate); historical log entries age out of the 7-day window by 2026-07-31 — remove this line then",
         "wg_residual_persistence": "shipped 2026-07-14 with ENABLED=False; Stage 2 preview + 7-day gate, flip earliest 2026-07-27",
+        "dp_residual_persistence": "shipped 2026-07-25 v0.6.380 with ENABLED=False; Stage 2 preview + 7-day gate, flip earliest 2026-08-01",
     }
     EXPECTED_DORMANT_PAIRS = {
         ("C1h", "t"): "REDUND to both C1f and C1e per co-axis ortho gate (v0.6.321); designed never to fire",
