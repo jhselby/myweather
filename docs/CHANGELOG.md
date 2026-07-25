@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.379b • July 24, 2026</strong></summary>
+
+- **Debug page — Calendar + Upcoming decisions Fri 07-24 sweep + Recent activity rollover.** Removed 3 stale Fri 07-24 rows from Calendar block (line 934-939) + 2 stale Fri 07-24 rows from Upcoming decisions block (line 1201-1215) — all three were outcomes today, not upcoming. **clp regime-gate variant re-audit:** superseded by v0.6.379 Stage 3 wire (bigger scope than the entry proposed — full regime × lead_band, not narrow 3-regime). **sr Lsb Stage 3 halves re-run:** ran in digest, verdict HOLD (pooled +7.34%, halves +24.1% / −1.6%, halves diverged &gt; ±5pp gate) — stays ENABLED=False. **h_ws_octant_bias re-read 2/3:** ran in digest, verdict 4 REAL octants (NE +0.81, E +1.71, SW −0.80, W −0.92 mph) — up from 07-17's 2 REAL + 2 WATCH (NE and W promoted from WATCH). Signal strengthening. Read #3 due 07-31. **Recent activity:** rolled 07-23 from "today" to "(Thu)"; added 2026-07-24 (Fri) as today with the 3-ship summary + the sr Lsb HOLD + h_ws_octant 4-REAL outcomes. Not localhost-tested (text-only edits to existing block structure). Not a full Rule 5 sweep — day counters and other blocks are the fitter's job via build.py SHIP_EVENTS auto-refresh (v0.6.376 fix #3), which touched what it needed to during the v0.6.379 build.
+
+</details>
+
+<details>
 <summary><strong>v0.6.379a • July 24, 2026</strong></summary>
 
 - **Debug page — cl_persistence_gate Rule 5 sweep + 7-day flip gate counter.** Follow-on to v0.6.379's Stage 3 wire. Added "Day 1/7 today" counter to the Stage 3 gated card (line 1883). Updated the Persistence-skill narrative (line 1332) — was still describing the retired short-lead gate at "day 7/7 HOLD"; rewritten to describe the successor gate with 12/8/16/1 rollup + 7-day flip gate day 1/7 through 07-31. Updated the section-D framing paragraph (line 1886) — was still saying "cl narrow persistence HELD (halves-mixed 4/9 regimes)"; rewritten to note the wire + flip gate. Cannot localhost-test this session; changes are pure text updates in existing cards / narrative paragraphs, no JS logic or card layout changed. Memory index also refreshed: [[project_cl_persistence_investigation]] marked RESOLVED, [[project_clp_regime_gate_opportunity]] marked SUPERSEDED, MEMORY.md moved both from "Active watches" to reflect settled state, [[project_todo]] refreshed with v0.6.379 status + new clp day-1/7 counter entry.
