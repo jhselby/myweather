@@ -4,6 +4,12 @@
 line numbers as of commit `7d7da66`. If lines drift, grep for the exact
 `old_string` — every patch uses text unique enough for grep-and-replace.
 
+**Drift re-verification 2026-07-25 (v0.6.380 landed post-preflight):** all 7 sites
+still valid via grep. Line numbers drifted 1-100 lines but every `old_string`
+is text-unique. **One material update below (SITE 1):** dp_residual_persistence
+was wired between wg_residual_persistence and the applicability map on 2026-07-25
+v0.6.380, so the wdp insertion point shifted. All other patches unchanged.
+
 **Open decisions resolved:**
 - mae_over_time L1_ONLY option: **(a)** — extend L1_ONLY branch inline; also
   add wdp to `PERMISSIVE_LAYER_KEYS` so `buckets[(day, fld)]` has a wdp slot.
@@ -16,8 +22,10 @@ Single commit. `make deploy-collector` before push per [[feedback_deploy_sequenc
 
 ## SITE 1 — `weather_collector/collector.py`
 
-**Insert after line 568** (after the `stamp_wg_residual_persistence` try/except
-block, before the "Applicability map" block).
+**Insert after line 582** (after the `stamp_dp_residual_persistence` try/except
+block, before the "Applicability map" block). *Preflight originally said "after
+line 568" — pre-v0.6.380 that was correct. dp_residual_persistence Stage 3 wire
+(2026-07-25) inserted a new block between wg and the applicability map.*
 
 ```python
     # wd persistence gate — predicted-transition bypass of L1/L2 for wd.
@@ -39,8 +47,12 @@ insertion after `stamp_wg_residual_persistence` (line 568) is well after any
 wind_blend invocation. ✓
 
 **Optional applicability-map extension** — add `_da_wdpg` to the imports at
-line ~581 and to the `for fn in (...)` tuple at line ~586. Skip if
-`wd_persistence_gate.describe_applicability` doesn't exist yet — check first:
+line ~594 and to the `for fn in (...)` tuple at line ~600 (drifted from ~581/~586
+after v0.6.380 added `_da_dprp`). The current tuple is `(_da_decay, _da_solar,
+_da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_c1)` —
+insert `_da_wdpg` alongside the other gates (after `_da_dprp` reads cleanly).
+Skip if `wd_persistence_gate.describe_applicability` doesn't exist yet — check
+first (grep confirmed present at line 154 as of 2026-07-25):
 
 ```bash
 grep -n "def describe_applicability" weather_collector/processors/wd_persistence_gate.py
