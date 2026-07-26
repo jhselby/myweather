@@ -45,6 +45,18 @@ import os
 from collections import defaultdict
 from datetime import datetime, timedelta
 
+# Import production SKIP infrastructure so the validator's per-cell verdicts
+# reflect what production actually applies, not a pre-asymmetric-SKIP baseline
+# that no longer exists. Diagnosed 2026-07-26: field-level aggregate said
+# "drop wg/ws from L3" because wins and losses cancel when averaged over cells
+# the asymmetric fc-bin SKIP is designed to skip. Per-cell view showed L3
+# doing its job. See feedback_walkforward_skip_table_blind memory.
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+from weather_collector.processors.decay_apply import (
+    _should_skip as _prod_should_skip,
+    _should_skip_asymmetric as _prod_should_skip_asymmetric,
+)
+
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
 
@@ -105,7 +117,13 @@ def main():
     ap.add_argument("--cutoff-days", type=float, default=10.0,
                     help="Hold out the last N days as test (default 10.0; "
                          "2d/5d are regime-fragile per 06-22 diagnostic)")
+    ap.add_argument("--ignore-skip-table", action="store_true",
+                    help="Compute MAEs on raw L3/L4 predictions without applying "
+                         "production SKIP_TABLE. Default (skip-aware) matches "
+                         "what production actually applies. See "
+                         "feedback_walkforward_skip_table_blind.")
     args = ap.parse_args()
+    skip_aware = not args.ignore_skip_table
 
     os.makedirs(OUT_DIR, exist_ok=True)
     now = datetime.utcnow()
@@ -133,6 +151,7 @@ def main():
         if field not in FIELDS:
             continue
         lead = row.get("lead_h")
+        f_l1 = row.get("forecast_l1")
         f_l2 = row.get("forecast_l2")
         f_l3 = row.get("forecast_l3")
         f_l4 = row.get("forecast_l4")
@@ -151,10 +170,34 @@ def main():
             obs_dt = datetime.strptime(obs_t, "%Y-%m-%dT%H:%M")
         except ValueError:
             continue
-        rec = (float(f_l2), float(f_l3), float(f_l4), float(obs))
+        lead_int = int(lead)
+        if skip_aware:
+            # Replicate production: L3 is a no-op where the SKIP_TABLE (regime × lead)
+            # OR the asymmetric fc-bin table fires. Same for L4 (only dp/l4 uses
+            # SKIP_TABLE today; L4 has no asymmetric variant). Uses state_fc regime
+            # since that's what production actually gates on. raw fc = forecast_l1
+            # (pre-L2 value the asymmetric-cuts JSON was built from).
+            raw_fc = f_l1 if f_l1 is not None else f_l2
+            l3_skipped_fc  = (_prod_should_skip(field, "l3", regime_fc,  lead_int)
+                              or _prod_should_skip_asymmetric(field, "l3", regime_fc,  lead_int, raw_fc))
+            l3_skipped_obs = (_prod_should_skip(field, "l3", regime_obs, lead_int)
+                              or _prod_should_skip_asymmetric(field, "l3", regime_obs, lead_int, raw_fc))
+            l4_skipped_fc  = _prod_should_skip(field, "l4", regime_fc,  lead_int)
+            l4_skipped_obs = _prod_should_skip(field, "l4", regime_obs, lead_int)
+            f_l3_eff_fc  = f_l2 if l3_skipped_fc  else f_l3
+            f_l3_eff_obs = f_l2 if l3_skipped_obs else f_l3
+            # L4 baseline is L3-effective (post-skip). If L4 is skipped, fall back
+            # to the L3-effective baseline.
+            f_l4_eff_fc  = f_l3_eff_fc  if l4_skipped_fc  else f_l4
+            f_l4_eff_obs = f_l3_eff_obs if l4_skipped_obs else f_l4
+            rec_fc  = (float(f_l2), float(f_l3_eff_fc),  float(f_l4_eff_fc),  float(obs))
+            rec_obs = (float(f_l2), float(f_l3_eff_obs), float(f_l4_eff_obs), float(obs))
+        else:
+            rec_fc  = (float(f_l2), float(f_l3), float(f_l4), float(obs))
+            rec_obs = rec_fc
         is_test = obs_dt >= cutoff
-        (test_cells_fc  if is_test else train_cells_fc )[field][(regime_fc,  band)].append(rec)
-        (test_cells_obs if is_test else train_cells_obs)[field][(regime_obs, band)].append(rec)
+        (test_cells_fc  if is_test else train_cells_fc )[field][(regime_fc,  band)].append(rec_fc)
+        (test_cells_obs if is_test else train_cells_obs)[field][(regime_obs, band)].append(rec_obs)
         n_use += 1
     n_train = sum(len(v) for cells in train_cells_fc.values() for v in cells.values())
     n_test  = sum(len(v) for cells in test_cells_fc.values() for v in cells.values())
@@ -278,9 +321,16 @@ def main():
         return out
 
     # Build human-readable summary.
+    mode_line = ("SKIP-AWARE — L3/L4 predictions replaced with baseline where "
+                 "production SKIP_TABLE + asymmetric fc-bin table would fire (default; "
+                 "matches what production actually applies)"
+                 if skip_aware else
+                 "IGNORE-SKIP — raw L3/L4 predictions with no production SKIP applied "
+                 "(pre-2026-07-26 behavior; produces spurious 'drop wg/ws' verdicts)")
     lines = [
         f"Walk-forward L3+L4 per-cell validator — generated {datetime.now().isoformat(timespec='seconds')}",
         f"Train cutoff: {cutoff_iso} UTC  (test = last {args.cutoff_days:.1f}d)",
+        f"Mode: {mode_line}",
         f"Per-cell thresholds: WIN >= {int(CELL_WIN_PCT*100)}%, LOSS <= -{int(CELL_LOSS_PCT*100)}%",
         f"Whitelist rule: weighted overall win >= {int(FIELD_WIN_PCT*100)}%; skip cells: LOSS >= {int(SKIP_LOSS_PCT*100)}%",
         f"Cell min-n: {MIN_N_PER_CELL}",
