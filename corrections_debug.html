@@ -805,10 +805,14 @@
         <th>Raw model</th>
         <th>Production</th>
         <th>Correction</th>
+        <th style="border-left:1px solid #232936;padding-left:16px;">Field</th>
+        <th>Raw model</th>
+        <th>Production</th>
+        <th>Correction</th>
       </tr>
     </thead>
     <tbody id="hbCorrRows">
-      <tr><td colspan="4" style="color:var(--muted);opacity:0.6;padding:8px;">Loading current tick…</td></tr>
+      <tr><td colspan="8" style="color:var(--muted);opacity:0.6;padding:8px;">Loading current tick…</td></tr>
     </tbody>
   </table>
   <div class="hb-ops-row">
@@ -1142,7 +1146,7 @@
 
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.75;font-size:0.85em;">Last curated: 2026-07-27 (v0.6.382 wdp flip + post-ship sweep) · per-field snapshot lives above under Current state · click any sub-box header to collapse it, or use the toggle below.</div>
+  <div class="meta-line" style="margin-bottom:8px;opacity:0.7;font-size:0.85em;">Per-field snapshot lives above under Current state. Recent changes tracked in the Recent activity section (not repeated here).</div>
 
 
   <div style="display:flex;justify-content:flex-end;margin-top:8px;">
@@ -1185,29 +1189,13 @@
       </ul>
     </details>
 
-    <details style="border:1px solid #3a2a2a;background:#191313;padding:10px;border-radius:6px;">
-      <summary style="color:#fb7c5c;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">🗄 Retired — kept as institutional memory</summary>
-      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>R3</strong> derived humidity · <strong>R4</strong> HRRR-GFS spread · <strong>R5</strong> cove cross-current · <strong>C1g</strong> RH≥95% fog · <strong>Δwd_3h</strong> wind shift rate · <strong>CALM_GATE</strong> (wrong intervention) · <strong>Lt</strong> (retired 07-13 — Fix B refit against L2 held-out +0.29%; L2 already captures the microclimate signal) · <strong>pr L2 additive</strong> (K=1 noise dominated; disabled 07-01) · <strong>ws τ=7 override</strong> (shipped 07-01, reverted 07-02). <em>C1d was previously here after 06-29 KILL; 07-04 re-read flipped MIXED, Stage-3 shipped 07-08.</em> Rationales in <a href="#sec-archive">Archive</a>.</li>
-      </ul>
-    </details>
-
-
-    <details style="border:1px solid #2a2a3a;background:#131319;padding:10px;border-radius:6px;">
+    <details open style="border:1px solid #2a2a3a;background:#131319;padding:10px;border-radius:6px;">
       <summary style="color:#a89ce0;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">🧪 Open architectural questions</summary>
       <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>Per-(field, regime, lead_band) skip table for L3/L4 — shipped v0.6.279 07-02, firing v0.6.310+311 07-06.</strong> <code>decay_apply.py::SKIP_TABLE</code> keyed by <code>(field, layer)</code> → list of <code>(regime, lead_lo, lead_hi)</code>. <code>_should_skip()</code> checked before apply; fail-safe on missing regime. That fail-safe masked a 4-day silent dormancy — nothing wrote <code>derived.state.regime_synoptic</code>. Fixed via <code>state_stamp.py</code> + closing a 10° gap in <code>classify_synoptic_regime</code>. Populated cells: ws L3 in ne_flow all + sea_breeze 0-11h; dp L4 cells present but dormant (not in L4_FIELDS). Skip counts logged in <code>decay_meta</code>. <strong>v0.6.366 extended with an asymmetric fc-bin dimension</strong> via a parallel <code>SKIP_TABLE_ASYMMETRIC</code> path (curated JSON per field, per (regime, band) fc-quartile cuts + SKIP verdict per (regime, band, fc-bin)). wg wired live (48 cells; raw fc from <code>hourly["raw_wind_gusts"]</code>); ws wired ADDITIVELY 07-20 v0.6.370 (26 SKIP cells today; concentrated at 12-47h; raw fc from <code>hourly["raw_wind_speed"]</code>); cm not wired (Stage 1 emitted 0 SKIP cells). Full-hardcode REPLACEMENT for ws HELD 07-27 (Jaccard 0.75 &lt; 0.80), re-evaluate ~07-31. Skip counts logged in <code>decay_meta.skip_table_l3_asymmetric_cells_skipped</code>. Next: extend to Lsr — waiting on unit-mismatch resolution.</li>
-        <li><strong>Lt lookup refit (Fix B) — ANSWERED 07-13, retired.</strong> Ran <code>analysis/l6_fix_b_refit.py</code> on 202,321 pair rows (154k train / 47k held-out). Panel B (sb_off × hour) looked like a real overnight cove-cooling signal on training (00-06h +0.9 to +2.1°F, 7 SHIP bins), but held-out MAE improvement only <strong>+0.29%</strong> vs +1.0% ship gate. Panel A (sb_on × octant) came back with 0 SHIP bins after refit — the warming-branch signal was largely a fitting-against-raw-L1 artifact. Mechanism: L2's Kalman blend re-fits per-tick based on obs-vs-model bias and absorbs the same signal dynamically. Static hourly cove table adds a delta L2 already added → wash on held-out. Lt retired, not "dormant pending refit." See [[project-lt-fix-b-answered]].</li>
-        <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/Lsr only.</li>
-        <li><strong>Scorecard banner — shipped 07-01.</strong> One-line stack-vs-raw summary above Engineering updates. Uses <code>_productionLayerKey</code> per field. Brier fields (pp) excluded.</li>
-        <li><strong>C1e (hours-since-front) — SHIPPED 2026-07-01 (Stage 3 wired end-to-end via v0.6.272 curator).</strong> Promoted by <code>h_hsf_orthogonality</code> on the 2026-07-01 daily digest: 9 orthogonal cells vs C1a, strongest on ch (all bands), cm (all bands), cc long-lead, cl 6-11h. Wire-up: <code>_current_hsf_group()</code> classifies live tick as "post" (&lt;24h since last frontal passage) or "baseline" (≥24h) from <code>frontal_events_log.json</code>. Stamped on <code>weather_data.confidence.live_axes.hsf_group</code>. Stage 2 v2 curator extended to include hsf as a 5th key dimension; regenerated multi-axis table: <strong>840 SHIP / 118 MARGINAL / 1828 SKIP (of 2,786)</strong> — up from 619 SHIP of 1,764 pre-extension. <code>stamp_confidence()</code> axis_key composes the 5-tuple <code>spread_q::pt_bin::trans::c1f::hsf</code>; falls back to legacy stable/transition when any axis is missing at the tick.</li>
-        <li><strong>Per-field τ (recency weighting) — same precedent triggered TWICE more.</strong> 07-01 ws τ=7 shipped, 07-02 reverted (+6.7% held-out → below floor on next read). 07-18 pa τ=7 shipped (v0.6.357, +5.9% held-out), <strong>07-19 pa τ reverted (v0.6.358)</strong> — same fact pattern, +0.9% today. pp is now also below the 5% floor (+3.2% vs τ=14, was +11.1% on 06-21) — flagged for next τ-audit day but not reverted today (needs its own multi-read history). Lesson: single-day tuning reads at borderline magnitudes shouldn't ship — the streak gate protects set membership, not the specific τ value. See [[feedback_tau_streak_gate_limits]].</li>
-        <li><strong>Per-row applied-layer stamping — SHIPPED 2026-07-01 end-to-end.</strong> <code>forecast_snapshot.py</code> derives <code>{field}_applied</code> per (field, lead) by walking L1→Lt arrays and finding the deepest layer whose value changed (every gate today is deterministic at forecast time, so equality walk is exact). <code>forecast_error_log.py</code> copies onto each pair-log row as <code>applied_layer</code>. <code>decay_fit.py</code> aggregates <code>per_layer_mae_by_lead[field].production</code>. Frontend Production line reads <code>.production[lead]</code> where the per-lead sample clears n≥30; deepest-applied-layer MAE fills any leads still below the floor (thin-sample fallback only — a rare-lead safety net, not a migration artifact). <strong>v0.6.369 extended the accumulator + emission loops in <code>decay_fit.py</code> from <code>(l1..l6)</code> to <code>(l1..l6, chp, clp)</code></strong> so ch_persistence_gate and cl_persistence_short_lead surface as their own per-layer MAE series instead of being silently absorbed into Production. Frontend <code>LAYER_LINES</code> + <code>_layerApplied()</code> updated in the same ship — chp/clp filter to ch/cl respectively (mirroring l5→sr, l6→cloud-fields). First honest chp read vs Lc at short lead: lead 0 −5%, lead 1 −81%, lead 2 −56%, lead 3 −42%; clp lead 0 −92%. Small n today (25-30/lead, day 2 of 14-day watch) — verdict-quality by day 7.</li>
-        <li><strong>Per-lead Brier for PP — SHIPPED 2026-07-01.</strong> Fitter emits <code>per_layer_brier_by_lead.pp</code> in <code>time_series_diagnostic.json</code> alongside MAE/bias/n (v0.6.267 collector). Frontend PP card swaps to Brier-native rendering the moment the key populates. Graceful fallback: if Brier is absent (pre-15:xx-Fitter-cycle), PP card falls back to MAE + orange disclaimer; when Brier populates, card auto-swaps to Brier + green banner.</li>
-        <li><strong>KBOS+KBVY cloud blend → full L2 — HOLD (resolved 2026-06-30).</strong> <code>analysis/h_cloud_bias_persistence.py</code> ran on 3,866 distinct HRRR runs, 1,902–1,952 paired observations per cloud-lead. <strong>cc lead 6h gate: FAIL (ρ = −0.04). cc lead 12h gate: FAIL (ρ = −0.10).</strong> Bias does not persist past ~3h on any cloud field; propagating it to lead 6h+ would inject error, not reduce it. <strong>Decision:</strong> formalize <code>hourly[0]</code>-only as the intentional behavior — stop calling it a half-built L2.</li>
-        <li><strong>NEW Stage 1 candidate (spun out from #4): tight-τ cloud bias propagation across leads 1–3h.</strong> Pearson at lead 1h is <strong>+0.50/+0.57/+0.55/+0.66</strong> for cc/cl/cm/ch — strong, clean signal. Degrades to weak by lead 3h. Architectural slot: short-lead τ-decayed bias propagation (~2h half-life) on top of the existing hourly[0] override. Would need its own analysis to estimate MAE impact (probably small — first 3 leads only). Not blocking anything; logged for the backlog.</li>
-        <li><strong>dp L4 — confirmed skip-table case (resolved 2026-06-30).</strong> <code>l4_regime_lead_analysis</code> on dp returns <strong>8 WIN / 9 flat / 15 L4 LOSES / 4 thin</strong>. <em>Wins:</em> frontal (all bands), nw_flow 24-47h, se_flow 12-23h+, sw_flow 24-47h, calm 12-23h. <em>Losses:</em> ne_flow all bands (−10% to −19%), sea_breeze all bands (−4.5% to −18.5%), nw_flow short leads, pre_frontal 0-5h, sw_flow short leads. <strong>Do NOT add dp to L4_FIELDS flat</strong> — population wash is below threshold for exactly this reason. dp goes in the per-(field, regime, lead_band) skip table alongside ws. <strong>ne_flow is the consistent loser on both ws and dp</strong> — confirms the regime axis is doing real work, not noise.</li>
+        <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/Lsr only. No date; architectural exploration.</li>
+        <li><strong>Tight-τ cloud bias propagation across leads 1–3h</strong> (Stage 1 candidate). Pearson at lead 1h is <strong>+0.50/+0.57/+0.55/+0.66</strong> for cc/cl/cm/ch — strong, clean; degrades by lead 3h. Architectural slot: short-lead τ-decayed bias propagation (~2h half-life) on top of the existing hourly[0] override. Needs Stage 0 MAE-impact estimate (probably small — first 3 leads only). Not blocking; logged for backlog. Spun out from resolved item KBOS+KBVY cloud blend (2026-06-30, ρ ≤ 0 at lead 6h — hourly[0]-only formalized as intentional).</li>
       </ul>
+      <div style="margin-top:10px;font-size:0.85em;opacity:0.75;">Settled / historical questions (kept as pointers): SKIP_TABLE architecture (shipped v0.6.279, asymmetric extension v0.6.366/370 — see decay_apply.py and Applicability map), Lt Fix B refit (retired 07-13, [[project_lt_fix_b_answered]]), Per-field τ lesson (see [[feedback_tau_streak_gate_limits]]), Scorecard banner + C1e + per-row applied-layer stamping + per-lead Brier for PP (all shipped 07-01), dp L4 skip-table case (resolved 06-30). Full details in git log + CHANGELOG.</div>
     </details>
 
   </div>
@@ -2713,16 +2701,40 @@ function renderHeadlineBox(wxDoc) {
     return { txt: `${sign}${Math.abs(d).toFixed(dec)} ${deltaUnit}`, cls };
   };
 
+  // v0.6.382d: partition rows into (correcting, quiet) preserving canonical
+  // order within each group, then render as two side-by-side columns. The
+  // categorical distinction is what the eye can't do on its own; the visual
+  // scan handles "big vs small correction" within col-1 by itself.
+  const _hasCorrection = (r) => {
+    let d = r.delta;
+    if (d == null && r.raw != null && r.cor != null) d = r.cor - r.raw;
+    if (d == null) return false;
+    const eps = Math.pow(10, -r.dec) / 2;
+    return Math.abs(d) > eps;
+  };
+  const partitioned = [
+    ...rows.filter(_hasCorrection),
+    ...rows.filter(r => !_hasCorrection(r)),
+  ];
+  const _rowCells = (r, isRight) => {
+    if (!r) return '<td></td><td></td><td></td><td></td>';
+    const del = _fmtDelta(r.raw, r.cor, r.unit, r.dec, r.delta);
+    const rawTxt = (degraded && (r.label === "Temperature (t)" || r.label === "Humidity (h)"))
+      ? '<span style="opacity:0.6;">paused</span>' : _fmt(r.raw, r.unit, r.dec);
+    const corTxt = (degraded && (r.label === "Temperature (t)" || r.label === "Humidity (h)"))
+      ? '<span style="opacity:0.6;">—</span>' : _fmt(r.cor, r.unit, r.dec);
+    const labelStyle = isRight ? ' style="border-left:1px solid #232936;padding-left:16px;"' : '';
+    return `<td${labelStyle}>${r.label}</td><td>${rawTxt}</td><td>${corTxt}</td><td class="${del.cls}">${del.txt}</td>`;
+  };
+
   const tbody = document.getElementById("hbCorrRows");
   if (tbody) {
-    tbody.innerHTML = rows.map(r => {
-      const del = _fmtDelta(r.raw, r.cor, r.unit, r.dec, r.delta);
-      const rawTxt = (degraded && (r.label === "Temperature" || r.label === "Humidity"))
-        ? '<span style="opacity:0.6;">paused</span>' : _fmt(r.raw, r.unit, r.dec);
-      const corTxt = (degraded && (r.label === "Temperature" || r.label === "Humidity"))
-        ? '<span style="opacity:0.6;">—</span>' : _fmt(r.cor, r.unit, r.dec);
-      return `<tr><td>${r.label}</td><td>${rawTxt}</td><td>${corTxt}</td><td class="${del.cls}">${del.txt}</td></tr>`;
-    }).join("");
+    const half = Math.ceil(partitioned.length / 2);
+    const rowsHtml = [];
+    for (let i = 0; i < half; i++) {
+      rowsHtml.push(`<tr>${_rowCells(partitioned[i], false)}${_rowCells(partitioned[i + half], true)}</tr>`);
+    }
+    tbody.innerHTML = rowsHtml.join("");
   }
 
   set("hbConfidence", hyp.confidence || "—");
