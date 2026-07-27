@@ -1118,7 +1118,6 @@
 
 <h2 class="section" id="sec-status">Engineering updates — where we are</h2>
 <div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.7;font-size:0.85em;">Per-field snapshot lives above under Current state. Recent changes tracked in the Recent activity section (not repeated here).</div>
 
 
   <div style="display:flex;justify-content:flex-end;margin-top:8px;">
@@ -1636,7 +1635,7 @@
 <!-- ───────────────────── Research ───────────────────── -->
 <h2 class="section research-heading" id="sec-research">Research & Diagnostics — experimental signals + audit views (not applied to live forecast)</h2>
 
-<h3 class="subsection" style="margin-top:8px;color:#74c38b;">Diagnostics</h3>
+<h3 class="subsection" style="margin-top:8px;color:#74c38b;">Diagnostics <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— audit live behavior</span></h3>
 
 <details class="research-subsection" id="r0-l3l4-audit" open>
   <summary>R0. L3/L4 audit table — is each layer earning its keep?</summary>
@@ -1663,18 +1662,26 @@
   <div id="drill-canvases" class="grid"></div>
   <div id="status-drill" class="status" hidden></div>
 </details>
-<details class="research-subsection" id="gated-candidates">
-  <summary>G1. Gated correction candidates — C1 confidence layer (Stage 3 dormant)</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Corrections sketched in code with <code>ENABLED = False</code> — stamp candidate values every tick without modifying the forecast. Currently gated: clp (day 4/7 → 07-31), wg residual persistence (07-27 flip HELD), dp residual persistence (day 3/7 → 08-01). Recent flip-outs: Lc (07-17), chp (07-19), wdp (07-27) — each moved to its own layer section for live telemetry.
-    <ul style="margin:6px 0 4px 18px;padding:0;line-height:1.5;">
-      <li><strong>C1 confidence layer</strong> (multi-axis v3 + marginal C1h/C1d): 7 axes stamping every tick, applied=False until Stage 4 clears. Curated v3: 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys. <strong>Latest 07-26 audit: HOLD 32.43%</strong> (12 CALIBRATED / 25 DRIFTED); cl now DEGRADED at 12-23h + 6-11h (cm cleared, same pattern different cell). Next re-audit 07-30. <strong>Narrow-promote counters:</strong> C1h GATE CLEARED 14/7 today; C1d 3/7. Earliest ship for either: gated on Stage 4. Per-cell co-axis ortho gate v0.6.321 in <code>confidence_layer.py</code>: cl fires freely, cc/cm/ch conditionally suppressed by the non-ortho co-axis, ch 24-47h + t × 3 never fire (REDUND both).</li>
-    </ul>
-  </div>
+
+<details class="research-subsection" id="frontal-events">
+  <summary>F1. Frontal passage log — detector instrumentation (last 14 days)</summary>
+  <div class="meta-line" style="margin-bottom:10px;">Live readout of detected frontal passages from <code>frontal_events_log.json</code>. Detector runs every tick in <code>frontal_detection.py</code>: passage fires when ≥2 of 3 signals hit (dp drop &gt;8°F, wd shift &gt;60°, pressure inflection with ≥0.02″ rise). Confidence 67% with 2 signals, 100% with 3. Sanity-check against real fronts before letting the briefing AI rely on the cause-attribution line. Live consumers: PWA front-passage card + C1e confidence axis + 10 analysis scripts joining on passage timestamps.</div>
+  <div id="frontal-events-content" class="status">Loading detected passages...</div>
 </details>
+
+<details class="research-subsection" id="r2-state-stratified" open>
+  <summary>R2. State-stratified accuracy — which regimes does the model fail in?</summary>
+  <div class="meta-line" style="margin-bottom:10px;">Per-field MAE + bias by regime. Big MAE spread across bins = regime-aware correction candidate. Addressed rows excluded from top-10 (shipped corrections absorb raw signal downstream); excluded rows in collapsible below. Temperature back in the top-10 since Lt retired 07-13. Refit twice daily; published to <code>state_stratified_accuracy.json</code>. <em>MAE-only; RMSE would rerank L2-additive fields (dp/h/ws/wg).</em></div>
+  <div id="status-state-stratified" class="status" hidden></div>
+  <div id="grid-state-stratified"></div>
+</details>
+
+
+<h3 class="subsection" style="margin-top:24px;color:#9fb8d8;">Tools <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— evaluate candidates before promotion</span></h3>
 
 <details class="research-subsection" id="shadow-whitelist">
   <summary>S1. Shadow applicability tuner — what would auto-tuner have chosen?</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Per Fitter cycle, log which fields a naive MAE auto-tuner would include in <code>L3_FIELDS</code>/<code>L4_FIELDS</code>, alongside production. Recommend ON if layer beats layer-below by ≥3% in any band AND bias no worse. Field-membership only — doesn't reason about per-field gates or skip tables (those in <a href="#sec-applicability">Applicability map</a>). Precondition for automation is agreement after 90+ days; mismatches informative, not actionable.</div>
+  <div class="meta-line" style="margin-bottom:10px;">Per Fitter cycle, log which fields a naive MAE auto-tuner would include in <code>L3_FIELDS</code>/<code>L4_FIELDS</code>, alongside production. Recommend ON if layer beats layer-below by ≥3% in any band AND bias no worse. Field-membership only — doesn't reason about per-field gates or skip tables (those in <a href="#sec-applicability">Applicability map</a>). Precondition for automation is agreement after 90+ days; mismatches informative, not actionable. Also surfaces the live <code>conditional_audits.r6</code> C1a-transition verdict per Fitter cycle.</div>
   <div id="shadow-whitelist-content" class="status">Loading…</div>
 </details>
 
@@ -1684,31 +1691,12 @@
   <div id="backtest-sweep-content" class="status">Loading sweep results...</div>
 </details>
 
-<details class="research-subsection" id="frontal-events">
-  <summary>F1. Frontal passage log — detector instrumentation (last 14 days)</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Live readout of detected frontal passages from <code>frontal_events_log.json</code>. Detector runs every tick in <code>frontal_detection.py</code>: passage fires when ≥2 of 3 signals hit (dp drop &gt;8°F, wd shift &gt;60°, pressure inflection with ≥0.02″ rise). Confidence 67% with 2 signals, 100% with 3. Sanity-check against real fronts before letting the briefing AI rely on the cause-attribution line.</div>
-  <div id="frontal-events-content" class="status">Loading detected passages...</div>
-</details>
 
+<h3 class="subsection" style="margin-top:24px;color:#d4a373;">Candidates <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— in-flight hypotheses (Stage 3 = wired ENABLED=False by definition)</span></h3>
 
-<h3 class="subsection" style="margin-top:24px;color:#d4a373;">Candidates</h3>
-
-<details class="research-subsection" id="r2-state-stratified" open>
-  <summary>R2. State-stratified accuracy — which regimes does the model fail in? (active)</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Per-field MAE + bias by regime. Big MAE spread across bins = regime-aware correction candidate. Addressed rows excluded from top-10 (shipped corrections absorb raw signal downstream); excluded rows in collapsible below. Temperature back in the top-10 since Lt retired 07-13. Refit twice daily; published to <code>state_stratified_accuracy.json</code>. <em>MAE-only; RMSE would rerank L2-additive fields (dp/h/ws/wg).</em></div>
-  <div id="status-state-stratified" class="status" hidden></div>
-  <div id="grid-state-stratified"></div>
-</details>
-
-<details class="research-subsection" id="r6-regime-transition" open>
-  <summary>R6. Regime-transition penalty (Stage 2 — auto-wired in Fitter)</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Pairs where <code>state_fc.regime_synoptic ≠ state_obs.regime_synoptic</code> show materially worse MAE than stable pairs where regimes agree. Widen confidence bands when the model signals a regime transition in the forecast window.</div>
-  <div class="meta-line" style="margin-bottom:10px;background:#101913;border:1px solid #1f3a2a;border-radius:6px;padding:10px 12px;">
-    <strong style="color:#4ad29a;">✓ Promotion gate passed (7-window agreement)</strong>
-    <div style="margin-top:6px;">Promotion gate run via <code>analysis/simulate_windows.py</code> across 7 trailing daily cutoffs on 7-day windows. All 7 cutoffs returned SHIP. ~25 of 56 (field × lead band) buckets show ≥10% transition penalty. Strongest effects: wind speed +73% at 0-5h, wind direction +45–72% across all bands, wind gust +63% at 0-5h, temperature +12–24% at 0-23h. ~40% of pairs are "transition" pairs. Solar at 12-23h <em>improves</em> by ~19% on transition pairs (transitioning-to-clear is easier than stable-cloudy).</div>
-    <div style="margin-top:6px;"><strong>Wired into the stack:</strong> R6 is C1a (regime-synoptic transition axis) — drives C1's confidence-widening table. Verdict logged under <code>conditional_audits.r6</code> on every Fitter cycle; surfaced via S1.</div>
-  </div>
-  <div class="meta-line" style="margin-bottom:10px;"><strong>Manual script:</strong> <code>analysis/regime_transition_audit.py</code> (single-window detail). <strong>Promotion gate:</strong> <code>analysis/simulate_windows.py</code> (7-window agreement test). Live verdict appears in S1 below.</div>
+<details class="research-subsection" id="c1-stack-status">
+  <summary>C1 confidence stack — status</summary>
+  <div class="meta-line" style="margin-bottom:10px;">7 axes stamping every tick, <code>applied=False</code> until Stage 4 clears. Curated v3: 296 SHIP / 42 MARGINAL / 1048 SKIP across 39 axis-keys. C1a shipped as regime-transition axis (was R6; verdict logged under <code>conditional_audits.r6</code> per Fitter cycle, surfaced via S1). <strong>Latest 07-26 audit: HOLD 32.43%</strong> (12 CALIBRATED / 25 DRIFTED); cl DEGRADED at 12-23h + 6-11h (cm cleared, same pattern different cell). Next re-audit 07-30. <strong>Narrow-promote counters:</strong> C1h GATE CLEARED 14/7 today; C1d 3/7. Ship gated on Stage 4. Per-cell co-axis ortho gate v0.6.321 in <code>confidence_layer.py</code>: cl fires freely, cc/cm/ch conditionally suppressed by the non-ortho co-axis, ch 24-47h + t × 3 never fire (REDUND both). Individual axes tracked in Backlog Group A below.</div>
 </details>
 
 <details class="research-subsection" id="hypothesis-backlog" style="margin-top:18px;border-color:#3a3a55;background:#13131e;">
@@ -1716,7 +1704,7 @@
   <div class="meta-line" style="margin-top:10px;">Stage 0-2 hypotheses (pre-wire). Promotion path: 0 exploration → 1 curated finding → 2 per-cell verification → 3 wired ENABLED=False → 4 shipped. Stage 3+ detail lives in Post-ship watches / layer sections, not here. Most surviving hypotheses measure forecast uncertainty (C1 axes), not forecast bias. Real bias candidates (marine layer, radiational cooling) overlap heavily with L2 and L4.</div>
 
   <h4 style="color:#4ad29a;margin-top:16px;margin-bottom:6px;">Group A — C1 multi-axis confidence extension</h4>
-  <div class="meta-line" style="margin-bottom:8px;">C1 stamps 7 axes today. Five feed the multi-axis join + Stage 4 calibration audit (C1a regime-synoptic, C1b cluster-spread, C1c pressure-tendency, C1f precip_fc&gt;0, C1e hours-since-front); C1h + C1d compose as marginal-premium tables (kept off the multi-axis join to avoid cell-dilution). All applied=False until Stage 4 clears.</div>
+  <div class="meta-line" style="margin-bottom:8px;">Individual axes. Five join the multi-axis Stage 4 calibration (C1a/b/c/f/e); C1h + C1d compose as marginal-premium tables (kept off the join to avoid cell-dilution). Stack-level status in C1 confidence stack card above.</div>
   <ul style="margin:0 0 0 22px;padding:0;line-height:1.55;">
     <li><strong>C1b</strong> Station-cluster disagreement — SHIPPED 2026-06-20 v0.6.149.</li>
     <li><strong>C1c</strong> Pressure-tendency regime — SHIPPED 2026-06-20.</li>
@@ -2660,7 +2648,12 @@ function renderHeadlineBox(wxDoc) {
       ? '<span style="opacity:0.6;">paused</span>' : _fmt(r.raw, r.unit, r.dec);
     const corTxt = (degraded && (r.label === "Temperature (t)" || r.label === "Humidity (h)"))
       ? '<span style="opacity:0.6;">—</span>' : _fmt(r.cor, r.unit, r.dec);
-    const labelStyle = isRight ? ' style="border-left:1px solid #232936;padding-left:16px;"' : '';
+    // v0.6.382h: right-column label needs to match left-column's muted grey
+    // + left-align styling (which the CSS applies to td:first-child only —
+    // the right column's Field cell is td #5, so we style it inline).
+    const labelStyle = isRight
+      ? ' style="border-left:1px solid #232936;padding-left:16px;text-align:left;color:var(--muted);"'
+      : '';
     return `<td${labelStyle}>${r.label}</td><td>${rawTxt}</td><td>${corTxt}</td><td class="${del.cls}">${del.txt}</td>`;
   };
 
