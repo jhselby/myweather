@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.382f • July 27, 2026</strong></summary>
+
+- **Per-band tables — "Production" column header shortened to "Prod" to fix overflow.** Joe flagged the Production column's right-side border rendering as clipped/missing on the ch and wd cards. Initial diagnosis was `border-collapse: collapse` clipping the outermost cell border, and I added an `inset -1.5px 0 0` box-shadow backstop. Wrong root cause — a zoom-out screenshot showed the "Production" header text was literally being truncated on multiple cards ("Producti…"), meaning the whole column was overflowing the accuracy-card container. The border wasn't broken; the column was pushed past the card's right edge. Fix: `renderAccuracySection` at line 3530 now emits `<th>Prod</th>` instead of `<th>Production</th>` (matches the chart legend + the RIGHT NOW pipeline table's terminology; ~50% column-width reduction). Reverted the box-shadow backstop since it was papering over the wrong problem. Title tooltip on the `<th>` preserves the full "Production" context for hover users.
+
+</details>
+
+<details>
 <summary><strong>v0.6.382e • July 27, 2026</strong></summary>
 
 - **Debug page — Recent activity condensation.** Three edits. (1) Badge legend collapsed from 5 lines (badge + description each) to a single "Badges:" line with color chips only — after 1-2 exposures the badges are self-explanatory. (2) Today's 3 DASHBOARD entries for v0.6.382a/b/c/d consolidated into one summary line pointing to CHANGELOG for detail. The individual granularity was useful in-session but adds noise to the rolling activity feed once the work is done. Kept as one line: multi-pass 07-27 debug page cleanup (post-ship refresh + compression pass + per-field snapshot move + R&D staleness fixes + Open-arch trim + Retired sub-box delete + RIGHT NOW 2-column split + 2 feedback memories). (3) Deleted the hidden HTML comment block preserving the trimmed 07-24 → 07-21 items (28 lines of dead source; CHANGELOG carries the full text). Recent activity render now: compact 1-line legend, then today (2 items) + Sun (3 items) + Sat (3 items) + Live-layer change gate + Still open watches reference blocks. ~40 lines out of source, ~6 lines out of render.

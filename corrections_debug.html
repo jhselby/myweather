@@ -3522,7 +3522,7 @@ function renderAccuracySection(tsDoc, wxDoc) {
       `<table class="band-table"><thead><tr>` +
       `<th>Band</th><th>Metric</th>` +
       LAYERS.map(l => `<th>${l.shortLabel || l.label}</th>`).join("") +
-      `<th class="production-col" title="${prodTitle}">Production${realCovered >= 40 ? "" : "*"}</th>` +
+      `<th class="production-col" title="${prodTitle}">Prod${realCovered >= 40 ? "" : "*"}</th>` +
       `</tr></thead><tbody>`;
 
     const renderMetricRow = (data, metric, band, isFirstInBand, isAllBand) => {
