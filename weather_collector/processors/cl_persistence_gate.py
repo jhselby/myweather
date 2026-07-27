@@ -38,7 +38,7 @@ import logging
 from pathlib import Path
 
 
-ENABLED = False  # Stage 3 shipped 2026-07-24 v0.6.379. 7-day live-layer change gate: flip earliest 2026-07-31 after 7 daily reads agree on SHIP cell set.
+ENABLED = False  # Stage 3 shipped 2026-07-24 v0.6.379. Shadow-write bug fixed 2026-07-27 v0.6.382p (pre-fix: 7-day flip gate through 07-31 was reading zero real data). Gate EXTENDED to 2026-08-03 (7 full daily reads of post-fix shadow data). Flip only after 7 daily reads agree on SHIP cell set.
 
 FIELD = "cl"
 HOURLY_KEY = "cloud_cover_low"
