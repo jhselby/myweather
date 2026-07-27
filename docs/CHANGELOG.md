@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.382g • July 27, 2026</strong></summary>
+
+- **Debug page — R&D + Archive full sweep.** Two goals: (1) content in the right section, (2) condense verbose prose. Placement fixes: G1 gated-candidates C1 mega-paragraph compressed (duplicated Lc + Group A C1h content) → 2-line summary + pointer to Stage 4 status; Backlog "Correction candidates in flight" table (12-row duplicate of What's improving at top of page) deleted entirely, replaced with a one-line pointer to Current state; Group B marine-layer 1500-char paragraph reduced to 3 lines with pointer to Archive (settled 07-16 as "hold indefinitely" — Archive already carries the full history); Group D shipped items (wd L2, joiner, K-taper, cc→L4, Lc, dp depression) compressed from 5 verbose paragraphs to 6 one-liners each with cross-refs to their layer sections; Stage 0 Experiments list trimmed from 14 items to 7 genuinely-open ones (promoted → Stage 1+, killed by orthogonality, and settled-null items moved to Archive framing as single source of truth). Condensations: R0/D1/S1/B1/F1 diagnostics preambles ("What this is:" paragraphs) tightened to 1 sentence each; R2/R6 preambles condensed; Group A C1 axes (B/C/F/E/H) collapsed from 5 verbose bullets to 5 one-line entries; Group A framing paragraph (dated 06-20 history) compressed to 2 lines; Group C (Wind-direction sector + Sea-breeze onset/decay) tightened; Backlog framing paragraph compressed; Archive preamble tightened. Character-count reduction across R&D+Archive: ~40-50%. Text-only; no JS changes.
+
+</details>
+
+<details>
 <summary><strong>v0.6.382f • July 27, 2026</strong></summary>
 
 - **Per-band tables — "Production" column header shortened to "Prod" to fix overflow.** Joe flagged the Production column's right-side border rendering as clipped/missing on the ch and wd cards. Initial diagnosis was `border-collapse: collapse` clipping the outermost cell border, and I added an `inset -1.5px 0 0` box-shadow backstop. Wrong root cause — a zoom-out screenshot showed the "Production" header text was literally being truncated on multiple cards ("Producti…"), meaning the whole column was overflowing the accuracy-card container. The border wasn't broken; the column was pushed past the card's right edge. Fix: `renderAccuracySection` at line 3530 now emits `<th>Prod</th>` instead of `<th>Production</th>` (matches the chart legend + the RIGHT NOW pipeline table's terminology; ~50% column-width reduction). Reverted the box-shadow backstop since it was papering over the wrong problem. Title tooltip on the `<th>` preserves the full "Production" context for hover users.
