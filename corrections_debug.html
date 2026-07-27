@@ -869,7 +869,7 @@
         </div>
 
         <div style="padding:6px 8px;border-left:2px solid #4ad29a;background:#0f1712;margin-bottom:6px;border-radius:2px;">
-          <div><strong>Lc — cloud saturation-unbiasing</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ FLIPPED 2026-07-17 v0.6.355 — day 10/14 post-ship watch through 07-31</span></div>
+          <div><strong>Lc — cloud saturation-unbiasing</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ FLIPPED 2026-07-17 v0.6.355 — day 11/14 post-ship watch through 07-31</span></div>
           <div style="opacity:0.85;">16 SHIP cells / 24 · biggest predicted lifts: cl 80-95 −55%, cl 95-100 −47%, ch 50-80 −37% MAE. First tick: 113 cells fired across cc/cl/cm/ch.</div>
           <div style="color:#9ab0a0;">→ Watch runs through <strong>2026-07-31</strong>. Triggers: any cc/cl/cm/ch cell flipping COLLAPSE in the anomaly detector; weekly Sunday <code>lc_fit</code> re-run showing SHIP-set change. See <a href="#sec-lc" style="color:#7fb3ff;">Lc layer section</a> for live tick telemetry.</div>
         </div>
@@ -972,10 +972,10 @@
 
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:4px;">Post-ship watches</div>
         <ul style="margin:0 0 0 16px;padding:0;">
-          <li><strong>Lc (v0.6.355, 07-17) — day 10/14 through 07-31.</strong> Trigger: any cc/cl/cm/ch cell flipping COLLAPSE in the anomaly detector.</li>
-          <li><strong>ch persistence gate (v0.6.358, 07-19) — day 8/14 through 08-02.</strong> Watchable per-lead as of v0.6.369 attribution wiring. First honest reads: chp lead 1 = 2.4 vs Lc 12.4 (−81%), lead 2 = 4.9 vs 11.3 (−56%). <strong style="color:#e0d472;">Active regression sub-watch:</strong> 07-21 day 3 read showed mid-lead 6-20h chp vs Lc regression +14→+53%. <strong>07-26 status:</strong> aggregate persistence-skill Δ (Prod −1.29 vs L4 −0.25) = −1.03, stable vs 07-23 −1.04 → NO escalation signal. Ad-hoc per-lead script deferred to 07-28. See [[project_chp_midlead_regression_watch]]. Trigger: chp series drifting toward Lc in per-band tables; scorecard <code>production</code> slipping vs baseline.</li>
-          <li><strong>wd L2 blend (v0.6.368a, 07-20) — day 7/14 through 08-03.</strong> First circular field entering L2. Trigger: spurious wd swings at short-lead on the wind card, or Fitter's <code>per_layer_mae_by_lead["wd"]["l2"]</code> flipping worse than l1 after n crosses 100 per lead. Calm-floor guard (WIND_DIR_MIN_SPEED = 3.0 mph) is the most likely failure mode — log per-cycle skip rate as a proxy.</li>
-          <li><strong>ws L3 asymmetric SKIP additive (v0.6.370, 07-20) — day 7/14 through 08-03.</strong> Trigger: 24-47h ws MAE moves wrong direction (23 of 40 SKIPs concentrated there per <code>project_ws_l3_long_lead_regression</code>). Current cell count: 25 SKIP (was 44 at Stage 1 07-20; natural evolution as windows accumulated).</li>
+          <li><strong>Lc (v0.6.355, 07-17) — day 11/14 through 07-31.</strong> Trigger: any cc/cl/cm/ch cell flipping COLLAPSE in the anomaly detector.</li>
+          <li><strong>ch persistence gate (v0.6.358, 07-19) — day 9/14 through 08-02.</strong> Watchable per-lead as of v0.6.369 attribution wiring. First honest reads: chp lead 1 = 2.4 vs Lc 12.4 (−81%), lead 2 = 4.9 vs 11.3 (−56%). <strong style="color:#e0d472;">Active regression sub-watch:</strong> 07-21 day 3 read showed mid-lead 6-20h chp vs Lc regression +14→+53%. <strong>07-26 status:</strong> aggregate persistence-skill Δ (Prod −1.29 vs L4 −0.25) = −1.03, stable vs 07-23 −1.04 → NO escalation signal. Ad-hoc per-lead script deferred to 07-28. See [[project_chp_midlead_regression_watch]]. Trigger: chp series drifting toward Lc in per-band tables; scorecard <code>production</code> slipping vs baseline.</li>
+          <li><strong>wd L2 blend (v0.6.368a, 07-20) — day 8/14 through 08-03.</strong> First circular field entering L2. Trigger: spurious wd swings at short-lead on the wind card, or Fitter's <code>per_layer_mae_by_lead["wd"]["l2"]</code> flipping worse than l1 after n crosses 100 per lead. Calm-floor guard (WIND_DIR_MIN_SPEED = 3.0 mph) is the most likely failure mode — log per-cycle skip rate as a proxy.</li>
+          <li><strong>ws L3 asymmetric SKIP additive (v0.6.370, 07-20) — day 8/14 through 08-03.</strong> Trigger: 24-47h ws MAE moves wrong direction (23 of 40 SKIPs concentrated there per <code>project_ws_l3_long_lead_regression</code>). Current cell count: 25 SKIP (was 44 at Stage 1 07-20; natural evolution as windows accumulated).</li>
           <li>wg persistence-skill thin margin — pooled L4 skill +0.169 (&lt; +0.20 hold margin). True drag is 24-47h (skill_prod −0.022, Prod=L1). Both 07-27 ships (wg residual persistence + wg L3 skip-table extension) target 24-47h — verify skill_prod at 24-47h moves post-flip.</li>
           <li>Lt retirement 2-window stability check — 07-16 + 07-17 (l6_fix_b_refit flipped SHIP → HOLD on 07-16 confirming Lt retirement mechanism).</li>
           <li>v0.6.291 raw-baseline verifier — healthy since ship, no drift events.</li>
@@ -1045,11 +1045,11 @@
       <li><span style="color:#7090a0;">◉</span> <strong>Gate governs live-layer flips, not exploration.</strong> New hypotheses, Stage 0/1, ortho-checks, curated text = NOT gated.</li>
 
       <li style="margin-top:8px;"><strong style="color:#7fb3ff;">Still open watches</strong></li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>Lc — FLIPPED 2026-07-17 v0.6.355. Day 10/14.</strong> 16 SHIP cells stable, LC_ENABLED AGREE on divergence report, no cc/cl/cm/ch ANOMALY. 14-day post-ship watch through 07-31.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>Lc — FLIPPED 2026-07-17 v0.6.355. Day 11/14.</strong> 16 SHIP cells stable, LC_ENABLED AGREE on divergence report, no cc/cl/cm/ch ANOMALY. 14-day post-ship watch through 07-31.</li>
       <li><span style="color:#e0d472;">⚠</span> <strong>wg residual persistence gate — day 6/7 on new baseline · 07-27 flip HOLD.</strong> Shipped 07-14 v0.6.351 ENABLED=False. 07-20 evening re-run: 10 SHIP / 4 MARGIN / 22 SKIP; Jaccard 0.45 vs 07-14 forced 07-21 flip HOLD. New 10-cell baseline. <strong>07-26 blocker:</strong> h_wg_residual_persistence_stage1 flipped PROMOTE → MARGINAL (best combo +20.24%) — the persistence hypothesis's own aggregate signal weakened. Hold until Stage 1 recovers PROMOTE. (Divergence-report drop-{wg,ws} GATED 1/7 is stale-tool per [[feedback_walkforward_skip_table_blind]] — walkforward is SKIP_TABLE-blind; ignore.)</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>ch persistence gate — LIVE 07-19 v0.6.358. Day 8/14.</strong> 27 SHIP cells on refreshed windows; 14-day watch through 08-02. See <a href="#" style="color:#7fb3ff;">[[project_chp_midlead_regression_watch]]</a> — mid-lead 6-20h chp vs Lc regression under active watch. 07-26 aggregate: persistence-skill Δ (Prod −1.29 vs L4 −0.25) = −1.03, stable vs 07-23 −1.04 → no escalation; ad-hoc per-lead script deferred to 07-28.</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>wd L2 blend — LIVE 07-20 v0.6.368a. Day 7/14.</strong> Circular unit-vector blend live in <code>wind_blend.py</code>. Watch through 08-03. First Fitter cycle emitted per-layer wd MAE across all 48 leads (v0.6.367 joiner fix).</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>ws L3 asymmetric fc-bin SKIP — LIVE 07-20 v0.6.370. Day 7/14.</strong> Additive on top of existing regime × band SKIP_TABLE; 25 curated SKIP cells today (was 44 at scaffold). 14-day watch through 08-03. Hardcode-REPLACEMENT deferred to 07-27+ pending 7-window cell-set stability.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>ch persistence gate — LIVE 07-19 v0.6.358. Day 9/14.</strong> 27 SHIP cells on refreshed windows; 14-day watch through 08-02. See <a href="#" style="color:#7fb3ff;">[[project_chp_midlead_regression_watch]]</a> — mid-lead 6-20h chp vs Lc regression under active watch. 07-26 aggregate: persistence-skill Δ (Prod −1.29 vs L4 −0.25) = −1.03, stable vs 07-23 −1.04 → no escalation; ad-hoc per-lead script deferred to 07-28.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>wd L2 blend — LIVE 07-20 v0.6.368a. Day 8/14.</strong> Circular unit-vector blend live in <code>wind_blend.py</code>. Watch through 08-03. First Fitter cycle emitted per-layer wd MAE across all 48 leads (v0.6.367 joiner fix).</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>ws L3 asymmetric fc-bin SKIP — LIVE 07-20 v0.6.370. Day 8/14.</strong> Additive on top of existing regime × band SKIP_TABLE; 25 curated SKIP cells today (was 44 at scaffold). 14-day watch through 08-03. Hardcode-REPLACEMENT deferred to 07-27+ pending 7-window cell-set stability.</li>
       <li><span style="color:#a08070;">✗</span> <strong>cl persistence short-lead gate — OFF permanently.</strong> Refreshed <code>h_cl_persistence_blend</code>: halves-mixed, 4/9 regimes SHIP at 0-5h; design requires all 9. Sibling <code>h_cl_linear_ramp_stage2</code> STRONG (17 cells today) — separate mechanism. Regime-gated clp variant re-audit 07-24 per [[project_clp_regime_gate_opportunity]].</li>
       <li><span style="color:#e07272;">✗</span> <strong>h/L4 narrow-add — 07-26 retest DECLINED.</strong> Jaccard walker cleared 8/7 days but 0 SHIP cells today → live-empty fossil pattern repeat. Nothing to wire. Retest 08-02+ (after fresh cm/cl mixture-check clean).</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>h → L4 — re-frozen 07-11.</strong> Halves-check killed 7 of 12 WIN cells (HRRR anomaly). Un-freeze: cm mixture-check has CLEARED on 07-26 but <strong>cl now DEGRADED at 12-23h + 6-11h</strong> — same failure pattern, different cell. Re-verify 08-02+ (cl-window roll ~4d).</li>
@@ -1111,7 +1111,7 @@
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cc</code> cloud cover</td>
           <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend → L4 diurnal → Lc <span style="opacity:0.6;">(flipped 07-17)</span></td>
           <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−14.7%</td>
-          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win + Lc live.</strong> Lc FLIPPED 07-17 v0.6.355 after 8/7-day gate clear. 14-day post-ship watch through 07-31 (day 10/14); predicted MAE improvements documented in the applicability-map bullet below.</td>
+          <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win + Lc live.</strong> Lc FLIPPED 07-17 v0.6.355 after 8/7-day gate clear. 14-day post-ship watch through 07-31 (day 11/14); predicted MAE improvements documented in the applicability-map bullet below.</td>
         </tr>
         <tr style="border-top:1px solid #232936;">
           <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ch</code> high cloud</td>
@@ -3426,6 +3426,8 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // field so the accuracy chart / legend / column render only where real.
     if (layerKey === "chp") return fieldKey === "ch";
     if (layerKey === "clp") return fieldKey === "cl";
+    // wd persistence gate (wdp) — post-L2 specialist on wd, LIVE 2026-07-27.
+    if (layerKey === "wdp") return fieldKey === "wd";
     return false;
   };
   const grid = document.getElementById("accuracy-grid");
@@ -3465,6 +3467,7 @@ function renderAccuracySection(tsDoc, wxDoc) {
     // (chp:#4ad29a green; clp same family, one hue over).
     { key: "chp", label: "ch persistence (chp)",            shortLabel: "ch persistence", color: "rgba(74,210,154,1)",     dash: [] },
     { key: "clp", label: "cl persistence (clp)",            shortLabel: "cl persistence", color: "rgba(140,210,120,1)",    dash: [] },
+    { key: "wdp", label: "wd persistence (wdp)",            shortLabel: "wd persistence", color: "rgba(180,210,90,1)",     dash: [] },
   ];
 
   // v2: per-band MAE summary. Bands match the walk-forward validator buckets.
@@ -6175,6 +6178,7 @@ load();
     // v0.6.361: post-Lc specialists — plotted on top of l6
     chp:  { color: "#4ad29a", dash: [], width: 1.25 },   // ch_persistence_gate — intermediate; prod_real is isProd for ch
     clp:  { color: "#4ad29a", dash: [], width: 1.25 },   // cl_persistence_gate — intermediate; prod_real is isProd for cl
+    wdp:  { color: "rgba(180,210,90,1)", dash: [], width: 1.25 },   // wd_persistence_gate — intermediate; prod_real is isProd for wd
     // v0.6.371: real per-row Prod trajectory keyed on applied_layer stamp.
     // Distinct yellow to visually own the "final applied" line; specialists
     // (Lsr/Lc/chp/clp) demote to intermediate width.
@@ -6206,11 +6210,12 @@ load();
     pr: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
     pa: [{key:"raw", label:"Raw"}, {key:"prod_real", label:"Prod", isProd:true}],
     // wd: L1 + L2 blend (v0.6.368a — wind_blend circular unit-vector blend of
-    // current obs into first 24 leads, calm floor ≥3 mph). No L3/L4 yet.
-    // wd_persistence_gate drafted 07-20 v0.6.365 ENABLED=False — when wired,
-    // add a specialist layer (e.g. `wdp`) that becomes isProd and demotes L2.
+    // current obs into first 24 leads, calm floor ≥3 mph) + wdp
+    // (wd_persistence_gate, LIVE 2026-07-27 v0.6.382 — predicted-transition
+    // bypass of L1/L2). Specialist demotes L2 to intermediate; prod_real is
+    // isProd (parallel to v0.6.371's treatment of the other 13 fields).
     // Circular metric: MAE values are absolute angular diff on [0, 180].
-    wd: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2 blend", isProd:true}],
+    wd: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
   };
   // Layer must have at least this many non-null days in the payload to
   // appear in the legend. Prevents 1-2 stragglers (e.g. cc l6 the day Lc
@@ -6252,6 +6257,8 @@ load();
          {date: "2026-07-17", label: "Lc ENABLED"}],
     ch: [{date: "2026-07-17", label: "Lc ENABLED"},
          {date: "2026-07-19", label: "ch persistence LIVE"}],
+    wd: [{date: "2026-07-20", label: "L2 blend"},
+         {date: "2026-07-27", label: "wdp ENABLED"}],
   };
 
   function seriesFor(field, layer, metric) {

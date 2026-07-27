@@ -70,9 +70,11 @@ PERMISSIVE_LAYER_KEYS = [("l5", "error_l5"), ("l6", "error_l6"),
                          # v0.6.361: post-Lc specialists — chp (ch_persistence_gate,
                          # ch only) and clp (cl_persistence_gate, cl only —
                          # v0.6.379 successor to cl_persistence_short_lead).
-                         # Chart legend shows them as their own lines once a few
+                         # v0.6.382: wdp (wd_persistence_gate, wd only).
+                         # Chart legend shows each as its own line once a few
                          # days of data have accumulated.
-                         ("chp", "error_chp"), ("clp", "error_clp")]
+                         ("chp", "error_chp"), ("clp", "error_clp"),
+                         ("wdp", "error_wdp")]
 
 LAYER_KEYS = STRICT_LAYER_KEYS + PERMISSIVE_LAYER_KEYS
 
@@ -148,6 +150,9 @@ def compute_fresh_rollup():
                 e_l2 = r.get("error_l2")
                 if e_l2 is not None:
                     per_layer["l2"] = e_l2
+                e_wdp = r.get("error_wdp")
+                if e_wdp is not None:
+                    per_layer["wdp"] = e_wdp
             else:
                 skip = False
                 for ln, key in STRICT_LAYER_KEYS:

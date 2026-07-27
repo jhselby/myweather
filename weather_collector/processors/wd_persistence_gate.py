@@ -49,7 +49,7 @@ import pytz
 from .regime_classifier import classify_synoptic_regime
 
 
-ENABLED = False  # Flip to True after 7-day narrow-promote gate clears.
+ENABLED = True  # Flipped 2026-07-27 v0.6.382 after 7-day gate cleared (Jaccard 1.0 across 5 daily reads).
 
 FIELD = "wd"
 HOURLY_KEY = "wind_direction"

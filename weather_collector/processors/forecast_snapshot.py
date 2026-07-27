@@ -139,15 +139,18 @@ def append_forecast_snapshot(hourly, derived=None):
                "chp": hourly.get("cloud_cover_high", [])},
         # Wind direction is circular — needs special sin/cos math in Fitter
         # and Apply. v0.6.368 added wd to L2 (wind_blend circular unit-vector
-        # blend of current obs wd into near-lead fc, weight decays over
-        # BLEND_HOURS, calm-floor guard skips ≤3 mph cells). No L3 (wd not in
-        # L3_FIELDS whitelist yet) and no L4 (diurnal is meaningless for
-        # circular signed-mean). l3 = l4 = l2 by construction until wd earns
-        # a downstream layer.
+        # blend). v0.6.382 added wdp (wd_persistence_gate) — post-L2 specialist
+        # that overwrites wind_direction on gate-fired cells. l3 = l4 = l2 =
+        # wind_direction_pre_wd_gate (L2 blend result). wdp slot holds the
+        # post-wdp array. wind_direction_pre_wd_gate is stashed by
+        # wd_persistence_gate.py PRE_GATE_KEY BEFORE the gate overwrites
+        # hourly.wind_direction; falls back to hourly.wind_direction when the
+        # gate is disabled or fired on zero cells (identity fallback).
         "wd": {"l1": hourly.get("raw_wind_direction", hourly.get("wind_direction", [])),
-               "l2": hourly.get("wind_direction", []),
-               "l3": hourly.get("wind_direction", []),
-               "l4": hourly.get("wind_direction", [])},
+               "l2": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction", [])),
+               "l3": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction", [])),
+               "l4": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction", [])),
+               "wdp": hourly.get("wind_direction", [])},
     }
     # Dew point is derived from t + h via Magnus at each layer (no separate model array).
     # Backward-compat top-level keys (t / h / ws / wg / pp / pr / cc) kept = L4 final.
@@ -177,7 +180,7 @@ def append_forecast_snapshot(hourly, derived=None):
         # v0.6.361: iteration order = pipeline order. Specialists that run
         # after Lc/L5 (chp, clp) walked last so applied_layer stamps them
         # when their contribution differs from the prior layer.
-        for lk in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp"):
+        for lk in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp"):
             arr = field_layers.get(lk) or []
             if i >= len(arr) or arr[i] is None:
                 continue
@@ -203,12 +206,10 @@ def append_forecast_snapshot(hourly, derived=None):
         # v0.6.269: applied-layer stamp per (field, lead). Recovers the actual
         # user-visible layer for this lead so the pair-log downstream can
         # score a real per-row Production error instead of the approximation
-        # that treats one layer as "the applied one" per field. Skipped for wd
-        # (all layers structurally equal after the l3 rewrite) and dp (derived,
-        # applied stamp inherited from t's applied layer).
+        # that treats one layer as "the applied one" per field. dp is derived
+        # (applied stamp inherited from t's applied layer). v0.6.382: wd
+        # participates now that wdp writes a distinct value on gate-fired cells.
         for field, lyrs in layers.items():
-            if field == "wd":
-                continue
             applied = _derive_applied_layer(lyrs, i)
             entry[f"{field}_applied"] = applied
         # Backward-compat top-level keys. CRITICAL: these must equal the L2

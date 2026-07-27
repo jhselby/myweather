@@ -205,7 +205,7 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                 # (currently shows Prod == raw since wd has no correction
                 # layers yet; will surface a real Δ once wd_persistence_gate
                 # or a future L2/L3/L4 wd correction ships).
-                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp"):
+                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp"):
                     v = target_hour.get(f"{short}_{lyr}")
                     if v is not None:
                         pair[f"forecast_{lyr}"] = round(float(v), 3)

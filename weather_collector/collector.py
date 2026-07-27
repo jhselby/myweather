@@ -581,6 +581,16 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  dp residual persistence stamp failed: {redact_secrets(e)}")
 
+    # wd persistence gate — predicted-transition bypass of L1/L2 for wd.
+    # Runs AFTER wind_blend (which produces L2 wind_direction) so wdp
+    # overwrites the L2 blend where the gate fires; module preserves the
+    # pre-gate array as hourly.wind_direction_pre_wd_gate.
+    try:
+        from .processors.wd_persistence_gate import stamp_wd_persistence_gate
+        stamp_wd_persistence_gate(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  wd persistence gate stamp failed: {redact_secrets(e)}")
+
     # Applicability map — each correction module exposes describe_applicability()
     # returning a list of layer descriptors (schema in weather_collector/data/
     # applicability_map_schema.json). Collected here once per tick, after every
@@ -596,9 +606,10 @@ def main():
         from .processors.cl_persistence_gate import describe_applicability as _da_clpg
         from .processors.wg_residual_persistence import describe_applicability as _da_wgrp
         from .processors.dp_residual_persistence import describe_applicability as _da_dprp
+        from .processors.wd_persistence_gate import describe_applicability as _da_wdpg
         from .processors.sr_sea_breeze_lsr_override import describe_applicability as _da_lsb
         layers = []
-        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_wdpg, _da_c1):
             try:
                 layers.extend(fn())
             except Exception as e:
