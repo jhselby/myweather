@@ -191,15 +191,23 @@ def stamp_cl_persistence_gate(weather_data):
         else:
             skips_by_band[band] += 1
 
+    # v0.6.382p: unconditional shadow-array write so ENABLED=False still
+    # produces pair-log-visible "would apply" values. Same shadow-eval bug
+    # as wdp had — previously the 7-day flip gate through 07-31 was being
+    # evaluated against zero real shadow data (forecast_clp fell back to
+    # forecast_l6 → identity duplicates).
+    shadow_arr = list(arr)
+    if persist_val is not None:
+        for i, fires in enumerate(per_lead_fires):
+            if fires and shadow_arr[i] is not None:
+                shadow_arr[i] = max(0.0, min(100.0, persist_val))
+    hourly[HOURLY_KEY + "_shadow_clp"] = shadow_arr
+
     if ENABLED and persist_val is not None:
         post_lc_key = f"{HOURLY_KEY}_post_lc"
         if post_lc_key not in hourly:
             hourly[post_lc_key] = list(arr)
-        new_arr = list(arr)
-        for i, fires in enumerate(per_lead_fires):
-            if fires and new_arr[i] is not None:
-                new_arr[i] = max(0.0, min(100.0, persist_val))
-        hourly[HOURLY_KEY] = new_arr
+        hourly[HOURLY_KEY] = shadow_arr
 
     weather_data["cl_persistence_gate"] = {
         "enabled": ENABLED,

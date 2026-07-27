@@ -190,15 +190,21 @@ def stamp_ch_persistence_gate(weather_data):
         else:
             skips_by_band[band] += 1
 
+    # v0.6.382p: unconditional shadow-array write for template consistency
+    # with wdp/clp. ENABLED=True so no behavior change today (shadow == live);
+    # keeps any future re-verify or clone-of-template honest.
+    shadow_arr = list(arr)
+    if persist_val is not None:
+        for i, fires in enumerate(per_lead_fires):
+            if fires and shadow_arr[i] is not None:
+                shadow_arr[i] = max(0.0, min(100.0, persist_val))
+    hourly[HOURLY_KEY + "_shadow_chp"] = shadow_arr
+
     if ENABLED and persist_val is not None:
         post_lc_key = f"{HOURLY_KEY}_post_lc"
         if post_lc_key not in hourly:
             hourly[post_lc_key] = list(arr)
-        new_arr = list(arr)
-        for i, fires in enumerate(per_lead_fires):
-            if fires and new_arr[i] is not None:
-                new_arr[i] = max(0.0, min(100.0, persist_val))
-        hourly[HOURLY_KEY] = new_arr
+        hourly[HOURLY_KEY] = shadow_arr
 
     weather_data["ch_persistence_gate"] = {
         "enabled": ENABLED,

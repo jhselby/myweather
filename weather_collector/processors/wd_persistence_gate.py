@@ -239,16 +239,22 @@ def stamp_wd_persistence_gate(weather_data):
         else:
             skips_by_band[band] += 1
 
+    # v0.6.382p: unconditional shadow-array write so ENABLED=False still
+    # produces pair-log-visible "would apply" values. Previously the shadow
+    # values only landed in the per-tick telemetry blob, which the snapshot
+    # writer and pair log never saw — the entire 07-20 → 07-27 shadow week
+    # generated zero pair-log rows where forecast_wdp differed from forecast_l2.
+    shadow_arr = list(arr)
+    if persist_val is not None:
+        for i, fires in enumerate(per_lead_fires):
+            if fires and shadow_arr[i] is not None:
+                shadow_arr[i] = round(persist_val % 360.0, 1)
+    hourly[HOURLY_KEY + "_shadow_wdp"] = shadow_arr
+
     if ENABLED and persist_val is not None:
         if PRE_GATE_KEY not in hourly:
             hourly[PRE_GATE_KEY] = list(arr)
-        new_arr = list(arr)
-        for i, fires in enumerate(per_lead_fires):
-            if fires and new_arr[i] is not None:
-                # Wind direction is on [0, 360). Clamp defensively.
-                v = persist_val % 360.0
-                new_arr[i] = round(v, 1)
-        hourly[HOURLY_KEY] = new_arr
+        hourly[HOURLY_KEY] = shadow_arr
 
     weather_data["wd_persistence_gate"] = {
         "enabled": ENABLED,

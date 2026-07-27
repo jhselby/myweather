@@ -473,43 +473,6 @@
     color: var(--muted);
     font-size: 9.5px;
   }
-  /* Drill-down section */
-  .drill-controls {
-    background: var(--panel);
-    border: 1px solid #242833;
-    border-radius: 8px;
-    padding: 10px 14px;
-    margin-bottom: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 14px;
-    font-size: 12px;
-  }
-  .drill-controls .group { display: flex; align-items: center; gap: 6px; }
-  .drill-controls .group-label { color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 10.5px; }
-  .drill-controls label { color: var(--ink); cursor: pointer; user-select: none; padding: 2px 6px; border-radius: 4px; }
-  .drill-controls label:hover { background: rgba(255,255,255,0.04); }
-  .drill-controls input[type="radio"],
-  .drill-controls input[type="checkbox"] { vertical-align: middle; margin-right: 3px; }
-  .drill-controls button {
-    background: rgba(74,163,255,0.15);
-    color: var(--accent);
-    border: 1px solid rgba(74,163,255,0.4);
-    border-radius: 4px;
-    padding: 4px 12px;
-    font-size: 12px;
-    cursor: pointer;
-  }
-  .drill-controls button:hover { background: rgba(74,163,255,0.25); }
-  .drill-chart-wrap {
-    position: relative;
-    height: 360px;
-    background: var(--panel);
-    border: 1px solid #242833;
-    border-radius: 8px;
-    padding: 12px;
-  }
   /* Bias map */
   .bias-map-wrap {
     height: 460px;
@@ -850,25 +813,25 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>t</code> temperature</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 additive</td>
         <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−1.1%</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable.</strong> Lt retired 07-13 (Fix B +0.29% held-out). Persistence-skill +0.68 pooled — L2 doing more than we thought.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable, no open work.</strong> L2 Kalman blend absorbs the microclimate signal on its own (persistence-skill +0.68 pooled); Lt reclassified as telemetry experiment 07-27 after Fix B refit came in +0.29% held-out (below +1% ship gate).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>h</code> humidity</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 additive → L4 diurnal</td>
         <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−2.3%</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win.</strong> <span style="color:#e07272;">h/l4 narrow-add — 07-26 retest declined</span>: Jaccard walker cleared 8/7 but 0 SHIP cells today (live-empty fossil pattern). Retest 08-02+ after cl-window rolls.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win; h/l4 narrow-add HELD.</strong> <span style="color:#e07272;">07-26 retest declined</span> — Jaccard walker cleared 8/7 but 0 SHIP cells today (live-empty fossil pattern). Retest 08-02+ after cl-window rolls.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ws</code> wind speed</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct → L3 lead-decay <span style="opacity:0.6;">(skip: ne_flow all + sea_breeze 0-11h)</span></td>
         <td style="padding:5px 10px;vertical-align:top;color:#e0d472;">+5.3%</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L3 asymmetric additive LIVE 07-20 v0.6.370</strong> (26 SKIP cells today, 23 at 24-47h). Additive safe: old hardcode <code>[("ne_flow", all), ("sea_breeze", 0-11)]</code> checks first at <code>decay_apply.py:641</code>, asymmetric only fires in OTHER regimes/bands. Hardcode-REPLACEMENT (the actual live-layer flip) HELD 07-27 (asymmetric Jaccard 0.75 &lt; 0.80); re-evaluate ~07-31. Persistence-skill +0.18 flagged at-risk.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L3 asymmetric additive LIVE; hardcode-REPLACEMENT HELD.</strong> Asymmetric additive shipped 07-20 v0.6.370 (26 SKIP cells today, 23 at 24-47h); safe on top of old hardcode because <code>decay_apply.py:641</code> checks the hardcode first, asymmetric fires only in other regimes/bands. REPLACEMENT flip held 07-27 on asymmetric Jaccard 0.75 &lt; 0.80. Re-evaluate ~07-31; persistence-skill +0.18 flagged at-risk.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wg</code> wind gust</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct → L3 lead-decay → wg residual persistence (dormant)</td>
         <td style="padding:5px 10px;vertical-align:top;color:#4ad29a;">−15.5%</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win vs raw.</strong> Two independent gates pending; both HELD 07-27. <strong>wg residual persistence gate</strong> (Stage 3 wired 07-14 v0.6.351, ENABLED=False): 07-26 blocker — h_wg_residual_persistence_stage1 flipped PROMOTE → MARGINAL (+20.24%); wait for Stage 1 recovery. <strong>wg L3 skip-table extension</strong> (Stage 1 preview 07-14 v0.6.351b): 12 SKIP cells; extension paired with the persistence gate flip.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win vs raw; existing asymmetric wg SKIP table is LIVE</strong> (07-20 v0.6.366, 48 cells). Two additional gates HELD 07-27: <strong>12-cell L3 skip-table extension</strong> (Stage 1 preview 07-14 v0.6.351b) and <strong>wg residual persistence gate</strong> (Stage 3 wired 07-14 v0.6.351, ENABLED=False) — residual gate blocked 07-26 by h_wg_residual_persistence_stage1 flipping PROMOTE → MARGINAL (+20.24%); extension pairs with the residual flip. Wait for Stage 1 recovery.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>dp</code> dew point</td>
@@ -892,7 +855,7 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cl</code> low cloud</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend → Lc <span style="opacity:0.6;">(flipped 07-17)</span> → clp (dormant)</td>
         <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">−0.2% <span style="font-size:0.9em;">(flat, pre-Lc)</span></td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Lc live 07-17.</strong> Highest predicted lift: cl 80-95 −55%, cl 95-100 −47%. <strong>clp (cl persistence gate)</strong> Stage 3 wired 07-24 v0.6.379 ENABLED=False (successor to retired <code>cl_persistence_short_lead</code> — narrow 0-5h shape retired because design gate "all 9 regimes SHIP at 0-5h" was not met). Broader regime × lead_band gate: 12 SHIP / 8 MARGIN / 16 SKIP. Day 4/7 flip gate through 07-31.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Lc LIVE; clp flip gate open.</strong> Lc flipped 07-17 (highest predicted lift: cl 80-95 −55%, cl 95-100 −47%). <strong>clp</strong> Stage 3 wired 07-24 v0.6.379 ENABLED=False (broader regime × lead_band curation, 12 SHIP / 8 MARGIN / 16 SKIP; successor to retired short-lead shape). Day 4/7 flip gate through 07-31.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cm</code> mid cloud</td>
@@ -903,8 +866,8 @@
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pp</code> precip probability</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(L3 dropped 07-04 — hurts Brier despite MAE gain)</span></td>
-        <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">Brier-evaluated</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Brier-evaluated.</strong> v0.6.335 Phase 3 decomposition: CALIBRATED +8.4% vs raw, BSS +0.126. Systematic under-forecast at fc 30-50% (obs freq 66%) flagged as future Stage 0.</td>
+        <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">0.0% <span style="font-size:0.9em;">(Brier; L1=raw)</span></td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only in production, no open work.</strong> L3 dropped 07-04 (hurt Brier despite MAE gain), so live Brier = raw Brier (matches the 0.0% headline tile). Separate offline v0.6.335 Phase 3 decomposition showed CALIBRATED +8.4% vs raw + BSS +0.126 with systematic under-forecast at fc 30-50% (obs freq 66%) — queued as future Stage 0.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pr</code> pressure</td>
@@ -922,19 +885,25 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pa</code> precip amount</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(no L2/L3/L4 apply)</span></td>
         <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">0% <span style="font-size:0.9em;">(bursty)</span></td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only.</strong> τ 28 → 42 07-13 (v0.6.334) → 7 07-18 (v0.6.357) → <strong>reverted to global τ=14 07-19</strong> (v0.6.358, +0.9% vs τ=14 today, below the 5% floor).</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only, no open work.</strong> Field-specific τ swept 28 → 42 → 7 → reverted to global τ=14 on 07-19 v0.6.358 (+0.9% vs τ=14, below the 5% floor).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wd</code> wind direction</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 wind_blend → wdp <span style="opacity:0.6;">(flipped 07-27)</span></td>
         <td style="padding:5px 10px;vertical-align:top;opacity:0.85;">— <span style="font-size:0.9em;">(circular, MAE 61° raw)</span></td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L2 shipped 07-20 v0.6.368a</strong> (wind_blend circular unit-vector; calm-floor skips ≤3 mph). <strong style="color:#4ad29a;">wdp FLIPPED 2026-07-27 v0.6.382</strong> — predicted-transition persistence-of-obs override; SHIP cells {calm/12-23, calm/24-47, pre_frontal/0-5, se_flow/0-5, sw_flow/0-5}. Expected lifts sw_flow/0-5 −26%, calm/24-47 −20%, se_flow/0-5 −12%. Day 0/14 watch through 08-10.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L2 + wdp both LIVE.</strong> L2 wind_blend (circular unit-vector; calm-floor skips ≤3 mph) shipped 07-20 v0.6.368a; wdp FLIPPED 2026-07-27 v0.6.382 (predicted-transition persistence-of-obs override; SHIP cells {calm/12-23, calm/24-47, pre_frontal/0-5, se_flow/0-5, sw_flow/0-5}; expected lifts sw_flow/0-5 −26%, calm/24-47 −20%, se_flow/0-5 −12%). Day 0/14 post-ship watch through 08-10.</td>
       </tr>
     </tbody>
   </table>
   <div style="margin-top:10px;font-size:0.88em;line-height:1.5;">
     <strong>Stable wins:</strong> <code>ch</code> −46%, <code>wg</code> −15.5%, <code>cc</code> −14.7%, <code>cm</code> −6.8%, <code>dp</code> −6.1%, <code>h</code> −2.3%. <strong>Open regression:</strong> <code>ws</code> +5.3% (asymmetric skip-table additive LIVE 07-20; REPLACEMENT HELD 07-27, re-eval ~07-31).
   </div>
+</details>
+
+<details style="margin-bottom:12px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
+  <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:revert;">pp Brier reliability — raw HRRR calibration probe <span id="pp-brier-headline" style="font-weight:normal;opacity:0.7;font-size:0.85em;">· loading…</span></summary>
+  <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">Live output of <code>analysis/pp_brier_reliability.py</code> (daily digest). Answers "when raw HRRR says X% chance of rain, how often does it actually rain?" — the surviving Stage 0 signal from the 07-21 investigation. Halves-test corrective candidate: <code>analysis/h_pp_bin_calibration.py</code>.</div>
+  <div id="pp-brier-content" class="status" style="font-size:0.85em;">Loading pp_brier_reliability.json…</div>
 </details>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;">
@@ -948,8 +917,10 @@
           <li>L2 mesonet blend: t · h · dp · cc · cl · cm · ch · ws · wg <span style="opacity:0.7;">(pr off 07-01)</span></li>
           <li>L3 lead-decay: ws · wg · ch · cm <span style="opacity:0.7;">(pp dropped 2026-07-04 v0.6.304 · skip: ws in ne_flow all bands + sea_breeze 0-11h)</span></li>
           <li>L4 diurnal: <code>{ch, cc}</code></li>
-          <li>Lsr synoptic (sr): skip ne_flow + calm <span style="opacity:0.7;">· Lt retired 07-13 (Fix B held-out +0.29%)</span></li>
+          <li>Lsr synoptic (sr): skip ne_flow + calm <span style="opacity:0.7;">· Lt reclassified as telemetry experiment 07-27 (Fix B held-out +0.29%)</span></li>
           <li>Lc cloud saturation-unbiasing (cc · cl · cm · ch) <span style="opacity:0.7;">· FLIPPED 07-17 v0.6.355 · 14-day watch through 07-31</span></li>
+          <li>chp high-cloud persistence-of-obs (ch): 27 SHIP cells <span style="opacity:0.7;">· FLIPPED 07-19 v0.6.358 · 14-day watch through 08-02</span></li>
+          <li>wdp wind-direction predicted-transition persistence (wd): 5 SHIP cells <span style="opacity:0.7;">· FLIPPED 2026-07-27 v0.6.382 · 14-day watch through 08-10</span></li>
         </ul>
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Production vs raw</div>
         <ul style="margin:0 0 8px 16px;padding:0;">
@@ -1387,7 +1358,7 @@
   <p class="layer-summary">The bare government weather model. Knows nothing about Wyman Cove specifically. Everything below corrects what it gets wrong here.</p>
   <details class="layer-methodology"><summary>About the raw model</summary>
     The starting point. Open-Meteo's HRRR (next 48h) and GFS (days 3–7) numerical weather models. Multi-kilometer grid resolution; the model has no specific knowledge of Wyman Cove. Every layer below corrects what the raw model gets wrong locally.
-    <div class="meta-line">Curves below show the current raw model forecast per field — same dotted line that appears in the drill-down above.</div>
+    <div class="meta-line">Curves below show the current raw model forecast per field.</div>
   </details>
 </div>
 <div id="grid-raw" class="grid"></div>
@@ -1558,7 +1529,7 @@
 <details>
   <summary><h3 class="subsection" style="display:inline;">Developer notes — classifier, lookup tables, audit details</h3></summary>
 
-  <div class="meta-line" style="margin-top:8px;"><strong>Regime classifier.</strong> <code>regime_classifier.classify_synoptic_regime(...)</code> returns one of nine labels; same source feeds C1a's transition axis. Lsr reads via <code>state.regime_synoptic</code>. Live label surfaces in Production Stack box, drill-down D1, R2, R6.</div>
+  <div class="meta-line" style="margin-top:8px;"><strong>Regime classifier.</strong> <code>regime_classifier.classify_synoptic_regime(...)</code> returns one of nine labels; same source feeds C1a's transition axis. Lsr reads via <code>state.regime_synoptic</code>. Live label surfaces in Production Stack box, R2.</div>
 
   <div class="meta-line" style="margin-top:10px;"><strong>Per-regime delta table — what the lookup contains.</strong> Lsr's bias tables live in <code>weather_collector/processors/solar_correction.py</code> as two Python dicts:</div>
   <ul class="meta-line" style="margin:6px 0 6px 22px;padding:0;line-height:1.55;font-size:0.92em;">
@@ -1635,33 +1606,22 @@
 <!-- ───────────────────── Research ───────────────────── -->
 <h2 class="section research-heading" id="sec-research">Research & Diagnostics — experimental signals + audit views (not applied to live forecast)</h2>
 
-<h3 class="subsection" style="margin-top:8px;color:#74c38b;">Diagnostics <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— audit live behavior</span></h3>
+<details class="rd-group" open style="margin-top:8px;">
+  <summary style="cursor:pointer;list-style-position:outside;"><h3 class="subsection" style="display:inline;color:#74c38b;">Diagnostics <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— audit live behavior</span></h3></summary>
 
 <details class="research-subsection" id="r0-l3l4-audit" open>
-  <summary>R0. L3/L4 audit table — is each layer earning its keep?</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Held-out MAE per field per layer (leads 1–47), refit every Fitter cycle. Dim subtext = signed bias. Δ columns compare to layer below: green = beats + applied; <span style="color:#d4a373;">amber</span> = beats but NOT applied; red = loses; gray = tied. Banners fire when an enabled layer loses &gt;3% (hidden regression) or a disabled layer wins &gt;3% (missed opportunity). <em>MAE-only caveat: RMSE tells a different story on L2-additive fields (wg Production improvement drops −33%→−26%, dp −17%→−13%, h −7%→−3%). Per-layer RMSE+bias column rewrite queued.</em></div>
+  <summary>R0. Per-layer audit — is each layer + specialist earning its keep?</summary>
+  <div class="meta-line" style="margin-bottom:10px;">Held-out MAE per field per layer (leads 1–47), refit every Fitter cycle. Dim subtext = signed bias. Δ columns compare to layer below: green = beats + applied; <span style="color:#d4a373;">amber</span> = beats but NOT applied; red = loses; gray = tied. Banners fire when an enabled layer or specialist loses &gt;3% (hidden regression) or a disabled specialist / layer wins &gt;3% (missed opportunity / post-ship watch signal). Specialists column (v0.6.382n) chains Lsr → Lc → chp / clp / wdp for the fields each owns; each rung compares to the previous rung (or L4 if first). Production column shows the real per-row Production MAE (aggregated from <code>applied_layer</code> stamps). <em>MAE-only caveat: RMSE tells a different story on L2-additive fields (wg Production improvement drops −33%→−26%, dp −17%→−13%, h −7%→−3%). Per-layer RMSE+bias column rewrite queued.</em></div>
   <div id="status-audit" class="status" hidden></div>
   <div id="grid-audit"></div>
 </details>
 
-<details class="research-subsection" id="sec-drill">
-  <summary>D1. Drill-down — see each correction layer build up (teaching view)</summary>
-  <div class="meta-line" style="margin-bottom:10px;">Visual build-up of the live forecast, layer by layer. Pick a field + layers, hit Play to watch L1 → L2 → L3 → L4 animate. Layers not applied to a field render on top of the prior layer (no visual change). Useful for sanity-checking a specific field's stack.</div>
-  <div class="drill-controls">
-    <div class="group">
-      <span class="group-label">Fields</span>
-      <span id="drill-field-checks"></span>
-      <button id="drill-clear-fields" type="button" style="margin-left:6px;font-size:11px;background:#1a1f2a;border:1px solid #242833;color:var(--muted);padding:3px 8px;border-radius:4px;cursor:pointer;">Clear all</button>
-    </div>
-    <div class="group">
-      <span class="group-label">Layers</span>
-      <span id="drill-layer-checks"></span>
-    </div>
-    <button id="drill-play">▶ Play layer build-up</button>
-  </div>
-  <div id="drill-canvases" class="grid"></div>
-  <div id="status-drill" class="status" hidden></div>
-</details>
+<!-- D1 Drill-down retired v0.6.382o — user never used it, and the L4→L3→L2
+     back-out reconstruction had gone stale after specialists (Lc/chp/wdp)
+     and skip tables entered the stack. Per-field sections above are the
+     authoritative view now. _drillComputeSeries stays because L2 raw-model
+     charts below still consume it. -->
+
 
 <details class="research-subsection" id="frontal-events">
   <summary>F1. Frontal passage log — detector instrumentation (last 14 days)</summary>
@@ -1677,7 +1637,10 @@
 </details>
 
 
-<h3 class="subsection" style="margin-top:24px;color:#9fb8d8;">Tools <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— evaluate candidates before promotion</span></h3>
+</details>
+
+<details class="rd-group" open style="margin-top:24px;">
+  <summary style="cursor:pointer;list-style-position:outside;"><h3 class="subsection" style="display:inline;color:#9fb8d8;">Tools <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— evaluate candidates before promotion</span></h3></summary>
 
 <details class="research-subsection" id="shadow-whitelist">
   <summary>S1. Shadow applicability tuner — what would auto-tuner have chosen?</summary>
@@ -1692,7 +1655,10 @@
 </details>
 
 
-<h3 class="subsection" style="margin-top:24px;color:#d4a373;">Candidates <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— in-flight hypotheses (Stage 3 = wired ENABLED=False by definition)</span></h3>
+</details>
+
+<details class="rd-group" open style="margin-top:24px;">
+  <summary style="cursor:pointer;list-style-position:outside;"><h3 class="subsection" style="display:inline;color:#d4a373;">Candidates <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— in-flight hypotheses (Stage 3 = wired ENABLED=False by definition)</span></h3></summary>
 
 <details class="research-subsection" id="c1-stack-status">
   <summary>C1 confidence stack — status</summary>
@@ -1742,9 +1708,14 @@
 
   </details>
 
-<h3 class="subsection" style="margin-top:24px;color:#888;">Experiments</h3>
-<h4 style="color:#888;margin-top:22px;margin-bottom:6px;">Stage 0 explorations — open design seeds + data-limitation flags</h4>
-  <div class="meta-line" style="margin-bottom:8px;opacity:0.85;">Only genuinely-open items live here. Promoted (→ Stage 1+), killed by orthogonality, and settled-null items live in <a href="#sec-archive" style="color:#7fb3ff;">Archive</a> — single source of truth.</div>
+</details>
+
+<details class="rd-group" open style="margin-top:24px;">
+  <summary style="cursor:pointer;list-style-position:outside;"><h3 class="subsection" style="display:inline;color:#888;">Experiments <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— open design seeds + live telemetry probes</span></h3></summary>
+
+<details class="research-subsection" id="stage0-explorations">
+  <summary>E1. Stage 0 explorations — open design seeds + data-limitation flags</summary>
+  <div class="meta-line" style="margin-top:10px;margin-bottom:8px;opacity:0.85;">Only genuinely-open items live here. Promoted (→ Stage 1+), killed by orthogonality, and settled-null items live in <a href="#sec-archive" style="color:#7fb3ff;">Archive</a> — single source of truth.</div>
   <ul style="margin:0 0 0 22px;padding:0;line-height:1.55;font-size:0.92em;">
     <li><strong>Asymmetric L3 (over- vs under-call).</strong> Wind L3 +57% on over-calls, −120 to −166% on under-calls. Real asymmetry but not directly actionable (can't predict which side a future pair falls on). Design seed for a future "L3-with-confidence-gate" hypothesis. <code>h_asymmetric_l3.py</code></li>
     <li><strong>Run-time issuance bias.</strong> HRRR init hour shows clean sinusoidal pattern on humidity L1 MAE (8.0 → 10.5, 33% spread) but potentially confounded with valid-time-of-day. Needs a controlled follow-up holding valid_time fixed. <code>h_run_time_bias.py</code></li>
@@ -1754,19 +1725,18 @@
     <li><strong>wind speed bin × wind direction error.</strong> <span style="color:#a08070;">SCRIPT BUG.</span> Join between wd-row and ws-row returned empty. Per-pair key structure may not align across fields. <code>h_ws_wd_error.py</code></li>
     <li><strong>Lightning proximity × MAE.</strong> <span style="color:#a08070;">INFRASTRUCTURE GAP.</span> Pair log doesn't carry lightning data (Tempest strike fields live in <code>station_history.json</code>, not <code>forecast_error_log.jsonl</code>). Re-test after adding <code>lightning_proximity_km</code> to pair-log rows. <code>h_lightning_proximity.py</code></li>
   </ul>
+</details>
 
 
-<!-- Lt (retired temperature specialist) — originally moved out of Archive
-     into R&D 2026-07-04 v0.6.300 as "dormant pending Fix B." Fix B ran
-     2026-07-13 v0.6.329 (l6_fix_b_refit.py) and failed the +1% ship gate
-     at +0.29% held-out. Section stays in R&D (not Archive) because the
-     code still runs each tick and cove_gradient_log.json is still being
-     appended — useful diagnostic surface if seasonal shift ever changes
-     the microclimate signal and a new refit becomes worth trying. -->
-<details class="research-subsection" id="sec-rd-lt" style="margin-top:12px;border-color:#3a2a2a;background:#191313;">
-  <summary style="color:#a08070;"><strong>[RETIRED LAYER] Lt — Cove microclimate correction (temperature)</strong> — <em>Retired 2026-07-13 v0.6.329 after Fix B refit failed the +1% ship gate (held-out +0.29%)</em></summary>
+<!-- Lt (cove microclimate telemetry) — reclassified 2026-07-27 v0.6.382i
+     from "RETIRED LAYER" to Experiment. Still runs each tick and appends
+     to cove_gradient_log.json — the correction returns 0.0 but the data
+     probe is live. Reactivation requires a future Fix B refit clearing
+     the +1% ship gate on fresh pair-log data. -->
+<details class="research-subsection" id="sec-rd-lt" style="margin-top:12px;">
+  <summary>E2. Lt — Cove microclimate telemetry probe <span style="opacity:0.7;font-weight:normal;">(active experiment — correction returns 0.0; gradient log still appending)</span></summary>
   <div id="lt-live-state" class="status" style="margin-top:10px;">Loading…</div>
-  <div class="meta-line" style="margin-top:10px;"><strong>Status: retired, not dormant.</strong> The processor code stays intact and still runs each tick (<code>compute_cove_correction()</code> returns 0.0 in both branches; telemetry stamps for retro-check). <code>cove_gradient_log.json</code> continues to append per-tick waterfront-vs-inland gradient data on GCS (14-day rolling window) — cheap, kept alive in case seasonal shift ever changes the microclimate signal and a new refit becomes worth trying. The Lt row in the divergence report now reads from <code>l6_fix_b_refit</code> (07-14 v0.6.351b), which reports HOLD and matches production, so the row stays AGREE forever unless a future refit crosses the +1% gate.</div>
+  <div class="meta-line" style="margin-top:10px;"><strong>Status: active telemetry, correction dormant.</strong> The processor code runs each tick (<code>compute_cove_correction()</code> returns 0.0 in both branches; telemetry stamps for retro-check). <code>cove_gradient_log.json</code> continues to append per-tick waterfront-vs-inland gradient data on GCS (14-day rolling window) — cheap, kept alive in case seasonal shift ever changes the microclimate signal and a new refit becomes worth trying. The Lt row in the divergence report now reads from <code>l6_fix_b_refit</code> (07-14 v0.6.351b), which reports HOLD and matches production, so the row stays AGREE forever unless a future refit crosses the +1% gate.</div>
   <div class="meta-line" style="margin-top:10px;"><strong>Original design.</strong> A small Δ°F added to the temperature forecast based on how much the waterfront stations (Willow Rd, Neptune Rd) typically diverge from the inland-network median under different wind / sea-breeze / hour combinations. Lt was the first correction trained on a spatial differential between station subgroups (L1–Lsr are trained on forecast-vs-aggregated-obs errors).</div>
   <div class="meta-line" style="margin-top:10px;"><strong>Shipped 2026-06-26 v0.6.238.</strong> Cleared a 2-read confirmation gate on <code>r5_cove_analysis.py</code> (06-25 SHIP + 06-26 SHIP). Per-lead projection fix 2026-06-26 v0.6.237 (initial ship applied current-tick Δ to all 48 leads — wrong by 3–5°F at distant leads when the table crossed zero). Cooling branch disabled 2026-06-30 v0.6.259 (paired-MAE on 19,975 t rows: cooling branch made cooling rows −74.9% worse). Warming branch disabled 2026-07-01 v0.6.276 after per-row Production data (v0.6.269 applied-layer stamping + v0.6.275 backfill on 47,301 T pair rows) showed warming-branch rows ran ~40% worse than L2 on the same rows. Hypothesis at that time: double-counting — L2's Kalman blend for T is dominated by waterfront Tempests (Willow Rd, Neptune Rd at ~0.1–0.2 mi from the cove) — L2 already carries "waterfront bias" by station weighting; adding a (waterfront − inland) Δ on top re-adds the same signal.</div>
   <div class="meta-line" style="margin-top:10px;"><strong>Fix B — tried 2026-07-13 v0.6.329, failed the +1% gate.</strong> <code>analysis/l6_fix_b_refit.py</code> refit both lookup tables against <em>(cove obs − L2 forecast at cove)</em> instead of the raw (waterfront − inland) gradient — the design the section header used to promise. Ran on 202,321 pair rows (154k train / 47,757 held-out). Panel B (sb_off × hour) looked like a real overnight cove-cooling signal on training: 00-06h +0.9 to +2.1°F, 7 SHIP bins. But held-out MAE improvement was <strong>+0.29%</strong> vs the +1.0% ship gate. Panel A (sb_on × octant) came back with 0 SHIP bins after refit — the warming-branch signal was largely a fitting-against-raw-L1 artifact. Mechanism confirmed: L2's Kalman blend re-fits per-tick based on obs-vs-model bias and absorbs the same microclimate signal dynamically. A static hourly cove table adds a delta L2 already added → wash on held-out.</div>
@@ -1778,6 +1748,8 @@
 <!-- ───────────────────── Archive ─────────────────────
      Retired ideas & historical investigations. Promoted out of
      Research → Retired into its own top-level section. -->
+</details>
+
 <h2 class="section" id="sec-archive">Archive — Retired ideas &amp; historical investigations</h2>
 <div class="layer-info-text" style="border-color:#3a2a2a;background:#191313;">
   <p class="layer-summary">Things we built, ran, and stopped running. Two kinds live here: <strong>hypotheses</strong> the data answered no, and <strong>settled tunings</strong> where the sweep concluded "current value is fine." Kept as institutional memory. Scripts in <code>analysis/</code> can be re-run if conditions shift. <strong>Retired layers</strong> (code intact but permanently no-op) stay in R&D — see Lt above.</p>
@@ -1898,6 +1870,8 @@ const BACKTEST_SWEEP_URL = "https://data.wymancove.com/backtest_sweep_results.js
 const SHADOW_WHITELIST_URL = "https://data.wymancove.com/shadow_whitelist_log.json";
 const GATE_FIRING_URL = "https://data.wymancove.com/gate_firing_rollup.json";
 const PERSISTENCE_URL = "https://data.wymancove.com/persistence_skill.json";
+const PP_BRIER_RELIABILITY_URL = "https://data.wymancove.com/pp_brier_reliability.json";
+const PP_BIN_CALIBRATION_URL = "https://data.wymancove.com/h_pp_bin_calibration.json";
 const M2_PERIOD_HOURS = 12.4206;
 // Reference cosine amplitude for Section 5's phase-binned charts. Bumped from
 // 4.0 to 5.0 in v0.6.12 — closer to Salem's typical M2 amplitude. The
@@ -2093,21 +2067,14 @@ function buildCorrectionChart(canvas, field, corrections, counts) {
   });
 }
 
-// ── Drill-down: per-field, layer-by-layer build-up ──────────────────────
-// 4 layers (raw → mesonet → decay → diurnal). Layer 2's internal K-scaling
-// detail lives inside Layer 2's own panel, not in the cross-layer view.
-const DRILL_LAYERS = [
-  { key: "raw", label: "Raw model",                   color: "rgba(138,147,163,0.55)", dash: [4,4] },
-  { key: "l2",  label: "+ L2 (aggregate bias)",       color: "rgba(170,180,200,1)",    dash: [] },
-  { key: "l3",  label: "+ L3 (lead decay)",           color: "rgba(110,180,235,1)",    dash: [] },
-  { key: "l4",  label: "+ L4 (diurnal)",              color: "rgba(74,163,255,1)",     dash: [] },
-];
-let _drillCharts = [];  // one Chart.js instance per selected field
-let _drillState = {
-  fields: new Set(["t"]),  // multi-select; default just temperature
-  visible: { raw: true, l2: true, l3: true, l4: true },
-};
-
+// ── Per-field layer-series compute (shared) ─────────────────────────────
+// Returns {leads, raw, l2, l3, l4} for a field, cumulative from raw model
+// through L4. Originally powered D1 Drill-down (retired v0.6.382o); still
+// consumed by the L2 raw-model curves section below. NOTE: the L4→L3→L2
+// back-out here does not account for specialists (Lc / chp / wdp) or skip
+// tables, so the l3 / l2 series it returns are mislabeled hybrids for
+// fields that carry those. The L2 section below only reads .l2 for fields
+// where that back-out is still honest (t/h/dp/ws/wg/pr).
 function _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr) {
   // Returns {leads, raw, l2, l3, l4} — 4 layers, cumulative:
   //   raw = model output, no corrections
@@ -2150,152 +2117,10 @@ function _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr) {
   return { leads, raw, l2, l3, l4 };
 }
 
-function _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc) {
-  // Tear down any existing charts before rebuilding the grid.
-  for (const c of _drillCharts) { try { c.destroy(); } catch (e) {} }
-  _drillCharts = [];
-  const host = document.getElementById("drill-canvases");
-  host.innerHTML = "";
-  const selectedFields = FIELDS.filter(f => _drillState.fields.has(f.key));
-  if (!selectedFields.length) {
-    host.innerHTML = `<div class="layer-info-text" style="grid-column:1/-1;">Select one or more fields above to render drill-down charts.</div>`;
-    return;
-  }
-  const mae = (tsDoc && tsDoc.per_layer_mae_by_lead) || {};
-  const errsByLead = (tsDoc && tsDoc.errors_by_lead) || {};
-  // MAE helper — same fallback logic as the Almanac forecast accuracy block:
-  // prefer per-layer L4 MAE; fall back to mean-of-abs of errors_by_lead when L4
-  // is missing at a lead (typical during the first 24-48h after a snapshot/joiner format change).
-  function maeAt(fieldKey, lead) {
-    const l4 = (mae[fieldKey] && mae[fieldKey].l4) || [];
-    if (l4[lead] != null) return l4[lead];
-    const arr = (errsByLead[String(lead)] || {})[fieldKey] || [];
-    const valid = arr.filter(v => v != null);
-    if (!valid.length) return null;
-    return valid.reduce((s, v) => s + Math.abs(v), 0) / valid.length;
-  }
-  for (const field of selectedFields) {
-    const s = _drillComputeSeries(field, wxDoc, decayCorr, diurnalCorr);
-    const layerDatasets = DRILL_LAYERS.filter(l => _drillState.visible[l.key]).map(l => ({
-      label: l.label,
-      data: s[l.key],
-      borderColor: l.color,
-      backgroundColor: "rgba(0,0,0,0)",
-      borderDash: l.dash,
-      borderWidth: l.key === "l4" ? 2 : (l.key === "raw" ? 1 : 1.5),
-      pointRadius: 0,
-      tension: 0.25,
-      spanGaps: true,
-    }));
-    // Confidence band around L4 — uses near-term (lead 6h) MAE as a single ±band
-    // width applied flat across all forecast leads. Simpler than per-lead bands;
-    // good enough for visual context. Skipped if MAE is unavailable.
-    const bandWidth = maeAt(field.key, 6);
-    let bandDatasets = [];
-    if (bandWidth != null && _drillState.visible.l4) {
-      const upper = s.l4.map(v => v == null || isNaN(v) ? NaN : v + bandWidth);
-      const lower = s.l4.map(v => v == null || isNaN(v) ? NaN : v - bandWidth);
-      bandDatasets = [
-        { label: `±${bandWidth.toFixed(2)} (near-term MAE)`, data: upper,
-          borderColor: "rgba(74,163,255,0.0)", backgroundColor: "rgba(74,163,255,0.10)",
-          borderWidth: 0, pointRadius: 0, fill: "+1", tension: 0.25, spanGaps: true, _isBand: true },
-        { label: "", data: lower,
-          borderColor: "rgba(74,163,255,0.0)", backgroundColor: "rgba(0,0,0,0)",
-          borderWidth: 0, pointRadius: 0, fill: false, tension: 0.25, spanGaps: true, _isBand: true },
-      ];
-    }
-    const datasets = [...bandDatasets, ...layerDatasets];
-    // MAE annotation
-    const v6 = maeAt(field.key, 6);
-    const v24 = maeAt(field.key, 24);
-    const maeFmt = v => v == null ? "—" : `±${v.toFixed(field.key === "pr" ? 3 : (field.key === "pa" ? 3 : 1))}${field.unit}`;
-    const maeLine = `Near-term (6h) <strong>${maeFmt(v6)}</strong> · Day-ahead (24h) <strong>${maeFmt(v24)}</strong>`;
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML =
-      `<h3><span class="name">${field.label} (${field.key})</span>` +
-      `<span class="summary">${field.unit}</span></h3>` +
-      `<div class="chart-wrap"><canvas></canvas></div>` +
-      `<div style="padding:6px 10px 8px;font-size:11px;color:var(--muted);border-top:1px solid #242833;">${maeLine}</div>`;
-    host.appendChild(card);
-    const canvas = card.querySelector("canvas");
-    const chart = new Chart(canvas, {
-      type: "line",
-      data: { labels: s.leads, datasets },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        animation: { duration: 400 },
-        plugins: {
-          legend: {
-            labels: {
-              color: "#8a93a3", boxWidth: 10, font: { size: 10.5 },
-              // Hide band datasets from legend; keep layer lines.
-              filter: (item, data) => !data.datasets[item.datasetIndex]._isBand,
-            },
-            position: "bottom",
-          },
-          tooltip: { callbacks: { title: (items) => `lead ${items[0].label}h` } },
-        },
-        scales: {
-          x: { title: { display: true, text: "lead time (hours from now)", color: "#8a93a3" },
-               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 8 },
-               grid: { color: "#242833" } },
-          y: { title: { display: true, text: field.unit, color: "#8a93a3" },
-               ticks: { color: "#8a93a3" },
-               grid: { color: "#242833" },
-               beginAtZero: false },
-        },
-      },
-    });
-    _drillCharts.push(chart);
-  }
-}
-
-function _drillSetupControls(wxDoc, decayCorr, diurnalCorr, tsDoc) {
-  const fieldHost = document.getElementById("drill-field-checks");
-  fieldHost.innerHTML = FIELDS.map(f =>
-    `<label><input type="checkbox" data-field="${f.key}"${_drillState.fields.has(f.key) ? " checked" : ""}> ${f.label}</label>`
-  ).join("");
-  fieldHost.addEventListener("change", (e) => {
-    const k = e.target.dataset.field;
-    if (k) {
-      if (e.target.checked) _drillState.fields.add(k); else _drillState.fields.delete(k);
-      _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
-    }
-  });
-  document.getElementById("drill-clear-fields").addEventListener("click", () => {
-    _drillState.fields.clear();
-    fieldHost.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
-    _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
-  });
-  const layerHost = document.getElementById("drill-layer-checks");
-  layerHost.innerHTML = DRILL_LAYERS.map(l =>
-    `<label><input type="checkbox" data-layer="${l.key}"${_drillState.visible[l.key] ? " checked" : ""}> ${l.label}</label>`
-  ).join("");
-  layerHost.addEventListener("change", (e) => {
-    const k = e.target.dataset.layer;
-    if (k) {
-      _drillState.visible[k] = e.target.checked;
-      _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
-    }
-  });
-  document.getElementById("drill-play").addEventListener("click", () => {
-    // Animate: hide all, then reveal one at a time on a delay. Applies to
-    // every selected field's chart in sync.
-    DRILL_LAYERS.forEach(l => { _drillState.visible[l.key] = false; });
-    layerHost.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
-    _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
-    DRILL_LAYERS.forEach((l, idx) => {
-      setTimeout(() => {
-        _drillState.visible[l.key] = true;
-        const cb = layerHost.querySelector(`input[data-layer="${l.key}"]`);
-        if (cb) cb.checked = true;
-        _drillRender(wxDoc, decayCorr, diurnalCorr, tsDoc);
-      }, 600 + idx * 900);
-    });
-  });
-}
+// (D1 Drill-down renderer + controls retired v0.6.382o — user never used
+// it, and the L4→L3→L2 back-out reconstruction had gone stale after
+// specialists / skip tables entered the stack. _drillComputeSeries above
+// stays because the L2 raw-model charts still call it.)
 
 // ── Top-of-page "right now" headline (plain English, mobile-first) ──────
 function renderApplicabilityMap(wxDoc) {
@@ -3667,6 +3492,23 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     return worst;
   };
 
+  // Specialist stack per field. Ordered downstream from L4: for a field with
+  // multiple specialists (ch: Lc → chp), each one's Δ compares against the
+  // PREVIOUS specialist, not against L4. `enabled` mirrors the current live
+  // status of each specialist's gate; update when a specialist flips (search
+  // for SPECIALIST_STACK in this file). Lt for `t` is intentionally omitted
+  // — the correction returns 0.0 (telemetry experiment only, v0.6.382i).
+  const SPECIALIST_STACK = {
+    sr: [{ key: "l5",  label: "Lsr", enabled: true  }],
+    cc: [{ key: "l6",  label: "Lc",  enabled: true  }],
+    cl: [{ key: "l6",  label: "Lc",  enabled: true  },
+         { key: "clp", label: "clp", enabled: false }],  // Stage 3, flip gate through 07-31
+    cm: [{ key: "l6",  label: "Lc",  enabled: true  }],
+    ch: [{ key: "l6",  label: "Lc",  enabled: true  },
+         { key: "chp", label: "chp", enabled: true  }],
+    wd: [{ key: "wdp", label: "wdp", enabled: true  }],
+  };
+
   // Build rows
   const rows = [];
   for (const f of FIELDS) {
@@ -3693,9 +3535,30 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     // l4Worst but with upper/lower swapped so wins, not losses, are flagged.)
     const l3WinIfOff = isBrier ? null : worstLosingBand(fd.l2, fd.l3);
     const l4WinIfOff = isBrier ? null : worstLosingBand(fd.l3, fd.l4);
+    // Specialist chain: each rung compares to the previous rung's MAE (or L4
+    // if it's the first specialist). Populates the "Specialists" column and
+    // the extended suspect/missed banners below.
+    const specialists = [];
+    let prevKey = "l4";
+    let prevMae = l4;
+    for (const spec of (SPECIALIST_STACK[f.key] || [])) {
+      const specMae  = avg(fd[spec.key]);
+      const specBias = avg(fb[spec.key]);
+      const dSpec    = (prevMae != null && specMae != null) ? (specMae - prevMae) : null;
+      const worst    = worstLosingBand(fd[spec.key], fd[prevKey]);
+      const winIfOff = worstLosingBand(fd[prevKey], fd[spec.key]);
+      specialists.push({
+        ...spec, mae: specMae, bias: specBias, delta: dSpec,
+        worst, winIfOff, prevLabel: prevKey.toUpperCase(),
+      });
+      if (specMae != null) { prevMae = specMae; prevKey = spec.key; }
+    }
+    const prodMae  = avg(fd.production);
+    const prodBias = avg(fb.production);
     rows.push({ f, l1, l2, l3, l4, b1, b2, b3, b4,
                 d2, d3, d4, l3Worst, l4Worst, l3WinIfOff, l4WinIfOff, isBrier,
-                l3on: l3Fields.has(f.key), l4on: l4Fields.has(f.key) });
+                l3on: l3Fields.has(f.key), l4on: l4Fields.has(f.key),
+                specialists, prodMae, prodBias });
   }
   if (!rows.length) {
     showStatus("status-audit", "No per-layer MAE rows yet.");
@@ -3783,6 +3646,39 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     return `<td style="color:#ef6450;font-weight:700;">No</td>`;
   };
 
+  // One-cell renderer for a field's specialist chain. Each rung shows
+  // <label>: MAE Δ vs prev-rung. Enabled specialists losing by >3% get ⚠
+  // (post-ship regression); disabled specialists winning by >3% get amber
+  // ⚠ (missed watch signal — analogous to the L3/L4 missed-opportunity rule).
+  const specialistsCell = (specs) => {
+    if (!specs || !specs.length) return `<td style="opacity:0.5;">—</td>`;
+    const rungs = specs.map(s => {
+      if (s.mae == null) {
+        return `<span style="opacity:0.55;">${s.label}: —</span>`;
+      }
+      const suspect = s.enabled && !!s.worst;
+      const missed  = !s.enabled && !!s.winIfOff;
+      let color;
+      if (suspect) color = "#ef6450";
+      else if (missed) color = "#d4a373";
+      else if (s.delta == null) color = "#8a93a3";
+      else if (Math.abs(s.delta) < 0.005) color = "#8a93a3";
+      else color = s.delta <= 0 ? "#4ad29a" : "#ef6450";
+      const arrow = (s.delta == null || Math.abs(s.delta) < 0.005) ? ""
+                    : (s.delta <= 0 ? "▼ " : "▲ ");
+      const dTxt = s.delta == null ? "" : ` <span style="opacity:0.75;">(${arrow}${Math.abs(s.delta).toFixed(2)} vs ${s.prevLabel})</span>`;
+      const stateTag = s.enabled
+        ? (suspect ? ` <span style="color:#ef6450;">⚠</span>` : "")
+        : ` <span style="opacity:0.65;font-size:0.85em;">off${missed ? " ⚠" : ""}</span>`;
+      return `<span style="color:${color};font-weight:600;">${s.label}: ${s.mae.toFixed(2)}</span>${dTxt}${stateTag}`;
+    });
+    return `<td style="font-size:0.9em;">${rungs.join("<br>")}</td>`;
+  };
+  const productionCell = (mae, bias) => {
+    if (mae == null) return `<td style="opacity:0.5;">—</td>`;
+    return `<td style="font-weight:600;">${mae.toFixed(2)}${biasSpan(bias, 2)}</td>`;
+  };
+
   const head = `<tr>
     <th>Field</th>
     <th>L1 raw</th>
@@ -3795,6 +3691,8 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
     <th>L4 diurnal</th>
     <th>Δ L4−L3</th>
     <th>L4 Applied?</th>
+    <th>Specialists</th>
+    <th>Production</th>
   </tr>`;
   const body = rows.map(r => {
     const l3Suspect = r.l3on && !!r.l3Worst;
@@ -3815,30 +3713,42 @@ function renderL3L4AuditSection(tsDoc, wxDoc) {
       <td>${fmt(r.l4, 2)}${biasSpan(r.b4, 2)}</td>
       ${deltaCell(r.d4, r.l4on, r.l4Worst, false, r.l4WinIfOff)}
       ${appliedCell(r.l4on, l4Suspect)}
+      ${specialistsCell(r.specialists)}
+      ${productionCell(r.prodMae, r.prodBias)}
     </tr>`;
   }).join("");
 
+  // Specialist-aware suspect / missed checks — same 3% margin rule extended
+  // to enabled specialists losing to prev-rung and disabled specialists that
+  // would win over prev-rung.
+  const specSuspect = (r) => (r.specialists || []).some(s => s.enabled && !!s.worst);
+  const specMissed  = (r) => (r.specialists || []).some(s => !s.enabled && !!s.winIfOff);
   const anySuspect = rows.some(r =>
-    (r.l3on && !!r.l3Worst) || (r.l4on && !!r.l4Worst));
+    (r.l3on && !!r.l3Worst) || (r.l4on && !!r.l4Worst) || specSuspect(r));
   const anyMissed = rows.some(r =>
-    (!r.l3on && !!r.l3WinIfOff) || (!r.l4on && !!r.l4WinIfOff));
+    (!r.l3on && !!r.l3WinIfOff) || (!r.l4on && !!r.l4WinIfOff) || specMissed(r));
 
   const missedList = rows.filter(r =>
-    (!r.l3on && !!r.l3WinIfOff) || (!r.l4on && !!r.l4WinIfOff))
+    (!r.l3on && !!r.l3WinIfOff) || (!r.l4on && !!r.l4WinIfOff) || specMissed(r))
     .map(r => {
       const parts = [];
       if (!r.l3on && r.l3WinIfOff) parts.push(`<code>${r.f.key}</code> L3 +${(r.l3WinIfOff.frac * 100).toFixed(0)}% at ${r.l3WinIfOff.band}`);
       if (!r.l4on && r.l4WinIfOff) parts.push(`<code>${r.f.key}</code> L4 +${(r.l4WinIfOff.frac * 100).toFixed(0)}% at ${r.l4WinIfOff.band}`);
+      for (const s of (r.specialists || [])) {
+        if (!s.enabled && s.winIfOff) {
+          parts.push(`<code>${r.f.key}</code> ${s.label} +${(s.winIfOff.frac * 100).toFixed(0)}% at ${s.winIfOff.band}`);
+        }
+      }
       return parts.join("; ");
     }).filter(Boolean).join(" · ");
 
   const suspectBanner = anySuspect
-    ? `<div class="layer-info-text" style="border-color:#3a1f1f;background:#1c1313;margin-bottom:10px;"><strong style="color:#ef6450;">⚠ At least one enabled layer is losing by >3% in a lead band.</strong><div class="meta-line">Review the rows marked Yes ⚠ — the band annotation shows where the regression is. Cross-reference the <a href="#sec-accuracy">accuracy chart</a> for per-lead detail before flipping L3_FIELDS / L4_FIELDS.</div></div>`
-    : `<div class="layer-info-text" style="border-color:#1f3a1f;background:#131c13;margin-bottom:10px;"><strong style="color:#4ad29a;">✓ No enabled layer is losing by >3% in any lead band.</strong><div class="meta-line">Current L3_FIELDS / L4_FIELDS still match the data across short, mid, and long leads.</div></div>`;
+    ? `<div class="layer-info-text" style="border-color:#3a1f1f;background:#1c1313;margin-bottom:10px;"><strong style="color:#ef6450;">⚠ At least one enabled layer or specialist is losing by >3% in a lead band.</strong><div class="meta-line">Review the rows marked Yes ⚠ or the Specialists column's ⚠ rungs — the band annotation shows where the regression is. Cross-reference the <a href="#sec-accuracy">accuracy chart</a> for per-lead detail before flipping the offending gate.</div></div>`
+    : `<div class="layer-info-text" style="border-color:#1f3a1f;background:#131c13;margin-bottom:10px;"><strong style="color:#4ad29a;">✓ No enabled layer or specialist is losing by >3% in any lead band.</strong><div class="meta-line">Current L3_FIELDS / L4_FIELDS + live specialists (Lsr / Lc / chp / wdp) still match the data across short, mid, and long leads.</div></div>`;
 
   const missedBanner = anyMissed
-    ? `<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-bottom:10px;"><strong style="color:#d4a373;">⚠ At least one disabled layer would win by >3% in a lead band.</strong><div class="meta-line">${missedList}. Possible opportunity to add to L3_FIELDS / L4_FIELDS — but verify the win is consistent across re-runs before flipping (matches the discipline of the walk-forward validator).</div></div>`
-    : `<div class="layer-info-text" style="border-color:#1f3a1f;background:#131c13;margin-bottom:10px;"><strong style="color:#4ad29a;">✓ No disabled layer is winning by >3% in any lead band.</strong><div class="meta-line">All No cells in L3 / L4 Applied are correctly off — no opportunities being left on the table.</div></div>`;
+    ? `<div class="layer-info-text" style="border-color:#3a2d1f;background:#1c1813;margin-bottom:10px;"><strong style="color:#d4a373;">⚠ At least one disabled layer or specialist would win by >3% in a lead band.</strong><div class="meta-line">${missedList}. For layers → possible add to L3_FIELDS / L4_FIELDS. For specialists → post-ship watch signal (the Stage 3 wired ENABLED=False candidate may be ready to flip). Verify the win is consistent across re-runs before flipping (matches walk-forward-validator discipline).</div></div>`
+    : `<div class="layer-info-text" style="border-color:#1f3a1f;background:#131c13;margin-bottom:10px;"><strong style="color:#4ad29a;">✓ No disabled layer or specialist is winning by >3% in any lead band.</strong><div class="meta-line">All No / off cells are correctly disabled — no opportunities being left on the table.</div></div>`;
 
   const brierFootnote = rows.some(r => r.isBrier)
     ? `<div class="meta-line" style="margin-top:10px;font-size:0.85em;opacity:0.75;">
@@ -4064,6 +3974,90 @@ function renderLsrLiveState(wxDoc) {
     </div>
     <div class="meta-line" style="font-size:0.82em;opacity:0.75;margin-top:6px;">${solar.note ?? ""}</div>
   </div>`;
+}
+
+// pp Brier reliability — surfaces the daily reliability decomposition +
+// the halves-mode bin-lift calibration verdict on the debug page so the
+// under-forecast Stage 0 candidate stops being invisible in the digest.
+function renderPpBrierReliability(reliabilityDoc, calibrationDoc) {
+  const el = document.getElementById("pp-brier-content");
+  const head = document.getElementById("pp-brier-headline");
+  if (!el) return;
+  if (!reliabilityDoc || !reliabilityDoc.overall) {
+    el.textContent = "No pp_brier_reliability.json yet — waits for first digest run after v0.6.382k.";
+    if (head) head.textContent = "· no data yet";
+    return;
+  }
+  const rawBlock = reliabilityDoc.overall["L1 (raw)"];
+  if (!rawBlock || !rawBlock.bins) {
+    el.textContent = "pp_brier_reliability.json present but L1 block missing.";
+    return;
+  }
+  const v = reliabilityDoc.verdict || {};
+  const bins = rawBlock.bins;
+  const genAt = reliabilityDoc.generated_at
+    ? new Date(reliabilityDoc.generated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : "?";
+
+  if (head) {
+    if (v.state === "STAGE0_OPEN") {
+      head.innerHTML = `· <span style="color:#e0d472;">STAGE0 OPEN</span> — weighted bias ${v.weighted_bias_pp >= 0 ? "+" : ""}${v.weighted_bias_pp}pp, worst bin ${v.worst_bin} (${v.worst_bin_gap_pp >= 0 ? "+" : ""}${v.worst_bin_gap_pp}pp)`;
+    } else if (v.state === "CLEAN") {
+      head.innerHTML = `· <span style="color:#4ad29a;">CLEAN</span> — weighted bias ${v.weighted_bias_pp >= 0 ? "+" : ""}${v.weighted_bias_pp}pp`;
+    } else {
+      head.textContent = "· generated " + genAt;
+    }
+  }
+
+  // Compact reliability table — bins with n ≥ 30 only.
+  const rows = bins.filter(b => b.n >= 30).map(b => {
+    const gap = b.gap;
+    const color = Math.abs(gap) < 5 ? "#4ad29a"
+                : Math.abs(gap) > 15 ? "#fb7c5c"
+                : "#e0d472";
+    return `<tr>
+      <td style="padding:3px 8px 3px 0;"><code>${b.bin}</code></td>
+      <td style="padding:3px 10px;text-align:right;opacity:0.85;">${b.n.toLocaleString()}</td>
+      <td style="padding:3px 10px;text-align:right;">${b.predicted.toFixed(1)}%</td>
+      <td style="padding:3px 10px;text-align:right;">${b.observed.toFixed(1)}%</td>
+      <td style="padding:3px 0 3px 10px;text-align:right;color:${color};font-weight:600;">${gap >= 0 ? "+" : ""}${gap.toFixed(1)}pp</td>
+    </tr>`;
+  }).join("");
+
+  const calBlock = calibrationDoc && calibrationDoc.verdict ? (() => {
+    const cv = calibrationDoc.verdict;
+    const b = calibrationDoc.brier || {};
+    const ab = b.fit_A_score_B || {};
+    const ba = b.fit_B_score_A || {};
+    const color = cv.state === "SHIP" ? "#4ad29a"
+                : cv.state === "MARGINAL" ? "#e0d472"
+                : "#fb7c5c";
+    return `
+    <div style="margin-top:10px;padding:8px 10px;border-left:2px solid ${color};background:#101318;border-radius:2px;">
+      <div style="font-weight:600;color:${color};">Halves test — <code>h_pp_bin_calibration.py</code>: ${cv.state}</div>
+      <div style="opacity:0.85;font-size:0.9em;margin-top:3px;">${cv.rationale}</div>
+      <div style="opacity:0.75;font-size:0.85em;margin-top:3px;">Fit A → score B: ${ab.pct != null ? (ab.pct >= 0 ? "+" : "") + ab.pct.toFixed(2) + "%" : "?"} · Fit B → score A: ${ba.pct != null ? (ba.pct >= 0 ? "+" : "") + ba.pct.toFixed(2) + "%" : "?"} · bins agreeing: ${calibrationDoc.bins_agree_in_sign ?? "?"}/10</div>
+    </div>`;
+  })() : `<div style="margin-top:10px;padding:8px 10px;border-left:2px solid #555;background:#101318;border-radius:2px;opacity:0.75;font-size:0.85em;">
+      Halves test not yet run — <code>python3 -m analysis.h_pp_bin_calibration</code> to populate.
+    </div>`;
+
+  el.innerHTML = `
+    <div style="opacity:0.75;font-size:0.82em;margin-bottom:6px;">Generated ${genAt} · n=${(rawBlock.decomp?.n ?? 0).toLocaleString()} pp rows · obs base rate ${rawBlock.decomp?.obs_freq_pct ?? "?"}%.</div>
+    <table style="border-collapse:collapse;font-size:0.86em;">
+      <thead>
+        <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
+          <th style="padding:3px 8px 3px 0;">Bin</th>
+          <th style="padding:3px 10px;text-align:right;">n</th>
+          <th style="padding:3px 10px;text-align:right;">Predicted</th>
+          <th style="padding:3px 10px;text-align:right;">Observed</th>
+          <th style="padding:3px 0 3px 10px;text-align:right;">Gap</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${calBlock}
+  `;
 }
 
 // Post-ship + candidate telemetry. Lc (cloud saturation) FLIPPED
@@ -5499,6 +5493,18 @@ async function load() {
     if (res.ok) persistenceDoc = await res.json();
   } catch (err) { /* silent — file appears after digest publishes it */ }
 
+  let ppBrierDoc;
+  try {
+    const res = await fetch(PP_BRIER_RELIABILITY_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) ppBrierDoc = await res.json();
+  } catch (err) { /* silent — file appears after first digest rollup */ }
+  let ppBinCalDoc;
+  try {
+    const res = await fetch(PP_BIN_CALIBRATION_URL + "?_=" + Date.now(), { cache: "no-store" });
+    if (res.ok) ppBinCalDoc = await res.json();
+  } catch (err) { /* silent — file appears after first h_pp_bin_calibration run */ }
+  renderPpBrierReliability(ppBrierDoc, ppBinCalDoc);
+
   renderMeta(corrDoc, wxDoc);
   renderScorecardBanner(tsDoc, wxDoc, persistenceDoc);
   renderAccuracySection(tsDoc, wxDoc);
@@ -5513,19 +5519,7 @@ async function load() {
 
   const decayApplied = !!(wxDoc && wxDoc.decay_meta);
 
-  // ── Drill-down: per-field, layer-by-layer build-up ──
-  if (wxDoc && wxDoc.hourly) {
-    // Use the newest entry from history as the "current" diurnal correction set.
-    let diurnalCurrent = null;
-    if (diurnalDoc && Array.isArray(diurnalDoc.history) && diurnalDoc.history.length) {
-      diurnalCurrent = [...diurnalDoc.history].sort((a, b) =>
-        (a.fitted_at || "").localeCompare(b.fitted_at || ""))[diurnalDoc.history.length - 1];
-    }
-    _drillSetupControls(wxDoc, corrDoc, diurnalCurrent, tsDoc);
-    _drillRender(wxDoc, corrDoc, diurnalCurrent, tsDoc);
-  } else {
-    showStatus("status-drill", "Drill-down needs weather_data.json — load failed above.");
-  }
+  // (D1 Drill-down retired v0.6.382o.)
 
   // ── Layer 1: raw model curves ──
   if (wxDoc && wxDoc.hourly) {

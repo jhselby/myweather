@@ -116,7 +116,11 @@ def append_forecast_snapshot(hourly, derived=None):
                                 hourly.get("cloud_cover_low", [])),
                "l6": hourly.get("cloud_cover_low_post_lc",
                                 hourly.get("cloud_cover_low", [])),
-               "clp": hourly.get("cloud_cover_low", [])},
+               # v0.6.382p: prefer shadow key so ENABLED=False shadow
+               # values reach the pair log (falls back to live array when
+               # gate is ENABLED — shadow == live in that case).
+               "clp": hourly.get("cloud_cover_low_shadow_clp",
+                                 hourly.get("cloud_cover_low", []))},
         "cm": {"l1": hourly.get("raw_cloud_cover_mid", hourly.get("cloud_cover_mid", [])),
                "l2": hourly.get("cloud_cover_mid_post_l2", []),
                "l3": hourly.get("cloud_cover_mid_post_l3", []),
@@ -136,7 +140,11 @@ def append_forecast_snapshot(hourly, derived=None):
                                 hourly.get("cloud_cover_high", [])),
                "l6": hourly.get("cloud_cover_high_post_lc",
                                 hourly.get("cloud_cover_high", [])),
-               "chp": hourly.get("cloud_cover_high", [])},
+               # v0.6.382p: prefer shadow key (matches clp/wdp pattern —
+               # no behavior change today since chp is ENABLED=True and
+               # shadow == live).
+               "chp": hourly.get("cloud_cover_high_shadow_chp",
+                                 hourly.get("cloud_cover_high", []))},
         # Wind direction is circular — needs special sin/cos math in Fitter
         # and Apply. v0.6.368 added wd to L2 (wind_blend circular unit-vector
         # blend). v0.6.382 added wdp (wd_persistence_gate) — post-L2 specialist
@@ -150,7 +158,12 @@ def append_forecast_snapshot(hourly, derived=None):
                "l2": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction", [])),
                "l3": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction", [])),
                "l4": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction", [])),
-               "wdp": hourly.get("wind_direction", [])},
+               # v0.6.382p: prefer shadow key so ENABLED=False shadow
+               # values land in the pair log. During today's flip (ENABLED=
+               # True) shadow == live so no behavior change; matters for
+               # future re-verify or clone-of-template Stage 3 shadow weeks.
+               "wdp": hourly.get("wind_direction_shadow_wdp",
+                                 hourly.get("wind_direction", []))},
     }
     # Dew point is derived from t + h via Magnus at each layer (no separate model array).
     # Backward-compat top-level keys (t / h / ws / wg / pp / pr / cc) kept = L4 final.

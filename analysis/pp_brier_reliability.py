@@ -237,52 +237,68 @@ def main():
                      f"{b['observed']:>8.2f}  {b['gap']:>+7.2f}{mark}")
         emit("")
 
-    # Verdict — compare L4 (live post-decay) vs L1 (raw). Skip Production
-    # because pp's pair-log `forecast` field carries L1 semantics per
-    # [[feedback_measure_against_live_stack_baseline]] — Production == L1
-    # in the pair log even when L4 differs. That's a debug-page rendering
-    # bug we surface separately below.
+    # Verdict — Production is the live-scored series (pp L3 dropped 07-04,
+    # so Production == L1 by design in the current pair log; that's expected,
+    # not a bug — see [[project_pp_brier_reliability]] retraction).
     emit("=" * 100)
     l1 = payload["overall"].get("L1 (raw)", {}).get("decomp") or {}
-    l4 = payload["overall"].get("L4 (post-decay)", {}).get("decomp") or {}
     prod = payload["overall"].get("Production", {}).get("decomp") or {}
-    if l1 and l4:
-        rel_gain = l1["reliability"] - l4["reliability"]
-        res_gain = l4["resolution"] - l1["resolution"]
-        skill_gain = l4["skill_vs_climatology"] - l1["skill_vs_climatology"]
-        emit(f"L4 vs L1 (real work): reliability {rel_gain:+.5f} (lower better), "
-             f"resolution {res_gain:+.5f} (higher better), skill {skill_gain:+.4f}.")
-        if skill_gain > 0.01:
-            emit(f"Verdict: pp decay stack IMPROVES Brier skill vs raw HRRR by "
-                 f"{skill_gain:+.4f} (relative Brier {(l1['brier']-l4['brier'])/l1['brier']*100:+.1f}%).")
-        elif skill_gain < -0.01:
-            emit("Verdict: pp decay stack DEGRADES Brier skill vs raw HRRR — investigate.")
-        else:
-            emit("Verdict: pp decay stack near-equivalent to raw HRRR on Brier skill.")
 
-    if prod and l1 and abs(prod["brier"] - l1["brier"]) < 1e-6:
-        emit("")
-        emit("⚠ RENDERING BUG: pair-log `forecast` field for pp carries L1 semantics "
-             "(Production Brier == L1 Brier bit-exact). Any debug-page chart reading "
-             "pp Production is showing L1, NOT the live L4-corrected value. This masks "
-             f"the entire {(l1['brier']-l4['brier'])/l1['brier']*100:+.1f}% Brier improvement "
-             "the decay stack actually delivers. Same class as [[feedback_measure_against_live_stack_baseline]].")
-
-    # Calibration bias summary — is pp systematically under- or over-forecasting?
-    l4_bins = payload["overall"].get("L4 (post-decay)", {}).get("bins") or []
+    # Calibration bias — is raw HRRR pp systematically under- or over-forecasting?
+    # This is the surviving signal from the 07-21 investigation: the Stage 0
+    # candidate is a bin-weighted probability lift table applied to raw fc.
+    raw_bins = payload["overall"].get("L1 (raw)", {}).get("bins") or []
     signed_bias_pts = []
-    for b in l4_bins:
+    for b in raw_bins:
         if b["n"] >= MIN_N_PER_BIN and b["gap"] is not None:
             signed_bias_pts.append(b["gap"] * b["n"])
-    total_weighted_n = sum(b["n"] for b in l4_bins if b["n"] >= MIN_N_PER_BIN)
+    total_weighted_n = sum(b["n"] for b in raw_bins if b["n"] >= MIN_N_PER_BIN)
+    verdict_payload = {}
     if total_weighted_n > 0:
         weighted_bias = sum(signed_bias_pts) / total_weighted_n
-        direction = "UNDER-forecast" if weighted_bias < -2 else ("OVER-forecast" if weighted_bias > 2 else "well-calibrated")
+        # Largest gap in a well-populated bin — the candidate's biggest-lift cell.
+        eligible = [b for b in raw_bins if b["n"] >= MIN_N_PER_BIN and b["gap"] is not None]
+        worst = max(eligible, key=lambda b: abs(b["gap"])) if eligible else None
+        direction = "UNDER" if weighted_bias < -2 else ("OVER" if weighted_bias > 2 else "CAL")
+        emit(f"Calibration bias (raw HRRR, weighted by bin n): {weighted_bias:+.2f}pp — "
+             f"raw pp is {'under-' if direction == 'UNDER' else 'over-' if direction == 'OVER' else 'well-'}"
+             f"forecasting wet outcomes.")
+        if worst:
+            emit(f"Largest gap: bin {worst['bin']} predicted {worst['predicted']}% → "
+                 f"observed {worst['observed']}% (gap {worst['gap']:+.1f}pp, n={worst['n']:,}).")
         emit("")
-        emit(f"Calibration bias (L4, weighted by bin n): {weighted_bias:+.2f}pp — pp is {direction} "
-             f"wet outcomes. When pp says a probability, actual rain frequency is "
-             f"{'HIGHER' if weighted_bias < 0 else 'LOWER' if weighted_bias > 0 else 'CLOSE'} on average.")
+        # Promotion-track verdict — routes to executive summary + digest verdict-grep.
+        # Trigger on EITHER a large weighted bias OR a large gap in a well-populated
+        # bin. The 0-10 bin holds ~80% of pp rows and is near-perfectly calibrated,
+        # so it drags the weighted mean toward zero even when a mid-range bin
+        # (e.g. 30-40 with a −28pp gap on n=1,422) is unambiguously mis-calibrated.
+        big_bin_gap = worst and worst["n"] >= 500 and abs(worst["gap"]) >= 15
+        if (direction in ("UNDER", "OVER") and abs(weighted_bias) >= 5) or big_bin_gap:
+            emit(f"→ STAGE0 CANDIDATE OPEN: pp bin-lift calibration table.")
+            emit(f"VERDICT: STAGE0_OPEN pp_bin_lift_calibration weighted_bias={weighted_bias:+.2f}pp "
+                 f"worst_bin={worst['bin'] if worst else 'n/a'} worst_gap={worst['gap']:+.1f}pp "
+                 f"(halves-test via h_pp_bin_calibration.py to promote → Stage 1).")
+            verdict_payload = {
+                "state": "STAGE0_OPEN",
+                "candidate": "pp_bin_lift_calibration",
+                "weighted_bias_pp": round(weighted_bias, 2),
+                "worst_bin": worst["bin"] if worst else None,
+                "worst_bin_predicted_pct": worst["predicted"] if worst else None,
+                "worst_bin_observed_pct": worst["observed"] if worst else None,
+                "worst_bin_gap_pp": worst["gap"] if worst else None,
+                "worst_bin_n": worst["n"] if worst else None,
+                "next_step": "h_pp_bin_calibration.py halves-test",
+            }
+        else:
+            emit(f"→ CLEAN: raw pp is well-calibrated; no Stage 0 candidate.")
+            emit(f"VERDICT: CLEAN pp_bin_lift_calibration weighted_bias={weighted_bias:+.2f}pp")
+            verdict_payload = {
+                "state": "CLEAN",
+                "candidate": "pp_bin_lift_calibration",
+                "weighted_bias_pp": round(weighted_bias, 2),
+            }
     emit("=" * 100)
+    payload["verdict"] = verdict_payload
 
     # Finalize
     from datetime import datetime, timezone
@@ -297,6 +313,16 @@ def main():
         json.dump(payload, fh, indent=2)
     print(f"\nwrote {OUT_TXT}", file=sys.stderr)
     print(f"wrote {OUT_JSON}", file=sys.stderr)
+    # Publish to GCS so the debug page can fetch via
+    # https://data.wymancove.com/pp_brier_reliability.json. Silent no-op
+    # on any failure — local artifact still lands.
+    try:
+        sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        from weather_collector.gcs_io import upload_json  # noqa: E402
+        upload_json(payload, "pp_brier_reliability.json", "pp_brier_reliability.json")
+        print("  ✓ Published to gs://myweather-data/pp_brier_reliability.json", file=sys.stderr)
+    except Exception as e:
+        print(f"  ⚠ GCS upload skipped ({type(e).__name__}: {e}) — local file still written", file=sys.stderr)
     return 0
 
 
