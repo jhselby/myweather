@@ -61,6 +61,15 @@ def fetch_pirate_weather():
             round(pt["cloudCover"] * 100) if pt.get("cloudCover") is not None else None
             for pt in hourly_raw
         ]
+        # precipProbability is 0-1; convert to 0-100 to match HRRR/GFS
+        # pp scale. Consumed by pirate_l1_log for the pp source-blend
+        # follow-up (v0.6.382q booked h_pp_source_blend at 2 sources HOLD
+        # → needs Pirate as an independent 3rd source; historical logging
+        # starts here, 14-day retention gates the retest).
+        hourly_precip_probability = [
+            round(pt["precipProbability"] * 100) if pt.get("precipProbability") is not None else None
+            for pt in hourly_raw
+        ]
 
         data = {
             "minutely": minutely,
@@ -71,6 +80,7 @@ def fetch_pirate_weather():
             "hourly_solar": hourly_solar,
             "hourly_cape": hourly_cape,
             "hourly_cloud_cover": hourly_cloud_cover,
+            "hourly_precip_probability": hourly_precip_probability,
         }
 
         meta = {

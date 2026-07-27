@@ -297,6 +297,17 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
         except Exception as e:
             logging.warning(f"  ⚠  GFS spread snapshot failed: {redact_secrets(e)}")
 
+    # Log raw Pirate Weather pp per tick (14-day retention) so pp
+    # source-blend can be re-tested at 3 sources (HRRR + GFS + Pirate)
+    # once this log accrues 14+ days. Booked v0.6.382q after 2-source
+    # blend HOLD showed HRRR+GFS near-collinear.
+    if pirate_data:
+        try:
+            from .processors.pirate_l1_log import append_pirate_snapshot
+            append_pirate_snapshot(pirate_data)
+        except Exception as e:
+            logging.warning(f"  ⚠  Pirate L1 snapshot failed: {redact_secrets(e)}")
+
     # Cove-gradient hypothesis: log waterfront vs inland Tempest temps
     # alongside the Salem Channel water temp so we can later test whether
     # the (waterfront − inland) air-temp differential is driven by the
