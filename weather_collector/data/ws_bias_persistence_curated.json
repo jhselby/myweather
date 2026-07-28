@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-07-28T18:00:00Z",
+  "source": "Stage 1 walkforward — ws_bias_persistence_stage1.py, window 2026-06-28 → 2026-07-28",
+  "field": "ws",
+  "layer": "ws_bias_persistence",
+  "trigger_threshold_mph": 1.0,
+  "correction_cap_mph": 3.0,
+  "min_lead_h": 6,
+  "focus_regimes": ["calm"],
+  "stage1_verdicts": {
+    "calm": {"delta_pct": 11.07, "A_pct": 13.35, "B_pct": 10.33, "fires_pct": 38.1, "verdict": "SHIP"},
+    "ne_flow_dropped": {"delta_pct": 10.91, "A_pct": 0.00, "B_pct": 11.24, "reason": "recent-half 0 fires — regime drifted mid-window; verdict rests on older data only"},
+    "nw_flow": {"delta_pct": -11.29, "verdict": "NEGATIVE"},
+    "pre_frontal": {"delta_pct": -1.47, "verdict": "NEGATIVE"},
+    "sw_flow": {"delta_pct": -6.93, "verdict": "NEGATIVE"}
+  },
+  "notes": "Stage 3 wired 2026-07-28 v0.6.388 ENABLED=False. 7-day live-layer flip gate through 2026-08-04. Rolling antecedent state at GCS ws_bias_antecedent_state.json; first ~24h post-deploy = state warming, gate silent. Correction is SIGN-INVERTED from prev-day bias direction (over-forecast → subtract wind). ne_flow was Stage 1 SHIP by numbers but dropped from ship due to 0-fire A-half. Under-forecast regimes (nw/pre_frontal/sw) HURT — the pattern is only tractable when the model systematically over-forecasts. See project_07_28_post_reboot for the arc."
+}

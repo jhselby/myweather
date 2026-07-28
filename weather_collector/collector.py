@@ -604,6 +604,19 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  dp bias persistence stamp failed: {redact_secrets(e)}")
 
+    # ws bias-persistence gate — antecedent-based ws correction. Sibling
+    # of dpbp. Fires when prev-24h regime-mean ws bias > +1.0 mph
+    # (over-forecast direction only), subtracting -min(bias, ±3) from
+    # hourly.wind_speed at leads >= 6 (wind_blend covers 0-3).
+    # Stage 1 SHIP only for calm regime (ne_flow was Stage 1 SHIP by
+    # numbers but recent-half had 0 fires; dropped). Shadow-write
+    # unconditional. ENABLED=False; 7-day flip gate.
+    try:
+        from .processors.ws_bias_persistence import stamp_ws_bias_persistence
+        stamp_ws_bias_persistence(weather_data, get_client(), BUCKET)
+    except Exception as e:
+        logging.warning(f"  ⚠  ws bias persistence stamp failed: {redact_secrets(e)}")
+
     # wd persistence gate — predicted-transition bypass of L1/L2 for wd.
     # Runs AFTER wind_blend (which produces L2 wind_direction) so wdp
     # overwrites the L2 blend where the gate fires; module preserves the
@@ -630,10 +643,11 @@ def main():
         from .processors.wg_residual_persistence import describe_applicability as _da_wgrp
         from .processors.dp_residual_persistence import describe_applicability as _da_dprp
         from .processors.dp_bias_persistence import describe_applicability as _da_dpbp
+        from .processors.ws_bias_persistence import describe_applicability as _da_wsbp
         from .processors.wd_persistence_gate import describe_applicability as _da_wdpg
         from .processors.sr_sea_breeze_lsr_override import describe_applicability as _da_lsb
         layers = []
-        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_dpbp, _da_wdpg, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_dpbp, _da_wsbp, _da_wdpg, _da_c1):
             try:
                 layers.extend(fn())
             except Exception as e:
