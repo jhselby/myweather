@@ -107,6 +107,11 @@ SKIP_TABLE = {
     ("ws", "l3"): [
         ("ne_flow",    0, 48),   # all bands, n=1.0K-4.1K, -5% to -9%
         ("sea_breeze", 0, 12),   # 0-11h only, n=966+918, -9.5% / -15.2%
+        # Stage 1 07-28 re-cut. Long-lead SKIP cells in transition regimes.
+        # (07-14 flat-Stage 1's other 8 SKIP cells are now covered by the
+        # ws L3 asymmetric SKIP table shipped v0.6.370.)
+        ("frontal",     24, 48), # 24-47, n=987,  +5.8% (halves +4.7/+9.4)
+        ("pre_frontal", 24, 48), # 24-47, n=9268, +8.0% (halves +3.4/+11.6)
     ],
     ("wg", "l3"): [
         # Stage 1 07-28 re-cut, clean-halves subset. calm 24-47 and

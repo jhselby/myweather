@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.386 • July 28, 2026 (ws L3 SKIP_TABLE — 2 long-lead transition cells added)</strong></summary>
+
+- **Collector — `decay_apply.py` `SKIP_TABLE[("ws", "l3")]` extended with 2 cells.** ws L3 skip-table Stage 1 re-cut on fresh windows (06-28 → 07-28) surfaces two clean-halves SKIP cells at long leads in transition regimes: `frontal 24-47` (+5.8%, n=987, halves +4.7/+9.4) and `pre_frontal 24-47` (+8.0%, n=9268, halves +3.4/+11.6). Notable: **all 8 unshipped 07-14 Stage 1 SKIP cells (calm all bands, nw_flow 24-47, sea_breeze 6-11+24-47, unknown 6-11+12-23+24-47) have vanished from the SKIP set on fresh data** — best explanation is that the v0.6.370 ws L3 asymmetric SKIP table (26 fc-bin cells) already covers most of that damage; what Stage 1 measures now is residual L3 damage AFTER asymmetric SKIP has done its work. Existing 2 entries (`ne_flow 0-48`, `sea_breeze 0-12`) left in place — they may be partially stale (fresh data shows `ne_flow 24-47: −5.45%` L3 actively HELPS) but SKIP is fail-safe: removing L3 where it might help is a small opportunity cost, not damage. Analysis window updated in `h_ws_l3_regression_stage1.py`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.385 • July 28, 2026 (wg L3 SKIP_TABLE — 4 clean-halves cells wired)</strong></summary>
 
 - **Collector — `decay_apply.py` `SKIP_TABLE[("wg", "l3")]` added with 4 cells.** wg L3 skip-table Stage 1 re-cut on fresh windows (06-28 → 07-28) confirms 6 halves-verified SKIP cells; shipping the 4 with clean halves-stability, holding the 2 with wide halves-spread (calm 24-47 and sea_breeze 24-47 both show A=+7% vs B=+50% — recent-half signal fading — held for another 7-day re-cut). Shipped cells: `calm 0-5` (+9.4%, halves +5.3/+10.0), `calm 12-23` (+40.0%, halves +44.3/+39.4), `ne_flow 6-11` (+11.8%, halves +6.2/+12.7), `sea_breeze 6-11` (+5.6%, halves +8.0/+4.8). Composition partially shifted from the 07-14 Stage 1 verdict: calm 6-11 fell to THIN (n=156), sea_breeze 0-5 fell to MARGIN, unknown 24-47 reclassified to PERSISTENCE_TERRITORY; new arrivals ne_flow 6-11 and sea_breeze 6-11 both cleanly halves-verified. Original 07-14 ship gate long past (07-21 target). Analysis window updated in `h_wg_l3_regression_stage1.py` (2-week slide forward). Fail-safe unchanged: any lookup miss → apply normally, so L3 stays ON wherever the table doesn't say OFF.
