@@ -75,7 +75,15 @@ KT_TO_MPH = 1.15078
 
 # Hourly blend horizon: weight decays linearly from 100% observed at hour 0
 # to 0% observed at hour BLEND_HOURS, replacing the model's wind in between.
-BLEND_HOURS = 24
+# Shrunk 2026-07-28 v0.6.384 from 24h → 4h after `analysis/h_ws_blend_hours_sweep.py`
+# showed the 24h blend was catastrophically hurting leads 3-16 (L2 was +30-85%
+# WORSE than raw at those bands, dragging Prod-vs-Raw to +30% on ws for weeks).
+# Physical read: observed current wind at KBVY has more variance than the
+# next-few-hour average — bleeding it out 24h imports point-in-time noise onto
+# a smoothed model signal. Sweep of {1,2,3,4,6,8,12,24}: 4 wins at +14.72%
+# pooled MAE, halves +8.4% / +22.4% (both positive), all lead-bands improve
+# (6-11h band improves +42.8%). 14-day post-ship watch on ws MAE.
+BLEND_HOURS = 4
 # Below this wind speed (mph), wind direction is physically undefined /
 # dominated by turbulence. wd L2 blend skips cells where both obs and fc
 # speeds fall below this floor. "Light and variable" per Beaufort scale.
