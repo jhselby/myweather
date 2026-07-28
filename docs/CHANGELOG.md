@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.382u • July 27, 2026 (debug page sweep)</strong></summary>
+
+- **Debug page sweep** for v0.6.382q–t evening ships. Calendar Wed 07-28 chp mid-lead re-check → RESOLVED (ad-hoc script pre-built + ran + demote applied same evening). Post-ship-watches ch persistence gate + per-field-snapshot ch row + Still-open-watches ch persistence gate + Persistence-skill narrative + pipeline stack `chp` bullet all refreshed for 14 SHIP / 8 MARGIN / 13 SKIP / 2 THIN rollup and the emergency-demote history. What's-improving gains two new cards: pp frontal × 6-11h Platt (Stage 1 SHIP, wire earliest ~08-03) + chp full-shape refinement (5-cell L6-baseline SHIP set adoption, day 1/7 gate). Active-candidate count 8 → 10. pp per-field snapshot row updated to reflect first shippable pp correction found (no longer "no open work"). Recent activity day-header captures all four evenings.
+
+</details>
+
+<details>
 <summary><strong>v0.6.382t • July 27, 2026 (emergency demote)</strong></summary>
 
 - **Collector — chp emergency demote of 6 clear-regression cells.** Same-evening surgical response to the L6-baseline finding from v0.6.382s. Six cells materially regressing ch vs Lc alone (all n≥100 in the 10-day post-Lc window, both halves worse than Lc, Δ ≥ +28% MAE) flipped SHIP/MARGIN → SKIP in `weather_collector/data/ch_persistence_gate_curated.json`: `sw_flow/24-47` (+59%), `sw_flow/12-23` (+38%), `sea_breeze/24-47` (+37%), `pre_frontal/24-47` (+32%), `se_flow/6-11` (+29%), `ne_flow/12-23` (+28%). These cells now fall back to Lc-corrected ch instead of firing chp. Chp rollup: was 19 SHIP / 9 MARGIN / 7 SKIP / 2 THIN → now 14 SHIP / 8 MARGIN / 13 SKIP / 2 THIN. `emergency_demotes` block appended to the curated JSON for audit trail. **Full-shape adoption of the 5-cell L6-baseline SHIP set** (which would additionally demote 5 more halves-disagreement/small-magnitude cells) **still under the normal 7-day live-layer change gate** — this ship targets only the unambiguous regressions. Not touching the shipped Stage 2 script (h_ch_persistence_blend_stage2.py stays authoritative until the full-shape decision).
