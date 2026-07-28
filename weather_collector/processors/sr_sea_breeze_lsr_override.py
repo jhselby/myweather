@@ -2,16 +2,23 @@
 sr sea_breeze cc-gated Lsr override — Stage 3 wiring, gated OFF.
 
 Follow-on to sr_sea_breeze_lsr_refit_stage2.py Stage 2 PROMOTE
-(2026-07-17). Stage 2 found pooled sea_breeze sr MAE improves +25.27%
-(halves +29.0% / +21.5%, lead-band clean) when the current-Prod Lsr
-output is replaced with per-hour-bias-corrected shortwave_radiation on
-cc-gated rows: (cc < 25) OR (cc >= 75). Middle cc bins keep current Lsr.
+(2026-07-17). Stage 2 found pooled sea_breeze sr MAE improves in
+clear-sky when the current-Prod Lsr output is replaced with per-hour-
+bias-corrected shortwave_radiation on cc-gated rows.
+
+**Gate narrowed 2026-07-28 v0.6.383b** — original gate was
+(cc < 25) OR (cc >= 75). 07-28 halves re-run showed the overcast half
+went materially negative (75-100 cc-bin Δ=−17.6%, halves +6%/−23%,
+n=351) while the clear-sky half stayed robust (0-25 cc-bin Δ=+35.8%,
+halves +33%/+40%, n=969). The "thick attenuation missed" hypothesis for
+overcast was wrong — model attenuation is fine or over-corrected.
+Overcast half retired; gate is now cc < CC_LO only. Shortwave shadow-log
+infrastructure stays alive (underpins future sr L2 work once unit
+mismatch resolves, and other regime candidates).
 
 Physical read: fc_shortwave over-predicts vs Tempest total-shortwave in
-clear-sky sea_breeze (coastal cloud burns off), under-predicts in overcast
-(thick attenuation missed). Both effects are stable enough to correct
-with a per-hour bias. Partly-cloudy is genuinely noisy at the pixel scale
-— no fit works, so gate it out.
+clear-sky sea_breeze (coastal cloud burns off later than model expects).
+Bias is stable enough to correct with a per-hour offset.
 
 Reads: weather_collector/data/sr_sea_breeze_lsr_curated.json
        (bias_by_hour, cc_gate, verdict; produced by Stage 2 script).
@@ -25,12 +32,13 @@ error keys still see the Lsr baseline for A/B watching.
 Phase 1 (this module, gated OFF):
   Every tick, compute per-lead candidate deltas and stamp
   weather_data["sr_sea_breeze_correction"] with the gate state, but do NOT
-  modify direct_radiation. Weekly Sun-morning halves re-runs of Stage 2
-  through 07-24 will decide the flip.
+  modify direct_radiation. Fresh 7-day live-layer change gate opens with
+  the narrowed shape (07-28); earliest ENABLED flip is 2026-08-04 if the
+  narrowed-gate pooled Δ + halves stay clean across 7 daily reads.
 
 Decision rule (ship if):
-  Stage 2 pooled Δ ≥ +20% and both halves ≥ +10% across weekly re-reads
-  W29 (07-19) and W30 (07-26), lead-band SHIP+MARGIN > SKIP.
+  Narrowed-gate (cc < CC_LO) pooled Δ ≥ +20% AND both halves ≥ +10%
+  across 7 daily reads, lead-band SHIP+MARGIN > SKIP.
 """
 import json
 import logging
@@ -43,7 +51,7 @@ from ..utils import redact_secrets
 
 
 TZ = pytz.timezone("America/New_York")
-ENABLED = False  # Flip after 07-24 weekly Sun-morning re-reads confirm.
+ENABLED = False  # Fresh 7-day gate 07-28 → 08-04 on narrowed cc < CC_LO shape.
 SUN_UP_THRESHOLD = 50.0  # W/m² — mirror Lsr's night-time suppression.
 
 _CURATED_PATH = os.path.join(
@@ -53,28 +61,31 @@ _CURATED_PATH = os.path.join(
 
 
 def _load_curated():
-    """Load bias table + gate config. Returns (bias_by_hour, overall_bias, cc_lo, cc_hi)."""
+    """Load bias table + gate config. Returns (bias_by_hour, overall_bias, cc_lo).
+
+    Overcast half (cc_hi) retired 2026-07-28 v0.6.383b — only cc_lo matters now.
+    Legacy `hi` field in older JSONs is ignored on load.
+    """
     try:
         with open(os.path.abspath(_CURATED_PATH)) as f:
             d = json.load(f)
     except FileNotFoundError:
-        return {}, 0.0, 25.0, 75.0
+        return {}, 0.0, 25.0
     hb_str = d.get("hourly_bias_wm2") or {}
     bias_by_hour = {int(k): float(v) for k, v in hb_str.items()}
     overall = float(d.get("overall_bias_wm2") or 0.0)
     gate = d.get("cc_gate") or {}
     cc_lo = float(gate.get("lo", 25.0))
-    cc_hi = float(gate.get("hi", 75.0))
-    return bias_by_hour, overall, cc_lo, cc_hi
+    return bias_by_hour, overall, cc_lo
 
 
-_BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO, _CC_HI = _load_curated()
+_BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO = _load_curated()
 
 
 def _cc_gated(cc):
     if cc is None:
         return False
-    return cc < _CC_LO or cc >= _CC_HI
+    return cc < _CC_LO
 
 
 def _record_firing(regime, fired, skipped):
@@ -121,17 +132,18 @@ def describe_applicability():
     if ENABLED:
         fires_when = (
             "ENABLED AND regime_synoptic == sea_breeze AND "
-            f"(cc < {_CC_LO} OR cc >= {_CC_HI}) AND "
+            f"cc < {_CC_LO} AND "
             f"shortwave_radiation >= {SUN_UP_THRESHOLD}"
         )
         current_state = (
             f"ENABLED True; overriding direct_radiation with "
-            f"(shortwave_radiation − bias(hod)) in the cc-gated band."
+            f"(shortwave_radiation − bias(hod)) in the clear-sky band."
         )
     else:
         fires_when = (
             f"OFF — would fire when ENABLED, sea_breeze regime, "
-            f"(cc < {_CC_LO} OR cc >= {_CC_HI}), sun up."
+            f"cc < {_CC_LO}, sun up. (Narrowed 07-28 v0.6.383b — overcast "
+            f"half retired.)"
         )
         current_state = "ENABLED False; no override applied."
     return [
@@ -216,15 +228,16 @@ def stamp_sr_sea_breeze_correction(weather_data):
     weather_data["sr_sea_breeze_correction"] = {
         "applied": ENABLED,
         "regime_now": regime_now,
-        "cc_gate": {"lo": _CC_LO, "hi": _CC_HI},
+        "cc_gate": {"lo": _CC_LO, "rule": "apply iff cc < lo"},
         "n_leads_gated": fired,
         "n_leads_middle_cc_skip": skipped_middle_cc,
         "per_lead_active": per_lead[:24],
         "note": (
-            "Stage 3 sandbox override for sr in sea_breeze regime, cc-gated. "
-            "Gated OFF until 07-24 weekly Sun-morning halves re-run confirms."
+            "Stage 3 sandbox override for sr in sea_breeze regime, clear-sky "
+            "only (cc < lo). Gated OFF; fresh 7-day gate 07-28 → 08-04 on "
+            "narrowed shape (overcast half retired 07-28 v0.6.383b)."
             if not ENABLED
-            else "sr sea_breeze cc-gated override applied to direct_radiation."
+            else "sr sea_breeze clear-sky override applied to direct_radiation."
         ),
     }
 

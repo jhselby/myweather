@@ -199,7 +199,7 @@ def print_summary(out):
     EXPECTED_DORMANT_OPERATORS = {
         "Lt":  "retired 2026-07-13 (Fix B refit +0.29% held-out, below +1.0% gate)",
         "MLC": "marine-layer cc sandbox, ENABLED=False, waiting on trend to hold",
-        "Lsb": "sr sea_breeze cc-gated Lsr override, shipped 2026-07-17 v0.6.354 ENABLED=False; halves re-run 07-24",
+        "Lsb": "sr sea_breeze clear-sky (cc < 25) Lsr override, shipped 2026-07-17 v0.6.354 ENABLED=False; overcast half retired 2026-07-28 v0.6.383b; fresh 7-day gate 07-28 → 08-04 on narrowed shape",
         "ch_persistence_gate":   "shipped 2026-07-12 v0.6.327 with ENABLED=False; 7-day gate, earliest flip 07-19",
         "cl_persistence_gate": "shipped 2026-07-24 v0.6.379 with ENABLED=False (successor to cl_persistence_short_lead — narrow 0-5h shape retired); 7-day gate, flip earliest 07-31",
         "cl_persistence_short_lead": "retired 2026-07-24 v0.6.379 (replaced by cl_persistence_gate); historical log entries age out of the 7-day window by 2026-07-31 — remove this line then",

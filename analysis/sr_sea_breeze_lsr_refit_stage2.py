@@ -1,4 +1,4 @@
-"""sr sea_breeze Lsr refit — Stage 2 preview (cc-gated).
+"""sr sea_breeze Lsr refit — Stage 2 preview (cc-gated, clear-sky only).
 
 Follow-on to Stage 1 (`sr_sea_breeze_lsr_refit_stage1.py`), which found
 pooled sea_breeze MAE improves +43.7% when swapping current-Prod Lsr for
@@ -15,15 +15,24 @@ Physical read: fc_shortwave has a stable step-function bias against clear
 and overcast skies but is genuinely noisy against partly-cloudy. Applying
 the intervention uniformly costs the wins in the middle bins.
 
-Stage 2 hypothesis: gate the intervention to (cc < 25) OR (cc >= 75)
-within sea_breeze; keep current Prod Lsr elsewhere. Fit the per-hour bias
-on cc-gated train rows only. Verify per-cell (hour, lead_band) with
+**Gate narrowed 2026-07-28 v0.6.383b** — original gate was (cc < 25) OR
+(cc >= 75). 07-28 halves re-run showed the 75-100 half went materially
+negative (Δ=−17.6%, halves +6%/−23%, n=351) while the 0-25 half stayed
+robust (Δ=+35.8%, halves +33%/+40%, n=969). Overcast half of the physical
+hypothesis was wrong ("thick attenuation missed" — data says model
+attenuation is fine or over-corrected). Gate is now cc < CC_LO only.
+The shortwave shadow-log infrastructure stays alive for future sr work
+(sr L2 once unit mismatch resolves; other regime candidates).
+
+Stage 2 hypothesis: gate the intervention to (cc < CC_LO) within
+sea_breeze; keep current Prod Lsr elsewhere. Fit the per-hour bias on
+cc-gated train rows only. Verify per-cell (hour, lead_band) with
 halves-stability on test.
 
 Method:
   1. Pull sr pair rows in sea_breeze regime.
   2. Split earliest 60% = train, latest 40% = test.
-  3. Compute cc_gated flag per row: (cc < CC_LO) OR (cc >= CC_HI).
+  3. Compute cc_gated flag per row: cc < CC_LO.
   4. On train ∩ cc_gated: fit per-hour signed bias (fc_sw - obs).
   5. On test: pooled and per-cell MAE, baseline vs gated intervention.
      Gated intervention = if cc_gated: fc_sw - bias(hod); else fc_l4.
@@ -61,9 +70,10 @@ CURATED_JSON = os.path.abspath(os.path.join(
 FIELD = "sr"
 REGIME = "sea_breeze"
 
-# cc gate: apply intervention only for clear or overcast skies
+# cc gate: apply intervention only for clear skies (overcast half retired
+# 07-28 v0.6.383b — see docstring).
 CC_LO = 25.0    # apply if cc < CC_LO
-CC_HI = 75.0    # apply if cc >= CC_HI
+# CC_HI intentionally removed 2026-07-28 v0.6.383b (overcast half retired).
 
 # Fit floors
 MIN_N_HOUR_FIT = 15    # min train pairs to fit a per-hour bias (else use overall)
@@ -83,7 +93,7 @@ def lead_band(h):
 def cc_gated(cc):
     if cc is None:
         return False
-    return cc < CC_LO or cc >= CC_HI
+    return cc < CC_LO
 
 
 def load_rows():
@@ -245,7 +255,7 @@ def main():
     out.append("=" * 96)
     out.append("sr sea_breeze Lsr refit — Stage 2 preview (cc-gated)")
     out.append("=" * 96)
-    out.append(f"Gate: apply intervention iff cc < {CC_LO} or cc >= {CC_HI}.  Else keep current Prod L4.")
+    out.append(f"Gate: apply intervention iff cc < {CC_LO}.  Else keep current Prod L4.  (Overcast half retired 07-28 v0.6.383b.)")
     out.append(f"Split: earliest 60% of sea_breeze rows = train, latest 40% = test.")
     out.append(f"Ship-gate: pooled test Δ ≥ {FLOOR_PCT:.1f}% AND both test halves ≥ 0.")
     out.append("")
@@ -329,7 +339,7 @@ def main():
 
     result = {
         "regime": REGIME,
-        "cc_gate": {"lo": CC_LO, "hi": CC_HI},
+        "cc_gate": {"lo": CC_LO, "rule": "apply iff cc < lo"},
         "verdict": verdict,
         "n_total": n_total,
         "n_train": len(train), "n_test": len(test),
@@ -351,7 +361,7 @@ def main():
         "generated": test[-1]["obs_time"],
         "regime": REGIME,
         "field": FIELD,
-        "cc_gate": {"lo": CC_LO, "hi": CC_HI, "rule": "apply iff cc < lo OR cc >= hi"},
+        "cc_gate": {"lo": CC_LO, "rule": "apply iff cc < lo"},
         "hourly_bias_wm2": {str(h): round(bias[h], 2) for h in bias},
         "overall_bias_wm2": round(overall, 2),
         "verdict": verdict,
