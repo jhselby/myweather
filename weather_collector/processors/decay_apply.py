@@ -108,6 +108,15 @@ SKIP_TABLE = {
         ("ne_flow",    0, 48),   # all bands, n=1.0K-4.1K, -5% to -9%
         ("sea_breeze", 0, 12),   # 0-11h only, n=966+918, -9.5% / -15.2%
     ],
+    ("wg", "l3"): [
+        # Stage 1 07-28 re-cut, clean-halves subset. calm 24-47 and
+        # sea_breeze 24-47 met the SKIP gate but had wide halves spread
+        # (recent-half signal fading — held for another 7-day re-cut).
+        ("calm",       1,  6),   # 0-5,   n=760,  +9.4%  (halves +5.3/+10.0)
+        ("calm",      12, 24),   # 12-23, n=707,  +40.0% (halves +44.3/+39.4)
+        ("ne_flow",    6, 12),   # 6-11,  n=1538, +11.8% (halves +6.2/+12.7)
+        ("sea_breeze", 6, 12),   # 6-11,  n=865,  +5.6%  (halves +8.0/+4.8)
+    ],
     ("dp", "l4"): [
         ("ne_flow",    0, 48),
         ("sea_breeze", 0, 48),
