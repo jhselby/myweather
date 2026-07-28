@@ -592,6 +592,18 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  dp residual persistence stamp failed: {redact_secrets(e)}")
 
+    # dp bias-persistence gate — antecedent-based dp correction for
+    # {pre_frontal, nw_flow, sw_flow} at leads >= 6. Rolling 48h GCS
+    # state (`dp_bias_antecedent_state.json`) tracks per-tick fc_l1-vs-obs
+    # bias; gate fires when prev-24h regime-mean dp_bias < -1.5°F, adds
+    # +2.0°F. Shadow-write unconditional. ENABLED=False; 7-day flip
+    # gate. Runs AFTER dp_residual_persistence to compose on top.
+    try:
+        from .processors.dp_bias_persistence import stamp_dp_bias_persistence
+        stamp_dp_bias_persistence(weather_data, get_client(), BUCKET)
+    except Exception as e:
+        logging.warning(f"  ⚠  dp bias persistence stamp failed: {redact_secrets(e)}")
+
     # wd persistence gate — predicted-transition bypass of L1/L2 for wd.
     # Runs AFTER wind_blend (which produces L2 wind_direction) so wdp
     # overwrites the L2 blend where the gate fires; module preserves the
@@ -617,10 +629,11 @@ def main():
         from .processors.cl_persistence_gate import describe_applicability as _da_clpg
         from .processors.wg_residual_persistence import describe_applicability as _da_wgrp
         from .processors.dp_residual_persistence import describe_applicability as _da_dprp
+        from .processors.dp_bias_persistence import describe_applicability as _da_dpbp
         from .processors.wd_persistence_gate import describe_applicability as _da_wdpg
         from .processors.sr_sea_breeze_lsr_override import describe_applicability as _da_lsb
         layers = []
-        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_wdpg, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_dpbp, _da_wdpg, _da_c1):
             try:
                 layers.extend(fn())
             except Exception as e:

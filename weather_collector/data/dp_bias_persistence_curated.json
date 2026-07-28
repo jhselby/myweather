@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-07-28T17:00:00Z",
+  "source": "Stage 2 sweep — dp_bias_persistence_stage2.py, window 2026-06-28 → 2026-07-28",
+  "field": "dp",
+  "layer": "dp_bias_persistence",
+  "trigger_threshold_f": -1.5,
+  "correction_f": 2.0,
+  "min_lead_h": 6,
+  "focus_regimes": ["pre_frontal", "nw_flow", "sw_flow"],
+  "stage1_verdicts": {
+    "pooled": {"delta_pct": 9.63, "A_pct": 12.43, "B_pct": 8.33},
+    "pre_frontal": {"delta_pct": 17.23, "A_pct": 21.59, "B_pct": 11.99, "fires_pct": 72.0, "verdict": "SHIP"},
+    "nw_flow": {"delta_pct": 14.51, "A_pct": 15.64, "B_pct": 13.83, "fires_pct": 71.5, "verdict": "SHIP"},
+    "sw_flow": {"delta_pct": 14.62, "A_pct": 6.05, "B_pct": 17.90, "fires_pct": 52.7, "verdict": "SHIP"}
+  },
+  "notes": "Stage 3 wired 2026-07-28 v0.6.387 ENABLED=False. 7-day live-layer flip gate through 2026-08-04. Rolling antecedent state at GCS dp_bias_antecedent_state.json; first ~24h post-deploy = state warming, gate silent. See project_hypothesis_backlog #6 (event-conditional angle) and project_07_28_post_reboot for the arc."
+}
