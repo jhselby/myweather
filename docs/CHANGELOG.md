@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.382t • July 27, 2026 (emergency demote)</strong></summary>
+
+- **Collector — chp emergency demote of 6 clear-regression cells.** Same-evening surgical response to the L6-baseline finding from v0.6.382s. Six cells materially regressing ch vs Lc alone (all n≥100 in the 10-day post-Lc window, both halves worse than Lc, Δ ≥ +28% MAE) flipped SHIP/MARGIN → SKIP in `weather_collector/data/ch_persistence_gate_curated.json`: `sw_flow/24-47` (+59%), `sw_flow/12-23` (+38%), `sea_breeze/24-47` (+37%), `pre_frontal/24-47` (+32%), `se_flow/6-11` (+29%), `ne_flow/12-23` (+28%). These cells now fall back to Lc-corrected ch instead of firing chp. Chp rollup: was 19 SHIP / 9 MARGIN / 7 SKIP / 2 THIN → now 14 SHIP / 8 MARGIN / 13 SKIP / 2 THIN. `emergency_demotes` block appended to the curated JSON for audit trail. **Full-shape adoption of the 5-cell L6-baseline SHIP set** (which would additionally demote 5 more halves-disagreement/small-magnitude cells) **still under the normal 7-day live-layer change gate** — this ship targets only the unambiguous regressions. Not touching the shipped Stage 2 script (h_ch_persistence_blend_stage2.py stays authoritative until the full-shape decision).
+
+</details>
+
+<details>
 <summary><strong>v0.6.382s • July 27, 2026 (evening 3)</strong></summary>
 
 - **Analysis — chp Stage 2 REBUILT vs `forecast_l6` baseline. Honest SHIP set collapses 28 live cells → 5 real cells + 3 by-design-frontal artifacts.** Follow-through on the evening-2 ESCALATE finding from `h_chp_midlead_regression.py`. New `analysis/h_ch_persistence_blend_stage2_vs_l6.py` (fork of shipped Stage 2 — original stays authoritative and untouched). Uses `forecast_l6` (Lc-corrected L4) as baseline instead of `forecast_l4`; post-Lc-flip window only (07-17 → 07-27, 10 days); MIN_N_CELL relaxed 200 → 100. **Real SHIP under L6**: calm/0-5 (−70%), pre_frontal/0-5 (−41%), sw_flow/0-5 (−30%), se_flow/0-5 (−26%), ne_flow/6-11 (−17%). **11 live cells flip → SKIP** (chp materially loses vs Lc, worst sw_flow/24-47 +59%, sea_breeze/24-47 +37%, pre_frontal/24-47 +32%). 6 live cells go THIN in the 10-day window. Pattern: chp's real value is 0-5h short-lead across 4 regimes + ne_flow/6-11 — an 8x tighter footprint than currently live. Preview written to `weather_collector/data/ch_persistence_gate_curated_vs_l6.json`; **live curated JSON UNTOUCHED**. Ship path: 7-day live-layer change gate confirming this shape + Joe's approval. Same class of bug as [[project_cc_sat_correction]] 07-20 kill.

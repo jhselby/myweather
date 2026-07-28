@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-26T10:39:36.655361+00:00",
+  "generated_at": "2026-07-28T00:04:20.785174+00:00",
   "source": "forecast_error_log.jsonl",
   "field": "ch",
   "windows": {
@@ -36,8 +36,8 @@
         "lead_band": "24-47"
       },
       {
-        "regime": "calm",
-        "lead_band": "6-11"
+        "regime": "ne_flow",
+        "lead_band": "12-23"
       },
       {
         "regime": "ne_flow",
@@ -56,7 +56,27 @@
         "lead_band": "6-11"
       },
       {
+        "regime": "pre_frontal",
+        "lead_band": "24-47"
+      },
+      {
         "regime": "se_flow",
+        "lead_band": "24-47"
+      },
+      {
+        "regime": "se_flow",
+        "lead_band": "6-11"
+      },
+      {
+        "regime": "sea_breeze",
+        "lead_band": "24-47"
+      },
+      {
+        "regime": "sw_flow",
+        "lead_band": "12-23"
+      },
+      {
+        "regime": "sw_flow",
         "lead_band": "24-47"
       },
       {
@@ -68,39 +88,39 @@
   "cells": {
     "calm": {
       "0-5": {
-        "n": 744,
-        "mae_base": 19.633,
-        "mae_gate": 8.782,
-        "delta_full_pct": -55.27,
+        "n": 726,
+        "mae_base": 19.592,
+        "mae_gate": 8.843,
+        "delta_full_pct": -54.87,
         "delta_a_pct": -53.89,
-        "delta_b_pct": -55.42,
+        "delta_b_pct": -54.97,
         "verdict": "SHIP"
       },
       "6-11": {
-        "n": 215,
-        "mae_base": 23.34,
-        "mae_gate": 19.195,
-        "delta_full_pct": -17.76,
-        "delta_a_pct": 52.73,
-        "delta_b_pct": -18.54,
-        "verdict": "SKIP"
+        "n": 199,
+        "mae_base": 24.045,
+        "mae_gate": 18.97,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
       },
       "12-23": {
-        "n": 883,
-        "mae_base": 24.275,
-        "mae_gate": 14.417,
-        "delta_full_pct": -40.61,
+        "n": 836,
+        "mae_base": 24.118,
+        "mae_gate": 14.312,
+        "delta_full_pct": -40.66,
         "delta_a_pct": -38.18,
-        "delta_b_pct": -41.39,
+        "delta_b_pct": -41.52,
         "verdict": "SHIP"
       },
       "24-47": {
-        "n": 3817,
-        "mae_base": 16.574,
-        "mae_gate": 15.883,
-        "delta_full_pct": -4.17,
+        "n": 3487,
+        "mae_base": 16.557,
+        "mae_gate": 15.689,
+        "delta_full_pct": -5.24,
         "delta_a_pct": 16.33,
-        "delta_b_pct": -13.72,
+        "delta_b_pct": -16.77,
         "verdict": "SKIP"
       }
     },
@@ -144,39 +164,48 @@
     },
     "ne_flow": {
       "0-5": {
-        "n": 1067,
-        "mae_base": 23.185,
-        "mae_gate": 10.059,
-        "delta_full_pct": -56.61,
+        "n": 1016,
+        "mae_base": 23.099,
+        "mae_gate": 9.479,
+        "delta_full_pct": -58.96,
         "delta_a_pct": -31.33,
-        "delta_b_pct": -62.14,
+        "delta_b_pct": -65.4,
         "verdict": "SHIP"
       },
       "6-11": {
-        "n": 1727,
-        "mae_base": 19.999,
-        "mae_gate": 13.836,
-        "delta_full_pct": -30.82,
+        "n": 1574,
+        "mae_base": 20.546,
+        "mae_gate": 13.419,
+        "delta_full_pct": -34.69,
         "delta_a_pct": -10.96,
-        "delta_b_pct": -33.92,
+        "delta_b_pct": -38.69,
         "verdict": "SHIP"
       },
       "12-23": {
-        "n": 3740,
-        "mae_base": 21.045,
-        "mae_gate": 16.765,
-        "delta_full_pct": -20.34,
+        "n": 3439,
+        "mae_base": 21.833,
+        "mae_gate": 15.295,
+        "delta_full_pct": -29.94,
         "delta_a_pct": -25.81,
-        "delta_b_pct": -19.41,
-        "verdict": "SHIP"
+        "delta_b_pct": -30.68,
+        "verdict": "SKIP",
+        "emergency_demote_notes": [
+          {
+            "ship_version": "v0.6.382t",
+            "ship_time_utc": "2026-07-28T00:04:20Z",
+            "delta_pct_vs_l6": 28.41,
+            "previous_verdict": "SHIP",
+            "reason": "chp mid-lead regression vs Lc: Stage 2 was measured vs forecast_l4 (pre-Lc); post-Lc-flip (07-17) the honest baseline is forecast_l6. h_ch_persistence_blend_stage2_vs_l6.py (evening-3 07-27) confirms this cell has chp materially worse than Lc alone."
+          }
+        ]
       },
       "24-47": {
-        "n": 8139,
-        "mae_base": 18.876,
-        "mae_gate": 22.05,
-        "delta_full_pct": 16.82,
+        "n": 7068,
+        "mae_base": 18.498,
+        "mae_gate": 21.657,
+        "delta_full_pct": 17.07,
         "delta_a_pct": 25.85,
-        "delta_b_pct": 14.86,
+        "delta_b_pct": 14.76,
         "verdict": "SKIP"
       }
     },
@@ -193,238 +222,323 @@
     },
     "nw_flow": {
       "0-5": {
-        "n": 2707,
-        "mae_base": 19.135,
-        "mae_gate": 10.212,
-        "delta_full_pct": -46.63,
+        "n": 2584,
+        "mae_base": 18.741,
+        "mae_gate": 10.11,
+        "delta_full_pct": -46.06,
         "delta_a_pct": -46.38,
-        "delta_b_pct": -47.02,
+        "delta_b_pct": -45.46,
         "verdict": "SHIP"
       },
       "6-11": {
-        "n": 2807,
-        "mae_base": 16.859,
-        "mae_gate": 16.087,
-        "delta_full_pct": -4.58,
+        "n": 2688,
+        "mae_base": 16.625,
+        "mae_gate": 15.87,
+        "delta_full_pct": -4.54,
         "delta_a_pct": 5.24,
-        "delta_b_pct": -16.7,
+        "delta_b_pct": -18.33,
         "verdict": "SKIP"
       },
       "12-23": {
-        "n": 4754,
-        "mae_base": 17.438,
-        "mae_gate": 13.631,
-        "delta_full_pct": -21.83,
+        "n": 4590,
+        "mae_base": 17.311,
+        "mae_gate": 13.262,
+        "delta_full_pct": -23.39,
         "delta_a_pct": 0.28,
-        "delta_b_pct": -47.15,
+        "delta_b_pct": -53.13,
         "verdict": "SKIP"
       },
       "24-47": {
-        "n": 8415,
-        "mae_base": 14.732,
-        "mae_gate": 17.644,
-        "delta_full_pct": 19.77,
+        "n": 8161,
+        "mae_base": 14.63,
+        "mae_gate": 17.734,
+        "delta_full_pct": 21.21,
         "delta_a_pct": 16.53,
-        "delta_b_pct": 24.75,
+        "delta_b_pct": 29.15,
         "verdict": "SKIP"
       }
     },
     "pre_frontal": {
       "0-5": {
-        "n": 2305,
-        "mae_base": 24.275,
-        "mae_gate": 11.425,
-        "delta_full_pct": -52.93,
+        "n": 2160,
+        "mae_base": 24.411,
+        "mae_gate": 10.587,
+        "delta_full_pct": -56.63,
         "delta_a_pct": -52.68,
-        "delta_b_pct": -53.29,
+        "delta_b_pct": -63.04,
         "verdict": "SHIP"
       },
       "6-11": {
-        "n": 2819,
-        "mae_base": 24.915,
-        "mae_gate": 18.149,
-        "delta_full_pct": -27.16,
+        "n": 2646,
+        "mae_base": 25.008,
+        "mae_gate": 17.213,
+        "delta_full_pct": -31.17,
         "delta_a_pct": -23.94,
-        "delta_b_pct": -32.36,
+        "delta_b_pct": -44.94,
         "verdict": "SHIP"
       },
       "12-23": {
-        "n": 5473,
-        "mae_base": 19.77,
-        "mae_gate": 14.07,
-        "delta_full_pct": -28.83,
+        "n": 5126,
+        "mae_base": 19.558,
+        "mae_gate": 13.605,
+        "delta_full_pct": -30.44,
         "delta_a_pct": -30.06,
-        "delta_b_pct": -27.01,
+        "delta_b_pct": -31.13,
         "verdict": "SHIP"
       },
       "24-47": {
-        "n": 10017,
-        "mae_base": 19.824,
-        "mae_gate": 17.055,
-        "delta_full_pct": -13.97,
+        "n": 9337,
+        "mae_base": 20.205,
+        "mae_gate": 17.424,
+        "delta_full_pct": -13.76,
         "delta_a_pct": -1.57,
-        "delta_b_pct": -28.35,
-        "verdict": "MARGIN"
+        "delta_b_pct": -29.62,
+        "verdict": "SKIP",
+        "emergency_demote_notes": [
+          {
+            "ship_version": "v0.6.382t",
+            "ship_time_utc": "2026-07-28T00:04:20Z",
+            "delta_pct_vs_l6": 32.12,
+            "previous_verdict": "MARGIN",
+            "reason": "chp mid-lead regression vs Lc: Stage 2 was measured vs forecast_l4 (pre-Lc); post-Lc-flip (07-17) the honest baseline is forecast_l6. h_ch_persistence_blend_stage2_vs_l6.py (evening-3 07-27) confirms this cell has chp materially worse than Lc alone."
+          }
+        ]
       }
     },
     "se_flow": {
       "0-5": {
-        "n": 2410,
-        "mae_base": 22.107,
-        "mae_gate": 10.309,
-        "delta_full_pct": -53.37,
+        "n": 2232,
+        "mae_base": 21.713,
+        "mae_gate": 9.914,
+        "delta_full_pct": -54.34,
         "delta_a_pct": -55.2,
-        "delta_b_pct": -52.75,
+        "delta_b_pct": -54.01,
         "verdict": "SHIP"
       },
       "6-11": {
-        "n": 3578,
-        "mae_base": 20.903,
-        "mae_gate": 15.166,
-        "delta_full_pct": -27.44,
+        "n": 3412,
+        "mae_base": 21.208,
+        "mae_gate": 14.545,
+        "delta_full_pct": -31.42,
         "delta_a_pct": -18.78,
-        "delta_b_pct": -30.0,
-        "verdict": "SHIP"
+        "delta_b_pct": -35.31,
+        "verdict": "SKIP",
+        "emergency_demote_notes": [
+          {
+            "ship_version": "v0.6.382t",
+            "ship_time_utc": "2026-07-28T00:04:20Z",
+            "delta_pct_vs_l6": 28.99,
+            "previous_verdict": "SHIP",
+            "reason": "chp mid-lead regression vs Lc: Stage 2 was measured vs forecast_l4 (pre-Lc); post-Lc-flip (07-17) the honest baseline is forecast_l6. h_ch_persistence_blend_stage2_vs_l6.py (evening-3 07-27) confirms this cell has chp materially worse than Lc alone."
+          }
+        ]
       },
       "12-23": {
-        "n": 8271,
-        "mae_base": 23.257,
-        "mae_gate": 14.864,
-        "delta_full_pct": -36.09,
+        "n": 7799,
+        "mae_base": 23.692,
+        "mae_gate": 14.419,
+        "delta_full_pct": -39.14,
         "delta_a_pct": -32.83,
-        "delta_b_pct": -37.36,
+        "delta_b_pct": -41.74,
         "verdict": "SHIP"
       },
       "24-47": {
-        "n": 15206,
-        "mae_base": 21.622,
-        "mae_gate": 17.815,
-        "delta_full_pct": -17.61,
+        "n": 14362,
+        "mae_base": 21.769,
+        "mae_gate": 17.762,
+        "delta_full_pct": -18.4,
         "delta_a_pct": 9.03,
-        "delta_b_pct": -28.77,
+        "delta_b_pct": -30.76,
         "verdict": "SKIP"
       }
     },
     "sea_breeze": {
       "0-5": {
-        "n": 1026,
-        "mae_base": 19.245,
-        "mae_gate": 10.436,
-        "delta_full_pct": -45.77,
+        "n": 943,
+        "mae_base": 18.86,
+        "mae_gate": 9.664,
+        "delta_full_pct": -48.76,
         "delta_a_pct": -51.77,
-        "delta_b_pct": -43.61,
+        "delta_b_pct": -47.5,
         "verdict": "SHIP"
       },
       "6-11": {
-        "n": 976,
-        "mae_base": 23.788,
-        "mae_gate": 16.645,
-        "delta_full_pct": -30.03,
+        "n": 869,
+        "mae_base": 23.739,
+        "mae_gate": 15.155,
+        "delta_full_pct": -36.16,
         "delta_a_pct": -24.64,
-        "delta_b_pct": -34.37,
+        "delta_b_pct": -47.8,
         "verdict": "SHIP"
       },
       "12-23": {
-        "n": 1314,
-        "mae_base": 27.871,
-        "mae_gate": 17.458,
-        "delta_full_pct": -37.36,
+        "n": 1301,
+        "mae_base": 27.976,
+        "mae_gate": 17.133,
+        "delta_full_pct": -38.76,
         "delta_a_pct": -34.23,
-        "delta_b_pct": -40.65,
+        "delta_b_pct": -43.58,
         "verdict": "SHIP"
       },
       "24-47": {
-        "n": 3057,
-        "mae_base": 21.922,
-        "mae_gate": 15.852,
-        "delta_full_pct": -27.69,
+        "n": 2987,
+        "mae_base": 21.81,
+        "mae_gate": 15.844,
+        "delta_full_pct": -27.35,
         "delta_a_pct": -17.05,
-        "delta_b_pct": -35.13,
-        "verdict": "SHIP"
+        "delta_b_pct": -34.92,
+        "verdict": "SKIP",
+        "emergency_demote_notes": [
+          {
+            "ship_version": "v0.6.382t",
+            "ship_time_utc": "2026-07-28T00:04:20Z",
+            "delta_pct_vs_l6": 36.85,
+            "previous_verdict": "SHIP",
+            "reason": "chp mid-lead regression vs Lc: Stage 2 was measured vs forecast_l4 (pre-Lc); post-Lc-flip (07-17) the honest baseline is forecast_l6. h_ch_persistence_blend_stage2_vs_l6.py (evening-3 07-27) confirms this cell has chp materially worse than Lc alone."
+          }
+        ]
       }
     },
     "sw_flow": {
       "0-5": {
-        "n": 4785,
-        "mae_base": 16.905,
-        "mae_gate": 10.347,
-        "delta_full_pct": -38.79,
+        "n": 4649,
+        "mae_base": 16.606,
+        "mae_gate": 10.089,
+        "delta_full_pct": -39.24,
         "delta_a_pct": -39.12,
-        "delta_b_pct": -38.34,
+        "delta_b_pct": -39.44,
         "verdict": "SHIP"
       },
       "6-11": {
-        "n": 5610,
-        "mae_base": 17.154,
-        "mae_gate": 16.782,
-        "delta_full_pct": -2.17,
+        "n": 5500,
+        "mae_base": 17.012,
+        "mae_gate": 16.646,
+        "delta_full_pct": -2.15,
         "delta_a_pct": 0.81,
-        "delta_b_pct": -7.2,
+        "delta_b_pct": -7.56,
         "verdict": "SKIP"
       },
       "12-23": {
-        "n": 10485,
-        "mae_base": 19.538,
-        "mae_gate": 15.232,
-        "delta_full_pct": -22.04,
+        "n": 10287,
+        "mae_base": 19.536,
+        "mae_gate": 15.11,
+        "delta_full_pct": -22.65,
         "delta_a_pct": -21.92,
-        "delta_b_pct": -22.26,
-        "verdict": "SHIP"
+        "delta_b_pct": -24.2,
+        "verdict": "SKIP",
+        "emergency_demote_notes": [
+          {
+            "ship_version": "v0.6.382t",
+            "ship_time_utc": "2026-07-28T00:04:20Z",
+            "delta_pct_vs_l6": 37.99,
+            "previous_verdict": "SHIP",
+            "reason": "chp mid-lead regression vs Lc: Stage 2 was measured vs forecast_l4 (pre-Lc); post-Lc-flip (07-17) the honest baseline is forecast_l6. h_ch_persistence_blend_stage2_vs_l6.py (evening-3 07-27) confirms this cell has chp materially worse than Lc alone."
+          }
+        ]
       },
       "24-47": {
-        "n": 19741,
-        "mae_base": 19.875,
-        "mae_gate": 16.313,
-        "delta_full_pct": -17.92,
+        "n": 19710,
+        "mae_base": 19.9,
+        "mae_gate": 16.322,
+        "delta_full_pct": -17.98,
         "delta_a_pct": -3.71,
-        "delta_b_pct": -36.05,
-        "verdict": "SHIP"
+        "delta_b_pct": -36.19,
+        "verdict": "SKIP",
+        "emergency_demote_notes": [
+          {
+            "ship_version": "v0.6.382t",
+            "ship_time_utc": "2026-07-28T00:04:20Z",
+            "delta_pct_vs_l6": 58.84,
+            "previous_verdict": "SHIP",
+            "reason": "chp mid-lead regression vs Lc: Stage 2 was measured vs forecast_l4 (pre-Lc); post-Lc-flip (07-17) the honest baseline is forecast_l6. h_ch_persistence_blend_stage2_vs_l6.py (evening-3 07-27) confirms this cell has chp materially worse than Lc alone."
+          }
+        ]
       }
     },
     "unknown": {
       "0-5": {
-        "n": 280,
-        "mae_base": 23.204,
-        "mae_gate": 8.346,
-        "delta_full_pct": -64.03,
+        "n": 274,
+        "mae_base": 23.208,
+        "mae_gate": 8.266,
+        "delta_full_pct": -64.38,
         "delta_a_pct": null,
-        "delta_b_pct": -64.03,
+        "delta_b_pct": -64.38,
         "verdict": "MARGIN"
       },
       "6-11": {
-        "n": 501,
-        "mae_base": 22.812,
-        "mae_gate": 20.864,
-        "delta_full_pct": -8.54,
+        "n": 457,
+        "mae_base": 24.133,
+        "mae_gate": 21.125,
+        "delta_full_pct": -12.47,
         "delta_a_pct": null,
-        "delta_b_pct": -8.54,
+        "delta_b_pct": -12.47,
         "verdict": "MARGIN"
       },
       "12-23": {
-        "n": 1003,
-        "mae_base": 25.481,
-        "mae_gate": 25.197,
-        "delta_full_pct": -1.11,
+        "n": 769,
+        "mae_base": 32.415,
+        "mae_gate": 21.892,
+        "delta_full_pct": -32.46,
         "delta_a_pct": null,
-        "delta_b_pct": -1.11,
+        "delta_b_pct": -32.46,
         "verdict": "MARGIN"
       },
       "24-47": {
-        "n": 1359,
-        "mae_base": 25.82,
-        "mae_gate": 18.205,
-        "delta_full_pct": -29.49,
+        "n": 1087,
+        "mae_base": 28.031,
+        "mae_gate": 17.598,
+        "delta_full_pct": -37.22,
         "delta_a_pct": null,
-        "delta_b_pct": -29.49,
+        "delta_b_pct": -37.22,
         "verdict": "MARGIN"
       }
     }
   },
   "rollup": {
-    "ship": 19,
-    "margin": 9,
-    "skip": 8,
-    "thin": 1
+    "ship": 14,
+    "margin": 8,
+    "skip": 13,
+    "thin": 2
   },
-  "notes": "Stage 2 preview only. Not wired to production. Persistence = flat-carry of the joined ch obs at forecast issue time. Cells with verdict=SHIP or MARGIN use persistence at runtime; SKIP + frontal fall back to L4. Wire via a new ch_persistence_gate processor with ENABLED=False on ship and a 7-day gate before enabling."
+  "notes": "Stage 2 preview only. Not wired to production. Persistence = flat-carry of the joined ch obs at forecast issue time. Cells with verdict=SHIP or MARGIN use persistence at runtime; SKIP + frontal fall back to L4. Wire via a new ch_persistence_gate processor with ENABLED=False on ship and a 7-day gate before enabling.",
+  "emergency_demotes": [
+    {
+      "version": "v0.6.382t",
+      "time_utc": "2026-07-28T00:04:20Z",
+      "cells": [
+        {
+          "regime": "sw_flow",
+          "band": "24-47",
+          "delta_pct_vs_l6_baseline": 58.84
+        },
+        {
+          "regime": "sw_flow",
+          "band": "12-23",
+          "delta_pct_vs_l6_baseline": 37.99
+        },
+        {
+          "regime": "sea_breeze",
+          "band": "24-47",
+          "delta_pct_vs_l6_baseline": 36.85
+        },
+        {
+          "regime": "pre_frontal",
+          "band": "24-47",
+          "delta_pct_vs_l6_baseline": 32.12
+        },
+        {
+          "regime": "se_flow",
+          "band": "6-11",
+          "delta_pct_vs_l6_baseline": 28.99
+        },
+        {
+          "regime": "ne_flow",
+          "band": "12-23",
+          "delta_pct_vs_l6_baseline": 28.41
+        }
+      ],
+      "source_script": "analysis/h_ch_persistence_blend_stage2_vs_l6.py",
+      "rationale": "Emergency demote of 6 chp cells that materially regress ch vs Lc under the L6 baseline (Stage 2 originally measured chp vs forecast_l4 pre-Lc-flip). All 6 cells: n>=100 in 10-day post-Lc window, both halves worse than Lc, delta >= +28% MAE. See project_chp_midlead_regression_watch for full escalation trail."
+    }
+  ]
 }
