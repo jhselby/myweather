@@ -1,19 +1,30 @@
 """
-Cross-cut for the L2 lead-decay ship candidate — sr τ=24h.
+Cross-cut for the L2 lead-decay ship candidate — sr τ=120h.
 
-Why this script exists:
-  l2_lead_decay_fit.py flipped sr to IMPLEMENT (+2.9% MAE vs flat, no per-band
-  loss). Aggregate-only + per-band gate isn't sufficient before shipping —
-  sr is heavily regime-conditional (that's why L5 exists). A decay that wins
-  on aggregate can still tank a specific regime (e.g. helps nw_flow long
-  leads but hurts sea_breeze), and the fix in that case is skip-table
-  architecture, not "don't ship."
+⚠  BLOCKED by unit mismatch — see project_sr_unit_mismatch.
+   sr has NO L2 wired in production. Pair-log forecast_l2 for sr is a bit-
+   identical echo of forecast_l1 (verified 20k rows). The +4.5% "improvement"
+   this script and l2_lead_decay_fit.py report is fitting the definitional
+   gap between model direct_radiation (direct-beam only) and Tempest
+   solar_wm2 (total shortwave), not a real hyperlocal station-consensus
+   signal. Naive L2 wiring here would re-encode the unit gap into a new
+   correction — exactly the trap Lsr's old regime bias fell into.
+   Actual open work: Lsb (sr_sea_breeze_lsr_override.py) shortwave-refit
+   chain. Do NOT ship sr L2 from this script's output until that resolves.
+
+Why this script still runs:
+  When Lsb / shortwave-refit lands and sr L2 becomes wireable against
+  shortwave, this regime × lead_band cross-cut is the pre-ship gate. Keep
+  running so the diagnostic is ready.
 
 Method:
   Stream pair log, sr only. Per row read forecast_l1, forecast_l2, observed,
   lead_h, state_obs.regime_synoptic. Compute per (regime × lead_band):
     |L2-flat|  = |err_l1 + applied_bias|
-    |L2-decay| = |err_l1 + exp(-lead/τ) × applied_bias|   with τ=24h
+    |L2-decay| = |err_l1 + exp(-lead/τ) × applied_bias|   with τ=120h
+    (τ=120h from analysis/l2_lead_decay_fit.py, replaces earlier τ=24h
+     recommendation. Re-cut 2026-07-28 confirmed CLEAN across all 32 cells
+     at τ=120h — zero regressions, calm/24-47 +2.1%, frontal/24-47 +5.8%.)
 
 Verdicts per cell (n≥200 floor):
     ★ L2 LOSES   Δ ≤ -2%   (decay makes MAE worse)
@@ -21,11 +32,9 @@ Verdicts per cell (n≥200 floor):
     WIN          Δ ≥ +2%
 
 What to do with the output:
-  - All WIN/flat: clean ship — wire sr τ=24h into l2_decay.json.
-  - LOSS concentrated in a specific (regime, lead_band): skip-table candidate
-    (skip the decay in that cell, ship everywhere else).
-  - LOSS across all regimes at same lead_band: refit τ or ship narrower.
-  - LOSS across all cells: aggregate win was noise — do not ship.
+  - Until unit mismatch resolved: informational only, do not ship.
+  - Post-resolution: All WIN/flat → clean ship. LOSS in one cell →
+    skip-table candidate. LOSS across cells → aggregate win was noise.
 """
 import json
 import math
@@ -41,7 +50,7 @@ PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUTPUT_PATH = os.path.join(SCRIPT_DIR, "output", "l2_regime_lead_analysis.txt")
 
 FIELD = "sr"
-TAU_H = 24.0
+TAU_H = 120.0  # from l2_lead_decay_fit.py — supersedes stale 24.0
 LEAD_BANDS = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
 MIN_N_PER_CELL = 200
 WIN_THRESHOLD_PCT = 2.0
@@ -164,8 +173,10 @@ def main():
     emit("=" * 86)
     if tally["★ L2 LOSES"] == 0:
         emit(f"  → CLEAN — {FIELD} τ={TAU_H:g}h wins or is flat in every judgeable "
-             f"(regime × lead_band) cell. Safe to wire into l2_decay.json without a "
-             f"skip table.")
+             f"(regime × lead_band) cell. ⚠  DO NOT SHIP: blocked by unit mismatch "
+             f"(see project_sr_unit_mismatch — sr forecast_l2 is echo of forecast_l1 "
+             f"in production; +% is fitting direct-vs-shortwave gap, not station "
+             f"consensus). Diagnostic-only until Lsb/shortwave-refit resolves.")
     else:
         loss_str = "; ".join(f"{r}/{b} ({d:+.1f}%, n={n:,})"
                              for r, b, n, d in loss_cells)

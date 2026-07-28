@@ -108,6 +108,13 @@ KNOWN_LIVE_PIPELINES = {
         "since": "v0.6.380",
         "date": "2026-07-25",
     },
+    "l5_solar_analysis": {
+        "target": "Lsr base solar_correction (solar_correction.py, "
+                  "ENABLED=True). Script's 'flip solar_correction.ENABLED = True' "
+                  "verdict is stale — target already live.",
+        "since": "v0.6.248",
+        "date": "2026-06-28",
+    },
     # NOT registered (deliberate):
     #   walkforward_l3l4_validator — composite. L4 {ch,cc} half live but L3
     #     half proposes real drop of wg/ws. Registering would suppress the

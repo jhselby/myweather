@@ -183,6 +183,13 @@ def emit(buckets):
                 "impact": impact,
             })
         elif a_win and b_win and (not currently_on):
+            # sr L2 ADD candidates are contaminated by the direct-vs-shortwave
+            # unit gap (model direct_radiation vs Tempest solar_wm2 total
+            # shortwave). See project_sr_unit_mismatch. Suppress until the
+            # Lsb / shortwave-refit chain resolves — naive L2 wiring would
+            # re-encode the unit gap into a new correction layer.
+            if fld == "sr" and lc == "l2":
+                continue
             add_candidates.append({
                 "field": fld, "layer": lc, "regime": regime, "band": band,
                 "delta_a": a["delta"], "delta_b": b["delta"],
