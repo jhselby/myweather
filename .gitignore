@@ -22,6 +22,11 @@ __pycache__/
 js/*.backup.js
 .env
 
+# Local Fitter gate-streak caches — read by analysis scripts on this Mac
+# only; deployed collector doesn't see them. Rewritten by every digest run.
+.cache_l5_gate_history.json
+.cache_lc_gate_history.json
+
 # Scratch / analysis output (not part of the app)
 HANDOFF.md
 dump.txt
