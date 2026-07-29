@@ -1,6 +1,18 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389a • July 29, 2026 (debug page freshness sweep — v0.6.389 backfill + day counter cleanup + C1 Stage 4 status resync)</strong></summary>
+
+- **Debug page — Rule 5 freshness sweep.** Sweeping `corrections_debug.html` against MEMORY and code state surfaced multiple stale sites where the same information was displayed with different day counts in different sections (a systemic problem — day counters get updated in some blocks during version bumps and not others). Fixed 6 sites plus one missing ship entry + one factually-wrong C1 note:
+  - **Missing:** v0.6.389 pr L2 shadow-wire was absent from Recent Ships entirely (deployed 07-29, no debug page entry). Added a full PIPELINE bullet + bumped today's ship count.
+  - **Factually wrong:** C1 Stage 4 line claimed "cm has cleared, cl now DEGRADED" — today's mixture check shows cm/0-5h [transition] b3 is still DEGRADED +42% (holding since 07-28), cl/6-11h [transition] b3 escalated +137→+217% one-day. Rewrote to reflect today's real state and the 07-29 REJECTION of the joint cl/cm correction hypothesis (cl has no live correction stack; cm corrections are stable improvers; drift is raw-HRRR-side and fitter absorbs via c1 confidence bands).
+  - **Day counter drift:** clp Day 0/7 → Day 2/7 (2 sites), wdp Day 0/14 → Day 2/14 (1 site), chp Day 9/14 → Day 11/14 (1 site).
+  - **wd L2 blend watch window:** was showing "Day 10/14 through 08-03" (original 07-20 ship). Watch was reset by v0.6.384 07-28 BLEND_HOURS 24→4 collateral fix — updated to "Day 2/14 through 08-11" with post-fix day-1 verify note.
+- **Persistence-skill MIXED verdict for wd noted as FOSSIL** in the wd L2 blend watch line (referenced [[project_wd_l2_blend]]).
+
+</details>
+
+<details>
 <summary><strong>v0.6.389 • July 29, 2026 (pr L2 shadow-wire — apply stays disabled but pair log now carries a measurable pr_l2 for regime × lead re-cut)</strong></summary>
 
 - **Collector — pr L2 shadow-wire.** L2 additive bias for pressure was disabled 2026-07-01 (v0.6.276) on a pooled Production-vs-raw read of −2.4%. That decision predates skip-table architecture (v0.6.279), regime-gate-first discipline (formalized ~07-11), and the `l2_regime_lead_analysis.py` cross-cut machinery. A 2026-07-29 retro (`analysis/pr_l2_regime_lead_retro.py`, on pre-07-01 pair-log rows where `pr_l2 ≠ pr_l1`) finds the kill was regime-blind: **6 (regime × lead) cells win at n≥200** — sea_breeze/0-5h +26.7% (n=220), pre_frontal/0-5h +26.1% (n=233), calm/6-11h +14.2% (n=396), ne_flow/12-23h +9.2% (n=271), sea_breeze/12-23h +7.2% (n=467), ne_flow/24-47h +3.3% (n=270). Losses concentrated in westerly dry offshore flow (nw/sw/se) which dominated the pooled n. Physical story is consistent — L2 helps in onshore / marine / transition regimes where station consensus carries real signal, hurts where station consensus reflects terrain gradients not present at the Beverly grid point. This ship **does not re-enable L2**: `corrected_pressure_in ≡ raw_pressure_in` still, `pr_applied` stays `l1`. What changes: `corrected_hourly.py` now computes the L2-corrected pressure array (K=1, τ from `_load_l2_taus` guardrails) and stamps `corrected_pressure_in_post_l2` directly. `decay_apply.py`'s post-Layer-2 snapshot now preserves any pre-written `_post_l2` key rather than unconditionally overwriting with the live array — general shadow-key improvement, currently only pr uses it. Pair log will carry a real `pr_l2` distinct from `pr_l1` starting next tick, enabling a ~2-week fresh-data re-cut of the regime × lead analysis. Companion memory: `project_pr_l2_regime_gate_opportunity.md`. Shadow write is unconditional per [[feedback_persistence_gate_shadow_write]].
