@@ -297,7 +297,15 @@ def _append_and_summarize_gate_history(this_entry):
     cells_changed = dedup
 
     stable = len(cells_changed) == 0
-    gate_clear = len(by_day) >= GATE_WINDOW_DAYS and hold_days == 0 and stable
+    # Live-empty fossil guard (added 2026-07-29): "no cells changed status"
+    # is True for both stable-non-empty and stable-empty windows — reporting
+    # gate_clear=True on a stable-empty streak would incorrectly signal
+    # "ready to promote nothing." Require at least one SHIP cell in the
+    # current set. Symmetric with the fix in build_executive_summary.py's
+    # narrow-promote walker for H_L4_ADD_CANDIDATES / PRE_FRONTAL_SHIP_CELLS.
+    # See [[feedback_fossil_windows]].
+    gate_clear = (len(by_day) >= GATE_WINDOW_DAYS and hold_days == 0
+                  and stable and len(current_ship) > 0)
 
     return {
         "entries_in_window": len(window),

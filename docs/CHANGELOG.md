@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389b • July 29, 2026 (live-empty fossil guard — narrow-promote walker + Lc gate_clear stop reporting "GATE CLEARED" for empty SHIP sets)</strong></summary>
+
+- **Analysis — narrow-promote walker (`build_executive_summary.py`).** The 4-gate walker (C1H_SHIP_CELLS, C1D_SHIP_CELLS, PRE_FRONTAL_SHIP_CELLS, H_L4_ADD_CANDIDATES) treats empty-vs-empty as a Jaccard match (line 1037-1038, deliberate — "consistent zero SHIP for N days is a legitimate stable state"). Downstream this rendered as `✓ GATE CLEARED (8/7 days) · 0 SHIP cells today`, which reads as ship-ready to a casual reader. Triggered a manual DECLINE on 07-26 when Claude noticed the mismatch. Fix: differentiate the two outcomes when count ≥ gate — `✓ GATE CLEARED (...) — ready to ship N cells` if `n_cells_today > 0`, else `⚫ STABLE-EMPTY (...) — nothing to ship`. Only PRE_FRONTAL_SHIP_CELLS and H_L4_ADD_CANDIDATES use `allow_empty=True` (C1H/C1D return `None` on empty and skip); both are now protected. See [[feedback_fossil_windows]].
+- **Analysis — Lc gate_clear (`lc_fit.py:300`).** Same live-empty fossil pattern: `stable = len(cells_changed) == 0` returns True for both stable-non-empty and stable-empty windows. Fix: `gate_clear` now additionally requires `len(current_ship) > 0`. Vestigial for now since Lc is already ENABLED=True 07-17, but fixes for symmetry with the walker fix and to protect against future re-arming logic.
+- **Sweep checked, NOT vulnerable:** `decay_tau_tuning.py` (short-circuits on `big_wins == 0` before streak logic), `build_executive_summary.py:698` SHIP-ELIGIBLE walker (bounded by promote-bucket entry; scripts already in promote have non-empty verdicts by construction), `divergence_report.py _streak_for` (only fires on DISAGREE; empty-vs-empty is AGREE and skips streak entirely).
+
+</details>
+
+<details>
 <summary><strong>v0.6.389a • July 29, 2026 (debug page freshness sweep — v0.6.389 backfill + day counter cleanup + C1 Stage 4 status resync)</strong></summary>
 
 - **Debug page — Rule 5 freshness sweep.** Sweeping `corrections_debug.html` against MEMORY and code state surfaced multiple stale sites where the same information was displayed with different day counts in different sections (a systemic problem — day counters get updated in some blocks during version bumps and not others). Fixed 6 sites plus one missing ship entry + one factually-wrong C1 note:

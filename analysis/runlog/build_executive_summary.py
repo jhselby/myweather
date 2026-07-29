@@ -1072,11 +1072,23 @@ def main():
                 else:
                     break
         count = streak + 1
+        n_cells_today = len(today_claim)
         if count >= gate_n:
-            marker = f"✓ GATE CLEARED ({count}/{gate_n} days, oldest match {oldest})"
+            if n_cells_today == 0:
+                # Live-empty fossil guard: the streak walker treats
+                # empty-vs-empty as a Jaccard match, so N consecutive empty
+                # days count toward the gate. That's a legitimate "stable
+                # nothing to ship" signal — but rendering it as "GATE
+                # CLEARED" reads as ship-ready, which triggered a manual
+                # decline on 07-26 (see debug page h/L4 narrow-add entry
+                # and [[feedback_fossil_windows]]). Distinct marker so the
+                # empty-stable case can't be confused with ship-ready.
+                marker = f"⚫ STABLE-EMPTY ({count}/{gate_n} days) — nothing to ship"
+            else:
+                marker = f"✓ GATE CLEARED ({count}/{gate_n} days, oldest match {oldest}) — ready to ship {n_cells_today} cells"
         else:
             marker = f"⏳ {count}/{gate_n} ({gate_n - count} to go)"
-        _narrow_lines.append(f"  • {label}: {marker}  · {len(today_claim)} SHIP cells today")
+        _narrow_lines.append(f"  • {label}: {marker}  · {n_cells_today} SHIP cells today")
     out.append("Narrow-promote gates (C1 marginal-axis Stage 3):")
     out.extend(_narrow_lines)
     out.append("")
