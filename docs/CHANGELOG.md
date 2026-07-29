@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.388b • July 29, 2026 (RIGHT NOW color-neutral + arrows, run_digest.sh classifier patch, day-1 wind_blend verify + Rule 5 sweep)</strong></summary>
+
+- **Debug page — "Right now — what the pipeline is doing" table.** The Correction column no longer color-codes cells green/red based on sign. Elsewhere on the page green/yellow/red carry a good/neutral/bad meaning; in this table sign is direction, not quality (e.g. −4 pts cloud low is not "bad"). Rows now render neutral (default text color) and use ↑ / ↓ arrows in place of + / − to indicate direction. Single-function change in `renderHeadlineBox._fmtDelta` (corrections_debug.html).
+- **Digest infra — `run_digest.sh` FAIL classifier.** 4 scripts marked FAIL(1) with empty tail on the 07-29 morning digest despite exiting 0 in re-run. Fallback grep at line 43 only recognized column-0 `VERDICT` / `Verdict` / `→` / `RESULT:` markers; scripts that emit indented verdicts + a non-zero exit path fell through to FAIL. Patched anchor to `^[[:space:]]*(...)` so indented verdicts still count.
+- **Rule 5 sweep** — advanced day counters across post-ship watches (Lc 12→13/14, chp 10→11/14, wd L2 / ws L3 asym 9→10/14, wdp 0→2/14, Lsb 0→1/7, 07-28 ships 0→1/14 or 1/7), clp gate day 0→2/7, dp residual day 3→5/7. **ws narrative updated** in "Currently correcting" summary (line 899): pre-fix "+5.3% open regression" replaced with post-fix reality — day-1 mae_over_time read for wind_blend fix came in at ws Prod −2.5% vs raw (first negative day in 2 weeks). **wind_blend post-ship watch** (v0.6.384) updated with day-1 verify result. **Recent activity** — added 07-29 "today" entry (this ship + digest classifier patch + digest triage session), demoted 07-28 to "yesterday".
+
+</details>
+
+<details>
 <summary><strong>v0.6.388a • July 28, 2026 (debug page sweep for the 4 post-reboot ships + h_dewpoint_depression_stability.py checked into analysis/)</strong></summary>
 
 - **Debug page sweep** (Rule 5) for the 4 post-reboot ships (v0.6.385/386/387/388). Recent activity: "today" summary updated to 9 ships (was 5), 4 new bullets for post-reboot ships with DISCOVERY/PIPELINE badges. Post-ship watches: 4 new entries — wg L3 4-cell 14d, ws L3 2-cell 14d, dpbp 7d flip gate, wsbp 7d flip gate — all through 08-04 or 08-11. Calendar Tue 08-04 expanded from Lsb-only to four items (Lsb narrowed-gate flip, dpbp flip, wsbp flip, wg L3 24-47 re-cut on held cells) with pointers to preflight_dpbp / preflight_wsbp memories. Per-field sections: dp row now mentions dpbp Stage 3 wire; ws row updated with L3 SKIP extension + wsbp new specialist; wg row mentions v0.6.385 flat SKIP shipping (4 cells) plus 08-04 held-cell re-cut.

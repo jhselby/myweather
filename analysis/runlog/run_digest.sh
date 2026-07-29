@@ -40,7 +40,7 @@ for f in analysis/*.py; do
   dur=$(( $(date +%s) - start ))
   if [ $rc -eq 0 ]; then
     status="OK     "
-  elif grep -qE "^(VERDICT|Verdict|→ [A-Z]|RESULT:)" "$out"; then
+  elif grep -qE "^[[:space:]]*(VERDICT|Verdict|→ [A-Z]|RESULT:)" "$out"; then
     # Non-zero exit but the script printed a verdict line — this is the
     # "didn't meet ship threshold" exit code pattern (r4_spread_analysis,
     # walkforward variants under some conditions). Treat as OK so it
