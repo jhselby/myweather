@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389 • July 29, 2026 (pr L2 shadow-wire — apply stays disabled but pair log now carries a measurable pr_l2 for regime × lead re-cut)</strong></summary>
+
+- **Collector — pr L2 shadow-wire.** L2 additive bias for pressure was disabled 2026-07-01 (v0.6.276) on a pooled Production-vs-raw read of −2.4%. That decision predates skip-table architecture (v0.6.279), regime-gate-first discipline (formalized ~07-11), and the `l2_regime_lead_analysis.py` cross-cut machinery. A 2026-07-29 retro (`analysis/pr_l2_regime_lead_retro.py`, on pre-07-01 pair-log rows where `pr_l2 ≠ pr_l1`) finds the kill was regime-blind: **6 (regime × lead) cells win at n≥200** — sea_breeze/0-5h +26.7% (n=220), pre_frontal/0-5h +26.1% (n=233), calm/6-11h +14.2% (n=396), ne_flow/12-23h +9.2% (n=271), sea_breeze/12-23h +7.2% (n=467), ne_flow/24-47h +3.3% (n=270). Losses concentrated in westerly dry offshore flow (nw/sw/se) which dominated the pooled n. Physical story is consistent — L2 helps in onshore / marine / transition regimes where station consensus carries real signal, hurts where station consensus reflects terrain gradients not present at the Beverly grid point. This ship **does not re-enable L2**: `corrected_pressure_in ≡ raw_pressure_in` still, `pr_applied` stays `l1`. What changes: `corrected_hourly.py` now computes the L2-corrected pressure array (K=1, τ from `_load_l2_taus` guardrails) and stamps `corrected_pressure_in_post_l2` directly. `decay_apply.py`'s post-Layer-2 snapshot now preserves any pre-written `_post_l2` key rather than unconditionally overwriting with the live array — general shadow-key improvement, currently only pr uses it. Pair log will carry a real `pr_l2` distinct from `pr_l1` starting next tick, enabling a ~2-week fresh-data re-cut of the regime × lead analysis. Companion memory: `project_pr_l2_regime_gate_opportunity.md`. Shadow write is unconditional per [[feedback_persistence_gate_shadow_write]].
+
+</details>
+
+<details>
 <summary><strong>v0.6.388b • July 29, 2026 (RIGHT NOW color-neutral + arrows, run_digest.sh classifier patch, day-1 wind_blend verify + Rule 5 sweep)</strong></summary>
 
 - **Debug page — "Right now — what the pipeline is doing" table.** The Correction column no longer color-codes cells green/red based on sign. Elsewhere on the page green/yellow/red carry a good/neutral/bad meaning; in this table sign is direction, not quality (e.g. −4 pts cloud low is not "bad"). Rows now render neutral (default text color) and use ↑ / ↓ arrows in place of + / − to indicate direction. Single-function change in `renderHeadlineBox._fmtDelta` (corrections_debug.html).

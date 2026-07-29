@@ -618,10 +618,14 @@ def apply_decay_corrections(weather_data, config=None):
     # before any forecast-time correction). This is the L2 layer's output —
     # needed downstream so the per-layer MAE accuracy section can compute
     # "what the forecast looked like after mesonet, before decay" per pair.
+    # Skip if a shadow value was pre-written upstream (currently only pr —
+    # apply disabled 07-01 but shadow L2 stamped in corrected_hourly.py so
+    # the pair log can measure the regime × lead re-cut).
     for short, array_name in TARGET_ARRAY.items():
         arr = hourly.get(array_name)
-        if isinstance(arr, list):
-            hourly[f"{array_name}_post_l2"] = list(arr)
+        post_l2_key = f"{array_name}_post_l2"
+        if isinstance(arr, list) and post_l2_key not in hourly:
+            hourly[post_l2_key] = list(arr)
 
     # Skip-table lookup — read the current-tick synoptic regime once, use for
     # all L3/L4 skip decisions across all leads. Approximation: treats the

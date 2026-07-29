@@ -256,3 +256,25 @@ def add_corrected_hourly_arrays(weather_data):
         raw_pressure_in = [round(p / 33.8639, 3) if p is not None else None for p in raw_pressure_mb]
         hourly["raw_pressure_in"] = raw_pressure_in
         hourly["corrected_pressure_in"] = list(raw_pressure_in)
+
+        # Shadow-wire pr L2 (2026-07-29). Apply stays disabled — production
+        # pr_applied is still l1, corrected_pressure_in ≡ raw. But we compute
+        # what L2 WOULD produce (K=1, τ from _load_l2_taus guardrails) and
+        # stamp corrected_pressure_in_post_l2 directly so the pair log carries
+        # a measurable pr_l2. This lets us re-cut the regime × lead cross-cut
+        # on fresh data. Companion: analysis/pr_l2_regime_lead_retro.py —
+        # 07-29 retro on pre-07-01 data found 6 WIN cells (sea_breeze /
+        # pre_frontal short-lead, ne_flow long-lead, calm 6-11h). The 07-01
+        # pooled kill was regime-blind; the WIN cells are physically real
+        # (marine boundary layer, frontal advance). Shadow write is
+        # unconditional (feedback_persistence_gate_shadow_write). Decision
+        # to re-enable a regime-gated pr L2 requires ~2 weeks of shadow
+        # accumulation + fresh regime cross-cut. See
+        # project_pr_l2_regime_gate_opportunity.
+        pr_bias = hyp.get("bias_pressure_in", 0) or 0
+        pr_tau = taus.get("pr")
+        pr_decay = _decay_factors(pr_tau, len(raw_pressure_in))
+        hourly["corrected_pressure_in_post_l2"] = [
+            round(p + pr_bias * pr_decay[i], 3) if p is not None else None
+            for i, p in enumerate(raw_pressure_in)
+        ]
