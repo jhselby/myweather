@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389f • July 30, 2026 (Lc field-kill for cl + walk-forward validator — held-out data says pooled AND regime-conditional both hurt cl)</strong></summary>
+
+- **Analysis — walk-forward validator (`analysis/walkforward_lc_regime.py` NEW).** Forks the walkforward_l3l4_validator pattern for Lc. Single train/test obs_time split (train pre-07-20, test 07-20→07-30). Fits BOTH regime-conditional and pooled tables on train, evaluates both on held-out. Motivation: 7-day Stage 2 walk-forward gate is process discipline; we already have ~30d of pair log, so we can answer the stronger held-out MAE question now instead of waiting a week. **Result:** VERDICT: FLAT overall (-1.55%) — regime-Lc does NOT clearly beat pooled Lc on held-out. Field-level: cc +0.63%, cl **-6.73%**, cm -0.22%, ch +0.28%. Per-cell: 22 SHIP (regime beats pool ≥3%), 21 SKIP-regime (regime loses ≥3%), 98 flat, 49 thin. Stage 1's 92-cell SHIP set is over-generalized; only 22 cells actually help on held-out. Output at `analysis/output/walkforward_lc_regime.txt`.
+- **Critical finding on cl.** Walk-forward exposes: pooled Lc hurts cl by **-22.15% vs raw** on held-out; regime-conditional hurts it MORE (-30.37% vs raw). Neither shift-table architecture fits cl's recent distribution. Not a bug in the fit — the architecture itself doesn't work for cl right now. Distinct from cc/cm/ch which all benefit from pooled Lc (+5.3% / +34.7% / +36.3% vs raw held-out).
+- **Field-level Lc kill (`cloud_saturation_correction.py`).** `_FIELD_SKIP = frozenset({"cl"})` gates cl out of Lc entirely at the field-loop level in `stamp_cloud_saturation_correction`. cl hourly array is left untouched; `per_field.cl.field_skipped=True` in telemetry so debug page / Fitter can distinguish "gated off" from "no cells fired." `_REGIME_SKIP` cleaned up — 2 cl entries removed as redundant (cl now off at field level). cc's 2 ne_flow demote cells retained since cc still gets pooled Lc. **Reversibility:** removing `"cl"` from `_FIELD_SKIP` re-enables cl Lc — no data loss, no schema change. cl is held out until the fit stabilizes or the architecture is redesigned (candidate: rolling shorter-lookback fit, or shrinkage on the shift magnitudes).
+
+</details>
+
+<details>
 <summary><strong>v0.6.389e • July 30, 2026 (Stage 1 halves-strict regime-conditional Lc — candidate curated table + 7-day gate start)</strong></summary>
 
 - **Analysis — Stage 1 fit (`analysis/h_lc_regime_stage1.py` NEW).** Halves-strict version of Stage 0 — both halves must improve by ≥ HALVES_MIN_PCT (not just positive). Chronological halves-split by `obs_time` so recent-anomaly contamination shows up as B < A. Emits `analysis/output/lc_regime_curated_stage1.json` structured for Stage 3 apply-side wiring: `cells[field][regime][bin]` primary + `pooled_fallback[field][bin]` for THIN regime cells. Also emits gate history file `.cache_lc_regime_gate_history.json` with 30-day retention + 7-day flip window (same shape as `.cache_lc_gate_history.json`).

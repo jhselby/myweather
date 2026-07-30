@@ -35,15 +35,25 @@ CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
 # over-corrects by >20pp for a specific regime. When state_fc.regime_synoptic
 # matches, treat the cell as SKIP for this tick regardless of the curated
 # table. Same shape as v0.6.382t chp emergency demote — a bandage while
-# Stage 1 regime-conditional Lc is built out.
+# regime-conditional Lc is built out.
 #
 #   (field, regime, bin) — see analysis/output/h_lc_regime_stage0.txt divergence table.
 _REGIME_SKIP = frozenset({
-    ("cl", "ne_flow", "80-95"),   # live shift -61, regime wants -35 (26pp over)
-    ("cl", "ne_flow", "95-100"),  # live shift -58, regime wants -32 (26pp over) + HALVES-DIVERGE
     ("cc", "ne_flow", "50-80"),   # live shift -27, regime wants  -3 (23pp over) — SKIP-mag verdict
     ("cc", "ne_flow", "80-95"),   # live shift -30, regime wants  -8 (22pp over) — SKIP-Δ verdict
+    # cl ne_flow entries removed 2026-07-30 v0.6.389f — cl fully off Lc via _FIELD_SKIP below,
+    # so per-regime demotes for cl are redundant.
 })
+
+# Field-level Lc kill (2026-07-30 v0.6.389f). Walk-forward validator
+# (analysis/walkforward_lc_regime.py) train pre-07-20 / test 07-20→07-30
+# showed cl broken under BOTH pooled Lc (-22.15% vs raw) AND regime-conditional
+# Lc (-30.37% vs raw). Neither shift-table architecture fits cl's recent
+# distribution. Held out from Lc entirely until the fit stabilizes or the
+# architecture changes (rolling shorter-lookback fit, shrinkage, etc.).
+# cc/cm/ch still get pooled Lc — they either helped (+0.63% / +34% / +36%
+# vs raw on held-out) or were flat.
+_FIELD_SKIP = frozenset({"cl"})
 
 _FIELD_TO_HOURLY_KEY = {
     "cc": "cloud_cover",
@@ -165,21 +175,24 @@ def stamp_cloud_saturation_correction(weather_data):
         if not arr:
             continue
 
+        field_skipped = field in _FIELD_SKIP
+
         # Per-lead: bin lookup + shift on the L4-corrected value.
         deltas = [0.0] * len(arr)
         bins = [None] * len(arr)
         fired = 0
         demoted = 0
-        for i, v in enumerate(arr):
-            if v is None:
-                continue
-            shift, bin_lab, was_demoted = _shift_for(cells, field, v, regime=regime)
-            bins[i] = bin_lab
-            deltas[i] = shift
-            if shift != 0.0:
-                fired += 1
-            elif was_demoted:
-                demoted += 1
+        if not field_skipped:
+            for i, v in enumerate(arr):
+                if v is None:
+                    continue
+                shift, bin_lab, was_demoted = _shift_for(cells, field, v, regime=regime)
+                bins[i] = bin_lab
+                deltas[i] = shift
+                if shift != 0.0:
+                    fired += 1
+                elif was_demoted:
+                    demoted += 1
 
         per_field[field] = {
             "hourly_key": hourly_key,
@@ -187,6 +200,7 @@ def stamp_cloud_saturation_correction(weather_data):
             "bins": bins,
             "cells_fired": fired,
             "cells_demoted": demoted,
+            "field_skipped": field_skipped,
             "n_leads": len(arr),
         }
 
@@ -209,6 +223,7 @@ def stamp_cloud_saturation_correction(weather_data):
         "fit_rules": table.get("fit_rules"),
         "regime_at_apply": regime,
         "regime_skip_cells": sorted(list(_REGIME_SKIP)),
+        "field_skip": sorted(list(_FIELD_SKIP)),
         "per_field": per_field,
     }
 
