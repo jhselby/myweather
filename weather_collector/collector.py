@@ -543,6 +543,18 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  Cloud saturation stamp failed: {redact_secrets(e)}")
 
+    # Ccd — cc from-derivation (v0.6.389j 2026-07-30). Replace Pirate-fed cc
+    # with derived-max(cl_l6, cm_l6, ch_l6) except in SKIP_REGIMES (se_flow,
+    # unknown) where Pirate + Lc wins on held-out. Runs AFTER Lc so cm/ch
+    # arrive Lc-corrected; cl arrives raw due to its own _FIELD_SKIP. h_cc_
+    # derivation held-out test (2026-07-30): +8.5% pooled MAE vs current cc.
+    # ENABLED=False; module stamps telemetry for the 7-day gate.
+    try:
+        from .processors.cc_from_derivation import stamp_cc_from_derivation
+        stamp_cc_from_derivation(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  cc from-derivation stamp failed: {redact_secrets(e)}")
+
     # ch persistence gate — regime × lead_band bypass of L4 for ch. Runs
     # AFTER Lc so persistence overwrites L4+Lc where the gate fires; Lc's
     # shift was fit against L4 and would re-introduce bias if applied on
