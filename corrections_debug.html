@@ -798,13 +798,14 @@
 
 <details open style="margin-bottom:12px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
   <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — per-field snapshot</summary>
-  <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. Production numbers are real per-row aggregates over the rolling 7-day window.</div>
+  <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. <strong>7d avg</strong> = rolling 7-day trailing MAE vs raw (fitter <code>per_layer_mae_by_lead</code>). <strong>today</strong> = most-recent-obs-day Prod-vs-Raw from <code>mae_over_time.json</code> — same series the regression sentry watches. Today catches a bad ship on day 1; 7d catches sustained drift. Watch both.</div>
   <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
     <thead>
       <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
         <th style="padding:4px 8px 4px 0;">Field</th>
         <th style="padding:4px 10px;">Applied layers</th>
-        <th style="padding:4px 10px;">vs raw</th>
+        <th style="padding:4px 10px;" title="Rolling 7-day trailing MAE vs raw (fitter tsDoc). Slow to update; hides fresh regressions.">7d avg</th>
+        <th style="padding:4px 10px;" title="Most-recent-obs-day Prod-vs-Raw ratio (mae_over_time.json). Same signal the regression sentry uses.">today</th>
         <th style="padding:4px 0 4px 10px;">Status</th>
       </tr>
     </thead>
@@ -813,84 +814,98 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>t</code> temperature</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 additive</td>
         <td class="pf-mae" data-field="t" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="t" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable, no open work.</strong> L2 Kalman blend absorbs the microclimate signal on its own (persistence-skill +0.68 pooled); Lt reclassified as telemetry experiment 07-27 after Fix B refit came in +0.29% held-out (below +1% ship gate).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>h</code> humidity</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 additive → L4 diurnal</td>
         <td class="pf-mae" data-field="h" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="h" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Recent regression (crept during Lc-broken week).</strong> Trailing card +7% vs raw. Not on any active watch. h/l4 narrow-add HELD 07-26 (Jaccard walker cleared 8/7 but 0 SHIP cells today — live-empty fossil pattern); retest 08-02+ after cl-window rolls.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ws</code> wind speed</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct → L3 lead-decay <span style="opacity:0.6;">(skip: ne_flow all + sea_breeze 0-11h)</span></td>
         <td class="pf-mae" data-field="ws" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="ws" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#e0a070;">L2 blend shrunk 24h → 4h (v0.6.384, 07-28) — root cause fix.</strong> ws had been Prod +30% WORSE than raw for 2 weeks. Per-lead diagnostic showed L2 wins only at lead 1, catastrophically loses at leads 3-16 (+40 to +85% vs L1). L3 == L2 bit-identical (asymmetric SKIP additive was attacking wrong layer). Sweep of BLEND_HOURS ∈ {1,2,3,4,6,8,12,24}: 4 wins at +14.72% pooled MAE, all lead-bands improve. Physical: observed current wind at KBVY has more variance than the next-few-hour average — 24h bleed imported point-in-time noise. 14-day post-ship watch. L3 asymmetric SKIP additive (v0.6.370, 26 cells) stays as-is; still helps at edges even with L2 fixed. <strong style="color:#4ad29a;">ws L3 SKIP_TABLE extended 07-28 v0.6.386</strong> — 2 new long-lead transition cells (frontal 24-47, pre_frontal 24-47) added; 8 of 10 07-14 flat SHIP cells absorbed by v0.6.370 asymmetric already. <strong style="color:#4ad29a;">ws_bias_persistence gate NEW 07-28 v0.6.388</strong> — sibling of dpbp, calm regime only (sign-inverted: subtracts on over-forecast). Stage 1 +11.07% pooled halves +13.35/+10.33. ENABLED=False; 7-day flip 08-04.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wg</code> wind gust</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 direct → L3 lead-decay → wg residual persistence (dormant)</td>
         <td class="pf-mae" data-field="wg" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="wg" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win vs raw; existing asymmetric wg SKIP table is LIVE</strong> (07-20 v0.6.366, 48 cells). <strong style="color:#4ad29a;">wg L3 flat SKIP_TABLE extended 07-28 v0.6.385</strong> — 4 clean-halves cells wired (calm 0-5 +9.4%, calm 12-23 +40.0%, ne_flow 6-11 +11.8% NEW, sea_breeze 6-11 +5.6% NEW). Composition rotated from 07-14 Stage 1: 07-14 SHIP cells calm 6-11 fell to THIN, sea_breeze 0-5 to MARGIN, unknown 24-47 to PERSISTENCE_TERRITORY. Held for 08-04 re-cut: calm 24-47 + sea_breeze 24-47 (wide halves-spread A=+7/B=+50; recent fading). <strong>wg residual persistence gate</strong> (Stage 3 wired 07-14 v0.6.351, ENABLED=False) still HELD 07-27 — blocked by h_wg_residual_persistence_stage1 flip PROMOTE → MARGINAL; wait for Stage 1 recovery.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>dp</code> dew point</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 additive → L3 skip-table → dp residual persistence (dormant) <span style="opacity:0.6;">(derived from corrected t, h via Magnus)</span></td>
         <td class="pf-mae" data-field="dp" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="dp" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win, derived.</strong> Rides t + h improvements. Frontal regime bias closed 07-09. <strong>dp residual persistence gate</strong> Stage 3 wired 2026-07-25 v0.6.380 ENABLED=False (cloned from wg template; 8 SHIP + 2 MARGIN long-lead cells). Day 5/7 flip gate through 08-01. <strong style="color:#4ad29a;">dp_bias_persistence gate NEW 2026-07-28 v0.6.387</strong> — first antecedent-error-based gate in the stack. Backlog #6 closed via full Stage 0 → Stage 3 arc: chunk-stability HOLD but per-day distribution + antecedent lag-1 r=+0.583 unlocked design. Gate: <code>regime ∈ {pre_frontal, nw_flow, sw_flow} AND lead ≥ 6h AND prev_24h_dp_bias &lt; -1.5°F</code> → +2°F. Pooled dp MAE 3.108 → 2.808. ENABLED=False; 7-day flip gate through 08-04.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cc</code> cloud cover <span style="font-size:0.72em;opacity:0.55;">(derived)</span></td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → <strong>Ccd = max(cl_l6, cm_l6, ch_l6)</strong> <span style="opacity:0.6;">(SKIP_REGIMES: se_flow, unknown → Pirate fallback)</span></td>
         <td class="pf-mae" data-field="cc" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="cc" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">cc retired from Lc as independent field 07-30 v0.6.390.</strong> cc is HRRR's own combine of cl/cm/ch — running Lc on it in parallel with the three components was double-correction from Lc's original ship. Ccd (<code>cc_from_derivation.py</code>) overwrites <code>hourly.cloud_cover</code> with <code>max(cl_l6, cm_l6, ch_l6)</code> after Lc. <code>h_cc_derivation.py</code> on 123K held-out quads: +8.48% pooled MAE vs pre-Ccd production, halves +11.4%/+5.8%, wins 6/10 regimes. cc excluded from Overall MAE mean in the scorecard above (derived field would double-weight cl/cm/ch). Trailing "vs raw" number will decay as pre-Ccd damage rolls off the 7-day window.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ch</code> high cloud</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY blend → L3 lead-decay → L4 diurnal → Lc <span style="opacity:0.6;">(flipped 07-17)</span> → chp <span style="opacity:0.6;">(flipped 07-19)</span></td>
         <td class="pf-mae" data-field="ch" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="ch" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Best-performing field vs raw.</strong> Lc flipped 07-17 + <strong style="color:#4ad29a;">chp LIVE 07-19 v0.6.358</strong> stack for the fullest non-frontal ch coverage yet. <strong>Rollup post 07-27 v0.6.382t emergency demote: 14 SHIP / 8 MARGIN / 13 SKIP / 2 THIN</strong> (was 19/9/7/2 pre-demote; 6 mid-lead cells regressing vs Lc under L6 baseline flipped SHIP/MARGIN → SKIP). Day 11/14 post-ship watch through 08-02. Full-shape refinement to the 5-cell L6-baseline SHIP set still under normal 7-day live-layer gate.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cl</code> low cloud</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → clp (dormant) <span style="opacity:0.6;">(cl in _FIELD_SKIP; cl_l6 = raw)</span></td>
         <td class="pf-mae" data-field="cl" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="cl" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#e07272;">cl fully off Lc as of 07-30 v0.6.389f.</strong> Walk-forward held-out (train pre-07-20, test 07-20→30): cl pool_vs_raw −22.15%, reg_vs_raw −30.37% — both shift-table shapes actively hurt cl. Rolling-window sweep (v0.6.389g): no fit window recovers cl (best W=3d still −3.7% vs raw). Shift-table architecture can't distinguish "model over-forecasts overcast" from "model correctly forecasts overcast" — currently in the latter regime for cl. Reversibility: remove <code>"cl"</code> from <code>_FIELD_SKIP</code> in <code>cloud_saturation_correction.py</code>. <strong>clp</strong> Stage 3 wired 07-24 v0.6.379 ENABLED=False (unaffected by cl Lc kill — clp runs after Lc and now sees raw cl values). Gate EXTENDED to 08-03 after shadow-write bug fix v0.6.382p; day 3/7 of newly-valid data.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cm</code> mid cloud</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY blend → L3 lead-decay → Lc <span style="opacity:0.6;">(flipped 07-17)</span></td>
         <td class="pf-mae" data-field="cm" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="cm" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win + Lc live.</strong> HRRR cm-distribution anomaly 07-04→07-11 recovered. C1 Stage 4 07-26 re-audit: NOT READY (cm has cleared but cl now DEGRADED at 12-23h + 6-11h). Next re-audit 07-30.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pp</code> precip probability</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(L3 dropped 07-04 — hurts Brier despite MAE gain)</span></td>
         <td class="pf-mae" data-field="pp" data-brier="1" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="pp" data-brier="1" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 in production; Stage 1 SHIP candidate found 07-27.</strong> L3 dropped 07-04 (hurt Brier despite MAE gain), so live Brier = raw Brier (matches the 0.0% headline tile). Separate offline v0.6.335 Phase 3 decomposition showed CALIBRATED +8.4% vs raw + BSS +0.126 with systematic under-forecast at fc 30-50% (obs freq 66%). <strong>07-27 evening 3: <code>h_pp_frontal_platt_stage1.py</code> → SHIP at frontal × 6-11h</strong> (Brier lift −28.56% / −18.73%, |Δa|=0.20, n=292) via fixed b=0.6. First shippable pp correction found. Stage 2 walk-forward next; want 3-5 more frontal passages before Stage 3 wire.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pr</code> pressure</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(L2 additive disabled 07-01)</span></td>
         <td class="pf-mae" data-field="pr" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="pr" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Flat.</strong> L2 additive disabled 07-01 (K=1 noise dominated). No open action.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>sr</code> solar radiation</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → Lsr synoptic-regime <span style="opacity:0.6;">(skip: ne_flow + calm)</span></td>
         <td class="pf-mae" data-field="sr" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="sr" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Lsr LIVE for sr.</strong> Today's vs-raw = 0% because Lsr skips calm regime (today's state_curr) — no fires this tick. Skip regimes: ne_flow + calm; Lsr fires on the other 7. <strong>sr sea_breeze Lsb Stage 3 wired 07-17 v0.6.354 · ENABLED=False · gate narrowed to <code>cc &lt; 25</code> 07-28 v0.6.383b.</strong> Overcast half retired after halves re-run showed 75-100 cc-bin regressed −17.6%. Narrowed-shape Stage 2 <strong style="color:#4ad29a;">PROMOTES</strong>: pooled +31.5%, halves +43.8%/+22.7%, 4/4 lead-bands SHIP. Fresh 7-day live-layer gate 07-28 → 08-04.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pa</code> precip amount</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 <span style="opacity:0.6;">(no L2/L3/L4 apply)</span></td>
         <td class="pf-mae" data-field="pa" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="pa" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only, no open work.</strong> Field-specific τ swept 28 → 42 → 7 → reverted to global τ=14 on 07-19 v0.6.358 (+0.9% vs τ=14, below the 5% floor).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wd</code> wind direction</td>
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 wind_blend → wdp <span style="opacity:0.6;">(flipped 07-27)</span></td>
         <td class="pf-mae" data-field="wd" style="padding:5px 10px;vertical-align:top;">—</td>
+        <td class="pf-today" data-field="wd" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L2 + wdp both LIVE.</strong> L2 wind_blend (circular unit-vector; calm-floor skips ≤3 mph) shipped 07-20 v0.6.368a; wdp FLIPPED 2026-07-27 v0.6.382 (predicted-transition persistence-of-obs override; SHIP cells {calm/12-23, calm/24-47, pre_frontal/0-5, se_flow/0-5, sw_flow/0-5}; expected lifts sw_flow/0-5 −26%, calm/24-47 −20%, se_flow/0-5 −12%). Day 2/14 post-ship watch through 08-10.</td>
       </tr>
     </tbody>
@@ -3206,6 +3221,39 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
     cell.style.color = color;
     cell.innerHTML = `${sign}${abs}%${suffix}`;
   });
+  // v0.6.390b — 'today' column reads per-obs-day Prod-vs-Raw from
+  // mae_over_time.json. Same series the regression sentry uses. Async fetch;
+  // populates when it arrives so the 7-day cells don't wait on it.
+  const todayCells = document.querySelectorAll("td.pf-today[data-field]");
+  if (!todayCells.length) return;
+  fetch("https://data.wymancove.com/mae_over_time.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : null)
+    .then(mot => {
+      if (!mot || !mot.series) return;
+      todayCells.forEach(cell => {
+        const f = cell.dataset.field;
+        const sf = mot.series[f];
+        if (!sf) { cell.textContent = "no data"; cell.style.opacity = 0.5; return; }
+        // raw and prod_real are per-day dicts keyed by YYYY-MM-DD.
+        // Find the most recent day present in BOTH.
+        const raw = sf.raw || {}, prod = sf.prod_real || sf.prod || {};
+        const days = Object.keys(raw).filter(d => d in prod).sort();
+        if (!days.length) { cell.textContent = "no data"; cell.style.opacity = 0.5; return; }
+        const day = days[days.length - 1];
+        const rMae = (raw[day] || {}).mae, pMae = (prod[day] || {}).mae;
+        if (rMae == null || pMae == null || rMae === 0) {
+          cell.textContent = "—"; cell.style.opacity = 0.5; return;
+        }
+        const pct = (pMae - rMae) / rMae * 100;
+        const sign = pct >= 0 ? "+" : "−";
+        const abs = Math.abs(pct).toFixed(1);
+        const color = pct <= -0.5 ? "#4ad29a" : (pct >= 0.5 ? "#fb7c5c" : "#e0d472");
+        cell.style.color = color;
+        cell.style.opacity = 1;
+        cell.innerHTML = `${sign}${abs}%<span style="font-size:0.7em;opacity:0.55;margin-left:3px;">${day.slice(5)}</span>`;
+      });
+    })
+    .catch(() => { /* silent — 7d column still renders */ });
 }
 
 function renderAccuracySection(tsDoc, wxDoc) {

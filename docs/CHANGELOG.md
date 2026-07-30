@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390b • July 30, 2026 (per-field snapshot gains 'today' column alongside 7-day)</strong></summary>
+
+- **'today' column added to per-field snapshot.** v0.6.390a wired the "vs raw" column live but that source (`tsDoc.per_layer_mae_by_lead`) is a rolling 7-day trailing average — it'll show cl at +65% for another 3-5 days as the 07-28/29/30 damage rolls off, hiding whether today's field-kill is actually working. New "today" column reads the most-recent-obs-day Prod-vs-Raw from `mae_over_time.json` (same series the regression sentry uses). Together the two columns answer both questions on the same row: "did we ship something bad today" (today col) and "is the pipeline healthy on average" (7d col). Table header renamed "vs raw" → "7d avg"; new "today" column between it and Status. Each row gains `<td class="pf-today" data-field="<k>">`; `renderPerFieldSnapshot()` extends with an async fetch of mae_over_time.json + populate logic. Cell shows pct and MM-DD of the day being read.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390a • July 30, 2026 (per-field snapshot wired live + debug page Rule 5 sweep for v0.6.390)</strong></summary>
 
 - **Per-field snapshot table wired live.** The "Current pipeline state — per-field snapshot" table's "vs raw" column had been hand-edited static text — went stale between debug-page sweeps and hid real events (cl went catastrophic 07-28 → 07-30 but the snapshot cell still read "−0.2% flat pre-Lc" for days). Every field's percentage cell now has `class="pf-mae" data-field="<key>"`; new `renderPerFieldSnapshot(tsDoc, wxDoc)` reads the same `tsDoc.per_layer_mae_by_lead` the scoreboard reads, computes `_avg1to47(prod) vs _avg1to47(l1)`, and populates each cell with matching color logic (green ≤ −0.5%, orange within ±0.5%, red ≥ +0.5%). pp cell uses `data-brier="1"` to read the Brier doc instead. Called after `renderScorecardBanner` on every load.
