@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389h • July 30, 2026 (debug page Rule 5 sweep — Lc emergency intervention sites)</strong></summary>
+
+- **Debug page — Rule 5 sweep** to catch the page up to today's 5-ship Lc intervention (v0.6.389c-g). Sites updated: Recent activity today's block replaced with 5-item entry list covering v0.6.389c-g + top-line summary of the Overall Prod-vs-Raw compression diagnosis; yesterday label bumped 07-27 → 07-29; Calendar Thu 07-30 rewritten from routine C1 Stage 4 re-audit to the emergency-intervention story; Fri 07-31 Lc 14-day watch marked as UNCLEAN close (two live-layer interventions during the watch means routine close is moot); Post-ship watches Lc entry rewritten with the field-kill / bin-skip / regime-demote state + reversibility note + walk-forward evidence; new Lc regime-conditional Stage 1 gate entry (day 1/7 through 08-06) with caveat that walk-forward validator already showed the naive 92-cell SHIP set is over-generalized; Lc layer section header SHIP surface rewritten (cl OFF, cc partial, cm/ch unchanged); Lc engineering status now leads with today's diagnosis + reference to [[project_lc_regime_conditional]], prior 07-17 flip block preserved but demoted; correction stack row + L4-stack cloud saturation line + routine-stack list bullet all reflect the split state (cm/ch full, cc partial, cl off). No collector code changes.
+
+</details>
+
+<details>
 <summary><strong>v0.6.389g • July 30, 2026 (Lc bin-skip for cc/95-100 + rolling-window diagnostic — no window fixes cl, cc/95-100 is the acute cc bleed)</strong></summary>
 
 - **Analysis — rolling-window diagnostic (`analysis/h_lc_rolling_window.py` NEW).** Sweeps fit windows W ∈ {3, 5, 7, 10, 14, 21, all} days, refits pooled Lc on each, evaluates on the last 3d held-out. Answers "does a shorter fit window recover cl?" **Verdict: NULL** — no window makes cl beat raw. Best cl window is W=3d at −3.7% vs raw. Longer windows compound the damage (W=14d = −101% vs raw). **Also exposes cc broken on last 3d** under every window (best W=7d at −25.5%). cm best W=14d +44.6%. ch best "all" +50.2%. The shift-table architecture can't handle the recent HRRR bias shift with any window length — cl+cc need something adaptive (EMA/Kalman shift tracker) or per-bin gate-when-recent-bias-small logic. cm/ch survive across windows and stay live.
