@@ -35,9 +35,12 @@ import logging
 from pathlib import Path
 
 
-ENABLED = False  # v0.6.389j 2026-07-30 — Stage 3 wire ENABLED=False.
-                 # Flip earliest 2026-08-06 after 7-day gate + halves-clean
-                 # on daily h_cc_derivation re-runs.
+ENABLED = True   # v0.6.390 2026-07-30 — flipped early. Rerun of
+                 # h_cc_derivation against the post-cl-field-kill regime
+                 # reconfirmed +8.48% pooled MAE vs current prod, halves
+                 # +11.4% / +5.8% (both positive), 6/10 regimes win.
+                 # Verdict PROMOTE. Retires cc's Lc surface entirely; cc
+                 # is now a derived field, not an independent one.
 
 # Regimes where h_cc_derivation held-out test showed Pirate cc + Lc wins vs
 # derivation. Fall back to Pirate cc in these regimes.

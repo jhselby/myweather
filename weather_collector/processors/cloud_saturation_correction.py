@@ -42,30 +42,23 @@ CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
 #   analysis/output/h_lc_rolling_window.txt     — 3-day held-out under all windows
 #   analysis/output/walkforward_lc_regime.txt   — 10-day walk-forward
 _CELL_SKIP = frozenset({
-    # ── field × bin (any regime) ─────────────────────────────────────────
-    ("cc", "95-100"),  # v0.6.389g. On 07-30 forecast was 99% at 95-100 bin,
-                       # obs matched at overcast, but Lc drops -58 → l6 error
-                       # ~53. Same shift-table architecture failure as cl:
-                       # can't distinguish "model over-forecasts overcast"
-                       # from "model correctly forecasts overcast." Kills the
-                       # acute bleed while cc/0-5, cc/50-80, cc/80-95 keep
-                       # their pooled Lc which mostly helps.
-    # ── field × regime × bin ─────────────────────────────────────────────
-    ("cc", "ne_flow", "50-80"),   # live shift -27, regime wants  -3 (23pp over) — SKIP-mag verdict
-    ("cc", "ne_flow", "80-95"),   # live shift -30, regime wants  -8 (22pp over) — SKIP-Δ verdict
+    # cc entries retired 2026-07-30 v0.6.390 — cc is now a derived field
+    # (Ccd overwrites hourly.cloud_cover from max(cl_l6, cm_l6, ch_l6)
+    # after Lc). cc is in _FIELD_SKIP below, so per-cell demotes are moot.
     # cl entries removed 2026-07-30 v0.6.389f — cl fully off Lc via _FIELD_SKIP,
     # so per-regime demotes for cl are redundant.
 })
 
-# Field-level Lc kill (2026-07-30 v0.6.389f). Walk-forward validator
-# (analysis/walkforward_lc_regime.py) train pre-07-20 / test 07-20→07-30
-# showed cl broken under BOTH pooled Lc (-22.15% vs raw) AND regime-conditional
-# Lc (-30.37% vs raw). Neither shift-table architecture fits cl's recent
-# distribution. Held out from Lc entirely until the fit stabilizes or the
-# architecture changes (rolling shorter-lookback fit, shrinkage, etc.).
-# cc/cm/ch still get pooled Lc — they either helped (+0.63% / +34% / +36%
-# vs raw on held-out) or were flat.
-_FIELD_SKIP = frozenset({"cl"})
+# Field-level Lc kill.
+#   cl (v0.6.389f 2026-07-30): walk-forward showed cl broken under BOTH
+#     pooled Lc (-22.15% vs raw) AND regime-conditional Lc (-30.37% vs raw).
+#     Held out until fit stabilizes or the architecture changes.
+#   cc (v0.6.390 2026-07-30): retired from Lc entirely. cc is HRRR's own
+#     internal combine of cl/cm/ch — correcting it independently in
+#     parallel with the components was double-correction from day one.
+#     Ccd (cc_from_derivation.py, ENABLED=True) overwrites hourly.cloud_cover
+#     from max(cl_l6, cm_l6, ch_l6) after Lc. cc is now a derived field.
+_FIELD_SKIP = frozenset({"cl", "cc"})
 
 _FIELD_TO_HOURLY_KEY = {
     "cc": "cloud_cover",

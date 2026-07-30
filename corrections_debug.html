@@ -1034,9 +1034,9 @@
           <li><strong style="color:#e07272;">Lc emergency intervention (v0.6.389d-g, 07-30) — active.</strong> 14-day post-ship watch was scheduled to close 07-31 but two live-layer interventions during the watch make a routine close moot. Current state: <strong>cl fully off Lc</strong> via <code>_FIELD_SKIP = {"cl"}</code> (walk-forward on 07-20→30 held-out: cl pool_vs_raw −22.15%, reg_vs_raw −30.37% — both shift-table shapes hurt cl on the recent regime). <strong>cc/95-100 universal bin-skip</strong> (07-30 forecast was 99% at 95-100, obs matched at overcast, Lc dragged 90→32 → err ~53). <strong>cc/ne_flow/50-80 + cc/ne_flow/80-95 regime-conditional demote</strong> (pool over-corrects 22-23pp per Stage 0). <strong>cm and ch untouched</strong> — walk-forward has both at +34-50% vs raw on held-out. Architectural next step (unshipped): EMA/Kalman shift tracker OR recent-bias gate on the existing lc_fit table. Both are multi-day workstreams. Reversibility for each bandage: single-line edit to the frozenset in <code>cloud_saturation_correction.py</code>. See [[project_lc_regime_conditional]].</li>
           <li><strong style="color:#4ad29a;">Ccd (cc from-derivation) 7-day live-shadow gate — day 0/7 through 08-06.</strong> Stage 3 wire v0.6.389j 07-30. <code>cc_from_derivation.py</code> stamps <code>weather_data["cc_from_derivation"]</code> every tick with formula=max, skip_regimes={se_flow, unknown}, and the derived 48-lead array. Held-out evidence (<code>h_cc_derivation.py</code>): +8.5% pooled MAE vs current cc, wins 6/9 regimes, halves-stable (+11.4% / +5.8%). Trigger for the 7-day gate: shadow-vs-live comparison holds pooled Δ ≥ +5% AND both halves ≥ +3% AND ≥ 6 regimes SHIP across 7 daily reads of <code>h_cc_derivation.py</code>. On flip 08-06: mutate <code>hourly.cloud_cover</code> in place with derived-max value; preserve original as <code>hourly.cloud_cover_pirate_raw</code>; retire cc's <code>_CELL_SKIP</code> entries (cc/95-100 + cc/ne_flow/50-80 + cc/ne_flow/80-95) in the same commit. See [[project_lc_regime_conditional]] Ccd section.</li>
           <li><strong>Lc regime-conditional Stage 1 gate — day 1/7 through 08-06.</strong> <code>analysis/h_lc_regime_stage1.py</code> emits candidate curated table (<code>cells[field][regime][bin]</code> primary + <code>pooled_fallback[field][bin]</code> for THIN cells). First read: 92 SHIP cells across cc/cl/cm/ch. Gate history at <code>.cache_lc_regime_gate_history.json</code>. <em>Same-day walk-forward validator revealed the 92 are over-generalized (only 22 beat pooled on held-out). Stage 3 wire, if it happens, should read the walk-forward-verified subset, NOT the Stage 1 raw set. Stage 2 watch monitors SHIP-set stability but does NOT establish held-out win — that's what the walk-forward validator answers directly.</em></li>
-          <li><strong>ch persistence gate (v0.6.358, 07-19) — day 11/14 through 08-02. Rollup post-demote: 14 SHIP / 8 MARGIN / 13 SKIP / 2 THIN (was 19/9/7/2).</strong> Watchable per-lead as of v0.6.369 attribution wiring. First honest reads: chp lead 1 = 2.4 vs Lc 12.4 (−81%), lead 2 = 4.9 vs 11.3 (−56%). <strong style="color:#e0a070;">Mid-lead regression PARTIALLY RESOLVED 07-27 v0.6.382t:</strong> 6 clear-regression cells (Δ ≥ +28% vs Lc under L6-baseline Stage 2 rebuild) surgically demoted SHIP/MARGIN → SKIP — sw_flow/24-47, sw_flow/12-23, sea_breeze/24-47, pre_frontal/24-47, se_flow/6-11, ne_flow/12-23. Full-shape adoption of the 5-cell L6-baseline SHIP set still under the normal 7-day live-layer change gate. See [[project_chp_midlead_regression_watch]]. Trigger going forward: any of the 14 remaining SHIP cells drifting toward Lc in per-band tables.</li>
-          <li><strong>wd L2 blend (v0.6.368a, 07-20) — day 10/14 from original ship; effective watch bumped to 08-11 via v0.6.384 07-28 (BLEND_HOURS 24→4).</strong> First circular field entering L2. Trigger: spurious wd swings at short-lead on the wind card, or Fitter's <code>per_layer_mae_by_lead["wd"]["l2"]</code> flipping worse than l1 after n crosses 100 per lead. Calm-floor guard (WIND_DIR_MIN_SPEED = 3.0 mph) is the most likely failure mode — log per-cycle skip rate as a proxy.</li>
-          <li><strong>ws L3 asymmetric SKIP additive (v0.6.370, 07-20) — day 10/14 through 08-03.</strong> Trigger: 24-47h ws MAE moves wrong direction (23 of 40 SKIPs concentrated there per <code>project_ws_l3_long_lead_regression</code>). Current cell count: 26 SKIP (was 44 at Stage 1 07-20; natural evolution as windows accumulated). Hardcode-REPLACEMENT HELD 07-27 (Jaccard 0.75); re-evaluate ~07-31.</li>
+          <li><strong>ch persistence gate (v0.6.358, 07-19) — day 12/14 through 08-02. Rollup post-demote: 14 SHIP / 8 MARGIN / 13 SKIP / 2 THIN (was 19/9/7/2).</strong> Watchable per-lead as of v0.6.369 attribution wiring. First honest reads: chp lead 1 = 2.4 vs Lc 12.4 (−81%), lead 2 = 4.9 vs 11.3 (−56%). <strong style="color:#e0a070;">Mid-lead regression PARTIALLY RESOLVED 07-27 v0.6.382t:</strong> 6 clear-regression cells (Δ ≥ +28% vs Lc under L6-baseline Stage 2 rebuild) surgically demoted SHIP/MARGIN → SKIP — sw_flow/24-47, sw_flow/12-23, sea_breeze/24-47, pre_frontal/24-47, se_flow/6-11, ne_flow/12-23. Full-shape adoption of the 5-cell L6-baseline SHIP set still under the normal 7-day live-layer change gate. See [[project_chp_midlead_regression_watch]]. Trigger going forward: any of the 14 remaining SHIP cells drifting toward Lc in per-band tables.</li>
+          <li><strong>wd L2 blend (v0.6.368a, 07-20) — day 11/14 from original ship; effective watch bumped to 08-11 via v0.6.384 07-28 (BLEND_HOURS 24→4).</strong> First circular field entering L2. Trigger: spurious wd swings at short-lead on the wind card, or Fitter's <code>per_layer_mae_by_lead["wd"]["l2"]</code> flipping worse than l1 after n crosses 100 per lead. Calm-floor guard (WIND_DIR_MIN_SPEED = 3.0 mph) is the most likely failure mode — log per-cycle skip rate as a proxy.</li>
+          <li><strong>ws L3 asymmetric SKIP additive (v0.6.370, 07-20) — day 11/14 through 08-03.</strong> Trigger: 24-47h ws MAE moves wrong direction (23 of 40 SKIPs concentrated there per <code>project_ws_l3_long_lead_regression</code>). Current cell count: 26 SKIP (was 44 at Stage 1 07-20; natural evolution as windows accumulated). Hardcode-REPLACEMENT HELD 07-27 (Jaccard 0.75); re-evaluate ~07-31.</li>
           <li><strong>wdp (wd_persistence_gate, v0.6.382, 07-27) — day 2/14 through 08-10.</strong> 5 SHIP cells (calm/12-23, calm/24-47, pre_frontal/0-5, se_flow/0-5, sw_flow/0-5). Triggers: gate stays 0-fire for ≥3 non-calm-state daily reads (inert), OR wd MAE at SHIP cells worse than L2 baseline once n ≥ 30 per cell. Expected lifts sw_flow/0-5 −26%, calm/24-47 −20%, se_flow/0-5 −12%.</li>
           <li><strong>Lsb narrowed-gate 7-day live-layer flip gate (v0.6.383b, 07-28) — day 1/7 through 08-04.</strong> Gate narrowed from <code>(cc &lt; 25) OR (cc &gt;= 75)</code> → <code>cc &lt; 25</code> only after overcast half regressed −17.6% on 07-24 halves re-run. Narrowed-shape Stage 2 re-run PROMOTES: pooled +31.5%, halves +43.8%/+22.7%, 4/4 lead-bands SHIP. Trigger for the 7-day gate: pooled Δ ≥ +20% AND both halves ≥ +10% AND lead-band SHIP+MARGIN &gt; SKIP across 7 daily reads. If clean at 08-04, flip <code>ENABLED=True</code>. Hour 13 remains an outlier (−43% test, n=145, small-sample fit instability) but pooled/lead-band metrics dominate net.</li>
           <li><strong>wind_blend BLEND_HOURS 24 → 4 (v0.6.384, 07-28) — day 1/14 through 08-11.</strong> Root-cause fix for the ws +30% Prod-vs-Raw regression that had run for 2 weeks. <strong style="color:#4ad29a;">Day-1 verify 07-29: ws Prod −2.5% vs raw</strong> (was +13.5% day-of, +25% pre-fix) — first negative day in 2 weeks; the fix is working. Scorecard tile still reads +15.9% because its 7-day window is dominated by pre-fix days; expected to flip negative by 08-04 as bad days roll off. Sweep predicted +14.72% pooled MAE improvement, halves +8.4%/+22.4%, every lead-band improves (0-5 +23%, 6-11 +43%, 12-23 +13%). Trigger: any lead-band regressing worse than v0.6.383c baseline once n ≥ 100 per band on the mae_over_time chart; ws Prod-vs-Raw drifting back above raw for ≥3 daily reads.</li>
@@ -1115,12 +1115,12 @@
       <li><span style="color:#7090a0;">◉</span> <strong>Gate governs live-layer flips, not exploration.</strong> New hypotheses, Stage 0/1, ortho-checks, curated text = NOT gated.</li>
 
       <li style="margin-top:8px;"><strong style="color:#7fb3ff;">Still open watches</strong></li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>Lc — FLIPPED 2026-07-17 v0.6.355. Day 13/14.</strong> 16 SHIP cells stable, LC_ENABLED AGREE on divergence report, no cc/cl/cm/ch ANOMALY. 14-day post-ship watch through 07-31.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>Lc — FLIPPED 2026-07-17 v0.6.355. Day 14/14.</strong> 16 SHIP cells stable, LC_ENABLED AGREE on divergence report, no cc/cl/cm/ch ANOMALY. 14-day post-ship watch through 07-31.</li>
       <li><span style="color:#e0d472;">⚠</span> <strong>wg residual persistence gate — 07-27 flip HELD; awaiting Stage 1 recovery.</strong> Shipped 07-14 v0.6.351 ENABLED=False. <strong>07-26 blocker:</strong> h_wg_residual_persistence_stage1 flipped PROMOTE → MARGINAL (best combo +20.24%, was +17.74%). Hold until Stage 1 recovers PROMOTE. (Divergence-report drop-{wg,ws} GATED 1/7 is stale-tool per [[feedback_walkforward_skip_table_blind]]; walkforward-fix v0.6.381 patched this — tomorrow's digest should show AGREE on wg.)</li>
       <li><span style="color:#4ad29a;">✓</span> <strong>wdp (wd_persistence_gate) — FLIPPED 2026-07-27 v0.6.382. Day 2/14.</strong> After 7-day narrow-promote gate cleared (Jaccard 1.0 across 5 daily reads 07-20 → 07-26). 14-day post-ship watch through 08-10. Third concrete persistence specialist (chp/clp/wdp).</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>ch persistence gate — LIVE 07-19 v0.6.358. Day 11/14.</strong> 14 SHIP cells post-emergency-demote 07-27 v0.6.382t (was 27) on refreshed windows; 14-day watch through 08-02. See <a href="#" style="color:#7fb3ff;">[[project_chp_midlead_regression_watch]]</a>. <strong>07-27 evening escalation resolved:</strong> mid-lead 6-20h regression confirmed via L6-baseline Stage 2 rebuild; 6 clear-regression cells demoted v0.6.382t. Full-shape refinement (adopt 5-cell L6-baseline SHIP set) still pending 7-day gate.</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>wd L2 blend — LIVE 07-20 v0.6.368a. Day 10/14 from original ship; effective watch bumped to 08-11 via v0.6.384 07-28 (BLEND_HOURS 24→4 collateral fix).</strong> Circular unit-vector blend live in <code>wind_blend.py</code>. Post-fix Day-1 verify 07-29: ws Prod −2.5% vs raw (first negative day in 2 weeks). See [[project_wd_l2_blend]] — persistence-skill MIXED verdict is now FOSSIL.</li>
-      <li><span style="color:#4ad29a;">✓</span> <strong>ws L3 asymmetric fc-bin SKIP — LIVE 07-20 v0.6.370. Day 10/14.</strong> Additive on top of existing regime × band SKIP_TABLE; 26 curated SKIP cells today (was 44 at scaffold). 14-day watch through 08-03. Hardcode-REPLACEMENT HELD 07-27 (Jaccard 0.75 &lt; 0.80); re-evaluate ~07-31.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>ch persistence gate — LIVE 07-19 v0.6.358. Day 12/14.</strong> 14 SHIP cells post-emergency-demote 07-27 v0.6.382t (was 27) on refreshed windows; 14-day watch through 08-02. See <a href="#" style="color:#7fb3ff;">[[project_chp_midlead_regression_watch]]</a>. <strong>07-27 evening escalation resolved:</strong> mid-lead 6-20h regression confirmed via L6-baseline Stage 2 rebuild; 6 clear-regression cells demoted v0.6.382t. Full-shape refinement (adopt 5-cell L6-baseline SHIP set) still pending 7-day gate.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>wd L2 blend — LIVE 07-20 v0.6.368a. Day 11/14 from original ship; effective watch bumped to 08-11 via v0.6.384 07-28 (BLEND_HOURS 24→4 collateral fix).</strong> Circular unit-vector blend live in <code>wind_blend.py</code>. Post-fix Day-1 verify 07-29: ws Prod −2.5% vs raw (first negative day in 2 weeks). See [[project_wd_l2_blend]] — persistence-skill MIXED verdict is now FOSSIL.</li>
+      <li><span style="color:#4ad29a;">✓</span> <strong>ws L3 asymmetric fc-bin SKIP — LIVE 07-20 v0.6.370. Day 11/14.</strong> Additive on top of existing regime × band SKIP_TABLE; 26 curated SKIP cells today (was 44 at scaffold). 14-day watch through 08-03. Hardcode-REPLACEMENT HELD 07-27 (Jaccard 0.75 &lt; 0.80); re-evaluate ~07-31.</li>
       <li><span style="color:#a08070;">✗</span> <strong>cl persistence short-lead gate — OFF permanently.</strong> Refreshed <code>h_cl_persistence_blend</code>: halves-mixed, 4/9 regimes SHIP at 0-5h; design requires all 9. Sibling <code>h_cl_linear_ramp_stage2</code> STRONG (17 cells today) — separate mechanism. Regime-gated clp variant re-audit 07-24 per [[project_clp_regime_gate_opportunity]].</li>
       <li><span style="color:#e07272;">✗</span> <strong>h/L4 narrow-add — 07-26 retest DECLINED.</strong> Jaccard walker cleared 8/7 days but 0 SHIP cells today → live-empty fossil pattern repeat. Nothing to wire. Retest 08-02+ (after fresh cm/cl mixture-check clean).</li>
       <li><span style="color:#7090a0;">⚙</span> <strong>h → L4 — re-frozen 07-11.</strong> Halves-check killed 7 of 12 WIN cells (HRRR anomaly). Un-freeze: cm mixture-check has CLEARED on 07-26 but <strong>cl now DEGRADED at 12-23h + 6-11h</strong> — same failure pattern, different cell. Re-verify 08-02+ (cl-window roll ~4d).</li>
@@ -2873,6 +2873,14 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
   // error) alongside MAE. This is what real NWS/ECMWF verification reports
   // publish: MAE says "typical error size," RMSE says "how bad are the
   // occasional blow-ups," bias says "systematic drift over/under."
+  // v0.6.390 — Derived fields are computed from other tracked fields, not
+  // independent forecast quantities. cc post-Ccd is max(cl_l6, cm_l6, ch_l6)
+  // for ~85% of ticks (Ccd SKIP_REGIMES fall back to Pirate for the rest).
+  // Even pre-Ccd, HRRR's cc was its own internal combine of cl/cm/ch, so
+  // including cc in an aggregate that also weights cl/cm/ch double-counted
+  // the cloud stack's errors. Excluded from mean/median/best/worst/counts;
+  // still rendered as an informational row below the tiles.
+  const DERIVED_FIELDS = new Set(["cc"]);
   const rows = [];
   const cellRows = [];  // per-(field, band) for worst-cell surfacing
   const mae = tsDoc.per_layer_mae_by_lead;
@@ -2900,14 +2908,15 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
     // over-forecasts on average; negative = under-forecasts. Field units.
     const biasLayers = biasByLead[fieldKey] || {};
     const prodBias = _avg1to47(biasLayers.production);
-    rows.push({ field: fieldKey, pct, rmsePct, prodBias });
+    rows.push({ field: fieldKey, pct, rmsePct, prodBias, derived: DERIVED_FIELDS.has(fieldKey) });
     // Per-band cells for worst-cell tracker.
     for (const b of BANDS) {
       const rawB = _avgBand(layers.l1, b.lo, b.hi);
       const prodB = _avgBand(prodArr, b.lo, b.hi);
       if (rawB == null || prodB == null || rawB === 0) continue;
       cellRows.push({ field: fieldKey, band: b.label,
-                      pct: (prodB - rawB) / rawB * 100 });
+                      pct: (prodB - rawB) / rawB * 100,
+                      derived: DERIVED_FIELDS.has(fieldKey) });
     }
   }
   // pp — Brier-native scoring. Falls back to the deepest-applied Brier
@@ -2941,11 +2950,16 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
     host.hidden = true;
     return;
   }
-  const meanPct = rows.reduce((s, r) => s + r.pct, 0) / rows.length;
+  // v0.6.390 — everything below aggregates over scoredRows (independent
+  // forecast quantities only). derivedRows are surfaced as a separate line.
+  const scoredRows = rows.filter(r => !r.derived);
+  const derivedRows = rows.filter(r => r.derived);
+  const scoredCellRows = cellRows.filter(r => !r.derived);
+  const meanPct = scoredRows.reduce((s, r) => s + r.pct, 0) / scoredRows.length;
   // RMSE mean across fields that have it. Falls back gracefully if the
   // Fitter hasn't emitted per_layer_rmse_by_lead yet (first tick after
   // v0.6.325 deploy).
-  const rmseAvailable = rows.filter(r => r.rmsePct != null);
+  const rmseAvailable = scoredRows.filter(r => r.rmsePct != null);
   const meanRmsePct = rmseAvailable.length
     ? rmseAvailable.reduce((s, r) => s + r.rmsePct, 0) / rmseAvailable.length
     : null;
@@ -2959,7 +2973,7 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
     if (n === 0) return null;
     return n % 2 ? s[(n - 1) >> 1] : (s[n / 2 - 1] + s[n / 2]) / 2;
   };
-  const medianPct = _median(rows.map(r => r.pct));
+  const medianPct = _median(scoredRows.map(r => r.pct));
   // Bucket at ±0.5pp so noise-level rows sort into "flat" rather than
   // shading the winning/regressing tallies (a −0.2% field is not really
   // a win). The main "Winning fields" count still uses strict <0 so it
@@ -2971,7 +2985,7 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
   // is MAE or Brier. So brier rows count toward the tally. The numeric mean
   // and median stay MAE-only because averaging Brier% with MAE% would
   // conflate scoring rules that don't share units.
-  const countingRows = rows.concat(brierRows);
+  const countingRows = scoredRows.concat(brierRows);
   const winningRows = countingRows.filter(r => r.pct <= -FLAT_EPS);
   const regressingRows = countingRows.filter(r => r.pct >= FLAT_EPS);
   const flatRows = countingRows.filter(r => Math.abs(r.pct) < FLAT_EPS);
@@ -2984,12 +2998,12 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
   // Biggest regression = most positive (Production worse than raw). Either
   // may be absent — no gains means every field is worse; no regressions means
   // every field is at or better than raw.
-  const best = rows.reduce((b, r) => (b == null || r.pct < b.pct ? r : b), null);
-  const worst = rows.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
+  const best = scoredRows.reduce((b, r) => (b == null || r.pct < b.pct ? r : b), null);
+  const worst = scoredRows.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
   // Worst per-(field, band) cell — surfaces short-lead damage the field-level
   // mean can hide. If Production is under water at any lead band, this shows
   // it even when the overall banner is green.
-  const worstBand = cellRows.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
+  const worstBand = scoredCellRows.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
   const meanColor = meanPct < 0 ? "#4ad29a" : "#fb7c5c";
   const _fieldLabel = (r) => r.brier ? `${r.field}<sup style="opacity:0.7;">B</sup>` : r.field;
   const fmt = (r, color) => r
@@ -3057,6 +3071,15 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
         const color = r.pct < 0 ? "#4ad29a" : (r.pct > 0 ? "#fb7c5c" : "#8a93a3");
         return `<code>${r.field}<sup style="opacity:0.7;">B</sup></code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`;
       }).join(" · ")}
+    </div>` : ""}
+    ${derivedRows.length ? `
+    <div style="margin-top:6px;font-size:0.78em;opacity:0.7;">
+      <span style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.75;margin-right:8px;">Derived (not in mean)</span>
+      ${derivedRows.map(r => {
+        const color = r.pct < 0 ? "#4ad29a" : (r.pct > 0 ? "#fb7c5c" : "#8a93a3");
+        return `<code>${r.field}</code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`;
+      }).join(" · ")}
+      <span style="opacity:0.55;margin-left:6px;">cc is derived from cl/cm/ch (Ccd) — its error is a function of theirs, so counting it in the mean would double-weight the cloud stack.</span>
     </div>` : ""}
     ${(() => {
       // Persistence-skill line — pipeline vs "same as now" reference forecast.

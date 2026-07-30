@@ -1,6 +1,17 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390 • July 30, 2026 (Ccd flip early — cc retired from Lc, cc excluded from scoreboard aggregate)</strong></summary>
+
+- **Ccd flipped ENABLED=True** in `weather_collector/processors/cc_from_derivation.py`. Six days ahead of the originally-planned 08-06 gate. Rerun of `h_cc_derivation.py` against post-cl-field-kill data reconfirmed the +8.48% pooled MAE win vs current production cc (halves +11.4% / +5.8%, both positive, 6/10 regimes win). The 7-day gate was normal caution; the math is a 20-line `max()` and the evidence base is 123K held-out quads over 30 days. Flip is warranted.
+- **cc retired from Lc entirely.** `_FIELD_SKIP` in `cloud_saturation_correction.py` gains `"cc"` alongside `"cl"`. All three cc entries removed from `_CELL_SKIP` (moot post-Ccd since Ccd overwrites `hourly.cloud_cover` after Lc runs). cc is now a derived field: `max(cl_l6, cm_l6, ch_l6)` for ~85% of ticks, Pirate fallback for `SKIP_REGIMES = {"se_flow", "unknown"}`.
+- **Why this needed to happen.** cc is HRRR's own internal combine of cl/cm/ch. Running Lc on cc in parallel with running Lc on the three components was double-correction from Lc's original ship weeks ago. The +8.5% Ccd win is what that architectural mistake has been costing us on average; this week's Lc collapse (cl+cc both breaking together) is what it cost us in the worst case.
+- **Scoreboard fix.** cc excluded from `meanPct` / `medianPct` / `winningRows` / `regressingRows` / `flatRows` / `best` / `worst` / `worstBand` in `corrections_debug.html`'s accuracy card. Introduced `DERIVED_FIELDS = new Set(["cc"])` and derived-aware filters. cc still renders as an informational line below the tiles ("Derived (not in mean): cc +X%") so its error stays visible without distorting the headline. Including cc in an aggregate that also fully weights cl/cm/ch was double-counting the cloud stack — user-facing scorecard now reflects independent forecast quantities only. `winning fields` denominator will drop by 1 as a result.
+- **Deferred.** dp is technically the same shape (dp = Magnus(corrected t, corrected h), derived from tracked components) but its numbers are small (−2.4%) and dpbp/dprp specialists in flight would add independent additive corrections. Not touching dp today.
+
+</details>
+
+<details>
 <summary><strong>v0.6.389k • July 30, 2026 (debug page Rule 5 sweep — catch page up to v0.6.389i regression sentry + v0.6.389j Ccd)</strong></summary>
 
 - **Debug page catch-up sweep.** v0.6.389h swept the page for the emergency Lc intervention sites (v0.6.389c-g). This commit extends the sweep to v0.6.389i + v0.6.389j which shipped after that sweep. Sites updated: today's Recent activity entry ship count 5 → 8 + full entries added for v0.6.389j (Ccd) and v0.6.389i (regression sentry); Post-ship watches gained a Ccd 7-day live-shadow gate entry (day 0/7 through 08-06); Calendar gained a Thu 08-06 entry for the Ccd flip check (co-located with the MLC anomaly-detector COLLAPSE suppression expiry); Correction stack routine list bullet + full description list gained Ccd rows. No collector code changes.
