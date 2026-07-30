@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389k • July 30, 2026 (debug page Rule 5 sweep — catch page up to v0.6.389i regression sentry + v0.6.389j Ccd)</strong></summary>
+
+- **Debug page catch-up sweep.** v0.6.389h swept the page for the emergency Lc intervention sites (v0.6.389c-g). This commit extends the sweep to v0.6.389i + v0.6.389j which shipped after that sweep. Sites updated: today's Recent activity entry ship count 5 → 8 + full entries added for v0.6.389j (Ccd) and v0.6.389i (regression sentry); Post-ship watches gained a Ccd 7-day live-shadow gate entry (day 0/7 through 08-06); Calendar gained a Thu 08-06 entry for the Ccd flip check (co-located with the MLC anomaly-detector COLLAPSE suppression expiry); Correction stack routine list bullet + full description list gained Ccd rows. No collector code changes.
+
+</details>
+
+<details>
 <summary><strong>v0.6.389j • July 30, 2026 (Ccd — cc from-derivation Stage 3 wire ENABLED=False + h_cc_derivation diagnostic)</strong></summary>
 
 - **Analysis — h_cc_derivation (`analysis/h_cc_derivation.py` NEW).** Architectural question raised by Joe: why is cc corrected independently from a Pirate feed when it could be derived from the Lc-corrected cl/cm/ch? Joins per-(run_time, lead_h) rows across all 4 cloud fields, compares current-production cc against derived random-overlap (`1 - Π(1-x/100)`) and derived max-overlap (`max`). Held-out on 123,050 joined quads (obs 07-01 → 07-30). **VERDICT: PROMOTE** — derived-max beats current-production cc by **+8.5% pooled MAE**, +5.8% halves-averaged, wins in 6/9 real regimes. Loses in se_flow (−6.5%, n=22,803) and marginal-loss in unknown/calm. Wins scale with lead: 0-5h +1.5%, 6-11h +6.2%, 12-23h +8.2%, 24-47h +10.3%. Halves-stable (+11.4% A / +5.8% B).
