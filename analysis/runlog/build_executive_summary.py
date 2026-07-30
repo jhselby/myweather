@@ -322,6 +322,16 @@ PERSISTENCE_SKILL_THIN_MARGIN = 0.20
 # if forecast-value distribution shift were tracked as its own signal.
 ANOMALY_DETECTOR_JSON_PATH = HERE.parent / "output" / "anomaly_detector.json"
 
+# Regression sentry (added v0.6.389i, 2026-07-30). Fires when a field's daily
+# Prod MAE exceeds its daily Raw MAE by ≥ REGRESSION_SENTRY_THRESHOLD_PCT for
+# ≥ REGRESSION_SENTRY_MIN_DAYS consecutive days. Would have caught the cl+cc
+# Lc breakdown 07-29 EOD instead of 07-30 EOD — cl was +23%/+121%/+659% across
+# 07-28/29/30, first crossed threshold on 07-28. See project_lc_regime_conditional.
+MAE_OVER_TIME_JSON_PATH = HERE.parent / "output" / "mae_over_time.json"
+REGRESSION_SENTRY_THRESHOLD_PCT = 15.0
+REGRESSION_SENTRY_MIN_DAYS = 2
+REGRESSION_SENTRY_LOOKBACK_DAYS = 5
+
 # Marine-layer stratum bias-collapse detector — companion to the global
 # anomaly detector, targeting the ~3%-of-cc stratum where MLC lives.
 MARINE_LAYER_ANOMALY_JSON_PATH = HERE.parent / "output" / "marine_layer_anomaly.json"
@@ -532,6 +542,71 @@ def marine_layer_anomaly_summary():
         line = f"  {mark} MLC in-bin bias: {verdict} — baseline {base:+.2f} → recent {rec:+.2f} (Δ {rec - base:+.2f})"
     suppression = check_suppression("marine_layer_anomaly", signal=verdict, verdict=verdict)
     return line, suppression
+
+
+def regression_sentry():
+    """Return list of alert lines for fields where Prod MAE has exceeded Raw
+    MAE by ≥ threshold on ≥ min_days consecutive recent days.
+
+    This is a headline-level early-warning: catches the "did we just ship
+    something that made a field worse than untouched HRRR?" case directly,
+    without waiting for the 14-day post-ship watch or the anomaly detector's
+    baseline-vs-recent smear to expose it.
+
+    Reads mae_over_time.json's daily per-field prod_real (or prod fallback)
+    and raw series. For each field, scans the last LOOKBACK_DAYS days, finds
+    the longest trailing run of days where prod > raw by ≥ THRESHOLD_PCT.
+    Fires when that run is ≥ MIN_DAYS. Returns None if the file is missing
+    or malformed (silent — this is diagnostic, not blocking)."""
+    if not MAE_OVER_TIME_JSON_PATH.exists():
+        return None
+    try:
+        doc = json.loads(MAE_OVER_TIME_JSON_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    days = doc.get("days") or []
+    series = doc.get("series") or {}
+    if len(days) < REGRESSION_SENTRY_MIN_DAYS:
+        return []
+
+    tail_days = days[-REGRESSION_SENTRY_LOOKBACK_DAYS:]
+
+    def _v(field, key, day):
+        s = series.get(field, {}).get(key)
+        if not isinstance(s, dict):
+            return None
+        v = s.get(day)
+        if isinstance(v, dict):
+            return v.get("mae") or v.get("value")
+        return v
+
+    lines = []
+    for field in sorted(series.keys()):
+        # Build trailing per-day pct = (prod - raw)/raw*100. Skip days with
+        # missing / zero raw. Only consider the trailing contiguous run.
+        run = []
+        for day in tail_days:
+            raw = _v(field, "raw", day)
+            prod = _v(field, "prod_real", day) or _v(field, "prod", day)
+            if raw is None or prod is None or raw <= 0.05:
+                run = []
+                continue
+            pct = (prod - raw) / raw * 100.0
+            if pct >= REGRESSION_SENTRY_THRESHOLD_PCT:
+                run.append((day, raw, prod, pct))
+            else:
+                run = []
+        if len(run) >= REGRESSION_SENTRY_MIN_DAYS:
+            latest_pct = run[-1][3]
+            worst = max(run, key=lambda x: x[3])
+            mark = "★" if latest_pct >= 100 else "⚠"
+            traj = " → ".join(f"{r[3]:+.0f}%" for r in run[-4:])
+            lines.append(
+                f"  {mark} {field}: Prod > Raw by ≥{REGRESSION_SENTRY_THRESHOLD_PCT:.0f}% "
+                f"for {len(run)} consecutive days (worst {worst[3]:+.1f}% on {worst[0]}, "
+                f"trajectory {traj})"
+            )
+    return lines
 
 
 def persistence_skill_watch():
@@ -919,6 +994,25 @@ def main():
             out.append(f"  · {a['script']} — {a['change']}")
             out.append(f"    suppress until {a['suppress_until']}: {a['suppress_reason']}")
         out.append("")
+
+    # Regression sentry: field-level Prod-vs-Raw daily trajectory. Fires as
+    # a headline alert BEFORE persistence-skill because "we made a field
+    # worse than untouched HRRR for N consecutive days" is more actionable
+    # than a distribution-shift signal buried in the anomaly detector.
+    sentry_lines = regression_sentry()
+    out.append("Regression sentry (Prod-vs-Raw daily trajectory — "
+               f"≥{REGRESSION_SENTRY_THRESHOLD_PCT:.0f}% for ≥{REGRESSION_SENTRY_MIN_DAYS} consecutive days):")
+    if sentry_lines is None:
+        out.append("  • mae_over_time.json missing — sentry offline")
+    elif sentry_lines:
+        for line in sentry_lines:
+            out.append(line)
+        out.append("  → A field firing here means live corrections are actively "
+                   "hurting vs raw HRRR. Check the field's per-lead layer table "
+                   "and the mae_over_time chart to identify which layer to demote.")
+    else:
+        out.append("  • all fields clean")
+    out.append("")
 
     # Persistence-skill watch: field-level regressions and at-risk fields.
     ps_regressions, ps_at_risk, ps_prod_delta = persistence_skill_watch()
