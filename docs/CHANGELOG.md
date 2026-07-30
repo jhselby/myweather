@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389d • July 30, 2026 (Lc emergency regime demote — 4 ne_flow cells forced SKIP + Stage 0 regime × bin sweep)</strong></summary>
+
+- **Analysis — Stage 0 sweep (`analysis/h_lc_regime_stage0.py` NEW).** Forks `lc_fit.py` fitting logic to bin by `(field, regime, bin)` instead of pooled `(field, bin)`. VERDICT: SIGNAL — **95 ★ cells across all 4 cloud fields** (cc/cl/cm/ch) pass MIN_N=200, |bias|≥5pp, Δ MAE ≥ 4%, both halves positive. Divergence table surfaces 33 cells where pooled-live shift differs from regime-conditional shift by ≥8pp. Signal is time-stable (13/204 cells halves-diverge). Motivation: cl+cc broke 07-28→30 (raw cl MAE 7.29 → Lc-corrected 56.96 on 07-30, 8× worse). Root cause: pooled Lc is regime-blind; ne_flow gets over-corrected by 22-26pp at overcast bins while calm/sw_flow get under-corrected by 30-38pp at 95-100. Justifies Stage 1 workup (regime-conditional Lc fit + halves-verified curated table + Stage 3 wire + 7-day flip gate). See `analysis/output/h_lc_regime_stage0.txt`.
+- **Emergency demote (`cloud_saturation_correction.py`).** Same pattern as v0.6.382t chp emergency demote — bandage while Stage 1 builds. Added `_REGIME_SKIP` frozenset of 4 (field, regime, bin) tuples where pooled Lc over-corrects by ≥22pp for ne_flow: `cl/ne_flow/80-95` (live −61, regime −35), `cl/ne_flow/95-100` (live −58, regime −32 + HALVES-DIVERGE), `cc/ne_flow/50-80` (live −27, regime −3 — SKIP-mag verdict), `cc/ne_flow/80-95` (live −30, regime −8 — SKIP-Δ verdict). `_shift_for` extended to take `regime` and return `demoted=True` when the cell hits the skip set; `stamp_cloud_saturation_correction` reads `derived.state.regime_synoptic` at apply time and forces shift=0 for those cells. `per_field` telemetry gains a `cells_demoted` counter alongside `cells_fired`. Debug page + Fitter attribution untouched (demote reads as natural SKIP in the pair log's `error_l6` accumulator). Bandage lifts when Stage 1 curated table + apply-side regime lookup lands — the `_REGIME_SKIP` frozenset gets removed then.
+
+</details>
+
+<details>
 <summary><strong>v0.6.389c • July 30, 2026 (digest registry — h_ws_blend_hours_sweep auto-relabeled STABLE)</strong></summary>
 
 - **Analysis — `build_executive_summary.py` `KNOWN_LIVE_PIPELINES`.** Added `h_ws_blend_hours_sweep` entry pointing at `wind_blend.py:78` `BLEND_HOURS=4` (shipped v0.6.384 07-28). Script's daily `VERDICT: SHIP — BLEND_HOURS=4 clears gate` was surfacing under "New candidates (aggregate-only tools — cross-cut required before shipping)" in this morning's digest despite the constant already being live for 2 days. Registry entry relabels to `STABLE — wind_blend BLEND_HOURS constant already live since v0.6.384`. Caught during 07-30 morning digest review — same pattern as the 07-28 `l5_solar_analysis` backstop.

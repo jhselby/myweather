@@ -30,6 +30,21 @@ ENABLED = True  # Flipped 2026-07-17 v0.6.355 after 8/7-day gate clear, 16 SHIP 
 
 CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
 
+# Emergency regime demote (2026-07-30). Stage 0 regime × bin sweep
+# (analysis/h_lc_regime_stage0.py) surfaced live SHIP cells where pooled Lc
+# over-corrects by >20pp for a specific regime. When state_fc.regime_synoptic
+# matches, treat the cell as SKIP for this tick regardless of the curated
+# table. Same shape as v0.6.382t chp emergency demote — a bandage while
+# Stage 1 regime-conditional Lc is built out.
+#
+#   (field, regime, bin) — see analysis/output/h_lc_regime_stage0.txt divergence table.
+_REGIME_SKIP = frozenset({
+    ("cl", "ne_flow", "80-95"),   # live shift -61, regime wants -35 (26pp over)
+    ("cl", "ne_flow", "95-100"),  # live shift -58, regime wants -32 (26pp over) + HALVES-DIVERGE
+    ("cc", "ne_flow", "50-80"),   # live shift -27, regime wants  -3 (23pp over) — SKIP-mag verdict
+    ("cc", "ne_flow", "80-95"),   # live shift -30, regime wants  -8 (22pp over) — SKIP-Δ verdict
+})
+
 _FIELD_TO_HOURLY_KEY = {
     "cc": "cloud_cover",
     "cl": "cloud_cover_low",
@@ -74,19 +89,23 @@ def _bin_of(v):
     return None
 
 
-def _shift_for(cells, field, value):
-    """Return the (shift, bin_label) that Lc would apply to `value` for
-    `field`, or (0.0, None) if the cell is not SHIP or the value is out
-    of range."""
+def _shift_for(cells, field, value, regime=None):
+    """Return the (shift, bin_label, demoted) that Lc would apply to `value`
+    for `field`, or (0.0, None, False) if the cell is not SHIP or the value
+    is out of range. If (field, regime, bin_lab) is in `_REGIME_SKIP`, the
+    shift is zeroed and `demoted=True` is returned so the caller can log
+    the demote separately from natural SKIPs."""
     bin_lab = _bin_of(value)
     if bin_lab is None:
-        return 0.0, None
+        return 0.0, None, False
     cell = cells.get(field, {}).get(bin_lab)
     if not cell:
-        return 0.0, bin_lab
+        return 0.0, bin_lab, False
     if cell.get("verdict") != "SHIP":
-        return 0.0, bin_lab
-    return float(cell.get("shift", 0.0)), bin_lab
+        return 0.0, bin_lab, False
+    if regime is not None and (field, regime, bin_lab) in _REGIME_SKIP:
+        return 0.0, bin_lab, True
+    return float(cell.get("shift", 0.0)), bin_lab, False
 
 
 def describe_applicability():
@@ -96,7 +115,10 @@ def describe_applicability():
     table = _load_table()
     cells = table.get("cells", {})
     if ENABLED:
-        fires_when_tmpl = "ENABLED — fires when the L4-corrected forecast falls in a SHIP-verdict value bin"
+        fires_when_tmpl = (
+            "ENABLED — fires when the L4-corrected forecast falls in a SHIP-verdict value bin, "
+            "except for regime-demoted cells (see _REGIME_SKIP)"
+        )
         state_prefix = "ENABLED True"
     else:
         fires_when_tmpl = "OFF — ENABLED False. Telemetry stamped for 7-day watch."
@@ -134,6 +156,7 @@ def stamp_cloud_saturation_correction(weather_data):
     hourly = weather_data.get("hourly") or {}
     table = _load_table()
     cells = table.get("cells", {})
+    regime = ((weather_data.get("derived") or {}).get("state") or {}).get("regime_synoptic")
 
     per_field = {}
     for field in CLOUD_FIELDS:
@@ -146,20 +169,24 @@ def stamp_cloud_saturation_correction(weather_data):
         deltas = [0.0] * len(arr)
         bins = [None] * len(arr)
         fired = 0
+        demoted = 0
         for i, v in enumerate(arr):
             if v is None:
                 continue
-            shift, bin_lab = _shift_for(cells, field, v)
+            shift, bin_lab, was_demoted = _shift_for(cells, field, v, regime=regime)
             bins[i] = bin_lab
             deltas[i] = shift
             if shift != 0.0:
                 fired += 1
+            elif was_demoted:
+                demoted += 1
 
         per_field[field] = {
             "hourly_key": hourly_key,
             "deltas": [round(d, 3) for d in deltas],
             "bins": bins,
             "cells_fired": fired,
+            "cells_demoted": demoted,
             "n_leads": len(arr),
         }
 
@@ -180,6 +207,8 @@ def stamp_cloud_saturation_correction(weather_data):
         "enabled": ENABLED,
         "fit_table_generated_at": table.get("generated_at"),
         "fit_rules": table.get("fit_rules"),
+        "regime_at_apply": regime,
+        "regime_skip_cells": sorted(list(_REGIME_SKIP)),
         "per_field": per_field,
     }
 
@@ -189,7 +218,6 @@ def stamp_cloud_saturation_correction(weather_data):
         import logging as _logging
         from . import gate_firing_log
         from ..utils import redact_secrets as _redact
-        regime = ((weather_data.get("derived") or {}).get("state") or {}).get("regime_synoptic")
         by_field = {}
         for field, meta in per_field.items():
             f = meta.get("cells_fired", 0) or 0
