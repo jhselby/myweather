@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389e • July 30, 2026 (Stage 1 halves-strict regime-conditional Lc — candidate curated table + 7-day gate start)</strong></summary>
+
+- **Analysis — Stage 1 fit (`analysis/h_lc_regime_stage1.py` NEW).** Halves-strict version of Stage 0 — both halves must improve by ≥ HALVES_MIN_PCT (not just positive). Chronological halves-split by `obs_time` so recent-anomaly contamination shows up as B < A. Emits `analysis/output/lc_regime_curated_stage1.json` structured for Stage 3 apply-side wiring: `cells[field][regime][bin]` primary + `pooled_fallback[field][bin]` for THIN regime cells. Also emits gate history file `.cache_lc_regime_gate_history.json` with 30-day retention + 7-day flip window (same shape as `.cache_lc_gate_history.json`).
+- **First read: VERDICT: STAGE 1 PROMOTE — 92 SHIP cells across 4 fields** (cc:22, cl:29, cm:22, ch:19). Stage 0 had 95 ★ candidates; the stricter halves criterion dropped 3 borderline cells. Pooled fallback SHIP set (15 cells) matches the live `lc_correction_table.json` exactly by construction, giving Stage 3 a clean pooled backstop when a regime cell is THIN. Day 1/7 of the walk-forward Stage 2 stability gate.
+- **Next steps (not shipped this commit):** Stage 2 = watch SHIP-set stability across 7 daily digests. Stage 3 = extend `cloud_saturation_correction.py` to read curated regime table with pooled fallback, ENABLED=False first. 7-day live-layer flip gate after that. Emergency `_REGIME_SKIP` frozenset from v0.6.389d gets removed at Stage 3 flip.
+
+</details>
+
+<details>
 <summary><strong>v0.6.389d • July 30, 2026 (Lc emergency regime demote — 4 ne_flow cells forced SKIP + Stage 0 regime × bin sweep)</strong></summary>
 
 - **Analysis — Stage 0 sweep (`analysis/h_lc_regime_stage0.py` NEW).** Forks `lc_fit.py` fitting logic to bin by `(field, regime, bin)` instead of pooled `(field, bin)`. VERDICT: SIGNAL — **95 ★ cells across all 4 cloud fields** (cc/cl/cm/ch) pass MIN_N=200, |bias|≥5pp, Δ MAE ≥ 4%, both halves positive. Divergence table surfaces 33 cells where pooled-live shift differs from regime-conditional shift by ≥8pp. Signal is time-stable (13/204 cells halves-diverge). Motivation: cl+cc broke 07-28→30 (raw cl MAE 7.29 → Lc-corrected 56.96 on 07-30, 8× worse). Root cause: pooled Lc is regime-blind; ne_flow gets over-corrected by 22-26pp at overcast bins while calm/sw_flow get under-corrected by 30-38pp at 95-100. Justifies Stage 1 workup (regime-conditional Lc fit + halves-verified curated table + Stage 3 wire + 7-day flip gate). See `analysis/output/h_lc_regime_stage0.txt`.
