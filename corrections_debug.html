@@ -3054,9 +3054,10 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
     <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:baseline;">
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Overall vs raw</div>
-        <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean</span></div>
-        ${meanRmsePct != null ? `<div style="font-size:0.85em;margin-top:2px;"><strong style="color:${rmseColor};">${meanRmsePct >= 0 ? "+" : ""}${meanRmsePct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">RMSE mean</span></div>` : ""}
-        ${medianPct != null ? `<div style="font-size:0.78em;margin-top:2px;opacity:0.75;"><strong style="color:${medianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${medianPct >= 0 ? "+" : ""}${medianPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE median</span></div>` : ""}
+        <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · 7d</span></div>
+        ${meanRmsePct != null ? `<div style="font-size:0.85em;margin-top:2px;"><strong style="color:${rmseColor};">${meanRmsePct >= 0 ? "+" : ""}${meanRmsePct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">RMSE mean · 7d</span></div>` : ""}
+        <div id="overall-today-tile" style="font-size:0.85em;margin-top:4px;padding-top:3px;border-top:1px solid #1a2530;opacity:0.55;"><strong>—</strong><span style="font-size:0.7em;margin-left:4px;">MAE mean · today</span></div>
+        ${medianPct != null ? `<div style="font-size:0.72em;margin-top:2px;opacity:0.55;"><strong style="color:${medianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${medianPct >= 0 ? "+" : ""}${medianPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE median · 7d</span></div>` : ""}
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Winning fields</div>
@@ -3230,28 +3231,84 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
     .then(r => r.ok ? r.json() : null)
     .then(mot => {
       if (!mot || !mot.series) return;
+      // Per-field production-layer priority. Mirrors renderScorecardBanner's
+      // _prodKey plus specialists that live in mae_over_time.json series keys.
+      // prod_real is preferred (real per-row aggregate) but may be missing on
+      // fields whose applied_layer stamps don't have matching error_ keys in
+      // the pair log (e.g., wd until v0.6.390c added "wdp" to the layer tuple
+      // in forecast_error_log.py — takes days for new pair-log rows to fill).
+      const PROD_PRIORITY = {
+        t:  ["prod_real", "l6", "l4", "l3", "l2", "l1"],
+        h:  ["prod_real", "l4", "l3", "l2", "l1"],
+        dp: ["prod_real", "l4", "l3", "l2", "l1"],
+        pr: ["prod_real", "l1"],
+        ws: ["prod_real", "l3", "l2", "l1"],
+        wg: ["prod_real", "l3", "l2", "l1"],
+        wd: ["prod_real", "wdp", "l2", "l1", "raw"],
+        cc: ["prod_real", "l6", "l4", "l3", "l2", "l1"],
+        cl: ["prod_real", "clp", "l6", "l2", "l1"],
+        cm: ["prod_real", "l6", "l3", "l2", "l1"],
+        ch: ["prod_real", "chp", "l6", "l4", "l3", "l2", "l1"],
+        sr: ["prod_real", "l5", "l1"],
+        pa: ["prod_real", "l1"],
+        pp: ["prod_real", "l4", "l3", "l1"],
+      };
+      const _pickProdDay = (sf, priority) => {
+        const raw = sf.raw || {};
+        const rawDays = Object.keys(raw).sort();
+        if (!rawDays.length) return null;
+        // Walk from most-recent day backwards; for each day try each layer
+        // in priority order and use the first one that isn't equal-to-raw
+        // (equal-to-raw means the layer wasn't actually different — pick a
+        // deeper layer if one exists) OR the deepest layer available if
+        // nothing differed.
+        for (let i = rawDays.length - 1; i >= 0; i--) {
+          const day = rawDays[i];
+          const rMae = (raw[day] || {}).mae;
+          if (rMae == null) continue;
+          for (const layer of priority) {
+            if (layer === "raw") return { day, rMae, pMae: rMae, layer };
+            const s = sf[layer];
+            if (!s || !s[day] || s[day].mae == null) continue;
+            return { day, rMae, pMae: s[day].mae, layer };
+          }
+        }
+        return null;
+      };
+      const perFieldToday = {};  // field -> pct (for aggregate)
       todayCells.forEach(cell => {
         const f = cell.dataset.field;
         const sf = mot.series[f];
         if (!sf) { cell.textContent = "no data"; cell.style.opacity = 0.5; return; }
-        // raw and prod_real are per-day dicts keyed by YYYY-MM-DD.
-        // Find the most recent day present in BOTH.
-        const raw = sf.raw || {}, prod = sf.prod_real || sf.prod || {};
-        const days = Object.keys(raw).filter(d => d in prod).sort();
-        if (!days.length) { cell.textContent = "no data"; cell.style.opacity = 0.5; return; }
-        const day = days[days.length - 1];
-        const rMae = (raw[day] || {}).mae, pMae = (prod[day] || {}).mae;
-        if (rMae == null || pMae == null || rMae === 0) {
+        const pri = PROD_PRIORITY[f] || ["prod_real", "l1", "raw"];
+        const pick = _pickProdDay(sf, pri);
+        if (!pick || pick.rMae === 0) {
           cell.textContent = "—"; cell.style.opacity = 0.5; return;
         }
-        const pct = (pMae - rMae) / rMae * 100;
+        const pct = (pick.pMae - pick.rMae) / pick.rMae * 100;
+        perFieldToday[f] = pct;
         const sign = pct >= 0 ? "+" : "−";
         const abs = Math.abs(pct).toFixed(1);
         const color = pct <= -0.5 ? "#4ad29a" : (pct >= 0.5 ? "#fb7c5c" : "#e0d472");
         cell.style.color = color;
         cell.style.opacity = 1;
-        cell.innerHTML = `${sign}${abs}%<span style="font-size:0.7em;opacity:0.55;margin-left:3px;">${day.slice(5)}</span>`;
+        const layerTag = pick.layer !== "prod_real" ? `<span style="font-size:0.65em;opacity:0.4;margin-left:2px;">(${pick.layer})</span>` : "";
+        cell.innerHTML = `${sign}${abs}%${layerTag}<span style="font-size:0.7em;opacity:0.55;margin-left:3px;">${pick.day.slice(5)}</span>`;
       });
+      // Overall today tile: mean of independent fields (cc excluded per v0.6.390,
+      // pp excluded because Brier-scored).
+      const DERIVED = new Set(["cc", "pp"]);
+      const overallVals = Object.entries(perFieldToday)
+        .filter(([f]) => !DERIVED.has(f))
+        .map(([, v]) => v);
+      const tile = document.getElementById("overall-today-tile");
+      if (tile && overallVals.length) {
+        const mean = overallVals.reduce((s, v) => s + v, 0) / overallVals.length;
+        const sign = mean >= 0 ? "+" : "−";
+        const color = mean <= -0.5 ? "#4ad29a" : (mean >= 0.5 ? "#fb7c5c" : "#e0d472");
+        tile.style.opacity = 1;
+        tile.innerHTML = `<strong style="color:${color};">${sign}${Math.abs(mean).toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · today (${overallVals.length}f)</span>`;
+      }
     })
     .catch(() => { /* silent — 7d column still renders */ });
 }

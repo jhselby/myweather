@@ -242,7 +242,7 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             # These stay flat vs l6 whenever the specialist gate is disabled
             # or skips the cell. Iterating the full list is safe because
             # target_hour.get returns None for absent keys.
-            for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp"):
+            for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp"):
                 v = target_hour.get(f"{short}_{lyr}")
                 if v is not None:
                     pair[f"forecast_{lyr}"] = round(float(v), 3)

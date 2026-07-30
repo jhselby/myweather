@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390c • July 30, 2026 (Overall today tile + wd today fix + per-field prod-priority fallback)</strong></summary>
+
+- **Overall today tile.** New line in the "Overall vs raw" scorecard tile: shows mean of independent fields' today Prod-vs-Raw (cc + pp excluded). Populated by `renderPerFieldSnapshot()` from the same per-field today data it reads for the table below. Answers "how bad is today really" at a glance — the 7d avg number is trailing and hides fresh damage. Renders below RMSE mean, above MAE median. Field count shown ("Xf") so you know the denominator.
+- **wd today cell fix — root cause.** `forecast_error_log.py:245` iterated over `("l1", "l2", ..., "chp", "clp")` when writing per-layer errors — `wdp` was missed when wdp shipped 07-27. So wd pair-log rows had `applied_layer="wdp"` on gate-firing ticks but no `error_wdp` column, and `mae_over_time.py`'s `prod_real` accumulator (`prod_real_buckets` keyed on `applied_layer` + `error_{applied}`) skipped every wd row. wd showed "no data" in the today column even though wdp/l2 series in mae_over_time were populating fine. Added `"wdp"` to the tuple. New pair-log rows now carry `error_wdp` (circular diff); `prod_real` for wd will start populating on tomorrow's digest as `mae_over_time.py` re-runs.
+- **Frontend fallback for the transition.** Rather than wait for the digest to backfill, `renderPerFieldSnapshot()` now walks a per-field production-layer priority list — prefers `prod_real`, falls back to specialists (chp/clp/wdp), then l6/l5/l4/l3/l2/l1, finally raw. Whichever exists deepest for the most-recent day wins. Cell tags the fallback layer in parentheses `(wdp)` at low opacity so you can tell when it's not using prod_real. Mirrors `renderScorecardBanner`'s `_prodKey` logic. wd will render today from `wdp` series immediately even before the digest backfill lands.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390b • July 30, 2026 (per-field snapshot gains 'today' column alongside 7-day)</strong></summary>
 
 - **'today' column added to per-field snapshot.** v0.6.390a wired the "vs raw" column live but that source (`tsDoc.per_layer_mae_by_lead`) is a rolling 7-day trailing average — it'll show cl at +65% for another 3-5 days as the 07-28/29/30 damage rolls off, hiding whether today's field-kill is actually working. New "today" column reads the most-recent-obs-day Prod-vs-Raw from `mae_over_time.json` (same series the regression sentry uses). Together the two columns answer both questions on the same row: "did we ship something bad today" (today col) and "is the pipeline healthy on average" (7d col). Table header renamed "vs raw" → "7d avg"; new "today" column between it and Status. Each row gains `<td class="pf-today" data-field="<k>">`; `renderPerFieldSnapshot()` extends with an async fetch of mae_over_time.json + populate logic. Cell shows pct and MM-DD of the day being read.
