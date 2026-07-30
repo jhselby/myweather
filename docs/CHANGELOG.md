@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390a • July 30, 2026 (per-field snapshot wired live + debug page Rule 5 sweep for v0.6.390)</strong></summary>
+
+- **Per-field snapshot table wired live.** The "Current pipeline state — per-field snapshot" table's "vs raw" column had been hand-edited static text — went stale between debug-page sweeps and hid real events (cl went catastrophic 07-28 → 07-30 but the snapshot cell still read "−0.2% flat pre-Lc" for days). Every field's percentage cell now has `class="pf-mae" data-field="<key>"`; new `renderPerFieldSnapshot(tsDoc, wxDoc)` reads the same `tsDoc.per_layer_mae_by_lead` the scoreboard reads, computes `_avg1to47(prod) vs _avg1to47(l1)`, and populates each cell with matching color logic (green ≤ −0.5%, orange within ±0.5%, red ≥ +0.5%). pp cell uses `data-brier="1"` to read the Brier doc instead. Called after `renderScorecardBanner` on every load.
+- **Debug page Rule 5 sweep for v0.6.390.** Post-ship watches — Lc intervention entry rewritten to reflect cl+cc both in `_FIELD_SKIP` (was cl only + cc bandages); Ccd 7-day gate marked CLEARED EARLY with new watch triggers going forward; Calendar 08-06 Ccd flip check marked cleared early. Correction stack list — Lc description now "cm/ch only; cl + cc BOTH OFF"; Ccd description now "LIVE ENABLED=True". Correction stack routine list bullet updated. Recent activity — today's session summary bumped to 10 ships, v0.6.390 entry added at top with full architectural context. Per-field snapshot Status column for cc/cl/h rewritten. Stable-wins summary line rewritten with fresh categorization (Stable wins / Regressing / Killed-or-retired). Applied-layers column for cc updated to show Lc struck out and Ccd substituted; cl also shows Lc struck out.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390 • July 30, 2026 (Ccd flip early — cc retired from Lc, cc excluded from scoreboard aggregate)</strong></summary>
 
 - **Ccd flipped ENABLED=True** in `weather_collector/processors/cc_from_derivation.py`. Six days ahead of the originally-planned 08-06 gate. Rerun of `h_cc_derivation.py` against post-cl-field-kill data reconfirmed the +8.48% pooled MAE win vs current production cc (halves +11.4% / +5.8%, both positive, 6/10 regimes win). The 7-day gate was normal caution; the math is a 20-line `max()` and the evidence base is 123K held-out quads over 30 days. Flip is warranted.
