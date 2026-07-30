@@ -332,6 +332,19 @@ REGRESSION_SENTRY_THRESHOLD_PCT = 15.0
 REGRESSION_SENTRY_MIN_DAYS = 2
 REGRESSION_SENTRY_LOOKBACK_DAYS = 5
 
+# Layer-shape sentry (added v0.6.390d, 2026-07-30). Fires on per-(field, band)
+# breakage that daily-total regression_sentry misses. Motivated by h L2 which
+# helps at 0-5h (−18%) but hurts +11 to +13% at 6-47h — τ-too-long signature
+# that never triggered the daily sentry because the day-level mean stayed
+# within threshold. Reads time_series_diagnostic.json from GCS via cached_path.
+TIMESERIES_DIAGNOSTIC_URL = "https://data.wymancove.com/time_series_diagnostic.json"
+LAYER_SHAPE_THRESHOLD_PCT = 10.0    # per-band production-vs-raw breach
+LAYER_SHAPE_MIN_N_PER_BAND = 100
+LAYER_SHAPE_TAU_HELP_PCT   = -5.0   # short-lead help threshold for τ signature
+LAYER_SHAPE_TAU_HURT_PCT   = +5.0   # long-lead hurt threshold for τ signature
+LAYER_SHAPE_BANDS = [(1, 6, "0-5h"), (6, 12, "6-11h"),
+                     (12, 24, "12-23h"), (24, 48, "24-47h")]
+
 # Marine-layer stratum bias-collapse detector — companion to the global
 # anomaly detector, targeting the ~3%-of-cc stratum where MLC lives.
 MARINE_LAYER_ANOMALY_JSON_PATH = HERE.parent / "output" / "marine_layer_anomaly.json"
@@ -607,6 +620,97 @@ def regression_sentry():
                 f"trajectory {traj})"
             )
     return lines
+
+
+def layer_shape_sentry():
+    """Return alert lines for (field, layer, lead_band) combos where the
+    production layer is hurting worse than raw at a specific band. Catches
+    the τ-too-long / band-conditional failure mode that daily-total
+    regression_sentry can't see because band-level breaches average out
+    across the 48h horizon.
+
+    Reads tsDoc's per_layer_mae_by_lead + per_layer_n_by_lead. For each
+    field's production layer, compares band-averaged production MAE vs
+    raw MAE. Fires per-band if delta ≥ LAYER_SHAPE_THRESHOLD_PCT with
+    n ≥ LAYER_SHAPE_MIN_N_PER_BAND.
+
+    Also detects τ-suspect signature: production layer HELPS at 0-5h
+    (delta ≤ LAYER_SHAPE_TAU_HELP_PCT) AND HURTS at some later band
+    (delta ≥ LAYER_SHAPE_TAU_HURT_PCT). This is the shape that hid h
+    from us — L2 helps short, hurts long, day-total looks fine.
+
+    Silent on missing file. Diagnostic, not blocking."""
+    try:
+        from analysis._cache import cached_path
+        with open(cached_path(TIMESERIES_DIAGNOSTIC_URL, max_age_hours=6)) as f:
+            tsd = json.load(f)
+    except Exception:
+        return None
+    mae = tsd.get("per_layer_mae_by_lead") or {}
+    n_by = tsd.get("per_layer_n_by_lead") or {}
+    if not mae:
+        return []
+
+    def _band_avg(arr, lo, hi):
+        if not isinstance(arr, list):
+            return None, 0
+        vals = []
+        for i in range(lo, min(hi, len(arr))):
+            if arr[i] is not None:
+                vals.append(arr[i])
+        return (sum(vals) / len(vals) if vals else None), len(vals)
+
+    def _band_n(arr, lo, hi):
+        if not isinstance(arr, list):
+            return 0
+        return sum(arr[i] for i in range(lo, min(hi, len(arr))) if arr[i])
+
+    lines = []
+    tau_suspects = []
+    for field in sorted(mae.keys()):
+        layers = mae[field] or {}
+        raw_arr = layers.get("l1")
+        if not raw_arr:
+            continue
+        # Pick production series. Prefer explicit `production` key; else fall
+        # back to deepest non-raw layer with data.
+        prod_arr = layers.get("production")
+        prod_key = "production"
+        if not prod_arr:
+            for k in ("wdp", "chp", "clp", "l6", "l5", "l4", "l3", "l2"):
+                if isinstance(layers.get(k), list):
+                    prod_arr = layers[k]
+                    prod_key = k
+                    break
+        if not prod_arr:
+            continue
+        band_deltas = {}  # label -> pct
+        for lo, hi, lbl in LAYER_SHAPE_BANDS:
+            r, _ = _band_avg(raw_arr, lo, hi)
+            p, _ = _band_avg(prod_arr, lo, hi)
+            n_band = _band_n(n_by.get(field, {}).get("l1"), lo, hi)
+            if r is None or p is None or r == 0 or n_band < LAYER_SHAPE_MIN_N_PER_BAND:
+                continue
+            pct = (p - r) / r * 100.0
+            band_deltas[lbl] = pct
+            if pct >= LAYER_SHAPE_THRESHOLD_PCT:
+                lines.append(
+                    f"  ⚠ {field}/{prod_key}@{lbl}: production +{pct:.1f}% vs raw "
+                    f"(raw {r:.2f}, prod {p:.2f}, n={n_band})"
+                )
+        # τ-signature check: helps short, hurts long.
+        short = band_deltas.get("0-5h")
+        long_hurts = [(lbl, band_deltas[lbl]) for lbl in ("6-11h", "12-23h", "24-47h")
+                      if lbl in band_deltas and band_deltas[lbl] >= LAYER_SHAPE_TAU_HURT_PCT]
+        if short is not None and short <= LAYER_SHAPE_TAU_HELP_PCT and long_hurts:
+            hurt_txt = ", ".join(f"{lbl} {pct:+.1f}%" for lbl, pct in long_hurts)
+            tau_suspects.append(
+                f"  ★ {field}/{prod_key} τ-suspect: helps 0-5h ({short:+.1f}%) "
+                f"but hurts {hurt_txt}. Classic 'decay time-constant too long' "
+                f"signature — shorten τ or add lead-band SKIP."
+            )
+    # τ-suspects head the section — they're the most actionable.
+    return tau_suspects + lines
 
 
 def persistence_skill_watch():
@@ -1012,6 +1116,24 @@ def main():
                    "and the mae_over_time chart to identify which layer to demote.")
     else:
         out.append("  • all fields clean")
+    out.append("")
+
+    # Layer-shape sentry — per-(field, band) breaches + τ-suspect signatures.
+    # Catches the failure mode that hid h L2 for 5+ days: layer that helps at
+    # short lead but hurts at longer lead — daily total looks fine but users
+    # see degraded forecasts past 6h. Complements regression_sentry above.
+    shape_lines = layer_shape_sentry()
+    out.append("Layer-shape sentry (per-band production-vs-raw + τ-suspect):")
+    if shape_lines is None:
+        out.append("  • time_series_diagnostic.json unavailable — sentry offline")
+    elif shape_lines:
+        for line in shape_lines:
+            out.append(line)
+        out.append("  → τ-suspect (★) means a layer helps at short lead but hurts long — "
+                   "shorten τ or add lead-band SKIP. Per-band ⚠ means a layer is "
+                   "broken at that band regardless of shape.")
+    else:
+        out.append("  • all applied layers clean at all bands")
     out.append("")
 
     # Persistence-skill watch: field-level regressions and at-risk fields.

@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390d • July 30, 2026 (layer-shape sentry — τ-suspect + per-band production-vs-raw alerts in digest)</strong></summary>
+
+- **Layer-shape sentry added to digest.** New `layer_shape_sentry()` in `build_executive_summary.py`. Complements the daily regression_sentry — which fires only when a field's day-total Prod-vs-Raw ≥+15% for 2 days. That failed to catch h, whose day-total stayed under threshold while L2 was helping short-lead (−18%) and hurting long-lead (+11-13%). Reads `time_series_diagnostic.json` per-lead MAE arrays; for each field's production layer, checks all four lead bands (0-5h / 6-11h / 12-23h / 24-47h) with n ≥ 100 per band.
+- **Two alert classes.** (1) Per-band ⚠ — production hurts raw by ≥+10% at any band, with n and layer/band named. (2) τ-suspect ★ — production HELPS at 0-5h (≤ −5%) AND HURTS at any later band (≥ +5%). Classic "decay time-constant too long" signature — bias signal that's real at short lead gets kept alive too far into the horizon. τ-suspects head the sentry section because they're the most actionable (shorten τ or add lead-band SKIP).
+- **Retro-fire on current data.** First run catches: **h/production** (τ-suspect, −20/+11/+12/+9), **dp/production** (τ-suspect, −28/+7/+8, new finding), **wd/production @ 6-11h +43%** (new finding, missed because today-cell was broken pre-v0.6.390c), plus recovering-from-ship noise on cc/cl/ws (expected — trailing window still contains pre-fix days). Both τ-suspects warrant τ-refit investigation as their own Stage 0 → Stage 1 workstreams.
+- **Fetches tsDoc via `analysis._cache.cached_path`** with 6h max age — same pattern as h_cc_derivation and other analysis scripts that pull GCS data. Silent on missing file (diagnostic, not blocking). Runs after regression_sentry, before persistence-skill watch.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390c • July 30, 2026 (Overall today tile + wd today fix + per-field prod-priority fallback)</strong></summary>
 
 - **Overall today tile.** New line in the "Overall vs raw" scorecard tile: shows mean of independent fields' today Prod-vs-Raw (cc + pp excluded). Populated by `renderPerFieldSnapshot()` from the same per-field today data it reads for the table below. Answers "how bad is today really" at a glance — the 7d avg number is trailing and hides fresh damage. Renders below RMSE mean, above MAE median. Field count shown ("Xf") so you know the denominator.
