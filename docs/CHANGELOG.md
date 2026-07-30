@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389c • July 30, 2026 (digest registry — h_ws_blend_hours_sweep auto-relabeled STABLE)</strong></summary>
+
+- **Analysis — `build_executive_summary.py` `KNOWN_LIVE_PIPELINES`.** Added `h_ws_blend_hours_sweep` entry pointing at `wind_blend.py:78` `BLEND_HOURS=4` (shipped v0.6.384 07-28). Script's daily `VERDICT: SHIP — BLEND_HOURS=4 clears gate` was surfacing under "New candidates (aggregate-only tools — cross-cut required before shipping)" in this morning's digest despite the constant already being live for 2 days. Registry entry relabels to `STABLE — wind_blend BLEND_HOURS constant already live since v0.6.384`. Caught during 07-30 morning digest review — same pattern as the 07-28 `l5_solar_analysis` backstop.
+
+</details>
+
+<details>
 <summary><strong>v0.6.389b • July 29, 2026 (live-empty fossil guard — narrow-promote walker + Lc gate_clear stop reporting "GATE CLEARED" for empty SHIP sets)</strong></summary>
 
 - **Analysis — narrow-promote walker (`build_executive_summary.py`).** The 4-gate walker (C1H_SHIP_CELLS, C1D_SHIP_CELLS, PRE_FRONTAL_SHIP_CELLS, H_L4_ADD_CANDIDATES) treats empty-vs-empty as a Jaccard match (line 1037-1038, deliberate — "consistent zero SHIP for N days is a legitimate stable state"). Downstream this rendered as `✓ GATE CLEARED (8/7 days) · 0 SHIP cells today`, which reads as ship-ready to a casual reader. Triggered a manual DECLINE on 07-26 when Claude noticed the mismatch. Fix: differentiate the two outcomes when count ≥ gate — `✓ GATE CLEARED (...) — ready to ship N cells` if `n_cells_today > 0`, else `⚫ STABLE-EMPTY (...) — nothing to ship`. Only PRE_FRONTAL_SHIP_CELLS and H_L4_ADD_CANDIDATES use `allow_empty=True` (C1H/C1D return `None` on empty and skip); both are now protected. See [[feedback_fossil_windows]].

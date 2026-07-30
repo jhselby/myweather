@@ -115,6 +115,13 @@ KNOWN_LIVE_PIPELINES = {
         "since": "v0.6.248",
         "date": "2026-06-28",
     },
+    "h_ws_blend_hours_sweep": {
+        "target": "wind_blend BLEND_HOURS constant (wind_blend.py:78, "
+                  "value=4). Sweep script's 'SHIP BLEND_HOURS=4' verdict is "
+                  "stale — constant already live.",
+        "since": "v0.6.384",
+        "date": "2026-07-28",
+    },
     # NOT registered (deliberate):
     #   walkforward_l3l4_validator — composite. L4 {ch,cc} half live but L3
     #     half proposes real drop of wg/ws. Registering would suppress the
