@@ -1,6 +1,20 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.389g • July 30, 2026 (Lc bin-skip for cc/95-100 + rolling-window diagnostic — no window fixes cl, cc/95-100 is the acute cc bleed)</strong></summary>
+
+- **Analysis — rolling-window diagnostic (`analysis/h_lc_rolling_window.py` NEW).** Sweeps fit windows W ∈ {3, 5, 7, 10, 14, 21, all} days, refits pooled Lc on each, evaluates on the last 3d held-out. Answers "does a shorter fit window recover cl?" **Verdict: NULL** — no window makes cl beat raw. Best cl window is W=3d at −3.7% vs raw. Longer windows compound the damage (W=14d = −101% vs raw). **Also exposes cc broken on last 3d** under every window (best W=7d at −25.5%). cm best W=14d +44.6%. ch best "all" +50.2%. The shift-table architecture can't handle the recent HRRR bias shift with any window length — cl+cc need something adaptive (EMA/Kalman shift tracker) or per-bin gate-when-recent-bias-small logic. cm/ch survive across windows and stay live.
+- **cc/95-100 bin-skip (`cloud_saturation_correction.py`).** Diagnosed the specific cc bleed on 07-30: 99% of cc forecasts landed in the 95-100 bin (heavy overcast), obs matched, but Lc's −58 shift dragged corrected cc from 90→32 → error 53. Same architecture failure as cl but bin-concentrated. Rather than field-kill cc entirely (would give up cc/0-5, cc/50-80, cc/80-95 which mostly help), added `("cc", "95-100")` to `_CELL_SKIP` — universal-regime bin demote. Left cc/0-5 (shift +13, still helps most days), cc/50-80 (−27), and cc/80-95 (−30, still SKIP-Δ under Stage 0 but not clearly harmful).
+- **Refactor: `_REGIME_SKIP` → `_CELL_SKIP`** unified frozenset supporting both `(field, bin)` shape (universal) and `(field, regime, bin)` shape (regime-conditional). `_shift_for` checks both before honoring the curated SHIP verdict. Telemetry key renamed `regime_skip_cells` → `cell_skip` and now lists both shapes. cc/ne_flow/50-80 and cc/ne_flow/80-95 from v0.6.389d retained as regime-conditional demotes.
+- **Current Lc SHIP surface** (after this commit):
+  - cl: fully off Lc (`_FIELD_SKIP`)
+  - cc: 0-5 (all regimes), 50-80 (all regimes except ne_flow), 80-95 (all regimes except ne_flow)
+  - cm: unchanged from live table (all SHIP bins fire in all regimes)
+  - ch: unchanged from live table
+
+</details>
+
+<details>
 <summary><strong>v0.6.389f • July 30, 2026 (Lc field-kill for cl + walk-forward validator — held-out data says pooled AND regime-conditional both hurt cl)</strong></summary>
 
 - **Analysis — walk-forward validator (`analysis/walkforward_lc_regime.py` NEW).** Forks the walkforward_l3l4_validator pattern for Lc. Single train/test obs_time split (train pre-07-20, test 07-20→07-30). Fits BOTH regime-conditional and pooled tables on train, evaluates both on held-out. Motivation: 7-day Stage 2 walk-forward gate is process discipline; we already have ~30d of pair log, so we can answer the stronger held-out MAE question now instead of waiting a week. **Result:** VERDICT: FLAT overall (-1.55%) — regime-Lc does NOT clearly beat pooled Lc on held-out. Field-level: cc +0.63%, cl **-6.73%**, cm -0.22%, ch +0.28%. Per-cell: 22 SHIP (regime beats pool ≥3%), 21 SKIP-regime (regime loses ≥3%), 98 flat, 49 thin. Stage 1's 92-cell SHIP set is over-generalized; only 22 cells actually help on held-out. Output at `analysis/output/walkforward_lc_regime.txt`.

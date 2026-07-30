@@ -30,18 +30,30 @@ ENABLED = True  # Flipped 2026-07-17 v0.6.355 after 8/7-day gate clear, 16 SHIP 
 
 CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
 
-# Emergency regime demote (2026-07-30). Stage 0 regime × bin sweep
-# (analysis/h_lc_regime_stage0.py) surfaced live SHIP cells where pooled Lc
-# over-corrects by >20pp for a specific regime. When state_fc.regime_synoptic
-# matches, treat the cell as SKIP for this tick regardless of the curated
-# table. Same shape as v0.6.382t chp emergency demote — a bandage while
-# regime-conditional Lc is built out.
+# Emergency cell-skip set (2026-07-30). Two supported shapes:
+#   (field, bin)              — skip that cell in every regime
+#   (field, regime, bin)      — skip only when state_fc.regime_synoptic matches
+# Both checked before the curated-table SHIP lookup fires. Same shape as
+# v0.6.382t chp emergency demote — bandages while regime-conditional Lc is
+# built out.
 #
-#   (field, regime, bin) — see analysis/output/h_lc_regime_stage0.txt divergence table.
-_REGIME_SKIP = frozenset({
+# See:
+#   analysis/output/h_lc_regime_stage0.txt      — divergence-vs-pooled cells
+#   analysis/output/h_lc_rolling_window.txt     — 3-day held-out under all windows
+#   analysis/output/walkforward_lc_regime.txt   — 10-day walk-forward
+_CELL_SKIP = frozenset({
+    # ── field × bin (any regime) ─────────────────────────────────────────
+    ("cc", "95-100"),  # v0.6.389g. On 07-30 forecast was 99% at 95-100 bin,
+                       # obs matched at overcast, but Lc drops -58 → l6 error
+                       # ~53. Same shift-table architecture failure as cl:
+                       # can't distinguish "model over-forecasts overcast"
+                       # from "model correctly forecasts overcast." Kills the
+                       # acute bleed while cc/0-5, cc/50-80, cc/80-95 keep
+                       # their pooled Lc which mostly helps.
+    # ── field × regime × bin ─────────────────────────────────────────────
     ("cc", "ne_flow", "50-80"),   # live shift -27, regime wants  -3 (23pp over) — SKIP-mag verdict
     ("cc", "ne_flow", "80-95"),   # live shift -30, regime wants  -8 (22pp over) — SKIP-Δ verdict
-    # cl ne_flow entries removed 2026-07-30 v0.6.389f — cl fully off Lc via _FIELD_SKIP below,
+    # cl entries removed 2026-07-30 v0.6.389f — cl fully off Lc via _FIELD_SKIP,
     # so per-regime demotes for cl are redundant.
 })
 
@@ -100,11 +112,9 @@ def _bin_of(v):
 
 
 def _shift_for(cells, field, value, regime=None):
-    """Return the (shift, bin_label, demoted) that Lc would apply to `value`
-    for `field`, or (0.0, None, False) if the cell is not SHIP or the value
-    is out of range. If (field, regime, bin_lab) is in `_REGIME_SKIP`, the
-    shift is zeroed and `demoted=True` is returned so the caller can log
-    the demote separately from natural SKIPs."""
+    """Return (shift, bin_label, demoted). Returns shift=0 and demoted=True
+    when (field, bin_lab) OR (field, regime, bin_lab) matches `_CELL_SKIP`,
+    so the caller can log the demote separately from natural SKIPs."""
     bin_lab = _bin_of(value)
     if bin_lab is None:
         return 0.0, None, False
@@ -113,7 +123,9 @@ def _shift_for(cells, field, value, regime=None):
         return 0.0, bin_lab, False
     if cell.get("verdict") != "SHIP":
         return 0.0, bin_lab, False
-    if regime is not None and (field, regime, bin_lab) in _REGIME_SKIP:
+    if (field, bin_lab) in _CELL_SKIP:
+        return 0.0, bin_lab, True
+    if regime is not None and (field, regime, bin_lab) in _CELL_SKIP:
         return 0.0, bin_lab, True
     return float(cell.get("shift", 0.0)), bin_lab, False
 
@@ -222,7 +234,7 @@ def stamp_cloud_saturation_correction(weather_data):
         "fit_table_generated_at": table.get("generated_at"),
         "fit_rules": table.get("fit_rules"),
         "regime_at_apply": regime,
-        "regime_skip_cells": sorted(list(_REGIME_SKIP)),
+        "cell_skip": sorted([list(x) for x in _CELL_SKIP], key=lambda x: (x[0], len(x), x[-1])),
         "field_skip": sorted(list(_FIELD_SKIP)),
         "per_field": per_field,
     }
