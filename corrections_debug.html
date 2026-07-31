@@ -3106,7 +3106,7 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
         const color = r.pct < 0 ? "#4ad29a" : (r.pct > 0 ? "#fb7c5c" : "#8a93a3");
         return `<code>${r.field}</code> <strong style="color:${color};">${r.pct >= 0 ? "+" : ""}${r.pct.toFixed(1)}%</strong>`;
       }).join(" · ")}
-      <span style="opacity:0.55;margin-left:6px;">cc is derived from cl/cm/ch (Ccd) — its error is a function of theirs, so counting it in the mean would double-weight the cloud stack.</span>
+      <span style="opacity:0.55;margin-left:6px;">cc is currently derived from cl/cm/ch via Ccd's <code>max()</code> — its error is a pure function of theirs, so counting it in the mean would double-weight the cloud stack. If <code>h_cc_blend_formula</code> tuner promotes a regime-conditional composition (Stage 0 HOLD today, re-check ~08-07), the tuner's contribution becomes an independent degree of freedom worth scoring — will add as a separate scoreboard line at that point rather than reintroducing double-counting.</span>
     </div>` : ""}
     ${(() => {
       // Persistence-skill line — pipeline vs "same as now" reference forecast.
