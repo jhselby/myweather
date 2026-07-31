@@ -149,8 +149,17 @@ def _decay_factors(tau, n):
 # 7-day window: +7.75% MAE improvement on 2026-06-22, +6.60% on 2026-06-24.
 # t and pr show ≤0.5% drift across all ramp shapes — flat K is optimal for
 # them, so only h gets the soft_ramp treatment.
-H_SOFT_RAMP_FLOOR = 0.4
-H_SOFT_RAMP_END = 24
+#
+# v0.6.390g (2026-07-31): shape re-tuned after h L2 marginal flipped from
+# helping to hurting around 07-25. New h_l2_shape_sweep.py grid across
+# floor × end, halves-verify on top-5. 7d window said {floor=0.0, end=8}
+# best; 14d said {floor=0.4, end=12} — regime shifted, one shape didn't
+# fit both. Adopted middle path {floor=0.1, end=10}: +2.8% vs raw on 7d
+# AND +6.0% vs raw on 14d. Beats old shape on both. Reversible one-line
+# edit if regime shifts further. Watch triggers: h L2-vs-L1 marginal
+# stays negative for 5+ days in daily digest.
+H_SOFT_RAMP_FLOOR = 0.1
+H_SOFT_RAMP_END = 10
 
 
 def _soft_ramp_factors(n, floor=H_SOFT_RAMP_FLOOR, end=H_SOFT_RAMP_END):
