@@ -322,15 +322,24 @@ PERSISTENCE_SKILL_THIN_MARGIN = 0.20
 # if forecast-value distribution shift were tracked as its own signal.
 ANOMALY_DETECTOR_JSON_PATH = HERE.parent / "output" / "anomaly_detector.json"
 
-# Regression sentry (added v0.6.389i, 2026-07-30). Fires when a field's daily
-# Prod MAE exceeds its daily Raw MAE by ≥ REGRESSION_SENTRY_THRESHOLD_PCT for
-# ≥ REGRESSION_SENTRY_MIN_DAYS consecutive days. Would have caught the cl+cc
-# Lc breakdown 07-29 EOD instead of 07-30 EOD — cl was +23%/+121%/+659% across
-# 07-28/29/30, first crossed threshold on 07-28. See project_lc_regime_conditional.
+# Regression sentry (added v0.6.389i, 2026-07-30; sustained-vs-fresh split
+# added v0.6.390f, 2026-07-31 after the cl field-kill exposed the flat-window
+# lag). Two windows per field, weighted-by-n across daily prod/raw MAE:
+#   sustained_pct = trailing 7 days (the sustained-behavior signal)
+#   fresh_pct     = trailing 3 days (the current-state signal)
+# 4-verdict classifier from the pair:
+#   sustained hot + fresh hot  → ⚠ SUSTAINED FIRE (real, ship a fix)
+#   sustained hot + fresh cool → ✓ HEALING       (intervention landed, watch)
+#   sustained cool + fresh hot → 🔥 FRESH FIRE    (new regression, catch early)
+#   sustained cool + fresh cool → clean
+# Cool < FRESH_COOL_PCT, hot ≥ SENTRY_HOT_PCT. Between the two = "watch"
+# neither-fire-nor-clean band, currently rendered as a NEUTRAL info line.
 MAE_OVER_TIME_JSON_PATH = HERE.parent / "output" / "mae_over_time.json"
-REGRESSION_SENTRY_THRESHOLD_PCT = 15.0
-REGRESSION_SENTRY_MIN_DAYS = 2
-REGRESSION_SENTRY_LOOKBACK_DAYS = 5
+SENTRY_HOT_PCT = 15.0          # ≥ this in a window = "hot"
+SENTRY_FRESH_COOL_PCT = 5.0    # < this in fresh window = "cool" (used with sustained hot to detect HEALING)
+SENTRY_SUSTAINED_DAYS = 7
+SENTRY_FRESH_DAYS = 3
+SENTRY_MIN_N_PER_WINDOW = 200  # thin-guard: sub-window with less than this reports THIN, not a verdict
 
 # Layer-shape sentry (added v0.6.390d, 2026-07-30). Fires on per-(field, band)
 # breakage that daily-total regression_sentry misses. Motivated by h L2 which
@@ -557,20 +566,54 @@ def marine_layer_anomaly_summary():
     return line, suppression
 
 
+def sustained_vs_fresh(series_for_field, tail_days, window_days):
+    """Aggregate Prod-vs-Raw over the trailing `window_days`, weighted by n.
+
+    Reads a series_for_field dict shaped {layer: {day: {mae, n, ...}}}.
+    Returns (pct, n_total) or (None, 0) if there's no usable data.
+
+    Weighted aggregation avoids day-level ratio noise on small-n days —
+    each day contributes proportional to its sample size. Same math as
+    a pooled MAE across the window, keeps consistency with how digest
+    scripts report."""
+    raw_series = series_for_field.get("raw", {}) or {}
+    prod_series = (series_for_field.get("prod_real") or
+                   series_for_field.get("prod") or {})
+    if not isinstance(raw_series, dict) or not isinstance(prod_series, dict):
+        return None, 0
+    window = tail_days[-window_days:] if len(tail_days) >= window_days else tail_days
+    prod_num = raw_num = n_tot = 0
+    for day in window:
+        r = raw_series.get(day) or {}
+        p = prod_series.get(day) or {}
+        raw_mae = r.get("mae") if isinstance(r, dict) else r
+        prod_mae = p.get("mae") if isinstance(p, dict) else p
+        n = (r.get("n") if isinstance(r, dict) else 0) or 0
+        if raw_mae is None or prod_mae is None or n <= 0 or raw_mae <= 0.05:
+            continue
+        prod_num += prod_mae * n
+        raw_num += raw_mae * n
+        n_tot += n
+    if n_tot == 0 or raw_num == 0:
+        return None, 0
+    pct = (prod_num - raw_num) / raw_num * 100.0
+    return pct, n_tot
+
+
 def regression_sentry():
-    """Return list of alert lines for fields where Prod MAE has exceeded Raw
-    MAE by ≥ threshold on ≥ min_days consecutive recent days.
+    """Return list of alert lines classifying each field's Prod-vs-Raw state
+    into one of four verdicts by comparing a sustained (7d) vs fresh (3d)
+    window. See constants block for the classifier.
 
-    This is a headline-level early-warning: catches the "did we just ship
-    something that made a field worse than untouched HRRR?" case directly,
-    without waiting for the 14-day post-ship watch or the anomaly detector's
-    baseline-vs-recent smear to expose it.
+    Motivation: flat 7d averaging lags interventions by 7 days. During that
+    lag the sentry either mis-fires (post-intervention window still red from
+    old damage) or misses fresh damage (drowned out by prior clean days).
+    Pairing the windows separates 'sustained state' from 'current state'
+    honestly and turns the divergence itself into a signal (HEALING when
+    old > new, FRESH FIRE when new > old).
 
-    Reads mae_over_time.json's daily per-field prod_real (or prod fallback)
-    and raw series. For each field, scans the last LOOKBACK_DAYS days, finds
-    the longest trailing run of days where prod > raw by ≥ THRESHOLD_PCT.
-    Fires when that run is ≥ MIN_DAYS. Returns None if the file is missing
-    or malformed (silent — this is diagnostic, not blocking)."""
+    Reads mae_over_time.json. Returns None if the file is missing or
+    malformed (silent — this is diagnostic, not blocking)."""
     if not MAE_OVER_TIME_JSON_PATH.exists():
         return None
     try:
@@ -579,47 +622,46 @@ def regression_sentry():
         return None
     days = doc.get("days") or []
     series = doc.get("series") or {}
-    if len(days) < REGRESSION_SENTRY_MIN_DAYS:
+    if not days:
         return []
 
-    tail_days = days[-REGRESSION_SENTRY_LOOKBACK_DAYS:]
-
-    def _v(field, key, day):
-        s = series.get(field, {}).get(key)
-        if not isinstance(s, dict):
-            return None
-        v = s.get(day)
-        if isinstance(v, dict):
-            return v.get("mae") or v.get("value")
-        return v
-
     lines = []
+    healing = []
+    watch = []
     for field in sorted(series.keys()):
-        # Build trailing per-day pct = (prod - raw)/raw*100. Skip days with
-        # missing / zero raw. Only consider the trailing contiguous run.
-        run = []
-        for day in tail_days:
-            raw = _v(field, "raw", day)
-            prod = _v(field, "prod_real", day) or _v(field, "prod", day)
-            if raw is None or prod is None or raw <= 0.05:
-                run = []
-                continue
-            pct = (prod - raw) / raw * 100.0
-            if pct >= REGRESSION_SENTRY_THRESHOLD_PCT:
-                run.append((day, raw, prod, pct))
-            else:
-                run = []
-        if len(run) >= REGRESSION_SENTRY_MIN_DAYS:
-            latest_pct = run[-1][3]
-            worst = max(run, key=lambda x: x[3])
-            mark = "★" if latest_pct >= 100 else "⚠"
-            traj = " → ".join(f"{r[3]:+.0f}%" for r in run[-4:])
-            lines.append(
-                f"  {mark} {field}: Prod > Raw by ≥{REGRESSION_SENTRY_THRESHOLD_PCT:.0f}% "
-                f"for {len(run)} consecutive days (worst {worst[3]:+.1f}% on {worst[0]}, "
-                f"trajectory {traj})"
-            )
-    return lines
+        sf = series.get(field) or {}
+        s_pct, s_n = sustained_vs_fresh(sf, days, SENTRY_SUSTAINED_DAYS)
+        f_pct, f_n = sustained_vs_fresh(sf, days, SENTRY_FRESH_DAYS)
+        if s_pct is None and f_pct is None:
+            continue
+
+        # THIN guard: report thin fresh window when it has <MIN_N.
+        # Still show sustained if hot (real signal, just no fresh corroboration).
+        thin_fresh = f_pct is None or f_n < SENTRY_MIN_N_PER_WINDOW
+        thin_sustained = s_pct is None or s_n < SENTRY_MIN_N_PER_WINDOW
+
+        s_hot = (s_pct is not None) and (s_pct >= SENTRY_HOT_PCT)
+        f_hot = (f_pct is not None) and (f_pct >= SENTRY_HOT_PCT)
+        f_cool = (f_pct is not None) and (f_pct < SENTRY_FRESH_COOL_PCT)
+
+        def fmt(p, n): return f"{p:+.1f}% (n={n:,})" if p is not None else "n/a"
+
+        if s_hot and f_hot:
+            lines.append(f"  ⚠ {field}: SUSTAINED FIRE — 7d {fmt(s_pct, s_n)}, "
+                         f"3d {fmt(f_pct, f_n)}. Real regression, ship a fix.")
+        elif s_hot and f_cool and not thin_fresh:
+            healing.append(f"  ✓ {field}: HEALING — 7d {fmt(s_pct, s_n)}, "
+                           f"3d {fmt(f_pct, f_n)}. Intervention landed; watch it roll off.")
+        elif f_hot and not s_hot and not thin_fresh:
+            lines.append(f"  🔥 {field}: FRESH FIRE — 7d {fmt(s_pct, s_n)}, "
+                         f"3d {fmt(f_pct, f_n)}. New regression, catch it early.")
+        elif s_hot and thin_fresh:
+            # Sustained hot, fresh window can't disambiguate — show as watch.
+            watch.append(f"  ? {field}: SUSTAINED hot ({fmt(s_pct, s_n)}) but fresh window THIN "
+                         f"({fmt(f_pct, f_n)}). Wait a day.")
+        # else: both cool → clean, no line
+
+    return lines + healing + watch
 
 
 def layer_shape_sentry():
@@ -1104,16 +1146,15 @@ def main():
     # worse than untouched HRRR for N consecutive days" is more actionable
     # than a distribution-shift signal buried in the anomaly detector.
     sentry_lines = regression_sentry()
-    out.append("Regression sentry (Prod-vs-Raw daily trajectory — "
-               f"≥{REGRESSION_SENTRY_THRESHOLD_PCT:.0f}% for ≥{REGRESSION_SENTRY_MIN_DAYS} consecutive days):")
+    out.append(f"Regression sentry (sustained 7d vs fresh 3d, hot ≥{SENTRY_HOT_PCT:.0f}%):")
     if sentry_lines is None:
         out.append("  • mae_over_time.json missing — sentry offline")
     elif sentry_lines:
         for line in sentry_lines:
             out.append(line)
-        out.append("  → A field firing here means live corrections are actively "
-                   "hurting vs raw HRRR. Check the field's per-lead layer table "
-                   "and the mae_over_time chart to identify which layer to demote.")
+        out.append("  → SUSTAINED FIRE = ship a fix. FRESH FIRE = new regression, "
+                   "catch early. HEALING = intervention landed, will roll off. "
+                   "Verify the field's per-lead layer table + mae_over_time chart.")
     else:
         out.append("  • all fields clean")
     out.append("")
