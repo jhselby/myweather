@@ -82,8 +82,8 @@ echo "" >> "$BODY"
 echo "Run finished $(date)" >> "$BODY"
 
 # Build executive summary + divergence report, prepend to body, write final digest.
-EXEC_SUM=$(python3 "$TOOL_DIR/build_executive_summary.py")
-DIVERGENCE=$(python3 "$TOOL_DIR/divergence_report.py")
+EXEC_SUM=$(python3 -m analysis.runlog.build_executive_summary)
+DIVERGENCE=$(python3 -m analysis.runlog.divergence_report)
 {
   echo "$EXEC_SUM"
   echo ""
