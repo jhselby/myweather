@@ -122,6 +122,14 @@ KNOWN_LIVE_PIPELINES = {
         "since": "v0.6.384",
         "date": "2026-07-28",
     },
+    "h_cc_derivation": {
+        "target": "Ccd — cc from-derivation (cc_from_derivation.py, "
+                  "ENABLED=True). Overwrites hourly.cloud_cover with "
+                  "max(cl_l6, cm_l6, ch_l6) except in SKIP_REGIMES. Script's "
+                  "'PROMOTE derived-max' verdict is stale — target already live.",
+        "since": "v0.6.390",
+        "date": "2026-07-30",
+    },
     # NOT registered (deliberate):
     #   walkforward_l3l4_validator — composite. L4 {ch,cc} half live but L3
     #     half proposes real drop of wg/ws. Registering would suppress the
