@@ -139,7 +139,8 @@ def main():
     p("=" * 100)
     p("POOLED MAE — GRID (floor rows × end cols) — CELL = MAE   [±% vs raw]")
     p("=" * 100)
-    header = f"  {'floor \\ end':<12}" + "".join(f"{e:>13}" for e in ENDS)
+    label = "floor / end"
+    header = f"  {label:<12}" + "".join(f"{e:>13}" for e in ENDS)
     p(header)
     for floor in FLOORS:
         row = [f"  {floor:<12.2f}"]
