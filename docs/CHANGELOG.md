@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390j • August 1, 2026 (applied_layer stamp gated on specialist ENABLED — fixes cl snapshot showing clp shadow as production)</strong></summary>
+
+- **Bug.** cl's per-field snapshot cells (7d avg + today) went red overnight — 7d "vs raw" ~+50%, today +83%. Real cl production is essentially = raw (Lc is field-skipped on cl since v0.6.389f), so both cells should track flat-vs-raw. Root cause: `forecast_snapshot.py:_derive_applied_layer` walked `("l1"…"l6","chp","clp","wdp")` unconditionally, and `cl_persistence_gate.py:204` writes `cloud_cover_low_shadow_clp` regardless of ENABLED (per v0.6.382p flip-gate visibility fix). Whenever the shadow value differed from l6 the walk stamped `applied_layer=clp` — poisoning Fitter's `per_layer_mae_by_lead[cl].production` (7d cell) and `mae_over_time[cl].prod_real` (today cell). Same class of bug lurked for chp and wdp but both are ENABLED=True so their stamps were legitimate.
+- **Fix.** Skip specialist keys in the walk when the corresponding module is `ENABLED=False`. Three-line guard inside `_derive_applied_layer` reading `cl_persistence_gate.ENABLED`, `ch_persistence_gate.ENABLED`, `wd_persistence_gate.ENABLED`. Shadow arrays still written unconditionally so the flip-gate keeps its evaluation signal. When any of those specialists flip ENABLED=True the guard automatically re-includes them — no coordination needed with the ship commit.
+- **Recovery.** Fix takes effect on new pair-log rows and forecast snapshots. Existing poisoned stamps in `mae_over_time.json` roll off over the trailing 7-day window (fully clean ~08-08). Today cell should flip green within one Fitter cycle after collector deploy.
+- **Prevention.** Added `field_skip_sanity_check()` to digest — for any field in `cloud_saturation_correction._FIELD_SKIP` (excluding derived fields like cc), 7d trailing `prod_real` must equal `raw` within ±5%. Divergence = applied_layer stamp bug. Would have caught the clp mislabel on day 1 instead of day 5. Currently fires on cl (+56.3%) as expected; clears within 7d after collector deploy as poisoned rows roll off.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390d • July 30, 2026 (layer-shape sentry — τ-suspect + per-band production-vs-raw alerts in digest)</strong></summary>
 
 - **Layer-shape sentry added to digest.** New `layer_shape_sentry()` in `build_executive_summary.py`. Complements the daily regression_sentry — which fires only when a field's day-total Prod-vs-Raw ≥+15% for 2 days. That failed to catch h, whose day-total stayed under threshold while L2 was helping short-lead (−18%) and hurting long-lead (+11-13%). Reads `time_series_diagnostic.json` per-lead MAE arrays; for each field's production layer, checks all four lead bands (0-5h / 6-11h / 12-23h / 24-47h) with n ≥ 100 per band.

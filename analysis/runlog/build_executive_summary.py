@@ -763,6 +763,63 @@ def layer_shape_sentry():
     return tau_suspects + lines
 
 
+FIELD_SKIP_DIVERGENCE_PCT = 5.0
+FIELD_SKIP_DERIVED_EXEMPT = frozenset({"cc"})  # cc is Ccd-derived; prod ≠ raw by design.
+
+
+def field_skip_sanity_check():
+    """For each field in cloud_saturation_correction._FIELD_SKIP, prod_real
+    should equal raw (Lc is off; no other layer touches the field). If it
+    diverges, something is stamping applied_layer to a specialist that
+    shouldn't be running.
+
+    Added v0.6.390j after the clp-shadow-stamp bug ran silently for 5 days
+    (07-27 → 08-01) inflating cl.prod_real to shadow values while real
+    production tracked raw. See [[feedback_shadow_write_applied_layer_trap]].
+
+    Silent on missing files. Diagnostic, not blocking."""
+    if not MAE_OVER_TIME_JSON_PATH.exists():
+        return None
+    try:
+        doc = json.loads(MAE_OVER_TIME_JSON_PATH.read_text())
+        from weather_collector.processors.cloud_saturation_correction import _FIELD_SKIP
+    except Exception:
+        return None
+    series = doc.get("series") or {}
+    days = doc.get("days") or []
+    if not days or not _FIELD_SKIP:
+        return []
+
+    def _trailing_mean(sf, layer, n_days):
+        vals = []
+        for day in days[-n_days:]:
+            row = (sf.get(layer) or {}).get(day) or {}
+            m = row.get("mae")
+            if m is not None:
+                vals.append(m)
+        return sum(vals) / len(vals) if vals else None
+
+    lines = []
+    for field in sorted(_FIELD_SKIP):
+        if field in FIELD_SKIP_DERIVED_EXEMPT:
+            continue
+        sf = series.get(field) or {}
+        raw = _trailing_mean(sf, "raw", SENTRY_SUSTAINED_DAYS)
+        prod = _trailing_mean(sf, "prod_real", SENTRY_SUSTAINED_DAYS)
+        if raw is None or prod is None or raw == 0:
+            continue
+        pct = (prod - raw) / raw * 100.0
+        if abs(pct) >= FIELD_SKIP_DIVERGENCE_PCT:
+            lines.append(
+                f"  ⚠ {field}: FIELD_SKIP'd (no active correction) but "
+                f"prod_real diverges from raw by {pct:+.1f}% over 7d "
+                f"(raw {raw:.2f}, prod {prod:.2f}). Something is stamping "
+                f"applied_layer to a layer that shouldn't be running — "
+                f"check forecast_snapshot._derive_applied_layer guards."
+            )
+    return lines
+
+
 def persistence_skill_watch():
     """Return (regression_lines, at_risk_lines, prod_delta_lines). Compares today's
     h_persistence_skill.json against last run's snapshot; overwrites the snapshot.
@@ -1183,6 +1240,23 @@ def main():
                    "broken at that band regardless of shape.")
     else:
         out.append("  • all applied layers clean at all bands")
+    out.append("")
+
+    # Field-skip sanity check: catches applied_layer mislabels that inflate
+    # a dormant field's prod_real to specialist-shadow values while real
+    # production is untouched raw. Added v0.6.390j after clp-shadow-stamp
+    # bug ran silently for 5 days.
+    fs_lines = field_skip_sanity_check()
+    out.append("Field-skip sanity check (dormant fields' prod_real vs raw):")
+    if fs_lines is None:
+        out.append("  • mae_over_time.json missing — check offline")
+    elif fs_lines:
+        for line in fs_lines:
+            out.append(line)
+        out.append("  → prod_real should equal raw for any field in "
+                   "_FIELD_SKIP. Divergence = applied_layer stamp bug.")
+    else:
+        out.append("  • all FIELD_SKIP'd fields track raw")
     out.append("")
 
     # Persistence-skill watch: field-level regressions and at-risk fields.

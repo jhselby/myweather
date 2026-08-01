@@ -13,6 +13,7 @@ import pytz
 
 from ..gcs_io import load_json, upload_json
 from ..utils import magnus_dew_point_f
+from . import cl_persistence_gate, ch_persistence_gate, wd_persistence_gate
 
 
 GCS_PATH = "forecast_log.json"
@@ -193,7 +194,16 @@ def append_forecast_snapshot(hourly, derived=None):
         # v0.6.361: iteration order = pipeline order. Specialists that run
         # after Lc/L5 (chp, clp) walked last so applied_layer stamps them
         # when their contribution differs from the prior layer.
+        # v0.6.390j: skip specialist keys when the corresponding module is
+        # ENABLED=False. Shadow arrays are still written unconditionally
+        # (v0.6.382p flip-gate visibility fix), so without this guard a
+        # dormant specialist gets stamped as the applied layer and poisons
+        # every downstream metric that reads applied_layer (Fitter's
+        # per_layer_mae_by_lead[.].production and mae_over_time[.].prod_real).
         for lk in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp"):
+            if lk == "clp" and not cl_persistence_gate.ENABLED: continue
+            if lk == "chp" and not ch_persistence_gate.ENABLED: continue
+            if lk == "wdp" and not wd_persistence_gate.ENABLED: continue
             arr = field_layers.get(lk) or []
             if i >= len(arr) or arr[i] is None:
                 continue
