@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390n • August 1, 2026 (debug page sweep — Recent activity block for today's 4 ships)</strong></summary>
+
+- Added Recent activity entry for 2026-08-01 covering v0.6.390j/k/l/m (applied_layer fix, layer-tuple test, recent-bias sensor, action-list at top, fossil-window cleanup, dpp HOLD).
+- Demoted 07-30 date label from "yesterday" → "2 days ago"; 07-31 → "yesterday". Stale-refs checker clean.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390m • August 1, 2026 (fossil-window cleanup — 11 h_ scripts slid 9d forward)</strong></summary>
 
 - **11 h_ scripts slid forward.** Windows updated: `WIN_A = 2026-07-17 → 2026-08-01`, `WIN_B = 2026-07-02 → 2026-07-17`, `WIN_FULL = 2026-07-02 → 2026-08-01`. Prior windows were 07-08 → 07-23 (9 days behind today), flagged as fossil-window suspects in the digest since 07-31. Scripts: `h_ch_persistence_blend[.py, _stage2.py]`, `h_cl_persistence_blend[.py, _stage2.py]`, `h_dp_residual_persistence_stage2.py`, `h_full_regime_sweep.py`, `h_l3_asymmetric_stage1.py`, `h_t_l2_regression_stage1.py`, `h_wd_persistence_gate_stage1[.py, _stage2.py]`, `h_wg_residual_persistence_stage2.py`.
