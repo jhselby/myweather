@@ -964,6 +964,31 @@ def main():
                 kills_new.append((name, verdict))
 
     out = []
+
+    # v0.6.390k action list: mirror the highest-severity sentry alerts at
+    # the very top so the digest's actionable content is above the
+    # process content. Same data as the sentries below — this is a
+    # priority-reorder, not new signal. Empty when nothing is firing.
+    action_lines = []
+    reg = regression_sentry() or []
+    shape = layer_shape_sentry() or []
+    skip = field_skip_sanity_check() or []
+    for line in reg:
+        if "SUSTAINED FIRE" in line:
+            action_lines.append(line.strip())
+    for line in shape:
+        if "τ-suspect" in line:
+            action_lines.append(line.strip())
+    for line in skip:
+        action_lines.append(line.strip())
+    if action_lines:
+        out.append("=" * 50)
+        out.append("🚨 TOP ALERTS (see sentry sections for full context)")
+        out.append("=" * 50)
+        for line in action_lines[:5]:  # cap so it never dominates
+            out.append(f"  {line}")
+        out.append("")
+
     out.append("==================================================")
     out.append("EXECUTIVE SUMMARY")
     out.append("==================================================")

@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390l • August 1, 2026 (digest action-list at top — highest-severity sentry alerts mirrored above executive summary)</strong></summary>
+
+- **Action list at digest top.** New `action_list` block ahead of `EXECUTIVE SUMMARY` mirrors the highest-severity alerts from the three sentries below: SUSTAINED FIRE from `regression_sentry`, τ-suspect ★ from `layer_shape_sentry`, and any FIELD_SKIP divergence from `field_skip_sanity_check`. Caps at 5 lines to prevent domination. Empty when nothing fires — no visual noise on clean days. Solves the "buried alerts" complaint driving plan-item-#5 in the pipeline-to-good plan: sentries were computed but sat below stale-windows and ship-eligible sections in the digest.
+- **No new signal.** This is a priority-reorder of existing outputs. Same alerts still appear in their original sentry sections below.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390k • August 1, 2026 (layer-tuple sanity test + recent-bias-gate Stage 0 sensor)</strong></summary>
 
 - **Layer-tuple sanity test (`tests/test_layer_tuple_sanity.py`).** Two assertions run under pytest: (1) the layer tuple walked by `forecast_snapshot._derive_applied_layer` must equal the tuple emitted by `forecast_error_log` per-layer loop — any drift means applied_layer gets stamped to a layer with no matching `error_` column, or vice versa; (2) every specialist in the walk (post-l6: chp, clp, wdp) must have an ENABLED guard in `_derive_applied_layer` — enforces the v0.6.390j prevention pattern for future specialists. Would have caught v0.6.390c's wdp-missing-from-tuple silent bug and v0.6.390j's clp-shadow-mislabel bug at commit time. Runs in 0.6s.
