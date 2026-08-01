@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390m • August 1, 2026 (fossil-window cleanup — 11 h_ scripts slid 9d forward)</strong></summary>
+
+- **11 h_ scripts slid forward.** Windows updated: `WIN_A = 2026-07-17 → 2026-08-01`, `WIN_B = 2026-07-02 → 2026-07-17`, `WIN_FULL = 2026-07-02 → 2026-08-01`. Prior windows were 07-08 → 07-23 (9 days behind today), flagged as fossil-window suspects in the digest since 07-31. Scripts: `h_ch_persistence_blend[.py, _stage2.py]`, `h_cl_persistence_blend[.py, _stage2.py]`, `h_dp_residual_persistence_stage2.py`, `h_full_regime_sweep.py`, `h_l3_asymmetric_stage1.py`, `h_t_l2_regression_stage1.py`, `h_wd_persistence_gate_stage1[.py, _stage2.py]`, `h_wg_residual_persistence_stage2.py`.
+- **Verdicts now trust-worthy again.** Any 7-day streak or gate-clear on these scripts was previously a re-read of the same stale data. Tomorrow's digest will produce halves-verified reads over post-07-25 regime shift + full recent HRRR-drift period.
+- **Left for tomorrow:** 3 scripts still 4d behind (`h_ch_persistence_blend_stage2_vs_l6`, `h_wg_l3_regression_stage1`, `h_ws_l3_regression_stage1`) — under the 3-day fossil threshold but marginal. Slide when they next roll fully out.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390l • August 1, 2026 (digest action-list at top — highest-severity sentry alerts mirrored above executive summary)</strong></summary>
 
 - **Action list at digest top.** New `action_list` block ahead of `EXECUTIVE SUMMARY` mirrors the highest-severity alerts from the three sentries below: SUSTAINED FIRE from `regression_sentry`, τ-suspect ★ from `layer_shape_sentry`, and any FIELD_SKIP divergence from `field_skip_sanity_check`. Caps at 5 lines to prevent domination. Empty when nothing fires — no visual noise on clean days. Solves the "buried alerts" complaint driving plan-item-#5 in the pipeline-to-good plan: sentries were computed but sat below stale-windows and ship-eligible sections in the digest.

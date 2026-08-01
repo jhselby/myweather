@@ -45,13 +45,13 @@ OUT_TXT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        "output", "h_ch_persistence_blend_summary.txt")
 
 # Halves windows (matches today's regime-gate sweep convention).
-# 2026-07-19: slid forward 8 days so the "recent" half covers the MLC
+# 2026-08-01: slid forward 9 days so the "recent" half covers the MLC
 # collapse / cc-cluster distribution shift. Prior window ends at the
 # original recent-half start so the halves-agreement test now spans
 # pre- vs post-shift data.
-WIN_A_LO, WIN_A_HI = "2026-07-08T00:00", "2026-07-23T00:00"  # recent 15d
-WIN_B_LO, WIN_B_HI = "2026-06-23T00:00", "2026-07-08T00:00"  # prior 15d
-WIN_FULL_LO, WIN_FULL_HI = "2026-06-23T00:00", "2026-07-23T00:00"  # 30d combined
+WIN_A_LO, WIN_A_HI = "2026-07-17T00:00", "2026-08-01T00:00"  # recent 15d
+WIN_B_LO, WIN_B_HI = "2026-07-02T00:00", "2026-07-17T00:00"  # prior 15d
+WIN_FULL_LO, WIN_FULL_HI = "2026-07-02T00:00", "2026-08-01T00:00"  # 30d combined
 
 FIELD = "ch"
 MIN_N_REGIME = 300

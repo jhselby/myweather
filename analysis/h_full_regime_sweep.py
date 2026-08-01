@@ -33,10 +33,10 @@ URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_TXT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        "output", "h_full_regime_sweep_summary.txt")
 
-# 2026-07-19: slid forward 8 days so windows cover post-shift data
+# 2026-08-01: slid forward 9 days so windows cover post-shift data
 # (MLC collapse / cc-cluster distribution shift). See v0.6.358.
-WIN_A_LO, WIN_A_HI = "2026-07-08T00:00", "2026-07-23T00:00"
-WIN_B_LO, WIN_B_HI = "2026-06-23T00:00", "2026-07-08T00:00"
+WIN_A_LO, WIN_A_HI = "2026-07-17T00:00", "2026-08-01T00:00"
+WIN_B_LO, WIN_B_HI = "2026-07-02T00:00", "2026-07-17T00:00"
 
 # Current state per project_correction_stack + project_todo
 L2_APPLIED = {"t", "dp", "h", "ws", "wg", "cc", "cl", "cm", "ch"}  # additive/direct/blend
