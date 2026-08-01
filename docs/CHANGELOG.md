@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390k • August 1, 2026 (layer-tuple sanity test + recent-bias-gate Stage 0 sensor)</strong></summary>
+
+- **Layer-tuple sanity test (`tests/test_layer_tuple_sanity.py`).** Two assertions run under pytest: (1) the layer tuple walked by `forecast_snapshot._derive_applied_layer` must equal the tuple emitted by `forecast_error_log` per-layer loop — any drift means applied_layer gets stamped to a layer with no matching `error_` column, or vice versa; (2) every specialist in the walk (post-l6: chp, clp, wdp) must have an ENABLED guard in `_derive_applied_layer` — enforces the v0.6.390j prevention pattern for future specialists. Would have caught v0.6.390c's wdp-missing-from-tuple silent bug and v0.6.390j's clp-shadow-mislabel bug at commit time. Runs in 0.6s.
+- **Recent-bias gate Stage 0 sensor (`analysis/h_lc_recent_bias_gate.py`).** Attempted architectural fix for cl bleeding: keep the lc_fit shift table but only apply per-cell when the past-3-day observed bias still agrees in sign AND ≥50% magnitude with the historical trained bias. Stage 0 pooled looked promising for cc (+5.9%). Stage 1 halves-strict killed the promote — half B (recovery days) showed the live shift was actually correct while the gate stayed off from lagged recent-bias measurement. HOLD, not shipping. Script stays as a standing daily digest sensor — recent-vs-historical divergence table per (field, bin) is a useful drift signal even without gate action. Cl root-cause remains open; next attempt should try an asymmetric gate (fast-off on divergence, fast-on when recent re-agrees) or shorter recent window.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390j • August 1, 2026 (applied_layer stamp gated on specialist ENABLED — fixes cl snapshot showing clp shadow as production)</strong></summary>
 
 - **Bug.** cl's per-field snapshot cells (7d avg + today) went red overnight — 7d "vs raw" ~+50%, today +83%. Real cl production is essentially = raw (Lc is field-skipped on cl since v0.6.389f), so both cells should track flat-vs-raw. Root cause: `forecast_snapshot.py:_derive_applied_layer` walked `("l1"…"l6","chp","clp","wdp")` unconditionally, and `cl_persistence_gate.py:204` writes `cloud_cover_low_shadow_clp` regardless of ENABLED (per v0.6.382p flip-gate visibility fix). Whenever the shadow value differed from l6 the walk stamped `applied_layer=clp` — poisoning Fitter's `per_layer_mae_by_lead[cl].production` (7d cell) and `mae_over_time[cl].prod_real` (today cell). Same class of bug lurked for chp and wdp but both are ENABLED=True so their stamps were legitimate.
