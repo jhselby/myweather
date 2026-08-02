@@ -3095,15 +3095,18 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Biggest gain</div>
-        <div>${bestCell}</div>
+        <div>${bestCell}<span style="font-size:0.7em;opacity:0.55;margin-left:4px;">7d</span></div>
+        <div id="tile-best-24h" style="font-size:0.8em;margin-top:2px;opacity:0.55;">—</div>
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Biggest field regression</div>
-        <div>${worstCell}</div>
+        <div>${worstCell}<span style="font-size:0.7em;opacity:0.55;margin-left:4px;">7d</span></div>
+        <div id="tile-worst-24h" style="font-size:0.8em;margin-top:2px;opacity:0.55;">—</div>
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Worst cell (field@band)</div>
-        <div>${worstBandCell}</div>
+        <div>${worstBandCell}<span style="font-size:0.7em;opacity:0.55;margin-left:4px;">7d</span></div>
+        <div id="tile-worst-band-24h" style="font-size:0.8em;margin-top:2px;opacity:0.55;">—</div>
       </div>
     </div>
     ${brierRows.length ? `
@@ -3312,6 +3315,52 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
         const color = mean <= -0.5 ? "#4ad29a" : (mean >= 0.5 ? "#fb7c5c" : "#e0d472");
         tile.style.opacity = 1;
         tile.innerHTML = `<strong style="color:${color};">${sign}${Math.abs(mean).toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · last 24h (${overallVals.length}f)</span>`;
+      }
+      // Scoreboard best/worst/worst-band 24h sub-tiles. Same DERIVED filter
+      // as the mean tile: cc/pp/dp aren't independent MAE-scorable fields.
+      const SCOREBOARD_EXCLUDE = new Set(["cc", "pp", "dp"]);
+      const fmtPct = (v) => `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
+      const pctColor = (v) => v <= -0.5 ? "#4ad29a" : (v >= 0.5 ? "#fb7c5c" : "#e0d472");
+      const scored24h = Object.entries(perFieldToday).filter(([f]) => !SCOREBOARD_EXCLUDE.has(f));
+      if (scored24h.length) {
+        const best24 = scored24h.reduce((b, r) => (b == null || r[1] < b[1] ? r : b), null);
+        const worst24 = scored24h.reduce((w, r) => (w == null || r[1] > w[1] ? r : w), null);
+        const bestEl = document.getElementById("tile-best-24h");
+        const worstEl = document.getElementById("tile-worst-24h");
+        if (bestEl && best24 && best24[1] < 0) {
+          bestEl.style.opacity = 1;
+          bestEl.innerHTML = `<code>${best24[0]}</code> <strong style="color:${pctColor(best24[1])};">${fmtPct(best24[1])}</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">last 24h</span>`;
+        }
+        if (worstEl && worst24 && worst24[1] > 0) {
+          worstEl.style.opacity = 1;
+          worstEl.innerHTML = `<code>${worst24[0]}</code> <strong style="color:${pctColor(worst24[1])};">${fmtPct(worst24[1])}</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">last 24h</span>`;
+        }
+      }
+      // Per-band 24h worst cell — reads last_24h_bands. Same priority walk
+      // per field as the per-field last-24h, applied within each band.
+      const bands = mot.last_24h_bands || {};
+      const bandCells = [];
+      for (const [f, bandDict] of Object.entries(bands)) {
+        if (SCOREBOARD_EXCLUDE.has(f)) continue;
+        const pri = PROD_PRIORITY[f] || ["prod_real", "l1", "raw"];
+        for (const [bandLabel, layers] of Object.entries(bandDict)) {
+          const rMae = (layers.raw || {}).mae;
+          if (rMae == null || rMae === 0) continue;
+          let pMae = null;
+          for (const layer of pri) {
+            if (layer === "raw") { pMae = rMae; break; }
+            const s = layers[layer];
+            if (s && s.mae != null) { pMae = s.mae; break; }
+          }
+          if (pMae == null) continue;
+          bandCells.push({ f, band: bandLabel, pct: (pMae - rMae) / rMae * 100 });
+        }
+      }
+      const worstBand24 = bandCells.reduce((w, r) => (w == null || r.pct > w.pct ? r : w), null);
+      const worstBandEl = document.getElementById("tile-worst-band-24h");
+      if (worstBandEl && worstBand24 && worstBand24.pct > 0) {
+        worstBandEl.style.opacity = 1;
+        worstBandEl.innerHTML = `<code>${worstBand24.f}</code>@${worstBand24.band} <strong style="color:${pctColor(worstBand24.pct)};">${fmtPct(worstBand24.pct)}</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">last 24h</span>`;
       }
     })
     .catch(() => { /* silent — 7d column still renders */ });

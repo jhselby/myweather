@@ -124,6 +124,17 @@ def compute_fresh_rollup():
     # >= now - 24h.
     last_24h_buckets = defaultdict(lambda: {ln: [] for ln, _ in LAYER_KEYS})
     last_24h_prod_real = defaultdict(list)
+    # Per-band 24h buckets — for the debug page's per-cell "worst cell (band)"
+    # tile so its rolling-24h read is honest at the same granularity as its
+    # 7d read. Bands mirror LAYER_SHAPE_BANDS / regression sentry conventions.
+    LAST_24H_BANDS = (("0-5", 0, 5), ("6-11", 6, 11), ("12-23", 12, 23), ("24-47", 24, 47))
+    last_24h_band_buckets = defaultdict(lambda: defaultdict(lambda: {ln: [] for ln, _ in LAYER_KEYS}))
+    last_24h_band_prod_real = defaultdict(lambda: defaultdict(list))
+    def _band_for(lead):
+        if lead is None: return None
+        for lbl, lo, hi in LAST_24H_BANDS:
+            if lo <= lead <= hi: return lbl
+        return None
     cutoff_24h = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M")
     n_total = 0
     with open(path) as f:
@@ -139,6 +150,7 @@ def compute_fresh_rollup():
             day = ot[:10]
 
             in_last_24h = ot >= cutoff_24h
+            band = _band_for(r.get("lead_h")) if in_last_24h else None
 
             applied = r.get("applied_layer")
             if applied:
@@ -147,6 +159,8 @@ def compute_fresh_rollup():
                     prod_real_buckets[(day, fld)].append(float(e_applied))
                     if in_last_24h:
                         last_24h_prod_real[fld].append(float(e_applied))
+                        if band is not None:
+                            last_24h_band_prod_real[fld][band].append(float(e_applied))
 
             per_layer = {}
             if fld in L1_ONLY_FIELDS:
@@ -195,6 +209,8 @@ def compute_fresh_rollup():
                 buckets[(day, fld)][ln].append(e)
                 if in_last_24h:
                     last_24h_buckets[fld][ln].append(e)
+                    if band is not None:
+                        last_24h_band_buckets[fld][band][ln].append(e)
 
     fresh = defaultdict(lambda: defaultdict(dict))  # fresh[field][layer][day] = cell
     for (day, fld), errs in buckets.items():
@@ -268,7 +284,49 @@ def compute_fresh_rollup():
             "brier": round(sqerr_mean, 4),
         }
 
-    return fresh, n_total, dict(last_24h), cutoff_24h
+    # Band-level 24h aggregate. Smaller MIN_N floor (each band is ~1/4 of the
+    # window's data, and we're bucketing across leads not fields, so use a
+    # lower floor to keep bands visible).
+    last_24h_bands = defaultdict(lambda: defaultdict(dict))
+    min_n_24h_band = max(10, MIN_N_PER_DAY // 20)
+    for fld, bands in last_24h_band_buckets.items():
+        for bnd, layers in bands.items():
+            for ln, xs in layers.items():
+                n = len(xs)
+                if n < min_n_24h_band:
+                    continue
+                mae = sum(abs(x) for x in xs) / n
+                sqerr_mean = sum(x * x for x in xs) / n
+                rmse = math.sqrt(sqerr_mean)
+                bias = sum(xs) / n
+                last_24h_bands[fld][bnd][ln] = {
+                    "n": n,
+                    "mae": round(mae, 4),
+                    "rmse": round(rmse, 4),
+                    "bias": round(bias, 4),
+                    "brier": round(sqerr_mean, 4),
+                }
+    for fld, bands in last_24h_band_prod_real.items():
+        for bnd, xs in bands.items():
+            n = len(xs)
+            if n < min_n_24h_band:
+                continue
+            mae = sum(abs(x) for x in xs) / n
+            sqerr_mean = sum(x * x for x in xs) / n
+            rmse = math.sqrt(sqerr_mean)
+            bias = sum(xs) / n
+            last_24h_bands[fld].setdefault(bnd, {})["prod_real"] = {
+                "n": n,
+                "mae": round(mae, 4),
+                "rmse": round(rmse, 4),
+                "bias": round(bias, 4),
+                "brier": round(sqerr_mean, 4),
+            }
+
+    # Coerce nested defaultdicts to dicts for JSON serialization.
+    last_24h_bands = {f: {b: dict(lyrs) for b, lyrs in bands.items()}
+                      for f, bands in last_24h_bands.items()}
+    return fresh, n_total, dict(last_24h), last_24h_bands, cutoff_24h
 
 
 def merge(prior_series, fresh_series, refresh_cutoff_day):
@@ -330,7 +388,7 @@ def main():
     print(f"  prior history: {prior_days_count} days")
 
     print("[2/3] Recomputing per-day rollup from pair log...")
-    fresh_series, n_pair_rows, last_24h, cutoff_24h = compute_fresh_rollup()
+    fresh_series, n_pair_rows, last_24h, last_24h_bands, cutoff_24h = compute_fresh_rollup()
     fresh_days = sorted({d for f in fresh_series.values()
                          for lyr in f.values() for d in lyr})
     print(f"  fresh rollup: {n_pair_rows:,} pair rows → {len(fresh_days)} days")
@@ -353,6 +411,7 @@ def main():
         "series": {fld: {lyr: dict(days) for lyr, days in layers.items()}
                    for fld, layers in merged.items()},
         "last_24h": last_24h,
+        "last_24h_bands": last_24h_bands,
         "last_24h_window_start_utc": cutoff_24h,
     }
 

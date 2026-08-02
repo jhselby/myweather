@@ -1,6 +1,22 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390r • August 2, 2026 (scoreboard: add rolling 24h sub-line to Biggest gain / regression / worst-cell tiles)</strong></summary>
+
+- **Full 7d + 24h symmetry across the scoreboard.** Only the Overall-mean tile had a 24h read; Biggest gain, Biggest field regression, and Worst cell tiles were 7d-only. Adding 24h subs makes the whole banner readable at both cadences: 7d catches sustained drift, 24h catches fresh single-day movements the 7d smooths over.
+- **`analysis/mae_over_time.py` emits `last_24h_bands`.** Per (field, band, layer) MAE/RMSE/bias/brier — same shape as `last_24h` but split across bands (0-5h, 6-11h, 12-23h, 24-47h) so the Worst-cell tile renders a 24h read at the same band-granularity as its 7d read. Uses lead_h from each pair-log row; MIN_N floor = max(10, MIN_N_PER_DAY/20) to keep bands visible.
+- **Debug page — three new sub-tiles.** Added `tile-best-24h`, `tile-worst-24h`, `tile-worst-band-24h` under each existing 7d tile. Populated in the same async fetch that fills the per-field "last 24h" column. SCOREBOARD_EXCLUDE = {cc, pp, dp} (matches DERIVED_FIELDS exclusion from the mean).
+
+</details>
+
+<details>
+<summary><strong>v0.6.390q • August 2, 2026 (KPI tile static text "today" → "last 24h" to match column rename)</strong></summary>
+
+- Static initial-state HTML for the Overall MAE-mean tile still said "MAE mean · today"; JS updated it to "last 24h (Nf)" after mae_over_time loaded, so users saw "today" flash briefly. Now consistent everywhere.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390p • August 2, 2026 (per-field snapshot: "today" → rolling "last 24h" — always contains a full diurnal cycle)</strong></summary>
 
 - **Root fix for morning-easy bias in per-field snapshot.** Calendar-day "today" column at 7am contained ~7h of overnight data (cool, calm, stable), so every field looked artificially good in the AM and everything's numbers shifted through the day as the sample filled. Never a fair scoreboard read until end-of-day, at which point it flipped to "yesterday" the next morning. Rolling 24h always contains a full diurnal cycle and is a matched comparison to the 7d column.
