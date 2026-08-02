@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390p • August 2, 2026 (per-field snapshot: "today" → rolling "last 24h" — always contains a full diurnal cycle)</strong></summary>
+
+- **Root fix for morning-easy bias in per-field snapshot.** Calendar-day "today" column at 7am contained ~7h of overnight data (cool, calm, stable), so every field looked artificially good in the AM and everything's numbers shifted through the day as the sample filled. Never a fair scoreboard read until end-of-day, at which point it flipped to "yesterday" the next morning. Rolling 24h always contains a full diurnal cycle and is a matched comparison to the 7d column.
+- **`analysis/mae_over_time.py` emits `last_24h` aggregate.** Per (field, layer) MAE/RMSE/bias/brier over rows with `obs_time >= now − 24h`. MIN_N floor = max(30, MIN_N_PER_DAY/5) — thin windows still filtered. Payload gains top-level `last_24h` dict + `last_24h_window_start_utc`.
+- **Debug page column re-wired.** Header renamed "today" → "last 24h" with new title-attr. `renderPerFieldSnapshot()` reads `mot.last_24h[field][layer]` directly instead of walking `series[field][layer][day]` for most-recent-obs-day. Removed the per-day walk that stripped the day-suffix (no longer applicable). Overall tile updated to "MAE mean · last 24h".
+- **First honest read (2026-08-02 12:47 UTC window start):** every stack-carrying field either winning or flat vs raw. h -9.1% (retune v0.6.390g landing hard), ws -6.0% (wind_blend BLEND_HOURS=4 landing), wg -23%, cm -62%, ch -68%. pp/pa/pr flat as designed. cl/wd/t small consistent wins.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390o • August 2, 2026 (cl applied_layer poison backfill + L1_ONLY routing fix for wd + full debug-page sweep)</strong></summary>
 
 - **cl applied_layer poison backfilled (`analysis/backfill_cl_applied_layer.py` NEW).** cl regression sentry had been screaming +67% for days despite production actually tracking raw. Root cause: pair-log rows 07-27 → 08-01 were stamped `applied_layer=clp` or `l6` due to the pre-v0.6.390j shadow-write bug, making `mae_over_time.prod_real` (which reads `error_{applied}`) pull phantom shadow errors instead of the real production error. Fixed forward by v0.6.390j guards, but historical rows kept poisoning trailing metrics. One-shot backfill script mirrors `_derive_applied_layer` logic on per-row errors to re-stamp cl rows (5,779 → l1, 55 → l2, 0 unresolved). Rebuilt `mae_over_time.json` with `MERGE_REFRESH_DAYS=10` and re-uploaded corrected pair log to GCS. cl now reads 7/7 wins over 7 days, −1.1% vs raw. Regression sentry: all fields clean.

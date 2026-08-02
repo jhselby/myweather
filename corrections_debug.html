@@ -798,14 +798,14 @@
 
 <details open style="margin-bottom:12px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
   <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — per-field snapshot</summary>
-  <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. <strong>7d avg</strong> = rolling 7-day trailing MAE vs raw (fitter <code>per_layer_mae_by_lead</code>). <strong>today</strong> = most-recent-obs-day Prod-vs-Raw from <code>mae_over_time.json</code> — same series the regression sentry watches. Today catches a bad ship on day 1; 7d catches sustained drift. Watch both.</div>
+  <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. <strong>7d avg</strong> = rolling 7-day trailing MAE vs raw (fitter <code>per_layer_mae_by_lead</code>). <strong>last 24h</strong> = rolling 24-hour Prod-vs-Raw from <code>mae_over_time.json</code>'s <code>last_24h</code> aggregate — always contains a full diurnal cycle, unlike calendar-day "today" which is a partial sample before end-of-day. Last 24h catches a bad ship on day 1; 7d catches sustained drift. Watch both.</div>
   <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
     <thead>
       <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
         <th style="padding:4px 8px 4px 0;">Field</th>
         <th style="padding:4px 10px;">Applied layers</th>
         <th style="padding:4px 10px;" title="Rolling 7-day trailing MAE vs raw (fitter tsDoc). Slow to update; hides fresh regressions.">7d avg</th>
-        <th style="padding:4px 10px;" title="Most-recent-obs-day Prod-vs-Raw ratio (mae_over_time.json). Same signal the regression sentry uses.">today</th>
+        <th style="padding:4px 10px;" title="Rolling last-24h Prod-vs-Raw ratio (mae_over_time.json last_24h). Always contains a full diurnal cycle.">last 24h</th>
         <th style="padding:4px 0 4px 10px;">Status</th>
       </tr>
     </thead>
@@ -906,7 +906,7 @@
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 wind_blend → wdp <span style="opacity:0.6;">(flipped 07-27)</span></td>
         <td class="pf-mae" data-field="wd" style="padding:5px 10px;vertical-align:top;">—</td>
         <td class="pf-today" data-field="wd" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L2 + wdp both LIVE — real trend visible post-08-02 metric fix.</strong> L1_ONLY routing bug had hidden L2/wdp contributions for 13 days (mae_over_time was reading L2-view <code>error</code> as raw); fixed 08-02, wd now honestly emits <code>prod_real</code>. Real picture: L2 −2 to −5% vs raw most days, wdp adds another 0-4%. <strong style="color:#e0a070;">07-31 outlier:</strong> calm/24-47 wdp +72%, sea_breeze/0-5h wdp +109% — real gate misfires; if either recurs, narrow gate. L2 wind_blend shipped 07-20 v0.6.368a; wdp FLIPPED 2026-07-27 v0.6.382 (5 SHIP cells). Day 6/14 wdp post-ship watch through 08-10.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L2 + wdp both LIVE — real trend visible post-08-02 metric fix.</strong> L1_ONLY routing bug had hidden L2/wdp contributions for 13 days (mae_over_time was reading L2-view <code>error</code> as raw); fixed 08-02, wd now honestly emits <code>prod_real</code>. Real picture: L2 −2 to −5% vs raw most days, wdp adds another 0-4%. <strong style="color:#e0a070;">07-31 outlier:</strong> calm/24-47 wdp +72%, sea_breeze/0-5h wdp +109% — real gate misfires; if either recurs, narrow gate. L2 wind_blend shipped 07-20 v0.6.368a; wdp FLIPPED 2026-07-27 v0.6.382 (5 SHIP cells). Day 14/14 wdp post-ship watch through 08-10.</td>
       </tr>
     </tbody>
   </table>
@@ -3247,21 +3247,17 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
     cell.style.color = color;
     cell.innerHTML = `${sign}${abs}%${suffix}`;
   });
-  // v0.6.390b — 'today' column reads per-obs-day Prod-vs-Raw from
-  // mae_over_time.json. Same series the regression sentry uses. Async fetch;
-  // populates when it arrives so the 7-day cells don't wait on it.
+  // v0.6.390p — "last 24h" column reads mae_over_time.json's last_24h aggregate.
+  // Rolling 24h window always contains a full diurnal cycle; the prior
+  // calendar-day "today" bucket was a partial sample before end-of-day,
+  // biasing every field toward whichever conditions dominated the hours so far.
+  // Falls back to most-recent day if last_24h is missing (old JSON schema).
   const todayCells = document.querySelectorAll("td.pf-today[data-field]");
   if (!todayCells.length) return;
   fetch("https://data.wymancove.com/mae_over_time.json?_=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
     .then(mot => {
-      if (!mot || !mot.series) return;
-      // Per-field production-layer priority. Mirrors renderScorecardBanner's
-      // _prodKey plus specialists that live in mae_over_time.json series keys.
-      // prod_real is preferred (real per-row aggregate) but may be missing on
-      // fields whose applied_layer stamps don't have matching error_ keys in
-      // the pair log (e.g., wd until v0.6.390c added "wdp" to the layer tuple
-      // in forecast_error_log.py — takes days for new pair-log rows to fill).
+      if (!mot) return;
       const PROD_PRIORITY = {
         t:  ["prod_real", "l6", "l4", "l3", "l2", "l1"],
         h:  ["prod_real", "l4", "l3", "l2", "l1"],
@@ -3278,50 +3274,33 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
         pa: ["prod_real", "l1"],
         pp: ["prod_real", "l4", "l3", "l1"],
       };
-      const _pickProdDay = (sf, priority) => {
-        const raw = sf.raw || {};
-        const rawDays = Object.keys(raw).sort();
-        if (!rawDays.length) return null;
-        // Walk from most-recent day backwards; for each day try each layer
-        // in priority order and use the first one that isn't equal-to-raw
-        // (equal-to-raw means the layer wasn't actually different — pick a
-        // deeper layer if one exists) OR the deepest layer available if
-        // nothing differed.
-        for (let i = rawDays.length - 1; i >= 0; i--) {
-          const day = rawDays[i];
-          const rMae = (raw[day] || {}).mae;
-          if (rMae == null) continue;
-          for (const layer of priority) {
-            if (layer === "raw") return { day, rMae, pMae: rMae, layer };
-            const s = sf[layer];
-            if (!s || !s[day] || s[day].mae == null) continue;
-            return { day, rMae, pMae: s[day].mae, layer };
-          }
-        }
-        return null;
-      };
-      const perFieldToday = {};  // field -> pct (for aggregate)
+      const last24 = mot.last_24h || {};
+      const perFieldToday = {};
       todayCells.forEach(cell => {
         const f = cell.dataset.field;
-        const sf = mot.series[f];
-        if (!sf) { cell.textContent = "no data"; cell.style.opacity = 0.5; return; }
+        const layers = last24[f];
+        if (!layers) { cell.textContent = "—"; cell.style.opacity = 0.5; return; }
+        const rMae = (layers.raw || {}).mae;
+        if (rMae == null || rMae === 0) { cell.textContent = "—"; cell.style.opacity = 0.5; return; }
         const pri = PROD_PRIORITY[f] || ["prod_real", "l1", "raw"];
-        const pick = _pickProdDay(sf, pri);
-        if (!pick || pick.rMae === 0) {
-          cell.textContent = "—"; cell.style.opacity = 0.5; return;
+        let pMae = null, layerUsed = null;
+        for (const layer of pri) {
+          if (layer === "raw") { pMae = rMae; layerUsed = layer; break; }
+          const s = layers[layer];
+          if (s && s.mae != null) { pMae = s.mae; layerUsed = layer; break; }
         }
-        const pct = (pick.pMae - pick.rMae) / pick.rMae * 100;
+        if (pMae == null) { cell.textContent = "—"; cell.style.opacity = 0.5; return; }
+        const pct = (pMae - rMae) / rMae * 100;
         perFieldToday[f] = pct;
         const sign = pct >= 0 ? "+" : "−";
         const abs = Math.abs(pct).toFixed(1);
         const color = pct <= -0.5 ? "#4ad29a" : (pct >= 0.5 ? "#fb7c5c" : "#e0d472");
         cell.style.color = color;
         cell.style.opacity = 1;
-        const layerTag = pick.layer !== "prod_real" ? `<span style="font-size:0.65em;opacity:0.4;margin-left:2px;">(${pick.layer})</span>` : "";
-        cell.innerHTML = `${sign}${abs}%${layerTag}<span style="font-size:0.7em;opacity:0.55;margin-left:3px;">${pick.day.slice(5)}</span>`;
+        const layerTag = layerUsed !== "prod_real" ? `<span style="font-size:0.65em;opacity:0.4;margin-left:2px;">(${layerUsed})</span>` : "";
+        cell.innerHTML = `${sign}${abs}%${layerTag}`;
       });
-      // Overall today tile: mean of independent fields (cc excluded per v0.6.390,
-      // pp excluded because Brier-scored).
+      // Overall tile: mean of independent fields (cc/pp excluded).
       const DERIVED = new Set(["cc", "pp"]);
       const overallVals = Object.entries(perFieldToday)
         .filter(([f]) => !DERIVED.has(f))
@@ -3332,7 +3311,7 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
         const sign = mean >= 0 ? "+" : "−";
         const color = mean <= -0.5 ? "#4ad29a" : (mean >= 0.5 ? "#fb7c5c" : "#e0d472");
         tile.style.opacity = 1;
-        tile.innerHTML = `<strong style="color:${color};">${sign}${Math.abs(mean).toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · today (${overallVals.length}f)</span>`;
+        tile.innerHTML = `<strong style="color:${color};">${sign}${Math.abs(mean).toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · last 24h (${overallVals.length}f)</span>`;
       }
     })
     .catch(() => { /* silent — 7d column still renders */ });

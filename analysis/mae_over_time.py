@@ -106,7 +106,11 @@ def load_prior_history():
 
 
 def compute_fresh_rollup():
-    """Compute per-day per-field per-layer aggregates from the current pair log."""
+    """Compute per-day per-field per-layer aggregates from the current pair log.
+    Also emits a rolling last-24h aggregate per (field, layer) — always contains
+    a full diurnal cycle, unlike the calendar-day "today" bucket which is a partial
+    at any tick before end-of-day. Used by the debug page's per-field snapshot
+    "last 24h" column."""
     path = cached_path(ERROR_LOG_URL)
     buckets = defaultdict(lambda: {ln: [] for ln, _ in LAYER_KEYS})
     # prod_real: real per-row Production aggregate, keyed on applied_layer stamp
@@ -115,6 +119,12 @@ def compute_fresh_rollup():
     # error_{applied} are both present. Pre-v0.6.269 rows without stamps are
     # skipped; those age out of the 30-day pair log by 07-31. (v0.6.371.)
     prod_real_buckets = defaultdict(list)
+    # Rolling last-24h buckets. Same shape as `buckets` and `prod_real_buckets`
+    # but keyed by field only (no day). Populated for any row with obs_time
+    # >= now - 24h.
+    last_24h_buckets = defaultdict(lambda: {ln: [] for ln, _ in LAYER_KEYS})
+    last_24h_prod_real = defaultdict(list)
+    cutoff_24h = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M")
     n_total = 0
     with open(path) as f:
         for line in f:
@@ -128,11 +138,15 @@ def compute_fresh_rollup():
                 continue
             day = ot[:10]
 
+            in_last_24h = ot >= cutoff_24h
+
             applied = r.get("applied_layer")
             if applied:
                 e_applied = r.get(f"error_{applied}")
                 if e_applied is not None:
                     prod_real_buckets[(day, fld)].append(float(e_applied))
+                    if in_last_24h:
+                        last_24h_prod_real[fld].append(float(e_applied))
 
             per_layer = {}
             if fld in L1_ONLY_FIELDS:
@@ -179,6 +193,8 @@ def compute_fresh_rollup():
                         per_layer[ln] = e
             for ln, e in per_layer.items():
                 buckets[(day, fld)][ln].append(e)
+                if in_last_24h:
+                    last_24h_buckets[fld][ln].append(e)
 
     fresh = defaultdict(lambda: defaultdict(dict))  # fresh[field][layer][day] = cell
     for (day, fld), errs in buckets.items():
@@ -214,7 +230,45 @@ def compute_fresh_rollup():
             "bias": round(bias, 4),
             "brier": round(sqerr_mean, 4),
         }
-    return fresh, n_total
+
+    # Rolling last-24h aggregate. MIN_N floor uses 1/7 of MIN_N_PER_DAY since
+    # the window is 24h vs 7-day-hourly. Keeps thin windows out but doesn't
+    # over-gate a genuinely quiet field.
+    last_24h = defaultdict(dict)
+    min_n_24h = max(30, MIN_N_PER_DAY // 5)
+    for fld, layers in last_24h_buckets.items():
+        for ln, xs in layers.items():
+            n = len(xs)
+            if n < min_n_24h:
+                continue
+            mae = sum(abs(x) for x in xs) / n
+            sqerr_mean = sum(x * x for x in xs) / n
+            rmse = math.sqrt(sqerr_mean)
+            bias = sum(xs) / n
+            last_24h[fld][ln] = {
+                "n": n,
+                "mae": round(mae, 4),
+                "rmse": round(rmse, 4),
+                "bias": round(bias, 4),
+                "brier": round(sqerr_mean, 4),
+            }
+    for fld, xs in last_24h_prod_real.items():
+        n = len(xs)
+        if n < min_n_24h:
+            continue
+        mae = sum(abs(x) for x in xs) / n
+        sqerr_mean = sum(x * x for x in xs) / n
+        rmse = math.sqrt(sqerr_mean)
+        bias = sum(xs) / n
+        last_24h[fld]["prod_real"] = {
+            "n": n,
+            "mae": round(mae, 4),
+            "rmse": round(rmse, 4),
+            "bias": round(bias, 4),
+            "brier": round(sqerr_mean, 4),
+        }
+
+    return fresh, n_total, dict(last_24h), cutoff_24h
 
 
 def merge(prior_series, fresh_series, refresh_cutoff_day):
@@ -276,7 +330,7 @@ def main():
     print(f"  prior history: {prior_days_count} days")
 
     print("[2/3] Recomputing per-day rollup from pair log...")
-    fresh_series, n_pair_rows = compute_fresh_rollup()
+    fresh_series, n_pair_rows, last_24h, cutoff_24h = compute_fresh_rollup()
     fresh_days = sorted({d for f in fresh_series.values()
                          for lyr in f.values() for d in lyr})
     print(f"  fresh rollup: {n_pair_rows:,} pair rows → {len(fresh_days)} days")
@@ -298,6 +352,8 @@ def main():
         "fields": all_fields,
         "series": {fld: {lyr: dict(days) for lyr, days in layers.items()}
                    for fld, layers in merged.items()},
+        "last_24h": last_24h,
+        "last_24h_window_start_utc": cutoff_24h,
     }
 
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)
