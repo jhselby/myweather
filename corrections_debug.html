@@ -798,14 +798,14 @@
 
 <details open style="margin-bottom:12px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
   <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — per-field snapshot</summary>
-  <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. <strong>7d avg</strong> = rolling 7-day trailing MAE vs raw (fitter <code>per_layer_mae_by_lead</code>). <strong>last 24h</strong> = rolling 24-hour Prod-vs-Raw from <code>mae_over_time.json</code>'s <code>last_24h</code> aggregate — always contains a full diurnal cycle, unlike calendar-day "today" which is a partial sample before end-of-day. Last 24h catches a bad ship on day 1; 7d catches sustained drift. Watch both.</div>
+  <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">One-glance state of every field. <strong>7-day</strong> = rolling 7-day trailing MAE vs raw (fitter <code>per_layer_mae_by_lead</code>). <strong>24-hour</strong> = rolling 24-hour Prod-vs-Raw from <code>mae_over_time.json</code>'s <code>last_24h</code> aggregate — always contains a full diurnal cycle, unlike calendar-day "today" which is a partial sample before end-of-day. 24-hour catches a bad ship on day 1; 7-day catches sustained drift. Watch both.</div>
   <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
     <thead>
       <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
         <th style="padding:4px 8px 4px 0;">Field</th>
         <th style="padding:4px 10px;">Applied layers</th>
         <th style="padding:4px 10px;" title="Rolling 7-day trailing MAE vs raw (fitter tsDoc). Slow to update; hides fresh regressions.">7d avg</th>
-        <th style="padding:4px 10px;" title="Rolling last-24h Prod-vs-Raw ratio (mae_over_time.json last_24h). Always contains a full diurnal cycle.">last 24h</th>
+        <th style="padding:4px 10px;" title="Rolling last-24h Prod-vs-Raw ratio (mae_over_time.json last_24h). Always contains a full diurnal cycle.">24-hour</th>
         <th style="padding:4px 0 4px 10px;">Status</th>
       </tr>
     </thead>
@@ -3079,10 +3079,10 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
     <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:baseline;">
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Overall vs raw</div>
-        <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · 7d</span></div>
-        ${meanRmsePct != null ? `<div style="font-size:0.85em;margin-top:2px;"><strong style="color:${rmseColor};">${meanRmsePct >= 0 ? "+" : ""}${meanRmsePct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">RMSE mean · 7d</span></div>` : ""}
-        <div id="overall-today-tile" style="font-size:0.85em;margin-top:4px;padding-top:3px;border-top:1px solid #1a2530;opacity:0.55;"><strong>—</strong><span style="font-size:0.7em;margin-left:4px;">MAE mean · last 24h</span></div>
-        ${medianPct != null ? `<div style="font-size:0.72em;margin-top:2px;opacity:0.55;"><strong style="color:${medianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${medianPct >= 0 ? "+" : ""}${medianPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE median · 7d</span></div>` : ""}
+        <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · 7-day</span></div>
+        ${meanRmsePct != null ? `<div style="font-size:0.85em;margin-top:2px;"><strong style="color:${rmseColor};">${meanRmsePct >= 0 ? "+" : ""}${meanRmsePct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">RMSE mean · 7-day</span></div>` : ""}
+        <div id="overall-today-tile" style="font-size:0.85em;margin-top:4px;padding-top:3px;border-top:1px solid #1a2530;opacity:0.55;"><strong>—</strong><span style="font-size:0.7em;margin-left:4px;">MAE mean · 24-hour</span></div>
+        ${medianPct != null ? `<div style="font-size:0.72em;margin-top:2px;opacity:0.55;"><strong style="color:${medianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${medianPct >= 0 ? "+" : ""}${medianPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE median · 7-day</span></div>` : ""}
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Winning fields</div>
@@ -3095,17 +3095,17 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Biggest gain</div>
-        <div>${bestCell}<span style="font-size:0.7em;opacity:0.55;margin-left:4px;">7d</span></div>
+        <div>${bestCell}<span style="font-size:0.7em;opacity:0.55;margin-left:4px;">7-day</span></div>
         <div id="tile-best-24h" style="font-size:0.8em;margin-top:2px;opacity:0.55;">—</div>
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Biggest field regression</div>
-        <div>${worstCell}<span style="font-size:0.7em;opacity:0.55;margin-left:4px;">7d</span></div>
+        <div>${worstCell}<span style="font-size:0.7em;opacity:0.55;margin-left:4px;">7-day</span></div>
         <div id="tile-worst-24h" style="font-size:0.8em;margin-top:2px;opacity:0.55;">—</div>
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Worst cell (field@band)</div>
-        <div>${worstBandCell}<span style="font-size:0.7em;opacity:0.55;margin-left:4px;">7d</span></div>
+        <div>${worstBandCell}<span style="font-size:0.7em;opacity:0.55;margin-left:4px;">7-day</span></div>
         <div id="tile-worst-band-24h" style="font-size:0.8em;margin-top:2px;opacity:0.55;">—</div>
       </div>
     </div>
@@ -3314,7 +3314,7 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
         const sign = mean >= 0 ? "+" : "−";
         const color = mean <= -0.5 ? "#4ad29a" : (mean >= 0.5 ? "#fb7c5c" : "#e0d472");
         tile.style.opacity = 1;
-        tile.innerHTML = `<strong style="color:${color};">${sign}${Math.abs(mean).toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · last 24h (${overallVals.length}f)</span>`;
+        tile.innerHTML = `<strong style="color:${color};">${sign}${Math.abs(mean).toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · 24-hour (${overallVals.length}f)</span>`;
       }
       // Scoreboard best/worst/worst-band 24h sub-tiles. Same DERIVED filter
       // as the mean tile: cc/pp/dp aren't independent MAE-scorable fields.
@@ -3330,17 +3330,17 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
         if (bestEl) {
           bestEl.style.opacity = 1;
           if (best24 && best24[1] < 0) {
-            bestEl.innerHTML = `<code>${best24[0]}</code> <strong style="color:${pctColor(best24[1])};">${fmtPct(best24[1])}</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">last 24h</span>`;
+            bestEl.innerHTML = `<code>${best24[0]}</code> <strong style="color:${pctColor(best24[1])};">${fmtPct(best24[1])}</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">24-hour</span>`;
           } else {
-            bestEl.innerHTML = `<span style="color:#8a93a3;">no field beating raw</span><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">last 24h</span>`;
+            bestEl.innerHTML = `<span style="color:#8a93a3;">no field beating raw</span><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">24-hour</span>`;
           }
         }
         if (worstEl) {
           worstEl.style.opacity = 1;
           if (worst24 && worst24[1] > 0) {
-            worstEl.innerHTML = `<code>${worst24[0]}</code> <strong style="color:${pctColor(worst24[1])};">${fmtPct(worst24[1])}</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">last 24h</span>`;
+            worstEl.innerHTML = `<code>${worst24[0]}</code> <strong style="color:${pctColor(worst24[1])};">${fmtPct(worst24[1])}</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">24-hour</span>`;
           } else {
-            worstEl.innerHTML = `<span style="color:#4ad29a;">✓ no field regressing</span><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">last 24h</span>`;
+            worstEl.innerHTML = `<span style="color:#4ad29a;">✓ no field regressing</span><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">24-hour</span>`;
           }
         }
       }
@@ -3369,9 +3369,9 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
       if (worstBandEl) {
         worstBandEl.style.opacity = 1;
         if (worstBand24 && worstBand24.pct > 0) {
-          worstBandEl.innerHTML = `<code>${worstBand24.f}</code>@${worstBand24.band} <strong style="color:${pctColor(worstBand24.pct)};">${fmtPct(worstBand24.pct)}</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">last 24h</span>`;
+          worstBandEl.innerHTML = `<code>${worstBand24.f}</code>@${worstBand24.band} <strong style="color:${pctColor(worstBand24.pct)};">${fmtPct(worstBand24.pct)}</strong><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">24-hour</span>`;
         } else {
-          worstBandEl.innerHTML = `<span style="color:#4ad29a;">✓ no cell regressing</span><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">last 24h</span>`;
+          worstBandEl.innerHTML = `<span style="color:#4ad29a;">✓ no cell regressing</span><span style="font-size:0.7em;opacity:0.55;margin-left:3px;">24-hour</span>`;
         }
       }
     })
