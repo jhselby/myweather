@@ -3081,7 +3081,7 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Overall vs raw</div>
         <div><strong style="color:${meanColor};font-size:1.05em;">${meanPct >= 0 ? "+" : ""}${meanPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · 7d</span></div>
         ${meanRmsePct != null ? `<div style="font-size:0.85em;margin-top:2px;"><strong style="color:${rmseColor};">${meanRmsePct >= 0 ? "+" : ""}${meanRmsePct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">RMSE mean · 7d</span></div>` : ""}
-        <div id="overall-today-tile" style="font-size:0.85em;margin-top:4px;padding-top:3px;border-top:1px solid #1a2530;opacity:0.55;"><strong>—</strong><span style="font-size:0.7em;margin-left:4px;">MAE mean · today</span></div>
+        <div id="overall-today-tile" style="font-size:0.85em;margin-top:4px;padding-top:3px;border-top:1px solid #1a2530;opacity:0.55;"><strong>—</strong><span style="font-size:0.7em;margin-left:4px;">MAE mean · last 24h</span></div>
         ${medianPct != null ? `<div style="font-size:0.72em;margin-top:2px;opacity:0.55;"><strong style="color:${medianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${medianPct >= 0 ? "+" : ""}${medianPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE median · 7d</span></div>` : ""}
       </div>
       <div>
