@@ -43,11 +43,12 @@ OUT_JSON = os.path.join(SCRIPT_DIR, "output", "mae_over_time.json")
 FIELDS = ["t", "dp", "h", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pr", "pp", "pa"]
 MIN_N_PER_DAY = 200  # skip (field, day) cells with too few pairs — avoids noise spikes
 
-# Fields with no L2/L3/L4 correction stack — pair-log rows only carry the top-level
-# `error` key, not error_l1/l2/l3/l4. Route them through the permissive path with a
-# single "raw" layer sourced from `error` (which IS L1 for these fields). Currently
-# just wd (circular; the pair log emits circular-angular error directly). Add
-# wd_persistence_gate output as a "chp"-style specialist layer once that gate wires.
+# Fields routed through the permissive path (skip the strict L1/L2/L3/L4 completeness
+# gate). wd lives here because its stack shape doesn't match the cloud/temp/wind fields
+# (no L3 or L4 corrections; circular math). Post-v0.6.368 the pair log now carries
+# error_l1 for wd from the raw_wind_direction stash (wind_blend.py:440-441) — prefer
+# that when present. Fallback to top-level `error` for pre-v0.6.368 rows; those age
+# out with the 30-day pair-log window.
 L1_ONLY_FIELDS = {"wd"}
 
 # Overwrite the last N days on every run — recent days may still be
@@ -135,24 +136,33 @@ def compute_fresh_rollup():
 
             per_layer = {}
             if fld in L1_ONLY_FIELDS:
-                # Fields without an L3/L4 correction stack. `error` in the pair log
-                # IS the raw-vs-obs metric (circular for wd). Route to "raw".
-                # v0.6.371b: also emit L2 for wd (wind_blend circular unit-vector
-                # blend, shipped 07-20 v0.6.368a). error_l2 populates on wd pairs
-                # via v0.6.367; STRICT completeness gate would demand error_l3/l4
-                # (which wd doesn't have yet) so wd stays in L1_ONLY but reads its
-                # own L2 inline. Post-wdp 07-27, add error_wdp here too per the
-                # wdp_ship_patches.md Site 7 (option (a)).
-                e = r.get("error")
-                if e is None:
+                # Permissive fields without a strict L1..L4 stack. Prefer explicit
+                # error_l1 (post-v0.6.368 wd rows have it from raw_wind_direction);
+                # fall back to top-level `error` for pre-v0.6.368 rows that only
+                # carried a single error metric. NOTE: for wd, top-level `error` is
+                # actually L2-view (fc = wd_l2 per forecast_snapshot._round_for), so
+                # falling back to it as "raw" mislabels post-v0.6.368 rows — the
+                # explicit error_l1 path corrects this. Applied-layer stamping isn't
+                # used for L1_ONLY_FIELDS (wd has no applied_layer key), so prod_real
+                # is derived inline by picking the deepest available specialist.
+                raw = r.get("error_l1")
+                if raw is None:
+                    raw = r.get("error")
+                if raw is None:
                     continue
-                per_layer["raw"] = e
+                per_layer["raw"] = raw
                 e_l2 = r.get("error_l2")
                 if e_l2 is not None:
                     per_layer["l2"] = e_l2
                 e_wdp = r.get("error_wdp")
                 if e_wdp is not None:
                     per_layer["wdp"] = e_wdp
+                # prod_real for L1_ONLY_FIELDS = deepest specialist present.
+                # Enables the standard "prod_real vs raw" trend reads without
+                # needing an applied_layer stamp (which wd doesn't have).
+                prod = e_wdp if e_wdp is not None else e_l2
+                if prod is not None:
+                    prod_real_buckets[(day, fld)].append(float(prod))
             else:
                 skip = False
                 for ln, key in STRICT_LAYER_KEYS:

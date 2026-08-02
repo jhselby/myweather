@@ -50,9 +50,9 @@ LIVE_CURATED = os.path.abspath(os.path.join(
 
 # Post-Lc-flip windows only. Lc FLIPPED 2026-07-17 v0.6.355.
 # Full: last 10 days including today. Halves: last 5d + prior 5d.
-WIN_A_LO, WIN_A_HI = "2026-07-22T00:00", "2026-07-28T00:00"
-WIN_B_LO, WIN_B_HI = "2026-07-17T00:00", "2026-07-22T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-07-17T00:00", "2026-07-28T00:00"
+WIN_A_LO, WIN_A_HI = "2026-07-27T00:00", "2026-08-02T00:00"
+WIN_B_LO, WIN_B_HI = "2026-07-22T00:00", "2026-07-27T00:00"
+WIN_FULL_LO, WIN_FULL_HI = "2026-07-22T00:00", "2026-08-02T00:00"
 
 FIELD = "ch"
 MIN_N_CELL = 100                # relaxed from 200 for the tighter 10-day window

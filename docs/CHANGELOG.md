@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390o • August 2, 2026 (cl applied_layer poison backfill + L1_ONLY routing fix for wd + full debug-page sweep)</strong></summary>
+
+- **cl applied_layer poison backfilled (`analysis/backfill_cl_applied_layer.py` NEW).** cl regression sentry had been screaming +67% for days despite production actually tracking raw. Root cause: pair-log rows 07-27 → 08-01 were stamped `applied_layer=clp` or `l6` due to the pre-v0.6.390j shadow-write bug, making `mae_over_time.prod_real` (which reads `error_{applied}`) pull phantom shadow errors instead of the real production error. Fixed forward by v0.6.390j guards, but historical rows kept poisoning trailing metrics. One-shot backfill script mirrors `_derive_applied_layer` logic on per-row errors to re-stamp cl rows (5,779 → l1, 55 → l2, 0 unresolved). Rebuilt `mae_over_time.json` with `MERGE_REFRESH_DAYS=10` and re-uploaded corrected pair log to GCS. cl now reads 7/7 wins over 7 days, −1.1% vs raw. Regression sentry: all fields clean.
+- **L1_ONLY field routing trap fixed (`analysis/mae_over_time.py`).** `mae_over_time.py`'s L1_ONLY branch was routing top-level `error` (which is L2-view since `fc = wd_l2` per forecast_snapshot) into the `raw` bucket for wd. Result: raw == l2 identically on every day for 13 days since v0.6.368a shipped wind_blend, hiding wd's L2+wdp contributions in every field-health scoreboard. Fix: prefer `error_l1` (present since v0.6.368a); fall back to `error` only for pre-v0.6.368a rows. Also emits inline `prod_real` for L1_ONLY fields from the deepest specialist (L1_ONLY doesn't get applied_layer stamping). Real wd picture surfaced: L2 −2 to −5% vs raw most days, wdp adds another 0-4%. 07-31 outlier: calm/24-47 wdp +72%, sea_breeze/0-5h wdp +109% — real gate misfires now visible. New memory `feedback_l1_only_field_routing_trap` requires this audit on any new correction for an L1_ONLY field.
+- **Fossil windows slid** on `h_wg_l3_regression_stage1.py`, `h_ws_l3_regression_stage1.py`, `h_ch_persistence_blend_stage2_vs_l6.py` — all had WIN_A_HI stuck at 07-28, flagged as fossils in this morning's digest. Slid forward 5 days.
+- **Debug page — full Rule 5 sweep.** "What's being evaluated next" calendar had "Thu 07-30 · today" stuck as today (3 days stale) — rewrote calendar block with correct dates and today's actual context. Bumped Recent activity today-label 08-01→08-02, demoted 07-31 "yesterday"→"2 days ago". Updated ~15 day counters in Post-ship watches (h L2 retune 0/7→2/7, Lc regime 1/7→3/7, chp closes-today flag, wdp 2/14→6/14, Lsb/dpbp/wsbp 1/7→5/7, wind_blend/wg L3/ws L3 2-cell 1/14→5/14). Rewrote per-field snapshot narratives for h (honest "red 7d +2.8%, direction favorable but hasn't earned green"), cl (post-backfill 7/7 wins), ch (day 14/14 closes today), wd (L2+wdp real picture noted). Rewrote bottom summary line: clean green/red/marginal buckets, no cherry-picked daily numbers.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390n • August 1, 2026 (debug page sweep — Recent activity block for today's 4 ships)</strong></summary>
 
 - Added Recent activity entry for 2026-08-01 covering v0.6.390j/k/l/m (applied_layer fix, layer-tuple test, recent-bias sensor, action-list at top, fossil-window cleanup, dpp HOLD).
