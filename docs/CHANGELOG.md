@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390x • August 3, 2026 (debug page Recent Activity refreshed for 08-03; path updated post-rename)</strong></summary>
+
+- Recent Activity moved "today" marker to Mon 08-03 with the 94-row residual backfill + `.skip.py` rename. Prior 08-02 entry demoted, path reference updated to the renamed script.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390w • August 3, 2026 (cl applied_layer poison backfilled; retire backfill from daily digest)</strong></summary>
 
 - **Backfilled 94 poisoned cl applied_layer stamps in the pair log** (clp→l1, 0 unresolved) and uploaded the corrected log to GCS. The v0.6.390j guard stopped new poison at write time; this backfill cleans the residue so the 7d field-skip sanity alert can roll off.
