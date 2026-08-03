@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390w • August 3, 2026 (cl applied_layer poison backfilled; retire backfill from daily digest)</strong></summary>
+
+- **Backfilled 94 poisoned cl applied_layer stamps in the pair log** (clp→l1, 0 unresolved) and uploaded the corrected log to GCS. The v0.6.390j guard stopped new poison at write time; this backfill cleans the residue so the 7d field-skip sanity alert can roll off.
+- **Renamed `analysis/backfill_cl_applied_layer.py` → `.skip.py`** so `run_digest.sh` stops calling it every morning. It's one-shot maintenance, not a daily analysis — the digest was FAILing it with "pass --dry-run or --apply" on every run.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390r • August 2, 2026 (scoreboard: add rolling 24h sub-line to Biggest gain / regression / worst-cell tiles)</strong></summary>
 
 - **Full 7d + 24h symmetry across the scoreboard.** Only the Overall-mean tile had a 24h read; Biggest gain, Biggest field regression, and Worst cell tiles were 7d-only. Adding 24h subs makes the whole banner readable at both cadences: 7d catches sustained drift, 24h catches fresh single-day movements the 7d smooths over.
