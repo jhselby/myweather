@@ -169,9 +169,21 @@ def compute():
                 continue
             rt = r.get("run_time")
             ob = r.get("observed")
-            fc_prod = r.get("forecast")
-            # Fields with no correction stack (e.g. wd) don't populate forecast_l1/l4.
-            # Fall back to top-level forecast (which is L1-semantic anyway for those).
+            # Production forecast reconstruction. Top-level `forecast` in the
+            # pair log is L2-semantic BY DESIGN (forecast_snapshot.py:246-249):
+            # the Fitter needs raw errors to calibrate decay coefficients, so
+            # the top-level key stays at L2. Using it here would score L2 as
+            # "Production" and miss L3/L4/L5/L6/chp/clp/wdp contributions
+            # entirely — for ch this made Prod skill look like L1 skill and
+            # falsely implicated chp for destroying value. Same class as
+            # feedback_l1_only_field_routing_trap (wd, fixed 2026-08-02) and
+            # feedback_pair_log_error_field. Prefer forecast_{applied_layer};
+            # fall back to forecast_l4 if the row lacks the applied stamp;
+            # last-resort top-level forecast for very old rows.
+            applied = r.get("applied_layer")
+            fc_prod = r.get(f"forecast_{applied}") if applied else None
+            if fc_prod is None:
+                fc_prod = r.get("forecast_l4", r.get("forecast"))
             fc1 = r.get("forecast_l1", fc_prod)
             fc4 = r.get("forecast_l4", fc_prod)
             if rt is None or ob is None or fc_prod is None or fc1 is None or fc4 is None:

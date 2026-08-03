@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.390y • August 3, 2026 (h_persistence_skill.py Prod-forecast reconstruction fix — third silent-lie metric bug in a week)</strong></summary>
+
+- **`h_persistence_skill.py` was scoring L2 as "Production" for every field.** The `mae_prod` accumulator read the top-level `forecast` field, which is L2-semantic by design (`forecast_snapshot.py:246-249` — the Fitter needs raw errors to calibrate decay coefficients so the top-level key stays at L2). For ch this meant the Prod line was really L1 — chp's actual 0-error contributions were invisible. Sample confirmation: an applied_layer=chp row had `forecast_chp=6.0, error_chp=0.0` (perfect) but `forecast=0.0, error=-6.0` (L1's raw error), and the script scored the -6.0.
+- **Fix:** reconstruct production forecast from `forecast_{applied_layer}` when the stamp is present; fall back to forecast_l4, then top-level. Effect on Prod-vs-L4 skill deltas: **ch −1.06 → +0.09** (chp actually helps, not hurts), cm −0.10 → +0.08, cc/wg deltas collapse to zero (no specialist active for the scored rows).
+- **Same class as v0.6.390j (shadow-write applied_layer trap), v0.6.390o (cl backfill), and v0.6.390p (wd L1_ONLY field routing trap).** All four were "the metric is looking at the wrong layer's error." Broader sweep needed — likely other analysis scripts read top-level `error` as Production.
+
+</details>
+
+<details>
 <summary><strong>v0.6.390x • August 3, 2026 (debug page Recent Activity refreshed for 08-03; path updated post-rename)</strong></summary>
 
 - Recent Activity moved "today" marker to Mon 08-03 with the 94-row residual backfill + `.skip.py` rename. Prior 08-02 entry demoted, path reference updated to the renamed script.
