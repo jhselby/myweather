@@ -3404,7 +3404,10 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
         narrEl.innerHTML = parts.join(" ");
         narrEl.style.opacity = 1;
       }
-      // Audit label — provenance for both 7-day and 24-hour columns.
+      // Audit label — provenance for both 7-day and 24-hour columns +
+      // raw-difficulty index (was this week harder or easier than the
+      // trailing 90d reference? Signals whether a moving weekly aggregate
+      // is a real correction change or just a shift in weather difficulty).
       const auditEl = document.getElementById("pf-snapshot-audit");
       if (auditEl) {
         const gen = mot.generated_at || "?";
@@ -3415,11 +3418,27 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
         const cutsNote = cutsUsed.count > 0
                           ? `${cutsUsed.count} cells sourced from ${cutsUsed.source}`
                           : `no last_7d in JSON — 7d column shows per_layer_mae_by_lead unweighted mean of leads 1-47 (fallback)`;
+        // Raw-difficulty line: mean ratio + top-3 hardest + top-3 easiest.
+        // Ratio > 1.0 = harder than baseline; < 1.0 = easier.
+        let diffLine = "";
+        const rdi = mot.raw_difficulty_index;
+        if (rdi && rdi.per_field) {
+          const pairs = Object.entries(rdi.per_field)
+                              .map(([f, v]) => [f, v.ratio])
+                              .sort((a, b) => b[1] - a[1]);
+          const fmtR = (r) => `${r.toFixed(2)}×`;
+          const hardest = pairs.slice(0, 3).map(([f, r]) => `${f} ${fmtR(r)}`).join(", ");
+          const easiest = pairs.slice(-3).reverse().map(([f, r]) => `${f} ${fmtR(r)}`).join(", ");
+          const meanDelta = ((rdi.mean_ratio - 1) * 100).toFixed(1);
+          const meanColor = rdi.mean_ratio > 1.05 ? "#fb7c5c" : (rdi.mean_ratio < 0.95 ? "#4ad29a" : "#e0d472");
+          diffLine = `<strong>Raw difficulty</strong> (7d raw MAE ÷ trailing ${rdi.ref_window_days}d ref, per-field): mean <span style="color:${meanColor};">${fmtR(rdi.mean_ratio)}</span> (${meanDelta >= 0 ? "+" : ""}${meanDelta}% vs baseline). Hardest: ${hardest}. Easiest: ${easiest}. <em>&gt;1.0 = raw model itself struggled more than usual; discount weekly correction lift accordingly.</em>`;
+        }
         auditEl.innerHTML = [
           `<strong>7-day</strong>: ${win7} · n-weighted pair-rows · production = applied_layer-stamped (prod_real) with per-field priority fallback · source ${cutsUsed.source || "time_series_diagnostic.json.per_layer_mae_by_lead"}.`,
           `<strong>24-hour</strong>: rolling window from ${win24} · same n-weighted method · source mae_over_time.json.last_24h.`,
+          diffLine,
           `Refreshed ${gen}. ${cutsNote}.`,
-        ].join("<br>");
+        ].filter(s => s).join("<br>");
       }
     })
     .catch(() => { /* silent — 7d column still renders */ });

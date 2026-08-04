@@ -444,6 +444,58 @@ def main():
         if fld_out:
             last_7d[fld] = fld_out
 
+    # raw_difficulty_index: was this week harder or easier than the trailing
+    # 90-day reference (excluding the 7d itself so the comparison isn't
+    # contaminated by the numerator)? Reported as a per-field ratio
+    # raw_mae_7d / raw_mae_ref (>1.0 = harder, <1.0 = easier) plus an
+    # unweighted mean across fields. Cheap correction-independent audit
+    # signal for the debug page: when a weekly aggregate moves, the reader
+    # can tell at a glance whether the raw baseline moved with it. Only
+    # uses raw-layer MAEs per field so units don't mix (each field is
+    # normalized by its own reference).
+    ref_window_days = 90
+    ref_days = all_days[-(last_7d_window_days + ref_window_days):-last_7d_window_days] if len(all_days) > last_7d_window_days else []
+    def _weighted_raw_mae(days_list, layers_map):
+        raw_days = layers_map.get("raw") or layers_map.get("l1") or {}
+        total_n = 0
+        weighted = 0.0
+        for d in days_list:
+            cell = raw_days.get(d)
+            if not cell:
+                continue
+            nd = cell.get("n", 0)
+            if nd <= 0:
+                continue
+            total_n += nd
+            weighted += cell.get("mae", 0.0) * nd
+        return (weighted / total_n) if total_n > 0 else None, total_n
+    per_field_ratios = {}
+    for fld, layers_map in merged.items():
+        mae_7d, n_7d = _weighted_raw_mae(last_7d_days, layers_map)
+        mae_ref, n_ref = _weighted_raw_mae(ref_days, layers_map)
+        if mae_7d is None or mae_ref is None or mae_ref <= 0:
+            continue
+        per_field_ratios[fld] = {
+            "raw_mae_7d": round(mae_7d, 4),
+            "raw_mae_ref": round(mae_ref, 4),
+            "ratio": round(mae_7d / mae_ref, 4),
+            "n_7d": n_7d,
+            "n_ref": n_ref,
+        }
+    if per_field_ratios:
+        ratios = [v["ratio"] for v in per_field_ratios.values()]
+        mean_ratio = sum(ratios) / len(ratios)
+        raw_difficulty_index = {
+            "ref_window_days": ref_window_days,
+            "ref_days": ref_days[:1] + ref_days[-1:] if ref_days else [],
+            "per_field": per_field_ratios,
+            "mean_ratio": round(mean_ratio, 4),
+            "n_fields": len(ratios),
+            "note": "ratio > 1.0 = raw MAE this week is harder than the trailing 90d reference (this week excluded from the reference); ratio < 1.0 = easier. Per-field normalization prevents unit mixing.",
+        }
+    else:
+        raw_difficulty_index = None
+
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source": "forecast_error_log.jsonl (with accumulating per-day history since first run)",
@@ -458,6 +510,7 @@ def main():
         "last_24h_window_start_utc": cutoff_24h,
         "last_7d": last_7d,
         "last_7d_days": last_7d_days,
+        "raw_difficulty_index": raw_difficulty_index,
     }
 
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)

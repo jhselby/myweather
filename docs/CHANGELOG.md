@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.392 • August 4, 2026 (raw-difficulty index — "did the model improve, or was the weather easier?")</strong></summary>
+
+- **New audit signal in the per-field snapshot label.** `analysis/mae_over_time.py` emits a `raw_difficulty_index` block: per-field ratio of trailing-7d raw MAE ÷ trailing-90d reference raw MAE (this week excluded from the reference). Ratio > 1.0 = the raw model itself struggled more than usual this week; < 1.0 = easier week. Debug page audit label now shows the mean ratio plus the three hardest and three easiest fields.
+- **Why:** aggregate weekly correction lift can move because the model got better or because the weather got easier — the two are indistinguishable without a correction-independent difficulty reference. Persistence skill was the closest existing signal but persistence difficulty is itself weather-dependent (stable ridges make persistence excellent, fronts make it terrible), so it's not an external reference. Raw MAE is. First-run today: mean 1.04× (basically flat) hides bimodal spread — cloud fields +18 to +67% harder than 90d normal (pa 1.67×, cm 1.62×, pp 1.29×, ch 1.19×, cl 1.18×), thermo fields 23-43% easier (dp 0.57×, h 0.62×, wd 0.66×, t 0.77×). Cloudy-and-mild week. Per-field normalization prevents unit mixing (can't average °F with W/m²).
+- **Scope:** just the third line of the framework Joe outlined — observed lift is already in the top table, standardized lift is deferred. The raw-difficulty ratio alone answers the confounding question: when a weekly aggregate moves, the reader can tell at a glance whether the raw baseline moved with it.
+
+</details>
+
+<details>
 <summary><strong>v0.6.391 • August 4, 2026 (4 substantive ships + debug page sweep)</strong></summary>
 
 - **Ccd saturation guard** (`cc_from_derivation.py`). cc losing +9.8% Last-24h despite cl/cm/ch all winning. Last-24h pair-log bucket by (regime × obs_cc bin) traces the entire loss to obs bin 95-100 (n=235 across pre_frontal/se_flow/sea_breeze/sw_flow): raw MAE ~2, Ccd MAE ~30 (+1000%+). Root cause: cm's Lc has bias +26.9 → −10.0 (over-corrected 10 pts), ch bias +40.7 → +12.8. `max(cl_l6, cm_l6, ch_l6)` sits in the 60-80s when obs is 100. Fix: `SAT_THRESHOLD = 90.0` — if raw cc ≥ 90, keep raw. Ccd still owns clear/partly-cloudy tail (bin 5-20: n=480, −45% MAE). Same shape as v0.6.389g cc/95-100 Lc skip (now a no-op since cc no longer runs Lc). Telemetry: `sat_holds` count in `cc_from_derivation` per-tick block.
