@@ -114,13 +114,18 @@ SKIP_TABLE = {
         ("pre_frontal", 24, 48), # 24-47, n=9268, +8.0% (halves +3.4/+11.6)
     ],
     ("wg", "l3"): [
-        # Stage 1 07-28 re-cut, clean-halves subset. calm 24-47 and
-        # sea_breeze 24-47 met the SKIP gate but had wide halves spread
-        # (recent-half signal fading — held for another 7-day re-cut).
+        # Stage 1 07-28 ship (4 cells).
         ("calm",       1,  6),   # 0-5,   n=760,  +9.4%  (halves +5.3/+10.0)
         ("calm",      12, 24),   # 12-23, n=707,  +40.0% (halves +44.3/+39.4)
         ("ne_flow",    6, 12),   # 6-11,  n=1538, +11.8% (halves +6.2/+12.7)
         ("sea_breeze", 6, 12),   # 6-11,  n=865,  +5.6%  (halves +8.0/+4.8)
+        # 08-04 re-cut adds 3 cells. Two are the 07-28 held cells (calm
+        # 24-47, sea_breeze 24-47) — A halves drifted 7 → 4 but still
+        # above the 3% floor; pooled damage +45%/+31% justifies shipping
+        # now with a demote-on-A-negative watch at the next re-cut.
+        ("calm",      24, 48),   # 24-47, n=1744, +45.2% (halves +4.3/+53.1)
+        ("sea_breeze",24, 48),   # 24-47, n=2298, +31.1% (halves +4.0/+45.0)
+        ("frontal",   12, 24),   # 12-23, n=443,  +8.8%  (halves +13.2/+4.5)
     ],
     ("dp", "l4"): [
         ("ne_flow",    0, 48),

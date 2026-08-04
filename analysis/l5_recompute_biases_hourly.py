@@ -33,6 +33,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                        "output", "l5_recompute_hourly_summary.txt")
+CURATED_JSON_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "weather_collector", "data", "lsr_bias_table_curated.json",
+)
 SUN_UP_THRESHOLD = 50.0
 MIN_CELL_N = 30  # Below this, cell falls back to regime-overall bias
 
@@ -184,6 +188,33 @@ def write_summary(lookup, fallbacks, by_cell, by_regime, path, test_days):
     return path
 
 
+def write_curated_json(lookup, fallbacks, path, window_days):
+    """Emit the (regime × hour) bias table as a curated JSON for
+    solar_correction.py to load at import time. Retires the manual
+    sync from analysis/output/l5_recompute_hourly_summary.txt into
+    the source-file dict — the class of drift documented in
+    project_curated_json_daily_drift.
+    """
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fb = dict(fallbacks)
+    fb.setdefault("unknown", 0.0)
+    payload = {
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "window_days": window_days,
+        "min_cell_n": MIN_CELL_N,
+        "sun_up_threshold_wm2": SUN_UP_THRESHOLD,
+        "bias_by_regime_hour": {
+            regime: {str(h): round(v, 1) for h, v in sorted(cells.items())}
+            for regime, cells in lookup.items()
+        },
+        "fallback_by_regime": {r: round(v, 1) for r, v in fb.items()},
+    }
+    with open(path, "w") as f:
+        json.dump(payload, f, indent=2, sort_keys=True)
+        f.write("\n")
+    return path
+
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--local-file", default=None)
@@ -191,7 +222,8 @@ def main():
     args = p.parse_args()
     lookup, fallbacks, by_cell, by_regime = run(local_file=args.local_file, test_days=args.days)
     out_path = write_summary(lookup, fallbacks, by_cell, by_regime, OUT_PATH, args.days)
-    sys.stderr.write(f"\nWrote {out_path}\n\n")
+    json_path = write_curated_json(lookup, fallbacks, CURATED_JSON_PATH, args.days)
+    sys.stderr.write(f"\nWrote {out_path}\nWrote {json_path}\n\n")
     with open(out_path) as f:
         sys.stdout.write(f.read())
 

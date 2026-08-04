@@ -39,7 +39,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 
-ENABLED = False   # 7-day flip gate. Stage 3 wired 2026-07-28; earliest flip 2026-08-04.
+ENABLED = True    # Flipped 2026-08-04 v0.6.391 after 7-day shadow-week clear. Stage 3 wired 2026-07-28 v0.6.387; Stage 1 halves-verified pre_frontal +17.2%, nw_flow +14.5%, sw_flow +14.6%.
 
 FIELD = "dp"
 HOURLY_KEY = "corrected_dew_point"

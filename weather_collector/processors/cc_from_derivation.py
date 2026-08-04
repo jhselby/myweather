@@ -51,6 +51,16 @@ ENABLED = True   # v0.6.390 2026-07-30 — flipped early. Rerun of
 # little.
 SKIP_REGIMES = frozenset({"se_flow", "unknown"})
 
+# Saturation guard — when raw cc says the sky is already filled, Ccd's
+# max(l6_cl, l6_cm, l6_ch) systematically undershoots because cm/ch's Lc
+# corrections drag their l6 well below 100 (cm bin 80-95 Lc premium is
+# +82%, ch is +268%). Investigation 2026-08-04 on last-24h pair log:
+# obs-cc bin 95-100 across pre_frontal/se_flow/sea_breeze/sw_flow, n=235,
+# raw MAE ~2 vs Ccd MAE ~30 (+1000%+). Corrections can only hurt when
+# raw already agrees with obs. Skip derivation on those leads and keep
+# raw cc.
+SAT_THRESHOLD = 90.0
+
 # Formula choice — h_cc_derivation shows max-overlap wins on this dataset
 # (+8.5% pooled vs +5.1% random). Physical justification: KBOS/KBVY METAR
 # reports total sky cover as the coverage of the highest layer that
@@ -83,8 +93,9 @@ def describe_applicability():
     state_prefix = "ENABLED True" if ENABLED else "ENABLED False"
     fires_when = (
         f"{'ENABLED' if ENABLED else 'OFF'} — replaces hourly.cloud_cover with "
-        f"derived-{FORMULA}(cl_l6, cm_l6, ch_l6) for regimes NOT in SKIP_REGIMES. "
-        f"SKIP: {sorted(SKIP_REGIMES)}."
+        f"derived-{FORMULA}(cl_l6, cm_l6, ch_l6) for regimes NOT in SKIP_REGIMES "
+        f"and leads where raw cc < {SAT_THRESHOLD:.0f}. "
+        f"SKIP: {sorted(SKIP_REGIMES)}. Saturation guard: raw cc ≥ {SAT_THRESHOLD:.0f} keeps raw."
     )
     return [{
         "layer_id": "Ccd",
@@ -141,6 +152,7 @@ def stamp_cc_from_derivation(weather_data):
     n = min(len(cc_arr), len(cl_arr), len(cm_arr), len(ch_arr))
     derived = [None] * n
     fires = 0
+    sat_holds = 0
     for i in range(n):
         cl_v = cl_arr[i]
         cm_v = cm_arr[i]
@@ -148,6 +160,10 @@ def stamp_cc_from_derivation(weather_data):
         cc_v = cc_arr[i]
         if cl_v is None or cm_v is None or ch_v is None or cc_v is None:
             derived[i] = cc_v
+            continue
+        if float(cc_v) >= SAT_THRESHOLD:
+            derived[i] = cc_v
+            sat_holds += 1
             continue
         d = _derive(float(cl_v), float(cm_v), float(ch_v))
         derived[i] = d
@@ -159,6 +175,8 @@ def stamp_cc_from_derivation(weather_data):
     per_lead["derived"] = [round(x, 2) if x is not None else None for x in derived]
     per_lead["would_fire"] = fires > 0
     per_lead["cells_fired"] = fires
+    per_lead["sat_holds"] = sat_holds
+    per_lead["sat_threshold"] = SAT_THRESHOLD
     per_lead["n_leads"] = n
 
     if ENABLED:

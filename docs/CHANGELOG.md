@@ -1,6 +1,34 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.391 • August 4, 2026 (4 substantive ships + debug page sweep)</strong></summary>
+
+- **Ccd saturation guard** (`cc_from_derivation.py`). cc losing +9.8% Last-24h despite cl/cm/ch all winning. Last-24h pair-log bucket by (regime × obs_cc bin) traces the entire loss to obs bin 95-100 (n=235 across pre_frontal/se_flow/sea_breeze/sw_flow): raw MAE ~2, Ccd MAE ~30 (+1000%+). Root cause: cm's Lc has bias +26.9 → −10.0 (over-corrected 10 pts), ch bias +40.7 → +12.8. `max(cl_l6, cm_l6, ch_l6)` sits in the 60-80s when obs is 100. Fix: `SAT_THRESHOLD = 90.0` — if raw cc ≥ 90, keep raw. Ccd still owns clear/partly-cloudy tail (bin 5-20: n=480, −45% MAE). Same shape as v0.6.389g cc/95-100 Lc skip (now a no-op since cc no longer runs Lc). Telemetry: `sat_holds` count in `cc_from_derivation` per-tick block.
+
+- **Lsr bias table drift fix** (`solar_correction.py` + `analysis/l5_recompute_biases_hourly.py`). sr Last-24h +10.1% traced to `_BIAS_BY_REGIME_HOUR` being hardcoded at v0.6.248 ship (2026-06-28) and never refreshed. Diff vs today's fitter: 47 cells with |Δ| ≥ 50 W/m², frontal regime had 8 live entries with 0 fresh support (fitter dropped it). Multiple cells sign-flipped; sw_flow/16 moved −170 → +136 (Δ +306 W/m²). Structural fix: fitter now writes `weather_collector/data/lsr_bias_table_curated.json`; `solar_correction.py` loads that JSON at import time and overrides embedded dicts when present. Embedded dicts remain as canonical fallback. Same pattern as `lc_correction_table.json`. `_BIAS_TABLE_SOURCE` + `_BIAS_TABLE_GENERATED_AT` exposed at module level for audit. Retires the manual-sync drift class per `[[feedback_curated_json_daily_drift]]`.
+
+- **dpbp flipped ENABLED=True** (`dp_bias_persistence.py`). First antecedent-error specialist LIVE. Shipped 07-28 v0.6.387 ENABLED=False; 7-day gate cleared. Stage 1 halves-verified: pre_frontal +17.2% (halves +21.6/+12.0), nw_flow +14.5% (+15.6/+13.8), sw_flow +14.6% (+6.1/+17.9). Pooled dp MAE 3.108 → 2.808. Fires when regime ∈ focus AND lead ≥ 6h AND prev_24h_dp_bias < −1.5°F → +2.0°F. Preflight verified: code unchanged since ship, params match Stage 2, shadow write firing +2.0°F per lead in nw_flow (38 leads this tick), dp Last-24h at −3.2% healthy baseline. Preflight gap flagged: `corrected_dew_point_shadow_dpbp` not stamped in pair log — same infra gap likely at chp/wdp flip. Follow-up: give dpbp the v0.6.382p treatment (stamp shadow key to error log) for future measurable pre-flip gates.
+
+- **wg L3 SKIP_TABLE +3 cells** (`decay_apply.py`). 08-04 re-cut clears the two 07-28 held cells plus one new: calm/24-47 (n=1744, pooled +45.2%, halves +4.3/+53.1), sea_breeze/24-47 (n=2298, +31.1%, +4.0/+45.0), frontal/12-23 (n=443, +8.8%, +13.2/+4.5 — NEW). A halves on the 24-47 pair drifted 7→4 but still above 3% floor; pooled damage +45%/+31% justifies shipping now with demote-on-A-negative watch at next re-cut. Live table now 7 cells.
+
+- **Debug page sweep.** Today tile Mon 08-03 → Tue 08-04. Recent Activity: added 08-04 (4 ships) and 08-03 (v0.6.390v/w/x/y). Trimmed 08-01 and earlier to changelog per rolling 3-day window. Layer status updated: dpbp (LIVE), wsbp (HELD — calm regime n=0 in shadow week), Ccd (SAT_THRESHOLD guard), wg L3 (4 → 7 cells).
+
+- **Metric provenance — 7-day cut unified, narrative auto-populated, audit label added.** Review flagged two different 7-day numbers on the debug page (top per-field table vs narrative), both labeled the same, from different sources. Top table was reading `tsDoc.per_layer_mae_by_lead` as unweighted mean of leads 1-47; narrative was hand-typed and stale. Four-part fix:
+  - `analysis/mae_over_time.py` now emits a `last_7d` block (parallel to `last_24h`) — n-weighted rollup across the trailing 7 calendar days from the per-day merged series, using `sum(mae_d * n_d) / sum(n_d)`. Single canonical 7d cut for the whole page.
+  - `renderPerFieldSnapshot` in the debug page now overrides pf-mae cells from `mot.last_7d` inside the same fetch that populates pf-today from `mot.last_24h`. Same source, same aggregation — the two columns in a row are always comparable.
+  - Hand-typed narrative at old line 914 replaced with an auto-populated container that bins fields by 7-day performance from the same `last_7d` source. No more stale prose.
+  - Audit label under the section: source file, window, aggregation method, refresh timestamp — one small line per section as the reviewer suggested.
+- **PROD_PRIORITY + _prodKey + _applied gap fix.** dpbp had just shipped ENABLED=True but wasn't in any of the priority chains — fallback would silently pick `l4` for dp when `prod_real` was missing. Added dpbp (dp) and wsbp (ws, kept for post-flip continuity). Both `_prodKey` implementations in the file now match.
+- **`tests/test_prod_key_coverage.py` — new metric-plumbing test.** Discovers ENABLED specialists from `weather_collector/processors/`, extracts PROD_PRIORITY / _prodKey / _applied from `corrections_debug.html`, asserts every ENABLED specialist is in every priority chain that touches its field(s). Sibling of `test_layer_tuple_sanity.py`; same class of silent-lie prevention. Runs in the existing pytest suite (19 → 23 passing).
+
+- **Deferrals.** wsbp HELD (calm regime n=0 in 7-day shadow-log window — preflight step 1 fails). Lsb HELD 24h post-Lsr change for clean attribution.
+
+- **build.py regex fix.** `id="appVersion"` regex was `[a-z]?` (single optional lowercase); doubled-letter suffixes would silently fail to update `version.json`. Widened to `[a-z]*`. Not needed after this renumber but kept — same class of silent failure.
+
+</details>
+
+
+<details>
 <summary><strong>v0.6.390y • August 3, 2026 (h_persistence_skill.py Prod-forecast reconstruction fix — third silent-lie metric bug in a week)</strong></summary>
 
 - **`h_persistence_skill.py` was scoring L2 as "Production" for every field.** The `mae_prod` accumulator read the top-level `forecast` field, which is L2-semantic by design (`forecast_snapshot.py:246-249` — the Fitter needs raw errors to calibrate decay coefficients so the top-level key stays at L2). For ch this meant the Prod line was really L1 — chp's actual 0-error contributions were invisible. Sample confirmation: an applied_layer=chp row had `forecast_chp=6.0, error_chp=0.0` (perfect) but `forecast=0.0, error=-6.0` (L1's raw error), and the script scored the -6.0.

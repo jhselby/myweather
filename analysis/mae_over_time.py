@@ -401,6 +401,49 @@ def main():
                        for lyr in f.values() for d in lyr})
     all_fields = sorted(f for f in merged if merged[f])
 
+    # last_7d: n-weighted rollup across the trailing 7 calendar days from the
+    # per-day merged series. Single canonical 7d cut used across the debug
+    # page (top per-field snapshot, scoreboard, narrative). Cell shape mirrors
+    # last_24h so consumers can swap. n-weighted aggregation keeps thin days
+    # from dominating; MAE is recovered from per-day (mae, n) as
+    # sum(mae_d * n_d) / sum(n_d); RMSE from brier (sqerr_mean); bias from
+    # per-day biases the same way.
+    last_7d_window_days = 7
+    last_7d_days = all_days[-last_7d_window_days:] if all_days else []
+    last_7d = {}
+    for fld, layers in merged.items():
+        fld_out = {}
+        for layer_name, days_map in layers.items():
+            total_n = 0
+            weighted_mae = 0.0
+            weighted_rmse_sq = 0.0
+            weighted_bias = 0.0
+            for d in last_7d_days:
+                cell = days_map.get(d)
+                if not cell:
+                    continue
+                nd = cell.get("n", 0)
+                if nd <= 0:
+                    continue
+                total_n += nd
+                weighted_mae += cell.get("mae", 0.0) * nd
+                # brier is the mean squared error per day; sum(brier*n) = SSE
+                weighted_rmse_sq += cell.get("brier", 0.0) * nd
+                weighted_bias += cell.get("bias", 0.0) * nd
+            if total_n <= 0:
+                continue
+            mae = weighted_mae / total_n
+            sqerr_mean = weighted_rmse_sq / total_n
+            fld_out[layer_name] = {
+                "n": total_n,
+                "mae": round(mae, 4),
+                "rmse": round(math.sqrt(sqerr_mean), 4),
+                "bias": round(weighted_bias / total_n, 4),
+                "brier": round(sqerr_mean, 4),
+            }
+        if fld_out:
+            last_7d[fld] = fld_out
+
     payload = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source": "forecast_error_log.jsonl (with accumulating per-day history since first run)",
@@ -413,6 +456,8 @@ def main():
         "last_24h": last_24h,
         "last_24h_bands": last_24h_bands,
         "last_24h_window_start_utc": cutoff_24h,
+        "last_7d": last_7d,
+        "last_7d_days": last_7d_days,
     }
 
     os.makedirs(os.path.dirname(OUT_JSON), exist_ok=True)

@@ -34,12 +34,16 @@ Two practical caveats baked in:
      window as of v0.6.93. They will be refreshed by a follow-up commit
      that auto-pulls the latest state_stratified instead of hardcoding.
 """
+import json
 import logging
 from datetime import datetime
+from pathlib import Path
 
 import pytz
 
 from ..utils import redact_secrets
+
+_CURATED_JSON_PATH = Path(__file__).resolve().parent.parent / "data" / "lsr_bias_table_curated.json"
 
 
 TZ = pytz.timezone("America/New_York")
@@ -171,6 +175,31 @@ _BIAS_BY_REGIME_HOUR = {
         18: -86.6,
     },
 }
+
+# Curated-JSON override. l5_recompute_biases_hourly.py writes
+# weather_collector/data/lsr_bias_table_curated.json each daily digest run.
+# If present, its (regime × hour) values replace the embedded constants
+# above. Embedded values remain as a canonical fallback for when the file
+# is missing (fresh checkouts, deploy race, malformed JSON).
+_BIAS_TABLE_SOURCE = "embedded"
+_BIAS_TABLE_GENERATED_AT = None
+try:
+    if _CURATED_JSON_PATH.exists():
+        _curated = json.loads(_CURATED_JSON_PATH.read_text())
+        _cur_bbrh = _curated.get("bias_by_regime_hour") or {}
+        _cur_fb = _curated.get("fallback_by_regime") or {}
+        if _cur_bbrh:
+            _BIAS_BY_REGIME_HOUR = {
+                regime: {int(h): float(v) for h, v in cells.items()}
+                for regime, cells in _cur_bbrh.items()
+            }
+        if _cur_fb:
+            _BIAS_FALLBACK_BY_REGIME = {r: float(v) for r, v in _cur_fb.items()}
+            _BIAS_FALLBACK_BY_REGIME.setdefault("unknown", 0.0)
+        _BIAS_TABLE_SOURCE = "curated_json"
+        _BIAS_TABLE_GENERATED_AT = _curated.get("generated_at")
+except Exception:
+    logging.exception("Lsr curated JSON load failed; using embedded constants")
 
 
 def describe_applicability():
