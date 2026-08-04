@@ -3431,7 +3431,8 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
           const easiest = pairs.slice(-3).reverse().map(([f, r]) => `${f} ${fmtR(r)}`).join(", ");
           const meanDelta = ((rdi.mean_ratio - 1) * 100).toFixed(1);
           const meanColor = rdi.mean_ratio > 1.05 ? "#fb7c5c" : (rdi.mean_ratio < 0.95 ? "#4ad29a" : "#e0d472");
-          diffLine = `<strong>Raw difficulty</strong> (7d raw MAE ÷ trailing ${rdi.ref_window_days}d ref, per-field): mean <span style="color:${meanColor};">${fmtR(rdi.mean_ratio)}</span> (${meanDelta >= 0 ? "+" : ""}${meanDelta}% vs baseline). Hardest: ${hardest}. Easiest: ${easiest}. <em>&gt;1.0 = raw model itself struggled more than usual; discount weekly correction lift accordingly.</em>`;
+          const harderEasier = rdi.mean_ratio >= 1.0 ? "harder" : "easier";
+          diffLine = `<strong>Raw difficulty</strong> (7d raw MAE ÷ trailing ${rdi.ref_window_days}d reference, per-field): mean <span style="color:${meanColor};">${fmtR(rdi.mean_ratio)}</span> (${meanDelta >= 0 ? "+" : ""}${meanDelta}% ${harderEasier} than baseline). Hardest: ${hardest}. Easiest: ${easiest}. <em>Values &gt;1 indicate the underlying weather was harder for the raw model than usual; interpret weekly correction gains in that context.</em>`;
         }
         auditEl.innerHTML = [
           `<strong>7-day</strong>: ${win7} · n-weighted pair-rows · production = applied_layer-stamped (prod_real) with per-field priority fallback · source ${cutsUsed.source || "time_series_diagnostic.json.per_layer_mae_by_lead"}.`,
