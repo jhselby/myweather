@@ -1,6 +1,20 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.394a • August 5, 2026 (debug page Rule 5 sweep — sr Lsb LIVE, C1h in stack + watches, calendar/Recent Activity roll, stale verdict-pending copy)</strong></summary>
+
+- **sr row updated for Lsb flip** — replaces the "flip HELD, re-check 08-05" copy with LIVE stamp, Stage 2 numbers, post-deploy applied=True verification, watch points (hour 13, halves B).
+- **"What's running" stack gains Lsb + dpbp + C1h** — three LIVE additions previously missing from the pipeline-at-a-glance list. chp watch-close flipped from "through 08-02" to "closed clean 08-02."
+- **Calendar rewrite** — 08-05 becomes today (4 ships, cl-fossil no-action), 08-04 becomes yesterday, 08-03 becomes 2 days ago, removed stale future entries for 08-05 (past) and 08-06 (Lc Stage 1 gate — action no longer clear). Added dpbp 08-18 + Lsb 08-19 watch-close rows. Retired C1h from ongoing (just shipped). Corrected pre-frontal from "4/7 (2 SHIP)" to "2/7 (2 SHIP)" and n=7 passages / 7% join to today's 4 passages / 9% join.
+- **Post-ship watches gain Lsb + C1h Stage 3 ship entries** — both auto-populate day X/14 via existing `watch-day` spans.
+- **Recent Activity: added today (v0.6.393/393a/393b/394), shifted 08-04→yesterday, 08-03→2 days ago, retired 08-02 to changelog** per rolling 3-day window.
+- **"verdict pending re-read" copy** on three long-closed gates (dp residual persistence, clp, chp full-shape refinement, cl row's clp descriptor) — all sat on the fossil windows that got slid this morning. Replaced with "awaiting post-fossil-slide re-cut (windows advanced 08-05 v0.6.393b — next digest is first trustworthy read)" so the reason for the delay is legible.
+- **ws L3 REPLACEMENT stale copy** — "re-eval ~07-31" replaced with "low-priority to reopen" reflecting that BLEND_HOURS 24→4 (07-28) resolved the root long-lead regression this REPLACEMENT was meant to address.
+- **Lsr sr row** — removed "Today's vs-raw = 0% because Lsr skips calm regime (today's state_curr)" (state_curr changes tick-to-tick, was misleading as a static claim). Added 08-04 bias-table refresh note.
+
+</details>
+
+<details>
 <summary><strong>v0.6.394 • August 5, 2026 (Lsb flipped ENABLED=True — sr sea_breeze cc-gated Lsr override goes live)</strong></summary>
 
 - **Lsb (sr_sea_breeze_lsr_override.py) flipped ENABLED=True.** Fresh 7-day gate on the narrowed cc<25 shape cleared: 7/7 daily PROMOTE verdicts (07-30 → 08-05) from `sr_sea_breeze_lsr_refit_stage2.py`. Today's Stage 2 (n_test=1,838): pooled Δ +11.34%, halves +23.9%/+4.0% (both ≥ 0), lead-band all 4 SHIP, cc-bin 0-25 +44.6% (n=718, halves +49%/+34%). Per-hour: 5 SHIP (12, 14, 17, 18, 19), 3 SKIP (13, 15, 16). Curated table is `weather_collector/data/sr_sea_breeze_lsr_curated.json` (unchanged shape — runtime reads hourly_bias_wm2 + cc_gate, ignores `enabled` field which is informational).
