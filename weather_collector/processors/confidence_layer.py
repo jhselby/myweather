@@ -340,9 +340,9 @@ _C1H_CO_AXIS_GATE = {
     ("cm", "24-47h"): {"require_c1f_off": True},
     ("ch", "6-11h"):  {"require_c1f_off": True, "require_c1e_off": True},  # AMBIG F, CONFOUND E
     ("ch", "12-23h"): {"require_c1f_off": True, "require_c1e_off": True},
-    ("ch", "24-47h"): {"always_skip": True},                                # REDUND both
+    ("ch", "24-47h"): {"require_c1f_off": True, "require_c1e_off": True},  # was REDUND both; 08-05 AMBIG F, AMBIG E — gate closed both
     ("t",  "6-11h"):  {"always_skip": True},                                # REDUND both
-    ("t",  "12-23h"): {"always_skip": True},
+    ("t",  "12-23h"): {"require_c1f_off": True, "require_c1e_off": True},  # was REDUND both; 08-05 curated flipped WIDEN→NARROW (-10.7%, stable 2/3 recent 7d) — gate closed both
     ("t",  "24-47h"): {"always_skip": True},
 }
 

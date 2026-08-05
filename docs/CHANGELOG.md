@@ -1,6 +1,22 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.393a • August 5, 2026 (scoreboard: touched-fields mean/median line)</strong></summary>
+
+- **Touched-fields aggregate on the Overall vs raw tile** (`corrections_debug.html`). Joe flagged the mean/median gap this morning (−12.9% mean vs −0.9% median on 7d MAE). Root cause: 3 fields (pa, pr, plus pp which is Brier-only) have no MAE-affecting layer, so prod ≡ raw by construction — three exact 0.00% entries pull both aggregates toward zero and land the median in a run of zeros. Added `MAE_UNCORRECTED_FIELDS = {pa, pr}` (pp already routed to `brierRows`). New sub-tile below existing median: "MAE mean · touched (n=9) · median X%" with an "excludes pa/pr (no MAE stack) + cc/dp (derived)" caveat. All-fields mean/median stay as-is — the top line answers "myweather vs raw across everything", the touched line answers "how much lift the correction stack actually produces." Both shown so a single number can't mislead either direction.
+
+</details>
+
+<details>
+<summary><strong>v0.6.393 • August 5, 2026 (C1h narrow-promote Stage 3 ship — 9 SHIP cells commit + co-axis gate refresh)</strong></summary>
+
+- **C1h curated table committed** (`weather_collector/data/c1h_curated.json`). Stage 3 gate cleared 7/7 days (oldest match 07-30). Ship set: 9 SHIP cells (cc 12-23h & 24-47h, cl 12-23h & 24-47h, cm 12-23h & 24-47h, ch 12-23h & 24-47h, t 12-23h). Diff vs previously shipped: cc/6-11h, ch/6-11h, cm/6-11h demoted SHIP WIDEN → SKIP (sample floor — n_fires 538–660, curator MIN_N=1000). t/24-47h demoted MARGINAL WIDEN → SKIP (magnitude floor +1.08%). t/12-23h flipped MARGINAL WIDEN → SHIP NARROW (−10.7%). Halves check across 3 rolling 7d windows: −14.3% / −0.1% / −17.4% — NARROW stable in 2 of 3, old WIDEN reading was the mid-July outlier.
+- **`_C1H_CO_AXIS_GATE` refreshed** (`confidence_layer.py`). Two entries had stale `always_skip:True` (REDUND both under prior ortho eval); today's `h_c1h_orthogonality` puts both at AMBIG both. Lifted to `require_c1f_off + require_c1e_off` — C1h fires on its residual signal only when neither incumbent axis is active: ch/24-47h and t/12-23h.
+- **Scope:** narrow-promote only. No changes to the multi-axis v2 join or to the marginal premium application in `_c1h_fires_per_band_field`. The v0.6.316 wiring shell is unchanged; this commit is data + gate.
+
+</details>
+
+<details>
 <summary><strong>v0.6.392 • August 4, 2026 (raw-difficulty index — "did the model improve, or was the weather easier?")</strong></summary>
 
 - **New audit signal in the per-field snapshot label.** `analysis/mae_over_time.py` emits a `raw_difficulty_index` block: per-field ratio of trailing-7d raw MAE ÷ trailing-90d reference raw MAE (this week excluded from the reference). Ratio > 1.0 = the raw model itself struggled more than usual this week; < 1.0 = easier week. Debug page audit label now shows the mean ratio plus the three hardest and three easiest fields.

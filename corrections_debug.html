@@ -2867,6 +2867,15 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
   // independent structure — at that point add a separate "dp specialists"
   // scoreboard line measuring only the specialist's contribution, not dp-in-mean.
   const DERIVED_FIELDS = new Set(["cc", "dp"]);
+  // Fields with no MAE-affecting layer in the correction stack — prod ≡ raw
+  // by construction, not by chance. pa and pr have no L2+ correction; pp is
+  // Brier-only and already routed to brierRows. Including these in the MAE
+  // mean averages them against the winners as flat zeros, pulling the
+  // aggregate toward zero and dragging the median through their run of
+  // exact 0.00% entries. Excluding is consistent with the DERIVED_FIELDS
+  // exclusion — both are "the correction stack doesn't independently move
+  // this field's MAE."
+  const MAE_UNCORRECTED_FIELDS = new Set(["pa", "pr"]);
   const rows = [];
   const cellRows = [];  // per-(field, band) for worst-cell surfacing
   const mae = tsDoc.per_layer_mae_by_lead;
@@ -2941,7 +2950,16 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
   const scoredRows = rows.filter(r => !r.derived);
   const derivedRows = rows.filter(r => r.derived);
   const scoredCellRows = cellRows.filter(r => !r.derived);
+  // Touched subset — scoredRows minus fields with no MAE-affecting layer.
+  // v0.6.393a: separates "correction-stack effectiveness" from "myweather vs
+  // raw across everything." The all-fields mean answers the second; the
+  // touched-fields mean answers the first. Both are shown so a single
+  // number can't mislead either direction.
+  const touchedRows = scoredRows.filter(r => !MAE_UNCORRECTED_FIELDS.has(r.field));
   const meanPct = scoredRows.reduce((s, r) => s + r.pct, 0) / scoredRows.length;
+  const touchedMeanPct = touchedRows.length
+    ? touchedRows.reduce((s, r) => s + r.pct, 0) / touchedRows.length
+    : null;
   // RMSE mean across fields that have it. Falls back gracefully if the
   // Fitter hasn't emitted per_layer_rmse_by_lead yet (first tick after
   // v0.6.325 deploy).
@@ -2960,6 +2978,7 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
     return n % 2 ? s[(n - 1) >> 1] : (s[n / 2 - 1] + s[n / 2]) / 2;
   };
   const medianPct = _median(scoredRows.map(r => r.pct));
+  const touchedMedianPct = _median(touchedRows.map(r => r.pct));
   // Bucket at ±0.5pp so noise-level rows sort into "flat" rather than
   // shading the winning/regressing tallies (a −0.2% field is not really
   // a win). The main "Winning fields" count still uses strict <0 so it
@@ -3028,6 +3047,7 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
         ${meanRmsePct != null ? `<div style="font-size:0.85em;margin-top:2px;"><strong style="color:${rmseColor};">${meanRmsePct >= 0 ? "+" : ""}${meanRmsePct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">RMSE mean · 7-day</span></div>` : ""}
         <div id="overall-today-tile" style="font-size:0.85em;margin-top:4px;padding-top:3px;border-top:1px solid #1a2530;opacity:0.55;"><strong>—</strong><span style="font-size:0.7em;margin-left:4px;">MAE mean · 24-hour</span></div>
         ${medianPct != null ? `<div style="font-size:0.72em;margin-top:2px;opacity:0.55;"><strong style="color:${medianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${medianPct >= 0 ? "+" : ""}${medianPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE median · 7-day</span></div>` : ""}
+        ${touchedMeanPct != null ? `<div style="font-size:0.72em;margin-top:6px;padding-top:4px;border-top:1px dashed #1a2530;opacity:0.7;"><strong style="color:${touchedMeanPct < 0 ? "#4ad29a" : "#fb7c5c"};">${touchedMeanPct >= 0 ? "+" : ""}${touchedMeanPct.toFixed(1)}%</strong><span style="font-size:0.7em;opacity:0.55;margin-left:4px;">MAE mean · touched (n=${touchedRows.length})</span>${touchedMedianPct != null ? `<span style="font-size:0.7em;opacity:0.55;margin-left:6px;">· median <strong style="color:${touchedMedianPct < 0 ? "#4ad29a" : "#fb7c5c"};">${touchedMedianPct >= 0 ? "+" : ""}${touchedMedianPct.toFixed(1)}%</strong></span>` : ""}</div><div style="font-size:0.62em;margin-top:2px;opacity:0.45;">excludes pa/pr (no MAE stack) + cc/dp (derived)</div>` : ""}
       </div>
       <div>
         <div style="font-size:0.7em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.65;margin-bottom:2px;">Winning fields</div>
