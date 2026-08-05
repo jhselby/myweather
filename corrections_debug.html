@@ -864,7 +864,7 @@
         <td style="padding:5px 10px;vertical-align:top;">L1 → L2 KBOS+KBVY hourly[0] blend → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → clp (dormant) <span style="opacity:0.6;">(cl in _FIELD_SKIP; cl_l6 = raw)</span></td>
         <td class="pf-mae" data-field="cl" style="padding:5px 10px;vertical-align:top;">—</td>
         <td class="pf-today" data-field="cl" style="padding:5px 10px;vertical-align:top;opacity:0.85;">—</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">cl now green — 7/7 wins over 7 days, −1.1% vs raw</strong> (post applied_layer poison backfill 08-02). cl fully off Lc as of 07-30 v0.6.389f — walk-forward held-out showed both shift-table shapes hurt cl (pool_vs_raw −22.15%, reg_vs_raw −30.37%). Shift-table can't distinguish "model over-forecasts overcast" from "correctly forecasts overcast" — cl currently in the latter regime. Reversibility: remove <code>"cl"</code> from <code>_FIELD_SKIP</code>. <strong>clp</strong> Stage 3 wired 07-24 v0.6.379 ENABLED=False (unaffected by cl Lc kill). Gate EXTENDED to 08-03 after shadow-write fix v0.6.382p; day 6/7 · closes tomorrow.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong><span class="pf-status" data-field="cl">cl status loading…</span></strong> (post applied_layer poison backfill 08-02; note auto-populated from same source as the 7-day cell above). cl fully off Lc as of 07-30 v0.6.389f — walk-forward held-out showed both shift-table shapes hurt cl (pool_vs_raw −22.15%, reg_vs_raw −30.37%). Shift-table can't distinguish "model over-forecasts overcast" from "correctly forecasts overcast" — cl currently in the latter regime. Reversibility: remove <code>"cl"</code> from <code>_FIELD_SKIP</code>. <strong>clp</strong> Stage 3 wired 07-24 v0.6.379 ENABLED=False (unaffected by cl Lc kill). Gate EXTENDED to 08-03 after shadow-write fix v0.6.382p; day 6/7 · closes tomorrow.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cm</code> mid cloud</td>
@@ -3367,6 +3367,32 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
           cutsUsed.count++;
         });
       }
+      // Per-field status prefixes on the narrative column (span.pf-status).
+      // Same last_7d.prod_real-vs-raw math as the pf-mae cell — keeps the
+      // narrative from lying when the cell drifts (as it did with cl's
+      // 08-02 "cl now green −1.1%" note that stayed static while the 7d
+      // window rolled through the 07-28→31 Lc/clp poison).
+      document.querySelectorAll("span.pf-status[data-field]").forEach(el => {
+        const f = el.dataset.field;
+        const layers = last7[f];
+        if (!layers) { el.textContent = `${f}: no 7-day data`; el.style.color = "#8a93a3"; return; }
+        const rMae = (layers.raw || {}).mae;
+        if (rMae == null || rMae === 0) { el.textContent = `${f}: no 7-day data`; el.style.color = "#8a93a3"; return; }
+        const pri = PROD_PRIORITY[f] || ["prod_real", "l1"];
+        let pMae = null;
+        for (const layer of pri) {
+          const s = layers[layer];
+          if (s && s.mae != null) { pMae = s.mae; break; }
+        }
+        if (pMae == null) { el.textContent = `${f}: no 7-day data`; el.style.color = "#8a93a3"; return; }
+        const pct = (pMae - rMae) / rMae * 100;
+        const sign = pct >= 0 ? "+" : "−";
+        const abs = Math.abs(pct).toFixed(1);
+        const color = pct <= -1.0 ? "#4ad29a" : (pct >= 1.0 ? "#fb7c5c" : "#e0d472");
+        const verdict = pct <= -1.0 ? "winning" : (pct >= 1.0 ? "losing" : "flat");
+        el.style.color = color;
+        el.textContent = `${f} 7-day vs raw: ${sign}${abs}% (${verdict})`;
+      });
       // Narrative — bin fields by 7-day performance and auto-populate.
       const narrEl = document.getElementById("pf-snapshot-narrative");
       if (narrEl) {
@@ -6642,7 +6668,13 @@ load();
     const metricLabel = (metric === "bias") ? "Bias" : metric === "brier" ? "Brier" : metric.toUpperCase();
     for (const fld of (payload.fields || [])) {
       const rawDaily = seriesFor(fld, "raw", metric);
-      const prodDaily = seriesFor(fld, "prod", metric);
+      // L1_ONLY fields (wd) publish prod_real instead of prod because they
+      // have no strict L1→L4 chain to aggregate. Fall back so the sparkline
+      // + MAE label render for them too.
+      let prodDaily = seriesFor(fld, "prod", metric);
+      if (!prodDaily.some(v => v !== null)) {
+        prodDaily = seriesFor(fld, "prod_real", metric);
+      }
       const rawMean = rollingMean(rawDaily);
       const prodMean = rollingMean(prodDaily);
       // Skip fields with no rolling-mean data (too early in history)
@@ -6668,7 +6700,7 @@ load();
         renderSparklines();
       };
       const header = document.createElement("div");
-      const shortLabel = (FIELD_LABELS[fld] || fld).split(" (")[0];
+      const shortLabel = FIELD_LABELS[fld] || fld;
       const isSelected = (fieldSel.value === fld);
       header.innerHTML = `<span style="font-size:0.78em;color:${isSelected ? '#7fb3ff' : '#cfd8e3'};font-weight:${isSelected ? '600' : '500'};">${shortLabel}</span>` +
         (latestProd !== null ? ` <span style="font-size:0.72em;color:#4ad29a;opacity:0.85;">${metricLabel} ${latestProd.toFixed(latestProd < 1 ? 3 : 1)}</span>` : "");
