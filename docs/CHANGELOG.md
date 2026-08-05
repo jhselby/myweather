@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.394b • August 5, 2026 (applicability_map fix — dpbp/wsbp descriptors return correct schema shape)</strong></summary>
+
+- **Bug found during 394a debug-sweep audit:** `dp_bias_persistence.describe_applicability()` and `ws_bias_persistence.describe_applicability()` returned the wrong shape — flat dict with `enabled`/`gate_summary`/`action` keys instead of the schema's `category` + `fields:[{fires_when, gated_by, current_state}]` wrapper. Result: applicability map on debug page rendered both rows with empty category and empty current_state despite dpbp being LIVE for 24h and wsbp being live-shadow. Silent-lie — the "at-a-glance" pipeline view claimed no info on two specialists.
+- **Fix:** rewrote both `describe_applicability()` to match the `ch_persistence_gate` shape (which was the working template). ENABLED-True path emits "adding +X°F / subtracting min(prev_bias, cap)"; ENABLED-False path emits "telemetry-only (shadow write); would…". Focus regimes rendered from `_params()` — no hardcoded values, so future param changes propagate automatically.
+- **Post-deploy verified:** live payload at 13:57 UTC shows `category=specialist` + populated `current_state` for both. dpbp reads "ENABLED True; adding +2.0°F"; wsbp reads "ENABLED False; telemetry-only, would subtract min(prev_bias, 3.0)."
+- **Class of bug:** describe_applicability() has no schema-coverage test. Silent shape breakage is the class of failure this file exists to prevent — descriptor coverage in `tests/` is a follow-up worth adding (assert every module's return value has `layer_id`, `category`, `fields[]` with `current_state`).
+
+</details>
+
+<details>
 <summary><strong>v0.6.394a • August 5, 2026 (debug page Rule 5 sweep — sr Lsb LIVE, C1h in stack + watches, calendar/Recent Activity roll, stale verdict-pending copy)</strong></summary>
 
 - **sr row updated for Lsb flip** — replaces the "flip HELD, re-check 08-05" copy with LIVE stamp, Stage 2 numbers, post-deploy applied=True verification, watch points (hour 13, halves B).

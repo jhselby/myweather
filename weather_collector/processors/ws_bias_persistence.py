@@ -241,14 +241,29 @@ def stamp_ws_bias_persistence(weather_data, gcs_client=None, bucket_name=None):
 
 def describe_applicability():
     trigger, cap, min_lead, focus_regimes = _params()
+    regimes_str = ", ".join(sorted(focus_regimes))
+    fires_when = (
+        f"ENABLED AND regime ∈ {{{regimes_str}}} "
+        f"AND lead ≥ {min_lead}h AND prev-24h ws_bias(regime) > +{trigger:.1f} mph"
+    )
+    if ENABLED:
+        current_state = (
+            f"ENABLED True; subtracting min(prev_bias, {cap:.1f}) mph from wind_speed "
+            f"on qualifying leads (non-neg clamped). Focus regimes: {regimes_str}."
+        )
+    else:
+        current_state = (
+            f"ENABLED False; telemetry-only (shadow write). Would subtract "
+            f"min(prev_bias, {cap:.1f}) mph on qualifying leads."
+        )
     return [{
         "layer_id": "ws_bias_persistence",
-        "field": FIELD,
-        "name": "ws bias-persistence gate",
-        "enabled": ENABLED,
-        "gate_summary": (
-            f"regime ∈ {{{', '.join(sorted(focus_regimes))}}} "
-            f"AND lead ≥ {min_lead}h AND prev-24h ws_bias > +{trigger:.1f} mph"
-        ),
-        "action": f"subtract min(prev_bias, {cap:.1f}) mph from wind_speed",
+        "name": "ws bias-persistence gate (antecedent-error, sign-inverted)",
+        "category": "specialist",
+        "fields": [{
+            "field": FIELD,
+            "fires_when": fires_when,
+            "gated_by": f"ENABLED + regime ∈ {{{regimes_str}}} + lead ≥ {min_lead}h + prev-24h ws_bias trigger",
+            "current_state": current_state,
+        }],
     }]

@@ -268,14 +268,29 @@ def describe_applicability():
     """Applicability descriptor for the debug page. Returns list of
     layer descriptors per applicability_map schema."""
     trigger, correction, min_lead, focus_regimes = _params()
+    regimes_str = ", ".join(sorted(focus_regimes))
+    fires_when = (
+        f"ENABLED AND regime ∈ {{{regimes_str}}} "
+        f"AND lead ≥ {min_lead}h AND prev-24h dp_bias(regime) < {trigger:+.1f}°F"
+    )
+    if ENABLED:
+        current_state = (
+            f"ENABLED True; adding +{correction:.1f}°F to corrected dew point "
+            f"on qualifying leads. Focus regimes: {regimes_str}."
+        )
+    else:
+        current_state = (
+            f"ENABLED False; telemetry-only (shadow write). Would add "
+            f"+{correction:.1f}°F on qualifying leads."
+        )
     return [{
         "layer_id": "dp_bias_persistence",
-        "field": FIELD,
-        "name": "dp bias-persistence gate",
-        "enabled": ENABLED,
-        "gate_summary": (
-            f"regime ∈ {{{', '.join(sorted(focus_regimes))}}} "
-            f"AND lead ≥ {min_lead}h AND prev-24h dp_bias < {trigger:+.1f}°F"
-        ),
-        "action": f"+{correction:.1f}°F to corrected dew point",
+        "name": "dp bias-persistence gate (antecedent-error)",
+        "category": "specialist",
+        "fields": [{
+            "field": FIELD,
+            "fires_when": fires_when,
+            "gated_by": f"ENABLED + regime ∈ {{{regimes_str}}} + lead ≥ {min_lead}h + prev-24h dp_bias trigger",
+            "current_state": current_state,
+        }],
     }]
