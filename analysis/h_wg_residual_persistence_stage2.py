@@ -42,9 +42,9 @@ OUT_JSON = os.path.abspath(os.path.join(
 
 # 2026-08-01: slid forward 9 days so windows cover post-shift data
 # (MLC collapse / cc-cluster distribution shift). See v0.6.358.
-WIN_A_LO, WIN_A_HI = "2026-07-17T00:00", "2026-08-01T00:00"
-WIN_B_LO, WIN_B_HI = "2026-07-02T00:00", "2026-07-17T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-07-02T00:00", "2026-08-01T00:00"
+WIN_A_LO, WIN_A_HI = "2026-07-21T00:00", "2026-08-05T00:00"
+WIN_B_LO, WIN_B_HI = "2026-07-06T00:00", "2026-07-21T00:00"
+WIN_FULL_LO, WIN_FULL_HI = "2026-07-06T00:00", "2026-08-05T00:00"
 
 FIELD = "wg"
 WINDOW_DAYS = 14

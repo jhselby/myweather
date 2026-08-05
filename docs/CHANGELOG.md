@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.393b • August 5, 2026 (analysis fossil-window slide — 11 h_* scripts +4d)</strong></summary>
+
+- **Batch WIN_ slide across 11 analysis scripts.** Digest sentry flagged max window date 08-01 across `h_ch_persistence_blend`, `h_ch_persistence_blend_stage2`, `h_cl_persistence_blend`, `h_cl_persistence_blend_stage2`, `h_dp_residual_persistence_stage2`, `h_full_regime_sweep`, `h_l3_asymmetric_stage1`, `h_t_l2_regression_stage1`, `h_wd_persistence_gate_stage1`, `h_wd_persistence_gate_stage2`, `h_wg_residual_persistence_stage2`. Slid uniformly +4d: WIN_A 07-17→08-01 becomes 07-21→08-05; WIN_B 07-02→07-17 becomes 07-06→07-21; WIN_FULL 07-02→08-01 becomes 07-06→08-05. Halves-agreement layout preserved (2×15d, non-overlapping). Spot-verified on `h_ch_persistence_blend`: SHIP verdict holds under new window, all 7 winning regimes still ★, higher n (26k vs prior). Any 7-day streak or gate-cleared verdict on these scripts before tomorrow's digest is now trustworthy.
+
+</details>
+
+<details>
 <summary><strong>v0.6.393a • August 5, 2026 (scoreboard: touched-fields mean/median line)</strong></summary>
 
 - **Touched-fields aggregate on the Overall vs raw tile** (`corrections_debug.html`). Joe flagged the mean/median gap this morning (−12.9% mean vs −0.9% median on 7d MAE). Root cause: 3 fields (pa, pr, plus pp which is Brier-only) have no MAE-affecting layer, so prod ≡ raw by construction — three exact 0.00% entries pull both aggregates toward zero and land the median in a run of zeros. Added `MAE_UNCORRECTED_FIELDS = {pa, pr}` (pp already routed to `brierRows`). New sub-tile below existing median: "MAE mean · touched (n=9) · median X%" with an "excludes pa/pr (no MAE stack) + cc/dp (derived)" caveat. All-fields mean/median stay as-is — the top line answers "myweather vs raw across everything", the touched line answers "how much lift the correction stack actually produces." Both shown so a single number can't mislead either direction.

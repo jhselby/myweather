@@ -46,9 +46,9 @@ OUT_JSON = os.path.abspath(os.path.join(
 ))
 
 # Windows mirror h_cl_persistence_blend.py exactly. If you slide one, slide both.
-WIN_A_LO, WIN_A_HI = "2026-07-17T00:00", "2026-08-01T00:00"
-WIN_B_LO, WIN_B_HI = "2026-07-02T00:00", "2026-07-17T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-07-02T00:00", "2026-08-01T00:00"
+WIN_A_LO, WIN_A_HI = "2026-07-21T00:00", "2026-08-05T00:00"
+WIN_B_LO, WIN_B_HI = "2026-07-06T00:00", "2026-07-21T00:00"
+WIN_FULL_LO, WIN_FULL_HI = "2026-07-06T00:00", "2026-08-05T00:00"
 
 FIELD = "cl"
 MIN_N_CELL = 200
