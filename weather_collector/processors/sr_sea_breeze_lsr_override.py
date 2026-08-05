@@ -51,7 +51,7 @@ from ..utils import redact_secrets
 
 
 TZ = pytz.timezone("America/New_York")
-ENABLED = False  # Fresh 7-day gate 07-28 → 08-04 on narrowed cc < CC_LO shape.
+ENABLED = True  # Flipped 2026-08-05 v0.6.394. Gate cleared 7/7 daily PROMOTE reads (07-30 → 08-05) on narrowed cc<25 shape. Stage 2 pooled +11.34%, halves +23.9%/+4.0%, cc-bin 0-25 +44.6% (n=718). Watch points: hour 13 SKIP on test (bias still applied — may need per-hour SHIP filter in curator if it drags sr Last-24h); halves B +4% is recency-weaker than +24% training half.
 SUN_UP_THRESHOLD = 50.0  # W/m² — mirror Lsr's night-time suppression.
 
 _CURATED_PATH = os.path.join(

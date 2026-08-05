@@ -1,6 +1,17 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.394 • August 5, 2026 (Lsb flipped ENABLED=True — sr sea_breeze cc-gated Lsr override goes live)</strong></summary>
+
+- **Lsb (sr_sea_breeze_lsr_override.py) flipped ENABLED=True.** Fresh 7-day gate on the narrowed cc<25 shape cleared: 7/7 daily PROMOTE verdicts (07-30 → 08-05) from `sr_sea_breeze_lsr_refit_stage2.py`. Today's Stage 2 (n_test=1,838): pooled Δ +11.34%, halves +23.9%/+4.0% (both ≥ 0), lead-band all 4 SHIP, cc-bin 0-25 +44.6% (n=718, halves +49%/+34%). Per-hour: 5 SHIP (12, 14, 17, 18, 19), 3 SKIP (13, 15, 16). Curated table is `weather_collector/data/sr_sea_breeze_lsr_curated.json` (unchanged shape — runtime reads hourly_bias_wm2 + cc_gate, ignores `enabled` field which is informational).
+- **Watch points for 14-day post-ship gate:**
+  - Hour 13 SKIP on test set (bias +16.49 W/m² still applied). If sr Last-24h drags, curator needs a per-hour SHIP filter — cheap follow-on.
+  - Halves B +4% is notably weaker than halves A +24%. Recency-weaker signal, not a blocker. If halves B stays weak past 08-12, revisit narrowing further.
+- **Wire path unchanged.** Override is on the confidence-layer/apply side; Lsr base bias (`solar_correction.py`) continues to run for non-sea_breeze regimes. Skip regimes for base Lsr (ne_flow, calm) remain in place.
+
+</details>
+
+<details>
 <summary><strong>v0.6.393b • August 5, 2026 (analysis fossil-window slide — 11 h_* scripts +4d)</strong></summary>
 
 - **Batch WIN_ slide across 11 analysis scripts.** Digest sentry flagged max window date 08-01 across `h_ch_persistence_blend`, `h_ch_persistence_blend_stage2`, `h_cl_persistence_blend`, `h_cl_persistence_blend_stage2`, `h_dp_residual_persistence_stage2`, `h_full_regime_sweep`, `h_l3_asymmetric_stage1`, `h_t_l2_regression_stage1`, `h_wd_persistence_gate_stage1`, `h_wd_persistence_gate_stage2`, `h_wg_residual_persistence_stage2`. Slid uniformly +4d: WIN_A 07-17→08-01 becomes 07-21→08-05; WIN_B 07-02→07-17 becomes 07-06→07-21; WIN_FULL 07-02→08-01 becomes 07-06→08-05. Halves-agreement layout preserved (2×15d, non-overlapping). Spot-verified on `h_ch_persistence_blend`: SHIP verdict holds under new window, all 7 winning regimes still ★, higher n (26k vs prior). Any 7-day streak or gate-cleared verdict on these scripts before tomorrow's digest is now trustworthy.
