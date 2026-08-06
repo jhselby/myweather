@@ -3245,14 +3245,25 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
     if (raw == null || prod == null || raw === 0) {
       cell.textContent = "—"; cell.style.opacity = 0.5; return;
     }
+    // Brier-scored fields: value delta is meaningless (nothing corrects pp
+    // value in live stack; Prod==L1 exactly). Show the raw Brier score
+    // itself — that's the real signal. Delta appended only when non-zero.
+    if (isBrier) {
+      const delta = prod - raw;
+      const suffix = Math.abs(delta) > 1e-6
+        ? ` <span style="font-size:0.85em;opacity:0.7;">(Δ${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(2)})</span>`
+        : ' <span style="font-size:0.85em;opacity:0.7;">(L1 only)</span>';
+      cell.style.color = "#9fb8d8";
+      cell.innerHTML = `${raw.toFixed(2)} Brier${suffix}`;
+      return;
+    }
     const pct = (prod - raw) / raw * 100;
     const sign = pct >= 0 ? "+" : "−";
     const abs = Math.abs(pct).toFixed(1);
-    const suffix = isBrier ? ' <span style="font-size:0.85em;opacity:0.7;">(Brier)</span>' : "";
     // Color mirrors the scorecard: green = beats raw, orange = ~flat, red = worse.
     const color = pct <= -0.5 ? "#4ad29a" : (pct >= 0.5 ? "#fb7c5c" : "#e0d472");
     cell.style.color = color;
-    cell.innerHTML = `${sign}${abs}%${suffix}`;
+    cell.innerHTML = `${sign}${abs}%`;
   });
   // v0.6.390p — "last 24h" column reads mae_over_time.json's last_24h aggregate.
   // Rolling 24h window always contains a full diurnal cycle; the prior
@@ -3297,6 +3308,21 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
           if (s && s.mae != null) { pMae = s.mae; layerUsed = layer; break; }
         }
         if (pMae == null) { cell.textContent = "—"; cell.style.opacity = 0.5; return; }
+        const isBrier = cell.dataset.brier === "1";
+        // Brier-scored fields (pp): show raw Brier value, not MAE % delta.
+        if (isBrier) {
+          const rBrier = (layers.raw || {}).brier;
+          const pBrier = ((layers[layerUsed] || {}) || {}).brier;
+          if (rBrier == null) { cell.textContent = "—"; cell.style.opacity = 0.5; return; }
+          const delta = (pBrier != null) ? (pBrier - rBrier) : 0;
+          const suffix = Math.abs(delta) > 1e-6
+            ? ` <span style="font-size:0.85em;opacity:0.7;">(Δ${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(2)})</span>`
+            : ' <span style="font-size:0.85em;opacity:0.7;">(L1 only)</span>';
+          cell.style.color = "#9fb8d8";
+          cell.style.opacity = 1;
+          cell.innerHTML = `${rBrier.toFixed(2)} Brier${suffix}`;
+          return;
+        }
         const pct = (pMae - rMae) / rMae * 100;
         perFieldToday[f] = pct;
         const sign = pct >= 0 ? "+" : "−";
@@ -3402,16 +3428,31 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
             if (s && s.mae != null) { pMae = s.mae; layerUsed = layer; break; }
           }
           if (pMae == null) return;
-          const pct = (pMae - rMae) / rMae * 100;
           const isBrier = cell.dataset.brier === "1";
+          // Brier-scored fields (pp): value delta is meaningless — show raw
+          // Brier score. Pull from raw.brier / prod.brier instead of .mae.
+          if (isBrier) {
+            const rBrier = (layers.raw || {}).brier;
+            const pBrier = ((layers[layerUsed] || {}) || {}).brier;
+            if (rBrier == null) return;
+            const delta = (pBrier != null) ? (pBrier - rBrier) : 0;
+            const suffix = Math.abs(delta) > 1e-6
+              ? ` <span style="font-size:0.85em;opacity:0.7;">(Δ${delta >= 0 ? "+" : "−"}${Math.abs(delta).toFixed(2)})</span>`
+              : ' <span style="font-size:0.85em;opacity:0.7;">(L1 only)</span>';
+            cell.style.color = "#9fb8d8";
+            cell.style.opacity = 1;
+            cell.innerHTML = `${rBrier.toFixed(2)} Brier${suffix}`;
+            cutsUsed.count++;
+            return;
+          }
+          const pct = (pMae - rMae) / rMae * 100;
           const sign = pct >= 0 ? "+" : "−";
           const abs = Math.abs(pct).toFixed(1);
-          const suffix = isBrier ? ' <span style="font-size:0.85em;opacity:0.7;">(Brier)</span>' : "";
           const color = pct <= -0.5 ? "#4ad29a" : (pct >= 0.5 ? "#fb7c5c" : "#e0d472");
           const layerTag = layerUsed !== "prod_real" ? `<span style="font-size:0.65em;opacity:0.4;margin-left:2px;">(${layerUsed})</span>` : "";
           cell.style.color = color;
           cell.style.opacity = 1;
-          cell.innerHTML = `${sign}${abs}%${suffix}${layerTag}`;
+          cell.innerHTML = `${sign}${abs}%${layerTag}`;
           cutsUsed.count++;
         });
       }

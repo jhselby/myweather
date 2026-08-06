@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395b • August 6, 2026 (pp cell shows raw Brier, not meaningless MAE % delta)</strong></summary>
+
+- Per-field snapshot cells for pp (both 7-day and 24h columns) previously showed "0.0% (Brier)" — a delta vs raw that's always exactly 0 because nothing in the live stack touches pp's forecast value (verified: `raw.brier == prod_real.brier == 660.48` in mae_over_time.json). Reads as "correction stack is neutral" when the accurate read is "MAE-delta is the wrong metric here — check the score itself."
+- Fix: when `data-brier="1"` on a cell, render the raw Brier value directly (e.g. `660.48 Brier (L1 only)`). If a corrected layer ever diverges from raw, suffix auto-flips to `(Δ−X.XX)`. Baseline anchor now, meaningful delta later when pp Platt frontal×6-11h Stage 3 wires. Zero maintenance on flip.
+- Same infra could extend to pa cell (`data-brier` not set today; pa has no L2+, no shipped correction, no queued Stage 3 candidate). Not applied here to keep the change scoped to pp; pa stays on MAE-delta 0.0% until a correction candidate surfaces.
+
+</details>
+
+<details>
 <summary><strong>v0.6.395a • August 6, 2026 (debug page Rule 5 sweep for v0.6.395)</strong></summary>
 
 - Recent activity: added 08-06 entry (v0.6.395 c1 re-curate + fossil-window slides + wsbp status + h L2 closing clean); rolled 08-05 → yesterday, 08-04 → 2 days ago; trimmed 08-02/08-03 to CHANGELOG per 3-day rolling window.
