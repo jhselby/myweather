@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395a • August 6, 2026 (debug page Rule 5 sweep for v0.6.395)</strong></summary>
+
+- Recent activity: added 08-06 entry (v0.6.395 c1 re-curate + fossil-window slides + wsbp status + h L2 closing clean); rolled 08-05 → yesterday, 08-04 → 2 days ago; trimmed 08-02/08-03 to CHANGELOG per 3-day rolling window.
+- Calendar: added Thu 08-06 · today (v0.6.395); Wed 08-05 → yesterday; Tue 08-04 → 2 days ago; Fri 08-07 · tomorrow updated to reflect layer-shape sentry now clean.
+- Blocked/ongoing: wsbp entry updated — calm regime n=25 in 48h state (up from 0 on 08-04), 24h antecedent n=12 (need ≥20).
+
+</details>
+
+<details>
 <summary><strong>v0.6.395 • August 6, 2026 (c1 confidence re-curate + fossil-window slides)</strong></summary>
 
 - **c1 re-curate** (`c1_confidence_curated.json` + `c1_confidence_curated_v2.json`): `c1_calibration_audit` flipped PASS → HOLD (pass rate 52.6% < 75% threshold). wd 12-23h + 24-47h flagged DRIFTED. Re-ran `c1_confidence_calibration.py` (+ v2) + `c1_curate_confidence_table.py` (+ v2) per the audit's own next-step guidance. Result: pass rate 52.6% → 66.7%. wd cells CALIBRATED after re-cut; cl 12-23h + cm 12-23h remain DRIFTED but that's the cloud-difficulty week per `raw_difficulty_index` (5 cloud fields harder than 90d baseline) — not something more re-cutting will fix. Legacy cell count: 15 SHIP / 4 MARGINAL / 37 SKIP → 14 SHIP / 6 MARGINAL / 36 SKIP.
