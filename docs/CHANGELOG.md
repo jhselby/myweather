@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395c • August 6, 2026 (per-field snapshot cells show absolute Prod value alongside % delta)</strong></summary>
+
+- Delta-vs-raw alone doesn't tell users if a −15% correction moved `t` 2.0°F→1.7°F (perceptible) or `ws` 6.2→5.9 mph (invisible). Cross-field rank order by user-visible improvement often differs from rank by %.
+- Cells now render `−15.2% (1.7°F)` — % delta plus absolute Prod value in native units (parenthetical). Same UI pattern as v0.6.395b pp Brier cell. Applied to both 7-day (`pf-mae`) and 24-hour (`pf-today`) columns.
+- Units: t/dp = °F; ws/wg = mph; h/cc/cl/cm/ch = % (0 decimals); wd = ° (0 decimals); sr = W/m² (0 decimals); pr = inHg (3 decimals); pa = in (3 decimals). pp keeps raw Brier value from v0.6.395b.
+- Motivation from discussion: "make a forecast better than Raw" is the stated objective — measured well by % delta. But *how much better in real units* has been invisible on the debug page. This surfaces that dimension without changing the ranking, which stays keyed to % delta (the goal metric).
+
+</details>
+
+<details>
 <summary><strong>v0.6.395b • August 6, 2026 (pp cell shows raw Brier, not meaningless MAE % delta)</strong></summary>
 
 - Per-field snapshot cells for pp (both 7-day and 24h columns) previously showed "0.0% (Brier)" — a delta vs raw that's always exactly 0 because nothing in the live stack touches pp's forecast value (verified: `raw.brier == prod_real.brier == 660.48` in mae_over_time.json). Reads as "correction stack is neutral" when the accurate read is "MAE-delta is the wrong metric here — check the score itself."
