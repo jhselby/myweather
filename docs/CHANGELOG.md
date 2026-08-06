@@ -1,7 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
-<summary><strong>v0.6.395c • August 6, 2026 (per-field snapshot cells show absolute Prod value alongside % delta)</strong></summary>
+<summary><strong>v0.6.395d • August 6, 2026 (revert v0.6.395c native-units suffix)</strong></summary>
+
+- Reverted the `(1.9°F)` / `(2.5mph)` / etc. suffix added by v0.6.395c to per-field snapshot cells. Mixed units confused the reader — the % delta answers "how much better than raw?" but the native-unit absolute doesn't cleanly answer "how good is the forecast?" in a comparable unit. Real design for surfacing forecast-quality-in-comparable-units still open — likely a skill score vs climatology (unitless %), TBD.
+- pp cell (v0.6.395b) unchanged — that one is pp-specific and honest (Brier value has no meaningful % delta since Prod == L1 exactly for pp).
+
+</details>
+
+<details>
+<summary><strong>v0.6.395c • August 6, 2026 (per-field snapshot cells show absolute Prod value alongside % delta) — REVERTED in v0.6.395d</strong></summary>
 
 - Delta-vs-raw alone doesn't tell users if a −15% correction moved `t` 2.0°F→1.7°F (perceptible) or `ws` 6.2→5.9 mph (invisible). Cross-field rank order by user-visible improvement often differs from rank by %.
 - Cells now render `−15.2% (1.7°F)` — % delta plus absolute Prod value in native units (parenthetical). Same UI pattern as v0.6.395b pp Brier cell. Applied to both 7-day (`pf-mae`) and 24-hour (`pf-today`) columns.

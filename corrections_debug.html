@@ -3190,23 +3190,6 @@ function renderWatchDayCounters() {
 // (e.g., cl went catastrophic 07-28 → 07-30 but the snapshot cell still
 // read −0.2% for days). Reads the same _avg1to47(prod) - _avg1to47(l1)
 // math as renderScorecardBanner so this section is always in sync.
-// v0.6.395c — Absolute Prod value in native units, appended to % delta.
-// Delta-vs-raw alone doesn't tell users if a −15% correction moved
-// t 2.0°F→1.7°F (perceptible) or ws 6.2→5.9 mph (invisible). Cross-field
-// rank order by user-visible improvement often differs from rank by %.
-const FIELD_UNITS = {
-  t: "°F", dp: "°F", h: "%",
-  ws: "mph", wg: "mph", wd: "°",
-  cc: "%", cl: "%", cm: "%", ch: "%",
-  sr: "W/m²", pr: "inHg", pa: "in",
-};
-function _fmtAbs(f, v) {
-  if (v == null) return "";
-  const u = FIELD_UNITS[f] || "";
-  const digits = (f === "pr" ? 3 : (f === "pa" ? 3 : (["cc","cl","cm","ch","h","wd","sr"].includes(f) ? 0 : 1)));
-  return `${v.toFixed(digits)}${u}`;
-}
-
 function renderPerFieldSnapshot(tsDoc, wxDoc) {
   if (!tsDoc || !tsDoc.per_layer_mae_by_lead) return;
   const cells = document.querySelectorAll("td.pf-mae[data-field]");
@@ -3280,9 +3263,7 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
     // Color mirrors the scorecard: green = beats raw, orange = ~flat, red = worse.
     const color = pct <= -0.5 ? "#4ad29a" : (pct >= 0.5 ? "#fb7c5c" : "#e0d472");
     cell.style.color = color;
-    const absLabel = _fmtAbs(f, prod);
-    const absSuffix = absLabel ? ` <span style="font-size:0.85em;opacity:0.7;">(${absLabel})</span>` : "";
-    cell.innerHTML = `${sign}${abs}%${absSuffix}`;
+    cell.innerHTML = `${sign}${abs}%`;
   });
   // v0.6.390p — "last 24h" column reads mae_over_time.json's last_24h aggregate.
   // Rolling 24h window always contains a full diurnal cycle; the prior
@@ -3350,9 +3331,7 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
         cell.style.color = color;
         cell.style.opacity = 1;
         const layerTag = layerUsed !== "prod_real" ? `<span style="font-size:0.65em;opacity:0.4;margin-left:2px;">(${layerUsed})</span>` : "";
-        const absLabel = _fmtAbs(f, pMae);
-        const absSuffix = absLabel ? ` <span style="font-size:0.85em;opacity:0.7;">(${absLabel})</span>` : "";
-        cell.innerHTML = `${sign}${abs}%${absSuffix}${layerTag}`;
+        cell.innerHTML = `${sign}${abs}%${layerTag}`;
       });
       // Overall tile: mean of independent fields (cc/pp excluded).
       const DERIVED = new Set(["cc", "pp"]);
@@ -3471,11 +3450,9 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
           const abs = Math.abs(pct).toFixed(1);
           const color = pct <= -0.5 ? "#4ad29a" : (pct >= 0.5 ? "#fb7c5c" : "#e0d472");
           const layerTag = layerUsed !== "prod_real" ? `<span style="font-size:0.65em;opacity:0.4;margin-left:2px;">(${layerUsed})</span>` : "";
-          const absLabel = _fmtAbs(f, pMae);
-          const absSuffix = absLabel ? ` <span style="font-size:0.85em;opacity:0.7;">(${absLabel})</span>` : "";
           cell.style.color = color;
           cell.style.opacity = 1;
-          cell.innerHTML = `${sign}${abs}%${absSuffix}${layerTag}`;
+          cell.innerHTML = `${sign}${abs}%${layerTag}`;
           cutsUsed.count++;
         });
       }
