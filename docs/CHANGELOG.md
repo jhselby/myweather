@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395 • August 6, 2026 (c1 confidence re-curate + fossil-window slides)</strong></summary>
+
+- **c1 re-curate** (`c1_confidence_curated.json` + `c1_confidence_curated_v2.json`): `c1_calibration_audit` flipped PASS → HOLD (pass rate 52.6% < 75% threshold). wd 12-23h + 24-47h flagged DRIFTED. Re-ran `c1_confidence_calibration.py` (+ v2) + `c1_curate_confidence_table.py` (+ v2) per the audit's own next-step guidance. Result: pass rate 52.6% → 66.7%. wd cells CALIBRATED after re-cut; cl 12-23h + cm 12-23h remain DRIFTED but that's the cloud-difficulty week per `raw_difficulty_index` (5 cloud fields harder than 90d baseline) — not something more re-cutting will fix. Legacy cell count: 15 SHIP / 4 MARGINAL / 37 SKIP → 14 SHIP / 6 MARGINAL / 36 SKIP.
+- **Fossil-window slides (+4d)**: three analysis scripts flagged by digest sentry as `max window date 2026-08-02 (4d behind today)` — WIN_ constants advanced +4d. `h_ws_l3_regression_stage1.py` (A 07-18→08-02 → 07-22→08-06), `h_wg_l3_regression_stage1.py` (same shape), `h_ch_persistence_blend_stage2_vs_l6.py` (A 07-27→08-02 → 07-31→08-06). All re-ran clean. Per `[[feedback_fossil_windows]]` — stale windows produce fossil verdicts.
+
+</details>
+
+<details>
 <summary><strong>v0.6.394b • August 5, 2026 (applicability_map fix — dpbp/wsbp descriptors return correct schema shape)</strong></summary>
 
 - **Bug found during 394a debug-sweep audit:** `dp_bias_persistence.describe_applicability()` and `ws_bias_persistence.describe_applicability()` returned the wrong shape — flat dict with `enabled`/`gate_summary`/`action` keys instead of the schema's `category` + `fields:[{fires_when, gated_by, current_state}]` wrapper. Result: applicability map on debug page rendered both rows with empty category and empty current_state despite dpbp being LIVE for 24h and wsbp being live-shadow. Silent-lie — the "at-a-glance" pipeline view claimed no info on two specialists.
