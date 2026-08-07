@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395e • August 7, 2026 (debug-page sweep — h L2 watch closed clean; sr Lsb Day 1 red-flag)</strong></summary>
+
+- **h L2 shape re-tune 7-day watch closed CLEAN.** Shipped v0.6.390g 07-31 (H_SOFT_RAMP_FLOOR 0.4→0.1, H_SOFT_RAMP_END 24→10). Close read: layer-shape sentry green at all bands, h pair-log ΔMAE −28.3%. Post-ship watches entry recolored green, watch-day counter retired.
+- **sr Lsb Day 1 red-flag surfaced** (v0.6.394, flipped 08-05). 08-06 per-day `prod_real` MAE 86.14 vs raw MAE 66.73 (−29%). L5-applied daylight hours 09–14 carry prod_bias +160 to +320 W/m². Matches [[project_sr_lsb_flip_gate]] hour-13 primary watch point + halves-B recency-weak secondary. No code change today — holding for one more tick. Recent Activity + calendar note the trigger; next-step is per-hour SHIP filter (drop hours 13/15/16) in `sr_sea_breeze_lsr_refit_stage2.py`, two more days regressing → revert `ENABLED=True`.
+- **Recent activity + calendar rolled forward.** 08-04 entry trimmed to CHANGELOG. wsbp status updated ("as of 08-07"). Stale chp watch-close narrative ("closes today (08-02)") corrected to past-tense.
+
+</details>
+
+<details>
 <summary><strong>v0.6.395d • August 6, 2026 (revert v0.6.395c native-units suffix)</strong></summary>
 
 - Reverted the `(1.9°F)` / `(2.5mph)` / etc. suffix added by v0.6.395c to per-field snapshot cells. Mixed units confused the reader — the % delta answers "how much better than raw?" but the native-unit absolute doesn't cleanly answer "how good is the forecast?" in a comparable unit. Real design for surfacing forecast-quality-in-comparable-units still open — likely a skill score vs climatology (unitless %), TBD.
