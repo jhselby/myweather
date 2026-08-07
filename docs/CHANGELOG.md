@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395i • August 7, 2026 ("paused" → "unavailable" on the t/h fallback row)</strong></summary>
+
+- Current-tick correction table now shows `unavailable` (with tooltip: "Raw model (HRRR/GFS) did not respond this tick; L2 station-bias correction can't compute without it.") instead of `paused` for t and h when the pipeline is in fallback mode. "Paused" implied intent — the actual state is upstream failure, so the word was misleading.
+
+</details>
+
+<details>
 <summary><strong>v0.6.395h • August 7, 2026 (header timestamps unified: MM-DD HH:MM ET, 24h)</strong></summary>
 
 - Header freshness stamps (fitted, decay applied, MAE data refreshed) all render as `MM-DD HH:MM ET` via new `fmtET()` helper. No more mixed ISO-with-Z, ISO-without-Z, and ambiguous local strings — one shape everywhere.

@@ -2509,7 +2509,8 @@ function renderHeadlineBox(wxDoc) {
     if (!r) return '<td></td><td></td><td></td><td></td>';
     const del = _fmtDelta(r.raw, r.cor, r.unit, r.dec, r.delta);
     const rawTxt = (degraded && (r.label === "Temperature (t)" || r.label === "Humidity (h)"))
-      ? '<span style="opacity:0.6;">paused</span>' : _fmt(r.raw, r.unit, r.dec);
+      ? '<span style="opacity:0.6;" title="Raw model (HRRR/GFS) did not respond this tick; L2 station-bias correction can\'t compute without it.">unavailable</span>'
+      : _fmt(r.raw, r.unit, r.dec);
     const corTxt = (degraded && (r.label === "Temperature (t)" || r.label === "Humidity (h)"))
       ? '<span style="opacity:0.6;">—</span>' : _fmt(r.cor, r.unit, r.dec);
     // v0.6.382h: right-column label needs to match left-column's muted grey
