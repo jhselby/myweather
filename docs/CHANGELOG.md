@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395j • August 7, 2026 (degraded-mode: show WU-station Production value, not em-dash)</strong></summary>
+
+- Bug fix in the current-tick correction table: when the pipeline is in fallback mode (HRRR/GFS unavailable), the Production column for t/h was rendering `—` even though the value exists (sourced from WU stations via `hyperlocal.corrected_temp`). The front-end has always shown this value in the main app; the debug table was misrepresenting the data as missing.
+- Now shows the real value with a `(stations only)` suffix + tooltip: "Sourced directly from WU stations — no HRRR/GFS bias correction applied this tick." Raw Model column still correctly reads `unavailable`, Correction column still `—` (can't compute correction without a raw baseline).
+- Discovered while investigating a HRRR/GFS outage this evening — user asked "where does the temperature the front-end is showing come from, and why isn't it in the debug table?" Answer: same source (`hourly.temperature[0]`), and the debug table had a rendering bug that hid it.
+
+</details>
+
+<details>
 <summary><strong>v0.6.395i • August 7, 2026 ("paused" → "unavailable" on the t/h fallback row)</strong></summary>
 
 - Current-tick correction table now shows `unavailable` (with tooltip: "Raw model (HRRR/GFS) did not respond this tick; L2 station-bias correction can't compute without it.") instead of `paused` for t and h when the pipeline is in fallback mode. "Paused" implied intent — the actual state is upstream failure, so the word was misleading.
