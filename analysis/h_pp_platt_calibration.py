@@ -42,10 +42,11 @@ from datetime import datetime, timezone
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
+from _output import out as _out  # noqa: E402
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
-OUT_TXT = os.path.join(SCRIPT_DIR, "output", "h_pp_platt_calibration.txt")
-OUT_JSON = os.path.join(SCRIPT_DIR, "output", "h_pp_platt_calibration.json")
+OUT_TXT = _out("h_pp_platt_calibration.txt")
+OUT_JSON = _out("h_pp_platt_calibration.json")
 
 FIELD = "pp"
 CLIP = 1e-3                 # keep logit finite

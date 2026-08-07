@@ -47,11 +47,11 @@ from datetime import datetime, timedelta
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path
+from _output import out as _out
 
 
 LOG_URL = "https://data.wymancove.com/gate_firing_log.jsonl"
-OUTPUT_JSON = os.path.join(os.path.dirname(__file__), "output",
-                           "gate_firing_rollup.json")
+OUTPUT_JSON = _out("gate_firing_rollup.json")
 WINDOW_DAYS = 7
 
 

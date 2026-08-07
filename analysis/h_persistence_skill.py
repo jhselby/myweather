@@ -60,12 +60,11 @@ from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path  # noqa: E402
+from _output import out as _out  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
-OUT_TXT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                       "output", "h_persistence_skill_summary.txt")
-OUT_JSON = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        "output", "h_persistence_skill.json")
+OUT_TXT = _out("h_persistence_skill_summary.txt")
+OUT_JSON = _out("h_persistence_skill.json")
 
 FIELDS = ["t", "dp", "h", "pr", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pp"]
 CIRCULAR_FIELDS = {"wd"}

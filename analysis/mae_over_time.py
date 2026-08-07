@@ -35,10 +35,11 @@ from datetime import datetime, timezone, date, timedelta
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
+from _output import out as _out  # noqa: E402
 
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 HISTORY_URL = "https://data.wymancove.com/mae_over_time.json"
-OUT_JSON = os.path.join(SCRIPT_DIR, "output", "mae_over_time.json")
+OUT_JSON = _out("mae_over_time.json")
 
 FIELDS = ["t", "dp", "h", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pr", "pp", "pa"]
 MIN_N_PER_DAY = 200  # skip (field, day) cells with too few pairs — avoids noise spikes

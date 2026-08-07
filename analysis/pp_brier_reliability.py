@@ -38,10 +38,11 @@ from collections import defaultdict
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
+from _output import out as _out  # noqa: E402
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
-OUT_TXT = os.path.join(SCRIPT_DIR, "output", "pp_brier_reliability.txt")
-OUT_JSON = os.path.join(SCRIPT_DIR, "output", "pp_brier_reliability.json")
+OUT_TXT = _out("pp_brier_reliability.txt")
+OUT_JSON = _out("pp_brier_reliability.json")
 
 FIELD = "pp"
 BIN_EDGES = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100.0001]  # last bin catches 100 inclusive

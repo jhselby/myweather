@@ -19,6 +19,28 @@ run-collector:
 logs:
 	gcloud functions logs read myweather-collector --region=us-east1 --limit=50
 
+# Publisher — runs the 6 dashboard-data rollups hourly, publishes JSON to GCS
+# for the debug page. See publisher/main.py.
+deploy-publisher:
+	gcloud functions deploy myweather-publisher \
+	  --gen2 \
+	  --runtime=python311 \
+	  --region=us-east1 \
+	  --source=. \
+	  --entry-point=publish \
+	  --trigger-http \
+	  --no-allow-unauthenticated \
+	  --timeout=540s \
+	  --memory=1024MB \
+	  --max-instances=1 \
+	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811
+
+run-publisher:
+	gcloud scheduler jobs run myweather-publisher-schedule --location=us-east1
+
+logs-publisher:
+	gcloud functions logs read myweather-publisher --region=us-east1 --limit=50
+
 run-local:
 	@bash -lc 'set +x; set -a; source .env; set +a; python3 -c "from weather_collector.collector import run; run(None)"'
 
