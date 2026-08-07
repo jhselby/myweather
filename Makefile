@@ -31,7 +31,7 @@ deploy-publisher:
 	  --trigger-http \
 	  --no-allow-unauthenticated \
 	  --timeout=540s \
-	  --memory=1024MB \
+	  --memory=2048MB \
 	  --max-instances=1 \
 	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811
 
