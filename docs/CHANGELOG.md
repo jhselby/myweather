@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395f • August 7, 2026 (publisher Cloud Function live; debug page narrative updated)</strong></summary>
+
+- New `myweather-publisher` Cloud Function deployed to us-east1, hourly Cloud Scheduler cron (`0 * * * *`). Runs the 6 dashboard-data publishers (`mae_over_time`, `gate_firing_rollup`, `h_persistence_skill`, `h_pp_platt_calibration`, `h_pp_bin_calibration`, `pp_brier_reliability`) and pushes fresh JSON to `gs://myweather-data/` on every hour. Removes the daily-manual-digest dependency for the debug page's 24h/7d MAE cells and the accuracy-over-time chart. Digest stays as-is for experiments; this only takes over the production publisher role.
+- Per-field snapshot topline updated: both 7-day and 24-hour cells now read from `mae_over_time.json` (unified since v0.6.391). Header narrative corrected to describe the new hourly refresh cadence.
+- Accuracy-over-time chart meta-line: "refreshed by daily digest" → "refreshed hourly by publisher Cloud Function."
+- First live cloud run 22:31 UTC 2026-08-07, all 6 publishers OK, total 3m 42s runtime, 2GB memory (was 1GB, OOM'd on pair-log aggregation). Free-tier cost ~16% of compute budget at hourly cadence.
+
+</details>
+
+<details>
 <summary><strong>v0.6.395e • August 7, 2026 (debug-page sweep — h L2 watch closed clean; sr Lsb Day 1 red-flag)</strong></summary>
 
 - **h L2 shape re-tune 7-day watch closed CLEAN.** Shipped v0.6.390g 07-31 (H_SOFT_RAMP_FLOOR 0.4→0.1, H_SOFT_RAMP_END 24→10). Close read: layer-shape sentry green at all bands, h pair-log ΔMAE −28.3%. Post-ship watches entry recolored green, watch-day counter retired.
