@@ -1950,6 +1950,22 @@ function showStatus(id, msg) {
   s.hidden = false;
 }
 
+// Format any ISO / date-parseable string as "MM-DD HH:MM ET" (24-hour).
+// Used by all header freshness stamps so they read consistently.
+function fmtET(iso) {
+  if (!iso) return "?";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/New_York',
+    month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+    hour12: false,
+  }).formatToParts(d);
+  const get = k => (parts.find(p => p.type === k) || {}).value;
+  return `${get('month')}-${get('day')} ${get('hour')}:${get('minute')} ET`;
+}
+
 function renderMeta(corrDoc, wxDoc) {
   const el = document.getElementById("meta");
   const dm = (wxDoc && wxDoc.decay_meta) || null;
@@ -1965,9 +1981,9 @@ function renderMeta(corrDoc, wxDoc) {
   if (l4FieldsSpan) l4FieldsSpan.textContent = l4FieldsStr;
   if (l3BrierSpan)  l3BrierSpan.textContent  = l3BrierFields.length ? l3BrierFields.join(', ') : 'none';
   const applied = dm
-    ? `decay applied ${dm.applied_at}`
+    ? `decay applied <strong>${fmtET(dm.applied_at)}</strong>`
     : `<strong style="color:#ff9f4a;">decay NOT yet applied to this payload</strong>`;
-  const fitted = corrDoc ? `fitted <strong>${corrDoc.fitted_at || "?"}</strong> · <strong>${(corrDoc.n_pairs || 0).toLocaleString()}</strong> pairs · ` : "";
+  const fitted = corrDoc ? `fitted <strong>${fmtET(corrDoc.fitted_at)}</strong> · <strong>${(corrDoc.n_pairs || 0).toLocaleString()}</strong> pairs · ` : "";
   const versionSpan = `<strong id="meta-version" style="color:#7fb3ff;">…</strong> · `;
   el.innerHTML =
     versionSpan +
@@ -3556,7 +3572,7 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
       }
       // Also stamp the topline freshness marker in the header.
       const topEl = document.getElementById("meta-mae");
-      if (topEl) topEl.textContent = `MAE data refreshed ${mot.generated_at || "?"}`;
+      if (topEl) topEl.innerHTML = `MAE data refreshed <strong>${fmtET(mot.generated_at)}</strong>`;
     })
     .catch(() => { /* silent — 7d column still renders */ });
 }

@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395h • August 7, 2026 (header timestamps unified: MM-DD HH:MM ET, 24h)</strong></summary>
+
+- Header freshness stamps (fitted, decay applied, MAE data refreshed) all render as `MM-DD HH:MM ET` via new `fmtET()` helper. No more mixed ISO-with-Z, ISO-without-Z, and ambiguous local strings — one shape everywhere.
+- 24-hour clock, no am/pm. Zone always ET regardless of viewer's timezone (values come from GCS on cross-timezone reads).
+
+</details>
+
+<details>
 <summary><strong>v0.6.395g • August 7, 2026 (topline freshness stamp; dropped page tagline)</strong></summary>
 
 - Header topline gets a `MAE data refreshed <timestamp>` line, populated from `mae_over_time.json`'s `generated_at`. Ticks forward hourly with the publisher Cloud Function. Answers "how fresh is what I'm looking at?" without scrolling to the per-field snapshot audit label.
