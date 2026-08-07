@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.395g • August 7, 2026 (topline freshness stamp; dropped page tagline)</strong></summary>
+
+- Header topline gets a `MAE data refreshed <timestamp>` line, populated from `mae_over_time.json`'s `generated_at`. Ticks forward hourly with the publisher Cloud Function. Answers "how fresh is what I'm looking at?" without scrolling to the per-field snapshot audit label.
+- Dropped the `Layer-by-layer anatomy…` page tagline to make room. Header now: title → correction-machinery meta (fitted / decay / corrections / weather) → data-freshness meta (MAE refresh time).
+
+</details>
+
+<details>
 <summary><strong>v0.6.395f • August 7, 2026 (publisher Cloud Function live; debug page narrative updated)</strong></summary>
 
 - New `myweather-publisher` Cloud Function deployed to us-east1, hourly Cloud Scheduler cron (`0 * * * *`). Runs the 6 dashboard-data publishers (`mae_over_time`, `gate_firing_rollup`, `h_persistence_skill`, `h_pp_platt_calibration`, `h_pp_bin_calibration`, `pp_brier_reliability`) and pushes fresh JSON to `gs://myweather-data/` on every hour. Removes the daily-manual-digest dependency for the debug page's 24h/7d MAE cells and the accuracy-over-time chart. Digest stays as-is for experiments; this only takes over the production publisher role.

@@ -733,8 +733,8 @@
 <body>
 <header>
   <h1>Forecast pipeline</h1>
-  <span class="page-tagline">Layer-by-layer anatomy of how Wyman Cove's forecast gets built — and how accurate it's turning out.</span>
   <span class="meta" id="meta">loading…</span>
+  <span class="meta" id="meta-mae" style="opacity:0.75;">MAE data …</span>
 </header>
 
 <nav class="toc">
@@ -3554,6 +3554,9 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
           `Refreshed ${gen}. ${cutsNote}.`,
         ].filter(s => s).join("<br>");
       }
+      // Also stamp the topline freshness marker in the header.
+      const topEl = document.getElementById("meta-mae");
+      if (topEl) topEl.textContent = `MAE data refreshed ${mot.generated_at || "?"}`;
     })
     .catch(() => { /* silent — 7d column still renders */ });
 }
