@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.397 • August 8, 2026 (walkforward L3/L4: drop ws from L3, add 6 skip cells)</strong></summary>
+
+- `walkforward_l3l4_validator` cleared 7-day gate. Two changes to `decay_apply.py`:
+  - **Drop ws from L3_FIELDS.** Pooled ws L3 impact is +0.1% fc / +0.6% obs (noise) after the existing ne_flow + sea_breeze skips. The strip candidacy queued 2026-07-04 finally passes. `("ws", "l3")` SKIP_TABLE entries left in place but now inert.
+  - **Add 6 SKIP cells.** wg L3 sea_breeze 12-23h (-8.9%). cc L4 nw_flow 0-5 (-43.3%), nw_flow 12-23 (-8.0%), pre_frontal 0-5 (-20.1%), pre_frontal 6-11 (-19.7%), pre_frontal 12-23 (-12.1%). cc L4 only helps at longer leads in these regimes; short/mid leads regress and are now skipped.
+- No new fields entered L3/L4. L4_FIELDS unchanged (ch, cc).
+
+</details>
+
+<details>
 <summary><strong>v0.6.396 • August 8, 2026 (C1h narrow-promote: 9 SHIP cells cleared 7-day gate)</strong></summary>
 
 - C1h (trend-direction confidence axis) narrow-promote gate cleared 10/7 days. `c1h_curated.json` refreshed with 9 SHIP cells — all WIDEN. Cloud fields at 12-47h see 80–239% premium when the hourly forecast trends vs stays flat; t/24-47h widens +11%. Point forecasts unchanged; only the ± confidence band moves.

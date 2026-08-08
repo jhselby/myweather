@@ -75,7 +75,7 @@ STALE_DAYS = 7
 # (06-23 dipped to +2.7% — a 1-day artifact). Two reads >=3% with one read
 # >=5% clears the 2-read promotion gate. cm rides along at +3.0% on 06-24
 # (was +2.7% on 06-23) — borderline; reconfirm 06-29 before adding.
-L3_FIELDS = {"ws", "wg", "ch", "cm"}  # pp dropped 2026-07-04 v0.6.304 after audit reconciliation: Fitter Brier l1=0.0734→l3=0.0765 (WORSE +4.2%), production_whatif +87.3% WORSE, h_regime_l3 pp sea_breeze L3 LOSES -96%, walkforward has never included pp in L3_FIELDS across 13 daily reads. The "pp L3 Brier +8.0% gain" claim on the debug page was a hallucinated number I codified earlier today; no analysis output supports it. This drop is reverting a decision that was based on that number. ws + wg strip candidacy queued but NOT shipped — earliest ship 2026-07-10 if the picture holds.
+L3_FIELDS = {"wg", "ch", "cm"}  # ws dropped 2026-08-08 v0.6.397 after walkforward_l3l4_validator cleared 7-day gate (ws L3 fc +0.1% / obs +0.6% pooled — noise, no field-level signal after the ne_flow + sea_breeze skips already in the SKIP_TABLE). The strip candidacy queued 2026-07-04 finally passes. pp dropped 2026-07-04 v0.6.304 after audit reconciliation: Fitter Brier l1=0.0734→l3=0.0765 (WORSE +4.2%), production_whatif +87.3% WORSE, h_regime_l3 pp sea_breeze L3 LOSES -96%.
 L4_FIELDS = {"ch", "cc"}
 # Fields where the L3/L4 audit's MAE-based ⚠ rule should be suppressed because
 # the field's correction is justified by a different metric (Brier, etc.).
@@ -126,6 +126,17 @@ SKIP_TABLE = {
         ("calm",      24, 48),   # 24-47, n=1744, +45.2% (halves +4.3/+53.1)
         ("sea_breeze",24, 48),   # 24-47, n=2298, +31.1% (halves +4.0/+45.0)
         ("frontal",   12, 24),   # 12-23, n=443,  +8.8%  (halves +13.2/+4.5)
+        # 08-08 walkforward adds 1 cell (v0.6.397).
+        ("sea_breeze",12, 24),   # 12-23, n=267,  -8.9%  LOSS
+    ],
+    ("cc", "l4"): [
+        # 08-08 walkforward v0.6.397. cc L4 only wins at longer leads;
+        # loses in nw_flow short/mid and pre_frontal short/mid.
+        ("nw_flow",     0,  6),  # 0-5,   n=260,  -43.3% LOSS
+        ("nw_flow",    12, 24),  # 12-23, n=216,  -8.0%  LOSS
+        ("pre_frontal", 0,  6),  # 0-5,   n=235,  -20.1% LOSS
+        ("pre_frontal", 6, 12),  # 6-11,  n=225,  -19.7% LOSS
+        ("pre_frontal",12, 24),  # 12-23, n=460,  -12.1% LOSS
     ],
     ("dp", "l4"): [
         ("ne_flow",    0, 48),
