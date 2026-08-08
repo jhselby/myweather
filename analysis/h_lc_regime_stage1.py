@@ -251,6 +251,29 @@ def main():
         if v == "SHIP":
             pooled_ship_set.add((field, lab))
 
+    # ── Prereq: pooled-must-also-ship ─────────────────────────────────────
+    # Diagnosed 2026-08-08: Stage 1 was emitting 70+ SHIP cells that
+    # walkforward_lc_regime rejected on held-out (-3.60% vs pooled). Root
+    # cause: regime cells with small n overfit noise in bins where pooled-Lc
+    # correctly stayed silent (e.g. ch/pre_frontal/0-5: raw=pool=5.52,
+    # regime made it 15.53 on held-out, -181% loss). If pooled-Lc for the
+    # same (field, bin) didn't earn its own SHIP, regime-conditional
+    # shouldn't override — it's fitting per-regime variance that doesn't
+    # generalize. Demote SHIP → SKIP-nopool where prereq fails.
+    demoted = 0
+    for field in list(cells.keys()):
+        for regime in list(cells[field].keys()):
+            for lab in list(cells[field][regime].keys()):
+                cell = cells[field][regime][lab]
+                if cell["verdict"] == "SHIP" and (field, lab) not in pooled_ship_set:
+                    cell["verdict"] = "SKIP-nopool"
+                    regime_ship_set.discard((field, regime, lab))
+                    verdict_counts["SHIP"] -= 1
+                    verdict_counts["SKIP-nopool"] += 1
+                    demoted += 1
+    print(f"  pool-prereq demoted {demoted} regime SHIP → SKIP-nopool")
+    print()
+
     # ── Emit curated table ──
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
