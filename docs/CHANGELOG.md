@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.396 • August 8, 2026 (C1h narrow-promote: 9 SHIP cells cleared 7-day gate)</strong></summary>
+
+- C1h (trend-direction confidence axis) narrow-promote gate cleared 10/7 days. `c1h_curated.json` refreshed with 9 SHIP cells — all WIDEN. Cloud fields at 12-47h see 80–239% premium when the hourly forecast trends vs stays flat; t/24-47h widens +11%. Point forecasts unchanged; only the ± confidence band moves.
+- SHIP cells: t/24-47h, cc/12-23h, cc/24-47h, cl/12-23h, cl/24-47h, cm/12-23h, cm/24-47h, ch/12-23h, ch/24-47h.
+- Axis machinery live since v0.6.316; this is a curated-table refresh, no code change.
+
+</details>
+
+<details>
 <summary><strong>v0.6.395j • August 7, 2026 (degraded-mode: show WU-station Production value, not em-dash)</strong></summary>
 
 - Bug fix in the current-tick correction table: when the pipeline is in fallback mode (HRRR/GFS unavailable), the Production column for t/h was rendering `—` even though the value exists (sourced from WU stations via `hyperlocal.corrected_temp`). The front-end has always shown this value in the main app; the debug table was misrepresenting the data as missing.
