@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.397a • August 8, 2026 (debug page Rule 5 sweep after morning's ships)</strong></summary>
+
+- `corrections_debug.html` sweep after v0.6.396 + v0.6.397 collector ships. Updates: (1) L3_FIELDS list drops `ws`; L4 skip cells for cc listed; C1h SHIP set refreshed to today's cells (t/24-47h in, t/12-23h out). (2) ws L3 asymmetric-skip block marked INERT (ws no longer in L3). (3) ws routing row: L3 lead-decay removed. (4) Post-ship watches restructured into "active" + collapsed "archived" sections — keeps the memory, tightens visible surface. (5) Backward-looking calendar entries (today/yesterday/etc.) removed from the dashboard column; Engineering log / Recent activity now owns chronology. (6) Recent activity slid to 08-06 → 08-08 rolling 3-day window; 08-05 trimmed to CHANGELOG.
+- Version bump letter (`a`) per convention: follow-on debug-page tweak after two substantive collector ships earlier today.
+
+</details>
+
+<details>
 <summary><strong>v0.6.397 • August 8, 2026 (walkforward L3/L4: drop ws from L3, add 6 skip cells)</strong></summary>
 
 - `walkforward_l3l4_validator` cleared 7-day gate. Two changes to `decay_apply.py`:
