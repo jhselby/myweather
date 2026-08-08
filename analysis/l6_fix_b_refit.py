@@ -36,6 +36,14 @@ PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_TXT = os.path.join(SCRIPT_DIR, "output", "l6_fix_b_refit.txt")
 OUT_JSON = os.path.join(SCRIPT_DIR, "output", "l6_fix_b_lookup.json")
 
+# 7-day rolling gate (added 2026-08-08 per project_lc_regime_stage1_pool_prereq
+# investigation: Fix B was single-day SHIP-eligible at +2.15% but had been
+# HOLD at +0.29% just 26 days prior with no consistency check between).
+GATE_HISTORY_PATH = os.path.join(os.path.dirname(SCRIPT_DIR),
+                                  ".cache_l6_fix_b_gate_history.json")
+GATE_HISTORY_RETENTION_DAYS = 30
+GATE_WINDOW_DAYS = 7
+
 OCTANTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 SB_OCTANTS = {"S", "SE", "SW"}
 SB_HOUR_LO, SB_HOUR_HI = 13, 18
@@ -192,6 +200,112 @@ def evaluate_heldout(test_rows_full, delta_by_octant, hour_delta_sb_off):
     }
 
 
+def _append_and_summarize_gate_history(this_entry):
+    """Append this run to .cache_l6_fix_b_gate_history.json, prune to 30-day
+    retention, compute 7-day rolling gate. Mirrors the shape used by lc_fit.py
+    but keyed on ship_bins (sorted list of shipped bin identifiers) instead
+    of per-(field,bin) verdicts.
+
+    gate_clear = True iff:
+      - ≥ GATE_WINDOW_DAYS distinct days in window
+      - no HOLD days
+      - ship_bins set stable across window
+      - at least one bin currently shipping (fossil-window guard)
+    """
+    try:
+        with open(GATE_HISTORY_PATH) as fh:
+            history = json.load(fh)
+    except FileNotFoundError:
+        history = {"entries": []}
+    except Exception as e:
+        print(f"  ⚠ gate history load failed: {e} — starting fresh")
+        history = {"entries": []}
+
+    entries = history.get("entries", [])
+    entries.append(this_entry)
+
+    now = datetime.now()
+    cutoff_ret = (now - timedelta(days=GATE_HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    entries = [e for e in entries if e.get("fitted_at", "") >= cutoff_ret]
+    with open(GATE_HISTORY_PATH, "w") as fh:
+        json.dump({"entries": entries}, fh, indent=2)
+
+    cutoff_win = (now - timedelta(days=GATE_WINDOW_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    window = [e for e in entries if e.get("fitted_at", "") >= cutoff_win]
+
+    by_day = {}
+    for e in window:
+        day = e.get("fitted_at", "")[:10]
+        if day:
+            by_day.setdefault(day, []).append(e)
+
+    ship_days = 0
+    hold_days = 0
+    for day, day_entries in by_day.items():
+        if all(x.get("verdict") == "SHIP" for x in day_entries):
+            ship_days += 1
+        else:
+            hold_days += 1
+
+    streak = 0
+    for e in reversed(window):
+        if e.get("verdict") == "SHIP":
+            streak += 1
+        else:
+            break
+
+    current_bins = set(this_entry.get("ship_bins") or [])
+    changed = []
+    seen = set()
+    for e in reversed(window[:-1]):
+        prior = set(e.get("ship_bins") or [])
+        for k in current_bins ^ prior:
+            if k in seen:
+                continue
+            seen.add(k)
+            was = "SHIP" if k in prior else "not-SHIP"
+            now_v = "SHIP" if k in current_bins else "not-SHIP"
+            changed.append((k, was, now_v))
+
+    stable = len(changed) == 0
+    gate_clear = (len(by_day) >= GATE_WINDOW_DAYS and hold_days == 0
+                  and stable and len(current_bins) > 0)
+
+    return {
+        "entries_in_window": len(window),
+        "days_in_window": len(by_day),
+        "ship_days": ship_days,
+        "hold_days": hold_days,
+        "latest_streak_ship": streak,
+        "ship_cell_stability": {
+            "stable": stable,
+            "current_ship_bins": sorted(current_bins),
+            "bins_changed_in_window": changed,
+        },
+        "gate_clear": gate_clear,
+        "history_window_days": GATE_WINDOW_DAYS,
+    }
+
+
+def _format_gate_summary(gate):
+    lines = []
+    lines.append("L6 Fix B 7-day rolling gate:")
+    lines.append(f"  window: {gate['history_window_days']} days · runs seen: {gate['entries_in_window']} · "
+                 f"distinct days: {gate['days_in_window']}")
+    lines.append(f"  ship_days: {gate['ship_days']} · hold_days: {gate['hold_days']} · "
+                 f"latest SHIP streak: {gate['latest_streak_ship']}")
+    stab = gate["ship_cell_stability"]
+    lines.append(f"  ship_bins stability: {'STABLE' if stab['stable'] else 'CHURN'} · "
+                 f"current bins: {len(stab['current_ship_bins'])}")
+    if stab["bins_changed_in_window"]:
+        lines.append("  bins whose status changed within window:")
+        for k, was, now_v in stab["bins_changed_in_window"]:
+            lines.append(f"    {k}: {was} → {now_v}")
+    lines.append(f"  gate_clear: {gate['gate_clear']}   "
+                 f"(requires ≥{GATE_WINDOW_DAYS} distinct days, no HOLD days, ship_bins STABLE, ≥1 bin)")
+    return lines
+
+
 def main():
     lines = []
     def emit(s=""):
@@ -291,15 +405,38 @@ def main():
         ship = ho['improvement_pct'] >= MIN_HELDOUT_IMPROVEMENT_PCT
     emit("")
 
+    # ---------- Rolling 7-day gate ----------
+    ship_bins = sorted(
+        [f"sb_on|{oct_}" for (_sb, oct_) in delta_by_octant.keys()]
+        + [f"sb_off|{h:02d}" for h in hour_delta_sb_off.keys()]
+    )
+    gate = _append_and_summarize_gate_history({
+        "fitted_at": datetime.now().strftime("%Y-%m-%dT%H:%M"),
+        "verdict": "SHIP" if ship else "HOLD",
+        "improvement_pct": (ho or {}).get("improvement_pct"),
+        "ship_bins": ship_bins,
+    })
+    emit("")
+    for line in _format_gate_summary(gate):
+        emit(line)
+
     # ---------- Verdict ----------
     emit("=" * 92)
-    if ship:
+    if ship and gate["gate_clear"]:
         emit(f"VERDICT: SHIP — refit tables beat L2 alone by "
-             f"{ho['improvement_pct']:.2f}% on held-out.")
+             f"{ho['improvement_pct']:.2f}% on held-out; 7-day rolling gate CLEARED.")
         emit(f"Next: replace _DELTA_BY_OCTANT and _HOUR_DELTA_SB_OFF in "
              f"weather_collector/processors/cove_correction.py with fitted values,")
         emit(f"remove the unconditional `return 0.0` on the compute path, "
              f"flip ENABLED = True (Lt gate still applies).")
+    elif ship:
+        # Day-level SHIP but consistency gate not yet met — do NOT act.
+        # Bucketed as HOLD so the exec summary treats it as not-actionable
+        # (accurate: the gate is HOLD even though today's fit is SHIP-eligible).
+        stab = "STABLE" if gate["ship_cell_stability"]["stable"] else "CHURN"
+        emit(f"VERDICT: HOLD-GATE — day-only +{ho['improvement_pct']:.2f}% but 7-day gate "
+             f"not cleared ({gate['days_in_window']}/{GATE_WINDOW_DAYS} days, "
+             f"{gate['hold_days']} HOLD days, ship_bins {stab}). Needs 7-day persistence.")
     else:
         emit("VERDICT: HOLD — refit tables did not beat L2 by threshold.")
         emit("Interpretation: L2's Kalman blend is doing enough that no per-regime")
@@ -315,6 +452,7 @@ def main():
     lookup = {
         "generated": datetime.utcnow().isoformat() + "Z",
         "verdict": "SHIP" if ship else "HOLD",
+        "gate": gate,
         "delta_by_octant": {
             f"{'True' if sb else 'False'}|{oct_}": v
             for (sb, oct_), v in delta_by_octant.items()
