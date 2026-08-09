@@ -2909,7 +2909,11 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
   // exact 0.00% entries. Excluding is consistent with the DERIVED_FIELDS
   // exclusion — both are "the correction stack doesn't independently move
   // this field's MAE."
-  const MAE_UNCORRECTED_FIELDS = new Set(["pa", "pr"]);
+  // v0.6.399a: added cl — its only MAE correction is the L2 hourly[0] blend
+  // at lead 0, which the leads-1-47 average deliberately excludes. Counting
+  // cl in the touched median produces a structural +0.0% that drags the
+  // median toward zero even though the correction stack is doing its job.
+  const MAE_UNCORRECTED_FIELDS = new Set(["pa", "pr", "cl"]);
   const rows = [];
   const cellRows = [];  // per-(field, band) for worst-cell surfacing
   const mae = tsDoc.per_layer_mae_by_lead;

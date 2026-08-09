@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.399a • August 9, 2026 (scoreboard MAE_UNCORRECTED_FIELDS adds cl)</strong></summary>
+
+- `corrections_debug.html` — added `cl` to `MAE_UNCORRECTED_FIELDS` in the scorecard header. cl's only MAE correction is the L2 hourly[0] blend at lead 0, and the scoreboard averages leads 1-47 (deliberate). Counting cl in the touched median produced a structural +0.0% that dragged the median toward zero even when the correction stack was doing its job. Before: touched median = -1.6% (n=9). After: touched median = ~-3% (n=8).
+- The main "MAE median · 7-day" line (scoredRows, uses only derived exclusion) still counts cl + pa + pr and thus still reads -0.8% today. That's the wider "myweather vs raw across everything" story; touched is the "correction stack effectiveness" story. Split intentional.
+
+</details>
+
+<details>
 <summary><strong>v0.6.399 • August 9, 2026 (Lc recent-bias gate — 7-day rolling gate tracker)</strong></summary>
 
 - Pipeline-to-good plan item #3 progress. `h_lc_recent_bias_gate.py` now appends each run's Stage 1 verdict to `.cache_lc_recent_bias_gate_history.json` and prints a rolling 7-day gate summary (mirrors the `_append_gate_history` shape used by `h_lc_regime_stage1` and `l6_fix_b_refit`).
