@@ -35,6 +35,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path  # noqa: E402
+from _windows import rolling_windows  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
@@ -46,9 +47,7 @@ OUT_JSON = os.path.abspath(os.path.join(
 
 # 2026-07-19: slid forward 8 days so windows cover post-shift data
 # (MLC collapse / cc-cluster distribution shift). See v0.6.358.
-WIN_A_LO, WIN_A_HI = "2026-07-22T00:00", "2026-08-06T00:00"
-WIN_B_LO, WIN_B_HI = "2026-07-07T00:00", "2026-07-22T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-07-07T00:00", "2026-08-06T00:00"
+WIN_A_LO, WIN_A_HI, WIN_B_LO, WIN_B_HI, WIN_FULL_LO, WIN_FULL_HI = rolling_windows()
 
 FIELD = "ws"
 MIN_N_CELL = 200

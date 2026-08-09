@@ -1,6 +1,27 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.399 • August 9, 2026 (Lc recent-bias gate — 7-day rolling gate tracker)</strong></summary>
+
+- Pipeline-to-good plan item #3 progress. `h_lc_recent_bias_gate.py` now appends each run's Stage 1 verdict to `.cache_lc_recent_bias_gate_history.json` and prints a rolling 7-day gate summary (mirrors the `_append_gate_history` shape used by `h_lc_regime_stage1` and `l6_fix_b_refit`).
+- Gate mechanics: promoted-field set must stay stable for 7 distinct days with no HOLD days and ≥1 promoted field. Gate-clear enables Stage 3 wire.
+- Also dropped cc from the gate's CLOUD_FIELDS — cc is derived from cl/cm/ch via Ccd and never carries its own Lc shift ([[project_cc_derived_field]]). Prior versions of the script were meaninglessly evaluating cc.
+- Today's day 1/7: ch = STAGE 1 PROMOTE, cl = HOLD-safe, cm = insufficient data. Verdict line now includes the rolling-gate day counter so the digest surfaces progress without hand-tracking.
+- No production code touched. Stage 3 (adding the gate to actual Lc application) waits for gate-clear.
+
+</details>
+
+<details>
+<summary><strong>v0.6.398 • August 9, 2026 (fossil-window bug class CLOSED via rolling helper)</strong></summary>
+
+- New `analysis/_windows.py` with `rolling_windows(recent_days=15, prior_days=15)` returning a `Windows` NamedTuple of A/B/FULL date-string bounds anchored at midnight-today.
+- 14 fossil-prone analysis scripts migrated to the helper: `h_ch_persistence_blend{,_stage2,_stage2_vs_l6}`, `h_cl_persistence_blend{,_stage2}`, `h_dp_residual_persistence_stage2`, `h_full_regime_sweep`, `h_l3_asymmetric_stage1`, `h_t_l2_regression_stage1`, `h_wd_persistence_gate_stage{1,2}`, `h_wg_l3_regression_stage1`, `h_wg_residual_persistence_stage2`, `h_ws_l3_regression_stage1`. Hardcoded `WIN_A_LO/HI` / `WIN_B_LO/HI` / `WIN_FULL_LO/HI` string literals removed everywhere; windows now roll automatically. `h_ch_persistence_blend_stage2_vs_l6` keeps its 5d/5d shape.
+- The `stale_window_audit` in `build_executive_summary.py` was already correct — needed no change. Once literals were gone from `WIN_*` assignments, tomorrow's digest reports "no fossil-window suspects."
+- Root cause: manual slide ritual repeated 07-19, 07-22, 07-28, 08-01, 08-06, 08-08. Each slide was mechanical; the code should have done it.
+
+</details>
+
+<details>
 <summary><strong>v0.6.397a • August 8, 2026 (debug page Rule 5 sweep after morning's ships)</strong></summary>
 
 - `corrections_debug.html` sweep after v0.6.396 + v0.6.397 collector ships. Updates: (1) L3_FIELDS list drops `ws`; L4 skip cells for cc listed; C1h SHIP set refreshed to today's cells (t/24-47h in, t/12-23h out). (2) ws L3 asymmetric-skip block marked INERT (ws no longer in L3). (3) ws routing row: L3 lead-decay removed. (4) Post-ship watches restructured into "active" + collapsed "archived" sections — keeps the memory, tightens visible surface. (5) Backward-looking calendar entries (today/yesterday/etc.) removed from the dashboard column; Engineering log / Recent activity now owns chronology. (6) Recent activity slid to 08-06 → 08-08 rolling 3-day window; 08-05 trimmed to CHANGELOG.

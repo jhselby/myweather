@@ -36,6 +36,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path  # noqa: E402
+from _windows import rolling_windows  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
@@ -50,9 +51,7 @@ LIVE_CURATED = os.path.abspath(os.path.join(
 
 # Post-Lc-flip windows only. Lc FLIPPED 2026-07-17 v0.6.355.
 # Full: last 10 days including today. Halves: last 5d + prior 5d.
-WIN_A_LO, WIN_A_HI = "2026-07-31T00:00", "2026-08-06T00:00"
-WIN_B_LO, WIN_B_HI = "2026-07-26T00:00", "2026-07-31T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-07-26T00:00", "2026-08-06T00:00"
+WIN_A_LO, WIN_A_HI, WIN_B_LO, WIN_B_HI, WIN_FULL_LO, WIN_FULL_HI = rolling_windows(recent_days=5, prior_days=5)
 
 FIELD = "ch"
 MIN_N_CELL = 100                # relaxed from 200 for the tighter 10-day window

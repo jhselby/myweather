@@ -28,6 +28,7 @@ from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path  # noqa: E402
+from _windows import rolling_windows  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_TXT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
@@ -35,8 +36,9 @@ OUT_TXT = os.path.join(os.path.dirname(os.path.abspath(__file__)),
 
 # 2026-08-01: slid forward 9 days so windows cover post-shift data
 # (MLC collapse / cc-cluster distribution shift). See v0.6.358.
-WIN_A_LO, WIN_A_HI = "2026-07-21T00:00", "2026-08-05T00:00"
-WIN_B_LO, WIN_B_HI = "2026-07-06T00:00", "2026-07-21T00:00"
+_W = rolling_windows()
+WIN_A_LO, WIN_A_HI = _W.A_LO, _W.A_HI
+WIN_B_LO, WIN_B_HI = _W.B_LO, _W.B_HI
 
 # Current state per project_correction_stack + project_todo
 L2_APPLIED = {"t", "dp", "h", "ws", "wg", "cc", "cl", "cm", "ch"}  # additive/direct/blend

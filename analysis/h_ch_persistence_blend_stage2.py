@@ -32,6 +32,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path  # noqa: E402
+from _windows import rolling_windows  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
@@ -44,9 +45,7 @@ OUT_JSON = os.path.abspath(os.path.join(
 # 2026-08-01: slid forward 9 days so the "recent" half covers the MLC
 # collapse / cc-cluster distribution shift (see h_ch_persistence_blend.py
 # for the parallel edit).
-WIN_A_LO, WIN_A_HI = "2026-07-21T00:00", "2026-08-05T00:00"
-WIN_B_LO, WIN_B_HI = "2026-07-06T00:00", "2026-07-21T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-07-06T00:00", "2026-08-05T00:00"
+WIN_A_LO, WIN_A_HI, WIN_B_LO, WIN_B_HI, WIN_FULL_LO, WIN_FULL_HI = rolling_windows()
 
 FIELD = "ch"
 MIN_N_CELL = 200

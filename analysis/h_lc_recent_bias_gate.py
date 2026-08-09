@@ -48,8 +48,12 @@ from analysis._cache import cached_path
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 LIVE_TABLE_PATH = Path(__file__).resolve().parent.parent / "weather_collector" / "data" / "lc_correction_table.json"
+GATE_HISTORY_PATH = Path(__file__).resolve().parent.parent / ".cache_lc_recent_bias_gate_history.json"
+GATE_HISTORY_RETENTION_DAYS = 30
+GATE_WINDOW_DAYS = 7
 
-CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
+CLOUD_FIELDS = ["cl", "cm", "ch"]  # cc excluded — derived from cl/cm/ch via Ccd,
+                                    # never carries its own Lc shift ([[project_cc_derived_field]])
 BINS = [(0,5,"0-5"), (5,20,"5-20"), (20,50,"20-50"),
         (50,80,"50-80"), (80,95,"80-95"), (95,100.01,"95-100")]
 
@@ -305,6 +309,109 @@ def main():
     print("=" * 128)
     for f, v in stage1:
         print(f"  {f}: {v}")
+
+    promoted = sorted(f for f, v in stage1 if v == "STAGE 1 PROMOTE")
+    gate = _append_gate_history({
+        "fitted_at": datetime.now().strftime("%Y-%m-%dT%H:%M"),
+        "verdict": "PROMOTE" if promoted else "HOLD",
+        "promoted_fields": promoted,
+    })
+
+    print()
+    print("=" * 128)
+    print(f"Rolling {GATE_WINDOW_DAYS}-day gate:")
+    print(f"  window: {gate['history_window_days']} days · runs seen: {gate['entries_in_window']} · "
+          f"distinct days: {gate['days_in_window']}")
+    print(f"  promote_days: {gate['promote_days']} · hold_days: {gate['hold_days']} · "
+          f"latest PROMOTE streak: {gate['latest_streak']}")
+    print(f"  promoted-field set stability: {'STABLE' if gate['stable'] else 'CHURN'} "
+          f"(fields changed: {len(gate['fields_changed'])})")
+    if gate["fields_changed"]:
+        for c in gate["fields_changed"][:10]:
+            print(f"    changed: {c}")
+    print(f"  gate_clear: {gate['gate_clear']}   (requires ≥{GATE_WINDOW_DAYS} distinct days, "
+          "no HOLD days, promoted set stable, ≥1 field)")
+    print()
+
+    if not promoted:
+        v = "VERDICT: NULL — no field cleared Stage 1 halves-strict today."
+    else:
+        v = (f"VERDICT: STAGE 1 PROMOTE — {len(promoted)} field(s) {promoted} cleared halves-strict. "
+             f"Rolling {GATE_WINDOW_DAYS}-day gate: day {gate['days_in_window']}/{GATE_WINDOW_DAYS}, "
+             f"set {'STABLE' if gate['stable'] else 'CHURN'}"
+             f"{', GATE CLEARED — ready for Stage 3 wire' if gate['gate_clear'] else ''}.")
+    print(v)
+    print("=" * 128)
+
+
+def _append_gate_history(this_entry):
+    try:
+        history = json.loads(GATE_HISTORY_PATH.read_text())
+    except FileNotFoundError:
+        history = {"entries": []}
+    except Exception as e:
+        print(f"  ⚠ gate history load failed: {e} — starting fresh")
+        history = {"entries": []}
+
+    entries = history.get("entries", [])
+    entries.append(this_entry)
+
+    now = datetime.now()
+    cutoff_ret = (now - timedelta(days=GATE_HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    entries = [e for e in entries if e.get("fitted_at", "") >= cutoff_ret]
+    GATE_HISTORY_PATH.write_text(json.dumps({"entries": entries}, indent=2))
+
+    cutoff_win = (now - timedelta(days=GATE_WINDOW_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    window = [e for e in entries if e.get("fitted_at", "") >= cutoff_win]
+
+    by_day = {}
+    for e in window:
+        day = e.get("fitted_at", "")[:10]
+        if day:
+            by_day.setdefault(day, []).append(e)
+
+    promote_days = sum(1 for _, xs in by_day.items()
+                       if all(x.get("verdict") == "PROMOTE" for x in xs))
+    hold_days = len(by_day) - promote_days
+
+    streak = 0
+    for e in reversed(window):
+        if e.get("verdict") == "PROMOTE":
+            streak += 1
+        else:
+            break
+
+    current_set = set(this_entry.get("promoted_fields") or [])
+    fields_changed = []
+    for e in reversed(window[:-1]):
+        prior = set(e.get("promoted_fields") or [])
+        for k in current_set ^ prior:
+            was = "PROMOTE" if k in prior else "not-PROMOTE"
+            now_v = "PROMOTE" if k in current_set else "not-PROMOTE"
+            fields_changed.append((k, was, now_v))
+    seen = set()
+    dedup = []
+    for c in fields_changed:
+        if c[0] in seen:
+            continue
+        seen.add(c[0])
+        dedup.append(c)
+
+    stable = len(dedup) == 0
+    gate_clear = (len(by_day) >= GATE_WINDOW_DAYS and hold_days == 0
+                  and stable and len(current_set) > 0)
+
+    return {
+        "entries_in_window": len(window),
+        "days_in_window": len(by_day),
+        "promote_days": promote_days,
+        "hold_days": hold_days,
+        "latest_streak": streak,
+        "stable": stable,
+        "fields_changed": dedup,
+        "gate_clear": gate_clear,
+        "history_window_days": GATE_WINDOW_DAYS,
+    }
 
 
 if __name__ == "__main__":

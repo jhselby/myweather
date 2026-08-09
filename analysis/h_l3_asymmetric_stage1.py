@@ -43,6 +43,7 @@ from datetime import datetime, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path  # noqa: E402
+from _windows import rolling_windows  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
@@ -50,9 +51,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_TXT = os.path.join(HERE, "output", "h_l3_asymmetric_stage1.txt")
 DATA_DIR = os.path.abspath(os.path.join(HERE, "..", "weather_collector", "data"))
 
-WIN_A_LO, WIN_A_HI = "2026-07-21T00:00", "2026-08-05T00:00"
-WIN_B_LO, WIN_B_HI = "2026-07-06T00:00", "2026-07-21T00:00"
-WIN_FULL_LO, WIN_FULL_HI = "2026-07-06T00:00", "2026-08-05T00:00"
+WIN_A_LO, WIN_A_HI, WIN_B_LO, WIN_B_HI, WIN_FULL_LO, WIN_FULL_HI = rolling_windows()
 
 # Fields with real asymmetric-L3 findings per Stage 0 (h_asymmetric_l3.py).
 FIELDS = ("wg", "ws", "cm")
