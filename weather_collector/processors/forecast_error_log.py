@@ -210,6 +210,14 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                     if v is not None:
                         pair[f"forecast_{lyr}"] = round(float(v), 3)
                         pair[f"error_{lyr}"] = round(_circular_diff_deg(float(v), obs_f), 3)
+                # v0.6.400: applied_layer stamp for wd — this branch takes an
+                # early `continue` below, so without stamping here every wd
+                # pair-log row has missed applied_layer since v0.6.269. Made
+                # wdp's firing cells invisible to per_layer_mae_by_lead["wd"]
+                # .production and to the 07-27 gate metric. Fixed 08-09.
+                applied = target_hour.get(f"{short}_applied")
+                if applied:
+                    pair["applied_layer"] = applied
                 if state_fc:  pair["state_fc"]  = state_fc
                 if state_obs: pair["state_obs"] = state_obs
                 if cloud_sigma is not None:

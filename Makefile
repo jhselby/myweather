@@ -62,11 +62,13 @@ check-stale:
 # want to *see* the patterns, not just read the numbers.
 visualize:
 	@for f in analysis/*.py; do \
+	  case "$$f" in *.skip.py) continue ;; esac; \
+	  name=$$(basename "$$f" .py); \
 	  echo ""; \
 	  echo "═══════════════════════════════════════════════════════════════"; \
 	  echo "▶ $$f"; \
 	  echo "═══════════════════════════════════════════════════════════════"; \
-	  python3 "$$f" || echo "   (failed — continuing)"; \
+	  python3 -m analysis."$$name" || echo "   (failed — continuing)"; \
 	done
 	@echo ""
 	@echo "Charts in analysis/output/:"

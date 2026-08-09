@@ -1,6 +1,28 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.400c • August 9, 2026 (Overall MAE mean tile dp exclusion + debug-page Rule 5 sweep post-audit)</strong></summary>
+
+- `corrections_debug.html:3370` — `DERIVED = {cc, pp}` was missing `dp`, causing the "Overall MAE mean · 24-hour" tile to double-count dp (Magnus-derived from t+h). Comment on line 3382 already documented "cc/pp/dp aren't independent MAE-scorable fields" — code just didn't match. Fixed to `{cc, pp, dp}` matching `SCOREBOARD_EXCLUDE`. Modest but real: dp's small delta was slightly dragging the tile toward zero.
+- **Debug-page Rule 5 sweep** after 08-09 audit + v0.6.400 ships. Updated:
+  - wd row (line 909): replaced hand-typed "Day 8/14" counter with auto-populate `<span class="watch-day">`; added v0.6.400 collector fix note.
+  - Persistence skill paragraph (line 1206): removed stale "Gate EXTENDED to 08-03 / Day 2/7"; added 08-09 clp Stage 2 rerun result (6 SHIP / 22 SKIP whitelist ready for flip); marked ch persistence gate watch CLOSED CLEAN 08-02; noted 08-09 mixture-check verdicts for cl/cm/t transition cells.
+  - SPECIALIST_STACK JS comment (line 4035): removed stale "EXTENDED to 08-03" — updated to reflect Stage 2 flip-ready state.
+  - Today's recent-activity entry: added AUDIT + PIPELINE frame with 7-chunk summary + v0.6.400 / 400b / 400c ships.
+- Also v0.6.400b (analysis-only, not deployed): `analysis/mae_over_time.py` — added `if applied and fld not in L1_ONLY_FIELDS` guard so v0.6.400's applied_layer stamp for wd doesn't double-count with the L1_ONLY branch below.
+
+</details>
+
+<details>
+<summary><strong>v0.6.400 • August 9, 2026 (wd applied_layer stamp fix — collector)</strong></summary>
+
+- `weather_collector/processors/forecast_error_log.py` — the wd branch takes an early `continue` and had been skipping the applied_layer stamp block since v0.6.269, so every wd pair-log row was missing `applied_layer`. Consequence: wdp's firing cells (~3.5% of wd rows in the sample window, 762/21494) were invisible to `per_layer_mae_by_lead["wd"].production` and to the 07-27 wdp flip-gate metric. Direction of hidden bias unknown until fresh clean-data window accrues.
+- Fix stamps applied_layer inside the wd branch before the early `continue`, matching the pattern the non-wd branch has always used.
+- Found during silent-lie sweep (chunk 1 of 08-09 code+logic audit). Historic pair-log rows stay missing the field; clean data starts on next Cloud Function tick.
+
+</details>
+
+<details>
 <summary><strong>v0.6.399a • August 9, 2026 (scoreboard MAE_UNCORRECTED_FIELDS adds cl)</strong></summary>
 
 - `corrections_debug.html` — added `cl` to `MAE_UNCORRECTED_FIELDS` in the scorecard header. cl's only MAE correction is the L2 hourly[0] blend at lead 0, and the scoreboard averages leads 1-47 (deliberate). Counting cl in the touched median produced a structural +0.0% that dragged the median toward zero even when the correction stack was doing its job. Before: touched median = -1.6% (n=9). After: touched median = ~-3% (n=8).

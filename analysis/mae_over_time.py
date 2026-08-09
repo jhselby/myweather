@@ -154,7 +154,11 @@ def compute_fresh_rollup():
             band = _band_for(r.get("lead_h")) if in_last_24h else None
 
             applied = r.get("applied_layer")
-            if applied:
+            # v0.6.400b: skip the applied_layer path for L1_ONLY_FIELDS —
+            # those fields (wd) have their own prod_real path below and would
+            # otherwise double-count now that v0.6.400 makes wd emit
+            # applied_layer for the first time.
+            if applied and fld not in L1_ONLY_FIELDS:
                 e_applied = r.get(f"error_{applied}")
                 if e_applied is not None:
                     prod_real_buckets[(day, fld)].append(float(e_applied))
