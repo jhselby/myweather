@@ -71,7 +71,13 @@ def load_rows():
             vt = r.get("valid_time")
             ob = r.get("observed")
             fc_l2 = r.get("forecast_l2")
-            fc_prod = r.get("forecast")
+            # v0.6.400a: reconstruct Production from applied_layer; top-level
+            # `forecast` is L2 by design. dp Production is L2 86% of the time
+            # so the impact is smaller than wg but non-zero (L4 fires ~3%).
+            applied = r.get("applied_layer")
+            fc_prod = r.get(f"forecast_{applied}") if applied else None
+            if fc_prod is None:
+                fc_prod = r.get("forecast_l4", r.get("forecast"))
             if vt is None or ob is None or fc_l2 is None or fc_prod is None:
                 continue
             date = parse_local_date(vt)

@@ -116,7 +116,12 @@ def compute(field):
             if not (WIN_FULL_LO <= rt < WIN_FULL_HI):
                 continue
             lead = r.get("lead_h")
-            fc = r.get("forecast")
+            # v0.6.400a: use forecast_l1 (raw) for fc_bin quantile cuts —
+            # top-level is L2-semantic and shifts bin thresholds for fields
+            # where L2 differs from L1 (wg 26%, ws 25%). Bins should be built
+            # on raw values so the analysis is "does L3 help over raw at
+            # different raw forecast magnitudes."
+            fc = r.get("forecast_l1", r.get("forecast"))
             if lead is None or fc is None:
                 continue
             try:
@@ -167,7 +172,9 @@ def compute(field):
                 continue
 
             ob = r.get("observed")
-            fc = r.get("forecast")
+            # v0.6.400a: consistent with Pass 1 — fc is L1 (raw) for both
+            # binning and err_l1 accumulation.
+            fc = r.get("forecast_l1", r.get("forecast"))
             if ob is None or fc is None:
                 continue
             fc_l2 = r.get("forecast_l2")

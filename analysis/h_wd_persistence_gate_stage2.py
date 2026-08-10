@@ -159,7 +159,7 @@ def compute():
                 continue
 
             ob = r.get("observed")
-            fc = r.get("forecast")
+            fc = r.get("forecast_l1", r.get("forecast"))  # v0.6.400a: L1 explicit; see stage1 note
             if ob is None or fc is None:
                 continue
 

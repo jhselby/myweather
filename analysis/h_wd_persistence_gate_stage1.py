@@ -139,7 +139,12 @@ def compute():
                 continue
 
             ob = r.get("observed")
-            fc = r.get("forecast")
+            # v0.6.400a: script intent is L1 baseline (see err_l1 below and
+            # docstring "baseline = L1"). Top-level `forecast` is L2-semantic
+            # by design (see [[feedback_top_level_forecast_is_l2]]); for wd
+            # L2==L1 in ~76% of rows but differs on the rest, so we prefer
+            # forecast_l1 explicitly. Fallback keeps pre-v0.6.25 rows scoreable.
+            fc = r.get("forecast_l1", r.get("forecast"))
             if ob is None or fc is None:
                 continue
 
