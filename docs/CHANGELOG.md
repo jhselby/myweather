@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.401a • August 10, 2026 (clp whitelist streak walker)</strong></summary>
+
+- **clp flip-gate infra** (`analysis/clp_whitelist_streak.py`). New daily walker archives the effective fire set (SHIP + MARGIN-excluding-frontal) from `cl_persistence_gate_curated.json` to `analysis/output/clp_whitelist_streak.json`, idempotent by UTC date. Reports pairwise Jaccard vs today over trailing 7 days; PASS when 7-day min Jaccard ≥ 0.80. The prior 08-03 flip window was invalidated by curated JSON churn history not being persisted anywhere — day 1/7 seeded today (fire set n=7: calm/0-5, ne_flow/{0-5,6-11,12-23}, nw_flow/0-5, pre_frontal/0-5, sea_breeze/0-5). Earliest flip decision: 08-16 morning digest.
+
+</details>
+
+<details>
 <summary><strong>v0.6.401 • August 10, 2026 (chp diurnal gate + pr L2 regime-gated SHIP)</strong></summary>
 
 Two same-day live-layer changes from `project_ch_chp_midlead_band_watch_08_10` and `project_pr_l2_regime_flip_investigation_08_10` investigations.
