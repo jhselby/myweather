@@ -46,7 +46,6 @@ from pathlib import Path
 
 import pytz
 
-from .regime_classifier import classify_synoptic_regime
 
 
 ENABLED = True  # Flipped 2026-07-27 v0.6.382 after 7-day gate cleared (Jaccard 1.0 across 5 daily reads).
@@ -115,40 +114,11 @@ def _persistence_source(weather_data):
         return None, None
 
 
-def _fc_regime_for_lead(weather_data, i):
-    """Classify state_fc.regime_synoptic for lead index i using the same
-    inputs forecast_error_log.py uses (wind_dir, wind_speed, pressure_in,
-    tick pressure_trend, hour_local, temp).
-    """
-    hourly = weather_data.get("hourly") or {}
-    wd_arr = hourly.get("wind_direction") or []
-    ws_arr = hourly.get("wind_speed") or []
-    pr_arr = hourly.get("pressure_in") or hourly.get("pressure") or []
-    t_arr = hourly.get("temperature") or []
-    time_arr = hourly.get("time") or []
-    if i >= len(wd_arr) or i >= len(ws_arr):
-        return None
-
-    derived = weather_data.get("derived") or {}
-    pressure_trend = derived.get("pressure_trend_hpa_3h")
-
-    hour_local = None
-    if i < len(time_arr) and time_arr[i]:
-        try:
-            # Open-Meteo returns "YYYY-MM-DDTHH:00" in the target TZ config.
-            hour_local = int(time_arr[i][11:13])
-        except Exception:
-            hour_local = None
-
-    try:
-        wd = float(wd_arr[i]) if wd_arr[i] is not None else None
-        ws = float(ws_arr[i]) if ws_arr[i] is not None else None
-        pr = float(pr_arr[i]) if i < len(pr_arr) and pr_arr[i] is not None else None
-        t = float(t_arr[i]) if i < len(t_arr) and t_arr[i] is not None else None
-    except (TypeError, ValueError):
-        return None
-
-    return classify_synoptic_regime(wd, ws, pr, pressure_trend, hour_local, t)
+def _fc_regime_by_lead(weather_data):
+    """Return derived.state_fc_by_lead (per-lead regime array) populated
+    by state_stamp. Empty list if state_stamp hasn't run — gate no-ops.
+    Extracted 2026-08-10 v0.6.401c; previously computed inline here."""
+    return ((weather_data.get("derived") or {}).get("state_fc_by_lead") or [])
 
 
 def describe_applicability():
@@ -217,19 +187,19 @@ def stamp_wd_persistence_gate(weather_data):
 
     n_leads = len(arr)
     per_lead_would_apply = [None] * n_leads
-    per_lead_fc_regime = [None] * n_leads
     per_lead_bands = [None] * n_leads
     per_lead_fires = [False] * n_leads
     fires_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
     skips_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
+
+    fc_by_lead = _fc_regime_by_lead(weather_data)
 
     for i in range(n_leads):
         band = _lead_band(i)
         per_lead_bands[i] = band
         if band is None or persist_val is None:
             continue
-        fc_regime = _fc_regime_for_lead(weather_data, i) or "unknown"
-        per_lead_fc_regime[i] = fc_regime
+        fc_regime = (fc_by_lead[i] if i < len(fc_by_lead) else None) or "unknown"
         transition_predicted = (state_curr != fc_regime)
         cell_active = _cell_fires(cells, fc_regime, band)
         if transition_predicted and cell_active:
@@ -263,9 +233,9 @@ def stamp_wd_persistence_gate(weather_data):
         "persistence_source": persist_src,
         "fires_by_band": fires_by_band,
         "skips_by_band": skips_by_band,
-        "per_lead_fc_regime": per_lead_fc_regime,
         "per_lead_would_apply": per_lead_would_apply,
         "table_generated_at": table.get("generated_at"),
+        "state_fc_source": "derived.state_fc_by_lead",
     }
 
     try:

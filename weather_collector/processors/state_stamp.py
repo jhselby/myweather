@@ -28,6 +28,13 @@ Fields written (matches backtest_snapshot's expected schema):
   * wind_speed       — passed straight from current
   * wind_octant      — 8-direction bucket (N/NE/E/...) for R2/stratification
   * cloud_cover      — passed straight from current
+
+Also writes `derived["state_fc_by_lead"]` — array of regime_synoptic per
+hourly lead index, using the same classifier applied to forecast values.
+Canonical location for consumers that need per-hour transition detection
+(e.g. wd_persistence_gate's transition trigger, future UI widening on
+`state_fc[lead] != state.regime_synoptic`). Extracted 2026-08-10 v0.6.401c
+from wd_persistence_gate.py to give it a home not owned by one specialist.
 """
 import logging
 from datetime import datetime
@@ -97,8 +104,52 @@ def stamp_state(weather_data):
         "cloud_cover":     cloud_cover,
     }
     derived["state"] = state
+
+    fc_by_lead = _classify_state_fc_by_lead(weather_data, pressure_trend_3h)
+    derived["state_fc_by_lead"] = fc_by_lead
+
+    n_transitions = sum(
+        1 for r in fc_by_lead
+        if r is not None and regime_synoptic is not None and r != regime_synoptic
+    )
     logging.info(
         f"  ✓ state stamped: synoptic={regime_synoptic} flow={regime_flow} "
-        f"octant={state['wind_octant']} ws={wind_speed}"
+        f"octant={state['wind_octant']} ws={wind_speed} "
+        f"fc_leads={len(fc_by_lead)} transitions={n_transitions}"
     )
     return state
+
+
+def _classify_state_fc_by_lead(weather_data, pressure_trend_3h):
+    """Per-lead classify_synoptic_regime using forecast values at each hour.
+    Returns list of regime strings (or None per lead when inputs missing).
+    Uses the same input signature as classify_synoptic_regime; pressure_trend
+    is the current tick's 3h trend (state_fc inherits it — matches
+    forecast_error_log.py's state_fc construction)."""
+    hourly = weather_data.get("hourly") or {}
+    wd_arr = hourly.get("wind_direction") or []
+    ws_arr = hourly.get("wind_speed") or []
+    pr_arr = hourly.get("pressure_in") or hourly.get("pressure") or []
+    t_arr = hourly.get("temperature") or []
+    time_arr = hourly.get("time") or []
+    n = len(wd_arr)
+    out = [None] * n
+    for i in range(n):
+        try:
+            wd = float(wd_arr[i]) if wd_arr[i] is not None else None
+            ws = float(ws_arr[i]) if i < len(ws_arr) and ws_arr[i] is not None else None
+            pr = float(pr_arr[i]) if i < len(pr_arr) and pr_arr[i] is not None else None
+            t = float(t_arr[i]) if i < len(t_arr) and t_arr[i] is not None else None
+        except (TypeError, ValueError):
+            continue
+        hour_local = None
+        if i < len(time_arr) and time_arr[i]:
+            try:
+                hour_local = int(time_arr[i][11:13])
+            except Exception:
+                pass
+        try:
+            out[i] = classify_synoptic_regime(wd, ws, pr, pressure_trend_3h, hour_local, t)
+        except Exception:
+            continue
+    return out

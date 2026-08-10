@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.401c • August 10, 2026 (state_fc_by_lead promoted to derived)</strong></summary>
+
+- **Per-lead forecast regime canonicalized** (`weather_collector/processors/state_stamp.py`). New `derived.state_fc_by_lead` — array of `regime_synoptic` per hourly lead index, computed once per tick alongside the current-tick `derived.state.regime_synoptic`. Uses the same `classify_synoptic_regime` inputs as `forecast_error_log.py`'s state_fc construction (forecast wind_dir/speed/pressure/temp per lead + tick pressure_trend + local hour). `stamp_state` now logs `transitions=N` count. Publishes to GCS; visible to any consumer.
+- **wd_persistence_gate refactor** (`weather_collector/processors/wd_persistence_gate.py`). Reads `derived.state_fc_by_lead` instead of computing per-lead regimes inline. Deletes `_fc_regime_for_lead` (~30 lines) and drops now-unused `classify_synoptic_regime` import. Behavior unchanged; smoke-tested against live GCS (state_curr=pre_frontal, 3 transitions detected at leads {9,39,42}, fires_by_band unchanged). Removes `per_lead_fc_regime` from telemetry (was writer-only; canonical read is now `derived.state_fc_by_lead`); adds `state_fc_source: "derived.state_fc_by_lead"` for provenance. Sets up any future consumer (UI regime-transition widening, other specialists) to read one canonical location instead of reaching into a specialist's telemetry blob.
+
+</details>
+
+<details>
 <summary><strong>v0.6.401b • August 10, 2026 (whitelist streak walker generalized)</strong></summary>
 
 - **Generalized whitelist streak walker** (`analysis/whitelist_streak.py`). Replaces the clp one-off from v0.6.401a with a registry-driven driver covering 5 cell-based gates: chp + wdp (LIVE) and clp + wg_residual + dp_residual (SHADOW). Each gate's effective fire set (SHIP + MARGIN, minus per-gate excluded regimes like frontal for chp/clp/wdp) archives to `analysis/output/{gate}_streak.json` idempotent by UTC date. Prints one PASS/FAIL/BUILDING line per gate. Same JACCARD_FLOOR=0.80 / STREAK_REQUIRED=7 as clp. Day 1/7 seeded for all gates. Closes the "no history to walk on flip day" gap for every in-flight persistence gate. Bias-persistence pair (dp_bias, ws_bias) uses a different curated shape and is not yet registered. Retired: `analysis/clp_whitelist_streak.py`.
