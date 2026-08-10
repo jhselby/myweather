@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.401d • August 10, 2026 (debug page: staleness audit + watch countdowns + archive relocation)</strong></summary>
+
+- **Staleness audit block** (`corrections_debug.html`). New red-bordered block above the "Right now" table lists any open watch whose expected close date has passed. Data source: hand-curated `OPEN_WATCHES` array in inline JS with `{name, closeDate, note}`. Hidden when nothing is overdue (today's state). Same anti-fossilization idea as the digest 🚨 TOP ALERTS block but for temporal drift instead of new sentry firings. Would have caught the 9 stale watches cleaned out of MEMORY.md this session.
+- **Post-ship watch countdown enhancements** (`renderWatchDayCounters`). Existing `day X/N` counter now distinguishes three states: `day X/N · Nd left` (normal, gray), `day N/N · CLOSES TODAY` (amber, bold), `day X/N · Xd OVERDUE — resolve` (red, bold). Prior behavior stamped green "closed" once the window elapsed, misleadingly implying clean when the watch was just overdue and unresolved. Today's page: wdp shows amber CLOSES TODAY (07-27 + 14d = 08-10); Lc regime-conditional Stage 1 gate shows red 3d OVERDUE (07-31 + 7d = 08-07).
+- **Archived post-ship watches moved into `#sec-archive`.** The inline "Post-ship watches — archived" collapsible under "What's improving" had been living next to its active sibling for weeks. Relocated into the existing Archive section as a `#sec-archive-post-ship` block right after the Archive intro, before "Recently ruled out." Left an in-place pointer link under the active watches for wayfinding. Follows the same convention as R&D → Archive: settled/closed items live in one place, not scattered inline next to live surfaces.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.401c • August 10, 2026 (state_fc_by_lead promoted to derived)</strong></summary>
 
 - **Per-lead forecast regime canonicalized** (`weather_collector/processors/state_stamp.py`). New `derived.state_fc_by_lead` — array of `regime_synoptic` per hourly lead index, computed once per tick alongside the current-tick `derived.state.regime_synoptic`. Uses the same `classify_synoptic_regime` inputs as `forecast_error_log.py`'s state_fc construction (forecast wind_dir/speed/pressure/temp per lead + tick pressure_trend + local hour). `stamp_state` now logs `transitions=N` count. Publishes to GCS; visible to any consumer.

@@ -759,6 +759,52 @@
      worst regression called out. Auto-computed each Fitter cycle. -->
 <div id="scorecard-banner" class="layer-info-text" style="border-color:#1f3a2a;background:#101913;margin-bottom:14px;padding:10px 14px;font-size:0.95em;" hidden></div>
 
+<!-- ───────────────────── Staleness audit ─────────────────────
+     Anti-fossilization check: watches whose close dates have passed
+     without being marked CLOSED CLEAN / UNCLEAN. Hidden when nothing
+     is overdue. Same idea as DIGEST 🚨 TOP ALERTS but for temporal
+     drift instead of new alerts. Data: OPEN_WATCHES array below,
+     hand-curated + Rule 5 sweep when a watch flips. -->
+<div id="staleness-audit" hidden style="border:1px solid #3a1f1f;background:#1c1313;margin-bottom:14px;padding:10px 14px;font-size:0.95em;border-radius:6px;color:#ef6450;"></div>
+
+<script>
+  // Open watches with an expected close date. When today's date >= closeDate
+  // the watch is surfaced in the staleness audit block above. Update this
+  // list when a watch flips or a new watch opens.
+  const OPEN_WATCHES = [
+    { name: "wd L2 blend v0.6.384",        closeDate: "2026-08-11", note: "watch reset" },
+    { name: "L6 Fix B rolling gate",       closeDate: "2026-08-15", note: "7-day gate from 08-08" },
+    { name: "clp Stage 3 flip gate",       closeDate: "2026-08-16", note: "earliest flip; day 1/7 on 08-10" },
+    { name: "dpbp LIVE (v0.6.391)",        closeDate: "2026-08-18", note: "14-day post-ship watch" },
+    { name: "sr Lsb LIVE (v0.6.394)",      closeDate: "2026-08-19", note: "14-day post-ship watch" },
+  ];
+
+  (function renderStalenessAudit() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const overdue = [];
+    for (const w of OPEN_WATCHES) {
+      const close = new Date(w.closeDate + "T00:00:00");
+      const daysOver = Math.floor((today - close) / (1000 * 60 * 60 * 24));
+      if (daysOver >= 0) overdue.push({ ...w, daysOver });
+    }
+    if (overdue.length === 0) return;
+    overdue.sort((a, b) => b.daysOver - a.daysOver);
+    const rows = overdue.map(w => {
+      const label = w.daysOver === 0
+        ? "closes today"
+        : `${w.daysOver} day${w.daysOver === 1 ? "" : "s"} overdue`;
+      return `<li style="margin:3px 0;"><strong>${w.name}</strong> — ${label} <span style="opacity:0.7;">(${w.closeDate}${w.note ? " · " + w.note : ""})</span></li>`;
+    }).join("");
+    const el = document.getElementById("staleness-audit");
+    el.hidden = false;
+    el.innerHTML =
+      `<strong>⚠ Staleness audit — ${overdue.length} watch${overdue.length === 1 ? "" : "es"} past close date</strong>` +
+      `<ul style="margin:6px 0 0 20px;padding:0;color:#e6c8c0;font-size:0.9em;">${rows}</ul>` +
+      `<div style="margin-top:6px;font-size:0.82em;opacity:0.7;color:#c8b0a8;">Resolve each: mark CLOSED CLEAN/UNCLEAN in MEMORY.md and remove from OPEN_WATCHES.</div>`;
+  })();
+</script>
+
 <div id="headlineBox">
   <div class="hb-title">Right now — what the pipeline is doing</div>
   <table class="hb-corr-table">
@@ -795,6 +841,7 @@
        - What's improving: active Stage 1 candidates only (retired below)
        - What's being evaluated next: forward calendar + frozen items -->
 <h2 class="section" id="sec-current-state">Current state <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— what's running · improving · being evaluated</span></h2>
+
 
 <details open style="margin-bottom:12px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
   <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Current pipeline state — per-field snapshot</summary>
@@ -1063,18 +1110,7 @@
           <li><strong>l6_fix_b_refit — HOLD-GATE (rolling gate added 08-08).</strong> Was single-day SHIP +2.15% today, HOLD at +0.29% 26 days prior; no consistency check between. Rolling gate needs 7 distinct days + same ship_bins before verdict can promote. Lt stays on do-not-reopen. See [[project_l6_fix_b_rolling_gate]].</li>
           <li>wg persistence-skill thin margin — pooled L4 skill +0.169 (&lt; +0.20 hold margin). Drag at 24-47h. 07-27 ship candidates HELD; re-check post-Stage 1 recovery.</li>
         </ul>
-
-        <details style="margin-left:16px;">
-          <summary style="color:#7090a0;font-weight:600;font-size:0.9em;cursor:pointer;">Post-ship watches — archived (closed / superseded / inert)</summary>
-          <ul style="margin:6px 0 0 16px;padding:0;color:#8090a0;font-size:0.9em;">
-            <li><strong style="color:#4ad29a;">C1h narrow-promote Stage 3 (v0.6.393, 08-05) — SUPERSEDED 2026-08-08 by v0.6.396 re-curate.</strong> Original ship: 9 SHIP cells cc/cl/cm/ch 12-23h + 24-47h + t/12-23h. Diff vs prior committed: cc/6-11h, ch/6-11h, cm/6-11h demoted SHIP WIDEN → SKIP (sample floor); t/12-23h flipped MARGINAL WIDEN → SHIP NARROW. Co-axis gate refreshed: t/12-23h + ch/24-47h from stale always_skip → require_c1f_off + require_c1e_off. First post-deploy tick fired 3 cells (cc/12-23h 1.83× widen, cl/24-47h 2.32×, ch/12-23h 3.78×) and coax_gated 2 correctly. Superseded when the 08-08 re-cut refreshed t band selection.</li>
-            <li><strong style="color:#7090a0;">ws L3 SKIP_TABLE (v0.6.386, 07-28) — INERT 2026-08-08 (ws dropped from L3_FIELDS in v0.6.397).</strong> Cells wired at ship: frontal 24-47 (+5.8%, n=987), pre_frontal 24-47 (+8.0%, n=9,268). Also existing ne_flow 0-48 + sea_breeze 0-11. Full skip-table + asymmetric additive (v0.6.370) now dead code because ws is no longer in L3_FIELDS. Kept in <code>decay_apply.py</code> for historical documentation.</li>
-            <li><strong style="color:#4ad29a;">h L2 shape re-tune (v0.6.390g, 07-31) — CLOSED CLEAN 2026-08-07.</strong> H_SOFT_RAMP_FLOOR 0.4→0.1, H_SOFT_RAMP_END 24→10 after L2 station_bias flipped helping → hurting 07-25. Grid sweep: 7d best {0.0, 8}, 14d best {0.4, 12} — middle path shipped +2.8% vs raw 7d + +6.0% 14d. Layer-shape sentry green all bands, h pair-log ΔMAE −28.3%. Reversible one-line edit. See [[project_h_dp_tau_refit]].</li>
-            <li><strong style="color:#4ad29a;">Ccd 7-day live-shadow gate — CLEARED EARLY 07-30 v0.6.390.</strong> Rerun post-cl-field-kill: +8.48% pooled MAE, halves +11.4%/+5.8% both positive, 6/10 regimes win. Flipped ENABLED=True; cc _CELL_SKIP retired same commit. Verified live at 22:19 UTC: cells_fired=44, cc[0:3] = [81,100,19] matches max(cl,cm,ch), cloud_cover_pirate_raw preserved. Forward triggers: cc-derived MAE creeping worse than cm+ch-corrected trajectory; SKIP_REGIMES {se_flow, unknown} coverage % changing.</li>
-            <li><strong style="color:#4ad29a;">cc composition tuner (v0.6.390e, 07-31) — analysis-only, HOLD.</strong> <code>h_cc_blend_formula.py</code> Stage 0 grid on 123K quads: max wins in 8/10 regimes; frontal +4.3% for random but halves-unstable (A=−2%, B=+8%); nor_easter +30.9% but one-sided (A=8, B=233). Only clean per-cell candidate: pre_frontal/0-5h random +3.5% n=2,115. Ccd stays max-only. Re-check when frontal + nor_easter data accumulates. See [[project_cc_blend_tuner]].</li>
-            <li><strong style="color:#7090a0;">4-verdict regression sentry (v0.6.390f, 07-31) — permanent infrastructure.</strong> Pair-window classifier (sustained 7d + fresh 3d) replaced flat 7d sentry that lagged interventions by 7 days. Emits SUSTAINED FIRE / HEALING / FRESH FIRE / clean per field. First live run 07-31: cl SUSTAINED FIRE, cc FRESH FIRE. 08-02 all fields clean — cl regression was stale applied_layer stamp artifact (v0.6.390j guard + one-shot backfill restored honest metrics). Not a watch — diagnostic used by all field-level watches.</li>
-          </ul>
-        </details>
+        <div style="margin-left:16px;font-size:0.85em;opacity:0.65;">Closed / superseded / inert watches → <a href="#sec-archive-post-ship" style="color:#7090a0;">Archive → Post-ship watches</a></div>
       </div>
     </div>
 
@@ -1787,6 +1823,19 @@
 <div class="layer-info-text" style="border-color:#3a2a2a;background:#191313;">
   <p class="layer-summary">Things we built, ran, and stopped running. Two kinds live here: <strong>hypotheses</strong> the data answered no, and <strong>settled tunings</strong> where the sweep concluded "current value is fine." Kept as institutional memory. Scripts in <code>analysis/</code> can be re-run if conditions shift. <strong>Retired layers</strong> (code intact but permanently no-op) stay in R&D — see Lt above.</p>
 </div>
+
+  <div id="sec-archive-post-ship" style="margin-top:18px;padding:10px;border:1px solid #3a2a2a;background:#1a1414;border-radius:6px;">
+    <div style="color:#9ab0a0;font-weight:600;margin-bottom:6px;">Post-ship watches — closed / superseded / inert</div>
+    <div class="meta-line" style="margin-bottom:8px;opacity:0.85;">Watches that ran their 14-day window and closed clean, or were superseded by a follow-on ship, or went inert because the target was dropped. Active watches live under <a href="#sec-current-state" style="color:#7fb3ff;">Current state → What's improving → Post-ship watches — active</a>.</div>
+    <ul style="margin:0 0 0 16px;padding:0;color:#8090a0;font-size:0.9em;line-height:1.5;">
+      <li><strong style="color:#4ad29a;">C1h narrow-promote Stage 3 (v0.6.393, 08-05) — SUPERSEDED 2026-08-08 by v0.6.396 re-curate.</strong> Original ship: 9 SHIP cells cc/cl/cm/ch 12-23h + 24-47h + t/12-23h. Diff vs prior committed: cc/6-11h, ch/6-11h, cm/6-11h demoted SHIP WIDEN → SKIP (sample floor); t/12-23h flipped MARGINAL WIDEN → SHIP NARROW. Co-axis gate refreshed: t/12-23h + ch/24-47h from stale always_skip → require_c1f_off + require_c1e_off. First post-deploy tick fired 3 cells (cc/12-23h 1.83× widen, cl/24-47h 2.32×, ch/12-23h 3.78×) and coax_gated 2 correctly. Superseded when the 08-08 re-cut refreshed t band selection.</li>
+      <li><strong style="color:#7090a0;">ws L3 SKIP_TABLE (v0.6.386, 07-28) — INERT 2026-08-08 (ws dropped from L3_FIELDS in v0.6.397).</strong> Cells wired at ship: frontal 24-47 (+5.8%, n=987), pre_frontal 24-47 (+8.0%, n=9,268). Also existing ne_flow 0-48 + sea_breeze 0-11. Full skip-table + asymmetric additive (v0.6.370) now dead code because ws is no longer in L3_FIELDS. Kept in <code>decay_apply.py</code> for historical documentation.</li>
+      <li><strong style="color:#4ad29a;">h L2 shape re-tune (v0.6.390g, 07-31) — CLOSED CLEAN 2026-08-07.</strong> H_SOFT_RAMP_FLOOR 0.4→0.1, H_SOFT_RAMP_END 24→10 after L2 station_bias flipped helping → hurting 07-25. Grid sweep: 7d best {0.0, 8}, 14d best {0.4, 12} — middle path shipped +2.8% vs raw 7d + +6.0% 14d. Layer-shape sentry green all bands, h pair-log ΔMAE −28.3%. Reversible one-line edit. See [[project_h_dp_tau_refit]].</li>
+      <li><strong style="color:#4ad29a;">Ccd 7-day live-shadow gate — CLEARED EARLY 07-30 v0.6.390.</strong> Rerun post-cl-field-kill: +8.48% pooled MAE, halves +11.4%/+5.8% both positive, 6/10 regimes win. Flipped ENABLED=True; cc _CELL_SKIP retired same commit. Verified live at 22:19 UTC: cells_fired=44, cc[0:3] = [81,100,19] matches max(cl,cm,ch), cloud_cover_pirate_raw preserved. Forward triggers: cc-derived MAE creeping worse than cm+ch-corrected trajectory; SKIP_REGIMES {se_flow, unknown} coverage % changing.</li>
+      <li><strong style="color:#4ad29a;">cc composition tuner (v0.6.390e, 07-31) — analysis-only, HOLD.</strong> <code>h_cc_blend_formula.py</code> Stage 0 grid on 123K quads: max wins in 8/10 regimes; frontal +4.3% for random but halves-unstable (A=−2%, B=+8%); nor_easter +30.9% but one-sided (A=8, B=233). Only clean per-cell candidate: pre_frontal/0-5h random +3.5% n=2,115. Ccd stays max-only. Re-check when frontal + nor_easter data accumulates. See [[project_cc_blend_tuner]].</li>
+      <li><strong style="color:#7090a0;">4-verdict regression sentry (v0.6.390f, 07-31) — permanent infrastructure.</strong> Pair-window classifier (sustained 7d + fresh 3d) replaced flat 7d sentry that lagged interventions by 7 days. Emits SUSTAINED FIRE / HEALING / FRESH FIRE / clean per field. First live run 07-31: cl SUSTAINED FIRE, cc FRESH FIRE. 08-02 all fields clean — cl regression was stale applied_layer stamp artifact (v0.6.390j guard + one-shot backfill restored honest metrics). Not a watch — diagnostic used by all field-level watches.</li>
+    </ul>
+  </div>
 
   <div style="margin-top:18px;padding:10px;border:1px solid #3a2a2a;background:#1a1414;border-radius:6px;">
     <div style="color:#fb7c5c;font-weight:600;margin-bottom:6px;">Recently ruled out — 2026-06-22 to 06-29 Stage 0/1 kills</div>
@@ -3215,11 +3264,18 @@ function renderWatchDayCounters() {
     if (day < 0) {
       el.textContent = `pre-ship (ships in ${-day}d)`;
       el.style.color = "#8a93a3";
-    } else if (day <= window) {
-      el.textContent = `day ${day}/${window}`;
+    } else if (day < window) {
+      const left = window - day;
+      el.textContent = `day ${day}/${window} · ${left}d left`;
+    } else if (day === window) {
+      el.textContent = `day ${day}/${window} · CLOSES TODAY`;
+      el.style.color = "#e0a070";
+      el.style.fontWeight = "600";
     } else {
-      el.textContent = `closed ${window}d watch (day ${day})`;
-      el.style.color = "#4ad29a";
+      const over = day - window;
+      el.textContent = `day ${day}/${window} · ${over}d OVERDUE — resolve`;
+      el.style.color = "#ef6450";
+      el.style.fontWeight = "600";
     }
   });
 }
