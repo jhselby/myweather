@@ -115,13 +115,6 @@ KNOWN_LIVE_PIPELINES = {
         "since": "v0.6.248",
         "date": "2026-06-28",
     },
-    "h_ws_blend_hours_sweep": {
-        "target": "wind_blend BLEND_HOURS constant (wind_blend.py:78, "
-                  "value=4). Sweep script's 'SHIP BLEND_HOURS=4' verdict is "
-                  "stale — constant already live.",
-        "since": "v0.6.384",
-        "date": "2026-07-28",
-    },
     "h_cc_derivation": {
         "target": "Ccd — cc from-derivation (cc_from_derivation.py, "
                   "ENABLED=True). Overwrites hourly.cloud_cover with "
@@ -240,7 +233,6 @@ SHIP_RESOLUTION_SCRIPTS = frozenset({
     "production_whatif",
     # Orthogonality checks emit per-axis-pair verdicts — sufficient for the
     # promote/kill signals they're designed to give.
-    "cluster_spread_orthogonality",
     "h_c1g_orthogonality",
     "h_cloud_disagreement_orthogonality",
     "h_hsf_orthogonality",
@@ -275,7 +267,6 @@ TOOL_QUESTION_GROUPS = {
         "c1_stage4_audit",
     },
     "orthogonality": {
-        "cluster_spread_orthogonality",
         "h_c1g_orthogonality",
         "h_cloud_disagreement_orthogonality",
         "h_hsf_orthogonality",

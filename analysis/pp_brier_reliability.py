@@ -278,7 +278,7 @@ def main():
             emit(f"→ STAGE0 CANDIDATE OPEN: pp bin-lift calibration table.")
             emit(f"VERDICT: STAGE0_OPEN pp_bin_lift_calibration weighted_bias={weighted_bias:+.2f}pp "
                  f"worst_bin={worst['bin'] if worst else 'n/a'} worst_gap={worst['gap']:+.1f}pp "
-                 f"(halves-test via h_pp_bin_calibration.py to promote → Stage 1).")
+                 f"(halves-test via h_pp_bin_calibration.skip.py to promote → Stage 1).")
             verdict_payload = {
                 "state": "STAGE0_OPEN",
                 "candidate": "pp_bin_lift_calibration",
@@ -288,7 +288,7 @@ def main():
                 "worst_bin_observed_pct": worst["observed"] if worst else None,
                 "worst_bin_gap_pp": worst["gap"] if worst else None,
                 "worst_bin_n": worst["n"] if worst else None,
-                "next_step": "h_pp_bin_calibration.py halves-test",
+                "next_step": "h_pp_bin_calibration.skip.py halves-test",
             }
         else:
             emit(f"→ CLEAN: raw pp is well-calibrated; no Stage 0 candidate.")
