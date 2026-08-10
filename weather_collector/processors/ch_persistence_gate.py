@@ -48,6 +48,43 @@ _LEAD_BANDS = [
     ("24-47", 24, 47),
 ]
 
+# v0.6.401 diurnal gate. 08-10 investigation of the 12-23h + 24-47h chp
+# regression on the debug-page scoreboard traced the bias to daytime
+# valid-times in nw_flow (chp_bias +20.51 at 12-23h nw_flow day, n=78)
+# and pre_frontal (chp_bias +4.25 at 24-47h day, n=91). Nighttime cells
+# in the same regimes remain strong wins (-6 to -26% vs raw). Physical
+# story: chp persists residual overnight clouds into daytime valid times;
+# in post-frontal cold advection (nw_flow) or pre-frontal warm sector
+# (pre_frontal) the clouds burn off by midday and persistence over-forecasts.
+# hourly.times[i] is America/New_York local; 10-18 local ≈ 6am-2pm EDT,
+# solidly inside sun-up hours for August. See
+# project_ch_chp_midlead_band_watch_08_10.
+_DIURNAL_SKIP_REGIMES = frozenset({"nw_flow", "pre_frontal"})
+_DIURNAL_SKIP_HOUR_START = 10  # inclusive, America/New_York local
+_DIURNAL_SKIP_HOUR_END = 18    # exclusive
+
+
+def _valid_hour_local(times, i):
+    """Extract local-time hour from hourly.times[i]. Returns None on failure."""
+    if i >= len(times):
+        return None
+    t = times[i]
+    if not isinstance(t, str) or len(t) < 13:
+        return None
+    try:
+        return int(t[11:13])
+    except ValueError:
+        return None
+
+
+def _diurnal_skip(regime, valid_hour):
+    """True when the diurnal gate suppresses chp fire at this (regime, hour)."""
+    if regime not in _DIURNAL_SKIP_REGIMES:
+        return False
+    if valid_hour is None:
+        return False
+    return _DIURNAL_SKIP_HOUR_START <= valid_hour < _DIURNAL_SKIP_HOUR_END
+
 _TABLE_PATH = Path(__file__).resolve().parent.parent / "data" / "ch_persistence_gate_curated.json"
 _TABLE_CACHE = None
 
@@ -112,7 +149,10 @@ def describe_applicability():
     table = _load_table()
     cells = table.get("cells", {})
     if ENABLED:
-        fires_when = "ENABLED — replaces L4/Lc ch value with persistence-of-obs when (regime, lead_band) is SHIP or MARGIN. frontal + SKIP cells fall back to L4."
+        fires_when = ("ENABLED — replaces L4/Lc ch value with persistence-of-obs when (regime, lead_band) is SHIP or MARGIN. "
+                      "frontal + SKIP cells fall back to L4. "
+                      f"v0.6.401 diurnal gate: chp OFF for valid hours {_DIURNAL_SKIP_HOUR_START}-{_DIURNAL_SKIP_HOUR_END} local "
+                      f"in {sorted(_DIURNAL_SKIP_REGIMES)} (morning residual clouds burn off; persistence over-forecasts).")
         state_prefix = "ENABLED True"
     else:
         fires_when = "OFF — ENABLED False. Telemetry stamped for 7-day watch; no ch values modified."
@@ -171,17 +211,26 @@ def stamp_ch_persistence_gate(weather_data):
 
     persist_val, persist_src = _persistence_source(weather_data)
 
+    times = hourly.get("times") or []
+
     n_leads = len(arr)
     per_lead_would_apply = [None] * n_leads
     per_lead_bands = [None] * n_leads
     per_lead_fires = [False] * n_leads
     fires_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
     skips_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
+    diurnal_skips_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
 
     for i in range(n_leads):
         band = _lead_band(i)
         per_lead_bands[i] = band
         if band is None or persist_val is None:
+            continue
+        # v0.6.401: diurnal gate — suppress chp fire during daytime valid
+        # hours in regimes where morning residual clouds burn off by midday.
+        if _diurnal_skip(regime, _valid_hour_local(times, i)):
+            skips_by_band[band] += 1
+            diurnal_skips_by_band[band] += 1
             continue
         if _cell_fires(cells, regime, band):
             per_lead_would_apply[i] = round(persist_val, 3)
@@ -213,6 +262,7 @@ def stamp_ch_persistence_gate(weather_data):
         "persistence_source": persist_src,
         "fires_by_band": fires_by_band,
         "skips_by_band": skips_by_band,
+        "diurnal_skips_by_band": diurnal_skips_by_band,
         "per_lead_would_apply": per_lead_would_apply,
         "table_generated_at": table.get("generated_at"),
     }

@@ -2913,7 +2913,10 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
   // at lead 0, which the leads-1-47 average deliberately excludes. Counting
   // cl in the touched median produces a structural +0.0% that drags the
   // median toward zero even though the correction stack is doing its job.
-  const MAE_UNCORRECTED_FIELDS = new Set(["pa", "pr", "cl"]);
+  // v0.6.401: dropped pr — pr L2 now applies on nw_flow/{0-5,6-11} WIN cells
+  // (analysis/pr_l2_regime_lead_retro.py 08-10 STAGE 1 SHIP), so pr's overall
+  // MAE is no longer structural-zero vs raw.
+  const MAE_UNCORRECTED_FIELDS = new Set(["pa", "cl"]);
   const rows = [];
   const cellRows = [];  // per-(field, band) for worst-cell surfacing
   const mae = tsDoc.per_layer_mae_by_lead;

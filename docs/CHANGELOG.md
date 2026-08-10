@@ -1,7 +1,18 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
-<summary><strong>v0.6.400c • August 9, 2026 (Overall MAE mean tile dp exclusion + debug-page Rule 5 sweep post-audit)</strong></summary>
+<summary><strong>v0.6.401 • August 10, 2026 (chp diurnal gate + pr L2 regime-gated SHIP)</strong></summary>
+
+Two same-day live-layer changes from `project_ch_chp_midlead_band_watch_08_10` and `project_pr_l2_regime_flip_investigation_08_10` investigations.
+
+- **chp diurnal gate** (`weather_collector/processors/ch_persistence_gate.py`). Added `_DIURNAL_SKIP_REGIMES = {nw_flow, pre_frontal}` and `_DIURNAL_SKIP_HOURS = [10, 18)` local. chp fire logic now checks `hourly.times[i]` per lead and suppresses on daytime valid hours in those regimes. 08-10 48h band-cut traced the 12-23h + 24-47h scoreboard regression to +20.51 chp_bias at 12-23h nw_flow daytime (n=78) and +4.25 at 24-47h pre_frontal daytime (n=91); nighttime cells in the same regimes remain strong wins (-6 to -26% vs raw). Physical: post-frontal cold-advection nights leave residual clouds that burn off by midday, and chp persists them into the daytime valid time. Diurnal skip count exposed as `ch_persistence_gate.diurnal_skips_by_band` for monitoring.
+- **pr L2 SHIP with regime gate** (`weather_collector/processors/corrected_hourly.py`). Flipped pr from L2-disabled-everywhere to L2-applied-on-WIN-cells. `_PR_L2_FIRE_CELLS = {(nw_flow, 0-5), (nw_flow, 6-11)}` — the both-halves winners from `analysis/pr_l2_regime_lead_retro.py` 08-10 (Jaccard=0.50 STAGE 1 SHIP CANDIDATE, nw_flow/0-5h A +21.8%/B +41.6%, nw_flow/6-11h A +10.3%/B +13.1%). Shadow-write of `corrected_pressure_in_post_l2` remains unconditional so the retro can keep evaluating skip cells for future promotion. Regime source: current-tick state (proxy for short-lead fc regime, matches chp/wdp pattern). Retro's other pooled WINs (nw_flow/12-23h, pre_frontal/{0-5,6-11}, sw_flow/{0-5,6-11}) held pending 7-day gate agreement per feedback_whitelist_promotion_gate.
+- **Scoreboard** (`corrections_debug.html:2916`). Dropped `pr` from `MAE_UNCORRECTED_FIELDS` — pr's overall MAE is no longer structural-zero vs raw once L2 applies on nw_flow WIN cells. Touched median now n=9 (was n=8).
+
+</details>
+
+<details>
+<summary><strong>v0.6.400c • August 9, 2026</strong> (Overall MAE mean tile dp exclusion + debug-page Rule 5 sweep post-audit)</summary>
 
 - `corrections_debug.html:3370` — `DERIVED = {cc, pp}` was missing `dp`, causing the "Overall MAE mean · 24-hour" tile to double-count dp (Magnus-derived from t+h). Comment on line 3382 already documented "cc/pp/dp aren't independent MAE-scorable fields" — code just didn't match. Fixed to `{cc, pp, dp}` matching `SCOREBOARD_EXCLUDE`. Modest but real: dp's small delta was slightly dragging the tile toward zero.
 - **Debug-page Rule 5 sweep** after 08-09 audit + v0.6.400 ships. Updated:

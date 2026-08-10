@@ -30,6 +30,24 @@ DEFAULT_L2_TAUS = {
 }
 L2_DECAY_PATH = "l2_decay.json"
 
+# v0.6.401: pr L2 gate — regime × lead-band whitelist. Only cells that
+# won BOTH-halves in analysis/pr_l2_regime_lead_retro.py get L2 applied;
+# every other cell stays raw. Shadow-wire (corrected_pressure_in_post_l2)
+# remains unconditional so the retro can keep evaluating skip cells for
+# potential promotion. See project_pr_l2_regime_flip_investigation_08_10.
+_PR_L2_FIRE_CELLS = frozenset({
+    ("nw_flow", "0-5"),   # 08-10 both-halves: A +21.8% (n=284) / B +41.6% (n=311)
+    ("nw_flow", "6-11"),  # 08-10 both-halves: A +10.3% (n=250) / B +13.1% (n=292)
+})
+
+
+def _pr_lead_band(lead_idx):
+    """Map lead index (0-based, hourly array position) to band label."""
+    if lead_idx < 6:  return "0-5"
+    if lead_idx < 12: return "6-11"
+    if lead_idx < 24: return "12-23"
+    return "24-47"
+
 
 L2_GUARDRAIL_MIN_IMPROVEMENT_PCT = 0.0  # held-out must beat default (≥0%)
 L2_GUARDRAIL_MIN_N_TEST = 100           # need at least this many test pairs
@@ -264,26 +282,37 @@ def add_corrected_hourly_arrays(weather_data):
     if raw_pressure_mb:
         raw_pressure_in = [round(p / 33.8639, 3) if p is not None else None for p in raw_pressure_mb]
         hourly["raw_pressure_in"] = raw_pressure_in
-        hourly["corrected_pressure_in"] = list(raw_pressure_in)
 
-        # Shadow-wire pr L2 (2026-07-29). Apply stays disabled — production
-        # pr_applied is still l1, corrected_pressure_in ≡ raw. But we compute
-        # what L2 WOULD produce (K=1, τ from _load_l2_taus guardrails) and
-        # stamp corrected_pressure_in_post_l2 directly so the pair log carries
-        # a measurable pr_l2. This lets us re-cut the regime × lead cross-cut
-        # on fresh data. Companion: analysis/pr_l2_regime_lead_retro.py —
-        # 07-29 retro on pre-07-01 data found 6 WIN cells (sea_breeze /
-        # pre_frontal short-lead, ne_flow long-lead, calm 6-11h). The 07-01
-        # pooled kill was regime-blind; the WIN cells are physically real
-        # (marine boundary layer, frontal advance). Shadow write is
-        # unconditional (feedback_persistence_gate_shadow_write). Decision
-        # to re-enable a regime-gated pr L2 requires ~2 weeks of shadow
-        # accumulation + fresh regime cross-cut. See
-        # project_pr_l2_regime_gate_opportunity.
+        # Shadow-wire pr L2 (2026-07-29). Compute L2 unconditionally so the
+        # pair log carries a measurable pr_l2 for retro cross-cuts even on
+        # cells where live-apply skips. See project_pr_l2_regime_gate_opportunity
+        # and feedback_persistence_gate_shadow_write.
         pr_bias = hyp.get("bias_pressure_in", 0) or 0
         pr_tau = taus.get("pr")
         pr_decay = _decay_factors(pr_tau, len(raw_pressure_in))
-        hourly["corrected_pressure_in_post_l2"] = [
+        l2_pressure_in = [
             round(p + pr_bias * pr_decay[i], 3) if p is not None else None
             for i, p in enumerate(raw_pressure_in)
         ]
+        hourly["corrected_pressure_in_post_l2"] = l2_pressure_in
+
+        # v0.6.401: pr L2 apply flipped from disabled-everywhere to
+        # gated-on-WIN-cells. 08-10 analysis/pr_l2_regime_lead_retro.py
+        # returned Jaccard(A,B)=0.50 STAGE 1 SHIP CANDIDATE with both-halves
+        # winners nw_flow/0-5h (A +21.8% / B +41.6%) and nw_flow/6-11h
+        # (A +10.3% / B +13.1%) on 8,596 August shadow-wire rows. Conservative
+        # first ship: only both-halves-verified cells. Pooled-only WINs
+        # (nw_flow/12-23h, pre_frontal/{0-5,6-11}, sw_flow/{0-5,6-11}) held
+        # pending 7-day gate agreement per feedback_whitelist_promotion_gate.
+        # Regime source: current-tick state (proxy for short-lead fc regime,
+        # matches chp/wdp gate pattern). See
+        # project_pr_l2_regime_flip_investigation_08_10.
+        regime = ((weather_data.get("derived") or {}).get("state") or {}).get("regime_synoptic")
+        pr_live = list(raw_pressure_in)
+        if regime is not None:
+            for i, val in enumerate(l2_pressure_in):
+                if val is None or pr_live[i] is None:
+                    continue
+                if (regime, _pr_lead_band(i)) in _PR_L2_FIRE_CELLS:
+                    pr_live[i] = val
+        hourly["corrected_pressure_in"] = pr_live
