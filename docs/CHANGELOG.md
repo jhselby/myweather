@@ -1,6 +1,23 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.401f • August 11, 2026 (debug page full sweep + 4-watch close/extend + Stage 3 c1 xr_q wire-up)</strong></summary>
+
+- **Cross-run spread → C1 Stage 3 wired** (`analysis/c1_confidence_calibration_v2.py` + `c1_curate_confidence_table_v2.py`). New `by_xr_q` single-axis sub-table alongside existing `by_axes`. Per-field cross-run spread computed in a pre-pass (max−min of forecast across runs for each (field, valid_time), only vts with ≥3 runs contributing). TRAIN-fit quintile edges per field. 252 xr_q cells wired at n≥40; curator emits SHIP/MARGINAL/SKIP with the same classifier as `by_axes` — **214 SHIP (103 WIDEN / 111 NARROW), 18 MARGINAL, 20 SKIP** of 252. Non-breaking: `confidence_layer.py`'s 5-tuple lookup path is untouched. Stage 4 (live consumer) needs a new `forecast_history_log.json` so the collector can compute per-tick spread; long-lead-only wiring first to sidestep training-vs-live spread drift at short leads. See `project_cross_run_spread_c1_axis`.
+- **Three hypothesis Stage 0/1 scripts + one Stage 2** (`analysis/`). `h_cross_run_spread_c1_stage2.py` PROMOTE 7/7 fields vs cluster_spread_q (Q5/Q1 |err| ratios 1.38–15.68); `h_depression_cloud_confidence_c1_stage2.py` NARROW PROMOTE — cl clean, ch confounded by cross-run spread; `h_windspeed_t_confidence_c1_stage1.py` REDUNDANT (2.11× in stable but 1.16× in transition — transition axis already captures it); `h_frontal_t_bias_stage0.py` HIT 3/4 bands (0-5h +1.94, 6-11h +2.74, 12-23h +1.06 SIGN_HOLDS; 24-47h SIGN_FLIPS); `h_sr_obs_recent_override_stage0.py` NO HIT pooled 4.58% but real fired-subset +23.5% on 77 non-Lsb fires.
+- **Full debug-page sweep + 4-watch close/extend** (`corrections_debug.html`). Verified all four watches with post-ship pair-log checks. **wdp CLOSED CLEAN** (Δ −2.7% aggregate n=16,416, 07-31 outlier cells did not recur). **wind_blend BLEND_HOURS 24→4 ws-side CLOSED CLEAN** (post-fix 0-5h L2 −23.3%, 6-11h +4.2%, 12-23h +0.9%, 24-47h 0%; sibling wd-side closed as v0.6.401e). **wg L3 SKIP_TABLE WATCH EXTENDED** with regression flag — 4/7 SHIP cells hurting post-ship 14d (calm 12-23h +23%, calm 24-47h +12%, sea_breeze 6-11h +14%, sea_breeze 24-47h +8%; only calm 0-5h clearly winning at −43%; needs investigation). **ws L3 SKIP_TABLE** confirmed already in Archive as INERT (v0.6.397). Also: L3 stack description updated (ws no longer in L3_FIELDS); C1 layer bullet updated with by_xr_q Stage 3 note; calendar entries reflowed (past dates removed, HELD items surfaced); Recent Activity today entry added, 08-08 and 08-07 trimmed to CHANGELOG per rolling 3-day window.
+- **Hypothesis backlog hygiene** (`memory/project_hypothesis_backlog.md`). Marked #6 as SHIPPED (was already dpbp v0.6.391) and #4 as SHIPPED (was already cluster_spread axis_2 live in c1_v2). Replaced 7-week-old "Closed today (2026-06-24)" block with compact recent-shipments line. Marine-layer entry rewritten to reflect dormant sentry-only state. Added #8 (sr obs-recent override), progressed #7 (frontal-t Stage 0 hit + watch), and HELD #2 (pre_front C1e — 16 ortho cells June → 2 SHIP today, n=3 passages).
+
+</details>
+
+<details>
+<summary><strong>v0.6.401e • August 11, 2026 (close wd L2 blend watch CLEAN)</strong></summary>
+
+- **wd L2 blend post-ship watch CLOSED CLEAN** (`corrections_debug.html`, `memory/project_wd_l2_blend.md`, `memory/MEMORY.md`). Watch (reset to 08-11 after v0.6.384 BLEND_HOURS 24→4 shrink) delivered design intent. `h_wd_l2_fire_rate.py` post-fix (obs_time ≥ 2026-07-28): 0-5h L2 35.44° vs L1 46.16° (−23% MAE, 65% fire, fired-subset −36%); 6-11h +0.3% (6% fire); 12-23h −0.3% (8% fire); 24-47h never fires (band ≥ BLEND_HOURS). Predicted MIXED → ADDS VALUE flip landed on schedule as pre-fix fossil damage aged out. OPEN_WATCHES entry removed; bullet relocated from active list to Archive → Post-ship watches with numbers.
+
+</details>
+
+<details>
 <summary><strong>v0.6.401d • August 10, 2026 (debug page: staleness audit + watch countdowns + archive relocation)</strong></summary>
 
 - **Staleness audit block** (`corrections_debug.html`). New red-bordered block above the "Right now" table lists any open watch whose expected close date has passed. Data source: hand-curated `OPEN_WATCHES` array in inline JS with `{name, closeDate, note}`. Hidden when nothing is overdue (today's state). Same anti-fossilization idea as the digest 🚨 TOP ALERTS block but for temporal drift instead of new sentry firings. Would have caught the 9 stale watches cleaned out of MEMORY.md this session.
