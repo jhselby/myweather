@@ -132,6 +132,21 @@ def curate():
                     "rationale": ax_reason,
                 }
 
+            # Cross-run spread quintile cells (Stage 3 wire-up, 08-11).
+            # Same classifier as multi-axis cells — reference is legacy stable_mae.
+            by_xr_q_out = {}
+            for xr_key, ax in (c.get("by_xr_q") or {}).items():
+                ax_status, ax_dir, ax_reason = classify_axis_cell(
+                    c["stable_mae"], ax["mae"], ax["n"]
+                )
+                by_xr_q_out[xr_key] = {
+                    "status":    ax_status,
+                    "direction": ax_dir,
+                    "mae":       ax["mae"],
+                    "n":         ax["n"],
+                    "rationale": ax_reason,
+                }
+
             curated[field][band] = {
                 "status":         status,
                 "direction":      direction,
@@ -143,6 +158,7 @@ def curate():
                 "n_transition":   c["n_transition"],
                 "rationale":      reason,
                 "by_axes":        by_axes_out,
+                "by_xr_q":        by_xr_q_out,
             }
         find_outliers(curated[field])
 
@@ -160,10 +176,12 @@ def curate():
             "test_days":    stage1.get("test_days"),
             "min_n_legacy": stage1.get("min_n_legacy"),
             "min_n_multi":  stage1.get("min_n_multi"),
+            "min_n_xr":     stage1.get("min_n_xr"),
             "spread_field": stage1.get("spread_field"),
             "spread_cuts":  stage1.get("spread_cuts"),
             "pt_bins":      stage1.get("pt_bins"),
             "axes":         stage1.get("axes"),
+            "xr_edges_by_field": stage1.get("xr_edges_by_field"),
         },
         "cells": curated,
     }
@@ -180,6 +198,9 @@ def print_summary(doc):
     legacy_counts = {"SHIP": 0, "MARGINAL": 0, "REVIEW": 0, "SKIP": 0}
     multi_counts = {"SHIP": 0, "MARGINAL": 0, "SKIP": 0}
     multi_total_cells = 0
+    xr_counts = {"SHIP": 0, "MARGINAL": 0, "SKIP": 0}
+    xr_total_cells = 0
+    xr_ship_by_direction = {"WIDEN": 0, "NARROW": 0}
 
     for field in field_order:
         for band, entry in doc["cells"][field].items():
@@ -188,6 +209,12 @@ def print_summary(doc):
             multi_total_cells += len(ba)
             for ax_entry in ba.values():
                 multi_counts[ax_entry["status"]] = multi_counts.get(ax_entry["status"], 0) + 1
+            xr = entry.get("by_xr_q") or {}
+            xr_total_cells += len(xr)
+            for ax_entry in xr.values():
+                xr_counts[ax_entry["status"]] = xr_counts.get(ax_entry["status"], 0) + 1
+                if ax_entry["status"] == "SHIP" and ax_entry["direction"]:
+                    xr_ship_by_direction[ax_entry["direction"]] += 1
 
     print("Legacy axis:")
     total_legacy = sum(legacy_counts.values())
@@ -197,6 +224,11 @@ def print_summary(doc):
     print("Multi-axis cells:")
     print(f"  {multi_counts['SHIP']} SHIP, {multi_counts['MARGINAL']} MARGINAL, "
           f"{multi_counts['SKIP']} SKIP (of {multi_total_cells})")
+    print("Cross-run spread (xr_q) cells:")
+    print(f"  {xr_counts['SHIP']} SHIP ({xr_ship_by_direction['WIDEN']} WIDEN / "
+          f"{xr_ship_by_direction['NARROW']} NARROW), "
+          f"{xr_counts['MARGINAL']} MARGINAL, {xr_counts['SKIP']} SKIP "
+          f"(of {xr_total_cells})")
 
 
 def main():
