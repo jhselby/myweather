@@ -87,7 +87,10 @@ C1F_LABELS = ("p0", "p1")
 TEST_DAYS = 14
 MIN_N_LEGACY = 100      # legacy single-axis floor (matches v1)
 MIN_N_MULTI = 30        # multi-axis floor — cells are 8-32× sparser (now 16-64×)
+MIN_N_XR = 40           # xr_q single-axis floor — 5-way slice per (field, band)
+MIN_RUNS_PER_VT_XR = 3  # cross_run_spread only defined when ≥3 runs contributed
 TICK_JOIN_TOLERANCE_MIN = 15   # cluster_spread tick matched if within this window
+XR_LEVELS = ("Q1", "Q2", "Q3", "Q4", "Q5")
 
 OUTPUT_JSON = os.path.join(os.path.dirname(__file__), "output", "c1_confidence_premium_v2.json")
 
@@ -245,6 +248,62 @@ def _spread_quartile(v, q1, q3):
     return "Q23"  # middle quartiles collapsed — we only care about extremes
 
 
+def _compute_xr_spread(path, cutoff):
+    """Pass over the pair log building per-(field, vt) cross-run spread.
+
+    Returns (spread_by_key, edges_by_field) where:
+      spread_by_key: {(field, valid_time): max_fc - min_fc}, only for vts
+        that had ≥ MIN_RUNS_PER_VT_XR forecasts.
+      edges_by_field: {field: [q20, q40, q60, q80]} — quintile cuts derived
+        from the same measurement window.
+
+    Kept as a pre-pass so the main pass can bin rows into xr quintiles
+    without needing to buffer them. Uses `forecast` (not lifted-layer fields)
+    because the spread question is about raw model disagreement across runs.
+    """
+    groups = defaultdict(list)  # (field, vt) -> [forecast, ...]
+    with open(path) as f:
+        for line in f:
+            if not line:
+                continue
+            try:
+                p = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            ot = p.get("obs_time") or ""
+            if ot < cutoff:
+                continue
+            field = p.get("field")
+            vt = p.get("valid_time") or ""
+            fc = p.get("forecast")
+            if field is None or not vt or fc is None:
+                continue
+            groups[(field, vt)].append(float(fc))
+    spread_by_key = {k: max(v) - min(v)
+                     for k, v in groups.items()
+                     if len(v) >= MIN_RUNS_PER_VT_XR}
+    by_field = defaultdict(list)
+    for (field, _vt), sp in spread_by_key.items():
+        by_field[field].append(sp)
+    edges_by_field = {}
+    for field, vals in by_field.items():
+        if len(vals) < 200:
+            continue
+        s = sorted(vals)
+        n = len(s)
+        edges_by_field[field] = [s[int(n * p)] for p in (0.20, 0.40, 0.60, 0.80)]
+    return spread_by_key, edges_by_field
+
+
+def _xr_bucket(sp, edges):
+    if sp is None or not edges:
+        return None
+    for i, e in enumerate(edges):
+        if sp < e:
+            return XR_LEVELS[i]
+    return XR_LEVELS[-1]
+
+
 def measure():
     print(f"C1 multi-axis calibration · {TEST_DAYS}-day window")
     print("=" * 80)
@@ -258,13 +317,24 @@ def measure():
 
     cutoff = (datetime.now(timezone.utc) - timedelta(days=TEST_DAYS)).strftime("%Y-%m-%dT%H:%M")
 
+    path = cached_path(PAIR_LOG_URL)
+
+    # Pre-pass: compute per-(field, vt) cross-run spread + per-field quintile
+    # cuts inside the same measurement window. See project_cross_run_spread_c1_axis.
+    print("[2a/3] Pre-pass: computing cross-run spread ...")
+    xr_spread_by_key, xr_edges_by_field = _compute_xr_spread(path, cutoff)
+    xr_scored_fields = sorted(xr_edges_by_field.keys())
+    print(f"  vts with ≥{MIN_RUNS_PER_VT_XR} runs: {len(xr_spread_by_key):,}   "
+          f"fields with quintile cuts: {xr_scored_fields}")
+
     # Legacy aggregator: (field, band, is_transition) -> [sum_abs_err, n]
     legacy_accs = defaultdict(lambda: [0.0, 0])
     # Multi-axis aggregator: (field, band, spread_q, pt_label, is_trans, c1f, hsf) -> [sum_abs_err, n]
     multi_accs = defaultdict(lambda: [0.0, 0])
+    # Xr-single-axis aggregator: (field, band, xr_q) -> [sum_abs_err, n]
+    xr_accs = defaultdict(lambda: [0.0, 0])
 
-    print("[2/3] Streaming pair log...")
-    path = cached_path(PAIR_LOG_URL)
+    print("[2b/3] Streaming pair log...")
     pairs_seen = 0
     pairs_used_legacy = 0
     pairs_used_multi = 0
@@ -313,6 +383,14 @@ def measure():
             legacy_accs[(field, band, is_trans)][0] += abs_err
             legacy_accs[(field, band, is_trans)][1] += 1
             pairs_used_legacy += 1
+
+            # Xr-quintile single-axis accumulator (independent slice per field).
+            xr_key = (field, p.get("valid_time") or "")
+            xr_sp = xr_spread_by_key.get(xr_key)
+            xr_q = _xr_bucket(xr_sp, xr_edges_by_field.get(field))
+            if xr_q is not None:
+                xr_accs[(field, band, xr_q)][0] += abs_err
+                xr_accs[(field, band, xr_q)][1] += 1
 
             # Multi-axis accumulator — needs both pt_bin AND spread_quartile.
             pt_label = _pt_bin(sfc.get("pressure_trend_hpa_3h"))
@@ -400,6 +478,27 @@ def measure():
     print(f"  legacy (field, band) cells: {sum(len(b) for b in out_cells.values()):,}")
     print(f"  multi-axis cells wired:     {multi_cell_count:,} (n≥{MIN_N_MULTI})")
 
+    # Attach the xr_q single-axis sub-table. Independent of by_axes; safe for
+    # confidence_layer.py's 5-tuple lookup path. Curator ignores it too.
+    for (field, band, xr_q), (s_e, n) in xr_accs.items():
+        if n < MIN_N_XR:
+            continue
+        entry = out_cells.get(field, {}).get(band)
+        if entry is None:
+            continue
+        entry.setdefault("by_xr_q", {})[xr_q] = {
+            "mae": round(s_e / n, 4),
+            "n":   n,
+        }
+    xr_cell_count = sum(
+        len(b.get("by_xr_q") or {}) for f in out_cells.values() for b in f.values()
+    )
+    print(f"  xr_q cells wired:           {xr_cell_count:,} (n≥{MIN_N_XR})")
+
+    # Stash xr edges on measure for main() to write to JSON.
+    measure._xr_edges = {f: [round(e, 4) for e in v]
+                         for f, v in xr_edges_by_field.items()}
+
     return out_cells, pairs_seen, pairs_used_legacy, pairs_used_multi
 
 
@@ -419,6 +518,7 @@ def main():
                 "pt":            [b[0] for b in PT_BINS],
                 "c1f":           list(C1F_LABELS),
                 "hsf":           list(C1E_LABELS),
+                "xr_q":          list(XR_LEVELS),
             },
             "spread_field":  SPREAD_FIELD,
             "join_tolerance_min": TICK_JOIN_TOLERANCE_MIN,
@@ -426,6 +526,9 @@ def main():
                 "q1": getattr(measure, "_sq1", None),
                 "q3": getattr(measure, "_sq3", None),
             },
+            "xr_edges_by_field": getattr(measure, "_xr_edges", {}),
+            "min_n_xr": MIN_N_XR,
+            "min_runs_per_vt_xr": MIN_RUNS_PER_VT_XR,
             "pt_bins": [
                 {"label": lbl, "lo": (None if lo == float("-inf") else lo),
                  "hi": (None if hi == float("inf") else hi)}
