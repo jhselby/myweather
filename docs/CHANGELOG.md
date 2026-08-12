@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.401j • August 12, 2026 (debug page staleness sweep)</strong></summary>
+
+- **Debug page staleness sweep** (`corrections_debug.html`). Systematically walked the page for numbers that had drifted vs today's state. Cleared: C1h narrow-promote counter "4/7 · 9 SHIP" and C1d "1/7 · 5 SHIP" — both obsolete since these axes are in KNOWN_LIVE_PIPELINES (auto-suppressed in digest); replaced with "already live-stamping; user-visible band gate is C1 Stage 4" language. C1 Stage 4 audit rate 32.43% → 36.36% (today's read). Narrow-promote today counter updated: pre-frontal 6/7 (was 4/7). clp streak walker "day 1/7 · fire set n=7" → "day 3/7 · fire set n=4" in 4 places. Lc recent-bias gate bullet updated for the 08-12 per-field fix: ch streak 4/7, cm 2/7, ch clears earliest 08-15. Backlog C1h bullet updated to "already live-stamping". Recent Activity 08-12 entry extended with afternoon's work (standing plan sweep + wg L3 reinvestigation + wg L2 Stage 0 + this sweep).
+
+</details>
+
+<details>
 <summary><strong>v0.6.401i • August 12, 2026 (item 1 KILL guard + item 3 gate fix + wg L3 reinvestigation)</strong></summary>
 
 - **`h_h_dp_tau_refit` KILL supersession guard** (`analysis/h_h_dp_tau_refit.py`). Summary verdict downgraded to `KILL (supersession guard)` when per-field STAGE 0 PROMOTE would fire. h uses `_soft_ramp_factors(lead)` piecewise-linear (not exp(-lead/τ)); dp is Magnus-derived — adopting a τ-decay would revert the v0.6.390g CLOSED-CLEAN shape retune. Docstring rewritten to lead with supersession context. Per-field PROMOTE lines retained for sentry pattern.
