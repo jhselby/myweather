@@ -1345,7 +1345,13 @@ def main():
         for n, pv, nv in changed:
             pv_s = pv if pv else "(no prior verdict)"
             nv_s = nv if nv else "(no verdict)"
-            out.append(f"  • {n}: {pv_s}  →  {nv_s}")
+            # Bucket annotation lets readers (and future audits) spot same-
+            # bucket flips instantly. The gate at the append site above
+            # requires bucket_prior != bucket_new, so anything printed here
+            # SHOULD read as a cross-bucket transition (e.g. promote→hold).
+            # If a line ever prints [X→X], that's a suppression bug.
+            bt = f"[{bucket(pv)}→{bucket(nv)}]"
+            out.append(f"  • {n}  {bt}: {pv_s}  →  {nv_s}")
     else:
         out.append("  • none")
     out.append("")
