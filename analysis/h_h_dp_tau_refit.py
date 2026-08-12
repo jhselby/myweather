@@ -1,14 +1,27 @@
 #!/usr/bin/env python3
 """Stage 0: shorter τ sweep restricted to h and dp, with per-lead-band scoring.
 
-Motivation: 2026-07-31 layer-shape sentry flagged both h and dp as τ-suspect —
-production helps at 0-5h but hurts at 6-23h+ (classic decay-time-constant-too-long
-signature). The generic decay_tau_tuning.py sweeps {7,10,14,21,28,35,42} which
-starts at τ=7 — likely too long. Sweep shorter {3,4,5,6,8,10,14,18,24} and score
-per lead-band so we can pick τ that maximises pooled gain WITHOUT making any
-band worse than raw.
+SUPERSEDED 2026-08-07 by v0.6.390g h L2 shape retune (H_SOFT_RAMP_FLOOR
+0.4→0.1, H_SOFT_RAMP_END 24→10). The τ-decay path this script tests is
+NOT what h or dp actually use in production:
+  - h uses soft_ramp(lead) piecewise-linear in corrected_hourly.py, not
+    exp(-lead/τ). The τ=240 in _L2_TAUS_DEFAULT for h is orphan.
+  - dp is Magnus-derived from t + h — no direct L2 bias to tune τ for.
 
-Design gate for Stage 1 promotion:
+Adopting any Stage 0 PROMOTE this script emits would revert the
+CLOSED-CLEAN shape retune. Verdict downgraded to DIAGNOSTIC-ONLY —
+"STAGE 0 PROMOTE" text is retained for the sentry that surfaces the
+underlying |err| pattern, but the summary caps at KILL so the digest
+does not treat it as ship-eligible. See [[project_h_l2_shape_retune]]
+and [[project_h_dp_tau_refit]] for the full supersession history.
+
+Original motivation (preserved): 2026-07-31 layer-shape sentry flagged
+both h and dp as τ-suspect — production helps at 0-5h but hurts at
+6-23h+ (classic decay-time-constant-too-long signature). Superseded
+mechanism was retuned instead; the underlying sentry pattern is
+addressed by the soft_ramp shape change.
+
+Design gate (historical, no longer live):
   1. Best τ beats τ=14 on pooled MAE by ≥ 2%
   2. No lead-band gets worse than raw (all 4 bands must be ≤ 0 vs raw)
   3. Halves-stable — both chronological halves improve
@@ -281,9 +294,19 @@ def main():
     else:
         promotes = [f for f, (_, _, _, v) in per_field_verdicts.items() if v.startswith("STAGE 0 PROMOTE")]
         if promotes:
-            p(f"VERDICT: STAGE 0 PROMOTE — {len(promotes)} field(s): "
-              + ", ".join(f"{f}→τ={per_field_verdicts[f][0]} ({per_field_verdicts[f][1]:+.1f}% vs τ=14)"
-                          for f in promotes))
+            # Downgrade to KILL — the τ-decay mechanism being tested is not
+            # what h/dp use in production (see docstring). Emitting PROMOTE
+            # would mislead the digest into treating a mechanism-swap as a
+            # parameter tweak. See project_h_l2_shape_retune.
+            per_field_str = ", ".join(
+                f"{f}→τ={per_field_verdicts[f][0]} ({per_field_verdicts[f][1]:+.1f}% vs τ=14)"
+                for f in promotes
+            )
+            p(f"VERDICT: KILL (supersession guard) — per-field τ candidates were "
+              f"[{per_field_str}] but adopting them would revert the CLOSED-CLEAN "
+              f"soft_ramp retune (v0.6.390g). h uses piecewise soft_ramp not exp(-lead/τ); "
+              f"dp is Magnus-derived. Do not scope Stage 1. Underlying |err| pattern "
+              f"is already addressed by the shape retune.")
         else:
             p("VERDICT: STAGE 0 HOLD — neither h nor dp promotes. "
               "Best-τ either IS 14, gains too little, hurts a band, or halves-unstable.")
