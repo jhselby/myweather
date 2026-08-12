@@ -385,6 +385,16 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     except Exception as e:
         logging.warning(f"  ⚠  Marine layer stamp failed: {redact_secrets(e)}")
 
+    # Cross-run spread (xr_q axis) — computed live from forecast_log.json.
+    # Stamps weather_data["cross_run_spread"]; consumer-less today, wired in
+    # ahead of confidence_layer's future by_xr_q multiplier. See
+    # [[project_cross_run_spread_c1_axis]].
+    try:
+        from .processors.cross_run_spread import stamp as stamp_cross_run_spread
+        stamp_cross_run_spread(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  cross_run_spread stamp failed: {redact_secrets(e)}")
+
     # Confidence-layer C1 (regime-transition aware uncertainty, gated OFF).
     # Stamps per-(field, band) widened/narrowed MAE bands on transition hours.
     # Does NOT modify any forecast value — this is the first non-MAE-reducing
@@ -432,6 +442,15 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     return weather_data
 
 
+def _rss_mib():
+    try:
+        import resource
+        r = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        return r / 1024 if r > 1_000_000 else r / 1024 / 1024  # macOS bytes, linux kb
+    except Exception:
+        return -1
+
+
 def main():
     """Main execution function."""
     logging.info("\n" + "=" * 60)
@@ -439,6 +458,8 @@ def main():
     logging.info("=" * 60 + "\n")
 
     total_t0 = time.time()
+    _rss_start = _rss_mib()
+    logging.info(f"MEMPROBE start_rss_mib={_rss_start:.1f}")
 
     # Load previous weather data for stale fallback cache
     prev_weather_data = load_prev_weather_data()
@@ -773,6 +794,9 @@ def main():
             logging.info(f"  ⏱  Decay fit: {time.time() - t0:.1f}s")
         except Exception as e:
             logging.warning(f"  ⚠  Decay fit failed: {redact_secrets(e)}")
+
+    _rss_end = _rss_mib()
+    logging.info(f"MEMPROBE end_rss_mib={_rss_end:.1f} delta_mib={_rss_end - _rss_start:+.1f} elapsed_s={time.time() - total_t0:.1f}")
 
     logging.info("\n" + "=" * 60)
     logging.info(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({time.time() - total_t0:.1f}s total)")

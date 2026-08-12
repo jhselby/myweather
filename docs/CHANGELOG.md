@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.401g • August 12, 2026 (cross_run_spread live stamper)</strong></summary>
+
+- **Live cross-run spread stamper** (`weather_collector/processors/cross_run_spread.py`, wired in `collector.py` before `stamp_confidence`). Reads `forecast_log.json` snapshots + this tick's live L1 values, groups by (field, valid_time), computes max−min across the last 12h of runs, buckets into Q1..Q5 using `xr_edges_by_field` from `c1_confidence_curated_v2.json`. Stamps `weather_data["cross_run_spread"] = {field: {vt: {spread, xr_q, n}}}`. Consumer-less today — `confidence_layer.py` untouched — running silently so we get a day of live logs to validate distribution/coverage before wiring the `by_xr_q` marginal multiplier. Corrects yesterday's v0.6.401f note: no new writer needed — `forecast_snapshot.py` was already accumulating the per-run L1 history that this reader consumes. See `project_cross_run_spread_c1_axis`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.401f • August 11, 2026 (debug page full sweep + 4-watch close/extend + Stage 3 c1 xr_q wire-up)</strong></summary>
 
 - **Cross-run spread → C1 Stage 3 wired** (`analysis/c1_confidence_calibration_v2.py` + `c1_curate_confidence_table_v2.py`). New `by_xr_q` single-axis sub-table alongside existing `by_axes`. Per-field cross-run spread computed in a pre-pass (max−min of forecast across runs for each (field, valid_time), only vts with ≥3 runs contributing). TRAIN-fit quintile edges per field. 252 xr_q cells wired at n≥40; curator emits SHIP/MARGINAL/SKIP with the same classifier as `by_axes` — **214 SHIP (103 WIDEN / 111 NARROW), 18 MARGINAL, 20 SKIP** of 252. Non-breaking: `confidence_layer.py`'s 5-tuple lookup path is untouched. Stage 4 (live consumer) needs a new `forecast_history_log.json` so the collector can compute per-tick spread; long-lead-only wiring first to sidestep training-vs-live spread drift at short leads. See `project_cross_run_spread_c1_axis`.
