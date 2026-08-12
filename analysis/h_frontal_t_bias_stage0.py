@@ -54,6 +54,16 @@ MIN_N_PER_BAND = 60
 BIAS_FLOOR = 0.5   # halves must both clear this in the same direction
 STAGE0_MAGNITUDE_FLOOR = 1.0  # overall pooled bias must clear this to matter
 
+# Stage 1 rolling gate — mirrors l6_fix_b_refit.py's shape. Accumulates the
+# ship_bands set across daily runs. Gate clears when ≥ GATE_WINDOW_DAYS
+# distinct days in window, no HOLD days, ship_bands stable, ≥1 band shipping.
+# Wired 2026-08-12 per Stage 0 verdict's "warrants a Stage 1 direction-
+# stability watch (2-3 weekly reads) before scoping specialist."
+GATE_HISTORY_PATH = os.path.join(os.path.dirname(SCRIPT_DIR),
+                                 ".cache_frontal_t_bias_stage0_history.json")
+GATE_HISTORY_RETENTION_DAYS = 30
+GATE_WINDOW_DAYS = 7
+
 
 def _band(lead):
     if lead is None:
@@ -62,6 +72,104 @@ def _band(lead):
         if lo <= lead < hi:
             return lbl
     return None
+
+
+def _append_and_summarize_gate_history(this_entry):
+    """Append today's entry, prune to retention, compute 7-day rolling gate.
+    Same shape as l6_fix_b_refit._append_and_summarize_gate_history; key is
+    ship_bands (sorted list of shipped band labels)."""
+    try:
+        with open(GATE_HISTORY_PATH) as fh:
+            history = json.load(fh)
+    except FileNotFoundError:
+        history = {"entries": []}
+    except Exception as e:
+        print(f"  ⚠ gate history load failed: {e} — starting fresh")
+        history = {"entries": []}
+
+    entries = history.get("entries", [])
+    entries.append(this_entry)
+
+    now = datetime.now()
+    cutoff_ret = (now - timedelta(days=GATE_HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    entries = [e for e in entries if e.get("fitted_at", "") >= cutoff_ret]
+    with open(GATE_HISTORY_PATH, "w") as fh:
+        json.dump({"entries": entries}, fh, indent=2)
+
+    cutoff_win = (now - timedelta(days=GATE_WINDOW_DAYS)).strftime("%Y-%m-%dT%H:%M")
+    window = [e for e in entries if e.get("fitted_at", "") >= cutoff_win]
+
+    by_day = {}
+    for e in window:
+        day = e.get("fitted_at", "")[:10]
+        if day:
+            by_day.setdefault(day, []).append(e)
+
+    hit_days = 0
+    hold_days = 0
+    for _day, day_entries in by_day.items():
+        if all(x.get("verdict") == "STAGE 0 HIT" for x in day_entries):
+            hit_days += 1
+        else:
+            hold_days += 1
+
+    streak = 0
+    for e in reversed(window):
+        if e.get("verdict") == "STAGE 0 HIT":
+            streak += 1
+        else:
+            break
+
+    current_bands = set(this_entry.get("ship_bands") or [])
+    changed = []
+    seen = set()
+    for e in reversed(window[:-1]):
+        prior = set(e.get("ship_bands") or [])
+        for k in current_bands ^ prior:
+            if k in seen:
+                continue
+            seen.add(k)
+            was = "SHIP" if k in prior else "not-SHIP"
+            now_v = "SHIP" if k in current_bands else "not-SHIP"
+            changed.append((k, was, now_v))
+
+    stable = len(changed) == 0
+    gate_clear = (len(by_day) >= GATE_WINDOW_DAYS and hold_days == 0
+                  and stable and len(current_bands) > 0)
+
+    return {
+        "entries_in_window": len(window),
+        "days_in_window": len(by_day),
+        "hit_days": hit_days,
+        "hold_days": hold_days,
+        "latest_streak_hit": streak,
+        "ship_band_stability": {
+            "stable": stable,
+            "current_ship_bands": sorted(current_bands),
+            "bands_changed_in_window": changed,
+        },
+        "gate_clear": gate_clear,
+        "history_window_days": GATE_WINDOW_DAYS,
+    }
+
+
+def _format_gate_summary(gate):
+    lines = []
+    lines.append("Frontal t-bias Stage 1 rolling gate:")
+    lines.append(f"  window: {gate['history_window_days']} days · runs seen: {gate['entries_in_window']} · "
+                 f"distinct days: {gate['days_in_window']}")
+    lines.append(f"  hit_days: {gate['hit_days']} · hold_days: {gate['hold_days']} · "
+                 f"latest STAGE 0 HIT streak: {gate['latest_streak_hit']}")
+    stab = gate["ship_band_stability"]
+    lines.append(f"  ship_bands stability: {'STABLE' if stab['stable'] else 'CHURN'} · "
+                 f"current bands: {stab['current_ship_bands']}")
+    if stab["bands_changed_in_window"]:
+        lines.append("  bands whose status changed within window:")
+        for k, was, now_v in stab["bands_changed_in_window"]:
+            lines.append(f"    {k}: {was} → {now_v}")
+    lines.append(f"  gate_clear: {gate['gate_clear']}   "
+                 f"(requires ≥{GATE_WINDOW_DAYS} distinct days, no HOLD days, ship_bands STABLE, ≥1 band)")
+    return lines
 
 
 def main():
@@ -177,16 +285,38 @@ def main():
 
     if not ship_bands:
         if any(v == "THIN" for v in band_verdicts.values()):
+            day_verdict = "HOLD"
             lines.append("VERDICT: HOLD — one or more bands THIN. Frontal-regime n is small; "
                          "re-run in 1-2 weeks as more passages accumulate.")
         else:
+            day_verdict = "HOLD"
             lines.append("VERDICT: NO SIGNAL — no band clears direction-stability + magnitude gate. "
                          "Do not scope a frontal_t_bias.py specialist.")
     else:
+        day_verdict = "STAGE 0 HIT"
         lines.append(f"VERDICT: STAGE 0 HIT — {len(ship_bands)} band(s) clear direction-stability + "
-                     f"pooled magnitude gate: {', '.join(ship_bands)}.  "
-                     f"Warrants a Stage 1 direction-stability watch (2-3 weekly reads) before "
-                     f"scoping frontal_t_bias.py specialist.")
+                     f"pooled magnitude gate: {', '.join(ship_bands)}.")
+
+    # Stage 1 rolling gate — accumulate today's read, report gate state.
+    gate = _append_and_summarize_gate_history({
+        "fitted_at": datetime.now().strftime("%Y-%m-%dT%H:%M"),
+        "verdict": day_verdict,
+        "ship_bands": ship_bands,
+        "pooled_bias_by_band": {b: pooled.get(b, {}).get("t_bias") for b in [x[0] for x in BANDS]},
+    })
+    lines.append("")
+    lines.extend(_format_gate_summary(gate))
+
+    # Escalate to a STAGE 1 verdict once the gate clears.
+    if gate["gate_clear"]:
+        lines.append(f"VERDICT: STAGE 1 CLEAR — direction stability held across "
+                     f"{gate['days_in_window']} days on bands {ship_bands}. "
+                     f"Scope frontal_t_bias.py specialist.")
+    elif day_verdict == "STAGE 0 HIT":
+        need = max(0, GATE_WINDOW_DAYS - gate["days_in_window"])
+        lines.append(f"VERDICT: STAGE 0 HIT (day-only) · STAGE 1 GATE {gate['days_in_window']}/{GATE_WINDOW_DAYS} "
+                     f"(need {need} more day(s); ship_bands "
+                     f"{'STABLE' if gate['ship_band_stability']['stable'] else 'CHURN'})")
 
     text = "\n".join(lines)
     print(text)
