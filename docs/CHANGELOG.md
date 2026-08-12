@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.401i • August 12, 2026 (item 1 KILL guard + item 3 gate fix + wg L3 reinvestigation)</strong></summary>
+
+- **`h_h_dp_tau_refit` KILL supersession guard** (`analysis/h_h_dp_tau_refit.py`). Summary verdict downgraded to `KILL (supersession guard)` when per-field STAGE 0 PROMOTE would fire. h uses `_soft_ramp_factors(lead)` piecewise-linear (not exp(-lead/τ)); dp is Magnus-derived — adopting a τ-decay would revert the v0.6.390g CLOSED-CLEAN shape retune. Docstring rewritten to lead with supersession context. Per-field PROMOTE lines retained for sentry pattern.
+- **`h_lc_recent_bias_gate` per-field clearance** (`analysis/h_lc_recent_bias_gate.py`). Set-level `stable` check was flagging new-field promotions as instability, resetting ch's day-4/7 streak when cm cleared halves for the first time today. Added per-field N-day streak tracking alongside the set-level check. ch clears earliest **2026-08-15** (streak 4/7 today), cm earliest 2026-08-17 (streak 2/7). Matches the standing plan's stated intent ("gate clears earliest 08-16 if ch stays promoted with no HOLD days"). Standing plan item 3 unblocked.
+- **wg L3 SKIP_TABLE reinvestigated** (`corrections_debug.html`, new `project_wg_l2_windblend_cell_concern`). Earlier "4/7 cells regressing" flag was a measurement mix. Today's `h_wg_l3_regression_stage1` halves-verified numbers CONFIRM all 6 measurable SKIP cells (L3 vs L2 hurts by 5.9-28.4% on both halves). The 4 cells where top-of-stack was worse than raw L1 (calm 12-23/24-47, sea_breeze 6-11/24-47) are pointing at **wg L2 (wind_blend)** not the SKIP — since L3 is skipped, top-of-stack = L2. Removing the SKIP would compound damage. SKIP_TABLE watch closed CLEAN; opened new investigation for wg L2 wind_blend cell concern (deferred, not same-session).
+- **Debug page changed-verdicts annotation** (`analysis/runlog/build_executive_summary.py`). Each Changed-verdicts line now shows `[prior_bucket→new_bucket]` — the mechanism at line 950 already gates on bucket transitions, so any `[X→X]` reads as a suppression bug.
+
+</details>
+
+<details>
 <summary><strong>v0.6.401h • August 12, 2026 (debug page sweep — 401g stamper + flip-sweep closures)</strong></summary>
 
 - **Debug page sweep** (`corrections_debug.html`). C1 layer bullet updated with 08-12 live-stamper ship (`weather_data["cross_run_spread"]` per-tick for 7 promoted fields; corrects yesterday's "requires a new forecast_history_log.json" note — `forecast_snapshot.py` was already accumulating the raw data). R&D frontal-t bias bullet replaced "wait 2-3 weekly reads" language with the new 7-day rolling gate wired into `h_frontal_t_bias_stage0.py` (day 1/7 seeded, ship_bands=[0-5h, 6-11h, 12-23h], earliest STAGE 1 CLEAR 2026-08-19). Post-ship watch for pr L2 v0.6.401 amended with 08-12 re-verify: retro flipped STAGE 1 SHIP → MIXED on non-shipped candidate cells while shipped nw_flow cells stayed both-halves-WIN with gain grown; script hardened with `SHIPPED_CELLS` awareness. Recent Activity: added 08-12 entry; shifted 08-11 to "yesterday" and 08-10 to "2 days ago"; trimmed 08-09 to CHANGELOG per rolling 3-day rule.
