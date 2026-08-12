@@ -67,6 +67,12 @@ WIN_THRESHOLD_PCT = 2.0
 LOSS_THRESHOLD_PCT = -2.0
 JACCARD_STAGE1_THRESHOLD = 0.5
 
+# Cells where pr L2 is already firing in production (corrected_hourly.py
+# _PR_L2_FIRE_CELLS, shipped v0.6.401 2026-08-10). Reported separately in
+# the verdict so cross-window movement on candidate cells doesn't mask the
+# health of the live gate.
+SHIPPED_CELLS = {("nw_flow", "0-5h"), ("nw_flow", "6-11h")}
+
 
 def lead_band(lead_h):
     for label, lo, hi in LEAD_BANDS:
@@ -277,7 +283,50 @@ def main():
              f"{nB:>6,} {dB:>6.1f}%  {status}")
 
     # ============================================================
-    # VERDICT
+    # SHIPPED CELLS STATUS — health of the live pr L2 gate
+    # ============================================================
+    emit("\n" + "=" * 86)
+    emit("SHIPPED CELLS STATUS  (live pr L2 gate — v0.6.401)")
+    emit("=" * 86)
+    shipped_lines = []
+    shipped_healthy = 0
+    shipped_at_risk = 0
+    for (regime, band_label) in sorted(SHIPPED_CELLS):
+        key = (band_label, regime)
+        p = pooled.get(key)
+        a = agg_a.get(key)
+        b = agg_b.get(key)
+        p_txt = f"pooled Δ {p[3]:+.1f}% n={p[0]:,} [{p[4]}]" if p else "pooled: no data"
+        a_txt = f"A Δ {a[3]:+.1f}%/n={a[0]:,}" if a else "A: —"
+        b_txt = f"B Δ {b[3]:+.1f}%/n={b[0]:,}" if b else "B: —"
+        # Health: pooled WIN AND both halves ≥ 0 (not backsliding). Flag if
+        # either half loses even if pooled still wins — that's the early
+        # signal the live gate is degrading.
+        healthy = (p is not None and p[4] == "WIN"
+                   and a is not None and a[3] >= 0
+                   and b is not None and b[3] >= 0)
+        mark = "✓ HEALTHY" if healthy else "⚠ AT RISK"
+        if healthy: shipped_healthy += 1
+        else:       shipped_at_risk += 1
+        shipped_lines.append(f"  {regime}/{band_label:<8}  {mark}   {p_txt}   {a_txt}   {b_txt}")
+    for line in shipped_lines:
+        emit(line)
+    emit(f"  → {shipped_healthy}/{len(SHIPPED_CELLS)} shipped cells healthy, "
+         f"{shipped_at_risk} at risk.")
+
+    # Candidate-only Jaccard — excludes SHIPPED_CELLS so today's cross-half
+    # WIN-set movement reflects genuine candidate churn, not membership of
+    # cells that are already live.
+    cand_wins_a = {k for k in wins_a if (k[1], k[0]) not in SHIPPED_CELLS}
+    cand_wins_b = {k for k in wins_b if (k[1], k[0]) not in SHIPPED_CELLS}
+    cand_union = cand_wins_a | cand_wins_b
+    cand_inter = cand_wins_a & cand_wins_b
+    cand_jaccard = len(cand_inter) / len(cand_union) if cand_union else 0.0
+    emit(f"  candidate-only Jaccard(A, B) = {cand_jaccard:.2f}   "
+         f"(shipped cells excluded; use this to judge NEW ship candidates)")
+
+    # ============================================================
+    # VERDICT  (about NEW ship candidates — shipped cells covered above)
     # ============================================================
     emit("\n" + "=" * 86)
     emit("VERDICT")
