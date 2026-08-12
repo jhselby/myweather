@@ -329,17 +329,30 @@ def main():
     if gate["fields_changed"]:
         for c in gate["fields_changed"][:10]:
             print(f"    changed: {c}")
-    print(f"  gate_clear: {gate['gate_clear']}   (requires ≥{GATE_WINDOW_DAYS} distinct days, "
+    print(f"  gate_clear (set-level): {gate['gate_clear']}   (requires ≥{GATE_WINDOW_DAYS} distinct days, "
           "no HOLD days, promoted set stable, ≥1 field)")
+    if gate.get("per_field"):
+        print(f"  per-field clearance (each field's own {GATE_WINDOW_DAYS}-day streak):")
+        for f in sorted(gate["per_field"].keys()):
+            pf = gate["per_field"][f]
+            mark = "✓ CLEARED" if pf["cleared"] else f"streak {pf['streak_days']}/{GATE_WINDOW_DAYS}"
+            print(f"    {f}: {mark} · promoted {pf['days_promoted_in_window']} days in window")
+        if gate.get("fields_cleared"):
+            print(f"  → fields ready for per-field ship: {gate['fields_cleared']}")
     print()
 
     if not promoted:
         v = "VERDICT: NULL — no field cleared Stage 1 halves-strict today."
     else:
+        fields_cleared = gate.get("fields_cleared") or []
+        clear_note = ""
+        if fields_cleared:
+            clear_note = f", PER-FIELD CLEARED: {fields_cleared} — ready for Stage 3 wire"
+        elif gate['gate_clear']:
+            clear_note = ", SET-LEVEL GATE CLEARED — ready for Stage 3 wire"
         v = (f"VERDICT: STAGE 1 PROMOTE — {len(promoted)} field(s) {promoted} cleared halves-strict. "
              f"Rolling {GATE_WINDOW_DAYS}-day gate: day {gate['days_in_window']}/{GATE_WINDOW_DAYS}, "
-             f"set {'STABLE' if gate['stable'] else 'CHURN'}"
-             f"{', GATE CLEARED — ready for Stage 3 wire' if gate['gate_clear'] else ''}.")
+             f"set {'STABLE' if gate['stable'] else 'CHURN'}{clear_note}.")
     print(v)
     print("=" * 128)
 
@@ -401,6 +414,40 @@ def _append_gate_history(this_entry):
     gate_clear = (len(by_day) >= GATE_WINDOW_DAYS and hold_days == 0
                   and stable and len(current_set) > 0)
 
+    # Per-field clearance — additive to the set-level check above. A field
+    # clears its own gate when it has been PROMOTE on the last N consecutive
+    # distinct days in the window. Decouples ch's ship-readiness from cm's
+    # (or any newcomer's) churn — per the standing plan's stated intent
+    # ("gate clears earliest [date] if ch stays promoted with no HOLD days").
+    all_fields_seen = set()
+    for e in window:
+        all_fields_seen |= set(e.get("promoted_fields") or [])
+    by_day_field = {}
+    for e in window:
+        day = e.get("fitted_at", "")[:10]
+        if not day:
+            continue
+        for f in all_fields_seen:
+            is_p = f in (e.get("promoted_fields") or [])
+            slot = by_day_field.setdefault(day, {})
+            slot[f] = slot.get(f, False) or is_p
+    sorted_days = sorted(by_day_field.keys())
+    per_field = {}
+    for f in all_fields_seen:
+        f_streak = 0
+        for day in reversed(sorted_days):
+            if by_day_field[day].get(f):
+                f_streak += 1
+            else:
+                break
+        f_days_in = sum(1 for d in sorted_days if by_day_field[d].get(f))
+        per_field[f] = {
+            "streak_days": f_streak,
+            "days_promoted_in_window": f_days_in,
+            "cleared": f_streak >= GATE_WINDOW_DAYS,
+        }
+    fields_cleared = sorted(f for f, v in per_field.items() if v["cleared"])
+
     return {
         "entries_in_window": len(window),
         "days_in_window": len(by_day),
@@ -410,6 +457,8 @@ def _append_gate_history(this_entry):
         "stable": stable,
         "fields_changed": dedup,
         "gate_clear": gate_clear,
+        "per_field": per_field,
+        "fields_cleared": fields_cleared,
         "history_window_days": GATE_WINDOW_DAYS,
     }
 
