@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.401h • August 12, 2026 (debug page sweep — 401g stamper + flip-sweep closures)</strong></summary>
+
+- **Debug page sweep** (`corrections_debug.html`). C1 layer bullet updated with 08-12 live-stamper ship (`weather_data["cross_run_spread"]` per-tick for 7 promoted fields; corrects yesterday's "requires a new forecast_history_log.json" note — `forecast_snapshot.py` was already accumulating the raw data). R&D frontal-t bias bullet replaced "wait 2-3 weekly reads" language with the new 7-day rolling gate wired into `h_frontal_t_bias_stage0.py` (day 1/7 seeded, ship_bands=[0-5h, 6-11h, 12-23h], earliest STAGE 1 CLEAR 2026-08-19). Post-ship watch for pr L2 v0.6.401 amended with 08-12 re-verify: retro flipped STAGE 1 SHIP → MIXED on non-shipped candidate cells while shipped nw_flow cells stayed both-halves-WIN with gain grown; script hardened with `SHIPPED_CELLS` awareness. Recent Activity: added 08-12 entry; shifted 08-11 to "yesterday" and 08-10 to "2 days ago"; trimmed 08-09 to CHANGELOG per rolling 3-day rule.
+
+</details>
+
+<details>
 <summary><strong>v0.6.401g • August 12, 2026 (cross_run_spread live stamper)</strong></summary>
 
 - **Live cross-run spread stamper** (`weather_collector/processors/cross_run_spread.py`, wired in `collector.py` before `stamp_confidence`). Reads `forecast_log.json` snapshots + this tick's live L1 values, groups by (field, valid_time), computes max−min across the last 12h of runs, buckets into Q1..Q5 using `xr_edges_by_field` from `c1_confidence_curated_v2.json`. Stamps `weather_data["cross_run_spread"] = {field: {vt: {spread, xr_q, n}}}`. Consumer-less today — `confidence_layer.py` untouched — running silently so we get a day of live logs to validate distribution/coverage before wiring the `by_xr_q` marginal multiplier. Corrects yesterday's v0.6.401f note: no new writer needed — `forecast_snapshot.py` was already accumulating the per-run L1 history that this reader consumes. See `project_cross_run_spread_c1_axis`.
