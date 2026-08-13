@@ -453,6 +453,94 @@ def bucket(verdict: str | None) -> str:
     return "info"
 
 
+# v0.6.408: disqualifier scanner. Surfaces per-ship red flags inline under
+# SHIP-ELIGIBLE / STILL-CONFIRMING / NEW-CANDIDATES entries so first-pass
+# digest reads don't miss context that's buried elsewhere in the digest.
+# Motivated by 2026-08-13 session review: 4 wrong ship reads in one morning,
+# each because a disqualifier existed (THIN keyword in the same verdict line,
+# sibling vs_l6 WATCH verdict 3000 lines down, PROPOSED CONFIG matching live).
+_DISQUAL_KEYWORDS = ("THIN", "UNSTABLE", "CHURN", "MARGINAL")
+
+
+def _walkforward_already_live(name, log_dir):
+    """For walkforward_*_validator scripts, return a warning if PROPOSED
+    CONFIG lines match the current live config from applied_layer_audit.
+    Returns None on no match or missing data.
+
+    Motivated by 2026-08-13 walkforward_l3l4_validator misread: script's
+    'L3 ship 3 fields, L4 ship 2 fields' verdict language reads as a NEW
+    ship signal, but the proposed L3={wg,ch,cm}/L4={cc,ch} matched the
+    already-deployed config verbatim. The 'shipped-if-different' framing
+    is missing from the verdict line itself."""
+    try:
+        log = (log_dir / f"{name}.log").read_text()
+        applied = (log_dir / "applied_layer_audit.log").read_text()
+    except (FileNotFoundError, OSError):
+        return None
+
+    def _parse_set(s):
+        import ast
+        try:
+            v = ast.literal_eval(s)
+            return frozenset(v) if isinstance(v, (set, frozenset, list, tuple)) else None
+        except Exception:
+            return None
+
+    m3 = re.search(r"L3_FIELDS\s*=\s*(\{[^}]+\})", log)
+    m4 = re.search(r"L4_FIELDS\s*=\s*(\{[^}]+\})", log)
+    proposed_l3 = _parse_set(m3.group(1)) if m3 else None
+    proposed_l4 = _parse_set(m4.group(1)) if m4 else None
+
+    live_l3 = frozenset(re.findall(r"L3_FIELDS:\s+(\w+)", applied))
+    live_l4 = frozenset(re.findall(r"L4_FIELDS:\s+(\w+)", applied))
+
+    if proposed_l3 is None or proposed_l4 is None:
+        return None
+    if proposed_l3 == live_l3 and proposed_l4 == live_l4:
+        return (f"PROPOSED CONFIG matches current live config "
+                f"(L3={sorted(live_l3)}, L4={sorted(live_l4)}) — no new ship")
+    return None
+
+
+def ship_disqualifiers(name, verdict, current, log_dir):
+    """Return a list of disqualifier warning strings for a ship-eligible entry.
+    Empty list = no known disqualifiers to surface.
+
+    Checks:
+      1. Verdict text keywords: THIN, UNSTABLE, CHURN, MARGINAL
+      2. Sibling *_vs_l6 / *_vs_l4 verdicts in the hold or kill bucket
+      3. walkforward_*_validator PROPOSED CONFIG matches live config
+    """
+    warnings = []
+    v = (verdict or "").upper()
+    for kw in _DISQUAL_KEYWORDS:
+        if kw in v:
+            warnings.append(f"⚠ verdict text contains '{kw}' — check before shipping")
+            break
+
+    for suffix in ("_vs_l6", "_vs_l4"):
+        sib_name = f"{name}{suffix}"
+        # Handle _stage suffixes: strip trailing _stageN before appending suffix
+        variants = [sib_name]
+        m = re.match(r"(.+)_stage\d+$", name)
+        if m:
+            variants.append(f"{m.group(1)}{suffix}")
+        for candidate in variants:
+            sib = current.get(candidate)
+            if sib and sib.get("bucket") in ("hold", "kill"):
+                sib_v = sib.get("verdict") or "?"
+                short = sib_v if len(sib_v) <= 120 else sib_v[:117] + "..."
+                warnings.append(f"⚠ sibling {candidate} bucket={sib['bucket']}: {short}")
+                break
+
+    if "walkforward_" in name and "_validator" in name:
+        wf = _walkforward_already_live(name, log_dir)
+        if wf:
+            warnings.append(f"⚠ {wf}")
+
+    return warnings
+
+
 def load_prior_state():
     if not STATE_PATH.exists():
         return {}
@@ -1074,6 +1162,8 @@ def main():
     if ship_eligible:
         for n, v, s in ship_eligible:
             out.append(f"  • {n} — {v}  [{s}/7 days confirmed]")
+            for w in ship_disqualifiers(n, v, current, LOG_DIR):
+                out.append(f"      {w}")
     else:
         out.append("  • none")
     out.append("")
@@ -1081,6 +1171,8 @@ def main():
     if still_confirming:
         for n, v, why in still_confirming:
             out.append(f"  • {n} — {v}  [{why}]")
+            for w in ship_disqualifiers(n, v, current, LOG_DIR):
+                out.append(f"      {w}")
     else:
         out.append("  • none")
     out.append("")
@@ -1105,8 +1197,12 @@ def main():
                 out.append(f"  • {n} — {tag} per {companion}")
                 out.append(f"      step 1 said: {v}")
                 out.append(f"      step 2 says: {comp_verdict}")
+                for w in ship_disqualifiers(n, v, current, LOG_DIR):
+                    out.append(f"      {w}")
             else:
                 out.append(f"  • {n} — {v}")
+                for w in ship_disqualifiers(n, v, current, LOG_DIR):
+                    out.append(f"      {w}")
     else:
         out.append("  • none")
     out.append("")

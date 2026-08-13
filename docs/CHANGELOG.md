@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.408 • August 13, 2026 (SHIP disqualifier scanner in exec summary)</strong></summary>
+
+- **Per-ship disqualifier scanner** (`analysis/runlog/build_executive_summary.py`). New `ship_disqualifiers(name, verdict, current, log_dir)` runs three checks and appends `      ⚠ ...` lines directly under each SHIP-ELIGIBLE / STILL-CONFIRMING / NEW-CANDIDATES entry: (1) verdict text keywords THIN / UNSTABLE / CHURN / MARGINAL, (2) sibling `*_vs_l6` or `*_vs_l4` scripts in `hold` or `kill` bucket (WATCH etc.), (3) `walkforward_*_validator` PROPOSED CONFIG matching current live L3/L4 from `applied_layer_audit`. Motivated by 08-13 session review: four wrong ship reads in one morning, each because a disqualifier existed but was buried 3000 lines deep in the digest (THIN in same verdict line skimmed past, sibling vs_l6 WATCH verdict emitted no-verdict → no bucket → invisible, walkforward PROPOSED CONFIG matched live config verbatim). Smoke-tested on today's data: all three misses surface inline.
+
+</details>
+
+<details>
 <summary><strong>v0.6.407 • August 13, 2026 (Stage 3 wire prep — recent-bias gate emits runtime table)</strong></summary>
 
 - **h_lc_recent_bias_gate emits runtime table** (`analysis/h_lc_recent_bias_gate.py` → `weather_collector/data/lc_recent_bias_gate.json`). Per-cell gate decisions (`gate_apply`, `sign_ok`, `mag_ok`, `recent_bias`, `hist_bias`, `hist_shift`, `n_holdout`) now serialized alongside `promoted_fields` and `fields_cleared`. Runtime contract: `cloud_saturation_correction.py` must NOT apply the historical shift for `field in fields_cleared` AND `per_cell[field][bin].gate_apply == False`. All other cells (fields not cleared, or gate_apply True/None) use existing lc_correction_table behavior.
