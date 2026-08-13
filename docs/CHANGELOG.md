@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.408a • August 13, 2026 (debug page sweep — v0.6.405 chp demote + v0.6.407 gate table + today's session log)</strong></summary>
+
+- **Debug page sweep** (`corrections_debug.html`). Post-ship updates for today's 6 ships: ch row + What's-running list + Layers rollup all note the v0.6.405 chp emergency demote (9 mid/long-lead cells force-skipped via `_CELL_SKIP`). New Post-ship watch entry for chp v0.6.405 with 14-day window through 08-27. Recent-bias gate status updated with today's per-field streaks (ch 5/7, cm 3/7, cl 1/7 — cl newly PROMOTED) + v0.6.407 runtime table emit note. Session log entry added for 08-13 covering all 6 ships (v0.6.403–408); 08-12 rebranded from "today" to "1 day ago".
+
+</details>
+
+<details>
 <summary><strong>v0.6.408 • August 13, 2026 (SHIP disqualifier scanner in exec summary)</strong></summary>
 
 - **Per-ship disqualifier scanner** (`analysis/runlog/build_executive_summary.py`). New `ship_disqualifiers(name, verdict, current, log_dir)` runs three checks and appends `      ⚠ ...` lines directly under each SHIP-ELIGIBLE / STILL-CONFIRMING / NEW-CANDIDATES entry: (1) verdict text keywords THIN / UNSTABLE / CHURN / MARGINAL, (2) sibling `*_vs_l6` or `*_vs_l4` scripts in `hold` or `kill` bucket (WATCH etc.), (3) `walkforward_*_validator` PROPOSED CONFIG matching current live L3/L4 from `applied_layer_audit`. Motivated by 08-13 session review: four wrong ship reads in one morning, each because a disqualifier existed but was buried 3000 lines deep in the digest (THIN in same verdict line skimmed past, sibling vs_l6 WATCH verdict emitted no-verdict → no bucket → invisible, walkforward PROPOSED CONFIG matched live config verbatim). Smoke-tested on today's data: all three misses surface inline.
