@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.404 • August 13, 2026 (walkforward Lc regime SHIP-set stability tracker)</strong></summary>
+
+- **New analysis script** (`analysis/walkforward_lc_regime_ship_stability.py`). Companion gate for `walkforward_lc_regime.py`. Parses today's SHIP cell list out of `analysis/output/walkforward_lc_regime.txt`, appends to `.cache_walkforward_lc_regime_ship_history.json`, and reports a stability verdict (BUILDING / UNSTABLE / READY) over a 7-day window. Motivation: today's walkforward returned VERDICT PROMOTE +3.06% with 16 SHIP cells, but the Stage 1 `.cache_lc_regime_gate_history.json` ship count has drifted 92→50 over the past 2 weeks with big daily flips. Before wiring Stage 3, need to confirm the walk-forward-verified 16-cell set is itself time-stable across the same 7-day window. Retention 30d, window 7d — same shape as `h_lc_regime_stage1.py`'s gate. Day 1/7 seeded today (n=16). Earliest READY verdict: 2026-08-20.
+
+</details>
+
+<details>
 <summary><strong>v0.6.403 • August 13, 2026 (GoMOFS fail-fast — stop the collector timeout cascade)</strong></summary>
 
 - **GoMOFS walker fail-fast** (`weather_collector/fetchers/salem_water.py`). Per-request timeout dropped 30s → 8s and added a 30s wall-clock budget to `_fetch_gomofs_temp`. Root cause of the alert flood: NOAA `opendap.co-ops.nos.noaa.gov` has been down since 08-12 ~09:17 UTC, and the walker was iterating ~40 candidates × 30s = up to 20 min of blocking retries per tick, blowing through the fetcher timeout and killing the whole collector run every ~10 min. Fix causes the walker to bail after ~30s wall clock so the buoy 44013 fallback (already working — was returning 68.9°F but too late) runs and the tick completes cleanly.
