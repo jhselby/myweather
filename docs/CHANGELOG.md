@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.403 • August 13, 2026 (GoMOFS fail-fast — stop the collector timeout cascade)</strong></summary>
+
+- **GoMOFS walker fail-fast** (`weather_collector/fetchers/salem_water.py`). Per-request timeout dropped 30s → 8s and added a 30s wall-clock budget to `_fetch_gomofs_temp`. Root cause of the alert flood: NOAA `opendap.co-ops.nos.noaa.gov` has been down since 08-12 ~09:17 UTC, and the walker was iterating ~40 candidates × 30s = up to 20 min of blocking retries per tick, blowing through the fetcher timeout and killing the whole collector run every ~10 min. Fix causes the walker to bail after ~30s wall clock so the buoy 44013 fallback (already working — was returning 68.9°F but too late) runs and the tick completes cleanly.
+- **`as_completed` outer-timeout handler** (`weather_collector/fetchers/fetch_parallel.py`). Wrapped the `for future in as_completed(..., timeout=AS_COMPLETED_TIMEOUT)` loop in `try/except TimeoutError`. Previously the per-future `TimeoutError` from `future.result(timeout=TASK_TIMEOUT)` was caught (line 72) but the outer `as_completed` timeout was not — when it fired (because a thread was stuck longer than 60s in a blocked HTTP call Python can't kill), the exception bubbled up uncaught and crashed the collector. Now any unfinished futures at the outer cap get marked as `as_completed_timeout` errors and the run continues.
+
+</details>
+
+<details>
 <summary><strong>v0.6.402 • August 13, 2026 (pr L2 gate ordering fix — gate has never fired)</strong></summary>
 
 - **Collector ordering fix** (`weather_collector/collector.py`). Moved `stamp_state` call to BEFORE `add_corrected_hourly_arrays`. The pr L2 regime gate shipped in v0.6.401 (08-10) reads `derived.state.regime_synoptic` to decide fires, but `stamp_state` (the writer for that field) ran ~115 lines later in the same tick. Result: `regime = None` every tick, guard `if regime is not None` short-circuited, **zero pr L2 cells have fired since ship**. Diagnosis via pair-log audit: 2,688 pr rows post-08-10 with 0 stamped `applied_layer=l2` (813× l1, 1,875× l3, all `l3` cases have `_post_l3 == raw` which only happens when live-apply skipped). `state_stamp` deps (current, pressure_trend_hpa_3h, hourly.wind_direction/speed/pressure/temp/time) all populated by line 226, safe to move up.

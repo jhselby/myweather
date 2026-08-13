@@ -3,6 +3,7 @@ Fetch Salem Harbor water temperature.
 Primary: GoMOFS model (NOAA Gulf of Maine OFS) at ny=392, nx=101 (42.50N, -70.88W)
 Fallback: NOAA buoy 44013 scraped from NDBC
 """
+import time
 import requests
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta, timezone
@@ -15,6 +16,8 @@ import logging
 GOMOFS_NY = 401
 GOMOFS_NX = 103
 GOMOFS_BASE = "https://opendap.co-ops.nos.noaa.gov/thredds/dodsC/NOAA/GOMOFS/MODELS"
+GOMOFS_REQUEST_TIMEOUT = 8
+GOMOFS_WALL_BUDGET = 30
 
 
 
@@ -58,11 +61,15 @@ def _parse_gomofs_temp(raw):
 def _fetch_gomofs_temp():
     ny, nx = GOMOFS_NY, GOMOFS_NX
     query = f"?temp%5B0%5D%5B0%5D%5B{ny}%5D%5B{nx}%5D"
+    deadline = time.monotonic() + GOMOFS_WALL_BUDGET
     for base_url in _candidate_urls():
+        if time.monotonic() >= deadline:
+            logging.warning(f"  ⚠ GoMOFS: wall-clock budget {GOMOFS_WALL_BUDGET}s exceeded, falling back to buoy")
+            return None
         full_url = base_url + query
         fname = base_url.split('/')[-1]
         try:
-            r = requests.get(full_url, headers=HEADERS_DEFAULT, timeout=30)
+            r = requests.get(full_url, headers=HEADERS_DEFAULT, timeout=GOMOFS_REQUEST_TIMEOUT)
             if r.status_code == 404:
                 logging.info(f"  - GoMOFS {fname}: 404, skipping")
                 continue

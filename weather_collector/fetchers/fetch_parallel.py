@@ -65,16 +65,24 @@ def fetch_parallel_sources():
             executor.submit(fn, *args, **kwargs): name
             for name, (fn, args, kwargs) in parallel_tasks.items()
         }
-        for future in as_completed(future_to_name, timeout=AS_COMPLETED_TIMEOUT):
-            name = future_to_name[future]
-            try:
-                parallel_results[name] = future.result(timeout=TASK_TIMEOUT)
-            except TimeoutError:
-                logging.warning(f"  ⚠️  {name} timed out ({TASK_TIMEOUT}s)")
-                parallel_results[name] = _error_placeholder(name, {"status": "error", "error": "timeout"})
-            except Exception as e:
-                logging.error(f"  ⚠️  {name} failed: {redact_secrets(e)}")
-                parallel_results[name] = _error_placeholder(name, {"status": "error", "error": redact_secrets(e)})
+        try:
+            for future in as_completed(future_to_name, timeout=AS_COMPLETED_TIMEOUT):
+                name = future_to_name[future]
+                try:
+                    parallel_results[name] = future.result(timeout=TASK_TIMEOUT)
+                except TimeoutError:
+                    logging.warning(f"  ⚠️  {name} timed out ({TASK_TIMEOUT}s)")
+                    parallel_results[name] = _error_placeholder(name, {"status": "error", "error": "timeout"})
+                except Exception as e:
+                    logging.error(f"  ⚠️  {name} failed: {redact_secrets(e)}")
+                    parallel_results[name] = _error_placeholder(name, {"status": "error", "error": redact_secrets(e)})
+        except TimeoutError:
+            logging.warning(f"  ⚠️  as_completed hit {AS_COMPLETED_TIMEOUT}s cap; marking unfinished futures as errored")
+            for future, name in future_to_name.items():
+                if name in parallel_results:
+                    continue
+                logging.warning(f"  ⚠️  {name} did not complete before as_completed timeout")
+                parallel_results[name] = _error_placeholder(name, {"status": "error", "error": "as_completed_timeout"})
     logging.info(f"  ✓ Parallel fetches complete: {time.time() - parallel_t0:.1f}s")
 
     return parallel_results
