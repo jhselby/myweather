@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.407 • August 13, 2026 (Stage 3 wire prep — recent-bias gate emits runtime table)</strong></summary>
+
+- **h_lc_recent_bias_gate emits runtime table** (`analysis/h_lc_recent_bias_gate.py` → `weather_collector/data/lc_recent_bias_gate.json`). Per-cell gate decisions (`gate_apply`, `sign_ok`, `mag_ok`, `recent_bias`, `hist_bias`, `hist_shift`, `n_holdout`) now serialized alongside `promoted_fields` and `fields_cleared`. Runtime contract: `cloud_saturation_correction.py` must NOT apply the historical shift for `field in fields_cleared` AND `per_cell[field][bin].gate_apply == False`. All other cells (fields not cleared, or gate_apply True/None) use existing lc_correction_table behavior.
+- **Prep for standing plan item 3 Stage 3 wire.** ch is currently day 5/7 per-field (earliest per-field clear 2026-08-15). Emitting the runtime table now means when ch clears, the collector has 2+ days of the table history ready to consume — no scramble on ship day. Today's table shows every cell gate_apply=True (recent bias tracks historical within ~20% on every ch bin), so shipping the wire today would be a no-op; the wire is defensive infrastructure for when bias drifts.
+
+</details>
+
+<details>
 <summary><strong>v0.6.406 • August 13, 2026 (vs_l6 tools surface via WATCH verdict; digest bucketer picks it up)</strong></summary>
 
 - **vs_l6 emits explicit verdict line** (`analysis/h_ch_persistence_blend_stage2_vs_l6.py`). Added `Verdict: WATCH — N live chp cell(s) lose to L6 baseline; worst {r}/{b} Δ={d:+.2f}%` (or `Verdict: CLEAN — ...` when no flips). Previously the tool wrote its ⚠ 9-cell warning as free text with no `Verdict:` prefix, so `build_executive_summary.py`'s bucketer couldn't classify it and the warning stayed buried in the per-script tail — exactly how the chp regression fixed in v0.6.405 went unremarked for 4 days.

@@ -1,0 +1,133 @@
+{
+  "generated_at": "2026-08-13T12:49:54.744847+00:00",
+  "source": "h_lc_recent_bias_gate.py",
+  "recent_window_days": 3,
+  "holdout_window_days": 3,
+  "gate_ratio": 0.5,
+  "min_n_cell": 30,
+  "promoted_fields": [
+    "ch",
+    "cm"
+  ],
+  "fields_cleared": [],
+  "set_level_gate_clear": false,
+  "per_cell": {
+    "cl": {
+      "50-80": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 38.0513,
+        "hist_bias": 31.02,
+        "hist_shift": -31.02,
+        "n_holdout": 133
+      },
+      "80-95": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 45.791,
+        "hist_shift": -45.791,
+        "n_holdout": 48
+      },
+      "95-100": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 87.6806,
+        "hist_bias": 42.207,
+        "hist_shift": -42.207,
+        "n_holdout": 130
+      }
+    },
+    "cm": {
+      "20-50": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 20.5565,
+        "hist_bias": 17.754,
+        "hist_shift": -17.754,
+        "n_holdout": 58
+      },
+      "50-80": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 52.3313,
+        "hist_bias": 46.666,
+        "hist_shift": -46.666,
+        "n_holdout": 104
+      },
+      "80-95": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 77.0384,
+        "hist_bias": 68.315,
+        "hist_shift": -68.315,
+        "n_holdout": 312
+      }
+    },
+    "ch": {
+      "0-5": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": -12.6042,
+        "hist_bias": -14.505,
+        "hist_shift": 14.505,
+        "n_holdout": 1409
+      },
+      "5-20": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": -12.0135,
+        "hist_bias": -11.209,
+        "hist_shift": 11.209,
+        "n_holdout": 272
+      },
+      "20-50": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 13.5196,
+        "hist_bias": 18.377,
+        "hist_shift": -18.377,
+        "n_holdout": 178
+      },
+      "50-80": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 41.1866,
+        "hist_bias": 37.269,
+        "hist_shift": -37.269,
+        "n_holdout": 686
+      },
+      "80-95": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 53.6667,
+        "hist_bias": 59.122,
+        "hist_shift": -59.122,
+        "n_holdout": 45
+      }
+    }
+  },
+  "notes": "Stage 3 wire contract: for field in fields_cleared AND per_cell[field][bin].gate_apply == False, cloud_saturation_correction.py must NOT apply the historical shift. All other cells (fields not in fields_cleared, or gate_apply True/None) use existing lc_correction_table behavior."
+}

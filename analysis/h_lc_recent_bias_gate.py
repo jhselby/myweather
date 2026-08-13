@@ -49,6 +49,11 @@ from analysis._cache import cached_path
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 LIVE_TABLE_PATH = Path(__file__).resolve().parent.parent / "weather_collector" / "data" / "lc_correction_table.json"
 GATE_HISTORY_PATH = Path(__file__).resolve().parent.parent / ".cache_lc_recent_bias_gate_history.json"
+# Runtime table consumed by cloud_saturation_correction.py once the per-field
+# gate clears. Refit-frequency ≡ this script's cadence (daily). Written unconditionally
+# each run so the runtime always has today's per-cell gate decisions; the collector
+# side decides whether to consult it based on its own ENABLED flag + promoted_fields.
+RUNTIME_TABLE_PATH = Path(__file__).resolve().parent.parent / "weather_collector" / "data" / "lc_recent_bias_gate.json"
 GATE_HISTORY_RETENTION_DAYS = 30
 GATE_WINDOW_DAYS = 7
 
@@ -138,6 +143,9 @@ def main():
     field_agg = {f: {"n": 0, "raw": 0.0, "live": 0.0, "gate": 0.0} for f in CLOUD_FIELDS}
     gated_off_cells = defaultdict(list)  # field -> [bin]
 
+    # Collect per-cell gate decisions for the runtime table emit at end of main().
+    per_cell_runtime = {f: {} for f in CLOUD_FIELDS}
+
     for field in CLOUD_FIELDS:
         for lo, hi, lab in BINS:
             key = (field, lab)
@@ -162,6 +170,8 @@ def main():
             if recent is None:
                 gate_apply = True  # THIN recent → default to live behavior
                 gate_reason = "thin"
+                sign_ok = None
+                mag_ok = None
             else:
                 sign_ok = (recent > 0 and hist_bias > 0) or (recent < 0 and hist_bias < 0)
                 mag_ok  = abs(recent) >= GATE_RATIO * abs(hist_bias)
@@ -170,6 +180,17 @@ def main():
                 if not gate_apply:
                     gated_off_cells[field].append(lab)
             m_gate = mae(holdout, hist_shift if gate_apply else 0.0)
+
+            per_cell_runtime[field][lab] = {
+                "gate_apply": bool(gate_apply),
+                "gate_reason": gate_reason,
+                "sign_ok": sign_ok,
+                "mag_ok": mag_ok,
+                "recent_bias": None if recent is None else round(float(recent), 4),
+                "hist_bias": round(float(hist_bias), 4),
+                "hist_shift": round(float(hist_shift), 4),
+                "n_holdout": n,
+            }
 
             live_pct = 100.0 * (m_raw - m_live) / m_raw if m_raw > 0 else 0.0
             gate_pct = 100.0 * (m_raw - m_gate) / m_raw if m_raw > 0 else 0.0
@@ -355,6 +376,30 @@ def main():
              f"set {'STABLE' if gate['stable'] else 'CHURN'}{clear_note}.")
     print(v)
     print("=" * 128)
+
+    # Emit runtime table for cloud_saturation_correction.py to consult.
+    # Written unconditionally each run — the collector uses `promoted_fields`
+    # + `fields_cleared` to decide whether to consult per_cell decisions.
+    runtime = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source": "h_lc_recent_bias_gate.py",
+        "recent_window_days": RECENT_DAYS,
+        "holdout_window_days": HOLDOUT_DAYS,
+        "gate_ratio": GATE_RATIO,
+        "min_n_cell": MIN_N_CELL,
+        "promoted_fields": promoted,
+        "fields_cleared": gate.get("fields_cleared") or [],
+        "set_level_gate_clear": bool(gate.get("gate_clear")),
+        "per_cell": per_cell_runtime,
+        "notes": (
+            "Stage 3 wire contract: for field in fields_cleared AND per_cell[field][bin].gate_apply == False, "
+            "cloud_saturation_correction.py must NOT apply the historical shift. All other cells "
+            "(fields not in fields_cleared, or gate_apply True/None) use existing lc_correction_table behavior."
+        ),
+    }
+    RUNTIME_TABLE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    RUNTIME_TABLE_PATH.write_text(json.dumps(runtime, indent=2))
+    print(f"\nwrote {RUNTIME_TABLE_PATH}")
 
 
 def _append_gate_history(this_entry):
