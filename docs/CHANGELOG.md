@@ -1,6 +1,13 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.405 • August 13, 2026 (chp emergency demote — 9 mid/long-lead cells losing to L6)</strong></summary>
+
+- **chp emergency cell-skip** (`weather_collector/processors/ch_persistence_gate.py`). Added `_CELL_SKIP` frozenset with 9 (regime, lead_band) cells forced back to L4 regardless of curated verdict: calm/{12-23,24-47}, nw_flow/12-23, pre_frontal/12-23, se_flow/24-47, sea_breeze/{12-23,24-47}, sw_flow/{12-23,24-47}. Source: `h_ch_persistence_blend_stage2_vs_l6.txt` "9 live cell(s) flip → SKIP under L6 baseline" with Δ ranging +9.7% to +34.9% (parity cells se_flow/24-47 and sea_breeze/24-47 included precautionarily). Diagnosis: Prod-vs-L6 MAE gap on ch widened monotonically from +3.4 (08-06) to +12.7 (08-13) — chp shipped 07-19 v0.6.358 keeps forcing persistence-of-obs in cells where L6+Lc is materially better on 10-day held-out. Encoded in processor (not JSON) because the fitter regenerates the curated JSON daily and JSON edits would be transient. Prior watches [[project_ch_chp_regression_watch_08_07]] + [[project_ch_chp_midlead_band_watch_08_10]] closed clean 08-09/08-10 but the gap started widening after — new regression class in the same mid/long-lead bands. Reversibility: remove any tuple from `_CELL_SKIP` to re-enable.
+
+</details>
+
+<details>
 <summary><strong>v0.6.404 • August 13, 2026 (walkforward Lc regime SHIP-set stability tracker)</strong></summary>
 
 - **New analysis script** (`analysis/walkforward_lc_regime_ship_stability.py`). Companion gate for `walkforward_lc_regime.py`. Parses today's SHIP cell list out of `analysis/output/walkforward_lc_regime.txt`, appends to `.cache_walkforward_lc_regime_ship_history.json`, and reports a stability verdict (BUILDING / UNSTABLE / READY) over a 7-day window. Motivation: today's walkforward returned VERDICT PROMOTE +3.06% with 16 SHIP cells, but the Stage 1 `.cache_lc_regime_gate_history.json` ship count has drifted 92→50 over the past 2 weeks with big daily flips. Before wiring Stage 3, need to confirm the walk-forward-verified 16-cell set is itself time-stable across the same 7-day window. Retention 30d, window 7d — same shape as `h_lc_regime_stage1.py`'s gate. Day 1/7 seeded today (n=16). Earliest READY verdict: 2026-08-20.

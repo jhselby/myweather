@@ -63,6 +63,30 @@ _DIURNAL_SKIP_REGIMES = frozenset({"nw_flow", "pre_frontal"})
 _DIURNAL_SKIP_HOUR_START = 10  # inclusive, America/New_York local
 _DIURNAL_SKIP_HOUR_END = 18    # exclusive
 
+# v0.6.405 emergency (regime, lead_band) demote. 08-13 investigation of
+# widening Prod-vs-L6 MAE gap on ch (+3.4→+12.7 over 8 days) traced to
+# chp firing on mid/long-lead cells where the vs_l6 tool says chp
+# materially loses to L6. Source: h_ch_persistence_blend_stage2_vs_l6.txt
+# "9 live cell(s) flip → SKIP under L6 baseline". Fitter regenerates the
+# curated JSON daily so a JSON verdict edit would be transient; encoded
+# here in the processor to survive. Reversibility: remove any entry to
+# re-enable that cell. Prior watches
+# [[project_ch_chp_regression_watch_08_07]] and
+# [[project_ch_chp_midlead_band_watch_08_10]] closed clean 08-09/08-10,
+# but the gap started widening after those closes — this is a NEW
+# regression class in the same mid/long-lead bands.
+_CELL_SKIP = frozenset({
+    ("calm",        "12-23"),  # vs_l6 Δ +34.26%
+    ("calm",        "24-47"),  # vs_l6 Δ +34.89%
+    ("nw_flow",     "12-23"),  # vs_l6 Δ +22.42% (overlaps diurnal skip 10-18 local)
+    ("pre_frontal", "12-23"),  # vs_l6 Δ +27.83% (overlaps diurnal skip 10-18 local)
+    ("se_flow",     "24-47"),  # vs_l6 Δ -0.16% (parity — precautionary)
+    ("sea_breeze",  "12-23"),  # vs_l6 Δ  +9.71%
+    ("sea_breeze",  "24-47"),  # vs_l6 Δ  -1.84% (parity — precautionary)
+    ("sw_flow",     "12-23"),  # vs_l6 Δ +22.80%
+    ("sw_flow",     "24-47"),  # vs_l6 Δ +30.69%
+})
+
 
 def _valid_hour_local(times, i):
     """Extract local-time hour from hourly.times[i]. Returns None on failure."""
@@ -115,8 +139,11 @@ def _lead_band(lead_h):
 
 def _cell_fires(cells, regime, band):
     """True if (regime, band) is SHIP or MARGIN (both halves improving).
-    `frontal` always falls to L4 regardless of table content."""
+    `frontal` always falls to L4 regardless of table content.
+    `_CELL_SKIP` cells are demoted regardless of table verdict."""
     if regime == "frontal":
+        return False
+    if (regime, band) in _CELL_SKIP:
         return False
     cell = cells.get(regime, {}).get(band)
     if not cell:
@@ -174,7 +201,9 @@ def describe_applicability():
     current_state = (
         f"{state_prefix}. Cells — SHIP: {len(ship_cells)}, MARGIN: {len(margin_cells)}, "
         f"SKIP: {len(skip_cells)} (fall back to L4), THIN: {len(thin_cells)}. "
-        f"frontal always L4 by design."
+        f"frontal always L4 by design. "
+        f"v0.6.405 emergency demote: {len(_CELL_SKIP)} (regime, band) cells forced to L4 "
+        f"regardless of curated verdict (h_ch_persistence_blend_stage2_vs_l6 damage)."
     )
 
     return [{
