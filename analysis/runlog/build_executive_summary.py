@@ -448,7 +448,7 @@ def bucket(verdict: str | None) -> str:
         return "kill"
     if "SHIP" in v or "PROMOTE" in v or "IMPLEMENT" in v:
         return "promote"
-    if "HOLD" in v or "CLOSE" in v or "WASH" in v or "MIXED" in v or "NOT READY" in v or "DEFER" in v:
+    if "HOLD" in v or "CLOSE" in v or "WASH" in v or "MIXED" in v or "NOT READY" in v or "DEFER" in v or "WATCH" in v:
         return "hold"
     return "info"
 
@@ -1375,11 +1375,16 @@ def main():
     from claims import compute_claims as _compute_claims
     _early_run_at = _dt_datetime.now(_dt_timezone.utc).strftime("%Y-%m-%dT%H:%M")
     _early_today_claims = _compute_claims(current)
+    # Third tuple element is the backing script name; if that script is in
+    # KNOWN_LIVE_PIPELINES the axis is already shipped and this section
+    # should not render a "ready to ship" line for it. Added 2026-08-11
+    # after C1h had been rendering "GATE CLEARED — ready to ship" for
+    # three consecutive mornings post-ship (v0.6.393 8-05, v0.6.396 8-08).
     _NARROW_PROMOTE_GATES = {
-        "C1H_SHIP_CELLS": ("C1h", 7),
-        "C1D_SHIP_CELLS": ("C1d", 7),
-        "PRE_FRONTAL_SHIP_CELLS": ("pre-frontal", 7),
-        "H_L4_ADD_CANDIDATES": ("h/l4 narrow-add", 7),
+        "C1H_SHIP_CELLS": ("C1h", 7, "h_c1h_orthogonality"),
+        "C1D_SHIP_CELLS": ("C1d", 7, "h_cloud_disagreement_orthogonality"),
+        "PRE_FRONTAL_SHIP_CELLS": ("pre-frontal", 7, "h_pre_front_orthogonality"),
+        "H_L4_ADD_CANDIDATES": ("h/l4 narrow-add", 7, None),
     }
     # Jaccard threshold for cell-set match across consecutive daily reads.
     # v0.6.362: relaxed from exact-identity (== comparison) to Jaccard ≥ 0.8
@@ -1409,7 +1414,9 @@ def main():
             return False
         return (len(sa & sb) / len(union)) >= threshold
     _narrow_lines = []
-    for key, (label, gate_n) in _NARROW_PROMOTE_GATES.items():
+    for key, (label, gate_n, backing_script) in _NARROW_PROMOTE_GATES.items():
+        if backing_script and backing_script in KNOWN_LIVE_PIPELINES:
+            continue
         today_claim = _early_today_claims.get(key)
         if today_claim is None:
             _narrow_lines.append(f"  • {label}: no claim today (curated table missing or empty)")

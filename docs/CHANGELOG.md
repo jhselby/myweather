@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.406 • August 13, 2026 (vs_l6 tools surface via WATCH verdict; digest bucketer picks it up)</strong></summary>
+
+- **vs_l6 emits explicit verdict line** (`analysis/h_ch_persistence_blend_stage2_vs_l6.py`). Added `Verdict: WATCH — N live chp cell(s) lose to L6 baseline; worst {r}/{b} Δ={d:+.2f}%` (or `Verdict: CLEAN — ...` when no flips). Previously the tool wrote its ⚠ 9-cell warning as free text with no `Verdict:` prefix, so `build_executive_summary.py`'s bucketer couldn't classify it and the warning stayed buried in the per-script tail — exactly how the chp regression fixed in v0.6.405 went unremarked for 4 days.
+- **Digest bucketer recognizes WATCH** (`analysis/runlog/build_executive_summary.py`). Added `"WATCH" in v` to the `hold` bucket keyword list. First run after this change routes vs_l6 through `no_verdict → hold` transition and surfaces it in "Changed verdicts". Same treatment applies to any other tool that emits `Verdict: WATCH — ...`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.405 • August 13, 2026 (chp emergency demote — 9 mid/long-lead cells losing to L6)</strong></summary>
 
 - **chp emergency cell-skip** (`weather_collector/processors/ch_persistence_gate.py`). Added `_CELL_SKIP` frozenset with 9 (regime, lead_band) cells forced back to L4 regardless of curated verdict: calm/{12-23,24-47}, nw_flow/12-23, pre_frontal/12-23, se_flow/24-47, sea_breeze/{12-23,24-47}, sw_flow/{12-23,24-47}. Source: `h_ch_persistence_blend_stage2_vs_l6.txt` "9 live cell(s) flip → SKIP under L6 baseline" with Δ ranging +9.7% to +34.9% (parity cells se_flow/24-47 and sea_breeze/24-47 included precautionarily). Diagnosis: Prod-vs-L6 MAE gap on ch widened monotonically from +3.4 (08-06) to +12.7 (08-13) — chp shipped 07-19 v0.6.358 keeps forcing persistence-of-obs in cells where L6+Lc is materially better on 10-day held-out. Encoded in processor (not JSON) because the fitter regenerates the curated JSON daily and JSON edits would be transient. Prior watches [[project_ch_chp_regression_watch_08_07]] + [[project_ch_chp_midlead_band_watch_08_10]] closed clean 08-09/08-10 but the gap started widening after — new regression class in the same mid/long-lead bands. Reversibility: remove any tuple from `_CELL_SKIP` to re-enable.

@@ -313,8 +313,13 @@ def emit(accum):
         L(f"⚠ {len(flip_ship_to_skip)} live cell(s) flip → SKIP under L6 baseline (chp materially loses vs Lc here):")
         for r, b, d in sorted(flip_ship_to_skip, key=lambda x: (x[0], x[1])):
             L(f"    {r:<12}/{b:<6}  Δ={d:+.2f}%")
+        worst_r, worst_b, worst_d = max(flip_ship_to_skip, key=lambda x: x[2])
+        L("")
+        L(f"Verdict: WATCH — {len(flip_ship_to_skip)} live chp cell(s) lose to L6 baseline; worst {worst_r}/{worst_b} Δ={worst_d:+.2f}%. See NEXT STEPS below.")
     else:
         L("✓ No live SHIP/MARGIN cell flips to SKIP under L6 baseline.")
+        L("")
+        L("Verdict: CLEAN — no live chp cell loses to L6 baseline in this window.")
     if flip_ship_to_margin:
         L(f"⚠ {len(flip_ship_to_margin)} live cell(s) go to THIN (n < {MIN_N_CELL} in the 10-day window):")
         for r, b, v in sorted(flip_ship_to_margin, key=lambda x: (x[0], x[1])):
