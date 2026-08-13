@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.402 • August 13, 2026 (pr L2 gate ordering fix — gate has never fired)</strong></summary>
+
+- **Collector ordering fix** (`weather_collector/collector.py`). Moved `stamp_state` call to BEFORE `add_corrected_hourly_arrays`. The pr L2 regime gate shipped in v0.6.401 (08-10) reads `derived.state.regime_synoptic` to decide fires, but `stamp_state` (the writer for that field) ran ~115 lines later in the same tick. Result: `regime = None` every tick, guard `if regime is not None` short-circuited, **zero pr L2 cells have fired since ship**. Diagnosis via pair-log audit: 2,688 pr rows post-08-10 with 0 stamped `applied_layer=l2` (813× l1, 1,875× l3, all `l3` cases have `_post_l3 == raw` which only happens when live-apply skipped). `state_stamp` deps (current, pressure_trend_hpa_3h, hourly.wind_direction/speed/pressure/temp/time) all populated by line 226, safe to move up.
+- **Debug page pr row updated** (`corrections_debug.html`). pr L2 status now notes "gate ordering bug fixed 08-13 v0.6.402" and reports the backstamp early read: gated-vs-raw −5.19% on 2,688 rows post-08-10 (nw_flow/0-5h Δ −43.6% n=223, nw_flow/6-11h Δ −21.9% n=221), matching Stage 1 A/B halves.
+- **wdp watch closed clean** (`corrections_debug.html`). Removed stale "day X/14 closes 08-10 · 2d OVERDUE" text from the wd field-table row + What's-running list + Layers section. Watch was formally closed 08-11 in v0.6.401f (Δ −2.7% n=16,416) — the sweep just missed the wd row. Applied_layer stamp gap fix language reframed: mae_over_time's L1_ONLY_FIELDS workaround bypasses the stamp, so the debug-page metric was correct throughout; real impact was only in Fitter's `decay_corrections.json` fallback.
+
+</details>
+
+<details>
 <summary><strong>v0.6.401j • August 12, 2026 (debug page staleness sweep)</strong></summary>
 
 - **Debug page staleness sweep** (`corrections_debug.html`). Systematically walked the page for numbers that had drifted vs today's state. Cleared: C1h narrow-promote counter "4/7 · 9 SHIP" and C1d "1/7 · 5 SHIP" — both obsolete since these axes are in KNOWN_LIVE_PIPELINES (auto-suppressed in digest); replaced with "already live-stamping; user-visible band gate is C1 Stage 4" language. C1 Stage 4 audit rate 32.43% → 36.36% (today's read). Narrow-promote today counter updated: pre-frontal 6/7 (was 4/7). clp streak walker "day 1/7 · fire set n=7" → "day 3/7 · fire set n=4" in 4 places. Lc recent-bias gate bullet updated for the 08-12 per-field fix: ch streak 4/7, cm 2/7, ch clears earliest 08-15. Backlog C1h bullet updated to "already live-stamping". Recent Activity 08-12 entry extended with afternoon's work (standing plan sweep + wg L3 reinvestigation + wg L2 Stage 0 + this sweep).

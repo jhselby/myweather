@@ -234,6 +234,18 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     except Exception as e:
         logging.warning(f"  ⚠  cluster_spread skipped: {e}")
 
+    # v0.6.402: stamp_state MUST run before add_corrected_hourly_arrays because
+    # the pr L2 regime gate (v0.6.401) reads derived.state.regime_synoptic to
+    # decide fires. Previously state_stamp lived at ~line 353, so on every tick
+    # derived.state was None when the pr gate ran and zero cells fired. The
+    # rest of the pipeline (decay_apply skip table, solar, confidence_layer)
+    # still sees the same populated state further down.
+    try:
+        from .processors.state_stamp import stamp_state
+        stamp_state(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  state stamp failed: {redact_secrets(e)}")
+
     # Bias-corrected hourly arrays (must run after build_hyperlocal_data)
     add_corrected_hourly_arrays(weather_data)
     _hyp = weather_data.get("hyperlocal", {})
@@ -342,17 +354,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # as a result. Fixed by preserving here (idempotent — decay_apply still
     # calls this too, both paths are guarded by `dst not in hourly`).
     preserve_raw_forecast_arrays(weather_data)
-
-    # v0.6.310: stamp current-tick regime + wind fields into derived.state so
-    # decay_apply's skip table, solar_correction, backtest_snapshot,
-    # confidence_layer, and state_stratified all read a populated state.
-    # Historical bug: no writer existed, everyone got None. See
-    # processors/state_stamp.py for the full history.
-    try:
-        from .processors.state_stamp import stamp_state
-        stamp_state(weather_data)
-    except Exception as e:
-        logging.warning(f"  ⚠  state stamp failed: {redact_secrets(e)}")
 
     # Solar L5 correction (regime-aware solar). Indexed by
     # derived.state.regime_synoptic. Live since 2026-06-28 v0.6.248; skip
