@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.409a • August 14, 2026 (debug page sweep for v0.6.409 + mid-sweep refactor to consume the existing cross_run_spread stamper)</strong></summary>
+
+- **Debug page sweep for v0.6.409.** Session log entry added for 08-14 with all today's work. Correction Stack + Specialists + Post-ship watches updated to 10 `_CELL_SKIP` cells (was 9); new v0.6.409 post-ship watch entry through 08-28. ch row prose gets an 08-14 addition note for the pre_frontal/24-47 demote. Rolling date labels bumped: 08-13 → "1 day ago", 08-12 → "2 days ago", etc.
+- **v0.6.409a mid-sweep refactor: confidence_layer consumes cross_run_spread stamper.** The sweep found that `weather_collector/processors/cross_run_spread.py` (v0.6.401g, 08-12) already stamps `weather_data["cross_run_spread"][field][vt] = {spread, xr_q, n}` per tick — 12h lookback, live-L1 inclusion, canonical semantics documented in the module. v0.6.409's `_c1_xr_per_band_field()` duplicated this less accurately (14-day forecast_log walk, no live-tick data). Refactored to read the stamper's output at each band's midpoint valid_time; deleted `_xr_quintile`, `_C1_XR_MIN_RUNS`, `_C1_XR_SNAP_KEY`, `_C1_XR_EDGES`, and the forecast_log loading (~70 lines dropped). Verified 14:27 tick post-redeploy: stamper produces 392 (field, vt) cells across 7 fields, confidence layer stamps 27 hits — semantics now match the stamper. Same failure family as [[feedback_analysis_tools_drift_from_runtime]], just on the writer side.
+
+</details>
+
+<details>
 <summary><strong>v0.6.409 • August 14, 2026 (C1_xr cross-run spread wired + chp pre_frontal/24-47 demote + analysis-drift class fix)</strong></summary>
 
 - **C1_xr — cross-run spread quintile marginal axis** (`weather_collector/processors/confidence_layer.py`, `analysis/c1_curate_confidence_table_v2.py`). Wires the axis unblocked today by `h_cross_run_spread_c1_stage2`'s PROMOTE (7 fields ORTHOGONAL to cluster_spread_q). Curator gates `by_xr_q` SHIP/MARGINAL to the ortho-promoted fields only (SHIP drops 206→109, only `[dp, h, pr, t, wd, wg, ws]`). Runtime `_c1_xr_per_band_field` computes live spread from `forecast_log.json` snapshots at each band's midpoint valid_time (≥3 runs required), bins via per-field edges from curated meta, composes a WIDEN/NARROW multiplier onto `displayed_mae` alongside C1h/C1d. New telemetry: per-cell `c1_xr` block, `live_axes.c1_xr_hits`, `gate_firing_log.record_firing("C1_xr", ...)`. C1 is still `ENABLED=False` — shadow-write only, verified 24 hits/tick on real data post-deploy.

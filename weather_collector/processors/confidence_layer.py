@@ -293,22 +293,25 @@ _C1D_SIGMA_CUTS = _C1D_META.get("sigma_cuts") or {}
 def _load_xr_table():
     """C1_xr — cross-run spread quintile marginal axis. Reads the by_xr_q
     sub-table from the curated_v2 file (already gated to ortho-promoted fields
-    by the curator's Stage 2 check). Returns (cells, edges_by_field) where
-    cells is {field: {band: {xr_q: {direction, premium_pct}}}} filtered to
-    SHIP/MARGINAL, and edges_by_field is {field: [q20, q40, q60, q80]}.
+    by the curator's Stage 2 check). Returns {field: {band: {xr_q:
+    {direction, premium_pct}}}} filtered to SHIP/MARGINAL.
+
+    Live xr_q classification is done upstream by cross_run_spread.py (v0.6.401g,
+    runs before stamp_confidence in the collector); this module just reads
+    weather_data["cross_run_spread"][field][vt]["xr_q"] at the band's midpoint
+    valid_time. Edges live in the curated stage1_meta and belong to the
+    stamper — no duplication here.
 
     Empty on any load failure — safe fallback, axis becomes a no-op.
     """
     if not _CURATED_PATH.endswith("_v2.json"):
-        return {}, {}
+        return {}
     try:
         with open(_CURATED_PATH) as f:
             doc = json.load(f)
     except Exception as e:
         logging.warning(f"  ⚠ confidence_layer C1_xr: curated load failed: {e}")
-        return {}, {}
-    sm = doc.get("stage1_meta") or {}
-    edges = sm.get("xr_edges_by_field") or {}
+        return {}
     cells = {}
     for field, bands in (doc.get("cells") or {}).items():
         for band, entry in bands.items():
@@ -328,26 +331,21 @@ def _load_xr_table():
                     "direction":   direction,
                     "premium_pct": float(pct),
                 }
-    return cells, edges
+    return cells
 
 
-_C1_XR_CELLS, _C1_XR_EDGES = _load_xr_table()
+_C1_XR_CELLS = _load_xr_table()
 
-# Per-band representative target hour for stamp-time cross-run spread lookup.
-# Matches C1h's _C1H_BAND_MID convention — the band's midpoint stands in for
-# the whole band. Includes 0-5h since xr_q promoted cells span all four bands.
+# Per-band representative target hour — index into hourly.times used to
+# select the valid_time we look up in weather_data["cross_run_spread"].
+# Mirrors C1h's _C1H_BAND_MID convention. Includes 0-5h since xr_q promoted
+# cells span all four bands.
 _C1_XR_BAND_MID = {
     "0-5h":   3,
     "6-11h":  9,
     "12-23h": 18,
     "24-47h": 36,
 }
-_C1_XR_LEVELS = ("Q1", "Q2", "Q3", "Q4", "Q5")
-_C1_XR_MIN_RUNS = 3   # matches MIN_RUNS_PER_VT_XR in the calibration script
-
-# Snapshot key per field — {field}_l1 in forecast_log entries, matching how
-# forecast_snapshot writes each field's raw L1 array.
-_C1_XR_SNAP_KEY = {f: f"{f}_l1" for f in _C1_XR_CELLS}
 
 
 # Field-to-hourly-array mapping for C1h L1 lookup at stamp time. C1h fires
@@ -683,81 +681,30 @@ def _c1h_fires_per_band_field(weather_data):
     return out
 
 
-def _xr_quintile(spread, edges):
-    """Bin spread into Q1..Q5 using per-field quintile cuts. Returns None if
-    edges missing or spread is None."""
-    if spread is None or not edges or len(edges) != 4:
-        return None
-    for i, e in enumerate(edges):
-        if spread < e:
-            return _C1_XR_LEVELS[i]
-    return _C1_XR_LEVELS[-1]
-
-
 def _c1_xr_per_band_field(weather_data):
-    """For each (field, band) with a wired xr cell, compute the current
-    cross-run spread from forecast_log.json snapshots and bin into Q1..Q5.
-
-    Spread = max(field_l1) - min(field_l1) across all snapshots that carry
-    the band's midpoint target valid_time. Requires ≥ _C1_XR_MIN_RUNS runs
-    to have snapshotted that target hour — matches the calibration's floor.
+    """For each (field, band) with a wired xr cell, look up the current
+    xr_q from weather_data["cross_run_spread"] (stamped upstream by
+    cross_run_spread.py, v0.6.401g). Uses the band's midpoint target
+    valid_time to select which stamped VT to consult.
 
     Returns {(field, band): "Q1".."Q5"|None}. None means the axis is
-    unavailable (missing snapshots, missing target hour, or too few runs).
+    unavailable (stamper skipped this tick, or no stamped entry for the
+    band's midpoint valid_time — most common cause is <3 runs seen in
+    the stamper's 12h lookback window).
     """
     out = {}
     if not _C1_XR_CELLS:
         return out
     hourly = weather_data.get("hourly") or {}
     times = hourly.get("times") or hourly.get("time") or []
-    if not times:
-        for field, bands in _C1_XR_CELLS.items():
-            for band in bands:
-                out[(field, band)] = None
-        return out
-    try:
-        log = load_json("forecast_log.json", default={"snapshots": []}) or {}
-    except Exception as e:
-        logging.debug(f"  ⚠ confidence_layer C1_xr: snapshot log load failed: {e}")
-        log = {"snapshots": []}
-    snapshots = log.get("snapshots") or []
-    # Build one pass: {(field, v): [l1_values]}. Only collect for target v's
-    # that appear at a band midpoint in the current forecast — bounds the work.
-    wanted_v = set()
-    band_v = {}  # {band: v_string}
-    for band, mid in _C1_XR_BAND_MID.items():
-        if mid < len(times) and times[mid]:
-            band_v[band] = times[mid]
-            wanted_v.add(times[mid])
-    per_key = {}  # (field, v) -> [values]
-    snap_keys = _C1_XR_SNAP_KEY
-    for snap in snapshots:
-        for h in (snap.get("hours") or []):
-            v = h.get("v")
-            if v not in wanted_v:
-                continue
-            for field, key in snap_keys.items():
-                val = h.get(key)
-                if val is None:
-                    continue
-                try:
-                    per_key.setdefault((field, v), []).append(float(val))
-                except (TypeError, ValueError):
-                    continue
-
+    xr_stamp = weather_data.get("cross_run_spread") or {}
     for field, bands in _C1_XR_CELLS.items():
-        edges = _C1_XR_EDGES.get(field) or []
+        per_field = xr_stamp.get(field) or {}
         for band in bands:
-            v = band_v.get(band)
-            if not v:
-                out[(field, band)] = None
-                continue
-            vals = per_key.get((field, v)) or []
-            if len(vals) < _C1_XR_MIN_RUNS:
-                out[(field, band)] = None
-                continue
-            spread = max(vals) - min(vals)
-            out[(field, band)] = _xr_quintile(spread, edges)
+            mid = _C1_XR_BAND_MID.get(band)
+            vt = times[mid] if (mid is not None and mid < len(times)) else None
+            entry = per_field.get(vt) if vt else None
+            out[(field, band)] = (entry or {}).get("xr_q")
     return out
 
 
