@@ -28,6 +28,22 @@ from pathlib import Path
 
 ENABLED = True  # Flipped 2026-07-17 v0.6.355 after 8/7-day gate clear, 16 SHIP cells stable, LC_ENABLED READY on divergence report, no cc/cl/cm/ch ANOMALY. Fit shipped 2026-07-04.
 
+# Lc recent-bias gate. When True, consult `lc_recent_bias_gate.json` (emitted
+# by analysis/h_lc_recent_bias_gate.py, v0.6.407) and suppress the historical
+# Lc shift on cells where recent-window observed bias disagrees with the
+# historical fit — the mechanism that broke cl in v0.6.389f.
+#
+# Runtime contract (also documented in the JSON's `notes` field):
+#   for field in fields_cleared AND per_cell[field][bin].gate_apply == False:
+#     do NOT apply the historical shift.
+#   All other cells (fields not cleared, or gate_apply True/None): existing
+#   lc_correction_table behavior.
+#
+# Shipped OFF 2026-08-14 v0.6.410. Flip to True once at least one field
+# clears the recent-bias 7-day gate (earliest 2026-08-15 per today's read:
+# ch streak 6/7). Standing plan item 3.
+LC_RECENT_BIAS_GATE_ENABLED = False
+
 CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
 
 # Emergency cell-skip set (2026-07-30). Two supported shapes:
@@ -79,6 +95,40 @@ _BINS = [
 _TABLE_PATH = Path(__file__).resolve().parent.parent / "data" / "lc_correction_table.json"
 _TABLE_CACHE = None
 
+_GATE_PATH = Path(__file__).resolve().parent.parent / "data" / "lc_recent_bias_gate.json"
+_GATE_CACHE = None
+
+
+def _load_gate():
+    """Load and cache the recent-bias gate table. Missing / malformed →
+    empty gate (nothing suppressed). Never raises."""
+    global _GATE_CACHE
+    if _GATE_CACHE is not None:
+        return _GATE_CACHE
+    try:
+        _GATE_CACHE = json.loads(_GATE_PATH.read_text())
+    except FileNotFoundError:
+        logging.warning(f"  ⚠  Lc recent-bias gate missing at {_GATE_PATH}; gate is a no-op")
+        _GATE_CACHE = {"fields_cleared": [], "per_cell": {}}
+    except Exception as e:
+        logging.warning(f"  ⚠  Lc recent-bias gate load failed: {e}")
+        _GATE_CACHE = {"fields_cleared": [], "per_cell": {}}
+    return _GATE_CACHE
+
+
+def _gate_suppresses(gate, field, bin_lab):
+    """Runtime contract: suppress iff LC_RECENT_BIAS_GATE_ENABLED AND
+    field in fields_cleared AND per_cell[field][bin_lab].gate_apply == False.
+    Returns True → skip the historical shift for this cell."""
+    if not LC_RECENT_BIAS_GATE_ENABLED:
+        return False
+    if field not in (gate.get("fields_cleared") or []):
+        return False
+    cell = ((gate.get("per_cell") or {}).get(field) or {}).get(bin_lab)
+    if not cell:
+        return False
+    return cell.get("gate_apply") is False
+
 
 def _load_table():
     """Load and cache the fit table. Missing / malformed file → empty
@@ -104,23 +154,26 @@ def _bin_of(v):
     return None
 
 
-def _shift_for(cells, field, value, regime=None):
-    """Return (shift, bin_label, demoted). Returns shift=0 and demoted=True
-    when (field, bin_lab) OR (field, regime, bin_lab) matches `_CELL_SKIP`,
-    so the caller can log the demote separately from natural SKIPs."""
+def _shift_for(cells, field, value, regime=None, gate=None):
+    """Return (shift, bin_label, demote_reason). demote_reason is one of
+    None, 'cell_skip', 'regime_skip', or 'recent_bias_gate' — lets the
+    caller distinguish natural SKIPs (verdict != SHIP) from active
+    demotes for telemetry."""
     bin_lab = _bin_of(value)
     if bin_lab is None:
-        return 0.0, None, False
+        return 0.0, None, None
     cell = cells.get(field, {}).get(bin_lab)
     if not cell:
-        return 0.0, bin_lab, False
+        return 0.0, bin_lab, None
     if cell.get("verdict") != "SHIP":
-        return 0.0, bin_lab, False
+        return 0.0, bin_lab, None
     if (field, bin_lab) in _CELL_SKIP:
-        return 0.0, bin_lab, True
+        return 0.0, bin_lab, "cell_skip"
     if regime is not None and (field, regime, bin_lab) in _CELL_SKIP:
-        return 0.0, bin_lab, True
-    return float(cell.get("shift", 0.0)), bin_lab, False
+        return 0.0, bin_lab, "regime_skip"
+    if gate is not None and _gate_suppresses(gate, field, bin_lab):
+        return 0.0, bin_lab, "recent_bias_gate"
+    return float(cell.get("shift", 0.0)), bin_lab, None
 
 
 def describe_applicability():
@@ -129,10 +182,21 @@ def describe_applicability():
     weather_collector/data/applicability_map_schema.json."""
     table = _load_table()
     cells = table.get("cells", {})
+    gate = _load_gate()
+    gate_note = ""
+    if LC_RECENT_BIAS_GATE_ENABLED:
+        cleared = gate.get("fields_cleared") or []
+        gate_note = (
+            f" + recent-bias gate ENABLED on {sorted(cleared) or '(none cleared yet)'}: "
+            f"cell suppressed when per_cell[field][bin].gate_apply == False"
+        )
+    else:
+        gate_note = " + recent-bias gate DISABLED (defensive; flip after ch 7-day streak clears)"
+
     if ENABLED:
         fires_when_tmpl = (
             "ENABLED — fires when the L4-corrected forecast falls in a SHIP-verdict value bin, "
-            "except for regime-demoted cells (see _REGIME_SKIP)"
+            "except for regime-demoted cells (see _CELL_SKIP)" + gate_note
         )
         state_prefix = "ENABLED True"
     else:
@@ -171,6 +235,7 @@ def stamp_cloud_saturation_correction(weather_data):
     hourly = weather_data.get("hourly") or {}
     table = _load_table()
     cells = table.get("cells", {})
+    gate = _load_gate()
     regime = ((weather_data.get("derived") or {}).get("state") or {}).get("regime_synoptic")
 
     per_field = {}
@@ -187,16 +252,21 @@ def stamp_cloud_saturation_correction(weather_data):
         bins = [None] * len(arr)
         fired = 0
         demoted = 0
+        gate_suppressed = 0
         if not field_skipped:
             for i, v in enumerate(arr):
                 if v is None:
                     continue
-                shift, bin_lab, was_demoted = _shift_for(cells, field, v, regime=regime)
+                shift, bin_lab, demote_reason = _shift_for(
+                    cells, field, v, regime=regime, gate=gate,
+                )
                 bins[i] = bin_lab
                 deltas[i] = shift
                 if shift != 0.0:
                     fired += 1
-                elif was_demoted:
+                elif demote_reason == "recent_bias_gate":
+                    gate_suppressed += 1
+                elif demote_reason in ("cell_skip", "regime_skip"):
                     demoted += 1
 
         per_field[field] = {
@@ -205,6 +275,7 @@ def stamp_cloud_saturation_correction(weather_data):
             "bins": bins,
             "cells_fired": fired,
             "cells_demoted": demoted,
+            "cells_gate_suppressed": gate_suppressed,
             "field_skipped": field_skipped,
             "n_leads": len(arr),
         }
@@ -229,6 +300,11 @@ def stamp_cloud_saturation_correction(weather_data):
         "regime_at_apply": regime,
         "cell_skip": sorted([list(x) for x in _CELL_SKIP], key=lambda x: (x[0], len(x), x[-1])),
         "field_skip": sorted(list(_FIELD_SKIP)),
+        "recent_bias_gate": {
+            "enabled": LC_RECENT_BIAS_GATE_ENABLED,
+            "gate_generated_at": gate.get("generated_at"),
+            "fields_cleared": gate.get("fields_cleared") or [],
+        },
         "per_field": per_field,
     }
 

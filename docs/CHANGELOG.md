@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.410 • August 14, 2026 (Stage 3 wire prep — Lc recent-bias gate ready for tomorrow's ch clearance)</strong></summary>
+
+- **Standing-plan item 3 Stage 3 wire, shipped defensively OFF.** `weather_collector/processors/cloud_saturation_correction.py` now loads `weather_collector/data/lc_recent_bias_gate.json` (emitted by fitter v0.6.407) and — when `LC_RECENT_BIAS_GATE_ENABLED = True` — suppresses the historical Lc shift for cells where `field in fields_cleared` AND `per_cell[field][bin].gate_apply == False`. Runtime contract matches the JSON's `notes` field verbatim. New `_gate_suppresses(gate, field, bin_lab)` gate check + `cells_gate_suppressed` counter per field. `describe_applicability` names the gate state. Truth-table verified 5-way (disabled; enabled + empty cleared; enabled + cleared + apply=True; enabled + cleared + apply=False; back to disabled).
+- **Toggle default False, ships today so tomorrow's ch clearance is a one-line flip + deploy.** Today's gate state: fields_cleared=[] (nothing cleared yet); ch streak 6/7 (earliest clear 2026-08-15), cm 0/7, cl 2/7. Even if flipped True right now the wire is a no-op because no field has cleared. Ship-ahead pattern same as v0.6.407 (runtime table shipped ahead of consumer).
+- **New telemetry**: `weather_data["cloud_saturation_correction"]["recent_bias_gate"] = {enabled, gate_generated_at, fields_cleared}` + per-field `cells_gate_suppressed` count separate from `cells_demoted`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.409a • August 14, 2026 (debug page sweep for v0.6.409 + mid-sweep refactor to consume the existing cross_run_spread stamper)</strong></summary>
 
 - **Debug page sweep for v0.6.409.** Session log entry added for 08-14 with all today's work. Correction Stack + Specialists + Post-ship watches updated to 10 `_CELL_SKIP` cells (was 9); new v0.6.409 post-ship watch entry through 08-28. ch row prose gets an 08-14 addition note for the pre_frontal/24-47 demote. Rolling date labels bumped: 08-13 → "1 day ago", 08-12 → "2 days ago", etc.
