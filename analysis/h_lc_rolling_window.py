@@ -32,6 +32,16 @@ from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis._cache import cached_path
 
+# Runtime skip list — Lc is a no-op on these fields regardless of table shape.
+# Import so the "shortest window all fields beat raw" verdict is computed over
+# runtime-active fields, not the full 4-field sweep. Falls back to empty set on
+# import failure (the sweep still runs; the verdict just answers the wrong
+# question, matching legacy behavior).
+try:
+    from weather_collector.processors.cloud_saturation_correction import _FIELD_SKIP as RUNTIME_FIELD_SKIP
+except Exception:
+    RUNTIME_FIELD_SKIP = frozenset()
+
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_TXT = Path(__file__).resolve().parent / "output" / "h_lc_rolling_window.txt"
 
@@ -151,10 +161,18 @@ def main():
         line = " ".join(str(x) for x in a)
         print(line); out.append(line)
 
+    active_fields = [f for f in CLOUD_FIELDS if f not in RUNTIME_FIELD_SKIP]
+    skipped_fields = sorted(f for f in CLOUD_FIELDS if f in RUNTIME_FIELD_SKIP)
+
     p("=" * 100)
     p("h_lc_rolling_window — pool Lc held-out MAE across fit windows")
     p("=" * 100)
     p(f"held-out: {args.hold_days}d ({hold_from} → {t_max})")
+    if skipped_fields:
+        p(f"runtime _FIELD_SKIP (Lc is a no-op on these): {skipped_fields}")
+        p(f"→ verdict computed over runtime-active fields: {active_fields}")
+    else:
+        p(f"runtime _FIELD_SKIP: (empty) — verdict spans all 4 fields")
     p()
 
     p(f"{'W':>5} {'train_from':<12} {'n_train':>9} {'nSHIP':>5} "
@@ -213,41 +231,77 @@ def main():
     p("  (S = SHIP, m = SKIP-mag, d = SKIP-Δ)")
     p()
 
-    # Verdict
+    # Verdict — computed over runtime-active fields only. If _FIELD_SKIP is
+    # non-empty, verdict answers "shortest window all runtime-active fields
+    # beat raw" rather than the full 4-field sweep. Additionally, verdict
+    # requires the winning window to be within 1pp of best-per-field so a
+    # "regressive win" (all fields positive but well below their per-field
+    # best) doesn't get labelled SWITCH.
     p("=" * 100)
-    # Find shortest window where every field is non-negative
-    verdict = None
-    for label, W, _, _, _, per in results:
-        all_good = True
-        for field in CLOUD_FIELDS:
-            f = per.get(field)
-            if not f or f["n"] == 0: continue
-            raw = f["raw"] / f["n"]
-            cor = f["cor"] / f["n"]
-            imp = 100.0 * (raw - cor) / raw if raw > 0 else 0.0
-            if imp < 0:
-                all_good = False; break
-        if all_good:
-            verdict = (label, W)
-            break
-    if verdict:
-        p(f"VERDICT: SWITCH TO W={verdict[0]} — shortest window where all 4 fields beat raw on held-out.")
+    if not active_fields:
+        p("VERDICT: NULL — all cloud fields in runtime _FIELD_SKIP; sweep has no runtime effect.")
+        p("=" * 100)
     else:
-        # Find shortest where cl beats raw
-        cl_ok = None
+        # Best per-field improvement across all windows (for the regressive-win check)
+        best_by_field = {}
+        for field in active_fields:
+            best = 0.0
+            for _, _, _, _, _, per in results:
+                f = per.get(field)
+                if not f or f["n"] == 0: continue
+                raw = f["raw"] / f["n"]
+                cor = f["cor"] / f["n"]
+                imp = 100.0 * (raw - cor) / raw if raw > 0 else 0.0
+                if imp > best:
+                    best = imp
+            best_by_field[field] = best
+
+        verdict = None
+        regressive_win = None
         for label, W, _, _, _, per in results:
-            f = per.get("cl")
-            if not f or f["n"] == 0: continue
-            raw = f["raw"] / f["n"]
-            cor = f["cor"] / f["n"]
-            imp = 100.0 * (raw - cor) / raw if raw > 0 else 0.0
-            if imp >= 0:
-                cl_ok = (label, imp); break
-        if cl_ok:
-            p(f"VERDICT: PARTIAL — cl recovers at W={cl_ok[0]} ({cl_ok[1]:+.2f}%). Check other fields for regressions at that window.")
+            all_good = True
+            all_near_best = True
+            for field in active_fields:
+                f = per.get(field)
+                if not f or f["n"] == 0:
+                    all_good = False; break
+                raw = f["raw"] / f["n"]
+                cor = f["cor"] / f["n"]
+                imp = 100.0 * (raw - cor) / raw if raw > 0 else 0.0
+                if imp < 0:
+                    all_good = False; break
+                # Regressive-win guard: this window's improvement must be
+                # within 5pp of the field's best across windows.
+                if best_by_field[field] - imp > 5.0:
+                    all_near_best = False
+            if all_good and all_near_best and verdict is None:
+                verdict = (label, W)
+            if all_good and not all_near_best and regressive_win is None:
+                regressive_win = (label, W, {
+                    field: (
+                        100.0 * (per[field]["raw"]/per[field]["n"] - per[field]["cor"]/per[field]["n"])
+                        / (per[field]["raw"]/per[field]["n"])
+                    ) if per.get(field) and per[field]["n"] > 0 else None
+                    for field in active_fields
+                })
+
+        if verdict:
+            p(f"VERDICT: SWITCH TO W={verdict[0]} — shortest window where all "
+              f"runtime-active fields ({active_fields}) beat raw AND stay "
+              f"within 5pp of best-per-field on held-out.")
+        elif regressive_win:
+            label, W, imps = regressive_win
+            deltas = ", ".join(
+                f"{f}={imps[f]:+.1f}% vs best {best_by_field[f]:+.1f}%"
+                for f in active_fields if imps.get(f) is not None
+            )
+            p(f"VERDICT: HOLD — shortest all-positive window is W={label} but "
+              f"regresses at least one runtime-active field vs best-per-field "
+              f"by >5pp: {deltas}. Switching would hurt more than it helps.")
         else:
-            p("VERDICT: NULL — no rolling window makes cl beat raw on held-out. Architecture change needed (EMA / Kalman, not just window).")
-    p("=" * 100)
+            p(f"VERDICT: NULL — no rolling window makes every runtime-active "
+              f"field beat raw on held-out (active: {active_fields}).")
+        p("=" * 100)
 
     OUT_TXT.parent.mkdir(parents=True, exist_ok=True)
     OUT_TXT.write_text("\n".join(out) + "\n")

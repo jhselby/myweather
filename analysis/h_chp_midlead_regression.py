@@ -157,12 +157,21 @@ def main():
              f"{row['mae_chp']:>8.3f}  {d_str:>7}  {winner}")
     emit("")
 
+    # Scope qualifier — this scanner only sees leads LEAD_LO..LEAD_HI pooled
+    # across all regimes. It CANNOT surface per-cell (regime × band) damage
+    # (see h_ch_persistence_blend_stage2_vs_l6.py) or damage at leads outside
+    # this band (24-47h in particular). A STABLE verdict here means "pooled
+    # mid-lead MAE is fine," not "chp is fine everywhere."
+    scope = (f"scope: leads {LEAD_LO}-{LEAD_HI}h pooled across regimes; "
+             "per-cell + 24-47h damage NOT visible here — see "
+             "h_ch_persistence_blend_stage2_vs_l6.py for that")
+
     if hits:
         verdict = "ESCALATE"
         rationale = (f"{len(hits)} lead(s) hit the escalation trigger "
                      f"(n ≥ {ESCALATE_N} AND Δ ≥ +{ESCALATE_PCT:.0f}%): "
                      + ", ".join(f"lead {h['lead']} n={h['n']} Δ={h['delta_pct']:+.1f}%"
-                                 for h in hits) + ".")
+                                 for h in hits) + f". [{scope}]")
     else:
         # Report the worst offender for context even when not escalating.
         worst = None
@@ -170,14 +179,17 @@ def main():
             if row["delta_pct"] is not None and (worst is None or row["delta_pct"] > worst["delta_pct"]):
                 worst = row
         if worst and worst["delta_pct"] > 0:
-            verdict = "STABLE"
-            rationale = (f"no lead hits the escalation trigger. Worst mid-lead: "
-                         f"lead {worst['lead']} n={worst['n']} Δ={worst['delta_pct']:+.1f}% "
+            verdict = "STABLE-MIDLEAD-POOLED"
+            rationale = (f"no lead in {LEAD_LO}-{LEAD_HI}h hits the escalation trigger. "
+                         f"Worst mid-lead: lead {worst['lead']} n={worst['n']} "
+                         f"Δ={worst['delta_pct']:+.1f}% "
                          f"(chp {'behind' if worst['delta_pct'] > 0 else 'ahead'} of Lc "
-                         f"— below the +{ESCALATE_PCT:.0f}% action floor).")
+                         f"— below the +{ESCALATE_PCT:.0f}% action floor). [{scope}]")
         else:
-            verdict = "STABLE"
-            rationale = "chp beats Lc across all 6-20h leads with sample; no regression signal."
+            verdict = "STABLE-MIDLEAD-POOLED"
+            rationale = (f"chp beats Lc across all {LEAD_LO}-{LEAD_HI}h leads "
+                         f"with sample; no regression signal at mid-lead pooled scope. "
+                         f"[{scope}]")
 
     emit("=" * 100)
     emit(f"→ {verdict}: {rationale}")

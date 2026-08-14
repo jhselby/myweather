@@ -1,20 +1,20 @@
 {
-  "generated_at": "2026-08-10T10:33:22.366889+00:00",
+  "generated_at": "2026-08-14T10:07:58.571613+00:00",
   "source": "forecast_error_log.jsonl",
   "field": "wd",
   "stage": 2,
   "windows": {
     "A_recent_15d": [
-      "2026-07-26T00:00",
-      "2026-08-10T00:00"
+      "2026-07-30T00:00",
+      "2026-08-14T00:00"
     ],
     "B_prior_15d": [
-      "2026-07-11T00:00",
-      "2026-07-26T00:00"
+      "2026-07-15T00:00",
+      "2026-07-30T00:00"
     ],
     "FULL_30d": [
-      "2026-07-11T00:00",
-      "2026-08-10T00:00"
+      "2026-07-15T00:00",
+      "2026-08-14T00:00"
     ]
   },
   "fit_rules": {
@@ -30,14 +30,14 @@
     "arithmetic": "circular_angular_diff"
   },
   "signal_quality": {
-    "tp": 18806,
-    "fp": 16139,
-    "fn": 6291,
-    "tn": 19844,
-    "precision_pct": 53.82,
-    "recall_pct": 74.93,
-    "accuracy_pct": 63.28,
-    "fire_rate_pct": 57.21
+    "tp": 14408,
+    "fp": 8560,
+    "fn": 3762,
+    "tn": 11867,
+    "precision_pct": 62.73,
+    "recall_pct": 79.3,
+    "accuracy_pct": 68.08,
+    "fire_rate_pct": 59.51
   },
   "gate": {
     "fire_condition": "state_curr != state_fc.regime_synoptic (per lead)",
@@ -55,11 +55,6 @@
         "verdict": "SHIP"
       },
       {
-        "fc_regime": "se_flow",
-        "lead_band": "0-5",
-        "verdict": "SHIP"
-      },
-      {
         "fc_regime": "sw_flow",
         "lead_band": "0-5",
         "verdict": "SHIP"
@@ -69,77 +64,77 @@
   "cells": {
     "calm": {
       "0-5": {
-        "n_fires": 52,
-        "mae_l1": 64.25,
-        "mae_gate": 68.635,
+        "n_fires": 35,
+        "mae_l1": 72.2,
+        "mae_gate": 80.886,
         "delta_full_pct": null,
         "delta_a_pct": null,
         "delta_b_pct": null,
         "verdict": "THIN"
       },
       "6-11": {
-        "n_fires": 76,
-        "mae_l1": 83.816,
-        "mae_gate": 85.618,
+        "n_fires": 109,
+        "mae_l1": 79.771,
+        "mae_gate": 89.422,
         "delta_full_pct": null,
         "delta_a_pct": null,
         "delta_b_pct": null,
         "verdict": "THIN"
       },
       "12-23": {
-        "n_fires": 318,
-        "mae_l1": 79.726,
-        "mae_gate": 55.22,
-        "delta_full_pct": -30.74,
-        "delta_a_pct": -30.19,
-        "delta_b_pct": -31.62,
+        "n_fires": 355,
+        "mae_l1": 84.834,
+        "mae_gate": 55.837,
+        "delta_full_pct": -34.18,
+        "delta_a_pct": -34.72,
+        "delta_b_pct": -32.72,
         "verdict": "SHIP"
       },
       "24-47": {
-        "n_fires": 938,
-        "mae_l1": 83.079,
-        "mae_gate": 68.456,
-        "delta_full_pct": -17.6,
-        "delta_a_pct": -3.54,
-        "delta_b_pct": -26.71,
+        "n_fires": 1025,
+        "mae_l1": 86.235,
+        "mae_gate": 71.02,
+        "delta_full_pct": -17.64,
+        "delta_a_pct": -5.8,
+        "delta_b_pct": -28.77,
         "verdict": "SHIP"
       }
     },
     "ne_flow": {
       "0-5": {
-        "n_fires": 202,
-        "mae_l1": 64.0,
-        "mae_gate": 89.5,
-        "delta_full_pct": 39.84,
-        "delta_a_pct": 125.94,
-        "delta_b_pct": 32.37,
-        "verdict": "SKIP"
+        "n_fires": 36,
+        "mae_l1": 54.694,
+        "mae_gate": 92.917,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
       },
       "6-11": {
-        "n_fires": 452,
-        "mae_l1": 58.951,
-        "mae_gate": 124.372,
-        "delta_full_pct": 110.97,
-        "delta_a_pct": 96.02,
-        "delta_b_pct": 114.13,
-        "verdict": "SKIP"
+        "n_fires": 160,
+        "mae_l1": 58.769,
+        "mae_gate": 118.219,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
       },
       "12-23": {
-        "n_fires": 569,
-        "mae_l1": 48.185,
-        "mae_gate": 93.995,
-        "delta_full_pct": 95.07,
-        "delta_a_pct": 77.21,
-        "delta_b_pct": 101.94,
+        "n_fires": 339,
+        "mae_l1": 55.605,
+        "mae_gate": 94.088,
+        "delta_full_pct": 69.21,
+        "delta_a_pct": -25.28,
+        "delta_b_pct": 98.68,
         "verdict": "SKIP"
       },
       "24-47": {
-        "n_fires": 987,
-        "mae_l1": 53.352,
-        "mae_gate": 89.83,
-        "delta_full_pct": 68.37,
-        "delta_a_pct": 122.21,
-        "delta_b_pct": 53.41,
+        "n_fires": 803,
+        "mae_l1": 57.376,
+        "mae_gate": 88.085,
+        "delta_full_pct": 53.52,
+        "delta_a_pct": -6.56,
+        "delta_b_pct": 64.62,
         "verdict": "SKIP"
       }
     },
@@ -183,200 +178,200 @@
     },
     "nw_flow": {
       "0-5": {
-        "n_fires": 188,
-        "mae_l1": 46.548,
-        "mae_gate": 57.686,
+        "n_fires": 110,
+        "mae_l1": 43.173,
+        "mae_gate": 46.845,
         "delta_full_pct": null,
         "delta_a_pct": null,
         "delta_b_pct": null,
         "verdict": "THIN"
       },
       "6-11": {
-        "n_fires": 500,
-        "mae_l1": 35.79,
-        "mae_gate": 107.612,
-        "delta_full_pct": 200.68,
-        "delta_a_pct": 69.3,
-        "delta_b_pct": 235.92,
+        "n_fires": 270,
+        "mae_l1": 41.093,
+        "mae_gate": 85.093,
+        "delta_full_pct": 107.08,
+        "delta_a_pct": 117.88,
+        "delta_b_pct": 102.57,
         "verdict": "SKIP"
       },
       "12-23": {
-        "n_fires": 803,
-        "mae_l1": 33.965,
-        "mae_gate": 103.126,
-        "delta_full_pct": 203.62,
-        "delta_a_pct": 62.35,
-        "delta_b_pct": 247.56,
+        "n_fires": 382,
+        "mae_l1": 40.149,
+        "mae_gate": 82.453,
+        "delta_full_pct": 105.37,
+        "delta_a_pct": 154.53,
+        "delta_b_pct": 90.95,
         "verdict": "SKIP"
       },
       "24-47": {
-        "n_fires": 1893,
-        "mae_l1": 38.288,
-        "mae_gate": 106.241,
-        "delta_full_pct": 177.48,
-        "delta_a_pct": 172.24,
-        "delta_b_pct": 179.17,
+        "n_fires": 974,
+        "mae_l1": 39.167,
+        "mae_gate": 101.567,
+        "delta_full_pct": 159.31,
+        "delta_a_pct": 155.37,
+        "delta_b_pct": 160.04,
         "verdict": "SKIP"
       }
     },
     "pre_frontal": {
       "0-5": {
-        "n_fires": 117,
-        "mae_l1": 42.778,
-        "mae_gate": 41.034,
+        "n_fires": 37,
+        "mae_l1": 47.459,
+        "mae_gate": 67.622,
         "delta_full_pct": null,
         "delta_a_pct": null,
         "delta_b_pct": null,
         "verdict": "THIN"
       },
       "6-11": {
-        "n_fires": 168,
-        "mae_l1": 44.804,
-        "mae_gate": 55.792,
+        "n_fires": 72,
+        "mae_l1": 41.861,
+        "mae_gate": 61.708,
         "delta_full_pct": null,
         "delta_a_pct": null,
         "delta_b_pct": null,
         "verdict": "THIN"
       },
       "12-23": {
-        "n_fires": 345,
-        "mae_l1": 43.533,
-        "mae_gate": 71.27,
-        "delta_full_pct": 63.71,
-        "delta_a_pct": 83.72,
-        "delta_b_pct": 59.49,
-        "verdict": "SKIP"
+        "n_fires": 152,
+        "mae_l1": 45.112,
+        "mae_gate": 68.441,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
       },
       "24-47": {
-        "n_fires": 626,
-        "mae_l1": 46.719,
-        "mae_gate": 77.427,
-        "delta_full_pct": 65.73,
-        "delta_a_pct": 142.61,
-        "delta_b_pct": 48.92,
+        "n_fires": 250,
+        "mae_l1": 49.404,
+        "mae_gate": 87.872,
+        "delta_full_pct": 77.86,
+        "delta_a_pct": -13.43,
+        "delta_b_pct": 86.35,
         "verdict": "SKIP"
       }
     },
     "se_flow": {
       "0-5": {
-        "n_fires": 387,
-        "mae_l1": 43.088,
-        "mae_gate": 35.76,
-        "delta_full_pct": -17.01,
-        "delta_a_pct": -6.73,
-        "delta_b_pct": -21.57,
-        "verdict": "SHIP"
-      },
-      "6-11": {
-        "n_fires": 884,
-        "mae_l1": 46.242,
-        "mae_gate": 84.473,
-        "delta_full_pct": 82.68,
-        "delta_a_pct": 62.91,
-        "delta_b_pct": 90.92,
-        "verdict": "SKIP"
-      },
-      "12-23": {
-        "n_fires": 2684,
-        "mae_l1": 45.937,
-        "mae_gate": 96.595,
-        "delta_full_pct": 110.28,
-        "delta_a_pct": 76.54,
-        "delta_b_pct": 123.93,
-        "verdict": "SKIP"
-      },
-      "24-47": {
-        "n_fires": 5189,
-        "mae_l1": 46.237,
-        "mae_gate": 110.06,
-        "delta_full_pct": 138.04,
-        "delta_a_pct": 96.51,
-        "delta_b_pct": 160.18,
-        "verdict": "SKIP"
-      }
-    },
-    "sea_breeze": {
-      "0-5": {
-        "n_fires": 150,
-        "mae_l1": 46.5,
-        "mae_gate": 61.273,
+        "n_fires": 178,
+        "mae_l1": 63.562,
+        "mae_gate": 50.955,
         "delta_full_pct": null,
         "delta_a_pct": null,
         "delta_b_pct": null,
         "verdict": "THIN"
       },
       "6-11": {
-        "n_fires": 412,
-        "mae_l1": 45.214,
-        "mae_gate": 79.466,
-        "delta_full_pct": 75.76,
-        "delta_a_pct": 77.11,
-        "delta_b_pct": 74.95,
+        "n_fires": 465,
+        "mae_l1": 57.325,
+        "mae_gate": 74.406,
+        "delta_full_pct": 29.8,
+        "delta_a_pct": 63.02,
+        "delta_b_pct": 1.86,
         "verdict": "SKIP"
       },
       "12-23": {
-        "n_fires": 506,
-        "mae_l1": 51.978,
-        "mae_gate": 84.818,
-        "delta_full_pct": 63.18,
-        "delta_a_pct": 33.97,
-        "delta_b_pct": 104.5,
+        "n_fires": 1680,
+        "mae_l1": 54.235,
+        "mae_gate": 88.181,
+        "delta_full_pct": 62.59,
+        "delta_a_pct": 66.33,
+        "delta_b_pct": 59.81,
         "verdict": "SKIP"
       },
       "24-47": {
-        "n_fires": 994,
-        "mae_l1": 49.42,
-        "mae_gate": 98.057,
-        "delta_full_pct": 98.42,
-        "delta_a_pct": 105.03,
-        "delta_b_pct": 90.17,
+        "n_fires": 3723,
+        "mae_l1": 53.594,
+        "mae_gate": 103.294,
+        "delta_full_pct": 92.73,
+        "delta_a_pct": 60.19,
+        "delta_b_pct": 111.58,
+        "verdict": "SKIP"
+      }
+    },
+    "sea_breeze": {
+      "0-5": {
+        "n_fires": 113,
+        "mae_l1": 47.257,
+        "mae_gate": 72.292,
+        "delta_full_pct": null,
+        "delta_a_pct": null,
+        "delta_b_pct": null,
+        "verdict": "THIN"
+      },
+      "6-11": {
+        "n_fires": 281,
+        "mae_l1": 51.705,
+        "mae_gate": 89.036,
+        "delta_full_pct": 72.2,
+        "delta_a_pct": 111.8,
+        "delta_b_pct": 11.03,
+        "verdict": "SKIP"
+      },
+      "12-23": {
+        "n_fires": 477,
+        "mae_l1": 55.178,
+        "mae_gate": 93.973,
+        "delta_full_pct": 70.31,
+        "delta_a_pct": 50.03,
+        "delta_b_pct": 128.07,
+        "verdict": "SKIP"
+      },
+      "24-47": {
+        "n_fires": 969,
+        "mae_l1": 49.617,
+        "mae_gate": 103.16,
+        "delta_full_pct": 107.91,
+        "delta_a_pct": 91.2,
+        "delta_b_pct": 141.88,
         "verdict": "SKIP"
       }
     },
     "sw_flow": {
       "0-5": {
-        "n_fires": 1660,
-        "mae_l1": 62.358,
-        "mae_gate": 38.775,
-        "delta_full_pct": -37.82,
-        "delta_a_pct": -18.79,
-        "delta_b_pct": -41.51,
+        "n_fires": 1280,
+        "mae_l1": 65.4,
+        "mae_gate": 29.121,
+        "delta_full_pct": -55.47,
+        "delta_a_pct": -20.39,
+        "delta_b_pct": -68.8,
         "verdict": "SHIP"
       },
       "6-11": {
-        "n_fires": 2079,
-        "mae_l1": 55.291,
-        "mae_gate": 51.049,
-        "delta_full_pct": -7.67,
-        "delta_a_pct": 15.18,
-        "delta_b_pct": -14.51,
+        "n_fires": 1611,
+        "mae_l1": 58.78,
+        "mae_gate": 42.045,
+        "delta_full_pct": -28.47,
+        "delta_a_pct": 5.44,
+        "delta_b_pct": -49.21,
         "verdict": "SKIP"
       },
       "12-23": {
-        "n_fires": 3983,
-        "mae_l1": 57.185,
-        "mae_gate": 54.559,
-        "delta_full_pct": -4.59,
-        "delta_a_pct": 13.53,
-        "delta_b_pct": -9.96,
+        "n_fires": 2919,
+        "mae_l1": 63.822,
+        "mae_gate": 49.382,
+        "delta_full_pct": -22.62,
+        "delta_a_pct": 6.69,
+        "delta_b_pct": -40.71,
         "verdict": "SKIP"
       },
       "24-47": {
-        "n_fires": 7575,
-        "mae_l1": 50.273,
-        "mae_gate": 75.708,
-        "delta_full_pct": 50.6,
-        "delta_a_pct": 23.8,
-        "delta_b_pct": 58.35,
+        "n_fires": 3955,
+        "mae_l1": 63.784,
+        "mae_gate": 57.934,
+        "delta_full_pct": -9.17,
+        "delta_a_pct": 4.35,
+        "delta_b_pct": -24.8,
         "verdict": "SKIP"
       }
     }
   },
   "rollup": {
-    "ship": 4,
+    "ship": 3,
     "margin": 0,
-    "skip": 18,
-    "thin": 10
+    "skip": 15,
+    "thin": 14
   },
   "notes": "Stage 2 preview. Not wired to production. Fire condition uses predicted-transition signal (state_curr != state_fc.regime); both knowable at forecast time. Wire via wd_persistence_gate processor with ENABLED=False on ship and 7-day narrow-promote gate."
 }

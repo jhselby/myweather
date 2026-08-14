@@ -190,8 +190,28 @@ def cell_verdict(base_full, gate_full, base_a, gate_a, base_b, gate_b, n_full):
     return "MARGIN", d_full, d_a, d_b
 
 
+def _load_processor_cell_skip():
+    """Read the runtime _CELL_SKIP frozenset from ch_persistence_gate.py.
+    These cells are demoted to L4 in the processor regardless of the curated
+    JSON verdict (v0.6.405+ emergency demote pattern). We subtract them from
+    the "live SHIP" set so this preview only flags cells that would ACTUALLY
+    fire chp under the L6 baseline test — otherwise the flip_ship_to_skip
+    count double-counts cells already forced to L4 at runtime.
+    """
+    try:
+        sys.path.insert(0, os.path.abspath(os.path.join(HERE, "..")))
+        from weather_collector.processors.ch_persistence_gate import _CELL_SKIP
+        return set(_CELL_SKIP)
+    except Exception as e:
+        print(f"    ⚠  could not load processor _CELL_SKIP: {e}", file=sys.stderr)
+        return set()
+
+
 def load_live_ship_set():
-    """Read the currently-live curated JSON's SHIP+MARGIN set for comparison."""
+    """Read the currently-live curated JSON's SHIP+MARGIN set for comparison.
+    Subtracts cells that the processor's _CELL_SKIP forces to L4 regardless
+    of curated verdict — those cells never fire chp at runtime, so counting
+    them as 'live SHIP' overstates the amount of active regression."""
     try:
         with open(LIVE_CURATED) as fh:
             payload = json.load(fh)
@@ -203,6 +223,14 @@ def load_live_ship_set():
         for band, cell in bandmap.items():
             if cell.get("verdict") in ("SHIP", "MARGIN"):
                 live.add((regime, band))
+    processor_skip = _load_processor_cell_skip()
+    if processor_skip:
+        overlap = live & processor_skip
+        if overlap:
+            print(f"    ℹ  subtracting {len(overlap)} cell(s) from live_ship_set — "
+                  f"already demoted by processor _CELL_SKIP: {sorted(overlap)}",
+                  file=sys.stderr)
+        live -= processor_skip
     return live
 
 

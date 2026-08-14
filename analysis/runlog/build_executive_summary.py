@@ -95,6 +95,20 @@ KNOWN_LIVE_PIPELINES = {
         "since": "v0.6.379",
         "date": "2026-07-24",
     },
+    "h_wd_persistence_gate_stage1": {
+        "target": "wd persistence gate (wdp) — regime × lead_band L1 override "
+                  "on predicted-transition fires (wd_persistence_gate.py, ENABLED=True)",
+        "since": "v0.6.382",
+        "date": "2026-07-27",
+    },
+    "h_wd_persistence_gate_stage2": {
+        "target": "wd persistence gate (wdp) Stage 2 curated cell table "
+                  "(wd_persistence_gate_curated.json). Predicted-transition "
+                  "fire signal on 3 SHIP cells: calm/12-23, calm/24-47, "
+                  "sw_flow/0-5.",
+        "since": "v0.6.382",
+        "date": "2026-07-27",
+    },
     "lc_fit": {
         "target": "Lc lead-decay correction (lc_correction_table.json). "
                   "Fitter re-emits SHIP cells each run; live table already reads them.",

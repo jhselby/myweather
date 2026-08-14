@@ -80,6 +80,7 @@ _CELL_SKIP = frozenset({
     ("calm",        "24-47"),  # vs_l6 Δ +34.89%
     ("nw_flow",     "12-23"),  # vs_l6 Δ +22.42% (overlaps diurnal skip 10-18 local)
     ("pre_frontal", "12-23"),  # vs_l6 Δ +27.83% (overlaps diurnal skip 10-18 local)
+    ("pre_frontal", "24-47"),  # 08-14 add: vs_l6 Δ +101.59% (biggest current chp loser to L6; nighttime targets outside the diurnal skip window)
     ("se_flow",     "24-47"),  # vs_l6 Δ -0.16% (parity — precautionary)
     ("sea_breeze",  "12-23"),  # vs_l6 Δ  +9.71%
     ("sea_breeze",  "24-47"),  # vs_l6 Δ  -1.84% (parity — precautionary)

@@ -152,6 +152,17 @@ def describe_applicability():
                 f"the base displayed_mae; reads {os.path.basename(_C1D_PATH)}."
             ),
         },
+        {
+            "axis_id": "C1_xr",
+            "name": "Cross-run forecast spread quintile",
+            "fires_when": (
+                "spread of field_l1 across recent forecast_log snapshots for the "
+                "band's midpoint valid_time (requires ≥3 runs). Quintile Q1..Q5 "
+                "binned using per-field edges from the curated_v2 stage1_meta. "
+                "Cells only fire for fields Stage 2 promoted ortho vs "
+                "cluster_spread_q: dp, h, pr, t, wd, wg, ws."
+            ),
+        },
     ]
     if ENABLED:
         current_state = (
@@ -277,6 +288,66 @@ _C1H_CELLS, _C1H_META = _load_marginal_table(_C1H_PATH, ("flat", "fires"))
 _C1D_CELLS, _C1D_META = _load_marginal_table(_C1D_PATH, ("low", "high"))
 _C1H_THRESH = (_C1H_META.get("stage1_meta") or {}).get("thresholds") or {}
 _C1D_SIGMA_CUTS = _C1D_META.get("sigma_cuts") or {}
+
+
+def _load_xr_table():
+    """C1_xr — cross-run spread quintile marginal axis. Reads the by_xr_q
+    sub-table from the curated_v2 file (already gated to ortho-promoted fields
+    by the curator's Stage 2 check). Returns (cells, edges_by_field) where
+    cells is {field: {band: {xr_q: {direction, premium_pct}}}} filtered to
+    SHIP/MARGINAL, and edges_by_field is {field: [q20, q40, q60, q80]}.
+
+    Empty on any load failure — safe fallback, axis becomes a no-op.
+    """
+    if not _CURATED_PATH.endswith("_v2.json"):
+        return {}, {}
+    try:
+        with open(_CURATED_PATH) as f:
+            doc = json.load(f)
+    except Exception as e:
+        logging.warning(f"  ⚠ confidence_layer C1_xr: curated load failed: {e}")
+        return {}, {}
+    sm = doc.get("stage1_meta") or {}
+    edges = sm.get("xr_edges_by_field") or {}
+    cells = {}
+    for field, bands in (doc.get("cells") or {}).items():
+        for band, entry in bands.items():
+            for xr_q, ax in (entry.get("by_xr_q") or {}).items():
+                if ax.get("status") not in _WIRED_STATUSES:
+                    continue
+                direction = ax.get("direction")
+                if direction not in ("WIDEN", "NARROW"):
+                    continue
+                # by_xr_q entries carry (mae, n) — premium_pct is derived vs
+                # the (field, band)'s legacy stable_mae, matching the curator.
+                stable_mae = entry.get("stable_mae")
+                if not stable_mae:
+                    continue
+                pct = 100.0 * (ax["mae"] - stable_mae) / stable_mae
+                cells.setdefault(field, {}).setdefault(band, {})[xr_q] = {
+                    "direction":   direction,
+                    "premium_pct": float(pct),
+                }
+    return cells, edges
+
+
+_C1_XR_CELLS, _C1_XR_EDGES = _load_xr_table()
+
+# Per-band representative target hour for stamp-time cross-run spread lookup.
+# Matches C1h's _C1H_BAND_MID convention — the band's midpoint stands in for
+# the whole band. Includes 0-5h since xr_q promoted cells span all four bands.
+_C1_XR_BAND_MID = {
+    "0-5h":   3,
+    "6-11h":  9,
+    "12-23h": 18,
+    "24-47h": 36,
+}
+_C1_XR_LEVELS = ("Q1", "Q2", "Q3", "Q4", "Q5")
+_C1_XR_MIN_RUNS = 3   # matches MIN_RUNS_PER_VT_XR in the calibration script
+
+# Snapshot key per field — {field}_l1 in forecast_log entries, matching how
+# forecast_snapshot writes each field's raw L1 array.
+_C1_XR_SNAP_KEY = {f: f"{f}_l1" for f in _C1_XR_CELLS}
 
 
 # Field-to-hourly-array mapping for C1h L1 lookup at stamp time. C1h fires
@@ -612,6 +683,84 @@ def _c1h_fires_per_band_field(weather_data):
     return out
 
 
+def _xr_quintile(spread, edges):
+    """Bin spread into Q1..Q5 using per-field quintile cuts. Returns None if
+    edges missing or spread is None."""
+    if spread is None or not edges or len(edges) != 4:
+        return None
+    for i, e in enumerate(edges):
+        if spread < e:
+            return _C1_XR_LEVELS[i]
+    return _C1_XR_LEVELS[-1]
+
+
+def _c1_xr_per_band_field(weather_data):
+    """For each (field, band) with a wired xr cell, compute the current
+    cross-run spread from forecast_log.json snapshots and bin into Q1..Q5.
+
+    Spread = max(field_l1) - min(field_l1) across all snapshots that carry
+    the band's midpoint target valid_time. Requires ≥ _C1_XR_MIN_RUNS runs
+    to have snapshotted that target hour — matches the calibration's floor.
+
+    Returns {(field, band): "Q1".."Q5"|None}. None means the axis is
+    unavailable (missing snapshots, missing target hour, or too few runs).
+    """
+    out = {}
+    if not _C1_XR_CELLS:
+        return out
+    hourly = weather_data.get("hourly") or {}
+    times = hourly.get("times") or hourly.get("time") or []
+    if not times:
+        for field, bands in _C1_XR_CELLS.items():
+            for band in bands:
+                out[(field, band)] = None
+        return out
+    try:
+        log = load_json("forecast_log.json", default={"snapshots": []}) or {}
+    except Exception as e:
+        logging.debug(f"  ⚠ confidence_layer C1_xr: snapshot log load failed: {e}")
+        log = {"snapshots": []}
+    snapshots = log.get("snapshots") or []
+    # Build one pass: {(field, v): [l1_values]}. Only collect for target v's
+    # that appear at a band midpoint in the current forecast — bounds the work.
+    wanted_v = set()
+    band_v = {}  # {band: v_string}
+    for band, mid in _C1_XR_BAND_MID.items():
+        if mid < len(times) and times[mid]:
+            band_v[band] = times[mid]
+            wanted_v.add(times[mid])
+    per_key = {}  # (field, v) -> [values]
+    snap_keys = _C1_XR_SNAP_KEY
+    for snap in snapshots:
+        for h in (snap.get("hours") or []):
+            v = h.get("v")
+            if v not in wanted_v:
+                continue
+            for field, key in snap_keys.items():
+                val = h.get(key)
+                if val is None:
+                    continue
+                try:
+                    per_key.setdefault((field, v), []).append(float(val))
+                except (TypeError, ValueError):
+                    continue
+
+    for field, bands in _C1_XR_CELLS.items():
+        edges = _C1_XR_EDGES.get(field) or []
+        for band in bands:
+            v = band_v.get(band)
+            if not v:
+                out[(field, band)] = None
+                continue
+            vals = per_key.get((field, v)) or []
+            if len(vals) < _C1_XR_MIN_RUNS:
+                out[(field, band)] = None
+                continue
+            spread = max(vals) - min(vals)
+            out[(field, band)] = _xr_quintile(spread, edges)
+    return out
+
+
 def _apply_marginal(base_mae, direction, premium_pct):
     """Multiplicatively compose a marginal-axis premium onto base_mae.
     WIDEN → multiply by (1 + |pct|/100). NARROW → multiply by max(0, 1 − |pct|/100).
@@ -688,8 +837,10 @@ def stamp_confidence(weather_data):
     # value means the marginal multiplier is 1.0 for the affected cell.
     c1d_slot = _current_c1d_slot(weather_data)
     c1h_by_cell = _c1h_fires_per_band_field(weather_data)
+    c1_xr_by_cell = _c1_xr_per_band_field(weather_data)
     c1h_hits = 0
     c1d_hits = 0
+    c1_xr_hits = 0
     # Per-field gate-firing counters for gate_firing_log (added 2026-07-10 to
     # close the C1-axis coverage gap surfaced by the same silent-dormancy
     # audit that caught the L3 streak wedge). record_firing() is called at
@@ -702,13 +853,15 @@ def stamp_confidence(weather_data):
     #       slot is the calibration baseline, not a suppression.
     _c1h_by_field = {}  # {field: {"fires": N, "skips": N}}
     _c1d_by_field = {}
+    _c1_xr_by_field = {}
 
     # Union of fields that appear in any of the three tables so C1h/C1d can
     # contribute cells even where the legacy v2/v1 table has none. Non-legacy
     # fields fall through with legacy_displayed=None; the multiplier still
     # composes onto whatever base_mae the multi-axis lookup provides (or None,
     # in which case the cell reports axis effects but no MAE).
-    all_fields = set(_CURATED_CELLS.keys()) | set(_C1H_CELLS.keys()) | set(_C1D_CELLS.keys())
+    all_fields = (set(_CURATED_CELLS.keys()) | set(_C1H_CELLS.keys())
+                  | set(_C1D_CELLS.keys()) | set(_C1_XR_CELLS.keys()))
 
     cells_out = {}
     multi_hits = 0
@@ -717,7 +870,7 @@ def stamp_confidence(weather_data):
         cells_out[field] = {}
         # Also include bands present only in c1h/c1d.
         extra_bands = set()
-        for tbl in (_C1H_CELLS, _C1D_CELLS):
+        for tbl in (_C1H_CELLS, _C1D_CELLS, _C1_XR_CELLS):
             extra_bands |= set(tbl.get(field, {}).keys())
         for band in set(bands.keys()) | extra_bands:
             entry = bands.get(band, {})
@@ -783,9 +936,33 @@ def stamp_confidence(weather_data):
                 c1d_hits += 1
                 _c1d_by_field.setdefault(field, {"fires": 0, "skips": 0})["fires"] += 1
 
+            # C1_xr — cross-run spread quintile marginal. Same shape as C1h/C1d:
+            # a (field, band, xr_q) cell fires whenever the live xr_q matches
+            # a wired SHIP/MARGINAL cell. Curator already gated to the 7 fields
+            # Stage 2 promoted (dp, h, pr, t, wd, wg, ws).
+            xr_band_cells = _C1_XR_CELLS.get(field, {}).get(band) or {}
+            c1_xr_q = c1_xr_by_cell.get((field, band))
+            c1_xr_cell = xr_band_cells.get(c1_xr_q) if c1_xr_q else None
+            c1_xr_direction = None
+            c1_xr_pct = None
+            c1_xr_applied = False
+            if c1_xr_cell:
+                c1_xr_direction = c1_xr_cell["direction"]
+                c1_xr_pct = c1_xr_cell["premium_pct"]
+                c1_xr_applied = True
+                c1_xr_hits += 1
+                _c1_xr_by_field.setdefault(field, {"fires": 0, "skips": 0})["fires"] += 1
+            elif xr_band_cells:
+                # Wired cells exist for this (field, band) but the live xr_q
+                # didn't match any of them (either None from missing snapshots
+                # or a quintile with no wired premium). Count as skip so a
+                # future dormancy audit can see the axis isn't silently dead.
+                _c1_xr_by_field.setdefault(field, {"fires": 0, "skips": 0})["skips"] += 1
+
             displayed_mae = base_displayed
             displayed_mae, m_h = _apply_marginal(displayed_mae, c1h_direction, c1h_pct)
             displayed_mae, m_d = _apply_marginal(displayed_mae, c1d_direction, c1d_pct)
+            displayed_mae, m_xr = _apply_marginal(displayed_mae, c1_xr_direction, c1_xr_pct)
 
             cells_out[field][band] = {
                 "stable_mae":     stable,
@@ -810,6 +987,13 @@ def stamp_confidence(weather_data):
                     "premium_pct": c1d_cell["premium_pct"] if c1d_cell else None,
                     "multiplier":  round(m_d, 4),
                 },
+                "c1_xr": {
+                    "applied":     c1_xr_applied,
+                    "xr_q":        c1_xr_q,
+                    "direction":   c1_xr_direction,
+                    "premium_pct": c1_xr_pct,
+                    "multiplier":  round(m_xr, 4),
+                },
             }
 
     weather_data["confidence"] = {
@@ -827,6 +1011,7 @@ def stamp_confidence(weather_data):
             "c1d_slot":        c1d_slot,   # C1d — 2026-07-08, marginal wired
             "c1h_hits":        c1h_hits,   # C1h — 2026-07-08, marginal wired
             "c1d_hits":        c1d_hits,
+            "c1_xr_hits":      c1_xr_hits, # C1_xr — cross-run spread, wired 2026-08-14
             "multi_hits":      multi_hits,
             "table_version":   "v3" if _CURATED_PATH.endswith("_v2.json") else "v1",
         },
@@ -854,6 +1039,11 @@ def stamp_confidence(weather_data):
             gate_firing_log.record_firing(
                 operator="C1d", regime=regime_obs,
                 by_field=_c1d_by_field, leads=48,
+            )
+        if _c1_xr_by_field:
+            gate_firing_log.record_firing(
+                operator="C1_xr", regime=regime_obs,
+                by_field=_c1_xr_by_field, leads=48,
             )
     except Exception as _e:
         logging.debug(f"  ⚠ confidence_layer: gate_firing_log record failed: {_e}")

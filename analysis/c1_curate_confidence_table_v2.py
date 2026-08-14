@@ -40,10 +40,33 @@ MULTI_MAGNITUDE_FLOOR_PCT = 5.0
 
 STAGE1_PATH = os.path.join(os.path.dirname(__file__), "output",
                            "c1_confidence_premium_v2.json")
+# Cross-run-spread axis promotion gate. by_xr_q SHIP verdicts are only wired
+# for fields that cleared h_cross_run_spread_c1_stage2's orthogonality check
+# vs cluster_spread_q. Other fields' xr_q cells stay in the curated file for
+# diagnostics but are demoted to SKIP so runtime never fires them.
+XR_STAGE2_PATH = os.path.join(os.path.dirname(__file__), "output",
+                              "h_cross_run_spread_c1_stage2.json")
 OUTPUT_PATH = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
     "weather_collector", "data", "c1_confidence_curated_v2.json",
 )
+
+
+def _load_xr_ortho_fields():
+    """Return the set of fields Stage 2 promoted as ortho-to-cluster_spread_q.
+    Empty set on any load failure — that gates every xr_q cell to SKIP, which
+    is the safe direction (no runtime firing until promotion is verified)."""
+    try:
+        with open(XR_STAGE2_PATH) as f:
+            doc = json.load(f)
+    except FileNotFoundError:
+        print(f"  ⚠ Stage 2 xr file missing at {XR_STAGE2_PATH} — "
+              "gating ALL by_xr_q cells to SKIP")
+        return set()
+    except Exception as e:
+        print(f"  ⚠ Stage 2 xr file load failed: {e} — gating all to SKIP")
+        return set()
+    return set(doc.get("ortho_fields") or [])
 
 
 def classify_legacy(cell):
@@ -108,6 +131,10 @@ def curate():
     with open(STAGE1_PATH) as f:
         stage1 = json.load(f)
 
+    xr_ortho_fields = _load_xr_ortho_fields()
+    print(f"  xr promotion gate: {len(xr_ortho_fields)} field(s) ortho-promoted: "
+          f"{sorted(xr_ortho_fields) if xr_ortho_fields else '(none)'}")
+
     cells = stage1.get("cells", {})
     curated = {}
 
@@ -132,13 +159,24 @@ def curate():
                     "rationale": ax_reason,
                 }
 
-            # Cross-run spread quintile cells (Stage 3 wire-up, 08-11).
-            # Same classifier as multi-axis cells — reference is legacy stable_mae.
+            # Cross-run spread quintile cells. Stage 2 orthogonality gate
+            # (h_cross_run_spread_c1_stage2) restricts SHIP verdicts to fields
+            # confirmed ortho-to-cluster_spread_q. Non-promoted fields' cells
+            # still emit for diagnostics but are demoted to SKIP with a gate
+            # rationale so runtime never fires them.
             by_xr_q_out = {}
+            field_ortho = field in xr_ortho_fields
             for xr_key, ax in (c.get("by_xr_q") or {}).items():
                 ax_status, ax_dir, ax_reason = classify_axis_cell(
                     c["stable_mae"], ax["mae"], ax["n"]
                 )
+                if not field_ortho and ax_status in ("SHIP", "MARGINAL"):
+                    ax_status = "SKIP"
+                    ax_dir = None
+                    ax_reason = (
+                        "xr Stage 2 gate: field not in ortho-promoted set "
+                        f"({sorted(xr_ortho_fields) or 'empty'})"
+                    )
                 by_xr_q_out[xr_key] = {
                     "status":    ax_status,
                     "direction": ax_dir,
@@ -182,6 +220,7 @@ def curate():
             "pt_bins":      stage1.get("pt_bins"),
             "axes":         stage1.get("axes"),
             "xr_edges_by_field": stage1.get("xr_edges_by_field"),
+            "xr_ortho_fields":   sorted(xr_ortho_fields),
         },
         "cells": curated,
     }
