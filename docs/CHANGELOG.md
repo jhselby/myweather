@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.415 • August 15, 2026 (MEMPROBE unit-bug fix — Linux branches were reversed)</strong></summary>
+
+- **`_rss_mib()` branches swapped.** Verified live post-v0.6.414 deploy: 10:27 tick reported `start_rss=0.0 MiB`, 10:37 reported `start=0.8 MiB → end=1203.3 MiB` (delta +1202.5 MiB in 91s). Impossible values. Cause: the heuristic `return r / 1024 if r > 1_000_000 else r / 1024 / 1024` had macOS-bytes and Linux-kb branches reversed. Linux `ru_maxrss` returns kb (~800,000 for ~800 MiB RSS), which fails the `> 1_000_000` threshold → falls into the else → gets double-divided by 1024². Once memory crosses ~977 MiB, the kb value trips the threshold and hits the other (still-wrong) branch → looks like a huge jump. Fixed to `return r / 1024 / 1024 if r > 1_000_000 else r / 1024` — macOS bytes → MiB (÷1024²), Linux kb → MiB (÷1024).
+- **Data collection restart date is now 2026-08-15 post-v0.6.415 deploy.** Everything before was garbage.
+
+</details>
+
+<details>
 <summary><strong>v0.6.414 • August 15, 2026 (MEMPROBE actually emits now — silent no-op since 08-11 ship)</strong></summary>
 
 - **MEMPROBE lines converted `logging.info` → `print(..., flush=True)`** in `weather_collector/collector.py` (lines 463 + 800). The 08-11 memory-probe telemetry ship never emitted a single line to Cloud Logging: the codebase has no `logging.basicConfig(...)` anywhere, so Python's root logger sat at default WARNING and silently dropped every INFO call. Verified by grepping Cloud Logging for the "Wyman Cove Weather" banner (also `logging.info`) — not one hit in a 5-day freshness window. Prints go straight to stderr → Cloud Logging.

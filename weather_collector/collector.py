@@ -447,7 +447,7 @@ def _rss_mib():
     try:
         import resource
         r = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        return r / 1024 if r > 1_000_000 else r / 1024 / 1024  # macOS bytes, linux kb
+        return r / 1024 / 1024 if r > 1_000_000 else r / 1024  # macOS bytes → MiB (÷1024²); Linux kb → MiB (÷1024). Branches were reversed pre-v0.6.415 — Linux RSS < 977 MiB got double-divided.
     except Exception:
         return -1
 
