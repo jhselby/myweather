@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.419 • August 15, 2026 (Lc applicability descriptor honors _FIELD_SKIP — cc/cl no longer misreported as ENABLED)</strong></summary>
+
+- **Bug fix in `cloud_saturation_correction.describe_applicability()`.** Live applicability_map was reporting `cc: ENABLED True. Cells for cc: 0-5: SHIP (shift +15.6); …` and `cl: ENABLED True. …` — misleading because both fields are in `_FIELD_SKIP` (cc since v0.6.390 2026-07-30 when Ccd took over cc derivation; cl since v0.6.389f 2026-07-30 when walk-forward showed cl broken under Lc). The descriptor read the global `ENABLED` flag but ignored per-field skips, so a reader of the applicability map would think Lc was actively shifting cc by −63.4 pts at the 95-100 bin.
+- **Per-field skip reasons surfaced inline.** cc + cl now report `FIELD-SKIPPED` in both `fires_when` and `current_state`, with the skip reason (v0.6.390 Ccd takeover for cc; v0.6.389f walk-forward-broken for cl). Diagnostic cells still emitted at the end of `current_state` as "would apply if un-skipped: …" so the fit values remain visible for the parked [[project_lc_cl_unskip_investigation]] investigation. cm + ch descriptors unchanged.
+- **Caught during today's applicability audit** (Joe asked "is the applicability section accurate?"). Real answer: mostly, except for this per-field skip gap. cc_from_derivation (Ccd) has no descriptor at all — separate small work item, not blocking.
+
+</details>
+
+<details>
 <summary><strong>v0.6.418 • August 15, 2026 (pr L2 whitelist joins the 7-day streak walker)</strong></summary>
 
 - **pr L2 gate now tracked by `whitelist_streak.py`** alongside chp/wdp/clp/wg_residual/dp_residual. Reason: today's `pr_l2_regime_lead_retro` cleared 2 new BOTH-WIN candidates (nw_flow/12-23h Δ+4.5%, sw_flow/12-23h Δ+2.6%) on top of the 2 shipped-live cells (nw_flow/{0-5h, 6-11h}). Session opened 2 dynamic-gate migration projects today, so shipping any expansion on a single day's read is exactly the pattern we're trying to escape. The walker provides the 7-day per-cell Jaccard≥0.8 stability check we don't get otherwise.

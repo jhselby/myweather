@@ -178,8 +178,10 @@ def _shift_for(cells, field, value, regime=None, gate=None):
 
 def describe_applicability():
     """Applicability descriptor for Lc (cloud saturation-unbiasing).
-    Four fields (cc, cl, cm, ch). See
-    weather_collector/data/applicability_map_schema.json."""
+    Four fields (cc, cl, cm, ch). Per-field state respects `_FIELD_SKIP`
+    so cc + cl (which Lc no longer touches) don't misleadingly display as
+    ENABLED. See weather_collector/data/applicability_map_schema.json.
+    """
     table = _load_table()
     cells = table.get("cells", {})
     gate = _load_gate()
@@ -193,15 +195,27 @@ def describe_applicability():
     else:
         gate_note = " + recent-bias gate DISABLED (defensive; flip after ch 7-day streak clears)"
 
+    # Per-field _FIELD_SKIP reasons — one-liner surfaced in fires_when +
+    # current_state so the applicability map reads accurately for cc/cl.
+    field_skip_reason = {
+        "cc": ("cc retired from Lc v0.6.390 (2026-07-30) — cc is a derived "
+               "field, overwritten by Ccd (cc_from_derivation.py) from "
+               "max(cl_l6, cm_l6, ch_l6) after Lc runs."),
+        "cl": ("cl killed from Lc v0.6.389f (2026-07-30) — walk-forward "
+               "showed cl broken under both pooled Lc (-22% vs raw) and "
+               "regime-conditional (-30%). Held out until architecture "
+               "changes (see project_lc_cl_unskip_investigation)."),
+    }
+
     if ENABLED:
-        fires_when_tmpl = (
+        fires_when_active = (
             "ENABLED — fires when the L4-corrected forecast falls in a SHIP-verdict value bin, "
             "except for regime-demoted cells (see _CELL_SKIP)" + gate_note
         )
-        state_prefix = "ENABLED True"
+        state_prefix_active = "ENABLED True"
     else:
-        fires_when_tmpl = "OFF — ENABLED False. Telemetry stamped for 7-day watch."
-        state_prefix = "ENABLED False"
+        fires_when_active = "OFF — ENABLED False. Telemetry stamped for 7-day watch."
+        state_prefix_active = "ENABLED False"
 
     field_descriptors = []
     for f in CLOUD_FIELDS:
@@ -211,11 +225,24 @@ def describe_applicability():
             if not c:
                 continue
             cell_states.append(f"{lab}: {c.get('verdict', '?')} (shift {c.get('shift', 0):+.1f})")
-        current_state = f"{state_prefix}. Cells for {f}: " + "; ".join(cell_states) if cell_states else f"{state_prefix}. No fit data for {f}."
+        cell_summary = "; ".join(cell_states) if cell_states else "no fit data"
+
+        if f in _FIELD_SKIP:
+            reason = field_skip_reason.get(f, "in _FIELD_SKIP; Lc is a no-op for this field")
+            fires_when = f"FIELD-SKIPPED — {reason}"
+            current_state = (
+                f"FIELD-SKIPPED. {reason} Diagnostic cells (would apply if un-skipped): "
+                + cell_summary
+            )
+        else:
+            fires_when = fires_when_active
+            current_state = f"{state_prefix_active}. Cells for {f}: " + cell_summary
+
         field_descriptors.append({
             "field": f,
-            "fires_when": fires_when_tmpl,
-            "gated_by": "ENABLED + SHIP verdict per (field, value_bin) cell",
+            "fires_when": fires_when,
+            "gated_by": ("_FIELD_SKIP membership" if f in _FIELD_SKIP else
+                         "ENABLED + SHIP verdict per (field, value_bin) cell"),
             "current_state": current_state,
         })
 
