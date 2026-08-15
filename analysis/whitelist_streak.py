@@ -36,6 +36,12 @@ REGISTRY = {
     "wdp":         {"curated": "wd_persistence_gate_curated.json",     "excludes": {"frontal"}, "status": "LIVE"},
     "wg_residual": {"curated": "wg_residual_persistence_curated.json", "excludes": set(),       "status": "SHADOW"},
     "dp_residual": {"curated": "dp_residual_persistence_curated.json", "excludes": set(),       "status": "SHADOW"},
+    # v0.6.418 (2026-08-15) — pr L2 whitelist joins the same 7-day stability
+    # tracker. Curated JSON emitted by pr_l2_regime_lead_retro.py with fire
+    # set = live SHIPPED_CELLS + today's BOTH-WIN candidates. Streak clears
+    # → new candidates earn a spot in _PR_L2_FIRE_CELLS. Status "LIVE" —
+    # the 2 shipped cells are firing, walker is tracking candidate churn.
+    "pr_l2":       {"curated": "pr_l2_regime_curated.json",            "excludes": set(),       "status": "LIVE"},
 }
 
 

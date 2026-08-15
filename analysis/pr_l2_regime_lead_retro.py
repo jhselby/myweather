@@ -59,6 +59,17 @@ from _cache import cached_path  # noqa: E402
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUTPUT_PATH = os.path.join(SCRIPT_DIR, "output", "pr_l2_regime_lead_retro.txt")
+# Curated-JSON companion emit — matches the shape whitelist_streak.py expects
+# ({cells: {regime: {band: {verdict}}}}) so pr can join the same 7-day per-cell
+# stability tracker as chp/wdp/clp. Verdict semantics:
+#   SHIP  = live in production (SHIPPED_CELLS) OR new BOTH-WIN candidate today.
+#   SKIP  = neither — do not fire.
+# This preserves live cells as always-in-set so streak stability = "is the
+# candidate set stable" without dropping live cells from the fire set on days
+# their halves-verify drifts.
+CURATED_JSON_PATH = os.path.join(
+    SCRIPT_DIR, "..", "weather_collector", "data", "pr_l2_regime_curated.json"
+)
 
 FIELD = "pr"
 LEAD_BANDS = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
@@ -369,6 +380,37 @@ def main():
     with open(OUTPUT_PATH, "w") as f:
         f.write("\n".join(lines) + "\n")
     print(f"\nWrote {OUTPUT_PATH}")
+
+    # Curated JSON emit for whitelist_streak.py. Fire set (verdict=SHIP) =
+    # shipped-live cells + today's BOTH-WIN candidates. Everything else SKIP.
+    # Streak walker Jaccard-tracks this set over 7 days to gate any expand.
+    from datetime import datetime, timezone
+    both_win_keys = {(r, b) for (b, r), *_ in strong_both}
+    fire_set = SHIPPED_CELLS | both_win_keys
+    cells_out = {}
+    all_regimes_seen = {r for r, _ in fire_set} | {k[1] for k in pooled.keys()}
+    for regime in all_regimes_seen:
+        band_map = {}
+        for band_label, _, _ in LEAD_BANDS:
+            key = (regime, band_label)
+            band_map[band_label] = {
+                "verdict": "SHIP" if key in fire_set else "SKIP",
+                "shipped_live": key in SHIPPED_CELLS,
+                "both_win_today": key in both_win_keys,
+            }
+        cells_out[regime] = band_map
+    doc = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "source": "pr_l2_regime_lead_retro.py",
+        "shipped_cells": sorted(list(SHIPPED_CELLS)),
+        "both_win_today": sorted(list(both_win_keys)),
+        "candidate_jaccard": round(cand_jaccard, 3),
+        "cells": cells_out,
+    }
+    os.makedirs(os.path.dirname(CURATED_JSON_PATH), exist_ok=True)
+    with open(CURATED_JSON_PATH, "w") as f:
+        json.dump(doc, f, indent=2)
+    print(f"Wrote {CURATED_JSON_PATH}")
     return 0
 
 

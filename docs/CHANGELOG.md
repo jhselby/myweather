@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.418 • August 15, 2026 (pr L2 whitelist joins the 7-day streak walker)</strong></summary>
+
+- **pr L2 gate now tracked by `whitelist_streak.py`** alongside chp/wdp/clp/wg_residual/dp_residual. Reason: today's `pr_l2_regime_lead_retro` cleared 2 new BOTH-WIN candidates (nw_flow/12-23h Δ+4.5%, sw_flow/12-23h Δ+2.6%) on top of the 2 shipped-live cells (nw_flow/{0-5h, 6-11h}). Session opened 2 dynamic-gate migration projects today, so shipping any expansion on a single day's read is exactly the pattern we're trying to escape. The walker provides the 7-day per-cell Jaccard≥0.8 stability check we don't get otherwise.
+- **`pr_l2_regime_lead_retro.py` now emits `weather_collector/data/pr_l2_regime_curated.json`** in the walker's expected shape ({cells: {regime: {band: {verdict}}}}). Fire set (verdict=SHIP) = live SHIPPED_CELLS + today's BOTH-WIN candidates; everything else SKIP. Live cells always in the set so streak stability = "is the candidate set stable" without dropping live cells on days their halves-verify drifts.
+- **Registry entry in `whitelist_streak.py`**: `"pr_l2"` with status LIVE. Day 1/7 seeded today with 4 fire cells; earliest clearance 2026-08-22. If streak holds, promote the 2 new candidates to `_PR_L2_FIRE_CELLS` in `corrected_hourly.py`. Analysis-side only — no collector redeploy needed.
+
+</details>
+
+<details>
 <summary><strong>v0.6.417 • August 15, 2026 (L5 solar bias refit — stop the bleeding on sr regression)</strong></summary>
 
 - **sr regression today** (Joe caught it observationally — "sr looking rough"). Confirmed via mae_over_time + per-(regime, band, day) pair-log walk: prod_real MAE 89.14 vs raw 80.97 last 24h (**+10%**), damage concentrated at short leads (0-5h +21.5%, 6-11h +28.8%) plus 24-47h (+10%). Bias flipped raw −11.88 → prod +38.48 — L5 added ~50 units in the wrong direction. Per-day trend: 08-14 was normal (−25.8%), today (08-15) flipped to +10.1% — today-only regression.
