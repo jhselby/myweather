@@ -42,7 +42,7 @@ ENABLED = True  # Flipped 2026-07-17 v0.6.355 after 8/7-day gate clear, 16 SHIP 
 # Shipped OFF 2026-08-14 v0.6.410. Flip to True once at least one field
 # clears the recent-bias 7-day gate (earliest 2026-08-15 per today's read:
 # ch streak 6/7). Standing plan item 3.
-LC_RECENT_BIAS_GATE_ENABLED = False
+LC_RECENT_BIAS_GATE_ENABLED = True  # flipped 2026-08-15 v0.6.413 — ch cleared 7-day streak; live no-op today (0/3 ch bins gate_apply=False) but ships the self-healing mechanism ahead of any per-bin drift.
 
 CLOUD_FIELDS = ["cc", "cl", "cm", "ch"]
 

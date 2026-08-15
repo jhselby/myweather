@@ -1,6 +1,17 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.413 • August 15, 2026 (Lc recent-bias gate FLIPPED ON — mechanism ships, standing plan item 3 closed)</strong></summary>
+
+- **`LC_RECENT_BIAS_GATE_ENABLED = True`** in `weather_collector/processors/cloud_saturation_correction.py`. Standing plan item 3 closed: ch cleared its 7-day per-field streak today (7/7). Wire prep landed 08-14 v0.6.410; today is the one-line toggle.
+- **Live impact today = no-op.** ch has 3 per-bin cells (0-5, 20-50, 50-80), all currently `gate_apply=True` (recent 3d bias tracks historical fit on sign + within magnitude 0.5× threshold on every bin). Gate suppresses **0 cells** on first tick. cl is `promoted_fields` but not yet `fields_cleared` (streak still building), so no suppression for cl either.
+- **Why ship a no-op:** the gate is the self-healing mechanism for Lc drift. Every day it recomputes per-bin whether recent obs still match the historical fit and dynamically suppresses only cells currently wrong — the anti-scar-tissue counterpart to hand-curated `_CELL_SKIP` frozensets. Shipping it now means when a bin *does* drift (previously we'd hand-add a skip tuple), the gate demotes automatically and self-restores on recovery. Ship-ahead pattern (same as v0.6.407 runtime table + v0.6.410 wire prep).
+- **Not a fix for today's ch@6-11h +372% Prod-vs-raw last-24h.** That's a sampling-luck window on n=60: Lc's bin-0-5 shift of +12.82 (fit over 2189 holdout) hit a 24h stretch where raw predicted ~0 clouds *and* obs actually were ~0. Gate would have to see the bin-level average drift (it hasn't), not a lucky window. Expected to self-heal as n accumulates.
+- **Follow-on workstream opened:** [[project_chp_cell_skip_to_dynamic_gate]] — chp's `_CELL_SKIP` frozenset (grew 0 → 9 on 08-13 → 10 on 08-14) is the same hand-curated scar-tissue pattern the Lc gate replaces. Same design shape (per-cell rolling regression detector, dynamic suppress + self-restore) should apply to chp. Ranked below other in-flight work; opened here to prevent silent further growth of `_CELL_SKIP`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.412 • August 15, 2026 (L6 Fix B rolling gate — CLOSE UNCLEAN)</strong></summary>
 
 - **L6 Fix B rolling gate CLOSED UNCLEAN.** 7-day watch opened 08-08 expired today. Final gate state: 8 distinct days, ship_days 4 / hold_days 4, `ship_bins` CHURN (6 bins flipped inside window: `sb_off|{03,04,06,07,10,11}`). Held-out +3.02% is real but the gate correctly refused to ship a churning shape — matches the 08-12 "high variance, working as designed" read. L2 Kalman already captures the microclimate signal; Fix B has nothing durable to add. Script keeps running as sentry; reopen only on ≥3 consecutive SHIP days with a stable `ship_bins` set.
