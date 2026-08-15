@@ -1,6 +1,17 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.416 • August 15, 2026 (Debug page sweep — 4-ship day)</strong></summary>
+
+- **Debug page sweep** per Rule 5 (Debug Page is Canon). Today's four ships changed enough state that the debug page had multiple stale references. Updated:
+  - **Upcoming grid:** removed L6 Fix B row (closed UNCLEAN v0.6.412). Updated clp Stage 3 flip gate row for 08-16 to reflect today's day 6/7 status + n=5 fire set, and noted wg_residual + dp_residual also 6/7.
+  - **Lc recent-bias gate section:** rewritten from "Stage 3 wire SHIPPED OFF · one-line flip on 08-15 clearance" → "SHIPPED ON 08-15 v0.6.413." Documents live no-op (0/3 ch bins gate_apply=False today) + 10:48 UTC telemetry verification + cl EMA/Kalman follow-on ([[project_lc_cl_unskip_investigation]]).
+  - **C1 Stage 4 audit numbers:** three call-sites updated from "last HOLD 36.36%" → "last HOLD 65.00% (moved 57.14% → 65.00% on 08-15 re-cure)."
+  - **Recent activity list:** added 2026-08-15 entry documenting all four ships + the two investigations that saved time by NOT acting (h WATCH mixture-shift, ch@6-11h sampling-luck). Bumped 08-14 tag "today" → "1 day ago."
+
+</details>
+
+<details>
 <summary><strong>v0.6.415 • August 15, 2026 (MEMPROBE unit-bug fix — Linux branches were reversed)</strong></summary>
 
 - **`_rss_mib()` branches swapped.** Verified live post-v0.6.414 deploy: 10:27 tick reported `start_rss=0.0 MiB`, 10:37 reported `start=0.8 MiB → end=1203.3 MiB` (delta +1202.5 MiB in 91s). Impossible values. Cause: the heuristic `return r / 1024 if r > 1_000_000 else r / 1024 / 1024` had macOS-bytes and Linux-kb branches reversed. Linux `ru_maxrss` returns kb (~800,000 for ~800 MiB RSS), which fails the `> 1_000_000` threshold → falls into the else → gets double-divided by 1024². Once memory crosses ~977 MiB, the kb value trips the threshold and hits the other (still-wrong) branch → looks like a huge jump. Fixed to `return r / 1024 / 1024 if r > 1_000_000 else r / 1024` — macOS bytes → MiB (÷1024²), Linux kb → MiB (÷1024).
