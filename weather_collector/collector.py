@@ -460,7 +460,7 @@ def main():
 
     total_t0 = time.time()
     _rss_start = _rss_mib()
-    logging.info(f"MEMPROBE start_rss_mib={_rss_start:.1f}")
+    print(f"MEMPROBE start_rss_mib={_rss_start:.1f}", flush=True)  # 2026-08-15 v0.6.414: was logging.info, silently dropped in Cloud Run (no basicConfig; root logger at WARNING).
 
     # Load previous weather data for stale fallback cache
     prev_weather_data = load_prev_weather_data()
@@ -797,7 +797,7 @@ def main():
             logging.warning(f"  ⚠  Decay fit failed: {redact_secrets(e)}")
 
     _rss_end = _rss_mib()
-    logging.info(f"MEMPROBE end_rss_mib={_rss_end:.1f} delta_mib={_rss_end - _rss_start:+.1f} elapsed_s={time.time() - total_t0:.1f}")
+    print(f"MEMPROBE end_rss_mib={_rss_end:.1f} delta_mib={_rss_end - _rss_start:+.1f} elapsed_s={time.time() - total_t0:.1f}", flush=True)
 
     logging.info("\n" + "=" * 60)
     logging.info(f"✓ Update complete - {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ({time.time() - total_t0:.1f}s total)")

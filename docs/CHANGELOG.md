@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.414 • August 15, 2026 (MEMPROBE actually emits now — silent no-op since 08-11 ship)</strong></summary>
+
+- **MEMPROBE lines converted `logging.info` → `print(..., flush=True)`** in `weather_collector/collector.py` (lines 463 + 800). The 08-11 memory-probe telemetry ship never emitted a single line to Cloud Logging: the codebase has no `logging.basicConfig(...)` anywhere, so Python's root logger sat at default WARNING and silently dropped every INFO call. Verified by grepping Cloud Logging for the "Wyman Cove Weather" banner (also `logging.info`) — not one hit in a 5-day freshness window. Prints go straight to stderr → Cloud Logging.
+- **Diagnostic thread:** Joe's memory nudge to "read MEMPROBE logs and follow up" had been stuck since 08-11 because there were literally no logs to read. Two weeks of "waiting on data" was masking a config bug.
+- **Follow-on parked:** the broader logging-config gap (every other `logging.info` in the collector still drops silently — banner, decay fit timing, etc.) is a separate cleanup. Not doing it in this change because a global `basicConfig(level=INFO)` could balloon log volume across imported modules; needs a per-logger audit first.
+
+</details>
+
+<details>
 <summary><strong>v0.6.413 • August 15, 2026 (Lc recent-bias gate FLIPPED ON — mechanism ships, standing plan item 3 closed)</strong></summary>
 
 - **`LC_RECENT_BIAS_GATE_ENABLED = True`** in `weather_collector/processors/cloud_saturation_correction.py`. Standing plan item 3 closed: ch cleared its 7-day per-field streak today (7/7). Wire prep landed 08-14 v0.6.410; today is the one-line toggle.
