@@ -1,6 +1,14 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.412 • August 15, 2026 (L6 Fix B rolling gate — CLOSE UNCLEAN)</strong></summary>
+
+- **L6 Fix B rolling gate CLOSED UNCLEAN.** 7-day watch opened 08-08 expired today. Final gate state: 8 distinct days, ship_days 4 / hold_days 4, `ship_bins` CHURN (6 bins flipped inside window: `sb_off|{03,04,06,07,10,11}`). Held-out +3.02% is real but the gate correctly refused to ship a churning shape — matches the 08-12 "high variance, working as designed" read. L2 Kalman already captures the microclimate signal; Fix B has nothing durable to add. Script keeps running as sentry; reopen only on ≥3 consecutive SHIP days with a stable `ship_bins` set.
+- **Debug page:** removed L6 Fix B row from `OPEN_WATCHES` in `corrections_debug.html`. Staleness banner now empty (next stale gate is clp on 08-16).
+
+</details>
+
+<details>
 <summary><strong>v0.6.411 • August 14, 2026 (L2 τ guardrail fix — post-mortem of today's t regression)</strong></summary>
 
 - **t regression post-mortem** (Joe caught it observationally — "temp is uncharacteristically rough last 24h"). Confirmed via mae_over_time + last-48h per-(regime, band) pair-log walk: Prod-vs-raw last-24h **+9.2%** (was −1% to −3% for the prior week), all damage at **24-47h band: +19.3%**, worst regime nw_flow +14% (n=346). L2 was driving the damage (all layers past L2 read identically since t isn't in L3/L4/L6 fields). Root cause traced to **`l2_decay_history.json` entry at 2026-08-12T15:08**: fitter published `t_tau=inf` with held-out improvement **+0.04%** (noise-level). Two loader guardrails failed simultaneously — (a) `L2_GUARDRAIL_MIN_IMPROVEMENT_PCT = 0.0` accepted any barely-positive improvement, (b) the range-check on `fitted_tau < 1e8` **bypassed τ=inf entirely**. Result: 12h of forecasts issued 08-12T15:08 → 08-13T03:08 UTC with L2 fully non-decaying (correction at lead 30 = 100% instead of exp(-30/4) ≈ 0). Those forecasts validate 08-13/08-14 24-47h — exactly the damaged window we saw. Every fit since has been negative (-0.28% to -6.53%) and reverted to τ=4h, so damage will taper off naturally over the next ~48h as the poisoned forecasts age out.
