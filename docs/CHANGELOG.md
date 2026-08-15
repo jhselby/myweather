@@ -1,6 +1,16 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.411 • August 14, 2026 (L2 τ guardrail fix — post-mortem of today's t regression)</strong></summary>
+
+- **t regression post-mortem** (Joe caught it observationally — "temp is uncharacteristically rough last 24h"). Confirmed via mae_over_time + last-48h per-(regime, band) pair-log walk: Prod-vs-raw last-24h **+9.2%** (was −1% to −3% for the prior week), all damage at **24-47h band: +19.3%**, worst regime nw_flow +14% (n=346). L2 was driving the damage (all layers past L2 read identically since t isn't in L3/L4/L6 fields). Root cause traced to **`l2_decay_history.json` entry at 2026-08-12T15:08**: fitter published `t_tau=inf` with held-out improvement **+0.04%** (noise-level). Two loader guardrails failed simultaneously — (a) `L2_GUARDRAIL_MIN_IMPROVEMENT_PCT = 0.0` accepted any barely-positive improvement, (b) the range-check on `fitted_tau < 1e8` **bypassed τ=inf entirely**. Result: 12h of forecasts issued 08-12T15:08 → 08-13T03:08 UTC with L2 fully non-decaying (correction at lead 30 = 100% instead of exp(-30/4) ≈ 0). Those forecasts validate 08-13/08-14 24-47h — exactly the damaged window we saw. Every fit since has been negative (-0.28% to -6.53%) and reverted to τ=4h, so damage will taper off naturally over the next ~48h as the poisoned forecasts age out.
+- **Two guardrail fixes in `weather_collector/processors/corrected_hourly.py`.** (1) `L2_GUARDRAIL_MIN_IMPROVEMENT_PCT` raised from **0.0 → 0.5** — a signal-floor above noise. Historical fitted improvements sat between +0.15% and +0.55%, so 0.5% keeps only the clearer wins. (2) Removed the `fitted_tau < 1e8 and ...` bypass on the range check — τ=inf now gets the same `[0.25×, 4×]` sanity-range validation as any finite τ. Comment added at both sites naming the 08-14 incident.
+- **Behavioral change to h**: fitted τ=inf held-out improvement is +0.36% (below new 0.5% floor) AND τ=inf is out of [60, 960]h range for h's default τ=240h — h now falls back to default τ=240h. Half-life ~7 days, docstring already called it "slow decay, bias persists" — very close to inf in practice. Acceptable trade of 0.36% MAE for guardrail robustness. t + pr already at default, no change.
+- **Truth-table verified 6-way** against today's fitter output + the 08-12T15:08 incident row + one hypothetical legit accept + one hypothetical near-noise reject. All decisions match intent.
+
+</details>
+
+<details>
 <summary><strong>v0.6.410 • August 14, 2026 (Stage 3 wire prep — Lc recent-bias gate ready for tomorrow's ch clearance)</strong></summary>
 
 - **Standing-plan item 3 Stage 3 wire, shipped defensively OFF.** `weather_collector/processors/cloud_saturation_correction.py` now loads `weather_collector/data/lc_recent_bias_gate.json` (emitted by fitter v0.6.407) and — when `LC_RECENT_BIAS_GATE_ENABLED = True` — suppresses the historical Lc shift for cells where `field in fields_cleared` AND `per_cell[field][bin].gate_apply == False`. Runtime contract matches the JSON's `notes` field verbatim. New `_gate_suppresses(gate, field, bin_lab)` gate check + `cells_gate_suppressed` counter per field. `describe_applicability` names the gate state. Truth-table verified 5-way (disabled; enabled + empty cleared; enabled + cleared + apply=True; enabled + cleared + apply=False; back to disabled).

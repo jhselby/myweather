@@ -49,7 +49,14 @@ def _pr_lead_band(lead_idx):
     return "24-47"
 
 
-L2_GUARDRAIL_MIN_IMPROVEMENT_PCT = 0.0  # held-out must beat default (≥0%)
+# Guardrails on the fitter-published L2 τ. Both bugs below identified via the
+# 2026-08-14 t regression post-mortem: on 2026-08-12T15:08 the fitter published
+# t_tau=inf with held-out improvement +0.04% (noise), which slipped through the
+# then-loose min-improvement floor of 0.0% AND the range check (which used to
+# have a `fitted_tau < 1e8` bypass — τ=inf skipped range validation). Result:
+# 12h of forecasts issued with L2 fully non-decaying, poisoning 24-47h t leads
+# validating 08-13/08-14 (Prod +19.3% vs raw on the damaged band).
+L2_GUARDRAIL_MIN_IMPROVEMENT_PCT = 0.5  # held-out must beat default by ≥0.5% (was 0.0 — noise-adjacent)
 L2_GUARDRAIL_MIN_N_TEST = 100           # need at least this many test pairs
 L2_GUARDRAIL_TAU_LOW_MULT = 0.25        # fitted τ must be ≥ 0.25× default
 L2_GUARDRAIL_TAU_HIGH_MULT = 4.0        # fitted τ must be ≤ 4× default
@@ -104,12 +111,19 @@ def _load_l2_taus():
             elif improvement < L2_GUARDRAIL_MIN_IMPROVEMENT_PCT:
                 reason = (f"held-out improvement {improvement:+.2f}% "
                           f"below threshold")
-            elif fitted_tau < 1e8 and not (
+            elif not (
                 L2_GUARDRAIL_TAU_LOW_MULT * default_tau
                 <= fitted_tau
                 <= L2_GUARDRAIL_TAU_HIGH_MULT * default_tau
             ):
-                reason = (f"fitted τ={fitted_tau}h outside guardrail "
+                # NB: no `fitted_tau < 1e8` bypass. τ=inf must clear the same
+                # range check as any finite τ; see the 08-14 incident above.
+                # Fields that legitimately want inf (h historically) need to
+                # rely on the improvement floor + being rejected here → falling
+                # back to default. If a field's honest τ is much larger than
+                # 4× default, widen the multipliers explicitly.
+                tau_disp = "inf" if fitted_tau >= 1e8 else f"{fitted_tau}h"
+                reason = (f"fitted τ={tau_disp} outside guardrail "
                           f"[{L2_GUARDRAIL_TAU_LOW_MULT * default_tau:.1f}, "
                           f"{L2_GUARDRAIL_TAU_HIGH_MULT * default_tau:.1f}]h")
             else:
