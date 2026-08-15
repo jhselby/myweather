@@ -1,6 +1,17 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.417 • August 15, 2026 (L5 solar bias refit — stop the bleeding on sr regression)</strong></summary>
+
+- **sr regression today** (Joe caught it observationally — "sr looking rough"). Confirmed via mae_over_time + per-(regime, band, day) pair-log walk: prod_real MAE 89.14 vs raw 80.97 last 24h (**+10%**), damage concentrated at short leads (0-5h +21.5%, 6-11h +28.8%) plus 24-47h (+10%). Bias flipped raw −11.88 → prod +38.48 — L5 added ~50 units in the wrong direction. Per-day trend: 08-14 was normal (−25.8%), today (08-15) flipped to +10.1% — today-only regression.
+- **Root cause**: L5's `_BIAS_BY_REGIME_HOUR` static table was fitted historically when the model under-forecast sr in most regimes (large negative biases: nw_flow ~−130, se_flow ~−117, sea_breeze ~−104). Today the model flipped to over-forecasting in ne_flow (+285 bias!) and near-neutral in se_flow/sea_breeze. L5 blindly adds +100-125 W/m² anyway → amplifies error. Same failure mode as pre-08-15 Lc: static shift tables can't handle regime shifts.
+- **Refit shipped** — `l5_recompute_biases_hourly.py` re-run on last 14d writes fresh `weather_collector/data/lsr_bias_table_curated.json` (processor auto-loads on next import). Key regime changes: **se_flow −117 → −60.7 (+56 units less over-correction)**, **sea_breeze −104 → −80.1 (+24 units less)**, sw_flow −138 → −146 (slightly deeper, matches recent bias), nw_flow tie, pre_frontal tie, ne_flow already `L5_SKIP_REGIMES` at issue-time (refit doesn't change ne_flow issue-time behavior; pair-log damage on ne_flow rows comes from forecasts issued in OTHER regimes that validate as ne_flow — structural quirk, not fixable by refit alone).
+- **Architectural observation logged**: L5 skip is regime-at-issue (single tick value applied uniformly to all 48 leads) but pair-log scoring is `state_fc` regime-at-valid-time (per-lead). Deferred fix; needs dynamic recent-bias gate mirroring Lc. See [[project_lsr_recent_bias_gate]] (opened this ship as follow-on).
+- **Not a code change** — only the curated JSON. But bundled with the collector redeploy so the new instance boots with the fresh table.
+
+</details>
+
+<details>
 <summary><strong>v0.6.416 • August 15, 2026 (Debug page sweep — 4-ship day)</strong></summary>
 
 - **Debug page sweep** per Rule 5 (Debug Page is Canon). Today's four ships changed enough state that the debug page had multiple stale references. Updated:
