@@ -1,6 +1,17 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.424 • August 16, 2026 (Debug page sweep — clp fail, chp/Lsr gates seeded, MEMPROBE VmRSS, n&lt;100 rule)</strong></summary>
+
+- **Debug page sweep** per Rule 5 (Debug Page is Canon). Today's ships (v0.6.417-423) + the clp walker FAIL + Joe's morning-red discussion needed to land on the page.
+  - **Upcoming grid:** removed stale "Sat 08-16 clp Stage 3 flip" row; replaced with "Sat 08-23 Lsr recent-bias + chp cell gate earliest per-cell flip" + "clp deferred (08-16 walker FAIL min-J 0.250, fire set churned 7→3)."
+  - **sr narrative:** updated the [[project_lsr_recent_bias_gate]] deferred-workstream pointer to reflect Stage 0/1 + Stage 3 wire OFF shipped 08-16 v0.6.420/421.
+  - **Recent activity — 2026-08-16 entry:** title updated 2 ships → 4 ships. Afternoon block appended documenting v0.6.422 (pf-today fix), v0.6.423 (MEMPROBE /proc/self/status VmRSS switch), and the morning-red n&lt;100 rule ([[feedback_morning_red_n_floor]]) with the 4/4 discriminator experiment that motivated it.
+- No collector deploy — descriptor-text edits only.
+
+</details>
+
+<details>
 <summary><strong>v0.6.423 • August 16, 2026 (MEMPROBE now reads /proc/self/status VmRSS — ru_maxrss went weird today)</strong></summary>
 
 - **`_rss_mib()` switched to `/proc/self/status` VmRSS on Linux**, with a `resource.getrusage` fallback for macOS dev. `ru_maxrss` had been reporting an implausible constant ~1.3 MiB across every tick and every instance today, despite yesterday's -00497 revision correctly reporting 47 → 854 MiB post-v0.6.415. Root cause of the change is unclear (nothing in the derivation moved between deploys), but `/proc/self/status VmRSS` gives actual current process RSS with no runtime interpretation and no lifetime-peak ambiguity — a cleaner primitive than `ru_maxrss` for per-tick memprobe.
