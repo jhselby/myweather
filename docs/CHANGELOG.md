@@ -1,6 +1,18 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.421 • August 16, 2026 (chp dynamic gate Stage 0/1 + both Stage 3 wires shipped OFF)</strong></summary>
+
+- **New `analysis/h_chp_cell_gate.py`** — retires the hand-typed `_CELL_SKIP` frozenset by making it dynamic. Reads today's `ch_persistence_gate_curated_vs_l6.json` (already regenerated daily by the existing preview script), decides per-cell "chp lost to L6 today?" using `delta_full_pct > +3%` (matches the vs_l6 script's own floor), appends to `.cache_chp_cell_gate_history.json`, and applies a conservative 7-day rule: `gate_apply = False` only if ALL 7 window days recorded a loss. Emits `weather_collector/data/chp_cell_gate.json`. Design differs from Lc/Lsr — chp is a substitution not a shift, so the gate is "recent chp-vs-L6 performance" rather than "recent bias direction agreement" — but the wire pattern and history semantics mirror the sibling gates.
+- **Day 1/7 seeded.** Today's read: 13 cells register 'lose', 8 of them already in `_CELL_SKIP` (agreement with hand-typing), 2 static-skip cells actually WINNING today (se_flow/24-47 −5.4%, sea_breeze/24-47 −1.2% — the "parity precautionary" 08-13 adds now look over-cautious; gate will un-suppress them once history accumulates). 4 currently-LIVE cells losing: se_flow/6-11 (+28.7%), se_flow/12-23 (+10.2%), sea_breeze/6-11 (+6.3%), ne_flow/24-47 (+4.2%). Nothing cleared yet — walker at day 1/7, no cells suppressed.
+- **`ch_persistence_gate.py` Stage 3 wire shipped OFF.** Adds `CHP_CELL_GATE_ENABLED = False` toggle + `_load_chp_gate()` + `_chp_gate_suppresses(regime, band)` + check inside `_cell_fires()` after the static `_CELL_SKIP` check. When flipped ON, dynamic gate becomes a superset of `_CELL_SKIP`; once dynamic consistently catches every static-skip cell, `_CELL_SKIP` retires. Same ship-ahead pattern as Lc v0.6.410 → v0.6.413.
+- **`solar_correction.py` Stage 3 wire shipped OFF.** Adds `LSR_RECENT_BIAS_GATE_ENABLED = False` toggle + `_load_lsr_gate()` + `_lsr_gate_suppresses(regime, hour_local)` + check inside `compute_solar_correction()` after the `L5_SKIP_REGIMES` check. Runtime contract mirrors Lc's exactly: suppress iff ENABLED AND `"sr" in fields_cleared` AND `per_cell[regime][str(hour)].gate_apply is False`. Ship-ahead — v0.6.420 shipped the analysis script + runtime JSON yesterday morning; this ships the consumer OFF ahead of the per-field 7-day clearance.
+- **Both wires verified inline** — module import + `_load_*_gate()` return non-empty gates today (both JSONs present), suppression helpers return False both with flag OFF and with flag ON (because gate histories have no cleared cells on day 1). No collector behavior change today; the wires are dormant hooks waiting for the flip.
+- **Deployed** — collector redeploy required because runtime code changed even though behavior is unchanged; the wires need to be present when either flag flips.
+
+</details>
+
+<details>
 <summary><strong>v0.6.420 • August 16, 2026 (Lsr recent-bias gate Stage 0/1 shipped — script only, no runtime change)</strong></summary>
 
 - **Follow-on to v0.6.417 refit and [[project_lsr_recent_bias_gate]] opened yesterday.** This morning's digest showed sr per-field snapshot at +18.2% vs raw over the last 24h — yesterday's refit did not stop the bleed because the underlying raw sr bias flipped signs in 24h (raw −11.88 yesterday → +26.8 today). Another refit is the treadmill. Decision: leave L5 ENABLED=True (7 weeks of net-benefit vs 2 days of bad regime doesn't justify a kill switch), do NOT refit again, accelerate the gate build.

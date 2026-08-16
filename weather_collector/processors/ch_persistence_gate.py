@@ -38,6 +38,15 @@ from pathlib import Path
 
 ENABLED = True  # Flipped 2026-07-19 v0.6.358 after 7-day gate cleared + refreshed-window rerun confirmed SHIP: 27 SHIP cells, halves A -17.84% / B -37.61%, regime_gate FULL -29.53%. Stage 2 preview shipped 2026-07-12.
 
+# Dynamic per-cell chp gate. When True, consult `chp_cell_gate.json` (emitted
+# by analysis/h_chp_cell_gate.py, v0.6.421) and treat any cell where
+# per_cell[regime][band].gate_apply == False as skipped (falls to L6). Designed
+# to eventually retire the hand-typed `_CELL_SKIP` frozenset below —
+# see [[project_chp_cell_skip_to_dynamic_gate]]. Ship-ahead wire, same
+# OFF-first pattern as the Lc gate v0.6.410 → v0.6.413 flip. Flip only after
+# per-cell 7-day clearance accumulates in the gate history.
+CHP_CELL_GATE_ENABLED = False
+
 FIELD = "ch"
 HOURLY_KEY = "cloud_cover_high"
 
@@ -113,6 +122,41 @@ def _diurnal_skip(regime, valid_hour):
 _TABLE_PATH = Path(__file__).resolve().parent.parent / "data" / "ch_persistence_gate_curated.json"
 _TABLE_CACHE = None
 
+_CHP_GATE_PATH = Path(__file__).resolve().parent.parent / "data" / "chp_cell_gate.json"
+_CHP_GATE_CACHE = None
+
+
+def _load_chp_gate():
+    """Load and cache the dynamic per-cell gate table. Missing / malformed →
+    empty gate (nothing suppressed). Never raises."""
+    global _CHP_GATE_CACHE
+    if _CHP_GATE_CACHE is not None:
+        return _CHP_GATE_CACHE
+    try:
+        _CHP_GATE_CACHE = json.loads(_CHP_GATE_PATH.read_text())
+    except FileNotFoundError:
+        logging.warning(f"  ⚠  chp cell gate missing at {_CHP_GATE_PATH}; gate is a no-op")
+        _CHP_GATE_CACHE = {"per_cell": {}}
+    except Exception as e:
+        logging.warning(f"  ⚠  chp cell gate load failed: {e}")
+        _CHP_GATE_CACHE = {"per_cell": {}}
+    return _CHP_GATE_CACHE
+
+
+def _chp_gate_suppresses(gate, regime, band):
+    """Runtime contract: suppress iff CHP_CELL_GATE_ENABLED AND
+    per_cell[regime][band].gate_apply is False. Returns True → treat cell
+    as skipped (falls to L6). Superset of `_CELL_SKIP` — once the dynamic
+    gate consistently catches every static-skip cell, _CELL_SKIP can retire."""
+    if not CHP_CELL_GATE_ENABLED:
+        return False
+    if regime is None or band is None:
+        return False
+    cell = ((gate.get("per_cell") or {}).get(regime) or {}).get(band)
+    if not cell:
+        return False
+    return cell.get("gate_apply") is False
+
 
 def _load_table():
     """Load and cache the Stage 2 preview table. Missing / malformed →
@@ -141,10 +185,14 @@ def _lead_band(lead_h):
 def _cell_fires(cells, regime, band):
     """True if (regime, band) is SHIP or MARGIN (both halves improving).
     `frontal` always falls to L4 regardless of table content.
-    `_CELL_SKIP` cells are demoted regardless of table verdict."""
+    `_CELL_SKIP` cells are demoted regardless of table verdict.
+    When `CHP_CELL_GATE_ENABLED`, the dynamic per-cell gate can additionally
+    demote cells whose recent chp-vs-L6 performance says persistence loses."""
     if regime == "frontal":
         return False
     if (regime, band) in _CELL_SKIP:
+        return False
+    if _chp_gate_suppresses(_load_chp_gate(), regime, band):
         return False
     cell = cells.get(regime, {}).get(band)
     if not cell:

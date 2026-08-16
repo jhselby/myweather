@@ -1,0 +1,397 @@
+{
+  "generated_at": "2026-08-16T12:55:02.597268+00:00",
+  "source": "h_chp_cell_gate.py",
+  "vs_l6_source_generated_at": "2026-08-16T09:53:39.431944+00:00",
+  "gate_window_days": 7,
+  "chp_loss_threshold_pct": 3.0,
+  "min_n_cell": 100,
+  "n_cells_gated_off": 0,
+  "cells_cleared_off": [],
+  "static_cell_skip_overlap": {
+    "both": [],
+    "static_only": [
+      "calm/12-23",
+      "calm/24-47",
+      "nw_flow/12-23",
+      "pre_frontal/12-23",
+      "pre_frontal/24-47",
+      "se_flow/24-47",
+      "sea_breeze/12-23",
+      "sea_breeze/24-47",
+      "sw_flow/12-23",
+      "sw_flow/24-47"
+    ],
+    "dynamic_only": []
+  },
+  "per_cell": {
+    "calm": {
+      "0-5": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 41,
+        "today_status": "thin"
+      },
+      "12-23": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 24.51,
+        "today_n": 189,
+        "today_status": "lose"
+      },
+      "24-47": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 20.46,
+        "today_n": 304,
+        "today_status": "lose"
+      },
+      "6-11": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 1,
+        "days_thin": 0,
+        "today_delta_full_pct": -5.87,
+        "today_n": 103,
+        "today_status": "win"
+      }
+    },
+    "frontal": {
+      "0-5": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 5,
+        "today_status": "thin"
+      },
+      "12-23": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 10,
+        "today_status": "thin"
+      },
+      "24-47": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 23,
+        "today_status": "thin"
+      },
+      "6-11": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 6,
+        "today_status": "thin"
+      }
+    },
+    "ne_flow": {
+      "0-5": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 21,
+        "today_status": "thin"
+      },
+      "12-23": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 68,
+        "today_status": "thin"
+      },
+      "24-47": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 4.18,
+        "today_n": 122,
+        "today_status": "lose"
+      },
+      "6-11": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 35,
+        "today_status": "thin"
+      }
+    },
+    "nw_flow": {
+      "0-5": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 1,
+        "days_thin": 0,
+        "today_delta_full_pct": -48.73,
+        "today_n": 381,
+        "today_status": "win"
+      },
+      "12-23": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 6.74,
+        "today_n": 589,
+        "today_status": "lose"
+      },
+      "24-47": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 1,
+        "days_thin": 0,
+        "today_delta_full_pct": -20.26,
+        "today_n": 1024,
+        "today_status": "win"
+      },
+      "6-11": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 1,
+        "days_thin": 0,
+        "today_delta_full_pct": -6.8,
+        "today_n": 328,
+        "today_status": "win"
+      }
+    },
+    "pre_frontal": {
+      "0-5": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 1,
+        "days_thin": 0,
+        "today_delta_full_pct": -53.53,
+        "today_n": 147,
+        "today_status": "win"
+      },
+      "12-23": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 16.01,
+        "today_n": 348,
+        "today_status": "lose"
+      },
+      "24-47": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 73.93,
+        "today_n": 623,
+        "today_status": "lose"
+      },
+      "6-11": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 1,
+        "days_thin": 0,
+        "today_delta_full_pct": -16.23,
+        "today_n": 148,
+        "today_status": "win"
+      }
+    },
+    "se_flow": {
+      "0-5": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 65,
+        "today_status": "thin"
+      },
+      "12-23": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 10.2,
+        "today_n": 368,
+        "today_status": "lose"
+      },
+      "24-47": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 1,
+        "days_thin": 0,
+        "today_delta_full_pct": -5.36,
+        "today_n": 585,
+        "today_status": "win"
+      },
+      "6-11": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 28.7,
+        "today_n": 112,
+        "today_status": "lose"
+      }
+    },
+    "sea_breeze": {
+      "0-5": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 0,
+        "days_thin": 1,
+        "today_delta_full_pct": null,
+        "today_n": 86,
+        "today_status": "thin"
+      },
+      "12-23": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 8.3,
+        "today_n": 148,
+        "today_status": "lose"
+      },
+      "24-47": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 1,
+        "days_thin": 0,
+        "today_delta_full_pct": -1.24,
+        "today_n": 317,
+        "today_status": "win"
+      },
+      "6-11": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 6.3,
+        "today_n": 117,
+        "today_status": "lose"
+      }
+    },
+    "sw_flow": {
+      "0-5": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 0,
+        "days_win": 1,
+        "days_thin": 0,
+        "today_delta_full_pct": -17.31,
+        "today_n": 398,
+        "today_status": "win"
+      },
+      "12-23": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 11.46,
+        "today_n": 902,
+        "today_status": "lose"
+      },
+      "24-47": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 19.92,
+        "today_n": 1814,
+        "today_status": "lose"
+      },
+      "6-11": {
+        "gate_apply": true,
+        "cleared_off": false,
+        "days_seen": 1,
+        "days_lose": 1,
+        "days_win": 0,
+        "days_thin": 0,
+        "today_delta_full_pct": 13.03,
+        "today_n": 516,
+        "today_status": "lose"
+      }
+    }
+  },
+  "notes": "Stage 3 wire contract: when CHP_CELL_GATE_ENABLED=True in ch_persistence_gate.py, treat any cell where per_cell[regime][band].gate_apply == False as skipped (falls to L6). This is a superset of the hand-curated _CELL_SKIP: once the dynamic gate has cleared and its `both` overlap matches _CELL_SKIP (or exceeds it), _CELL_SKIP can retire."
+}

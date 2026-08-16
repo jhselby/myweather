@@ -50,6 +50,15 @@ TZ = pytz.timezone("America/New_York")
 ENABLED = True  # Shipped 2026-06-28 v0.6.248 after L5 gate cleared 7/7 ship days.
 SUN_UP_THRESHOLD = 50.0  # W/m² — suppress correction below this raw value.
 
+# Lsr recent-bias gate. When True, consult `lsr_recent_bias_gate.json`
+# (emitted by analysis/h_lsr_recent_bias_gate.py, v0.6.420) and suppress the
+# historical L5 shift on per-cell (regime × hour) cells where the recent-bias
+# signal disagrees with the historical fit in sign or magnitude. Ship-ahead
+# wire — same OFF-first pattern as the Lc gate v0.6.410 → v0.6.413 flip.
+# Flip only after per-field 7-day clearance in the gate history. See
+# [[project_lsr_recent_bias_gate]].
+LSR_RECENT_BIAS_GATE_ENABLED = False
+
 # Mean signed bias (forecast − observed) by (regime × hour_local) cell,
 # computed from DAYTIME pair-log data (raw_solar ≥ 50 W/m²) over a 14-day
 # window. First evaluation (regime-only lookup) showed only 2/8 regimes
@@ -202,6 +211,43 @@ except Exception:
     logging.exception("Lsr curated JSON load failed; using embedded constants")
 
 
+_LSR_GATE_PATH = Path(__file__).resolve().parent.parent / "data" / "lsr_recent_bias_gate.json"
+_LSR_GATE_CACHE = None
+
+
+def _load_lsr_gate():
+    """Load and cache the recent-bias gate table. Missing / malformed →
+    empty gate (nothing suppressed). Never raises."""
+    global _LSR_GATE_CACHE
+    if _LSR_GATE_CACHE is not None:
+        return _LSR_GATE_CACHE
+    try:
+        _LSR_GATE_CACHE = json.loads(_LSR_GATE_PATH.read_text())
+    except FileNotFoundError:
+        logging.warning(f"  ⚠  Lsr recent-bias gate missing at {_LSR_GATE_PATH}; gate is a no-op")
+        _LSR_GATE_CACHE = {"fields_cleared": [], "per_cell": {}}
+    except Exception as e:
+        logging.warning(f"  ⚠  Lsr recent-bias gate load failed: {e}")
+        _LSR_GATE_CACHE = {"fields_cleared": [], "per_cell": {}}
+    return _LSR_GATE_CACHE
+
+
+def _lsr_gate_suppresses(gate, regime, hour_local):
+    """Runtime contract: suppress iff LSR_RECENT_BIAS_GATE_ENABLED AND
+    "sr" in fields_cleared AND per_cell[regime][str(hour)].gate_apply is False.
+    Returns True → return 0.0 from compute_solar_correction (no correction)."""
+    if not LSR_RECENT_BIAS_GATE_ENABLED:
+        return False
+    if "sr" not in (gate.get("fields_cleared") or []):
+        return False
+    if regime is None or hour_local is None:
+        return False
+    cell = ((gate.get("per_cell") or {}).get(regime) or {}).get(str(hour_local))
+    if not cell:
+        return False
+    return cell.get("gate_apply") is False
+
+
 def describe_applicability():
     """Applicability descriptor for L5 (solar regime correction). One field (sr).
     See weather_collector/data/applicability_map_schema.json for the shape.
@@ -262,6 +308,8 @@ def compute_solar_correction(regime_synoptic, raw_solar_wm2, hour_local=None):
     if regime_synoptic in L5_SKIP_REGIMES:
         # 2026-07-02: L5 is net-negative in these regimes; skip. See
         # analysis/l5_solar_analysis.py for the per-regime numbers.
+        return 0.0
+    if _lsr_gate_suppresses(_load_lsr_gate(), regime_synoptic, hour_local):
         return 0.0
     # Try (regime, hour) cell first; fall back to regime overall.
     regime_cells = _BIAS_BY_REGIME_HOUR.get(regime_synoptic, {})
