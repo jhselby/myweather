@@ -1,0 +1,195 @@
+{
+  "generated_at": "2026-08-16T11:03:09.496696+00:00",
+  "source": "h_lsr_recent_bias_gate.py",
+  "recent_window_days": 3,
+  "holdout_window_days": 3,
+  "gate_ratio": 0.5,
+  "min_n_cell": 30,
+  "sun_up_threshold_wm2": 50.0,
+  "l5_skip_regimes": [
+    "calm",
+    "ne_flow"
+  ],
+  "promoted_fields": [],
+  "fields_cleared": [],
+  "set_level_gate_clear": false,
+  "per_cell": {
+    "nw_flow": {
+      "8": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": -91.0727,
+        "hist_bias": -88.5,
+        "hist_shift": 88.5,
+        "n_holdout": 90
+      },
+      "9": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": -143.64,
+        "hist_bias": -149.5,
+        "hist_shift": 149.5,
+        "n_holdout": 86
+      },
+      "10": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": -207.9706,
+        "hist_bias": -226.0,
+        "hist_shift": 226.0,
+        "n_holdout": 80
+      },
+      "11": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -209.3,
+        "hist_shift": 209.3,
+        "n_holdout": 78
+      },
+      "12": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -270.4,
+        "hist_shift": 270.4,
+        "n_holdout": 47
+      },
+      "13": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -226.4,
+        "hist_shift": 226.4,
+        "n_holdout": 43
+      },
+      "14": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -176.6,
+        "hist_shift": 176.6,
+        "n_holdout": 37
+      }
+    },
+    "se_flow": {
+      "13": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -98.3,
+        "hist_shift": 98.3,
+        "n_holdout": 34
+      },
+      "14": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -207.1,
+        "hist_shift": 207.1,
+        "n_holdout": 35
+      },
+      "15": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -148.5,
+        "hist_shift": 148.5,
+        "n_holdout": 46
+      },
+      "16": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 4.4,
+        "hist_shift": -4.4,
+        "n_holdout": 50
+      },
+      "17": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -11.5,
+        "hist_shift": 11.5,
+        "n_holdout": 51
+      },
+      "18": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 62.2,
+        "hist_shift": -62.2,
+        "n_holdout": 48
+      }
+    },
+    "sw_flow": {
+      "9": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": -85.7105,
+        "hist_bias": -66.1,
+        "hist_shift": 66.1,
+        "n_holdout": 30
+      },
+      "10": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": -182.9762,
+        "hist_bias": -187.9,
+        "hist_shift": 187.9,
+        "n_holdout": 34
+      },
+      "11": {
+        "gate_apply": false,
+        "gate_reason": "mag",
+        "sign_ok": true,
+        "mag_ok": false,
+        "recent_bias": -60.95,
+        "hist_bias": -428.1,
+        "hist_shift": 428.1,
+        "n_holdout": 31
+      },
+      "12": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": -319.9412,
+        "hist_bias": -195.2,
+        "hist_shift": 195.2,
+        "n_holdout": 32
+      }
+    }
+  },
+  "notes": "Stage 3 wire contract: for field in fields_cleared AND per_cell[regime][hour].gate_apply == False, solar_correction.py must return 0.0 (no correction) instead of the historical shift. All other cells (regime in L5_SKIP_REGIMES, cell missing, or gate_apply True/None) keep existing solar_correction behavior."
+}
