@@ -444,10 +444,23 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
 
 
 def _rss_mib():
+    # Prefer /proc/self/status VmRSS on Linux (current RSS, no runtime ambiguity).
+    # ru_maxrss values went weird on 08-16 (all ticks reported ~1.3 MiB despite
+    # a running collector); yesterday's -00497 revision had reported plausible
+    # 47 → 854 MiB — root cause unclear, but /proc sidesteps it entirely.
+    try:
+        with open("/proc/self/status") as f:
+            for line in f:
+                if line.startswith("VmRSS:"):
+                    return int(line.split()[1]) / 1024  # kB → MiB
+    except FileNotFoundError:
+        pass  # macOS dev — fall through
+    except Exception:
+        return -1
     try:
         import resource
         r = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        return r / 1024 / 1024 if r > 1_000_000 else r / 1024  # macOS bytes → MiB (÷1024²); Linux kb → MiB (÷1024). Branches were reversed pre-v0.6.415 — Linux RSS < 977 MiB got double-divided.
+        return r / 1024 / 1024 if r > 1_000_000 else r / 1024
     except Exception:
         return -1
 

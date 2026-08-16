@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.423 • August 16, 2026 (MEMPROBE now reads /proc/self/status VmRSS — ru_maxrss went weird today)</strong></summary>
+
+- **`_rss_mib()` switched to `/proc/self/status` VmRSS on Linux**, with a `resource.getrusage` fallback for macOS dev. `ru_maxrss` had been reporting an implausible constant ~1.3 MiB across every tick and every instance today, despite yesterday's -00497 revision correctly reporting 47 → 854 MiB post-v0.6.415. Root cause of the change is unclear (nothing in the derivation moved between deploys), but `/proc/self/status VmRSS` gives actual current process RSS with no runtime interpretation and no lifetime-peak ambiguity — a cleaner primitive than `ru_maxrss` for per-tick memprobe.
+- **Semantic change worth noting:** VmRSS is *current* RSS, not lifetime peak. That's actually more useful for the leak-hunt — we want to see what the process weighs per tick, not the high-water mark. Start/end deltas now represent real per-tick allocation, and start values across ticks on a warm instance show whether memory is climbing (leak) or returning to baseline (transient allocation).
+- Data collection restart date is 2026-08-16 post-v0.6.423 deploy.
+
+</details>
+
+<details>
 <summary><strong>v0.6.422 • August 16, 2026 (pf-today zero-baseline fix — pa was rendering "—" when clean)</strong></summary>
 
 - **Per-field snapshot table's 24-hour column was rendering "—" for pa** instead of "0.0%" during clean windows. Cause: `if (rMae == null || rMae === 0)` treated a zero raw MAE as "no data" and short-circuited before checking prod. For pa specifically, `rMae === 0` is a legitimate value (no precip in the window, forecast said no precip, MAE=0) — not missing data.
