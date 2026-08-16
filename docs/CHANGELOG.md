@@ -1,6 +1,15 @@
 # v0.6.0 — Decay-correction milestone
 
 <details open>
+<summary><strong>v0.6.422 • August 16, 2026 (pf-today zero-baseline fix — pa was rendering "—" when clean)</strong></summary>
+
+- **Per-field snapshot table's 24-hour column was rendering "—" for pa** instead of "0.0%" during clean windows. Cause: `if (rMae == null || rMae === 0)` treated a zero raw MAE as "no data" and short-circuited before checking prod. For pa specifically, `rMae === 0` is a legitimate value (no precip in the window, forecast said no precip, MAE=0) — not missing data.
+- **Fix:** split the check. `rMae == null` → still "—" (genuinely missing). `rMae === 0` → keep computing prod, then branch: if `pMae === 0` too → render "0.0%" (both clean, contributes 0 to the overall mean); if `pMae > 0` → render `+<pMae> (raw=0)` in red (stack added error to a perfect raw, undefined %). Same latent bug lives in the `pf-status` 7-day span code path, not fired today because 7d rolling pa MAE is 0.0006 (tiny but non-zero); left alone until it fires.
+- No collector deploy — corrections_debug.html JS-only edit.
+
+</details>
+
+<details>
 <summary><strong>v0.6.421 • August 16, 2026 (chp dynamic gate Stage 0/1 + both Stage 3 wires shipped OFF)</strong></summary>
 
 - **New `analysis/h_chp_cell_gate.py`** — retires the hand-typed `_CELL_SKIP` frozenset by making it dynamic. Reads today's `ch_persistence_gate_curated_vs_l6.json` (already regenerated daily by the existing preview script), decides per-cell "chp lost to L6 today?" using `delta_full_pct > +3%` (matches the vs_l6 script's own floor), appends to `.cache_chp_cell_gate_history.json`, and applies a conservative 7-day rule: `gate_apply = False` only if ALL 7 window days recorded a loss. Emits `weather_collector/data/chp_cell_gate.json`. Design differs from Lc/Lsr — chp is a substitution not a shift, so the gate is "recent chp-vs-L6 performance" rather than "recent bias direction agreement" — but the wire pattern and history semantics mirror the sibling gates.

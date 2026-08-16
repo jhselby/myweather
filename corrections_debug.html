@@ -3400,7 +3400,7 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
         const layers = last24[f];
         if (!layers) { cell.textContent = "—"; cell.style.opacity = 0.5; return; }
         const rMae = (layers.raw || {}).mae;
-        if (rMae == null || rMae === 0) { cell.textContent = "—"; cell.style.opacity = 0.5; return; }
+        if (rMae == null) { cell.textContent = "—"; cell.style.opacity = 0.5; return; }
         const pri = PROD_PRIORITY[f] || ["prod_real", "l1", "raw"];
         let pMae = null, layerUsed = null;
         for (const layer of pri) {
@@ -3409,6 +3409,18 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
           if (s && s.mae != null) { pMae = s.mae; layerUsed = layer; break; }
         }
         if (pMae == null) { cell.textContent = "—"; cell.style.opacity = 0.5; return; }
+        // Zero-baseline handling: rMae===0 means the window had no error to
+        // improve on (typically pa when there's no precip). If prod is also 0
+        // the stack is clean → show 0.0%; if prod > 0 the stack added error
+        // to a perfect raw — undefined %, mark as "worse" without a ratio.
+        if (rMae === 0) {
+          const isClean = pMae === 0;
+          perFieldToday[f] = 0;
+          cell.style.color = isClean ? "#e0d472" : "#fb7c5c";
+          cell.style.opacity = 1;
+          cell.innerHTML = isClean ? "0.0%" : `+${pMae.toFixed(2)} (raw=0)`;
+          return;
+        }
         const isBrier = cell.dataset.brier === "1";
         // Brier-scored fields (pp): show raw Brier value, not MAE % delta.
         if (isBrier) {
