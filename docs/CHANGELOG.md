@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.427 • August 17, 2026 (cl h-predictor router — CLOSED MISS same-day, 3rd cl-correction architecture to fail this session)</strong></summary>
+
+- **Stage 0 + Stage 1 for h_fc as a cl router.** Two new scripts (`analysis/h_cl_h_predictor_stage0.py`, `h_cl_h_predictor_stage1.py`). Motivated by the closed EMA workstream ([[project_lc_ema_kalman_fallback]]) — needed to test a "different feature space" for cl. Physical hypothesis: clouds form near saturation, so HRRR's own h forecast should predict its own cl accuracy.
+- **Stage 0 HIT (real, no leakage).** Multi-field join on (run_time, obs_time, lead_h) between cl and h pair-log rows. Univariate: cl MAE spans 9.97 (h=0-40%) to 21.46 (h=92-100%), a 2.15× spread. Bivariate: (cl_fc bin × h_fc bin) shows disagreement cells (cl-wet + h-dry, or cl-dry + h-wet) have MAE 20.29 vs agreement cells 12.77 — **1.59× ratio, real structural signal**. The extreme cell (cl=95-100 predicted + h=60-75 predicted) has MAE 83, HRRR's internal inconsistency screaming.
+- **Stage 1 MISS (halves-unstable).** Only one routing scheme in the (N × condition) sweep cleared the 2% SHIP floor: N=6h persistence lookback, fire only when (lead ≥ 12h AND disagreement). Overall +2.5% on 14d held-out — but **halves-stability catastrophically failed**: Half A −35.5%, Half B +34.3%. The +2.5% was averaging noise.
+- **h-predictor on cm/ch/cc for completeness.** cm/ch have larger univariate spread than cl (3.37×, 2.45×) but neutral disagreement ratio (~1.0×) — high-h rows just have higher baseline MAE. cc has the 1.54× disagreement ratio but ships via Ccd (derived), so router would be moot. **Only cl has routable disagreement structure, and cl won't monetize it stably.**
+- **Session pattern:** 3 cl-correction architectures failed today (Lc rolling-window MISS, EMA/Kalman MISS via leakage, h-predictor MISS via halves). cl may be genuinely beyond shift-table-family correction — the 07-30 `_FIELD_SKIP` is starting to read as the correct long-term answer, not a bandage. See [[project_cl_h_predictor]] memo for full closeout + [[project_plan_pipeline_to_good]] item 3 for updated status.
+- Analysis-only — no collector deploy.
+
+</details>
+
+<details>
 <summary><strong>v0.6.426 • August 17, 2026 (Lc EMA/Kalman fallback — CLOSED MISS same-day, honest sim exposes Stage 0 leakage)</strong></summary>
 
 - **Stage 1a honest baseline check for the Lc EMA workstream.** New `analysis/h_lc_ema_stage1_baseline.py`. Compared EMA α=0.2 vs naive "mean residual over last N obs" lookback. Simple N=6 lookback beat EMA on 3/4 fields — red flag that the win wasn't from the exponential machinery. Then the leakage check: the obs-time-keyed shift lookup was giving corrections access to obs from up to 24h more recent than would be available at forecast issue-time.
