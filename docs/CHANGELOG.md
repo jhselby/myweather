@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.426 • August 17, 2026 (Lc EMA/Kalman fallback — CLOSED MISS same-day, honest sim exposes Stage 0 leakage)</strong></summary>
+
+- **Stage 1a honest baseline check for the Lc EMA workstream.** New `analysis/h_lc_ema_stage1_baseline.py`. Compared EMA α=0.2 vs naive "mean residual over last N obs" lookback. Simple N=6 lookback beat EMA on 3/4 fields — red flag that the win wasn't from the exponential machinery. Then the leakage check: the obs-time-keyed shift lookup was giving corrections access to obs from up to 24h more recent than would be available at forecast issue-time.
+- **Honest run-time-keyed sweep on cl:** every N ∈ {6h, 24h, 48h, 168h, 720h} HURTS cl at every lead band. Longer hurts more. Sim reproduces production Lc gains on cc (+27%), cm (+16%), ch (+58%), so it's validated — cl is uniquely broken. Shift-table architecture at any timescale is the wrong tool for cl's currently-unstable fit-target.
+- **EMA/Kalman branch closed MISS.** Pipeline-to-good item 3 fallback path retired. cl un-skip is not achievable via any lookback variant; needs a different feature space (fc-trajectory, dew point depression, LCL height) or a persistence-of-obs specialist. See [[project_lc_ema_kalman_fallback]] memo for full closeout + meta-lessons on the two distinct leakage classes caught same-session.
+- Header comment added to `h_lc_ema_stage0.py` noting the retraction. Scripts kept as artifacts + as the honest-comparison harness for future ideas.
+- Analysis-only — no collector deploy.
+
+</details>
+
+<details>
 <summary><strong>v0.6.425 • August 17, 2026 (Analysis truth-telling: pair-log `error` field sweep + Lc EMA/Kalman Stage 0)</strong></summary>
 
 - **20-script analysis sweep — pair-log `error` field is L2, not production.** Morning triage on cm showed the field as CLEAN in `anomaly_detector` when real production was WATCH +32.6%. Root cause per [[feedback_top_level_forecast_is_l2]]: `error = forecast - obs` in the pair log uses the L2-value top-level `forecast` key (backward-compat for the Fitter). Analysis scripts treating `error` as production were silently reporting L2 residual instead.

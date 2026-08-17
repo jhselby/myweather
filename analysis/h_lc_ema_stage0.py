@@ -1,5 +1,12 @@
 """Stage 0 — EMA/Kalman shift tracker as Lc fallback, per field.
 
+CLOSED MISS 2026-08-17 same-day. See project_lc_ema_kalman_fallback memory.
+Stage 0 "HIT" verdict below is retracted — it was inflated by obs-time-keyed
+shift lookup (leakage). Honest run-time-keyed Stage 1a (h_lc_ema_stage1_baseline.py)
+showed every lookback hurts cl at every lead band. Kept as an artifact + as
+the honest-comparison harness for future ideas.
+
+
 Motivated by 2026-07-30 cl kill + 2026-08-14 un-skip investigation. Current
 Lc uses a 30d rolling shift table refit once per day per (field, bin). When
 HRRR's bias distribution shifts materially (07-30 cl overcast episode),
