@@ -24,6 +24,7 @@ from statistics import mean
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
+from _prod import prod_error  # noqa: E402
 from _windows import rolling_windows  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
@@ -60,7 +61,7 @@ def _load_groups(window_days):
                 continue
             rt = r.get("run_time")
             fc = r.get("forecast")
-            err = r.get("error")
+            err = prod_error(r)
             if not (rt and fc is not None and err is not None):
                 continue
             groups[(f, vt)].append((rt, float(fc), float(err)))

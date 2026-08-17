@@ -26,6 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path, CACHE_DIR
+from _prod import prod_error
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from weather_collector.processors.solar_correction import compute_solar_correction, SUN_UP_THRESHOLD
@@ -142,7 +143,7 @@ def main():
             # ---- R6 (regime transition) — needs both regimes + final error ----
             rfc = sfc.get("regime_synoptic")
             rob = sob.get("regime_synoptic")
-            err = p.get("error")
+            err = prod_error(p)
             if rfc and rob and field and band and err is not None:
                 is_trans = (rfc != rob)
                 key = (field, band, is_trans)

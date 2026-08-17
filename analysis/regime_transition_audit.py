@@ -34,6 +34,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path, CACHE_DIR
+from _prod import prod_error
 
 ERROR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
@@ -117,7 +118,7 @@ def main():
 
             field = p.get("field")
             lead = p.get("lead_h")
-            err = p.get("error")
+            err = prod_error(p)
             if field is None or lead is None or err is None:
                 continue
             band = _band_for(lead)

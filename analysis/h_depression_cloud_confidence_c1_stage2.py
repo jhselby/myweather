@@ -31,6 +31,7 @@ from statistics import mean
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
+from _prod import prod_error  # noqa: E402
 from _windows import rolling_windows  # noqa: E402
 
 PAIR_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
@@ -163,7 +164,7 @@ def _load():
                     obs_dp[vt] = float(ob)
             if f in TARGET_FIELDS:
                 fc = r.get("forecast")
-                err = r.get("error")
+                err = prod_error(r)
                 lh = r.get("lead_h")
                 ot = r.get("obs_time") or ""
                 if fc is None or err is None or lh is None:

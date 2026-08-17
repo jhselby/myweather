@@ -2,6 +2,7 @@
 import sys, os as _os
 sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
 from _cache import cached_path
+from _prod import prod_error
 #!/usr/bin/env python3
 """
 State-stratified accuracy: slice forecast MAE by observed state to find
@@ -125,9 +126,7 @@ def main():
         field = row.get("field")
         if field not in FIELDS:
             continue
-        err = row.get("error_l4")
-        if err is None:
-            err = row.get("error")
+        err = prod_error(row)
         if err is None:
             continue
         err = float(err)

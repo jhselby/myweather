@@ -22,6 +22,7 @@ from datetime import datetime, timedelta, timezone
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
+from _prod import prod_error  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
@@ -78,7 +79,7 @@ def compute(field, window_days=45):
             b = _bucket(lh)
             if b is None:
                 continue
-            e = r.get("error")
+            e = prod_error(r)
             rt = r.get("run_time")
             h = _hod(vt)
             if e is None or rt is None or h is None:

@@ -43,6 +43,7 @@ from collections import defaultdict
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
+from _prod import prod_error  # noqa: E402
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
@@ -100,7 +101,7 @@ def main():
             field = row.get("field")
             if field not in FIELDS_TO_TEST:
                 continue
-            err = row.get("error")
+            err = prod_error(row)
             lead_h = row.get("lead_h")
             if err is None or lead_h is None:
                 continue

@@ -44,6 +44,7 @@ from datetime import datetime, timedelta
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
+from _prod import prod_error  # noqa: E402
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_TXT = os.path.join(SCRIPT_DIR, "output", "anomaly_detector.txt")
@@ -160,9 +161,12 @@ def compute():
                 continue
             fc = r.get("forecast")
             ob = r.get("observed")
-            err = r.get("error")
+            err = prod_error(r)
             if fc is None or ob is None or err is None:
                 continue
+            # `fc` stays as top-level (L2) — used only for distribution shift
+            # detection on the input forecast, which is layer-independent.
+            # `err` is the real production residual per applied_layer.
             if baseline_start <= ts < baseline_end:
                 per_field[f]["baseline_fc"].append(float(fc))
                 per_field[f]["baseline_obs"].append(float(ob))

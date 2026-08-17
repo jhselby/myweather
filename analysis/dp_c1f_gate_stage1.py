@@ -39,6 +39,7 @@ from collections import defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path
+from _prod import prod_error
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_TXT = os.path.join(os.path.dirname(__file__), "output",
@@ -52,15 +53,6 @@ def band_of(lh):
     for lab, lo, hi in BANDS:
         if lo <= lh < hi:
             return lab
-    return None
-
-
-def prod_error(row):
-    """Deepest applied error, matching odometer + state_stratified semantics."""
-    for k in ("error_l4", "error_l3", "error_l2", "error_l1", "error"):
-        v = row.get(k)
-        if v is not None:
-            return v
     return None
 
 

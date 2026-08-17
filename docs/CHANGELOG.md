@@ -1,6 +1,20 @@
+<details open>
+<summary><strong>v0.6.425 • August 17, 2026 (Analysis truth-telling: pair-log `error` field sweep + Lc EMA/Kalman Stage 0)</strong></summary>
+
+- **20-script analysis sweep — pair-log `error` field is L2, not production.** Morning triage on cm showed the field as CLEAN in `anomaly_detector` when real production was WATCH +32.6%. Root cause per [[feedback_top_level_forecast_is_l2]]: `error = forecast - obs` in the pair log uses the L2-value top-level `forecast` key (backward-compat for the Fitter). Analysis scripts treating `error` as production were silently reporting L2 residual instead.
+  - New helper `analysis/_prod.py::prod_error(row)` — prefers `error_{applied_layer}`, falls back to `error_l4`, then top-level.
+  - Batch 1 (production-visible metrics): `anomaly_detector`, `state_stratified_accuracy`, `regime_transition_audit`, `simulate_windows`, `dp_c1f_gate_stage1`.
+  - Batch 2 (hypothesis Stage 0/1/2 + pressure_tendency + _run_bias_carryover): 15 files.
+  - Left alone (correct usages): `decay_tau_tuning` (Fitter calibration exception), `mae_over_time` (already has `prod_real` path + wd L1_ONLY fallback).
+  - **Post-fix verified:** anomaly_detector now shows cm WATCH +32.6%, cc drops to CLEAN (Ccd derivation catches it). Next digest run (08-18) picks this up automatically.
+- **Lc EMA/Kalman fallback — Stage 0 HIT.** New `analysis/h_lc_ema_stage0.py`. Motivation: fixed-window rolling can't rescue cl (per [[project_lc_regime_conditional]] line 57). Simulate online EMA of `(fc_l4 - obs)` per (field, bin); two-phase per-obs_time processing avoids repeated-obs leakage. Result at α=0.2 on 14d held-out: cl beats raw L2 by **+33.5%** (halves A +13.3% / B +51.1%, STABLE ★), cc/cm/ch also STABLE ★ vs live prod. Advance to Stage 1: regime-slice halves, baseline-lookback compare, walkforward vs current pooled Lc. Retires the cl `_FIELD_SKIP` bandage if it clears. See [[project_lc_ema_kalman_fallback]].
+- No collector deploy — analysis-only changes. Next digest run picks them up.
+
+</details>
+
 # v0.6.0 — Decay-correction milestone
 
-<details open>
+<details>
 <summary><strong>v0.6.424 • August 16, 2026 (Debug page sweep — clp fail, chp/Lsr gates seeded, MEMPROBE VmRSS, n&lt;100 rule)</strong></summary>
 
 - **Debug page sweep** per Rule 5 (Debug Page is Canon). Today's ships (v0.6.417-423) + the clp walker FAIL + Joe's morning-red discussion needed to land on the page.

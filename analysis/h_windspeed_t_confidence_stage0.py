@@ -24,6 +24,7 @@ from statistics import mean
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _cache import cached_path  # noqa: E402
+from _prod import prod_error  # noqa: E402
 from _windows import rolling_windows  # noqa: E402
 
 URL = "https://data.wymancove.com/forecast_error_log.jsonl"
@@ -75,7 +76,7 @@ def main():
                     ws_obs[vt] = float(ob)
             elif f == "t":
                 lh = r.get("lead_h")
-                err = r.get("error")
+                err = prod_error(r)
                 if lh is None or lh > LEAD_MAX or err is None:
                     continue
                 t_rows.append((vt, float(err)))
