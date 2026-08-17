@@ -144,7 +144,8 @@ def main():
     # 2D: (cl_bin, h_bin) — diagonal vs off-diagonal
     p("")
     p("Bivariate: cl error by (cl_fc bin × h_fc bin)")
-    header = f"  {'cl \\ h':<10}" + "".join(f"{lab:>10}" for _, _, lab in H_BINS)
+    _corner = 'cl \\ h'
+    header = f"  {_corner:<10}" + "".join(f"{lab:>10}" for _, _, lab in H_BINS)
     p(header)
     p("  " + "-" * (10 + 10 * len(H_BINS)))
     for _, _, cl_lab in CL_BINS:

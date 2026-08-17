@@ -42,6 +42,12 @@ ENABLED = True   # v0.6.390 2026-07-30 — flipped early. Rerun of
                  # Verdict PROMOTE. Retires cc's Lc surface entirely; cc
                  # is now a derived field, not an independent one.
 
+# Dynamic per-(regime × lead-band) combine gate. When True, per-cell formula
+# from cc_combine_gate.json overrides the module-level FORMULA default.
+# See [[project_cc_combine_walker]]. Ship-ahead pattern — same as chp v0.6.421
+# and Lc v0.6.410 → v0.6.413. Flip only after walker clears >= 1 cell.
+CC_COMBINE_GATE_ENABLED = False
+
 # Regimes where h_cc_derivation held-out test showed Pirate cc + Lc wins vs
 # derivation. Fall back to Pirate cc in these regimes.
 #   se_flow: derived max-overlap loses -6.50% vs prod (n=22,803, real signal)
@@ -68,6 +74,11 @@ SAT_THRESHOLD = 90.0
 # random-independent union.
 FORMULA = "max"  # "max" | "random"
 
+_LEAD_BANDS = (("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
+
+_COMBINE_GATE_PATH = Path(__file__).resolve().parent.parent / "data" / "cc_combine_gate.json"
+_COMBINE_GATE_CACHE = None
+
 
 def _clip(v):
     return max(0.0, min(100.0, v))
@@ -84,18 +95,66 @@ def _derive_random(cl, cm, ch):
     return _clip(100.0 * (1.0 - a * b * c))
 
 
+def _derive_with(formula, cl, cm, ch):
+    if formula == "random":
+        return _derive_random(cl, cm, ch)
+    return _derive_max(cl, cm, ch)
+
+
 def _derive(cl, cm, ch):
-    return _derive_max(cl, cm, ch) if FORMULA == "max" else _derive_random(cl, cm, ch)
+    return _derive_with(FORMULA, cl, cm, ch)
+
+
+def _band_of(lead_h):
+    for name, lo, hi in _LEAD_BANDS:
+        if lo <= lead_h < hi:
+            return name
+    return None
+
+
+def _load_combine_gate():
+    """Load and cache the dynamic per-cell combine gate. Missing / malformed →
+    empty gate (nothing overridden). Never raises."""
+    global _COMBINE_GATE_CACHE
+    if _COMBINE_GATE_CACHE is not None:
+        return _COMBINE_GATE_CACHE
+    try:
+        _COMBINE_GATE_CACHE = json.loads(_COMBINE_GATE_PATH.read_text())
+    except FileNotFoundError:
+        logging.warning(f"  ⚠  cc combine gate missing at {_COMBINE_GATE_PATH}; gate is a no-op")
+        _COMBINE_GATE_CACHE = {"per_cell": {}}
+    except Exception as e:
+        logging.warning(f"  ⚠  cc combine gate load failed: {e}")
+        _COMBINE_GATE_CACHE = {"per_cell": {}}
+    return _COMBINE_GATE_CACHE
+
+
+def _gate_formula_for(gate, regime, band):
+    """Runtime contract: only when CC_COMBINE_GATE_ENABLED. Returns a formula
+    string ('max' | 'random' | 'prod') or None to defer to FORMULA default."""
+    if not CC_COMBINE_GATE_ENABLED:
+        return None
+    if regime is None or band is None:
+        return None
+    cell = ((gate.get("per_cell") or {}).get(regime) or {}).get(band)
+    if not cell or not cell.get("cleared"):
+        return None
+    return cell.get("formula")
 
 
 def describe_applicability():
     """Applicability descriptor for Ccd. Field-scoped to cc."""
     state_prefix = "ENABLED True" if ENABLED else "ENABLED False"
+    gate_note = (
+        f" · combine gate {'ENABLED' if CC_COMBINE_GATE_ENABLED else 'OFF'} "
+        f"(per-cell formula override when cleared, else FORMULA default)"
+    )
     fires_when = (
         f"{'ENABLED' if ENABLED else 'OFF'} — replaces hourly.cloud_cover with "
         f"derived-{FORMULA}(cl_l6, cm_l6, ch_l6) for regimes NOT in SKIP_REGIMES "
         f"and leads where raw cc < {SAT_THRESHOLD:.0f}. "
         f"SKIP: {sorted(SKIP_REGIMES)}. Saturation guard: raw cc ≥ {SAT_THRESHOLD:.0f} keeps raw."
+        f"{gate_note}"
     )
     return [{
         "layer_id": "Ccd",
@@ -129,15 +188,19 @@ def stamp_cc_from_derivation(weather_data):
     ch_arr = hourly.get("cloud_cover_high")
     regime = ((weather_data.get("derived") or {}).get("state") or {}).get("regime_synoptic")
 
+    gate = _load_combine_gate() if CC_COMBINE_GATE_ENABLED else {"per_cell": {}}
+
     per_lead = {
         "enabled": ENABLED,
         "formula": FORMULA,
+        "combine_gate_enabled": CC_COMBINE_GATE_ENABLED,
         "regime_at_apply": regime,
         "skip_regimes": sorted(list(SKIP_REGIMES)),
         "gate_skip_regime": regime in SKIP_REGIMES,
         "derived": None,
         "would_fire": False,
         "n_leads": 0,
+        "formula_by_band": {},
     }
 
     if not cc_arr or not cl_arr or not cm_arr or not ch_arr:
@@ -153,6 +216,8 @@ def stamp_cc_from_derivation(weather_data):
     derived = [None] * n
     fires = 0
     sat_holds = 0
+    gate_passthrough = 0
+    formula_counts = {}
     for i in range(n):
         cl_v = cl_arr[i]
         cm_v = cm_arr[i]
@@ -165,7 +230,17 @@ def stamp_cc_from_derivation(weather_data):
             derived[i] = cc_v
             sat_holds += 1
             continue
-        d = _derive(float(cl_v), float(cm_v), float(ch_v))
+        # Per-lead formula: gate override if enabled+cleared, else module default.
+        band = _band_of(i)
+        gate_formula = _gate_formula_for(gate, regime, band)
+        formula_for_lead = gate_formula or FORMULA
+        formula_counts[formula_for_lead] = formula_counts.get(formula_for_lead, 0) + 1
+        if formula_for_lead == "prod":
+            # Gate says Pirate cc wins this cell — passthrough.
+            derived[i] = cc_v
+            gate_passthrough += 1
+            continue
+        d = _derive_with(formula_for_lead, float(cl_v), float(cm_v), float(ch_v))
         derived[i] = d
         # Fire counts a lead if derivation would produce a materially
         # different value than the Pirate cc — |Δ| > 0.5pp.
@@ -177,6 +252,8 @@ def stamp_cc_from_derivation(weather_data):
     per_lead["cells_fired"] = fires
     per_lead["sat_holds"] = sat_holds
     per_lead["sat_threshold"] = SAT_THRESHOLD
+    per_lead["gate_passthrough"] = gate_passthrough
+    per_lead["formula_by_band"] = formula_counts
     per_lead["n_leads"] = n
 
     if ENABLED:
