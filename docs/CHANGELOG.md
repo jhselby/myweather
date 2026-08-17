@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.428 • August 17, 2026 (Lc gate rule direct-MAE — CLOSED MISS same-day, 3rd leakage catch of the session)</strong></summary>
+
+- **Investigating why cm's per-field walker in `h_lc_recent_bias_gate.py` isn't clearing** (day 0/7 despite 4/7 recent PROMOTE days). Root cause identified: cm/50-80 today has recent bias +44.7 vs historical +42.8 (ratio 1.04, sign OK → gate says "on") but live shift produced holdout MAE 39.84 vs raw 30.40 (Lc HURTS by 31%). Bias-ratio proxy missed a case where signs and magnitudes match but recent obs pattern makes live's shift over-correct.
+- **Proposed rule change:** replace sign+magnitude proxy with direct held-out MAE comparison — `gate_apply = m_live ≤ m_raw × 1.05`. New scripts `analysis/h_lc_gate_rule_stage0.py`, `h_lc_gate_rule_stage1.py`.
+- **Stage 0 "HIT" (+8.8% cm) retracted — leakage.** Rule used m_live and m_raw computed on the HOLDOUT window both to DECIDE suppression AND to SCORE it. Same class as this morning's EMA obs-time-vs-run-time leakage and the h-predictor same-window halves check. Third instance of the pattern in one session.
+- **Honest walk** (decision from recent 3d, disjoint holdout 3d for scoring): proposed rule makes ZERO different decisions from current at any of 7 cutoffs for cm/cl/ch, net −0.3% for cc. cm's walker churn is a real feature of cm's regime volatility (recent-3d bias doesn't predict next-3d MAE), not a bug in the gate rule. Fixing would require predictive features (leading indicators of regime change), not better use of past bias data.
+- **Both scripts kept as artifacts** with retraction headers, per the [[project_lc_ema_kalman_fallback]] pattern. Serve as the honest-comparison harness for future gate-rule ideas.
+- **Session pattern:** four same-day closes today, three from same leakage-class trap. Consider extracting an `analysis/_walkforward_honest.py` shared harness on the next instance. See [[project_lc_gate_rule_direct_mae]] memo.
+- Analysis-only — no collector deploy.
+
+</details>
+
+<details>
 <summary><strong>v0.6.427 • August 17, 2026 (cl h-predictor router — CLOSED MISS same-day, 3rd cl-correction architecture to fail this session)</strong></summary>
 
 - **Stage 0 + Stage 1 for h_fc as a cl router.** Two new scripts (`analysis/h_cl_h_predictor_stage0.py`, `h_cl_h_predictor_stage1.py`). Motivated by the closed EMA workstream ([[project_lc_ema_kalman_fallback]]) — needed to test a "different feature space" for cl. Physical hypothesis: clouds form near saturation, so HRRR's own h forecast should predict its own cl accuracy.
