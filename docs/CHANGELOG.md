@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.430 • August 18, 2026 (Lc recent-bias gate — ch cleared per-field 7/7, ship)</strong></summary>
+
+- `h_lc_recent_bias_gate.py` cleared **ch** per-field: 7/7 distinct days, PROMOTE streak 11. cl and cm remain CHURN (in and out of the promoted set) and stay out.
+- Runtime already armed (`LC_RECENT_BIAS_GATE_ENABLED = True` since v0.6.413); this deploy just carries the updated `lc_recent_bias_gate.json` into the collector image so `fields_cleared: ["ch"]` takes effect in prod.
+- Zero user-visible change today — all 3 ch cells have `gate_apply=True` right now (recent bias agrees with historical in sign+magnitude, or is thin). Value is the safety net: when a ch cell's recent bias flips or halves, prod suppresses the historical shift instead of applying a wrong-signed correction.
+- Only clean signal in today's 155-script digest. Every other flip (`h_lc_ema_stage1_baseline` "LOOKBACK WINS", `h_lc_rolling_window` W=21d, `h_frontal_t_bias_stage0` promote→hold) is either leaky (obs-time-keyed feature build, same class as yesterday's 5 CLOSED MISS) or CHURN.
+
+</details>
+
+<details>
 <summary><strong>v0.6.428 • August 17, 2026 (Lc gate rule direct-MAE — CLOSED MISS same-day, 3rd leakage catch of the session)</strong></summary>
 
 - **Investigating why cm's per-field walker in `h_lc_recent_bias_gate.py` isn't clearing** (day 0/7 despite 4/7 recent PROMOTE days). Root cause identified: cm/50-80 today has recent bias +44.7 vs historical +42.8 (ratio 1.04, sign OK → gate says "on") but live shift produced holdout MAE 39.84 vs raw 30.40 (Lc HURTS by 31%). Bias-ratio proxy missed a case where signs and magnitudes match but recent obs pattern makes live's shift over-correct.
