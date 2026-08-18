@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.431 • August 18, 2026 (NWS gridpoint activated as forecast source — frame expansion begins)</strong></summary>
+
+- **Frame audit outcome (overdue since 07-10):** correction stack has been at a local optimum for weeks. MAE flat, gate churn dominating ship list, 6-for-6 CLOSED MISS on 08-17 all from same failure class. Root cause: daily digest is a closed loop over the pair log, which contains only HRRR/GFS/Pirate — no periodic step asks "are we consuming the right inputs?" Discovery: **NWS gridpoint (NBM-derived official NWS forecast) has been fetched at every tick for months and used only for briefing narrative text — never as a forecast source, never in the pair log, never benchmarked against our HRRR/GFS/Pirate blend.**
+- **Ship — NWS gridpoint plumbing:** `forecast_snapshot.py` now stamps `{short}_nws` per hour for t / dp / pp / ws / wd by aligning NWS gridpoint validTime intervals to our hourly grid and applying unit conversions (degC → F, km/h → mph). `forecast_error_log.py` extends the per-layer emit loop with "nws" so pair rows carry `forecast_nws` + `error_nws`. `decay_fit.py` extends per-layer MAE aggregation to include "nws" so standard reporting works. `collector.py` passes `weather_data["nws_gridpoints"]` into the snapshot writer.
+- **What this unlocks:** starting with the next collector tick, every pair row that has an aligned NWS gridpoint value gets a forecast_nws + error_nws column. Within 24-72h enough data accumulates for a per-field NBM-vs-current-blend benchmark. If NBM wins on a field, promote it to L1 (or route per-field). Existing correction stack cascades on top unchanged.
+- **Scope excluded:** h (no equivalent in gridpoint), cc/cl/cm/ch (no equivalent), sr (no equivalent), wg (would need separate gustSpeed handling), pa (unit choice for precip amount TBD). If the pilot works, expand.
+- **What's on hold pending pilot outcome (2-3 weeks):** no new Stage 0 hypotheses inside the pair log, no new dynamic-gate migrations beyond items already in-flight (chp v0.6.421 walker, Ccd v0.6.429 walker), no debug-page sweeps except in response to real state changes. Daily sentries still run.
+- Related: [[feedback_frame_exhaustion_watch]] (new), [[feedback_ship_count_by_impact_class]] (new), [[project_plan_pipeline_to_good]] rewritten with input-frame expansion on top.
+
+</details>
+
+<details>
 <summary><strong>v0.6.430 • August 18, 2026 (Lc recent-bias gate — ch cleared per-field 7/7, ship)</strong></summary>
 
 - `h_lc_recent_bias_gate.py` cleared **ch** per-field: 7/7 distinct days, PROMOTE streak 11. cl and cm remain CHURN (in and out of the promoted set) and stay out.

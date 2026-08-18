@@ -7,13 +7,14 @@ forecast-vs-observed calibration (decay curves, POP accuracy, dew point
 drift, etc.). One entry per hour, fields use short keys to keep file
 size manageable across two weeks of 10-minute runs.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone as _dt_timezone
 
 import pytz
 
 from ..gcs_io import load_json, upload_json
 from ..utils import magnus_dew_point_f
 from . import cl_persistence_gate, ch_persistence_gate, wd_persistence_gate
+from .forecast_text import _extract_nws_value
 
 
 GCS_PATH = "forecast_log.json"
@@ -22,7 +23,42 @@ SNAPSHOT_HOURS = 48
 TZ = pytz.timezone("America/New_York")
 
 
-def append_forecast_snapshot(hourly, derived=None):
+# v0.6.431 — NWS gridpoint (NBM-derived official NWS forecast) as an alternate
+# forecast source alongside HRRR/GFS/Pirate. Stamped per-hour under `{short}_nws`
+# so the pair log emits forecast_nws + error_nws for downstream benchmarking.
+# NWS gridpoint properties are irregular-interval (typically hourly out to
+# ~72h then 3-hourly) and each entry carries a validTime range; we align to
+# our hourly grid by asking for the value valid at each hour's timestamp.
+# Fields covered (NWS gridpoint returns unit-tagged values; we convert to
+# our internal units):
+#   t  ← temperature (degC → F)
+#   dp ← dewpoint (degC → F)
+#   pp ← probabilityOfPrecipitation (percent, no conversion)
+#   ws ← windSpeed (km/h → mph)
+#   wd ← windDirection (deg, no conversion)
+# Not covered (NWS gridpoint returns no equivalent): h, cc, cl, cm, ch, sr,
+# wg, pa (QPF is in mm and can be added later once we settle on the pa unit).
+_NWS_FIELDS = ("t", "dp", "pp", "ws", "wd")
+
+def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
+    """Extract an NWS gridpoint value at target_utc (tz-aware UTC), applying
+    the unit conversion. Returns None if the property is missing or the
+    target time falls outside any validTime interval."""
+    if not nws_gridpoints:
+        return None
+    prop = nws_gridpoints.get(nws_key)
+    if not prop:
+        return None
+    raw = _extract_nws_value(prop, target_utc)
+    if raw is None:
+        return None
+    try:
+        return convert(float(raw))
+    except (TypeError, ValueError):
+        return None
+
+
+def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None):
     """Append a snapshot of the corrected 48h forecast for later validation.
     Prunes snapshots older than RETENTION_DAYS on each write. No-op if the
     hourly data has no usable hours.
@@ -287,6 +323,41 @@ def append_forecast_snapshot(hourly, derived=None):
             entry["sr_sw"] = round(float(sw_arr[i]))
         if i < len(diff_arr) and diff_arr[i] is not None:
             entry["sr_diffuse"] = round(float(diff_arr[i]))
+        # v0.6.431 — NWS gridpoint (NBM-derived) values at this hour, aligned
+        # by validTime interval. Parses `t` as local ET (matching hourly grid
+        # convention) and converts to tz-aware UTC for the NWS extractor.
+        if nws_gridpoints:
+            try:
+                naive = datetime.fromisoformat(t[:16])  # "YYYY-MM-DDTHH:MM"
+                target_utc = TZ.localize(naive).astimezone(_dt_timezone.utc)
+            except (ValueError, TypeError):
+                target_utc = None
+            if target_utc is not None:
+                # temperature: degC → F
+                v = _nws_value_at(nws_gridpoints, "temperature", target_utc,
+                                  lambda c: c * 9.0 / 5.0 + 32.0)
+                if v is not None:
+                    entry["t_nws"] = _round_for("t", v)
+                # dewpoint: degC → F
+                v = _nws_value_at(nws_gridpoints, "dewpoint", target_utc,
+                                  lambda c: c * 9.0 / 5.0 + 32.0)
+                if v is not None:
+                    entry["dp_nws"] = _round_for("dp", v)
+                # POP: percent, no conversion
+                v = _nws_value_at(nws_gridpoints, "probabilityOfPrecipitation",
+                                  target_utc, lambda x: x)
+                if v is not None:
+                    entry["pp_nws"] = _round_for("pp", v)
+                # wind speed: km/h → mph
+                v = _nws_value_at(nws_gridpoints, "windSpeed", target_utc,
+                                  lambda k: k * 0.621371)
+                if v is not None:
+                    entry["ws_nws"] = _round_for("ws", v)
+                # wind direction: deg, no conversion
+                v = _nws_value_at(nws_gridpoints, "windDirection", target_utc,
+                                  lambda d: d)
+                if v is not None:
+                    entry["wd_nws"] = _round_for("wd", v)
         hours.append(entry)
 
     if not hours:

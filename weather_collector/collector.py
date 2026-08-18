@@ -738,6 +738,7 @@ def main():
         append_forecast_snapshot(
             weather_data.get("hourly", {}),
             derived=weather_data.get("derived", {}),
+            nws_gridpoints=weather_data.get("nws_gridpoints"),
         )
     except Exception as e:
         logging.warning(f"  ⚠  Forecast snapshot failed: {redact_secrets(e)}")
