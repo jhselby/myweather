@@ -1229,7 +1229,7 @@
   <details style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
     <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">How we measure whether the forecast is good — the metric framework</summary>
     <div style="font-size:0.9em;line-height:1.55;margin-top:8px;color:#cfd8e3;">
-      <p><strong>Core comparison:</strong> pipeline error vs. raw L1 error on the same forecast-observation pairs. L1 = Open-Meteo HRRR/GFS by default; for <code>t / ws / wd</code> at leads ≥6h the L1 router (v0.6.432) substitutes NBM (NWS-gridpoint) instead. Every metric on this page averages those errors differently.</p>
+      <p><strong>Core comparison:</strong> pipeline error vs. raw L1 error on the same forecast-observation pairs. L1 = HRRR-side (Open-Meteo HRRR/GFS) baseline. NBM cascade runs in parallel; the Phase 4 🎯 selector (v0.6.436) picks per (field, lead-band) which cascade's output the user sees. Every metric on this page averages those errors differently.</p>
 
       <p><strong>"Observed" per field</strong> (best local measurement, not absolute truth):</p>
       <ul style="margin:4px 0 8px 20px;padding:0;">
@@ -1523,14 +1523,15 @@
 <div id="gate-firing-content"></div>
 
 <!-- ───────────────────── L1 ───────────────────── -->
-<h2 class="section" id="sec-layer1">L1 — Raw model input (Open-Meteo HRRR/GFS + NBM router)</h2>
+<h2 class="section" id="sec-layer1">L1 — Raw model input (parallel HRRR + NBM cascades; selector picks per cell)</h2>
 <div class="layer-info-text">
-  <p class="layer-summary">The starting point that every layer below corrects. Per-field, per-lead selection between Open-Meteo (HRRR/GFS) and NBM (NWS gridpoint). Multi-kilometer grid resolution; still knows nothing specifically about Wyman Cove — that's what the layers below add.</p>
-  <details class="layer-methodology"><summary>About the L1 input (post-v0.6.432 router)</summary>
-    <div class="meta-line"><strong>Open-Meteo HRRR (next 48h) and GFS (days 3-7)</strong> — the default source. Feeds every field. Every cell where the L1 router below does not fire uses the Open-Meteo value unchanged. Cloud fields (cc/cl/cm/ch), pressure (pr), precip amount/POP (pa/pp), gust (wg), solar (sr), humidity (h), and short-lead t/ws/wd (leads 0-5h) all come from Open-Meteo everywhere.</div>
-    <div class="meta-line"><strong>L1 router (v0.6.432, 2026-08-18)</strong> — at leads ≥6h for <strong>t / ws / wd</strong>, replaces the Open-Meteo value with the NWS-gridpoint forecast (NBM: National Blend of Models, NOAA's operational ensemble blend). Driven by a 14-day head-to-head that showed NBM beats the full production cascade by +6% to +24% MAE at those slots. At leads 0-5h Open-Meteo + short-lead correction cascade still wins, so the router falls through there. Falls through everywhere if NWS-gridpoint is unavailable this tick.</div>
-    <div class="meta-line"><strong>Phase 2 pending:</strong> wg + sr + dp router coverage (need direct NBM grib ingester on the Cloud Function — NWS-gridpoint doesn't expose those fields). Phase 3: challenge Open-Meteo for cc/pr/pa/pp against ECMWF-open or similar.</div>
-    <div class="meta-line">Curves below show the current L1 forecast per field — post-router where the router fired, Open-Meteo elsewhere. Per-hour source labels stamped on <code>hourly.corrected_temperature_router_source</code> / <code>wind_speed_router_source</code> / <code>wind_direction_router_source</code>.</div>
+  <p class="layer-summary">Two forecast sources run in parallel for every hour: Open-Meteo HRRR/GFS on one side, direct NBM (National Blend of Models) on the other. Each side runs its own full correction cascade. The 🎯 selector below picks per (field, lead-band) which cascade's output becomes user-visible. Multi-kilometer grid resolution on both — still knows nothing specifically about Wyman Cove; that's what the layers below add.</p>
+  <details class="layer-methodology"><summary>About the L1 sources (post-Phase-4 selector, v0.6.437)</summary>
+    <div class="meta-line"><strong>HRRR-side (Open-Meteo).</strong> Open-Meteo HRRR (next 48h) + GFS (days 3-7), fetched every 10-min tick. Feeds the full HRRR cascade: L1 → L2 mesonet blend → L3 lead-decay → L4 diurnal → L5 Lsr (sr) / L6 Lc (cm/ch) / specialists (chp, wdp, clp, dpbp) / Ccd (cc derivation). Every field starts from a HRRR value at L1.</div>
+    <div class="meta-line"><strong>NBM-side (direct grib ingester).</strong> NBM CO 2.5km grib byte-range fetched hourly at :45 UTC by the nbm-ingester CF (Phase 0, v0.6.433). Extracts 9 fields at Wyman Cove: t / dp / ws / wd / wg / sr / cc / ch / h. Cascade so far: raw_nbm → l2_nbm (delta from HRRR L2) → l3_nbm (per-lead bias, Phase 3, currently warming up on identity fall-through until per-lead bins clear n≥20). L4/L5/L6 NBM siblings not yet built (backport queue, Phase 5+). wdp gets an NBM sibling via v0.6.437 (same table, applied to wd_l3_nbm).</div>
+    <div class="meta-line"><strong>🎯 L1 selector (Phase 4, v0.6.436).</strong> For each (field, lead-band), argmin of recent-window MAE(HRRR-side) vs MAE(NBM-side) — table below. When "nbm", the user-visible <code>{field}</code> value = <code>{field}_l3_nbm</code>. When "hrrr", value = HRRR cascade output. Currently covers 5 fields: t / ws / wg / wd / h. Fields NBM doesn't emit (cl, cm, pr, pa, pp) or fields not yet in scope (dp, sr, cc) are HRRR-side only — no NBM cascade to pick from.</div>
+    <div class="meta-line"><strong>v0.6.432 L1 router retired 2026-08-19 v0.6.437.</strong> Superseded by the selector on all counts: wider scope (5 fields vs 3), stronger evidence base (30-day scoreboard vs 14-day), post-cascade application (all corrections apply first, selector picks last).</div>
+    <div class="meta-line">Curves below show the current L1 forecast per field for the HRRR-side only. NBM raw is available on the per-field accuracy charts as a dashed line (<code>raw_nbm</code>) once the Fitter has a day of pair-log coverage.</div>
   </details>
 </div>
 <!-- ───────── L1 router — live per-hour source labels (v0.6.432) ─────────
@@ -2885,7 +2886,7 @@ function renderHeadlineBox(wxDoc) {
     const del = _fmtDelta(r.raw, r.cor, r.unit, r.dec, r.delta);
     const tOrH = (r.label === "Temperature (t)" || r.label === "Humidity (h)");
     const rawTxt = (degraded && tOrH)
-      ? '<span style="opacity:0.6;" title="Raw L1 seed (Open-Meteo HRRR/GFS) did not respond this tick; the L2 station-bias correction can\'t compute without it. The L1 router (v0.6.432) only overrides at leads ≥6h so it doesn\'t rescue this hour-0 tile.">unavailable</span>'
+      ? '<span style="opacity:0.6;" title="HRRR-side L1 seed (Open-Meteo HRRR/GFS) did not respond this tick; the L2 station-bias correction can\'t compute without it. Selector (v0.6.436) only picks NBM at cells with l3_nbm coverage, so it doesn\'t rescue this hour-0 tile.">unavailable</span>'
       : _fmt(r.raw, r.unit, r.dec);
     // In degraded mode the Production value is still real — it comes straight
     // from WU stations (hyperlocal.corrected_temp) instead of model+bias — so
