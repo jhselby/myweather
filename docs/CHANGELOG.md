@@ -1,4 +1,23 @@
 <details open>
+<summary><strong>v0.6.436 • August 19, 2026 (Option-1 Phase 4 SHIPPED — L1 selector arms; per-(field, lead-band) argmin(HRRR, NBM) picks user-visible forecast; first ship of user-facing NBM cascade output beyond the v0.6.432 router)</strong></summary>
+
+- **Phase 4 — L1 selector LIVE.** New `weather_collector/processors/l1_selector.py` loads `weather_collector/data/l1_selector_table_curated.json` at import; exposes `pick_source(field, lead_h) -> "hrrr"|"nbm"`. `forecast_snapshot.stamp()` runs the selector after all NBM cascade stamping: for each hour × field, if `pick == "nbm"`, replaces the user-visible `{field}` value with `{field}_l3_nbm`. HRRR fall-through when the field/band is out of scope or the cell hasn't cleared its n/lift floors — safe default equal to pre-Phase-4 Prod behavior. Selector source stamped as `{field}_selector_source` in forecast log; pair-log joiner picks it up as `pair["selector_source"]` for per-row Prod attribution.
+- **Phase 4 — Selector table fitter.** New `analysis/l1_selector_fit.py` reuses the `nbm_backfill_scoreboard.aggregate()` join (backfill + pair-log MAE evidence). Emits per-(field, lead-band) `{source, hrrr_mae, nbm_mae, lift_pct, n}`. Scope = `t / ws / wg / wd / h` (fields with L3_NBM coverage). Pick rule: NBM iff `n ≥ 200 AND lift_pct ≥ 3.0` (asymmetric threshold favors HRRR fall-through — safe default). Refits nightly; pair-log's `error_l3_nbm` will supersede backfill signal as bins warm up. Reproducible: `python3 -m analysis.l1_selector_fit`.
+- **Initial table (2026-08-19 fit, window 30d, n up to 6,100/cell):**
+  - **t:** HRRR at 0-11h (short-lead HRRR wins −15.8%/+2.3%), NBM at 12-47h (+9.8%/+16.5%)
+  - **ws:** NBM at all leads (+11.2% to +22.7%) — expansion beyond router's leads-≥6h scope
+  - **wg:** NBM at all leads (+39.1% to +48.2%) — largest expansion, wg wasn't in router
+  - **wd:** NBM at all leads (+16.1% to +23.6%) — expansion to include 0-5h
+  - **h:** NBM at 0-11h (+9.2% to +19.6%), HRRR at 12-47h (+1.4% within noise / −8.3% NBM hurts) — h is the ONE field where HRRR wins long-lead
+- **Ship gate met.** Router-scope (t/ws/wd @ leads≥6h) selector-side aggregate NBM lift = **+18.8% on n=32,288**. Per plan: Phase 4 ship gate requires selector to deliver ≥90% of v0.6.432 router's measured long-lead lift. Selector delivers same or better across router's scope, plus expands to wg + short-lead ws/wd + short-lead h.
+- **v0.6.432 router coexists during 14-day post-ship watch.** Rip-out follows once selector clears its watch clean. Coordination: for cells where router already picks NBM at L1, downstream HRRR-cascade output ≈ NBM cascade output (station-bias delta cancels), so selector's pick on those cells is a near-no-op that reaffirms router. For cells the router doesn't touch (wg, all fields at leads 0-5, h at 6-11h), selector delivers new user-facing NBM output.
+- **Refactor.** `analysis/nbm_backfill_scoreboard.py` split — aggregation logic extracted to `aggregate()` function, printed scoreboard now a thin wrapper. Selector fitter imports `aggregate()` directly so both use the same join code and same window semantics.
+- **Debug page — 🎯 selector tile ARMED.** Placeholder retired; now fetches `l1_selector_table_curated.json` and renders per-(field, lead-band) pick table (NBM cells highlighted blue, hover for raw HRRR/NBM MAE + n), fitted_at, ship-gate summary. Section header LIVE badge.
+- **Cost audit fix (from same session).** Backfill CF Makefile spec downsized from 8vCPU/8GB to 2vCPU/4GB after tracing yesterday's ~$20 spend to Cloud Functions Gen2 compute at the over-provisioned spec. Backfill is I/O-bound (byte-range fetches from NBM S3), so cheaper spec doesn't hurt throughput. Per-invocation cost dropped ~$0.76 → ~$0.20.
+
+</details>
+
+<details>
 <summary><strong>v0.6.435 • August 19, 2026 (Option-1 Phase 3 — L3_NBM fit + apply scaffolded; per-lead scalar bias for t/ws/wg/h + circular sin/cos bias for wd; debug page Phase 3 fit-status tile)</strong></summary>
 
 - **Phase 3 — L3_NBM apply.** New `weather_collector/processors/l3_nbm.py` loads `weather_collector/data/l3_nbm_curated.json` at import; exposes `l3_nbm_bias(field, lead_h)` for scalar fields (t/ws/wg/h) and `l3_nbm_wd_components(lead_h)` for wd. Identity fall-through (0.0 / (0.0, 0.0)) until a bin clears the `min_pairs_per_lead` floor (default 20). `forecast_snapshot.stamp()` stamps `{field}_l3_nbm` inside the same NBM loop right after `_l2_nbm`: scalars subtract per-lead bias; wd uses circular `atan2(sin(l2_nbm_rad) − sin_corr, cos(l2_nbm_rad) − cos_corr)`. Shadow-only in Phase 3 (selector wiring is Phase 4).

@@ -1,0 +1,171 @@
+{
+  "fitted_at": "2026-08-19T10:36",
+  "window_days": 30,
+  "min_n": 200,
+  "min_lift_pct": 3.0,
+  "matched_triplets": 98085,
+  "table": {
+    "t": {
+      "0-5": {
+        "source": "hrrr",
+        "hrrr_mae": 1.159,
+        "nbm_mae": 1.342,
+        "lift_pct": -15.78,
+        "n": 1300
+      },
+      "6-11": {
+        "source": "hrrr",
+        "hrrr_mae": 1.439,
+        "nbm_mae": 1.406,
+        "lift_pct": 2.26,
+        "n": 1560
+      },
+      "12-23": {
+        "source": "nbm",
+        "hrrr_mae": 1.597,
+        "nbm_mae": 1.44,
+        "lift_pct": 9.84,
+        "n": 3103
+      },
+      "24-47": {
+        "source": "nbm",
+        "hrrr_mae": 1.855,
+        "nbm_mae": 1.548,
+        "lift_pct": 16.53,
+        "n": 6100
+      }
+    },
+    "ws": {
+      "0-5": {
+        "source": "nbm",
+        "hrrr_mae": 2.13,
+        "nbm_mae": 1.848,
+        "lift_pct": 13.23,
+        "n": 1300
+      },
+      "6-11": {
+        "source": "nbm",
+        "hrrr_mae": 2.344,
+        "nbm_mae": 1.891,
+        "lift_pct": 19.33,
+        "n": 1560
+      },
+      "12-23": {
+        "source": "nbm",
+        "hrrr_mae": 2.442,
+        "nbm_mae": 1.887,
+        "lift_pct": 22.72,
+        "n": 3103
+      },
+      "24-47": {
+        "source": "nbm",
+        "hrrr_mae": 2.506,
+        "nbm_mae": 2.225,
+        "lift_pct": 11.19,
+        "n": 6100
+      }
+    },
+    "wg": {
+      "0-5": {
+        "source": "nbm",
+        "hrrr_mae": 5.535,
+        "nbm_mae": 3.231,
+        "lift_pct": 41.62,
+        "n": 1300
+      },
+      "6-11": {
+        "source": "nbm",
+        "hrrr_mae": 5.632,
+        "nbm_mae": 3.43,
+        "lift_pct": 39.1,
+        "n": 1560
+      },
+      "12-23": {
+        "source": "nbm",
+        "hrrr_mae": 6.792,
+        "nbm_mae": 3.515,
+        "lift_pct": 48.25,
+        "n": 3103
+      },
+      "24-47": {
+        "source": "nbm",
+        "hrrr_mae": 6.658,
+        "nbm_mae": 3.84,
+        "lift_pct": 42.32,
+        "n": 6100
+      }
+    },
+    "wd": {
+      "0-5": {
+        "source": "nbm",
+        "hrrr_mae": 45.054,
+        "nbm_mae": 36.997,
+        "lift_pct": 17.88,
+        "n": 1300
+      },
+      "6-11": {
+        "source": "nbm",
+        "hrrr_mae": 49.021,
+        "nbm_mae": 38.008,
+        "lift_pct": 22.46,
+        "n": 1560
+      },
+      "12-23": {
+        "source": "nbm",
+        "hrrr_mae": 49.892,
+        "nbm_mae": 38.112,
+        "lift_pct": 23.61,
+        "n": 3102
+      },
+      "24-47": {
+        "source": "nbm",
+        "hrrr_mae": 50.286,
+        "nbm_mae": 42.174,
+        "lift_pct": 16.13,
+        "n": 6100
+      }
+    },
+    "h": {
+      "0-5": {
+        "source": "nbm",
+        "hrrr_mae": 5.428,
+        "nbm_mae": 4.367,
+        "lift_pct": 19.55,
+        "n": 670
+      },
+      "6-11": {
+        "source": "nbm",
+        "hrrr_mae": 5.123,
+        "nbm_mae": 4.65,
+        "lift_pct": 9.24,
+        "n": 804
+      },
+      "12-23": {
+        "source": "hrrr",
+        "hrrr_mae": 5.593,
+        "nbm_mae": 5.517,
+        "lift_pct": 1.35,
+        "n": 1590
+      },
+      "24-47": {
+        "source": "hrrr",
+        "hrrr_mae": 6.215,
+        "nbm_mae": 6.729,
+        "lift_pct": -8.27,
+        "n": 3101
+      }
+    }
+  },
+  "ship_gate_router_scope": {
+    "fields": [
+      "t",
+      "wd",
+      "ws"
+    ],
+    "leads": ">=6h",
+    "aggregate_nbm_lift_pct": 18.82,
+    "aggregate_n": 32288,
+    "note": "Router-scope selector-lift vs HRRR raw. Phase 4 ship gate: \u226590% of v0.6.432 router's measured long-lead lift on t/ws/wd. Interpret against router's own last-24h lift on debug page."
+  },
+  "notes": "Per-(field, lead-band) source picker. source='nbm' \u2192 user-facing {field} value is replaced with {field}_l3_nbm in forecast_snapshot. HRRR fall-through when n<min_n or |lift_pct|<min_lift_pct. Scope: t/ws/wg/wd/h (fields with L3_NBM coverage). Refits nightly."
+}

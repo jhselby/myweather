@@ -70,6 +70,10 @@ from .l3_nbm import (
     l3_nbm_bias as _l3_nbm_bias,
     l3_nbm_wd_components as _l3_nbm_wd_components,
 )
+# Phase 4 (2026-08-19) — L1 selector. Picks HRRR or NBM cascade output
+# per (field, lead-band). When "nbm", replace the user-visible {field}
+# with {field}_l3_nbm. Table refit nightly by analysis/l1_selector_fit.py.
+from .l1_selector import pick_source as _selector_pick_source
 
 
 def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
@@ -472,6 +476,21 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     c = _math.cos(wd_rad) - cos_c
                     corrected = _math.degrees(_math.atan2(s, c)) % 360.0
                     entry[f"{_L3_NBM_WD}_l3_nbm"] = _round_for(_L3_NBM_WD, corrected)
+        # Phase 4 (2026-08-19) — L1 selector. For each field with an
+        # l3_nbm value stamped this hour, ask the selector table which
+        # source to pick per (field, lead=i). When "nbm", override the
+        # user-visible {field} value with {field}_l3_nbm. Selector source
+        # is stamped as {field}_selector_source for pair-log attribution.
+        # HRRR fall-through is safe (equals pre-Phase-4 Prod behavior)
+        # because pick_source returns "hrrr" for out-of-scope fields.
+        for f in list(_L3_NBM_FIELDS) + [_L3_NBM_WD]:
+            l3_nbm_v = entry.get(f"{f}_l3_nbm")
+            if l3_nbm_v is None:
+                continue
+            source = _selector_pick_source(f, i)
+            entry[f"{f}_selector_source"] = source
+            if source == "nbm":
+                entry[f] = l3_nbm_v
         hours.append(entry)
 
     if not hours:

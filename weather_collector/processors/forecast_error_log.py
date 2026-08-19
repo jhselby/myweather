@@ -229,6 +229,9 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                 applied = target_hour.get(f"{short}_applied")
                 if applied:
                     pair["applied_layer"] = applied
+                sel = target_hour.get(f"{short}_selector_source")
+                if sel:
+                    pair["selector_source"] = sel
                 if state_fc:  pair["state_fc"]  = state_fc
                 if state_obs: pair["state_obs"] = state_obs
                 if cloud_sigma is not None:
@@ -275,6 +278,12 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             applied = target_hour.get(f"{short}_applied")
             if applied:
                 pair["applied_layer"] = applied
+            # Phase 4 (2026-08-19) — L1 selector source ("hrrr"|"nbm") for
+            # this (field, hour). Stamped by forecast_snapshot when l3_nbm
+            # is available for the field. Present on t/ws/wg/wd/h rows.
+            sel = target_hour.get(f"{short}_selector_source")
+            if sel:
+                pair["selector_source"] = sel
             # v0.6.309: shadow-log model shortwave + diffuse for sr pairs so
             # we can compare against Tempest's total-shortwave obs on the same
             # units. `forecast` (direct-beam only) stays the primary forecast —

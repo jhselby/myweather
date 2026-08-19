@@ -1657,18 +1657,78 @@
 })();
 </script>
 
-<!-- ───────── Phase 4 selector placeholder (2026-08-18) ─────────
-     The eventual per-(field, lead-band) source picker on finished L6
-     output. Not armed until Phase 4 ship gate (requires NBM L3 to
-     stabilize first). Kept visible so the layout doesn't jump when
-     the selector goes live. -->
-<details style="margin:12px 0;padding:10px 14px;border:1px solid #4a3a52;background:#1a0e20;border-radius:6px;" id="sec-l1-selector">
-  <summary style="color:#c48fe0;font-weight:600;cursor:pointer;list-style:none;">🎯 L1 selector — per (field, lead-band) source picker <span style="opacity:0.6;font-weight:normal;">(not yet armed — Phase 4)</span></summary>
-  <div class="meta-line" style="margin-top:8px;opacity:0.75;font-size:0.88em;">
-    Design intent: for each (field, lead-band) combo, argmin of recent-window MAE(l3_hrrr) vs MAE(l3_nbm) picks which source's cascade output becomes the user-facing forecast. Table refit nightly from pair log; stored at <code>l1_selector_table.json</code>. Phase 1/2 shipped 2026-08-18 (raw_nbm + l2_nbm stamped in pair log). Phase 3 scaffolded 2026-08-19: <code>l3_nbm</code> apply + <code>l3_nbm_curated.json</code> table + <code>analysis/l3_nbm_fit.py</code> — see fit-status tile above for warmup progress. Selector arms once L3_NBM has stable per-lead coverage vs L3_HRRR (rule-of-thumb ~30d of pair-log fill from Phase 2 deploy).
+<!-- ───────── Phase 4 selector LIVE (2026-08-19) ─────────
+     Per-(field, lead-band) source picker. When source=nbm, the collector
+     replaces the user-visible {field} value with {field}_l3_nbm. Table
+     refit nightly by analysis/l1_selector_fit.py. -->
+<details open style="margin:12px 0;padding:10px 14px;border:1px solid #4a3a52;background:#1a0e20;border-radius:6px;" id="sec-l1-selector">
+  <summary style="color:#c48fe0;font-weight:600;cursor:pointer;list-style:none;">🎯 L1 selector — per (field, lead-band) source picker <span style="color:#4ad29a;font-weight:normal;">(LIVE — Phase 4, v0.6.436)</span></summary>
+  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
+    For each (field, lead-band), argmin of recent-window MAE(HRRR) vs MAE(NBM) picks the cascade output that becomes the user-facing forecast. Table refit nightly by <code>analysis/l1_selector_fit.py</code>; stored at <code>weather_collector/data/l1_selector_table_curated.json</code>. Sources: NBM-side is <code>l3_nbm</code> (Phase 3, identity fall-through until per-lead bins warm up); HRRR-side is the current Prod stack. Selector runs after all NBM stamping in <code>forecast_snapshot</code>; when picked "nbm", replaces top-level <code>{field}</code> with <code>{field}_l3_nbm</code>. Fall-through to HRRR is safe (equals pre-Phase-4 Prod).
   </div>
-  <div style="margin-top:10px;font-size:0.88em;opacity:0.55;font-style:italic;">Selector not yet armed. Once wired, this block will show per-hour <code>pick_source</code> per field with color coding + hover-margin for the pick's recent MAE lift over the loser.</div>
+  <div id="l1-selector-live" style="margin-top:10px;font-size:0.88em;">
+    <div style="opacity:0.6;">loading l1_selector_table_curated.json…</div>
+  </div>
 </details>
+<script>
+(function(){
+  const url = "weather_collector/data/l1_selector_table_curated.json?_=" + Date.now();
+  fetch(url, { cache: "no-store" })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      const el = document.getElementById("l1-selector-live");
+      if (!el) return;
+      const fittedAt = d.fitted_at || "never";
+      const win = d.window_days || "?";
+      const minN = d.min_n || "?";
+      const minLift = d.min_lift_pct || "?";
+      const gate = d.ship_gate_router_scope || {};
+      const table = d.table || {};
+      const fields = Object.keys(table);
+      const bands = ["0-5", "6-11", "12-23", "24-47"];
+      const cellHtml = (cell) => {
+        if (!cell) return `<td style="padding:3px 8px;opacity:0.4;">—</td>`;
+        const src = cell.source || "hrrr";
+        const isNbm = src === "nbm";
+        const color = isNbm ? "#7fb3ff" : "#c8c8c8";
+        const bg = isNbm ? "#12233a" : "transparent";
+        const label = isNbm ? "NBM" : "HRRR";
+        const lift = cell.lift_pct;
+        const liftStr = lift >= 0 ? `+${lift.toFixed(1)}%` : `${lift.toFixed(1)}%`;
+        return `<td style="padding:3px 8px;text-align:center;background:${bg};color:${color};font-weight:600;" title="HRRR ${cell.hrrr_mae} vs NBM ${cell.nbm_mae} · n=${cell.n.toLocaleString()}">${label}<div style="font-size:0.78em;opacity:0.7;font-weight:normal;">${liftStr}</div></td>`;
+      };
+      const rows = fields.map(f => {
+        const cells = table[f] || {};
+        return `<tr><td style="padding:3px 12px 3px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;"><code>${f}</code></td>` +
+               bands.map(b => cellHtml(cells[b])).join("") + `</tr>`;
+      }).join("");
+      const headerCells = bands.map(b =>
+        `<th style="padding:3px 8px;font-weight:600;opacity:0.7;text-align:center;font-size:0.82em;">${b}h</th>`
+      ).join("");
+      el.innerHTML = `
+        <div><strong>Last fit:</strong> ${fittedAt} · window ${win}d · min ${minN} pairs · min lift ${minLift}%</div>
+        <table style="margin-top:10px;border-collapse:collapse;">
+          <thead><tr><th></th>${headerCells}</tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <div style="margin-top:10px;opacity:0.8;font-size:0.85em;">
+          <strong>Ship gate</strong> (router-scope t/ws/wd @ leads≥6h): aggregate NBM lift
+          <strong style="color:${gate.aggregate_nbm_lift_pct >= 5 ? '#4ad29a' : '#e0a070'};">
+            ${gate.aggregate_nbm_lift_pct != null ? `+${gate.aggregate_nbm_lift_pct}%` : "—"}
+          </strong>
+          on n=${(gate.aggregate_n || 0).toLocaleString()}.
+          v0.6.432 router ripout follows once 14-day post-Phase-4 watch closes clean.
+        </div>
+        <div style="margin-top:6px;opacity:0.65;font-size:0.82em;">
+          NBM cells = user-visible forecast is now the NBM cascade output for that (field, lead-band). Hover cells for raw HRRR/NBM MAE + n.
+        </div>`;
+    })
+    .catch(e => {
+      const el = document.getElementById("l1-selector-live");
+      if (el) el.innerHTML = `<div style="color:#e08a70;">l1_selector_table_curated.json not yet reachable. Error: ${e}</div>`;
+    });
+})();
+</script>
 
 <h3 class="subsection" style="margin-top:14px;">Raw L1 forecast per field (post-router where the router fired)</h3>
 <div id="grid-raw" class="grid"></div>
