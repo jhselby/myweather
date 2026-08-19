@@ -1,4 +1,18 @@
 <details open>
+<summary><strong>v0.6.438 • August 19, 2026 (Scoreboard v2 SHIPPED — Prod vs best-public argmin(HRRR raw, NBM raw); 4 rollup tiles + per-field detail table; retires pre-Phase-4 "vs raw" framing)</strong></summary>
+
+- **New publisher `analysis/scoreboard_v2.py`.** Reads pair log; emits `scoreboard_v2.json` to GCS with two windows (7d, 24h) × 14 fields. Per-field cell: HRRR raw MAE, NBM raw MAE, best_public (argmin), selector_pick, Prod MAE, lift_vs_best_public_pct, halves_a/b lift, halves_agree, n, confidence (HIGH/MED/LOW/NA), verdict (STRONG/GOOD/WATCH/REGRESS/NA). Rollup collapses to Section-1-4 summary: value_add_mean_pct, winning_fields green/amber/red, national_source_score (HRRR wins / NBM wins / insufficient), local_correction_value (does Prod add value on top of the selected source?), health confidence bucket counts.
+- **Confidence thresholds (Q3 agreed with Joe):** HIGH = `|lift| ≥ 10% AND n ≥ 200 AND halves-agree`; MED = `|lift| ≥ 3% AND n ≥ 50`; LOW = below; NA = unavailable.
+- **Verdict thresholds (Q4 defaults):** STRONG = `lift ≥ 10% AND halves-agree`; GOOD = `lift ≥ 3%`; REGRESS = `lift ≤ -3%`; WATCH = between.
+- **Rollup exclusions** match the legacy scoreboard: `pp` (Brier), `pa/pr` (no MAE stack), `cc/dp` (derived — would double-count components).
+- **Publisher CF wired.** `publisher/main.py` PUBLISHERS list gains `scoreboard_v2`; refits hourly alongside `mae_over_time.py` at `0 * * * *`.
+- **Debug page — `renderScoreboardV2()` async fetch + render.** Replaces two pre-Phase-4 renderers: `#scorecard-banner` (top tiles) now shows 4 rollup tiles (value-add / national source score / local correction value / health); `#headlineBox` Right-Now table now shows per-field HRRR / NBM / Selected / Prod / lift / halves / n / confidence / verdict columns. Old `renderScorecardBanner` + `renderPerFieldSnapshot` marked deprecated but kept as dead code pending removal (the pf-snapshot table lower on the page still calls the latter for its numeric columns).
+- **First fit surfaced 2 data-quality signals worth follow-up:** NBM `sr` raw MAE = 0.0 (nighttime-only extract; daytime sr not landing in extract or joiner). NBM `dp` raw MAE = 0.881 vs HRRR 2.875 (3× better, implausibly low — probable unit or coverage issue). Both are scoreboard doing its job — surfacing signals we didn't have visibility into pre-v2. Neither blocks the ship.
+- **Session context:** the -37% value-add-mean over 7d is HONEST — pre-Phase-4 (all of last week), Prod was HRRR-cascade-only; NBM raw beats HRRR + corrections for many fields (esp. wg, wd, ch); the scoreboard correctly says "you weren't picking the winning source". As post-Phase-4 pair-log rows accumulate (Prod for wg/wd/etc. becomes NBM-cascade output ≈ NBM raw), value_add will trend toward 0 (identity to selected source) or positive (where corrections add lift).
+
+</details>
+
+<details>
 <summary><strong>v0.6.437 • August 19, 2026 (Phase 4b — wdp NBM sibling wired; v0.6.432 L1 router retired; NBM cascade now inherits wdp coverage on cells the selector routes to NBM)</strong></summary>
 
 - **v0.6.432 L1 router retired.** Deleted `weather_collector/processors/l1_router.py` + the `apply_l1_router(weather_data)` call in `collector.py`. Router was scope-limited by its NWS-gridpoint data source (3 fields: t/ws/wd @ leads ≥6h). Phase 4 selector (v0.6.436) supersedes on all counts: wider scope (5 fields including wg + h), stronger evidence base (30-day scoreboard vs router's 14-day), post-cascade application (all corrections apply first, selector picks last). Ship-gate met at +18.8% aggregate NBM lift on router-scope. No hypothetical dead-code retention — deleted cleanly per CLAUDE.md rule.

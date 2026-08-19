@@ -2269,6 +2269,10 @@ const GATE_FIRING_URL = "https://data.wymancove.com/gate_firing_rollup.json";
 const PERSISTENCE_URL = "https://data.wymancove.com/persistence_skill.json";
 const PP_BRIER_RELIABILITY_URL = "https://data.wymancove.com/pp_brier_reliability.json";
 const PP_BIN_CALIBRATION_URL = "https://data.wymancove.com/h_pp_bin_calibration.json";
+// Phase 4 scoreboard v2 (2026-08-19). Written by analysis/scoreboard_v2.py.
+// Post-Phase-4 the "vs raw" scoreboard is retired; v2 shows Prod vs
+// argmin(HRRR raw, NBM raw) with per-field HRRR/NBM/Selected/Prod columns.
+const SCOREBOARD_V2_URL = "https://data.wymancove.com/scoreboard_v2.json";
 const M2_PERIOD_HOURS = 12.4206;
 // Reference cosine amplitude for Section 5's phase-binned charts. Bumped from
 // 4.0 to 5.0 in v0.6.12 — closer to Salem's typical M2 amplitude. The
@@ -3155,12 +3159,176 @@ function _legendSwatch(color, checked) {
   return c;
 }
 
+// ── Phase 4 scoreboard v2 (2026-08-19). Fetches scoreboard_v2.json,
+// populates BOTH #scorecard-banner (sections 1-4 rollup tiles) AND the
+// #headlineBox "Right now — what the pipeline is doing" per-field table
+// (section 5). Retires the pre-Phase-4 renderScorecardBanner (below) +
+// the wxDoc-driven Right Now table population — both left as dead code
+// until a follow-up cleanup pass, since they read different sources and
+// still work if scoreboard_v2 hasn't landed yet.
+async function renderScoreboardV2() {
+  const banner = document.getElementById("scorecard-banner");
+  const hbBody = document.getElementById("hbCorrRows");
+  const setLoading = (msg) => {
+    if (banner) {
+      banner.hidden = false;
+      banner.innerHTML = `<div style="opacity:0.6;">${msg}</div>`;
+    }
+    if (hbBody) hbBody.innerHTML = `<tr><td colspan="8" style="color:var(--muted);opacity:0.6;padding:8px;">${msg}</td></tr>`;
+  };
+  setLoading("loading scoreboard_v2.json…");
+  let d;
+  try {
+    const res = await fetch("https://data.wymancove.com/scoreboard_v2.json?_=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    d = await res.json();
+  } catch (err) {
+    setLoading(`scoreboard_v2.json not yet available (${err.message}). Publisher runs hourly; check back in ~1h.`);
+    return;
+  }
+  const win7 = (d.windows && d.windows["7d"]) || {};
+  const win24 = (d.windows && d.windows["24h"]) || {};
+  const r7 = win7.rollup || {};
+  const r24 = win24.rollup || {};
+
+  // ── Sections 1-4 rollup tiles ─────────────────────────────────────
+  const pct = (v) => (v == null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(1) + "%");
+  const colorFor = (v) => v == null ? "#8a93a3" : v > 3 ? "#4ad29a" : v < -3 ? "#fb7c5c" : "#e0d472";
+  const tile = (title, body) => `<div style="border:1px solid #1f2f3a;background:#0e1620;border-radius:6px;padding:10px 12px;min-width:0;">
+    <div style="font-size:0.72em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;margin-bottom:6px;">${title}</div>
+    ${body}
+  </div>`;
+  const valueAddTile = tile("1 · Prod vs Best-Public",
+    `<div><strong style="color:${colorFor(r7.value_add_mean_pct)};font-size:1.15em;">${pct(r7.value_add_mean_pct)}</strong>
+     <span style="font-size:0.72em;opacity:0.6;margin-left:5px;">mean · 7d (n_fields=${r7.n_fields_in_mean || 0})</span></div>
+     <div style="margin-top:4px;font-size:0.85em;opacity:0.8;"><strong style="color:${colorFor(r24.value_add_mean_pct)};">${pct(r24.value_add_mean_pct)}</strong>
+     <span style="font-size:0.72em;opacity:0.6;margin-left:5px;">mean · 24h</span></div>
+     <div style="margin-top:6px;font-size:0.72em;opacity:0.55;">Median 7d: ${pct(r7.value_add_median_pct)} · median 24h: ${pct(r24.value_add_median_pct)}</div>
+     <div style="margin-top:4px;font-size:0.68em;opacity:0.45;">Best public = argmin(HRRR raw, NBM raw) per field. Excludes cc/dp (derived) + pp (Brier) + pa/pr (no MAE stack).</div>`);
+  const src = r7.national_source_score || {};
+  const nationalTile = tile("2 · National Source Score (7d)",
+    `<div style="font-size:0.9em;line-height:1.6;">
+       <div><span style="color:#7fb3ff;font-weight:600;">NBM wins</span> ${src.nbm_wins_count || 0}: <span style="opacity:0.7;">${(src.nbm_wins_fields || []).join(" · ") || "—"}</span></div>
+       <div><span style="color:#c8c8c8;font-weight:600;">HRRR wins</span> ${src.hrrr_wins_count || 0}: <span style="opacity:0.7;">${(src.hrrr_wins_fields || []).join(" · ") || "—"}</span></div>
+       <div><span style="opacity:0.55;">Insufficient data</span> ${src.insufficient_count || 0}: <span style="opacity:0.7;">${(src.insufficient || []).join(" · ") || "—"}</span></div>
+     </div>`);
+  const cv = r7.local_correction_value || {};
+  const correctionTile = tile("3 · Local Correction Value (Prod vs Selected)",
+    `<div style="font-size:0.9em;line-height:1.6;">
+       <div><span style="color:#4ad29a;font-weight:600;">Positive lift</span> ${cv.positive_count || 0}: <span style="opacity:0.7;">${(cv.positive_fields || []).join(" · ") || "—"}</span></div>
+       <div><span style="color:#e0d472;font-weight:600;">Flat</span> ${cv.flat_count || 0} <span style="opacity:0.6;font-size:0.85em;">(|Δ|&lt;2%)</span>: <span style="opacity:0.7;">${(cv.flat_fields || []).join(" · ") || "—"}</span></div>
+       <div><span style="color:#fb7c5c;font-weight:600;">Negative lift</span> ${cv.negative_count || 0}: <span style="opacity:0.7;">${(cv.negative_fields || []).join(" · ") || "—"}</span></div>
+       <div style="margin-top:6px;font-size:0.68em;opacity:0.45;">Does Wyman Cove add value on top of the source the selector picked?</div>
+     </div>`);
+  const win = r7.winning_fields || {};
+  const health = r7.health || {};
+  const healthTile = tile("4 · Health & Reliability",
+    `<div style="font-size:0.9em;line-height:1.6;">
+       <div><span style="color:#4ad29a;">Green</span> (Prod ≥ +${d.thresholds && d.thresholds.verdict ? d.thresholds.verdict.good_lift_pct : 3}% vs best-public): ${win.green_count || 0}</div>
+       <div><span style="color:#e0d472;">Amber</span> (flat): ${win.amber_count || 0}</div>
+       <div><span style="color:#fb7c5c;">Red</span> (Prod worse than best-public): ${win.red_count || 0}</div>
+       <div style="margin-top:6px;">Selector confidence — <strong style="color:#4ad29a;">HIGH</strong> ${health.HIGH || 0} · <strong style="color:#e0d472;">MED</strong> ${health.MED || 0} · <strong style="color:#8a93a3;">LOW</strong> ${health.LOW || 0} · <span style="opacity:0.55;">N/A ${health.NA || 0}</span></div>
+     </div>`);
+
+  if (banner) {
+    banner.hidden = false;
+    banner.style.background = "transparent";
+    banner.style.border = "0";
+    banner.style.padding = "0";
+    banner.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;">
+        ${valueAddTile}
+        ${nationalTile}
+        ${correctionTile}
+        ${healthTile}
+      </div>
+      <div style="margin-top:8px;font-size:0.72em;opacity:0.55;text-align:right;">Scoreboard v2 · fitted_at ${d.generated_at || "?"} · <span style="color:#7fb3ff;cursor:help;" title="lift_vs_best_public_pct = (best_public_mae − prod_mae) / best_public_mae × 100. best_public = argmin(hrrr_raw, nbm_raw). Post-Phase-4 (2026-08-19) scoreboard. Refits hourly.">what these mean</span></div>`;
+  }
+
+  // ── Section 5: per-field table in #headlineBox ────────────────────
+  const perField = win7.per_field || {};
+  const perField24 = win24.per_field || {};
+  const FIELD_ORDER = ["t","h","dp","ws","wg","wd","cc","cl","cm","ch","sr","pp","pa","pr"];
+  const FIELD_LABELS = {
+    t: "Temperature (°F)", h: "Humidity (%)", dp: "Dewpoint (°F)",
+    ws: "Wind speed (mph)", wg: "Wind gust (mph)", wd: "Wind dir (°)",
+    cc: "Cloud cover (%)", cl: "Cloud low (%)", cm: "Cloud mid (%)", ch: "Cloud high (%)",
+    sr: "Solar rad (W/m²)", pp: "Precip prob (%)", pa: "Precip amt (in)", pr: "Pressure (inHg)",
+  };
+  const CONF_COLOR = { HIGH: "#4ad29a", MED: "#e0d472", LOW: "#8a93a3", NA: "#6a707c" };
+  const VERDICT_COLOR = { STRONG: "#4ad29a", GOOD: "#7fb3ff", WATCH: "#e0d472", REGRESS: "#fb7c5c", NA: "#6a707c" };
+
+  const hbHost = document.getElementById("headlineBox");
+  if (hbHost) {
+    // Replace the old 8-column table with a wide per-field detail table.
+    hbHost.innerHTML = `
+      <div class="hb-title">Right now — what the pipeline is doing <span style="font-weight:normal;opacity:0.6;font-size:0.85em;">(scoreboard v2 · per-field, 7d window)</span></div>
+      <table class="hb-corr-table" style="width:100%;font-size:0.85em;">
+        <thead>
+          <tr>
+            <th style="text-align:left;">Field</th>
+            <th title="Raw Open-Meteo HRRR/GFS MAE over the 7-day window">HRRR raw</th>
+            <th title="Raw NBM (National Blend of Models) MAE over the 7-day window">NBM raw</th>
+            <th title="Which source the selector picks for user-visible output">Selected</th>
+            <th title="Wyman Cove Production MAE — what the user actually sees">Prod</th>
+            <th title="(best_public − prod) / best_public × 100; positive = Wyman Cove beats the best free option">Lift vs best (7d)</th>
+            <th title="Same metric on the last 24 hours — catches fresh regressions">24h</th>
+            <th title="First-half vs second-half lift; matching signs = stable">Halves A/B</th>
+            <th title="n = matched forecast-obs pairs in the 7d window">n</th>
+            <th>Confidence</th>
+            <th>Verdict</th>
+          </tr>
+        </thead>
+        <tbody id="hbCorrRows"></tbody>
+      </table>
+      <div class="hb-ops-row" style="margin-top:6px;font-size:0.78em;opacity:0.55;">
+        Lift = positive means Wyman Cove beats the best free public forecast for this field. Selected shows which national source the selector picks; Prod is what the user sees. Best-public = argmin(HRRR raw, NBM raw) per field.
+      </div>`;
+  }
+  const rowsHost = document.getElementById("hbCorrRows");
+  if (rowsHost) {
+    const rows = FIELD_ORDER.map(f => {
+      const c = perField[f] || {};
+      const c24 = perField24[f] || {};
+      const fmt = (v, dp=2) => (v == null ? '<span style="opacity:0.4;">—</span>' : v.toFixed(dp));
+      const lift = c.lift_vs_best_public_pct;
+      const lift24 = c24.lift_vs_best_public_pct;
+      const liftColor = lift == null ? "#8a93a3" : lift >= 3 ? "#4ad29a" : lift <= -3 ? "#fb7c5c" : "#e0d472";
+      const lift24Color = lift24 == null ? "#8a93a3" : lift24 >= 3 ? "#4ad29a" : lift24 <= -3 ? "#fb7c5c" : "#e0d472";
+      const sel = c.selector_pick || "na";
+      const selColor = sel === "nbm" ? "#7fb3ff" : sel === "hrrr" ? "#c8c8c8" : "#6a707c";
+      const ha = c.halves_a_lift_pct, hb = c.halves_b_lift_pct;
+      const halvesStr = (ha == null || hb == null)
+        ? '<span style="opacity:0.4;">—</span>'
+        : `<span style="color:${c.halves_agree ? '#4ad29a' : '#e0a070'};">${ha >= 0 ? '+' : ''}${ha.toFixed(1)}% / ${hb >= 0 ? '+' : ''}${hb.toFixed(1)}%</span>`;
+      const conf = c.confidence || "NA";
+      const verdict = c.verdict || "NA";
+      return `<tr>
+        <td style="text-align:left;font-weight:600;"><code>${f}</code> <span style="opacity:0.55;font-weight:normal;font-size:0.82em;">${FIELD_LABELS[f] || ""}</span></td>
+        <td>${fmt(c.hrrr_raw_mae)}</td>
+        <td>${fmt(c.nbm_raw_mae)}</td>
+        <td style="color:${selColor};font-weight:600;">${sel.toUpperCase()}</td>
+        <td style="font-weight:600;">${fmt(c.prod_mae)}</td>
+        <td style="color:${liftColor};font-weight:600;">${lift == null ? '<span style="opacity:0.4;">—</span>' : (lift >= 0 ? '+' : '') + lift.toFixed(1) + '%'}</td>
+        <td style="color:${lift24Color};">${lift24 == null ? '<span style="opacity:0.4;">—</span>' : (lift24 >= 0 ? '+' : '') + lift24.toFixed(1) + '%'}</td>
+        <td>${halvesStr}</td>
+        <td style="opacity:0.75;">${(c.n || 0).toLocaleString()}</td>
+        <td style="color:${CONF_COLOR[conf]};font-weight:600;font-size:0.82em;">${conf}</td>
+        <td style="color:${VERDICT_COLOR[verdict]};font-weight:700;font-size:0.82em;">${verdict}</td>
+      </tr>`;
+    }).join("");
+    rowsHost.innerHTML = rows;
+  }
+}
+
 // ── Scorecard banner: one-line summary of the stack's overall performance.
 // Reads per_layer_mae_by_lead from time_series_diagnostic.json, computes each
 // field's overall stack-vs-raw MAE delta averaged across all leads (1-47), and
 // summarizes: mean delta, count of net-positive fields, worst regression. Uses
 // the same _productionLayerKey logic as the accuracy chart so "stack" = actual
 // production output per field, not just a hardcoded L4.
+// **DEPRECATED 2026-08-19 v0.6.438** — replaced by renderScoreboardV2. Kept
+// as dead code pending removal; caller in load() was changed to renderScoreboardV2.
 function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
   const host = document.getElementById("scorecard-banner");
   if (!host) return;
@@ -6425,7 +6593,14 @@ async function load() {
   renderPpBrierReliability(ppBrierDoc, ppBinCalDoc);
 
   renderMeta(corrDoc, wxDoc);
-  renderScorecardBanner(tsDoc, wxDoc, persistenceDoc);
+  // Phase 4 scoreboard v2 (2026-08-19). Async fetch — renders when
+  // scoreboard_v2.json lands; falls back with "loading" placeholder
+  // otherwise. Retires the pre-Phase-4 renderScorecardBanner + per-field
+  // snapshot table.
+  renderScoreboardV2();
+  // Legacy hand-curated pf-snapshot table lower on the page still populates
+  // its numeric 7d/24h columns from tsDoc — the v2 scoreboard replaces
+  // the top tiles and #headlineBox but not that detail block.
   renderPerFieldSnapshot(tsDoc, wxDoc);
   renderWatchDayCounters();
   renderAccuracySection(tsDoc, wxDoc);

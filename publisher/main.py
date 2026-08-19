@@ -45,6 +45,9 @@ PUBLISHERS = [
     "h_pp_platt_calibration",
     "h_pp_bin_calibration",
     "pp_brier_reliability",
+    # Phase 4 scoreboard v2 (2026-08-19) — Prod-vs-best-public rollup
+    # + per-field detail. Retires the pre-Phase-4 "vs raw" framing.
+    "scoreboard_v2",
 ]
 
 
