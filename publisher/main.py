@@ -48,6 +48,10 @@ PUBLISHERS = [
     # Phase 4 scoreboard v2 (2026-08-19) — Prod-vs-best-public rollup
     # + per-field detail. Retires the pre-Phase-4 "vs raw" framing.
     "scoreboard_v2",
+    # Per-field two-step scoring (2026-08-19): Selection lift (L1 vs HRRR/NBM)
+    # + Correction lift (Prod vs L1) + Total pipeline lift (Prod vs best raw).
+    # Under "Current state" on the debug page.
+    "per_field_scoring",
 ]
 
 

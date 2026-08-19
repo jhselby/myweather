@@ -532,6 +532,25 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
     if not hours:
         return
 
+    # v0.6.442 — publish per-field L1_selected arrays into hourly so the
+    # debug page's "Base forecast (L1)" column reads the honest L1 output
+    # (selector's chosen raw source per lead) rather than raw HRRR alone.
+    #   selector picked NBM → {f}_raw_nbm (raw NBM value at that lead)
+    #   selector picked HRRR / fall-through → {f}_l1 (raw HRRR value)
+    # For fields the selector doesn't touch (no NBM cascade — pa, pp, pr,
+    # cl, cm), l1_selected always = raw HRRR.
+    for _f in ("t", "h", "dp", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pp", "pa", "pr"):
+        arr = []
+        for _h in hours:
+            src = _h.get(f"{_f}_selector_source")
+            if src == "nbm":
+                v = _h.get(f"{_f}_raw_nbm")
+            else:
+                v = _h.get(f"{_f}_l1")
+            arr.append(v)
+        if any(v is not None for v in arr):
+            hourly[f"l1_selected_{_f}"] = arr
+
     log = load_json(GCS_PATH, default={"snapshots": []})
     snapshots = [s for s in log.get("snapshots", []) if s.get("run", "") >= cutoff]
     snap_entry = {"run": run_stamp, "hours": hours}

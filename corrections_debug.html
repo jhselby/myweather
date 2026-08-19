@@ -443,6 +443,197 @@
     font-size: 12px; color: var(--muted);
   }
   #headlineBox .hb-ops-row strong { color: var(--ink); font-weight: 600; }
+  /* Per-field scoring table (v0.6.442) — mirrors #headlineBox typography
+     so the two sections read as one system. */
+  #per-field-scoring-block {
+    background: var(--panel); border: 1px solid #242833; border-radius: 10px;
+    padding: 14px 16px; margin: 0 0 16px 0;
+  }
+  #per-field-scoring-block .pfs-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: var(--muted); margin-bottom: 6px;
+  }
+  #per-field-scoring-block .pfs-blurb {
+    font-size: 12px; color: var(--muted); margin: 4px 0 12px 0; line-height: 1.5;
+  }
+  #per-field-scoring-block table.pfs-table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12.5px; color: var(--ink);
+    margin-top: 4px;
+  }
+  /* Grouped-header row (top of thead): colored group labels spanning
+     the child columns beneath them. */
+  #per-field-scoring-block table.pfs-table th.pfs-group {
+    text-align: center; font-weight: 600; font-size: 10.5px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 8px 10px 4px 10px; border-bottom: none;
+    background: transparent;
+  }
+  #per-field-scoring-block table.pfs-table th.pfs-group-inputs   { color: #7fb3ff; }
+  #per-field-scoring-block table.pfs-table th.pfs-group-chooser  { color: #c88bff; }
+  #per-field-scoring-block table.pfs-table th.pfs-group-local    { color: #74c38b; }
+  #per-field-scoring-block table.pfs-table th.pfs-group-total    { color: #e0a86b; }
+  /* Column-name row (second thead row). */
+  #per-field-scoring-block table.pfs-table th.pfs-col {
+    text-align: center; font-weight: 500; font-size: 10.5px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); padding: 4px 10px 8px 10px;
+    border-bottom: 1px solid #242833; vertical-align: bottom;
+  }
+  #per-field-scoring-block table.pfs-table th.pfs-col:first-child { text-align: left; }
+  #per-field-scoring-block table.pfs-table th.pfs-col .pfs-sub {
+    display: block; font-weight: 400; text-transform: none;
+    letter-spacing: 0; font-size: 10px; color: var(--muted);
+    opacity: 0.75; margin-top: 2px;
+  }
+  /* Data cells — 7d on top, 24h below in secondary weight, same cell. */
+  #per-field-scoring-block table.pfs-table td {
+    padding: 8px 10px; border-bottom: 1px solid #1c1f28;
+    text-align: center; font-variant-numeric: tabular-nums;
+    vertical-align: middle;
+  }
+  #per-field-scoring-block table.pfs-table td:first-child {
+    text-align: left; color: var(--muted); font-weight: 500;
+  }
+  #per-field-scoring-block table.pfs-table td.pfs-total { font-weight: 600; }
+  #per-field-scoring-block .pfs-cell-7d {
+    display: block; font-weight: 600; font-size: 13px;
+    line-height: 1.25;
+  }
+  #per-field-scoring-block .pfs-cell-24h {
+    display: block; font-size: 10.5px; color: var(--muted);
+    margin-top: 3px; line-height: 1.2; font-weight: 400;
+    opacity: 0.85;
+  }
+  #per-field-scoring-block .pfs-cell-24h .pfs-pos,
+  #per-field-scoring-block .pfs-cell-24h .pfs-neg {
+    font-weight: 500;
+  }
+  /* Row-label markers in the field cell — tiny 7d/24h stacked at the
+     right edge, vertically aligned with the two lines of numeric data
+     in every other cell. */
+  #per-field-scoring-block .pfs-row-labels {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 12px;
+  }
+  #per-field-scoring-block .pfs-row-labels .pfs-row-marks {
+    font-size: 9px; color: var(--muted); opacity: 0.4;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    text-align: right; font-weight: 500;
+    padding-top: 2px; flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+  }
+  #per-field-scoring-block .pfs-row-labels .pfs-row-marks span {
+    display: block; line-height: 1.25;
+  }
+  #per-field-scoring-block .pfs-row-labels .pfs-row-marks span + span {
+    margin-top: 3px; line-height: 1.2;
+  }
+  /* ── Scoreboard v2 layout (v0.6.442) ──
+     Headline strip: 3 lift metrics in one row.
+     Tile row: National Source Score + Health & Reliability side by side. */
+  #scorecard-banner .sb-headline-strip {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-bottom: 10px;
+  }
+  #scorecard-banner .sb-strip-cell {
+    background: var(--panel); border: 1px solid #242833; border-radius: 8px;
+    padding: 10px 14px;
+  }
+  #scorecard-banner .sb-strip-title {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 600; margin-bottom: 1px;
+  }
+  #scorecard-banner .sb-strip-sub {
+    font-size: 10.5px; color: var(--muted); opacity: 0.7;
+    margin-bottom: 8px;
+  }
+  #scorecard-banner .sb-strip-nums {
+    display: flex; align-items: baseline; gap: 14px;
+    margin: 4px 0 8px 0; font-variant-numeric: tabular-nums;
+  }
+  #scorecard-banner .sb-strip-primary { display: flex; align-items: baseline; gap: 6px; }
+  #scorecard-banner .sb-strip-secondary { display: flex; align-items: baseline; gap: 6px; opacity: 0.85; }
+  #scorecard-banner .sb-strip-window {
+    font-size: 10px; color: var(--muted); opacity: 0.7;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  #scorecard-banner .sb-strip-counts {
+    font-size: 11px; color: var(--muted);
+    padding-top: 6px; border-top: 1px solid #242833;
+  }
+  #scorecard-banner .sb-strip-fields {
+    padding-top: 6px; border-top: 1px solid #242833;
+    font-size: 11.5px; line-height: 1.5;
+  }
+  #scorecard-banner .sb-strip-field-row {
+    display: grid; grid-template-columns: 100px 1fr; gap: 8px;
+    align-items: baseline; padding: 2px 0;
+  }
+  #scorecard-banner .sb-strip-field-label {
+    font-size: 11px; font-weight: 600; font-variant-numeric: tabular-nums;
+  }
+  #scorecard-banner .sb-strip-field-list {
+    color: var(--muted); opacity: 0.9; font-size: 11.5px;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  }
+  #scorecard-banner .sb-tile-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+  }
+  #scorecard-banner .sb-tile {
+    background: var(--panel); border: 1px solid #242833; border-radius: 8px;
+    padding: 10px 14px;
+  }
+  #scorecard-banner .sb-tile-title {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-weight: 600; margin-bottom: 8px;
+  }
+  #scorecard-banner .sb-src-row {
+    display: grid; grid-template-columns: 90px 40px 1fr; gap: 8px;
+    align-items: baseline; padding: 3px 0; font-size: 12.5px;
+    line-height: 1.5;
+  }
+  #scorecard-banner .sb-src-count { color: var(--muted); font-variant-numeric: tabular-nums; }
+  #scorecard-banner .sb-src-fields { color: var(--muted); opacity: 0.85; font-size: 11.5px; }
+  #scorecard-banner .sb-health-row {
+    display: grid; grid-template-columns: 130px 1fr; gap: 8px;
+    align-items: baseline; padding: 3px 0; font-size: 12.5px;
+    line-height: 1.55; font-variant-numeric: tabular-nums;
+  }
+  #scorecard-banner .sb-health-label {
+    color: var(--muted); font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.04em; opacity: 0.75;
+  }
+  #scorecard-banner .sb-tile-foot {
+    margin-top: 8px; padding-top: 8px;
+    border-top: 1px solid #242833;
+    font-size: 10.5px; color: var(--muted); opacity: 0.75;
+    line-height: 1.45;
+  }
+  #scorecard-banner .sb-pos { color: #74c38b; font-weight: 600; }
+  #scorecard-banner .sb-neg { color: #d47070; font-weight: 600; }
+  #scorecard-banner .sb-flat { color: #e0d472; font-weight: 500; }
+  /* Halves-agree glyph — superscript-ish next to the primary number. */
+  #per-field-scoring-block .pfs-agree {
+    display: inline-block; margin-left: 3px; opacity: 0.55;
+    font-size: 9px; vertical-align: super; font-weight: 400;
+  }
+  #per-field-scoring-block .pfs-agree-bad { color: #d47070; opacity: 0.75; }
+  /* Vertical group boundary — subtle divider between column groups. */
+  #per-field-scoring-block table.pfs-table td.pfs-group-start,
+  #per-field-scoring-block table.pfs-table th.pfs-group-start {
+    border-left: 1px solid #1c1f28;
+  }
+  #per-field-scoring-block .pfs-pos { color: #74c38b; }
+  #per-field-scoring-block .pfs-neg { color: #d47070; }
+  #per-field-scoring-block .pfs-flat { color: var(--muted); }
+  #per-field-scoring-block .pfs-sample {
+    font-size: 10.5px; color: var(--muted); text-align: left; line-height: 1.4;
+  }
+  #per-field-scoring-block .pfs-foot {
+    margin-top: 10px; padding-top: 10px; border-top: 1px solid #242833;
+    font-size: 11px; color: var(--muted); line-height: 1.5;
+  }
   .octant-rose {
     display: grid;
     grid-template-columns: repeat(3, 64px);
@@ -803,16 +994,16 @@
 </script>
 
 <div id="headlineBox">
-  <div class="hb-title">Right now — what the pipeline is doing</div>
+  <div class="hb-title">Right now — current conditions</div>
   <table class="hb-corr-table">
     <thead>
       <tr>
         <th>Field</th>
-        <th>Raw model</th>
+        <th>Base forecast (L1)</th>
         <th>Production</th>
         <th>Correction</th>
         <th style="border-left:1px solid #232936;padding-left:16px;">Field</th>
-        <th>Raw model</th>
+        <th>Base forecast (L1)</th>
         <th>Production</th>
         <th>Correction</th>
       </tr>
@@ -825,6 +1016,7 @@
     <div>Confidence: <strong id="hbConfidence">—</strong> <span id="hbStationsLine" style="opacity:0.75;">· — stations reporting</span></div>
     <div>Briefing source: <strong id="hbBriefingSource">—</strong> <span id="hbBriefingAge" style="opacity:0.75;">· —</span></div>
   </div>
+  <div style="margin-top:6px;font-size:0.72em;opacity:0.55;">Base forecast (L1) = the selector's chosen raw source fed into our correction stack (HRRR raw or NBM raw, per field per lead). Production = final Wyman Cove forecast (after L2/L3/L4/gates). Correction = Production − L1 for this tick.</div>
 </div>
 
 <!-- ───────────────────── Tri-column current-state band ─────────────────────
@@ -839,10 +1031,23 @@
        - What's being evaluated next: forward calendar + frozen items -->
 <h2 class="section" id="sec-current-state">Current state <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— what's running · improving · being evaluated</span></h2>
 
+<!-- ───────────────────── Per-field scoring (2026-08-19) ─────────────────────
+     Two-step per-field scoring, populated by renderPerFieldScoring() from
+     per_field_scoring.json (hourly refit by the publisher CF).
+       Step 1: SELECTION lift — L1 (selector's pick) vs raw HRRR / raw NBM
+       Step 2: CORRECTION lift — Prod vs L1_selected
+       Headline: TOTAL pipeline lift — Prod vs argmin(raw HRRR, raw NBM)
+     Each numeric cell shows 7d primary + 24h in small type. -->
+<div id="per-field-scoring-block">
+  <div class="pfs-title">Per-field scoring — 7 day / 24 h</div>
+  <div class="pfs-blurb">MAE (mean absolute error) per field, broken out by pipeline stage: <span style="color:#7fb3ff;font-weight:600;">public inputs</span> (raw HRRR + raw NBM) → <span style="color:#c88bff;font-weight:600;">our L1 chooser</span> (picks per cell) → <span style="color:#74c38b;font-weight:600;">local processing</span> (L2/L3/L4/gates) → <span style="color:#e0a86b;font-weight:600;">total result</span>. Each cell shows 7d on top and 24h in small type below. Refits hourly. <em>Warmup note:</em> chooser lift reads 0% or negative on most fields today because L1 falls through to HRRR everywhere until ~09-17 when enough post-Phase-4 pair-log rows have accumulated to fit the chooser table meaningfully.</div>
+  <div id="pfs-content" style="min-height:60px;color:var(--muted);opacity:0.6;">Loading per_field_scoring.json…</div>
+</div>
+
 
 <details open style="margin-bottom:12px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
   <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Per-field pipeline architecture + status</summary>
-  <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">Companion to the Right Now scoreboard above (which carries the numeric MAE columns). This section shows the pipeline shape for each field — HRRR-side cascade, NBM-side cascade (if in scope), which side the selector picks — plus hand-curated narrative context (open work, recent ships, current state). Data-driven cells live in scoreboard v2; this table is the architecture + journal.</div>
+  <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">Companion to the per-field scoring table above (numeric selection/correction/total lifts). This section shows the pipeline shape for each field — HRRR-side cascade, NBM-side cascade (if in scope), which side the selector picks — plus hand-curated narrative context (open work, recent ships, current state). Numeric cells live in the scoring table; this table is the architecture + journal.</div>
   <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
     <thead>
       <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
@@ -2848,34 +3053,49 @@ function renderHeadlineBox(wxDoc) {
                 || (hyp.weighted_bias == null && hyp.weighted_bias_humidity == null);
 
   // ── Current-tick correction table ──
-  // Convention: correction = corrected[0] − raw[0]. Positive = the pipeline
-  // added to raw (warmer, wetter, more wind, etc.); negative = subtracted.
-  // For t/h the raw model isn't stored directly; derive raw = corrected − bias,
-  // where hyp.weighted_bias IS the amount added to raw to get corrected.
+  // Convention: correction = corrected[0] − L1[0]. Positive = the pipeline
+  // added to L1 (warmer, wetter, more wind, etc.); negative = subtracted.
+  // v0.6.442: the Raw column ("Base forecast (L1)") reads
+  // hourly.l1_selected_{field}[0] — the selector's chosen raw source at
+  // lead=0 (raw NBM if selector picked NBM, raw HRRR otherwise). Legacy
+  // fallback to hourly.raw_* if the collector hasn't stamped l1_selected_*
+  // yet (pre-v0.6.442 weather_data.json). Correction = cor − L1 shows the
+  // FULL correction stack (L2 + L3 + L4 + gates), not just the L2 bias.
   const h0 = (arr) => Array.isArray(arr) && arr.length ? arr[0] : null;
+  const l1sel = (field, fallbackArr) => {
+    const v = h0(hourly[`l1_selected_${field}`]);
+    return v != null ? v : h0(fallbackArr);
+  };
+  // t/h have no hourly.raw_temperature / raw_humidity arrays historically —
+  // the collector never preserved them because L2 additive is invertible via
+  // hyp.weighted_bias. Now with l1_selected_t / l1_selected_h we have the
+  // true L1 directly. Legacy fallback (for pre-v0.6.442 payloads only):
+  // derive from corrected minus L2 bias — accurate for t (L1→L2 only) but
+  // silently absorbs L4 diurnal for h (known-lossy; deploy fixes).
   const t_cor = h0(hourly.temperature);
   const h_cor = h0(hourly.humidity);
-  const tb = hyp.weighted_bias;         // t correction (°F)
-  const hb = hyp.weighted_bias_humidity; // h correction (%)
-  const t_raw = (t_cor != null && tb != null) ? t_cor - tb : null;
-  const h_raw = (h_cor != null && hb != null) ? h_cor - hb : null;
+  const tb = hyp.weighted_bias;
+  const hb = hyp.weighted_bias_humidity;
+  const t_raw_legacy = (t_cor != null && tb != null) ? t_cor - tb : null;
+  const h_raw_legacy = (h_cor != null && hb != null) ? h_cor - hb : null;
+  const t_raw = h0(hourly.l1_selected_t);
+  const h_raw = h0(hourly.l1_selected_h);
 
   const rows = [
-    // { label, raw, corrected, correction, unit, decimals }
-    { label: "Temperature (t)",  raw: t_raw, cor: t_cor, delta: tb, unit: "°F", dec: 1 },
-    { label: "Humidity (h)",     raw: h_raw, cor: h_cor, delta: hb, unit: "%",  dec: 0 },
-    { label: "Dew point (dp)",   raw: h0(hourly.dew_point),         cor: h0(hourly.corrected_dew_point), unit: "°F", dec: 1 },
-    { label: "Wind speed (ws)",  raw: h0(hourly.raw_wind_speed),    cor: h0(hourly.wind_speed),    unit: "mph", dec: 1 },
-    { label: "Wind gusts (wg)",  raw: h0(hourly.raw_wind_gusts),    cor: h0(hourly.wind_gusts),    unit: "mph", dec: 1 },
-    { label: "Wind dir (wd)",    raw: h0(hourly.raw_wind_direction),cor: h0(hourly.wind_direction),unit: "°",   dec: 0 },
-    { label: "Cloud cover (cc)", raw: h0(hourly.raw_cloud_cover),   cor: h0(hourly.cloud_cover),   unit: "%",   dec: 0 },
-    { label: "Cloud low (cl)",   raw: h0(hourly.raw_cloud_cover_low), cor: h0(hourly.cloud_cover_low),  unit: "%", dec: 0 },
-    { label: "Cloud mid (cm)",   raw: h0(hourly.raw_cloud_cover_mid), cor: h0(hourly.cloud_cover_mid),  unit: "%", dec: 0 },
-    { label: "Cloud high (ch)",  raw: h0(hourly.raw_cloud_cover_high),cor: h0(hourly.cloud_cover_high), unit: "%", dec: 0 },
-    { label: "Solar rad (sr)",   raw: h0(hourly.raw_direct_radiation),cor: h0(hourly.direct_radiation), unit: "W/m²", dec: 0 },
-    { label: "Precip prob (pp)", raw: h0(hourly.raw_precipitation_probability), cor: h0(hourly.precipitation_probability), unit: "%", dec: 0 },
-    { label: "Precip amt (pa)",  raw: h0(hourly.raw_precipitation), cor: h0(hourly.precipitation),  unit: "in", dec: 2 },
-    { label: "Pressure (pr)",    raw: h0(hourly.raw_pressure_in),   cor: h0(hourly.corrected_pressure_in), unit: "inHg", dec: 2 },
+    { label: "Temperature (t)",  raw: (t_raw != null ? t_raw : t_raw_legacy), cor: t_cor, unit: "°F", dec: 1 },
+    { label: "Humidity (h)",     raw: (h_raw != null ? h_raw : h_raw_legacy), cor: h_cor, unit: "%",  dec: 0 },
+    { label: "Dew point (dp)",   raw: l1sel("dp", hourly.dew_point),            cor: h0(hourly.corrected_dew_point),  unit: "°F", dec: 1 },
+    { label: "Wind speed (ws)",  raw: l1sel("ws", hourly.raw_wind_speed),       cor: h0(hourly.wind_speed),           unit: "mph", dec: 1 },
+    { label: "Wind gusts (wg)",  raw: l1sel("wg", hourly.raw_wind_gusts),       cor: h0(hourly.wind_gusts),           unit: "mph", dec: 1 },
+    { label: "Wind dir (wd)",    raw: l1sel("wd", hourly.raw_wind_direction),   cor: h0(hourly.wind_direction),       unit: "°",   dec: 0 },
+    { label: "Cloud cover (cc)", raw: l1sel("cc", hourly.raw_cloud_cover),      cor: h0(hourly.cloud_cover),          unit: "%",   dec: 0 },
+    { label: "Cloud low (cl)",   raw: l1sel("cl", hourly.raw_cloud_cover_low),  cor: h0(hourly.cloud_cover_low),      unit: "%", dec: 0 },
+    { label: "Cloud mid (cm)",   raw: l1sel("cm", hourly.raw_cloud_cover_mid),  cor: h0(hourly.cloud_cover_mid),      unit: "%", dec: 0 },
+    { label: "Cloud high (ch)",  raw: l1sel("ch", hourly.raw_cloud_cover_high), cor: h0(hourly.cloud_cover_high),     unit: "%", dec: 0 },
+    { label: "Solar rad (sr)",   raw: l1sel("sr", hourly.raw_direct_radiation), cor: h0(hourly.direct_radiation),     unit: "W/m²", dec: 0 },
+    { label: "Precip prob (pp)", raw: l1sel("pp", hourly.raw_precipitation_probability), cor: h0(hourly.precipitation_probability), unit: "%", dec: 0 },
+    { label: "Precip amt (pa)",  raw: l1sel("pa", hourly.raw_precipitation),    cor: h0(hourly.precipitation),        unit: "in", dec: 2 },
+    { label: "Pressure (pr)",    raw: l1sel("pr", hourly.raw_pressure_in),      cor: h0(hourly.corrected_pressure_in), unit: "inHg", dec: 2 },
   ];
 
   const _fmt = (v, unit, dec) => v == null ? "—" : `${Number(v).toFixed(dec)} ${unit}`;
@@ -3194,199 +3414,326 @@ function _legendSwatch(color, checked) {
 // until a follow-up cleanup pass, since they read different sources and
 // still work if scoreboard_v2 hasn't landed yet.
 async function renderScoreboardV2() {
+  // v0.6.442 — replaces the old 4-tile scorecard with:
+  //   1) compact headline strip (3 lift metrics + count breakdowns)
+  //   2) National Source Score tile
+  //   3) Health & Reliability tile
+  // Reads BOTH per_field_scoring.json (for the 3 lift aggregations) and
+  // scoreboard_v2.json (for national-source-score + health/verdict/halves).
   const banner = document.getElementById("scorecard-banner");
-  const hbBody = document.getElementById("hbCorrRows");
+  if (!banner) return;
   const setLoading = (msg) => {
-    if (banner) {
-      banner.hidden = false;
-      banner.innerHTML = `<div style="opacity:0.6;">${msg}</div>`;
-    }
-    if (hbBody) hbBody.innerHTML = `<tr><td colspan="8" style="color:var(--muted);opacity:0.6;padding:8px;">${msg}</td></tr>`;
+    banner.hidden = false;
+    banner.innerHTML = `<div style="opacity:0.6;">${msg}</div>`;
   };
-  setLoading("loading scoreboard_v2.json…");
+  setLoading("loading scoreboard tiles…");
+  let pfs, sb;
+  try {
+    const [pfsRes, sbRes] = await Promise.all([
+      fetch("https://data.wymancove.com/per_field_scoring.json?_=" + Date.now(), { cache: "no-store" }),
+      fetch("https://data.wymancove.com/scoreboard_v2.json?_=" + Date.now(), { cache: "no-store" }),
+    ]);
+    if (!pfsRes.ok) throw new Error("per_field_scoring.json HTTP " + pfsRes.status);
+    if (!sbRes.ok)  throw new Error("scoreboard_v2.json HTTP " + sbRes.status);
+    pfs = await pfsRes.json();
+    sb  = await sbRes.json();
+  } catch (err) {
+    setLoading(`scoreboard not yet available (${err.message}). Publisher runs hourly; check back in ~1h.`);
+    return;
+  }
+  const pf7  = (pfs.windows && pfs.windows["7d"]  && pfs.windows["7d"].per_field)  || {};
+  const pf24 = (pfs.windows && pfs.windows["24h"] && pfs.windows["24h"].per_field) || {};
+  const sbW7 = (sb.windows && sb.windows["7d"] && sb.windows["7d"].rollup) || {};
+
+  // Per-metric field sets — each metric is only meaningful where its
+  // baseline exists. Excludes derived (cc, dp), Brier (pp), and no-MAE-
+  // stack (pa, pr) in all cases.
+  //   Chooser lift: only NBM-scope fields (chooser has a real choice).
+  //   Local lift + Total lift: all fields where the local stack runs.
+  const CHOOSER_FIELDS = ["t","h","ws","wg","wd","ch","sr"];     // 7 — NBM in scope
+  const LOCAL_FIELDS   = ["t","h","ws","wg","wd","cl","cm","ch","sr"]; // 9
+  const _bestRaw = (c) => {
+    const h = c.hrrr_raw_mae, n = c.nbm_raw_mae;
+    if (c.in_nbm_scope && h != null && n != null) return Math.min(h, n);
+    if (h != null) return h;
+    if (n != null) return n;
+    return null;
+  };
+  const _chooserLift = (c) => {
+    const b = _bestRaw(c), l1 = c.l1_selected_mae;
+    return (b != null && l1 != null && b > 0) ? 100 * (b - l1) / b : null;
+  };
+  const _corrAdd = (c) => {
+    const l1 = c.l1_selected_mae, p = c.prod_mae;
+    return (l1 != null && p != null && l1 > 0) ? 100 * (l1 - p) / l1 : null;
+  };
+  const _totalLift = (c) => {
+    const b = _bestRaw(c), p = c.prod_mae;
+    if (c.total_vs_best_raw_pct != null) return c.total_vs_best_raw_pct;
+    return (b != null && p != null && b > 0) ? 100 * (b - p) / b : null;
+  };
+
+  // Aggregate a metric across the given fields: return {mean, counts, fields per bucket}.
+  const _agg = (window, metricFn, fieldSet, beatLabel, regressLabel) => {
+    let sum = 0, n = 0;
+    const beatFields = [], flatFields = [], regressFields = [];
+    for (const f of fieldSet) {
+      const v = metricFn(window[f] || {});
+      if (v == null) continue;
+      sum += v; n += 1;
+      if (v >= 5) beatFields.push(f);
+      else if (v <= -1) regressFields.push(f);
+      else flatFields.push(f);
+    }
+    return {
+      mean: n > 0 ? sum / n : null,
+      n_fields: n,
+      counts: { beat: beatFields.length, flat: flatFields.length, regress: regressFields.length },
+      fields: { beat: beatFields, flat: flatFields, regress: regressFields },
+      beat_label: beatLabel,
+      regress_label: regressLabel,
+    };
+  };
+
+  const chooser7  = _agg(pf7,  _chooserLift, CHOOSER_FIELDS, "winning", "losing");
+  const chooser24 = _agg(pf24, _chooserLift, CHOOSER_FIELDS, "winning", "losing");
+  const local7    = _agg(pf7,  _corrAdd,     LOCAL_FIELDS,   "winning", "losing");
+  const local24   = _agg(pf24, _corrAdd,     LOCAL_FIELDS,   "winning", "losing");
+  const total7    = _agg(pf7,  _totalLift,   LOCAL_FIELDS,   "winning", "losing");
+  const total24   = _agg(pf24, _totalLift,   LOCAL_FIELDS,   "winning", "losing");
+
+  const pct = (v) => v == null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(1) + "%";
+  const liftClass = (v) => v == null ? "sb-flat"
+    : v >= 5 ? "sb-pos"
+    : v <= -1 ? "sb-neg"
+    : "sb-flat";
+  const liftSpan = (v, size) => `<span class="${liftClass(v)}" style="font-size:${size};font-weight:600;">${pct(v)}</span>`;
+
+  // Headline strip cell — one metric, both windows, count breakdown + field lists.
+  const _fields = (arr) => (arr && arr.length) ? arr.join(" · ") : "—";
+  const stripCell = (title, subtitle, accentColor, agg7, agg24) => `
+    <div class="sb-strip-cell">
+      <div class="sb-strip-title" style="color:${accentColor};">${title}</div>
+      <div class="sb-strip-sub">${subtitle}</div>
+      <div class="sb-strip-nums">
+        <div class="sb-strip-primary">${liftSpan(agg7.mean, "22px")} <span class="sb-strip-window">7d mean</span></div>
+        <div class="sb-strip-secondary">${liftSpan(agg24.mean, "13px")} <span class="sb-strip-window">24h mean</span></div>
+      </div>
+      <div class="sb-strip-fields">
+        <div class="sb-strip-field-row">
+          <span class="sb-pos sb-strip-field-label">${agg7.counts.beat} ${agg7.beat_label}</span>
+          <span class="sb-strip-field-list">${_fields(agg7.fields.beat)}</span>
+        </div>
+        <div class="sb-strip-field-row">
+          <span class="sb-flat sb-strip-field-label">${agg7.counts.flat} flat</span>
+          <span class="sb-strip-field-list">${_fields(agg7.fields.flat)}</span>
+        </div>
+        <div class="sb-strip-field-row">
+          <span class="sb-neg sb-strip-field-label">${agg7.counts.regress} ${agg7.regress_label}</span>
+          <span class="sb-strip-field-list">${_fields(agg7.fields.regress)}</span>
+        </div>
+      </div>
+    </div>`;
+
+  // National Source Score — pulls from scoreboard_v2's rollup.
+  const src = sbW7.national_source_score || {};
+  const srcLine = (label, count, fields, color) => `
+    <div class="sb-src-row">
+      <span style="color:${color};font-weight:600;">${label}</span>
+      <span class="sb-src-count">${count}</span>
+      <span class="sb-src-fields">${(fields || []).join(" · ") || "—"}</span>
+    </div>`;
+
+  // Health & Reliability — verdict counts + confidence bins + halves agree.
+  const health = sbW7.health || {};
+  const vc = sbW7.verdict_counts || {};
+  const dd = sbW7.cell_drilldown || {};
+  const halvesPct = dd.halves_agree_pct_of_fields;
+  const hcCellsPct = dd.selector_high_conf_pct_of_cells;
+
+  banner.hidden = false;
+  banner.style.background = "transparent";
+  banner.style.border = "0";
+  banner.style.padding = "0";
+  banner.innerHTML = `
+    <div class="sb-headline-strip">
+      ${stripCell("L1 chooser lift", "vs better raw source", "#c88bff", chooser7, chooser24)}
+      ${stripCell("Local lift",       "Prod vs L1",           "#74c38b", local7,   local24)}
+      ${stripCell("Total result",     "Prod vs better raw",   "#e0a86b", total7,   total24)}
+    </div>
+    <div class="sb-tile-row">
+      <div class="sb-tile">
+        <div class="sb-tile-title" style="color:#7fb3ff;">National source score <span style="opacity:0.6;font-weight:400;">(7d, lower MAE wins)</span></div>
+        ${srcLine("NBM wins",  src.nbm_wins_count  || 0, src.nbm_wins_fields,  "#7fb3ff")}
+        ${srcLine("HRRR wins", src.hrrr_wins_count || 0, src.hrrr_wins_fields, "#c8c8c8")}
+        ${srcLine("Insufficient data", src.insufficient_count || 0, src.insufficient, "#8a93a3")}
+        <div class="sb-tile-foot">Which raw model has lower field-level MAE. NBM winning is the "chooser should flip" signal.</div>
+      </div>
+      <div class="sb-tile">
+        <div class="sb-tile-title" style="color:#e0a86b;">Health &amp; reliability <span style="opacity:0.6;font-weight:400;">(7d)</span></div>
+        <div class="sb-health-row">
+          <span class="sb-health-label">Confidence</span>
+          <div>
+            <span class="sb-pos">HIGH ${health.HIGH || 0}</span> ·
+            <span class="sb-flat">MED ${health.MED || 0}</span> ·
+            <span style="color:#8a93a3;">LOW ${health.LOW || 0}</span>
+          </div>
+        </div>
+        <div class="sb-health-row">
+          <span class="sb-health-label">HIGH-conf cells</span>
+          <div>
+            <strong>${hcCellsPct != null ? hcCellsPct.toFixed(1) + "%" : "—"}</strong>
+            <span style="opacity:0.55;">of ${dd.n_cells_scored || 0} scored</span>
+          </div>
+        </div>
+        <div class="sb-health-row">
+          <span class="sb-health-label">Halves agree</span>
+          <div>
+            <strong style="color:${(halvesPct || 0) >= 60 ? '#74c38b' : '#e0a070'};">${halvesPct != null ? halvesPct.toFixed(1) + "%" : "—"}</strong>
+            <span style="opacity:0.55;">of fields</span>
+          </div>
+        </div>
+        <div class="sb-tile-foot">Trust signals separated from scoring. Halves agree = both halves of the 7d window show the same sign of lift.</div>
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;opacity:0.55;text-align:right;">Fitted ${pfs.generated_at || "?"} · refits hourly</div>`;
+}
+
+// ── Per-field scoring (2026-08-19). Fetches per_field_scoring.json (hourly
+// refit by publisher CF) and renders the two-step per-field scoring table
+// into #per-field-scoring-block. Companion to renderScoreboardV2's aggregate
+// tiles: this is the per-field cut of the same story.
+//   Selection lift: L1_selected vs raw HRRR / vs raw NBM
+//   Correction lift: Prod vs L1_selected
+//   Total pipeline lift: Prod vs argmin(raw HRRR, raw NBM)
+// Each numeric cell shows 7d primary + 24h in small type. Positive = we win.
+async function renderPerFieldScoring() {
+  const host = document.getElementById("pfs-content");
+  if (!host) return;
   let d;
   try {
-    const res = await fetch("https://data.wymancove.com/scoreboard_v2.json?_=" + Date.now(), { cache: "no-store" });
+    const res = await fetch("https://data.wymancove.com/per_field_scoring.json?_=" + Date.now(), { cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     d = await res.json();
   } catch (err) {
-    setLoading(`scoreboard_v2.json not yet available (${err.message}). Publisher runs hourly; check back in ~1h.`);
+    host.innerHTML = `<div style="opacity:0.6;padding:8px;">per_field_scoring.json not yet available (${err.message}). Publisher runs hourly; check back in ~1h.</div>`;
     return;
   }
-  const win7 = (d.windows && d.windows["7d"]) || {};
-  const win24 = (d.windows && d.windows["24h"]) || {};
-  const r7 = win7.rollup || {};
-  const r24 = win24.rollup || {};
-
-  // ── Sections 1-4 rollup tiles ─────────────────────────────────────
-  const pct = (v) => (v == null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(1) + "%");
-  const colorFor = (v) => v == null ? "#8a93a3" : v > 3 ? "#4ad29a" : v < -3 ? "#fb7c5c" : "#e0d472";
-  const tile = (title, body) => `<div style="border:1px solid #1f2f3a;background:#0e1620;border-radius:6px;padding:10px 12px;min-width:0;">
-    <div style="font-size:0.72em;letter-spacing:0.05em;text-transform:uppercase;opacity:0.7;margin-bottom:6px;">${title}</div>
-    ${body}
-  </div>`;
-  // Section 1 as a table mirroring the mockup, all percentage-based
-  // (no unit-mixed absolute MAE). Convention: positive = Wyman Cove
-  // beats best-public baseline. Kept opposite of the mockup's
-  // "negative-as-improvement" because our whole page reads "positive
-  // lift = win"; flipping here alone would be a trap.
-  const cellPct = (v, dp=1) => v == null
-    ? '<span style="opacity:0.4;">—</span>'
-    : `<span style="color:${colorFor(v)};font-weight:600;">${v >= 0 ? "+" : ""}${v.toFixed(dp)}%</span>`;
-  // Tile 1: simple headline rollup — analog to the OLD scoreboard's
-  // "Overall vs raw -10.5% MAE mean · 7-day", with best-public replacing
-  // raw. Arithmetic mean of per-field lift % (unit-free per field, then
-  // averaged with the same exclusion set the old scoreboard used).
-  const winFields7 = r7.winning_fields || {};
-  const winFields24 = r24.winning_fields || {};
-  const valueAddTile = tile("1 · Prod vs Best-Public",
-    `<div style="font-size:0.72em;opacity:0.65;font-style:italic;margin-bottom:8px;">Is Wyman Cove better than the best free public forecast?</div>
-     <div style="display:flex;align-items:baseline;gap:8px;">
-       <strong style="color:${colorFor(r7.value_add_mean_pct)};font-size:1.5em;">${pct(r7.value_add_mean_pct)}</strong>
-       <span style="font-size:0.72em;opacity:0.6;">MAE mean · 7-day (n=${r7.n_fields_touched || 0} touched)</span>
-     </div>
-     <div style="margin-top:4px;display:flex;align-items:baseline;gap:8px;">
-       <strong style="color:${colorFor(r24.value_add_mean_pct)};font-size:1.05em;">${pct(r24.value_add_mean_pct)}</strong>
-       <span style="font-size:0.72em;opacity:0.6;">MAE mean · 24-hour</span>
-     </div>
-     <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #1a2530;font-size:0.78em;opacity:0.8;">
-       <div>Median 7d/24h: <strong style="color:${colorFor(r7.value_add_median_pct)};">${pct(r7.value_add_median_pct)}</strong> / <strong style="color:${colorFor(r24.value_add_median_pct)};">${pct(r24.value_add_median_pct)}</strong></div>
-       <div style="margin-top:2px;">All fields (incl derived/Brier): <strong style="color:${colorFor(r7.value_add_mean_all_fields)};">${pct(r7.value_add_mean_all_fields)}</strong></div>
-       <div style="margin-top:2px;">Winning fields 7d/24h: <strong style="color:#4ad29a;">${winFields7.green_count||0}</strong>/<strong style="color:#e0d472;">${winFields7.amber_count||0}</strong>/<strong style="color:#fb7c5c;">${winFields7.red_count||0}</strong> · <strong style="color:#4ad29a;">${winFields24.green_count||0}</strong>/<strong style="color:#e0d472;">${winFields24.amber_count||0}</strong>/<strong style="color:#fb7c5c;">${winFields24.red_count||0}</strong></div>
-     </div>
-     <div style="margin-top:6px;font-size:0.68em;opacity:0.55;">
-       <strong>Positive %</strong> = Wyman Cove Prod beats best-public baseline. Arithmetic mean of per-field lift % — unit-free per field. Best-public = argmin(HRRR, NBM) for in-scope fields (t/ws/wg/wd/h); HRRR only for out-of-scope. Touched excludes ${(r7.excluded_fields||[]).join("/")}.
-     </div>`);
-  const src = r7.national_source_score || {};
-  const nationalTile = tile("2 · National Source Score (7d)",
-    `<div style="font-size:0.9em;line-height:1.6;">
-       <div><span style="color:#7fb3ff;font-weight:600;">NBM wins</span> ${src.nbm_wins_count || 0}: <span style="opacity:0.7;">${(src.nbm_wins_fields || []).join(" · ") || "—"}</span></div>
-       <div><span style="color:#c8c8c8;font-weight:600;">HRRR wins</span> ${src.hrrr_wins_count || 0}: <span style="opacity:0.7;">${(src.hrrr_wins_fields || []).join(" · ") || "—"}</span></div>
-       <div><span style="opacity:0.55;">Insufficient data</span> ${src.insufficient_count || 0}: <span style="opacity:0.7;">${(src.insufficient || []).join(" · ") || "—"}</span></div>
-     </div>`);
-  const cv = r7.local_correction_value || {};
-  const correctionTile = tile("3 · Local Correction Value (Prod vs Selected)",
-    `<div style="font-size:0.9em;line-height:1.6;">
-       <div><span style="color:#4ad29a;font-weight:600;">Positive lift</span> ${cv.positive_count || 0}: <span style="opacity:0.7;">${(cv.positive_fields || []).join(" · ") || "—"}</span></div>
-       <div><span style="color:#e0d472;font-weight:600;">Flat</span> ${cv.flat_count || 0} <span style="opacity:0.6;font-size:0.85em;">(|Δ|&lt;2%)</span>: <span style="opacity:0.7;">${(cv.flat_fields || []).join(" · ") || "—"}</span></div>
-       <div><span style="color:#fb7c5c;font-weight:600;">Negative lift</span> ${cv.negative_count || 0}: <span style="opacity:0.7;">${(cv.negative_fields || []).join(" · ") || "—"}</span></div>
-       <div style="margin-top:6px;font-size:0.68em;opacity:0.45;">Does Wyman Cove add value on top of the source the selector picked?</div>
-     </div>`);
-  const win = r7.winning_fields || {};
-  const health = r7.health || {};
-  const vc = r7.verdict_counts || {};
-  const dd = r7.cell_drilldown || {};
-  const healthTile = tile("4 · Health & Reliability",
-    `<div style="font-size:0.9em;line-height:1.6;">
-       <div><span style="color:#4ad29a;">Green</span> ${win.green_count || 0} · <span style="color:#e0d472;">Amber</span> ${win.amber_count || 0} · <span style="color:#fb7c5c;">Red</span> ${win.red_count || 0} <span style="opacity:0.6;font-size:0.85em;">fields</span></div>
-       <div style="margin-top:2px;">Verdicts — <strong style="color:#4ad29a;">STRONG</strong> ${vc.STRONG || 0} · <strong style="color:#7fb3ff;">GOOD</strong> ${vc.GOOD || 0} · <strong style="color:#e0d472;">WATCH</strong> ${vc.WATCH || 0} · <strong style="color:#fb7c5c;">REGRESS</strong> ${vc.REGRESS || 0}</div>
-       <div style="margin-top:6px;padding-top:5px;border-top:1px dashed #1a2530;">Confidence bins: <strong style="color:#4ad29a;">HIGH</strong> ${health.HIGH || 0} · <strong style="color:#e0d472;">MED</strong> ${health.MED || 0} · <strong style="color:#8a93a3;">LOW</strong> ${health.LOW || 0} <span style="opacity:0.55;">(fields)</span></div>
-       <div style="margin-top:2px;font-size:0.85em;">HIGH-conf cells: <strong style="color:#4ad29a;">${dd.selector_high_conf_pct_of_cells != null ? dd.selector_high_conf_pct_of_cells.toFixed(1) + "%" : "—"}</strong> of ${dd.n_cells_scored || 0} scored</div>
-       <div style="margin-top:2px;font-size:0.85em;">Halves agree: <strong style="color:${(dd.halves_agree_pct_of_fields||0) >= 60 ? "#4ad29a" : "#e0a070"};">${dd.halves_agree_pct_of_fields != null ? dd.halves_agree_pct_of_fields.toFixed(1) + "%" : "—"}</strong> of fields</div>
-     </div>`);
-  const drilldownFmt = (cell) => {
-    if (!cell) return "—";
-    const lift = cell.lift_pct;
-    const color = lift >= 0 ? "#4ad29a" : "#fb7c5c";
-    return `<code>${cell.field}@${cell.band}h</code> <strong style="color:${color};">${lift >= 0 ? "+" : ""}${lift.toFixed(1)}%</strong> <span style="opacity:0.55;font-size:0.85em;">n=${cell.n.toLocaleString()}</span>`;
-  };
-  const drilldownTile = tile("5 · Cell drill-down (per field × lead-band)",
-    `<div style="font-size:0.9em;line-height:1.6;">
-       <div><span style="color:#4ad29a;font-weight:600;">Largest gain:</span> ${drilldownFmt(dd.largest_gain)}</div>
-       <div><span style="color:#fb7c5c;font-weight:600;">Largest regress:</span> ${drilldownFmt(dd.largest_regression)}</div>
-       <div style="margin-top:6px;font-size:0.72em;opacity:0.55;">${dd.n_cells_scored || 0} (field × band) cells scored (min ${d.thresholds && d.thresholds.confidence ? d.thresholds.confidence.med_n : 50} pairs). Per-cell drilldown data in <code>per_field_band</code> of scoreboard_v2.json.</div>
-     </div>`);
-
-  if (banner) {
-    banner.hidden = false;
-    banner.style.background = "transparent";
-    banner.style.border = "0";
-    banner.style.padding = "0";
-    banner.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;">
-        ${valueAddTile}
-        ${nationalTile}
-        ${correctionTile}
-        ${healthTile}
-        ${drilldownTile}
-      </div>
-      <div style="margin-top:8px;font-size:0.72em;opacity:0.55;text-align:right;">Scoreboard v2 · fitted_at ${d.generated_at || "?"} · <span style="color:#7fb3ff;cursor:help;" title="lift_vs_best_public_pct = (best_public_mae − prod_mae) / best_public_mae × 100. best_public = argmin(hrrr_raw, nbm_raw). Post-Phase-4 (2026-08-19) scoreboard. Refits hourly.">what these mean</span></div>`;
-  }
-
-  // ── Section 5: per-field table in #headlineBox ────────────────────
-  const perField = win7.per_field || {};
-  const perField24 = win24.per_field || {};
+  const pf7 = (d.windows && d.windows["7d"] && d.windows["7d"].per_field) || {};
+  const pf24 = (d.windows && d.windows["24h"] && d.windows["24h"].per_field) || {};
   const FIELD_ORDER = ["t","h","dp","ws","wg","wd","cc","cl","cm","ch","sr","pp","pa","pr"];
+  // Field labels with units baked in (units removed from cells).
   const FIELD_LABELS = {
-    t: "Temperature (°F)", h: "Humidity (%)", dp: "Dewpoint (°F)",
-    ws: "Wind speed (mph)", wg: "Wind gust (mph)", wd: "Wind dir (°)",
-    cc: "Cloud cover (%)", cl: "Cloud low (%)", cm: "Cloud mid (%)", ch: "Cloud high (%)",
-    sr: "Solar rad (W/m²)", pp: "Precip prob (%)", pa: "Precip amt (in)", pr: "Pressure (inHg)",
+    t:  "Temperature (°F)",   h:  "Humidity (%)",       dp: "Dewpoint (°F)",
+    ws: "Wind speed (mph)",   wg: "Wind gust (mph)",    wd: "Wind dir (°)",
+    cc: "Cloud cover (%)",    cl: "Cloud low (%)",      cm: "Cloud mid (%)",
+    ch: "Cloud high (%)",     sr: "Solar rad (W/m²)",   pp: "Precip prob (%)",
+    pa: "Precip amt (in)",    pr: "Pressure (inHg)",
   };
-  const CONF_COLOR = { HIGH: "#4ad29a", MED: "#e0d472", LOW: "#8a93a3", NA: "#6a707c" };
-  const VERDICT_COLOR = { STRONG: "#4ad29a", GOOD: "#7fb3ff", WATCH: "#e0d472", REGRESS: "#fb7c5c", NA: "#6a707c" };
+  // Display precision per field (units already in the label).
+  const DP = {
+    t: 2, h: 2, dp: 2, ws: 2, wg: 2, wd: 1,
+    cc: 2, cl: 2, cm: 2, ch: 2, sr: 1, pp: 2, pa: 3, pr: 3,
+  };
+  const classFor = (v) => {
+    if (v == null) return "pfs-flat";
+    if (v >= 5) return "pfs-pos";
+    if (v <= -1) return "pfs-neg";
+    return "";
+  };
+  const fmtMae = (v, f) => {
+    if (v == null) return '<span class="pfs-flat">—</span>';
+    return v.toFixed(DP[f] != null ? DP[f] : 2);
+  };
+  const fmtPct = (v) => {
+    if (v == null) return '<span class="pfs-flat">—</span>';
+    const sign = v >= 0 ? "+" : "";
+    return `<span class="${classFor(v)}">${sign}${v.toFixed(1)}%</span>`;
+  };
+  // Halves-agree superscript glyph — only shown when both halves are thin
+  // enough to compute AND they disagree on sign (a red ✗). Silent when
+  // they agree (the common case) so the cell stays clean.
+  const agreeMark = (a) => a === false ? '<span class="pfs-agree pfs-agree-bad" title="Halves disagree on sign — churning">✗</span>' : '';
 
-  const hbHost = document.getElementById("headlineBox");
-  if (hbHost) {
-    // Replace the old 8-column table with a wide per-field detail table.
-    hbHost.innerHTML = `
-      <div class="hb-title">Right now — what the pipeline is doing <span style="font-weight:normal;opacity:0.6;font-size:0.85em;">(scoreboard v2 · per-field, 7d window)</span></div>
-      <table class="hb-corr-table" style="width:100%;font-size:0.85em;">
-        <thead>
-          <tr>
-            <th style="text-align:left;">Field</th>
-            <th title="Raw Open-Meteo HRRR/GFS MAE over the 7-day window">HRRR raw</th>
-            <th title="Raw NBM (National Blend of Models) MAE over the 7-day window">NBM raw</th>
-            <th title="Which source the selector picks for user-visible output">Selected</th>
-            <th title="Wyman Cove Production MAE — what the user actually sees">Prod</th>
-            <th title="(best_public − prod) / best_public × 100; positive = Wyman Cove beats the best free option">Lift vs best (7d)</th>
-            <th title="Same metric on the last 24 hours — catches fresh regressions">24h</th>
-            <th title="First-half vs second-half lift; matching signs = stable">Halves A/B</th>
-            <th title="n = matched forecast-obs pairs in the 7d window">n</th>
-            <th>Confidence</th>
-            <th>Verdict</th>
-          </tr>
-        </thead>
-        <tbody id="hbCorrRows"></tbody>
-      </table>
-      <div class="hb-ops-row" style="margin-top:6px;font-size:0.78em;opacity:0.55;">
-        Lift = positive means Wyman Cove beats the best free public forecast for this field. Selected shows which national source the selector picks; Prod is what the user sees. Best-public = argmin(HRRR raw, NBM raw) per field.
-      </div>`;
-  }
-  const rowsHost = document.getElementById("hbCorrRows");
-  if (rowsHost) {
-    const rows = FIELD_ORDER.map(f => {
-      const c = perField[f] || {};
-      const c24 = perField24[f] || {};
-      const fmt = (v, dp=2) => (v == null ? '<span style="opacity:0.4;">—</span>' : v.toFixed(dp));
-      const lift = c.lift_vs_best_public_pct;
-      const lift24 = c24.lift_vs_best_public_pct;
-      const liftColor = lift == null ? "#8a93a3" : lift >= 3 ? "#4ad29a" : lift <= -3 ? "#fb7c5c" : "#e0d472";
-      const lift24Color = lift24 == null ? "#8a93a3" : lift24 >= 3 ? "#4ad29a" : lift24 <= -3 ? "#fb7c5c" : "#e0d472";
-      const sel = c.selector_pick || "na";
-      const selColor = sel === "nbm" ? "#7fb3ff" : sel === "hrrr" ? "#c8c8c8" : "#6a707c";
-      const ha = c.halves_a_lift_pct, hb = c.halves_b_lift_pct;
-      const halvesStr = (ha == null || hb == null)
-        ? '<span style="opacity:0.4;">—</span>'
-        : `<span style="color:${c.halves_agree ? '#4ad29a' : '#e0a070'};">${ha >= 0 ? '+' : ''}${ha.toFixed(1)}% / ${hb >= 0 ? '+' : ''}${hb.toFixed(1)}%</span>`;
-      const conf = c.confidence || "NA";
-      const verdict = c.verdict || "NA";
-      return `<tr>
-        <td style="text-align:left;font-weight:600;"><code>${f}</code> <span style="opacity:0.55;font-weight:normal;font-size:0.82em;">${FIELD_LABELS[f] || ""}</span></td>
-        <td>${fmt(c.hrrr_raw_mae)}</td>
-        <td>${fmt(c.nbm_raw_mae)}</td>
-        <td style="color:${selColor};font-weight:600;">${sel.toUpperCase()}</td>
-        <td style="font-weight:600;">${fmt(c.prod_mae)}</td>
-        <td style="color:${liftColor};font-weight:600;">${lift == null ? '<span style="opacity:0.4;">—</span>' : (lift >= 0 ? '+' : '') + lift.toFixed(1) + '%'}</td>
-        <td style="color:${lift24Color};">${lift24 == null ? '<span style="opacity:0.4;">—</span>' : (lift24 >= 0 ? '+' : '') + lift24.toFixed(1) + '%'}</td>
-        <td>${halvesStr}</td>
-        <td style="opacity:0.75;">${(c.n || 0).toLocaleString()}</td>
-        <td style="color:${CONF_COLOR[conf]};font-weight:600;font-size:0.82em;">${conf}</td>
-        <td style="color:${VERDICT_COLOR[verdict]};font-weight:700;font-size:0.82em;">${verdict}</td>
-      </tr>`;
-    }).join("");
-    rowsHost.innerHTML = rows;
-  }
+  const _bestRaw = (c) => {
+    const h = c.hrrr_raw_mae, n = c.nbm_raw_mae;
+    if (c.in_nbm_scope && h != null && n != null) return Math.min(h, n);
+    if (h != null) return h;
+    if (n != null) return n;
+    return null;
+  };
+  const _chooserLift = (c) => {
+    const b = _bestRaw(c), l1 = c.l1_selected_mae;
+    return (b != null && l1 != null && b > 0) ? 100 * (b - l1) / b : null;
+  };
+  const _corrAdd = (c) => {
+    const l1 = c.l1_selected_mae, p = c.prod_mae;
+    return (l1 != null && p != null && l1 > 0) ? 100 * (l1 - p) / l1 : null;
+  };
+
+  // Stacked cell: 7d primary on top, 24h secondary below. Numeric.
+  const stackedMae = (v7, v24, f) => `
+    <span class="pfs-cell-7d">${fmtMae(v7, f)}</span>
+    <span class="pfs-cell-24h">${fmtMae(v24, f)}</span>`;
+  // Stacked cell for percentage lifts + optional halves-disagree glyph.
+  const stackedPct = (v7, v24, agree7, agree24) => `
+    <span class="pfs-cell-7d">${fmtPct(v7)}${agreeMark(agree7)}</span>
+    <span class="pfs-cell-24h">${fmtPct(v24)}${agreeMark(agree24)}</span>`;
+
+  const rows = FIELD_ORDER.map(f => {
+    const c = pf7[f] || {};
+    const c24 = pf24[f] || {};
+    const ha7 = c.halves_agree || {};
+    const ha24 = c24.halves_agree || {};
+    const chooser7 = _chooserLift(c);
+    const chooser24 = _chooserLift(c24);
+    const corr7 = _corrAdd(c);
+    const corr24 = _corrAdd(c24);
+    // Total pipeline lift (Prod vs best raw) — precomputed field, but
+    // fall back to derivation if missing.
+    const total7 = (c.total_vs_best_raw_pct != null) ? c.total_vs_best_raw_pct
+      : ((_bestRaw(c) != null && c.prod_mae != null && _bestRaw(c) > 0)
+         ? 100 * (_bestRaw(c) - c.prod_mae) / _bestRaw(c) : null);
+    const total24 = (c24.total_vs_best_raw_pct != null) ? c24.total_vs_best_raw_pct
+      : ((_bestRaw(c24) != null && c24.prod_mae != null && _bestRaw(c24) > 0)
+         ? 100 * (_bestRaw(c24) - c24.prod_mae) / _bestRaw(c24) : null);
+    return `<tr>
+      <td><div class="pfs-row-labels"><span><code style="font-weight:600;">${f}</code> <span style="opacity:0.85;">${FIELD_LABELS[f] || ""}</span></span><span class="pfs-row-marks"><span>7d</span><span>24h</span></span></div></td>
+      <td class="pfs-group-start">${stackedMae(c.hrrr_raw_mae, c24.hrrr_raw_mae, f)}</td>
+      <td>${stackedMae(c.nbm_raw_mae, c24.nbm_raw_mae, f)}</td>
+      <td class="pfs-group-start">${stackedMae(c.l1_selected_mae, c24.l1_selected_mae, f)}</td>
+      <td>${stackedPct(chooser7, chooser24, null, null)}</td>
+      <td class="pfs-group-start">${stackedMae(c.prod_mae, c24.prod_mae, f)}</td>
+      <td>${stackedPct(corr7, corr24, ha7.corr_vs_l1, ha24.corr_vs_l1)}</td>
+      <td class="pfs-group-start pfs-total">${stackedPct(total7, total24, ha7.total_vs_best_raw, ha24.total_vs_best_raw)}</td>
+    </tr>`;
+  }).join("");
+
+  host.innerHTML = `
+    <table class="pfs-table">
+      <thead>
+        <tr>
+          <th class="pfs-col" rowspan="2" style="text-align:left;vertical-align:bottom;">Field</th>
+          <th class="pfs-group pfs-group-inputs pfs-group-start" colspan="2">Public inputs (raw models)</th>
+          <th class="pfs-group pfs-group-chooser pfs-group-start" colspan="2">Wyman Cove L1 chooser</th>
+          <th class="pfs-group pfs-group-local pfs-group-start" colspan="2">Wyman Cove correction stack</th>
+          <th class="pfs-group pfs-group-total pfs-group-start" colspan="1">Total result</th>
+        </tr>
+        <tr>
+          <th class="pfs-col pfs-group-start" title="Mean absolute error of the raw HRRR forecast. 7d primary, 24h below.">HRRR MAE</th>
+          <th class="pfs-col" title="Mean absolute error of the raw NBM forecast. Dash = NBM does not emit this field.">NBM MAE</th>
+          <th class="pfs-col pfs-group-start" title="Mean absolute error of L1 — the selector's chosen raw source per cell.">L1 MAE</th>
+          <th class="pfs-col" title="(better raw MAE − L1 MAE) / better raw MAE × 100. Positive = the selector's per-cell picks beat picking a single raw across the whole field. During warmup this reads 0% because the chooser still falls through to HRRR everywhere.">Chooser lift<span class="pfs-sub">vs better raw</span></th>
+          <th class="pfs-col pfs-group-start" title="Mean absolute error of the final Wyman Cove Production forecast (after L2 / L3 / L4 / gates).">Prod MAE</th>
+          <th class="pfs-col" title="(L1 MAE − Prod MAE) / L1 MAE × 100. Positive = our local correction stack (L2/L3/L4/gates) adds value on top of the chooser's pick.">Local lift<span class="pfs-sub">Prod vs L1</span></th>
+          <th class="pfs-col pfs-group-start" title="(better raw MAE − Prod MAE) / better raw MAE × 100. Positive = Wyman Cove Production beats the best free public raw for this field.">Production lift<span class="pfs-sub">vs better raw</span></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="pfs-foot">
+      <strong>How to read:</strong> Lower MAE is better. Each cell shows <strong>7d</strong> on top and 24h below in smaller type. Positive lift (<span class="pfs-pos">green</span>) = improvement · negative lift (<span class="pfs-neg">red</span>) = regression · neutral otherwise. A small <span class="pfs-agree pfs-agree-bad">✗</span> on a lift means the two halves of the window disagreed on sign (churning). L1 = the chooser's picked raw source per cell (HRRR or NBM). All units are native to the field. Refits hourly · fitted ${d.generated_at || "?"}.
+    </div>`;
 }
 
 // ── Scorecard banner: one-line summary of the stack's overall performance.
@@ -6669,6 +7016,9 @@ async function load() {
   // otherwise. Retires the pre-Phase-4 renderScorecardBanner + per-field
   // snapshot table.
   renderScoreboardV2();
+  // Per-field two-step scoring — populates #per-field-scoring-block under
+  // the "Current state" header. Async fetch of per_field_scoring.json.
+  renderPerFieldScoring();
   // Legacy hand-curated pf-snapshot table lower on the page still populates
   // its numeric 7d/24h columns from tsDoc — the v2 scoreboard replaces
   // the top tiles and #headlineBox but not that detail block.
