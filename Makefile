@@ -54,10 +54,15 @@ deploy-nbm-backfill:
 	  --trigger-http \
 	  --no-allow-unauthenticated \
 	  --timeout=3600s \
-	  --memory=8192MB \
-	  --cpu=8 \
+	  --memory=4096MB \
+	  --cpu=2 \
 	  --max-instances=10 \
 	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811
+
+# Backfill CF is I/O-bound (byte-range fetches from NBM S3), not CPU-bound.
+# Downsized from 8vCPU/8GB to 2vCPU/4GB on 2026-08-19 after cost audit —
+# per-invocation cost dropped ~$0.76 -> ~$0.20. Throughput per-cycle nearly
+# identical because the bottleneck is network + cfgrib decode ordering.
 
 logs-nbm-backfill:
 	gcloud functions logs read myweather-nbm-backfill --region=us-east1 --limit=50
