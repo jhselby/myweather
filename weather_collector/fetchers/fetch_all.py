@@ -115,6 +115,7 @@ def fetch_all_sources():
         "buoy_44013": buoy_meta,
         "wu_stations": wu_meta,
         "nws_alerts": alerts_meta,
+        "nws_gridpoints": nws_gridpoints_meta,  # v0.6.432: exposed as a source
         "pirate_weather": pirate_meta,
         "ebird": birds_meta,
         "tempest": tempest_meta,

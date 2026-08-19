@@ -11,3 +11,11 @@ def run(request):
 def publish(request):
     from publisher.main import publish as _publish
     return _publish(request)
+
+def backfill(request):
+    from nbm_backfill.main import backfill as _backfill
+    return _backfill(request)
+
+def nbm_ingest(request):
+    from nbm_ingester.main import ingest as _ingest
+    return _ingest(request)

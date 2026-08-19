@@ -2,7 +2,7 @@
 
 const SOURCE_META = {
   gfs_current:  { name: "GFS",          desc: "Global Forecast System — current conditions baseline (NOAA)" },
-  hrrr_hourly:  { name: "HRRR",         desc: "High-Resolution Rapid Refresh — 48h hourly forecast, cloud layers, upper-air (NOAA)" },
+  hrrr_hourly:  { name: "HRRR",         desc: "High-Resolution Rapid Refresh — 48h hourly forecast, cloud layers, upper-air (NOAA via Open-Meteo). Default L1 seed for every field; for t / ws / wd at leads ≥6h the L1 router (v0.6.432) substitutes NBM instead." },
   ecmwf_daily:  { name: "ECMWF",        desc: "European Centre model — 10-day daily forecast (Open-Meteo)" },
   pws:          { name: "PWS",           desc: "Single weather station KMAMARBL63 (Castle Hill, 0.27mi) — fallback only" },
   wu_stations:  { name: "Mesonet",      desc: "Distance- and elevation-weighted, quality-filtered local personal weather stations" },
@@ -11,6 +11,7 @@ const SOURCE_META = {
   buoy_44013:   { name: "Buoy 44013",   desc: "NOAA Boston Buoy (16mi ENE) — water temp, waves, offshore wind (NDBC)" },
   tides:        { name: "Tides",        desc: "NOAA CO-OPS tide predictions — Salem Harbor station 8442645" },
   nws_alerts:   { name: "NWS Alerts",   desc: "Active NWS watches, warnings, advisories for Marblehead (api.weather.gov)" },
+  nws_gridpoints: { name: "NWS / NBM",  desc: "NWS gridpoint hourly forecast — NBM (National Blend of Models) at our cell. L1 router source (v0.6.432) for temperature / wind speed / wind direction at leads ≥6h, where 14-day head-to-head beat the current HRRR/GFS + cascade by +11–24% MAE. Short-lead forecast (1–5h) still comes from the HRRR/GFS + station-blend cascade." },
   pirate_weather: { name: "Pirate Weather", desc: "Pirate Weather API — next 60 minutes precipitation, plus solar and CAPE" },
   ebird:        { name: "eBird",        desc: "Cornell eBird recent and notable bird observations near Marblehead" },
   groq:         { name: "Groq", desc: "Groq AI — briefing waterfall: openai/gpt-oss-120b → llama-3.3-70b-versatile (free tier)" },
@@ -48,7 +49,7 @@ function renderSources(sources, pwsStale) {
   const order = Object.keys(SOURCE_META);
 
   // Only critical sources trigger the alert dot — supplementary failures are silent
-  const CRITICAL_SOURCES = new Set(['gfs_current', 'hrrr_hourly', 'wu_stations', 'pirate_weather', 'nws_alerts']);
+  const CRITICAL_SOURCES = new Set(['gfs_current', 'hrrr_hourly', 'wu_stations', 'pirate_weather', 'nws_alerts', 'nws_gridpoints']);
   let anyError = false;
   let anyCriticalError = false;
   order.forEach(key => {

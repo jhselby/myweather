@@ -335,15 +335,17 @@ async function renderForecastAccuracy() {
     { key: "pr", label: "Pressure", unit: "inHg", digits: 2 },
     { key: "cc", label: "Cloud",    unit: "%",    digits: 0 },
   ];
-  // Per-lead MAE from per_layer_mae_by_lead.l4 (the post-Layer-4 final
-  // forecast). Falls back to errors_by_lead[lead][field] mean-of-abs when
-  // L4 has no data at that lead — typically true for longer leads in the
-  // first 24-48h after a deploy that touched the snapshot/joiner format,
-  // because per-layer pair fields only exist on post-deploy snapshots.
+  // v0.6.432: prefer l1r (post-L1-router user-visible output) over l4 for
+  // fields the router covers (t / ws / wd) at leads ≥6h — L1 router replaces
+  // cascade output with NWS/NBM there, and the tile must show what users
+  // actually saw, not the shadow cascade MAE. Falls back to l4 → errors_by_lead
+  // for fields the router doesn't touch and for leads <6h where l1r == l4.
   function maeAt(fieldKey, lead) {
-    const l4 = (mae[fieldKey] && mae[fieldKey].l4) || [];
-    const direct = (l4[lead] != null) ? l4[lead] : null;
-    if (direct != null) return direct;
+    const layers = mae[fieldKey] || {};
+    const l1r = layers.l1r || [];
+    const l4  = layers.l4  || [];
+    const pref = (l1r[lead] != null) ? l1r[lead] : l4[lead];
+    if (pref != null) return pref;
     const arr = (errorsByLead[String(lead)] || {})[fieldKey] || [];
     const valid = arr.filter(v => v != null);
     if (!valid.length) return null;

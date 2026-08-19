@@ -743,7 +743,7 @@
   <a href="#sec-status">Engineering updates</a>
   <a href="#sec-accuracy" class="accuracy">Accuracy</a>
   <a href="#sec-applicability">Applicability</a>
-  <a href="#sec-layer1">L1 Raw</a>
+  <a href="#sec-layer1">L1 Raw + router</a>
   <a href="#sec-layer2">L2 Aggregate bias</a>
   <a href="#sec-layer3">L3 Decay</a>
   <a href="#sec-layer4">L4 Diurnal</a>
@@ -1165,7 +1165,7 @@
       <summary style="color:#4ad29a;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">✅ Production stack</summary>
       <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Core pipeline <span style="font-weight:normal;opacity:0.7;">— general-purpose, can apply to any field</span></div>
       <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>L1</strong> raw HRRR / GFS — the starting point every other layer corrects.</li>
+        <li><strong>L1</strong> raw model input — Open-Meteo HRRR/GFS everywhere by default; NBM (NWS-gridpoint) via router for <code>t / ws / wd</code> at leads ≥6h (v0.6.432, 2026-08-18). Everything else in the stack corrects starting from whichever L1 the router picked.</li>
         <li><strong>L2</strong> mesonet blend — additive bias on <code>t / dp / h</code> (Kalman gain) + KBOS+KBVY hourly[0] blend on <code>cc / cl / cm / ch</code>; direct selection on <code>ws / wg</code>. <code>pr</code> re-enabled 2026-08-10 v0.6.401 gated on <code>nw_flow</code>/{0-5h, 6-11h} (2026-07-01 v0.6.276 → 2026-08-10 disabled everywhere: pooled read masked regime-conditional wins).</li>
         <li><strong>L3</strong> lead-decay — {wg, ch, cm, pp}. <strong>ws dropped from L3_FIELDS 2026-08-08 v0.6.397</strong> (walkforward cleared 7-day gate; pooled ws L3 +0.1%/+0.6% is noise after BLEND_HOURS 24→4 fix resolved the long-lead regression). wg L3 uses asymmetric additive (v0.6.366) per (regime, band, fc-quartile) with SKIP_TABLE (v0.6.385 + .391). <strong style="color:#e0a070;">wg L3 08-11 investigation flag:</strong> 4/7 SKIP_TABLE SHIP cells regressing post-ship — see Post-ship watches → wg L3 SKIP_TABLE.</li>
         <li><strong>L4</strong> diurnal — applies to {ch, cc}.</li>
@@ -1219,7 +1219,7 @@
   <details style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
     <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">How we measure whether the forecast is good — the metric framework</summary>
     <div style="font-size:0.9em;line-height:1.55;margin-top:8px;color:#cfd8e3;">
-      <p><strong>Core comparison:</strong> pipeline error vs. raw HRRR/GFS error on the same forecast-observation pairs. Every metric on this page averages those errors differently.</p>
+      <p><strong>Core comparison:</strong> pipeline error vs. raw L1 error on the same forecast-observation pairs. L1 = Open-Meteo HRRR/GFS by default; for <code>t / ws / wd</code> at leads ≥6h the L1 router (v0.6.432) substitutes NBM (NWS-gridpoint) instead. Every metric on this page averages those errors differently.</p>
 
       <p><strong>"Observed" per field</strong> (best local measurement, not absolute truth):</p>
       <ul style="margin:4px 0 8px 20px;padding:0;">
@@ -1253,7 +1253,7 @@
 
   <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
     <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📈 Accuracy over time — Raw vs Production, per-day trajectory</summary>
-    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (bare HRRR/GFS) and every correction layer applicable to the selected field — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed hourly by the <code>myweather-publisher</code> Cloud Function (v0.6.395f, hourly cron); prior to that it was tied to the daily digest. (v0.6.361: per-specialist attribution — Lsr, Lc, and post-Lc specialists (ch-persist, cl-persist) each plotted separately once ≥3 days of data have accumulated. New collector-side pair-log columns start accruing today; specialist lines will appear on the chart around 2026-07-22. v0.6.371: the 'Prod' line is now the real per-row aggregate keyed on applied_layer stamps — sample-comparable to Raw/L2/L3 on the same chart. Pre-v0.6.371 it was L4's daily MAE for non-specialist fields and a specialist line for cc/cl/cm/ch/sr (gate-fired-only, sample-mismatched).)</div>
+    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (Open-Meteo L1 seed — HRRR/GFS) and every correction layer applicable to the selected field (for t/ws/wd, "L1r (router)" line shows the v0.6.432 NBM router output at leads ≥6h) — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed hourly by the <code>myweather-publisher</code> Cloud Function (v0.6.395f, hourly cron); prior to that it was tied to the daily digest. (v0.6.361: per-specialist attribution — Lsr, Lc, and post-Lc specialists (ch-persist, cl-persist) each plotted separately once ≥3 days of data have accumulated. New collector-side pair-log columns start accruing today; specialist lines will appear on the chart around 2026-07-22. v0.6.371: the 'Prod' line is now the real per-row aggregate keyed on applied_layer stamps — sample-comparable to Raw/L2/L3 on the same chart. Pre-v0.6.371 it was L4's daily MAE for non-specialist fields and a specialist line for cc/cl/cm/ch/sr (gate-fired-only, sample-mismatched).)</div>
     <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
       <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
       <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
@@ -1289,7 +1289,7 @@
       </div>
       <div class="meta-line"><strong>Layer labels:</strong>
         <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
-          <li><strong>Raw</strong>: bare HRRR/GFS forecast for this coordinate. Knows nothing about Wyman Cove.</li>
+          <li><strong>Raw</strong>: bare Open-Meteo HRRR/GFS forecast for this coordinate. Knows nothing about Wyman Cove. (For t/ws/wd at leads ≥6h, the user-facing L1 is the NBM router output — see the L1r line, added v0.6.432.)</li>
           <li><strong>Aggregate bias (L2)</strong>: what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
           <li><strong>Lead decay (L3)</strong>: historical per-lead bias correction from the pair log.</li>
           <li><strong>Diurnal (L4)</strong>: hour-of-day bias correction. Final line for t / dp / h / ws / wg / pp.</li>
@@ -1324,6 +1324,102 @@
   </details>
 </div>
 <div id="status-applicability" class="status" hidden></div>
+
+<!-- L1 router row group — v0.6.432 (2026-08-18). Hand-curated; router doesn't
+     yet expose describe_applicability(). Router runs after cascade completes
+     and swaps hourly[<field>] to the NWS-gridpoint value at long lead. -->
+<div class="layer-info-text" style="margin-bottom:12px;border-color:#3a6a3a;">
+  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+    <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">L1 router — NBM (NWS-gridpoint) at long lead</span>
+    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;background:#1f3a2a;border:1px solid #3a6a3a;color:#8fd8b0;">seed selection</span>
+    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.7em;background:#2a2a3a;border:1px solid #4a4a5a;color:#a8a8b8;font-style:italic;">hand-curated · v0.6.432</span>
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:0.92em;">
+    <thead>
+      <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
+        <th style="padding:4px 10px 4px 0;">field</th>
+        <th style="padding:4px 10px;">applies when</th>
+        <th style="padding:4px 10px;">gated by</th>
+        <th style="padding:4px 0 4px 10px;">current state</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>t</code></td>
+        <td style="padding:6px 10px;vertical-align:top;">Lead ≥ 6h AND <code>nws_gridpoints.temperature</code> covers the valid hour → replaces <code>corrected_temperature[i]</code> with the NWS value (°C→°F converted)</td>
+        <td style="padding:6px 10px;vertical-align:top;"><code>_ROUTER_ENABLED</code> · <code>_MIN_LEAD_H=6</code></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>ws</code></td>
+        <td style="padding:6px 10px;vertical-align:top;">Lead ≥ 6h AND <code>nws_gridpoints.windSpeed</code> covers the valid hour → replaces <code>wind_speed[i]</code> (km/h→mph converted)</td>
+        <td style="padding:6px 10px;vertical-align:top;"><code>_ROUTER_ENABLED</code> · <code>_MIN_LEAD_H=6</code></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>wd</code></td>
+        <td style="padding:6px 10px;vertical-align:top;">Lead ≥ 6h AND <code>nws_gridpoints.windDirection</code> covers the valid hour → replaces <code>wind_direction[i]</code> (deg unchanged)</td>
+        <td style="padding:6px 10px;vertical-align:top;"><code>_ROUTER_ENABLED</code> · <code>_MIN_LEAD_H=6</code></td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.7;"><code>dp</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">Phase 2 pending — dp is derived from t + humidity via Magnus. Coordinated override with routed t (already covered) needs corresponding humidity source. 14-day head-to-head showed NBM dp beats Prod by +4-18% at leads 6-24h — worth wiring.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.7;">not yet routed</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.7;"><code>wg</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">Phase 2 pending — NWS-gridpoint doesn't expose gust. Needs direct NBM grib ingester (<code>GUST:10 m above ground</code>) on the collector. <strong>Biggest single win in the 14-day head-to-head:</strong> NBM beats Prod +7-27% at leads 3-24h.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.7;">not yet routed</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.7;"><code>sr</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">Phase 2 pending — NWS-gridpoint doesn't expose solar. Needs direct NBM (<code>DSWRF:surface</code>) or HRRR grib ingester. 14-day head-to-head: NBM +3-13% at leads ≥3h; HRRR essentially tied with NBM. Wire whichever is cheaper.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.7;">not yet routed</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>cc</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Out of scope — cloud stack is <strong>vindicated</strong> vs NBM: Prod beats NBM +21% pooled but halves unstable (+59/-19). Phase 3 could challenge Open-Meteo with ECMWF-open or a different HRRR/NBM cc field, but current cascade already extracts more skill than any single external model.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">not scoped</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>cl / cm / ch</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Out of scope — cloud-layer stacks (Lc + chp + clp) beat NBM by -13% (cl), -20% (cm), -161% (ch) at 14-day scale. Correction cascade extracts real signal external models can't touch. Router leaves cloud fields alone.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">out of scope</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>pr</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Phase 3 unscoped — pressure not in the NBM CO grib subset used for phase 2. Would need a separate NBM product or ECMWF-open. Current pr L2 regime gate (v0.6.401) is doing real work at short lead.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">not scoped</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>pa</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Phase 3 unscoped — precip amount from NBM APCP was measurable at 14-day scale (+8% marginal). Not obviously worth the ingester cost given how low pa MAE runs in clean windows.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">not scoped</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>pp</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Out of scope for router — pp in our pair log is Probability of Precipitation (0-100). NBM has APCP amount not POP; direct comparison isn't meaningful without extracting NBM's <code>prob &gt; 0.254</code> field separately. Deferred to phase 3.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">not scoped</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>h</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Out of scope — humidity not tested against NBM in 14-day head-to-head (NWS-gridpoint doesn't expose h). Current h L2 shape retune closed clean 08-07; short-lead correction working.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">out of scope</td>
+      </tr>
+    </tbody>
+  </table>
+  <div style="margin-top:8px;font-size:0.83em;opacity:0.7;">Fall-through: if the NWS-gridpoint value is missing for a routed (field, hour), the cascade's output is kept and the source label reads <code>prod</code> instead of <code>nws</code>. See the live per-hour source table in the L1 section above.</div>
+</div>
 
 <!-- L2 row group — hand-curated; L2 module doesn't expose describe_applicability() yet.
      Promote to the dynamic block once that lands. -->
@@ -1417,14 +1513,86 @@
 <div id="gate-firing-content"></div>
 
 <!-- ───────────────────── L1 ───────────────────── -->
-<h2 class="section" id="sec-layer1">L1 — Raw model (HRRR / GFS)</h2>
+<h2 class="section" id="sec-layer1">L1 — Raw model input (Open-Meteo HRRR/GFS + NBM router)</h2>
 <div class="layer-info-text">
-  <p class="layer-summary">The bare government weather model. Knows nothing about Wyman Cove specifically. Everything below corrects what it gets wrong here.</p>
-  <details class="layer-methodology"><summary>About the raw model</summary>
-    The starting point. Open-Meteo's HRRR (next 48h) and GFS (days 3–7) numerical weather models. Multi-kilometer grid resolution; the model has no specific knowledge of Wyman Cove. Every layer below corrects what the raw model gets wrong locally.
-    <div class="meta-line">Curves below show the current raw model forecast per field.</div>
+  <p class="layer-summary">The starting point that every layer below corrects. Per-field, per-lead selection between Open-Meteo (HRRR/GFS) and NBM (NWS gridpoint). Multi-kilometer grid resolution; still knows nothing specifically about Wyman Cove — that's what the layers below add.</p>
+  <details class="layer-methodology"><summary>About the L1 input (post-v0.6.432 router)</summary>
+    <div class="meta-line"><strong>Open-Meteo HRRR (next 48h) and GFS (days 3-7)</strong> — the default source. Feeds every field. Every cell where the L1 router below does not fire uses the Open-Meteo value unchanged. Cloud fields (cc/cl/cm/ch), pressure (pr), precip amount/POP (pa/pp), gust (wg), solar (sr), humidity (h), and short-lead t/ws/wd (leads 0-5h) all come from Open-Meteo everywhere.</div>
+    <div class="meta-line"><strong>L1 router (v0.6.432, 2026-08-18)</strong> — at leads ≥6h for <strong>t / ws / wd</strong>, replaces the Open-Meteo value with the NWS-gridpoint forecast (NBM: National Blend of Models, NOAA's operational ensemble blend). Driven by a 14-day head-to-head that showed NBM beats the full production cascade by +6% to +24% MAE at those slots. At leads 0-5h Open-Meteo + short-lead correction cascade still wins, so the router falls through there. Falls through everywhere if NWS-gridpoint is unavailable this tick.</div>
+    <div class="meta-line"><strong>Phase 2 pending:</strong> wg + sr + dp router coverage (need direct NBM grib ingester on the Cloud Function — NWS-gridpoint doesn't expose those fields). Phase 3: challenge Open-Meteo for cc/pr/pa/pp against ECMWF-open or similar.</div>
+    <div class="meta-line">Curves below show the current L1 forecast per field — post-router where the router fired, Open-Meteo elsewhere. Per-hour source labels stamped on <code>hourly.corrected_temperature_router_source</code> / <code>wind_speed_router_source</code> / <code>wind_direction_router_source</code>.</div>
   </details>
 </div>
+<!-- ───────── L1 router — live per-hour source labels (v0.6.432) ─────────
+     Router runs BEFORE the raw grid conceptually — it selects which L1 seed
+     enters the pipeline for each (field, hour). Placed first so the reader
+     sees "here's the source choice per hour" before seeing the raw curves. -->
+<details open style="margin:12px 0;padding:10px 14px;border:1px solid #3a6a3a;background:#0e2018;border-radius:6px;" id="sec-l1-router">
+  <summary style="color:#5fd4d4;font-weight:600;cursor:pointer;list-style:none;">🔀 L1 router — current tick's per-hour source per field <span style="opacity:0.75;font-weight:normal;">(runs first: what enters the pipeline as L1)</span></summary>
+  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
+    v0.6.432, live-tick view. Reads <code>hourly.corrected_temperature_router_source</code> / <code>wind_speed_router_source</code> / <code>wind_direction_router_source</code> from <code>weather_data.json</code>. Cascade output (<code>*_pre_router</code>) shown side-by-side with the router's live value at every hour the router fired, so you can see the router's per-hour delta as raw numbers before the next Fitter run rolls the L1r line onto the accuracy chart above. The raw-model curves below reflect the router's per-hour selection: cyan segments = NBM (via NWS-gridpoint), gray segments = Open-Meteo HRRR/GFS.
+  </div>
+  <div id="l1-router-live" style="margin-top:10px;font-size:0.88em;">
+    <div style="opacity:0.6;">loading current tick…</div>
+  </div>
+</details>
+
+<!-- ───────── Phase 0 build: NBM parallel-cascade infra status (2026-08-18) ─────────
+     Ingester CF pulls latest NBM CO cycle hourly and writes
+     nbm_point_extract.json. Backfill CF one-shot populated
+     nbm_backfill/YYYYMMDD_HH.json across 120 days for L3 residual fits.
+     Both feed the Phase 4 selector, which shadow-fits until it clears its
+     ship gate. -->
+<details style="margin:12px 0;padding:10px 14px;border:1px solid #3a527a;background:#0e1a2a;border-radius:6px;" id="sec-nbm-infra">
+  <summary style="color:#8db4e8;font-weight:600;cursor:pointer;list-style:none;">🏗️ NBM parallel-cascade infra (Phase 0 build) <span style="opacity:0.75;font-weight:normal;">— ingester + backfill status</span></summary>
+  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
+    Foundation for the option-1 dual HRRR/NBM cascade. Ingester writes the current cycle's leads to <code>nbm_point_extract.json</code> every hour at :45 UTC. Backfill CF populated <code>nbm_backfill/YYYYMMDD_HH.json</code> for 120 days pre-Phase-3 L3 fits. Fields extracted: t, dp, ws, wd, wg, sr, cc, ch. No cl/cm (NBM CO product does not publish them — selector will always pick HRRR for those two).
+  </div>
+  <div id="nbm-infra-live" style="margin-top:10px;font-size:0.88em;">
+    <div style="opacity:0.6;">loading NBM ingester status…</div>
+  </div>
+</details>
+<script>
+(function(){
+  const url = "https://data.wymancove.com/nbm_point_extract.json?_=" + Date.now();
+  fetch(url, { cache: "no-store" })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      const el = document.getElementById("nbm-infra-live");
+      if (!el) return;
+      const cycle = d.cycle || "—";
+      const fetched = d.fetched_at || "—";
+      const nOk = Object.values(d.leads || {}).filter(v => v && Object.keys(v).length).length;
+      const totalLeads = Object.keys(d.leads || {}).length;
+      const cycleAgeH = d.cycle ?
+        ((Date.now() - Date.UTC(
+            parseInt(d.cycle.slice(0,4)), parseInt(d.cycle.slice(4,6))-1,
+            parseInt(d.cycle.slice(6,8)), parseInt(d.cycle.slice(8,10))
+        )) / 3600000).toFixed(1) : "?";
+      const fetchAgeMin = d.fetched_at ?
+        ((Date.now() - new Date(d.fetched_at).getTime()) / 60000).toFixed(0) : "?";
+      const sampleLead = d.leads && d.leads["1"] ? d.leads["1"] : {};
+      const sampleStr = Object.entries(sampleLead)
+        .map(([k,v]) => `${k}=${typeof v === 'number' ? v.toFixed(1) : v}`).join(" · ");
+      el.innerHTML = `
+        <div><strong>Ingester (myweather-nbm-ingest):</strong> latest cycle
+          <code>${cycle}</code> (age ${cycleAgeH}h) · fetched ${fetchAgeMin}min ago ·
+          ${nOk}/${totalLeads} leads populated</div>
+        <div style="margin-top:4px;opacity:0.8;">Lead 1 sample: ${sampleStr}</div>
+        <div style="margin-top:8px;opacity:0.7;font-size:0.85em;">
+          Backfill coverage: manifest tile pending (Phase 0 item). Verify via
+          <code>gsutil ls gs://myweather-data/nbm_backfill/ | wc -l</code>
+          — expect 2,880 blobs (120 days × 24 cycles).
+        </div>`;
+    })
+    .catch(e => {
+      const el = document.getElementById("nbm-infra-live");
+      if (el) el.innerHTML = `<div style="color:#e08a70;">nbm_point_extract.json not yet available (ingester has not written the first cycle). Error: ${e}</div>`;
+    });
+})();
+</script>
+
+<h3 class="subsection" style="margin-top:14px;">Raw L1 forecast per field (post-router where the router fired)</h3>
 <div id="grid-raw" class="grid"></div>
 
 <!-- ───────────────────── L2 ───────────────────── -->
@@ -2576,13 +2744,13 @@ function renderHeadlineBox(wxDoc) {
     const del = _fmtDelta(r.raw, r.cor, r.unit, r.dec, r.delta);
     const tOrH = (r.label === "Temperature (t)" || r.label === "Humidity (h)");
     const rawTxt = (degraded && tOrH)
-      ? '<span style="opacity:0.6;" title="Raw model (HRRR/GFS) did not respond this tick; L2 station-bias correction can\'t compute without it.">unavailable</span>'
+      ? '<span style="opacity:0.6;" title="Raw L1 seed (Open-Meteo HRRR/GFS) did not respond this tick; the L2 station-bias correction can\'t compute without it. The L1 router (v0.6.432) only overrides at leads ≥6h so it doesn\'t rescue this hour-0 tile.">unavailable</span>'
       : _fmt(r.raw, r.unit, r.dec);
     // In degraded mode the Production value is still real — it comes straight
     // from WU stations (hyperlocal.corrected_temp) instead of model+bias — so
     // show it. Only Raw and Correction are truly missing.
     const corTxt = (degraded && tOrH)
-      ? `<span title="Sourced directly from WU stations — no HRRR/GFS bias correction applied this tick.">${_fmt(r.cor, r.unit, r.dec)} <span style="opacity:0.5;font-size:0.85em;">(stations only)</span></span>`
+      ? `<span title="Sourced directly from WU stations — no Open-Meteo bias correction applied this tick.">${_fmt(r.cor, r.unit, r.dec)} <span style="opacity:0.5;font-size:0.85em;">(stations only)</span></span>`
       : _fmt(r.cor, r.unit, r.dec);
     // v0.6.382h: right-column label needs to match left-column's muted grey
     // + left-align styling (which the CSS applies to td:first-child only —
@@ -3238,7 +3406,7 @@ function renderScorecardBanner(tsDoc, wxDoc, persistDoc) {
     <details style="margin-top:6px;">
       <summary style="opacity:0.55;font-size:0.78em;cursor:pointer;list-style:revert;"><strong>What this measures</strong></summary>
       <div style="opacity:0.55;font-size:0.78em;margin-top:4px;line-height:1.5;">
-        Production forecast error compared to raw HRRR/GFS, averaged over leads 1–47h. Both computed against the same local-network observations (mesonet Kalman blend for temp/wind/humidity/pressure; KBOS+KBVY METAR for cloud; Tempest median for solar; max WU precip gauges). Lower error is better; negative % means we beat raw. Three metrics side-by-side because they answer different questions:
+        Production forecast error compared to raw L1 baseline, averaged over leads 1–47h. Raw L1 in the pair log is Open-Meteo (HRRR/GFS) for every field, always — that's what the <code>error_l1</code> stamp records. Production is whatever the user actually saw: for <code>t / ws / wd</code> at leads ≥6h that's the L1 router output (NBM via NWS-gridpoint, v0.6.432); at leads 0-5h and for every other field it's the correction cascade's output. So the "we beat raw" percentage is Prod-vs-Open-Meteo across the full leads-1-47h horizon — a blended measure of "router win at long lead + cascade win at short lead" for the routed fields, and pure cascade win for everything else. Both computed against the same local-network observations (mesonet Kalman blend for temp/wind/humidity/pressure; KBOS+KBVY METAR for cloud; Tempest median for solar; max WU precip gauges). Lower error is better; negative % means we beat raw. Three metrics side-by-side because they answer different questions:
         <br><strong>MAE</strong> = average of |error|. Typical error size on a normal day.
         <strong>RMSE</strong> = root of mean squared error. Same shape but weights big misses more — if RMSE is worse than MAE, the pipeline occasionally has blow-ups it hides in typical-day averages. NWS and ECMWF publish both.
         <strong>Bias</strong> = signed mean error (in field units, e.g., °F for temp). Positive = we usually over-forecast; negative = we usually under-forecast. Systematic drift MAE hides.
@@ -3735,7 +3903,7 @@ function renderAccuracySection(tsDoc, wxDoc) {
   const brierByLead = tsDoc.per_layer_brier_by_lead || {};
   const ppBrierAvailable = Array.isArray((brierByLead.pp || {}).l1);
   const LAYER_LINES = [
-    { key: "l1", label: "Raw model",                       shortLabel: "Raw",            color: "rgba(138,147,163,0.75)", dash: [4,4] },
+    { key: "l1", label: "Raw model (Open-Meteo)",          shortLabel: "Raw",            color: "rgba(138,147,163,0.75)", dash: [4,4] },
     { key: "l2", label: "Aggregate-bias (L2)",             shortLabel: "Aggregate bias", color: "rgba(200,160,110,1)",    dash: [] },
     { key: "l3", label: "Lead-decay (L3)",                 shortLabel: "Lead decay",     color: "rgba(110,180,235,1)",    dash: [] },
     { key: "l4", label: "Diurnal (L4)",                    shortLabel: "Diurnal",        color: "rgba(74,163,255,1)",     dash: [] },
@@ -6152,6 +6320,9 @@ async function load() {
     }
   }
 
+  // ── L1 router live state (v0.6.432) ──
+  if (wxDoc && wxDoc.hourly) renderL1RouterLive(wxDoc);
+
   // ── Top-of-page "right now" headline (plain-English) ──
   if (wxDoc) renderHeadlineBox(wxDoc);
 
@@ -6437,6 +6608,88 @@ async function load() {
   }
 }
 
+// v0.6.432: render live per-hour router source labels + pre_router vs live
+// values for t / ws / wd. Reads directly from the current tick's
+// weather_data.json.hourly — no rollup dependency, no waiting on the Fitter.
+function renderL1RouterLive(wxDoc) {
+  const container = document.getElementById("l1-router-live");
+  if (!container) return;
+  const hourly = (wxDoc && wxDoc.hourly) || {};
+  const times = hourly.times || [];
+  if (!times.length) {
+    container.innerHTML = '<div style="opacity:0.6;">no hourly data in this tick.</div>';
+    return;
+  }
+  const ROUTER_FIELDS = [
+    {key: "t",  liveArr: "corrected_temperature", label: "Temperature", unit: "°F",  digits: 1},
+    {key: "ws", liveArr: "wind_speed",            label: "Wind speed",  unit: "mph", digits: 1},
+    {key: "wd", liveArr: "wind_direction",        label: "Wind dir",    unit: "°",   digits: 0},
+  ];
+  const HOURS_TO_SHOW = 24;
+  const parts = [];
+  let anyRouterFired = false;
+
+  for (const f of ROUTER_FIELDS) {
+    const live = hourly[f.liveArr] || [];
+    const pre = hourly[f.liveArr + "_pre_router"] || [];
+    const src = hourly[f.liveArr + "_router_source"] || [];
+    if (!live.length) continue;
+    const nSlots = src.length;
+    const nNws = src.filter(s => s === "nws").length;
+    if (nNws > 0) anyRouterFired = true;
+    const badge = nNws > 0
+      ? `<span style="background:#5fd4d4;color:#0e1620;padding:1px 6px;border-radius:3px;font-weight:600;font-size:0.85em;">${nNws}/${nSlots} routed</span>`
+      : `<span style="background:#3a3f48;color:#9ab0a0;padding:1px 6px;border-radius:3px;font-size:0.85em;">no rows routed this tick</span>`;
+    parts.push(`<div style="margin-top:14px;">
+      <div style="font-weight:600;color:#cfd8e3;">${f.label} (${f.key}) &nbsp; ${badge}</div>
+      <table style="border-collapse:collapse;margin-top:6px;font-size:0.85em;font-family:'SF Mono',Menlo,monospace;">
+        <thead>
+          <tr style="opacity:0.7;">
+            <th style="text-align:left;padding:2px 10px 2px 0;">Hour</th>
+            <th style="text-align:right;padding:2px 10px;">Cascade (pre-router)</th>
+            <th style="text-align:right;padding:2px 10px;">User-facing (live)</th>
+            <th style="text-align:right;padding:2px 10px;">&Delta;</th>
+            <th style="text-align:left;padding:2px 0 2px 10px;">Source</th>
+          </tr>
+        </thead>
+        <tbody>`);
+    const shown = Math.min(HOURS_TO_SHOW, times.length);
+    for (let i = 0; i < shown; i++) {
+      const s = src[i] || "prod";
+      const liveV = live[i] != null ? Number(live[i]) : null;
+      const preV = pre[i] != null ? Number(pre[i]) : null;
+      const delta = (liveV != null && preV != null) ? liveV - preV : null;
+      const routed = s === "nws";
+      const rowStyle = routed ? "background:rgba(95,212,212,0.08);" : "";
+      const deltaStr = (delta != null && Math.abs(delta) > 0.01)
+        ? ((delta > 0 ? "+" : "") + delta.toFixed(f.digits))
+        : (routed ? "0" : "—");
+      const srcCell = routed
+        ? '<span style="color:#5fd4d4;font-weight:600;">nws (NBM)</span>'
+        : '<span style="opacity:0.6;">prod (cascade)</span>';
+      const lead = i === 0 ? "now" : `+${i}h`;
+      parts.push(`<tr style="${rowStyle}">
+        <td style="padding:1px 10px 1px 0;opacity:0.75;">${lead}</td>
+        <td style="text-align:right;padding:1px 10px;">${preV != null ? preV.toFixed(f.digits) : "—"}${f.unit}</td>
+        <td style="text-align:right;padding:1px 10px;color:${routed ? "#5fd4d4" : "#cfd8e3"};">${liveV != null ? liveV.toFixed(f.digits) : "—"}${f.unit}</td>
+        <td style="text-align:right;padding:1px 10px;opacity:${routed ? 1 : 0.5};">${deltaStr}</td>
+        <td style="padding:1px 0 1px 10px;">${srcCell}</td>
+      </tr>`);
+    }
+    parts.push('</tbody></table></div>');
+  }
+
+  if (!parts.length) {
+    container.innerHTML = '<div style="opacity:0.6;">router arrays not present in weather_data.json — collector may be on a pre-v0.6.432 revision, or the router was disabled.</div>';
+    return;
+  }
+
+  const headline = anyRouterFired
+    ? '<div style="color:#5fd4d4;">Router is live. Cyan rows = NBM (NWS-gridpoint) replaced the cascade at that hour. &Delta; column is the router\'s per-hour override vs what the cascade would have said.</div>'
+    : '<div style="opacity:0.7;">Router did not fire on any hour this tick — either every routed field\'s NWS-gridpoint response was empty or the router is disabled.</div>';
+  container.innerHTML = headline + parts.join("");
+}
+
 // Click-to-collapse on each h2.section, state persisted to localStorage by
 // section id. Wraps the content between each h2 and the next h2 in a
 // .section-body div so we can toggle a single element.
@@ -6641,6 +6894,11 @@ load();
     // Distinct yellow to visually own the "final applied" line; specialists
     // (Lsr/Lc/chp/clp) demote to intermediate width.
     prod_real: { color: "#e0d472", dash: [], width: 2.0 },
+    // v0.6.432: L1 router (NWS/NBM) — the router's own MAE contribution as
+    // an intermediate line. For t / ws / wd at leads ≥6h router replaces
+    // cascade output; the l1r line lets you see router-only MAE vs the
+    // cascade shadow (prod) side-by-side. Distinct cyan.
+    l1r:  { color: "#5fd4d4", dash: [], width: 1.5 },
   };
   const FIELD_LAYERS = {
     // sr: Lsr is the final applied value; l4/prod key is pre-Lsr, filtered out
@@ -6657,12 +6915,16 @@ load();
     cl: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc"}, {key:"clp", label:"cl-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
     cm: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc"}, {key:"prod_real", label:"Prod", isProd:true}],
     ch: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
-    // t: Lt retired 07-13, l6 series flat vs l4/prod; keep prod as authoritative
-    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod_real", label:"Prod", isProd:true}],
+    // t / ws / wd carry an extra "l1r" line (v0.6.432 L1 router — NWS/NBM
+    // at leads ≥6h). Distinct from prod_real: prod_real follows applied_layer
+    // and IS the router where the router fired, so at long lead prod_real and
+    // l1r coincide; short lead prod_real shows cascade output. The l1r line
+    // visualizes router-only MAE for direct comparison with the cascade path.
+    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // Non-cloud, non-specialist fields
     h:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
     dp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
-    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"prod_real", label:"Prod", isProd:true}],
     wg: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod_real", label:"Prod", isProd:true}],
     pp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
     pr: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
@@ -6673,12 +6935,16 @@ load();
     // bypass of L1/L2). Specialist demotes L2 to intermediate; prod_real is
     // isProd (parallel to v0.6.371's treatment of the other 13 fields).
     // Circular metric: MAE values are absolute angular diff on [0, 180].
-    wd: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wd: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"l1r", label:"L1r (router)"}, {key:"prod_real", label:"Prod", isProd:true}],
   };
   // Layer must have at least this many non-null days in the payload to
   // appear in the legend. Prevents 1-2 stragglers (e.g. cc l6 the day Lc
   // shipped) from being drawn as a two-point line.
   const MIN_DAYS_FOR_LEGEND = 3;
+  // v0.6.433: layers where we WANT day-1 visibility (bypass MIN_DAYS filter).
+  // l1r is the L1 router — brand-new line shipped v0.6.432; would otherwise
+  // hide for 3 days by the min-days rule. Once it has any data, show it.
+  const LAYERS_BYPASS_MIN_DAYS = new Set(["l1r"]);
   function layersForField(field) {
     const config = FIELD_LAYERS[field] || FIELD_LAYERS.t;
     const series = (payload && payload.series && payload.series[field]) || {};
@@ -6686,6 +6952,7 @@ load();
       const days = series[L.key] || {};
       let n = 0;
       for (const k in days) if (days[k] && days[k].n) n++;
+      if (LAYERS_BYPASS_MIN_DAYS.has(L.key)) return n >= 1;
       return n >= MIN_DAYS_FOR_LEGEND;
     });
     // Ensure exactly one layer carries isProd (the rolling-mean overlay
@@ -6704,9 +6971,11 @@ load();
   // visible expected impact on the chart. Dormant ships (ENABLED=False)
   // deliberately not annotated since they don't move Production.
   const SHIP_EVENTS = {
-    ws: [{date: "2026-07-06", label: "L3 skip-table firing"}],
+    ws: [{date: "2026-07-06", label: "L3 skip-table firing"},
+         {date: "2026-08-18", label: "L1 router (NBM ≥6h)"}],
     sr: [{date: "2026-07-06", label: "Lsr correction firing"}],
-    t:  [{date: "2026-07-13", label: "Lt retired"}],
+    t:  [{date: "2026-07-13", label: "Lt retired"},
+         {date: "2026-08-18", label: "L1 router (NBM ≥6h)"}],
     pa: [{date: "2026-07-13", label: "τ 28→42"}, {date: "2026-07-18", label: "τ 42→7"}],
     pp: [{date: "2026-07-04", label: "pp dropped from L3"}],
     cc: [{date: "2026-07-17", label: "Lc ENABLED"}],
@@ -6716,7 +6985,8 @@ load();
     ch: [{date: "2026-07-17", label: "Lc ENABLED"},
          {date: "2026-07-19", label: "ch persistence LIVE"}],
     wd: [{date: "2026-07-20", label: "L2 blend"},
-         {date: "2026-07-27", label: "wdp ENABLED"}],
+         {date: "2026-07-27", label: "wdp ENABLED"},
+         {date: "2026-08-18", label: "L1 router (NBM ≥6h)"}],
   };
 
   function seriesFor(field, layer, metric) {

@@ -16,7 +16,7 @@ import pytz
 
 from .config import (LAT, LON, SCHEMA_VERSION, LOCATION_NAME, WIND_EXPOSURE_TABLE,
                      WORRY_NOTICEABLE, WORRY_NOTABLE, WORRY_SIGNIFICANT, WORRY_SEVERE)
-from .gcs_io import BUCKET, get_client, upload_json
+from .gcs_io import BUCKET, get_client, load_json, upload_json
 from .stale_cache import apply_stale_fallbacks, load_prev_weather_data
 from .utils import iso_utc_now, compute_age_minutes, redact_secrets
 
@@ -728,17 +728,36 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  Backtest snapshot failed: {redact_secrets(e)}")
 
+    # v0.6.432: L1 router — swap cascade output for NWS-gridpoint (NBM-derived)
+    # values at leads ≥6h for t/dp/ws/wd, where 14-day head-to-head showed
+    # NBM beats current production by +6% to +24% MAE. At leads 1-5h and for
+    # fields the router doesn't cover (wg, sr, all clouds, pressure) cascade
+    # output is untouched. See l1_router.py header for the empirical grid.
+    try:
+        from .processors.l1_router import apply_l1_router
+        apply_l1_router(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  L1 router failed: {redact_secrets(e)}")
+
     # Forecast snapshot — must run AFTER decay_apply so the snapshot has access
     # to per-layer intermediate arrays (corrected_*_post_l2, corrected_*_post_l3)
     # that decay_apply stamps as side effects. Legacy top-level keys in the
     # snapshot still equal the L2 (pre-decay) value so the Fitter's decay
     # calibration is unaffected by the timing change.
     from .processors.forecast_snapshot import append_forecast_snapshot
+    # Phase 1 (2026-08-18) — load NBM point extract written hourly by the
+    # nbm-ingester CF. Best-effort: if missing or stale, snapshot proceeds
+    # without _raw_nbm stamps (selector will pick HRRR for those cells).
+    try:
+        nbm_extract = load_json("nbm_point_extract.json", default=None)
+    except Exception:
+        nbm_extract = None
     try:
         append_forecast_snapshot(
             weather_data.get("hourly", {}),
             derived=weather_data.get("derived", {}),
             nws_gridpoints=weather_data.get("nws_gridpoints"),
+            nbm_extract=nbm_extract,
         )
     except Exception as e:
         logging.warning(f"  ⚠  Forecast snapshot failed: {redact_secrets(e)}")

@@ -41,6 +41,50 @@ run-publisher:
 logs-publisher:
 	gcloud functions logs read myweather-publisher --region=us-east1 --limit=50
 
+# NBM backfill — one-shot CF that pulls historical NBM CO extracts and writes
+# gs://myweather-data/nbm_backfill/YYYYMMDD_HH.json per cycle. Resume-friendly.
+# Deploy once; invoke repeatedly with ?start_date=&num_days= until 120d covered.
+deploy-nbm-backfill:
+	gcloud functions deploy myweather-nbm-backfill \
+	  --gen2 \
+	  --runtime=python311 \
+	  --region=us-east1 \
+	  --source=. \
+	  --entry-point=backfill \
+	  --trigger-http \
+	  --no-allow-unauthenticated \
+	  --timeout=3600s \
+	  --memory=8192MB \
+	  --cpu=8 \
+	  --max-instances=10 \
+	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811
+
+logs-nbm-backfill:
+	gcloud functions logs read myweather-nbm-backfill --region=us-east1 --limit=50
+
+# NBM hourly ingester — fetches freshest NBM cycle each hour, writes
+# nbm_point_extract.json to GCS for the collector to stamp raw_nbm from.
+deploy-nbm-ingester:
+	gcloud functions deploy myweather-nbm-ingest \
+	  --gen2 \
+	  --runtime=python311 \
+	  --region=us-east1 \
+	  --source=. \
+	  --entry-point=nbm_ingest \
+	  --trigger-http \
+	  --no-allow-unauthenticated \
+	  --timeout=540s \
+	  --memory=2048MB \
+	  --cpu=2 \
+	  --max-instances=2 \
+	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811
+
+logs-nbm-ingester:
+	gcloud functions logs read myweather-nbm-ingest --region=us-east1 --limit=50
+
+run-nbm-ingester:
+	gcloud scheduler jobs run myweather-nbm-ingest-schedule --location=us-east1
+
 run-local:
 	@bash -lc 'set +x; set -a; source .env; set +a; python3 -c "from weather_collector.collector import run; run(None)"'
 

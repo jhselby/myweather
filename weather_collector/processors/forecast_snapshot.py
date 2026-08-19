@@ -40,6 +40,14 @@ TZ = pytz.timezone("America/New_York")
 # wg, pa (QPF is in mm and can be added later once we settle on the pa unit).
 _NWS_FIELDS = ("t", "dp", "pp", "ws", "wd")
 
+# Phase 1 (option-1 parallel HRRR/NBM cascade, 2026-08-18) — NBM CO grib
+# point extract fetched hourly by nbm-ingester CF, stamped per-hour as
+# {short}_raw_nbm so downstream (pair log, L2/L3/L4 NBM cascades, selector)
+# have a clean HRRR-vs-NBM comparison. Fields NBM emits: see
+# weather_collector/fetchers/nbm_point.py — no cl/cm/h/pr/pa/pp (single-
+# source, HRRR-only forever).
+_NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch")
+
 def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
     """Extract an NWS gridpoint value at target_utc (tz-aware UTC), applying
     the unit conversion. Returns None if the property is missing or the
@@ -58,7 +66,7 @@ def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
         return None
 
 
-def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None):
+def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extract=None):
     """Append a snapshot of the corrected 48h forecast for later validation.
     Prunes snapshots older than RETENTION_DAYS on each write. No-op if the
     hourly data has no usable hours.
@@ -71,6 +79,17 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None):
     now_local = datetime.now(TZ)
     run_stamp = now_local.replace(second=0, microsecond=0).strftime("%Y-%m-%dT%H:%M")
     cutoff = (now_local - timedelta(days=RETENTION_DAYS)).strftime("%Y-%m-%dT%H:%M")
+
+    # Phase 1 — build a valid-UTC → NBM-lead-values map so we can look up
+    # NBM's forecast for each of our snapshot hours without a per-hour scan.
+    nbm_by_valid_utc = {}
+    if nbm_extract and isinstance(nbm_extract, dict):
+        leads = nbm_extract.get("leads") or {}
+        valid_map = nbm_extract.get("lead_valid_utc") or {}
+        for lead_str, fields in leads.items():
+            v = valid_map.get(lead_str)
+            if v and fields:
+                nbm_by_valid_utc[v] = fields
 
     times = hourly.get("times", [])
     # Per-layer forecast arrays. The Fitter (decay_fit) computes per-layer MAE
@@ -87,20 +106,34 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None):
         # stamp_cove_correction so we can isolate L6's contribution; when
         # disabled, the post_l4 key is absent and l4 falls back to the live
         # corrected_temperature (cove is a no-op in that path).
+        # v0.6.432: l1r (L1-router) layer holds the router's user-visible output.
+        # At leads <6h it equals l6 (router falls through to cascade); at ≥6h
+        # for routed hours it holds the NWS-gridpoint value. The upstream l6
+        # slot reads from *_pre_router when the router preserved it, so l6
+        # remains the cascade's honest output and error_l6 stays scoring the
+        # cascade even after v0.6.432 flipped.
         "t":  {"l1": hourly.get("temperature", []),
                "l2": hourly.get("corrected_temperature_post_l2", []),
                "l3": hourly.get("corrected_temperature_post_l3", []),
                "l4": hourly.get("corrected_temperature_post_l4",
+                                hourly.get("corrected_temperature_pre_router",
+                                           hourly.get("corrected_temperature", []))),
+               "l6": hourly.get("corrected_temperature_pre_router",
                                 hourly.get("corrected_temperature", [])),
-               "l6": hourly.get("corrected_temperature", [])},
+               "l1r": hourly.get("corrected_temperature", [])},
         "h":  {"l1": hourly.get("humidity", []),
                "l2": hourly.get("corrected_humidity_post_l2", []),
                "l3": hourly.get("corrected_humidity_post_l3", []),
                "l4": hourly.get("corrected_humidity", [])},
+        # v0.6.432: l1r holds post-router live wind_speed; l4 falls back to
+        # wind_speed_pre_router where the router captured it so error_l4
+        # continues to score the cascade honestly.
         "ws": {"l1": hourly.get("raw_wind_speed", hourly.get("wind_speed", [])),
                "l2": hourly.get("wind_speed_post_l2", []),
                "l3": hourly.get("wind_speed_post_l3", []),
-               "l4": hourly.get("wind_speed", [])},
+               "l4": hourly.get("wind_speed_pre_router",
+                                hourly.get("wind_speed", [])),
+               "l1r": hourly.get("wind_speed", [])},
         "wg": {"l1": hourly.get("raw_wind_gusts", hourly.get("wind_gusts", [])),
                "l2": hourly.get("wind_gusts_post_l2", []),
                "l3": hourly.get("wind_gusts_post_l3", []),
@@ -191,16 +224,17 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None):
         # wd_persistence_gate.py PRE_GATE_KEY BEFORE the gate overwrites
         # hourly.wind_direction; falls back to hourly.wind_direction when the
         # gate is disabled or fired on zero cells (identity fallback).
+        # v0.6.432: wdp reads from wind_direction_pre_router when set (so
+        # wdp's contribution is scored against the pre-router array, not the
+        # router-overridden live one). l1r holds the post-router live value.
         "wd": {"l1": hourly.get("raw_wind_direction", hourly.get("wind_direction", [])),
                "l2": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction", [])),
                "l3": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction", [])),
                "l4": hourly.get("wind_direction_pre_wd_gate", hourly.get("wind_direction", [])),
-               # v0.6.382p: prefer shadow key so ENABLED=False shadow
-               # values land in the pair log. During today's flip (ENABLED=
-               # True) shadow == live so no behavior change; matters for
-               # future re-verify or clone-of-template Stage 3 shadow weeks.
                "wdp": hourly.get("wind_direction_shadow_wdp",
-                                 hourly.get("wind_direction", []))},
+                                 hourly.get("wind_direction_pre_router",
+                                            hourly.get("wind_direction", []))),
+               "l1r": hourly.get("wind_direction", [])},
     }
     # Dew point is derived from t + h via Magnus at each layer (no separate model array).
     # Backward-compat top-level keys (t / h / ws / wg / pp / pr / cc) kept = L4 final.
@@ -236,7 +270,11 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None):
         # dormant specialist gets stamped as the applied layer and poisons
         # every downstream metric that reads applied_layer (Fitter's
         # per_layer_mae_by_lead[.].production and mae_over_time[.].prod_real).
-        for lk in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp"):
+        # v0.6.432: l1r appended at the end so router attribution wins over
+        # l4/l6/wdp on hours where the router fired (value differs from
+        # cascade output). At leads <6h, l1r == prior layer so walk falls
+        # back to cascade attribution.
+        for lk in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp", "l1r"):
             if lk == "clp" and not cl_persistence_gate.ENABLED: continue
             if lk == "chp" and not ch_persistence_gate.ENABLED: continue
             if lk == "wdp" and not wd_persistence_gate.ENABLED: continue
@@ -323,15 +361,16 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None):
             entry["sr_sw"] = round(float(sw_arr[i]))
         if i < len(diff_arr) and diff_arr[i] is not None:
             entry["sr_diffuse"] = round(float(diff_arr[i]))
-        # v0.6.431 — NWS gridpoint (NBM-derived) values at this hour, aligned
-        # by validTime interval. Parses `t` as local ET (matching hourly grid
-        # convention) and converts to tz-aware UTC for the NWS extractor.
+        # Parse this hour's local-ET timestamp into tz-aware UTC once —
+        # used by both the NWS gridpoint alignment (v0.6.431) and the NBM
+        # raw stamp (Phase 1, 2026-08-18).
+        try:
+            naive = datetime.fromisoformat(t[:16])  # "YYYY-MM-DDTHH:MM"
+            target_utc = TZ.localize(naive).astimezone(_dt_timezone.utc)
+        except (ValueError, TypeError):
+            target_utc = None
+        # v0.6.431 — NWS gridpoint (NBM-derived) values at this hour.
         if nws_gridpoints:
-            try:
-                naive = datetime.fromisoformat(t[:16])  # "YYYY-MM-DDTHH:MM"
-                target_utc = TZ.localize(naive).astimezone(_dt_timezone.utc)
-            except (ValueError, TypeError):
-                target_utc = None
             if target_utc is not None:
                 # temperature: degC → F
                 v = _nws_value_at(nws_gridpoints, "temperature", target_utc,
@@ -358,6 +397,21 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None):
                                   lambda d: d)
                 if v is not None:
                     entry["wd_nws"] = _round_for("wd", v)
+        # Phase 1 (2026-08-18) — NBM raw stamp per field for parallel
+        # HRRR/NBM cascade. Look up this hour's valid UTC in the extract's
+        # lead_valid_utc map; if the ingester covered it, stamp _raw_nbm
+        # for every field NBM emits. Fields NBM does not emit (cl/cm/h/pr/
+        # pa/pp) get nothing here — selector will always pick HRRR for
+        # those. Depends on target_utc already computed from the nws
+        # branch above being tz-aware UTC.
+        if nbm_by_valid_utc and target_utc is not None:
+            key = target_utc.strftime("%Y-%m-%dT%H:00:00Z")
+            fields = nbm_by_valid_utc.get(key)
+            if fields:
+                for f in _NBM_FIELDS:
+                    v = fields.get(f)
+                    if v is not None:
+                        entry[f"{f}_raw_nbm"] = _round_for(f, v)
         hours.append(entry)
 
     if not hours:

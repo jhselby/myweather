@@ -76,7 +76,15 @@ PERMISSIVE_LAYER_KEYS = [("l5", "error_l5"), ("l6", "error_l6"),
                          # Chart legend shows each as its own line once a few
                          # days of data have accumulated.
                          ("chp", "error_chp"), ("clp", "error_clp"),
-                         ("wdp", "error_wdp")]
+                         ("wdp", "error_wdp"),
+                         # v0.6.432: l1r = L1 router output. Present for
+                         # t / ws / wd at leads ≥6h where NWS-gridpoint (NBM)
+                         # replaces cascade output. Frontend renders this as
+                         # a distinct line so cascade ("prod" = l4) and router
+                         # ("l1r") are visible side-by-side and users can see
+                         # the router's win/loss vs. what the cascade would
+                         # have produced.
+                         ("l1r", "error_l1r")]
 
 LAYER_KEYS = STRICT_LAYER_KEYS + PERMISSIVE_LAYER_KEYS
 
