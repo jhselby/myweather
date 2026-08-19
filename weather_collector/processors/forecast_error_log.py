@@ -205,11 +205,22 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                 # (currently shows Prod == raw since wd has no correction
                 # layers yet; will surface a real Δ once wd_persistence_gate
                 # or a future L2/L3/L4 wd correction ships).
-                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp", "l1r", "nws", "raw_nbm", "l2_nbm"):
+                # Emit per-layer sin/cos error components (residuals in radian
+                # space) alongside the display-only circular_diff error_{lyr}.
+                # L3_NBM's wd fit consumes error_sin_l2_nbm + error_cos_l2_nbm
+                # as its residual signal, matching decay_fit's wd_components
+                # path off the top-level error_sin/error_cos. Doing it for
+                # every layer keeps the door open for L4_NBM etc without
+                # revisiting this branch.
+                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp", "l1r", "nws", "raw_nbm", "l2_nbm", "l3_nbm"):
                     v = target_hour.get(f"{short}_{lyr}")
                     if v is not None:
-                        pair[f"forecast_{lyr}"] = round(float(v), 3)
-                        pair[f"error_{lyr}"] = round(_circular_diff_deg(float(v), obs_f), 3)
+                        vf = float(v)
+                        pair[f"forecast_{lyr}"] = round(vf, 3)
+                        pair[f"error_{lyr}"] = round(_circular_diff_deg(vf, obs_f), 3)
+                        v_rad = math.radians(vf)
+                        pair[f"error_sin_{lyr}"] = round(math.sin(v_rad) - math.sin(o_rad), 5)
+                        pair[f"error_cos_{lyr}"] = round(math.cos(v_rad) - math.cos(o_rad), 5)
                 # v0.6.400: applied_layer stamp for wd — this branch takes an
                 # early `continue` below, so without stamping here every wd
                 # pair-log row has missed applied_layer since v0.6.269. Made
@@ -250,7 +261,7 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             # These stay flat vs l6 whenever the specialist gate is disabled
             # or skips the cell. Iterating the full list is safe because
             # target_hour.get returns None for absent keys.
-            for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp", "l1r", "nws", "raw_nbm", "l2_nbm"):
+            for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp", "l1r", "nws", "raw_nbm", "l2_nbm", "l3_nbm"):
                 v = target_hour.get(f"{short}_{lyr}")
                 if v is not None:
                     pair[f"forecast_{lyr}"] = round(float(v), 3)

@@ -689,7 +689,7 @@ def fit_decay_corrections():
                 # silent-absorption into Production per [[feedback_specialist_
                 # attribution_wiring]] — ch_persistence 14d watch (shipped
                 # 2026-07-19 v0.6.358) needs an isolated chp series.
-                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp", "l1r", "nws", "raw_nbm", "l2_nbm"):
+                for lyr in ("l1", "l2", "l3", "l4", "l5", "l6", "chp", "clp", "wdp", "l1r", "nws", "raw_nbm", "l2_nbm", "l3_nbm"):
                     if lyr == "l6" and run_time < L6_VALID_FROM:
                         continue
                     if lyr == "l5" and run_time < L5_VALID_FROM:

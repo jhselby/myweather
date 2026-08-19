@@ -95,7 +95,12 @@ PERMISSIVE_LAYER_KEYS = [("l5", "error_l5"), ("l6", "error_l6"),
                          # since v0.6.433; chart line appears once fitter
                          # accumulates a day of data.
                          ("raw_nbm", "error_raw_nbm"),
-                         ("l2_nbm", "error_l2_nbm")]
+                         ("l2_nbm", "error_l2_nbm"),
+                         # Phase 3 (2026-08-19). l3_nbm = l2_nbm minus per-
+                         # lead signed bias from analysis/l3_nbm_fit.py.
+                         # Populated for t/ws/wg/h since v0.6.435; wd
+                         # excluded (would need per-layer sin/cos plumbing).
+                         ("l3_nbm", "error_l3_nbm")]
 
 LAYER_KEYS = STRICT_LAYER_KEYS + PERMISSIVE_LAYER_KEYS
 

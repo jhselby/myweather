@@ -1546,7 +1546,7 @@
 <details style="margin:12px 0;padding:10px 14px;border:1px solid #3a527a;background:#0e1a2a;border-radius:6px;" id="sec-nbm-infra">
   <summary style="color:#8db4e8;font-weight:600;cursor:pointer;list-style:none;">🏗️ NBM parallel-cascade infra (Phase 0 build) <span style="opacity:0.75;font-weight:normal;">— ingester + backfill status</span></summary>
   <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
-    Foundation for the option-1 dual HRRR/NBM cascade. Ingester writes the current cycle's leads to <code>nbm_point_extract.json</code> every hour at :45 UTC. Backfill CF populated <code>nbm_backfill/YYYYMMDD_HH.json</code> for 120 days pre-Phase-3 L3 fits. Fields extracted: t, dp, ws, wd, wg, sr, cc, ch. No cl/cm (NBM CO product does not publish them — selector will always pick HRRR for those two).
+    Foundation for the option-1 dual HRRR/NBM cascade. Ingester writes the current cycle's leads to <code>nbm_point_extract.json</code> every hour at :45 UTC. Backfill CF populates <code>nbm_backfill/YYYYMMDD_HH.json</code> across ~107 days. Fields extracted (9): t, dp, ws, wd, wg, sr, cc, ch, h. No cl/cm/pr/pa/pp (NBM CO product does not publish them — selector will always pick HRRR for those). Backfill still funds L4_NBM diurnal work + independent-window audits; L3_NBM trains directly on the pair log (training-serving parity).
   </div>
   <div id="nbm-infra-live" style="margin-top:10px;font-size:0.88em;">
     <div style="opacity:0.6;">loading NBM ingester status…</div>
@@ -1582,12 +1582,67 @@
         <div style="margin-top:8px;opacity:0.7;font-size:0.85em;">
           Backfill coverage: manifest tile pending (Phase 0 item). Verify via
           <code>gsutil ls gs://myweather-data/nbm_backfill/ | wc -l</code>
-          — expect 2,880 blobs (120 days × 24 cycles).
+          — target 2,568 blobs (107 days × 24 cycles).
         </div>`;
     })
     .catch(e => {
       const el = document.getElementById("nbm-infra-live");
       if (el) el.innerHTML = `<div style="color:#e08a70;">nbm_point_extract.json not yet available (ingester has not written the first cycle). Error: ${e}</div>`;
+    });
+})();
+</script>
+
+<!-- ───────── Phase 3 fit-status tile (2026-08-19) ─────────
+     Reads the local curated JSON that l3_nbm.py loads at collector import.
+     Same rendering pattern as the Phase 0 infra tile. -->
+<details style="margin:12px 0;padding:10px 14px;border:1px solid #3a527a;background:#0e1a2a;border-radius:6px;" id="sec-nbm-l3-fit">
+  <summary style="color:#8db4e8;font-weight:600;cursor:pointer;list-style:none;">🧮 NBM L3 fit status (Phase 3 build) <span style="opacity:0.75;font-weight:normal;">— per-lead bias table warmup</span></summary>
+  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
+    <code>analysis/l3_nbm_fit.py</code> refits <code>weather_collector/data/l3_nbm_curated.json</code> from the pair log's <code>error_l2_nbm</code> residual. τ=14d, 30d retention, min 20 pairs per (field, lead) bin before publishing. Scalar fields: t / ws / wg / h. Circular field: wd via sin/cos components (mirror of HRRR-side <code>wd_components</code>). Applied inside <code>forecast_snapshot.stamp()</code>; identity fall-through until bins pass the pair-count floor.
+  </div>
+  <div id="nbm-l3-fit-live" style="margin-top:10px;font-size:0.88em;">
+    <div style="opacity:0.6;">loading l3_nbm_curated.json…</div>
+  </div>
+</details>
+<script>
+(function(){
+  const url = "weather_collector/data/l3_nbm_curated.json?_=" + Date.now();
+  fetch(url, { cache: "no-store" })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      const el = document.getElementById("nbm-l3-fit-live");
+      if (!el) return;
+      const fittedAt = d.fitted_at || "never";
+      const nPairs = (d.n_pairs || 0).toLocaleString();
+      const minP = d.min_pairs_per_lead || 20;
+      const scalars = (d.fields_covered || []).filter(f => f !== "wd");
+      const corr = d.corrections || {};
+      const nsam = d.n_samples || {};
+      const rows = scalars.map(f => {
+        const arr = corr[f] || [];
+        const filled = arr.filter(v => v !== null).length;
+        const pairs = (nsam[f] || []).reduce((a, b) => a + b, 0);
+        return `<tr><td style="padding:2px 12px 2px 0;"><code>${f}</code></td>` +
+               `<td style="padding:2px 12px 2px 0;">${filled}/48 leads</td>` +
+               `<td style="padding:2px 0;opacity:0.75;">${pairs.toLocaleString()} pairs</td></tr>`;
+      }).join("");
+      const wdComp = (corr.wd_components) || {};
+      const wdSin = wdComp.sin || [];
+      const wdFilled = wdSin.filter(v => v !== null).length;
+      const wdPairs = (nsam.wd || []).reduce((a, b) => a + b, 0);
+      const wdRow = `<tr><td style="padding:2px 12px 2px 0;"><code>wd</code> <span style="opacity:0.6;">(sin/cos)</span></td>` +
+                    `<td style="padding:2px 12px 2px 0;">${wdFilled}/48 leads</td>` +
+                    `<td style="padding:2px 0;opacity:0.75;">${wdPairs.toLocaleString()} pairs</td></tr>`;
+      el.innerHTML = `
+        <div><strong>Last fit:</strong> ${fittedAt} · ${nPairs} pairs in window · min ${minP}/bin to publish</div>
+        <table style="margin-top:8px;border-collapse:collapse;">${rows}${wdRow}</table>
+        <div style="margin-top:8px;opacity:0.7;font-size:0.85em;">
+          Empty coverage is expected until the pair log fills — first meaningful bias table lands once per-lead bins clear ${minP} recent-weighted samples (rule-of-thumb ~2 weeks post-Phase 2 deploy).
+        </div>`;
+    })
+    .catch(e => {
+      const el = document.getElementById("nbm-l3-fit-live");
+      if (el) el.innerHTML = `<div style="color:#e08a70;">l3_nbm_curated.json not yet reachable. Error: ${e}</div>`;
     });
 })();
 </script>
@@ -1600,7 +1655,7 @@
 <details style="margin:12px 0;padding:10px 14px;border:1px solid #4a3a52;background:#1a0e20;border-radius:6px;" id="sec-l1-selector">
   <summary style="color:#c48fe0;font-weight:600;cursor:pointer;list-style:none;">🎯 L1 selector — per (field, lead-band) source picker <span style="opacity:0.6;font-weight:normal;">(not yet armed — Phase 4)</span></summary>
   <div class="meta-line" style="margin-top:8px;opacity:0.75;font-size:0.88em;">
-    Design intent: for each (field, lead-band) combo, argmin of recent-window MAE(l3_hrrr) vs MAE(l3_nbm) picks which source's cascade output becomes the user-facing forecast. Table refit nightly from pair log; stored at <code>l1_selector_table.json</code>. Placeholder until Phase 4 ship gate clears (requires NBM L3 to fit + stabilize, ~90d of forward pair-log data with <code>l2_nbm</code> stamped — Phase 1/2 shipped 2026-08-18).
+    Design intent: for each (field, lead-band) combo, argmin of recent-window MAE(l3_hrrr) vs MAE(l3_nbm) picks which source's cascade output becomes the user-facing forecast. Table refit nightly from pair log; stored at <code>l1_selector_table.json</code>. Phase 1/2 shipped 2026-08-18 (raw_nbm + l2_nbm stamped in pair log). Phase 3 scaffolded 2026-08-19: <code>l3_nbm</code> apply + <code>l3_nbm_curated.json</code> table + <code>analysis/l3_nbm_fit.py</code> — see fit-status tile above for warmup progress. Selector arms once L3_NBM has stable per-lead coverage vs L3_HRRR (rule-of-thumb ~30d of pair-log fill from Phase 2 deploy).
   </div>
   <div style="margin-top:10px;font-size:0.88em;opacity:0.55;font-style:italic;">Selector not yet armed. Once wired, this block will show per-hour <code>pick_source</code> per field with color coding + hover-margin for the pick's recent MAE lift over the loser.</div>
 </details>
@@ -6919,6 +6974,9 @@ load();
     // cascade shadow (not user-facing until Phase 4 selector ships).
     raw_nbm: { color: "rgba(138,175,220,0.7)", dash: [4,4], width: 1.25 },
     l2_nbm:  { color: "#7fb3ff",               dash: [4,4], width: 1.25 },
+    // Phase 3 (2026-08-19). l3_nbm sits above l2_nbm in the NBM cascade —
+    // slightly deeper blue to keep the visual ordering (raw → l2 → l3).
+    l3_nbm:  { color: "#4d8fe0",               dash: [4,4], width: 1.25 },
   };
   const FIELD_LAYERS = {
     // sr: Lsr is the final applied value; l4/prod key is pre-Lsr, filtered out
@@ -6940,17 +6998,17 @@ load();
     // and IS the router where the router fired, so at long lead prod_real and
     // l1r coincide; short lead prod_real shows cascade output. The l1r line
     // visualizes router-only MAE for direct comparison with the cascade path.
-    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // Non-cloud, non-specialist fields
     // Phase 1/2 (option-1 parallel cascade): NBM lines (raw_nbm, l2_nbm)
     // added for the 5 fields NBM emits + L2 corrects (t/ws/wg/wd/h).
     // Dashed rendering (see LAYER_STYLE). Fields NBM emits but L2 doesn't
     // (sr, ch, cc, dp) get raw_nbm only. Fields NBM doesn't emit (cl/cm/
     // pr/pp/pa) get nothing new here — selector picks HRRR always.
-    h:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    h:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     dp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    wg: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wg: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     pp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
     pr: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
     pa: [{key:"raw", label:"Raw"}, {key:"prod_real", label:"Prod", isProd:true}],
@@ -6960,7 +7018,7 @@ load();
     // bypass of L1/L2). Specialist demotes L2 to intermediate; prod_real is
     // isProd (parallel to v0.6.371's treatment of the other 13 fields).
     // Circular metric: MAE values are absolute angular diff on [0, 180].
-    wd: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wd: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"l3_nbm", label:"L3 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
   };
   // Layer must have at least this many non-null days in the payload to
   // appear in the legend. Prevents 1-2 stragglers (e.g. cc l6 the day Lc

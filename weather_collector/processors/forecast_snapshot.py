@@ -58,6 +58,20 @@ _NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch", "h")
 # accumulates. wd uses circular subtraction/addition.
 _L2_NBM_FIELDS = ("t", "ws", "wd", "wg", "h")
 
+# Phase 3 (2026-08-19) — L3_NBM coverage. Per-lead signed bias applied to
+# {field}_l2_nbm: `l3_nbm = l2_nbm - bias_table[field][lead_h]`. Table
+# comes from analysis/l3_nbm_fit.py fitting the pair log's error_l2_nbm
+# residual. wd excluded (would need per-layer sin/cos plumbing, matches
+# HRRR-side L3_FIELDS not carrying wd). Shadow-only until Phase 4
+# selector arms user-visible NBM outputs.
+from .l3_nbm import (
+    L3_NBM_FIELDS as _L3_NBM_FIELDS,
+    L3_NBM_WD as _L3_NBM_WD,
+    l3_nbm_bias as _l3_nbm_bias,
+    l3_nbm_wd_components as _l3_nbm_wd_components,
+)
+
+
 def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
     """Extract an NWS gridpoint value at target_utc (tz-aware UTC), applying
     the unit conversion. Returns None if the property is missing or the
@@ -440,6 +454,24 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         entry[f"{f}_l2_nbm"] = _round_for(f, combined)
                     else:
                         entry[f"{f}_l2_nbm"] = _round_for(f, raw_nbm + (l2_hrrr - raw_hrrr))
+                # Phase 3 (2026-08-19) — L3_NBM. Scalar fields (t/ws/wg/h)
+                # subtract a per-lead signed bias. wd uses circular sin/cos
+                # correction: subtract per-lead sin/cos residuals then atan2
+                # back to degrees. Both branches identity-fall-through when
+                # the curated table has no coverage (bias 0.0 / (0.0, 0.0)).
+                for f in _L3_NBM_FIELDS:
+                    l2_nbm = entry.get(f"{f}_l2_nbm")
+                    if l2_nbm is None:
+                        continue
+                    entry[f"{f}_l3_nbm"] = _round_for(f, l2_nbm - _l3_nbm_bias(f, i))
+                wd_l2_nbm = entry.get(f"{_L3_NBM_WD}_l2_nbm")
+                if wd_l2_nbm is not None:
+                    sin_c, cos_c = _l3_nbm_wd_components(i)
+                    wd_rad = _math.radians(float(wd_l2_nbm))
+                    s = _math.sin(wd_rad) - sin_c
+                    c = _math.cos(wd_rad) - cos_c
+                    corrected = _math.degrees(_math.atan2(s, c)) % 360.0
+                    entry[f"{_L3_NBM_WD}_l3_nbm"] = _round_for(_L3_NBM_WD, corrected)
         hours.append(entry)
 
     if not hours:
