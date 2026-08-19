@@ -1,158 +1,437 @@
 {
-  "fitted_at": "2026-08-19T10:36",
+  "fitted_at": "2026-08-19T15:24",
   "window_days": 30,
   "min_n": 200,
   "min_lift_pct": 3.0,
-  "matched_triplets": 98085,
+  "n_rows_scanned": 482360,
+  "n_rows_kept": 304443,
+  "compare_shape": "hrrr_prod_vs_nbm_prod",
+  "hrrr_layer_priority_by_field": {
+    "t": [
+      "l6",
+      "l4",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "ws": [
+      "wsbp",
+      "l4",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "wg": [
+      "l4",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "wd": [
+      "wdp",
+      "l4",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "h": [
+      "l4",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "ch": [
+      "chp",
+      "l6",
+      "l4",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "cm": [
+      "l6",
+      "l4",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "cl": [
+      "clp",
+      "l6",
+      "l4",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "cc": [
+      "l6",
+      "l4",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "sr": [
+      "l5",
+      "l1"
+    ],
+    "dp": [
+      "dpbp",
+      "l3",
+      "l2",
+      "l1"
+    ],
+    "pa": [
+      "l1"
+    ],
+    "pr": [
+      "l2",
+      "l1"
+    ],
+    "pp": [
+      "l1"
+    ]
+  },
   "table": {
     "t": {
       "0-5": {
         "source": "hrrr",
-        "hrrr_mae": 1.159,
-        "nbm_mae": 1.342,
-        "lift_pct": -15.78,
-        "n": 1300
+        "hrrr_prod_mae": 0.93,
+        "nbm_prod_mae": 1.795,
+        "lift_pct": -92.96,
+        "n": 21,
+        "hrrr_n": 4237,
+        "nbm_n": 21
       },
       "6-11": {
         "source": "hrrr",
-        "hrrr_mae": 1.439,
-        "nbm_mae": 1.406,
-        "lift_pct": 2.26,
-        "n": 1560
+        "hrrr_prod_mae": 1.468,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4236,
+        "nbm_n": 0
       },
       "12-23": {
-        "source": "nbm",
-        "hrrr_mae": 1.597,
-        "nbm_mae": 1.44,
-        "lift_pct": 9.84,
-        "n": 3103
+        "source": "hrrr",
+        "hrrr_prod_mae": 1.758,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 8472,
+        "nbm_n": 0
       },
       "24-47": {
-        "source": "nbm",
-        "hrrr_mae": 1.855,
-        "nbm_mae": 1.548,
-        "lift_pct": 16.53,
-        "n": 6100
+        "source": "hrrr",
+        "hrrr_prod_mae": 2.267,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 16944,
+        "nbm_n": 0
       }
     },
     "ws": {
       "0-5": {
-        "source": "nbm",
-        "hrrr_mae": 2.13,
-        "nbm_mae": 1.848,
-        "lift_pct": 13.23,
-        "n": 1300
+        "source": "hrrr",
+        "hrrr_prod_mae": 1.707,
+        "nbm_prod_mae": 1.652,
+        "lift_pct": 3.2,
+        "n": 21,
+        "hrrr_n": 4237,
+        "nbm_n": 21
       },
       "6-11": {
-        "source": "nbm",
-        "hrrr_mae": 2.344,
-        "nbm_mae": 1.891,
-        "lift_pct": 19.33,
-        "n": 1560
+        "source": "hrrr",
+        "hrrr_prod_mae": 2.561,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4236,
+        "nbm_n": 0
       },
       "12-23": {
-        "source": "nbm",
-        "hrrr_mae": 2.442,
-        "nbm_mae": 1.887,
-        "lift_pct": 22.72,
-        "n": 3103
+        "source": "hrrr",
+        "hrrr_prod_mae": 2.343,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 8472,
+        "nbm_n": 0
       },
       "24-47": {
-        "source": "nbm",
-        "hrrr_mae": 2.506,
-        "nbm_mae": 2.225,
-        "lift_pct": 11.19,
-        "n": 6100
+        "source": "hrrr",
+        "hrrr_prod_mae": 2.33,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 16944,
+        "nbm_n": 0
       }
     },
     "wg": {
       "0-5": {
-        "source": "nbm",
-        "hrrr_mae": 5.535,
-        "nbm_mae": 3.231,
-        "lift_pct": 41.62,
-        "n": 1300
+        "source": "hrrr",
+        "hrrr_prod_mae": 3.316,
+        "nbm_prod_mae": 1.852,
+        "lift_pct": 44.15,
+        "n": 21,
+        "hrrr_n": 4237,
+        "nbm_n": 21
       },
       "6-11": {
-        "source": "nbm",
-        "hrrr_mae": 5.632,
-        "nbm_mae": 3.43,
-        "lift_pct": 39.1,
-        "n": 1560
+        "source": "hrrr",
+        "hrrr_prod_mae": 4.984,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4236,
+        "nbm_n": 0
       },
       "12-23": {
-        "source": "nbm",
-        "hrrr_mae": 6.792,
-        "nbm_mae": 3.515,
-        "lift_pct": 48.25,
-        "n": 3103
+        "source": "hrrr",
+        "hrrr_prod_mae": 4.979,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 8472,
+        "nbm_n": 0
       },
       "24-47": {
-        "source": "nbm",
-        "hrrr_mae": 6.658,
-        "nbm_mae": 3.84,
-        "lift_pct": 42.32,
-        "n": 6100
+        "source": "hrrr",
+        "hrrr_prod_mae": 5.21,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 16944,
+        "nbm_n": 0
       }
     },
     "wd": {
       "0-5": {
-        "source": "nbm",
-        "hrrr_mae": 45.054,
-        "nbm_mae": 36.997,
-        "lift_pct": 17.88,
-        "n": 1300
+        "source": "hrrr",
+        "hrrr_prod_mae": 38.553,
+        "nbm_prod_mae": 75.095,
+        "lift_pct": -94.78,
+        "n": 21,
+        "hrrr_n": 4237,
+        "nbm_n": 21
       },
       "6-11": {
-        "source": "nbm",
-        "hrrr_mae": 49.021,
-        "nbm_mae": 38.008,
-        "lift_pct": 22.46,
-        "n": 1560
+        "source": "hrrr",
+        "hrrr_prod_mae": 57.735,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4236,
+        "nbm_n": 0
       },
       "12-23": {
-        "source": "nbm",
-        "hrrr_mae": 49.892,
-        "nbm_mae": 38.112,
-        "lift_pct": 23.61,
-        "n": 3102
+        "source": "hrrr",
+        "hrrr_prod_mae": 55.002,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 8472,
+        "nbm_n": 0
       },
       "24-47": {
-        "source": "nbm",
-        "hrrr_mae": 50.286,
-        "nbm_mae": 42.174,
-        "lift_pct": 16.13,
-        "n": 6100
+        "source": "hrrr",
+        "hrrr_prod_mae": 55.748,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 16944,
+        "nbm_n": 0
       }
     },
     "h": {
       "0-5": {
-        "source": "nbm",
-        "hrrr_mae": 5.428,
-        "nbm_mae": 4.367,
-        "lift_pct": 19.55,
-        "n": 670
+        "source": "hrrr",
+        "hrrr_prod_mae": 3.982,
+        "nbm_prod_mae": 5.495,
+        "lift_pct": -38.0,
+        "n": 21,
+        "hrrr_n": 4222,
+        "nbm_n": 21
       },
       "6-11": {
-        "source": "nbm",
-        "hrrr_mae": 5.123,
-        "nbm_mae": 4.65,
-        "lift_pct": 9.24,
-        "n": 804
+        "source": "hrrr",
+        "hrrr_prod_mae": 6.138,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4200,
+        "nbm_n": 0
       },
       "12-23": {
         "source": "hrrr",
-        "hrrr_mae": 5.593,
-        "nbm_mae": 5.517,
-        "lift_pct": 1.35,
-        "n": 1590
+        "hrrr_prod_mae": 6.832,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 8400,
+        "nbm_n": 0
       },
       "24-47": {
         "source": "hrrr",
-        "hrrr_mae": 6.215,
-        "nbm_mae": 6.729,
-        "lift_pct": -8.27,
-        "n": 3101
+        "hrrr_prod_mae": 7.759,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 16800,
+        "nbm_n": 0
+      }
+    },
+    "ch": {
+      "0-5": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 8.856,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4219,
+        "nbm_n": 0
+      },
+      "6-11": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 12.817,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4218,
+        "nbm_n": 0
+      },
+      "12-23": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 13.359,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 8436,
+        "nbm_n": 0
+      },
+      "24-47": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 14.49,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 16872,
+        "nbm_n": 0
+      }
+    },
+    "sr": {
+      "0-5": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 70.458,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4237,
+        "nbm_n": 0
+      },
+      "6-11": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 75.886,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4236,
+        "nbm_n": 0
+      },
+      "12-23": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 80.902,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 8472,
+        "nbm_n": 0
+      },
+      "24-47": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 85.579,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 16944,
+        "nbm_n": 0
+      }
+    },
+    "dp": {
+      "0-5": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 1.413,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4222,
+        "nbm_n": 0
+      },
+      "6-11": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 2.21,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4200,
+        "nbm_n": 0
+      },
+      "12-23": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 2.348,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 8400,
+        "nbm_n": 0
+      },
+      "24-47": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 2.745,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 16800,
+        "nbm_n": 0
+      }
+    },
+    "cc": {
+      "0-5": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 22.191,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4231,
+        "nbm_n": 0
+      },
+      "6-11": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 22.234,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 4254,
+        "nbm_n": 0
+      },
+      "12-23": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 24.327,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 8508,
+        "nbm_n": 0
+      },
+      "24-47": {
+        "source": "hrrr",
+        "hrrr_prod_mae": 23.933,
+        "nbm_prod_mae": null,
+        "lift_pct": null,
+        "n": 0,
+        "hrrr_n": 17016,
+        "nbm_n": 0
       }
     }
   },
@@ -163,9 +442,9 @@
       "ws"
     ],
     "leads": ">=6h",
-    "aggregate_nbm_lift_pct": 18.82,
-    "aggregate_n": 32288,
-    "note": "Router-scope selector-lift vs HRRR raw. Phase 4 ship gate: \u226590% of v0.6.432 router's measured long-lead lift on t/ws/wd. Interpret against router's own last-24h lift on debug page."
+    "aggregate_nbm_lift_pct": 0.0,
+    "aggregate_n": 0,
+    "note": "Post-cascade NBM lift on the cells v0.6.432 router covered. Phase 4 ship gate: selector delivers \u226590% of router's live lift on t/ws/wd @ leads \u22656h."
   },
-  "notes": "Per-(field, lead-band) source picker. source='nbm' \u2192 user-facing {field} value is replaced with {field}_l3_nbm in forecast_snapshot. HRRR fall-through when n<min_n or |lift_pct|<min_lift_pct. Scope: t/ws/wg/wd/h (fields with L3_NBM coverage). Refits nightly."
+  "notes": "Selector compares fully-corrected Prod per source: HRRR-side deepest applied layer's error vs NBM-side error_l3_nbm. Picks NBM iff paired n \u2265 min_n AND lift \u2265 min_lift_pct; HRRR fall-through otherwise. Runtime l1_selector.pick_source(field, lead_h) reads this table; when 'nbm', forecast_snapshot replaces user-visible {field} with {field}_l3_nbm."
 }

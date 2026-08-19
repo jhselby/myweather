@@ -1,4 +1,28 @@
 <details open>
+<summary><strong>v0.6.440 • August 19, 2026 (NBM cascade expanded to 9 fields; L1 selector rewritten to compare Prod-per-source; scoreboard v2 rollup extended with per-cell drill-down and pipeline value-add framing)</strong></summary>
+
+- **NBM cascade expanded — ch, sr, dp, cc added to `_L2_NBM_FIELDS` + `L3_NBM_FIELDS`.** `forecast_snapshot.py` now stamps `l2_nbm` + `l3_nbm` for all 9 fields NBM emits (t/ws/wd/wg/h + ch/sr/dp/cc). sr has no HRRR L2, so `l2_nbm_sr = raw_nbm` passthrough — honest identity when no L2 delta exists. `l3_nbm_curated.json` stub extended to 8 scalar fields + wd sin/cos.
+- **L1 selector rewritten to compare Prod-per-source (not raw-per-source).** `analysis/l1_selector_fit.py` walks pair-log rows and computes HRRR-Prod (deepest applied HRRR-side layer via priority list: `dpbp/wsbp/wdp/clp/chp/l6/l5/l4/l3/l2/l1`) vs NBM-Prod (`error_l3_nbm`). Picks argmin per (field, band) subject to `n ≥ 200 AND lift ≥ 3%`. Fixes the Phase 4 v0.6.436 design flaw where selector picked NBM raw over HRRR raw for fields with deep HRRR-side cascade — for ch, HRRR-side (Lc + chp) hits 11.5 MAE while NBM raw is 19.4; raw comparison would have wrongly picked NBM and lost 8 MAE. Prod-vs-Prod comparison picks HRRR correctly.
+- **First fit under new logic:** all cells fall through to HRRR because only ~5-6h of `error_l3_nbm` in pair log (Phase 3 shipped this morning). Selector is safe (no user output change from HRRR baseline) while pair log fills over the next 1-2 weeks.
+- **Scoreboard v2 extended:**
+  - Prod MAE now uses `error_{applied_layer}` per row (not top-level `error` which is L2 residual by legacy). Fixes previous under-reporting of Lc/chp/wdp/etc. contributions for cm/ch/wd/etc.
+  - Best-public baseline uses argmin(HRRR, NBM) for in-scope fields; HRRR-only for out-of-scope. Fixes previous unfair -49% REGRESS on ch by comparing Prod to a source the selector couldn't pick.
+  - Rollup gains: `n_fields_touched` vs `n_fields_all`, verdict counts (STRONG/GOOD/WATCH/REGRESS), per-cell drill-down (`largest_gain`/`largest_regression` per (field, band)), selector-confidence % of cells, halves-agreement % of fields, `mae_pct_of_hrrr` block (HRRR/NBM/best-chosen/Prod as ratio-of-HRRR).
+  - Per-(field, band) cells emitted in `per_field_band` block for future drill-down UI.
+- **Debug page — Tile 1 shape iterated multiple times this session, landed on OLD scoreboard's headline shape** (mean lift + median + all-fields + winning-fields counts). Retired the National Source Score tile (not diagnostic for Wyman Cove); added Cell drill-down tile (largest gain/regress per (field, band)). Colors on numbers instead of "green/amber/red" text labels.
+- **Debug page — Pipeline column in per-field status table** rewritten to show HRRR-side cascade + NBM-side cascade for each field. ch/cc/sr/dp updated from "raw_nbm only (out of scope)" to "raw_nbm → l2_nbm → l3_nbm".
+- **FIELD_LAYERS** on the accuracy chart config: ch/sr/dp/cc rows gain L2 (NBM) + L3 (NBM) entries so those layers plot on the chart.
+- **`nbm_backfill_scoreboard.aggregate()`** extracted as reusable function (previously inline in `scoreboard()` printer).
+- **Publisher CF gains `scoreboard_v2` in the PUBLISHERS list** — refits hourly at :00 UTC alongside `mae_over_time.py`.
+- **Known-broken (afternoon cleanup queue):**
+  - Selected column in Right Now table still uses majority-vote across bands — misleading for fields with mixed picks. Should either be deleted or replaced with per-band strip (H·H·N·N) or MAE of picked source.
+  - `-39% MAE mean 7d` reflects real state (sr Prod is worse than raw NBM by 5×, dominating the arithmetic mean). Will fix as selector flips sr to NBM once pair-log accumulates `error_l3_nbm` for sr.
+  - Style guide inconsistencies across tiles: mixed vocab (positive/negative lift vs STRONG/GOOD/WATCH vs green/amber/red), mixed separators (`/` for both windows and category counts).
+  - Data-quality investigation of NBM sr (nighttime-only extract?) and NBM dp (implausibly good?) was resolved as "extract is healthy" but scoreboard v2's opportunity-gap column still shows misleading +100% for sr.
+
+</details>
+
+<details>
 <summary><strong>v0.6.439 • August 19, 2026 (Debug page — pipeline-status table reshaped to complement scoreboard v2; numeric columns dropped, Pipeline column now shows HRRR + NBM cascades side-by-side, new Selector column)</strong></summary>
 
 - **"Current pipeline state — per-field snapshot" reshaped and retitled to "Per-field pipeline architecture + status".** Companion role rather than redundant one: scoreboard v2 (above) carries the data-driven numeric MAE columns; this table carries the architecture + hand-curated narrative journal.

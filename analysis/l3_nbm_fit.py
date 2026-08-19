@@ -38,7 +38,7 @@ from analysis._cache import cached_path
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_PATH = Path(__file__).resolve().parent.parent / "weather_collector" / "data" / "l3_nbm_curated.json"
 
-FIELDS = ("t", "ws", "wg", "h")
+FIELDS = ("t", "ws", "wg", "h", "ch", "sr", "dp", "cc")
 WD_FIELD = "wd"  # fit via sin/cos components; separate branch, same weighting.
 LEAD_BINS = 48
 TAU_DAYS = 14

@@ -1,15 +1,15 @@
 {
-  "generated_at": "2026-08-17T22:05:49.461242+00:00",
+  "generated_at": "2026-08-19T08:53:35.470148+00:00",
   "source": "h_cc_combine_walker.py",
   "min_obs_date": "2026-07-01",
   "gate_window_days": 7,
   "min_n_cell_day": 30,
   "min_days_in_window": 7,
   "default_formula": "max",
-  "n_cells_total": 33,
+  "n_cells_total": 31,
   "n_cells_cleared": 0,
   "days_present": 31,
-  "latest_day": "2026-08-17",
+  "latest_day": "2026-08-19",
   "per_cell": {
     "calm": {
       "0-5": {
@@ -31,18 +31,18 @@
       "12-23": {
         "formula": "max",
         "cleared": false,
-        "days_seen": 3,
+        "days_seen": 4,
         "days_random_wins": 0,
         "days_max_wins": 2,
-        "days_prod_wins": 1,
-        "today_day": "2026-08-10",
-        "today_n": 39,
+        "days_prod_wins": 2,
+        "today_day": "2026-08-18",
+        "today_n": 48,
         "today_maes": {
-          "prod": 48.46153846153846,
-          "max": 8.179487179487179,
-          "random": 12.161723076923078
+          "prod": 28.041666666666668,
+          "max": 30.458333333333332,
+          "random": 30.458333333333332
         },
-        "today_winner": "max"
+        "today_winner": "prod"
       },
       "24-47": {
         "formula": "max",
@@ -51,80 +51,48 @@
         "days_random_wins": 1,
         "days_max_wins": 4,
         "days_prod_wins": 2,
-        "today_day": "2026-08-16",
-        "today_n": 37,
+        "today_day": "2026-08-19",
+        "today_n": 68,
         "today_maes": {
-          "prod": 29.243243243243242,
-          "max": 12.756756756756756,
-          "random": 13.337600000000002
+          "prod": 41.794117647058826,
+          "max": 50.61764705882353,
+          "random": 46.5391176470588
         },
-        "today_winner": "max"
+        "today_winner": "prod"
       }
     },
     "frontal": {
-      "0-5": {
-        "formula": "max",
-        "cleared": false,
-        "days_seen": 1,
-        "days_random_wins": 1,
-        "days_max_wins": 0,
-        "days_prod_wins": 0,
-        "today_day": "2026-07-18",
-        "today_n": 60,
-        "today_maes": {
-          "prod": 38.333333333333336,
-          "max": 47.28333333333333,
-          "random": 32.586888333333334
-        },
-        "today_winner": "random"
-      },
       "12-23": {
         "formula": "max",
         "cleared": false,
         "days_seen": 2,
-        "days_random_wins": 0,
+        "days_random_wins": 1,
         "days_max_wins": 0,
-        "days_prod_wins": 2,
-        "today_day": "2026-07-22",
-        "today_n": 60,
+        "days_prod_wins": 1,
+        "today_day": "2026-08-17",
+        "today_n": 57,
         "today_maes": {
-          "prod": 40.9,
-          "max": 48.35,
-          "random": 43.88318833333334
+          "prod": 14.543859649122806,
+          "max": 13.280701754385966,
+          "random": 11.490835087719297
         },
-        "today_winner": "prod"
+        "today_winner": "random"
       },
       "24-47": {
         "formula": "max",
         "cleared": false,
-        "days_seen": 3,
+        "days_seen": 4,
         "days_random_wins": 0,
         "days_max_wins": 2,
-        "days_prod_wins": 1,
-        "today_day": "2026-07-23",
-        "today_n": 86,
+        "days_prod_wins": 2,
+        "today_day": "2026-08-18",
+        "today_n": 66,
         "today_maes": {
-          "prod": 19.813953488372093,
-          "max": 17.13953488372093,
-          "random": 17.834904651162788
+          "prod": 25.0,
+          "max": 25.742424242424242,
+          "random": 25.770151515151515
         },
-        "today_winner": "max"
-      },
-      "6-11": {
-        "formula": "max",
-        "cleared": false,
-        "days_seen": 1,
-        "days_random_wins": 1,
-        "days_max_wins": 0,
-        "days_prod_wins": 0,
-        "today_day": "2026-07-18",
-        "today_n": 39,
-        "today_maes": {
-          "prod": 51.12820512820513,
-          "max": 62.15384615384615,
-          "random": 38.11857692307692
-        },
-        "today_winner": "random"
+        "today_winner": "prod"
       }
     },
     "ne_flow": {
@@ -147,50 +115,50 @@
       "12-23": {
         "formula": "max",
         "cleared": false,
-        "days_seen": 3,
-        "days_random_wins": 0,
+        "days_seen": 4,
+        "days_random_wins": 1,
         "days_max_wins": 2,
         "days_prod_wins": 1,
-        "today_day": "2026-07-27",
-        "today_n": 89,
+        "today_day": "2026-08-18",
+        "today_n": 80,
         "today_maes": {
-          "prod": 12.179775280898877,
-          "max": 11.348314606741573,
-          "random": 11.348314606741573
+          "prod": 16.75,
+          "max": 14.35,
+          "random": 12.511625000000004
         },
-        "today_winner": "max"
+        "today_winner": "random"
       },
       "24-47": {
         "formula": "max",
         "cleared": false,
-        "days_seen": 6,
+        "days_seen": 7,
         "days_random_wins": 1,
-        "days_max_wins": 2,
+        "days_max_wins": 3,
         "days_prod_wins": 3,
-        "today_day": "2026-08-12",
-        "today_n": 42,
+        "today_day": "2026-08-18",
+        "today_n": 52,
         "today_maes": {
-          "prod": 32.38095238095238,
-          "max": 16.714285714285715,
-          "random": 18.771904761904768
+          "prod": 37.5,
+          "max": 34.11538461538461,
+          "random": 34.39038461538461
         },
         "today_winner": "max"
       },
       "6-11": {
         "formula": "max",
         "cleared": false,
-        "days_seen": 2,
-        "days_random_wins": 0,
+        "days_seen": 3,
+        "days_random_wins": 1,
         "days_max_wins": 0,
         "days_prod_wins": 2,
-        "today_day": "2026-07-27",
-        "today_n": 37,
+        "today_day": "2026-08-18",
+        "today_n": 51,
         "today_maes": {
-          "prod": 11.297297297297296,
-          "max": 12.783783783783784,
-          "random": 12.738918918918918
+          "prod": 16.45098039215686,
+          "max": 13.372549019607844,
+          "random": 10.51156862745098
         },
-        "today_winner": "prod"
+        "today_winner": "random"
       }
     },
     "nor_easter": {
@@ -251,44 +219,44 @@
         "days_random_wins": 2,
         "days_max_wins": 4,
         "days_prod_wins": 1,
-        "today_day": "2026-08-16",
-        "today_n": 74,
+        "today_day": "2026-08-18",
+        "today_n": 51,
         "today_maes": {
-          "prod": 31.864864864864863,
-          "max": 15.756756756756756,
-          "random": 16.196205405405408
+          "prod": 13.823529411764707,
+          "max": 17.686274509803923,
+          "random": 17.37882352941176
         },
-        "today_winner": "max"
+        "today_winner": "prod"
       },
       "24-47": {
         "formula": "max",
         "cleared": false,
         "days_seen": 7,
         "days_random_wins": 1,
-        "days_max_wins": 4,
-        "days_prod_wins": 2,
-        "today_day": "2026-08-16",
-        "today_n": 123,
+        "days_max_wins": 5,
+        "days_prod_wins": 1,
+        "today_day": "2026-08-18",
+        "today_n": 114,
         "today_maes": {
-          "prod": 14.829268292682928,
-          "max": 14.829268292682928,
-          "random": 15.779320325203246
+          "prod": 21.833333333333332,
+          "max": 20.473684210526315,
+          "random": 20.601929824561402
         },
-        "today_winner": "prod"
+        "today_winner": "max"
       },
       "6-11": {
         "formula": "max",
         "cleared": false,
         "days_seen": 7,
-        "days_random_wins": 1,
+        "days_random_wins": 0,
         "days_max_wins": 2,
-        "days_prod_wins": 4,
-        "today_day": "2026-08-16",
-        "today_n": 35,
+        "days_prod_wins": 5,
+        "today_day": "2026-08-18",
+        "today_n": 31,
         "today_maes": {
-          "prod": 13.885714285714286,
-          "max": 14.914285714285715,
-          "random": 15.360857142857142
+          "prod": 23.806451612903224,
+          "max": 26.35483870967742,
+          "random": 26.35483870967742
         },
         "today_winner": "prod"
       }
@@ -301,14 +269,14 @@
         "days_random_wins": 6,
         "days_max_wins": 0,
         "days_prod_wins": 1,
-        "today_day": "2026-08-16",
-        "today_n": 49,
+        "today_day": "2026-08-17",
+        "today_n": 58,
         "today_maes": {
-          "prod": 16.979591836734695,
-          "max": 15.53061224489796,
-          "random": 15.201679591836736
+          "prod": 5.551724137931035,
+          "max": 9.862068965517242,
+          "random": 8.424944827586206
         },
-        "today_winner": "random"
+        "today_winner": "prod"
       },
       "12-23": {
         "formula": "max",
@@ -317,12 +285,12 @@
         "days_random_wins": 2,
         "days_max_wins": 3,
         "days_prod_wins": 2,
-        "today_day": "2026-08-17",
-        "today_n": 49,
+        "today_day": "2026-08-18",
+        "today_n": 63,
         "today_maes": {
-          "prod": 38.714285714285715,
-          "max": 41.95918367346939,
-          "random": 38.72632653061225
+          "prod": 16.46031746031746,
+          "max": 19.349206349206348,
+          "random": 17.836984126984127
         },
         "today_winner": "prod"
       },
@@ -331,68 +299,18 @@
         "cleared": false,
         "days_seen": 7,
         "days_random_wins": 3,
-        "days_max_wins": 2,
-        "days_prod_wins": 2,
-        "today_day": "2026-08-16",
-        "today_n": 31,
-        "today_maes": {
-          "prod": 27.70967741935484,
-          "max": 12.193548387096774,
-          "random": 11.30253870967742
-        },
-        "today_winner": "random"
-      },
-      "6-11": {
-        "formula": "max",
-        "cleared": false,
-        "days_seen": 7,
-        "days_random_wins": 3,
         "days_max_wins": 3,
         "days_prod_wins": 1,
-        "today_day": "2026-08-16",
-        "today_n": 40,
+        "today_day": "2026-08-18",
+        "today_n": 195,
         "today_maes": {
-          "prod": 32.85,
-          "max": 17.0,
-          "random": 13.904034999999997
+          "prod": 31.24102564102564,
+          "max": 30.605128205128207,
+          "random": 30.85851282051282
         },
-        "today_winner": "random"
-      }
-    },
-    "se_flow": {
-      "0-5": {
-        "formula": "max",
-        "cleared": false,
-        "days_seen": 7,
-        "days_random_wins": 1,
-        "days_max_wins": 0,
-        "days_prod_wins": 6,
-        "today_day": "2026-08-02",
-        "today_n": 43,
-        "today_maes": {
-          "prod": 18.11627906976744,
-          "max": 20.953488372093023,
-          "random": 15.420369767441862
-        },
-        "today_winner": "random"
+        "today_winner": "max"
       },
-      "12-23": {
-        "formula": "max",
-        "cleared": false,
-        "days_seen": 7,
-        "days_random_wins": 4,
-        "days_max_wins": 1,
-        "days_prod_wins": 2,
-        "today_day": "2026-08-16",
-        "today_n": 107,
-        "today_maes": {
-          "prod": 41.54205607476636,
-          "max": 14.57943925233645,
-          "random": 11.995791588785044
-        },
-        "today_winner": "random"
-      },
-      "24-47": {
+      "6-11": {
         "formula": "max",
         "cleared": false,
         "days_seen": 7,
@@ -400,11 +318,61 @@
         "days_max_wins": 2,
         "days_prod_wins": 2,
         "today_day": "2026-08-17",
-        "today_n": 163,
+        "today_n": 56,
         "today_maes": {
-          "prod": 25.607361963190183,
-          "max": 29.32515337423313,
-          "random": 23.97085214723927
+          "prod": 13.089285714285714,
+          "max": 13.982142857142858,
+          "random": 13.616464285714287
+        },
+        "today_winner": "prod"
+      }
+    },
+    "se_flow": {
+      "0-5": {
+        "formula": "max",
+        "cleared": false,
+        "days_seen": 7,
+        "days_random_wins": 3,
+        "days_max_wins": 0,
+        "days_prod_wins": 4,
+        "today_day": "2026-08-18",
+        "today_n": 37,
+        "today_maes": {
+          "prod": 28.35135135135135,
+          "max": 27.864864864864863,
+          "random": 27.187027027027025
+        },
+        "today_winner": "random"
+      },
+      "12-23": {
+        "formula": "max",
+        "cleared": false,
+        "days_seen": 7,
+        "days_random_wins": 5,
+        "days_max_wins": 1,
+        "days_prod_wins": 1,
+        "today_day": "2026-08-19",
+        "today_n": 51,
+        "today_maes": {
+          "prod": 27.705882352941178,
+          "max": 28.058823529411764,
+          "random": 27.31137254901961
+        },
+        "today_winner": "random"
+      },
+      "24-47": {
+        "formula": "max",
+        "cleared": false,
+        "days_seen": 7,
+        "days_random_wins": 4,
+        "days_max_wins": 2,
+        "days_prod_wins": 1,
+        "today_day": "2026-08-19",
+        "today_n": 41,
+        "today_maes": {
+          "prod": 20.902439024390244,
+          "max": 13.878048780487806,
+          "random": 13.259024390243903
         },
         "today_winner": "random"
       },
@@ -416,11 +384,11 @@
         "days_max_wins": 0,
         "days_prod_wins": 4,
         "today_day": "2026-08-17",
-        "today_n": 31,
+        "today_n": 46,
         "today_maes": {
-          "prod": 5.806451612903226,
-          "max": 5.806451612903226,
-          "random": 5.0134838709677405
+          "prod": 7.369565217391305,
+          "max": 5.521739130434782,
+          "random": 4.987347826086955
         },
         "today_winner": "random"
       }

@@ -56,7 +56,7 @@ _NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch", "h")
 # model-agnostic — the delta L2 computed for HRRR is what the NBM cascade
 # would also need. Refinable in Phase 5+ once station-vs-NBM bias data
 # accumulates. wd uses circular subtraction/addition.
-_L2_NBM_FIELDS = ("t", "ws", "wd", "wg", "h")
+_L2_NBM_FIELDS = ("t", "ws", "wd", "wg", "h", "ch", "sr", "dp", "cc")
 
 # Phase 3 (2026-08-19) — L3_NBM coverage. Per-lead signed bias applied to
 # {field}_l2_nbm: `l3_nbm = l2_nbm - bias_table[field][lead_h]`. Table
@@ -464,9 +464,16 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                 import math as _math
                 for f in _L2_NBM_FIELDS:
                     raw_nbm = entry.get(f"{f}_raw_nbm")
+                    if raw_nbm is None:
+                        continue
                     raw_hrrr = entry.get(f"{f}_l1")
                     l2_hrrr = entry.get(f"{f}_l2")
-                    if raw_nbm is None or raw_hrrr is None or l2_hrrr is None:
+                    # If HRRR side has no L2 correction for this field (sr,
+                    # fields where L2 didn't fire this hour, etc.), the L2
+                    # delta is 0 by construction — l2_nbm passes raw_nbm
+                    # through unchanged. Honest fall-through.
+                    if raw_hrrr is None or l2_hrrr is None:
+                        entry[f"{f}_l2_nbm"] = _round_for(f, raw_nbm)
                         continue
                     if f == "wd":
                         # Circular: delta = signed angular diff in (-180, 180]

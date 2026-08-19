@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17T11:25:20.071779+00:00",
+  "generated_at": "2026-08-19T08:56:22.463780+00:00",
   "source": "h_lsr_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
@@ -10,84 +10,10 @@
     "calm",
     "ne_flow"
   ],
-  "promoted_fields": [
-    "sr"
-  ],
+  "promoted_fields": [],
   "fields_cleared": [],
   "set_level_gate_clear": false,
   "per_cell": {
-    "nw_flow": {
-      "8": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": -88.5,
-        "hist_shift": 88.5,
-        "n_holdout": 111
-      },
-      "9": {
-        "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
-        "mag_ok": true,
-        "recent_bias": -163.7805,
-        "hist_bias": -149.5,
-        "hist_shift": 149.5,
-        "n_holdout": 87
-      },
-      "10": {
-        "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
-        "mag_ok": true,
-        "recent_bias": -235.6129,
-        "hist_bias": -226.0,
-        "hist_shift": 226.0,
-        "n_holdout": 78
-      },
-      "11": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": -209.3,
-        "hist_shift": 209.3,
-        "n_holdout": 74
-      },
-      "12": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": -270.4,
-        "hist_shift": 270.4,
-        "n_holdout": 42
-      },
-      "13": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": -226.4,
-        "hist_shift": 226.4,
-        "n_holdout": 38
-      },
-      "14": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": -176.6,
-        "hist_shift": 176.6,
-        "n_holdout": 34
-      }
-    },
     "se_flow": {
       "11": {
         "gate_apply": true,
@@ -95,79 +21,19 @@
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": 123.5,
-        "hist_shift": -123.5,
-        "n_holdout": 40
-      },
-      "12": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 90.6,
-        "hist_shift": -90.6,
-        "n_holdout": 34
-      },
-      "13": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": -98.3,
-        "hist_shift": 98.3,
-        "n_holdout": 56
-      },
-      "14": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": -207.1,
-        "hist_shift": 207.1,
-        "n_holdout": 57
-      },
-      "15": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": -148.5,
-        "hist_shift": 148.5,
-        "n_holdout": 60
-      },
-      "16": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 4.4,
-        "hist_shift": -4.4,
-        "n_holdout": 61
+        "hist_bias": 3.3,
+        "hist_shift": -3.3,
+        "n_holdout": 39
       },
       "17": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": -11.5,
-        "hist_shift": 11.5,
-        "n_holdout": 68
-      },
-      "18": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 62.2,
-        "hist_shift": -62.2,
-        "n_holdout": 62
+        "gate_apply": false,
+        "gate_reason": "sign",
+        "sign_ok": false,
+        "mag_ok": true,
+        "recent_bias": 15.1961,
+        "hist_bias": -4.8,
+        "hist_shift": 4.8,
+        "n_holdout": 37
       }
     }
   },

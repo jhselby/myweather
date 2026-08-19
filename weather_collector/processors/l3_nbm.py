@@ -33,7 +33,7 @@ from pathlib import Path
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l3_nbm_curated.json"
 
-L3_NBM_FIELDS = ("t", "ws", "wg", "h")   # scalar-bias fields
+L3_NBM_FIELDS = ("t", "ws", "wg", "h", "ch", "sr", "dp", "cc")   # scalar-bias fields
 L3_NBM_WD = "wd"                          # circular field (sin/cos components)
 LEAD_BINS = 48
 

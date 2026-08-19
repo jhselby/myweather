@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-18T11:49:51.858206+00:00",
+  "generated_at": "2026-08-19T08:56:02.905731+00:00",
   "source": "h_lc_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
@@ -19,20 +19,20 @@
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 57.7554,
-        "hist_bias": 23.712,
-        "hist_shift": -23.712,
-        "n_holdout": 80
+        "recent_bias": 62.1207,
+        "hist_bias": 24.303,
+        "hist_shift": -24.303,
+        "n_holdout": 173
       },
       "80-95": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 77.5783,
-        "hist_bias": 38.051,
-        "hist_shift": -38.051,
-        "n_holdout": 89
+        "recent_bias": 84.7105,
+        "hist_bias": 35.522,
+        "hist_shift": -35.522,
+        "n_holdout": 176
       }
     },
     "cm": {
@@ -41,30 +41,30 @@
         "gate_reason": "sign",
         "sign_ok": false,
         "mag_ok": false,
-        "recent_bias": -5.2195,
-        "hist_bias": 14.827,
-        "hist_shift": -14.827,
-        "n_holdout": 165
+        "recent_bias": -0.7867,
+        "hist_bias": 16.0,
+        "hist_shift": -16.0,
+        "n_holdout": 127
       },
       "50-80": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 35.4568,
-        "hist_bias": 42.824,
-        "hist_shift": -42.824,
-        "n_holdout": 143
+        "recent_bias": 37.0,
+        "hist_bias": 44.265,
+        "hist_shift": -44.265,
+        "n_holdout": 121
       },
       "80-95": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 44.6017,
-        "hist_bias": 65.326,
-        "hist_shift": -65.326,
-        "n_holdout": 310
+        "recent_bias": 66.9189,
+        "hist_bias": 65.988,
+        "hist_shift": -65.988,
+        "n_holdout": 289
       },
       "95-100": {
         "gate_apply": true,
@@ -72,9 +72,9 @@
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": 60.948,
-        "hist_shift": -60.948,
-        "n_holdout": 110
+        "hist_bias": 63.73,
+        "hist_shift": -63.73,
+        "n_holdout": 98
       }
     },
     "ch": {
@@ -83,30 +83,20 @@
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 27.1028,
-        "hist_bias": 21.97,
-        "hist_shift": -21.97,
-        "n_holdout": 302
+        "recent_bias": 22.4776,
+        "hist_bias": 22.416,
+        "hist_shift": -22.416,
+        "n_holdout": 227
       },
       "50-80": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 58.3828,
-        "hist_bias": 45.828,
-        "hist_shift": -45.828,
-        "n_holdout": 897
-      },
-      "80-95": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 58.01,
-        "hist_shift": -58.01,
-        "n_holdout": 129
+        "recent_bias": 52.3976,
+        "hist_bias": 46.009,
+        "hist_shift": -46.009,
+        "n_holdout": 541
       }
     }
   },
