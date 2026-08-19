@@ -84,7 +84,18 @@ PERMISSIVE_LAYER_KEYS = [("l5", "error_l5"), ("l6", "error_l6"),
                          # ("l1r") are visible side-by-side and users can see
                          # the router's win/loss vs. what the cascade would
                          # have produced.
-                         ("l1r", "error_l1r")]
+                         ("l1r", "error_l1r"),
+                         # Phase 1/2 (option-1 parallel HRRR/NBM cascade,
+                         # 2026-08-18). raw_nbm = NBM CO grib point extract
+                         # (analogue of raw HRRR/GFS L1). l2_nbm = NBM raw
+                         # + delta the HRRR-side L2 applied (v1 approximation
+                         # — station-derived corrections treated as model-
+                         # agnostic; refinable at Phase 5+ with station-vs-
+                         # NBM bias). Both series populated in pair log
+                         # since v0.6.433; chart line appears once fitter
+                         # accumulates a day of data.
+                         ("raw_nbm", "error_raw_nbm"),
+                         ("l2_nbm", "error_l2_nbm")]
 
 LAYER_KEYS = STRICT_LAYER_KEYS + PERMISSIVE_LAYER_KEYS
 

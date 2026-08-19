@@ -1592,6 +1592,19 @@
 })();
 </script>
 
+<!-- ───────── Phase 4 selector placeholder (2026-08-18) ─────────
+     The eventual per-(field, lead-band) source picker on finished L6
+     output. Not armed until Phase 4 ship gate (requires NBM L3 to
+     stabilize first). Kept visible so the layout doesn't jump when
+     the selector goes live. -->
+<details style="margin:12px 0;padding:10px 14px;border:1px solid #4a3a52;background:#1a0e20;border-radius:6px;" id="sec-l1-selector">
+  <summary style="color:#c48fe0;font-weight:600;cursor:pointer;list-style:none;">🎯 L1 selector — per (field, lead-band) source picker <span style="opacity:0.6;font-weight:normal;">(not yet armed — Phase 4)</span></summary>
+  <div class="meta-line" style="margin-top:8px;opacity:0.75;font-size:0.88em;">
+    Design intent: for each (field, lead-band) combo, argmin of recent-window MAE(l3_hrrr) vs MAE(l3_nbm) picks which source's cascade output becomes the user-facing forecast. Table refit nightly from pair log; stored at <code>l1_selector_table.json</code>. Placeholder until Phase 4 ship gate clears (requires NBM L3 to fit + stabilize, ~90d of forward pair-log data with <code>l2_nbm</code> stamped — Phase 1/2 shipped 2026-08-18).
+  </div>
+  <div style="margin-top:10px;font-size:0.88em;opacity:0.55;font-style:italic;">Selector not yet armed. Once wired, this block will show per-hour <code>pick_source</code> per field with color coding + hover-margin for the pick's recent MAE lift over the loser.</div>
+</details>
+
 <h3 class="subsection" style="margin-top:14px;">Raw L1 forecast per field (post-router where the router fired)</h3>
 <div id="grid-raw" class="grid"></div>
 
@@ -6899,33 +6912,45 @@ load();
     // cascade output; the l1r line lets you see router-only MAE vs the
     // cascade shadow (prod) side-by-side. Distinct cyan.
     l1r:  { color: "#5fd4d4", dash: [], width: 1.5 },
+    // Phase 1/2 (option-1 parallel HRRR/NBM cascade, 2026-08-18) — NBM side
+    // of the parallel stack. raw_nbm = NBM CO grib point extract analogue
+    // of L1 (raw). l2_nbm = same L2 correction delta the HRRR side computed,
+    // applied to NBM raw. Dashed to visually mark them as the parallel-
+    // cascade shadow (not user-facing until Phase 4 selector ships).
+    raw_nbm: { color: "rgba(138,175,220,0.7)", dash: [4,4], width: 1.25 },
+    l2_nbm:  { color: "#7fb3ff",               dash: [4,4], width: 1.25 },
   };
   const FIELD_LAYERS = {
     // sr: Lsr is the final applied value; l4/prod key is pre-Lsr, filtered out
     // v0.6.371: prod_real is the real per-row Prod aggregate (applied_layer-keyed,
     // sample-comparable to raw/l2/l3). Specialists (Lsr, Lc, chp, clp) remain
     // visible as intermediate lines showing gate-fired-only MAE.
-    sr: [{key:"raw", label:"Raw"}, {key:"l5", label:"Lsr"}, {key:"prod_real", label:"Prod", isProd:true}],
+    sr: [{key:"raw", label:"Raw"}, {key:"l5", label:"Lsr"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // cc/cl/cm/ch: Lc rides l6. cm/cc have no post-Lc specialist. cl has
     // cl_persistence_gate (clp; wired v0.6.379, ENABLED=False — successor to
     // retired cl_persistence_short_lead). ch has ch_persistence_gate
     // (chp; LIVE since v0.6.358). Specialists demote to intermediate; prod_real
     // is isProd (v0.6.371).
-    cc: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"prod_real", label:"Prod", isProd:true}],
+    cc: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     cl: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l6", label:"Lc"}, {key:"clp", label:"cl-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
     cm: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l6", label:"Lc"}, {key:"prod_real", label:"Prod", isProd:true}],
-    ch: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ch: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l4", label:"L4"}, {key:"l6", label:"Lc"}, {key:"chp", label:"ch-persist"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // t / ws / wd carry an extra "l1r" line (v0.6.432 L1 router — NWS/NBM
     // at leads ≥6h). Distinct from prod_real: prod_real follows applied_layer
     // and IS the router where the router fired, so at long lead prod_real and
     // l1r coincide; short lead prod_real shows cascade output. The l1r line
     // visualizes router-only MAE for direct comparison with the cascade path.
-    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    t:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     // Non-cloud, non-specialist fields
-    h:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
-    dp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
-    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"prod_real", label:"Prod", isProd:true}],
-    wg: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"prod_real", label:"Prod", isProd:true}],
+    // Phase 1/2 (option-1 parallel cascade): NBM lines (raw_nbm, l2_nbm)
+    // added for the 5 fields NBM emits + L2 corrects (t/ws/wg/wd/h).
+    // Dashed rendering (see LAYER_STYLE). Fields NBM emits but L2 doesn't
+    // (sr, ch, cc, dp) get raw_nbm only. Fields NBM doesn't emit (cl/cm/
+    // pr/pp/pa) get nothing new here — selector picks HRRR always.
+    h:  [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    dp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    ws: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wg: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"l3", label:"L3"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
     pp: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
     pr: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2"}, {key:"prod_real", label:"Prod", isProd:true}],
     pa: [{key:"raw", label:"Raw"}, {key:"prod_real", label:"Prod", isProd:true}],
@@ -6935,7 +6960,7 @@ load();
     // bypass of L1/L2). Specialist demotes L2 to intermediate; prod_real is
     // isProd (parallel to v0.6.371's treatment of the other 13 fields).
     // Circular metric: MAE values are absolute angular diff on [0, 180].
-    wd: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"l1r", label:"L1r (router)"}, {key:"prod_real", label:"Prod", isProd:true}],
+    wd: [{key:"raw", label:"Raw"}, {key:"l2", label:"L2 blend"}, {key:"wdp", label:"wd-persist"}, {key:"l1r", label:"L1r (router)"}, {key:"raw_nbm", label:"Raw (NBM)"}, {key:"l2_nbm", label:"L2 (NBM)"}, {key:"prod_real", label:"Prod", isProd:true}],
   };
   // Layer must have at least this many non-null days in the payload to
   // appear in the legend. Prevents 1-2 stragglers (e.g. cc l6 the day Lc

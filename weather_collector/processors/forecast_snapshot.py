@@ -46,7 +46,17 @@ _NWS_FIELDS = ("t", "dp", "pp", "ws", "wd")
 # have a clean HRRR-vs-NBM comparison. Fields NBM emits: see
 # weather_collector/fetchers/nbm_point.py — no cl/cm/h/pr/pa/pp (single-
 # source, HRRR-only forever).
-_NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch")
+_NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch", "h")
+
+# Phase 2 (2026-08-18) — L2_nbm coverage. Intersection of (fields NBM emits)
+# with (fields L2 corrects), minus derived (cc = Ccd(cl,cm,ch), dp = Magnus(t,h)).
+# For each of these 5 fields the snapshot stamps {field}_l2_nbm using the
+# same correction delta L2 applied to HRRR: `l2_nbm = raw_nbm + (l2_hrrr −
+# raw_hrrr)`. Rationale: station-derived corrections are (in v1) treated as
+# model-agnostic — the delta L2 computed for HRRR is what the NBM cascade
+# would also need. Refinable in Phase 5+ once station-vs-NBM bias data
+# accumulates. wd uses circular subtraction/addition.
+_L2_NBM_FIELDS = ("t", "ws", "wd", "wg", "h")
 
 def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
     """Extract an NWS gridpoint value at target_utc (tz-aware UTC), applying
@@ -412,6 +422,24 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     v = fields.get(f)
                     if v is not None:
                         entry[f"{f}_raw_nbm"] = _round_for(f, v)
+                # Phase 2 (2026-08-18) — L2_nbm = raw_nbm + (l2_hrrr − raw_hrrr)
+                # per field where the HRRR side already stamped l1 + l2 above.
+                # wd uses circular arithmetic (delta in [-180, 180], sum wraps
+                # into [0, 360)). Skip when any input is missing.
+                import math as _math
+                for f in _L2_NBM_FIELDS:
+                    raw_nbm = entry.get(f"{f}_raw_nbm")
+                    raw_hrrr = entry.get(f"{f}_l1")
+                    l2_hrrr = entry.get(f"{f}_l2")
+                    if raw_nbm is None or raw_hrrr is None or l2_hrrr is None:
+                        continue
+                    if f == "wd":
+                        # Circular: delta = signed angular diff in (-180, 180]
+                        d = (l2_hrrr - raw_hrrr + 180.0) % 360.0 - 180.0
+                        combined = (raw_nbm + d) % 360.0
+                        entry[f"{f}_l2_nbm"] = _round_for(f, combined)
+                    else:
+                        entry[f"{f}_l2_nbm"] = _round_for(f, raw_nbm + (l2_hrrr - raw_hrrr))
         hours.append(entry)
 
     if not hours:

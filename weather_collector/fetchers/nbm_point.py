@@ -17,11 +17,14 @@ Field map (grib param → app field):
   DSWRF:surface             → sr  (W/m², unchanged)
   TCDC:surface              → cc  (%, unchanged)
   TCDC:high cloud layer     → ch  (%, unchanged)
+  RH:2 m above ground       → h   (%, unchanged)
 
 Not extracted:
   cl, cm      — NBM CO product does NOT publish low/middle cloud amount.
-                Router will always pick HRRR for these fields (single-source).
-  pa          — needs PRMSL confirmation; add later.
+                Selector will always pick HRRR for these fields (single-source).
+  pr          — NBM CO product does NOT publish surface pressure or MSLP
+                anywhere in the 208-message inventory. HRRR-only forever.
+  pa, pp      — precip amount / POP need separate audit; not extracted yet.
 
 Note: the file also contains three TCDC:reserved messages with NCEP local
 level codes 195/196/197 that have no defined meaning; they are NOT low/mid
@@ -54,6 +57,7 @@ FIELD_SPECS = [
     ("DSWRF:surface",         0, "sr", lambda v: v),
     ("TCDC:surface",          0, "cc", lambda v: v),
     ("TCDC:high cloud layer", 0, "ch", lambda v: v),
+    ("RH:2 m above ground",   0, "h",  lambda v: v),
 ]
 
 
