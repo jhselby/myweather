@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.439 • August 19, 2026 (Debug page — pipeline-status table reshaped to complement scoreboard v2; numeric columns dropped, Pipeline column now shows HRRR + NBM cascades side-by-side, new Selector column)</strong></summary>
+
+- **"Current pipeline state — per-field snapshot" reshaped and retitled to "Per-field pipeline architecture + status".** Companion role rather than redundant one: scoreboard v2 (above) carries the data-driven numeric MAE columns; this table carries the architecture + hand-curated narrative journal.
+- **Columns changed:** Field | ~~Applied layers~~ Pipeline | ~~7d avg~~ | ~~24-hour~~ **Selector** | Status. Dropped the two numeric columns (7d/24h) — now shown in scoreboard v2 per-field row.
+- **Pipeline column** shows two lines per cell: **HRRR:** current-side cascade (L1 → L2 → ... → specialists) and **NBM:** parallel-side cascade (raw_nbm → l2_nbm → l3_nbm + wdp_nbm) OR "raw_nbm only" (extracted, no L3_NBM stack) OR "not extracted" (NBM doesn't publish).
+- **New Selector column** shows majority pick per field: NBM all leads (ws/wg/wd), HRRR 0-11h + NBM 12-47h (t), NBM 0-11h + HRRR 12-47h (h), HRRR (out of scope for fields with no NBM cascade). Colored blue for NBM picks, gray for HRRR — same convention as the 🎯 selector tile lower on the page.
+- **Intro paragraph rewritten** to reflect the new companion-role framing.
+- **renderPerFieldSnapshot()** kept but early-return check removed — function still populates the .pf-status status prefixes ("cc status loading…" spans in the Status column) and the narrative/audit blocks below the table.
+- **No collector deploy needed** — pure frontend changes + scoreboard_v2.json already published in v0.6.438.
+
+</details>
+
+<details>
 <summary><strong>v0.6.438 • August 19, 2026 (Scoreboard v2 SHIPPED — Prod vs best-public argmin(HRRR raw, NBM raw); 4 rollup tiles + per-field detail table; retires pre-Phase-4 "vs raw" framing)</strong></summary>
 
 - **New publisher `analysis/scoreboard_v2.py`.** Reads pair log; emits `scoreboard_v2.json` to GCS with two windows (7d, 24h) × 14 fields. Per-field cell: HRRR raw MAE, NBM raw MAE, best_public (argmin), selector_pick, Prod MAE, lift_vs_best_public_pct, halves_a/b lift, halves_agree, n, confidence (HIGH/MED/LOW/NA), verdict (STRONG/GOOD/WATCH/REGRESS/NA). Rollup collapses to Section-1-4 summary: value_add_mean_pct, winning_fields green/amber/red, national_source_score (HRRR wins / NBM wins / insufficient), local_correction_value (does Prod add value on top of the selected source?), health confidence bucket counts.
