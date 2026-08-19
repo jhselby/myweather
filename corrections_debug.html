@@ -6823,7 +6823,7 @@ function renderL1RouterLive(wxDoc) {
   }
 
   const headline = anyRouterFired
-    ? '<div style="color:#5fd4d4;">Router is live. Cyan rows = NBM (NWS-gridpoint) replaced the cascade at that hour. &Delta; column is the router\'s per-hour override vs what the cascade would have said.</div>'
+    ? '<div style="color:#5fd4d4;">Router is live. Cyan rows = cascade input is NBM (NWS-gridpoint) at that hour; L2/L3/L4 corrections then apply on top. &Delta; column is the post-cascade router output vs what the cascade would have produced from HRRR/GFS input.</div>'
     : '<div style="opacity:0.7;">Router did not fire on any hour this tick — either every routed field\'s NWS-gridpoint response was empty or the router is disabled.</div>';
   container.innerHTML = headline + parts.join("");
 }
