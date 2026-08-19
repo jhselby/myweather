@@ -1537,7 +1537,10 @@
      Router runs BEFORE the raw grid conceptually — it selects which L1 seed
      enters the pipeline for each (field, hour). Placed first so the reader
      sees "here's the source choice per hour" before seeing the raw curves. -->
-<details open style="margin:12px 0;padding:10px 14px;border:1px solid #3a6a3a;background:#0e2018;border-radius:6px;" id="sec-l1-router">
+<!-- v0.6.432 L1 router retired 2026-08-19 v0.6.437 — superseded by the
+     🎯 L1 selector tile below. Tile hidden by CSS but element kept so
+     the loader script's document.getElementById returns null cleanly. -->
+<details style="display:none;" id="sec-l1-router">
   <summary style="color:#5fd4d4;font-weight:600;cursor:pointer;list-style:none;">🔀 L1 router — current tick's per-hour source per field <span style="opacity:0.75;font-weight:normal;">(runs first: what enters the pipeline as L1)</span></summary>
   <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
     v0.6.432, live-tick view. Reads <code>hourly.corrected_temperature_router_source</code> / <code>wind_speed_router_source</code> / <code>wind_direction_router_source</code> from <code>weather_data.json</code>. Cascade output (<code>*_pre_router</code>) shown side-by-side with the router's live value at every hour the router fired, so you can see the router's per-hour delta as raw numbers before the next Fitter run rolls the L1r line onto the accuracy chart above. The raw-model curves below reflect the router's per-hour selection: cyan segments = NBM (via NWS-gridpoint), gray segments = Open-Meteo HRRR/GFS.

@@ -728,16 +728,11 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  Backtest snapshot failed: {redact_secrets(e)}")
 
-    # v0.6.432: L1 router — swap cascade output for NWS-gridpoint (NBM-derived)
-    # values at leads ≥6h for t/dp/ws/wd, where 14-day head-to-head showed
-    # NBM beats current production by +6% to +24% MAE. At leads 1-5h and for
-    # fields the router doesn't cover (wg, sr, all clouds, pressure) cascade
-    # output is untouched. See l1_router.py header for the empirical grid.
-    try:
-        from .processors.l1_router import apply_l1_router
-        apply_l1_router(weather_data)
-    except Exception as e:
-        logging.warning(f"  ⚠  L1 router failed: {redact_secrets(e)}")
+    # v0.6.432 L1 router retired 2026-08-19 v0.6.437 — superseded by the
+    # Phase 4 selector (l1_selector.py), which picks HRRR vs NBM per
+    # (field, lead-band) argmin(MAE) on the same evidence, with wider
+    # scope (5 fields including wg + h vs router's 3 t/ws/wd) and post-
+    # cascade application (all corrections apply first, selector picks last).
 
     # Forecast snapshot — must run AFTER decay_apply so the snapshot has access
     # to per-layer intermediate arrays (corrected_*_post_l2, corrected_*_post_l3)
@@ -758,6 +753,7 @@ def main():
             derived=weather_data.get("derived", {}),
             nws_gridpoints=weather_data.get("nws_gridpoints"),
             nbm_extract=nbm_extract,
+            current=weather_data.get("current"),
         )
     except Exception as e:
         logging.warning(f"  ⚠  Forecast snapshot failed: {redact_secrets(e)}")

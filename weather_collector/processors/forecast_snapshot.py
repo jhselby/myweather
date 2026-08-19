@@ -74,6 +74,11 @@ from .l3_nbm import (
 # per (field, lead-band). When "nbm", replace the user-visible {field}
 # with {field}_l3_nbm. Table refit nightly by analysis/l1_selector_fit.py.
 from .l1_selector import pick_source as _selector_pick_source
+# Phase 4b (2026-08-19) — wdp NBM sibling. Applies HRRR-side wdp's
+# predicted-transition persistence gate to the NBM cascade too, so
+# cells the selector routes to NBM don't silently lose wdp's coverage.
+# Shares the same curated table (wd_persistence_gate_curated.json).
+from . import wd_persistence_gate as _wdp
 
 
 def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
@@ -94,7 +99,7 @@ def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
         return None
 
 
-def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extract=None):
+def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extract=None, current=None):
     """Append a snapshot of the corrected 48h forecast for later validation.
     Prunes snapshots older than RETENTION_DAYS on each write. No-op if the
     hourly data has no usable hours.
@@ -118,6 +123,18 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             v = valid_map.get(lead_str)
             if v and fields:
                 nbm_by_valid_utc[v] = fields
+
+    # Phase 4b (2026-08-19) — wdp NBM sibling state. Read once here so
+    # the per-hour loop can gate wd_l3_nbm on the same predicted-transition
+    # signal HRRR-side wdp uses. Persistence source = current observed wd
+    # (post-wind_blend consensus, matching HRRR-side wdp's source).
+    _wdp_state_curr = ((derived or {}).get("state") or {}).get("regime_synoptic") or "unknown"
+    _wdp_state_fc_by_lead = (derived or {}).get("state_fc_by_lead") or []
+    _wdp_persist_val = ((current or {}).get("wind_direction"))
+    try:
+        _wdp_persist_val = float(_wdp_persist_val) if _wdp_persist_val is not None else None
+    except (TypeError, ValueError):
+        _wdp_persist_val = None
 
     times = hourly.get("times", [])
     # Per-layer forecast arrays. The Fitter (decay_fit) computes per-layer MAE
@@ -476,6 +493,18 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     c = _math.cos(wd_rad) - cos_c
                     corrected = _math.degrees(_math.atan2(s, c)) % 360.0
                     entry[f"{_L3_NBM_WD}_l3_nbm"] = _round_for(_L3_NBM_WD, corrected)
+                    # Phase 4b — wdp NBM sibling. Same gate as HRRR-side wdp
+                    # (regime × band + predicted-transition), applied to
+                    # wd_l3_nbm instead of hourly.wind_direction. Keeps
+                    # both cascades symmetric so the selector picks between
+                    # apples-to-apples wdp-corrected wd values.
+                    if _wdp_persist_val is not None and i < len(_wdp_state_fc_by_lead):
+                        fc_regime_i = _wdp_state_fc_by_lead[i] or "unknown"
+                        if (fc_regime_i != _wdp_state_curr
+                                and _wdp.should_fire_at(fc_regime_i, i)):
+                            entry[f"{_L3_NBM_WD}_l3_nbm"] = _round_for(
+                                _L3_NBM_WD, _wdp_persist_val % 360.0)
+                            entry[f"{_L3_NBM_WD}_wdp_nbm_fired"] = True
         # Phase 4 (2026-08-19) — L1 selector. For each field with an
         # l3_nbm value stamped this hour, ask the selector table which
         # source to pick per (field, lead=i). When "nbm", override the

@@ -102,6 +102,22 @@ def _cell_fires(cells, fc_regime, band):
     return cell.get("verdict") in ("SHIP", "MARGIN")
 
 
+def should_fire_at(fc_regime, lead_h):
+    """Public helper — used by the NBM cascade sibling (wdp_nbm) to apply
+    the same gate decision to wd_l3_nbm. Returns True if this cell would
+    fire when a state transition is also predicted."""
+    band = _lead_band(lead_h)
+    if band is None:
+        return False
+    return _cell_fires(_load_table().get("cells", {}), fc_regime, band)
+
+
+def persistence_value(weather_data):
+    """Current observed wd used as the persistence forecast. Same source
+    HRRR-side wdp uses (post-wind_blend consensus)."""
+    return _persistence_source(weather_data)[0]
+
+
 def _persistence_source(weather_data):
     """Current observed wind_direction (post-wind_blend consensus)."""
     current = weather_data.get("current") or {}

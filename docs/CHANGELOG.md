@@ -1,4 +1,18 @@
 <details open>
+<summary><strong>v0.6.437 • August 19, 2026 (Phase 4b — wdp NBM sibling wired; v0.6.432 L1 router retired; NBM cascade now inherits wdp coverage on cells the selector routes to NBM)</strong></summary>
+
+- **v0.6.432 L1 router retired.** Deleted `weather_collector/processors/l1_router.py` + the `apply_l1_router(weather_data)` call in `collector.py`. Router was scope-limited by its NWS-gridpoint data source (3 fields: t/ws/wd @ leads ≥6h). Phase 4 selector (v0.6.436) supersedes on all counts: wider scope (5 fields including wg + h), stronger evidence base (30-day scoreboard vs router's 14-day), post-cascade application (all corrections apply first, selector picks last). Ship-gate met at +18.8% aggregate NBM lift on router-scope. No hypothetical dead-code retention — deleted cleanly per CLAUDE.md rule.
+- **Router tile hidden on debug page.** `#sec-l1-router` block collapsed to `display:none` with a retirement comment; loader script no-ops on the null element. Keeps historical `l1r` pair-log rows readable via the accuracy chart's inert layer key until the 30-day pair-log retention window rolls it out.
+- **Phase 4b — wdp NBM sibling.** `wd_persistence_gate.py` gains public helpers `should_fire_at(fc_regime, lead_h)` and `persistence_value(weather_data)` extracted from the existing gate logic. `forecast_snapshot.stamp()` reads state_curr + state_fc_by_lead + current wind_direction once outside the loop; inside the wd_l3_nbm computation block, applies the same predicted-transition persistence override to `wd_l3_nbm` that HRRR-side wdp applies to `hourly.wind_direction`. Stamps `wd_wdp_nbm_fired` for telemetry. Same curated table (`wd_persistence_gate_curated.json`), same 5 SHIP cells, same gate semantics — just applied to the NBM cascade output too, so cells the selector routes to NBM don't silently lose wdp's −2.7% MAE contribution.
+- **Signature extended.** `append_forecast_snapshot(..., current=None)` — new arg so the snapshot can read the persistence source without pulling in the full `weather_data`. `collector.py` passes `weather_data.get("current")`.
+- **Not built (deliberately deferred):**
+  - `wg_residual_persistence_nbm` — HRRR-side is still `ENABLED=False`, shadow-only. Building the NBM sibling before the HRRR-side clears its 7-day gate is premature.
+  - Specialists for fields the selector doesn't route (chp/clp/dpbp/L4/L5/L6) — N/A, those fields stay HRRR-side.
+- **Architectural note.** Duplicated-specialist pattern (this ship) is the pragmatic path today. Long-term cleaner is source-agnostic specialists that run AFTER the selector — one specialist chain per field, applied to whichever value the selector picked. That's a Phase 7-ish refactor.
+
+</details>
+
+<details>
 <summary><strong>v0.6.436 • August 19, 2026 (Option-1 Phase 4 SHIPPED — L1 selector arms; per-(field, lead-band) argmin(HRRR, NBM) picks user-visible forecast; first ship of user-facing NBM cascade output beyond the v0.6.432 router)</strong></summary>
 
 - **Phase 4 — L1 selector LIVE.** New `weather_collector/processors/l1_selector.py` loads `weather_collector/data/l1_selector_table_curated.json` at import; exposes `pick_source(field, lead_h) -> "hrrr"|"nbm"`. `forecast_snapshot.stamp()` runs the selector after all NBM cascade stamping: for each hour × field, if `pick == "nbm"`, replaces the user-visible `{field}` value with `{field}_l3_nbm`. HRRR fall-through when the field/band is out of scope or the cell hasn't cleared its n/lift floors — safe default equal to pre-Phase-4 Prod behavior. Selector source stamped as `{field}_selector_source` in forecast log; pair-log joiner picks it up as `pair["selector_source"]` for per-row Prod attribution.
