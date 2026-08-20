@@ -16,10 +16,12 @@ Run: python3 analysis/output/runlog/divergence_report.py
 import ast
 import json
 import re
+import sys
 import urllib.request
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
 REPO = HERE.parents[1]
 LOG_DIR = HERE.parent / "output" / "runlog"
 STATE_PATH = LOG_DIR / "digest_state.json"
