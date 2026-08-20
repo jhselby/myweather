@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.444 • August 20, 2026 (debug page — unify Selector-picks placeholder wording)</strong></summary>
+
+- Follow-up to v0.6.443: dp/cc/ch/sr still said "pending first fit" (placeholder from v0.6.442), while t/h/ws/wg/wd said "warming — see live table below" (v0.6.443). Unified all 9 warming cells to the latter — same state deserves the same phrase, and it points readers to the live L1-selector table on the same page.
+
+</details>
+
+<details>
 <summary><strong>v0.6.443 • August 20, 2026 (debug page — blank stale Selector-picks cells in per-field pipeline architecture)</strong></summary>
 
 - Selector-picks column for t/h/ws/wg/wd in the "Per-field pipeline architecture" table showed hardcoded v0.6.432-router bands ("HRRR 0-11h · NBM 12-47h", "NBM all leads", etc.) that were left over from the pre-v0.6.440 router. Prod-vs-Prod selector (v0.6.440) replaced the router and currently falls through to all-HRRR while pair-log warms up, so those cells were contradicting the live L1-selector table below on the same page. Blanked to "warming — see live table below" (opacity 0.7) matching the pattern already used for dp/cc/ch/sr. Restore live-source strings when the chooser starts flipping cells post-backstamp.
