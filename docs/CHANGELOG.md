@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.443 • August 20, 2026 (debug page — blank stale Selector-picks cells in per-field pipeline architecture)</strong></summary>
+
+- Selector-picks column for t/h/ws/wg/wd in the "Per-field pipeline architecture" table showed hardcoded v0.6.432-router bands ("HRRR 0-11h · NBM 12-47h", "NBM all leads", etc.) that were left over from the pre-v0.6.440 router. Prod-vs-Prod selector (v0.6.440) replaced the router and currently falls through to all-HRRR while pair-log warms up, so those cells were contradicting the live L1-selector table below on the same page. Blanked to "warming — see live table below" (opacity 0.7) matching the pattern already used for dp/cc/ch/sr. Restore live-source strings when the chooser starts flipping cells post-backstamp.
+
+</details>
+
+<details>
 <summary><strong>v0.6.440 • August 19, 2026 (NBM cascade expanded to 9 fields; L1 selector rewritten to compare Prod-per-source; scoreboard v2 rollup extended with per-cell drill-down and pipeline value-add framing)</strong></summary>
 
 - **NBM cascade expanded — ch, sr, dp, cc added to `_L2_NBM_FIELDS` + `L3_NBM_FIELDS`.** `forecast_snapshot.py` now stamps `l2_nbm` + `l3_nbm` for all 9 fields NBM emits (t/ws/wd/wg/h + ch/sr/dp/cc). sr has no HRRR L2, so `l2_nbm_sr = raw_nbm` passthrough — honest identity when no L2 delta exists. `l3_nbm_curated.json` stub extended to 8 scalar fields + wd sin/cos.
