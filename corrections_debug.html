@@ -1961,7 +1961,7 @@
         const bg = isNbm ? "#12233a" : "transparent";
         const label = isNbm ? "NBM" : "HRRR";
         const lift = cell.lift_pct;
-        const liftStr = lift >= 0 ? `+${lift.toFixed(1)}%` : `${lift.toFixed(1)}%`;
+        const liftStr = lift == null ? "—" : (lift >= 0 ? `+${lift.toFixed(1)}%` : `${lift.toFixed(1)}%`);
         return `<td style="padding:3px 8px;text-align:center;background:${bg};color:${color};font-weight:600;" title="HRRR ${cell.hrrr_mae} vs NBM ${cell.nbm_mae} · n=${cell.n.toLocaleString()}">${label}<div style="font-size:0.78em;opacity:0.7;font-weight:normal;">${liftStr}</div></td>`;
       };
       const rows = fields.map(f => {
