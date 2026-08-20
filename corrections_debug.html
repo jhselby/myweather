@@ -209,6 +209,37 @@
     #headlineBox, .hb-stat { background: white !important; color: #111 !important; border-color: #ccc !important; }
     .hb-title, .hb-label, .hb-value, .hb-sub { color: #111 !important; }
     .hb-label, .hb-sub { color: #555 !important; }
+    /* v0.6.442 — new scoring surfaces: force white backgrounds in print. */
+    #per-field-scoring-block,
+    #per-field-scoring-block .pfs-table,
+    #per-field-scoring-block .pfs-table th,
+    #per-field-scoring-block .pfs-table td,
+    #scorecard-banner .sb-strip-cell,
+    #scorecard-banner .sb-tile {
+      background: white !important; color: #111 !important; border-color: #ccc !important;
+    }
+    #per-field-scoring-block .pfs-title,
+    #per-field-scoring-block .pfs-blurb,
+    #per-field-scoring-block .pfs-foot,
+    #per-field-scoring-block .pfs-window-tag,
+    #per-field-scoring-block .pfs-row-labels .pfs-row-marks,
+    #per-field-scoring-block .pfs-cell-24h,
+    #scorecard-banner .sb-strip-title,
+    #scorecard-banner .sb-strip-sub,
+    #scorecard-banner .sb-strip-window,
+    #scorecard-banner .sb-strip-counts,
+    #scorecard-banner .sb-strip-field-list,
+    #scorecard-banner .sb-tile-title,
+    #scorecard-banner .sb-tile-foot,
+    #scorecard-banner .sb-health-label,
+    #scorecard-banner .sb-src-count,
+    #scorecard-banner .sb-src-fields { color: #555 !important; }
+    #per-field-scoring-block .pfs-pos,
+    #scorecard-banner .sb-pos { color: #1a6a3a !important; }
+    #per-field-scoring-block .pfs-neg,
+    #scorecard-banner .sb-neg { color: #a33 !important; }
+    #per-field-scoring-block .pfs-flat,
+    #scorecard-banner .sb-flat { color: #8a7a1a !important; }
     /* Status panel: keep colored accents on headings + borders, lose the fills */
     [style*="background:#131a24"] strong { color: #2a4d8a !important; }
     [style*="background:#101913"] > div:first-child { color: #1a6a3a !important; }
@@ -3450,8 +3481,8 @@ async function renderScoreboardV2() {
   // stack (pa, pr) in all cases.
   //   Chooser lift: only NBM-scope fields (chooser has a real choice).
   //   Local lift + Total lift: all fields where the local stack runs.
-  const CHOOSER_FIELDS = ["t","h","ws","wg","wd","ch","sr"];     // 7 — NBM in scope
-  const LOCAL_FIELDS   = ["t","h","ws","wg","wd","cl","cm","ch","sr"]; // 9
+  const CHOOSER_FIELDS = ["t","h","ws","wg","wd","ch","sr"];              // 7 — NBM in scope
+  const LOCAL_FIELDS   = ["t","h","ws","wg","wd","cl","cm","ch","sr","pp","pr"]; // 11 — excludes derived (dp, cc) + pa (denom near zero)
   const _bestRaw = (c) => {
     const h = c.hrrr_raw_mae, n = c.nbm_raw_mae;
     if (c.in_nbm_scope && h != null && n != null) return Math.min(h, n);
