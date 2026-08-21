@@ -4344,8 +4344,11 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
   // calendar-day "today" bucket was a partial sample before end-of-day,
   // biasing every field toward whichever conditions dominated the hours so far.
   // Falls back to most-recent day if last_24h is missing (old JSON schema).
+  // v0.6.448: pf-today column was removed from DOM in v0.6.439 but the
+  // early return here also skipped the fetch, so the header "MAE data refreshed …"
+  // stamp (line ~4648) never fired. Fetch unconditionally; the empty todayCells
+  // forEach is a no-op.
   const todayCells = document.querySelectorAll("td.pf-today[data-field]");
-  if (!todayCells.length) return;
   fetch("https://data.wymancove.com/mae_over_time.json?_=" + Date.now(), { cache: "no-store" })
     .then(r => r.ok ? r.json() : null)
     .then(mot => {
