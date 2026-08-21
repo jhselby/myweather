@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.459 • August 21, 2026 (debug page sweep — F3/F4/F5 surface changes)</strong></summary>
+
+- **Current-state NBM cascade tile** — extended to cover today's three ships in one line: F3 audit (applied_layer NBM-aware, specialist attribution, l6_nbm_fit backstamp), F1 sentry + F2 walkforward, F4 gate telemetry + F5 skip table. "Next: F6 PWA writeback trace" queued.
+- **Recent activity** — 08-21 entry re-titled "9 ships (v0.6.450–458)" with F3/F1/F2/F4/F5 explainers appended. Prior batch (v0.6.450-454 cascade completion) left intact.
+- **New skip-table fit-status tile** — 🚫 NBM skip table card between the L6_NBM tile and the L1 selector card. Fetches `weather_collector/data/skip_table_nbm_curated.json` and renders per-layer cell counts; ships with empty seed. Notes the walkforward's `"*"` regime-pooled proposals need manual translation before landing here.
+- **Gate-firing rollup card** — meta-line notes NBM operators (`L3_NBM`/`L4_NBM`/`L5_NBM`/`L6_NBM`/`CHP_NBM`/`WDP_NBM`) now emit per-tick from `forecast_snapshot.py` (F4). They'll appear in the 7-day rollup after the next digest cycle.
+- **Held-out MAE per-field-per-layer meta-line** — notes v0.6.456 (F3-A) `applied_layer` semantics change (now stamps NBM layers on selector-picks-NBM rows). Historical rows carry the old HRRR stamp; only post-08-21 rows carry NBM-aware attribution.
+
+</details>
+
+<details>
 <summary><strong>v0.6.458 • August 21, 2026 (F4 gate telemetry + F5 skip table — NBM per-cell dormancy)</strong></summary>
 
 - **F4 NBM gate-firing telemetry** — `forecast_snapshot.py` NBM apply blocks (L3/L4/L5/L6/chp/wdp) now accumulate per-field fires/skips across the 48-hour snapshot loop; one `gate_firing_log.record_firing(operator="L3_NBM"|"L4_NBM"|…)` call per NBM operator after the loop. Mirrors the HRRR L3/L4 telemetry from `decay_apply.py`. `gate_firing_rollup` can now audit NBM dormancy the same way it audits HRRR — no more silent "code path enabled but never fires" gaps.
