@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.449 • August 20, 2026 (debug page — trim Recent activity to last 3 days)</strong></summary>
+
+- Recent activity list had accumulated 11 days of entries (08-10 → 08-20). Trimmed to the most recent 3 (08-19 + 08-20). Older entries live in the changelog/session-log memory files.
+
+</details>
+
+<details>
 <summary><strong>v0.6.448 • August 20, 2026 (debug page — restore "MAE data refreshed …" header stamp)</strong></summary>
 
 - `renderPerFieldSnapshot` had an early return `if (!todayCells.length) return;` that fired whenever the `pf-today` column was empty — which has been the case since v0.6.439 removed that column from the DOM. That early return skipped the `mae_over_time.json` fetch entirely, so the header's `MAE data refreshed <ts>` stamp (which happens inside the fetch's `.then`) never fired and the label sat at the loading placeholder. Removed the early return; the fetch runs unconditionally, and the empty `todayCells.forEach` becomes a no-op.
