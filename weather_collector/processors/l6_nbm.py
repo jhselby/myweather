@@ -78,3 +78,21 @@ def _sb_active_forecast(hour_local, wind_dir_deg):
     if not (13 <= hour_local <= 18):
         return False
     return _octant(wind_dir_deg) in {"S", "SE", "SW"}
+
+
+def describe_applicability():
+    """F7 (2026-08-21) — applicability descriptor for L6_NBM (scaffold)."""
+    return [{
+        "layer_id": "L6_NBM",
+        "name": "NBM cove (regime × octant × hour) correction",
+        "category": "nbm-cascade",
+        "stale": False,
+        "fields": [{
+            "field": "t",
+            "fires_when": ("shape-only scaffold — ENABLED=False; enablement gated on "
+                           "'does NBM L2 double-count waterfront?' investigation"),
+            "gated_by": "ENABLED flag + NBM L2 double-count investigation",
+            "current_state": ("enabled — firing per curated table" if ENABLED
+                              else "dormant — apply is a strict no-op"),
+        }],
+    }]

@@ -58,6 +58,34 @@ def fitted_at():
     return _FITTED_AT
 
 
+def describe_applicability():
+    """F7 (2026-08-21) — applicability descriptor for the NBM skip table."""
+    if _CELLS is None:
+        _load()
+    cells = _CELLS or {}
+    per_layer_counts = {
+        lyr: sum(len(rows) for rows in (per_field or {}).values())
+        for lyr, per_field in cells.items()
+    }
+    total = sum(per_layer_counts.values())
+    return [{
+        "layer_id": "SKIP_TABLE_NBM",
+        "name": "NBM per-cell skip table",
+        "category": "nbm-cascade",
+        "fitted_at": _FITTED_AT,
+        "stale": False,
+        "fields": [{
+            "field": "*",
+            "fires_when": (f"per-cell (field × layer × regime × lead-band) skip check "
+                           f"called from each NBM apply block; total cells curated: {total}"),
+            "gated_by": "curated skip_table_nbm_curated.json entries",
+            "current_state": (
+                "empty seed — no cells firing" if total == 0
+                else "; ".join(f"{lyr}: {n}" for lyr, n in sorted(per_layer_counts.items()) if n)),
+        }],
+    }]
+
+
 def should_skip(field, layer, regime, lead_h):
     """Return True if the (field, layer) skip table has a cell matching this
     (regime, lead_h). Fail-safe: unknown regime / lead → False."""

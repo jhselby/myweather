@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.461 • August 21, 2026 (F7 applicability + F8 caps/staleness + debug sweep — structural parity)</strong></summary>
+
+- **F7 applicability map entries.** New `describe_applicability()` on `l3_nbm.py`, `l4_nbm.py`, `l5_nbm.py`, `l6_nbm.py`, `skip_table_nbm.py`; collector aggregation wires them into `weather_data.applicability_map.layers` alongside the HRRR descriptors. Debug page's Section D + per-layer applicability filters now render NBM cascade entries.
+- **F8 CAPS_NBM + staleness gates.** New shared `weather_collector/processors/nbm_common.py` with `CAPS_NBM` (per-field magnitude caps mirroring `decay_apply.CAPS`), `STALE_DAYS_NBM = 7`, and helpers `cap_correction(field, delta)` / `is_stale(fitted_at)`. Each NBM applier (l3/l4/l5) checks `fitted_at` freshness at load — logs a warning + becomes a no-op when stale — and clamps every correction return through `cap_correction`. L6_NBM stays ENABLED=False so caps + staleness are wired but latent.
+- **Debug page sweep post-F6.** Current-state NBM tile rewritten from "STRUCTURALLY COMPLETE" to **"STRUCTURAL PARITY WITH HRRR"** with an explicit list of what remains different and why (permanent field scope; L6_NBM double-count investigation; skip-table empty seed; F3-D backstamp depth). Recent activity entry updated to reflect F6 shipped (was still saying "queued next"). "11 ships today" instead of "9 ships".
+
+</details>
+
+<details>
 <summary><strong>v0.6.460 • August 21, 2026 (F6 PWA writeback — selector picks now reach the user)</strong></summary>
 
 - **F6 investigation found a real gap.** The selector overwrote `entry[f]` (snapshot log) and stamped `hourly.l1_selected_*` (debug-page read) when it picked NBM — but never touched `hourly[array_name]` (the arrays PWA reads: `cloud_cover`, `wind_gusts`, `corrected_dew_point`, etc.). Users have been seeing HRRR-corrected values on every screen for cells the selector picked NBM (wg 12-47h, dp 6-47h, cc all leads at ship). The pair-log's Prod attribution was correct (reads `entry[f]` = NBM), so scoreboard lift numbers were honest — the display was silently wrong.

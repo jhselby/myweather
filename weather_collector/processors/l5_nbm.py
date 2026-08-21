@@ -30,24 +30,36 @@ import json
 import logging
 from pathlib import Path
 
+from .nbm_common import cap_correction, is_stale
+
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "lsr_nbm_bias_table_curated.json"
 
+L5_NBM_FIELDS = ("sr",)
 SUN_UP_THRESHOLD = 50.0
 
 _BIAS_BY_REGIME_HOUR = {}   # {regime: {hour_local: bias_wm2}}
 _BIAS_FALLBACK_BY_REGIME = {}  # {regime: overall_bias_wm2}
 _SKIP_REGIMES = set()
 _MIN_CELL_N = 30
+_STALE = False
+_FITTED_AT = None
 
 
 def _load():
-    global _BIAS_BY_REGIME_HOUR, _BIAS_FALLBACK_BY_REGIME, _SKIP_REGIMES, _MIN_CELL_N
+    global _BIAS_BY_REGIME_HOUR, _BIAS_FALLBACK_BY_REGIME, _SKIP_REGIMES, _MIN_CELL_N, _STALE, _FITTED_AT
     try:
         with open(CURATED_PATH) as f:
             data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         logging.warning(f"  ⚠  l5_nbm: curated JSON unavailable ({e}); apply is a no-op")
+        _STALE = False
+        _FITTED_AT = None
+        return
+    _FITTED_AT = data.get("fitted_at")
+    _STALE = is_stale(_FITTED_AT)
+    if _STALE:
+        logging.warning(f"  ⚠  l5_nbm: curated JSON stale (fitted {_FITTED_AT}); apply is a no-op")
         return
     try:
         _MIN_CELL_N = int(data.get("min_cell_n", 30))
@@ -77,8 +89,31 @@ def l5_nbm_correction(regime_synoptic, hour_of_day, raw_solar_wm2):
     if regime_synoptic in _SKIP_REGIMES:
         return 0.0
     regime_cells = _BIAS_BY_REGIME_HOUR.get(regime_synoptic, {})
+    if _STALE:
+        return 0.0
     if hour_of_day is not None and hour_of_day in regime_cells:
         bias = regime_cells[hour_of_day]
     else:
         bias = _BIAS_FALLBACK_BY_REGIME.get(regime_synoptic, 0.0)
-    return round(-bias, 1)
+    return round(cap_correction("sr", -bias), 1)
+
+
+def describe_applicability():
+    """F7 (2026-08-21) — applicability descriptors for L5_NBM."""
+    fitted_regimes = sorted(set(_BIAS_BY_REGIME_HOUR.keys()) | set(_BIAS_FALLBACK_BY_REGIME.keys()))
+    coverage = (", ".join(fitted_regimes) if fitted_regimes else "no regimes fit yet")
+    skip = (", ".join(sorted(_SKIP_REGIMES)) if _SKIP_REGIMES else "none")
+    return [{
+        "layer_id": "L5_NBM",
+        "name": "NBM regime × hour_of_day solar bias",
+        "category": "nbm-cascade",
+        "fitted_at": _FITTED_AT,
+        "stale": _STALE,
+        "fields": [{
+            "field": "sr",
+            "fires_when": f"sun-up (raw ≥{SUN_UP_THRESHOLD:.0f} W/m²) AND regime NOT in skip list ({skip}) AND (regime × hour) cell fit or regime fallback ≥{_MIN_CELL_N} pairs",
+            "gated_by": "sun-up threshold + regime skip list + curated cell coverage + NBM staleness gate",
+            "current_state": ("stale — apply no-op" if _STALE
+                              else f"fitted regimes: {coverage}"),
+        }],
+    }]

@@ -30,6 +30,8 @@ import json
 import logging
 from pathlib import Path
 
+from .nbm_common import cap_correction, is_stale
+
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l3_nbm_curated.json"
 
@@ -40,15 +42,26 @@ LEAD_BINS = 48
 _TABLE = None      # {field: [(bias, n), ...]} for scalar fields
 _WD_TABLE = None   # [(sin_corr, cos_corr, n), ...] length LEAD_BINS
 _MIN_PAIRS = 20
+_STALE = False
+_FITTED_AT = None
 
 
 def _load():
-    global _TABLE, _WD_TABLE, _MIN_PAIRS
+    global _TABLE, _WD_TABLE, _MIN_PAIRS, _STALE, _FITTED_AT
     try:
         with open(CURATED_PATH) as f:
             data = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         logging.warning(f"  ⚠  l3_nbm: curated JSON unavailable ({e}); apply is a no-op")
+        _TABLE = {}
+        _WD_TABLE = [(None, None, 0)] * LEAD_BINS
+        _STALE = False
+        _FITTED_AT = None
+        return
+    _FITTED_AT = data.get("fitted_at")
+    _STALE = is_stale(_FITTED_AT)
+    if _STALE:
+        logging.warning(f"  ⚠  l3_nbm: curated JSON stale (fitted {_FITTED_AT}); apply is a no-op")
         _TABLE = {}
         _WD_TABLE = [(None, None, 0)] * LEAD_BINS
         return
@@ -87,7 +100,7 @@ def l3_nbm_bias(field, lead_h):
     bias, n = row[lead_h]
     if bias is None or n < _MIN_PAIRS:
         return 0.0
-    return float(bias)
+    return cap_correction(field, float(bias))
 
 
 def l3_nbm_wd_components(lead_h):
@@ -101,3 +114,32 @@ def l3_nbm_wd_components(lead_h):
     if sin_c is None or cos_c is None or n < _MIN_PAIRS:
         return (0.0, 0.0)
     return (float(sin_c), float(cos_c))
+
+
+def describe_applicability():
+    """F7 (2026-08-21) — applicability descriptors for L3_NBM. Consumed by
+    collector's applicability_map aggregation; rendered on the debug page
+    alongside the HRRR L3 descriptors."""
+    scalar_fields = [
+        {"field": f,
+         "fires_when": f"L3_NBM_FIELDS contains {f}; every lead 0-47h when the curated bin has ≥{_MIN_PAIRS} pairs",
+         "gated_by": "L3_NBM_FIELDS + curated bin coverage + NBM staleness gate",
+         "current_state": ("stale — apply no-op" if _STALE
+                           else "firing at every lead where the curated bin is fit")}
+        for f in sorted(L3_NBM_FIELDS)
+    ]
+    wd_desc = {
+        "field": L3_NBM_WD,
+        "fires_when": f"Circular sin/cos correction from wd_components; every lead 0-47h when the bin has ≥{_MIN_PAIRS} pairs",
+        "gated_by": "wd_components curated coverage + NBM staleness gate",
+        "current_state": ("stale — apply no-op" if _STALE
+                          else "firing at every lead where the wd_components bin is fit"),
+    }
+    return [{
+        "layer_id": "L3_NBM",
+        "name": "NBM lead-decay correction",
+        "category": "nbm-cascade",
+        "fitted_at": _FITTED_AT,
+        "stale": _STALE,
+        "fields": scalar_fields + [wd_desc],
+    }]

@@ -693,8 +693,15 @@ def main():
         from .processors.ws_bias_persistence import describe_applicability as _da_wsbp
         from .processors.wd_persistence_gate import describe_applicability as _da_wdpg
         from .processors.sr_sea_breeze_lsr_override import describe_applicability as _da_lsb
+        # F7 (2026-08-21) — NBM cascade applicability descriptors.
+        from .processors.l3_nbm import describe_applicability as _da_l3nbm
+        from .processors.l4_nbm import describe_applicability as _da_l4nbm
+        from .processors.l5_nbm import describe_applicability as _da_l5nbm
+        from .processors.l6_nbm import describe_applicability as _da_l6nbm
+        from .processors.skip_table_nbm import describe_applicability as _da_sknbm
         layers = []
-        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_dpbp, _da_wsbp, _da_wdpg, _da_c1):
+        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_dpbp, _da_wsbp, _da_wdpg, _da_c1,
+                   _da_l3nbm, _da_l4nbm, _da_l5nbm, _da_l6nbm, _da_sknbm):
             try:
                 layers.extend(fn())
             except Exception as e:
