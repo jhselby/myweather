@@ -547,7 +547,11 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         fc_regime_i = _wdp_state_fc_by_lead[i] or "unknown"
                         if (fc_regime_i != _wdp_state_curr
                                 and _wdp.should_fire_at(fc_regime_i, i)):
-                            entry[f"{_L3_NBM_WD}_l3_nbm"] = _round_for(
+                            # F3-B fix: stamp wdp_nbm as a distinct layer key
+                            # so pair-log can score its residual independently
+                            # (error_wdp_nbm). Selector walk below picks it as
+                            # the deepest NBM layer for wd.
+                            entry[f"{_L3_NBM_WD}_wdp_nbm"] = _round_for(
                                 _L3_NBM_WD, _wdp_persist_val % 360.0)
                             entry[f"{_L3_NBM_WD}_wdp_nbm_fired"] = True
                 # Phase 5 (2026-08-21) — L4_NBM. Diurnal (hour-of-day) residual
@@ -612,7 +616,10 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         if (band is not None
                                 and not _chp_diurnal_skip(_wdp_state_curr, vhour)
                                 and _chp_cell_fires(_chp_nbm_cells, _wdp_state_curr, band)):
-                            entry["ch_l4_nbm"] = _round_for(
+                            # F3-B fix: stamp chp_nbm as a distinct layer key
+                            # (error_chp_nbm in pair-log). Selector walk below
+                            # picks it as deepest NBM layer for ch.
+                            entry["ch_chp_nbm"] = _round_for(
                                 "ch", max(0.0, min(100.0, _chp_nbm_persist_val)))
                             entry["ch_chp_nbm_fired"] = True
         # Phase 4 (2026-08-19) — L1 selector. For each field with an
@@ -631,17 +638,39 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             entry[f"{f}_selector_source"] = source
             if source == "nbm":
                 # Deepest available NBM-side layer wins:
+                #   wd → wdp_nbm > l3_nbm
+                #   ch → chp_nbm > l4_nbm > l3_nbm
                 #   t → l6_nbm > l3_nbm  (t skips L4_NBM + L5_NBM)
                 #   sr → l5_nbm > l3_nbm  (sr skips L4_NBM by design)
-                #   cc/ch → l4_nbm > l3_nbm
+                #   cc → l4_nbm > l3_nbm
                 #   everything else → l3_nbm
+                # F3-A fix: also overwrite {f}_applied so downstream Prod
+                # attribution (analysis/_prod.prod_error → error_{applied})
+                # returns the NBM-side residual instead of the HRRR walker's.
+                # F3-B: chp_nbm/wdp_nbm participate as distinct deepest layers.
+                chp_nbm_v = entry.get(f"{f}_chp_nbm")
+                wdp_nbm_v = entry.get(f"{f}_wdp_nbm")
                 l6_nbm_v = entry.get(f"{f}_l6_nbm")
                 l5_nbm_v = entry.get(f"{f}_l5_nbm")
                 l4_nbm_v = entry.get(f"{f}_l4_nbm")
-                entry[f] = (l6_nbm_v if l6_nbm_v is not None
-                            else l5_nbm_v if l5_nbm_v is not None
-                            else l4_nbm_v if l4_nbm_v is not None
-                            else l3_nbm_v)
+                if wdp_nbm_v is not None:
+                    entry[f] = wdp_nbm_v
+                    entry[f"{f}_applied"] = "wdp_nbm"
+                elif chp_nbm_v is not None:
+                    entry[f] = chp_nbm_v
+                    entry[f"{f}_applied"] = "chp_nbm"
+                elif l6_nbm_v is not None:
+                    entry[f] = l6_nbm_v
+                    entry[f"{f}_applied"] = "l6_nbm"
+                elif l5_nbm_v is not None:
+                    entry[f] = l5_nbm_v
+                    entry[f"{f}_applied"] = "l5_nbm"
+                elif l4_nbm_v is not None:
+                    entry[f] = l4_nbm_v
+                    entry[f"{f}_applied"] = "l4_nbm"
+                else:
+                    entry[f] = l3_nbm_v
+                    entry[f"{f}_applied"] = "l3_nbm"
         hours.append(entry)
 
     if not hours:

@@ -34,7 +34,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from analysis._cache import cached_path
+from analysis._cache import cached_path, pair_log_paths
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_PATH = Path(__file__).resolve().parent.parent / "weather_collector" / "data" / "l6_nbm_cove_curated.json"
@@ -77,47 +77,47 @@ def fit():
     n_in = 0
     n_kept = 0
 
-    path = cached_path(PAIR_LOG_URL)
-    with open(path) as fin:
-        for line in fin:
-            line = line.strip()
-            if not line:
-                continue
-            n_in += 1
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            if row.get("field") != FIELD:
-                continue
-            obs_time = row.get("obs_time", "")
-            if obs_time < cutoff:
-                continue
-            try:
-                obs_dt = datetime.strptime(obs_time, "%Y-%m-%dT%H:%M")
-            except ValueError:
-                continue
-            err = row.get("error_l3_nbm")
-            if err is None:
-                continue
-            wd = row.get("wd_forecast")
-            oct_ = _octant(wd)
-            if oct_ is None:
-                continue
-            hod = _hour_local(row.get("valid_time") or obs_time)
-            if hod is None:
-                continue
-            sb_active = bool(row.get("sb_active"))
-            age_days = max(0.0, (now - obs_dt).total_seconds() / 86400.0)
-            w = math.exp(-age_days / TAU_DAYS)
-            oct_sums[(sb_active, oct_)] += float(err) * w
-            oct_wts[(sb_active, oct_)] += w
-            oct_ns[(sb_active, oct_)] += 1
-            if not sb_active:
-                hr_sums[hod] += float(err) * w
-                hr_wts[hod] += w
-                hr_ns[hod] += 1
-            n_kept += 1
+    for path in pair_log_paths():
+        with open(path) as fin:
+            for line in fin:
+                line = line.strip()
+                if not line:
+                    continue
+                n_in += 1
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if row.get("field") != FIELD:
+                    continue
+                obs_time = row.get("obs_time", "")
+                if obs_time < cutoff:
+                    continue
+                try:
+                    obs_dt = datetime.strptime(obs_time, "%Y-%m-%dT%H:%M")
+                except ValueError:
+                    continue
+                err = row.get("error_l3_nbm")
+                if err is None:
+                    continue
+                wd = row.get("wd_forecast")
+                oct_ = _octant(wd)
+                if oct_ is None:
+                    continue
+                hod = _hour_local(row.get("valid_time") or obs_time)
+                if hod is None:
+                    continue
+                sb_active = bool(row.get("sb_active"))
+                age_days = max(0.0, (now - obs_dt).total_seconds() / 86400.0)
+                w = math.exp(-age_days / TAU_DAYS)
+                oct_sums[(sb_active, oct_)] += float(err) * w
+                oct_wts[(sb_active, oct_)] += w
+                oct_ns[(sb_active, oct_)] += 1
+                if not sb_active:
+                    hr_sums[hod] += float(err) * w
+                    hr_wts[hod] += w
+                    hr_ns[hod] += 1
+                n_kept += 1
 
     delta_by_octant = {"true": {}, "false": {}}
     for (sb, oct_), n in oct_ns.items():

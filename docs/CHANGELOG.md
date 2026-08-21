@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.456 • August 21, 2026 (F3 NBM audit — applied_layer + specialist attribution)</strong></summary>
+
+- **F3-A applied_layer stamp now NBM-aware** — `forecast_snapshot.py` selector loop overwrites `{f}_applied` with the deepest NBM layer picked (`l3_nbm`/`l4_nbm`/`l5_nbm`/`l6_nbm`/`chp_nbm`/`wdp_nbm`) instead of leaving the HRRR-walker's stamp in place. Downstream `analysis/_prod.prod_error(row)` now returns the NBM-side residual for NBM-served rows via `error_{applied}`. Fixes systematic Prod-attribution misclassification across every prod-error-based analysis (mae_over_time, anomaly_detector, all `h_*_stage1.py`, digest scoreboards) — they were scoring HRRR-layer errors on NBM-served rows.
+- **F3-B specialist attribution** — chp_nbm and wdp_nbm now stamp distinct `ch_chp_nbm` / `wd_wdp_nbm` layer values instead of overwriting `ch_l4_nbm` / `wd_l3_nbm` in place. Pair-log layer iteration extended to include `chp_nbm` / `wdp_nbm` so `error_chp_nbm` / `error_wdp_nbm` are emitted per row. Selector's deepest-NBM-layer walk picks these when fired: `wdp_nbm > l3_nbm` for wd; `chp_nbm > l4_nbm > l3_nbm` for ch. Specialists' lift can now be measured independently.
+- **F3-C l6_nbm_fit reads backstamp** — `analysis/l6_nbm_fit.py` switched from `cached_path(PAIR_LOG_URL)` to `pair_log_paths()`, matching l3/l4/l5 NBM fitters. Latent (L6_NBM is ENABLED=False today) but ready for enablement.
+- **F3-D deferred** — nbm_backstamp still only writes `error_l3_nbm`; backfilling `error_l4_nbm`/`l5_nbm`/`l6_nbm` for pre-08-21 rows is non-trivial and diminishes as live coverage grows over the next ~28 days.
+
+</details>
+
+<details>
 <summary><strong>v0.6.455 • August 21, 2026 (debug page — post-NBM-cascade sweep, F1-F12 punch list)</strong></summary>
 
 - **F1 chart LAYER_STYLE** — extended for `l4_nbm`, `l5_nbm`, `l6_nbm`, `chp_nbm`, `wdp_nbm` (all dashed to flag as NBM-cascade, mirroring HRRR-side colors).
