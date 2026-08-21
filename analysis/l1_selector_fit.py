@@ -42,9 +42,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from analysis._cache import cached_path
+from analysis._cache import pair_log_paths
 
-PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
+PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"  # kept for compat; see pair_log_paths()
 OUT_PATH = Path(__file__).resolve().parent.parent / "weather_collector" / "data" / "l1_selector_table_curated.json"
 
 FIELDS = ("t", "ws", "wg", "wd", "h", "ch", "sr", "dp", "cc")
@@ -96,11 +96,16 @@ def _hrrr_prod_error(row, field):
 
 
 def _nbm_prod_error(row):
-    """Deepest NBM-side layer's error = error_l3_nbm. Identity to
-    l2_nbm until l3_nbm per-lead bins warm up; either way, this is the
-    NBM-side output the selector-substitution would deliver."""
-    e = row.get("error_l3_nbm")
-    return abs(float(e)) if e is not None else None
+    """Deepest NBM-side layer's error. Preference order (deepest first):
+    error_l6_nbm (t) > error_l5_nbm (sr) > error_l4_nbm (cc/ch) >
+    error_l3_nbm > (identity to l2_nbm until l3_nbm per-lead bins warm
+    up). This is the NBM-side output the selector-substitution would
+    deliver."""
+    for k in ("error_l6_nbm", "error_l5_nbm", "error_l4_nbm", "error_l3_nbm"):
+        e = row.get(k)
+        if e is not None:
+            return abs(float(e))
+    return None
 
 
 def fit():
@@ -116,39 +121,39 @@ def fit():
 
     n_in = 0
     n_kept = 0
-    path = cached_path(PAIR_LOG_URL)
-    with open(path) as fin:
-        for line in fin:
-            line = line.strip()
-            if not line:
-                continue
-            n_in += 1
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            field = row.get("field")
-            if field not in FIELDS:
-                continue
-            lead_h = row.get("lead_h")
-            band = _band_for(lead_h)
-            if band is None:
-                continue
-            obs_time = row.get("obs_time", "")
-            if obs_time < window_start:
-                continue
-            n_kept += 1
-            h = _hrrr_prod_error(row, field)
-            n = _nbm_prod_error(row)
-            key = (field, band)
-            if h is not None:
-                acc[key]["hrrr_abs"] += h
-                acc[key]["hrrr_n"]   += 1
-            if n is not None:
-                acc[key]["nbm_abs"] += n
-                acc[key]["nbm_n"]   += 1
-            if h is not None and n is not None:
-                acc[key]["paired_n"] += 1
+    for path in pair_log_paths():
+        with open(path) as fin:
+            for line in fin:
+                line = line.strip()
+                if not line:
+                    continue
+                n_in += 1
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                field = row.get("field")
+                if field not in FIELDS:
+                    continue
+                lead_h = row.get("lead_h")
+                band = _band_for(lead_h)
+                if band is None:
+                    continue
+                obs_time = row.get("obs_time", "")
+                if obs_time < window_start:
+                    continue
+                n_kept += 1
+                h = _hrrr_prod_error(row, field)
+                n = _nbm_prod_error(row)
+                key = (field, band)
+                if h is not None:
+                    acc[key]["hrrr_abs"] += h
+                    acc[key]["hrrr_n"]   += 1
+                if n is not None:
+                    acc[key]["nbm_abs"] += n
+                    acc[key]["nbm_n"]   += 1
+                if h is not None and n is not None:
+                    acc[key]["paired_n"] += 1
 
     # Emit per-(field, band) picks + shape the payload the runtime + fit-
     # status tile consume.

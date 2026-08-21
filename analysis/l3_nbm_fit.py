@@ -33,9 +33,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from analysis._cache import cached_path
+from analysis._cache import pair_log_paths
 
-PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
+PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"  # kept for compat
 OUT_PATH = Path(__file__).resolve().parent.parent / "weather_collector" / "data" / "l3_nbm_curated.json"
 
 FIELDS = ("t", "ws", "wg", "h", "ch", "sr", "dp", "cc")
@@ -74,51 +74,51 @@ def fit():
     n_in = 0
     n_kept = 0
 
-    path = cached_path(PAIR_LOG_URL)
-    with open(path) as fin:
-        for line in fin:
-            line = line.strip()
-            if not line:
-                continue
-            n_in += 1
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            field = row.get("field")
-            if field not in FIELDS and field != WD_FIELD:
-                continue
-            lead_h = row.get("lead_h")
-            if lead_h is None or not (0 <= lead_h < LEAD_BINS):
-                continue
-            obs_time = row.get("obs_time", "")
-            if obs_time < cutoff:
-                continue
-            try:
-                obs_dt = datetime.strptime(obs_time, "%Y-%m-%dT%H:%M")
-            except ValueError:
-                continue
-            age_days = max(0.0, (now - obs_dt).total_seconds() / 86400.0)
-            w = math.exp(-age_days / TAU_DAYS)
-            if field == WD_FIELD:
-                e_sin = row.get("error_sin_l2_nbm")
-                e_cos = row.get("error_cos_l2_nbm")
-                if e_sin is None or e_cos is None:
+    for path in pair_log_paths():
+        with open(path) as fin:
+            for line in fin:
+                line = line.strip()
+                if not line:
                     continue
-                wd_sin_sums[lead_h]    += float(e_sin) * w
-                wd_cos_sums[lead_h]    += float(e_cos) * w
-                wd_sin_weights[lead_h] += w
-                wd_cos_weights[lead_h] += w
-                wd_counts[lead_h]      += 1
+                n_in += 1
+                try:
+                    row = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                field = row.get("field")
+                if field not in FIELDS and field != WD_FIELD:
+                    continue
+                lead_h = row.get("lead_h")
+                if lead_h is None or not (0 <= lead_h < LEAD_BINS):
+                    continue
+                obs_time = row.get("obs_time", "")
+                if obs_time < cutoff:
+                    continue
+                try:
+                    obs_dt = datetime.strptime(obs_time, "%Y-%m-%dT%H:%M")
+                except ValueError:
+                    continue
+                age_days = max(0.0, (now - obs_dt).total_seconds() / 86400.0)
+                w = math.exp(-age_days / TAU_DAYS)
+                if field == WD_FIELD:
+                    e_sin = row.get("error_sin_l2_nbm")
+                    e_cos = row.get("error_cos_l2_nbm")
+                    if e_sin is None or e_cos is None:
+                        continue
+                    wd_sin_sums[lead_h]    += float(e_sin) * w
+                    wd_cos_sums[lead_h]    += float(e_cos) * w
+                    wd_sin_weights[lead_h] += w
+                    wd_cos_weights[lead_h] += w
+                    wd_counts[lead_h]      += 1
+                    n_kept += 1
+                    continue
+                err = row.get("error_l2_nbm")
+                if err is None:
+                    continue
+                sums[(field, lead_h)] += float(err) * w
+                weights[(field, lead_h)] += w
+                counts[(field, lead_h)] += 1
                 n_kept += 1
-                continue
-            err = row.get("error_l2_nbm")
-            if err is None:
-                continue
-            sums[(field, lead_h)] += float(err) * w
-            weights[(field, lead_h)] += w
-            counts[(field, lead_h)] += 1
-            n_kept += 1
 
     corrections = {}
     n_samples = {}

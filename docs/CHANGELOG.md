@@ -1,4 +1,77 @@
 <details open>
+<summary><strong>v0.6.455 • August 21, 2026 (debug page — post-NBM-cascade sweep, F1-F12 punch list)</strong></summary>
+
+- **F1 chart LAYER_STYLE** — extended for `l4_nbm`, `l5_nbm`, `l6_nbm`, `chp_nbm`, `wdp_nbm` (all dashed to flag as NBM-cascade, mirroring HRRR-side colors).
+- **F2 FIELD_LAYERS** — cascade config extended per field: cc/ch gain `l4_nbm`; ch also gains `chp_nbm`; sr gains `l5_nbm`; t gains `l6_nbm`; wd gains `wdp_nbm`. Deep NBM layers now render on the per-field trajectory charts.
+- **F3 SHIP_EVENTS** — annotations added for L4_NBM (cc/ch), L5_NBM (sr), L6_NBM scaffold (t), chp_nbm (ch), wdp_nbm (wd), and the selector-armed cell flips (wg/dp/cc).
+- **F4 per-field pipeline architecture table** — NBM cascade descriptions for t / cc / ch / sr updated to reflect today's shipped layers (t→l6_nbm scaffold; cc→l4_nbm; ch→l4_nbm→chp_nbm; sr→l5_nbm).
+- **F5 current-state card** — "NBM parallel cascade" line rewritten from "LIVE with L3 filled" to "STRUCTURALLY COMPLETE" listing every shipped layer; L3_NBM sub-tile promoted to a broader NBM-cascade tile; "Upcoming" section retired the "L4_nbm next, ~4 sessions" language.
+- **F6 Recent activity** — 08-21 entry added with all 5 ships (v0.6.450 clamp + v0.6.451-454 NBM cascade completion + deploy incident); 08-20 relabeled "1 day ago", 08-19 relabeled "2 days ago".
+- **F7 L1 card meta line** — rewritten from "L4/L5/L6/specialists still to build" to the full shipped cascade.
+- **F8 fit-status tiles** — three new tiles below the L3 tile, each async-fetching its curated JSON: 🧮 NBM L4 (cc/ch × 24 hours), 🧮 NBM L5 (regime × hour + fallbacks), 🧮 NBM L6 (scaffold, ENABLED=False).
+- **F11 L1 router card** — v0.6.432 router card marked RETIRED with a banner, opacity dimmed. Superseded by the L1 selector 2026-08-19 v0.6.437; "current state" cells describe the retired router only.
+- **F10 deferred** — applicability map is data-driven; adding NBM layer descriptors is a backend `describe_applicability()` addition per module, not a debug-page HTML fix.
+
+</details>
+
+<details>
+<summary><strong>v0.6.454 • August 21, 2026 (NBM parallel pipeline — chp_nbm specialist)</strong></summary>
+
+- Mirror of HRRR `ch_persistence_gate` (chp) on the NBM cascade. Reuses the HRRR-side gate primitives (`_cell_fires`, `_lead_band`, `_diurnal_skip`, `_load_table`, `_persistence_source`) — the NBM sibling cannot drift from the HRRR gate rule.
+- On cells where the (regime × lead_band) table says SHIP/MARGIN and the diurnal skip doesn't suppress, overwrites `ch_l4_nbm` in place with the current-obs persistence value (Kalman-blended `hourly[0].cloud_cover_high`, clamped to [0,100]). Stamps `ch_chp_nbm_fired = True` for pair-log attribution.
+- Overwrite-in-place matches the wdp_nbm precedent from v0.6.440 — the selector reads the deepest NBM layer for ch (l4_nbm), so a chp override on l4_nbm flows naturally through the existing selector substitution with no changes.
+- Regime source: current-tick synoptic (same source HRRR chp uses).
+- Completes the NBM specialists sweep for this cascade. clp_nbm is N/A (NBM doesn't emit cl, so cl has no NBM cascade to specialize). wdp_nbm shipped v0.6.440. chp_nbm ships here.
+
+</details>
+
+<details>
+<summary><strong>v0.6.453 • August 21, 2026 (NBM parallel pipeline — L6_NBM shape-only scaffold)</strong></summary>
+
+- Shape-only mirror of HRRR L6 (`cove_correction.py`) on the NBM cascade. t-only, scaffold shipped `ENABLED=False` so the parallel slot exists in the pair log / selector chain and enablement is a one-line flag flip once the fit against L5_NBM baseline lands.
+- HRRR L6 has been disabled since 2026-07-01 after per-row Production data exposed both cove branches as double-counting L2's waterfront-weighted Kalman blend. Whether the same double-count applies to NBM's L2 is a separate investigation; until then L6_NBM stays dormant.
+- New `weather_collector/processors/l6_nbm.py` (regime × wind-octant × hour cove Δ°F — no-op today) + `analysis/l6_nbm_fit.py` stub (fits `(sb_active × octant)` and `hour_local` means from pair-log `error_l3_nbm` for t; 14-day exponential decay, 30-day retention, MIN_PAIRS_PER_BIN=20).
+- `forecast_snapshot.py` — L6_NBM stamp block after L5_NBM. Uses `wd_l3_nbm` per lead + heuristic `sb_active` (sea breeze fires 13-18 EDT with S-half wind). Branch gated on `_L6_NBM_ENABLED`, so today nothing is stamped.
+- Selector substitution walks `t → l6_nbm > l3_nbm` (t skips L4_NBM + L5_NBM, matching HRRR t which skips L4/L5).
+- `forecast_error_log.py` layer list gains `l6_nbm` in both branches so `forecast_l6_nbm` / `error_l6_nbm` will land in the pair log once the module is enabled.
+- `l1_selector_fit._nbm_prod_error` chain now walks `error_l6_nbm > error_l5_nbm > error_l4_nbm > error_l3_nbm`.
+- Curated JSON stub `weather_collector/data/l6_nbm_cove_curated.json` created with empty `delta_by_octant` / `hour_delta_sb_off` tables.
+
+</details>
+
+<details>
+<summary><strong>v0.6.452 • August 21, 2026 (NBM parallel pipeline — L5_NBM shadow-live)</strong></summary>
+
+- Mirror of HRRR L5 (regime × hour_of_day solar bias) on the NBM cascade. sr-only, applied to `sr_l3_nbm` (sr skips L4_NBM by design — sr not in L4_NBM_FIELDS).
+- New `weather_collector/processors/l5_nbm.py` applier + `analysis/l5_nbm_recompute_biases_hourly.py` fitter. Fit reads pair-log sr rows with `forecast_l3_nbm`, bias = `forecast_l3_nbm − observed` indexed by (regime × hour_local), 30-day retention, MIN_CELL_N=30 per cell with regime-overall fallback when n≥50. Sun-up gate at SUN_UP_THRESHOLD=50 W/m² (mirrors HRRR L5).
+- `forecast_snapshot.py` — L5_NBM stamp after L4_NBM block. Uses current-tick synoptic regime (same source HRRR L5 uses via `_wdp_state_curr`); per-lead sun-up gated on `sr_raw_nbm`. Identity fall-through when regime unknown or curated cell unfit.
+- Selector substitution now picks deepest available NBM layer: `sr_l5_nbm > sr_l3_nbm`, `cc/ch_l4_nbm > l3_nbm`, else `l3_nbm`.
+- `forecast_error_log.py` layer list gains `l5_nbm` in both branches so `forecast_l5_nbm` / `error_l5_nbm` land in the pair log.
+- `l1_selector_fit._nbm_prod_error` walks `error_l5_nbm > error_l4_nbm > error_l3_nbm`.
+- Curated JSON: all hour cells null, only `se_flow` fallback populated (+286 W/m², n=71) — table warms as more `forecast_l3_nbm` sr rows accumulate.
+
+</details>
+
+<details>
+<summary><strong>v0.6.451 • August 21, 2026 (NBM parallel pipeline — L4_NBM shadow-live)</strong></summary>
+
+- Mirror of HRRR L4 diurnal residual on the NBM cascade. New `weather_collector/processors/l4_nbm.py` applier + `analysis/l4_nbm_fit.py` fitter, scoped to `L4_NBM_FIELDS = ("cc", "ch")` (mirrors HRRR `L4_FIELDS`). Applier reads `l4_nbm_curated.json`, exposes `l4_nbm_correction(field, hour_of_day)`; forecast_snapshot stamps `{f}_l4_nbm = {f}_l3_nbm − correction` per hour right after the L3_NBM block.
+- Fitter is recency-weighted (TAU_DAYS=14, retention 30 days) over `error_l3_nbm`, per (field, hour-of-day) 24-bin, publishes when n≥20 per bin.
+- `forecast_error_log.py` layer list gains `l4_nbm` in both branches so per-layer `forecast_l4_nbm` / `error_l4_nbm` land in the pair log.
+- `l1_selector_fit._nbm_prod_error` now prefers `error_l4_nbm` when the row carries it, falling back to `error_l3_nbm`.
+- `forecast_snapshot`'s selector substitution reads the deepest available NBM-side layer: `{f}_l4_nbm` for cc/ch when populated, else `{f}_l3_nbm`.
+- Curated JSON starts empty (all bins null); apply is identity fall-through until `l4_nbm_fit.py` warms up the bins. Digest sweep picks it up automatically (`analysis/*.py` discovery).
+
+</details>
+
+<details>
+<summary><strong>v0.6.450 • August 21, 2026 (clamp percent fields to [0,100], sr to ≥0 in _round_for)</strong></summary>
+
+- cc l3_nbm (and any other percent-field layer stamp) could push past 100 when the L3_NBM per-lead signed bias was subtracted from an already-high raw. `_round_for` in `forecast_snapshot.py` had no domain clamp — every layer array (`{f}_l1`, `{f}_l2_nbm`, `{f}_l3_nbm`, etc.) trusted the upstream value. Added domain clamps for the five percent fields (`pp`, `cc`, `cl`, `cm`, `ch`) to `[0, 100]` and `sr` to `≥ 0` at the single choke point, so every layer stamp is clean without touching each call site.
+
+</details>
+
+<details>
 <summary><strong>v0.6.449 • August 20, 2026 (debug page — trim Recent activity to last 3 days)</strong></summary>
 
 - Recent activity list had accumulated 11 days of entries (08-10 → 08-20). Trimmed to the most recent 3 (08-19 + 08-20). Older entries live in the changelog/session-log memory files.

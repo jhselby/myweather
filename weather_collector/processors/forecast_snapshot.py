@@ -14,6 +14,14 @@ import pytz
 from ..gcs_io import load_json, upload_json
 from ..utils import magnus_dew_point_f
 from . import cl_persistence_gate, ch_persistence_gate, wd_persistence_gate
+from .ch_persistence_gate import (
+    _cell_fires as _chp_cell_fires,
+    _diurnal_skip as _chp_diurnal_skip,
+    _lead_band as _chp_lead_band,
+    _load_table as _chp_load_table,
+    _persistence_source as _chp_persistence_source,
+    _valid_hour_local as _chp_valid_hour_local,
+)
 from .forecast_text import _extract_nws_value
 
 
@@ -64,6 +72,19 @@ _L2_NBM_FIELDS = ("t", "ws", "wd", "wg", "h", "ch", "sr", "dp", "cc")
 # residual. wd excluded (would need per-layer sin/cos plumbing, matches
 # HRRR-side L3_FIELDS not carrying wd). Shadow-only until Phase 4
 # selector arms user-visible NBM outputs.
+from .l6_nbm import (
+    ENABLED as _L6_NBM_ENABLED,
+    L6_NBM_FIELDS as _L6_NBM_FIELDS,
+    l6_nbm_correction as _l6_nbm_correction,
+    _sb_active_forecast as _l6_nbm_sb_active_forecast,
+)
+from .l5_nbm import (
+    l5_nbm_correction as _l5_nbm_correction,
+)
+from .l4_nbm import (
+    L4_NBM_FIELDS as _L4_NBM_FIELDS,
+    l4_nbm_correction as _l4_nbm_correction,
+)
 from .l3_nbm import (
     L3_NBM_FIELDS as _L3_NBM_FIELDS,
     L3_NBM_WD as _L3_NBM_WD,
@@ -129,6 +150,19 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
     # signal HRRR-side wdp uses. Persistence source = current observed wd
     # (post-wind_blend consensus, matching HRRR-side wdp's source).
     _wdp_state_curr = ((derived or {}).get("state") or {}).get("regime_synoptic") or "unknown"
+    # Phase 8 (2026-08-21) — chp_nbm sibling state. Same regime + persistence
+    # value HRRR-side chp reads (hourly[0].cloud_cover_high Kalman-blended),
+    # applied to the NBM cascade's ch_l4_nbm on cells where the chp gate table
+    # says SHIP/MARGIN and the diurnal-skip regime × valid-hour doesn't suppress.
+    # Reuses ch_persistence_gate primitives so the NBM sibling can't drift from
+    # the HRRR-side gate rule. Overwrites ch_l4_nbm in place on fire (matches
+    # wdp_nbm precedent — deepest NBM layer for ch is L4).
+    # _chp_persistence_source(weather_data) expects a dict shaped
+    # {"hourly": ...}; append_forecast_snapshot only receives `hourly`
+    # directly, so synthesize the minimal shape.
+    _chp_nbm_persist_val, _ = _chp_persistence_source({"hourly": hourly})
+    _chp_nbm_table = _chp_load_table()
+    _chp_nbm_cells = _chp_nbm_table.get("cells", {}) if _chp_nbm_table else {}
     _wdp_state_fc_by_lead = (derived or {}).get("state_fc_by_lead") or []
     _wdp_persist_val = ((current or {}).get("wind_direction"))
     try:
@@ -289,7 +323,11 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             return None
         if field == "pr":  return round(val, 3)
         if field == "pa":  return round(val, 3)
-        if field in ("pp", "cc", "cl", "cm", "ch", "sr", "wd"): return round(val)
+        if field in ("pp", "cc", "cl", "cm", "ch"):
+            return round(max(0.0, min(100.0, val)))
+        if field == "sr":
+            return round(max(0.0, val))
+        if field == "wd": return round(val)
         return round(val, 1)
 
     def _derive_applied_layer(field_layers, i, eps=1e-6):
@@ -512,13 +550,79 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                             entry[f"{_L3_NBM_WD}_l3_nbm"] = _round_for(
                                 _L3_NBM_WD, _wdp_persist_val % 360.0)
                             entry[f"{_L3_NBM_WD}_wdp_nbm_fired"] = True
+                # Phase 5 (2026-08-21) — L4_NBM. Diurnal (hour-of-day) residual
+                # correction on the NBM cascade. Mirrors HRRR L4 whitelist
+                # (cc/ch). `l4_nbm = l3_nbm − correction(field, hod)`. Identity
+                # fall-through when the curated bin is null / thin.
+                try:
+                    _hod = int(t[11:13])
+                except (ValueError, TypeError, IndexError):
+                    _hod = None
+                if _hod is not None and 0 <= _hod < 24:
+                    for f in _L4_NBM_FIELDS:
+                        l3_nbm = entry.get(f"{f}_l3_nbm")
+                        if l3_nbm is None:
+                            continue
+                        entry[f"{f}_l4_nbm"] = _round_for(
+                            f, l3_nbm - _l4_nbm_correction(f, _hod))
+                # Phase 6 (2026-08-21) — L5_NBM. sr-only regime × hour
+                # solar bias. Mirrors HRRR L5. Applied to sr_l3_nbm (sr
+                # skips L4_NBM by design — sr not in L4_NBM_FIELDS). The
+                # regime used is the current-tick synoptic regime (same as
+                # HRRR L5), reused from _wdp_state_curr. Sun-up gated on
+                # the NBM raw solar at this lead. Identity fall-through
+                # when regime is unknown or the curated cell is unfit.
+                if _hod is not None and 0 <= _hod < 24:
+                    sr_l3_nbm = entry.get("sr_l3_nbm")
+                    sr_raw_nbm_i = entry.get("sr_raw_nbm")
+                    _regime_now = _wdp_state_curr if _wdp_state_curr != "unknown" else None
+                    if sr_l3_nbm is not None:
+                        delta = _l5_nbm_correction(_regime_now, _hod, sr_raw_nbm_i)
+                        entry["sr_l5_nbm"] = _round_for("sr", sr_l3_nbm + delta)
+                # Phase 7 (2026-08-21) — L6_NBM. t-only cove microclimate
+                # correction (regime × wind octant × hour_of_day). Mirrors
+                # HRRR's `cove_correction.py`. Shipped ENABLED=False as
+                # shape-only scaffold: the branch runs but the correction
+                # is 0.0 today, so `t_l6_nbm` is not stamped. Enablement
+                # gated on the "does NBM L2 double-count waterfront?"
+                # investigation. t skips L4_NBM (t not in L4_NBM_FIELDS)
+                # and L5_NBM (sr-only), matching HRRR t.
+                if _L6_NBM_ENABLED and _hod is not None and 0 <= _hod < 24:
+                    for f in _L6_NBM_FIELDS:
+                        l3_nbm = entry.get(f"{f}_l3_nbm")
+                        if l3_nbm is None:
+                            continue
+                        wd_i = entry.get(f"{_L3_NBM_WD}_l3_nbm")
+                        sb_i = _l6_nbm_sb_active_forecast(_hod, wd_i)
+                        delta = _l6_nbm_correction(wd_i, sb_i, _hod)
+                        entry[f"{f}_l6_nbm"] = _round_for(f, l3_nbm + delta)
+                # Phase 8 (2026-08-21) — chp_nbm sibling. Same gate rule as
+                # HRRR-side chp: on cells where the (regime × lead_band) table
+                # says SHIP/MARGIN and diurnal skip doesn't suppress, replace
+                # ch_l4_nbm with persistence-of-obs. Overwrites l4_nbm in place
+                # (matches wdp_nbm precedent). Fired flag stamped for pair-log
+                # attribution. Regime is current-tick (same as HRRR chp).
+                if (ch_persistence_gate.ENABLED
+                        and _chp_nbm_persist_val is not None
+                        and _chp_nbm_cells):
+                    ch_l4_nbm = entry.get("ch_l4_nbm")
+                    if ch_l4_nbm is not None:
+                        band = _chp_lead_band(i)
+                        vhour = _chp_valid_hour_local(times, i)
+                        if (band is not None
+                                and not _chp_diurnal_skip(_wdp_state_curr, vhour)
+                                and _chp_cell_fires(_chp_nbm_cells, _wdp_state_curr, band)):
+                            entry["ch_l4_nbm"] = _round_for(
+                                "ch", max(0.0, min(100.0, _chp_nbm_persist_val)))
+                            entry["ch_chp_nbm_fired"] = True
         # Phase 4 (2026-08-19) — L1 selector. For each field with an
         # l3_nbm value stamped this hour, ask the selector table which
         # source to pick per (field, lead=i). When "nbm", override the
-        # user-visible {field} value with {field}_l3_nbm. Selector source
-        # is stamped as {field}_selector_source for pair-log attribution.
-        # HRRR fall-through is safe (equals pre-Phase-4 Prod behavior)
-        # because pick_source returns "hrrr" for out-of-scope fields.
+        # user-visible {field} value with the deepest available NBM-side
+        # layer: {field}_l4_nbm when present (cc/ch), else {field}_l3_nbm.
+        # Selector source is stamped as {field}_selector_source for pair-log
+        # attribution. HRRR fall-through is safe (equals pre-Phase-4 Prod
+        # behavior) because pick_source returns "hrrr" for out-of-scope fields.
         for f in list(_L3_NBM_FIELDS) + [_L3_NBM_WD]:
             l3_nbm_v = entry.get(f"{f}_l3_nbm")
             if l3_nbm_v is None:
@@ -526,7 +630,18 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             source = _selector_pick_source(f, i)
             entry[f"{f}_selector_source"] = source
             if source == "nbm":
-                entry[f] = l3_nbm_v
+                # Deepest available NBM-side layer wins:
+                #   t → l6_nbm > l3_nbm  (t skips L4_NBM + L5_NBM)
+                #   sr → l5_nbm > l3_nbm  (sr skips L4_NBM by design)
+                #   cc/ch → l4_nbm > l3_nbm
+                #   everything else → l3_nbm
+                l6_nbm_v = entry.get(f"{f}_l6_nbm")
+                l5_nbm_v = entry.get(f"{f}_l5_nbm")
+                l4_nbm_v = entry.get(f"{f}_l4_nbm")
+                entry[f] = (l6_nbm_v if l6_nbm_v is not None
+                            else l5_nbm_v if l5_nbm_v is not None
+                            else l4_nbm_v if l4_nbm_v is not None
+                            else l3_nbm_v)
         hours.append(entry)
 
     if not hours:

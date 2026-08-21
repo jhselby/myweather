@@ -65,6 +65,30 @@ def cached_path(url, max_age_hours=12, refresh=None):
     return path
 
 
+PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
+PAIR_LOG_BACKSTAMP_URL = "https://data.wymancove.com/forecast_error_log_backstamped.jsonl"
+
+
+def pair_log_paths():
+    """Return the list of local paths that together make up the pair-log
+    corpus a fitter should stream.
+
+    Today: (1) the live pair log continuously written by the collector,
+    plus (2) the one-time historical backstamped file produced by
+    `analysis/nbm_backstamp.py`. Both live at stable GCS URLs; the
+    backstamped file is a fixed historical artifact that ages out of any
+    reasonable retention window on its own (~28 days from the backstamp
+    date), so fitters that apply a window filter naturally stop seeing
+    its rows once they fall out of scope. No dedup needed — the two
+    corpora are disjoint by construction (backstamped rows carry
+    obs_time from before the L3_NBM apply-time stamp shipped 2026-08-19).
+
+    Fitters should replace `open(cached_path(PAIR_LOG_URL))` with a loop
+    over these paths.
+    """
+    return [cached_path(PAIR_LOG_URL), cached_path(PAIR_LOG_BACKSTAMP_URL)]
+
+
 def _gcs_cached_path(url):
     """GCS mode: download the file directly from myweather-data bucket to /tmp.
 
