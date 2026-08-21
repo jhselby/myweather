@@ -753,6 +753,39 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         if any(v is not None for v in arr):
             hourly[f"l1_selected_{_f}"] = arr
 
+    # F6 (2026-08-21) — writeback selector's picks to the user-visible
+    # hourly arrays. Prior to this fix, hourly[array_name] (which the PWA
+    # reads) always carried the HRRR L4-corrected value; the selector's
+    # NBM picks landed only in entry[f] (snapshot log) + l1_selected_*
+    # (debug-page read). Users saw HRRR even for cells where the selector
+    # picked NBM. Now: for each selector-picks-NBM hour, overwrite the
+    # corresponding hourly array slot with the selector's chosen value
+    # (which is entry[f] — the deepest available NBM layer per F3-A).
+    # Bounds-checked per array to avoid IndexError on shorter hourly arrays.
+    _SELECTOR_WRITEBACK = {
+        "t":  "corrected_temperature",
+        "dp": "corrected_dew_point",
+        "h":  "corrected_humidity",
+        "ws": "wind_speed",
+        "wg": "wind_gusts",
+        "cc": "cloud_cover",
+        "sr": "direct_radiation",
+        "ch": "cloud_cover_high",
+        "wd": "wind_direction",
+    }
+    for _f, _array_name in _SELECTOR_WRITEBACK.items():
+        _arr = hourly.get(_array_name)
+        if not isinstance(_arr, list):
+            continue
+        for _i, _h in enumerate(hours):
+            if _i >= len(_arr):
+                break
+            if _h.get(f"{_f}_selector_source") != "nbm":
+                continue
+            _v = _h.get(_f)
+            if _v is not None:
+                _arr[_i] = _v
+
     log = load_json(GCS_PATH, default={"snapshots": []})
     snapshots = [s for s in log.get("snapshots", []) if s.get("run", "") >= cutoff]
     snap_entry = {"run": run_stamp, "hours": hours}

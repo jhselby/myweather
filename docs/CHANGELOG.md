@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.460 • August 21, 2026 (F6 PWA writeback — selector picks now reach the user)</strong></summary>
+
+- **F6 investigation found a real gap.** The selector overwrote `entry[f]` (snapshot log) and stamped `hourly.l1_selected_*` (debug-page read) when it picked NBM — but never touched `hourly[array_name]` (the arrays PWA reads: `cloud_cover`, `wind_gusts`, `corrected_dew_point`, etc.). Users have been seeing HRRR-corrected values on every screen for cells the selector picked NBM (wg 12-47h, dp 6-47h, cc all leads at ship). The pair-log's Prod attribution was correct (reads `entry[f]` = NBM), so scoreboard lift numbers were honest — the display was silently wrong.
+- **Fix** — `forecast_snapshot.py` gains a `_SELECTOR_WRITEBACK` map (t → corrected_temperature, dp → corrected_dew_point, h → corrected_humidity, ws → wind_speed, wg → wind_gusts, cc → cloud_cover, sr → direct_radiation, ch → cloud_cover_high, wd → wind_direction) applied after the `l1_selected_*` publication. For each hour where `{f}_selector_source == "nbm"`, overwrites `hourly[array_name][i]` with `entry[f]` (the deepest available NBM layer per F3-A). Bounds-checked per array to avoid IndexError on shorter arrays. Runs post-decay-apply, so all HRRR corrections + Magnus dp derivation are done first — NBM overwrite lands last.
+- **Coherence caveat noted.** Today's live picks (wg / dp / cc) are field-independent so no downstream physics constraint breaks. If a future selector picks NBM for `t` while leaving `h` on HRRR (or vice-versa), the displayed (t, h) pair no longer comes from the same model — Magnus-derived quantities the PWA computes from them may look slightly inconsistent. Not fixing preemptively; will revisit if a future selector fit surfaces the case.
+
+</details>
+
+<details>
 <summary><strong>v0.6.459 • August 21, 2026 (debug page sweep — F3/F4/F5 surface changes)</strong></summary>
 
 - **Current-state NBM cascade tile** — extended to cover today's three ships in one line: F3 audit (applied_layer NBM-aware, specialist attribution, l6_nbm_fit backstamp), F1 sentry + F2 walkforward, F4 gate telemetry + F5 skip table. "Next: F6 PWA writeback trace" queued.
