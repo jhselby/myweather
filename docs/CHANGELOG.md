@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.446 • August 20, 2026 (debug page — Selector column in per-field pipeline architecture is now data-driven)</strong></summary>
+
+- Ends the hardcoded-drift risk on the Selector column of the per-field pipeline architecture table. New JS block reads the same `l1_selector_table_curated.json` as the live selector table below and populates each of the 9 cells (t/h/ws/wg/dp/cc/ch/sr/wd) with the current per-band pick, grouping contiguous same-source bands into ranges (`HRRR 0-11h · NBM 12-47h`, `NBM all leads`, etc.). Falls back to "warming — see live table below" if the JSON is unreachable.
+
+</details>
+
+<details>
 <summary><strong>v0.6.445 • August 20, 2026 (NBM backstamp shipped: L3_NBM bins fit + L1 selector flips 9 cells to NBM)</strong></summary>
 
 - **`analysis/nbm_backstamp.py`** — new tool. Walks pair log, joins with the 2,455 backfilled NBM point extracts at `gs://myweather-data/nbm_backfill/`, reconstructs `l2_nbm = raw_nbm + (l2_hrrr − raw_hrrr)` using snapshotted HRRR forecast_l1/forecast_l2 (exact live Kalman delta at that tick), stamps `error_raw_nbm/error_l2_nbm/error_l3_nbm` (+ sin/cos for wd) on 237,143 historical rows. Two-pass mode: first pass fits L3 identity, second pass applies fitted L3 bias for honest Prod-vs-Prod. Writes to `~/.cache/myweather_nbm_backstamp/forecast_error_log_backstamped.jsonl`. Non-destructive to live pair log.

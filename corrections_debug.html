@@ -1095,7 +1095,7 @@
           <div><strong>HRRR:</strong> L1 → L2 additive</div>
           <div style="opacity:0.7;"><strong>NBM:</strong> raw_nbm → l2_nbm → l3_nbm</div>
         </td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">warming — see live table below</td>
+        <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable, no open work.</strong> L2 Kalman blend absorbs the microclimate signal on its own (persistence-skill +0.68 pooled); Lt reclassified as telemetry experiment 07-27 after Fix B refit came in +0.29% held-out (below +1% ship gate).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
@@ -1104,7 +1104,7 @@
           <div><strong>HRRR:</strong> L1 → L2 additive → L4 diurnal</div>
           <div style="opacity:0.7;"><strong>NBM:</strong> raw_nbm → l2_nbm → l3_nbm</div>
         </td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">warming — see live table below</td>
+        <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong><span class="pf-status" data-field="h">h status loading…</span></strong> h L2 retune v0.6.390g (07-31) landed cleanly — 08-04 verdict: retune working, direction right, drawing board avoided. τ-suspect signature at 6-11h/12-23h to be watched as it compresses toward 0. h/l4 narrow-add HELD 07-26.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
@@ -1113,7 +1113,7 @@
           <div><strong>HRRR:</strong> L1 → L2 direct <span style="opacity:0.6;">(L3 dropped 08-08 v0.6.397)</span></div>
           <div style="opacity:0.7;"><strong>NBM:</strong> raw_nbm → l2_nbm → l3_nbm</div>
         </td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">warming — see live table below</td>
+        <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">ws L3 dropped from L3_FIELDS 2026-08-08 v0.6.397</strong> — walkforward cleared 7-day gate; pooled ws L3 fc +0.1% / obs +0.6% is noise. L3 asymmetric additive + SKIP_TABLE entries now inert (kept for docs). <strong style="color:#e0a070;">Root cause was L2 blend, not L3.</strong> L2 blend shrunk 24h → 4h (v0.6.384, 07-28) fixed the +30% Prod-vs-Raw regression that ran 2 weeks. Per-lead diagnostic showed L2 lost catastrophically at leads 3-16 (+40 to +85% vs L1). Sweep BLEND_HOURS ∈ {1..24}: 4 wins at +14.72% pooled. Physical: observed KBVY wind has more variance than the next-few-hour average — 24h bleed imported point-in-time noise. <strong style="color:#4ad29a;">wsbp gate</strong> (v0.6.388, 07-28) — sibling of dpbp, calm-only, sign-inverted. ENABLED=False. Preflight failed 08-04: calm regime n=0 in shadow window. Wait for calm regime to accumulate.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
@@ -1122,7 +1122,7 @@
           <div><strong>HRRR:</strong> L1 → L2 direct → L3 lead-decay → wg residual persistence <span style="opacity:0.6;">(dormant)</span></div>
           <div style="opacity:0.7;"><strong>NBM:</strong> raw_nbm → l2_nbm → l3_nbm</div>
         </td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">warming — see live table below</td>
+        <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win vs raw; existing asymmetric wg SKIP table is LIVE</strong> (07-20 v0.6.366, 48 cells). <strong style="color:#4ad29a;">wg L3 flat SKIP_TABLE extended 07-28 v0.6.385</strong> — 4 clean-halves cells wired (calm 0-5 +9.4%, calm 12-23 +40.0%, ne_flow 6-11 +11.8% NEW, sea_breeze 6-11 +5.6% NEW). Composition rotated from 07-14 Stage 1: 07-14 SHIP cells calm 6-11 fell to THIN, sea_breeze 0-5 to MARGIN, unknown 24-47 to PERSISTENCE_TERRITORY. <strong style="color:#4ad29a;">wg L3 +3 cells 08-04 v0.6.391</strong> — 08-04 re-cut cleared the two held cells (calm 24-47 +45.2% halves +4.3/+53.1, sea_breeze 24-47 +31.1% halves +4.0/+45.0) plus new frontal 12-23 (+8.8% halves +13.2/+4.5). Live table now 7 cells; demote-on-A-negative watch at next re-cut. <strong>wg residual persistence gate</strong> (Stage 3 wired 07-14 v0.6.351, ENABLED=False) still HELD 07-27 — blocked by h_wg_residual_persistence_stage1 flip PROMOTE → MARGINAL; wait for Stage 1 recovery.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
@@ -1131,7 +1131,7 @@
           <div><strong>HRRR:</strong> L1 → L2 additive → L3 skip-table → dpbp → dp residual persistence <span style="opacity:0.6;">(dormant)</span> <span style="opacity:0.55;">(derived from corrected t, h via Magnus)</span></div>
           <div style="opacity:0.7;"><strong>NBM:</strong> raw_nbm → l2_nbm → l3_nbm <span style="opacity:0.6;">(v0.6.440)</span></div>
         </td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">warming — see live table below</td>
+        <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win, derived.</strong> Rides t + h improvements. Frontal regime bias closed 07-09. <strong>dp residual persistence gate</strong> Stage 3 wired 2026-07-25 v0.6.380 ENABLED=False (cloned from wg template; 8 SHIP + 2 MARGIN long-lead cells). Gate closed 08-01 — verdict tracked continuously via auto-rolling windows (v0.6.398, 08-09). <strong style="color:#4ad29a;">dp_bias_persistence gate FLIPPED 2026-08-04 v0.6.391 (shipped 07-28 v0.6.387)</strong> — first antecedent-error-based specialist LIVE. Backlog #6 closed via full Stage 0 → Stage 3 arc: chunk-stability HOLD but per-day distribution + antecedent lag-1 r=+0.583 unlocked design. Gate: <code>regime ∈ {pre_frontal, nw_flow, sw_flow} AND lead ≥ 6h AND prev_24h_dp_bias &lt; -1.5°F</code> → +2°F. Pooled dp MAE 3.108 → 2.808. 14-day post-flip watch through 08-18. Preflight gap: dpbp shadow key not stamped in pair log — same infra as chp/wdp — measurable pre-flip gate would require v0.6.382p-style shadow-key stamping (follow-up).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
@@ -1140,7 +1140,7 @@
           <div><strong>HRRR:</strong> L1 → L2 blend → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → <strong>Ccd = max(cl_l6, cm_l6, ch_l6)</strong> <span style="opacity:0.6;">(SKIP_REGIMES: se_flow, unknown → Pirate fallback)</span></div>
           <div style="opacity:0.7;"><strong>NBM:</strong> raw_nbm → l2_nbm → l3_nbm <span style="opacity:0.6;">(v0.6.440; different mechanism than Ccd — no cl/cm on NBM to derive from)</span></div>
         </td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">warming — see live table below</td>
+        <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">cc retired from Lc as independent field 07-30 v0.6.390.</strong> cc is HRRR's own combine of cl/cm/ch — running Lc on it in parallel with the three components was double-correction from Lc's original ship. Ccd (<code>cc_from_derivation.py</code>) overwrites <code>hourly.cloud_cover</code> with <code>max(cl_l6, cm_l6, ch_l6)</code> after Lc. <code>h_cc_derivation.py</code> on 123K held-out quads: +8.48% pooled MAE vs pre-Ccd production, halves +11.4%/+5.8%, wins 6/10 regimes. cc excluded from Overall MAE mean in the scorecard above (derived field would double-weight cl/cm/ch). <strong><span class="pf-status" data-field="cc">cc status loading…</span></strong> — 08-04 v0.6.391 Ccd saturation guard (raw cc ≥ 90 keeps raw) cleared the Last-24h loss to −9.9%; the 7d cell still carries pre-guard poison at Ccd's obs bin 95-100 (cm/ch Lc dragged max below METAR total-sky) and rolls off through ~08-11. <strong style="color:#e0a070;">08-17 — cc combine walker Stage 0/1 seeded</strong> [[project_cc_combine_walker]]. <code>h_cc_derivation</code> re-run on 34,129 quads: <strong>random-overlap now beats max by +8.13% pooled and beats current prod by +8.73%, wins 9/9 regimes</strong> (halves A +0.86% / B +16.55% — dominant and stable). Ccd's hardcoded <code>FORMULA="max"</code> is the last static combine in the cloud stack and has silently drifted. <code>analysis/h_cc_combine_walker.py</code> now walks the pair log per-(regime × band) daily and emits <code>weather_collector/data/cc_combine_gate.json</code>; 7-day unanimous+margin rule per cell. Day 1/7 <strong>HOLD</strong> — per-cell daily winners churn much more than the pooled result implied (validating the walker's purpose). Cells close: pre_frontal/0-5 (PRRRRRR), sea_breeze/12-23 (PRRRRPR), se_flow/0-5 (PPPPPPR — this regime wants Pirate passthrough, confirming existing SKIP_REGIMES). Stage 3 wire in <code>cc_from_derivation.py</code> (CC_COMBINE_GATE_ENABLED = False + per-cell formula loader) follows in next redeploy after first cell clears — same ship-ahead pattern as Lc v0.6.410 → v0.6.413 and chp v0.6.421.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
@@ -1149,7 +1149,7 @@
           <div><strong>HRRR:</strong> L1 → L2 blend → L3 lead-decay → L4 diurnal → Lc <span style="opacity:0.6;">(07-17)</span> → chp <span style="opacity:0.6;">(07-19)</span></div>
           <div style="opacity:0.7;"><strong>NBM:</strong> raw_nbm → l2_nbm → l3_nbm <span style="opacity:0.6;">(v0.6.440)</span></div>
         </td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">warming — see live table below</td>
+        <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Best-performing field vs raw.</strong> Lc flipped 07-17 + <strong style="color:#4ad29a;">chp LIVE 07-19 v0.6.358</strong> stack for the fullest non-frontal ch coverage yet. <strong>Rollup post 07-27 v0.6.382t emergency demote: 14 SHIP / 8 MARGIN / 13 SKIP / 2 THIN</strong> (was 19/9/7/2 pre-demote; 6 mid-lead cells regressing vs Lc under L6 baseline flipped SHIP/MARGIN → SKIP). 14-day post-ship watch closed clean 08-02. Full-shape refinement to the 5-cell L6-baseline SHIP set still under normal 7-day live-layer gate. <strong>08-10 diurnal gate (v0.6.401):</strong> chp suppressed on nw_flow + pre_frontal daytime valid hours [10, 18) local after 48h band-cut traced +7.48 bias at 12-23h to daytime nw_flow cells burning off overnight residuals. <strong style="color:#e07272;">08-13 emergency demote (v0.6.405):</strong> Prod-vs-L6 MAE gap widened +3.4→+12.7 over 08-06→08-13; <code>h_ch_persistence_blend_stage2_vs_l6</code> flagged 9 live chp cells losing to L6 (worst pre_frontal/24-47 Δ +78%, sw_flow/24-47 +31%). Added <code>_CELL_SKIP</code> frozenset in <code>ch_persistence_gate.py</code>: calm/{12-23,24-47}, nw_flow/12-23, pre_frontal/12-23, se_flow/24-47, sea_breeze/{12-23,24-47}, sw_flow/{12-23,24-47} forced back to L4 regardless of curated verdict. Fitter regenerates the curated JSON daily so JSON edits would be transient. <strong style="color:#e07272;">08-14 addition (v0.6.409):</strong> pre_frontal/24-47 added to <code>_CELL_SKIP</code> (now 10 cells) after vs_l6 flagged it as the biggest current chp loser to L6 (Δ +101.59%; nighttime targets outside the diurnal skip window). See Post-ship watches. See [[project_ch_chp_regression_watch_08_13]].</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
@@ -1194,7 +1194,7 @@
           <div><strong>HRRR:</strong> L1 → Lsr synoptic-regime <span style="opacity:0.6;">(skip: ne_flow + calm)</span> → Lsb <span style="opacity:0.6;">(sea_breeze cc&lt;25 override)</span></div>
           <div style="opacity:0.7;"><strong>NBM:</strong> raw_nbm → l2_nbm → l3_nbm <span style="opacity:0.6;">(v0.6.440; sr has no HRRR L2 so l2_nbm = raw_nbm passthrough)</span></div>
         </td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">warming — see live table below</td>
+        <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Lsr LIVE for sr.</strong> Skip regimes: ne_flow + calm; Lsr fires on the other 7. Bias table refreshed 08-04 v0.6.391 (fitter now writes <code>lsr_bias_table_curated.json</code>, module loads at import — retires 5+ weeks of manual-sync drift). <strong style="color:#e07272;">08-15 v0.6.417 refit</strong> after sr Prod-vs-raw flipped to +10% last-24h (raw bias −11.88 → prod +38.48 — L5 amplified today's regime shift). Key changes: se_flow −117→−60.7, sea_breeze −104→−80.1. Ne_flow damage in pair log is architectural (issue-regime skip vs validate-regime scoring); refit doesn't fix. Deferred workstream → landed 08-16 v0.6.420/421: [[project_lsr_recent_bias_gate]] Stage 0/1 script + Stage 3 wire shipped OFF (<code>LSR_RECENT_BIAS_GATE_ENABLED = False</code>). Day 1/7 walker seeded; earliest per-cell flip 08-23. <strong style="color:#4ad29a;">sr sea_breeze Lsb FLIPPED 2026-08-05 v0.6.394 · ENABLED=True · gate <code>cc &lt; 25</code>.</strong> Fresh 7-day gate cleared 7/7 daily PROMOTE reads (07-30 → 08-05) on the narrowed-shape Stage 2. Today's Stage 2: pooled Δ +11.34%, halves +23.9%/+4.0%, cc-bin 0-25 +44.6% (n=718, halves +49%/+34%). Post-deploy verified: <code>sr_sea_breeze_correction.applied = True</code> at 12:27 UTC tick. 14-day post-ship watch through 08-19. <strong style="color:#e0a070;">Watch points:</strong> hour 13 SKIP on test (bias +16.49 W/m² still applied — needs per-hour SHIP filter in curator if sr Last-24h drags); halves B +4% is recency-weaker than halves A +23.9%.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
@@ -1212,7 +1212,7 @@
           <div><strong>HRRR:</strong> L1 → L2 wind_blend → wdp <span style="opacity:0.6;">(07-27)</span></div>
           <div style="opacity:0.7;"><strong>NBM:</strong> raw_nbm → l2_nbm → l3_nbm (sin/cos) → wdp_nbm <span style="opacity:0.6;">(08-19 v0.6.437)</span></div>
         </td>
-        <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">warming — see live table below</td>
+        <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
         <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L2 + wdp both LIVE — real trend visible post-08-02 metric fix.</strong> L1_ONLY routing bug had hidden L2/wdp contributions for 13 days (mae_over_time was reading L2-view <code>error</code> as raw); fixed 08-02, wd now honestly emits <code>prod_real</code>. Real picture: L2 −2 to −5% vs raw most days, wdp adds another 0-4%. <strong style="color:#e0a070;">07-31 outlier:</strong> calm/24-47 wdp +72%, sea_breeze/0-5h wdp +109% — real gate misfires; if either recurs, narrow gate. L2 wind_blend shipped 07-20 v0.6.368a; wdp FLIPPED 2026-07-27 v0.6.382 (5 SHIP cells). <strong style="color:#4ad29a;">wdp 14-day post-ship watch CLOSED CLEAN 08-11</strong> — Δ −2.7% aggregate n=16,416; 07-31 outlier cells did not recur. Collector-side <code>applied_layer</code> stamp gap fixed 08-09 v0.6.400 (bug silent since v0.6.269) did not affect the debug-page metric — mae_over_time's <code>L1_ONLY_FIELDS</code> workaround bypassed the stamp; real impact was only in Fitter's <code>decay_corrections.json</code> fallback.</td>
       </tr>
     </tbody>
@@ -1993,6 +1993,52 @@
     .catch(e => {
       const el = document.getElementById("l1-selector-live");
       if (el) el.innerHTML = `<div style="color:#e08a70;">l1_selector_table_curated.json not yet reachable. Error: ${e}</div>`;
+    });
+})();
+
+// Per-field pipeline architecture table: populate the "Selector" column
+// from the same l1_selector_table_curated.json so cells never go stale.
+(function(){
+  const cells = document.querySelectorAll("td.pf-selector-cell");
+  if (!cells.length) return;
+  const bands = [["0-5", 0, 5], ["6-11", 6, 11], ["12-23", 12, 23], ["24-47", 24, 47]];
+  const url = "weather_collector/data/l1_selector_table_curated.json?_=" + Date.now();
+  fetch(url, { cache: "no-store" })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      const table = d.table || {};
+      cells.forEach(cell => {
+        const row = cell.closest("tr");
+        const codeEl = row && row.querySelector("td:first-child code");
+        const field = codeEl && codeEl.textContent.trim();
+        if (!field || !table[field]) {
+          cell.textContent = "—";
+          return;
+        }
+        // Group contiguous same-source bands into one segment.
+        const picks = bands.map(b => (table[field][b[0]] || {}).source || "hrrr");
+        const segs = [];
+        let cur = null;
+        picks.forEach((src, i) => {
+          if (!cur || cur.src !== src) {
+            cur = { src, lo: bands[i][1], hi: bands[i][2] };
+            segs.push(cur);
+          } else {
+            cur.hi = bands[i][2];
+          }
+        });
+        const allBands = segs.length === 1;
+        cell.style.opacity = "";
+        cell.innerHTML = segs.map(s => {
+          const label = s.src === "nbm" ? "NBM" : "HRRR";
+          const color = s.src === "nbm" ? "#7fb3ff" : "#c8c8c8";
+          const range = allBands ? "all leads" : `${s.lo}-${s.hi}h`;
+          return `<span style="color:${color};font-weight:600;">${label}</span> ${range}`;
+        }).join(" · ");
+      });
+    })
+    .catch(() => {
+      cells.forEach(cell => { cell.textContent = "warming — see live table below"; });
     });
 })();
 </script>
