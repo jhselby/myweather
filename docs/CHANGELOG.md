@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.445 • August 20, 2026 (NBM backstamp shipped: L3_NBM bins fit + L1 selector flips 9 cells to NBM)</strong></summary>
+
+- **`analysis/nbm_backstamp.py`** — new tool. Walks pair log, joins with the 2,455 backfilled NBM point extracts at `gs://myweather-data/nbm_backfill/`, reconstructs `l2_nbm = raw_nbm + (l2_hrrr − raw_hrrr)` using snapshotted HRRR forecast_l1/forecast_l2 (exact live Kalman delta at that tick), stamps `error_raw_nbm/error_l2_nbm/error_l3_nbm` (+ sin/cos for wd) on 237,143 historical rows. Two-pass mode: first pass fits L3 identity, second pass applies fitted L3 bias for honest Prod-vs-Prod. Writes to `~/.cache/myweather_nbm_backstamp/forecast_error_log_backstamped.jsonl`. Non-destructive to live pair log.
+- **`weather_collector/data/l3_nbm_curated.json`** — fresh fit against backstamped log. **373/384 (field, lead) cells filled** (all 9 fields × 48 leads; only ch has 11 sparse leads). Was 0/192 before backstamp.
+- **`weather_collector/data/l1_selector_table_curated.json`** — Prod-vs-Prod fit, 30-day window. **9 cells now pick NBM**: wg 12-23h (+5.7%), wg 24-47h (+8.9%), dp 6-11h (+16.1%), dp 12-23h (+18.4%), dp 24-47h (+23.2%), cc 0-5h (+9.7%), cc 6-11h (+9.7%), cc 12-23h (+19.6%), cc 24-47h (+17.7%). Router-scope ship-gate NBM lift = **+8.5% on n=74,528**. All other cells correctly stay HRRR (HRRR-side cascade wins t/ws/h/wd/ch/sr — chp specialist dominates ch, Lsr for sr, etc.).
+- **Debug page**: L1 selector table and 🧮 NBM L3 fit-status tile pick up the new curated JSONs after cache-flush. Collector deploy (`make deploy-collector`) required to actually change user-facing wg/dp/cc values.
+
+</details>
+
+<details>
 <summary><strong>v0.6.444 • August 20, 2026 (debug page — unify Selector-picks placeholder wording)</strong></summary>
 
 - Follow-up to v0.6.443: dp/cc/ch/sr still said "pending first fit" (placeholder from v0.6.442), while t/h/ws/wg/wd said "warming — see live table below" (v0.6.443). Unified all 9 warming cells to the latter — same state deserves the same phrase, and it points readers to the live L1-selector table on the same page.
