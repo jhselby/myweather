@@ -91,6 +91,10 @@ def fit():
     acc = defaultdict(list)
     # paired_acc[(field, cand, base, band)] = (Σ|err_cand|, Σ|err_base|, n)
     paired = defaultdict(lambda: [0.0, 0.0, 0])
+    # Regime × band cross-cut. Regime = row's state_fc.regime_synoptic
+    # (matches runtime skip check + HRRR walkforward's fc-side view).
+    # paired_by_regime[(field, cand, base, band, regime)] = same shape as paired.
+    paired_by_regime = defaultdict(lambda: [0.0, 0.0, 0])
 
     for path in pair_log_paths():
         with open(path) as fh:
@@ -111,6 +115,7 @@ def fit():
                 band = _band_of(lead_h)
                 if band is None:
                     continue
+                regime = ((r.get("state_fc") or {}).get("regime_synoptic")) or None
                 for cand, base, fields in COMPARE:
                     if field not in fields:
                         continue
@@ -133,6 +138,11 @@ def fit():
                         p[0] += abs(float(ec))
                         p[1] += abs(float(eb))
                         p[2] += 1
+                        if regime:
+                            pr = paired_by_regime[(field, cand, base, band, regime)]
+                            pr[0] += abs(float(ec))
+                            pr[1] += abs(float(eb))
+                            pr[2] += 1
 
     # Roll up per (field, cand): aggregate across bands using paired samples.
     results = []
@@ -168,18 +178,48 @@ def fit():
                     f"mae_{base}": round(mae_b, 3) if mae_b is not None else None,
                     "lift_pct": round(lift, 1) if lift is not None else None,
                 })
-                # F5 per-band SKIP proposal: layer hurts by ≥ threshold in this
-                # band with enough paired rows to trust the verdict.
-                if (lift is not None and n >= SKIP_CELL_MIN_N
-                        and lift <= -SKIP_CELL_LOSS_PCT):
-                    # Look up lead bounds from the BANDS constant.
-                    for _lbl, _lo, _hi in BANDS:
-                        if _lbl == band:
-                            skip_proposals[cand].setdefault(field, []).append(
-                                {"regime": "*", "lead_lo": _lo, "lead_hi": _hi,
-                                 "band": band, "n": n, "lift_pct": round(lift, 1)}
-                            )
-                            break
+                # F5 per-band SKIP proposal — now with regime cross-cut.
+                # For each (band, regime) cell that hurts by ≥ threshold with
+                # enough paired rows, emit a real per-regime cell drop-in for
+                # skip_table_nbm_curated.json. The band's pooled "*" line is
+                # kept only as informational fallback when no regime clears.
+                _band_bounds = None
+                for _lbl, _lo, _hi in BANDS:
+                    if _lbl == band:
+                        _band_bounds = (_lo, _hi)
+                        break
+                if _band_bounds is None:
+                    continue
+                _lo, _hi = _band_bounds
+                _regime_hits = 0
+                for (_f, _c, _b, _band, _regime), pr in paired_by_regime.items():
+                    if (_f, _c, _b, _band) != (field, cand, base, band):
+                        continue
+                    rn = pr[2]
+                    if rn < SKIP_CELL_MIN_N:
+                        continue
+                    r_mae_c = pr[0] / rn
+                    r_mae_b = pr[1] / rn
+                    if not r_mae_b or r_mae_b <= 0:
+                        continue
+                    r_lift = 100.0 * (r_mae_b - r_mae_c) / r_mae_b
+                    if r_lift > -SKIP_CELL_LOSS_PCT:
+                        continue
+                    skip_proposals[cand].setdefault(field, []).append(
+                        {"regime": _regime, "lead_lo": _lo, "lead_hi": _hi,
+                         "band": band, "n": rn, "lift_pct": round(r_lift, 1)}
+                    )
+                    _regime_hits += 1
+                # Fallback: no regime cleared but pooled band hurts — surface
+                # the pooled cell as advisory-only (regime "*"), so we see
+                # something is off even before per-regime n's thicken.
+                if (_regime_hits == 0 and lift is not None
+                        and n >= SKIP_CELL_MIN_N and lift <= -SKIP_CELL_LOSS_PCT):
+                    skip_proposals[cand].setdefault(field, []).append(
+                        {"regime": "*", "lead_lo": _lo, "lead_hi": _hi,
+                         "band": band, "n": n, "lift_pct": round(lift, 1),
+                         "note": "pooled — no single regime cleared n floor"}
+                    )
             agg_mae_c = cand_sum / paired_n if paired_n else None
             agg_mae_b = base_sum / paired_n if paired_n else None
             agg_lift = (100.0 * (agg_mae_b - agg_mae_c) / agg_mae_b) if (agg_mae_b and agg_mae_b > 0) else None
@@ -269,7 +309,7 @@ def emit(results, divergence, skip_proposals):
     # SKIP_CELL_LOSS_PCT / SKIP_CELL_MIN_N gate.
     lines.append("")
     lines.append("-" * 96)
-    lines.append(f"Skip-table proposals (lift ≤ -{SKIP_CELL_LOSS_PCT:.0f}% AND n ≥ {SKIP_CELL_MIN_N}, regime pooled):")
+    lines.append(f"Skip-table proposals (lift ≤ -{SKIP_CELL_LOSS_PCT:.0f}% AND n ≥ {SKIP_CELL_MIN_N}; per-regime cross-cut, fallback pooled *):")
     lines.append("-" * 96)
     any_prop = False
     for lyr in ("l3_nbm", "l4_nbm", "l5_nbm", "l6_nbm", "chp_nbm", "wdp_nbm"):
@@ -277,8 +317,9 @@ def emit(results, divergence, skip_proposals):
         for field, cells in sorted(by_field.items()):
             for c in cells:
                 any_prop = True
+                note = f"  [{c['note']}]" if c.get("note") else ""
                 lines.append(
-                    f"  {lyr:<9} {field:<3} {c['band']:<8} n={c['n']:>6,} lift={c['lift_pct']:+.1f}%"
+                    f"  {lyr:<9} {field:<3} {c['regime']:<12} {c['band']:<8} n={c['n']:>6,} lift={c['lift_pct']:+.1f}%{note}"
                 )
     if not any_prop:
         lines.append("  (no per-band cells hit the skip threshold)")

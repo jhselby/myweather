@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.462 • August 21, 2026 (NBM walkforward regime cross-cut — skip proposals become actionable)</strong></summary>
+
+- **Regime dimension added to `nbm_walkforward_validator.py`.** `paired_by_regime[(field, cand, base, band, regime)]` accumulates alongside the existing pooled `paired`; regime comes from each row's `state_fc.regime_synoptic` (matches the runtime skip check and HRRR walkforward's fc-side view). For each cell that hurts by ≥3% with n ≥ 200, emits real per-regime SKIP proposals ready to drop into `skip_table_nbm_curated.json`. Pooled `*` proposal kept only as advisory fallback when no single regime cleared the n floor (labeled `[pooled — no single regime cleared n floor]`).
+- **First-run results (14d window, live-only rows).** 44 actionable per-regime cells surfaced across l3_nbm: notably `dp 0-5h {sw_flow, pre_frontal, se_flow}` all -96% to -125% lift (L3_NBM identity fit still warming), `sr 0-5h {nw_flow, sw_flow, pre_frontal}` -15% to -25%, `t 12-23h pre_frontal` -30%. Digest exec-summary "NBM skip-table proposals" block now shows regime column; the walkforward's report title updated from "regime pooled" to "per-regime cross-cut, fallback pooled *".
+- **What lands next.** Curated `skip_table_nbm_curated.json` stays empty pending your review — the proposals are advisory. Some numbers (dp -125%) suggest the L3_NBM fit needs another day or two of pair-log data before those cells should be treated as durable. Suggest waiting for the fresh 3d ≡ sustained 7d window to be fully post-backstamp before landing any cells.
+
+</details>
+
+<details>
 <summary><strong>v0.6.461 • August 21, 2026 (F7 applicability + F8 caps/staleness + debug sweep — structural parity)</strong></summary>
 
 - **F7 applicability map entries.** New `describe_applicability()` on `l3_nbm.py`, `l4_nbm.py`, `l5_nbm.py`, `l6_nbm.py`, `skip_table_nbm.py`; collector aggregation wires them into `weather_data.applicability_map.layers` alongside the HRRR descriptors. Debug page's Section D + per-layer applicability filters now render NBM cascade entries.

@@ -713,8 +713,10 @@ def nbm_skip_proposals_summary():
         by_field = props.get(lyr) or {}
         for field, cells in sorted(by_field.items()):
             for c in cells:
+                note = f" [{c['note']}]" if c.get("note") else ""
                 lines.append(
-                    f"  • {lyr} {field} {c.get('band')}: n={c.get('n'):,} lift={c.get('lift_pct'):+.1f}%"
+                    f"  • {lyr} {field} {c.get('regime','*')} {c.get('band')}: "
+                    f"n={c.get('n'):,} lift={c.get('lift_pct'):+.1f}%{note}"
                 )
     return lines
 
