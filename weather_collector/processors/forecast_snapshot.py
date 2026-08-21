@@ -91,6 +91,8 @@ from .l3_nbm import (
     l3_nbm_bias as _l3_nbm_bias,
     l3_nbm_wd_components as _l3_nbm_wd_components,
 )
+from . import gate_firing_log as _gate_firing_log
+from .skip_table_nbm import should_skip as _should_skip_nbm
 # Phase 4 (2026-08-19) — L1 selector. Picks HRRR or NBM cascade output
 # per (field, lead-band). When "nbm", replace the user-visible {field}
 # with {field}_l3_nbm. Table refit nightly by analysis/l1_selector_fit.py.
@@ -374,6 +376,22 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         return applied or "l1"
 
     hours = []
+    # F4 (2026-08-21) — per-NBM-layer gate-firing telemetry. Accumulate
+    # fires/skips per field across the snapshot's hour loop; emit one
+    # record_firing() call per NBM operator after the loop. Mirrors the
+    # HRRR-side L3/L4 telemetry from decay_apply.py.
+    _nbm_gate_counts = {
+        lyr: {f: {"fires": 0, "skips": 0}
+              for f in fields}
+        for lyr, fields in (
+            ("l3_nbm", list(_L3_NBM_FIELDS) + [_L3_NBM_WD]),
+            ("l4_nbm", list(_L4_NBM_FIELDS)),
+            ("l5_nbm", ["sr"]),
+            ("l6_nbm", list(_L6_NBM_FIELDS)),
+            ("chp_nbm", ["ch"]),
+            ("wdp_nbm", [_L3_NBM_WD]),
+        )
+    }
     for i, t in enumerate(times[:SNAPSHOT_HOURS]):
         if not t:
             continue
@@ -529,8 +547,16 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     l2_nbm = entry.get(f"{f}_l2_nbm")
                     if l2_nbm is None:
                         continue
+                    if _should_skip_nbm(f, "l3_nbm", _wdp_state_curr, i):
+                        _nbm_gate_counts["l3_nbm"][f]["skips"] += 1
+                        continue
                     entry[f"{f}_l3_nbm"] = _round_for(f, l2_nbm - _l3_nbm_bias(f, i))
+                    _nbm_gate_counts["l3_nbm"][f]["fires"] += 1
                 wd_l2_nbm = entry.get(f"{_L3_NBM_WD}_l2_nbm")
+                if wd_l2_nbm is not None:
+                    if _should_skip_nbm(_L3_NBM_WD, "l3_nbm", _wdp_state_curr, i):
+                        _nbm_gate_counts["l3_nbm"][_L3_NBM_WD]["skips"] += 1
+                        wd_l2_nbm = None
                 if wd_l2_nbm is not None:
                     sin_c, cos_c = _l3_nbm_wd_components(i)
                     wd_rad = _math.radians(float(wd_l2_nbm))
@@ -538,6 +564,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     c = _math.cos(wd_rad) - cos_c
                     corrected = _math.degrees(_math.atan2(s, c)) % 360.0
                     entry[f"{_L3_NBM_WD}_l3_nbm"] = _round_for(_L3_NBM_WD, corrected)
+                    _nbm_gate_counts["l3_nbm"][_L3_NBM_WD]["fires"] += 1
                     # Phase 4b — wdp NBM sibling. Same gate as HRRR-side wdp
                     # (regime × band + predicted-transition), applied to
                     # wd_l3_nbm instead of hourly.wind_direction. Keeps
@@ -547,13 +574,17 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         fc_regime_i = _wdp_state_fc_by_lead[i] or "unknown"
                         if (fc_regime_i != _wdp_state_curr
                                 and _wdp.should_fire_at(fc_regime_i, i)):
-                            # F3-B fix: stamp wdp_nbm as a distinct layer key
-                            # so pair-log can score its residual independently
-                            # (error_wdp_nbm). Selector walk below picks it as
-                            # the deepest NBM layer for wd.
-                            entry[f"{_L3_NBM_WD}_wdp_nbm"] = _round_for(
-                                _L3_NBM_WD, _wdp_persist_val % 360.0)
-                            entry[f"{_L3_NBM_WD}_wdp_nbm_fired"] = True
+                            if _should_skip_nbm(_L3_NBM_WD, "wdp_nbm", _wdp_state_curr, i):
+                                _nbm_gate_counts["wdp_nbm"][_L3_NBM_WD]["skips"] += 1
+                            else:
+                                # F3-B fix: stamp wdp_nbm as a distinct layer key
+                                # so pair-log can score its residual independently
+                                # (error_wdp_nbm). Selector walk below picks it as
+                                # the deepest NBM layer for wd.
+                                entry[f"{_L3_NBM_WD}_wdp_nbm"] = _round_for(
+                                    _L3_NBM_WD, _wdp_persist_val % 360.0)
+                                entry[f"{_L3_NBM_WD}_wdp_nbm_fired"] = True
+                                _nbm_gate_counts["wdp_nbm"][_L3_NBM_WD]["fires"] += 1
                 # Phase 5 (2026-08-21) — L4_NBM. Diurnal (hour-of-day) residual
                 # correction on the NBM cascade. Mirrors HRRR L4 whitelist
                 # (cc/ch). `l4_nbm = l3_nbm − correction(field, hod)`. Identity
@@ -567,8 +598,12 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         l3_nbm = entry.get(f"{f}_l3_nbm")
                         if l3_nbm is None:
                             continue
+                        if _should_skip_nbm(f, "l4_nbm", _wdp_state_curr, i):
+                            _nbm_gate_counts["l4_nbm"][f]["skips"] += 1
+                            continue
                         entry[f"{f}_l4_nbm"] = _round_for(
                             f, l3_nbm - _l4_nbm_correction(f, _hod))
+                        _nbm_gate_counts["l4_nbm"][f]["fires"] += 1
                 # Phase 6 (2026-08-21) — L5_NBM. sr-only regime × hour
                 # solar bias. Mirrors HRRR L5. Applied to sr_l3_nbm (sr
                 # skips L4_NBM by design — sr not in L4_NBM_FIELDS). The
@@ -581,8 +616,12 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     sr_raw_nbm_i = entry.get("sr_raw_nbm")
                     _regime_now = _wdp_state_curr if _wdp_state_curr != "unknown" else None
                     if sr_l3_nbm is not None:
-                        delta = _l5_nbm_correction(_regime_now, _hod, sr_raw_nbm_i)
-                        entry["sr_l5_nbm"] = _round_for("sr", sr_l3_nbm + delta)
+                        if _should_skip_nbm("sr", "l5_nbm", _wdp_state_curr, i):
+                            _nbm_gate_counts["l5_nbm"]["sr"]["skips"] += 1
+                        else:
+                            delta = _l5_nbm_correction(_regime_now, _hod, sr_raw_nbm_i)
+                            entry["sr_l5_nbm"] = _round_for("sr", sr_l3_nbm + delta)
+                            _nbm_gate_counts["l5_nbm"]["sr"]["fires"] += 1
                 # Phase 7 (2026-08-21) — L6_NBM. t-only cove microclimate
                 # correction (regime × wind octant × hour_of_day). Mirrors
                 # HRRR's `cove_correction.py`. Shipped ENABLED=False as
@@ -596,10 +635,14 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         l3_nbm = entry.get(f"{f}_l3_nbm")
                         if l3_nbm is None:
                             continue
+                        if _should_skip_nbm(f, "l6_nbm", _wdp_state_curr, i):
+                            _nbm_gate_counts["l6_nbm"][f]["skips"] += 1
+                            continue
                         wd_i = entry.get(f"{_L3_NBM_WD}_l3_nbm")
                         sb_i = _l6_nbm_sb_active_forecast(_hod, wd_i)
                         delta = _l6_nbm_correction(wd_i, sb_i, _hod)
                         entry[f"{f}_l6_nbm"] = _round_for(f, l3_nbm + delta)
+                        _nbm_gate_counts["l6_nbm"][f]["fires"] += 1
                 # Phase 8 (2026-08-21) — chp_nbm sibling. Same gate rule as
                 # HRRR-side chp: on cells where the (regime × lead_band) table
                 # says SHIP/MARGIN and diurnal skip doesn't suppress, replace
@@ -616,12 +659,16 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         if (band is not None
                                 and not _chp_diurnal_skip(_wdp_state_curr, vhour)
                                 and _chp_cell_fires(_chp_nbm_cells, _wdp_state_curr, band)):
-                            # F3-B fix: stamp chp_nbm as a distinct layer key
-                            # (error_chp_nbm in pair-log). Selector walk below
-                            # picks it as deepest NBM layer for ch.
-                            entry["ch_chp_nbm"] = _round_for(
-                                "ch", max(0.0, min(100.0, _chp_nbm_persist_val)))
-                            entry["ch_chp_nbm_fired"] = True
+                            if _should_skip_nbm("ch", "chp_nbm", _wdp_state_curr, i):
+                                _nbm_gate_counts["chp_nbm"]["ch"]["skips"] += 1
+                            else:
+                                # F3-B fix: stamp chp_nbm as a distinct layer key
+                                # (error_chp_nbm in pair-log). Selector walk below
+                                # picks it as deepest NBM layer for ch.
+                                entry["ch_chp_nbm"] = _round_for(
+                                    "ch", max(0.0, min(100.0, _chp_nbm_persist_val)))
+                                entry["ch_chp_nbm_fired"] = True
+                                _nbm_gate_counts["chp_nbm"]["ch"]["fires"] += 1
         # Phase 4 (2026-08-19) — L1 selector. For each field with an
         # l3_nbm value stamped this hour, ask the selector table which
         # source to pick per (field, lead=i). When "nbm", override the
@@ -672,6 +719,17 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     entry[f] = l3_nbm_v
                     entry[f"{f}_applied"] = "l3_nbm"
         hours.append(entry)
+
+    # F4 (2026-08-21) — emit one gate-firing record per NBM operator so
+    # gate_firing_rollup can audit NBM dormancy the same way it audits
+    # HRRR L3/L4. Regime = _wdp_state_curr (current-tick synoptic).
+    for _lyr in ("l3_nbm", "l4_nbm", "l5_nbm", "l6_nbm", "chp_nbm", "wdp_nbm"):
+        _gate_firing_log.record_firing(
+            operator=_lyr.upper(),
+            regime=_wdp_state_curr,
+            by_field=_nbm_gate_counts[_lyr],
+            leads=SNAPSHOT_HOURS,
+        )
 
     if not hours:
         return

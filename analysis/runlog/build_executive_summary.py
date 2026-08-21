@@ -699,6 +699,26 @@ def nbm_walkforward_divergence_summary():
     return lines
 
 
+def nbm_skip_proposals_summary():
+    """Return list of per-cell skip_table_nbm proposals from nbm_walkforward.json."""
+    if not NBM_WALKFORWARD_JSON_PATH.exists():
+        return None
+    try:
+        doc = json.loads(NBM_WALKFORWARD_JSON_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    props = doc.get("skip_proposals") or {}
+    lines = []
+    for lyr in ("l3_nbm", "l4_nbm", "l5_nbm", "l6_nbm", "chp_nbm", "wdp_nbm"):
+        by_field = props.get(lyr) or {}
+        for field, cells in sorted(by_field.items()):
+            for c in cells:
+                lines.append(
+                    f"  • {lyr} {field} {c.get('band')}: n={c.get('n'):,} lift={c.get('lift_pct'):+.1f}%"
+                )
+    return lines
+
+
 def marine_layer_anomaly_summary():
     """Return (line, suppression_entry_or_None). `line` is the alert text or None
     if no alert. If a suppression matches, the alert routes to the Suppressed
@@ -1493,6 +1513,18 @@ def main():
             out.append(line)
     else:
         out.append("  • all NBM whitelists match live runtime")
+    out.append("")
+
+    # NBM per-cell skip proposals (F5, 2026-08-21).
+    nbm_skip_lines = nbm_skip_proposals_summary()
+    out.append("NBM skip-table proposals (per-band cells hurting ≥ 3% with n ≥ 200):")
+    if nbm_skip_lines is None:
+        out.append("  • walkforward not run yet")
+    elif nbm_skip_lines:
+        for line in nbm_skip_lines:
+            out.append(line)
+    else:
+        out.append("  • no per-band cells hit the skip threshold")
     out.append("")
 
     ml_line, ml_suppression = marine_layer_anomaly_summary()

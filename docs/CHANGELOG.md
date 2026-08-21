@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.458 • August 21, 2026 (F4 gate telemetry + F5 skip table — NBM per-cell dormancy)</strong></summary>
+
+- **F4 NBM gate-firing telemetry** — `forecast_snapshot.py` NBM apply blocks (L3/L4/L5/L6/chp/wdp) now accumulate per-field fires/skips across the 48-hour snapshot loop; one `gate_firing_log.record_firing(operator="L3_NBM"|"L4_NBM"|…)` call per NBM operator after the loop. Mirrors the HRRR L3/L4 telemetry from `decay_apply.py`. `gate_firing_rollup` can now audit NBM dormancy the same way it audits HRRR — no more silent "code path enabled but never fires" gaps.
+- **F5 NBM skip table** — new `weather_collector/processors/skip_table_nbm.py` + curated `weather_collector/data/skip_table_nbm_curated.json` (empty seed). Mirrors HRRR's `decay_apply.SKIP_TABLE` + `_should_skip()`: per-cell (field, layer, regime, lead-band) skip check called from each NBM apply block. When it fires: skip the layer stamp for that cell → selector's deepest-NBM-layer walk naturally falls back to the shallower layer. Cell shape `[regime, lead_lo, lead_hi_exclusive]`.
+- **Walkforward emits skip proposals** — `analysis/nbm_walkforward_validator.py` gains per-band SKIP proposals (lift ≤ -3% AND paired_n ≥ 200) alongside its existing whitelist divergence. Proposals use `"*"` as pooled-regime placeholder until regime cross-cut lands. Digest exec-summary gains an "NBM skip-table proposals" block via new `nbm_skip_proposals_summary()`.
+- **First-run skip candidates surfaced** — from 14d live-only rows: `l3_nbm cc 12-23h`, `ch 0-5h`, `ch 6-11h`, `dp 0-5h`, `dp 6-11h`, `sr 0-5h`, `sr 6-11h`, `t 6-11h`, `t 12-23h`, `wg 6-11h`, `wg 12-23h`. Advisory only — curated JSON stays empty pending regime cross-cut + Joe's review.
+
+</details>
+
+<details>
 <summary><strong>v0.6.457 • August 21, 2026 (F1 sentry + F2 walkforward — NBM monitoring loop)</strong></summary>
 
 - **F1 NBM regression sentry** — new `analysis/nbm_regression_sentry.py` mirrors `anomaly_detector.py` but keyed on `error_{l3_nbm|l4_nbm|l5_nbm|l6_nbm|chp_nbm|wdp_nbm}`. Per (field, layer): MAE fresh 3d vs sustained 7d, verdict HOT/WATCH/CLEAN/THIN at ±15%/±8% thresholds. Digest exec-summary gains an "NBM regression sentry" section that surfaces HOT/WATCH cells with n_sust/n_fresh/ΔMAE inline.

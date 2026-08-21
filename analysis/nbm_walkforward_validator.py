@@ -48,6 +48,8 @@ OUT_JSON = os.path.join(SCRIPT_DIR, "output", "nbm_walkforward.json")
 WINDOW_DAYS = 14
 MIN_N = 200
 FIELD_WIN_PCT = 2.0   # aggregate lift %; matches HRRR walkforward gate
+SKIP_CELL_LOSS_PCT = 3.0   # per-band lift ≤ -this fires a skip_table_nbm proposal
+SKIP_CELL_MIN_N = 200      # per-band paired n floor to trust the proposal
 
 BANDS = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
 
@@ -135,6 +137,14 @@ def fit():
     # Roll up per (field, cand): aggregate across bands using paired samples.
     results = []
     proposed = defaultdict(set)
+    # F5 (2026-08-21) — per-band SKIP proposals for skip_table_nbm.
+    # Entry shape mirrors HRRR SKIP_TABLE cells: [regime, lead_lo, lead_hi].
+    # Walkforward currently pools regimes, so proposed cells use "*" as a
+    # placeholder regime — curator translates to per-regime cells when
+    # regime cross-cut lands. skip_table_nbm treats "*" as "never matches"
+    # (no unknown regime fires the wildcard), so these are advisory-only
+    # until manually translated. Digest surfaces them under skip_proposals.
+    skip_proposals = {ln: {} for ln, _, _ in COMPARE}
     for cand, base, fields in COMPARE:
         for field in fields:
             cand_sum = base_sum = 0.0
@@ -158,6 +168,18 @@ def fit():
                     f"mae_{base}": round(mae_b, 3) if mae_b is not None else None,
                     "lift_pct": round(lift, 1) if lift is not None else None,
                 })
+                # F5 per-band SKIP proposal: layer hurts by ≥ threshold in this
+                # band with enough paired rows to trust the verdict.
+                if (lift is not None and n >= SKIP_CELL_MIN_N
+                        and lift <= -SKIP_CELL_LOSS_PCT):
+                    # Look up lead bounds from the BANDS constant.
+                    for _lbl, _lo, _hi in BANDS:
+                        if _lbl == band:
+                            skip_proposals[cand].setdefault(field, []).append(
+                                {"regime": "*", "lead_lo": _lo, "lead_hi": _hi,
+                                 "band": band, "n": n, "lift_pct": round(lift, 1)}
+                            )
+                            break
             agg_mae_c = cand_sum / paired_n if paired_n else None
             agg_mae_b = base_sum / paired_n if paired_n else None
             agg_lift = (100.0 * (agg_mae_b - agg_mae_c) / agg_mae_b) if (agg_mae_b and agg_mae_b > 0) else None
@@ -189,10 +211,10 @@ def fit():
             "add": sorted(prop - live),
             "drop": sorted(live - prop),
         }
-    return results, divergence
+    return results, divergence, skip_proposals
 
 
-def emit(results, divergence):
+def emit(results, divergence, skip_proposals):
     lines = []
     lines.append("=" * 96)
     lines.append("NBM WALKFORWARD — per-layer field-membership proposal (14d window)")
@@ -240,12 +262,32 @@ def emit(results, divergence):
     if not any_diff:
         lines.append("")
         lines.append("All NBM whitelists match live runtime. Nothing to ship.")
+
+    # F5 per-band SKIP proposals (advisory; regime column is "*" wildcard —
+    # translate manually to per-regime cells before dropping into
+    # skip_table_nbm_curated.json). Empty when no per-band cell hits the
+    # SKIP_CELL_LOSS_PCT / SKIP_CELL_MIN_N gate.
+    lines.append("")
+    lines.append("-" * 96)
+    lines.append(f"Skip-table proposals (lift ≤ -{SKIP_CELL_LOSS_PCT:.0f}% AND n ≥ {SKIP_CELL_MIN_N}, regime pooled):")
+    lines.append("-" * 96)
+    any_prop = False
+    for lyr in ("l3_nbm", "l4_nbm", "l5_nbm", "l6_nbm", "chp_nbm", "wdp_nbm"):
+        by_field = skip_proposals.get(lyr) or {}
+        for field, cells in sorted(by_field.items()):
+            for c in cells:
+                any_prop = True
+                lines.append(
+                    f"  {lyr:<9} {field:<3} {c['band']:<8} n={c['n']:>6,} lift={c['lift_pct']:+.1f}%"
+                )
+    if not any_prop:
+        lines.append("  (no per-band cells hit the skip threshold)")
     return "\n".join(lines)
 
 
 def main():
-    results, divergence = fit()
-    text = emit(results, divergence)
+    results, divergence, skip_proposals = fit()
+    text = emit(results, divergence, skip_proposals)
     print(text)
     os.makedirs(os.path.dirname(OUT_TXT), exist_ok=True)
     with open(OUT_TXT, "w") as fh:
@@ -257,6 +299,11 @@ def main():
         "field_win_pct": FIELD_WIN_PCT,
         "results": results,
         "divergence": divergence,
+        "skip_proposals": skip_proposals,
+        "skip_thresholds": {
+            "loss_pct": SKIP_CELL_LOSS_PCT,
+            "min_n": SKIP_CELL_MIN_N,
+        },
     }
     with open(OUT_JSON, "w") as fh:
         json.dump(payload, fh, indent=2)

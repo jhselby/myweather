@@ -1,0 +1,12 @@
+{
+  "fitted_at": "2026-08-21T22:00",
+  "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Seed = empty; curated from nbm_walkforward_validator.py per-band SKIP proposals as they accumulate ≥MIN_N of live post-refit rows. Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
+  "cells": {
+    "l3_nbm": {},
+    "l4_nbm": {},
+    "l5_nbm": {},
+    "l6_nbm": {},
+    "chp_nbm": {},
+    "wdp_nbm": {}
+  }
+}
