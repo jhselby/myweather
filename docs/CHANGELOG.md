@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.457 • August 21, 2026 (F1 sentry + F2 walkforward — NBM monitoring loop)</strong></summary>
+
+- **F1 NBM regression sentry** — new `analysis/nbm_regression_sentry.py` mirrors `anomaly_detector.py` but keyed on `error_{l3_nbm|l4_nbm|l5_nbm|l6_nbm|chp_nbm|wdp_nbm}`. Per (field, layer): MAE fresh 3d vs sustained 7d, verdict HOT/WATCH/CLEAN/THIN at ±15%/±8% thresholds. Digest exec-summary gains an "NBM regression sentry" section that surfaces HOT/WATCH cells with n_sust/n_fresh/ΔMAE inline.
+- **F2 NBM walkforward validator** — new `analysis/nbm_walkforward_validator.py` mirrors `walkforward_l3l4_validator.py` for NBM. Per (field, candidate layer, baseline layer, band): aggregate lift over 14d, whitelist rule = lift ≥ 2% AND paired_n ≥ 200. Emits proposed `L3_NBM_FIELDS`/`L4_NBM_FIELDS`/`L5_NBM_FIELDS`/`L6_NBM_FIELDS`/`chp_nbm`/`wdp_nbm` and diffs against runtime-live. Digest exec-summary gains an "NBM walkforward — proposed whitelist divergence vs live runtime" section listing ADD/DROP per layer.
+- **Backstamp identity filter** — l3_nbm-vs-l2_nbm comparison skips rows where the two errors match exactly (nbm_backstamp writes `l3_nbm = l2_nbm` when no curated L3 bias existed pre-08-19). Prevents identity-noise from drowning real post-refit signal. Auto-clears in ~28d as backstamped rows sunset.
+- **Digest wiring** — `analysis/runlog/build_executive_summary.py` gains `nbm_regression_sentry_summary()` + `nbm_walkforward_divergence_summary()` + new output blocks; new JSON paths `NBM_SENTRY_JSON_PATH` / `NBM_WALKFORWARD_JSON_PATH`. Both scripts auto-run via `run_digest.sh`'s `analysis/*.py` sweep — no orchestration changes needed.
+
+</details>
+
+<details>
 <summary><strong>v0.6.456 • August 21, 2026 (F3 NBM audit — applied_layer + specialist attribution)</strong></summary>
 
 - **F3-A applied_layer stamp now NBM-aware** — `forecast_snapshot.py` selector loop overwrites `{f}_applied` with the deepest NBM layer picked (`l3_nbm`/`l4_nbm`/`l5_nbm`/`l6_nbm`/`chp_nbm`/`wdp_nbm`) instead of leaving the HRRR-walker's stamp in place. Downstream `analysis/_prod.prod_error(row)` now returns the NBM-side residual for NBM-served rows via `error_{applied}`. Fixes systematic Prod-attribution misclassification across every prod-error-based analysis (mae_over_time, anomaly_detector, all `h_*_stage1.py`, digest scoreboards) — they were scoring HRRR-layer errors on NBM-served rows.

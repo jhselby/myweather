@@ -335,6 +335,15 @@ PERSISTENCE_SKILL_THIN_MARGIN = 0.20
 # if forecast-value distribution shift were tracked as its own signal.
 ANOMALY_DETECTOR_JSON_PATH = HERE.parent / "output" / "anomaly_detector.json"
 
+# NBM per-layer regression sentry (F1, 2026-08-21). Fresh 3d vs sustained 7d
+# MAE by (field, NBM layer) — surfaces a degrading l4_nbm/chp_nbm/etc. before
+# it hurts user-visible Prod.
+NBM_SENTRY_JSON_PATH = HERE.parent / "output" / "nbm_regression_sentry.json"
+# NBM walkforward validator (F2, 2026-08-21). Per-layer per-field aggregate
+# lift; emits proposed L3_NBM_FIELDS / L4_NBM_FIELDS whitelists and diffs
+# against runtime-live tuples.
+NBM_WALKFORWARD_JSON_PATH = HERE.parent / "output" / "nbm_walkforward.json"
+
 # Regression sentry (added v0.6.389i, 2026-07-30; sustained-vs-fresh split
 # added v0.6.390f, 2026-07-31 after the cl field-kill exposed the flat-window
 # lag). Two windows per field, weighted-by-n across daily prod/raw MAE:
@@ -640,6 +649,53 @@ def anomaly_detector_summary():
             parts.append(f"bin shift {bin_shift:.1f}pp")
         mark = "★" if v == "ANOMALY" else "⚠"
         lines.append(f"  {mark} {f}: {v} — {', '.join(parts)}")
+    return lines
+
+
+def nbm_regression_sentry_summary():
+    """Return list of alert lines from nbm_regression_sentry.json, or None if absent."""
+    if not NBM_SENTRY_JSON_PATH.exists():
+        return None
+    try:
+        doc = json.loads(NBM_SENTRY_JSON_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    cells = doc.get("cells") or {}
+    lines = []
+    for key, c in sorted(cells.items()):
+        v = c.get("verdict")
+        if v not in ("HOT", "WATCH"):
+            continue
+        mae_pct = c.get("mae_pct_change")
+        mark = "★" if v == "HOT" else "⚠"
+        lines.append(
+            f"  {mark} {c.get('field')}.{c.get('layer')}: {v} — ΔMAE {mae_pct:+.1f}% "
+            f"(sust {c.get('mae_sustained')}, fresh {c.get('mae_fresh')}, "
+            f"n_sust {c.get('n_sustained'):,}, n_fresh {c.get('n_fresh'):,})"
+        )
+    return lines
+
+
+def nbm_walkforward_divergence_summary():
+    """Return list of divergence lines from nbm_walkforward.json, or None if absent."""
+    if not NBM_WALKFORWARD_JSON_PATH.exists():
+        return None
+    try:
+        doc = json.loads(NBM_WALKFORWARD_JSON_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    divergence = doc.get("divergence") or {}
+    lines = []
+    for cand in ("l3_nbm", "l4_nbm", "l5_nbm", "l6_nbm", "chp_nbm", "wdp_nbm"):
+        d = divergence.get(cand) or {}
+        add = d.get("add") or []
+        drop = d.get("drop") or []
+        if not add and not drop:
+            continue
+        parts = []
+        if add:  parts.append(f"ADD {','.join(add)}")
+        if drop: parts.append(f"DROP {','.join(drop)}")
+        lines.append(f"  • {cand}: {'; '.join(parts)}")
     return lines
 
 
@@ -1415,6 +1471,30 @@ def main():
             out.append(line)
     else:
         out.append("  • all fields CLEAN")
+    # NBM per-layer regression sentry (F1, 2026-08-21).
+    nbm_sentry_lines = nbm_regression_sentry_summary()
+    out.append("NBM regression sentry (per-layer fresh 3d vs sustained 7d):")
+    if nbm_sentry_lines is None:
+        out.append("  • sentry not run yet (nbm_regression_sentry.json missing)")
+    elif nbm_sentry_lines:
+        for line in nbm_sentry_lines:
+            out.append(line)
+    else:
+        out.append("  • all NBM cells CLEAN")
+    out.append("")
+
+    # NBM walkforward whitelist divergence (F2, 2026-08-21).
+    nbm_wf_lines = nbm_walkforward_divergence_summary()
+    out.append("NBM walkforward — proposed whitelist divergence vs live runtime:")
+    if nbm_wf_lines is None:
+        out.append("  • walkforward not run yet (nbm_walkforward.json missing)")
+    elif nbm_wf_lines:
+        for line in nbm_wf_lines:
+            out.append(line)
+    else:
+        out.append("  • all NBM whitelists match live runtime")
+    out.append("")
+
     ml_line, ml_suppression = marine_layer_anomaly_summary()
     ml_suppressed_line = None
     if ml_line:
