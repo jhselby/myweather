@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.447 • August 20, 2026 (debug page — stale-language sweep for post-v0.6.445 state)</strong></summary>
+
+- Full-page sweep of `corrections_debug.html` to retire pre-arm language now that the L1 selector is LIVE. Removed "warming up · earliest arm ~2026-09-17 (Phase 4 selector)", "identity fall-through until per-lead bins clear n≥20", "not user-visible until Phase 4 selector arms", "Phase 4 selector — earliest arm date ~Wed 09-17". Updated version references from v0.6.436 (Phase 4 stub) to v0.6.445 (armed). Corrected in-scope field list on the L1-selector methodology block (was "5 fields: t/ws/wg/wd/h", now the full 9 NBM emits). Rewrote the L3_NBM fit-status tile subtitle from "warming up" to "LIVE — 373/384 cells filled". Rewrote the pipeline-architecture NBM-parallel entry from "shadow (Phase 1/2/3)" to "LIVE". Added a 2026-08-20 "today" entry to Recent activity with the v0.6.443-446 narrative.
+
+</details>
+
+<details>
 <summary><strong>v0.6.446 • August 20, 2026 (debug page — Selector column in per-field pipeline architecture is now data-driven)</strong></summary>
 
 - Ends the hardcoded-drift risk on the Selector column of the per-field pipeline architecture table. New JS block reads the same `l1_selector_table_curated.json` as the live selector table below and populates each of the 9 cells (t/h/ws/wg/dp/cc/ch/sr/wd) with the current per-band pick, grouping contiguous same-source bands into ranges (`HRRR 0-11h · NBM 12-47h`, `NBM all leads`, etc.). Falls back to "warming — see live table below" if the JSON is unreachable.
