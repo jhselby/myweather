@@ -3747,21 +3747,33 @@ async function renderScoreboardV2() {
     return (c.chooser_vs_prod_pct != null) ? c.chooser_vs_prod_pct : null;
   };
 
-  // Aggregate a metric across the given fields: return {mean, counts, fields per bucket}.
+  // Aggregate a metric across the given fields. Returns median (headline
+  // number) and per-bucket field lists. Median instead of mean — the
+  // multiplicative identity (1-Total) = (1-Chooser)(1-Local) holds per-
+  // field but does NOT survive an arithmetic mean of per-field percentages
+  // over heterogeneous fields. Median is more honest for a headline that
+  // visually implies a decomposition; per-field cells still carry the
+  // actual field-level number.
   const _agg = (window, metricFn, fieldSet, beatLabel, regressLabel) => {
-    let sum = 0, n = 0;
+    const values = [];
     const beatFields = [], flatFields = [], regressFields = [];
     for (const f of fieldSet) {
       const v = metricFn(window[f] || {});
       if (v == null) continue;
-      sum += v; n += 1;
+      values.push(v);
       if (v >= 5) beatFields.push(f);
       else if (v <= -1) regressFields.push(f);
       else flatFields.push(f);
     }
+    const median = (arr) => {
+      if (!arr.length) return null;
+      const s = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(s.length / 2);
+      return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+    };
     return {
-      mean: n > 0 ? sum / n : null,
-      n_fields: n,
+      mean: median(values),  // "mean" key retained for template callers; value is the median.
+      n_fields: values.length,
       counts: { beat: beatFields.length, flat: flatFields.length, regress: regressFields.length },
       fields: { beat: beatFields, flat: flatFields, regress: regressFields },
       beat_label: beatLabel,
@@ -3783,17 +3795,21 @@ async function renderScoreboardV2() {
   const trend7    = _agg(pf7,  _prodTrend,   DIAG_FIELDS, "improving", "regressing");
   const trend24   = _agg(pf24, _prodTrend,   DIAG_FIELDS, "improving", "regressing");
 
-  // Coherence check: (1 - Total) ≈ (1 - Chooser) × (1 - Local).
-  // Silent in UI; logged to console if the two sides deviate by more than
-  // ±5 percentage points, which suggests the three tiles are being pooled
-  // over inconsistent obs sets and one of the numbers is misleading.
-  if (chooser7.mean != null && local7.mean != null && total7.mean != null) {
-    const impliedTotal = 100 * (1 - (1 - chooser7.mean/100) * (1 - local7.mean/100));
-    const dev = Math.abs(total7.mean - impliedTotal);
+  // Coherence check — per-field, not aggregate. The identity
+  // (1 - Total) = (1 - Chooser) × (1 - Local) holds per field, but does
+  // NOT survive an arithmetic mean or median across heterogeneous fields.
+  // Assert per-field only: any field where the identity deviates >2pp is
+  // a real signal that its pool intersection is off. Silent in UI.
+  for (const f of VALUE_CHAIN_FIELDS) {
+    const c = pf7[f] || {};
+    const ch = _chooserLift(c), lo = _corrAdd(c), to = _totalLift(c);
+    if (ch == null || lo == null || to == null) continue;
+    const implied = 100 * (1 - (1 - ch/100) * (1 - lo/100));
+    const dev = Math.abs(to - implied);
     if (dev > 5.0) {
-      console.warn(`[scoreboard] coherence check FAIL 7d: chooser=${chooser7.mean.toFixed(2)}%, local=${local7.mean.toFixed(2)}%, implied total=${impliedTotal.toFixed(2)}%, actual total=${total7.mean.toFixed(2)}%, dev=${dev.toFixed(2)}pp (>5pp threshold)`);
+      console.warn(`[scoreboard] coherence FAIL 7d ${f}: chooser=${ch.toFixed(2)}% × local=${lo.toFixed(2)}% → implied ${implied.toFixed(2)}% vs actual ${to.toFixed(2)}% (dev=${dev.toFixed(2)}pp)`);
     } else if (dev > 2.0) {
-      console.info(`[scoreboard] coherence check WARN 7d: dev=${dev.toFixed(2)}pp (>2pp threshold)`);
+      console.info(`[scoreboard] coherence WARN 7d ${f}: dev=${dev.toFixed(2)}pp`);
     }
   }
 
@@ -3811,8 +3827,8 @@ async function renderScoreboardV2() {
       <div class="sb-strip-title" style="color:${accentColor};">${title}</div>
       <div class="sb-strip-sub">${subtitle}</div>
       <div class="sb-strip-nums">
-        <div class="sb-strip-primary">${liftSpan(agg7.mean, "22px")} <span class="sb-strip-window">7d mean</span></div>
-        <div class="sb-strip-secondary">${liftSpan(agg24.mean, "13px")} <span class="sb-strip-window">24h mean</span></div>
+        <div class="sb-strip-primary">${liftSpan(agg7.mean, "22px")} <span class="sb-strip-window">7d median</span></div>
+        <div class="sb-strip-secondary">${liftSpan(agg24.mean, "13px")} <span class="sb-strip-window">24h median</span></div>
       </div>
       <div class="sb-strip-fields">
         <div class="sb-strip-field-row">

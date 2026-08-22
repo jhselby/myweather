@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.469 • August 22, 2026 (scoreboard tiles show median, not mean — the identity doesn't survive arithmetic-mean-of-percentages)</strong></summary>
+
+- **The subtlety Joe caught.** The multiplicative identity `(1-Total) = (1-Chooser)(1-Local)` holds per field, but breaks under an arithmetic mean of per-field percentages. Under v0.6.468 the headline tiles were showing means, and the numbers were visually inviting a decomposition read that the aggregate could not actually support (mean Chooser −28.7% × mean Local +13.5% implies −11.3%, not the shown −7.3%).
+- **Tiles now show median lift** across the 7 value-chain fields (labels updated: "7d median" / "24h median"). More honest for heterogeneous fields; doesn't imply a decomposition at the aggregate level.
+- **Coherence check moved to per-field.** The old aggregate-vs-identity check was measuring the wrong thing. Now iterates the 7 value-chain fields and asserts `(1-Total_i) ≈ (1-Chooser_i)(1-Local_i)` per field — >5pp dev is a `console.warn` (real signal of pool mismatch inside that field); >2pp is `console.info`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.466–v0.6.468 • August 22, 2026 (scoreboard restructured as Value Chain + Diagnostics — Chooser Lift no longer measures selector skill)</strong></summary>
 
 * **The confound.** The tile labeled "L1 Chooser Lift" was actually Selector Skill (chosen-cascade Prod vs alternative-cascade Prod). That answers "did the router pick the branch that turned out better?" — a diagnostic of the router, not value attribution. It cannot tell you whether L1 selection contributed anything over what the public forecasts already provide. The number could be positive (router picked correctly) while L1 was still worse than just always using raw NBM. Two different questions were sitting on top of each other in one tile.
