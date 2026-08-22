@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.463 • August 21, 2026 (first curated NBM skip cells — dp 0-5h ×3 regimes)</strong></summary>
+
+- **First real cells landed in `skip_table_nbm_curated.json`.** Three cells for `dp l3_nbm 0-5h`: `pre_frontal`, `sw_flow`, `se_flow`. Selected because walkforward emitted -96% to -125% lift with n=202-345 each, and the badness is structural (L3_NBM's pooled +1.5°F bias fights close-to-obs L2_NBM in these regimes).
+- **User impact today: zero.** Selector currently picks HRRR for `dp 0-5h` — this skip prevents future selector fits from being poisoned by a broken NBM-Prod score, doesn't change what users see.
+- **Why 0-5h only, not the whole field.** dp 6-47h per-regime cells are all THIN today. Selector picks NBM for `dp 6-47h` currently, and that pick depends on `l3_nbm` helping. Dropping dp from L3_NBM_FIELDS entirely (matching HRRR) was tempting but would have been pattern-matching HRRR beyond what NBM-specific data supports — deferred pending stronger per-regime evidence at longer leads.
+- **Provenance recorded.** New `provenance` block in the curated JSON captures the evidence (regime × n × lift) + reasoning behind each curated group, so future readers know why cells were added and can revisit if patterns shift.
+- **Monitoring loop closed.** F1 sentry watches `dp.l3_nbm` MAE fresh-vs-sustained daily; walkforward re-runs daily and will show if these cells stop appearing (skip working) or if 6-47h cells cross the n-floor with real signal (needs another decision). Scheduled review [[nbm-skip-proposals-review]] on 2026-08-28 for the remaining 44-cell backlog.
+
+</details>
+
+<details>
 <summary><strong>v0.6.462 • August 21, 2026 (NBM walkforward regime cross-cut — skip proposals become actionable)</strong></summary>
 
 - **Regime dimension added to `nbm_walkforward_validator.py`.** `paired_by_regime[(field, cand, base, band, regime)]` accumulates alongside the existing pooled `paired`; regime comes from each row's `state_fc.regime_synoptic` (matches the runtime skip check and HRRR walkforward's fc-side view). For each cell that hurts by ≥3% with n ≥ 200, emits real per-regime SKIP proposals ready to drop into `skip_table_nbm_curated.json`. Pooled `*` proposal kept only as advisory fallback when no single regime cleared the n floor (labeled `[pooled — no single regime cleared n floor]`).
