@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.464 • August 21, 2026 (close L1_ONLY_FIELDS NBM gap in mae_over_time — feature parity)</strong></summary>
+
+- **Latent gap closed.** `mae_over_time.py`'s L1_ONLY_FIELDS branch (wd) derived prod_real inline from `error_wdp || error_l2` without checking `selector_source`. When selector picked NBM for wd (not today, but the day it happens), prod_real would silently show HRRR-side wdp/l2 residual instead of the NBM-side residual users actually saw. Same class as F3-A but on a code path that intentionally skips `applied_layer`.
+- **Fix.** When `selector_source == "nbm"`, walk NBM-side deepest layer: `error_wdp_nbm > error_l3_nbm > error_l2_nbm > error_raw_nbm`. Falls back to the existing HRRR walk when selector picked HRRR. No user-visible change today (selector picks NBM only for wg/dp/cc, none L1_ONLY); closes the last known metric-attribution gap between the two cascades.
+- **NBM cascade now at true feature parity with HRRR.** Every code path that reads pair-log residuals routes NBM-served rows to their NBM-side answer. Project returns to pure-tuning mode: no remaining structural asymmetries between the cascades except the permanent field-scope difference (NBM doesn't emit cl/cm/pp/pa/pr) and the L6_NBM enablement question (empirical, awaiting shadow-fit signal).
+
+</details>
+
+<details>
 <summary><strong>v0.6.463 • August 21, 2026 (first curated NBM skip cells — dp 0-5h ×3 regimes)</strong></summary>
 
 - **First real cells landed in `skip_table_nbm_curated.json`.** Three cells for `dp l3_nbm 0-5h`: `pre_frontal`, `sw_flow`, `se_flow`. Selected because walkforward emitted -96% to -125% lift with n=202-345 each, and the badness is structural (L3_NBM's pooled +1.5°F bias fights close-to-obs L2_NBM in these regimes).

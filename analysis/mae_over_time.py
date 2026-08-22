@@ -199,9 +199,7 @@ def compute_fresh_rollup():
                 # carried a single error metric. NOTE: for wd, top-level `error` is
                 # actually L2-view (fc = wd_l2 per forecast_snapshot._round_for), so
                 # falling back to it as "raw" mislabels post-v0.6.368 rows — the
-                # explicit error_l1 path corrects this. Applied-layer stamping isn't
-                # used for L1_ONLY_FIELDS (wd has no applied_layer key), so prod_real
-                # is derived inline by picking the deepest available specialist.
+                # explicit error_l1 path corrects this.
                 raw = r.get("error_l1")
                 if raw is None:
                     raw = r.get("error")
@@ -215,9 +213,18 @@ def compute_fresh_rollup():
                 if e_wdp is not None:
                     per_layer["wdp"] = e_wdp
                 # prod_real for L1_ONLY_FIELDS = deepest specialist present.
-                # Enables the standard "prod_real vs raw" trend reads without
-                # needing an applied_layer stamp (which wd doesn't have).
-                prod = e_wdp if e_wdp is not None else e_l2
+                # v0.6.464 (2026-08-21): NBM-aware. Post-F3-A, wd has an
+                # applied_layer stamp on selector-picks-NBM rows. When the
+                # row was served from NBM, prefer the NBM-side deepest layer
+                # residual (wdp_nbm > l3_nbm > l2_nbm > raw_nbm) so prod_real
+                # reflects what the user actually saw. Falls back to the
+                # HRRR-side walk when selector picked HRRR or the field's
+                # selector isn't wired.
+                if r.get("selector_source") == "nbm":
+                    prod = (r.get("error_wdp_nbm") or r.get("error_l3_nbm")
+                            or r.get("error_l2_nbm") or r.get("error_raw_nbm"))
+                else:
+                    prod = e_wdp if e_wdp is not None else e_l2
                 if prod is not None:
                     prod_real_buckets[(day, fld)].append(float(prod))
             else:
