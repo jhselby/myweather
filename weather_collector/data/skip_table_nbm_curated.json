@@ -1,30 +1,24 @@
 {
-  "fitted_at": "2026-08-21T23:50",
+  "fitted_at": "2026-08-22T00:35",
   "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals. Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
   "cells": {
-    "l3_nbm": {
-      "dp": [
-        ["pre_frontal", 0, 6],
-        ["sw_flow",     0, 6],
-        ["se_flow",     0, 6]
-      ]
-    },
+    "l3_nbm": {},
     "l4_nbm": {},
     "l5_nbm": {},
     "l6_nbm": {},
     "chp_nbm": {},
     "wdp_nbm": {}
   },
-  "provenance": {
-    "l3_nbm.dp": {
-      "source": "analysis/nbm_walkforward_validator.py 2026-08-21 v0.6.462 regime cross-cut",
-      "window_days": 14,
-      "cells_evidence": [
-        {"regime": "pre_frontal", "band": "0-5h", "n": 264, "lift_pct": -124.6},
-        {"regime": "sw_flow",     "band": "0-5h", "n": 345, "lift_pct": -104.2},
-        {"regime": "se_flow",     "band": "0-5h", "n": 202, "lift_pct":  -96.1}
-      ],
-      "reasoning": "L3_NBM subtracts pooled per-lead bias of +1.5°F at 0-5h. In these three regimes, l2_nbm is already close to obs (|err_l2_nbm| median ~1.9°F), so subtracting +1.5°F pushes dp AWAY from obs (l3_nbm MAE 4.3 vs l2_nbm MAE 1.9). Selector currently picks HRRR for dp 0-5h so no user impact — skip prevents future selector fits from being poisoned by broken NBM-Prod score. Long-lead dp cells (6-47h) NOT included pending stronger per-regime evidence; selector currently picks NBM there based on l3_nbm helping."
+  "history": {
+    "2026-08-21T23:50": {
+      "action": "add",
+      "cells": {"l3_nbm.dp": [["pre_frontal", 0, 6], ["sw_flow", 0, 6], ["se_flow", 0, 6]]},
+      "reason": "walkforward regime cross-cut showed -96% to -125% lift for dp 0-5h in these regimes."
+    },
+    "2026-08-22T00:35": {
+      "action": "remove",
+      "cells": {"l3_nbm.dp": [["pre_frontal", 0, 6], ["sw_flow", 0, 6], ["se_flow", 0, 6]]},
+      "reason": "Superseded by v0.6.465 — dp removed from L3_NBM_FIELDS entirely (per_field_scoring showed Prod=2.895 vs L1sel=1.619 at NBM-selected leads 6-47h, so the damage extends past the 0-5h skip cells; NBM dp already well-calibrated, no pooled bias should apply). Skip cells now redundant."
     }
   }
 }

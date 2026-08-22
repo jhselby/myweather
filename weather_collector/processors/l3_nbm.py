@@ -35,7 +35,16 @@ from .nbm_common import cap_correction, is_stale
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l3_nbm_curated.json"
 
-L3_NBM_FIELDS = ("t", "ws", "wg", "h", "ch", "sr", "dp", "cc")   # scalar-bias fields
+L3_NBM_FIELDS = ("t", "ws", "wg", "h", "ch", "sr", "cc")   # scalar-bias fields
+# dp dropped 2026-08-21 v0.6.465 — pooled per-lead bias (+1°F range at short
+# leads) fights close-to-obs L2_NBM in every regime with enough data
+# (pre_frontal/sw_flow/se_flow all at -96% to -125% lift 0-5h; per_field_scoring
+# 24h showed Prod=2.895 vs L1sel=1.619, 79% worse than the raw NBM selector
+# picked). NBM's dp is already well-calibrated at this coord (bias ~0, fc_std
+# matches obs_std); no pooled bias should be subtracted. Matches HRRR's decision
+# to exclude dp from L3_FIELDS. Selector's dp 6-47h NBM picks now score against
+# l2_nbm (identity to raw_nbm since dp has no HRRR L2 delta); may re-evaluate
+# on next fit.
 L3_NBM_WD = "wd"                          # circular field (sin/cos components)
 LEAD_BINS = 48
 

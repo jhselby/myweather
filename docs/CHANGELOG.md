@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.465 • August 22, 2026 (drop dp from L3_NBM_FIELDS — pooled bias was actively harming users)</strong></summary>
+
+- **What forced the fix.** per_field_scoring 24h (freshly regenerated post-F6) revealed dp Prod=2.895 vs NBM raw=0.841 — our correction stack was making dp forecasts **244% worse** than the raw NBM data the selector picked. Since F6 shipped writeback, users viewing dp at 6-47h were actively seeing the degraded value. My earlier "user impact zero" analysis was wrong — it only held for the 0-5h band the skip cells covered, not the 6-47h range where the selector actually picks NBM.
+- **Root cause.** L3_NBM subtracts a pooled per-lead bias (~+1°F) that was fitted globally across all obs. NBM's dp is already well-calibrated at this coord: bias ≈ 0, fc_std matches obs_std. Subtracting a wrong-direction pooled bias worsens every regime. Matches HRRR's long-standing decision to exclude dp from `L3_FIELDS` — HRRR reached the same conclusion months ago via `h_l3_asymmetric` analysis. NBM-specific data confirms.
+- **Fix.** dp removed from `L3_NBM_FIELDS`. dp NBM cascade now `raw_nbm → l2_nbm` (identity — dp has no HRRR L2 delta since dp is derived, not directly extracted). Selector's dp 6-47h NBM picks score against l2_nbm on the next fit.
+- **Skip cells retracted.** Yesterday's `skip_table_nbm_curated.json` dp 0-5h cells are now redundant (dp not in L3_NBM_FIELDS → nothing to skip). Removed from `cells`; kept in a new `history` block with the reasoning trail. skip_table_nbm.py's loader ignores the history block.
+- **Data collection confirmed honest.** Deep-dive on the "NBM raw is way better than HRRR raw for t/h/dp" numbers: verified matching timestamps between NBM and HRRR (same n_shared), sensible ranges, consistent bias direction across all lead bands. HRRR L1 has real systematic biases at this coord (h under -10%, dp under -2°F, sr under -60 W/m², t over +1°F); NBM is more physically calibrated. Correction stack closing the HRRR raw biases is exactly what it's supposed to do; adding a pooled NBM bias on TOP of already-calibrated NBM raw is what was wrong.
+
+</details>
+
+<details>
 <summary><strong>v0.6.464 • August 21, 2026 (close L1_ONLY_FIELDS NBM gap in mae_over_time — feature parity)</strong></summary>
 
 - **Latent gap closed.** `mae_over_time.py`'s L1_ONLY_FIELDS branch (wd) derived prod_real inline from `error_wdp || error_l2` without checking `selector_source`. When selector picked NBM for wd (not today, but the day it happens), prod_real would silently show HRRR-side wdp/l2 residual instead of the NBM-side residual users actually saw. Same class as F3-A but on a code path that intentionally skips `applied_layer`.
