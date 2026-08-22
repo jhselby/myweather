@@ -68,6 +68,14 @@ HRRR_PROD_KEYS = [
     "error_l6", "error_l5", "error_l4", "error_l3", "error_l2", "error_l1",
 ]
 
+# NBM-side layer priority for extracting the "NBM Prod" residual per row.
+# Deepest available layer wins. Mirrors HRRR order (specialists → base cascade).
+NBM_PROD_KEYS = [
+    "error_chp_nbm", "error_wdp_nbm",
+    "error_l6_nbm", "error_l5_nbm", "error_l4_nbm", "error_l3_nbm", "error_l2_nbm",
+    "error_raw_nbm",
+]
+
 
 def _band_for(lead_h):
     if lead_h is None:
@@ -98,6 +106,16 @@ def _hrrr_prod_error(row):
     """Deepest HRRR-side layer residual on this row (signed). Falls through
     to raw HRRR (error_l1). Returns None if nothing is stamped."""
     for k in HRRR_PROD_KEYS:
+        v = row.get(k)
+        if v is not None:
+            return v
+    return None
+
+
+def _nbm_prod_error(row):
+    """Deepest NBM-side layer residual on this row (signed). Falls through
+    to raw NBM (error_raw_nbm). Returns None if nothing is stamped."""
+    for k in NBM_PROD_KEYS:
         v = row.get(k)
         if v is not None:
             return v
@@ -157,6 +175,10 @@ def _new_bucket():
         "nbm_raw":      [0.0, 0],
         "l1_selected":  [0.0, 0],
         "prod":         [0.0, 0],
+        "hrrr_prod":    [0.0, 0],
+        "nbm_prod":     [0.0, 0],
+        "chosen_prod":  [0.0, 0],
+        "alt_prod":     [0.0, 0],
         "selector_picks": {"hrrr": 0, "nbm": 0, "hrrr_fallback": 0, "na": 0},
     }
 
@@ -169,6 +191,8 @@ def _new_bucket_halves():
         "nbm_raw":     [0.0, 0],
         "l1_selected": [0.0, 0],
         "prod":        [0.0, 0],
+        "chosen_prod": [0.0, 0],
+        "alt_prod":    [0.0, 0],
     }
 
 
@@ -217,6 +241,32 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, band_picks):
                 v = abs(float(e_prod))
                 b["prod"][0] += v; b["prod"][1] += 1
                 half["prod"][0] += v; half["prod"][1] += 1
+
+            # Per-cascade Prod residuals. Pooled unconditionally so we can
+            # answer "what would Prod be if we always picked HRRR / always
+            # NBM" at the field level.
+            e_hp = _hrrr_prod_error(row)
+            if e_hp is not None:
+                v = abs(float(e_hp))
+                b["hrrr_prod"][0] += v; b["hrrr_prod"][1] += 1
+            e_np = _nbm_prod_error(row)
+            if e_np is not None:
+                v = abs(float(e_np))
+                b["nbm_prod"][0] += v; b["nbm_prod"][1] += 1
+
+            # Chosen vs alternative Prod: paired per row using the selector's
+            # actual pick. This is the honest "did the chooser pick the better
+            # cascade" measurement — Prod-vs-Prod per v0.6.440.
+            if e_hp is not None and e_np is not None:
+                hp = abs(float(e_hp)); np_ = abs(float(e_np))
+                if pick == "nbm":
+                    chosen, alt = np_, hp
+                else:  # "hrrr", "hrrr_fallback", or "na" → HRRR is what shipped
+                    chosen, alt = hp, np_
+                b["chosen_prod"][0] += chosen; b["chosen_prod"][1] += 1
+                b["alt_prod"][0] += alt;       b["alt_prod"][1] += 1
+                half["chosen_prod"][0] += chosen; half["chosen_prod"][1] += 1
+                half["alt_prod"][0] += alt;       half["alt_prod"][1] += 1
     return acc, halves
 
 
@@ -237,6 +287,10 @@ def _compute_field(field, buckets, halves):
     nbm  = _mean(buckets["nbm_raw"])
     sel  = _mean(buckets["l1_selected"])
     prod = _mean(buckets["prod"])
+    hrrr_prod = _mean(buckets["hrrr_prod"])
+    nbm_prod  = _mean(buckets["nbm_prod"])
+    chosen_prod = _mean(buckets["chosen_prod"])
+    alt_prod    = _mean(buckets["alt_prod"])
 
     in_nbm_scope = field in NBM_SCOPE
 
@@ -264,6 +318,8 @@ def _compute_field(field, buckets, halves):
     sel_h_a  = _half_lift("a", "hrrr_raw", "l1_selected"); sel_h_b  = _half_lift("b", "hrrr_raw", "l1_selected")
     sel_n_a  = _half_lift("a", "nbm_raw",  "l1_selected"); sel_n_b  = _half_lift("b", "nbm_raw",  "l1_selected")
     corr_a   = _half_lift("a", "l1_selected", "prod");     corr_b   = _half_lift("b", "l1_selected", "prod")
+    chooser_prod_a = _half_lift("a", "alt_prod", "chosen_prod")
+    chooser_prod_b = _half_lift("b", "alt_prod", "chosen_prod")
     def _best_half(side):
         h = _mean(halves[side]["hrrr_raw"]); n = _mean(halves[side]["nbm_raw"])
         if in_nbm_scope and h is not None and n is not None: return min(h, n)
@@ -272,11 +328,21 @@ def _compute_field(field, buckets, halves):
     total_a = _lift_pct(total_a_base, _mean(halves["a"]["prod"]))
     total_b = _lift_pct(total_b_base, _mean(halves["b"]["prod"]))
 
+    # Chooser lift Prod-vs-Prod (v0.6.440 rule):
+    # positive = chosen cascade Prod beats alternative cascade Prod.
+    chooser_vs_prod_pct = _lift_pct(alt_prod, chosen_prod)
+
     return {
         "hrrr_raw_mae":  round(hrrr, 3) if hrrr is not None else None,
         "nbm_raw_mae":   round(nbm, 3)  if nbm  is not None else None,
         "l1_selected_mae": round(sel, 3) if sel is not None else None,
         "prod_mae":      round(prod, 3) if prod is not None else None,
+        "hrrr_prod_mae": round(hrrr_prod, 3) if hrrr_prod is not None else None,
+        "nbm_prod_mae":  round(nbm_prod, 3)  if nbm_prod  is not None else None,
+        "chosen_prod_mae": round(chosen_prod, 3) if chosen_prod is not None else None,
+        "alt_prod_mae":  round(alt_prod, 3) if alt_prod is not None else None,
+        "chooser_vs_prod_pct": round(chooser_vs_prod_pct, 2) if chooser_vs_prod_pct is not None else None,
+        "n_chooser_prod_paired": buckets["chosen_prod"][1],
         "best_raw_mae":  round(best_raw, 3) if best_raw is not None else None,
         "best_raw_source": best_raw_src,
         "in_nbm_scope":  in_nbm_scope,
@@ -299,6 +365,7 @@ def _compute_field(field, buckets, halves):
             "sel_vs_nbm":  _agree(sel_n_a, sel_n_b) if in_nbm_scope else None,
             "corr_vs_l1":  _agree(corr_a, corr_b),
             "total_vs_best_raw": _agree(total_a, total_b),
+            "chooser_vs_prod": _agree(chooser_prod_a, chooser_prod_b),
         },
     }
 
@@ -328,6 +395,9 @@ def main():
             "corr_vs_l1_pct":  "Prod vs L1_selected — positive means the local correction stack adds value on top of the selector's pick",
             "total_vs_best_raw_pct": "Prod vs argmin(raw HRRR, raw NBM) — headline of the whole pipeline",
             "l1_selected_definition": "For rows where selector picks NBM: error_l3_nbm (NBM's own bias-corrected output). For rows where selector picks HRRR (or falls through): error_l1 (raw HRRR). This makes corr_vs_l1_pct honestly measure the local correction stack's contribution.",
+            "chooser_vs_prod_pct": "Chosen cascade's Prod vs alternative cascade's Prod, paired per row. Positive = selector picked the better cascade. This is the v0.6.440-rule chooser lift (Prod-vs-Prod, not raw-vs-raw).",
+            "hrrr_prod_mae": "Deepest HRRR-side layer residual pooled over all rows — 'what would Prod be if we always picked HRRR'.",
+            "nbm_prod_mae":  "Deepest NBM-side layer residual pooled over all rows — 'what would Prod be if we always picked NBM'.",
         },
         "nbm_scope": sorted(list(NBM_SCOPE)),
         "warmup_note": "Until pair log fills post-v0.6.440 + selector table starts flipping cells to NBM (earliest ~2026-09-17), L1_selected == raw HRRR for every row; sel_vs_hrrr_pct will read 0.0% and sel_vs_nbm_pct will read whatever raw-HRRR-vs-raw-NBM is on that field.",
