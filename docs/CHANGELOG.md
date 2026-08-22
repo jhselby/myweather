@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.470 • August 22, 2026 (Prod Trend pool symmetry — v0.6.468 was comparing intersected current-window Prod to unfiltered prior Prod)</strong></summary>
+
+- **The asymmetry Joe caught in a screenshot.** After v0.6.468's pool intersection, the current-window `prod` bucket only accepted rows where the 4-residual pool was satisfied, but `prod_prior` still accumulated on all rows. Prod Trend = (prod_prior − prod)/prod_prior was therefore comparing two MAEs pooled over different obs sets, which produced a spurious "−2.6% regressing on 6 fields" reading with no matching real-world signal.
+- **Fix.** `_accumulate` now computes `pool_ok` up-front and applies it to both branches: prior-window rows only contribute to `prod_prior` when the same intersection rule is met. Prod Trend now compares like-with-like.
+- **Effect.** NBM-scope fields get a blank Prod Trend cell for now, because the backstamp doesn't yet cover the prior-equal window under the intersection rule. That's honest — the tile stays quiet until there's real trend evidence to show. Non-scope fields (cl/cm/pr) still populate; their movements reflect weather variability, not pipeline drift.
+- **What survives.** Local Lift near zero (+0.4% median) is NOT a pool artifact — it appears to be a real change that needs looking at, but not tonight.
+
+</details>
+
+<details>
 <summary><strong>v0.6.469 • August 22, 2026 (scoreboard tiles show median, not mean — the identity doesn't survive arithmetic-mean-of-percentages)</strong></summary>
 
 - **The subtlety Joe caught.** The multiplicative identity `(1-Total) = (1-Chooser)(1-Local)` holds per field, but breaks under an arithmetic mean of per-field percentages. Under v0.6.468 the headline tiles were showing means, and the numbers were visually inviting a decomposition read that the aggregate could not actually support (mean Chooser −28.7% × mean Local +13.5% implies −11.3%, not the shown −7.3%).

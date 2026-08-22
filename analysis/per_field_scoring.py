@@ -235,25 +235,15 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
             if obs_time < prior_start:
                 continue
             in_current = obs_time >= window_start
-            if not in_current:
-                # Prior-window row: only contribute to prod_prior for trend.
-                e_prod_p = _prod_error(row)
-                if e_prod_p is not None:
-                    v = abs(float(e_prod_p))
-                    acc[field]["prod_prior"][0] += v
-                    acc[field]["prod_prior"][1] += 1
-                continue
-            b = acc[field]
-            half = halves[field]["b" if obs_time >= halves_midpoint else "a"]
-
+            # Compute residuals + pool_ok up-front so prior-window uses the
+            # SAME intersection rule as current-window. Without this, Prod
+            # Trend compares a pool-intersected current-window `prod` to an
+            # unfiltered `prod_prior` — apples to oranges (v0.6.468 shipped
+            # this asymmetry, v0.6.470 fixes it).
             e_hrrr = row.get("error_l1")
             e_nbm = row.get("error_raw_nbm")
             e_sel, pick = _selected_l1_error(row, band_picks)
             e_prod = _prod_error(row)
-            b["selector_picks"][pick] = b["selector_picks"].get(pick, 0) + 1
-
-            # Value-chain pool intersection: for NBM-scope fields, require all
-            # four residuals; for non-NBM-scope, require the HRRR-side three.
             in_nbm_scope = field in NBM_SCOPE
             if in_nbm_scope:
                 pool_ok = (e_hrrr is not None and e_nbm is not None
@@ -261,6 +251,19 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
             else:
                 pool_ok = (e_hrrr is not None and e_sel is not None
                            and e_prod is not None)
+
+            if not in_current:
+                # Prior-window row: only contribute to prod_prior, and only
+                # when the intersected pool is satisfied so the trend
+                # compares like-with-like.
+                if pool_ok:
+                    v = abs(float(e_prod))
+                    acc[field]["prod_prior"][0] += v
+                    acc[field]["prod_prior"][1] += 1
+                continue
+            b = acc[field]
+            half = halves[field]["b" if obs_time >= halves_midpoint else "a"]
+            b["selector_picks"][pick] = b["selector_picks"].get(pick, 0) + 1
 
             if pool_ok:
                 vh = abs(float(e_hrrr))
