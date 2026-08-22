@@ -1074,7 +1074,7 @@
      Each numeric cell shows 7d primary + 24h in small type. -->
 <div id="per-field-scoring-block">
   <div class="pfs-title">Per-field scoring — 7 day / 24 h</div>
-  <div class="pfs-blurb">MAE (mean absolute error) per field, broken out by pipeline stage: <span style="color:#7fb3ff;font-weight:600;">public inputs</span> (raw HRRR + raw NBM) → <span style="color:#c88bff;font-weight:600;">our L1 chooser</span> (picks per cell) → <span style="color:#74c38b;font-weight:600;">local processing</span> (L2/L3/L4/gates) → <span style="color:#e0a86b;font-weight:600;">total result</span>. Each cell shows 7d on top and 24h in small type below. Refits hourly. <em>Warmup note:</em> chooser started firing on wg/dp/cc at 2026-08-21 00:47 UTC (v0.6.445 armed the selector via NBM backstamp). 24h row values start showing signal within a day; 7d row stabilizes over the next week.</div>
+  <div class="pfs-blurb">MAE (mean absolute error) per field. The three value-chain stages read left-to-right — <span style="color:#7fb3ff;font-weight:600;">public inputs</span> → <span style="color:#c88bff;font-weight:600;">L1 chooser</span> → <span style="color:#74c38b;font-weight:600;">local processing</span> → <span style="color:#e0a86b;font-weight:600;">total</span> — with each lift measured against the stage before it. The rightmost <span style="color:#a0a0d0;font-weight:600;">selector-skill</span> column is a diagnostic of the router (did it pick the branch that turned out better?) and is not part of the value chain. Each cell shows 7d on top and 24h in small type below. Refits hourly. <em>Warmup note:</em> chooser started firing on wg/dp/cc at 2026-08-21 00:47 UTC (v0.6.445 armed the selector via NBM backstamp). 24h row values start showing signal within a day; 7d row stabilizes over the next week.</div>
   <div id="pfs-content" style="min-height:60px;color:var(--muted);opacity:0.6;">Loading per_field_scoring.json…</div>
 </div>
 
@@ -3703,13 +3703,18 @@ async function renderScoreboardV2() {
   const pf24 = (pfs.windows && pfs.windows["24h"] && pfs.windows["24h"].per_field) || {};
   const sbW7 = (sb.windows && sb.windows["7d"] && sb.windows["7d"].rollup) || {};
 
-  // Per-metric field sets — each metric is only meaningful where its
-  // baseline exists. Excludes derived (cc, dp), Brier (pp), and no-MAE-
-  // stack (pa, pr) in all cases.
-  //   Chooser lift: only NBM-scope fields (chooser has a real choice).
-  //   Local lift + Total lift: all fields where the local stack runs.
-  const CHOOSER_FIELDS = ["t","h","ws","wg","wd","ch","sr"];              // 7 — NBM in scope
-  const LOCAL_FIELDS   = ["t","h","ws","wg","wd","cl","cm","ch","sr","pp","pr"]; // 11 — excludes derived (dp, cc) + pa (denom near zero)
+  // v0.6.468 — scoreboard restructured as VALUE CHAIN + DIAGNOSTICS.
+  // The value chain evaluates BestRaw → L1 → Production. The old "L1 chooser
+  // lift" (chosen-vs-alt Prod) is Selector Skill, not value attribution, and
+  // moves to diagnostics.
+  //
+  // All three value-chain tiles use ONE field set so the multiplicative
+  // identity (1-Total) ≈ (1-Chooser)(1-Local) is meaningful. Fields with no
+  // NBM raw baseline cannot participate in a "vs best raw" chain.
+  const VALUE_CHAIN_FIELDS = ["t","h","ws","wg","wd","ch","sr"]; // NBM in scope
+  // Diagnostics fields are broader — the diagnostics don't need a NBM raw
+  // baseline to be interpretable.
+  const DIAG_FIELDS = ["t","h","ws","wg","wd","cl","cm","ch","sr","pp","pr"];
   const _bestRaw = (c) => {
     const h = c.hrrr_raw_mae, n = c.nbm_raw_mae;
     if (c.in_nbm_scope && h != null && n != null) return Math.min(h, n);
@@ -3717,21 +3722,29 @@ async function renderScoreboardV2() {
     if (n != null) return n;
     return null;
   };
-  // Chooser lift is Prod-vs-Prod per v0.6.440 rule: chosen cascade's Prod
-  // vs alternative cascade's Prod, paired per row. Positive = selector
-  // picked the better cascade. Raw-vs-raw is a design flaw — never fall
-  // back to it here.
+  // VALUE CHAIN — Chooser Lift = L1 vs best raw. Did source selection
+  // improve on the best public forecast? Positive = L1 beats min(HRRR, NBM).
   const _chooserLift = (c) => {
-    return (c.chooser_vs_prod_pct != null) ? c.chooser_vs_prod_pct : null;
+    const b = _bestRaw(c), l1 = c.l1_selected_mae;
+    return (b != null && l1 != null && b > 0) ? 100 * (b - l1) / b : null;
   };
+  // VALUE CHAIN — Local Lift = Prod vs L1.
   const _corrAdd = (c) => {
     const l1 = c.l1_selected_mae, p = c.prod_mae;
     return (l1 != null && p != null && l1 > 0) ? 100 * (l1 - p) / l1 : null;
   };
+  // VALUE CHAIN — Total Lift = Prod vs best raw.
   const _totalLift = (c) => {
     const b = _bestRaw(c), p = c.prod_mae;
     if (c.total_vs_best_raw_pct != null) return c.total_vs_best_raw_pct;
     return (b != null && p != null && b > 0) ? 100 * (b - p) / b : null;
+  };
+  // DIAGNOSTIC — Selector Skill = chosen cascade Prod vs alternative cascade
+  // Prod (v0.6.440 rule, paired per row). Did the router pick the branch
+  // that turned out better AFTER local processing? Different question from
+  // Chooser Lift and belongs in diagnostics, not the value chain.
+  const _selectorSkill = (c) => {
+    return (c.chooser_vs_prod_pct != null) ? c.chooser_vs_prod_pct : null;
   };
 
   // Aggregate a metric across the given fields: return {mean, counts, fields per bucket}.
@@ -3757,14 +3770,32 @@ async function renderScoreboardV2() {
   };
 
   const _prodTrend = (c) => (c.prod_trend_pct != null) ? c.prod_trend_pct : null;
-  const chooser7  = _agg(pf7,  _chooserLift, CHOOSER_FIELDS, "winning", "losing");
-  const chooser24 = _agg(pf24, _chooserLift, CHOOSER_FIELDS, "winning", "losing");
-  const local7    = _agg(pf7,  _corrAdd,     LOCAL_FIELDS,   "winning", "losing");
-  const local24   = _agg(pf24, _corrAdd,     LOCAL_FIELDS,   "winning", "losing");
-  const total7    = _agg(pf7,  _totalLift,   LOCAL_FIELDS,   "winning", "losing");
-  const total24   = _agg(pf24, _totalLift,   LOCAL_FIELDS,   "winning", "losing");
-  const trend7    = _agg(pf7,  _prodTrend,   LOCAL_FIELDS,   "improving", "regressing");
-  const trend24   = _agg(pf24, _prodTrend,   LOCAL_FIELDS,   "improving", "regressing");
+  // Value chain — all three use VALUE_CHAIN_FIELDS.
+  const chooser7  = _agg(pf7,  _chooserLift,   VALUE_CHAIN_FIELDS, "winning", "losing");
+  const chooser24 = _agg(pf24, _chooserLift,   VALUE_CHAIN_FIELDS, "winning", "losing");
+  const local7    = _agg(pf7,  _corrAdd,       VALUE_CHAIN_FIELDS, "winning", "losing");
+  const local24   = _agg(pf24, _corrAdd,       VALUE_CHAIN_FIELDS, "winning", "losing");
+  const total7    = _agg(pf7,  _totalLift,     VALUE_CHAIN_FIELDS, "winning", "losing");
+  const total24   = _agg(pf24, _totalLift,     VALUE_CHAIN_FIELDS, "winning", "losing");
+  // Diagnostics.
+  const selskill7  = _agg(pf7,  _selectorSkill, VALUE_CHAIN_FIELDS, "correct pick", "wrong pick");
+  const selskill24 = _agg(pf24, _selectorSkill, VALUE_CHAIN_FIELDS, "correct pick", "wrong pick");
+  const trend7    = _agg(pf7,  _prodTrend,   DIAG_FIELDS, "improving", "regressing");
+  const trend24   = _agg(pf24, _prodTrend,   DIAG_FIELDS, "improving", "regressing");
+
+  // Coherence check: (1 - Total) ≈ (1 - Chooser) × (1 - Local).
+  // Silent in UI; logged to console if the two sides deviate by more than
+  // ±5 percentage points, which suggests the three tiles are being pooled
+  // over inconsistent obs sets and one of the numbers is misleading.
+  if (chooser7.mean != null && local7.mean != null && total7.mean != null) {
+    const impliedTotal = 100 * (1 - (1 - chooser7.mean/100) * (1 - local7.mean/100));
+    const dev = Math.abs(total7.mean - impliedTotal);
+    if (dev > 5.0) {
+      console.warn(`[scoreboard] coherence check FAIL 7d: chooser=${chooser7.mean.toFixed(2)}%, local=${local7.mean.toFixed(2)}%, implied total=${impliedTotal.toFixed(2)}%, actual total=${total7.mean.toFixed(2)}%, dev=${dev.toFixed(2)}pp (>5pp threshold)`);
+    } else if (dev > 2.0) {
+      console.info(`[scoreboard] coherence check WARN 7d: dev=${dev.toFixed(2)}pp (>2pp threshold)`);
+    }
+  }
 
   const pct = (v) => v == null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(1) + "%";
   const liftClass = (v) => v == null ? "sb-flat"
@@ -3820,11 +3851,16 @@ async function renderScoreboardV2() {
   banner.style.border = "0";
   banner.style.padding = "0";
   banner.innerHTML = `
-    <div class="sb-headline-strip">
-      ${stripCell("L1 chooser lift", "chosen vs alt cascade Prod", "#c88bff", chooser7, chooser24)}
-      ${stripCell("Local lift",       "Prod vs L1",           "#74c38b", local7,   local24)}
-      ${stripCell("Total result",     "Prod vs better raw",   "#e0a86b", total7,   total24)}
-      ${stripCell("Prod trend",       "vs prior window (tuning)",   "#7fb3ff", trend7,  trend24)}
+    <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.55;margin:0 0 6px 2px;">Value chain — BestRaw → L1 → Production</div>
+    <div class="sb-headline-strip" style="grid-template-columns: repeat(3, 1fr);">
+      ${stripCell("Chooser lift", "L1 vs best raw",       "#c88bff", chooser7, chooser24)}
+      ${stripCell("Local lift",   "Prod vs L1",           "#74c38b", local7,   local24)}
+      ${stripCell("Total lift",   "Prod vs best raw",     "#e0a86b", total7,   total24)}
+    </div>
+    <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;opacity:0.55;margin:14px 0 6px 2px;">Diagnostics</div>
+    <div class="sb-headline-strip" style="grid-template-columns: repeat(2, 1fr);">
+      ${stripCell("Selector skill", "chosen vs alt cascade Prod", "#a0a0d0", selskill7, selskill24)}
+      ${stripCell("Prod trend",     "vs prior equal window",      "#7fb3ff", trend7,   trend24)}
     </div>
     <div class="sb-tile-row">
       <div class="sb-tile">
@@ -3832,7 +3868,7 @@ async function renderScoreboardV2() {
         ${srcLine("NBM wins",  src.nbm_wins_count  || 0, src.nbm_wins_fields,  "#7fb3ff")}
         ${srcLine("HRRR wins", src.hrrr_wins_count || 0, src.hrrr_wins_fields, "#c8c8c8")}
         ${srcLine("Insufficient data", src.insufficient_count || 0, src.insufficient, "#8a93a3")}
-        <div class="sb-tile-foot">Which raw model has lower field-level MAE. NBM winning is the "chooser should flip" signal.</div>
+        <div class="sb-tile-foot">Which raw public model has lower field-level MAE right now. Diagnostic of national guidance — does NOT imply a chooser flip. Corrected HRRR can beat corrected NBM even when raw NBM beats raw HRRR.</div>
       </div>
       <div class="sb-tile">
         <div class="sb-tile-title" style="color:#e0a86b;">Health &amp; reliability <span style="opacity:0.6;font-weight:400;">(7d)</span></div>
@@ -3927,7 +3963,13 @@ async function renderPerFieldScoring() {
     if (n != null) return n;
     return null;
   };
+  // Value-chain Chooser Lift — L1 vs best raw.
   const _chooserLift = (c) => {
+    const b = _bestRaw(c), l1 = c.l1_selected_mae;
+    return (b != null && l1 != null && b > 0) ? 100 * (b - l1) / b : null;
+  };
+  // Diagnostic Selector Skill — chosen cascade Prod vs alt cascade Prod.
+  const _selectorSkill = (c) => {
     return (c.chooser_vs_prod_pct != null) ? c.chooser_vs_prod_pct : null;
   };
   const _corrAdd = (c) => {
@@ -3951,6 +3993,8 @@ async function renderPerFieldScoring() {
     const ha24 = c24.halves_agree || {};
     const chooser7 = _chooserLift(c);
     const chooser24 = _chooserLift(c24);
+    const selskill7 = _selectorSkill(c);
+    const selskill24 = _selectorSkill(c24);
     const corr7 = _corrAdd(c);
     const corr24 = _corrAdd(c24);
     // Total pipeline lift (Prod vs best raw) — precomputed field, but
@@ -3966,10 +4010,11 @@ async function renderPerFieldScoring() {
       <td class="pfs-group-start">${stackedMae(c.hrrr_raw_mae, c24.hrrr_raw_mae, f)}</td>
       <td>${stackedMae(c.nbm_raw_mae, c24.nbm_raw_mae, f)}</td>
       <td class="pfs-group-start">${stackedMae(c.l1_selected_mae, c24.l1_selected_mae, f)}</td>
-      <td>${stackedPct(chooser7, chooser24, ha7.chooser_vs_prod, ha24.chooser_vs_prod)}</td>
+      <td>${stackedPct(chooser7, chooser24, null, null)}</td>
       <td class="pfs-group-start">${stackedMae(c.prod_mae, c24.prod_mae, f)}</td>
       <td>${stackedPct(corr7, corr24, ha7.corr_vs_l1, ha24.corr_vs_l1)}</td>
       <td class="pfs-group-start pfs-total">${stackedPct(total7, total24, ha7.total_vs_best_raw, ha24.total_vs_best_raw)}</td>
+      <td class="pfs-group-start">${stackedPct(selskill7, selskill24, ha7.chooser_vs_prod, ha24.chooser_vs_prod)}</td>
     </tr>`;
   }).join("");
 
@@ -3979,18 +4024,20 @@ async function renderPerFieldScoring() {
         <tr>
           <th class="pfs-col" rowspan="2" style="text-align:left;vertical-align:bottom;">Field</th>
           <th class="pfs-group pfs-group-inputs pfs-group-start" colspan="2">Public inputs (raw models)</th>
-          <th class="pfs-group pfs-group-chooser pfs-group-start" colspan="2">Wyman Cove L1 chooser</th>
-          <th class="pfs-group pfs-group-local pfs-group-start" colspan="2">Wyman Cove correction stack</th>
-          <th class="pfs-group pfs-group-total pfs-group-start" colspan="1">Total result</th>
+          <th class="pfs-group pfs-group-chooser pfs-group-start" colspan="2">L1 chooser (value chain)</th>
+          <th class="pfs-group pfs-group-local pfs-group-start" colspan="2">Local correction stack (value chain)</th>
+          <th class="pfs-group pfs-group-total pfs-group-start" colspan="1">Total (value chain)</th>
+          <th class="pfs-group pfs-group-start" colspan="1" style="color:#a0a0d0;">Diagnostic</th>
         </tr>
         <tr>
           <th class="pfs-col pfs-group-start" title="Mean absolute error of the raw HRRR forecast. 7d primary, 24h below.">HRRR MAE</th>
           <th class="pfs-col" title="Mean absolute error of the raw NBM forecast. Dash = NBM does not emit this field.">NBM MAE</th>
           <th class="pfs-col pfs-group-start" title="Mean absolute error of L1 — the selector's chosen raw source per cell.">L1 MAE</th>
-          <th class="pfs-col" title="(alt cascade Prod MAE − chosen cascade Prod MAE) / alt cascade Prod MAE × 100, paired per row. Positive = selector picked the better cascade. Prod-vs-Prod per v0.6.440; raw-vs-raw is a design flaw and no longer measured here.">Chooser lift<span class="pfs-sub">chosen vs alt Prod</span></th>
+          <th class="pfs-col" title="(best raw MAE − L1 MAE) / best raw MAE × 100. Positive = source selection produced an L1 better than the best public raw model. Zero = no better than just using min(HRRR, NBM). Negative = source selection cost us accuracy.">Chooser lift<span class="pfs-sub">L1 vs best raw</span></th>
           <th class="pfs-col pfs-group-start" title="Mean absolute error of the final Wyman Cove Production forecast (after L2 / L3 / L4 / gates).">Prod MAE</th>
           <th class="pfs-col" title="(L1 MAE − Prod MAE) / L1 MAE × 100. Positive = our local correction stack (L2/L3/L4/gates) adds value on top of the chooser's pick.">Local lift<span class="pfs-sub">Prod vs L1</span></th>
-          <th class="pfs-col pfs-group-start" title="(better raw MAE − Prod MAE) / better raw MAE × 100. Positive = Wyman Cove Production beats the best free public raw for this field.">Production lift<span class="pfs-sub">vs better raw</span></th>
+          <th class="pfs-col pfs-group-start" title="(best raw MAE − Prod MAE) / best raw MAE × 100. Positive = Wyman Cove Production beats the best free public raw for this field. This is the number that answers 'is this project worth it'.">Total lift<span class="pfs-sub">Prod vs best raw</span></th>
+          <th class="pfs-col pfs-group-start" style="color:#a0a0d0;" title="(alt cascade Prod MAE − chosen cascade Prod MAE) / alt cascade Prod MAE × 100, paired per row. Positive = router picked the branch that turned out to be better after local processing. DIAGNOSTIC of the router — separate from Chooser lift, which measures whether source selection beat the best public raw. A working router shows ≥0 here.">Selector skill<span class="pfs-sub">chosen vs alt Prod</span></th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>

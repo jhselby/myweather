@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.466–v0.6.468 • August 22, 2026 (scoreboard restructured as Value Chain + Diagnostics — Chooser Lift no longer measures selector skill)</strong></summary>
+
+* **The confound.** The tile labeled "L1 Chooser Lift" was actually Selector Skill (chosen-cascade Prod vs alternative-cascade Prod). That answers "did the router pick the branch that turned out better?" — a diagnostic of the router, not value attribution. It cannot tell you whether L1 selection contributed anything over what the public forecasts already provide. The number could be positive (router picked correctly) while L1 was still worse than just always using raw NBM. Two different questions were sitting on top of each other in one tile.
+* **New governing principle.** The top-level scoreboard distinguishes **value attribution** from **diagnostics**. Chooser Lift, Local Lift, and Total Lift are successive stages of one value chain: **Best Public Raw → L1 → Production**. National Source Score, Selector Skill, Prod Trend, and Health & Reliability diagnose why that chain is behaving as it is. A diagnostic never substitutes for a value-chain score.
+* **Value-chain tiles (new definitions).** Chooser Lift = (best_raw_MAE − L1_MAE)/best_raw_MAE — did source selection improve on the best public raw. Local Lift = (L1_MAE − Prod_MAE)/L1_MAE — did the local correction stack add value on top of L1. Total Lift = (best_raw_MAE − Prod_MAE)/best_raw_MAE — is what Wyman Cove publishes better than the best public alternative. Under fractional-reduction semantics, (1−Total) ≈ (1−Chooser)(1−Local); the renderer logs a console warning if the two sides deviate by more than ±5pp.
+* **Diagnostics row.** The old chooser-lift tile is renamed **Selector Skill** and moved below the value chain. National Source Score copy updated — the line "NBM winning is the 'chooser should flip' signal" is removed. It was wrong: corrected HRRR can beat corrected NBM even when raw NBM beats raw HRRR, so National Source Score is diagnostic of national guidance only.
+* **Field scope.** All three value-chain tiles pool over the same field set — the 7 NBM-scope fields (t/h/ws/wg/wd/ch/sr) — so the multiplicative identity holds. Fields with no NBM raw baseline can't participate in a "vs best raw" chain.
+* **Per-field table.** Renamed group headers to "L1 chooser (value chain)" / "Local correction stack (value chain)" / "Total (value chain)". Chooser Lift column now reads L1 vs best raw. Added a new **Selector Skill** column at the right of the table, styled as diagnostic (grey accent).
+* **v0.6.466 and v0.6.467** (Chooser Lift Prod-vs-Prod rework and Prod Trend tile) shipped earlier today. Both were correct as changes-in-isolation but described the wrong tile-level story; v0.6.468 is the restructuring pass that puts the numbers in the right conceptual place.
+
+</details>
+
+<details>
 <summary><strong>v0.6.465 • August 22, 2026 (drop dp from L3_NBM_FIELDS — pooled bias was actively harming users)</strong></summary>
 
 - **What forced the fix.** per_field_scoring 24h (freshly regenerated post-F6) revealed dp Prod=2.895 vs NBM raw=0.841 — our correction stack was making dp forecasts **244% worse** than the raw NBM data the selector picked. Since F6 shipped writeback, users viewing dp at 6-47h were actively seeing the degraded value. My earlier "user impact zero" analysis was wrong — it only held for the 0-5h band the skip cells covered, not the 6-47h range where the selector actually picks NBM.

@@ -200,7 +200,23 @@ def _new_bucket_halves():
 def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_picks):
     """window_start = start of current window. prior_start = start of the
     equal-length window preceding it (used for Prod trend). Rows in
-    [prior_start, window_start) only contribute to prod_prior."""
+    [prior_start, window_start) only contribute to prod_prior.
+
+    v0.6.468 — value-chain pool intersection. For NBM-scope fields, a row
+    contributes to hrrr_raw / nbm_raw / l1_selected / prod ONLY when all four
+    residuals exist on that row. This makes the pool consistent across the
+    three headline tiles so best_raw, L1, and Prod MAEs describe the same
+    obs set and (1-Total) ≈ (1-Chooser)(1-Local) is meaningful.
+
+    Non-NBM-scope fields: no NBM raw baseline exists, so the intersection
+    reduces to requiring hrrr_raw + l1_selected + prod. best_raw = MAE_HRRR
+    for those fields (they can't enter the value-chain tiles anyway; the
+    tile renderer restricts to NBM-scope).
+
+    Diagnostic buckets (hrrr_prod / nbm_prod / chosen_prod / alt_prod /
+    prod_prior / selector_picks) stay on their prior pool discipline — they
+    answer different questions and pairing rules differ per bucket.
+    """
     acc = {f: _new_bucket() for f in FIELDS}
     halves = {f: {"a": _new_bucket_halves(), "b": _new_bucket_halves()} for f in FIELDS}
     with open(pair_log_path) as fin:
@@ -231,29 +247,35 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
             half = halves[field]["b" if obs_time >= halves_midpoint else "a"]
 
             e_hrrr = row.get("error_l1")
-            if e_hrrr is not None:
-                v = abs(float(e_hrrr))
-                b["hrrr_raw"][0] += v; b["hrrr_raw"][1] += 1
-                half["hrrr_raw"][0] += v; half["hrrr_raw"][1] += 1
-
             e_nbm = row.get("error_raw_nbm")
-            if e_nbm is not None:
-                v = abs(float(e_nbm))
-                b["nbm_raw"][0] += v; b["nbm_raw"][1] += 1
-                half["nbm_raw"][0] += v; half["nbm_raw"][1] += 1
-
             e_sel, pick = _selected_l1_error(row, band_picks)
-            b["selector_picks"][pick] = b["selector_picks"].get(pick, 0) + 1
-            if e_sel is not None:
-                v = abs(float(e_sel))
-                b["l1_selected"][0] += v; b["l1_selected"][1] += 1
-                half["l1_selected"][0] += v; half["l1_selected"][1] += 1
-
             e_prod = _prod_error(row)
-            if e_prod is not None:
-                v = abs(float(e_prod))
-                b["prod"][0] += v; b["prod"][1] += 1
-                half["prod"][0] += v; half["prod"][1] += 1
+            b["selector_picks"][pick] = b["selector_picks"].get(pick, 0) + 1
+
+            # Value-chain pool intersection: for NBM-scope fields, require all
+            # four residuals; for non-NBM-scope, require the HRRR-side three.
+            in_nbm_scope = field in NBM_SCOPE
+            if in_nbm_scope:
+                pool_ok = (e_hrrr is not None and e_nbm is not None
+                           and e_sel is not None and e_prod is not None)
+            else:
+                pool_ok = (e_hrrr is not None and e_sel is not None
+                           and e_prod is not None)
+
+            if pool_ok:
+                vh = abs(float(e_hrrr))
+                b["hrrr_raw"][0] += vh; b["hrrr_raw"][1] += 1
+                half["hrrr_raw"][0] += vh; half["hrrr_raw"][1] += 1
+                if e_nbm is not None:
+                    vn = abs(float(e_nbm))
+                    b["nbm_raw"][0] += vn; b["nbm_raw"][1] += 1
+                    half["nbm_raw"][0] += vn; half["nbm_raw"][1] += 1
+                vs = abs(float(e_sel))
+                b["l1_selected"][0] += vs; b["l1_selected"][1] += 1
+                half["l1_selected"][0] += vs; half["l1_selected"][1] += 1
+                vp = abs(float(e_prod))
+                b["prod"][0] += vp; b["prod"][1] += 1
+                half["prod"][0] += vp; half["prod"][1] += 1
 
             # Per-cascade Prod residuals. Pooled unconditionally so we can
             # answer "what would Prod be if we always picked HRRR / always
