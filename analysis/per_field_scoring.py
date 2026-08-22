@@ -179,6 +179,7 @@ def _new_bucket():
         "nbm_prod":     [0.0, 0],
         "chosen_prod":  [0.0, 0],
         "alt_prod":     [0.0, 0],
+        "prod_prior":   [0.0, 0],
         "selector_picks": {"hrrr": 0, "nbm": 0, "hrrr_fallback": 0, "na": 0},
     }
 
@@ -196,7 +197,10 @@ def _new_bucket_halves():
     }
 
 
-def _accumulate(pair_log_path, window_start, halves_midpoint, band_picks):
+def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_picks):
+    """window_start = start of current window. prior_start = start of the
+    equal-length window preceding it (used for Prod trend). Rows in
+    [prior_start, window_start) only contribute to prod_prior."""
     acc = {f: _new_bucket() for f in FIELDS}
     halves = {f: {"a": _new_bucket_halves(), "b": _new_bucket_halves()} for f in FIELDS}
     with open(pair_log_path) as fin:
@@ -212,7 +216,16 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, band_picks):
             if field not in acc:
                 continue
             obs_time = row.get("obs_time", "")
-            if obs_time < window_start:
+            if obs_time < prior_start:
+                continue
+            in_current = obs_time >= window_start
+            if not in_current:
+                # Prior-window row: only contribute to prod_prior for trend.
+                e_prod_p = _prod_error(row)
+                if e_prod_p is not None:
+                    v = abs(float(e_prod_p))
+                    acc[field]["prod_prior"][0] += v
+                    acc[field]["prod_prior"][1] += 1
                 continue
             b = acc[field]
             half = halves[field]["b" if obs_time >= halves_midpoint else "a"]
@@ -291,6 +304,7 @@ def _compute_field(field, buckets, halves):
     nbm_prod  = _mean(buckets["nbm_prod"])
     chosen_prod = _mean(buckets["chosen_prod"])
     alt_prod    = _mean(buckets["alt_prod"])
+    prod_prior  = _mean(buckets["prod_prior"])
 
     in_nbm_scope = field in NBM_SCOPE
 
@@ -332,6 +346,11 @@ def _compute_field(field, buckets, halves):
     # positive = chosen cascade Prod beats alternative cascade Prod.
     chooser_vs_prod_pct = _lift_pct(alt_prod, chosen_prod)
 
+    # Weekly Prod trend: current-window Prod vs prior-window Prod. No external
+    # anchor. Positive = we improved vs the same-length window preceding this
+    # one. This is the "am I doing my job well" signal — see [[08-22-session]].
+    prod_trend_pct = _lift_pct(prod_prior, prod)
+
     return {
         "hrrr_raw_mae":  round(hrrr, 3) if hrrr is not None else None,
         "nbm_raw_mae":   round(nbm, 3)  if nbm  is not None else None,
@@ -343,6 +362,9 @@ def _compute_field(field, buckets, halves):
         "alt_prod_mae":  round(alt_prod, 3) if alt_prod is not None else None,
         "chooser_vs_prod_pct": round(chooser_vs_prod_pct, 2) if chooser_vs_prod_pct is not None else None,
         "n_chooser_prod_paired": buckets["chosen_prod"][1],
+        "prod_prior_mae": round(prod_prior, 3) if prod_prior is not None else None,
+        "n_prod_prior":   buckets["prod_prior"][1],
+        "prod_trend_pct": round(prod_trend_pct, 2) if prod_trend_pct is not None else None,
         "best_raw_mae":  round(best_raw, 3) if best_raw is not None else None,
         "best_raw_source": best_raw_src,
         "in_nbm_scope":  in_nbm_scope,
@@ -379,7 +401,8 @@ def main():
     for label, days in WINDOWS:
         window_start = (now - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M")
         halves_midpoint = (now - timedelta(days=days / 2)).strftime("%Y-%m-%dT%H:%M")
-        acc, halves = _accumulate(path, window_start, halves_midpoint, band_picks)
+        prior_start = (now - timedelta(days=days * 2)).strftime("%Y-%m-%dT%H:%M")
+        acc, halves = _accumulate(path, window_start, halves_midpoint, prior_start, band_picks)
         per_field = {f: _compute_field(f, acc[f], halves[f]) for f in FIELDS}
         windows_out[label] = {"per_field": per_field}
 
@@ -398,6 +421,7 @@ def main():
             "chooser_vs_prod_pct": "Chosen cascade's Prod vs alternative cascade's Prod, paired per row. Positive = selector picked the better cascade. This is the v0.6.440-rule chooser lift (Prod-vs-Prod, not raw-vs-raw).",
             "hrrr_prod_mae": "Deepest HRRR-side layer residual pooled over all rows — 'what would Prod be if we always picked HRRR'.",
             "nbm_prod_mae":  "Deepest NBM-side layer residual pooled over all rows — 'what would Prod be if we always picked NBM'.",
+            "prod_trend_pct": "Current-window Prod MAE vs the equal-length window immediately preceding it. Positive = we improved. No external anchor — this is the 'am I doing my tuning job well' score.",
         },
         "nbm_scope": sorted(list(NBM_SCOPE)),
         "warmup_note": "Until pair log fills post-v0.6.440 + selector table starts flipping cells to NBM (earliest ~2026-09-17), L1_selected == raw HRRR for every row; sel_vs_hrrr_pct will read 0.0% and sel_vs_nbm_pct will read whatever raw-HRRR-vs-raw-NBM is on that field.",

@@ -564,8 +564,11 @@
      Headline strip: 3 lift metrics in one row.
      Tile row: National Source Score + Health & Reliability side by side. */
   #scorecard-banner .sb-headline-strip {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
     margin-bottom: 10px;
+  }
+  @media (max-width: 900px) {
+    #scorecard-banner .sb-headline-strip { grid-template-columns: repeat(2, 1fr); }
   }
   #scorecard-banner .sb-strip-cell {
     background: var(--panel); border: 1px solid #242833; border-radius: 8px;
@@ -3753,12 +3756,15 @@ async function renderScoreboardV2() {
     };
   };
 
+  const _prodTrend = (c) => (c.prod_trend_pct != null) ? c.prod_trend_pct : null;
   const chooser7  = _agg(pf7,  _chooserLift, CHOOSER_FIELDS, "winning", "losing");
   const chooser24 = _agg(pf24, _chooserLift, CHOOSER_FIELDS, "winning", "losing");
   const local7    = _agg(pf7,  _corrAdd,     LOCAL_FIELDS,   "winning", "losing");
   const local24   = _agg(pf24, _corrAdd,     LOCAL_FIELDS,   "winning", "losing");
   const total7    = _agg(pf7,  _totalLift,   LOCAL_FIELDS,   "winning", "losing");
   const total24   = _agg(pf24, _totalLift,   LOCAL_FIELDS,   "winning", "losing");
+  const trend7    = _agg(pf7,  _prodTrend,   LOCAL_FIELDS,   "improving", "regressing");
+  const trend24   = _agg(pf24, _prodTrend,   LOCAL_FIELDS,   "improving", "regressing");
 
   const pct = (v) => v == null ? "—" : (v >= 0 ? "+" : "") + v.toFixed(1) + "%";
   const liftClass = (v) => v == null ? "sb-flat"
@@ -3818,6 +3824,7 @@ async function renderScoreboardV2() {
       ${stripCell("L1 chooser lift", "chosen vs alt cascade Prod", "#c88bff", chooser7, chooser24)}
       ${stripCell("Local lift",       "Prod vs L1",           "#74c38b", local7,   local24)}
       ${stripCell("Total result",     "Prod vs better raw",   "#e0a86b", total7,   total24)}
+      ${stripCell("Prod trend",       "vs prior window (tuning)",   "#7fb3ff", trend7,  trend24)}
     </div>
     <div class="sb-tile-row">
       <div class="sb-tile">
