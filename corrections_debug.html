@@ -4324,6 +4324,47 @@ async function renderScoreboardTilesMinimal() {
   _paintTile("pipeline_lift",  _agg(NBM_SCOPE), _pipelineLift);
   _paintTile("selector_skill", _agg(NBM_SCOPE), _selectorSkill);
   _paintTile("prod_trend",     _agg(ALL_SCOPE), _prodTrend);
+
+  // v0.6.485 — wire the W/F/L breakdown block under each tile from the
+  // same 7d numbers. dp and cc are excluded here too (see DERIVED_EXCLUDE
+  // note above — same logic as the medians). Threshold ±3% matches the
+  // tile color rule (sb-good ≥3, sb-bad ≤−3, warn between).
+  const _paintWfl = (tileKey, fields, metricFn, labels) => {
+    // The .sb-wfl block for prod_trend is a sibling of [data-tile], not a
+    // child — that tile uses data-tile on an inner number row. Look inside
+    // the tile first, then fall back to searching the enclosing sb-tile.
+    let tile = document.querySelector(`[data-tile="${tileKey}"]`);
+    if (!tile) return;
+    let wflHost = tile.querySelector(".sb-wfl");
+    if (!wflHost) {
+      const container = tile.closest(".sb-tile") || tile.parentElement;
+      wflHost = container && container.querySelector(".sb-wfl");
+    }
+    if (!wflHost) return;
+    const buckets = { w: [], f: [], l: [] };
+    for (const f of fields) {
+      const v = metricFn(pf7[f]);
+      if (v == null || !isFinite(v)) continue;
+      if (v >= 3) buckets.w.push(f);
+      else if (v <= -3) buckets.l.push(f);
+      else buckets.f.push(f);
+    }
+    const fmt = (arr) => arr.length ? arr.map(f => `<code>${f}</code>`).join(" · ") : "—";
+    wflHost.innerHTML =
+      `<div class="sb-wfl-count sb-w">${buckets.w.length} ${labels.w}</div>` +
+      `<div class="sb-wfl-fields">${fmt(buckets.w)}</div>` +
+      `<div class="sb-wfl-count sb-f">${buckets.f.length} ${labels.f}</div>` +
+      `<div class="sb-wfl-fields">${fmt(buckets.f)}</div>` +
+      `<div class="sb-wfl-count sb-l">${buckets.l.length} ${labels.l}</div>` +
+      `<div class="sb-wfl-fields">${fmt(buckets.l)}</div>`;
+  };
+
+  const _lift = { w: "winning", f: "flat", l: "losing" };
+  const _trend = { w: "improving", f: "flat", l: "regressing" };
+  _paintWfl("total_lift",     _agg(NBM_SCOPE), _totalLift,     _lift);
+  _paintWfl("pipeline_lift",  _agg(NBM_SCOPE), _pipelineLift,  _lift);
+  _paintWfl("selector_skill", _agg(NBM_SCOPE), _selectorSkill, _lift);
+  _paintWfl("prod_trend",     _agg(ALL_SCOPE), _prodTrend,     _trend);
 }
 
 

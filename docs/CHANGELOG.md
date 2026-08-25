@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.485 • August 25, 2026 (Tile W/F/L breakdowns wired live; dp + cc removed from tile scoring entirely, kept as rows in diagnostic)</strong></summary>
+
+- **Tile W/F/L breakdowns are now live.** The `winning · flat · losing` (and `improving · flat · regressing` for Prod Trend) lists under each of the 4 tiles were previously hardcoded static content — showing an outdated baseline that still counted dp + cc among winning/losing fields. New `_paintWfl` in `renderScoreboardTilesMinimal` computes each tile's buckets from live 7d numbers with the same ±3% threshold the tile color logic uses, and excludes dp + cc via the same `DERIVED_EXCLUDE` set the medians use.
+- **dp + cc now fully absent from the scoreboard.** Not in the median. Not in the mean. Not in the W/F/L bucket lists. Rationale: we don't do independent work on either (prod_dp = Magnus(prod_t, prod_h); prod_cc = Ccd max(prod_cl, cm, ch)). Suggesting they're scored fields anywhere on the scoreboard double-counts the fields we actually work on (t/h for dp; cl/cm/ch for cc) and misleads the reader.
+- **Per-field diagnostic table:** dp + cc rows STAY. Aggregations (Median/Mean tfoot) still exclude them. Row cells continue to show the compounded outcome of our derivation vs the raw baselines — useful diagnostic if NBM's independent DPT/TCDC beats our compounded output even when the underlying t/h or cl/cm/ch look fine.
+- Frontend-only. No publisher redeploy.
+
+</details>
+
+<details>
 <summary><strong>v0.6.484 • August 25, 2026 (cc joins dp in the derived-field exclusion — applied to all tiles + all diagnostic tfoot columns)</strong></summary>
 
 - **Extends v0.6.483 to cc, and applies the exclusion universally.** Verified via [[project_cc_derived_field]]: HRRR raw cc = max(raw cl, cm, ch) (confirmed 20/20 in raw data 2026-07-31); our prod cc = Ccd max(prod cl, cm, ch) for ~85% of ticks (`cc_from_derivation.py`); cc has NO L1/L2/L3/L4/Lc corrections of its own (retired 2026-07-30 v0.6.390). NBM raw cc is TCDC (independent blend) — but our prod cc is still Ccd max regardless of which raw the selector picks, so cc as a scoreboard row over-counts the cloud stack.
