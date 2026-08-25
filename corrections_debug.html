@@ -997,8 +997,9 @@
   // the watch is surfaced in the staleness audit block above. Update this
   // list when a watch flips or a new watch opens.
   const OPEN_WATCHES = [
-    { name: "Lsr recent-bias gate",        closeDate: "2026-08-23", note: "earliest per-field flip; day 1/7 on 08-16 (v0.6.420 script + v0.6.421 wire OFF)" },
-    { name: "chp cell gate",               closeDate: "2026-08-23", note: "earliest per-cell flip; day 1/7 on 08-16 (v0.6.421 script + wire OFF)" },
+    // Both entries removed 2026-08-25 — CLOSED CLEAN HOLD.
+    // Lsr recent-bias gate: 7-day window closed 08-23; 8 distinct days, 0 promote / 8 hold, promoted set STABLE (empty). Never fired.
+    // chp cell gate: walker at day 8/7; no cell cleared the 7-day all-lose gate. Hand-typed _CELL_SKIP continues to carry the work.
   ];
 
   (function renderStalenessAudit() {
@@ -3771,8 +3772,10 @@ async function renderScoreboardV2() {
       const mid = Math.floor(s.length / 2);
       return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
     };
+    const arithMean = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
     return {
       mean: median(values),  // "mean" key retained for template callers; value is the median.
+      arith_mean: arithMean(values),
       n_fields: values.length,
       counts: { beat: beatFields.length, flat: flatFields.length, regress: regressFields.length },
       fields: { beat: beatFields, flat: flatFields, regress: regressFields },
@@ -3827,8 +3830,8 @@ async function renderScoreboardV2() {
       <div class="sb-strip-title" style="color:${accentColor};">${title}</div>
       <div class="sb-strip-sub">${subtitle}</div>
       <div class="sb-strip-nums">
-        <div class="sb-strip-primary">${liftSpan(agg7.mean, "22px")} <span class="sb-strip-window">7d median</span></div>
-        <div class="sb-strip-secondary">${liftSpan(agg24.mean, "13px")} <span class="sb-strip-window">24h median</span></div>
+        <div class="sb-strip-primary">${liftSpan(agg7.mean, "22px")} <span class="sb-strip-window">7d median</span> <span class="sb-strip-window" style="opacity:0.7;">· ${liftSpan(agg7.arith_mean, "13px")} mean</span></div>
+        <div class="sb-strip-secondary">${liftSpan(agg24.mean, "13px")} <span class="sb-strip-window">24h median</span> <span class="sb-strip-window" style="opacity:0.7;">· ${liftSpan(agg24.arith_mean, "11px")} mean</span></div>
       </div>
       <div class="sb-strip-fields">
         <div class="sb-strip-field-row">
