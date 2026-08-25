@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.471 • August 25, 2026 (l5_nbm sr killed — sentry HOT +238% MAE + walkforward "DROP sr" both agree, plus fitted_at write bug fixed)</strong></summary>
+
+- **Sentry + walkforward agreement.** `nbm_regression_sentry` today: `sr.l5_nbm HOT ΔMAE +238.2%` (sustained 39, fresh 132). `nbm_walkforward_validator` skip proposals for sr on l5_nbm: pooled −126% (0-5h), −145% (6-11h), −147% (pre_frontal 12-23h). Two independent tools, unanimous — kill the layer.
+- **Physical cause.** Fallback biases in `lsr_nbm_bias_table_curated.json` are large-negative for the flow regimes (calm −218, ne_flow −181, nw_flow −164, frontal −103 W/m²). Correction is `−bias`, so l5_nbm was adding +100 to +218 W/m² on cells that missed the per-hour fit and fell back to regime average — massive over-correction.
+- **The kill.** `weather_collector/processors/l5_nbm.py` gains `ENABLED = False` and `l5_nbm_correction()` short-circuits to 0.0. Cascade falls back to `sr_raw_nbm → sr_l2_nbm → sr_l3_nbm`. `L5_NBM_FIELDS = ("sr",)` stays as a documentation constant; the field application is hardwired in `forecast_snapshot.py`, so the flag inside the correction function is what actually gates it.
+- **Latent bug fixed on the way through.** `analysis/l5_nbm_recompute_biases_hourly.py` wrote `generated_at` but not `fitted_at`; every sibling NBM fitter (l3/l4/l6) writes both. `l5_nbm.py::_load()` reads `fitted_at`, got `None`, `is_stale(None)` returns `False` (fail-safe), so the staleness gate was silently disabled. Added `fitted_at` to the output dict so when/if l5_nbm returns after a refit, the staleness gate actually works.
+
+</details>
+
+<details>
 <summary><strong>v0.6.470 • August 22, 2026 (Prod Trend pool symmetry — v0.6.468 was comparing intersected current-window Prod to unfiltered prior Prod)</strong></summary>
 
 - **The asymmetry Joe caught in a screenshot.** After v0.6.468's pool intersection, the current-window `prod` bucket only accepted rows where the 4-residual pool was satisfied, but `prod_prior` still accumulated on all rows. Prod Trend = (prod_prior − prod)/prod_prior was therefore comparing two MAEs pooled over different obs sets, which produced a spurious "−2.6% regressing on 6 fields" reading with no matching real-world signal.

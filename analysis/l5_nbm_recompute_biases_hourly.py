@@ -109,6 +109,7 @@ def fit():
 
     output = {
         "generated_at": now.strftime("%Y-%m-%dT%H:%M"),
+        "fitted_at": now.strftime("%Y-%m-%dT%H:%M"),
         "n_pairs": n_kept,
         "retention_days": RETENTION_DAYS,
         "min_cell_n": MIN_CELL_N,
