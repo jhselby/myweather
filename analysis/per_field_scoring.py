@@ -173,6 +173,13 @@ def _new_bucket():
     return {
         "hrrr_raw":     [0.0, 0],
         "nbm_raw":      [0.0, 0],
+        # Per-row oracle baseline: min(|error_hrrr_raw|, |error_nbm_raw|) per
+        # row when both exist; the one that exists otherwise. Aggregating this
+        # per-row-winner is the honest Total Lift baseline (v0.6.477).
+        # Pooled min(hrrr_pooled, nbm_pooled) was too generous — it credited
+        # us for beating whichever raw source wins a whole day, when an oracle
+        # could pick the winner per lead-hour for free.
+        "best_raw_row": [0.0, 0],
         "l1_selected":  [0.0, 0],
         "prod":         [0.0, 0],
         "hrrr_prod":    [0.0, 0],
@@ -188,12 +195,13 @@ def _new_bucket_halves():
     """Same shape as _new_bucket but for one half of the window (for
     halves-agree stability check)."""
     return {
-        "hrrr_raw":    [0.0, 0],
-        "nbm_raw":     [0.0, 0],
-        "l1_selected": [0.0, 0],
-        "prod":        [0.0, 0],
-        "chosen_prod": [0.0, 0],
-        "alt_prod":    [0.0, 0],
+        "hrrr_raw":     [0.0, 0],
+        "nbm_raw":      [0.0, 0],
+        "best_raw_row": [0.0, 0],
+        "l1_selected":  [0.0, 0],
+        "prod":         [0.0, 0],
+        "chosen_prod":  [0.0, 0],
+        "alt_prod":     [0.0, 0],
     }
 
 
@@ -273,6 +281,15 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                     vn = abs(float(e_nbm))
                     b["nbm_raw"][0] += vn; b["nbm_raw"][1] += 1
                     half["nbm_raw"][0] += vn; half["nbm_raw"][1] += 1
+                    # Per-row oracle baseline (v0.6.477): min of the two raws
+                    # on this row. Aggregating this vs pooled Prod is the
+                    # honest headline — Total Lift can no longer earn credit
+                    # from a raw source that only wins at some leads.
+                    br = min(vh, vn)
+                else:
+                    br = vh
+                b["best_raw_row"][0] += br; b["best_raw_row"][1] += 1
+                half["best_raw_row"][0] += br; half["best_raw_row"][1] += 1
                 vs = abs(float(e_sel))
                 b["l1_selected"][0] += vs; b["l1_selected"][1] += 1
                 half["l1_selected"][0] += vs; half["l1_selected"][1] += 1
@@ -333,16 +350,21 @@ def _compute_field(field, buckets, halves):
 
     in_nbm_scope = field in NBM_SCOPE
 
-    # Best raw = argmin(hrrr, nbm) if both, else the one that exists.
+    # Best raw = mean of per-row min(|error_hrrr|, |error_nbm|) — the oracle
+    # baseline (v0.6.477). For NBM-scope fields with both rows, this is
+    # strictly ≤ pooled min(hrrr, nbm), so Total Lift is strictly stricter.
+    # For non-NBM fields (only hrrr exists), best_raw = hrrr — unchanged.
+    best_raw = _mean(buckets["best_raw_row"])
+    # best_raw_source now says which raw wins in aggregate, kept for the
+    # National Source panel. "oracle" flags the per-row-winner semantic.
     if hrrr is not None and nbm is not None and in_nbm_scope:
-        best_raw = min(hrrr, nbm)
-        best_raw_src = "hrrr" if hrrr <= nbm else "nbm"
+        best_raw_src = "oracle (hrrr+nbm per-row)"
     elif hrrr is not None:
-        best_raw, best_raw_src = hrrr, "hrrr"
+        best_raw_src = "hrrr"
     elif nbm is not None:
-        best_raw, best_raw_src = nbm, "nbm"
+        best_raw_src = "nbm"
     else:
-        best_raw, best_raw_src = None, "na"
+        best_raw_src = "na"
 
     # Halves-agree per metric: both halves show the SAME SIGN of lift
     # (both positive or both negative). None when either half is thin.
@@ -360,9 +382,8 @@ def _compute_field(field, buckets, halves):
     chooser_prod_a = _half_lift("a", "alt_prod", "chosen_prod")
     chooser_prod_b = _half_lift("b", "alt_prod", "chosen_prod")
     def _best_half(side):
-        h = _mean(halves[side]["hrrr_raw"]); n = _mean(halves[side]["nbm_raw"])
-        if in_nbm_scope and h is not None and n is not None: return min(h, n)
-        return h if h is not None else n
+        # v0.6.477: matches _compute_field — per-row oracle baseline.
+        return _mean(halves[side]["best_raw_row"])
     total_a_base = _best_half("a"); total_b_base = _best_half("b")
     total_a = _lift_pct(total_a_base, _mean(halves["a"]["prod"]))
     total_b = _lift_pct(total_b_base, _mean(halves["b"]["prod"]))
@@ -441,7 +462,7 @@ def main():
             "sel_vs_hrrr_pct": "L1_selected vs raw HRRR — positive means the selector was smart to sometimes pick NBM",
             "sel_vs_nbm_pct":  "L1_selected vs raw NBM — positive means the selector was smart to sometimes pick HRRR",
             "corr_vs_l1_pct":  "Prod vs L1_selected — positive means the local correction stack adds value on top of the selector's pick",
-            "total_vs_best_raw_pct": "Prod vs argmin(raw HRRR, raw NBM) — headline of the whole pipeline",
+            "total_vs_best_raw_pct": "Prod vs per-row oracle raw baseline (v0.6.477): baseline = mean of min(|error_hrrr_raw|, |error_nbm_raw|) per row. Strictly harsher than the pre-v0.6.477 pooled-min baseline, because it credits us only for beating what an oracle picker of hrrr-vs-nbm-per-lead would have picked for free.",
             "l1_selected_definition": "For rows where selector picks NBM: error_l3_nbm (NBM's own bias-corrected output). For rows where selector picks HRRR (or falls through): error_l1 (raw HRRR). This makes corr_vs_l1_pct honestly measure the local correction stack's contribution.",
             "chooser_vs_prod_pct": "Chosen cascade's Prod vs alternative cascade's Prod, paired per row. Positive = selector picked the better cascade. This is the v0.6.440-rule chooser lift (Prod-vs-Prod, not raw-vs-raw).",
             "hrrr_prod_mae": "Deepest HRRR-side layer residual pooled over all rows — 'what would Prod be if we always picked HRRR'.",
