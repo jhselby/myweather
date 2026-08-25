@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.484 • August 25, 2026 (cc joins dp in the derived-field exclusion — applied to all tiles + all diagnostic tfoot columns)</strong></summary>
+
+- **Extends v0.6.483 to cc, and applies the exclusion universally.** Verified via [[project_cc_derived_field]]: HRRR raw cc = max(raw cl, cm, ch) (confirmed 20/20 in raw data 2026-07-31); our prod cc = Ccd max(prod cl, cm, ch) for ~85% of ticks (`cc_from_derivation.py`); cc has NO L1/L2/L3/L4/Lc corrections of its own (retired 2026-07-30 v0.6.390). NBM raw cc is TCDC (independent blend) — but our prod cc is still Ccd max regardless of which raw the selector picks, so cc as a scoreboard row over-counts the cloud stack.
+- **Same treatment as dp:** dp and cc are shown as rows in the per-field diagnostic table (we care about the on-page quality), but dropped from every headline aggregation to avoid double-counting and to stop misleadingly implying we're doing separate work on either field.
+- **Applied to all four tiles** (Total Lift, Pipeline Lift, Selector Skill, Prod Trend) via a `DERIVED_EXCLUDE = {"dp","cc"}` set in `renderScoreboardTilesMinimal`. **Applied to all five diagnostic tfoot columns** (Total Lift, HRRR Skill, NBM Skill, Hit Rate, Value Captured) in `renderPerFieldDiagnostic`. v0.6.483's exclusion was Total-Lift-only — v0.6.484 makes it universal and adds cc.
+- **Restores the pre-tile-rewrite behavior.** `analysis/scoreboard_v2.py`'s `ROLLUP_EXCLUDE = {"pp","pa","pr","cc","dp"}` had this right; the tile rewrite in v0.6.478/479 dropped the exclusion. Regression fixed.
+- Frontend-only. No backend / publisher change needed.
+
+</details>
+
+<details>
 <summary><strong>v0.6.483 • August 25, 2026 (dp excluded from Total Lift aggregation — analytically not independent of t and h)</strong></summary>
 
 - **Why:** Our prod_dp = Magnus(prod_t, prod_h). If our t and h were perfect, prod_dp would be perfect by construction — dp has zero independent correction skill on our side. Including dp in the Total Lift median implicitly weights t and h errors 2-3× because they also drive dp. NBM's dp is independently blended, but that doesn't fix the double-count on our contribution.

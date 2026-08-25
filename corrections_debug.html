@@ -1643,7 +1643,7 @@
 
 <section class="sb-pfs-scope">
   <div class="sb-pfs-title">Per-field diagnostic — 7 day</div>
-  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. <strong>dp</strong> is shown but excluded from the Total Lift Median/Mean and the headline tile: our prod_dp = Magnus(prod_t, prod_h) is analytically a function of t and h, so including it double-counts them.</span></div>
+  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. <strong>dp and cc</strong> are shown as rows but excluded from every Median/Mean row and every headline tile: our prod_dp = Magnus(prod_t, prod_h) and our prod_cc = Ccd max(prod_cl, cm, ch) — both analytical functions of fields we already score, with no independent correction chain. Including them in aggregates double-counts and misleadingly suggests we work on them separately.</span></div>
 
   <div class="sb-pfs-scroll">
     <table class="sb-pfs-tbl">
@@ -4250,14 +4250,19 @@ async function renderScoreboardTilesMinimal() {
   // fields where the chooser has any data. Prod Trend uses everything.
   const NBM_SCOPE = ["t","h","dp","ws","wg","wd","cc","ch","sr"];
   const ALL_SCOPE = ["t","h","dp","ws","wg","wd","cc","cl","cm","ch","sr","pp","pa","pr"];
-  // v0.6.483 — Total Lift excludes dp from the aggregate. Our prod_dp =
-  // Magnus(prod_t, prod_h) is an analytical function of t and h — it has no
-  // independent correction skill. Including it in the median implicitly
-  // weights t and h errors 2-3× because they also drive dp. dp stays visible
-  // as a row in the per-field diagnostic so we still watch the on-page dp
-  // quality (NBM's independent DPT can and does beat our derived one), but
-  // it doesn't distort the headline tile.
-  const TOTAL_LIFT_SCOPE = NBM_SCOPE.filter(f => f !== "dp");
+  // v0.6.484 — derived fields excluded from ALL tile aggregations. Our
+  // prod_dp = Magnus(prod_t, prod_h) and prod_cc = Ccd max(prod_cl,
+  // prod_cm, prod_ch) are analytical functions of other fields we already
+  // score. Neither has an independent correction chain — cc was retired
+  // from L1/L2/L3/L4/Lc on 2026-07-30 v0.6.390; dp never had one.
+  // Including either in a median implicitly weights their component
+  // fields (t/h for dp, cl/cm/ch for cc) 2-3× and misleadingly implies
+  // we're doing separate work on them. Both stay visible as rows in the
+  // per-field diagnostic (NBM's independent DPT/TCDC can beat our
+  // derivations and we want to see that), but they're dropped from
+  // every headline aggregation.
+  const DERIVED_EXCLUDE = new Set(["dp", "cc"]);
+  const _agg = (scope) => scope.filter(f => !DERIVED_EXCLUDE.has(f));
 
   const _totalLift     = (c) => (c && c.total_vs_best_raw_pct != null) ? c.total_vs_best_raw_pct : null;
   const _pipelineLift  = (c) => (c && c.corr_vs_l1_pct        != null) ? c.corr_vs_l1_pct        : null;
@@ -4315,10 +4320,10 @@ async function renderScoreboardTilesMinimal() {
     }
   };
 
-  _paintTile("total_lift",     TOTAL_LIFT_SCOPE, _totalLift);
-  _paintTile("pipeline_lift",  NBM_SCOPE, _pipelineLift);
-  _paintTile("selector_skill", NBM_SCOPE, _selectorSkill);
-  _paintTile("prod_trend",     ALL_SCOPE, _prodTrend);
+  _paintTile("total_lift",     _agg(NBM_SCOPE), _totalLift);
+  _paintTile("pipeline_lift",  _agg(NBM_SCOPE), _pipelineLift);
+  _paintTile("selector_skill", _agg(NBM_SCOPE), _selectorSkill);
+  _paintTile("prod_trend",     _agg(ALL_SCOPE), _prodTrend);
 }
 
 
@@ -4389,14 +4394,18 @@ async function renderPerFieldDiagnostic() {
     const nbmSkill = NBM_SCOPE.has(f) ? _pipeSkill(c.nbm_raw_mae, c.nbm_prod_mae) : null;
     const n = _nOf(c);
 
-    // v0.6.483 — dp excluded from Total Lift aggregation (row still shown).
-    // Our prod_dp = Magnus(prod_t, prod_h) is analytically a function of t
-    // and h, so including it double-counts t/h in the aggregate.
-    if (total != null && f !== "dp") totalCol.push(total);
-    if (hrrrSkill != null) hrrrCol.push(hrrrSkill);
-    if (nbmSkill != null) nbmCol.push(nbmSkill);
-    if (NBM_SCOPE.has(f) && c.hit_rate_pct != null) hitCol.push(c.hit_rate_pct);
-    if (NBM_SCOPE.has(f) && c.value_captured_pct != null) valCol.push(c.value_captured_pct);
+    // v0.6.484 — dp and cc excluded from ALL Median/Mean aggregations
+    // (rows still shown). Both are derived from other fields we score:
+    // prod_dp = Magnus(prod_t, prod_h); prod_cc = Ccd max(prod_cl, cm, ch).
+    // Neither has its own correction chain — including them in any
+    // aggregate double-counts their component fields and misleadingly
+    // suggests we're doing separate work on them.
+    const isDerived = (f === "dp" || f === "cc");
+    if (total != null && !isDerived) totalCol.push(total);
+    if (hrrrSkill != null && !isDerived) hrrrCol.push(hrrrSkill);
+    if (nbmSkill != null && !isDerived) nbmCol.push(nbmSkill);
+    if (NBM_SCOPE.has(f) && !isDerived && c.hit_rate_pct != null) hitCol.push(c.hit_rate_pct);
+    if (NBM_SCOPE.has(f) && !isDerived && c.value_captured_pct != null) valCol.push(c.value_captured_pct);
 
     let totalCell = _fmtPct(total);
     let hrrrCell = _fmtPct(hrrrSkill);
