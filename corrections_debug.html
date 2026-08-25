@@ -1317,17 +1317,17 @@
   <div class="sb-row sb-row-1">
 
     <!-- HERO: Total Lift -->
-    <div class="sb-tile">
+    <div class="sb-tile" data-tile="total_lift">
       <div class="sb-tile-title">Total Lift</div>
-      <div class="sb-tile-sub">Prod vs the best raw public source (HRRR or NBM), across every field we work on. The referee's number.</div>
+      <div class="sb-tile-sub">Prod vs NBM raw (the field your default weather app already shows you). The referee's number.</div>
 
       <div class="sb-hero-num-row">
         <div class="sb-hero-primary">
-          <div class="sb-hero-num sb-bad">−4.5%</div>
-          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span class="sb-bad">−3.4%</span></span></div>
+          <div class="sb-hero-num" data-cell="med7">—</div>
+          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span data-cell="mean7">—</span></span></div>
         </div>
         <div class="sb-hero-secondary">
-          <span class="sb-hs-lbl">24H</span><span class="sb-bad">−1.5%</span> <span class="sb-hero-mean">· mean —</span>
+          <span class="sb-hs-lbl">24H</span><span data-cell="med24">—</span> <span class="sb-hero-mean">· mean <span data-cell="mean24">—</span></span>
         </div>
       </div>
       <div class="sb-wfl">
@@ -1341,17 +1341,17 @@
     </div>
 
     <!-- Pipeline Lift -->
-    <div class="sb-tile">
+    <div class="sb-tile" data-tile="pipeline_lift">
       <div class="sb-tile-title">Pipeline Lift</div>
-      <div class="sb-tile-sub">Cascade value if selection were perfect. Answers "are the pipelines pulling their weight?"</div>
+      <div class="sb-tile-sub">Local correction stack value: Prod vs L1 selector's pick. Answers "are the pipelines pulling their weight on top of raw?"</div>
 
       <div class="sb-score-num-row">
         <div class="sb-score-primary">
-          <div class="sb-score-num sb-bad">−5.6%</div>
-          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean —</span></div>
+          <div class="sb-score-num" data-cell="med7">—</div>
+          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span data-cell="mean7">—</span></span></div>
         </div>
         <div class="sb-score-secondary">
-          <span class="sb-hs-lbl">24H</span> <span class="sb-bad">−0.4%</span> <span class="sb-hero-mean">· mean —</span>
+          <span class="sb-hs-lbl">24H</span> <span data-cell="med24">—</span> <span class="sb-hero-mean">· mean <span data-cell="mean24">—</span></span>
         </div>
       </div>
 
@@ -1366,17 +1366,17 @@
     </div>
 
     <!-- Selector Quality -->
-    <div class="sb-tile">
-      <div class="sb-tile-title">Selector Quality</div>
-      <div class="sb-tile-sub">Value captured out of a perfect oracle picker. Answers "is the router leaving anything on the table?"</div>
+    <div class="sb-tile" data-tile="selector_skill">
+      <div class="sb-tile-title">Selector Skill</div>
+      <div class="sb-tile-sub">Chosen cascade Prod vs alternative cascade Prod, paired per row. Answers "did the router pick the branch that turned out better after local processing?"</div>
 
       <div class="sb-score-num-row">
         <div class="sb-score-primary">
-          <div class="sb-score-num sb-good">100%</div>
-          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean —</span></div>
+          <div class="sb-score-num" data-cell="med7">—</div>
+          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span data-cell="mean7">—</span></span></div>
         </div>
         <div class="sb-score-secondary">
-          <span class="sb-hs-lbl">24H</span> <span class="sb-good">100%</span> <span class="sb-hero-mean">· mean —</span>
+          <span class="sb-hs-lbl">24H</span> <span data-cell="med24">—</span> <span class="sb-hero-mean">· mean <span data-cell="mean24">—</span></span>
         </div>
       </div>
 
@@ -1400,13 +1400,13 @@
       <div class="sb-tile-title">Prod Trend</div>
       <div class="sb-tile-sub">Change vs the prior equal window. Are we improving over time?</div>
 
-      <div class="sb-score-num-row">
+      <div class="sb-score-num-row" data-tile="prod_trend">
         <div class="sb-score-primary">
-          <div class="sb-score-num sb-warn">+0.2%</div>
-          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean —</span></div>
+          <div class="sb-score-num" data-cell="med7">—</div>
+          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span data-cell="mean7">—</span></span></div>
         </div>
         <div class="sb-score-secondary">
-          <span class="sb-hs-lbl">24H</span> <span class="sb-warn">+1.1%</span> <span class="sb-hero-mean">· mean —</span>
+          <span class="sb-hs-lbl">24H</span> <span data-cell="med24">—</span> <span class="sb-hero-mean">· mean <span data-cell="mean24">—</span></span>
         </div>
       </div>
 
@@ -4256,6 +4256,94 @@ function _legendSwatch(color, checked) {
 // the wxDoc-driven Right Now table population — both left as dead code
 // until a follow-up cleanup pass, since they read different sources and
 // still work if scoreboard_v2 hasn't landed yet.
+// v0.6.478 — minimal tile renderer for the 08-25 redesigned tiles. Reads
+// per_field_scoring.json, computes median + arithmetic mean per metric per
+// window across the relevant field set, and populates the [data-cell=…]
+// spans inside each [data-tile=…] tile. Deliberately narrow-scope: leaves
+// W/F/L breakdowns + per-field diagnostic table as static placeholders
+// until the full renderer lands.
+async function renderScoreboardTilesMinimal() {
+  let pfs;
+  try {
+    const r = await fetch("https://data.wymancove.com/per_field_scoring.json?_=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    pfs = await r.json();
+  } catch (e) {
+    console.warn("tile renderer: pfs fetch failed:", e);
+    return;
+  }
+  const pf7  = (pfs.windows && pfs.windows["7d"]  && pfs.windows["7d"].per_field)  || {};
+  const pf24 = (pfs.windows && pfs.windows["24h"] && pfs.windows["24h"].per_field) || {};
+
+  // Field sets per tile. Total Lift + Pipeline Lift use NBM-scope fields
+  // (they need a raw baseline to be interpretable). Selector Skill uses
+  // fields where the chooser has any data. Prod Trend uses everything.
+  const NBM_SCOPE = ["t","h","dp","ws","wg","wd","cc","ch","sr"];
+  const ALL_SCOPE = ["t","h","dp","ws","wg","wd","cc","cl","cm","ch","sr","pp","pa","pr"];
+
+  const _totalLift     = (c) => (c && c.total_vs_best_raw_pct != null) ? c.total_vs_best_raw_pct : null;
+  const _pipelineLift  = (c) => (c && c.corr_vs_l1_pct        != null) ? c.corr_vs_l1_pct        : null;
+  const _selectorSkill = (c) => (c && c.chooser_vs_prod_pct   != null) ? c.chooser_vs_prod_pct   : null;
+  const _prodTrend     = (c) => (c && c.prod_trend_pct        != null) ? c.prod_trend_pct        : null;
+
+  const _collect = (window, fields, metricFn) => {
+    const vals = [];
+    for (const f of fields) {
+      const v = metricFn(window[f]);
+      if (v != null && isFinite(v)) vals.push(v);
+    }
+    return vals;
+  };
+  const _median = (a) => {
+    if (!a.length) return null;
+    const s = [...a].sort((x, y) => x - y);
+    const m = Math.floor(s.length / 2);
+    return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
+  };
+  const _mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+
+  const _fmt = (v, isPct) => {
+    if (v == null) return "—";
+    const s = (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(1) + (isPct ? "%" : "");
+    return s;
+  };
+  const _cls = (v) => {
+    if (v == null) return "";
+    if (v >= 3)  return "sb-good";
+    if (v <= -3) return "sb-bad";
+    return "sb-warn";
+  };
+
+  const _paintTile = (tileKey, fields, metricFn) => {
+    const tile = document.querySelector(`[data-tile="${tileKey}"]`);
+    if (!tile) return;
+    const v7  = _collect(pf7,  fields, metricFn);
+    const v24 = _collect(pf24, fields, metricFn);
+    const cells = {
+      med7:  _median(v7),
+      mean7: _mean(v7),
+      med24: _median(v24),
+      mean24: _mean(v24),
+    };
+    for (const [key, val] of Object.entries(cells)) {
+      const el = tile.querySelector(`[data-cell="${key}"]`);
+      if (!el) continue;
+      el.textContent = _fmt(val, true);
+      // Apply color class to the value element. Preserve existing non-color
+      // classes (sb-hero-num etc.); we only own sb-good/warn/bad tokens.
+      el.classList.remove("sb-good", "sb-warn", "sb-bad");
+      const cls = _cls(val);
+      if (cls) el.classList.add(cls);
+    }
+  };
+
+  _paintTile("total_lift",     NBM_SCOPE, _totalLift);
+  _paintTile("pipeline_lift",  NBM_SCOPE, _pipelineLift);
+  _paintTile("selector_skill", NBM_SCOPE, _selectorSkill);
+  _paintTile("prod_trend",     ALL_SCOPE, _prodTrend);
+}
+
+
 async function renderScoreboardV2() {
   // v0.6.442 — replaces the old 4-tile scorecard with:
   //   1) compact headline strip (3 lift metrics + count breakdowns)
@@ -7932,11 +8020,14 @@ async function load() {
   // scoreboard_v2.json lands; falls back with "loading" placeholder
   // otherwise. Retires the pre-Phase-4 renderScorecardBanner + per-field
   // snapshot table.
-  // MOCK 2026-08-25: scoreboard redesign under review. Live renderers
-  // suppressed so the static mock (below Current state) isn't overwritten.
-  // Restore both calls when the mock is either wired up or dropped.
-  // renderScoreboardV2();
-  // renderPerFieldScoring();
+  // v0.6.478 — minimal tile renderer for the 08-25 redesign. Populates
+  // only the numeric cells (primary median + mean, 7d + 24h) on the 4
+  // headline tiles from per_field_scoring.json. Does not touch the W/F/L
+  // breakdowns or the per-field diagnostic table — those stay static
+  // until the full renderScoreboardV2 rewrite lands.
+  renderScoreboardTilesMinimal();
+  // renderScoreboardV2();       // deferred — targets old #scorecard-banner
+  // renderPerFieldScoring();    // deferred — companion to above
   // Legacy hand-curated pf-snapshot table lower on the page still populates
   // its numeric 7d/24h columns from tsDoc — the v2 scoreboard replaces
   // the top tiles and #headlineBox but not that detail block.
