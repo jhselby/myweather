@@ -35,7 +35,12 @@ from .nbm_common import cap_correction, is_stale
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l3_nbm_curated.json"
 
-L3_NBM_FIELDS = ("t", "ws", "wg", "h", "ch", "sr", "cc")   # scalar-bias fields
+L3_NBM_FIELDS = ("wg", "h", "ch", "cc")   # scalar-bias fields
+# 2026-08-25 v0.6.472: dropped sr, t, ws — 14d walkforward agg lift vs
+# l2_nbm baseline: sr net loss (skip-cells -22% to -5%), t -2.2%, ws -2.5%,
+# all with losses at every non-trivial band. wg kept despite walkforward
+# proposal — mixed signal (0-5h +3.0%, 24-47h +8.2%, 6-11h -9.1%,
+# 12-23h -3.4%); per-cell skip-table review scheduled 2026-08-28.
 # dp dropped 2026-08-21 v0.6.465 — pooled per-lead bias (+1°F range at short
 # leads) fights close-to-obs L2_NBM in every regime with enough data
 # (pre_frontal/sw_flow/se_flow all at -96% to -125% lift 0-5h; per_field_scoring

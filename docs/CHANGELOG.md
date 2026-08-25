@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.472 • August 25, 2026 (L3_NBM whitelist trimmed — sr, t, ws dropped on walkforward evidence; wg kept for 08-28 per-cell review)</strong></summary>
+
+- **Same class of ship as v0.6.471, one cascade layer up.** `nbm_walkforward_validator` proposes dropping {sr, t, wg, ws} from `L3_NBM_FIELDS`. 14-day aggregate lift vs `l2_nbm` baseline: t **−2.2%**, ws **−2.5%**, sr net loss (skip-cells run −22% to −5%). All three lose at every non-trivial band. Dropped.
+- **wg kept despite the tool's proposal.** wg is the only field with genuinely mixed bands: 0-5h **+3.0%**, 24-47h **+8.2%**, 6-11h −9.1%, 12-23h −3.4%; aggregate is a small −1.1% loss. The walkforward's earn-membership gate (+2%) is designed to *add* whitelist entries, not remove them — removing an already-live field should require clear harm, not just failure to clear the add gate. Two positive-lift bands worth eating a −1.1% aggregate for 72 hours while the scheduled per-cell skip-table review (2026-08-28) runs — that's the surgical fix for a mixed-signal field.
+- **L3_NBM_FIELDS**: `("t", "ws", "wg", "h", "ch", "sr", "cc")` → `("wg", "h", "ch", "cc")`. sr cascade for the NBM side now walks `sr_raw_nbm → sr_l2_nbm` (l3_nbm skipped, l5_nbm already killed in v0.6.471). t and ws walk `raw_nbm → l2_nbm`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.471 • August 25, 2026 (l5_nbm sr killed — sentry HOT +238% MAE + walkforward "DROP sr" both agree, plus fitted_at write bug fixed)</strong></summary>
 
 - **Sentry + walkforward agreement.** `nbm_regression_sentry` today: `sr.l5_nbm HOT ΔMAE +238.2%` (sustained 39, fresh 132). `nbm_walkforward_validator` skip proposals for sr on l5_nbm: pooled −126% (0-5h), −145% (6-11h), −147% (pre_frontal 12-23h). Two independent tools, unanimous — kill the layer.
