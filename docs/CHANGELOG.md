@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.487 • August 25, 2026 (Prod Trend uses a wider prod-only pool; Notable Calls dashed pending live wiring)</strong></summary>
+
+- **Prod Trend backend fix.** Previously computed on the same pool-intersected `prod` / `prod_prior` buckets as Total Lift (nbm_raw required on NBM-scope rows). That intersection starves the 7d prior window because backstamp thins beyond ~5d, leaving 0-3 rows per NBM-scope field and forcing v0.6.482's `n_prod_prior < 50` gate to null the trend for almost every field. Result: 7D Prod Trend median was aggregating only cl/cm/pr (HRRR-only, no NBM intersection), which was a narrow signal presented as a whole-pipeline number.
+- **The wider pool.** New `prod_wider` / `prod_prior_wider` accumulators require only `e_prod` — no intersection. Both windows use the same wider pool (apples-to-apples). `prod_trend_pct` computed from those. Total Lift / Chooser Lift / Pipeline Lift stay on the intersected pool (v0.6.468/470 consistency preserved). `MIN_N_TREND=50` gate + `TREND_EXCLUDE_FIELDS={pa,pp}` still applied. Publisher redeployed; new fields `prod_wider_mae` / `prod_prior_wider_mae` / `n_prod_wider` / `n_prod_prior_wider` emitted alongside.
+- **Notable Calls dashed.** Was static content with `dp 24-47h −46.1%` as 2nd worst — inconsistent with the "no dp/cc on scoreboard" rule from v0.6.485/486. Also read as data (violates the fabricated-data rule from earlier today). Cells now dashed with a "wiring pending" note; will be wired live from a per (field, lead-band) MAE feed as a follow-up, with dp+cc excluded.
+
+</details>
+
+<details>
 <summary><strong>v0.6.486 • August 25, 2026 (Restore cl/cm/pr to Total Lift + Pipeline Lift tiles; dp + cc rows become placeholder-only in diagnostic)</strong></summary>
 
 - **Regression fix from v0.6.485.** When the tile W/F/L was wired live, the field scope defaulted to `NBM_SCOPE` (the 9 fields NBM emits), which mechanically dropped cl/cm/pr from the buckets. The prior static content had cl/cm listed under Total Lift ("2 flat: cl · cm") and cl/cm/ch under Pipeline Lift ("3 winning"). New `LIFT_SCOPE = ["t","h","ws","wg","wd","cc","ch","sr","dp","cl","cm","pr"]` — Total Lift + Pipeline Lift now include all 12 fields we do independent work on; DERIVED_EXCLUDE (dp+cc) + NON_MAE_EXCLUDE (pa+pp) still applied via `_agg`. Selector Skill stays NBM-only since there's no NBM cascade for HRRR-only fields to be compared against. Prod Trend uses ALL_SCOPE unchanged.

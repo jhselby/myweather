@@ -199,6 +199,17 @@ def _new_bucket():
         "nbm_prod":     [0.0, 0],
         "chosen_prod":  [0.0, 0],
         "alt_prod":     [0.0, 0],
+        # v0.6.487 — wider prod pool for Prod Trend. The `prod` and
+        # `prod_prior` buckets above are gated by the same pool intersection
+        # used for Total Lift/Chooser Lift (nbm_raw required on NBM-scope
+        # rows) so those metrics stay internally consistent. Prod Trend
+        # measures our stack's own MAE across time and doesn't need the
+        # intersection to be interpretable — using the intersected pool
+        # starves the 7d prior window (nbm_raw backstamp thins out that
+        # far back) and leaves us with 0-3 rows per NBM-scope field.
+        # `prod_wider` / `prod_prior_wider` require only `e_prod`.
+        "prod_wider":       [0.0, 0],
+        "prod_prior_wider": [0.0, 0],
         # Per-row oracle Prod (v0.6.481): min(|chosen_prod_err|, |alt_prod_err|)
         # per row over the paired chosen/alt pool. Feeds Value Captured.
         "oracle_prod":  [0.0, 0],
@@ -282,13 +293,19 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                            and e_prod is not None)
 
             if not in_current:
-                # Prior-window row: only contribute to prod_prior, and only
-                # when the intersected pool is satisfied so the trend
-                # compares like-with-like.
+                # Prior-window row: contribute to prod_prior (intersected —
+                # keeps parity with the current-window intersected `prod`
+                # for internal consistency) AND prod_prior_wider (any row
+                # with a Prod stamp — feeds prod_trend_pct on a pool wide
+                # enough to survive the 7d backstamp-thinning).
                 if pool_ok:
                     v = abs(float(e_prod))
                     acc[field]["prod_prior"][0] += v
                     acc[field]["prod_prior"][1] += 1
+                if e_prod is not None:
+                    vw = abs(float(e_prod))
+                    acc[field]["prod_prior_wider"][0] += vw
+                    acc[field]["prod_prior_wider"][1] += 1
                 continue
             b = acc[field]
             half = halves[field]["b" if obs_time >= halves_midpoint else "a"]
@@ -317,6 +334,14 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                 vp = abs(float(e_prod))
                 b["prod"][0] += vp; b["prod"][1] += 1
                 half["prod"][0] += vp; half["prod"][1] += 1
+
+            # v0.6.487 — current-window prod on the wider pool (any row
+            # with a Prod stamp, no intersection requirement). Paired with
+            # `prod_prior_wider` above to compute prod_trend_pct.
+            if e_prod is not None:
+                vw = abs(float(e_prod))
+                b["prod_wider"][0] += vw
+                b["prod_wider"][1] += 1
 
             # Per-cascade Prod residuals. Pooled unconditionally so we can
             # answer "what would Prod be if we always picked HRRR / always
@@ -432,12 +457,20 @@ def _compute_field(field, buckets, halves):
     # Weekly Prod trend: current-window Prod vs prior-window Prod. No external
     # anchor. Positive = we improved vs the same-length window preceding this
     # one. This is the "am I doing my job well" signal — see [[08-22-session]].
-    prod_trend_pct = _lift_pct(prod_prior, prod)
-    # v0.6.482 — suppress prod_trend when the prior-window pool is thin
-    # (denominator noise) or the field is on the trend-exclude list
-    # (tiny-magnitude MAE, or non-MAE scoring like Brier).
-    n_prior = buckets["prod_prior"][1]
-    if field in TREND_EXCLUDE_FIELDS or n_prior < MIN_N_TREND:
+    # v0.6.487 — Prod Trend uses the wider prod-only pool (both windows).
+    # The intersected pool (used by Total Lift / Chooser Lift / Pipeline
+    # Lift) is starved at 7d for NBM-scope fields — nbm_raw backstamp
+    # thins out, leaving 0-3 rows per prior window. Prod Trend doesn't
+    # need the intersection to be interpretable (it's Prod-vs-Prod on our
+    # own stack across time), so it gets its own pool.
+    prod_wider       = _mean(buckets["prod_wider"])
+    prod_prior_wider = _mean(buckets["prod_prior_wider"])
+    prod_trend_pct = _lift_pct(prod_prior_wider, prod_wider)
+    # v0.6.482 gate carried forward — suppress when the wider prior pool
+    # is still thin (belt and suspenders), or when the field is on the
+    # trend-exclude list (pa near-zero magnitude; pp Brier-scored).
+    n_prior_wider = buckets["prod_prior_wider"][1]
+    if field in TREND_EXCLUDE_FIELDS or n_prior_wider < MIN_N_TREND:
         prod_trend_pct = None
 
     # v0.6.481 — Selector Hit Rate + Value Captured (both diagnostic,
@@ -478,6 +511,11 @@ def _compute_field(field, buckets, halves):
         "prod_prior_mae": round(prod_prior, 3) if prod_prior is not None else None,
         "n_prod_prior":   buckets["prod_prior"][1],
         "prod_trend_pct": round(prod_trend_pct, 2) if prod_trend_pct is not None else None,
+        # v0.6.487 — wider-pool numbers Prod Trend is actually computed from.
+        "prod_wider_mae":       round(prod_wider, 3) if prod_wider is not None else None,
+        "prod_prior_wider_mae": round(prod_prior_wider, 3) if prod_prior_wider is not None else None,
+        "n_prod_wider":         buckets["prod_wider"][1],
+        "n_prod_prior_wider":   buckets["prod_prior_wider"][1],
         "best_raw_mae":  round(best_raw, 3) if best_raw is not None else None,
         "best_raw_source": best_raw_src,
         "in_nbm_scope":  in_nbm_scope,
