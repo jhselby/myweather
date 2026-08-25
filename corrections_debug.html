@@ -982,7 +982,493 @@
      One-line headline computed from time_series_diagnostic.json:
      stack-vs-raw MAE delta averaged across fields, net-positive count,
      worst regression called out. Auto-computed each Fitter cycle. -->
-<div id="scorecard-banner" class="layer-info-text" style="border-color:#1f3a2a;background:#101913;margin-bottom:14px;padding:10px 14px;font-size:0.95em;" hidden></div>
+<details style="margin-bottom:14px;">
+  <summary style="cursor:pointer;color:#7fb3ff;font-weight:600;padding:6px 0;">Right now — current conditions <span style="opacity:0.6;font-weight:400;font-size:0.85em;">(click to expand)</span></summary>
+<div id="headlineBox">
+  <div class="hb-title">Right now — current conditions</div>
+  <table class="hb-corr-table">
+    <thead>
+      <tr>
+        <th>Field</th>
+        <th>Base forecast (L1)</th>
+        <th>Production</th>
+        <th>Correction</th>
+        <th style="border-left:1px solid #232936;padding-left:16px;">Field</th>
+        <th>Base forecast (L1)</th>
+        <th>Production</th>
+        <th>Correction</th>
+      </tr>
+    </thead>
+    <tbody id="hbCorrRows">
+      <tr><td colspan="8" style="color:var(--muted);opacity:0.6;padding:8px;">Loading current tick…</td></tr>
+    </tbody>
+  </table>
+  <div class="hb-ops-row">
+    <div>Confidence: <strong id="hbConfidence">—</strong> <span id="hbStationsLine" style="opacity:0.75;">· — stations reporting</span></div>
+    <div>Briefing source: <strong id="hbBriefingSource">—</strong> <span id="hbBriefingAge" style="opacity:0.75;">· —</span></div>
+  </div>
+  <div style="margin-top:6px;font-size:0.72em;opacity:0.55;">Base forecast (L1) = the selector's chosen raw source fed into our correction stack (HRRR raw or NBM raw, per field per lead). Production = final Wyman Cove forecast (after L2/L3/L4/gates). Correction = Production − L1 for this tick.</div>
+</div>
+</details>
+
+<!-- ============================================================
+     SCOREBOARD (2026-08-25 redesign) — replaces old #scorecard-banner
+     Row 1: Total Lift (hero, wide) + Pipeline Lift + Selector Quality
+     Row 2: National Source + Health & Reliability
+     All numbers today's real 7d values. Live wiring is a follow-up:
+     see commented-out renderScoreboardV2()/renderPerFieldScoring() in load().
+     Scoped to .sb-scope + .sb-* so nothing bleeds into the page.
+     ============================================================ -->
+<style>
+  .sb-scope {
+    --sb-bg: #0e1319;
+    --sb-surface: #171e26;
+    --sb-surface-2: #1e2731;
+    --sb-divider: #242f3a;
+    --sb-text: #e6ecf2;
+    --sb-muted: #8896a4;
+    --sb-dim: #5c6874;
+    --sb-accent: #7fb3ff;
+    --sb-good: #4ad29a;
+    --sb-warn: #e0a86b;
+    --sb-bad: #e07272;
+    --sb-good-dim: #2a4a3a;
+    --sb-warn-dim: #4a3a28;
+
+    display: block;
+    margin: 0 0 20px;
+    color: var(--sb-text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14.5px;
+    line-height: 1.5;
+  }
+  .sb-scope .sb-num {
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Grid rows */
+  .sb-scope .sb-row {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .sb-scope .sb-row-1 { grid-template-columns: 1fr 1fr 1fr; }
+  .sb-scope .sb-row-2 { grid-template-columns: 1fr 1fr; }
+  @media (max-width: 900px) {
+    .sb-scope .sb-row-1, .sb-scope .sb-row-2 { grid-template-columns: 1fr; }
+  }
+
+  /* Tile shell */
+  .sb-scope .sb-tile {
+    background: var(--sb-surface);
+    border: 1px solid var(--sb-divider);
+    border-radius: 10px;
+    padding: 16px 18px 18px;
+    display: flex;
+    flex-direction: column;
+  }
+  .sb-scope .sb-tile-title {
+    color: var(--sb-muted);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 600;
+  }
+  .sb-scope .sb-tile-sub {
+    color: var(--sb-dim);
+    font-size: 11.5px;
+    line-height: 1.35;
+    margin-top: 2px;
+    margin-bottom: 14px;
+  }
+
+  /* Hero (Total Lift) — bigger number, best/worst callouts */
+  .sb-scope .sb-hero-num-row {
+    display: flex;
+    align-items: baseline;
+    gap: 20px;
+    margin-bottom: 6px;
+  }
+  .sb-scope .sb-hero-primary {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .sb-scope .sb-hero-num {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .sb-scope .sb-hero-window {
+    font-size: 10.5px;
+    color: var(--sb-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .sb-scope .sb-hero-secondary {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    color: var(--sb-muted);
+    font-size: 13px;
+    padding-left: 16px;
+    border-left: 1px solid var(--sb-divider);
+    font-family: ui-monospace, "JetBrains Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .sb-scope .sb-hero-secondary .sb-hs-lbl {
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    font-size: 10px;
+    color: var(--sb-dim);
+    font-family: -apple-system, sans-serif;
+  }
+  .sb-scope .sb-hero-agree {
+    color: var(--sb-good);
+    font-size: 11px;
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .sb-scope .sb-hero-agree.sb-agree-no { color: var(--sb-warn); }
+  .sb-scope .sb-hero-callouts {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--sb-divider);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 12px;
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .sb-scope .sb-hero-callouts .sb-co-label {
+    color: var(--sb-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 10px;
+  }
+  .sb-scope .sb-hero-callouts .sb-co-val {
+    color: var(--sb-text);
+    font-family: ui-monospace, "JetBrains Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Score tile (Pipeline / Selector) — smaller than hero */
+  .sb-scope .sb-score-num-row {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .sb-scope .sb-score-primary {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .sb-scope .sb-score-num {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    font-family: ui-monospace, "JetBrains Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .sb-scope .sb-score-secondary {
+    color: var(--sb-muted);
+    font-size: 12px;
+    font-family: ui-monospace, "JetBrains Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Winning/flat/losing list */
+  .sb-scope .sb-wfl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 4px 10px;
+    font-size: 12px;
+    margin-top: auto;
+  }
+  .sb-scope .sb-wfl-count {
+    font-weight: 500;
+    font-family: ui-monospace, "JetBrains Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    color: var(--sb-muted);
+    white-space: nowrap;
+  }
+  .sb-scope .sb-wfl-count.sb-w { color: var(--sb-good); }
+  .sb-scope .sb-wfl-count.sb-f { color: var(--sb-warn); }
+  .sb-scope .sb-wfl-count.sb-l { color: var(--sb-bad); }
+  .sb-scope .sb-wfl-fields { color: var(--sb-muted); font-size: 12px; word-spacing: 0.15em; }
+  .sb-scope .sb-wfl-fields code {
+    font-family: inherit;
+    color: var(--sb-text);
+  }
+
+  /* National Source table */
+  .sb-scope .sb-ns-scroll { overflow-x: auto; }
+  .sb-scope table.sb-ns-tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 4px;
+  }
+  .sb-scope .sb-ns-tbl th, .sb-scope .sb-ns-tbl td {
+    padding: 3px 12px 3px 0;
+    text-align: right;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--sb-divider);
+    font-size: 12px;
+  }
+  .sb-scope .sb-ns-tbl th:first-child, .sb-scope .sb-ns-tbl td:first-child { text-align: left; }
+  .sb-scope .sb-ns-tbl th {
+    color: var(--sb-muted);
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    padding-top: 8px;
+    padding-bottom: 6px;
+  }
+  .sb-scope .sb-ns-tbl tbody tr:last-child td { border-bottom: none; }
+  .sb-scope .sb-chip {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 3px;
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: var(--sb-surface-2);
+    color: var(--sb-muted);
+  }
+  .sb-scope .sb-chip.sb-nbm  { background: var(--sb-good-dim); color: var(--sb-good); }
+  .sb-scope .sb-chip.sb-hrrr { background: var(--sb-warn-dim); color: var(--sb-warn); }
+  .sb-scope .sb-gap        { color: var(--sb-muted); font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .sb-scope .sb-gap.sb-strong { color: var(--sb-accent); font-weight: 500; }
+  .sb-scope .sb-good { color: var(--sb-good) !important; }
+  .sb-scope .sb-warn { color: var(--sb-warn) !important; }
+  .sb-scope .sb-bad  { color: var(--sb-bad)  !important; }
+  .sb-scope .sb-dim  { color: var(--sb-dim); }
+  .sb-scope .sb-em   { color: var(--sb-dim); font-family: ui-monospace, monospace; }
+
+  /* Health tile */
+  .sb-scope .sb-health-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12.5px;
+  }
+  .sb-scope .sb-health-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    color: var(--sb-muted);
+  }
+  .sb-scope .sb-health-row .sb-h-lbl { text-transform: uppercase; letter-spacing: 0.07em; font-size: 10.5px; }
+  .sb-scope .sb-health-row .sb-h-val {
+    font-family: ui-monospace, "JetBrains Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    color: var(--sb-text);
+    font-size: 13px;
+  }
+  .sb-scope .sb-health-row .sb-h-val .sb-h-hi   { color: var(--sb-good); }
+  .sb-scope .sb-health-row .sb-h-val .sb-h-med  { color: var(--sb-warn); }
+  .sb-scope .sb-health-row .sb-h-val .sb-h-low  { color: var(--sb-bad); }
+  .sb-scope .sb-health-note {
+    color: var(--sb-dim);
+    font-size: 11px;
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px solid var(--sb-divider);
+    line-height: 1.45;
+  }
+
+  .sb-scope .sb-footer {
+    color: var(--sb-dim);
+    font-size: 11px;
+    text-align: right;
+    margin-top: -4px;
+  }
+</style>
+
+<section class="sb-scope">
+
+  <!-- ROW 1 =============================================================== -->
+  <div class="sb-row sb-row-1">
+
+    <!-- HERO: Total Lift -->
+    <div class="sb-tile">
+      <div class="sb-tile-title">Total Lift</div>
+      <div class="sb-tile-sub">Prod vs the best raw public source (HRRR or NBM), across every field we work on. The referee's number.</div>
+
+      <div class="sb-hero-num-row">
+        <div class="sb-hero-primary">
+          <div class="sb-hero-num sb-bad">−4.5%</div>
+          <div class="sb-hero-window">7D median</div>
+        </div>
+        <div class="sb-hero-secondary">
+          <span class="sb-hs-lbl">24H</span><span class="sb-bad">−1.5%</span>
+        </div>
+      </div>
+      <div class="sb-wfl">
+        <div class="sb-wfl-count sb-w">1 winning</div>
+        <div class="sb-wfl-fields"><code>ch</code></div>
+        <div class="sb-wfl-count sb-f">2 flat</div>
+        <div class="sb-wfl-fields"><code>cl · cm</code></div>
+        <div class="sb-wfl-count sb-l">8 losing</div>
+        <div class="sb-wfl-fields"><code>t · h · dp · ws · wg · wd · sr · cc</code></div>
+      </div>
+    </div>
+
+    <!-- Pipeline Lift -->
+    <div class="sb-tile">
+      <div class="sb-tile-title">Pipeline Lift</div>
+      <div class="sb-tile-sub">Cascade value if selection were perfect. Answers "are the pipelines pulling their weight?"</div>
+
+      <div class="sb-score-num-row">
+        <div class="sb-score-primary">
+          <div class="sb-score-num sb-bad">−5.6%</div>
+          <div class="sb-hero-window">7D median</div>
+        </div>
+        <div class="sb-score-secondary">
+          <span class="sb-hs-lbl">24H</span> <span class="sb-bad">−0.4%</span>
+        </div>
+      </div>
+
+      <div class="sb-wfl">
+        <div class="sb-wfl-count sb-w">3 winning</div>
+        <div class="sb-wfl-fields"><code>cl · cm · ch</code></div>
+        <div class="sb-wfl-count sb-f">0 flat</div>
+        <div class="sb-wfl-fields">—</div>
+        <div class="sb-wfl-count sb-l">8 losing</div>
+        <div class="sb-wfl-fields"><code>t · h · dp · ws · wg · wd · sr · cc</code></div>
+      </div>
+    </div>
+
+    <!-- Selector Quality -->
+    <div class="sb-tile">
+      <div class="sb-tile-title">Selector Quality</div>
+      <div class="sb-tile-sub">Value captured out of a perfect oracle picker. Answers "is the router leaving anything on the table?"</div>
+
+      <div class="sb-score-num-row">
+        <div class="sb-score-primary">
+          <div class="sb-score-num sb-good">100%</div>
+          <div class="sb-hero-window">7D median</div>
+        </div>
+        <div class="sb-score-secondary">
+          <span class="sb-hs-lbl">24H</span> <span class="sb-good">100%</span>
+        </div>
+      </div>
+
+      <div class="sb-wfl">
+        <div class="sb-wfl-count sb-w">9 winning</div>
+        <div class="sb-wfl-fields"><code>t · h · dp · ws · wg · wd · sr · cc · ch</code></div>
+        <div class="sb-wfl-count sb-f">0 flat</div>
+        <div class="sb-wfl-fields">—</div>
+        <div class="sb-wfl-count sb-l">0 losing</div>
+        <div class="sb-wfl-fields">—</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 2: DIAGNOSTICS ================================================== -->
+  <div class="sb-row sb-row-2">
+
+    <!-- Prod Trend -->
+    <div class="sb-tile sb-tile-wide">
+      <div class="sb-tile-title">Prod Trend</div>
+      <div class="sb-tile-sub">Change vs the prior equal window. Are we improving over time?</div>
+
+      <div class="sb-score-num-row">
+        <div class="sb-score-primary">
+          <div class="sb-score-num sb-warn">+0.2%</div>
+          <div class="sb-hero-window">7D median</div>
+        </div>
+        <div class="sb-score-secondary">
+          <span class="sb-hs-lbl">24H</span> <span class="sb-warn">+1.1%</span>
+        </div>
+      </div>
+
+      <div class="sb-wfl">
+        <div class="sb-wfl-count sb-w">4 improving</div>
+        <div class="sb-wfl-fields"><code>t · cm · ch · cc</code></div>
+        <div class="sb-wfl-count sb-f">3 flat</div>
+        <div class="sb-wfl-fields"><code>cl · pr · pp</code></div>
+        <div class="sb-wfl-count sb-l">4 regressing</div>
+        <div class="sb-wfl-fields"><code>h · dp · ws · sr</code></div>
+      </div>
+    </div>
+
+    <!-- Notable Calls -->
+    <div class="sb-tile">
+      <div class="sb-tile-title">Notable Calls <span style="color:var(--sb-dim);letter-spacing:0.05em;">(7D)</span></div>
+      <div class="sb-tile-sub">Biggest wins and losses at the (field, lead-band) level. Referee highlights.</div>
+
+      <div class="sb-hero-callouts" style="margin-top:0;padding-top:0;border-top:0;">
+        <div class="sb-co-label" style="color: var(--sb-good);">Best</div>
+        <div class="sb-co-val"><span class="sb-good">ch · 0-5h · +72.2%</span> <span class="sb-dim">n=941</span></div>
+        <div class="sb-co-label" style="color: var(--sb-bad);">Worst</div>
+        <div class="sb-co-val"><span class="sb-bad">sr · 24-47h · −65.4%</span> <span class="sb-dim">n=3,768</span></div>
+        <div class="sb-co-label" style="color: var(--sb-bad); opacity: 0.85;">2nd worst</div>
+        <div class="sb-co-val"><span class="sb-bad">dp · 24-47h · −46.1%</span> <span class="sb-dim">n=3,552</span></div>
+        <div class="sb-co-label" style="color: var(--sb-bad); opacity: 0.75;">3rd worst</div>
+        <div class="sb-co-val"><span class="sb-bad">wd · 12-23h · −27.8%</span> <span class="sb-dim">n=1,914</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ROW 3: CONTEXT ====================================================== -->
+  <div class="sb-row sb-row-2">
+
+    <!-- National Source -->
+    <div class="sb-tile sb-tile-wide">
+      <div class="sb-tile-title">National Source <span style="color:var(--sb-dim);letter-spacing:0.05em;">(7D · lower MAE wins)</span></div>
+      <div class="sb-tile-sub">Which raw source wins per field. This is the baseline we must beat.</div>
+
+      <div class="sb-wfl" style="grid-template-columns: auto 1fr; row-gap: 8px; font-size: 13px;">
+        <div class="sb-wfl-count" style="color: var(--sb-good);">NBM wins &nbsp;9</div>
+        <div class="sb-wfl-fields"><code>t · h · dp · ws · wg · wd · sr · cc · ch</code></div>
+        <div class="sb-wfl-count" style="color: var(--sb-warn);">HRRR wins&nbsp;0</div>
+        <div class="sb-wfl-fields">—</div>
+        <div class="sb-wfl-count" style="color: var(--sb-muted);">HRRR only&nbsp;&nbsp;5</div>
+        <div class="sb-wfl-fields"><code>cl · cm · pr · pa · pp</code> <span class="sb-dim" style="font-size:11px;">(NBM doesn't emit)</span></div>
+      </div>
+    </div>
+
+    <!-- Health & Reliability -->
+    <div class="sb-tile">
+      <div class="sb-tile-title">Health &amp; Reliability <span style="color:var(--sb-dim);letter-spacing:0.05em;">(7D)</span></div>
+      <div class="sb-tile-sub">Trust indicators. Independent of who's winning.</div>
+
+      <div class="sb-health-rows">
+        <div class="sb-health-row">
+          <span class="sb-h-lbl">Confidence</span>
+          <span class="sb-h-val"><span class="sb-h-hi">HIGH 2</span> · <span class="sb-h-med">MED 7</span> · <span class="sb-h-low">LOW 5</span></span>
+        </div>
+        <div class="sb-health-row">
+          <span class="sb-h-lbl">High-conf cells</span>
+          <span class="sb-h-val">33.9% <span class="sb-dim">of 56</span></span>
+        </div>
+        <div class="sb-health-row">
+          <span class="sb-h-lbl">Halves agree</span>
+          <span class="sb-h-val"><span class="sb-h-med">64.3%</span> <span class="sb-dim">of fields · noisy</span></span>
+        </div>
+      </div>
+      <div class="sb-health-note">Halves agree below ~70% is a noisy week — read the score tiles above with caution. Halves agree = both halves of the 7d window show the same sign of lift.</div>
+    </div>
+
+  </div>
+
+  <div class="sb-footer">Fitted from today's 7d scoreboard · numbers static pending live wiring</div>
+
+</section>
 
 <!-- ───────────────────── Staleness audit ─────────────────────
      Anti-fossilization check: watches whose close dates have passed
@@ -1028,31 +1514,6 @@
   })();
 </script>
 
-<div id="headlineBox">
-  <div class="hb-title">Right now — current conditions</div>
-  <table class="hb-corr-table">
-    <thead>
-      <tr>
-        <th>Field</th>
-        <th>Base forecast (L1)</th>
-        <th>Production</th>
-        <th>Correction</th>
-        <th style="border-left:1px solid #232936;padding-left:16px;">Field</th>
-        <th>Base forecast (L1)</th>
-        <th>Production</th>
-        <th>Correction</th>
-      </tr>
-    </thead>
-    <tbody id="hbCorrRows">
-      <tr><td colspan="8" style="color:var(--muted);opacity:0.6;padding:8px;">Loading current tick…</td></tr>
-    </tbody>
-  </table>
-  <div class="hb-ops-row">
-    <div>Confidence: <strong id="hbConfidence">—</strong> <span id="hbStationsLine" style="opacity:0.75;">· — stations reporting</span></div>
-    <div>Briefing source: <strong id="hbBriefingSource">—</strong> <span id="hbBriefingAge" style="opacity:0.75;">· —</span></div>
-  </div>
-  <div style="margin-top:6px;font-size:0.72em;opacity:0.55;">Base forecast (L1) = the selector's chosen raw source fed into our correction stack (HRRR raw or NBM raw, per field per lead). Production = final Wyman Cove forecast (after L2/L3/L4/gates). Correction = Production − L1 for this tick.</div>
-</div>
 
 <!-- ───────────────────── Tri-column current-state band ─────────────────────
      Forward-looking summary of the three lenses that matter for a daily
@@ -1067,406 +1528,139 @@
 <h2 class="section" id="sec-current-state">Current state <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— what's running · improving · being evaluated</span></h2>
 
 <!-- ============================================================
-     PROPOSED SCOREBOARD REDESIGN — STATIC MOCK v2 (2026-08-25)
-     Replaces both the live #scorecard-banner tiles and the live
-     #per-field-scoring-block table. Live JS renderers are commented
-     out in load() so this mock is what you see.
-
-     Numbers: today's real 7d values from scoreboard_v2.json for
-     Total Lift + National Source. Pipeline Skill / Hit Rate /
-     Value Captured use the L1 selector's 30d pool as a design proxy;
-     production impl would recompute all on 7d/24h.
-
-     Everything scoped to .sm-scope + .sm-* — cannot clash with page CSS.
-     To restore live behavior: delete this block, uncomment the two
-     render calls in load(), delete the "hidden" removal on scorecard-banner.
+     Per-field diagnostic table (2026-08-25 redesign) — replaces the
+     old #per-field-scoring-block (value-chain 4-group layout).
+     Uses classes defined in the .sb-scope <style> block near the top.
      ============================================================ -->
 <style>
-  .sm-scope {
-    --sm-bg: #0e1319;
-    --sm-surface: #171e26;
-    --sm-surface-2: #1e2731;
-    --sm-divider: #242f3a;
-    --sm-text: #e6ecf2;
-    --sm-muted: #8896a4;
-    --sm-dim: #5c6874;
-    --sm-accent: #7fb3ff;
-    --sm-good: #4ad29a;
-    --sm-warn: #e0a86b;
-    --sm-bad: #e07272;
-    --sm-good-dim: #2a4a3a;
-    --sm-warn-dim: #4a3a28;
-    --sm-bad-dim: #4a2828;
+  .sb-pfs-scope {
+    --sb-bg: #0e1319;
+    --sb-surface: #171e26;
+    --sb-surface-2: #1e2731;
+    --sb-divider: #242f3a;
+    --sb-text: #e6ecf2;
+    --sb-muted: #8896a4;
+    --sb-dim: #5c6874;
+    --sb-good: #4ad29a;
+    --sb-warn: #e0a86b;
+    --sb-bad: #e07272;
 
     display: block;
-    margin: 0 0 20px;
-    color: var(--sm-text);
+    margin: 0 0 18px;
+    background: var(--sb-surface);
+    border: 1px solid var(--sb-divider);
+    border-radius: 10px;
+    padding: 16px 18px 4px;
+    color: var(--sb-text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    font-size: 15px;
+    font-size: 14.5px;
     line-height: 1.5;
   }
-  .sm-scope .sm-wrap { display: flex; flex-direction: column; gap: 18px; margin-top: 6px; }
-  .sm-scope .sm-num  { font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace; font-variant-numeric: tabular-nums; }
-
-  /* ── HERO + SUB-TILE ROW ─────────────────────────────────────── */
-  .sm-scope .sm-top-row {
-    display: grid;
-    grid-template-columns: minmax(300px, 1.4fr) repeat(3, minmax(160px, 1fr));
-    gap: 14px;
-  }
-  @media (max-width: 900px) { .sm-scope .sm-top-row { grid-template-columns: 1fr 1fr; } }
-
-  .sm-scope .sm-hero,
-  .sm-scope .sm-subtile {
-    background: var(--sm-surface);
-    border: 1px solid var(--sm-divider);
-    border-radius: 10px;
-    padding: 18px 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    gap: 14px;
-  }
-
-  .sm-scope .sm-hero { padding: 20px 24px; }
-
-  .sm-scope .sm-tile-label {
-    color: var(--sm-muted);
+  .sb-pfs-scope .sb-pfs-title {
+    color: var(--sb-muted);
     font-size: 10.5px;
     text-transform: uppercase;
     letter-spacing: 0.12em;
     font-weight: 600;
+    margin-bottom: 3px;
   }
-  .sm-scope .sm-hero .sm-tile-label { font-size: 11.5px; }
-
-  .sm-scope .sm-tile-def {
-    color: var(--sm-dim);
+  .sb-pfs-scope .sb-pfs-sub {
+    color: var(--sb-dim);
     font-size: 11.5px;
-    line-height: 1.35;
-    margin-top: -6px;
+    line-height: 1.4;
+    margin-bottom: 14px;
   }
-
-  .sm-scope .sm-num-primary {
-    font-family: ui-monospace, "JetBrains Mono", monospace;
-    font-variant-numeric: tabular-nums;
-    font-weight: 500;
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
-  .sm-scope .sm-hero .sm-num-primary { font-size: 44px; }
-  .sm-scope .sm-subtile .sm-num-primary { font-size: 26px; }
-
-  .sm-scope .sm-num-secondary {
-    font-family: ui-monospace, "JetBrains Mono", monospace;
-    font-variant-numeric: tabular-nums;
-    font-size: 13px;
-    color: var(--sm-muted);
-    margin-top: 4px;
-  }
-  .sm-scope .sm-num-secondary .sm-2lbl {
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    font-size: 10px;
-    color: var(--sm-dim);
-    margin-right: 5px;
-    font-family: inherit;
-  }
-  .sm-scope .sm-hero-tag {
-    font-size: 11px;
-    color: var(--sm-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.09em;
-    margin-top: 8px;
-  }
-
-  /* ── HEALTH TILE (categorical, not numeric) ──────────────────── */
-  .sm-scope .sm-health-rows {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    font-size: 12px;
-  }
-  .sm-scope .sm-health-row {
-    display: flex;
-    justify-content: space-between;
-    color: var(--sm-muted);
-  }
-  .sm-scope .sm-health-row .sm-hn { font-family: ui-monospace, "JetBrains Mono", monospace; font-variant-numeric: tabular-nums; }
-  .sm-scope .sm-health-row.sm-h-hi   .sm-hn { color: var(--sm-good); }
-  .sm-scope .sm-health-row.sm-h-med  .sm-hn { color: var(--sm-warn); }
-  .sm-scope .sm-health-row.sm-h-low  .sm-hn { color: var(--sm-bad); }
-  .sm-scope .sm-health-agree { font-size: 11px; color: var(--sm-dim); margin-top: 6px; }
-
-  /* ── PANELS ──────────────────────────────────────────────────── */
-  .sm-scope .sm-panel {
-    background: var(--sm-surface);
-    border: 1px solid var(--sm-divider);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .sm-scope .sm-panel-head {
-    padding: 14px 20px 10px;
-    border-bottom: 1px solid var(--sm-divider);
-    background: var(--sm-surface-2);
-  }
-  .sm-scope .sm-panel-head h3 { margin: 0 0 3px; font-size: 13.5px; font-weight: 600; }
-  .sm-scope .sm-panel-head p  { margin: 0; color: var(--sm-muted); font-size: 12px; }
-
-  .sm-scope .sm-tbl-scroll { overflow-x: auto; }
-  .sm-scope table.sm-tbl {
+  .sb-pfs-scope .sb-pfs-scroll { overflow-x: auto; margin: 0 -18px; padding: 0 18px 4px; }
+  .sb-pfs-scope table.sb-pfs-tbl {
     width: 100%;
     border-collapse: collapse;
     font-size: 13px;
   }
-  .sm-scope .sm-tbl th, .sm-scope .sm-tbl td {
+  .sb-pfs-scope .sb-pfs-tbl th, .sb-pfs-scope .sb-pfs-tbl td {
     padding: 8px 12px;
     text-align: right;
-    border-bottom: 1px solid var(--sm-divider);
     white-space: nowrap;
+    border-bottom: 1px solid var(--sb-divider);
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
   }
-  .sm-scope .sm-tbl th {
-    color: var(--sm-muted);
-    font-size: 10px;
+  .sb-pfs-scope .sb-pfs-tbl th:first-child,
+  .sb-pfs-scope .sb-pfs-tbl td:first-child {
+    text-align: left;
+    padding-left: 4px;
+    font-family: -apple-system, sans-serif;
+    font-weight: 500;
+  }
+  .sb-pfs-scope .sb-pfs-tbl th {
+    color: var(--sb-muted);
+    font-size: 9.5px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.09em;
-    padding-top: 11px;
-    padding-bottom: 9px;
-    background: var(--sm-surface);
+    padding-top: 10px;
+    padding-bottom: 8px;
+    font-family: -apple-system, sans-serif;
     line-height: 1.35;
   }
-  .sm-scope .sm-tbl th .sm-thsub {
+  .sb-pfs-scope .sb-pfs-tbl th .sb-pfs-thsub {
     display: block;
-    color: var(--sm-dim);
+    color: var(--sb-dim);
     font-weight: 400;
     letter-spacing: 0.04em;
-    font-size: 9.5px;
+    font-size: 9px;
     text-transform: none;
     margin-top: 2px;
   }
-  .sm-scope .sm-tbl th.sm-first, .sm-scope .sm-tbl td.sm-first { text-align: left; }
-  .sm-scope .sm-tbl th.sm-first { padding-left: 20px; }
-  .sm-scope .sm-tbl td.sm-first { padding-left: 20px; font-weight: 500; }
-  .sm-scope .sm-tbl tbody tr:last-child td { border-bottom: none; }
-  .sm-scope .sm-tbl tbody tr:hover td { background: var(--sm-surface-2); }
-
-  .sm-scope .sm-chip {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 3px;
-    font-size: 10px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    background: var(--sm-surface-2);
-    color: var(--sm-muted);
-  }
-  .sm-scope .sm-chip.sm-nbm  { background: var(--sm-good-dim); color: var(--sm-good); }
-  .sm-scope .sm-chip.sm-hrrr { background: var(--sm-warn-dim); color: var(--sm-warn); }
-
-  .sm-scope .sm-good { color: var(--sm-good); }
-  .sm-scope .sm-warn { color: var(--sm-warn); }
-  .sm-scope .sm-bad  { color: var(--sm-bad); }
-  .sm-scope .sm-dim  { color: var(--sm-dim); }
-  .sm-scope .sm-em   { color: var(--sm-dim); }
-  .sm-scope .sm-gap        { color: var(--sm-muted); }
-  .sm-scope .sm-gap.sm-strong { color: var(--sm-accent); font-weight: 500; }
-
-  .sm-scope .sm-foot {
-    color: var(--sm-muted);
-    font-size: 11.5px;
-    padding: 11px 20px 14px;
-    border-top: 1px solid var(--sm-divider);
-    background: var(--sm-surface-2);
-    line-height: 1.55;
-  }
-  .sm-scope .sm-foot strong { color: var(--sm-text); font-weight: 600; }
-
-  .sm-scope .sm-legend {
-    background: var(--sm-surface);
-    border: 1px solid var(--sm-divider);
-    border-radius: 10px;
-    padding: 14px 20px 16px;
-    font-size: 12px;
-    color: var(--sm-muted);
-    line-height: 1.55;
-  }
-  .sm-scope .sm-legend h4 {
-    margin: 0 0 8px;
-    color: var(--sm-text);
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-weight: 600;
-  }
-  .sm-scope .sm-legend dl { display: grid; grid-template-columns: 190px 1fr; gap: 3px 16px; margin: 0; }
-  .sm-scope .sm-legend dt { color: var(--sm-text); font-weight: 500; font-size: 11.5px; }
-  .sm-scope .sm-legend dd { margin: 0; }
-  .sm-scope .sm-legend code {
-    font-family: ui-monospace, "JetBrains Mono", monospace;
+  .sb-pfs-scope .sb-pfs-tbl tbody tr:last-child td { border-bottom: none; }
+  .sb-pfs-scope .sb-pfs-tbl tbody tr:hover td { background: var(--sb-surface-2); }
+  .sb-pfs-scope .sb-good { color: var(--sb-good); }
+  .sb-pfs-scope .sb-warn { color: var(--sb-warn); }
+  .sb-pfs-scope .sb-bad  { color: var(--sb-bad); }
+  .sb-pfs-scope .sb-dim  { color: var(--sb-dim); }
+  .sb-pfs-scope .sb-em   { color: var(--sb-dim); }
+  .sb-pfs-scope .sb-pfs-foot {
+    color: var(--sb-dim);
     font-size: 11px;
-    color: var(--sm-dim);
+    padding: 12px 0 8px;
+    line-height: 1.5;
   }
 </style>
 
-<section class="sm-scope">
-  <div class="sm-wrap">
+<section class="sb-pfs-scope">
+  <div class="sb-pfs-title">Per-field diagnostic — 7 day</div>
+  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull.</div>
 
-    <!-- HERO + 3 SUB-TILES ============================================== -->
-    <div class="sm-top-row">
+  <div class="sb-pfs-scroll">
+    <table class="sb-pfs-tbl">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Total Lift<span class="sb-pfs-thsub">Prod vs BestRaw</span></th>
+          <th>HRRR Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
+          <th>NBM Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
+          <th>Hit Rate<span class="sb-pfs-thsub">% rows picked right</span></th>
+          <th>Value Captured<span class="sb-pfs-thsub">% of oracle</span></th>
+          <th>n</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>t</td><td class="sb-bad">−1.7%</td><td class="sb-good">+2.1%</td><td class="sb-bad">−103.9%</td><td class="sb-good">98.4%</td><td class="sb-good">100%</td><td class="sb-dim">7,535</td></tr>
+        <tr><td>h</td><td class="sb-bad">−6.3%</td><td class="sb-good">+11.5%</td><td class="sb-bad">−36.2%</td><td class="sb-good">94.1%</td><td class="sb-good">100%</td><td class="sb-dim">7,268</td></tr>
+        <tr><td>dp</td><td class="sb-bad">−36.2%</td><td class="sb-good">+15.1%</td><td class="sb-bad">−15.0%</td><td class="sb-good">89.7%</td><td class="sb-good">100%</td><td class="sb-dim">7,268</td></tr>
+        <tr><td>ws</td><td class="sb-bad">−9.4%</td><td class="sb-good">+2.2%</td><td class="sb-bad">−27.1%</td><td class="sb-good">92.6%</td><td class="sb-good">100%</td><td class="sb-dim">7,535</td></tr>
+        <tr><td>wg</td><td class="sb-bad">−4.5%</td><td class="sb-good">+5.9%</td><td class="sb-bad">−14.5%</td><td class="sb-good">81.3%</td><td class="sb-good">100%</td><td class="sb-dim">7,535</td></tr>
+        <tr><td>wd</td><td class="sb-bad">−19.3%</td><td class="sb-warn">+2.8%</td><td class="sb-bad">−20.7%</td><td class="sb-good">76.5%</td><td class="sb-good">100%</td><td class="sb-dim">7,535</td></tr>
+        <tr><td>sr</td><td class="sb-bad">−51.3%</td><td class="sb-bad">−10.4%</td><td class="sb-bad">−346.5%</td><td class="sb-good">99.8%</td><td class="sb-good">100%</td><td class="sb-dim">7,535</td></tr>
+        <tr><td>cc</td><td class="sb-bad">−6.8%</td><td class="sb-bad">−18.1%</td><td class="sb-warn">−2.2%</td><td class="sb-good">72.4%</td><td class="sb-good">100%</td><td class="sb-dim">7,823</td></tr>
+        <tr><td>cl</td><td class="sb-good">+1.4%</td><td class="sb-good">+1.4%</td><td class="sb-em">n/a</td><td class="sb-em">n/a</td><td class="sb-em">n/a</td><td class="sb-dim">7,535</td></tr>
+        <tr><td>cm</td><td class="sb-good">+28.3%</td><td class="sb-good">+28.3%</td><td class="sb-em">n/a</td><td class="sb-em">n/a</td><td class="sb-em">n/a</td><td class="sb-dim">7,535</td></tr>
+        <tr><td>ch</td><td class="sb-good">+64.4%</td><td class="sb-good">+72.7%</td><td class="sb-good">+33.1%</td><td class="sb-good">96.1%</td><td class="sb-good">100%</td><td class="sb-dim">7,535</td></tr>
+      </tbody>
+    </table>
+  </div>
 
-      <!-- Hero: Total Lift (the master score) -->
-      <div class="sm-hero">
-        <div>
-          <div class="sm-tile-label">Total Lift</div>
-          <div class="sm-tile-def">Prod MAE vs the best raw public source, across every field we work on.</div>
-        </div>
-        <div>
-          <div class="sm-num-primary sm-bad">−4.5%</div>
-          <div class="sm-num-secondary"><span class="sm-2lbl">24h</span><span class="sm-bad">−1.5%</span></div>
-        </div>
-        <div class="sm-hero-tag">7-day median · losing · 24h early recovery</div>
-      </div>
-
-      <!-- Sub-tile: Pipeline Lift -->
-      <div class="sm-subtile">
-        <div>
-          <div class="sm-tile-label">Pipeline Lift</div>
-          <div class="sm-tile-def">Value our cascades add on top of raw, if the selector were perfect.</div>
-        </div>
-        <div>
-          <div class="sm-num-primary sm-bad">−2.1%</div>
-          <div class="sm-num-secondary"><span class="sm-2lbl">mean</span><span class="sm-bad">−28.4%</span></div>
-        </div>
-      </div>
-
-      <!-- Sub-tile: Prod Trend -->
-      <div class="sm-subtile">
-        <div>
-          <div class="sm-tile-label">Prod Trend</div>
-          <div class="sm-tile-def">Change vs the prior same window. Positive = improving.</div>
-        </div>
-        <div>
-          <div class="sm-num-primary sm-warn">+0.2%</div>
-          <div class="sm-num-secondary"><span class="sm-2lbl">24h</span><span class="sm-warn">+1.1%</span></div>
-        </div>
-      </div>
-
-      <!-- Sub-tile: Health -->
-      <div class="sm-subtile">
-        <div>
-          <div class="sm-tile-label">Health</div>
-          <div class="sm-tile-def">Fields with enough sample and halves-agreement to trust.</div>
-        </div>
-        <div class="sm-health-rows">
-          <div class="sm-health-row sm-h-hi"><span>HIGH conf</span><span class="sm-hn">2</span></div>
-          <div class="sm-health-row sm-h-med"><span>MED conf</span><span class="sm-hn">7</span></div>
-          <div class="sm-health-row sm-h-low"><span>LOW conf</span><span class="sm-hn">5</span></div>
-          <div class="sm-health-agree">halves agree · <span class="sm-num">64.3%</span> of fields</div>
-        </div>
-      </div>
-
-    </div>
-
-    <!-- NATIONAL SOURCE PANEL =========================================== -->
-    <div class="sm-panel">
-      <div class="sm-panel-head">
-        <h3>National Source — the baseline we must beat</h3>
-        <p>Winner's raw MAE is the denominator for Total Lift. Headroom gap = how much the losing model is behind.</p>
-      </div>
-      <div class="sm-tbl-scroll">
-        <table class="sm-tbl">
-          <thead>
-            <tr>
-              <th class="sm-first">Field</th>
-              <th>Winner</th>
-              <th>Best raw MAE</th>
-              <th>Headroom gap<span class="sm-thsub">loser vs winner</span></th>
-              <th>n</th>
-            </tr>
-          </thead>
-          <tbody class="sm-num">
-            <tr><td class="sm-first">t · temperature</td><td><span class="sm-chip sm-nbm">NBM</span></td><td class="sm-good">1.78</td><td class="sm-gap">7.3%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">h · humidity</td><td><span class="sm-chip sm-nbm">NBM</span></td><td class="sm-good">6.74</td><td class="sm-gap">12.0%</td><td class="sm-dim">7,268</td></tr>
-            <tr><td class="sm-first">dp · dew point</td><td><span class="sm-chip sm-nbm">NBM</span></td><td class="sm-good">1.99</td><td class="sm-gap sm-strong">31.6%</td><td class="sm-dim">7,268</td></tr>
-            <tr><td class="sm-first">ws · wind speed</td><td><span class="sm-chip sm-nbm">NBM</span></td><td class="sm-good">2.03</td><td class="sm-gap">9.8%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">wg · wind gust</td><td><span class="sm-chip sm-nbm">NBM</span></td><td class="sm-good">3.87</td><td class="sm-gap sm-strong">24.0%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">wd · wind direction</td><td><span class="sm-chip sm-nbm">NBM</span></td><td class="sm-good">44.66</td><td class="sm-gap">15.4%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">sr · solar</td><td><span class="sm-chip sm-nbm">NBM</span></td><td class="sm-good">50.82</td><td class="sm-gap sm-strong">33.5%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">cc · cloud cover</td><td><span class="sm-chip sm-nbm">NBM</span></td><td class="sm-good">20.11</td><td class="sm-gap">3.6%</td><td class="sm-dim">7,823</td></tr>
-            <tr><td class="sm-first">cl · low cloud</td><td><span class="sm-chip sm-hrrr">HRRR</span></td><td class="sm-good">23.66</td><td class="sm-em">—</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">cm · mid cloud</td><td><span class="sm-chip sm-hrrr">HRRR</span></td><td class="sm-good">25.47</td><td class="sm-em">—</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">ch · high cloud</td><td><span class="sm-chip sm-nbm">NBM</span></td><td class="sm-good">32.29</td><td class="sm-gap sm-strong">30.2%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">pr · pressure</td><td><span class="sm-chip sm-hrrr">HRRR</span></td><td class="sm-good">0.02</td><td class="sm-em">—</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">pa · precip amount</td><td><span class="sm-chip sm-hrrr">HRRR</span></td><td class="sm-good sm-dim">tiny mag</td><td class="sm-em">—</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">pp · precip prob</td><td><span class="sm-chip sm-hrrr">HRRR</span></td><td class="sm-good sm-dim">Brier</td><td class="sm-em">—</td><td class="sm-dim">7,535</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="sm-foot">
-        <strong>NBM wins raw on 8 of 14 fields; HRRR wins the rest by default</strong> (no "insufficient" — a field NBM doesn't emit defaults to HRRR).
-        Big <span class="sm-gap sm-strong">headroom gaps</span> mark unrealized signal on the losing model — sr (33.5%), dp (31.6%), ch (30.2%), wg (24.0%). Those are the fields where fixing the losing cascade would move Total Lift the most.
-      </div>
-    </div>
-
-    <!-- PER-FIELD DIAGNOSTIC ============================================ -->
-    <div class="sm-panel">
-      <div class="sm-panel-head">
-        <h3>Per-field diagnostic — where Total Lift comes from</h3>
-        <p>Each field's total, plus separate scores for each cascade (independent of routing) and two views of the selector's work.</p>
-      </div>
-      <div class="sm-tbl-scroll">
-        <table class="sm-tbl">
-          <thead>
-            <tr>
-              <th class="sm-first">Field</th>
-              <th>Total Lift<span class="sm-thsub">Prod vs BestRaw</span></th>
-              <th>HRRR Pipeline Skill<span class="sm-thsub">(raw − Prod) / raw</span></th>
-              <th>NBM Pipeline Skill<span class="sm-thsub">(raw − Prod) / raw</span></th>
-              <th>Selector Hit Rate<span class="sm-thsub">% rows picked right</span></th>
-              <th>Value Captured<span class="sm-thsub">% of oracle value</span></th>
-              <th>n</th>
-            </tr>
-          </thead>
-          <tbody class="sm-num">
-            <tr><td class="sm-first">t</td><td class="sm-bad">−1.7%</td><td class="sm-good">+2.1%</td><td class="sm-bad">−103.9%</td><td class="sm-good">98.4%</td><td class="sm-good">100%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">h</td><td class="sm-bad">−6.3%</td><td class="sm-good">+11.5%</td><td class="sm-bad">−36.2%</td><td class="sm-good">94.1%</td><td class="sm-good">100%</td><td class="sm-dim">7,268</td></tr>
-            <tr><td class="sm-first">dp</td><td class="sm-bad">−36.2%</td><td class="sm-good">+15.1%</td><td class="sm-bad">−15.0%</td><td class="sm-good">89.7%</td><td class="sm-good">100%</td><td class="sm-dim">7,268</td></tr>
-            <tr><td class="sm-first">ws</td><td class="sm-bad">−9.4%</td><td class="sm-good">+2.2%</td><td class="sm-bad">−27.1%</td><td class="sm-good">92.6%</td><td class="sm-good">100%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">wg</td><td class="sm-bad">−4.5%</td><td class="sm-good">+5.9%</td><td class="sm-bad">−14.5%</td><td class="sm-good">81.3%</td><td class="sm-good">100%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">wd</td><td class="sm-bad">−19.3%</td><td class="sm-warn">+2.8%</td><td class="sm-bad">−20.7%</td><td class="sm-good">76.5%</td><td class="sm-good">100%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">sr</td><td class="sm-bad">−51.3%</td><td class="sm-bad">−10.4%</td><td class="sm-bad">−346.5%</td><td class="sm-good">99.8%</td><td class="sm-good">100%</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">cc</td><td class="sm-bad">−6.8%</td><td class="sm-bad">−18.1%</td><td class="sm-warn">−2.2%</td><td class="sm-good">72.4%</td><td class="sm-good">100%</td><td class="sm-dim">7,823</td></tr>
-            <tr><td class="sm-first">cl</td><td class="sm-good">+1.4%</td><td class="sm-good">+1.4%</td><td class="sm-em">n/a</td><td class="sm-em">n/a</td><td class="sm-em">n/a</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">cm</td><td class="sm-good">+28.3%</td><td class="sm-good">+28.3%</td><td class="sm-em">n/a</td><td class="sm-em">n/a</td><td class="sm-em">n/a</td><td class="sm-dim">7,535</td></tr>
-            <tr><td class="sm-first">ch</td><td class="sm-good">+64.4%</td><td class="sm-good">+72.7%</td><td class="sm-good">+33.1%</td><td class="sm-good">96.1%</td><td class="sm-good">100%</td><td class="sm-dim">7,535</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="sm-foot">
-        <strong>Read the story left-to-right:</strong> Total Lift red on 8 of 11. HRRR Pipeline Skill positive on 8, <em>NBM Pipeline Skill negative on 8 of 9</em>. Selector Hit Rate 72–100%, Value Captured 100% everywhere — the selector is picking optimally against the (bad) NBM Prod evidence. Fix the NBM Skill negatives → Total Lift turns green.
-        <br><br>
-        <em style="color:var(--sm-dim);">Windows: Total Lift from today's 7d scoreboard. Pipeline Skill + Selector cols use the L1 selector's 30d pool as a design proxy — production impl computes all six on 7d/24h.</em>
-      </div>
-    </div>
-
-    <!-- LEGEND ========================================================== -->
-    <div class="sm-legend">
-      <h4>What each score answers</h4>
-      <dl>
-        <dt>Total Lift</dt>
-        <dd>Are we beating what the forecaster sees? <code>(BestRaw − Prod) / BestRaw</code></dd>
-        <dt>Pipeline Lift (tile)</dt>
-        <dd>Value our cascades add on top of raw if selection were perfect. Median across fields, mean underneath.</dd>
-        <dt>HRRR / NBM Pipeline Skill</dt>
-        <dd>How much each cascade improves its own raw. <code>(raw − Prod) / raw</code></dd>
-        <dt>Selector Hit Rate</dt>
-        <dd>Fraction of rows where the selector picked the cascade with lower per-row error.</dd>
-        <dt>Value Captured</dt>
-        <dd>Selector-quality with magnitude + correlation baked in. <code>(Random − Actual) / (Random − Oracle)</code>. 100% = perfect.</dd>
-      </dl>
-    </div>
-
+  <div class="sb-pfs-foot">
+    Windows: Total Lift from today's 7d scoreboard. Pipeline Skill + Hit Rate + Value Captured use the L1 selector's 30d pool as a design proxy — production impl computes all on the same 7d/24h grid.
   </div>
 </section>
 
