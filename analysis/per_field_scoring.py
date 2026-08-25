@@ -350,21 +350,26 @@ def _compute_field(field, buckets, halves):
 
     in_nbm_scope = field in NBM_SCOPE
 
-    # Best raw = mean of per-row min(|error_hrrr|, |error_nbm|) — the oracle
-    # baseline (v0.6.477). For NBM-scope fields with both rows, this is
-    # strictly ≤ pooled min(hrrr, nbm), so Total Lift is strictly stricter.
-    # For non-NBM fields (only hrrr exists), best_raw = hrrr — unchanged.
-    best_raw = _mean(buckets["best_raw_row"])
-    # best_raw_source now says which raw wins in aggregate, kept for the
-    # National Source panel. "oracle" flags the per-row-winner semantic.
-    if hrrr is not None and nbm is not None and in_nbm_scope:
-        best_raw_src = "oracle (hrrr+nbm per-row)"
+    # Best raw = "what the regular user's weather app already shows them"
+    # (v0.6.478). For NBM-scope fields → NBM raw (NBM is the NWS backbone
+    # and effectively the default single-source for iPhone Weather /
+    # weather.gov / vendor consumer displays). For HRRR-only fields
+    # (cl/cm/pp/pa/pr — NBM doesn't publish) → HRRR raw.
+    #
+    # Prior baselines this replaces:
+    #   pre-v0.6.477: pooled min(hrrr_mae, nbm_mae) — too generous, gave
+    #     us credit for beating whichever raw wins on average.
+    #   v0.6.477: per-row oracle min(|error_hrrr_row|, |error_nbm_row|) —
+    #     too strict; represents a picker no human has (nobody swaps
+    #     hrrr/nbm per lead-hour dynamically).
+    if in_nbm_scope and nbm is not None:
+        best_raw, best_raw_src = nbm, "nbm (user default)"
     elif hrrr is not None:
-        best_raw_src = "hrrr"
+        best_raw, best_raw_src = hrrr, "hrrr"
     elif nbm is not None:
-        best_raw_src = "nbm"
+        best_raw, best_raw_src = nbm, "nbm"
     else:
-        best_raw_src = "na"
+        best_raw, best_raw_src = None, "na"
 
     # Halves-agree per metric: both halves show the SAME SIGN of lift
     # (both positive or both negative). None when either half is thin.
@@ -382,8 +387,13 @@ def _compute_field(field, buckets, halves):
     chooser_prod_a = _half_lift("a", "alt_prod", "chosen_prod")
     chooser_prod_b = _half_lift("b", "alt_prod", "chosen_prod")
     def _best_half(side):
-        # v0.6.477: matches _compute_field — per-row oracle baseline.
-        return _mean(halves[side]["best_raw_row"])
+        # v0.6.478: matches _compute_field — NBM raw where in scope, HRRR
+        # raw otherwise. "What the regular weather app shows the user."
+        if in_nbm_scope:
+            v = _mean(halves[side]["nbm_raw"])
+            if v is not None:
+                return v
+        return _mean(halves[side]["hrrr_raw"])
     total_a_base = _best_half("a"); total_b_base = _best_half("b")
     total_a = _lift_pct(total_a_base, _mean(halves["a"]["prod"]))
     total_b = _lift_pct(total_b_base, _mean(halves["b"]["prod"]))
@@ -462,7 +472,7 @@ def main():
             "sel_vs_hrrr_pct": "L1_selected vs raw HRRR — positive means the selector was smart to sometimes pick NBM",
             "sel_vs_nbm_pct":  "L1_selected vs raw NBM — positive means the selector was smart to sometimes pick HRRR",
             "corr_vs_l1_pct":  "Prod vs L1_selected — positive means the local correction stack adds value on top of the selector's pick",
-            "total_vs_best_raw_pct": "Prod vs per-row oracle raw baseline (v0.6.477): baseline = mean of min(|error_hrrr_raw|, |error_nbm_raw|) per row. Strictly harsher than the pre-v0.6.477 pooled-min baseline, because it credits us only for beating what an oracle picker of hrrr-vs-nbm-per-lead would have picked for free.",
+            "total_vs_best_raw_pct": "Prod vs 'what the user's default weather app already shows them' (v0.6.478): baseline = NBM raw for NBM-scope fields (NBM is the NWS backbone, i.e. iPhone Weather / weather.gov / vendor displays); HRRR raw for the 5 HRRR-only fields (cl/cm/pp/pa/pr — NBM doesn't publish). Replaces the v0.6.477 per-row oracle (too strict — no real user picks HRRR/NBM per lead-hour) and the pre-v0.6.477 pooled-min (too generous — credited us for beating whichever raw source wins on average).",
             "l1_selected_definition": "For rows where selector picks NBM: error_l3_nbm (NBM's own bias-corrected output). For rows where selector picks HRRR (or falls through): error_l1 (raw HRRR). This makes corr_vs_l1_pct honestly measure the local correction stack's contribution.",
             "chooser_vs_prod_pct": "Chosen cascade's Prod vs alternative cascade's Prod, paired per row. Positive = selector picked the better cascade. This is the v0.6.440-rule chooser lift (Prod-vs-Prod, not raw-vs-raw).",
             "hrrr_prod_mae": "Deepest HRRR-side layer residual pooled over all rows — 'what would Prod be if we always picked HRRR'.",
