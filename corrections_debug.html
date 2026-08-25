@@ -1448,13 +1448,9 @@
       <div class="sb-tile-title">National Source <span style="color:var(--sb-dim);letter-spacing:0.05em;">(7D · lower MAE wins)</span></div>
       <div class="sb-tile-sub">Which raw source wins per field. This is the baseline we must beat.</div>
 
-      <div class="sb-wfl" style="grid-template-columns: auto 1fr; row-gap: 8px; font-size: 13px;">
-        <div class="sb-wfl-count" style="color: var(--sb-good);">NBM wins &nbsp;9</div>
-        <div class="sb-wfl-fields"><code>t · h · dp · ws · wg · wd · sr · cc · ch</code></div>
-        <div class="sb-wfl-count" style="color: var(--sb-warn);">HRRR wins&nbsp;0</div>
-        <div class="sb-wfl-fields">—</div>
-        <div class="sb-wfl-count" style="color: var(--sb-muted);">HRRR only&nbsp;&nbsp;5</div>
-        <div class="sb-wfl-fields"><code>cl · cm · pr · pa · pp</code> <span class="sb-dim" style="font-size:11px;">(NBM doesn't emit)</span></div>
+      <div id="national-source-body" class="sb-wfl" style="grid-template-columns: auto 1fr; row-gap: 8px; font-size: 13px;">
+        <div class="sb-wfl-count sb-dim">—</div>
+        <div class="sb-wfl-fields sb-dim">loading…</div>
       </div>
     </div>
 
@@ -1466,15 +1462,15 @@
       <div class="sb-health-rows">
         <div class="sb-health-row">
           <span class="sb-h-lbl">Confidence</span>
-          <span class="sb-h-val"><span class="sb-h-hi">HIGH 2</span> · <span class="sb-h-med">MED 7</span> · <span class="sb-h-low">LOW 5</span></span>
+          <span class="sb-h-val" id="health-confidence"><span class="sb-dim">loading…</span></span>
         </div>
         <div class="sb-health-row">
           <span class="sb-h-lbl">High-conf cells</span>
-          <span class="sb-h-val">33.9% <span class="sb-dim">of 56</span></span>
+          <span class="sb-h-val sb-dim">— <span style="font-size:11px;">wiring pending (needs per-cell feed)</span></span>
         </div>
         <div class="sb-health-row">
           <span class="sb-h-lbl">Halves agree</span>
-          <span class="sb-h-val"><span class="sb-h-med">64.3%</span> <span class="sb-dim">of fields · noisy</span></span>
+          <span class="sb-h-val" id="health-halves"><span class="sb-dim">loading…</span></span>
         </div>
       </div>
       <div class="sb-health-note">Halves agree below ~70% is a noisy week — read the score tiles above with caution. Halves agree = both halves of the 7d window show the same sign of lift.</div>
@@ -1482,7 +1478,7 @@
 
   </div>
 
-  <div class="sb-footer">Fitted from today's 7d scoreboard · numbers static pending live wiring</div>
+  <div class="sb-footer">Live from per_field_scoring.json (refits hourly). Notable Calls + High-conf cells still pending live wiring (need a per-(field, lead-band) feed).</div>
 
 </section>
 
@@ -4368,6 +4364,72 @@ async function renderScoreboardTilesMinimal() {
   _paintWfl("pipeline_lift",  _agg(LIFT_SCOPE), _pipelineLift,  _lift);
   _paintWfl("selector_skill", _agg(NBM_SCOPE),  _selectorSkill, _lift);
   _paintWfl("prod_trend",     _agg(ALL_SCOPE),  _prodTrend,     _trend);
+
+  // v0.6.488 — National Source. Which raw source (HRRR or NBM) wins per
+  // field on 7d MAE. dp + cc excluded per the no-derived-on-scoreboard
+  // rule; pa + pp stay in "HRRR only" because they're real forecast
+  // fields NBM doesn't emit (about data provenance, not scoring skill).
+  const nsHost = document.getElementById("national-source-body");
+  if (nsHost) {
+    const nbmScopeNoDer = NBM_SCOPE.filter(f => !DERIVED_EXCLUDE.has(f));
+    const hrrrOnlyFields = ALL_SCOPE.filter(f => !NBM_SCOPE.includes(f) && !DERIVED_EXCLUDE.has(f));
+    const nbmWins = [], hrrrWins = [], hrrrOnly = [];
+    for (const f of nbmScopeNoDer) {
+      const c = pf7[f] || {};
+      const h = c.hrrr_raw_mae, n = c.nbm_raw_mae;
+      if (h == null && n == null) continue;
+      if (h == null) { nbmWins.push(f); continue; }
+      if (n == null) { hrrrWins.push(f); continue; }
+      (n < h ? nbmWins : hrrrWins).push(f);
+    }
+    for (const f of hrrrOnlyFields) hrrrOnly.push(f);
+    const fmtF = (arr) => arr.length ? arr.map(f => `<code>${f}</code>`).join(" · ") : "—";
+    nsHost.innerHTML =
+      `<div class="sb-wfl-count" style="color: var(--sb-good);">NBM wins &nbsp;${nbmWins.length}</div>` +
+      `<div class="sb-wfl-fields">${fmtF(nbmWins)}</div>` +
+      `<div class="sb-wfl-count" style="color: var(--sb-warn);">HRRR wins&nbsp;${hrrrWins.length}</div>` +
+      `<div class="sb-wfl-fields">${fmtF(hrrrWins)}</div>` +
+      `<div class="sb-wfl-count" style="color: var(--sb-muted);">HRRR only&nbsp;&nbsp;${hrrrOnly.length}</div>` +
+      `<div class="sb-wfl-fields">${fmtF(hrrrOnly)} <span class="sb-dim" style="font-size:11px;">(NBM doesn't emit)</span></div>`;
+  }
+
+  // v0.6.488 — Health & Reliability partial. Confidence bucket per field
+  // and halves-agree rate, both from per_field_scoring's own halves_agree
+  // + total_vs_best_raw_pct signals. Scope = LIFT_SCOPE minus derived
+  // (10 fields). High-conf cells stays dashed — needs per-cell feed.
+  const confHost = document.getElementById("health-confidence");
+  const halvesHost = document.getElementById("health-halves");
+  if (confHost || halvesHost) {
+    const scope = _agg(LIFT_SCOPE);
+    let hi = 0, med = 0, lo = 0;
+    let agree = 0, agreeDenom = 0;
+    for (const f of scope) {
+      const c = pf7[f] || {};
+      const t = c.total_vs_best_raw_pct;
+      const ha = (c.halves_agree || {}).total_vs_best_raw;
+      // Confidence: HIGH = halves agree AND |lift| ≥ 10; LOW = halves
+      // disagree OR |lift| < 3 (noise floor); MED = else.
+      if (t == null) continue;
+      const mag = Math.abs(t);
+      if (ha === false || mag < 3) lo++;
+      else if (ha === true && mag >= 10) hi++;
+      else med++;
+      // Halves-agree denominator only counts fields where the check
+      // could run at all (both halves thick enough).
+      if (ha != null) { agreeDenom++; if (ha === true) agree++; }
+    }
+    if (confHost) {
+      confHost.innerHTML = `<span class="sb-h-hi">HIGH ${hi}</span> · <span class="sb-h-med">MED ${med}</span> · <span class="sb-h-low">LOW ${lo}</span>`;
+    }
+    if (halvesHost) {
+      const pct = agreeDenom > 0 ? (100 * agree / agreeDenom) : null;
+      const noisy = pct != null && pct < 70;
+      const cls = pct == null ? "sb-dim" : (pct >= 70 ? "sb-h-hi" : "sb-h-med");
+      const label = pct == null ? "—" : `${pct.toFixed(1)}%`;
+      const suffix = pct == null ? "" : ` <span class="sb-dim">of ${agreeDenom} fields${noisy ? " · noisy" : ""}</span>`;
+      halvesHost.innerHTML = `<span class="${cls}">${label}</span>${suffix}`;
+    }
+  }
 }
 
 

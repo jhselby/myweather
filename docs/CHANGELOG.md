@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.488 • August 25, 2026 (National Source + Health & Reliability partial wired live)</strong></summary>
+
+- **National Source panel** now derives NBM-wins / HRRR-wins / HRRR-only counts live per-field from `per_field_scoring.json`'s `hrrr_raw_mae` vs `nbm_raw_mae` (7d). dp and cc excluded from the wins count (no-derived-on-scoreboard rule). pa and pp stay in HRRR-only — they're real forecast fields NBM doesn't emit, and this panel is about data provenance, not scoring skill.
+- **Health & Reliability — Confidence + Halves agree wired live** from `halves_agree.total_vs_best_raw` + `total_vs_best_raw_pct` per field over LIFT_SCOPE minus derived (10 fields). Confidence rule: HIGH = halves agree AND |lift| ≥ 10; LOW = halves disagree OR |lift| < 3 (noise floor); MED = else. Halves agree = fraction of fields whose halves match on sign; "noisy" flag below 70%.
+- **High-conf cells stays dashed.** Same missing per-(field, lead-band) feed as Notable Calls. Marked "wiring pending (needs per-cell feed)."
+- **Footer updated** to reflect the new state: "Live from per_field_scoring.json. Notable Calls + High-conf cells still pending live wiring."
+- Frontend-only.
+
+</details>
+
+<details>
 <summary><strong>v0.6.487 • August 25, 2026 (Prod Trend uses a wider prod-only pool; Notable Calls dashed pending live wiring)</strong></summary>
 
 - **Prod Trend backend fix.** Previously computed on the same pool-intersected `prod` / `prod_prior` buckets as Total Lift (nbm_raw required on NBM-scope rows). That intersection starves the 7d prior window because backstamp thins beyond ~5d, leaving 0-3 rows per NBM-scope field and forcing v0.6.482's `n_prod_prior < 50` gate to null the trend for almost every field. Result: 7D Prod Trend median was aggregating only cl/cm/pr (HRRR-only, no NBM intersection), which was a narrow signal presented as a whole-pipeline number.
