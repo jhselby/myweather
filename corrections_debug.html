@@ -1109,6 +1109,21 @@
     text-transform: uppercase;
     letter-spacing: 0.1em;
   }
+  .sb-scope .sb-hero-mean {
+    font-size: 10px;
+    color: var(--sb-dim);
+    letter-spacing: 0.02em;
+    text-transform: none;
+    margin-left: 4px;
+    font-weight: 400;
+    font-family: ui-monospace, "JetBrains Mono", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  .sb-scope .sb-hero-mean .sb-good,
+  .sb-scope .sb-hero-mean .sb-warn,
+  .sb-scope .sb-hero-mean .sb-bad {
+    font-weight: 500;
+  }
   .sb-scope .sb-hero-secondary {
     display: flex;
     align-items: baseline;
@@ -1309,10 +1324,10 @@
       <div class="sb-hero-num-row">
         <div class="sb-hero-primary">
           <div class="sb-hero-num sb-bad">−4.5%</div>
-          <div class="sb-hero-window">7D median</div>
+          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span class="sb-bad">−3.4%</span></span></div>
         </div>
         <div class="sb-hero-secondary">
-          <span class="sb-hs-lbl">24H</span><span class="sb-bad">−1.5%</span>
+          <span class="sb-hs-lbl">24H</span><span class="sb-bad">−1.5%</span> <span class="sb-hero-mean">· mean —</span>
         </div>
       </div>
       <div class="sb-wfl">
@@ -1333,10 +1348,10 @@
       <div class="sb-score-num-row">
         <div class="sb-score-primary">
           <div class="sb-score-num sb-bad">−5.6%</div>
-          <div class="sb-hero-window">7D median</div>
+          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean —</span></div>
         </div>
         <div class="sb-score-secondary">
-          <span class="sb-hs-lbl">24H</span> <span class="sb-bad">−0.4%</span>
+          <span class="sb-hs-lbl">24H</span> <span class="sb-bad">−0.4%</span> <span class="sb-hero-mean">· mean —</span>
         </div>
       </div>
 
@@ -1358,10 +1373,10 @@
       <div class="sb-score-num-row">
         <div class="sb-score-primary">
           <div class="sb-score-num sb-good">100%</div>
-          <div class="sb-hero-window">7D median</div>
+          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean —</span></div>
         </div>
         <div class="sb-score-secondary">
-          <span class="sb-hs-lbl">24H</span> <span class="sb-good">100%</span>
+          <span class="sb-hs-lbl">24H</span> <span class="sb-good">100%</span> <span class="sb-hero-mean">· mean —</span>
         </div>
       </div>
 
@@ -1388,10 +1403,10 @@
       <div class="sb-score-num-row">
         <div class="sb-score-primary">
           <div class="sb-score-num sb-warn">+0.2%</div>
-          <div class="sb-hero-window">7D median</div>
+          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean —</span></div>
         </div>
         <div class="sb-score-secondary">
-          <span class="sb-hs-lbl">24H</span> <span class="sb-warn">+1.1%</span>
+          <span class="sb-hs-lbl">24H</span> <span class="sb-warn">+1.1%</span> <span class="sb-hero-mean">· mean —</span>
         </div>
       </div>
 
