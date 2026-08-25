@@ -58,6 +58,19 @@ FIELDS = ["t", "h", "dp", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pp", 
 # sel_vs_nbm_pct is None for them.
 NBM_SCOPE = {"t", "ws", "wg", "wd", "h", "ch", "cc", "sr", "dp"}
 
+# v0.6.482 — fields where MAE-ratio metrics like prod_trend_pct produce
+# meaningless numbers because the underlying magnitude is near-zero (pa,
+# inches of precip) or the metric isn't MAE at all (pp, Brier score).
+# These fields get their trend nulled so tile medians/means aren't
+# dominated by ratio noise.
+TREND_EXCLUDE_FIELDS = {"pa", "pp"}
+
+# Minimum paired-pool size for prod_trend_pct to be published. Below this
+# the prior-window MAE is one or two rows' worth of error, and the ratio
+# is dominated by whichever row lands there. Frontend then skips nulls
+# in its median/mean aggregations.
+MIN_N_TREND = 50
+
 BANDS = [(0, 6, "0-5"), (6, 12, "6-11"), (12, 24, "12-23"), (24, 48, "24-47")]
 WINDOWS = [("7d", 7), ("24h", 1)]
 
@@ -420,6 +433,12 @@ def _compute_field(field, buckets, halves):
     # anchor. Positive = we improved vs the same-length window preceding this
     # one. This is the "am I doing my job well" signal — see [[08-22-session]].
     prod_trend_pct = _lift_pct(prod_prior, prod)
+    # v0.6.482 — suppress prod_trend when the prior-window pool is thin
+    # (denominator noise) or the field is on the trend-exclude list
+    # (tiny-magnitude MAE, or non-MAE scoring like Brier).
+    n_prior = buckets["prod_prior"][1]
+    if field in TREND_EXCLUDE_FIELDS or n_prior < MIN_N_TREND:
+        prod_trend_pct = None
 
     # v0.6.481 — Selector Hit Rate + Value Captured (both diagnostic,
     # NBM-scope only; null for HRRR-only fields where there's no alt

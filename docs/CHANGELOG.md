@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.482 • August 25, 2026 (Prod Trend noise suppression — thin prior pool + tiny-magnitude/non-MAE fields)</strong></summary>
+
+- **Symptom.** 7d Prod Trend tile median was landing at −191.8% because pa (precip amount, `prod_prior_mae` = 0.005 in, `prod_mae` = 0.015 in) produced a ratio of −191% off two near-zero denominators. Several NBM-scope fields at 7d showed even wilder trends (t −1181%, dp −8339%, wg −674%) because the "prior window" (7-14 days ago) has almost no rows that survive the v0.6.468 pool intersection — `nbm_raw` backstamp thins out that far back, so `n_prod_prior` was 0-3 on those fields.
+- **Fix in `per_field_scoring.py`.** `prod_trend_pct` is now nulled when `n_prod_prior < 50` (denominator too thin to trust) or when the field is on `TREND_EXCLUDE_FIELDS = {"pa", "pp"}` (pa's MAE is near-zero inches; pp is Brier-scored, not MAE). Nulls flow through the frontend tile's median/mean aggregation, which already skips them.
+- **Effect.** 7d Prod Trend tile will now aggregate over whichever fields have real trend numbers — currently the HRRR-only fields (cl/cm/pr) whose full-history prior pool isn't gated by NBM backstamp. 24h Prod Trend unaffected (all fields have ample prior-window data at 24-48h).
+
+</details>
+
+<details>
 <summary><strong>v0.6.481 • August 25, 2026 (Selector Hit Rate + Value Captured live in the per-field diagnostic table)</strong></summary>
 
 - **Backend:** `analysis/per_field_scoring.py` gains two per-field diagnostics on the paired chosen/alt Prod pool: `hit_rate_pct` (fraction of paired rows where the selector's chosen cascade Prod residual ≤ the alternative cascade's; ties count as hits) and `value_captured_pct` ((alt − chosen) / (alt − oracle) × 100, where oracle = per-row min of the two). Both null for HRRR-only fields where there's no alt cascade. Also emits `oracle_prod_mae` for later use.
