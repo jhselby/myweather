@@ -186,6 +186,14 @@ def _new_bucket():
         "nbm_prod":     [0.0, 0],
         "chosen_prod":  [0.0, 0],
         "alt_prod":     [0.0, 0],
+        # Per-row oracle Prod (v0.6.481): min(|chosen_prod_err|, |alt_prod_err|)
+        # per row over the paired chosen/alt pool. Feeds Value Captured.
+        "oracle_prod":  [0.0, 0],
+        # Selector Hit Rate (v0.6.481): count of paired rows where the
+        # selector's chosen cascade Prod residual ≤ the alternative
+        # cascade's. Denominator is chosen_prod's n. Ties count as hits
+        # (the router picked something that wasn't worse).
+        "hits":         0,
         "prod_prior":   [0.0, 0],
         "selector_picks": {"hrrr": 0, "nbm": 0, "hrrr_fallback": 0, "na": 0},
     }
@@ -322,6 +330,12 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                 b["alt_prod"][0] += alt;       b["alt_prod"][1] += 1
                 half["chosen_prod"][0] += chosen; half["chosen_prod"][1] += 1
                 half["alt_prod"][0] += alt;       half["alt_prod"][1] += 1
+                # v0.6.481: per-row oracle + selector hit count on the
+                # paired pool. Oracle picks the lower cascade every row.
+                orc = chosen if chosen <= alt else alt
+                b["oracle_prod"][0] += orc; b["oracle_prod"][1] += 1
+                if chosen <= alt:
+                    b["hits"] += 1
     return acc, halves
 
 
@@ -407,6 +421,27 @@ def _compute_field(field, buckets, halves):
     # one. This is the "am I doing my job well" signal — see [[08-22-session]].
     prod_trend_pct = _lift_pct(prod_prior, prod)
 
+    # v0.6.481 — Selector Hit Rate + Value Captured (both diagnostic,
+    # NBM-scope only; null for HRRR-only fields where there's no alt
+    # cascade to compare against). Both computed on the paired
+    # chosen_prod / alt_prod pool.
+    oracle_prod = _mean(buckets["oracle_prod"])
+    n_paired = buckets["chosen_prod"][1]
+    if in_nbm_scope and n_paired > 0:
+        hit_rate_pct = 100.0 * buckets["hits"] / n_paired
+    else:
+        hit_rate_pct = None
+    # Value Captured = (alt − chosen) / (alt − oracle) × 100. How much of
+    # the routing gain the oracle could have captured did the selector
+    # actually capture. 100% = perfect picker; 0% = every pick was a wash;
+    # negative = anti-selected. Undefined when the pool is empty or when
+    # oracle == alt (no routing gain available — a pure tie window).
+    if (in_nbm_scope and chosen_prod is not None and alt_prod is not None
+            and oracle_prod is not None and (alt_prod - oracle_prod) > 0):
+        value_captured_pct = 100.0 * (alt_prod - chosen_prod) / (alt_prod - oracle_prod)
+    else:
+        value_captured_pct = None
+
     return {
         "hrrr_raw_mae":  round(hrrr, 3) if hrrr is not None else None,
         "nbm_raw_mae":   round(nbm, 3)  if nbm  is not None else None,
@@ -418,6 +453,9 @@ def _compute_field(field, buckets, halves):
         "alt_prod_mae":  round(alt_prod, 3) if alt_prod is not None else None,
         "chooser_vs_prod_pct": round(chooser_vs_prod_pct, 2) if chooser_vs_prod_pct is not None else None,
         "n_chooser_prod_paired": buckets["chosen_prod"][1],
+        "oracle_prod_mae": round(oracle_prod, 3) if oracle_prod is not None else None,
+        "hit_rate_pct":    round(hit_rate_pct, 2) if hit_rate_pct is not None else None,
+        "value_captured_pct": round(value_captured_pct, 2) if value_captured_pct is not None else None,
         "prod_prior_mae": round(prod_prior, 3) if prod_prior is not None else None,
         "n_prod_prior":   buckets["prod_prior"][1],
         "prod_trend_pct": round(prod_trend_pct, 2) if prod_trend_pct is not None else None,

@@ -1,4 +1,23 @@
 <details open>
+<summary><strong>v0.6.481 • August 25, 2026 (Selector Hit Rate + Value Captured live in the per-field diagnostic table)</strong></summary>
+
+- **Backend:** `analysis/per_field_scoring.py` gains two per-field diagnostics on the paired chosen/alt Prod pool: `hit_rate_pct` (fraction of paired rows where the selector's chosen cascade Prod residual ≤ the alternative cascade's; ties count as hits) and `value_captured_pct` ((alt − chosen) / (alt − oracle) × 100, where oracle = per-row min of the two). Both null for HRRR-only fields where there's no alt cascade. Also emits `oracle_prod_mae` for later use.
+- **Frontend:** the per-field diagnostic table's Hit Rate + Value Captured columns now populate from those fields; Median + Mean tfoot rows include both. Table's sub-blurb replaces the "stay dashed" caveat with a description of the paired-pool + NBM-scope-only rule.
+- **Publisher redeployed.** First tick after redeploy will overwrite `per_field_scoring.json` with the new fields.
+
+</details>
+
+<details>
+<summary><strong>v0.6.480 • August 25, 2026 (Per-field diagnostic table wired live from per_field_scoring.json)</strong></summary>
+
+- **Finishes the 08-25 evening scoreboard wire-up.** Follow-up (a) from v0.6.479: the per-field diagnostic table under Current State was still showing hand-hardcoded values from the pre-v0.6.478 pooled-min baseline. New `renderPerFieldDiagnostic()` populates rows + Median/Mean tfoot from the same hourly-refit `per_field_scoring.json` the headline tiles read (single source of truth, no drift risk).
+- **Columns wired:** Total Lift (`total_vs_best_raw_pct`), HRRR Pipeline Skill (`(hrrr_raw_mae − hrrr_prod_mae)/hrrr_raw_mae`), NBM Pipeline Skill (same on NBM side; `n/a` for HRRR-only fields cl/cm/pr/pa/pp), n (`n_l1_selected` fallback to summed `selector_picks`). pp cells show "Brier" (scored differently); pa cells show "tiny mag".
+- **Not wired:** Hit Rate + Value Captured columns stay dashed — these need the L1 selector fit's per-cell picked/oracle counts, not currently emitted to per_field_scoring.json. Separate work item.
+- **Removed:** hand-hardcoded `<tbody>` + `<tfoot>` rows and the ⚠ stale-numbers warning in the table sub-blurb. Sub-blurb now names the exact live source and dashed-column caveat.
+
+</details>
+
+<details>
 <summary><strong>v0.6.472 • August 25, 2026 (L3_NBM whitelist trimmed — sr, t, ws dropped on walkforward evidence; wg kept for 08-28 per-cell review)</strong></summary>
 
 - **Same class of ship as v0.6.471, one cascade layer up.** `nbm_walkforward_validator` proposes dropping {sr, t, wg, ws} from `L3_NBM_FIELDS`. 14-day aggregate lift vs `l2_nbm` baseline: t **−2.2%**, ws **−2.5%**, sr net loss (skip-cells run −22% to −5%). All three lose at every non-trivial band. Dropped.
