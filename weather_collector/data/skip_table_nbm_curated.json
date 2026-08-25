@@ -1,8 +1,19 @@
 {
-  "fitted_at": "2026-08-22T00:35",
-  "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals. Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
+  "fitted_at": "2026-08-25T20:30",
+  "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
   "cells": {
-    "l3_nbm": {},
+    "l3_nbm": {
+      "wg": [
+        ["calm",       0,  6],
+        ["calm",      12, 24],
+        ["calm",      24, 48],
+        ["ne_flow",    6, 12],
+        ["sea_breeze", 6, 12],
+        ["sea_breeze",12, 24],
+        ["sea_breeze",24, 48],
+        ["frontal",   12, 24]
+      ]
+    },
     "l4_nbm": {},
     "l5_nbm": {},
     "l6_nbm": {},
@@ -18,7 +29,49 @@
     "2026-08-22T00:35": {
       "action": "remove",
       "cells": {"l3_nbm.dp": [["pre_frontal", 0, 6], ["sw_flow", 0, 6], ["se_flow", 0, 6]]},
-      "reason": "Superseded by v0.6.465 — dp removed from L3_NBM_FIELDS entirely (per_field_scoring showed Prod=2.895 vs L1sel=1.619 at NBM-selected leads 6-47h, so the damage extends past the 0-5h skip cells; NBM dp already well-calibrated, no pooled bias should apply). Skip cells now redundant."
+      "reason": "Superseded by v0.6.465 — dp removed from L3_NBM_FIELDS entirely."
+    },
+    "2026-08-25T20:00": {
+      "action": "add",
+      "cells": {
+        "l3_nbm.wg": [
+          ["calm", 0, 6], ["calm", 12, 24], ["calm", 24, 48],
+          ["ne_flow", 6, 12],
+          ["sea_breeze", 6, 12], ["sea_breeze", 12, 24], ["sea_breeze", 24, 48],
+          ["frontal", 12, 24]
+        ],
+        "l4_nbm.cc": [
+          ["nw_flow", 0, 6], ["nw_flow", 12, 24],
+          ["pre_frontal", 0, 6], ["pre_frontal", 6, 12], ["pre_frontal", 12, 24]
+        ],
+        "chp_nbm.ch": [
+          ["calm", 12, 24], ["calm", 24, 48],
+          ["nw_flow", 12, 24],
+          ["pre_frontal", 12, 24], ["pre_frontal", 24, 48],
+          ["se_flow", 24, 48],
+          ["sea_breeze", 12, 24], ["sea_breeze", 24, 48],
+          ["sw_flow", 12, 24], ["sw_flow", 24, 48]
+        ]
+      },
+      "reason": "v0.6.475 HRRR-skip-topology transfer proposal. Seeded each NBM layer with the matching HRRR skip cells as an educated-guess prior, pending counterfactual rescore verdict."
+    },
+    "2026-08-25T20:30": {
+      "action": "remove",
+      "cells": {
+        "l4_nbm.cc": [
+          ["nw_flow", 0, 6], ["nw_flow", 12, 24],
+          ["pre_frontal", 0, 6], ["pre_frontal", 6, 12], ["pre_frontal", 12, 24]
+        ],
+        "chp_nbm.ch": [
+          ["calm", 12, 24], ["calm", 24, 48],
+          ["nw_flow", 12, 24],
+          ["pre_frontal", 12, 24], ["pre_frontal", 24, 48],
+          ["se_flow", 24, 48],
+          ["sea_breeze", 12, 24], ["sea_breeze", 24, 48],
+          ["sw_flow", 12, 24], ["sw_flow", 24, 48]
+        ]
+      },
+      "reason": "v0.6.476 rescore verdict. Extended nbm_backstamp.py to compute error_l4_nbm counterfactuals across 30 days (44K new stamps for cc/ch), then re-ran analysis/nbm_counterfactual_rescore.py. Results: wg L3 transfer net +0.16% to +0.58% at 6-47h (KEPT); cc L4 transfer ±0.11% wash (REMOVED — no evidence); chp_nbm ch transfer −1.15% at 24-47h with near-zero elsewhere (REMOVED — directionally negative, though chp coverage still thin at 930 rows). Anti-'ship everything from HRRR' discipline in force: only cells with 30-day evidence of net-positive counterfactual lift stay. chp_nbm re-evaluation gated on 14 days of live chp_nbm stamps (~09-04)."
     }
   }
 }

@@ -67,6 +67,14 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from analysis._cache import cached_path
+# L4_NBM counterfactual (v0.6.476, 2026-08-25): reuse the runtime layer's
+# curated-table loader + apply function so backstamped error_l4_nbm exactly
+# matches what forecast_snapshot would have stamped if l4_nbm had been live
+# for the whole backstamp window.
+from weather_collector.processors.l4_nbm import (
+    l4_nbm_correction as _l4_nbm_correction,
+    L4_NBM_FIELDS as _L4_NBM_FIELDS,
+)
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 GCS_BLOB_URL = "https://storage.googleapis.com/myweather-data/nbm_backfill/{ymd}_{hh:02d}.json"
@@ -203,6 +211,33 @@ def _circular_diff_deg(a, b):
     return (a - b + 180) % 360 - 180
 
 
+def _maybe_add_l4_nbm(row):
+    """Fill error_l4_nbm on a row that already carries forecast_l3_nbm but
+    predates the live l4_nbm ship (v0.6.451, 08-21). Idempotent — no-op if
+    the row already has error_l4_nbm or is out of scope. v0.6.476."""
+    field = row.get("field")
+    if field not in _L4_NBM_FIELDS:
+        return False
+    if row.get("error_l4_nbm") is not None:
+        return False
+    l3 = row.get("forecast_l3_nbm")
+    obs = row.get("observed")
+    vt = row.get("valid_time")
+    if l3 is None or obs is None or not isinstance(vt, str) or len(vt) < 13:
+        return False
+    try:
+        hod = int(vt[11:13])
+    except ValueError:
+        return False
+    if not (0 <= hod < 24):
+        return False
+    corr = _l4_nbm_correction(field, hod)
+    l4 = float(l3) - corr
+    row["forecast_l4_nbm"] = round(l4, 3)
+    row["error_l4_nbm"] = round(l4 - float(obs), 3)
+    return True
+
+
 def _stamp_row(row, blob, new_lead):
     """Compute + inject raw_nbm / l2_nbm / l3_nbm fields onto row.
     Returns True if stamped, False if prerequisites missing."""
@@ -272,6 +307,22 @@ def _stamp_row(row, blob, new_lead):
         row["error_raw_nbm"] = round(raw_nbm - obs_f, 3)
         row["error_l2_nbm"] = round(l2_nbm - obs_f, 3)
         row["error_l3_nbm"] = round(l3_nbm - obs_f, 3)
+
+    # L4_NBM counterfactual (v0.6.476). Diurnal hour-of-day residual for
+    # cc/ch — mirrors what forecast_snapshot would stamp at live-tick time.
+    # Requires valid_time to derive hour_of_day; skip if missing.
+    if field in _L4_NBM_FIELDS:
+        vt = row.get("valid_time")
+        if isinstance(vt, str) and len(vt) >= 13:
+            try:
+                hod = int(vt[11:13])
+            except ValueError:
+                hod = None
+            if hod is not None and 0 <= hod < 24:
+                corr = _l4_nbm_correction(field, hod)
+                l4_nbm = l3_nbm - corr
+                row["forecast_l4_nbm"] = round(l4_nbm, 3)
+                row["error_l4_nbm"] = round(l4_nbm - obs_f, 3)
     return True
 
 
@@ -295,6 +346,7 @@ def backstamp():
     n_no_prereq = 0
     n_no_blob = 0
     n_stamped = 0
+    n_l4_backfilled = 0
     stamped_by_field = defaultdict(int)
 
     print(f"Streaming pair log → {OUT_PATH}")
@@ -316,9 +368,13 @@ def backstamp():
                 n_out += 1
                 continue
 
-            # Skip rows that already carry NBM stamps (post-v0.6.435).
+            # Skip full stamping for rows that already carry NBM stamps
+            # (post-v0.6.435), BUT still fill L4_NBM counterfactual if the
+            # row predates the live l4_nbm ship (v0.6.451, 08-21).
             if row.get("error_l3_nbm") is not None:
                 n_already += 1
+                if _maybe_add_l4_nbm(row):
+                    n_l4_backfilled += 1
                 fout.write(json.dumps(row, separators=(",", ":")) + "\n")
                 n_out += 1
                 continue
@@ -359,8 +415,9 @@ def backstamp():
     print()
     print(f"Backstamp complete:")
     print(f"  {n_in:,} rows scanned, {n_out:,} written")
-    print(f"  {n_stamped:,} newly stamped with raw_nbm / l2_nbm / l3_nbm")
+    print(f"  {n_stamped:,} newly stamped with raw_nbm / l2_nbm / l3_nbm / l4_nbm (l4 for cc/ch)")
     print(f"  {n_already:,} already had error_l3_nbm (passed through)")
+    print(f"  {n_l4_backfilled:,} of those got L4_NBM counterfactual back-filled (v0.6.476)")
     print(f"  {n_out_of_scope:,} out-of-scope field (passed through)")
     print(f"  {n_too_old:,} older than {BACKSTAMP_CUTOFF_DAYS}d cutoff")
     print(f"  {n_no_prereq:,} missing run_time or lead_h")
