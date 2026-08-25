@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.483 • August 25, 2026 (dp excluded from Total Lift aggregation — analytically not independent of t and h)</strong></summary>
+
+- **Why:** Our prod_dp = Magnus(prod_t, prod_h). If our t and h were perfect, prod_dp would be perfect by construction — dp has zero independent correction skill on our side. Including dp in the Total Lift median implicitly weights t and h errors 2-3× because they also drive dp. NBM's dp is independently blended, but that doesn't fix the double-count on our contribution.
+- **Fix (frontend-only, no publisher change).** `renderScoreboardTilesMinimal` computes Total Lift over `TOTAL_LIFT_SCOPE = NBM_SCOPE \ {"dp"}`. `renderPerFieldDiagnostic` still shows dp as a row (we care about the on-page dp quality — NBM's independent DPT can and does beat our derived one) but excludes it from the Total Lift column's Median/Mean tfoot rows. Pipeline Lift, Selector Skill, and Prod Trend tiles still include dp — the double-count concern is specific to Prod-vs-BestRaw where NBM's independent dp emission gets pooled with our compounded dp error.
+- **Truth-source note.** Our obs_dp is Magnus'd from our WU-network hyperlocal T and H aggregate — that's the honest Wyman Cove yardstick given we're on the water and KBVY is inland. No independent hyperlocal dp truth exists (Tempest dp is derived from Tempest's Sensirion T+RH; PWS dp is derived on-device; buoy doesn't emit dp). This isn't fixable; the exclusion above is the honest workaround.
+
+</details>
+
+<details>
 <summary><strong>v0.6.482 • August 25, 2026 (Prod Trend noise suppression — thin prior pool + tiny-magnitude/non-MAE fields)</strong></summary>
 
 - **Symptom.** 7d Prod Trend tile median was landing at −191.8% because pa (precip amount, `prod_prior_mae` = 0.005 in, `prod_mae` = 0.015 in) produced a ratio of −191% off two near-zero denominators. Several NBM-scope fields at 7d showed even wilder trends (t −1181%, dp −8339%, wg −674%) because the "prior window" (7-14 days ago) has almost no rows that survive the v0.6.468 pool intersection — `nbm_raw` backstamp thins out that far back, so `n_prod_prior` was 0-3 on those fields.
