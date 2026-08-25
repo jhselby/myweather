@@ -1643,7 +1643,7 @@
 
 <section class="sb-pfs-scope">
   <div class="sb-pfs-title">Per-field diagnostic — 7 day</div>
-  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. <strong>dp and cc</strong> are shown as rows but excluded from every Median/Mean row and every headline tile: our prod_dp = Magnus(prod_t, prod_h) and our prod_cc = Ccd max(prod_cl, cm, ch) — both analytical functions of fields we already score, with no independent correction chain. Including them in aggregates double-counts and misleadingly suggests we work on them separately.</span></div>
+  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. <strong>dp and cc</strong> appear as placeholder rows with all metric cells dashed — neither has an independent correction chain today (prod_dp is Magnus of corrected t/h, prod_cc is Ccd max of corrected cl/cm/ch), so any number here would be a compounded restatement of fields we already score. Row kept as a slot for future resurrection (dp bias layer, cc composition tuner).</span></div>
 
   <div class="sb-pfs-scroll">
     <table class="sb-pfs-tbl">
@@ -4250,19 +4250,21 @@ async function renderScoreboardTilesMinimal() {
   // fields where the chooser has any data. Prod Trend uses everything.
   const NBM_SCOPE = ["t","h","dp","ws","wg","wd","cc","ch","sr"];
   const ALL_SCOPE = ["t","h","dp","ws","wg","wd","cc","cl","cm","ch","sr","pp","pa","pr"];
-  // v0.6.484 — derived fields excluded from ALL tile aggregations. Our
-  // prod_dp = Magnus(prod_t, prod_h) and prod_cc = Ccd max(prod_cl,
-  // prod_cm, prod_ch) are analytical functions of other fields we already
-  // score. Neither has an independent correction chain — cc was retired
-  // from L1/L2/L3/L4/Lc on 2026-07-30 v0.6.390; dp never had one.
-  // Including either in a median implicitly weights their component
-  // fields (t/h for dp, cl/cm/ch for cc) 2-3× and misleadingly implies
-  // we're doing separate work on them. Both stay visible as rows in the
-  // per-field diagnostic (NBM's independent DPT/TCDC can beat our
-  // derivations and we want to see that), but they're dropped from
-  // every headline aggregation.
+  // v0.6.484-486 — field-exclusion sets for tile aggregations.
+  //   DERIVED_EXCLUDE: dp + cc. Neither has its own correction chain
+  //     (prod_dp = Magnus(prod_t, prod_h); prod_cc = Ccd max(prod_cl,
+  //     prod_cm, prod_ch)); including them double-counts the fields we
+  //     actually work on.
+  //   NON_MAE_EXCLUDE: pa + pp. pa's MAE is tiny-magnitude inches, ratio
+  //     lifts land in noise; pp is Brier-scored, not MAE-comparable.
   const DERIVED_EXCLUDE = new Set(["dp", "cc"]);
-  const _agg = (scope) => scope.filter(f => !DERIVED_EXCLUDE.has(f));
+  const NON_MAE_EXCLUDE = new Set(["pa", "pp"]);
+  const _agg = (scope) => scope.filter(f => !DERIVED_EXCLUDE.has(f) && !NON_MAE_EXCLUDE.has(f));
+  // v0.6.486 — Total Lift + Pipeline Lift now include HRRR-only fields
+  // (cl/cm/pr). HRRR raw IS a valid baseline for those; per_field_scoring
+  // computes real lift numbers. Previously restricted to NBM_SCOPE on the
+  // assumption that "needs both raws to be interpretable" — wrong.
+  const LIFT_SCOPE = ["t","h","ws","wg","wd","cc","ch","sr","dp","cl","cm","pr"];
 
   const _totalLift     = (c) => (c && c.total_vs_best_raw_pct != null) ? c.total_vs_best_raw_pct : null;
   const _pipelineLift  = (c) => (c && c.corr_vs_l1_pct        != null) ? c.corr_vs_l1_pct        : null;
@@ -4320,10 +4322,10 @@ async function renderScoreboardTilesMinimal() {
     }
   };
 
-  _paintTile("total_lift",     _agg(NBM_SCOPE), _totalLift);
-  _paintTile("pipeline_lift",  _agg(NBM_SCOPE), _pipelineLift);
-  _paintTile("selector_skill", _agg(NBM_SCOPE), _selectorSkill);
-  _paintTile("prod_trend",     _agg(ALL_SCOPE), _prodTrend);
+  _paintTile("total_lift",     _agg(LIFT_SCOPE), _totalLift);
+  _paintTile("pipeline_lift",  _agg(LIFT_SCOPE), _pipelineLift);
+  _paintTile("selector_skill", _agg(NBM_SCOPE),  _selectorSkill);
+  _paintTile("prod_trend",     _agg(ALL_SCOPE),  _prodTrend);
 
   // v0.6.485 — wire the W/F/L breakdown block under each tile from the
   // same 7d numbers. dp and cc are excluded here too (see DERIVED_EXCLUDE
@@ -4361,10 +4363,10 @@ async function renderScoreboardTilesMinimal() {
 
   const _lift = { w: "winning", f: "flat", l: "losing" };
   const _trend = { w: "improving", f: "flat", l: "regressing" };
-  _paintWfl("total_lift",     _agg(NBM_SCOPE), _totalLift,     _lift);
-  _paintWfl("pipeline_lift",  _agg(NBM_SCOPE), _pipelineLift,  _lift);
-  _paintWfl("selector_skill", _agg(NBM_SCOPE), _selectorSkill, _lift);
-  _paintWfl("prod_trend",     _agg(ALL_SCOPE), _prodTrend,     _trend);
+  _paintWfl("total_lift",     _agg(LIFT_SCOPE), _totalLift,     _lift);
+  _paintWfl("pipeline_lift",  _agg(LIFT_SCOPE), _pipelineLift,  _lift);
+  _paintWfl("selector_skill", _agg(NBM_SCOPE),  _selectorSkill, _lift);
+  _paintWfl("prod_trend",     _agg(ALL_SCOPE),  _prodTrend,     _trend);
 }
 
 
@@ -4428,8 +4430,21 @@ async function renderPerFieldDiagnostic() {
 
   const totalCol = [], hrrrCol = [], nbmCol = [], hitCol = [], valCol = [];
 
+  const DERIVED_NOTE = {
+    dp: "derived — Magnus(prod_t, prod_h). Placeholder for a future dp bias layer.",
+    cc: "derived — Ccd max(prod_cl, prod_cm, prod_ch). Placeholder for a future cc composition/correction layer.",
+  };
   const rows = FIELD_ORDER.map(f => {
     const c = pf7[f] || {};
+    // v0.6.486 — dp and cc are shown as placeholder rows only. They have no
+    // independent correction chain today, so any numbers here would be
+    // compounded restatements of t/h (dp) or cl/cm/ch (cc). Present the row
+    // so the field is visible on the scoreboard for future resurrection
+    // (dp bias layer, cc composition tuner), but dash every metric cell.
+    if (DERIVED_NOTE[f]) {
+      const dash = `<span class="sb-em">—</span>`;
+      return `<tr><td>${f} <span class="sb-dim" style="font-size:11px;">· ${DERIVED_NOTE[f]}</span></td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td class="sb-dim">—</td></tr>`;
+    }
     const total = (c.total_vs_best_raw_pct != null) ? c.total_vs_best_raw_pct : null;
     const hrrrSkill = _pipeSkill(c.hrrr_raw_mae, c.hrrr_prod_mae);
     const nbmSkill = NBM_SCOPE.has(f) ? _pipeSkill(c.nbm_raw_mae, c.nbm_prod_mae) : null;

@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.486 • August 25, 2026 (Restore cl/cm/pr to Total Lift + Pipeline Lift tiles; dp + cc rows become placeholder-only in diagnostic)</strong></summary>
+
+- **Regression fix from v0.6.485.** When the tile W/F/L was wired live, the field scope defaulted to `NBM_SCOPE` (the 9 fields NBM emits), which mechanically dropped cl/cm/pr from the buckets. The prior static content had cl/cm listed under Total Lift ("2 flat: cl · cm") and cl/cm/ch under Pipeline Lift ("3 winning"). New `LIFT_SCOPE = ["t","h","ws","wg","wd","cc","ch","sr","dp","cl","cm","pr"]` — Total Lift + Pipeline Lift now include all 12 fields we do independent work on; DERIVED_EXCLUDE (dp+cc) + NON_MAE_EXCLUDE (pa+pp) still applied via `_agg`. Selector Skill stays NBM-only since there's no NBM cascade for HRRR-only fields to be compared against. Prod Trend uses ALL_SCOPE unchanged.
+- **dp + cc rows in per-field diagnostic table are now placeholder-only.** Field name shown with a short note explaining the derivation (dp: Magnus(prod_t, prod_h); cc: Ccd max(prod_cl, cm, ch)) — all metric cells dashed. Rationale (per Joe): dp and cc have no independent skill to score today, so any numbers there would be compounded restatements of the fields they inherit from. Rows kept as reserved slots for future resurrection (dp bias layer, cc composition tuner).
+- Sub-blurb updated to name the placeholder behavior instead of the prior "shown as rows but excluded from Median/Mean" phrasing.
+- Frontend-only.
+
+</details>
+
+<details>
 <summary><strong>v0.6.485 • August 25, 2026 (Tile W/F/L breakdowns wired live; dp + cc removed from tile scoring entirely, kept as rows in diagnostic)</strong></summary>
 
 - **Tile W/F/L breakdowns are now live.** The `winning · flat · losing` (and `improving · flat · regressing` for Prod Trend) lists under each of the 4 tiles were previously hardcoded static content — showing an outdated baseline that still counted dp + cc among winning/losing fields. New `_paintWfl` in `renderScoreboardTilesMinimal` computes each tile's buckets from live 7d numbers with the same ±3% threshold the tile color logic uses, and excludes dp + cc via the same `DERIVED_EXCLUDE` set the medians use.
