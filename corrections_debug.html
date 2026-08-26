@@ -1640,7 +1640,7 @@
 
 <section class="sb-pfs-scope">
   <div class="sb-pfs-title">Per-field diagnostic — 7 day</div>
-  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. <strong>dp and cc</strong> appear as placeholder rows with all metric cells dashed — neither has an independent correction chain today (prod_dp is Magnus of corrected t/h, prod_cc is Ccd max of corrected cl/cm/ch), so any number here would be a compounded restatement of fields we already score. Row kept as a slot for future resurrection (dp bias layer, cc composition tuner).</span></div>
+  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. dp<sup>¹</sup> and cc<sup>²</sup> are placeholder rows — see footnotes below.</span></div>
 
   <div class="sb-pfs-scroll">
     <table class="sb-pfs-tbl">
@@ -1663,7 +1663,9 @@
   </div>
 
   <div class="sb-pfs-foot">
-    Windows: Total Lift from today's 7d scoreboard. Pipeline Skill + Hit Rate + Value Captured use the L1 selector's 30d pool as a design proxy — production impl computes all on the same 7d/24h grid.
+    <div><sup>¹</sup> <strong>dp</strong> — derived, Magnus(prod_t, prod_h). Placeholder row for a future dp bias layer.</div>
+    <div><sup>²</sup> <strong>cc</strong> — derived, Ccd max(prod_cl, prod_cm, prod_ch). Placeholder row for a future cc composition/correction layer.</div>
+    <div style="margin-top:8px;">Windows: Total Lift from today's 7d scoreboard. Pipeline Skill + Hit Rate + Value Captured use the L1 selector's 30d pool as a design proxy — production impl computes all on the same 7d/24h grid.</div>
   </div>
 </section>
 
@@ -4493,20 +4495,16 @@ async function renderPerFieldDiagnostic() {
 
   const totalCol = [], hrrrCol = [], nbmCol = [], hitCol = [], valCol = [];
 
-  const DERIVED_NOTE = {
-    dp: "derived — Magnus(prod_t, prod_h). Placeholder for a future dp bias layer.",
-    cc: "derived — Ccd max(prod_cl, prod_cm, prod_ch). Placeholder for a future cc composition/correction layer.",
-  };
+  // v0.6.489 — dp/cc placeholder rows carry a small footnote marker only;
+  // the derivation explanation lives in a footnote row below the tfoot
+  // so the field-name column doesn't stretch and break the column widths.
+  const DERIVED_MARKER = { dp: "¹", cc: "²" };
   const rows = FIELD_ORDER.map(f => {
     const c = pf7[f] || {};
-    // v0.6.486 — dp and cc are shown as placeholder rows only. They have no
-    // independent correction chain today, so any numbers here would be
-    // compounded restatements of t/h (dp) or cl/cm/ch (cc). Present the row
-    // so the field is visible on the scoreboard for future resurrection
-    // (dp bias layer, cc composition tuner), but dash every metric cell.
-    if (DERIVED_NOTE[f]) {
+    // dp and cc: placeholder-only row (no independent skill to score).
+    if (DERIVED_MARKER[f]) {
       const dash = `<span class="sb-em">—</span>`;
-      return `<tr><td>${f} <span class="sb-dim" style="font-size:11px;">· ${DERIVED_NOTE[f]}</span></td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td class="sb-dim">—</td></tr>`;
+      return `<tr><td>${f}<sup class="sb-dim" style="font-size:10px;margin-left:2px;">${DERIVED_MARKER[f]}</sup></td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td class="sb-dim">—</td></tr>`;
     }
     const total = (c.total_vs_best_raw_pct != null) ? c.total_vs_best_raw_pct : null;
     const hrrrSkill = _pipeSkill(c.hrrr_raw_mae, c.hrrr_prod_mae);

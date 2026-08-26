@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.489 • August 25, 2026 (dp/cc placeholder-row derivation notes moved to footnotes)</strong></summary>
+
+- The inline "derived — Magnus(prod_t, prod_h). Placeholder for a future dp bias layer." note in the dp/cc rows' first column was stretching the field-name column and misaligning the table. Row cell now carries just the field name plus a small footnote marker (¹ / ²); the full derivation explanation moves to two footnote lines in the existing `sb-pfs-foot` block below the tfoot. Sub-blurb shortened accordingly.
+
+</details>
+
+<details>
 <summary><strong>v0.6.488 • August 25, 2026 (National Source + Health & Reliability partial wired live)</strong></summary>
 
 - **National Source panel** now derives NBM-wins / HRRR-wins / HRRR-only counts live per-field from `per_field_scoring.json`'s `hrrr_raw_mae` vs `nbm_raw_mae` (7d). dp and cc excluded from the wins count (no-derived-on-scoreboard rule). pa and pp stay in HRRR-only — they're real forecast fields NBM doesn't emit, and this panel is about data provenance, not scoring skill.
