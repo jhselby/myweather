@@ -66,6 +66,26 @@ _NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch", "h")
 # accumulates. wd uses circular subtraction/addition.
 _L2_NBM_FIELDS = ("t", "ws", "wd", "wg", "h", "ch", "sr", "dp", "cc")
 
+# v0.6.492 (2026-08-26) — evidence-driven skip of the HRRR-delta transfer
+# for fields where analysis/nbm_l2_delta_audit.py shows the delta actively
+# hurts vs raw_nbm on the 30d pool. For these fields we stamp
+#   l2_nbm = raw_nbm
+# (identity passthrough — same path already used when HRRR L2 didn't fire).
+#
+# Rationale: the L2_NBM reconstruction assumes the true Wyman Cove bias is
+# independent of which model generated the raw. That assumption breaks for
+# moisture fields at short lead (h 0-5h delta = −29%, dp 0-5h delta = −28%)
+# and for solar at all leads (sr pooled −2.9%). Applying the HRRR delta on
+# those fields amplifies rather than cancels the model-specific bias.
+#
+# Fields that still get the delta: t, ws, wd, wg, ch, cc — pooled effect is
+# neutral (|lift| < 1%) or positive (wd +1.0%, ch +0.6%, cc +0.1%).
+#
+# Downstream effect: l3_nbm h re-fits daily via analysis/l3_nbm_fit.py so
+# the change ripples in ~14 days (τ=14d recency-weighted). dp/sr are not in
+# L3_NBM_FIELDS so no downstream disruption there.
+_L2_NBM_DELTA_SKIP = frozenset({"h", "dp", "sr"})
+
 # Phase 3 (2026-08-19) — L3_NBM coverage. Per-lead signed bias applied to
 # {field}_l2_nbm: `l3_nbm = l2_nbm - bias_table[field][lead_h]`. Table
 # comes from analysis/l3_nbm_fit.py fitting the pair log's error_l2_nbm
@@ -521,6 +541,11 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                 for f in _L2_NBM_FIELDS:
                     raw_nbm = entry.get(f"{f}_raw_nbm")
                     if raw_nbm is None:
+                        continue
+                    # v0.6.492 — fields where the HRRR-delta transfer hurts
+                    # per nbm_l2_delta_audit skip the delta entirely.
+                    if f in _L2_NBM_DELTA_SKIP:
+                        entry[f"{f}_l2_nbm"] = _round_for(f, raw_nbm)
                         continue
                     raw_hrrr = entry.get(f"{f}_l1")
                     l2_hrrr = entry.get(f"{f}_l2")

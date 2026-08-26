@@ -250,6 +250,65 @@
     .field-badge { background: #eee !important; color: #111 !important; border-color: #ccc !important; }
     .field-badge.active { background: #e8f5ec !important; color: #1a6a3a !important; }
     .field-badge.inactive { background: #f0f0f0 !important; color: #777 !important; }
+
+    /* v0.6.491 — 2026-08-25 redesign scoreboard uses .sb-scope + CSS
+       variables. Redefine the vars at print so the whole subtree
+       inherits light-mode colors — one place, no per-selector churn.
+       .sb-pfs-scope has its own CSS-var block, must be listed too. */
+    .sb-scope,
+    .sb-pfs-scope {
+      --sb-bg: white !important;
+      --sb-surface: white !important;
+      --sb-surface-2: #f6f7f9 !important;
+      --sb-divider: #ccc !important;
+      --sb-text: #111 !important;
+      --sb-muted: #555 !important;
+      --sb-dim: #777 !important;
+      --sb-accent: #2554a0 !important;
+      --sb-good: #1a6a3a !important;
+      --sb-warn: #8a5a1a !important;
+      --sb-bad: #a33 !important;
+      --sb-good-dim: #e8f5ec !important;
+      --sb-warn-dim: #fdf3e0 !important;
+      background: white !important;
+      color: #111 !important;
+    }
+    /* Belt-and-suspenders for sb-* elements whose backgrounds were set
+       to raw hex (not through vars) — the inline-hex wildcard rules
+       above catch most, this makes borders + text explicit. */
+    .sb-scope [class*="sb-tile"],
+    .sb-scope [class*="sb-strip"],
+    .sb-scope .sb-pfs,
+    .sb-scope .sb-pfs-sub,
+    .sb-scope .sb-pfs-foot,
+    .sb-scope table, .sb-pfs-scope table,
+    .sb-scope th, .sb-pfs-scope th,
+    .sb-scope td, .sb-pfs-scope td {
+      background: white !important;
+      color: #111 !important;
+      border-color: #ccc !important;
+    }
+    .sb-scope th, .sb-pfs-scope th { background: #eee !important; }
+    /* Tile-status color classes — keep semantic hue, drop dark bg */
+    .sb-scope .sb-good, .sb-scope .sb-pos,
+    .sb-pfs-scope .sb-good { color: #1a6a3a !important; }
+    .sb-scope .sb-warn, .sb-scope .sb-flat,
+    .sb-pfs-scope .sb-warn { color: #8a5a1a !important; }
+    .sb-scope .sb-bad, .sb-scope .sb-neg,
+    .sb-pfs-scope .sb-bad { color: #a33 !important; }
+    .sb-scope .sb-em, .sb-scope .sb-dim,
+    .sb-pfs-scope .sb-dim { color: #777 !important; }
+
+    /* v0.6.491 — nuclear catch-all. Any element whose background wasn't
+       already normalized to white by the specific rules above gets its
+       background dropped to transparent — the body's white shows through.
+       Runs last so specific rules (badge fills, th greys) win by
+       cascade order. script/style excluded; header keeps its own bg. */
+    body *:not(script):not(style):not(header):not(header *):not(.field-badge):not(.octant-rose .oct):not(th) {
+      background-color: transparent !important;
+      background-image: none !important;
+    }
+    body { background: white !important; }
     .field-badge.na { background: #f4f4f4 !important; color: #888 !important; }
     .field-badge.brier { background: #fdf3e0 !important; color: #8a5a1a !important; }
     /* Band-table active column shading — light green tint */
@@ -1427,15 +1486,15 @@
 
       <div class="sb-hero-callouts" style="margin-top:0;padding-top:0;border-top:0;">
         <div class="sb-co-label" style="color: var(--sb-good);">Best</div>
-        <div class="sb-co-val"><span class="sb-dim">— wiring pending</span></div>
+        <div class="sb-co-val" id="nc-best"><span class="sb-dim">loading…</span></div>
         <div class="sb-co-label" style="color: var(--sb-bad);">Worst</div>
-        <div class="sb-co-val"><span class="sb-dim">— wiring pending</span></div>
+        <div class="sb-co-val" id="nc-worst-1"><span class="sb-dim">loading…</span></div>
         <div class="sb-co-label" style="color: var(--sb-bad); opacity: 0.85;">2nd worst</div>
-        <div class="sb-co-val"><span class="sb-dim">—</span></div>
+        <div class="sb-co-val" id="nc-worst-2"><span class="sb-dim">—</span></div>
         <div class="sb-co-label" style="color: var(--sb-bad); opacity: 0.75;">3rd worst</div>
-        <div class="sb-co-val"><span class="sb-dim">—</span></div>
+        <div class="sb-co-val" id="nc-worst-3"><span class="sb-dim">—</span></div>
       </div>
-      <div style="font-size:11px;color:var(--sb-dim);padding-top:8px;line-height:1.4;">Live wiring pending — needs a per (field, lead-band) MAE feed. dp + cc will be excluded when wired (same rule as the score tiles).</div>
+      <div style="font-size:11px;color:var(--sb-dim);padding-top:8px;line-height:1.4;">Top-1 win + top-3 losses at (field, lead-band). dp + cc excluded (derived); pa + pp excluded (non-MAE); cells with n &lt; 200 filtered as noise-adjacent.</div>
     </div>
 
   </div>
@@ -1446,7 +1505,7 @@
     <!-- National Source -->
     <div class="sb-tile sb-tile-wide">
       <div class="sb-tile-title">National Source <span style="color:var(--sb-dim);letter-spacing:0.05em;">(7D · lower MAE wins)</span></div>
-      <div class="sb-tile-sub">Which raw source wins per field. This is the baseline we must beat.</div>
+      <div class="sb-tile-sub">Which national raw source is currently scoring better per field. Diagnostic only — Total Lift already scores against NBM raw (or HRRR raw for the 5 HRRR-only fields), so National Source doesn't set the baseline; it's context for interpreting where the pipeline's lift is coming from.</div>
 
       <div id="national-source-body" class="sb-wfl" style="grid-template-columns: auto 1fr; row-gap: 8px; font-size: 13px;">
         <div class="sb-wfl-count sb-dim">—</div>
@@ -1466,7 +1525,7 @@
         </div>
         <div class="sb-health-row">
           <span class="sb-h-lbl">High-conf cells</span>
-          <span class="sb-h-val sb-dim">— <span style="font-size:11px;">wiring pending (needs per-cell feed)</span></span>
+          <span class="sb-h-val" id="health-hcc"><span class="sb-dim">loading…</span></span>
         </div>
         <div class="sb-health-row">
           <span class="sb-h-lbl">Halves agree</span>
@@ -1478,7 +1537,7 @@
 
   </div>
 
-  <div class="sb-footer">Live from per_field_scoring.json (refits hourly). Notable Calls + High-conf cells still pending live wiring (need a per-(field, lead-band) feed).</div>
+  <div class="sb-footer">Live from per_field_scoring.json (refits hourly). All tiles wired v0.6.493.</div>
 
 </section>
 
@@ -1640,14 +1699,14 @@
 
 <section class="sb-pfs-scope">
   <div class="sb-pfs-title">Per-field diagnostic — 7 day</div>
-  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. dp<sup>¹</sup> and cc<sup>²</sup> are placeholder rows — see footnotes below.</span></div>
+  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. dp and cc omitted — both derived, no independent skill to score (see note below).</span></div>
 
   <div class="sb-pfs-scroll">
     <table class="sb-pfs-tbl">
       <thead>
         <tr>
           <th>Field</th>
-          <th>Total Lift<span class="sb-pfs-thsub">Prod vs BestRaw</span></th>
+          <th>Total Lift<span class="sb-pfs-thsub">Prod vs Public Baseline</span></th>
           <th>HRRR Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
           <th>NBM Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
           <th>Hit Rate<span class="sb-pfs-thsub">% rows picked right</span></th>
@@ -1663,9 +1722,8 @@
   </div>
 
   <div class="sb-pfs-foot">
-    <div><sup>¹</sup> <strong>dp</strong> — derived, Magnus(prod_t, prod_h). Placeholder row for a future dp bias layer.</div>
-    <div><sup>²</sup> <strong>cc</strong> — derived, Ccd max(prod_cl, prod_cm, prod_ch). Placeholder row for a future cc composition/correction layer.</div>
-    <div style="margin-top:8px;">Windows: Total Lift from today's 7d scoreboard. Pipeline Skill + Hit Rate + Value Captured use the L1 selector's 30d pool as a design proxy — production impl computes all on the same 7d/24h grid.</div>
+    <div><strong>dp</strong> and <strong>cc</strong> omitted — both derived at prod-time (dp = Magnus(prod_t, prod_h); cc = Ccd max(prod_cl, prod_cm, prod_ch)) with no independent skill chain. Future dp bias layer or cc composition tuner would restore their rows.</div>
+    <div style="margin-top:8px;">Windows: all five columns computed on the same paired 7d/24h pool (v0.6.492) — rows where every relevant residual (HRRR raw, NBM raw, selector output, Prod, both cascade Prods) exists. Total Lift columns and Pipeline Skill columns now share denominators, so causal chaining is meaningful: if Total Lift moves, at least one Pipeline Skill or the selector's Hit Rate moved on the same rows to cause it.</div>
   </div>
 </section>
 
@@ -1700,7 +1758,7 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ws</code> wind speed</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 direct <span style="opacity:0.6;">(L3 dropped 08-08 v0.6.397)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472 — walkforward −2.5% agg)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">ws L3 dropped from L3_FIELDS 2026-08-08 v0.6.397</strong> — walkforward cleared 7-day gate; pooled ws L3 fc +0.1% / obs +0.6% is noise. L3 asymmetric additive + SKIP_TABLE entries now inert (kept for docs). <strong style="color:#e0a070;">Root cause was L2 blend, not L3.</strong> L2 blend shrunk 24h → 4h (v0.6.384, 07-28) fixed the +30% Prod-vs-Raw regression that ran 2 weeks. Per-lead diagnostic showed L2 lost catastrophically at leads 3-16 (+40 to +85% vs L1). Sweep BLEND_HOURS ∈ {1..24}: 4 wins at +14.72% pooled. Physical: observed KBVY wind has more variance than the next-few-hour average — 24h bleed imported point-in-time noise. <strong style="color:#4ad29a;">wsbp gate</strong> (v0.6.388, 07-28) — sibling of dpbp, calm-only, sign-inverted. ENABLED=False. Preflight failed 08-04: calm regime n=0 in shadow window. Wait for calm regime to accumulate.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Stable — L2 blend + direct-selection only.</strong> ws L3 dropped 2026-08-08 v0.6.397 (walkforward cleared 7-day gate; pooled ws L3 impact was noise). Root cause + BLEND_HOURS 24→4 fix + wsbp dormant-gate history → <a href="#sec-archive-post-ship" style="color:#7090a0;">Archive</a>. <strong>wsbp gate</strong> (v0.6.388, ENABLED=False, calm-only sign-inverted sibling of dpbp) still HELD — preflight failed 08-04 on calm-regime n=0; waiting for accumulation.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wg</code> wind gust</td>
@@ -1792,7 +1850,7 @@
           <li>L4 diurnal: <code>{ch, cc}</code> <span style="opacity:0.7;">· <strong style="color:#4ad29a;">cc skip cells added 2026-08-08 v0.6.397</strong>: nw_flow 0-5 + 12-23, pre_frontal 0-5 + 6-11 + 12-23 (cc L4 only wins at longer leads in these regimes)</span></li>
           <li>Lsr synoptic (sr): skip ne_flow + calm <span style="opacity:0.7;">· Lt reclassified as telemetry experiment 07-27 (Fix B held-out +0.29%)</span></li>
           <li>Lsb sr sea_breeze cc&lt;25 Lsr override (sr): per-hour bias hours 12-19 <span style="opacity:0.7;">· <span style="color:#4ad29a;">FLIPPED 2026-08-05 v0.6.394</span> · gate: <code>regime == "sea_breeze" AND cc &lt; 25</code> · <span style="color:#4ad29a;">14-day watch CLOSED CLEAN 2026-08-19 (+11.4% pooled, n=15,985)</span></span></li>
-          <li>NBM parallel cascade — <strong>STRUCTURALLY COMPLETE</strong>: <code>raw_nbm</code> for 9 fields (t/dp/ws/wd/wg/sr/cc/ch/h), <code>l2_nbm</code> for all 9 via HRRR-delta reconstruction, <code>l3_nbm</code> for all 9 (373/384 cells filled), <code>l4_nbm</code> for cc/ch (v0.6.451), <code>l5_nbm</code> for sr (v0.6.452), <code>l6_nbm</code> for t scaffold (v0.6.453, ENABLED=False mirroring HRRR L6), <code>chp_nbm</code> for ch (v0.6.454), <code>wdp_nbm</code> for wd (v0.6.437). <span style="opacity:0.7;">· 9 cells picking NBM: wg 12-47h, dp 6-47h, cc all leads (router-scope lift +8.5% on n=74,528 at last selector fit) · L4/L5/L6/chp curated tables now warming; selector re-fit as bins fill will pick up any deeper-layer lift</span></li>
+          <li>NBM parallel cascade — <strong>pipeline slots complete; operational parity incomplete</strong>: <code>raw_nbm</code> for 9 fields (t/dp/ws/wd/wg/sr/cc/ch/h), <code>l2_nbm</code> for all 9 via HRRR-delta reconstruction, <code>l3_nbm</code> for all 9 (373/384 cells filled), <code>l4_nbm</code> for cc/ch (v0.6.451), <code>l5_nbm</code> for sr (v0.6.452), <code>l6_nbm</code> for t scaffold (v0.6.453, ENABLED=False mirroring HRRR L6), <code>chp_nbm</code> for ch (v0.6.454), <code>wdp_nbm</code> for wd (v0.6.437). <span style="opacity:0.7;">· 9 cells picking NBM: wg 12-47h, dp 6-47h, cc all leads (router-scope lift +8.5% on n=74,528 at last selector fit) · L4/L5/L6/chp curated tables now warming; selector re-fit as bins fill will pick up any deeper-layer lift</span></li>
           <li>Lc cloud saturation-unbiasing (cm · ch only) <span style="opacity:0.7;">· FLIPPED 07-17 v0.6.355 · <span style="color:#e07272;">cl+cc both OFF via _FIELD_SKIP after 07-30 v0.6.389d-390 intervention</span></span></li>
           <li>Ccd cc from-derivation <span style="opacity:0.7;">· <span style="color:#4ad29a;">LIVE ENABLED=True 07-30 v0.6.390 (flipped 6d ahead of gate)</span> · cc = <code>max(cl_l6, cm_l6, ch_l6)</code> except SKIP_REGIMES {se_flow, unknown}</span></li>
           <li>chp high-cloud persistence-of-obs (ch): 14 SHIP cells post-07-27 demote, 10 additional cells force-skipped via <code>_CELL_SKIP</code> in processor 08-13 v0.6.405 <span style="opacity:0.7;">· FLIPPED 07-19 v0.6.358 · 14-day watch closed clean 08-02 · 14-day post-v0.6.405 watch through 08-27</span></li>
@@ -1804,7 +1862,7 @@
         <ul style="margin:0 0 8px 16px;padding:0;">
           <li><span style="color:#4ad29a;">✓ ch −46%</span>  ·  <span style="color:#4ad29a;">wg −16%</span>  ·  <span style="color:#4ad29a;">cc −15%</span></li>
           <li><span style="color:#4ad29a;">✓ cm −7%</span>  ·  <span style="color:#4ad29a;">dp −6%</span>  ·  <span style="color:#4ad29a;">h −2%</span></li>
-          <li><span style="color:#4ad29a;">✓ ws long-lead — RESOLVED. BLEND_HOURS 24→4 (v0.6.384 07-28) fixed the root cause; ws then dropped from L3_FIELDS entirely 2026-08-08 v0.6.397 after walkforward cleared 7-day gate (pooled ws L3 impact +0.1%/+0.6% is noise). ws L3 asymmetric skip-table (v0.6.370) + SKIP_TABLE entries (v0.6.386) are now inert — kept for historical documentation.</span></li>
+          <li><span style="color:#4ad29a;">✓ ws long-lead — RESOLVED 08-08 (L2 blend fix, then dropped from L3_FIELDS).</span> <span style="opacity:0.6;font-size:0.9em;">Details in <a href="#sec-archive-post-ship" style="color:#7090a0;">Archive</a>.</span></li>
         </ul>
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Guards</div>
         <ul style="margin:0 0 0 16px;padding:0;">
@@ -1821,7 +1879,7 @@
         <div style="opacity:0.7;font-size:0.9em;margin-bottom:6px;">11 active Stage 1+3 candidates · all auto-run in daily digest · <em>shipped items live under Post-ship watches below</em></div>
 
         <div style="padding:6px 8px;border-left:2px solid #8db4e8;background:#0e1a2a;margin-bottom:6px;border-radius:2px;">
-          <div><strong>NBM parallel cascade</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ STRUCTURALLY COMPLETE 2026-08-21 · L4/L5/L6/chp/wdp all wired · tables warming</span></div>
+          <div><strong>NBM parallel cascade</strong> <span style="color:#4ad29a;font-size:0.85em;">✓ pipeline slots complete 2026-08-21 · L4/L5/L6/chp/wdp all wired</span> <span style="color:#e0a86b;font-size:0.85em;">· operational parity incomplete — see parity callout below (l2_nbm delta reconstruction, L6_NBM disabled, skip table sparse)</span></div>
           <div style="opacity:0.85;">Full mirror of the HRRR cascade on the NBM side, layer-for-layer: <code>raw_nbm → l2_nbm → l3_nbm → l4_nbm (cc/ch) → l5_nbm (sr) → l6_nbm (t, ENABLED=False) → chp_nbm (ch) / wdp_nbm (wd)</code>. Each layer has its own fitter (<code>analysis/l{3-6}_nbm_*.py</code>) writing a curated JSON that the collector loads at import; per-hour stamps land in the snapshot log and per-row <code>error_l{n}_nbm</code> columns land in the pair log. L1 selector picks argmin(MAE(HRRR-deepest-Prod), MAE(NBM-deepest-Prod)) per (field, lead-band). Bins reached L3 maturity via <code>analysis/nbm_backstamp.py</code> (walks pair log + backfilled NBM point extracts, reconstructs <code>l2_nbm</code> exactly from snapshotted HRRR values); deeper layers warm naturally over the next ~30 days as <code>error_l3_nbm</code>/<code>error_l4_nbm</code>/<code>error_l5_nbm</code> rows accumulate. See per-layer fit-status tiles below.</div>
           <div style="color:#9ab0a0;">→ 9 cells currently flip to NBM (wg 12-47h, dp 6-47h, cc all leads). Router-scope ship-gate lift +8.5% on n=74,528 at last selector fit. As deeper NBM layers earn lift, additional cells will flip.</div>
         </div>
@@ -1880,11 +1938,6 @@
           <div><strong>chp full-shape refinement (adopt L6-baseline 5-cell SHIP set)</strong> <span style="color:#e0d472;font-size:0.85em;">⚙ 6-cell emergency demote LIVE 07-27 v0.6.382t · full-shape adoption 7-day gate closed 08-03 · verdict tracked continuously via auto-rolling windows (v0.6.398, 08-09)</span></div>
           <div style="opacity:0.85;">Preview curated JSON at <code>weather_collector/data/ch_persistence_gate_curated_vs_l6.json</code>. L6-baseline Stage 2 rebuild (<code>h_ch_persistence_blend_stage2_vs_l6.py</code>) says chp's honest SHIP set is 5 cells: calm/0-5 (−70%), pre_frontal/0-5 (−41%), sw_flow/0-5 (−30%), se_flow/0-5 (−26%), ne_flow/6-11 (−17%). Currently-live chp is at 14 SHIP + 8 MARGIN post-demote; 5 more halves-disagreement/small-magnitude cells still fire but should also fall away. 7-day live-layer change gate closed 08-03; verdict tracked continuously via auto-rolling windows (v0.6.398, 08-09). Adopt condition: 7 daily reads of the L6-baseline Stage 2 continue to agree on the 5-cell SHIP set + no new frontal-only-recalibration interaction.</div>
         </div>
-
-        <div style="padding:6px 8px;border-left:2px solid #e0d472;background:#0f1712;margin-top:6px;border-radius:2px;">
-          <div><strong>ws L3 hardcode-REPLACEMENT</strong> <span style="color:#7090a0;font-size:0.85em;">⚫ INERT 2026-08-08 v0.6.397 — ws dropped from L3_FIELDS entirely</span></div>
-          <div style="opacity:0.75;"><strong>Now dead code.</strong> All ws L3 asymmetric skip-table + SKIP_TABLE logic is inert because ws is no longer in <code>L3_FIELDS</code> (walkforward 08-08 cleared 7-day gate; pooled ws L3 +0.1%/+0.6% is noise). Historical: L3 is a mean-bias subtraction that helps on over-forecast rows and hurts on under-forecast rows. Asymmetric fc-bin SKIP wired additively on top of the old hardcode (<code>ne_flow</code> all + <code>sea_breeze 0-11</code>) — additive can only add skips, never subtract. Reached 26 SKIP cells (was 44 at scaffold); 23 of 40 concentrated at 24-47h — matches [[project_ws_l3_long_lead_regression]]. REPLACEMENT flip stayed HELD across three re-runs (Jaccard 0.70 → 0.75 → 0.75, none clear 0.8). BLEND_HOURS 24→4 fix (v0.6.384 07-28) resolved the root long-lead regression. 07-28 v0.6.386 extended SKIP_TABLE with frontal 24-47 + pre_frontal 24-47 — those never got a chance to matter before ws left L3. <em>(wg's asymmetric wiring shipped LIVE 07-20 v0.6.366 with 48 SKIP cells; still live — see in-flight table below.)</em></div>
-        </div>
       </div>
     </div>
 
@@ -1902,7 +1955,7 @@
           <div style="color:#4ad29a;font-weight:600;white-space:nowrap;">✓ 08-20</div>
           <div><strong>Phase 4 selector — ARMED</strong> (v0.6.445). Backstamp trick (108d of backfilled NBM point extracts joined to pair log via exact L2 delta reconstruction) let L3_NBM bins reach maturity same-session instead of waiting ~30d for natural fill. 9 cells now pick NBM: wg 12-47h, dp 6-47h, cc all leads. Router-scope ship-gate NBM lift +8.5% on n=74,528.</div>
           <div style="color:#4ad29a;font-weight:600;white-space:nowrap;">✓ 08-21</div>
-          <div><strong>NBM parallel cascade — STRUCTURAL PARITY WITH HRRR (v0.6.450-460).</strong> Cascade layers, applied_layer semantics, specialist attribution, regression sentry, walkforward validator, gate-firing telemetry, skip-table infrastructure, and user-visible writeback all mirror the HRRR side. Selector's NBM picks (currently wg 12-47h, dp 6-47h, cc all leads) now reach the PWA arrays users see. <strong>Real remaining differences (not stale, actively tracked):</strong> (a) <strong>field scope, permanently</strong> — NBM emits 9 fields; <code>cl</code>/<code>cm</code>/<code>pp</code>/<code>pa</code>/<code>pr</code> stay HRRR-only forever (grib doesn't carry them; <code>clp</code> N/A by extension); (b) <strong>L6_NBM ENABLED=False</strong> scaffold pending the "does NBM L2 double-count waterfront?" investigation — HRRR-side L6 disabled 07-01 for a similar-but-distinct reason; (c) <strong>skip_table_nbm_curated.json empty seed</strong> — walkforward has 11 pooled-regime SKIP proposals awaiting regime cross-cut before landing; (d) <strong>F7 applicability map entries</strong> deferred — HRRR modules expose <code>describe_applicability()</code>, NBM modules don't yet; (e) <strong>F8 per-field CAPS_NBM + <code>fitted_at</code> staleness gates</strong> deferred — one domain clamp (v0.6.450) is the safety floor for now; (f) <strong>NBM pair-log depth</strong> — <code>error_l3_nbm</code> has 2d live + ~30d backstamped identity rows sunsetting; <code>error_{l4,l5,l6,chp,wdp}_nbm</code> only started accumulating 08-21. F3-D (backstamp for deeper layers) deferred as low-ROI; fills naturally over ~30d.</div>
+          <div><strong>NBM parallel cascade — operational state.</strong> Structural symmetry with HRRR shipped v0.6.450-460: cascade layers, applied_layer semantics, specialist attribution, regression sentry, walkforward validator, gate-firing telemetry, skip-table infrastructure, PWA writeback (F6), applicability descriptors on all NBM modules (F7), and per-layer CAPS_NBM + <code>fitted_at</code> staleness gates via <code>nbm_common.py</code> (F8) all mirror HRRR. Selector's NBM picks (currently wg 12-47h, dp 6-47h, cc all leads) reach the PWA arrays users see. <strong>Real open gaps (not slogans):</strong> (a) <strong><code>skip_table_nbm_curated.json</code> only partially populated</strong> — 8 wg L3 cells shipped 08-25 (first evidence-graded transfer via <code>analysis/nbm_counterfactual_rescore.py</code>); 41 more walkforward per-band proposals pending 08-28 curation; (b) <strong>L6_NBM ENABLED=False</strong> scaffold pending the "does NBM L2 double-count waterfront?" investigation — HRRR-side L6 also disabled, distinct-but-related reason; (c) <strong>l2_nbm is delta-reconstructed, not fit natively</strong> — <code>forecast_snapshot.py</code> computes <code>l2_nbm = raw_nbm + (l2_hrrr − raw_hrrr)</code> across all 9 fields; NBM inherits HRRR's Kalman-scaled station bias rather than running its own station-blend fit. Cheap and captures most of the value, but structural asymmetry. See L2_NBM row in the Applicability map. <strong>Permanent asymmetries (not gaps):</strong> (d) <strong>Field scope</strong> — NBM CO grib does not carry <code>cl</code>/<code>cm</code>/<code>pp</code>/<code>pa</code>/<code>pr</code>; these stay HRRR-only forever (<code>clp_nbm</code> N/A by extension); (e) <strong>Pair-log depth</strong> — <code>error_{l4,l5,l6,chp,wdp}_nbm</code> only started accumulating 08-21, so early-life sentry noise reads as regressions for another ~2-3 weeks (cc.l4_nbm HOT flag today is an example — walkforward has not flagged any cc l4_nbm cells for SKIP, so pooled 14d is still net-positive; calendar closes this).</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">ongoing</div>
           <div><strong>C1d narrow-promote — auto-suppressed (KNOWN_LIVE_PIPELINES).</strong> Already live-stamping via confidence_layer; user-visible band-widening gate is C1 Stage 4.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">held</div>
@@ -1927,7 +1980,6 @@
           <li><strong style="color:#4ad29a;">dpbp (v0.6.391, 08-04) — <span style="color:#4ad29a;">CLOSED CLEAN 2026-08-18</span>.</strong> 14-day post-flip watch elapsed. Regression sentry clean on dp (7d vs 3d, no field hot); layer-shape sentry clean on all applied bands. Today's anomaly-detector dp WATCH +32% MAE is a shared distribution shift (bin_shift +29.7pp; h similarly WATCH +6.5%) — a weather event, not attributable to dpbp's narrow gated firing (pre_frontal/nw_flow/sw_flow + lead ≥ 6h + prev_24h_dp_bias &lt; -1.5°F). First antecedent-error specialist stays LIVE.</li>
           <li><strong style="color:#4ad29a;">wg L3 SKIP_TABLE (v0.6.385 07-28 + v0.6.391 08-04) — <span style="color:#4ad29a;">SKIPs VALIDATED 08-12, but wg L2 concern surfaced.</span></strong> Reinvestigated 08-12: earlier "4/7 cells regressing" flag was a measurement mix. Today's <code>h_wg_l3_regression_stage1</code> halves-verified numbers CONFIRM all 6 measurable SKIP cells (L3 vs L2 hurts by 5.9-28.4% on both halves): calm 12-23 +28.4%, calm 24-47 +9.4%, sea_breeze 6-11 +5.9%, sea_breeze 12-23 +7.9%, sea_breeze 24-47 +7.3%, frontal 12-23 +9.2%. The 2 remaining SKIP cells (<code>calm 0-5</code>, <code>ne_flow 6-11</code>) are n&lt;200 — can't measure, no evidence against. <strong style="color:#e0a070;">Real concern (separate workstream):</strong> in the SKIP cells where the stack top-of-stack (L2, since L3 skipped) is still worse than raw L1 (calm 12-23 +23%, calm 24-47 +12%, sea_breeze 6-11 +14%, sea_breeze 24-47 +8%), the culprit is <strong>wg L2 (wind_blend)</strong>, not the SKIP. Removing the SKIP would make it worse. Wg L2 in calm/sea_breeze cells is a new investigation — see <code>project_wg_l2_windblend_cell_concern</code>. 14-day post-ship watch on the SKIP_TABLE itself CLOSED CLEAN.</li>
           <li><strong style="color:#e07272;">Lc emergency intervention (v0.6.389d-g + v0.6.390, 07-30) — active state, no close date.</strong> cl + cc BOTH off Lc via <code>_FIELD_SKIP</code>. cl held out (walk-forward: pool_vs_raw −22.15%, reg_vs_raw −30.37%). cc retired v0.6.390 architecturally → Ccd derives max(cl_l6, cm_l6, ch_l6). cm + ch untouched, +34-50% vs raw held-out. Next step for cl: EMA/Kalman shift tracker OR recent-bias gate. See [[project_lc_regime_conditional]] + [[project_lc_regime_stage1_pool_prereq]].</li>
-          <li><strong>Lc regime-conditional Stage 1 gate — <span class="watch-day" data-shipped="2026-07-31" data-window="7">day X/7</span>.</strong> 08-08 gate history reset to CHURN after pool-prereq fix demoted 11 false-positive cells (72 → 61 SHIP). See [[project_lc_regime_stage1_pool_prereq]].</li>
           <li><strong>wsbp — HELD (v0.6.388, 07-28).</strong> Sibling of dpbp, calm-only, sign-inverted. ENABLED=False. Preflight 08-04: calm regime n=0 in shadow window. Wait for calm regime accumulation. Cost of waiting: nothing (dpbp covers dp side).</li>
           <li><strong>l6_fix_b_refit — HOLD-GATE (rolling gate added 08-08).</strong> Was single-day SHIP +2.15% today, HOLD at +0.29% 26 days prior; no consistency check between. Rolling gate needs 7 distinct days + same ship_bins before verdict can promote. Lt stays on do-not-reopen. See [[project_l6_fix_b_rolling_gate]].</li>
           <li>wg persistence-skill thin margin — pooled L4 skill +0.169 (&lt; +0.20 hold margin). Drag at 24-47h. 07-27 ship candidates HELD; re-check post-Stage 1 recovery.</li>
@@ -1960,19 +2012,11 @@
     </div>
     <ul style="margin:0 0 0 18px;padding:0;line-height:1.55;font-size:0.92em;list-style:none;color:#cfd8e3;">
 
-      <li><strong style="color:#7fb3ff;">2026-08-25 (Tue) — today</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>Evening session (v0.6.473–479): baseline reframe + evidence-driven NBM skip transfer + live tile renderer.</strong> <strong>v0.6.478 — Total Lift baseline reframe (third iteration in one evening):</strong> pre-v0.6.477 pooled min(hrrr_mae, nbm_mae) was too generous; v0.6.477 per-row oracle min(|error_hrrr_row|, |error_nbm_row|) was too strict (represents a picker no user has); v0.6.478 = NBM raw for NBM-scope fields, HRRR raw for the 5 HRRR-only fields — the honest "what your default weather app already shows you" baseline. Numbers hit reality: 24h Total Lift wins t +36.7%, ch +51.0%, wg +7.4%, cm +10.1%; honest losses h −60.9%, dp −344.3%, sr −14.7% (NBM raw is fundamentally better on dp/h at 24h and we're not catching up — actionable). Also settled the product mental model: we're building "a local model starting with NBM plus corrections," and HRRR-through-its-own-pipeline is a specialized substitution the selector fires only where it wins per Prod-vs-Prod — the math is already symmetric, story on the page updates gradually. <strong>v0.6.479 — live tile renderer:</strong> the 08-25 morning tile redesign held static values because the old renderScoreboardV2 targeted the pre-redesign #scorecard-banner; new minimal renderer populates the 4 headline tiles (Total Lift, Pipeline Lift, Selector Skill, Prod Trend) with median + mean 7d/24h from per_field_scoring.json. W/F/L breakdowns + per-field diagnostic table still static — full renderer follow-up. <strong>v0.6.475/476 — evidence-driven NBM skip transfer:</strong> proposed HRRR skip topology (wg L3 8 cells + cc L4 5 cells + chp_nbm ch 10 cells) onto the empty skip_table_nbm_curated.json as an educated-guess prior, then built analysis/nbm_counterfactual_rescore.py that grades any proposed skip topology by walking the pair log's per-layer error stamps (no re-fitting) and picking a different column of already-computed errors per row. Extended analysis/nbm_backstamp.py with L4_NBM counterfactual coverage (adds ~44K historical error_l4_nbm stamps across 30 days for cc/ch — was 5,873 rows, now 50,881). Only wg L3 cells cleared the evidence bar (+0.16 to +0.58% counterfactual lift at 6-47h); cc L4 was ±0.11% wash (rejected); chp_nbm ch was −1.15% at 24-47h (rejected, though thin at 930 chp rows — re-evaluate ~09-04 when 14 days of live chp_nbm stamps accumulate). Zero selector flips at MIN_LIFT_PCT=3% so the selector table stays as-is. History block in skip_table_nbm_curated.json records the full trial. <strong>v0.6.473/474 — per-field diagnostic + pipeline column split:</strong> added Mean row to the diagnostic tfoot alongside Median; split the "Pipeline" column into "Pipeline · HRRR" and "Pipeline · NBM" across all 14 field rows (Status column stays merged since notes interweave both cascades). <strong>Follow-ups queued for next session:</strong> (a) full renderPerFieldScoring wire-up so the diagnostic table populates live too (currently the table's cells are hand-hardcoded from PRE-v0.6.478 baseline — do NOT trust those numbers, use the tiles above), (b) chp_nbm/wdp_nbm counterfactual backstamp (needs persistence-of-obs at run_time + kalman + gate primitives — bigger project), (c) 14-day live-watch on the wg L3 skip transfer (deployed cells should materialize the +0.16-0.58% counterfactual lift in real data — if not by 09-01 daily digest, roll back).</span></li>
+      <li><strong style="color:#7fb3ff;">2026-08-26 (Wed) — today</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>Morning digest — 169/169 pass · one action + one watch.</strong> <strong>c1_calibration_audit HOLD (info→hold overnight)</strong> — pass rate 58.82% &lt; 75% gate, 7 DRIFTED cells including t/12-23h, ch/12-23h, cm cells. Re-fit via <code>c1_confidence_calibration.py</code> + <code>c1_curate_confidence_table.py</code>; wrote fresh <code>weather_collector/data/c1_confidence_curated.json</code>. Post-recurate audit: <strong>pass rate 58.82% → 68.42%</strong> (13 CALIBRATED, 6 DRIFTED, 2 BRIER_EXEMPT); still HOLD (under 75% gate) but the curated table is now aligned to today's premium — remaining drift is holdout-vs-recent-window noise, not curator staleness. <strong>cc.l4_nbm HOT +67.4%</strong> (nbm_regression_sentry: sust 9.22 → fresh 15.44, n_sust 1,034 / n_fresh 3,285). Layer is early-life (l4_nbm shipped 08-21 v0.6.451, only 5d live) so sustained window is thin. Walkforward has NOT flagged any cc l4_nbm cells for SKIP yet — pooled 14d still net-positive. Prod cc is derived via Ccd anyway (v0.6.484), so cc l4_nbm only affects the selector's cc pick (per_field_scoring shows chooser already costing −9.6% on cc); no ship action. WATCH day 1 — escalate if HOT holds tomorrow. <strong>sr.l5_nbm HOT +94.5%</strong> — expected sentry lag from the v0.6.471 kill (08-25); self-clears as tables warm. <strong>walkforward divergences:</strong> l3_nbm ADD wd (14d proposal), DROP wg (pooled negative but wg has 08-28 per-cell handling queued); l6_nbm DROP t (scaffold ENABLED=False, no-op divergence); wdp_nbm DROP wd. No auto-ships. <strong>Verdict flips:</strong> h_lc_recent_bias_gate PROMOTE→NULL (yesterday's ch clear did not repeat — day 8 gate cleared but today failed halves-strict; rolled off). sr_sea_breeze_lsr_refit_stage1 MARGINAL→PROMOTE (aggregate-only, awaits cross-cut). decay_tau_tuning HOLD→INFO (keep τ=14 confirmed). <strong>Pair-log WATCH:</strong> cc/cl/cm/dp/pp/pr/t/wg on distribution-shift metric — pp largest at +83% ΔMAE, worth an eye but consistent with recent transition weather.</span></li>
 
-      <li><strong style="opacity:0.85;">2026-08-25 (Tue) — earlier today</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>Morning session — first real NBM cascade tuning pass (v0.6.471, v0.6.472) + scoreboard redesign.</strong> <strong>v0.6.471 killed l5_nbm on sr</strong> — `nbm_regression_sentry` fired HOT ΔMAE +238.2% (sust 39, fresh 132), `nbm_walkforward_validator` proposed DROP sr from l5_nbm with pooled lift −126% (0-5h), −145% (6-11h), −147% (pre_frontal 12-23h). Two independent tools unanimous. Root cause: fallback biases in `lsr_nbm_bias_table_curated.json` were large-negative (calm −218, ne_flow −181, nw_flow −164 W/m²); correction = −bias so l5_nbm was adding +100 to +218 W/m² on cells missing the per-hour fit. Fix: `ENABLED = False` in `l5_nbm.py`; correction function short-circuits to 0. On the way through: latent bug fixed in `analysis/l5_nbm_recompute_biases_hourly.py` which wrote `generated_at` but not `fitted_at`, silently disabling the staleness gate. <strong>v0.6.472 trimmed L3_NBM_FIELDS</strong> from `("t","ws","wg","h","ch","sr","cc")` to `("wg","h","ch","cc")` — walkforward 14d agg lift vs l2_nbm baseline: t −2.2%, ws −2.5%, sr net loss with skip cells −22% to −5%. wg NOT dropped despite the tool's proposal — wg is mixed (0-5h +3.0%, 24-47h +8.2%, 6-11h −9.1%, 12-23h −3.4%); per-cell skip table 08-28 handles it surgically. <strong>Two overdue debug watches cleared</strong> (commit 87b9d39): Lsr recent-bias gate and chp cell gate both closed CLEAN HOLD after their 7-day windows ran without a promotion. <strong>Scoreboard redesign shipped (b9e3a58)</strong> — replaces value-chain layout with 3 bands: Scores (Total Lift + Pipeline Lift + Selector Quality) · Diagnostics (Prod Trend + Notable Calls) · Context (National Source + Health). Live renderers suppressed pending re-wiring on the new column structure; numbers currently static. Per-field diagnostic table under Current State replaces the old pfs 4-group layout. <strong>Path B discipline confirmed as design rule:</strong> any NBM cascade layer that can't beat its own raw gets killed, not routed around. Adding raw as a selector fallback was considered and rejected — the walkforward + sentry loop already catches broken layers within days; loudness beats silent safety nets.</span></li>
+      <li><strong style="opacity:0.85;">2026-08-25 (Tue) — 1 day ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>19 ships (v0.6.471–489) — full-day arc: NBM cascade tuning (morning), scoreboard redesign + baseline reframe (afternoon), full live scoreboard wire-up + dp/cc derived-exclusion (evening).</strong> <strong>v0.6.471 killed l5_nbm on sr</strong> — sentry HOT ΔMAE +238.2%, walkforward −126% to −147% agreed. Root cause: fallback biases in <code>lsr_nbm_bias_table_curated.json</code> were large-negative (calm −218, ne_flow −181, nw_flow −164 W/m²); correction = −bias added +100 to +218 W/m² on cells missing per-hour fit. Fix: <code>ENABLED=False</code> in <code>l5_nbm.py</code>. Latent bug fixed on the way through in <code>l5_nbm_recompute_biases_hourly.py</code> (missing <code>fitted_at</code> silently disabled staleness gate). <strong>v0.6.472 trimmed L3_NBM_FIELDS</strong> from 7 fields to <code>(wg, h, ch, cc)</code> — walkforward 14d agg vs l2_nbm: t −2.2%, ws −2.5%, sr net loss. wg NOT dropped despite tool's DROP proposal — pooled mixed (0-5h +3.0%, 24-47h +8.2%; 6-11h/12-23h negative), per-cell skip table handles surgically. <strong>Scoreboard redesign shipped (b9e3a58)</strong> — 3-band layout: Scores · Diagnostics · Context. Per-field diagnostic table under Current State replaces the old pfs 4-group layout. Two overdue watches cleared (Lsr recent-bias gate + chp cell gate — both CLOSED CLEAN HOLD). <strong>Path B discipline confirmed as design rule:</strong> broken NBM cascade layers get killed, not routed around; raw-fallback in the selector was considered and rejected. <strong>v0.6.473/474 — per-field diagnostic Mean row + Pipeline column split</strong> (HRRR vs NBM across all 14 rows). <strong>v0.6.475/476 — evidence-driven NBM skip transfer:</strong> proposed the HRRR skip topology (wg L3 8 cells + cc L4 5 cells + chp_nbm ch 10 cells) as an educated-guess prior, then built <code>analysis/nbm_counterfactual_rescore.py</code> to grade any proposed skip topology by walking the pair log's per-layer error stamps (no re-fit). Extended <code>analysis/nbm_backstamp.py</code> with L4_NBM counterfactual coverage (+44K historical <code>error_l4_nbm</code> stamps across 30 days for cc/ch — was 5,873 rows, now 50,881). Only wg L3 cells cleared the evidence bar (+0.16 to +0.58% counterfactual lift at 6-47h); cc L4 ±0.11% wash rejected; chp_nbm ch −1.15% at 24-47h rejected (re-evaluate ~09-04 when 14d of live chp_nbm stamps accumulate). Zero selector flips at MIN_LIFT_PCT=3%. <strong>v0.6.478 — Total Lift baseline reframe (third iteration in one sitting):</strong> pre-v0.6.477 pooled min(hrrr_mae, nbm_mae) was too generous; v0.6.477 per-row oracle min(|error_hrrr_row|, |error_nbm_row|) was too strict (represents a picker no user has); v0.6.478 = NBM raw for NBM-scope fields, HRRR raw for the 5 HRRR-only fields — the honest "what your default weather app already shows you" baseline. 24h Total Lift wins t +36.7%, ch +51.0%, wg +7.4%, cm +10.1%; honest losses h −60.9%, dp −344.3%, sr −14.7% (NBM raw is fundamentally better on dp/h at 24h and we're not catching up — actionable). Product mental model settled: "a local model starting with NBM plus corrections; HRRR-through-its-own-pipeline is a specialized substitution the selector fires only where it wins per Prod-vs-Prod." <strong>v0.6.479 — live tile renderer:</strong> minimal renderer populates the 4 headline tiles (Total Lift, Pipeline Lift, Selector Skill, Prod Trend) with median + mean 7d/24h from <code>per_field_scoring.json</code>. <strong>v0.6.480 — per-field diagnostic table wired live</strong> via <code>renderPerFieldDiagnostic()</code> from <code>per_field_scoring.json</code> (Total Lift + HRRR/NBM Pipeline Skill + n populated; Hit Rate + Value Captured dashed pending backend). <strong>v0.6.481 — backend hit_rate_pct + value_captured_pct</strong> per NBM-scope field in <code>per_field_scoring.py</code> (paired chosen/alt Prod pool); frontend wires them + Median/Mean tfoot rows include them. <strong>v0.6.482 — Prod Trend noise suppression:</strong> null <code>prod_trend_pct</code> when <code>n_prod_prior &lt; 50</code> or field ∈ <code>TREND_EXCLUDE_FIELDS = {pa, pp}</code>. <strong>v0.6.483 — dp excluded from Total Lift + tile</strong> (prod_dp = Magnus(prod_t, prod_h), no independent skill). <strong>v0.6.484 — cc joins dp exclusion</strong> universally (all four tiles + all five diagnostic tfoot columns). Rationale per [[project_cc_derived_field]]: HRRR raw cc = max(raw cl,cm,ch) verified 20/20; prod cc = Ccd max(prod cl,cm,ch) for ~85% ticks; no independent cc correction chain since 2026-07-30 v0.6.390. <strong>v0.6.485 — Tile W/F/L breakdowns wired live</strong> (were hardcoded static). Regression on this ship: used NBM_SCOPE which dropped cl/cm/pr from Total Lift + Pipeline Lift. <strong>v0.6.486 — restore cl/cm/pr</strong> via new <code>LIFT_SCOPE = [t,h,ws,wg,wd,cc,ch,sr,dp,cl,cm,pr]</code>; DERIVED_EXCLUDE + NON_MAE_EXCLUDE applied via <code>_agg</code>. Selector Skill stays NBM-only. dp + cc rows in the diagnostic table become placeholder-only (field name + derivation note, all metric cells dashed) — reserved for future resurrection (dp bias layer, cc composition tuner). <strong>v0.6.487 — Prod Trend backend on wider pool:</strong> new <code>prod_wider</code> / <code>prod_prior_wider</code> buckets (any row with <code>e_prod</code>, no pool intersection); both windows use the wider pool → apples-to-apples trend that survives the 7d NBM backstamp thin-out. Total Lift / Chooser Lift / Pipeline Lift stay on the intersected pool for v0.6.468/470 consistency. Publisher CF redeployed. Notable Calls block dashed with "wiring pending" note (was static, listed dp in 2nd worst — inconsistent with the no-dp/cc rule and violates [[feedback_no_fabricated_data_on_page]]). <strong>v0.6.488 — National Source panel wired live</strong> (per-field hrrr_raw_mae vs nbm_raw_mae, dp+cc excluded). Health &amp; Reliability partial wired: Confidence (HIGH = halves agree AND |lift|≥10; LOW = disagree OR |lift|&lt;3; MED = else) + Halves-agree (fraction of fields matching sign, "noisy" flag &lt;70%). High-conf cells stays dashed — needs per-cell feed. <strong>v0.6.489 — dp/cc placeholder-row derivation notes moved to footnotes</strong> (were inline in field-name column, stretching column + misaligning the table). <strong>Follow-ups queued:</strong> (a) Notable Calls + High-conf cells wire (needs per-(field, lead-band) MAE aggregation), (b) dp bias layer prototype (decaying-average bias between Magnus(prod_t, prod_h) and observed hyperlocal Magnus'd dp), (c) cc composition tuner re-check (<code>h_cc_blend_formula.py</code> had pre_frontal/0-5h random +3.5% candidate at n=2,115), (d) 14-day live-watch on wg L3 skip transfer (roll back by 09-01 if counterfactual +0.16-0.58% lift doesn't materialize), (e) chp_nbm / wdp_nbm counterfactual backstamp when a re-evaluation triggers.</span></li>
 
-      <li><strong style="opacity:0.85;">2026-08-21 (Fri)</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>11 ships (v0.6.450–460) — cc l3_nbm clamp fix + NBM parallel cascade completed (L4_NBM, L5_NBM, L6_NBM scaffold, chp_nbm) + F3 audit + F1 sentry + F2 walkforward + F4 gate telemetry + F5 skip table + debug sweep + F6 PWA writeback (real gap, real fix)</strong>. <strong>v0.6.460 (F6) — PWA writeback:</strong> selector was overwriting <code>entry[f]</code> in the snapshot log and stamping <code>hourly.l1_selected_*</code> for the debug page, but never touching <code>hourly.cloud_cover</code> / <code>hourly.wind_gusts</code> / <code>hourly.corrected_dew_point</code> — the arrays the PWA renders from. Users had been seeing HRRR-corrected values on every screen for cells the selector picked NBM (wg 12-47h, dp 6-47h, cc all leads). Fix: <code>_SELECTOR_WRITEBACK</code> map in <code>forecast_snapshot.py</code> walks 9 fields → hourly array names and overwrites <code>hourly[array_name][i] = entry[f]</code> wherever <code>{f}_selector_source == "nbm"</code>. Bounds-checked. Runs post-decay-apply so HRRR corrections + Magnus dp finish first. Pair-log Prod attribution was already correct (reads <code>entry[f]</code>), so scoreboard lift numbers were honest — this only affects what the user actually saw. <strong>v0.6.459 — debug page sweep:</strong> current-state NBM tile, Recent activity, held-out MAE meta-line, gate-firing card, and new 🚫 skip-table fit-status tile all updated for today's F3/F4/F5 surface changes. <strong>v0.6.456 (F3) — NBM audit:</strong> selector loop now overwrites <code>{f}_applied</code> with the deepest NBM layer picked (<code>l3_nbm</code>/<code>l4_nbm</code>/<code>l5_nbm</code>/<code>l6_nbm</code>/<code>chp_nbm</code>/<code>wdp_nbm</code>) — fixes systematic misattribution in every prod-error-based analysis; chp_nbm + wdp_nbm stamp distinct layer keys (<code>ch_chp_nbm</code>, <code>wd_wdp_nbm</code>) instead of overwriting <code>ch_l4_nbm</code>/<code>wd_l3_nbm</code> in place, so specialists become independently measurable via <code>error_chp_nbm</code>/<code>error_wdp_nbm</code>; <code>l6_nbm_fit</code> switched to <code>pair_log_paths()</code> matching l3/l4/l5. <strong>v0.6.457 (F1+F2) — NBM monitoring loop:</strong> new <code>analysis/nbm_regression_sentry.py</code> (per-layer fresh 3d vs sustained 7d MAE, HOT ≥15% / WATCH ≥8%) + new <code>analysis/nbm_walkforward_validator.py</code> (14d aggregate lift per candidate NBM layer vs shallower baseline, whitelist earn rule ≥2% AND paired_n ≥200) — both auto-run via <code>run_digest.sh</code>'s <code>analysis/*.py</code> sweep and surface in the digest exec-summary. Includes a backstamp identity filter (l3_nbm-vs-l2_nbm skips rows where <code>err_l3 == err_l2</code>). <strong>v0.6.458 (F4+F5) — gate telemetry + skip table:</strong> forecast_snapshot NBM apply blocks accumulate per-field fires/skips across the 48h loop, emit one <code>gate_firing_log.record_firing(operator="L3_NBM"|"L4_NBM"|…)</code> per operator after the loop (mirrors HRRR <code>decay_apply</code> pattern); new <code>weather_collector/processors/skip_table_nbm.py</code> + curated <code>skip_table_nbm_curated.json</code> (empty seed) — per-cell (field, layer, regime, lead-band) skip check called from each NBM apply block, fires cause the layer stamp to be skipped so the selector's deepest-layer walk falls back naturally; walkforward emits per-band SKIP proposals (regime pooled as <code>"*"</code>). <strong>F3-D remains deferred</strong> (backstamp l4/l5/l6 backfill diminishes as live coverage grows). <strong>v0.6.450 — cc l3_nbm &gt;100% clamp.</strong> Added domain clamps in <code>forecast_snapshot._round_for</code>: percent fields (<code>pp/cc/cl/cm/ch</code>) clamped to <code>[0, 100]</code>, <code>sr</code> clamped to <code>≥ 0</code>. Single choke point; hits every layer stamp in one spot. Prod-verified: percent arrays now in domain. <strong>v0.6.451 — L4_NBM shadow-live.</strong> Mirror of HRRR L4 diurnal (hour-of-day residual), scoped to <code>L4_NBM_FIELDS = (cc, ch)</code>. New <code>weather_collector/processors/l4_nbm.py</code> applier + <code>analysis/l4_nbm_fit.py</code> fitter (recency-weighted τ=14d, retention 30d, n≥20 per bin) + empty curated JSON stub. Wired into <code>forecast_snapshot.py</code> after L3_NBM block. <code>forecast_error_log.py</code> layer list gains <code>l4_nbm</code>; <code>l1_selector_fit._nbm_prod_error</code> prefers <code>error_l4_nbm</code>. First fit: cc 24/24 bins, ch 19/24 bins (5 mid-morning n&lt;20). Prod-verified: <code>cc_l4_nbm</code> + <code>ch_l4_nbm</code> stamped in all 48 hours of snapshot. <strong>v0.6.452 — L5_NBM shadow-live.</strong> Mirror of HRRR L5 (regime × hour_of_day solar bias), sr-only. sr skips L4_NBM (sr not in L4_NBM_FIELDS). New <code>l5_nbm.py</code> applier + <code>l5_nbm_recompute_biases_hourly.py</code> fitter reading <code>forecast_l3_nbm</code> rows, MIN_CELL_N=30 per (regime, hour) cell with regime-overall fallback when n≥50. Sun-up gate at 50 W/m² (mirrors HRRR L5). First fit: only <code>se_flow</code> cleared fallback floor (+286 W/m², n=71); all hour cells still null. Prod-verified: <code>sr_l5_nbm</code> stamped. <strong>v0.6.453 — L6_NBM shape-only scaffold.</strong> Mirror of HRRR L6 <code>cove_correction.py</code>, t-only, shipped <code>ENABLED=False</code> so the parallel slot exists in the pair log / selector chain. Enablement gated on the "does NBM L2 double-count waterfront?" investigation. t skips L4_NBM + L5_NBM (matches HRRR t). <strong>v0.6.454 — chp_nbm specialist.</strong> Reuses HRRR-side <code>ch_persistence_gate</code> primitives (<code>_cell_fires</code>, <code>_lead_band</code>, <code>_diurnal_skip</code>) so the NBM sibling can't drift from the HRRR gate rule. On cells where the gate table says SHIP/MARGIN, overwrites <code>ch_l4_nbm</code> with persistence-of-obs (Kalman-blended <code>hourly[0].cloud_cover_high</code>, clamped [0,100]), stamps <code>ch_chp_nbm_fired=True</code>. Prod-verified: 5/48 leads fired in latest snapshot. <strong>Deploy incident:</strong> mid-session weather_data reference bug broke snapshot for 30 min (12:57-13:35 UTC); root-caused to a helper call inside <code>append_forecast_snapshot()</code> that expected a full weather_data dict when only <code>hourly</code> was in scope; fix wraps the arg as <code>{"hourly": hourly}</code>. Debug page sweep this session (F1-F12 punch list): chart LAYER_STYLE + FIELD_LAYERS extended for l4_nbm/l5_nbm/l6_nbm/chp_nbm/wdp_nbm; per-field pipeline architecture NBM cascade descriptions updated; current-state + L1 card + Recent activity retired stale "cascade still to build" language. <strong>NBM parallel cascade structurally complete.</strong> Cross-cutting infra sweep (per-NBM-layer regression sentries, skip-table gate, staleness gate, caps, PWA writeback trace) queued as follow-up audit.</span></li>
-
-      <li><strong style="color:#7fb3ff;">2026-08-20 (Thu) — 1 day ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>4 ships (v0.6.443–446) — NBM backstamp end-to-end: L3_NBM bins fit + L1 selector armed; 9 cells flip to NBM (wg 12-47h, dp 6-47h, cc all leads); debug page stale-language sweep</strong>. <strong>v0.6.443/444 — debug page cell polish.</strong> Blanked 5 stale Selector-picks cells in the per-field pipeline architecture table (t/h/ws/wg/wd) that still showed v0.6.432-router bands ("HRRR 0-11h · NBM 12-47h", "NBM all leads") left over from before the v0.6.440 rewrite. Unified all 9 warming placeholders to "warming — see live table below". <strong>v0.6.445 — NBM backstamp SHIPPED end-to-end.</strong> New <code>analysis/nbm_backstamp.py</code> — walks pair log, joins with 2,455 backfilled NBM point extracts (<code>gs://myweather-data/nbm_backfill/{ymd}_{hh}.json</code>), reconstructs <code>l2_nbm = raw_nbm + (l2_hrrr − raw_hrrr)</code> exactly using snapshotted HRRR <code>forecast_l1</code>/<code>forecast_l2</code> (Kalman delta captured at forecast time by construction). Two-pass mode: first pass fits L3 identity, second pass reads fresh L3 curated JSON and applies bias for honest Prod-vs-Prod. 237,143 pair-log rows newly stamped with <code>error_raw_nbm</code>/<code>error_l2_nbm</code>/<code>error_l3_nbm</code>. <code>l3_nbm_curated.json</code> filled 373/384 cells (was 0/192). <code>l1_selector_table_curated.json</code> — Prod-vs-Prod fit, 30-day window: <strong>9 cells flip to NBM</strong> — wg 12-23h (+5.7%), wg 24-47h (+8.9%), dp 6-11h (+16.1%), dp 12-23h (+18.4%), dp 24-47h (+23.2%), cc 0-5h (+9.7%), cc 6-11h (+9.7%), cc 12-23h (+19.6%), cc 24-47h (+17.7%). Router-scope ship-gate NBM lift <strong>+8.5% on n=74,528</strong>. All other cells correctly stay HRRR — deep specialists (chp for ch, Lsr for sr, station-blend for t/h) dominate their fields. Backfill CF finished at 2,455/2,568 (~95.6%, rest are NOAA archive gaps — 404s on missing cycles); CF sizing reverted to 4GB/2CPU per cost-audit. Publisher CF redeployed; per_field_scoring.json + halves compute now refits hourly. Collector CF redeployed 00:39 UTC; first post-deploy tick 00:47 UTC verified — forecast_log shows all 9 NBM/selector keys per hourly row, selector firing per curated table. <strong>Known bug queued for tomorrow:</strong> cc <code>l3_nbm</code> can exceed 100% (raw 94-95 + L3 bias ~+6 pushes above physical max at several long leads); needs <code>min(100, l3_nbm)</code> clamp at cc apply site. <strong>v0.6.446 — debug page: Selector column data-driven.</strong> Added JS block that reads the same <code>l1_selector_table_curated.json</code> and populates each of the 9 NBM-scope cells in the per-field pipeline architecture table with the current per-band pick, grouping contiguous same-source bands into ranges. Ends the hardcoded-drift risk on that column. Also this session: broader stale-language sweep — retired "warming up / earliest arm ~2026-09-17 / Phase 4 selector / not user-facing" language across the page; updated to reflect the LIVE state.</span></li>
-
-      <li><strong style="color:#7fb3ff;">2026-08-19 (Wed) — 2 days ago</strong> <span style="opacity:0.6;font-size:0.85em;">· <strong>1 ship (v0.6.435) — option-1 Phase 3: L3_NBM fit + apply scaffolded; sr Lsb 14-day watch CLOSED CLEAN; NBM backfill Round 4 in flight</strong>. <strong>v0.6.435 — Phase 3 L3_NBM.</strong> New <code>weather_collector/processors/l3_nbm.py</code> loads <code>weather_collector/data/l3_nbm_curated.json</code> at import; exposes <code>l3_nbm_bias(field, lead_h)</code> for scalars + <code>l3_nbm_wd_components(lead_h)</code> for wd. Identity fall-through until per-lead bins clear n≥20. <code>forecast_snapshot.stamp()</code> stamps <code>{f}_l3_nbm</code> inside the NBM loop right after <code>_l2_nbm</code>: scalars t/ws/wg/h subtract per-lead bias; wd uses circular <code>atan2(sin(l2_nbm_rad) − sin_corr, cos(l2_nbm_rad) − cos_corr)</code>. <strong>wd rescued from initial scope-drop</strong> — the field where NBM most directly reaches user output via v0.6.432 router (t/ws/wd @ leads ≥6h). Design decision: pair-log-only training (not backfill-driven), because <code>l2_nbm</code> residuals depend on live station-bias Kalman state at time-of-obs — snapshotted only in pair log. Backfill still funds L4_NBM diurnal + independent-window audits. New <code>analysis/l3_nbm_fit.py</code>: τ=14d, 30d retention, min 20 pairs per bin. First-fit smoke: scanned 477K rows, kept 112 in window, published 0/192 scalar cells (all n&lt;20 as expected during warmup). Joiner (<code>forecast_error_log.py</code>) emits per-layer <code>error_sin_{lyr}</code>/<code>error_cos_{lyr}</code> on wd rows across all 14 layers so future NBM cascades reuse the signal. Debug page: new 🧮 Phase 3 fit-status tile; <code>LAYER_STYLE</code> gains dashed <code>l3_nbm</code>; <code>FIELD_LAYERS</code> gains L3 (NBM) on t/ws/wg/h/wd. Post-deploy verified 05:17 tick: 45/48 hours carry <code>*_l3_nbm</code> stamps; wd circular apply verified (l2_nbm=349 → l3_nbm=349, zero-correction identity). <strong>sr Lsb 14-day watch CLOSED CLEAN.</strong> Pooled 14d sr prod_real 84.16 vs raw 95.03 = +11.4% lift on n=15,985 — well above any noise threshold. Removed from OPEN_WATCHES; memory + MEMORY.md updated. <strong>Daily digest triage.</strong> Two SHIP-ELIGIBLE auto-flagged (h_pre_front_orthogonality THIN, walkforward_l3l4_validator PROPOSED == LIVE). cc FRESH FIRE surfaced (7d +3.2% lift → 3d −5.2%, Δ −8.4pp) — cross-cut showed cl/cm/ch all stable individually; the cc regression is stack over-correction on easier atmosphere, routes into existing Lc regime-conditional + recent-bias-gate watches, no new work. h_cl_h_predictor_stage1 "STAGE 1 HIT" is prior CLOSED MISS 08-17 (leaky Stage 0/1 class). l2_lead_decay_fit flip-flop pattern — no ship. <strong>NBM backfill Round 4 in flight.</strong> Fired 7 targeted 10-12d gap slices ~04:45 EDT (Option B per handoff — gap-targeted rather than full-refire). Coverage 663 → 823 in first 30min; ETA ~9:00 EDT to full 2,568 target across ~2 more rounds. All 3 NBM CFs verified on 9-field extractor schema (h/RH:2m present).</span></li>
-
-
-
-      <li style="margin-top:8px;"><strong style="color:#7fb3ff;">2026-08-09 (Sun) and earlier</strong> <span style="opacity:0.6;font-size:0.85em;">— trimmed to <code>docs/CHANGELOG.md</code> per rolling 3-day window (v0.6.401g sweep 08-12).</span></li>
+      <li style="margin-top:8px;"><strong style="color:#7fb3ff;">2026-08-21 (Fri) and earlier</strong> <span style="opacity:0.6;font-size:0.85em;">— trimmed to <code>docs/CHANGELOG.md</code> per rolling 3-day window (v0.6.490 sweep 08-26).</span></li>
     </ul>
   </details>
 </div>
@@ -2145,109 +2189,13 @@
   <p class="layer-summary">Two lenses on the same object. <strong>Applicability</strong> (top) describes what's <em>configured</em> to fire and under what gates — built each tick from <code>describe_applicability()</code> in each correction module, so <strong>the page can never drift from the code</strong>. <strong>Runtime firing frequency</strong> (bottom, 7-day rolling) shows what's <em>actually</em> firing per operator × field × regime, so silent dormancy (config says "enabled" but the code path never mutates a value — the class of bug that hid ws L3 for 4 days after v0.6.279) surfaces as an ★ on cells with 0 fires despite ≥5 ticks in that regime.</p>
   <details class="layer-methodology"><summary>How to read this</summary>
     <div class="meta-line">Three categories: <strong>General-purpose</strong> layers (L1–L4) can apply to any field; the per-field applicability set controls which actually trigger. <strong>Specialists</strong> (Lsr, Lt, Lc) are domain-scoped by construction — the physics of the correction binds them to a field type. <strong>Confidence</strong> (C1) doesn't modify forecast values; it widens or narrows uncertainty bands along orthogonal axes (transition, pressure tendency, mesonet spread, pre-frontal proximity) that cross multiple (field, band) cells.</div>
+    <div class="meta-line"><strong>HRRR + NBM cascades render together below.</strong> HRRR-side layers (L2 mesonet blend, L3 decay, L4 diurnal, Lsr, Lc, chp/clp/wdp/dpbp/wsbp/lsb, C1) plus NBM-side layers (l3_nbm, l4_nbm, l5_nbm, l6_nbm, skip_table_nbm) are all unioned into the same block. Selector (l1_selector) picks between HRRR-Prod and NBM-Prod per (field, lead-band) after both cascades finish. L2_NBM is not a fitted layer — it's a delta reconstruction, described in the hand-curated block below.</div>
     <div class="meta-line"><strong>applies when</strong> is the predicate in plain text. <strong>gated by</strong> names the module-level constant the gate reads (omitted if always-on). <strong>current state</strong> resolves the constant for the reader — what the gate is doing this very tick.</div>
     <div class="meta-line"><strong>Terminology key:</strong> <em>applies</em> = correction applied to a (field, row) this tick · <em>enabled</em> = feature switch (the module-level constant is on) · <em>active</em> = runtime branch (which code path actually fired).</div>
     <div class="meta-line">Source: <code>weather_data.applicability_map.layers</code>. Schema: <code>weather_collector/data/applicability_map_schema.json</code>. If this section says "not available," the collector hasn't shipped the block yet — it landed v0.6.260.</div>
   </details>
 </div>
 <div id="status-applicability" class="status" hidden></div>
-
-<!-- L1 router row group — v0.6.432 (2026-08-18). RETIRED 2026-08-19 v0.6.437 —
-     superseded by the L1 selector (see L1 card meta line for details). Kept
-     as historical reference; do not update the "current state" cells — they
-     describe the retired router, not live behavior. -->
-<div class="layer-info-text" style="margin-bottom:12px;border-color:#3a6a3a;opacity:0.6;">
-  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
-    <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">L1 router — NBM (NWS-gridpoint) at long lead</span>
-    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.7em;background:#3a2a2a;border:1px solid #6a3a3a;color:#e08a80;">RETIRED · v0.6.437 (2026-08-19) — superseded by L1 selector</span>
-  </div>
-  <div style="font-size:0.82em;opacity:0.75;margin:0 0 8px 0;padding:4px 8px;border-left:2px solid #6a3a3a;background:#1a0e0e;">Historical scaffold. The router ran after cascade completed and swapped <code>hourly[field]</code> to the NWS-gridpoint value at long lead for t/ws/wd. Superseded by the L1 selector (Prod-vs-Prod per (field, lead-band), all 9 NBM-scope fields). The "current state" cells below describe the retired router only.</div>
-  <table style="width:100%;border-collapse:collapse;font-size:0.92em;">
-    <thead>
-      <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
-        <th style="padding:4px 10px 4px 0;">field</th>
-        <th style="padding:4px 10px;">applies when</th>
-        <th style="padding:4px 10px;">gated by</th>
-        <th style="padding:4px 0 4px 10px;">current state</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>t</code></td>
-        <td style="padding:6px 10px;vertical-align:top;">Lead ≥ 6h AND <code>nws_gridpoints.temperature</code> covers the valid hour → replaces <code>corrected_temperature[i]</code> with the NWS value (°C→°F converted)</td>
-        <td style="padding:6px 10px;vertical-align:top;"><code>_ROUTER_ENABLED</code> · <code>_MIN_LEAD_H=6</code></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>ws</code></td>
-        <td style="padding:6px 10px;vertical-align:top;">Lead ≥ 6h AND <code>nws_gridpoints.windSpeed</code> covers the valid hour → replaces <code>wind_speed[i]</code> (km/h→mph converted)</td>
-        <td style="padding:6px 10px;vertical-align:top;"><code>_ROUTER_ENABLED</code> · <code>_MIN_LEAD_H=6</code></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>wd</code></td>
-        <td style="padding:6px 10px;vertical-align:top;">Lead ≥ 6h AND <code>nws_gridpoints.windDirection</code> covers the valid hour → replaces <code>wind_direction[i]</code> (deg unchanged)</td>
-        <td style="padding:6px 10px;vertical-align:top;"><code>_ROUTER_ENABLED</code> · <code>_MIN_LEAD_H=6</code></td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.7;"><code>dp</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">Phase 2 pending — dp is derived from t + humidity via Magnus. Coordinated override with routed t (already covered) needs corresponding humidity source. 14-day head-to-head showed NBM dp beats Prod by +4-18% at leads 6-24h — worth wiring.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.7;">not yet routed</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.7;"><code>wg</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">Phase 2 pending — NWS-gridpoint doesn't expose gust. Needs direct NBM grib ingester (<code>GUST:10 m above ground</code>) on the collector. <strong>Biggest single win in the 14-day head-to-head:</strong> NBM beats Prod +7-27% at leads 3-24h.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.7;">not yet routed</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.7;"><code>sr</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">Phase 2 pending — NWS-gridpoint doesn't expose solar. Needs direct NBM (<code>DSWRF:surface</code>) or HRRR grib ingester. 14-day head-to-head: NBM +3-13% at leads ≥3h; HRRR essentially tied with NBM. Wire whichever is cheaper.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.7;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.7;">not yet routed</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>cc</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Out of scope — cloud stack is <strong>vindicated</strong> vs NBM: Prod beats NBM +21% pooled but halves unstable (+59/-19). Phase 3 could challenge Open-Meteo with ECMWF-open or a different HRRR/NBM cc field, but current cascade already extracts more skill than any single external model.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">not scoped</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>cl / cm / ch</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Out of scope — cloud-layer stacks (Lc + chp + clp) beat NBM by -13% (cl), -20% (cm), -161% (ch) at 14-day scale. Correction cascade extracts real signal external models can't touch. Router leaves cloud fields alone.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">out of scope</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>pr</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Phase 3 unscoped — pressure not in the NBM CO grib subset used for phase 2. Would need a separate NBM product or ECMWF-open. Current pr L2 regime gate (v0.6.401) is doing real work at short lead.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">not scoped</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>pa</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Phase 3 unscoped — precip amount from NBM APCP was measurable at 14-day scale (+8% marginal). Not obviously worth the ingester cost given how low pa MAE runs in clean windows.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">not scoped</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>pp</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Out of scope for router — pp in our pair log is Probability of Precipitation (0-100). NBM has APCP amount not POP; direct comparison isn't meaningful without extracting NBM's <code>prob &gt; 0.254</code> field separately. Deferred to phase 3.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">not scoped</td>
-      </tr>
-      <tr style="border-top:1px solid #232936;">
-        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>h</code></td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">Out of scope — humidity not tested against NBM in 14-day head-to-head (NWS-gridpoint doesn't expose h). Current h L2 shape retune closed clean 08-07; short-lead correction working.</td>
-        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
-        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">out of scope</td>
-      </tr>
-    </tbody>
-  </table>
-  <div style="margin-top:8px;font-size:0.83em;opacity:0.7;">Fall-through: if the NWS-gridpoint value is missing for a routed (field, hour), the cascade's output is kept and the source label reads <code>prod</code> instead of <code>nws</code>. See the live per-hour source table in the L1 section above.</div>
-</div>
 
 <!-- L2 row group — hand-curated; L2 module doesn't expose describe_applicability() yet.
      Promote to the dynamic block once that lands. -->
@@ -2325,6 +2273,147 @@
   </table>
 </div>
 
+<!-- L2_NBM row group — hand-curated; l2_nbm is not a standalone module (reconstruction
+     happens inline in forecast_snapshot.py). Promote to describe_applicability() if
+     l2_nbm becomes a real processor. -->
+<div class="layer-info-text" style="margin-bottom:12px;border-color:#3a4f6a;">
+  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+    <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">L2_NBM — HRRR-delta reconstruction (not a fit)</span>
+    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;background:#1f2a3a;border:1px solid #3a4f6a;color:#9fb8d8;">general-purpose · NBM cascade</span>
+    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.7em;background:#2a2a3a;border:1px solid #4a4a5a;color:#a8a8b8;font-style:italic;">hand-curated · not a standalone module</span>
+  </div>
+  <div class="meta-line" style="opacity:0.85;font-size:0.9em;margin-bottom:8px;">
+    Structural asymmetry with HRRR L2: <strong>no native NBM station-blend fit exists.</strong> Instead, <code>forecast_snapshot.py</code> computes <code>l2_nbm = raw_nbm + (l2_hrrr − raw_hrrr)</code> per field per lead. The HRRR-side Kalman-scaled additive bias rides across to NBM under the assumption that the true bias vs Wyman Cove is the same regardless of which model produced the raw. Cheap and captures most of the value; would need a full NBM-side station-blend fitter to run natively. Scope: all 9 NBM-emitted fields (t, dp, ws, wd, wg, sr, cc, ch, h).
+  </div>
+  <table style="width:100%;border-collapse:collapse;font-size:0.92em;">
+    <thead>
+      <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
+        <th style="padding:4px 10px 4px 0;">field</th>
+        <th style="padding:4px 10px;">applies when</th>
+        <th style="padding:4px 10px;">gated by</th>
+        <th style="padding:4px 0 4px 10px;">current state</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>t / dp / h</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — receives HRRR L2's Kalman-scaled additive bias delta</td>
+        <td style="padding:6px 10px;vertical-align:top;">rides on HRRR L2</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>ws / wg</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — direct-selection delta from HRRR L2 wind blend rides across</td>
+        <td style="padding:6px 10px;vertical-align:top;">rides on HRRR L2</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies (direct)</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>wd</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Always</strong> — circular unit-vector delta from HRRR L2 wind_blend rides across (calm-floor 3 mph inherited)</td>
+        <td style="padding:6px 10px;vertical-align:top;">rides on HRRR L2</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies (circular)</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>cc / ch</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>hourly[0] only</strong> — inherits HRRR L2 KBOS+KBVY METAR delta on current hour; not propagated across leads (same limitation as HRRR L2 cloud fields)</td>
+        <td style="padding:6px 10px;vertical-align:top;">rides on HRRR L2</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">applies on hourly[0]; other leads pass through</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;"><code>sr</code></td>
+        <td style="padding:6px 10px;vertical-align:top;"><strong>Passes through raw</strong> — HRRR L2 has no sr correction (no station network), so delta is 0.</td>
+        <td style="padding:6px 10px;vertical-align:top;">n/a — HRRR L2 sr is n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;">l2_nbm = raw_nbm</td>
+      </tr>
+      <tr style="border-top:1px solid #232936;">
+        <td style="padding:6px 10px 6px 0;vertical-align:top;white-space:nowrap;opacity:0.55;"><code>cl / cm / pp / pa / pr</code></td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;"><strong>Not emitted by NBM CO grib</strong> — permanent HRRR-only. Selector never picks NBM for these; no L2_NBM row exists.</td>
+        <td style="padding:6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
+        <td style="padding:6px 0 6px 10px;vertical-align:top;opacity:0.55;">n/a</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- L2_NBM soundness tile (v0.6.492, 2026-08-26) — reads nbm_l2_delta_audit.json.
+     Answers the load-bearing question: does the HRRR-delta transfer actually
+     lift l2_nbm vs raw_nbm, or is it hurting the foundation every deeper NBM
+     layer sits on? Placed next to the L2_NBM applicability block so the
+     measurement lives next to the description of what's being measured. -->
+<div class="layer-info-text" style="margin-bottom:12px;border-color:#4a3f6a;background:#131019;">
+  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+    <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">🔍 L2_NBM soundness — 30d field × lead</span>
+    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;background:#241f3a;border:1px solid #4a3f6a;color:#b8a8d8;">measurement</span>
+  </div>
+  <div class="meta-line" style="opacity:0.85;font-size:0.9em;margin-bottom:8px;">
+    Grades the HRRR-delta transfer per (field, lead-band). Positive lift = delta helps NBM (assumption vindicated); near-zero = neutral (delta washes at long lead by construction — K-taper); negative = delta HURTS raw NBM for this cell (Wyman Cove bias is model-dependent). ★ = both halves of window agree on sign. Source: <code>analysis/nbm_l2_delta_audit.py</code> → <code>gs://myweather-data/nbm_l2_delta_audit.json</code>.
+  </div>
+  <div id="nbm-l2-delta-live" style="margin-top:10px;font-size:0.88em;">
+    <div style="opacity:0.6;">loading nbm_l2_delta_audit.json…</div>
+  </div>
+</div>
+<script>
+(function(){
+  const url = "https://data.wymancove.com/nbm_l2_delta_audit.json?_=" + Date.now();
+  fetch(url, { cache: "no-store" })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      const el = document.getElementById("nbm-l2-delta-live");
+      if (!el) return;
+      const escape = (s) => String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const fmtPct = (v) => (v == null) ? "—" : `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
+      const cls = (v) => v == null ? "" : (v >= 3 ? "color:#4ad29a;" : v <= -3 ? "color:#e07272;" : "color:#e0a86b;");
+      const pf = d.per_field_totals || {};
+      const FIELDS = ["t","dp","ws","wd","wg","sr","cc","ch","h"];
+      let rows = FIELDS.map(f => {
+        const c = pf[f] || {};
+        return `<tr>
+          <td style="padding:3px 10px 3px 0;vertical-align:top;"><code>${f}</code></td>
+          <td style="padding:3px 10px;vertical-align:top;text-align:right;">${c.n ? c.n.toLocaleString() : "—"}</td>
+          <td style="padding:3px 10px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${c.mae_raw != null ? c.mae_raw.toFixed(3) : "—"}</td>
+          <td style="padding:3px 10px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${c.mae_l2 != null ? c.mae_l2.toFixed(3) : "—"}</td>
+          <td style="padding:3px 10px;vertical-align:top;text-align:right;font-weight:600;${cls(c.lift_pct)}">${fmtPct(c.lift_pct)}</td>
+        </tr>`;
+      }).join("");
+      const hurts = (d.hurts || []);
+      const helps = (d.helps || []);
+      const hurtsRow = hurts.length
+        ? `<div style="margin-top:8px;padding:6px 8px;border-left:2px solid #e07272;background:#1a0e0e;border-radius:2px;">
+             <strong style="color:#e07272;">HURTS (${hurts.length}):</strong>
+             ${hurts.map(h => `<code>${h.field} ${h.band}</code> ${fmtPct(h.lift_pct)} <span style="opacity:0.6;">n=${h.n.toLocaleString()}</span>`).join(" · ")}
+           </div>` : "";
+      const helpsRow = helps.length
+        ? `<div style="margin-top:6px;padding:6px 8px;border-left:2px solid #4ad29a;background:#0e1a13;border-radius:2px;">
+             <strong style="color:#4ad29a;">HELPS (${helps.length}):</strong>
+             ${helps.map(h => `<code>${h.field} ${h.band}</code> ${fmtPct(h.lift_pct)} <span style="opacity:0.6;">n=${h.n.toLocaleString()}</span>`).join(" · ")}
+           </div>` : "";
+      el.innerHTML = `
+        <div style="font-size:0.85em;opacity:0.7;margin-bottom:6px;">Per-field pooled (30d window)</div>
+        <table style="border-collapse:collapse;font-size:0.9em;">
+          <thead>
+            <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
+              <th style="padding:3px 10px 3px 0;">field</th>
+              <th style="padding:3px 10px;text-align:right;">n</th>
+              <th style="padding:3px 10px;text-align:right;">MAE raw_nbm</th>
+              <th style="padding:3px 10px;text-align:right;">MAE l2_nbm</th>
+              <th style="padding:3px 10px;text-align:right;">lift %</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        ${hurtsRow}
+        ${helpsRow}
+        <div style="margin-top:8px;font-size:0.85em;opacity:0.7;"><strong>${escape(d.verdict || "")}</strong></div>
+        <div style="margin-top:4px;font-size:0.8em;opacity:0.55;">Assembled ${escape(d.generated_at || "")}</div>`;
+    })
+    .catch(e => {
+      const el = document.getElementById("nbm-l2-delta-live");
+      if (el) el.innerHTML = `<div style="color:#e08a70;">nbm_l2_delta_audit.json not yet available (publisher CF hasn't uploaded the first run). Error: ${e}</div>`;
+    });
+})();
+</script>
+
 <div id="applicability-content"></div>
 
 <!-- ─── Runtime firing (7-day rolling) — subsection within Applicability map ─── -->
@@ -2346,8 +2435,8 @@
   <p class="layer-summary">Two forecast sources run in parallel for every hour: Open-Meteo HRRR/GFS on one side, direct NBM (National Blend of Models) on the other. Each side runs its own full correction cascade. The 🎯 selector below picks per (field, lead-band) which cascade's output becomes user-visible. Multi-kilometer grid resolution on both — still knows nothing specifically about Wyman Cove; that's what the layers below add.</p>
   <details class="layer-methodology"><summary>About the L1 sources (post-selector-arm v0.6.445)</summary>
     <div class="meta-line"><strong>HRRR-side (Open-Meteo).</strong> Open-Meteo HRRR (next 48h) + GFS (days 3-7), fetched every 10-min tick. Feeds the full HRRR cascade: L1 → L2 mesonet blend → L3 lead-decay → L4 diurnal → L5 Lsr (sr) / L6 Lc (cm/ch) / specialists (chp, wdp, clp, dpbp) / Ccd (cc derivation). Every field starts from a HRRR value at L1.</div>
-    <div class="meta-line"><strong>NBM-side (direct grib ingester).</strong> NBM CO 2.5km grib byte-range fetched hourly at :45 UTC by the nbm-ingester CF (Phase 0, v0.6.433). Extracts 9 fields at Wyman Cove: t / dp / ws / wd / wg / sr / cc / ch / h. <strong>Full parallel cascade shipped 2026-08-21:</strong> raw_nbm → l2_nbm (HRRR-delta reconstruction for all 9) → l3_nbm (per-lead bias, LIVE v0.6.445, scope trimmed 08-25 v0.6.472 to {wg, h, ch, cc}) → l4_nbm for cc/ch (v0.6.451, diurnal hour-of-day) → <span style="text-decoration:line-through;opacity:0.6;">l5_nbm for sr</span> <strong style="color:#e07272;">KILLED 08-25 v0.6.471</strong> (sentry +238% MAE + walkforward −126% to −147% agreed) → l6_nbm for t (v0.6.453 scaffold, ENABLED=False mirroring HRRR L6) → chp_nbm for ch (v0.6.454) / wdp_nbm for wd (v0.6.437). clp_nbm N/A (NBM doesn't emit cl). <strong>Path B discipline (owner call 08-25):</strong> any NBM cascade layer that can't beat its own raw gets killed, not routed around — a broken cascade should be diagnosed loudly, not silently masked. Adding raw as a selector fallback was considered and rejected on those grounds.</div>
-    <div class="meta-line"><strong>🎯 L1 selector (Prod-vs-Prod, v0.6.440 fit / v0.6.445 armed).</strong> For each (field, lead-band), argmin of recent-window MAE(HRRR-Prod deepest applied layer) vs MAE(NBM-Prod = l3_nbm). Fires per <code>l1_selector_table_curated.json</code>. In-scope fields: t / ws / wg / wd / h / ch / sr / dp / cc (all 9 NBM emits). Out-of-scope (HRRR-only): cl / cm / pr / pa / pp — NBM doesn't publish them. Currently 9 cells pick NBM: wg 12-47h, dp 6-47h, cc all leads.</div>
+    <div class="meta-line"><strong>NBM-side (direct grib ingester).</strong> NBM CO 2.5km grib byte-range fetched hourly at :45 UTC by the nbm-ingester CF (v0.6.433). Extracts 9 fields at Wyman Cove: t / dp / ws / wd / wg / sr / cc / ch / h. <strong>Full parallel cascade shipped 2026-08-21:</strong> raw_nbm → l2_nbm (HRRR-delta reconstruction for all 9) → l3_nbm (per-lead bias, LIVE v0.6.445, scope trimmed 08-25 v0.6.472 to {wg, h, ch, cc}) → l4_nbm for cc/ch (v0.6.451, diurnal hour-of-day) → <span style="text-decoration:line-through;opacity:0.6;">l5_nbm for sr</span> <strong style="color:#e07272;">KILLED 08-25 v0.6.471</strong> (sentry +238% MAE + walkforward −126% to −147% agreed) → l6_nbm for t (v0.6.453 scaffold, ENABLED=False mirroring HRRR L6) → chp_nbm for ch (v0.6.454) / wdp_nbm for wd (v0.6.437). clp_nbm N/A (NBM doesn't emit cl). <strong>Path B discipline (owner call 08-25):</strong> any NBM cascade layer that can't beat its own raw gets killed, not routed around — a broken cascade should be diagnosed loudly, not silently masked. Adding raw as a selector fallback was considered and rejected on those grounds.</div>
+    <div class="meta-line"><strong>🎯 L1 selector (Prod-vs-Prod, v0.6.440 fit / v0.6.445 armed).</strong> For each (field, lead-band), argmin of recent-window MAE(HRRR-Prod, deepest applied HRRR layer) vs MAE(NBM-Prod, deepest applied NBM layer — l3_nbm → l4_nbm → l5_nbm → l6_nbm → chp_nbm/wdp_nbm as each fires). Fires per <code>l1_selector_table_curated.json</code>. In-scope fields: t / ws / wg / wd / h / ch / sr / dp / cc (all 9 NBM emits). Out-of-scope (HRRR-only): cl / cm / pr / pa / pp — NBM doesn't publish them. Currently 9 cells pick NBM: wg 12-47h, dp 6-47h, cc all leads.</div>
     <div class="meta-line"><strong>v0.6.432 L1 router retired 2026-08-19 v0.6.437.</strong> Superseded by the selector on all counts: wider scope (9 fields vs 3), stronger evidence base (30-day scoreboard vs 14-day, plus 108-day backfill for L3 fit), post-cascade application (all corrections apply first, selector picks last).</div>
     <div class="meta-line">Curves below show the current L1 forecast per field for the HRRR-side only. NBM raw is available on the per-field accuracy charts as a dashed line (<code>raw_nbm</code>) once the Fitter has a day of pair-log coverage.</div>
   </details>
@@ -2369,295 +2458,10 @@
   </div>
 </details>
 
-<!-- ───────── Phase 0 build: NBM parallel-cascade infra status (2026-08-18) ─────────
-     Ingester CF pulls latest NBM CO cycle hourly and writes
-     nbm_point_extract.json. Backfill CF one-shot populated
-     nbm_backfill/YYYYMMDD_HH.json across 120 days for L3 residual fits.
-     Both feed the L1 selector (LIVE v0.6.445, Prod-vs-Prod). -->
-<details style="margin:12px 0;padding:10px 14px;border:1px solid #3a527a;background:#0e1a2a;border-radius:6px;" id="sec-nbm-infra">
-  <summary style="color:#8db4e8;font-weight:600;cursor:pointer;list-style:none;">🏗️ NBM parallel-cascade infra (Phase 0 build) <span style="opacity:0.75;font-weight:normal;">— ingester + backfill status</span></summary>
-  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
-    Foundation for the option-1 dual HRRR/NBM cascade. Ingester writes the current cycle's leads to <code>nbm_point_extract.json</code> every hour at :45 UTC. Backfill CF populates <code>nbm_backfill/YYYYMMDD_HH.json</code> across ~107 days. Fields extracted (9): t, dp, ws, wd, wg, sr, cc, ch, h. No cl/cm/pr/pa/pp (NBM CO product does not publish them — selector will always pick HRRR for those). Backfill still funds L4_NBM diurnal work + independent-window audits; L3_NBM trains directly on the pair log (training-serving parity).
-  </div>
-  <div id="nbm-infra-live" style="margin-top:10px;font-size:0.88em;">
-    <div style="opacity:0.6;">loading NBM ingester status…</div>
-  </div>
-</details>
-<script>
-(function(){
-  const url = "https://data.wymancove.com/nbm_point_extract.json?_=" + Date.now();
-  fetch(url, { cache: "no-store" })
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(d => {
-      const el = document.getElementById("nbm-infra-live");
-      if (!el) return;
-      const cycle = d.cycle || "—";
-      const fetched = d.fetched_at || "—";
-      const nOk = Object.values(d.leads || {}).filter(v => v && Object.keys(v).length).length;
-      const totalLeads = Object.keys(d.leads || {}).length;
-      const cycleAgeH = d.cycle ?
-        ((Date.now() - Date.UTC(
-            parseInt(d.cycle.slice(0,4)), parseInt(d.cycle.slice(4,6))-1,
-            parseInt(d.cycle.slice(6,8)), parseInt(d.cycle.slice(8,10))
-        )) / 3600000).toFixed(1) : "?";
-      const fetchAgeMin = d.fetched_at ?
-        ((Date.now() - new Date(d.fetched_at).getTime()) / 60000).toFixed(0) : "?";
-      const sampleLead = d.leads && d.leads["1"] ? d.leads["1"] : {};
-      const sampleStr = Object.entries(sampleLead)
-        .map(([k,v]) => `${k}=${typeof v === 'number' ? v.toFixed(1) : v}`).join(" · ");
-      el.innerHTML = `
-        <div><strong>Ingester (myweather-nbm-ingest):</strong> latest cycle
-          <code>${cycle}</code> (age ${cycleAgeH}h) · fetched ${fetchAgeMin}min ago ·
-          ${nOk}/${totalLeads} leads populated</div>
-        <div style="margin-top:4px;opacity:0.8;">Lead 1 sample: ${sampleStr}</div>
-        <div style="margin-top:8px;opacity:0.7;font-size:0.85em;">
-          Backfill coverage: manifest tile pending (Phase 0 item). Verify via
-          <code>gsutil ls gs://myweather-data/nbm_backfill/ | wc -l</code>
-          — target 2,568 blobs (107 days × 24 cycles).
-        </div>`;
-    })
-    .catch(e => {
-      const el = document.getElementById("nbm-infra-live");
-      if (el) el.innerHTML = `<div style="color:#e08a70;">nbm_point_extract.json not yet available (ingester has not written the first cycle). Error: ${e}</div>`;
-    });
-})();
-</script>
 
-<!-- ───────── Phase 3 fit-status tile (2026-08-19) ─────────
-     Reads the local curated JSON that l3_nbm.py loads at collector import.
-     Same rendering pattern as the Phase 0 infra tile. -->
-<details style="margin:12px 0;padding:10px 14px;border:1px solid #3a527a;background:#0e1a2a;border-radius:6px;" id="sec-nbm-l3-fit">
-  <summary style="color:#8db4e8;font-weight:600;cursor:pointer;list-style:none;">🧮 NBM L3 fit status <span style="color:#4ad29a;font-weight:normal;">(LIVE — v0.6.445, 373/384 cells filled)</span></summary>
-  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
-    <code>analysis/l3_nbm_fit.py</code> refits <code>weather_collector/data/l3_nbm_curated.json</code> from the pair log's <code>error_l2_nbm</code> residual. τ=14d, 30d retention, min 20 pairs per (field, lead) bin before publishing. Scalar fields: t / ws / wg / h / ch / sr / dp / cc. Circular field: wd via sin/cos components. Applied inside <code>forecast_snapshot.stamp()</code>. Bins reached maturity via <code>analysis/nbm_backstamp.py</code> — walks pair log, joins with backfilled NBM point extracts, reconstructs <code>l2_nbm</code> exactly from snapshotted HRRR <code>forecast_l1</code>/<code>forecast_l2</code>, stamps historical residuals so L3 could fit against 108 days of data same session.
-  </div>
-  <div id="nbm-l3-fit-live" style="margin-top:10px;font-size:0.88em;">
-    <div style="opacity:0.6;">loading l3_nbm_curated.json…</div>
-  </div>
-</details>
-<script>
-(function(){
-  const url = "weather_collector/data/l3_nbm_curated.json?_=" + Date.now();
-  fetch(url, { cache: "no-store" })
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(d => {
-      const el = document.getElementById("nbm-l3-fit-live");
-      if (!el) return;
-      const fittedAt = d.fitted_at || "never";
-      const nPairs = (d.n_pairs || 0).toLocaleString();
-      const minP = d.min_pairs_per_lead || 20;
-      const scalars = (d.fields_covered || []).filter(f => f !== "wd");
-      const corr = d.corrections || {};
-      const nsam = d.n_samples || {};
-      const rows = scalars.map(f => {
-        const arr = corr[f] || [];
-        const filled = arr.filter(v => v !== null).length;
-        const pairs = (nsam[f] || []).reduce((a, b) => a + b, 0);
-        return `<tr><td style="padding:2px 12px 2px 0;"><code>${f}</code></td>` +
-               `<td style="padding:2px 12px 2px 0;">${filled}/48 leads</td>` +
-               `<td style="padding:2px 0;opacity:0.75;">${pairs.toLocaleString()} pairs</td></tr>`;
-      }).join("");
-      const wdComp = (corr.wd_components) || {};
-      const wdSin = wdComp.sin || [];
-      const wdFilled = wdSin.filter(v => v !== null).length;
-      const wdPairs = (nsam.wd || []).reduce((a, b) => a + b, 0);
-      const wdRow = `<tr><td style="padding:2px 12px 2px 0;"><code>wd</code> <span style="opacity:0.6;">(sin/cos)</span></td>` +
-                    `<td style="padding:2px 12px 2px 0;">${wdFilled}/48 leads</td>` +
-                    `<td style="padding:2px 0;opacity:0.75;">${wdPairs.toLocaleString()} pairs</td></tr>`;
-      el.innerHTML = `
-        <div><strong>Last fit:</strong> ${fittedAt} · ${nPairs} pairs in window · min ${minP}/bin to publish</div>
-        <table style="margin-top:8px;border-collapse:collapse;">${rows}${wdRow}</table>
-        <div style="margin-top:8px;opacity:0.7;font-size:0.85em;">
-          Bins filled via <code>analysis/nbm_backstamp.py</code> on 2026-08-20 (v0.6.445) — walks pair log, joins with 2,455 backfilled NBM point extracts, reconstructs <code>l2_nbm</code> exactly from snapshotted HRRR forecast_l1/forecast_l2, so L3 gets 108 days of training data same session instead of waiting ~30d for natural fill.
-        </div>`;
-    })
-    .catch(e => {
-      const el = document.getElementById("nbm-l3-fit-live");
-      if (el) el.innerHTML = `<div style="color:#e08a70;">l3_nbm_curated.json not yet reachable. Error: ${e}</div>`;
-    });
-})();
-</script>
 
-<!-- ───────── L4_NBM fit-status tile (2026-08-21 v0.6.451) ─────────
-     Mirror of the L3 tile pattern. Reads the curated JSON l4_nbm.py loads
-     at collector import. Scope: cc/ch × 24 hour-of-day bins. -->
-<details style="margin:12px 0;padding:10px 14px;border:1px solid #3a527a;background:#0e1a2a;border-radius:6px;" id="sec-nbm-l4-fit">
-  <summary style="color:#8db4e8;font-weight:600;cursor:pointer;list-style:none;">🧮 NBM L4 fit status <span style="color:#4ad29a;font-weight:normal;">(shadow-live — v0.6.451)</span></summary>
-  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
-    <code>analysis/l4_nbm_fit.py</code> refits <code>weather_collector/data/l4_nbm_curated.json</code> from the pair log's <code>error_l3_nbm</code> residual for cc/ch, indexed by hour-of-day. τ=14d, 30d retention, min 20 pairs per (field, hour) bin before publishing. Mirrors HRRR L4 diurnal (whitelist matches HRRR <code>L4_FIELDS = {cc, ch}</code>). Applied inside <code>forecast_snapshot.stamp()</code> right after the L3_NBM block.
-  </div>
-  <div id="nbm-l4-fit-live" style="margin-top:10px;font-size:0.88em;">
-    <div style="opacity:0.6;">loading l4_nbm_curated.json…</div>
-  </div>
-</details>
-<script>
-(function(){
-  const url = "weather_collector/data/l4_nbm_curated.json?_=" + Date.now();
-  fetch(url, { cache: "no-store" })
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(d => {
-      const el = document.getElementById("nbm-l4-fit-live");
-      if (!el) return;
-      const fittedAt = d.fitted_at || "never";
-      const nPairs = (d.n_pairs || 0).toLocaleString();
-      const minP = d.min_pairs_per_bin || 20;
-      const fields = d.fields_covered || ["cc", "ch"];
-      const corr = d.corrections || {};
-      const nsam = d.n_samples || {};
-      const rows = fields.map(f => {
-        const arr = corr[f] || [];
-        const filled = arr.filter(v => v !== null).length;
-        const pairs = (nsam[f] || []).reduce((a, b) => a + b, 0);
-        return `<tr><td style="padding:2px 12px 2px 0;"><code>${f}</code></td>` +
-               `<td style="padding:2px 12px 2px 0;">${filled}/24 hours</td>` +
-               `<td style="padding:2px 0;opacity:0.75;">${pairs.toLocaleString()} pairs</td></tr>`;
-      }).join("");
-      el.innerHTML = `
-        <div><strong>Last fit:</strong> ${fittedAt} · ${nPairs} pairs in window · min ${minP}/bin to publish</div>
-        <table style="margin-top:8px;border-collapse:collapse;">${rows}</table>
-        <div style="margin-top:8px;opacity:0.7;font-size:0.85em;">
-          Table warms as more pair-log rows accumulate <code>error_l3_nbm</code> for cc/ch. Deeper cells (all 24 hours) unlock as bin counts cross 20 pairs.
-        </div>`;
-    })
-    .catch(e => {
-      const el = document.getElementById("nbm-l4-fit-live");
-      if (el) el.innerHTML = `<div style="color:#e08a70;">l4_nbm_curated.json not yet reachable. Error: ${e}</div>`;
-    });
-})();
-</script>
 
-<!-- ───────── L5_NBM fit-status tile (2026-08-21 v0.6.452) ─────────
-     Mirror of HRRR L5 (regime × hour_of_day solar bias). sr-only. -->
-<details style="margin:12px 0;padding:10px 14px;border:1px solid #3a527a;background:#0e1a2a;border-radius:6px;" id="sec-nbm-l5-fit">
-  <summary style="color:#8db4e8;font-weight:600;cursor:pointer;list-style:none;">🧮 NBM L5 fit status <span style="color:#4ad29a;font-weight:normal;">(shadow-live — v0.6.452, sr-only)</span></summary>
-  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
-    <code>analysis/l5_nbm_recompute_biases_hourly.py</code> refits <code>weather_collector/data/lsr_nbm_bias_table_curated.json</code> from the pair log's <code>error_l3_nbm</code> residual for sr, indexed by (regime × hour_local). Sun-up gate at 50 W/m² (mirrors HRRR L5). Min 30 pairs per (regime, hour) cell before publishing; regimes with n≥50 get a regime-overall fallback bias for cells that don't clear the cell floor. Skip regimes start empty; per-regime skips will be promoted as pair-log data accumulates and per-regime performance shows.
-  </div>
-  <div id="nbm-l5-fit-live" style="margin-top:10px;font-size:0.88em;">
-    <div style="opacity:0.6;">loading lsr_nbm_bias_table_curated.json…</div>
-  </div>
-</details>
-<script>
-(function(){
-  const url = "weather_collector/data/lsr_nbm_bias_table_curated.json?_=" + Date.now();
-  fetch(url, { cache: "no-store" })
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(d => {
-      const el = document.getElementById("nbm-l5-fit-live");
-      if (!el) return;
-      const genAt = d.generated_at || "never";
-      const nPairs = (d.n_pairs || 0).toLocaleString();
-      const minCell = d.min_cell_n || 30;
-      const lookup = d.bias_by_regime_hour || {};
-      const fallback = d.fallback_by_regime || {};
-      const skip = d.skip_regimes || [];
-      const regimes = Object.keys(fallback).length ? Object.keys(fallback)
-                       : ["frontal","sw_flow","pre_frontal","sea_breeze","nw_flow","calm","se_flow","ne_flow"];
-      const rows = regimes.map(r => {
-        const cells = lookup[r] || {};
-        const filled = Object.keys(cells).length;
-        const fb = fallback[r];
-        const fbStr = (typeof fb === "number" && fb !== 0) ? `${fb > 0 ? "+" : ""}${fb.toFixed(2)} W/m²` : "—";
-        const skipStr = skip.includes(r) ? " · <span style=\"color:#e07272;\">SKIP</span>" : "";
-        return `<tr><td style="padding:2px 12px 2px 0;"><code>${r}</code></td>` +
-               `<td style="padding:2px 12px 2px 0;">${filled}/24 hours filled</td>` +
-               `<td style="padding:2px 0;opacity:0.75;">fallback ${fbStr}${skipStr}</td></tr>`;
-      }).join("");
-      el.innerHTML = `
-        <div><strong>Last fit:</strong> ${genAt} · ${nPairs} pairs in window · min ${minCell}/cell to publish</div>
-        <table style="margin-top:8px;border-collapse:collapse;">${rows}</table>
-        <div style="margin-top:8px;opacity:0.7;font-size:0.85em;">
-          Table warms as more <code>error_l3_nbm</code> sr rows land per regime × hour. Regime-fallback fills first (n≥50 pairs per regime); per-cell fits populate as (regime, hour) bins reach n≥${minCell}.
-        </div>`;
-    })
-    .catch(e => {
-      const el = document.getElementById("nbm-l5-fit-live");
-      if (el) el.innerHTML = `<div style="color:#e08a70;">lsr_nbm_bias_table_curated.json not yet reachable. Error: ${e}</div>`;
-    });
-})();
-</script>
 
-<!-- ───────── L6_NBM fit-status tile (2026-08-21 v0.6.453) ─────────
-     Scaffold — ENABLED=False today (mirrors HRRR L6 / cove_correction). -->
-<details style="margin:12px 0;padding:10px 14px;border:1px solid #3a527a;background:#0e1a2a;border-radius:6px;" id="sec-nbm-l6-fit">
-  <summary style="color:#8db4e8;font-weight:600;cursor:pointer;list-style:none;">🧮 NBM L6 fit status <span style="color:#a89ce0;font-weight:normal;">(scaffold — v0.6.453, ENABLED=False)</span></summary>
-  <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">
-    <code>analysis/l6_nbm_fit.py</code> stub reads pair-log <code>error_l3_nbm</code> t rows to fit an <code>(sb_active × octant)</code> + <code>hour_local</code> cove correction. Applied inside <code>forecast_snapshot.stamp()</code> after L5_NBM, gated on <code>_L6_NBM_ENABLED</code>. HRRR-side L6 (<code>cove_correction.py</code>) has been disabled since 2026-07-01 after per-row Production data exposed both cove branches as double-counting L2's waterfront-weighted Kalman blend. Whether the same double-count applies to NBM's L2 is a separate investigation; until then L6_NBM stays dormant. Curated JSON tracked for parallel-cascade completeness even in the disabled state.
-  </div>
-  <div id="nbm-l6-fit-live" style="margin-top:10px;font-size:0.88em;">
-    <div style="opacity:0.6;">loading l6_nbm_cove_curated.json…</div>
-  </div>
-</details>
-<script>
-(function(){
-  const url = "weather_collector/data/l6_nbm_cove_curated.json?_=" + Date.now();
-  fetch(url, { cache: "no-store" })
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(d => {
-      const el = document.getElementById("nbm-l6-fit-live");
-      if (!el) return;
-      const genAt = d.generated_at || d.fitted_at || "never";
-      const nPairs = (d.n_pairs || 0).toLocaleString();
-      el.innerHTML = `
-        <div><strong>Last fit:</strong> ${genAt} · ${nPairs} pairs in window</div>
-        <div style="margin-top:6px;opacity:0.75;">Scaffold applies no correction today (ENABLED=False). Table stays as placeholder until the L6-vs-L2-double-count investigation clears; at that point the fitter populates <code>delta_by_octant</code> + <code>hour_delta_sb_off</code> and the flag flips.</div>`;
-    })
-    .catch(e => {
-      const el = document.getElementById("nbm-l6-fit-live");
-      if (el) el.innerHTML = `<div style="color:#e08a70;">l6_nbm_cove_curated.json not yet reachable. Error: ${e}</div>`;
-    });
-})();
-</script>
-
-<!-- ───────── NBM skip-table (F5, 2026-08-21 v0.6.458) ─────────
-     Per-cell (field, layer, regime, lead-band) skip check for the NBM
-     cascade. Ships with empty cells; curated from
-     analysis/nbm_walkforward_validator.py's per-band SKIP proposals as
-     regime cross-cut lands. Loader at weather_collector/processors/skip_table_nbm.py. -->
-<details style="margin:12px 0;padding:10px 14px;border:1px solid #4a3a52;background:#1a0e20;border-radius:6px;" id="sec-skip-table-nbm">
-  <summary style="color:#c48fe0;font-weight:600;cursor:pointer;list-style:none;">🚫 NBM skip table — per-cell dormancy gate <span style="color:#7fb3ff;font-weight:normal;">(empty seed — v0.6.458)</span></summary>
-  <div style="margin-top:8px;font-size:0.88em;opacity:0.85;">
-    Mirrors HRRR <code>decay_apply.SKIP_TABLE</code> + <code>_should_skip()</code>. Called from every NBM apply block in <code>forecast_snapshot.py</code>; when a cell fires, the layer stamp is skipped and the selector's deepest-layer walk falls back to the shallower NBM layer. Cell shape <code>[regime, lead_lo, lead_hi_exclusive]</code>. Fed by <code>analysis/nbm_walkforward_validator.py</code>'s <code>skip_proposals</code> block; regime column starts as <code>"*"</code> pooled placeholder pending regime cross-cut, so proposals are advisory until manually translated to per-regime cells.
-  </div>
-  <div id="skip-table-nbm-live" style="margin-top:10px;font-size:0.88em;">
-    <div style="opacity:0.6;">loading skip_table_nbm_curated.json…</div>
-  </div>
-</details>
-<script>
-(function(){
-  const url = "weather_collector/data/skip_table_nbm_curated.json?_=" + Date.now();
-  fetch(url, { cache: "no-store" })
-    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-    .then(d => {
-      const el = document.getElementById("skip-table-nbm-live");
-      if (!el) return;
-      const cells = d.cells || {};
-      const layers = ["l3_nbm", "l4_nbm", "l5_nbm", "l6_nbm", "chp_nbm", "wdp_nbm"];
-      let total = 0;
-      const rows = layers.map(lyr => {
-        const perField = cells[lyr] || {};
-        const fields = Object.keys(perField).sort();
-        const n = fields.reduce((a, f) => a + (perField[f] || []).length, 0);
-        total += n;
-        if (n === 0) {
-          return `<div style="opacity:0.6;">${lyr}: empty</div>`;
-        }
-        const inner = fields.map(f => {
-          const rowStrs = (perField[f] || []).map(r => `[${r[0]}, ${r[1]}, ${r[2]})`);
-          return `<div style="margin-left:10px;"><code>${f}</code>: ${rowStrs.join(", ")}</div>`;
-        }).join("");
-        return `<div><strong>${lyr}</strong>: ${n} cell${n===1?"":"s"}${inner}</div>`;
-      }).join("");
-      el.innerHTML = `
-        <div><strong>Last curated:</strong> ${d.fitted_at || "never"} · ${total} cell${total===1?"":"s"} total</div>
-        <div style="margin-top:6px;">${rows}</div>`;
-    })
-    .catch(e => {
-      const el = document.getElementById("skip-table-nbm-live");
-      if (el) el.innerHTML = `<div style="color:#e08a70;">skip_table_nbm_curated.json not yet reachable. Error: ${e}</div>`;
-    });
-})();
-</script>
 
 <!-- ───────── L1 selector LIVE (armed 2026-08-20 v0.6.445) ─────────
      Per-(field, lead-band) source picker. When source=nbm, the collector
@@ -2831,6 +2635,7 @@
 <!-- ───────────────────── L3 ───────────────────── -->
 <h2 class="section" id="sec-layer3">L3 — Lead-decay correction</h2>
 
+
 <!-- 1. What it does -->
 <div class="layer-info-text">
   <p class="layer-summary">How the model's error tends to grow with each hour into the future — and the per-field nudge we apply to push back against that drift.</p>
@@ -2866,6 +2671,7 @@
 <!-- ───────────────────── L4 ───────────────────── -->
 <h2 class="section" id="sec-layer4">L4 — Diurnal correction</h2>
 
+
 <!-- 1. What it does -->
 <div class="layer-info-text">
   <p class="layer-summary">A separate correction for the part of model error that follows the sun — e.g., bias that's different at 3 AM than at 3 PM. Currently applied to high cloud and cloud cover.</p>
@@ -2900,6 +2706,7 @@
 
 <!-- ───────────────────── Lsr — Synoptic-regime correction (solar specialist) ───────────────────── -->
 <h2 class="section" id="sec-layer5">Lsr — Synoptic-regime correction (solar specialist)</h2>
+
 
 <!-- 1. What it does -->
 <div class="layer-info-text" style="border-color:#3a2f1f;background:#1a160e;">
@@ -2970,6 +2777,7 @@
 
 <!-- ───────────────────── Lc — Cloud saturation-unbiasing ───────────────────── -->
 <h2 class="section" id="sec-lc">Lc — Cloud saturation-unbiasing (cloud specialist)</h2>
+
 
 <!-- 1. What it does -->
 <div class="layer-info-text" style="border-color:#3a2f1f;background:#1a160e;">
@@ -4437,7 +4245,7 @@ async function renderScoreboardTilesMinimal() {
 
 // v0.6.480 — Per-field diagnostic table populated live from per_field_scoring.json.
 // Replaces the hand-hardcoded pre-v0.6.478 pooled-min baseline rows. Columns:
-// Total Lift (Prod vs BestRaw — from total_vs_best_raw_pct), HRRR Pipeline Skill
+// Total Lift (Prod vs Public Baseline — from total_vs_best_raw_pct), HRRR Pipeline Skill
 // ((hrrr_raw − hrrr_prod)/hrrr_raw), NBM Pipeline Skill (same on NBM side),
 // n (sum of selector_picks). Hit Rate + Value Captured need L1 selector fit
 // output and stay dashed.
@@ -4501,14 +4309,21 @@ async function renderPerFieldDiagnostic() {
   const DERIVED_MARKER = { dp: "¹", cc: "²" };
   const rows = FIELD_ORDER.map(f => {
     const c = pf7[f] || {};
-    // dp and cc: placeholder-only row (no independent skill to score).
-    if (DERIVED_MARKER[f]) {
-      const dash = `<span class="sb-em">—</span>`;
-      return `<tr><td>${f}<sup class="sb-dim" style="font-size:10px;margin-left:2px;">${DERIVED_MARKER[f]}</sup></td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td>${dash}</td><td class="sb-dim">—</td></tr>`;
-    }
+    // dp and cc: derived fields, omitted entirely — footnote below explains.
+    if (DERIVED_MARKER[f]) return "";
     const total = (c.total_vs_best_raw_pct != null) ? c.total_vs_best_raw_pct : null;
-    const hrrrSkill = _pipeSkill(c.hrrr_raw_mae, c.hrrr_prod_mae);
-    const nbmSkill = NBM_SCOPE.has(f) ? _pipeSkill(c.nbm_raw_mae, c.nbm_prod_mae) : null;
+    // v0.6.492 — Pipeline Skill reads the paired-pool percent computed
+    // backend-side. Same pool as Total Lift + Hit Rate + Value Captured
+    // so all four columns describe the same row set. Fall back to the
+    // legacy per-cascade computation only when the paired field is
+    // missing (backend hasn't been redeployed yet).
+    const hrrrSkill = (c.hrrr_pipeline_skill_paired_pct != null)
+      ? c.hrrr_pipeline_skill_paired_pct
+      : _pipeSkill(c.hrrr_raw_mae, c.hrrr_prod_mae);
+    const nbmSkill = !NBM_SCOPE.has(f) ? null
+      : (c.nbm_pipeline_skill_paired_pct != null
+          ? c.nbm_pipeline_skill_paired_pct
+          : _pipeSkill(c.nbm_raw_mae, c.nbm_prod_mae));
     const n = _nOf(c);
 
     // v0.6.484 — dp and cc excluded from ALL Median/Mean aggregations
@@ -4562,6 +4377,81 @@ async function renderPerFieldDiagnostic() {
     const medRow = `<tr style="border-top:2px solid var(--sb-divider);background:var(--sb-surface-2);"><td style="${labelStyle}">Median</td>${wrapFoot(_median(totalCol))}${wrapFoot(_median(hrrrCol))}${wrapFoot(_median(nbmCol))}${hitFoot(_median(hitCol))}${wrapFoot(_median(valCol))}<td class="sb-dim">—</td></tr>`;
     const meanRow = `<tr style="background:var(--sb-surface-2);"><td style="${labelStyle}">Mean</td>${wrapFoot(_mean(totalCol))}${wrapFoot(_mean(hrrrCol))}${wrapFoot(_mean(nbmCol))}${hitFoot(_mean(hitCol))}${wrapFoot(_mean(valCol))}<td class="sb-dim">—</td></tr>`;
     tfoot.innerHTML = medRow + meanRow;
+  }
+}
+
+
+// v0.6.493 — Notable Calls + High-Conf cells. Both read the per-band block
+// added to per_field_scoring.json this ship. Fields excluded by the same
+// rule as the tile aggregations: dp + cc (derived); pa + pp (non-MAE).
+// Cells with n < MIN_N (200) filtered as noise-adjacent.
+async function renderNotableAndHighConf() {
+  const bestEl = document.getElementById("nc-best");
+  const worst1 = document.getElementById("nc-worst-1");
+  const worst2 = document.getElementById("nc-worst-2");
+  const worst3 = document.getElementById("nc-worst-3");
+  const hccEl  = document.getElementById("health-hcc");
+  if (!bestEl && !hccEl) return;
+  let pfs;
+  try {
+    const r = await fetch("https://data.wymancove.com/per_field_scoring.json?_=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    pfs = await r.json();
+  } catch (e) {
+    const msg = `<span class="sb-dim">unavailable</span>`;
+    if (bestEl)  bestEl.innerHTML  = msg;
+    if (worst1) worst1.innerHTML = msg;
+    if (worst2) worst2.innerHTML = msg;
+    if (worst3) worst3.innerHTML = msg;
+    if (hccEl)   hccEl.innerHTML   = msg;
+    return;
+  }
+  const pf7 = (pfs.windows && pfs.windows["7d"] && pfs.windows["7d"].per_field) || {};
+  const DERIVED_EXCLUDE = new Set(["dp", "cc"]);
+  const NON_MAE_EXCLUDE = new Set(["pa", "pp"]);
+  const MIN_N = 200;
+  const HIGH_CONF_LIFT = 10;
+
+  // Collect all (field, band) cells that pass exclusions + n floor.
+  const cells = [];
+  for (const [f, c] of Object.entries(pf7)) {
+    if (DERIVED_EXCLUDE.has(f) || NON_MAE_EXCLUDE.has(f)) continue;
+    const pb = c && c.per_band;
+    if (!pb) continue;
+    const halvesAgree = c && c.halves_agree && c.halves_agree.total_vs_best_raw;
+    for (const [band, cc] of Object.entries(pb)) {
+      if (cc == null || cc.total_lift_pct == null || cc.n == null || cc.n < MIN_N) continue;
+      cells.push({ field: f, band, lift: cc.total_lift_pct, n: cc.n, halvesAgree: !!halvesAgree });
+    }
+  }
+  const fmtCell = (cell) => {
+    const s = (cell.lift >= 0 ? "+" : "−") + Math.abs(cell.lift).toFixed(1) + "%";
+    const cls = cell.lift >= 3 ? "sb-good" : cell.lift <= -3 ? "sb-bad" : "sb-warn";
+    return `<code>${cell.field} ${cell.band}h</code> <span class="${cls}">${s}</span> <span class="sb-dim">n=${cell.n.toLocaleString()}</span>`;
+  };
+
+  // Notable Calls: top-1 best, top-3 worst by |lift|.
+  const wins = cells.filter(c => c.lift > 0).sort((a, b) => b.lift - a.lift);
+  const losses = cells.filter(c => c.lift < 0).sort((a, b) => a.lift - b.lift);
+  const dash = `<span class="sb-dim">—</span>`;
+  if (bestEl)  bestEl.innerHTML  = wins[0]   ? fmtCell(wins[0])   : dash;
+  if (worst1) worst1.innerHTML = losses[0] ? fmtCell(losses[0]) : dash;
+  if (worst2) worst2.innerHTML = losses[1] ? fmtCell(losses[1]) : dash;
+  if (worst3) worst3.innerHTML = losses[2] ? fmtCell(losses[2]) : dash;
+
+  // High-Conf cells: |lift| ≥ 10 AND parent field's halves_agree = true.
+  // Uses field-level halves_agree as the per-cell confidence proxy —
+  // per-cell halves is a deeper change queued as a follow-up.
+  if (hccEl) {
+    const total = cells.length;
+    const highConf = cells.filter(c => c.halvesAgree && Math.abs(c.lift) >= HIGH_CONF_LIFT).length;
+    if (total === 0) {
+      hccEl.innerHTML = dash;
+    } else {
+      const pct = 100 * highConf / total;
+      const cls = pct >= 50 ? "sb-h-hi" : pct >= 30 ? "sb-h-med" : "sb-h-low";
+      hccEl.innerHTML = `<span class="${cls}">${highConf} / ${total}</span> <span class="sb-dim" style="font-size:11px;">(${pct.toFixed(0)}%; |lift|≥${HIGH_CONF_LIFT}% AND field halves agree)</span>`;
+    }
   }
 }
 
@@ -8249,6 +8139,7 @@ async function load() {
   // until the full renderScoreboardV2 rewrite lands.
   renderScoreboardTilesMinimal();
   renderPerFieldDiagnostic();
+  renderNotableAndHighConf();
   // renderScoreboardV2();       // deferred — targets old #scorecard-banner
   // renderPerFieldScoring();    // deferred — companion to above
   // Legacy hand-curated pf-snapshot table lower on the page still populates

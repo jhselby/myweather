@@ -199,6 +199,16 @@ def _new_bucket():
         "nbm_prod":     [0.0, 0],
         "chosen_prod":  [0.0, 0],
         "alt_prod":     [0.0, 0],
+        # v0.6.492 — paired per-cascade Prod buckets for the coach's table.
+        # Populated only inside the pool_ok intersection so HRRR Pipeline
+        # Skill / NBM Pipeline Skill / Hit Rate / Value Captured / Total
+        # Lift all describe the same row set. The unpaired `hrrr_prod` /
+        # `nbm_prod` buckets stay for other consumers (they answer the
+        # "what would Prod be if we always picked HRRR/NBM at field level"
+        # question, unconstrained by whether the peer cascade was
+        # stampable — different question, different pool).
+        "hrrr_prod_paired": [0.0, 0],
+        "nbm_prod_paired":  [0.0, 0],
         # v0.6.487 — wider prod pool for Prod Trend. The `prod` and
         # `prod_prior` buckets above are gated by the same pool intersection
         # used for Total Lift/Chooser Lift (nbm_raw required on NBM-scope
@@ -220,6 +230,14 @@ def _new_bucket():
         "hits":         0,
         "prod_prior":   [0.0, 0],
         "selector_picks": {"hrrr": 0, "nbm": 0, "hrrr_fallback": 0, "na": 0},
+        # v0.6.493 — per-band buckets for Notable Calls + High-Conf tiles.
+        # Total Lift per (field, band) uses the Public Baseline rule
+        # (v0.6.478): NBM raw for NBM-scope, HRRR raw for HRRR-only. Both
+        # raws accumulated per band; renderer picks by scope. Populated
+        # inside the pool_ok block so it inherits Total Lift's pool
+        # discipline.
+        "per_band": {name: {"hrrr_raw": [0.0, 0], "nbm_raw": [0.0, 0], "prod": [0.0, 0]}
+                     for _lo, _hi, name in BANDS},
     }
 
 
@@ -311,7 +329,23 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
             half = halves[field]["b" if obs_time >= halves_midpoint else "a"]
             b["selector_picks"][pick] = b["selector_picks"].get(pick, 0) + 1
 
+            # Compute per-cascade Prod residuals up-front — used both by
+            # unpaired buckets below AND by paired buckets inside pool_ok.
+            e_hp = _hrrr_prod_error(row)
+            e_np = _nbm_prod_error(row)
+
             if pool_ok:
+                # v0.6.492 — paired per-cascade Prod, gated on the same
+                # pool intersection Total Lift uses. Keeps the coach's
+                # table on one consistent row set.
+                if e_hp is not None:
+                    v = abs(float(e_hp))
+                    b["hrrr_prod_paired"][0] += v
+                    b["hrrr_prod_paired"][1] += 1
+                if e_np is not None:
+                    v = abs(float(e_np))
+                    b["nbm_prod_paired"][0] += v
+                    b["nbm_prod_paired"][1] += 1
                 vh = abs(float(e_hrrr))
                 b["hrrr_raw"][0] += vh; b["hrrr_raw"][1] += 1
                 half["hrrr_raw"][0] += vh; half["hrrr_raw"][1] += 1
@@ -334,6 +368,17 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                 vp = abs(float(e_prod))
                 b["prod"][0] += vp; b["prod"][1] += 1
                 half["prod"][0] += vp; half["prod"][1] += 1
+                # v0.6.493 — per-band Total Lift feed. Accumulate both raws
+                # so the renderer can apply the Public Baseline rule per
+                # scope. wd's raws are circular-degree MAE (already |·|).
+                band = _band_for(row.get("lead_h"))
+                if band is not None:
+                    pb = b["per_band"].get(band)
+                    if pb is not None:
+                        pb["hrrr_raw"][0] += vh; pb["hrrr_raw"][1] += 1
+                        if e_nbm is not None:
+                            pb["nbm_raw"][0] += vn; pb["nbm_raw"][1] += 1
+                        pb["prod"][0] += vp; pb["prod"][1] += 1
 
             # v0.6.487 — current-window prod on the wider pool (any row
             # with a Prod stamp, no intersection requirement). Paired with
@@ -345,12 +390,11 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
 
             # Per-cascade Prod residuals. Pooled unconditionally so we can
             # answer "what would Prod be if we always picked HRRR / always
-            # NBM" at the field level.
-            e_hp = _hrrr_prod_error(row)
+            # NBM" at the field level. e_hp/e_np already computed above
+            # (needed inside pool_ok for paired buckets).
             if e_hp is not None:
                 v = abs(float(e_hp))
                 b["hrrr_prod"][0] += v; b["hrrr_prod"][1] += 1
-            e_np = _nbm_prod_error(row)
             if e_np is not None:
                 v = abs(float(e_np))
                 b["nbm_prod"][0] += v; b["nbm_prod"][1] += 1
@@ -358,7 +402,9 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
             # Chosen vs alternative Prod: paired per row using the selector's
             # actual pick. This is the honest "did the chooser pick the better
             # cascade" measurement — Prod-vs-Prod per v0.6.440.
-            if e_hp is not None and e_np is not None:
+            # v0.6.492 — gate on pool_ok so Hit Rate + Value Captured live
+            # on the same row set as Total Lift + paired Pipeline Skills.
+            if pool_ok and e_hp is not None and e_np is not None:
                 hp = abs(float(e_hp)); np_ = abs(float(e_np))
                 if pick == "nbm":
                     chosen, alt = np_, hp
@@ -396,6 +442,10 @@ def _compute_field(field, buckets, halves):
     prod = _mean(buckets["prod"])
     hrrr_prod = _mean(buckets["hrrr_prod"])
     nbm_prod  = _mean(buckets["nbm_prod"])
+    # v0.6.492 — paired Prod means (pool_ok pool). Feed the coach's table's
+    # Pipeline Skill columns so all four columns describe the same row set.
+    hrrr_prod_paired = _mean(buckets["hrrr_prod_paired"])
+    nbm_prod_paired  = _mean(buckets["nbm_prod_paired"])
     chosen_prod = _mean(buckets["chosen_prod"])
     alt_prod    = _mean(buckets["alt_prod"])
     prod_prior  = _mean(buckets["prod_prior"])
@@ -501,6 +551,19 @@ def _compute_field(field, buckets, halves):
         "prod_mae":      round(prod, 3) if prod is not None else None,
         "hrrr_prod_mae": round(hrrr_prod, 3) if hrrr_prod is not None else None,
         "nbm_prod_mae":  round(nbm_prod, 3)  if nbm_prod  is not None else None,
+        # v0.6.492 — paired-pool per-cascade Prod (matches Total Lift's pool).
+        # Coach's table reads these; unpaired *_prod_mae stays for consumers
+        # that want the intrinsic per-cascade rollup.
+        "hrrr_prod_paired_mae": round(hrrr_prod_paired, 3) if hrrr_prod_paired is not None else None,
+        "nbm_prod_paired_mae":  round(nbm_prod_paired, 3)  if nbm_prod_paired  is not None else None,
+        "n_hrrr_prod_paired":   buckets["hrrr_prod_paired"][1],
+        "n_nbm_prod_paired":    buckets["nbm_prod_paired"][1],
+        # Pipeline Skill lifts computed on the paired pool: paired-Prod vs
+        # pool_ok-raw. Positive = the cascade's corrections lift its own raw.
+        "hrrr_pipeline_skill_paired_pct": (round(_lift_pct(hrrr, hrrr_prod_paired), 2)
+                                            if _lift_pct(hrrr, hrrr_prod_paired) is not None else None),
+        "nbm_pipeline_skill_paired_pct":  (round(_lift_pct(nbm, nbm_prod_paired), 2)
+                                            if (in_nbm_scope and _lift_pct(nbm, nbm_prod_paired) is not None) else None),
         "chosen_prod_mae": round(chosen_prod, 3) if chosen_prod is not None else None,
         "alt_prod_mae":  round(alt_prod, 3) if alt_prod is not None else None,
         "chooser_vs_prod_pct": round(chooser_vs_prod_pct, 2) if chooser_vs_prod_pct is not None else None,
@@ -533,6 +596,38 @@ def _compute_field(field, buckets, halves):
         "n_l1_selected":  buckets["l1_selected"][1],
         "n_prod":         buckets["prod"][1],
         "selector_picks": dict(buckets["selector_picks"]),
+        # v0.6.493 — per-band Total Lift for Notable Calls + High-Conf tiles.
+        # Baseline rule mirrors the field-level Public Baseline (v0.6.478):
+        # NBM raw for NBM-scope; HRRR raw for HRRR-only. dp + cc excluded
+        # at the frontend renderer per DERIVED_EXCLUDE / LIFT_SCOPE rules.
+        "per_band": {
+            band: (lambda pb: {
+                "total_lift_pct": (
+                    round(_lift_pct(
+                        _mean(pb["nbm_raw"]) if in_nbm_scope and _mean(pb["nbm_raw"]) is not None
+                        else _mean(pb["hrrr_raw"]),
+                        _mean(pb["prod"])
+                    ), 2)
+                    if _lift_pct(
+                        _mean(pb["nbm_raw"]) if in_nbm_scope and _mean(pb["nbm_raw"]) is not None
+                        else _mean(pb["hrrr_raw"]),
+                        _mean(pb["prod"])
+                    ) is not None else None
+                ),
+                "n": pb["prod"][1],
+                "baseline_mae": (
+                    round(
+                        _mean(pb["nbm_raw"]) if in_nbm_scope and _mean(pb["nbm_raw"]) is not None
+                        else _mean(pb["hrrr_raw"]), 3
+                    ) if (
+                        (_mean(pb["nbm_raw"]) if in_nbm_scope else _mean(pb["hrrr_raw"])) is not None
+                    ) else None
+                ),
+                "prod_mae": round(_mean(pb["prod"]), 3) if _mean(pb["prod"]) is not None else None,
+                "baseline_src": "nbm" if in_nbm_scope else "hrrr",
+            })(buckets["per_band"][band])
+            for band in buckets["per_band"]
+        },
         "halves_agree": {
             "sel_vs_hrrr": _agree(sel_h_a, sel_h_b),
             "sel_vs_nbm":  _agree(sel_n_a, sel_n_b) if in_nbm_scope else None,

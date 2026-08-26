@@ -52,6 +52,11 @@ PUBLISHERS = [
     # + Correction lift (Prod vs L1) + Total pipeline lift (Prod vs best raw).
     # Under "Current state" on the debug page.
     "per_field_scoring",
+    # L2_NBM soundness audit (2026-08-26 v0.6.492) — measures whether the
+    # HRRR-delta reconstruction l2_nbm = raw_nbm + (l2_hrrr − raw_hrrr)
+    # actually lifts vs raw_nbm by (field, lead-band). Debug page reads
+    # the JSON for the L2_NBM soundness tile.
+    "nbm_l2_delta_audit",
 ]
 
 

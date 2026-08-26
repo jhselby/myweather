@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-19T08:56:22.463780+00:00",
+  "generated_at": "2026-08-26T10:03:28.856821+00:00",
   "source": "h_lsr_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
@@ -14,26 +14,138 @@
   "fields_cleared": [],
   "set_level_gate_clear": false,
   "per_cell": {
-    "se_flow": {
+    "pre_frontal": {
+      "8": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -41.4,
+        "hist_shift": 41.4,
+        "n_holdout": 31
+      },
+      "9": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -110.8,
+        "hist_shift": 110.8,
+        "n_holdout": 30
+      },
       "11": {
         "gate_apply": true,
         "gate_reason": "thin",
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": 3.3,
-        "hist_shift": -3.3,
-        "n_holdout": 39
+        "hist_bias": -152.8,
+        "hist_shift": 152.8,
+        "n_holdout": 34
+      },
+      "12": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -168.1,
+        "hist_shift": 168.1,
+        "n_holdout": 33
+      },
+      "13": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -216.0,
+        "hist_shift": 216.0,
+        "n_holdout": 30
+      },
+      "14": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -117.1,
+        "hist_shift": 117.1,
+        "n_holdout": 33
       },
       "17": {
-        "gate_apply": false,
-        "gate_reason": "sign",
-        "sign_ok": false,
-        "mag_ok": true,
-        "recent_bias": 15.1961,
-        "hist_bias": -4.8,
-        "hist_shift": 4.8,
-        "n_holdout": 37
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 17.7,
+        "hist_shift": -17.7,
+        "n_holdout": 33
+      },
+      "18": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 50.7,
+        "hist_shift": -50.7,
+        "n_holdout": 33
+      }
+    },
+    "sw_flow": {
+      "10": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -295.7,
+        "hist_shift": 295.7,
+        "n_holdout": 56
+      },
+      "15": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 41.2,
+        "hist_shift": -41.2,
+        "n_holdout": 61
+      },
+      "16": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 137.1,
+        "hist_shift": -137.1,
+        "n_holdout": 60
+      },
+      "17": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 44.1,
+        "hist_shift": -44.1,
+        "n_holdout": 52
+      },
+      "18": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 59.3,
+        "hist_shift": -59.3,
+        "n_holdout": 69
       }
     }
   },

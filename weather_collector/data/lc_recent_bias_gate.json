@@ -1,80 +1,46 @@
 {
-  "generated_at": "2026-08-19T08:56:02.905731+00:00",
+  "generated_at": "2026-08-26T10:03:09.017255+00:00",
   "source": "h_lc_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
   "gate_ratio": 0.5,
   "min_n_cell": 30,
-  "promoted_fields": [
-    "ch"
-  ],
-  "fields_cleared": [
-    "ch"
-  ],
+  "promoted_fields": [],
+  "fields_cleared": [],
   "set_level_gate_clear": false,
   "per_cell": {
     "cl": {
       "50-80": {
-        "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
+        "gate_apply": false,
+        "gate_reason": "sign",
+        "sign_ok": false,
         "mag_ok": true,
-        "recent_bias": 62.1207,
-        "hist_bias": 24.303,
-        "hist_shift": -24.303,
-        "n_holdout": 173
-      },
-      "80-95": {
-        "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
-        "mag_ok": true,
-        "recent_bias": 84.7105,
-        "hist_bias": 35.522,
-        "hist_shift": -35.522,
-        "n_holdout": 176
+        "recent_bias": -15.3404,
+        "hist_bias": 16.783,
+        "hist_shift": -16.783,
+        "n_holdout": 98
       }
     },
     "cm": {
       "20-50": {
-        "gate_apply": false,
-        "gate_reason": "sign",
-        "sign_ok": false,
-        "mag_ok": false,
-        "recent_bias": -0.7867,
-        "hist_bias": 16.0,
-        "hist_shift": -16.0,
-        "n_holdout": 127
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 24.3073,
+        "hist_bias": 16.406,
+        "hist_shift": -16.406,
+        "n_holdout": 36
       },
       "50-80": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 37.0,
-        "hist_bias": 44.265,
-        "hist_shift": -44.265,
-        "n_holdout": 121
-      },
-      "80-95": {
-        "gate_apply": true,
-        "gate_reason": "on",
-        "sign_ok": true,
-        "mag_ok": true,
-        "recent_bias": 66.9189,
-        "hist_bias": 65.988,
-        "hist_shift": -65.988,
-        "n_holdout": 289
-      },
-      "95-100": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 63.73,
-        "hist_shift": -63.73,
-        "n_holdout": 98
+        "recent_bias": 49.8235,
+        "hist_bias": 44.182,
+        "hist_shift": -44.182,
+        "n_holdout": 30
       }
     },
     "ch": {
@@ -83,20 +49,20 @@
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 22.4776,
-        "hist_bias": 22.416,
-        "hist_shift": -22.416,
-        "n_holdout": 227
+        "recent_bias": 33.936,
+        "hist_bias": 23.278,
+        "hist_shift": -23.278,
+        "n_holdout": 123
       },
       "50-80": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 52.3976,
-        "hist_bias": 46.009,
-        "hist_shift": -46.009,
-        "n_holdout": 541
+        "recent_bias": 59.4339,
+        "hist_bias": 50.222,
+        "hist_shift": -50.222,
+        "n_holdout": 60
       }
     }
   },
