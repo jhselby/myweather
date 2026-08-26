@@ -147,6 +147,45 @@ def _prod_error(row):
     return row.get("error")
 
 
+# v0.6.494 — NBM-side layer stamps to SKIP when computing current-config Prod.
+# Any NBM-cascade layer whose runtime ENABLED flag is False belongs here so its
+# historical stamps stop contaminating the rolling window post-kill/scaffold.
+# When a layer is re-enabled, remove its stamp key from this set.
+#
+# Snapshot as of 2026-08-26:
+#   error_l5_nbm — l5_nbm.ENABLED = False (killed 2026-08-25, sr regression)
+#   error_l6_nbm — l6_nbm.ENABLED = False (scaffold, waterfront investigation)
+#
+# HRRR-side deliberately NOT listed: HRRR `l6` slot is Lt for t (disabled) but
+# Lc for cm/ch (enabled). Correct HRRR-side counterfactual needs per-field
+# disable logic — deferred as a follow-up. For today, HRRR-side counterfactual
+# ≡ as-shipped Prod.
+_DISABLED_LAYER_KEYS = frozenset({
+    "error_l5_nbm",
+    "error_l6_nbm",
+})
+
+
+def _prod_error_current_config(row):
+    """Prod residual under CURRENT enable-flags — walks the appropriate
+    cascade side (NBM if row's applied_layer ends in `_nbm`, HRRR otherwise)
+    and SKIPS stamps for currently-disabled layers. Killed layers stop
+    poisoning the rolling window even for rows stamped while they were live.
+
+    Fall-through: if no non-disabled stamp is present on the side, returns
+    None (caller treats it the same as any missing residual).
+    """
+    applied = (row.get("applied_layer") or "")
+    keys = NBM_PROD_KEYS if applied.endswith("_nbm") else HRRR_PROD_KEYS
+    for k in keys:
+        if k in _DISABLED_LAYER_KEYS:
+            continue
+        v = row.get(k)
+        if v is not None:
+            return v
+    return None
+
+
 def _selected_l1_error(row, band_picks):
     """L1_selected residual — the error a user would get if they saw only the
     selector's chosen source, WITHOUT the local correction stack on top.
@@ -236,8 +275,13 @@ def _new_bucket():
         # raws accumulated per band; renderer picks by scope. Populated
         # inside the pool_ok block so it inherits Total Lift's pool
         # discipline.
-        "per_band": {name: {"hrrr_raw": [0.0, 0], "nbm_raw": [0.0, 0], "prod": [0.0, 0]}
+        "per_band": {name: {"hrrr_raw": [0.0, 0], "nbm_raw": [0.0, 0],
+                             "prod": [0.0, 0], "prod_cc": [0.0, 0]}
                      for _lo, _hi, name in BANDS},
+        # v0.6.494 — current-config Prod. Same pool discipline as `prod`
+        # (populated inside pool_ok). Skips historical stamps for layers
+        # currently disabled — see _DISABLED_LAYER_KEYS.
+        "prod_current_config": [0.0, 0],
     }
 
 
@@ -368,6 +412,14 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                 vp = abs(float(e_prod))
                 b["prod"][0] += vp; b["prod"][1] += 1
                 half["prod"][0] += vp; half["prod"][1] += 1
+                # v0.6.494 — current-config Prod: walk the applied cascade
+                # skipping disabled layers.
+                e_pcc = _prod_error_current_config(row)
+                v_pcc = None
+                if e_pcc is not None:
+                    v_pcc = abs(float(e_pcc))
+                    b["prod_current_config"][0] += v_pcc
+                    b["prod_current_config"][1] += 1
                 # v0.6.493 — per-band Total Lift feed. Accumulate both raws
                 # so the renderer can apply the Public Baseline rule per
                 # scope. wd's raws are circular-degree MAE (already |·|).
@@ -379,6 +431,8 @@ def _accumulate(pair_log_path, window_start, halves_midpoint, prior_start, band_
                         if e_nbm is not None:
                             pb["nbm_raw"][0] += vn; pb["nbm_raw"][1] += 1
                         pb["prod"][0] += vp; pb["prod"][1] += 1
+                        if v_pcc is not None:
+                            pb["prod_cc"][0] += v_pcc; pb["prod_cc"][1] += 1
 
             # v0.6.487 — current-window prod on the wider pool (any row
             # with a Prod stamp, no intersection requirement). Paired with
@@ -591,6 +645,19 @@ def _compute_field(field, buckets, halves):
         # Headline: total pipeline lift (Prod vs best raw)
         "total_vs_best_raw_pct": (round(_lift_pct(best_raw, prod), 2)
                                    if _lift_pct(best_raw, prod) is not None else None),
+        # v0.6.494 — current-config counterfactual Total Lift. Same math as
+        # total_vs_best_raw_pct but Prod is recomputed by walking cascade
+        # stamps and skipping currently-disabled layers (see
+        # _DISABLED_LAYER_KEYS). Big delta vs total_vs_best_raw_pct = a
+        # recent kill is still poisoning the rolling window; small delta =
+        # historical stamps and current config agree.
+        "total_current_config_pct": (
+            round(_lift_pct(best_raw, _mean(buckets["prod_current_config"])), 2)
+            if _lift_pct(best_raw, _mean(buckets["prod_current_config"])) is not None
+            else None),
+        "prod_current_config_mae": (round(_mean(buckets["prod_current_config"]), 3)
+                                     if _mean(buckets["prod_current_config"]) is not None else None),
+        "n_prod_current_config":   buckets["prod_current_config"][1],
         "n_hrrr":         buckets["hrrr_raw"][1],
         "n_nbm":          buckets["nbm_raw"][1],
         "n_l1_selected":  buckets["l1_selected"][1],
@@ -625,6 +692,21 @@ def _compute_field(field, buckets, halves):
                 ),
                 "prod_mae": round(_mean(pb["prod"]), 3) if _mean(pb["prod"]) is not None else None,
                 "baseline_src": "nbm" if in_nbm_scope else "hrrr",
+                # v0.6.494 — per-band current-config counterfactual.
+                "total_current_config_pct": (
+                    round(_lift_pct(
+                        _mean(pb["nbm_raw"]) if in_nbm_scope and _mean(pb["nbm_raw"]) is not None
+                        else _mean(pb["hrrr_raw"]),
+                        _mean(pb["prod_cc"])
+                    ), 2)
+                    if _lift_pct(
+                        _mean(pb["nbm_raw"]) if in_nbm_scope and _mean(pb["nbm_raw"]) is not None
+                        else _mean(pb["hrrr_raw"]),
+                        _mean(pb["prod_cc"])
+                    ) is not None else None
+                ),
+                "prod_cc_mae": round(_mean(pb["prod_cc"]), 3) if _mean(pb["prod_cc"]) is not None else None,
+                "n_prod_cc":   pb["prod_cc"][1],
             })(buckets["per_band"][band])
             for band in buckets["per_band"]
         },

@@ -1494,7 +1494,7 @@
         <div class="sb-co-label" style="color: var(--sb-bad); opacity: 0.75;">3rd worst</div>
         <div class="sb-co-val" id="nc-worst-3"><span class="sb-dim">—</span></div>
       </div>
-      <div style="font-size:11px;color:var(--sb-dim);padding-top:8px;line-height:1.4;">Top-1 win + top-3 losses at (field, lead-band). dp + cc excluded (derived); pa + pp excluded (non-MAE); cells with n &lt; 200 filtered as noise-adjacent.</div>
+      <div style="font-size:11px;color:var(--sb-dim);padding-top:8px;line-height:1.4;">Top-1 win + top-3 losses at (field, lead-band). Scored on <strong>current-config</strong> counterfactual Total Lift (v0.6.494) so killed layers don't drag the rankings. dp + cc excluded (derived); pa + pp excluded (non-MAE); n &lt; 200 filtered.</div>
     </div>
 
   </div>
@@ -1723,6 +1723,7 @@
 
   <div class="sb-pfs-foot">
     <div><strong>dp</strong> and <strong>cc</strong> omitted — both derived at prod-time (dp = Magnus(prod_t, prod_h); cc = Ccd max(prod_cl, prod_cm, prod_ch)) with no independent skill chain. Future dp bias layer or cc composition tuner would restore their rows.</div>
+    <div style="margin-top:6px;"><strong>🪦 cfg X%</strong> annotation on a Total Lift cell = current-config counterfactual (v0.6.494). Computed by walking the cascade stamps and skipping layers currently ENABLED=False. Big delta between the as-shipped number and cfg = a recent kill is still poisoning the rolling window; expect it to fade over ~7-30 days as new rows accumulate. Snapshot 2026-08-26: skips <code>error_l5_nbm</code> (killed 08-25) + <code>error_l6_nbm</code> (scaffold). HRRR-side counterfactual deferred (needs per-field disable logic because HRRR layer slots are field-dependent).</div>
     <div style="margin-top:8px;">Windows: all five columns computed on the same paired 7d/24h pool (v0.6.492) — rows where every relevant residual (HRRR raw, NBM raw, selector output, Prod, both cascade Prods) exists. Total Lift columns and Pipeline Skill columns now share denominators, so causal chaining is meaningful: if Total Lift moves, at least one Pipeline Skill or the selector's Hit Rate moved on the same rows to cause it.</div>
   </div>
 </section>
@@ -4340,6 +4341,16 @@ async function renderPerFieldDiagnostic() {
     if (NBM_SCOPE.has(f) && !isDerived && c.value_captured_pct != null) valCol.push(c.value_captured_pct);
 
     let totalCell = _fmtPct(total);
+    // v0.6.494 — current-config Total Lift annotation. When the delta between
+    // as-shipped and current-config is meaningful (|Δ| ≥ 3%), append a small
+    // subscript showing what Total Lift WOULD be under the current enable-flags.
+    // Big delta = a recently-disabled layer's historical stamps are still
+    // dragging the rolling window.
+    const totalCfg = (c.total_current_config_pct != null) ? c.total_current_config_pct : null;
+    if (totalCfg != null && total != null && Math.abs(totalCfg - total) >= 3.0) {
+      const cfgStr = (totalCfg >= 0 ? "+" : "−") + Math.abs(totalCfg).toFixed(1) + "%";
+      totalCell += `<div class="sb-dim" style="font-size:10px;margin-top:1px;">🪦 cfg ${cfgStr}</div>`;
+    }
     let hrrrCell = _fmtPct(hrrrSkill);
     if (BRIER_FIELDS.has(f)) { totalCell = `<span class="sb-em">Brier</span>`; hrrrCell = `<span class="sb-em">Brier</span>`; }
     else if (TINY_MAG_FIELDS.has(f)) { totalCell = `<span class="sb-em">tiny mag</span>`; hrrrCell = `<span class="sb-em">tiny mag</span>`; }
@@ -4413,6 +4424,9 @@ async function renderNotableAndHighConf() {
   const HIGH_CONF_LIFT = 10;
 
   // Collect all (field, band) cells that pass exclusions + n floor.
+  // v0.6.494 — prefer per-band current-config lift for Notable Calls so
+  // killed layers don't drag the top-N wins/losses. Falls back to
+  // as-shipped when the current-config field isn't emitted.
   const cells = [];
   for (const [f, c] of Object.entries(pf7)) {
     if (DERIVED_EXCLUDE.has(f) || NON_MAE_EXCLUDE.has(f)) continue;
@@ -4420,8 +4434,12 @@ async function renderNotableAndHighConf() {
     if (!pb) continue;
     const halvesAgree = c && c.halves_agree && c.halves_agree.total_vs_best_raw;
     for (const [band, cc] of Object.entries(pb)) {
-      if (cc == null || cc.total_lift_pct == null || cc.n == null || cc.n < MIN_N) continue;
-      cells.push({ field: f, band, lift: cc.total_lift_pct, n: cc.n, halvesAgree: !!halvesAgree });
+      const lift = (cc && cc.total_current_config_pct != null)
+        ? cc.total_current_config_pct
+        : (cc && cc.total_lift_pct != null ? cc.total_lift_pct : null);
+      const n = (cc && cc.n_prod_cc != null) ? cc.n_prod_cc : (cc && cc.n != null ? cc.n : null);
+      if (lift == null || n == null || n < MIN_N) continue;
+      cells.push({ field: f, band, lift, n, halvesAgree: !!halvesAgree });
     }
   }
   const fmtCell = (cell) => {
