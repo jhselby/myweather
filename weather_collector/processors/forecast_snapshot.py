@@ -66,23 +66,29 @@ _NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch", "h")
 # accumulates. wd uses circular subtraction/addition.
 _L2_NBM_FIELDS = ("t", "ws", "wd", "wg", "h", "ch", "sr", "dp", "cc")
 
-# v0.6.498 (2026-08-26) — NATIVE NBM L2 for the additive-bias family
-# (t, h; dp derived from Magnus(l2_nbm_t, l2_nbm_h)). Retires the
-# HRRR-delta transfer for these fields because the transfer assumed
-# the station-network bias is model-independent, and analysis/
-# nbm_l2_delta_audit.py measured that assumption failing for h/dp
-# short-lead. Native L2 fixes that by re-anchoring the same station
-# consensus + Kalman gain + decay curve against NBM raw at h=0
-# instead of HRRR raw at h=0.
+# v0.6.499 (2026-08-26) — NATIVE NBM L2 for ALL NBM-scope fields.
+# Full delta-transfer retirement.
 #
-# Fields with native L2:  t, h, dp (dp derived)
-# Fields still on delta transfer (phase 2): ws, wg, wd, cc, ch —
-#   these use direct-selection / circular / hourly[0]-override
-#   mechanisms on HRRR side; porting to native NBM needs a plumbing
-#   pass on wind_blend.py + cloud_obs_blend.py (deferred).
-# Fields on identity:     sr — HRRR L2 has no sr correction (no
-#   station network for solar), so there is no native L2 to build.
-_L2_NBM_NATIVE = frozenset({"t", "h", "dp"})
+# Additive-bias family (t/h/dp): re-anchors the station consensus +
+#   Kalman gain + decay curve against NBM raw at h=0 (mirror of the
+#   HRRR L2 math in corrected_hourly.py). dp derived Magnus(t, h).
+# Wind family (ws/wg/wd): mirror of wind_blend.py's linear time-decay
+#   blend of the current observed value into [0, BLEND_HOURS) of the
+#   forecast, applied to NBM raw arrays. wd uses circular unit-vector
+#   blend with the same WIND_DIR_MIN_SPEED calm-floor guard.
+# Cloud family (cc/ch): mirror of cloud_obs_blend.py's hourly[0]-only
+#   K*(obs_mean - raw) adjustment, reusing the K + obs means computed
+#   for HRRR (stored in weather_data.hourly.cloud_l2_meta).
+# Identity (sr): HRRR has no L2 for sr — no station network for solar,
+#   nothing to mirror.
+#
+# All native math shares the SAME station observations / Kalman gain /
+# decay curves the HRRR side uses. The only substitution is which raw
+# forecast the correction anchors against. That is exactly the fix the
+# 2026-08-26 nbm_l2_delta_audit prescribed: the station-network bias
+# IS model-independent, but the anchor (raw at h=0) is not, and the
+# delta transfer conflated the two.
+_L2_NBM_NATIVE = frozenset({"t", "h", "dp", "ws", "wg", "wd", "cc", "ch"})
 
 
 def _build_nbm_raw_array(times, nbm_by_valid_utc, field, n_leads):
@@ -282,9 +288,99 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     dp = magnus_dew_point_f(tv, hv) if (tv is not None and hv is not None) else None
                     _dp_arr.append(dp)
                 _nbm_l2_native_arrays["dp"] = _dp_arr
+
+            # v0.6.499 — NATIVE NBM L2 for wind family (ws/wg/wd). Mirrors
+            # wind_blend.py's linear time-decay blend of the current observed
+            # value into the next BLEND_HOURS of forecast, applied to NBM raw
+            # arrays instead of HRRR raw arrays. Same observed value, same
+            # weight curve; leads >= BLEND_HOURS pass raw_nbm through.
+            from .wind_blend import BLEND_HOURS as _WIND_BLEND_HOURS, WIND_DIR_MIN_SPEED as _WIND_DIR_MIN_SPEED
+            _cur = weather_data.get("current", {}) or {}
+            _obs_ws = _cur.get("wind_speed")
+            _obs_wg = _cur.get("wind_gusts")
+            _obs_wd = _cur.get("wind_direction")
+            _nbm_ws_arr = _build_nbm_raw_array(times, nbm_by_valid_utc, "ws", _n_leads) if _obs_ws is not None else None
+            _nbm_wg_arr = _build_nbm_raw_array(times, nbm_by_valid_utc, "wg", _n_leads) if _obs_wg is not None else None
+            _nbm_wd_arr = _build_nbm_raw_array(times, nbm_by_valid_utc, "wd", _n_leads) if _obs_wd is not None else None
+            def _wind_blend(obs, raw_arr):
+                if obs is None or raw_arr is None:
+                    return None
+                out = []
+                for j in range(_n_leads):
+                    if j >= len(raw_arr) or raw_arr[j] is None:
+                        out.append(None); continue
+                    if j < _WIND_BLEND_HOURS:
+                        w = max(0.0, 1.0 - j / _WIND_BLEND_HOURS)
+                        out.append(round(obs * w + raw_arr[j] * (1 - w), 1))
+                    else:
+                        out.append(round(raw_arr[j], 1))
+                return out
+            _nbm_l2_native_arrays["ws"] = _wind_blend(_obs_ws, _nbm_ws_arr)
+            _nbm_l2_native_arrays["wg"] = _wind_blend(_obs_wg, _nbm_wg_arr)
+            # wd uses circular unit-vector blend with calm-floor guard.
+            if _obs_wd is not None and _nbm_wd_arr is not None:
+                import math as _math_wd
+                _wd_out = []
+                _obs_wd_f = float(_obs_wd)
+                _obs_ws_f = float(_obs_ws) if _obs_ws is not None else 0.0
+                for j in range(_n_leads):
+                    if j >= len(_nbm_wd_arr) or _nbm_wd_arr[j] is None:
+                        _wd_out.append(None); continue
+                    if j >= _WIND_BLEND_HOURS:
+                        _wd_out.append(round(float(_nbm_wd_arr[j])))
+                        continue
+                    _fc_ws_j = (_nbm_ws_arr[j] if _nbm_ws_arr and j < len(_nbm_ws_arr) and _nbm_ws_arr[j] is not None
+                                else _obs_ws_f)
+                    if max(_obs_ws_f, _fc_ws_j or 0.0) < _WIND_DIR_MIN_SPEED:
+                        _wd_out.append(round(float(_nbm_wd_arr[j])))
+                        continue
+                    _w = max(0.0, 1.0 - j / _WIND_BLEND_HOURS)
+                    _or = _math_wd.radians(_obs_wd_f)
+                    _fr = _math_wd.radians(float(_nbm_wd_arr[j]))
+                    _s = _w * _math_wd.sin(_or) + (1 - _w) * _math_wd.sin(_fr)
+                    _c = _w * _math_wd.cos(_or) + (1 - _w) * _math_wd.cos(_fr)
+                    if abs(_s) < 1e-9 and abs(_c) < 1e-9:
+                        _wd_out.append(round(float(_nbm_wd_arr[j])))
+                    else:
+                        _wd_out.append(round((_math_wd.degrees(_math_wd.atan2(_s, _c)) + 360.0) % 360.0))
+                _nbm_l2_native_arrays["wd"] = _wd_out
+
+            # v0.6.499 — NATIVE NBM L2 for cloud family (cc/ch). Mirrors
+            # cloud_obs_blend.py: at hourly[0] only, apply K * (obs_mean - raw).
+            # Reuses the Kalman gain + obs means computed for HRRR (stored in
+            # cloud_l2_meta by cloud_obs_blend). Leads >= 1 pass raw_nbm through
+            # (HRRR L2 cloud also only touches hourly[0]).
+            _cloud_meta = hourly.get("cloud_l2_meta", {}) or {}
+            _cloud_K = _cloud_meta.get("kalman_gain")
+            _cloud_applied = _cloud_meta.get("fields_applied", []) or []
+            _obs_mean_by_field = {"cc": None, "ch": None}
+            for _entry in _cloud_applied:
+                _field_key = _entry.get("field", "")
+                if _field_key == "cloud_cover":
+                    _obs_mean_by_field["cc"] = _entry.get("obs_mean")
+                elif _field_key == "cloud_cover_high":
+                    _obs_mean_by_field["ch"] = _entry.get("obs_mean")
+            for _cf in ("cc", "ch"):
+                _obs_mean = _obs_mean_by_field.get(_cf)
+                _nbm_cf_arr = _build_nbm_raw_array(times, nbm_by_valid_utc, _cf, _n_leads)
+                if _obs_mean is not None and _cloud_K is not None and _nbm_cf_arr is not None:
+                    _arr = [None] * _n_leads
+                    _r0 = _nbm_cf_arr[0] if _nbm_cf_arr else None
+                    if _r0 is not None:
+                        _new0 = _r0 + _cloud_K * (_obs_mean - _r0)
+                        _new0 = max(0, min(100, round(_new0)))
+                        _arr[0] = _new0
+                    for j in range(1, _n_leads):
+                        _arr[j] = _nbm_cf_arr[j]
+                    _nbm_l2_native_arrays[_cf] = _arr
+                elif _nbm_cf_arr is not None:
+                    # No obs → identity passthrough
+                    _nbm_l2_native_arrays[_cf] = list(_nbm_cf_arr)
     except Exception as _e:
         logging.warning(f"  ⚠  Native NBM L2 precompute failed: {_e}")
-        _nbm_l2_native_arrays = {"t": None, "h": None, "dp": None}
+        _nbm_l2_native_arrays = {"t": None, "h": None, "dp": None,
+                                  "ws": None, "wg": None, "wd": None,
+                                  "cc": None, "ch": None}
 
     # Per-layer forecast arrays. The Fitter (decay_fit) computes per-layer MAE
     # by comparing each layer's forecast against the same observation, so we
