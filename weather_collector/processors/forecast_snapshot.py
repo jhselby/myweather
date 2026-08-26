@@ -66,25 +66,46 @@ _NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch", "h")
 # accumulates. wd uses circular subtraction/addition.
 _L2_NBM_FIELDS = ("t", "ws", "wd", "wg", "h", "ch", "sr", "dp", "cc")
 
-# v0.6.492 (2026-08-26) — evidence-driven skip of the HRRR-delta transfer
-# for fields where analysis/nbm_l2_delta_audit.py shows the delta actively
-# hurts vs raw_nbm on the 30d pool. For these fields we stamp
-#   l2_nbm = raw_nbm
-# (identity passthrough — same path already used when HRRR L2 didn't fire).
+# v0.6.498 (2026-08-26) — NATIVE NBM L2 for the additive-bias family
+# (t, h; dp derived from Magnus(l2_nbm_t, l2_nbm_h)). Retires the
+# HRRR-delta transfer for these fields because the transfer assumed
+# the station-network bias is model-independent, and analysis/
+# nbm_l2_delta_audit.py measured that assumption failing for h/dp
+# short-lead. Native L2 fixes that by re-anchoring the same station
+# consensus + Kalman gain + decay curve against NBM raw at h=0
+# instead of HRRR raw at h=0.
 #
-# Rationale: the L2_NBM reconstruction assumes the true Wyman Cove bias is
-# independent of which model generated the raw. That assumption breaks for
-# moisture fields at short lead (h 0-5h delta = −29%, dp 0-5h delta = −28%)
-# and for solar at all leads (sr pooled −2.9%). Applying the HRRR delta on
-# those fields amplifies rather than cancels the model-specific bias.
-#
-# Fields that still get the delta: t, ws, wd, wg, ch, cc — pooled effect is
-# neutral (|lift| < 1%) or positive (wd +1.0%, ch +0.6%, cc +0.1%).
-#
-# Downstream effect: l3_nbm h re-fits daily via analysis/l3_nbm_fit.py so
-# the change ripples in ~14 days (τ=14d recency-weighted). dp/sr are not in
-# L3_NBM_FIELDS so no downstream disruption there.
-_L2_NBM_DELTA_SKIP = frozenset({"h", "dp", "sr"})
+# Fields with native L2:  t, h, dp (dp derived)
+# Fields still on delta transfer (phase 2): ws, wg, wd, cc, ch —
+#   these use direct-selection / circular / hourly[0]-override
+#   mechanisms on HRRR side; porting to native NBM needs a plumbing
+#   pass on wind_blend.py + cloud_obs_blend.py (deferred).
+# Fields on identity:     sr — HRRR L2 has no sr correction (no
+#   station network for solar), so there is no native L2 to build.
+_L2_NBM_NATIVE = frozenset({"t", "h", "dp"})
+
+
+def _build_nbm_raw_array(times, nbm_by_valid_utc, field, n_leads):
+    """Extract per-lead NBM raw values for one field by walking `times`
+    (local ET) and looking up each hour's UTC key in the NBM extract.
+    Returns a list of length n_leads with None for gaps. v0.6.498."""
+    out = []
+    for j in range(n_leads):
+        if j >= len(times) or not times[j]:
+            out.append(None); continue
+        try:
+            _naive = datetime.fromisoformat(times[j][:16])
+            _utc = TZ.localize(_naive).astimezone(_dt_timezone.utc)
+            _key = _utc.strftime("%Y-%m-%dT%H:00:00Z")
+            _fields = nbm_by_valid_utc.get(_key) or {}
+            _v = _fields.get(field)
+            out.append(float(_v) if _v is not None else None)
+        except (ValueError, TypeError):
+            out.append(None)
+    return out
+_L2_NBM_IDENTITY = frozenset({"sr"})
+# Legacy alias for one grep cycle; retire in a follow-up.
+_L2_NBM_DELTA_SKIP = _L2_NBM_IDENTITY
 
 # Phase 3 (2026-08-19) — L3_NBM coverage. Per-lead signed bias applied to
 # {field}_l2_nbm: `l3_nbm = l2_nbm - bias_table[field][lead_h]`. Table
@@ -193,6 +214,78 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         _wdp_persist_val = None
 
     times = hourly.get("times", [])
+
+    # v0.6.498 — NATIVE NBM L2 arrays for t/h/dp. Precompute here so the
+    # per-lead loop below is a pure lookup. Anchors the station-consensus
+    # bias against NBM raw at h=0 (instead of HRRR raw at h=0), then
+    # applies the same Kalman gain + decay curve HRRR L2 uses. dp is
+    # Magnus-derived from the two native corrected arrays.
+    _nbm_l2_native_arrays = {"t": None, "h": None, "dp": None}
+    try:
+        if nbm_by_valid_utc:
+            # Find NBM raw values for lead 0 (first hourly timestamp).
+            _first_t = times[0] if times else None
+            _lead0_key = None
+            if _first_t:
+                try:
+                    _naive = datetime.fromisoformat(_first_t[:16])
+                    _lead0_utc = TZ.localize(_naive).astimezone(_dt_timezone.utc)
+                    _lead0_key = _lead0_utc.strftime("%Y-%m-%dT%H:00:00Z")
+                except (ValueError, TypeError):
+                    pass
+            _nbm_lead0 = nbm_by_valid_utc.get(_lead0_key or "", {}) or {}
+            _raw_nbm_t_0 = _nbm_lead0.get("t")
+            _raw_nbm_h_0 = _nbm_lead0.get("h")
+            _raw_hrrr_t_arr = hourly.get("temperature", [])
+            _raw_hrrr_h_arr = hourly.get("humidity", [])
+            _raw_hrrr_t_0 = _raw_hrrr_t_arr[0] if _raw_hrrr_t_arr else None
+            _raw_hrrr_h_0 = _raw_hrrr_h_arr[0] if _raw_hrrr_h_arr else None
+            _hyp = weather_data.get("hyperlocal", {}) or {}
+            _weighted_bias = _hyp.get("weighted_bias", 0) or 0
+            _bias_humid = _hyp.get("bias_humidity", 0) or 0
+            _K = _hyp.get("kalman_gain", 1.0)
+            if _K is None:
+                _K = 1.0
+            from .corrected_hourly import _decay_factors, _soft_ramp_factors, _load_l2_taus
+            _taus, _ = _load_l2_taus()
+            _n_leads = min(SNAPSHOT_HOURS, max(len(_raw_hrrr_t_arr), len(_raw_hrrr_h_arr), 0))
+            _t_decay = _decay_factors(_taus.get("t"), _n_leads)
+            _h_decay = _soft_ramp_factors(_n_leads)
+            # NBM biases: station consensus minus NBM raw at h=0. Equivalent
+            # to HRRR bias shifted by (raw_hrrr[0] - raw_nbm[0]).
+            _nbm_t_arr = None
+            _nbm_h_arr = None
+            if (_raw_hrrr_t_0 is not None and _raw_nbm_t_0 is not None):
+                _bias_nbm_t = _weighted_bias + (float(_raw_hrrr_t_0) - float(_raw_nbm_t_0))
+                # Build lead-0..N-1 NBM raw temperature array from the extract
+                # by walking each lead's target UTC and looking up.
+                _nbm_t_arr = _build_nbm_raw_array(times, nbm_by_valid_utc, "t", _n_leads)
+                _nbm_l2_native_arrays["t"] = [
+                    (round(_nbm_t_arr[j] + _K * _bias_nbm_t * _t_decay[j], 1)
+                     if (_nbm_t_arr[j] is not None and j < len(_t_decay)) else None)
+                    for j in range(_n_leads)
+                ]
+            if (_raw_hrrr_h_0 is not None and _raw_nbm_h_0 is not None):
+                _bias_nbm_h = _bias_humid + (float(_raw_hrrr_h_0) - float(_raw_nbm_h_0))
+                _nbm_h_arr = _build_nbm_raw_array(times, nbm_by_valid_utc, "h", _n_leads)
+                _nbm_l2_native_arrays["h"] = [
+                    (round(_nbm_h_arr[j] + _K * _bias_nbm_h * _h_decay[j], 1)
+                     if (_nbm_h_arr[j] is not None and j < len(_h_decay)) else None)
+                    for j in range(_n_leads)
+                ]
+            # dp derived from native t + h via Magnus
+            if _nbm_l2_native_arrays["t"] is not None and _nbm_l2_native_arrays["h"] is not None:
+                _dp_arr = []
+                for j in range(_n_leads):
+                    tv = _nbm_l2_native_arrays["t"][j]
+                    hv = _nbm_l2_native_arrays["h"][j]
+                    dp = magnus_dew_point_f(tv, hv) if (tv is not None and hv is not None) else None
+                    _dp_arr.append(dp)
+                _nbm_l2_native_arrays["dp"] = _dp_arr
+    except Exception as _e:
+        logging.warning(f"  ⚠  Native NBM L2 precompute failed: {_e}")
+        _nbm_l2_native_arrays = {"t": None, "h": None, "dp": None}
+
     # Per-layer forecast arrays. The Fitter (decay_fit) computes per-layer MAE
     # by comparing each layer's forecast against the same observation, so we
     # snapshot all 4 layers' values per hour. Mapping:
@@ -542,17 +635,31 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                     raw_nbm = entry.get(f"{f}_raw_nbm")
                     if raw_nbm is None:
                         continue
-                    # v0.6.492 — fields where the HRRR-delta transfer hurts
-                    # per nbm_l2_delta_audit skip the delta entirely.
-                    if f in _L2_NBM_DELTA_SKIP:
+                    # v0.6.498 — NATIVE L2 for t/h/dp: apply the same
+                    # station-consensus bias + Kalman gain + decay curve
+                    # used by HRRR L2, but anchored against NBM raw at
+                    # h=0 instead of HRRR raw at h=0. Precomputed above
+                    # the loop as _nbm_l2_native_arrays.
+                    if f in _L2_NBM_NATIVE:
+                        native_arr = _nbm_l2_native_arrays.get(f)
+                        if native_arr is not None and i < len(native_arr) and native_arr[i] is not None:
+                            entry[f"{f}_l2_nbm"] = _round_for(f, native_arr[i])
+                        else:
+                            entry[f"{f}_l2_nbm"] = _round_for(f, raw_nbm)
+                        continue
+                    # sr and any other IDENTITY field: no L2 either side.
+                    if f in _L2_NBM_IDENTITY:
                         entry[f"{f}_l2_nbm"] = _round_for(f, raw_nbm)
                         continue
+                    # Phase 2 pending: ws/wg/wd/cc/ch still use the delta
+                    # transfer. To be replaced with native L2 once
+                    # wind_blend.py + cloud_obs_blend.py are re-plumbed.
                     raw_hrrr = entry.get(f"{f}_l1")
                     l2_hrrr = entry.get(f"{f}_l2")
-                    # If HRRR side has no L2 correction for this field (sr,
-                    # fields where L2 didn't fire this hour, etc.), the L2
-                    # delta is 0 by construction — l2_nbm passes raw_nbm
-                    # through unchanged. Honest fall-through.
+                    # If HRRR side has no L2 correction for this field
+                    # (fields where L2 didn't fire this hour, etc.), the
+                    # L2 delta is 0 by construction — l2_nbm passes
+                    # raw_nbm through unchanged. Honest fall-through.
                     if raw_hrrr is None or l2_hrrr is None:
                         entry[f"{f}_l2_nbm"] = _round_for(f, raw_nbm)
                         continue
