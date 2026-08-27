@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.511 • August 27, 2026 (end-of-session debug page sweep)</strong></summary>
+
+- Recent activity block advanced: 08-27 (today) prepended with full session narrative (3 fitter FAILs from transient DNS, sr.l5_nbm HOT resolved as stale-signal, ch.chp_nbm HOT resolved as shadow-write, 24H selector red as regime-mix noise, v0.6.510 ship). 08-26 Wed entries relabeled as "1 day ago" (afternoon arc + morning digest). 08-25 Tue entry relabeled as "2 days ago" — rolling 3-day window intact.
+
+</details>
+
+<details>
 <summary><strong>v0.6.510 • August 27, 2026 (scoreboard yellow band tightened ±3% → ±2%)</strong></summary>
 
 - Tile color classifier and W/F/L bucket threshold lowered from ±3% to ±2% (`corrections_debug.html` two `_cls` fns, inline lift cls, WFL bucket splitter; `analysis/scoreboard_v2.py` `VERDICT_GOOD_LIFT` / `VERDICT_REGRESS_LIFT` constants). Fields with lifts between ±2% and ±3% now flip green/red instead of sitting yellow. Rationale: ±3% wasn't derived from a noise model — it was chosen to match other symmetric watchdog thresholds. Empirical 1σ SE of a 7d median lift on a well-behaved field is ~2%, so ±3% was ~1.5σ (over-conservative). ±2% ≈ 1σ: real drift surfaces earlier at the cost of a bit more color churn on noisy fields.
