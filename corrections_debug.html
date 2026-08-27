@@ -1259,6 +1259,60 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* v0.6.502 — uniform median/mean layout: two labeled window groups,
+     four equal-sized numbers, no median-vs-mean visual hierarchy. */
+  .sb-scope .sb-num-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: 12px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .sb-scope .sb-num-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .sb-scope .sb-num-group + .sb-num-group {
+    padding-left: 20px;
+    margin-left: 20px;
+    border-left: 1px solid var(--sb-divider);
+  }
+  .sb-scope .sb-num-group-lbl {
+    font-size: 10.5px;
+    color: var(--sb-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 500;
+  }
+  .sb-scope .sb-num-pair {
+    display: flex;
+    gap: 18px;
+  }
+  .sb-scope .sb-num-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .sb-scope .sb-num-sublbl {
+    font-size: 10px;
+    color: var(--sb-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .sb-scope .sb-num {
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Row 2 diagnostic tile — smaller numbers than the row-1 score tiles */
+  .sb-scope .sb-num-row[data-tile="prod_trend"] .sb-num {
+    font-size: 16px;
+  }
+
   /* Winning/flat/losing list */
   .sb-scope .sb-wfl {
     display: grid;
@@ -1380,13 +1434,32 @@
       <div class="sb-tile-title">Total Lift</div>
       <div class="sb-tile-sub">Prod vs NBM raw (the field your default weather app already shows you). The referee's number.</div>
 
-      <div class="sb-hero-num-row">
-        <div class="sb-hero-primary">
-          <div class="sb-hero-num" data-cell="med7">—</div>
-          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span data-cell="mean7">—</span></span></div>
+      <div class="sb-num-row">
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">7 Day</div>
+          <div class="sb-num-pair">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">median</div>
+              <div class="sb-num" data-cell="med7">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">mean</div>
+              <div class="sb-num" data-cell="mean7">—</div>
+            </div>
+          </div>
         </div>
-        <div class="sb-hero-secondary">
-          <span class="sb-hs-lbl">24H</span><span data-cell="med24">—</span> <span class="sb-hero-mean">· mean <span data-cell="mean24">—</span></span>
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">24 Hour</div>
+          <div class="sb-num-pair">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">median</div>
+              <div class="sb-num" data-cell="med24">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">mean</div>
+              <div class="sb-num" data-cell="mean24">—</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="sb-wfl">
@@ -1404,13 +1477,32 @@
       <div class="sb-tile-title">Pipeline Lift</div>
       <div class="sb-tile-sub">Local correction stack value: Prod vs L1 selector's pick. Answers "are the pipelines pulling their weight on top of raw?"</div>
 
-      <div class="sb-score-num-row">
-        <div class="sb-score-primary">
-          <div class="sb-score-num" data-cell="med7">—</div>
-          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span data-cell="mean7">—</span></span></div>
+      <div class="sb-num-row">
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">7 Day</div>
+          <div class="sb-num-pair">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">median</div>
+              <div class="sb-num" data-cell="med7">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">mean</div>
+              <div class="sb-num" data-cell="mean7">—</div>
+            </div>
+          </div>
         </div>
-        <div class="sb-score-secondary">
-          <span class="sb-hs-lbl">24H</span> <span data-cell="med24">—</span> <span class="sb-hero-mean">· mean <span data-cell="mean24">—</span></span>
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">24 Hour</div>
+          <div class="sb-num-pair">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">median</div>
+              <div class="sb-num" data-cell="med24">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">mean</div>
+              <div class="sb-num" data-cell="mean24">—</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1429,13 +1521,32 @@
       <div class="sb-tile-title">Selector Skill</div>
       <div class="sb-tile-sub">Chosen cascade Prod vs alternative cascade Prod, paired per row. Answers "did the router pick the branch that turned out better after local processing?"</div>
 
-      <div class="sb-score-num-row">
-        <div class="sb-score-primary">
-          <div class="sb-score-num" data-cell="med7">—</div>
-          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span data-cell="mean7">—</span></span></div>
+      <div class="sb-num-row">
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">7 Day</div>
+          <div class="sb-num-pair">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">median</div>
+              <div class="sb-num" data-cell="med7">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">mean</div>
+              <div class="sb-num" data-cell="mean7">—</div>
+            </div>
+          </div>
         </div>
-        <div class="sb-score-secondary">
-          <span class="sb-hs-lbl">24H</span> <span data-cell="med24">—</span> <span class="sb-hero-mean">· mean <span data-cell="mean24">—</span></span>
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">24 Hour</div>
+          <div class="sb-num-pair">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">median</div>
+              <div class="sb-num" data-cell="med24">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">mean</div>
+              <div class="sb-num" data-cell="mean24">—</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1459,13 +1570,32 @@
       <div class="sb-tile-title">Prod Trend</div>
       <div class="sb-tile-sub">Change vs the prior equal window. Are we improving over time?</div>
 
-      <div class="sb-score-num-row" data-tile="prod_trend">
-        <div class="sb-score-primary">
-          <div class="sb-score-num" data-cell="med7">—</div>
-          <div class="sb-hero-window">7D median <span class="sb-hero-mean">· mean <span data-cell="mean7">—</span></span></div>
+      <div class="sb-num-row" data-tile="prod_trend">
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">7 Day</div>
+          <div class="sb-num-pair">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">median</div>
+              <div class="sb-num" data-cell="med7">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">mean</div>
+              <div class="sb-num" data-cell="mean7">—</div>
+            </div>
+          </div>
         </div>
-        <div class="sb-score-secondary">
-          <span class="sb-hs-lbl">24H</span> <span data-cell="med24">—</span> <span class="sb-hero-mean">· mean <span data-cell="mean24">—</span></span>
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">24 Hour</div>
+          <div class="sb-num-pair">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">median</div>
+              <div class="sb-num" data-cell="med24">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">mean</div>
+              <div class="sb-num" data-cell="mean24">—</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1654,6 +1784,16 @@
     border-bottom: 1px solid var(--sb-divider);
     font-family: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, monospace;
     font-variant-numeric: tabular-nums;
+  }
+  /* v0.6.509 — pa/pp unit tag: sits BEFORE the number so the number keeps
+     the same right-aligned x-position as every other row. */
+  .sb-pfs-scope .sb-pfs-tbl td .pfs-unit-tag {
+    font-size: 9.5px;
+    opacity: 0.55;
+    color: var(--sb-dim);
+    font-weight: 400;
+    margin-right: 8px;
+    font-family: -apple-system, sans-serif;
   }
   .sb-pfs-scope .sb-pfs-tbl th:first-child,
   .sb-pfs-scope .sb-pfs-tbl td:first-child {
@@ -4346,11 +4486,17 @@ async function renderPerFieldDiagnostic() {
     // aggregate double-counts their component fields and misleadingly
     // suggests we're doing separate work on them.
     const isDerived = (f === "dp" || f === "cc");
-    if (total != null && !isDerived) totalCol.push(total);
-    if (hrrrSkill != null && !isDerived) hrrrCol.push(hrrrSkill);
-    if (nbmSkill != null && !isDerived) nbmCol.push(nbmSkill);
-    if (NBM_SCOPE.has(f) && !isDerived && c.hit_rate_pct != null) hitCol.push(c.hit_rate_pct);
-    if (NBM_SCOPE.has(f) && !isDerived && c.value_captured_pct != null) valCol.push(c.value_captured_pct);
+    // v0.6.504 — pa (inches, tiny-mag → % lift blows up) and pp (Brier, not
+    // MAE) belong in NON_MAE_EXCLUDE like the scoreboard tile does. Row cells
+    // for these fields display "tiny mag" / "Brier" labels, but the numeric
+    // push happened before that guard, silently poisoning median/mean.
+    const isNonMae = (f === "pa" || f === "pp");
+    const skipAgg = isDerived || isNonMae;
+    if (total != null && !skipAgg) totalCol.push(total);
+    if (hrrrSkill != null && !skipAgg) hrrrCol.push(hrrrSkill);
+    if (nbmSkill != null && !skipAgg) nbmCol.push(nbmSkill);
+    if (NBM_SCOPE.has(f) && !skipAgg && c.hit_rate_pct != null) hitCol.push(c.hit_rate_pct);
+    if (NBM_SCOPE.has(f) && !skipAgg && c.value_captured_pct != null) valCol.push(c.value_captured_pct);
 
     let totalCell = _fmtPct(total);
     // v0.6.494 — current-config Total Lift annotation. When the delta between
@@ -4364,8 +4510,18 @@ async function renderPerFieldDiagnostic() {
       totalCell += `<div class="sb-dim" style="font-size:10px;margin-top:1px;">🪦 cfg ${cfgStr}</div>`;
     }
     let hrrrCell = _fmtPct(hrrrSkill);
-    if (BRIER_FIELDS.has(f)) { totalCell = `<span class="sb-em">Brier</span>`; hrrrCell = `<span class="sb-em">Brier</span>`; }
-    else if (TINY_MAG_FIELDS.has(f)) { totalCell = `<span class="sb-em">tiny mag</span>`; hrrrCell = `<span class="sb-em">tiny mag</span>`; }
+    // v0.6.507 — pp (Brier) and pa (inches, tiny mag): keep the lift color
+    // but center the number in the cell and pin the unit tag to the right
+    // edge so the two don't crowd each other. Aggregation still skips these
+    // fields (v0.6.504).
+    const unitTag = BRIER_FIELDS.has(f) ? "Brier"
+                  : TINY_MAG_FIELDS.has(f) ? "in"
+                  : null;
+    if (unitTag) {
+      const tagHtml = `<span class="pfs-unit-tag">${unitTag}</span>`;
+      totalCell = tagHtml + totalCell;
+      hrrrCell = tagHtml + hrrrCell;
+    }
     const nbmCell = NBM_SCOPE.has(f) ? _fmtPct(nbmSkill) : `<span class="sb-em">n/a</span>`;
     // Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod
     // pool (v0.6.481). Only defined for NBM-scope fields. Hit rate rendered
