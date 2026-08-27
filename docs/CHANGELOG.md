@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.510 • August 27, 2026 (scoreboard yellow band tightened ±3% → ±2%)</strong></summary>
+
+- Tile color classifier and W/F/L bucket threshold lowered from ±3% to ±2% (`corrections_debug.html` two `_cls` fns, inline lift cls, WFL bucket splitter; `analysis/scoreboard_v2.py` `VERDICT_GOOD_LIFT` / `VERDICT_REGRESS_LIFT` constants). Fields with lifts between ±2% and ±3% now flip green/red instead of sitting yellow. Rationale: ±3% wasn't derived from a noise model — it was chosen to match other symmetric watchdog thresholds. Empirical 1σ SE of a 7d median lift on a well-behaved field is ~2%, so ±3% was ~1.5σ (over-conservative). ±2% ≈ 1σ: real drift surfaces earlier at the cost of a bit more color churn on noisy fields.
+
+</details>
+
+<details>
 <summary><strong>v0.6.489 • August 25, 2026 (dp/cc placeholder-row derivation notes moved to footnotes)</strong></summary>
 
 - The inline "derived — Magnus(prod_t, prod_h). Placeholder for a future dp bias layer." note in the dp/cc rows' first column was stretching the field-name column and misaligning the table. Row cell now carries just the field name plus a small footnote marker (¹ / ²); the full derivation explanation moves to two footnote lines in the existing `sb-pfs-foot` block below the tfoot. Sub-blurb shortened accordingly.

@@ -2516,7 +2516,7 @@
       const escape = (s) => String(s == null ? "" : s)
         .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
       const fmtPct = (v) => (v == null) ? "—" : `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
-      const cls = (v) => v == null ? "" : (v >= 3 ? "color:#4ad29a;" : v <= -3 ? "color:#e07272;" : "color:#e0a86b;");
+      const cls = (v) => v == null ? "" : (v >= 2 ? "color:#4ad29a;" : v <= -2 ? "color:#e07272;" : "color:#e0a86b;");
       const pf = d.per_field_totals || {};
       const FIELDS = ["t","dp","ws","wd","wg","sr","cc","ch","h"];
       let rows = FIELDS.map(f => {
@@ -4254,8 +4254,8 @@ async function renderScoreboardTilesMinimal() {
   };
   const _cls = (v) => {
     if (v == null) return "";
-    if (v >= 3)  return "sb-good";
-    if (v <= -3) return "sb-bad";
+    if (v >= 2)  return "sb-good";
+    if (v <= -2) return "sb-bad";
     return "sb-warn";
   };
 
@@ -4289,8 +4289,8 @@ async function renderScoreboardTilesMinimal() {
 
   // v0.6.485 — wire the W/F/L breakdown block under each tile from the
   // same 7d numbers. dp and cc are excluded here too (see DERIVED_EXCLUDE
-  // note above — same logic as the medians). Threshold ±3% matches the
-  // tile color rule (sb-good ≥3, sb-bad ≤−3, warn between).
+  // note above — same logic as the medians). Threshold ±2% matches the
+  // tile color rule (sb-good ≥2, sb-bad ≤−2, warn between).
   const _paintWfl = (tileKey, fields, metricFn, labels) => {
     // The .sb-wfl block for prod_trend is a sibling of [data-tile], not a
     // child — that tile uses data-tile on an inner number row. Look inside
@@ -4307,8 +4307,8 @@ async function renderScoreboardTilesMinimal() {
     for (const f of fields) {
       const v = metricFn(pf7[f]);
       if (v == null || !isFinite(v)) continue;
-      if (v >= 3) buckets.w.push(f);
-      else if (v <= -3) buckets.l.push(f);
+      if (v >= 2) buckets.w.push(f);
+      else if (v <= -2) buckets.l.push(f);
       else buckets.f.push(f);
     }
     const fmt = (arr) => arr.length ? arr.map(f => `<code>${f}</code>`).join(" · ") : "—";
@@ -4423,8 +4423,8 @@ async function renderPerFieldDiagnostic() {
 
   const _cls = (v) => {
     if (v == null) return "";
-    if (v >= 3) return "sb-good";
-    if (v <= -3) return "sb-bad";
+    if (v >= 2) return "sb-good";
+    if (v <= -2) return "sb-bad";
     return "sb-warn";
   };
   const _fmtPct = (v) => {
