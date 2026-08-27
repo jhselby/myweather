@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-26T10:03:09.017255+00:00",
+  "generated_at": "2026-08-27T10:23:27.897413+00:00",
   "source": "h_lc_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
@@ -15,10 +15,10 @@
         "gate_reason": "sign",
         "sign_ok": false,
         "mag_ok": true,
-        "recent_bias": -15.3404,
-        "hist_bias": 16.783,
-        "hist_shift": -16.783,
-        "n_holdout": 98
+        "recent_bias": -11.3377,
+        "hist_bias": 16.156,
+        "hist_shift": -16.156,
+        "n_holdout": 91
       }
     },
     "cm": {
@@ -27,20 +27,30 @@
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 24.3073,
-        "hist_bias": 16.406,
-        "hist_shift": -16.406,
-        "n_holdout": 36
+        "recent_bias": 31.7429,
+        "hist_bias": 16.499,
+        "hist_shift": -16.499,
+        "n_holdout": 32
       },
       "50-80": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 49.8235,
-        "hist_bias": 44.182,
-        "hist_shift": -44.182,
-        "n_holdout": 30
+        "recent_bias": 58.8264,
+        "hist_bias": 44.433,
+        "hist_shift": -44.433,
+        "n_holdout": 43
+      },
+      "80-95": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 88.1425,
+        "hist_bias": 64.53,
+        "hist_shift": -64.53,
+        "n_holdout": 84
       }
     },
     "ch": {
@@ -49,20 +59,20 @@
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 33.936,
-        "hist_bias": 23.278,
-        "hist_shift": -23.278,
-        "n_holdout": 123
+        "recent_bias": 33.73,
+        "hist_bias": 23.685,
+        "hist_shift": -23.685,
+        "n_holdout": 386
       },
       "50-80": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 59.4339,
-        "hist_bias": 50.222,
-        "hist_shift": -50.222,
-        "n_holdout": 60
+        "recent_bias": 59.0221,
+        "hist_bias": 50.382,
+        "hist_shift": -50.382,
+        "n_holdout": 102
       }
     }
   },

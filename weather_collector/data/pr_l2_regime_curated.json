@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-26T10:10:59.210255+00:00",
+  "generated_at": "2026-08-27T11:20:35.043931+00:00",
   "source": "pr_l2_regime_lead_retro.py",
   "shipped_cells": [
     [
@@ -27,7 +27,7 @@
   ],
   "candidate_jaccard": 0.222,
   "cells": {
-    "sw_flow": {
+    "calm": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -71,7 +71,7 @@
         "both_win_today": false
       }
     },
-    "nor_easter": {
+    "sw_flow": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,
@@ -80,6 +80,28 @@
       "6-11h": {
         "verdict": "SKIP",
         "shipped_live": false,
+        "both_win_today": false
+      },
+      "12-23h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "24-47h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      }
+    },
+    "nw_flow": {
+      "0-5h": {
+        "verdict": "SHIP",
+        "shipped_live": true,
+        "both_win_today": true
+      },
+      "6-11h": {
+        "verdict": "SHIP",
+        "shipped_live": true,
         "both_win_today": false
       },
       "12-23h": {
@@ -115,15 +137,15 @@
         "both_win_today": false
       }
     },
-    "nw_flow": {
+    "frontal": {
       "0-5h": {
-        "verdict": "SHIP",
-        "shipped_live": true,
-        "both_win_today": true
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
       },
       "6-11h": {
-        "verdict": "SHIP",
-        "shipped_live": true,
+        "verdict": "SKIP",
+        "shipped_live": false,
         "both_win_today": false
       },
       "12-23h": {
@@ -159,51 +181,29 @@
         "both_win_today": false
       }
     },
-    "frontal": {
-      "0-5h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "6-11h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "12-23h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "24-47h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      }
-    },
-    "calm": {
-      "0-5h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "6-11h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "12-23h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      },
-      "24-47h": {
-        "verdict": "SKIP",
-        "shipped_live": false,
-        "both_win_today": false
-      }
-    },
     "ne_flow": {
+      "0-5h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "6-11h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "12-23h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      },
+      "24-47h": {
+        "verdict": "SKIP",
+        "shipped_live": false,
+        "both_win_today": false
+      }
+    },
+    "nor_easter": {
       "0-5h": {
         "verdict": "SKIP",
         "shipped_live": false,

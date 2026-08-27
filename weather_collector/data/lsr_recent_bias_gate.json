@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-26T10:03:28.856821+00:00",
+  "generated_at": "2026-08-27T10:23:47.533904+00:00",
   "source": "h_lsr_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
@@ -10,20 +10,22 @@
     "calm",
     "ne_flow"
   ],
-  "promoted_fields": [],
+  "promoted_fields": [
+    "sr"
+  ],
   "fields_cleared": [],
   "set_level_gate_clear": false,
   "per_cell": {
-    "pre_frontal": {
+    "nw_flow": {
       "8": {
         "gate_apply": true,
         "gate_reason": "thin",
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": -41.4,
-        "hist_shift": 41.4,
-        "n_holdout": 31
+        "hist_bias": -63.1,
+        "hist_shift": 63.1,
+        "n_holdout": 46
       },
       "9": {
         "gate_apply": true,
@@ -31,19 +33,53 @@
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": -110.8,
-        "hist_shift": 110.8,
-        "n_holdout": 30
+        "hist_bias": -108.6,
+        "hist_shift": 108.6,
+        "n_holdout": 44
+      }
+    },
+    "pre_frontal": {
+      "8": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -24.8,
+        "hist_shift": 24.8,
+        "n_holdout": 34
       },
+      "9": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -115.7,
+        "hist_shift": 115.7,
+        "n_holdout": 33
+      },
+      "10": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -155.3,
+        "hist_shift": 155.3,
+        "n_holdout": 30
+      }
+    },
+    "se_flow": {
       "11": {
         "gate_apply": true,
         "gate_reason": "thin",
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": -152.8,
-        "hist_shift": 152.8,
-        "n_holdout": 34
+        "hist_bias": -86.2,
+        "hist_shift": 86.2,
+        "n_holdout": 36
       },
       "12": {
         "gate_apply": true,
@@ -51,9 +87,9 @@
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": -168.1,
-        "hist_shift": 168.1,
-        "n_holdout": 33
+        "hist_bias": 15.1,
+        "hist_shift": -15.1,
+        "n_holdout": 31
       },
       "13": {
         "gate_apply": true,
@@ -61,9 +97,9 @@
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": -216.0,
-        "hist_shift": 216.0,
-        "n_holdout": 30
+        "hist_bias": -197.8,
+        "hist_shift": 197.8,
+        "n_holdout": 31
       },
       "14": {
         "gate_apply": true,
@@ -71,29 +107,9 @@
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": -117.1,
-        "hist_shift": 117.1,
-        "n_holdout": 33
-      },
-      "17": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 17.7,
-        "hist_shift": -17.7,
-        "n_holdout": 33
-      },
-      "18": {
-        "gate_apply": true,
-        "gate_reason": "thin",
-        "sign_ok": null,
-        "mag_ok": null,
-        "recent_bias": null,
-        "hist_bias": 50.7,
-        "hist_shift": -50.7,
-        "n_holdout": 33
+        "hist_bias": -109.3,
+        "hist_shift": 109.3,
+        "n_holdout": 32
       }
     },
     "sw_flow": {
@@ -103,9 +119,19 @@
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": -295.7,
-        "hist_shift": 295.7,
+        "hist_bias": -227.9,
+        "hist_shift": 227.9,
         "n_holdout": 56
+      },
+      "11": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -176.1,
+        "hist_shift": 176.1,
+        "n_holdout": 58
       },
       "15": {
         "gate_apply": true,

@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.512 • August 27, 2026 (NBM TSTM + APCP extraction)</strong></summary>
+
+- NBM point extractor now pulls two new per-lead fields: `tstm_prob` (probability of thunder in the 1h bucket ending at each lead, from `TSTM:surface:{L-1}-{L} hour acc fcst`) and `pa` (1h precip accumulation, converted mm→in). Fetcher's FIELD_SPECS gained support for callable per-lead match strings and an `allow_prob` flag so probability messages aren't filtered out.
+- Thunderstorm detector's "Possible" (watch) branch widened: fires when NBM 6h-forward max thunder probability ≥ 30%, in addition to the existing CAPE-current ≥ Weak / CAPE-peak ≥ Moderate paths. Active + Severe branches unchanged (still lightning-gated ground truth). Collector derives `nbm_tstm_prob_6h_max` before invoking the detector.
+- `pa` lands in the NBM extract but no scoring cascade yet — first step toward a real pa selector (currently HRRR-only).
+
+</details>
+
+<details>
 <summary><strong>v0.6.511 • August 27, 2026 (end-of-session debug page sweep)</strong></summary>
 
 - Recent activity block advanced: 08-27 (today) prepended with full session narrative (3 fitter FAILs from transient DNS, sr.l5_nbm HOT resolved as stale-signal, ch.chp_nbm HOT resolved as shadow-write, 24H selector red as regime-mix noise, v0.6.510 ship). 08-26 Wed entries relabeled as "1 day ago" (afternoon arc + morning digest). 08-25 Tue entry relabeled as "2 days ago" — rolling 3-day window intact.

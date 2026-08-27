@@ -47,8 +47,15 @@ NBM_BASE = "https://noaa-nbm-grib2-pds.s3.amazonaws.com"
 # Order matters: the 3rd column is our field name; the 1st two are how
 # we match the .idx line. `nth` selects among duplicate matches (e.g.
 # three TCDC:reserved entries for cl/cm/ch).
+#
+# Match column is either a substring (str) or a callable(lead) -> str for
+# leads where the idx text embeds the hour range (TSTM/APCP: "0-1 hour
+# acc fcst" at f001, "1-2 hour acc fcst" at f002, ...).
+# Optional 5th element `allow_prob` keeps messages whose idx line contains
+# "prob" (needed for TSTM which is `probability forecast`); default is to
+# filter them out so APCP picks the accumulation, not the >0.254 prob.
 FIELD_SPECS = [
-    # (idx_match_substring, nth_occurrence, app_field, unit_transform)
+    # (idx_match, nth, app_field, unit_transform[, allow_prob])
     ("TMP:2 m above ground",  0, "t",  lambda k: (k - 273.15) * 9/5 + 32),
     ("DPT:2 m above ground",  0, "dp", lambda k: (k - 273.15) * 9/5 + 32),
     ("WIND:10 m above ground", 0, "ws", lambda mps: mps * 2.23694),
@@ -58,6 +65,12 @@ FIELD_SPECS = [
     ("TCDC:surface",          0, "cc", lambda v: v),
     ("TCDC:high cloud layer", 0, "ch", lambda v: v),
     ("RH:2 m above ground",   0, "h",  lambda v: v),
+    # APCP 1h accumulation ending at this lead (inches, from kg/m² = mm)
+    (lambda L: f"APCP:surface:{L-1}-{L} hour acc fcst",
+     0, "pa", lambda mm: mm / 25.4),
+    # TSTM 1h thunder probability for the hour ending at this lead (%)
+    (lambda L: f"TSTM:surface:{L-1}-{L} hour acc fcst",
+     0, "tstm_prob", lambda v: v, True),
 ]
 
 
@@ -66,7 +79,7 @@ def _fetch_idx(cycle_ymd, cycle_hh, lead):
     return urllib.request.urlopen(url, timeout=30).read().decode()
 
 
-def _plan_ranges(idx_text):
+def _plan_ranges(idx_text, lead):
     """Parse .idx into a list of (app_field, byte_start, byte_end).
 
     .idx lines look like: `N:OFFSET:d=YYYYMMDDHH:PARAM:LEVEL:FCST:...`
@@ -85,9 +98,17 @@ def _plan_ranges(idx_text):
         entries.append((offset, line))
 
     plan = []
-    for match_str, nth, field, transform in FIELD_SPECS:
+    for spec in FIELD_SPECS:
+        if len(spec) == 5:
+            match, nth, field, transform, allow_prob = spec
+        else:
+            match, nth, field, transform = spec
+            allow_prob = False
+        match_str = match(lead) if callable(match) else match
         matches = [i for i, (_, line) in enumerate(entries)
-                   if match_str in line and "ens std" not in line and "prob" not in line]
+                   if match_str in line
+                   and "ens std" not in line
+                   and (allow_prob or "prob" not in line)]
         if len(matches) <= nth:
             logging.warning(f"NBM idx: no match for {field} ({match_str} #{nth})")
             continue
@@ -142,7 +163,7 @@ def fetch_nbm_lead(cycle_ymd, cycle_hh, lead, lat=LAT, lon=LON):
         logging.warning(f"NBM idx fetch failed {cycle_ymd}/{cycle_hh} f{lead:03d}: {e}")
         return {}
 
-    plan = _plan_ranges(idx_text)
+    plan = _plan_ranges(idx_text, lead)
     out = {}
     for field, start, end, transform in plan:
         try:

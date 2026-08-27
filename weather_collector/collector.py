@@ -293,7 +293,27 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     hyperlocal_data = weather_data.get("hyperlocal", {})
     add_corrected_precip_types(weather_data, hyperlocal_data)
 
-    # Thunderstorm detection
+    # Thunderstorm detection — stamp NBM TSTM 6h-forward max onto derived so
+    # the detector's "Possible" branch can widen beyond CAPE alone. Best-effort:
+    # if the NBM extract is missing or stale, the CAPE-only path still fires.
+    try:
+        from datetime import datetime, timedelta, timezone
+        _nbm = load_json("nbm_point_extract.json", default=None)
+        if _nbm and _nbm.get("leads") and _nbm.get("lead_valid_utc"):
+            now_utc = datetime.now(timezone.utc)
+            horizon = now_utc + timedelta(hours=6)
+            vals = []
+            for lead_str, v_iso in _nbm["lead_valid_utc"].items():
+                v_dt = datetime.fromisoformat(v_iso.replace("Z", "+00:00"))
+                if now_utc <= v_dt <= horizon:
+                    p = (_nbm["leads"].get(lead_str) or {}).get("tstm_prob")
+                    if p is not None:
+                        vals.append(p)
+            if vals:
+                weather_data.setdefault("derived", {})["nbm_tstm_prob_6h_max"] = max(vals)
+    except Exception as e:
+        logging.warning(f"  ⚠  NBM TSTM 6h max derive failed: {redact_secrets(e)}")
+
     ts = detect_thunderstorm(weather_data)
     weather_data["derived"]["thunderstorm"] = ts
     if ts.get("sky_override"):

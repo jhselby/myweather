@@ -26,6 +26,7 @@ def detect_thunderstorm(weather_data):
     tempest = weather_data.get("tempest", {})
     pirate  = weather_data.get("pirate_weather", {})
     stations = tempest.get("stations", [])
+    nbm_tstm_prob_6h = (weather_data.get("derived") or {}).get("nbm_tstm_prob_6h_max")
 
     # Lightning — max across stations (all detect the same strikes)
     lightning_count     = max((s.get("lightning_count_1hr") or 0 for s in stations), default=0)
@@ -72,7 +73,8 @@ def detect_thunderstorm(weather_data):
         else:
             severity = "active"
     elif (cape_current is not None and cape_current >= CAPE_WEAK) or \
-         (cape_peak_value is not None and cape_peak_value >= CAPE_MODERATE):
+         (cape_peak_value is not None and cape_peak_value >= CAPE_MODERATE) or \
+         (nbm_tstm_prob_6h is not None and nbm_tstm_prob_6h >= 30):
         severity = "watch"
     else:
         severity = "clear"
@@ -103,5 +105,6 @@ def detect_thunderstorm(weather_data):
         "cape_peak_label":     _cape_label(cape_peak_value),
         "cape_hourly":         hourly_payload,
         "precip_intensity":    cur_precip,
+        "nbm_tstm_prob_6h":    nbm_tstm_prob_6h,
         "sky_override":        sky_override,
     }

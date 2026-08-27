@@ -7,6 +7,7 @@ forecast-vs-observed calibration (decay curves, POP accuracy, dew point
 drift, etc.). One entry per hour, fields use short keys to keep file
 size manageable across two weeks of 10-minute runs.
 """
+import logging
 from datetime import datetime, timedelta, timezone as _dt_timezone
 
 import pytz
