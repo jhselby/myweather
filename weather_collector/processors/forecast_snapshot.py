@@ -55,7 +55,7 @@ _NWS_FIELDS = ("t", "dp", "pp", "ws", "wd")
 # have a clean HRRR-vs-NBM comparison. Fields NBM emits: see
 # weather_collector/fetchers/nbm_point.py — no cl/cm/h/pr/pa/pp (single-
 # source, HRRR-only forever).
-_NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch", "h")
+_NBM_FIELDS = ("t", "dp", "ws", "wd", "wg", "sr", "cc", "ch", "h", "pa", "pp")  # pa+pp added v0.6.517; no L2+ cascade, raw_nbm stamps only for future selector eval
 
 # Phase 2 (2026-08-18) — L2_nbm coverage. Intersection of (fields NBM emits)
 # with (fields L2 corrects), minus derived (cc = Ccd(cl,cm,ch), dp = Magnus(t,h)).
@@ -711,10 +711,13 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         # Phase 1 (2026-08-18) — NBM raw stamp per field for parallel
         # HRRR/NBM cascade. Look up this hour's valid UTC in the extract's
         # lead_valid_utc map; if the ingester covered it, stamp _raw_nbm
-        # for every field NBM emits. Fields NBM does not emit (cl/cm/h/pr/
-        # pa/pp) get nothing here — selector will always pick HRRR for
-        # those. Depends on target_utc already computed from the nws
-        # branch above being tz-aware UTC.
+        # for every field NBM emits. Fields NBM does not emit (cl/cm/pr)
+        # get nothing here — selector always picks HRRR for those.
+        # pa/pp/tstm_prob were added to the extractor v0.6.512/517;
+        # pa+pp raw_nbm stamps land here (no L2+ cascade yet — feed for
+        # future selector eval, first 7d of data lands ~09-04). Depends
+        # on target_utc already computed from the nws branch above being
+        # tz-aware UTC.
         if nbm_by_valid_utc and target_utc is not None:
             key = target_utc.strftime("%Y-%m-%dT%H:00:00Z")
             fields = nbm_by_valid_utc.get(key)

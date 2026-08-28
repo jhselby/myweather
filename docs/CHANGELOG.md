@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.517 • August 28, 2026 (NBM POP extraction — pp/pa raw_nbm stamps land in pair log)</strong></summary>
+
+- `weather_collector/fetchers/nbm_point.py` — added `pp` FIELD_SPEC pulling the NBM APCP prob variant (`APCP:surface:{L-1}-{L} hour acc fcst:prob`, allow_prob=True). Sibling of the pa accumulation message; the `:prob` suffix in the match string keeps them from colliding. Value passes through unchanged (NBM POP is already 0-100 %).
+- `weather_collector/processors/forecast_snapshot.py:58` — `_NBM_FIELDS` grew from 9 to 11 (added `pa`, `pp`). Yesterday's v0.6.512 added pa to the extractor but forgot to add it to `_NBM_FIELDS` — so pa_raw_nbm was never landing in the pair log despite being extracted. Fixed alongside the pp add. Both now stamp `{f}_raw_nbm` per lead. No L2+ cascade for either — raw-only stamps feed future selector eval.
+- Comment at forecast_snapshot.py:711-720 refreshed — was claiming "selector will always pick HRRR" for pa/pp; that's true today but no longer for a stale reason.
+- **Dual-deploy note per [[feedback_nbm_point_dual_deploy]]:** touching `nbm_point.py` requires redeploying the nbm-ingester sidecar CF AND the collector. If only the collector ships, the ingester keeps writing the old field list and the extract will lack pp values.
+- First 7d of NBM pp data lands ~2026-09-04 — Stage 0 selector eval (HRRR pp vs NBM pp per lead-band, Brier-scored) can run after that.
+
+</details>
+
+<details>
 <summary><strong>v0.6.516 • August 28, 2026 (c1_stage4_difficulty_lens uses prod_error — real drift count 3→14)</strong></summary>
 
 - `analysis/c1_stage4_difficulty_lens.py` line 113 was computing "Prod error" as `abs(fc_l4 or fc_l3 or fc_l2 or fc_l1 or forecast) - obs` — falling through the base HRRR layers but **ignoring specialists (chp/l6/Lc) and the NBM cascade**. Violates [[feedback_pair_log_error_field]] which says real Prod residual = `error_{applied_layer}` via the documented `_prod.prod_error()` helper. Fix: import `prod_error`, replace the manual fallthrough with `e_prod = prod_error(r)`. Post-fix `c1_stage4_difficulty_lens` REAL DRIFT count went 3 → 14, exposing signals the old proxy was hiding by conflating l4-error with prod-error. First surfaced today when the digest's ch/6-11h/transition "REAL DRIFT" finding was falsified by a pair-log direct measurement showing Prod +56% lift vs Raw on that cell in the last 4 days. Cause: same audit script bug — it was measuring L4's drift, not Prod's drift.

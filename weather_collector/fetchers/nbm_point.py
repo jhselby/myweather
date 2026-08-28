@@ -24,7 +24,14 @@ Not extracted:
                 Selector will always pick HRRR for these fields (single-source).
   pr          — NBM CO product does NOT publish surface pressure or MSLP
                 anywhere in the 208-message inventory. HRRR-only forever.
-  pa, pp      — precip amount / POP need separate audit; not extracted yet.
+
+Precip family (added 2026-08-27/28):
+  pa          — APCP 1h accumulation (mm → in). v0.6.512.
+  tstm_prob   — 1h thunder probability. v0.6.512.
+  pp          — APCP 1h prob >0.254 mm (%, 0-100). v0.6.517. Sibling of the
+                accumulation grib message; picked by the `:prob` suffix in
+                the idx line so it doesn't collide with pa. First 7d of
+                NBM pp lands ~09-04; Stage 0 selector eval after that.
 
 Note: the file also contains three TCDC:reserved messages with NCEP local
 level codes 195/196/197 that have no defined meaning; they are NOT low/mid
@@ -71,6 +78,11 @@ FIELD_SPECS = [
     # TSTM 1h thunder probability for the hour ending at this lead (%)
     (lambda L: f"TSTM:surface:{L-1}-{L} hour acc fcst",
      0, "tstm_prob", lambda v: v, True),
+    # APCP 1h POP — prob of any measurable precip (>0.254 mm ≈ 0.01 in)
+    # in the hour ending at this lead. Match includes `:prob` so it picks
+    # the probability variant and never collides with pa's accumulation.
+    (lambda L: f"APCP:surface:{L-1}-{L} hour acc fcst:prob",
+     0, "pp", lambda v: v, True),
 ]
 
 
