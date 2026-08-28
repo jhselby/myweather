@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.513 • August 28, 2026 (scheduled NBM skip-proposals review — h se_flow curated)</strong></summary>
+
+- Scheduled 08-28 review of `analysis/nbm_walkforward_validator.py` per-regime SKIP proposals (sustained-7d window fully post-backstamp today for the first time). Of 41 L3_NBM proposals, 19 are moot (field not in `L3_NBM_FIELDS`), 8 wg + 2 ch were already curated 08-26 v0.6.500, 4 cc are excluded by design (Ccd overwrite). Net-new: 2 h `se_flow` cells added to `weather_collector/data/skip_table_nbm_curated.json` — `["se_flow", 0, 6]` (walkforward −17.8% n=247) and `["se_flow", 24, 48]` (−25.9% n=477). Both survive the full-post-backstamp durability bar. Wait confirmed the 08-26 curation was correctly-aimed: all 8 of its cells still on today's list at similar magnitude.
+- `fitted_at` bumped to `2026-08-28T10:45`; history entry logs the review + reasoning.
+
+</details>
+
+<details>
 <summary><strong>v0.6.512 • August 27, 2026 (NBM TSTM + APCP extraction)</strong></summary>
 
 - NBM point extractor now pulls two new per-lead fields: `tstm_prob` (probability of thunder in the 1h bucket ending at each lead, from `TSTM:surface:{L-1}-{L} hour acc fcst`) and `pa` (1h precip accumulation, converted mm→in). Fetcher's FIELD_SPECS gained support for callable per-lead match strings and an `allow_prob` flag so probability messages aren't filtered out.

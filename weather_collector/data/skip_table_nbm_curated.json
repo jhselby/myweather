@@ -1,5 +1,5 @@
 {
-  "fitted_at": "2026-08-26T17:26",
+  "fitted_at": "2026-08-28T10:45",
   "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
   "cells": {
     "l3_nbm": {
@@ -90,6 +90,18 @@
           "se_flow",
           0,
           6
+        ]
+      ],
+      "h": [
+        [
+          "se_flow",
+          0,
+          6
+        ],
+        [
+          "se_flow",
+          24,
+          48
         ]
       ]
     },
@@ -357,6 +369,24 @@
         ]
       },
       "reason": "v0.6.476 rescore verdict. Extended nbm_backstamp.py to compute error_l4_nbm counterfactuals across 30 days (44K new stamps for cc/ch), then re-ran analysis/nbm_counterfactual_rescore.py. Results: wg L3 transfer net +0.16% to +0.58% at 6-47h (KEPT); cc L4 transfer \u00b10.11% wash (REMOVED \u2014 no evidence); chp_nbm ch transfer \u22121.15% at 24-47h with near-zero elsewhere (REMOVED \u2014 directionally negative, though chp coverage still thin at 930 rows). Anti-'ship everything from HRRR' discipline in force: only cells with 30-day evidence of net-positive counterfactual lift stay. chp_nbm re-evaluation gated on 14 days of live chp_nbm stamps (~09-04)."
+    },
+    "2026-08-28T10:45": {
+      "action": "add",
+      "cells": {
+        "l3_nbm.h": [
+          [
+            "se_flow",
+            0,
+            6
+          ],
+          [
+            "se_flow",
+            24,
+            48
+          ]
+        ]
+      },
+      "reason": "Scheduled 08-28 review of NBM walkforward per-regime SKIP proposals — sustained-7d window fully post-backstamp today. Today's list of 41 L3_NBM proposals: fields not in L3_NBM_FIELDS (t/ws/wd/sr/dp) are moot; cc excluded by design (Ccd overwrite); all 6 wg + both ch proposals were already curated 08-26 v0.6.500. Net-new is 2 h se_flow cells (0-5h -17.8% n=247, 24-47h -25.9% n=477). Both durable: sustained-7d window is fully post-backstamp, large lift, n>=247."
     },
     "2026-08-26T17:26": {
       "action": "add",
