@@ -76,7 +76,7 @@ STALE_DAYS = 7
 # >=5% clears the 2-read promotion gate. cm rides along at +3.0% on 06-24
 # (was +2.7% on 06-23) — borderline; reconfirm 06-29 before adding.
 L3_FIELDS = {"wg", "ch", "cm"}  # ws dropped 2026-08-08 v0.6.397 after walkforward_l3l4_validator cleared 7-day gate (ws L3 fc +0.1% / obs +0.6% pooled — noise, no field-level signal after the ne_flow + sea_breeze skips already in the SKIP_TABLE). The strip candidacy queued 2026-07-04 finally passes. pp dropped 2026-07-04 v0.6.304 after audit reconciliation: Fitter Brier l1=0.0734→l3=0.0765 (WORSE +4.2%), production_whatif +87.3% WORSE, h_regime_l3 pp sea_breeze L3 LOSES -96%.
-L4_FIELDS = {"ch", "cc"}
+L4_FIELDS = {"ch"}  # cc dropped 2026-08-28 v0.6.515 after walkforward_l3l4_validator cleared 7-day drop gate (cc is Ccd-overwritten downstream — cc_from_derivation.py runs after L4 and replaces cloud_cover with max(cl_l6, cm_l6, ch_l6) except SKIP_REGIMES). L4 cc correction was code-hygiene deadweight; no user-visible change.
 # Fields where the L3/L4 audit's MAE-based ⚠ rule should be suppressed because
 # the field's correction is justified by a different metric (Brier, etc.).
 L3_BRIER_FIELDS = {"pp"}

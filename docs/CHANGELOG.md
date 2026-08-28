@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.515 • August 28, 2026 (L4_FIELDS drop cc — 7-day gate cleared)</strong></summary>
+
+- `weather_collector/processors/decay_apply.py` — `L4_FIELDS = {"ch"}` (was `{"ch", "cc"}`). Divergence report cleared the 7-day drop gate today: script wants `{ch}`, production had `{ch, cc}`. cc is Ccd-overwritten downstream (`cc_from_derivation.py` replaces `cloud_cover` with `max(cl_l6, cm_l6, ch_l6)` except in `SKIP_REGIMES = {se_flow, unknown}`) — the L4 cc correction was code-hygiene deadweight, never surfaced in user output. Mechanical ship, zero user-visible change.
+- Companion 08-28 review outcome, non-ships: `l6_nbm: DROP t` (layer THIN n=0, retired mechanism 07-13), `wdp_nbm: DROP wd` (THIN sample n=49), `h_lc_recent_bias_gate` PROMOTE (per-field ch streak 1/7, set-stability CHURN, gate_clear=False), `l6_fix_b_refit` HOLD-GATE (6 HOLD days out of 7).
+
+</details>
+
+<details>
 <summary><strong>v0.6.514 • August 28, 2026 (native NBM L2 precompute — undefined `weather_data` fixed)</strong></summary>
 
 - `forecast_snapshot.append_forecast_snapshot()` referenced `weather_data` in two spots inside the native-NBM-L2 precompute block but the function has no such parameter — the block has been raising `NameError: name 'weather_data' is not defined` every tick since v0.6.499 (2026-08-26), silently falling back to identity passthrough for all 8 NBM-scope fields. The error was hidden until v0.6.512 (yesterday) added `import logging`, exposing the underlying message. Fix: added `hyperlocal=None` parameter to the function signature; line 250 uses `hyperlocal or {}` (previously `weather_data.get("hyperlocal", {})`); line 299 uses `current or {}` (previously `weather_data.get("current", {})` — `current` was already a parameter). Collector call site (`collector.py`) now passes `hyperlocal=weather_data.get("hyperlocal")`.
