@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.516 • August 28, 2026 (c1_stage4_difficulty_lens uses prod_error — real drift count 3→14)</strong></summary>
+
+- `analysis/c1_stage4_difficulty_lens.py` line 113 was computing "Prod error" as `abs(fc_l4 or fc_l3 or fc_l2 or fc_l1 or forecast) - obs` — falling through the base HRRR layers but **ignoring specialists (chp/l6/Lc) and the NBM cascade**. Violates [[feedback_pair_log_error_field]] which says real Prod residual = `error_{applied_layer}` via the documented `_prod.prod_error()` helper. Fix: import `prod_error`, replace the manual fallthrough with `e_prod = prod_error(r)`. Post-fix `c1_stage4_difficulty_lens` REAL DRIFT count went 3 → 14, exposing signals the old proxy was hiding by conflating l4-error with prod-error. First surfaced today when the digest's ch/6-11h/transition "REAL DRIFT" finding was falsified by a pair-log direct measurement showing Prod +56% lift vs Raw on that cell in the last 4 days. Cause: same audit script bug — it was measuring L4's drift, not Prod's drift.
+- No runtime change; analysis-only. Post-hoc audit metric only.
+- Debug page: hidden 08-25 Recent activity entry (from 08-28 sweep) fully removed instead of `display:none`.
+
+</details>
+
+<details>
 <summary><strong>v0.6.515 • August 28, 2026 (L4_FIELDS drop cc — 7-day gate cleared)</strong></summary>
 
 - `weather_collector/processors/decay_apply.py` — `L4_FIELDS = {"ch"}` (was `{"ch", "cc"}`). Divergence report cleared the 7-day drop gate today: script wants `{ch}`, production had `{ch, cc}`. cc is Ccd-overwritten downstream (`cc_from_derivation.py` replaces `cloud_cover` with `max(cl_l6, cm_l6, ch_l6)` except in `SKIP_REGIMES = {se_flow, unknown}`) — the L4 cc correction was code-hygiene deadweight, never surfaced in user output. Mechanical ship, zero user-visible change.

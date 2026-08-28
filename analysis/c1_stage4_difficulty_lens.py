@@ -42,6 +42,7 @@ from datetime import datetime, timedelta, timezone
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path
+from _prod import prod_error
 
 PAIR_LOG_URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 OUT_TXT = os.path.join(os.path.dirname(__file__), "output",
@@ -110,13 +111,12 @@ def main():
                 continue
             slot = "transition" if rfc != rob else "stable"
             fc_l1 = r.get("forecast_l1")
-            fc_prod = (r.get("forecast_l4") or r.get("forecast_l3")
-                       or r.get("forecast_l2") or fc_l1 or r.get("forecast"))
             obs = r.get("observed")
-            if fc_l1 is None or fc_prod is None or obs is None:
+            e_prod = prod_error(r)
+            if fc_l1 is None or e_prod is None or obs is None:
                 continue
             try:
-                err_prod = abs(float(fc_prod) - float(obs))
+                err_prod = abs(float(e_prod))
                 err_raw  = abs(float(fc_l1) - float(obs))
             except (TypeError, ValueError):
                 continue
