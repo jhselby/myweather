@@ -781,6 +781,7 @@ def main():
             nws_gridpoints=weather_data.get("nws_gridpoints"),
             nbm_extract=nbm_extract,
             current=weather_data.get("current"),
+            hyperlocal=weather_data.get("hyperlocal"),
         )
     except Exception as e:
         logging.warning(f"  ⚠  Forecast snapshot failed: {redact_secrets(e)}")

@@ -170,7 +170,7 @@ def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
         return None
 
 
-def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extract=None, current=None):
+def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extract=None, current=None, hyperlocal=None):
     """Append a snapshot of the corrected 48h forecast for later validation.
     Prunes snapshots older than RETENTION_DAYS on each write. No-op if the
     hourly data has no usable hours.
@@ -247,7 +247,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             _raw_hrrr_h_arr = hourly.get("humidity", [])
             _raw_hrrr_t_0 = _raw_hrrr_t_arr[0] if _raw_hrrr_t_arr else None
             _raw_hrrr_h_0 = _raw_hrrr_h_arr[0] if _raw_hrrr_h_arr else None
-            _hyp = weather_data.get("hyperlocal", {}) or {}
+            _hyp = hyperlocal or {}
             _weighted_bias = _hyp.get("weighted_bias", 0) or 0
             _bias_humid = _hyp.get("bias_humidity", 0) or 0
             _K = _hyp.get("kalman_gain", 1.0)
@@ -296,7 +296,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             # arrays instead of HRRR raw arrays. Same observed value, same
             # weight curve; leads >= BLEND_HOURS pass raw_nbm through.
             from .wind_blend import BLEND_HOURS as _WIND_BLEND_HOURS, WIND_DIR_MIN_SPEED as _WIND_DIR_MIN_SPEED
-            _cur = weather_data.get("current", {}) or {}
+            _cur = current or {}
             _obs_ws = _cur.get("wind_speed")
             _obs_wg = _cur.get("wind_gusts")
             _obs_wd = _cur.get("wind_direction")

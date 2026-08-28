@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.514 • August 28, 2026 (native NBM L2 precompute — undefined `weather_data` fixed)</strong></summary>
+
+- `forecast_snapshot.append_forecast_snapshot()` referenced `weather_data` in two spots inside the native-NBM-L2 precompute block but the function has no such parameter — the block has been raising `NameError: name 'weather_data' is not defined` every tick since v0.6.499 (2026-08-26), silently falling back to identity passthrough for all 8 NBM-scope fields. The error was hidden until v0.6.512 (yesterday) added `import logging`, exposing the underlying message. Fix: added `hyperlocal=None` parameter to the function signature; line 250 uses `hyperlocal or {}` (previously `weather_data.get("hyperlocal", {})`); line 299 uses `current or {}` (previously `weather_data.get("current", {})` — `current` was already a parameter). Collector call site (`collector.py`) now passes `hyperlocal=weather_data.get("hyperlocal")`.
+- User-facing impact: t/h/dp/ws/wg/wd/cc/ch native NBM L2 arrays start populating on next tick. Selector-visible NBM lift should improve over the next 30d as the 30d fit window rolls past the 08-26→08-28 identity-passthrough period. Fits Joe's 08-27 observation: "pipeline green, Total Lift red for h/ws/wg/wd" — 29/30 days of the selector fit reflect the (still-broken) pre-native-L2 behavior.
+
+</details>
+
+<details>
 <summary><strong>v0.6.513 • August 28, 2026 (scheduled NBM skip-proposals review — h se_flow curated)</strong></summary>
 
 - Scheduled 08-28 review of `analysis/nbm_walkforward_validator.py` per-regime SKIP proposals (sustained-7d window fully post-backstamp today for the first time). Of 41 L3_NBM proposals, 19 are moot (field not in `L3_NBM_FIELDS`), 8 wg + 2 ch were already curated 08-26 v0.6.500, 4 cc are excluded by design (Ccd overwrite). Net-new: 2 h `se_flow` cells added to `weather_collector/data/skip_table_nbm_curated.json` — `["se_flow", 0, 6]` (walkforward −17.8% n=247) and `["se_flow", 24, 48]` (−25.9% n=477). Both survive the full-post-backstamp durability bar. Wait confirmed the 08-26 curation was correctly-aimed: all 8 of its cells still on today's list at similar magnitude.
