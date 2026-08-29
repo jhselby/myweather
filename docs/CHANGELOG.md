@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.519 • August 29, 2026 (debug page sweep completion — "What's being evaluated next" section rebuilt)</strong></summary>
+
+- Upcoming panel: dropped stale 08-28 entry (that ship happened as v0.6.513). Added forward items: Sun 08-30 cc.l4_nbm watch day 3 close-check, ~Fri 09-04 NBM POP first 7d of data + chp_nbm re-evaluation, Tue 09-09 NBM skip-table 14d post-ship watch closes. Marked 08-28 review as ✓ done.
+- Post-ship watches — active: trimmed 7 CLOSED CLEAN items (pr L2 regime-gated, chp diurnal, walkforward L3/L4, C1h re-curate, Lsb, dpbp, wg L3 SKIP_TABLE — all closed 08-26 in the v0.6.490→v0.6.500 sweep). Closed two chp watches whose 14d windows elapsed clean: chp cell-skip +1 (v0.6.409, through 08-28) and chp emergency cell-skip (v0.6.405, through 08-27). Added today's cc.l4_nbm watch as day 2 active. Refreshed wg persistence-skill line with today's +0.19 reading. Closed-item summary line at bottom points to Archive.
+- No runtime change; docs-only completion of the v0.6.518 sweep.
+
+</details>
+
+<details>
 <summary><strong>v0.6.518 • August 29, 2026 (end-of-session debug page sweep — 08-28 evening ships + 08-29 triage consolidated)</strong></summary>
 
 - Recent activity block advanced: new 08-29 (today) entry — clean triage day, 0 ships, 3 open items closed via investigation (cc.l4_nbm watch extended day 2→3, ch.chp_nbm HOT diagnosed as false alarm and closed with new `feedback_nbm_regression_sentry_semantics` memory, Stage 4 `ch/6-11h/transition` REAL DRIFT did not replicate). 08-28 Fri entry relabeled "today" → "1 day ago" and expanded to include four evening ships (v0.6.514 native-NBM-L2 NameError fix, v0.6.515 L4_FIELDS drop cc, v0.6.516 difficulty-lens methodology fix, v0.6.517 NBM POP extraction) that landed after 08-28 morning's sweep. 08-27 Thu relabeled "1 day ago" → "2 days ago". 08-26 entries trimmed to CHANGELOG per rolling 3-day window.
