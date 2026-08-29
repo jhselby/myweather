@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.518 • August 29, 2026 (end-of-session debug page sweep — 08-28 evening ships + 08-29 triage consolidated)</strong></summary>
+
+- Recent activity block advanced: new 08-29 (today) entry — clean triage day, 0 ships, 3 open items closed via investigation (cc.l4_nbm watch extended day 2→3, ch.chp_nbm HOT diagnosed as false alarm and closed with new `feedback_nbm_regression_sentry_semantics` memory, Stage 4 `ch/6-11h/transition` REAL DRIFT did not replicate). 08-28 Fri entry relabeled "today" → "1 day ago" and expanded to include four evening ships (v0.6.514 native-NBM-L2 NameError fix, v0.6.515 L4_FIELDS drop cc, v0.6.516 difficulty-lens methodology fix, v0.6.517 NBM POP extraction) that landed after 08-28 morning's sweep. 08-27 Thu relabeled "1 day ago" → "2 days ago". 08-26 entries trimmed to CHANGELOG per rolling 3-day window.
+- Applicability map correction: L4 `cc` bullet updated to reflect v0.6.515 drop-cc (`L4_FIELDS = {ch}`).
+- No runtime change; docs-only.
+
+</details>
+
+<details>
 <summary><strong>v0.6.517 • August 28, 2026 (NBM POP extraction — pp/pa raw_nbm stamps land in pair log)</strong></summary>
 
 - `weather_collector/fetchers/nbm_point.py` — added `pp` FIELD_SPEC pulling the NBM APCP prob variant (`APCP:surface:{L-1}-{L} hour acc fcst:prob`, allow_prob=True). Sibling of the pa accumulation message; the `:prob` suffix in the match string keeps them from colliding. Value passes through unchanged (NBM POP is already 0-100 %).
