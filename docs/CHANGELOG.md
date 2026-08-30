@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.526 • August 30, 2026 (session-end debug page sweep — v0.6.522/523/524/525 landing narrative + collector-deploy verify)</strong></summary>
+
+- Recent activity: 2026-08-30 (Sun) "today" entry rewritten as a 6-ship + 1-collector-deploy summary. Consolidates v0.6.520 attribution + v0.6.521 first sweep + v0.6.522 Stage 1 harness+bugs + v0.6.523 retraction + v0.6.524 Stage 2 harness + h Stage 2 written + v0.6.525 Stage 3 processor bug-fix + collector deploy (revision 00544-fuj at 18:11 UTC, verified 18:17 UTC tick shows new <code>clamped_out_by_band</code> key).
+- What's being evaluated next: dropped "write h Stage 2" (done v0.6.524). Added h Stage 2 walker watch (7d starting 08-31, earliest clear 09-06 for Stage 3 write). Added deferred "extract shared Stage 3 processor harness" — right time is when h Stage 3 would otherwise become the third clone.
+- Post-ship watches active: h Stage 1 halves watch marked CLEARED (v0.6.522 refactor). Added h Stage 2 walker (v0.6.524). Added Stage 3 processor bug-fix watch (v0.6.525 collector deploy verified in tick).
+- Active-candidate count 12 → 13 (h_h Stage 2 now active).
+- CLOSED CLEAN roll now includes 08-30 h Stage 1 halves.
+- Docs-only. No runtime change.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.525 • August 30, 2026 (residual-persistence Stage 3 processors — 4 real bugs fixed from `/code-review high` in wg + dp)</strong></summary>
 
 - **Trigger:** `/code-review high` on `weather_collector/processors/wg_residual_persistence.py` — the Stage 3 runtime processor template that h Stage 3 will clone from. Review found 4 real bugs; fixed the same bugs in both wg and dp (cloned siblings) before h Stage 3 gets written. **⚠ Collector-side change — requires `make deploy-collector`.**
