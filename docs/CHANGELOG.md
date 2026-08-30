@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.524 • August 30, 2026 (Stage 2 harness extracted + h Stage 2 written — same architectural discipline as v0.6.522 Stage 1 refactor)</strong></summary>
+
+- **New `analysis/_residual_persistence_stage2.py`** — extracted shared 330-line Stage 2 harness. Same pattern as v0.6.522 for Stage 1: dp and wg Stage 2 scripts were 408-line siblings differing only in FIELD constant, output paths, and one units-label string. Writing h Stage 2 as a fourth clone would compound the same drift risk that just paid off to fix.
+- **`analysis/h_h_residual_persistence_stage2.py`** — new, thin wrapper: `run_stage2(field="h", units_label="%")`. Feeds `weather_collector/data/h_residual_persistence_curated.json`. Not yet read by any processor — the Stage 3 h processor gets written after 7-day walker window on this Stage 2 output.
+- **`h_dp_residual_persistence_stage2.py` and `h_wg_residual_persistence_stage2.py`** — collapsed to ~15-line thin wrappers.
+- **Semantic-preservation gate:** ran both pre- and post-refactor Stage 2 for dp and wg, diffed the collector-facing curated JSONs. dp: byte-equivalent (excl generated_at). wg: one cosmetic diff — `hourly_correction.units` string changed from `'mph (add to fc_l2_wg on SHIP cells)'` to `'mph (add to forecast_l2 for wg on SHIP cells)'` after harness normalized the phrasing to match dp/h. Verified via grep that the collector's `wg_residual_persistence.py` reads `hour_of_day` + `fit_asof` only, never `units` — zero runtime impact. Kept the normalized form for consistency across all three fields.
+- **Also fixed:** stale line-46 comment ("2026-08-01: slid forward 9 days ... See v0.6.358") flagged by `/code-review high` — comment described a hardcoded window pin that no longer exists (deleted when `rolling_windows()` helper landed). Removed via the refactor.
+- **h Stage 2 first-run verdict (initial read only, per-cell SHIP set still needs walker stability):** SKIP cells span pre_frontal/6-11, se_flow/0-5, se_flow/12-23, se_flow/6-11, sea_breeze/0-5, sea_breeze/12-23, sea_breeze/24-47, sw_flow/0-5. Verdict rollup + SHIP cells emit to the new curated JSON; digest will pick up `h_h_residual_persistence_stage2` on next run.
+- Every future methodology fix to Stage 2 now happens in one place. Line count: 3 × 408 = 1224 lines before → 330 shared + 3 × 15 wrappers = 375 lines after (~830 lines removed).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.523 • August 30, 2026 (retraction — v0.6.522 "Stage 2 may be contaminated" flag was overstated)</strong></summary>
 
 - v0.6.522 flagged as follow-up: "dp/wg Stage 2 curated JSONs the collector reads share the same load-path bugs and may carry contaminated SHIP/MARGIN/SKIP verdicts." That was speculation, not verified.
