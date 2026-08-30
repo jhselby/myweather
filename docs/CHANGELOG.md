@@ -1,4 +1,22 @@
 <details open>
+<summary><strong>v0.6.522 • August 30, 2026 (residual-persistence Stage 1 harness extracted + three real bugs fixed — h Stage 1 flips MARGINAL → STAGE 1 PROMOTE same session)</strong></summary>
+
+- **New `analysis/_residual_persistence_stage1.py`** — extracted shared 300-line harness from three identical sibling scripts (`h_h_...`, `h_dp_...`, `h_wg_...`). Trigger: `/code-review high` on the un-skipped h Stage 1 script (v0.6.520 morning) surfaced three drifting copies with three real bugs.
+- **Bug 1 — fc_prod L2 contamination** (silent). `load_rows()` fallback chain was `r.get(f"forecast_{applied}") or r.get("forecast_l4", r.get("forecast"))`. When applied_layer or forecast_{applied} was missing, it fell through to top-level `forecast` — which is L2 by design per [[feedback_top_level_forecast_is_l2]]. Those rows scored Production-baseline MAE against L2, contaminating the "Production" grid rows with L2 numbers. Fix: strict form — require `applied_layer` present AND `forecast_{applied}` present, else skip the row. Load-time stats now emit the skip counts.
+- **Bug 2 — test-window off-by-one.** `test_start = max_date - timedelta(days=TEST_WINDOW_DAYS)` combined with `>= test_start` yielded N+1 dates in the test window (e.g. `TEST_WINDOW_DAYS=7` → 8 test dates). Fix: `max_date - timedelta(days=N-1)` gives inclusive last-N-days. Also shifted one day of what should have been training into test.
+- **Bug 3 — halves-check crash.** If one half filtered to n=0, `score()` returned None but the emit path immediately dereferenced `h1['n']` into an AttributeError. Fix: guard both h1 and h2 for None; emit the actual counts if either is None instead of crashing.
+- **Cosmetic:** halves label now prints first-half end as (mid − 1 day) so the boundary reads correctly (mid is first date of second_half). Removed redundant `_dt`/`_tz` local re-import in `_finalize`.
+- **The three sibling scripts (h_h, h_dp, h_wg) collapsed to ~15-line thin wrappers** that import `run_stage1` and pass `field=`. Every future methodology fix now happens in one place. The v0.6.400a fc_prod-reconstruction drift (ported to dp only until v0.6.520 caught h up) is precisely the class of mistake this refactor eliminates.
+- **Post-refactor number moves — the old numbers were contaminated:**
+  - h Stage 1: was +21.41% MARGINAL (halves −0.93 / +3.12 SIGN FLIP) → **now +24.04% STAGE 1 PROMOTE (halves +1.28 / +0.88 BOTH WIN)**. The halves-sign-flip that blocked the morning ship was a bug artifact — off-by-one put a bad day (08-23) in test, and fc_prod contamination dragged Production baseline. **Same-session flip from MARGINAL to PROMOTE.**
+  - dp Stage 1: was +21.25% PROMOTE (from morning digest) → **now +28.83% PROMOTE**. +7.6pt jump from same bug fixes.
+  - wg Stage 1: was previously-marginal → **now +36.53% PROMOTE (halves both +14%)**.
+- **Implication for h Stage 2:** can proceed NOW, not 09-02. The morning [[project_h_residual_persistence_attribution_08_30]] recommendation to wait 3 days for halves stability was chasing contamination; halves are actually clean under correct methodology. Memory updated.
+- **Follow-up audit worth flagging:** shipped Stage 2 outputs (`dp_residual_persistence_curated.json`, `wg_residual_persistence_curated.json` — the ones the collector reads) come from Stage 2 scripts that share the same load-path bugs. Those SHIP/MARGIN/SKIP verdicts and hourly correction tables may be contaminated too. Not a runtime break (Stage 3 processors both read the JSONs correctly) but downstream ship decisions have been building on noisy numbers.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.521 • August 30, 2026 (debug page sweep — v0.6.520 h-Stage-1 un-skip + cc.l4_nbm CLOSED CLEAN reflected)</strong></summary>
 
 - Recent activity: added 2026-08-30 (Sun) as "today" leading with cc.l4_nbm CLOSED CLEAN day 3 + v0.6.520 h Stage 1 un-skip. 08-29 → "1 day ago". 08-28 → "2 days ago". 08-27+ earlier trimmed to CHANGELOG per rolling 3-day window.
