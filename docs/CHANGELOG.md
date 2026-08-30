@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.520 • August 30, 2026 (h residual-persistence Stage 1 un-skipped — architectural attribution of today's dp Stage 1 PROMOTE)</strong></summary>
+
+- `analysis/h_h_residual_persistence_stage1.py` — un-skipped (was `.py.skip` since 2026-07-31 when the aggregate signal was weak). Fresh run on current pair-log: window=14d Production → **MAE +21.41%**, per-regime 5/5 WIN (nw_flow +25.6%, pre_frontal +18.8%, se_flow +17.8%, sea_breeze +20.1%, sw_flow +25.9%). Verdict MARGINAL — the +21% signal and 5/5 regime WIN pattern are strong; the only blocker is halves stability (first half −0.93%, second half +3.12% on training slices). Ported the v0.6.400a fc_prod-reconstruction patch from the dp script (applied_layer lookup) — needed for honest Production-baseline comparison. Per [[project_dp_is_derived_no_dp_work]], h is the architecturally-correct home for a residual-persistence correction; a dp-side gate is a downstream echo when the underlying bias is in h.
+- **Attribution finding:** today's digest promoted `h_dp_residual_persistence_stage1` from MARGINAL → PROMOTE (+21.25% aggregate, 5/5 WIN). Fresh h Stage 1 lands at +21.41% aggregate, 5/5 WIN on the same 5 regimes — statistically indistinguishable from dp Stage 1. Per Magnus `dp = f(t, h)` with `observed_dp = f(observed_t, observed_h)`, that's the signature of a single h bias observed once directly and once one derivation-step downstream. Companion t Stage 1 (scratchpad, same methodology): +1.46% aggregate, 3/5 LOSE — t exonerated.
+- **No runtime change.** `dp_residual_persistence` stays ENABLED=False. `h_h_residual_persistence_stage2.py` is the next code piece to write (Stage 2 preview on the wg/dp template) once the h halves-stability blocker resolves — earliest re-check in 3 days per Stage 1 verdict template.
+- Related: [[project_h_residual_persistence_attribution_08_30]] (new memory documenting the attribution), [[project_dp_residual_persistence]] (parked, do not flip).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.519 • August 29, 2026 (debug page sweep completion — "What's being evaluated next" section rebuilt)</strong></summary>
 
 - Upcoming panel: dropped stale 08-28 entry (that ship happened as v0.6.513). Added forward items: Sun 08-30 cc.l4_nbm watch day 3 close-check, ~Fri 09-04 NBM POP first 7d of data + chp_nbm re-evaluation, Tue 09-09 NBM skip-table 14d post-ship watch closes. Marked 08-28 review as ✓ done.
