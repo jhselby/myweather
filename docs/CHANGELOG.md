@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.521 • August 30, 2026 (debug page sweep — v0.6.520 h-Stage-1 un-skip + cc.l4_nbm CLOSED CLEAN reflected)</strong></summary>
+
+- Recent activity: added 2026-08-30 (Sun) as "today" leading with cc.l4_nbm CLOSED CLEAN day 3 + v0.6.520 h Stage 1 un-skip. 08-29 → "1 day ago". 08-28 → "2 days ago". 08-27+ earlier trimmed to CHANGELOG per rolling 3-day window.
+- What's being evaluated next: dropped cc.l4_nbm day-3 check row (closed today). Added Wed 09-02 as h_h_residual_persistence_stage1 halves re-check. Added ✓ 08-30 entry for the cc.l4_nbm close.
+- Post-ship watches active: added h Stage 1 halves watch (opened 08-30). Moved cc.l4_nbm HOT sentry to CLOSED CLEAN with the day-3 close narrative. Updated wg persistence-skill line to reflect today's finding that the "at-risk" +0.17 measures L4-vs-persistence not Prod-vs-persistence (Prod skill +0.215, above margin — not a live-product regression).
+- Active-candidate count 11 → 12 (h Stage 1 un-skipped).
+- CLOSED CLEAN roll updated to include 08-30.
+- Docs-only. No runtime change.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.520 • August 30, 2026 (h residual-persistence Stage 1 un-skipped — architectural attribution of today's dp Stage 1 PROMOTE)</strong></summary>
 
 - `analysis/h_h_residual_persistence_stage1.py` — un-skipped (was `.py.skip` since 2026-07-31 when the aggregate signal was weak). Fresh run on current pair-log: window=14d Production → **MAE +21.41%**, per-regime 5/5 WIN (nw_flow +25.6%, pre_frontal +18.8%, se_flow +17.8%, sea_breeze +20.1%, sw_flow +25.9%). Verdict MARGINAL — the +21% signal and 5/5 regime WIN pattern are strong; the only blocker is halves stability (first half −0.93%, second half +3.12% on training slices). Ported the v0.6.400a fc_prod-reconstruction patch from the dp script (applied_layer lookup) — needed for honest Production-baseline comparison. Per [[project_dp_is_derived_no_dp_work]], h is the architecturally-correct home for a residual-persistence correction; a dp-side gate is a downstream echo when the underlying bias is in h.
