@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.523 • August 30, 2026 (retraction — v0.6.522 "Stage 2 may be contaminated" flag was overstated)</strong></summary>
+
+- v0.6.522 flagged as follow-up: "dp/wg Stage 2 curated JSONs the collector reads share the same load-path bugs and may carry contaminated SHIP/MARGIN/SKIP verdicts." That was speculation, not verified.
+- Verified this session by reading both Stage 2 scripts: **Stage 2 is L2-only.** It reads `forecast_l2` and never touches Production or the top-level `forecast` field. Windows are `run_time`-bucketed via `_windows.rolling_windows()` (WIN_A / WIN_B / FULL), not the test-window-slicing pattern Stage 1 used. Per-cell verdict via `cell_verdict()` — no halves-check-with-None-crash path.
+- **None of the three Stage 1 bugs apply to Stage 2.** dp/wg curated JSONs the collector reads are NOT contaminated by that class of bug. My "audit worth doing" concern was wrong.
+- Retracted in the attribution memory, MEMORY.md index line, and the debug page Post-ship watches item. This entry documents the correction.
+- Docs-only. No runtime change.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.522 • August 30, 2026 (residual-persistence Stage 1 harness extracted + three real bugs fixed — h Stage 1 flips MARGINAL → STAGE 1 PROMOTE same session)</strong></summary>
 
 - **New `analysis/_residual_persistence_stage1.py`** — extracted shared 300-line harness from three identical sibling scripts (`h_h_...`, `h_dp_...`, `h_wg_...`). Trigger: `/code-review high` on the un-skipped h Stage 1 script (v0.6.520 morning) surfaced three drifting copies with three real bugs.
