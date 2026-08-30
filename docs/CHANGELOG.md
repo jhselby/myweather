@@ -1,4 +1,18 @@
 <details open>
+<summary><strong>v0.6.525 • August 30, 2026 (residual-persistence Stage 3 processors — 4 real bugs fixed from `/code-review high` in wg + dp)</strong></summary>
+
+- **Trigger:** `/code-review high` on `weather_collector/processors/wg_residual_persistence.py` — the Stage 3 runtime processor template that h Stage 3 will clone from. Review found 4 real bugs; fixed the same bugs in both wg and dp (cloned siblings) before h Stage 3 gets written. **⚠ Collector-side change — requires `make deploy-collector`.**
+- **Bug 1 (wg only) — telemetry lies about applied delta.** `per_lead_would_apply` stamped the pre-clamp candidate but `new_arr[i] = max(0, per_lead_would_apply[i])` was what actually landed. Fix: clamp to physical floor (0.0) BEFORE stamping so telemetry matches applied. Attribution readers (debug + pair-log analysis) now see the correct delta. dp does not have this bug (dp can be negative — no floor clamp).
+- **Bug 2 (both) — `_TABLE_CACHE` never invalidated.** Cloud Function warm workers kept the module hot across ticks; a Stage 2 refit that wrote updated curated JSON was invisible until worker rotation. Fix: mtime-check invalidation + `MYWEATHER_REFRESH=1` respect per [[feedback_cache_refresh_policy]]. Matches the pattern other collector data readers use.
+- **Bug 3 (both) — clamp-out silently pooled with normal skips.** A bad refit slot with `|corr| > _MAX_ABS_CORRECTION` was counted in `skips_by_band` indistinguishably from "l2 missing" or "verdict != SHIP/MARGIN". Fix: separate `clamped_out_by_band` counter added to telemetry payload. Matches [[feedback_stated_intent_vs_code_behavior]] — "refuse to apply" is now observable.
+- **Bug 4 (both) — `no_hourly_array` early return skipped `gate_firing_log.record_firing`.** 7-day watch saw "operator did not run" instead of "operator ran, nothing to do" — biased the flip decision. Fix: record 0/0 explicitly before the early return.
+- **Bug 6 (both, cosmetic)** — comment added noting lead 0 (i=0) is intentionally unbanded ("0-5" runs 1..5 to exclude the current-tick "now" observation). Consistent with sibling persistence-gate processors.
+- **Refactor deferred:** these two processors are 230-line cloned siblings and would benefit from the same shared-harness extraction as v0.6.522 Stage 1 + v0.6.524 Stage 2. Not doing today — touches live processors, higher blast radius than analysis-only refactors. When h Stage 3 lands (post walker clearance ~09-06), extract at that point when the third clone would otherwise be written.
+- **Deploy required:** `make deploy-collector`. Verify via `gcloud functions logs read myweather-collector --region=us-east1 --limit=10 --gen2` — look for the new `clamped_out_by_band` key in the telemetry stamp on the next tick.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.524 • August 30, 2026 (Stage 2 harness extracted + h Stage 2 written — same architectural discipline as v0.6.522 Stage 1 refactor)</strong></summary>
 
 - **New `analysis/_residual_persistence_stage2.py`** — extracted shared 330-line Stage 2 harness. Same pattern as v0.6.522 for Stage 1: dp and wg Stage 2 scripts were 408-line siblings differing only in FIELD constant, output paths, and one units-label string. Writing h Stage 2 as a fourth clone would compound the same drift risk that just paid off to fix.

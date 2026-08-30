@@ -31,6 +31,7 @@ change gate can watch it. Flip ENABLED=True only after gate agreement across
 """
 import json
 import logging
+import os
 from pathlib import Path
 
 
@@ -40,6 +41,9 @@ FIELD = "wg"
 HOURLY_KEY = "wind_gusts"
 L2_KEY = "wind_gusts_post_l2"
 
+# Note: lead 0 (i=0) intentionally unbanded — "0-5" runs 1..5 to exclude
+# the current-tick "now" observation from the correction. Consistent with
+# sibling persistence-gate processors (dp/wd/ch persistence).
 _LEAD_BANDS = [
     ("0-5",   1,  5),
     ("6-11",  6, 11),
@@ -49,22 +53,36 @@ _LEAD_BANDS = [
 
 _TABLE_PATH = Path(__file__).resolve().parent.parent / "data" / "wg_residual_persistence_curated.json"
 _TABLE_CACHE = None
+_TABLE_MTIME = None
 
 _MAX_ABS_CORRECTION_MPH = 15.0  # sanity clamp; larger => refuse to apply
 
 
 def _load_table():
-    global _TABLE_CACHE
-    if _TABLE_CACHE is not None:
+    """Load curated JSON with mtime-check invalidation so a Stage 2 refit
+    lands without needing a worker restart. Also respects MYWEATHER_REFRESH=1
+    per [[feedback_cache_refresh_policy]]."""
+    global _TABLE_CACHE, _TABLE_MTIME
+    if os.environ.get("MYWEATHER_REFRESH") == "1":
+        _TABLE_CACHE = None
+        _TABLE_MTIME = None
+    try:
+        mtime = _TABLE_PATH.stat().st_mtime
+    except FileNotFoundError:
+        mtime = None
+    if _TABLE_CACHE is not None and mtime == _TABLE_MTIME:
         return _TABLE_CACHE
     try:
         _TABLE_CACHE = json.loads(_TABLE_PATH.read_text())
+        _TABLE_MTIME = mtime
     except FileNotFoundError:
         logging.warning(f"  ⚠  wg residual persistence table missing at {_TABLE_PATH}; gate will not fire")
         _TABLE_CACHE = {"cells": {}, "hourly_correction": {}}
+        _TABLE_MTIME = None
     except Exception as e:
         logging.warning(f"  ⚠  wg residual persistence table load failed: {e}")
         _TABLE_CACHE = {"cells": {}, "hourly_correction": {}}
+        _TABLE_MTIME = None
     return _TABLE_CACHE
 
 
@@ -146,6 +164,18 @@ def stamp_wg_residual_persistence(weather_data):
             "enabled": ENABLED,
             "status": "no_hourly_array",
         }
+        # v0.6.525: record 0/0 so the 7-day watch sees "operator ran, nothing
+        # to do" instead of "operator did not run" — biasing the flip decision.
+        try:
+            from . import gate_firing_log
+            gate_firing_log.record_firing(
+                operator="wg_residual_persistence",
+                regime="unknown",
+                by_field={FIELD: {"fires": 0, "skips": 0}},
+                leads=0,
+            )
+        except Exception:
+            pass
         return
 
     l2_arr = hourly.get(L2_KEY)
@@ -164,6 +194,10 @@ def stamp_wg_residual_persistence(weather_data):
     per_lead_fires = [False] * n_leads
     fires_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
     skips_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
+    # v0.6.525: separate counter for the sanity-clamp path so a bad refit slot
+    # (hour_of_day |corr| > _MAX_ABS_CORRECTION_MPH) is observable in telemetry
+    # instead of silently pooled with normal skips.
+    clamped_out_by_band = {name: 0 for name, _, _ in _LEAD_BANDS}
 
     l2_available = isinstance(l2_arr, list) and len(l2_arr) == n_leads
 
@@ -183,10 +217,18 @@ def stamp_wg_residual_persistence(weather_data):
             skips_by_band[band] += 1
             continue
         corr = hour_corr.get(str(hour))
-        if corr is None or abs(corr) > _MAX_ABS_CORRECTION_MPH:
+        if corr is None:
             skips_by_band[band] += 1
             continue
+        if abs(corr) > _MAX_ABS_CORRECTION_MPH:
+            clamped_out_by_band[band] += 1
+            continue
         candidate = float(l2_arr[i]) + float(corr)
+        # v0.6.525: clamp to physical floor BEFORE stamping so per_lead_would_apply
+        # matches what actually lands in hourly[HOURLY_KEY]. Prior code stamped
+        # the pre-clamp candidate then clamped again at apply time — attribution
+        # readers saw a delta that didn't match the real applied delta.
+        candidate = max(0.0, candidate)
         per_lead_would_apply[i] = round(candidate, 3)
         per_lead_fires[i] = True
         fires_by_band[band] += 1
@@ -198,7 +240,7 @@ def stamp_wg_residual_persistence(weather_data):
         new_arr = list(arr)
         for i, fires in enumerate(per_lead_fires):
             if fires and per_lead_would_apply[i] is not None:
-                new_arr[i] = max(0.0, per_lead_would_apply[i])
+                new_arr[i] = per_lead_would_apply[i]
         hourly[HOURLY_KEY] = new_arr
 
     weather_data["wg_residual_persistence"] = {
@@ -207,6 +249,7 @@ def stamp_wg_residual_persistence(weather_data):
         "l2_available": l2_available,
         "fires_by_band": fires_by_band,
         "skips_by_band": skips_by_band,
+        "clamped_out_by_band": clamped_out_by_band,
         "per_lead_would_apply": per_lead_would_apply,
         "table_generated_at": table.get("generated_at"),
         "hourly_correction_fit_asof": hc_block.get("fit_asof"),
