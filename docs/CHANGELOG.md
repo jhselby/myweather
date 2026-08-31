@@ -1,4 +1,21 @@
 <details open>
+<summary><strong>v0.6.532 • August 31, 2026 (Stage 3 processor harness extracted — three ~230-line clones collapsed to shared module + thin wrappers)</strong></summary>
+
+- **Trigger fired today:** deferred v0.6.525 refactor gate was "when h Stage 3 lands (~09-06) to avoid third clone." v0.6.530 landed h Stage 3 pre-stage today, so the third clone materialized. Extracting now, same session, closes the same-day-arch-alignment loop.
+- **New `weather_collector/processors/_residual_persistence.py`** (290 lines) — shared harness owning: `_load_table` with per-field mtime + MYWEATHER_REFRESH invalidation, `_lead_band` + `_cell_fires` + `_parse_hour` helpers, `_apply_bounds` physical clamp, `stamp_field(...)` (the meat), `describe_field(...)` (applicability descriptor). All 4 v0.6.525 bugfixes live here now, once instead of thrice.
+- **Rewrote three wrappers** as thin adapters preserving the exact API `weather_collector/collector.py` imports (`stamp_<field>_residual_persistence` + `describe_applicability` + module-level `ENABLED`):
+  - `wg_residual_persistence.py` (48 lines) — physical_bounds `(0.0, None)`, `_MAX_ABS_CORRECTION_MPH = 15.0`.
+  - `dp_residual_persistence.py` (52 lines) — physical_bounds `(None, None)`, `_MAX_ABS_CORRECTION_F = 10.0`. Wrapper doc-string cross-references `[[project_dp_is_derived_no_dp_work]]` — ENABLED stays False permanently; wrapper retained so a re-fit re-enters the walker gate on equal footing.
+  - `h_residual_persistence.py` (55 lines) — physical_bounds `(0.0, 100.0)` (only field with both-ends clamp), `_MAX_ABS_CORRECTION_PCT = 20.0`.
+- **Line-count:** before 3×~230 = ~690 lines duplicated. After 290 shared + 155 wrappers = **445 total, 245 lines cut (35%)**. Same discipline as v0.6.522 (Stage 1 harness) + v0.6.524 (Stage 2 harness).
+- **Semantic-preservation gate cleared** — captured pre-refactor `weather_data["<field>_residual_persistence"]` telemetry blocks on 3 fields × 4 regimes (nw_flow, calm, frontal, se_flow) plus all 3 `describe_applicability()` outputs. Post-refactor byte-hash `sha256=6b6c5293acc6126b` matched pre-refactor identically. Live-edit `ENABLED = False → True` per wrapper still works identically (wrapper passes `enabled=ENABLED` on each call).
+- **Collector wiring unchanged.** `collector.py` still imports `stamp_<field>_residual_persistence` + `describe_applicability` from the per-field modules; the three stamp calls + `_da_wgrp` / `_da_dprp` / `_da_hrp` tuple entries are unchanged. Verified: full `weather_collector.collector` module imports cleanly with all env vars set.
+- **⚠ COLLECTOR DEPLOY REQUIRED** to promote the refactor into the running function: `make deploy-collector`. Post-deploy verify next tick: `weather_data["h_residual_persistence"]` block still has all fields (`enabled`, `regime`, `l2_available`, `fires_by_band`, `skips_by_band`, `clamped_out_by_band`, `per_lead_would_apply`, `table_generated_at`, `hourly_correction_fit_asof`) with the same shape as v0.6.530's initial deploy. Same check on wg + dp siblings.
+- Zero forecast value change expected (ENABLED=False on all three; and byte-equivalent telemetry proven locally).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.531 • August 31, 2026 (session-end debug page sweep — v0.6.527/528/529/530 landing narrative)</strong></summary>
 
 - Recent activity: added 2026-08-31 (Mon) "today" entry — 5 ships + 1 collector deploy consolidated. Rolled 08-30 → "1 day ago", 08-29 → "2 days ago". Trim line advanced: 08-28 detail entry moved to "and earlier" reference to CHANGELOG per rolling 3-day window.
