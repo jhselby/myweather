@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.531 • August 31, 2026 (session-end debug page sweep — v0.6.527/528/529/530 landing narrative)</strong></summary>
+
+- Recent activity: added 2026-08-31 (Mon) "today" entry — 5 ships + 1 collector deploy consolidated. Rolled 08-30 → "1 day ago", 08-29 → "2 days ago". Trim line advanced: 08-28 detail entry moved to "and earlier" reference to CHANGELOG per rolling 3-day window.
+- Post-ship watches — active: h Stage 2 walker watch updated to reflect automation (v0.6.529 walker + day-1 rollup 9 SHIP / 8 MARGIN / 9 SKIP / 7 THIN). Added Stage 1 harness halves-preference watch (v0.6.528). Added h_residual_persistence Stage 3 shadow watch (v0.6.530 deploy).
+- What's being evaluated next: "h Stage 2 SHIP-set stability watch" replaced with paired "h Stage 2 walker + Stage 3 shadow watch" (walker + processor pre-stage both landed today). "Extract shared Stage 3 processor harness" flipped from "when h Stage 3 lands" to "trigger fired 08-31 — deferred to next session for dedicated live-processor extraction with deploy verify."
+- Active-candidate count 13 → 14 (h Stage 3 shadow watch added).
+- Docs-only. No runtime change.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.530 • August 31, 2026 (h_residual_persistence Stage 3 processor pre-staged + wired collector-side, ENABLED=False)</strong></summary>
 
 - **Intent:** make the ~09-06 ship of h Stage 3 a one-line config flip rather than a fresh implementation. wg + dp Stage 3 processors landed in July as clones of each other; h Stage 3 lands now as the third clone, with all the v0.6.525 bug fixes baked in from birth.
