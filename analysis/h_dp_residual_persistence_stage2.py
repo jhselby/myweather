@@ -10,9 +10,12 @@ via `weather_collector/data/dp_residual_persistence_curated.json` but the
 Stage 3 processor stays ENABLED=False permanently (h upstream owns the
 signal via Magnus).
 """
+import os
 import sys
 
-from _residual_persistence_stage2 import run_stage2
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
+from _residual_persistence_stage2 import run_stage2  # noqa: E402
 
 
 if __name__ == "__main__":

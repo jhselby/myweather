@@ -14,9 +14,12 @@ ENABLED=False permanently — fixing h routes to dp via Magnus. See
 [[project_h_residual_persistence_attribution_08_30]] and
 [[project_dp_is_derived_no_dp_work]].
 """
+import os
 import sys
 
-from _residual_persistence_stage2 import run_stage2
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
+from _residual_persistence_stage2 import run_stage2  # noqa: E402
 
 
 if __name__ == "__main__":

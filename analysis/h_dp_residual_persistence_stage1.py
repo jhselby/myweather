@@ -7,9 +7,12 @@ Magnus (dp = f(t, h)); real Stage 2/3 ship path lives on h. See
 [[project_dp_is_derived_no_dp_work]]. `dp_residual_persistence` processor
 stays ENABLED=False permanently — fixing h routes to dp via Magnus.
 """
+import os
 import sys
 
-from _residual_persistence_stage1 import run_stage1
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, SCRIPT_DIR)
+from _residual_persistence_stage1 import run_stage1  # noqa: E402
 
 
 if __name__ == "__main__":

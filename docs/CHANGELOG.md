@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.527 • August 31, 2026 (residual-persistence wrapper sys.path fix — 6 FAILs from v0.6.522/524 harness extraction)</strong></summary>
+
+- **Root cause:** v0.6.522 (Stage 1 harness) and v0.6.524 (Stage 2 harness) refactored `h_{h,dp,wg}_residual_persistence_stage{1,2}.py` into thin wrappers around `analysis/_residual_persistence_stage{1,2}.py`. Each wrapper did `from _residual_persistence_stageN import run_stageN` without `sys.path.insert(0, SCRIPT_DIR)`. The digest runner invokes via `python3 -m analysis.<name>` from repo root, so sibling imports don't resolve — 6 scripts `ModuleNotFoundError`'d in this morning's digest.
+- **Fix:** added the standard `SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, SCRIPT_DIR)` prologue + `# noqa: E402` on the sibling import, matching the working pattern already used in `h_run_bias_carryover_{pa,t}_stage0.py` around the `_run_bias_carryover` shared module. All 6 wrappers updated identically. Matches [[feedback_sentry_syspath_invocation]].
+- **Verified:** `python3 -m analysis.h_wg_residual_persistence_stage1` runs clean end-to-end (verdict STAGE 1 PROMOTE, 5/5 WIN, halves BOTH WIN, matching yesterday's re-run).
+- Analysis-only change. No collector deploy required. Next digest (Mon 08-31 evening or Tue 09-01 morning) will show the 6 FAILs cleared.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.526 • August 30, 2026 (session-end debug page sweep — v0.6.522/523/524/525 landing narrative + collector-deploy verify)</strong></summary>
 
 - Recent activity: 2026-08-30 (Sun) "today" entry rewritten as a 6-ship + 1-collector-deploy summary. Consolidates v0.6.520 attribution + v0.6.521 first sweep + v0.6.522 Stage 1 harness+bugs + v0.6.523 retraction + v0.6.524 Stage 2 harness + h Stage 2 written + v0.6.525 Stage 3 processor bug-fix + collector deploy (revision 00544-fuj at 18:11 UTC, verified 18:17 UTC tick shows new <code>clamped_out_by_band</code> key).
