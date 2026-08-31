@@ -1,4 +1,21 @@
 <details open>
+<summary><strong>v0.6.530 • August 31, 2026 (h_residual_persistence Stage 3 processor pre-staged + wired collector-side, ENABLED=False)</strong></summary>
+
+- **Intent:** make the ~09-06 ship of h Stage 3 a one-line config flip rather than a fresh implementation. wg + dp Stage 3 processors landed in July as clones of each other; h Stage 3 lands now as the third clone, with all the v0.6.525 bug fixes baked in from birth.
+- **New `weather_collector/processors/h_residual_persistence.py`** — cloned from `wg_residual_persistence.py`. Deltas: FIELD="h", HOURLY_KEY="corrected_humidity", L2_KEY="corrected_humidity_post_l2", pre-key suffix `_pre_hrp`, `_MAX_ABS_CORRECTION_PCT = 20.0` (comfortably above Stage 2's current +7.58% max hour_of_day slot), and both-ends physical clamp `[0.0, 100.0]` (wg only had a floor at 0). All four v0.6.525 fixes present: telemetry pre-clamp match, `_TABLE_CACHE` mtime invalidation + MYWEATHER_REFRESH respect, `clamped_out_by_band` separate counter, and `record_firing` in the no_hourly_array early-return.
+- **Collector wired** in `weather_collector/collector.py` (3 edits): stamp call inserted after `stamp_dp_residual_persistence`, `describe_applicability` import added, `_da_hrp` added to the applicability-map tuple. Runs with ENABLED=False so no h forecast value changes — only telemetry is stamped to `weather_data["h_residual_persistence"]` and the gate_firing log picks up per-tick counts.
+- **Smoke tested:** processor unit-tested against real curated JSON. nw_flow (Stage 2 SHIP all 4 bands) → 47/47 leads fire (5+6+12+24 by band). calm (Stage 2 SKIP all bands) → 0 fires, 47 skips (correctly falls through). ENABLED=False confirmed: `hourly.corrected_humidity` unmodified. collector.py imports cleanly with all env vars.
+- **Deploy required to start shadow accumulation:** `make deploy-collector` at Joe's convenience. Runs zero-side-effect while ENABLED=False; starts building the 7-day live-layer flip watch. Verify next tick shows `h_residual_persistence.clamped_out_by_band` key present alongside the wg/dp siblings.
+- **Ship-day (~09-06 earliest) sequence** when walker + shadow both clear:
+  1. Confirm `h_residual_persistence_walker.json` reports `n_cells_cleared >= 1` and no `cells_flipped_in_window`.
+  2. Confirm 7 daily reads of h_residual_persistence telemetry show consistent fires_by_band shape matching the walker's cleared cells.
+  3. Edit `h_residual_persistence.py` line 44: `ENABLED = False` → `ENABLED = True`.
+  4. `make deploy-collector`, verify next tick shows `corrected_humidity_post_l3_pre_hrp` key populated.
+- Collector wire lands in git; no forecast change until Joe deploys AND flips ENABLED.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.529 • August 31, 2026 (residual-persistence Stage 2 → Stage 3 promotion walker — closes manual-review gap)</strong></summary>
 
 - **Gap surfaced during today's telemetry sweep:** wg + dp Stage 3 processors shipped in July via manual review of Stage 2 output over ~7 days. No automated per-cell verdict history existed, so a Stage 2 verdict flip inside the "ripening" window would only be caught if Joe happened to notice. h Stage 2's first curated JSON just landed 08-30; without a walker, the ~09-06 Stage 3 write would rely on the same manual review pattern.

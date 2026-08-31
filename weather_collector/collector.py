@@ -659,6 +659,20 @@ def main():
     except Exception as e:
         logging.warning(f"  ⚠  dp residual persistence stamp failed: {redact_secrets(e)}")
 
+    # h residual persistence gate — regime × lead_band L2-residual add-on for
+    # relative humidity. Reads hourly.corrected_humidity_post_l2 stashed by
+    # decay_apply and adds the fitted per-clock-hour L2 residual mean on top.
+    # Pre-staged 2026-08-31 v0.6.530 ahead of the walker gate clearance
+    # (earliest ~09-06). ENABLED=False; module stamps telemetry for the 7-day
+    # live-layer change gate. Flip ENABLED=True after
+    # h_residual_persistence_walker.json reports cleared cells + 7 days of
+    # stable Stage 2 verdicts.
+    try:
+        from .processors.h_residual_persistence import stamp_h_residual_persistence
+        stamp_h_residual_persistence(weather_data)
+    except Exception as e:
+        logging.warning(f"  ⚠  h residual persistence stamp failed: {redact_secrets(e)}")
+
     # dp bias-persistence gate — antecedent-based dp correction for
     # {pre_frontal, nw_flow, sw_flow} at leads >= 6. Rolling 48h GCS
     # state (`dp_bias_antecedent_state.json`) tracks per-tick fc_l1-vs-obs
@@ -709,6 +723,7 @@ def main():
         from .processors.cl_persistence_gate import describe_applicability as _da_clpg
         from .processors.wg_residual_persistence import describe_applicability as _da_wgrp
         from .processors.dp_residual_persistence import describe_applicability as _da_dprp
+        from .processors.h_residual_persistence import describe_applicability as _da_hrp
         from .processors.dp_bias_persistence import describe_applicability as _da_dpbp
         from .processors.ws_bias_persistence import describe_applicability as _da_wsbp
         from .processors.wd_persistence_gate import describe_applicability as _da_wdpg
@@ -720,7 +735,7 @@ def main():
         from .processors.l6_nbm import describe_applicability as _da_l6nbm
         from .processors.skip_table_nbm import describe_applicability as _da_sknbm
         layers = []
-        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_dpbp, _da_wsbp, _da_wdpg, _da_c1,
+        for fn in (_da_decay, _da_solar, _da_lsb, _da_cove, _da_lc, _da_chpg, _da_clpg, _da_wgrp, _da_dprp, _da_hrp, _da_dpbp, _da_wsbp, _da_wdpg, _da_c1,
                    _da_l3nbm, _da_l4nbm, _da_l5nbm, _da_l6nbm, _da_sknbm):
             try:
                 layers.extend(fn())
