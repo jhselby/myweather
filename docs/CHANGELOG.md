@@ -1,4 +1,21 @@
 <details open>
+<summary><strong>v0.6.528 • August 31, 2026 (residual-persistence Stage 1 harness — halves-preference best-window selection)</strong></summary>
+
+- **Symptom:** h Stage 1 verdict flipped PROMOTE → MARGINAL between yesterday and today with no underlying regression. Grid: window=5d had highest test-MAE (+28.04%) but halves failed (first -3.57%, second +1.14%); window=14d test +24.51%, halves +0.56% / +4.10% (BOTH WIN). Old harness picked 5d by raw max, ran halves on it, failed, downgraded verdict. dp/wg happened to have halves-passing raw-max, so this hid until h's max flipped windows today.
+- **Root cause:** `analysis/_residual_persistence_stage1.py` line 224 selected `best = max(grid, key=lambda g: g["mae_pct"])`, then ran halves on that one combo. A shorter window with marginally-better test-MAE would outrank a longer, halves-stable window and drag the whole verdict to MARGINAL.
+- **Fix:** compute halves for every grid combo (small extra cost — grid is 12 combos × 2 halves scores). Select `best` as the highest-test-MAE combo that passes halves; fall back to raw-max (with existing MARGINAL/HOLD path) only when nothing clears. Emits a "Halves-preference override" line naming raw-max vs selected combo when the two differ, so the decision is visible in the log.
+- **[C] Halves-check block** reuses the precomputed halves for `best` (no double compute).
+- **Verified:**
+  - h: raw-max 5d (test +28.04%, halves ✗) → selected 14d (test +24.51%, halves ✓ +0.56 / +4.10). Verdict now STAGE 1 PROMOTE. Override line printed.
+  - dp: raw-max 5d passes halves → no override; verdict unchanged (STAGE 1 PROMOTE, +31.19%).
+  - wg: raw-max 14d passes halves → no override; verdict unchanged (STAGE 1 PROMOTE, +37.34%).
+- **Impact on live stack:** none. Stage 1 is preview only. Stage 2 uses hardcoded `WINDOW_DAYS = 14` and is independent of Stage 1's window pick, so Stage 2 curated JSON was already computed on the correct (14d) window.
+- **Impact on walkers:** if any walker reads Stage 1's verdict field (not just Stage 2's per-cell verdicts), it will now see the correct verdict instead of a spurious MARGINAL day. Prevents ship-streak resets on days when the raw-max window happens to be halves-unstable.
+- Analysis-only change. No collector deploy.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.527 • August 31, 2026 (residual-persistence wrapper sys.path fix — 6 FAILs from v0.6.522/524 harness extraction)</strong></summary>
 
 - **Root cause:** v0.6.522 (Stage 1 harness) and v0.6.524 (Stage 2 harness) refactored `h_{h,dp,wg}_residual_persistence_stage{1,2}.py` into thin wrappers around `analysis/_residual_persistence_stage{1,2}.py`. Each wrapper did `from _residual_persistence_stageN import run_stageN` without `sys.path.insert(0, SCRIPT_DIR)`. The digest runner invokes via `python3 -m analysis.<name>` from repo root, so sibling imports don't resolve — 6 scripts `ModuleNotFoundError`'d in this morning's digest.

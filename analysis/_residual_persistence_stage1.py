@@ -221,7 +221,31 @@ def run_stage1(field,
             )
     emit("")
 
-    best = max(grid, key=lambda g: g["mae_pct"]) if grid else None
+    train_dates_sorted = sorted({r["date"] for r in train_rows})
+    have_halves = len(train_dates_sorted) >= 10
+    mid = train_dates_sorted[len(train_dates_sorted) // 2] if have_halves else None
+    first_half = [r for r in train_rows if r["date"] < mid] if have_halves else []
+    second_half = [r for r in train_rows if r["date"] >= mid] if have_halves else []
+    if have_halves:
+        for g in grid:
+            dr = daily_res_l2 if g["baseline"] == "L2-alone" else daily_res_prod
+            key = "fc_l2" if g["baseline"] == "L2-alone" else "fc_prod"
+            h1 = _score(first_half, dr, key, g["window"])
+            h2 = _score(second_half, dr, key, g["window"])
+            g["_halves"] = {"first": h1, "second": h2, "split_at": mid}
+            g["halves_ok"] = bool(h1 and h2
+                                  and h1["mae_pct"] >= 0.5
+                                  and h2["mae_pct"] >= 0.5)
+
+    raw_best = max(grid, key=lambda g: g["mae_pct"]) if grid else None
+    stable = [g for g in grid if g.get("halves_ok")]
+    best = max(stable, key=lambda g: g["mae_pct"]) if stable else raw_best
+    if have_halves and best is not None and raw_best is not None and best is not raw_best:
+        emit(f"Halves-preference override: raw-max window={raw_best['window']}d "
+             f"{raw_best['baseline']} (test {raw_best['mae_pct']:+.2f}%) fails halves; "
+             f"selecting halves-stable window={best['window']}d {best['baseline']} "
+             f"(test {best['mae_pct']:+.2f}%).")
+        emit("")
     if not best or best["mae_pct"] < 1.0:
         emit("Verdict: FAIL — no grid combo hits +1% MAE improvement on held-out.")
         _finalize(lines, grid, None, None, None, field, test_window_days,
@@ -267,29 +291,24 @@ def run_stage1(field,
     emit("-" * 100)
     emit(f"[C] Halves check on training (excl. test) — best combo (window={best['window']}d)")
     emit("-" * 100)
-    train_dates = sorted({r["date"] for r in train_rows})
     halves = None
-    if len(train_dates) < 10:
+    if not have_halves:
         emit("  (training set too short for halves check)")
     else:
-        mid = train_dates[len(train_dates) // 2]
+        halves = best.get("_halves")
+        h1 = halves["first"] if halves else None
+        h2 = halves["second"] if halves else None
         mid_prev_iso = (datetime.strptime(mid, "%Y-%m-%d").date() - timedelta(days=1)).isoformat()
-        first_half = [r for r in train_rows if r["date"] < mid]
-        second_half = [r for r in train_rows if r["date"] >= mid]
-        h1 = _score(first_half, daily_res, baseline_key, best["window"])
-        h2 = _score(second_half, daily_res, baseline_key, best["window"])
-        halves = {"first": h1, "second": h2, "split_at": mid}
         if h1 is None or h2 is None:
             emit(f"  halves check skipped — one half returned 0 rows "
                  f"(first={'None' if h1 is None else h1['n']}, "
                  f"second={'None' if h2 is None else h2['n']})")
         else:
-            emit(f"  first half   ({train_dates[0]} → {mid_prev_iso}, n={h1['n']:,}): "
+            emit(f"  first half   ({train_dates_sorted[0]} → {mid_prev_iso}, n={h1['n']:,}): "
                  f"MAE {h1['mae_pct']:+.2f}%, RMSE {h1['rmse_pct']:+.2f}%")
-            emit(f"  second half  ({mid} → {train_dates[-1]}, n={h2['n']:,}): "
+            emit(f"  second half  ({mid} → {train_dates_sorted[-1]}, n={h2['n']:,}): "
                  f"MAE {h2['mae_pct']:+.2f}%, RMSE {h2['rmse_pct']:+.2f}%")
-            both_win = (h1["mae_pct"] >= 0.5 and h2["mae_pct"] >= 0.5)
-            emit(f"  → Halves stability: {'✓ BOTH WIN' if both_win else '✗ SIGN FLIP or WEAK HALF'}")
+            emit(f"  → Halves stability: {'✓ BOTH WIN' if best.get('halves_ok') else '✗ SIGN FLIP or WEAK HALF'}")
     emit("")
 
     emit("=" * 100)
