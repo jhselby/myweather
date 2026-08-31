@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.533 • August 31, 2026 (evening audit sweep — L1 selector refit + NWS-gridpoint benchmark superseded + sr Stage 2 re-read + debug page updated)</strong></summary>
+
+- **Analysis-only session (no runtime code changes).** Debug page evening addendum on today's 08-31 entry documents 4 findings and 2 memo drops.
+- **L1 selector refit** ran today 10:15 UTC via nightly cron — 30-day window, 934K rows scanned, 485K kept. Table update stamps dp/wg/wd/cc to NBM at ≥6h with dp lift +11/+24/+27% at 6-11/12-23/24-47 bands. cc stays NBM all bands. t/ws/h/sr/ch remain HRRR all bands (NBM loses pooled).
+- **NWS-gridpoint benchmark** (13d overdue since v0.6.431 plumbing 08-18) fired via `analysis/h_nws_gridpoint_benchmark.py`. Initial read claimed `dp Δ_prod=+44.6%` (halves +35/+52). **SUPERSEDED SAME-SESSION** on discovery that prod already routes dp to NBM via `l1_selector.py` (wired forecast_snapshot.py:916) — the measured "gain" was against a selector-routed baseline, magnitude inflated by dp-derived-exclusion arc baseline artifacts (08-25 → 08-31 elevated prod MAE in that window). Memo `project_nws_dp_promote_08_31` updated with strikethrough + new status.
+- **REAL new finding** from the NWS work: **selector fits at band-level only; regime × band cells where NBM wins under a pooled-HRRR band are MASKED.** Regime × band drill on the 4 pooled-KILL fields revealed 8 halves-stable NBM cells hidden for ws (e.g. sw/24-47h +11.3% n=1142, w/24-47h +16.1% n=1080, calm/24-47h +35.1% n=223), 1 for t (s/24-47h +21.1% n=817). Actionable: extend `analysis/l1_selector_fit.py` to per (field, regime, band) granularity.
+- **NWS-gridpoint benchmark script** got a caveat header so future runs surface the selector-routed-baseline warning immediately.
+- **sr sea_breeze Lsr shortwave Stage 2 re-run** with 6+ weeks accumulated data — VERDICT HOLD pooled (Δ -0.22%, halves -0.6/+0.3), but hours 17-18 concentrate clean narrow ship signal (+25.9% on 244 firing rows, halves 2/2 both cells). Cause B strongly confirmed for sea_breeze (matched-bin +86 W/m² vs +83 on 07-11). pre_frontal shifted toward Cause A (matched +16, big-miss +47) — likely permanent-defer signal.
+- **t/6-11h τ-suspect day-3 pre-read:** L2 flipped +5% helping → -7% hurting week-over-week, but absolute Δ ~0.075°F/day still within noise band; authoritative 457K-row decay_tau_tuning still says τ=42 optimal. WATCH day 4.
+
+</details>
+
+<details>
 <summary><strong>v0.6.532 • August 31, 2026 (Stage 3 processor harness extracted — three ~230-line clones collapsed to shared module + thin wrappers)</strong></summary>
 
 - **Trigger fired today:** deferred v0.6.525 refactor gate was "when h Stage 3 lands (~09-06) to avoid third clone." v0.6.530 landed h Stage 3 pre-stage today, so the third clone materialized. Extracting now, same session, closes the same-day-arch-alignment loop.

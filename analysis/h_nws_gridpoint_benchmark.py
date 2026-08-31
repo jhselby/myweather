@@ -63,6 +63,9 @@ def main():
             by_field[f].append((ot, abs(float(e_nws)), abs(float(e_l1)), abs(float(e_prod))))
 
     print("h_nws_gridpoint_benchmark — NBM/NWS-gridpoint vs current stack")
+    print("⚠ 08-31 caveat: prod stack already routes dp/wg/wd/cc to NBM at ≥6h")
+    print("  via l1_selector.py (uses direct-NBM, not NWS-gridpoint). Any 'promote' verdict")
+    print("  here is measuring NWS-gridpoint against a selector-routed baseline, not raw HRRR.")
     print(f"pair log rows scanned: {n_total:,}   with error_nws non-null: {n_with_nws:,}")
     if n_with_nws == 0:
         print()
