@@ -1,4 +1,19 @@
 <details open>
+<summary><strong>v0.6.529 • August 31, 2026 (residual-persistence Stage 2 → Stage 3 promotion walker — closes manual-review gap)</strong></summary>
+
+- **Gap surfaced during today's telemetry sweep:** wg + dp Stage 3 processors shipped in July via manual review of Stage 2 output over ~7 days. No automated per-cell verdict history existed, so a Stage 2 verdict flip inside the "ripening" window would only be caught if Joe happened to notice. h Stage 2's first curated JSON just landed 08-30; without a walker, the ~09-06 Stage 3 write would rely on the same manual review pattern.
+- **New `analysis/_residual_persistence_walker.py`** — shared harness mirroring `h_chp_cell_gate` + `h_lc_recent_bias_gate`. `run_walker(field)` reads `{field}_residual_persistence_curated.json`, appends today's per-cell verdicts to `.cache_{field}_residual_persistence_walker_history.json` (idempotent-per-day, 30d retention), and computes a 7-day gate.
+- **Gate rule:** cell `cleared_for_wire = True` iff last 7 distinct days are ALL in `{SHIP, MARGIN}` (matches the Stage 3 processor's fire condition — both wg and dp `_residual_persistence.py` fire on `verdict in ("SHIP", "MARGIN")`). A single SKIP/THIN day inside the window resets. Flip detection (`flipped_in_window`) is called out separately so a re-clear after a flip can't silently promote without operator review.
+- **Three thin wrappers** — `h_{h,dp,wg}_residual_persistence_walker.py`, same one-import shape as v0.6.522/524 Stage 1/2 wrappers (with the v0.6.527 `sys.path.insert` prologue).
+- **Emits per field:**
+  - `weather_collector/data/{field}_residual_persistence_walker.json` — runtime table with per-cell state + cleared list + notes describing the future Stage 3 wire contract (a future re-fit's Stage 3 processor can read this directly to know which cells to enable, rather than hand-editing the processor).
+  - `.cache_{field}_residual_persistence_walker_history.json` — history accumulator.
+- **Day-1 verdicts today:** all three walkers report BUILDING (day 1/7). h has 9 SHIP + 8 MARGIN + 9 SKIP + 7 THIN cells to track; wg has 11 positive cells; dp has 8 positive cells. Earliest h Stage 3 write signal: ~09-06 (7 daily digest runs from today).
+- Analysis-only. No collector deploy. Auto-picked up by the daily digest (`analysis/*.py` discovery).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.528 • August 31, 2026 (residual-persistence Stage 1 harness — halves-preference best-window selection)</strong></summary>
 
 - **Symptom:** h Stage 1 verdict flipped PROMOTE → MARGINAL between yesterday and today with no underlying regression. Grid: window=5d had highest test-MAE (+28.04%) but halves failed (first -3.57%, second +1.14%); window=14d test +24.51%, halves +0.56% / +4.10% (BOTH WIN). Old harness picked 5d by raw max, ran halves on it, failed, downgraded verdict. dp/wg happened to have halves-passing raw-max, so this hid until h's max flipped windows today.
