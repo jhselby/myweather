@@ -1,5 +1,18 @@
 <details open>
-<summary><strong>v0.6.534 • September 1, 2026 (L1 selector by-regime walker — 7-day stability gate for masked NBM-win cells)</strong></summary>
+<summary><strong>v0.6.535 • September 1, 2026 (L1 by-regime walker NOT_BEFORE_DATE guard + v0.6.533 debug page sweep + investigation pass)</strong></summary>
+
+- **Walker correction — `NOT_BEFORE_DATE = "2026-09-07"` guard added to `analysis/l1_selector_fit_by_regime_walker.py`** (shipped 5min prior as v0.6.534). Own v0.6.533 calendar entry (uncommitted from yesterday, surfaced during today's sweep) flagged: the diagnostic's 30d window is 96% pre-refit as of 09-01 (L1 selector refit landed 08-31 10:15 UTC), and the flagged cells are likely the same pre-refit-baseline artifact class that superseded `[[project_nws_dp_promote_08_31]]`. Walker would have accumulated 7 days of contaminated positives → spurious wire flip on 09-08. Guard suppresses history persistence until 2026-09-07 when the diagnostic's window contains ≥7d post-refit data. Existing day-1 cache + runtime JSON deleted. Earliest wire flip moves from 09-08 → 09-14. Walker runs a no-op stanza during suppression window.
+- **v0.6.533 debug page work committed** — yesterday's evening calendar-add + 08-31 narrative addendum (uncommitted in `corrections_debug.html`) landed as part of today's sweep.
+- **Debug page sweep for v0.6.534/v0.6.535** — 09-01 (Tue) narrative added with the walker ship, correction, and today's triage.
+- **Investigation pass (no ships from):**
+  - `h_cc_combine_walker` HOLD (0/27 cells cleared) verified as **correctly holding** — walker output IS wired at `cc_from_derivation.py:79`; not orphan. Was worried it was another masked-cells build-me-a-consumer situation; it's not.
+  - `walkforward_lc_regime_ship_stability` UNSTABLE (18 cells flipping) noted for continued watch — no ship until stability returns.
+  - Pair-log pp ΔMAE −72.4% flagged for future investigation; pp gate is Brier not MAE so audit doesn't fire, but the shape shift is worth understanding when time permits.
+
+</details>
+
+<details>
+<summary><strong>v0.6.534 • September 1, 2026 (L1 selector by-regime walker — 7-day stability gate for masked NBM-win cells) — SUPERSEDED SAME-SESSION by v0.6.535 NOT_BEFORE_DATE guard</strong></summary>
 
 - **New walker `analysis/l1_selector_fit_by_regime_walker.py`** closes the infra gap identified in v0.6.533's evening finding: the diagnostic `l1_selector_fit_by_regime.py` surfaces halves-stable NBM-wins that the pooled-band router masks, but nothing tracked cell stability across daily reads. Walker follows the same 7/7-day cell gate pattern as [[_residual_persistence_walker]] and [[h_chp_cell_gate]] — cells become wire-eligible after appearing in the flagged set for 7 consecutive distinct dates; a flipped cell (present then absent within window) requires operator review before re-entry.
 - **Runtime output** `weather_collector/data/l1_selector_by_regime_walker.json` has no runtime consumer today; provides the read-shape a future `l1_selector.py` extension will use to route NBM at (field, regime, band) granularity without touching the pooled-band table. **History cache** `.cache_l1_selector_by_regime_walker_history.json` accumulates per-day positive sets (30-day retention).

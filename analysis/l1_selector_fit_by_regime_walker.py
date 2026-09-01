@@ -42,6 +42,15 @@ HISTORY_PATH = REPO / ".cache_l1_selector_by_regime_walker_history.json"
 GATE_WINDOW_DAYS = 7
 GATE_HISTORY_RETENTION_DAYS = 30
 
+# The upstream diagnostic uses a 30d window over the pair log. The L1 selector
+# refit landed 2026-08-31 10:15 UTC, so the diagnostic's baseline is mostly
+# pre-refit for ~30 days after. Signal during that window is likely a pre-refit
+# baseline artifact (same class that superseded [[project_nws_dp_promote_08_31]]).
+# The 09-07 calendar re-check judges whether cells survive with 7+ days of post-
+# refit data inside the diagnostic's window. Accumulation before this date is
+# suppressed to avoid a wire flip on spurious positives.
+NOT_BEFORE_DATE = "2026-09-07"
+
 
 def _load_json(path):
     try:
@@ -67,6 +76,16 @@ def run():
     fitted_at = report.get("fitted_at") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
     day = fitted_at[:10]
     masked = report.get("masked_cells") or []
+
+    if day < NOT_BEFORE_DATE:
+        print(f"L1 selector by-regime walker — {day}")
+        print(f"diagnostic source: {fitted_at}")
+        print(f"SUPPRESSED — accumulation not_before {NOT_BEFORE_DATE} "
+              f"(diagnostic window contains pre-refit selector baseline; "
+              f"see NOT_BEFORE_DATE docstring).")
+        print(f"  today's diagnostic flagged {len(masked)} cell(s); "
+              f"not persisting to history until {NOT_BEFORE_DATE}.")
+        return 0
 
     # Today's positive set + per-cell payload (kept for reporting).
     today_by_key = {_cell_key(c): {
