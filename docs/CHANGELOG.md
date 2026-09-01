@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.534 • September 1, 2026 (L1 selector by-regime walker — 7-day stability gate for masked NBM-win cells)</strong></summary>
+
+- **New walker `analysis/l1_selector_fit_by_regime_walker.py`** closes the infra gap identified in v0.6.533's evening finding: the diagnostic `l1_selector_fit_by_regime.py` surfaces halves-stable NBM-wins that the pooled-band router masks, but nothing tracked cell stability across daily reads. Walker follows the same 7/7-day cell gate pattern as [[_residual_persistence_walker]] and [[h_chp_cell_gate]] — cells become wire-eligible after appearing in the flagged set for 7 consecutive distinct dates; a flipped cell (present then absent within window) requires operator review before re-entry.
+- **Runtime output** `weather_collector/data/l1_selector_by_regime_walker.json` has no runtime consumer today; provides the read-shape a future `l1_selector.py` extension will use to route NBM at (field, regime, band) granularity without touching the pooled-band table. **History cache** `.cache_l1_selector_by_regime_walker_history.json` accumulates per-day positive sets (30-day retention).
+- **Day 1/7 status:** 8 masked cells present in today's flagged set — ws/calm/24-47 +41.2% (n=688), ws/calm/6-11 +33.6% (n=183), ws/calm/12-23 +33.1% (n=340), h/ne_flow/12-23 +29.2% (n=325), h/se_flow/24-47 +16.8% (n=1,465), ws/nw_flow/12-23 +13.0% (n=1,028), ws/sw_flow/24-47 +7.7% (n=2,423), ws/nw_flow/24-47 +7.3% (n=1,985). All halves-stable per the upstream diagnostic. Earliest wire flip ~09-08.
+- **Not shipping the router extension today** — waiting for the walker to clock the 7-day gate before the runtime plumbing becomes worth building. Follows [[feedback_stop_after_minimum_ship]]: the walker is a self-contained ship; the router extension is a separate ship blocked on data that doesn't exist yet.
+
+</details>
+
+<details>
 <summary><strong>v0.6.533 • August 31, 2026 (evening audit sweep — L1 selector refit + NWS-gridpoint benchmark superseded + sr Stage 2 re-read + debug page updated)</strong></summary>
 
 - **Analysis-only session (no runtime code changes).** Debug page evening addendum on today's 08-31 entry documents 4 findings and 2 memo drops.
