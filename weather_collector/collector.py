@@ -297,7 +297,6 @@ def build_weather_data(current_data, hourly_data, daily_data, pws_data, tide_dat
     # the detector's "Possible" branch can widen beyond CAPE alone. Best-effort:
     # if the NBM extract is missing or stale, the CAPE-only path still fires.
     try:
-        from datetime import datetime, timedelta, timezone
         _nbm = load_json("nbm_point_extract.json", default=None)
         if _nbm and _nbm.get("leads") and _nbm.get("lead_valid_utc"):
             now_utc = datetime.now(timezone.utc)

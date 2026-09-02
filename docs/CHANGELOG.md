@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.539 • September 2, 2026 (🔥 collector PROD FIX — NameError shadowed datetime in build_weather_data, crashed every tick when HRRR fell back to Pirate)</strong></summary>
+
+- **Production crash:** cloud logs surfaced `NameError: cannot access free variable 'datetime' where it is not associated with a value in enclosing scope` at `collector.py:125`. Every Open-Meteo (HRRR) outage tick was killing the collector. Alert "Executions above threshold of 0 with value of 1" fired repeatedly.
+- **Root cause:** `weather_collector/collector.py:300` had a local `from datetime import datetime, timedelta, timezone` INSIDE `build_weather_data()`. Python's compile-time scope analysis marks `datetime` as function-local for the entire scope once it sees any local assignment (imports count) — so the earlier use at line 125 (Pirate Weather HRRR fallback block, `_eastern.localize(datetime.fromtimestamp(ts))...`) inside a list comprehension raised NameError because the not-yet-executed local import shadowed the module-level `from datetime import datetime` at line 12.
+- **Trigger:** only fires when HRRR block returns no hourly data → Pirate fallback path at line 121-128 executes. Today's 429 rate-limits on Open-Meteo made HRRR unavailable → fallback fired → crash → data didn't write → next 10-min tick same crash.
+- **Fix:** deleted the redundant local import at line 300. Module-level import at line 12 covers it. Verified no other local `from datetime import` shadowing in `collector.py`.
+- **Deploy required:** `make deploy-collector`. Post-deploy verify: `gcloud functions logs read myweather-collector --region=us-east1 --limit=10 --gen2` — should show clean ticks even when Pirate fallback fires.
+
+</details>
+
+<details>
 <summary><strong>v0.6.538 • September 2, 2026 (c1-axis triage — 3 stale PROMOTE verdicts registered as KNOWN_LIVE_PIPELINES, leakage-check on h_cl_h_predictor_stage1 cleared)</strong></summary>
 
 - **KNOWN_LIVE_PIPELINES additions in `analysis/runlog/build_executive_summary.py`:**
