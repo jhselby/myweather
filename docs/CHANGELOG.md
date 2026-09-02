@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.537 • September 2, 2026 (cc blend formula Stage 1 halves-verify — new pipeline stage between Stage 0 pooled signal and per-cell walker)</strong></summary>
+
+- **New `analysis/h_cc_blend_formula_stage1.py`** — closes the pipeline gap between Stage 0's pooled-regime `h_cc_blend_formula` (today PROMOTE 5 STABLE ★ regimes) and the existing per-cell `h_cc_combine_walker` (much stricter regime × band × day unanimous 7-day gate, currently HOLD 0/27). Stage 1 emits a regime-granularity curated table (`analysis/output/cc_blend_formula_curated_stage1.json`) with 7-day set-stability gate history at `.cache_h_cc_blend_formula_gate_history.json`. Structured for a future Ccd Stage 3 wire that uses regime-level formula overrides as a coarser fallback under the per-cell walker.
+- **SHIP criterion (all four required):** `n ≥ 500`, `pooled_improve_pct ≥ 3.0` vs live `max`, both halves `≥ 2.0%` improve vs `max` (chronological split), regime NOT in Ccd `SKIP_REGIMES = {se_flow, unknown}`.
+- **Day-1 gate reads 4 SHIP regimes:** `frontal` (+5.20%, hA +4.45% / hB +5.75%, n=595), `ne_flow` (+7.88%, hA +6.10% / hB +10.42%, n=1,736), `pre_frontal` (+5.65%, hA +4.14% / hB +6.89%, n=5,711), `sea_breeze` (+5.13%, hA +3.98% / hB +6.31%, n=2,087). All prefer `random` over `max`. Stage 0's se_flow win (+6.44%) correctly demoted to `SKIP-ccd` (Ccd already falls back to Pirate cc on se_flow). Stage 0's sw_flow/nw_flow/calm winners correctly demoted to `SKIP-mag` — halves A negative (recent-anomaly contamination), halves B positive.
+- **Earliest wire-eligible = 09-09** (day 7/7 of gate). No runtime code changes today; Stage 3 wire (`CC_COMBINE_GATE_REGIME_ENABLED` flag in `cc_from_derivation.py`) blocked on gate clear.
+- **Not in scope this ship:** Stage 2 walkforward-stability script (separate file, after Stage 1 accumulates history), the Stage 3 wire itself (own commit), or retuning Ccd's `SKIP_REGIMES`. Per-cell walker keeps its role for surgical cell overrides.
+
+</details>
+
+<details>
 <summary><strong>v0.6.536 • September 2, 2026 (h_lc_ema_stage1_baseline renamed to .skip.py — same obs-time-keying leakage the 08-17 memo retracted)</strong></summary>
 
 - **Trigger:** today's digest surfaced `h_lc_ema_stage1_baseline` as `info→promote` (LOOKBACK verdict — "ship simple rolling mean over last 6 obs"). Investigation traced the promote to the same leakage class the [[project_lc_ema_kalman_fallback]] 08-17 CLOSED-MISS memo retracted: script batches by `obs_time` and applies a shift built from prior obs_times up to `ot`, but the forecast was issued at `ot - lead_h` — so obs from `[ot - lead_h, ot]` are peek-ahead. The 08-17 memo's honest run-time-keyed sweep showed cl HURTS at every band; today's leaky simulation shows cl +22%.
