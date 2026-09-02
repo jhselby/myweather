@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.541 • September 2, 2026 (session-end debug page sweep — v0.6.536–540 landing narrative)</strong></summary>
+
+- Recent activity: added 09-02 (Wed) "today" entry — 5 ships (v0.6.536 leaky Stage 1a script skip, v0.6.537 cc blend Stage 1, v0.6.538 c1-axis triage + h_cl_h_predictor clearance, v0.6.539 🔥 collector NameError prod fix + deploy, v0.6.540 L1 selector scope-mismatch bug + deploy) + 2 collector deploys consolidated. Rolled 09-01 → "1 day ago", 08-31 → "2 days ago". Trim line advanced: 08-30 detail entry moved to "and earlier" reference to CHANGELOG per rolling 3-day window.
+- NBM cascade summary updated to reflect ws 24-47h now routing to NBM (new pick from v0.6.540 refit) — count of NBM-picked cells goes 10 → 11. Both the ⏸ Production stack card's NBM row and the Applicability map card's cascade row now mention the v0.6.540 scope-mismatch fix.
+
+</details>
+
+<details>
 <summary><strong>v0.6.540 • September 2, 2026 (L1 selector scope-mismatch bug — expanded runtime writeback + fit walker to honor all 9 selector-table fields)</strong></summary>
 
 - **The bug:** the L1 selector table has entries for **9 fields** (t, dp, h, ws, wg, wd, cc, ch, sr) — the runtime writeback loop in `forecast_snapshot.py:912` iterated only over `_L3_NBM_FIELDS + wd` = **5 fields** (wg, h, ch, cc, wd). Selector picks for t, dp, ws, sr were **silently dropped** — table said route-to-NBM, runtime kept shipping HRRR-derived. Attribution `{f}_selector_source` was never stamped for the dropped fields, so pair-log couldn't even see the drop. Investigation surfaced when dp's `-88%` line in the scoreboard read like "selector picked NBM and it went wrong" — actual cause was "selector picked NBM, runtime silently discarded, shipped HRRR."
