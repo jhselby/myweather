@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.542 • September 2, 2026 (h_l2_shape_sweep — 7-day gate + memory index compacted)</strong></summary>
+
+- **`analysis/h_l2_shape_sweep.py` extended with rolling 7-day gate.** The sweep already does full halves-verify + per-band-not-worse gate; today's "STAGE 0 PROMOTE — floor=0.4, end=24" verdict cleared all three but had no temporal-stability tracking, so a single-day fluke could trigger a ship. Ported the gate-history + rolling-7d pattern from `h_lc_regime_stage1` + `h_cc_blend_formula_stage1` (v0.6.537): cache at `.cache_h_l2_shape_sweep_gate_history.json` (30-day retention), gate clears when last 7 distinct days are all SHIP with the same `(floor, end)` pick. New verdict shape: `STAGE 0 PROMOTE` while gate is filling (`day k/7`), `STAGE 1 PROMOTE` when gate clears. Day 1/7 today with pick `[0.4, 24]` (+5.04% pooled vs raw). Earliest ship-eligible ~09-09 if pick stays stable.
+- **Memory index compacted 22.5KB → 16.5KB** (under the 17.1KB hook-advisory target). Today's 09-02 detail moved to `project_09_02_session.md`; older "READ SECOND" sections consolidated into 1-line pointers in Recent sessions; redundant one-liner references collapsed. All memory files preserved — index just gets terser.
+
+</details>
+
+<details>
 <summary><strong>v0.6.541 • September 2, 2026 (session-end debug page sweep — v0.6.536–540 landing narrative)</strong></summary>
 
 - Recent activity: added 09-02 (Wed) "today" entry — 5 ships (v0.6.536 leaky Stage 1a script skip, v0.6.537 cc blend Stage 1, v0.6.538 c1-axis triage + h_cl_h_predictor clearance, v0.6.539 🔥 collector NameError prod fix + deploy, v0.6.540 L1 selector scope-mismatch bug + deploy) + 2 collector deploys consolidated. Rolled 09-01 → "1 day ago", 08-31 → "2 days ago". Trim line advanced: 08-30 detail entry moved to "and earlier" reference to CHANGELOG per rolling 3-day window.
