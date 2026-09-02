@@ -137,6 +137,29 @@ KNOWN_LIVE_PIPELINES = {
         "since": "v0.6.390",
         "date": "2026-07-30",
     },
+    "h_hsf_orthogonality": {
+        "target": "C1e hours-since-front axis in confidence_layer.py "
+                  "(_current_hsf_group + hsf-keyed by_axes curated tables). "
+                  "Script's 'PROMOTE Ship as C1e axis' verdict is stale — "
+                  "target already live. THIN warning on the verdict is a "
+                  "sparse-passages artifact of the live measurement, not a "
+                  "blocker to a wire that already happened.",
+        "since": "v0.6.316",
+        "date": "2026-07-01",
+    },
+    "h_cross_run_spread_c1_stage1": {
+        "target": "cross_run_spread xr_q axis — weather_data['cross_run_spread'] "
+                  "stamped upstream by cross_run_spread.py; consumed by "
+                  "_apply_c1h_marginals in confidence_layer.py.",
+        "since": "v0.6.401g",
+        "date": "2026-08-12",
+    },
+    "h_cross_run_spread_c1_stage2": {
+        "target": "cross_run_spread xr_q axis — same target as stage1. "
+                  "Stage 2 verdict is a stability re-check on the live axis.",
+        "since": "v0.6.401g",
+        "date": "2026-08-12",
+    },
     # NOT registered (deliberate):
     #   walkforward_l3l4_validator — composite. L4 {ch,cc} half live but L3
     #     half proposes real drop of wg/ws. Registering would suppress the

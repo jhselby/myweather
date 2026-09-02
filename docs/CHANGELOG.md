@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.538 • September 2, 2026 (c1-axis triage — 3 stale PROMOTE verdicts registered as KNOWN_LIVE_PIPELINES, leakage-check on h_cl_h_predictor_stage1 cleared)</strong></summary>
+
+- **KNOWN_LIVE_PIPELINES additions in `analysis/runlog/build_executive_summary.py`:**
+  - `h_hsf_orthogonality` — C1e hours-since-front axis has been live in `confidence_layer.py` (`_current_hsf_group` + hsf-keyed by_axes curated tables) since v0.6.316 2026-07-01. Script has been reading "PROMOTE Ship as C1e axis" for weeks because the housekeeping registry missed it. THIN warning on the verdict is a sparse-passages artifact of the live measurement, not a blocker to a wire that already happened.
+  - `h_cross_run_spread_c1_stage1` + `stage2` — cross_run_spread xr_q axis has been live since v0.6.401g 2026-08-12 (`cross_run_spread.py` stamps `weather_data["cross_run_spread"]`, consumed by `_apply_c1h_marginals` in confidence_layer.py). Both stages have been PROMOTE for 10+ consecutive days without a wire target check.
+- **Effect:** three verdicts drop out of the digest's ship-eligible list and into the "Auto-relabeled STABLE" section. Reduces noise for the two c1 axes that are *genuinely* unwired (forecast_magnitude for wg/dp, recent_err_streak for t/4-12+t/13-36+wg/4-12) — both are real ship candidates but need their own Stage 2/3 build-out.
+- **Leakage-check cleared:** `h_cl_h_predictor_stage1.py` was flagged in v0.6.536's session memo as a potential same-class bug (docstring references "same two-phase per-obs_time processing"). Verified honest: `_persistence_mean(rt_iso, n_hours)` at line 134 keys on `run_time`, not `obs_time`, so the persistence window is `[rt - n_hours, rt)` — obs strictly before run_time. Today's MISS -5.1% verdict is honest. Memory `project_lc_ema_kalman_fallback` updated to clear the flag.
+
+</details>
+
+<details>
 <summary><strong>v0.6.537 • September 2, 2026 (cc blend formula Stage 1 halves-verify — new pipeline stage between Stage 0 pooled signal and per-cell walker)</strong></summary>
 
 - **New `analysis/h_cc_blend_formula_stage1.py`** — closes the pipeline gap between Stage 0's pooled-regime `h_cc_blend_formula` (today PROMOTE 5 STABLE ★ regimes) and the existing per-cell `h_cc_combine_walker` (much stricter regime × band × day unanimous 7-day gate, currently HOLD 0/27). Stage 1 emits a regime-granularity curated table (`analysis/output/cc_blend_formula_curated_stage1.json`) with 7-day set-stability gate history at `.cache_h_cc_blend_formula_gate_history.json`. Structured for a future Ccd Stage 3 wire that uses regime-level formula overrides as a coarser fallback under the per-cell walker.
