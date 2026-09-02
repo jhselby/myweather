@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.536 • September 2, 2026 (h_lc_ema_stage1_baseline renamed to .skip.py — same obs-time-keying leakage the 08-17 memo retracted)</strong></summary>
+
+- **Trigger:** today's digest surfaced `h_lc_ema_stage1_baseline` as `info→promote` (LOOKBACK verdict — "ship simple rolling mean over last 6 obs"). Investigation traced the promote to the same leakage class the [[project_lc_ema_kalman_fallback]] 08-17 CLOSED-MISS memo retracted: script batches by `obs_time` and applies a shift built from prior obs_times up to `ot`, but the forecast was issued at `ot - lead_h` — so obs from `[ot - lead_h, ot]` are peek-ahead. The 08-17 memo's honest run-time-keyed sweep showed cl HURTS at every band; today's leaky simulation shows cl +22%.
+- **Action:** `git mv analysis/h_lc_ema_stage1_baseline.py analysis/h_lc_ema_stage1_baseline.skip.py` per [[feedback_analysis_skip_naming]]. Kept in-tree as an investigation artifact; drops it out of the daily digest so a future promote flip can't trigger a ship on leaky numbers.
+- **Also fixed:** `h_lc_ema_stage0.py` docstring line 5 incorrectly claimed Stage 1a was "honest run-time-keyed" — updated to reflect it was itself obs-time-keyed and is now `.skip.py`. `h_cl_h_predictor_stage1.py` docstring line 18 references the same pattern; not touched today (script was previously classified per its own investigation).
+- **L4 add cc streak triaged (no ship):** `digest_history.jsonl` shows the L4 claim was `["ch"]` for 10 consecutive days (08-22 → 09-01); today (09-02) is the first day the walkforward proposed `["cc","ch"]`. `1/7 (6 to go)` is genuinely day 1 — not a reset. Yesterday's session note ("expected 2/7 today") was wrong; the divergence hadn't opened yet on 09-01.
+
+</details>
+
+<details>
 <summary><strong>v0.6.535 • September 1, 2026 (L1 by-regime walker NOT_BEFORE_DATE guard + v0.6.533 debug page sweep + investigation pass)</strong></summary>
 
 - **Walker correction — `NOT_BEFORE_DATE = "2026-09-07"` guard added to `analysis/l1_selector_fit_by_regime_walker.py`** (shipped 5min prior as v0.6.534). Own v0.6.533 calendar entry (uncommitted from yesterday, surfaced during today's sweep) flagged: the diagnostic's 30d window is 96% pre-refit as of 09-01 (L1 selector refit landed 08-31 10:15 UTC), and the flagged cells are likely the same pre-refit-baseline artifact class that superseded `[[project_nws_dp_promote_08_31]]`. Walker would have accumulated 7 days of contaminated positives → spurious wire flip on 09-08. Guard suppresses history persistence until 2026-09-07 when the diagnostic's window contains ≥7d post-refit data. Existing day-1 cache + runtime JSON deleted. Earliest wire flip moves from 09-08 → 09-14. Walker runs a no-op stanza during suppression window.

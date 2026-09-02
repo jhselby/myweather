@@ -2,9 +2,13 @@
 
 CLOSED MISS 2026-08-17 same-day. See project_lc_ema_kalman_fallback memory.
 Stage 0 "HIT" verdict below is retracted — it was inflated by obs-time-keyed
-shift lookup (leakage). Honest run-time-keyed Stage 1a (h_lc_ema_stage1_baseline.py)
-showed every lookback hurts cl at every lead band. Kept as an artifact + as
-the honest-comparison harness for future ideas.
+shift lookup (leakage). The honest run-time-keyed sweep (documented in the
+memo) showed every lookback hurts cl at every lead band. The Stage 1a
+compare script (h_lc_ema_stage1_baseline) was itself obs-time-keyed —
+carrying the same leakage — and on 2026-09-02 flipped info→promote and
+reached the executive summary, so it was renamed to `.skip.py` (v0.6.536)
+to keep it out of the digest. Kept in-tree as an artifact of the
+investigation; do NOT act on its verdicts without fixing the keying.
 
 
 Motivated by 2026-07-30 cl kill + 2026-08-14 un-skip investigation. Current
