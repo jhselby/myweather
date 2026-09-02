@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.540 • September 2, 2026 (L1 selector scope-mismatch bug — expanded runtime writeback + fit walker to honor all 9 selector-table fields)</strong></summary>
+
+- **The bug:** the L1 selector table has entries for **9 fields** (t, dp, h, ws, wg, wd, cc, ch, sr) — the runtime writeback loop in `forecast_snapshot.py:912` iterated only over `_L3_NBM_FIELDS + wd` = **5 fields** (wg, h, ch, cc, wd). Selector picks for t, dp, ws, sr were **silently dropped** — table said route-to-NBM, runtime kept shipping HRRR-derived. Attribution `{f}_selector_source` was never stamped for the dropped fields, so pair-log couldn't even see the drop. Investigation surfaced when dp's `-88%` line in the scoreboard read like "selector picked NBM and it went wrong" — actual cause was "selector picked NBM, runtime silently discarded, shipped HRRR."
+- **Impact today:** dp's selector table picks NBM at 6-11/12-23/24-47h — production always shipped HRRR-derived dp. Latent risk: the by-regime walker (v0.6.534) is being built to detect NBM wins for t/dp/ws/sr; those picks would have silently dropped too until this fix.
+- **Fix 1 — `forecast_snapshot.py` writeback scope expansion.** Loop now iterates all 9 selector-table fields. Guard changed from "`{f}_l3_nbm` exists" to "`{f}_raw_nbm` exists" (raw NBM is the floor). NBM fallback chain extended to include `l2_nbm > raw_nbm` at the tail, so fields without deep NBM cascades (dp, ws) get routed honestly instead of skipped.
+- **Fix 2 — `analysis/l1_selector_fit.py` `_nbm_prod_error` walker.** Extended from `l6→l5→l4→l3` to `chp→l6→l5→l4→l3→l2→raw` so fields with only NBM L2 (v0.6.499) or raw NBM get an honest fit comparison instead of silent None → HRRR fall-through. Matches runtime fallback chain.
+- **Fit run confirms:** ws 24-47 flipped HRRR → NBM (+3.0% on n=12,900); dp/wg/wd/cc NBM picks unchanged from before but now runtime honors them. t/sr/ch/h correctly stay HRRR (HRRR-stack wins post-correction on these). Ship gate +51.4% on n=70,558 (was +53% on n=59,110 — slightly lower % because more cells now qualify).
+- **⚠ COLLECTOR DEPLOY REQUIRED** — `make deploy-collector`. Post-deploy verify: `{f}_selector_source` should now appear in the pair-log for t/dp/ws/sr rows, and prod dp MAE should drop toward NBM raw MAE (~1.66°F) at 6-11+ leads. Scoreboard verdict for dp should flip from REGRESS toward WATCH/STRONG over the next 24h.
+- **Why not gated:** this is a bug fix for a silent-drop, not a new correction layer. The selector table is refit daily; if bad picks emerge, revert the fit walker change and the writeback is a no-op on unstamped picks.
+
+</details>
+
+<details>
 <summary><strong>v0.6.539 • September 2, 2026 (🔥 collector PROD FIX — NameError shadowed datetime in build_weather_data, crashed every tick when HRRR fell back to Pirate)</strong></summary>
 
 - **Production crash:** cloud logs surfaced `NameError: cannot access free variable 'datetime' where it is not associated with a value in enclosing scope` at `collector.py:125`. Every Open-Meteo (HRRR) outage tick was killing the collector. Alert "Executions above threshold of 0 with value of 1" fired repeatedly.

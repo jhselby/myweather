@@ -97,11 +97,17 @@ def _hrrr_prod_error(row, field):
 
 def _nbm_prod_error(row):
     """Deepest NBM-side layer's error. Preference order (deepest first):
-    error_l6_nbm (t) > error_l5_nbm (sr) > error_l4_nbm (cc/ch) >
-    error_l3_nbm > (identity to l2_nbm until l3_nbm per-lead bins warm
-    up). This is the NBM-side output the selector-substitution would
-    deliver."""
-    for k in ("error_l6_nbm", "error_l5_nbm", "error_l4_nbm", "error_l3_nbm"):
+    error_chp_nbm (ch) > error_l6_nbm (t) > error_l5_nbm (sr) >
+    error_l4_nbm (cc/ch/wg/h) > error_l3_nbm > error_l2_nbm > error_raw_nbm.
+    This is the NBM-side output the selector-substitution would deliver.
+
+    v0.6.540: extended to l2_nbm + raw_nbm at the tail so fields without
+    deep NBM cascades (dp, ws — L2 only from v0.6.499) get a real fit
+    comparison instead of silent None → HRRR fall-through. Matches the
+    runtime writeback fallback chain in forecast_snapshot.py."""
+    for k in ("error_chp_nbm", "error_l6_nbm", "error_l5_nbm",
+              "error_l4_nbm", "error_l3_nbm",
+              "error_l2_nbm", "error_raw_nbm"):
         e = row.get(k)
         if e is not None:
             return abs(float(e))

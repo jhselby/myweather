@@ -901,55 +901,60 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                                     "ch", max(0.0, min(100.0, _chp_nbm_persist_val)))
                                 entry["ch_chp_nbm_fired"] = True
                                 _nbm_gate_counts["chp_nbm"]["ch"]["fires"] += 1
-        # Phase 4 (2026-08-19) — L1 selector. For each field with an
-        # l3_nbm value stamped this hour, ask the selector table which
-        # source to pick per (field, lead=i). When "nbm", override the
-        # user-visible {field} value with the deepest available NBM-side
-        # layer: {field}_l4_nbm when present (cc/ch), else {field}_l3_nbm.
-        # Selector source is stamped as {field}_selector_source for pair-log
-        # attribution. HRRR fall-through is safe (equals pre-Phase-4 Prod
-        # behavior) because pick_source returns "hrrr" for out-of-scope fields.
-        for f in list(_L3_NBM_FIELDS) + [_L3_NBM_WD]:
-            l3_nbm_v = entry.get(f"{f}_l3_nbm")
-            if l3_nbm_v is None:
+        # Phase 4 (2026-08-19; scope expanded v0.6.540 2026-09-02) — L1
+        # selector. For each field the selector table covers, ask the
+        # selector which source to pick per (field, lead=i). When "nbm",
+        # override the user-visible {field} value with the deepest
+        # available NBM-side layer. Selector source is stamped as
+        # {field}_selector_source for pair-log attribution. HRRR fall-
+        # through is safe (equals pre-Phase-4 Prod behavior) because
+        # pick_source returns "hrrr" for out-of-scope fields.
+        #
+        # v0.6.540 scope-mismatch fix: previously this loop iterated
+        # `_L3_NBM_FIELDS + wd` (5 fields), so selector picks for the
+        # other 4 fields in the selector table (t, dp, ws, sr) were
+        # silently dropped — the table said route-to-NBM, the runtime
+        # kept shipping HRRR. Loop now iterates over every field the
+        # selector table advertises; NBM fallback chain extended to
+        # l2_nbm > raw_nbm at the tail so fields without deep NBM
+        # cascades (dp, ws) can still be routed honestly.
+        _SELECTOR_FIELDS = ("t", "dp", "h", "ws", "wg", "wd", "cc", "ch", "sr")
+        for f in _SELECTOR_FIELDS:
+            # Any NBM value at all — raw_nbm is the floor. If absent,
+            # NBM had no data this hour; skip.
+            raw_nbm_v = entry.get(f"{f}_raw_nbm")
+            if raw_nbm_v is None:
                 continue
             source = _selector_pick_source(f, i)
             entry[f"{f}_selector_source"] = source
             if source == "nbm":
                 # Deepest available NBM-side layer wins:
-                #   wd → wdp_nbm > l3_nbm
-                #   ch → chp_nbm > l4_nbm > l3_nbm
-                #   t → l6_nbm > l3_nbm  (t skips L4_NBM + L5_NBM)
-                #   sr → l5_nbm > l3_nbm  (sr skips L4_NBM by design)
-                #   cc → l4_nbm > l3_nbm
-                #   everything else → l3_nbm
+                #   wd  → wdp_nbm > l3_nbm > l2_nbm > raw_nbm
+                #   ch  → chp_nbm > l4_nbm > l3_nbm > l2_nbm > raw_nbm
+                #   t   → l6_nbm > l2_nbm > raw_nbm  (t skips L3/L4/L5 NBM)
+                #   sr  → l5_nbm > l2_nbm > raw_nbm  (sr skips L3/L4 NBM)
+                #   cc  → l4_nbm > l3_nbm > l2_nbm > raw_nbm
+                #   wg/h → l3_nbm > l2_nbm > raw_nbm
+                #   dp/ws → l2_nbm > raw_nbm  (no deeper NBM cascade yet)
                 # F3-A fix: also overwrite {f}_applied so downstream Prod
                 # attribution (analysis/_prod.prod_error → error_{applied})
                 # returns the NBM-side residual instead of the HRRR walker's.
                 # F3-B: chp_nbm/wdp_nbm participate as distinct deepest layers.
-                chp_nbm_v = entry.get(f"{f}_chp_nbm")
-                wdp_nbm_v = entry.get(f"{f}_wdp_nbm")
-                l6_nbm_v = entry.get(f"{f}_l6_nbm")
-                l5_nbm_v = entry.get(f"{f}_l5_nbm")
-                l4_nbm_v = entry.get(f"{f}_l4_nbm")
-                if wdp_nbm_v is not None:
-                    entry[f] = wdp_nbm_v
-                    entry[f"{f}_applied"] = "wdp_nbm"
-                elif chp_nbm_v is not None:
-                    entry[f] = chp_nbm_v
-                    entry[f"{f}_applied"] = "chp_nbm"
-                elif l6_nbm_v is not None:
-                    entry[f] = l6_nbm_v
-                    entry[f"{f}_applied"] = "l6_nbm"
-                elif l5_nbm_v is not None:
-                    entry[f] = l5_nbm_v
-                    entry[f"{f}_applied"] = "l5_nbm"
-                elif l4_nbm_v is not None:
-                    entry[f] = l4_nbm_v
-                    entry[f"{f}_applied"] = "l4_nbm"
-                else:
-                    entry[f] = l3_nbm_v
-                    entry[f"{f}_applied"] = "l3_nbm"
+                nbm_layer_priority = (
+                    ("wdp_nbm", entry.get(f"{f}_wdp_nbm")),
+                    ("chp_nbm", entry.get(f"{f}_chp_nbm")),
+                    ("l6_nbm",  entry.get(f"{f}_l6_nbm")),
+                    ("l5_nbm",  entry.get(f"{f}_l5_nbm")),
+                    ("l4_nbm",  entry.get(f"{f}_l4_nbm")),
+                    ("l3_nbm",  entry.get(f"{f}_l3_nbm")),
+                    ("l2_nbm",  entry.get(f"{f}_l2_nbm")),
+                    ("raw_nbm", raw_nbm_v),
+                )
+                for _layer_name, _val in nbm_layer_priority:
+                    if _val is not None:
+                        entry[f] = _val
+                        entry[f"{f}_applied"] = _layer_name
+                        break
         hours.append(entry)
 
     # F4 (2026-08-21) — emit one gate-firing record per NBM operator so
