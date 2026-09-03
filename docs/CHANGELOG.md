@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.543 • September 3, 2026 (NBM walkforward — stale-DROP registry suppresses 2 lines of daily false-signal noise)</strong></summary>
+
+- **`analysis/runlog/build_executive_summary.py` — new `KNOWN_DISABLED_NBM_DROPS` registry.** Same class as `KNOWN_LIVE_PIPELINES`, one layer down: the NBM walkforward compares proposed field sets against `L*_NBM_FIELDS` constants but has no knowledge of module `ENABLED=False` state, so it proposes DROP daily for layers that are already effectively off. Two stale echoes registered: `(l5_nbm, sr)` — killed v0.6.471 2026-08-25 after sentry+walkforward agreed layer is net loss; `(l6_nbm, t)` — ENABLED=False scaffold pending NBM L2 double-count investigation. Suppressed drops still appear in the digest as `·` transparency lines with the reason, so the registry is visible not hidden. Real DROP signals (`l4_nbm cc`, `wdp_nbm wd`) and all ADD signals (`l3_nbm ADD dp,sr,t,wd,ws`) pass through unchanged. Same digest-hygiene pattern as v0.6.538 (c1-axis KNOWN_LIVE triage).
+
+</details>
+
+<details>
 <summary><strong>v0.6.542 • September 2, 2026 (h_l2_shape_sweep — 7-day gate + memory index compacted)</strong></summary>
 
 - **`analysis/h_l2_shape_sweep.py` extended with rolling 7-day gate.** The sweep already does full halves-verify + per-band-not-worse gate; today's "STAGE 0 PROMOTE — floor=0.4, end=24" verdict cleared all three but had no temporal-stability tracking, so a single-day fluke could trigger a ship. Ported the gate-history + rolling-7d pattern from `h_lc_regime_stage1` + `h_cc_blend_formula_stage1` (v0.6.537): cache at `.cache_h_l2_shape_sweep_gate_history.json` (30-day retention), gate clears when last 7 distinct days are all SHIP with the same `(floor, end)` pick. New verdict shape: `STAGE 0 PROMOTE` while gate is filling (`day k/7`), `STAGE 1 PROMOTE` when gate clears. Day 1/7 today with pick `[0.4, 24]` (+5.04% pooled vs raw). Earliest ship-eligible ~09-09 if pick stays stable.

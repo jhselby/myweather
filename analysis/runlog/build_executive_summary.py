@@ -173,6 +173,26 @@ KNOWN_LIVE_PIPELINES = {
 }
 
 
+# Same class as KNOWN_LIVE_PIPELINES, one layer down: NBM per-layer scope where
+# a field is in L*_NBM_FIELDS but the module is ENABLED=False, so the
+# walkforward's DROP proposal is a stale echo (the layer is already effectively
+# off — flipping the FIELDS constant would just lose telemetry + gate readiness).
+# Register the (layer, field) pair to suppress the divergence line. Real DROP
+# signals for enabled layers still surface.
+KNOWN_DISABLED_NBM_DROPS = {
+    ("l5_nbm", "sr"): {
+        "reason": "ENABLED=False since v0.6.471 (2026-08-25 kill; "
+                  "sentry+walkforward agreed layer is net loss)",
+        "date": "2026-08-25",
+    },
+    ("l6_nbm", "t"): {
+        "reason": "ENABLED=False scaffold; enablement gated on NBM L2 "
+                  "double-count investigation (HRRR L6 also disabled)",
+        "date": "2026-08-26",
+    },
+}
+
+
 def relabel_stable_recheck(script_name, verdict):
     """If script_name is a KNOWN_LIVE_PIPELINES entry and the verdict is
     action-verb-shaped, relabel to STABLE. Returns (new_verdict, was_relabeled).
@@ -709,16 +729,28 @@ def nbm_walkforward_divergence_summary():
         return None
     divergence = doc.get("divergence") or {}
     lines = []
+    suppressed = []
     for cand in ("l3_nbm", "l4_nbm", "l5_nbm", "l6_nbm", "chp_nbm", "wdp_nbm"):
         d = divergence.get(cand) or {}
-        add = d.get("add") or []
-        drop = d.get("drop") or []
+        add = list(d.get("add") or [])
+        drop = list(d.get("drop") or [])
+        kept_drop = []
+        for f in drop:
+            if (cand, f) in KNOWN_DISABLED_NBM_DROPS:
+                suppressed.append((cand, f))
+            else:
+                kept_drop.append(f)
+        drop = kept_drop
         if not add and not drop:
             continue
         parts = []
         if add:  parts.append(f"ADD {','.join(add)}")
         if drop: parts.append(f"DROP {','.join(drop)}")
         lines.append(f"  • {cand}: {'; '.join(parts)}")
+    if suppressed:
+        for cand, f in suppressed:
+            reason = KNOWN_DISABLED_NBM_DROPS[(cand, f)]["reason"]
+            lines.append(f"  · {cand} DROP {f} suppressed — {reason}")
     return lines
 
 
