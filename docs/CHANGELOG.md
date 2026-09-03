@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.544 • September 3, 2026 (session-end debug page + memory sweep)</strong></summary>
+
+- **`corrections_debug.html` calendar refresh.** Added 09-03 (Thu) narrative — v0.6.543 ship, scoreboard bad-read (24h -7.53%, 7d +3.51%, L5 rolling monotonic +2.8 → -3.0), dp -91.6% traced to v0.6.540 warmup with Fri 09-05 6-11h re-check trigger, l4_nbm cc DROP proposal verified as REAL (not the no-op the initial hypothesis assumed) deferred to 09-09 curation. Age-shifted: 09-02 → "1 day ago", 09-01 → "2 days ago", 08-31 → "3 days ago"; "08-30 and earlier" pointer unchanged.
+- **Memory:** new `project_09_03_session.md` + `project_dp_v0540_warmup_watch.md`. `MEMORY.md` READ FIRST replaced with 09-03; 09-02 → READ SECOND; 09-01 folded into Recent sessions.
+
+</details>
+
+<details>
 <summary><strong>v0.6.543 • September 3, 2026 (NBM walkforward — stale-DROP registry suppresses 2 lines of daily false-signal noise)</strong></summary>
 
 - **`analysis/runlog/build_executive_summary.py` — new `KNOWN_DISABLED_NBM_DROPS` registry.** Same class as `KNOWN_LIVE_PIPELINES`, one layer down: the NBM walkforward compares proposed field sets against `L*_NBM_FIELDS` constants but has no knowledge of module `ENABLED=False` state, so it proposes DROP daily for layers that are already effectively off. Two stale echoes registered: `(l5_nbm, sr)` — killed v0.6.471 2026-08-25 after sentry+walkforward agreed layer is net loss; `(l6_nbm, t)` — ENABLED=False scaffold pending NBM L2 double-count investigation. Suppressed drops still appear in the digest as `·` transparency lines with the reason, so the registry is visible not hidden. Real DROP signals (`l4_nbm cc`, `wdp_nbm wd`) and all ADD signals (`l3_nbm ADD dp,sr,t,wd,ws`) pass through unchanged. Same digest-hygiene pattern as v0.6.538 (c1-axis KNOWN_LIVE triage).
