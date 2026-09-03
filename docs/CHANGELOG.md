@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.545 • September 3, 2026 (debug page — stale "Ccd overwrite makes cc L3_NBM no-op" comment corrected)</strong></summary>
+
+- **`corrections_debug.html` operational-state paragraph fixed.** The pre-v0.6.540 explanation "cc excluded from L3_NBM ADD list because Ccd overwrite makes cc L3_NBM no-op for user output" was invalidated by the 09-02 v0.6.540 selector fix — cc now routes to NBM at runtime, so users see the NBM cascade rather than the Ccd-overwritten HRRR value. Amended in place with a highlighted "stale as of 09-03" callout pointing to the 6 hurting l4_nbm cc cells (n≈3,700, lifts −4.5% to −14.1%) surfaced in today's digest, deferred to 09-09 curation. Avoids the page contradicting the 09-03 calendar entry directly below.
+
+</details>
+
+<details>
 <summary><strong>v0.6.544 • September 3, 2026 (session-end debug page + memory sweep)</strong></summary>
 
 - **`corrections_debug.html` calendar refresh.** Added 09-03 (Thu) narrative — v0.6.543 ship, scoreboard bad-read (24h -7.53%, 7d +3.51%, L5 rolling monotonic +2.8 → -3.0), dp -91.6% traced to v0.6.540 warmup with Fri 09-05 6-11h re-check trigger, l4_nbm cc DROP proposal verified as REAL (not the no-op the initial hypothesis assumed) deferred to 09-09 curation. Age-shifted: 09-02 → "1 day ago", 09-01 → "2 days ago", 08-31 → "3 days ago"; "08-30 and earlier" pointer unchanged.
