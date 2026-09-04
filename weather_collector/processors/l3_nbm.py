@@ -35,7 +35,7 @@ from .nbm_common import cap_correction, is_stale
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l3_nbm_curated.json"
 
-L3_NBM_FIELDS = ("wg", "h", "ch", "cc")   # scalar-bias fields
+L3_NBM_FIELDS = ("wg", "h", "ch", "cc", "sr")   # scalar-bias fields
 # 2026-08-25 v0.6.472: dropped sr, t, ws — 14d walkforward agg lift vs
 # l2_nbm baseline: sr net loss (skip-cells -22% to -5%), t -2.2%, ws -2.5%,
 # all with losses at every non-trivial band. wg kept despite walkforward
