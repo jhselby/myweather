@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.546 • September 3, 2026 (L1 selector — recency override; 10 cells flip HRRR→NBM to close −28% value-captured gap)</strong></summary>
+
+- **`analysis/l1_selector_fit.py` — recency override layer added.** The 30d fit stays the anchor pick; when the last 7d has paired n ≥ 200 AND lift magnitude ≥ 5% in the opposite direction from the 30d pick, the cell flips. Same threshold-gate vocabulary as the base pool. Runtime `l1_selector.pick_source()` reads only the final `source` key — no runtime change, new fields (`source_30d`, `source_recent`, `override_reason`, `recent_*_prod_mae`, `recent_lift_pct`, `recent_n`) are pure metadata. Rationale: the v0.6.540 09-02 selector writeback fix unlocked honest NBM-side numbers for sr/dp/t; the 30d pool is still averaging in pre-fix corrupted data. Debug-page Selector Skill was median −4.4%, hit rate 54.1%, value captured −28.4% (median) / −16.3% (mean) at the time of shipping.
+- **10 recency overrides applied on this refit — all HRRR→NBM:** sr all 4 bands (0-5 rec +16.4%, 6-11 +11.3%, 12-23 +12.2%, 24-47 +10.8%; 30d still shows HRRR winning by 100-160% from pre-v0.6.540 stale data); h 6-11 (+19.3%) and h 12-23 (+26.2%); dp 0-5 (+11.8%); t 24-47 (+25.1%); wd 0-5 (+13.8%); ws 24-47 preserved as NBM after 30d lift dipped below the 3% base threshold (recent +17.5% held the pin). Ship gate (router-scope t/ws/wd @ leads ≥6h): +48.4% NBM lift on n=72,475 — near-identical to the 30d-only fit's +50.4%, well above the 90% floor.
+- **`weather_collector/data/l1_selector_table_curated.json` regenerated** with `override_count=10`, new cell metadata. Expected debug-page impact next refit cycle: Value Captured moves from −28% median toward 0-plus, Selector Skill hit rate lifts from 54% toward high-60s on the flipped cells, Total Lift improves on h/sr/dp/wd 0-5/t 24-47/wg 0-5 losing bands. First real read at tomorrow's morning digest.
+
+</details>
+
+<details>
 <summary><strong>v0.6.545 • September 3, 2026 (debug page — stale "Ccd overwrite makes cc L3_NBM no-op" comment corrected)</strong></summary>
 
 - **`corrections_debug.html` operational-state paragraph fixed.** The pre-v0.6.540 explanation "cc excluded from L3_NBM ADD list because Ccd overwrite makes cc L3_NBM no-op for user output" was invalidated by the 09-02 v0.6.540 selector fix — cc now routes to NBM at runtime, so users see the NBM cascade rather than the Ccd-overwritten HRRR value. Amended in place with a highlighted "stale as of 09-03" callout pointing to the 6 hurting l4_nbm cc cells (n≈3,700, lifts −4.5% to −14.1%) surfaced in today's digest, deferred to 09-09 curation. Avoids the page contradicting the 09-03 calendar entry directly below.
