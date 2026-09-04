@@ -709,13 +709,24 @@ def nbm_regression_sentry_summary():
         v = c.get("verdict")
         if v not in ("HOT", "WATCH"):
             continue
-        mae_pct = c.get("mae_pct_change")
         mark = "★" if v == "HOT" else "⚠"
-        lines.append(
-            f"  {mark} {c.get('field')}.{c.get('layer')}: {v} — ΔMAE {mae_pct:+.1f}% "
-            f"(sust {c.get('mae_sustained')}, fresh {c.get('mae_fresh')}, "
-            f"n_sust {c.get('n_sustained'):,}, n_fresh {c.get('n_fresh'):,})"
-        )
+        if c.get("marginal_available"):
+            lines.append(
+                f"  {mark} {c.get('field')}.{c.get('layer')}: {v} — "
+                f"layer help {c.get('layer_help_pct_sustained'):+.1f}% → "
+                f"{c.get('layer_help_pct_fresh'):+.1f}% "
+                f"(Δ {c.get('marginal_degradation_pp'):+.1f}pp; "
+                f"n_sust {c.get('n_paired_sustained'):,}, "
+                f"n_fresh {c.get('n_paired_fresh'):,}; vs {c.get('input_layer')})"
+            )
+        else:
+            mae_pct = c.get("mae_pct_change")
+            lines.append(
+                f"  {mark} {c.get('field')}.{c.get('layer')}: {v} — ΔMAE {mae_pct:+.1f}% "
+                f"(sust {c.get('mae_sustained')}, fresh {c.get('mae_fresh')}, "
+                f"n_sust {c.get('n_sustained'):,}, n_fresh {c.get('n_fresh'):,}) "
+                "[absolute fallback — no input pair]"
+            )
     return lines
 
 
