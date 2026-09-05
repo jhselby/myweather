@@ -31,6 +31,13 @@ RETENTION_DAYS = 14
 SNAPSHOT_HOURS = 48
 TZ = pytz.timezone("America/New_York")
 
+# 2026-09-05 v0.6.551: chp_nbm ch kill. Sentry HOT — layer help +32.1% →
+# +0.8% (Δ +31.3pp) on fresh window; 4 se_flow/pre_frontal cells all
+# flipped help→hurt as L4_NBM input got easier and persistence-of-obs
+# blend didn't track. Small scope (~676 fresh rows) but net-negative on
+# the NBM-routed ch path. Reversible; flip back when sentry clears.
+CHP_NBM_CH_KILL = True
+
 
 # v0.6.431 — NWS gridpoint (NBM-derived official NWS forecast) as an alternate
 # forecast source alongside HRRR/GFS/Pirate. Stamped per-hour under `{short}_nws`
@@ -882,6 +889,7 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                 # (matches wdp_nbm precedent). Fired flag stamped for pair-log
                 # attribution. Regime is current-tick (same as HRRR chp).
                 if (ch_persistence_gate.ENABLED
+                        and not CHP_NBM_CH_KILL
                         and _chp_nbm_persist_val is not None
                         and _chp_nbm_cells):
                     ch_l4_nbm = entry.get("ch_l4_nbm")

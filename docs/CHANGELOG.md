@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.551 • September 5, 2026 (kill L3_NBM h and chp_nbm ch — both sentry-HOT, correction stacks hurting NBM-routed prod)</strong></summary>
+
+- **`weather_collector/processors/l3_nbm.py`: drop `h` from `L3_NBM_FIELDS`.** NBM regression sentry HOT 2 days running — layer marginal help +17.5% → -25.7% (Δ +43.2pp) on the fresh 3d window. Per-cell breakdown across 15 regime × band cells: 14 with help_fresh negative, driven by L2_NBM getting close on fresh weather while L3's static bias shift kept applying. h Total Lift -21% traced directly to this layer regressing NBM-h prod on the v0.6.546-routed 6-11 and 12-23 bands. NBM-h now falls back to L2_NBM (deepest remaining NBM layer for h).
+- **`weather_collector/processors/forecast_snapshot.py`: `CHP_NBM_CH_KILL = True` guards the chp_nbm ch fire block.** Sentry HOT — layer marginal help +32.1% → +0.8% (Δ +31.3pp); 4 se_flow/pre_frontal cells all flipped help→hurt as L4_NBM input got easier and persistence-of-obs blend didn't track. Small scope (~676 fresh rows), but net-negative on the NBM-routed ch path. NBM-ch falls back to L4_NBM (which itself reads healthy).
+- **Both are reversible one-line changes.** Flip back when the sentry clears sustained for 3+ days. Session-end memo + debug page sweep held for now — will sweep once Value-Add signal on h/ch has rotated through the pair log (~24-48h).
+
+</details>
+
+<details>
 <summary><strong>v0.6.550 • September 4, 2026 (session-end debug page sweep — 09-04 recent-activity entry, calendar 09-04 done, L3_NBM scope refs updated for sr add)</strong></summary>
 
 - **`corrections_debug.html` Recent Activity — new 09-04 (Fri) entry as "today".** Covers v0.6.548 sentry marginal-help refactor, v0.6.549 L3_NBM sr add + collector deploy, scoreboard recovery (24h -6.0% from yesterday's -7.53%), h.l3_nbm WATCH cell-level breakdown (ne_flow 24-47h cleanest degrader, se_flow 24-47h massive improver — weather-mix artifact), dp warmup early peek (HRRR dp healing well post-fix, NBM raw dp question open pending tomorrow's backstamp), and prep memo <code>[[l4-nbm-cc-drop-prep]]</code> for 09-09 curation. Lessons captured on <code>[[feedback_broader_than_gate_cleared]]</code> (would have missed both ships if I'd stuck with "wait and watch") and <code>[[feedback_check_own_arithmetic]]</code> (user's "look at the scoreboard, NBM pipeline skill +17.7%" pushback reframed h/t as selector-routing not correction-stack questions). Day-labels shifted: 09-03 → 1 day ago, 09-02 → 2, 09-01 → 3, 08-31 → 4.

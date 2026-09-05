@@ -35,7 +35,14 @@ from .nbm_common import cap_correction, is_stale
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l3_nbm_curated.json"
 
-L3_NBM_FIELDS = ("wg", "h", "ch", "cc", "sr")   # scalar-bias fields
+L3_NBM_FIELDS = ("wg", "ch", "cc", "sr")   # scalar-bias fields
+# 2026-09-05 v0.6.551: dropped h. Sentry HOT 2 days running — layer help
+# +17.5% → -25.7% (Δ +43.2pp) on the fresh window; per-cell breakdown
+# showed 14 of 15 cells with help_fresh negative across nearly every
+# regime, driven by L2_NBM getting close on fresh weather while L3's
+# static bias shift kept applying. Total Lift on h -21% traces to this
+# layer degrading NBM-h prod on the v0.6.546-routed rows. Reversible;
+# re-add when sentry clears sustained.
 # 2026-08-25 v0.6.472: dropped sr, t, ws — 14d walkforward agg lift vs
 # l2_nbm baseline: sr net loss (skip-cells -22% to -5%), t -2.2%, ws -2.5%,
 # all with losses at every non-trivial band. wg kept despite walkforward
