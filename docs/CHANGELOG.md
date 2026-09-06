@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.553 • September 6, 2026 (session-end debug page + memory sweep — 09-06 recent-activity, day-labels shifted, MEMORY.md READ FIRST refreshed)</strong></summary>
+
+- **`corrections_debug.html` Recent Activity — new 09-06 (Sun) entry as "today".** Covers v0.6.552 wire by-regime walker, cell-level Value Captured audit (ne_flow outlier regime), wd.l3_nbm sentry HOT triaged as near-zero flip false positive, and the two pushback-and-retract moments on selector-vs-pipeline framing. Also **new 09-05 (Sat) entry as "1 day ago"** covering v0.6.551 killed L3_NBM h + chp_nbm ch — held from that session pending pair-log rotation, swept today. Day-labels shifted: 09-04 → 2 days ago, 09-03 → 3 days ago, 09-02 → 4, 09-01 → 5, 08-31 → 6.
+- **Followup queued (NOT shipped):** `analysis/nbm_regression_sentry.py:220` flip-to-hurt clause needs a min-magnitude gate (e.g., `abs(help_s) + abs(help_f) >= 3.0`) so cells that oscillate near zero help don't spuriously HOT. Same class as v0.6.548's marginal-help refactor.
+- **Memory:** new [[project_09_06_session]] narrative file; MEMORY.md READ FIRST replaced with 09-06 summary, READ SECOND/THIRD demoted, older 09-05/09-04 index entries compacted (index size 20.5KB → 18.6KB).
+
+</details>
+
+<details>
 <summary><strong>v0.6.552 • September 6, 2026 (wire by-regime walker into L1 selector — regime × band overrides on top of band pool)</strong></summary>
 
 - **`weather_collector/processors/l1_selector.py`** — `pick_source(field, lead_h, regime=None)` gains an optional `regime` param. Loads `l1_selector_by_regime_walker.json` at module import; when a cell has `cleared_for_wire == True` AND `flipped_in_window == False`, `pick_source` returns "nbm" for that (field, regime, band) — takes precedence over the band-pool pick. Any other outcome falls through to the existing band lookup. Wire contract matches the walker's docstring exactly.
