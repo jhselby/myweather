@@ -28,11 +28,13 @@ from pathlib import Path
 
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_table_curated.json"
+REGIME_WALKER_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_by_regime_walker.json"
 
 BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)]
 
 _TABLE = {}       # {field: {band: "hrrr"|"nbm"}}
 _META = {}        # fitted_at, ship-gate summary, etc.
+_REGIME_OVERRIDES = {}  # {field: {regime: {band: "nbm"}}} — cleared cells only
 
 
 def _band_for(lead_h):
@@ -65,16 +67,48 @@ def _load():
     }
 
 
+def _load_regime_overrides():
+    """Load the by-regime walker's per-cell verdicts. Only cells whose
+    `cleared_for_wire == True` AND `flipped_in_window == False` produce a
+    runtime override (route NBM) — matches the walker's wire contract.
+    Missing file, empty cells list, or any load error → no overrides
+    (band-level pool decides)."""
+    global _REGIME_OVERRIDES
+    try:
+        with open(REGIME_WALKER_PATH) as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        _REGIME_OVERRIDES = {}
+        return
+    per_cell = data.get("per_cell") or {}
+    parsed = {}
+    for field, regs in per_cell.items():
+        for regime, bands in (regs or {}).items():
+            for band, cell in (bands or {}).items():
+                if cell.get("cleared_for_wire") and not cell.get("flipped_in_window"):
+                    parsed.setdefault(field, {}).setdefault(regime, {})[band] = "nbm"
+    _REGIME_OVERRIDES = parsed
+
+
 _load()
+_load_regime_overrides()
 
 
-def pick_source(field, lead_h):
-    """Return "hrrr" or "nbm" for this (field, lead_h). HRRR fall-through
-    on any missing lookup — always safe (equal to pre-Phase-4 Prod)."""
+def pick_source(field, lead_h, regime=None):
+    """Return "hrrr" or "nbm" for this (field, lead_h[, regime]).
+
+    Precedence: by-regime walker override (if a cleared cell matches) → band
+    pool pick → HRRR fall-through. HRRR fall-through on any missing lookup
+    remains safe (equal to pre-Phase-4 Prod).
+    """
+    band = _band_for(lead_h)
+    if band is not None and regime:
+        reg_cells = _REGIME_OVERRIDES.get(field, {}).get(regime)
+        if reg_cells and reg_cells.get(band) == "nbm":
+            return "nbm"
     cells = _TABLE.get(field)
     if not cells:
         return "hrrr"
-    band = _band_for(lead_h)
     if band is None:
         return "hrrr"
     return cells.get(band, "hrrr")

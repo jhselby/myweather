@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.552 • September 6, 2026 (wire by-regime walker into L1 selector — regime × band overrides on top of band pool)</strong></summary>
+
+- **`weather_collector/processors/l1_selector.py`** — `pick_source(field, lead_h, regime=None)` gains an optional `regime` param. Loads `l1_selector_by_regime_walker.json` at module import; when a cell has `cleared_for_wire == True` AND `flipped_in_window == False`, `pick_source` returns "nbm" for that (field, regime, band) — takes precedence over the band-pool pick. Any other outcome falls through to the existing band lookup. Wire contract matches the walker's docstring exactly.
+- **`weather_collector/processors/forecast_snapshot.py`** — selector loop passes `_wdp_state_fc_by_lead[i]` (forecast-time regime for lead i) into `pick_source`. Same regime signal `wdp_nbm` and `chp_nbm` gates already use.
+- **Why:** cell-level Value Captured audit today showed the -51% median VC has two drivers — (1) transitional plumbing (sr + wind cells recently flipped NBM but 7d rows still lack error_l3_nbm → hrrr_fallback shipping HRRR when NBM would have won), evaporates on its own, and (2) real per-regime routing errors that band-level pooling cannot see. ne_flow was the outlier: dp (24-47 n=393, VC -818%), cc (12-23 + 6-11 n=384, VC -150%/-64%), wd (12-23 n=233, VC -55%), h (6-11 n=124, VC -137%) all route wrong on ne_flow. Selector by-regime walker (v0.6.534) was built for exactly that; this wires its output.
+- **Passive today.** Walker is suppressed until 2026-09-07 per its `NOT_BEFORE_DATE`; earliest 7/7 clear is 2026-09-14. `_REGIME_OVERRIDES` loads empty for now → selector behaves identically to v0.6.551. First user-visible routing change lands when the walker clears its first cell.
+- **Collector deploy required** (runtime processor change; ships now so the wiring is in place for the 09-14 clear).
+
+</details>
+
+<details>
 <summary><strong>v0.6.551 • September 5, 2026 (kill L3_NBM h and chp_nbm ch — both sentry-HOT, correction stacks hurting NBM-routed prod)</strong></summary>
 
 - **`weather_collector/processors/l3_nbm.py`: drop `h` from `L3_NBM_FIELDS`.** NBM regression sentry HOT 2 days running — layer marginal help +17.5% → -25.7% (Δ +43.2pp) on the fresh 3d window. Per-cell breakdown across 15 regime × band cells: 14 with help_fresh negative, driven by L2_NBM getting close on fresh weather while L3's static bias shift kept applying. h Total Lift -21% traced directly to this layer regressing NBM-h prod on the v0.6.546-routed 6-11 and 12-23 bands. NBM-h now falls back to L2_NBM (deepest remaining NBM layer for h).

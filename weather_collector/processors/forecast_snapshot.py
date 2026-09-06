@@ -933,7 +933,11 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             raw_nbm_v = entry.get(f"{f}_raw_nbm")
             if raw_nbm_v is None:
                 continue
-            source = _selector_pick_source(f, i)
+            # v0.6.552 — pass forecast-time regime so the selector can honor
+            # cleared cells from the by-regime walker (finer-than-band route).
+            _fc_regime_i = (_wdp_state_fc_by_lead[i]
+                            if i < len(_wdp_state_fc_by_lead) else None)
+            source = _selector_pick_source(f, i, _fc_regime_i)
             entry[f"{f}_selector_source"] = source
             if source == "nbm":
                 # Deepest available NBM-side layer wins:
