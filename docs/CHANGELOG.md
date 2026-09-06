@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.554 • September 6, 2026 (per_field_scoring `_selected_l1_error` NBM fallback — Selector Skill card was mislabeling picks post-L3_NBM kills)</strong></summary>
+
+- **`analysis/per_field_scoring.py:_selected_l1_error`** — NBM path fallback chain extended from `error_l3_nbm → error_l1 (hrrr_fallback)` to `error_l3_nbm → error_raw_nbm → error_l1 (hrrr_fallback)`. Matches the runtime's cascade walker (extended v0.6.540) and the semantic in the docstring ("NBM's own bias-corrected output"). L2_NBM excluded on purpose — L2 is our local Kalman on NBM raw, not "NBM's own output."
+- **Why:** post-v0.6.551 killed L3_NBM h + chp_nbm ch, `error_l3_nbm` for h stops being stamped on new rows. Old code fell through to `hrrr_fallback` on every h row where the selector picked NBM — which then flagged `chosen_prod = HRRR Prod` in the paired accounting even though runtime actually shipped NBM cascade (via L2_NBM). Same latent bug for dp/ws (never had L3_NBM stamps). At 2026-09-06T18:01Z the debug page's Selector Skill 24h card was reading catastrophic false negatives: h -90%, dp -211%, t -114%, wg -3.9%, wd -27%, sr -30%. After fix + local rerun of `per_field_scoring`: h +37.8%, dp +58.7%, t +35.2%, wg +37.3%, wd +14.4%, sr +27.2%. Hit Rate median ~40% → ~70%. Value Captured median ~-100% → +60%. Selector is doing its job — the scoring drifted from runtime, same class as [[feedback_analysis_tools_drift_from_runtime]].
+- **No collector deploy.** Analysis-only. Fresh JSON already uploaded to `gs://myweather-data/per_field_scoring.json` by the local rerun; debug page users refresh to see corrected numbers.
+
+</details>
+
+<details>
 <summary><strong>v0.6.553 • September 6, 2026 (session-end debug page + memory sweep — 09-06 recent-activity, day-labels shifted, MEMORY.md READ FIRST refreshed)</strong></summary>
 
 - **`corrections_debug.html` Recent Activity — new 09-06 (Sun) entry as "today".** Covers v0.6.552 wire by-regime walker, cell-level Value Captured audit (ne_flow outlier regime), wd.l3_nbm sentry HOT triaged as near-zero flip false positive, and the two pushback-and-retract moments on selector-vs-pipeline framing. Also **new 09-05 (Sat) entry as "1 day ago"** covering v0.6.551 killed L3_NBM h + chp_nbm ch — held from that session pending pair-log rotation, swept today. Day-labels shifted: 09-04 → 2 days ago, 09-03 → 3 days ago, 09-02 → 4, 09-01 → 5, 08-31 → 6.

@@ -211,10 +211,23 @@ def _selected_l1_error(row, band_picks):
     if field in band_picks and band in band_picks[field]:
         pick = band_picks[field][band]
     if pick == "nbm":
-        v = row.get("error_l3_nbm")
-        if v is not None:
-            return v, "nbm"
-        # NBM pick but no NBM prod stamped this row → fall through to HRRR
+        # v0.6.554 — walk L3_NBM → raw_nbm (matches runtime's cascade extended
+        # in v0.6.540 and the runtime's actual routing post-v0.6.551 L3_NBM h
+        # kill, where NBM path ships L2_NBM h). Previous version only checked
+        # error_l3_nbm and fell through to hrrr_fallback whenever the selector
+        # picked NBM but L3_NBM wasn't stamped — flagged chosen=HRRR in the
+        # paired accounting even though runtime actually shipped NBM. This
+        # made the Selector Skill card read chosen=HRRR/alt=NBM for h/dp/ws
+        # after their L3_NBM stamps stopped, producing large false negatives
+        # (h -90%, dp -211%, t -114% on 24h at 2026-09-06T18:00) that don't
+        # reflect actual routing. L2_NBM excluded from the walk on purpose —
+        # L2 is our local Kalman on NBM raw, not "NBM's own bias-corrected
+        # output" (see docstring). raw_nbm is the honest fallback.
+        for k in ("error_l3_nbm", "error_raw_nbm"):
+            v = row.get(k)
+            if v is not None:
+                return v, "nbm"
+        # NBM pick but neither NBM stamp on this row → fall through to HRRR.
         v = row.get("error_l1")
         return (v, "hrrr_fallback") if v is not None else (None, "na")
     v = row.get("error_l1")
