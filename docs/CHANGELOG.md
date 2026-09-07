@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.559 • September 7, 2026 (session-end debug page + memory sweep — 09-07 recent activity, MEMORY.md READ FIRST bumped)</strong></summary>
+
+- **`corrections_debug.html` Recent Activity** — new 09-07 (Mon) entry as "today" covering v0.6.554 publisher-CF-deploy-fix + full scoring audit + v0.6.555 (L1_selected walks to raw + Selector tile primary swap) + v0.6.556 (Hit Rate → Win Rate, ties excluded) + v0.6.557 (scoreboard_v2 baseline reframed) + v0.6.558 (sentry min-magnitude gate). Day labels shifted: 09-06 → 1 day ago, 09-05 → 2 days ago, 09-04 → 3 days ago, 09-03 → 4 days ago.
+- **Memory:** new `project_09_07_session.md` narrative file; MEMORY.md READ FIRST replaced with 09-07 summary; READ SECOND/FOURTH/FIFTH demoted from prior positions. Bogus-window scope for the 08-28 → today range documented (hard-bogus 09-05 15:18 → 09-07 10:58 UTC for h/dp/ws Selector Skill only).
+- No collector deploy; no publisher CF touch — this is bookkeeping. Publisher stays on v0.6.557 revision from 12:20 UTC.
+
+</details>
+
+<details>
 <summary><strong>v0.6.558 • September 7, 2026 (NBM regression sentry: min-magnitude gate on flip-to-hurt clause)</strong></summary>
 
 - **`analysis/nbm_regression_sentry.py:220`** — the `flipped_to_hurt = help_s > 0 AND help_f < 0` clause now requires `abs(help_s) + abs(help_f) >= 3.0` (`MIN_FLIP_MAGNITUDE_PP`). Without the guard, any near-zero sign crossing fired HOT regardless of how tiny the move was.
