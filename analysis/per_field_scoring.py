@@ -19,16 +19,12 @@ Plus a headline number that ties them together:
 
 Two windows: 7-day rolling and 24-hour rolling.
 
-L1_selected residual: for each pair-log row, look up the selector table at
-(field, band). If it picks "nbm", use error_l3_nbm (NBM Prod residual —
-the selector compares Prod-vs-Prod, not raw-vs-raw). If "hrrr" or fall-
-through, use error_{deepest_applied_hrrr_layer}. Falls back to raw HRRR
-(error_l1) when the deepest-layer error is missing.
-
-Warmup caveat: until v0.6.440-era pair-log rows accumulate + the selector
-table actually flips a cell to NBM (~09-17), L1_selected == HRRR-Prod
-everywhere. sel_vs_hrrr will show ~0% and sel_vs_nbm will show whatever
-HRRR-Prod-vs-NBM-Prod is. That is the honest signal.
+L1_selected residual (v0.6.555): the raw of the source the selector
+picked — error_raw_nbm on NBM picks, error_l1 (raw HRRR) on HRRR picks.
+Both cascades symmetric: L1_selected IS the raw baseline; every Wyman
+Cove correction layer above raw (L2_NBM/L3_NBM/L4_NBM/L5_NBM/L6_NBM/
+chp_nbm/wdp_nbm on NBM; L2/L3/L4/L5/L6/chp/dpbp/wsbp/wdp/clp on HRRR)
+counts as our local correction stack in corr_vs_l1_pct.
 
 Runtime:
     python3 -m analysis.per_field_scoring
@@ -158,8 +154,11 @@ def _prod_error(row):
 #
 # HRRR-side deliberately NOT listed: HRRR `l6` slot is Lt for t (disabled) but
 # Lc for cm/ch (enabled). Correct HRRR-side counterfactual needs per-field
-# disable logic — deferred as a follow-up. For today, HRRR-side counterfactual
-# ≡ as-shipped Prod.
+# disable logic — deferred. As of 2026-09-07 this is moot in practice: Lt
+# retired 2026-07-13, so the 7d/24h rolling windows no longer contain any
+# error_l6 stamps that trace back to Lt. HRRR-side counterfactual ≡ as-
+# shipped Prod. Add back the per-field logic if any HRRR-side layer is
+# scaffolded/disabled while still stamping error_{layer} in the pair log.
 _DISABLED_LAYER_KEYS = frozenset({
     "error_l5_nbm",
     "error_l6_nbm",
@@ -187,23 +186,25 @@ def _prod_error_current_config(row):
 
 
 def _selected_l1_error(row, band_picks):
-    """L1_selected residual — the error a user would get if they saw only the
-    selector's chosen source, WITHOUT the local correction stack on top.
+    """L1_selected residual — the raw of the source the selector picked.
+    Everything above the raw counts as our local correction stack.
 
-    Wait — read carefully. "L1_selected" here means "the output of the
-    selector's pick BEFORE our local correction stack applies its final
-    layers." For NBM the closest thing is NBM's L3 output (nbm-side Prod).
-    For HRRR the closest thing is HRRR raw (error_l1) — everything above
-    that is our local correction stack.
+    Rule:
+      selector picks "nbm" → error_raw_nbm
+      selector picks "hrrr" or falls through → error_l1 (raw HRRR)
 
-    So:
-      selector picks "nbm" → error_l3_nbm (NBM's own bias-corrected output,
-                             the thing we'd ship if we did no further work)
-      selector picks "hrrr" or falls through → error_l1 (raw HRRR — our
-                             correction stack builds on top of this)
+    Both cascades treated symmetrically: L1_selected is the RAW of the
+    picked source; every Wyman Cove layer above raw (L2_NBM, L3_NBM,
+    L4_NBM, L5_NBM, L6_NBM, chp_nbm, wdp_nbm on the NBM side; L2, L3, L4,
+    L5, L6, chp, dpbp, wsbp, wdp, clp on the HRRR side) is our
+    correction stack. corr_vs_l1_pct honestly measures the full local
+    contribution.
 
-    This makes corr_vs_l1_pct honestly measure "what did WE add on top of
-    what the selector handed us."
+    Pre-v0.6.555 the NBM walk went `error_l3_nbm → error_raw_nbm`, which
+    excluded L3_NBM from corr_vs_l1 credit. But L3_NBM is a Wyman Cove
+    local bias-shift table (analysis/l3_nbm_fit.py fits it from pair-log
+    residuals) — it belongs on the correction side, not the reference
+    side. Moved 2026-09-07.
     """
     field = row.get("field")
     band = _band_for(row.get("lead_h"))
@@ -211,22 +212,9 @@ def _selected_l1_error(row, band_picks):
     if field in band_picks and band in band_picks[field]:
         pick = band_picks[field][band]
     if pick == "nbm":
-        # v0.6.554 — walk L3_NBM → raw_nbm (matches runtime's cascade extended
-        # in v0.6.540 and the runtime's actual routing post-v0.6.551 L3_NBM h
-        # kill, where NBM path ships L2_NBM h). Previous version only checked
-        # error_l3_nbm and fell through to hrrr_fallback whenever the selector
-        # picked NBM but L3_NBM wasn't stamped — flagged chosen=HRRR in the
-        # paired accounting even though runtime actually shipped NBM. This
-        # made the Selector Skill card read chosen=HRRR/alt=NBM for h/dp/ws
-        # after their L3_NBM stamps stopped, producing large false negatives
-        # (h -90%, dp -211%, t -114% on 24h at 2026-09-06T18:00) that don't
-        # reflect actual routing. L2_NBM excluded from the walk on purpose —
-        # L2 is our local Kalman on NBM raw, not "NBM's own bias-corrected
-        # output" (see docstring). raw_nbm is the honest fallback.
-        for k in ("error_l3_nbm", "error_raw_nbm"):
-            v = row.get(k)
-            if v is not None:
-                return v, "nbm"
+        v = row.get("error_raw_nbm")
+        if v is not None:
+            return v, "nbm"
         # NBM pick but neither NBM stamp on this row → fall through to HRRR.
         v = row.get("error_l1")
         return (v, "hrrr_fallback") if v is not None else (None, "na")
@@ -758,14 +746,14 @@ def main():
             "sel_vs_nbm_pct":  "L1_selected vs raw NBM — positive means the selector was smart to sometimes pick HRRR",
             "corr_vs_l1_pct":  "Prod vs L1_selected — positive means the local correction stack adds value on top of the selector's pick",
             "total_vs_best_raw_pct": "Prod vs 'what the user's default weather app already shows them' (v0.6.478): baseline = NBM raw for NBM-scope fields (NBM is the NWS backbone, i.e. iPhone Weather / weather.gov / vendor displays); HRRR raw for the 5 HRRR-only fields (cl/cm/pp/pa/pr — NBM doesn't publish). Replaces the v0.6.477 per-row oracle (too strict — no real user picks HRRR/NBM per lead-hour) and the pre-v0.6.477 pooled-min (too generous — credited us for beating whichever raw source wins on average).",
-            "l1_selected_definition": "For rows where selector picks NBM: error_l3_nbm (NBM's own bias-corrected output). For rows where selector picks HRRR (or falls through): error_l1 (raw HRRR). This makes corr_vs_l1_pct honestly measure the local correction stack's contribution.",
+            "l1_selected_definition": "The raw of the source the selector picked (v0.6.555 — symmetric across cascades): NBM pick → error_raw_nbm; HRRR pick or fall-through → error_l1 (raw HRRR). Every Wyman Cove correction layer above raw counts as our local stack in corr_vs_l1_pct. Pre-v0.6.555 NBM walked error_l3_nbm → error_raw_nbm, which excluded L3_NBM from corr credit even though L3_NBM is our local bias table (analysis/l3_nbm_fit.py). Moved to correction side 2026-09-07.",
             "chooser_vs_prod_pct": "Chosen cascade's Prod vs alternative cascade's Prod, paired per row. Positive = selector picked the better cascade. This is the v0.6.440-rule chooser lift (Prod-vs-Prod, not raw-vs-raw).",
             "hrrr_prod_mae": "Deepest HRRR-side layer residual pooled over all rows — 'what would Prod be if we always picked HRRR'.",
             "nbm_prod_mae":  "Deepest NBM-side layer residual pooled over all rows — 'what would Prod be if we always picked NBM'.",
             "prod_trend_pct": "Current-window Prod MAE vs the equal-length window immediately preceding it. Positive = we improved. No external anchor — this is the 'am I doing my tuning job well' score.",
         },
         "nbm_scope": sorted(list(NBM_SCOPE)),
-        "warmup_note": "Until pair log fills post-v0.6.440 + selector table starts flipping cells to NBM (earliest ~2026-09-17), L1_selected == raw HRRR for every row; sel_vs_hrrr_pct will read 0.0% and sel_vs_nbm_pct will read whatever raw-HRRR-vs-raw-NBM is on that field.",
+        "warmup_note": "Selector is actively flipping cells since v0.6.546 (recency overrides) and v0.6.552 (by-regime walker wire). Currently ~11 recency overrides + walker overrides accumulating post-2026-09-07 (earliest walker clear 09-14). Any fresh cascade change (e.g. L3_NBM kill 09-05 v0.6.551, sr add 09-04 v0.6.549) will show a ~7d transient where the rolling window mixes pre-change and post-change rows — 24h reads honest current behavior; 7d lags by up to a week.",
     }
 
     with open(OUT_JSON, "w") as fout:

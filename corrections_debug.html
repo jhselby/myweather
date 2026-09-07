@@ -1519,11 +1519,11 @@
     <!-- Selector Quality -->
     <div class="sb-tile" data-tile="selector_skill">
       <div class="sb-tile-title">Selector Skill</div>
-      <div class="sb-tile-sub">Chosen cascade Prod vs alternative cascade Prod, paired per row. Answers "did the router pick the branch that turned out better after local processing?"</div>
+      <div class="sb-tile-sub">Hit Rate: what fraction of paired rows did the selector pick the better cascade? Value Captured: of the routing gain a perfect picker could have captured, how much did we actually get?</div>
 
       <div class="sb-num-row">
         <div class="sb-num-group">
-          <div class="sb-num-group-lbl">7 Day</div>
+          <div class="sb-num-group-lbl">7 Day · Hit Rate</div>
           <div class="sb-num-pair">
             <div class="sb-num-cell">
               <div class="sb-num-sublbl">median</div>
@@ -1536,7 +1536,7 @@
           </div>
         </div>
         <div class="sb-num-group">
-          <div class="sb-num-group-lbl">24 Hour</div>
+          <div class="sb-num-group-lbl">24 Hour · Hit Rate</div>
           <div class="sb-num-pair">
             <div class="sb-num-cell">
               <div class="sb-num-sublbl">median</div>
@@ -1548,6 +1548,12 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <div class="sb-tile-secondary" style="font-size:12px;color:var(--sb-dim);margin-top:2px;line-height:1.4;">
+        <strong style="color:var(--sb-fg);">Value Captured</strong> —
+        7d: <span data-cell="vcMed7">—</span> med / <span data-cell="vcMean7">—</span> mean ·
+        24h: <span data-cell="vcMed24">—</span> med / <span data-cell="vcMean24">—</span> mean
       </div>
 
       <div class="sb-wfl">
@@ -4248,7 +4254,14 @@ async function renderScoreboardTilesMinimal() {
 
   const _totalLift     = (c) => (c && c.total_vs_best_raw_pct != null) ? c.total_vs_best_raw_pct : null;
   const _pipelineLift  = (c) => (c && c.corr_vs_l1_pct        != null) ? c.corr_vs_l1_pct        : null;
-  const _selectorSkill = (c) => (c && c.chooser_vs_prod_pct   != null) ? c.chooser_vs_prod_pct   : null;
+  // v0.6.555 — Selector Skill primary metric switched from chooser_vs_prod_pct
+  // (pooled MAE ratio, easily misread as a per-row rate) to hit_rate_pct
+  // (the true per-row picker rate the tile description promises). Value
+  // Captured rendered as secondary line so the magnitude story is still
+  // visible. chooser_vs_prod_pct remains in the per-field Accuracy table
+  // + underlying JSON for consumers that want it.
+  const _selectorSkill = (c) => (c && c.hit_rate_pct          != null) ? c.hit_rate_pct          : null;
+  const _valueCaptured = (c) => (c && c.value_captured_pct    != null) ? c.value_captured_pct    : null;
   const _prodTrend     = (c) => (c && c.prod_trend_pct        != null) ? c.prod_trend_pct        : null;
 
   const _collect = (window, fields, metricFn) => {
@@ -4304,14 +4317,55 @@ async function renderScoreboardTilesMinimal() {
 
   _paintTile("total_lift",     _agg(LIFT_SCOPE), _totalLift);
   _paintTile("pipeline_lift",  _agg(LIFT_SCOPE), _pipelineLift);
-  _paintTile("selector_skill", _agg(NBM_SCOPE),  _selectorSkill);
   _paintTile("prod_trend",     _agg(ALL_SCOPE),  _prodTrend);
+
+  // v0.6.555 — Selector Skill tile: dedicated painter. Primary numbers are
+  // Hit Rate (0-100%, unsigned display, thresholds centered on 50% coin
+  // flip). Secondary line shows Value Captured (signed, ±2% thresholds
+  // like other tiles). WFL row splits by Hit Rate (>=55 winning, <=50
+  // losing, 50-55 flat).
+  const _fmtRate  = (v) => (v == null) ? "—" : v.toFixed(1) + "%";
+  const _clsRate  = (v) => (v == null) ? "" : (v >= 55 ? "sb-good" : (v < 50 ? "sb-bad" : "sb-warn"));
+  const _paintSelectorSkill = () => {
+    const tile = document.querySelector(`[data-tile="selector_skill"]`);
+    if (!tile) return;
+    const fields = _agg(NBM_SCOPE);
+    const hr7  = _collect(pf7,  fields, _selectorSkill);
+    const hr24 = _collect(pf24, fields, _selectorSkill);
+    const vc7  = _collect(pf7,  fields, _valueCaptured);
+    const vc24 = _collect(pf24, fields, _valueCaptured);
+    const primary = {
+      med7:  _median(hr7),  mean7:  _mean(hr7),
+      med24: _median(hr24), mean24: _mean(hr24),
+    };
+    for (const [key, val] of Object.entries(primary)) {
+      const el = tile.querySelector(`[data-cell="${key}"]`);
+      if (!el) continue;
+      el.textContent = _fmtRate(val);
+      el.classList.remove("sb-good", "sb-warn", "sb-bad");
+      const cls = _clsRate(val);
+      if (cls) el.classList.add(cls);
+    }
+    const secondary = {
+      vcMed7:  _median(vc7),  vcMean7:  _mean(vc7),
+      vcMed24: _median(vc24), vcMean24: _mean(vc24),
+    };
+    for (const [key, val] of Object.entries(secondary)) {
+      const el = tile.querySelector(`[data-cell="${key}"]`);
+      if (!el) continue;
+      el.textContent = _fmt(val, true);
+      el.classList.remove("sb-good", "sb-warn", "sb-bad");
+      const cls = _cls(val);
+      if (cls) el.classList.add(cls);
+    }
+  };
+  _paintSelectorSkill();
 
   // v0.6.485 — wire the W/F/L breakdown block under each tile from the
   // same 7d numbers. dp and cc are excluded here too (see DERIVED_EXCLUDE
   // note above — same logic as the medians). Threshold ±2% matches the
   // tile color rule (sb-good ≥2, sb-bad ≤−2, warn between).
-  const _paintWfl = (tileKey, fields, metricFn, labels) => {
+  const _paintWfl = (tileKey, fields, metricFn, labels, thresholds) => {
     // The .sb-wfl block for prod_trend is a sibling of [data-tile], not a
     // child — that tile uses data-tile on an inner number row. Look inside
     // the tile first, then fall back to searching the enclosing sb-tile.
@@ -4323,12 +4377,16 @@ async function renderScoreboardTilesMinimal() {
       wflHost = container && container.querySelector(".sb-wfl");
     }
     if (!wflHost) return;
+    // Thresholds: default {win: 2, lose: -2} for signed lift metrics.
+    // Hit Rate uses {win: 55, lose: 50} to split around the 50% coin flip.
+    const win = (thresholds && thresholds.win != null) ? thresholds.win : 2;
+    const lose = (thresholds && thresholds.lose != null) ? thresholds.lose : -2;
     const buckets = { w: [], f: [], l: [] };
     for (const f of fields) {
       const v = metricFn(pf7[f]);
       if (v == null || !isFinite(v)) continue;
-      if (v >= 2) buckets.w.push(f);
-      else if (v <= -2) buckets.l.push(f);
+      if (v >= win) buckets.w.push(f);
+      else if (v < lose) buckets.l.push(f);
       else buckets.f.push(f);
     }
     const fmt = (arr) => arr.length ? arr.map(f => `<code>${f}</code>`).join(" · ") : "—";
@@ -4345,7 +4403,7 @@ async function renderScoreboardTilesMinimal() {
   const _trend = { w: "improving", f: "flat", l: "regressing" };
   _paintWfl("total_lift",     _agg(LIFT_SCOPE), _totalLift,     _lift);
   _paintWfl("pipeline_lift",  _agg(LIFT_SCOPE), _pipelineLift,  _lift);
-  _paintWfl("selector_skill", _agg(NBM_SCOPE),  _selectorSkill, _lift);
+  _paintWfl("selector_skill", _agg(NBM_SCOPE),  _selectorSkill, _lift, {win: 55, lose: 50});
   _paintWfl("prod_trend",     _agg(ALL_SCOPE),  _prodTrend,     _trend);
 
   // v0.6.488 — National Source. Which raw source (HRRR or NBM) wins per
@@ -4730,12 +4788,14 @@ async function renderScoreboardV2() {
     if (c.total_vs_best_raw_pct != null) return c.total_vs_best_raw_pct;
     return (b != null && p != null && b > 0) ? 100 * (b - p) / b : null;
   };
-  // DIAGNOSTIC — Selector Skill = chosen cascade Prod vs alternative cascade
-  // Prod (v0.6.440 rule, paired per row). Did the router pick the branch
-  // that turned out better AFTER local processing? Different question from
-  // Chooser Lift and belongs in diagnostics, not the value chain.
+  // DIAGNOSTIC — Selector Skill = Hit Rate (v0.6.555). What fraction of
+  // paired rows did the selector pick the better cascade? Bounded 0-100%,
+  // matches the top scoreboard tile. Pre-v0.6.555 this read
+  // chooser_vs_prod_pct (pooled MAE ratio) — swapped to align semantics
+  // with the tile description ("did the router pick the branch that
+  // turned out better"). chooser_vs_prod_pct still available in the JSON.
   const _selectorSkill = (c) => {
-    return (c.chooser_vs_prod_pct != null) ? c.chooser_vs_prod_pct : null;
+    return (c.hit_rate_pct != null) ? c.hit_rate_pct : null;
   };
 
   // Aggregate a metric across the given fields. Returns median (headline
@@ -4745,15 +4805,19 @@ async function renderScoreboardV2() {
   // over heterogeneous fields. Median is more honest for a headline that
   // visually implies a decomposition; per-field cells still carry the
   // actual field-level number.
-  const _agg = (window, metricFn, fieldSet, beatLabel, regressLabel) => {
+  const _agg = (window, metricFn, fieldSet, beatLabel, regressLabel, thresholds) => {
     const values = [];
     const beatFields = [], flatFields = [], regressFields = [];
+    // Default thresholds are for signed lift metrics (>=5 win, <=-1 lose).
+    // Hit Rate (0-100%) needs different thresholds centered on 50%.
+    const beatT = (thresholds && thresholds.beat != null) ? thresholds.beat : 5;
+    const regressT = (thresholds && thresholds.regress != null) ? thresholds.regress : -1;
     for (const f of fieldSet) {
       const v = metricFn(window[f] || {});
       if (v == null) continue;
       values.push(v);
-      if (v >= 5) beatFields.push(f);
-      else if (v <= -1) regressFields.push(f);
+      if (v >= beatT) beatFields.push(f);
+      else if (v <= regressT) regressFields.push(f);
       else flatFields.push(f);
     }
     const median = (arr) => {
@@ -4783,8 +4847,9 @@ async function renderScoreboardV2() {
   const total7    = _agg(pf7,  _totalLift,     VALUE_CHAIN_FIELDS, "winning", "losing");
   const total24   = _agg(pf24, _totalLift,     VALUE_CHAIN_FIELDS, "winning", "losing");
   // Diagnostics.
-  const selskill7  = _agg(pf7,  _selectorSkill, VALUE_CHAIN_FIELDS, "correct pick", "wrong pick");
-  const selskill24 = _agg(pf24, _selectorSkill, VALUE_CHAIN_FIELDS, "correct pick", "wrong pick");
+  const _hitRateThresh = {beat: 55, regress: 50};
+  const selskill7  = _agg(pf7,  _selectorSkill, VALUE_CHAIN_FIELDS, "correct pick", "wrong pick", _hitRateThresh);
+  const selskill24 = _agg(pf24, _selectorSkill, VALUE_CHAIN_FIELDS, "correct pick", "wrong pick", _hitRateThresh);
   const trend7    = _agg(pf7,  _prodTrend,   DIAG_FIELDS, "improving", "regressing");
   const trend24   = _agg(pf24, _prodTrend,   DIAG_FIELDS, "improving", "regressing");
 
