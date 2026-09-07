@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.556 • September 7, 2026 (Selector Skill tile switched from Hit Rate → Win Rate; ties excluded)</strong></summary>
+
+- **`analysis/per_field_scoring.py:_accumulate`** — the paired chosen/alt Prod pool now splits into three counters: `wins` (chosen strictly < alt), `losses` (chosen strictly > alt), `ties` (chosen == alt). `_compute_field` emits `win_rate_pct = 100 × wins / (wins + losses)` — ties drop out of the denominator entirely. Pre-v0.6.556 emitted `hit_rate_pct` which counted ties as wins.
+- **Why:** ties are the two cascades happening to agree on the residual — the router didn't earn credit, the cascades did. A router that always picks HRRR gets 100% hit rate on any tied row. Ties tell you nothing about picker skill and inflate the tile 15-30pp on small-magnitude fields (ws/sr/ch) where L2_NBM often behaves as an identity transform. The kill-transition case is worst: on 2026-09-07 24h, ch showed 97.9% Hit Rate against −895% Value Captured — the near-perfect Hit Rate was 507 tied rows out of 563; the 12 non-tie losses were catastrophic. Win Rate for the same cell = 78.6% (44 wins / 56 non-tie decisions), which is honest about the small decisive sample and lets Value Captured tell the magnitude story without contradiction.
+- **Effect on today's numbers (7d):** ch 85% → 51%, sr 75% → 55%, wg 66% → 66%, t 60% → 58%, cc 55% → 53%. Tile median shifts from ~66% to ~58% — the ~8pp drop is the tie inflation coming out.
+- **JSON schema change:** `hit_rate_pct` removed. New keys: `win_rate_pct`, `n_wins`, `n_losses`, `n_ties`. `chooser_vs_prod_pct` unchanged.
+- **Tile change:** primary label "HIT RATE" → "WIN RATE"; tile description rewritten. WFL row bucketing still 55/50 thresholds (Win Rate is still centered on 50% coin flip). Value Captured secondary line unchanged.
+- **Publisher CF redeployed at 12:07 UTC** — earlier deploys at 10:58 UTC (v0.6.554) and 11:50 UTC (v0.6.555). Next hourly tick runs v0.6.556 code.
+
+</details>
+
+<details>
 <summary><strong>v0.6.555 • September 7, 2026 (L1_selected moves to raw-of-picked-source — L3_NBM now counted as our correction stack, Pipeline Lift newly honest + full scoring audit)</strong></summary>
 
 - **`analysis/per_field_scoring.py:_selected_l1_error`** — NBM path simplified from `error_l3_nbm → error_raw_nbm` walk to just `error_raw_nbm`. L3_NBM was excluded from `corr_vs_l1_pct` credit under the old attribution (treated as "NBM's product"), but L3_NBM is a Wyman Cove local bias-shift table (`analysis/l3_nbm_fit.py` fits it from pair-log residuals). It belongs on the correction-stack side, not the reference side.

@@ -1519,11 +1519,11 @@
     <!-- Selector Quality -->
     <div class="sb-tile" data-tile="selector_skill">
       <div class="sb-tile-title">Selector Skill</div>
-      <div class="sb-tile-sub">Hit Rate: what fraction of paired rows did the selector pick the better cascade? Value Captured: of the routing gain a perfect picker could have captured, how much did we actually get?</div>
+      <div class="sb-tile-sub">Win Rate: of the rows where the two cascades disagreed, what fraction did the selector pick the winner? Ties excluded — those rows don't test picker skill. Value Captured: of the routing gain a perfect picker could have captured, how much did we actually get?</div>
 
       <div class="sb-num-row">
         <div class="sb-num-group">
-          <div class="sb-num-group-lbl">7 Day · Hit Rate</div>
+          <div class="sb-num-group-lbl">7 Day · Win Rate</div>
           <div class="sb-num-pair">
             <div class="sb-num-cell">
               <div class="sb-num-sublbl">median</div>
@@ -1536,7 +1536,7 @@
           </div>
         </div>
         <div class="sb-num-group">
-          <div class="sb-num-group-lbl">24 Hour · Hit Rate</div>
+          <div class="sb-num-group-lbl">24 Hour · Win Rate</div>
           <div class="sb-num-pair">
             <div class="sb-num-cell">
               <div class="sb-num-sublbl">median</div>
@@ -1845,7 +1845,7 @@
 
 <section class="sb-pfs-scope">
   <div class="sb-pfs-title">Per-field diagnostic — 7 day</div>
-  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Hit Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. dp and cc omitted — both derived, no independent skill to score (see note below).</span></div>
+  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Win Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. dp and cc omitted — both derived, no independent skill to score (see note below).</span></div>
 
   <div class="sb-pfs-scroll">
     <table class="sb-pfs-tbl">
@@ -1855,7 +1855,7 @@
           <th>Total Lift<span class="sb-pfs-thsub">Prod vs Public Baseline</span></th>
           <th>HRRR Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
           <th>NBM Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
-          <th>Hit Rate<span class="sb-pfs-thsub">% rows picked right</span></th>
+          <th>Win Rate<span class="sb-pfs-thsub">wins / (wins + losses); ties excluded</span></th>
           <th>Value Captured<span class="sb-pfs-thsub">% of oracle</span></th>
           <th>n</th>
         </tr>
@@ -1870,7 +1870,7 @@
   <div class="sb-pfs-foot">
     <div><strong>dp</strong> and <strong>cc</strong> omitted — both derived at prod-time (dp = Magnus(prod_t, prod_h); cc = Ccd max(prod_cl, prod_cm, prod_ch)) with no independent skill chain. Future dp bias layer or cc composition tuner would restore their rows.</div>
     <div style="margin-top:6px;"><strong>🪦 cfg X%</strong> annotation on a Total Lift cell = current-config counterfactual (v0.6.494). Computed by walking the cascade stamps and skipping layers currently ENABLED=False. Big delta between the as-shipped number and cfg = a recent kill is still poisoning the rolling window; expect it to fade over ~7-30 days as new rows accumulate. Snapshot 2026-08-26: skips <code>error_l5_nbm</code> (killed 08-25) + <code>error_l6_nbm</code> (scaffold). HRRR-side counterfactual deferred (needs per-field disable logic because HRRR layer slots are field-dependent).</div>
-    <div style="margin-top:8px;">Windows: all five columns computed on the same paired 7d/24h pool (v0.6.492) — rows where every relevant residual (HRRR raw, NBM raw, selector output, Prod, both cascade Prods) exists. Total Lift columns and Pipeline Skill columns now share denominators, so causal chaining is meaningful: if Total Lift moves, at least one Pipeline Skill or the selector's Hit Rate moved on the same rows to cause it.</div>
+    <div style="margin-top:8px;">Windows: all five columns computed on the same paired 7d/24h pool (v0.6.492) — rows where every relevant residual (HRRR raw, NBM raw, selector output, Prod, both cascade Prods) exists. Total Lift columns and Pipeline Skill columns now share denominators, so causal chaining is meaningful: if Total Lift moves, at least one Pipeline Skill or the selector's Win Rate moved on the same rows to cause it.</div>
   </div>
 </section>
 
@@ -4255,12 +4255,17 @@ async function renderScoreboardTilesMinimal() {
   const _totalLift     = (c) => (c && c.total_vs_best_raw_pct != null) ? c.total_vs_best_raw_pct : null;
   const _pipelineLift  = (c) => (c && c.corr_vs_l1_pct        != null) ? c.corr_vs_l1_pct        : null;
   // v0.6.555 — Selector Skill primary metric switched from chooser_vs_prod_pct
-  // (pooled MAE ratio, easily misread as a per-row rate) to hit_rate_pct
-  // (the true per-row picker rate the tile description promises). Value
-  // Captured rendered as secondary line so the magnitude story is still
-  // visible. chooser_vs_prod_pct remains in the per-field Accuracy table
-  // + underlying JSON for consumers that want it.
-  const _selectorSkill = (c) => (c && c.hit_rate_pct          != null) ? c.hit_rate_pct          : null;
+  // (pooled MAE ratio, easily misread as a per-row rate) to a per-row
+  // picker rate. v0.6.556 — refined to Win Rate (ties excluded from
+  // denominator). Ties don't test router skill — the cascades happen to
+  // agree and the router earns nothing. Pre-v0.6.556 Hit Rate counted
+  // ties as wins, which inflated tile 15-30pp on small-magnitude fields
+  // and hid catastrophic magnitude losses on kill-transition rows (see
+  // ch 24h 2026-09-07: 97.9% Hit Rate, -895% VC — near-perfect Hit Rate
+  // was all ties). hit_rate_pct removed from JSON; win_rate_pct + n_wins
+  // + n_losses + n_ties emitted in its place. chooser_vs_prod_pct still
+  // available for consumers that want the magnitude-weighted view.
+  const _selectorSkill = (c) => (c && c.win_rate_pct          != null) ? c.win_rate_pct          : null;
   const _valueCaptured = (c) => (c && c.value_captured_pct    != null) ? c.value_captured_pct    : null;
   const _prodTrend     = (c) => (c && c.prod_trend_pct        != null) ? c.prod_trend_pct        : null;
 
@@ -4573,7 +4578,7 @@ async function renderPerFieldDiagnostic() {
     if (total != null && !skipAgg) totalCol.push(total);
     if (hrrrSkill != null && !skipAgg) hrrrCol.push(hrrrSkill);
     if (nbmSkill != null && !skipAgg) nbmCol.push(nbmSkill);
-    if (NBM_SCOPE.has(f) && !skipAgg && c.hit_rate_pct != null) hitCol.push(c.hit_rate_pct);
+    if (NBM_SCOPE.has(f) && !skipAgg && c.win_rate_pct != null) hitCol.push(c.win_rate_pct);
     if (NBM_SCOPE.has(f) && !skipAgg && c.value_captured_pct != null) valCol.push(c.value_captured_pct);
 
     let totalCell = _fmtPct(total);
@@ -4612,7 +4617,7 @@ async function renderPerFieldDiagnostic() {
       const cls = _cls(v);
       return cls ? `<span class="${cls}">${s}</span>` : s;
     };
-    const hitRate = (c.hit_rate_pct != null) ? c.hit_rate_pct : null;
+    const hitRate = (c.win_rate_pct != null) ? c.win_rate_pct : null;
     const valCap = (c.value_captured_pct != null) ? c.value_captured_pct : null;
     const hitCell = NBM_SCOPE.has(f) ? _fmtHit(hitRate) : `<span class="sb-em">n/a</span>`;
     const valCell = NBM_SCOPE.has(f) ? _fmtVal(valCap)  : `<span class="sb-em">n/a</span>`;
@@ -4788,14 +4793,12 @@ async function renderScoreboardV2() {
     if (c.total_vs_best_raw_pct != null) return c.total_vs_best_raw_pct;
     return (b != null && p != null && b > 0) ? 100 * (b - p) / b : null;
   };
-  // DIAGNOSTIC — Selector Skill = Hit Rate (v0.6.555). What fraction of
-  // paired rows did the selector pick the better cascade? Bounded 0-100%,
-  // matches the top scoreboard tile. Pre-v0.6.555 this read
-  // chooser_vs_prod_pct (pooled MAE ratio) — swapped to align semantics
-  // with the tile description ("did the router pick the branch that
-  // turned out better"). chooser_vs_prod_pct still available in the JSON.
+  // DIAGNOSTIC — Selector Skill = Win Rate (v0.6.556). Of the rows where
+  // the two cascades disagreed, what fraction did the selector pick the
+  // winner? Ties excluded from denominator. Pre-v0.6.556 read
+  // hit_rate_pct (ties counted as wins) — ties don't test router skill.
   const _selectorSkill = (c) => {
-    return (c.hit_rate_pct != null) ? c.hit_rate_pct : null;
+    return (c.win_rate_pct != null) ? c.win_rate_pct : null;
   };
 
   // Aggregate a metric across the given fields. Returns median (headline
