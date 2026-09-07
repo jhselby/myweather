@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.558 • September 7, 2026 (NBM regression sentry: min-magnitude gate on flip-to-hurt clause)</strong></summary>
+
+- **`analysis/nbm_regression_sentry.py:220`** — the `flipped_to_hurt = help_s > 0 AND help_f < 0` clause now requires `abs(help_s) + abs(help_f) >= 3.0` (`MIN_FLIP_MAGNITUDE_PP`). Without the guard, any near-zero sign crossing fired HOT regardless of how tiny the move was.
+- **Why:** on 09-06 `wd.l3_nbm` triggered HOT via a `+5.35% → -0.18%` move (Δhelp only +5.52pp, raw wd was drifting +31% by itself — cell breakdown showed L3 was tracking raw). Not disease. Same class of false positive as v0.6.548's marginal-help refactor addressed for the degradation clause. Followup queued from that 09-06 session, scoped to a single-line guard so it's independent of today's scoring work.
+- **Verification:** rerun today shows `wd.l3_nbm` naturally CLEAN (+2.74 → +4.14, both positive — sign never flipped); `h.l3_nbm` and `ch.chp_nbm` both still HOT with |sum| far above the 3pp floor (27.8pp and 111.5pp respectively). No legitimate HOTs suppressed; no false HOTs firing.
+- **Publisher CF not affected** — `nbm_regression_sentry` runs via the digest, not the hourly publisher. Fifth and final publisher-CF revision of the day stays at 12:20 UTC (v0.6.557).
+
+</details>
+
+<details>
 <summary><strong>v0.6.557 • September 7, 2026 (scoreboard_v2 baseline reframed to user-default, matching per_field_scoring)</strong></summary>
 
 - **`analysis/scoreboard_v2.py:_compute_field_cell` + per-cell `_accumulate`** — `best_public` baseline changed from `argmin(hrrr_raw, nbm_raw)` per field to user-default: NBM raw for NBM-scope fields, HRRR raw for the HRRR-only fields (cl/cm/pp/pa/pr). Matches `per_field_scoring.py`'s `best_raw` from v0.6.478 + [[feedback_baseline_is_user_default]].

@@ -216,8 +216,20 @@ def evaluate(acc):
         cell["layer_help_pct_fresh"] = round(help_f_pct, 2)
         cell["marginal_degradation_pp"] = round(degradation_pp, 2)
         # HOT also fires when the layer flipped from net-helping to net-hurting
-        # even below the +15pp bar.
-        flipped_to_hurt = help_s_pct > 0 and help_f_pct < 0
+        # even below the +15pp bar. v0.6.558: min-magnitude gate — the flip
+        # only counts if the sustained + fresh magnitudes together are ≥3pp.
+        # Same class as v0.6.548's marginal-help refactor. Without this, cells
+        # where the layer is essentially neutral (help oscillating near zero)
+        # fire HOT on any sign crossing — false positives like wd.l3_nbm on
+        # 2026-09-06 (help_s +5.35% → help_f -0.18%, only 5.5pp move, raw
+        # was drifting +31% by itself). Same guard, same threshold as the
+        # WATCH degradation floor.
+        MIN_FLIP_MAGNITUDE_PP = 3.0
+        flipped_to_hurt = (
+            help_s_pct > 0
+            and help_f_pct < 0
+            and (abs(help_s_pct) + abs(help_f_pct)) >= MIN_FLIP_MAGNITUDE_PP
+        )
         if degradation_pp >= HOT_PCT or flipped_to_hurt:
             cell["verdict"] = "HOT"
         elif degradation_pp >= WATCH_PCT:
