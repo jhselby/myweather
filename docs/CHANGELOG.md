@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.557 • September 7, 2026 (scoreboard_v2 baseline reframed to user-default, matching per_field_scoring)</strong></summary>
+
+- **`analysis/scoreboard_v2.py:_compute_field_cell` + per-cell `_accumulate`** — `best_public` baseline changed from `argmin(hrrr_raw, nbm_raw)` per field to user-default: NBM raw for NBM-scope fields, HRRR raw for the HRRR-only fields (cl/cm/pp/pa/pr). Matches `per_field_scoring.py`'s `best_raw` from v0.6.478 + [[feedback_baseline_is_user_default]].
+- **Why:** two files with two baselines feeding tiles side by side on the same page was the failure mode that ate half a day. Total Lift tile read per_field_scoring (user-default baseline); Health & Reliability tile + terminal digest rollup read scoreboard_v2 (argmin baseline). Argmin is strictly harder than user-default (argmin picks whichever raw beat obs per field), so Health systematically under-classified confidence relative to Total Lift — same underlying pool, different verdict. Fields the Total Lift tile called GOOD showed up as MED/WATCH in Health for no user-facing reason. The argmin baseline didn't answer any real user question — nobody's default weather app is a per-field oracle picking whichever raw was closer.
+- **Effect on numbers:** small. NBM raw was already argmin winner on most NBM-scope fields, so the baseline change only shifted things on fields where HRRR raw was closer to obs. 7d `value_add_mean` -0.88% → -0.65% (+0.23pp softer); 24h -5.47% → -5.05% (+0.42pp). One field moved LOW→MED on 7d Health; one moved HIGH→MED on 24h Health. Winning green/amber/red counts unchanged both windows. National Source tile unaffected (that literally IS argmin comparison, kept as-is).
+- **Publisher CF redeployed.** Fourth publisher deploy today (10:58 UTC v0.6.554, 11:50 UTC v0.6.555, 12:07 UTC v0.6.556, 12:20 UTC v0.6.557).
+
+</details>
+
+<details>
 <summary><strong>v0.6.556 • September 7, 2026 (Selector Skill tile switched from Hit Rate → Win Rate; ties excluded)</strong></summary>
 
 - **`analysis/per_field_scoring.py:_accumulate`** — the paired chosen/alt Prod pool now splits into three counters: `wins` (chosen strictly < alt), `losses` (chosen strictly > alt), `ties` (chosen == alt). `_compute_field` emits `win_rate_pct = 100 × wins / (wins + losses)` — ties drop out of the denominator entirely. Pre-v0.6.556 emitted `hit_rate_pct` which counted ties as wins.

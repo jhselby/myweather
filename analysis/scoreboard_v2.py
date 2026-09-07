@@ -5,8 +5,14 @@ Post-Phase-4 the "vs raw" scoreboard is no longer the honest question.
 HRRR and NBM run in parallel; the selector picks per (field, lead-band).
 The interesting questions are:
 
-  1. Does Wyman Cove Production add value on top of the best free public
-     forecast — argmin(raw HRRR, raw NBM) — for each field?
+  1. Does Wyman Cove Production add value on top of what the user's
+     default weather app already shows them — NBM raw for NBM-scope
+     fields (NBM is the NWS backbone: iPhone Weather, weather.gov,
+     vendor displays), HRRR raw for the HRRR-only fields (cl/cm/pp/pa/pr
+     — NBM doesn't publish)? (v0.6.557 — matches per_field_scoring's
+     user-default baseline per v0.6.478. Pre-v0.6.557 used argmin(raw
+     HRRR, raw NBM) which was strictly harder than user default and made
+     Health/verdict/rollup grade more strictly than the Total Lift tile.)
   2. Which national source is stronger (HRRR vs NBM)?
   3. Where is Production winning / flat / regressing?
   4. How stable + confident are those wins?
@@ -256,14 +262,20 @@ def _compute_field_cell(field, window_acc, band_picks):
     prod_mae = _mean(window_acc["prod"])
     n = window_acc["prod"][1]
 
+    # v0.6.557 — best_public = user default (matches per_field_scoring's
+    # best_raw per v0.6.478 + [[feedback_baseline_is_user_default]]).
+    # NBM raw for NBM-scope fields (NBM is the NWS backbone, i.e. iPhone
+    # Weather / weather.gov / vendor consumer displays); HRRR raw for the
+    # HRRR-only fields (cl/cm/pp/pa/pr — NBM doesn't publish). Pre-v0.6.557
+    # used argmin(hrrr_mae, nbm_mae) per field — a fossil of the pre-v0.6.478
+    # oracle-like framing. That baseline was strictly harder than user
+    # default and made Health/verdict/rollup grade fields more strictly
+    # than the Total Lift tile (which read per_field_scoring). Consistency
+    # matters more than the historical framing.
     in_scope = field in SELECTOR_SCOPE
-    if in_scope and hrrr_mae is not None and nbm_mae is not None:
-        if hrrr_mae <= nbm_mae:
-            best_public, best_mae = "hrrr", hrrr_mae
-        else:
-            best_public, best_mae = "nbm", nbm_mae
+    if in_scope and nbm_mae is not None:
+        best_public, best_mae = "nbm", nbm_mae
     elif hrrr_mae is not None:
-        # Out-of-scope OR NBM missing: HRRR is the only comparable baseline.
         best_public, best_mae = "hrrr", hrrr_mae
     elif nbm_mae is not None:
         best_public, best_mae = "nbm", nbm_mae
@@ -510,9 +522,11 @@ def main():
             if b["prod"][1] == 0:
                 continue
             hrrr = _mean(b["hrrr"]); nbm = _mean(b["nbm"]); prod = _mean(b["prod"])
+            # v0.6.557 — per-cell baseline matches field-level rule above
+            # (user default: NBM raw for NBM-scope, HRRR raw for HRRR-only).
             in_scope = field in SELECTOR_SCOPE
-            if in_scope and hrrr is not None and nbm is not None:
-                best = min(hrrr, nbm)
+            if in_scope and nbm is not None:
+                best = nbm
             elif hrrr is not None:
                 best = hrrr
             elif nbm is not None:
@@ -560,7 +574,7 @@ def main():
                            "regress_lift_pct": VERDICT_REGRESS_LIFT},
             "rollup_excluded_fields": sorted(list(ROLLUP_EXCLUDE)),
         },
-        "notes": "Post-Phase-4 scoreboard. lift_vs_best_public_pct = (best_public_mae − prod_mae) / best_public_mae × 100. best_public = argmin(hrrr_raw, nbm_raw) per field. selector_pick = majority vote across bands from l1_selector_table_curated.json. halves_a/b = first/second half of window vs HRRR raw; halves_agree = same sign both halves. cc/dp/pp/pa/pr excluded from rollup arithmetic mean; still shown in per_field detail.",
+        "notes": "Post-Phase-4 scoreboard. lift_vs_best_public_pct = (best_public_mae − prod_mae) / best_public_mae × 100. best_public = user default per v0.6.557 — NBM raw for NBM-scope fields (NBM is the NWS backbone; iPhone Weather / weather.gov / vendor displays), HRRR raw for the 5 HRRR-only fields (cl/cm/pp/pa/pr). Matches per_field_scoring's best_raw. Pre-v0.6.557 used argmin(hrrr_raw, nbm_raw). selector_pick = majority vote across bands from l1_selector_table_curated.json. halves_a/b = first/second half of window vs HRRR raw; halves_agree = same sign both halves. cc/dp/pp/pa/pr excluded from rollup arithmetic mean; still shown in per_field detail.",
     }
 
     with open(OUT_JSON, "w") as fout:
