@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.568 • September 8, 2026 (Selector Skill tile — trim Win Rate line, VC-tuned WFL thresholds)</strong></summary>
+
+- **`corrections_debug.html`** — Selector Skill tile Win Rate secondary line removed entirely (was inviting the same "direction-only companion" misread the primary swap in v0.6.567 was meant to end). Description trimmed to one sentence so the tile matches the height/shape of Total Lift and Pipeline Lift. Win Rate is still available per-field on the Accuracy tab's diagnostic table for divergence reads.
+- **WFL thresholds tuned to the metric.** Old shared ±2% (inherited from lift-in-MAE tiles) marked a field "winning" at +5% Value Captured, which is barely any routing work. New thresholds: **≥ +33% winning**, **≤ 0% losing**, **0-33% flat**. Big median/mean numbers now use the same thresholds via a dedicated `_clsVC` classifier so tile paint and WFL row don't disagree.
+- **Rationale.** +33% VC = "the selector captures at least a third of the oracle routing gap" — non-trivial work. Not so tight that a field going +55% → +45% during a regime shift flips out of green. 0% is unambiguous (any positive means the selector is helping something; any negative means anti-selection). Effect on today's board: ws honestly re-marked flat at +24% (previously misleadingly "winning" under the +2% bar); other 6 NBM-scope fields stay green.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.567 • September 8, 2026 (Selector Skill tile — primary swapped Win Rate → Value Captured)</strong></summary>
 
 - **`corrections_debug.html`** — Selector Skill tile primary metric swapped from Win Rate (direction-only, magnitude-blind) to **Value Captured** (% of oracle, magnitude-aware and n-weighted). Win Rate demoted to the secondary line as the direction-only companion. Tile now uses the same signed ±2% color/WFL thresholds as Total Lift / Pipeline Lift / Prod Trend instead of the 55/50 rate thresholds.

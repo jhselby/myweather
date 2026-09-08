@@ -1519,7 +1519,7 @@
     <!-- Selector Quality -->
     <div class="sb-tile" data-tile="selector_skill">
       <div class="sb-tile-title">Selector Skill</div>
-      <div class="sb-tile-sub">Value Captured: of the routing gain a perfect picker could have captured (always picking the better source per row), how much did we actually get? Magnitude-aware and n-weighted — a wrong pick where sources differ by 5 MAE hurts 5× more than one where they differ by 1. Win Rate on the secondary line is the direction-only companion (ties excluded).</div>
+      <div class="sb-tile-sub">Value Captured: of the routing gain a perfect picker could have captured, how much did we actually get? Magnitude-aware and n-weighted.</div>
 
       <div class="sb-num-row">
         <div class="sb-num-group">
@@ -1548,12 +1548,6 @@
             </div>
           </div>
         </div>
-      </div>
-
-      <div class="sb-tile-secondary" style="font-size:12px;color:var(--sb-dim);margin-top:2px;line-height:1.4;">
-        <strong style="color:var(--sb-fg);">Win Rate</strong> (ties excluded) —
-        7d: <span data-cell="vcMed7">—</span> med / <span data-cell="vcMean7">—</span> mean ·
-        24h: <span data-cell="vcMed24">—</span> med / <span data-cell="vcMean24">—</span> mean
       </div>
 
       <div class="sb-wfl">
@@ -4328,24 +4322,27 @@ async function renderScoreboardTilesMinimal() {
   _paintTile("pipeline_lift",  _agg(LIFT_SCOPE), _pipelineLift);
   _paintTile("prod_trend",     _agg(ALL_SCOPE),  _prodTrend);
 
-  // v0.6.567 — Selector Skill tile: primary swapped from Win Rate (direction
-  // only, magnitude-blind) to Value Captured (% of oracle, magnitude-aware
-  // and n-weighted). Win Rate demoted to secondary line as the direction-
-  // only companion. Both metrics keep the ±2% signed-lift color convention
-  // used by other tiles (WFL thresholds default win:+2, lose:-2). Motive:
-  // Win Rate ~59% while Value Captured ~50.5% created "high skill / low
-  // overall lift" confusion — direction alone can be right on most rows
-  // while magnitude is thin. Value Captured is the single number that
-  // says whether the router is doing meaningful work; Win Rate is kept
-  // as the "how often did we get direction right" diagnostic beside it.
+  // v0.6.568 — Selector Skill tile: Value Captured is now the sole tile
+  // metric. Win Rate secondary line removed to keep the tile the same
+  // shape as Total Lift + Pipeline Lift and to avoid the "high Win Rate /
+  // low overall lift" misread that direction-only companion metrics
+  // invite. Win Rate is still available per-field on the Accuracy tab's
+  // diagnostic table for the trained-eyes-only divergence read.
+  // Big-number color class uses the same VC-tuned thresholds as this tile's
+  // WFL: ≥ +33% good, ≤ 0% bad, in-between warn. Keeps tile paint and WFL
+  // consistent so a "green" number doesn't sit next to a "flat" WFL row.
+  const _clsVC = (v) => {
+    if (v == null) return "";
+    if (v >= 33) return "sb-good";
+    if (v <= 0)  return "sb-bad";
+    return "sb-warn";
+  };
   const _paintSelectorSkill = () => {
     const tile = document.querySelector(`[data-tile="selector_skill"]`);
     if (!tile) return;
     const fields = _agg(NBM_SCOPE);
     const vc7  = _collect(pf7,  fields, _valueCaptured);
     const vc24 = _collect(pf24, fields, _valueCaptured);
-    const hr7  = _collect(pf7,  fields, _selectorSkill);
-    const hr24 = _collect(pf24, fields, _selectorSkill);
     const primary = {
       med7:  _median(vc7),  mean7:  _mean(vc7),
       med24: _median(vc24), mean24: _mean(vc24),
@@ -4355,19 +4352,8 @@ async function renderScoreboardTilesMinimal() {
       if (!el) continue;
       el.textContent = _fmt(val, true);
       el.classList.remove("sb-good", "sb-warn", "sb-bad");
-      const cls = _cls(val);
+      const cls = _clsVC(val);
       if (cls) el.classList.add(cls);
-    }
-    const _fmtRate = (v) => (v == null) ? "—" : v.toFixed(1) + "%";
-    const secondary = {
-      vcMed7:  _median(hr7),  vcMean7:  _mean(hr7),
-      vcMed24: _median(hr24), vcMean24: _mean(hr24),
-    };
-    for (const [key, val] of Object.entries(secondary)) {
-      const el = tile.querySelector(`[data-cell="${key}"]`);
-      if (!el) continue;
-      el.textContent = _fmtRate(val);
-      el.classList.remove("sb-good", "sb-warn", "sb-bad");
     }
   };
   _paintSelectorSkill();
@@ -4414,7 +4400,15 @@ async function renderScoreboardTilesMinimal() {
   const _trend = { w: "improving", f: "flat", l: "regressing" };
   _paintWfl("total_lift",     _agg(LIFT_SCOPE), _totalLift,     _lift);
   _paintWfl("pipeline_lift",  _agg(LIFT_SCOPE), _pipelineLift,  _lift);
-  _paintWfl("selector_skill", _agg(NBM_SCOPE),  _valueCaptured, _lift);
+  // Selector Skill uses Value Captured thresholds tuned to the metric:
+  //   ≥ +33% "winning" = captures at least a third of the oracle routing gap
+  //   ≤   0% "losing"  = anti-selection, netting more MAE than the alternative
+  //   0-33% "flat"     = positive but underperforming (helping some, leaving
+  //                      most of the oracle gap on the table)
+  // The shared ±2% default (used by lift-in-MAE tiles) is too lenient for
+  // VC — a field can show "winning" at +5% while the selector barely
+  // routes. +33% is the meaningful-work bar.
+  _paintWfl("selector_skill", _agg(NBM_SCOPE),  _valueCaptured, _lift, {win: 33, lose: 0});
   _paintWfl("prod_trend",     _agg(ALL_SCOPE),  _prodTrend,     _trend);
 
   // v0.6.488 — National Source. Which raw source (HRRR or NBM) wins per
