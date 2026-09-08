@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.563 • September 8, 2026 (l4_nbm cc DROP — walkforward-flagged layer with marginal net contribution)</strong></summary>
+
+- **`weather_collector/processors/l4_nbm.py`** — `L4_NBM_FIELDS = ("ch",)`. cc dropped. Selector's deepest NBM layer for cc now falls through to L3_NBM (or raw_nbm where L3 doesn't cover).
+- **Why:** walkforward validator has proposed `l4_nbm: DROP cc` for multiple runs. 30d prep analysis ([[l4-nbm-cc-drop-prep]], n=27,313 over 30 regime×band cells): layer's total marginal lift over L3 is +0.79% pooled; best-possible skip-table only reaches +1.38%; cells flip verdict week-to-week (se_flow 12-23h was −13% on 09-03 shortened window, −1.9% on 30d; se_flow 24-47h flipped from −4.8% to +1.2% helping). ≤60bp on a field with pool-wide MAE 19.5, on unstable per-cell verdicts — not worth the maintenance burden of a skip-table.
+- **Scope check:** all L4_NBM consumers iterate `L4_NBM_FIELDS` dynamically (apply loop, gate telemetry). Removing cc means no `cc_l4_nbm` slot is stamped; deepest-NBM walk uses `entry.get("cc_l4_nbm")` which returns None and cascades to L3_NBM. chp_nbm ch path independent (ch stays in the tuple). No dangling references in runtime code.
+- **Requires collector deploy** — `l4_nbm.py` is a collector processor. Next digest's walkforward should show `l4_nbm:` (no proposals) once the deploy takes.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.562 • September 8, 2026 (layer-shape sentry: τ-suspect gated on L2 actually applied at hurt band)</strong></summary>
 
 - **`analysis/runlog/build_executive_summary.py:layer_shape_sentry`** — τ-suspect flag now requires L2 MAE to differ from L1 MAE by ≥1% at the long-hurt band before labeling the shape as decay-τ. When L2 has fully decayed (L2 = L1 at that band), the hurt must be coming from something above L2 (selector routing, deeper layer), and the "shorten τ or add SKIP" prescription is the wrong fix.

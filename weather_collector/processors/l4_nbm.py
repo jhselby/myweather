@@ -11,7 +11,7 @@ Applied inside `forecast_snapshot.stamp()` right after the L3_NBM block,
 per hour: `{f}_l4_nbm = {f}_l3_nbm - correction`. Same sign convention
 as the HRRR L4 diurnal (decay_apply.py L4 branch).
 
-Scope: `L4_NBM_FIELDS = ("cc", "ch")` — mirrors HRRR `L4_FIELDS`. Fields
+Scope: `L4_NBM_FIELDS = ("ch",)` — cc dropped v0.6.563 (2026-09-08). Fields
 outside this whitelist stay at L3_NBM as their deepest NBM-side layer.
 
 Curated JSON is source-controlled and updated by `analysis/l4_nbm_fit.py`.
@@ -29,7 +29,13 @@ from .nbm_common import cap_correction, is_stale
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l4_nbm_curated.json"
 
-L4_NBM_FIELDS = ("cc", "ch")
+# 2026-09-08 v0.6.563: dropped cc. Walkforward flagged DROP cc for weeks;
+# 30d prep analysis (n=27,313) confirmed layer's total marginal contribution
+# is +0.79% pooled (best-possible skip-table +1.38%), not durable across
+# cells or windows (verdicts flip week-to-week). Skip-table would be high-
+# maintenance for marginal gain; DROP is the right shape. ch kept —
+# sentry marginal help strongly positive. See [[l4-nbm-cc-drop-prep]].
+L4_NBM_FIELDS = ("ch",)
 HOD_BINS = 24
 
 _TABLE = None      # {field: [(correction, n), ...]}, length HOD_BINS
