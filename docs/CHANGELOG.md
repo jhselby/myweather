@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.562 • September 8, 2026 (layer-shape sentry: τ-suspect gated on L2 actually applied at hurt band)</strong></summary>
+
+- **`analysis/runlog/build_executive_summary.py:layer_shape_sentry`** — τ-suspect flag now requires L2 MAE to differ from L1 MAE by ≥1% at the long-hurt band before labeling the shape as decay-τ. When L2 has fully decayed (L2 = L1 at that band), the hurt must be coming from something above L2 (selector routing, deeper layer), and the "shorten τ or add SKIP" prescription is the wrong fix.
+- **Why:** this morning's digest flagged `t/production τ-suspect: helps 0-5h (-7.7%) but hurts 12-23h +5.3%`. Per-lead breakdown showed L2 (τ=4h) had fully decayed by lead 6 — L2 MAE equalled L1 MAE from lead 6 onward. Real driver was the L1 selector routing t to NBM at leads 12-27, where NBM raw is ~5-14% worse than HRRR raw. `decay_tau_tuning` had t stable at τ=4 (τ=42 shift +1.0% only, noise), so shortening τ was a no-op and the alert was misdirecting the fix to a layer that wasn't the problem.
+- **Verified:** re-ran `layer_shape_sentry()` — 0 lines emitted (previously 1 tau_suspect on t). No other cells lose their τ-suspect status since t was today's only firing.
+- **Not shipped:** the t selector-routing issue itself is a known transient — L1 recency-override aftershock post-v0.6.540. By-regime walker armed 09-06 (v0.6.552) is the fix; earliest 7/7 clear is 09-14.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.561 • September 8, 2026 (nbm_regression_sentry: KILLED verdict suppresses stale HOTs on recently-killed layers)</strong></summary>
 
 - **`analysis/nbm_regression_sentry.py`** — new `KILLED_LAYERS` registry `{(field, layer): kill_date_iso}` seeded with `("ch","chp_nbm")` and `("h","l3_nbm")`, both 2026-09-05 (v0.6.551). When the sustained window still overlaps the kill date and the cell has any rows, verdict is `KILLED` with a "pre-kill rows aging out" note instead of `HOT`/`WATCH`. Digest exec-summary greps for HOT/WATCH so alerts stop firing automatically; row still prints in the table for visibility.

@@ -985,10 +985,31 @@ def layer_shape_sentry():
                     f"  ⚠ {field}/{prod_key}@{lbl}: production +{pct:.1f}% vs raw "
                     f"(raw {r:.2f}, prod {p:.2f}, n={n_band})"
                 )
-        # τ-signature check: helps short, hurts long.
+        # τ-signature check: helps short, hurts long. Gated on L2 actually
+        # being applied at the hurt band — a "helps short, hurts long" shape
+        # is only a decay-τ problem if L2 is materially the top-of-stack
+        # correction at the long band. When L2 has fully decayed (L2 MAE
+        # matches L1 within 1%), the hurt must be coming from something
+        # above L2 (selector routing, deeper layer). Flagging those as
+        # τ-suspect misdirects the fix — 2026-09-08 t case: L2 τ=4h had
+        # fully decayed by lead 6, sentry still labeled it τ-suspect but
+        # the real driver was the L1 selector routing to NBM at 12-27h.
+        L2_APPLIED_MIN_PCT = 1.0
+        l2_arr = layers.get("l2")
+        def _l2_applied(lbl_lo, lbl_hi):
+            if not l2_arr:
+                return False
+            r_v, _ = _band_avg(raw_arr, lbl_lo, lbl_hi)
+            l2_v, _ = _band_avg(l2_arr, lbl_lo, lbl_hi)
+            if r_v is None or l2_v is None or r_v == 0:
+                return False
+            return abs(l2_v - r_v) / r_v * 100.0 >= L2_APPLIED_MIN_PCT
+        _band_bounds = {lbl: (lo, hi) for lo, hi, lbl in LAYER_SHAPE_BANDS}
         short = band_deltas.get("0-5h")
-        long_hurts = [(lbl, band_deltas[lbl]) for lbl in ("6-11h", "12-23h", "24-47h")
-                      if lbl in band_deltas and band_deltas[lbl] >= LAYER_SHAPE_TAU_HURT_PCT]
+        long_hurts_raw = [(lbl, band_deltas[lbl]) for lbl in ("6-11h", "12-23h", "24-47h")
+                         if lbl in band_deltas and band_deltas[lbl] >= LAYER_SHAPE_TAU_HURT_PCT]
+        long_hurts = [(lbl, pct) for lbl, pct in long_hurts_raw
+                      if _l2_applied(*_band_bounds[lbl])]
         if short is not None and short <= LAYER_SHAPE_TAU_HELP_PCT and long_hurts:
             hurt_txt = ", ".join(f"{lbl} {pct:+.1f}%" for lbl, pct in long_hurts)
             tau_suspects.append(
