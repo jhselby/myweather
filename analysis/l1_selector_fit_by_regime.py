@@ -46,6 +46,7 @@ def _new_bucket():
     return {"hrrr_abs": 0.0, "hrrr_n": 0,
             "nbm_abs":  0.0, "nbm_n":  0,
             "paired_n": 0,
+            "paired_n_today": 0,
             "hrrr_abs_h1": 0.0, "nbm_abs_h1": 0.0, "paired_n_h1": 0,
             "hrrr_abs_h2": 0.0, "nbm_abs_h2": 0.0, "paired_n_h2": 0}
 
@@ -76,8 +77,10 @@ def fit():
     now = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
     window_start_dt = now - timedelta(days=WINDOW_DAYS)
     window_mid_dt   = now - timedelta(days=WINDOW_DAYS // 2)
+    today_start_dt  = now - timedelta(days=1)
     window_start = window_start_dt.strftime("%Y-%m-%dT%H:%M")
     window_mid   = window_mid_dt.strftime("%Y-%m-%dT%H:%M")
+    today_start  = today_start_dt.strftime("%Y-%m-%dT%H:%M")
 
     pooled = defaultdict(_new_bucket)   # key: (field, band)
     regime = defaultdict(_new_bucket)   # key: (field, regime, band)
@@ -112,6 +115,7 @@ def fit():
                 h = _hrrr_prod_error(row, field)
                 n = _nbm_prod_error(row)
                 is_h2 = obs_time >= window_mid
+                is_today = obs_time >= today_start
 
                 for key, acc in (((field, band), pooled),
                                  ((field, reg, band), regime)):
@@ -124,6 +128,8 @@ def fit():
                         b["nbm_n"]   += 1
                     if h is not None and n is not None:
                         b["paired_n"] += 1
+                        if is_today:
+                            b["paired_n_today"] += 1
                         if is_h2:
                             b["hrrr_abs_h2"] += h
                             b["nbm_abs_h2"]  += n
@@ -167,6 +173,7 @@ def fit():
                     "nbm_prod_mae":  round(nmae, 3) if nmae is not None else None,
                     "lift_pct":      round(lift, 2) if lift is not None else None,
                     "n":             paired,
+                    "n_today":       b.get("paired_n_today", 0),
                     "half1_lift_pct": round(h1, 2) if h1 is not None else None,
                     "half2_lift_pct": round(h2, 2) if h2 is not None else None,
                     "halves_stable_nbm": halves_stable_nbm,

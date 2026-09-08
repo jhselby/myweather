@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.566 • September 8, 2026 (L1 by-regime walker — 7-day gate → 3-day + per-day n floor)</strong></summary>
+
+- **`analysis/l1_selector_fit_by_regime.py`** — diagnostic now emits per-cell `n_today` (paired-sample count inside a rolling 24h window) alongside the existing 30d rolling `n`. Threaded through the bucket, the fit loop, and the masked_cells / all_cells output. Diagnostic-only; no runtime consumer change.
+- **`analysis/l1_selector_fit_by_regime_walker.py`** — gate loosened from 7 consecutive positive days to **3**, with a new **per-day n floor of 20 paired samples** enforced on each of those 3 days (`MIN_DAILY_N = 20`, `GATE_WINDOW_DAYS = 3`). History payload now stores today's `n_today`; walker gate is `n_seen == 3 AND n_pos == 3 AND min(n_today across window) >= 20`. History entries written before this change have `n_today = None` and are treated as 0 (fail-safe), so the effective gate resets to 3 days of new-format history from 09-08 forward. Earliest wire = 09-11. Runtime contract unchanged (`cleared_for_wire`, `flipped_in_window`); collector's `l1_selector.py` needs no change. Stdout table adds a `min_dn` column and a `blocked: min_dn=<x><20` status for cells that go 3/3 positive but fail the daily-n floor.
+- **Rationale.** The 7-day gate was the conservative first draft when the walker landed 09-06 (v0.6.552). Post-kill (v0.6.551) production is showing a real regime flip on t/h — hrrr_raw beats nbm_raw by 30-40% on the 24h window while the selector still routes to NBM based on 30d fit — but the 7-day persistence held wire-eligibility out to 09-14 minimum. 3-day + per-day-n floor keeps the "not chasing one noisy day" property while shortening the routing-catch-up horizon. Cells with rare regimes (calm, ne_flow) will take longer to accumulate 3 qualifying days because their `n_today` is often 0 when the regime isn't active — that's the intended behavior, not a bug.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.565 • September 8, 2026 (debug page — l4_nbm cc DROP downstream text fixes)</strong></summary>
 
 - **`corrections_debug.html`** — four stale l4_nbm cc references updated post-DROP: NBM parallel cascade summary (l4_nbm for ch only), cascade-ordering diagram (`l4_nbm (ch)`), "Real open gaps" bullet (DROP shipped 09-08, not deferred to 09-09), NBM-side ingester block (l4_nbm for ch only). Remaining `cc/ch` mentions are correct — L2_NBM cloud_obs_blend still handles both, and the selector still routes cc to NBM (just uses L3_NBM as deepest now).

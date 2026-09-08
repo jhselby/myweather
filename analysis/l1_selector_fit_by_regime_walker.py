@@ -1,11 +1,16 @@
-"""L1 selector by-regime — 7-day cell stability walker.
+"""L1 selector by-regime — cell stability walker (3-day gate + per-day n floor).
 
 Sibling to `l1_selector_fit_by_regime.py`. That script fits a per-
 (field, regime, band) diagnostic each run and flags cells where NBM Prod
 beats HRRR Prod but the pooled-band selector picked HRRR (halves-stable,
 n >= 60, lift >= 3.0%). This walker adds the temporal-stability layer
 per [[feedback_whitelist_promotion_gate]] — a cell only becomes wire-
-eligible after appearing in the flagged set on 7 consecutive daily reads.
+eligible after appearing in the flagged set on GATE_WINDOW_DAYS
+consecutive daily reads AND having per-day paired-sample count
+(n_today) >= MIN_DAILY_N on each of those days. The daily-n floor
+distinguishes a genuine multi-day signal from a stuck weather pattern
+where the cell happens to be flagged on the 30-day rolling window but
+had thin daily volume.
 
 Reads (upstream in the digest):
   analysis/l1_selector_by_regime_report.json
@@ -19,7 +24,9 @@ Writes:
 
 Semantics:
   * "positive today" = cell present in today's masked_cells list
-  * cleared_for_wire = 7/7 distinct dates in window all positive
+  * cleared_for_wire = GATE_WINDOW_DAYS/GATE_WINDOW_DAYS distinct dates
+    in window all positive AND payload n_today >= MIN_DAILY_N on each
+    of those days
   * flipped_in_window = present on earlier day, absent on later day
     within the same window. Flipped cells do not clear even if they
     re-appear later without operator review.
@@ -39,8 +46,13 @@ REPORT_PATH = Path(__file__).resolve().parent / "l1_selector_by_regime_report.js
 RUNTIME_PATH = REPO / "weather_collector" / "data" / "l1_selector_by_regime_walker.json"
 HISTORY_PATH = REPO / ".cache_l1_selector_by_regime_walker_history.json"
 
-GATE_WINDOW_DAYS = 7
+GATE_WINDOW_DAYS = 3
 GATE_HISTORY_RETENTION_DAYS = 30
+# Per-day paired-sample floor. A cell must have at least this many pair-log
+# samples inside a rolling 24h window on EACH day of the gate window.
+# Below ~20 the daily cell-level lift signal is too thin to trust as a
+# regime tell — see [[feedback_pooled_n_time_thin.md]] class of concern.
+MIN_DAILY_N = 20
 
 # The upstream diagnostic uses a 30d window over the pair log. The L1 selector
 # refit landed 2026-08-31 10:15 UTC, so the diagnostic's baseline is mostly
@@ -91,6 +103,7 @@ def run():
     today_by_key = {_cell_key(c): {
         "field": c["field"], "regime": c["regime"], "band": c["band"],
         "lift_pct": c.get("lift_pct"), "n": c.get("n"),
+        "n_today": c.get("n_today"),
         "half1_lift_pct": c.get("half1_lift_pct"),
         "half2_lift_pct": c.get("half2_lift_pct"),
     } for c in masked}
@@ -125,6 +138,18 @@ def run():
             out.append(bool(entry and key in entry.get("positive", [])))
         return out
 
+    def _daily_ns(key):
+        # Per-day n_today for this cell across the window. Missing (None or
+        # absent — e.g. history entries written before n_today was plumbed)
+        # is treated as 0 so the daily-n floor fails safely.
+        out = []
+        for d in days_in_window:
+            entry = next((e for e in window if e["date"] == d), None)
+            payload = (entry or {}).get("payload", {}) if entry else {}
+            n = (payload.get(key) or {}).get("n_today")
+            out.append(int(n) if n is not None else 0)
+        return out
+
     per_cell_runtime = defaultdict(lambda: defaultdict(dict))  # field -> regime -> band
     report_rows = []
     n_cleared = 0
@@ -132,10 +157,15 @@ def run():
     for key in sorted(all_keys):
         field, regime, band = key.split("|", 2)
         series = _series(key)
+        daily_ns = _daily_ns(key)
         n_seen = len(series)
         n_pos = sum(1 for s in series if s)
+        min_daily_n_in_window = min(daily_ns) if daily_ns else 0
+        enough_daily_n = bool(daily_ns) and all(dn >= MIN_DAILY_N for dn in daily_ns)
 
-        cleared = (n_seen == GATE_WINDOW_DAYS and n_pos == GATE_WINDOW_DAYS)
+        cleared = (n_seen == GATE_WINDOW_DAYS
+                   and n_pos == GATE_WINDOW_DAYS
+                   and enough_daily_n)
 
         # Flip: any (True → False) inside window.
         flipped = any(series[i - 1] and not series[i] for i in range(1, len(series)))
@@ -146,9 +176,12 @@ def run():
             "flipped_in_window": bool(flipped),
             "days_seen": n_seen,
             "days_positive": n_pos,
+            "min_daily_n_in_window": min_daily_n_in_window,
+            "min_daily_n_required": MIN_DAILY_N,
             "today_present": key in today_by_key,
             "today_lift_pct": today.get("lift_pct"),
             "today_n": today.get("n"),
+            "today_n_today": today.get("n_today"),
             "today_half1_lift_pct": today.get("half1_lift_pct"),
             "today_half2_lift_pct": today.get("half2_lift_pct"),
         }
@@ -159,9 +192,12 @@ def run():
         report_rows.append({
             "field": field, "regime": regime, "band": band,
             "series": series, "n_seen": n_seen, "n_pos": n_pos,
+            "min_daily_n": min_daily_n_in_window,
+            "enough_daily_n": enough_daily_n,
             "cleared": cleared, "flipped": flipped,
             "today_lift_pct": today.get("lift_pct"),
             "today_n": today.get("n"),
+            "today_n_today": today.get("n_today"),
         })
 
     # Report.
@@ -171,12 +207,13 @@ def run():
           f"({days_in_window[0] if days_in_window else 'empty'} → "
           f"{days_in_window[-1] if days_in_window else 'empty'}), "
           f"{len(days_in_window)} distinct day(s)")
-    print(f"clear rule: {GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS} consecutive days present in masked_cells")
+    print(f"clear rule: {GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS} consecutive positive days "
+          f"AND per-day n_today >= {MIN_DAILY_N} on each day")
     print()
 
     series_w = max(1, len(days_in_window)) + 2
     header = (f"{'field':<5} {'regime':<12} {'band':<7} {'series':<{series_w}} "
-              f"{'seen':>5} {'pos':>5} {'lift%':>8} {'n':>6}  status")
+              f"{'seen':>5} {'pos':>5} {'min_dn':>7} {'lift%':>8} {'n':>6}  status")
     print(header)
     print("-" * len(header))
     for row in sorted(report_rows, key=lambda x: (x["field"], x["regime"], x["band"])):
@@ -185,15 +222,18 @@ def run():
             status = "✓ CLEARED"
         elif row["flipped"]:
             status = "⚠ FLIPPED"
+        elif row["n_pos"] >= GATE_WINDOW_DAYS and not row["enough_daily_n"]:
+            status = f"blocked: min_dn={row['min_daily_n']}<{MIN_DAILY_N}"
         elif row["n_pos"] >= GATE_WINDOW_DAYS - 1:
             status = f"→ {row['n_pos']}/{GATE_WINDOW_DAYS}"
         else:
             status = ""
         lift_s = f"{row['today_lift_pct']:+.1f}" if row["today_lift_pct"] is not None else "—"
         n_s = f"{row['today_n']:,}" if row["today_n"] is not None else "—"
+        min_dn_s = f"{row['min_daily_n']}"
         print(f"{row['field']:<5} {row['regime']:<12} {row['band']:<7} "
               f"{series_str:<{series_w}} {row['n_seen']:>5} {row['n_pos']:>5} "
-              f"{lift_s:>8} {n_s:>6}  {status}")
+              f"{min_dn_s:>7} {lift_s:>8} {n_s:>6}  {status}")
 
     print()
     print("=" * 100)
@@ -207,10 +247,11 @@ def run():
              f"{n_flipped} cell(s) have flipped inside the window.")
     elif n_cleared == 0:
         v = (f"HOLD — window full ({GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS}) but no cell "
-             f"has {GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS} consecutive positive days. "
-             f"{n_flipped} cell(s) flipped inside window.")
+             f"cleared: needs {GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS} consecutive positive days "
+             f"AND per-day n_today >= {MIN_DAILY_N}. {n_flipped} cell(s) flipped inside window.")
     else:
-        v = (f"WIRE READY — {n_cleared} cell(s) cleared the {GATE_WINDOW_DAYS}-day gate. "
+        v = (f"WIRE READY — {n_cleared} cell(s) cleared the {GATE_WINDOW_DAYS}-day gate "
+             f"(min per-day n_today >= {MIN_DAILY_N}). "
              f"Ready to extend l1_selector.py to route NBM for these (field, regime, band) cells.")
     print(f"  {v}")
 
@@ -232,6 +273,7 @@ def run():
         "source": "analysis/l1_selector_fit_by_regime_walker.py",
         "diagnostic_source_fitted_at": fitted_at,
         "gate_window_days": GATE_WINDOW_DAYS,
+        "min_daily_n": MIN_DAILY_N,
         "n_cells_cleared": n_cleared,
         "n_cells_flipped": n_flipped,
         "cells_cleared_for_wire": cleared_cells,
