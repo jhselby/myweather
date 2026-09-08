@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.560 • September 7, 2026 (scoreboard_v2: pool-intersected best-public numbers + n-weighted rollup means)</strong></summary>
+
+- **`analysis/scoreboard_v2.py:_accumulate`** — pool intersection. NBM-scope fields now require `e_l1 AND e_nbm AND e_prod` on a row to contribute; HRRR-only fields require `e_l1 AND e_prod`. Mirrors `per_field_scoring._accumulate`'s pool discipline. Pre-v0.6.560 accumulated each MAE independently, so `hrrr_raw_mae` / `nbm_raw_mae` / `prod_mae` described different obs sets and `lift_vs_best_public_pct` was apples-to-oranges when NBM backstamps thinned.
+- **`analysis/scoreboard_v2.py:_rollup`** — new n-weighted keys added alongside the unweighted ones: `value_add_mean_pct_nweighted`, `value_add_mean_all_fields_nweighted`, and `mae_pct_of_hrrr.{nbm,best_chosen,prod,pipeline_value_add_pp}_nweighted`. Weights each field's contribution by its Prod n so the aggregate reflects where forecast hours actually live (t/wd at n=200s outweigh pr at n=20). Unweighted keys retained for backwards compatibility; frontend swap is a future decision.
+- **Verified numbers pre-push:** 7d touched-field n dropped as expected on NBM-scope fields (e.g., ch 7200→5098; sr 7402→5651). Field lifts shifted within a few pp on most fields; ch 24h swung from -16.16% to +6.87% because kill-transition rows without paired stamps are correctly excluded. Weighted mean 7d = 1.72% vs unweighted 2.61% — the small-n green fields (cm, ch) were flattering the unweighted mean.
+- **Publisher CF redeployed** — scoreboard_v2 is in `publisher/main.py:PUBLISHERS`, so per deploy-hygiene rule the CF was redeployed to pick up the intersected accumulator. Next hourly tick will carry both new keys and the intersected field-level numbers.
+
+</details>
+
+<details>
 <summary><strong>v0.6.559 • September 7, 2026 (session-end debug page + memory sweep — 09-07 recent activity, MEMORY.md READ FIRST bumped)</strong></summary>
 
 - **`corrections_debug.html` Recent Activity** — new 09-07 (Mon) entry as "today" covering v0.6.554 publisher-CF-deploy-fix + full scoring audit + v0.6.555 (L1_selected walks to raw + Selector tile primary swap) + v0.6.556 (Hit Rate → Win Rate, ties excluded) + v0.6.557 (scoreboard_v2 baseline reframed) + v0.6.558 (sentry min-magnitude gate). Day labels shifted: 09-06 → 1 day ago, 09-05 → 2 days ago, 09-04 → 3 days ago, 09-03 → 4 days ago.

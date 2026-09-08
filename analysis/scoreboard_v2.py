@@ -179,7 +179,18 @@ def _accumulate(pair_log_path, window_start, halves_midpoint):
     """Walk pair log, accumulate per-field AND per-(field, band) abs-errors for
     HRRR raw, NBM raw, Prod. Split into halves at midpoint for stability check.
     Returns (per_field_acc, per_cell_acc) where per_cell_acc[(field, band)]
-    carries the same keys but scoped to one lead band."""
+    carries the same keys but scoped to one lead band.
+
+    v0.6.560 — pool intersection. Mirrors per_field_scoring._accumulate's rule
+    so hrrr_raw_mae / nbm_raw_mae / prod_mae all describe the SAME row set:
+      NBM-scope fields (SELECTOR_SCOPE): row contributes only when
+          e_l1, e_nbm, and e_prod are all stamped.
+      HRRR-only fields: row contributes only when e_l1 and e_prod are stamped.
+    Pre-v0.6.560 accumulated each MAE independently, so lift_vs_best_public_pct
+    compared MAEs computed on different obs subsets — apples-to-oranges when
+    NBM backstamps thinned. n's will shrink on 7d NBM-scope fields; that's
+    the honest number.
+    """
     def _new_bucket():
         return {
             "hrrr":         [0.0, 0],  # [sum_abs, n]
@@ -221,33 +232,38 @@ def _accumulate(pair_log_path, window_start, halves_midpoint):
             if e_prod is None:
                 e_prod = row.get("error")
             e_nbm = row.get("error_raw_nbm")
+            in_scope = field in SELECTOR_SCOPE
+            if in_scope:
+                pool_ok = (e_l1 is not None and e_nbm is not None and e_prod is not None)
+            else:
+                pool_ok = (e_l1 is not None and e_prod is not None)
+            if not pool_ok:
+                continue
             b = acc[field]
             band = _band_for(row.get("lead_h"))
             cell = band_acc[(field, band)] if band else None
             in_half_b = (obs_time >= halves_midpoint)
-            if e_l1 is not None:
-                v = abs(float(e_l1))
-                b["hrrr"][0] += v; b["hrrr"][1] += 1
-                bucket = b["halves_b_hrrr"] if in_half_b else b["halves_a_hrrr"]
-                bucket[0] += v; bucket[1] += 1
-                if cell:
-                    cell["hrrr"][0] += v; cell["hrrr"][1] += 1
-                    bk = cell["halves_b_hrrr"] if in_half_b else cell["halves_a_hrrr"]
-                    bk[0] += v; bk[1] += 1
+            vh = abs(float(e_l1))
+            b["hrrr"][0] += vh; b["hrrr"][1] += 1
+            bucket = b["halves_b_hrrr"] if in_half_b else b["halves_a_hrrr"]
+            bucket[0] += vh; bucket[1] += 1
+            if cell:
+                cell["hrrr"][0] += vh; cell["hrrr"][1] += 1
+                bk = cell["halves_b_hrrr"] if in_half_b else cell["halves_a_hrrr"]
+                bk[0] += vh; bk[1] += 1
             if e_nbm is not None:
-                v = abs(float(e_nbm))
-                b["nbm"][0] += v; b["nbm"][1] += 1
+                vn = abs(float(e_nbm))
+                b["nbm"][0] += vn; b["nbm"][1] += 1
                 if cell:
-                    cell["nbm"][0] += v; cell["nbm"][1] += 1
-            if e_prod is not None:
-                v = abs(float(e_prod))
-                b["prod"][0] += v; b["prod"][1] += 1
-                bucket = b["halves_b_prod"] if in_half_b else b["halves_a_prod"]
-                bucket[0] += v; bucket[1] += 1
-                if cell:
-                    cell["prod"][0] += v; cell["prod"][1] += 1
-                    bk = cell["halves_b_prod"] if in_half_b else cell["halves_a_prod"]
-                    bk[0] += v; bk[1] += 1
+                    cell["nbm"][0] += vn; cell["nbm"][1] += 1
+            vp = abs(float(e_prod))
+            b["prod"][0] += vp; b["prod"][1] += 1
+            bucket = b["halves_b_prod"] if in_half_b else b["halves_a_prod"]
+            bucket[0] += vp; bucket[1] += 1
+            if cell:
+                cell["prod"][0] += vp; cell["prod"][1] += 1
+                bk = cell["halves_b_prod"] if in_half_b else cell["halves_a_prod"]
+                bk[0] += vp; bk[1] += 1
     return acc, band_acc
 
 
@@ -394,6 +410,25 @@ def _rollup(per_field, per_field_band, window_label):
     full_mean, full_med = _mean_med(all_lifts)
     touched_mean, touched_med = _mean_med(touched_lifts)
 
+    # v0.6.560 — n-weighted lift mean. Weights each field's lift by its Prod
+    # observation count. Reflects where forecast hours actually live (t/wd
+    # with n=200s outweigh pr with n=20). Unweighted mean stays for legacy
+    # consumers; new keys are additive.
+    def _weighted_mean(pairs):
+        num = sum(l * n for l, n in pairs)
+        den = sum(n for _, n in pairs)
+        return (num / den) if den > 0 else None
+    all_pairs = [(per_field[f]["lift_vs_best_public_pct"], per_field[f]["n"])
+                 for f in per_field
+                 if per_field[f]["lift_vs_best_public_pct"] is not None
+                 and per_field[f]["n"]]
+    touched_pairs = [p for f, p in
+                     [(f, (per_field[f]["lift_vs_best_public_pct"], per_field[f]["n"]))
+                      for f in per_field]
+                     if f not in ROLLUP_EXCLUDE and p[0] is not None and p[1]]
+    full_mean_w = _weighted_mean(all_pairs)
+    touched_mean_w = _weighted_mean(touched_pairs)
+
     # Four-answer framing: normalize each field's MAE as % of HRRR MAE
     # (unit-free), then average. Gives the direct answers to "how good is
     # HRRR vs NBM vs best-chosen vs Prod on average?". Only computed on
@@ -402,6 +437,10 @@ def _rollup(per_field, per_field_band, window_label):
     nbm_ratios = []
     best_ratios = []
     prod_ratios = []
+    # v0.6.560 — parallel weighted-by-n lists.
+    nbm_ratios_w = []
+    best_ratios_w = []
+    prod_ratios_w = []
     for field, cell in per_field.items():
         if field in ROLLUP_EXCLUDE:
             continue
@@ -409,23 +448,39 @@ def _rollup(per_field, per_field_band, window_label):
         n = cell.get("nbm_raw_mae")
         b = cell.get("best_public_mae")
         p = cell.get("prod_mae")
+        n_prod = cell.get("n") or 0
         if h is None or h <= 0:
             continue
         if n is not None:
-            nbm_ratios.append(100.0 * n / h)
+            r = 100.0 * n / h
+            nbm_ratios.append(r)
+            if n_prod: nbm_ratios_w.append((r, n_prod))
         if b is not None:
-            best_ratios.append(100.0 * b / h)
+            r = 100.0 * b / h
+            best_ratios.append(r)
+            if n_prod: best_ratios_w.append((r, n_prod))
         if p is not None:
-            prod_ratios.append(100.0 * p / h)
+            r = 100.0 * p / h
+            prod_ratios.append(r)
+            if n_prod: prod_ratios_w.append((r, n_prod))
     def _mean_or_none(lst):
         return (sum(lst) / len(lst)) if lst else None
+    def _weighted_or_none(pairs):
+        num = sum(v * n for v, n in pairs); den = sum(n for _, n in pairs)
+        return (num / den) if den > 0 else None
     hrrr_baseline_pct = 100.0 if prod_ratios else None
     nbm_mean_pct = _mean_or_none(nbm_ratios)
     best_mean_pct = _mean_or_none(best_ratios)
     prod_mean_pct = _mean_or_none(prod_ratios)
+    nbm_mean_pct_w = _weighted_or_none(nbm_ratios_w)
+    best_mean_pct_w = _weighted_or_none(best_ratios_w)
+    prod_mean_pct_w = _weighted_or_none(prod_ratios_w)
     pipeline_value_add_pp = None
     if best_mean_pct is not None and prod_mean_pct is not None:
         pipeline_value_add_pp = best_mean_pct - prod_mean_pct
+    pipeline_value_add_pp_w = None
+    if best_mean_pct_w is not None and prod_mean_pct_w is not None:
+        pipeline_value_add_pp_w = best_mean_pct_w - prod_mean_pct_w
 
     # Per-cell drill-down: largest gain + regression across (field, band).
     largest_gain = None
@@ -455,6 +510,11 @@ def _rollup(per_field, per_field_band, window_label):
         "value_add_median_pct":       (round(touched_med, 2) if touched_med is not None else None),
         "value_add_mean_all_fields":  (round(full_mean, 2) if full_mean is not None else None),
         "value_add_median_all_fields": (round(full_med, 2) if full_med is not None else None),
+        # v0.6.560 — n-weighted lift means (weighted by each field's Prod n).
+        # Reflects where forecast hours live; unweighted keys above stay for
+        # backwards compatibility.
+        "value_add_mean_pct_nweighted":        (round(touched_mean_w, 2) if touched_mean_w is not None else None),
+        "value_add_mean_all_fields_nweighted": (round(full_mean_w, 2) if full_mean_w is not None else None),
         "excluded_fields": sorted(list(ROLLUP_EXCLUDE)),
         # Four-answer framing: mean of per-field MAE normalized to HRRR
         # baseline (=100). Unit-free, comparable across fields.
@@ -464,6 +524,12 @@ def _rollup(per_field, per_field_band, window_label):
             "best_chosen":        (round(best_mean_pct, 1) if best_mean_pct is not None else None),
             "prod":               (round(prod_mean_pct, 1) if prod_mean_pct is not None else None),
             "pipeline_value_add_pp": (round(pipeline_value_add_pp, 2) if pipeline_value_add_pp is not None else None),
+            # v0.6.560 — n-weighted variants (each field's ratio weighted by
+            # its Prod count). Field-count keys unchanged.
+            "nbm_nweighted":                (round(nbm_mean_pct_w, 1) if nbm_mean_pct_w is not None else None),
+            "best_chosen_nweighted":        (round(best_mean_pct_w, 1) if best_mean_pct_w is not None else None),
+            "prod_nweighted":               (round(prod_mean_pct_w, 1) if prod_mean_pct_w is not None else None),
+            "pipeline_value_add_pp_nweighted": (round(pipeline_value_add_pp_w, 2) if pipeline_value_add_pp_w is not None else None),
             "n_fields": len(prod_ratios),
             "n_fields_with_nbm": len(nbm_ratios),
         },
@@ -574,7 +640,7 @@ def main():
                            "regress_lift_pct": VERDICT_REGRESS_LIFT},
             "rollup_excluded_fields": sorted(list(ROLLUP_EXCLUDE)),
         },
-        "notes": "Post-Phase-4 scoreboard. lift_vs_best_public_pct = (best_public_mae − prod_mae) / best_public_mae × 100. best_public = user default per v0.6.557 — NBM raw for NBM-scope fields (NBM is the NWS backbone; iPhone Weather / weather.gov / vendor displays), HRRR raw for the 5 HRRR-only fields (cl/cm/pp/pa/pr). Matches per_field_scoring's best_raw. Pre-v0.6.557 used argmin(hrrr_raw, nbm_raw). selector_pick = majority vote across bands from l1_selector_table_curated.json. halves_a/b = first/second half of window vs HRRR raw; halves_agree = same sign both halves. cc/dp/pp/pa/pr excluded from rollup arithmetic mean; still shown in per_field detail.",
+        "notes": "Post-Phase-4 scoreboard. lift_vs_best_public_pct = (best_public_mae − prod_mae) / best_public_mae × 100. best_public = user default per v0.6.557 — NBM raw for NBM-scope fields (NBM is the NWS backbone; iPhone Weather / weather.gov / vendor displays), HRRR raw for the 5 HRRR-only fields (cl/cm/pp/pa/pr). Matches per_field_scoring's best_raw. Pre-v0.6.557 used argmin(hrrr_raw, nbm_raw). v0.6.560: pool-intersected — per-field hrrr_raw / nbm_raw / prod MAEs describe the SAME row set (NBM-scope: row needs hrrr+nbm+prod; HRRR-only: row needs hrrr+prod). Matches per_field_scoring's pool discipline; pre-v0.6.560 accumulated each MAE independently. selector_pick = majority vote across bands from l1_selector_table_curated.json. halves_a/b = first/second half of window vs HRRR raw; halves_agree = same sign both halves. cc/dp/pp/pa/pr excluded from rollup arithmetic mean; still shown in per_field detail. v0.6.560: value_add_mean_pct_nweighted + mae_pct_of_hrrr._nweighted variants weight each field's contribution by its Prod n; unweighted keys stay for backwards compatibility.",
     }
 
     with open(OUT_JSON, "w") as fout:
