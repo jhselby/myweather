@@ -68,6 +68,17 @@ FRESH_DAYS = 3
 SUSTAINED_DAYS = 7   # window immediately prior to fresh (day 4 → day 10 ago)
 MIN_N_PER_WINDOW = 200
 
+# Recently-killed layers. When either window still overlaps the pre-kill data,
+# the verdict is suppressed to KILLED (with the kill date) — a killed layer
+# whose old fires haven't aged out is not a live regression. Once both
+# windows post-date the kill, the layer will naturally show as THIN (no
+# rows) and can be removed from this list.
+# Format: {(field, layer): "YYYY-MM-DD"}
+KILLED_LAYERS = {
+    ("ch", "chp_nbm"): "2026-09-05",   # v0.6.551
+    ("h", "l3_nbm"): "2026-09-05",     # v0.6.551
+}
+
 # Verdict thresholds apply to layer marginal degradation, not absolute MAE.
 # HOT   = marginal helping dropped by >= 15 percentage points OR flipped
 #         from helping to hurting.
@@ -171,12 +182,27 @@ def _window_stats(pairs):
     return n_all, mae_layer, n_paired, mae_layer_paired, mae_input_paired
 
 
-def evaluate(acc):
+def evaluate(acc, windows=None):
+    sustained_start = windows[0] if windows else None
     out = {}
     for (field, lyr), buckets in acc.items():
         n_f = len(buckets["fresh"])
         n_s = len(buckets["sustained"])
         cell = {"field": field, "layer": lyr, "n_fresh": n_f, "n_sustained": n_s}
+        kill_iso = KILLED_LAYERS.get((field, lyr))
+        if kill_iso and sustained_start is not None:
+            try:
+                kill_dt = datetime.fromisoformat(kill_iso)
+            except Exception:
+                kill_dt = None
+            if kill_dt is not None:
+                if kill_dt.tzinfo is None and sustained_start.tzinfo is not None:
+                    kill_dt = kill_dt.replace(tzinfo=sustained_start.tzinfo)
+                if kill_dt >= sustained_start and (n_f > 0 or n_s > 0):
+                    cell["verdict"] = "KILLED"
+                    cell["killed_at"] = kill_iso
+                    out[f"{field}.{lyr}"] = cell
+                    continue
         if n_f < MIN_N_PER_WINDOW or n_s < MIN_N_PER_WINDOW:
             cell["verdict"] = "THIN"
             out[f"{field}.{lyr}"] = cell
@@ -262,7 +288,7 @@ def emit(cells, windows):
     lines.append(hdr)
     lines.append("-" * len(hdr))
     # Sort HOT first, then WATCH, then rest — most alarming at top.
-    order = {"HOT": 0, "WATCH": 1, "CLEAN": 2, "THIN": 3}
+    order = {"HOT": 0, "WATCH": 1, "CLEAN": 2, "KILLED": 3, "THIN": 4}
     def sortkey(c):
         return (order.get(c.get("verdict", "THIN"), 4),
                 -(c.get("marginal_degradation_pp") or c.get("mae_pct_change") or 0.0),
@@ -272,6 +298,10 @@ def emit(cells, windows):
         mark = "★" if v == "HOT" else ("⚠" if v == "WATCH" else " ")
         if v == "THIN":
             lines.append(f"{c['field']:<6}{c['layer']:<10}{v:<10}{c['n_sustained']:>9,}{c['n_fresh']:>9,}")
+            continue
+        if v == "KILLED":
+            note = f"killed {c.get('killed_at', '?')} — pre-kill rows aging out"
+            lines.append(f"{c['field']:<6}{c['layer']:<10}{v:<10}{c['n_sustained']:>9,}{c['n_fresh']:>9,}   {note}")
             continue
         marg = c.get("marginal_available", False)
         help_s = f"{c['layer_help_pct_sustained']:>+10.2f}" if marg else f"{'  n/a':>10}"
@@ -292,12 +322,13 @@ def emit(cells, windows):
     n_watch = sum(1 for c in cells.values() if c.get("verdict") == "WATCH")
     n_clean = sum(1 for c in cells.values() if c.get("verdict") == "CLEAN")
     n_thin = sum(1 for c in cells.values() if c.get("verdict") == "THIN")
+    n_killed = sum(1 for c in cells.values() if c.get("verdict") == "KILLED")
     if n_hot:
         hot = sorted(f"{c['field']}.{c['layer']}" for c in cells.values() if c.get("verdict") == "HOT")
-        lines.append(f"Verdict: {n_hot} HOT, {n_watch} WATCH, {n_clean} CLEAN, {n_thin} THIN — hot: {', '.join(hot)}.")
+        lines.append(f"Verdict: {n_hot} HOT, {n_watch} WATCH, {n_clean} CLEAN, {n_killed} KILLED, {n_thin} THIN — hot: {', '.join(hot)}.")
     elif n_watch:
         watch = sorted(f"{c['field']}.{c['layer']}" for c in cells.values() if c.get("verdict") == "WATCH")
-        lines.append(f"Verdict: {n_hot} HOT, {n_watch} WATCH, {n_clean} CLEAN, {n_thin} THIN — watch: {', '.join(watch)}.")
+        lines.append(f"Verdict: {n_hot} HOT, {n_watch} WATCH, {n_clean} CLEAN, {n_killed} KILLED, {n_thin} THIN — watch: {', '.join(watch)}.")
     else:
         lines.append(f"Verdict: CLEAN — {n_clean} NBM cells nominal ({n_thin} THIN).")
     return "\n".join(lines)
@@ -308,7 +339,7 @@ def main():
     if acc is None:
         print("No pair-log rows found; aborting.", file=sys.stderr)
         return 1
-    cells = evaluate(acc)
+    cells = evaluate(acc, windows)
     text = emit(cells, windows)
     print(text)
     os.makedirs(os.path.dirname(OUT_TXT), exist_ok=True)

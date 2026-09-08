@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.561 • September 8, 2026 (nbm_regression_sentry: KILLED verdict suppresses stale HOTs on recently-killed layers)</strong></summary>
+
+- **`analysis/nbm_regression_sentry.py`** — new `KILLED_LAYERS` registry `{(field, layer): kill_date_iso}` seeded with `("ch","chp_nbm")` and `("h","l3_nbm")`, both 2026-09-05 (v0.6.551). When the sustained window still overlaps the kill date and the cell has any rows, verdict is `KILLED` with a "pre-kill rows aging out" note instead of `HOT`/`WATCH`. Digest exec-summary greps for HOT/WATCH so alerts stop firing automatically; row still prints in the table for visibility.
+- **Why:** both cells were flagged HOT this morning purely because the fresh 3d window still contained ~9-12h of pre-kill fires (chp_nbm ch n_fresh=243, l3_nbm h n_fresh=1,389). The kills themselves (v0.6.551, deployed with v0.6.552 collector 09-06) are already live; the sentry had no way to know. On the fresh window ch is trivially easy (l4_nbm MAE=2.64) so any residual layer error inflates help% into extreme negatives (chp_nbm help_f=-192%). Same-class false positive to the v0.6.548 marginal-help + v0.6.558 min-flip-magnitude guards.
+- **Registry pruning:** entries can be removed once both fresh + sustained windows fully post-date the kill (natural cleanup: THIN verdict with n=0). For today's kills that's roughly 09-15.
+- **Verified:** re-ran the sentry — both cells now `KILLED`, final verdict flipped from `2 HOT` to `CLEAN — 6 NBM cells nominal (7 THIN)`. No publisher redeploy: `nbm_regression_sentry` is not in `publisher/main.py:PUBLISHERS`.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.560 • September 7, 2026 (scoreboard_v2: pool-intersected best-public numbers + n-weighted rollup means)</strong></summary>
 
 - **`analysis/scoreboard_v2.py:_accumulate`** — pool intersection. NBM-scope fields now require `e_l1 AND e_nbm AND e_prod` on a row to contribute; HRRR-only fields require `e_l1 AND e_prod`. Mirrors `per_field_scoring._accumulate`'s pool discipline. Pre-v0.6.560 accumulated each MAE independently, so `hrrr_raw_mae` / `nbm_raw_mae` / `prod_mae` described different obs sets and `lift_vs_best_public_pct` was apples-to-oranges when NBM backstamps thinned.
