@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.564 • September 8, 2026 (session-end sweep — recent-activity + memory refresh)</strong></summary>
+
+- **`corrections_debug.html`** — Recent-Activity block: added 09-08 (Tue) as today (3 ships v0.6.561-563 + collector deploy, sentry plumbing + l4_nbm cc DROP, τ-suspect diagnosis narrative). Day-label shift: 09-07 → 1 day ago, 09-06 → 2 days ago, 09-05 → 3 days ago, 09-01 → 7 days ago, 08-31 → 8 days ago.
+- **Memory:** new `project_09_08_session.md` narrative file. `MEMORY.md` READ FIRST pointer replaced; compacted READ SECOND-FIFTH block to single-line entries so index stays under the 17.1KB limit; `l4_nbm cc DROP` moved from Scheduled to shipped.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.563 • September 8, 2026 (l4_nbm cc DROP — walkforward-flagged layer with marginal net contribution)</strong></summary>
 
 - **`weather_collector/processors/l4_nbm.py`** — `L4_NBM_FIELDS = ("ch",)`. cc dropped. Selector's deepest NBM layer for cc now falls through to L3_NBM (or raw_nbm where L3 doesn't cover).
