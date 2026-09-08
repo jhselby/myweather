@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.565 • September 8, 2026 (debug page — l4_nbm cc DROP downstream text fixes)</strong></summary>
+
+- **`corrections_debug.html`** — four stale l4_nbm cc references updated post-DROP: NBM parallel cascade summary (l4_nbm for ch only), cascade-ordering diagram (`l4_nbm (ch)`), "Real open gaps" bullet (DROP shipped 09-08, not deferred to 09-09), NBM-side ingester block (l4_nbm for ch only). Remaining `cc/ch` mentions are correct — L2_NBM cloud_obs_blend still handles both, and the selector still routes cc to NBM (just uses L3_NBM as deepest now).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.564 • September 8, 2026 (session-end sweep — recent-activity + memory refresh)</strong></summary>
 
 - **`corrections_debug.html`** — Recent-Activity block: added 09-08 (Tue) as today (3 ships v0.6.561-563 + collector deploy, sentry plumbing + l4_nbm cc DROP, τ-suspect diagnosis narrative). Day-label shift: 09-07 → 1 day ago, 09-06 → 2 days ago, 09-05 → 3 days ago, 09-01 → 7 days ago, 08-31 → 8 days ago.
