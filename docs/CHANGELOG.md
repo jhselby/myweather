@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.567 • September 8, 2026 (Selector Skill tile — primary swapped Win Rate → Value Captured)</strong></summary>
+
+- **`corrections_debug.html`** — Selector Skill tile primary metric swapped from Win Rate (direction-only, magnitude-blind) to **Value Captured** (% of oracle, magnitude-aware and n-weighted). Win Rate demoted to the secondary line as the direction-only companion. Tile now uses the same signed ±2% color/WFL thresholds as Total Lift / Pipeline Lift / Prod Trend instead of the 55/50 rate thresholds.
+- **Rationale.** Session-triggered by "Win Rate looks great, barely moves overall lift." Root cause: Win Rate counts each row equally regardless of the magnitude of the pick-vs-alternative gap. A field can win 60% of rows by 0.1°F and lose the other 40% by 3°F — Win Rate reads "great," Overall Lift reads "bad," and both are correct about different things. Value Captured is the single number that says whether the router is doing meaningful work (positive = getting some fraction of the oracle gain; negative = anti-selection, picking the worse source in aggregate). Value Captured was already computed per-field in the Accuracy tab's per-field diagnostic table and in `per_field_scoring.py:596`; this ship promotes it to the tile-level primary. No JSON schema change.
+- Range reminder: **+100%** = oracle, **0%** = broke even, **negative** = picked worse source often enough to net more MAE than the alternative (unbounded on the low end when a small denominator meets a big-magnitude wrong pick — see 09-07 ch 24h −895% as a historical example).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.566 • September 8, 2026 (L1 by-regime walker — 7-day gate → 3-day + per-day n floor)</strong></summary>
 
 - **`analysis/l1_selector_fit_by_regime.py`** — diagnostic now emits per-cell `n_today` (paired-sample count inside a rolling 24h window) alongside the existing 30d rolling `n`. Threaded through the bucket, the fit loop, and the masked_cells / all_cells output. Diagnostic-only; no runtime consumer change.
