@@ -47,6 +47,23 @@ SELECTOR_TABLE_PATH = (
     / "weather_collector" / "data" / "l1_selector_table_curated.json"
 )
 OUT_JSON = _out("per_field_scoring.json")
+MAE_OVER_TIME_JSON_PATH = _out("mae_over_time.json")
+
+
+def _load_raw_difficulty():
+    """Read raw_difficulty_index.per_field from the local mae_over_time.json
+    written earlier in the same publisher run. Returns {field: ratio} where
+    ratio = raw_mae_7d / raw_mae_90d_ref (>1 = harder than usual, <1 = easier).
+    Silent {} on any failure — this is an optional 7d audit signal, not a
+    gating input."""
+    try:
+        with open(MAE_OVER_TIME_JSON_PATH) as fin:
+            payload = json.load(fin)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+    rdi = payload.get("raw_difficulty_index") or {}
+    pf = rdi.get("per_field") or {}
+    return {f: cell.get("ratio") for f, cell in pf.items() if cell.get("ratio") is not None}
 
 FIELDS = ["t", "h", "dp", "ws", "wg", "wd", "cc", "cl", "cm", "ch", "sr", "pp", "pa", "pr"]
 
@@ -761,6 +778,14 @@ def main():
         prior_start = (now - timedelta(days=days * 2)).strftime("%Y-%m-%dT%H:%M")
         acc, halves = _accumulate(path, window_start, halves_midpoint, prior_start, band_picks)
         per_field = {f: _compute_field(f, acc[f], halves[f]) for f in FIELDS}
+        # Raw-difficulty index (7d only — reference is trailing 90d, no 24h
+        # analog). Attaches per_field ratio so the diagnostic table can show
+        # "was the underlying weather harder or easier than usual" alongside
+        # Total Lift. Direction-neutral display per feedback_audit_label_direction_neutral.
+        if label == "7d":
+            rdi = _load_raw_difficulty()
+            for f in FIELDS:
+                per_field[f]["raw_difficulty_ratio"] = rdi.get(f)
         windows_out[label] = {"per_field": per_field}
 
     payload = {
@@ -779,6 +804,7 @@ def main():
             "hrrr_prod_mae": "Deepest HRRR-side layer residual pooled over all rows — 'what would Prod be if we always picked HRRR'.",
             "nbm_prod_mae":  "Deepest NBM-side layer residual pooled over all rows — 'what would Prod be if we always picked NBM'.",
             "prod_trend_pct": "Current-window Prod MAE vs the equal-length window immediately preceding it. Positive = we improved. No external anchor — this is the 'am I doing my tuning job well' score.",
+            "raw_difficulty_ratio": "7d only. raw_mae_7d / raw_mae_ref where ref = trailing 90d excluding the 7d itself. >1.0 = raw model had it harder than usual (harder-to-predict week); <1.0 = easier than usual. Per-field normalized so units don't mix. Sourced from mae_over_time.json's raw_difficulty_index (v0.6.392). Direction-neutral audit signal — does not prescribe how to reinterpret weekly lift.",
         },
         "nbm_scope": sorted(list(NBM_SCOPE)),
         "warmup_note": "Selector is actively flipping cells since v0.6.546 (recency overrides) and v0.6.552 (by-regime walker wire). Currently ~11 recency overrides + walker overrides accumulating post-2026-09-07 (earliest walker clear 09-14). Any fresh cascade change (e.g. L3_NBM kill 09-05 v0.6.551, sr add 09-04 v0.6.549) will show a ~7d transient where the rolling window mixes pre-change and post-change rows — 24h reads honest current behavior; 7d lags by up to a week.",

@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.576 • September 9, 2026 (per-field diagnostic — Difficulty column, 7d raw MAE ÷ 90d ref)</strong></summary>
+
+- **`analysis/per_field_scoring.py`** — reads `raw_difficulty_index.per_field[f].ratio` from the local `analysis/output/mae_over_time.json` written earlier in the same publisher run and stamps it as `raw_difficulty_ratio` on every 7d per_field cell. Silent skip if `mae_over_time.json` is missing or malformed — the ratio is an optional 7d audit signal, not a gating input. 24h cells get no ratio (reference window is 90d — no 24h analog). `conventions` gets a `raw_difficulty_ratio` entry pointing at v0.6.392 for provenance.
+- **`corrections_debug.html`** — per-field diagnostic table gets a new `Difficulty` column between `Total Lift` and `Pipeline Lift`. Displays `raw_difficulty_ratio` as `1.XX×` — bare number, direction-neutral (no lift-color), per `feedback_audit_label_direction_neutral`. Bolded when `|ratio − 1| ≥ 0.15` so a materially harder or easier week catches the eye. Median + Mean foot cells added; both use an unweighted-across-fields aggregation matching `mae_over_time.json`'s own `mean_ratio`. `colspan` bumped 8 → 9 on the loading + error rows.
+- **Motivation.** The 24h window this session showed harder-than-normal HRRR raw MAE while prod MAE dropped — real pipeline lift, not easy weather. The debug page had no inline way to answer "did the model improve, or was the weather easier?" — the `raw_difficulty_index` was already emitted since v0.6.392 but lived only as a footnote under the per-field snapshot. Wiring the per-field ratio into the scoreboard row makes the confound answerable at the row where Total Lift is read.
+- **Snapshot at ship** (14 fields with a ratio): `pa` 0.61× (much easier), `ch` 0.68×, `sr` 0.75×, `t` 0.91×, `h` 0.92× — most fields easier than the 90d reference this week; `cm` 1.09×, `wd` 1.11×, `pr` 1.12×, `cl` 1.29× on the harder side. `t` + `h` at ~0.91× means the recent REGRESS on both fields is NOT explained by input difficulty — the raw baseline has actually had it a bit easier than usual.
+- No collector deploy — analysis-only change. Publisher redeploy required to publish the new field into `per_field_scoring.json` (falls back cleanly if the field is missing — old data + new UI show `—` in the Difficulty column until the publisher CF is redeployed).
+
+</details>
+
+<details open>
 <summary><strong>v0.6.575 • September 9, 2026 (debug page sweep — Recent Activity roll + NBM skip-cell count refresh)</strong></summary>
 
 - **`corrections_debug.html`** — Recent Activity rolled forward one day. New 09-09 (Wed) entry with the day's 4 ships (v0.6.571-574) at the top; 09-08 shifted to "1 day ago", 09-07 to "2 days ago", 09-06 and 09-05 trimmed to display:none (matches v0.6.570 precedent for outside-3d rolling window).

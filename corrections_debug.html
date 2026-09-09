@@ -1945,6 +1945,7 @@
         <tr>
           <th>Field</th>
           <th>Total Lift<span class="sb-pfs-thsub">Prod vs Public Baseline</span></th>
+          <th>Difficulty<span class="sb-pfs-thsub">7d raw MAE ÷ 90d ref · &gt;1 = harder than usual</span></th>
           <th>Pipeline Lift<span class="sb-pfs-thsub">(L1 pick − Prod) / L1 pick</span></th>
           <th>HRRR Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
           <th>NBM Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
@@ -1954,7 +1955,7 @@
         </tr>
       </thead>
       <tbody id="pfd-tbody">
-        <tr><td colspan="8" class="sb-dim" style="text-align:center;padding:12px;">loading per_field_scoring.json…</td></tr>
+        <tr><td colspan="9" class="sb-dim" style="text-align:center;padding:12px;">loading per_field_scoring.json…</td></tr>
       </tbody>
       <tfoot id="pfd-tfoot"></tfoot>
     </table>
@@ -4620,7 +4621,7 @@ async function renderPerFieldDiagnostic() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     pfs = await r.json();
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="8" class="sb-dim" style="text-align:center;padding:12px;">per_field_scoring.json unavailable (${e.message}).</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="sb-dim" style="text-align:center;padding:12px;">per_field_scoring.json unavailable (${e.message}).</td></tr>`;
     return;
   }
   const pf7 = (pfs.windows && pfs.windows["7d"] && pfs.windows["7d"].per_field) || {};
@@ -4662,7 +4663,7 @@ async function renderPerFieldDiagnostic() {
   };
   const _mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 
-  const totalCol = [], pipeCol = [], hrrrCol = [], nbmCol = [], hitCol = [], valCol = [];
+  const totalCol = [], pipeCol = [], hrrrCol = [], nbmCol = [], hitCol = [], valCol = [], diffCol = [];
 
   // v0.6.489 — dp/cc placeholder rows carry a small footnote marker only;
   // the derivation explanation lives in a footnote row below the tfoot
@@ -4710,6 +4711,9 @@ async function renderPerFieldDiagnostic() {
     if (nbmSkill != null && !skipAgg) nbmCol.push(nbmSkill);
     if (NBM_SCOPE.has(f) && !skipAgg && c.win_rate_pct != null) hitCol.push(c.win_rate_pct);
     if (NBM_SCOPE.has(f) && !skipAgg && c.value_captured_pct != null) valCol.push(c.value_captured_pct);
+    // Difficulty aggregate uses ALL fields with a ratio — matches
+    // mae_over_time's own mean_ratio (unweighted across fields).
+    if (c.raw_difficulty_ratio != null) diffCol.push(c.raw_difficulty_ratio);
 
     let totalCell = _fmtPct(total);
     // v0.6.494 — current-config Total Lift annotation. When the delta between
@@ -4753,7 +4757,17 @@ async function renderPerFieldDiagnostic() {
     const valCell = NBM_SCOPE.has(f) ? _fmtVal(valCap)  : `<span class="sb-em">n/a</span>`;
 
     const pipeCell = _fmtPct(pipeLift);
-    return `<tr><td>${f}</td><td>${totalCell}</td><td>${pipeCell}</td><td>${hrrrCell}</td><td>${nbmCell}</td><td>${hitCell}</td><td>${valCell}</td><td class="sb-dim">${_fmtN(n)}</td></tr>`;
+    // v0.6.576 — Difficulty column. Direction-neutral display per
+    // feedback_audit_label_direction_neutral: ratio only, no lift-color.
+    // Bold when |ratio − 1| ≥ 0.15 so a materially harder/easier week
+    // catches the eye without prescribing how to reinterpret Total Lift.
+    const diff = (c.raw_difficulty_ratio != null) ? c.raw_difficulty_ratio : null;
+    const diffCell = (diff == null)
+      ? `<span class="sb-em">—</span>`
+      : (Math.abs(diff - 1) >= 0.15
+          ? `<strong>${diff.toFixed(2)}×</strong>`
+          : `${diff.toFixed(2)}×`);
+    return `<tr><td>${f}</td><td>${totalCell}</td><td class="sb-dim">${diffCell}</td><td>${pipeCell}</td><td>${hrrrCell}</td><td>${nbmCell}</td><td>${hitCell}</td><td>${valCell}</td><td class="sb-dim">${_fmtN(n)}</td></tr>`;
   }).join("");
   tbody.innerHTML = rows;
 
@@ -4767,8 +4781,10 @@ async function renderPerFieldDiagnostic() {
     const labelStyle = "font-weight:600;text-transform:uppercase;letter-spacing:0.08em;font-size:11px;color:var(--sb-muted);";
     // Hit Rate foot: no sign, no lift-color (it's a %, not a lift).
     const hitFoot = (v) => (v == null) ? `<td class="sb-dim">—</td>` : `<td style="font-weight:600;">${v.toFixed(1)}%</td>`;
-    const medRow = `<tr style="border-top:2px solid var(--sb-divider);background:var(--sb-surface-2);"><td style="${labelStyle}">Median</td>${wrapFoot(_median(totalCol))}${wrapFoot(_median(pipeCol))}${wrapFoot(_median(hrrrCol))}${wrapFoot(_median(nbmCol))}${hitFoot(_median(hitCol))}${wrapFoot(_median(valCol))}<td class="sb-dim">—</td></tr>`;
-    const meanRow = `<tr style="background:var(--sb-surface-2);"><td style="${labelStyle}">Mean</td>${wrapFoot(_mean(totalCol))}${wrapFoot(_mean(pipeCol))}${wrapFoot(_mean(hrrrCol))}${wrapFoot(_mean(nbmCol))}${hitFoot(_mean(hitCol))}${wrapFoot(_mean(valCol))}<td class="sb-dim">—</td></tr>`;
+    // Difficulty foot: bare ratio, no lift-color (direction-neutral).
+    const diffFoot = (v) => (v == null) ? `<td class="sb-dim">—</td>` : `<td style="font-weight:600;">${v.toFixed(2)}×</td>`;
+    const medRow = `<tr style="border-top:2px solid var(--sb-divider);background:var(--sb-surface-2);"><td style="${labelStyle}">Median</td>${wrapFoot(_median(totalCol))}${diffFoot(_median(diffCol))}${wrapFoot(_median(pipeCol))}${wrapFoot(_median(hrrrCol))}${wrapFoot(_median(nbmCol))}${hitFoot(_median(hitCol))}${wrapFoot(_median(valCol))}<td class="sb-dim">—</td></tr>`;
+    const meanRow = `<tr style="background:var(--sb-surface-2);"><td style="${labelStyle}">Mean</td>${wrapFoot(_mean(totalCol))}${diffFoot(_mean(diffCol))}${wrapFoot(_mean(pipeCol))}${wrapFoot(_mean(hrrrCol))}${wrapFoot(_mean(nbmCol))}${hitFoot(_mean(hitCol))}${wrapFoot(_mean(valCol))}<td class="sb-dim">—</td></tr>`;
     tfoot.innerHTML = medRow + meanRow;
   }
 }
