@@ -1562,6 +1562,104 @@
 
   </div>
 
+  <!-- ROW 1.5: ATTRIBUTION (v0.6.569) — additive decomposition of Total Lift
+       into Routing Lift + Cascade Lift, both expressed as pp of user default.
+       Different question from the top-row quality tiles: this panel answers
+       "how many percentage points of Total Lift did each layer contribute?"
+       Routing Lift = 0 on rows where the selector picked the user default
+       (which is most rows in the current regime) — so most fields attribute
+       nearly all lift to Cascade. That's the honest reading, not a bug. ==== -->
+  <div class="sb-row sb-row-2" style="margin:0 0 12px 0;">
+    <!-- Median attribution: per-column typical field. Medians don't sum
+         (different fields set each column's median), so no "= total"
+         framing — three independent descriptive stats. Median-first per
+         the top-row convention. -->
+    <div class="sb-tile" data-tile="attribution_median">
+      <div class="sb-tile-title">Attribution — Routing · Cascade · Total <span style="color:var(--sb-dim);letter-spacing:0.05em;">(median, pp of user default)</span></div>
+      <div class="sb-tile-sub" style="min-height:3.6em;">Median across fields per column — the typical field's split. Three independent stats: medians don't add, so Total is its own median, not Routing + Cascade.</div>
+
+      <div class="sb-num-row">
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">7 Day</div>
+          <div class="sb-num-pair" style="display:grid;grid-template-columns:repeat(3,minmax(72px,1fr));gap:12px;">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">routing</div>
+              <div class="sb-num" data-cell="med_routing7">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">cascade</div>
+              <div class="sb-num" data-cell="med_cascade7">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">total</div>
+              <div class="sb-num" data-cell="med_total7">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">24 Hour</div>
+          <div class="sb-num-pair" style="display:grid;grid-template-columns:repeat(3,minmax(72px,1fr));gap:12px;">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">routing</div>
+              <div class="sb-num" data-cell="med_routing24">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">cascade</div>
+              <div class="sb-num" data-cell="med_cascade24">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">total</div>
+              <div class="sb-num" data-cell="med_total24">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mean attribution: additive across the row. -->
+    <div class="sb-tile sb-tile-wide" data-tile="attribution">
+      <div class="sb-tile-title">Attribution — Total = Routing + Cascade <span style="color:var(--sb-dim);letter-spacing:0.05em;">(mean, pp of user default)</span></div>
+      <div class="sb-tile-sub" style="min-height:3.6em;">Additive split of Total Lift. Routing = pick vs user default (0 when the pick IS the default — most rows today). Cascade = local stack on top of that pick.</div>
+
+      <div class="sb-num-row">
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">7 Day</div>
+          <div class="sb-num-pair" style="display:grid;grid-template-columns:repeat(3,minmax(72px,1fr));gap:12px;">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">routing</div>
+              <div class="sb-num" data-cell="routing7">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">cascade</div>
+              <div class="sb-num" data-cell="cascade7">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">= total</div>
+              <div class="sb-num" data-cell="total7">—</div>
+            </div>
+          </div>
+        </div>
+        <div class="sb-num-group">
+          <div class="sb-num-group-lbl">24 Hour</div>
+          <div class="sb-num-pair" style="display:grid;grid-template-columns:repeat(3,minmax(72px,1fr));gap:12px;">
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">routing</div>
+              <div class="sb-num" data-cell="routing24">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">cascade</div>
+              <div class="sb-num" data-cell="cascade24">—</div>
+            </div>
+            <div class="sb-num-cell">
+              <div class="sb-num-sublbl">= total</div>
+              <div class="sb-num" data-cell="total24">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ROW 2: DIAGNOSTICS ================================================== -->
   <div class="sb-row sb-row-2">
 
@@ -1839,7 +1937,7 @@
 
 <section class="sb-pfs-scope">
   <div class="sb-pfs-title">Per-field diagnostic — 7 day</div>
-  <div class="sb-pfs-sub">Coach's table: each field's total, plus the two cascade skills (independent of routing), plus the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Win Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. dp and cc omitted — both derived, no independent skill to score (see note below).</span></div>
+  <div class="sb-pfs-sub">Coach's table: each field's total, the pipeline lift on the selector's chosen stack (mirrors the tile), the two cascade skills (independent of routing), and the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Win Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. dp and cc omitted — both derived, no independent skill to score (see note below).</span></div>
 
   <div class="sb-pfs-scroll">
     <table class="sb-pfs-tbl">
@@ -1847,6 +1945,7 @@
         <tr>
           <th>Field</th>
           <th>Total Lift<span class="sb-pfs-thsub">Prod vs Public Baseline</span></th>
+          <th>Pipeline Lift<span class="sb-pfs-thsub">(L1 pick − Prod) / L1 pick</span></th>
           <th>HRRR Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
           <th>NBM Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
           <th>Win Rate<span class="sb-pfs-thsub">wins / (wins + losses); ties excluded</span></th>
@@ -1855,7 +1954,7 @@
         </tr>
       </thead>
       <tbody id="pfd-tbody">
-        <tr><td colspan="7" class="sb-dim" style="text-align:center;padding:12px;">loading per_field_scoring.json…</td></tr>
+        <tr><td colspan="8" class="sb-dim" style="text-align:center;padding:12px;">loading per_field_scoring.json…</td></tr>
       </tbody>
       <tfoot id="pfd-tfoot"></tfoot>
     </table>
@@ -1864,7 +1963,7 @@
   <div class="sb-pfs-foot">
     <div><strong>dp</strong> and <strong>cc</strong> omitted — both derived at prod-time (dp = Magnus(prod_t, prod_h); cc = Ccd max(prod_cl, prod_cm, prod_ch)) with no independent skill chain. Future dp bias layer or cc composition tuner would restore their rows.</div>
     <div style="margin-top:6px;"><strong>🪦 cfg X%</strong> annotation on a Total Lift cell = current-config counterfactual (v0.6.494). Computed by walking the cascade stamps and skipping layers currently ENABLED=False. Big delta between the as-shipped number and cfg = a recent kill is still poisoning the rolling window; expect it to fade over ~7-30 days as new rows accumulate. Snapshot 2026-08-26: skips <code>error_l5_nbm</code> (killed 08-25) + <code>error_l6_nbm</code> (scaffold). HRRR-side counterfactual deferred (needs per-field disable logic because HRRR layer slots are field-dependent).</div>
-    <div style="margin-top:8px;">Windows: all five columns computed on the same paired 7d/24h pool (v0.6.492) — rows where every relevant residual (HRRR raw, NBM raw, selector output, Prod, both cascade Prods) exists. Total Lift columns and Pipeline Skill columns now share denominators, so causal chaining is meaningful: if Total Lift moves, at least one Pipeline Skill or the selector's Win Rate moved on the same rows to cause it.</div>
+    <div style="margin-top:8px;">Windows: all six lift/skill columns computed on the same paired 7d/24h pool (v0.6.492) — rows where every relevant residual (HRRR raw, NBM raw, selector output, Prod, both cascade Prods) exists. Total Lift, Pipeline Lift, and per-cascade Pipeline Skill columns share denominators (each vs its own reference: user default, L1 pick, own raw), so causal chaining is meaningful: if Total Lift moves, at least one of Pipeline Lift, a Pipeline Skill, or the selector's Win Rate moved on the same rows to cause it.</div>
   </div>
 </section>
 
@@ -4322,19 +4421,69 @@ async function renderScoreboardTilesMinimal() {
   _paintTile("pipeline_lift",  _agg(LIFT_SCOPE), _pipelineLift);
   _paintTile("prod_trend",     _agg(ALL_SCOPE),  _prodTrend);
 
+  // v0.6.569 — Attribution panel: additive decomposition of Total Lift.
+  // routing_lift_pct = (best_raw − l1_selected) / best_raw × 100
+  // cascade_lift_pct = (l1_selected − prod)    / best_raw × 100
+  // Sum = (best_raw − prod)/best_raw × 100 = total_vs_best_raw_pct.
+  // Same field scope as Total Lift tile.
+  const _paintAttribution = () => {
+    const tileMean = document.querySelector(`[data-tile="attribution"]`);
+    const tileMed  = document.querySelector(`[data-tile="attribution_median"]`);
+    if (!tileMean && !tileMed) return;
+    const fields = _agg(LIFT_SCOPE);
+    const _decomp = (win) => {
+      const rs = [], cs = [], ts = [];
+      for (const f of fields) {
+        const c = win[f];
+        if (!c) continue;
+        const b = c.best_raw_mae, s = c.l1_selected_mae, p = c.prod_mae;
+        if (b == null || s == null || p == null || !(b > 0)) continue;
+        rs.push(100 * (b - s) / b);
+        cs.push(100 * (s - p) / b);
+        ts.push(100 * (b - p) / b);
+      }
+      return { rs, cs, ts };
+    };
+    const _paintCells = (tile, mapping) => {
+      if (!tile) return;
+      for (const [key, val] of Object.entries(mapping)) {
+        const el = tile.querySelector(`[data-cell="${key}"]`);
+        if (!el) continue;
+        el.textContent = _fmt(val, true);
+        el.classList.remove("sb-good", "sb-warn", "sb-bad");
+        const cls = _cls(val);
+        if (cls) el.classList.add(cls);
+      }
+    };
+    const d7 = _decomp(pf7), d24 = _decomp(pf24);
+    // Mean: additive across fields (routing + cascade = total).
+    _paintCells(tileMean, {
+      routing7:  _mean(d7.rs),   cascade7:  _mean(d7.cs),   total7:  _mean(d7.ts),
+      routing24: _mean(d24.rs),  cascade24: _mean(d24.cs),  total24: _mean(d24.ts),
+    });
+    // Median: per-column typical field. Not additive.
+    _paintCells(tileMed, {
+      med_routing7:  _median(d7.rs),   med_cascade7:  _median(d7.cs),   med_total7:  _median(d7.ts),
+      med_routing24: _median(d24.rs),  med_cascade24: _median(d24.cs),  med_total24: _median(d24.ts),
+    });
+  };
+  _paintAttribution();
+
   // v0.6.568 — Selector Skill tile: Value Captured is now the sole tile
   // metric. Win Rate secondary line removed to keep the tile the same
   // shape as Total Lift + Pipeline Lift and to avoid the "high Win Rate /
   // low overall lift" misread that direction-only companion metrics
   // invite. Win Rate is still available per-field on the Accuracy tab's
   // diagnostic table for the trained-eyes-only divergence read.
-  // Big-number color class uses the same VC-tuned thresholds as this tile's
-  // WFL: ≥ +33% good, ≤ 0% bad, in-between warn. Keeps tile paint and WFL
-  // consistent so a "green" number doesn't sit next to a "flat" WFL row.
+  // v0.6.569 — retuned VC thresholds. Prior +33% winning bar painted +48%
+  // aggregate green even though the selector was leaving over half the
+  // oracle gap on the table. New scale reflects what "good picking"
+  // actually means: ≥ +70% winning, ≤ +30% losing, 30-70% flat. Tile
+  // paint + WFL share this classifier so numbers and lists agree.
   const _clsVC = (v) => {
     if (v == null) return "";
-    if (v >= 33) return "sb-good";
-    if (v <= 0)  return "sb-bad";
+    if (v >= 70) return "sb-good";
+    if (v <= 30) return "sb-bad";
     return "sb-warn";
   };
   const _paintSelectorSkill = () => {
@@ -4400,15 +4549,15 @@ async function renderScoreboardTilesMinimal() {
   const _trend = { w: "improving", f: "flat", l: "regressing" };
   _paintWfl("total_lift",     _agg(LIFT_SCOPE), _totalLift,     _lift);
   _paintWfl("pipeline_lift",  _agg(LIFT_SCOPE), _pipelineLift,  _lift);
-  // Selector Skill uses Value Captured thresholds tuned to the metric:
-  //   ≥ +33% "winning" = captures at least a third of the oracle routing gap
-  //   ≤   0% "losing"  = anti-selection, netting more MAE than the alternative
-  //   0-33% "flat"     = positive but underperforming (helping some, leaving
-  //                      most of the oracle gap on the table)
-  // The shared ±2% default (used by lift-in-MAE tiles) is too lenient for
-  // VC — a field can show "winning" at +5% while the selector barely
-  // routes. +33% is the meaningful-work bar.
-  _paintWfl("selector_skill", _agg(NBM_SCOPE),  _valueCaptured, _lift, {win: 33, lose: 0});
+  // Selector Skill uses Value Captured thresholds tuned to the metric
+  // (v0.6.569 retune — was +33%/0%):
+  //   ≥ +70% "winning" = capturing most of the oracle routing gap
+  //   ≤ +30% "losing"  = capturing less than a third of the gap (or
+  //                       anti-selecting when negative)
+  //   30-70% "flat"    = middling — real gap remaining
+  // Prior +33%/0% bar painted +48% aggregate green even though the
+  // selector was leaving more than half of the oracle gap on the table.
+  _paintWfl("selector_skill", _agg(NBM_SCOPE),  _valueCaptured, _lift, {win: 70, lose: 30});
   _paintWfl("prod_trend",     _agg(ALL_SCOPE),  _prodTrend,     _trend);
 
   // v0.6.488 — National Source. Which raw source (HRRR or NBM) wins per
@@ -4495,7 +4644,7 @@ async function renderPerFieldDiagnostic() {
     if (!r.ok) throw new Error("HTTP " + r.status);
     pfs = await r.json();
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="7" class="sb-dim" style="text-align:center;padding:12px;">per_field_scoring.json unavailable (${e.message}).</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="sb-dim" style="text-align:center;padding:12px;">per_field_scoring.json unavailable (${e.message}).</td></tr>`;
     return;
   }
   const pf7 = (pfs.windows && pfs.windows["7d"] && pfs.windows["7d"].per_field) || {};
@@ -4537,7 +4686,7 @@ async function renderPerFieldDiagnostic() {
   };
   const _mean = (a) => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
 
-  const totalCol = [], hrrrCol = [], nbmCol = [], hitCol = [], valCol = [];
+  const totalCol = [], pipeCol = [], hrrrCol = [], nbmCol = [], hitCol = [], valCol = [];
 
   // v0.6.489 — dp/cc placeholder rows carry a small footnote marker only;
   // the derivation explanation lives in a footnote row below the tfoot
@@ -4575,7 +4724,12 @@ async function renderPerFieldDiagnostic() {
     // push happened before that guard, silently poisoning median/mean.
     const isNonMae = (f === "pa" || f === "pp");
     const skipAgg = isDerived || isNonMae;
+    // v0.6.569 — Pipeline Lift per-field column (corr_vs_l1_pct). Mirrors
+    // the tile's metric: (l1_selected − prod) / l1_selected. Same aggregation
+    // scope as Total Lift + Pipe Skills (skip dp/cc derived + pa/pp non-MAE).
+    const pipeLift = (c.corr_vs_l1_pct != null) ? c.corr_vs_l1_pct : null;
     if (total != null && !skipAgg) totalCol.push(total);
+    if (pipeLift != null && !skipAgg) pipeCol.push(pipeLift);
     if (hrrrSkill != null && !skipAgg) hrrrCol.push(hrrrSkill);
     if (nbmSkill != null && !skipAgg) nbmCol.push(nbmSkill);
     if (NBM_SCOPE.has(f) && !skipAgg && c.win_rate_pct != null) hitCol.push(c.win_rate_pct);
@@ -4622,7 +4776,8 @@ async function renderPerFieldDiagnostic() {
     const hitCell = NBM_SCOPE.has(f) ? _fmtHit(hitRate) : `<span class="sb-em">n/a</span>`;
     const valCell = NBM_SCOPE.has(f) ? _fmtVal(valCap)  : `<span class="sb-em">n/a</span>`;
 
-    return `<tr><td>${f}</td><td>${totalCell}</td><td>${hrrrCell}</td><td>${nbmCell}</td><td>${hitCell}</td><td>${valCell}</td><td class="sb-dim">${_fmtN(n)}</td></tr>`;
+    const pipeCell = _fmtPct(pipeLift);
+    return `<tr><td>${f}</td><td>${totalCell}</td><td>${pipeCell}</td><td>${hrrrCell}</td><td>${nbmCell}</td><td>${hitCell}</td><td>${valCell}</td><td class="sb-dim">${_fmtN(n)}</td></tr>`;
   }).join("");
   tbody.innerHTML = rows;
 
@@ -4636,8 +4791,8 @@ async function renderPerFieldDiagnostic() {
     const labelStyle = "font-weight:600;text-transform:uppercase;letter-spacing:0.08em;font-size:11px;color:var(--sb-muted);";
     // Hit Rate foot: no sign, no lift-color (it's a %, not a lift).
     const hitFoot = (v) => (v == null) ? `<td class="sb-dim">—</td>` : `<td style="font-weight:600;">${v.toFixed(1)}%</td>`;
-    const medRow = `<tr style="border-top:2px solid var(--sb-divider);background:var(--sb-surface-2);"><td style="${labelStyle}">Median</td>${wrapFoot(_median(totalCol))}${wrapFoot(_median(hrrrCol))}${wrapFoot(_median(nbmCol))}${hitFoot(_median(hitCol))}${wrapFoot(_median(valCol))}<td class="sb-dim">—</td></tr>`;
-    const meanRow = `<tr style="background:var(--sb-surface-2);"><td style="${labelStyle}">Mean</td>${wrapFoot(_mean(totalCol))}${wrapFoot(_mean(hrrrCol))}${wrapFoot(_mean(nbmCol))}${hitFoot(_mean(hitCol))}${wrapFoot(_mean(valCol))}<td class="sb-dim">—</td></tr>`;
+    const medRow = `<tr style="border-top:2px solid var(--sb-divider);background:var(--sb-surface-2);"><td style="${labelStyle}">Median</td>${wrapFoot(_median(totalCol))}${wrapFoot(_median(pipeCol))}${wrapFoot(_median(hrrrCol))}${wrapFoot(_median(nbmCol))}${hitFoot(_median(hitCol))}${wrapFoot(_median(valCol))}<td class="sb-dim">—</td></tr>`;
+    const meanRow = `<tr style="background:var(--sb-surface-2);"><td style="${labelStyle}">Mean</td>${wrapFoot(_mean(totalCol))}${wrapFoot(_mean(pipeCol))}${wrapFoot(_mean(hrrrCol))}${wrapFoot(_mean(nbmCol))}${hitFoot(_mean(hitCol))}${wrapFoot(_mean(valCol))}<td class="sb-dim">—</td></tr>`;
     tfoot.innerHTML = medRow + meanRow;
   }
 }
