@@ -1,4 +1,39 @@
 <details open>
+<summary><strong>v0.6.571 • September 9, 2026 (debug page — Upcoming + Post-ship watches cleanup pass)</strong></summary>
+
+- **`corrections_debug.html`** — Upcoming grid trimmed of five ✓-completed entries (09-04 NBM POP first 7d, 08-30 cc.l4_nbm sentry close, 08-28 NBM skip-proposals review, 08-20 Phase 4 selector armed, 08-21 NBM parallel cascade operational). The grid header already says "Forward-looking only" and duplicated state on completed work was scrolling the still-actionable rows off the fold.
+- **L1 by-regime walker milestone rewritten.** Old Mon 09-07 (walker start) + ~Mon 09-14 (earliest wire) rows collapsed to a single **~Fri 09-11** row that reflects the v0.6.566 gate loosening (7-day → 3-day + per-day n_today ≥ 20). Names the first cell likely to clear (ws/nw_flow/12-23, n_today=228 on 09-08) and notes rare-regime cells will lag by design.
+- **Post-ship watches — active** — three items marked CLOSED CLEAN removed (cc.l4_nbm HOT sentry closed 08-30, chp cell-skip +1 closed 08-28, chp emergency cell-skip closed 08-27). Same items still summarized in the CLOSED-CLEAN footer below the active list, so no historical loss.
+- **Post-ship footer** — added today's close: NBM skip-table 14d watch (9 cells shipped 08-26 v0.6.500 — 7 wg + 2 ch) closed clean 2026-09-09; no cell reversals in walkforward output across the window.
+
+</details>
+
+<details open>
+<summary><strong>v0.6.570 • September 8, 2026 (debug page text sweep — trim Recent Activity to 3 days + fix stale L4/NBM refs)</strong></summary>
+
+- **`corrections_debug.html`** — Recent Activity window trimmed from 7+ days to 3 days (09-08, 09-07, 09-06, 09-05); older entries removed and the trimmed-tail marker updated. Today's entry extended to include evening ships v0.6.564–569 (attribution + Pipeline Lift column + VC threshold retune + cc/sr investigations).
+- **L4 diurnal scope corrected in three places** (was `{ch, cc}` — cc dropped from HRRR L4 on 2026-08-28 v0.6.515 and from NBM L4 on 2026-09-08 v0.6.563):
+    - What's running: L4 = `{ch}` with cc-drop annotation.
+    - Engineering updates cc row: NBM chain drops the l4_nbm reference.
+    - Engineering updates L4 summary: `{ch}` with drop dates for both cascades.
+- **Engineering updates h row** — HRRR chain trimmed L4 diurnal (h has never been in HRRR `L4_FIELDS`; the text was carried over from an earlier scope).
+- **Engineering updates L3 row** — `{wg, ch, cm}` (was `{wg, ch, cm, pp}` — pp dropped 2026-07-04 v0.6.304).
+- **NBM cell-count references (3 places)** — hard-coded "10 cells: wg 12-47h, wd 12-23h..." replaced with today's actual field-level picks + pointer to the Total Lift tile for real-time picks, so future selector refits don't drift the text away from truth.
+
+</details>
+
+<details open>
+<summary><strong>v0.6.569 • September 8, 2026 (attribution decomposition + Pipeline Lift per-field column + Selector Skill retune)</strong></summary>
+
+- **New Attribution panels (mean + median)** in `corrections_debug.html` — additive decomposition of Total Lift into **Routing + Cascade**, expressed in pp of user default. Mean tile: Routing + Cascade = Total, exact per-field. Median tile: three independent per-column stats (medians don't sum — different fields set each column's median). Panels sit between the top-row quality tiles and the diagnostics row; median first per top-row convention, mean wider for emphasis of the additive story.
+- **New "Pipeline Lift" column** in the per-field diagnostic table, between Total Lift and HRRR Pipeline Skill. Displays the existing `corr_vs_l1_pct` so the tile aggregate becomes auditable per field.
+- **Selector Skill WFL retune** — thresholds **≥ +70% winning / ≤ +30% losing** (was ≥ +33% / ≤ 0%). The old bar painted +48% VC green even though the selector was leaving over half the oracle gap on the table. Tile paint (`_clsVC`) and WFL bands share the new scale.
+- **Sub-text on the per-field diagnostic updated** to reference the six lift/skill columns and the different denominators each uses.
+- **Design rationale.** Two separate questions, two separate panels. Top-row quality tiles measure each layer against its natural counterfactual (Total Lift vs user default, Pipeline Lift vs L1_selected, Selector Skill vs alternative pick) — non-additive by design. Attribution panels force one denominator (user default) so contributions sum. You can't have (a) additive decomposition, (b) each layer credited for its own work, and (c) a user-anchored baseline all at once — natural counterfactuals don't nest. Panels ship both framings side by side. Live numbers at ship time: 7d routing −4.0% + cascade +8.4% = total +4.4%; 24h routing −3.5% + cascade +17.1% = total +13.6% (mean panel). Selector routing negative both windows is honest — the walker wire on ~09-11 is expected to shift this.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.568 • September 8, 2026 (Selector Skill tile — trim Win Rate line, VC-tuned WFL thresholds)</strong></summary>
 
 - **`corrections_debug.html`** — Selector Skill tile Win Rate secondary line removed entirely (was inviting the same "direction-only companion" misread the primary swap in v0.6.567 was meant to end). Description trimmed to one sentence so the tile matches the height/shape of Total Lift and Pipeline Lift. Win Rate is still available per-field on the Accuracy tab's diagnostic table for divergence reads.
