@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.575 • September 9, 2026 (debug page sweep — Recent Activity roll + NBM skip-cell count refresh)</strong></summary>
+
+- **`corrections_debug.html`** — Recent Activity rolled forward one day. New 09-09 (Wed) entry with the day's 4 ships (v0.6.571-574) at the top; 09-08 shifted to "1 day ago", 09-07 to "2 days ago", 09-06 and 09-05 trimmed to display:none (matches v0.6.570 precedent for outside-3d rolling window).
+- **What's running — NBM parallel cascade line** — updated the `skip_table_nbm_curated.json` cell count from "17 cells (v0.6.500)" to "14 cells post-v0.6.574 (was 19 → 14 after first REMOVE-side curation)" with note that the symmetric ADD + REMOVE audit loop now runs daily in the digest.
+- No runtime change; text sweep only. No collector deploy required.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.574 • September 9, 2026 (NBM skip audit — two-window verdict + revert 2 premature removes)</strong></summary>
 
 - **`analysis/nbm_skip_earning_audit.py`** — two-window verdict added. REMOVE now requires BOTH a 14d fresh window AND a 50d long window to clear the same lift + halves-stability gate. WATCH is a new verdict for cells that clear 14d but fail 50d (regime-transient signal, no action). 14d catches freshness, 50d catches robustness.
