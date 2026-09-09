@@ -386,6 +386,7 @@ NBM_SENTRY_JSON_PATH = HERE.parent / "output" / "nbm_regression_sentry.json"
 # lift; emits proposed L3_NBM_FIELDS / L4_NBM_FIELDS whitelists and diffs
 # against runtime-live tuples.
 NBM_WALKFORWARD_JSON_PATH = HERE.parent / "output" / "nbm_walkforward.json"
+NBM_SKIP_EARNING_JSON_PATH = HERE.parent / "output" / "nbm_skip_earning_audit.json"
 
 # Regression sentry (added v0.6.389i, 2026-07-30; sustained-vs-fresh split
 # added v0.6.390f, 2026-07-31 after the cl field-kill exposed the flat-window
@@ -784,6 +785,29 @@ def nbm_skip_proposals_summary():
                     f"  • {lyr} {field} {c.get('regime','*')} {c.get('band')}: "
                     f"n={c.get('n'):,} lift={c.get('lift_pct'):+.1f}%{note}"
                 )
+    return lines
+
+
+def nbm_skip_earning_summary():
+    """Return list of REMOVE-candidate lines from nbm_skip_earning_audit.json —
+    skip cells that no longer earn their skip on recent data."""
+    if not NBM_SKIP_EARNING_JSON_PATH.exists():
+        return None
+    try:
+        doc = json.loads(NBM_SKIP_EARNING_JSON_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None
+    lines = []
+    for c in doc.get("per_cell") or []:
+        if c.get("verdict") != "REMOVE":
+            continue
+        s = c.get("score") or {}
+        lines.append(
+            f"  • {c['layer']} {c['field']} {c['regime']} {c['band']}: "
+            f"n={s.get('n', 0):,} lift={s.get('lift_pct', 0):+.2f}% "
+            f"(halves {s.get('halves_first_lift', 0):+.2f}% / "
+            f"{s.get('halves_second_lift', 0):+.2f}%)"
+        )
     return lines
 
 
@@ -1614,6 +1638,18 @@ def main():
             out.append(line)
     else:
         out.append("  • no per-band cells hit the skip threshold")
+    out.append("")
+
+    # NBM stale-skip audit — symmetric REMOVE proposals (2026-09-09).
+    nbm_remove_lines = nbm_skip_earning_summary()
+    out.append("NBM stale-skip proposals (current skip cells no longer earning — REMOVE candidates):")
+    if nbm_remove_lines is None:
+        out.append("  • skip-earning audit not run yet")
+    elif nbm_remove_lines:
+        for line in nbm_remove_lines:
+            out.append(line)
+    else:
+        out.append("  • every current skip cell still earns its skip (or is THIN)")
     out.append("")
 
     ml_line, ml_suppression = marine_layer_anomaly_summary()

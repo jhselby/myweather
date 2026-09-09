@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.572 • September 9, 2026 (NBM skip-table stale-cell audit — symmetric REMOVE curation loop)</strong></summary>
+
+- **New `analysis/nbm_skip_earning_audit.py`** — for every cell currently in `skip_table_nbm_curated.json`, evaluate on last 14d of pair-log data whether the skip still earns. Counterfactual: what would `error_l3_nbm` have been if this cell were not skipped, using the current pooled bias from `l3_nbm_curated.json`. Emits REMOVE proposals with the same halves-stability + 3% lift gate the ADD side uses.
+- **Motivation.** The ADD-side skip curation loop has been running daily since v0.6.462 (walkforward validator proposes cells to add). The REMOVE side has never existed — cells added weeks ago on evidence have never been re-tested against fresh data. Asymmetric process → skip table drifts toward over-skipping as weather regimes shift.
+- **First-run finding on 19 current skip cells:** **7 REMOVE candidates** surfaced (37% of the table). Biggest: `l3_nbm wg se_flow 12-23h` (n=870, lift +17.89%, halves +16% / +19%); `l3_nbm h se_flow 24-47h` (n=1487, lift +10.29%); `l3_nbm wg nw_flow 12-23h` (n=943, lift +10.31%). All halves-stable. None acted on yet — curator (Joe) reviews before shipping a `history: remove` action.
+- **Digest wiring** — `build_executive_summary.py` picks up the JSON output and emits a new "NBM stale-skip proposals" section directly below the existing "NBM skip-table proposals" section. Symmetric REMOVE-side alerts in the daily exec summary. No runtime change; analysis-only.
+- **Design note.** Scope today is l3_nbm cells only (all 19 current cells live under l3_nbm). Extension points documented in `_score_cell` — chp_nbm/wdp_nbm counterfactuals need the persistence-gate tables reconstructed, not a scalar bias; deferred until those layers grow skip entries.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.571 • September 9, 2026 (debug page — Upcoming + Post-ship watches cleanup pass)</strong></summary>
 
 - **`corrections_debug.html`** — Upcoming grid trimmed of five ✓-completed entries (09-04 NBM POP first 7d, 08-30 cc.l4_nbm sentry close, 08-28 NBM skip-proposals review, 08-20 Phase 4 selector armed, 08-21 NBM parallel cascade operational). The grid header already says "Forward-looking only" and duplicated state on completed work was scrolling the still-actionable rows off the fold.
