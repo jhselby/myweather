@@ -1,4 +1,23 @@
 <details open>
+<summary><strong>v0.6.573 • September 9, 2026 (NBM skip-table — remove 7 stale cells, first REMOVE-side curation)</strong></summary>
+
+- **`weather_collector/data/skip_table_nbm_curated.json`** — removed 7 cells that no longer earned their skip on 14d of fresh pair-log data per v0.6.572's audit. First-ever REMOVE-side curation on the NBM skip table; every prior curation had been ADD-side.
+- **Cells removed** (all `l3_nbm`, all halves-stable, lifts +5.64% to +17.89%, n=257 to 1,487):
+    - `wg se_flow 12-23h` (n=870, lift +17.89%, halves +16%/+19%)
+    - `h se_flow 24-47h` (n=1,487, lift +10.29%, halves +4%/+17%)
+    - `wg nw_flow 12-23h` (n=943, lift +10.31%, halves +20%/+4%)
+    - `wg se_flow 6-11h` (n=357, lift +15.93%, halves +11%/+19%)
+    - `wg pre_frontal 12-23h` (n=449, lift +11.42%, halves +14%/+10%)
+    - `wg nw_flow 6-11h` (n=513, lift +12.05%, halves +17%/+8%)
+    - `wg se_flow 0-5h` (n=257, lift +5.64%, halves +6%/+5%)
+- **Table state**: 19 → 12 cells. wg 15 → 9, h 2 → 1, ch 2 → 2 unchanged. History entry added under `2026-09-09T15:16` with `action: remove` and per-cell evidence.
+- **User impact**: NBM cascade now applies the pooled L3 bias in these 7 (regime × band) cells. Selector already routes NBM for many of them (wg is NBM-routed at 6-47h in most regimes; h is HRRR-routed but the skip removal is future-proofing if h ever routes NBM).
+- **Post-ship watch**: `nbm_regression_sentry` + `nbm_skip_earning_audit` both run daily. Any of the 7 REMOVEs that turn HOT within 7 days go back on the skip list. Digest exec summary line under "NBM stale-skip proposals" flips (0 candidates from these 7 iff they still earn the un-skip).
+- **Collector deploy required.**
+
+</details>
+
+<details open>
 <summary><strong>v0.6.572 • September 9, 2026 (NBM skip-table stale-cell audit — symmetric REMOVE curation loop)</strong></summary>
 
 - **New `analysis/nbm_skip_earning_audit.py`** — for every cell currently in `skip_table_nbm_curated.json`, evaluate on last 14d of pair-log data whether the skip still earns. Counterfactual: what would `error_l3_nbm` have been if this cell were not skipped, using the current pooled bias from `l3_nbm_curated.json`. Emits REMOVE proposals with the same halves-stability + 3% lift gate the ADD side uses.

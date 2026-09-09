@@ -1,5 +1,5 @@
 {
-  "fitted_at": "2026-08-28T10:45",
+  "fitted_at": "2026-09-09T15:16",
   "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
   "cells": {
     "l3_nbm": {
@@ -45,39 +45,9 @@
           24
         ],
         [
-          "nw_flow",
-          6,
-          12
-        ],
-        [
-          "nw_flow",
-          12,
-          24
-        ],
-        [
           "pre_frontal",
           6,
           12
-        ],
-        [
-          "pre_frontal",
-          12,
-          24
-        ],
-        [
-          "se_flow",
-          0,
-          6
-        ],
-        [
-          "se_flow",
-          6,
-          12
-        ],
-        [
-          "se_flow",
-          12,
-          24
         ]
       ],
       "ch": [
@@ -97,11 +67,6 @@
           "se_flow",
           0,
           6
-        ],
-        [
-          "se_flow",
-          24,
-          48
         ]
       ]
     },
@@ -386,7 +351,7 @@
           ]
         ]
       },
-      "reason": "Scheduled 08-28 review of NBM walkforward per-regime SKIP proposals — sustained-7d window fully post-backstamp today. Today's list of 41 L3_NBM proposals: fields not in L3_NBM_FIELDS (t/ws/wd/sr/dp) are moot; cc excluded by design (Ccd overwrite); all 6 wg + both ch proposals were already curated 08-26 v0.6.500. Net-new is 2 h se_flow cells (0-5h -17.8% n=247, 24-47h -25.9% n=477). Both durable: sustained-7d window is fully post-backstamp, large lift, n>=247."
+      "reason": "Scheduled 08-28 review of NBM walkforward per-regime SKIP proposals \u2014 sustained-7d window fully post-backstamp today. Today's list of 41 L3_NBM proposals: fields not in L3_NBM_FIELDS (t/ws/wd/sr/dp) are moot; cc excluded by design (Ccd overwrite); all 6 wg + both ch proposals were already curated 08-26 v0.6.500. Net-new is 2 h se_flow cells (0-5h -17.8% n=247, 24-47h -25.9% n=477). Both durable: sustained-7d window is fully post-backstamp, large lift, n>=247."
     },
     "2026-08-26T17:26": {
       "action": "add",
@@ -442,6 +407,51 @@
         ]
       },
       "reason": "v0.6.500 \u2014 nbm_walkforward_validator per-band proposals n>=200 lift<=-3%, filtered to fields currently in L3_NBM_FIELDS (wg/h/ch/cc). cc excluded (Ccd overwrite makes cc L3_NBM no-op for user output). wg cells span nw_flow/pre_frontal/se_flow regimes, lift -4 to -13%. ch cells short-lead nw_flow + se_flow, lift -3.4/-3.8%."
+    },
+    "2026-09-09T15:16": {
+      "action": "remove",
+      "cells": {
+        "l3_nbm.wg": [
+          [
+            "nw_flow",
+            6,
+            12
+          ],
+          [
+            "nw_flow",
+            12,
+            24
+          ],
+          [
+            "pre_frontal",
+            12,
+            24
+          ],
+          [
+            "se_flow",
+            0,
+            6
+          ],
+          [
+            "se_flow",
+            6,
+            12
+          ],
+          [
+            "se_flow",
+            12,
+            24
+          ]
+        ],
+        "l3_nbm.h": [
+          [
+            "se_flow",
+            24,
+            48
+          ]
+        ]
+      },
+      "reason": "v0.6.572 nbm_skip_earning_audit findings \u2014 7 skip cells no longer earn their skip on 14d fresh data. Halves-stable lifts +5.64% to +17.89% with n=257 to 1,487 per cell (thresholds mirror walkforward ADD-side: n\u226550, lift\u22653%, halves both positive). Symmetric REMOVE curation loop shipped in v0.6.572 catches skip-table drift as weather regimes shift. Per-cell evidence: wg se_flow 12-23h (n=870, +17.89%), wg nw_flow 12-23h (n=943, +10.31%), h se_flow 24-47h (n=1487, +10.29%), wg se_flow 6-11h (n=357, +15.93%), wg pre_frontal 12-23h (n=449, +11.42%), wg nw_flow 6-11h (n=513, +12.05%), wg se_flow 0-5h (n=257, +5.64%)."
     }
   }
 }
