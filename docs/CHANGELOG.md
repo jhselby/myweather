@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.574 • September 9, 2026 (NBM skip audit — two-window verdict + revert 2 premature removes)</strong></summary>
+
+- **`analysis/nbm_skip_earning_audit.py`** — two-window verdict added. REMOVE now requires BOTH a 14d fresh window AND a 50d long window to clear the same lift + halves-stability gate. WATCH is a new verdict for cells that clear 14d but fail 50d (regime-transient signal, no action). 14d catches freshness, 50d catches robustness.
+- **Motivation.** A 50d cross-check of v0.6.573's 7 shipped removes surfaced 2 that failed the longer window: `h se_flow 24-47h` (50d lift −2.22%, skip still earns) and `wg nw_flow 6-11h` (50d halves-unstable −4.55/+12.76). Both cleared 14d only. The pattern was systemic — recent regime shifts flip individual cells over short windows without holding up on longer data.
+- **Reverts.** Both premature removes put back on the skip list. `weather_collector/data/skip_table_nbm_curated.json` cells: 12 → 14. `wg` back to 10, `h` back to 2. History entry `2026-09-09T16:19` with `action: add` and cross-check evidence.
+- **What stayed removed** (5 of the original 7 confirmed robust on 50d): wg se_flow 0-5h, wg se_flow 6-11h, wg se_flow 12-23h, wg nw_flow 12-23h, wg pre_frontal 12-23h. All halves-stable on both windows.
+- **`analysis/runlog/build_executive_summary.py`** — the "NBM stale-skip proposals" section now emits REMOVE candidates only for two-window clears; a separate WATCH block flags 14d-only signals for monitoring without action. Today's audit reports 0 REMOVE, 3 WATCH.
+- **Post-v0.6.574 skip-audit state** (per this session's run): 14 cells total, 0 REMOVE, 3 WATCH (the 2 just reverted plus `wg sea_breeze 6-11h`), 10 HOLD, 1 THIN.
+- **Collector deploy required.**
+
+</details>
+
+<details open>
 <summary><strong>v0.6.573 • September 9, 2026 (NBM skip-table — remove 7 stale cells, first REMOVE-side curation)</strong></summary>
 
 - **`weather_collector/data/skip_table_nbm_curated.json`** — removed 7 cells that no longer earned their skip on 14d of fresh pair-log data per v0.6.572's audit. First-ever REMOVE-side curation on the NBM skip table; every prior curation had been ADD-side.

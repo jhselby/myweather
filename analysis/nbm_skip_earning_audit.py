@@ -49,10 +49,15 @@ L3_NBM_CURATED_PATH = REPO / "weather_collector" / "data" / "l3_nbm_curated.json
 OUT_TXT = REPO / "analysis" / "output" / "nbm_skip_earning_audit.txt"
 OUT_JSON = REPO / "analysis" / "output" / "nbm_skip_earning_audit.json"
 
-WINDOW_DAYS = 14
+WINDOW_DAYS_FRESH = 14       # short window catches regime-transient shifts
+WINDOW_DAYS_LONG = 50        # long window guards against premature ships
 MIN_N = 50
 REMOVE_LIFT_PCT = 3.0        # matches SKIP_CELL_LOSS_PCT on the ADD side
 HALVES_MIN_LIFT = 0.0        # both halves must be positive-lift for REMOVE
+# Two-window verdict added 2026-09-09 v0.6.574 after the first REMOVE
+# curation (v0.6.573) surfaced 2 cells that cleared 14d but failed 50d
+# (h se_flow 24-47h halves-asymmetric on 50d, wg nw_flow 6-11h same).
+# 14d catches freshness, 50d catches robustness — REMOVE now requires both.
 
 # LAYER_INPUT mirrors nbm_regression_sentry — which layer feeds this one.
 LAYER_INPUT = {
@@ -224,21 +229,36 @@ def _load_rows_for_cells(cells, window_days):
     return buckets, n_in
 
 
-def _verdict(scored):
-    """Return REMOVE / HOLD / THIN based on gate rules."""
-    if scored is None:
-        return "THIN"
-    if scored["n"] < MIN_N:
-        return "THIN"
+def _single_window_pass(scored):
+    """Return True iff this scored window meets lift + halves-stability gate."""
+    if scored is None or scored["n"] < MIN_N:
+        return False
     if scored["lift_pct"] < REMOVE_LIFT_PCT:
-        return "HOLD"
+        return False
     h1 = scored.get("halves_first_lift")
     h2 = scored.get("halves_second_lift")
     if h1 is None or h2 is None:
-        return "HOLD"
+        return False
     if h1 <= HALVES_MIN_LIFT or h2 <= HALVES_MIN_LIFT:
-        return "HOLD_UNSTABLE"
-    return "REMOVE"
+        return False
+    return True
+
+
+def _verdict(scored_fresh, scored_long):
+    """Two-window verdict:
+      REMOVE = both fresh (14d) AND long (50d) windows pass gate
+      WATCH  = fresh passes, long does not — flag for monitoring, no action
+      HOLD   = fresh does not pass (skip is still earning)
+      THIN   = insufficient data in the fresh window"""
+    if scored_fresh is None or scored_fresh["n"] < MIN_N:
+        return "THIN"
+    fresh_pass = _single_window_pass(scored_fresh)
+    long_pass = _single_window_pass(scored_long)
+    if fresh_pass and long_pass:
+        return "REMOVE"
+    if fresh_pass and not long_pass:
+        return "WATCH"      # signal exists in recent data but doesn't hold up on the 50d window
+    return "HOLD"
 
 
 def run():
@@ -248,14 +268,23 @@ def run():
         return
 
     bias_table = _load_l3_bias_table()
-    buckets, n_in = _load_rows_for_cells(cells, WINDOW_DAYS)
+    # Load rows in the LONG window; subset for FRESH.
+    buckets_long, n_in = _load_rows_for_cells(cells, WINDOW_DAYS_LONG)
+    fresh_cutoff = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0) - timedelta(days=WINDOW_DAYS_FRESH)
+    fresh_cutoff_str = fresh_cutoff.strftime("%Y-%m-%dT%H:%M")
+    buckets_fresh = {
+        cell: [r for r in rows if r[0] >= fresh_cutoff_str]
+        for cell, rows in buckets_long.items()
+    }
 
     per_cell = []
     for cell in cells:
         layer, field, regime, lo, hi = cell
-        rows = buckets.get(cell, [])
-        scored = _score_cell(rows, layer, field, bias_table)
-        verdict = _verdict(scored)
+        rows_fresh = buckets_fresh.get(cell, [])
+        rows_long = buckets_long.get(cell, [])
+        scored_fresh = _score_cell(rows_fresh, layer, field, bias_table)
+        scored_long = _score_cell(rows_long, layer, field, bias_table)
+        verdict = _verdict(scored_fresh, scored_long)
         per_cell.append({
             "layer": layer,
             "field": field,
@@ -264,55 +293,70 @@ def run():
             "lead_hi": hi,
             "band": _band_label(lo, hi),
             "verdict": verdict,
-            "score": scored,
+            "score_fresh": scored_fresh,
+            "score_long": scored_long,
         })
 
     remove_count = sum(1 for c in per_cell if c["verdict"] == "REMOVE")
-    hold_count = sum(1 for c in per_cell if c["verdict"] in ("HOLD", "HOLD_UNSTABLE"))
+    watch_count = sum(1 for c in per_cell if c["verdict"] == "WATCH")
+    hold_count = sum(1 for c in per_cell if c["verdict"] == "HOLD")
     thin_count = sum(1 for c in per_cell if c["verdict"] == "THIN")
 
     # Text report.
     lines = []
     now = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M UTC")
     lines.append(f"NBM skip-table stale-cell audit — {now}")
-    lines.append(f"  window={WINDOW_DAYS}d, MIN_N={MIN_N}, REMOVE_LIFT_PCT={REMOVE_LIFT_PCT}%")
+    lines.append(f"  fresh_window={WINDOW_DAYS_FRESH}d, long_window={WINDOW_DAYS_LONG}d, "
+                 f"MIN_N={MIN_N}, REMOVE_LIFT_PCT={REMOVE_LIFT_PCT}% (both windows must clear for REMOVE)")
     lines.append(f"  scanned {n_in:,} pair-log rows across {len(cells)} skip cells")
     lines.append("")
     lines.append(f"{'layer':<9}{'field':<5}{'regime':<13}{'band':<8}"
-                 f"{'n':>6}{'input_MAE':>11}{'cf_MAE':>10}{'lift%':>9}"
-                 f"{'halves1':>10}{'halves2':>10}   verdict")
+                 f"{'n_14':>6}{'lift_14%':>10}{'h14a':>8}{'h14b':>8}"
+                 f"{'n_50':>6}{'lift_50%':>10}{'h50a':>8}{'h50b':>8}"
+                 f"   verdict")
     for c in per_cell:
-        s = c["score"]
-        if s is None:
-            lines.append(f"{c['layer']:<9}{c['field']:<5}{c['regime']:<13}{c['band']:<8}"
-                         f"{'—':>6}{'—':>11}{'—':>10}{'—':>9}"
-                         f"{'—':>10}{'—':>10}   {c['verdict']}")
-            continue
+        sf = c["score_fresh"]; sl = c["score_long"]
+        def _fmt(s, key, fmt="{:+7.2f}%"):
+            if s is None: return "     —"
+            v = s.get(key)
+            return fmt.format(v) if v is not None else "     —"
+        n_f = sf["n"] if sf else 0
+        n_l = sl["n"] if sl else 0
         lines.append(
             f"{c['layer']:<9}{c['field']:<5}{c['regime']:<13}{c['band']:<8}"
-            f"{s['n']:>6}{s['input_mae']:>11.3f}{s['cf_layer_mae']:>10.3f}"
-            f"{s['lift_pct']:>+8.2f}%"
-            f"{(s['halves_first_lift'] or 0):>+9.2f}%{(s['halves_second_lift'] or 0):>+9.2f}%"
+            f"{n_f:>6}{_fmt(sf,'lift_pct'):>10}"
+            f"{_fmt(sf,'halves_first_lift'):>8}{_fmt(sf,'halves_second_lift'):>8}"
+            f"{n_l:>6}{_fmt(sl,'lift_pct'):>10}"
+            f"{_fmt(sl,'halves_first_lift'):>8}{_fmt(sl,'halves_second_lift'):>8}"
             f"   {c['verdict']}"
         )
     lines.append("")
-    lines.append(f"Verdict: {remove_count} REMOVE, {hold_count} HOLD, {thin_count} THIN "
-                 f"(of {len(cells)} cells).")
+    lines.append(f"Verdict: {remove_count} REMOVE, {watch_count} WATCH, {hold_count} HOLD, "
+                 f"{thin_count} THIN (of {len(cells)} cells).")
     if remove_count > 0:
         lines.append("")
-        lines.append("REMOVE candidates (skip cell no longer earns — pooled L3 correction "
-                     "would now help in this cell):")
+        lines.append("REMOVE candidates (both 14d fresh + 50d long windows pass gate):")
         for c in per_cell:
             if c["verdict"] != "REMOVE":
                 continue
-            s = c["score"]
+            sf = c["score_fresh"]; sl = c["score_long"]
             lines.append(f"  • {c['layer']} {c['field']} {c['regime']} {c['band']}: "
-                         f"n={s['n']:,} lift={s['lift_pct']:+.2f}% "
-                         f"(halves {s['halves_first_lift']:+.2f}% / {s['halves_second_lift']:+.2f}%)")
-    else:
+                         f"14d n={sf['n']:,} lift={sf['lift_pct']:+.2f}%  ·  "
+                         f"50d n={sl['n']:,} lift={sl['lift_pct']:+.2f}%")
+    if watch_count > 0:
         lines.append("")
-        lines.append("No REMOVE candidates in this window — every current skip cell still "
-                     "either earns its skip (pooled correction still hurts) or is THIN.")
+        lines.append("WATCH cells (14d fresh window flags earn-back, but 50d doesn't confirm):")
+        for c in per_cell:
+            if c["verdict"] != "WATCH":
+                continue
+            sf = c["score_fresh"]; sl = c["score_long"]
+            lines.append(f"  • {c['layer']} {c['field']} {c['regime']} {c['band']}: "
+                         f"14d lift={sf['lift_pct']:+.2f}% (halves {sf['halves_first_lift']:+.2f}/{sf['halves_second_lift']:+.2f}) "
+                         f"vs 50d lift={sl['lift_pct']:+.2f}% (halves {sl['halves_first_lift']:+.2f}/{sl['halves_second_lift']:+.2f})")
+    if remove_count == 0 and watch_count == 0:
+        lines.append("")
+        lines.append("No REMOVE or WATCH candidates — every current skip cell still earns "
+                     "its skip on 14d fresh (or is THIN).")
 
     text = "\n".join(lines) + "\n"
     OUT_TXT.parent.mkdir(parents=True, exist_ok=True)
@@ -320,11 +364,13 @@ def run():
 
     out_json = {
         "fitted_at": now,
-        "window_days": WINDOW_DAYS,
+        "window_days_fresh": WINDOW_DAYS_FRESH,
+        "window_days_long": WINDOW_DAYS_LONG,
         "min_n": MIN_N,
         "remove_lift_pct": REMOVE_LIFT_PCT,
         "summary": {
             "remove": remove_count,
+            "watch": watch_count,
             "hold": hold_count,
             "thin": thin_count,
             "total": len(cells),

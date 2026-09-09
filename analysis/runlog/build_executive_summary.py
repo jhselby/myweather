@@ -789,26 +789,36 @@ def nbm_skip_proposals_summary():
 
 
 def nbm_skip_earning_summary():
-    """Return list of REMOVE-candidate lines from nbm_skip_earning_audit.json —
-    skip cells that no longer earn their skip on recent data."""
+    """Return (remove_lines, watch_lines) from nbm_skip_earning_audit.json —
+    skip cells that no longer earn their skip on recent data. REMOVE candidates
+    clear both 14d fresh and 50d long windows; WATCH clears only 14d (flagged
+    but not proposed for action)."""
     if not NBM_SKIP_EARNING_JSON_PATH.exists():
-        return None
+        return None, None
     try:
         doc = json.loads(NBM_SKIP_EARNING_JSON_PATH.read_text())
     except (json.JSONDecodeError, OSError):
-        return None
-    lines = []
+        return None, None
+    removes = []
+    watches = []
     for c in doc.get("per_cell") or []:
-        if c.get("verdict") != "REMOVE":
-            continue
-        s = c.get("score") or {}
-        lines.append(
-            f"  • {c['layer']} {c['field']} {c['regime']} {c['band']}: "
-            f"n={s.get('n', 0):,} lift={s.get('lift_pct', 0):+.2f}% "
-            f"(halves {s.get('halves_first_lift', 0):+.2f}% / "
-            f"{s.get('halves_second_lift', 0):+.2f}%)"
-        )
-    return lines
+        sf = c.get("score_fresh") or c.get("score") or {}
+        sl = c.get("score_long") or {}
+        if c.get("verdict") == "REMOVE":
+            removes.append(
+                f"  • {c['layer']} {c['field']} {c['regime']} {c['band']}: "
+                f"14d n={sf.get('n', 0):,} lift={sf.get('lift_pct', 0):+.2f}%  ·  "
+                f"50d n={sl.get('n', 0):,} lift={sl.get('lift_pct', 0):+.2f}%"
+            )
+        elif c.get("verdict") == "WATCH":
+            watches.append(
+                f"  • {c['layer']} {c['field']} {c['regime']} {c['band']}: "
+                f"14d lift={sf.get('lift_pct', 0):+.2f}% but 50d only "
+                f"{sl.get('lift_pct', 0):+.2f}% (halves "
+                f"{sl.get('halves_first_lift', 0):+.2f}/{sl.get('halves_second_lift', 0):+.2f}) — "
+                f"regime-transient, hold"
+            )
+    return removes, watches
 
 
 def marine_layer_anomaly_summary():
@@ -1641,7 +1651,9 @@ def main():
     out.append("")
 
     # NBM stale-skip audit — symmetric REMOVE proposals (2026-09-09).
-    nbm_remove_lines = nbm_skip_earning_summary()
+    # Two-window verdict (v0.6.574): REMOVE requires 14d+50d both clearing;
+    # WATCH clears 14d only (regime-transient, no action).
+    nbm_remove_lines, nbm_watch_lines = nbm_skip_earning_summary()
     out.append("NBM stale-skip proposals (current skip cells no longer earning — REMOVE candidates):")
     if nbm_remove_lines is None:
         out.append("  • skip-earning audit not run yet")
@@ -1649,7 +1661,11 @@ def main():
         for line in nbm_remove_lines:
             out.append(line)
     else:
-        out.append("  • every current skip cell still earns its skip (or is THIN)")
+        out.append("  • every current skip cell still earns its skip (or is THIN/WATCH)")
+    if nbm_watch_lines:
+        out.append("NBM stale-skip WATCH (14d flags earn-back, 50d does not confirm — hold, do not remove):")
+        for line in nbm_watch_lines:
+            out.append(line)
     out.append("")
 
     ml_line, ml_suppression = marine_layer_anomaly_summary()
