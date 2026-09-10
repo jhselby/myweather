@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.579 • September 10, 2026 (debug page sweep — Recent Activity roll + NBM cascade line refresh)</strong></summary>
+
+- **`corrections_debug.html` Recent Activity** — new 09-10 (Thu) entry at the top summarizing today's 2 ships (v0.6.577 cc drop + v0.6.578 wg REMOVE). 09-09 shifted to "1 day ago", 09-08 to "2 days ago", 09-07 trimmed to a one-line display:none summary matching the 09-06 / 09-05 pattern.
+- **`corrections_debug.html` NBM parallel cascade line** — `l3_nbm` scope updated `wg/h/ch/cc/sr` → **`wg/ch/sr`** with h drop (09-05 v0.6.551) and cc drop (09-10 v0.6.577) both annotated inline. Skip-table cell count `14 cells post-v0.6.574` → **`13 cells post-v0.6.578`** with the two-window verdict lineage recorded (19 → 14 → 13).
+- Cosmetic sweep, no runtime touch — publisher not affected.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.578 • September 10, 2026 (NBM skip-table — remove wg pre_frontal 6-11h)</strong></summary>
 
 - **`weather_collector/data/skip_table_nbm_curated.json`** — `l3_nbm.wg` skip cell `["pre_frontal", 6, 12]` removed. Table: 14 → 13 cells (wg 10 → 9). Pooled L3_NBM wg bias now applies again in pre-frontal 6-11h leads.
