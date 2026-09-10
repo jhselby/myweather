@@ -1289,11 +1289,13 @@
     margin-left: 20px;
     border-left: 1px solid var(--sb-divider);
   }
-  /* v0.6.580: when the flex row wraps to a new line on narrow screens,
-     the left border + inset would appear under the wrapped-above group
-     as a phantom vertical line + indent. Reset on mobile so 24 HOUR
-     aligns flush-left under 7 DAY. */
+  /* v0.6.580: on mobile, stack window groups vertically (7 DAY over
+     24 HOUR) instead of side-by-side with a divider. Kills the phantom
+     vertical line and the offset on the second group's MEDIAN. */
   @media (max-width: 640px) {
+    .sb-scope .sb-num-row {
+      flex-direction: column;
+    }
     .sb-scope .sb-num-group + .sb-num-group {
       padding-left: 0;
       margin-left: 0;
