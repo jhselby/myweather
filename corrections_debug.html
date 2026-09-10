@@ -883,6 +883,18 @@
   nav.toc a:hover { background: #242a36; border-color: #3a3f48; }
   nav.toc a.research { color: #d4a373; border-color: #3a2d1f; background: #1c1813; }
   nav.toc a.accuracy { color: #74c38b; border-color: #1f3a25; background: #131c16; }
+  /* v0.6.580: on mobile, TOC becomes a single horizontally-scrollable row
+     instead of wrapping to 5 rows. Hides the scrollbar but stays swipable. */
+  @media (max-width: 640px) {
+    nav.toc {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 4px;
+    }
+    nav.toc::-webkit-scrollbar { display: none; }
+  }
   /* Forecast accuracy section */
   .accuracy-grid {
     display: grid;
@@ -1024,7 +1036,6 @@
 <nav class="toc">
   <a href="/" style="color:#8a93a3;">← Back</a>
   <a href="#sec-recent">Recent activity</a>
-  <a href="#sec-status">Engineering updates</a>
   <a href="#sec-accuracy" class="accuracy">Accuracy</a>
   <a href="#sec-applicability">Applicability</a>
   <a href="#sec-layer1">L1 Raw + router</a>
@@ -1277,6 +1288,18 @@
     padding-left: 20px;
     margin-left: 20px;
     border-left: 1px solid var(--sb-divider);
+  }
+  /* v0.6.580: when the flex row wraps to a new line on narrow screens,
+     the left border + inset would appear under the wrapped-above group
+     as a phantom vertical line + indent. Reset on mobile so 24 HOUR
+     aligns flush-left under 7 DAY. */
+  @media (max-width: 640px) {
+    .sb-scope .sb-num-group + .sb-num-group {
+      padding-left: 0;
+      margin-left: 0;
+      border-left: none;
+      margin-top: 14px;
+    }
   }
   .sb-scope .sb-num-group-lbl {
     font-size: 10.5px;
@@ -1817,14 +1840,33 @@
 <!-- ───────────────────── Tri-column current-state band ─────────────────────
      Forward-looking summary of the three lenses that matter for a daily
      read: what's running, what's improving, what's being evaluated next.
-     Hand-curated (like Engineering updates below); update when a layer
+     Hand-curated; update when a layer
      flips, a Stage 1 candidate moves, or a date on the calendar advances.
      Stays above the fold so the reader gets state-of-the-work in one
      glance without scrolling. Retention rule for the three lists:
        - What's running: current live state, no history (kill trail below)
        - What's improving: active Stage 1 candidates only (retired below)
        - What's being evaluated next: forward calendar + frozen items -->
-<h2 class="section" id="sec-current-state">Current state <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— what's running · improving · being evaluated</span></h2>
+<h2 class="section" id="sec-current-state">Current state</h2>
+
+<!-- v0.6.580: compact aggregate stack-health chart at top of Current State.
+     Full "Accuracy over time" section (with per-field drill-down + sparklines)
+     stays in Forecast accuracy below. -->
+<details open style="margin:8px 0 14px 0;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-stack-health">
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health trajectory <span style="font-weight:normal;opacity:0.75;">— aggregate Prod vs 90d-ref raw, per day (12 fields, pa/pp excluded)</span></summary>
+  <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Per-obs-day cross-field <em>Median</em> + <em>Mean</em> + <em>P25–P75 band</em> of <code>(1 − prod_MAE / raw_MAE_90d_ref) × 100</code>. Denominator is each field's fixed 90-day-reference raw MAE — daily weather difficulty is absorbed by the fixed baseline, so the ratio only moves when Prod moves. Positive = Prod beating the 90d baseline; a ship that improves the stack pushes the 7d rolling median UP over the following week. Full per-field trajectory + drill-down: <a href="#sec-mae-over-time" style="color:#7fb3ff;">Accuracy over time ↓</a>.</div>
+  <div style="display:flex;gap:12px;align-items:center;margin-top:8px;font-size:0.9em;">
+    <label>Y-range: <select id="stack-health-yrange" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
+      <option value="auto" selected>Auto (smart)</option>
+      <option value="free">Free (fit all)</option>
+    </select></label>
+    <span id="stack-health-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
+  </div>
+  <div style="height:280px;margin-top:10px;position:relative;">
+    <canvas id="stack-health-canvas"></canvas>
+  </div>
+  <div id="stack-health-events-legend"></div>
+</details>
 
 <!-- ============================================================
      Per-field diagnostic table (2026-08-25 redesign) — replaces the
@@ -1935,8 +1977,9 @@
   }
 </style>
 
-<section class="sb-pfs-scope">
-  <div class="sb-pfs-title">Per-field diagnostic — 7 day</div>
+<details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Per-field diagnostic — 7 day</summary>
+<section class="sb-pfs-scope" style="margin-top:8px;">
   <div class="sb-pfs-sub">Coach's table: each field's total, the pipeline lift on the selector's chosen stack (mirrors the tile), the two cascade skills (independent of routing), and the two selector-quality views. If Total Lift is red, this table shows which lever to pull. <span class="sb-dim">Live from per_field_scoring.json (refits hourly). Win Rate + Value Captured are diagnostic on the paired chosen/alt Prod pool — NBM-scope fields only. dp and cc omitted — both derived, no independent skill to score (see note below).</span></div>
 
   <div class="sb-pfs-scroll">
@@ -1967,10 +2010,11 @@
     <div style="margin-top:8px;">Windows: all six lift/skill columns computed on the same paired 7d/24h pool (v0.6.492) — rows where every relevant residual (HRRR raw, NBM raw, selector output, Prod, both cascade Prods) exists. Total Lift, Pipeline Lift, and per-cascade Pipeline Skill columns share denominators (each vs its own reference: user default, L1 pick, own raw), so causal chaining is meaningful: if Total Lift moves, at least one of Pipeline Lift, a Pipeline Skill, or the selector's Win Rate moved on the same rows to cause it.</div>
   </div>
 </section>
+</details>
 
 
-<details open style="margin-bottom:12px;padding:10px 12px;border:1px solid #3a4f6a;background:#0e1620;border-radius:6px;">
-  <summary style="color:#9fb8d8;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Per-field pipeline architecture + status</summary>
+<details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Per-field pipeline architecture + status</summary>
   <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">Companion to the per-field scoring table above (numeric selection/correction/total lifts). This section shows the pipeline shape for each field — HRRR-side cascade, NBM-side cascade (if in scope), which side the selector picks — plus hand-curated narrative context (open work, recent ships, current state). Numeric cells live in the scoring table; this table is the architecture + journal.</div>
   <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
     <thead>
@@ -1987,85 +2031,85 @@
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>t</code> temperature</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive</div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472 — walkforward −2.2% agg; l6_nbm v0.6.453 scaffold ENABLED=False)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable, no open work.</strong> L2 Kalman blend absorbs the microclimate signal on its own (persistence-skill +0.68 pooled); Lt reclassified as telemetry experiment 07-27 after Fix B refit came in +0.29% held-out (below +1% ship gate). <strong>NBM t dropped from l3_nbm 08-25 v0.6.472</strong> — 14d walkforward vs l2_nbm baseline was −2.2% (losing every non-trivial band).</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable.</strong> L2 additive only. HRRR wins; NBM l2_nbm minimal.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>h</code> humidity</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive</div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm</div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong><span class="pf-status" data-field="h">h status loading…</span></strong> h L2 retune v0.6.390g (07-31) landed cleanly — 08-04 verdict: retune working, direction right, drawing board avoided. τ-suspect signature at 6-11h/12-23h to be watched as it compresses toward 0. h/l4 narrow-add HELD 07-26. <strong style="color:#4ad29a;">08-26 v0.6.499 — h on native NBM L2</strong> (h/dp additive Kalman+decay re-anchored against NBM raw at h=0). The 08-18 v1 delta-transfer shortcut retired for h; the intermediate 08-26 v0.6.493 <code>_L2_NBM_DELTA_SKIP</code> add was superseded 6 hours later by native L2. <strong style="color:#4ad29a;">08-28 v0.6.513 — h se_flow 0-5h + se_flow 24-47h added to <code>skip_table_nbm_curated.json</code></strong> (walkforward −17.8% n=247 and −25.9% n=477 on today's fully-post-backstamp sustained-7d window).</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#e07272;">REGRESS on scoreboard</strong> — halves-agree, MED conf. Cascade fine; losses are pipeline-side. h L3_NBM killed 09-05.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ws</code> wind speed</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 direct <span style="opacity:0.6;">(L3 dropped 08-08 v0.6.397)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472 — walkforward −2.5% agg)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Stable — L2 blend + direct-selection only.</strong> ws L3 dropped 2026-08-08 v0.6.397 (walkforward cleared 7-day gate; pooled ws L3 impact was noise). Root cause + BLEND_HOURS 24→4 fix + wsbp dormant-gate history → <a href="#sec-archive-post-ship" style="color:#7090a0;">Archive</a>. <strong>wsbp gate</strong> (v0.6.388, ENABLED=False, calm-only sign-inverted sibling of dpbp) still HELD — preflight failed 08-04 on calm-regime n=0; waiting for accumulation.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable</strong> — L2 blend + direct selection. wsbp calm-only sibling gate <code>ENABLED=False</code> (preflight n=0).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wg</code> wind gust</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 direct → L3 lead-decay → wg residual persistence <span style="opacity:0.6;">(dormant)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm</div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win vs raw; existing asymmetric wg SKIP table is LIVE</strong> (07-20 v0.6.366, 48 cells). <strong style="color:#4ad29a;">wg L3 flat SKIP_TABLE extended 07-28 v0.6.385</strong> — 4 clean-halves cells wired (calm 0-5 +9.4%, calm 12-23 +40.0%, ne_flow 6-11 +11.8% NEW, sea_breeze 6-11 +5.6% NEW). Composition rotated from 07-14 Stage 1: 07-14 SHIP cells calm 6-11 fell to THIN, sea_breeze 0-5 to MARGIN, unknown 24-47 to PERSISTENCE_TERRITORY. <strong style="color:#4ad29a;">wg L3 +3 cells 08-04 v0.6.391</strong> — 08-04 re-cut cleared the two held cells (calm 24-47 +45.2% halves +4.3/+53.1, sea_breeze 24-47 +31.1% halves +4.0/+45.0) plus new frontal 12-23 (+8.8% halves +13.2/+4.5). Live table now 7 cells; demote-on-A-negative watch at next re-cut. <strong>wg residual persistence gate</strong> (Stage 3 wired 07-14 v0.6.351, ENABLED=False) still HELD 07-27 — blocked by h_wg_residual_persistence_stage1 flip PROMOTE → MARGINAL; wait for Stage 1 recovery.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win.</strong> L3 asymmetric SKIP table live. wg residual persistence gate <code>ENABLED=False</code> (Stage 1 held MARGINAL).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>dp</code> dew point</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive → L3 skip-table → dpbp → dp residual persistence <span style="opacity:0.6;">(dormant)</span> <span style="opacity:0.55;">(derived from corrected t, h via Magnus)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm <span style="opacity:0.6;">(v0.6.440)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win, derived.</strong> Rides t + h improvements. Frontal regime bias closed 07-09. <strong>dp residual persistence gate</strong> Stage 3 wired 2026-07-25 v0.6.380 ENABLED=False. <strong style="color:#4ad29a;">dp_bias_persistence gate FLIPPED 2026-08-04 v0.6.391</strong> — first antecedent-error-based specialist LIVE. Gate: <code>regime ∈ {pre_frontal, nw_flow, sw_flow} AND lead ≥ 6h AND prev_24h_dp_bias &lt; -1.5°F</code> → +2°F. Pooled dp MAE 3.108 → 2.808. Post-flip watch closed CLEAN 08-18. <strong style="color:#4ad29a;">08-26 v0.6.484 — dp row removed from per-field diagnostic table</strong> (derivation double-counts t + h; footnote below explains). <strong style="color:#4ad29a;">08-26 v0.6.499 — dp on native NBM L2</strong> (Magnus(t, h) with both anchored to NBM raw at h=0). The 08-18 v1 delta-transfer shortcut retired; the intermediate 08-26 v0.6.493 <code>_L2_NBM_DELTA_SKIP</code> add was superseded 6 hours later by native L2. dp not in <code>L3_NBM_FIELDS</code> (removed 08-22 v0.6.465) so today's walkforward dp SKIP proposal (−31.8% pooled 0-5h) is moot — no L3 layer runs for dp. dp remains derived, no independent skill.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Derived from corrected t + h.</strong> No independent skill chain. dpbp LIVE since 08-04.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cc</code> cloud cover <span style="font-size:0.72em;opacity:0.55;">(derived)</span></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 blend → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → <strong>Ccd = max(cl_l6, cm_l6, ch_l6)</strong> <span style="opacity:0.6;">(SKIP_REGIMES: se_flow, unknown → Pirate fallback)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm <span style="opacity:0.6;">(l4_nbm cc dropped 09-08 v0.6.563)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">cc retired from Lc as independent field 07-30 v0.6.390.</strong> cc is HRRR's own combine of cl/cm/ch — running Lc on it in parallel with the three components was double-correction from Lc's original ship. Ccd (<code>cc_from_derivation.py</code>) overwrites <code>hourly.cloud_cover</code> with <code>max(cl_l6, cm_l6, ch_l6)</code> after Lc. <code>h_cc_derivation.py</code> on 123K held-out quads: +8.48% pooled MAE vs pre-Ccd production, halves +11.4%/+5.8%, wins 6/10 regimes. cc excluded from Overall MAE mean in the scorecard above (derived field would double-weight cl/cm/ch). <strong><span class="pf-status" data-field="cc">cc status loading…</span></strong> — 08-04 v0.6.391 Ccd saturation guard (raw cc ≥ 90 keeps raw) cleared the Last-24h loss to −9.9%; the 7d cell still carries pre-guard poison at Ccd's obs bin 95-100 (cm/ch Lc dragged max below METAR total-sky) and rolls off through ~08-11. <strong style="color:#e0a070;">08-17 — cc combine walker Stage 0/1 seeded</strong> [[project_cc_combine_walker]]. <code>h_cc_derivation</code> re-run on 34,129 quads: <strong>random-overlap now beats max by +8.13% pooled and beats current prod by +8.73%, wins 9/9 regimes</strong> (halves A +0.86% / B +16.55% — dominant and stable). Ccd's hardcoded <code>FORMULA="max"</code> is the last static combine in the cloud stack and has silently drifted. <code>analysis/h_cc_combine_walker.py</code> now walks the pair log per-(regime × band) daily and emits <code>weather_collector/data/cc_combine_gate.json</code>; 7-day unanimous+margin rule per cell. Day 1/7 <strong>HOLD</strong> — per-cell daily winners churn much more than the pooled result implied (validating the walker's purpose). Cells close: pre_frontal/0-5 (PRRRRRR), sea_breeze/12-23 (PRRRRPR), se_flow/0-5 (PPPPPPR — this regime wants Pirate passthrough, confirming existing SKIP_REGIMES). Stage 3 wire in <code>cc_from_derivation.py</code> (CC_COMBINE_GATE_ENABLED = False + per-cell formula loader) follows in next redeploy after first cell clears — same ship-ahead pattern as Lc v0.6.410 → v0.6.413 and chp v0.6.421.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Derived via Ccd</strong> = max(cl_l6, cm_l6, ch_l6) except SKIP_REGIMES. Fully removed from NBM cascade layers 09-08 + 09-10. Combine walker tracking random-overlap replacement for the hardcoded max formula.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>ch</code> high cloud</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 blend → L3 lead-decay → L4 diurnal → Lc <span style="opacity:0.6;">(07-17)</span> → chp <span style="opacity:0.6;">(07-19)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm → l4_nbm → chp_nbm <span style="opacity:0.6;">(l4_nbm v0.6.451, chp_nbm v0.6.454)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Best-performing field vs raw.</strong> Lc flipped 07-17 + <strong style="color:#4ad29a;">chp LIVE 07-19 v0.6.358</strong> stack for the fullest non-frontal ch coverage yet. <strong>Rollup post 07-27 v0.6.382t emergency demote: 14 SHIP / 8 MARGIN / 13 SKIP / 2 THIN</strong> (was 19/9/7/2 pre-demote; 6 mid-lead cells regressing vs Lc under L6 baseline flipped SHIP/MARGIN → SKIP). 14-day post-ship watch closed clean 08-02. Full-shape refinement to the 5-cell L6-baseline SHIP set still under normal 7-day live-layer gate. <strong>08-10 diurnal gate (v0.6.401):</strong> chp suppressed on nw_flow + pre_frontal daytime valid hours [10, 18) local after 48h band-cut traced +7.48 bias at 12-23h to daytime nw_flow cells burning off overnight residuals. <strong style="color:#e07272;">08-13 emergency demote (v0.6.405):</strong> Prod-vs-L6 MAE gap widened +3.4→+12.7 over 08-06→08-13; <code>h_ch_persistence_blend_stage2_vs_l6</code> flagged 9 live chp cells losing to L6 (worst pre_frontal/24-47 Δ +78%, sw_flow/24-47 +31%). Added <code>_CELL_SKIP</code> frozenset in <code>ch_persistence_gate.py</code>: calm/{12-23,24-47}, nw_flow/12-23, pre_frontal/12-23, se_flow/24-47, sea_breeze/{12-23,24-47}, sw_flow/{12-23,24-47} forced back to L4 regardless of curated verdict. Fitter regenerates the curated JSON daily so JSON edits would be transient. <strong style="color:#e07272;">08-14 addition (v0.6.409):</strong> pre_frontal/24-47 added to <code>_CELL_SKIP</code> (now 10 cells) after vs_l6 flagged it as the biggest current chp loser to L6 (Δ +101.59%; nighttime targets outside the diurnal skip window). See Post-ship watches. See [[project_ch_chp_regression_watch_08_13]].</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">Best-performing field vs raw.</strong> Full stack L1→L2→L3→L4→Lc→chp. 10-cell <code>_CELL_SKIP</code> forces mid/long-lead cells back to L4 (v0.6.405/409 emergency demotes).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cl</code> low cloud</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 blend → <span style="text-decoration:line-through;opacity:0.5;">Lc</span> → clp <span style="opacity:0.6;">(dormant; cl in _FIELD_SKIP; cl_l6 = raw)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(NBM CO does not publish cl)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong><span class="pf-status" data-field="cl">cl status loading…</span></strong> (post applied_layer poison backfill 08-02; note auto-populated from same source as the 7-day cell above). cl fully off Lc as of 07-30 v0.6.389f — walk-forward held-out showed both shift-table shapes hurt cl (pool_vs_raw −22.15%, reg_vs_raw −30.37%). Shift-table can't distinguish "model over-forecasts overcast" from "correctly forecasts overcast" — cl currently in the latter regime. Reversibility: remove <code>"cl"</code> from <code>_FIELD_SKIP</code>. <strong>clp</strong> Stage 3 wired 07-24 v0.6.379 ENABLED=False (unaffected by cl Lc kill). Gate closed 08-03; 08-04 verdict tracked continuously via auto-rolling windows (v0.6.398, 08-09).</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Off Lc</strong> (in <code>_FIELD_SKIP</code>) since 07-30. clp gate wired Stage 3, <code>ENABLED=False</code>. Open: EMA/Kalman shift tracker to un-skip Lc.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>cm</code> mid cloud</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 blend → L3 lead-decay → Lc <span style="opacity:0.6;">(07-17)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(NBM CO does not publish cm)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong><span class="pf-status" data-field="cm">cm status loading…</span></strong> Stable win + Lc live. HRRR cm-distribution anomaly 07-04→07-11 recovered. C1 Stage 4 last audit: NOT READY (32.43% pass rate). Next re-audit gated on window roll.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Stable win</strong> + Lc live. L3 DROP walkforward streak 2/7 — potential ship 09-15.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pp</code> precip probability</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 only <span style="opacity:0.6;">(L3 dropped 07-04 — hurts Brier despite MAE gain)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(POP deferred pending unit audit)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 in production. All recalibration paths PARKED 2026-08-02 — non-stationary.</strong> L3 dropped 07-04 (hurt Brier despite MAE gain), so live Brier = raw Brier (matches the 0.0% headline tile). Separate offline v0.6.335 Phase 3 decomposition showed CALIBRATED +8.4% vs raw + BSS +0.126. The 07-27 h_pp_frontal_platt_stage1 SHIP at frontal × 6-11h re-flipped HOLD on 08-02 halves-strict re-cut — Reliability ≈ 5% of Brier (0.005 of 0.086); Uncertainty + Resolution dominate the error budget; recalibration params don't transfer across time at this sample size. All Platt-family scripts (h_pp_platt_calibration, h_pp_platt_by_regime, h_pp_frontal_platt_stage1, h_pp_bin_calibration, h_pp_bias_persistence_stage0) retired to <code>.skip.py</code> on 08-10 (dead-verdict HOLD/KILL, no reopen path from daily data). If pp_brier_reliability trips STAGE0_OPEN, h_pp_bin_calibration.skip.py runs on demand. Structural next step if this ever reopens: physical-feature gating (CAPE, RH-500mb, front proximity).</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only.</strong> All recalibration paths PARKED 08-02 (non-stationary). Reopen path: physical-feature gating (CAPE, RH-500mb, front proximity).</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pr</code> pressure</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 additive <span style="opacity:0.6;">(gated on nw_flow/0-5h + 6-11h since 08-10)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(NBM CO does not publish pressure)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L2 SHIP with regime gate — v0.6.401 (08-10).</strong> pr_l2_regime_lead_retro cleared halves (Jaccard 0.50): nw_flow/0-5h A +21.8%/B +41.6%, nw_flow/6-11h A +10.3%/B +13.1% on 8,596 shadow rows. Only both-halves winners shipped; pooled-only WINs (nw_flow/12-23h, pre_frontal/{0-5,6-11}, sw_flow/{0-5,6-11}) held pending 7-day gate agreement. Shadow-write (<code>corrected_pressure_in_post_l2</code>) remains unconditional so retro keeps evaluating skip cells. Predecessor: L2-disabled-everywhere 07-01 → 08-10 (K=1 pooled noise dominated) — that was the pooled-blind read; regime-conditional found the win. <strong style="color:#e07272;">Gate ordering bug fixed 08-13 v0.6.402:</strong> live gate had never fired since 08-10 ship — <code>collector.py</code> ran <code>add_corrected_hourly_arrays</code> before <code>stamp_state</code>, so <code>derived.state.regime_synoptic</code> was <code>None</code> when the gate read it and the guard short-circuited. Pair-log audit: 2,688 pr rows post-08-10 with 0 stamped <code>applied_layer=l2</code>. Backstamp early read (<code>scratchpad/pr_l2_backstamp.py</code>, simulating live-apply using <code>state_obs.regime@lead=0</code>): gated-vs-raw <strong style="color:#4ad29a;">−5.19%</strong> on 2,688 rows; nw_flow/0-5h Δ −43.6% n=223, nw_flow/6-11h Δ −21.9% n=221 — matches Stage 1 A/B halves. 14-day post-fix watch begins 08-13.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L2 SHIP</strong> gated on nw_flow/{0-5h, 6-11h} since 08-10 v0.6.401.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>sr</code> solar radiation</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → Lsr synoptic-regime <span style="opacity:0.6;">(skip: ne_flow + calm)</span> → Lsb <span style="opacity:0.6;">(sea_breeze cc&lt;25 override)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm <span style="opacity:0.6;">(l3_nbm dropped 08-25 v0.6.472; l5_nbm KILLED 08-25 v0.6.471 — sentry +238% MAE + walkforward −126%/−145% agreed; sr has no HRRR L2 so l2_nbm ≈ raw_nbm)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Lsr LIVE for sr.</strong> Skip regimes: ne_flow + calm; Lsr fires on the other 7. Bias table refreshed 08-04 v0.6.391. <strong style="color:#4ad29a;">sr sea_breeze Lsb LIVE (v0.6.394, 08-05, gate <code>cc &lt; 25</code>).</strong> Post-ship 14d watch CLOSED CLEAN 08-19 (+11.4% pooled n=15,985). <strong style="color:#e07272;">08-25 v0.6.471 — l5_nbm KILLED for sr</strong>: sentry HOT +238% + walkforward −126 to −147% agreed; fallback biases were adding +100 to +218 W/m² to cells missing per-hour fit. <strong style="color:#4ad29a;">08-25 v0.6.472 — sr dropped from L3_NBM_FIELDS</strong>. <strong style="color:#4ad29a;">08-26 v0.6.493 — sr added to <code>_L2_NBM_DELTA_SKIP</code></strong>: audit found the HRRR-delta transfer hurt sr −2.9% pooled across all leads (HRRR L2 has no sr correction so the delta was pure noise anyway). NBM sr now stamps <code>l2_nbm = raw_nbm</code>. <strong style="color:#4ad29a;">08-26 v0.6.494 counterfactual verifies:</strong> the L5_NBM kill was not user-facing — selector picks HRRR for sr, so historical <code>_l5_nbm</code> stamps never touched Prod. sr's ugly Notable Calls numbers (worst-3 dominant) are REAL, not stale-layer artifact.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>Lsr LIVE</strong>, skip ne_flow + calm. Lsb sea_breeze cc&lt;25 override LIVE. NBM cascade minimal — l3_nbm/l5_nbm both killed for sr; selector picks HRRR.</td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>pa</code> precip amount</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 only <span style="opacity:0.6;">(no L2/L3/L4 apply)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">not extracted <span style="opacity:0.65;">(APCP deferred pending unit audit)</span></div></td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;"><span style="color:#c8c8c8;">HRRR</span> <span style="opacity:0.6;">(no NBM cascade)</span></td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only, no open work.</strong> Field-specific τ swept 28 → 42 → 7 → reverted to global τ=14 on 07-19 v0.6.358 (+0.9% vs τ=14, below the 5% floor).</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong>L1 only, no open work.</strong></td>
       </tr>
       <tr style="border-top:1px solid #232936;">
         <td style="padding:5px 8px 5px 0;vertical-align:top;"><code>wd</code> wind direction</td>
         <td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div>L1 → L2 wind_blend → wdp <span style="opacity:0.6;">(07-27)</span></div></td><td style="padding:5px 10px;vertical-align:top;font-size:0.85em;line-height:1.5;"><div style="opacity:0.85;">raw_nbm → l2_nbm → l3_nbm (sin/cos) → wdp_nbm <span style="opacity:0.6;">(08-19 v0.6.437)</span></div></td>
         <td class="pf-selector-cell" style="padding:5px 10px;vertical-align:top;font-size:0.85em;opacity:0.7;">loading…</td>
-        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L2 + wdp both LIVE — real trend visible post-08-02 metric fix.</strong> L1_ONLY routing bug had hidden L2/wdp contributions for 13 days (mae_over_time was reading L2-view <code>error</code> as raw); fixed 08-02, wd now honestly emits <code>prod_real</code>. Real picture: L2 −2 to −5% vs raw most days, wdp adds another 0-4%. <strong style="color:#e0a070;">07-31 outlier:</strong> calm/24-47 wdp +72%, sea_breeze/0-5h wdp +109% — real gate misfires; if either recurs, narrow gate. L2 wind_blend shipped 07-20 v0.6.368a; wdp FLIPPED 2026-07-27 v0.6.382 (5 SHIP cells). <strong style="color:#4ad29a;">wdp 14-day post-ship watch CLOSED CLEAN 08-11</strong> — Δ −2.7% aggregate n=16,416; 07-31 outlier cells did not recur. Collector-side <code>applied_layer</code> stamp gap fixed 08-09 v0.6.400 (bug silent since v0.6.269) did not affect the debug-page metric — mae_over_time's <code>L1_ONLY_FIELDS</code> workaround bypassed the stamp; real impact was only in Fitter's <code>decay_corrections.json</code> fallback.</td>
+        <td style="padding:5px 0 5px 10px;vertical-align:top;opacity:0.85;"><strong style="color:#4ad29a;">L2 wind_blend + wdp both LIVE.</strong> NBM cascade full (l2/l3/wdp_nbm).</td>
       </tr>
     </tbody>
   </table>
@@ -2081,11 +2125,13 @@
 </details>
 
 
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;">
+<details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;font-size:0.95em;">What's running · improving · being evaluated next</summary>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px;margin-top:10px;">
 
     <!-- What's running -->
     <div style="border:1px solid #1f3a2a;background:#0d1512;padding:12px 14px;border-radius:8px;">
-      <div style="color:#4ad29a;font-weight:600;margin-bottom:8px;font-size:0.95em;">🟢 What's running</div>
+      <div style="color:#4ad29a;font-weight:600;margin-bottom:8px;font-size:0.95em;">What's running</div>
       <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Stack</div>
         <ul style="margin:0 0 8px 16px;padding:0;">
@@ -2110,15 +2156,15 @@
         </ul>
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:2px;">Guards</div>
         <ul style="margin:0 0 0 16px;padding:0;">
-          <li><span style="color:#4ad29a;">🟢 raw-baseline verifier: healthy</span> <span style="opacity:0.7;">(no drift)</span></li>
-          <li><span style="color:#4ad29a;">🟢 live-layer change gate active</span> <span style="opacity:0.7;">(7-day / 2-tool / per-cell / no-ENT)</span></li>
+          <li><span style="color:#4ad29a;">raw-baseline verifier: healthy</span> <span style="opacity:0.7;">(no drift)</span></li>
+          <li><span style="color:#4ad29a;">live-layer change gate active</span> <span style="opacity:0.7;">(7-day / 2-tool / per-cell / no-ENT)</span></li>
         </ul>
       </div>
     </div>
 
     <!-- What's improving -->
     <div style="border:1px solid #3a2f1f;background:#15120d;padding:12px 14px;border-radius:8px;">
-      <div style="color:#e0d472;font-weight:600;margin-bottom:8px;font-size:0.95em;">🟡 What's improving</div>
+      <div style="color:#e0d472;font-weight:600;margin-bottom:8px;font-size:0.95em;">What's improving</div>
       <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
         <div style="opacity:0.7;font-size:0.9em;margin-bottom:6px;">14 active Stage 1+3 candidates · all auto-run in daily digest · <em>shipped items live under Post-ship watches below</em></div>
 
@@ -2187,17 +2233,25 @@
 
     <!-- What's being evaluated next -->
     <div style="border:1px solid #1f2f3a;background:#0d1218;padding:12px 14px;border-radius:8px;">
-      <div style="color:#7fb3ff;font-weight:600;margin-bottom:8px;font-size:0.95em;">🔵 What's being evaluated next</div>
+      <div style="color:#7fb3ff;font-weight:600;margin-bottom:8px;font-size:0.95em;">What's being evaluated next</div>
       <div style="font-size:0.86em;line-height:1.55;color:#cfd8e3;">
         <div style="color:#9ab0a0;font-weight:600;margin-bottom:4px;">Upcoming</div>
         <div style="font-size:0.85em;opacity:0.7;margin-bottom:6px;">Forward-looking only. For today/yesterday narrative see <a href="#sec-recent" style="color:#7fb3ff;">Recent activity</a> below.</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 10px;margin-bottom:8px;">
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">7d walker starting 08-31</div>
-          <div><strong>h Stage 2 walker + Stage 3 shadow watch (paired).</strong> Walker automated 08-31 v0.6.529 (<code>h_h_residual_persistence_walker.py</code> + shared <code>_residual_persistence_walker.py</code> harness): accumulates per-cell verdicts to <code>.cache_h_residual_persistence_walker_history.json</code>, gates Stage 3 flip on 7/7 consecutive days in {SHIP, MARGIN} per cell. Day-1 rollup 9 SHIP / 8 MARGIN / 9 SKIP / 7 THIN. Stage 3 processor pre-staged 08-31 v0.6.530 (<code>weather_collector/processors/h_residual_persistence.py</code>, cloned from wg template with FIELD=h + [0,100] both-ends clamp for RH). Wired collector-side ENABLED=False, deploy-verified: nw_flow shows all-4-band fires (5+6+12+24 = 47/47), <code>clamped_out_by_band</code> present with zeros. Ship-day ~<strong>2026-09-06</strong> becomes <code>ENABLED=False→True</code> one-line flip + redeploy. <code>dp_residual_persistence</code> stays ENABLED=False permanently — fixing h routes to dp via Magnus.</div>
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">h Stage 3 write</div>
-          <div><strong>Extract shared Stage 3 processor harness — trigger fired 08-31 v0.6.530.</strong> h_residual_persistence.py landed as the third ~230-line clone; extraction to <code>weather_collector/processors/_residual_persistence.py</code> is the next architectural cleanup on the calendar. Semantic-preservation gate: shadow telemetry byte-equivalent (or documented-diff) on all three processors post-refactor. Deferred to next session since (a) analysis-only ships took today's session and (b) live-processor extraction wants a dedicated session with the deploy verify built in.</div>
-          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">~Fri 09-11</div>
-          <div><strong>L1 by-regime walker — earliest cell wire flip.</strong> Walker gate loosened 2026-09-08 v0.6.566: 7-day persistence → 3-day + per-day <code>n_today ≥ 20</code>. Day-1 of new-format history was 09-08; walker clears any cell that reads {SHIP,MARGIN} across 09-08/09/10 with all three <code>n_today ≥ 20</code>. Runtime <code>l1_selector.py</code> already reads <code>l1_selector_by_regime_walker.json</code>; wire flips per-cell as they clear. First cell most likely to clear: <code>ws/nw_flow/12-23</code> (n_today=228 on 09-08). Rare-regime cells (ne_flow, calm) will take longer because n_today=0 when regime not active — intended, not a bug.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Thu 09-11</div>
+          <div><strong>L1 by-regime walker — first cell-wire read (day 3/3 under loosened gate).</strong> Walker gate loosened 09-08 v0.6.566: 7d persistence → 3d + <code>n_today ≥ 20</code>. Cells clearing {SHIP,MARGIN} across 09-08/09/10 with all three <code>n_today ≥ 20</code> wire tomorrow. Most likely first: <code>ws/nw_flow/12-23</code>.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Sun 09-14</div>
+          <div><strong>sr false-positive sentries clear.</strong> sr.l5_nbm HOT + sr.l3_nbm WATCH are 09-04 pre-add sustained-window artifacts. Both windows post-date the sr add on 09-14; sentries revert to CLEAN.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Mon 09-15</div>
+          <div><strong>L3 DROP cm — walkforward streak clear.</strong> Divergence report day 2/7 today (drop cm). If 7-window streak holds through 09-15, ship: remove cm from <code>L3_FIELDS</code>. Ref tile cm 7d corr +10.5% still positive, so tempered — walkforward sees the ship-side signal, scoreboard hasn't yet.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Mon 09-15</div>
+          <div><strong>KILLED_LAYERS registry — prune 09-05 entries.</strong> <code>(ch, chp_nbm)</code> and <code>(h, l3_nbm)</code> registered 09-05 v0.6.561. Both sustained + fresh windows post-date the kill on ~09-15; entries removable so sentry rows revert to THIN naturally.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Backlog</div>
+          <div><strong>12 days of accumulated ADD-side walkforward SKIP proposals — rescore protocol.</strong> Symmetric twin of 09-09's REMOVE loop. Proposals since 08-28 unshipped; each needs 14d fresh + 50d long-window verdict before add. Next-session workstream once L1 walker read (09-11) lands.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Backlog</div>
+          <div><strong>ADDED_LAYERS registry — mirror of KILLED_LAYERS.</strong> Small ship. Defers false-positive sentry HOTs on recently-added layers (same shape as the sr.l5_nbm 09-04→09-14 story). Would have suppressed today's sr false positives at ship time instead of ignoring them for 10 days.</div>
+          <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">Backlog</div>
+          <div><strong>NBM sea-breeze specialist — dedicated workstream.</strong> Only if 09-11 walker read + skip curation loop don't close enough of the aggregate gap. Stack-health trajectory (top of page) is the arbiter — if 7d median plateaus after this week's ships, structural NBM specialist work is next; if it keeps trending up, keep tuning.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">clp deferred</div>
           <div><strong>clp Stage 3 flip gate — 08-16 walker FAIL</strong> (min-J 0.250; fire set churned 7 → 3 cells over 7d window). No ENABLED flip. Walker continues; re-check when digest reports PASS.</div>
           <div style="color:#7fb3ff;font-weight:600;white-space:nowrap;">ongoing</div>
@@ -2225,23 +2279,22 @@
           <li>wg persistence-skill thin margin — pooled L4 skill <strong>+0.17</strong> today (was +0.19 08-29; &lt; +0.20 hold margin). BUT per-cell check 08-30: <strong>Prod-vs-persistence skill +0.215 pooled</strong> (above +0.20 margin, healthy at 6-11h/12-23h/24-47h; 0-5h at parity is structural — wind_blend uses recent obs). The "at-risk" line measures L4-vs-persistence; users-see production is fine. Not a real live-product regression. Re-flag only if <em>Prod</em> skill drops &lt; +0.20 for 2+ days OR any of 6-11h/12-23h/24-47h halves specialist contribution.</li>
         </ul>
         <div style="margin-left:16px;font-size:0.85em;opacity:0.65;">CLOSED CLEAN 2026-08-26/27/28/30/09-09: pr L2 regime-gated, chp diurnal gate, walkforward L3/L4, C1h re-curate, Lsb, dpbp, wg L3 SKIP_TABLE, chp cell-skip +1, chp emergency cell-skip, cc.l4_nbm HOT sentry, NBM skip-table 14d (9 cells shipped 08-26 held stable). Full history → <a href="#sec-archive-post-ship" style="color:#7090a0;">Archive → Post-ship watches</a></div>
+
+        <div style="color:#9ab0a0;font-weight:600;margin:12px 0 4px 0;">🧪 Architectural backlog <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">— longer-horizon items, no date target</span></div>
+        <ul style="margin:0 0 0 16px;padding:0;line-height:1.5;">
+          <li><strong>MLC — marine-layer correction sandbox.</strong> Stamps <code>weather_data["marine_layer_correction"]</code> every tick, <code>ENABLED=False</code>. In-bin cc bias collapsed 06-30 (real break, not the 07-07 "cliff" the anomaly detector reported — that was cumulative-window artifact). Split at 07-04 (cm HRRR-anomaly onset): stratum-local, pre-HRRR, rules out HRRR-anomaly causation. Companion cl signal points seasonal. <strong>Hold OFF indefinitely.</strong> Will not re-arm when cm HRRR anomaly clears — different event. Redesign candidate: time-of-year gating on the MLC bin.</li>
+          <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/Lsr only. Architectural exploration.</li>
+          <li><strong>Tight-τ cloud bias propagation across leads 1–3h.</strong> Pearson at lead 1h is +0.50/+0.57/+0.55/+0.66 for cc/cl/cm/ch — strong, clean; degrades by lead 3h. Architectural slot: short-lead τ-decayed bias propagation (~2h half-life) on top of the existing hourly[0] override. Needs Stage 0 MAE-impact estimate (probably small — first 3 leads only). Not blocking; logged for backlog. Spun out from resolved KBOS+KBVY cloud blend (2026-06-30, ρ ≤ 0 at lead 6h — hourly[0]-only formalized as intentional).</li>
+        </ul>
       </div>
     </div>
 
 </div>
-<div style="margin-top:8px;font-size:0.8em;opacity:0.7;text-align:center;">Details for each cell live in the sections below · <a href="#sec-status" style="color:#7fb3ff;">Engineering updates</a> · <a href="#sec-accuracy" style="color:#7fb3ff;">Accuracy</a> · <a href="#sec-research" style="color:#7fb3ff;">Research &amp; Diagnostics</a></div>
+</details>
 
-<a id="sec-status"></a>
-<!-- ───────────────────── Status panel ─────────────────────
-     Hand-curated orientation for an outside reviewer. Update whenever
-     a layer flips, an audit reads out, or a hypothesis dies. The rest
-     of the page is automatic; THIS panel is not. Stamp the date on
-     every edit so reviewers can tell how stale it is. -->
-<!-- ───────────────────── Recent activity (new top-level section, moved out of Engineering updates v0.6.339b) ───────────────────── -->
-<h2 class="section" id="sec-recent">Recent activity <span style="font-weight:normal;opacity:0.7;font-size:0.85em;">— rolling 3-day window</span></h2>
-<div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-  <details open style="padding:10px 12px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-    <summary style="color:#7fb3ff;font-weight:600;margin-bottom:6px;font-size:0.95em;cursor:pointer;list-style:none;">Recent activity <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">— today + 2 prior days (older entries in <code>docs/CHANGELOG.md</code>, trimmed on next curation)</span></summary>
+<a id="sec-recent"></a>
+<details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Recent activity <span style="font-weight:normal;opacity:0.7;font-size:0.9em;">— today + 2 prior days (older entries in <code>docs/CHANGELOG.md</code>, trimmed on next curation)</span></summary>
     <div style="font-size:0.78em;opacity:0.6;margin-bottom:8px;">
       Badges:
       <span style="color:#4ad29a;font-weight:700;">PIPELINE</span> ·
@@ -2265,163 +2318,7 @@
 
 
     </ul>
-  </details>
-</div>
-
-<h2 class="section" id="sec-status">Engineering updates — where we are</h2>
-<div class="layer-info-text" style="border-color:#2a3a52;background:#131a24;margin-bottom:20px;">
-
-
-  <div style="display:flex;justify-content:flex-end;margin-top:8px;">
-    <button id="stack-cards-toggle" type="button"
-            style="background:#1e2a3a;color:#9fb8d8;border:1px solid #3a4a5a;border-radius:4px;padding:4px 10px;font-size:0.85em;cursor:pointer;"
-            onclick="(function(){var g=document.getElementById('stack-cards-grid');if(!g)return;var cards=g.querySelectorAll('details');var anyOpen=false;cards.forEach(function(d){if(d.open)anyOpen=true;});cards.forEach(function(d){d.open=!anyOpen;});var b=document.getElementById('stack-cards-toggle');if(b)b.textContent=anyOpen?'Expand all':'Collapse all';})()">Collapse all</button>
-  </div>
-  <div id="stack-cards-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-top:12px;">
-
-    <details open style="border:1px solid #1f3a2a;background:#101913;padding:10px;border-radius:6px;">
-      <summary style="color:#4ad29a;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">✅ Production stack</summary>
-      <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Core pipeline <span style="font-weight:normal;opacity:0.7;">— general-purpose, can apply to any field</span></div>
-      <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>L1</strong> raw model input — parallel HRRR (Open-Meteo HRRR/GFS) and NBM (direct grib) cascades both run every tick; the L1 selector (Prod-vs-Prod per field × lead-band, v0.6.445 armed 2026-08-20) picks the deepest-Prod cascade output that becomes user-visible. Currently NBM wins wg 12-47h, wd 12-23h, dp 6-47h, cc all leads; HRRR wins everything else. The v0.6.432 router (t/ws/wd at leads ≥6h) was retired 2026-08-19 v0.6.437 in favor of the selector.</li>
-        <li><strong>L2</strong> mesonet blend — additive bias on <code>t / dp / h</code> (Kalman gain) + KBOS+KBVY hourly[0] blend on <code>cc / cl / cm / ch</code>; direct selection on <code>ws / wg</code>. <code>pr</code> re-enabled 2026-08-10 v0.6.401 gated on <code>nw_flow</code>/{0-5h, 6-11h} (2026-07-01 v0.6.276 → 2026-08-10 disabled everywhere: pooled read masked regime-conditional wins).</li>
-        <li><strong>L3</strong> lead-decay — {wg, ch, cm} (pp dropped 2026-07-04 v0.6.304; ws dropped 2026-08-08 v0.6.397 — pooled +0.1%/+0.6% is noise after BLEND_HOURS 24→4 fix resolved the long-lead regression). wg L3 uses asymmetric additive (v0.6.366) per (regime, band, fc-quartile) with SKIP_TABLE (v0.6.385 + .391). <strong style="color:#e0a070;">wg L3 08-11 investigation flag:</strong> 4/7 SKIP_TABLE SHIP cells regressing post-ship — see Post-ship watches → wg L3 SKIP_TABLE.</li>
-        <li><strong>L4</strong> diurnal — applies to {ch}. (cc dropped 2026-08-28 v0.6.515 HRRR-side + 2026-09-08 v0.6.563 NBM-side; L4_NBM_FIELDS also {ch}.)</li>
-        <li style="list-style:none;margin-left:-16px;opacity:0.75;font-size:0.9em;">Cards read corrected <code>hourly[0]</code>. See <a href="#sec-applicability">Applicability map</a> for live triggers + gates (e.g. L3 skip cells for ws in ne_flow / short-lead sea_breeze, Lsr skip regimes for sr in ne_flow / calm, sun-up threshold on Lsr).</li>
-      </ul>
-      <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Specialists <span style="font-weight:normal;opacity:0.7;">— domain-scoped, parallel to the core stack</span></div>
-      <ul style="margin:2px 0 8px 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>Lsr</strong> synoptic-regime solar (sr only). Shipped 06-28 v0.6.248. Per-(regime, hour) bias above sun-up. Skip: ne_flow, calm. <a href="#sec-layer5" style="color:#7fb3ff;">Lsr layer section →</a></li>
-        <li><strong>Lc</strong> cloud saturation-unbiasing (cm/ch only; <span style="color:#e07272;">cl + cc BOTH OFF</span>). FLIPPED 2026-07-17 v0.6.355; <strong style="color:#e07272;">emergency intervention 07-30 v0.6.389d-g + v0.6.390</strong>. cl held out via <code>_FIELD_SKIP</code> after walk-forward showed both shift-table shapes hurt cl; cc retired from Lc v0.6.390 as an architectural correction (Ccd derives cc from components instead). cm and ch untouched, +34-50% vs raw on held-out. See Post-ship watches above + [[project_lc_regime_conditional]] + <a href="#sec-lc" style="color:#7fb3ff;">Lc layer section →</a></li>
-        <li><strong>Ccd</strong> cc from-derivation (specialist, cc only). <strong style="color:#4ad29a;">LIVE 2026-07-30 v0.6.390 · ENABLED=True</strong> (flipped 6d ahead of gate). Runs LAST in the cloud pipeline; overwrites <code>hourly.cloud_cover</code> with <code>max(cl_l6, cm_l6, ch_l6)</code> except in <code>SKIP_REGIMES = {"se_flow", "unknown"}</code> (Pirate fallback). Held-out lift <strong>+8.48% pooled MAE</strong> vs pre-Ccd production (<code>h_cc_derivation.py</code>, 123K quads, halves +11.4%/+5.8%). <strong style="color:#4ad29a;">08-04 v0.6.391 — saturation guard added:</strong> if raw cc ≥ 90, keep raw cc (skip derivation). Traces to the last-24h loss where cm's Lc had bias +26.9 → −10.0 (over-corrected 10 pts), dragging max composite below METAR total sky cover at obs bin 95-100 (raw MAE ~2 → Ccd MAE ~30 across 4 regimes). Ccd still owns the mid + clear tail where corrections help. Retired cc's whole Lc surface — all three cc <code>_CELL_SKIP</code> entries removed; cc added to Lc's <code>_FIELD_SKIP</code>. See Post-ship watches above + [[project_lc_regime_conditional]] Ccd section.</li>
-        <li><strong>chp</strong> ch persistence gate. FLIPPED 07-19 v0.6.358 · 07-27 v0.6.382t emergency demote of 6 mid-lead regression cells. Rollup now 14 SHIP + 8 MARGIN + 13 SKIP + 2 THIN. 14-day watch closed 08-02. Full shape refinement gate closed 08-03 · verdict tracked continuously via auto-rolling windows (v0.6.398, 08-09). <strong style="color:#e07272;">08-13 v0.6.405 second emergency demote:</strong> 10 additional mid/long-lead cells force-skipped in processor <code>_CELL_SKIP</code> after Prod-vs-L6 gap widened +3.4→+12.7 over 8 days. 14-day watch through 08-27. See [[project_ch_chp_regression_watch_08_13]] + [[project_chp_midlead_regression_watch]].</li>
-        <li><strong>clp</strong> cl persistence gate. Shipped 07-24 v0.6.379, ENABLED=False. Stage 2: 12 SHIP / 8 MARGIN / 16 SKIP. Streak walker tracked continuously via auto-rolling windows (v0.6.398, 08-09); flip only when 7-day Jaccard ≥ 0.80 clears — no fixed date target.</li>
-        <li><strong>wg residual persistence gate</strong> wg only. Shipped 07-14 v0.6.351, ENABLED=False. 07-27 flip HELD (Stage 1 flipped PROMOTE → MARGINAL 07-26). See What's improving above.</li>
-        <li><strong>wdp</strong> wd persistence gate. FLIPPED 2026-07-27 v0.6.382 · 5 SHIP cells. 14-day post-ship watch CLOSED CLEAN 08-11 (Δ −2.7% n=16,416). See Archive → Post-ship watches.</li>
-        <li><strong>dp residual persistence gate</strong> dp only. Shipped 2026-07-25 v0.6.380, ENABLED=False. Stage 2: 8 SHIP / 2 MARGIN. Gate closed 08-01 — verdict tracked continuously via auto-rolling windows (v0.6.398, 08-09).</li>
-      </ul>
-      <div style="margin:6px 0 2px 0;font-size:0.88em;color:#9ab0a0;font-weight:600;">Confidence <span style="font-weight:normal;opacity:0.7;">— orthogonal; widens/narrows bands, doesn't shift values</span></div>
-      <ul style="margin:2px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>C1</strong> multi-axis confidence layer — <em>gated off (ENABLED=False)</em>. Stamps <code>weather_data["confidence"]</code> every tick. Axes: C1a regime transition, C1b cluster spread, C1c pressure tendency, C1f precip-forecast presence, C1e hours-since-front (07-01 v0.6.272), <strong>C1d KBOS-vs-KBVY σ (07-08 Stage 3, 13 SHIP + 1 MARGINAL cells)</strong>, <strong>C1h trend direction (v0.6.316 07-10, 15 SHIP cells)</strong>. Flip after Stage 4 audit clears. Refined view primary since 07-16 v0.6.353e; last read HOLD 65.00% (re-cured 08-15 from 57.14%; legacy MIXED, multi-axis NOT READY per <code>c1_stage4_mixture_check</code>). Next re-audit gated on window roll past cl-poisoned days (08-04+). Note: C1h + C1d curated tables ARE read live at stamp time (<code>confidence_layer.py</code>), gated per-cell by co-axis ortho whitelist; downstream user-visible band widening is what "ENABLED=False" refers to. <strong style="color:#4ad29a;">08-11 Stage 3 wire-up:</strong> new <code>by_xr_q</code> sub-table in <code>c1_confidence_premium_v2.json</code> — per-field cross-run spread quintiles (same-vt max−min forecast across runs). 252 cells wired, <strong>214 SHIP (103 WIDEN / 111 NARROW)</strong> per <code>c1_curate_confidence_table_v2</code>. <strong style="color:#4ad29a;">08-12 v0.6.401g — live stamper shipped:</strong> <code>weather_collector/processors/cross_run_spread.py</code> reads <code>forecast_log.json</code> (already accumulating per-run L1 via <code>forecast_snapshot.py</code> — no new writer needed) plus this tick's live L1, groups by (field, vt), max−min, buckets into xr_q using the curated edges. Stamps <code>weather_data["cross_run_spread"] = {field: {vt: {spread, xr_q, n}}}</code> for 7 promoted fields (dp, h, pr, t, wd, wg, ws). Verified 13:37 UTC. Consumer-less today by design; tomorrow's ship = wire the by_xr_q marginal multiplier in <code>confidence_layer.py</code> (mirrors C1h / C1d) against a full day of live data. See [[project_cross_run_spread_c1_axis]].</li>
-      </ul>
-    </details>
-
-    <details open style="border:1px solid #3a2d1f;background:#191510;padding:10px;border-radius:6px;">
-      <summary style="color:#d4a373;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">⏸ Built, not applied (gated off)</summary>
-      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>Marine-layer correction sandbox</strong> — stamps <code>weather_data["marine_layer_correction"]</code> every tick, <code>ENABLED=False</code>. <strong style="color:#e0d472;">In-bin cc bias collapsed — real break 06-30, not 07-07 (2026-07-16 diagnostic)</strong>. <code>marine_layer_collapse_diagnostic.py</code> recomputes fresh per-obs-day (independent of the Fitter's cumulative aggregation): in-bin cc bias +42.7 (06-28) → +16.6 (06-30) → +3.9 (07-05) → never above +5 after. The 07-07 "cliff" reported by <code>marine_layer_anomaly.py</code> was the growing cumulative window finally reflecting the older shift, not the actual break. Split at 07-04 (cm HRRR-anomaly onset): in-bin Δ = −48.6, out-of-bin Δ = −5.0, ratio 9.8× — <strong>stratum-local, pre-HRRR</strong>, rules out HRRR-anomaly causation. Companion cl signal (marine_layer_cl_stage1 W29 −2.98 vs +12/+22/+17/+13 W25–W28) points seasonal. <strong>Hold OFF indefinitely.</strong> Will not re-arm when the cm HRRR anomaly clears — different event. Redesign candidate: time-of-year gating on the MLC bin.</li>
-      </ul>
-    </details>
-
-    <details open style="border:1px solid #2a2a3a;background:#131319;padding:10px;border-radius:6px;">
-      <summary style="color:#a89ce0;font-weight:600;margin-bottom:4px;cursor:pointer;list-style:none;">🧪 Open architectural questions</summary>
-      <ul style="margin:4px 0 0 16px;padding:0;line-height:1.5;font-size:0.92em;">
-        <li><strong>L2-as-observation-only.</strong> Remove L2 from forecast pipeline, keep as training target for L3/L4/Lsr only. No date; architectural exploration.</li>
-        <li><strong>Tight-τ cloud bias propagation across leads 1–3h</strong> (Stage 1 candidate). Pearson at lead 1h is <strong>+0.50/+0.57/+0.55/+0.66</strong> for cc/cl/cm/ch — strong, clean; degrades by lead 3h. Architectural slot: short-lead τ-decayed bias propagation (~2h half-life) on top of the existing hourly[0] override. Needs Stage 0 MAE-impact estimate (probably small — first 3 leads only). Not blocking; logged for backlog. Spun out from resolved item KBOS+KBVY cloud blend (2026-06-30, ρ ≤ 0 at lead 6h — hourly[0]-only formalized as intentional).</li>
-      </ul>
-      <div style="margin-top:10px;font-size:0.85em;opacity:0.75;">Settled / historical questions (kept as pointers): SKIP_TABLE architecture (shipped v0.6.279, asymmetric extension v0.6.366/370 — see decay_apply.py and Applicability map), Lt Fix B refit (retired 07-13, [[project_lt_fix_b_answered]]), Per-field τ lesson (see [[feedback_tau_streak_gate_limits]]), Scorecard banner + C1e + per-row applied-layer stamping + per-lead Brier for PP (all shipped 07-01), dp L4 skip-table case (resolved 06-30). Full details in git log + CHANGELOG.</div>
-    </details>
-
-  </div>
-
-  <div class="meta-line" style="margin-top:12px;opacity:0.7;font-size:0.85em;">
-    <strong>Convention:</strong> L = correction layer (applied); R = research hypothesis (logged, not applied); G/S/B/F = operational tools in Research section.
-  </div>
-</div>
-
-<!-- ───────────────────── Forecast accuracy ───────────────────── -->
-<h2 class="section" id="sec-accuracy">Forecast accuracy — how accurate is it?</h2>
-<div class="layer-info-text">
-  <p class="layer-summary">Two lenses on the same question. <strong>First (Accuracy over time, below):</strong> the per-obs-day trajectory of Raw vs Production — is the stack drifting? Did a recent ship move the needle? <strong>Second (per-field tables, further down):</strong> the current-window breakdown by lead band per field — where in the 0-47h horizon is each correction layer helping or hurting? The over-time view is the drift detector; the per-band tables are the shipping-decision granularity. <em>Production in both views IS a real per-row aggregate. Per-band tables: <code>per_layer_mae_by_lead[field].production</code> where the per-lead sample count clears n≥30, keyed on <code>applied_layer</code> stamps. Over-time chart: <code>mae_over_time.json</code>'s <code>"prod_real"</code> series, bucketed per obs-day from the same <code>applied_layer</code> stamps (v0.6.371). Both surface the same "what users actually saw" quantity, just at different aggregation grains. Specialist lines (Lsr, Lc, chp, clp) remain visible on the over-time chart as intermediate series showing gate-fired-only MAE — smaller sample than Raw/L2/L3/Prod, useful for isolating each specialist's per-lead lift during 14-day watches.</em></p>
-
-  <details style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
-    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">How we measure whether the forecast is good — the metric framework</summary>
-    <div style="font-size:0.9em;line-height:1.55;margin-top:8px;color:#cfd8e3;">
-      <p><strong>Core comparison:</strong> pipeline error vs. raw L1 error on the same forecast-observation pairs. L1 = HRRR-side (Open-Meteo HRRR/GFS) baseline. NBM cascade runs in parallel; the 🎯 L1 selector (Prod-vs-Prod as of v0.6.440, armed via backstamp v0.6.445) picks per (field, lead-band) which cascade's output the user sees. Every metric on this page averages those errors differently.</p>
-
-      <p><strong>"Observed" per field</strong> (best local measurement, not absolute truth):</p>
-      <ul style="margin:4px 0 8px 20px;padding:0;">
-        <li><strong>t, dp, h, ws, wg, pr</strong>: mesonet Kalman blend across 60 WU + 26 Tempest stations within ~2.5 mi, station-bias corrected.</li>
-        <li><strong>cc, cl, cm, ch</strong>: mean of KBOS + KBVY METAR sky reports (octa → percent). Coarser than mesonet.</li>
-        <li><strong>sr</strong>: median across valid Tempest solar_radiation_wm2.</li>
-        <li><strong>pa</strong>: max WU precip_rate_in across stations (patchy-rain-aware).</li>
-        <li><strong>pp</strong>: binary — any measurable rain this hour (0 or 100).</li>
-        <li><strong>wd</strong>: station wind_direction, circular error.</li>
-      </ul>
-
-      <p><strong>Three metrics per NWS/ECMWF conventions:</strong></p>
-      <ul style="margin:4px 0 8px 20px;padding:0;">
-        <li><strong>MAE</strong> — mean |error|. "Typical-day miss." Historical page text usually means this.</li>
-        <li><strong>RMSE</strong> — root mean squared error. Weights big misses harder; if RMSE improvement lags MAE, pipeline has hidden blow-ups.</li>
-        <li><strong>Bias</strong> — signed mean error. Positive = over-forecast; negative = under. Catches systematic drift MAE masks.</li>
-      </ul>
-
-      <p><strong>pp uses Brier score</strong>, not MAE (binary obs vs. probability forecast). Brier = mean of (fc/100 − obs/100)². Same "% erased" framing.</p>
-
-      <p><strong>Measurement gaps:</strong></p>
-      <ul style="margin:4px 0 8px 20px;padding:0;">
-        <li><strong>Persistence skill</strong> — shipped 2026-07-11 (<code>h_persistence_skill.py</code>). Baseline: 5 ADD VALUE (t/h/pr/ws/sr), 4 MIXED (dp/wg/cc/pp), 3 NO SKILL — <em>cl/cm/ch lose to persistence at every band despite L3+L4</em>. <strong>Scorecard integration shipped 07-12 v0.6.328</strong> — the "vs Persistence" line in the scorecard banner (above) is live-updated from <code>persistence_skill.json</code>. Response for ch: <strong style="color:#4ad29a;">ch persistence gate FLIPPED LIVE 07-19 v0.6.358</strong> (14 SHIP cells post-emergency-demote 07-27 v0.6.382t (was 27) on refreshed windows; 14-day watch <strong style="color:#4ad29a;">CLOSED CLEAN 08-02</strong>). Landmark answered 07-14 v0.6.351a: persist_only ties gate pooled but gate wins halves-hedge; keep the gate. cl persistence gate wired Stage 3 07-24 v0.6.379 (replaces retired <code>cl_persistence_short_lead</code> — narrow 0-5h hypothesis disproven by halves-verified Stage 2). <strong style="color:#4ad29a;">08-09 Stage 2 rerun — 6 SHIP / 22 SKIP whitelist shape ready for flip decision.</strong> SHIP cells: calm/0-5 (−35.7%), ne_flow/0-5 (−54.4%), ne_flow/12-23 (−16.6%), nw_flow/0-5 (−18.7%), pre_frontal/0-5 (−17.8%), sea_breeze/0-5 (−32.9%). Flip = <code>cl_persistence_gate.ENABLED=True</code>. 08-09 c1_stage4_mixture_check: cl/6-11h [transition] b3 no longer in DEGRADED list (07-29 escalation window CLOSED CLEAN, never reached 3× ≥+200%); cm/12-23h [transition] IMPROVED; t/24-47h [transition] newly DEGRADED (unrelated). Joint cl/cm correction hypothesis rejected 07-29 (cl has no correction stack; cm corrections are stable improvers; drift is raw-HRRR-side on top-fc transition rows and fitter absorbs via c1 confidence bands).</li>
-        <li><strong>Climatology skill</strong> — long-lead reference. Needs a climatology dataset.</li>
-        <li><strong>pp Brier reliability decomposition</strong> — does "30% chance" actually happen 30% of the time? Aggregate Brier only, no decomposition.</li>
-      </ul>
-
-      <p><strong>Historical wording caveat:</strong> section text written pre-v0.6.325 (2026-07-10) treats MAE as the only measure. Read alongside RMSE + bias — disagreements usually mean occasional big misses or systematic drift.</p>
-    </div>
-  </details>
-
-  <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
-    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📈 Accuracy over time — Raw vs Production, per-day trajectory</summary>
-    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (Open-Meteo L1 seed — HRRR/GFS) and every correction layer applicable to the selected field (for t/ws/wd, "L1r (router)" line shows the v0.6.432 NBM router output at leads ≥6h) — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed hourly by the <code>myweather-publisher</code> Cloud Function (v0.6.395f, hourly cron); prior to that it was tied to the daily digest. (v0.6.361: per-specialist attribution — Lsr, Lc, and post-Lc specialists (ch-persist, cl-persist) each plotted separately once ≥3 days of data have accumulated. New collector-side pair-log columns start accruing today; specialist lines will appear on the chart around 2026-07-22. v0.6.371: the 'Prod' line is now the real per-row aggregate keyed on applied_layer stamps — sample-comparable to Raw/L2/L3 on the same chart. Pre-v0.6.371 it was L4's daily MAE for non-specialist fields and a specialist line for cc/cl/cm/ch/sr (gate-fired-only, sample-mismatched).)</div>
-    <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
-      <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
-      <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
-        <option value="mae" selected>MAE</option>
-        <option value="rmse">RMSE</option>
-        <option value="bias">Bias (signed)</option>
-        <option value="brier">Brier (for pp)</option>
-      </select></label>
-      <span id="mae-time-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
-    </div>
-    <!-- Detail chart — one field at a time, all four layers + ship annotations. -->
-    <div style="margin:6px 0;font-size:0.8em;color:#8a93a3;">Detail view for selected field (Raw / L2 / L3 / Prod + rolling means + ship annotations):</div>
-    <div class="chart-wrap" style="height:280px;"><canvas id="mae-time-canvas"></canvas></div>
-    <!-- Sparkline grid — scan-all view. Each cell shows Raw + Prod rolling
-         7-day means for one field. Click a cell to focus the detail chart
-         above on that field. Reacts to the metric selector. -->
-    <div style="margin:14px 0 6px 0;font-size:0.8em;color:#8a93a3;">Scan all fields (click any panel to focus the detail chart above):</div>
-    <div id="mae-time-sparklines" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;"></div>
-  </details>
-
-  <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-per-band">
-    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📊 Per-field breakdown by lead band — MAE / RMSE / bias per correction layer</summary>
-    <p class="layer-summary" style="margin-top:10px;">The bright white "Production" column is the forecast users actually see. Lower is better. For each field, one combined table shows how far off the forecast tends to be at each lead band — <strong>MAE</strong> (typical error), <strong>RMSE</strong> (occasional big misses that MAE averages away), <strong>bias</strong> (systematic drift, signed) — per correction layer. Compare a MAE row across columns to see where each layer helps or hurts.</p>
-    <details class="layer-methodology"><summary>How to read these tables</summary>
-      <div class="meta-line"><strong>What you're looking at.</strong> One card per field. Each card shows a table with rows grouped by lead band (0-5h, 6-11h, 12-23h, 24-47h, ALL). Under each band, three metric rows: MAE (primary), RMSE (secondary), bias (secondary, signed). Columns are the correction layers actually applied to that field, plus the Production output on the right.</div>
-      <div class="meta-line"><strong>Only-applied layers.</strong> Layers that aren't applied to a field don't render as columns because their per-lead MAE array equals the previous applied layer's — noise. The badges above the table (L2 ✓, L3 ✓, L4 off, etc.) confirm the applied set. If Production isn't the lowest MAE, check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
-      <div class="meta-line"><strong>Per-metric usage:</strong>
-        <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
-          <li><strong>MAE</strong> — average absolute error. The primary metric; drives L3/L4 whitelist decisions. Best cell in row highlighted green, worst red.</li>
-          <li><strong>RMSE</strong> — squared-error root. Higher than MAE by a factor set by how tail-heavy the errors are. Watch for a band where RMSE jumps proportionally more than MAE — that's occasional big misses hiding behind an OK average.</li>
-          <li><strong>bias</strong> — mean signed error (forecast − obs). Near-zero = calibrated on average. Persistent + or − by band signals systematic drift.</li>
-        </ul>
-      </div>
-      <div class="meta-line"><strong>Layer labels:</strong>
-        <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
-          <li><strong>Raw</strong>: bare Open-Meteo HRRR/GFS forecast for this coordinate. Knows nothing about Wyman Cove. (For t/ws/wd at leads ≥6h, the user-facing L1 is the NBM router output — see the L1r line, added v0.6.432.)</li>
-          <li><strong>Aggregate bias (L2)</strong>: what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
-          <li><strong>Lead decay (L3)</strong>: historical per-lead bias correction from the pair log.</li>
-          <li><strong>Diurnal (L4)</strong>: hour-of-day bias correction. Final line for t / dp / h / ws / wg / pp.</li>
-          <li><strong>Synoptic-regime (Lsr)</strong>: per-regime W/m² delta on direct solar radiation. Only present on sr.</li>
-          <li><strong>Cloud saturation (Lc)</strong>: per-(field, value_bin) percentage-point shift, clamped to [0, 100]. Final line for cm / ch (unchanged); <span style="color:#e07272;">cl and cc both fully off</span> as of 07-30 (v0.6.389f cl · v0.6.390 cc). cc now derived downstream via Ccd = max(cl_l6, cm_l6, ch_l6). FLIPPED 2026-07-17 v0.6.355; emergency intervention 07-30 — see <a href="#sec-lc">Lc layer section</a> for details.</li>
-        </ul>
-      </div>
-      <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> = bias added (t, dp, h, pr). <span class="field-badge active">L2 ✓ direct</span> = station median replaces model wind (ws, wg). <span class="field-badge na">L2 n/a</span> = no station network reports this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is n/a as a forecast correction, but obs truth for cc/cl/cm/ch comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
-      <div class="meta-line">Bands match the walk-forward validator buckets — this is exactly the granularity that drives shipping decisions. Source: <code>time_series_diagnostic.json::per_layer_{mae,rmse,bias}_by_lead</code>, 7-day window. <em>Design note (v0.6.350):</em> previously carried a per-card chart + 3 separate tables. The chart mostly restated what the MAE band table already showed; killed for signal density.</div>
-    </details>
-    <div id="status-accuracy" class="status" hidden></div>
-    <div id="accuracy-grid" class="accuracy-grid"></div>
-  </details>
-</div>
+</details>
 
 <!-- ───────────────────── Applicability map (Section D) ─────────────────────
      Global "what corrections trigger, and why" view, code-derived. Each
@@ -3098,6 +2995,106 @@
   <div class="meta-line" style="margin-bottom:10px;">Held-out MAE per field per layer (leads 1–47), refit every Fitter cycle. Dim subtext = signed bias. Δ columns compare to layer below: green = beats + applied; <span style="color:#d4a373;">amber</span> = beats but NOT applied; red = loses; gray = tied. Banners fire when an enabled layer or specialist loses &gt;3% (hidden regression) or a disabled specialist / layer wins &gt;3% (missed opportunity / post-ship watch signal). Specialists column (v0.6.382n) chains Lsr → Lc → chp / clp / wdp for the fields each owns; each rung compares to the previous rung (or L4 if first). Production column shows the real per-row Production MAE (aggregated from <code>applied_layer</code> stamps). <strong>v0.6.456 (F3-A):</strong> <code>applied_layer</code> now stamps NBM layers (<code>l3_nbm</code>/<code>l4_nbm</code>/<code>l5_nbm</code>/<code>l6_nbm</code>/<code>chp_nbm</code>/<code>wdp_nbm</code>) on rows where the selector picked NBM — before v0.6.456 those rows carried the HRRR walker's stamp and Prod attribution silently misclassified. Historical rows carry the old stamp; only post-08-21 rows carry NBM-aware attribution. <em>MAE-only caveat: RMSE tells a different story on L2-additive fields (wg Production improvement drops −33%→−26%, dp −17%→−13%, h −7%→−3%). Per-layer RMSE+bias column rewrite queued.</em></div>
   <div id="status-audit" class="status" hidden></div>
   <div id="grid-audit"></div>
+</details>
+
+<a id="sec-accuracy"></a>
+<details class="research-subsection" open>
+  <summary>Forecast accuracy — Raw vs Production + per-field lead-band breakdown</summary>
+  <div class="research-body">
+  <p class="layer-summary">Two lenses on the same question. <strong>First (Accuracy over time, below):</strong> the per-obs-day trajectory of Raw vs Production — is the stack drifting? Did a recent ship move the needle? <strong>Second (per-field tables, further down):</strong> the current-window breakdown by lead band per field — where in the 0-47h horizon is each correction layer helping or hurting? The over-time view is the drift detector; the per-band tables are the shipping-decision granularity. <em>Production in both views IS a real per-row aggregate. Per-band tables: <code>per_layer_mae_by_lead[field].production</code> where the per-lead sample count clears n≥30, keyed on <code>applied_layer</code> stamps. Over-time chart: <code>mae_over_time.json</code>'s <code>"prod_real"</code> series, bucketed per obs-day from the same <code>applied_layer</code> stamps (v0.6.371). Both surface the same "what users actually saw" quantity, just at different aggregation grains. Specialist lines (Lsr, Lc, chp, clp) remain visible on the over-time chart as intermediate series showing gate-fired-only MAE — smaller sample than Raw/L2/L3/Prod, useful for isolating each specialist's per-lead lift during 14-day watches.</em></p>
+
+  <details style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">How we measure whether the forecast is good — the metric framework</summary>
+    <div style="font-size:0.9em;line-height:1.55;margin-top:8px;color:#cfd8e3;">
+      <p><strong>Core comparison:</strong> pipeline error vs. raw L1 error on the same forecast-observation pairs. L1 = HRRR-side (Open-Meteo HRRR/GFS) baseline. NBM cascade runs in parallel; the 🎯 L1 selector (Prod-vs-Prod as of v0.6.440, armed via backstamp v0.6.445) picks per (field, lead-band) which cascade's output the user sees. Every metric on this page averages those errors differently.</p>
+
+      <p><strong>"Observed" per field</strong> (best local measurement, not absolute truth):</p>
+      <ul style="margin:4px 0 8px 20px;padding:0;">
+        <li><strong>t, dp, h, ws, wg, pr</strong>: mesonet Kalman blend across 60 WU + 26 Tempest stations within ~2.5 mi, station-bias corrected.</li>
+        <li><strong>cc, cl, cm, ch</strong>: mean of KBOS + KBVY METAR sky reports (octa → percent). Coarser than mesonet.</li>
+        <li><strong>sr</strong>: median across valid Tempest solar_radiation_wm2.</li>
+        <li><strong>pa</strong>: max WU precip_rate_in across stations (patchy-rain-aware).</li>
+        <li><strong>pp</strong>: binary — any measurable rain this hour (0 or 100).</li>
+        <li><strong>wd</strong>: station wind_direction, circular error.</li>
+      </ul>
+
+      <p><strong>Three metrics per NWS/ECMWF conventions:</strong></p>
+      <ul style="margin:4px 0 8px 20px;padding:0;">
+        <li><strong>MAE</strong> — mean |error|. "Typical-day miss." Historical page text usually means this.</li>
+        <li><strong>RMSE</strong> — root mean squared error. Weights big misses harder; if RMSE improvement lags MAE, pipeline has hidden blow-ups.</li>
+        <li><strong>Bias</strong> — signed mean error. Positive = over-forecast; negative = under. Catches systematic drift MAE masks.</li>
+      </ul>
+
+      <p><strong>pp uses Brier score</strong>, not MAE (binary obs vs. probability forecast). Brier = mean of (fc/100 − obs/100)². Same "% erased" framing.</p>
+
+      <p><strong>Measurement gaps:</strong></p>
+      <ul style="margin:4px 0 8px 20px;padding:0;">
+        <li><strong>Persistence skill</strong> — shipped 2026-07-11 (<code>h_persistence_skill.py</code>). Baseline: 5 ADD VALUE (t/h/pr/ws/sr), 4 MIXED (dp/wg/cc/pp), 3 NO SKILL — <em>cl/cm/ch lose to persistence at every band despite L3+L4</em>. <strong>Scorecard integration shipped 07-12 v0.6.328</strong> — the "vs Persistence" line in the scorecard banner (above) is live-updated from <code>persistence_skill.json</code>. Response for ch: <strong style="color:#4ad29a;">ch persistence gate FLIPPED LIVE 07-19 v0.6.358</strong> (14 SHIP cells post-emergency-demote 07-27 v0.6.382t (was 27) on refreshed windows; 14-day watch <strong style="color:#4ad29a;">CLOSED CLEAN 08-02</strong>). Landmark answered 07-14 v0.6.351a: persist_only ties gate pooled but gate wins halves-hedge; keep the gate. cl persistence gate wired Stage 3 07-24 v0.6.379 (replaces retired <code>cl_persistence_short_lead</code> — narrow 0-5h hypothesis disproven by halves-verified Stage 2). <strong style="color:#4ad29a;">08-09 Stage 2 rerun — 6 SHIP / 22 SKIP whitelist shape ready for flip decision.</strong> SHIP cells: calm/0-5 (−35.7%), ne_flow/0-5 (−54.4%), ne_flow/12-23 (−16.6%), nw_flow/0-5 (−18.7%), pre_frontal/0-5 (−17.8%), sea_breeze/0-5 (−32.9%). Flip = <code>cl_persistence_gate.ENABLED=True</code>. 08-09 c1_stage4_mixture_check: cl/6-11h [transition] b3 no longer in DEGRADED list (07-29 escalation window CLOSED CLEAN, never reached 3× ≥+200%); cm/12-23h [transition] IMPROVED; t/24-47h [transition] newly DEGRADED (unrelated). Joint cl/cm correction hypothesis rejected 07-29 (cl has no correction stack; cm corrections are stable improvers; drift is raw-HRRR-side on top-fc transition rows and fitter absorbs via c1 confidence bands).</li>
+        <li><strong>Climatology skill</strong> — long-lead reference. Needs a climatology dataset.</li>
+        <li><strong>pp Brier reliability decomposition</strong> — does "30% chance" actually happen 30% of the time? Aggregate Brier only, no decomposition.</li>
+      </ul>
+
+      <p><strong>Historical wording caveat:</strong> section text written pre-v0.6.325 (2026-07-10) treats MAE as the only measure. Read alongside RMSE + bias — disagreements usually mean occasional big misses or systematic drift.</p>
+    </div>
+  </details>
+
+  <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-mae-over-time">
+    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Accuracy over time — Raw vs Production, per-day trajectory</summary>
+    <div class="meta-line" style="margin-top:8px;opacity:0.8;font-size:0.88em;">Per-obs-day rollup. Chart shows the trajectory of Raw (Open-Meteo L1 seed — HRRR/GFS) and every correction layer applicable to the selected field (for t/ws/wd, "L1r (router)" line shows the v0.6.432 NBM router output at leads ≥6h) — legend adapts per field so noise-lines that don't do work for that field are hidden (e.g. sr shows Raw / Lsr; pa shows Raw / Prod only). Rolling 7-day mean overlays on Raw and the final applied layer smooth out day-to-day noise. Ship-date vertical annotations mark when live-layer changes landed. Source: <code>mae_over_time.json</code> — accumulating history, x-axis grows one day at a time (retention-independent; the pair log is capped at 30 days but this rollup persists prior days). Refreshed hourly by the <code>myweather-publisher</code> Cloud Function (v0.6.395f, hourly cron); prior to that it was tied to the daily digest. (v0.6.361: per-specialist attribution — Lsr, Lc, and post-Lc specialists (ch-persist, cl-persist) each plotted separately once ≥3 days of data have accumulated. New collector-side pair-log columns start accruing today; specialist lines will appear on the chart around 2026-07-22. v0.6.371: the 'Prod' line is now the real per-row aggregate keyed on applied_layer stamps — sample-comparable to Raw/L2/L3 on the same chart. Pre-v0.6.371 it was L4's daily MAE for non-specialist fields and a specialist line for cc/cl/cm/ch/sr (gate-fired-only, sample-mismatched).)</div>
+    <div style="margin:10px 0 8px 0;display:flex;gap:10px;flex-wrap:wrap;font-size:0.88em;">
+      <label>Field: <select id="mae-time-field" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;"></select></label>
+      <label>Metric: <select id="mae-time-metric" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
+        <option value="mae" selected>MAE</option>
+        <option value="rmse">RMSE</option>
+        <option value="bias">Bias (signed)</option>
+        <option value="brier">Brier (for pp)</option>
+      </select></label>
+      <label id="mae-time-yrange-wrap" style="display:none;">Y-range: <select id="mae-time-yrange" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
+        <option value="auto" selected>Auto (smart)</option>
+        <option value="free">Free (fit all)</option>
+      </select></label>
+      <span id="mae-time-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
+    </div>
+    <!-- Detail chart — one field at a time, all four layers + ship annotations. -->
+    <div style="margin:6px 0;font-size:0.8em;color:#8a93a3;">Detail view for selected field (Raw / L2 / L3 / Prod + rolling means + ship annotations):</div>
+    <div class="chart-wrap" style="height:280px;"><canvas id="mae-time-canvas"></canvas></div>
+    <!-- Sparkline grid — scan-all view. Each cell shows Raw + Prod rolling
+         7-day means for one field. Click a cell to focus the detail chart
+         above on that field. Reacts to the metric selector. -->
+    <div style="margin:14px 0 6px 0;font-size:0.8em;color:#8a93a3;">Scan all fields (click any panel to focus the detail chart above):</div>
+    <div id="mae-time-sparklines" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;"></div>
+  </details>
+
+  <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-per-band">
+    <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">📊 Per-field breakdown by lead band — MAE / RMSE / bias per correction layer</summary>
+    <p class="layer-summary" style="margin-top:10px;">The bright white "Production" column is the forecast users actually see. Lower is better. For each field, one combined table shows how far off the forecast tends to be at each lead band — <strong>MAE</strong> (typical error), <strong>RMSE</strong> (occasional big misses that MAE averages away), <strong>bias</strong> (systematic drift, signed) — per correction layer. Compare a MAE row across columns to see where each layer helps or hurts.</p>
+    <details class="layer-methodology"><summary>How to read these tables</summary>
+      <div class="meta-line"><strong>What you're looking at.</strong> One card per field. Each card shows a table with rows grouped by lead band (0-5h, 6-11h, 12-23h, 24-47h, ALL). Under each band, three metric rows: MAE (primary), RMSE (secondary), bias (secondary, signed). Columns are the correction layers actually applied to that field, plus the Production output on the right.</div>
+      <div class="meta-line"><strong>Only-applied layers.</strong> Layers that aren't applied to a field don't render as columns because their per-lead MAE array equals the previous applied layer's — noise. The badges above the table (L2 ✓, L3 ✓, L4 off, etc.) confirm the applied set. If Production isn't the lowest MAE, check the <a href="#sec-applicability">Applicability map</a> for a gate that's wrong.</div>
+      <div class="meta-line"><strong>Per-metric usage:</strong>
+        <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
+          <li><strong>MAE</strong> — average absolute error. The primary metric; drives L3/L4 whitelist decisions. Best cell in row highlighted green, worst red.</li>
+          <li><strong>RMSE</strong> — squared-error root. Higher than MAE by a factor set by how tail-heavy the errors are. Watch for a band where RMSE jumps proportionally more than MAE — that's occasional big misses hiding behind an OK average.</li>
+          <li><strong>bias</strong> — mean signed error (forecast − obs). Near-zero = calibrated on average. Persistent + or − by band signals systematic drift.</li>
+        </ul>
+      </div>
+      <div class="meta-line"><strong>Layer labels:</strong>
+        <ul style="margin:4px 0 4px 18px; padding:0; line-height:1.5">
+          <li><strong>Raw</strong>: bare Open-Meteo HRRR/GFS forecast for this coordinate. Knows nothing about Wyman Cove. (For t/ws/wd at leads ≥6h, the user-facing L1 is the NBM router output — see the L1r line, added v0.6.432.)</li>
+          <li><strong>Aggregate bias (L2)</strong>: what 40+ nearby weather stations say the model is currently getting wrong, blended in by distance.</li>
+          <li><strong>Lead decay (L3)</strong>: historical per-lead bias correction from the pair log.</li>
+          <li><strong>Diurnal (L4)</strong>: hour-of-day bias correction. Final line for t / dp / h / ws / wg / pp.</li>
+          <li><strong>Synoptic-regime (Lsr)</strong>: per-regime W/m² delta on direct solar radiation. Only present on sr.</li>
+          <li><strong>Cloud saturation (Lc)</strong>: per-(field, value_bin) percentage-point shift, clamped to [0, 100]. Final line for cm / ch (unchanged); <span style="color:#e07272;">cl and cc both fully off</span> as of 07-30 (v0.6.389f cl · v0.6.390 cc). cc now derived downstream via Ccd = max(cl_l6, cm_l6, ch_l6). FLIPPED 2026-07-17 v0.6.355; emergency intervention 07-30 — see <a href="#sec-lc">Lc layer section</a> for details.</li>
+        </ul>
+      </div>
+      <div class="meta-line"><strong>L2 badge variants:</strong> <span class="field-badge active">L2 ✓ additive</span> = bias added (t, dp, h, pr). <span class="field-badge active">L2 ✓ direct</span> = station median replaces model wind (ws, wg). <span class="field-badge na">L2 n/a</span> = no station network reports this field (clouds, solar, precip). <em>Note for clouds:</em> L2 is n/a as a forecast correction, but obs truth for cc/cl/cm/ch comes from a KBOS + KBVY METAR blend (v0.6.134) — feeds the joiner so L3/L4 can be evaluated, not applied at L2.</div>
+      <div class="meta-line">Bands match the walk-forward validator buckets — this is exactly the granularity that drives shipping decisions. Source: <code>time_series_diagnostic.json::per_layer_{mae,rmse,bias}_by_lead</code>, 7-day window. <em>Design note (v0.6.350):</em> previously carried a per-card chart + 3 separate tables. The chart mostly restated what the MAE band table already showed; killed for signal density.</div>
+    </details>
+    <div id="status-accuracy" class="status" hidden></div>
+    <div id="accuracy-grid" class="accuracy-grid"></div>
+  </details>
+</div>
 </details>
 
 <!-- D1 Drill-down retired v0.6.382o — user never used it, and the L4→L3→L2
@@ -9134,8 +9131,19 @@ load();
   const canvas = document.getElementById("mae-time-canvas");
   const fieldSel = document.getElementById("mae-time-field");
   const metricSel = document.getElementById("mae-time-metric");
+  const yrangeSel = document.getElementById("mae-time-yrange");
+  const yrangeWrap = document.getElementById("mae-time-yrange-wrap");
   const statusEl = document.getElementById("mae-time-status");
   if (!canvas || !fieldSel || !metricSel) return;
+
+  // v0.6.580: top-of-Current-State compact aggregate stack-health chart.
+  // Shares payload + aggregateSeries/rollingMean/computeYRange with the
+  // main mae-over-time chart. Own canvas + Y-range selector; no field/
+  // metric selectors (aggregate-only).
+  const stackHealthCanvas = document.getElementById("stack-health-canvas");
+  const stackHealthYrangeSel = document.getElementById("stack-health-yrange");
+  const stackHealthStatusEl = document.getElementById("stack-health-status");
+  let stackHealthChart = null;
 
   let payload = null;
   let chart = null;
@@ -9146,6 +9154,20 @@ load();
     cc: "Cloud cover (%)", cl: "Cloud low (%)", cm: "Cloud mid (%)", ch: "Cloud high (%)",
     sr: "Solar rad (W/m²)", pr: "Pressure (inHg)", pp: "Precip prob (0-1)", pa: "Precip amt (in)",
   };
+  // v0.6.580: aggregate lift view — cross-field median + mean of daily
+  // (raw − prod) / raw × 100, with 7d rolling overlays. Default view.
+  // Baseline per field = user-default raw (raw_nbm for NBM-scope fields
+  // that emit it, else raw) — matches per_field_scoring's best_raw and
+  // scoreboard_v2's baseline (v0.6.557).
+  const AGGREGATE_KEY = "__aggregate__";
+  const AGGREGATE_LABEL = "🌐 Aggregate lift (all fields)";
+  // NBM-scope fields: NBM emits raw, so user-default raw = raw_nbm.
+  // Others use HRRR raw. Matches per_field_scoring:522 best_raw.
+  const NBM_SCOPE_FIELDS = new Set(["t", "h", "dp", "ws", "wg", "wd", "cc", "ch", "sr"]);
+  // pa is excluded from aggregate — obs values are ~0 most days, % lift
+  // blows up on tiny denominators. pp is excluded on MAE (its native
+  // metric is Brier). All other 12 fields participate.
+  const AGGREGATE_EXCLUDE = new Set(["pa", "pp"]);
 
   // Per-field layer config. Specialist labels (Lsr, Lc) reflect what the
   // numbered slot actually captures for that field per forecast_snapshot.py:
@@ -9378,10 +9400,376 @@ load();
     return out;
   }
 
+  // v0.6.580: aggregate — cross-field median + mean of daily
+  // (1 − prod_MAE / raw_MAE_90d_ref) × 100. Uses each field's raw_mae_ref
+  // from payload.raw_difficulty_index.per_field as a FIXED denominator so
+  // the ratio only moves when Prod moves — daily weather difficulty is
+  // absorbed by the fixed 90d reference. Positive = Prod beating baseline,
+  // negative = Prod worse than baseline. A ship that improves the stack
+  // pushes this UP over the following 7d rolling window.
+  function aggregateSeries(metric) {
+    if (metric !== "mae") return null;   // aggregate only defined for MAE
+    const rdi = (payload.raw_difficulty_index || {}).per_field || {};
+    const fields = (payload.fields || []).filter(f => !AGGREGATE_EXCLUDE.has(f) && rdi[f] && rdi[f].raw_mae_ref > 0);
+    const median = new Array(payload.days.length).fill(null);
+    const mean = new Array(payload.days.length).fill(null);
+    const p25 = new Array(payload.days.length).fill(null);
+    const p75 = new Array(payload.days.length).fill(null);
+    for (let i = 0; i < payload.days.length; i++) {
+      const scores = [];
+      for (const f of fields) {
+        const refMae = rdi[f].raw_mae_ref;
+        let prodCell = ((payload.series[f] || {}).prod_real || {})[payload.days[i]];
+        if (!prodCell) prodCell = ((payload.series[f] || {}).prod || {})[payload.days[i]];
+        const prodVal = prodCell ? prodCell.mae : null;
+        if (prodVal === null || prodVal === undefined) continue;
+        scores.push((1 - prodVal / refMae) * 100);
+      }
+      if (scores.length >= 6) {
+        const sorted = [...scores].sort((a, b) => a - b);
+        const mid = Math.floor(sorted.length / 2);
+        median[i] = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+        mean[i] = scores.reduce((s, v) => s + v, 0) / scores.length;
+        // Percentile bands: nearest-rank interpolation for small n
+        const q = (p) => {
+          const idx = (sorted.length - 1) * p;
+          const lo = Math.floor(idx), hi = Math.ceil(idx);
+          return sorted[lo] + (sorted[hi] - sorted[lo]) * (idx - lo);
+        };
+        p25[i] = q(0.25);
+        p75[i] = q(0.75);
+      }
+    }
+    return { median, mean, p25, p75 };
+  }
+
+  function renderAggregate() {
+    const agg = aggregateSeries("mae");
+    const label = "Prod vs 90d-ref raw (%, ↑ = beating baseline)";
+    const datasets = [];
+    if (agg) {
+      // p25 / p75 shaded band — draw p75 line first, then p25 with fill to p75.
+      // Chart.js `fill: {target: index}` refers to the dataset index at which
+      // p75 was pushed. Compute after pushing p75.
+      datasets.push({
+        label: "P75", data: agg.p75,
+        borderColor: "rgba(74,210,154,0.15)", backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: 0.5, pointRadius: 0, tension: 0.2, spanGaps: true, order: 20,
+      });
+      const p75Idx = datasets.length - 1;
+      datasets.push({
+        label: "P25-P75 spread", data: agg.p25,
+        borderColor: "rgba(74,210,154,0.15)",
+        backgroundColor: "rgba(74,210,154,0.08)",
+        borderWidth: 0.5, pointRadius: 0, tension: 0.2, spanGaps: true,
+        fill: { target: p75Idx }, order: 21,
+      });
+      datasets.push({
+        label: "Median (%)", data: agg.median,
+        borderColor: "#4ad29a", backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: 1.5, pointRadius: 0, tension: 0.2, spanGaps: true,
+      });
+      datasets.push({
+        label: "Mean (%)", data: agg.mean,
+        borderColor: "#e0d472", backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: 1.25, borderDash: [4, 4],
+        pointRadius: 0, tension: 0.2, spanGaps: true,
+      });
+      const medSmooth = rollingMean(agg.median);
+      if (medSmooth.some(v => v !== null)) {
+        datasets.push({
+          label: "Median (7d mean)", data: medSmooth,
+          borderColor: "rgba(74,210,154,0.5)", backgroundColor: "rgba(0,0,0,0)",
+          borderWidth: 4, pointRadius: 0, tension: 0.35, spanGaps: true,
+          borderCapStyle: "round", borderJoinStyle: "round", order: 10,
+        });
+      }
+      const meanSmooth = rollingMean(agg.mean);
+      if (meanSmooth.some(v => v !== null)) {
+        datasets.push({
+          label: "Mean (7d mean)", data: meanSmooth,
+          borderColor: "rgba(224,212,114,0.5)", backgroundColor: "rgba(0,0,0,0)",
+          borderWidth: 4, pointRadius: 0, tension: 0.35, spanGaps: true,
+          borderCapStyle: "round", borderJoinStyle: "round", order: 10,
+        });
+      }
+      const trend = computeTrendline(agg);
+      if (trend) {
+        const sign = trend.slopePerWeek >= 0 ? "+" : "";
+        datasets.push({
+          label: `Trend (${sign}${trend.slopePerWeek.toFixed(2)} pp/week)`,
+          data: trend.data,
+          borderColor: "#e07272", backgroundColor: "rgba(0,0,0,0)",
+          borderWidth: 1.5, borderDash: [6, 4],
+          pointRadius: 0, spanGaps: true, tension: 0, order: 5,
+        });
+      }
+    }
+    if (chart) chart.destroy();
+    chart = new Chart(canvas, {
+      type: "line",
+      data: { labels: payload.days, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: "#cfd8e3", filter: (item) => item.text !== "P75" } },
+          tooltip: { mode: "index", intersect: false,
+            filter: (item) => item.dataset.label !== "P75" && item.dataset.label !== "P25-P75 spread",
+            callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y == null ? "—" : ctx.parsed.y.toFixed(1) + "%"}` } },
+        },
+        scales: {
+          x: { title: { display: true, text: "obs date", color: "#8a93a3" },
+               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
+               grid: { color: "#242833" } },
+          y: { title: { display: true, text: label + " — 12 fields (pa/pp excluded)", color: "#8a93a3" },
+               ticks: { color: "#8a93a3", callback: (v) => v + "%" },
+               grid: {
+                 color: (ctx) => ctx.tick && ctx.tick.value === 0 ? "rgba(207,216,227,0.55)" : "#242833",
+                 lineWidth: (ctx) => ctx.tick && ctx.tick.value === 0 ? 1.5 : 1,
+               },
+               beginAtZero: false,
+               ...computeYRange(agg) },
+        },
+      },
+      plugins: [aggregateEventsPlugin()],
+    });
+  }
+
+  // v0.6.580: Y-axis range for aggregate. All modes center on the median
+  // of the smoothed 7d Median line (the signal you're reading), not on
+  // zero — because the aggregate live band is ~+15-25%, not zero. Auto
+  // picks a smart half-span from the data spread. Preset options set an
+  // explicit half-span around center. "free" lets Chart.js autoscale.
+  function aggCenter(agg) {
+    if (!agg) return 0;
+    const smoothedMed = rollingMean(agg.median).filter(v => v !== null);
+    if (smoothedMed.length < 3) return 0;
+    const sorted = [...smoothedMed].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    const center = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    return Math.round(center / 5) * 5;
+  }
+  function computeYRange(agg, sel) {
+    sel = sel || yrangeSel;
+    const mode = sel ? sel.value : "auto";
+    if (mode === "free") return {};
+    const center = aggCenter(agg);
+    if (mode !== "auto") {
+      const b = parseInt(mode, 10);
+      return { min: center - b, max: center + b };
+    }
+    // Auto: half-span = 1.8× spread of smoothed 7d Median + Mean, snapped
+    // to 5pp, min 10pp, max 40pp around center.
+    if (!agg) return { min: center - 30, max: center + 30 };
+    const smoothedMed = rollingMean(agg.median).filter(v => v !== null);
+    const smoothedMean = rollingMean(agg.mean).filter(v => v !== null);
+    const vals = smoothedMed.concat(smoothedMean);
+    if (vals.length < 4) return { min: center - 30, max: center + 30 };
+    const lo = Math.min(...vals), hi = Math.max(...vals);
+    const halfSpan = Math.max(hi - center, center - lo);
+    const padded = Math.max(halfSpan * 1.8, 10);
+    const snapped = Math.ceil(padded / 5) * 5;
+    const clamped = Math.max(10, Math.min(40, snapped));
+    return { min: center - clamped, max: center + clamped };
+  }
+
+  // v0.6.580: linear regression trendline over the smoothed 7d Median.
+  // Returns { data: [len N with only two non-null endpoints], slopePerWeek }
+  // Two-point line is drawn spanCaps:true so Chart.js connects the endpoints
+  // across the interior nulls.
+  function computeTrendline(agg) {
+    if (!agg) return null;
+    const smoothed = rollingMean(agg.median);
+    const pts = [];
+    for (let i = 0; i < smoothed.length; i++) {
+      if (smoothed[i] !== null && smoothed[i] !== undefined) pts.push({ x: i, y: smoothed[i] });
+    }
+    if (pts.length < 8) return null;
+    const n = pts.length;
+    const sumX = pts.reduce((s, p) => s + p.x, 0);
+    const sumY = pts.reduce((s, p) => s + p.y, 0);
+    const sumXY = pts.reduce((s, p) => s + p.x * p.y, 0);
+    const sumXX = pts.reduce((s, p) => s + p.x * p.x, 0);
+    const denom = n * sumXX - sumX * sumX;
+    if (denom === 0) return null;
+    const m = (n * sumXY - sumX * sumY) / denom;
+    const b = (sumY - m * sumX) / n;
+    const xStart = pts[0].x, xEnd = pts[pts.length - 1].x;
+    const data = new Array(smoothed.length).fill(null);
+    data[xStart] = m * xStart + b;
+    data[xEnd] = m * xEnd + b;
+    return { data, slopePerWeek: m * 7 };
+  }
+
+  // v0.6.580: cross-stack ship events for the aggregate chart. Only
+  // stack-wide milestones that plausibly moved the aggregate lift —
+  // NOT per-field tweaks. Same rendering as shipEventsPlugin below.
+  // Rule: only include ships that touch ≥2 fields OR are structural
+  // cascade changes that shift routing for many fields. Single-field
+  // ships (dpbp, cc L4 drop, wd L2 alone) belong on the per-field
+  // SHIP_EVENTS below, not on an aggregate.
+  const AGGREGATE_SHIP_EVENTS = [
+    {date: "2026-06-16", label: "L2 τ fitter train/test guardrail (5 L2 fields)"},
+    {date: "2026-07-17", label: "Lc cloud correction (cc/cl/cm/ch)"},
+    {date: "2026-08-18", label: "L1 router (NBM ≥6h for t/ws/wd)"},
+    {date: "2026-08-19", label: "L1 selector armed — Prod-vs-Prod (cross-field)"},
+    {date: "2026-08-20", label: "Selector cascade → NBM (cc/wg/dp)"},
+    {date: "2026-08-26", label: "NBM native L2 architectural parity (8 fields)"},
+    {date: "2026-09-05", label: "h L3_NBM + ch chp_nbm kills (2 fields)"},
+    {date: "2026-09-10", label: "cc L3_NBM drop + wg REMOVE (2 fields)"},
+  ];
+  function aggregateEventsPlugin() {
+    return {
+      id: "aggregateShipEvents",
+      afterDatasetsDraw(chart) {
+        if (!payload) return;
+        const days = payload.days;
+        const {ctx, chartArea: {top, bottom}, scales: {x}} = chart;
+        ctx.save();
+        ctx.strokeStyle = "rgba(224,164,115,0.55)";
+        ctx.setLineDash([3, 3]);
+        ctx.lineWidth = 1;
+        ctx.font = "bold 10px system-ui, sans-serif";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        AGGREGATE_SHIP_EVENTS.forEach((ev, i) => {
+          const idx = days.indexOf(ev.date);
+          if (idx < 0) return;
+          const px = x.getPixelForValue(idx);
+          ctx.beginPath();
+          ctx.moveTo(px, top);
+          ctx.lineTo(px, bottom);
+          ctx.stroke();
+          // Numbered marker at top of line — filled circle + white number
+          ctx.setLineDash([]);
+          ctx.fillStyle = "rgba(224,164,115,0.95)";
+          ctx.beginPath();
+          ctx.arc(px, top + 8, 8, 0, 2 * Math.PI);
+          ctx.fill();
+          ctx.fillStyle = "#0e1620";
+          ctx.fillText(String(i + 1), px, top + 8);
+          ctx.setLineDash([3, 3]);
+        });
+        ctx.restore();
+      },
+    };
+  }
+
+  // v0.6.580: numbered legend for the aggregate ship events — rendered
+  // as a compact grid under whichever aggregate chart called it, keyed
+  // by container element id.
+  function renderAggregateEventsLegend(containerId) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    const rows = AGGREGATE_SHIP_EVENTS.map((ev, i) =>
+      `<div style="display:flex;gap:6px;align-items:baseline;">
+         <span style="display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(224,164,115,0.95);color:#0e1620;font-size:0.72em;font-weight:700;flex-shrink:0;">${i + 1}</span>
+         <span style="opacity:0.8;font-size:0.82em;"><span style="opacity:0.65;">${ev.date.slice(5)}</span> ${ev.label}</span>
+       </div>`
+    ).join("");
+    el.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 12px;margin-top:8px;">${rows}</div>`;
+  }
+
+  // v0.6.580: compact aggregate chart at top of Current State.
+  // Same aggregate series + rendering approach as renderAggregate but
+  // targets its own canvas + Y-range selector. No P25/P75 label filter
+  // difference; keep in sync with renderAggregate if that changes.
+  function renderStackHealth() {
+    if (!payload || !stackHealthCanvas) return;
+    const agg = aggregateSeries("mae");
+    if (!agg) return;
+    const label = "Prod vs 90d-ref raw (%, ↑ = beating baseline)";
+    const datasets = [];
+    datasets.push({
+      label: "P75", data: agg.p75,
+      borderColor: "rgba(74,210,154,0.15)", backgroundColor: "rgba(0,0,0,0)",
+      borderWidth: 0.5, pointRadius: 0, tension: 0.2, spanGaps: true, order: 20,
+    });
+    const p75Idx = datasets.length - 1;
+    datasets.push({
+      label: "P25-P75 spread", data: agg.p25,
+      borderColor: "rgba(74,210,154,0.15)",
+      backgroundColor: "rgba(74,210,154,0.08)",
+      borderWidth: 0.5, pointRadius: 0, tension: 0.2, spanGaps: true,
+      fill: { target: p75Idx }, order: 21,
+    });
+    datasets.push({
+      label: "Median (%)", data: agg.median,
+      borderColor: "#4ad29a", backgroundColor: "rgba(0,0,0,0)",
+      borderWidth: 1.5, pointRadius: 0, tension: 0.2, spanGaps: true,
+    });
+    datasets.push({
+      label: "Mean (%)", data: agg.mean,
+      borderColor: "#e0d472", backgroundColor: "rgba(0,0,0,0)",
+      borderWidth: 1.25, borderDash: [4, 4],
+      pointRadius: 0, tension: 0.2, spanGaps: true,
+    });
+    const medSmooth = rollingMean(agg.median);
+    if (medSmooth.some(v => v !== null)) {
+      datasets.push({
+        label: "Median (7d mean)", data: medSmooth,
+        borderColor: "rgba(74,210,154,0.5)", backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: 4, pointRadius: 0, tension: 0.35, spanGaps: true,
+        borderCapStyle: "round", borderJoinStyle: "round", order: 10,
+      });
+    }
+    const meanSmooth = rollingMean(agg.mean);
+    if (meanSmooth.some(v => v !== null)) {
+      datasets.push({
+        label: "Mean (7d mean)", data: meanSmooth,
+        borderColor: "rgba(224,212,114,0.5)", backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: 4, pointRadius: 0, tension: 0.35, spanGaps: true,
+        borderCapStyle: "round", borderJoinStyle: "round", order: 10,
+      });
+    }
+    const trend = computeTrendline(agg);
+    if (trend) {
+      const sign = trend.slopePerWeek >= 0 ? "+" : "";
+      datasets.push({
+        label: `Trend (${sign}${trend.slopePerWeek.toFixed(2)} pp/week)`,
+        data: trend.data,
+        borderColor: "#e07272", backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: 1.5, borderDash: [6, 4],
+        pointRadius: 0, spanGaps: true, tension: 0, order: 5,
+      });
+    }
+    if (stackHealthChart) stackHealthChart.destroy();
+    stackHealthChart = new Chart(stackHealthCanvas, {
+      type: "line",
+      data: { labels: payload.days, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: "#cfd8e3", filter: (item) => item.text !== "P75" } },
+          tooltip: { mode: "index", intersect: false,
+            filter: (item) => item.dataset.label !== "P75" && item.dataset.label !== "P25-P75 spread",
+            callbacks: { label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y == null ? "—" : ctx.parsed.y.toFixed(1) + "%"}` } },
+        },
+        scales: {
+          x: { title: { display: true, text: "obs date", color: "#8a93a3" },
+               ticks: { color: "#8a93a3", autoSkip: true, maxTicksLimit: 12 },
+               grid: { color: "#242833" } },
+          y: { title: { display: true, text: label, color: "#8a93a3" },
+               ticks: { color: "#8a93a3", callback: (v) => v + "%" },
+               grid: {
+                 color: (ctx) => ctx.tick && ctx.tick.value === 0 ? "rgba(207,216,227,0.55)" : "#242833",
+                 lineWidth: (ctx) => ctx.tick && ctx.tick.value === 0 ? 1.5 : 1,
+               },
+               beginAtZero: false,
+               ...computeYRange(agg, stackHealthYrangeSel) },
+        },
+      },
+      plugins: [aggregateEventsPlugin()],
+    });
+    if (stackHealthStatusEl) stackHealthStatusEl.textContent = `${payload.days.length} days · refit ${payload.generated_at || ""}`;
+    renderAggregateEventsLegend("stack-health-events-legend");
+  }
+
   function render() {
     if (!payload) return;
     const field = fieldSel.value;
     const metric = metricSel.value;
+    if (field === AGGREGATE_KEY) { renderAggregate(); return; }
     const label = (metric === "bias") ? "Bias (signed)" : metric === "brier" ? "Brier" : metric.toUpperCase();
 
     const activeLayers = layersForField(field);
@@ -9538,6 +9926,9 @@ load();
     .then(p => {
       payload = p;
       fieldSel.innerHTML = "";
+      // v0.6.580: aggregate lives in its own compact chart at the top of
+      // Current State (#sec-stack-health). Bottom Accuracy-over-time is
+      // per-field only — no aggregate option, default back to Temperature.
       (payload.fields || []).forEach(f => {
         const opt = document.createElement("option");
         opt.value = f;
@@ -9546,22 +9937,32 @@ load();
       });
       if (payload.fields.includes("t")) fieldSel.value = "t";
       statusEl.textContent = `${payload.days.length} days · refit ${payload.generated_at || ""}`;
-      // Brier is only meaningful for pp (binary obs vs. probability forecast).
-      // Gray out the Brier option in the metric dropdown when a non-pp field
-      // is selected so users don't try to pick it and get silently kicked
-      // back to the prior metric.
+      // Brier is only meaningful for pp; MAE is the only metric that makes
+      // sense for aggregate lift. Sync metric availability + coerce as needed.
       const brierOpt = metricSel.querySelector('option[value="brier"]');
-      const syncBrierAvailability = () => {
-        if (brierOpt) brierOpt.disabled = fieldSel.value !== "pp";
+      const biasOpt = metricSel.querySelector('option[value="bias"]');
+      const rmseOpt = metricSel.querySelector('option[value="rmse"]');
+      const syncMetricAvailability = () => {
+        const isAgg = fieldSel.value === AGGREGATE_KEY;
+        if (brierOpt) brierOpt.disabled = isAgg || fieldSel.value !== "pp";
+        if (biasOpt) biasOpt.disabled = isAgg;
+        if (rmseOpt) rmseOpt.disabled = isAgg;
+        if (isAgg && metricSel.value !== "mae") metricSel.value = "mae";
+        if (yrangeWrap) yrangeWrap.style.display = isAgg ? "" : "none";
       };
-      syncBrierAvailability();
+      syncMetricAvailability();
+      if (yrangeSel) yrangeSel.addEventListener("change", render);
+      // v0.6.580: top-of-page compact aggregate chart
+      renderStackHealth();
+      if (stackHealthYrangeSel) stackHealthYrangeSel.addEventListener("change", renderStackHealth);
       renderSparklines();
       render();
       fieldSel.addEventListener("change", () => {
-        // Auto-suggest Brier when user picks pp
-        if (fieldSel.value === "pp" && metricSel.value === "mae") metricSel.value = "brier";
+        // Auto-suggest Brier when user picks pp; coerce to MAE for aggregate
+        if (fieldSel.value === AGGREGATE_KEY) metricSel.value = "mae";
+        else if (fieldSel.value === "pp" && metricSel.value === "mae") metricSel.value = "brier";
         else if (fieldSel.value !== "pp" && metricSel.value === "brier") metricSel.value = "mae";
-        syncBrierAvailability();
+        syncMetricAvailability();
         render();
         renderSparklines();
       });

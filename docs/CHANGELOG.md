@@ -1,4 +1,20 @@
 <details open>
+<summary><strong>v0.6.580 • September 10, 2026 (debug page — Stack health trajectory chart + Current State reorg + Status column trim + mobile fixes)</strong></summary>
+
+- **New: Stack health trajectory chart at top of Current State.** Compact aggregate view — per-obs-day cross-field Median + Mean + P25–P75 band of `(1 − prod_MAE / raw_MAE_90d_ref) × 100`. Denominator is each field's fixed 90-day-reference raw MAE (from `raw_difficulty_index`), so daily weather difficulty is absorbed and the ratio only moves when Prod moves. Positive = Prod beating baseline; a ship that improves the stack pushes the 7d rolling median up. 7d rolling overlays, prominent zero gridline, Auto/Free Y-range selector, ship-event annotations (numbered orange circles at top of vertical lines + labeled legend below). Trendline in red-dashed with slope in pp/week displayed in the legend. Cross-stack ship events curated under a ≥2-fields-OR-structural rule (7 events: 06-16 L2 τ fitter, 07-17 Lc, 08-18 L1 router, 08-19 selector armed, 08-20 selector cascade→NBM, 08-26 NBM native L2, 09-05 h+ch kills, 09-10 cc+wg cleanup).
+- **Current State reorganization.** All sub-sections now collapsible `<details open>` blocks with matching styling: Stack health trajectory, Per-field diagnostic — 7 day, Per-field pipeline architecture + status, What's running · improving · being evaluated next, Recent activity. Recent activity moved in from its former standalone H2 (project-narrative content belongs adjacent to project state). Emojis (📈, 🟢🟡🔵) stripped from section titles and inner sub-headers.
+- **Killed the standalone "Engineering updates" H2.** ~90% overlapped with What's Running. Unique content (MLC sandbox + L2-as-observation-only + tight-τ cloud bias propagation across leads 1-3h) moved to a new "🧪 Architectural backlog" sub-block at the bottom of "What's being evaluated next." Sec-status references cleaned from TOC + inline links.
+- **Aggressive Status column trim in Per-field pipeline architecture.** Was 13 journal-style cells averaging ~800 bytes each with ship dates and closed-watch history going back to July. Now 1-2 sentences per field: current state + open work only. Pipeline · HRRR / Pipeline · NBM columns untouched (real reference value).
+- **Forecast accuracy moved from top-level H2 into Research & Diagnostics.** It's diagnostic content, not primary-read. Now sits inside the Diagnostics group with the other R- and F-tagged audits. Anchor + all `#sec-accuracy` cross-refs preserved via inline `<a id>`.
+- **What's being evaluated next — Upcoming grid refreshed** to today's forward calendar: Thu 09-11 L1 walker cell-wire read (day 3/3), Sun 09-14 sr false-positive sentries clear, Mon 09-15 L3 DROP cm streak + KILLED_LAYERS prune, then three Backlog items (12d walkforward ADD proposal rescore, ADDED_LAYERS registry mirror, NBM sea-breeze specialist gated on stack-health trajectory).
+- **Mobile fixes** (`@media (max-width: 640px)`, desktop untouched):
+  - **TOC** flex-wrap disabled → single horizontally-scrollable row. Was wrapping to 5 rows on iPhone, eating half the viewport.
+  - **Scoreboard 24-HOUR row** — when the flex row wraps below 7 DAY on narrow screens, the second `.sb-num-group`'s left border + padding + margin reset to zero (with `margin-top:14px` for row spacing). Fixes the phantom vertical line under the 7 DAY number and the indented 24 HOUR MEDIAN.
+- Cosmetic sweep, no collector or publisher touch. Publisher is redeployed automatically on the hour by the cron; the new `sec-stack-health` chart reads `mae_over_time.json` directly, no schema change.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.579 • September 10, 2026 (debug page sweep — Recent Activity roll + NBM cascade line refresh)</strong></summary>
 
 - **`corrections_debug.html` Recent Activity** — new 09-10 (Thu) entry at the top summarizing today's 2 ships (v0.6.577 cc drop + v0.6.578 wg REMOVE). 09-09 shifted to "1 day ago", 09-08 to "2 days ago", 09-07 trimmed to a one-line display:none summary matching the 09-06 / 09-05 pattern.
