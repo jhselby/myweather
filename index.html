@@ -1946,7 +1946,7 @@
   <!-- Service Worker Registration -->
   <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/myweather/sw.js')
+    navigator.serviceWorker.register('/myweather/sw.js', { updateViaCache: 'none' })
       .then(function(reg) {
         setInterval(function() { reg.update(); }, 30 * 60 * 1000);
         reg.addEventListener('updatefound', function() {
