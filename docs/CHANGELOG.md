@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.578 • September 10, 2026 (NBM skip-table — remove wg pre_frontal 6-11h)</strong></summary>
+
+- **`weather_collector/data/skip_table_nbm_curated.json`** — `l3_nbm.wg` skip cell `["pre_frontal", 6, 12]` removed. Table: 14 → 13 cells (wg 10 → 9). Pooled L3_NBM wg bias now applies again in pre-frontal 6-11h leads.
+- **Why.** Second harvest from the symmetric REMOVE audit shipped v0.6.572, first single-cell REMOVE under the two-window verdict shipped v0.6.574. Cleared BOTH windows cleanly: 14d fresh n=282 lift=+4.64%, 50d long n=1,046 lift=+4.69%. Halves-stable on both windows. Different pattern from the 5-cell v0.6.573 batch — this cell was originally skipped under an older regime, its bias has since converged with the pooled correction, and the walkforward audit flagged it as no longer earning its skip.
+- **Watch.** Post-ship the two remaining WATCH cells (`wg sea_breeze 6-11h`, `wg nw_flow 6-11h`) — 14d says earn-back, 50d halves-unstable. Do not remove until 50d halves converge.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.577 • September 10, 2026 (NBM cascade — drop cc from L3_NBM_FIELDS)</strong></summary>
 
 - **`weather_collector/processors/l3_nbm.py:38`** — `L3_NBM_FIELDS` now `("wg", "ch", "sr")`, removing `cc`. NBM-path cc = L2_NBM only from this ship forward.

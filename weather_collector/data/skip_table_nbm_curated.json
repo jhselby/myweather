@@ -1,5 +1,5 @@
 {
-  "fitted_at": "2026-09-09T16:19",
+  "fitted_at": "2026-09-10T11:15",
   "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
   "cells": {
     "l3_nbm": {
@@ -43,11 +43,6 @@
           "frontal",
           12,
           24
-        ],
-        [
-          "pre_frontal",
-          6,
-          12
         ],
         [
           "nw_flow",
@@ -482,6 +477,19 @@
         ]
       },
       "reason": "v0.6.574 revert of 2 cells removed prematurely in v0.6.573. Cross-check on 50d fresh data showed h se_flow 24-47h skip still earns (50d lift -2.22%, halves -8.60/+8.38) and wg nw_flow 6-11h is halves-unstable on 50d (lift +3.08% but halves -4.55/+12.76 fails both-positive gate). Both cells cleared 14d but not 50d. v0.6.574 audit now requires both windows for REMOVE verdict \u2014 this class of premature ship will not recur."
+    },
+    "2026-09-10T11:15": {
+      "action": "remove",
+      "cells": {
+        "l3_nbm.wg": [
+          [
+            "pre_frontal",
+            6,
+            12
+          ]
+        ]
+      },
+      "reason": "v0.6.578: symmetric REMOVE audit \u2014 14d n=282 lift=+4.64%, 50d n=1,046 lift=+4.69%, both windows cleared. First single-cell REMOVE post-v0.6.574 two-window verdict."
     }
   }
 }
