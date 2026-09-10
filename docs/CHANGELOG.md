@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.577 • September 10, 2026 (NBM cascade — drop cc from L3_NBM_FIELDS)</strong></summary>
+
+- **`weather_collector/processors/l3_nbm.py:38`** — `L3_NBM_FIELDS` now `("wg", "ch", "sr")`, removing `cc`. NBM-path cc = L2_NBM only from this ship forward.
+- **`analysis/nbm_regression_sentry.py:77`** — `KILLED_LAYERS` gets `("cc", "l3_nbm"): "2026-09-10"` so the sentry suppresses the verdict to KILLED (with the kill date) while both windows still overlap pre-kill data, and the walkforward validator's ADD-proposal path doesn't churn on the recently-killed layer.
+- **Why.** Two-tool agreement, same shape as the sr.l5_nbm 08-25 kill. Sentry HOT — layer help +9.4% (sustained 7d, n=7,503) → **-8.3% (fresh 3d, n=3,285)**, Δ +17.7pp above the 15pp HOT threshold with a sign flip. `nbm_walkforward_validator` independently proposed DROP cc on l3_nbm the same day. Scoreboard corroborates: per_field cc corr **-13.1%** (nbm raw 20.17 → prod 22.82 — cascade already net-negative). cc was dropped from `L4_NBM_FIELDS` on 09-08 (v0.6.563); L3 was the last NBM cascade layer still touching cc.
+- **Skip-table.** The 9 `cc l3_nbm` cells in `skip_table_nbm_curated.json` become inert (field no longer applied) — harmless, and the symmetric REMOVE audit shipped v0.6.572 will prune them naturally on subsequent cross-checks. Not touched in this ship.
+- **Watch.** cc.l3_nbm sentry should read KILLED after the next tick. 7-day post-ship: cc NBM-path prod MAE trends from 22.82 back toward NBM raw 20.17. Reversible — re-add when sentry clears sustained.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.576 • September 9, 2026 (per-field diagnostic — Difficulty column, 7d raw MAE ÷ 90d ref)</strong></summary>
 
 - **`analysis/per_field_scoring.py`** — reads `raw_difficulty_index.per_field[f].ratio` from the local `analysis/output/mae_over_time.json` written earlier in the same publisher run and stamps it as `raw_difficulty_ratio` on every 7d per_field cell. Silent skip if `mae_over_time.json` is missing or malformed — the ratio is an optional 7d audit signal, not a gating input. 24h cells get no ratio (reference window is 90d — no 24h analog). `conventions` gets a `raw_difficulty_ratio` entry pointing at v0.6.392 for provenance.

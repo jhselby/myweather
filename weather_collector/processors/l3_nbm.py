@@ -35,7 +35,14 @@ from .nbm_common import cap_correction, is_stale
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l3_nbm_curated.json"
 
-L3_NBM_FIELDS = ("wg", "ch", "cc", "sr")   # scalar-bias fields
+L3_NBM_FIELDS = ("wg", "ch", "sr")   # scalar-bias fields
+# 2026-09-10 v0.6.577: dropped cc. Sentry HOT — layer help +9.4% → -8.3%
+# (Δ +17.7pp, n_sust 7,503 / n_fresh 3,285). Walkforward independently
+# proposed DROP cc same day (two-tool agreement — same pattern as sr.l5_nbm
+# 08-25 kill). Scoreboard corroborates: per_field cc corr -13.1% (nbm raw
+# 20.17 → prod 22.82, cascade net-negative). cc already out of L4_NBM_FIELDS
+# since v0.6.563 (2026-09-08); L3 was the last NBM cascade layer touching cc.
+# NBM-path cc now = L2_NBM only. Reversible.
 # 2026-09-05 v0.6.551: dropped h. Sentry HOT 2 days running — layer help
 # +17.5% → -25.7% (Δ +43.2pp) on the fresh window; per-cell breakdown
 # showed 14 of 15 cells with help_fresh negative across nearly every

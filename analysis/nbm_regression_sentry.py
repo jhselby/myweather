@@ -77,6 +77,7 @@ MIN_N_PER_WINDOW = 200
 KILLED_LAYERS = {
     ("ch", "chp_nbm"): "2026-09-05",   # v0.6.551
     ("h", "l3_nbm"): "2026-09-05",     # v0.6.551
+    ("cc", "l3_nbm"): "2026-09-10",    # v0.6.577
 }
 
 # Verdict thresholds apply to layer marginal degradation, not absolute MAE.
