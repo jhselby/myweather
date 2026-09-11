@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.585 • September 11, 2026 (session-end sweep — debug page Recent Activity + Upcoming grid)</strong></summary>
+
+- Recent Activity 09-11 entry rewritten to cover all 5 ships of the day (v0.6.581 walker fixes → v0.6.585 sweep).
+- Upcoming grid: 2 Backlog rows pruned — the 12-day ADD-side rescore protocol (built + shipped today as v0.6.584) and the ADDED_LAYERS registry (shipped today as v0.6.583). Both had been carried since 09-09.
+
+</details>
+
+<details>
 <summary><strong>v0.6.584 • September 11, 2026 (NBM skip-ADD two-window audit + first CONFIRMED ship: l3_nbm wd se_flow 6-11h)</strong></summary>
 
 - **New: `analysis/nbm_skip_add_audit.py`** — ADD-side mirror of the REMOVE-side `nbm_skip_earning_audit` (v0.6.572+v0.6.574). Rescores each 14d ADD proposal from `nbm_walkforward_validator` against a 50d long window. Verdicts: CONFIRMED (both windows ≤ -3% AND 50d halves both ≤ 0), FRESH (14d only), STALE (14d hurts but 50d shows helping — drop the proposal), THIN_50D. Closes the last symmetry gap: REMOVE has required two-window since 09-09 v0.6.574; ADD was 14d-only since 08-21 v0.6.462.
