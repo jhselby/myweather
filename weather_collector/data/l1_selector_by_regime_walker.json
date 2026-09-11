@@ -1,72 +1,38 @@
 {
-  "generated_at": "2026-09-08T17:56:53.854142+00:00",
+  "generated_at": "2026-09-11T12:12:26.895221+00:00",
   "source": "analysis/l1_selector_fit_by_regime_walker.py",
-  "diagnostic_source_fitted_at": "2026-09-08T17:55",
+  "diagnostic_source_fitted_at": "2026-09-11T10:29",
   "gate_window_days": 3,
-  "min_daily_n": 20,
-  "n_cells_cleared": 0,
-  "n_cells_flipped": 2,
-  "cells_cleared_for_wire": [],
-  "cells_flipped_in_window": [
-    "ch/nw_flow/6-11",
-    "ws/nw_flow/6-11"
+  "window_sum_n_min": 60,
+  "n_cells_cleared": 2,
+  "n_cells_flipped": 0,
+  "cells_cleared_for_wire": [
+    "ws/calm/12-23",
+    "ws/nw_flow/12-23"
   ],
+  "cells_flipped_in_window": [],
   "days_in_window": [
-    "2026-09-07",
-    "2026-09-08"
+    "2026-09-09",
+    "2026-09-10",
+    "2026-09-11"
   ],
   "per_cell": {
-    "ch": {
-      "nw_flow": {
-        "6-11": {
-          "cleared_for_wire": false,
-          "flipped_in_window": true,
-          "days_seen": 2,
-          "days_positive": 1,
-          "min_daily_n_in_window": 0,
-          "min_daily_n_required": 20,
-          "today_present": false,
-          "today_lift_pct": null,
-          "today_n": null,
-          "today_n_today": null,
-          "today_half1_lift_pct": null,
-          "today_half2_lift_pct": null
-        }
-      }
-    },
-    "h": {
-      "ne_flow": {
-        "12-23": {
-          "cleared_for_wire": false,
-          "flipped_in_window": false,
-          "days_seen": 2,
-          "days_positive": 2,
-          "min_daily_n_in_window": 0,
-          "min_daily_n_required": 20,
-          "today_present": true,
-          "today_lift_pct": 26.33,
-          "today_n": 477,
-          "today_n_today": 0,
-          "today_half1_lift_pct": 19.6,
-          "today_half2_lift_pct": 12.75
-        }
-      }
-    },
     "wg": {
       "sw_flow": {
         "0-5": {
           "cleared_for_wire": false,
           "flipped_in_window": false,
-          "days_seen": 2,
-          "days_positive": 1,
-          "min_daily_n_in_window": 0,
-          "min_daily_n_required": 20,
+          "days_seen": 3,
+          "days_positive": 3,
+          "min_daily_n_in_window": 6,
+          "sum_daily_n_in_window": 32,
+          "window_sum_n_required": 60,
           "today_present": true,
-          "today_lift_pct": 8.31,
-          "today_n": 708,
-          "today_n_today": 0,
-          "today_half1_lift_pct": 2.92,
-          "today_half2_lift_pct": 11.18
+          "today_lift_pct": 7.37,
+          "today_n": 640,
+          "today_n_today": 11,
+          "today_half1_lift_pct": 6.37,
+          "today_half2_lift_pct": 9.61
         }
       }
     },
@@ -75,74 +41,64 @@
         "0-5": {
           "cleared_for_wire": false,
           "flipped_in_window": false,
-          "days_seen": 2,
-          "days_positive": 2,
+          "days_seen": 3,
+          "days_positive": 3,
           "min_daily_n_in_window": 0,
-          "min_daily_n_required": 20,
+          "sum_daily_n_in_window": 6,
+          "window_sum_n_required": 60,
           "today_present": true,
-          "today_lift_pct": 19.43,
-          "today_n": 224,
-          "today_n_today": 1,
-          "today_half1_lift_pct": 7.83,
-          "today_half2_lift_pct": 31.9
+          "today_lift_pct": 21.37,
+          "today_n": 227,
+          "today_n_today": 0,
+          "today_half1_lift_pct": 10.26,
+          "today_half2_lift_pct": 30.68
         },
         "12-23": {
-          "cleared_for_wire": false,
+          "cleared_for_wire": true,
           "flipped_in_window": false,
-          "days_seen": 2,
-          "days_positive": 2,
+          "days_seen": 3,
+          "days_positive": 3,
           "min_daily_n_in_window": 0,
-          "min_daily_n_required": 20,
+          "sum_daily_n_in_window": 67,
+          "window_sum_n_required": 60,
           "today_present": true,
-          "today_lift_pct": 28.71,
-          "today_n": 511,
+          "today_lift_pct": 26.14,
+          "today_n": 529,
           "today_n_today": 0,
-          "today_half1_lift_pct": 30.65,
-          "today_half2_lift_pct": 22.95
+          "today_half1_lift_pct": 30.45,
+          "today_half2_lift_pct": 15.91
         },
         "6-11": {
           "cleared_for_wire": false,
           "flipped_in_window": false,
-          "days_seen": 2,
-          "days_positive": 2,
+          "days_seen": 3,
+          "days_positive": 3,
           "min_daily_n_in_window": 0,
-          "min_daily_n_required": 20,
+          "sum_daily_n_in_window": 2,
+          "window_sum_n_required": 60,
           "today_present": true,
-          "today_lift_pct": 26.22,
-          "today_n": 306,
-          "today_n_today": 1,
-          "today_half1_lift_pct": 32.02,
-          "today_half2_lift_pct": 14.0
+          "today_lift_pct": 28.72,
+          "today_n": 300,
+          "today_n_today": 0,
+          "today_half1_lift_pct": 34.33,
+          "today_half2_lift_pct": 15.77
         }
       },
       "nw_flow": {
         "12-23": {
-          "cleared_for_wire": false,
+          "cleared_for_wire": true,
           "flipped_in_window": false,
-          "days_seen": 2,
-          "days_positive": 2,
+          "days_seen": 3,
+          "days_positive": 3,
           "min_daily_n_in_window": 0,
-          "min_daily_n_required": 20,
+          "sum_daily_n_in_window": 155,
+          "window_sum_n_required": 60,
           "today_present": true,
-          "today_lift_pct": 8.21,
-          "today_n": 2024,
-          "today_n_today": 228,
-          "today_half1_lift_pct": 12.79,
-          "today_half2_lift_pct": 1.2
-        },
-        "6-11": {
-          "cleared_for_wire": false,
-          "flipped_in_window": true,
-          "days_seen": 2,
-          "days_positive": 1,
-          "min_daily_n_in_window": 0,
-          "min_daily_n_required": 20,
-          "today_present": false,
-          "today_lift_pct": null,
-          "today_n": null,
-          "today_n_today": null,
-          "today_half1_lift_pct": null,
-          "today_half2_lift_pct": null
+          "today_lift_pct": 8.46,
+          "today_n": 1979,
+          "today_n_today": 97,
+          "today_half1_lift_pct": 12.07,
+          "today_half2_lift_pct": 0.5
         }
       }
     }

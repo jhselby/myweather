@@ -22,7 +22,21 @@ trap 'rm -f "$BODY"' EXIT
   echo "=================================================="
 } > "$BODY"
 
+# Run non-walkers first, then walkers, so each walker reads its sibling
+# fitter's fresh output for today. Bash glob order puts *_walker.py before
+# the fitter *.py alphabetically under this locale ('_' < '.'), which left
+# walkers reading yesterday's report and gating on stale n_today values.
+FILES=""
 for f in analysis/*.py; do
+  case "$f" in *_walker.py) continue ;; esac
+  FILES="$FILES $f"
+done
+for f in analysis/*_walker.py; do
+  [ -e "$f" ] || continue
+  FILES="$FILES $f"
+done
+
+for f in $FILES; do
   name=$(basename "$f" .py)
   [ "$name" = "_cache" ] && continue
   # Skip anything with .skip in the name (parked scripts).

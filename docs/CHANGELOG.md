@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.581 • September 11, 2026 (L1 by-regime walker — 3 bugs fixed, first 2 cells wire)</strong></summary>
+
+- **Bug 1 — run order.** In `analysis/runlog/run_digest.sh`, bash glob iterates `analysis/*.py` alphabetically under this locale with `_` sorting before `.`, so `l1_selector_fit_by_regime_walker.py` ran BEFORE `l1_selector_fit_by_regime.py` and read yesterday's fitter report as "today's" input. Fixed by splitting the loop into non-walkers first, then walkers.
+- **Bug 2 — n_today floor semantics.** `MIN_DAILY_N = 20` (per-day min across the 3-day window, shipped v0.6.566) zeroed on any regime-quiet day — nw_flow, ne_flow, calm cells routinely see 0 rolling-24h paired samples when the wind is from another quadrant, sinking cells with 600–2000 total 30d paired samples. Replaced with `WINDOW_SUM_N_MIN = 60` (sum of daily `n_today` across the window). Same total-sample budget, tolerant of regime gaps. Preserves the "reject thin-data streaks" intent.
+- **Bug 3 — window overcount.** Cutoff used `datetime.now() - GATE_WINDOW_DAYS` and returned N+1 days on any day today's history entry existed. `n_seen == GATE_WINDOW_DAYS` could never clear. Replaced with "most recent GATE_WINDOW_DAYS entries from sorted history" — robust to fitter/walker/clock timing.
+- **Result — first 2 wire-cleared cells:** `ws/calm/12-23` (lift +26.1%, sum_dn=67) and `ws/nw_flow/12-23` (lift +8.5%, sum_dn=155). Collector's `l1_selector.pick_source()` routes NBM for these `(field, regime, band)` cells on next deploy. Walker milestone from 09-06 (armed) → 09-08 (loosened) → 09-11 (first wire).
+
+</details>
+
+<details>
 <summary><strong>v0.6.580 • September 10, 2026 (debug page — Stack health trajectory chart + Current State reorg + Status column trim + mobile fixes)</strong></summary>
 
 - **New: Stack health trajectory chart at top of Current State.** Compact aggregate view — per-obs-day cross-field Median + Mean + P25–P75 band of `(1 − prod_MAE / raw_MAE_90d_ref) × 100`. Denominator is each field's fixed 90-day-reference raw MAE (from `raw_difficulty_index`), so daily weather difficulty is absorbed and the ratio only moves when Prod moves. Positive = Prod beating baseline; a ship that improves the stack pushes the 7d rolling median up. 7d rolling overlays, prominent zero gridline, Auto/Free Y-range selector, ship-event annotations (numbered orange circles at top of vertical lines + labeled legend below). Trendline in red-dashed with slope in pp/week displayed in the legend. Cross-stack ship events curated under a ≥2-fields-OR-structural rule (7 events: 06-16 L2 τ fitter, 07-17 Lc, 08-18 L1 router, 08-19 selector armed, 08-20 selector cascade→NBM, 08-26 NBM native L2, 09-05 h+ch kills, 09-10 cc+wg cleanup).
