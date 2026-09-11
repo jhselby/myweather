@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.583 • September 11, 2026 (nbm_regression_sentry — ADDED_LAYERS registry mirror of KILLED_LAYERS)</strong></summary>
+
+- **New: `ADDED_LAYERS` registry** in `analysis/nbm_regression_sentry.py`. Mirror of `KILLED_LAYERS`. When a layer was recently added, the sustained window (day 4→day 10 ago) can contain pre-add rows where the layer wasn't wired yet. Sentry compares that mixed sustained help-rate to a post-add fresh window and false-fires HOT/WATCH. Registry suppresses to `ADDED` (with add date) until `sustained_start >= add_date`; then the layer evaluates normally.
+- **Seeded with `sr.l3_nbm` and `sr.l5_nbm`** (both added 2026-09-04 v0.6.548). Digest today (09-11) previously showed these as HOT + WATCH false positives; now show as `ADDED — sustained window pre-dates add`. Both auto-clear on 2026-09-14 when sustained window fully post-dates the add.
+- **Verdict rollup line** in the exec-summary and the per-layer table now include an `ADDED` count alongside `KILLED`.
+- Case study origin: [[project_sr_l5_l3_nbm_sentry_false_positive_09_08]] flagged this class of false-positive on 09-08; today's ship closes the loop.
+
+</details>
+
+<details>
 <summary><strong>v0.6.582 • September 11, 2026 (debug page — 09-11 Recent Activity + Upcoming grid roll)</strong></summary>
 
 - Recent Activity: 2026-09-11 (Fri) entry added — v0.6.581 walker fixes + first-ever regime-conditional wire. Day-labels shifted (09-10 → 1 day ago, 09-09 → 2 days ago, 09-08 → trimmed).

@@ -80,6 +80,21 @@ KILLED_LAYERS = {
     ("cc", "l3_nbm"): "2026-09-10",    # v0.6.577
 }
 
+# Recently-added layers. Mirror of KILLED_LAYERS for the ADD side.
+# When the sustained window's start pre-dates the add, that window contains
+# rows where the layer wasn't wired yet — its stamped `error_layer` values
+# reflect a mix of inactive and active periods. Compared to a fully-active
+# fresh window, this looks like a regression even when the layer is fine.
+# Case study: sr.l5_nbm added 2026-09-04, sentry logged false HOT continuously
+# 09-04 → 09-14 as the sustained window walked forward past pre-add data.
+# Verdict is suppressed to ADDED (with add date) until sustained_start
+# crosses the add date; then the layer evaluates normally.
+# Format: {(field, layer): "YYYY-MM-DD"}
+ADDED_LAYERS = {
+    ("sr", "l5_nbm"): "2026-09-04",    # v0.6.548
+    ("sr", "l3_nbm"): "2026-09-04",    # v0.6.548
+}
+
 # Verdict thresholds apply to layer marginal degradation, not absolute MAE.
 # HOT   = marginal helping dropped by >= 15 percentage points OR flipped
 #         from helping to hurting.
@@ -204,6 +219,20 @@ def evaluate(acc, windows=None):
                     cell["killed_at"] = kill_iso
                     out[f"{field}.{lyr}"] = cell
                     continue
+        add_iso = ADDED_LAYERS.get((field, lyr))
+        if add_iso and sustained_start is not None:
+            try:
+                add_dt = datetime.fromisoformat(add_iso)
+            except Exception:
+                add_dt = None
+            if add_dt is not None:
+                if add_dt.tzinfo is None and sustained_start.tzinfo is not None:
+                    add_dt = add_dt.replace(tzinfo=sustained_start.tzinfo)
+                if add_dt >= sustained_start and (n_f > 0 or n_s > 0):
+                    cell["verdict"] = "ADDED"
+                    cell["added_at"] = add_iso
+                    out[f"{field}.{lyr}"] = cell
+                    continue
         if n_f < MIN_N_PER_WINDOW or n_s < MIN_N_PER_WINDOW:
             cell["verdict"] = "THIN"
             out[f"{field}.{lyr}"] = cell
@@ -289,7 +318,7 @@ def emit(cells, windows):
     lines.append(hdr)
     lines.append("-" * len(hdr))
     # Sort HOT first, then WATCH, then rest — most alarming at top.
-    order = {"HOT": 0, "WATCH": 1, "CLEAN": 2, "KILLED": 3, "THIN": 4}
+    order = {"HOT": 0, "WATCH": 1, "CLEAN": 2, "KILLED": 3, "ADDED": 3, "THIN": 4}
     def sortkey(c):
         return (order.get(c.get("verdict", "THIN"), 4),
                 -(c.get("marginal_degradation_pp") or c.get("mae_pct_change") or 0.0),
@@ -302,6 +331,10 @@ def emit(cells, windows):
             continue
         if v == "KILLED":
             note = f"killed {c.get('killed_at', '?')} — pre-kill rows aging out"
+            lines.append(f"{c['field']:<6}{c['layer']:<10}{v:<10}{c['n_sustained']:>9,}{c['n_fresh']:>9,}   {note}")
+            continue
+        if v == "ADDED":
+            note = f"added {c.get('added_at', '?')} — sustained window pre-dates add"
             lines.append(f"{c['field']:<6}{c['layer']:<10}{v:<10}{c['n_sustained']:>9,}{c['n_fresh']:>9,}   {note}")
             continue
         marg = c.get("marginal_available", False)
@@ -324,12 +357,13 @@ def emit(cells, windows):
     n_clean = sum(1 for c in cells.values() if c.get("verdict") == "CLEAN")
     n_thin = sum(1 for c in cells.values() if c.get("verdict") == "THIN")
     n_killed = sum(1 for c in cells.values() if c.get("verdict") == "KILLED")
+    n_added = sum(1 for c in cells.values() if c.get("verdict") == "ADDED")
     if n_hot:
         hot = sorted(f"{c['field']}.{c['layer']}" for c in cells.values() if c.get("verdict") == "HOT")
-        lines.append(f"Verdict: {n_hot} HOT, {n_watch} WATCH, {n_clean} CLEAN, {n_killed} KILLED, {n_thin} THIN — hot: {', '.join(hot)}.")
+        lines.append(f"Verdict: {n_hot} HOT, {n_watch} WATCH, {n_clean} CLEAN, {n_killed} KILLED, {n_added} ADDED, {n_thin} THIN — hot: {', '.join(hot)}.")
     elif n_watch:
         watch = sorted(f"{c['field']}.{c['layer']}" for c in cells.values() if c.get("verdict") == "WATCH")
-        lines.append(f"Verdict: {n_hot} HOT, {n_watch} WATCH, {n_clean} CLEAN, {n_killed} KILLED, {n_thin} THIN — watch: {', '.join(watch)}.")
+        lines.append(f"Verdict: {n_hot} HOT, {n_watch} WATCH, {n_clean} CLEAN, {n_killed} KILLED, {n_added} ADDED, {n_thin} THIN — watch: {', '.join(watch)}.")
     else:
         lines.append(f"Verdict: CLEAN — {n_clean} NBM cells nominal ({n_thin} THIN).")
     return "\n".join(lines)
