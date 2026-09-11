@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.589 • September 11, 2026 (session-end sweep — v0.6.588 + prep for 09-12)</strong></summary>
+
+- Recent Activity 09-11 entry updated to cover v0.6.588 (now 8 ships + 4 collector deploys, up from 6+3).
+- Upcoming grid 09-14 row rewritten: 2 cells already fired via escalation; 9 remaining candidates listed with (lift, n) so next session sees at a glance which qualify for what path.
+- Memory `project_09_11_session.md` extended with v0.6.588 + v0.6.589 sections, lessons, and full 09-12 session-prep block (first-thing-to-check, likely-clear cells, walker-fragility watch, prioritized open items).
+- MEMORY.md READ FIRST rewritten with 09-12 first-read clock-watch (scoreboard h/ws/wg/sr/dp 24h VC — was escalation the right call?).
+
+</details>
+
+<details>
 <summary><strong>v0.6.588 • September 11, 2026 (L1 walker escalation clause — bypass 3-day gate for large-magnitude signals; 2 HRRR-wire cells fire immediately)</strong></summary>
 
 - **Driver:** 24h VC read showed 5 losing fields on the scoreboard — h −522%, ws −106%, wg −104%, sr −49%, dp −21%. Every one had HRRR-wire candidates in today's fitter output. Big-magnitude, healthy-n, halves-stable signals waiting 3 days behind the walker gate while the selector loses ~7 MAE-points on h per hour.
