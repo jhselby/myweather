@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.587 • September 11, 2026 (session-end sweep — debug page + memory for v0.6.586)</strong></summary>
+
+- Recent Activity 09-11 entry updated to cover v0.6.586 (now 6 ships + 3 collector deploys, up from 5+2).
+- Upcoming grid: 09-14 row added for "First HRRR-wire read (day 3/3, walker's second direction)" — parallel to today's NBM-wire read that surfaced the walker bugs. Top-impact candidates listed. Existing 09-14 sr sentries row updated to note ADDED_LAYERS prunable.
+- Memory `project_09_11_session.md` v0.6.586 + v0.6.587 sections appended; MEMORY.md READ FIRST rewritten with the two-directional walker milestone + 09-14 HRRR-wire clock-watch.
+
+</details>
+
+<details>
 <summary><strong>v0.6.586 • September 11, 2026 (L1 by-regime walker — symmetric HRRR-wire direction, 3× impact ceiling unlocked)</strong></summary>
 
 - **Model work — walker was one-directional.** Fitter's `masked_cells` only surfaced cells where pooled=HRRR × regime says NBM helps (`halves_stable_nbm = h1>0 AND h2>0`). Symmetric direction — cells where pooled=NBM × regime says HRRR helps — had no output channel. Impact score diagnostic: NBM-wire direction 488, HRRR-wire direction **1,475 — 3× larger ceiling**. Real cells the selector wrongly routes to NBM include `ws/sea_breeze/24-47` (-40.2%, n=869), `h/calm/24-47` (-34.7%), `h/frontal/12-23` (-35.2%), `cc/ne_flow/12-23` (-19.2% — the same ne_flow outlier the 09-06 audit flagged), plus 8 more halves-stable cells.
