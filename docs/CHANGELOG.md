@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.586 • September 11, 2026 (L1 by-regime walker — symmetric HRRR-wire direction, 3× impact ceiling unlocked)</strong></summary>
+
+- **Model work — walker was one-directional.** Fitter's `masked_cells` only surfaced cells where pooled=HRRR × regime says NBM helps (`halves_stable_nbm = h1>0 AND h2>0`). Symmetric direction — cells where pooled=NBM × regime says HRRR helps — had no output channel. Impact score diagnostic: NBM-wire direction 488, HRRR-wire direction **1,475 — 3× larger ceiling**. Real cells the selector wrongly routes to NBM include `ws/sea_breeze/24-47` (-40.2%, n=869), `h/calm/24-47` (-34.7%), `h/frontal/12-23` (-35.2%), `cc/ne_flow/12-23` (-19.2% — the same ne_flow outlier the 09-06 audit flagged), plus 8 more halves-stable cells.
+- **Fitter (`l1_selector_fit_by_regime.py`)** now emits `masked_cells_hrrr` alongside `masked_cells`. New per-cell field `halves_stable_hrrr = h1<0 AND h2<0`. Same n floor (60) and |lift| threshold (3.0%) as the NBM direction. Text report prints both direction tables. First-run today: **NBM-wire 5 candidates, HRRR-wire 11 candidates.**
+- **Walker (`l1_selector_fit_by_regime_walker.py`)** now tracks both directions independently under the same 3d/sum(n_today)≥60 gate. History-cache entries store `positive` + `payload` (NBM direction) and `positive_hrrr` + `payload_hrrr` (HRRR direction). Runtime JSON adds `cells_cleared_for_wire_hrrr`, `cells_flipped_in_window_hrrr`, and per-cell `cleared_for_wire_hrrr` / `flipped_in_window_hrrr`.
+- **Collector `l1_selector.pick_source()`** extended for two-directional overrides. When a cell has `cleared_for_wire_hrrr=True` AND `flipped_in_window_hrrr=False`, route HRRR with precedence over pooled. Existing NBM-direction wire semantics unchanged. Two directions are mutually exclusive by construction (a cell can't be both halves>0 and halves<0). Deploy 14:21 UTC.
+- **Today's HRRR-wire candidates need 2 more days** to build the 3-day window (accumulation starts today). Earliest wire 2026-09-14 for cells that hold PPP with sum_dn ≥ 60. NBM-wire cells continue as before (2 wired 09-11, near-miss watch continues).
+
+</details>
+
+<details>
 <summary><strong>v0.6.585 • September 11, 2026 (session-end sweep — debug page Recent Activity + Upcoming grid)</strong></summary>
 
 - Recent Activity 09-11 entry rewritten to cover all 5 ships of the day (v0.6.581 walker fixes → v0.6.585 sweep).

@@ -151,6 +151,7 @@ def fit():
         return "hrrr", hmae, nmae, lift, paired
 
     masked_cells = []
+    masked_cells_hrrr = []
     all_cells = []
     for field in FIELDS:
         pooled_by_band = {band: _pooled_pick(field, band)
@@ -167,6 +168,10 @@ def fit():
                     h1 is not None and h2 is not None
                     and h1 > 0 and h2 > 0
                 )
+                halves_stable_hrrr = (
+                    h1 is not None and h2 is not None
+                    and h1 < 0 and h2 < 0
+                )
                 cell = {
                     "field": field, "regime": reg, "band": band,
                     "hrrr_prod_mae": round(hmae, 3) if hmae is not None else None,
@@ -177,17 +182,28 @@ def fit():
                     "half1_lift_pct": round(h1, 2) if h1 is not None else None,
                     "half2_lift_pct": round(h2, 2) if h2 is not None else None,
                     "halves_stable_nbm": halves_stable_nbm,
+                    "halves_stable_hrrr": halves_stable_hrrr,
                     "pooled_pick": pooled_by_band[band][0],
                 }
                 all_cells.append(cell)
                 pooled_source = pooled_by_band[band][0]
+                # Direction 1: pooled=HRRR but regime says NBM helps.
                 if (pooled_source == "hrrr"
                         and paired >= MIN_N_REGIME
                         and lift is not None and lift >= MIN_LIFT_PCT_REGIME
                         and halves_stable_nbm):
                     masked_cells.append(cell)
+                # Direction 2 (symmetric): pooled=NBM but regime says HRRR helps.
+                # Same n floor and lift magnitude threshold, halves-stable in
+                # the HRRR-helps direction (both halves < 0).
+                if (pooled_source == "nbm"
+                        and paired >= MIN_N_REGIME
+                        and lift is not None and lift <= -MIN_LIFT_PCT_REGIME
+                        and halves_stable_hrrr):
+                    masked_cells_hrrr.append(cell)
 
     masked_cells.sort(key=lambda c: c["lift_pct"], reverse=True)
+    masked_cells_hrrr.sort(key=lambda c: c["lift_pct"])  # most-negative first
 
     output = {
         "fitted_at": now.strftime("%Y-%m-%dT%H:%M"),
@@ -199,14 +215,17 @@ def fit():
         "n_rows_scanned": n_in,
         "n_rows_kept":    n_kept,
         "n_masked_cells": len(masked_cells),
+        "n_masked_cells_hrrr": len(masked_cells_hrrr),
         "masked_cells":   masked_cells,
+        "masked_cells_hrrr": masked_cells_hrrr,
         "all_cells":      all_cells,
         "notes": (
-            "Diagnostic-only. Runtime l1_selector.py still keys on (field, band). "
-            "A masked cell is one where the pooled band picks HRRR but the regime × "
-            "band cell shows NBM lift >= min_lift_pct_regime on n >= min_n_regime with "
-            "both halves lifting toward NBM. Promotion requires runtime extension to "
-            "(field, regime, band) plus a stability watch across daily reads."
+            "Two-directional walker candidate output. "
+            "masked_cells: pooled=HRRR × regime says NBM helps (halves both >0). "
+            "masked_cells_hrrr: pooled=NBM × regime says HRRR helps (halves both <0). "
+            "Both use n >= min_n_regime and |lift| >= min_lift_pct_regime. "
+            "Downstream walker gates each direction independently, then l1_selector "
+            "routes the cleared cells with precedence over the pooled band pick."
         ),
     }
     with open(OUT_PATH, "w") as fout:
@@ -227,7 +246,22 @@ def fit():
               f"{c['lift_pct']:>+7.1f}% {c['half1_lift_pct']:>+6.1f}% "
               f"{c['half2_lift_pct']:>+6.1f}% {c['n']:>6,}")
     print("=" * 92)
-    print(f"Total flagged: {len(masked_cells)}  (of {len(all_cells)} regime×band cells seen)")
+    print()
+    print("=" * 92)
+    print(f"Masked cells (HRRR direction): pooled-picks-NBM but regime × band flags HRRR (halves-stable, n≥{MIN_N_REGIME}, |lift|≥{MIN_LIFT_PCT_REGIME}%)")
+    print("=" * 92)
+    print(f"{'field':<5} {'regime':<12} {'band':<7} {'HRRR':>7} {'NBM':>7} {'lift':>8} {'h1':>7} {'h2':>7} {'n':>6}")
+    print("-" * 92)
+    if not masked_cells_hrrr:
+        print("(none)")
+    for c in masked_cells_hrrr:
+        print(f"{c['field']:<5} {c['regime']:<12} {c['band']:<7} "
+              f"{c['hrrr_prod_mae']:>7.2f} {c['nbm_prod_mae']:>7.2f} "
+              f"{c['lift_pct']:>+7.1f}% {c['half1_lift_pct']:>+6.1f}% "
+              f"{c['half2_lift_pct']:>+6.1f}% {c['n']:>6,}")
+    print("=" * 92)
+    print(f"Total flagged: NBM-wire {len(masked_cells)}  ·  HRRR-wire {len(masked_cells_hrrr)}  "
+          f"(of {len(all_cells)} regime×band cells seen)")
     print(f"  wrote {OUT_PATH}")
 
 

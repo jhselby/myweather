@@ -68,11 +68,13 @@ def _load():
 
 
 def _load_regime_overrides():
-    """Load the by-regime walker's per-cell verdicts. Only cells whose
-    `cleared_for_wire == True` AND `flipped_in_window == False` produce a
-    runtime override (route NBM) — matches the walker's wire contract.
-    Missing file, empty cells list, or any load error → no overrides
-    (band-level pool decides)."""
+    """Load the by-regime walker's per-cell verdicts. Two-directional:
+    a cell with `cleared_for_wire == True` AND `flipped_in_window == False`
+    routes NBM (Direction 1); a cell with `cleared_for_wire_hrrr == True`
+    AND `flipped_in_window_hrrr == False` routes HRRR (Direction 2). The
+    two directions are mutually exclusive by construction in the walker
+    (a cell can't have both halves >0 and both halves <0). Missing file,
+    empty cells list, or any load error → no overrides (band pool decides)."""
     global _REGIME_OVERRIDES
     try:
         with open(REGIME_WALKER_PATH) as f:
@@ -87,6 +89,8 @@ def _load_regime_overrides():
             for band, cell in (bands or {}).items():
                 if cell.get("cleared_for_wire") and not cell.get("flipped_in_window"):
                     parsed.setdefault(field, {}).setdefault(regime, {})[band] = "nbm"
+                elif cell.get("cleared_for_wire_hrrr") and not cell.get("flipped_in_window_hrrr"):
+                    parsed.setdefault(field, {}).setdefault(regime, {})[band] = "hrrr"
     _REGIME_OVERRIDES = parsed
 
 
@@ -97,15 +101,17 @@ _load_regime_overrides()
 def pick_source(field, lead_h, regime=None):
     """Return "hrrr" or "nbm" for this (field, lead_h[, regime]).
 
-    Precedence: by-regime walker override (if a cleared cell matches) → band
-    pool pick → HRRR fall-through. HRRR fall-through on any missing lookup
-    remains safe (equal to pre-Phase-4 Prod).
+    Precedence: by-regime walker override (if a cleared cell matches, either
+    direction) → band pool pick → HRRR fall-through. HRRR fall-through on any
+    missing lookup remains safe (equal to pre-Phase-4 Prod).
     """
     band = _band_for(lead_h)
     if band is not None and regime:
         reg_cells = _REGIME_OVERRIDES.get(field, {}).get(regime)
-        if reg_cells and reg_cells.get(band) == "nbm":
-            return "nbm"
+        if reg_cells:
+            pick = reg_cells.get(band)
+            if pick in ("nbm", "hrrr"):
+                return pick
     cells = _TABLE.get(field)
     if not cells:
         return "hrrr"

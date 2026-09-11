@@ -92,6 +92,7 @@ def run():
     fitted_at = report.get("fitted_at") or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M")
     day = fitted_at[:10]
     masked = report.get("masked_cells") or []
+    masked_hrrr = report.get("masked_cells_hrrr") or []
 
     if day < NOT_BEFORE_DATE:
         print(f"L1 selector by-regime walker — {day}")
@@ -99,18 +100,24 @@ def run():
         print(f"SUPPRESSED — accumulation not_before {NOT_BEFORE_DATE} "
               f"(diagnostic window contains pre-refit selector baseline; "
               f"see NOT_BEFORE_DATE docstring).")
-        print(f"  today's diagnostic flagged {len(masked)} cell(s); "
+        print(f"  today's diagnostic flagged NBM-wire {len(masked)} + "
+              f"HRRR-wire {len(masked_hrrr)} cell(s); "
               f"not persisting to history until {NOT_BEFORE_DATE}.")
         return 0
 
-    # Today's positive set + per-cell payload (kept for reporting).
-    today_by_key = {_cell_key(c): {
-        "field": c["field"], "regime": c["regime"], "band": c["band"],
-        "lift_pct": c.get("lift_pct"), "n": c.get("n"),
-        "n_today": c.get("n_today"),
-        "half1_lift_pct": c.get("half1_lift_pct"),
-        "half2_lift_pct": c.get("half2_lift_pct"),
-    } for c in masked}
+    def _payload(c):
+        return {
+            "field": c["field"], "regime": c["regime"], "band": c["band"],
+            "lift_pct": c.get("lift_pct"), "n": c.get("n"),
+            "n_today": c.get("n_today"),
+            "half1_lift_pct": c.get("half1_lift_pct"),
+            "half2_lift_pct": c.get("half2_lift_pct"),
+        }
+
+    # Today's positive sets + per-cell payload (kept for reporting).
+    # Two directions tracked independently under the same gate.
+    today_by_key = {_cell_key(c): _payload(c) for c in masked}
+    today_by_key_hrrr = {_cell_key(c): _payload(c) for c in masked_hrrr}
 
     # Append today's positive set to history (idempotent by day).
     hist = _load_json(HISTORY_PATH) or {"entries": []}
@@ -120,6 +127,8 @@ def run():
         "fitted_at": fitted_at,
         "positive": sorted(today_by_key.keys()),
         "payload": today_by_key,
+        "positive_hrrr": sorted(today_by_key_hrrr.keys()),
+        "payload_hrrr": today_by_key_hrrr,
     })
     cutoff_ret = (datetime.now() - timedelta(days=GATE_HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%d")
     entries = [e for e in entries if e.get("date", "") >= cutoff_ret]
@@ -134,81 +143,117 @@ def run():
     window = entries_sorted[-GATE_WINDOW_DAYS:]
     days_in_window = sorted({e["date"] for e in window})
 
-    all_keys = set()
-    for e in window:
-        all_keys |= set(e.get("positive", []))
+    def _direction_evaluate(positive_key, payload_key, today_lookup):
+        """Run gate evaluation for one direction. Returns
+        (per_cell_runtime_updates, report_rows, n_cleared, n_flipped,
+         cleared_cells, flipped_cells)."""
+        all_keys = set()
+        for e in window:
+            all_keys |= set(e.get(positive_key, []))
 
-    def _series(key):
-        out = []
-        for d in days_in_window:
-            entry = next((e for e in window if e["date"] == d), None)
-            out.append(bool(entry and key in entry.get("positive", [])))
-        return out
+        def _series(key):
+            out = []
+            for d in days_in_window:
+                entry = next((e for e in window if e["date"] == d), None)
+                out.append(bool(entry and key in entry.get(positive_key, [])))
+            return out
 
-    def _daily_ns(key):
-        # Per-day n_today for this cell across the window. Missing (None or
-        # absent — e.g. history entries written before n_today was plumbed)
-        # is treated as 0 so the daily-n floor fails safely.
-        out = []
-        for d in days_in_window:
-            entry = next((e for e in window if e["date"] == d), None)
-            payload = (entry or {}).get("payload", {}) if entry else {}
-            n = (payload.get(key) or {}).get("n_today")
-            out.append(int(n) if n is not None else 0)
-        return out
+        def _daily_ns(key):
+            out = []
+            for d in days_in_window:
+                entry = next((e for e in window if e["date"] == d), None)
+                payload = (entry or {}).get(payload_key, {}) if entry else {}
+                n = (payload.get(key) or {}).get("n_today")
+                out.append(int(n) if n is not None else 0)
+            return out
 
-    per_cell_runtime = defaultdict(lambda: defaultdict(dict))  # field -> regime -> band
-    report_rows = []
-    n_cleared = 0
-    n_flipped = 0
-    for key in sorted(all_keys):
+        per_cell = {}   # key -> per-cell dict
+        rows = []
+        cleared_ct = 0
+        flipped_ct = 0
+        for key in sorted(all_keys):
+            series = _series(key)
+            daily_ns = _daily_ns(key)
+            n_seen = len(series)
+            n_pos = sum(1 for s in series if s)
+            min_dn = min(daily_ns) if daily_ns else 0
+            sum_dn = sum(daily_ns) if daily_ns else 0
+            enough_dn = sum_dn >= WINDOW_SUM_N_MIN
+
+            cleared = (n_seen == GATE_WINDOW_DAYS
+                       and n_pos == GATE_WINDOW_DAYS
+                       and enough_dn)
+            flipped = any(series[i - 1] and not series[i] for i in range(1, len(series)))
+
+            today = today_lookup.get(key, {})
+            per_cell[key] = {
+                "cleared": bool(cleared),
+                "flipped": bool(flipped),
+                "days_seen": n_seen,
+                "days_positive": n_pos,
+                "min_daily_n_in_window": min_dn,
+                "sum_daily_n_in_window": sum_dn,
+                "window_sum_n_required": WINDOW_SUM_N_MIN,
+                "today_present": key in today_lookup,
+                "today_lift_pct": today.get("lift_pct"),
+                "today_n": today.get("n"),
+                "today_n_today": today.get("n_today"),
+                "today_half1_lift_pct": today.get("half1_lift_pct"),
+                "today_half2_lift_pct": today.get("half2_lift_pct"),
+            }
+            if cleared: cleared_ct += 1
+            if flipped: flipped_ct += 1
+            rows.append({
+                "field": key.split("|", 2)[0],
+                "regime": key.split("|", 2)[1],
+                "band": key.split("|", 2)[2],
+                "series": series, "n_seen": n_seen, "n_pos": n_pos,
+                "min_daily_n": min_dn,
+                "sum_daily_n": sum_dn,
+                "enough_daily_n": enough_dn,
+                "cleared": cleared, "flipped": flipped,
+                "today_lift_pct": today.get("lift_pct"),
+                "today_n": today.get("n"),
+                "today_n_today": today.get("n_today"),
+            })
+        return per_cell, rows, cleared_ct, flipped_ct
+
+    # Direction 1: NBM-wire (pooled=HRRR, regime says NBM helps).
+    per_cell_nbm, report_rows, n_cleared, n_flipped = _direction_evaluate(
+        "positive", "payload", today_by_key)
+    # Direction 2: HRRR-wire (pooled=NBM, regime says HRRR helps). Symmetric gate.
+    per_cell_hrrr, report_rows_hrrr, n_cleared_hrrr, n_flipped_hrrr = _direction_evaluate(
+        "positive_hrrr", "payload_hrrr", today_by_key_hrrr)
+
+    # Fold per-cell dicts into runtime structure: field -> regime -> band -> {wire_dir: dict}.
+    per_cell_runtime = defaultdict(lambda: defaultdict(dict))
+    for key, v in per_cell_nbm.items():
         field, regime, band = key.split("|", 2)
-        series = _series(key)
-        daily_ns = _daily_ns(key)
-        n_seen = len(series)
-        n_pos = sum(1 for s in series if s)
-        min_daily_n_in_window = min(daily_ns) if daily_ns else 0
-        sum_daily_n_in_window = sum(daily_ns) if daily_ns else 0
-        enough_daily_n = sum_daily_n_in_window >= WINDOW_SUM_N_MIN
-
-        cleared = (n_seen == GATE_WINDOW_DAYS
-                   and n_pos == GATE_WINDOW_DAYS
-                   and enough_daily_n)
-
-        # Flip: any (True → False) inside window.
-        flipped = any(series[i - 1] and not series[i] for i in range(1, len(series)))
-
-        today = today_by_key.get(key, {})
-        per_cell_runtime[field][regime][band] = {
-            "cleared_for_wire": bool(cleared),
-            "flipped_in_window": bool(flipped),
-            "days_seen": n_seen,
-            "days_positive": n_pos,
-            "min_daily_n_in_window": min_daily_n_in_window,
-            "sum_daily_n_in_window": sum_daily_n_in_window,
-            "window_sum_n_required": WINDOW_SUM_N_MIN,
-            "today_present": key in today_by_key,
-            "today_lift_pct": today.get("lift_pct"),
-            "today_n": today.get("n"),
-            "today_n_today": today.get("n_today"),
-            "today_half1_lift_pct": today.get("half1_lift_pct"),
-            "today_half2_lift_pct": today.get("half2_lift_pct"),
-        }
-        if cleared:
-            n_cleared += 1
-        if flipped:
-            n_flipped += 1
-        report_rows.append({
-            "field": field, "regime": regime, "band": band,
-            "series": series, "n_seen": n_seen, "n_pos": n_pos,
-            "min_daily_n": min_daily_n_in_window,
-            "sum_daily_n": sum_daily_n_in_window,
-            "enough_daily_n": enough_daily_n,
-            "cleared": cleared, "flipped": flipped,
-            "today_lift_pct": today.get("lift_pct"),
-            "today_n": today.get("n"),
-            "today_n_today": today.get("n_today"),
-        })
+        per_cell_runtime[field][regime].setdefault(band, {})
+        per_cell_runtime[field][regime][band]["nbm"] = v
+        # Back-compat: top-level cleared_for_wire/flipped_in_window keep NBM-direction
+        # semantics so existing l1_selector.pick_source() consumers keep working
+        # without modification. HRRR-direction lives under ["hrrr"] sub-key.
+        per_cell_runtime[field][regime][band]["cleared_for_wire"] = v["cleared"]
+        per_cell_runtime[field][regime][band]["flipped_in_window"] = v["flipped"]
+        per_cell_runtime[field][regime][band]["days_seen"] = v["days_seen"]
+        per_cell_runtime[field][regime][band]["days_positive"] = v["days_positive"]
+        per_cell_runtime[field][regime][band]["min_daily_n_in_window"] = v["min_daily_n_in_window"]
+        per_cell_runtime[field][regime][band]["sum_daily_n_in_window"] = v["sum_daily_n_in_window"]
+        per_cell_runtime[field][regime][band]["window_sum_n_required"] = v["window_sum_n_required"]
+        per_cell_runtime[field][regime][band]["today_present"] = v["today_present"]
+        per_cell_runtime[field][regime][band]["today_lift_pct"] = v["today_lift_pct"]
+        per_cell_runtime[field][regime][band]["today_n"] = v["today_n"]
+        per_cell_runtime[field][regime][band]["today_n_today"] = v["today_n_today"]
+        per_cell_runtime[field][regime][band]["today_half1_lift_pct"] = v["today_half1_lift_pct"]
+        per_cell_runtime[field][regime][band]["today_half2_lift_pct"] = v["today_half2_lift_pct"]
+    for key, v in per_cell_hrrr.items():
+        field, regime, band = key.split("|", 2)
+        per_cell_runtime[field][regime].setdefault(band, {})
+        per_cell_runtime[field][regime][band]["hrrr"] = v
+        # New keys for HRRR direction (no back-compat concern — no consumer yet).
+        per_cell_runtime[field][regime][band]["cleared_for_wire_hrrr"] = v["cleared"]
+        per_cell_runtime[field][regime][band]["flipped_in_window_hrrr"] = v["flipped"]
 
     # Report.
     print(f"L1 selector by-regime walker — {day}")
@@ -222,28 +267,38 @@ def run():
     print()
 
     series_w = max(1, len(days_in_window)) + 2
-    header = (f"{'field':<5} {'regime':<12} {'band':<7} {'series':<{series_w}} "
-              f"{'seen':>5} {'pos':>5} {'sum_dn':>7} {'lift%':>8} {'n':>6}  status")
-    print(header)
-    print("-" * len(header))
-    for row in sorted(report_rows, key=lambda x: (x["field"], x["regime"], x["band"])):
-        series_str = "".join("P" if s else "." for s in row["series"])
-        if row["cleared"]:
-            status = "✓ CLEARED"
-        elif row["flipped"]:
-            status = "⚠ FLIPPED"
-        elif row["n_pos"] >= GATE_WINDOW_DAYS and not row["enough_daily_n"]:
-            status = f"blocked: sum_dn={row['sum_daily_n']}<{WINDOW_SUM_N_MIN}"
-        elif row["n_pos"] >= GATE_WINDOW_DAYS - 1:
-            status = f"→ {row['n_pos']}/{GATE_WINDOW_DAYS}"
-        else:
-            status = ""
-        lift_s = f"{row['today_lift_pct']:+.1f}" if row["today_lift_pct"] is not None else "—"
-        n_s = f"{row['today_n']:,}" if row["today_n"] is not None else "—"
-        sum_dn_s = f"{row['sum_daily_n']}"
-        print(f"{row['field']:<5} {row['regime']:<12} {row['band']:<7} "
-              f"{series_str:<{series_w}} {row['n_seen']:>5} {row['n_pos']:>5} "
-              f"{sum_dn_s:>7} {lift_s:>8} {n_s:>6}  {status}")
+
+    def _print_direction(label, rows):
+        print()
+        print(f"--- {label} ---")
+        header = (f"{'field':<5} {'regime':<12} {'band':<7} {'series':<{series_w}} "
+                  f"{'seen':>5} {'pos':>5} {'sum_dn':>7} {'lift%':>8} {'n':>6}  status")
+        print(header)
+        print("-" * len(header))
+        if not rows:
+            print("(no candidates)")
+            return
+        for row in sorted(rows, key=lambda x: (x["field"], x["regime"], x["band"])):
+            series_str = "".join("P" if s else "." for s in row["series"])
+            if row["cleared"]:
+                status = "✓ CLEARED"
+            elif row["flipped"]:
+                status = "⚠ FLIPPED"
+            elif row["n_pos"] >= GATE_WINDOW_DAYS and not row["enough_daily_n"]:
+                status = f"blocked: sum_dn={row['sum_daily_n']}<{WINDOW_SUM_N_MIN}"
+            elif row["n_pos"] >= GATE_WINDOW_DAYS - 1:
+                status = f"→ {row['n_pos']}/{GATE_WINDOW_DAYS}"
+            else:
+                status = ""
+            lift_s = f"{row['today_lift_pct']:+.1f}" if row["today_lift_pct"] is not None else "—"
+            n_s = f"{row['today_n']:,}" if row["today_n"] is not None else "—"
+            sum_dn_s = f"{row['sum_daily_n']}"
+            print(f"{row['field']:<5} {row['regime']:<12} {row['band']:<7} "
+                  f"{series_str:<{series_w}} {row['n_seen']:>5} {row['n_pos']:>5} "
+                  f"{sum_dn_s:>7} {lift_s:>8} {n_s:>6}  {status}")
+
+    _print_direction("NBM-wire (pooled=HRRR, regime says NBM helps)", report_rows)
+    _print_direction("HRRR-wire (pooled=NBM, regime says HRRR helps)", report_rows_hrrr)
 
     print()
     print("=" * 100)
@@ -253,31 +308,43 @@ def run():
         v = "NULL — no history yet (this is day 1)."
     elif len(days_in_window) < GATE_WINDOW_DAYS:
         v = (f"BUILDING — walker at day {len(days_in_window)}/{GATE_WINDOW_DAYS} distinct dates. "
-             f"{n_cleared} cell(s) already track positive daily; "
-             f"{n_flipped} cell(s) have flipped inside the window.")
-    elif n_cleared == 0:
+             f"NBM-wire {n_cleared} cleared / {n_flipped} flipped; "
+             f"HRRR-wire {n_cleared_hrrr} cleared / {n_flipped_hrrr} flipped.")
+    elif n_cleared == 0 and n_cleared_hrrr == 0:
         v = (f"HOLD — window full ({GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS}) but no cell "
-             f"cleared: needs {GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS} consecutive positive days "
-             f"AND sum(n_today) across window >= {WINDOW_SUM_N_MIN}. "
-             f"{n_flipped} cell(s) flipped inside window.")
+             f"cleared either direction. NBM-wire {n_flipped} flipped; "
+             f"HRRR-wire {n_flipped_hrrr} flipped.")
     else:
-        v = (f"WIRE READY — {n_cleared} cell(s) cleared the {GATE_WINDOW_DAYS}-day gate "
+        v = (f"WIRE READY — {n_cleared} NBM-wire + {n_cleared_hrrr} HRRR-wire cell(s) "
+             f"cleared the {GATE_WINDOW_DAYS}-day gate "
              f"(sum(n_today) across window >= {WINDOW_SUM_N_MIN}). "
-             f"Ready to extend l1_selector.py to route NBM for these (field, regime, band) cells.")
+             f"l1_selector routes cleared cells with precedence over pooled band pick.")
     print(f"  {v}")
 
     cleared_cells = sorted([f"{f}/{r}/{b}"
                             for f, regs in per_cell_runtime.items()
                             for r, bands in regs.items()
-                            for b, v in bands.items() if v["cleared_for_wire"]])
+                            for b, v in bands.items() if v.get("cleared_for_wire")])
     flipped_cells = sorted([f"{f}/{r}/{b}"
                             for f, regs in per_cell_runtime.items()
                             for r, bands in regs.items()
-                            for b, v in bands.items() if v["flipped_in_window"]])
+                            for b, v in bands.items() if v.get("flipped_in_window")])
+    cleared_cells_hrrr = sorted([f"{f}/{r}/{b}"
+                                 for f, regs in per_cell_runtime.items()
+                                 for r, bands in regs.items()
+                                 for b, v in bands.items() if v.get("cleared_for_wire_hrrr")])
+    flipped_cells_hrrr = sorted([f"{f}/{r}/{b}"
+                                 for f, regs in per_cell_runtime.items()
+                                 for r, bands in regs.items()
+                                 for b, v in bands.items() if v.get("flipped_in_window_hrrr")])
     if cleared_cells:
-        print(f"  Cleared: {cleared_cells}")
+        print(f"  NBM-wire cleared: {cleared_cells}")
     if flipped_cells:
-        print(f"  Flipped: {flipped_cells}")
+        print(f"  NBM-wire flipped: {flipped_cells}")
+    if cleared_cells_hrrr:
+        print(f"  HRRR-wire cleared: {cleared_cells_hrrr}")
+    if flipped_cells_hrrr:
+        print(f"  HRRR-wire flipped: {flipped_cells_hrrr}")
 
     runtime = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -287,16 +354,22 @@ def run():
         "window_sum_n_min": WINDOW_SUM_N_MIN,
         "n_cells_cleared": n_cleared,
         "n_cells_flipped": n_flipped,
+        "n_cells_cleared_hrrr": n_cleared_hrrr,
+        "n_cells_flipped_hrrr": n_flipped_hrrr,
         "cells_cleared_for_wire": cleared_cells,
         "cells_flipped_in_window": flipped_cells,
+        "cells_cleared_for_wire_hrrr": cleared_cells_hrrr,
+        "cells_flipped_in_window_hrrr": flipped_cells_hrrr,
         "days_in_window": days_in_window,
         "per_cell": {f: {r: dict(bands) for r, bands in regs.items()}
                      for f, regs in per_cell_runtime.items()},
         "notes": (
-            "Wire contract: when l1_selector.py is extended to read this table, "
-            "for any cell where per_cell[field][regime][band].cleared_for_wire == True, "
-            "route NBM Prod instead of the pooled-band pick. Cells not cleared, or "
-            "flipped_in_window == True, must not be wired without operator review."
+            "Wire contract (two-directional): for any (field, regime, band) cell where "
+            "per_cell[field][regime][band].cleared_for_wire == True (and flipped_in_window "
+            "== False), route NBM Prod. Where cleared_for_wire_hrrr == True (and "
+            "flipped_in_window_hrrr == False), route HRRR Prod. Both take precedence over "
+            "the pooled-band pick. NBM-wire and HRRR-wire are mutually exclusive by "
+            "construction (a cell can't have both halves >0 and both halves <0)."
         ),
     }
     RUNTIME_PATH.write_text(json.dumps(runtime, indent=2))
