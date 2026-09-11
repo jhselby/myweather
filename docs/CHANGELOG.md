@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.584 • September 11, 2026 (NBM skip-ADD two-window audit + first CONFIRMED ship: l3_nbm wd se_flow 6-11h)</strong></summary>
+
+- **New: `analysis/nbm_skip_add_audit.py`** — ADD-side mirror of the REMOVE-side `nbm_skip_earning_audit` (v0.6.572+v0.6.574). Rescores each 14d ADD proposal from `nbm_walkforward_validator` against a 50d long window. Verdicts: CONFIRMED (both windows ≤ -3% AND 50d halves both ≤ 0), FRESH (14d only), STALE (14d hurts but 50d shows helping — drop the proposal), THIN_50D. Closes the last symmetry gap: REMOVE has required two-window since 09-09 v0.6.574; ADD was 14d-only since 08-21 v0.6.462.
+- **Filter: proposals for (field, layer) pairs in `KILLED_LAYERS` are excluded** — audit no longer recommends skip cells for layers that no longer touch that field. Also added `(cc, l4_nbm): "2026-09-08"` to `KILLED_LAYERS` (was killed via `L4_NBM_FIELDS` tuple change in v0.6.563 but never registered).
+- **Wired into digest** — `build_executive_summary` new section "NBM skip-ADD two-window audit" prints CONFIRMED ship candidates and STALE proposals to drop.
+- **First CONFIRMED ship: `l3_nbm.wd ['se_flow', 6, 12]`** — 14d n=301 lift=-3.3%, 50d n=1,104 lift=-5.7%, halves -5.2/-6.5. Added to `skip_table_nbm_curated.json` (13 → 14 cells). Also explains today's `wg.l3_nbm` sentry HOT: it was single-tool signal (sentry only), not two-tool — walkforward emits wg proposals but all 3 clear STALE on 50d rescore (regime-transient fresh degradation, positive over long haul). No wg DROP or skip needed.
+- Audit results today: 14 proposals (excluding killed layers) → 1 CONFIRMED, 8 FRESH, 5 STALE, 0 THIN_50D.
+
+</details>
+
+<details>
 <summary><strong>v0.6.583 • September 11, 2026 (nbm_regression_sentry — ADDED_LAYERS registry mirror of KILLED_LAYERS)</strong></summary>
 
 - **New: `ADDED_LAYERS` registry** in `analysis/nbm_regression_sentry.py`. Mirror of `KILLED_LAYERS`. When a layer was recently added, the sustained window (day 4→day 10 ago) can contain pre-add rows where the layer wasn't wired yet. Sentry compares that mixed sustained help-rate to a post-add fresh window and false-fires HOT/WATCH. Registry suppresses to `ADDED` (with add date) until `sustained_start >= add_date`; then the layer evaluates normally.

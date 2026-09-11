@@ -1,5 +1,5 @@
 {
-  "fitted_at": "2026-09-10T11:15",
+  "fitted_at": "2026-09-11T14:00",
   "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
   "cells": {
     "l3_nbm": {
@@ -72,6 +72,13 @@
           "se_flow",
           24,
           48
+        ]
+      ],
+      "wd": [
+        [
+          "se_flow",
+          6,
+          12
         ]
       ]
     },

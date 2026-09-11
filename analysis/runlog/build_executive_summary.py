@@ -387,6 +387,7 @@ NBM_SENTRY_JSON_PATH = HERE.parent / "output" / "nbm_regression_sentry.json"
 # against runtime-live tuples.
 NBM_WALKFORWARD_JSON_PATH = HERE.parent / "output" / "nbm_walkforward.json"
 NBM_SKIP_EARNING_JSON_PATH = HERE.parent / "output" / "nbm_skip_earning_audit.json"
+NBM_SKIP_ADD_AUDIT_JSON_PATH = HERE.parent / "output" / "nbm_skip_add_audit.json"
 
 # Regression sentry (added v0.6.389i, 2026-07-30; sustained-vs-fresh split
 # added v0.6.390f, 2026-07-31 after the cl field-kill exposed the flat-window
@@ -819,6 +820,40 @@ def nbm_skip_earning_summary():
                 f"regime-transient, hold"
             )
     return removes, watches
+
+
+def nbm_skip_add_summary():
+    """Return (confirmed_lines, fresh_lines, stale_lines) from
+    nbm_skip_add_audit.json — walkforward's 14d ADD proposals rescored
+    against a 50d long window. CONFIRMED clears both windows and
+    both halves; FRESH is 14d-only regime-transient; STALE is 14d-hurts
+    but 50d-helps (drop the proposal)."""
+    if not NBM_SKIP_ADD_AUDIT_JSON_PATH.exists():
+        return None, None, None
+    try:
+        doc = json.loads(NBM_SKIP_ADD_AUDIT_JSON_PATH.read_text())
+    except (json.JSONDecodeError, OSError):
+        return None, None, None
+    confirmed, fresh, stale = [], [], []
+    for c in doc.get("proposals") or []:
+        prefix = f"  • {c['layer']} {c['field']} {c['regime']} {c['band']}"
+        if c.get("verdict") == "CONFIRMED":
+            confirmed.append(
+                f"{prefix}: 14d n={c.get('n_14d', 0):,} lift={c.get('lift_14d_pct', 0):+.2f}%  ·  "
+                f"50d n={c.get('n_50d', 0):,} lift={c.get('lift_50d', 0):+.2f}% "
+                f"(halves {c.get('lift_h1') or 0:+.2f}/{c.get('lift_h2') or 0:+.2f})"
+            )
+        elif c.get("verdict") == "FRESH":
+            fresh.append(
+                f"{prefix}: 14d lift={c.get('lift_14d_pct', 0):+.2f}% but 50d "
+                f"{c.get('lift_50d') or 0:+.2f}% — regime-transient, hold"
+            )
+        elif c.get("verdict") == "STALE":
+            stale.append(
+                f"{prefix}: 14d lift={c.get('lift_14d_pct', 0):+.2f}% but 50d "
+                f"{c.get('lift_50d') or 0:+.2f}% helping — drop proposal"
+            )
+    return confirmed, fresh, stale
 
 
 def marine_layer_anomaly_summary():
@@ -1665,6 +1700,24 @@ def main():
     if nbm_watch_lines:
         out.append("NBM stale-skip WATCH (14d flags earn-back, 50d does not confirm — hold, do not remove):")
         for line in nbm_watch_lines:
+            out.append(line)
+    out.append("")
+
+    # NBM skip-ADD two-window audit — 14d walkforward proposals rescored
+    # against 50d long window. CONFIRMED is ship-ready; FRESH/STALE hold or drop.
+    add_confirmed, add_fresh, add_stale = nbm_skip_add_summary()
+    out.append("NBM skip-ADD two-window audit (walkforward proposals × 50d long window):")
+    if add_confirmed is None:
+        out.append("  • skip-add audit not run yet")
+    elif add_confirmed:
+        out.append("  CONFIRMED (ship candidates — both windows + halves agree):")
+        for line in add_confirmed:
+            out.append(line)
+    else:
+        out.append("  • no proposals cleared the 14d + 50d two-window verdict")
+    if add_stale:
+        out.append("  STALE (14d proposal but 50d shows helping — drop):")
+        for line in add_stale:
             out.append(line)
     out.append("")
 
