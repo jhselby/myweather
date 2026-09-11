@@ -58,6 +58,19 @@ GATE_HISTORY_RETENTION_DAYS = 30
 # regime coverage gaps. See [[feedback_pooled_n_time_thin.md]] class.
 WINDOW_SUM_N_MIN = 60
 
+# Escalation clause: a cell that clears the fitter's halves-stable + n>=60
+# + |lift|>=3% mask AND today shows |lift| >= ESCALATION_MIN_LIFT_PCT AND
+# n >= ESCALATION_MIN_N wires immediately, bypassing the 3-day accumulation.
+# Rationale: signal magnitudes ≥ 20% at n ≥ 500 with halves-stable direction
+# are too large to be day-1 noise. Waiting 3 days on such cells costs
+# substantial MAE — 09-11 24h VC showed h/calm/24-47 at -34.7% n=618 and
+# ws/sea_breeze/24-47 at -36.7% n=839 dragging h VC to -522% and ws to -106%,
+# both surfaced by today's fitter but blocked by the 3-day gate. The gate
+# exists to filter thin/noisy signals; halves-stable × large magnitude ×
+# large n is not what it was designed to filter.
+ESCALATION_MIN_LIFT_PCT = 20.0
+ESCALATION_MIN_N = 500
+
 # The upstream diagnostic uses a 30d window over the pair log. The L1 selector
 # refit landed 2026-08-31 10:15 UTC, so the diagnostic's baseline is mostly
 # pre-refit for ~30 days after. Signal during that window is likely a pre-refit
@@ -180,14 +193,33 @@ def run():
             sum_dn = sum(daily_ns) if daily_ns else 0
             enough_dn = sum_dn >= WINDOW_SUM_N_MIN
 
-            cleared = (n_seen == GATE_WINDOW_DAYS
-                       and n_pos == GATE_WINDOW_DAYS
-                       and enough_dn)
+            cleared_by_gate = (n_seen == GATE_WINDOW_DAYS
+                               and n_pos == GATE_WINDOW_DAYS
+                               and enough_dn)
             flipped = any(series[i - 1] and not series[i] for i in range(1, len(series)))
 
             today = today_lookup.get(key, {})
+            today_lift = today.get("lift_pct")
+            today_n = today.get("n")
+            # Escalation clause — bypasses the 3-day gate for large-magnitude
+            # halves-stable signals with healthy n. Only fires when the cell is
+            # in today's fitter mask AND was not flipped inside the window
+            # (i.e., no prior day's mask fell out — a flip means the signal
+            # isn't as durable as its magnitude suggests). Halves-stability
+            # is already baked into the fitter's mask emission.
+            cleared_by_escalation = (
+                key in today_lookup
+                and today_lift is not None and today_n is not None
+                and abs(today_lift) >= ESCALATION_MIN_LIFT_PCT
+                and today_n >= ESCALATION_MIN_N
+                and not flipped
+            )
+            cleared = bool(cleared_by_gate or cleared_by_escalation)
+
             per_cell[key] = {
-                "cleared": bool(cleared),
+                "cleared": cleared,
+                "cleared_by_gate": bool(cleared_by_gate),
+                "cleared_by_escalation": bool(cleared_by_escalation),
                 "flipped": bool(flipped),
                 "days_seen": n_seen,
                 "days_positive": n_pos,
@@ -195,8 +227,8 @@ def run():
                 "sum_daily_n_in_window": sum_dn,
                 "window_sum_n_required": WINDOW_SUM_N_MIN,
                 "today_present": key in today_lookup,
-                "today_lift_pct": today.get("lift_pct"),
-                "today_n": today.get("n"),
+                "today_lift_pct": today_lift,
+                "today_n": today_n,
                 "today_n_today": today.get("n_today"),
                 "today_half1_lift_pct": today.get("half1_lift_pct"),
                 "today_half2_lift_pct": today.get("half2_lift_pct"),
@@ -211,9 +243,12 @@ def run():
                 "min_daily_n": min_dn,
                 "sum_daily_n": sum_dn,
                 "enough_daily_n": enough_dn,
-                "cleared": cleared, "flipped": flipped,
-                "today_lift_pct": today.get("lift_pct"),
-                "today_n": today.get("n"),
+                "cleared": cleared,
+                "cleared_by_gate": bool(cleared_by_gate),
+                "cleared_by_escalation": bool(cleared_by_escalation),
+                "flipped": flipped,
+                "today_lift_pct": today_lift,
+                "today_n": today_n,
                 "today_n_today": today.get("n_today"),
             })
         return per_cell, rows, cleared_ct, flipped_ct
@@ -263,7 +298,8 @@ def run():
           f"{days_in_window[-1] if days_in_window else 'empty'}), "
           f"{len(days_in_window)} distinct day(s)")
     print(f"clear rule: {GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS} consecutive positive days "
-          f"AND sum(n_today) across window >= {WINDOW_SUM_N_MIN}")
+          f"AND sum(n_today) across window >= {WINDOW_SUM_N_MIN}  "
+          f"OR escalation (|lift| >= {ESCALATION_MIN_LIFT_PCT:.0f}% AND n >= {ESCALATION_MIN_N} on day 1)")
     print()
 
     series_w = max(1, len(days_in_window)) + 2
@@ -281,7 +317,7 @@ def run():
         for row in sorted(rows, key=lambda x: (x["field"], x["regime"], x["band"])):
             series_str = "".join("P" if s else "." for s in row["series"])
             if row["cleared"]:
-                status = "✓ CLEARED"
+                status = "✓ CLEARED (escalation)" if row.get("cleared_by_escalation") and not row.get("cleared_by_gate") else "✓ CLEARED"
             elif row["flipped"]:
                 status = "⚠ FLIPPED"
             elif row["n_pos"] >= GATE_WINDOW_DAYS and not row["enough_daily_n"]:
@@ -352,6 +388,8 @@ def run():
         "diagnostic_source_fitted_at": fitted_at,
         "gate_window_days": GATE_WINDOW_DAYS,
         "window_sum_n_min": WINDOW_SUM_N_MIN,
+        "escalation_min_lift_pct": ESCALATION_MIN_LIFT_PCT,
+        "escalation_min_n": ESCALATION_MIN_N,
         "n_cells_cleared": n_cleared,
         "n_cells_flipped": n_flipped,
         "n_cells_cleared_hrrr": n_cleared_hrrr,

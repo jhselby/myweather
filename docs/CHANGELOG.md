@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.588 • September 11, 2026 (L1 walker escalation clause — bypass 3-day gate for large-magnitude signals; 2 HRRR-wire cells fire immediately)</strong></summary>
+
+- **Driver:** 24h VC read showed 5 losing fields on the scoreboard — h −522%, ws −106%, wg −104%, sr −49%, dp −21%. Every one had HRRR-wire candidates in today's fitter output. Big-magnitude, healthy-n, halves-stable signals waiting 3 days behind the walker gate while the selector loses ~7 MAE-points on h per hour.
+- **New: escalation clause in `l1_selector_fit_by_regime_walker.py`** — cells with `|lift| ≥ 20%` AND `n ≥ 500` on day 1 wire immediately, bypassing the 3-day gate. Halves-stability + fitter's n≥60 + |lift|≥3% mask are still required (that's what makes today's read a candidate at all). Cells flipped inside the window don't escalate.
+- **Rationale:** the gate exists to filter thin/noisy signals; halves-stable × large magnitude × large n is not what it was designed to filter. Same conceptual shape as the two-window verdict (14d+50d) — signals meeting both a magnitude AND a robustness bar don't need the full accumulation.
+- **Two HRRR-wire cells fired today via escalation:** `h/calm/24-47` (lift −34.7%, n=618) and `ws/sea_breeze/24-47` (lift −36.7%, n=839). Both are top-impact candidates from today's fitter. Both target exactly the fields showing worst 24h VC. Collector deployed 15:16 UTC.
+- Runtime JSON adds `escalation_min_lift_pct` + `escalation_min_n` + per-cell `cleared_by_gate` and `cleared_by_escalation` breakdown.
+- Post-ship watch: h + ws 24h VC over next 12-24 hours. Expect meaningful improvement as the wired cells fire on new obs.
+
+</details>
+
+<details>
 <summary><strong>v0.6.587 • September 11, 2026 (session-end sweep — debug page + memory for v0.6.586)</strong></summary>
 
 - Recent Activity 09-11 entry updated to cover v0.6.586 (now 6 ships + 3 collector deploys, up from 5+2).

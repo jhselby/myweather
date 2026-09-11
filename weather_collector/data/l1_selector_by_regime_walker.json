@@ -1,19 +1,24 @@
 {
-  "generated_at": "2026-09-11T14:19:55.100993+00:00",
+  "generated_at": "2026-09-11T15:15:35.487358+00:00",
   "source": "analysis/l1_selector_fit_by_regime_walker.py",
   "diagnostic_source_fitted_at": "2026-09-11T14:19",
   "gate_window_days": 3,
   "window_sum_n_min": 60,
+  "escalation_min_lift_pct": 20.0,
+  "escalation_min_n": 500,
   "n_cells_cleared": 2,
   "n_cells_flipped": 0,
-  "n_cells_cleared_hrrr": 0,
+  "n_cells_cleared_hrrr": 2,
   "n_cells_flipped_hrrr": 0,
   "cells_cleared_for_wire": [
     "ws/calm/12-23",
     "ws/nw_flow/12-23"
   ],
   "cells_flipped_in_window": [],
-  "cells_cleared_for_wire_hrrr": [],
+  "cells_cleared_for_wire_hrrr": [
+    "h/calm/24-47",
+    "ws/sea_breeze/24-47"
+  ],
   "cells_flipped_in_window_hrrr": [],
   "days_in_window": [
     "2026-09-09",
@@ -26,6 +31,8 @@
         "0-5": {
           "nbm": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 3,
@@ -58,6 +65,8 @@
         "12-23": {
           "hrrr": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -79,6 +88,8 @@
         "6-11": {
           "hrrr": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -100,6 +111,8 @@
         "12-23": {
           "hrrr": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -119,6 +132,8 @@
         "6-11": {
           "hrrr": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -142,6 +157,8 @@
         "0-5": {
           "nbm": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 3,
@@ -172,6 +189,8 @@
         "12-23": {
           "nbm": {
             "cleared": true,
+            "cleared_by_gate": true,
+            "cleared_by_escalation": true,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 3,
@@ -202,6 +221,8 @@
         "6-11": {
           "nbm": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 3,
@@ -234,6 +255,8 @@
         "12-23": {
           "nbm": {
             "cleared": true,
+            "cleared_by_gate": true,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 3,
@@ -265,7 +288,9 @@
       "sea_breeze": {
         "24-47": {
           "hrrr": {
-            "cleared": false,
+            "cleared": true,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": true,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -279,7 +304,7 @@
             "today_half1_lift_pct": -43.56,
             "today_half2_lift_pct": -26.32
           },
-          "cleared_for_wire_hrrr": false,
+          "cleared_for_wire_hrrr": true,
           "flipped_in_window_hrrr": false
         }
       }
@@ -289,6 +314,8 @@
         "12-23": {
           "hrrr": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -312,6 +339,8 @@
         "6-11": {
           "hrrr": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -334,7 +363,9 @@
       "calm": {
         "24-47": {
           "hrrr": {
-            "cleared": false,
+            "cleared": true,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": true,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -348,7 +379,7 @@
             "today_half1_lift_pct": -34.25,
             "today_half2_lift_pct": -52.25
           },
-          "cleared_for_wire_hrrr": false,
+          "cleared_for_wire_hrrr": true,
           "flipped_in_window_hrrr": false
         }
       },
@@ -356,6 +387,8 @@
         "12-23": {
           "hrrr": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -377,6 +410,8 @@
         "6-11": {
           "hrrr": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
@@ -400,6 +435,8 @@
         "24-47": {
           "hrrr": {
             "cleared": false,
+            "cleared_by_gate": false,
+            "cleared_by_escalation": false,
             "flipped": false,
             "days_seen": 3,
             "days_positive": 1,
