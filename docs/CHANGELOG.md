@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.582 • September 11, 2026 (debug page — 09-11 Recent Activity + Upcoming grid roll)</strong></summary>
+
+- Recent Activity: 2026-09-11 (Fri) entry added — v0.6.581 walker fixes + first-ever regime-conditional wire. Day-labels shifted (09-10 → 1 day ago, 09-09 → 2 days ago, 09-08 → trimmed).
+- Upcoming grid: 09-11 walker row rewritten as a rolling near-miss watch. `wg/sw_flow/0-5` (sum_dn=32), `ws/calm/0-5` (sum_dn=6), `ws/calm/6-11` (sum_dn=2) — PPP for 3 days but below the sum_dn=60 floor; will clear as sample sum accumulates.
+
+</details>
+
+<details>
 <summary><strong>v0.6.581 • September 11, 2026 (L1 by-regime walker — 3 bugs fixed, first 2 cells wire)</strong></summary>
 
 - **Bug 1 — run order.** In `analysis/runlog/run_digest.sh`, bash glob iterates `analysis/*.py` alphabetically under this locale with `_` sorting before `.`, so `l1_selector_fit_by_regime_walker.py` ran BEFORE `l1_selector_fit_by_regime.py` and read yesterday's fitter report as "today's" input. Fixed by splitting the loop into non-walkers first, then walkers.
