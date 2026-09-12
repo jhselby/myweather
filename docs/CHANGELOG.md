@@ -1,4 +1,19 @@
 <details open>
+<summary><strong>v0.6.595 • September 12, 2026 (Stage 2 preview — inter-model spread STAGE 2 PROMOTE, 33 SHIP cells, 7-day gate armed)</strong></summary>
+
+- **`analysis/h_inter_model_spread_c1_stage2.py`** — per-cell Stage 2 preview producing the curated table that will seed a future axis_6 wiring in `c1_confidence_calibration_v2.py`. 14-day test window, halves-stable, MIN_PREMIUM_SHIP=30%, MIN_N_SHIP=500 combined.
+- **Result: STAGE 2 PROMOTE — 33 SHIP cells** across every non-cl field. Premiums 40-500% for t/h/ws/wg/wd/cc/ch/dp; sr's numbers are pathological (60k-90k% because Q1 rows are near-zero-MAE night hours) and will need a filter at wire time. Only 3 UNSTABLE cells (ws 0-5h, wg 0-5h, wg 12-23h — halves ratios don't both clear 1.15), 0 SKIP, 8 THIN (cl entire — no NBM data).
+- **7-day stability gate now armed.** Standard discipline: SHIP set must stay stable across 7 daily reads before wiring. Earliest wire flip: 2026-09-19.
+- **Wire shape when it clears:**
+  1. Extend `c1_confidence_calibration_v2.py` — add `axis_6: inter_model_spread_q ∈ {Q1, Q2, Q3, Q4}` alongside existing 5 axes + xr_q. Per-tick join joins `forecast_l1 − forecast_raw_nbm` (already per-row in pair log — no new logger needed).
+  2. Extend `c1_curate_confidence_table_v2.py` to emit per-cell verdicts on the new axis.
+  3. Extend `confidence_layer.py` to consult the axis_6 lookup on live rows.
+  4. sr will need a floor filter to avoid the night-Q1 pathology (MAE_Q1 < 5 W/m² → skip).
+- **Session bottom line:** started the day with the digest producing zero new correction layers and me thinking that was the steady-state. Ended with a candidate that has cleared Stage 0 + Stage 1 orthogonality + Stage 2 preview in a single session. First real new C1-axis candidate since cross_run_spread in June. The pipeline works when it has fresh hypotheses to test.
+
+</details>
+
+<details>
 <summary><strong>v0.6.594 • September 12, 2026 (Stage 1 orthogonality — inter-model spread STAGE 1 PROMOTE; prior-day-error HOLD)</strong></summary>
 
 - Two Stage 1 orthogonality scripts written against per-row-available C1 axes (C1a transition, cluster_spread, pt_mag). Test: does the candidate's Q4/Q1 MAE ratio survive when each existing axis is HELD LOW?
