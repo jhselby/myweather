@@ -1,4 +1,20 @@
 <details open>
+<summary><strong>v0.6.593 • September 12, 2026 (4 new Stage 0 hypothesis-tests — 2 PROMOTE, 1 MARGINAL, 1 blocked on plumbing)</strong></summary>
+
+- **Motivation:** after v0.6.592's digest pruning, wrote real Stage 0 machinery for 4 hypotheses genuinely absent from the current stack. Three tested against existing pair-log data; the fourth blocked on missing SST plumbing.
+- **`analysis/h_inter_model_spread_stage0.py` → STAGE 0 PROMOTE (35 of 36 cells).** New C1 axis candidate: |forecast_l1 − forecast_raw_nbm| as a per-row inter-model disagreement feature. Every field with NBM data (t, h, ws, wg, wd, cc, ch, dp, sr) shows Q4/Q1 MAE ratios of 1.4× to 5×+ halves-stable across every band. **Caveat:** signal is partly self-referential — when models disagree, at least one is "wrong" against any single-model verification. Legitimate for a C1 confidence-widening axis (users want wider bounds when models disagree); needs orthogonality proof vs existing axes before biasing anywhere.
+- **`analysis/h_diurnal_l2_tau_stage0.py` → STAGE 0 MARGINAL (2 of 10 fields).** Screens whether L2 help-rate varies by hour-of-day. Physical intuition: nighttime radiational cooling has different persistence than daytime convection. Result: **sr 4.69pp spread** (12-17h help drops to 4.25% vs 8-9% other bins — mid-day convection reduces predictability) and **wg 3.37pp spread**. Other fields FLAT (<1.5pp spread — pooled τ well-calibrated). Watch, need third strong field before structural PROMOTE.
+- **`analysis/h_prior_day_error_c1_stage0.py` → STAGE 0 PROMOTE (14 of 40 cells).** Prior-day-error at same (field, lead, valid-hour) as a C1 axis. **Strong 0-5h short-lead signal across t/h/ws/wg/cc/dp** (Q4/Q1 ratios 2-3× halves-stable). **ch promotes across all 4 bands** — cloud-high forecast skill is highly persistent day-to-day. Genuinely orthogonal to cluster_spread + cross_run_spread by construction (this is persistence of forecast SKILL, not state).
+- **`analysis/h_buoy_sst_gradient_stage0.py` → SCAFFOLDING (plumbing blocked).** Hypothesis: land-sea Δt drives sea-breeze intensity. Buoy 44013 SST is fetched every tick but not per-row-logged, so no historical SST timeline exists for pair-log join. Docstring specifies the plumbing needed to unblock.
+- **Next steps** (order of impact × cost):
+  1. Orthogonality check for inter-model spread vs existing C1 axes (cluster_spread, cross_run_spread, C1a, C1e). If it's genuinely independent, wire as `h_inter_model_spread_c1_stage1.py` + Stage 2 gate.
+  2. Same for prior-day-error at 0-5h — likely orthogonal (temporal-skill vs spatial or cross-run features).
+  3. Grid-search τ per (field, HOD) for sr and wg to see if diurnal L2 refit beats pooled on held-out.
+  4. Plumb SST log (small collector change: append weather_data['buoy_44013'] + run_time to a rolling JSONL).
+
+</details>
+
+<details>
 <summary><strong>v0.6.592 • September 12, 2026 (digest pruning — retire 13 dead-weight scripts, add 4 new hypothesis-tests)</strong></summary>
 
 - **Driver:** the daily digest was running 183 scripts, but most of the Stage-N promotion pipeline has been quiet for months. Categorized what's actually firing: (a) STABLE re-fires of already-live pipelines, (b) CLOSED-MISS scripts still emitting verdicts against dead targets, (c) perpetually inconclusive HOLD scripts. Deciding to retire dead weight and add fresh hypothesis-tests before more digest tuning.
