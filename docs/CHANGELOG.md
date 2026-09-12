@@ -1,4 +1,19 @@
 <details open>
+<summary><strong>v0.6.597 • September 12, 2026 (L1 selector 3-way fitter — 6 NWS-wire cells cleared, walker+runtime follow-on)</strong></summary>
+
+- **`analysis/l1_selector_fit_3way.py`** — standalone 3-way fitter (HRRR/NBM/NWS). Mirrors the 30d window + halves-stability discipline of `l1_selector_fit_by_regime.py`. Analysis-only — runtime `l1_selector.py` is not touched until a walker-gate + 7-day stability read agrees.
+- NWS covers 5 fields on Wyman Cove's feed: t/wd/ws/dp 100%, pp 76%. Other 9 fields stay 2-way (unchanged).
+- **First-run: 6 NWS-wire cells clear** halves-stable + lift ≥ 3%: dp/nw_flow/12-23 (+29.3%, h1/h2 13.4/33.7), dp/nw_flow/0-5 (+26.1%, 8.7/31.0), dp/pre_frontal/12-23 (+24.8%, 27.5/18.3), dp/nw_flow/24-47 (+13.6%, 9.9/14.7), dp/sw_flow/24-47 (+9.8%, 5.0/13.4), t/frontal/6-11 (+9.7%, 14.3/3.9 — thin n=84, masked by pooled).
+- All 5 strong cells are dp. NWS's dp is likely a direct forecast rather than Magnus(t, h) — the derived-field rule ([[project_dp_is_derived_no_dp_work]]) still holds locally but the routing decision is separate: NWS carries different information regardless.
+- Output: `analysis/l1_selector_3way_report.json` with `cells_cleared_for_wire_nws` in walker-consumable shape.
+- **Follow-on wire path (do NOT ship until 7 daily reads agree):**
+  1. Extend `analysis/l1_selector_fit_by_regime_walker.py` to a THIRD direction — NWS-wire — alongside NBM-wire and HRRR-wire. Same 3-day gate + escalation clause as v0.6.586-588. Mutual exclusivity by construction (only one direction wins per cell).
+  2. Extend `weather_collector/processors/l1_selector.py` `pick_source()` to route NWS when the walker's `cleared_for_wire_nws=True`.
+  3. Debug-page Upcoming grid row for the 09-19 first-read.
+
+</details>
+
+<details>
 <summary><strong>v0.6.596 • September 12, 2026 (3 more Stage 0 hypothesis-tests — 3 PROMOTE, including NWS-optimal routing cells)</strong></summary>
 
 - Realized while wrapping up: pair log has more per-row features than we'd been using (`forecast_nws`, `error_nws`, `error_l2_nbm`, `error_l3_nbm`, `selector_source`, `regime_flow` in state_fc/obs). Wrote three more Stage 0 scripts against these fields.
