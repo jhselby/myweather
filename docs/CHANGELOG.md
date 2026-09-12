@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.598 • September 12, 2026 (session-end sweep — 9-ship day handoff to 09-13)</strong></summary>
+
+- Recent Activity 09-12 entry rewritten to cover the full 9-ship day (v0.6.590 → v0.6.598): pr L2 unwire, digest pruning, 7 hypothesis-test scripts, inter_model_spread through Stage 2 with 7-day gate armed for 09-19, 3-way selector fitter identifying 6 NWS-wire cells with dp/nw_flow/12-23 escalation-eligible.
+- Memory: `project_09_12_session.md` extended with full afternoon-session narrative (v0.6.592-597), follow-on wire path for next session (3-way selector walker + runtime), and clock-watches through 09-19.
+- MEMORY.md READ FIRST rewritten with 09-13 first-read priorities (pr pair-log, 3-way fitter day 2, chp gate day 2, inter_model_spread Stage 2 day 2) and 09-19 KEY DATE.
+- **Next-session opener queued:** extend L1 selector walker + runtime to 3-way (HRRR/NBM/NWS). dp/nw_flow/12-23 qualifies for escalation-clause immediate wire (+29.3% × n=1,721 halves-stable 13.4/33.7). Expected ~975°F-days of dp error saved per month on the top cell alone.
+
+</details>
+
+<details>
 <summary><strong>v0.6.597 • September 12, 2026 (L1 selector 3-way fitter — 6 NWS-wire cells cleared, walker+runtime follow-on)</strong></summary>
 
 - **`analysis/l1_selector_fit_3way.py`** — standalone 3-way fitter (HRRR/NBM/NWS). Mirrors the 30d window + halves-stability discipline of `l1_selector_fit_by_regime.py`. Analysis-only — runtime `l1_selector.py` is not touched until a walker-gate + 7-day stability read agrees.
