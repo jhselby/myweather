@@ -1,4 +1,18 @@
 <details open>
+<summary><strong>v0.6.592 • September 12, 2026 (digest pruning — retire 13 dead-weight scripts, add 4 new hypothesis-tests)</strong></summary>
+
+- **Driver:** the daily digest was running 183 scripts, but most of the Stage-N promotion pipeline has been quiet for months. Categorized what's actually firing: (a) STABLE re-fires of already-live pipelines, (b) CLOSED-MISS scripts still emitting verdicts against dead targets, (c) perpetually inconclusive HOLD scripts. Deciding to retire dead weight and add fresh hypothesis-tests before more digest tuning.
+- **Retired 13 scripts (renamed to `.skip.py`):** `h_lc_ema_stage0`, `h_lc_gate_rule_stage0`, `h_lc_gate_rule_stage1`, `h_lc_regime_stage0`, `h_lc_regime_stage1`, `h_cl_h_predictor_stage0`, `h_cl_h_predictor_stage1` (all CLOSED MISS 2026-08-17 as "leaky Stage 0/1"). `sr_sea_breeze_lsr_refit_stage1` (KILL every day for weeks). `l6_fix_b_refit` (Lt Fix B retired 07-13). `h_lightning_proximity` (0s runtime, no data). `h_pre_front_orthogonality` (global-baseline denominator broken per method-fix backlog — replaced, see below). `dp_c1f_gate_stage1` (HOLD +0.11% forever). `walkforward_lc_regime` (FLAT for weeks).
+- **Added 4 new scripts:**
+  - `analysis/h_pre_front_orthogonality.py` (rewrite) — matched-regime baseline mirror of the working `h_hsf_orthogonality` structure, applied to the PRE-front window (0-24h before next passage). First-run today: 4 ORTHOGONAL cells (wg 12-23h & 24-47h, cm 12-23h & 24-47h) with the correct population tag `[n=4 passages, 64% join → THIN]` — real signal, population thin until autumn front cadence returns.
+  - `analysis/h_cloud_saturation_bias_stage0.py` (scaffold) — backlog item #1: cl 95-100% at -57.5pp bias, direction-stable across 06-23/06-24 reads. No live layer conditions on forecast-VALUE saturation bin — genuinely new architecture. Mechanism-test spec in docstring; emits STAGE 0 SCAFFOLDING verdict pending implementation.
+  - `analysis/h_regime_transition_correction_off_stage0.py` (scaffold) — operationalizes the 2026-08-17 meta-finding across 6 sr closures: "any recent-obs-predicts-near-future architecture fails in fast-moving regimes." Tests whether wrapping live specialists in a transition-off gate improves aggregate MAE. Spec in docstring.
+  - `analysis/h_sr_regime_conditional_lsr_stage0.py` (scaffold) — motivated by today's `state_stratified_accuracy` finding (sr × synoptic MAE spread 154.83 W/m² across bins). Tests regime-conditional Lsr refit vs pooled+Lsb live shape. Spec in docstring.
+- **Net change:** 183 → 170 daily digest scripts. New scripts land in `PASS/FAIL TABLE` and per-script findings automatically via `run_digest.sh`'s `analysis/*.py` glob. Scaffolds fire a single VERDICT line — visible in the digest as queued Stage 0 work, non-crashing, ready for Joe to fill in the mechanism-testing code when the hypothesis is prioritized.
+
+</details>
+
+<details>
 <summary><strong>v0.6.591 • September 12, 2026 (session-end sweep — debug page + memory for v0.6.590)</strong></summary>
 
 - Recent Activity 09-12 entry added (1 ship + 4 candidates reviewed and held with reason). Day-labels rolled: 09-11 → 1 day ago, 09-10 → 2 days ago, 09-09 → trimmed.
