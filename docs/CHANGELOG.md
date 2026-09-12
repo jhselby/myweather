@@ -1,4 +1,23 @@
 <details open>
+<summary><strong>v0.6.596 • September 12, 2026 (3 more Stage 0 hypothesis-tests — 3 PROMOTE, including NWS-optimal routing cells)</strong></summary>
+
+- Realized while wrapping up: pair log has more per-row features than we'd been using (`forecast_nws`, `error_nws`, `error_l2_nbm`, `error_l3_nbm`, `selector_source`, `regime_flow` in state_fc/obs). Wrote three more Stage 0 scripts against these fields.
+- **`analysis/h_three_way_spread_stage0.py` → STAGE 0 PROMOTE (15 of 16 cells).** σ across HRRR/NBM/NWS. Cleaner ratios than today's 2-way inter-model spread but reduced coverage (require all three forecasts present). Not superior enough to supersede — keep 2-way as the wire candidate for the 09-19 gate. 3-way stays as a fallback if 2-way ratios prove noisy.
+- **`analysis/h_nws_source_check_stage0.py` → STAGE 0 PROMOTE (7 halves-stable NWS-optimal cells).** Genuine routing finding: NWS beats both HRRR and NBM on:
+  - `dp/0-5h/nw_flow` — 27.6% better
+  - `dp/12-23h/nw_flow` — 29.7% better
+  - `dp/12-23h/pre_frontal` — 25.0% better
+  - `dp/24-47h/calm` — 6.3% better
+  - `dp/24-47h/nw_flow` — 12.7% better
+  - `ws/0-5h/sw_flow` — 9.0% better
+  - `ws/12-23h/sw_flow` — 5.3% better
+  Current L1 selector is 2-way (HRRR/NBM). These cells are real lift the selector is missing. Path forward: extend selector to 3-way (HRRR/NBM/NWS), likely via the same walker-gate discipline as today's HRRR-wire cells. dp caveat: derived-field rule still holds — but NWS's dp advantage means NWS's t/h happens to be materially better in nw_flow (or NWS has a different dp derivation than Magnus(t,h)). Worth investigating before wiring.
+- **`analysis/h_state_fc_obs_disagreement_stage0.py` → STAGE 0 PROMOTE (both axes).** cloud_delta 12 cells + solar_delta 13 cells. Two per-row-computable axes: `|state_fc.cloud_cover − state_obs.cloud_cover|` and `|state_fc.solar_wm2 − state_obs.solar_wm2|` at issue time. When model's current-state view already disagrees with observations, downstream error is elevated. sr shows extreme ratios (same night-Q1-near-zero pathology as inter-model spread — needs floor filter at wire time).
+- **Session pipeline summary:** 5 hypothesis-tests written today (v0.6.593 + v0.6.596), 4 STAGE 0 PROMOTE, 1 MARGINAL. Inter-model spread already cleared Stage 1 orthogonality + Stage 2 preview (7-day gate armed for 09-19). NWS-optimal routing is the standout new finding — a concrete routing miss on dp/nw_flow that could ship as a walker extension.
+
+</details>
+
+<details>
 <summary><strong>v0.6.595 • September 12, 2026 (Stage 2 preview — inter-model spread STAGE 2 PROMOTE, 33 SHIP cells, 7-day gate armed)</strong></summary>
 
 - **`analysis/h_inter_model_spread_c1_stage2.py`** — per-cell Stage 2 preview producing the curated table that will seed a future axis_6 wiring in `c1_confidence_calibration_v2.py`. 14-day test window, halves-stable, MIN_PREMIUM_SHIP=30%, MIN_N_SHIP=500 combined.
