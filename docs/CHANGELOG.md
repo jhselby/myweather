@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.591 • September 12, 2026 (session-end sweep — debug page + memory for v0.6.590)</strong></summary>
+
+- Recent Activity 09-12 entry added (1 ship + 4 candidates reviewed and held with reason). Day-labels rolled: 09-11 → 1 day ago, 09-10 → 2 days ago, 09-09 → trimmed.
+- Memory: new `project_09_12_session.md` covering v0.6.590 pr L2 unwire + full hold rationale for dp / ch / wg / wdp candidates + clock-watches through 09-19.
+- MEMORY.md READ FIRST rewritten with 09-13 pr pair-log first-read + chp L6-gate day 2/7 + 09-14 HRRR-wire read + ~09-19 pr L2 stability re-read.
+
+</details>
+
+<details>
 <summary><strong>v0.6.590 • September 12, 2026 (pr L2 gate — unwire nw_flow/6-11h losing cell)</strong></summary>
 
 - **Driver:** three-tool agreement that the shipped `pr/nw_flow/6-11h` L2 cell is making pressure forecasts worse. Today's `pr_l2_regime_lead_retro` shows pooled **Δ −13.6%** over 1,447 pairs since 08-13, with both chronological halves negative (A −8.5% n=658 / B −17.7% n=789). Layer-shape sentry fires `pr/production@6-11h +10.6% vs raw`. Yesterday's scoreboard Notable Calls flagged `pr 6-11h −8.7% n=942`. The 08-10 Stage 1 both-halves that justified the ship (A +10.3% / B +13.1%) has since inverted — this isn't noise, it's a persistent regression across a month of live data.
