@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.590 • September 12, 2026 (pr L2 gate — unwire nw_flow/6-11h losing cell)</strong></summary>
+
+- **Driver:** three-tool agreement that the shipped `pr/nw_flow/6-11h` L2 cell is making pressure forecasts worse. Today's `pr_l2_regime_lead_retro` shows pooled **Δ −13.6%** over 1,447 pairs since 08-13, with both chronological halves negative (A −8.5% n=658 / B −17.7% n=789). Layer-shape sentry fires `pr/production@6-11h +10.6% vs raw`. Yesterday's scoreboard Notable Calls flagged `pr 6-11h −8.7% n=942`. The 08-10 Stage 1 both-halves that justified the ship (A +10.3% / B +13.1%) has since inverted — this isn't noise, it's a persistent regression across a month of live data.
+- **Fix:** removed `("nw_flow", "6-11")` from `_PR_L2_FIRE_CELLS` in `weather_collector/processors/corrected_hourly.py:38`. `nw_flow/0-5h` retained — today's retro confirms it's still HEALTHY (pooled +6.4%, halves +11.7%/+1.9%). Shadow-wire remains unconditional so the retro can keep evaluating.
+- **Expected:** pair-log MAE on `pr` short-lead nw_flow rows returns to raw once new obs stamp `applied_layer=l1` in the 6-11h band. Layer-shape sentry for pr 6-11h should clear over next few days.
+
+</details>
+
+<details>
 <summary><strong>v0.6.589 • September 11, 2026 (session-end sweep — v0.6.588 + prep for 09-12)</strong></summary>
 
 - Recent Activity 09-11 entry updated to cover v0.6.588 (now 8 ships + 4 collector deploys, up from 6+3).

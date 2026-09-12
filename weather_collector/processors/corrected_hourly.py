@@ -36,8 +36,8 @@ L2_DECAY_PATH = "l2_decay.json"
 # remains unconditional so the retro can keep evaluating skip cells for
 # potential promotion. See project_pr_l2_regime_flip_investigation_08_10.
 _PR_L2_FIRE_CELLS = frozenset({
-    ("nw_flow", "0-5"),   # 08-10 both-halves: A +21.8% (n=284) / B +41.6% (n=311)
-    ("nw_flow", "6-11"),  # 08-10 both-halves: A +10.3% (n=250) / B +13.1% (n=292)
+    ("nw_flow", "0-5"),   # 08-10 both-halves: A +21.8% (n=284) / B +41.6% (n=311); 09-12 retro pooled +6.4% halves +11.7%/+1.9% — HEALTHY
+    # ("nw_flow", "6-11") unwired 09-12: retro -13.6% pooled, both halves negative (A -8.5% n=658 / B -17.7% n=789 across 1,447 pairs since 08-13); layer-shape sentry +10.6% production-vs-raw; yesterday's scoreboard pr 6-11h -8.7%. Three-tool agreement.
 })
 
 
