@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.600 • September 12, 2026 (reviewer-driven fixes — humidity row, NBM topology, scope framing)</strong></summary>
+
+- ChatGPT reviewer flagged four presentation issues in an out-of-session review of today's work. All correct — fixing now.
+- **Humidity architecture row** (corrections_debug.html:2042): was "REGRESS on scoreboard — halves-agree, MED conf. Cascade fine; losses are pipeline-side." Actually recovered — 7d Total Lift +1.0%, Pipeline Lift +3.9%, NBM Pipeline Skill +3.8% (was −9.1/−7.2/−2.4 on 09-10 pre-escalation). Rewrote to "Recovered to flat/positive" with post-selector-flip watch note after v0.6.588's h/calm/24-47 escalation.
+- **h NBM cascade topology** (row: 2040): was `raw_nbm → l2_nbm → l3_nbm`. h was dropped from L3_NBM on 09-05 v0.6.551. Corrected to `raw_nbm → l2_nbm (l3_nbm dropped 09-05 v0.6.551 — sentry HOT + 14/15 cells help_fresh negative)`.
+- **cc NBM cascade topology** (row: 2064): was `raw_nbm → l2_nbm → l3_nbm (l4_nbm cc dropped 09-08 v0.6.563)`. cc was dropped from L3_NBM on 09-10 v0.6.577. Corrected to `raw_nbm → l2_nbm (l3_nbm dropped 09-10 v0.6.577 — sentry HOT + walkforward DROP two-tool; l4_nbm dropped 09-08 v0.6.563)`.
+- **Session scope framing:** "9 ships (v0.6.590 → v0.6.598)" overstated operational impact. Reframed as "10 commits (v0.6.590 → v0.6.599) · 1 production change · 1 collector deploy · 8 analysis/documentation commits." Only pr L2 unwire touched a runtime file.
+- **Adopting reviewer's preferred next-session order:** (1) decompose current negative 24h VC by field/regime/band; (2) verify Sept 11 escalation cell post-flip behavior (h/calm/24-47, ws/sea_breeze/24-47 pair-log MAE); (3) resolve NWS/dp derivation question BEFORE any wiring (does forecast_nws for dp come from a direct NWS API field or NWS-side derivation, and where does Magnus run in the collector pipeline relative to L1 selector output); (4) extend 3-way walker analysis-only until the derivation contract is clear; (5) let inter_model_spread finish its 7-day gate; (6) resist rushing production adds from Stage 0 PROMOTEs.
+- **NWS/dp derivation** is the critical unresolved question. If pick_source returns "nws" for dp but Magnus derivation runs later, the routing is either a no-op (Magnus overwrites) or breaks thermodynamic consistency (dp > t possible). Cannot ship as an accidental side effect of extending pick_source(). Tomorrow's work.
+
+</details>
+
+<details>
 <summary><strong>v0.6.599 • September 12, 2026 (sweep completion — Upcoming grid + Post-ship watches)</strong></summary>
 
 - Follow-up sweep for what v0.6.598 missed. The Recent Activity narrative was current but forward-looking sections weren't touched.
