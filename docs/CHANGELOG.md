@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.594 • September 12, 2026 (Stage 1 orthogonality — inter-model spread STAGE 1 PROMOTE; prior-day-error HOLD)</strong></summary>
+
+- Two Stage 1 orthogonality scripts written against per-row-available C1 axes (C1a transition, cluster_spread, pt_mag). Test: does the candidate's Q4/Q1 MAE ratio survive when each existing axis is HELD LOW?
+- **`analysis/h_inter_model_spread_orthogonality.py` → STAGE 1 PROMOTE.** Inter-model spread orthogonal to all three tested axes: **C1a 33/36 ORTHOGONAL** (0 REDUNDANT), **cluster 36/36** (0 REDUNDANT), **pt_mag 34/36** (1 REDUNDANT). Every field with NBM data clears cleanly. Real new C1 axis candidate — genuinely independent signal, not a re-skin of any existing per-row-computable axis.
+- **`analysis/h_prior_day_error_orthogonality.py` → HOLD.** Mixed result: 19 ORTHOGONAL / 13 REDUNDANT / 8 PARTIAL vs C1a; similar splits vs cluster + pt_mag. Pattern: 0-5h short-lead cells (which drove the Stage 0 PROMOTE) mostly stay ORTHOGONAL, but mid/long-lead cells contribute REDUNDANT verdicts. Not a clean structural PROMOTE. Narrow-ship candidate (0-5h only) if pursued; otherwise fold into another axis (e.g., extend the recent-err-streak C1 candidate that's already Stage 0'd).
+- **Next moves for inter-model spread:**
+  1. Stage 2 preview — fit magnitude of confidence widening as a function of spread quartile. Compare Brier / calibration on held-out.
+  2. Wire as `axis_5` in `c1_confidence_calibration_v2.py` alongside existing axes.
+  3. 7-day gate before flipping ENABLED=True.
+
+</details>
+
+<details>
 <summary><strong>v0.6.593 • September 12, 2026 (4 new Stage 0 hypothesis-tests — 2 PROMOTE, 1 MARGINAL, 1 blocked on plumbing)</strong></summary>
 
 - **Motivation:** after v0.6.592's digest pruning, wrote real Stage 0 machinery for 4 hypotheses genuinely absent from the current stack. Three tested against existing pair-log data; the fourth blocked on missing SST plumbing.
