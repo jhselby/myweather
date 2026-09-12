@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.599 • September 12, 2026 (sweep completion — Upcoming grid + Post-ship watches)</strong></summary>
+
+- Follow-up sweep for what v0.6.598 missed. The Recent Activity narrative was current but forward-looking sections weren't touched.
+- **Upcoming grid** — added 4 new rows: 09-13 four-part first-read (pr pair-log return, 3-way fitter day 2, chp gate day 2, inter_model_spread Stage 2 day 2); next-session 3-way selector walker+runtime extension (deferred from tonight to preserve top-of-session focus); 09-19 KEY DATE for inter_model_spread wire as C1 axis_6; 09-19 pr L2 gate stability re-read.
+- **Post-ship watches** — added 3 new active rows: pr L2 unwire nw_flow/6-11h (v0.6.590), inter_model_spread Stage 2 7-day gate (v0.6.595), 3-way selector fitter stability watch (v0.6.597).
+- Rest of the day's ships already covered in v0.6.598's Recent Activity entry — no duplication.
+
+</details>
+
+<details>
 <summary><strong>v0.6.598 • September 12, 2026 (session-end sweep — 9-ship day handoff to 09-13)</strong></summary>
 
 - Recent Activity 09-12 entry rewritten to cover the full 9-ship day (v0.6.590 → v0.6.598): pr L2 unwire, digest pruning, 7 hypothesis-test scripts, inter_model_spread through Stage 2 with 7-day gate armed for 09-19, 3-way selector fitter identifying 6 NWS-wire cells with dp/nw_flow/12-23 escalation-eligible.
