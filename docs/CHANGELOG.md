@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.603 • September 13, 2026 (debug page sweep — 09-13 Recent Activity + Upcoming grid + Post-ship watches)</strong></summary>
+
+- Recent Activity: added today's 09-13 entry (2 ships, 2 scouts, memory saves). Relabeled 09-12 today→"1 day ago", 09-11 to "2 days ago", 09-10 to "3 days ago".
+- Upcoming grid: removed 3 completed rows (Sun 09-13 first-read, next-session L1 3-way — both landed in v0.6.601). Added "next session" entry for dp NWS coherence option B design pointing at [[project_nws_dp_coherence_wire]].
+- Post-ship watches: replaced 3-way selector fitter stability watch with L1 3-way walker+runtime watch (opened 09-13 v0.6.601). Added l3_nbm.wg.nw_flow/12-23h skip watch (opened 09-13 v0.6.602).
+- Frontend: HTML text-only sweep, no functional UI change. Not localhost-testable.
+
+</details>
+
+<details>
 <summary><strong>v0.6.602 • September 13, 2026 (l3_nbm wg/nw_flow/12-23h skip — two-window CONFIRMED)</strong></summary>
 
 - **Shipped one NBM skip cell:** `l3_nbm.wg.nw_flow/12-23h` — 14d lift −3.8% (n=472), 50d lift −5.0% (n=1,545), halves −8.87 / −1.86. Cleared both windows of the two-window audit shipped v0.6.584 (the gate that stops shipping 14d proposals that 50d shows are just regime-transient).
