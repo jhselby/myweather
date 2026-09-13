@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.604 • September 13, 2026 (Per-field diagnostic — 24 hour companion table)</strong></summary>
+
+- New "Per-field diagnostic — 24 hour" section directly below the existing 7-day table. Same 8 columns (Total Lift, Difficulty, Pipeline Lift, HRRR/NBM Pipeline Skill, Win Rate, Value Captured, n) computed over `per_field_scoring.json`'s `windows.24h.per_field` block (already emitted by the backend).
+- `renderPerFieldDiagnostic()` parameterized to accept `windowKey` + tbody/tfoot ids so the same code path renders both windows; called twice on page load.
+- Difficulty column always sources `raw_difficulty_ratio` from the 7d block (it's inherently 7d-computed as 7d raw MAE ÷ 90d ref) so the weekly context appears beside today's row in both tables.
+- **Why:** the 7d table averages away single-day regressions. When 09-13 mean/median gap on Stack Health flagged that one field went negative, identifying dp as the culprit required an ad-hoc pair-log query. A field whose 24h row goes red while its 7d row stays green is now visible on the page. Caveat: dp/cc are still omitted (derived — no independent skill chain), so today's dp regression itself does not surface here; the pattern for other fields is caught.
+
+</details>
+
+<details>
 <summary><strong>v0.6.603 • September 13, 2026 (debug page sweep — 09-13 Recent Activity + Upcoming grid + Post-ship watches)</strong></summary>
 
 - Recent Activity: added today's 09-13 entry (2 ships, 2 scouts, memory saves). Relabeled 09-12 today→"1 day ago", 09-11 to "2 days ago", 09-10 to "3 days ago".

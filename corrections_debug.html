@@ -2016,6 +2016,36 @@
 
 
 <details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+  <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Per-field diagnostic — 24 hour</summary>
+<section class="sb-pfs-scope" style="margin-top:8px;">
+  <div class="sb-pfs-sub">Same columns as the 7d table above, computed over the last 24 hours of paired residuals. Read this table for "did anything break today" — a field whose 24h row goes red while its 7d row stays green flagged a regression the daily view is still averaging away. <span class="sb-dim">Live from per_field_scoring.json's <code>windows.24h.per_field</code> block. Same aggregation rules as the 7d table (dp/cc derived-omitted; pa/pp non-MAE excluded from Median/Mean).</span></div>
+
+  <div class="sb-pfs-scroll">
+    <table class="sb-pfs-tbl">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Total Lift<span class="sb-pfs-thsub">Prod vs Public Baseline</span></th>
+          <th>Difficulty<span class="sb-pfs-thsub">7d raw MAE ÷ 90d ref · &gt;1 = harder than usual</span></th>
+          <th>Pipeline Lift<span class="sb-pfs-thsub">(L1 pick − Prod) / L1 pick</span></th>
+          <th>HRRR Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
+          <th>NBM Pipeline Skill<span class="sb-pfs-thsub">(raw − Prod) / raw</span></th>
+          <th>Win Rate<span class="sb-pfs-thsub">wins / (wins + losses); ties excluded</span></th>
+          <th>Value Captured<span class="sb-pfs-thsub">% of oracle</span></th>
+          <th>n</th>
+        </tr>
+      </thead>
+      <tbody id="pfd-tbody-24h">
+        <tr><td colspan="9" class="sb-dim" style="text-align:center;padding:12px;">loading per_field_scoring.json…</td></tr>
+      </tbody>
+      <tfoot id="pfd-tfoot-24h"></tfoot>
+    </table>
+  </div>
+</section>
+</details>
+
+
+<details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
   <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Per-field pipeline architecture + status</summary>
   <div style="font-size:0.82em;opacity:0.7;margin:8px 0;">Companion to the per-field scoring table above (numeric selection/correction/total lifts). This section shows the pipeline shape for each field — HRRR-side cascade, NBM-side cascade (if in scope), which side the selector picks — plus hand-curated narrative context (open work, recent ships, current state). Numeric cells live in the scoring table; this table is the architecture + journal.</div>
   <table style="width:100%;border-collapse:collapse;font-size:0.88em;">
@@ -4624,9 +4654,12 @@ async function renderScoreboardTilesMinimal() {
 // ((hrrr_raw − hrrr_prod)/hrrr_raw), NBM Pipeline Skill (same on NBM side),
 // n (sum of selector_picks). Hit Rate + Value Captured need L1 selector fit
 // output and stay dashed.
-async function renderPerFieldDiagnostic() {
-  const tbody = document.getElementById("pfd-tbody");
-  const tfoot = document.getElementById("pfd-tfoot");
+async function renderPerFieldDiagnostic(windowKey, tbodyId, tfootId) {
+  windowKey = windowKey || "7d";
+  tbodyId = tbodyId || "pfd-tbody";
+  tfootId = tfootId || "pfd-tfoot";
+  const tbody = document.getElementById(tbodyId);
+  const tfoot = document.getElementById(tfootId);
   if (!tbody) return;
   let pfs;
   try {
@@ -4637,7 +4670,12 @@ async function renderPerFieldDiagnostic() {
     tbody.innerHTML = `<tr><td colspan="9" class="sb-dim" style="text-align:center;padding:12px;">per_field_scoring.json unavailable (${e.message}).</td></tr>`;
     return;
   }
-  const pf7 = (pfs.windows && pfs.windows["7d"] && pfs.windows["7d"].per_field) || {};
+  const pf7 = (pfs.windows && pfs.windows[windowKey] && pfs.windows[windowKey].per_field) || {};
+  // raw_difficulty_ratio is inherently 7d-computed (7d raw MAE ÷ 90d ref) — the 24h
+  // window doesn't emit it. Always pull from the 7d block regardless of which window
+  // this table is rendering, so the Difficulty column shows the weekly context beside
+  // today's row.
+  const pf7Diff = (pfs.windows && pfs.windows["7d"] && pfs.windows["7d"].per_field) || {};
   const FIELD_ORDER = ["t","h","dp","ws","wg","wd","sr","cc","ch","cl","cm","pr","pa","pp"];
   const NBM_SCOPE = new Set(["t","h","dp","ws","wg","wd","cc","ch","sr"]);
   const BRIER_FIELDS = new Set(["pp"]);
@@ -4726,7 +4764,9 @@ async function renderPerFieldDiagnostic() {
     if (NBM_SCOPE.has(f) && !skipAgg && c.value_captured_pct != null) valCol.push(c.value_captured_pct);
     // Difficulty aggregate uses ALL fields with a ratio — matches
     // mae_over_time's own mean_ratio (unweighted across fields).
-    if (c.raw_difficulty_ratio != null) diffCol.push(c.raw_difficulty_ratio);
+    // Always sourced from pf7Diff (7d block); the 24h window doesn't emit ratio.
+    const diffSrc = pf7Diff[f] || {};
+    if (diffSrc.raw_difficulty_ratio != null) diffCol.push(diffSrc.raw_difficulty_ratio);
 
     let totalCell = _fmtPct(total);
     // v0.6.494 — current-config Total Lift annotation. When the delta between
@@ -4774,7 +4814,7 @@ async function renderPerFieldDiagnostic() {
     // feedback_audit_label_direction_neutral: ratio only, no lift-color.
     // Bold when |ratio − 1| ≥ 0.15 so a materially harder/easier week
     // catches the eye without prescribing how to reinterpret Total Lift.
-    const diff = (c.raw_difficulty_ratio != null) ? c.raw_difficulty_ratio : null;
+    const diff = (diffSrc.raw_difficulty_ratio != null) ? diffSrc.raw_difficulty_ratio : null;
     const diffCell = (diff == null)
       ? `<span class="sb-em">—</span>`
       : (Math.abs(diff - 1) >= 0.15
@@ -8572,7 +8612,8 @@ async function load() {
   // breakdowns or the per-field diagnostic table — those stay static
   // until the full renderScoreboardV2 rewrite lands.
   renderScoreboardTilesMinimal();
-  renderPerFieldDiagnostic();
+  renderPerFieldDiagnostic("7d", "pfd-tbody", "pfd-tfoot");
+  renderPerFieldDiagnostic("24h", "pfd-tbody-24h", "pfd-tfoot-24h");
   renderNotableAndHighConf();
   // renderScoreboardV2();       // deferred — targets old #scorecard-banner
   // renderPerFieldScoring();    // deferred — companion to above
