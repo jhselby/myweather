@@ -133,7 +133,8 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
         fc_syn = classify_synoptic_regime(
             state_fc.get("wind_dir"), state_fc.get("wind_speed"),
             state_fc.get("pressure_in"), state_fc.get("pressure_trend_hpa_3h"),
-            fc_hour_local, target_hour.get("t"))
+            fc_hour_local, target_hour.get("t"),
+            cloud_cover=state_fc.get("cloud_cover"))
         if fc_flow is not None: state_fc["regime_flow"] = fc_flow
         if fc_syn is not None:  state_fc["regime_synoptic"] = fc_syn
 
@@ -160,7 +161,8 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
         obs_syn = classify_synoptic_regime(
             state_obs.get("wind_dir"), state_obs.get("wind_speed"),
             state_obs.get("pressure_in"), pt,
-            obs_hour_local, state_obs.get("temp"))
+            obs_hour_local, state_obs.get("temp"),
+            cloud_cover=state_obs.get("cloud_cover"))
         if obs_flow is not None: state_obs["regime_flow"] = obs_flow
         if obs_syn is not None:  state_obs["regime_synoptic"] = obs_syn
 

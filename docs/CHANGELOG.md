@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.605 • September 13, 2026 (regime classifier + collector: new `stagnant_high` synoptic regime — stamp-only ship, walker consumes automatically)</strong></summary>
+
+- **New regime label:** `weather_collector/processors/regime_classifier.py` — `classify_synoptic_regime()` gains a `cloud_cover` kwarg and a `stagnant_high` branch that fires when `ws < 5 mph AND cc < 0.40 AND |pt_3h| < 0.5 hPa`. Checked before frontal/calm so a "stagnant + light SE wind" state isn't miscoded as `se_flow` or bare `calm`. When `cloud_cover` is not passed, the branch is silently skipped (safe default for older callers).
+- **Wire-through:** `forecast_error_log.py` passes `state_fc.cloud_cover` / `state_obs.cloud_cover` into the classifier at both fc + obs call sites. `solar_correction.py`'s live-regime classify path also passes `cur.cloud_cover`.
+- **Motivation from a retroactive pair-log sweep (09-13):** at the shipped thresholds NBM raw beats HRRR raw meaningfully more under stag than non-stag for **ws (+16.6% vs +3.7%)** and **sr (+35.4% vs +13.8%)**; **wg** shows a smaller boost on top of an already-large baseline. **ch is a reverse anti-signal** (−46.1% vs +34.6% — HRRR wins hard in stagnant clear-air on cirrus) — walker will correctly route ch to HRRR in this regime once cells clear. **t was not a clean signal** across thresholds; today's 24h t regression has a separate cause worth investigating.
+- **Runtime impact:** zero. Stamp-only ship. The by-regime walker (`l1_selector_fit_by_regime_walker.py`) iterates over whatever regime labels appear in the pair log — new label appears as new cells without code change. Selector runtime override kicks in only after the walker's wire gate clears (3-day accumulation OR escalation |lift|≥20% n≥500).
+- **Post-ship watches:** (a) first `stagnant_high` rows in the pair log after next joiner write (~16:07 UTC); (b) 09-16 or 09-20 walker first read on `stagnant_high` cells; (c) ws / sr / ch cells expected to escalation-wire earliest given magnitude of retroactive lift.
+
+</details>
+
+<details>
 <summary><strong>v0.6.604 • September 13, 2026 (Per-field diagnostic — 24 hour companion table)</strong></summary>
 
 - New "Per-field diagnostic — 24 hour" section directly below the existing 7-day table. Same 8 columns (Total Lift, Difficulty, Pipeline Lift, HRRR/NBM Pipeline Skill, Win Rate, Value Captured, n) computed over `per_field_scoring.json`'s `windows.24h.per_field` block (already emitted by the backend).

@@ -39,12 +39,28 @@ def classify_flow_regime(wind_dir_deg, wind_speed_mph):
     return FLOW_OCTANTS[int(d // 45)]
 
 
+STAGNANT_HIGH_WS_MPH = 5.0
+STAGNANT_HIGH_CC_FRAC = 0.40
+STAGNANT_HIGH_PT_HPA = 0.5
+
+
 def classify_synoptic_regime(wind_dir_deg, wind_speed_mph, pressure_in,
-                             pressure_trend_3h, hour_local, temp_f):
+                             pressure_trend_3h, hour_local, temp_f,
+                             cloud_cover=None):
     """Coastal-flavored synoptic regime. Tries the special patterns first
     (frontal, sea_breeze, nor'easter) then falls back to direction-named
     flow regimes (nw_flow / sw_flow / se_flow / ne_flow). Returns one of:
 
+      stagnant_high — weak synoptic forcing: light wind, mostly clear,
+                      pressure steady. NBM's climatological smoothing tends
+                      to beat HRRR's mesoscale detail in this state for
+                      ws/sr specifically (retroactive pair-log sweep 09-13:
+                      ws +16.6% vs +3.7%, sr +35.4% vs +13.8% — ch is a
+                      reverse anti-signal, do not blanket-route). Checked
+                      before frontal so a "stagnant + light SE wind" state
+                      isn't miscoded as se_flow. Requires cloud_cover input;
+                      when cc unknown, this branch cannot fire and the
+                      flow-direction fallbacks run instead.
       frontal       — rapid pressure drop (|Δ| ≥ 2 hPa/3h)
       pre_frontal   — pressure dropping notably (Δ between −2 and −0.7)
       nor_easter    — NE flow + low pressure + windy
@@ -53,11 +69,24 @@ def classify_synoptic_regime(wind_dir_deg, wind_speed_mph, pressure_in,
       sw_flow       — SW direction
       se_flow       — SE direction (when not sea_breeze)
       ne_flow       — NE direction (when not nor_easter)
-      calm          — wind < 3 mph
+      calm          — wind < 3 mph AND not stagnant_high (cc/pt disqualify stag)
       None          — input insufficient to classify
     """
     if wind_speed_mph is None:
         return None
+
+    # Stagnant-high: weak synoptic forcing. Checked before calm/frontal so a
+    # ws<3 + clear + steady-pressure row lands in stagnant_high rather than
+    # bare "calm". Silently skipped when cloud_cover is absent (older callers
+    # don't need to change; they just never emit this label).
+    if cloud_cover is not None:
+        cc_frac = cloud_cover / 100.0 if cloud_cover > 1.5 else cloud_cover
+        pt_quiet = pressure_trend_3h is None or abs(pressure_trend_3h) < STAGNANT_HIGH_PT_HPA
+        if (wind_speed_mph < STAGNANT_HIGH_WS_MPH
+                and cc_frac < STAGNANT_HIGH_CC_FRAC
+                and pt_quiet):
+            return "stagnant_high"
+
     if wind_speed_mph < 3:
         return "calm"
 

@@ -344,6 +344,7 @@ def stamp_solar_correction(weather_data):
                 pressure_trend_3h=derived.get("pressure_trend_hpa_3h"),
                 hour_local=now_local_for_classify.hour,
                 temp_f=cur.get("temperature"),
+                cloud_cover=cur.get("cloud_cover"),
             )
         except Exception:
             regime = None
