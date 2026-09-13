@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.607 • September 13, 2026 (debug page sweep — 09-13 afternoon-session extension + Upcoming grid updates + Post-ship watches for stagnant_high + PBL gate)</strong></summary>
+
+- Recent Activity: extended today's 09-13 entry from morning-only (2 ships) to full-day narrative (6 ships) with afternoon diagnostic-driven ship chain (v0.6.604 24h table → discovery arc → v0.6.605 stagnant_high → v0.6.606 PBL gate).
+- Upcoming grid: added Tue 09-16 (stagnant_high first walker read day 3/3) and 4-7d (prune HRRR PBL gate when walker cell clears).
+- Post-ship watches: added stagnant_high regime label (v0.6.605) and HRRR PBL morning-overshoot routing gate (v0.6.606).
+- Frontend: HTML text-only sweep, no functional UI change. Not localhost-testable.
+
+</details>
+
+<details>
 <summary><strong>v0.6.606 • September 13, 2026 (collector: HRRR PBL morning-overshoot routing gate — t + stagnant_high + EDT 04-08 → NBM)</strong></summary>
 
 - **Diagnosis:** dug into today's t 24h Total Lift −43.8%. Pair-log by-hour breakdown identified the exact failure mode — HRRR MAE at UTC 09-11 (EDT 05-07) was 2.74 / 3.40 / 2.49 with bias +2.48 / +3.13 / +2.28 (consistently ~3°F warm); NBM MAE at the same hours was 0.67 / 0.62 / 0.59. Classic HRRR boundary-layer overshoot: under clear skies + light wind + strong overnight radiational cooling, HRRR's PBL scheme mixes down aloft warm air too aggressively as the sun rises. NBM's climatological smoothing sidesteps this.
