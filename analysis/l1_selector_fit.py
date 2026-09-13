@@ -63,6 +63,20 @@ RECENT_WINDOW_DAYS = 7
 MIN_N_RECENT = 200
 MIN_LIFT_RECENT_PCT = 5.0
 
+# Simpson-guard shadow (v0.6.60x — SHADOW ONLY, runtime unaffected). When
+# the recency override would flip a cell, check whether the per-regime 30d
+# picture unanimously agrees with the 30d pick. If ≥SIMPSON_GUARD_MIN_AGREE
+# of measured regimes (paired_n ≥ SIMPSON_GUARD_MIN_N_PER_REGIME) agree with
+# source_30d AND median |per-regime lift| ≥ SIMPSON_GUARD_MIN_MEDIAN_LIFT_PCT,
+# the pooled flip is likely a composition (Simpson-paradox) artifact. We
+# emit `simpson_guard_would_veto` + `source_under_simpson_guard` per cell
+# for measurement; runtime still uses `source`. Ship gate: 7-day shadow
+# lift measurement in analysis/simpson_guard_shadow.py.
+SIMPSON_GUARD_MIN_N_PER_REGIME = 100
+SIMPSON_GUARD_MIN_MEASURED_REGIMES = 6
+SIMPSON_GUARD_MIN_AGREE = 7
+SIMPSON_GUARD_MIN_MEDIAN_LIFT_PCT = 20.0
+
 # HRRR-side layer priority per field — deepest applied layer wins. Same
 # shape as the debug page's _prodKey walker. Specialists first (dpbp,
 # wdp, chp, clp), then decay layers (l6 Lc, l5 Lsr, l4 diurnal, l3
@@ -139,6 +153,11 @@ def fit():
     rec = defaultdict(lambda: {"hrrr_abs": 0.0, "hrrr_n": 0,
                                 "nbm_abs":  0.0, "nbm_n":  0,
                                 "paired_n": 0})
+    # Per-regime 30d accumulator for Simpson-guard shadow. Key:
+    # (field, regime, band). Populated from state_fc.regime_synoptic.
+    acc_reg = defaultdict(lambda: {"hrrr_abs": 0.0, "hrrr_n": 0,
+                                    "nbm_abs":  0.0, "nbm_n":  0,
+                                    "paired_n": 0})
 
     n_in = 0
     n_kept = 0
@@ -175,6 +194,17 @@ def fit():
                     acc[key]["nbm_n"]   += 1
                 if h is not None and n is not None:
                     acc[key]["paired_n"] += 1
+                state_fc = row.get("state_fc") or {}
+                reg = state_fc.get("regime_synoptic") or "unknown"
+                rkey = (field, reg, band)
+                if h is not None:
+                    acc_reg[rkey]["hrrr_abs"] += h
+                    acc_reg[rkey]["hrrr_n"]   += 1
+                if n is not None:
+                    acc_reg[rkey]["nbm_abs"] += n
+                    acc_reg[rkey]["nbm_n"]   += 1
+                if h is not None and n is not None:
+                    acc_reg[rkey]["paired_n"] += 1
                 if obs_time >= recent_start:
                     if h is not None:
                         rec[key]["hrrr_abs"] += h
@@ -193,6 +223,30 @@ def fit():
     router_paired_n = 0
     ROUTER_FIELDS = {"t", "ws", "wd"}
     override_count = 0
+    simpson_veto_count = 0
+    simpson_vetoed_cells = []
+
+    def _regime_snapshot(field, band):
+        """For each regime with paired_n ≥ SIMPSON_GUARD_MIN_N_PER_REGIME,
+        emit its 30d hrrr/nbm MAE + lift_pct. Returns list of dicts sorted
+        by paired_n desc. Excludes 'unknown'."""
+        out = []
+        for (f, r, bd), v in acc_reg.items():
+            if f != field or bd != band or r == "unknown":
+                continue
+            pn = v.get("paired_n", 0)
+            if pn < SIMPSON_GUARD_MIN_N_PER_REGIME:
+                continue
+            hn = v.get("hrrr_n", 0); nn = v.get("nbm_n", 0)
+            hm = (v["hrrr_abs"] / hn) if hn else None
+            nm = (v["nbm_abs"]  / nn) if nn else None
+            lp = None
+            if hm is not None and nm is not None and hm > 0:
+                lp = 100.0 * (hm - nm) / hm
+            out.append({"regime": r, "n": pn, "hrrr_mae": hm, "nbm_mae": nm, "lift_pct": lp})
+        out.sort(key=lambda x: -x["n"])
+        return out
+
     for field in FIELDS:
         cells = {}
         for band, lo, _ in BANDS:
@@ -244,6 +298,44 @@ def fit():
                                    f"(lift {r_lift_pct:+.1f}%, n={r_paired})")
                 override_count += 1
 
+            # Simpson-guard shadow: measure whether the recency flip
+            # disagrees with a unanimous-strong per-regime 30d picture.
+            # Runtime pick unaffected — this only annotates the cell.
+            simpson_would_veto = False
+            simpson_guard_note = None
+            source_under_guard = source
+            if override_reason is not None:
+                snap = _regime_snapshot(field, band)
+                n_measured = sum(1 for s in snap if s["lift_pct"] is not None)
+                if n_measured >= SIMPSON_GUARD_MIN_MEASURED_REGIMES:
+                    if source_30d == "hrrr":
+                        agree = [s for s in snap if s["lift_pct"] is not None and s["lift_pct"] < 0]
+                    else:
+                        agree = [s for s in snap if s["lift_pct"] is not None and s["lift_pct"] > 0]
+                    n_agree = len(agree)
+                    lifts = sorted(abs(s["lift_pct"]) for s in snap if s["lift_pct"] is not None)
+                    median_mag = lifts[len(lifts) // 2] if lifts else 0.0
+                    if (n_agree >= SIMPSON_GUARD_MIN_AGREE
+                            and median_mag >= SIMPSON_GUARD_MIN_MEDIAN_LIFT_PCT):
+                        simpson_would_veto = True
+                        source_under_guard = source_30d
+                        simpson_guard_note = (
+                            f"{n_agree}/{n_measured} regimes agree with source_30d="
+                            f"{source_30d}, median |per-regime lift| {median_mag:.0f}%")
+                        simpson_veto_count += 1
+                        simpson_vetoed_cells.append({
+                            "field": field, "band": band,
+                            "source_30d": source_30d, "source_recent": source_recent,
+                            "n_agree": n_agree, "n_measured": n_measured,
+                            "median_regime_lift_pct_abs": round(median_mag, 2),
+                            "regimes": [
+                                {"regime": s["regime"], "n": s["n"],
+                                 "lift_pct": (round(s["lift_pct"], 2)
+                                              if s["lift_pct"] is not None else None)}
+                                for s in snap
+                            ],
+                        })
+
             cells[band] = {
                 "source":        source,
                 "source_30d":    source_30d,
@@ -259,6 +351,9 @@ def fit():
                 "recent_nbm_prod_mae":  round(r_nbm_mae,  3) if r_nbm_mae  is not None else None,
                 "recent_lift_pct":      round(r_lift_pct, 2) if r_lift_pct is not None else None,
                 "recent_n":             r_paired,
+                "simpson_guard_would_veto": simpson_would_veto,
+                "source_under_simpson_guard": source_under_guard,
+                "simpson_guard_note": simpson_guard_note,
             }
             # Ship-gate aggregation across router-scope cells (t/ws/wd @
             # leads ≥6h) — matches v0.6.432 router's scope so we can prove
@@ -283,6 +378,24 @@ def fit():
         "min_n_recent": MIN_N_RECENT,
         "min_lift_recent_pct": MIN_LIFT_RECENT_PCT,
         "override_count": override_count,
+        "simpson_guard_shadow": {
+            "min_n_per_regime": SIMPSON_GUARD_MIN_N_PER_REGIME,
+            "min_measured_regimes": SIMPSON_GUARD_MIN_MEASURED_REGIMES,
+            "min_agree": SIMPSON_GUARD_MIN_AGREE,
+            "min_median_lift_pct": SIMPSON_GUARD_MIN_MEDIAN_LIFT_PCT,
+            "veto_count": simpson_veto_count,
+            "vetoed_cells": simpson_vetoed_cells,
+            "runtime_effect": "none (shadow only)",
+            "note": (
+                "Shadow measurement of a Simpson-paradox guard on the recency "
+                "override. Fires only when the recency override would flip a "
+                "cell AND ≥min_agree of ≥min_measured_regimes per-regime 30d "
+                "lifts agree with source_30d AND median |per-regime lift| ≥ "
+                "min_median_lift_pct. Runtime pick_source is unaffected — "
+                "cells still route by 'source'. Companion measurement: "
+                "analysis/simpson_guard_shadow.py."
+            ),
+        },
         "n_rows_scanned": n_in,
         "n_rows_kept":    n_kept,
         "compare_shape": "hrrr_prod_vs_nbm_prod",
@@ -333,6 +446,13 @@ def fit():
     print("=" * 96)
     print(f"Ship gate (router-scope): selector NBM lift = {selector_router_lift_pct:+.1f}% on n={router_paired_n:,}")
     print(f"Recency overrides applied: {override_count} cells")
+    print(f"Simpson-guard shadow: {simpson_veto_count} of {override_count} overrides "
+          f"would be vetoed (SHADOW — runtime unchanged)")
+    if simpson_vetoed_cells:
+        for c in simpson_vetoed_cells:
+            print(f"  · {c['field']}/{c['band']:>5}  {c['n_agree']}/{c['n_measured']} "
+                  f"regimes agree with {c['source_30d']}, "
+                  f"median |lift| {c['median_regime_lift_pct_abs']:.0f}%")
     print(f"  wrote {OUT_PATH}")
 
 

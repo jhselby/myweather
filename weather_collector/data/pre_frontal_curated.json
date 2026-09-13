@@ -1,53 +1,33 @@
 {
-  "generated_at": "2026-09-11T10:27:14Z",
+  "generated_at": "2026-09-12T10:04:07Z",
   "source": "h_pre_front_orthogonality.py",
   "ship_rule": "cell is SHIP iff ORTHOGONAL vs C1a AND ORTHOGONAL vs C1e",
   "cells": {
     "cc": {
-      "12-23h": {
-        "status": "SKIP",
-        "vs_c1a": "AMBIGUOUS",
-        "vs_c1e": "ORTHOGONAL"
-      },
       "24-47h": {
         "status": "SKIP",
-        "vs_c1a": "REDUNDANT",
+        "vs_c1a": null,
         "vs_c1e": "REDUNDANT"
       }
     },
     "ch": {
-      "12-23h": {
-        "status": "SKIP",
-        "vs_c1a": "REDUNDANT",
-        "vs_c1e": "REDUNDANT"
-      },
       "24-47h": {
         "status": "SKIP",
-        "vs_c1a": "REDUNDANT",
+        "vs_c1a": null,
         "vs_c1e": "REDUNDANT"
       }
     },
     "cl": {
-      "12-23h": {
-        "status": "SHIP",
-        "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "ORTHOGONAL"
-      },
       "24-47h": {
         "status": "SKIP",
-        "vs_c1a": "AMBIGUOUS",
-        "vs_c1e": "ORTHOGONAL"
+        "vs_c1a": null,
+        "vs_c1e": "REDUNDANT"
       }
     },
     "cm": {
-      "12-23h": {
-        "status": "SHIP",
-        "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "ORTHOGONAL"
-      },
       "24-47h": {
-        "status": "SHIP",
-        "vs_c1a": "ORTHOGONAL",
+        "status": "SKIP",
+        "vs_c1a": null,
         "vs_c1e": "ORTHOGONAL"
       }
     },
@@ -59,39 +39,24 @@
       }
     },
     "t": {
-      "12-23h": {
-        "status": "SKIP",
-        "vs_c1a": "AMBIGUOUS",
-        "vs_c1e": "ORTHOGONAL"
-      },
       "24-47h": {
         "status": "SKIP",
-        "vs_c1a": "REDUNDANT",
-        "vs_c1e": "REDUNDANT"
+        "vs_c1a": null,
+        "vs_c1e": "AMBIGUOUS"
       }
     },
     "wg": {
-      "12-23h": {
-        "status": "SHIP",
-        "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "ORTHOGONAL"
-      },
       "24-47h": {
-        "status": "SHIP",
-        "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "ORTHOGONAL"
+        "status": "SKIP",
+        "vs_c1a": null,
+        "vs_c1e": "REDUNDANT"
       }
     },
     "ws": {
-      "12-23h": {
-        "status": "SHIP",
-        "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "ORTHOGONAL"
-      },
       "24-47h": {
-        "status": "SHIP",
-        "vs_c1a": "ORTHOGONAL",
-        "vs_c1e": "ORTHOGONAL"
+        "status": "SKIP",
+        "vs_c1a": null,
+        "vs_c1e": "REDUNDANT"
       }
     }
   }

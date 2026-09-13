@@ -1,4 +1,19 @@
 <details open>
+<summary><strong>v0.6.608 • September 13, 2026 (L1 recency-override Simpson-guard shadow — analysis-only, no runtime change; data rejected the ship)</strong></summary>
+
+- **Question:** could the L1 recency-override mechanism (v0.6.546) produce Simpson's-paradox flips where the pooled 7d lift disagrees with a unanimous per-regime 30d picture?
+- **Audit:** 6 of 9 current overrides are Simpson-shaped by per-regime lens — h/0-5 (8/8 regimes agree HRRR), sr all 4 bands (7-8/8 agree HRRR), dp/0-5 (8/8). 3 are legit (t/24-47, wg/0-5, wd/0-5 all had marginal 30d + genuine regime disagreement).
+- **Shadow-only ship:** `analysis/l1_selector_fit.py` — added per-regime 30d accumulator + Simpson-guard shadow annotations (`simpson_guard_would_veto`, `source_under_simpson_guard`, `simpson_guard_note` per cell; `simpson_guard_shadow` summary block with vetoed-cell list). Guard params: `MIN_N_PER_REGIME=100`, `MIN_MEASURED_REGIMES=6`, `MIN_AGREE=7`, `MIN_MEDIAN_LIFT_PCT=20.0`. `pick_source` runtime UNTOUCHED.
+- **Companion measurement:** `analysis/simpson_guard_shadow.py` — new script. Reads curated table for vetoed cells, re-scans pair-log over 7d, computes pooled prod-MAE under `source` (current) vs `source_under_simpson_guard` (counterfactual). Writes `analysis/output/simpson_guard_shadow.json`, publishes to GCS.
+- **Shadow verdict:** guard would REGRESS prod on every flagged cell. sr/0-5 −6.2%, sr/6-11 −16.2%, sr/12-23 −10.5%, sr/24-47 −8.6%, dp/0-5 −8.9%. **Pooled −14.2%.** Guard NOT shipped to runtime. Recency mechanism vindicated on Simpson-shaped flips — 30d per-regime data is a stale/wrong baseline for judging recent flips.
+- **h 24h regression follow-up:** sel_h −66% at scan-start improved to −41% after fresh fit (h/0-5 flipped hrrr). Layer decomp on 24h pool showed 100% of rows delivered by l2_nbm; HRRR-side L2 station bias would beat L2_NBM in every 24h band. But 30d by-regime prod-vs-prod shows NBM wins at h/6-11 (7/8 regimes, +5.7% to +25.6%) and h/12-23 (7/8, +2.8% to +31.6%). Short-lived HRRR-favorable pattern, not a routing bug. 7d recency will flip h/6-11 automatically in 3-4 more days if the pattern holds.
+- **Watch item logged:** L2_NBM MAE on h/6-11 (9.02) barely differs from NBM raw (9.06) — station-bias Kalman doing nothing on that cell in the 24h window. Compare h/0-5 where L2_NBM=6.02 vs raw 9.28 (−35%). Likely stale/thin Kalman state. Log-only.
+- **Frontend:** none. This is analysis-only work — no collector deploy, no PWA change. Debug page Recent Activity extended to cover the evening session.
+- **Lesson:** shadow-first was the right call. Designed guard looked mathematically defensible against pooling artifacts; measured against real 7d prod and got the opposite answer. `feedback_shadow_write_applied_layer_trap` discipline paid off.
+
+</details>
+
+<details>
 <summary><strong>v0.6.607 • September 13, 2026 (debug page sweep — 09-13 afternoon-session extension + Upcoming grid updates + Post-ship watches for stagnant_high + PBL gate)</strong></summary>
 
 - Recent Activity: extended today's 09-13 entry from morning-only (2 ships) to full-day narrative (6 ships) with afternoon diagnostic-driven ship chain (v0.6.604 24h table → discovery arc → v0.6.605 stagnant_high → v0.6.606 PBL gate).

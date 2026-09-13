@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-11T10:26:49.330497+00:00",
+  "generated_at": "2026-09-13T10:51:27.989512+00:00",
   "source": "h_lsr_recent_bias_gate.py",
   "recent_window_days": 3,
   "holdout_window_days": 3,
@@ -15,67 +15,167 @@
   "set_level_gate_clear": false,
   "per_cell": {
     "nw_flow": {
-      "9": {
-        "gate_apply": false,
-        "gate_reason": "mag",
+      "10": {
+        "gate_apply": true,
+        "gate_reason": "on",
         "sign_ok": true,
-        "mag_ok": false,
-        "recent_bias": -56.3981,
-        "hist_bias": -114.7,
-        "hist_shift": 114.7,
-        "n_holdout": 36
+        "mag_ok": true,
+        "recent_bias": -173.3636,
+        "hist_bias": -149.8,
+        "hist_shift": 149.8,
+        "n_holdout": 30
       },
       "11": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": -80.1058,
-        "hist_bias": -89.2,
-        "hist_shift": 89.2,
-        "n_holdout": 41
+        "recent_bias": -155.925,
+        "hist_bias": -108.7,
+        "hist_shift": 108.7,
+        "n_holdout": 31
       },
       "12": {
-        "gate_apply": false,
-        "gate_reason": "mag",
+        "gate_apply": true,
+        "gate_reason": "on",
         "sign_ok": true,
-        "mag_ok": false,
-        "recent_bias": -17.2989,
-        "hist_bias": -104.5,
-        "hist_shift": 104.5,
-        "n_holdout": 39
+        "mag_ok": true,
+        "recent_bias": -104.7867,
+        "hist_bias": -125.9,
+        "hist_shift": 125.9,
+        "n_holdout": 36
       },
       "13": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": 74.0909,
-        "hist_bias": 120.9,
-        "hist_shift": -120.9,
-        "n_holdout": 41
+        "recent_bias": 10.8082,
+        "hist_bias": 20.2,
+        "hist_shift": -20.2,
+        "n_holdout": 39
       },
       "14": {
         "gate_apply": true,
         "gate_reason": "on",
         "sign_ok": true,
         "mag_ok": true,
-        "recent_bias": -74.8333,
-        "hist_bias": -99.8,
-        "hist_shift": 99.8,
-        "n_holdout": 36
+        "recent_bias": -169.6143,
+        "hist_bias": -38.7,
+        "hist_shift": 38.7,
+        "n_holdout": 39
+      },
+      "15": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 57.0175,
+        "hist_bias": 30.9,
+        "hist_shift": -30.9,
+        "n_holdout": 42
+      },
+      "16": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 98.5962,
+        "hist_bias": 84.2,
+        "hist_shift": -84.2,
+        "n_holdout": 46
+      },
+      "17": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 174.7857,
+        "hist_bias": 149.2,
+        "hist_shift": -149.2,
+        "n_holdout": 48
+      },
+      "18": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": 104.3182,
+        "hist_bias": 100.1,
+        "hist_shift": -100.1,
+        "n_holdout": 58
       }
     },
     "se_flow": {
-      "11": {
+      "10": {
         "gate_apply": true,
         "gate_reason": "thin",
         "sign_ok": null,
         "mag_ok": null,
         "recent_bias": null,
-        "hist_bias": -253.1,
-        "hist_shift": 253.1,
-        "n_holdout": 34
+        "hist_bias": -153.6,
+        "hist_shift": 153.6,
+        "n_holdout": 40
+      },
+      "11": {
+        "gate_apply": true,
+        "gate_reason": "on",
+        "sign_ok": true,
+        "mag_ok": true,
+        "recent_bias": -237.6765,
+        "hist_bias": -241.1,
+        "hist_shift": 241.1,
+        "n_holdout": 43
+      },
+      "12": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -114.9,
+        "hist_shift": 114.9,
+        "n_holdout": 38
+      },
+      "13": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -12.1,
+        "hist_shift": 12.1,
+        "n_holdout": 39
+      },
+      "14": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": -29.1,
+        "hist_shift": 29.1,
+        "n_holdout": 35
+      },
+      "15": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 36.5,
+        "hist_shift": -36.5,
+        "n_holdout": 37
+      },
+      "16": {
+        "gate_apply": true,
+        "gate_reason": "thin",
+        "sign_ok": null,
+        "mag_ok": null,
+        "recent_bias": null,
+        "hist_bias": 86.0,
+        "hist_shift": -86.0,
+        "n_holdout": 36
       }
     }
   },
