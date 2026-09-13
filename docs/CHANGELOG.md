@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.602 • September 13, 2026 (l3_nbm wg/nw_flow/12-23h skip — two-window CONFIRMED)</strong></summary>
+
+- **Shipped one NBM skip cell:** `l3_nbm.wg.nw_flow/12-23h` — 14d lift −3.8% (n=472), 50d lift −5.0% (n=1,545), halves −8.87 / −1.86. Cleared both windows of the two-window audit shipped v0.6.584 (the gate that stops shipping 14d proposals that 50d shows are just regime-transient).
+- `l3_nbm.wd.se_flow/6-11h` also CONFIRMED today but already shipped in an earlier curated JSON — the audit re-surfaces every passing proposal regardless of ship state.
+- Watch: pair-log MAE for `wg` at `nw_flow/12-23h` should trend back toward raw as new obs land with the l3_nbm skip in place.
+
+</details>
+
+<details>
 <summary><strong>v0.6.601 • September 13, 2026 (L1 selector 3-way — walker + runtime, dp gated pending coherence work)</strong></summary>
 
 - **3-way fitter (`analysis/l1_selector_fit_3way.py`)** now emits `n_today` per cell (rolling-24h paired-sample count) alongside `n` (30d window) so the walker's `WINDOW_SUM_N_MIN` accounting works for NWS-direction cells. Simplified the accumulator loop while I was in there — the original `for key in ((f, sf, band), None)` construct did the same one-cell + one-pool update as a straight two-item iteration but was harder to read.
