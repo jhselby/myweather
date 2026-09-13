@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.601 • September 13, 2026 (L1 selector 3-way — walker + runtime, dp gated pending coherence work)</strong></summary>
+
+- **3-way fitter (`analysis/l1_selector_fit_3way.py`)** now emits `n_today` per cell (rolling-24h paired-sample count) alongside `n` (30d window) so the walker's `WINDOW_SUM_N_MIN` accounting works for NWS-direction cells. Simplified the accumulator loop while I was in there — the original `for key in ((f, sf, band), None)` construct did the same one-cell + one-pool update as a straight two-item iteration but was harder to read.
+- **By-regime walker (`analysis/l1_selector_fit_by_regime_walker.py`)** gains NWS as third direction alongside NBM-wire and HRRR-wire. Same 3-day gate + `WINDOW_SUM_N_MIN=60` + escalation clause (`|lift|≥20% AND n≥500 AND not flipped`). History entries carry `positive_nws` / `payload_nws`; runtime JSON carries `cells_cleared_for_wire_nws` / `cells_flipped_in_window_nws` / per-cell `cleared_for_wire_nws` / `flipped_in_window_nws`. Directions mutually exclusive by construction — a cell in `positive_nws` beat both HRRR and NBM in the 3-way fitter, so it cannot co-occur with NBM-wire or HRRR-wire.
+- **Runtime (`weather_collector/processors/l1_selector.py`)** `pick_source()` extended to return `"nws"`; precedence NWS override → NBM/HRRR regime override → band pool → HRRR fall-through. `forecast_snapshot.py` gets a new NWS branch that swaps `entry[f]` and `entry[f"{f}_applied"]="nws"` when `{f}_nws` is present; falls through to HRRR walker output when NWS has no coverage that hour.
+- **dp gated out of NWS wire (`_NWS_FIELDS_WIRE_ELIGIBLE = {t, ws, wd, pp}`).** dp is derived — Magnus(t, h) at `corrected_hourly.py:264` and `forecast_snapshot.py:296/652`. Routing dp to NWS while t and h stay on HRRR/NBM walker picks would ship a thermodynamically inconsistent (t, h, dp) triple to the user. Yesterday's v0.6.600 flagged this as tomorrow's work; gating dp at wire-time lets the infrastructure ship without inheriting the block. **The walker's dp cleared cells stay in the diagnostic JSON as evidence** for a future coherence-aware wire (back-derive h from dp_nws + native t, or gate on NWS-t agreement with the selected t).
+- **Today's read:** 3 dp cells cleared escalation (`dp/nw_flow/0-5` lift +25.0% n=1,238; `dp/nw_flow/12-23` +29.3% n=1,721; `dp/pre_frontal/12-23` +23.6% n=1,078) — all fall through to pool (nbm) under the dp gate. Zero non-dp NWS-wire cells cleared, so runtime wire is a no-op today. The wire fires the moment any t/ws/wd/pp cell clears in the 3-way fitter (dp still contributes to the fitter's stats — just not the runtime pick).
+- **Watch:** 3-way fitter dp cells daily; report when a non-dp NWS cell first appears in the 3-way STAGE 1 PROMOTE list (that's when the runtime wire starts firing).
+- Frontend: mechanical version bump only, no UI change. Not localhost-testable.
+
+</details>
+
+<details>
 <summary><strong>v0.6.600 • September 12, 2026 (reviewer-driven fixes — humidity row, NBM topology, scope framing)</strong></summary>
 
 - ChatGPT reviewer flagged four presentation issues in an out-of-session review of today's work. All correct — fixing now.

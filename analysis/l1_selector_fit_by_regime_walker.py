@@ -43,6 +43,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 REPORT_PATH = Path(__file__).resolve().parent / "l1_selector_by_regime_report.json"
+REPORT_PATH_3WAY = Path(__file__).resolve().parent / "l1_selector_3way_report.json"
 RUNTIME_PATH = REPO / "weather_collector" / "data" / "l1_selector_by_regime_walker.json"
 HISTORY_PATH = REPO / ".cache_l1_selector_by_regime_walker_history.json"
 
@@ -107,6 +108,21 @@ def run():
     masked = report.get("masked_cells") or []
     masked_hrrr = report.get("masked_cells_hrrr") or []
 
+    # Third direction: NWS-wire cells from the 3-way fitter. Optional —
+    # missing report leaves the NWS direction empty (no wire pressure).
+    report_3way = _load_json(REPORT_PATH_3WAY) or {}
+    masked_nws_raw = report_3way.get("cells_cleared_for_wire_nws") or []
+    # Normalize 3-way schema (lift_pct_h1/h2) to walker payload schema (half1_lift_pct/half2_lift_pct).
+    masked_nws = []
+    for c in masked_nws_raw:
+        masked_nws.append({
+            "field": c.get("field"), "regime": c.get("regime"), "band": c.get("band"),
+            "lift_pct": c.get("lift_pct"), "n": c.get("n"),
+            "n_today": c.get("n_today"),
+            "half1_lift_pct": c.get("lift_pct_h1"),
+            "half2_lift_pct": c.get("lift_pct_h2"),
+        })
+
     if day < NOT_BEFORE_DATE:
         print(f"L1 selector by-regime walker — {day}")
         print(f"diagnostic source: {fitted_at}")
@@ -128,9 +144,10 @@ def run():
         }
 
     # Today's positive sets + per-cell payload (kept for reporting).
-    # Two directions tracked independently under the same gate.
+    # Three directions tracked independently under the same gate.
     today_by_key = {_cell_key(c): _payload(c) for c in masked}
     today_by_key_hrrr = {_cell_key(c): _payload(c) for c in masked_hrrr}
+    today_by_key_nws = {_cell_key(c): _payload(c) for c in masked_nws}
 
     # Append today's positive set to history (idempotent by day).
     hist = _load_json(HISTORY_PATH) or {"entries": []}
@@ -142,6 +159,8 @@ def run():
         "payload": today_by_key,
         "positive_hrrr": sorted(today_by_key_hrrr.keys()),
         "payload_hrrr": today_by_key_hrrr,
+        "positive_nws": sorted(today_by_key_nws.keys()),
+        "payload_nws": today_by_key_nws,
     })
     cutoff_ret = (datetime.now() - timedelta(days=GATE_HISTORY_RETENTION_DAYS)).strftime("%Y-%m-%d")
     entries = [e for e in entries if e.get("date", "") >= cutoff_ret]
@@ -259,6 +278,11 @@ def run():
     # Direction 2: HRRR-wire (pooled=NBM, regime says HRRR helps). Symmetric gate.
     per_cell_hrrr, report_rows_hrrr, n_cleared_hrrr, n_flipped_hrrr = _direction_evaluate(
         "positive_hrrr", "payload_hrrr", today_by_key_hrrr)
+    # Direction 3: NWS-wire (3-way fitter, regime says NWS beats best-of-HRRR-NBM).
+    # Mutually exclusive with the other two by construction (a cell only enters
+    # this set if NWS beats both HRRR AND NBM; NBM-/HRRR-wire cells lose to NWS).
+    per_cell_nws, report_rows_nws, n_cleared_nws, n_flipped_nws = _direction_evaluate(
+        "positive_nws", "payload_nws", today_by_key_nws)
 
     # Fold per-cell dicts into runtime structure: field -> regime -> band -> {wire_dir: dict}.
     per_cell_runtime = defaultdict(lambda: defaultdict(dict))
@@ -289,6 +313,12 @@ def run():
         # New keys for HRRR direction (no back-compat concern — no consumer yet).
         per_cell_runtime[field][regime][band]["cleared_for_wire_hrrr"] = v["cleared"]
         per_cell_runtime[field][regime][band]["flipped_in_window_hrrr"] = v["flipped"]
+    for key, v in per_cell_nws.items():
+        field, regime, band = key.split("|", 2)
+        per_cell_runtime[field][regime].setdefault(band, {})
+        per_cell_runtime[field][regime][band]["nws"] = v
+        per_cell_runtime[field][regime][band]["cleared_for_wire_nws"] = v["cleared"]
+        per_cell_runtime[field][regime][band]["flipped_in_window_nws"] = v["flipped"]
 
     # Report.
     print(f"L1 selector by-regime walker — {day}")
@@ -335,6 +365,7 @@ def run():
 
     _print_direction("NBM-wire (pooled=HRRR, regime says NBM helps)", report_rows)
     _print_direction("HRRR-wire (pooled=NBM, regime says HRRR helps)", report_rows_hrrr)
+    _print_direction("NWS-wire (3-way: NWS beats best-of-HRRR-NBM)", report_rows_nws)
 
     print()
     print("=" * 100)
@@ -345,15 +376,16 @@ def run():
     elif len(days_in_window) < GATE_WINDOW_DAYS:
         v = (f"BUILDING — walker at day {len(days_in_window)}/{GATE_WINDOW_DAYS} distinct dates. "
              f"NBM-wire {n_cleared} cleared / {n_flipped} flipped; "
-             f"HRRR-wire {n_cleared_hrrr} cleared / {n_flipped_hrrr} flipped.")
-    elif n_cleared == 0 and n_cleared_hrrr == 0:
+             f"HRRR-wire {n_cleared_hrrr} cleared / {n_flipped_hrrr} flipped; "
+             f"NWS-wire {n_cleared_nws} cleared / {n_flipped_nws} flipped.")
+    elif n_cleared == 0 and n_cleared_hrrr == 0 and n_cleared_nws == 0:
         v = (f"HOLD — window full ({GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS}) but no cell "
-             f"cleared either direction. NBM-wire {n_flipped} flipped; "
-             f"HRRR-wire {n_flipped_hrrr} flipped.")
+             f"cleared any direction. NBM-wire {n_flipped} flipped; "
+             f"HRRR-wire {n_flipped_hrrr} flipped; NWS-wire {n_flipped_nws} flipped.")
     else:
-        v = (f"WIRE READY — {n_cleared} NBM-wire + {n_cleared_hrrr} HRRR-wire cell(s) "
-             f"cleared the {GATE_WINDOW_DAYS}-day gate "
-             f"(sum(n_today) across window >= {WINDOW_SUM_N_MIN}). "
+        v = (f"WIRE READY — {n_cleared} NBM-wire + {n_cleared_hrrr} HRRR-wire + "
+             f"{n_cleared_nws} NWS-wire cell(s) cleared the {GATE_WINDOW_DAYS}-day gate "
+             f"(sum(n_today) across window >= {WINDOW_SUM_N_MIN}) OR escalation. "
              f"l1_selector routes cleared cells with precedence over pooled band pick.")
     print(f"  {v}")
 
@@ -373,6 +405,14 @@ def run():
                                  for f, regs in per_cell_runtime.items()
                                  for r, bands in regs.items()
                                  for b, v in bands.items() if v.get("flipped_in_window_hrrr")])
+    cleared_cells_nws = sorted([f"{f}/{r}/{b}"
+                                for f, regs in per_cell_runtime.items()
+                                for r, bands in regs.items()
+                                for b, v in bands.items() if v.get("cleared_for_wire_nws")])
+    flipped_cells_nws = sorted([f"{f}/{r}/{b}"
+                                for f, regs in per_cell_runtime.items()
+                                for r, bands in regs.items()
+                                for b, v in bands.items() if v.get("flipped_in_window_nws")])
     if cleared_cells:
         print(f"  NBM-wire cleared: {cleared_cells}")
     if flipped_cells:
@@ -381,6 +421,10 @@ def run():
         print(f"  HRRR-wire cleared: {cleared_cells_hrrr}")
     if flipped_cells_hrrr:
         print(f"  HRRR-wire flipped: {flipped_cells_hrrr}")
+    if cleared_cells_nws:
+        print(f"  NWS-wire cleared: {cleared_cells_nws}")
+    if flipped_cells_nws:
+        print(f"  NWS-wire flipped: {flipped_cells_nws}")
 
     runtime = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -394,20 +438,26 @@ def run():
         "n_cells_flipped": n_flipped,
         "n_cells_cleared_hrrr": n_cleared_hrrr,
         "n_cells_flipped_hrrr": n_flipped_hrrr,
+        "n_cells_cleared_nws": n_cleared_nws,
+        "n_cells_flipped_nws": n_flipped_nws,
         "cells_cleared_for_wire": cleared_cells,
         "cells_flipped_in_window": flipped_cells,
         "cells_cleared_for_wire_hrrr": cleared_cells_hrrr,
         "cells_flipped_in_window_hrrr": flipped_cells_hrrr,
+        "cells_cleared_for_wire_nws": cleared_cells_nws,
+        "cells_flipped_in_window_nws": flipped_cells_nws,
         "days_in_window": days_in_window,
         "per_cell": {f: {r: dict(bands) for r, bands in regs.items()}
                      for f, regs in per_cell_runtime.items()},
         "notes": (
-            "Wire contract (two-directional): for any (field, regime, band) cell where "
+            "Wire contract (three-directional): for any (field, regime, band) cell where "
             "per_cell[field][regime][band].cleared_for_wire == True (and flipped_in_window "
             "== False), route NBM Prod. Where cleared_for_wire_hrrr == True (and "
-            "flipped_in_window_hrrr == False), route HRRR Prod. Both take precedence over "
-            "the pooled-band pick. NBM-wire and HRRR-wire are mutually exclusive by "
-            "construction (a cell can't have both halves >0 and both halves <0)."
+            "flipped_in_window_hrrr == False), route HRRR Prod. Where cleared_for_wire_nws "
+            "== True (and flipped_in_window_nws == False), route NWS Prod. NWS takes "
+            "highest precedence, then HRRR/NBM regime overrides, then the pooled-band pick. "
+            "Directions are mutually exclusive by construction — NBM-/HRRR-wire cells lose "
+            "to NWS in the 3-way fitter and don't enter positive_nws."
         ),
     }
     RUNTIME_PATH.write_text(json.dumps(runtime, indent=2))

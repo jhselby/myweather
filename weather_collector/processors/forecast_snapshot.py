@@ -939,7 +939,19 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                             if i < len(_wdp_state_fc_by_lead) else None)
             source = _selector_pick_source(f, i, _fc_regime_i)
             entry[f"{f}_selector_source"] = source
-            if source == "nbm":
+            if source == "nws":
+                # 3-way walker cleared this (field, regime, band) for NWS
+                # routing (NWS beat both HRRR and NBM in the 3-way fitter,
+                # halves-stable, cleared 3-day gate OR escalation). Use the
+                # stamped {f}_nws value; if NWS had no forecast this hour
+                # (coverage gap), fall through to HRRR by leaving entry[f]
+                # untouched (safe default = current HRRR walker output).
+                nws_v = entry.get(f"{f}_nws")
+                if nws_v is not None:
+                    entry[f] = nws_v
+                    entry[f"{f}_applied"] = "nws"
+                # else: leave HRRR walker's entry[f] / {f}_applied intact.
+            elif source == "nbm":
                 # Deepest available NBM-side layer wins:
                 #   wd  → wdp_nbm > l3_nbm > l2_nbm > raw_nbm
                 #   ch  → chp_nbm > l4_nbm > l3_nbm > l2_nbm > raw_nbm

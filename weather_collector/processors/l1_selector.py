@@ -1,7 +1,7 @@
 """L1 selector apply-time processor (option-1 Phase 4, 2026-08-19).
 
 Loads `weather_collector/data/l1_selector_table_curated.json` at module
-import; exposes `pick_source(field, lead_h) -> "hrrr" | "nbm"`. Table
+import; exposes `pick_source(field, lead_h[, regime]) -> "hrrr" | "nbm" | "nws"`. Table
 schema and pick rule live in `analysis/l1_selector_fit.py`.
 
 Fall-through to "hrrr" when the field or band is out of scope, the
@@ -31,6 +31,16 @@ CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_ta
 REGIME_WALKER_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_by_regime_walker.json"
 
 BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)]
+
+# Runtime allowlist for NWS routing. The 3-way fitter covers t/wd/ws/dp/pp,
+# but dp is DERIVED downstream (Magnus(t, h) at corrected_hourly.py:264 and
+# forecast_snapshot.py:296/652). Routing dp to NWS while t and h stay on
+# HRRR/NBM walker picks would ship a thermodynamically inconsistent
+# (t, h, dp) triple to the user. Gated at wire-time, not at the walker —
+# the walker's dp/... cleared cells stay in the diagnostic JSON as
+# evidence for a future coherence-aware wire (back-derive h from dp_nws,
+# or gate on NWS-t agreement with our t). Per v0.6.600 blocker note.
+_NWS_FIELDS_WIRE_ELIGIBLE = frozenset({"t", "ws", "wd", "pp"})
 
 _TABLE = {}       # {field: {band: "hrrr"|"nbm"}}
 _META = {}        # fitted_at, ship-gate summary, etc.
@@ -68,13 +78,16 @@ def _load():
 
 
 def _load_regime_overrides():
-    """Load the by-regime walker's per-cell verdicts. Two-directional:
-    a cell with `cleared_for_wire == True` AND `flipped_in_window == False`
-    routes NBM (Direction 1); a cell with `cleared_for_wire_hrrr == True`
-    AND `flipped_in_window_hrrr == False` routes HRRR (Direction 2). The
-    two directions are mutually exclusive by construction in the walker
-    (a cell can't have both halves >0 and both halves <0). Missing file,
-    empty cells list, or any load error → no overrides (band pool decides)."""
+    """Load the by-regime walker's per-cell verdicts. Three-directional:
+    a cell with `cleared_for_wire_nws == True` AND `flipped_in_window_nws
+    == False` routes NWS (highest precedence — NWS beat both HRRR and NBM
+    in the 3-way fitter); else `cleared_for_wire == True` AND
+    `flipped_in_window == False` routes NBM; else `cleared_for_wire_hrrr
+    == True` AND `flipped_in_window_hrrr == False` routes HRRR. The three
+    directions are mutually exclusive by construction (NWS-wire cells are
+    only emitted when NWS beats best-of-HRRR-NBM, so they can't co-occur
+    with the other two). Missing file, empty cells list, or any load error
+    → no overrides (band pool decides)."""
     global _REGIME_OVERRIDES
     try:
         with open(REGIME_WALKER_PATH) as f:
@@ -87,7 +100,9 @@ def _load_regime_overrides():
     for field, regs in per_cell.items():
         for regime, bands in (regs or {}).items():
             for band, cell in (bands or {}).items():
-                if cell.get("cleared_for_wire") and not cell.get("flipped_in_window"):
+                if cell.get("cleared_for_wire_nws") and not cell.get("flipped_in_window_nws"):
+                    parsed.setdefault(field, {}).setdefault(regime, {})[band] = "nws"
+                elif cell.get("cleared_for_wire") and not cell.get("flipped_in_window"):
                     parsed.setdefault(field, {}).setdefault(regime, {})[band] = "nbm"
                 elif cell.get("cleared_for_wire_hrrr") and not cell.get("flipped_in_window_hrrr"):
                     parsed.setdefault(field, {}).setdefault(regime, {})[band] = "hrrr"
@@ -99,18 +114,22 @@ _load_regime_overrides()
 
 
 def pick_source(field, lead_h, regime=None):
-    """Return "hrrr" or "nbm" for this (field, lead_h[, regime]).
+    """Return "hrrr", "nbm", or "nws" for this (field, lead_h[, regime]).
 
-    Precedence: by-regime walker override (if a cleared cell matches, either
-    direction) → band pool pick → HRRR fall-through. HRRR fall-through on any
-    missing lookup remains safe (equal to pre-Phase-4 Prod).
+    Precedence: by-regime walker override (if a cleared cell matches — nws,
+    nbm, or hrrr) → band pool pick (hrrr/nbm only) → HRRR fall-through.
+    HRRR fall-through on any missing lookup remains safe (equal to
+    pre-Phase-4 Prod). The forecast_snapshot consumer falls back to HRRR
+    if "nws" is returned but the {field}_nws value is missing for the hour.
     """
     band = _band_for(lead_h)
     if band is not None and regime:
         reg_cells = _REGIME_OVERRIDES.get(field, {}).get(regime)
         if reg_cells:
             pick = reg_cells.get(band)
-            if pick in ("nbm", "hrrr"):
+            if pick == "nws" and field not in _NWS_FIELDS_WIRE_ELIGIBLE:
+                pick = None  # dp gated — fall through to pool
+            if pick in ("nbm", "hrrr", "nws"):
                 return pick
     cells = _TABLE.get(field)
     if not cells:

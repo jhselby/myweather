@@ -69,6 +69,7 @@ def _new_bucket():
         "hrrr_abs": 0.0, "nbm_abs": 0.0, "nws_abs": 0.0, "n": 0,
         "hrrr_abs_h1": 0.0, "nbm_abs_h1": 0.0, "nws_abs_h1": 0.0, "n_h1": 0,
         "hrrr_abs_h2": 0.0, "nbm_abs_h2": 0.0, "nws_abs_h2": 0.0, "n_h2": 0,
+        "n_today": 0,
     }
 
 
@@ -100,7 +101,8 @@ def _cell_verdict(b):
             lift_h2 = 100.0 * (best_h2 - mae_w_h2) / best_h2
             halves_stable = (lift_h1 >= MIN_LIFT_PCT and lift_h2 >= MIN_LIFT_PCT)
     return {
-        "n": b["n"], "mae_hrrr": round(mae_h, 4), "mae_nbm": round(mae_n, 4),
+        "n": b["n"], "n_today": b.get("n_today", 0),
+        "mae_hrrr": round(mae_h, 4), "mae_nbm": round(mae_n, 4),
         "mae_nws": round(mae_w, 4), "lift_pct": round(lift_pct, 2),
         "lift_pct_h1": round(lift_h1, 2) if lift_h1 is not None else None,
         "lift_pct_h2": round(lift_h2, 2) if lift_h2 is not None else None,
@@ -120,6 +122,7 @@ def fit():
     now = datetime.now(timezone.utc).replace(tzinfo=None, microsecond=0)
     window_start_dt = now - timedelta(days=WINDOW_DAYS)
     window_mid_dt   = now - timedelta(days=WINDOW_DAYS // 2)
+    today_start_dt  = now - timedelta(days=1)
 
     # (field, regime, band) -> bucket
     cells = defaultdict(_new_bucket)
@@ -154,28 +157,18 @@ def fit():
                 if sf not in REGIMES: sf = "unknown"
                 a_h = abs(float(e_h)); a_n = abs(float(e_n)); a_w = abs(float(e_w))
 
-                for key in ((f, sf, band), None):  # None means pooled
-                    b = cells[(f, sf, band)] if key else pooled[(f, band)]
+                is_today = odt >= today_start_dt
+                for b in (cells[(f, sf, band)], pooled[(f, band)]):
                     b["hrrr_abs"] += a_h; b["nbm_abs"] += a_n; b["nws_abs"] += a_w
                     b["n"] += 1
+                    if is_today:
+                        b["n_today"] += 1
                     if odt <= window_mid_dt:
                         b["hrrr_abs_h1"] += a_h; b["nbm_abs_h1"] += a_n; b["nws_abs_h1"] += a_w
                         b["n_h1"] += 1
                     else:
                         b["hrrr_abs_h2"] += a_h; b["nbm_abs_h2"] += a_n; b["nws_abs_h2"] += a_w
                         b["n_h2"] += 1
-                    if not key: break  # only iterate pooled once
-                    # actually iterate BOTH (per-cell and pooled)
-                    b_pool = pooled[(f, band)]
-                    b_pool["hrrr_abs"] += a_h; b_pool["nbm_abs"] += a_n; b_pool["nws_abs"] += a_w
-                    b_pool["n"] += 1
-                    if odt <= window_mid_dt:
-                        b_pool["hrrr_abs_h1"] += a_h; b_pool["nbm_abs_h1"] += a_n; b_pool["nws_abs_h1"] += a_w
-                        b_pool["n_h1"] += 1
-                    else:
-                        b_pool["hrrr_abs_h2"] += a_h; b_pool["nbm_abs_h2"] += a_n; b_pool["nws_abs_h2"] += a_w
-                        b_pool["n_h2"] += 1
-                    break
                 n_use += 1
 
     # Verdicts
