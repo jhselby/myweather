@@ -1,6 +1,6 @@
 // Wyman Cove Weather — Service Worker
 // Bump CACHE_VERSION with each deploy to invalidate old caches
-const CACHE_VERSION = 'wc-v0.6.605';
+const CACHE_VERSION = 'wc-v0.6.606';
 const APP_SHELL = [
   '/myweather/',
   '/myweather/index.html',

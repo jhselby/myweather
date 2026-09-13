@@ -113,15 +113,34 @@ _load()
 _load_regime_overrides()
 
 
-def pick_source(field, lead_h, regime=None):
-    """Return "hrrr", "nbm", or "nws" for this (field, lead_h[, regime]).
+# v0.6.606 — HRRR PBL morning-overshoot workaround. Named routing gate for
+# a specific, diagnosed HRRR failure mode: under stagnant_high conditions,
+# HRRR's boundary-layer scheme mixes down aloft warm air too aggressively
+# during morning heating hours, overshooting the observed surface temperature
+# by 2-3°F at EDT hours 05-07. Pair-log dig 09-13 showed HRRR MAE 2.74-3.40
+# vs NBM MAE 0.59-0.67 at these hours today. This is a stop-gap until the
+# by-regime walker's escalation clause catches (field=t, regime=stagnant_high,
+# band=0-5) via >=500 stagnant t rows accumulating with |lift|>=20%. Reversal:
+# set HRRR_PBL_MORNING_OVERSHOOT_KILL = True to disable, or delete the branch.
+HRRR_PBL_MORNING_OVERSHOOT_KILL = False
+_HRRR_PBL_MORNING_HOURS_LOCAL = (4, 5, 6, 7, 8)  # EDT — brackets the observed 05-07 blowout
 
-    Precedence: by-regime walker override (if a cleared cell matches — nws,
-    nbm, or hrrr) → band pool pick (hrrr/nbm only) → HRRR fall-through.
-    HRRR fall-through on any missing lookup remains safe (equal to
-    pre-Phase-4 Prod). The forecast_snapshot consumer falls back to HRRR
-    if "nws" is returned but the {field}_nws value is missing for the hour.
+
+def pick_source(field, lead_h, regime=None, hour_local=None):
+    """Return "hrrr", "nbm", or "nws" for this (field, lead_h[, regime, hour_local]).
+
+    Precedence: HRRR PBL morning-overshoot workaround (t only, stagnant_high
+    only, morning hours only) → by-regime walker override → band pool pick →
+    HRRR fall-through. HRRR fall-through on any missing lookup remains safe
+    (equal to pre-Phase-4 Prod). The forecast_snapshot consumer falls back to
+    HRRR if "nws" is returned but the {field}_nws value is missing for the hour.
     """
+    # HRRR PBL morning-overshoot workaround — see comment block above pick_source.
+    if (not HRRR_PBL_MORNING_OVERSHOOT_KILL
+            and field == "t"
+            and regime == "stagnant_high"
+            and hour_local in _HRRR_PBL_MORNING_HOURS_LOCAL):
+        return "nbm"
     band = _band_for(lead_h)
     if band is not None and regime:
         reg_cells = _REGIME_OVERRIDES.get(field, {}).get(regime)

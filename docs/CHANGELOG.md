@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.606 • September 13, 2026 (collector: HRRR PBL morning-overshoot routing gate — t + stagnant_high + EDT 04-08 → NBM)</strong></summary>
+
+- **Diagnosis:** dug into today's t 24h Total Lift −43.8%. Pair-log by-hour breakdown identified the exact failure mode — HRRR MAE at UTC 09-11 (EDT 05-07) was 2.74 / 3.40 / 2.49 with bias +2.48 / +3.13 / +2.28 (consistently ~3°F warm); NBM MAE at the same hours was 0.67 / 0.62 / 0.59. Classic HRRR boundary-layer overshoot: under clear skies + light wind + strong overnight radiational cooling, HRRR's PBL scheme mixes down aloft warm air too aggressively as the sun rises. NBM's climatological smoothing sidesteps this.
+- **Ship:** `l1_selector.py:pick_source()` gains an optional `hour_local` kwarg and a named routing gate — `field == "t" AND regime == "stagnant_high" AND hour_local ∈ {4,5,6,7,8}` → return `"nbm"`. Highest precedence (fires before the walker's cell overrides and the pool table). Reversible one-liner via `HRRR_PBL_MORNING_OVERSHOOT_KILL = False`.
+- **Wire-through:** `forecast_snapshot.py` passes `_chp_valid_hour_local(times, i)` (America/New_York local hour) into `_selector_pick_source()`. Existing callers that don't pass `hour_local` see the gate stay inert (safe default).
+- **Why hardcoded not walker-driven:** the by-regime walker's escalation clause needs ~500 stagnant-high t rows in a single cell before it can fire — 4-7 days of accumulation at the current ~2% stagnancy rate. This gate closes the gap immediately for today's regime. When the walker catches up and its `stagnant_high × t × 0-5` cell wires, this named gate becomes redundant and should be pruned.
+- **Post-ship watches:** (a) 24h t Total Lift trends toward zero as morning hours 09-11 UTC use NBM; (b) selector_picks for t stagnant_high should show NBM dominant in the morning window; (c) walker `stagnant_high × t × 0-5` cell — remove this gate when it clears the wire.
+
+</details>
+
+<details>
 <summary><strong>v0.6.605 • September 13, 2026 (regime classifier + collector: new `stagnant_high` synoptic regime — stamp-only ship, walker consumes automatically)</strong></summary>
 
 - **New regime label:** `weather_collector/processors/regime_classifier.py` — `classify_synoptic_regime()` gains a `cloud_cover` kwarg and a `stagnant_high` branch that fires when `ws < 5 mph AND cc < 0.40 AND |pt_3h| < 0.5 hPa`. Checked before frontal/calm so a "stagnant + light SE wind" state isn't miscoded as `se_flow` or bare `calm`. When `cloud_cover` is not passed, the branch is silently skipped (safe default for older callers).

@@ -937,7 +937,11 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             # cleared cells from the by-regime walker (finer-than-band route).
             _fc_regime_i = (_wdp_state_fc_by_lead[i]
                             if i < len(_wdp_state_fc_by_lead) else None)
-            source = _selector_pick_source(f, i, _fc_regime_i)
+            # v0.6.606 — pass valid-hour local for the HRRR PBL morning-overshoot
+            # workaround (t + stagnant_high + EDT 04-08 → NBM). Falls back to
+            # None if hour extraction fails; selector's morning gate stays inert.
+            _valid_hour_local_i = _chp_valid_hour_local(times, i)
+            source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i)
             entry[f"{f}_selector_source"] = source
             if source == "nws":
                 # 3-way walker cleared this (field, regime, band) for NWS
