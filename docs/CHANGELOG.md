@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.609 • September 14, 2026 (collector: NBM skip cell — l3_nbm.wd.se_flow/12-23h)</strong></summary>
+
+- **Ship:** `weather_collector/data/skip_table_nbm_curated.json` — added `l3_nbm.wd.se_flow/[12,24)` skip cell.
+- **Evidence:** two-window audit CONFIRMED. 14d n=953 lift −4.60%; 50d n=2,581 lift −9.79% with halves −14.24 / −5.26 (both-negative). Passes the v0.6.574 two-window gate.
+- **Context:** wd L3_NBM in se_flow was the third net-new CONFIRMED proposal on today's `nbm_skip_add_audit`. The other two — wd/se_flow/6-11h and wg/nw_flow/12-23h — already shipped (v0.6.500 and v0.6.608).
+- **Frontend:** none. Collector-only change; version bump to track. No localhost test applicable.
+
+</details>
+
+<details>
 <summary><strong>v0.6.608 • September 13, 2026 (L1 recency-override Simpson-guard shadow — analysis-only, no runtime change; data rejected the ship)</strong></summary>
 
 - **Question:** could the L1 recency-override mechanism (v0.6.546) produce Simpson's-paradox flips where the pooled 7d lift disagrees with a unanimous per-regime 30d picture?
