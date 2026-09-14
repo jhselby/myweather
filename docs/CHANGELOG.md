@@ -1,4 +1,18 @@
 <details open>
+<summary><strong>v0.6.613 • September 14, 2026 (analysis: residual-persistence walker gate off-by-one fix — 8-day window for 7-day gate)</strong></summary>
+
+- **Root cause:** `analysis/_residual_persistence_walker.py:117` had `cutoff_win = now - GATE_WINDOW_DAYS` which produces an 8-day window (09-07 to 09-14 today) for a gate that requires `n_seen == GATE_WINDOW_DAYS` (7). Cells SHIP every day never cleared because `8 == 7` is False. Applies to wg/dp/h — all three residual-persistence walkers have had **0 cells cleared since the shared harness landed**.
+- **Fingerprint that surfaced it:** h/sw_flow/12-23 with `days_seen=8, days_positive=8, days_ship=8, flipped=false, cleared=false`. That combination is impossible under a correct 7-day gate.
+- **Fix:** cutoff = `now - (GATE_WINDOW_DAYS - 1)` → window contains exactly 7 dates.
+- **Post-fix walker output:** wg 16 cells cleared, h 7 cells cleared, dp 6 cells cleared. All three still ENABLED=False on their runtime processors.
+- **Runtime change:** none today. Follow-up (not today): consider flipping ENABLED=True on `wg_residual_persistence.py` + `h_residual_persistence.py` after one more week of stability. dp stays False per derived-field rule ([[project_dp_is_derived_no_dp_work]]).
+- **Memory correction:** the index had wg listed as "live via shared harness" — that was aspiration, not reality. Wg has been shadow ENABLED=False the whole time. Updated.
+- **Frontend:** version-only. No PWA behavior change.
+- **Lesson:** off-by-one on "last N days" cutoff. If filter is `>= today - N` the window has N+1 dates; correct form is `>= today - (N-1)`. And digest "0 cells cleared" was normal-looking output nobody investigated — same class of silent mis-fire the Stage 1 harness fell into pre-v0.6.522.
+
+</details>
+
+<details>
 <summary><strong>v0.6.612 • September 14, 2026 (debug page — clock-watch clearance narrative for HRRR-wire day 3/3 + post-ship watch)</strong></summary>
 
 - Post-ship watches: added HRRR-wire cells first-gated live entry. 3 cells cleared today's 3-day gate — `cc/ne_flow/12-23`, `wd/se_flow/24-47`, `ws/sea_breeze/24-47` (last one already firing via 09-11 escalation, today formalizes gate-clearance).

@@ -114,7 +114,11 @@ def run_walker(field):
     history_path.write_text(json.dumps({"entries": entries}, indent=2))
 
     # Gate window.
-    cutoff_win = (datetime.now() - timedelta(days=GATE_WINDOW_DAYS)).strftime("%Y-%m-%d")
+    # Include exactly GATE_WINDOW_DAYS dates: today plus (GATE_WINDOW_DAYS - 1) prior days.
+    # Pre-fix (2026-09-14): cutoff was `now - GATE_WINDOW_DAYS` which produced an 8-day window
+    # for a 7-day gate, so `n_seen == GATE_WINDOW_DAYS` on line below never fired even for cells
+    # SHIP every day. All three residual-persistence walkers had 0 clearances since inception.
+    cutoff_win = (datetime.now() - timedelta(days=GATE_WINDOW_DAYS - 1)).strftime("%Y-%m-%d")
     window = [e for e in entries if e.get("date", "") >= cutoff_win]
     days_in_window = sorted({e["date"] for e in window})
 
