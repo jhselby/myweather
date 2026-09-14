@@ -88,7 +88,10 @@ ROLLUP_EXCLUDE = {"pp", "pa", "pr", "cc", "dp"}
 
 BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)]
 
-WINDOWS = [("7d", 7), ("24h", 1)]
+# v0.6.615 (2026-09-14) added 12h short window. 6h was tried and dropped —
+# pair log typically lags real-time by 8+ hours (backstamp cadence), so a 6h
+# window is empty most of the time. 12h reliably has data.
+WINDOWS = [("7d", 7), ("24h", 1), ("12h", 0.5)]
 
 # Thresholds per Q3/Q4 agreed with Joe.
 CONF_HIGH_LIFT = 10.0

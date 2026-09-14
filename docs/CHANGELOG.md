@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.615 • September 14, 2026 (analysis + UI: 12h short-window on scoreboard + per-field diagnostic)</strong></summary>
+
+- **Ship:** added `"12h"` (days=0.5) to `WINDOWS` in both `analysis/scoreboard_v2.py` and `analysis/per_field_scoring.py`. New "Per-field diagnostic — 12 hour" table on the debug page (parameterized `renderPerFieldDiagnostic("12h", ...)` from v0.6.604 handles it directly).
+- **Why:** 24h/7d windows lag routing changes by up to 24h/7d. A fresh selector flip or L2 fix reads as noise there. The 12h table surfaces the effect first — post-ship reads land in ~half a day instead of a full day.
+- **6h considered and dropped.** Pair-log lags real-time by 8+ hours (backstamp cadence), so a 6h window has zero rows most of the time. 12h reliably has data. Comment in `WINDOWS` records the decision so future readers don't retry.
+- **Thin-window caveat** noted in table subhead: pair-log's 8h backstamp means the 12h window is effectively "recent ~4h of ripe rows"; fields with n≤50 read as noise, not signal.
+- **Sample from today's run:** ch 24h Total Lift −10.8% flipped to 12h +11.1%; wg 12h +16.2% vs 24h +8.0% (improving); ws 12h −14.6% vs 24h −1.8% (fresh regression flagged).
+- **Frontend:** GCS-published `scoreboard_v2.json` + `per_field_scoring.json` now carry the 12h block. Debug page table renders it via the existing parameterized function.
+
+</details>
+
+<details>
 <summary><strong>v0.6.614 • September 14, 2026 (analysis: chp-cell-gate same off-by-one fix — 11 cells cleared)</strong></summary>
 
 - **Follow-up audit** on v0.6.613's walker off-by-one — swept other walker scripts for the same pattern. `h_cc_blend_formula_stage1.py` and `h_frontal_t_bias_stage0.py` use the tolerant `>= GATE_WINDOW_DAYS` check and are unaffected. `h_chp_cell_gate.py:137` had the identical bug: cutoff `now - GATE_WINDOW_DAYS` + clearance check `n_seen == GATE_WINDOW_DAYS`. Yesterday's digest fingerprint: "HOLD — walker at day 8/7 distinct dates."

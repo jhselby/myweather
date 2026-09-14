@@ -85,7 +85,8 @@ TREND_EXCLUDE_FIELDS = {"pa", "pp"}
 MIN_N_TREND = 50
 
 BANDS = [(0, 6, "0-5"), (6, 12, "6-11"), (12, 24, "12-23"), (24, 48, "24-47")]
-WINDOWS = [("7d", 7), ("24h", 1)]
+# v0.6.615 (2026-09-14) added 12h. See scoreboard_v2.py for why 6h was tried and dropped.
+WINDOWS = [("7d", 7), ("24h", 1), ("12h", 0.5)]
 
 # HRRR-side layer priority for extracting the "HRRR Prod" residual per row.
 # Deepest applied layer wins (matches selector fitter's convention).
