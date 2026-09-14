@@ -18,6 +18,7 @@ State machine:
 
 Detected events are appended to frontal_events_log.json (14-day retention).
 """
+import logging
 import math
 from datetime import datetime, timedelta
 
@@ -33,7 +34,10 @@ TZ = pytz.timezone("America/New_York")
 WINDOW_MIN = 60          # rolling window for rate-of-change features
 RECENT_HOURS = 12        # how long a "recent" passage is surfaced
 
-DP_DROP_THRESHOLD = 8.0  # °F drop over 60 min
+DP_DROP_THRESHOLD = 4.0  # °F drop over 60 min. Lowered 8.0→4.0 (v0.6.620,
+                          # 2026-09-14) — observed 60-min dp drop max=6.8°F,
+                          # p99.9=6.3°F; 8.0 was unreachable in this region
+                          # so dp branch was dead and type='cold' unreachable.
 WD_SHIFT_THRESHOLD = 60  # degrees, angular
 PRESSURE_BOUNCE_MIN = 0.02  # inHg rise after local min
 
@@ -139,6 +143,21 @@ def detect_and_log_frontal(now_local=None):
         "pressure_inflection": pressure_inflection,
     }
     score = sum(1 for v in signals.values() if v)
+
+    # v0.6.620 diagnostic — log any tick with at least one active signal so
+    # a miss-rate re-occurrence is traceable via `gcloud functions logs read`.
+    # frontal_detector_health.py's simulator found 5/9 candidates unlogged
+    # in the 14-day window ending 2026-09-14 without an obvious cause.
+    if score >= 1:
+        dp_str = f"{dp_drop:.2f}" if dp_drop is not None else "None"
+        wd_str = f"{wd_shift}" if wd_shift is not None else "None"
+        pb_str = (f"{p_now - p_min:.3f}"
+                  if (p_min is not None and p_now is not None) else "None")
+        logging.info(
+            f"  frontal: score={score} sigs={signals} "
+            f"dp_drop={dp_str} wd_shift={wd_str} p_bounce={pb_str} "
+            f"window_n={len(window)}"
+        )
 
     state = "quiet"
     event = None

@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Runtime constants — mirrored from frontal_detection.py. If either file
 # changes, update the other.
-DP_DROP_THRESHOLD    = 8.0
+DP_DROP_THRESHOLD    = 4.0  # v0.6.620: lowered 8.0→4.0
 WD_SHIFT_THRESHOLD   = 60
 PRESSURE_BOUNCE_MIN  = 0.02
 WINDOW_MIN           = 60
@@ -162,7 +162,8 @@ def main():
     print("\nSimulated 2-of-3 passages / 14 days at candidate dp thresholds "
           f"(wd≥{WD_SHIFT_THRESHOLD}, pb≥{PRESSURE_BOUNCE_MIN}):")
     sim = {}
-    for dp_thr in (2.0, 3.0, 4.0, 5.0, 6.0, DP_DROP_THRESHOLD):
+    thresholds = sorted({2.0, 3.0, 4.0, 5.0, 6.0, 8.0, DP_DROP_THRESHOLD})
+    for dp_thr in thresholds:
         sim[dp_thr] = _simulate(feats, dp_thr, WD_SHIFT_THRESHOLD, PRESSURE_BOUNCE_MIN)
         marker = "  ← LIVE" if dp_thr == DP_DROP_THRESHOLD else ""
         print(f"  dp_thr={dp_thr:>4.1f}°F: {len(sim[dp_thr]):>3} events{marker}")

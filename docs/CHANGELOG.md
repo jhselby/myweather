@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.620 • September 14, 2026 (frontal detector — DP_DROP_THRESHOLD 8.0→4.0°F + diagnostic logging)</strong></summary>
+
+- **`weather_collector/processors/frontal_detection.py`** — `DP_DROP_THRESHOLD 8.0→4.0°F`. Observed max 60-min dp drop over the last 14 days is 6.8°F (p99.9=6.3°F, p99.5=4.5°F). 8.0 sat above the 99.9th percentile, dp signal was dead, and `_classify_type='cold'` was unreachable. 4.0 lands at p99.5 — top 0.5% of ticks — restoring dp as a real signal without opening the floodgate.
+- **Simulated event rate:** 8.0°F → 9 candidates / 14d; 4.0°F → 13. Adds ~4 real cold-front-shaped events per 14d.
+- **Diagnostic logging** added: when score≥1 (any signal firing), log the score, individual signal booleans, and raw dp/wd/pb values. Traceable via `gcloud functions logs read` next time the health-check flags a miss-rate candidate. The 2026-09-14 sweep found 5/9 candidates unlogged with no obvious cause — this restores visibility.
+- **Health check auto-flips:** `analysis/frontal_detector_health.py` DP_DROP_THRESHOLD kept in sync. Verdict will move HOLD→CLEAN as new obs accumulate under the lowered threshold (14-day rolling window).
+- **Downstream C1e** cells (in `c1_confidence_curated_v2.json`) will re-fit automatically as `c1_confidence_calibration_v2.py` rolls its window forward — no coordinated re-curation needed. Post-front pool will grow by ~44% over the next few weeks.
+
+</details>
+
+<details>
 <summary><strong>v0.6.619 • September 14, 2026 (frontal-detector health check in daily digest)</strong></summary>
 
 - **New `analysis/frontal_detector_health.py`** — daily calibration audit of the frontal-passage detector. Sweeps the live `frontal_obs_log.json` with the same 2-of-3 signal logic the runtime uses, compares live thresholds (`DP_DROP_THRESHOLD=8.0°F`, `WD_SHIFT_THRESHOLD=60°`, `PRESSURE_BOUNCE_MIN=0.02 inHg`) to observed p95/p99/p99.9/max, simulates event counts at candidate `dp_thr` values (2/3/4/5/6/8°F), and compares to the live events log.
