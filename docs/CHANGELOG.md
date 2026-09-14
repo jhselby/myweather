@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.6.624 • September 14, 2026 (debug page header — swap MAE freshness for scoreboard freshness)</strong></summary>
+
+- **Header stamp source change** — `#meta-mae` now reads `per_field_scoring.json`'s `generated_at` instead of `mae_over_time.json`'s. Label "MAE data refreshed" → "Scoreboard refreshed". The scoreboard tiles at the top of the page are the actual thing that freshness marker should be describing; `mae_over_time.json` still feeds the Accuracy Over Time chart and the 24h/7d narrative table below (their own "Refreshed …" line is unchanged).
+- Text-only debug page change. No collector redeploy.
+
+</details>
+
+<details>
 <summary><strong>v0.6.623 • September 14, 2026 (debug page afternoon sweep — 5 ships + frontal-detector calibration)</strong></summary>
 
 - **Recent Activity** — today's `<li>` updated: `9 ships` → `14 ships`, `1 collector deploy` → `5 collector deploys`, appended afternoon-session narrative for v0.6.618-622 (h L2 soft_ramp retune, frontal_detector_health, DP_DROP_THRESHOLD 8→4°F, logging.info→print fix, wd.se_flow/0-5h skip).

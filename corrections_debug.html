@@ -1030,7 +1030,7 @@
 <header>
   <h1>Forecast pipeline</h1>
   <span class="meta" id="meta">loading…</span>
-  <span class="meta" id="meta-mae" style="opacity:0.75;">MAE data …</span>
+  <span class="meta" id="meta-mae" style="opacity:0.75;">Scoreboard …</span>
 </header>
 
 <nav class="toc">
@@ -6200,11 +6200,17 @@ function renderPerFieldSnapshot(tsDoc, wxDoc) {
           `Refreshed ${gen}. ${cutsNote}.`,
         ].filter(s => s).join("<br>");
       }
-      // Also stamp the topline freshness marker in the header.
-      const topEl = document.getElementById("meta-mae");
-      if (topEl) topEl.innerHTML = `MAE data refreshed <strong>${fmtET(mot.generated_at)}</strong>`;
     })
     .catch(() => { /* silent — 7d column still renders */ });
+
+  fetch("https://data.wymancove.com/per_field_scoring.json?_=" + Date.now(), { cache: "no-store" })
+    .then(r => r.ok ? r.json() : null)
+    .then(pfs => {
+      if (!pfs) return;
+      const topEl = document.getElementById("meta-mae");
+      if (topEl) topEl.innerHTML = `Scoreboard refreshed <strong>${fmtET(pfs.generated_at)}</strong>`;
+    })
+    .catch(() => {});
 }
 
 function renderAccuracySection(tsDoc, wxDoc) {
