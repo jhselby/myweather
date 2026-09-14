@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.612 • September 14, 2026 (debug page — clock-watch clearance narrative for HRRR-wire day 3/3 + post-ship watch)</strong></summary>
+
+- Post-ship watches: added HRRR-wire cells first-gated live entry. 3 cells cleared today's 3-day gate — `cc/ne_flow/12-23`, `wd/se_flow/24-47`, `ws/sea_breeze/24-47` (last one already firing via 09-11 escalation, today formalizes gate-clearance).
+- Runtime: walker JSON regenerated 10:57 UTC (before this morning's v0.6.609 deploy at 11:06 UTC), so the 2 net-new HRRR routings are live in production this tick.
+- Upcoming grid: removed the completed 09-14 HRRR-wire gated-read entry.
+- Recent Activity: extended today's entry with the clock-watch clearance detail — also noted NWS-wire dp cells cleared but stay walker-diagnostic pending option B design.
+- Frontend: text-only sweep. Not localhost-testable.
+
+</details>
+
+<details>
 <summary><strong>v0.6.611 • September 14, 2026 (analysis: ADDED_LAYERS registry prune — sr.l5_nbm + sr.l3_nbm)</strong></summary>
 
 - **Ship:** `analysis/nbm_regression_sentry.py` — removed sr.l5_nbm + sr.l3_nbm from `ADDED_LAYERS` (both entries added 2026-09-04 v0.6.548 with add-date suppression).
