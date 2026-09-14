@@ -190,8 +190,8 @@ def _decay_factors(tau, n):
 # AND +6.0% vs raw on 14d. Beats old shape on both. Reversible one-line
 # edit if regime shifts further. Watch triggers: h L2-vs-L1 marginal
 # stays negative for 5+ days in daily digest.
-H_SOFT_RAMP_FLOOR = 0.1
-H_SOFT_RAMP_END = 10
+H_SOFT_RAMP_FLOOR = 0.4
+H_SOFT_RAMP_END = 24
 
 
 def _soft_ramp_factors(n, floor=H_SOFT_RAMP_FLOOR, end=H_SOFT_RAMP_END):

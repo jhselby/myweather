@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.618 • September 14, 2026 (h L2 soft_ramp retune — floor 0.1→0.4, end 10→24)</strong></summary>
+
+- **h L2 soft_ramp retuned** in `weather_collector/processors/corrected_hourly.py`: `H_SOFT_RAMP_FLOOR 0.1→0.4`, `H_SOFT_RAMP_END 10→24`. Resolves the top-alert τ-suspect signal in today's digest (h/production helped 0-5h −43.7% but hurt 24-47h +6.6% under the old shape).
+- **Source:** `h_l2_shape_sweep` STAGE 1 PROMOTE, 7/7 rolling days, single stable pick, halves-stable (A +6.99% / B +10.39% at 24-47h). Pooled MAE 7.0351 vs raw 7.6879 (+8.49%).
+- **Per-band vs raw under new shape:** 0-5h +48.22%, 6-11h +11.10%, 12-23h +2.72%, 24-47h +1.46% — every band positive. The τ-suspect hurt at 24-47h was an *under-correction* residual (floor=0.1 killed the correction by lead 10), not an over-correction.
+- Original 06-22/06-24 ktaper calibration is superseded; new shape has 7 consecutive days of stable pick.
+
+</details>
+
+<details>
 <summary><strong>v0.6.617 • September 14, 2026 (audit sweep + stale-comment cleanup)</strong></summary>
 
 - **Systematic audit** after today's 3 silent-tool-bug ships (v0.6.613/v0.6.614/v0.6.616). Swept for the same shapes elsewhere:
