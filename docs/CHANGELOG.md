@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.6.623 • September 14, 2026 (debug page afternoon sweep — 5 ships + frontal-detector calibration)</strong></summary>
+
+- **Recent Activity** — today's `<li>` updated: `9 ships` → `14 ships`, `1 collector deploy` → `5 collector deploys`, appended afternoon-session narrative for v0.6.618-622 (h L2 soft_ramp retune, frontal_detector_health, DP_DROP_THRESHOLD 8→4°F, logging.info→print fix, wd.se_flow/0-5h skip).
+- **NBM cascade blurb** — `skip_table_nbm_curated.json` cell count `13` → `15` with the 09-14 morning (12-23h) and afternoon (0-5h) wd.se_flow additions.
+- **F1 frontal-passage log description** — reflects `dp drop ≥4°F` threshold + diagnostic logging + health-check daily digest wire. Front-type asymmetry item marked "PARTIALLY UNBLOCKED 2026-09-14 v0.6.620" — cold branch now reachable.
+- **Post-ship watches** — 4 new entries: v0.6.618 h L2 soft_ramp retune (09-21 τ-suspect clearance), v0.6.619 frontal_detector_health daily verdict, v0.6.620/621 frontal detector calibration + diagnostic logging, v0.6.622 wd.se_flow/0-5h skip.
+- **Upcoming grid** — added Sun 09-21 h/production τ-suspect clearance entry.
+- **Recent Activity trim** — dropped 09-11 and 09-10 entries per "today + 2 prior days" section scope; content preserved in changelog.
+- No runtime change. Text-only debug page sweep + build.py cache-bust.
+
+</details>
+
+<details>
 <summary><strong>v0.6.622 • September 14, 2026 (L3_NBM skip cell — wd.se_flow/0-5h; completes wd.se_flow short-lead pattern)</strong></summary>
 
 - **`skip_table_nbm_curated.json`** — added `["se_flow", 0, 6]` to `l3_nbm.wd`. Two-window audit CONFIRMED: 14d n=209 lift -3.6%, 50d n=808 lift -8.9% (halves -13.4/-3.0).
