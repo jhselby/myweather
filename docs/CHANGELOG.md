@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.621 • September 14, 2026 (frontal detector diagnostic logging fix — logging.info silently dropped in Cloud Run)</strong></summary>
+
+- **Bug in v0.6.620:** the diagnostic line used `logging.info(...)` which is silently dropped in Cloud Run (no `basicConfig`; root logger at WARNING). Verified after collector deploy — three runs (17:27, 17:37, 17:47 UTC) produced zero `frontal:` log lines despite the detector definitely running.
+- **Fix:** swapped to `print(..., flush=True)`, matching the existing MEMPROBE pattern (`collector.py:495` with the same "was logging.info, silently dropped" comment from 2026-08-15).
+- Also dropped the now-unused `import logging` from `frontal_detection.py`.
+- No behavior change to the detector logic; miss-rate diagnostic will now actually surface.
+
+</details>
+
+<details>
 <summary><strong>v0.6.620 • September 14, 2026 (frontal detector — DP_DROP_THRESHOLD 8.0→4.0°F + diagnostic logging)</strong></summary>
 
 - **`weather_collector/processors/frontal_detection.py`** — `DP_DROP_THRESHOLD 8.0→4.0°F`. Observed max 60-min dp drop over the last 14 days is 6.8°F (p99.9=6.3°F, p99.5=4.5°F). 8.0 sat above the 99.9th percentile, dp signal was dead, and `_classify_type='cold'` was unreachable. 4.0 lands at p99.5 — top 0.5% of ticks — restoring dp as a real signal without opening the floodgate.
