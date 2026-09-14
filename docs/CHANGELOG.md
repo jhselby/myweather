@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.611 • September 14, 2026 (analysis: ADDED_LAYERS registry prune — sr.l5_nbm + sr.l3_nbm)</strong></summary>
+
+- **Ship:** `analysis/nbm_regression_sentry.py` — removed sr.l5_nbm + sr.l3_nbm from `ADDED_LAYERS` (both entries added 2026-09-04 v0.6.548 with add-date suppression).
+- **Trigger:** today's post-ship watch clock cleared. Sustained window now starts 2026-09-04T06:07, at/past the sr add date, so both entries were already producing no suppression. Both sentries CLEAN today (l3_nbm sust +16.2% → fresh +24.7%; l5_nbm CLEAN with THIN counts).
+- **Result:** verdict count moves from `0 ADDED` to steady state; registry empty until the next NBM-layer add.
+- **Frontend:** Recent Activity + Upcoming grid updated (removed the 09-14 sr clock-watch, now complete).
+
+</details>
+
+<details>
 <summary><strong>v0.6.610 • September 14, 2026 (debug page sweep — v0.6.609 post-ship watch + wg.l3_nbm sentry HOT dig recorded)</strong></summary>
 
 - Recent Activity: added today's 09-14 entry — v0.6.609 collector ship + the sentry HOT investigation narrative. 09-13 label rolled to "1 day ago", 09-12 to "2 days ago".

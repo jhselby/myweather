@@ -92,8 +92,9 @@ KILLED_LAYERS = {
 # crosses the add date; then the layer evaluates normally.
 # Format: {(field, layer): "YYYY-MM-DD"}
 ADDED_LAYERS = {
-    ("sr", "l5_nbm"): "2026-09-04",    # v0.6.548
-    ("sr", "l3_nbm"): "2026-09-04",    # v0.6.548
+    # sr.l5_nbm / sr.l3_nbm (v0.6.548, add date 2026-09-04) pruned 2026-09-14:
+    # both windows now post-date the add; sentry verdict CLEAN today so the
+    # suppression is no-op. Left empty until the next NBM-layer add.
 }
 
 # Verdict thresholds apply to layer marginal degradation, not absolute MAE.
