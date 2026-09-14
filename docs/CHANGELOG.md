@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.619 • September 14, 2026 (frontal-detector health check in daily digest)</strong></summary>
+
+- **New `analysis/frontal_detector_health.py`** — daily calibration audit of the frontal-passage detector. Sweeps the live `frontal_obs_log.json` with the same 2-of-3 signal logic the runtime uses, compares live thresholds (`DP_DROP_THRESHOLD=8.0°F`, `WD_SHIFT_THRESHOLD=60°`, `PRESSURE_BOUNCE_MIN=0.02 inHg`) to observed p95/p99/p99.9/max, simulates event counts at candidate `dp_thr` values (2/3/4/5/6/8°F), and compares to the live events log.
+- **Current verdict:** `HOLD — dp_thr=8.0°F unreachable (max obs=6.8°F); type='cold' never classified; runtime missed 5/9 candidates; live=4 events / 336h`.
+- **Root finding (14-day sweep):** dp threshold sits above the 99.9th percentile of observed 60-min dp drops (p99.9=6.3°F, max=6.8°F). The dp signal is effectively dead — detector reduces to `wd_shift + press_bounce`. `_classify_type='cold'` branch requires `dp_drop≥8.0` and is unreachable, so 0 events have ever been tagged `cold`.
+- **Miss-rate finding:** 9 candidates fire under the runtime's own logic in 14 days, only 4 landed in the events log. All 5 misses had ≥6 obs entries in their 60-min windows — not a thinness issue. Root cause not yet traced.
+- **Follow-up:** lower `DP_DROP_THRESHOLD` to 4.0°F (~p99.5, adds 4 candidates without flooding) and re-fit downstream C1e "post-front" cells. Separate ship.
+- **Chronic HOLD** until fixed — script emits the same verdict daily to keep the miscalibration visible in the digest.
+
+</details>
+
+<details>
 <summary><strong>v0.6.618 • September 14, 2026 (h L2 soft_ramp retune — floor 0.1→0.4, end 10→24)</strong></summary>
 
 - **h L2 soft_ramp retuned** in `weather_collector/processors/corrected_hourly.py`: `H_SOFT_RAMP_FLOOR 0.1→0.4`, `H_SOFT_RAMP_END 10→24`. Resolves the top-alert τ-suspect signal in today's digest (h/production helped 0-5h −43.7% but hurt 24-47h +6.6% under the old shape).
