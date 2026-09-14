@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.6.610 • September 14, 2026 (debug page sweep — v0.6.609 post-ship watch + wg.l3_nbm sentry HOT dig recorded)</strong></summary>
+
+- Recent Activity: added today's 09-14 entry — v0.6.609 collector ship + the sentry HOT investigation narrative. 09-13 label rolled to "1 day ago", 09-12 to "2 days ago".
+- Upcoming grid: added Wed 09-17 → Thu 09-18 clock-watch for wg.l3_nbm sentry HOT self-clear OR `frontal/24-47h` CONFIRMED promote.
+- Post-ship watches: added v0.6.609 wd.se_flow/12-23h skip entry alongside 09-13's wg.nw_flow/12-23h entry.
+- **Sentry HOT dig:** ran per-regime × band across 5 windows (fresh 3d / sust 7d / 14d / 30d / 50d) for wg.l3_nbm. `nw_flow/24-47h` fresh −14.02% but 50d +1.75% halves-stable both positive — 3-day dip, not skip-worthy. `frontal/24-47h` real watch target (14d −4.54%, 50d −1.26%, halves unstable). Recorded to memory `project_wg_l3_nbm_sentry_09_14`. Lesson: the v0.6.574 two-window gate is doing real work — sentry alone would have proposed shipping `nw_flow/24-47h` today; 50d halves-stable caught it as noise.
+- Frontend: HTML text-only + skip-table JSON already deployed as v0.6.609. Not localhost-testable.
+
+</details>
+
+<details>
 <summary><strong>v0.6.609 • September 14, 2026 (collector: NBM skip cell — l3_nbm.wd.se_flow/12-23h)</strong></summary>
 
 - **Ship:** `weather_collector/data/skip_table_nbm_curated.json` — added `l3_nbm.wd.se_flow/[12,24)` skip cell.
@@ -9,7 +20,7 @@
 </details>
 
 <details>
-<summary><strong>v0.6.608 • September 13, 2026 (L1 recency-override Simpson-guard shadow — analysis-only, no runtime change; data rejected the ship)</strong></summary>
+<summary><strong>v0.6.609 • September 14, 2026 (collector: NBM skip cell — l3_nbm.wd.se_flow/12-23h)</strong></summary>
 
 - **Question:** could the L1 recency-override mechanism (v0.6.546) produce Simpson's-paradox flips where the pooled 7d lift disagrees with a unanimous per-regime 30d picture?
 - **Audit:** 6 of 9 current overrides are Simpson-shaped by per-regime lens — h/0-5 (8/8 regimes agree HRRR), sr all 4 bands (7-8/8 agree HRRR), dp/0-5 (8/8). 3 are legit (t/24-47, wg/0-5, wd/0-5 all had marginal 30d + genuine regime disagreement).
