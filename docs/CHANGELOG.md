@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.614 • September 14, 2026 (analysis: chp-cell-gate same off-by-one fix — 11 cells cleared)</strong></summary>
+
+- **Follow-up audit** on v0.6.613's walker off-by-one — swept other walker scripts for the same pattern. `h_cc_blend_formula_stage1.py` and `h_frontal_t_bias_stage0.py` use the tolerant `>= GATE_WINDOW_DAYS` check and are unaffected. `h_chp_cell_gate.py:137` had the identical bug: cutoff `now - GATE_WINDOW_DAYS` + clearance check `n_seen == GATE_WINDOW_DAYS`. Yesterday's digest fingerprint: "HOLD — walker at day 8/7 distinct dates."
+- **Fix:** same shape as v0.6.613 — cutoff = `now - (GATE_WINDOW_DAYS - 1)`.
+- **Post-fix walker output:** 11 cells cleared. 4 overlap `_CELL_SKIP` (dynamic gate catches manual skips — ready to retire the manual entries eventually). 7 net-new dynamic suppressions: `ne_flow` all 3 bands, `nw_flow/6-11`, `nw_flow/24-47`, `pre_frontal/6-11`, `se_flow/12-23`.
+- **Runtime change:** none. `CHP_CELL_GATE_ENABLED = False` on the runtime processor. This is shadow-only Stage 1 analysis.
+- **Follow-up (not today):** 2026-09-21 fresh 7-day post-fix window closes. If the 7 net-new cells stay in the clear-list, consider flipping `CHP_CELL_GATE_ENABLED=True` — the dynamic gate would suppress chp fires on those cells and let L6 baseline take over there. Correlates with `h_chp_midlead_regression` ESCALATE verdict on lead 11 (+24.3%) — two independent tools converging on the same mid-lead chp regression.
+- **Frontend:** version-only. No PWA behavior change.
+
+</details>
+
+<details>
 <summary><strong>v0.6.613 • September 14, 2026 (analysis: residual-persistence walker gate off-by-one fix — 8-day window for 7-day gate)</strong></summary>
 
 - **Root cause:** `analysis/_residual_persistence_walker.py:117` had `cutoff_win = now - GATE_WINDOW_DAYS` which produces an 8-day window (09-07 to 09-14 today) for a gate that requires `n_seen == GATE_WINDOW_DAYS` (7). Cells SHIP every day never cleared because `8 == 7` is False. Applies to wg/dp/h — all three residual-persistence walkers have had **0 cells cleared since the shared harness landed**.

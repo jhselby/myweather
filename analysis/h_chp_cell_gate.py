@@ -134,7 +134,10 @@ def main():
     HISTORY_PATH.write_text(json.dumps({"entries": entries}, indent=2))
 
     # Per-cell 7-day gate decision.
-    cutoff_win = (datetime.now() - timedelta(days=GATE_WINDOW_DAYS)).strftime("%Y-%m-%d")
+    # Cutoff of `now - (GATE_WINDOW_DAYS - 1)` gives exactly GATE_WINDOW_DAYS dates in the
+    # window (today + 6 prior). Pre-2026-09-14 fix used `now - GATE_WINDOW_DAYS` which
+    # produced an 8-day window — same off-by-one that hit `_residual_persistence_walker.py`.
+    cutoff_win = (datetime.now() - timedelta(days=GATE_WINDOW_DAYS - 1)).strftime("%Y-%m-%d")
     window = [e for e in entries if e.get("date", "") >= cutoff_win]
     days_in_window = sorted({e["date"] for e in window})
 
