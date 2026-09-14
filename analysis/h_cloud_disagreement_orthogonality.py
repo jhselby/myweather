@@ -43,7 +43,14 @@ OUTPUT_PATH = os.path.join(SCRIPT_DIR, "output", "h_cloud_disagreement_orthogona
 FIELDS = ("cc", "cl", "cm", "ch")
 BANDS  = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
 HSF_THRESHOLD = 24  # hours since front: post-frontal axis
-MIN_N_PER_CELL = 100
+# v0.6.616 (2026-09-14) lowered from 100 to 50 after C1d KILL investigation.
+# At n=100 only 24-47h cells cleared the floor, giving the tool an 8-cell view
+# that mistook scope-limited redundancy for whole-axis redundancy — KILL fired
+# while the tool was blind to 3 of the 5 live C1d SHIP cells (at 12-23h).
+# At n=50 all 4 bands clear and the tool sees a MIXED picture:
+# 2 ORTHOGONAL (cc/0-5h on both axes) + 20 REDUNDANT + 2 CONFOUNDED +
+# 8 AMBIGUOUS. See [[project_c1d_kill_scope_artifact_09_14]] for evidence.
+MIN_N_PER_CELL = 50
 
 
 def lead_band(lead_h):

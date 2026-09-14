@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.6.616 • September 14, 2026 (analysis: C1d KILL scope-artifact fix — orthogonality tool MIN_N 100→50)</strong></summary>
+
+- **Investigation:** today's digest emitted "→ KILL C1d: signal captured by C1a/C1e (6/8 redundant)." Live C1d has 5 SHIP cells (at 12-23h + 24-47h). At the tool's default `MIN_N_PER_CELL=100`, only 24-47h cells clear the floor — the tool KILLed C1d while being blind to 3 of the 5 live SHIP cells (all at 12-23h).
+- **Ship:** `analysis/h_cloud_disagreement_orthogonality.py` — `MIN_N_PER_CELL` lowered from 100 to 50. At n=50 all 4 bands clear on both axes without introducing noise from sub-populations of 30-50 rows.
+- **New verdict:** MIXED — 3 orthogonal / 17 redundant / 8 other. Narrow-promote guidance replaces the KILL. `cc/0-5h` reads as clean ORTHOGONAL on both axes (2.57×/2.82× vs C1a, 2.57×/3.38× vs C1e) — a signal the KILL would have erased.
+- **Do NOT unwire C1d.** Follow-ups queued (not today): `cc/0-5h` narrow-promote; `ch/24-47h` re-calibration flag (post-front σH/σL = 3.20× is OPPOSITE direction to live NARROW premium — pooled calibration is being dragged by two conflicting sub-regimes).
+- **Discipline:** added step 6 to `feedback_digest_triage_discipline` — for KILL verdicts on live axes, verify the tool's test scope covers all live SHIP cells before acting. Same class of "tool with a blindspot" trap as the walker off-by-ones (v0.6.613/v0.6.614).
+- **Frontend:** version-only. No PWA behavior change.
+
+</details>
+
+<details>
 <summary><strong>v0.6.615 • September 14, 2026 (analysis + UI: 12h short-window on scoreboard + per-field diagnostic)</strong></summary>
 
 - **Ship:** added `"12h"` (days=0.5) to `WINDOWS` in both `analysis/scoreboard_v2.py` and `analysis/per_field_scoring.py`. New "Per-field diagnostic — 12 hour" table on the debug page (parameterized `renderPerFieldDiagnostic("12h", ...)` from v0.6.604 handles it directly).
