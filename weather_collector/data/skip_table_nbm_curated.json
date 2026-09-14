@@ -1,5 +1,5 @@
 {
-  "fitted_at": "2026-09-14T06:45",
+  "fitted_at": "2026-09-14T14:15",
   "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
   "cells": {
     "l3_nbm": {
@@ -80,6 +80,11 @@
         ]
       ],
       "wd": [
+        [
+          "se_flow",
+          0,
+          6
+        ],
         [
           "se_flow",
           6,
@@ -506,7 +511,7 @@
           ]
         ]
       },
-      "reason": "v0.6.609 — nbm_skip_add_audit two-window CONFIRMED. 14d n=953 lift -4.60%, 50d n=2,581 lift -9.79% (halves -14.24/-5.26). Both windows agree and halves are both-negative; passes the v0.6.574 two-window gate."
+      "reason": "v0.6.609 \u2014 nbm_skip_add_audit two-window CONFIRMED. 14d n=953 lift -4.60%, 50d n=2,581 lift -9.79% (halves -14.24/-5.26). Both windows agree and halves are both-negative; passes the v0.6.574 two-window gate."
     },
     "2026-09-10T11:15": {
       "action": "remove",
@@ -557,6 +562,24 @@
         }
       ],
       "notes": "l3_nbm/wd/se_flow/6-11h + l3_nbm/wg/nw_flow/12-23h also on today's CONFIRMED list but already shipped (v0.6.500 and v0.6.608 respectively).",
+      "source": "analysis/nbm_skip_add_audit.py CONFIRMED both windows"
+    },
+    {
+      "date": "2026-09-14",
+      "action": "ship",
+      "cells": [
+        {
+          "layer": "l3_nbm",
+          "field": "wd",
+          "cell": [
+            "se_flow",
+            0,
+            6
+          ],
+          "reason": "two-window audit CONFIRMED: 14d n=209 lift -3.6%, 50d n=808 lift -8.9% (halves -13.4/-3.0). Completes wd.se_flow pattern: all three short-lead bands (0-5h, 6-11h, 12-23h) now skipped."
+        }
+      ],
+      "notes": "Third and final wd.se_flow band. 6-11h shipped v0.6.584 (2026-09-04), 12-23h shipped v0.6.609 (2026-09-14 morning).",
       "source": "analysis/nbm_skip_add_audit.py CONFIRMED both windows"
     }
   ]

@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.622 • September 14, 2026 (L3_NBM skip cell — wd.se_flow/0-5h; completes wd.se_flow short-lead pattern)</strong></summary>
+
+- **`skip_table_nbm_curated.json`** — added `["se_flow", 0, 6]` to `l3_nbm.wd`. Two-window audit CONFIRMED: 14d n=209 lift -3.6%, 50d n=808 lift -8.9% (halves -13.4/-3.0).
+- **Completes the wd.se_flow short-lead pattern:** all three of 0-5h (this ship), 6-11h (v0.6.584, 2026-09-04), and 12-23h (v0.6.609, 2026-09-14 morning) now skipped. 24-47h is FRESH not CONFIRMED — 50d only -2.9%, hold.
+- Source: `analysis/nbm_skip_add_audit.py` CONFIRMED both windows in today's digest run.
+
+</details>
+
+<details>
 <summary><strong>v0.6.621 • September 14, 2026 (frontal detector diagnostic logging fix — logging.info silently dropped in Cloud Run)</strong></summary>
 
 - **Bug in v0.6.620:** the diagnostic line used `logging.info(...)` which is silently dropped in Cloud Run (no `basicConfig`; root logger at WARNING). Verified after collector deploy — three runs (17:27, 17:37, 17:47 UTC) produced zero `frontal:` log lines despite the detector definitely running.
