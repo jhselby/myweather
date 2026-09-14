@@ -52,7 +52,11 @@ def _record_mlc_firing(regime, gated_count):
 
 
 TZ = pytz.timezone("America/New_York")
-ENABLED = False  # Flip after 06-28 / 07-05 / 07-12 weekly re-reads confirm.
+ENABLED = False  # HOLD OFF INDEFINITELY. Post-07-04 cm HRRR-anomaly onset made
+                 # the Stage 2 signal stratum-local and pre-HRRR (ruled out HRRR-anomaly
+                 # causation). MLC signal collapsed 06-30 (documented anomaly). Seasonal
+                 # component suspected. Do not re-arm on cm anomaly clearing — different
+                 # event. Redesign candidate: time-of-year gating on the MLC bin.
 
 # Gate: NE flow morning (Stage 2 baseline cell). Half-open intervals.
 NE_FLOW_WD_RANGE = (45.0, 105.0)

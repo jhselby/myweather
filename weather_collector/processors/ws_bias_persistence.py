@@ -43,7 +43,10 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 
-ENABLED = False   # 7-day flip gate. Stage 3 wired 2026-07-28; earliest flip 2026-08-04.
+ENABLED = False   # HELD indefinitely — Stage 3 wired 2026-07-28. Gate blocked on
+                  # calm regime n=0 in shadow window (preflight 2026-08-04). Sibling
+                  # of dpbp, calm-only, sign-inverted; waits for calm accumulation.
+                  # Cost of waiting: nothing (dpbp covers dp side). No target date.
 
 FIELD = "ws"
 HOURLY_KEY = "wind_speed"

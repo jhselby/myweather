@@ -1,4 +1,19 @@
 <details open>
+<summary><strong>v0.6.617 • September 14, 2026 (audit sweep + stale-comment cleanup)</strong></summary>
+
+- **Systematic audit** after today's 3 silent-tool-bug ships (v0.6.613/v0.6.614/v0.6.616). Swept for the same shapes elsewhere:
+  - **Walker off-by-one pattern** — checked all `GATE_WINDOW_DAYS` walkers. Two safe patterns dominate (`entries_sorted[-N:]` slicing, `len(by_day) >= N` tolerant). Only the 2 fixed today had the unsafe `n_seen == N` on an N+1 window. No new bugs.
+  - **Orthogonality-tool scope pattern** — `h_c1h_orthogonality` MIN_CELL_N=60 tests all live SHIP cells cleanly; `h_inter_model_spread_orthogonality` 33/36 orthogonal. No new bugs.
+- **Stale ENABLED=False comments cleaned** (cosmetic, prevents future memory-vs-code drift like the "wg residual persistence live" false claim from the outdated project_todo):
+  - `marine_layer_correction.py`: "Flip after 06-28/07-05/07-12" → HOLD OFF INDEFINITELY per anomaly diagnosis.
+  - `ws_bias_persistence.py`: "earliest flip 2026-08-04" → HELD indefinitely on calm regime accumulation.
+  - `cl_persistence_gate.py`: "Gate EXTENDED to 2026-08-03" → gate did not clear, no target date.
+- **Frontend:** version-only. No PWA behavior change.
+- **Follow-up notes queued:** h/production τ-suspect (h L2 −43.7% at 0-5h, +6.6% at 24-47h; decay_tau_tuning HOLD 1/3 streak) is the largest remaining actionable candidate. cc/0-5h narrow-promote and ch/24-47h C1a-conditional recalibration queued from v0.6.616.
+
+</details>
+
+<details>
 <summary><strong>v0.6.616 • September 14, 2026 (analysis: C1d KILL scope-artifact fix — orthogonality tool MIN_N 100→50)</strong></summary>
 
 - **Investigation:** today's digest emitted "→ KILL C1d: signal captured by C1a/C1e (6/8 redundant)." Live C1d has 5 SHIP cells (at 12-23h + 24-47h). At the tool's default `MIN_N_PER_CELL=100`, only 24-47h cells clear the floor — the tool KILLed C1d while being blind to 3 of the 5 live SHIP cells (all at 12-23h).
