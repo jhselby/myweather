@@ -75,8 +75,9 @@ MIN_N_PER_WINDOW = 200
 # rows) and can be removed from this list.
 # Format: {(field, layer): "YYYY-MM-DD"}
 KILLED_LAYERS = {
-    ("ch", "chp_nbm"): "2026-09-05",   # v0.6.551
-    ("h", "l3_nbm"): "2026-09-05",     # v0.6.551
+    # (ch, chp_nbm) + (h, l3_nbm) — v0.6.551, kill date 2026-09-05 — pruned
+    # 2026-09-15 v0.6.626: both windows (fresh 3d + sustained 7d) now
+    # post-date the kill; sentry naturally reads THIN/nominal.
     ("cc", "l4_nbm"): "2026-09-08",    # v0.6.563
     ("cc", "l3_nbm"): "2026-09-10",    # v0.6.577
 }
