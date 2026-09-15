@@ -40,6 +40,7 @@ REPO = Path(__file__).resolve().parent.parent
 WALKFORWARD_JSON = REPO / "analysis" / "output" / "nbm_walkforward.json"
 OUT_TXT = REPO / "analysis" / "output" / "nbm_skip_add_audit.txt"
 OUT_JSON = REPO / "analysis" / "output" / "nbm_skip_add_audit.json"
+SKIP_TABLE_JSON = REPO / "weather_collector" / "data" / "skip_table_nbm_curated.json"
 
 LONG_WINDOW_DAYS = 50
 MIN_N = 50
@@ -53,6 +54,33 @@ def _load_proposals():
         return None
     r = json.loads(WALKFORWARD_JSON.read_text())
     return r.get("skip_proposals", {})
+
+
+def _load_shipped_cells():
+    # Return set of (cand_layer, field, regime, lo, hi) tuples already
+    # present in the runtime skip table. Used to drop already-shipped cells
+    # from the proposal set — otherwise CONFIRMED re-surfaces every day for
+    # cells that have been live for months. Silent no-op if the file is
+    # missing (audit still runs; nothing gets filtered).
+    if not SKIP_TABLE_JSON.exists():
+        return set()
+    try:
+        doc = json.loads(SKIP_TABLE_JSON.read_text())
+    except (json.JSONDecodeError, OSError):
+        return set()
+    shipped = set()
+    for cand, fields in (doc.get("cells") or {}).items():
+        if not isinstance(fields, dict):
+            continue
+        for field, cells in fields.items():
+            if not isinstance(cells, list):
+                continue
+            for entry in cells:
+                if not (isinstance(entry, (list, tuple)) and len(entry) >= 3):
+                    continue
+                regime, lo, hi = entry[0], entry[1], entry[2]
+                shipped.add((cand, field, regime, int(lo), int(hi)))
+    return shipped
 
 
 def _base_layer_for(cand):
@@ -70,6 +98,7 @@ def _base_layer_for(cand):
 
 def _accumulate_50d(proposals):
     # Build target set: {(field, cand, base, regime, lo, hi)}
+    shipped_cells = _load_shipped_cells()
     targets = {}
     for cand, fields in proposals.items():
         base = _base_layer_for(cand)
@@ -81,6 +110,14 @@ def _accumulate_50d(proposals):
             if (field, cand) in KILLED_LAYERS:
                 continue
             for c in cells:
+                # v0.6.627: drop already-shipped cells from the audit.
+                # Walkforward re-emits every cell that clears its 14d gate,
+                # including cells shipped weeks ago — the audit surfaced
+                # these as CONFIRMED daily (3/3 CONFIRMED cells on
+                # 2026-09-15 were all already live: wd/se_flow/0-5h v0.6.622,
+                # wd/se_flow/12-23h v0.6.609, wg/nw_flow/12-23h v0.6.602).
+                if (cand, field, c["regime"], int(c["lead_lo"]), int(c["lead_hi"])) in shipped_cells:
+                    continue
                 key = (field, cand, base, c["regime"], c["lead_lo"], c["lead_hi"])
                 targets[key] = c
 
