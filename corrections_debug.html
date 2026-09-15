@@ -4491,10 +4491,13 @@ async function renderScoreboardTilesMinimal() {
   _paintTile("prod_trend",     _agg(ALL_SCOPE),  _prodTrend);
 
   // v0.6.569 — Attribution panel: additive decomposition of Total Lift.
-  // routing_lift_pct = (best_raw − l1_selected) / best_raw × 100
-  // cascade_lift_pct = (l1_selected − prod)    / best_raw × 100
-  // Sum = (best_raw − prod)/best_raw × 100 = total_vs_best_raw_pct.
-  // Same field scope as Total Lift tile.
+  // v0.6.630 — reads backend paired fields directly instead of recomputing
+  // from *_mae. Recomputing from 3-dp rounded MAEs propagated ~0.5pp of
+  // drift into the mean/median aggregate vs Total Lift's 2-dp
+  // total_vs_best_raw_pct. Backend now emits routing_paired_pct and
+  // cascade_paired_pct on the same paired pool and rounding as
+  // total_vs_best_raw_pct, so the identity Routing + Cascade = Total
+  // holds per field and reconciles with Total Lift by construction.
   const _paintAttribution = () => {
     const tileMean = document.querySelector(`[data-tile="attribution"]`);
     const tileMed  = document.querySelector(`[data-tile="attribution_median"]`);
@@ -4505,11 +4508,13 @@ async function renderScoreboardTilesMinimal() {
       for (const f of fields) {
         const c = win[f];
         if (!c) continue;
-        const b = c.best_raw_mae, s = c.l1_selected_mae, p = c.prod_mae;
-        if (b == null || s == null || p == null || !(b > 0)) continue;
-        rs.push(100 * (b - s) / b);
-        cs.push(100 * (s - p) / b);
-        ts.push(100 * (b - p) / b);
+        const r = c.routing_paired_pct;
+        const cas = c.cascade_paired_pct;
+        const t = c.total_vs_best_raw_pct;
+        if (r == null || cas == null || t == null) continue;
+        rs.push(r);
+        cs.push(cas);
+        ts.push(t);
       }
       return { rs, cs, ts };
     };

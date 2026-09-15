@@ -692,6 +692,20 @@ def _compute_field(field, buckets, halves):
         # Headline: total pipeline lift (Prod vs best raw)
         "total_vs_best_raw_pct": (round(_lift_pct(best_raw, prod), 2)
                                    if _lift_pct(best_raw, prod) is not None else None),
+        # v0.6.630 — paired additive decomposition of total_vs_best_raw_pct.
+        # routing_paired_pct = (best_raw − l1_selected) / best_raw × 100
+        # cascade_paired_pct = (l1_selected − prod)     / best_raw × 100
+        # By construction routing_paired_pct + cascade_paired_pct =
+        # total_vs_best_raw_pct on the same paired pool, at the same 2-dp
+        # rounding. Frontend Attribution tile reads these directly instead
+        # of recomputing from *_mae — recomputation via 3-dp intermediates
+        # was drifting from Total Lift by ~0.5pp per aggregate.
+        "routing_paired_pct": (round(_lift_pct(best_raw, sel), 2)
+                                if _lift_pct(best_raw, sel) is not None else None),
+        "cascade_paired_pct": (round(100.0 * (sel - prod) / best_raw, 2)
+                                if (best_raw is not None and best_raw > 0
+                                    and sel is not None and prod is not None)
+                                else None),
         # v0.6.494 — current-config counterfactual Total Lift. Same math as
         # total_vs_best_raw_pct but Prod is recomputed by walking cascade
         # stamps and skipping currently-disabled layers (see
@@ -800,6 +814,8 @@ def main():
             "sel_vs_nbm_pct":  "L1_selected vs raw NBM — positive means the selector was smart to sometimes pick HRRR",
             "corr_vs_l1_pct":  "Prod vs L1_selected — positive means the local correction stack adds value on top of the selector's pick",
             "total_vs_best_raw_pct": "Prod vs 'what the user's default weather app already shows them' (v0.6.478): baseline = NBM raw for NBM-scope fields (NBM is the NWS backbone, i.e. iPhone Weather / weather.gov / vendor displays); HRRR raw for the 5 HRRR-only fields (cl/cm/pp/pa/pr — NBM doesn't publish). Replaces the v0.6.477 per-row oracle (too strict — no real user picks HRRR/NBM per lead-hour) and the pre-v0.6.477 pooled-min (too generous — credited us for beating whichever raw source wins on average).",
+            "routing_paired_pct": "Additive decomposition (v0.6.630): (best_raw − l1_selected) / best_raw × 100. How much of Total Lift comes from the selector picking the better raw source. Zero on rows where the pick IS the default. Paired pool = same rows as total_vs_best_raw_pct.",
+            "cascade_paired_pct": "Additive decomposition (v0.6.630): (l1_selected − prod) / best_raw × 100. How much of Total Lift comes from the local correction stack on top of the selected raw. Paired pool = same rows as total_vs_best_raw_pct. By construction routing_paired_pct + cascade_paired_pct = total_vs_best_raw_pct.",
             "l1_selected_definition": "The raw of the source the selector picked (v0.6.555 — symmetric across cascades): NBM pick → error_raw_nbm; HRRR pick or fall-through → error_l1 (raw HRRR). Every Wyman Cove correction layer above raw counts as our local stack in corr_vs_l1_pct. Pre-v0.6.555 NBM walked error_l3_nbm → error_raw_nbm, which excluded L3_NBM from corr credit even though L3_NBM is our local bias table (analysis/l3_nbm_fit.py). Moved to correction side 2026-09-07.",
             "chooser_vs_prod_pct": "Chosen cascade's Prod vs alternative cascade's Prod, paired per row. Positive = selector picked the better cascade. This is the v0.6.440-rule chooser lift (Prod-vs-Prod, not raw-vs-raw).",
             "hrrr_prod_mae": "Deepest HRRR-side layer residual pooled over all rows — 'what would Prod be if we always picked HRRR'.",
