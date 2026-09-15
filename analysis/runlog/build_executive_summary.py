@@ -1340,7 +1340,25 @@ def main():
     # consecutive daily reads that were also in promote bucket. Ship-eligible
     # verdicts require CONFIRMATION_STREAK_DAYS AND multi-group agreement.
     from collections import defaultdict as _dd
-    streaks = {}  # script_name -> consecutive promote days
+    streaks = {}  # script_name -> consecutive days in promote AND same proposal
+
+    # Normalize verdict text so meta-only bracket clauses that shift day-to-day
+    # (e.g. "[entangled: 0]" ↔ "[entangled: 1]", "[N thin]") don't reset the
+    # streak. Ship-count and skip-count digits stay in the string so a real
+    # proposal change (e.g. "L3 ship 3" → "L3 ship 2") resets the streak.
+    # v0.6.626: previously the streak counted bucket-continuity only, so
+    # scripts like walkforward_l3l4_validator that keep proposing new items
+    # after prior ships (ws → cc L4 → cm) accumulated a streak that outlived
+    # any individual proposal, misleadingly reading as "N days confirmed" on
+    # the current proposal. Now the streak resets when the normalized verdict
+    # text changes.
+    def _normalize_verdict(v):
+        if not v:
+            return ""
+        v = re.sub(r"\s*\[[^\[\]]*\]", "", v)  # strip bracket clauses
+        v = re.sub(r"\s+", " ", v).strip().lower()
+        return v
+
     prior_by_script_day = _dd(dict)
     if HISTORY_PATH.exists():
         for row in HISTORY_PATH.read_text().splitlines():
@@ -1352,18 +1370,23 @@ def main():
                 continue
             day = (r.get("run_at") or "")[:10]  # YYYY-MM-DD
             if day:
-                prior_by_script_day[r["script"]][day] = r.get("bucket")
+                prior_by_script_day[r["script"]][day] = (
+                    r.get("bucket"), _normalize_verdict(r.get("verdict")))
     from datetime import date as _date, timedelta as _td
     today_d = _date.today()
     for name, info in current.items():
         if info["bucket"] != "promote":
             continue
+        current_v_norm = _normalize_verdict(info.get("verdict"))
         s = 1  # today counts
         d = today_d
         while True:
             d = d - _td(days=1)
-            prev_bucket = prior_by_script_day.get(name, {}).get(d.isoformat())
-            if prev_bucket == "promote":
+            prev = prior_by_script_day.get(name, {}).get(d.isoformat())
+            if prev is None:
+                break
+            prev_bucket, prev_v_norm = prev
+            if prev_bucket == "promote" and prev_v_norm == current_v_norm:
                 s += 1
                 continue
             break
