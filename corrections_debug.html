@@ -2045,7 +2045,7 @@
 </details>
 
 
-<details style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
+<details open style="margin-top:10px;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;">
   <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Per-field diagnostic — 12 hour <span style="font-weight:normal;opacity:0.6;font-size:0.85em;">· fresh post-ship read (v0.6.615)</span></summary>
 <section class="sb-pfs-scope" style="margin-top:8px;">
   <div class="sb-pfs-sub">Same columns as the 24h table, computed over the last 12 hours of paired residuals. Read this AFTER a ship — the 24h and 7d windows lag any override/selector-fit change by up to 24h/7d respectively, so a fresh routing change or L2 fix reads as noise there. 12h reads first. Thin-window caveat: pair-log typically has an 8h backstamp lag, so the 12h window is really "recent 4h of ripe pair-log rows"; fields with n≤50 read as noise, not signal. <span class="sb-dim">Live from per_field_scoring.json's <code>windows.12h.per_field</code> block. Same aggregation rules as 7d/24h.</span></div>
