@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.6.634 • September 15, 2026 (Stack health trend line — solid + warm red)</strong></summary>
+
+- **Trend line restyled** — Stack health trajectory's linear-regression trend line changed from dashed `#e07272` at 1.5px to solid `#d97a6c` (warm terracotta) at 2.5px. Same regression math; visibility bump only.
+
+</details>
+
+<details>
 <summary><strong>v0.6.624 • September 14, 2026 (debug page header — swap MAE freshness for scoreboard freshness)</strong></summary>
 
 - **Header stamp source change** — `#meta-mae` now reads `per_field_scoring.json`'s `generated_at` instead of `mae_over_time.json`'s. Label "MAE data refreshed" → "Scoreboard refreshed". The scoreboard tiles at the top of the page are the actual thing that freshness marker should be describing; `mae_over_time.json` still feeds the Accuracy Over Time chart and the 24h/7d narrative table below (their own "Refreshed …" line is unchanged).
