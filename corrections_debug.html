@@ -1857,11 +1857,19 @@
 <details open style="margin:8px 0 14px 0;padding:10px 14px;border:1px solid #2a3a52;background:#0e1620;border-radius:6px;" id="sec-stack-health">
   <summary style="color:#7fb3ff;font-weight:600;cursor:pointer;list-style:none;">Stack health trajectory <span style="font-weight:normal;opacity:0.75;">— aggregate Prod vs 90d-ref raw, per day (12 fields, pa/pp excluded)</span></summary>
   <div class="meta-line" style="margin-top:6px;opacity:0.8;font-size:0.85em;">Per-obs-day cross-field <em>Median</em> + <em>Mean</em> + <em>P25–P75 band</em> of <code>(1 − prod_MAE / raw_MAE_90d_ref) × 100</code>. Denominator is each field's fixed 90-day-reference raw MAE — daily weather difficulty is absorbed by the fixed baseline, so the ratio only moves when Prod moves. Positive = Prod beating the 90d baseline; a ship that improves the stack pushes the 7d rolling median UP over the following week. Full per-field trajectory + drill-down: <a href="#sec-mae-over-time" style="color:#7fb3ff;">Accuracy over time ↓</a>.</div>
-  <div style="display:flex;gap:12px;align-items:center;margin-top:8px;font-size:0.9em;">
+  <div style="display:flex;gap:12px;align-items:center;margin-top:8px;font-size:0.9em;flex-wrap:wrap;">
     <label>Y-range: <select id="stack-health-yrange" style="background:#1a1f28;color:#cfd8e3;border:1px solid #3a3f48;padding:3px 6px;border-radius:3px;">
       <option value="auto" selected>Auto (smart)</option>
       <option value="free">Free (fit all)</option>
     </select></label>
+    <fieldset id="stack-health-trend-controls" style="border:1px solid #3a3f48;padding:2px 8px 3px 8px;border-radius:3px;margin:0;">
+      <legend style="opacity:0.7;padding:0 4px;font-size:0.8em;">Trend windows</legend>
+      <label style="margin-right:6px;"><input type="checkbox" class="stack-health-trend-cb" value="7"> 7d</label>
+      <label style="margin-right:6px;"><input type="checkbox" class="stack-health-trend-cb" value="30" checked> 30d</label>
+      <label style="margin-right:6px;"><input type="checkbox" class="stack-health-trend-cb" value="90"> 90d</label>
+      <label style="margin-right:6px;"><input type="checkbox" class="stack-health-trend-cb" value="180"> 180d</label>
+      <label><input type="checkbox" class="stack-health-trend-cb" value="365"> 365d</label>
+    </fieldset>
     <span id="stack-health-status" style="opacity:0.7;font-size:0.85em;align-self:center;"></span>
   </div>
   <div style="height:280px;margin-top:10px;position:relative;">
@@ -9694,14 +9702,24 @@ load();
   // Returns { data: [len N with only two non-null endpoints], slopePerWeek }
   // Two-point line is drawn spanCaps:true so Chart.js connects the endpoints
   // across the interior nulls.
-  function computeTrendline(agg) {
+  // windowDays: if provided, regress only the last N days of the smoothed
+  // median (aligned to the tail of the series). If null/undefined, regress
+  // the entire smoothed series (legacy behavior for other callers).
+  // v0.6.638: per-window trend selector. Min pts guard lowered 8 → 4 so
+  // the 7d window can produce a slope; short windows are inherently noisier
+  // but the caller is opting in.
+  function computeTrendline(agg, windowDays) {
     if (!agg) return null;
     const smoothed = rollingMean(agg.median);
+    let startIdx = 0;
+    if (windowDays && Number.isFinite(windowDays) && windowDays > 0) {
+      startIdx = Math.max(0, smoothed.length - windowDays);
+    }
     const pts = [];
-    for (let i = 0; i < smoothed.length; i++) {
+    for (let i = startIdx; i < smoothed.length; i++) {
       if (smoothed[i] !== null && smoothed[i] !== undefined) pts.push({ x: i, y: smoothed[i] });
     }
-    if (pts.length < 8) return null;
+    if (pts.length < 4) return null;
     const n = pts.length;
     const sumX = pts.reduce((s, p) => s + p.x, 0);
     const sumY = pts.reduce((s, p) => s + p.y, 0);
@@ -9715,7 +9733,36 @@ load();
     const data = new Array(smoothed.length).fill(null);
     data[xStart] = m * xStart + b;
     data[xEnd] = m * xEnd + b;
-    return { data, slopePerWeek: m * 7 };
+    return { data, slopePerWeek: m * 7, nPoints: n };
+  }
+
+  // Style per trend window. Warm-terracotta family; lighter/thinner for
+  // shorter (noisier) windows, deeper/dashed for longer windows.
+  const STACK_HEALTH_TREND_STYLES = {
+    7:   { color: "#f4a494", width: 1.75, dash: [2, 3] },
+    30:  { color: "#d97a6c", width: 2.5,  dash: [] },
+    90:  { color: "#b56052", width: 2,    dash: [8, 4] },
+    180: { color: "#904839", width: 1.75, dash: [12, 4] },
+    365: { color: "#6d3527", width: 1.5,  dash: [16, 4] },
+  };
+  const STACK_HEALTH_TREND_LS_KEY = "debug.stackHealth.trendWindows";
+
+  function readStackHealthTrendSelection() {
+    try {
+      const raw = localStorage.getItem(STACK_HEALTH_TREND_LS_KEY);
+      if (!raw) return null;
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr.map(String) : null;
+    } catch (_) { return null; }
+  }
+  function writeStackHealthTrendSelection(vals) {
+    try { localStorage.setItem(STACK_HEALTH_TREND_LS_KEY, JSON.stringify(vals)); } catch (_) {}
+  }
+  function selectedTrendWindows() {
+    const cbs = document.querySelectorAll(".stack-health-trend-cb");
+    const out = [];
+    cbs.forEach(cb => { if (cb.checked) out.push(parseInt(cb.value, 10)); });
+    return out.filter(Number.isFinite).sort((a, b) => a - b);
   }
 
   // v0.6.580: cross-stack ship events for the aggregate chart. Only
@@ -9839,17 +9886,23 @@ load();
         borderCapStyle: "round", borderJoinStyle: "round", order: 10,
       });
     }
-    const trend = computeTrendline(agg);
-    if (trend) {
+    // v0.6.638: per-window trend lines. Each selected checkbox regresses
+    // the last N days of the 7d-smoothed median and adds its own line.
+    const trendWindows = selectedTrendWindows();
+    trendWindows.forEach(win => {
+      const style = STACK_HEALTH_TREND_STYLES[win];
+      if (!style) return;
+      const trend = computeTrendline(agg, win);
+      if (!trend) return;
       const sign = trend.slopePerWeek >= 0 ? "+" : "";
       datasets.push({
-        label: `Trend (${sign}${trend.slopePerWeek.toFixed(2)} pp/week)`,
+        label: `Trend ${win}d (${sign}${trend.slopePerWeek.toFixed(2)} pp/week)`,
         data: trend.data,
-        borderColor: "#d97a6c", backgroundColor: "rgba(0,0,0,0)",
-        borderWidth: 2.5,
+        borderColor: style.color, backgroundColor: "rgba(0,0,0,0)",
+        borderWidth: style.width, borderDash: style.dash,
         pointRadius: 0, spanGaps: true, tension: 0, order: 5,
       });
-    }
+    });
     if (stackHealthChart) stackHealthChart.destroy();
     stackHealthChart = new Chart(stackHealthCanvas, {
       type: "line",
@@ -10070,6 +10123,18 @@ load();
       syncMetricAvailability();
       if (yrangeSel) yrangeSel.addEventListener("change", render);
       // v0.6.580: top-of-page compact aggregate chart
+      // v0.6.638: restore trend-window selection from localStorage before first render.
+      (function initStackHealthTrendControls() {
+        const cbs = document.querySelectorAll(".stack-health-trend-cb");
+        const saved = readStackHealthTrendSelection();
+        if (saved) {
+          cbs.forEach(cb => { cb.checked = saved.includes(cb.value); });
+        }
+        cbs.forEach(cb => cb.addEventListener("change", () => {
+          writeStackHealthTrendSelection(selectedTrendWindows().map(String));
+          renderStackHealth();
+        }));
+      })();
       renderStackHealth();
       if (stackHealthYrangeSel) stackHealthYrangeSel.addEventListener("change", renderStackHealth);
       renderSparklines();

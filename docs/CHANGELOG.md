@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.638 • September 16, 2026 (stack health trajectory — multi-window trend selector)</strong></summary>
+
+- **Trend line control** — Stack health trajectory's single "regress the whole plotted history" line replaced with a per-window multi-select. Checkboxes: 7d / 30d / 90d / 180d / 365d. Any subset can be on at once; all-off hides trends entirely. Default: 30d checked (matches the "am I winning this week" question), others off. Selection persists in `localStorage` (`debug.stackHealth.trendWindows`).
+- **What each line means** — OLS regression on the last N days of the 7d-smoothed daily median. Slope reported in the legend as `pp/week`. Short windows (7d) are noisier by construction — smoothing lag + fewer points — but respond fastest to fresh ships; long windows (180d/365d) are stable but lag by design.
+- **Style** — warm-terracotta family. 30d stays the current solid 2.5px `#d97a6c`. 7d is lighter and dashed; 90d/180d/365d are progressively darker and dashed with wider gaps, reading as a "recency ramp" at a glance.
+- **Implementation** — `computeTrendline(agg, windowDays)` now takes an optional windowDays. `null`/omitted keeps the full-history behavior for the main aggregate chart's own trend (line 9621) — backwards compatible. Min-points guard lowered 8 → 4 so a 7d window can produce a slope; callers opt into short-window noise. New helpers: `STACK_HEALTH_TREND_STYLES`, `selectedTrendWindows`, `readStackHealthTrendSelection`, `writeStackHealthTrendSelection`. Wired in the existing `initStackHealthTrendControls` IIFE alongside the yrange listener.
+
+</details>
+
+<details>
 <summary><strong>v0.6.637 • September 16, 2026 (NBM stale-skip removal — wg/ne_flow/6-11h)</strong></summary>
 
 - **Removed `["ne_flow", 6, 12]` from `l3_nbm.wg`** in `skip_table_nbm_curated.json`. Two-window audit confirms the skip is preventing a beneficial correction: 14d n=157 lift +7.67%, 50d n=418 lift +6.91%. Both windows agree — no regime-transient flip, unlike the sea_breeze WATCH cells that get 14d earn-back but 50d negative.
