@@ -1,5 +1,5 @@
 {
-  "fitted_at": "2026-09-14T14:15",
+  "fitted_at": "2026-09-16T08:04",
   "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
   "cells": {
     "l3_nbm": {
@@ -18,11 +18,6 @@
           "calm",
           24,
           48
-        ],
-        [
-          "ne_flow",
-          6,
-          12
         ],
         [
           "sea_breeze",
@@ -525,6 +520,19 @@
         ]
       },
       "reason": "v0.6.578: symmetric REMOVE audit \u2014 14d n=282 lift=+4.64%, 50d n=1,046 lift=+4.69%, both windows cleared. First single-cell REMOVE post-v0.6.574 two-window verdict."
+    },
+    "2026-09-16T08:04": {
+      "action": "remove",
+      "cells": {
+        "l3_nbm.wg": [
+          [
+            "ne_flow",
+            6,
+            12
+          ]
+        ]
+      },
+      "reason": "v0.6.637 \u2014 nbm_stale_skip_audit two-window verdict: 14d n=157 lift +7.67%, 50d n=418 lift +6.91%. Both windows agree correction is helping (positive lift) \u2014 skip is preventing a beneficial correction. Removed per feedback_two_gates_per_layer rule."
     }
   },
   "ship_history": [

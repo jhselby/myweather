@@ -1,4 +1,31 @@
 <details open>
+<summary><strong>v0.6.637 • September 16, 2026 (NBM stale-skip removal — wg/ne_flow/6-11h)</strong></summary>
+
+- **Removed `["ne_flow", 6, 12]` from `l3_nbm.wg`** in `skip_table_nbm_curated.json`. Two-window audit confirms the skip is preventing a beneficial correction: 14d n=157 lift +7.67%, 50d n=418 lift +6.91%. Both windows agree — no regime-transient flip, unlike the sea_breeze WATCH cells that get 14d earn-back but 50d negative.
+- Also refreshed `fitted_at` and appended a `history` entry documenting the removal.
+
+</details>
+
+<details>
+<summary><strong>v0.6.636 • September 16, 2026 (wg residual persistence — ENABLED=True)</strong></summary>
+
+- **`wg_residual_persistence.py` ENABLED flipped True.** Processor has been wired at ENABLED=False since v0.6.351 (2026-07-14). Today's digest reads: Stage 1 `h_wg_residual_persistence_stage1` PROMOTE (Test MAE +17.83% held-out, 3/5 regime WIN, halves both positive). Stage 2 curated table refreshed with 16 SHIP cells: frontal/24-47, ne_flow/24-47, nw_flow ×4 bands, pre_frontal/6-11+12-23+24-47, se_flow ×4 bands, sw_flow/6-11+12-23+24-47.
+- **Walker cross-check:** `_residual_persistence_walker` confirms 13 cells cleared the 7-day agreement gate; all 13 are ⊂ Stage 2 SHIP set. The three Stage 2 SHIPs without a walker streak yet (se_flow/0-5, se_flow/12-23, sw_flow/24-47) still get corrected because the processor keys off the curated cells[regime][band] verdict — walker is a meta-gate on the ENABLED flip decision, not a cell-level gate at runtime.
+- **User-visible change:** wg forecasts get up to ~±5 mph adjustments on affected cells; short-lead SKIP cells (calm all bands, ne_flow 0-11h, pre_frontal/sw_flow 0-5h, sea_breeze 12-47h) fall back to L2-alone.
+- **Post-ship watch:** production wg MAE vs L2 baseline over the next 7 days; watch for halves-flip demotions in any of the 16 SHIP cells.
+
+</details>
+
+<details>
+<summary><strong>v0.6.635 • September 16, 2026 (per-field τ — h τ=7 in decay_fit)</strong></summary>
+
+- **`TAU_DAYS_BY_FIELD["h"] = 7`** in `decay_fit.py`. `decay_tau_tuning.py` verdict PROMOTE with 3/3 consecutive daily confirmation streak: h held-out MAE gains +6.9% vs the global τ=14. dp gains +7.6% but is deliberately excluded — dp is derived from (t, h) via Magnus at forecast time and inherits h's improvement, and dp is not in L3_FIELDS / L4_FIELDS / L2_TAU_FIELDS so a per-field τ_dp entry would only affect reported analytics (same inert-config pattern that stranded the `pp` entry).
+- Recency-window change only. Affects the fitter's per-pair weighting `w = exp(-age/τ_field)` — h fits weight the last week more heavily than the last month. Impact lands on h's per-lead corrections, per-layer MAE reports, and the L2 τ_h fit input.
+- Backend-only. Runs on the next daily fitter tick (03:X7 UTC). Watch h/production τ-suspect signature (helps 0-5h -43.7% / hurts 24-47h +12.0%) — the more-recent-weighted fit should shorten the effective correction memory and pull the long-lead residual back toward zero.
+
+</details>
+
+<details>
 <summary><strong>v0.6.634 • September 15, 2026 (Stack health trend line — solid + warm red)</strong></summary>
 
 - **Trend line restyled** — Stack health trajectory's linear-regression trend line changed from dashed `#e07272` at 1.5px to solid `#d97a6c` (warm terracotta) at 2.5px. Same regression math; visibility bump only.

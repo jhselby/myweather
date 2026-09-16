@@ -149,6 +149,11 @@ TAU_DAYS = 14
 # here; marginal differences stay at the default. Re-validate weekly via
 # analysis/decay_tau_tuning.py.
 TAU_DAYS_BY_FIELD = {
+    "h": 7,   # +6.9% MAE held-out vs τ=14 (2026-09-16 read, 3/3 streak). h
+    #          is live via L2 (L2_TAU_FIELDS) and reports per-layer MAE that
+    #          feeds analytics; dp inherits any h improvement through Magnus
+    #          derivation at forecast time so dp is deliberately NOT added
+    #          here (see project_dp_is_derived_no_dp_work).
     "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read). 2026-07-19
     #          re-measurement via extended decay_tau_tuning (v0.6.363, first
     #          time pp was included in the tuner): τ=7 wins +13.7% vs τ=14

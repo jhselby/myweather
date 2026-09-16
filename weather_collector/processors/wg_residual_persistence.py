@@ -18,7 +18,7 @@ from ._residual_persistence import (
     describe_field,
 )
 
-ENABLED = False  # Live-layer change gate: 7-day agreement + halves-stability + no-halves-flip before flipping True. Stage 2 preview shipped 2026-07-14.
+ENABLED = True   # Flipped 2026-09-16 v0.6.635. Stage 1 PROMOTE (Test MAE +17.83%, 3/5 regime WIN, halves both positive). Stage 2 curated table has 16 SHIP cells; residual_persistence_walker confirms 13 cleared the 7-day gate (all ⊂ Stage 2 SHIP set). Two months past the 07-27 earliest-flip target.
 
 FIELD = "wg"
 HOURLY_KEY = "wind_gusts"
