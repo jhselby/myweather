@@ -36,7 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path
 
 PAIR_URL = "https://data.wymancove.com/forecast_error_log_backstamped.jsonl"
-FIELD = "h"
+FIELD = sys.argv[1] if len(sys.argv) > 1 else "h"
 BANDS = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
 MIN_N_BIN = 100
 MIN_WIN_RATE_SPREAD = 0.10   # 10pp variation in hrrr_win_rate across quartiles
