@@ -1,4 +1,21 @@
 <details open>
+<summary><strong>v0.6.640 • September 19, 2026 (L1 selector — first per-obs axis wired, ims for h/sea_breeze/24-47h, shadow)</strong></summary>
+
+- **First per-obs axis on the L1 picker.** Every C1 axis built since v0.6.401 (inter_model_spread, cross_run_spread, cluster_spread, state_fc/obs) feeds `confidence_layer.py` to widen bands. None fed `l1_selector.py` to pick winners — the selector saw only `(field, lead_h, regime, hour_local)`. Meanwhile per-obs oracle gap on h/dp/t/sr is 37-45% of MAE. Stage 0/1 diag (`analysis/h_l1_selector_ims_stage0.py`, `_multiaxis_stage1.py`, `_stage1.py`) proved ims carries halves-stable per-obs signal on ~10 h-cells; the crude threshold rule generalized cleanly on one: `h/sea_breeze/24-47h`.
+- **The rule.** For that one cell only: if `|forecast_l1 - forecast_raw_nbm| >= 13`, pick HRRR (default); if `< 13`, pick NBM. Train +9.86% / test +4.32% MAE lift on chronological halves (11.1% of per-obs oracle gap). Overfit guard was 0.44× (below strict 0.5× threshold) — shipped shadow-first.
+- **Shipped shadow (`IMS_SELECTOR_SHADOW_ENABLED = False`).** Code path lives in `l1_selector.py` `_ims_override()`; `forecast_snapshot.py` computes `ims = |{f}_l1 - {f}_raw_nbm|` per row and passes to `pick_source(..., ims=...)`. With the flag False the branch is inert — pick unchanged from v0.6.639. Flip to True after 7-day pair-log accumulates and the retro confirms the +4.32% held-out lift replicates on fresh data.
+- **Wire mechanic proven.** Broader deployment (more cells, more axes, more fields) blocked on this cell's post-flip verdict.
+
+</details>
+
+<details open>
+<summary><strong>v0.6.639 • September 17, 2026 (PWS via WU API — retire browser-page scraper)</strong></summary>
+
+- **Castle Hill PWS moved from WU browser-page scrape to the WU PWS observations API** (`/current` endpoint, existing `WU_API_KEY`). Old scraper had failed 38/38 runs after WU's Angular SPA served inconsistent HTML from GCP IPs. Post-deploy `sources.pws.status` flipped error → ok at 15:17 UTC. PWS remains fallback-of-fallback at `hyperlocal.py:391` — never on the prod path when WU multi-station is ok.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.638 • September 16, 2026 (stack health trajectory — multi-window trend selector)</strong></summary>
 
 - **Trend line control** — Stack health trajectory's single "regress the whole plotted history" line replaced with a per-window multi-select. Checkboxes: 7d / 30d / 90d / 180d / 365d. Any subset can be on at once; all-off hides trends entirely. Default: 30d checked (matches the "am I winning this week" question), others off. Selection persists in `localStorage` (`debug.stackHealth.trendWindows`).

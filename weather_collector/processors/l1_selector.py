@@ -125,15 +125,51 @@ _load_regime_overrides()
 HRRR_PBL_MORNING_OVERSHOOT_KILL = False
 _HRRR_PBL_MORNING_HOURS_LOCAL = (4, 5, 6, 7, 8)  # EDT — brackets the observed 05-07 blowout
 
+# v0.6.640 — First per-obs axis wired into the L1 selector. Stage 0/1 finding
+# 2026-09-19 (analysis/h_l1_selector_ims_stage1.py, project_l1_selector_per_obs_axes):
+# for h/sea_breeze/24-47h, inter-model spread ims = |forecast_l1 - forecast_raw_nbm|
+# carries per-obs picking signal that regime × band alone can't see. Halves-stable
+# held-out fit: pick NBM when ims < 13.0, else HRRR default. Train +9.86% / test
+# +4.32% MAE lift on 380/381 rows (11.1% of per-obs oracle gap). Overfit guard was
+# 0.44× (below the strict 0.5× threshold) — shadow ship first, walker validates
+# before flip. Scope intentionally narrow (one cell) — proves the C1→L1 wire
+# mechanic; broader deployment gated on this cell's post-deploy pair-log verdict.
+IMS_SELECTOR_SHADOW_ENABLED = False   # False = code path exists but does not affect pick
+_IMS_SELECTOR_CELLS = {
+    # (field, regime, band): (threshold, direction)
+    #   direction "H_high" = pick HRRR when ims >= T, NBM when ims < T
+    ("h", "sea_breeze", "24-47"): (13.0, "H_high"),
+}
 
-def pick_source(field, lead_h, regime=None, hour_local=None):
-    """Return "hrrr", "nbm", or "nws" for this (field, lead_h[, regime, hour_local]).
+
+def _ims_override(field, regime, band, ims):
+    """Return "hrrr" or "nbm" if this cell has an ims-conditioned rule and
+    ims is available, else None. Only fires when IMS_SELECTOR_SHADOW_ENABLED
+    is True — the flag is a shadow guard, not a kill switch: to enable the
+    override live, flip IMS_SELECTOR_SHADOW_ENABLED = True."""
+    if not IMS_SELECTOR_SHADOW_ENABLED:
+        return None
+    if ims is None:
+        return None
+    rule = _IMS_SELECTOR_CELLS.get((field, regime, band))
+    if not rule:
+        return None
+    threshold, direction = rule
+    if direction == "H_high":
+        return "hrrr" if ims >= threshold else "nbm"
+    else:  # "H_low"
+        return "hrrr" if ims < threshold else "nbm"
+
+
+def pick_source(field, lead_h, regime=None, hour_local=None, ims=None):
+    """Return "hrrr", "nbm", or "nws" for this (field, lead_h[, regime, hour_local, ims]).
 
     Precedence: HRRR PBL morning-overshoot workaround (t only, stagnant_high
-    only, morning hours only) → by-regime walker override → band pool pick →
-    HRRR fall-through. HRRR fall-through on any missing lookup remains safe
-    (equal to pre-Phase-4 Prod). The forecast_snapshot consumer falls back to
-    HRRR if "nws" is returned but the {field}_nws value is missing for the hour.
+    only, morning hours only) → ims per-obs override (shadow-guarded) →
+    by-regime walker override → band pool pick → HRRR fall-through. HRRR
+    fall-through on any missing lookup remains safe (equal to pre-Phase-4 Prod).
+    The forecast_snapshot consumer falls back to HRRR if "nws" is returned
+    but the {field}_nws value is missing for the hour.
     """
     # HRRR PBL morning-overshoot workaround — see comment block above pick_source.
     if (not HRRR_PBL_MORNING_OVERSHOOT_KILL
@@ -141,6 +177,11 @@ def pick_source(field, lead_h, regime=None, hour_local=None):
             and regime == "stagnant_high"
             and hour_local in _HRRR_PBL_MORNING_HOURS_LOCAL):
         return "nbm"
+    # ims per-obs override — first per-obs axis wired to the L1 selector.
+    band_for_ims = _band_for(lead_h)
+    ims_pick = _ims_override(field, regime, band_for_ims, ims) if band_for_ims else None
+    if ims_pick is not None:
+        return ims_pick
     band = _band_for(lead_h)
     if band is not None and regime:
         reg_cells = _REGIME_OVERRIDES.get(field, {}).get(regime)

@@ -941,7 +941,17 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             # workaround (t + stagnant_high + EDT 04-08 → NBM). Falls back to
             # None if hour extraction fails; selector's morning gate stays inert.
             _valid_hour_local_i = _chp_valid_hour_local(times, i)
-            source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i)
+            # v0.6.640 — pass per-obs ims (|forecast_l1 - forecast_raw_nbm|) so
+            # the selector can honor ims-conditioned per-obs rules (currently
+            # shadow-guarded to h/sea_breeze/24-47h only). Fallback to None when
+            # either side is missing; selector's ims override stays inert then.
+            _l1_v = entry.get(f"{f}_l1")
+            try:
+                _ims_i = (abs(float(_l1_v) - float(raw_nbm_v))
+                          if _l1_v is not None and raw_nbm_v is not None else None)
+            except (TypeError, ValueError):
+                _ims_i = None
+            source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i, _ims_i)
             entry[f"{f}_selector_source"] = source
             if source == "nws":
                 # 3-way walker cleared this (field, regime, band) for NWS
