@@ -82,7 +82,10 @@ JACCARD_STAGE1_THRESHOLD = 0.5
 # _PR_L2_FIRE_CELLS, shipped v0.6.401 2026-08-10). Reported separately in
 # the verdict so cross-window movement on candidate cells doesn't mask the
 # health of the live gate.
-SHIPPED_CELLS = {("nw_flow", "0-5h"), ("nw_flow", "6-11h")}
+SHIPPED_CELLS = {("nw_flow", "0-5h")}
+# ("nw_flow", "6-11h") unwired 09-12 in corrected_hourly.py _PR_L2_FIRE_CELLS
+# (retro -13.6% pooled, both halves negative). Kept in sync manually — this set
+# must match runtime _PR_L2_FIRE_CELLS, band-label 'X-Yh' vs runtime 'X-Y'.
 
 
 def lead_band(lead_h):
