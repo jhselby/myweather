@@ -138,7 +138,21 @@ IMS_SELECTOR_SHADOW_ENABLED = False   # False = code path exists but does not af
 _IMS_SELECTOR_CELLS = {
     # (field, regime, band): (threshold, direction)
     #   direction "H_high" = pick HRRR when ims >= T, NBM when ims < T
+    #   direction "H_low"  = pick HRRR when ims <  T, NBM when ims >= T
     ("h", "sea_breeze", "24-47"): (13.0, "H_high"),
+    # ch — 10 cells cleared strict Stage 1 on 2026-09-20 (v0.6.641 shadow):
+    # test lifts +8 to +22%, capture 25-60% of per-obs oracle gap, all H_low
+    # (small ims ⇒ trust HRRR; large ims ⇒ NBM wins the row).
+    ("ch", "calm",        "24-47"): (87.0, "H_low"),
+    ("ch", "nw_flow",     "12-23"): (66.0, "H_low"),
+    ("ch", "pre_frontal", "6-11" ): (82.0, "H_low"),
+    ("ch", "pre_frontal", "12-23"): (85.0, "H_low"),
+    ("ch", "se_flow",     "6-11" ): (61.0, "H_low"),
+    ("ch", "se_flow",     "12-23"): (51.0, "H_low"),
+    ("ch", "se_flow",     "24-47"): (56.0, "H_low"),
+    ("ch", "sea_breeze",  "24-47"): (85.0, "H_low"),
+    ("ch", "sw_flow",     "12-23"): (81.0, "H_low"),
+    ("ch", "sw_flow",     "24-47"): (98.0, "H_low"),
 }
 
 

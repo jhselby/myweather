@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.641 • September 20, 2026 (L1 selector — ims axis extended to 10 ch cells, shadow)</strong></summary>
+
+- **ch stage-1 sweep cleared 10 cells at the strict gate.** Parameterized `analysis/h_l1_selector_ims_stage1.py` (FIELD via argv) and ran on ch — 10 of 21 judged cells cleared held-out MAE lift ≥ 3%, halves-stable (test ≥ 0.5× train), non-overfit. Test lifts +8 to +22%, captures 25-60% of the per-obs oracle gap. All rules are `H_low` direction — small `|forecast_l1 - forecast_raw_nbm|` ⇒ trust HRRR default; large disagreement ⇒ switch the row to NBM. Physically: when the two models diverge a lot on ch, HRRR is more likely to be the one that's wrong.
+- **Cells wired** (into `l1_selector.py::_IMS_SELECTOR_CELLS`): `ch/calm/24-47` T=87, `ch/nw_flow/12-23` T=66, `ch/pre_frontal/6-11` T=82, `ch/pre_frontal/12-23` T=85, `ch/se_flow/6-11` T=61, `ch/se_flow/12-23` T=51, `ch/se_flow/24-47` T=56, `ch/sea_breeze/24-47` T=85, `ch/sw_flow/12-23` T=81, `ch/sw_flow/24-47` T=98.
+- **Still shadow.** `IMS_SELECTOR_SHADOW_ENABLED = False` unchanged — the whole ims override branch is still inert. Ship keeps the same gating discipline as v0.6.640: accumulate 7 days of pair-log data on how these rules would have picked, then flip the flag once retro confirms lifts replicate on fresh runs. Blast radius when flipped: 10 ch cells across 6 regimes — meaningful but bounded.
+- **Not touched.** xr_q Stage 0 confirmed dead-end on HRRR-dominant fields (sr/t/ws) — the shadow-lift gate can't fire when the losing model never wins cell-avg in any quartile ([[feedback_stage0_shadow_lift_gate_hrrr_dominant]]). Linear per-obs classifier on t at 34K rows failed to beat always-HRRR on any cell; parked pending richer features / more data. See `project_09_20_session.md`.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.640 • September 19, 2026 (L1 selector — first per-obs axis wired, ims for h/sea_breeze/24-47h, shadow)</strong></summary>
 
 - **First per-obs axis on the L1 picker.** Every C1 axis built since v0.6.401 (inter_model_spread, cross_run_spread, cluster_spread, state_fc/obs) feeds `confidence_layer.py` to widen bands. None fed `l1_selector.py` to pick winners — the selector saw only `(field, lead_h, regime, hour_local)`. Meanwhile per-obs oracle gap on h/dp/t/sr is 37-45% of MAE. Stage 0/1 diag (`analysis/h_l1_selector_ims_stage0.py`, `_multiaxis_stage1.py`, `_stage1.py`) proved ims carries halves-stable per-obs signal on ~10 h-cells; the crude threshold rule generalized cleanly on one: `h/sea_breeze/24-47h`.

@@ -32,7 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _cache import cached_path
 
 PAIR_URL = "https://data.wymancove.com/forecast_error_log_backstamped.jsonl"
-FIELD = "h"
+FIELD = sys.argv[1] if len(sys.argv) > 1 else "h"
 BANDS = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
 MIN_N_CELL = 400        # need >= 200 train + 200 test per cell
 MIN_N_TEST = 150
@@ -204,8 +204,8 @@ out = {"field": FIELD, "min_lift_pct": MIN_LIFT_PCT, "cells": results, "promote"
     {"regime": r["regime"], "band": r["band"], "T": r["T"], "direction": r["direction"],
      "test_lift_pct": r["test_lift_pct"], "test_capture_pct": r["test_capture_pct"]}
     for r in promote]}
-out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output",
-                       "h_l1_selector_ims_stage1.json")
+out_name = "h_l1_selector_ims_stage1.json" if FIELD == "h" else f"l1_selector_ims_stage1_{FIELD}.json"
+out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output", out_name)
 os.makedirs(os.path.dirname(out_path), exist_ok=True)
 with open(out_path, "w") as fh:
     json.dump(out, fh, indent=2)
