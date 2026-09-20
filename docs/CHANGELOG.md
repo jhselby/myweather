@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.642 • September 20, 2026 (h τ=7 REVERT — noise ship, long-lead regression)</strong></summary>
+
+- **h τ=7 removed from `decay_fit.py::TAU_DAYS_BY_FIELD`.** Shipped v0.6.635 on 09-16 (3/3 streak, +6.9% held-out); fresh τ-suspect fired 09-17 as the day 2/7 watch item. Instead of settling by day 7, it worsened: Sunday afternoon 09-20 fresh 12h VC on h reached **+37% at 0-5h but -128% at 24-47h**, with dp (derived from h via Magnus at forecast time) showing the same shape at **-132% on 24-47h**. Users saw forecast > 2× worse-than-raw MAE on the long-lead band, which drives most of the visible 24h forecast.
+- **Third instance of the same failure mode.** ws τ=7 shipped 07-01, reverted 07-02 for identical reasons. pa τ=7 shipped 07-13/18, reverted 07-19 with the note "same fact pattern as the 07-02 ws revert." decay_tau_tuning verdict today: HOLD, 1/3 streak, "noise-adjacent." Per-field τ overrides at the 5% ship floor are too flimsy for this fitter's noise level — a 3-day streak lets a lucky window pass, and the correction ships before the shape sentry can catch it in production.
+- **Effect.** h falls back to global τ=14, dp inherits the reversion through the same Magnus path that broke it. No other per-field τ live. Everything else unchanged.
+- **Not fixed here.** sr showed `fc=0.0 obs=198.0 layer=l1` in many rows at 11am — HRRR sr base feed producing zeros in daytime. Separate data-ingest issue, needs collector-side investigation. ch/wd 24-47h also showed heavy fresh regression; may share a long-lead correction issue, watch after this deploy.
+
+</details>
+
+<details open>
 <summary><strong>v0.6.641 • September 20, 2026 (L1 selector — ims axis extended to 10 ch cells, shadow)</strong></summary>
 
 - **ch stage-1 sweep cleared 10 cells at the strict gate.** Parameterized `analysis/h_l1_selector_ims_stage1.py` (FIELD via argv) and ran on ch — 10 of 21 judged cells cleared held-out MAE lift ≥ 3%, halves-stable (test ≥ 0.5× train), non-overfit. Test lifts +8 to +22%, captures 25-60% of the per-obs oracle gap. All rules are `H_low` direction — small `|forecast_l1 - forecast_raw_nbm|` ⇒ trust HRRR default; large disagreement ⇒ switch the row to NBM. Physically: when the two models diverge a lot on ch, HRRR is more likely to be the one that's wrong.

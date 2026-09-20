@@ -149,11 +149,17 @@ TAU_DAYS = 14
 # here; marginal differences stay at the default. Re-validate weekly via
 # analysis/decay_tau_tuning.py.
 TAU_DAYS_BY_FIELD = {
-    "h": 7,   # +6.9% MAE held-out vs τ=14 (2026-09-16 read, 3/3 streak). h
-    #          is live via L2 (L2_TAU_FIELDS) and reports per-layer MAE that
-    #          feeds analytics; dp inherits any h improvement through Magnus
-    #          derivation at forecast time so dp is deliberately NOT added
-    #          here (see project_dp_is_derived_no_dp_work).
+    # h τ=7 REVERTED 2026-09-20 v0.6.642. Shipped v0.6.635 on the 09-16 read
+    # (3/3 streak, +6.9% held-out). Fresh regression fired 09-17 as expected
+    # per τ-suspect watch, but instead of settling by day 7 it kept worsening:
+    # 09-20 afternoon showed h/24-47h VC -128% and dp/24-47h VC -132% (dp
+    # inherits through Magnus derivation). Third instance of the exact
+    # ship→next-read-disagrees→long-lead regression pattern — see the ws
+    # revert on 2026-07-02 and the pa revert on 2026-07-19 for the previous
+    # two. decay_tau_tuning verdict today: HOLD, 1/3 streak, "noise-adjacent."
+    # Per-field τ overrides at the 5% floor are too flimsy for this fitter's
+    # noise level; keep this block empty of live fields until we widen the
+    # ship gate or add a lead-band SKIP mechanism that protects 24-47h.
     "pp": 28,  # +11.1% MAE held-out vs τ=14 (2026-06-21 read). 2026-07-19
     #          re-measurement via extended decay_tau_tuning (v0.6.363, first
     #          time pp was included in the tuner): τ=7 wins +13.7% vs τ=14
