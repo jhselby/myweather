@@ -41,6 +41,24 @@ GATE_HISTORY_RETENTION_DAYS = 30
 POSITIVE_VERDICTS = frozenset({"SHIP", "MARGIN"})
 
 
+def _processor_state(field):
+    """Return "live" (ENABLED=True), "shadow" (module exists, ENABLED=False),
+    or "unwritten" (module absent). Read-only regex on the file — avoids
+    importing collector-only modules from an analysis context."""
+    path = REPO / "weather_collector" / "processors" / f"{field}_residual_persistence.py"
+    if not path.exists():
+        return "unwritten"
+    try:
+        src = path.read_text()
+    except Exception:
+        return "unwritten"
+    import re
+    m = re.search(r"^ENABLED\s*=\s*(True|False)\b", src, re.MULTILINE)
+    if not m:
+        return "unwritten"
+    return "live" if m.group(1) == "True" else "shadow"
+
+
 def _curated_path(field):
     return REPO / "weather_collector" / "data" / f"{field}_residual_persistence_curated.json"
 
@@ -227,9 +245,23 @@ def run_walker(field):
              f"has {GATE_WINDOW_DAYS}/{GATE_WINDOW_DAYS} consecutive positive days. "
              f"{n_flipped} cell(s) flipped inside window.")
     else:
-        v = (f"STAGE 3 READY — {n_cleared} cell(s) cleared the {GATE_WINDOW_DAYS}-day gate. "
-             f"Ready to write {field}_residual_persistence.py Stage 3 processor "
-             f"(ship ENABLED=False, then flip via a live-layer gate).")
+        # Introspect the processor's runtime state so the verdict reflects
+        # what's actually shipped, not what's ready to write. Prior text
+        # ("Ready to write {field}_residual_persistence.py Stage 3 processor")
+        # stayed stale after wg was flipped ENABLED=True on 2026-09-16 v0.6.635
+        # and looked identical to dp/h whose processors also exist but are
+        # ENABLED=False. Detected 2026-09-21.
+        state = _processor_state(field)
+        if state == "live":
+            v = (f"LIVE — {n_cleared} cell(s) cleared the {GATE_WINDOW_DAYS}-day gate; "
+                 f"processor ENABLED=True. Walker confirms wire is earning; no action.")
+        elif state == "shadow":
+            v = (f"STAGE 3 READY — {n_cleared} cell(s) cleared the {GATE_WINDOW_DAYS}-day gate. "
+                 f"Processor exists with ENABLED=False; ready for live-layer gate flip.")
+        else:
+            v = (f"STAGE 3 READY — {n_cleared} cell(s) cleared the {GATE_WINDOW_DAYS}-day gate. "
+                 f"Ready to write {field}_residual_persistence.py Stage 3 processor "
+                 f"(ship ENABLED=False, then flip via a live-layer gate).")
     print(f"  {v}")
 
     cleared_cells = sorted([f"{r}/{b}" for r, bands in per_cell_runtime.items()
