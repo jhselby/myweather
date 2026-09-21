@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.645 • September 21, 2026 (learned selector — feature plumbing in forecast_snapshot)</strong></summary>
+
+- **Per-lead 12-feature dict flows into `pick_source`.** v0.6.644 shipped the runtime scaffold and curated table but forecast_snapshot was still calling `pick_source(..., features=None)`, meaning the learned override could never fire even with the shadow flag on. This closes the loop: `_build_learned_features(field, i, ims, valid_hour_local, hourly, derived, cross_run_spread, times)` assembles all 12 features per (field, lead) — ims (already computed), xr_spread (from `weather_data["cross_run_spread"][field][valid_time]["spread"]`), lead_h, sin/cos of hour, cc_inter_sigma + pressure_trend (from `derived`), wd_sin/cos + ws_fc + cloud_low_fc + solar_wm2_fc (from hourly arrays). Passed via new `features=` param to `pick_source`.
+- **Signature extended.** `append_forecast_snapshot(hourly, ..., cross_run_spread=None)` — collector.py now passes `weather_data.get("cross_run_spread")`. Safe fall-through: any missing input yields None-valued features and `_learned_override` fails safely to fall-through picking.
+- **Shadow still off.** `LEARNED_SELECTOR_SHADOW_ENABLED = False` unchanged. The whole feature-plumbing pipeline now runs every tick and per-lead per-field, but `_learned_override` short-circuits to `None` at the guard, so picks are identical to v0.6.644. Real user-visible test: a 24h clean run with no exceptions in the new code path, then flip the flag when the classifier's 7-day pair-log accumulates enough fresh data.
+
+</details>
+
+<details>
 <summary><strong>v0.6.644 • September 21, 2026 (L1 selector — first LEARNED per-obs classifier wired, shadow)</strong></summary>
 
 - **First learned model wired into the L1 selector.** All prior per-obs picks in `l1_selector.py` were crude threshold rules on a single axis (`_IMS_SELECTOR_CELLS`, v0.6.640/641). This ships the runtime scaffold to consume L2-regularized logistic regression classifiers per (field, regime, lead-band): β vector + standardization moments + θ* live in `weather_collector/data/l1_learned_selector_curated.json`; runtime standardizes an incoming feature dict, computes sigmoid(β·x), routes "nbm" if P > θ*, "hrrr" if P ≤ θ*. Fitter is `analysis/l1_selector_per_obs_classifier_stage1_v2.py` (12 physics features); curator is `analysis/l1_learned_selector_curate.py`.

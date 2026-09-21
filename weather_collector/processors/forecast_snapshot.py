@@ -8,6 +8,7 @@ drift, etc.). One entry per hour, fields use short keys to keep file
 size manageable across two weeks of 10-minute runs.
 """
 import logging
+import math
 from datetime import datetime, timedelta, timezone as _dt_timezone
 
 import pytz
@@ -177,7 +178,79 @@ def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
         return None
 
 
-def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extract=None, current=None, hyperlocal=None):
+def _safe_float(v):
+    try:
+        return float(v) if v is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _build_learned_features(field, i, ims_i, valid_hour_local, hourly, derived, cross_run_spread, times):
+    """Assemble the 12-feature dict the learned per-obs classifier consumes.
+
+    Feature-name order MUST match FEATURE_NAMES in
+    analysis/l1_selector_per_obs_classifier_stage1_v2.py:
+      ims, xr_spread, lead_h, sin_hod, cos_hod, cc_inter_sigma,
+      pressure_trend, wd_sin, wd_cos, ws_fc, cloud_low_fc, solar_wm2_fc.
+
+    Any None value causes l1_selector._learned_override to fall through
+    (fail-safe). Emits None-values freely — the classifier can't fire on
+    a partial feature set anyway.
+    """
+    def _arr_at(name):
+        arr = hourly.get(name) or []
+        return arr[i] if i < len(arr) else None
+
+    wd_i = _safe_float(_arr_at("wind_direction"))
+    ws_i = _safe_float(_arr_at("wind_speed"))
+    cloud_low_i = _safe_float(_arr_at("cloud_cover_low"))
+    solar_i = _safe_float(_arr_at("direct_radiation"))
+
+    # xr_spread is per (field, valid_time). Match cross_run_spread's keying.
+    xr = None
+    if cross_run_spread and i < len(times):
+        vt_key = times[i]
+        if vt_key:
+            # cross_run_spread keys are minute-precision "YYYY-MM-DDTHH:MM"; times[i]
+            # may include seconds. Strip past minute.
+            vt_norm = vt_key[:16] if len(vt_key) >= 16 else vt_key
+            entry = ((cross_run_spread.get(field) or {}).get(vt_norm)) or {}
+            xr = _safe_float(entry.get("spread"))
+
+    p_trend = _safe_float((derived or {}).get("pressure_trend_hpa_3h"))
+    cc_sigma = _safe_float((derived or {}).get("cloud_inter_source_sigma"))
+
+    if valid_hour_local is None:
+        sin_hod = cos_hod = None
+    else:
+        h_ang = 2 * math.pi * (valid_hour_local % 24) / 24.0
+        sin_hod = math.sin(h_ang)
+        cos_hod = math.cos(h_ang)
+
+    if wd_i is None:
+        wd_sin = wd_cos = None
+    else:
+        wd_rad = math.radians(wd_i)
+        wd_sin = math.sin(wd_rad)
+        wd_cos = math.cos(wd_rad)
+
+    return {
+        "ims": ims_i,
+        "xr_spread": xr,
+        "lead_h": float(i),
+        "sin_hod": sin_hod,
+        "cos_hod": cos_hod,
+        "cc_inter_sigma": cc_sigma,
+        "pressure_trend": p_trend,
+        "wd_sin": wd_sin,
+        "wd_cos": wd_cos,
+        "ws_fc": ws_i,
+        "cloud_low_fc": cloud_low_i,
+        "solar_wm2_fc": solar_i,
+    }
+
+
+def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extract=None, current=None, hyperlocal=None, cross_run_spread=None):
     """Append a snapshot of the corrected 48h forecast for later validation.
     Prunes snapshots older than RETENTION_DAYS on each write. No-op if the
     hourly data has no usable hours.
@@ -951,7 +1024,15 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                           if _l1_v is not None and raw_nbm_v is not None else None)
             except (TypeError, ValueError):
                 _ims_i = None
-            source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i, _ims_i)
+            # v0.6.645 — build the 12-feature dict the learned per-obs
+            # classifier consumes. Must exactly match FEATURE_NAMES order in
+            # analysis/l1_selector_per_obs_classifier_stage1_v2.py. Any missing
+            # feature (None) causes _learned_override to fail-safe fall-through.
+            _feats = _build_learned_features(
+                f, i, _ims_i, _valid_hour_local_i,
+                hourly, derived, cross_run_spread, times,
+            )
+            source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i, _ims_i, _feats)
             entry[f"{f}_selector_source"] = source
             if source == "nws":
                 # 3-way walker cleared this (field, regime, band) for NWS

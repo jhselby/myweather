@@ -796,6 +796,7 @@ def main():
             nbm_extract=nbm_extract,
             current=weather_data.get("current"),
             hyperlocal=weather_data.get("hyperlocal"),
+            cross_run_spread=weather_data.get("cross_run_spread"),
         )
     except Exception as e:
         logging.warning(f"  ⚠  Forecast snapshot failed: {redact_secrets(e)}")
