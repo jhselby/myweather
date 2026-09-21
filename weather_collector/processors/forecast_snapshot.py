@@ -152,7 +152,7 @@ from .skip_table_nbm import should_skip as _should_skip_nbm
 # Phase 4 (2026-08-19) — L1 selector. Picks HRRR or NBM cascade output
 # per (field, lead-band). When "nbm", replace the user-visible {field}
 # with {field}_l3_nbm. Table refit nightly by analysis/l1_selector_fit.py.
-from .l1_selector import pick_source as _selector_pick_source
+from .l1_selector import pick_source as _selector_pick_source, learned_predict as _learned_predict
 # Phase 4b (2026-08-19) — wdp NBM sibling. Applies HRRR-side wdp's
 # predicted-transition persistence gate to the NBM cascade too, so
 # cells the selector routes to NBM don't silently lose wdp's coverage.
@@ -176,6 +176,18 @@ def _nws_value_at(nws_gridpoints, nws_key, target_utc, convert):
         return convert(float(raw))
     except (TypeError, ValueError):
         return None
+
+
+_LEARNED_BANDS = (("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48))
+
+
+def _band_for_lead(lead_h):
+    """Local band mapper — mirrors l1_selector._band_for. Kept here so
+    forecast_snapshot doesn't depend on a private symbol."""
+    for name, lo, hi in _LEARNED_BANDS:
+        if lo <= lead_h < hi:
+            return name
+    return None
 
 
 def _safe_float(v):
@@ -1032,6 +1044,18 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                 f, i, _ims_i, _valid_hour_local_i,
                 hourly, derived, cross_run_spread, times,
             )
+            # v0.6.646 — shadow telemetry: stamp classifier's would-pick and
+            # underlying probability whenever the (field, regime, band) has a
+            # curated cell. Runs REGARDLESS of LEARNED_SELECTOR_SHADOW_ENABLED
+            # so pair-log retro can compare learned vs actual pick during the
+            # 7-day shadow window before a flag flip is entertained.
+            _fc_band_i = _band_for_lead(i)
+            _learned_p, _learned_prob = _learned_predict(
+                f, _fc_regime_i, _fc_band_i, _feats
+            )
+            if _learned_p is not None:
+                entry[f"{f}_learned_pick_shadow"] = _learned_p
+                entry[f"{f}_learned_prob_shadow"] = round(_learned_prob, 4)
             source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i, _ims_i, _feats)
             entry[f"{f}_selector_source"] = source
             if source == "nws":

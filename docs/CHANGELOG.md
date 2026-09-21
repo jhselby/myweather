@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.646 • September 21, 2026 (learned selector — shadow telemetry stamped for retro comparison)</strong></summary>
+
+- **Classifier vote + probability stamped every tick, independent of the shadow flag.** v0.6.644-645 built the wire but with `LEARNED_SELECTOR_SHADOW_ENABLED = False` we had zero visibility into what the classifier WOULD pick — 7 days into the future we'd be asked to justify a flag flip with nothing to justify from. Fixed: `_learned_override` refactored into `_learned_predict` (always computes when the cell exists and features are complete) + a live guard (returns None unless flag flipped). New public `learned_predict(field, regime, band, features)` returns `(pick, prob)`.
+- **`forecast_snapshot` stamps two shadow fields per row.** When the classifier fires for a curated cell, `entry[f"{f}_learned_pick_shadow"]` gets "nbm"|"hrrr" and `entry[f"{f}_learned_prob_shadow"]` gets the sigmoid probability (0..1, rounded to 4 dp). Currently the only curated cell is h/nw_flow/24-47h, so telemetry fires ~30-50 rows per week when h forecasts land in that regime. Pair log picks these up automatically; retro can compare learned pick vs actual `{f}_selector_source` and score the counterfactual (`abs(forecast_l4 - obs)` if pick=hrrr, `abs(forecast_l3_nbm - obs)` if pick=nbm) row-by-row.
+- **Same-tick production behavior unchanged.** `LEARNED_SELECTOR_SHADOW_ENABLED = False` still short-circuits the LIVE picker path via `_learned_override`. The new telemetry runs in parallel — it can't affect what users see. When 7 days of shadow evidence confirms the +6.5% held-out lift replicates on fresh production data, flipping the flag becomes a supported decision, not a leap.
+
+</details>
+
+<details>
 <summary><strong>v0.6.645 • September 21, 2026 (learned selector — feature plumbing in forecast_snapshot)</strong></summary>
 
 - **Per-lead 12-feature dict flows into `pick_source`.** v0.6.644 shipped the runtime scaffold and curated table but forecast_snapshot was still calling `pick_source(..., features=None)`, meaning the learned override could never fire even with the shadow flag on. This closes the loop: `_build_learned_features(field, i, ims, valid_hour_local, hourly, derived, cross_run_spread, times)` assembles all 12 features per (field, lead) — ims (already computed), xr_spread (from `weather_data["cross_run_spread"][field][valid_time]["spread"]`), lead_h, sin/cos of hour, cc_inter_sigma + pressure_trend (from `derived`), wd_sin/cos + ws_fc + cloud_low_fc + solar_wm2_fc (from hourly arrays). Passed via new `features=` param to `pick_source`.

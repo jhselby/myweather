@@ -222,33 +222,50 @@ def _sigmoid(z):
     return 1.0 / (1.0 + math.exp(-z))
 
 
-def _learned_override(field, regime, band, features):
-    """Return the classifier's per-obs vote: "nbm" when P(NBM wins) > θ*,
-    "hrrr" when P ≤ θ*. Returns None (fall-through to lower-priority pickers)
-    only when the classifier can't run (shadow off, features missing, cell
-    absent). Fires both directions because the classifier trained with
-    baseline=always-HRRR, but for cells whose band-pool default is already
-    NBM, the classifier's ROUTE-TO-HRRR vote is the informative half."""
-    if not LEARNED_SELECTOR_SHADOW_ENABLED:
-        return None
+def _learned_predict(field, regime, band, features):
+    """Compute the classifier's per-obs vote AND probability, independent
+    of the shadow flag. Returns (pick, prob) — pick is "nbm"|"hrrr", prob is
+    the sigmoid(β·x) value in [0,1]. Returns (None, None) when the classifier
+    can't run (cell absent, features missing/incomplete). Consumers can use
+    this for shadow telemetry regardless of whether the pick is honored."""
     if features is None:
-        return None
+        return (None, None)
     cell = _LEARNED_CELLS.get((field, regime, band))
     if not cell:
-        return None
-    # Extract features in trained order; missing → fail-safe fall-through
+        return (None, None)
     xs = []
     for name in _LEARNED_FEATURE_NAMES:
         v = features.get(name)
         if v is None:
-            return None
+            return (None, None)
         xs.append(float(v))
     mu = cell["mu"]; sd = cell["sd"]; beta = cell["beta"]
     z = beta[0]
     for i, x in enumerate(xs):
         s = sd[i] if sd[i] > 1e-8 else 1.0
         z += beta[i + 1] * ((x - mu[i]) / s)
-    return "nbm" if _sigmoid(z) > cell["theta"] else "hrrr"
+    prob = _sigmoid(z)
+    pick = "nbm" if prob > cell["theta"] else "hrrr"
+    return (pick, prob)
+
+
+def _learned_override(field, regime, band, features):
+    """Return the classifier's per-obs vote when SHADOW flag is on; None
+    otherwise. Wraps _learned_predict with the live guard so shadow
+    telemetry can still fire from consumers that call _learned_predict
+    directly regardless of the flag."""
+    if not LEARNED_SELECTOR_SHADOW_ENABLED:
+        return None
+    pick, _ = _learned_predict(field, regime, band, features)
+    return pick
+
+
+def learned_predict(field, regime, band, features):
+    """Public entrypoint for shadow telemetry — same as internal _learned_predict.
+    Consumers stamp the returned (pick, prob) alongside the actual selector
+    source so retro analysis can compare classifier vs pool per row without
+    depending on the shadow flag state."""
+    return _learned_predict(field, regime, band, features)
 
 
 def _ims_override(field, regime, band, ims):
