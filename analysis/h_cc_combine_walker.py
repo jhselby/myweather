@@ -61,8 +61,20 @@ LEAD_BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 4
 
 GATE_WINDOW_DAYS = 7
 MIN_N_CELL_DAY = 30      # a cell-day counts as "seen" only if n >= this
-MIN_DAYS_IN_WINDOW = 7   # gate flips only if all 7 seen days agree
+MIN_DAYS_IN_WINDOW = 7   # cell must have this many seen days to be judged
+MIN_R_DAYS = 5           # random must win on ≥ this many days out of window
+MAX_M_DAYS = 0           # max cannot win on any day (no losing-regime tolerance)
+MARGIN_MIN = 0.01        # on winning days, ≥1% MAE gap vs max
 FORMULA_DEFAULT = "max"  # matches Ccd's FORMULA constant
+
+# Rule rationale: physics-choice gates should not use the same unanimity rule
+# as regression-correction gates. cc combine is a choice between {max, random}
+# overlap physics — random dominates in every regime with adequate sample per
+# Stage 1 halves-strict, but the original walker required random to win on
+# ALL 7 days, which never fires when a single P day (prod wins because Lc
+# corrections beat both raw formulas) counts as non-R. Loosened 2026-09-21:
+# random must win a strong majority (≥5/7) with no outright M day, with the
+# ≥1% margin enforced on the R days.
 
 
 def band_of(lead):
@@ -198,21 +210,19 @@ def main():
         n_win_max = winners.count("max")
         n_win_prod = winners.count("prod")
 
-        # Strict rule: unanimous non-default across the full window
+        # Loosened rule (2026-09-21): random must win ≥MIN_R_DAYS of MIN_DAYS_IN_WINDOW
+        # and max must not win outright on any day; P days (prod wins) allowed.
+        # On R days, require ≥MARGIN_MIN relative gap vs max.
         cleared_formula = None
         margin_ok = False
-        if n_seen >= MIN_DAYS_IN_WINDOW:
-            for candidate in ("random", "prod"):
-                if winners.count(candidate) == n_seen:
-                    # require candidate to beat `max` by >= 1% MAE on every day
-                    if all(
-                        e["maes"][candidate] < e["maes"]["max"]
-                        and (e["maes"]["max"] - e["maes"][candidate]) / max(1e-6, e["maes"]["max"]) >= 0.01
-                        for e in window
-                    ):
-                        cleared_formula = candidate
-                        margin_ok = True
-                        break
+        if n_seen >= MIN_DAYS_IN_WINDOW and n_win_random >= MIN_R_DAYS and n_win_max <= MAX_M_DAYS:
+            r_days = [e for e in window if e["winner"] == "random"]
+            if all(
+                (e["maes"]["max"] - e["maes"]["random"]) / max(1e-6, e["maes"]["max"]) >= MARGIN_MIN
+                for e in r_days
+            ):
+                cleared_formula = "random"
+                margin_ok = True
 
         formula = cleared_formula or FORMULA_DEFAULT
         cleared = cleared_formula is not None
@@ -251,7 +261,8 @@ def main():
     p(f"window: {GATE_WINDOW_DAYS}d  min-n-per-cell-day: {MIN_N_CELL_DAY}  "
       f"default formula: {FORMULA_DEFAULT}")
     p(f"days present: {len(all_days)}  cells with any history: {n_cells}  cells cleared: {n_flipped}")
-    p(f"rule: non-default formula must win on ALL {MIN_DAYS_IN_WINDOW} days by ≥1% MAE vs max")
+    p(f"rule: random must win ≥{MIN_R_DAYS}/{MIN_DAYS_IN_WINDOW} days with 0 M days; "
+      f"≥{int(MARGIN_MIN*100)}% MAE gap on R days")
     p("=" * 100)
 
     header = (f"{'regime':<12} {'band':<7} {'series':<9} {'seen':>5} "
