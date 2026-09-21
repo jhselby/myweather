@@ -63,15 +63,30 @@ def _parse_ts(s):
 
 
 def _window_entries(entries, now_local, minutes):
-    cutoff = now_local - timedelta(minutes=minutes)
+    # Truncate cutoff to minute — obs timestamps are minute-precision (see
+    # frontal_log.append_frontal_snapshot). If now_local carries seconds,
+    # cutoff shifts a few seconds INTO the earliest window entry and drops
+    # it (e.g. run at 02:07:29 → cutoff 01:07:29 excludes obs ts 01:07:00).
+    # That silently ate 3 of 6 recent wd+pressure passages by dropping the
+    # leading obs and pushing p_now-p_min below the 0.02 threshold on the
+    # float boundary (frontal_detector_health investigation 2026-09-21).
+    cutoff = (now_local - timedelta(minutes=minutes)).replace(second=0, microsecond=0)
     return [e for e in entries if _parse_ts(e["ts"]) >= cutoff.replace(tzinfo=None)]
 
 
 def _classify_type(dp_drop, wd_from, wd_to, pressure_rising):
-    """Best guess at front type from signature."""
+    """Best guess at front type from signature.
+
+    Cold requires dp_drop + wd_to in N-quadrant. pressure_rising is not
+    required: the pressure trough sits AT frontal passage and rises AFTER,
+    so a mid-passage detection catches dp+wd in-window but pressure
+    hasn't bounced yet. Demanding pressure_rising forced the front to be
+    fully behind us and produced 4/5 recent events labeled 'unknown'
+    (frontal_detector_health 2026-09-21).
+    """
     to_oct = _octant(wd_to)
     from_oct = _octant(wd_from)
-    if dp_drop is not None and dp_drop >= DP_DROP_THRESHOLD and to_oct in ("N", "NE", "NW") and pressure_rising:
+    if dp_drop is not None and dp_drop >= DP_DROP_THRESHOLD and to_oct in ("N", "NE", "NW"):
         return "cold"
     if to_oct in ("S", "SE", "E") and from_oct in ("N", "NW", "W", "NE"):
         return "sea_breeze"

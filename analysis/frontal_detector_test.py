@@ -116,6 +116,17 @@ def main():
     )
     all_ok &= run_test("strong sea-breeze (should fire)", strong_sb, "active", "sea_breeze", min_confidence=67)
 
+    # 5. Mid-passage cold front: dp drop + wd shift into NW, pressure still
+    # falling (trough not yet passed). Classifier must NOT require
+    # pressure_rising for a cold label — see _classify_type docstring.
+    cold_mid_passage = make_window(
+        datetime(2026, 6, 15, 14, 0),
+        dp_series=[65, 64, 63, 60, 57, 55, 54],
+        wd_series=[210, 220, 250, 280, 310, 320, 320],
+        p_series=[29.95, 29.94, 29.92, 29.90, 29.88, 29.86, 29.85],
+    )
+    all_ok &= run_test("cold front mid-passage (no pressure bounce)", cold_mid_passage, "active", "cold", min_confidence=67)
+
     print()
     print(f"RESULT: {'ALL PASS' if all_ok else 'FAILURES'}")
     return 0 if all_ok else 1

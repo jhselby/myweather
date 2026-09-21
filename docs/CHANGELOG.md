@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.6.643 • September 21, 2026 (frontal detector — cold-branch reachable + window-cutoff bug fix)</strong></summary>
+
+- **`_classify_type` cold branch no longer requires `pressure_rising`.** Pressure trough sits AT frontal passage; the bounce is a lagging signal that often falls outside the 60-min detection window during mid-passage. Requiring all three signals (dp drop + wd shift + pressure rise) demanded the front already be fully behind us, and produced 4 of 5 recent events labeled `type=unknown` in `frontal_events_log.json`. Cold now = `dp_drop >= 4°F AND wd_to in (N/NE/NW)`, whether or not pressure has yet inflected. Terminal-octant sets are disjoint from sea_breeze (S/SE/E), so no reclassification collision.
+- **`_window_entries` cutoff truncated to minute.** Was `now_local - timedelta(minutes=60)` using a `now_local` that carries seconds/microseconds from `datetime.now(TZ)`. A collector run at 02:07:29 produced cutoff 01:07:29, which excluded the obs entry at ts 01:07:00 (obs are minute-precision). Silently ate the earliest obs from the window, which happened to be the lower-pressure reading on real passages, pushing `p_now - p_min` from ~0.023 down to `0.019999...` (displays as "0.020" but genuinely below 0.02) → `pressure_inflection = False` → score 2 → 1 → no event. Explains 3 of 6 wd+pressure passages that `frontal_detector_health` reported missing in the 14-day window ending 2026-09-21.
+- **Test added.** `analysis/frontal_detector_test.py` gets a `cold front mid-passage (no pressure bounce)` case with dp drop + wd shift into NW and pressure still falling. Confirms score=2 fires and classifies as cold at conf=67.
+- **What this doesn't fix.** The other half of the `frontal_detector_health` detection gap is a threshold-change lookback artifact — DP_DROP_THRESHOLD dropped 8.0→4.0 on 2026-09-14 (v0.6.620) and the simulator retroactively applies 4.0 to obs from the 7 days before the change, finding 3 dp+pressure passages that couldn't have fired at the old threshold. Auto-heals by 2026-09-28 when those days roll out of the 14-day window.
+
+</details>
+
+<details>
 <summary><strong>v0.6.642 • September 20, 2026 (h τ=7 REVERT — noise ship, long-lead regression)</strong></summary>
 
 - **h τ=7 removed from `decay_fit.py::TAU_DAYS_BY_FIELD`.** Shipped v0.6.635 on 09-16 (3/3 streak, +6.9% held-out); fresh τ-suspect fired 09-17 as the day 2/7 watch item. Instead of settling by day 7, it worsened: Sunday afternoon 09-20 fresh 12h VC on h reached **+37% at 0-5h but -128% at 24-47h**, with dp (derived from h via Magnus at forecast time) showing the same shape at **-132% on 24-47h**. Users saw forecast > 2× worse-than-raw MAE on the long-lead band, which drives most of the visible 24h forecast.
