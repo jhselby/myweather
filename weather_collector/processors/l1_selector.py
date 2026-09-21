@@ -24,11 +24,13 @@ its post-deploy watch.
 """
 import json
 import logging
+import math
 from pathlib import Path
 
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_table_curated.json"
 REGIME_WALKER_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_by_regime_walker.json"
+LEARNED_CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_learned_selector_curated.json"
 
 BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)]
 
@@ -45,6 +47,11 @@ _NWS_FIELDS_WIRE_ELIGIBLE = frozenset({"t", "ws", "wd", "pp"})
 _TABLE = {}       # {field: {band: "hrrr"|"nbm"}}
 _META = {}        # fitted_at, ship-gate summary, etc.
 _REGIME_OVERRIDES = {}  # {field: {regime: {band: "nbm"}}} — cleared cells only
+
+# Learned per-obs classifier runtime table. See analysis/l1_learned_selector_curate.py
+# for the curator, l1_selector_per_obs_classifier_stage1_v2.py for the fitter.
+_LEARNED_CELLS = {}       # {(field, regime, band): {theta, beta, mu, sd}}
+_LEARNED_FEATURE_NAMES = ()   # tuple, ordered — must match runtime feature dict keys
 
 
 def _band_for(lead_h):
@@ -109,8 +116,46 @@ def _load_regime_overrides():
     _REGIME_OVERRIDES = parsed
 
 
+def _load_learned():
+    """Load learned per-obs classifier cells. Missing / malformed → empty
+    table (learned override is a no-op)."""
+    global _LEARNED_CELLS, _LEARNED_FEATURE_NAMES
+    try:
+        with open(LEARNED_CURATED_PATH) as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        _LEARNED_CELLS = {}
+        _LEARNED_FEATURE_NAMES = ()
+        return
+    names = tuple(data.get("feature_names") or ())
+    parsed = {}
+    for cell in data.get("cells") or ():
+        f_ = cell.get("field")
+        r_ = cell.get("regime")
+        b_ = cell.get("band")
+        beta = cell.get("beta")
+        mu = cell.get("mu")
+        sd = cell.get("sd")
+        theta = cell.get("theta")
+        if None in (f_, r_, b_, beta, mu, sd, theta):
+            continue
+        if len(beta) != len(names) + 1 or len(mu) != len(names) or len(sd) != len(names):
+            logging.warning(f"  ⚠  l1_learned_selector: shape mismatch on cell "
+                            f"{f_}/{r_}/{b_}; skipping")
+            continue
+        parsed[(f_, r_, b_)] = {
+            "theta": float(theta),
+            "beta": [float(x) for x in beta],
+            "mu": [float(x) for x in mu],
+            "sd": [float(x) for x in sd],
+        }
+    _LEARNED_CELLS = parsed
+    _LEARNED_FEATURE_NAMES = names
+
+
 _load()
 _load_regime_overrides()
+_load_learned()
 
 
 # v0.6.606 — HRRR PBL morning-overshoot workaround. Named routing gate for
@@ -156,6 +201,56 @@ _IMS_SELECTOR_CELLS = {
 }
 
 
+# v0.6.644 — First LEARNED per-obs classifier wired into the L1 selector.
+# Stage 1 v2b (analysis/l1_selector_per_obs_classifier_stage1_v2.py, 2026-09-21):
+# 12-feature L2-regularized logistic regression per (regime, band). Leakage-checked
+# — dropped cc_disagree because state_obs.cloud_cover is post-hoc. Cleared cells
+# emit a β vector + standardization stats + θ*; runtime standardizes the incoming
+# feature dict, computes sigmoid(β·x), routes NBM iff P > θ*.
+#
+# Ships in shadow. LEARNED_SELECTOR_SHADOW_ENABLED = False → override branch inert.
+# Flip to True after 7-day pair-log accumulates and retro confirms held-out lift
+# replicates on fresh data. Blast radius when flipped: 1 cell today
+# (h/nw_flow/24-47h at test +6.50%, capture 19.9%, fNBM 25.8%).
+LEARNED_SELECTOR_SHADOW_ENABLED = False
+
+
+def _sigmoid(z):
+    # Clip for numerical stability — matches the classifier's sigmoid.
+    if z > 30: return 1.0
+    if z < -30: return 0.0
+    return 1.0 / (1.0 + math.exp(-z))
+
+
+def _learned_override(field, regime, band, features):
+    """Return the classifier's per-obs vote: "nbm" when P(NBM wins) > θ*,
+    "hrrr" when P ≤ θ*. Returns None (fall-through to lower-priority pickers)
+    only when the classifier can't run (shadow off, features missing, cell
+    absent). Fires both directions because the classifier trained with
+    baseline=always-HRRR, but for cells whose band-pool default is already
+    NBM, the classifier's ROUTE-TO-HRRR vote is the informative half."""
+    if not LEARNED_SELECTOR_SHADOW_ENABLED:
+        return None
+    if features is None:
+        return None
+    cell = _LEARNED_CELLS.get((field, regime, band))
+    if not cell:
+        return None
+    # Extract features in trained order; missing → fail-safe fall-through
+    xs = []
+    for name in _LEARNED_FEATURE_NAMES:
+        v = features.get(name)
+        if v is None:
+            return None
+        xs.append(float(v))
+    mu = cell["mu"]; sd = cell["sd"]; beta = cell["beta"]
+    z = beta[0]
+    for i, x in enumerate(xs):
+        s = sd[i] if sd[i] > 1e-8 else 1.0
+        z += beta[i + 1] * ((x - mu[i]) / s)
+    return "nbm" if _sigmoid(z) > cell["theta"] else "hrrr"
+
+
 def _ims_override(field, regime, band, ims):
     """Return "hrrr" or "nbm" if this cell has an ims-conditioned rule and
     ims is available, else None. Only fires when IMS_SELECTOR_SHADOW_ENABLED
@@ -175,15 +270,16 @@ def _ims_override(field, regime, band, ims):
         return "hrrr" if ims < threshold else "nbm"
 
 
-def pick_source(field, lead_h, regime=None, hour_local=None, ims=None):
-    """Return "hrrr", "nbm", or "nws" for this (field, lead_h[, regime, hour_local, ims]).
+def pick_source(field, lead_h, regime=None, hour_local=None, ims=None, features=None):
+    """Return "hrrr", "nbm", or "nws" for this (field, lead_h[, regime, hour_local, ims, features]).
 
     Precedence: HRRR PBL morning-overshoot workaround (t only, stagnant_high
-    only, morning hours only) → ims per-obs override (shadow-guarded) →
-    by-regime walker override → band pool pick → HRRR fall-through. HRRR
-    fall-through on any missing lookup remains safe (equal to pre-Phase-4 Prod).
-    The forecast_snapshot consumer falls back to HRRR if "nws" is returned
-    but the {field}_nws value is missing for the hour.
+    only, morning hours only) → learned per-obs classifier (shadow-guarded,
+    NBM-vote only) → ims per-obs override (shadow-guarded) → by-regime walker
+    override → band pool pick → HRRR fall-through. HRRR fall-through on any
+    missing lookup remains safe (equal to pre-Phase-4 Prod). The
+    forecast_snapshot consumer falls back to HRRR if "nws" is returned but the
+    {field}_nws value is missing for the hour.
     """
     # HRRR PBL morning-overshoot workaround — see comment block above pick_source.
     if (not HRRR_PBL_MORNING_OVERSHOOT_KILL
@@ -191,12 +287,16 @@ def pick_source(field, lead_h, regime=None, hour_local=None, ims=None):
             and regime == "stagnant_high"
             and hour_local in _HRRR_PBL_MORNING_HOURS_LOCAL):
         return "nbm"
-    # ims per-obs override — first per-obs axis wired to the L1 selector.
-    band_for_ims = _band_for(lead_h)
-    ims_pick = _ims_override(field, regime, band_for_ims, ims) if band_for_ims else None
+    band_here = _band_for(lead_h)
+    # Learned per-obs classifier — first learned model in the picker.
+    learned_pick = _learned_override(field, regime, band_here, features) if band_here else None
+    if learned_pick is not None:
+        return learned_pick
+    # ims per-obs override — first per-obs axis wired to the L1 selector (crude threshold).
+    ims_pick = _ims_override(field, regime, band_here, ims) if band_here else None
     if ims_pick is not None:
         return ims_pick
-    band = _band_for(lead_h)
+    band = band_here
     if band is not None and regime:
         reg_cells = _REGIME_OVERRIDES.get(field, {}).get(regime)
         if reg_cells:

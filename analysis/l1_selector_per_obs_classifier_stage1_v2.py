@@ -57,7 +57,10 @@ VAL_FRAC = 0.30     # last 30% of train half used to pick theta*
 FEATURE_NAMES = [
     "ims", "xr_spread", "lead_h",
     "sin_hod", "cos_hod",
-    "cc_disagree", "cc_inter_sigma",
+    "cc_inter_sigma",         # NOTE: state_fc-only. cc_disagree removed 09-21
+                              # (data leak — used state_obs at valid_time which
+                              # a live picker doesn't have; see
+                              # feedback_state_fc_vs_state_obs.md).
     "pressure_trend",
     "wd_sin", "wd_cos",
     "ws_fc", "cloud_low_fc", "solar_wm2_fc",
@@ -106,8 +109,9 @@ def build_features(rows_raw, vt_spread):
         sob = r.get("state_obs") or {}
         regime = sfc.get("regime_synoptic")
         if not regime: continue
-        cc_fc, cc_obs = sfc.get("cloud_cover"), sob.get("cloud_cover")
-        cc_disagree = abs(float(cc_fc) - float(cc_obs)) if cc_fc is not None and cc_obs is not None else 0.0
+        # cc_disagree dropped 09-21: state_obs.cloud_cover is only available
+        # AFTER valid_time (post-hoc). Live picker cannot use it. cc_inter_sigma
+        # (model-vs-model σ at forecast time) stays — that's a legit signal.
         cc_sigma = float(r.get("cloud_inter_source_sigma") or 0.0)
         p_trend = float(sfc.get("pressure_trend_hpa_3h") or 0.0)
         hh = hour_local(r.get("obs_time", ""))
@@ -126,7 +130,7 @@ def build_features(rows_raw, vt_spread):
                 ims, xr, float(lead),
                 math.sin(2 * math.pi * hh / 24.0),
                 math.cos(2 * math.pi * hh / 24.0),
-                cc_disagree, cc_sigma, p_trend,
+                cc_sigma, p_trend,
                 wd_sin, wd_cos,
                 ws_fc, cloud_low_fc, solar_fc,
             ],
@@ -300,6 +304,8 @@ for key in sorted(by_cell.keys()):
         "test_capture_pct": capture,
         "test_frac_nbm": fnbm_te, "train_frac_nbm": fnbm_tr,
         "beta_std": beta.tolist(),  # first is intercept, then FEATURE_NAMES order
+        "mu": mu.tolist(),           # feature means from fit slice (for runtime standardization)
+        "sd": sd.tolist(),           # feature stds from fit slice (for runtime standardization)
     }
     all_results.append(res)
     if is_promote:

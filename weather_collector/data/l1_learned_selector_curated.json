@@ -1,0 +1,75 @@
+{
+  "generated_at": "2026-09-21T17:14:18.603522+00:00",
+  "source": "analysis/l1_learned_selector_curate.py",
+  "feature_names": [
+    "ims",
+    "xr_spread",
+    "lead_h",
+    "sin_hod",
+    "cos_hod",
+    "cc_inter_sigma",
+    "pressure_trend",
+    "wd_sin",
+    "wd_cos",
+    "ws_fc",
+    "cloud_low_fc",
+    "solar_wm2_fc"
+  ],
+  "min_lift_pct": 3.0,
+  "min_n_test": 150,
+  "cells": [
+    {
+      "field": "h",
+      "regime": "nw_flow",
+      "band": "24-47",
+      "theta": 0.45,
+      "beta": [
+        -2.1650352236589137,
+        -0.39848690740729537,
+        0.48006999500132164,
+        0.32284360117093025,
+        0.9145624450153286,
+        0.5317584439529205,
+        -0.4325854033773544,
+        0.19806928663066073,
+        -0.9196310392152591,
+        0.47664466457655397,
+        -0.25513391138375213,
+        -0.12602800966884775,
+        -0.42524147260687883
+      ],
+      "mu": [
+        11.144715447154471,
+        24.390081300812952,
+        35.36747967479675,
+        0.1815924688629318,
+        -0.020136428708851482,
+        20.226325203251964,
+        0.3167479674796764,
+        -0.19323938296901386,
+        0.8525597428972573,
+        8.005853658536596,
+        47.13008130081301,
+        137.89918699186993
+      ],
+      "sd": [
+        10.962917563513622,
+        9.215761463003677,
+        7.323972176674951,
+        0.6998432557476637,
+        0.6905346601551788,
+        21.81347332191252,
+        0.671435176798334,
+        0.44268380135333424,
+        0.1995782495165278,
+        3.3054178061015413,
+        45.844161502810984,
+        304.0441339101786
+      ],
+      "test_lift_pct": 6.505,
+      "capture_pct": 19.94,
+      "n_test": 879
+    }
+  ],
+  "notes": "Runtime consumer: l1_selector._learned_override(field, regime, band, features). features is a dict keyed by feature_names entries; each value is standardized as (x - mu[i]) / sd[i], then P = sigmoid(beta[0] + sum(beta[i+1] * x_std[i])). Route NBM iff P > theta, else HRRR (or the fall-through pick). SHADOW guard lives in l1_selector.LEARNED_SELECTOR_SHADOW_ENABLED \u2014 the runtime table is loaded regardless; the flag controls whether picks are actually swapped."
+}
