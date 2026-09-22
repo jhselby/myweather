@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.6.647 • September 22, 2026 (l3_nbm skip-ADD 3 wd cells — two-window CONFIRMED)</strong></summary>
+
+- **`nbm_skip_add_audit` promoted three wd cells to skip in `l3_nbm`.** All three cleared the v0.6.574 two-window gate: 14d and 50d windows both agree, halves directionally-consistent. `wd/pre_frontal/0-5h` (14d n=343 lift -3.10%, 50d n=914 lift -3.01%, halves -3.08/-2.94), `wd/ne_flow/12-23h` (14d n=212 -9.30%, 50d n=762 -5.80%, halves -12.68/-3.43), `wd/ne_flow/24-47h` (14d n=294 -6.20%, 50d n=1,077 -3.81%, halves +0.00/-4.05). Third cell's h1 half is neutral not strictly negative — audit CONFIRMED but this cell is the thinnest of the three; first to watch post-deploy.
+- **Skip-table wd stack now covers 6 regime×band cells.** `se_flow` (0-5, 6-11, 12-23) shipped v0.6.500–v0.6.609; today adds `pre_frontal/0-5` + `ne_flow/{12-23, 24-47}`. Matches walkforward validator's proposed skip diff.
+- **No new code — data-only change.** `skip_table_nbm_curated.json` edited; runtime reads via `skip_table_nbm.py` at collector import. `fitted_at` bumped to 2026-09-22T10:15; per-cell history + ship_history rows appended.
+
+</details>
+
+<details>
 <summary><strong>v0.6.646 • September 21, 2026 (learned selector — shadow telemetry stamped for retro comparison)</strong></summary>
 
 - **Classifier vote + probability stamped every tick, independent of the shadow flag.** v0.6.644-645 built the wire but with `LEARNED_SELECTOR_SHADOW_ENABLED = False` we had zero visibility into what the classifier WOULD pick — 7 days into the future we'd be asked to justify a flag flip with nothing to justify from. Fixed: `_learned_override` refactored into `_learned_predict` (always computes when the cell exists and features are complete) + a live guard (returns None unless flag flipped). New public `learned_predict(field, regime, band, features)` returns `(pick, prob)`.

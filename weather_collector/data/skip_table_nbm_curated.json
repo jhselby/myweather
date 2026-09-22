@@ -1,5 +1,5 @@
 {
-  "fitted_at": "2026-09-16T08:04",
+  "fitted_at": "2026-09-22T10:15",
   "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
   "cells": {
     "l3_nbm": {
@@ -89,6 +89,21 @@
           "se_flow",
           12,
           24
+        ],
+        [
+          "pre_frontal",
+          0,
+          6
+        ],
+        [
+          "ne_flow",
+          12,
+          24
+        ],
+        [
+          "ne_flow",
+          24,
+          48
         ]
       ]
     },
@@ -533,6 +548,29 @@
         ]
       },
       "reason": "v0.6.637 \u2014 nbm_stale_skip_audit two-window verdict: 14d n=157 lift +7.67%, 50d n=418 lift +6.91%. Both windows agree correction is helping (positive lift) \u2014 skip is preventing a beneficial correction. Removed per feedback_two_gates_per_layer rule."
+    },
+    "2026-09-22T10:15": {
+      "action": "add",
+      "cells": {
+        "l3_nbm.wd": [
+          [
+            "pre_frontal",
+            0,
+            6
+          ],
+          [
+            "ne_flow",
+            12,
+            24
+          ],
+          [
+            "ne_flow",
+            24,
+            48
+          ]
+        ]
+      },
+      "reason": "nbm_skip_add_audit two-window CONFIRMED (all three). wd/pre_frontal/0-5h: 14d n=343 lift -3.10%, 50d n=914 lift -3.01%, halves -3.08/-2.94 both-negative. wd/ne_flow/12-23h: 14d n=212 lift -9.30%, 50d n=762 lift -5.80%, halves -12.68/-3.43 both-negative. wd/ne_flow/24-47h: 14d n=294 lift -6.20%, 50d n=1,077 lift -3.81%, halves +0.00/-4.05 directionally-consistent (h1 neutral, h2 negative, pooled negative). Passes v0.6.574 two-window gate on all three."
     }
   },
   "ship_history": [
@@ -588,6 +626,44 @@
         }
       ],
       "notes": "Third and final wd.se_flow band. 6-11h shipped v0.6.584 (2026-09-04), 12-23h shipped v0.6.609 (2026-09-14 morning).",
+      "source": "analysis/nbm_skip_add_audit.py CONFIRMED both windows"
+    },
+    {
+      "date": "2026-09-22",
+      "action": "ship",
+      "cells": [
+        {
+          "layer": "l3_nbm",
+          "field": "wd",
+          "cell": [
+            "pre_frontal",
+            0,
+            6
+          ],
+          "reason": "two-window CONFIRMED: 14d n=343 lift -3.10%, 50d n=914 lift -3.01%, halves -3.08/-2.94 both-negative."
+        },
+        {
+          "layer": "l3_nbm",
+          "field": "wd",
+          "cell": [
+            "ne_flow",
+            12,
+            24
+          ],
+          "reason": "two-window CONFIRMED: 14d n=212 lift -9.30%, 50d n=762 lift -5.80%, halves -12.68/-3.43 both-negative."
+        },
+        {
+          "layer": "l3_nbm",
+          "field": "wd",
+          "cell": [
+            "ne_flow",
+            24,
+            48
+          ],
+          "reason": "two-window CONFIRMED: 14d n=294 lift -6.20%, 50d n=1,077 lift -3.81%, halves +0.00/-4.05 directionally-consistent, pooled negative."
+        }
+      ],
+      "notes": "Three CONFIRMED wd cells from today's nbm_skip_add_audit. wd stack now skips 6 regime×band cells: se_flow (0-5, 6-11, 12-23) + pre_frontal 0-5 + ne_flow (12-23, 24-47).",
       "source": "analysis/nbm_skip_add_audit.py CONFIRMED both windows"
     }
   ]
