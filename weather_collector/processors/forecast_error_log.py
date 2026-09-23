@@ -234,6 +234,11 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
                 sel = target_hour.get(f"{short}_selector_source")
                 if sel:
                     pair["selector_source"] = sel
+                # v0.7.0 — shadow-stamp pass-through, wd branch (mirrors main branch).
+                _short_prefix = f"{short}_"
+                for _k, _v in target_hour.items():
+                    if _k.endswith("_shadow") and _k.startswith(_short_prefix) and _v is not None:
+                        pair[_k[len(_short_prefix):]] = _v
                 if state_fc:  pair["state_fc"]  = state_fc
                 if state_obs: pair["state_obs"] = state_obs
                 if cloud_sigma is not None:
@@ -286,6 +291,24 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             sel = target_hour.get(f"{short}_selector_source")
             if sel:
                 pair["selector_source"] = sel
+            # v0.7.0 — shadow-stamp pass-through. Any {short}_*_shadow key in
+            # the snapshot flows into the pair row with the short-prefix
+            # stripped. Covers v0.6.646 learned_pick_shadow/learned_prob_shadow
+            # (silently dead-lettered until now) and v0.7.0 blender's
+            # blend_omega_shadow/blend_shadow. Generic-shape so future shadow
+            # experiments don't need a pair-log-writer edit.
+            _short_prefix = f"{short}_"
+            for _k, _v in target_hour.items():
+                if _k.endswith("_shadow") and _k.startswith(_short_prefix) and _v is not None:
+                    pair[_k[len(_short_prefix):]] = _v
+            # v0.7.0 — error_blend residual when blender fired. Mirrors the
+            # error_lN pattern in the loop above so per_layer_mae_by_lead["blend"]
+            # picks it up automatically. shadow-only until BLENDER_APPLIED_ENABLED
+            # flips; then it's the served error.
+            _blend_fc = pair.get("blend_shadow")
+            if _blend_fc is not None:
+                pair["forecast_blend"] = round(float(_blend_fc), 3)
+                pair["error_blend"] = round(float(_blend_fc) - obs_f, 3)
             # v0.6.309: shadow-log model shortwave + diffuse for sr pairs so
             # we can compare against Tempest's total-shortwave obs on the same
             # units. `forecast` (direct-beam only) stays the primary forecast —

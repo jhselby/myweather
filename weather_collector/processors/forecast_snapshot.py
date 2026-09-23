@@ -152,7 +152,12 @@ from .skip_table_nbm import should_skip as _should_skip_nbm
 # Phase 4 (2026-08-19) — L1 selector. Picks HRRR or NBM cascade output
 # per (field, lead-band). When "nbm", replace the user-visible {field}
 # with {field}_l3_nbm. Table refit nightly by analysis/l1_selector_fit.py.
-from .l1_selector import pick_source as _selector_pick_source, learned_predict as _learned_predict
+from .l1_selector import (
+    pick_source as _selector_pick_source,
+    learned_predict as _learned_predict,
+    blender_omega as _blender_omega,
+    BLENDER_APPLIED_ENABLED as _BLENDER_APPLIED_ENABLED,
+)
 # Phase 4b (2026-08-19) — wdp NBM sibling. Applies HRRR-side wdp's
 # predicted-transition persistence gate to the NBM cascade too, so
 # cells the selector routes to NBM don't silently lose wdp's coverage.
@@ -1056,8 +1061,42 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             if _learned_p is not None:
                 entry[f"{f}_learned_pick_shadow"] = _learned_p
                 entry[f"{f}_learned_prob_shadow"] = round(_learned_prob, 4)
+            # v0.7.0 — L1 blender shadow stamp. Computes ω per obs when the
+            # (field, regime, band) has a curated cell; stamps ω and the
+            # corresponding blend forecast alongside forecast_l1 for retro
+            # comparison during the 7-day shadow window. HRRR-terminal choice
+            # here mirrors HRRR_TERMINAL in analysis/l1_blender_stage1.py:
+            # l6 for ch/t, l5 for sr, l4 for dp/h/wg. NBM-terminal falls
+            # through l3_nbm → l2_nbm → raw_nbm. Runs REGARDLESS of the
+            # BLENDER_APPLIED_ENABLED flag so shadow telemetry accrues.
+            _omega = _blender_omega(f, _fc_regime_i, _fc_band_i, _feats)
+            _blend_shadow_v = None
+            if _omega is not None:
+                if f in ("ch", "t"):
+                    _hrrr_term_v = entry.get(f"{f}_l6") or entry.get(f"{f}_l5") or entry.get(f"{f}_l4")
+                elif f == "sr":
+                    _hrrr_term_v = entry.get(f"{f}_l5") or entry.get(f"{f}_l4")
+                else:  # dp, h, wg, ws, wd, cc
+                    _hrrr_term_v = entry.get(f"{f}_l4") or entry.get(f"{f}_l3") or entry.get(f"{f}_l2")
+                _nbm_term_v = (entry.get(f"{f}_l3_nbm") or entry.get(f"{f}_l2_nbm") or raw_nbm_v)
+                if _hrrr_term_v is not None and _nbm_term_v is not None:
+                    try:
+                        _blend_shadow_v = _omega * float(_hrrr_term_v) + (1 - _omega) * float(_nbm_term_v)
+                        entry[f"{f}_blend_omega_shadow"] = round(_omega, 4)
+                        entry[f"{f}_blend_shadow"] = _round_for(f, _blend_shadow_v)
+                    except (TypeError, ValueError):
+                        _blend_shadow_v = None
             source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i, _ims_i, _feats)
             entry[f"{f}_selector_source"] = source
+            # v0.7.0 — when BLENDER_APPLIED_ENABLED, blender wins over selector
+            # for curated cells only (source stamped as "blend"). Un-curated
+            # cells fall through to the selector unchanged. Flag stays False
+            # for the initial ship — this branch is dead code until flip day.
+            if _BLENDER_APPLIED_ENABLED and _blend_shadow_v is not None:
+                entry[f] = _round_for(f, _blend_shadow_v)
+                entry[f"{f}_applied"] = "blend"
+                entry[f"{f}_selector_source"] = "blend"
+                continue
             if source == "nws":
                 # 3-way walker cleared this (field, regime, band) for NWS
                 # routing (NWS beat both HRRR and NBM in the 3-way fitter,

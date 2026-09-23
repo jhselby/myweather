@@ -31,6 +31,7 @@ from pathlib import Path
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_table_curated.json"
 REGIME_WALKER_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_by_regime_walker.json"
 LEARNED_CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_learned_selector_curated.json"
+BLENDER_CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_blender_curated.json"
 
 BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)]
 
@@ -52,6 +53,15 @@ _REGIME_OVERRIDES = {}  # {field: {regime: {band: "nbm"}}} — cleared cells onl
 # for the curator, l1_selector_per_obs_classifier_stage1_v2.py for the fitter.
 _LEARNED_CELLS = {}       # {(field, regime, band): {theta, beta, mu, sd}}
 _LEARNED_FEATURE_NAMES = ()   # tuple, ordered — must match runtime feature dict keys
+
+# v0.7.0 — L1 blender runtime table. Successor architecture to the picker.
+# Ridge regression on the same 12 features; output is a continuous blend
+# weight ω ∈ [0,1] instead of a binary pick. Curated by
+# analysis/l1_blender_curate.py from Stage 1 STABLE cells. Consumer (see
+# forecast_snapshot.py) computes forecast = ω·HRRR_terminal + (1-ω)·NBM_terminal
+# per row when the (field, regime, band) has a curated cell.
+_BLENDER_CELLS = {}       # {(field, regime, band): {beta, mu, sd}}
+_BLENDER_FEATURE_NAMES = ()   # tuple, ordered — must match feature-dict keys
 
 
 def _band_for(lead_h):
@@ -153,9 +163,45 @@ def _load_learned():
     _LEARNED_FEATURE_NAMES = names
 
 
+def _load_blender():
+    """Load blender curated cells. Missing / malformed → empty table (blender
+    output is a no-op; caller falls through to selector's pick)."""
+    global _BLENDER_CELLS, _BLENDER_FEATURE_NAMES
+    try:
+        with open(BLENDER_CURATED_PATH) as f:
+            data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        _BLENDER_CELLS = {}
+        _BLENDER_FEATURE_NAMES = ()
+        return
+    names = tuple(data.get("feature_names") or ())
+    parsed = {}
+    for cell in data.get("cells") or ():
+        f_ = cell.get("field")
+        r_ = cell.get("regime")
+        b_ = cell.get("band")
+        beta = cell.get("beta")
+        mu = cell.get("mu")
+        sd = cell.get("sd")
+        if None in (f_, r_, b_, beta, mu, sd):
+            continue
+        if len(beta) != len(names) + 1 or len(mu) != len(names) or len(sd) != len(names):
+            logging.warning(f"  ⚠  l1_blender: shape mismatch on cell "
+                            f"{f_}/{r_}/{b_}; skipping")
+            continue
+        parsed[(f_, r_, b_)] = {
+            "beta": [float(x) for x in beta],
+            "mu": [float(x) for x in mu],
+            "sd": [float(x) for x in sd],
+        }
+    _BLENDER_CELLS = parsed
+    _BLENDER_FEATURE_NAMES = names
+
+
 _load()
 _load_regime_overrides()
 _load_learned()
+_load_blender()
 
 
 # v0.6.606 — HRRR PBL morning-overshoot workaround. Named routing gate for
@@ -266,6 +312,46 @@ def learned_predict(field, regime, band, features):
     source so retro analysis can compare classifier vs pool per row without
     depending on the shadow flag state."""
     return _learned_predict(field, regime, band, features)
+
+
+# v0.7.0 — L1 blender shadow guard. When False (initial ship state), the
+# blender computes ω per obs and consumers stamp forecast_blend_shadow for
+# retro comparison, but the applied forecast still comes from the picker.
+# Flip to True after 7-day shadow window replicates the halves-stable lift
+# on fresh pair-log data. Blast radius when flipped: 10 curated cells
+# (see l1_blender_curated.json).
+BLENDER_APPLIED_ENABLED = False
+
+
+def blender_omega(field, regime, band, features):
+    """Return ω ∈ [0,1] for this (field, regime, band) if the blender has a
+    curated cell for it and all features are present, else None.
+
+    Runs INDEPENDENT of BLENDER_APPLIED_ENABLED — the flag only gates whether
+    the caller applies the blend to the served forecast. Shadow telemetry
+    calls this directly to stamp forecast_blend_shadow into the pair log
+    during the 7-day shadow window regardless of flag state.
+    """
+    if features is None:
+        return None
+    cell = _BLENDER_CELLS.get((field, regime, band))
+    if not cell:
+        return None
+    xs = []
+    for name in _BLENDER_FEATURE_NAMES:
+        v = features.get(name)
+        if v is None:
+            return None
+        xs.append(float(v))
+    beta = cell["beta"]; mu = cell["mu"]; sd = cell["sd"]
+    z = beta[0]
+    for i, x in enumerate(xs):
+        s = sd[i] if sd[i] > 1e-8 else 1.0
+        z += beta[i + 1] * ((x - mu[i]) / s)
+    # clip to [0, 1] — same as the fit-time apply_ridge in analysis.
+    if z < 0.0: return 0.0
+    if z > 1.0: return 1.0
+    return z
 
 
 def _ims_override(field, regime, band, ims):
