@@ -45,7 +45,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 OUT = REPO / "weather_collector" / "data" / "l1_blender_curated.json"
-FIELDS = ("dp", "h", "ch", "wg")   # extend as more fields clear Stage 1
+FIELDS = ("dp", "h", "ch", "wg", "t")   # extend as more fields clear Stage 1
 
 
 def _band_key(band):
