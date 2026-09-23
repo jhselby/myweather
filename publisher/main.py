@@ -57,6 +57,10 @@ PUBLISHERS = [
     # actually lifts vs raw_nbm by (field, lead-band). Debug page reads
     # the JSON for the L2_NBM soundness tile.
     "nbm_l2_delta_audit",
+    # L1 blender shadow-verify (v0.7.0, 2026-09-23) — per curated cell,
+    # is the blender's shadow forecast beating what the selector served?
+    # Debug page reads the JSON for the L1 blender status tile.
+    "l1_blender_shadow_verify",
 ]
 
 

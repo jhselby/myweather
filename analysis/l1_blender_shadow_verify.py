@@ -262,22 +262,30 @@ def main():
     print(summary)
 
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "min_n_fires_7d": MIN_N_FIRES_7D,
+        "min_lift_pct": MIN_LIFT_PCT,
+        "neg_kill_pct": NEG_KILL_PCT,
+        "omega_drift_tol": OMEGA_DRIFT_TOL,
+        "tally": tally,
+        "cells": out_rows,
+    }
     with open(OUT_JSON, "w") as fh:
-        json.dump({
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-            "min_n_fires_7d": MIN_N_FIRES_7D,
-            "min_lift_pct": MIN_LIFT_PCT,
-            "neg_kill_pct": NEG_KILL_PCT,
-            "omega_drift_tol": OMEGA_DRIFT_TOL,
-            "tally": tally,
-            "cells": out_rows,
-        }, fh, indent=2)
+        json.dump(payload, fh, indent=2)
     with open(OUT_TXT, "w") as fh:
         fh.write(summary + "\n")
         fh.write(f"Cells: {len(curated)} curated\n")
         fh.write(f"Scanned: {n_scanned} blend-shadow rows total\n")
     print(f"\nwrote {OUT_JSON}")
     print(f"wrote {OUT_TXT}")
+
+    try:
+        from weather_collector.gcs_io import upload_json  # noqa: E402
+        upload_json(payload, "l1_blender_shadow_verify.json", "l1_blender_shadow_verify.json")
+        print("  ✓ Published to gs://myweather-data/l1_blender_shadow_verify.json")
+    except Exception as e:
+        print(f"  ⚠ GCS upload skipped ({type(e).__name__}: {e}) — local file still written")
 
 
 if __name__ == "__main__":

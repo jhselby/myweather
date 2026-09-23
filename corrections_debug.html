@@ -2673,6 +2673,91 @@
 })();
 </script>
 
+<!-- L1 blender shadow-verify tile (v0.7.0, 2026-09-23) — reads l1_blender_shadow_verify.json.
+     Answers: per curated cell, is the blender's shadow forecast beating what the
+     selector actually served? Verdict determines flip readiness for BLENDER_APPLIED_ENABLED. -->
+<div class="layer-info-text" style="margin-bottom:12px;border-color:#e0a070;background:#1a1410;">
+  <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+    <span style="font-weight:600;font-size:1.05em;color:#e5e7eb;">🎯 L1 blender shadow status</span>
+    <span style="display:inline-block;padding:2px 8px;border-radius:4px;font-size:0.75em;background:#2a1f10;border:1px solid #e0a070;color:#f0c090;">v0.7.0 · shadow only</span>
+  </div>
+  <div class="meta-line" style="opacity:0.85;font-size:0.9em;margin-bottom:8px;">
+    Per-cell verdict on whether the blender's shadow forecast is beating what the selector actually served. <strong>SHIP-READY</strong> = 7d n≥50, lift ≥ +3% vs served, ω drift ≤ 0.20 · <strong>HOLD</strong> = insufficient fires or below threshold · <strong>KILL</strong> = 7d lift ≤ −3% (blend hurts) · <strong>THIN</strong> = zero fires (regime hasn't matched). Flip <code>BLENDER_APPLIED_ENABLED = True</code> for SHIP-READY cells only. Source: <code>analysis/l1_blender_shadow_verify.py</code> → <code>gs://myweather-data/l1_blender_shadow_verify.json</code>.
+  </div>
+  <div id="l1-blender-live" style="margin-top:10px;font-size:0.88em;">
+    <div style="opacity:0.6;">loading l1_blender_shadow_verify.json…</div>
+  </div>
+</div>
+<script>
+(function(){
+  const url = "https://data.wymancove.com/l1_blender_shadow_verify.json?_=" + Date.now();
+  fetch(url, { cache: "no-store" })
+    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+    .then(d => {
+      const el = document.getElementById("l1-blender-live");
+      if (!el) return;
+      const escape = (s) => String(s == null ? "" : s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const fmtPct = (v) => (v == null) ? "—" : `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(1)}%`;
+      const fmt = (v, d=2) => (v == null) ? "—" : Number(v).toFixed(d);
+      const verdictColor = { "SHIP-READY":"#4ad29a", "HOLD":"#e0a070", "KILL":"#e07272", "THIN":"#7090a0" };
+      const cells = d.cells || [];
+      const rows = cells.map(c => {
+        const vc = verdictColor[c.verdict] || "#cfd8e3";
+        return `<tr>
+          <td style="padding:3px 8px 3px 0;vertical-align:top;"><code>${escape(c.field)}</code></td>
+          <td style="padding:3px 8px;vertical-align:top;"><code>${escape(c.regime)}</code></td>
+          <td style="padding:3px 8px;vertical-align:top;"><code>${escape(c.band)}</code></td>
+          <td style="padding:3px 8px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${c.n_7d ?? 0}</td>
+          <td style="padding:3px 8px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${c.n_30d ?? 0}</td>
+          <td style="padding:3px 8px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${fmt(c.served_mae_7d, 3)}</td>
+          <td style="padding:3px 8px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${fmt(c.blend_mae_7d, 3)}</td>
+          <td style="padding:3px 8px;vertical-align:top;text-align:right;font-weight:600;color:${c.lift_vs_served_pct_7d >= 3 ? "#4ad29a" : c.lift_vs_served_pct_7d <= -3 ? "#e07272" : "#e0a86b"};">${fmtPct(c.lift_vs_served_pct_7d)}</td>
+          <td style="padding:3px 8px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${fmt(c.omega_mean_live_7d, 2)}</td>
+          <td style="padding:3px 8px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;opacity:0.7;">${fmt(c.omega_mean_train, 2)}</td>
+          <td style="padding:3px 8px;vertical-align:top;text-align:right;font-variant-numeric:tabular-nums;">${c.omega_drift_7d == null ? "—" : (c.omega_drift_7d > 0.20 ? `<span style="color:#e07272;">${fmt(c.omega_drift_7d, 2)}</span>` : fmt(c.omega_drift_7d, 2))}</td>
+          <td style="padding:3px 8px;vertical-align:top;font-weight:600;color:${vc};">${escape(c.verdict)}</td>
+        </tr>`;
+      }).join("");
+      const tally = d.tally || {};
+      const tallyLine = `
+        <span style="color:${verdictColor["SHIP-READY"]};font-weight:600;">${tally["SHIP-READY"] || 0} SHIP-READY</span> ·
+        <span style="color:${verdictColor["HOLD"]};font-weight:600;">${tally["HOLD"] || 0} HOLD</span> ·
+        <span style="color:${verdictColor["KILL"]};font-weight:600;">${tally["KILL"] || 0} KILL</span> ·
+        <span style="color:${verdictColor["THIN"]};font-weight:600;">${tally["THIN"] || 0} THIN</span>
+        <span style="opacity:0.6;"> of ${cells.length} curated cells</span>`;
+      el.innerHTML = `
+        <div style="font-size:0.9em;margin-bottom:8px;">${tallyLine}</div>
+        <div style="overflow-x:auto;">
+        <table style="border-collapse:collapse;font-size:0.87em;">
+          <thead>
+            <tr style="color:#8a93a3;text-align:left;font-weight:500;font-size:0.82em;">
+              <th style="padding:3px 8px 3px 0;">field</th>
+              <th style="padding:3px 8px;">regime</th>
+              <th style="padding:3px 8px;">band</th>
+              <th style="padding:3px 8px;text-align:right;">n 7d</th>
+              <th style="padding:3px 8px;text-align:right;">n 30d</th>
+              <th style="padding:3px 8px;text-align:right;">MAE served</th>
+              <th style="padding:3px 8px;text-align:right;">MAE blend</th>
+              <th style="padding:3px 8px;text-align:right;">lift vs served</th>
+              <th style="padding:3px 8px;text-align:right;">ω live</th>
+              <th style="padding:3px 8px;text-align:right;">ω train</th>
+              <th style="padding:3px 8px;text-align:right;">Δω</th>
+              <th style="padding:3px 8px;">verdict</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+        </div>
+        <div style="margin-top:8px;font-size:0.82em;opacity:0.6;">Gate: n≥${d.min_n_fires_7d} on 7d + lift ≥ ${d.min_lift_pct}% vs served + |Δω| ≤ ${d.omega_drift_tol}. Assembled ${escape(d.generated_at || "")}</div>`;
+    })
+    .catch(e => {
+      const el = document.getElementById("l1-blender-live");
+      if (el) el.innerHTML = `<div style="color:#e08a70;">l1_blender_shadow_verify.json not yet available (publisher CF hasn't uploaded the first run). Error: ${e}</div>`;
+    });
+})();
+</script>
+
 <div id="applicability-content"></div>
 
 <!-- ─── Runtime firing (7-day rolling) — subsection within Applicability map ─── -->
