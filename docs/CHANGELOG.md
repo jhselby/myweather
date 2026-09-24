@@ -1,5 +1,16 @@
 <details open>
-<summary><strong>v0.7.2 • September 24, 2026 (L1 blender — first apply flip: 3 dp cells go live)</strong></summary>
+<summary><strong>v0.7.3 • September 24, 2026 (L1 blender apply flip ROLLED BACK — curated table was fit on stale data)</strong></summary>
+
+- **Reverted v0.7.2 dp flip.** `BLENDER_APPLIED_FIELDS` set back to `frozenset()` in `weather_collector/processors/l1_selector.py` — pure shadow, no applied blend on any field. Blender infrastructure (ω computation, blend_shadow stamping, shadow-verify tile) stays live.
+- **Root cause.** The GCS `forecast_error_log_backstamped.jsonl` had been stale since 2026-08-21 — someone (me) uploaded it manually once and nothing updated it since. Local fitters that read the backstamped URL via `cached_path()` had been curling a file whose last obs_time was `2026-08-20T20:07` for five weeks. Every blender_stage1 fit — including the v0.7.0 curated table shipped 09-23 and the v0.7.2 flip today — used data that stopped one month before the ship date.
+- **Damage confirmed.** Refit of `analysis/l1_blender_stage1.py` on fresh data (backstamped file re-uploaded and appender wired to publisher CF this session) shows 11 of 13 curated cells fail halves-stable. All 3 dp cells the v0.7.2 flip promoted demote: `nw_flow/12-23` → one-window, `sw_flow/12-23` → UNSTABLE, `sw_flow/24-47` → one-window. Only survivors: `h/pre_frontal/24-47` and `t/se_flow/24-47`. One new candidate that wasn't shipped: `wg/pre_frontal/12-23`.
+- **Fixed the upstream.** New `analysis/nbm_backstamp_append.py` runs in the publisher CF every hour, range-downloads new pair-log bytes and appends to the GCS backstamped file via `bucket.compose()`. HWM tracked in `gs://myweather-data/backstamp_hwm.json`. Manual full-rebuild escape hatch: `make backstamp-rebuild-and-upload`.
+- **Not re-curating in this ship.** `l1_blender_curated.json` still holds the 13 stale cells; leaving it in place until a proper Stage 1 sweep + curate on live-fresh data. Since `BLENDER_APPLIED_FIELDS = frozenset()`, no cell fires; shadow-only telemetry continues to accumulate.
+
+</details>
+
+<details>
+<summary><strong>v0.7.2 • September 24, 2026 (L1 blender — first apply flip: 3 dp cells go live) — SUPERSEDED by v0.7.3 rollback</strong></summary>
 
 - **First `BLENDER_APPLIED_FIELDS` progressive flip.** Replaced the global `BLENDER_APPLIED_ENABLED = False` boolean with a field allowlist `BLENDER_APPLIED_FIELDS = frozenset({"dp"})` in `weather_collector/processors/l1_selector.py`. Fields in the set have their curated cells apply blended forecasts to the served output; fields not in the set still get shadow telemetry (blender_omega runs regardless). Empty set = pure shadow — the flip is one-line reversible.
 - **Blast radius: 3 dp curated cells** — `dp/nw_flow/12-23`, `dp/sw_flow/12-23`, `dp/sw_flow/24-47`. Only these cells fire; every other (regime, band) for dp falls through to the selector unchanged.

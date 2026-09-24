@@ -317,15 +317,14 @@ def learned_predict(field, regime, band, features):
 # v0.7.0 — L1 blender apply allowlist. Fields listed here have their curated
 # cells applied to the served forecast; fields not listed still get shadow
 # telemetry stamped (blender_omega runs regardless of this set). Empty set =
-# pure shadow (initial v0.7.0 behavior). v0.7.2 (2026-09-24) adds "dp" as the
-# first progressive-flip field: retro shadow-scoring on ~months of pair log
-# showed all 3 dp curated cells (nw_flow/12-23, sw_flow/12-23, sw_flow/24-47)
-# STABLE with pooled lift +21 to +52% vs selector-served, halves-stable ✓,
-# largest and safest wins in the curated set. dp is already 100% NBM under
-# the selector today (l1_selector_table_curated.json), so the blender flip
-# does not introduce a new (t, h, dp) coherence question — same as today's
-# behavior with a better-optimized dp. See project_l1_blender_retro_score.
-BLENDER_APPLIED_FIELDS = frozenset({"dp"})
+# pure shadow (initial v0.7.0 behavior). v0.7.2 (2026-09-24) added "dp" as
+# the first progressive-flip field — ROLLED BACK v0.7.3 (2026-09-24) after
+# discovering the entire blender curated table was fit on backstamped pair
+# log data ending 2026-08-20 (stale GCS backstamp). Fresh-data re-fit of
+# analysis/l1_blender_stage1.py showed all 3 dp cells demote (one-window /
+# UNSTABLE); 11 of 13 shipped cells fail halves-stable overall. Empty
+# frozenset() = pure-shadow until re-curated on live-current data.
+BLENDER_APPLIED_FIELDS = frozenset()
 
 
 def blender_omega(field, regime, band, features):

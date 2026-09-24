@@ -106,6 +106,18 @@ run-local:
 check-stale:
 	@python3 scripts/check_stale_refs.py
 
+# Full rebuild of the backstamped pair-log + upload + HWM reset.
+# Run this when the L4_NBM curated table changes (or any other
+# baseline that would invalidate the incremental appender). Rebuilds
+# locally (~5-10 min), uploads to GCS (~5 min), deletes the HWM sidecar
+# so the next publisher-CF tick reseeds from the fresh base.
+backstamp-rebuild-and-upload:
+	python3 -m analysis.nbm_backstamp
+	gsutil -h "Cache-Control:no-cache" cp \
+	  ~/.cache/myweather_nbm_backstamp/forecast_error_log_backstamped.jsonl \
+	  gs://myweather-data/forecast_error_log_backstamped.jsonl
+	python3 -m analysis.nbm_backstamp_append --reset-hwm
+
 # Run all analyses WITH chart generation. Slower (matplotlib). Produces
 # PNGs alongside text summaries for visual exploration. Use this when you
 # want to *see* the patterns, not just read the numbers.

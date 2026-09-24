@@ -35,10 +35,17 @@ sys.path.insert(0, ANALYSIS_DIR)
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-# Order matters only in that mae_over_time is the debug page's most-read
-# publisher, so run it first. If a later publisher fails, we still get a
-# fresh mae_over_time.json out.
+# Order matters: nbm_backstamp_append runs FIRST so all downstream jobs
+# that read forecast_error_log_backstamped.jsonl (scoreboard_v2,
+# per_field_scoring, nbm_l2_delta_audit, l1_blender_shadow_verify) see
+# fresh data within the same publisher tick. After that, mae_over_time
+# runs first among the readers because it's the debug page's most-read.
 PUBLISHERS = [
+    # Incremental appender for the backstamped pair-log. Reads live
+    # pair-log's byte HWM, range-downloads new bytes, appends via GCS
+    # compose. Keeps all downstream scoring jobs on fresh data without
+    # requiring manual `nbm_backstamp` rebuilds. See analysis/nbm_backstamp_append.py.
+    "nbm_backstamp_append",
     "mae_over_time",
     "gate_firing_rollup",
     "h_persistence_skill",
