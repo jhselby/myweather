@@ -156,7 +156,7 @@ from .l1_selector import (
     pick_source as _selector_pick_source,
     learned_predict as _learned_predict,
     blender_omega as _blender_omega,
-    BLENDER_APPLIED_ENABLED as _BLENDER_APPLIED_ENABLED,
+    BLENDER_APPLIED_FIELDS as _BLENDER_APPLIED_FIELDS,
 )
 # Phase 4b (2026-08-19) — wdp NBM sibling. Applies HRRR-side wdp's
 # predicted-transition persistence gate to the NBM cascade too, so
@@ -1088,11 +1088,13 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         _blend_shadow_v = None
             source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i, _ims_i, _feats)
             entry[f"{f}_selector_source"] = source
-            # v0.7.0 — when BLENDER_APPLIED_ENABLED, blender wins over selector
-            # for curated cells only (source stamped as "blend"). Un-curated
-            # cells fall through to the selector unchanged. Flag stays False
-            # for the initial ship — this branch is dead code until flip day.
-            if _BLENDER_APPLIED_ENABLED and _blend_shadow_v is not None:
+            # v0.7.0 — for fields in BLENDER_APPLIED_FIELDS with a curated cell
+            # that matched (i.e. _blend_shadow_v computed), blender wins over
+            # selector (source stamped as "blend"). Un-curated cells and fields
+            # not in the allowlist fall through to the selector unchanged.
+            # v0.7.2 flipped {dp} into the allowlist as the first progressive
+            # rollout — retro shadow-scoring cleared all 3 dp curated cells.
+            if f in _BLENDER_APPLIED_FIELDS and _blend_shadow_v is not None:
                 entry[f] = _round_for(f, _blend_shadow_v)
                 entry[f"{f}_applied"] = "blend"
                 entry[f"{f}_selector_source"] = "blend"

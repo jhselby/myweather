@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.7.2 • September 24, 2026 (L1 blender — first apply flip: 3 dp cells go live)</strong></summary>
+
+- **First `BLENDER_APPLIED_FIELDS` progressive flip.** Replaced the global `BLENDER_APPLIED_ENABLED = False` boolean with a field allowlist `BLENDER_APPLIED_FIELDS = frozenset({"dp"})` in `weather_collector/processors/l1_selector.py`. Fields in the set have their curated cells apply blended forecasts to the served output; fields not in the set still get shadow telemetry (blender_omega runs regardless). Empty set = pure shadow — the flip is one-line reversible.
+- **Blast radius: 3 dp curated cells** — `dp/nw_flow/12-23`, `dp/sw_flow/12-23`, `dp/sw_flow/24-47`. Only these cells fire; every other (regime, band) for dp falls through to the selector unchanged.
+- **Evidence:** `analysis/l1_blender_retro_score.py` (new — see below) reconstructed ω from stored ridge coefficients on ~months of pair-log history. All 3 dp cells STABLE with pooled lift-vs-served +21% (sw_flow/24-47), +36% (sw_flow/12-23), +52% (nw_flow/12-23), halves-stable ✓, matching stage1's held-out numbers within split-noise tolerance. Largest and safest wins in the curated set.
+- **Coherence:** dp is already 100% NBM under today's selector (`l1_selector_table_curated.json` shows all 4 bands routed to NBM), so the blender flip does not introduce a new (t, h, dp) inconsistency question — same as today's behavior with a better-optimized dp value.
+- **`analysis/l1_blender_retro_score.py`** — new companion to `l1_blender_shadow_verify.py`. Reconstructs ω from the curated table's stored ridge coefficients on ANY pair-log row (no `blend_shadow` stamp needed), collapsing the shadow-accumulation wait from 7-30 days to seconds. Two uses: (1) backfill confirmation for cells that shipped shadow-only, (2) pre-ship validation of stage1 candidate cells on longer windows than stage1's 25% test-quartile. First-run scoreboard across 13 curated cells surfaced 3 POS-UNSTABLE flip watch cells (`ch/sw_flow/12-23`, `wg/nw_flow/0-5`, `t/se_flow/12-23`) — weak earlier-half + strong later-half signature; not blockers, but de-prioritized in the flip sequence.
+- **Flip sequence recommendation from retro:** dp (this ship) → h (all 4 cells clean) → ch (drop the POS-UNSTABLE, keep nw_flow/12-23) → t (2 clean of 3) → wg (only cell is POS-UNSTABLE; ship last or gate on shadow catch-up).
+
+</details>
+
+<details>
 <summary><strong>v0.7.1 • September 24, 2026 (L4 wg — add wind gust to Lt lead-decay correction)</strong></summary>
 
 - **`L4_FIELDS` = `{"ch", "wg"}`** in `weather_collector/processors/decay_apply.py`. `walkforward_l3l4_validator` cleared the 7-day claim gate on the L4_FIELDS = {ch, wg} proposal (09-19 → 09-24, six consecutive prior days). Fitter tail: L4 wg fc +27.4% / obs +27.3% MAE lift, 0 entangled cells. L3 wg has been live since v0.6.397 (2026-08-08); L4 is the natural companion. Backend-only; no user-visible change beyond the version pill bump.
