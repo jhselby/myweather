@@ -1,4 +1,11 @@
 <details open>
+<summary><strong>v0.7.1 • September 24, 2026 (L4 wg — add wind gust to Lt lead-decay correction)</strong></summary>
+
+- **`L4_FIELDS` = `{"ch", "wg"}`** in `weather_collector/processors/decay_apply.py`. `walkforward_l3l4_validator` cleared the 7-day claim gate on the L4_FIELDS = {ch, wg} proposal (09-19 → 09-24, six consecutive prior days). Fitter tail: L4 wg fc +27.4% / obs +27.3% MAE lift, 0 entangled cells. L3 wg has been live since v0.6.397 (2026-08-08); L4 is the natural companion. Backend-only; no user-visible change beyond the version pill bump.
+
+</details>
+
+<details>
 <summary><strong>v0.7.0 • September 23, 2026 (L1 blender — per-obs continuous ω, shadow only)</strong></summary>
 
 - **First L1 architectural change: continuous blend replaces binary picking at the L1 seat.** The selector is capped at ~20-30% oracle-gap capture because binary picks pay the full HRRR–NBM gap on 40/60 truths. Blender solves the fusion problem the picker was solving badly: ridge on 12 features predicts ω ∈ [0,1] per obs, then `forecast = ω·HRRR_terminal + (1-ω)·NBM_terminal`. 10 STABLE cells cleared halves-stable Stage 1 vs best single source: dp/{nw_flow/12-23, sw_flow/12-23, sw_flow/24-47}, h/{nw_flow/24-47, pre_frontal/12-23, pre_frontal/24-47, se_flow/12-23}, ch/{nw_flow/12-23, sw_flow/12-23}, wg/nw_flow/0-5. Lifts +7% to +56% vs the source the selector would have picked.
