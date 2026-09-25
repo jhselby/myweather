@@ -128,7 +128,14 @@ def _load_regime_overrides():
 
 def _load_learned():
     """Load learned per-obs classifier cells. Missing / malformed → empty
-    table (learned override is a no-op)."""
+    table (learned override is a no-op).
+
+    Two model shapes are supported per-cell (auto-detected):
+      - "logistic" (default): {theta, beta, mu, sd} — sigmoid(β·((x-μ)/σ)).
+      - "gbm": {theta, init, learning_rate, trees[]} — gradient-boosted
+        tree ensemble. Each tree = {feature[], threshold[], left[],
+        right[], value[]} flattened arrays; feature[i] == -1 marks a
+        leaf. Pure-python walk; no sklearn at runtime."""
     global _LEARNED_CELLS, _LEARNED_FEATURE_NAMES
     try:
         with open(LEARNED_CURATED_PATH) as f:
@@ -143,22 +150,66 @@ def _load_learned():
         f_ = cell.get("field")
         r_ = cell.get("regime")
         b_ = cell.get("band")
-        beta = cell.get("beta")
-        mu = cell.get("mu")
-        sd = cell.get("sd")
         theta = cell.get("theta")
-        if None in (f_, r_, b_, beta, mu, sd, theta):
+        model_type = cell.get("model_type") or ("gbm" if "trees" in cell else "logistic")
+        if None in (f_, r_, b_, theta):
             continue
-        if len(beta) != len(names) + 1 or len(mu) != len(names) or len(sd) != len(names):
-            logging.warning(f"  ⚠  l1_learned_selector: shape mismatch on cell "
-                            f"{f_}/{r_}/{b_}; skipping")
+        if model_type == "logistic":
+            beta = cell.get("beta"); mu = cell.get("mu"); sd = cell.get("sd")
+            if None in (beta, mu, sd):
+                continue
+            if len(beta) != len(names) + 1 or len(mu) != len(names) or len(sd) != len(names):
+                logging.warning(f"  ⚠  l1_learned_selector: logistic shape mismatch on cell "
+                                f"{f_}/{r_}/{b_}; skipping")
+                continue
+            parsed[(f_, r_, b_)] = {
+                "model_type": "logistic",
+                "theta": float(theta),
+                "beta": [float(x) for x in beta],
+                "mu": [float(x) for x in mu],
+                "sd": [float(x) for x in sd],
+            }
+        elif model_type == "gbm":
+            trees = cell.get("trees") or []
+            init = cell.get("init")
+            lr = cell.get("learning_rate")
+            if init is None or lr is None or not trees:
+                continue
+            parsed_trees = []
+            bad = False
+            for tr in trees:
+                feat = tr.get("feature"); thr = tr.get("threshold")
+                lft = tr.get("left"); rgt = tr.get("right"); val = tr.get("value")
+                if None in (feat, thr, lft, rgt, val):
+                    bad = True; break
+                n_nodes = len(feat)
+                if not (len(thr) == len(lft) == len(rgt) == len(val) == n_nodes):
+                    bad = True; break
+                # Feature indices must reference valid columns (or -1 for leaf).
+                if any((fi < -1 or fi >= len(names)) for fi in feat):
+                    bad = True; break
+                parsed_trees.append({
+                    "feature": [int(x) for x in feat],
+                    "threshold": [float(x) for x in thr],
+                    "left": [int(x) for x in lft],
+                    "right": [int(x) for x in rgt],
+                    "value": [float(x) for x in val],
+                })
+            if bad or not parsed_trees:
+                logging.warning(f"  ⚠  l1_learned_selector: gbm shape mismatch on cell "
+                                f"{f_}/{r_}/{b_}; skipping")
+                continue
+            parsed[(f_, r_, b_)] = {
+                "model_type": "gbm",
+                "theta": float(theta),
+                "init": float(init),
+                "learning_rate": float(lr),
+                "trees": parsed_trees,
+            }
+        else:
+            logging.warning(f"  ⚠  l1_learned_selector: unknown model_type "
+                            f"{model_type!r} on cell {f_}/{r_}/{b_}; skipping")
             continue
-        parsed[(f_, r_, b_)] = {
-            "theta": float(theta),
-            "beta": [float(x) for x in beta],
-            "mu": [float(x) for x in mu],
-            "sd": [float(x) for x in sd],
-        }
     _LEARNED_CELLS = parsed
     _LEARNED_FEATURE_NAMES = names
 
@@ -268,12 +319,25 @@ def _sigmoid(z):
     return 1.0 / (1.0 + math.exp(-z))
 
 
+def _tree_predict(tree, xs):
+    """Walk one decision tree; return the leaf value. -1 in feature[] marks
+    a leaf (sklearn's TREE_UNDEFINED convention)."""
+    node = 0
+    feat = tree["feature"]
+    while feat[node] >= 0:
+        if xs[feat[node]] <= tree["threshold"][node]:
+            node = tree["left"][node]
+        else:
+            node = tree["right"][node]
+    return tree["value"][node]
+
+
 def _learned_predict(field, regime, band, features):
     """Compute the classifier's per-obs vote AND probability, independent
     of the shadow flag. Returns (pick, prob) — pick is "nbm"|"hrrr", prob is
-    the sigmoid(β·x) value in [0,1]. Returns (None, None) when the classifier
-    can't run (cell absent, features missing/incomplete). Consumers can use
-    this for shadow telemetry regardless of whether the pick is honored."""
+    the sigmoid of the model's log-odds score in [0,1]. Returns (None, None)
+    when the classifier can't run (cell absent, features missing/incomplete).
+    Dispatches on cell.model_type: "logistic" or "gbm"."""
     if features is None:
         return (None, None)
     cell = _LEARNED_CELLS.get((field, regime, band))
@@ -285,11 +349,18 @@ def _learned_predict(field, regime, band, features):
         if v is None:
             return (None, None)
         xs.append(float(v))
-    mu = cell["mu"]; sd = cell["sd"]; beta = cell["beta"]
-    z = beta[0]
-    for i, x in enumerate(xs):
-        s = sd[i] if sd[i] > 1e-8 else 1.0
-        z += beta[i + 1] * ((x - mu[i]) / s)
+    mt = cell.get("model_type", "logistic")
+    if mt == "logistic":
+        mu = cell["mu"]; sd = cell["sd"]; beta = cell["beta"]
+        z = beta[0]
+        for i, x in enumerate(xs):
+            s = sd[i] if sd[i] > 1e-8 else 1.0
+            z += beta[i + 1] * ((x - mu[i]) / s)
+    else:  # "gbm"
+        z = cell["init"]
+        lr = cell["learning_rate"]
+        for tree in cell["trees"]:
+            z += lr * _tree_predict(tree, xs)
     prob = _sigmoid(z)
     pick = "nbm" if prob > cell["theta"] else "hrrr"
     return (pick, prob)
