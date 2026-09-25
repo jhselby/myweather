@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.4 • September 25, 2026 (NBM skip table — wg/sea_breeze/6-11h earning again, removed)</strong></summary>
+
+- **Removed `l3_nbm/wg/sea_breeze/6-11h`** from `weather_collector/data/skip_table_nbm_curated.json`. NBM stale-skip audit shows this cell earns back on both windows: 14d n=104 lift +14.50%, 50d n=316 lift +8.12%. Cell now serves L3_NBM instead of falling back.
+- **Digest triage.** First fresh-data digest since the 09-24 backstamp appender fix. Only real ship candidate today — every other flip (`l1_blender_stage1 info→hold`, `h_l1_selector_ims_stage1 hold→promote`, `l1_selector_per_obs_classifier_v3 PROMOTE`) is either the expected consequence of the 09-24 audit or a stale-URL fitter on ~19h of fresh data. Pair-log anomaly WATCH on 7 fields is corpus-composition drift from the appender fix, not physical.
+- **09-26 h per-obs axes flip deferred.** The `h_l1_selector_ims_*` fitters are on the stale-URL list; ~19h of fresh data isn't enough to trust halves-stable. Pushed to ~10-01.
+
+</details>
+
+<details>
 <summary><strong>v0.7.3 • September 24, 2026 (L1 blender apply flip ROLLED BACK — curated table was fit on stale data)</strong></summary>
 
 - **Reverted v0.7.2 dp flip.** `BLENDER_APPLIED_FIELDS` set back to `frozenset()` in `weather_collector/processors/l1_selector.py` — pure shadow, no applied blend on any field. Blender infrastructure (ω computation, blend_shadow stamping, shadow-verify tile) stays live.
