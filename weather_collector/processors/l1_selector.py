@@ -185,8 +185,11 @@ def _load_learned():
                 n_nodes = len(feat)
                 if not (len(thr) == len(lft) == len(rgt) == len(val) == n_nodes):
                     bad = True; break
-                # Feature indices must reference valid columns (or -1 for leaf).
-                if any((fi < -1 or fi >= len(names)) for fi in feat):
+                # Feature indices must reference valid columns. Any negative
+                # value marks a leaf (sklearn uses -2 as TREE_UNDEFINED;
+                # _tree_predict below stops on `feat[node] >= 0`). Only the
+                # upper bound is a real error.
+                if any((fi >= len(names)) for fi in feat):
                     bad = True; break
                 parsed_trees.append({
                     "feature": [int(x) for x in feat],
