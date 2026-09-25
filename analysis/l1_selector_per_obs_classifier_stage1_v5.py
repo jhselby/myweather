@@ -4,9 +4,10 @@ matrix sweep, serialized to the new curated JSON format for the router.
 Differences from v4:
   1. Sweeps ALL fields (not one at a time) — this is the selector-
      replacement benchmark, not a per-field experiment.
-  2. Baseline is `error_prod_real` (what selector actually serves), not
+  2. Baseline is the top-level `error` field (what production actually
+     served for this row, post-selector, post-any-applied-layer), not
      `error_l4` (always-HRRR). This is the honest ship-gain: does the
-     classifier's per-obs pick beat what the selector is doing today?
+     classifier's per-obs pick beat what the stack served today?
   3. Emits a candidate `l1_learned_selector_curated.json` with the
      surviving STABLE cells serialized as GBM trees (feature/threshold/
      left/right/value arrays) — runtime lives in l1_selector.py
@@ -30,7 +31,7 @@ Writes:
       copying into place.
 """
 import os, sys, json, math
-from collections import defaultdict
+from collections import defaultdict, Counter
 import numpy as np
 from sklearn.ensemble import GradientBoostingClassifier
 
@@ -39,7 +40,15 @@ from _cache import cached_path
 
 PAIR_URL = "https://data.wymancove.com/forecast_error_log_backstamped.jsonl"
 
-FIELDS = ["t", "h", "dp", "ws", "wg", "wd", "cc", "ch", "cl", "cm", "sr", "pp"]
+# Fields with a live NBM parallel pipeline in the pair-log (both
+# forecast_raw_nbm and error_l3_nbm present). dp is derived from
+# (t, h) via Magnus so has no direct NBM forecast; cl/cm are cloud
+# sub-components consumed only by the cc composition layer; pp is
+# derived downstream. All four show zero rows through build_features
+# and are dropped here to keep the sweep output legible. Selector-
+# replacement scope is intrinsically the fields with two-cascade
+# routing, so this exclusion is definitional, not a workaround.
+FIELDS = ["t", "h", "ws", "wg", "wd", "cc", "ch", "sr"]
 
 BANDS = [("0-5h", 0, 6), ("6-11h", 6, 12), ("12-23h", 12, 24), ("24-47h", 24, 48)]
 
@@ -97,25 +106,48 @@ def load_rows_by_field():
     return by_field, vt_spread_by_field
 
 
-def build_features(rows_raw, vt_spread):
-    """Yields per-obs feature rows, with prod_real error alongside the
-    HRRR/NBM errors. Baseline for lift = mean(|err_prod_real|)."""
+def build_features(rows_raw, vt_spread, drop=None):
+    """Yields per-obs feature rows, with the served baseline (top-level
+    `error`) alongside the HRRR/NBM per-row errors. `drop`, if given,
+    is a Counter that gets incremented per drop reason — used by the
+    sweep to attribute sparsity."""
+    if drop is None:
+        drop = Counter()
     for r in rows_raw:
         vt = r.get("valid_time")
-        xr = vt_spread.get(vt)
-        if xr is None: continue
+        if vt_spread.get(vt) is None:
+            drop["no_vt_spread"] += 1; continue
+        xr = vt_spread[vt]
         lead = r.get("lead_h")
-        if lead is None: continue
+        if lead is None:
+            drop["no_lead"] += 1; continue
         band = lead_band(int(lead))
-        if not band: continue
+        if not band:
+            drop["lead_out_of_band"] += 1; continue
         fc_l1 = r.get("forecast_l1"); fc_nbm_raw = r.get("forecast_raw_nbm")
-        err_l4 = r.get("error_l4"); err_l3_nbm = r.get("error_l3_nbm")
-        err_prod_real = r.get("error_prod_real")
-        if None in (fc_l1, fc_nbm_raw, err_l4, err_l3_nbm, err_prod_real):
-            continue
+        err_l4 = r.get("error_l4")
+        # NBM-side error: prefer error_l3_nbm (L3-corrected) where the field
+        # actually has L3 NBM live; else fall back to error_raw_nbm. For
+        # fields without an L3 NBM stage (t, h, ws, wd, sr, cc — anything
+        # not in L3_FIELDS), the router's real choice is HRRR-terminal vs
+        # raw NBM, and error_raw_nbm is the correct target.
+        err_nbm = r.get("error_l3_nbm")
+        nbm_source = "l3_nbm"
+        if err_nbm is None:
+            err_nbm = r.get("error_raw_nbm")
+            nbm_source = "raw_nbm"
+        # Served baseline: top-level `error` is what production returned for
+        # this row (post-selector, post-any-applied-layer). This is the honest
+        # baseline the classifier needs to beat.
+        err_served = r.get("error")
+        if fc_l1 is None: drop["no_forecast_l1"] += 1; continue
+        if fc_nbm_raw is None: drop["no_forecast_raw_nbm"] += 1; continue
+        if err_l4 is None: drop["no_error_l4"] += 1; continue
+        if err_nbm is None: drop["no_error_nbm_either"] += 1; continue
+        if err_served is None: drop["no_error_served"] += 1; continue
         sfc = r.get("state_fc") or {}
         regime = sfc.get("regime_synoptic")
-        if not regime: continue
+        if not regime: drop["no_regime"] += 1; continue
         cc_sigma = float(r.get("cloud_inter_source_sigma") or 0.0)
         p_trend = float(sfc.get("pressure_trend_hpa_3h") or 0.0)
         hh = hour_local(r.get("obs_time", ""))
@@ -126,8 +158,8 @@ def build_features(rows_raw, vt_spread):
         ws_fc = float(sfc.get("wind_speed") or 0.0)
         cloud_low_fc = float(sfc.get("cloud_low") or 0.0)
         solar_fc = float(sfc.get("solar_wm2") or 0.0)
-        eh = abs(float(err_l4)); en = abs(float(err_l3_nbm))
-        es = abs(float(err_prod_real))
+        eh = abs(float(err_l4)); en = abs(float(err_nbm))
+        es = abs(float(err_served))
         yield {
             "regime": regime, "band": band, "t": r.get("obs_time", ""),
             "x": [ims, xr, float(lead),
@@ -137,6 +169,7 @@ def build_features(rows_raw, vt_spread):
                   ws_fc, cloud_low_fc, solar_fc],
             "y": 1 if en < eh else 0,
             "eh": eh, "en": en, "es": es,
+            "nbm_source": nbm_source,
         }
 
 
@@ -302,11 +335,19 @@ def serialize_gbm(clf, best_round, theta_star):
 
 
 def sweep_field(field, rows_raw, vt_spread):
+    # Track why rows drop, so the report can attribute sparsity to
+    # missing features vs. missing regime vs. missing NBM pipeline.
+    drop = Counter()
     by_cell = defaultdict(list)
-    for row in build_features(rows_raw, vt_spread):
+    n_input = len(rows_raw)
+    for row in build_features(rows_raw, vt_spread, drop):
         by_cell[(row["regime"], row["band"])].append(row)
 
-    print(f"\n=== field={field} ({sum(len(v) for v in by_cell.values()):,} rows, {len(by_cell)} cells) ===")
+    kept = sum(len(v) for v in by_cell.values())
+    print(f"\n=== field={field} ({kept:,}/{n_input:,} kept, {len(by_cell)} cells) ===")
+    if drop:
+        top = ", ".join(f"{k}:{v}" for k, v in drop.most_common(4))
+        print(f"    drops: {top}")
     print(f"{'regime':<14}{'band':<8}{'n':>5}  "
           f"{'A_liftTe':>9}{'A_fNBM':>7}  "
           f"{'B_liftTe':>9}{'B_fNBM':>7}  verdict")
@@ -378,7 +419,7 @@ def main():
             "feature_names": FEATURE_NAMES,
             "gbm_params": GBM_PARAMS,
             "min_lift_pct": MIN_LIFT_PCT,
-            "baseline": "error_prod_real",
+            "baseline": "error (top-level served)",
             "cells": [{k: v for k, v in c.items() if k != "serialized"} for c in all_results],
             "stable_summary": [
                 {"field": c["field"], "regime": c["regime"], "band": c["band"],
