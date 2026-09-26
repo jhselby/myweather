@@ -1,4 +1,18 @@
 <details open>
+<summary><strong>v0.7.5 • September 26, 2026 (Router-as-authority — ch via ims-threshold, sr via GBM, both live)</strong></summary>
+
+- **One-commit ship of the router-as-authority pivot.** L1 selector's two per-obs override mechanisms — `_IMS_SELECTOR_CELLS` (linear ims threshold) and `_LEARNED_CELLS` (GBM classifier) — flipped from shadow to live in a single collector deploy. Both flag names preserved as `..._SHADOW_ENABLED` for wire compat with existing telemetry consumers; `True` = live apply (docstring already reflected this).
+- **ch via `_IMS_SELECTOR_CELLS`.** Old v0.6.641 (09-20) shadow table replaced with the 10-cell refit from `analysis/l1_selector_ims_threshold_refit.py` (commit 3a11ca87, 09-25). Halves-stable A/B ≥ +37% test-side lift on `error_prod_real`, ablation-cleared (commit f24ab785). Cells: ne_flow/0-5, ne_flow/12-23, nw_flow/24-47, pre_frontal/0-5, pre_frontal/6-11, pre_frontal/12-23, se_flow/6-11, se_flow/12-23, se_flow/24-47, sw_flow/12-23. `IMS_SELECTOR_SHADOW_ENABLED = True`.
+- **sr via `_LEARNED_CELLS` (GBM).** `weather_collector/data/l1_learned_selector_curated.json` populated with 5 sr STABLE cells from the v5 GBM sweep (commit f9cc4443). ch cells from the v5 candidate dropped — the two mechanisms are non-overlapping by field. `LEARNED_SELECTOR_SHADOW_ENABLED = True`.
+- **Killed the 10-02 fresh-corpus gate as over-caution.** Prior plan waited 7d post the 09-24 backstamp fix to be sure fitters used fresh data. But halves-stable A/B is the exact gate that caught 09-24's blender stale-fit (11 of 13 cells failed) — v5 STABLE cells passed it, so the corpus-freshness question was already answered at fit time. Shipped 6 days early.
+- **No blast radius outside covered cells.** `pick_source()` precedence is HRRR-PBL workaround → `_LEARNED_CELLS` → `_IMS_SELECTOR_CELLS` → by-regime walker → band pool → HRRR fall-through. Cells the router doesn't cover fall through to the pre-v0.7.5 path unchanged.
+- **Rollback = one flag flip.** Regression in either mechanism → set its `..._SHADOW_ENABLED` back to `False`; dict and JSON stay in place, guard makes them inert. Pre-v0.7.5 curated JSON backed up at `weather_collector/data/l1_learned_selector_curated.json.pre-v0.7.5.bak`.
+- **First tick clean.** Deploy 10:53:12 UTC, first tick 10:57:02 UTC (execution kq96blFRm2nY). MEMPROBE 48.7 → 465.7 MiB, 90.8s elapsed. Zero NameError/KeyError/AttributeError post-deploy.
+- **Watch 10-03.** First 7d pair-log after the ship. ch VC target > +70% (was +68% pre-ship). sr VC target > +70% (was +38%). Halves-stable check on the fresh live pair-log is the first-round verdict.
+
+</details>
+
+<details>
 <summary><strong>v0.7.4 • September 25, 2026 (NBM skip table — wg/sea_breeze/6-11h earning again, removed)</strong></summary>
 
 - **Removed `l3_nbm/wg/sea_breeze/6-11h`** from `weather_collector/data/skip_table_nbm_curated.json`. NBM stale-skip audit shows this cell earns back on both windows: 14d n=104 lift +14.50%, 50d n=316 lift +8.12%. Cell now serves L3_NBM instead of falling back.
