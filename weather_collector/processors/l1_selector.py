@@ -279,25 +279,28 @@ _HRRR_PBL_MORNING_HOURS_LOCAL = (4, 5, 6, 7, 8)  # EDT — brackets the observed
 # 0.44× (below the strict 0.5× threshold) — shadow ship first, walker validates
 # before flip. Scope intentionally narrow (one cell) — proves the C1→L1 wire
 # mechanic; broader deployment gated on this cell's post-deploy pair-log verdict.
-IMS_SELECTOR_SHADOW_ENABLED = False   # False = code path exists but does not affect pick
+IMS_SELECTOR_SHADOW_ENABLED = True    # v0.7.5 — router-as-authority pivot: LIVE. Name preserved
+                                      # for wire compatibility; True = override applies to served pick.
 _IMS_SELECTOR_CELLS = {
     # (field, regime, band): (threshold, direction)
     #   direction "H_high" = pick HRRR when ims >= T, NBM when ims < T
     #   direction "H_low"  = pick HRRR when ims <  T, NBM when ims >= T
     ("h", "sea_breeze", "24-47"): (13.0, "H_high"),
-    # ch — 10 cells cleared strict Stage 1 on 2026-09-20 (v0.6.641 shadow):
-    # test lifts +8 to +22%, capture 25-60% of per-obs oracle gap, all H_low
-    # (small ims ⇒ trust HRRR; large ims ⇒ NBM wins the row).
-    ("ch", "calm",        "24-47"): (87.0, "H_low"),
-    ("ch", "nw_flow",     "12-23"): (66.0, "H_low"),
-    ("ch", "pre_frontal", "6-11" ): (82.0, "H_low"),
-    ("ch", "pre_frontal", "12-23"): (85.0, "H_low"),
-    ("ch", "se_flow",     "6-11" ): (61.0, "H_low"),
-    ("ch", "se_flow",     "12-23"): (51.0, "H_low"),
-    ("ch", "se_flow",     "24-47"): (56.0, "H_low"),
-    ("ch", "sea_breeze",  "24-47"): (85.0, "H_low"),
-    ("ch", "sw_flow",     "12-23"): (81.0, "H_low"),
-    ("ch", "sw_flow",     "24-47"): (98.0, "H_low"),
+    # ch — 10 cells from ims-threshold refit (analysis/l1_selector_ims_threshold_refit.py,
+    # commit 3a11ca87, 2026-09-25). Halves-stable A/B ≥ +37% test-side lift on
+    # error_prod_real; ablation-cleared (commit f24ab785). Replaces the prior
+    # v0.6.641 (2026-09-20) shadow table — different cell set and thresholds because
+    # the refit was on the post-backstamp-fix corpus (see stale-fit incident 09-24).
+    ("ch", "ne_flow",     "0-5"  ): (73.5, "H_low"),   # A+39.7%/B+39.3%
+    ("ch", "ne_flow",     "12-23"): (4.5,  "H_high"),  # A+58.3%/B+45.1%
+    ("ch", "nw_flow",     "24-47"): (43.5, "H_low"),   # A+39.1%/B+65.8%
+    ("ch", "pre_frontal", "0-5"  ): (50.5, "H_low"),   # A+61.1%/B+37.9%
+    ("ch", "pre_frontal", "6-11" ): (62.5, "H_low"),   # A+63.7%/B+48.4%
+    ("ch", "pre_frontal", "12-23"): (78.5, "H_low"),   # A+58.8%/B+56.4%
+    ("ch", "se_flow",     "6-11" ): (27.5, "H_low"),   # A+58.4%/B+57.4%
+    ("ch", "se_flow",     "12-23"): (64.0, "H_low"),   # A+69.1%/B+53.7%
+    ("ch", "se_flow",     "24-47"): (71.5, "H_low"),   # A+75.9%/B+68.7%
+    ("ch", "sw_flow",     "12-23"): (84.5, "H_low"),   # A+70.6%/B+58.3%
 }
 
 
@@ -308,11 +311,12 @@ _IMS_SELECTOR_CELLS = {
 # emit a β vector + standardization stats + θ*; runtime standardizes the incoming
 # feature dict, computes sigmoid(β·x), routes NBM iff P > θ*.
 #
-# Ships in shadow. LEARNED_SELECTOR_SHADOW_ENABLED = False → override branch inert.
-# Flip to True after 7-day pair-log accumulates and retro confirms held-out lift
-# replicates on fresh data. Blast radius when flipped: 1 cell today
-# (h/nw_flow/24-47h at test +6.50%, capture 19.9%, fNBM 25.8%).
-LEARNED_SELECTOR_SHADOW_ENABLED = False
+# v0.7.5 (2026-09-26) — router-as-authority pivot: LIVE for sr. Curated JSON now
+# holds 5 sr GBM cells from v5 sweep (halves-stable ≥3% lift on error_prod_real,
+# baseline = what the selector actually served). ch is routed via
+# _IMS_SELECTOR_CELLS above (ims-threshold refit) — the two mechanisms are
+# non-overlapping by field. Flag name preserved for wire compat; True = live apply.
+LEARNED_SELECTOR_SHADOW_ENABLED = True
 
 
 def _sigmoid(z):
