@@ -158,6 +158,11 @@ from .l1_selector import (
     blender_omega as _blender_omega,
     BLENDER_APPLIED_FIELDS as _BLENDER_APPLIED_FIELDS,
 )
+# v0.7.6 (2026-09-26) — L1 static blender, universal ω per field on curated
+# (regime, band) cells for h and dp. Blends at the L1 seat (raw HRRR L1 vs
+# raw NBM L1), bypassing the cascade. Shadow-only until 7-day live retro
+# confirms; see l1_static_blend.py docstring for the analysis backing this.
+from . import l1_static_blend as _l1_static_blend
 # Phase 4b (2026-08-19) — wdp NBM sibling. Applies HRRR-side wdp's
 # predicted-transition persistence gate to the NBM cascade too, so
 # cells the selector routes to NBM don't silently lose wdp's coverage.
@@ -1086,6 +1091,15 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                         entry[f"{f}_blend_shadow"] = _round_for(f, _blend_shadow_v)
                     except (TypeError, ValueError):
                         _blend_shadow_v = None
+            # v0.7.6 — L1 static blender shadow stamp. Universal ω per field on
+            # curated (regime, band) cells for h and dp. Blends the RAW L1
+            # forecasts directly (fc_l1 and raw_nbm_v), NOT the terminals —
+            # analysis showed L1-blend-no-cascade beats terminal-blend and
+            # cascade-on-blended-L1 on these fields. Runs regardless of the
+            # module's ENABLED flag so pair-log accrues shadow telemetry.
+            _l1_blend_v = _l1_static_blend.blend_l1(f, _fc_regime_i, _fc_band_i, _l1_v, raw_nbm_v)
+            if _l1_blend_v is not None:
+                entry[f"{f}_l1_blend_shadow"] = _round_for(f, _l1_blend_v)
             source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i, _ims_i, _feats)
             entry[f"{f}_selector_source"] = source
             # v0.7.0 — for fields in BLENDER_APPLIED_FIELDS with a curated cell
@@ -1098,6 +1112,17 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
                 entry[f] = _round_for(f, _blend_shadow_v)
                 entry[f"{f}_applied"] = "blend"
                 entry[f"{f}_selector_source"] = "blend"
+                continue
+            # v0.7.6 — L1 static blender apply: when ENABLED and this (field,
+            # regime, band) is covered, L1-blend replaces the served forecast
+            # for this hour. Bypasses L2/L3/L4 entirely (curated cells for h
+            # and dp only, per l1_static_blend_curated.json). Precedence
+            # after the v0.7.0 terminal blender — but the two mechanisms are
+            # non-overlapping today (v0.7.0 applies to empty frozenset()).
+            if _l1_static_blend.ENABLED and _l1_blend_v is not None:
+                entry[f] = _round_for(f, _l1_blend_v)
+                entry[f"{f}_applied"] = "l1_blend"
+                entry[f"{f}_selector_source"] = "l1_blend"
                 continue
             if source == "nws":
                 # 3-way walker cleared this (field, regime, band) for NWS

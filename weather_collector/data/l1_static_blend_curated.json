@@ -1,0 +1,295 @@
+{
+  "note": "L1 static blend curated table. Universal \u03c9 per field, applied to (regime, band) cells that cleared halves-stable A/B \u22655% MAE lift and non-degenerate (0.05<\u03c9<0.95) on 90d pair-log. Blend at L1 seat, bypasses L2/L3/L4 for covered rows. Blender output: \u03c9\u00b7forecast_l1 + (1-\u03c9)\u00b7forecast_raw_nbm.",
+  "gate": {
+    "min_lift_pct": 5.0,
+    "min_n_rows": 400,
+    "non_degenerate_range": [
+      0.05,
+      0.95
+    ]
+  },
+  "fields": {
+    "h": {
+      "omega": 0.44,
+      "omega_train_A": 0.41,
+      "omega_train_B": 0.47,
+      "lift_pct_univ_A": 38.44,
+      "lift_pct_univ_B": 18.51,
+      "cells": [
+        [
+          "ne_flow",
+          "12-23"
+        ],
+        [
+          "nw_flow",
+          "12-23"
+        ],
+        [
+          "nw_flow",
+          "24-47"
+        ],
+        [
+          "nw_flow",
+          "6-11"
+        ],
+        [
+          "pre_frontal",
+          "12-23"
+        ],
+        [
+          "pre_frontal",
+          "24-47"
+        ],
+        [
+          "se_flow",
+          "24-47"
+        ],
+        [
+          "sw_flow",
+          "12-23"
+        ],
+        [
+          "sw_flow",
+          "24-47"
+        ],
+        [
+          "sw_flow",
+          "6-11"
+        ]
+      ],
+      "cells_diagnostic": [
+        {
+          "regime": "ne_flow",
+          "band": "12-23",
+          "omega_train_A": 0.55,
+          "omega_train_B": 0.41,
+          "lift_pct_A": 20.19,
+          "lift_pct_B": 6.4,
+          "n": 1217
+        },
+        {
+          "regime": "nw_flow",
+          "band": "12-23",
+          "omega_train_A": 0.45,
+          "omega_train_B": 0.49,
+          "lift_pct_A": 54.44,
+          "lift_pct_B": 33.52,
+          "n": 1954
+        },
+        {
+          "regime": "nw_flow",
+          "band": "24-47",
+          "omega_train_A": 0.48,
+          "omega_train_B": 0.51,
+          "lift_pct_A": 56.16,
+          "lift_pct_B": 28.35,
+          "n": 3186
+        },
+        {
+          "regime": "nw_flow",
+          "band": "6-11",
+          "omega_train_A": 0.45,
+          "omega_train_B": 0.43,
+          "lift_pct_A": 48.58,
+          "lift_pct_B": 6.82,
+          "n": 1178
+        },
+        {
+          "regime": "pre_frontal",
+          "band": "12-23",
+          "omega_train_A": 0.45,
+          "omega_train_B": 0.51,
+          "lift_pct_A": 38.03,
+          "lift_pct_B": 22.16,
+          "n": 1277
+        },
+        {
+          "regime": "pre_frontal",
+          "band": "24-47",
+          "omega_train_A": 0.42,
+          "omega_train_B": 0.55,
+          "lift_pct_A": 48.15,
+          "lift_pct_B": 29.24,
+          "n": 2290
+        },
+        {
+          "regime": "se_flow",
+          "band": "24-47",
+          "omega_train_A": 0.34,
+          "omega_train_B": 0.41,
+          "lift_pct_A": 14.82,
+          "lift_pct_B": 5.75,
+          "n": 3541
+        },
+        {
+          "regime": "sw_flow",
+          "band": "12-23",
+          "omega_train_A": 0.42,
+          "omega_train_B": 0.32,
+          "lift_pct_A": 49.32,
+          "lift_pct_B": 11.53,
+          "n": 1021
+        },
+        {
+          "regime": "sw_flow",
+          "band": "24-47",
+          "omega_train_A": 0.43,
+          "omega_train_B": 0.37,
+          "lift_pct_A": 25.56,
+          "lift_pct_B": 26.24,
+          "n": 2057
+        },
+        {
+          "regime": "sw_flow",
+          "band": "6-11",
+          "omega_train_A": 0.42,
+          "omega_train_B": 0.46,
+          "lift_pct_A": 24.28,
+          "lift_pct_B": 26.21,
+          "n": 488
+        }
+      ]
+    },
+    "dp": {
+      "omega": 0.27,
+      "omega_train_A": 0.22,
+      "omega_train_B": 0.32,
+      "lift_pct_univ_A": 43.7,
+      "lift_pct_univ_B": 30.15,
+      "cells": [
+        [
+          "ne_flow",
+          "12-23"
+        ],
+        [
+          "ne_flow",
+          "24-47"
+        ],
+        [
+          "ne_flow",
+          "6-11"
+        ],
+        [
+          "nw_flow",
+          "12-23"
+        ],
+        [
+          "nw_flow",
+          "24-47"
+        ],
+        [
+          "pre_frontal",
+          "12-23"
+        ],
+        [
+          "pre_frontal",
+          "24-47"
+        ],
+        [
+          "se_flow",
+          "24-47"
+        ],
+        [
+          "sw_flow",
+          "12-23"
+        ],
+        [
+          "sw_flow",
+          "24-47"
+        ]
+      ],
+      "cells_diagnostic": [
+        {
+          "regime": "ne_flow",
+          "band": "12-23",
+          "omega_train_A": 0.44,
+          "omega_train_B": 0.32,
+          "lift_pct_A": 47.0,
+          "lift_pct_B": 40.27,
+          "n": 1217
+        },
+        {
+          "regime": "ne_flow",
+          "band": "24-47",
+          "omega_train_A": 0.12,
+          "omega_train_B": 0.23,
+          "lift_pct_A": 15.47,
+          "lift_pct_B": 19.26,
+          "n": 2056
+        },
+        {
+          "regime": "ne_flow",
+          "band": "6-11",
+          "omega_train_A": 0.66,
+          "omega_train_B": 0.53,
+          "lift_pct_A": 5.12,
+          "lift_pct_B": 24.29,
+          "n": 654
+        },
+        {
+          "regime": "nw_flow",
+          "band": "12-23",
+          "omega_train_A": 0.28,
+          "omega_train_B": 0.31,
+          "lift_pct_A": 68.42,
+          "lift_pct_B": 24.98,
+          "n": 1953
+        },
+        {
+          "regime": "nw_flow",
+          "band": "24-47",
+          "omega_train_A": 0.27,
+          "omega_train_B": 0.3,
+          "lift_pct_A": 57.47,
+          "lift_pct_B": 33.96,
+          "n": 3186
+        },
+        {
+          "regime": "pre_frontal",
+          "band": "12-23",
+          "omega_train_A": 0.23,
+          "omega_train_B": 0.35,
+          "lift_pct_A": 39.62,
+          "lift_pct_B": 21.02,
+          "n": 1277
+        },
+        {
+          "regime": "pre_frontal",
+          "band": "24-47",
+          "omega_train_A": 0.27,
+          "omega_train_B": 0.42,
+          "lift_pct_A": 43.63,
+          "lift_pct_B": 29.21,
+          "n": 2290
+        },
+        {
+          "regime": "se_flow",
+          "band": "24-47",
+          "omega_train_A": 0.26,
+          "omega_train_B": 0.3,
+          "lift_pct_A": 27.96,
+          "lift_pct_B": 29.28,
+          "n": 3541
+        },
+        {
+          "regime": "sw_flow",
+          "band": "12-23",
+          "omega_train_A": 0.15,
+          "omega_train_B": 0.14,
+          "lift_pct_A": 47.19,
+          "lift_pct_B": 56.62,
+          "n": 1021
+        },
+        {
+          "regime": "sw_flow",
+          "band": "24-47",
+          "omega_train_A": 0.17,
+          "omega_train_B": 0.11,
+          "lift_pct_A": 12.88,
+          "lift_pct_B": 50.56,
+          "n": 2056
+        }
+      ]
+    }
+  }
+}
