@@ -455,9 +455,59 @@ def _ims_override(field, regime, band, ims):
         return "hrrr" if ims < threshold else "nbm"
 
 
-def pick_source(field, lead_h, regime=None, hour_local=None, ims=None, features=None):
-    """Return "hrrr", "nbm", or "nws" for this (field, lead_h[, regime, hour_local, ims, features]).
+def pick_source_with_mechanism(field, lead_h, regime=None, hour_local=None, ims=None, features=None):
+    """Return (source, mechanism) for this (field, lead_h[, ...]).
 
+    source    — "hrrr" | "nbm" | "nws" (what pick_source returns).
+    mechanism — which precedence-chain rule made the pick. Values:
+      "pbl_morning_kill" — HRRR PBL morning-overshoot workaround (t only,
+                           stagnant_high, morning hours) → forces "nbm".
+      "learned_gbm"      — v0.7.5 sr router (per-obs learned classifier).
+      "ims_threshold"    — v0.7.5 ch router (per-obs IMS threshold rule).
+      "regime_override"  — walker's by-regime table.
+      "band_pool"        — pooled band table.
+      "default_hrrr"     — no rule matched; HRRR fall-through.
+
+    The mechanism tag lets the pair-log distinguish v0.7.5 router-driven
+    picks from coincidental HRRR/NBM matches, so 10-03 verdict analysis
+    can attribute per-cell Value-Captured to the router specifically.
+    """
+    if (not HRRR_PBL_MORNING_OVERSHOOT_KILL
+            and field == "t"
+            and regime == "stagnant_high"
+            and hour_local in _HRRR_PBL_MORNING_HOURS_LOCAL):
+        return "nbm", "pbl_morning_kill"
+    band_here = _band_for(lead_h)
+    learned_pick = _learned_override(field, regime, band_here, features) if band_here else None
+    if learned_pick is not None:
+        return learned_pick, "learned_gbm"
+    ims_pick = _ims_override(field, regime, band_here, ims) if band_here else None
+    if ims_pick is not None:
+        return ims_pick, "ims_threshold"
+    band = band_here
+    if band is not None and regime:
+        reg_cells = _REGIME_OVERRIDES.get(field, {}).get(regime)
+        if reg_cells:
+            pick = reg_cells.get(band)
+            if pick == "nws" and field not in _NWS_FIELDS_WIRE_ELIGIBLE:
+                pick = None
+            if pick in ("nbm", "hrrr", "nws"):
+                return pick, "regime_override"
+    cells = _TABLE.get(field)
+    if not cells:
+        return "hrrr", "default_hrrr"
+    if band is None:
+        return "hrrr", "default_hrrr"
+    pool_pick = cells.get(band)
+    if pool_pick is None:
+        return "hrrr", "default_hrrr"
+    return pool_pick, "band_pool"
+
+
+def pick_source(field, lead_h, regime=None, hour_local=None, ims=None, features=None):
+    """Backwards-compatible wrapper — returns just the source string.
+
+    See pick_source_with_mechanism for the mechanism tag emitted alongside.
     Precedence: HRRR PBL morning-overshoot workaround (t only, stagnant_high
     only, morning hours only) → learned per-obs classifier (shadow-guarded,
     NBM-vote only) → ims per-obs override (shadow-guarded) → by-regime walker
@@ -466,36 +516,8 @@ def pick_source(field, lead_h, regime=None, hour_local=None, ims=None, features=
     forecast_snapshot consumer falls back to HRRR if "nws" is returned but the
     {field}_nws value is missing for the hour.
     """
-    # HRRR PBL morning-overshoot workaround — see comment block above pick_source.
-    if (not HRRR_PBL_MORNING_OVERSHOOT_KILL
-            and field == "t"
-            and regime == "stagnant_high"
-            and hour_local in _HRRR_PBL_MORNING_HOURS_LOCAL):
-        return "nbm"
-    band_here = _band_for(lead_h)
-    # Learned per-obs classifier — first learned model in the picker.
-    learned_pick = _learned_override(field, regime, band_here, features) if band_here else None
-    if learned_pick is not None:
-        return learned_pick
-    # ims per-obs override — first per-obs axis wired to the L1 selector (crude threshold).
-    ims_pick = _ims_override(field, regime, band_here, ims) if band_here else None
-    if ims_pick is not None:
-        return ims_pick
-    band = band_here
-    if band is not None and regime:
-        reg_cells = _REGIME_OVERRIDES.get(field, {}).get(regime)
-        if reg_cells:
-            pick = reg_cells.get(band)
-            if pick == "nws" and field not in _NWS_FIELDS_WIRE_ELIGIBLE:
-                pick = None  # dp gated — fall through to pool
-            if pick in ("nbm", "hrrr", "nws"):
-                return pick
-    cells = _TABLE.get(field)
-    if not cells:
-        return "hrrr"
-    if band is None:
-        return "hrrr"
-    return cells.get(band, "hrrr")
+    src, _ = pick_source_with_mechanism(field, lead_h, regime, hour_local, ims, features)
+    return src
 
 
 def table_meta():

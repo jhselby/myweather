@@ -291,6 +291,14 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             sel = target_hour.get(f"{short}_selector_source")
             if sel:
                 pair["selector_source"] = sel
+            # v0.7.7: which rule in pick_source's precedence chain made the
+            # pick ("ims_threshold" / "learned_gbm" / "regime_override" /
+            # "band_pool" / "default_hrrr" / "pbl_morning_kill"). Lets
+            # retro-scoring separate router-driven picks from precedence
+            # picks that happen to land on the same source.
+            mech = target_hour.get(f"{short}_selector_mechanism")
+            if mech:
+                pair["selector_mechanism"] = mech
             # v0.7.0 — shadow-stamp pass-through. Any {short}_*_shadow key in
             # the snapshot flows into the pair row with the short-prefix
             # stripped. Covers v0.6.646 learned_pick_shadow/learned_prob_shadow

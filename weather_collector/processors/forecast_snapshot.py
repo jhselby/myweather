@@ -154,6 +154,7 @@ from .skip_table_nbm import should_skip as _should_skip_nbm
 # with {field}_l3_nbm. Table refit nightly by analysis/l1_selector_fit.py.
 from .l1_selector import (
     pick_source as _selector_pick_source,
+    pick_source_with_mechanism as _selector_pick_source_with_mech,
     learned_predict as _learned_predict,
     blender_omega as _blender_omega,
     BLENDER_APPLIED_FIELDS as _BLENDER_APPLIED_FIELDS,
@@ -1100,8 +1101,16 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             _l1_blend_v = _l1_static_blend.blend_l1(f, _fc_regime_i, _fc_band_i, _l1_v, raw_nbm_v)
             if _l1_blend_v is not None:
                 entry[f"{f}_l1_blend_shadow"] = _round_for(f, _l1_blend_v)
-            source = _selector_pick_source(f, i, _fc_regime_i, _valid_hour_local_i, _ims_i, _feats)
+            source, _mechanism = _selector_pick_source_with_mech(
+                f, i, _fc_regime_i, _valid_hour_local_i, _ims_i, _feats
+            )
             entry[f"{f}_selector_source"] = source
+            # v0.7.7 — mechanism tag for pair-log attribution. Lets the
+            # verdict analysis at 10-03 distinguish v0.7.5 router picks
+            # ("ims_threshold" / "learned_gbm") from precedence-chain
+            # picks that happen to land on the same source. Silent on any
+            # consumer that doesn't read it.
+            entry[f"{f}_selector_mechanism"] = _mechanism
             # v0.7.0 — for fields in BLENDER_APPLIED_FIELDS with a curated cell
             # that matched (i.e. _blend_shadow_v computed), blender wins over
             # selector (source stamped as "blend"). Un-curated cells and fields
