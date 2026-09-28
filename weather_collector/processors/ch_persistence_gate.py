@@ -45,7 +45,11 @@ ENABLED = True  # Flipped 2026-07-19 v0.6.358 after 7-day gate cleared + refresh
 # see [[project_chp_cell_skip_to_dynamic_gate]]. Ship-ahead wire, same
 # OFF-first pattern as the Lc gate v0.6.410 → v0.6.413 flip. Flip only after
 # per-cell 7-day clearance accumulates in the gate history.
-CHP_CELL_GATE_ENABLED = False
+# v0.7.9 (2026-09-28) — FLIPPED. Digest 09-28 h_chp_cell_gate: 9 cells cleared
+# with days_lose=7/days_win=0. The dynamic gate is a superset of _CELL_SKIP
+# (4 overlap `both`, 5 are `dynamic_only` new suppressions). Reversal: set
+# back to False; static _CELL_SKIP still holds the pre-existing 10 cells.
+CHP_CELL_GATE_ENABLED = True
 
 FIELD = "ch"
 HOURLY_KEY = "cloud_cover_high"

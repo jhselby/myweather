@@ -1,4 +1,25 @@
 <details open>
+<summary><strong>v0.7.9 • September 28, 2026 (chp dynamic per-cell gate flipped — 9 cells added to skip list)</strong></summary>
+
+- **`CHP_CELL_GATE_ENABLED = True` in `ch_persistence_gate.py`.** The dynamic per-cell gate (`analysis/h_chp_cell_gate.py`, wired since v0.6.421) has been ship-ahead running in shadow. Digest 2026-09-28: 9 cells cleared the 7-day gate with `days_lose=7 / days_win=0 / days_thin=0` — `ne_flow/6-11`, `ne_flow/12-23`, `ne_flow/24-47`, `nw_flow/12-23`, `nw_flow/24-47`, `pre_frontal/12-23`, `pre_frontal/24-47`, `se_flow/12-23`, `se_flow/24-47`. All 6h+ (except one at 6-11); 0-5h cells consistent winners not touched.
+- **Superset of hand-curated `_CELL_SKIP`.** Static _CELL_SKIP (10 cells, added v0.6.405 emergency demote in August) stays in place unchanged; the dynamic gate additionally suppresses 5 `dynamic_only` cells the hand-curated list didn't cover (`ne_flow/6-11`, `ne_flow/12-23`, `ne_flow/24-47`, `nw_flow/24-47`, `se_flow/12-23`). 4 cells overlap `both`. 6 static-only cells retained (calm/12-23, calm/24-47, sea_breeze/12-23, sea_breeze/24-47, sw_flow/12-23, sw_flow/24-47) — the dynamic gate hasn't fired on these yet due to thin history; they stay killed by the frozen static list. Once dynamic clears them too, `_CELL_SKIP` can retire.
+- **Expected effect.** Per `project_chp_narrow_to_0_5h_watch.md` 66-day anchor: 6h+ regime cells lose to L6 by +10-37% MAE. Killing 5 new losers should net ~5-10% MAE reduction on ch across the ~10K weekly obs those cells cover, and remove the mid-lead regression that has been dragging chp's overall verdict below L6.
+- **Reversal.** Flip `CHP_CELL_GATE_ENABLED` back to False. Static `_CELL_SKIP` still holds the pre-existing 10 cells; runtime returns to v0.7.8 behavior. No JSON edits needed.
+- **Watch.** Debug scoreboard `h_ch_persistence_blend_stage2_vs_l6` should show the WATCH count drop from 4 live losing cells to ≤1 within a 7-day window. If it doesn't, one of the dynamic-only cells has a Simpson-paradox artifact and the gate should be reverted; investigate before shipping any additional cells.
+
+</details>
+
+<details>
+<summary><strong>v0.7.8 • September 28, 2026 (Regime-source reconciliation — shadow-stamp regime now matches pair-log)</strong></summary>
+
+- **Fix: shadow-stamp regime now matches pair-log regime.** `forecast_snapshot.py` previously used `derived["state_fc_by_lead"][i]` (built by `state_stamp.py` from raw `hourly[]` arrays, without `cloud_cover`) when computing the (regime, band) cell for shadow-stamps and selector picks. `forecast_error_log.py` rebuilds regime from the snapshot's per-hour dict WITH `cloud_cover`. The two calls returned different labels — e.g. `stagnant_high` can only fire in the pair-log path; L2-corrected pressure/wind can cross the `nor_easter` threshold when raw values don't. Consequence, per v0.7.7 changelog: 78 of 93 v0.7.6 shadow-stamps in the first 12h landed on `nor_easter` cells not in curated JSON.
+- **What changed.** New import of `classify_synoptic_regime` in `forecast_snapshot.py`. In the per-lead field loop, `_fc_regime_i` is now computed inline from `entry.get("wd" / "ws" / "pr" / "cc" / "t")` + snap-level `pressure_trend_hpa_3h` + local valid-hour — the same signature `forecast_error_log.py` uses. Value flows to `_learned_predict`, `_blender_omega`, `_l1_static_blend.blend_l1`, `_selector_pick_source_with_mech`. `_wdp_state_fc_by_lead` still consumed by `wd_persistence_gate` at snapshot line 908 (different concern; not touched).
+- **Impact.** New shadow-stamps for v0.7.6 (`l1_blend_shadow`), v0.7.5 (`selector_mechanism`), and v0.7.0 (`blend_omega_shadow`, `learned_pick_shadow`) will land on the same cell the pair-log records. Off-curated stamp rate should drop from ~84% to near-zero for the v0.7.6 gate. Removes the pre-flip blocker for v0.7.6 `ENABLED=True`. No user-visible change (shadow only). Reversal: revert the two `forecast_snapshot.py` hunks; state_stamp's regime lookup returns unchanged.
+- **Verify after deploy.** Run `analysis/l1_static_blend_shadow_verify.py` on a fresh 4-6h window; ratio of stamped rows in curated cells vs total shadow rows should be ~100% (was ~16%). If it isn't, the L2-value path still diverges somewhere else in `forecast_error_log`'s state_fc build.
+
+</details>
+
+<details>
 <summary><strong>v0.7.7 • September 27, 2026 (Router attribution stamp + v0.7.6 shadow verifier)</strong></summary>
 
 - **`{f}_selector_mechanism` on every pair-log row.** New tag alongside `{f}_selector_source` records which rule in `pick_source()`'s precedence chain made the pick: `pbl_morning_kill` / `learned_gbm` / `ims_threshold` / `regime_override` / `band_pool` / `default_hrrr`. Written by `pick_source_with_mechanism()` in `l1_selector.py`; passed through by `forecast_error_log.py` as `pair["selector_mechanism"]`. Backwards-compatible: existing `pick_source()` wraps the new function and returns just the source string. Unblocks the 10-03 v0.7.5 verdict — without this we cannot separate router-driven ch/sr picks from precedence-chain picks that happen to land on the same source.

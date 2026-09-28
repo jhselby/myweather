@@ -149,6 +149,17 @@ from .l3_nbm import (
 )
 from . import gate_firing_log as _gate_firing_log
 from .skip_table_nbm import should_skip as _should_skip_nbm
+# v0.7.8 (2026-09-28) — regime classifier, imported here so shadow-stamps
+# and selector picks use the SAME regime forecast_error_log will later
+# record on the pair-log row. Previously the field loop used
+# state_stamp's per-lead regime (built from RAW hourly[] arrays without
+# cloud_cover), while forecast_error_log rebuilds regime from the
+# snapshot's per-hour dict WITH cloud_cover. The mismatch stamped
+# v0.7.6 shadow blends onto pair-log rows whose recorded regime was
+# different — 78/93 rows in the first 12h landed on nor_easter cells
+# not in curated JSON. Fix: classify inside the field loop from the
+# same entry keys forecast_error_log reads, mirroring its call.
+from .regime_classifier import classify_synoptic_regime as _classify_synoptic_regime
 # Phase 4 (2026-08-19) — L1 selector. Picks HRRR or NBM cascade output
 # per (field, lead-band). When "nbm", replace the user-visible {field}
 # with {field}_l3_nbm. Table refit nightly by analysis/l1_selector_fit.py.
@@ -1023,20 +1034,33 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         # l2_nbm > raw_nbm at the tail so fields without deep NBM
         # cascades (dp, ws) can still be routed honestly.
         _SELECTOR_FIELDS = ("t", "dp", "h", "ws", "wg", "wd", "cc", "ch", "sr")
+        # v0.7.8 (2026-09-28) — regime for this lead, computed from the SAME
+        # entry keys forecast_error_log later reads to build state_fc.regime_synoptic.
+        # Kept aligned so shadow-stamps and selector picks land on the same cell
+        # the pair-log will record. Mirrors forecast_error_log.py's call at line
+        # ~133 (ws, wd, pr, cc, t + snap-level pressure_trend). None inputs are
+        # handled by the classifier — returns None then, matching pair-log behavior.
+        # Kept as `_fc_regime_i` for local var-name compatibility.
+        _pt_snap = (derived or {}).get("pressure_trend_hpa_3h")
+        # v0.6.606 — pass valid-hour local for the HRRR PBL morning-overshoot
+        # workaround (t + stagnant_high + EDT 04-08 → NBM). Falls back to
+        # None if hour extraction fails; selector's morning gate stays inert.
+        _valid_hour_local_i = _chp_valid_hour_local(times, i)
+        try:
+            _fc_regime_i = _classify_synoptic_regime(
+                entry.get("wd"), entry.get("ws"),
+                entry.get("pr"), _pt_snap,
+                _valid_hour_local_i, entry.get("t"),
+                cloud_cover=entry.get("cc"),
+            )
+        except Exception:
+            _fc_regime_i = None
         for f in _SELECTOR_FIELDS:
             # Any NBM value at all — raw_nbm is the floor. If absent,
             # NBM had no data this hour; skip.
             raw_nbm_v = entry.get(f"{f}_raw_nbm")
             if raw_nbm_v is None:
                 continue
-            # v0.6.552 — pass forecast-time regime so the selector can honor
-            # cleared cells from the by-regime walker (finer-than-band route).
-            _fc_regime_i = (_wdp_state_fc_by_lead[i]
-                            if i < len(_wdp_state_fc_by_lead) else None)
-            # v0.6.606 — pass valid-hour local for the HRRR PBL morning-overshoot
-            # workaround (t + stagnant_high + EDT 04-08 → NBM). Falls back to
-            # None if hour extraction fails; selector's morning gate stays inert.
-            _valid_hour_local_i = _chp_valid_hour_local(times, i)
             # v0.6.640 — pass per-obs ims (|forecast_l1 - forecast_raw_nbm|) so
             # the selector can honor ims-conditioned per-obs rules (currently
             # shadow-guarded to h/sea_breeze/24-47h only). Fallback to None when
