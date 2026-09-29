@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.14 • September 29, 2026 (terminology consistency — "selector" is the primary name)</strong></summary>
+
+- **Naming rule established:** "selector" is the primary name for the layer. Applies to prose, section headings, and narrative. Kept: `l1_selector.py`, `pick_source()`, `selector_source` / `selector_mechanism` pair-log fields, "Selector Skill" UI card (all code-tied). "Router-as-authority" retained only as the name of the v0.7.5 *framing pivot*, not as a rename of the layer.
+- **Why not "router":** the debug archive has a v0.6.432 "L1 router" that was retired 2026-08-19 v0.6.437 and explicitly *replaced by the selector*. Calling the current layer "router" in new prose collides with the historical retired-router in the archive. Prose consistency matters more than mechanical accuracy of the name.
+- **Swept for today's authored prose only** (v0.7.10–v0.7.13 memory + CHANGELOG + debug page edits). Fixed three prose "router" → "selector" where I had drifted mid-session: v0.7.12 CHANGELOG summary, v0.7.10 CHANGELOG body, `MEMORY.md` "Selector/routing" heading, debug page line 2250 ("the selector picks NBM"), `project_09_29_session.md` link description.
+- **Historical entries left untouched.** 09-28 memory / older CHANGELOG entries / debug page's retired L1 router tile all keep their original wording — history is the record of how we talked then, not what we standardize on now.
+- **No runtime change.**
+
+</details>
+
+<details>
 <summary><strong>v0.7.13 • September 29, 2026 (operator narrative structural cleanup — 22 old post-ship watches archived + today's Recent Activity compressed)</strong></summary>
 
 - **22 post-ship watches archived** (all opened 08-30 through 09-15, all ≥14 days old with watch windows fully concluded). Set `display:none` on each `<li>` in place; the entries stay in the source for auditability but are hidden from the visible list. The `CLOSED CLEAN` summary line below the active list expanded to include every archived entry by ship-tag and date so a reader can scan "what closed" at a glance without expanding archived HTML.
@@ -34,7 +45,7 @@
 <details>
 <summary><strong>v0.7.10 • September 29, 2026 (debug page 09-29 triage sweep + h_cc_derivation format guard)</strong></summary>
 
-- **Debug page 09-29 sweep.** Recent Activity: new 09-29 today entry covering the selector/router/blender triage session — v0.7.8 shadow verify partial-pass (off-curated 84%→41%, residual all `nor_easter`), l1_selector_fit_3way regression diagnosed as real regime-driven signal decay on dp (not a bug — walker gate correctly held), nor_easter static-blend fit shows universal ω doesn't fit the regime (best-ω is HRRR-favoring 1.00 dp / 0.65 h vs universal 0.27 / 0.44), cc FRESH FIRE is a lucky-baseline artifact from 3 consecutive all-clear days. Labels shifted: 09-28 → 1 day ago, 09-27 → 2 days ago, 09-26 trimmed.
+- **Debug page 09-29 sweep.** Recent Activity: new 09-29 today entry covering the selector/blender triage session — v0.7.8 shadow verify partial-pass (off-curated 84%→41%, residual all `nor_easter`), l1_selector_fit_3way regression diagnosed as real regime-driven signal decay on dp (not a bug — walker gate correctly held), nor_easter static-blend fit shows universal ω doesn't fit the regime (best-ω is HRRR-favoring 1.00 dp / 0.65 h vs universal 0.27 / 0.44), cc FRESH FIRE is a lucky-baseline artifact from 3 consecutive all-clear days. Labels shifted: 09-28 → 1 day ago, 09-27 → 2 days ago, 09-26 trimmed.
 - **Upcoming rescope.** Removed done Tue 09-29 item. Fri 10-03 v0.7.6 shadow-retro entry updated with 09-29 findings (2 SHIP-READY: h/nw_flow/24-47 +39.4%, dp/nw_flow/24-47 +8.6%, both halves-stable, n=336 below gate). New `~10-02 (n gate)` narrow-flip decision item and `~10-04 (n gate)` nor_easter per-regime ω schema decision item.
 - **Post-ship watches.** v0.7.8 marked PARTIAL PASS with nor_easter curation-gap note. sr/l3_nbm/nor_easter watch updated with worsening sentry (+8.1%→−46.7%, Δ +54.8pp) and skip-add proposal n=220 (up from n=39 on 09-28); still held per fresh-fire discipline. L1 blender tile refreshed to 09-29 retro numbers.
 - **`analysis/h_cc_derivation.py` format guard.** Digest showed `h_cc_derivation FAIL(1)`. Root cause: `pct(new, base)` returns None when `base == 0`, but the per-obs-day and per-regime print format strings used `>+12.2f` unconditionally. On 09-27 and 09-28 all-clear days, prod_cc MAE hit exactly 0 → format crashed. Fixed both call sites to print `n/a` when pct is None. Script now runs to completion; substantive verdict unchanged (long-standing `PROMOTE — derived-random beats current production cc by +47.91% pooled`).
