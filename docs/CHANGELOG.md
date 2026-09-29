@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.10 • September 29, 2026 (debug page 09-29 triage sweep + h_cc_derivation format guard)</strong></summary>
+
+- **Debug page 09-29 sweep.** Recent Activity: new 09-29 today entry covering the selector/router/blender triage session — v0.7.8 shadow verify partial-pass (off-curated 84%→41%, residual all `nor_easter`), l1_selector_fit_3way regression diagnosed as real regime-driven signal decay on dp (not a bug — walker gate correctly held), nor_easter static-blend fit shows universal ω doesn't fit the regime (best-ω is HRRR-favoring 1.00 dp / 0.65 h vs universal 0.27 / 0.44), cc FRESH FIRE is a lucky-baseline artifact from 3 consecutive all-clear days. Labels shifted: 09-28 → 1 day ago, 09-27 → 2 days ago, 09-26 trimmed.
+- **Upcoming rescope.** Removed done Tue 09-29 item. Fri 10-03 v0.7.6 shadow-retro entry updated with 09-29 findings (2 SHIP-READY: h/nw_flow/24-47 +39.4%, dp/nw_flow/24-47 +8.6%, both halves-stable, n=336 below gate). New `~10-02 (n gate)` narrow-flip decision item and `~10-04 (n gate)` nor_easter per-regime ω schema decision item.
+- **Post-ship watches.** v0.7.8 marked PARTIAL PASS with nor_easter curation-gap note. sr/l3_nbm/nor_easter watch updated with worsening sentry (+8.1%→−46.7%, Δ +54.8pp) and skip-add proposal n=220 (up from n=39 on 09-28); still held per fresh-fire discipline. L1 blender tile refreshed to 09-29 retro numbers.
+- **`analysis/h_cc_derivation.py` format guard.** Digest showed `h_cc_derivation FAIL(1)`. Root cause: `pct(new, base)` returns None when `base == 0`, but the per-obs-day and per-regime print format strings used `>+12.2f` unconditionally. On 09-27 and 09-28 all-clear days, prod_cc MAE hit exactly 0 → format crashed. Fixed both call sites to print `n/a` when pct is None. Script now runs to completion; substantive verdict unchanged (long-standing `PROMOTE — derived-random beats current production cc by +47.91% pooled`).
+- **No runtime change.** Documentation + one analysis script guard; no collector redeploy.
+
+</details>
+
+<details>
 <summary><strong>v0.7.9 • September 28, 2026 (chp dynamic per-cell gate flipped — 9 cells added to skip list)</strong></summary>
 
 - **`CHP_CELL_GATE_ENABLED = True` in `ch_persistence_gate.py`.** The dynamic per-cell gate (`analysis/h_chp_cell_gate.py`, wired since v0.6.421) has been ship-ahead running in shadow. Digest 2026-09-28: 9 cells cleared the 7-day gate with `days_lose=7 / days_win=0 / days_thin=0` — `ne_flow/6-11`, `ne_flow/12-23`, `ne_flow/24-47`, `nw_flow/12-23`, `nw_flow/24-47`, `pre_frontal/12-23`, `pre_frontal/24-47`, `se_flow/12-23`, `se_flow/24-47`. All 6h+ (except one at 6-11); 0-5h cells consistent winners not touched.
