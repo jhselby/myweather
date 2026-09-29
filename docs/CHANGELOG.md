@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.7.15 • September 29, 2026 (learned_gbm selector for sr — 5 STABLE cells finally wired live)</strong></summary>
+
+- **`weather_collector/data/l1_learned_selector_curated.json` populated with 5 sr STABLE GBM cells** from the v5 sweep. This completes the sr side of the v0.7.5 router-as-authority pivot that shipped 3 days ago as a no-op: `LEARNED_SELECTOR_SHADOW_ENABLED = True` was set, but the shipped curated JSON was empty, so the learned path never fired. Today's re-run of `analysis/l1_selector_per_obs_classifier_stage1_v5.py` on current pair-log confirmed the same 5 cells are still halves-stable (including 4 days of nor'easter data): sr/nw_flow/12-23 (+14.6/+25.4), sr/nw_flow/24-47 (+11.9/+28.7), sr/se_flow/12-23 (+14.2/+21.7), sr/se_flow/24-47 (+21.3/+17.2), sr/sw_flow/6-11 (+25.6/+37.4).
+- **Fixed a real bug caught by shipping.** The v5 candidate JSON used band `"0-5h"` / `"6-11h"` / `"12-23h"` / `"24-47h"` (with `h` suffix), but the runtime's `_band_for_lead()` in `forecast_snapshot.py` returns `"0-5"` / `"6-11"` / `"12-23"` / `"24-47"` (no suffix). Cell keys would never have matched. Stripped the `h` suffix in the shipped JSON. This is likely why the file was left empty — an earlier ship attempt would have looked live but never fired, so was reverted to empty.
+- **Non-overlapping with v0.7.5 ims_threshold.** The v5 candidate also has 4 ch cells; those are dropped here per the original router-as-authority plan (ch is handled by ims_threshold, sr is handled by GBM). Non-overlapping by field.
+- **Not shipping ch or h GBM cells.** ch is already covered by ims_threshold. The v5 sweep did not produce any h STABLE cells today (all UNSTABLE/one-window/MARGINAL on current data).
+- **Rollback: one file swap.** `weather_collector/data/l1_learned_selector_curated.json.pre-v0.7.15.bak` holds the pre-ship empty file. Restore with `cp`.
+- **Precedence in `pick_source()` unchanged:** HRRR-PBL → LEARNED (this ship's sr cells fire here) → IMS → by-regime walker → band pool → HRRR fall-through.
+- **Watch after deploy.** (a) Next tick logs clean, no shape-mismatch warnings from `l1_learned_selector`. (b) Post-deploy sr pair-log rows in nw_flow/12-23, nw_flow/24-47, se_flow/12-23, se_flow/24-47, sw_flow/6-11 should stamp `selector_mechanism=learned_gbm` (was `band_pool` for all sr rows before this ship). (c) sr Value Captured 7d should trend positive as the covered cells accumulate. (d) sr per-cell picks either agree with the pool (fine) or disagree — disagreements are what we're paying for.
+
+</details>
+
+<details>
 <summary><strong>v0.7.14 • September 29, 2026 (terminology consistency — "selector" is the primary name)</strong></summary>
 
 - **Naming rule established:** "selector" is the primary name for the layer. Applies to prose, section headings, and narrative. Kept: `l1_selector.py`, `pick_source()`, `selector_source` / `selector_mechanism` pair-log fields, "Selector Skill" UI card (all code-tied). "Router-as-authority" retained only as the name of the v0.7.5 *framing pivot*, not as a rename of the layer.
