@@ -214,10 +214,13 @@ def main():
     for regime in sorted(by_regime.keys(), key=lambda k: -by_regime[k]["n"]):
         agg = by_regime[regime]
         if agg["n"] < 100: continue
+        rvp = pct(mae(agg,'rand_cc'), mae(agg,'prod_cc'))
+        mvp = pct(mae(agg,'max_cc'), mae(agg,'prod_cc'))
+        rvp_s = f"{rvp:>+12.2f}%" if rvp is not None else f"{'n/a':>13}"
+        mvp_s = f"{mvp:>+11.2f}%" if mvp is not None else f"{'n/a':>12}"
         p(f"{regime:<14} {agg['n']:>7,} {mae(agg,'raw_cc'):>7.2f} {mae(agg,'prod_cc'):>7.2f} "
           f"{mae(agg,'rand_cc'):>7.2f} {mae(agg,'max_cc'):>7.2f} "
-          f"{pct(mae(agg,'rand_cc'), mae(agg,'prod_cc')):>+12.2f}% "
-          f"{pct(mae(agg,'max_cc'), mae(agg,'prod_cc')):>+11.2f}%")
+          f"{rvp_s} {mvp_s}")
     p()
 
     # ── Per obs-day (halves-style check) ──
@@ -229,9 +232,11 @@ def main():
     for day in days:
         agg = per_day[day]
         if agg["n"] < 30: continue
+        rvp = pct(mae(agg,'rand_cc'), mae(agg,'prod_cc'))
+        rvp_str = f"{rvp:>+12.2f}%" if rvp is not None else f"{'n/a':>13}"
         p(f"{day:<12} {agg['n']:>6,} {mae(agg,'raw_cc'):>7.2f} {mae(agg,'prod_cc'):>7.2f} "
           f"{mae(agg,'rand_cc'):>7.2f} {mae(agg,'max_cc'):>7.2f} "
-          f"{pct(mae(agg,'rand_cc'), mae(agg,'prod_cc')):>+12.2f}%")
+          f"{rvp_str}")
     p()
 
     # ── Halves check ──
