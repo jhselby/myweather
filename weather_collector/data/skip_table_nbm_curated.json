@@ -1,6 +1,6 @@
 {
-  "fitted_at": "2026-09-25T07:30",
-  "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive].",
+  "fitted_at": "2026-09-29T13:00",
+  "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive]. | v0.7.11 2026-09-29: TEMPORARY sr nor_easter/12-23h and /24-47h added as L3 bypass (n=220 lift -47.2% and n=206 lift -17.7%; raw+L2 clean, L3 corrupts on new regime). Re-review 2026-10-13 or when walkforward proposes cleanly.",
   "cells": {
     "l3_nbm": {
       "wg": [
@@ -100,6 +100,18 @@
           24,
           48
         ]
+      ],
+      "sr": [
+        [
+          "nor_easter",
+          12,
+          24
+        ],
+        [
+          "nor_easter",
+          24,
+          48
+        ]
       ]
     },
     "l4_nbm": {},
@@ -109,6 +121,24 @@
     "wdp_nbm": {}
   },
   "history": {
+    "2026-09-29T13:00": {
+      "action": "add",
+      "cells": {
+        "l3_nbm.sr": [
+          [
+            "nor_easter",
+            12,
+            24
+          ],
+          [
+            "nor_easter",
+            24,
+            48
+          ]
+        ]
+      },
+      "reason": "TEMPORARY emergency bypass. nor_easter regime new since ~09-26 broke L3 sr calibration: nbm_regression_sentry sr.l3_nbm HOT +8.1% -> -46.7% (Δ +54.8pp) over two consecutive days. Per-layer breakdown: raw_nbm 5.6-15 W/m² clean, L2_nbm≡raw_nbm, L3 inflates. Walkforward proposals l3_nbm sr nor_easter 12-23h n=220 lift -47.2%, 24-47h n=206 lift -17.7% — above skip-threshold but new-regime blocks the 14d+50d two-window gate. Skip ships now as circuit-breaker; re-review 2026-10-13. Precedent: same pattern as v0.6.622 wd.se_flow/0-5h."
+    },
     "2026-08-21T23:50": {
       "action": "add",
       "cells": {

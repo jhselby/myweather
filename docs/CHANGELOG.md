@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.7.11 • September 29, 2026 (TEMPORARY sr × nor_easter L3 bypass — circuit-breaker)</strong></summary>
+
+- **Added `sr × nor_easter × 12-23h` and `24-47h` to `skip_table_nbm_curated.json` (l3_nbm).** Runtime picks up automatically via `skip_table_nbm.should_skip()` — the sr/nor_easter cells now stop at L2_nbm (which equals raw_nbm for sr) instead of applying L3_nbm.
+- **Why this bypasses the normal 14d+50d gate.** ChatGPT-review call, correct: the fresh-fire lucky-baseline discipline was the wrong frame here. That's for one-anomaly-day sentries with tiny-baseline percentage math. This is different — known layer, known regime, known direction, two consecutive days worsening, sample grown 39→220. Per-layer breakdown confirmed the specific L3 correction is the culprit (raw_nbm 5.6-15 W/m² clean, L2_nbm≡raw_nbm, L1 20-40 worse, L3 inflates the good raw). The 14d+50d gate is structurally slow on new regimes; nor_easter started ~09-26 and won't accumulate 50d for weeks. Meanwhile the correction is degrading a forecast source that's already good before it gets applied.
+- **Evidence.** nbm_regression_sentry `sr.l3_nbm HOT` moved from +8.1%→−1.9% (Δ +7.6pp) on 09-28 to +8.1%→−46.7% (Δ +54.8pp) on 09-29 — worsening across two days. Walkforward proposals `l3_nbm sr nor_easter 12-23h` n=220 lift −47.2% and `24-47h` n=206 lift −17.7%. 24h scorecard: sr −37.2%; 12h: −22.9%. 7d sr held at only +1.8%, one of only two barely-positive fields.
+- **Temporary framing.** Note field in curated JSON marks this as a v0.7.11 emergency add with a 2026-10-13 re-review date. History entry logs the reason. Reversal: delete the two entries and redeploy — no code change.
+- **Watch.** (a) `nbm_regression_sentry` sr.l3_nbm should drop out of HOT within a tick as new pairs stamp `applied_layer=l2_nbm` instead of `l3_nbm` for the covered cells. (b) sr 24h/12h scorecard should recover toward raw NBM sr MAE. (c) Layer-shape sentry for sr should stay clean at 0-5h / 6-11h (unaffected bands). (d) If nor_easter regime fades in 1-2 weeks and walkforward proposes cleanly on 14d+50d, transition from emergency add to formal skip; if regime persists, keep skip through 2026-10-13 review.
+- **Precedent.** Same shape as v0.6.622 wd.se_flow/0-5h emergency add — regime-specific L3 loss, ship-first-verify-later, cleared cleanly in follow-up walkforward.
+- **Also (analysis-only, no runtime change).** `analysis/l1_static_blend_shadow_verify.py`: report totals reconciled — the "Verdict:" summary was counting all scored cells (curated + off-curated stamped) but labeling only the 20 curated. Split into two lines so 2+13+7+7=29 reads coherently against "20 curated + 9 off-curated". Caught by ChatGPT review.
+
+</details>
+
+<details>
 <summary><strong>v0.7.10 • September 29, 2026 (debug page 09-29 triage sweep + h_cc_derivation format guard)</strong></summary>
 
 - **Debug page 09-29 sweep.** Recent Activity: new 09-29 today entry covering the selector/router/blender triage session — v0.7.8 shadow verify partial-pass (off-curated 84%→41%, residual all `nor_easter`), l1_selector_fit_3way regression diagnosed as real regime-driven signal decay on dp (not a bug — walker gate correctly held), nor_easter static-blend fit shows universal ω doesn't fit the regime (best-ω is HRRR-favoring 1.00 dp / 0.65 h vs universal 0.27 / 0.44), cc FRESH FIRE is a lucky-baseline artifact from 3 consecutive all-clear days. Labels shifted: 09-28 → 1 day ago, 09-27 → 2 days ago, 09-26 trimmed.

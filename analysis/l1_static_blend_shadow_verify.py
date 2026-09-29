@@ -293,6 +293,8 @@ def main():
     print("-" * len(header))
 
     tally = {"SHIP-READY": 0, "HOLD": 0, "KILL": 0, "THIN": 0}
+    tally_curated = {"SHIP-READY": 0, "HOLD": 0, "KILL": 0, "THIN": 0}
+    tally_offcurated = {"SHIP-READY": 0, "HOLD": 0, "KILL": 0, "THIN": 0}
     field_tally = defaultdict(lambda: {"SHIP-READY": 0, "HOLD": 0, "KILL": 0, "THIN": 0})
 
     # Report every cell that either (a) has stamped rows in the last 30d
@@ -318,6 +320,10 @@ def main():
         sB = score(b_rows, field)
         v = verdict_for(s7, sA, sB)
         tally[v] += 1
+        if key in curated_keys:
+            tally_curated[v] += 1
+        else:
+            tally_offcurated[v] += 1
         field_tally[field][v] += 1
         curated_mark = "" if key in curated_keys else " *"
         if key not in curated_keys and s7.get("n", 0) > 0:
@@ -363,11 +369,19 @@ def main():
         print(f"  {f}: {ft['SHIP-READY']}/{total_f} SHIP-READY  "
               f"({ft['HOLD']} hold, {ft['KILL']} kill, {ft['THIN']} thin)")
     print()
-    summary = (f"Verdict: {tally['SHIP-READY']} SHIP-READY / "
-               f"{tally['HOLD']} HOLD / {tally['KILL']} KILL / "
-               f"{tally['THIN']} THIN "
-               f"(of {total_cells} curated cells across {len(curated)} field(s))")
-    print(summary)
+    tc = tally_curated; to = tally_offcurated
+    n_off = sum(to.values())
+    summary_curated = (f"Verdict (curated cells, n={total_cells}): "
+                       f"{tc['SHIP-READY']} SHIP-READY / {tc['HOLD']} HOLD / "
+                       f"{tc['KILL']} KILL / {tc['THIN']} THIN")
+    summary_off = (f"Verdict (off-curated stamped, n={n_off}): "
+                   f"{to['SHIP-READY']} SHIP-READY / {to['HOLD']} HOLD / "
+                   f"{to['KILL']} KILL / {to['THIN']} THIN"
+                   f"  (regime disagreement or new-regime carve-outs)")
+    summary = summary_curated
+    print(summary_curated)
+    if n_off:
+        print(summary_off)
 
     OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
     payload = {
@@ -377,6 +391,8 @@ def main():
         "neg_kill_pct": NEG_KILL_PCT,
         "field_omega": {f: spec["omega"] for f, spec in curated.items()},
         "tally": tally,
+        "tally_curated": tally_curated,
+        "tally_offcurated": tally_offcurated,
         "per_field_tally": dict(field_tally),
         "cells": out_rows,
         "n_scanned": n_scanned,
