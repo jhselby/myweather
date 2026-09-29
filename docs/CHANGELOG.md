@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.13 • September 29, 2026 (operator narrative structural cleanup — 22 old post-ship watches archived + today's Recent Activity compressed)</strong></summary>
+
+- **22 post-ship watches archived** (all opened 08-30 through 09-15, all ≥14 days old with watch windows fully concluded). Set `display:none` on each `<li>` in place; the entries stay in the source for auditability but are hidden from the visible list. The `CLOSED CLEAN` summary line below the active list expanded to include every archived entry by ship-tag and date so a reader can scan "what closed" at a glance without expanding archived HTML.
+- **Active post-ship watches now reads top-down as recent ships only**: v0.7.11 sr bypass · v0.7.12 debug de-stale · v0.7.10 h_cc_derivation · v0.7.9 chp dynamic gate · v0.7.8 regime-source · v0.7.7 mechanism stamp · sr regression / L3_nbm / nor_easter · + 4 long-standing state flags (Lc emergency, wsbp, l6_fix_b_refit, wg persistence-skill). Everything else is history.
+- **Today's Recent Activity entry compressed** from ~5,000 chars of session prose to ~1,700 chars of landmark-only summary. Full session detail lives in `project_09_29_session` memory + <code>docs/CHANGELOG.md</code> entries; the debug page no longer duplicates them. Discipline: Recent Activity is a scoreboard pointer, not a session doc.
+- **No runtime change.** Documentation-only restructuring. This is the "operator narrative structural cleanup" ChatGPT flagged as recurring debt. Follow-on for another session: consider a JSON-populated Upcoming grid + Post-ship watches loader so text stays in curated data files rather than inline HTML.
+
+</details>
+
+<details>
 <summary><strong>v0.7.12 • September 29, 2026 (debug page narrative refresh — humidity + selector/NBM cascade summary de-staled)</strong></summary>
 
 - **Humidity row narrative refreshed.** The `h` row's narrative had been carrying `7d Total Lift +3.7%` and prose from 09-15 v0.6.633's sweep — 14 days stale, and rewrote itself in a way that drifts every ship. New narrative is event-based (structural state + shadow ships in flight) with all numeric values deferred to the live per-field scoring table above. Notes the v0.7.6 nw_flow/24-47 SHIP-READY status from 09-29's shadow retro.
