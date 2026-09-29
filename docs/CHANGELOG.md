@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.16 • September 29, 2026 (preventive schema fix in v5 classifier + debug page sweep for v0.7.13/14/15/16)</strong></summary>
+
+- **`analysis/l1_selector_per_obs_classifier_stage1_v5.py` candidate writer fix.** One-line change to strip the `"h"` suffix from band values before serialization. The `BANDS` tuple still uses `"12-23h"` etc. for display, but the JSON writer now emits `"12-23"` to match the runtime's `_band_for_lead()` canonical form. Prevents recurrence of the silent-no-op bug that made v0.7.5's sr side inert for 3 days.
+- **Debug page sweep.** Today's Recent Activity entry expanded to cover all 7 ships (was 3). Post-ship watches gained entries for v0.7.13/14/15/16. All within the compact landmark-only format from v0.7.13.
+- **Wd dig documented (no ship).** 7d Total Lift −2.67% attributed entirely to cascade (routing 0%, cascade −2.67%). NBM L3 sentry WATCH on wd (help −3.4% → −16.1% fresh). Same circuit-breaker pattern as sr today but smaller magnitude (Δ +12.8pp vs sr's +54.8pp) and WATCH not HOT. Held to verify v0.7.11 sr ship first; revisit tomorrow morning with data. If sr shows clean L2 stamping and sentry cooling, wd × nor_easter × 12-23h + 24-47h L3 bypass is a 10-min ship.
+- **No runtime change from this commit.** Analysis script fix + debug page text only.
+
+</details>
+
+<details>
 <summary><strong>v0.7.15 • September 29, 2026 (learned_gbm selector for sr — 5 STABLE cells finally wired live)</strong></summary>
 
 - **`weather_collector/data/l1_learned_selector_curated.json` populated with 5 sr STABLE GBM cells** from the v5 sweep. This completes the sr side of the v0.7.5 router-as-authority pivot that shipped 3 days ago as a no-op: `LEARNED_SELECTOR_SHADOW_ENABLED = True` was set, but the shipped curated JSON was empty, so the learned path never fired. Today's re-run of `analysis/l1_selector_per_obs_classifier_stage1_v5.py` on current pair-log confirmed the same 5 cells are still halves-stable (including 4 days of nor'easter data): sr/nw_flow/12-23 (+14.6/+25.4), sr/nw_flow/24-47 (+11.9/+28.7), sr/se_flow/12-23 (+14.2/+21.7), sr/se_flow/24-47 (+21.3/+17.2), sr/sw_flow/6-11 (+25.6/+37.4).

@@ -442,7 +442,13 @@ def main():
             "gate is halves-stable ≥3% lift on both quartile pairs A and B, non-degenerate fNBM."
         ),
         "cells": [
-            {**{"field": c["field"], "regime": c["regime"], "band": c["band"]},
+            # Strip "h" suffix from band to match runtime _band_for_lead()
+            # canonical form ("12-23" not "12-23h"). Runtime lookup key is
+            # (field, regime, band); a mismatch here silently loads cells
+            # that never fire. Bug caught in v0.7.15 (2026-09-29) after the
+            # sr side of v0.7.5 was a no-op for 3 days.
+            {**{"field": c["field"], "regime": c["regime"],
+                "band": c["band"][:-1] if isinstance(c["band"], str) and c["band"].endswith("h") else c["band"]},
              **c["serialized"]}
             for c in stable if "serialized" in c
         ],
