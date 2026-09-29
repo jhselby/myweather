@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.12 • September 29, 2026 (debug page narrative refresh — humidity + selector/NBM cascade summary de-staled)</strong></summary>
+
+- **Humidity row narrative refreshed.** The `h` row's narrative had been carrying `7d Total Lift +3.7%` and prose from 09-15 v0.6.633's sweep — 14 days stale, and rewrote itself in a way that drifts every ship. New narrative is event-based (structural state + shadow ships in flight) with all numeric values deferred to the live per-field scoring table above. Notes the v0.7.6 nw_flow/24-47 SHIP-READY status from 09-29's shadow retro.
+- **NBM cascade "current picks" summary de-staled.** Two long-form summary sentences (lines 2213 and 2250) claimed which fields route to which side. Both had drifted — v0.6.633 already noted sr moved HRRR→ but the second sentence never got updated, and v0.7.11 changed nothing about routing but added a per-cell L3 skip for sr × nor_easter. Both summaries replaced with pointers to the live National Source tile + per-field Selector column (which the readers see anyway). Skip-table cell count updated 15 → 17 (v0.7.11 +2 sr × nor_easter).
+- **Added `cm dropped 09-15 v0.6.625` to the L3_NBM cascade history sentence.** This was a v0.6.633 miss — the sweep noted the L3 drop for cm on the top-of-page architecture summary but left the parallel NBM sentence stale.
+- **No runtime change.** Documentation only.
+
+</details>
+
+<details>
 <summary><strong>v0.7.11 • September 29, 2026 (TEMPORARY sr × nor_easter L3 bypass — circuit-breaker)</strong></summary>
 
 - **Added `sr × nor_easter × 12-23h` and `24-47h` to `skip_table_nbm_curated.json` (l3_nbm).** Runtime picks up automatically via `skip_table_nbm.should_skip()` — the sr/nor_easter cells now stop at L2_nbm (which equals raw_nbm for sr) instead of applying L3_nbm.
