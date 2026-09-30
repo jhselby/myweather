@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.17 • September 30, 2026 (l3_nbm skip REMOVE: wg/nw_flow/12-23h)</strong></summary>
+
+- **`weather_collector/data/skip_table_nbm_curated.json`** — removed `["nw_flow", 12, 24]` from `l3_nbm.wg`. `nbm_skip_earning_audit` two-window CONFIRMED: 14d n=952 lift +18.30% (halves +11.25/+27.67), 50d n=3,980 lift +6.90% (halves +7.27/+6.61). Both windows agree the correction now helps; skip was preventing a beneficial correction.
+- **Companion cell held.** `wg/nw_flow/6-11h` also flagged by the audit but its 50d halves are +9.52/+2.11 (h2 decays below the +3% threshold), fails halves-stable both-positive per the v0.6.574 two-window rule. Re-check next cycle.
+- **Collector-only change.** No frontend behavior change. Verify next tick: pair-log rows for `wg` in `nw_flow/12-23h` should now stamp `applied_layer=l3_nbm` (was `l2_nbm` while skipped).
+
+</details>
+
+<details>
 <summary><strong>v0.7.16 • September 29, 2026 (preventive schema fix in v5 classifier + debug page sweep for v0.7.13/14/15/16)</strong></summary>
 
 - **`analysis/l1_selector_per_obs_classifier_stage1_v5.py` candidate writer fix.** One-line change to strip the `"h"` suffix from band values before serialization. The `BANDS` tuple still uses `"12-23h"` etc. for display, but the JSON writer now emits `"12-23"` to match the runtime's `_band_for_lead()` canonical form. Prevents recurrence of the silent-no-op bug that made v0.7.5's sr side inert for 3 days.

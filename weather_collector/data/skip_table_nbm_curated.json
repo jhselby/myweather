@@ -1,5 +1,5 @@
 {
-  "fitted_at": "2026-09-29T13:00",
+  "fitted_at": "2026-09-30T07:35",
   "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive]. | v0.7.11 2026-09-29: TEMPORARY sr nor_easter/12-23h and /24-47h added as L3 bypass (n=220 lift -47.2% and n=206 lift -17.7%; raw+L2 clean, L3 corrupts on new regime). Re-review 2026-10-13 or when walkforward proposes cleanly.",
   "cells": {
     "l3_nbm": {
@@ -38,11 +38,6 @@
           "nw_flow",
           6,
           12
-        ],
-        [
-          "nw_flow",
-          12,
-          24
         ]
       ],
       "ch": [
@@ -137,7 +132,7 @@
           ]
         ]
       },
-      "reason": "TEMPORARY emergency bypass. nor_easter regime new since ~09-26 broke L3 sr calibration: nbm_regression_sentry sr.l3_nbm HOT +8.1% -> -46.7% (Δ +54.8pp) over two consecutive days. Per-layer breakdown: raw_nbm 5.6-15 W/m² clean, L2_nbm≡raw_nbm, L3 inflates. Walkforward proposals l3_nbm sr nor_easter 12-23h n=220 lift -47.2%, 24-47h n=206 lift -17.7% — above skip-threshold but new-regime blocks the 14d+50d two-window gate. Skip ships now as circuit-breaker; re-review 2026-10-13. Precedent: same pattern as v0.6.622 wd.se_flow/0-5h."
+      "reason": "TEMPORARY emergency bypass. nor_easter regime new since ~09-26 broke L3 sr calibration: nbm_regression_sentry sr.l3_nbm HOT +8.1% -> -46.7% (\u0394 +54.8pp) over two consecutive days. Per-layer breakdown: raw_nbm 5.6-15 W/m\u00b2 clean, L2_nbm\u2261raw_nbm, L3 inflates. Walkforward proposals l3_nbm sr nor_easter 12-23h n=220 lift -47.2%, 24-47h n=206 lift -17.7% \u2014 above skip-threshold but new-regime blocks the 14d+50d two-window gate. Skip ships now as circuit-breaker; re-review 2026-10-13. Precedent: same pattern as v0.6.622 wd.se_flow/0-5h."
     },
     "2026-08-21T23:50": {
       "action": "add",
@@ -596,6 +591,19 @@
         ]
       },
       "reason": "nbm_skip_add_audit two-window CONFIRMED (all three). wd/pre_frontal/0-5h: 14d n=343 lift -3.10%, 50d n=914 lift -3.01%, halves -3.08/-2.94 both-negative. wd/ne_flow/12-23h: 14d n=212 lift -9.30%, 50d n=762 lift -5.80%, halves -12.68/-3.43 both-negative. wd/ne_flow/24-47h: 14d n=294 lift -6.20%, 50d n=1,077 lift -3.81%, halves +0.00/-4.05 directionally-consistent (h1 neutral, h2 negative, pooled negative). Passes v0.6.574 two-window gate on all three."
+    },
+    "2026-09-30T07:35": {
+      "action": "remove",
+      "cells": {
+        "l3_nbm.wg": [
+          [
+            "nw_flow",
+            12,
+            24
+          ]
+        ]
+      },
+      "reason": "v0.7.17 stale-skip REMOVE \u2014 09-30 nbm_skip_earning_audit two-window CONFIRMED. 14d n=952 lift +18.30% (halves +11.25/+27.67), 50d n=3,980 lift +6.90% (halves +7.27/+6.61). Both windows agree correction now helps; halves-stable both-positive. Companion cell wg/nw_flow/6-11h held for another cycle \u2014 50d halves +9.52/+2.11 decaying, fails halves-stable spirit."
     }
   },
   "ship_history": [
@@ -688,8 +696,26 @@
           "reason": "two-window CONFIRMED: 14d n=294 lift -6.20%, 50d n=1,077 lift -3.81%, halves +0.00/-4.05 directionally-consistent, pooled negative."
         }
       ],
-      "notes": "Three CONFIRMED wd cells from today's nbm_skip_add_audit. wd stack now skips 6 regime×band cells: se_flow (0-5, 6-11, 12-23) + pre_frontal 0-5 + ne_flow (12-23, 24-47).",
+      "notes": "Three CONFIRMED wd cells from today's nbm_skip_add_audit. wd stack now skips 6 regime\u00d7band cells: se_flow (0-5, 6-11, 12-23) + pre_frontal 0-5 + ne_flow (12-23, 24-47).",
       "source": "analysis/nbm_skip_add_audit.py CONFIRMED both windows"
+    },
+    {
+      "date": "2026-09-30",
+      "action": "ship",
+      "cells": [
+        {
+          "layer": "l3_nbm",
+          "field": "wg",
+          "cell": [
+            "nw_flow",
+            12,
+            24
+          ],
+          "reason": "two-window REMOVE audit CONFIRMED: 14d n=952 lift +18.30% (halves +11.25/+27.67), 50d n=3,980 lift +6.90% (halves +7.27/+6.61)."
+        }
+      ],
+      "notes": "Companion cell wg/nw_flow/6-11h flagged by the audit but held \u2014 50d halves +9.52/+2.11 (h2 decays below +3% threshold), fails halves-stable both-positive gate. Re-check next audit cycle.",
+      "source": "analysis/nbm_skip_earning_audit.py 14d + 50d CONFIRMED"
     }
   ]
 }
