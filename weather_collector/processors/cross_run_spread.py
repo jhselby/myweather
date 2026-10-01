@@ -25,8 +25,12 @@ from ..gcs_io import load_json
 from ..utils import magnus_dew_point_f, redact_secrets
 
 
-# Fields the promotion cleared. Others have no xr_edges and are skipped.
-FIELDS = ("t", "wd", "wg", "dp", "h", "pr", "ws")
+# Fields with curated xr_edges for the c1 xr_q axis (t/wd/wg/dp/h/pr/ws from
+# h_cross_run_spread_c1_stage2 promotion). sr added v0.7.19 for the learned
+# selector classifier's xr_spread feature — sr has no curated edges, so xr_q
+# bucketing is skipped for it, but the raw spread value is still stamped so
+# forecast_snapshot._build_learned_features can read it.
+FIELDS = ("t", "wd", "wg", "dp", "h", "pr", "ws", "sr")
 
 FORECAST_LOG = "forecast_log.json"
 
@@ -80,6 +84,7 @@ _LIVE_KEYS = {
     "wg": ("raw_wind_gusts", "wind_gusts"),
     "pr": ("raw_pressure_in",),
     "wd": ("raw_wind_direction", "wind_direction"),
+    "sr": ("raw_direct_radiation", "direct_radiation"),
 }
 
 
@@ -174,9 +179,14 @@ def stamp(weather_data):
             continue
         sp = round(max(vals) - min(vals), 4)
         xr_q = _bucket(sp, _EDGES.get(f))
-        if xr_q is None:
-            continue
-        out.setdefault(f, {})[vt] = {"spread": sp, "xr_q": xr_q, "n": len(vals)}
+        # Stamp `spread` for all fields in FIELDS so downstream feature
+        # builders (learned selector classifier) can read it regardless of
+        # xr_q bucketing. `xr_q` is only present when the field has curated
+        # edges — confidence_layer.C1_xr skips entries without xr_q.
+        entry = {"spread": sp, "n": len(vals)}
+        if xr_q is not None:
+            entry["xr_q"] = xr_q
+        out.setdefault(f, {})[vt] = entry
 
     if not out:
         logging.info("  ⊘ cross_run_spread: no (field, vt) cells cleared MIN_RUNS_PER_VT")

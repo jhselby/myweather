@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.19 • October 1, 2026 (sr learned_gbm feature-path fix: xr_spread wiring for sr)</strong></summary>
+
+- **Bug: v0.7.18's "learned_gbm firing live" claim was false.** Thu 10-01 daylight verify: 45 sr pair-log rows post v0.7.18 deploy (19:42 EDT 09-30, rev 00604-zoy), 6 of them in the covered `sw_flow/6-11` cell — all stamped `selector_mechanism=band_pool`, zero `sr_learned_pick_shadow` ever stamped in the tail 50k rows. The classifier has been silently dead since v0.7.15 ship, not just since 09-30's wholesale wipe.
+- **Root cause: train/serve feature-availability skew.** `weather_collector/processors/cross_run_spread.py` only tracked `FIELDS = ("t", "wd", "wg", "dp", "h", "pr", "ws")` — sr absent. v5 fitter (`l1_selector_per_obs_classifier_stage1_v5.py:51`) trained the sr GBM with real xr_spread values from the pair-log. At runtime, `_build_learned_features` emitted `xr_spread=None` on every sr call → `_learned_predict` returned `(None, None)` on the first missing feature → selector fell through to `band_pool`. Both the live override AND the shadow stamp depend on the same predict path, which is why `learned_pick_shadow` was also never stamped.
+- **Fix.** Three edits to `cross_run_spread.py`: add `"sr"` to `FIELDS`; add `_LIVE_KEYS["sr"] = ("raw_direct_radiation", "direct_radiation")`; relax the stamp gate so missing xr_edges don't skip stamping — `spread` is now stamped for all FIELDS regardless of `_EDGES.get(f)`, with `xr_q` only present when the field has curated edges. `confidence_layer.C1_xr` only iterates fields in its curated `_C1_XR_CELLS`, so sr-without-xr_q is invisible to it (no behavior change for the c1 axis).
+- **Policy unchanged.** `LEARNED_SELECTOR_SHADOW_ENABLED = True` stays — v0.7.15 already made the live-apply decision; this fix just restores the mechanism that was quietly dead the whole time.
+- **Verify next tick.** `sr_learned_pick_shadow` should begin stamping on every sr row (universal, not just covered cells — the shadow stamp fires wherever the classifier can run). `selector_mechanism=learned_gbm` should appear on sr rows that fall into one of the 5 covered cells with features complete. Discipline check per [[feedback_shipped_flag_verify_effect]]: verify by pair-log attribution, not just the flag.
+
+</details>
+
+<details>
 <summary><strong>v0.7.18 • September 30, 2026 (learned_gbm silent-no-op fix: restore + prevent recurrence)</strong></summary>
 
 - **Bug: v0.7.15's 5 sr learned_gbm cells were silently wiped this morning.** `analysis/l1_learned_selector_curate.py` ran during the 06:22 digest and regenerated `weather_collector/data/l1_learned_selector_curated.json` with `cells: []`. Today's v0.7.17 collector redeploy (08:57 EDT) baked the empty file into the live function, undoing v0.7.15's ~19h of working coverage. Detected via pair-log: 97 rows post-cutoff in the covered cells (se_flow/12-23 n=72, se_flow/24-47 n=25) all stamped `selector_mechanism=band_pool`, not `learned_gbm`.
