@@ -46,7 +46,16 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 OUT = REPO / "weather_collector" / "data" / "l1_learned_selector_curated.json"
-FIELDS = ("t", "h")   # extend as more fields promote
+# v2b pipeline (logistic) — sources per-field classifier output.
+V2B_FIELDS = ("t", "h")
+# v5 pipeline (GBM) — sources the pre-serialized runtime candidate emitted
+# by l1_selector_per_obs_classifier_stage1_v5.py. That script already
+# runs the halves-stable gate and serializes STABLE cells in runtime
+# format; we just filter to fields owned by this pipeline. Router-as-
+# authority (v0.7.5): sr → GBM (this pipeline); ch → ims_threshold
+# (not this pipeline), so ch cells from v5 are dropped.
+V5_FIELDS = ("sr",)
+V5_CANDIDATE = HERE / "output" / "l1_learned_selector_curated_v5_candidate.json"
 
 MIN_LIFT_PCT = 3.0
 MIN_N_TEST = 150
@@ -55,7 +64,7 @@ MIN_N_TEST = 150
 def curate():
     all_cells = []
     feature_names = None
-    for field in FIELDS:
+    for field in V2B_FIELDS:
         src = HERE / "output" / f"l1_selector_per_obs_classifier_stage1_v2b_{field}.json"
         if not src.exists():
             print(f"  skip {field}: {src.name} not found")
@@ -94,6 +103,26 @@ def curate():
                 "n_test": n_te,
             })
 
+    # v5 pipeline — GBM cells already in runtime format. v5.py's own
+    # halves-stable gate has filtered to STABLE cells; we just drop
+    # fields not owned by this pipeline.
+    if V5_CANDIDATE.exists():
+        v5 = json.load(open(V5_CANDIDATE))
+        v5_features = v5.get("feature_names")
+        if feature_names is None:
+            feature_names = v5_features
+        elif v5_features and v5_features != feature_names:
+            raise SystemExit(f"feature-name mismatch: v5 candidate has {v5_features}, expected {feature_names}")
+        v5_added = 0
+        for cell in v5.get("cells") or []:
+            if cell.get("field") not in V5_FIELDS:
+                continue
+            all_cells.append(cell)
+            v5_added += 1
+        print(f"  v5 candidate: {v5_added} cell(s) added for fields={list(V5_FIELDS)}")
+    else:
+        print(f"  skip v5: {V5_CANDIDATE.name} not found")
+
     out = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "source": "analysis/l1_learned_selector_curate.py",
@@ -113,10 +142,14 @@ def curate():
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(out, indent=2))
     print(f"wrote {OUT}")
-    print(f"  {len(all_cells)} cell(s) curated across fields={list(FIELDS)}")
+    print(f"  {len(all_cells)} cell(s) curated across v2b={list(V2B_FIELDS)} + v5={list(V5_FIELDS)}")
     for c in all_cells:
-        print(f"    {c['field']}/{c['regime']}/{c['band']}h  "
-              f"θ={c['theta']}  test +{c['test_lift_pct']:.2f}%  capture {c['capture_pct']:.1f}%  n_te={c['n_test']}")
+        mt = c.get("model_type", "logistic")
+        if mt == "logistic":
+            print(f"    {c['field']}/{c['regime']}/{c['band']}h  logistic  "
+                  f"θ={c['theta']}  test +{c['test_lift_pct']:.2f}%  capture {c['capture_pct']:.1f}%  n_te={c['n_test']}")
+        else:
+            print(f"    {c['field']}/{c['regime']}/{c['band']}h  gbm  θ={c['theta']}  trees={len(c.get('trees') or [])}")
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-29T14:30:00Z",
-  "source": "analysis/l1_selector_per_obs_classifier_stage1_v5.py (v5 sweep, sr cells only)",
+  "generated_at": "2026-09-30T22:54:02.296870+00:00",
+  "source": "analysis/l1_learned_selector_curate.py",
   "feature_names": [
     "ims",
     "xr_spread",
@@ -16,7 +16,7 @@
     "solar_wm2_fc"
   ],
   "min_lift_pct": 3.0,
-  "min_n_test": 200,
+  "min_n_test": 150,
   "cells": [
     {
       "field": "sr",
@@ -40364,5 +40364,5 @@
       ]
     }
   ],
-  "notes": "v0.7.15 ship \u2014 5 sr STABLE cells from v5 GBM sweep, re-verified halves-stable on current pair-log (including 4d nor_easter). Non-overlapping with v0.7.5 ims_threshold ch cells. Band suffix \"h\" stripped to match runtime _band_for_lead output. ch cells from v5 candidate NOT included (already covered by ims_threshold)."
+  "notes": "Runtime consumer: l1_selector._learned_override(field, regime, band, features). features is a dict keyed by feature_names entries; each value is standardized as (x - mu[i]) / sd[i], then P = sigmoid(beta[0] + sum(beta[i+1] * x_std[i])). Route NBM iff P > theta, else HRRR (or the fall-through pick). SHADOW guard lives in l1_selector.LEARNED_SELECTOR_SHADOW_ENABLED \u2014 the runtime table is loaded regardless; the flag controls whether picks are actually swapped."
 }
