@@ -175,13 +175,69 @@ def mean(xs):
     return sum(xs) / len(xs)
 
 
+# v0.7.21 — runtime source-depth chains, mirroring forecast_snapshot's
+# "deepest available NBM layer wins" apply block. Used ONLY to rebuild the
+# served counterfactual on rows where the blend actually applied.
+_NBM_CHAIN = {
+    "wd": ("wdp_nbm", "l3_nbm", "l2_nbm", "raw_nbm"),
+    "ch": ("chp_nbm", "l4_nbm", "l3_nbm", "l2_nbm", "raw_nbm"),
+    "t":  ("l6_nbm", "l2_nbm", "raw_nbm"),
+    "sr": ("l5_nbm", "l2_nbm", "raw_nbm"),
+    "cc": ("l4_nbm", "l3_nbm", "l2_nbm", "raw_nbm"),
+    "wg": ("l3_nbm", "l2_nbm", "raw_nbm"),
+    "h":  ("l3_nbm", "l2_nbm", "raw_nbm"),
+    "dp": ("l2_nbm", "raw_nbm"),
+    "ws": ("l2_nbm", "raw_nbm"),
+}
+_HRRR_CHAIN = ("l6", "l4", "l3", "l2", "l1")
+
+
+def counterfactual_served_err(r, field):
+    """|error| of what WOULD have been served had the blend not applied.
+
+    Once a cell is live (v0.7.20 flipped h/nw_flow/24-47), row['error'] IS
+    the blend's own error — every shadow-stamped row in that cell is also an
+    applied row, so scoring blend vs row['error'] compares the blend against
+    itself and yields exactly 0% lift. A SHIP-READY cell would silently read
+    HOLD the day after it shipped.
+
+    The honest baseline is the layer the selector would have served, which
+    v0.7.21 preserves as `preempted_source_shadow`. Returns None when that
+    stamp is absent (any applied row logged before v0.7.21) so the caller can
+    exclude the row rather than mis-score it.
+    """
+    pre = r.get("preempted_source_shadow")
+    if not pre:
+        return None
+    # "nws" is not wire-eligible for h/dp (_NWS_FIELDS_WIRE_ELIGIBLE is
+    # t/ws/wd/pp), so anything that isn't an NBM pick served the HRRR side.
+    chain = _NBM_CHAIN.get(field, ("l2_nbm", "raw_nbm")) if pre == "nbm" else _HRRR_CHAIN
+    for lyr in chain:
+        e = r.get(f"error_{lyr}")
+        if e is None:
+            continue
+        try:
+            return abs(float(e))
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
 def score(rows, field):
     """Return per-window stats for a bag of rows in one cell.
 
-    served_mae   — from row['error'] (served = current cascade+selector output)
+    served_mae   — the served baseline. For rows where the blend did NOT
+                   apply this is row['error'] (cascade+selector output). For
+                   rows where it DID apply, row['error'] is the blend itself,
+                   so the counterfactual is rebuilt from the pre-empted
+                   source instead. See counterfactual_served_err.
     blend_mae    — |{f}_l1_blend_shadow − observed|
     l1_mae       — |forecast_l1 − observed|
     raw_nbm_mae  — |forecast_raw_nbm − observed|
+
+    Applied rows with no reconstructable counterfactual are dropped from the
+    cell entirely (not just from served_mae) so all four series keep the same
+    population; the count surfaces as n_excluded_no_counterfactual.
     """
     if not rows:
         return {"n": 0}
@@ -190,14 +246,27 @@ def score(rows, field):
     blend_errs = []
     l1_errs = []
     nbm_errs = []
+    n_scored = 0
+    n_applied = 0
+    n_excluded = 0
     for r in rows:
         obs = r.get("observed")
-        served_e = r.get("error")
+        if r.get("applied_layer") == "l1_blend":
+            n_applied += 1
+            served_e = counterfactual_served_err(r, field)
+            if served_e is None:
+                n_excluded += 1
+                continue
+        else:
+            served_e = r.get("error")
+            if served_e is not None:
+                try:
+                    served_e = abs(float(served_e))
+                except (TypeError, ValueError):
+                    served_e = None
+        n_scored += 1
         if served_e is not None:
-            try:
-                served_errs.append(abs(float(served_e)))
-            except (TypeError, ValueError):
-                pass
+            served_errs.append(served_e)
         b = _abs_err(r.get(stamp_key), obs)
         if b is not None:
             blend_errs.append(b)
@@ -215,7 +284,10 @@ def score(rows, field):
     if served_mae and served_mae > 0 and blend_mae is not None:
         lift = 100.0 * (served_mae - blend_mae) / served_mae
     return {
-        "n": len(rows),
+        "n": n_scored,
+        "n_applied_rows": n_applied,
+        "n_excluded_no_counterfactual": n_excluded,
+        "served_baseline": "counterfactual" if n_applied else "served",
         "served_mae": served_mae,
         "blend_mae": blend_mae,
         "l1_mae": l1_mae,
@@ -354,9 +426,25 @@ def main():
             "halves_B_lift_pct": sB.get("lift_vs_served_pct"),
             "halves_A_n": sA.get("n"),
             "halves_B_n": sB.get("n"),
+            # v0.7.21 — provenance of the served baseline. "counterfactual"
+            # means this cell has live applied rows whose served value IS the
+            # blend, so the baseline was rebuilt from preempted_source_shadow
+            # rather than read off row['error'].
+            "served_baseline_7d": s7.get("served_baseline"),
+            "n_applied_rows_7d": s7.get("n_applied_rows"),
+            "n_excluded_no_counterfactual_7d": s7.get("n_excluded_no_counterfactual"),
         })
 
     print("=" * len(header))
+    _applied_cells = [r for r in out_rows if (r.get("n_applied_rows_7d") or 0) > 0]
+    if _applied_cells:
+        print("  v0.7.21 live-apply cells — served baseline is the rebuilt "
+              "counterfactual, not row['error']:")
+        for r in _applied_cells:
+            print(f"    {r['field']}/{r['regime']}/{r['band']}: "
+                  f"{r['n_applied_rows_7d']} applied row(s), "
+                  f"{r['n_excluded_no_counterfactual_7d']} excluded "
+                  f"(no preempted_source_shadow — logged pre-v0.7.21)")
     if off_table_hits:
         print(f"  (* = cell has stamped rows but is NOT in curated table — "
               f"forecast_snapshot's runtime regime differs from state_stamp's; "

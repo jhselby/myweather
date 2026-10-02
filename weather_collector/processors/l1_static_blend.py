@@ -15,11 +15,15 @@ Key mechanic difference from the v0.7.0 blender (`l1_selector.blender_omega`):
   L2/L3/L4 residual models are source-specific and miscorrect blended
   input. Terminal blending also loses to L1-blend-no-cascade.
 
-Shadow-only initially: stamps `{f}_l1_blend_shadow` on every covered
-row regardless of the ENABLED flag. `ENABLED = False` means the stamp
-is telemetry, not applied. When ENABLED flips True, covered rows'
-entry[f] and applied_layer switch to "l1_blend" for h/dp — replacing
-whatever the cascade+selector produced.
+Stamps `{f}_l1_blend_shadow` on every covered row regardless of the
+apply gate, so telemetry accrues for cells that are not yet live.
+
+Apply is gated by TWO things as of v0.7.20 (2026-10-02): the master
+`ENABLED` switch and per-cell membership in `APPLIED_CELLS`. Use
+`is_applied(field, regime, band)` rather than reading `ENABLED`
+directly. For an applied cell, entry[f] / applied_layer / selector_source
+switch to "l1_blend" — replacing whatever the cascade+selector produced
+and bypassing L2/L3/L4 for that hour.
 
 Curated table shape (weather_collector/data/l1_static_blend_curated.json):
     {"fields": {
@@ -33,10 +37,27 @@ from pathlib import Path
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_static_blend_curated.json"
 
-# Shadow-only until 7-day pair-log retro confirms the fitted lift replicates
-# on fresh live data. Flip to True in v0.7.7 (or later) after halves-stable
-# validation on post-ship pair-log rows. Same discipline as v0.7.0 blender.
-ENABLED = False
+# Master switch. True since v0.7.20 (2026-10-02) — but apply is ALSO gated
+# per-cell by APPLIED_CELLS below, so flipping this alone does not make all
+# 20 curated cells live.
+ENABLED = True
+
+# v0.7.20 (2026-10-02) — narrow apply rollout. A cell applies only when
+# ENABLED is True AND its (regime, band) is listed here for that field.
+# Every other curated cell keeps stamping {f}_l1_blend_shadow as pure
+# telemetry, exactly as it did while the module was shadow-only.
+#
+# First flip: h / nw_flow / 24-47 only. 10-02 shadow retro on live
+# post-v0.7.8 rows: n=436 (curated gate min_n_rows=400), lift vs served
+# +35.5%, halves 38.7% / 33.9% — the tightest halves spread of the nine
+# SHIP-READY cells. dp / nw_flow / 24-47 cleared n (436) and lift (+17.5%)
+# on the same day but its halves spread is 7.7% / 42.4%; held for the 10-03
+# verdict rather than flipped on a wide spread.
+#
+# Reversal: set APPLIED_CELLS = {} (or ENABLED = False) and redeploy.
+APPLIED_CELLS = {
+    "h": frozenset({("nw_flow", "24-47")}),
+}
 
 _OMEGA_BY_FIELD = {}            # {field: omega}
 _COVERED_CELLS_BY_FIELD = {}    # {field: frozenset((regime, band))}
@@ -95,6 +116,27 @@ def blend_l1(field, regime, band, fc_l1, fc_raw_nbm):
     return omega * float(fc_l1) + (1.0 - omega) * float(fc_raw_nbm)
 
 
+def is_applied(field, regime, band):
+    """True when this (field, regime, band) is cleared for LIVE apply.
+
+    The narrow-rollout gate: requires the master ENABLED switch AND
+    membership in APPLIED_CELLS. Covered-but-not-applied cells still get
+    their shadow stamp from the caller — this governs only whether the
+    blend replaces the served forecast. Callers must use this instead of
+    reading ENABLED, or they will apply every curated cell.
+    """
+    if not ENABLED:
+        return False
+    cells = APPLIED_CELLS.get(field)
+    if not cells:
+        return False
+    return (regime, band) in cells
+
+
+def applied_cells(field):
+    return APPLIED_CELLS.get(field, frozenset())
+
+
 def omega_for(field):
     return _OMEGA_BY_FIELD.get(field)
 
@@ -106,11 +148,13 @@ def covered_cells(field):
 def describe_applicability():
     return {
         "enabled": ENABLED,
+        "n_applied_cells": sum(len(c) for c in APPLIED_CELLS.values()),
         "fields": {
             f: {
                 "omega": _OMEGA_BY_FIELD[f],
                 "n_cells": len(_COVERED_CELLS_BY_FIELD[f]),
                 "cells": sorted(list(_COVERED_CELLS_BY_FIELD[f])),
+                "applied_cells": sorted(list(APPLIED_CELLS.get(f, frozenset()))),
             }
             for f in _OMEGA_BY_FIELD
         },

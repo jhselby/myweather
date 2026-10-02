@@ -172,8 +172,9 @@ from .l1_selector import (
 )
 # v0.7.6 (2026-09-26) — L1 static blender, universal ω per field on curated
 # (regime, band) cells for h and dp. Blends at the L1 seat (raw HRRR L1 vs
-# raw NBM L1), bypassing the cascade. Shadow-only until 7-day live retro
-# confirms; see l1_static_blend.py docstring for the analysis backing this.
+# raw NBM L1), bypassing the cascade. v0.7.20 (2026-10-02) flipped the first
+# cell to live apply (h/nw_flow/24-47); the rest stay shadow telemetry. Gate
+# is is_applied(), not ENABLED — see l1_static_blend.py docstring.
 from . import l1_static_blend as _l1_static_blend
 # Phase 4b (2026-08-19) — wdp NBM sibling. Applies HRRR-side wdp's
 # predicted-transition persistence gate to the NBM cascade too, so
@@ -1142,17 +1143,35 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             # v0.7.2 flipped {dp} into the allowlist as the first progressive
             # rollout — retro shadow-scoring cleared all 3 dp curated cells.
             if f in _BLENDER_APPLIED_FIELDS and _blend_shadow_v is not None:
+                # v0.7.21 — preserve what the selector WOULD have picked
+                # before we overwrite the stamp. Without this the row loses
+                # the only record of the counterfactual, and any retro scorer
+                # comparing blend-vs-served ends up comparing the blend
+                # against itself. Named with the _shadow suffix so it rides
+                # forecast_error_log's generic {short}_*_shadow pass-through
+                # into the pair log (arrives as `preempted_source_shadow`)
+                # without a pair-log-writer edit in two branches.
+                entry[f"{f}_preempted_source_shadow"] = source
                 entry[f] = _round_for(f, _blend_shadow_v)
                 entry[f"{f}_applied"] = "blend"
                 entry[f"{f}_selector_source"] = "blend"
                 continue
-            # v0.7.6 — L1 static blender apply: when ENABLED and this (field,
-            # regime, band) is covered, L1-blend replaces the served forecast
-            # for this hour. Bypasses L2/L3/L4 entirely (curated cells for h
-            # and dp only, per l1_static_blend_curated.json). Precedence
+            # v0.7.6 — L1 static blender apply: when this (field, regime,
+            # band) is cleared for apply, L1-blend replaces the served
+            # forecast for this hour. Bypasses L2/L3/L4 entirely. Precedence
             # after the v0.7.0 terminal blender — but the two mechanisms are
             # non-overlapping today (v0.7.0 applies to empty frozenset()).
-            if _l1_static_blend.ENABLED and _l1_blend_v is not None:
+            # v0.7.20 — gate is is_applied(), NOT the bare ENABLED flag: the
+            # module is now ENABLED with a per-cell allowlist (h/nw_flow/24-47
+            # only). Reading ENABLED here would apply all 20 curated cells.
+            if _l1_blend_v is not None and _l1_static_blend.is_applied(
+                f, _fc_regime_i, _fc_band_i
+            ):
+                # v0.7.21 — see A1: keep the pre-empted selector source so
+                # l1_static_blend_shadow_verify can reconstruct the served
+                # counterfactual for applied rows instead of scoring the
+                # blend against itself.
+                entry[f"{f}_preempted_source_shadow"] = source
                 entry[f] = _round_for(f, _l1_blend_v)
                 entry[f"{f}_applied"] = "l1_blend"
                 entry[f"{f}_selector_source"] = "l1_blend"
@@ -1226,6 +1245,12 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             src = _h.get(f"{_f}_selector_source")
             if src == "nbm":
                 v = _h.get(f"{_f}_raw_nbm")
+            elif src == "l1_blend":
+                # v0.7.20 — the L1 static blender's output IS an L1-seat
+                # quantity (omega*l1 + (1-omega)*raw_nbm), so the honest
+                # "Base forecast (L1)" value for an applied row is the
+                # blend, not raw HRRR.
+                v = _h.get(f"{_f}_l1_blend_shadow")
             else:
                 v = _h.get(f"{_f}_l1")
             arr.append(v)
@@ -1252,6 +1277,20 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         "ch": "cloud_cover_high",
         "wd": "wind_direction",
     }
+    # v0.7.20 — the writeback must cover "l1_blend" as well as "nbm". The
+    # L1 static blender writes entry[f] (snapshot log + pair log) but the
+    # user-visible hourly arrays are built by corrected_hourly/decay_apply
+    # from the HRRR cascade. Without l1_blend here, an applied cell would be
+    # scored on a value the PWA never served — the same class of bug F6 fixed
+    # for NBM picks. See feedback_shadow_write_applied_layer_trap.
+    # v0.7.21 — allowlist completed. Four source values can reach this loop
+    # and each one means entry[f] diverges from the cascade-built array:
+    # "nbm" (F6), "l1_blend" (v0.7.20), "nws" (3-way walker wire) and "blend"
+    # (v0.7.0 terminal blender). nws and blend were latent — nws has zero
+    # cleared cells today and _BLENDER_APPLIED_FIELDS is empty — so neither
+    # was biting yet, but both would have shipped the same
+    # scored-a-value-users-never-saw bug the moment a cell cleared.
+    _WRITEBACK_SOURCES = ("nbm", "l1_blend", "nws", "blend")
     for _f, _array_name in _SELECTOR_WRITEBACK.items():
         _arr = hourly.get(_array_name)
         if not isinstance(_arr, list):
@@ -1259,7 +1298,15 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         for _i, _h in enumerate(hours):
             if _i >= len(_arr):
                 break
-            if _h.get(f"{_f}_selector_source") != "nbm":
+            _src = _h.get(f"{_f}_selector_source")
+            if _src not in _WRITEBACK_SOURCES:
+                continue
+            # "nws" is stamped as the source even when {f}_nws was missing for
+            # this hour and the apply block deliberately fell through to the
+            # HRRR walker. In that case {f}_applied is NOT "nws" and entry[f]
+            # is already the array's own value — writing it back would be a
+            # no-op at best and a silent re-round at worst.
+            if _src == "nws" and _h.get(f"{_f}_applied") != "nws":
                 continue
             _v = _h.get(_f)
             if _v is not None:
