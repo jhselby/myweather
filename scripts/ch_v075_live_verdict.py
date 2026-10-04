@@ -29,6 +29,8 @@ CELLS = {
     ("se_flow", "6-11"), ("se_flow", "12-23"), ("se_flow", "24-47"),
     ("sw_flow", "12-23"),
 }
+HRRR_LADDER = ("l1", "l2", "l3", "l4", "l6", "chp")
+NBM_LADDER = ("raw_nbm", "l2_nbm", "l3_nbm", "l4_nbm", "l6_nbm", "chp_nbm")
 MIN_N = 30
 FAIL_PCT = -5.0
 
@@ -66,10 +68,16 @@ def load():
                 continue
             eh, en, es = abs(float(eh)), abs(float(nbm)), abs(float(es))
             picked, other = (en, eh) if src == "nbm" else (eh, en)
+            lad = {}
+            for lyr in HRRR_LADDER + NBM_LADDER:
+                v = r.get("error_" + lyr)
+                if v is not None:
+                    lad[lyr] = abs(float(v))
             rows.append({
                 "t": r.get("obs_time", ""), "key": (regime, band(int(lead))),
                 "nbm_pick": src == "nbm", "eh": eh, "en": en, "es": es,
                 "picked": picked, "other": other,
+                "lad": lad, "applied": r.get("applied_layer") or "?",
             })
     rows.sort(key=lambda x: x["t"])
     return rows, n_ims, n_drop
@@ -97,6 +105,40 @@ def verdict(m, halves):
     if m["lift_best"] >= 0 and all(h["lift_other"] > 0 for h in halves if h["n"] >= MIN_N // 2):
         return "HOLDING"
     return "MARGINAL"
+
+
+def ladder(rows, cells):
+    """Where does the picked-source error turn into the served error? Mean |error|
+    at each layer, per pick side, plus which layer was actually applied."""
+    print("\nLAYER LADDER: mean |error| per layer (rows where that layer is present), 10 cells")
+    for side, lyrs, flag in (("HRRR-picked", HRRR_LADDER, False), ("NBM-picked", NBM_LADDER, True)):
+        sub = [r for r in rows if r["nbm_pick"] == flag and r["key"] in cells]
+        if not sub:
+            continue
+        print(f"  {side} rows: {len(sub)}   served {mean(sub, 'es'):.2f}")
+        for lyr in lyrs:
+            have = [r["lad"][lyr] for r in sub if lyr in r["lad"]]
+            if have:
+                print(f"    {lyr:<8} n={len(have):>5}  {sum(have)/len(have):6.2f}")
+        ap = defaultdict(int)
+        for r in sub:
+            ap[r["applied"]] += 1
+        print("    applied_layer: " + ", ".join(f"{k}:{v}" for k, v in sorted(ap.items(), key=lambda x: -x[1])[:6]))
+
+    print("\nPER-CELL: mean |error| at l4 / l6 / chp (rows where present) vs picked vs served; top applied_layer")
+    print(f"  {'cell':<22}{'n':>5}{'picked':>8}{'l4':>7}{'l6':>7}{'chp':>7}{'served':>8}  applied_layer")
+    for key in sorted(cells):
+        cr = [r for r in rows if r["key"] == key]
+        if not cr:
+            continue
+        def lm(l):
+            h = [r["lad"][l] for r in cr if l in r["lad"]]
+            return f"{sum(h)/len(h):7.2f}" if h else "     --"
+        ap = defaultdict(int)
+        for r in cr:
+            ap[r["applied"]] += 1
+        top = ", ".join(f"{k}:{100*v//len(cr)}%" for k, v in sorted(ap.items(), key=lambda x: -x[1])[:3])
+        print(f"  {key[0] + '/' + key[1]:<22}{len(cr):>5}{mean(cr, 'picked'):>8.2f}{lm('l4')}{lm('l6')}{lm('chp')}{mean(cr, 'es'):>8.2f}  {top}")
 
 
 def main():
@@ -151,6 +193,8 @@ def main():
     for d in sorted(days):
         m = summarize(days[d])
         print(f"  {d}  n={m['n']:>4}  {m['picked']:.2f}  {m['other']:.2f}  {m['eh']:.2f}  {m['en']:.2f}")
+
+    ladder(rows, CELLS)
 
     print(f"\nTALLY: {tally['HOLDING']} HOLDING / {tally['MARGINAL']} MARGINAL / "
           f"{tally['FAILING']} FAILING / {tally['THIN']} THIN (of {len(CELLS)} cells)")
