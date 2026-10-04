@@ -54,9 +54,18 @@ ENABLED = True
 # on the same day but its halves spread is 7.7% / 42.4%; held for the 10-03
 # verdict rather than flipped on a wide spread.
 #
+# Second flip, v0.7.23 (2026-10-03) — h / sw_flow / 24-47. Only unflipped
+# cell clearing the declared min_n_rows=400 gate: n=830, lift vs served
+# +39.0%, halves 41.8% / 35.7% (6.1pt spread, tighter than the first flip's
+# 38.7 / 33.9). h/sw_flow/12-23 is the next candidate at n=380 — 20 rows
+# short of the gate, halves 50.6 / 40.9 — and should cross within a day or
+# two. h/nw_flow/12-23 (n=210) and h/sw_flow/6-11 (n=173) have good lift but
+# sit at half the gate or less; not taken. The 10-03 h SUSTAINED FIRE is an
+# NBM source break, not a reason to lower the bar.
+#
 # Reversal: set APPLIED_CELLS = {} (or ENABLED = False) and redeploy.
 APPLIED_CELLS = {
-    "h": frozenset({("nw_flow", "24-47")}),
+    "h": frozenset({("nw_flow", "24-47"), ("sw_flow", "24-47")}),
 }
 
 _OMEGA_BY_FIELD = {}            # {field: omega}

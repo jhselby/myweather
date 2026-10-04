@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.23 • October 3, 2026 (L1 blender second apply-flip)</strong></summary>
+
+- **`h / sw_flow / 24-47` flipped to applied.** Added to `APPLIED_CELLS` alongside `h/nw_flow/24-47`. 10-03 shadow retro: n=830, lift vs served **+39.0%**, halves **41.8% / 35.7%** — a 6.1pt spread, tighter than the first flip's 38.7 / 33.9. It is the only unflipped cell clearing the curated `min_n_rows: 400` gate.
+- **Held, deliberately:** `h/sw_flow/12-23` (n=380, halves 50.6 / 40.9) is 20 rows short of the gate and should cross within a day or two. `h/nw_flow/12-23` (n=210, halves 27.2 / 31.4 — the tightest spread on the board) and `h/sw_flow/6-11` (n=173) sit at half the gate or less. Not taken despite landing on the bands where h is currently bleeding: the gate is not moved because of a bad sentry reading.
+- **Context — h SUSTAINED FIRE.** The regression sentry escalated h from FRESH FIRE to **SUSTAINED FIRE** (7d +16.5% n=7,106, 3d +30.9% n=2,584). Traced: ~90% of h rows carry `applied_layer = l2_nbm`, and NBM humidity broke at mid leads from 09-30. Per-band `prod_real` vs HRRR L1 at 12-23h: 5.11/2.57 (09-30) → 6.73/2.42 (10-01) → 3.74/2.62 (10-02) → 4.06/3.80 (10-03). This is an upstream source break that is already receding, not a stack regression; the 3d window is still dragging 10-01 along.
+- **No verifier work needed for this flip.** v0.7.21's `counterfactual_served_err()` and the `{f}_preempted_source_shadow` stamp are global to both blend paths, so the new cell is measured correctly from its first applied row. Per `feedback_apply_flip_invalidates_shadow_verifier`, this was checked rather than assumed.
+- **Blender retro (scheduled 10-03 re-run):** 9 SHIP-READY / 11 HOLD / **0 KILL** / 0 THIN, up from 9/10/1/0 on 10-02. `dp/pre_frontal/12-23` cleared its KILL; no KILLs remain. `h/nw_flow/24-47` held SHIP-READY at +25.9% (n 436→584, halves 33.4 / 23.2) with `n_applied_rows_7d: 0` and `n_excluded_no_counterfactual_7d: 0` — the measurement trap fix is clean, and the first applied rows had not yet closed at digest time.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.22 • October 2, 2026 (debug page full sweep)</strong></summary>
 
 - **Recent activity rotated.** Added 10-02 (v0.7.20 + v0.7.21 + the v0.7.19 attribution confirmation), 10-01 (v0.7.19) and 09-30 (v0.7.17 + v0.7.18) — none of which had ever been written to the page; it still showed 09-29 as "today". Trimmed 09-29, 09-28 and 09-27 to `display:none` per the today-plus-2-prior-days convention, with full detail living in this changelog and memory.
