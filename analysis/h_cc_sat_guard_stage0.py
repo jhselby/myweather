@@ -159,6 +159,14 @@ def main():
         s, dd = mean([r["srv"] for r in sub]), mean([r["der"] for r in sub])
         print(f"  {d}  n={len(sub):>5}  {s:6.2f}  {dd:6.2f}  {lift(s, dd):+7.1f}%")
 
+    ordered = sorted(days)
+    print("\nRECENCY (saturated rows pooled, n-weighted): is the edge still there in the newest days?")
+    for k in (4, 7):
+        keep = [r for d in ordered[-k:] for r in days[d]]
+        if keep:
+            s_k, d_k = mean([r["srv"] for r in keep]), mean([r["der"] for r in keep])
+            print(f"  last {k} days: n={len(keep):>6}  served {s_k:6.2f}  derived {d_k:6.2f}  lift {lift(s_k, d_k):+6.1f}%")
+
     overall = lift(mean([r["srv"] for r in rows]), mean([r["der"] for r in rows]))
     print()
     if tested == 0:

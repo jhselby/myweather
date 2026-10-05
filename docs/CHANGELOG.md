@@ -1,8 +1,18 @@
 <details open>
+<summary><strong>v0.7.25c • October 5, 2026 (cc saturation guard: first real Stage 0 read + a correction)</strong></summary>
+
+- **First real read of `h_cc_sat_guard_stage0`: PROMOTE.** 10,923 saturated (raw cc ≥ 90) quads over 14d: derived-max beats served by +52.1% (0-5h), +57.6% (6-11h), +43.9% (12-23h), +35.2% (24-47h) and raw by 55–60%. 20 of 24 regime × band cells are STABLE; unstable: `ne_flow` 12-23 and 24-47, `se_flow` 12-23, `sw_flow` 24-47. Largest: calm (+79–98%), nor_easter (+99–100%), nw_flow, pre_frontal.
+- **The guard's two halves.** Observed ≥ 95 (n=5,414): raw 0.08, served 12.01, derived 3.29. Observed < 95 (n=5,509): raw 61.73, served 34.96, derived 23.87. Raw is perfect on true overcast and terrible otherwise; derived hedges and beats served on both. Served is mostly NBM, so the guard does not decide most served values.
+- **Caution recorded.** The edge is concentrated in 09-21..10-01. The newest four days net out flat (served 25.02 vs derived 25.01, n=1,470), and derived lost badly on 09-24 (27.4 → 44.0) and 10-03 (23.6 → 37.0). The tool now prints a RECENCY block (last 4 and 7 days) so the 7-day read shows it directly.
+- **Correction.** I had called 09-26..09-29 "clear days". They were saturated-overcast nor'easter days: on 09-27/28 every cloud row had raw ≥ 90 and raw = observed = 100. The sentry artifact is a saturated-overcast lucky baseline, not a clear-sky one. Corrected on the page and in the v0.7.25a/b entries.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.25b • October 5, 2026 (cc derived-max: all-band read + saturation-guard Stage 0 tool)</strong></summary>
 
 - **New Stage 0 tool `analysis/h_cc_sat_guard_stage0.py`** (digest-run, read-only). Tests Ccd's saturation guard on the forecast it acts on: among rows with raw cc ≥ 90, derived-max(cl, cm, ch) vs raw vs served, by regime × lead band, with chronological halves, plus the observed ≥ 95 slice that justified the guard. Tested on synthetic data via `-m`, direct invocation and an empty log.
-- **All-band result (14d, complete quads):** derived-max beats served cc at 0-5h (13.5 vs 20.8), 6-11h (15.8 vs 26.8), 12-23h (16.4 vs 24.0) and 24-47h (17.1 vs 22.1), in both halves of each band. The gain is concentrated in raw ≥ 90 rows (35–52%); on non-saturated rows it is a wash and worse at 24-47h. The edge weakens in the second half and reverses on 10-03/04/05 at 24-47h. About 30% of the 0-5h gain comes from four clear days (09-26..09-29).
+- **All-band result (14d, complete quads):** derived-max beats served cc at 0-5h (13.5 vs 20.8), 6-11h (15.8 vs 26.8), 12-23h (16.4 vs 24.0) and 24-47h (17.1 vs 22.1), in both halves of each band. The gain is concentrated in raw ≥ 90 rows (35–52%); on non-saturated rows it is a wash and worse at 24-47h. The edge weakens in the second half and reverses on 10-03/04/05 at 24-47h. About 30% of the 0-5h gain comes from four saturated-overcast nor'easter days (09-26..09-29).
 - **Why the guard may be wrong:** the 08-04 trace selected rows by observed cc 95–100 (conditioning on the outcome); the guard conditions on the raw forecast. Not shipped; needs the 7-day read and a selector refit.
 - Debug page: the Upcoming 'open' row and the 10-05 Recent activity sentence updated. Page-text change plus one new analysis script.
 
@@ -11,7 +21,7 @@
 <details open>
 <summary><strong>v0.7.25a • October 5, 2026 (debug page: cc/production resolved to a selector-routing finding)</strong></summary>
 
-- **The cc/production "worse than raw" sentry line is a lucky-baseline artifact, not a stack regression.** On the 14-day pair log, served cc beats raw (0-5h −12.3%, 6-11h −5.5%, n=1,938 per band); the daily split swings from −48% on cloudy days to +314% on a clear day (raw MAE 1.9, then exactly 0.0).
+- **The cc/production "worse than raw" sentry line is a lucky-baseline artifact, not a stack regression.** On the 14-day pair log, served cc beats raw (0-5h −12.3%, 6-11h −5.5%, n=1,938 per band); the daily split swings from −48% on most days to +314% and worse on the 09-26..09-29 nor'easter (raw cc = observed = 100; raw MAE 1.9, then exactly 0.0 on 09-27/28, when every row had raw ≥ 90). A saturated-overcast lucky baseline, not a clear-sky one.
 - **The real finding: served cc is mostly NBM, not Ccd's derived value.** The selector routes cc to `l2_nbm` on 86% (0-5h) / 67% (6-11h) of rows and overwrites Ccd's output; on `l6`-applied rows served equals derived-max exactly, so Ccd works. Derived-max from cl/cm/ch scores 13.54 / 15.79 against 20.75 / 26.82 served, and beats served in every regime. Stage 0 candidate only — needs all four bands, halves, and a selector refit that offers the derived value as a source; also revisit the raw ≥ 90 saturation guard and correct the KNOWN_LIVE_PIPELINES label that suppresses `h_cc_derivation`'s PROMOTE.
 - Updated the 10-05 Recent activity entry and the Upcoming "open" row accordingly. Page-text change only.
 
