@@ -1,6 +1,6 @@
 ---
 name: project-10-03-session
-description: "10-03 session. 1 ship: v0.7.23 second L1-blender apply-flip (h/sw_flow/24-47). DEPLOYED rev 00608-jot but NOT COMMITTED — HEAD still v0.7.22. h escalated to SUSTAINED FIRE, diagnosed as an NBM source break, not a stack regression. v0.7.5 ch verdict slipped."
+description: "10-03 session. 1 ship: v0.7.23 second L1-blender apply-flip (h/sw_flow/24-47). DEPLOYED rev 00608-jot; committed 10-04 as 4aa17f6. h escalated to SUSTAINED FIRE, diagnosed as an NBM source break, not a stack regression. v0.7.5 ch verdict slipped."
 metadata:
   node_type: memory
   type: project
@@ -9,7 +9,7 @@ metadata:
 
 # 10-03 session
 
-## ⚠ State at session end — v0.7.23 DEPLOYED BUT UNCOMMITTED
+## State at session end — v0.7.23 DEPLOYED BUT UNCOMMITTED (RESOLVED 10-04: committed as `4aa17f6`)
 
 **The collector is running code that is not in git.** Verified 10-04: live revision is still
 `myweather-collector-00608-jot`, HEAD is still `020cda9a` (v0.7.22), and these three files are
