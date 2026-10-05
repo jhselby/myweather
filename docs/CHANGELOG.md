@@ -1,4 +1,13 @@
 <details open>
+<summary><strong>v0.7.25a • October 5, 2026 (debug page: cc/production resolved to a selector-routing finding)</strong></summary>
+
+- **The cc/production "worse than raw" sentry line is a lucky-baseline artifact, not a stack regression.** On the 14-day pair log, served cc beats raw (0-5h −12.3%, 6-11h −5.5%, n=1,938 per band); the daily split swings from −48% on cloudy days to +314% on a clear day (raw MAE 1.9, then exactly 0.0).
+- **The real finding: served cc is mostly NBM, not Ccd's derived value.** The selector routes cc to `l2_nbm` on 86% (0-5h) / 67% (6-11h) of rows and overwrites Ccd's output; on `l6`-applied rows served equals derived-max exactly, so Ccd works. Derived-max from cl/cm/ch scores 13.54 / 15.79 against 20.75 / 26.82 served, and beats served in every regime. Stage 0 candidate only — needs all four bands, halves, and a selector refit that offers the derived value as a source; also revisit the raw ≥ 90 saturation guard and correct the KNOWN_LIVE_PIPELINES label that suppresses `h_cc_derivation`'s PROMOTE.
+- Updated the 10-05 Recent activity entry and the Upcoming "open" row accordingly. Page-text change only.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.25 • October 5, 2026 (debug page full sweep)</strong></summary>
 
 - **Recent activity rotated.** Added 10-05 (v0.7.24, the digest triage, the cc/0-5h C1d closure), 10-04 (v0.7.5 ch verdict, the fit-baseline finding, the frozen Stage 2b gate) and 10-03 (v0.7.23, the h NBM humidity break) — none had been written to the page, which still showed 10-02 as "today". Trimmed 10-02, 10-01 and 09-30 to `display:none`; detail lives in this changelog and memory.

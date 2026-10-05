@@ -19,7 +19,7 @@ import json
 import os
 import sys
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
@@ -48,7 +48,7 @@ def band_of(lead):
 
 
 def load(days):
-    cutoff = (datetime.utcnow() - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M")
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).strftime("%Y-%m-%dT%H:%M")
     groups = defaultdict(dict)
     with open(cached_path(PAIR_LOG_URL)) as fh:
         for line in fh:
@@ -144,15 +144,30 @@ def main():
           lambda r: (r["b"], r["reg"]))
     table("BY BAND x APPLIED LAYER", lambda r: (r["b"], r["applied"]))
 
-    print("DAILY (0-5 band only): n, raw, live, live-raw")
-    days = defaultdict(Agg)
-    for r in rows:
-        if r["b"] == "0-5":
-            days[r["t"]].add(raw=r["raw"], live=r["live"])
-    for d in sorted(days):
-        g = days[d]
-        print(f"  {d}  n={g.n:>4}  {g.m('raw'):6.2f}  {g.m('live'):6.2f}  {100*(g.m('live')-g.m('raw'))/g.m('raw'):+7.1f}%")
+    for bname in bands:
+        print(f"DAILY ({bname}): n, raw, live, derived-max, live-raw, dmax-live")
+        days = defaultdict(Agg)
+        for r in rows:
+            if r["b"] == bname:
+                days[r["t"]].add(raw=r["raw"], live=r["live"], dmax=r["dmax"])
+        for d in sorted(days):
+            g = days[d]
+            lr = f"{100*(g.m('live')-g.m('raw'))/g.m('raw'):+7.1f}%" if g.m("raw") > 0.05 else "    n/a "
+            dl = f"{100*(g.m('dmax')-g.m('live'))/g.m('live'):+7.1f}%" if g.m("live") > 0.05 else "    n/a "
+            print(f"  {d}  n={g.n:>4}  {g.m('raw'):6.2f}  {g.m('live'):6.2f}  {g.m('dmax'):6.2f}  {lr}  {dl}")
+        print()
 
+    print("HALVES (chronological split of the window): live MAE vs derived-max MAE")
+    for bname in bands:
+        sub = sorted([r for r in rows if r["b"] == bname], key=lambda r: r["t"])
+        if len(sub) < 40:
+            continue
+        mid = len(sub) // 2
+        for lab, part in (("first half", sub[:mid]), ("second half", sub[mid:])):
+            lv = sum(r["live"] for r in part) / len(part)
+            dm = sum(r["dmax"] for r in part) / len(part)
+            rw = sum(r["raw"] for r in part) / len(part)
+            print(f"  {bname:<6}{lab:<12} n={len(part):>5}  raw {rw:6.2f}  live {lv:6.2f}  dmax {dm:6.2f}  dmax vs live {100*(dm-lv)/lv:+6.1f}%")
     print("\nSIGNED BIAS (forecast - obs), mean:")
     for b in bands:
         sub = [r for r in rows if r["b"] == b]
