@@ -1,4 +1,14 @@
 <details open>
+<summary><strong>v0.7.25b • October 5, 2026 (cc derived-max: all-band read + saturation-guard Stage 0 tool)</strong></summary>
+
+- **New Stage 0 tool `analysis/h_cc_sat_guard_stage0.py`** (digest-run, read-only). Tests Ccd's saturation guard on the forecast it acts on: among rows with raw cc ≥ 90, derived-max(cl, cm, ch) vs raw vs served, by regime × lead band, with chronological halves, plus the observed ≥ 95 slice that justified the guard. Tested on synthetic data via `-m`, direct invocation and an empty log.
+- **All-band result (14d, complete quads):** derived-max beats served cc at 0-5h (13.5 vs 20.8), 6-11h (15.8 vs 26.8), 12-23h (16.4 vs 24.0) and 24-47h (17.1 vs 22.1), in both halves of each band. The gain is concentrated in raw ≥ 90 rows (35–52%); on non-saturated rows it is a wash and worse at 24-47h. The edge weakens in the second half and reverses on 10-03/04/05 at 24-47h. About 30% of the 0-5h gain comes from four clear days (09-26..09-29).
+- **Why the guard may be wrong:** the 08-04 trace selected rows by observed cc 95–100 (conditioning on the outcome); the guard conditions on the raw forecast. Not shipped; needs the 7-day read and a selector refit.
+- Debug page: the Upcoming 'open' row and the 10-05 Recent activity sentence updated. Page-text change plus one new analysis script.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.25a • October 5, 2026 (debug page: cc/production resolved to a selector-routing finding)</strong></summary>
 
 - **The cc/production "worse than raw" sentry line is a lucky-baseline artifact, not a stack regression.** On the 14-day pair log, served cc beats raw (0-5h −12.3%, 6-11h −5.5%, n=1,938 per band); the daily split swings from −48% on cloudy days to +314% on a clear day (raw MAE 1.9, then exactly 0.0).
