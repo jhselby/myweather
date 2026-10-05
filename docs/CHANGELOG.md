@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.7.25 • October 5, 2026 (debug page full sweep)</strong></summary>
+
+- **Recent activity rotated.** Added 10-05 (v0.7.24, the digest triage, the cc/0-5h C1d closure), 10-04 (v0.7.5 ch verdict, the fit-baseline finding, the frozen Stage 2b gate) and 10-03 (v0.7.23, the h NBM humidity break) — none had been written to the page, which still showed 10-02 as "today". Trimmed 10-02, 10-01 and 09-30 to `display:none`; detail lives in this changelog and memory.
+- **Upcoming calendar rebuilt.** The Fri 10-03 KEY DATE row is now a ~10-11 re-read row (the v0.7.5 verdict was taken 10-04: keep ON, +15.9% vs always-HRRR). The Mon 10-05 chp verify row now records the read (NOT MET: 6 cells vs expected ≤1; 10-day window caveat) and moves to ~10-09. The live-verify row is marked partly done (stamp landing: 0 excluded on 87 applied rows). The overdue nor_easter static-blend row is marked as such. New rows: v0.7.24 effect check, the 10-13 joint nor_easter re-review (wd v0.7.24 + sr v0.7.11), L4 add dp,h held, the frozen Stage 2b gate, and cc/production + Lc l6 vs ch se_flow.
+- **Blender state de-staled.** The h row and the L1-blender sibling block said exactly one live cell; both now describe two (`h/nw_flow/24-47` since v0.7.20, `h/sw_flow/24-47` since v0.7.23) with the 10-04 and 10-05 shadow-verify reads (14/6/0/0 and 16/4/0/0).
+- **Post-ship watches.** New v0.7.24 and v0.7.23 entries; the v0.7.20, v0.7.21, v0.7.11, v0.7.9 and v0.7.7 entries carry `[as of 10-05]` status. The C1d "ongoing" row now says the cc/0-5h watch is closed and that `confidence_layer.ENABLED = False`.
+- **NBM skip-table count corrected.** The page said 17 cells post-v0.7.11; counted from `skip_table_nbm_curated.json` it is 22 post-v0.7.24 (v0.7.17 removed one, v0.7.24 added three).
+- **Checks:** `make check-stale` clean; element-balance counts (`div`, `li`, `ul`, `span`, `strong`, `code`, `details`) identical before and after; headless Chromium over http shows exactly three visible Recent activity entries (10-05, 10-04, 10-03) and the new calendar rows. Console output differs from the pre-sweep page only by the unavoidable remote `data.wymancove.com` fetch failure in this environment. Not verified: the live-data tiles (the container cannot reach the data host).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.24 • October 5, 2026 (l3_nbm skip ADD: wd se_flow/24-47 + two TEMPORARY nor_easter cells)</strong></summary>
 
 - **`l3_nbm / wd / se_flow / 24-47h` added to the skip table.** `nbm_skip_add_audit` two-window CONFIRMED: 14d n=620 lift **-20.00%**, 50d n=6,052 lift **-5.60%**, halves -0.62 / -9.94. With this cell, `l3_nbm` is skipped for `wd` in every `se_flow` lead band.
