@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.24 • October 5, 2026 (l3_nbm skip ADD: wd se_flow/24-47 + two TEMPORARY nor_easter cells)</strong></summary>
+
+- **`l3_nbm / wd / se_flow / 24-47h` added to the skip table.** `nbm_skip_add_audit` two-window CONFIRMED: 14d n=620 lift **-20.00%**, 50d n=6,052 lift **-5.60%**, halves -0.62 / -9.94. With this cell, `l3_nbm` is skipped for `wd` in every `se_flow` lead band.
+- **`wd / nor_easter / 12-23h` and `/ 24-47h` added as TEMPORARY.** 14d n=228 lift -24.70% (50d n=270, -24.59%, halves -24.32 / -24.70) and 14d n=206 lift -17.70% (50d n=208, -17.93%, halves -25.00 / -17.75). The 50d window adds only 42 and 2 rows over the 14d, so both windows are the same single event and the two-window gate is not independent confirmation. Same circuit-breaker treatment as the v0.7.11 `sr` nor_easter bypass. **Re-review 2026-10-13.**
+- **Dropped from the batch:** `wg / nor_easter / 12-23h` (half A degenerate at -0.00). `wg / nor_easter / 24-47h` is FRESH (not confirmed). `wg / nw_flow / 6-11h` REMOVE still held on halves.
+- **Effect:** the cells fall back from `l3_nbm` to `l2_nbm` for `wd`. Reversible by deleting the three entries from `weather_collector/data/skip_table_nbm_curated.json`.
+- **Collector-only change.** No frontend behavior to test on localhost. Verified in the loader (`skip_table_nbm.should_skip`): the three cells skip, `wd/nor_easter/0-5h` and `wg/nor_easter/12-23h` do not.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.23 • October 3, 2026 (L1 blender second apply-flip)</strong></summary>
 
 - **`h / sw_flow / 24-47` flipped to applied.** Added to `APPLIED_CELLS` alongside `h/nw_flow/24-47`. 10-03 shadow retro: n=830, lift vs served **+39.0%**, halves **41.8% / 35.7%** — a 6.1pt spread, tighter than the first flip's 38.7 / 33.9. It is the only unflipped cell clearing the curated `min_n_rows: 400` gate.

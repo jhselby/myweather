@@ -1,6 +1,6 @@
 {
-  "fitted_at": "2026-09-30T07:35",
-  "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive]. | v0.7.11 2026-09-29: TEMPORARY sr nor_easter/12-23h and /24-47h added as L3 bypass (n=220 lift -47.2% and n=206 lift -17.7%; raw+L2 clean, L3 corrupts on new regime). Re-review 2026-10-13 or when walkforward proposes cleanly.",
+  "fitted_at": "2026-10-05T08:28",
+  "note": "Per-cell (field, regime, lead-band) skip table for the NBM cascade. Curated from analysis/nbm_walkforward_validator.py per-regime SKIP proposals AND from an HRRR-skip-topology transfer graded via analysis/nbm_counterfactual_rescore.py against 30 days of backstamped pair data (see history v0.6.476). Runtime skip check lives in weather_collector/processors/skip_table_nbm.py. Cell shape: [regime, lead_lo_inclusive, lead_hi_exclusive]. | v0.7.11 2026-09-29: TEMPORARY sr nor_easter/12-23h and /24-47h added as L3 bypass (n=220 lift -47.2% and n=206 lift -17.7%; raw+L2 clean, L3 corrupts on new regime). Re-review 2026-10-13 or when walkforward proposes cleanly. | v0.7.24 2026-10-05: wd se_flow/24-47h added (two-window CONFIRMED). wd nor_easter/12-23h and /24-47h added as TEMPORARY (14d and 50d windows are the same single event: n 228 vs 270, 206 vs 208). Re-review 2026-10-13.",
   "cells": {
     "l3_nbm": {
       "wg": [
@@ -92,6 +92,21 @@
         ],
         [
           "ne_flow",
+          24,
+          48
+        ],
+        [
+          "se_flow",
+          24,
+          48
+        ],
+        [
+          "nor_easter",
+          12,
+          24
+        ],
+        [
+          "nor_easter",
           24,
           48
         ]
@@ -604,6 +619,29 @@
         ]
       },
       "reason": "v0.7.17 stale-skip REMOVE \u2014 09-30 nbm_skip_earning_audit two-window CONFIRMED. 14d n=952 lift +18.30% (halves +11.25/+27.67), 50d n=3,980 lift +6.90% (halves +7.27/+6.61). Both windows agree correction now helps; halves-stable both-positive. Companion cell wg/nw_flow/6-11h held for another cycle \u2014 50d halves +9.52/+2.11 decaying, fails halves-stable spirit."
+    },
+    "2026-10-05T08:28": {
+      "action": "add",
+      "cells": {
+        "l3_nbm.wd": [
+          [
+            "se_flow",
+            24,
+            48
+          ],
+          [
+            "nor_easter",
+            12,
+            24
+          ],
+          [
+            "nor_easter",
+            24,
+            48
+          ]
+        ]
+      },
+      "reason": "nbm_skip_add_audit 10-05. wd/se_flow/24-47h two-window CONFIRMED: 14d n=620 lift -20.00%, 50d n=6,052 lift -5.60%, halves -0.62/-9.94. wd/nor_easter/12-23h: 14d n=228 lift -24.70%, 50d n=270 lift -24.59%, halves -24.32/-24.70. wd/nor_easter/24-47h: 14d n=206 lift -17.70%, 50d n=208 lift -17.93%, halves -25.00/-17.75. The two nor_easter cells are TEMPORARY: the 50d window adds only 42 and 2 rows over the 14d, so both windows are one event and the two-window gate is not independent confirmation. Same circuit-breaker treatment as the v0.7.11 sr nor_easter bypass. Re-review 2026-10-13. wg/nor_easter/12-23h dropped from the batch (half A degenerate at -0.00)."
     }
   },
   "ship_history": [
@@ -716,6 +754,44 @@
       ],
       "notes": "Companion cell wg/nw_flow/6-11h flagged by the audit but held \u2014 50d halves +9.52/+2.11 (h2 decays below +3% threshold), fails halves-stable both-positive gate. Re-check next audit cycle.",
       "source": "analysis/nbm_skip_earning_audit.py 14d + 50d CONFIRMED"
+    },
+    {
+      "date": "2026-10-05",
+      "action": "ship",
+      "cells": [
+        {
+          "layer": "l3_nbm",
+          "field": "wd",
+          "cell": [
+            "se_flow",
+            24,
+            48
+          ],
+          "reason": "two-window CONFIRMED: 14d n=620 lift -20.00%, 50d n=6,052 lift -5.60%, halves -0.62/-9.94."
+        },
+        {
+          "layer": "l3_nbm",
+          "field": "wd",
+          "cell": [
+            "nor_easter",
+            12,
+            24
+          ],
+          "reason": "TEMPORARY, single-event evidence: 14d n=228 lift -24.70%, 50d n=270 lift -24.59%, halves -24.32/-24.70. Re-review 2026-10-13."
+        },
+        {
+          "layer": "l3_nbm",
+          "field": "wd",
+          "cell": [
+            "nor_easter",
+            24,
+            48
+          ],
+          "reason": "TEMPORARY, single-event evidence: 14d n=206 lift -17.70%, 50d n=208 lift -17.93%, halves -25.00/-17.75. Re-review 2026-10-13."
+        }
+      ],
+      "notes": "wg/nor_easter/12-23h dropped (half A degenerate at -0.00). wg/nor_easter/24-47h is FRESH, not confirmed. wg/nw_flow/6-11h REMOVE still held (halves).",
+      "source": "analysis/nbm_skip_add_audit.py 14d + 50d (10-05 digest)"
     }
   ]
 }
