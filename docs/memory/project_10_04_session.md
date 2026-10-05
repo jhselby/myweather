@@ -1,6 +1,6 @@
 ---
 name: project-10-04-session
-description: "10-04 session (cloud). v0.7.23 committed (4aa17f6). Triaged the 10-04 digest against the checklist. v0.7.5 ch verdict DONE: keep ON, router lift is +15.9% vs always-HRRR (NOT the fit-time +37-76%, which was vs raw L1). Suspected stale Stage 2b gate (walkforward_lc_regime parked, ship-stability reads a frozen file) UNVERIFIED. se_flow Lc question open."
+description: "10-04 session (cloud). v0.7.23 committed (4aa17f6). Triaged the 10-04 digest against the checklist. v0.7.5 ch verdict DONE: keep ON, router lift is +15.9% vs always-HRRR (NOT the fit-time +37-76%, which was vs raw L1). Stage 2b regime-Lc gate CONFIRMED stale (input file frozen since 09-12). se_flow Lc question open."
 metadata:
   node_type: memory
   type: project
@@ -48,15 +48,17 @@ metadata:
 ### Open: Lc `l6` appears to hurt ch in `se_flow` (live window) — UNRESOLVED
 - `se_flow` cells: prod 21.28 / 22.35 / 14.02 vs picked 17.42 / 15.59 / 12.07 vs always-HRRR(l4) 10.65 / 10.46 / 10.77. Ladder `l4 -> l6`: 10.65->17.27, 10.46->18.73, 10.77->14.70.
 - Code facts: ch Lc is a **pooled, forecast-value-binned shift, regime-blind** (`lc_correction_table.json`, repo copy dated 09-13: 20-50 -> -25.3, 50-80 -> -46.3, 80-95 -> -61.4; 0-5 and 5-20 SKIP). `_CELL_SKIP` is empty; `_FIELD_SKIP = {cl, cc}`. The `(field, regime, bin)` skip shape is supported but unused for ch.
-- Counter-evidence: `analysis/output/walkforward_lc_regime.txt` row `ch se_flow 20-50 n=647`: raw 33.86 / pooled-Lc 15.06 / regime-Lc 16.47 (-9.36% vs pooled). Pooled Lc *helps* there by ~55% vs raw, and a regime swap would lose. Column order inferred from the `cm` row; the file may be stale (below). "raw" may be L1, not L4.
+- Weak counter-evidence: `analysis/output/walkforward_lc_regime.txt` row `ch se_flow 20-50 n=647`: raw 33.86 / pooled-Lc 15.06 / regime-Lc 16.47 (-9.36% vs pooled). Pooled Lc helped ~55% vs raw and a regime swap would have lost. Column order inferred from the `cm` row; **the file is from the 09-02..09-12 window (frozen, see below)**, and "raw" may be L1, not L4. So it does not cover the live window.
 - NBM is also poor in se_flow (25.15, 27.58 in two cells) and the router picks it 26-33% of the time. The split between the two causes is not measured.
 - Next step if pursued: pair-log test of `error_l4` vs `error_l6` by Lc bin within `se_flow` for ch. Do NOT change `_CELL_SKIP` on the current evidence.
 
-## SUSPECTED stale gate (UNVERIFIED): Stage 2b regime-Lc "READY"
+## CONFIRMED stale gate: Stage 2b regime-Lc "READY" is vacuous
 
-- Digest 10-04: `walkforward_lc_regime_ship_stability` = READY, "8 days stable, 16 SHIP cells", exactly 16 every day 09-27..10-04. Committed history through 09-13 shows the ship set changing daily (13-18 cells).
-- `walkforward_lc_regime` (the script that writes the file the stability tool parses) is named `.skip.py` and is **not among the 208 scripts the digest runs** (grepped the PASS table). So the stability tool may re-parse a frozen `analysis/output/walkforward_lc_regime.txt` every morning. Hypothesis from the constant count; not confirmed.
-- **Pending check (Joe did not run it):** `ls -l analysis/output/walkforward_lc_regime.txt && head -12 analysis/output/walkforward_lc_regime.txt`. Old mtime => the Stage 3 gate has been vacuous; fix = un-park the script or stop trusting READY. Stage 3 (regime-Lc wire) is still unwired in the repo.
+- **Verified 10-05:** `analysis/output/walkforward_lc_regime.txt` has mtime **Sep 12 06:10** (3,977 bytes). Train = 20 days < 2026-09-02, test = 11 days >= 2026-09-02 (so test window ~09-02..09-12). Nothing has rewritten it since.
+- Cause: `walkforward_lc_regime` is `.skip.py` and is not among the 208 scripts the digest runs. `walkforward_lc_regime_ship_stability` keeps re-parsing the frozen file; digest 10-04 showed READY "8 days stable, 16 SHIP cells", exactly 16 every day 09-27..10-04. The committed history last changed on 09-13 (16 cells), which matches the freeze.
+- Consequences: (1) the Stage 2b "READY" has carried no information since 09-13; Stage 3 (regime-Lc wire, still unwired in the repo) must NOT be justified by it. (2) Every row in that file, including the `ch se_flow 20-50` row (raw 33.86 / pooled 15.06 / regime 16.47), is from the 09-02..09-12 test window: it predates the 09-30..10-02 event and the router era, so it is **weak counter-evidence** against the live `se_flow` Lc observation, not a contradiction.
+- Fix options (Joe's call, not done): un-park the script (rename `.skip.py` -> `.py`; check its runtime and `--cutoff-days` defaults first) so the digest regenerates it, or stop reading Stage 2b as a gate. Un-parking would change the digest's script count and runtime.
+- The `.skip.py` name predates this session; why it was parked is not recorded in memory (the file was first committed under that name in `07a2907`, v0.6.640, 09-19).
 
 ## 10-04 digest triage (digest run 06:36 EDT 10-04, 208/208 OK, no kills, no post-ship watches, regression + NBM sentries clean)
 
@@ -86,7 +88,7 @@ Triaged after reading memory (my first pass was done without it and was wrong on
 ## Next session (Mon 10-05), in order
 1. **Load memory + the digest triage checklist BEFORE reading the digest** ([[feedback_digest_triage_discipline]]).
 2. 10-05 digest: **L4 add dp,h** reaches 7/7 -> contamination check first. Also scheduled for 10-05: **v0.7.9 chp 7d verify** (`h_ch_persistence_blend_stage2_vs_l6` WATCH count should fall 4 -> <=1) and the **cc/0-5h C1d watch** (escalate only if `n_low` still < 1000).
-3. Joe: run the `walkforward_lc_regime.txt` mtime check above (kills or confirms the stale-gate hypothesis).
+3. Decide the stale Stage 2b gate (confirmed frozen since 09-12): un-park `walkforward_lc_regime` or drop the READY claim. Do not wire Stage 3 on it.
 4. **v0.7.20/21 live verify** with a refreshed pair log: `h_preempted_source_shadow` (expect `nbm`) + `hourly.corrected_humidity` writeback; both applied cells (`nw_flow/24-47`, `sw_flow/24-47`) should now have rows.
 5. Ship the 3 `wd` NBM skip-ADD cells (drop `wg/nor_easter/12-23`).
 6. `cc/production` vs raw (unexplained, above).
