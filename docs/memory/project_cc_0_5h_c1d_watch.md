@@ -42,3 +42,14 @@ Signal is mechanistically defensible and the orthogonality is exceptional, but t
 - [[project_c1d_kill_scope_artifact_09_14]] — where the cc/0-5h finding surfaced (from the C1d KILL orthogonality re-run at MIN_N=50).
 - [[project_09_14_session]] — session context.
 - [[feedback_hypothesis_promotion_pipeline]] — the discipline being honored by no-op.
+
+
+## CLOSED 2026-10-05 — no ship, watch retired
+
+Trigger date reached. Findings (digest 10-05 + `scripts/c1d_cc05_stability.py`, 21 trailing 14-day windows, run on the Mac):
+
+- **The premise was structurally wrong.** `analysis/c1d_calibration.py` uses `TEST_DAYS = 14`, a *rolling* 14-day window, so `n_low` cannot grow organically; it plateaus. n_low scales with band width at ~140 rows per lead-hour (0-5h 832, 12-23h 1,709, 24-47h 3,544). The 0-5h and 6-11h bands for every field sit under `SAMPLE_FLOOR = 1000` permanently. "Wait for n to grow" never resolves.
+- **The premium is not stable in magnitude.** cc/0-5h `premium_pct` over the 21 windows: +145% (09-15) -> +762% (09-29) -> +464% (10-05); max/min 5.3x. Digest run 10-05 read +429.63% (low 7.46 / high 39.49). Halves disagree wildly (e.g. 10-05: +1,285% vs +213%). The **ratio** is driven by the low-sigma MAE shrinking (12.0 -> 4.4 -> 7.0) in clear-sky stretches.
+- **The direction IS stable.** The absolute gap (high - low) is positive in every window and every half (minimum half +44%): about 19 points on 09-15, 33-37 points around 10-02, 32.5 on 10-05. The user-visible-error variant (`prod_error`) is also positive throughout: +57% -> +205% -> +115%.
+- **Decisive: `confidence_layer.ENABLED = False`.** The confidence block is stamped on `weather_data` for transparency but not applied, and the frontend only shows the status line when `data.confidence.applied` (`js/briefing.js`). The module comment says flip True only after the UI is wired AND the calibration audit confirms bands contain truth at the claimed rate; `c1_calibration_audit` is HOLD at 13% pass (3/23) vs the 75% bar. So a cc/0-5h C1d cell would have **zero user-visible effect today**. The KNOWN_LIVE_PIPELINES "C1d live" label means the loader is wired, not that bands are displayed.
+- **Decision: do not ship, do not cap, close the watch.** Revisit only if the confidence layer gets a real enable plan. If it does: use the absolute gap (or a capped widen) instead of premium_pct, and re-measure on a window that excludes the 09-30..10-02 event.
