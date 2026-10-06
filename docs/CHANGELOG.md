@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.7.26 • October 6, 2026 (debug page sweep — no-ship day)</strong></summary>
+
+- **Recent activity rotated.** Added 10-06 (today — no ships, digest triage only). Demoted 10-05 → 1 day ago, 10-04 → 2 days ago. Trimmed 10-03 to `display:none` (already fully recorded in the v0.7.23 changelog entry below).
+- **Raw-difficulty index pulled** (Joe asked whether the weather has been easier to predict lately): mean ratio 0.83 — this week's raw MAE ran ~17% below each field's trailing-90d baseline. `sr` (0.63) and `h` (0.70) are the easiest; `cl` (1.08) and `pr` (1.08) are slightly harder than normal. Recorded on the page so the answer doesn't need re-deriving.
+- **h/production + t/production τ-suspect investigated.** Both are new top alerts today, shaped like the classic decay-τ-too-long signature. Pair-log check (7d) shows L2 itself helps or is neutral at the flagged "hurt" bands (h/12-23h: L2-for-every-row 4.50 vs raw 4.97) — the hurt comes from the selector splitting the band across `l2_nbm`/`l4`/`l2` in a way that loses to committing to L2 uniformly. Same bug class the sentry's own code comment already names from a 09-08 case; shortening τ would be the wrong fix. Not shipped — one day's window, needs a selector-criteria read next.
+- **sr learned_gbm 7d Value-Captured check** (the v0.7.15 post-ship watch's scheduled read): 4 of 5 covered cells beat the `band_pool` baseline (+9.0% to +61.6%); `nw_flow/24-47` is negative (−21.4%, n=150, exactly at `min_n_test`). Recheck 10-07 before deciding whether to drop the cell.
+- **cc Stage 0 day 2:** `h_cc_sat_guard_stage0` PROMOTE holds (+42.5%, was +42.0%; 20/24 STABLE, same set) — second consecutive day toward the 7-day gate.
+- **Checks:** `make check-stale` clean.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.25c • October 5, 2026 (cc saturation guard: first real Stage 0 read + a correction)</strong></summary>
 
 - **First real read of `h_cc_sat_guard_stage0`: PROMOTE.** 10,923 saturated (raw cc ≥ 90) quads over 14d: derived-max beats served by +52.1% (0-5h), +57.6% (6-11h), +43.9% (12-23h), +35.2% (24-47h) and raw by 55–60%. 20 of 24 regime × band cells are STABLE; unstable: `ne_flow` 12-23 and 24-47, `se_flow` 12-23, `sw_flow` 24-47. Largest: calm (+79–98%), nor_easter (+99–100%), nw_flow, pre_frontal.
