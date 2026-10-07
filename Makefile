@@ -41,6 +41,42 @@ run-publisher:
 logs-publisher:
 	gcloud functions logs read myweather-publisher --region=us-east1 --limit=50
 
+# Refitter — daily refit of runtime tables that are meant to track recent
+# data (selector table first). Publishes to gs://myweather-data/runtime_tables/;
+# the collector reads them via weather_collector/runtime_tables.py, so a refit
+# goes live without a collector deploy or the Mac digest. See refitter/main.py.
+deploy-refitter:
+	gcloud functions deploy myweather-refitter \
+	  --gen2 \
+	  --runtime=python311 \
+	  --region=us-east1 \
+	  --source=. \
+	  --entry-point=refit \
+	  --trigger-http \
+	  --no-allow-unauthenticated \
+	  --timeout=1800s \
+	  --memory=4096MB \
+	  --cpu=2 \
+	  --max-instances=1 \
+	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811
+
+# One-time: let the scheduler SA invoke the refitter, then schedule it daily 04:30 ET.
+schedule-refitter:
+	gcloud functions add-invoker-policy-binding myweather-refitter --region=us-east1 \
+	  --member=serviceAccount:myweather-collector@weather-data-493811.iam.gserviceaccount.com
+	gcloud scheduler jobs create http myweather-refitter-schedule --location=us-east1 \
+	  --schedule="30 4 * * *" --time-zone=America/New_York \
+	  --uri=https://us-east1-weather-data-493811.cloudfunctions.net/myweather-refitter \
+	  --http-method=POST --attempt-deadline=1800s \
+	  --oidc-service-account-email=myweather-collector@weather-data-493811.iam.gserviceaccount.com \
+	  --oidc-token-audience=https://us-east1-weather-data-493811.cloudfunctions.net/myweather-refitter
+
+run-refitter:
+	gcloud scheduler jobs run myweather-refitter-schedule --location=us-east1
+
+logs-refitter:
+	gcloud functions logs read myweather-refitter --region=us-east1 --gen2 --limit=50
+
 # NBM backfill — one-shot CF that pulls historical NBM CO extracts and writes
 # gs://myweather-data/nbm_backfill/YYYYMMDD_HH.json per cycle. Resume-friendly.
 # Deploy once; invoke repeatedly with ?start_date=&num_days= until 120d covered.

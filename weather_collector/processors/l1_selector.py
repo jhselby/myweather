@@ -27,8 +27,11 @@ import logging
 import math
 from pathlib import Path
 
+from .. import runtime_tables
+
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_table_curated.json"
+TABLE_NAME = "l1_selector_table_curated.json"   # runtime_tables name (GCS refit, bundled fallback)
 REGIME_WALKER_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_by_regime_walker.json"
 LEARNED_CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_learned_selector_curated.json"
 BLENDER_CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_blender_curated.json"
@@ -71,14 +74,48 @@ def _band_for(lead_h):
     return None
 
 
+_SOURCES = ("hrrr", "nbm", "nws")
+
+
+def validate_table(data):
+    """Structural check shared by the runtime loader and the refitter's
+    publish guard. Returns None when usable, else a reason string."""
+    if not isinstance(data, dict):
+        return "not a JSON object"
+    table = data.get("table")
+    if not isinstance(table, dict) or not table:
+        return "missing or empty 'table'"
+    for field, cells in table.items():
+        if not isinstance(cells, dict):
+            return f"{field}: cells not an object"
+        for band, cell in cells.items():
+            if band not in {b for b, _, _ in BANDS}:
+                return f"{field}: unknown band {band!r}"
+            if (cell or {}).get("source") not in _SOURCES:
+                return f"{field}/{band}: bad source {(cell or {}).get('source')!r}"
+    if not data.get("fitted_at"):
+        return "missing fitted_at"
+    return None
+
+
+_LOADED_FROM = None   # identity of the table dict last parsed into _TABLE
+
+
+def _maybe_reload():
+    """Pick up a refit table published to GCS without a deploy. Cheap:
+    runtime_tables caches for REFRESH_S and returns the same object until
+    a new generation validates."""
+    if runtime_tables.get(TABLE_NAME, CURATED_PATH, validate_table) is not _LOADED_FROM:
+        _load()
+
+
 def _load():
-    global _TABLE, _META
-    try:
-        with open(CURATED_PATH) as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
-        logging.warning(f"  ⚠  l1_selector: curated JSON unavailable ({e}); "
-                        f"selector is a no-op (HRRR fall-through)")
+    global _TABLE, _META, _LOADED_FROM
+    data = runtime_tables.get(TABLE_NAME, CURATED_PATH, validate_table)
+    _LOADED_FROM = data
+    if data is None:
+        logging.warning("  ⚠  l1_selector: no usable selector table (GCS or bundled); "
+                        "selector is a no-op (HRRR fall-through)")
         _TABLE = {}
         return
     raw = data.get("table") or {}
@@ -88,6 +125,7 @@ def _load():
                          for band, cell in (cells or {}).items()}
     _TABLE = parsed
     _META = {
+        "source": runtime_tables.source(TABLE_NAME),
         "fitted_at": data.get("fitted_at"),
         "window_days": data.get("window_days"),
         "ship_gate": data.get("ship_gate_router_scope") or {},
@@ -477,6 +515,7 @@ def pick_source_with_mechanism(field, lead_h, regime=None, hour_local=None, ims=
             and regime == "stagnant_high"
             and hour_local in _HRRR_PBL_MORNING_HOURS_LOCAL):
         return "nbm", "pbl_morning_kill"
+    _maybe_reload()
     band_here = _band_for(lead_h)
     learned_pick = _learned_override(field, regime, band_here, features) if band_here else None
     if learned_pick is not None:

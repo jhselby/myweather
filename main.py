@@ -19,3 +19,7 @@ def backfill(request):
 def nbm_ingest(request):
     from nbm_ingester.main import ingest as _ingest
     return _ingest(request)
+
+def refit(request):
+    from refitter.main import refit as _refit
+    return _refit(request)

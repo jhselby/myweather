@@ -1,4 +1,16 @@
 <details open>
+<summary><strong>v0.7.28 • October 7, 2026 (cloud refitter: runtime tables refresh without a deploy; backstamp appender fixed)</strong></summary>
+
+- **Runtime tables no longer need the Mac digest + a deploy to refresh.** New `myweather-refitter` Cloud Function runs daily (04:30 ET), refits registered tables with the unchanged analysis fitters, checks each against a guard, and publishes to `gs://myweather-data/runtime_tables/`. A table that fails its guard is not published; yesterday's stays live and the reason goes to `runtime_tables/_status.json` and the function log at ERROR. Each published version is kept under `runtime_tables/history/<date>/`.
+- **Collector reads them through `weather_collector/runtime_tables.py`:** GCS copy (re-checked every 10 min by generation), else the last good copy in memory, else the bundled file. Previously each table loaded once at import from the bundled file.
+- **First table moved: the L1 selector table.** Until now it changed only when the collector was deployed, so production picks were whatever that morning's digest said on the last deploy day. Guard: structure, no dropped fields, ≥50% of the previous fit's rows, ≥100k rows, newer `fitted_at`.
+- **Not moved (by design):** tables that encode ship decisions — skip tables, `APPLIED_CELLS`, `LIVE_DEMOTED` — change only through a ship. Still to move: L3/L4/L5_NBM fits (they switch themselves off after 7 days without a refit), Lc, Lsr and the other self-refitting tables.
+- **Backstamp appender frozen since 09-24, fixed** (`3ccff999`, publisher redeployed): an off-by-one byte offset plus the daily pair-log prune left every run appending nothing, silently. 17 scripts that read only the backstamp file (including the sr GBM fitter and the blender verifier) had no rows after 09-24. Now re-seeds by obs_time when misaligned, catches up 64 MB per hourly run.
+- **Pair-log duplicates removed** in `analysis/_cache.py`: the live and backstamped logs overlapped 09-06..09-24 (285,847 identical rows); 18 fitters counted those days twice.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.27 • October 7, 2026 (sr learned selector: drop nw_flow/24-47)</strong></summary>
 
 - **Dropped `sr/nw_flow/24-47` from the learned GBM selector.** On the correct paired comparison (the classifier's served error vs `error_l5_nbm`, which is what `band_pool` would have served on the same rows), the cell lost over 7d: 38.45 vs 31.65, −21.5%, n=193. It lost on both recent nw_flow days (10-05: 95.7 vs 67.1; 10-06: 92.2 vs 68.1). Second consecutive negative read; the 10-06 rule was to drop it if still negative. The cell now falls back to `band_pool` (NBM).
