@@ -31,9 +31,11 @@ import logging
 from pathlib import Path
 
 from .nbm_common import cap_correction, is_stale
+from .. import runtime_tables
 
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l3_nbm_curated.json"
+TABLE_NAME = "l3_nbm_curated.json"   # runtime_tables name (daily GCS refit, bundled fallback)
 
 L3_NBM_FIELDS = ("wg", "ch", "sr")   # scalar-bias fields
 # 2026-09-10 v0.6.577: dropped cc. Sentry HOT — layer help +9.4% → -8.3%
@@ -76,10 +78,11 @@ _FITTED_AT = None
 
 def _load():
     global _TABLE, _WD_TABLE, _MIN_PAIRS, _STALE, _FITTED_AT
-    try:
-        with open(CURATED_PATH) as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
+    global _LOADED_FROM
+    data = runtime_tables.get(TABLE_NAME, CURATED_PATH, validate_table)
+    _LOADED_FROM = data
+    if data is None:
+        e = "no usable table (GCS or bundled)"
         logging.warning(f"  ⚠  l3_nbm: curated JSON unavailable ({e}); apply is a no-op")
         _TABLE = {}
         _WD_TABLE = [(None, None, 0)] * LEAD_BINS
@@ -112,12 +115,45 @@ def _load():
     _WD_TABLE = list(zip(wd_sin, wd_cos, wd_n))
 
 
+
+def validate_table(data):
+    """Structural check shared by the runtime loader and the refitter's
+    publish guard. Returns None when usable, else a reason string."""
+    if not isinstance(data, dict):
+        return "not a JSON object"
+    if not data.get("fitted_at"):
+        return "missing fitted_at"
+    corr = data.get("corrections")
+    if not isinstance(corr, dict):
+        return "missing corrections"
+    for f in L3_NBM_FIELDS:
+        row = corr.get(f)
+        if not isinstance(row, list) or len(row) != LEAD_BINS:
+            return f"corrections[{f!r}] missing or not length {LEAD_BINS}"
+    wd = corr.get("wd_components")
+    if not isinstance(wd, dict) or len(wd.get("sin") or []) != LEAD_BINS or len(wd.get("cos") or []) != LEAD_BINS:
+        return "wd_components sin/cos missing or wrong length"
+    return None
+
+
+_LOADED_FROM = None   # identity of the table dict last parsed
+
+
+def _maybe_reload():
+    """Pick up a refit table from GCS without a deploy, and re-apply the
+    stale rule on a long-lived instance (it used to run only at import)."""
+    if (runtime_tables.get(TABLE_NAME, CURATED_PATH, validate_table) is not _LOADED_FROM
+            or (not _STALE and is_stale(_FITTED_AT))):
+        _load()
+
+
 _load()
 
 
 def l3_nbm_bias(field, lead_h):
     """Signed per-lead bias to subtract from {field}_l2_nbm. 0.0 when the
     table lacks coverage, the bin is too thin, or the field is out of scope."""
+    _maybe_reload()
     if field not in L3_NBM_FIELDS:
         return 0.0
     if _TABLE is None:
@@ -136,6 +172,7 @@ def l3_nbm_wd_components(lead_h):
     cos(wd_l2_nbm_rad)). Returns (0.0, 0.0) when the bin is too thin, out
     of range, or the curated table lacks wd data — leaves l3_nbm identical
     to l2_nbm in the identity fall-through case."""
+    _maybe_reload()
     if _WD_TABLE is None or not (0 <= lead_h < LEAD_BINS):
         return (0.0, 0.0)
     sin_c, cos_c, n = _WD_TABLE[lead_h]

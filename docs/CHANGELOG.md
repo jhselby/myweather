@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.29 • October 7, 2026 (refitter: L3_NBM and L4_NBM tables move to the daily cloud refit)</strong></summary>
+
+- **L3_NBM (live on wg/ch/sr + wd) and L4_NBM (live on ch) now refit daily in the cloud** and load through `runtime_tables`, like the selector table in v0.7.28. Both used to switch themselves off 7 days after their last digest fit + deploy, so a week without the Mac digest silently disabled the NBM correction stack.
+- **The 7-day stale rule stays as a safety net but now actually trips on a running instance.** It used to be checked only at import; a long-lived collector instance kept applying an aging table. Now re-checked on every call (tested: 8 days after `fitted_at` the layer goes no-op and logs a warning).
+- **Guards:** table structure (48 lead bins per live field + wd sin/cos for L3, 24 hour bins for L4), ≥50% of the previous fit's pairs, floors of 100k (L3) and 10k (L4), newer `fitted_at`.
+- **First deduplicated fits:** pair counts drop to ~60% (L3 272,641 vs 432,153; L4 25,748 vs 42,594) because 09-07..09-24 no longer counts twice. Corrections move modestly, e.g. L3 ch@30h 9.74 → 8.59, L4 ch@14h 9.56 → 9.79.
+- **Not moved:** L5_NBM (`ENABLED = False`).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.28 • October 7, 2026 (cloud refitter: runtime tables refresh without a deploy; backstamp appender fixed)</strong></summary>
 
 - **Runtime tables no longer need the Mac digest + a deploy to refresh.** New `myweather-refitter` Cloud Function runs daily (04:30 ET), refits registered tables with the unchanged analysis fitters, checks each against a guard, and publishes to `gs://myweather-data/runtime_tables/`. A table that fails its guard is not published; yesterday's stays live and the reason goes to `runtime_tables/_status.json` and the function log at ERROR. Each published version is kept under `runtime_tables/history/<date>/`.

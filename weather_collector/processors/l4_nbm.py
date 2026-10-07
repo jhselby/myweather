@@ -25,9 +25,11 @@ import logging
 from pathlib import Path
 
 from .nbm_common import cap_correction, is_stale
+from .. import runtime_tables
 
 
 CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l4_nbm_curated.json"
+TABLE_NAME = "l4_nbm_curated.json"   # runtime_tables name (daily GCS refit, bundled fallback)
 
 # 2026-09-08 v0.6.563: dropped cc. Walkforward flagged DROP cc for weeks;
 # 30d prep analysis (n=27,313) confirmed layer's total marginal contribution
@@ -46,10 +48,11 @@ _FITTED_AT = None
 
 def _load():
     global _TABLE, _MIN_PAIRS, _STALE, _FITTED_AT
-    try:
-        with open(CURATED_PATH) as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError) as e:
+    global _LOADED_FROM
+    data = runtime_tables.get(TABLE_NAME, CURATED_PATH, validate_table)
+    _LOADED_FROM = data
+    if data is None:
+        e = "no usable table (GCS or bundled)"
         logging.warning(f"  ⚠  l4_nbm: curated JSON unavailable ({e}); apply is a no-op")
         _TABLE = {}
         _STALE = False
@@ -75,6 +78,35 @@ def _load():
     _TABLE = fused
 
 
+
+def validate_table(data):
+    """Structural check shared by the runtime loader and the refitter's
+    publish guard. Returns None when usable, else a reason string."""
+    if not isinstance(data, dict):
+        return "not a JSON object"
+    if not data.get("fitted_at"):
+        return "missing fitted_at"
+    corr = data.get("corrections")
+    if not isinstance(corr, dict):
+        return "missing corrections"
+    for f in L4_NBM_FIELDS:
+        row = corr.get(f)
+        if not isinstance(row, list) or len(row) != HOD_BINS:
+            return f"corrections[{f!r}] missing or not length {HOD_BINS}"
+    return None
+
+
+_LOADED_FROM = None   # identity of the table dict last parsed
+
+
+def _maybe_reload():
+    """Pick up a refit table from GCS without a deploy, and re-apply the
+    stale rule on a long-lived instance (it used to run only at import)."""
+    if (runtime_tables.get(TABLE_NAME, CURATED_PATH, validate_table) is not _LOADED_FROM
+            or (not _STALE and is_stale(_FITTED_AT))):
+        _load()
+
+
 _load()
 
 
@@ -82,6 +114,7 @@ def l4_nbm_correction(field, hour_of_day):
     """Signed diurnal correction to subtract from {field}_l3_nbm. 0.0 when
     the table lacks coverage, the bin is too thin, or the field is out of
     scope."""
+    _maybe_reload()
     if field not in L4_NBM_FIELDS:
         return 0.0
     if _TABLE is None:
