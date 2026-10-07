@@ -38,9 +38,9 @@ URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_TXT = os.path.join(HERE, "output", "h_ch_persistence_blend_stage2.txt")
-OUT_JSON = os.path.abspath(os.path.join(
-    HERE, "..", "weather_collector", "data", "ch_persistence_gate_curated.json"
-))
+# Ship-decision table: write a candidate; the live copy changes only via a ship.
+from _candidates import candidate_path  # noqa: E402
+OUT_JSON = candidate_path("ch_persistence_gate_curated.json")
 
 # 2026-08-01: slid forward 9 days so the "recent" half covers the MLC
 # collapse / cc-cluster distribution shift (see h_ch_persistence_blend.py

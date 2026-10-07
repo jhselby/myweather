@@ -55,7 +55,7 @@ deploy-refitter:
 	  --trigger-http \
 	  --no-allow-unauthenticated \
 	  --timeout=1800s \
-	  --memory=4096MB \
+	  --memory=8192MB \
 	  --cpu=2 \
 	  --max-instances=1 \
 	  --update-env-vars=GOOGLE_CLOUD_PROJECT=weather-data-493811

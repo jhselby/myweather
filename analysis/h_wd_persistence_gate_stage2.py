@@ -43,9 +43,9 @@ URL = "https://data.wymancove.com/forecast_error_log.jsonl"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_TXT = os.path.join(HERE, "output", "h_wd_persistence_gate_stage2.txt")
-OUT_JSON = os.path.abspath(os.path.join(
-    HERE, "..", "weather_collector", "data", "wd_persistence_gate_curated.json"
-))
+# Ship-decision table: write a candidate; the live copy changes only via a ship.
+from _candidates import candidate_path  # noqa: E402
+OUT_JSON = candidate_path("wd_persistence_gate_curated.json")
 
 WIN_A_LO, WIN_A_HI, WIN_B_LO, WIN_B_HI, WIN_FULL_LO, WIN_FULL_HI = rolling_windows()
 

@@ -47,6 +47,7 @@ from datetime import datetime
 
 import pytz
 
+from .. import runtime_tables
 from ..utils import redact_secrets
 
 
@@ -60,16 +61,36 @@ _CURATED_PATH = os.path.join(
 )
 
 
+TABLE_NAME = "sr_sea_breeze_lsr_curated.json"   # runtime_tables name (cloud refit, bundled fallback)
+
+
+def validate_table(data):
+    """Structural check shared by the runtime loader and the refitter's
+    publish guard. Returns None when usable, else a reason string."""
+    if not isinstance(data, dict):
+        return "not a JSON object"
+    try:
+        if abs(float(data["overall_bias_wm2"])) > 600:
+            return f"overall_bias_wm2 out of range ({data['overall_bias_wm2']})"
+        for h, v in (data.get("hourly_bias_wm2") or {}).items():
+            if not 0 <= int(h) <= 23 or abs(float(v)) > 600:
+                return f"hour {h}: out of range ({v})"
+        float((data.get("cc_gate") or {})["lo"])
+    except (KeyError, TypeError, ValueError, AttributeError) as e:
+        return f"bad or missing value: {e!r}"
+    if not data.get("generated"):
+        return "missing generated"
+    return None
+
+
 def _load_curated():
     """Load bias table + gate config. Returns (bias_by_hour, overall_bias, cc_lo).
 
     Overcast half (cc_hi) retired 2026-07-28 v0.6.383b — only cc_lo matters now.
     Legacy `hi` field in older JSONs is ignored on load.
     """
-    try:
-        with open(os.path.abspath(_CURATED_PATH)) as f:
-            d = json.load(f)
-    except FileNotFoundError:
+    d = runtime_tables.get(TABLE_NAME, os.path.abspath(_CURATED_PATH), validate_table)
+    if d is None:
         return {}, 0.0, 25.0
     hb_str = d.get("hourly_bias_wm2") or {}
     bias_by_hour = {int(k): float(v) for k, v in hb_str.items()}
@@ -80,6 +101,16 @@ def _load_curated():
 
 
 _BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO = _load_curated()
+_LOADED_FROM = runtime_tables.get(TABLE_NAME, os.path.abspath(_CURATED_PATH), validate_table)
+
+
+def _maybe_reload():
+    """Pick up a refit table published to GCS without a deploy."""
+    global _BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO, _LOADED_FROM
+    data = runtime_tables.get(TABLE_NAME, os.path.abspath(_CURATED_PATH), validate_table)
+    if data is not _LOADED_FROM:
+        _BIAS_BY_HOUR, _OVERALL_BIAS, _CC_LO = _load_curated()
+        _LOADED_FROM = data
 
 
 def _cc_gated(cc):
@@ -170,6 +201,7 @@ def stamp_sr_sea_breeze_correction(weather_data):
     classification via forecast-side state (regime is per-lead, matching
     the training-data axis in Stage 2).
     """
+    _maybe_reload()
     hourly = weather_data.get("hourly") or {}
     times = hourly.get("times") or hourly.get("time") or []
     direct_arr = hourly.get("direct_radiation") or []

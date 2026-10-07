@@ -1,4 +1,17 @@
 <details open>
+<summary><strong>v0.7.30 • October 7, 2026 (refitter: every self-refitting live table moves to the cloud; churning cell sets become ship decisions)</strong></summary>
+
+- **Seven more live tables refit daily in the cloud** and load through `runtime_tables` (GCS copy, else last good, else bundled), so none of them depends on the Mac digest or a deploy any more:
+  - plain refits: Lc fit (`lc_correction_table`), Lsr solar bias (`lsr_bias_table_curated`), sr sea-breeze override (`sr_sea_breeze_lsr_curated`), the sr learned GBM selector (`l1_learned_selector_curated`, chain v2 → v5 → curate; `LIVE_DEMOTED` stays in code);
+  - self-gating walkers: chp cell gate, Lc recent-bias gate, selector regime overrides. Their streak histories now persist in `runtime_tables/state/`, saved only when the table publishes.
+- **Guards:** each consumer's `validate_*` (shared by loader and refitter), timestamp not older than the live copy, row counts ≥50% of the previous fit (Lc), and cell sets never emptied without a human (learned selector, gates, walker). A refused table is put back so later fits that read it (the Lc gate reads the Lc table) see the live copy.
+- **Four churning cell sets are now ship decisions, frozen at the copies live since today's deploy:** `ch_persistence_gate_curated` (chp), `wd_persistence_gate_curated` (wdp), `wg_residual_persistence_curated`, `wg_l3_asymmetric_skip_curated`. Their Stage 1/2 tools write candidates to `analysis/output/candidates/` (new `analysis/_candidates.py`); `whitelist_streak` and the wg residual walker read the candidates. Until now production got whatever the digest wrote on the morning of the last deploy.
+- **Left bundled:** tables whose layer is off or shadow (c1 confidence, cc combine gate, clp, dp/h residual, blender, Lsr recent-bias gate, ws tables).
+- Refitter memory 4 → 8 GB (pair logs live in in-memory `/tmp`; local dry run peaked at 1.9 GB before them). `scikit-learn` added to `requirements.txt` for the GBM fit.
+
+</details>
+
+<details open>
 <summary><strong>v0.7.29 • October 7, 2026 (refitter: L3_NBM and L4_NBM tables move to the daily cloud refit)</strong></summary>
 
 - **L3_NBM (live on wg/ch/sr + wd) and L4_NBM (live on ch) now refit daily in the cloud** and load through `runtime_tables`, like the selector table in v0.7.28. Both used to switch themselves off 7 days after their last digest fit + deploy, so a week without the Mac digest silently disabled the NBM correction stack.

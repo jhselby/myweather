@@ -21,6 +21,8 @@ from datetime import datetime, timezone
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CURATED_DIR = os.path.join(HERE, "..", "weather_collector", "data")
+sys.path.insert(0, HERE)
+from _candidates import candidate_path  # noqa: E402
 ARCHIVE_DIR = os.path.join(HERE, "output")
 
 JACCARD_FLOOR = 0.80
@@ -31,10 +33,10 @@ STREAK_REQUIRED = 7
 # curated JSONs (dp_bias, ws_bias) use a different shape (stage1_verdicts flat)
 # and would need a second extractor.
 REGISTRY = {
-    "chp":         {"curated": "ch_persistence_gate_curated.json",     "excludes": {"frontal"}, "status": "LIVE"},
+    "chp":         {"curated": "ch_persistence_gate_curated.json",     "excludes": {"frontal"}, "status": "LIVE", "candidate": True},
     "clp":         {"curated": "cl_persistence_gate_curated.json",     "excludes": {"frontal"}, "status": "SHADOW"},
-    "wdp":         {"curated": "wd_persistence_gate_curated.json",     "excludes": {"frontal"}, "status": "LIVE"},
-    "wg_residual": {"curated": "wg_residual_persistence_curated.json", "excludes": set(),       "status": "SHADOW"},
+    "wdp":         {"curated": "wd_persistence_gate_curated.json",     "excludes": {"frontal"}, "status": "LIVE", "candidate": True},
+    "wg_residual": {"curated": "wg_residual_persistence_curated.json", "excludes": set(),       "status": "SHADOW", "candidate": True},
     "dp_residual": {"curated": "dp_residual_persistence_curated.json", "excludes": set(),       "status": "SHADOW"},
     # v0.6.418 (2026-08-15) — pr L2 whitelist joins the same 7-day stability
     # tracker. Curated JSON emitted by pr_l2_regime_lead_retro.py with fire
@@ -77,7 +79,8 @@ def save_archive(path, entries):
 
 
 def walk_gate(name, cfg, today):
-    curated_path = os.path.join(CURATED_DIR, cfg["curated"])
+    curated_path = (candidate_path(cfg["curated"]) if cfg.get("candidate")
+                    else os.path.join(CURATED_DIR, cfg["curated"]))
     archive_path = os.path.join(ARCHIVE_DIR, f"{name}_streak.json")
 
     if not os.path.exists(curated_path):

@@ -14,11 +14,18 @@ stay in the repo and change only through a ship.
 
 Every published version is also kept at runtime_tables/history/<date>/<name>
 so any day's table can be restored by copying it back.
+
+Self-gating tables (streak walkers) keep their history file at
+runtime_tables/state/<file>. It is restored before the fit and saved only
+when the table publishes, so a refused fit leaves no trace in the streak.
+
+REFITTER_DRY_RUN=1 runs every fitter and guard but uploads nothing.
 """
 import importlib
 import json
 import logging
 import os
+import runpy
 import sys
 import time
 import traceback
@@ -39,10 +46,45 @@ from weather_collector.runtime_tables import PREFIX  # noqa: E402
 from refitter.tables import TABLES  # noqa: E402
 
 STATUS_PATH = PREFIX + "_status.json"
+STATE_PREFIX = PREFIX + "state/"
+DRY_RUN = os.environ.get("REFITTER_DRY_RUN") == "1"
+
+
+def _run_step(step):
+    """Run one fitter step: call a function, or run the module as __main__
+    with argv the way the digest does. A SystemExit is a normal finish (some
+    scripts exit non-zero on a HOLD verdict); the guard judges the output."""
+    if "call" in step:
+        getattr(importlib.import_module(step["module"]), step["call"])()
+        return
+    saved = sys.argv
+    sys.argv = [step["module"]] + list(step.get("argv") or [])
+    try:
+        runpy.run_module(step["module"], run_name="__main__", alter_sys=False)
+    except SystemExit:
+        pass
+    finally:
+        sys.argv = saved
+
+
+def _restore_state(spec):
+    for rel in spec.get("state") or ():
+        data = load_json(STATE_PREFIX + os.path.basename(rel))
+        if data is not None:   # else keep the bundled copy (first run)
+            with open(os.path.join(REPO, rel), "w") as f:
+                json.dump(data, f, indent=2)
+
+
+def _save_state(spec):
+    for rel in spec.get("state") or ():
+        with open(os.path.join(REPO, rel)) as f:
+            upload_json(json.load(f), STATE_PREFIX + os.path.basename(rel), f"state {rel}")
 
 
 def _refit_one(spec, now):
-    """Run one fitter, guard, publish. Returns a status dict."""
+    """Run one table's fitter steps, guard, publish. Returns a status dict.
+    On refusal the previous table is put back at `out` so later entries
+    that read it (e.g. the Lc gate reads the Lc table) see the live copy."""
     name = spec["name"]
     out_path = os.path.join(REPO, spec["out"])
     prev = load_json(PREFIX + name)
@@ -52,29 +94,52 @@ def _refit_one(spec, now):
                 prev = json.load(f)   # bundled copy is the baseline on first publish
         except (OSError, json.JSONDecodeError):
             prev = None
+    _restore_state(spec)
 
     t0 = time.time()
-    mod = importlib.import_module(spec["module"])
-    getattr(mod, spec["call"])()
-    with open(out_path) as f:
-        new = json.load(f)
+    mtime = os.path.getmtime(out_path) if os.path.exists(out_path) else None
+    try:
+        for step in spec["steps"]:
+            _run_step(step)
+        if not os.path.exists(out_path) or os.path.getmtime(out_path) == mtime:
+            raise RuntimeError(f"fitter did not write {spec['out']}")
+        with open(out_path) as f:
+            new = json.load(f)
+        reason = spec["guard"](new, prev)
+    except Exception:
+        _put_back(out_path, prev)
+        raise
 
-    reason = spec["guard"](new, prev)
+    stamp = new.get("fitted_at") or new.get("generated_at") or new.get("generated")
     st = {
         "attempted_at": now,
         "fit_seconds": round(time.time() - t0, 1),
-        "fitted_at": new.get("fitted_at"),
-        "prev_fitted_at": (prev or {}).get("fitted_at"),
+        "fitted_at": stamp,
+        "prev_fitted_at": (prev or {}).get("fitted_at") or (prev or {}).get("generated_at")
+                          or (prev or {}).get("generated"),
     }
     if reason:
+        _put_back(out_path, prev)
         st.update(published=False, reason=reason)
         logging.error(f"refitter: {name} NOT published — {reason}")
         return st
+    summary = spec["summary"](new, prev)
+    if DRY_RUN:
+        st.update(published=False, reason="dry run", summary=summary)
+        print(f"refitter: {name} would publish ({summary})", flush=True)
+        return st
     upload_json(new, PREFIX + name, f"runtime table {name}")
     upload_json(new, f"{PREFIX}history/{now[:10]}/{name}", f"history {name}")
-    st.update(published=True, reason=None, summary=spec["summary"](new, prev))
-    print(f"refitter: {name} published ({st['summary']})", flush=True)
+    _save_state(spec)
+    st.update(published=True, reason=None, summary=summary)
+    print(f"refitter: {name} published ({summary})", flush=True)
     return st
+
+
+def _put_back(out_path, prev):
+    if prev is not None:
+        with open(out_path, "w") as f:
+            json.dump(prev, f, indent=2)
 
 
 def refit(request):
@@ -99,5 +164,8 @@ def refit(request):
         status["tables"][spec["name"]] = st
     status["last_run_at"] = now
     status["last_run_ok"] = ok
+    if DRY_RUN:
+        print(json.dumps(status, indent=2))
+        return (json.dumps(status, indent=2), 200 if ok else 500, {"Content-Type": "application/json"})
     upload_json(status, STATUS_PATH, "runtime_tables status")
     return (json.dumps(status, indent=2), 200 if ok else 500, {"Content-Type": "application/json"})

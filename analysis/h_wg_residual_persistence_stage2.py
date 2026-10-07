@@ -1,7 +1,8 @@
 """wg residual-persistence Stage 2 preview.
 
 Refactored 2026-08-30 v0.6.524 — logic lives in `_residual_persistence_stage2`.
-Feeds `weather_collector/data/wg_residual_persistence_curated.json`, read by
+Writes the candidate `analysis/output/candidates/wg_residual_persistence_curated.json`
+(see _candidates.py). The runtime copy in weather_collector/data/, read by
 the live `wg_residual_persistence.py` processor (Stage 3 shipped v0.6.380
 2026-07-25 with a 7-day live-layer flip gate).
 """
@@ -11,7 +12,10 @@ import sys
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, SCRIPT_DIR)
 from _residual_persistence_stage2 import run_stage2  # noqa: E402
+from _candidates import candidate_path  # noqa: E402
 
 
 if __name__ == "__main__":
-    sys.exit(run_stage2(field="wg", units_label="mph"))
+    # Live ship-decision table: write a candidate; the live copy changes only via a ship.
+    sys.exit(run_stage2(field="wg", units_label="mph",
+                        out_json=candidate_path("wg_residual_persistence_curated.json")))

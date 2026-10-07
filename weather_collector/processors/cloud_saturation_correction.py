@@ -25,6 +25,8 @@ import json
 import logging
 from pathlib import Path
 
+from .. import runtime_tables
+
 
 ENABLED = True  # Flipped 2026-07-17 v0.6.355 after 8/7-day gate clear, 16 SHIP cells stable, LC_ENABLED READY on divergence report, no cc/cl/cm/ch ANOMALY. Fit shipped 2026-07-04.
 
@@ -93,27 +95,52 @@ _BINS = [
 ]
 
 _TABLE_PATH = Path(__file__).resolve().parent.parent / "data" / "lc_correction_table.json"
-_TABLE_CACHE = None
+TABLE_NAME = "lc_correction_table.json"        # runtime_tables names (cloud refit, bundled fallback)
 
 _GATE_PATH = Path(__file__).resolve().parent.parent / "data" / "lc_recent_bias_gate.json"
-_GATE_CACHE = None
+GATE_NAME = "lc_recent_bias_gate.json"
+
+
+def validate_table(data):
+    """Structural check shared by the runtime loader and the refitter's
+    publish guard. Returns None when usable, else a reason string."""
+    if not isinstance(data, dict) or not isinstance(data.get("cells"), dict):
+        return "missing 'cells' object"
+    labels = {lab for _, _, lab in _BINS}
+    for field, cells in data["cells"].items():
+        if not isinstance(cells, dict):
+            return f"{field}: cells not an object"
+        for lab, cell in cells.items():
+            if lab not in labels:
+                return f"{field}: unknown bin {lab!r}"
+            shift = (cell or {}).get("shift")
+            if not isinstance(shift, (int, float)) or abs(shift) > 100:
+                return f"{field}/{lab}: bad shift {shift!r}"
+    if not data.get("generated_at"):
+        return "missing generated_at"
+    return None
+
+
+def validate_gate(data):
+    if not isinstance(data, dict):
+        return "not a JSON object"
+    if not isinstance(data.get("fields_cleared"), list):
+        return "missing 'fields_cleared' list"
+    if not isinstance(data.get("per_cell"), dict):
+        return "missing 'per_cell' object"
+    if not data.get("generated_at"):
+        return "missing generated_at"
+    return None
 
 
 def _load_gate():
-    """Load and cache the recent-bias gate table. Missing / malformed →
-    empty gate (nothing suppressed). Never raises."""
-    global _GATE_CACHE
-    if _GATE_CACHE is not None:
-        return _GATE_CACHE
-    try:
-        _GATE_CACHE = json.loads(_GATE_PATH.read_text())
-    except FileNotFoundError:
-        logging.warning(f"  ⚠  Lc recent-bias gate missing at {_GATE_PATH}; gate is a no-op")
-        _GATE_CACHE = {"fields_cleared": [], "per_cell": {}}
-    except Exception as e:
-        logging.warning(f"  ⚠  Lc recent-bias gate load failed: {e}")
-        _GATE_CACHE = {"fields_cleared": [], "per_cell": {}}
-    return _GATE_CACHE
+    """Current recent-bias gate (refitter's GCS copy, else bundled).
+    Missing / invalid → empty gate (nothing suppressed). Never raises."""
+    gate = runtime_tables.get(GATE_NAME, _GATE_PATH, validate_gate)
+    if gate is None:
+        logging.warning("  ⚠  Lc recent-bias gate unavailable (GCS and bundled); gate is a no-op")
+        return {"fields_cleared": [], "per_cell": {}}
+    return gate
 
 
 def _gate_suppresses(gate, field, bin_lab):
@@ -131,20 +158,13 @@ def _gate_suppresses(gate, field, bin_lab):
 
 
 def _load_table():
-    """Load and cache the fit table. Missing / malformed file → empty
-    table (nothing ships)."""
-    global _TABLE_CACHE
-    if _TABLE_CACHE is not None:
-        return _TABLE_CACHE
-    try:
-        _TABLE_CACHE = json.loads(_TABLE_PATH.read_text())
-    except FileNotFoundError:
-        logging.warning(f"  ⚠  Lc fit table missing at {_TABLE_PATH}; Lc will not fire")
-        _TABLE_CACHE = {"cells": {}}
-    except Exception as e:
-        logging.warning(f"  ⚠  Lc fit table load failed: {e}")
-        _TABLE_CACHE = {"cells": {}}
-    return _TABLE_CACHE
+    """Current fit table (refitter's GCS copy, else bundled). Missing /
+    invalid → empty table (nothing ships)."""
+    table = runtime_tables.get(TABLE_NAME, _TABLE_PATH, validate_table)
+    if table is None:
+        logging.warning("  ⚠  Lc fit table unavailable (GCS and bundled); Lc will not fire")
+        return {"cells": {}}
+    return table
 
 
 def _bin_of(v):

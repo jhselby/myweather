@@ -34,6 +34,8 @@ CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_ta
 TABLE_NAME = "l1_selector_table_curated.json"   # runtime_tables name (GCS refit, bundled fallback)
 REGIME_WALKER_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_selector_by_regime_walker.json"
 LEARNED_CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_learned_selector_curated.json"
+REGIME_WALKER_NAME = "l1_selector_by_regime_walker.json"   # runtime_tables names
+LEARNED_NAME = "l1_learned_selector_curated.json"
 BLENDER_CURATED_PATH = Path(__file__).resolve().parent.parent / "data" / "l1_blender_curated.json"
 
 BANDS = [("0-5", 0, 6), ("6-11", 6, 12), ("12-23", 12, 24), ("24-47", 24, 48)]
@@ -99,6 +101,8 @@ def validate_table(data):
 
 
 _LOADED_FROM = None   # identity of the table dict last parsed into _TABLE
+_WALKER_LOADED_FROM = None
+_LEARNED_LOADED_FROM = None
 
 
 def _maybe_reload():
@@ -107,6 +111,10 @@ def _maybe_reload():
     a new generation validates."""
     if runtime_tables.get(TABLE_NAME, CURATED_PATH, validate_table) is not _LOADED_FROM:
         _load()
+    if runtime_tables.get(REGIME_WALKER_NAME, REGIME_WALKER_PATH, validate_regime_walker) is not _WALKER_LOADED_FROM:
+        _load_regime_overrides()
+    if runtime_tables.get(LEARNED_NAME, LEARNED_CURATED_PATH, validate_learned) is not _LEARNED_LOADED_FROM:
+        _load_learned()
 
 
 def _load():
@@ -143,11 +151,10 @@ def _load_regime_overrides():
     only emitted when NWS beats best-of-HRRR-NBM, so they can't co-occur
     with the other two). Missing file, empty cells list, or any load error
     → no overrides (band pool decides)."""
-    global _REGIME_OVERRIDES
-    try:
-        with open(REGIME_WALKER_PATH) as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+    global _REGIME_OVERRIDES, _WALKER_LOADED_FROM
+    data = runtime_tables.get(REGIME_WALKER_NAME, REGIME_WALKER_PATH, validate_regime_walker)
+    _WALKER_LOADED_FROM = data
+    if data is None:
         _REGIME_OVERRIDES = {}
         return
     per_cell = data.get("per_cell") or {}
@@ -174,14 +181,19 @@ def _load_learned():
         tree ensemble. Each tree = {feature[], threshold[], left[],
         right[], value[]} flattened arrays; feature[i] == -1 marks a
         leaf. Pure-python walk; no sklearn at runtime."""
-    global _LEARNED_CELLS, _LEARNED_FEATURE_NAMES
-    try:
-        with open(LEARNED_CURATED_PATH) as f:
-            data = json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
+    global _LEARNED_CELLS, _LEARNED_FEATURE_NAMES, _LEARNED_LOADED_FROM
+    data = runtime_tables.get(LEARNED_NAME, LEARNED_CURATED_PATH, validate_learned)
+    _LEARNED_LOADED_FROM = data
+    if data is None:
         _LEARNED_CELLS = {}
         _LEARNED_FEATURE_NAMES = ()
         return
+    _LEARNED_CELLS, _LEARNED_FEATURE_NAMES = _parse_learned(data)
+
+
+def _parse_learned(data):
+    """Parse the learned table into ({(field, regime, band): model}, names).
+    Cells with a bad shape are skipped with a warning."""
     names = tuple(data.get("feature_names") or ())
     parsed = {}
     for cell in data.get("cells") or ():
@@ -251,8 +263,42 @@ def _load_learned():
             logging.warning(f"  ⚠  l1_learned_selector: unknown model_type "
                             f"{model_type!r} on cell {f_}/{r_}/{b_}; skipping")
             continue
-    _LEARNED_CELLS = parsed
-    _LEARNED_FEATURE_NAMES = names
+    return parsed, names
+
+
+def validate_regime_walker(data):
+    """Structural check shared by the runtime loader and the refitter's
+    publish guard. Returns None when usable, else a reason string."""
+    if not isinstance(data, dict) or not isinstance(data.get("per_cell"), dict):
+        return "missing 'per_cell' object"
+    for field, regs in data["per_cell"].items():
+        for regime, bands in (regs or {}).items():
+            if not isinstance(bands, dict):
+                return f"{field}/{regime}: bands not an object"
+            for band in bands:
+                if band not in {b for b, _, _ in BANDS}:
+                    return f"{field}/{regime}: unknown band {band!r}"
+    if not data.get("generated_at"):
+        return "missing generated_at"
+    return None
+
+
+def validate_learned(data):
+    """Every cell must parse into a runtime model; a cell the loader would
+    skip means the writer and the runtime disagree on shape."""
+    if not isinstance(data, dict) or not isinstance(data.get("cells"), list):
+        return "missing 'cells' list"
+    if data["cells"] and not data.get("feature_names"):
+        return "cells present but no feature_names"
+    parsed, _ = _parse_learned(data)
+    if len(parsed) != len(data["cells"]):
+        return f"{len(data['cells']) - len(parsed)} of {len(data['cells'])} cells failed to parse"
+    for f_, r_, b_ in parsed:
+        if b_ not in {b for b, _, _ in BANDS}:
+            return f"{f_}/{r_}: unknown band {b_!r}"
+    if not data.get("generated_at"):
+        return "missing generated_at"
+    return None
 
 
 def _load_blender():
@@ -427,6 +473,7 @@ def learned_predict(field, regime, band, features):
     Consumers stamp the returned (pick, prob) alongside the actual selector
     source so retro analysis can compare classifier vs pool per row without
     depending on the shadow flag state."""
+    _maybe_reload()
     return _learned_predict(field, regime, band, features)
 
 

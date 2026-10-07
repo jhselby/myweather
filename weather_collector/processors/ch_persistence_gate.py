@@ -35,6 +35,8 @@ import json
 import logging
 from pathlib import Path
 
+from .. import runtime_tables
+
 
 ENABLED = True  # Flipped 2026-07-19 v0.6.358 after 7-day gate cleared + refreshed-window rerun confirmed SHIP: 27 SHIP cells, halves A -17.84% / B -37.61%, regime_gate FULL -29.53%. Stage 2 preview shipped 2026-07-12.
 
@@ -127,24 +129,33 @@ _TABLE_PATH = Path(__file__).resolve().parent.parent / "data" / "ch_persistence_
 _TABLE_CACHE = None
 
 _CHP_GATE_PATH = Path(__file__).resolve().parent.parent / "data" / "chp_cell_gate.json"
-_CHP_GATE_CACHE = None
+CHP_GATE_NAME = "chp_cell_gate.json"   # runtime_tables name (cloud refit, bundled fallback)
+
+
+def validate_chp_gate(data):
+    """Structural check shared by the runtime loader and the refitter's
+    publish guard. Returns None when usable, else a reason string."""
+    if not isinstance(data, dict) or not isinstance(data.get("per_cell"), dict):
+        return "missing 'per_cell' object"
+    for regime, bands in data["per_cell"].items():
+        if not isinstance(bands, dict):
+            return f"{regime}: bands not an object"
+        for band, cell in bands.items():
+            if not isinstance(cell, dict) or not isinstance(cell.get("gate_apply"), bool):
+                return f"{regime}/{band}: gate_apply not a bool"
+    if not data.get("generated_at"):
+        return "missing generated_at"
+    return None
 
 
 def _load_chp_gate():
-    """Load and cache the dynamic per-cell gate table. Missing / malformed →
-    empty gate (nothing suppressed). Never raises."""
-    global _CHP_GATE_CACHE
-    if _CHP_GATE_CACHE is not None:
-        return _CHP_GATE_CACHE
-    try:
-        _CHP_GATE_CACHE = json.loads(_CHP_GATE_PATH.read_text())
-    except FileNotFoundError:
-        logging.warning(f"  ⚠  chp cell gate missing at {_CHP_GATE_PATH}; gate is a no-op")
-        _CHP_GATE_CACHE = {"per_cell": {}}
-    except Exception as e:
-        logging.warning(f"  ⚠  chp cell gate load failed: {e}")
-        _CHP_GATE_CACHE = {"per_cell": {}}
-    return _CHP_GATE_CACHE
+    """Current dynamic per-cell gate (refitter's GCS copy, else bundled).
+    Missing / invalid → empty gate (nothing suppressed). Never raises."""
+    gate = runtime_tables.get(CHP_GATE_NAME, _CHP_GATE_PATH, validate_chp_gate)
+    if gate is None:
+        logging.warning("  ⚠  chp cell gate unavailable (GCS and bundled); gate is a no-op")
+        return {"per_cell": {}}
+    return gate
 
 
 def _chp_gate_suppresses(gate, regime, band):

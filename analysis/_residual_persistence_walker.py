@@ -59,8 +59,15 @@ def _processor_state(field):
     return "live" if m.group(1) == "True" else "shadow"
 
 
+CANDIDATE_FIELDS = {"wg"}   # Stage 2 writes a candidate for these (see _candidates.py)
+
+
 def _curated_path(field):
-    return REPO / "weather_collector" / "data" / f"{field}_residual_persistence_curated.json"
+    name = f"{field}_residual_persistence_curated.json"
+    if field in CANDIDATE_FIELDS:
+        from _candidates import candidate_path
+        return Path(candidate_path(name))
+    return REPO / "weather_collector" / "data" / name
 
 
 def _runtime_path(field):

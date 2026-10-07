@@ -41,6 +41,7 @@ from pathlib import Path
 
 import pytz
 
+from .. import runtime_tables
 from ..utils import redact_secrets
 
 _CURATED_JSON_PATH = Path(__file__).resolve().parent.parent / "data" / "lsr_bias_table_curated.json"
@@ -185,30 +186,69 @@ _BIAS_BY_REGIME_HOUR = {
     },
 }
 
-# Curated-JSON override. l5_recompute_biases_hourly.py writes
-# weather_collector/data/lsr_bias_table_curated.json each daily digest run.
-# If present, its (regime × hour) values replace the embedded constants
-# above. Embedded values remain as a canonical fallback for when the file
-# is missing (fresh checkouts, deploy race, malformed JSON).
+# Curated-JSON override. l5_recompute_biases_hourly.py is refit daily by
+# the cloud refitter (runtime_tables/lsr_bias_table_curated.json); the
+# bundled copy in weather_collector/data/ is the fallback. Its (regime × hour)
+# values replace the embedded constants above. Embedded values remain the
+# last fallback when neither copy is usable.
+TABLE_NAME = "lsr_bias_table_curated.json"
+_EMBEDDED_BY_REGIME_HOUR = _BIAS_BY_REGIME_HOUR
+_EMBEDDED_FALLBACK_BY_REGIME = _BIAS_FALLBACK_BY_REGIME
 _BIAS_TABLE_SOURCE = "embedded"
 _BIAS_TABLE_GENERATED_AT = None
-try:
-    if _CURATED_JSON_PATH.exists():
-        _curated = json.loads(_CURATED_JSON_PATH.read_text())
-        _cur_bbrh = _curated.get("bias_by_regime_hour") or {}
-        _cur_fb = _curated.get("fallback_by_regime") or {}
-        if _cur_bbrh:
-            _BIAS_BY_REGIME_HOUR = {
-                regime: {int(h): float(v) for h, v in cells.items()}
-                for regime, cells in _cur_bbrh.items()
-            }
-        if _cur_fb:
-            _BIAS_FALLBACK_BY_REGIME = {r: float(v) for r, v in _cur_fb.items()}
-            _BIAS_FALLBACK_BY_REGIME.setdefault("unknown", 0.0)
-        _BIAS_TABLE_SOURCE = "curated_json"
-        _BIAS_TABLE_GENERATED_AT = _curated.get("generated_at")
-except Exception:
-    logging.exception("Lsr curated JSON load failed; using embedded constants")
+_LOADED_FROM = None
+
+
+def validate_table(data):
+    """Structural check shared by the runtime loader and the refitter's
+    publish guard. Returns None when usable, else a reason string."""
+    if not isinstance(data, dict):
+        return "not a JSON object"
+    bbrh = data.get("bias_by_regime_hour")
+    if not isinstance(bbrh, dict) or not bbrh:
+        return "missing or empty 'bias_by_regime_hour'"
+    try:
+        for regime, cells in bbrh.items():
+            for h, v in cells.items():
+                if not 0 <= int(h) <= 23 or abs(float(v)) > 600:
+                    return f"{regime}/{h}: out of range ({v})"
+        for regime, v in (data.get("fallback_by_regime") or {}).items():
+            if abs(float(v)) > 600:
+                return f"fallback {regime}: out of range ({v})"
+    except (TypeError, ValueError, AttributeError) as e:
+        return f"bad cell value: {e}"
+    if not data.get("generated_at"):
+        return "missing generated_at"
+    return None
+
+
+def _maybe_reload():
+    """Pick up a refit table published to GCS without a deploy."""
+    global _BIAS_BY_REGIME_HOUR, _BIAS_FALLBACK_BY_REGIME, _BIAS_TABLE_SOURCE
+    global _BIAS_TABLE_GENERATED_AT, _LOADED_FROM
+    data = runtime_tables.get(TABLE_NAME, _CURATED_JSON_PATH, validate_table)
+    if data is _LOADED_FROM:
+        return
+    _LOADED_FROM = data
+    _BIAS_BY_REGIME_HOUR = _EMBEDDED_BY_REGIME_HOUR
+    _BIAS_FALLBACK_BY_REGIME = _EMBEDDED_FALLBACK_BY_REGIME
+    _BIAS_TABLE_SOURCE, _BIAS_TABLE_GENERATED_AT = "embedded", None
+    if data is None:
+        logging.warning("  ⚠  Lsr curated table unavailable (GCS and bundled); using embedded constants")
+        return
+    _BIAS_BY_REGIME_HOUR = {
+        regime: {int(h): float(v) for h, v in cells.items()}
+        for regime, cells in data["bias_by_regime_hour"].items()
+    }
+    fb = data.get("fallback_by_regime") or {}
+    if fb:
+        _BIAS_FALLBACK_BY_REGIME = {r: float(v) for r, v in fb.items()}
+        _BIAS_FALLBACK_BY_REGIME.setdefault("unknown", 0.0)
+    _BIAS_TABLE_SOURCE = runtime_tables.source(TABLE_NAME)
+    _BIAS_TABLE_GENERATED_AT = data.get("generated_at")
+
+
+_maybe_reload()
 
 
 _LSR_GATE_PATH = Path(__file__).resolve().parent.parent / "data" / "lsr_recent_bias_gate.json"
@@ -311,6 +351,7 @@ def compute_solar_correction(regime_synoptic, raw_solar_wm2, hour_local=None):
         return 0.0
     if _lsr_gate_suppresses(_load_lsr_gate(), regime_synoptic, hour_local):
         return 0.0
+    _maybe_reload()
     # Try (regime, hour) cell first; fall back to regime overall.
     regime_cells = _BIAS_BY_REGIME_HOUR.get(regime_synoptic, {})
     if hour_local is not None and hour_local in regime_cells:

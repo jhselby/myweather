@@ -23,6 +23,10 @@ import time
 from .gcs_io import BUCKET, get_client
 
 PREFIX = "runtime_tables/"
+
+
+def _stamp(data):
+    return data.get("fitted_at") or data.get("generated_at") or data.get("generated")
 REFRESH_S = 600
 
 _cache = {}   # name → {"data", "source", "generation", "checked_at"}
@@ -56,7 +60,7 @@ def get(name, bundled_path, validate=None):
             reason = validate(data) if validate else None
             if reason is None:
                 if not ent or ent["source"] != "gcs":
-                    print(f"  runtime_tables: {name} ← GCS (fitted_at {data.get('fitted_at')})", flush=True)
+                    print(f"  runtime_tables: {name} ← GCS (fitted {_stamp(data)})", flush=True)
                 ent = {"data": data, "source": "gcs", "generation": blob.generation, "checked_at": now}
                 _cache[name] = ent
                 return data
@@ -72,7 +76,7 @@ def get(name, bundled_path, validate=None):
         return ent["data"]
     data = _bundled(name, bundled_path, validate)
     if data is not None:
-        print(f"  runtime_tables: {name} ← bundled (fitted_at {data.get('fitted_at')})", flush=True)
+        print(f"  runtime_tables: {name} ← bundled (fitted {_stamp(data)})", flush=True)
     _cache[name] = {"data": data, "source": "bundled", "generation": None, "checked_at": now}
     return data
 

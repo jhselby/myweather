@@ -387,7 +387,9 @@ def emit(field, accum, cuts, lines):
         ),
     }
 
-    out_json = os.path.join(DATA_DIR, f"{field}_l3_asymmetric_skip_curated.json")
+    # Ship-decision table: write a candidate; the live copy changes only via a ship.
+    from _candidates import candidate_path
+    out_json = candidate_path(f"{field}_l3_asymmetric_skip_curated.json")
     with open(out_json, "w") as fh:
         json.dump(payload, fh, indent=2)
     print(f"wrote {out_json}", file=sys.stderr)
