@@ -60,6 +60,18 @@ V5_CANDIDATE = HERE / "output" / "l1_learned_selector_curated_v5_candidate.json"
 MIN_LIFT_PCT = 3.0
 MIN_N_TEST = 150
 
+# Cells pulled from runtime because they lost live, out-of-sample, even though
+# the daily fitter still emits them as STABLE. The v5 fitter's baseline is the
+# served `error`, which is the classifier's own pick once a cell is live, so its
+# halves gate can't see a live loss. Without this set, the next digest re-adds
+# the cell (see feedback_auto_curate_wholesale_overwrite). Keyed (field, regime, band).
+#   sr/nw_flow/24-47 — v0.7.27, 2026-10-07: 7d paired learned vs band_pool
+#     counterfactual (error_l5_nbm, same rows) 38.45 vs 31.65, −21.5%, n=193;
+#     lost 10-05 and 10-06 (95.7 vs 67.1, 92.2 vs 68.1). Second negative read.
+LIVE_DEMOTED = {
+    ("sr", "nw_flow", "24-47"),
+}
+
 
 def curate():
     all_cells = []
@@ -90,6 +102,8 @@ def curate():
             if not passes:
                 continue
             band = cell["band"].rstrip("h")   # "12-23h" → "12-23" to match _band_for
+            if (field, cell["regime"], band) in LIVE_DEMOTED:
+                continue
             all_cells.append({
                 "field": field,
                 "regime": cell["regime"],
@@ -116,6 +130,9 @@ def curate():
         v5_added = 0
         for cell in v5.get("cells") or []:
             if cell.get("field") not in V5_FIELDS:
+                continue
+            if (cell.get("field"), cell.get("regime"), cell.get("band")) in LIVE_DEMOTED:
+                print(f"  v5 candidate: {cell['field']}/{cell['regime']}/{cell['band']} dropped (LIVE_DEMOTED)")
                 continue
             all_cells.append(cell)
             v5_added += 1

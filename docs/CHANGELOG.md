@@ -1,4 +1,15 @@
 <details open>
+<summary><strong>v0.7.27 • October 7, 2026 (sr learned selector: drop nw_flow/24-47)</strong></summary>
+
+- **Dropped `sr/nw_flow/24-47` from the learned GBM selector.** On the correct paired comparison (the classifier's served error vs `error_l5_nbm`, which is what `band_pool` would have served on the same rows), the cell lost over 7d: 38.45 vs 31.65, −21.5%, n=193. It lost on both recent nw_flow days (10-05: 95.7 vs 67.1; 10-06: 92.2 vs 68.1). Second consecutive negative read; the 10-06 rule was to drop it if still negative. The cell now falls back to `band_pool` (NBM).
+- **New `LIVE_DEMOTED` set in `analysis/l1_learned_selector_curate.py`.** The daily v5 fitter still emits this cell as STABLE (+12%/+29% held-out). Its baseline is the served error, which on live rows is the classifier's own pick, so it can't see a live loss. Without the exclusion, the next digest would regenerate the runtime JSON with the cell back in.
+- **Correction to the 10-06 read.** The 10-06 numbers compared `learned_gbm` rows against `band_pool` rows, which are different hours with a different day/night mix. Paired on the same rows, the other cells are: `nw_flow/12-23` −44.2% (n=207, almost all from 10-06, 113 rows: 76.0 vs 48.3; halves +1.2/−57.8), `se_flow/12-23` +9.9%, `se_flow/24-47` +5.9%, `sw_flow/6-11` +3.0%. Not +9% to +62%.
+- **Held:** `nw_flow/12-23`. Its loss comes from one day; recheck 10-08 on the same paired measure.
+- Collector deploy required (runtime JSON is baked into the function source).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.26 • October 6, 2026 (debug page sweep — no-ship day)</strong></summary>
 
 - **Recent activity rotated.** Added 10-06 (today — no ships, digest triage only). Demoted 10-05 → 1 day ago, 10-04 → 2 days ago. Trimmed 10-03 to `display:none` (already fully recorded in the v0.7.23 changelog entry below).
