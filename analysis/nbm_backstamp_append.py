@@ -203,7 +203,6 @@ def main():
         out.write(json.dumps(row, separators=(",", ":")).encode())
         out.write(b"\n")
         n_out += 1
-        last_complete_end = running
 
     if n_bad:
         print(f"nbm_backstamp_append: skipped {n_bad} unparseable complete line(s)", flush=True)
