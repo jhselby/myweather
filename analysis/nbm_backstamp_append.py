@@ -41,6 +41,9 @@ PAIR_LOG_BLOB = "forecast_error_log.jsonl"
 BACKSTAMPED_BLOB = "forecast_error_log_backstamped.jsonl"
 DELTA_BLOB = "forecast_error_log_backstamped_delta.jsonl"
 HWM_BLOB = "backstamp_hwm.json"
+# Per-run cap so a catch-up after an outage fits the publisher's 540 s budget;
+# the remainder is picked up on the next hourly run.
+MAX_DELTA_BYTES = 64_000_000
 
 
 def _read_hwm(bucket):
@@ -108,6 +111,27 @@ def _seed_hwm(bucket):
     return {"offset": offset, "last_obs_time": last_obs_time}
 
 
+def _offset_misaligned(pb, offset, plog_size, last_obs_time):
+    """True when `offset` no longer points at the first row after
+    `last_obs_time`: file shrank below it, the byte before it isn't a
+    newline, or the row starting there is older than what was appended."""
+    if offset <= 0:
+        return False
+    if plog_size < offset:
+        return True
+    if offset == plog_size:
+        return False
+    head = pb.download_as_bytes(start=offset - 1, end=min(plog_size, offset + 65_536))
+    if head[:1] != b"\n":
+        return True
+    first = head[1:].split(b"\n", 1)[0]
+    try:
+        ot = json.loads(first).get("obs_time")
+    except Exception:
+        return True
+    return bool(last_obs_time and ot and ot < last_obs_time)
+
+
 def main():
     # Use print() throughout so output is visible in Cloud Function logs
     # (the publisher's logging.info calls are filtered out below WARNING).
@@ -127,33 +151,49 @@ def main():
     hwm_offset = int(hwm.get("offset", 0))
     print(f"nbm_backstamp_append: hwm={hwm_offset:,} plog_size={plog_size:,}", flush=True)
 
+    # decay_fit rewrites the live pair-log daily (retention prune), which
+    # shifts every byte offset. A stale offset lands mid-line: the first
+    # line fails to parse, the loop below breaks on it as if it were a
+    # truncated tail, and nothing is appended — silently, every hour
+    # (2026-09-24 → 10-07). Re-seed by obs_time whenever the offset no
+    # longer lines up.
+    if _offset_misaligned(pb, hwm_offset, plog_size, hwm.get("last_obs_time")):
+        print("nbm_backstamp_append: offset misaligned (pair-log rewritten) — re-seeding", flush=True)
+        hwm = _seed_hwm(bucket)
+        _write_hwm(bucket, hwm)
+        hwm_offset = int(hwm["offset"])
+
     if plog_size <= hwm_offset:
         print(f"nbm_backstamp_append: no new bytes; done", flush=True)
         return
 
-    n_bytes = plog_size - hwm_offset
-    logging.info(f"range-downloading {n_bytes:,} bytes ({hwm_offset:,}..{plog_size:,})")
-    raw = pb.download_as_bytes(start=hwm_offset, end=plog_size)
+    end = min(plog_size, hwm_offset + MAX_DELTA_BYTES)
+    print(f"nbm_backstamp_append: range-downloading {end - hwm_offset:,} bytes "
+          f"({hwm_offset:,}..{end:,} of {plog_size:,})", flush=True)
+    raw = pb.download_as_bytes(start=hwm_offset, end=end - 1)
 
     out = io.BytesIO()
     n_in = 0
     n_out = 0
     n_l4 = 0
     n_no_l3 = 0
-    running = 0
+    n_bad = 0
     last_complete_end = 0
-    for line in raw.split(b"\n"):
-        line_len = len(line) + 1
-        running += line_len
+    # Only lines terminated by a newline are complete; the last split element
+    # is a partial row (or b"" when raw ends on a newline) and is left for the
+    # next run. The old loop counted that element as +1 byte, so the saved
+    # offset pointed one byte into the next row and every later run broke on
+    # it (backstamp frozen 2026-09-24 18:00 → 10-07).
+    for line in raw.split(b"\n")[:-1]:
+        last_complete_end += len(line) + 1
         if not line.strip():
-            last_complete_end = running
             continue
         n_in += 1
         try:
             row = json.loads(line)
         except json.JSONDecodeError:
-            # Truncated final line — stop; resume from last_complete_end next run.
-            break
+            n_bad += 1
+            continue
         if row.get("error_l3_nbm") is None and row.get("field") in (
             "t", "ws", "wd", "wg", "h", "ch", "sr", "dp", "cc"
         ):
@@ -165,9 +205,11 @@ def main():
         n_out += 1
         last_complete_end = running
 
+    if n_bad:
+        print(f"nbm_backstamp_append: skipped {n_bad} unparseable complete line(s)", flush=True)
     delta_content = out.getvalue()
     if not delta_content:
-        logging.info(f"no complete rows to append (scanned {n_in})")
+        print(f"nbm_backstamp_append: no complete rows to append (scanned {n_in})", flush=True)
         return
 
     new_offset = hwm_offset + last_complete_end

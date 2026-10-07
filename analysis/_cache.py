@@ -79,14 +79,59 @@ def pair_log_paths():
     backstamped file is a fixed historical artifact that ages out of any
     reasonable retention window on its own (~28 days from the backstamp
     date), so fitters that apply a window filter naturally stop seeing
-    its rows once they fall out of scope. No dedup needed — the two
-    corpora are disjoint by construction (backstamped rows carry
-    obs_time from before the L3_NBM apply-time stamp shipped 2026-08-19).
+    its rows once they fall out of scope.
+
+    The two files are NOT disjoint: since the 09-24 backstamp append, the
+    backstamped file reaches obs_time 09-24 while the live log starts at
+    09-06 (retention-pruned). Every backstamped row at or after the live
+    log's first obs_time is an exact duplicate of a live row (verified
+    2026-10-07: 285,847 of 285,847). So the second path is a filtered
+    copy holding only backstamped rows observed before the live log's
+    first row. Without this, 18 fitters double-counted 09-06..09-24.
 
     Fitters should replace `open(cached_path(PAIR_LOG_URL))` with a loop
     over these paths.
     """
-    return [cached_path(PAIR_LOG_URL), cached_path(PAIR_LOG_BACKSTAMP_URL)]
+    live = cached_path(PAIR_LOG_URL)
+    return [live, _backstamp_before_live(live, cached_path(PAIR_LOG_BACKSTAMP_URL))]
+
+
+def _first_obs_time(path):
+    """obs_time of the first row. The live log is append-ordered and
+    retention-pruned from the front, so its first row is its oldest."""
+    with open(path) as f:
+        for line in f:
+            i = line.find('"obs_time"')
+            if i >= 0:
+                j = line.find('"', line.find(":", i) + 1)
+                return line[j + 1:j + 17]
+    return None
+
+
+def _backstamp_before_live(live_path, backstamp_path):
+    """Filtered copy of the backstamped log: rows with obs_time strictly
+    before the live log's first obs_time. Rebuilt when either input changes
+    (cut moves or backstamp re-downloaded)."""
+    cut = _first_obs_time(live_path)
+    if not cut:
+        return backstamp_path
+    out = Path(backstamp_path).with_name(
+        f"forecast_error_log_backstamped.before_{cut.replace(':', '')}.jsonl")
+    if out.exists() and out.stat().st_mtime >= Path(backstamp_path).stat().st_mtime:
+        return out
+    for old in out.parent.glob("forecast_error_log_backstamped.before_*.jsonl"):
+        old.unlink()
+    tmp = out.with_suffix(".jsonl.tmp")
+    with open(backstamp_path) as src, open(tmp, "w") as dst:
+        for line in src:
+            i = line.find('"obs_time"')
+            if i < 0:
+                continue
+            j = line.find('"', line.find(":", i) + 1)
+            if line[j + 1:j + 17] < cut:
+                dst.write(line)
+    os.replace(tmp, out)
+    return out
 
 
 def _gcs_cached_path(url):
