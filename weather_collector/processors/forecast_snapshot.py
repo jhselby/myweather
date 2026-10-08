@@ -1042,6 +1042,9 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
         # ~133 (ws, wd, pr, cc, t + snap-level pressure_trend). None inputs are
         # handled by the classifier — returns None then, matching pair-log behavior.
         # Kept as `_fc_regime_i` for local var-name compatibility.
+        # NOT aligned once the selector routes t/ws/wd/cc to NBM: the swap
+        # below changes the entry keys after this call, so the pair log's
+        # regime_synoptic differs on ~20% of routed hours. Use regime_runtime.
         _pt_snap = (derived or {}).get("pressure_trend_hpa_3h")
         # v0.6.606 — pass valid-hour local for the HRRR PBL morning-overshoot
         # workaround (t + stagnant_high + EDT 04-08 → NBM). Falls back to
@@ -1056,6 +1059,13 @@ def append_forecast_snapshot(hourly, derived=None, nws_gridpoints=None, nbm_extr
             )
         except Exception:
             _fc_regime_i = None
+        # v0.7.35 (2026-10-08) — record the per-hour regime the selector,
+        # learned-classifier and blender lookups below actually used. The pair log's
+        # state_fc.regime_synoptic is reclassified from the FINAL entry, after
+        # the selector loop swaps NBM values into t/ws/wd/cc, and disagrees
+        # with this one on ~20% of routed hours (10-08 measurement).
+        if _fc_regime_i is not None:
+            entry["regime_runtime"] = _fc_regime_i
         for f in _SELECTOR_FIELDS:
             # Any NBM value at all — raw_nbm is the floor. If absent,
             # NBM had no data this hour; skip.

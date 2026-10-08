@@ -51,3 +51,15 @@ metadata:
 - `l1_static_blend.describe_applicability()` returned a dict (not the schema's list of layer entries) and was never imported. Rewritten to the schema (`layer_id` "L1b", one entry per curated field: ω, covered vs applied cells) and registered first in `collector.py`'s descriptor loop.
 - Collector deployed by Claude (11:27Z; `make deploy-collector` is allowed, `deploy-refitter` is not). The 11:27 tick started before the revision went active, so it ran old code. 11:37 tick clean (cold start +426 MiB), live map 21 layers with L1b: h applied 2/10 (nw_flow/24-47, sw_flow/24-47), dp 0/10.
 - Headless Chrome `--dump-dom` on localhost doesn't load the weather JSON, so it can't check the map visually. Renderer unchanged; Joe to eyeball Section D.
+
+## FOUND: pair-log regime label ≠ runtime regime on ~20% of selector-routed rows
+- `forecast_snapshot.py:1051` classifies `_fc_regime_i` from the entry BEFORE the selector loop overwrites `entry[f]` with NBM values (`:1216`). `forecast_error_log.py:133` reclassifies `state_fc.regime_synoptic` from the FINAL (post-swap) entry. The v0.7.8 comment claiming they are aligned is wrong whenever wd/ws/t/cc are routed to NBM.
+- Measured (t rows, runs ≥ 09-29, pre-swap rebuilt from HRRR-side `forecast_l1r`/deepest layer): no wd/ws/t/cc routed to NBM → 0.0% disagreement (n=519, so the rebuild is exact); any routed → 20.4% (n=8,921); overall 19.2%. Top flips runtime→logged: sw→nw 359, se→sw 281, nw→calm 155, se→ne 152.
+- Every sr `learned_gbm` row lands in a curated cell under the rebuilt runtime regime (and ~150 on 10-07 alone did not under the logged label). Script: scratchpad `regime_gap.py` (rebuild logic: classify_synoptic_regime(pre wd, pre ws, state_fc pressure_in, pressure_trend, valid hour, pre t, cloud_cover=pre cc)).
+- Paired sr learned read re-keyed by runtime cell: nw_flow/12-23 −41.8% (n=239; demotion stands), nw_flow/24-47 −26.3%, se_flow/12-23 −0.3% (was +7.3% logged), se_flow/24-47 −6.2% (was +4.9%), sw_flow/6-11 +3.6%.
+- Consequence: every regime-keyed fitter/audit buckets by the logged label while runtime looks up by the pre-swap label, so ~1 in 5 routed rows trains/scores the wrong cell. Not yet fixed — see decision with Joe.
+
+## Shipped: v0.7.35 — `regime_runtime` recorded (no served change)
+- `forecast_snapshot` stamps `entry["regime_runtime"]` = the per-hour pre-swap regime the selector / learned / blender lookups used; `forecast_error_log` copies it to `state_fc.regime_runtime`. `regime_synoptic` unchanged. Other runtime lookups (chp, NBM gate telemetry) key on the current-tick regime `_wdp_state_curr`, not this.
+- Collector deployed 19:28Z; 19:37 tick clean, snapshot 48/48 hours carry it. Pair-log rows carry it from the first obs joined to a post-deploy snapshot (~20:07Z 10-08).
+- **Next (separate ships, one per fitter):** move the fitters for the selector by-regime walker, the learned classifier (v5 + curate) and the blender onto `regime_runtime`. History before 10-08 19:37 lacks the key; the rebuild in scratchpad `regime_gap.py` can backfill it exactly (0.0% error on unrouted rows) if a fitter needs the window now.

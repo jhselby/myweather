@@ -1,4 +1,12 @@
 <details open>
+<summary><strong>v0.7.35 • October 8, 2026 (pair log records the regime the selector actually used)</strong></summary>
+
+- **New pair-log key `state_fc.regime_runtime`.** The selector, learned classifier and blender look cells up by a per-hour regime computed before the selector swaps NBM values into t/ws/wd/cc. The pair log's `regime_synoptic` is recomputed after the swap, so on hours where any of those four is routed to NBM it disagrees 20.4% of the time (n=8,921; 0.0% when none is routed, n=519). Fitters for those tables have been training and scoring about 1 in 5 routed rows in the wrong cell. This ship only records the new key; nothing served changes. Moving each fitter onto it is a separate ship.
+- Re-keyed by runtime regime, the sr learned-selector paired reads are: `nw_flow/12-23` −41.8% (the v0.7.33 demotion stands), `se_flow/12-23` −0.3% (flat, not +7.3%).
+
+</details>
+
+<details open>
 <summary><strong>v0.7.34 • October 8, 2026 (blender on the applicability map; stale layer-tuple test fixed)</strong></summary>
 
 - **The L1 static blender now appears on the debug page's applicability map** as `L1b`. It had a descriptor since v0.7.6, but the collector never called it, and it returned a different shape from every other layer. It now lists, per field, ω, the curated cells, and the cells that apply live (h: `nw_flow/24-47`, `sw_flow/24-47`; dp: none).

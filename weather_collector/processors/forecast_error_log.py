@@ -137,6 +137,11 @@ def _pairs_for_obs(obs_entry, obs_hour_iso, snapshots):
             cloud_cover=state_fc.get("cloud_cover"))
         if fc_flow is not None: state_fc["regime_flow"] = fc_flow
         if fc_syn is not None:  state_fc["regime_synoptic"] = fc_syn
+        # v0.7.35 — the per-hour regime the selector / learned / blender
+        # lookups used (pre-selector-swap values). Fitters for those tables
+        # should bucket on this, not on regime_synoptic above. See forecast_snapshot.py regime_runtime.
+        if target_hour.get("regime_runtime") is not None:
+            state_fc["regime_runtime"] = target_hour["regime_runtime"]
 
         state_obs = {}
         for key, src in (("wind_speed","wind_mph"), ("wind_dir","wind_dir"),
